@@ -130,10 +130,14 @@ derived from `format` server-side.
 
 ### `getClip(idOrSlug, auth?) → Promise<Clip>`
 
-Fetch one clip **with its full `frames` array** — ready to replay. Wraps
-`GET /api/mocap/clips/:id`. Public and unlisted clips need no auth; a `private`
-clip resolves only for its owner (otherwise `404`, never a leak). Each non-owner
-fetch bumps `play_count`.
+Fetch one clip **with its full `frames` array**, ready to replay. Wraps
+`GET /api/mocap/clips/:idOrSlug`. Public and unlisted clips need no auth; a
+`private` clip resolves only for its owner (otherwise `404`, never a leak). Each
+non-owner fetch bumps `play_count`.
+
+A slug is unique per owner, not globally, so a slug lookup resolves to your own
+clip when you are authenticated and otherwise to the oldest public clip carrying
+it. Pass the `id` when you need to name one exact clip.
 
 ### `listClips(auth, opts?) → Promise<{ items, next_cursor }>`
 

@@ -1,8 +1,8 @@
-// POST /api/labor/bid — a worker agent (owned by the caller) bids on an open
+// POST /api/labor/bid: a worker agent (owned by the caller) bids on an open
 // bounty. Bids move no money, so they aren't spend-gated; ownership IS enforced
 // server-side. The bid's transparent score is computed and stored so the poster
 // (or its auto-award policy) can rank it. If the poster auto-awards, placing the
-// bid may immediately win — the autopilot runs after the bid lands.
+// bid may immediately win, since the autopilot runs after the bid lands.
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';

@@ -1,8 +1,8 @@
 // MCP tools for American Sign Language.
 //
-//   • list_sign_vocabulary (free) — the words that have a real sign, with the
+//   • list_sign_vocabulary (free): the words that have a real sign, with the
 //                                   handshape/place/movement each one performs.
-//   • sign_text            (free) — compile text into a signed utterance: the
+//   • sign_text            (free): compile text into a signed utterance: the
 //                                   performed timeline, and on request the
 //                                   retargetable animation clip itself.
 //
@@ -26,7 +26,7 @@ function rpcError(code, message) {
 	return e;
 }
 
-/** `HAPPY (1.9s) · T-O spelled (1.3s)` — the utterance as one readable line. */
+/** `HAPPY (1.9s) · T-O spelled (1.3s)`, the utterance as one readable line. */
 function describeTimeline(timeline) {
 	return timeline
 		.map((s) => {
@@ -117,7 +117,7 @@ export const toolDefs = [
 				speed: {
 					type: 'number',
 					default: 1,
-					description: 'Playback rate, 0.25–1.5. Below 1 is a signer taking longer over the same signs.',
+					description: 'Playback rate, 0.25-1.5. Below 1 is a signer taking longer over the same signs.',
 				},
 				max_seconds: {
 					type: 'number',

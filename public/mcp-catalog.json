@@ -12425,7 +12425,7 @@
 		{
 			"name": "find_services",
 			"title": "Find paid services the agent can call",
-			"description": "Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL — feed a resource into pay_and_call to actually use it.",
+			"description": "Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL. Feed a resource into pay_and_call to actually use it.",
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",
@@ -12485,7 +12485,7 @@
 		{
 			"name": "monetize_endpoint",
 			"title": "Publish a paid endpoint to earn USDC",
-			"description": "Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network — run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
+			"description": "Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network; run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",
@@ -12621,7 +12621,7 @@
 		{
 			"name": "provision_wallet",
 			"title": "Create the agent's wallet",
-			"description": "Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent — if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Requires sign-in; you can only provision wallets for agents on your own account.",
+			"description": "Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent: if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Requires sign-in; you can only provision wallets for agents on your own account.",
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",
@@ -12659,7 +12659,7 @@
 					"airdrop": {
 						"type": "boolean",
 						"default": false,
-						"description": "Devnet only — request a 1 SOL faucet airdrop after provisioning."
+						"description": "Devnet only: request a 1 SOL faucet airdrop after provisioning."
 					}
 				},
 				"required": [
@@ -12672,7 +12672,7 @@
 		{
 			"name": "wallet_status",
 			"title": "Check the agent's wallet",
-			"description": "Show the signed-in user's three.ws agent wallet: address, SOL and USDC balance, the per-call/hour/day spending caps, and whether autonomous spending is enabled. Read-only — never moves funds. Call this before pay_and_call to confirm there's balance and headroom.",
+			"description": "Show the signed-in user's three.ws agent wallet: address, SOL and USDC balance, the per-call/hour/day spending caps, and whether autonomous spending is enabled. Read-only, never moves funds. Call this before pay_and_call to confirm there's balance and headroom.",
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",

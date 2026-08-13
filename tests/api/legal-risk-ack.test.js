@@ -45,15 +45,16 @@ const { default: handler } = await import('../../api/legal/risk-ack.js');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function makeReq(body = null, { method = 'POST', origin = null } = {}) {
-	const bodyStr = body === null ? '' : JSON.stringify(body);
+function makeReq(body = null, { method = 'POST', origin = null, contentType, raw = null } = {}) {
+	const bodyStr = raw ?? (body === null ? '' : JSON.stringify(body));
+	const ct = contentType === undefined ? (body !== null || raw !== null ? 'application/json' : null) : contentType;
 	const req = Readable.from([Buffer.from(bodyStr)]);
 	req.method = method;
 	req.url = '/api/legal/risk-ack';
 	req.headers = {
 		host: 'app.test',
 		'user-agent': 'vitest',
-		...(body !== null ? { 'content-type': 'application/json' } : {}),
+		...(ct ? { 'content-type': ct } : {}),
 		...(origin ? { origin } : {}),
 	};
 	return req;
@@ -139,6 +140,32 @@ describe('POST /api/legal/risk-ack', () => {
 	])('refuses a malformed version %#', async (body) => {
 		const { status } = await invoke(body);
 		expect(status).toBe(400);
+		expect(auditRows()).toHaveLength(0);
+	});
+
+	// A body the endpoint could not read used to be reported as a bad `version`,
+	// pointing the caller at a field that was never the problem.
+	it('names the size limit rather than the version when the body is too large', async () => {
+		const { status, body } = await invoke({ version: RISK_ACK_VERSION, pad: 'a'.repeat(11_000) });
+		expect(status).toBe(413);
+		expect(body.error).toBe('payload_too_large');
+		expect(auditRows()).toHaveLength(0);
+	});
+
+	it('names the content-type rather than the version when the body is not JSON', async () => {
+		const { status, body } = await invoke(null, {
+			contentType: 'application/x-www-form-urlencoded',
+			raw: 'version=1',
+		});
+		expect(status).toBe(415);
+		expect(body.error).toBe('unsupported_media_type');
+		expect(auditRows()).toHaveLength(0);
+	});
+
+	it('refuses an unparseable body', async () => {
+		const { status, body } = await invoke(null, { raw: '{oops' });
+		expect(status).toBe(400);
+		expect(body.error).toBe('bad_request');
 		expect(auditRows()).toHaveLength(0);
 	});
 

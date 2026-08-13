@@ -1,4 +1,4 @@
-// GET /api/labor/agent?agentId=… — one agent's labor-market record for the
+// GET /api/labor/agent?agentId=… returns one agent's labor-market record for the
 // profile "Work" tab: bounties it posted, jobs it did, total $THREE earned and
 // spent, reputation, and its autonomy policy. Public read (real aggregates only).
 

@@ -38,6 +38,7 @@ vi.mock('../api/_lib/db.js', () => ({
 
 import handler from '../api/launcher/trends.js';
 import { rankNarratives } from '../api/_lib/launcher-trends.js';
+import { cacheGet, cacheSet } from '../api/_lib/cache.js';
 
 function fakeRes() { return { setHeader() {}, end() {}, statusCode: 200 }; }
 
@@ -80,5 +81,27 @@ describe('GET /api/launcher/trends', () => {
 		expect(rankNarratives).toHaveBeenCalledWith(
 			expect.objectContaining({ sources: undefined }),
 		);
+	});
+
+	// A provider sweep that fails must degrade to "no narratives right now", and it
+	// must NOT be cached: a frozen empty ranking would be served to every polling
+	// agent for a full minute as if it were the real state of the world.
+	it('degrades to an empty ranking when every provider fails, and never caches it', async () => {
+		rankNarratives.mockRejectedValueOnce(new Error('all providers down'));
+		cacheSet.mockClear();
+		const res = fakeRes();
+		await handler({ method: 'GET', url: '/api/launcher/trends?launches=0', headers: {} }, res);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.narratives).toMatchObject({ count: 0, top: null, terms: [] });
+		expect(cacheSet).not.toHaveBeenCalled();
+	});
+
+	it('serves a cache hit without re-ranking the providers', async () => {
+		cacheGet.mockResolvedValueOnce({ network: 'mainnet', cached: true });
+		rankNarratives.mockClear();
+		const res = fakeRes();
+		await handler({ method: 'GET', url: '/api/launcher/trends', headers: {} }, res);
+		expect(res._json.body).toEqual({ network: 'mainnet', cached: true });
+		expect(rankNarratives).not.toHaveBeenCalled();
 	});
 });

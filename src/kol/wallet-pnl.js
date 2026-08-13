@@ -31,7 +31,7 @@ function consumeFifo(lots, sellTokens, proceedsUsd) {
  * Pure FIFO P&L computation. Exported for unit testing.
  *
  * @param {{ trades: Array, currentPrices?: Object, windowSecs?: number }} opts
- * @returns {{ realizedUsd, unrealizedUsd, totalUsd, winRate, trades, volumeUsd, openPositions }}
+ * @returns {{ realizedUsd, unrealizedUsd, totalUsd, winRate, closedTrades, trades, volumeUsd, openPositions }}
  */
 export function computeWalletPnl({ trades, currentPrices = {}, windowSecs = Infinity }) {
 	const now = Date.now() / 1000;
@@ -88,6 +88,10 @@ export function computeWalletPnl({ trades, currentPrices = {}, windowSecs = Infi
 		unrealizedUsd,
 		totalUsd: realizedUsd + unrealizedUsd,
 		winRate,
+		// A wallet that has only bought has no win rate yet, and `winRate: 0` cannot
+		// say so on its own. Callers that must distinguish "0% wins" from "nothing
+		// closed to measure" read this count; the tracker board keeps using winRate.
+		closedTrades,
 		trades: sorted.length,
 		volumeUsd,
 		openPositions,

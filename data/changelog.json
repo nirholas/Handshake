@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Your Memetic Launcher settings can no longer be dropped behind a success message",
+			"summary": "The launcher's settings endpoint answered \"saved\" to any request whose body it could not actually read, so a badly formed save from a script or an agent looked like it worked while nothing changed. This config decides whether your launcher mints for real and how much SOL it may spend per day, so \"I switched it to preview and got an OK\" has to mean it is in preview. An unreadable save is now refused outright with a message naming what was wrong, and only a save the server genuinely understood reports success.",
+			"tags": [
+				"fix"
+			],
+			"link": "/launcher"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Retro computing prompts are no longer refused by the 3D Studio safety gate",
 			"summary": "The free 3D Studio screens every prompt for age-inappropriate content before it starts generating. That screen matched the bare abbreviation \"cp\" as a whole word, so ordinary modeling prompts like \"a CP/M retro computer terminal\" or \"a CP violation physics diagram\" were refused, and refused under the harshest category the screen has. The abbreviation is gone and the spelled-out terms it stood for are now matched directly, so those prompts generate normally while the genuinely harmful ones are still blocked before any work starts.",
 			"tags": [

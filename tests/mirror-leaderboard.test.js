@@ -135,4 +135,41 @@ describe('rankLeaders', () => {
 		expect(rankLeaders([])).toEqual([]);
 		expect(rankLeaders([], { sort: 'pnl', limit: 5 })).toEqual([]);
 	});
+
+	// agent_sniper_positions.entry_quote_lamports is nullable, so a settled
+	// round-trip can carry a realized P&L with nothing summed into the entry
+	// denominator. Dividing anyway would produce Infinity or NaN, which
+	// JSON.stringify silently flattens to `null`: a corrupt number that reads
+	// exactly like the honest "no track record" null the board already uses.
+	it('never emits Infinity or NaN when a settled position has no recorded entry size', () => {
+		const noEntry = row({
+			id: 'cccccccc-0000-4000-8000-000000000001',
+			name: 'No entry recorded',
+			settled: 5, wins: 2,
+			pnl_lamports: '250000000', entry_lamports: '0',
+		});
+		const [l] = rankLeaders([noEntry]);
+		expect(l.roi_pct).toBeNull();
+		expect(l.pnl_sol).toBe(0.25);
+		expect(l.win_rate).toBe(40);
+		expect(Number.isFinite(l.score)).toBe(true);
+	});
+
+	// Lamport sums are cast ::text in SQL precisely because a bigint sum overflows
+	// a JS number. The ranking must stay finite and correctly ordered for a whale
+	// row rather than degrading to NaN and sorting arbitrarily.
+	it('ranks lamport sums past the safe-integer range without losing finiteness or order', () => {
+		const whale = row({
+			id: 'cccccccc-0000-4000-8000-000000000002',
+			name: 'Whale',
+			settled: 40, wins: 25,
+			pnl_lamports: '9007199254740993000', entry_lamports: '90071992547409930000',
+		});
+		const ranked = rankLeaders([CONSISTENT, whale], { sort: 'pnl' });
+		expect(ranked[0].agent_id).toBe(whale.id);
+		expect(Number.isFinite(ranked[0].pnl_sol)).toBe(true);
+		expect(ranked[0].pnl_sol).toBeGreaterThan(9e9);
+		expect(ranked[0].roi_pct).toBe(10);
+		expect(Number.isFinite(ranked[0].score)).toBe(true);
+	});
 });

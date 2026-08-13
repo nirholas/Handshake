@@ -55,7 +55,8 @@ vi.mock('../../api/_mcp3d/text-to-image.js', () => ({
 }));
 
 const { default: handler } = await import('../../api/mcp-3d.js');
-const { studioX402Amount } = await import('../../api/_mcp3d/pricing.js');
+const { studioX402Amount, FREE_TOOLS, TOOL_PRICING } = await import('../../api/_mcp3d/pricing.js');
+const { TOOL_CATALOG } = await import('../../api/_mcp3d/catalog.js');
 const { isDiscoveryOnlyBatch } = await import('../../api/_lib/mcp-batch-price.js');
 
 function makeRes() {
@@ -265,6 +266,34 @@ describe('studioX402Amount', () => {
 		expect(studioX402Amount('generation_status', {})).toBeNull();
 		expect(studioX402Amount('preview_3d', {})).toBeNull();
 		expect(studioX402Amount('getting_started', {})).toBeNull();
+	});
+});
+
+// An unpriced tool is served free, so a new GPU-backed tool that lands in the
+// catalog without a TOOL_PRICING entry silently gives away generation-grade
+// compute — the exact regression api/_mcp3d/pricing.js exists to prevent. These
+// assertions force every catalog tool to be a deliberate paid-or-free decision.
+describe('studio pricing classification covers the whole catalog', () => {
+	const catalogNames = TOOL_CATALOG.map((t) => t.name);
+
+	it('classifies every catalog tool as either priced or deliberately free', () => {
+		const unclassified = catalogNames.filter(
+			(n) => !FREE_TOOLS.has(n) && studioX402Amount(n, {}) === null,
+		);
+		expect(unclassified).toEqual([]);
+	});
+
+	it('never prices a tool it also declares free', () => {
+		const contradictory = catalogNames.filter(
+			(n) => FREE_TOOLS.has(n) && studioX402Amount(n, {}) !== null,
+		);
+		expect(contradictory).toEqual([]);
+	});
+
+	it('carries no pricing or free entry for a tool the catalog dropped', () => {
+		const known = new Set(catalogNames);
+		expect(Object.keys(TOOL_PRICING).filter((n) => !known.has(n))).toEqual([]);
+		expect([...FREE_TOOLS].filter((n) => !known.has(n))).toEqual([]);
 	});
 });
 

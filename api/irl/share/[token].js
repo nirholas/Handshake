@@ -8,8 +8,8 @@
  * not a generic logo) and a single "Place your own agent" CTA back to /irl —
  * the growth loop this whole feature exists for.
  *
- * Privacy: the page title/description ever renders the pin's caption or the
- * agent's name — NEVER coordinates, NEVER the owner's identity. Same rule the
+ * Privacy: the page title/description only ever renders the pin's caption or the
+ * agent's name. NEVER coordinates, NEVER the owner's identity. Same rule the
  * rest of /api/irl/pins already enforces on every public projection.
  */
 

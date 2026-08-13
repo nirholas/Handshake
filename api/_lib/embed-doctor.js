@@ -278,6 +278,21 @@ export function analyze(obs) {
 	}
 
 	// ── 3. The element ────────────────────────────────────────────────────────
+	if (!el && obs?.probeFailed) {
+		// The DOM was never read, so "no element" is not a fact we hold. Saying it
+		// anyway would send a developer hunting for a tag that is right there.
+		findings.push(
+			unknown(
+				'page_not_inspected',
+				'The page could not be inspected in the time available',
+				obs.timedOut
+					? 'The page was still busy when the time budget ran out, so its contents were never read. A page that keeps the browser occupied this long usually has heavy scripts of its own running ahead of the embed.'
+					: 'The browser closed the page before its contents could be read, so nothing below the loader is knowable.',
+				{ timedOut: !!obs.timedOut },
+			),
+		);
+		return { verdict: verdictFor(findings), findings: rank(findings), summary: summarize(findings, obs) };
+	}
 	if (!el || !el.count) {
 		findings.push(
 			finding(
@@ -972,12 +987,19 @@ function instrument(page) {
 
 /** Everything a diagnosis needs from a booted page, once it has settled. */
 async function harvest(page, { recorders, response, bootMs, platformOrigin, screenshot }) {
-	const probe = await page.evaluate(inPageProbe, EMBED_SELECTOR, SOURCE_ATTRIBUTES).catch(() => ({
-		scripts: [],
-		element: null,
-		webgl: { available: null, renderer: null },
-		title: '',
-	}));
+	// A page that never yields its main thread (or one the watchdog closed) makes
+	// the probe reject. That is "we could not look", not "there is nothing there",
+	// and the difference has to survive into the report: honesty rule 1.
+	let probeFailed = false;
+	const probe = await page.evaluate(inPageProbe, EMBED_SELECTOR, SOURCE_ATTRIBUTES).catch(() => {
+		probeFailed = true;
+		return {
+			scripts: [],
+			element: null,
+			webgl: { available: null, renderer: null },
+			title: '',
+		};
+	});
 
 	const headers = (() => {
 		try {
@@ -1020,8 +1042,37 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 		pageErrors: recorders.pageErrors,
 		agent,
 		screenshot: shot,
+		probeFailed,
 	};
 }
+
+/**
+ * Close the page once the whole inspection has outstayed its welcome.
+ *
+ * Every individual step is already bounded (navigation, boot budget, agent
+ * lookup), but the in-page probe is not: a page that pegs its main thread never
+ * runs it, and `page.evaluate` has no deadline of its own. Without this, one
+ * such page holds a request and a chromium instance open indefinitely. Closing
+ * the page rejects whatever is pending, and every caller of a page API here
+ * already treats a rejection as "unknown", so the request unwinds into an
+ * honest inconclusive report instead of hanging.
+ */
+function pageWatchdog(page, ms) {
+	const state = { firedAt: null };
+	const timer = setTimeout(() => {
+		state.firedAt = Date.now();
+		page.close().catch(() => {});
+	}, ms);
+	if (typeof timer.unref === 'function') timer.unref();
+	state.clear = () => clearTimeout(timer);
+	return state;
+}
+
+/** How long past the caller's boot budget the probe, screenshot and agent
+ *  lookup are allowed before the watchdog closes the page. Sized from the two
+ *  bounded calls inside `harvest` (a 6 s agent lookup and a screenshot) with
+ *  room to spare, and still well inside the handler's 60 s ceiling. */
+const HARVEST_GRACE_MS = 20000;
 
 /**
  * Diagnose a live URL.
@@ -1045,6 +1096,7 @@ export async function collectFromUrl({
 	const browser = await getBrowser();
 	const page = await browser.newPage();
 	const target = { kind: 'url', url };
+	const watchdog = pageWatchdog(page, budgetMs + HARVEST_GRACE_MS);
 	try {
 		await page.setUserAgent(
 			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 three.ws-EmbedDoctor/1.0 (+https://three.ws/embed-doctor)',
@@ -1066,8 +1118,9 @@ export async function collectFromUrl({
 		}
 		const bootMs = await waitForEmbed(page, EMBED_SELECTOR, budgetMs);
 		const obs = await harvest(page, { recorders, response, bootMs, platformOrigin, screenshot });
-		return { target, ...obs };
+		return { target, ...obs, timedOut: watchdog.firedAt !== null };
 	} finally {
+		watchdog.clear();
 		await page.close().catch(() => {});
 	}
 }
@@ -1096,6 +1149,7 @@ export async function collectFromSnippet({
 	const browser = await getBrowser();
 	const page = await browser.newPage();
 	const target = { kind: 'snippet', snippet: String(snippet).slice(0, 4000) };
+	const watchdog = pageWatchdog(page, budgetMs + HARVEST_GRACE_MS);
 	try {
 		const recorders = instrument(page);
 		// Served from the platform origin so relative URLs and module imports
@@ -1119,8 +1173,9 @@ export async function collectFromSnippet({
 		response = await page.goto(sandboxUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
 		const bootMs = await waitForEmbed(page, EMBED_SELECTOR, budgetMs);
 		const obs = await harvest(page, { recorders, response, bootMs, platformOrigin, screenshot });
-		return { target, ...obs };
+		return { target, ...obs, timedOut: watchdog.firedAt !== null };
 	} finally {
+		watchdog.clear();
 		await page.close().catch(() => {});
 	}
 }
@@ -1137,6 +1192,7 @@ export async function diagnose(input) {
 		target: observations.target,
 		screenshot: observations.screenshot || null,
 		pageTitle: observations.page?.title || null,
+		timedOut: !!observations.timedOut,
 		durationMs: Date.now() - started,
 	};
 }

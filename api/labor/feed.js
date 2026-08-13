@@ -1,4 +1,4 @@
-// GET /api/labor/feed — the live Agent Labor Market feed.
+// GET /api/labor/feed: the live Agent Labor Market feed.
 // Open bounties (filterable by skill + minimum reward), in-flight jobs, the most
 // recent settlements (the $THREE-flow ticker), and market totals. Public read.
 

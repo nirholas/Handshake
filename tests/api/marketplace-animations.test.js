@@ -69,6 +69,15 @@ describe('marketplace/animations cursor', () => {
 	it('returns null for a malformed cursor', () => {
 		expect(decodeCursor('@@not-base64@@')).toBeNull();
 	});
+	// A cursor that decodes cleanly but carries an unparseable timestamp used to
+	// become an Invalid Date, reach Postgres as a bind parameter, and take the
+	// whole feed down with a 500. It is a bad cursor: drop it, serve page one.
+	it('returns null for a well-formed cursor holding an unparseable date', () => {
+		for (const bad of ['not-a-date', '', null, {}]) {
+			const cur = Buffer.from(JSON.stringify({ c: bad })).toString('base64url');
+			expect(decodeCursor(cur), `cursor carrying ${JSON.stringify(bad)}`).toBeNull();
+		}
+	});
 });
 
 describe('marketplace/animations sort whitelist', () => {

@@ -12,6 +12,8 @@ import {
 	looksLikeCspBlock,
 	snippetHostHtml,
 	EMBED_TAG,
+	EMBED_TAGS,
+	EMBED_SELECTOR,
 	SOURCE_ATTRIBUTES,
 } from '../api/_lib/embed-doctor.js';
 
@@ -237,6 +239,92 @@ describe('analyze — the element', () => {
 			healthyObservations({ element: { ...healthyObservations().element, count: 4 } }),
 		);
 		expect(byId(report, 'duplicate_element').evidence.count).toBe(4);
+	});
+});
+
+// The v1 loader (public/embed/v1.js) registers <three-d>, <three-agent> and
+// <three-ws> rather than <agent-3d>, and it is what the gated-embed snippet in
+// api/embed/gate-create.js hands developers. The doctor accepted that loader
+// but knew only the canonical tag, so a working v1 embed came back "broken".
+describe('analyze — the v1 loader element aliases', () => {
+	const V1_LOADER = 'https://three.ws/embed/v1.js';
+
+	function v1Observations(elementOverrides = {}) {
+		const base = healthyObservations();
+		return healthyObservations({
+			scripts: [{ src: V1_LOADER, type: '' }],
+			network: [
+				{ url: V1_LOADER, status: 200, ok: true, bytes: 31835 },
+				{ url: 'https://three.ws/api/agents/abc123', status: 200, ok: true },
+			],
+			element: { ...base.element, tag: 'three-d', ...elementOverrides },
+		});
+	}
+
+	for (const tag of EMBED_TAGS) {
+		it(`reports a healthy <${tag}> embed as healthy`, () => {
+			const report = analyze(v1Observations({ tag }));
+			expect(report.verdict).toBe('healthy');
+			expect(failed(report)).toHaveLength(0);
+			expect(byId(report, 'element_upgraded').detail).toContain(`customElements.get('${tag}')`);
+		});
+	}
+
+	it('names the tag the developer actually wrote when it was never upgraded', () => {
+		const report = analyze(v1Observations({ defined: false }));
+		const f = byId(report, 'element_not_upgraded');
+		expect(f.severity).toBe('fatal');
+		expect(f.detail).toContain('<three-d>');
+		expect(f.detail).not.toContain(`<${EMBED_TAG}>`);
+	});
+
+	it('writes the fix snippet with the caller tag, not the canonical one', () => {
+		const report = analyze(
+			v1Observations({ attributes: { mode: 'floating' } }),
+		);
+		expect(byId(report, 'source_missing').fix).toContain('<three-d agent-id=');
+	});
+
+	it('falls back to the canonical tag when there is no element to name', () => {
+		const report = analyze(healthyObservations({ element: null }));
+		expect(byId(report, 'element_missing').title).toContain(`<${EMBED_TAG}>`);
+	});
+
+	it('ignores a tag the platform does not register, so a report cannot echo page markup', () => {
+		const report = analyze(v1Observations({ tag: 'script', defined: false }));
+		expect(byId(report, 'element_not_upgraded').detail).toContain(`<${EMBED_TAG}>`);
+	});
+});
+
+// The in-page probe has no deadline of its own, so a page that pegs its main
+// thread gets its page closed by the watchdog in collectFrom*. What comes back
+// then is "we could not look", and the report has to say exactly that instead of
+// claiming the developer's element is missing.
+describe('analyze — a page that could not be inspected', () => {
+	it('reports inconclusive rather than inventing a missing element', () => {
+		const report = analyze(
+			healthyObservations({ element: null, probeFailed: true, timedOut: true }),
+		);
+		expect(report.verdict).toBe('inconclusive');
+		expect(idsOf(report)).not.toContain('element_missing');
+		const f = byId(report, 'page_not_inspected');
+		expect(f.status).toBe('unknown');
+		expect(f.evidence.timedOut).toBe(true);
+		// The loader evidence is upstream of the probe and still worth reporting.
+		expect(idsOf(report)).toContain('loader_loaded');
+	});
+
+	it('distinguishes a closed page from an expired budget in the wording', () => {
+		const report = analyze(
+			healthyObservations({ element: null, probeFailed: true, timedOut: false }),
+		);
+		expect(byId(report, 'page_not_inspected').detail).toMatch(/closed the page/i);
+	});
+
+	it('still calls a genuinely missing element missing when the probe did run', () => {
+		const report = analyze(healthyObservations({ element: null, probeFailed: false }));
+		expect(byId(report, 'element_missing').severity).toBe('fatal');
+		expect(idsOf(report)).not.toContain('page_not_inspected');
 	});
 });
 
@@ -509,6 +597,15 @@ describe('helpers', () => {
 	it('does not mistake a lookalike hostname for the platform', () => {
 		expect(isEmbedRelated('https://three.ws.evil.example/agent.js')).toBe(false);
 		expect(isEmbedRelated('https://notthree.ws/x.js')).toBe(false);
+	});
+
+	it('probes with a selector covering every tag a platform loader registers', () => {
+		expect(EMBED_TAGS).toContain(EMBED_TAG);
+		expect(EMBED_SELECTOR.split(',')).toEqual(EMBED_TAGS);
+		// The v1 loader's aliases, which public/embed/v1.js defines.
+		for (const alias of ['three-d', 'three-agent', 'three-ws']) {
+			expect(EMBED_TAGS).toContain(alias);
+		}
 	});
 
 	it('detects the wording browsers actually use for a CSP refusal', () => {

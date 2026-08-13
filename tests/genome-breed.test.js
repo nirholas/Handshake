@@ -115,8 +115,10 @@ const breed = (body) =>
 
 describe('happy path — a real child is born', () => {
 	it('mints a child with fresh wallets distinct from both parents', async () => {
-		// Queue: replay-check (none), child insert, skill-grant meta update, breeding insert.
-		state.sqlQueue = [[], [{ id: 'child-agent' }], [], []];
+		// Queue: replay-check (none), child insert, skill-grant meta update, breeding
+		// insert. The breeding insert RETURNS the recorded row; an empty result there
+		// means the breeding key lost a race and the handler retires the child.
+		state.sqlQueue = [[], [{ id: 'child-agent' }], [], [{ child_agent_id: 'child-agent' }]];
 		const { status, body } = await breed({ seed: 'deterministic-seed' });
 		expect(status).toBe(201);
 		expect(body.child.id).toBe('child-agent');
@@ -131,7 +133,7 @@ describe('happy path — a real child is born', () => {
 	});
 
 	it('never issues an UPDATE/DELETE against a parent agent row', async () => {
-		state.sqlQueue = [[], [{ id: 'child-agent' }], [], []];
+		state.sqlQueue = [[], [{ id: 'child-agent' }], [], [{ child_agent_id: 'child-agent' }]];
 		await breed({ seed: 's' });
 		const mutatedParent = state.sqlCalls.some(
 			(c) => /update|delete/i.test(c.query) && (c.values.includes(A_ID) || c.values.includes(B_ID)),

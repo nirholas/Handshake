@@ -1,6 +1,6 @@
-// crypto_data + token_snapshot — MCP front door onto the /api/v1/x aggregator
+// crypto_data + token_snapshot: MCP front door onto the /api/v1/x aggregator
 // (api/v1/_providers.js). Generated from the live registry so the toolset
-// grows automatically as provider prompts land — no hand-enumerated endpoint
+// grows automatically as provider prompts land, with no hand-enumerated endpoint
 // list to keep in sync.
 //
 // Design (owner-approved, x402-catalog campaign work order 10):
@@ -8,13 +8,13 @@
 // (a 30-tool flood degrades agent tool selection).
 //
 // Both tools run calls through the SAME engine the REST aggregator uses
-// (executeUpstream, with the platform's own upstream key) — never re-fetch an
+// (executeUpstream, with the platform's own upstream key), and never re-fetch an
 // upstream directly. An endpoint marked `free` in the registry is served
 // within the identical per-IP quota the REST free lane enforces
 // (api/v1/x/[...slug].js `serveFreeLane`) so the two doors share one budget
 // instead of doubling it. A caller who exhausts the quota, or calls an
 // endpoint with no free tier, gets a -32402 JSON-RPC error naming the exact
-// REST URL + USDC price to pay via x402 — the platform's one real payment
+// REST URL + USDC price to pay via x402, the platform's one real payment
 // rail, never a second payment flow invented for MCP.
 
 import { ENDPOINT_INDEX, providerCatalog } from '../../v1/_providers.js';
@@ -44,7 +44,7 @@ function errorResult(message, data) {
 }
 
 // Same per-IP identity the REST free lane keys its quota by. `req` is absent
-// under some transports (unit tests, non-HTTP dispatch) — fall back to the
+// under some transports (unit tests, non-HTTP dispatch), so fall back to the
 // caller's account id, then a shared anonymous bucket.
 function callerKey(auth, req) {
 	if (req) {
@@ -65,14 +65,14 @@ function listPairs() {
 /** One line per endpoint, generated fresh from the live registry at call time. */
 function describePairs() {
 	return providerCatalog()
-		.flatMap((p) => p.endpoints.map((e) => `${p.id}/${e.id} — ${e.summary}`))
+		.flatMap((p) => p.endpoints.map((e) => `${p.id}/${e.id}: ${e.summary}`))
 		.join('\n');
 }
 
 /**
  * Run one aggregator call, honoring the endpoint's free-tier quota (if any).
  * Shared by both tools so token_snapshot's fan-out and crypto_data's direct
- * call enforce identically. Never throws — every outcome is a tagged result
+ * call enforce identically. Never throws: every outcome is a tagged result
  * so callers can degrade gracefully (token_snapshot) or surface a clean
  * payment-required error (crypto_data).
  */
@@ -163,7 +163,7 @@ export const toolDefs = [
 				},
 				params: {
 					type: 'object',
-					description: 'Endpoint-specific query params — see the endpoint summary in the tool description for required fields.',
+					description: 'Endpoint-specific query params. See the endpoint summary in the tool description for required fields.',
 					additionalProperties: true,
 					default: {},
 				},
@@ -191,7 +191,7 @@ export const toolDefs = [
 					provider: result.provider,
 					endpoint: result.endpoint,
 					amount_usdc_atomics: result.priceAtomics,
-					pay_via: `${result.restUrl} — send an X-PAYMENT header (see docs/x402.md) for pay-per-call USDC`,
+					pay_via: `${result.restUrl}: send an X-PAYMENT header (see docs/x402.md) for pay-per-call USDC`,
 					...(result.reset ? { free_tier_reset: result.reset } : {}),
 				});
 			}
@@ -205,10 +205,10 @@ export const toolDefs = [
 		description:
 			'One-call snapshot for a Solana token mint, fanning out to whichever free crypto-data ' +
 			'providers are registered on this deployment (DexScreener pairs, Jupiter price, Solana RPC ' +
-			'supply) and merging what answers — degrades gracefully around any provider that is absent, ' +
+			'supply) and merging what answers. Degrades gracefully around any provider that is absent, ' +
 			'unconfigured, or fails, never throwing on a partial result. Example mint: the $THREE CA ' +
 			'"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump". For pump.fun-specific bonding-curve / ' +
-			'launch data use the pump_snapshot tool instead — this tool covers general market data.',
+			'launch data use the pump_snapshot tool instead. This tool covers general market data.',
 		inputSchema: {
 			type: 'object',
 			required: ['mint'],
@@ -221,7 +221,7 @@ export const toolDefs = [
 			const mint = String(args?.mint || '').trim();
 			if (!mint) return errorResult('"mint" is required', { error: 'validation_error' });
 
-			// Fixed, small candidate set (not every registered provider) — a
+			// Fixed, small candidate set (not every registered provider): a
 			// snapshot is meant to answer "what is this token" in one call, not
 			// fan out to every provider that happens to accept a mint-shaped param.
 			const CANDIDATES = [

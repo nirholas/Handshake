@@ -102,6 +102,14 @@ function haversineM(lat1, lng1, lat2, lng2) {
 let _tableReady = false;
 async function ensureTables() {
 	if (_tableReady) return;
+	// Every coordinate feed here JOINs irl_pins for the anchor's precise position, so
+	// this table is a hard dependency, not an optional one. Provision it through the
+	// definition that owns it (api/irl/pins.js) rather than a second copy of the DDL:
+	// on a database where no pin has ever been placed, `nearby` and the single-quest
+	// read otherwise 500 with a raw `relation "irl_pins" does not exist`. Imported
+	// lazily so the pins handler's module graph only loads when a World Line is used.
+	const { ensurePinsSchema } = await import('./pins.js');
+	await ensurePinsSchema();
 	await sql`
 		CREATE TABLE IF NOT EXISTS irl_world_lines (
 			id               UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -180,8 +188,11 @@ function routeOf(req) {
 const isLive = `hidden_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())`;
 
 export default wrap(async (req, res) => {
-	cors(req, res, { methods: ['GET', 'POST', 'OPTIONS'], credentials: true });
-	if (req.method === 'OPTIONS') return res.end();
+	// `methods` is written straight into the header, so an ARRAY emits three
+	// separate access-control-allow-methods lines instead of one list. Pass the
+	// comma string every neighbouring handler passes, and let cors() answer the
+	// preflight itself rather than calling res.end() a second time behind it.
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 
 	await ensureTables();
 	const { action, id } = routeOf(req);

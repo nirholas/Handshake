@@ -58,24 +58,67 @@ async function _fetchBirdeye(addr, apiKey) {
 	}
 }
 
-function _normalizePortfolio(addr, portfolio) {
-	const items = portfolio?.items ?? [];
+// Birdeye's /v1/wallet/portfolio is a HOLDINGS endpoint: it returns the wallet's
+// current token positions and their USD value. It carries no realized P&L, no win
+// rate and no trade count, so this proxy reports holdings under holdings names.
+// The row it used to emit dressed them up as a P&L card instead: `realizedPnl`,
+// `winRate` and `totalTrades` were hardcoded zeros Birdeye never sends,
+// `unrealizedPnl` was really the portfolio's total USD value, and `topToken.pnl`
+// was the top holding's value. Downstream (`get_wallet_portfolio` in
+// packages/kol-mcp) rendered all four to agents as measured P&L. Real per-wallet
+// P&L is FIFO-computed from the wallet's own on-chain trades by
+// src/kol/wallet-pnl.js and merged in by _walletPnl below.
+function _normalizeHoldings(addr, portfolio) {
+	const items = Array.isArray(portfolio?.items) ? portfolio.items : [];
 	let topToken = null;
 	let maxVal = 0;
+	let summedUsd = 0;
 	for (const item of items) {
-		const val = item.valueUsd ?? 0;
-		if (val > maxVal) {
-			maxVal = val;
-			topToken = { symbol: item.symbol ?? '?', pnl: val };
+		const valueUsd = Number(item?.valueUsd) || 0;
+		summedUsd += valueUsd;
+		if (valueUsd > maxVal) {
+			maxVal = valueUsd;
+			topToken = { symbol: item?.symbol ?? '?', valueUsd };
 		}
 	}
+	const totalUsd = Number(portfolio?.totalUsd);
 	return {
 		address: addr,
-		realizedPnl: portfolio?.realizedPnl ?? 0,
-		unrealizedPnl: portfolio?.unrealizedPnl ?? portfolio?.totalUsd ?? 0,
-		winRate: portfolio?.winRate ?? 0,
-		totalTrades: portfolio?.totalTrades ?? 0,
+		totalUsd: Number.isFinite(totalUsd) ? totalUsd : summedUsd,
+		holdings: items.length,
 		topToken,
+	};
+}
+
+// P&L window this proxy reports. The tracker board is window-selectable; this is
+// a single-wallet card, so it answers one question ("how has this wallet traded
+// lately") with the widest window the FIFO engine keeps cheap.
+const PNL_WINDOW = '30d';
+const NO_PNL = {
+	realizedPnl: null,
+	winRate: null,
+	totalTrades: null,
+	volumeUsd: null,
+	pnlSource: null,
+	pnlWindow: PNL_WINDOW,
+};
+
+// Real FIFO P&L over the wallet's own on-chain trades. No trade history for the
+// wallet (no configured trade source, or none inside the window) is NOT a flat
+// record: every P&L field stays null so a caller can tell "unknown" from "broke
+// even". Same rule for win rate with no closed trades: a wallet that has only
+// bought has no win rate yet, which is not a 0% one.
+async function _walletPnl(addr) {
+	const { getWalletPnl } = await import('../../src/kol/wallet-pnl.js');
+	const pnl = await getWalletPnl({ wallet: addr, window: PNL_WINDOW }).catch(() => null);
+	if (!pnl || pnl.trades === 0) return NO_PNL;
+	return {
+		realizedPnl: pnl.realizedUsd,
+		winRate: pnl.closedTrades > 0 ? pnl.winRate : null,
+		totalTrades: pnl.trades,
+		volumeUsd: pnl.volumeUsd,
+		pnlSource: 'onchain-fifo',
+		pnlWindow: PNL_WINDOW,
 	};
 }
 
@@ -105,8 +148,13 @@ async function handleWallets(req, res) {
 		await Promise.allSettled(
 			uncached.map(async (addr) => {
 				try {
-					const portfolio = await _fetchBirdeye(addr, apiKey);
-					_setCache(addr, _normalizePortfolio(addr, portfolio));
+					// _walletPnl never rejects, so only a Birdeye failure reaches the
+					// catch: the holdings half is what this endpoint exists to proxy.
+					const [portfolio, pnl] = await Promise.all([
+						_fetchBirdeye(addr, apiKey),
+						_walletPnl(addr),
+					]);
+					_setCache(addr, { ..._normalizeHoldings(addr, portfolio), ...pnl });
 				} catch (err) {
 					// The negative cache bounds this log to once per address per
 					// NEG_CACHE_TTL window, so an outage can't flood the function logs.

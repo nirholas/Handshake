@@ -39,7 +39,7 @@ If every source is unreachable the tracker returns an empty array and the page s
 - **On-chain trades, not self-reported numbers.** The `onchain` P&L path computes from the wallet's own trade history; the `kolscan` fallback is itself a board of realized on-chain SOL profit. Nothing on this page is entered by the KOL.
 - **kolscan.io** supplies the live wallet universe and the fallback P&L per window. Trader names it publishes are deliberately dropped; the schema stays address-keyed.
 - **Helius** enhanced transactions back the per-mint trade feed (`/api/kol/trades`).
-- **Birdeye** backs the portfolio proxy (`/api/kol/wallets`).
+- **Birdeye** backs the holdings half of the portfolio proxy (`/api/kol/wallets`); its P&L half is computed in-house from on-chain trades.
 - **The X API** supplies follower counts and avatars, only for admin-verified handles.
 
 Each integration degrades honestly: a missing key or an upstream outage yields an empty or null field (and, for `/api/kol/trades`, an explicit error when the whole provider is down), never a fabricated or zeroed row that looks like real data.
@@ -110,7 +110,16 @@ Portfolio snapshot proxy (Birdeye) for up to 20 addresses at once, cached 60 sec
 curl 'https://three.ws/api/kol/wallets?addresses=<WALLET_ADDRESS>,<WALLET_ADDRESS_2>'
 ```
 
-Response: `{ data: [{ address, realizedPnl, unrealizedPnl, winRate, totalTrades, topToken }] }`. A wallet whose upstream fetch failed is omitted from `data` rather than rendered as a fake zero-P&L row.
+Response: `{ data: [{ address, totalUsd, holdings, topToken, realizedPnl, winRate, totalTrades, volumeUsd, pnlSource, pnlWindow }] }`.
+
+The row has two independently-sourced halves, and the field names say which is which:
+
+- **Holdings, from Birdeye.** `totalUsd` is the wallet's current token-position value, `holdings` the number of positions, and `topToken` is `{ symbol, valueUsd }` for the single largest one. Birdeye's portfolio endpoint returns positions and nothing else, so this half never carries a P&L number.
+- **Trading record, FIFO-computed from the wallet's own on-chain trades** over `pnlWindow` (30d) by [`src/kol/wallet-pnl.js`](../src/kol/wallet-pnl.js), the same engine behind the tracker board. `pnlSource` is `onchain-fifo` when it ran on real trades.
+
+Every P&L field is `null` when there is no trade history for the wallet in the window, and `winRate` is additionally `null` when nothing closed inside it (a wallet that has only bought has no win rate yet). A null is "unknown", never "flat": treat it as no data, not as zero profit. `pnlSource: null` marks the whole half as unmeasured.
+
+A wallet whose upstream fetch failed is omitted from `data` rather than rendered as a fake zero-P&L row.
 
 ### `POST /api/kol/import-gmgn` (admin only)
 

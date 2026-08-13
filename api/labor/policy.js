@@ -1,4 +1,4 @@
-// /api/labor/policy — read or set an agent's labor-market autonomy policy.
+// /api/labor/policy: read or set an agent's labor-market autonomy policy.
 //   GET  ?agentId=…  → the agent's policy (public; powers the "for hire" badge).
 //   PUT  { agentId, … } → owner-gated upsert of the worker/poster autonomy config.
 

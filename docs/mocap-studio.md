@@ -52,17 +52,28 @@ The clip format saved is the object `FaceMocap` records: `{ format, duration, fr
 ```bash
 # List your clips plus public ones.
 curl 'https://three.ws/api/mocap/clips?include_public=true&limit=30' \
-  -H 'cookie: <session>'
+  -H 'authorization: Bearer <api key>'
 
-# Save a recorded clip (visibility: private | unlisted | public).
+# Save a recorded clip (visibility: private | unlisted | public). `format` must
+# be one of three.ws.face-mocap.v1 / pose-mocap.v1 / hand-mocap.v1 / vmc.v1, and
+# each frame is { t, shapes, mat? } where shapes maps a channel name to a weight.
 curl -X POST 'https://three.ws/api/mocap/clips' \
-  -H 'content-type: application/json' -H 'cookie: <session>' \
+  -H 'content-type: application/json' -H 'authorization: Bearer <api key>' \
   -d '{"name":"eyebrow-raise","visibility":"public","tags":["face"],
-       "clip":{"format":"arkit52","duration":3.2,"frames":[{"t":0,"shapes":[0,0,0]}]}}'
+       "clip":{"format":"three.ws.face-mocap.v1","duration":3.2,
+               "frames":[{"t":0,"shapes":{"browOuterUpLeft":0.0,"browOuterUpRight":0.0}},
+                         {"t":0.5,"shapes":{"browOuterUpLeft":0.8,"browOuterUpRight":0.8}}]}}'
 
-# Fetch one clip by id to replay it.
-curl 'https://three.ws/api/mocap/clips/<clipId>' -H 'cookie: <session>'
+# Fetch one clip to replay it. The path segment takes either the clip UUID or
+# its slug; a slug resolves to your own clip first, then to a public one.
+curl 'https://three.ws/api/mocap/clips/eyebrow-raise' \
+  -H 'authorization: Bearer <api key>'
 ```
+
+A bearer API key is the simplest way to call these from a script. The same
+endpoints accept a browser session cookie instead, but every write then also
+needs a single-use `X-CSRF-Token` header from `GET /api/csrf-token`, which is
+what the page itself sends.
 
 ## States & limits
 

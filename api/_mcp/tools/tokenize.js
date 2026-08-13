@@ -28,13 +28,13 @@ export const toolDefs = [
 		},
 		description:
 			'Mint a generated or owned GLB as a Metaplex Core NFT on Solana whose media is a ' +
-			'LIVE, interactive 3D viewer (the rigged glTF model under animation_url — not a static ' +
+			'LIVE, interactive 3D viewer (the rigged glTF model under animation_url, not a static ' +
 			'image). Bakes provenance (creator, prompt, generation model, parent lineage, timestamp) ' +
 			'into the metadata AND appends a signed, independently-verifiable record to the ' +
 			'agent_actions provenance ledger; enforces capped creator royalties on secondary sales. ' +
 			'Supply an owned avatar_id or a glb_url, and a recipient (owner_wallet, or your OAuth-linked ' +
 			'Solana wallet). Devnet by default; pass network="mainnet" for a real mainnet mint. Idempotent ' +
-			'— a repeat call for the same asset returns the same mint. Royalty is capped at ' +
+			'(a repeat call for the same asset returns the same mint). Royalty is capped at ' +
 			`${TOKENIZE_3D_ROYALTY_CAP_BPS / 100}%. Naming parent_mint (a remix/derivative on mainnet) ` +
 			"routes the parent creator's royalty slice out of THIS mint's fee as a real on-chain USDC " +
 			'transfer. Returns the mint address, explorer + viewer links, royalty terms, the provenance ' +
@@ -94,7 +94,7 @@ export const toolDefs = [
 		async handler(args, auth) {
 			try {
 				// The remix-royalty split (task 4) must only ever split a fee that was
-				// ACTUALLY collected for this exact call — a genuine per-call x402
+				// ACTUALLY collected for this exact call: a genuine per-call x402
 				// settlement (auth.x402Paid), never a subscription window or an OAuth
 				// bypass (both real access, but no fresh fee here to split).
 				const mintFeeAtomicsCollected =
@@ -126,7 +126,7 @@ export const toolDefs = [
 							(result.explorer_tx_url ? `Tx: ${result.explorer_tx_url}\n` : '') +
 							`Viewer: ${result.viewer_url}\n` +
 							`Royalty: ${result.royalty.percent}% (cap ${result.royalty.cap_basis_points / 100}%)` +
-							(result.royalty.capped ? ` — requested ${result.royalty.requested_basis_points / 100}%, clamped` : '') +
+							(result.royalty.capped ? ` (requested ${result.royalty.requested_basis_points / 100}%, clamped)` : '') +
 							(result.provenance_ledger
 								? `\nProvenance: ledger action #${result.provenance_ledger.action_id} (${result.provenance_ledger.signed ? 'signed' : 'unsigned'})`
 								: '') +
@@ -135,7 +135,7 @@ export const toolDefs = [
 									? `\nRemix royalty: ${result.remix_royalty.creator_usd} USDC paid to the source creator (${result.remix_royalty.creator_tx})`
 									: `\nRemix royalty: not paid (${result.remix_royalty.reason})`
 								: '')
-						: `Mint in progress for this asset — read it back with get_3d_asset_onchain once it confirms.`;
+						: `Mint in progress for this asset. Read it back with get_3d_asset_onchain once it confirms.`;
 				return { content: [{ type: 'text', text }], structuredContent: result };
 			} catch (err) {
 				if (isHandled(err)) return toolError(err.message);
@@ -146,7 +146,7 @@ export const toolDefs = [
 	{
 		name: 'get_3d_asset_onchain',
 		title: 'Resolve a 3D NFT to its live asset + provenance',
-		// A read over live on-chain state — the holder can change between calls, so
+		// A read over live on-chain state: the holder can change between calls, so
 		// not idempotent. Open-world (reads the Solana network).
 		annotations: {
 			readOnlyHint: true,
@@ -157,8 +157,8 @@ export const toolDefs = [
 		description:
 			'Resolve a Solana mint address to its live 3D asset: current holder, the interactive ' +
 			'viewer link + GLB (confirmed live), baked provenance (creator, prompt, model, lineage, ' +
-			'timestamp), and the enforced on-chain royalty terms. Works on any Metaplex Core mint — ' +
-			'assets minted through three.ws also return their platform launch record. Read-only, public.',
+			'timestamp), and the enforced on-chain royalty terms. Works on any Metaplex Core mint. ' +
+			'Assets minted through three.ws also return their platform launch record. Read-only, public.',
 		inputSchema: {
 			type: 'object',
 			properties: {

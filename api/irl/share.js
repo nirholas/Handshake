@@ -30,6 +30,7 @@ import { getSessionUser } from '../_lib/auth.js';
 import { readDeviceToken } from '../_lib/irl-auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { randomToken } from '../_lib/crypto.js';
+import { isUuid } from '../_lib/validate.js';
 import { putObject, publicUrl } from '../_lib/r2.js';
 import { logIrlEvent, ensureIrlAnalyticsSchema, hashDeviceToken } from '../_lib/irl-analytics.js';
 
@@ -52,6 +53,10 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const pinId = (url.searchParams.get('pinId') || '').trim();
 	if (!pinId) return error(res, 400, 'bad_request', 'pinId is required');
+	// The lookup below casts this straight to ::uuid, so a malformed id reaches
+	// Postgres as `invalid input syntax for type uuid` and 500s a request whose
+	// only fault is a typo. Shape-check it here and answer the designed 400.
+	if (!isUuid(pinId)) return error(res, 400, 'bad_request', 'pinId must be a pin uuid');
 
 	const session = await getSessionUser(req).catch(() => null);
 	const deviceToken = readDeviceToken(req);
@@ -76,7 +81,7 @@ export default wrap(async (req, res) => {
 		(session && pin.user_id === session.id) ||
 		(deviceToken && pin.device_token === deviceToken);
 	if (!owns) return error(res, 403, 'forbidden', 'you can only share your own placement');
-	if (pin.published === false) return error(res, 409, 'not_shareable', 'unpublish this pin first if you want it private — a private pin can\'t be turned into a public link');
+	if (pin.published === false) return error(res, 409, 'not_shareable', 'make this pin public before you share it: a private placement can\'t become a public link');
 	if (pin.hidden_at) return error(res, 409, 'not_shareable', 'this pin is under review and can\'t be shared right now');
 
 	const token = randomToken(16);

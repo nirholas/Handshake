@@ -1,4 +1,4 @@
-// MCP memory tools — remember / recall / forget.
+// MCP memory tools: remember / recall / forget.
 //
 // Exposes the agent-memory backend (api/agent-memory.js, table agent_memories)
 // as MCP tools so an agent connected to /api/mcp can persist, retrieve, and
@@ -17,7 +17,7 @@ const VALID_TYPES = ['user', 'feedback', 'project', 'reference'];
 const RECENCY_HALF_LIFE_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Designed "not your agent / not signed in" result. The task requires a helpful
-// message, not a throw — anonymous x402 callers have no account at all, owners
+// message, not a throw. Anonymous x402 callers have no account at all, owners
 // of a different agent get the same opaque answer so we don't leak existence.
 function ownershipError() {
 	return {
@@ -65,7 +65,7 @@ function tokenize(text) {
 // Blend lexical relevance to the query with salience and recency. With no
 // per-memory embeddings stored server-side, lexical overlap stands in for
 // semantic similarity; when a query matches nothing, lexical=0 and the order
-// degrades cleanly to the salience+recency ranking the REST endpoint uses —
+// degrades cleanly to the salience+recency ranking the REST endpoint uses,
 // never a failure mode. Returns a score in roughly [0,1].
 function scoreMemory(row, queryTokens, nowMs) {
 	const haystack = new Set(tokenize(`${row.content} ${(row.tags || []).join(' ')}`));
@@ -86,7 +86,7 @@ export const toolDefs = [
 	{
 		name: 'remember',
 		title: 'Remember',
-		// Inserts a new row every call — additive write, never destructive.
+		// Inserts a new row every call: additive write, never destructive.
 		annotations: {
 			readOnlyHint: false,
 			destructiveHint: false,
@@ -241,7 +241,7 @@ export const toolDefs = [
 	{
 		name: 'forget',
 		title: 'Forget',
-		// Permanently deletes a stored memory — destructive.
+		// Permanently deletes a stored memory: destructive.
 		annotations: {
 			readOnlyHint: false,
 			destructiveHint: true,

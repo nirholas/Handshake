@@ -113,7 +113,7 @@ export const toolDefs = [
 		description:
 			'Poll a generate_garment job. While running, reports the pipeline stage. When ' +
 			'done, returns the published glb_url, manifest_url, thumbnail, measured bind ' +
-			'coverage, and the occluded body regions — at that point the garment is already ' +
+			'coverage, and the occluded body regions. At that point the garment is already ' +
 			'live in the wardrobe catalog.',
 		inputSchema: {
 			type: 'object',
@@ -163,7 +163,7 @@ export const toolDefs = [
 				? `Garment ${pub.garment_id} published: ${pub.glb_url} (${coverageText}, occludes ${pub.occludes?.join(', ') || 'nothing'}).`
 				: pub.status === 'failed'
 					? `Garment job failed: ${pub.error}`
-					: `Garment job ${pub.status} — stage: ${pub.stage}.`;
+					: `Garment job ${pub.status}, stage: ${pub.stage}.`;
 			return {
 				content: [{ type: 'text', text: line }],
 				structuredContent: pub,
@@ -220,7 +220,7 @@ export const toolDefs = [
 				content: [{
 					type: 'text',
 					text: garments.length
-						? garments.map((g) => `${g.slot}/${g.id} v${g.version} — ${g.name}`).join('\n')
+						? garments.map((g) => `${g.slot}/${g.id} v${g.version}: ${g.name}`).join('\n')
 						: 'The catalog is empty for that filter.',
 				}],
 				structuredContent: { garments, count: garments.length },

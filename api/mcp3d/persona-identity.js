@@ -2,7 +2,12 @@
 // embed's visual binding (prompt 17: "the avatar IS the wallet").
 //
 //   GET /api/mcp3d/persona-identity?id=persona_xxx[&network=mainnet|devnet]
-//     → { address, network, balances, reputation, holdings, nameplate, visual }
+//     → { persona, address, network, balances, reputation, holdings, nameplate,
+//         visual, caps, fetched_at }
+//
+// `persona` is the same public projection GET /api/mcp3d/persona returns; every
+// other field sits at the top level because that is exactly the object
+// EmbodimentStage.setChainState() reads.
 //
 // pages/embodiment/embed.html polls this (only when opened with ?wallet=1) so
 // the body's aura/cosmetic/muted-state/nameplate track LIVE chain state, not a

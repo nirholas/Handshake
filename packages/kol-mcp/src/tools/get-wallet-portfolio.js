@@ -1,8 +1,11 @@
-// `get_wallet_portfolio` — one KOL wallet's portfolio P&L card. Read-only.
+// `get_wallet_portfolio` - one KOL wallet's holdings card plus its real trading
+// record. Read-only.
 //
-// Wraps GET /api/kol/wallets?addresses=<wallet>. The three.ws API proxies
-// Birdeye's wallet portfolio (server-side key) and returns a normalized P&L
-// summary per address. This tool focuses that on a single tracked trader.
+// Wraps GET /api/kol/wallets?addresses=<wallet>. Two independently-sourced halves
+// come back in one row: current holdings from Birdeye (server-side key) and, when
+// three.ws has trade history for the wallet, realized P&L / win rate / volume
+// FIFO-computed from that wallet's own on-chain trades. Any P&L field can be
+// null, which means "no trade history to measure", never "flat".
 
 import { z } from 'zod';
 
@@ -13,43 +16,46 @@ export const def = {
 	title: 'KOL wallet portfolio + P&L',
 	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		"Pull one KOL trader's live portfolio P&L card from the three.ws Birdeye proxy. " +
-		'Returns realized P&L, unrealized P&L (current open-position value), win rate, total ' +
-		'trades, and the single highest-value token the wallet holds (symbol + USD value). Use ' +
-		'this to size up a specific smart trader before copying or analyzing them. For ranking ' +
-		'many traders at once use intel-mcp `kol_leaderboard`; this is the per-wallet deep dive. ' +
-		'`has_activity:false` (all-zero P&L, no trades, no holding) means the proxy has no ' +
-		'recorded portfolio for that address yet — an honest "no data", not a failure. ' +
+		"Pull one KOL trader's live portfolio card from three.ws. Returns current holdings " +
+		'(total USD value, position count, and the single highest-value token the wallet ' +
+		'holds) from the Birdeye proxy, plus realized P&L, win rate, trade count and volume ' +
+		'over the last 30 days FIFO-computed from that wallet\'s own on-chain trades. Use this ' +
+		'to size up a specific smart trader before copying or analyzing them. For ranking many ' +
+		'traders at once use intel-mcp `kol_leaderboard`; this is the per-wallet deep dive. ' +
+		'A null P&L field (with `pnl_source: null`) means three.ws has no trade history for ' +
+		'that wallet in the window, which is an honest "unknown", NOT a flat or losing record: ' +
+		'never report it as zero profit. `has_activity:false` means no holdings and no trades. ' +
 		'Read-only live data.',
 	inputSchema: {
 		wallet: z
 			.string()
 			.min(1)
-			.describe('The Solana wallet address of the KOL trader to pull a portfolio P&L card for.'),
+			.describe('The Solana wallet address of the KOL trader to pull a portfolio card for.'),
 	},
 	async handler(args) {
 		const wallet = String(args?.wallet ?? '').trim();
 		const data = await apiRequest('/api/kol/wallets', { query: { addresses: wallet } });
-		// The proxy returns one normalized row per requested address (zeros when
-		// Birdeye has no history for it), so match ours out of the batch.
+		// The proxy returns one row per requested address, and omits an address whose
+		// upstream fetch failed rather than inventing a row for it.
 		const rows = Array.isArray(data?.data) ? data.data : [];
 		const row = rows.find((r) => r?.address === wallet) ?? rows[0] ?? {};
 
-		const realizedPnl = row.realizedPnl ?? 0;
-		const unrealizedPnl = row.unrealizedPnl ?? 0;
-		const winRate = row.winRate ?? 0;
-		const totalTrades = row.totalTrades ?? 0;
-		const topToken = row.topToken ?? null;
+		const holdings = row.holdings ?? 0;
+		const totalTrades = row.totalTrades ?? null;
 
 		return {
 			ok: true,
 			wallet: row.address ?? wallet,
-			has_activity: totalTrades > 0 || realizedPnl !== 0 || unrealizedPnl !== 0 || topToken !== null,
-			realized_pnl_usd: realizedPnl,
-			unrealized_pnl_usd: unrealizedPnl,
-			win_rate: winRate,
+			has_activity: holdings > 0 || (totalTrades ?? 0) > 0,
+			portfolio_value_usd: row.totalUsd ?? null,
+			holdings,
+			top_token: row.topToken ?? null,
+			realized_pnl_usd: row.realizedPnl ?? null,
+			win_rate: row.winRate ?? null,
 			total_trades: totalTrades,
-			top_token: topToken,
+			volume_usd: row.volumeUsd ?? null,
+			pnl_source: row.pnlSource ?? null,
+			pnl_window: row.pnlWindow ?? null,
 		};
 	},
 };

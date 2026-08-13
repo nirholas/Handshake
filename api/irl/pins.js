@@ -317,6 +317,15 @@ export async function recordCellRead(ip, cell) {
 }
 
 let _tableReady = false;
+// Exported so every other surface that READS irl_pins can provision it through the
+// one definition that owns it. api/irl/world-lines.js joins this table on its two
+// coordinate feeds and used to 500 with a bare `relation "irl_pins" does not exist`
+// on a database where no pin had ever been placed. Re-declaring the DDL there would
+// have forked the schema; this shares it, and the module-level _tableReady flag makes
+// the second caller a no-op.
+export async function ensurePinsSchema() {
+	return ensureTable();
+}
 async function ensureTable() {
 	if (_tableReady) return;
 	// Critical bootstrap — the base table + proximity/expiry indexes. These are

@@ -1,10 +1,10 @@
-// MCP tool: get_embed_code — hand an agent a copy-paste embed snippet for a
+// MCP tool: get_embed_code. Hands an agent a copy-paste embed snippet for a
 // three.ws 3D avatar, on-chain agent, or Forge creation. "As easy as embedding a
 // YouTube video": one call returns the <iframe> HTML, the shareable URL, the
 // oEmbed discovery URL, and a social-card thumbnail.
 //
 // The iframe markup + canonical URL shapes come from the shared builder in
-// api/_lib/embed.js — the same one the /api/oembed provider uses — so embed
+// api/_lib/embed.js (the same one the /api/oembed provider uses), so embed
 // output never drifts between the oEmbed surface and this tool.
 
 import { sql } from '../../_lib/db.js';
@@ -31,7 +31,7 @@ function rpcError(code, message, data) {
 }
 
 // A designed, actionable error a chat client renders as text (not a thrown
-// JSON-RPC fault) — used for "make it public first" style guidance.
+// JSON-RPC fault), used for "make it public first" style guidance.
 function designedError(text, structured) {
 	return {
 		content: [{ type: 'text', text }],
@@ -54,7 +54,7 @@ async function resolveTarget({ kind, args, auth, origin }) {
 		`;
 		if (!agent) throw new Error('agent not found');
 		// Mirror get_avatar's visibility check: a private item is embeddable only
-		// by its owner — everyone else must publish (public/unlisted) it first.
+		// by its owner. Everyone else must publish (public/unlisted) it first.
 		if (agent.is_public === false && agent.user_id !== auth.userId) {
 			return {
 				error: designedError(
@@ -100,7 +100,7 @@ async function resolveTarget({ kind, args, auth, origin }) {
 		};
 	}
 
-	// Forge creation — Forge share pages are public by id (no per-user
+	// Forge creation: Forge share pages are public by id (no per-user
 	// visibility), so the only gate is that the mesh actually finished rendering.
 	if (!isUuid(args.creation_id)) throw rpcError(-32602, 'creation_id must be a uuid');
 	const [creation] = await sql`
@@ -150,8 +150,8 @@ export const toolDefs = [
 				creation_id: { type: 'string', format: 'uuid', description: 'Embed a Forge 3D creation.' },
 				// Bounds are clamped in the handler, not enforced by the schema, so an
 				// out-of-range number yields a usable snippet instead of a hard error.
-				width: { type: 'integer', default: 480, description: 'Iframe width in px (clamped 240–1920).' },
-				height: { type: 'integer', default: 360, description: 'Iframe height in px (clamped 180–1080).' },
+				width: { type: 'integer', default: 480, description: 'Iframe width in px (clamped 240-1920).' },
+				height: { type: 'integer', default: 360, description: 'Iframe height in px (clamped 180-1080).' },
 				autorotate: { type: 'boolean', default: true, description: 'Slowly auto-rotate the avatar.' },
 				ar: { type: 'boolean', default: true, description: 'Offer an AR / view-in-room button on mobile.' },
 			},
@@ -206,7 +206,7 @@ export const toolDefs = [
 				content: [
 					{
 						type: 'text',
-						text: `Embed snippet for "${title}" — paste it anywhere HTML is allowed:\n\n${embedHtml}\n\nShare URL: ${target.shareUrl}`,
+						text: `Embed snippet for "${title}". Paste it anywhere HTML is allowed:\n\n${embedHtml}\n\nShare URL: ${target.shareUrl}`,
 					},
 					// A self-contained text/html artifact so MCP clients that render HTML
 					// show a live preview of the embed (mirrors render_avatar / preview_3d).
@@ -233,7 +233,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Turn an avatar or on-chain agent you own into a holder-only interactive 3D embed. Visitors must prove — with a real, server-verified Solana SPL token balance, never a client-reported number — they hold at least min_amount of mint before the live scene renders; below that they see a designed locked teaser with a connect-wallet CTA. mint defaults to $THREE but accepts any SPL mint at runtime. Returns a ready-to-paste <three-d> embed snippet.',
+			'Turn an avatar or on-chain agent you own into a holder-only interactive 3D embed. Visitors must prove, with a real, server-verified Solana SPL token balance and never a client-reported number, that they hold at least min_amount of mint before the live scene renders; below that they see a designed locked teaser with a connect-wallet CTA. mint defaults to $THREE but accepts any SPL mint at runtime. Returns a ready-to-paste <three-d> embed snippet.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -243,7 +243,7 @@ export const toolDefs = [
 				},
 				mint: {
 					type: 'string',
-					description: `SPL token mint holders must have a balance of. Defaults to $THREE (${DEFAULT_GATE_MINT}) — pass a different mint to gate with another community's token.`,
+					description: `SPL token mint holders must have a balance of. Defaults to $THREE (${DEFAULT_GATE_MINT}). Pass a different mint to gate with another community's token.`,
 				},
 				min_amount: {
 					type: 'number',
@@ -266,7 +266,7 @@ export const toolDefs = [
 			if (!ownership.ok) {
 				if (ownership.reason === 'not_owner') {
 					throw new Error(
-						'you do not own this asset — link the owning wallet (or account) to gate it',
+						'you do not own this asset: link the owning wallet (or account) to gate it',
 					);
 				}
 				throw new Error(`embed asset "${args.asset_id}" not found`);
@@ -305,7 +305,7 @@ export const toolDefs = [
 					{
 						type: 'text',
 						text:
-							`Gated "${asset.name || args.asset_id}" — visitors need ≥ ${gate.minAmount} ${symbol} to unlock it. ` +
+							`Gated "${asset.name || args.asset_id}": visitors need ≥ ${gate.minAmount} ${symbol} to unlock it. ` +
 							`Paste this anywhere HTML is allowed:\n\n${snippet}`,
 					},
 				],

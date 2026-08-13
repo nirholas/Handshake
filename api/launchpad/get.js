@@ -1,7 +1,7 @@
 // GET /api/launchpad/get?slug=<slug>
 //
 // Returns the published Launchpad Studio config for /p/<slug> hydration.
-// Public read — no auth required. Cached briefly at the edge to soak hot
+// Public read, no auth required. Cached briefly at the edge to soak hot
 // pages without going to Postgres on every visit.
 
 import { sql } from '../_lib/db.js';

@@ -7,7 +7,7 @@ function clamp(n, lo, hi, fallback) {
 }
 
 // MCP tool annotations (2025-06-18 spec): every pump.fun intel tool is a
-// read-only view of a live upstream feed — never idempotent (the market moves),
+// read-only view of a live upstream feed, never idempotent (the market moves),
 // never destructive. destructiveHint defaults to TRUE when omitted, so it is
 // set explicitly.
 const LIVE_FEED_ANNOTATIONS = {

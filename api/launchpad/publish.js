@@ -15,6 +15,12 @@
 //     (Matching the row's payout wallet is deliberately NOT accepted: the
 //     owner wallet is publicly readable via /api/launchpad/get, so it would
 //     let anyone overwrite any page.)
+//   • Both decisions are made by the write statements themselves (a claiming
+//     INSERT ... ON CONFLICT DO NOTHING, then an UPDATE whose WHERE re-asserts
+//     the secret/session match), never by a preceding SELECT. Two first
+//     publishes of the same slug racing each other used to both read "no row",
+//     both mint a secret, and both return 200: the loser overwrote the winner's
+//     page and walked away with a secret that unlocks nothing.
 //
 // This lets anonymous CMS-style editing work end-to-end: publish from a
 // browser → edit later from the same browser → secret travels with the
@@ -116,7 +122,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const rl = await limits.authIp(clientIp(req));
-	if (!rl.success) return rateLimited(res, rl, 'too many publish attempts — try again soon');
+	if (!rl.success) return rateLimited(res, rl, 'too many publish attempts, try again soon');
 
 	const body = await readJson(req).catch(() => null);
 	if (!body) return error(res, 400, 'validation_error', 'request body required');
@@ -140,43 +146,13 @@ export default wrap(async (req, res) => {
 	}
 
 	const auth = await resolveAuth(req);
+	const authUserId = auth?.userId || null;
+	const providedHash = data.ownerSecret ? hashSecret(data.ownerSecret) : null;
 
-	const [existing] = await sql`
-		SELECT slug, owner_wallet, owner_secret_hash, user_id
-		FROM launchpad_pages WHERE slug = ${data.slug}
-	`;
-
-	let ownerSecret = null;
-	let ownerSecretHash = null;
-
-	if (!existing) {
-		ownerSecret = randomBytes(32).toString('hex');
-		ownerSecretHash = hashSecret(ownerSecret);
-	} else {
-		// Edit auth: (a) matching secret, or (b) same session user. The row's
-		// payout wallet is public (returned by /api/launchpad/get), so knowing it
-		// proves nothing — it must never grant edit rights.
-		const secretOk =
-			data.ownerSecret &&
-			existing.owner_secret_hash &&
-			hashSecret(data.ownerSecret) === existing.owner_secret_hash;
-		const sessionOk = auth?.userId && existing.user_id === auth.userId;
-		if (!secretOk && !sessionOk) {
-			return error(
-				res,
-				409,
-				'slug_taken',
-				'that slug is already published — pick a different one',
-			);
-		}
-		// Existing row keeps its secret unless the publisher is rotating it.
-		ownerSecretHash = existing.owner_secret_hash;
-		// If the row was created before secrets existed, mint one on this update.
-		if (!ownerSecretHash) {
-			ownerSecret = randomBytes(32).toString('hex');
-			ownerSecretHash = hashSecret(ownerSecret);
-		}
-	}
+	// Minted up front so the claiming INSERT can carry it, but only ever handed
+	// back when the database confirms this request is the one that stored it.
+	const freshSecret = randomBytes(32).toString('hex');
+	const freshHash = hashSecret(freshSecret);
 
 	const config = {
 		identity: data.identity,
@@ -190,32 +166,58 @@ export default wrap(async (req, res) => {
 
 	const tokenMint = data.token?.mint?.trim() || null;
 
-	await sql`
-		INSERT INTO launchpad_pages
-			(slug, template, owner_wallet, owner_secret_hash, user_id, config, token_mint, updated_at)
-		VALUES
-			(${data.slug}, ${data.template}, ${data.identity.wallet}, ${ownerSecretHash},
-			 ${auth?.userId || null}, ${JSON.stringify(config)}::jsonb, ${tokenMint}, now())
-		ON CONFLICT (slug) DO UPDATE SET
-			template          = EXCLUDED.template,
-			owner_wallet      = EXCLUDED.owner_wallet,
-			owner_secret_hash = COALESCE(launchpad_pages.owner_secret_hash, EXCLUDED.owner_secret_hash),
-			user_id           = COALESCE(EXCLUDED.user_id, launchpad_pages.user_id),
-			config            = EXCLUDED.config,
-			-- A launched mint is a permanent on-chain fact. Re-publishing from a
-			-- studio draft that predates the launch must not erase it (which would
-			-- also drop the page out of list.js's "already minted" sort).
-			token_mint        = COALESCE(EXCLUDED.token_mint, launchpad_pages.token_mint),
-			updated_at        = now()
-	`;
-
 	const out = {
 		slug: data.slug,
 		url: `${env.APP_ORIGIN}/p/${data.slug}`,
 		publishedAt: new Date().toISOString(),
 	};
-	// Only return the secret on first publish (or first time we minted one for
-	// a legacy row). Subsequent updates must already have it client-side.
-	if (ownerSecret) out.ownerSecret = ownerSecret;
+
+	// Claim the slug. DO NOTHING means the row already existed (or a concurrent
+	// publisher won the race), and this request is an edit that has to prove it.
+	const claimed = await sql`
+		INSERT INTO launchpad_pages
+			(slug, template, owner_wallet, owner_secret_hash, user_id, config, token_mint, updated_at)
+		VALUES
+			(${data.slug}, ${data.template}, ${data.identity.wallet}, ${freshHash},
+			 ${authUserId}, ${JSON.stringify(config)}::jsonb, ${tokenMint}, now())
+		ON CONFLICT (slug) DO NOTHING
+		RETURNING slug
+	`;
+	if (claimed.length) {
+		out.ownerSecret = freshSecret;
+		return json(res, 200, out);
+	}
+
+	// Edit auth, re-asserted inside the statement so it cannot go stale between a
+	// read and the write: (a) matching secret, or (b) same session user. The row's
+	// payout wallet is public (returned by /api/launchpad/get), so knowing it
+	// proves nothing and must never grant edit rights. A row created before
+	// secrets existed gets one minted here, on the update that proves ownership.
+	const [updated] = await sql`
+		UPDATE launchpad_pages SET
+			template          = ${data.template},
+			owner_wallet      = ${data.identity.wallet},
+			owner_secret_hash = COALESCE(owner_secret_hash, ${freshHash}),
+			user_id           = COALESCE(${authUserId}, user_id),
+			config            = ${JSON.stringify(config)}::jsonb,
+			-- A launched mint is a permanent on-chain fact. Re-publishing from a
+			-- studio draft that predates the launch must not erase it (which would
+			-- also drop the page out of list.js's "already minted" sort).
+			token_mint        = COALESCE(${tokenMint}, token_mint),
+			updated_at        = now()
+		WHERE slug = ${data.slug}
+			AND (
+				(${providedHash}::text IS NOT NULL AND owner_secret_hash = ${providedHash})
+				OR (${authUserId}::uuid IS NOT NULL AND user_id = ${authUserId})
+			)
+		RETURNING owner_secret_hash
+	`;
+	if (!updated) {
+		return error(res, 409, 'slug_taken', 'that slug is already published, pick a different one');
+	}
+
+	// Only hand back a secret when this request is the one that stored it: the
+	// first publish above, or the legacy row that had none until this update.
+	if (updated.owner_secret_hash === freshHash) out.ownerSecret = freshSecret;
 	return json(res, 200, out);
 });

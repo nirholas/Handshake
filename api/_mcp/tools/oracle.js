@@ -1,20 +1,20 @@
-// Oracle MCP tools — conviction signal for autonomous agents.
+// Oracle MCP tools: conviction signal for autonomous agents.
 //
 // Three tools, one mission: give any 3D AI agent on three.ws access to the
 // same Oracle conviction intelligence that drives the platform's own sniper
 // strategy and copy-trading systems.
 //
-//   oracle_top_plays   — public, no auth needed. Returns the current top-scoring
+//   oracle_top_plays   (public, no auth needed). Returns the current top-scoring
 //                        pump.fun launches ranked by Oracle conviction. Each play
 //                        carries a machine-readable recommendation: action (buy /
 //                        watch / skip), confidence, and a suggested size factor
 //                        so the agent never has to re-derive the trading signal.
 //
-//   oracle_coin        — public. Full conviction verdict for one specific mint:
+//   oracle_coin        (public). Full conviction verdict for one specific mint:
 //                        score, tier, four pillar scores, badges, and the same
 //                        agent-ready recommendation envelope.
 //
-//   oracle_arm_watch   — requires account auth (scope: agents:write). Arms (or
+//   oracle_arm_watch   requires account auth (scope: agents:write). Arms (or
 //                        updates) the caller's agent to act on the live Oracle
 //                        stream. Sets the conviction floor, category filters,
 //                        per-trade SOL cap, and simulate-vs-live mode. The
@@ -34,11 +34,11 @@ const CATEGORIES = new Set([
 const TIERS = new Set(['prime', 'strong', 'lean', 'watch']);
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const REC = {
-	prime:  { action: 'buy',   confidence: 'high',   size_factor: 1.0,  note: 'top-conviction play — proven smart money + clean structure + on-narrative' },
-	strong: { action: 'buy',   confidence: 'medium', size_factor: 0.75, note: 'strong conviction — favorable across multiple pillars' },
-	lean:   { action: 'watch', confidence: 'low',    size_factor: 0,    note: 'leaning positive but not decisive — watch for confirmation' },
-	watch:  { action: 'skip',  confidence: 'low',    size_factor: 0,    note: 'inconclusive — no edge yet' },
-	avoid:  { action: 'skip',  confidence: 'high',   size_factor: 0,    note: 'structural or pedigree red flags — avoid' },
+	prime:  { action: 'buy',   confidence: 'high',   size_factor: 1.0,  note: 'top-conviction play: proven smart money + clean structure + on-narrative' },
+	strong: { action: 'buy',   confidence: 'medium', size_factor: 0.75, note: 'strong conviction: favorable across multiple pillars' },
+	lean:   { action: 'watch', confidence: 'low',    size_factor: 0,    note: 'leaning positive but not decisive, watch for confirmation' },
+	watch:  { action: 'skip',  confidence: 'low',    size_factor: 0,    note: 'inconclusive, no edge yet' },
+	avoid:  { action: 'skip',  confidence: 'high',   size_factor: 0,    note: 'structural or pedigree red flags, avoid' },
 };
 
 function shapePlay(it) {
@@ -94,12 +94,12 @@ export const toolDefs = [
 		title: 'Oracle top conviction plays',
 		annotations: LIVE_ANNOTATIONS,
 		description:
-			"Get the current top pump.fun launches ranked by Oracle conviction score. Each play includes a score (0–100), tier (prime/strong/lean/watch/avoid), four pillar scores (pedigree/structure/narrative/momentum), and an agent-ready recommendation with a suggested size_factor. Use this to decide which coins to buy before they move. Filter by min_score or category to narrow the signal.",
+			"Get the current top pump.fun launches ranked by Oracle conviction score. Each play includes a score (0-100), tier (prime/strong/lean/watch/avoid), four pillar scores (pedigree/structure/narrative/momentum), and an agent-ready recommendation with a suggested size_factor. Use this to decide which coins to buy before they move. Filter by min_score or category to narrow the signal.",
 		inputSchema: {
 			type: 'object',
 			properties: {
 				limit:     { type: 'integer', minimum: 1, maximum: 20, default: 5, description: 'Number of plays to return (default 5, max 20).' },
-				min_score: { type: 'integer', minimum: 0, maximum: 100, default: 72, description: 'Minimum conviction score (0–100). Default 72 (strong+).' },
+				min_score: { type: 'integer', minimum: 0, maximum: 100, default: 72, description: 'Minimum conviction score (0-100). Default 72 (strong+).' },
 				category:  { type: 'string', enum: [...CATEGORIES], description: 'Filter by narrative category (optional).' },
 				network:   { type: 'string', enum: ['mainnet', 'devnet'], default: 'mainnet' },
 			},
@@ -112,7 +112,7 @@ export const toolDefs = [
 			const category = CATEGORIES.has(args?.category) ? args.category : null;
 
 			const rl = await limits.mcpIp(auth.rateKey || 'anon');
-			if (!rl.success) return mcpErr('Rate limit exceeded — try again in a moment.');
+			if (!rl.success) return mcpErr('Rate limit exceeded. Try again in a moment.');
 
 			// A degraded feed store is NOT an empty feed. Returning [] on a fault
 			// rendered "no plays at this conviction floor, try lowering min_score",
@@ -147,7 +147,7 @@ export const toolDefs = [
 		title: 'Oracle verdict for one coin',
 		annotations: LIVE_ANNOTATIONS,
 		description:
-			"Get Oracle's full conviction verdict for a specific pump.fun coin by mint address. Returns the fused 0–100 conviction score, tier (prime/strong/lean/watch/avoid), all four pillar scores (pedigree = who's behind it, structure = how it's built, narrative = cultural fit, momentum = early trading signal), active badges (e.g. smart_money_early, narrative_match), and a machine-readable buy/watch/skip recommendation. If the coin isn't in the Oracle cache yet, it will be scored on-demand (may add ~1s latency).",
+			"Get Oracle's full conviction verdict for a specific pump.fun coin by mint address. Returns the fused 0-100 conviction score, tier (prime/strong/lean/watch/avoid), all four pillar scores (pedigree = who's behind it, structure = how it's built, narrative = cultural fit, momentum = early trading signal), active badges (e.g. smart_money_early, narrative_match), and a machine-readable buy/watch/skip recommendation. If the coin isn't in the Oracle cache yet, it will be scored on-demand (may add ~1s latency).",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -161,22 +161,22 @@ export const toolDefs = [
 			const network = NETWORKS.has(args?.network) ? args.network : 'mainnet';
 			const mint = (args?.mint || '').trim();
 
-			if (!MINT_RE.test(mint)) return mcpErr('Invalid mint: must be a base58 Solana address (32–44 chars).');
+			if (!MINT_RE.test(mint)) return mcpErr('Invalid mint: must be a base58 Solana address (32-44 chars).');
 
 			const rl = await limits.mcpIp(auth.rateKey || 'anon');
-			if (!rl.success) return mcpErr('Rate limit exceeded — try again in a moment.');
+			if (!rl.success) return mcpErr('Rate limit exceeded. Try again in a moment.');
 
 			let scored;
 			try {
 				scored = await scoreCoin(mint, { network, classify: true, persist: true });
 			} catch {
-				// Intel store / DB degraded — distinct from "coin unknown". Tell the
+				// Intel store / DB degraded: distinct from "coin unknown". Tell the
 				// agent it's transient so it retries rather than concluding the coin
 				// doesn't exist.
-				return mcpErr(`Oracle is temporarily unavailable for ${mint} — the intel store is degraded. Retry shortly.`);
+				return mcpErr(`Oracle is temporarily unavailable for ${mint}: the intel store is degraded. Retry shortly.`);
 			}
 			if (!scored) {
-				return mcpErr(`Coin ${mint} not found in Oracle — it may not have been observed on pump.fun yet.`);
+				return mcpErr(`Coin ${mint} not found in Oracle. It may not have been observed on pump.fun yet.`);
 			}
 
 			const v = scored.verdict;
@@ -224,7 +224,7 @@ export const toolDefs = [
 				armed:               { type: 'boolean', default: true, description: 'true to arm, false to disarm.' },
 				mode:                { type: 'string', enum: ['simulate', 'live'], default: 'simulate', description: "simulate = no real spend (safe default). live = real SOL from agent's wallet." },
 				min_score:           { type: 'integer', minimum: 0, maximum: 100, default: 72, description: 'Conviction floor to act on (72 = strong+; 90 = prime only).' },
-				min_tier:            { type: 'string', enum: ['prime', 'strong', 'lean', 'watch'], description: 'Alternative to min_score — acts on this tier and above.' },
+				min_tier:            { type: 'string', enum: ['prime', 'strong', 'lean', 'watch'], description: 'Alternative to min_score: acts on this tier and above.' },
 				categories:          { type: 'array', items: { type: 'string', enum: [...CATEGORIES] }, description: 'Only act on coins in these narrative categories. Omit to act on all.' },
 				per_trade_sol:       { type: 'number', minimum: 0.001, maximum: 1, default: 0.05, description: 'Max SOL per single trade (default 0.05). Ignored in simulate mode.' },
 				max_daily_sol:       { type: 'number', minimum: 0, maximum: 10, default: 0.5, description: 'Daily SOL budget cap (default 0.5). The loop will not spend more in one day.' },
@@ -240,7 +240,7 @@ export const toolDefs = [
 			if (!auth.userId) return mcpErr('You must be signed in with a three.ws account to arm an agent watch.');
 
 			const agentId = (args?.agent_id || '').trim();
-			if (!isUuid(agentId)) return mcpErr('Invalid agent_id — must be a UUID (get it from /api/agents or your dashboard).');
+			if (!isUuid(agentId)) return mcpErr('Invalid agent_id: must be a UUID (get it from /api/agents or your dashboard).');
 
 			if (!(await ownsAgent(auth.userId, agentId))) {
 				return mcpErr(`Agent ${agentId} does not belong to your account.`);
@@ -275,7 +275,7 @@ export const toolDefs = [
 				watch: watch || { agent_id: agentId, network, ...cfg },
 				track_record: summary || { total: 0, wins: 0, losses: 0, win_rate: null, realized_pnl_sol: 0 },
 				message: cfg.armed
-					? `Agent armed in ${cfg.mode} mode. The Oracle cron runs every 2 min — your first action will appear in /oracle?tab=activity once a qualifying coin is scored.`
+					? `Agent armed in ${cfg.mode} mode. The Oracle cron runs every 2 min, so your first action will appear in /oracle?tab=activity once a qualifying coin is scored.`
 					: `Agent disarmed. No further Oracle actions will be taken.`,
 				links: {
 					activity: `https://three.ws/activity`,
@@ -313,7 +313,7 @@ export const toolDefs = [
 			if (!auth.userId) return mcpErr('Sign in to check your agent watch status.');
 
 			const agentId = (args?.agent_id || '').trim();
-			if (!isUuid(agentId)) return mcpErr('Invalid agent_id — must be a UUID.');
+			if (!isUuid(agentId)) return mcpErr('Invalid agent_id: must be a UUID.');
 
 			if (!(await ownsAgent(auth.userId, agentId))) {
 				return mcpErr(`Agent ${agentId} does not belong to your account.`);
@@ -364,7 +364,7 @@ export const toolDefs = [
 					mode:              a.mode,
 					outcome:           a.outcome,
 					pnl_sol:           a.realized_pnl_sol,
-					// Open-position exit call — an agent reading its own status can act
+					// Open-position exit call: an agent reading its own status can act
 					// on this to close a position whose thesis has broken.
 					exit_signal:       a.exit_signal ?? null,
 					acted_at:          a.acted_at,

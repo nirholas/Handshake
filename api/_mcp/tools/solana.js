@@ -97,7 +97,7 @@ async function solanaPassport(asset, network) {
 }
 
 // MCP tool annotations (2025-06-18 spec): public, read-only views over the
-// live on-chain attestation index — new attestations land between calls, so
+// live on-chain attestation index. New attestations land between calls, so
 // not idempotent. destructiveHint defaults to TRUE when omitted, so it is set
 // explicitly.
 const ATTESTATION_READ_ANNOTATIONS = {
@@ -170,7 +170,7 @@ export const toolDefs = [
 		title: 'Get Solana agent passport',
 		annotations: ATTESTATION_READ_ANNOTATIONS,
 		description:
-			'Full discovery card for a Solana agent: identity (Metaplex Core asset), owner wallet, reputation summary, latest validation result, and attestation schema endpoint. Equivalent to an ERC-8004 passport — use this when one tool call should answer "who is this agent and can I trust them?".',
+			'Full discovery card for a Solana agent: identity (Metaplex Core asset), owner wallet, reputation summary, latest validation result, and attestation schema endpoint. Equivalent to an ERC-8004 passport. Use this when one tool call should answer "who is this agent and can I trust them?".',
 		inputSchema: {
 			type: 'object',
 			properties: {

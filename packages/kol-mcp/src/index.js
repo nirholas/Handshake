@@ -5,11 +5,11 @@
 // (kol_leaderboard) and shows everyone's trades on a mint (kol_trades), this
 // server is the per-wallet deep dive: one tracked trader's portfolio P&L and
 // their own trades on a given token, for copy/analysis decisions.
-//   • get_wallet_portfolio — a KOL wallet's realized/unrealized P&L card
+//   • get_wallet_portfolio — a KOL wallet's holdings + real on-chain P&L card
 //   • get_wallet_trades    — that wallet's recent trades on a given mint
 //
 // A thin wrapper over the PUBLIC three.ws KOL API. No keys, no signer, no
-// payment on the client — the Birdeye key that backs the portfolio P&L lives
+// payment on the client — the Birdeye key that backs the holdings half lives
 // server-side on three.ws. Point THREE_WS_BASE at a deployment and go.
 //
 // Run standalone:
@@ -45,8 +45,10 @@ export function buildServer() {
 			capabilities: { tools: {} },
 			instructions:
 				'three.ws KOL MCP — track one smart trader. get_wallet_portfolio pulls a single ' +
-				"tracked KOL wallet's live portfolio P&L card: realized P&L, unrealized (open-position) " +
-				'P&L, win rate, total trades, and its largest holding. get_wallet_trades returns that ' +
+				"tracked KOL wallet's live portfolio card: current holdings value and largest holding, " +
+				'plus 30d realized P&L, win rate and trade count computed from its own on-chain trades ' +
+				'(null where there is no trade history to measure, never a fabricated zero). ' +
+				'get_wallet_trades returns that ' +
 				"same wallet's recent buys/sells of a specific mint — side, SOL size, price, USD value, " +
 				'and timing, newest first. This is the per-wallet deep dive; to rank the whole KOL set or ' +
 				'see every wallet\'s trades on a mint, use the intel-mcp server (kol_leaderboard, ' +

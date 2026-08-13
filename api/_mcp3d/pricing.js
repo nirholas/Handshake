@@ -91,13 +91,43 @@ export function priceFor(toolName) {
 	return TOOL_PRICING[toolName] || null;
 }
 
+// Tools deliberately served at no per-call charge: discovery, status polling,
+// previews, local analysis, and the persona/identity ops whose authorization is
+// the 120-bit persona_id capability rather than a payment. Listing them
+// explicitly (instead of letting "absent from TOOL_PRICING" silently mean free)
+// is what lets tests/api/mcp-3d-challenge.test.js assert that EVERY catalog tool
+// is a deliberate decision: add a GPU-backed tool to the catalog without pricing
+// it and the classification test fails, rather than the tool shipping free. That
+// silent-free failure is exactly the outage this module was written to end.
+export const FREE_TOOLS = Object.freeze(
+	new Set([
+		'getting_started',
+		'generation_status',
+		'preview_3d',
+		'save_avatar',
+		'create_agent_persona',
+		'get_agent_persona',
+		'persona_say',
+		'validate_spatial_response',
+		'export_ar',
+		'verify_provenance',
+		'persona_identity',
+		'persona_tip',
+		'persona_send',
+		'inspect_model',
+		'optimize_model',
+		'list_animations',
+		'animation_signature',
+		'find_similar_animations',
+		'text_to_animation',
+	]),
+);
+
 // The x402 `amount` (atomic-unit string) for a studio tools/call, or null for
-// free tools (getting_started, generation_status, preview_3d, list_animations,
-// inspect_model, optimize_model, save_avatar). Tier-priced tools read the
-// caller's `tier` argument so the 402 quote, the verified payment, and the
-// settled charge all match the work actually requested; an unknown tier
-// resolves to the standard price (resolveTier's fallback) rather than
-// under-charging.
+// the free tools above. Tier-priced tools read the caller's `tier` argument so
+// the 402 quote, the verified payment, and the settled charge all match the work
+// actually requested; an unknown tier resolves to the standard price
+// (resolveTier's fallback) rather than under-charging.
 export function studioX402Amount(toolName, args) {
 	if (TIER_PRICED_TOOLS.has(toolName)) {
 		return String(priceAtomicsForTier(args?.tier || DEFAULT_TIER));

@@ -854,7 +854,7 @@
 			"name": "find_services",
 			"title": "Find paid services the agent can call",
 			"descHead": "Search the live x402 facilitator network for paid services (HTTP APIs an",
-			"descHash": "10b9605cf0c4",
+			"descHash": "0a3c1fdcaf27",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -867,14 +867,14 @@
 			"name": "monetize_endpoint",
 			"title": "Publish a paid endpoint to earn USDC",
 			"descHead": "Put a price on an upstream API your agent already serves and publish it ",
-			"descHash": "43e54e8d4142",
+			"descHash": "ee8468b7ec03",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "ba14c8f9eb27"
+			"schemaHash": "5181829cf383"
 		},
 		{
 			"name": "pay_and_call",
@@ -893,20 +893,20 @@
 			"name": "provision_wallet",
 			"title": "Create the agent's wallet",
 			"descHead": "Create (or return) the custodial Solana wallet for one of your agents so",
-			"descHash": "aea787e2cec2",
+			"descHash": "406b15338ea6",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "575d608cdcde"
+			"schemaHash": "9eb6ba57d5e7"
 		},
 		{
 			"name": "wallet_status",
 			"title": "Check the agent's wallet",
 			"descHead": "Show the signed-in user's three.ws agent wallet: address, SOL and USDC b",
-			"descHash": "e8cef61875a7",
+			"descHash": "4bbc44f0aaa1",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -921,7 +921,7 @@
 			"name": "bazaar_service_details",
 			"title": "Live price details for one x402 service",
 			"descHead": "Resolve the current live price of a single x402 service by its resource ",
-			"descHash": "32ef6c0a06fd",
+			"descHash": "ea7b6efc43d7",
 			"annotations": "ref:DISCOVERY_ANNOTATIONS",
 			"schemaHash": "8b343836306d"
 		},
@@ -929,7 +929,7 @@
 			"name": "browse_services",
 			"title": "Browse the x402 bazaar",
 			"descHead": "List paid agent services from the live x402 facilitator network without ",
-			"descHash": "5f4946b4f7d3",
+			"descHash": "87c59b46c02f",
 			"annotations": "ref:DISCOVERY_ANNOTATIONS",
 			"schemaHash": "24d42c431f67"
 		},

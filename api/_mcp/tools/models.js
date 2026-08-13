@@ -20,7 +20,7 @@ async function safeFetchModel(url) {
 }
 
 // MCP tool annotations (2025-06-18 spec): all three tools are deterministic,
-// pure inspections of a caller-supplied URL — same file, same report.
+// pure inspections of a caller-supplied URL: same file, same report.
 // destructiveHint defaults to TRUE when omitted, so it is set explicitly.
 const INSPECTION_ANNOTATIONS = {
 	readOnlyHint: true,
@@ -50,7 +50,7 @@ function formatInspection(info) {
 		? info.textures
 				.map(
 					(t) =>
-						`  • ${t.name || '(unnamed)'} — ${t.mimeType} ${t.width}×${t.height}, ${(t.byteSize / 1024).toFixed(1)} KB`,
+						`  • ${t.name || '(unnamed)'}: ${t.mimeType} ${t.width}×${t.height}, ${(t.byteSize / 1024).toFixed(1)} KB`,
 				)
 				.join('\n')
 		: '  (none)';
@@ -73,7 +73,7 @@ function formatSuggestions(suggestions) {
 			const tag =
 				{ info: 'INFO', warn: 'WARN', critical: 'CRIT' }[s.severity] ||
 				s.severity.toUpperCase();
-			const est = s.estimate ? ` — ${s.estimate}` : '';
+			const est = s.estimate ? ` (${s.estimate})` : '';
 			return `[${tag}] ${s.id}: ${s.message}${est}`;
 		})
 		.join('\n');
@@ -85,7 +85,7 @@ export const toolDefs = [
 		title: 'Validate glTF/GLB model',
 		annotations: INSPECTION_ANNOTATIONS,
 		description:
-			'Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns a structured report of errors, warnings, infos, and hints — the authoritative answer to "is this file spec-compliant?". SSRF-hardened: only public https URLs are fetched.',
+			'Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns a structured report of errors, warnings, infos, and hints: the authoritative answer to "is this file spec-compliant?". SSRF-hardened: only public https URLs are fetched.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -138,7 +138,7 @@ export const toolDefs = [
 		title: 'Inspect glTF/GLB model',
 		annotations: INSPECTION_ANNOTATIONS,
 		description:
-			'Parse a remote GLB or glTF and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used. Pure inspection — no optimization advice.',
+			'Parse a remote GLB or glTF and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used. Pure inspection, no optimization advice.',
 		inputSchema: {
 			type: 'object',
 			properties: {

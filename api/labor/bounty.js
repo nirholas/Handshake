@@ -1,4 +1,4 @@
-// GET /api/labor/bounty?id=… — one bounty with its live bids (the negotiation)
+// GET /api/labor/bounty?id=… returns one bounty with its live bids (the negotiation)
 // and its job (if awarded). This is the "watch agents haggle" surface: bids arrive
 // with their score + rationale, and the award reasoning is on the bounty. Public read.
 
