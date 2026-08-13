@@ -47,6 +47,7 @@ The package exposes these subpath exports (each dual ESM/CJS with type declarati
 | `@three-ws/solana-agent/wallet` | the wallet providers (re-exported from the root) |
 | `@three-ws/solana-agent/x402-exact` | the x402 "exact" USDC payment scheme (payer + facilitator) |
 | `@three-ws/solana-agent/solana-agent-kit` | a `solana-agent-kit` plugin and tool-call `Action` definitions |
+| `@three-ws/solana-agent/vanity` | provably-fair vanity wallet grinding: one-call client, receipt verifier, sealed-envelope opener |
 
 ## Quick start
 
@@ -185,6 +186,27 @@ Also exported: `getAgenCAgent`, `deriveAgenCAgentPda`, the task lifecycle helper
 `getCanonicalThreewsAgenCId`), and the program-id constants
 (`AGENC_DEVNET_PROGRAM_ID`, `AGENC_MAINNET_PROGRAM_ID`).
 
+## Provably-fair vanity wallets
+
+`grindVerifiedVanity` requests a vanity address from the three.ws
+`/api/x402/vanity-verifiable` endpoint, opens the ECIES-sealed secret locally,
+and independently verifies every claim in the signed receipt before handing
+you the key. It throws instead of returning a key that fails verification.
+
+```js
+import { grindVerifiedVanity, verifyVanityReceipt } from '@three-ws/solana-agent/vanity';
+
+const { address, secretKeyBase58, receipt } = await grindVerifiedVanity({
+  prefix: 'abc',
+  fetchImpl: paywallFetch,   // x402-capable fetch (e.g. wrapFetchWithPayment)
+});
+
+// The receipt is portable: anyone can re-verify it later.
+const check = await verifyVanityReceipt(receipt);
+```
+
+Also exported: the verifier internals (`verifyVanityReceipt`, `verifyReceiptSignature`, `commitToSeed`, `deriveMasterSeed`, `candidateSeed`, `candidateAddress`, `addressMatchesPattern`, `expectedAttempts`, `fetchServiceKey`), the sealed-envelope helpers (`openSealed`, `openSealedJson`, `generateRecipientKeypair`, `SEALED_ENVELOPE_SCHEME`), and the protocol constants (`VANITY_PROTOCOL_VERSION`, `THREE_VANITY_SERVICE_KEY`, `THREE_VANITY_WELL_KNOWN`, `THREE_VANITY_ENDPOINT`).
+
 ## Errors
 
 Typed error classes (exported from the root) for boundary handling: `SolanaAgentError`, `TransactionRejectedError`, `WalletNotConnectedError`, `WalletCapabilityError`, `MissingTokenAccountError`, `SwapError`, `SimulationError`, `ConfirmationTimeoutError`.
@@ -203,7 +225,7 @@ Typed error classes (exported from the root) for boundary handling: `SolanaAgent
 - Changelog: https://three.ws/changelog
 - Sibling SDK: [`@three-ws/agent-payments`](https://www.npmjs.com/package/@three-ws/agent-payments)
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, all rights reserved. See [LICENSE](./LICENSE).
 
 ---
 

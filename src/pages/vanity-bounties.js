@@ -79,7 +79,13 @@ function selectTab(name) {
 	if (location.hash.slice(1) !== name) history.replaceState(null, '', `#${name}`);
 }
 TABS.forEach((t) => $(`tab-${t}`).addEventListener('click', () => selectTab(t)));
-$('lede-earn').addEventListener('click', (e) => { e.preventDefault(); selectTab('earn'); });
+// Delegated: the i18n pass rewrites the lede paragraph's innerHTML for
+// localized users, which would orphan a listener bound to the link itself.
+document.addEventListener('click', (e) => {
+	if (!e.target.closest('#lede-earn')) return;
+	e.preventDefault();
+	selectTab('earn');
+});
 
 // ── stats strip ──────────────────────────────────────────────────────────────
 async function loadStats() {
