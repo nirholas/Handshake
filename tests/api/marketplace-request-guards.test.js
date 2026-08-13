@@ -1,10 +1,10 @@
 // Boundary behaviour for two marketplace endpoints that answer before any DB work.
 //
-//   GET /api/marketplace/check-skill-access — agent_id lands in a uuid column, so
+//   GET /api/marketplace/check-skill-access: agent_id lands in a uuid column, so
 //     a malformed one used to reach Postgres as 22P02 and surface as a 500 on what
 //     is plainly bad client input.
 //
-//   /api/marketplace/agents/:id/reviews — the CORS preflight was answered inside
+//   /api/marketplace/agents/:id/reviews: the CORS preflight was answered inside
 //     the per-method handlers, so a request the dispatcher rejected first (bad
 //     agent id, or a preflight that names no method) came back as a bare error with
 //     no CORS headers at all. The browser then reported a CORS failure instead of
