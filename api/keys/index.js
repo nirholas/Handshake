@@ -52,10 +52,20 @@ export default wrap(async (req, res) => {
 
 	const body = parse(createSchema, await readJson(req));
 
-	const requestedScopes = body.scope.split(/\s+/).filter(Boolean);
+	// Dedupe so "avatars:read avatars:read" stores one grant, not two: the stored
+	// string is rendered verbatim as scope chips in the dashboard key table.
+	const requestedScopes = [...new Set(body.scope.split(/\s+/).filter(Boolean))];
 	const invalid = requestedScopes.filter((s) => !ALLOWED_SCOPES.has(s));
 	if (invalid.length)
 		return error(res, 400, 'validation_error', `unknown scopes: ${invalid.join(', ')}`);
+	// zod's .default() only fires on an absent field, so an explicit "" or "   "
+	// reaches here as zero scopes and used to mint a 201 credential that
+	// hasScope() can never satisfy: a key that is dead the moment it is issued,
+	// with nothing telling the caller so. The dashboard already refuses to submit
+	// an empty selection; the API has to enforce the same invariant for every
+	// other client.
+	if (!requestedScopes.length)
+		return error(res, 400, 'validation_error', 'scope must name at least one permission');
 
 	const raw = `sk_${body.environment}_${randomToken(28)}`;
 	const hash = await sha256(raw);
