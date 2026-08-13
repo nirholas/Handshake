@@ -3,6 +3,25 @@
 All notable changes to `@three-ws/x402-payment-modal` are documented here. This
 project adheres to [Semantic Versioning](https://semver.org).
 
+## 1.2.1
+
+### Added
+
+- **`version` named export.** `import { version } from '@three-ws/x402-payment-modal'`
+  returns the library version, kept in lockstep with `package.json` by a test.
+
+### Fixed
+
+- **Importing the client entry off-browser no longer throws.** 1.2.0 read
+  `location.origin` at module scope, so SSR frameworks and test runners crashed
+  with `ReferenceError: location is not defined` on import. Every DOM and
+  `location` read is now guarded, and a test imports the entry under plain Node
+  to keep it that way.
+- **The npm tarball can no longer swallow `examples/*/node_modules`.** Running
+  `npm install` inside a shipped example before publishing used to balloon the
+  package from ~130 kB to 63 MB (4,600 extra files); the `files` manifest now
+  excludes nested `node_modules` and lockfiles explicitly.
+
 ## 1.2.0
 
 Hardening pass for scale and a UX/accessibility overhaul.

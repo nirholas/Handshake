@@ -46,6 +46,8 @@
     "server",
     "react",
     "examples",
+    "!examples/**/node_modules",
+    "!examples/**/package-lock.json",
     "docs",
     "README.md",
     "TUTORIAL.md",
