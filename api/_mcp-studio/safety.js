@@ -38,9 +38,18 @@ const SEXUAL_TERMS = [
 ];
 
 // Child-sexual content — zero tolerance; refuse outright.
+//
+// Every term here must be unambiguous, because this category refuses with the
+// blunt "not allowed" message and accuses the caller of the highest-harm
+// request there is. The bare abbreviation "cp" is deliberately NOT in this list:
+// as a whole word it fires on ordinary modeling prompts ("a CP/M retro computer
+// terminal", "a CP violation physics diagram"), and a false accusation of child
+// sexual content is a worse failure than missing an abbreviation nobody types
+// into a 3D generator. The spelled-out forms below cover the real intent.
 const CSAM_TERMS = [
-	'loli', 'lolicon', 'shota', 'shotacon', 'cp', 'underage', 'preteen',
-	'pre-teen', 'jailbait', 'child porn', 'childporn', 'minor sex',
+	'loli', 'lolicon', 'shota', 'shotacon', 'toddlercon', 'underage', 'preteen',
+	'pre-teen', 'jailbait', 'child porn', 'childporn', 'child sex', 'child sexual',
+	'minor sex', 'csam',
 ];
 
 // Graphic violence / gore — keep the asset library age-appropriate.
