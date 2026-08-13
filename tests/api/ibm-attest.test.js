@@ -140,6 +140,7 @@ vi.mock('../../api/_lib/avatar-wallet.js', () => ({
 }));
 
 import { limits } from '../../api/_lib/rate-limit.js';
+import { getSessionUser } from '../../api/_lib/auth.js';
 import { fetchOhlcv, topPoolForToken, trendingPools } from '../../api/_lib/market/ohlcv.js';
 
 const handler = (await import('../../api/ibm/attest.js')).default;
@@ -327,6 +328,25 @@ describe('POST /api/ibm/attest (notarize)', () => {
 		expect(body.onchain.submitted).toBe(false);
 		expect(body.onchain.reason).toBe('vetoed_by_guardian');
 		expect(state.sendSolArgs).toBeNull(); // never reached the chain
+	});
+
+	// Broadcasting pays a real network fee from the platform's shared attester
+	// wallet, so an anonymous caller must never reach the chain. The read-only
+	// attestation (no submit) stays open to everyone.
+	it('refuses an anonymous submit with 401 and never touches the chain', async () => {
+		state.wxConfigured = true;
+		state.walletConfigured = true;
+		state.guardianVerdict = 'No';
+		getSessionUser.mockResolvedValueOnce(null);
+		const { status, body } = await invoke({
+			method: 'POST',
+			body: { pool: POOL, submit: true },
+		});
+		expect(status).toBe(401);
+		expect(body.onchain.submitted).toBe(false);
+		expect(body.onchain.error).toMatch(/sign-in or a valid bearer token/);
+		expect(state.sendSolArgs).toBeNull();
+		expect(limits.attestSubmitDaily).not.toHaveBeenCalled();
 	});
 
 	it('does not submit when the attester wallet is not configured', async () => {
