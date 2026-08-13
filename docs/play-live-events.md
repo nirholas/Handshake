@@ -7,8 +7,14 @@ when each segment starts, and a synchronized fireworks show everyone watches
 together.
 
 Everything below is driven by one file, `public/event.json`.
-Edit it, redeploy, and the event exists. Delete it and the world goes back to
+Create it, redeploy, and the event exists. Delete it and the world goes back to
 normal with no code change and no dead pixels.
+
+**The repo ships without that file, and that is the resting state.** No event is
+scheduled right now, so `/event.json` answers 404, every surface below mounts
+nothing, and the world runs as a plain world. Scheduling an event means writing
+the file; ending one means deleting it again. Nothing in this document is live
+until that file exists.
 
 - **Surface:** `/play`, in the `$THREE` home town only (`isHomeTown()`).
 - **Modules:** [`src/game/meetup-event.js`](../src/game/meetup-event.js) (the view),
@@ -27,6 +33,9 @@ normal with no code change and no dead pixels.
 banner and wayfinding pill ([`src/game/event-countdown.js`](../src/game/event-countdown.js)),
 this in-world layer, and the server-side souvenir grant, so those three can never
 disagree about when the event is.
+
+Write it to schedule an event. There is no file in the repo to edit, so start
+from the shape below:
 
 ```json
 {
@@ -109,11 +118,18 @@ shifts it to a specific instant instead. This runs through
 `applyPreviewOverride()`, which every surface that reads the event shares, so a
 preview never drifts from the real thing.
 
+It shifts a configured event; it does not invent one. With no `public/event.json`
+present, `?meetup=now` has nothing to move and the world loads as usual, so write
+the file first.
+
 ```
 http://localhost:3000/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three&meetup=now
 ```
 
 ## Verifying before an event
+
+The audit drives the real layer through a real browser, so it needs a
+`public/event.json` in place before you run it (see the note under Previewing).
 
 ```bash
 npm run dev            # terminal 1: vite on :3000

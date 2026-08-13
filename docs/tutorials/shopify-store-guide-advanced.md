@@ -134,7 +134,7 @@ When the guide reaches the end of the homepage stops, it walks to a link, the pa
 The one-tag install reads `data-*` attributes:
 
 ```html
-<script src="https://unpkg.com/@three-ws/tour@0.5.0/dist/tour.global.js"
+<script src="https://unpkg.com/@three-ws/tour@0.5.1/dist/tour.global.js"
         data-tour
         data-curriculum="https://cdn.shopify.com/s/files/…/curriculum.json"
         data-avatar="realistic-male"
@@ -173,7 +173,7 @@ By default, narration shows as timed captions — zero setup, no API key. For an
 Set `data-mode="explore"` (or pick **🕹 Explore** in the [Tour Builder](/tour-builder)) and the tour becomes an interactive, GTA-style experience: instead of the avatar walking itself, **the visitor drives it** with the arrow keys (or WASD) on desktop and an on-screen joystick on mobile. It's the real three.ws "Stroll" character — it **turns to face its heading and walks or runs in full 3D**, and the page scrolls under it so the whole store is walkable. Each stop becomes a glowing **checkpoint** anchored to its section. Walk the character into the active checkpoint and it stops, spotlights the section, and narrates it — then the next checkpoint lights up. Reach them all to finish.
 
 ```html
-<script src="https://unpkg.com/@three-ws/tour@0.5.0/dist/tour.global.js"
+<script src="https://unpkg.com/@three-ws/tour@0.5.1/dist/tour.global.js"
         data-tour
         data-mode="explore"
         data-curriculum="https://cdn.shopify.com/s/files/…/curriculum.json"
@@ -266,7 +266,7 @@ Or as the `<page-agent>` element:
 <page-agent avatar="nova" preset="shop-assistant"></page-agent>
 ```
 
-See [`page-agent-sdk`'s Persona presets](../../page-agent-sdk/README.md#persona-presets)
+See [`@three-ws/page-agent`'s Persona presets](https://www.npmjs.com/package/@three-ws/page-agent#persona-presets)
 for the other four personas and the full `preset`/`context` reference.
 
 ---

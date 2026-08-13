@@ -14,8 +14,10 @@ about you. This one says exactly one thing, permanently, to every player who
 walks past you.
 
 The first one is the **Meetup Laurel**: a gold laurel circlet, open at the
-front, with three pearl berries in the gap. It is granted at the
-[`$THREE` First Holders Meetup](play-live-events.md).
+front, with three pearl berries in the gap. It was granted at the
+[`$THREE` First Holders Meetup](play-live-events.md). That window has closed, so
+the laurel is now exactly what this page promises: owned only by the players who
+were in the world that day, and never granted again.
 
 ---
 
@@ -39,7 +41,11 @@ does not give you a second one and does not show the card again.
 
 Everything lives in one file: `public/event.json`, the
 same config that drives the countdown pill, the agenda drawer, and the fireworks
-finale. Add a `souvenir` block:
+finale.
+
+**That file is absent between events, which is the platform's resting state.**
+No event is scheduled right now, so nothing is being granted. Running one starts
+by writing the file, souvenir block included:
 
 ```json
 {
@@ -73,8 +79,10 @@ Omit the `souvenir` block entirely to run an event with no drop.
    ```bash
    npx vitest run tests/event-souvenir.test.js
    ```
-   The suite reads the real `public/event.json` and fails if the shipped config
-   would grant nothing.
+   The suite's last block reads the real `public/event.json` and fails if the
+   shipped config would grant nothing. It skips itself when there is no file, so
+   a green run between events proves the drop logic, not your window: write the
+   config first, then run it and read the count.
 4. **Deploy.** The game server fetches the config over HTTP and re-reads it
    every two minutes, so moving a window does not need a game-server redeploy.
    `EVENT_CONFIG_TTL_MS` tightens that interval while you are setting up.

@@ -5,7 +5,7 @@ Search and page the public three.ws agent marketplace and the skills catalog fro
 Registered in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as **`io.github.nirholas/marketplace-mcp`**.
 
 - **Install:** `npx -y @three-ws/marketplace-mcp`
-- **npm:** [`@three-ws/marketplace-mcp`](https://www.npmjs.com/package/@three-ws/marketplace-mcp) · v0.1.0
+- **npm:** [`@three-ws/marketplace-mcp`](https://www.npmjs.com/package/@three-ws/marketplace-mcp), published from `packages/marketplace-mcp`
 - **Transport:** stdio — no account, no key, no payment
 
 ## Add it
@@ -40,10 +40,10 @@ Popular programming agents:
 { "category": "programming", "sort": "popular", "limit": 10 }
 ```
 
-Open one agent:
+Open one agent (ids come from a `browse_agents` response):
 
 ```json
-{ "id": "550e8400-e29b-41d4-a716-446655440000" }
+{ "id": "0f81b359-3ba3-40d6-9cbf-ebd551e4f862" }
 ```
 
 Newest skills matching a query:

@@ -51,7 +51,7 @@ Skills are extra capabilities you can give your agent. The wizard offers:
 
 There is also an optional crypto group (pump.fun monitoring/trading, a Solana wallet, and x402 pay-per-call) you can reveal and enable if you want an on-chain agent; skip it entirely otherwise.
 
-You can add or remove skills at any time from the agent's edit page. Voice (microphone input and spoken replies) isn't a wizard skill: you configure it later on the Voice tab of the agent editor.
+You can add or remove skills at any time from the agent's edit page. Voice (microphone input and spoken replies) isn't a wizard skill: you configure it later in the Voice panel of the agent editor.
 
 ---
 

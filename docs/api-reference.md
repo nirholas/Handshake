@@ -4472,7 +4472,7 @@ wire format); pay in USDC and the identical upstream call runs.
 GET /api/web-search?q=<query>&sources=<n>
 ```
 
-Open-web search with cited sources. This is distinct from [`/api/search`](#search-api),
+Open-web search with cited sources. This is distinct from [`/api/search`](#cross-entity-search),
 which federates three.ws's own entities (avatars, agents, models, worlds, coins)
 and never leaves the platform. This endpoint answers questions about the live
 web and returns the sources the answer is grounded in.

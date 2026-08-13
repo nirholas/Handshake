@@ -2,8 +2,9 @@
 
 The three.ws **Crypto Data API** is a free, keyless bundle of read-only crypto
 endpoints built for AI agents. No account, no API key, no payment — just HTTP
-GET with a generous per-IP rate limit. Each endpoint answers one question an
-autonomous agent has mid-task, from real on-chain and pump.fun data (no mocks).
+GET, rate-limited to 60 requests per minute per IP. Each endpoint answers one
+question an autonomous agent has mid-task, from real on-chain and pump.fun data
+(no mocks).
 
 Base URL: `https://three.ws`
 
@@ -657,7 +658,7 @@ those fields are simply `null`.
 curl -s "https://three.ws/api/crypto/token?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
 
 # Pin a multi-chain EVM contract to one chain
-curl -s "https://three.ws/api/crypto/token?address=0x1111111111111111111111111111111111111111&chain=base"
+curl -s "https://three.ws/api/crypto/token?address=0x<evm-contract>&chain=base"
 ```
 
 ---
@@ -882,7 +883,7 @@ that layer, computed once server-side so every client renders the same numbers.
       "amount": 10.58,
       "price": 75.66,
       "usd": 800.5,
-      "pct": 62.32,
+      "sharePct": 62.32,
       "change24h": -1.78,
       "logo": null
     }
@@ -899,6 +900,9 @@ that layer, computed once server-side so every client renders the same numbers.
   are excluded from the aggregate rather than extrapolated over.
 - **`class`** - `stable`, `major` or `other`, so a chart can group without
   re-deriving the taxonomy per client.
+- **`sharePct` vs `pct`** - a `rows[]` entry carries its share of the book as
+  `sharePct`; the condensed `topAssets[]` entries use `pct`. Read the field the
+  array you are in actually publishes.
 - **`slot`** - a palette slot per top asset, so the same wallet colors the same
   way across reloads and across surfaces.
 - **`stale: true`** - present only when the balance source served a cached read.
@@ -980,9 +984,9 @@ registry, so the agent can act on the gap instead of guessing at farming advice.
     }
   ],
   "otherFamily": [],
-  "summary": { "qualified": 3, "inProgress": 2, "notEligible": 4 },
-  "thresholds": { "qualified": 70, "inProgress": 40 },
-  "registryUpdated": "2026-08-01",
+  "summary": { "tracked": 9, "qualified": 3, "in_progress": 2, "not_eligible": 4, "estimatedValue": "$100 - $2,000" },
+  "thresholds": { "qualified": 80, "inProgress": 30 },
+  "registryUpdated": "2026-08-06",
   "ts": "2026-08-10T16:31:34.527Z"
 }
 ```
@@ -1006,7 +1010,8 @@ registry, so the agent can act on the gap instead of guessing at farming advice.
 
 ### States
 
-- **No `address`** -> `200` with `registry` + `thresholds`: the directory view.
+- **No `address`** -> `200` with `registry`, `updated` and `thresholds`: the
+  directory view. (The scored response echoes the same date as `registryUpdated`.)
 - **Scored wallet** -> `200` with activity, opportunities and summary.
 - **Invalid address (neither Solana nor EVM)** -> `400`.
 - **EVM requested where no explorer key is set** -> `503 not_configured`,

@@ -46,14 +46,17 @@ There's no custom contract — a vouch is an **SPL Memo** transaction. The revie
 
 Cost is a single Solana fee (~$0.0000+); the optional stake is real SOL that goes to the agent owner. The Passport's rate panel enforces a **double-review guard** — rating the same agent twice from one wallet updates that wallet's score rather than adding a second vote.
 
-### The eight attestation kinds
+### The nine attestation kinds
 
-Every memo is one of these (`api/_lib/solana-attestations.js`):
+Every memo is one of these, and `KIND_MAP` in
+[`api/_lib/solana-attestations.js`](../api/_lib/solana-attestations.js) is the
+single source of truth for the list:
 
 | Kind | Meaning |
 |---|---|
 | `threews.feedback.v1` | A 1–5 score (a vouch) |
 | `threews.stake.v1` | A score backed by a SOL transfer to the owner |
+| `threews.unstake.v1` | Retires the conviction a specific stake expressed. Carries the staking signature and a decimal lamport `principal` string, so a payout past `Number.MAX_SAFE_INTEGER` survives the JSON round trip |
 | `threews.validation.v1` | A pass/fail check — including `glb-schema` (the Solana analog of the EVM ValidationRegistry's glTF attestation) |
 | `threews.task.v1` | An agent advertised a task |
 | `threews.accept.v1` | The agent owner accepted/acknowledged a task — used to *verify* feedback |

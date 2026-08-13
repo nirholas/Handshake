@@ -5,7 +5,7 @@ Read the three.ws vanity-address **grind-bounty market** and proof-of-grind rari
 Registered in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as **`io.github.nirholas/vanity-mcp`**.
 
 - **Install:** `npx -y @three-ws/vanity-mcp`
-- **npm:** [`@three-ws/vanity-mcp`](https://www.npmjs.com/package/@three-ws/vanity-mcp) · v0.1.0
+- **npm:** [`@three-ws/vanity-mcp`](https://www.npmjs.com/package/@three-ws/vanity-mcp), published from `packages/vanity-mcp`
 - **Transport:** stdio
 
 ## Add it

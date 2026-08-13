@@ -115,14 +115,20 @@ It accepts the same flexible identifier and returns the richest payload of any p
     "uri": "ipfs://…"          // the agent's ERC-8004 card
   },
   "reputation": {
-    "totalScore": "42",
+    "averageX100": "450",      // the contract's average, multiplied by 100
+    "average": 4.5,            // averageX100 / 100; null when count is 0
     "count": "6",
-    "average": 7,              // null when count is 0
     "totalStakeWei": "0"
   },
-  "events": [                  // latest 25 vouches + stakes
-    { "kind": "submitted", "score": 5, "submitter": "0x…", "comment": "fast and accurate", "txHash": "0x…", "blockNumber": 21345678 }
-  ],
+  "events": {                  // the scanned log window, plus the latest 25 vouches + stakes
+    "windowBlocks": 200000,
+    "fromBlock": 21145678,
+    "toBlock": 21345678,
+    "events": [
+      { "kind": "submitted", "score": 5, "submitter": "0x…", "comment": "fast and accurate", "txHash": "0x…", "blockNumber": 21345678 }
+    ]
+  },
+  "rpc": ["https://mainnet.base.org"],
   "fetchedAt": "2026-06-22T18:00:00.000Z"
 }
 ```

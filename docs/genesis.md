@@ -45,10 +45,14 @@ never invents a shortcut path; it orchestrates the real ones.
   Solana first because Solana is the home chain.
 - **Persona and voice.** `POST /api/persona/extract` synthesizes a structured
   in-character system prompt from your description, running through the shared LLM
-  helper with Anthropic-first ordered failover (server Anthropic, then Groq, then
-  OpenRouter) so a single upstream 429 or 5xx never returns a hard error. Voices
-  load from `/api/tts/voices`. Your chosen name, persona, and voice are persisted
-  with `PATCH /api/agents/:id`.
+  helper (`llmComplete` in [`api/_lib/llm.js`](../api/_lib/llm.js)). That helper is
+  free-providers-first by policy: the platform-funded and keyless free tiers lead
+  the chain, Vertex Gemini on GCP credits sits behind them as the reliability
+  anchor, and paid keys (Anthropic, OpenAI) are appended to the tail as a
+  last resort. Nothing here depends on a paid key being present or in quota, and a
+  single upstream 429 or 5xx never returns a hard error. Voices load from
+  `/api/tts/voices`. Your chosen name, persona, and voice are persisted with
+  `PATCH /api/agents/:id`.
 - **On-chain identity (optional).** The final step mints a real
   [ERC-8004](./erc8004.md) identity record for the agent and returns a real tx
   hash, defaulting to Base (chain id 8453) to match the rest of the platform's EVM

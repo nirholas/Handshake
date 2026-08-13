@@ -2,7 +2,7 @@
 
 Voice Lab is where an agent gets its voice. Two paths lead there, and both end in the same playground:
 
-- **Pick one.** Browse roughly 850 ready-made voices across five providers in one grid: Microsoft Edge (free, around 500 neural voices in 100+ locales), Google Gemini (30 prompt-directable voices on the platform's Google credits), NVIDIA Magpie (free, multilingual), OpenAI (11 voices), and ElevenLabs (your account's voices, plus the several-thousand-voice public Voice Library).
+- **Pick one.** Browse every ready-made voice across five providers in one grid: Microsoft Edge (free, the live Microsoft neural-voice list, hundreds of voices across 100+ locales), Google Gemini (30 prompt-directable voices on the platform's Google credits), NVIDIA Magpie (free, multilingual), OpenAI (11 voices), and ElevenLabs (your account's voices, plus the several-thousand-voice public Voice Library). `GET /api/tts/catalog` reports the exact `total` and a per-provider `counts` breakdown for the deployment you are talking to; nothing here is a hardcoded snapshot.
 - **Make your own.** Record 20 to 30 seconds of clear speech and Voice Lab clones it into a reusable voice identity you can type into, save, and assign to any agent.
 
 The recording, the live waveform, the browser, and the saved-voice library all run in the browser; synthesis and cloning run server-side so no provider key ever reaches the page.
@@ -18,7 +18,7 @@ An agent that speaks in a generic stock voice is a demo. An agent that speaks in
 
 | Provider | Voices | Cost to you | Notes |
 | --- | --- | --- | --- |
-| Microsoft Edge | ~500, live catalog | Free | No key, no account, works signed out. The default lane. |
+| Microsoft Edge | the live Microsoft list | Free | No key, no account, works signed out. The default lane. |
 | Google Gemini | 30 prebuilt | Free | Runs on the platform's Google Cloud credits. Takes a natural-language **direction** ("say it like a bedtime story"). |
 | NVIDIA Magpie | 11 personas | Free | The real-time avatar lane, 9 languages. |
 | OpenAI | 11 | Credits | `gpt-4o-mini-tts` also takes a direction. |
@@ -40,7 +40,7 @@ The page ([`pages/voice.html`](../pages/voice.html)) loads [`src/voice-lab.js`](
 2. **Review.** You play the take back, name the voice (1 to 64 chars), and either re-record or clone.
 3. **Clone.** The recording is POSTed as `multipart/form-data` to `/api/tts/eleven-clone`. The shared library [`api/_lib/elevenlabs.js`](../api/_lib/elevenlabs.js) dynamically imports `@elevenlabs/elevenlabs-js`, constructs an `ElevenLabsClient`, and calls `client.voices.ivc.create({ name, description, files })` (ElevenLabs Instant Voice Cloning). The endpoint returns a `voice_id`.
 4. **Save.** The `voice_id` is written to a browser voice library (`localStorage` key `voicelab_voices_v1`, up to 20 voices). Each card offers "Play sample" and "Remove".
-5. **Play.** The playground takes any voice (cloned or picked from the browser), up to 1,000 characters of text, an optional model, an optional direction, and a speed, and POSTs them to `/api/tts/synthesize`. Options are keyed `<provider>:<voiceId>` so a cloned ElevenLabs voice, a free Edge voice, and a Gemini prebuilt can never collide. The model select and the direction field appear only for lanes that have them. Every clip is cached in R2 for 30 days keyed on a hash of the full request (the response header `x-tts-cache: hit|miss` tells you which).
+5. **Play.** The playground takes any voice (cloned or picked from the browser), up to 1,000 characters of text, an optional model, an optional direction, and a speed, and POSTs them to `/api/tts/synthesize`. Options are keyed `<provider>:<voiceId>` so a cloned ElevenLabs voice, a free Edge voice, and a Gemini prebuilt can never collide. The model select and the direction field appear only for lanes that have them. Every clip is cached in R2 keyed on a hash of the full request (provider, voice, text, model, direction, speed, and settings), so an identical request is served from storage with no upstream call and no charge. The response header `x-tts-cache: hit|miss` tells you which path served you.
 
 ### Comparing voice models
 
@@ -60,7 +60,7 @@ Free means free, and vendor-billed means metered: no request the platform would 
 0. **Free (`free` / `gcp`).** Edge and NVIDIA cost the platform nothing (Edge is keyless; NVIDIA runs on its free NIM tier), and Gemini runs on the platform's Google Cloud credits under the standing owner-approved spend. All three are served without charge and Edge, Gemini, and NVIDIA all work **signed out**.
 1. **Prepaid credits (default for OpenAI and ElevenLabs).** Requests on the platform's vendor accounts are metered against your [credit balance](https://three.ws/credits) (top up with $THREE or SOL): $0.30 per 1,000 spoken characters on ElevenLabs (`tts.eleven`), $0.03 per 1,000 on OpenAI (`tts.openai`), and $0.50 per voice clone (`voice.clone`, with the $THREE holder-tier discount applied). A short balance returns `402 insufficient_credits` with `top_up_url`, and a failed synthesis or clone refunds the charge. The response header `x-tts-charged-usd` reports what a metered call cost.
 2. **Bring your own key (BYOK).** Send your own ElevenLabs API key in the `x-eleven-key` header on any ElevenLabs-touching endpoint (`/api/tts/synthesize`, `/api/tts/eleven`, `/api/tts/eleven/voices`, `/api/tts/eleven/library`, `/api/tts/eleven-clone`) and the call runs on *your* ElevenLabs account: your voices, your quota, your bill, with no platform charges. The server uses the key for that one request and never stores it. On [/voice](https://three.ws/voice), the "Use Your Own ElevenLabs Key" card saves the key to your browser's `localStorage` and attaches the header automatically.
-3. **Cache hits.** Clips already synthesized (same voice, text, model, and settings) are served from R2 with no upstream call and no charge (`x-tts-billing: cached`).
+3. **Cache hits.** Clips already synthesized (same voice, text, model, and settings) are served from R2 with no upstream call and no charge (`x-tts-billing: cached`). The cache is checked before metering, so a repeat line never spends credits twice.
 
 ```bash
 # Every voice on the platform, in one shape. Works signed out (free lanes only).
@@ -145,7 +145,7 @@ The agent-voice handler ([`api/agents/_id/voice.js`](../api/agents/_id/voice.js)
 - **Server config.** ElevenLabs must be configured (`ELEVENLABS_API_KEY`) or the endpoints return `503 not_configured`; a request carrying its own `x-eleven-key` header still works (see the billing section above).
 - **Paid cloning tier.** Instant Voice Cloning is an ElevenLabs paid-tier (Starter and up) feature. On a free upstream tier the API surfaces the upstream `can_not_use_instant_voice_cloning` body verbatim as a `502`.
 - **Length rules.** Voice Lab recommends 20 to 30 seconds, auto-stops at 60, and rejects under 3. The separate agent-clone endpoint (`POST /api/agents/:id/voice/clone`) enforces a 30-second floor. Platform-key clones on both endpoints are capped at 3 per user per day (an abuse guard on the shared account's limited clone slots) and each is charged per the billing section; BYOK clones on `/api/tts/eleven-clone` skip the cap.
-- **Synthesis limits.** 1,000 characters per `/api/tts/synthesize` request (500 on the older `/api/tts/eleven`); every platform-key request is metered to credits per the billing section (charged before synthesis, refunded on failure). BYOK requests are unmetered by the platform. Clips are cached in R2 for 30 days and cache hits are not charged.
+- **Synthesis limits.** 1,000 characters per `/api/tts/synthesize` request (500 on the older `/api/tts/eleven`); every platform-key request is metered to credits per the billing section (charged before synthesis, refunded on failure). BYOK requests are unmetered by the platform. Clips are cached in R2 and cache hits are not charged.
 - **Audio size.** Clone uploads are capped at ~10 MB.
 - **"Add to an agent" on `/voice`** links to the dashboard; the actual assignment happens in the agent editor. The cloned `voice_id` lives in browser `localStorage` until you assign it.
 - **Error copy.** Mic denial, recorder failure, too-short recording, missing name, network failure, and clone failure each map to a specific message; the playground shows "Synthesizing...", then a size, a cached/generated tag, and the billing rung that served it, or an error. A lane's upstream failure is tagged with a code (`invalid_key`, `rate_limited`, `content_blocked`, `provider_unreachable`) that `/api/tts/synthesize` maps to a truthful HTTP status rather than a blanket 502.

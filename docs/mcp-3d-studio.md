@@ -45,7 +45,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `animation_signature(clip, slot?)`                       | A clip's measured motion: energy, tempo, leading region, loop seam, travel. Pass `slot` for an ok/warn fit verdict against a runtime slot. |
 | `find_similar_animations(clip, limit?)`                  | The library ranked by measured-motion distance from a reference clip: "more like this" for animations.                              |
 | `apply_animation(model_url, animation, format?, speed?)` | Retarget a preset clip onto a rigged GLB — returns the retargeted `AnimationClip` JSON (or a baked animated GLB).                    |
-| `pose_model(prompt)`                                     | Map a pose description to a deterministic seed + full Euler joint-rotation map from the in-repo preset library. Free, deterministic. |
+| `pose_model(prompt)`                                     | Map a pose description to a deterministic seed + full Euler joint-rotation map from the in-repo preset library. Deterministic: the same prompt always returns the same seed. Priced at $0.01 (see the table below). |
 
 ### Edit & process the mesh
 

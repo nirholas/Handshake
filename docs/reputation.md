@@ -139,6 +139,20 @@ function submitFeedback(uint256 agentId, int8 score, string calldata uri) extern
 
 Emits: `FeedbackSubmitted(agentId, from, score, uri)`
 
+```solidity
+function stakeReputation(uint256 agentId, uint8 score, string calldata comment) external payable
+function withdrawStake(uint256 agentId) external
+```
+
+The same review, backed by ETH the contract escrows. `score` is on the 1 to 5
+scale here (not the int8 range), and `msg.value` must be at least 0.001 ETH. It
+enforces the same one-review-per-wallet, no-self-review rules, and emits
+`FeedbackSubmitted` plus `ReputationStaked(agentId, from, score, amount)`.
+`withdrawStake` refunds only your own deposit and leaves the review on-chain, so
+a staker can reclaim their ETH at any time without erasing what they said. The
+SDK wraps both as `stakeReputation({ agentId, score, comment, stakeWei, signer,
+chainId })` and reads the pool with `getTotalStake({ agentId, runner, chainId })`.
+
 ### Read
 
 ```solidity

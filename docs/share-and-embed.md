@@ -38,11 +38,16 @@ Copy and paste this into any page that accepts HTML — including Notion, Webflo
 
 | Widget | Best for |
 |---|---|
-| **Talking Agent** | Full chat + voice + 3D avatar — the default |
-| **Turntable** | Auto-rotating 3D model, no chat |
-| **Animation Gallery** | Plays through the avatar's animations |
-| **ERC-8004 Passport** | On-chain identity card |
-| **Hotspot Tour** | Annotated 3D model with camera waypoints |
+| **Turntable Showcase** | An auto-rotating 3D model with no UI. The type Widget Studio starts you on |
+| **Animation Gallery** | Clicking through every clip on a rigged avatar |
+| **Talking Agent** | Full chat, voice, and 3D avatar: your agent embodied on your site |
+| **ERC-8004 Passport** | An on-chain identity card for any agent |
+| **Hotspot Tour** | An annotated 3D scene with clickable points of interest |
+| **Pump.fun Live Feed** | A Solana agent narrating live launch claims and graduations |
+| **Smart Money Feed** | Live buy and sell activity from KOL and whale wallets for a token |
+| **Live Trades Canvas** | A particle visualization of live buy/sell trades for a token |
+| **Bonding Curve** | Live graduation progress and the bonding-curve climb for a token |
+| **Walking Avatar** | A roaming 3D avatar visitors steer around your page with a joystick or the keyboard |
 
 ---
 

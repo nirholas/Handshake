@@ -385,11 +385,11 @@ node scripts/publish-lib.mjs
 
 This copies `dist-lib/agent-3d.js` and `dist-lib/agent-3d.umd.cjs` into `dist/agent-3d/<version>/` and creates channel aliases (`<major>`, `<major>.<minor>`, `latest`). It also emits SRI hashes and a `versions.json` manifest so embedders can pin with `integrity` attributes.
 
-Requires `npm run build:lib` to have completed first. It's also wired as the `npm run publish:lib` script, and runs automatically inside the full production build (`scripts/build-vercel.mjs`).
+Requires the library bundle to have been built first. It's also wired as the `npm run publish:lib` script, and runs automatically inside the production build: `npm run build:gcp` chains `build:lib:full` (which emits both the ES and UMD formats) straight into `publish:lib`, then verifies the result with `check:dist`.
 
 ### Versioning
 
-The platform follows semantic versioning. The web component version tracks `package.json` (currently `1.5.2`). The AgentKit SDK is independently versioned in `sdk/package.json` (currently `0.2.1`). Breaking changes only ship in major releases. See `sdk/CHANGELOG.md` for the AgentKit release history.
+The platform follows semantic versioning. The web component version tracks the root `package.json`; the AgentKit SDK is independently versioned in `sdk/package.json`. Read the `version` field in either file for the current number, or `https://three.ws/agent-3d/versions.json` for every published web component channel. Breaking changes only ship in major releases. See `sdk/CHANGELOG.md` for the AgentKit release history.
 
 ---
 
@@ -400,10 +400,12 @@ A pre-built integration that embeds a live 3D avatar in the LobeChat sidebar. Th
 ### One-click install
 
 1. In LobeChat, open **Plugins → Plugin Store → Custom plugins**.
-2. Paste the manifest URL: `https://three.ws/.well-known/chat-plugin.json`
+2. Paste the manifest URL: `https://three.ws/.well-known/lobehub-plugin.json`
 3. Click **Install** and enter your Agent ID from the dashboard.
 
-The plugin exposes four LLM-callable tools:
+That is the manifest to install. `/.well-known/chat-plugin.json` is an older, settings-only descriptor that predates the tool protocol: it declares no `api` array and no `ui.url`, so installing from it yields a plugin the model cannot call. SperaxOS, a LobeChat-lineage host that speaks the same protocol, uses `https://three.ws/.well-known/sperax-plugin.json`.
+
+The plugin exposes four LLM-callable tools, each declared in the manifest's `api` array and backed by a real endpoint under `/api/chat-plugin/`:
 
 | Tool | Payload | Effect |
 |---|---|---|

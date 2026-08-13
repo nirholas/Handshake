@@ -49,7 +49,10 @@ The `formation` attribute controls avatar placement:
 
 Each `<agent-3d>` child keeps its own brain, memory, and chat chrome. Setting `brain="none"` gives an agent a live avatar with animations and emotions but no LLM — useful for characters that only react, or that you drive programmatically.
 
-See the full working example at `/examples/two-agents.html`.
+See the full working example:
+[`examples/two-agents.html`](https://github.com/nirholas/three.ws/blob/main/examples/two-agents.html).
+The `examples/` directory ships with the repo rather than the site, so run it
+with `npm run dev` and open `http://localhost:3000/examples/two-agents.html`.
 
 ---
 
@@ -311,7 +314,9 @@ Running multiple LLM connections simultaneously is expensive, especially when mo
 
 ## Walking through the example
 
-Open `/examples/two-agents.html` to see a complete, runnable scene with real avatar files. Key things to notice:
+Run `npm run dev` and open `http://localhost:3000/examples/two-agents.html`
+([source](https://github.com/nirholas/three.ws/blob/main/examples/two-agents.html))
+to see a complete, runnable scene with real avatar files. Key things to notice:
 
 1. **Single `<agent-stage>` with `formation="row"`** — both agents share one canvas and one WebGL context. No separate renderers.
 2. **Leo has a brain; Mira has `brain="none"`** — Leo drives the conversation; Mira is an avatar waiting to be spoken to. Her animations and emotions still run; her LLM does not.

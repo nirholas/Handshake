@@ -34,9 +34,10 @@ The paid launch sits between two **free, keyless** [Crypto Data API](do-i-need-c
 endpoints. Use them to make the launch land well:
 
 1. **Before you launch — check the ticker.**
-   `GET /api/crypto/symbol?ticker=<SYMBOL>` reports whether a live pump.fun coin
-   already trades that symbol and lists near-collisions. Free, no key. Pick a
-   symbol that isn't already crowded before you spend $5.
+   `GET /api/crypto/symbol?symbols=<SYMBOL>` reports whether a live pump.fun
+   coin already trades that symbol (`exactCollisions`) and lists near-misses
+   (`fuzzyCollisions`). Up to 20 comma-separated symbols per call, free, no key.
+   Pick a symbol that isn't already crowded before you spend $5.
 2. **Launch** — `POST /api/x402/pump-launch` (this endpoint).
 3. **After you launch — confirm it landed.**
    `GET /api/crypto/launches` is the live pump.fun launch feed; your new mint
@@ -65,11 +66,16 @@ or `imageUrl`.
 
 ### Example request
 
-```bash
-# 1. (free) is HELIO taken?
-curl "https://three.ws/api/crypto/symbol?ticker=HELIO"
+**1. (free) Is HELIO taken?**
 
-# 2. (paid, $5 USDC via x402) launch it — your x402 client handles the 402 dance
+```bash
+curl "https://three.ws/api/crypto/symbol?symbols=HELIO"
+```
+
+**2. (paid, $5 USDC via x402) Launch it.** Your x402 client handles the 402 dance;
+the shape below is the request body, not the payment headers.
+
+```bash
 curl -X POST https://three.ws/api/x402/pump-launch \
   -H 'Content-Type: application/json' \
   -d '{
@@ -81,13 +87,16 @@ curl -X POST https://three.ws/api/x402/pump-launch \
     "twitter": "https://x.com/heliocoin",
     "vanityPrefix": "HEL"
   }'
+```
 
-# 3. (free) confirm it landed on the live launch feed
+**3. (free) Confirm it landed on the live launch feed.**
+
+```bash
 curl "https://three.ws/api/crypto/launches"
 ```
 
 See [x402 buyer client](x402-buyer.md) for how to satisfy the 402 challenge in
-code (the `curl` above shows the shape, not the payment headers).
+code.
 
 ## Output
 

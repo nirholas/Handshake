@@ -4,7 +4,7 @@ three.ws runs a small on-chain treasury that funds itself. A single **funding-ro
 wallet tops up a handful of **engine** wallets; those engines do real work — launch
 coins, run buybacks, pay holders, settle agent-to-agent invoices — and any surplus
 sweeps back up to the root. Every wallet is on Solana mainnet, every move is public,
-and the platform **scans its own wallets for leaks every minute**.
+and the platform **scans its own wallets for leaks every few minutes**.
 
 This page explains the whole loop in plain language: which wallet does what, how money
 can and cannot move, and how you can verify there's no leak yourself.
@@ -95,13 +95,16 @@ Together these mean money can only move **inside the set of wallets the platform
 
 ---
 
-## 4. The platform audits itself for leaks — every minute
+## 4. The platform audits itself for leaks, around the clock
 
-You don't have to take rule #3 on faith. Two on-chain scanners run continuously:
+You don't have to take rule #3 on faith. Two on-chain scanners run on their own
+schedules (the cadences below are the ones in `vercel.json`, which is what Cloud
+Scheduler is synced from):
 
-- **`wallets-leak-scan`** watches *every* resolvable signer wallet (funding root, coin
-  launcher, treasuries, x402 sponsor/payer, SNS parent, fee-payer, …).
-- **`x402-ring-leak-scan`** watches the x402 ring role wallets specifically.
+- **`wallets-leak-scan`**, every 15 minutes, watches *every* resolvable signer wallet
+  (funding root, coin launcher, treasuries, x402 sponsor/payer, SNS parent, fee-payer, …).
+- **`x402-ring-leak-scan`**, every 10 minutes, watches the x402 ring role wallets
+  specifically.
 
 Each reads new transactions for every wallet and classifies every debit as one of:
 *internal* (to another controlled wallet), *network fee*, *delegation*, or **leak** — a
@@ -110,8 +113,12 @@ alert** with the signature, counterparty, amount, and a rotate-the-key recommend
 and records a verdict in `payment_reconciliation`. The scanners are **read-only** — they
 never move funds.
 
-**As of this writing, the scanners have examined 44,122 transactions across all wallets
-and found zero leaks and zero leak verdicts, ever.**
+**As of 2026-07-12, the scanners had examined 44,122 transactions across all wallets
+and found zero leaks and zero leak verdicts, ever.** That count is not a frozen
+marketing number: each scanner keeps its own running totals per wallet
+(`wallet_scan_cursor.scanned_total` and `.leaks_total`), so the current figure is
+always re-derivable from the database, and a non-zero `leaks_total` would already
+have paged the operator before anyone read it here.
 
 ### Verify it yourself
 

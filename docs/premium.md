@@ -62,7 +62,12 @@ A `202 { pending: true }` means the transaction hasn't confirmed yet — poll
 `subscribe` again with the same body; redeeming is idempotent, and
 re-submitting an already-redeemed signature returns the existing pass.
 
-Live per-asset pricing: `GET https://three.ws/api/premium/plans`.
+Live per-asset pricing for all three tiers, free and keyless:
+
+```bash
+curl -s https://three.ws/api/premium/plans
+```
+
 Pass state for any wallet: `GET https://three.ws/api/premium/status?wallet=…`.
 
 ## Using the pass

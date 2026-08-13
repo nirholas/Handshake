@@ -1,6 +1,6 @@
 # Forge: text and image to 3D, on a free-first engine grid
 
-Forge is three.ws's text-and-image-to-3D generator. Type a prompt, drop in one to six photos of an object, or sketch a shape and name it, and Forge returns a downloadable, textured GLB you can orbit, view in AR, and take anywhere. It runs on a grid of real generation engines with live health status, and it is free-first by design: text prompts default to a zero-cost NVIDIA lane, photos default to a zero-cost reconstruction lane, and the paid engines stay explicitly selectable for when you want a specific vendor.
+Forge is three.ws's text-and-image-to-3D generator. Type a prompt, drop in one to six photos of an object, or sketch a shape and name it, and Forge returns a downloadable, textured GLB you can orbit, view in AR, and take anywhere. It runs on a grid of real generation engines with live health status, and it is free-first by design: text prompts and photos both default to our own zero-cost GPU reconstruction workers, free hosted lanes stand behind them, and the paid engines stay explicitly selectable for when you want a specific vendor.
 
 Page: [/forge](https://three.ws/forge) and the feature landing [/features/forge](https://three.ws/features/forge) · API: `/api/forge`
 
@@ -32,9 +32,9 @@ A generation request is described by two orthogonal axes, resolved in `api/_lib/
 
 Each backend declares which paths it serves, whether it needs a bring-your-own-key (BYOK) credential, and its per-(path, tier) cost and latency estimates so the UI can show the trade-off before you commit. The live registry (`BACKENDS` in `api/_lib/forge-tiers.js`):
 
-- **TRELLIS (free)** on NVIDIA NIM (Microsoft TRELLIS). The default lane for text prompts at Draft and Standard. Zero vendor cost. Text-only: it rejects user photos, so photo submissions route elsewhere.
+- **TRELLIS (free)** on NVIDIA NIM (Microsoft TRELLIS). Zero vendor cost, and the last free lane in the chain: it serves a text prompt when every self-host worker and Space is cold or down. Text-only, so it rejects user photos and photo submissions route elsewhere.
 - **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces. The free photo-to-3D lane and a High-tier engine, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR. Queue waits vary.
-- **TRELLIS (self-host)** and **Hunyuan3D (self-host)**, our own scale-to-zero Cloud Run GPU workers. Zero vendor cost, so free-first routing prefers them first. Self-host TRELLIS is a native single-hop image-to-3D lane; Hunyuan3D leads on people and organic subjects.
+- **TRELLIS (self-host)** and **Hunyuan3D (self-host)**, our own scale-to-zero Cloud Run GPU workers, and the named defaults: TRELLIS at Draft and Standard, Hunyuan3D at High. Zero vendor cost, so free-first routing prefers them first. Self-host TRELLIS is a native single-hop image-to-3D lane; Hunyuan3D leads on people and organic subjects.
 - **TripoSG (self-host)**, the sketch-only scribble worker. Untextured geometry from a drawing.
 - **TRELLIS** on Replicate, a paid platform lane. Selectable explicitly and used as the last-resort fallback only on deployments with no free engine configured.
 - **Meshy 6**, **Tripo v3.1**, **Rodin (Hyper3D)**, BYOK geometry-first engines with quad topology and a real poly target. You supply your own key.
@@ -42,7 +42,7 @@ Each backend declares which paths it serves, whether it needs a bring-your-own-k
 
 ### Free-first routing with live health
 
-Routing (`resolveBackendIdWithHealth`) walks an ordered list of every free lane that could serve the request on this deployment, most preferred first: the tier's named free engine, then the per-path fallback chain (our own GPU workers, then the free external Spaces, then the free NVIDIA lane as the final health-gated safety net). Draft and Standard text prompts name NVIDIA TRELLIS; High names our self-host Hunyuan3D worker. A subject classifier reorders the two self-host PBR lanes for hard-surface versus organic prompts. Every entry is env-gated, so the list degrades cleanly on partial deployments.
+Routing (`resolveBackendIdWithHealth`) walks an ordered list of every free lane that could serve the request on this deployment, most preferred first: the tier's named free engine, then the per-path fallback chain (our own GPU workers, then the free external Spaces, then the free NVIDIA lane as the final health-gated safety net). Draft and Standard name our self-host TRELLIS worker; High names our self-host Hunyuan3D worker. The free NVIDIA NIM lane is never a named default: reconstructing straight from a truncated prompt with no photoreal reference is the realism hole this ordering closes, so it trails as the final health-gated fallthrough (and stays explicitly selectable). A subject classifier reorders the two self-host PBR lanes for hard-surface versus organic prompts. Every entry is env-gated, so the list degrades cleanly on partial deployments.
 
 Health is real. The UI fetches `/api/forge?health=1` after load and disables any lane whose upstream is down, with the actual reason, instead of failing after you have typed a prompt and clicked Generate. A short circuit-breaker cooldown sidelines a degraded lane (for example the free NIM lane after a gateway timeout) so subsequent requests skip it and go straight to a working engine; the cooldown expires on its own so a recovered lane is retried promptly. There are no mock paths: if a selected backend isn't configured the endpoint returns a clean `backend_unconfigured` error, never a fake result.
 
@@ -124,11 +124,11 @@ stills; it never reports a recording that did not happen.
 
 1. Open [/forge](https://three.ws/forge). No login, no wallet, no key required.
 2. Pick an input mode: **Describe it** (text), **From photos**, or **From a sketch** (the sketch tab appears only when the TripoSG worker is configured).
-3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to four images of the same object from different angles; each uploads straight to object storage via a presigned URL and the public URLs are fused with multi-view conditioning.
+3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to six images of the same object from different angles (front, back, left, right, top, three-quarter); each uploads straight to object storage via a presigned URL and the public URLs are fused with multi-view conditioning.
 4. Optionally open the quality controls and pick a tier (Draft, Standard, High) and an engine. The default engine carries a **FREE** pill. Down lanes are disabled with the reason shown.
 5. Click Generate. A real elapsed-driven progress line runs against the catalog's ETA estimate for the chosen path, tier, and engine.
 6. When the model lands, orbit it in the viewer, view it in AR, download the GLB, or run the post-generation tools (stylize, optimize, Game-Ready retopology, split). Press `R` (or click **Reel**) to render a shareable video and stills of it without leaving the page.
-7. Keep going on the same result: **Rig for animation** adds a humanoid skeleton (POST `/api/forge?action=rig`) and hands off to Pose Studio or IRL placement; **Restyle materials** re-skins the surface with a free-text instruction or a preset chip (chrome, wood, gold, neon, marble, rust) via `/api/material-studio`, keeping the mesh untouched; **Iterate** makes a shape-changing edit from a plain-language instruction ("make the helmet red", "add a backpack") via `/api/forge-iterate` — the same conversational core the `refine_model` MCP tool uses — and keeps every version in a branchable lineage strip; **Place IRL** opens `/irl?avatar=<glb_url>` to anchor the model in AR at a real-world location.
+7. Keep going on the same result: **Rig for animation** adds a humanoid skeleton (POST `/api/forge?action=rig`) and hands off to Pose Studio or IRL placement; **Restyle materials** re-skins the surface with a free-text instruction or a preset chip (chrome, wood, gold, neon, marble, rust) via `/api/material-studio`, keeping the mesh untouched; **Iterate** makes a shape-changing edit from a plain-language instruction ("make the helmet red", "add a backpack") via `/api/forge-iterate` (the same conversational core the `refine_model` MCP tool uses) and keeps every version in a branchable lineage strip; **Place IRL** opens `/irl?avatar=<glb_url>` to anchor the model in AR at a real-world location.
 
 ## Examples
 
@@ -141,9 +141,9 @@ curl 'https://three.ws/api/forge?catalog=1'
 # Probe live backend health (which lanes are up right now).
 curl 'https://three.ws/api/forge?health=1'
 
-# Start a free text-to-3D generation. The free NVIDIA lane often completes
-# inline, answering with status "done", a glb_url, and a null job_id; slower
-# lanes answer with a job_id to poll instead.
+# Start a free text-to-3D generation. A lane that finishes inside the request
+# (and any cache hit) answers with status "done", a glb_url, and a null job_id;
+# slower lanes answer with a job_id to poll instead.
 RESP=$(curl -s -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
   -d '{"prompt":"a weathered brass diving helmet","tier":"draft"}')

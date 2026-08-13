@@ -44,11 +44,15 @@ Served from [`public/demos/lipsync-mic.html`](../public/demos/lipsync-mic.html).
 Only the TTS demo hits an API. `/api/tts/speak` returns audio bytes you can decode and analyze exactly as the demo does.
 
 ```bash
-# Synthesize speech to an MP3 file (the same call the /lipsync demo makes).
+# Synthesize speech (the same call the /lipsync demo makes). Save the response
+# headers too: content-type names the container you actually got back.
 curl -X POST 'https://three.ws/api/tts/speak' \
   -H 'content-type: application/json' \
   -d '{ "text": "Welcome to three dot ws.", "voice": "nova", "speed": 1.0, "format": "mp3" }' \
-  --output speech.mp3
+  -D headers.txt --output speech.audio
+grep -i '^content-type\|^x-tts-' headers.txt
+# -> content-type: audio/wav   (free NVIDIA lane; see the format note below)
+# -> x-tts-format: wav
 ```
 
 ```js
@@ -72,6 +76,8 @@ tick();
 ```
 
 `POST /api/tts/speak` ([`api/tts/speak.js`](../api/tts/speak.js)) prefers the free NVIDIA NIM Magpie TTS lane when configured and falls back to OpenAI as a paid backstop. Body: `{ text, voice?, model?, format?, language?, speed? }`. `text` is required (max 4096 chars), `voice` defaults to `nova`, `format` defaults to `mp3`, `speed` clamps 0.5 to 2.0. It is rate-limited per user or per IP.
+
+**`format` is a request, not a guarantee.** Magpie emits raw PCM, so the free lane serves every non-`pcm` request as WAV; only the OpenAI backstop honors `mp3`/`opus`/`aac`/`flac` exactly. The `content-type` and `x-tts-format` headers always describe the bytes actually sent, so read them instead of assuming a container. This costs the demos nothing: `decodeAudioData` and the `Audio` element sniff the container, so wav, ogg, and mp3 all animate the mouth the same way.
 
 ## States and limits
 

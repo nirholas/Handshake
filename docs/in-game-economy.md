@@ -195,7 +195,12 @@ curl -s https://three.ws/api/play/economy | jq '.generalStore.sell'
 ```json
 [
   { "item": "wood", "label": "Wood", "price": 2 },
-  { "item": "cookedFish", "label": "Cooked Fish", "price": 9 }
+  { "item": "stone", "label": "Stone", "price": 2 },
+  { "item": "coal", "label": "Coal", "price": 6 },
+  { "item": "fish", "label": "Raw fish", "price": 3 },
+  { "item": "cookedFish", "label": "Cooked fish", "price": 9 },
+  { "item": "bones", "label": "Bones", "price": 4 },
+  { "item": "hide", "label": "Beast hide", "price": 8 }
 ]
 ```
 

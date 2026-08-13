@@ -20,6 +20,9 @@
  *      reaches the sitemap, llms.txt and features.json instead of being live at
  *      200 and invisible to every crawler. Docs that are deliberately not
  *      published carry an entry in UNPUBLISHED_DOCS below with the reason.
+ *   6. The mirror of 5: every /docs/<slug> declared in data/pages.json has an
+ *      article to serve. A declared slug with no Markdown behind it answers 404
+ *      while the sitemap, llms.txt and the changelog all advertise it.
  *
  * Usage:
  *   node scripts/audit-docs.mjs              # audit the whole repo, exit 1 on findings
@@ -323,6 +326,55 @@ if (!explicitFiles.length) {
 	}
 }
 
+// ------------------------------------------- declared docs must have an article
+// The mirror of the check above, and the one that actually shipped a 404. Every
+// /docs/<slug> route rewrites to one shell that fetches /docs/<slug>.md at
+// runtime, so declaring a page in data/pages.json without writing its Markdown
+// puts the slug in the sitemap, llms.txt, features.json and the changelog while
+// the live route answers 404 (server/shell-pages.mjs refuses to serve a shell
+// whose article is missing). That is exactly what happened to
+// /docs/economy-health-dashboard: it documented the admin panel deleted in the
+// security cleanup, the doc went with the panel, and the pages.json entry stayed
+// behind advertising a dead page for a week.
+if (!explicitFiles.length) {
+	// Mirror the server's own resolution order (server/index.mjs walks
+	// vercel.json top to bottom): only a slug whose FIRST matching route lands on
+	// the shared docs shell needs an article. A path claimed earlier by a
+	// dedicated route (/docs/world, /docs/walk/*, /docs/widgets) is a real page
+	// with its own HTML and is none of this check's business.
+	const orderedRoutes = (vercel.routes || [])
+		// Only rewriting rules decide where a path lands. Header-only rules (the
+		// leading `/(.*)` security-header pass) and `continue: true` rules match
+		// everything and resolve nothing, so counting them would make the first
+		// match always be the catch-all.
+		.filter((r) => r.src && r.dest && !r.continue && !(typeof r.status === 'number' && r.status >= 400))
+		.map((r) => {
+			try {
+				return { re: new RegExp(`^${r.src}$`), dest: r.dest || '' };
+			} catch {
+				return null;
+			}
+		})
+		.filter(Boolean);
+	// server/shell-pages.mjs: the shell probes dist/docs/<slug>.md, built from
+	// docs/. A dot is excluded there, so it can never name an article here.
+	const ARTICLE_SLUG = /^[A-Za-z0-9][A-Za-z0-9_-]*(\/[A-Za-z0-9][A-Za-z0-9_-]*)*$/;
+	for (const declared of declaredPages) {
+		if (!declared.startsWith('/docs/')) continue;
+		const slug = declared.slice('/docs/'.length).replace(/\/+$/, '');
+		if (!slug || !ARTICLE_SLUG.test(slug)) continue;
+		const first = orderedRoutes.find((r) => r.re.test(declared));
+		if (!first || !first.dest.startsWith('/docs/index.html')) continue;
+		if (existsSync(resolve(root, `docs/${slug}.md`))) continue;
+		findings.push({
+			file: 'data/pages.json',
+			line: 0,
+			kind: 'declared-doc-without-article',
+			detail: `declares ${declared} but no docs/${slug}.md exists, so the route 404s while the sitemap and llms.txt advertise it. Write the doc, or remove the entry.`,
+		});
+	}
+}
+
 // ---------------------------------------------------------------- the verdict
 const byKind = findings.reduce((acc, f) => {
 	(acc[f.kind] = acc[f.kind] || []).push(f);
@@ -335,6 +387,7 @@ const LABEL = {
 	'dead-script': 'Commands naming scripts that do not exist',
 	'missing-readme': 'Directories required to carry a README.md',
 	'unregistered-doc': 'Public docs missing from data/pages.json (live but undiscoverable)',
+	'declared-doc-without-article': 'Docs pages declared in data/pages.json with no article to serve (404)',
 };
 
 if (!findings.length) {

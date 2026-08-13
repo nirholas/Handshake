@@ -5,8 +5,8 @@ Turn one sentence into a placed 3D diorama plan, then forge and browse saved wor
 Registered in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as **`io.github.nirholas/scene-mcp`**.
 
 - **Install:** `npx -y @three-ws/scene-mcp`
-- **npm:** [`@three-ws/scene-mcp`](https://www.npmjs.com/package/@three-ws/scene-mcp) · v0.1.0
-- **Transport:** stdio — no account, no key, no payment
+- **npm:** [`@three-ws/scene-mcp`](https://www.npmjs.com/package/@three-ws/scene-mcp) (the package page carries the current version; `npx -y` always fetches it)
+- **Transport:** stdio, no account, no key, no payment
 - **Backend:** `/api/diorama` on three.ws
 
 ## Add it

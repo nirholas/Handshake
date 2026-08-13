@@ -47,9 +47,9 @@ exposes **only** 3D generation/inspection — no account, no payment, no token. 
 
 A free, rate-limited (not x402) REST endpoint backing the [Restyle Studio](/restyle)
 web page: live PBR material editing, AI restyle, seeded colorway variants, and
-texture swaps for any GLB. Not an MCP tool itself — the paid `restyle_material`
-tool above (and the web page) both call it as a thin client, so the free and paid
-surfaces share one implementation. See
+texture swaps for any GLB. Not an MCP tool itself: the paid `restyle_material`
+tool (listed under the agent tools below) and the web page both call it as a thin
+client, so the free and paid surfaces share one implementation. See
 [`api/_lib/material-studio-store.js`](../api/_lib/material-studio-store.js) and the
 [Material Studio API reference](api-reference.md#material-studio-api).
 
@@ -96,7 +96,7 @@ generation lane**; the rest are paid and quote their price in the
 | Tool | Price | What it does |
 |---|---|---|
 | `forge_free` | **Free** | Text → textured GLB on the free NVIDIA NIM (Microsoft TRELLIS) lane; returns a GLB URL + viewer link. |
-| `crypto_news` | **Free** | Live crypto headlines from 191 publisher feeds, filterable by category, source, language, or search. |
+| `crypto_news` | **Free** | Live crypto headlines from every publisher feed in the registry (`api/_lib/news-sources.js`, 27 categories, 17 languages), filterable by category, source, language, or search. |
 | `crypto_news_digest` | **Free** | Clusters the last 1-72h of coverage into distinct narratives with stance, tickers, and covering outlets. |
 | `crypto_news_archive` | free quota, then $0.001/search | Search 660,000+ archived articles back to September 2017. Stats and trending modes are always free; search is free up to a daily per-IP quota, then $0.001 USDC per search via x402. |
 | `text_to_avatar` | paid | Text → 3D avatar. |

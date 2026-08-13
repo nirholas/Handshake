@@ -19,7 +19,7 @@ The element is designed to be zero-overhead until it is needed.
 
 1. **Element added to DOM** — `connectedCallback` fires. Shadow DOM shell (canvas container, chat chrome, poster, loading indicator) is rendered immediately.
 2. **IntersectionObserver** starts watching the element. Nothing else happens until at least one pixel is visible in the viewport. Add the `eager` attribute to skip this and boot immediately on connection.
-3. **Manifest resolved** — the element reads its source attributes (`src`, `agent-id`, `manifest`, or `body`) in priority order and fetches or constructs an agent manifest. See [Source attributes](#source-attributes) for the priority chain.
+3. **Manifest resolved**: the element reads its source attributes (`src`, `agent-id`, `manifest`, or `body`) in priority order and fetches or constructs an agent manifest. See [Source attributes](#source-attributes-pick-one) for the priority chain.
 4. **Embed policy checked** — if the manifest maps to a backend agent ID, the element fetches the agent's embed policy and refuses to continue if the current origin is not permitted.
 5. **Viewer constructed** — a three.js renderer is created inside the shadow DOM canvas. The GLB referenced by `manifest.body.uri` is loaded.
 6. **Memory, skills, and runtime initialized** — the memory store is opened, skills listed in the manifest are installed, and the LLM runtime is wired up (or a null provider is used if `brain` is `none` or omitted).

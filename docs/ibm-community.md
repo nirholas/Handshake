@@ -4,15 +4,19 @@ This is the running catalog of everything published in the [Three.ws User Group]
 
 Dates marked "approx." are derived from the site's relative timestamps ("17 days ago") on the snapshot date; blog dates come from their URLs and are exact.
 
-## Group snapshot (2026-08-05)
+## Group snapshot (2026-08-13)
 
 | Metric | Value |
 | ------ | ----- |
-| Members | 15 |
-| Discussion threads | 8 listed in the [digest viewer](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) |
-| Blog posts | 3 |
+| Members | 16 |
+| Discussion threads | 8 listed in the [digest viewer](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016), which reports "Showing 1 to 8 of 8" |
+| Blog posts | 4 |
 | Library entries | 2 (the attachments on the BOWYER and SperaxOS threads) |
 | Upcoming events | 0 |
+
+The group header counts threads as 10 while the digest viewer lists 8. The
+header's tally is the one to distrust: the digest viewer is the per-thread
+listing this catalog is built from, and it is explicit about its own total.
 
 ## Blog posts
 
@@ -43,6 +47,44 @@ A feature tour structured as "ten features, in the order I would demo them": (1)
 - **URL:** [community.ibm.com/.../join-the-threews-user-groups-first-in-world-meetup](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/04/join-the-threews-user-groups-first-in-world-meetup)
 
 Jessica's companion piece to the meetup thread, written in her own voice as a member telling the group not to mistake the event for another webinar link. Carries the event table (Friday, August 7, 8 to 9 AM Pacific, 11 AM Eastern, free, browser only), the three-step join flow (open three.ws/play, bring a custom avatar made at three.ws/create beforehand, talk via spatial voice), and the agenda: live in-world platform tour, community demos, open Q&A ("the skeptical questions are the most useful ones"), and a first look at what is next. Her framing argument: the venue is the demo, so the hour doubles as hands-on evaluation of the technology the group exists to discuss, and since every world is a shareable URL, attending teaches you how to run your own events there. Points readers at the pinned meetup thread for the deep technical background and closes with the full platform link list. The draft lives in [ibm-community-blog-meetup-jessica.md](./ibm-community-blog-meetup-jessica.md).
+
+### 4. The First Three.ws User Group Meetup: How It Actually Went
+
+- **Author:** Jessica Swanson
+- **Published:** 2026-08-08
+- **Activity:** 0 comments, 4 views at snapshot
+- **URL:** [community.ibm.com/.../the-first-threews-user-group-meetup-ibm](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/08/08/the-first-threews-user-group-meetup-ibm)
+
+Jessica's close of the meetup arc, written the day after the live post she
+published mid-event. She frames the group as an unusual case (three.ws is the
+only project she knows of with its own dedicated IBM Community user group, which
+exists because IBM's own account had traded posts with three.ws on X before the
+group launched), then makes the argument the day proved: a nine-hour user-group
+meetup held entirely inside a 3D world instead of on a call is exactly the kind
+of thing neither side is supposed to try, and it held up. She reports peak
+concurrency of 3,145 avatars in the world across the day, noting the world was
+open to anyone with the link, so most of that crowd was not group members. The
+agenda ran as planned (in-world platform tour, community demos, open Q&A
+including the two open-source watsonx.ai and Granite connectors), but the part
+she leads with is what happened around it: fishing, cooking the catch, and
+driving cars around the map with two other players. The Q&A recap covers the
+Forge, Avatar Studio's auto-rigging, the no-allowlist skeleton mapping across
+Mixamo/VRM/Daz/Blender rigs, the cross-world wardrobe, and the `agent-3d` web
+component. Her under-the-hood section describes the authoritative server, spatial
+voice gated by distance, the clock-derived countdown and fireworks, and the
+Meetup Laurel as the platform's answer to "prove you were there". She says
+plainly that she was not into crypto before this partnership and that three.ws
+changed it. Closes on the follow-through: turning the meetup into a rhythm,
+more joint posts, more three.ws work surfaced through IBM channels, and an
+explicitly unconfirmed note that three.ws is looking at IBM's newly expanded
+Partner Plus marketplace motions (Microsoft Multiparty Private Offers and Google
+Cloud Marketplace Channel Private Offers, on top of the live AWS reseller
+integration). Links the team's own recap at
+[/blog/ibm-user-group-first-in-world-meetup-recap](/blog/ibm-user-group-first-in-world-meetup-recap).
+
+Two placeholders are still live in the published post: a bracketed note about the
+next meetup date and a bracketed "[link once available]" for the recording. If
+either gets filled in, update this entry.
 
 ## Discussion threads
 

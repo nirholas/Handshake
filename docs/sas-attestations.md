@@ -1,6 +1,6 @@
 # SAS Credentialed Attestations
 
-An attestation is a signed on-chain statement about a wallet or an agent (for example "this wallet is verified" or "this task result was audited"). This page is for operators and developers who run or integrate with the three.ws attestation authority; end users see the results surfaced on agent passports and reputation scores. Reads are public via `GET /api/agents/sas/credentials`; issuing is admin-only.
+An attestation is a signed on-chain statement about a wallet or an agent (for example "this wallet is verified" or "this task result was audited"). This page is for operators and developers who run or integrate with the three.ws attestation authority; end users see the results surfaced on agent passports and reputation scores. Reads are public via `GET /api/agents/sas-credentials`; issuing is admin-only.
 
 three.ws issues two kinds of on-chain attestations on Solana:
 
@@ -144,9 +144,13 @@ A validation of an agent task result, issued by an authorized validator. Subject
 
 The endpoint is [api/agents/sas/[action].js](../api/agents/sas/[action].js).
 
-### Read credentials — `GET /api/agents/sas/credentials`
+### Read credentials: `GET /api/agents/sas-credentials`
 
 Public, rate-limited. Returns active (non-closed, non-expired) attestations for a subject.
+
+> The route is a single flat path segment (`sas-credentials`), not a nested one.
+> `/api/agents/sas/credentials` is claimed by the agent-by-id route and answers
+> `{"error":"not_found"}`.
 
 | Query param | Required | Description |
 |-------------|----------|-------------|
@@ -156,19 +160,19 @@ Public, rate-limited. Returns active (non-closed, non-expired) attestations for 
 | `include_closed` | no | `1` to include closed attestations. |
 
 ```bash
-curl "https://three.ws/api/agents/sas/credentials?subject=<pubkey>&network=mainnet"
+curl "https://three.ws/api/agents/sas-credentials?subject=<pubkey>&network=mainnet"
 ```
 
 ```json
 { "subject": "<pubkey>", "network": "mainnet", "kind": null, "count": 1, "data": [ /* attestations */ ] }
 ```
 
-### Issue a credential — `POST /api/agents/sas/issue-credential`
+### Issue a credential: `POST /api/agents/sas-issue-credential`
 
 **Admin-only.** Requires admin auth (see [api/_lib/admin.js](../api/_lib/admin.js)) and validates the body against the target schema before signing. On success it issues the attestation on-chain with the authority wallet and records it in the `solana_credentials` table.
 
 ```bash
-curl -X POST https://three.ws/api/agents/sas/issue-credential \
+curl -X POST https://three.ws/api/agents/sas-issue-credential \
   -H "Authorization: Bearer <admin-token>" \
   -H "Content-Type: application/json" \
   -d '{

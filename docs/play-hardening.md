@@ -193,7 +193,7 @@ The vehicle teleport clamp allowed a fixed displacement *per `vsync` message*, s
 
 Every world interaction gates on the server's authoritative position: fishing spots, the wheel, quest zones, loot reach, vehicle entry, and now `ball:kick`, which had no proximity check and let anyone in the district drive the shared ball.
 
-Read-only request handlers are rate limited too. `storeReq`, `boutiqueReq`, `profileReq`, `questReq`, and `spinInfo` each had a declared bucket in `ACTION_RATES` that nothing consulted. `questReq` is the expensive one: it rebuilds the whole mission registry per call, so an unbounded loop from one client was a self-service denial of service against every player in that room.
+Read-only request handlers are rate limited too. `store`, `boutique`, `profile`, `questBoard`, and `spinInfo` each had a declared bucket in `ACTION_RATES` ([multiplayer/src/rooms/WalkRoom.js](../multiplayer/src/rooms/WalkRoom.js)) that nothing consulted. `questBoard` is the expensive one: it runs `boardOffers` over the whole mission registry per call, so an unbounded loop from one client was a self-service denial of service against every player in that room.
 
 ## 11. A value that is not an image never reaches an image sink
 

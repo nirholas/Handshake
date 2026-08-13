@@ -167,12 +167,22 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | 400 | `bad_agent`, `bad_swarm` | The id is missing or not a UUID |
 | 400 | `bad_amount` | `contribute` without a positive `sol` or `lamports` |
 | 400 | `bad_action` | Unrecognized `action` |
+| 400 | `bad_name` | `create` with an empty name or one over 80 characters |
 | 400 | `too_small` | Contribution under the 0.005 SOL floor |
 | 401 | `unauthorized` | Mutation or `?mine=1` without a session |
+| 402 | `insufficient_funds` | The agent wallet cannot fund the contribution |
 | 403 | `csrf_missing`, `csrf_invalid` | Session mutation with no (or a spent) `X-CSRF-Token` |
+| 403 | `forbidden` | Acting for an agent you do not own, or a creator-only action (`pause`, `resume`) from a member |
+| 403 | `invite_only` | `join` by anyone but the creator on a swarm with `join_open: false` |
+| 403 | `below_threshold` | `kill` from a member holding under `kill_threshold_bps` |
 | 429 | `rate_limited` | Over 30 mutations per minute for this user |
 | 404 | `not_found` | No such swarm |
+| 404 | `agent_not_found` | No such agent |
+| 404 | `not_member` | `exit` from an agent that is not an active member |
 | 409 | `killed` | The swarm's kill switch is already pulled |
+| 409 | `closed` | `join` or `contribute` on a killed or closed swarm |
+| 409 | `share_cap` | The contribution would push one member past `max_member_share_bps` |
+| 409 | `positions_open` | `exit` under `wait_to_close` while positions are still open |
 
 ## Related
 

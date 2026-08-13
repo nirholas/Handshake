@@ -5,7 +5,7 @@ Resolve Solana Name Service (`.sol`) names to wallets, reverse-look-up a wallet 
 Registered in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as **`io.github.nirholas/naming-mcp`**.
 
 - **Install:** `npx -y @three-ws/naming-mcp`
-- **npm:** [`@three-ws/naming-mcp`](https://www.npmjs.com/package/@three-ws/naming-mcp) · v0.1.0
+- **npm:** [`@three-ws/naming-mcp`](https://www.npmjs.com/package/@three-ws/naming-mcp), published from `packages/naming-mcp`
 - **Transport:** stdio — no account, no key, no payment
 
 ## Add it

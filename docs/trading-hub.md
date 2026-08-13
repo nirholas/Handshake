@@ -60,11 +60,12 @@ means the coin cannot be exited, so the trade never happens.
 
 ### Every trading surface, and Learn the system
 
-Two directories covering the product surfaces (arena, experiments, leaderboard,
-trade feed, smart money, radar, copy trading, strategy lab, autopilot, vaults,
-coin intelligence, trader card) and the documentation (agent sniper, the arming
-tutorial, the risk policy, the risk acknowledgment, custody, earned autonomy,
-the market-making copilot, and strategy objects).
+Two directories covering the product surfaces (arena, Exit Lab, experiments,
+leaderboard, trade feed, smart money, radar, copy trading, strategy lab,
+autopilot, vaults, coin intelligence, trader card) and the documentation (agent
+sniper, the arming tutorial, the exit-policy tutorial, the risk policy, the risk
+acknowledgment, custody, earned autonomy, the market-making copilot, and
+strategy objects).
 
 These live as data in [`src/trading-hub-data.js`](../src/trading-hub-data.js)
 rather than as inline markup, so the set is enumerable and a test can assert

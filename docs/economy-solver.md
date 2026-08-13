@@ -156,20 +156,27 @@ curl -s 'https://three.ws/api/play/solver?level=30&curves=0' | jq '.bestRate, .l
 {
   "label": "Fish pond-west and cook",
   "key": "loop:fish-cook",
-  "cashPerHour": 12723.19,
+  "cashPerHour": 13199.52,
   "attemptsPerHour": 2400
 }
 {
   "key": "loop:fish-cook",
   "family": "loop",
   "label": "Fish pond-west and cook",
-  "fishSharePct": 68.83,
-  "cookSharePct": 31.17,
-  "cookedPerHour": 1413.69,
-  "cashPerHour": 12723.19,
-  "rawOnlyCashPerHour": 6825.6,
-  "upliftPct": 86.4,
-  "sustainable": true
+  "spot": { "id": "pond-west", "quality": 1.4 },
+  "fishingLevel": 30,
+  "cookingLevel": 30,
+  "fishSharePct": 60.1,
+  "cookSharePct": 39.9,
+  "fishPerHour": 1595.88,
+  "cookedPerHour": 1466.61,
+  "cashPerHour": 13199.52,
+  "rawOnlyCashPerHour": 7965.72,
+  "upliftPct": 65.7,
+  "xpPerHour": 85879.22,
+  "sustainable": true,
+  "requires": null,
+  "packHours": 16.35
 }
 ```
 

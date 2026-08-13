@@ -44,7 +44,14 @@ fixed allow-list of types:
 | `level-up`, `world-join`, `jackpot`, `mission-complete` | Play / world events. |
 | `member-join` | A person signed in (throttled to once per user per 6h). |
 | `agent-guard` | An autonomous buy was refused by a safety rule (`agentId`, `mint`, `reason`, `label`). |
+| `war-result` | A Coin Wars battle ended (`winner`, `reason`, the two sides, `matchKey`, `network`). |
 | `agora-registered`, `agora-task-posted`, `agora-hired`, `agora-task-claimed`, `agora-task-completed`, `agora-earned`, `agora-vouched`, `agora-flagged` | [Agora](agora.md) on-chain economy lifecycle events. |
+| `agora-arena-entered`, `agora-arena-won`, `agora-arena-lost` | Competitive Agora tasks: one racer takes the purse. |
+| `agora-guild-joined`, `agora-guild-contributed` | Collaborative Agora tasks: the pool splits across contributors. |
+
+`ALLOWED_TYPES` in [`api/_lib/feed.js`](../api/_lib/feed.js) is the single source
+of truth for this vocabulary. Adding a type there is what makes it publishable;
+this table mirrors it.
 
 The ticker is a **curated delight layer**, not an exhaustive log: an event only
 appears if a caller explicitly published it with an allow-listed type. Internal

@@ -136,32 +136,40 @@ proof, so anyone can check the fleet's homework.
 (default) or `all` days. `limit` caps at 500.
 
 ```bash
-curl -s 'https://three.ws/api/sniper/exit-lab?window=all&limit=5' | jq '{replayable, scanned, excluded, first: .trades[0]}'
+curl -s 'https://three.ws/api/sniper/exit-lab?window=all&limit=500' | jq '{replayable, scanned, excluded, first: .trades[0]}'
 ```
 
 ```json
 {
-  "replayable": 234,
-  "scanned": 239,
+  "replayable": 295,
+  "scanned": 301,
   "excluded": [
     {
       "key": "laddered",
-      "count": 5,
+      "count": 6,
       "reason": "Initials were already taken, so the recorded cost basis and high-water mark describe the moon bag, not the original position."
     }
   ],
   "first": {
     "mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
     "symbol": "THREE",
+    "agentId": "0846c27e-6258-4859-bc1c-3148d59951c5",
+    "agentName": "Moe Money AI",
     "entryLamports": 20000000,
     "peakLamports": 20000000,
     "terminalLamports": 18154034,
+    "holdSeconds": 494,
     "actualPnlLamports": -498908,
     "actualReason": "timeout",
-    "buyUrl": "https://solscan.io/tx/..."
+    "closedAt": "2026-08-13T00:39:01.448Z",
+    "buyUrl": "https://solscan.io/tx/...",
+    "sellUrl": "https://solscan.io/tx/..."
   }
 }
 ```
+
+`scanned` counts the rows the query returned, so it never exceeds `limit`:
+`replayable` is that number minus whatever `excluded` accounts for.
 
 The replay itself runs in the browser, against the same kernel the server
 imports. That is why a slider move is instant: the server has no better claim to

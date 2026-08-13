@@ -20,7 +20,7 @@ The page is a Three.js scene with PMREM image-based lighting, soft shadows, expo
 
 ### Export vs. save outfit
 
-There are two ways out. **Export GLB** bakes every visible, non-bone-attached object into one downloadable `scene-compose.glb`. **Save outfit** takes a different path: for a three.ws avatar loaded from `/avatars/<id>`, it PATCHes the bone-attached items (bone name, GLB URL, name) onto that avatar's record as `accessories`, so the outfit becomes part of the avatar everywhere it appears. Save outfit needs at least one item attached to a bone and a resolvable avatar id; otherwise it points you to Export GLB.
+There are two ways out. **Export GLB** bakes every visible, non-bone-attached object into one downloadable `scene-compose.glb`. **Save outfit** takes a different path: for an avatar loaded from your three.ws library (a `?avatar=<id>` deep link or the Browse picker), it PATCHes the bone-attached items onto that avatar's record as `appearance.attachments`, each entry a `{ bone, url, name }`, so the outfit rides the avatar everywhere its appearance is applied. Save outfit needs at least one item attached to a bone (up to 8) and an avatar that came from a record; otherwise it points you to Export GLB. The save extends the avatar's existing appearance rather than replacing it, so colors, morphs and layers set in [Avatar Studio](./avatar-studio.md) survive it.
 
 ## Walkthrough
 
@@ -50,19 +50,21 @@ curl 'https://three.ws/api/forge?job=<job_id>' -H 'x-forge-client: <your-client-
 # → { "status": "done", "glb_url": "https://.../crown.glb" }
 ```
 
-Saving attached items as an avatar outfit:
+Saving attached items as an avatar outfit. This writes to your own avatar record, so unlike the Forge calls above it needs a signed-in session (or an API key with the `avatars:write` scope), not just a client key:
 
 ```bash
 curl -X PATCH 'https://three.ws/api/avatars/<avatarId>' \
   -H 'content-type: application/json' \
-  -H 'x-forge-client: <your-client-key>' \
-  -d '{"accessories":[{"bone":"mixamorig:Head","glbUrl":"https://.../crown.glb","name":"Horned crown"}]}'
+  -H 'authorization: Bearer <api-key>' \
+  -d '{"appearance":{"attachments":[{"bone":"mixamorig:Head","url":"https://.../crown.glb","name":"Horned crown"}]}}'
 ```
+
+`appearance` replaces the whole parameter document, so send the fields you want to keep alongside `attachments` (the studio reads the record first and merges). Attachment URLs must be https on a three.ws asset host; the full contract is in [specs/AVATAR_PARAMETERS.md](../specs/AVATAR_PARAMETERS.md).
 
 ## States & limits
 
 - **Bone attachment needs a rigged avatar.** The "Attach to Bone" control only appears when an avatar with bones is loaded. A non-humanoid or unrigged model can still be arranged and exported, just not bone-parented.
-- **Save outfit is for three.ws avatars.** It only works when the loaded avatar came from `/avatars/<id>` (so it has a record to PATCH). For any other model, use Export GLB.
+- **Save outfit is for three.ws avatars.** It only works when the loaded avatar came from a record in your library, which is what `?avatar=<id>` and the Browse picker load (so there is something to PATCH), and it needs you signed in. A model loaded by raw URL has no record: use Export GLB. Up to 8 attached items are saved; beyond that, Export GLB.
 - **Bone-attached items are excluded from Export GLB.** Export bakes visible, world-space objects; items parented to a bone belong to the avatar and are saved through Save outfit instead.
 - **Generation can take minutes.** Full-quality bakes legitimately run past ten minutes; the studio's ceiling sits above the slowest real generation, and a queued job restarts the wait window. A genuinely failed or timed-out job surfaces an actionable error.
 - **Undo is 50 deep.** Transforms, adds, and removes are undoable (Ctrl+Z / Ctrl+Y); a full scene wipe is not a single undo step.

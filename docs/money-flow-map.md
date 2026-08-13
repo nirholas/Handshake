@@ -145,7 +145,12 @@ curl -s 'https://three.ws/api/pulse?view=graph&window=30d' | jq '.data.totals'
       }
     ],
     "services": [{ "name": "lore-pack", "count": 39, "usd": 15.6 }],
-    "totals": { "nodes": 108, "edges": 400, "transfers": 1177, "usd": 370.64, "named_agents": 94 },
+    "totals": {
+      "nodes": 108, "edges": 400, "transfers": 1177,
+      "usd": 370.64, "sol": 4.91,
+      "payments": 291, "tips": 886,
+      "named_agents": 94
+    },
     "truncated": true,
     "max_edges": 400
   }

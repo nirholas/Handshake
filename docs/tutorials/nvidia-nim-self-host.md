@@ -46,7 +46,7 @@ The result is a base URL like `https://trellis.yourdomain.com`.
 
 ## Step 3 — Point three.ws at your NIM
 
-Set two environment variables on your three.ws deployment. Production runs on Google Cloud Run (service `three-ws-api`, region `us-central1`), so the env lives on the Cloud Run service — see the [GCP production runbook](../ops/gcp-production.md) for the full ops flow.
+Set two environment variables on your three.ws deployment. Production runs on Google Cloud Run (service `three-ws-api`, region `us-central1`), so the env lives on the Cloud Run service rather than in a checked-in file.
 
 | Variable | What it is |
 |----------|-----------|
@@ -65,7 +65,7 @@ Confirm three.ws can see it:
 
 ```bash
 curl "https://three.ws/api/forge-nim?action=health"
-# → { "configured": true, "reachable": true, "baseUrl": "https://trellis.yourdomain.com", "endpoint": ".../v1/infer", "detail": "" }
+# → { "configured": true, "reachable": true, "baseUrl": "https://trellis.yourdomain.com", "endpoint": ".../v1/infer", "detail": null }
 ```
 
 `configured` means the URL is set; `reachable` means the readiness probe answered.
@@ -103,7 +103,7 @@ Decode `glb_base64` to a file:
 node -e 'const b=require("fs").readFileSync(0,"utf8");const o=JSON.parse(b);require("fs").writeFileSync("teapot.glb",Buffer.from(o.glb_base64,"base64"))' < response.json
 ```
 
-`tier` maps to TRELLIS sampling steps — `draft` runs 15/15 (sparse-structure / structured-latent steps), `high` runs 40/40 for more refinement. Prompts are truncated to TRELLIS's 77-character window, so keep them tight.
+`tier` maps to TRELLIS sampling steps: `draft` runs 15/15 (sparse-structure / structured-latent steps), `high` runs 50/50 for more refinement. Prompts are truncated to TRELLIS's 77-character window, and a prompt that names no lighting or style picks up a `, studio lighting` suffix so text results match the production forge lane. Keep prompts tight.
 
 ---
 
@@ -139,6 +139,8 @@ POST {baseUrl}/v1/infer
   "prompt": "a glazed ceramic teapot",    // text mode
   "ss_sampling_steps": 15,
   "slat_sampling_steps": 15,
+  "ss_cfg_scale": 7.5,                     // TRELLIS default
+  "slat_cfg_scale": 5.0,                   // above the 3.0 default: stays faithful to the source
   "output_format": "glb",
   "seed": 0                                // optional, for reproducibility
 }

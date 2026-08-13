@@ -5,7 +5,7 @@ Score a coin by **who** is net-buying it, pull any wallet's realized reputation,
 Registered in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as **`io.github.nirholas/intel-mcp`**.
 
 - **Install:** `npx -y @three-ws/intel-mcp`
-- **npm:** [`@three-ws/intel-mcp`](https://www.npmjs.com/package/@three-ws/intel-mcp) · v0.1.0
+- **npm:** [`@three-ws/intel-mcp`](https://www.npmjs.com/package/@three-ws/intel-mcp), published from `packages/intel-mcp`
 - **Transport:** stdio — no account, no key, no payment
 
 ## Add it
