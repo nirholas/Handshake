@@ -1134,12 +1134,16 @@ export function makeRotatingFetch(endpoints) {
 		// `StructError`, and the /api/solana-rpc proxy would forward the garbage (an
 		// empty `[]`) straight to the browser.
 		const tryEndpoint = async (url) => {
+			// Bound every attempt so one hanging provider can never absorb the whole
+			// request budget (undici's default timeouts run to minutes): the attempt
+			// aborts, cools briefly, and the rotation moves on. A caller-supplied
+			// signal still applies on top via AbortSignal.any. Declared OUTSIDE the
+			// try on purpose: the catch reads `attemptSignal.aborted`, and a const
+			// inside the try block is not in scope there, so a thrown attempt raised
+			// ReferenceError instead of rotating and killed the whole failover chain
+			// (the play-gate 502 of 2026-08-13).
+			const attemptSignal = AbortSignal.timeout(ATTEMPT_TIMEOUT_MS);
 			try {
-				// Bound every attempt so one hanging provider can never absorb the whole
-				// request budget (undici's default timeouts run to minutes): the attempt
-				// aborts, cools briefly, and the rotation moves on. A caller-supplied
-				// signal still applies on top via AbortSignal.any.
-				const attemptSignal = AbortSignal.timeout(ATTEMPT_TIMEOUT_MS);
 				const resp = await fetch(url, {
 					...init,
 					signal: init?.signal ? AbortSignal.any([init.signal, attemptSignal]) : attemptSignal,

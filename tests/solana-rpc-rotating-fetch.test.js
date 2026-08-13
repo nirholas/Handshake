@@ -90,6 +90,27 @@ describe('makeRotatingFetch — never leaks an unvalidated upstream body', () =>
 		expect((await out.json()).result).toEqual({ ok: true });
 	});
 
+	// A lane whose fetch THROWS (connection refused, DNS failure, or the 10s
+	// attempt bound aborting a hung provider) must rotate to the next lane like
+	// any other failure. Regression: `attemptSignal` was declared inside the try
+	// block but read in the catch, where a try-scoped const is not visible, so
+	// every thrown attempt raised ReferenceError out of the rotation instead of
+	// failing over. That is how one hung free lane turned the /play balance gate
+	// into a hard 502 (2026-08-13).
+	it('fails over past a lane whose fetch throws, instead of leaking the throw', async () => {
+		const eps = ['https://throw-e1.test/', 'https://throw-e2.test/'];
+		global.fetch = vi.fn(async (url) => {
+			if (url === eps[0]) throw new TypeError('fetch failed');
+			return resp(VALID);
+		});
+		const out = await makeRotatingFetch(eps)(null, {
+			method: 'POST',
+			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getTokenAccountsByOwner', params: [] }),
+		});
+		expect((await out.json()).result).toEqual({ ok: true });
+		expect(global.fetch).toHaveBeenCalledTimes(2);
+	});
+
 	// The mirror-image guard: a genuinely absent method is deterministic across every
 	// provider, so rotating on it would just retry a guaranteed failure on each lane.
 	// It must reach the caller untouched.

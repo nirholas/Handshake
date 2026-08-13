@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Solana reads no longer fail when one RPC provider hangs",
+			"summary": "A scoping bug in the Solana RPC failover meant that a provider whose connection hung or dropped could crash the whole request instead of handing it to the next provider in the chain. Wallet sign-in for /play and other on-chain balance reads answered with a server error whenever the rotation landed on such a lane. The failover now rotates past a hung or unreachable provider exactly like any other refusal, so one bad node never takes a read down.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Rate ceilings on stud listings and inscription status polls",
 			"summary": "Two more endpoints joined the platform rate limiter. Listing or unlisting an agent on the stud market is now capped, so a scripted flood cannot churn the market ordering, and the anonymous Bitcoin inscription status poll is capped at a level that still lets a long inscription wait clear across a couple of open tabs. Both ceilings are deliberately non-critical: if the limiter's backing store is ever down, an owner can still unlist their agent and a paying user's status screen keeps working.",
 			"tags": [

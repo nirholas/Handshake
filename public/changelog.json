@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T16:39:43.927Z",
+	"generated_at": "2026-08-13T16:43:11.555Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -363,6 +363,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Solana reads no longer fail when one RPC provider hangs",
+			"summary": "A scoping bug in the Solana RPC failover meant that a provider whose connection hung or dropped could crash the whole request instead of handing it to the next provider in the chain. Wallet sign-in for /play and other on-chain balance reads answered with a server error whenever the rotation landed on such a lane. The failover now rotates past a hung or unreachable provider exactly like any other refusal, so one bad node never takes a read down.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
