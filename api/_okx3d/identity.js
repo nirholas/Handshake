@@ -165,7 +165,7 @@ export function fallbackIdentityPrompt({ brief, styleHints }) {
 	// usually is not, so that branch splits on a zero-width boundary instead, or
 	// a whole Chinese brief counts as one sentence and crowds out the hints.
 	const raw = String(brief ?? '').trim();
-	const firstSentence = raw.split(/(?<=[.!?。！？])\s+/)[0] || raw;
+	const firstSentence = raw.split(/(?<=[.!?])\s+|(?<=[。！？])\s*/)[0] || raw;
 	const subject = cleanClause(
 		clampPrompt(firstSentence, MAX_GENERATION_PROMPT_CHARS - 140 - (hints ? hints.length + 2 : 0)),
 	);
