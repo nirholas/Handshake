@@ -24,6 +24,7 @@ import { wrap, cors, method, json, error, readJson, rateLimited, setRateLimitHea
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import { verifyInferenceReceipt, signerPublicKey } from '../_lib/inference-settlement.js';
+import { NETWORK_SOLANA_DEVNET } from '../_lib/x402/solana-networks.js';
 
 // The platform's published inference signers, so a verifier can pin them
 // without out-of-band key distribution. Derived live from env; absent keys
@@ -55,7 +56,11 @@ async function confirmSettlement(network, transaction) {
 		if (isSolana) {
 			const { solanaConnection } = await import('../_lib/solana/connection.js');
 			// Devnet receipts confirm against devnet: the CAIP-2 id tells us which.
-			const devnet = n.includes('etwtrabzayq6imeykouru166vu2xqa1');
+			// Compared in full against the canonical id, never by substring — an
+			// earlier substring here was missing a character, so it never matched
+			// and every devnet receipt was looked up on MAINNET and reported as
+			// mainnet: a false statement about where the money moved.
+			const devnet = n === NETWORK_SOLANA_DEVNET.toLowerCase();
 			const conn = solanaConnection({
 				commitment: 'confirmed',
 				...(devnet ? { url: process.env.SOLANA_DEVNET_RPC_URL || 'https://api.devnet.solana.com' } : {}),

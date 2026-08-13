@@ -182,3 +182,79 @@ describe('settle-royalties EVM flag gate (api/_lib/royalty.js)', () => {
 		expect(sqlMock).not.toHaveBeenCalled();
 	});
 });
+
+// With the flag ON, the redeem leg must never pay the same ledger row twice.
+// These cover SR-16 (atomic claim), SR-17 (sub-threshold release) and SR-18
+// (a failed redeem is visible state) in specs/SKILL_ROYALTY_SPLIT.md. The
+// relayer is never reached in any of them: each case is decided before the
+// redeem, which is the point.
+describe('settleRoyalties claim semantics (no double-pay)', () => {
+	const AUTHOR = '22222222-2222-2222-2222-222222222222';
+	const GROUP = {
+		agent_id: '33333333-3333-3333-3333-333333333333',
+		chain_id: 8453,
+		wallet_address: '0x1111111111111111111111111111111111111111',
+		total_usd: 1.5,
+		ledger_ids: ['ledger-a', 'ledger-b'],
+	};
+
+	// Drive the mock by matching on query text, so a change in call ORDER cannot
+	// make one of these pass for the wrong reason.
+	function respondWith({ claimed }) {
+		sqlMock.mockImplementation(async (strings) => {
+			const text = Array.isArray(strings) ? strings.join('?') : String(strings);
+			if (/SELECT[\s\S]*FROM royalty_ledger rl/i.test(text)) return [GROUP];
+			if (/SET status = 'settling'/i.test(text)) return claimed;
+			return [];
+		});
+	}
+
+	beforeEach(() => {
+		process.env.SKILL_ROYALTIES_EVM_7710_ENABLED = 'true';
+	});
+
+	afterEach(() => {
+		delete process.env.SKILL_ROYALTIES_EVM_7710_ENABLED;
+		sqlMock.mockReset();
+		sqlMock.mockResolvedValue([{ id: 'ledger-1' }]);
+	});
+
+	it('claims pending rows before redeeming, conditional on still being pending', async () => {
+		respondWith({ claimed: [] });
+		await settleRoyalties(AUTHOR);
+
+		const claim = sqlMock.mock.calls.find((c) => /SET status = 'settling'/i.test(c[0].join('?')));
+		expect(claim).toBeDefined();
+		// Without this guard two concurrent passes would both redeem the same rows.
+		expect(claim[0].join('?')).toMatch(/AND status = 'pending'/i);
+	});
+
+	it('redeems nothing when a concurrent pass already claimed the rows', async () => {
+		respondWith({ claimed: [] });
+		await settleRoyalties(AUTHOR);
+
+		const texts = sqlMock.mock.calls.map((c) => c[0].join('?'));
+		expect(texts.some((t) => /SET status = 'settled'/i.test(t))).toBe(false);
+		expect(texts.some((t) => /SET status = 'failed'/i.test(t))).toBe(false);
+	});
+
+	it('releases a sub-threshold claim back to pending instead of paying dust', async () => {
+		respondWith({ claimed: [{ id: 'ledger-a', price_usd: 0.001 }] });
+		await settleRoyalties(AUTHOR);
+
+		const texts = sqlMock.mock.calls.map((c) => c[0].join('?'));
+		expect(texts.some((t) => /SET status = 'pending'/i.test(t))).toBe(true);
+		expect(texts.some((t) => /SET status = 'settled'/i.test(t))).toBe(false);
+	});
+
+	it('marks a group failed when the redeem cannot complete', async () => {
+		respondWith({ claimed: [{ id: 'ledger-a', price_usd: 1.5 }] });
+		// No author payout wallet: _redeemForGroup throws before any relayer call.
+		await settleRoyalties(AUTHOR);
+
+		const texts = sqlMock.mock.calls.map((c) => c[0].join('?'));
+		expect(texts.some((t) => /SET status = 'failed'/i.test(t))).toBe(true);
+		// A failure is recorded state, never a silent return to the pending pool.
+		expect(texts.some((t) => /SET status = 'settled'/i.test(t))).toBe(false);
+	});
+});

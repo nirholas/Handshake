@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Compressed models now work across every 3D tool, not just some",
+			"summary": "Models saved with meshopt compression, which includes most of the avatars on three.ws, failed with an internal error in five different tools: stylize filters, retopology and game-ready export, retexturing, part segmentation and auto-rigging. None of the mesh readers could open that format. Each of those workers now unpacks the file before it starts, so a compressed avatar behaves like any other model everywhere on the platform. Stylize results also show their face count again in the panel instead of leaving the number blank.",
+			"tags": [
+				"fix"
+			],
+			"link": "/create"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Your face scan keeps building even if the engine lineup changes mid-job",
 			"summary": "A scan in progress is tracked by an id that only the engine which started it can read. When the platform had more than one avatar engine available, the page checking on your scan could ask the wrong one, and it would answer that it had never heard of your job. Your avatar was generating perfectly well and you were told it had failed. The status check now always asks the engine that actually took your photos, and if that engine is no longer reachable it leaves your job alone for the server-side sweep to finish instead of declaring it dead.",
 			"tags": [
