@@ -303,7 +303,7 @@ describe('analyze: the v1 loader element aliases', () => {
 describe('analyze: a page that could not be inspected', () => {
 	it('reports inconclusive rather than inventing a missing element', () => {
 		const report = analyze(
-			healthyObservations({ element: null, probeFailed: true, timedOut: true }),
+			healthyObservations({ element: null, probeFailed: true, probeTimedOut: true }),
 		);
 		expect(report.verdict).toBe('inconclusive');
 		expect(idsOf(report)).not.toContain('element_missing');
@@ -316,7 +316,7 @@ describe('analyze: a page that could not be inspected', () => {
 
 	it('distinguishes a closed page from an expired budget in the wording', () => {
 		const report = analyze(
-			healthyObservations({ element: null, probeFailed: true, timedOut: false }),
+			healthyObservations({ element: null, probeFailed: true, probeTimedOut: false }),
 		);
 		expect(byId(report, 'page_not_inspected').detail).toMatch(/closed the page/i);
 	});

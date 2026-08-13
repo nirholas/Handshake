@@ -285,10 +285,10 @@ export function analyze(obs) {
 			unknown(
 				'page_not_inspected',
 				'The page could not be inspected in the time available',
-				obs.timedOut
+				obs.probeTimedOut
 					? 'The page was still busy when the time budget ran out, so its contents were never read. A page that keeps the browser occupied this long usually has heavy scripts of its own running ahead of the embed.'
 					: 'The browser closed the page before its contents could be read, so nothing below the loader is knowable.',
-				{ timedOut: !!obs.timedOut },
+				{ timedOut: !!obs.probeTimedOut },
 			),
 		);
 		return { verdict: verdictFor(findings), findings: rank(findings), summary: summarize(findings, obs) };
@@ -1001,10 +1001,14 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 	// `page.evaluate` has no deadline of its own. Giving up on it is "we could
 	// not look", not "there is nothing there", and the difference has to survive
 	// into the report: honesty rule 1.
+	let probeTimedOut = false;
 	const probed = await withDeadline(
 		page.evaluate(inPageProbe, EMBED_SELECTOR, SOURCE_ATTRIBUTES),
 		left(PROBE_MAX_MS),
 		null,
+		() => {
+			probeTimedOut = true;
+		},
 	);
 	const probeFailed = probed === null;
 	const probe = probed || {
@@ -1062,6 +1066,7 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 		agent,
 		screenshot: shot,
 		probeFailed,
+		probeTimedOut,
 	};
 }
 
@@ -1100,11 +1105,18 @@ function pageDeadline(budgetMs) {
  * when the deadline passes or the call rejects. The abandoned call is cancelled
  * for real when the caller closes the page in its `finally`, so nothing is left
  * running behind the response.
+ *
+ * `onTimeout` separates the two ways a step gives up: a page too busy to answer
+ * in time, and a page that went away. The report words them differently, so the
+ * distinction has to be recorded here rather than inferred later from a clock.
  */
-function withDeadline(promise, ms, fallback) {
+function withDeadline(promise, ms, fallback, onTimeout) {
 	let timer = null;
 	const timeout = new Promise((resolve) => {
-		timer = setTimeout(() => resolve(fallback), ms);
+		timer = setTimeout(() => {
+			if (onTimeout) onTimeout();
+			resolve(fallback);
+		}, ms);
 		if (typeof timer.unref === 'function') timer.unref();
 	});
 	return Promise.race([Promise.resolve(promise).catch(() => fallback), timeout]).finally(() => {
@@ -1187,7 +1199,7 @@ export async function collectFromUrl({
 			screenshot,
 			deadlineAt,
 		});
-		return { target, ...obs, timedOut: obs.probeFailed || watchdog.firedAt !== null };
+		return { target, ...obs, timedOut: obs.probeTimedOut || watchdog.firedAt !== null };
 	} finally {
 		watchdog.clear();
 		await page.close().catch(() => {});
@@ -1254,7 +1266,7 @@ export async function collectFromSnippet({
 			screenshot,
 			deadlineAt,
 		});
-		return { target, ...obs, timedOut: obs.probeFailed || watchdog.firedAt !== null };
+		return { target, ...obs, timedOut: obs.probeTimedOut || watchdog.firedAt !== null };
 	} finally {
 		watchdog.clear();
 		await page.close().catch(() => {});
