@@ -72,9 +72,9 @@ function makeRes() {
 		end(body) { this.writableEnded = true; this._body = body; },
 	};
 }
-async function report(body) {
+async function report(body, headers = {}) {
 	const res = makeRes();
-	await handler({ url: '/api/irl/report', method: 'POST', headers: { host: 'x' }, query: {}, body }, res);
+	await handler({ url: '/api/irl/report', method: 'POST', headers: { host: 'x', ...headers }, query: {}, body }, res);
 	let parsed = null;
 	try { parsed = JSON.parse(res._body); } catch {}
 	return { res, body: parsed };
@@ -157,6 +157,22 @@ describe('POST /api/irl/report', () => {
 		const inserted = sqlMock.mock.calls.some(([s]) =>
 			/INSERT INTO irl_pin_reports/i.test(Array.isArray(s) ? s.join(' ') : String(s)));
 		expect(inserted).toBe(false);
+	});
+
+	// H2 transport: the device credential rides the `x-irl-device` HEADER, with the
+	// body as the fallback. This path used to read `body.deviceToken` only, so a
+	// header-only client lost BOTH device-keyed protections at once: the owner became
+	// an "independent" reporter of their own pin, and the per-device dedup fell back
+	// to the coarse per-IP identity.
+	it('honours the x-irl-device header for the owner self-report', async () => {
+		const { res, body } = await report({ pinId: PIN_A, reason: 'spam' }, { 'x-irl-device': 'owner-dev' });
+		expect(res.statusCode).toBe(200);
+		expect(body.self).toBe(true);
+	});
+
+	it('dedupes a header-only reporter by device, not by IP', async () => {
+		await report({ pinId: PIN_A, reason: 'spam' }, { 'x-irl-device': 'visitor-dev' });
+		expect(lastInsert.reporterToken).toBe('visitor-dev');
 	});
 
 	it('ignores an authenticated owner self-report', async () => {

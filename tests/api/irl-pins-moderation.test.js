@@ -105,6 +105,17 @@ describe('POST /api/irl/pins — content gate', () => {
 		expect(body.message).toMatch(/\$THREE/);
 	});
 
+	// A ticker longer than ten characters used to slip past the guard entirely: the
+	// cashtag pattern capped the ticker at nine trailing characters and then demanded
+	// a word boundary, which can never fall mid-word, so the whole cashtag went
+	// unmatched and the caption was treated as clean.
+	it('422s an off-brand cashtag whose ticker is longer than ten characters', async () => {
+		const { res, body } = await post({ ...BASE, caption: 'buy $SOMETHINGELSE now' });
+		expect(res.statusCode).toBe(422);
+		expect(body.error).toBe('content');
+		expect(body.field).toBe('caption');
+	});
+
 	it('allows a caption that references $THREE', async () => {
 		const { res } = await post({ ...BASE, caption: 'powered by $THREE' });
 		expect(res.statusCode).toBe(201);

@@ -145,4 +145,27 @@ describe('getIrlAnalyticsSummary', () => {
 		expect(Array.isArray(summary.daily_series_30d)).toBe(true);
 		expect(typeof summary.generated_at).toBe('string');
 	});
+
+	// The 30-day series joins two per-day sub-selects onto a generate_series. Both
+	// sides expose a column called `day`, so every reference to the series column has
+	// to be qualified: an unqualified one made Postgres reject the whole query with
+	// `column reference "day" is ambiguous`, and because the endpoint degrades a
+	// failed summary into an empty 200, the rollup silently served zeros forever.
+	it('qualifies every reference to the daily-series column so the join is unambiguous', async () => {
+		sqlMock.mockReset();
+		sqlMock.mockResolvedValue([]);
+		await getIrlAnalyticsSummary();
+
+		const series = sqlMock.mock.calls
+			.map(([strings]) => (Array.isArray(strings) ? strings.join(' ') : String(strings)))
+			.find((q) => /generate_series/.test(q));
+		expect(series).toBeTruthy();
+		// The series carries its own column alias and both joins reference it.
+		expect(series).toMatch(/generate_series\([^)]*\)\s+AS\s+d\(day\)/i);
+		expect(series).toMatch(/ON p\.day = d\.day/i);
+		expect(series).toMatch(/ON n\.day = d\.day/i);
+		// No bare `day` survives on either side of a join condition or the ordering.
+		expect(series).not.toMatch(/=\s*day\b/);
+		expect(series).not.toMatch(/ORDER BY\s+day\b/i);
+	});
 });

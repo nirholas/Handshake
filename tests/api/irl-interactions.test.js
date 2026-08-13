@@ -78,6 +78,12 @@ vi.mock('../../api/_lib/settlement-verify.js', () => ({
 
 const { default: handler } = await import('../../api/irl/interactions.js');
 
+// `irl_pins.id` / `irl_interactions.pin_id` are UUID columns, so every fixture id
+// here is a real UUID: the handler rejects anything else at the boundary rather
+// than letting Postgres fail the cast and turn a bad request into a 500.
+const PIN_ID = '11111111-1111-4111-8111-111111111111';
+const MISSING_PIN_ID = '22222222-2222-4222-8222-222222222222';
+
 // A real Solana settlement signature (base58, 43–88 chars) and the $THREE mint —
 // the only signature/mint a `pay` row is allowed to carry.
 const SOL_SIG = '5'.repeat(64);
@@ -120,7 +126,7 @@ beforeEach(() => {
 	replyOrigRow = null;
 	sessionUser = null;
 	pinRow = {
-		id: 'pin-1',
+		id: PIN_ID,
 		agent_id: 'agent-1',
 		lat: 40.7128,
 		lng: -74.006,
@@ -135,15 +141,33 @@ describe('POST — validation + ownership resolution', () => {
 		expect(res.statusCode).toBe(400);
 	});
 
+	// A non-UUID id reached the pin lookup unchecked and Postgres killed the query
+	// with `invalid input syntax for type uuid`, so a malformed request came back as
+	// a 500. It is a bad request, and it never touches the database.
+	it('400s a malformed pinId instead of letting the UUID cast 500 the request', async () => {
+		const { res, body } = await post({ pinId: 'not-a-uuid', type: 'view' });
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toMatch(/invalid pinId/i);
+		const queried = sqlMock.mock.calls.some(([s]) =>
+			/FROM irl_pins/i.test(Array.isArray(s) ? s.join(' ') : String(s)));
+		expect(queried).toBe(false);
+	});
+
+	it('400s a malformed pinId on the public count read too', async () => {
+		const { res, body } = await call('GET', { query: { pinId: "1' OR '1'='1" } });
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toMatch(/invalid pinId/i);
+	});
+
 	it('404s when the pin is missing / expired / hidden', async () => {
 		pinRow = null;
-		const { res, body } = await post({ pinId: 'gone', type: 'tap' });
+		const { res, body } = await post({ pinId: MISSING_PIN_ID, type: 'tap' });
 		expect(res.statusCode).toBe(404);
 		expect(body.error).toMatch(/not found/i);
 	});
 
 	it('logs a tap and never trusts a caller-supplied owner — uses the pin', async () => {
-		const { res } = await post({ pinId: 'pin-1', type: 'tap', deviceToken: 'dev-A' });
+		const { res } = await post({ pinId: PIN_ID, type: 'tap', deviceToken: 'dev-A' });
 		expect(res.statusCode).toBe(201);
 		// agent_id taken from the pin (values[1]), not the body.
 		expect(lastInsert.values[1]).toBe('agent-1');
@@ -153,7 +177,7 @@ describe('POST — validation + ownership resolution', () => {
 describe('POST — view de-dupe', () => {
 	it('collapses a repeat view from the same device within the window', async () => {
 		viewDupeRow = { id: 'ix-existing' };
-		const { res, body } = await post({ pinId: 'pin-1', type: 'view', deviceToken: 'dev-A' });
+		const { res, body } = await post({ pinId: PIN_ID, type: 'view', deviceToken: 'dev-A' });
 		expect(res.statusCode).toBe(200);
 		expect(body.deduped).toBe(true);
 		expect(lastInsert).toBeNull(); // no new row written
@@ -161,7 +185,7 @@ describe('POST — view de-dupe', () => {
 
 	it("doesn't log the owner viewing their own pin", async () => {
 		sessionUser = { id: 'owner-uuid' };
-		const { res, body } = await post({ pinId: 'pin-1', type: 'view' });
+		const { res, body } = await post({ pinId: PIN_ID, type: 'view' });
 		expect(res.statusCode).toBe(200);
 		expect(body.self).toBe(true);
 		expect(lastInsert).toBeNull();
@@ -170,7 +194,7 @@ describe('POST — view de-dupe', () => {
 
 describe('POST — pay is only recorded with a verified settlement', () => {
 	it('400s a pay with no signature', async () => {
-		const { res, body } = await post({ pinId: 'pin-1', type: 'pay', amount: 50000, currencyMint: THREE_MINT });
+		const { res, body } = await post({ pinId: PIN_ID, type: 'pay', amount: 50000, currencyMint: THREE_MINT });
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toMatch(/signature/i);
 		expect(lastInsert).toBeNull();
@@ -178,7 +202,7 @@ describe('POST — pay is only recorded with a verified settlement', () => {
 
 	it('400s a pay whose mint is neither $THREE nor USDC', async () => {
 		const { res, body } = await post({
-			pinId: 'pin-1', type: 'pay', amount: 50000,
+			pinId: PIN_ID, type: 'pay', amount: 50000,
 			currencyMint: 'SomeOtherMint1111111111111111111111111111111', signature: SOL_SIG,
 		});
 		expect(res.statusCode).toBe(400);
@@ -188,7 +212,7 @@ describe('POST — pay is only recorded with a verified settlement', () => {
 
 	it('records a verified $THREE pay and notifies the owner + ops', async () => {
 		const { res } = await post({
-			pinId: 'pin-1', type: 'pay', amount: 50000, currencyMint: THREE_MINT, signature: SOL_SIG,
+			pinId: PIN_ID, type: 'pay', amount: 50000, currencyMint: THREE_MINT, signature: SOL_SIG,
 		});
 		expect(res.statusCode).toBe(201);
 		expect(insertedPayload().signature).toBe(SOL_SIG);
@@ -199,7 +223,7 @@ describe('POST — pay is only recorded with a verified settlement', () => {
 	it('holds a pay at 202 while the settlement is not yet visible on-chain', async () => {
 		settlementProof = { status: 'pending' };
 		const { res, body } = await post({
-			pinId: 'pin-1', type: 'pay', amount: 50000, currencyMint: THREE_MINT, signature: SOL_SIG,
+			pinId: PIN_ID, type: 'pay', amount: 50000, currencyMint: THREE_MINT, signature: SOL_SIG,
 		});
 		expect(res.statusCode).toBe(202);
 		expect(body.pending).toBe(true);
@@ -213,7 +237,7 @@ describe('POST — pay is only recorded with a verified settlement', () => {
 	it('de-dupes a pay by signature (one settlement → one row)', async () => {
 		paySigDupeRow = { id: 'ix-paid' };
 		const { res, body } = await post({
-			pinId: 'pin-1', type: 'pay', amount: 50000, currencyMint: THREE_MINT, signature: SOL_SIG,
+			pinId: PIN_ID, type: 'pay', amount: 50000, currencyMint: THREE_MINT, signature: SOL_SIG,
 		});
 		expect(res.statusCode).toBe(200);
 		expect(body.deduped).toBe(true);
@@ -223,7 +247,7 @@ describe('POST — pay is only recorded with a verified settlement', () => {
 
 describe('POST — messages + owner replies', () => {
 	it('a visitor message notifies the owner', async () => {
-		const { res } = await post({ pinId: 'pin-1', type: 'message', message: 'is this the meetup?', deviceToken: 'dev-A' });
+		const { res } = await post({ pinId: PIN_ID, type: 'message', message: 'is this the meetup?', deviceToken: 'dev-A' });
 		expect(res.statusCode).toBe(201);
 		expect(notifyMock).toHaveBeenCalledWith('owner-uuid', 'irl_interaction', expect.objectContaining({ kind: 'message' }));
 		// not an owner reply → no from:'owner' stamp, stays unread (seen_at null).
@@ -233,7 +257,7 @@ describe('POST — messages + owner replies', () => {
 
 	it("a visitor can't forge an owner reply via payload.from", async () => {
 		const { res } = await post({
-			pinId: 'pin-1', type: 'message', message: 'totally the owner', deviceToken: 'dev-A',
+			pinId: PIN_ID, type: 'message', message: 'totally the owner', deviceToken: 'dev-A',
 			payload: { from: 'owner' },
 		});
 		expect(res.statusCode).toBe(201);
@@ -245,7 +269,7 @@ describe('POST — messages + owner replies', () => {
 		sessionUser = { id: 'owner-uuid' };
 		replyOrigRow = { viewer_user_id: 'visitor-uuid' };
 		const { res, body } = await post({
-			pinId: 'pin-1', type: 'message', message: 'yes! see you there',
+			pinId: PIN_ID, type: 'message', message: 'yes! see you there',
 			replyTo: '11111111-1111-1111-1111-111111111111',
 		});
 		expect(res.statusCode).toBe(201);
@@ -253,7 +277,7 @@ describe('POST — messages + owner replies', () => {
 		expect(insertedSeenAt()).not.toBeNull();         // authored → already seen
 		// The owner is never self-notified; the signed-in visitor is.
 		expect(notifyMock).not.toHaveBeenCalledWith('owner-uuid', expect.anything(), expect.anything());
-		expect(notifyMock).toHaveBeenCalledWith('visitor-uuid', 'irl_reply', expect.objectContaining({ pin_id: 'pin-1' }));
+		expect(notifyMock).toHaveBeenCalledWith('visitor-uuid', 'irl_reply', expect.objectContaining({ pin_id: PIN_ID }));
 		expect(body.notified).toBe(true);
 	});
 
@@ -261,7 +285,7 @@ describe('POST — messages + owner replies', () => {
 		sessionUser = { id: 'owner-uuid' };
 		replyOrigRow = { viewer_user_id: null }; // visitor was anonymous
 		const { res, body } = await post({
-			pinId: 'pin-1', type: 'message', message: 'thanks for stopping by',
+			pinId: PIN_ID, type: 'message', message: 'thanks for stopping by',
 			replyTo: '11111111-1111-1111-1111-111111111111',
 		});
 		expect(res.statusCode).toBe(201);
@@ -286,14 +310,14 @@ describe('POST — payload serialization boundary (no uncaught 500)', () => {
 				throw new TypeError('Converting circular structure to JSON');
 			},
 		};
-		const { res, body } = await post({ pinId: 'pin-1', type: 'tap', payload: hostile, deviceToken: 'dev-A' });
+		const { res, body } = await post({ pinId: PIN_ID, type: 'tap', payload: hostile, deviceToken: 'dev-A' });
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toMatch(/serializable/i);
 		expect(lastInsert).toBeNull(); // no row written when serialization fails
 	});
 
 	it('records a normal payload object as serialized JSONB', async () => {
-		const { res } = await post({ pinId: 'pin-1', type: 'tap', payload: { note: 'hi' }, deviceToken: 'dev-A' });
+		const { res } = await post({ pinId: PIN_ID, type: 'tap', payload: { note: 'hi' }, deviceToken: 'dev-A' });
 		expect(res.statusCode).toBe(201);
 		// values[10] is the serialized payload text the INSERT binds to the ::jsonb cast.
 		expect(typeof lastInsert.values[10]).toBe('string');
@@ -316,14 +340,14 @@ describe('POST — view_count increment is logged, not swallowed', () => {
 			}
 			return Promise.resolve([]);
 		});
-		const { res } = await post({ pinId: 'pin-1', type: 'view', deviceToken: 'dev-fresh' });
+		const { res } = await post({ pinId: PIN_ID, type: 'view', deviceToken: 'dev-fresh' });
 		expect(res.statusCode).toBe(201);
 		// The rejection is async fire-and-forget — let the microtask queue drain.
 		await Promise.resolve();
 		await Promise.resolve();
 		expect(warn).toHaveBeenCalledWith(
 			'[irl/interactions] view_count increment failed',
-			expect.objectContaining({ pinId: 'pin-1', reason: 'db down' }),
+			expect.objectContaining({ pinId: PIN_ID, reason: 'db down' }),
 		);
 		warn.mockRestore();
 		sqlMock.mockClear();

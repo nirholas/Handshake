@@ -154,10 +154,18 @@ beforeEach(() => {
 
 // ── Pure helpers ─────────────────────────────────────────────────────────────
 describe('isValidPinId', () => {
-	it('accepts a canonical UUID + conservative opaque ids', () => {
+	it('accepts a canonical UUID', () => {
 		expect(isValidPinId(UUID)).toBe(true);
-		expect(isValidPinId('pin-1')).toBe(true);   // url/path-safe opaque id
-		expect(isValidPinId('del_1')).toBe(true);
+		expect(isValidPinId(UUID.toUpperCase())).toBe(true);
+	});
+	// `irl_pins.id` is a UUID COLUMN. A "URL-safe opaque id" used to be accepted
+	// here, which handed non-UUID text straight to Postgres: the query died with
+	// `invalid input syntax for type uuid` and the caller saw a 500 where this
+	// guard exists to produce a 400. Anything that is not a UUID is rejected.
+	it('rejects url-safe-but-not-UUID ids that the UUID column cannot cast', () => {
+		expect(isValidPinId('pin-1')).toBe(false);
+		expect(isValidPinId('del_1')).toBe(false);
+		expect(isValidPinId('not-a-uuid')).toBe(false);
 	});
 	it('rejects empty / non-string / oversized / dangerous-shaped ids', () => {
 		expect(isValidPinId('')).toBe(false);
