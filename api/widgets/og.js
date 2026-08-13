@@ -12,6 +12,7 @@
 import { sql } from '../_lib/db.js';
 import { getAvatar } from '../_lib/avatars.js';
 import { cors, wrap } from '../_lib/http.js';
+import { isDemoWidgetId, getDemoWidget } from './_demo-fixtures.js';
 
 const CACHE_CARD = 'public, max-age=3600, s-maxage=86400';
 const CACHE_REDIR = 'public, max-age=3600';
@@ -61,6 +62,15 @@ export default wrap(async (req, res) => {
 });
 
 async function loadWidget(id) {
+	// The demo widgets are served by /w/:id and the oEmbed route from baked-in
+	// fixtures rather than the DB, so resolve them here too. Without this every
+	// demo widget's og:image (which /w/:id points at) answers 404 and social
+	// previews render the not-found card instead of the widget.
+	if (isDemoWidgetId(id)) {
+		const demo = getDemoWidget(id);
+		if (!demo) return null;
+		return { id: demo.id, name: demo.name, type: demo.type, avatar_id: null, is_public: true };
+	}
 	try {
 		const [row] = await sql`
 			select id, name, type, avatar_id, is_public
