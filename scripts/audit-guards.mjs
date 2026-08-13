@@ -116,6 +116,20 @@ for (const g of registry.guards || []) {
 	try {
 		const proof = normalizeProof(g);
 		prose.push([`${where} proof ${proof.kind === 'live' ? 'reason' : 'summary'}`, proof.summary ?? proof.reason]);
+		// A json op edits a file in place, so the file must exist in the working
+		// tree the proof sandbox mirrors. A deleted target turns the proof into a
+		// crash at apply time (public/event.json was retired and its proof kept
+		// editing it), and nothing else catches that before a prove run.
+		if (proof.kind === 'mutation') {
+			for (const op of proof.violation.json) {
+				if (!existsSync(path.join(root, op.file))) {
+					note(
+						`${where} proof edits ${op.file} in place, but that file does not exist, so the fixture can never apply. ` +
+							'Rewrite the violation as a `write` of a complete file, or restore the target.',
+					);
+				}
+			}
+		}
 	} catch (err) {
 		note(`${where}: ${err.message}. Every guard must declare the violation it rejects (see docs/guards.md).`);
 	}

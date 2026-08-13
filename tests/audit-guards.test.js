@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync, copyFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, copyFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { proveGuard, normalizeProof, VERDICTS } from '../scripts/lib/guard-proofs.mjs';
 
 // Guards the guard. audit-guards is the only thing standing between
 // data/guards.json and quiet fiction, and it is rendered in two public places
@@ -101,7 +102,7 @@ const goodGuard = {
 	stages: ['gate'],
 	needs: 'none',
 	// The auditor requires every guard to declare a proof; the sandboxed
-	// two-sided kind is exercised by tests/prove-guards.test.js, so fixtures
+	// two-sided kind is exercised by the 'guard proofs' block below, so fixtures
 	// here use the declared-live escape hatch.
 	proof: { kind: 'live', reason: 'fixture guard, proven elsewhere' },
 };
@@ -315,6 +316,53 @@ describe('audit-guards', () => {
 		const { code, out } = run(dir);
 		expect(code).toBe(1);
 		expect(out).toContain('never describes it for readers');
+	});
+
+	it('fails when a json-op proof edits a file that does not exist', () => {
+		// The rot that motivated this: public/event.json was deliberately retired
+		// while its guard's proof kept editing it in place, which crashed every
+		// prove run at apply time. The auditor must catch the dead target first.
+		const jsonOpGuard = {
+			...goodGuard,
+			proof: {
+				summary: 'fixture violation via json op',
+				violation: { json: [{ file: 'public/gone.json', pointer: 'items', insert: { a: 1 } }] },
+				expect: 'gone',
+			},
+		};
+		const dir = makeRepo('json-op-dead-target', { guards: [jsonOpGuard], scripts: goodScripts });
+		const { code, out } = run(dir);
+		expect(code).toBe(1);
+		expect(out).toContain('the fixture can never apply');
+
+		const okDir = makeRepo('json-op-live-target', { guards: [jsonOpGuard], scripts: goodScripts });
+		writeFileSync(join(okDir, 'public', 'gone.json'), '{"items": []}\n');
+		expect(run(okDir).code).toBe(0);
+	});
+});
+
+describe('guard proofs', () => {
+	it('reports an unappliable fixture as a failing verdict instead of throwing', () => {
+		// A throw here would abort the whole prove run and silently skip every
+		// guard after the broken one, so the runner depends on this contract.
+		const dir = join(sandbox, 'proof-apply-error');
+		mkdirSync(dir, { recursive: true });
+		const proof = normalizeProof({
+			id: 'check-thing',
+			proof: {
+				summary: 'edits a file that is not there',
+				violation: { json: [{ file: 'public/gone.json', pointer: 'items', insert: { a: 1 } }] },
+				expect: 'gone',
+			},
+		});
+		const result = proveGuard({ id: 'check-thing', command: 'true' }, proof, dir, {
+			run: () => ({ code: 0, output: '', timedOut: false, ms: 1 }),
+		});
+		expect(result.verdict).toBe(VERDICTS.CONTROL_FAILED);
+		expect(result.note).toContain('could not be applied');
+		expect(result.output).toContain('gone.json');
+		// The sandbox is left exactly as it was found.
+		expect(existsSync(join(dir, 'public', 'gone.json'))).toBe(false);
 	});
 });
 

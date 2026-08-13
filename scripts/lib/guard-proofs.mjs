@@ -390,6 +390,21 @@ export function proveGuard(guard, proof, sandbox, options = {}) {
 			evidence: firstMatchingLine(violated.output, proof.expect),
 			ms,
 		};
+	} catch (err) {
+		// A fixture that cannot even be applied (its target file was deleted, its
+		// pointer resolves to nothing) is a broken DECLARATION, not a broken
+		// guard. It must surface as a failing verdict rather than an uncaught
+		// throw, because a throw here aborts the entire run and silently skips
+		// every guard after this one, which already happened once when a proof
+		// kept editing public/event.json after the tree retired that file.
+		return {
+			id: guard.id,
+			verdict: VERDICTS.CONTROL_FAILED,
+			summary: proof.summary,
+			output: String(err?.message ?? err),
+			ms: 0,
+			note: 'the proof fixture could not be applied, so the guard was never exercised; fix this proof in data/guards.json',
+		};
 	} finally {
 		if (proof.stage) unstage(sandbox);
 		restore(sandbox, saved);
