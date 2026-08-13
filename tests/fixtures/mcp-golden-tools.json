@@ -861,7 +861,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "c2ce8b0c47c9"
+			"schemaHash": "85a78b392826"
 		},
 		{
 			"name": "monetize_endpoint",

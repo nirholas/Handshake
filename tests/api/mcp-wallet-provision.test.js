@@ -153,6 +153,8 @@ describe('agent-wallet MCP — provisioning + earning', () => {
 		// No airdrop attempted, no fabricated balance.
 		expect(r.result.structuredContent.airdrop).toBeUndefined();
 		expect(r.result.structuredContent.sol_balance).toBe(0.5);
+		// Say so rather than dropping the argument in silence.
+		expect(r.result.content[0].text).toContain('Airdrop skipped');
 	});
 
 	it('enforces the wallet:write scope', async () => {
