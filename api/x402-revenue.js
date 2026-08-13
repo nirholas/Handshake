@@ -27,9 +27,14 @@ import { sql, isDbUnavailableError } from './_lib/db.js';
 import { cors, json, method, error, serverError, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
-import { explorerTxUrl } from './_lib/avatar-wallet.js';
 import { atomicsToUsdc } from './_lib/agent-paid-services.js';
 import { buildRevenueReport, resolvePeriod } from './_lib/x402/revenue-analytics.js';
+import {
+	networkIdentity,
+	resolveNetworkFilter,
+	revenueTxUrl,
+	foldNetworkRows,
+} from './_lib/x402/revenue-networks.js';
 
 const STATS_TTL_S = 30;
 const FEED_TTL_S = 8;
@@ -57,25 +62,31 @@ function routeForEndpoint(slug) {
 	return clean ? `/api/x402/${clean}` : null;
 }
 
-function normNetwork(n) {
-	if (!n) return null;
-	const v = String(n).trim().toLowerCase();
-	return ['solana', 'base', 'bsc', 'devnet', 'mainnet'].includes(v) ? v : null;
+// A `?network=` value → the raw ledger ids it selects, as a comma-joined string
+// bound once and expanded in SQL. The ledger holds CAIP-2 ids ('solana:5eykt4Us…',
+// 'eip155:8453') while callers filter by family ('solana', 'base'), so comparing
+// the two directly matches nothing; see _lib/x402/revenue-networks.js.
+function networkFilterIds(n) {
+	const f = resolveNetworkFilter(n);
+	return f ? f.ids.join(',') : null;
 }
 
 // Shape a settled-payment row into a privacy-safe public event.
 function shapeSettlement(r) {
 	const atomics = /^[0-9]+$/.test(String(r.amount_atomics || '')) ? Number(r.amount_atomics) : 0;
 	const net = r.network || null;
+	const identity = networkIdentity(net);
 	return {
 		id: r.id,
 		route: r.route || 'unknown',
 		network: net,
+		network_family: identity.family,
+		network_label: identity.label,
 		amount_usd: atomicsToUsdc(atomics),
 		asset: r.asset || 'USDC',
 		payer: shortAddr(r.payer),
 		tx: r.tx_hash || null,
-		tx_url: r.tx_hash ? explorerTxUrl(r.tx_hash, net) : null,
+		tx_url: revenueTxUrl(r.tx_hash, net),
 		ts: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
 	};
 }
@@ -121,10 +132,11 @@ async function revenueSeries(period) {
 	};
 }
 
-// Revenue split by settlement network.
+// Revenue split by settlement network, folded to one row per chain family so the
+// UI names "Solana" rather than the genesis hash the ledger stores.
 async function revenueByNetwork(since) {
 	const rows = await sql`
-		SELECT coalesce(network, 'unknown') AS network,
+		SELECT network,
 			count(*)::int AS count,
 			coalesce(sum(CASE WHEN amount_atomics ~ '^[0-9]+$' THEN amount_atomics::numeric ELSE 0 END), 0) AS gross_atomics
 		FROM x402_audit_log
@@ -133,11 +145,13 @@ async function revenueByNetwork(since) {
 		GROUP BY network
 		ORDER BY gross_atomics DESC
 	`;
-	return rows.map((r) => ({
-		network: r.network,
-		count: r.count,
-		gross_usd: atomicsToUsdc(Number(r.gross_atomics || 0)),
-	}));
+	return foldNetworkRows(
+		rows.map((r) => ({
+			network: r.network,
+			count: r.count,
+			gross_usd: atomicsToUsdc(Number(r.gross_atomics || 0)),
+		})),
+	);
 }
 
 // Momentum: this window's gross vs the immediately-preceding equal window, plus a
@@ -179,7 +193,7 @@ async function handleStats(period) {
 
 async function handleFeed({ since, cursor, limit, endpoint, network }) {
 	const route = routeForEndpoint(endpoint);
-	const net = normNetwork(network);
+	const netIds = networkFilterIds(network);
 	const rows = await sql`
 		SELECT id, route, network, amount_atomics, asset, tx_hash, payer, created_at
 		FROM x402_audit_log
@@ -187,7 +201,7 @@ async function handleFeed({ since, cursor, limit, endpoint, network }) {
 			AND (${since}::timestamptz IS NULL OR created_at > ${since}::timestamptz)
 			AND (${cursor}::timestamptz IS NULL OR created_at < ${cursor}::timestamptz)
 			AND (${route}::text IS NULL OR route = ${route})
-			AND (${net}::text IS NULL OR network = ${net})
+			AND (${netIds}::text IS NULL OR network = ANY(string_to_array(${netIds}::text, ',')))
 		ORDER BY created_at DESC
 		LIMIT ${limit}
 	`;
@@ -202,7 +216,10 @@ async function handleFeed({ since, cursor, limit, endpoint, network }) {
 		events,
 		count: events.length,
 		next_cursor: events.length === limit ? nextCursor : null,
-		filter: { endpoint: route ? endpoint : null, network: net },
+		filter: {
+			endpoint: route ? endpoint : null,
+			network: resolveNetworkFilter(network)?.family || null,
+		},
 	};
 }
 
@@ -210,28 +227,30 @@ async function handleFeed({ since, cursor, limit, endpoint, network }) {
 async function handleExport(res, { period, endpoint, network }) {
 	const { since } = resolvePeriod(period);
 	const route = routeForEndpoint(endpoint);
-	const net = normNetwork(network);
+	const netIds = networkFilterIds(network);
 	const rows = await sql`
 		SELECT route, network, amount_atomics, asset, tx_hash, payer, created_at
 		FROM x402_audit_log
 		WHERE event_type = 'payment_settled'
 			AND (${since}::timestamptz IS NULL OR created_at >= ${since}::timestamptz)
 			AND (${route}::text IS NULL OR route = ${route})
-			AND (${net}::text IS NULL OR network = ${net})
+			AND (${netIds}::text IS NULL OR network = ANY(string_to_array(${netIds}::text, ',')))
 		ORDER BY created_at DESC
 		LIMIT ${EXPORT_MAX_ROWS}
 	`;
-	const header = 'timestamp,endpoint,network,amount_usd,asset,payer,tx_hash\n';
+	const header = 'timestamp,endpoint,network,chain,amount_usd,asset,payer,tx_hash,tx_url\n';
 	const csv = rows.reduce((acc, r) => {
 		const ev = shapeSettlement(r);
 		const cells = [
 			ev.ts,
 			ev.route,
 			ev.network || '',
+			ev.network_label,
 			ev.amount_usd,
 			ev.asset,
 			r.payer || '',
 			ev.tx || '',
+			ev.tx_url || '',
 		].map((c) => {
 			const s = String(c ?? '');
 			return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -289,7 +308,7 @@ export default async function handler(req, res) {
 		}
 
 		// Filtered feeds and older pages: a short cache smooths the live-poll cadence.
-		const filterKey = `${routeForEndpoint(endpoint) || 'all'}:${normNetwork(network) || 'all'}`;
+		const filterKey = `${routeForEndpoint(endpoint) || 'all'}:${resolveNetworkFilter(network)?.family || 'all'}`;
 		const cacheKey = `x402rev:feed:${cursor || 'head'}:${limit}:${filterKey}`;
 		let body = await cacheGet(cacheKey);
 		if (body === null) {

@@ -18,14 +18,17 @@ import { timeAgo } from './shared/pulse-format.js';
 const POLL_MS = 12_000; // live delta cadence when visible
 const STATS_REFRESH_MS = 60_000;
 const PERIODS = ['24h', '7d', '30d', 'all'];
-const NETWORKS = ['solana', 'base', 'bsc'];
+// Chain families the API filters by ('solana', 'base', 'eip155-8453', …). The
+// ledger stores CAIP-2 ids; the API folds them to these slugs, so the page never
+// needs a hardcoded chain list — it validates the shape and lets the API decide.
+const NETWORK_SLUG_RE = /^[a-z0-9][a-z0-9-]{1,31}$/;
 
 const $ = (id) => document.getElementById(id);
 
 const state = {
 	period: '24h',
 	endpoint: null, // slug feed filter
-	network: null, // network feed filter
+	network: null, // chain-family feed filter
 	query: '', // client-side search
 	paused: false,
 	sound: false,
@@ -35,6 +38,8 @@ const state = {
 	pollTimer: null,
 	statsTimer: null,
 	firstChart: true,
+	hasStats: false, // a successful stats render has landed at least once
+	hasFeed: false, // the feed has rendered rows or an honest empty state
 };
 
 // ── formatters ───────────────────────────────────────────────────────────────
@@ -76,8 +81,8 @@ function readUrl() {
 	if (PERIODS.includes(per)) state.period = per;
 	const ep = (p.get('endpoint') || '').replace(/[^a-z0-9-]/gi, '');
 	if (ep) state.endpoint = ep;
-	const net = (p.get('network') || '').toLowerCase();
-	if (NETWORKS.includes(net)) state.network = net;
+	const net = (p.get('network') || '').trim().toLowerCase();
+	if (NETWORK_SLUG_RE.test(net)) state.network = net;
 }
 function writeUrl() {
 	const p = new URLSearchParams();
@@ -123,23 +128,92 @@ function setCounter(id, value, format) {
 }
 
 async function loadStats() {
-	let res;
+	let data = null;
+	let reason = '';
 	try {
-		res = await fetch(
+		const res = await fetch(
 			`/api/x402-revenue?view=stats&period=${encodeURIComponent(state.period)}`,
 			{
 				headers: { accept: 'application/json' },
 			},
 		);
+		if (res.ok) ({ data } = await res.json());
+		else
+			reason =
+				res.status === 503
+					? 'The revenue ledger is temporarily unavailable.'
+					: `The revenue service answered ${res.status}.`;
 	} catch {
-		return; // transient blip — keep last-known
+		reason = 'The revenue service could not be reached.';
 	}
-	if (!res.ok) return;
-	const { data } = await res.json();
-	if (!data) return;
+	if (!data) {
+		// A blip after a good render keeps the last-known numbers (they are still
+		// true, just ageing); a failure before any render has nothing to show, so
+		// the page says so and offers the retry instead of sitting on em-dashes.
+		if (state.hasStats) markStale();
+		else renderStatsError(reason || 'Revenue data is unavailable right now.');
+		return;
+	}
+	state.hasStats = true;
 	renderStats(data);
 	const u = $('xr-updated');
-	if (u) u.textContent = `updated ${timeAgo(new Date().toISOString())}`;
+	if (u) {
+		u.dataset.state = 'ok';
+		u.textContent = `updated ${timeAgo(new Date().toISOString())}`;
+	}
+}
+
+// A degraded-but-not-empty signal: the numbers on screen are the last good ones.
+function markStale() {
+	const u = $('xr-updated');
+	if (!u) return;
+	u.dataset.state = 'stale';
+	u.textContent = 'reconnecting to the revenue ledger…';
+}
+
+// Nothing has ever loaded: replace every data region with one honest, actionable
+// explanation rather than leaving placeholder dashes and a spinner forever.
+function renderStatsError(reason) {
+	const u = $('xr-updated');
+	if (u) {
+		u.dataset.state = 'error';
+		u.textContent = 'revenue data unavailable';
+	}
+	const chartHost = $('xr-chart');
+	if (chartHost) chartHost.innerHTML = '';
+	const empty = $('xr-chart-empty');
+	if (empty) {
+		empty.hidden = false;
+		empty.textContent = reason;
+	}
+	for (const id of ['xr-top', 'xr-networks']) {
+		const host = $(id);
+		if (host) host.innerHTML = `<p class="xr-empty">${esc(reason)}</p>`;
+	}
+	const chips = $('xr-chips');
+	if (chips) chips.innerHTML = '';
+	mountRetry('xr-stats-retry', $('xr-top'), () => {
+		loadStats();
+		if (!state.hasFeed) loadInitialFeed();
+	});
+}
+
+// One retry affordance, reused by the stats and feed error states. Replaces any
+// previous instance so repeated failures never stack up buttons.
+function mountRetry(id, host, onRetry) {
+	if (!host) return;
+	document.getElementById(id)?.remove();
+	const btn = document.createElement('button');
+	btn.type = 'button';
+	btn.id = id;
+	btn.className = 'xr-retry';
+	btn.textContent = 'Try again';
+	btn.addEventListener('click', () => {
+		btn.disabled = true;
+		btn.textContent = 'Retrying…';
+		onRetry();
+	});
+	host.appendChild(btn);
 }
 
 function renderStats(d) {
@@ -229,6 +303,8 @@ function renderTopEndpoints(rows) {
 	}
 }
 
+// The rail rows double as the network filter: clicking one scopes the feed to
+// that chain, the same toggle the chips above the feed drive.
 function renderNetworks(rows) {
 	const host = $('xr-networks');
 	if (!host) return;
@@ -242,15 +318,29 @@ function renderNetworks(rows) {
 		.map((r) => {
 			const g = Number(r.gross_usd) || 0;
 			const pct = max > 0 ? Math.max(3, Math.round((g / max) * 100)) : 3;
+			const slug = r.network || 'unknown';
+			const label = r.label || slug;
+			const active = state.network === slug ? ' active' : '';
 			return (
-				`<div class="xr-net-row">` +
-				`<span class="xr-net-name">${esc(r.network)}</span>` +
+				`<div class="xr-net-row${active}" role="button" tabindex="0" data-network="${esc(slug)}" ` +
+				`aria-label="Filter feed to ${esc(label)}">` +
+				`<span class="xr-net-name">${esc(label)}</span>` +
 				`<span class="xr-net-track"><span class="xr-net-fill" style="width:${pct}%"></span></span>` +
-				`<span class="xr-net-val">${fmtUsd(g)}</span>` +
+				`<span class="xr-net-val">${fmtUsd(g)}<small>${fmtInt(r.count)} call${r.count === 1 ? '' : 's'}</small></span>` +
 				`</div>`
 			);
 		})
 		.join('');
+	for (const el of host.querySelectorAll('[data-network]')) {
+		const slug = el.dataset.network;
+		el.addEventListener('click', () => toggleNetwork(slug));
+		el.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				toggleNetwork(slug);
+			}
+		});
+	}
 }
 
 // ── SVG area chart ────────────────────────────────────────────────────────────
@@ -302,7 +392,10 @@ function renderChart(series) {
 	const hasData = points.some((p) => p.gross_usd > 0);
 	if (!points.length || !hasData) {
 		host.innerHTML = '';
-		if (empty) empty.hidden = false;
+		if (empty) {
+			empty.textContent = 'No revenue in this window yet.';
+			empty.hidden = false;
+		}
 		host._points = null;
 		return;
 	}
@@ -407,10 +500,10 @@ function renderChips(topEndpoints, networks) {
 		);
 	}
 	for (const r of networks.filter((nr) => Number(nr.count) > 0).slice(0, 4)) {
-		if (!NETWORKS.includes(r.network)) continue;
+		if (!r.network || r.network === 'unknown') continue;
 		const active = state.network === r.network ? ' active' : '';
 		chips.push(
-			`<button type="button" class="xr-chip${active}" data-network="${esc(r.network)}">${esc(r.network)}</button>`,
+			`<button type="button" class="xr-chip${active}" data-network="${esc(r.network)}">${esc(r.label || r.network)}</button>`,
 		);
 	}
 	host.innerHTML = chips.join('');
@@ -461,8 +554,14 @@ function setFeedState(s) {
 						: 'connecting…';
 }
 
+// The chain a row settled on reads as its family name ('Solana'), but the raw
+// CAIP-2 id stays searchable so a ledger reconciliation can find it by id.
+function networkName(e) {
+	return e.network_label || e.network_family || e.network || '';
+}
+
 function searchText(e) {
-	return `${endpointLabel(e.route)} ${e.payer || ''} ${e.tx || ''} ${e.network || ''}`.toLowerCase();
+	return `${endpointLabel(e.route)} ${e.payer || ''} ${e.tx || ''} ${e.network || ''} ${networkName(e)}`.toLowerCase();
 }
 
 function rowHTML(e) {
@@ -473,10 +572,13 @@ function rowHTML(e) {
 	const payer = e.payer
 		? `<span class="xr-row-payer" title="payer wallet">${esc(e.payer)}</span>`
 		: '';
-	const net = e.network ? `<span class="xr-row-net">${esc(e.network)}</span>` : '';
+	const chain = networkName(e);
+	const net = chain
+		? `<span class="xr-row-net" title="${esc(e.network || chain)}">${esc(chain)}</span>`
+		: '';
 	const hidden = state.query && !searchText(e).includes(state.query) ? ' hidden' : '';
 	return (
-		`<div class="xr-row${hidden}" data-id="${esc(e.id)}" data-tx="${esc(e.tx || '')}" data-search="${esc(searchText(e))}" role="button" tabindex="0" aria-label="${esc(label)} settled ${esc(e.amount_usd)} — click to copy tx">` +
+		`<div class="xr-row${hidden}" data-id="${esc(e.id)}" data-tx="${esc(e.tx || '')}" data-search="${esc(searchText(e))}" role="button" tabindex="0" aria-label="${esc(label)} settled ${fmtUsd(e.amount_usd)} on ${esc(chain || 'chain')}. Activate to copy the transaction signature.">` +
 		`<span class="xr-row-glyph" aria-hidden="true">→</span>` +
 		`<span class="xr-row-body">` +
 		`<span class="xr-row-line"><span class="xr-row-ep">${esc(label)}</span> ${payer}</span>` +
@@ -487,19 +589,43 @@ function rowHTML(e) {
 	);
 }
 
+// Clipboard access is denied in plenty of real contexts (an insecure origin, a
+// denied permission prompt). Fall back to a selection-based copy so the click
+// still does what the row promises instead of dead-ending in a toast.
+function copyText(text) {
+	if (navigator.clipboard?.writeText) {
+		return navigator.clipboard.writeText(text).catch(() => legacyCopy(text));
+	}
+	return legacyCopy(text);
+}
+
+function legacyCopy(text) {
+	const ta = document.createElement('textarea');
+	ta.value = text;
+	ta.setAttribute('readonly', '');
+	ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+	document.body.appendChild(ta);
+	ta.select();
+	const ok = document.execCommand?.('copy');
+	ta.remove();
+	return ok ? Promise.resolve() : Promise.reject(new Error('copy unavailable'));
+}
+
 function wireRow(node) {
 	node.addEventListener('click', (e) => {
 		if (e.target.closest('.xr-row-tx')) return; // let the explorer link work
 		const tx = node.dataset.tx;
-		if (tx && navigator.clipboard) {
-			navigator.clipboard.writeText(tx).then(
-				() => toast('Transaction signature copied'),
-				() => toast(tx.slice(0, 16) + '…'),
-			);
-		}
+		if (!tx) return;
+		copyText(tx).then(
+			() => toast('Transaction signature copied'),
+			() => toast('Copy blocked by the browser. Open the tx link instead.'),
+		);
 	});
 	node.addEventListener('keydown', (e) => {
-		if (e.key === 'Enter') node.click();
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			node.click();
+		}
 	});
 }
 
@@ -525,13 +651,31 @@ function renderInitialFeed(events) {
 			`</div>`;
 		setFeedState('empty');
 		state.latestTs = null;
+		state.hasFeed = true;
 		return;
 	}
 	host.innerHTML = events.map(rowHTML).join('');
 	for (const node of host.querySelectorAll('.xr-row')) wireRow(node);
 	for (const e of events) state.seen.add(e.id);
 	state.latestTs = events[0].ts;
+	state.hasFeed = true;
 	setFeedState(state.paused ? 'paused' : 'live');
+}
+
+// The feed could not be read at all. Say what happened, keep the filter escape
+// hatch reachable, and offer the retry — never leave skeletons pulsing forever.
+function renderFeedError(reason) {
+	const host = $('xr-feed');
+	if (!host) return;
+	setFeedState('error');
+	host.innerHTML =
+		`<div class="xr-feed-empty xr-feed-empty--error" role="alert">` +
+		`<p class="xr-feed-empty-h">Live settlements are unavailable.</p>` +
+		`<p class="xr-feed-empty-p">${esc(reason)} Nothing is lost: every settlement stays in the ledger and the feed refills the moment the service answers.</p>` +
+		`</div>`;
+	mountRetry('xr-feed-retry', host.querySelector('.xr-feed-empty'), () => loadInitialFeed());
+	const more = $('xr-more');
+	if (more) more.hidden = true;
 }
 
 function prependEvents(events) {
@@ -556,26 +700,37 @@ function prependEvents(events) {
 	for (let i = 240; i < rows.length; i++) rows[i].remove();
 }
 
-async function loadInitialFeed() {
-	setFeedState('loading');
-	showSkeleton();
+// `background` re-reads the head of the feed without tearing the current view
+// down: the 12s poll on a quiet (empty) feed used to flash six skeletons over
+// the empty state every cycle.
+async function loadInitialFeed({ background = false } = {}) {
+	if (!background) {
+		setFeedState('loading');
+		showSkeleton();
+	}
 	state.seen.clear();
-	let res;
+	let data = null;
+	let reason = '';
 	try {
-		res = await fetch(`/api/x402-revenue?view=feed&limit=30&${feedParams()}`, {
+		const res = await fetch(`/api/x402-revenue?view=feed&limit=30&${feedParams()}`, {
 			headers: { accept: 'application/json' },
 		});
+		if (res.ok) ({ data } = await res.json());
+		else
+			reason =
+				res.status === 503
+					? 'The revenue ledger is temporarily unavailable.'
+					: `The revenue service answered ${res.status}.`;
 	} catch {
-		setFeedState('error');
+		reason = 'The revenue service could not be reached.';
+	}
+	if (!data) {
+		if (state.hasFeed) setFeedState('error');
+		else renderFeedError(reason || 'The revenue service is not responding.');
 		return;
 	}
-	if (!res.ok) {
-		setFeedState('error');
-		return;
-	}
-	const { data } = await res.json();
-	renderInitialFeed(data?.events || []);
-	state.cursor = data?.next_cursor || null;
+	renderInitialFeed(data.events || []);
+	state.cursor = data.next_cursor || null;
 	const more = $('xr-more');
 	if (more) more.hidden = !state.cursor;
 }
@@ -643,7 +798,7 @@ function startPolling() {
 	if (state.pollTimer) return;
 	state.pollTimer = setInterval(() => {
 		if (document.hidden || state.paused) return;
-		state.latestTs ? pollDelta() : loadInitialFeed();
+		state.latestTs ? pollDelta() : loadInitialFeed({ background: true });
 	}, POLL_MS);
 }
 
