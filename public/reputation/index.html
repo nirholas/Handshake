@@ -58,6 +58,24 @@
 				min-height: 60vh;
 			}
 
+			/* ── Cross-link into the staking market ── */
+			.rep-market-link {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem 1rem;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 1.75rem;
+				padding: 0.85rem 1.1rem;
+				border: 1px solid rgba(124, 124, 255, 0.35);
+				border-radius: 12px;
+				background: rgba(124, 124, 255, 0.08);
+				transition: background 0.15s ease, border-color 0.15s ease;
+			}
+			.rep-market-link:hover { background: rgba(124, 124, 255, 0.14); border-color: rgba(124, 124, 255, 0.55); }
+			.rep-market-link span { font-size: 0.875rem; color: rgba(232, 233, 240, 0.72); }
+			.rep-market-link strong { color: #ffffff; font-weight: 700; }
+
 			/* ── Stars ── */
 			.rep-stars-row { display: inline-flex; gap: 2px; vertical-align: middle; line-height: 1; }
 			.rep-star path { fill: currentColor; }
@@ -390,6 +408,13 @@
 
 		<main id="rep-content">
 			<div class="rep-page-wrap">
+				<a class="rep-market-link" href="/reputation/market">
+					<span data-i18n="reputation_index.market_link"
+						><strong>Reputation Staking Market</strong>: back an agent with escrowed SOL and earn from its attested
+						action history.</span
+					>
+					<span aria-hidden="true">→</span>
+				</a>
 				<div id="app">
 					<div class="rep-loading">
 						<div class="spinner"></div>

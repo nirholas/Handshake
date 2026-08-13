@@ -693,6 +693,12 @@ const appConfig = {
 				'agenc-room': resolve(__dirname, 'pages/agenc/room.html'),
 				studio: resolve(__dirname, 'public/studio/index.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
+				// /reputation/market loads a module that imports the shared earnings
+				// engine (src/shared/reputation-staking.js) and lazily pulls the Solana
+				// signer (src/solana-stake.js). Served as a raw publicDir copy those
+				// `/src/*` refs 404 in production and the market renders empty forever,
+				// so register it as an input and promote the bundled output below.
+				'reputation-market': resolve(__dirname, 'public/reputation/market/index.html'),
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
 				// /agent/index.html is reachable as a static page (vercel.json
 				// routes it to itself). Registering it as a Vite input bundles
@@ -2726,6 +2732,7 @@ support: resolve(__dirname, 'pages/support.html'),
 					['dist/public/character.html', 'dist/character.html'],
 					['dist/public/agents/index.html', 'dist/agents/index.html'],
 					['dist/public/validation/index.html', 'dist/validation/index.html'],
+					['dist/public/reputation/market/index.html', 'dist/reputation/market/index.html'],
 					['dist/public/gallery/index.html', 'dist/gallery/index.html'],
 					['dist/public/demos/brain.html', 'dist/demos/brain.html'],
 					['dist/public/demos/lipsync-tts.html', 'dist/demos/lipsync-tts.html'],

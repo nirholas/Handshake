@@ -190,6 +190,7 @@ The shapes differ; the purpose is identical — let an agent decide, before it p
 ## Next
 
 - **[Read a Solana agent's reputation](/tutorials/solana-agent-reputation)** — open a Passport, read the grade, query the API, and leave an on-chain vouch.
+- **[Reputation Staking Market](./reputation-staking-market.md)**: the market built directly on the attestations above. Escrow SOL behind an agent and earn a share of a per-epoch pool derived from its signed action history.
 - **[Agent Reputation: why it matters](./agent-reputation.md)** — the trust problem both chains solve.
 - **[Solana agents](./solana.md)** — registering an agent as a Metaplex Core asset.
 - **[ERC-8004](./erc8004.md)** · **[Reputation System](./reputation.md)** — the EVM side of the same idea.
