@@ -167,6 +167,14 @@
 			<description>Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.</description>
 		</item>
 		<item>
+			<title>Publishing, forking, bookmarking, and creating an agent are now protected against forged requests</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-08-13:Publishing, forking, bookmarking, and creating an agent are now protected against forged requests</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Every other signed-in write on three.ws (posting a review, buying a skill, pricing an asset) carries a single-use token that proves the request came from a page you were actually on. The four marketplace agent writes did not: creating an agent, forking one, bookmarking one, and publishing one. Publishing is the one that mattered most, because its request replaces an agent's system prompt, category, and tags, so an accepted forgery would change what your agent says to everyone who talks to it. All four now require the token, machine callers using an API key are unaffected, and every place in the site that performs these actions was updated to send it.</description>
+		</item>
+		<item>
 			<title>Rankings stops counting your own remixes, and the Daily Match board opens up to other sites</title>
 			<link>https://three.ws/rankings</link>
 			<guid isPermaLink="false">2026-08-13:Rankings stops counting your own remixes, and the Daily Match board opens up to other sites</guid>
@@ -351,6 +359,14 @@
 			<description>Every agent's Reasoning Ledger is a public, tamper-evident record of what it decided and why, so the reads behind it have to be honest. Three things were not. Asking for a page larger than the 200-decision maximum quietly returned a trimmed page and then reported that there was nothing after it, so a caller reading the whole history could stop early believing they had seen all of it; page sizes are now checked against the real maximum and the follow-on cursor is always correct. A malformed page cursor (a word where a sequence number belongs) came back as a generic internal error instead of saying what was wrong, and an unbounded search filter could drive a full scan of an agent's history; both now return a clear bad-request reply. And the timeline was publishing the name and picture of agents whose owners had made them private or deleted them: the decision history stays public, but an unlisted agent now appears as its id alone. The independent verification endpoint also shows the on-chain anchor even when verification fails, which is exactly when an auditor needs to see the commitment the altered history no longer matches.</description>
 		</item>
 		<item>
+			<title>The speech and avatar guides stopped promising formats, counts, and model orders the code does not deliver</title>
+			<link>https://three.ws/docs/lipsync</link>
+			<guid isPermaLink="false">2026-08-13:The speech and avatar guides stopped promising formats, counts, and model orders the code does not deliver</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Five studio guides carried claims that had drifted away from the code. The Lipsync page's example asked the speech endpoint for an MP3 and saved the reply as one, but the free NVIDIA lane emits raw audio and always answers in WAV, so anyone following it ended up with a file whose name lied about its contents; the example now saves the response headers alongside the audio, and the page explains that the requested format is a request rather than a guarantee and which header tells you what you actually got. Voice Lab claimed roughly 850 voices with about 500 of them from Microsoft, a count the live Microsoft list no longer matches, and the provider tile in the voice picker quoted the same stale figure; both now point at the catalog endpoint, which reports the real per-provider totals for whatever deployment you are talking to. Voice Lab also promised synthesized clips are cached for 30 days, a limit nothing in the code sets, and now describes the cache as it actually behaves. The Genesis page described persona writing as trying a paid model first and falling back to free ones, the reverse of the platform's real free-providers-first order. And the Selfie to Avatar page attributed one step's image-quality setting to the wrong step, so both numbers it quoted belonged to code it was not describing.</description>
+		</item>
+		<item>
 			<title>The three.ws launchpad directory answers a bad filter instead of erroring out</title>
 			<link>https://three.ws/launches</link>
 			<guid isPermaLink="false">2026-08-13:The three.ws launchpad directory answers a bad filter instead of erroring out</guid>
@@ -381,6 +397,22 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>The Smart Money Radar guide listed the rules that earn a wallet its label but was missing the one added in August: a wallet with a sustained edge over a real sample (8 or more judged coins at a 35 percent or better win rate) counts as smart money even without a 70+ score, which is how most proven wallets qualify today. The Fact Check guide still described the old verdict math, so a reader computing an expected verdict by hand would get the wrong answer: the verdict is now read off the sources that actually took a stance, needs 70 percent agreement rather than 65, calls a single stance in otherwise-silent evidence insufficient, and scores confidence by how much of the evidence engaged the claim. That page also now lists the Google-grounded search rung at the top of its source chain and shows the real number of searches a check runs. The Guardian console guide said only a beneficiary can arm an inheritance when a guardian can too.</description>
+		</item>
+		<item>
+			<title>Three tutorials quoted settings, fields, and links that had drifted from the code</title>
+			<link>https://three.ws/tutorials/nvidia-nim-self-host</link>
+			<guid isPermaLink="false">2026-08-13:Three tutorials quoted settings, fields, and links that had drifted from the code</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The Run TRELLIS on Your Own NVIDIA NIM guide said the high quality tier runs 40 sampling steps when the code runs 50, showed the health check reporting an empty detail string where it really returns null, left the two prompt-strength settings the proxy always sends out of the wire contract it documents, and linked an operations runbook that is not published on the site. The ERC-8004 reputation tutorial printed an MCP response carrying a totalScore field the tool has never returned, and listed the recent vouches as a bare array when the tool wraps them together with the block range it scanned; both now match the real payload. The advanced Shopify store guide pointed its persona reference at a repository file that is not reachable on the web, and pinned an older tour engine than the Tour Builder actually hands you; the link now goes to the published package documentation and the pinned version matches the builder.</description>
+		</item>
+		<item>
+			<title>Two docs pages told you to run a command that no longer exists</title>
+			<link>https://three.ws/docs/quick-start</link>
+			<guid isPermaLink="false">2026-08-13:Two docs pages told you to run a command that no longer exists</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The Quick Start page's tip for shrinking a large 3D model named a tool that was pulled from npm back in 2023, so the command it gave you failed instead of compressing anything. It now names the tool that is actually published, and the page also stopped claiming the avatar builder defaults to a local port; it is served from the site itself. On the ERC-8004 page, the snippet that shows you how to independently re-check a validation compared your freshly computed hash against a field the read function never returns, so the check always came back false. It now reads the field that carries the on-chain hash. The &quot;do I need crypto&quot; page also listed an agent's portable address in a form the resolver rejects, and now shows the form that works.</description>
 		</item>
 		<item>
 			<title>Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</title>
@@ -6132,7 +6164,7 @@
 			<guid isPermaLink="false">2026-07-18:Docs · Image to 3D</guid>
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Turn 1 to 4 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.</description>
+			<description>Turn 1 to 6 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.</description>
 		</item>
 		<item>
 			<title>Docs · Instant Agent Genesis</title>
@@ -6188,7 +6220,7 @@
 			<guid isPermaLink="false">2026-07-18:Docs · Restyle Studio</guid>
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Re-skin any GLB without regenerating its mesh: 14 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.</description>
+			<description>Re-skin any GLB without regenerating its mesh: 18 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.</description>
 		</item>
 		<item>
 			<title>Docs · Scene Capture (video to point cloud)</title>

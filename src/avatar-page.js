@@ -11,6 +11,7 @@ import { openTalkMode } from './voice/talk-mode.js';
 import { downloadAvatar } from './avatar-export.js';
 import { fbxFromUrl } from './remesh-convert.js';
 import { safeUrl } from './safe-url.js';
+import { apiFetch } from './api.js';
 import { log } from './shared/log.js';
 import { emptyStateHTML, errorStateHTML } from './shared/state-kit.js';
 import { mountViewSwitcher } from './view-switcher.js';
@@ -1302,22 +1303,21 @@ async function startAgentWithAvatar() {
 			capabilities: { skills: skillsArr, library: [], bullets: [] },
 			avatar_id: avatar.id || avatarId,
 		};
-		const r = await fetch('/api/marketplace/agents', {
+		// apiFetch attaches the single-use CSRF token every marketplace write needs.
+		const r = await apiFetch('/api/marketplace/agents', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			credentials: 'include',
 			body: JSON.stringify(body),
 		});
-		if (r.status === 401) {
-			location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
-			return;
-		}
 		const j = await r.json();
 		if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to create agent');
 		const newId = j?.data?.agent?.id;
 		if (!newId) throw new Error('Server did not return new agent id');
 		location.href = `/agent/${encodeURIComponent(newId)}/edit`;
 	} catch (err) {
+		// A signed-out caller is already on its way to /login (apiFetch owns that
+		// redirect), so there is nothing to say and nothing to retry.
+		if (err?.redirected) return;
 		log.error('[avatar] start agent', err);
 		btn.textContent = original;
 		btn.disabled = false;

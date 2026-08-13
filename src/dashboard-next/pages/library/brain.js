@@ -2,7 +2,7 @@
 // Per-agent LLM brain configurator: pick a model, edit the system prompt,
 // and live-test the brain against streaming responses — all from the dashboard.
 
-import { get, put, esc } from '../../api.js';
+import { get, put, post, esc } from '../../api.js';
 import { emptyStateHTML, errorStateHTML, attachRetry, ensureStateKitStyles } from '../../../shared/state-kit.js';
 import { renderMarkdown } from '../../../shared/markdown.js';
 ensureStateKitStyles();
@@ -513,16 +513,12 @@ export async function renderBrain(host) {
 			promptStatus.textContent = 'Saving…';
 			promptStatus.className = 'br-status';
 			try {
-				const r = await fetch(`/api/marketplace/agents/${encodeURIComponent(agent.id)}/publish`, {
-					method: 'POST',
-					headers: { 'content-type': 'application/json' },
-					credentials: 'include',
-					body: JSON.stringify({ system_prompt: newPrompt, category }),
+				// post() attaches the single-use CSRF token this endpoint requires and
+				// raises an ApiError that friendly() already knows how to phrase.
+				await post(`/api/marketplace/agents/${encodeURIComponent(agent.id)}/publish`, {
+					system_prompt: newPrompt,
+					category,
 				});
-				if (!r.ok) {
-					const j = await r.json().catch(() => ({}));
-					throw new Error(j.message || j.error || `HTTP ${r.status}`);
-				}
 				agent.system_prompt = newPrompt;
 				agent.category = category;
 				promptStatus.textContent = 'Saved.';

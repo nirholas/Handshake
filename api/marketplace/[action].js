@@ -23,6 +23,7 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/
 import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { pedigreeScore } from '../_lib/genome.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { markProviderCooldown, AUTH_COOLDOWN_SECONDS } from '../_lib/provider-health.js';
 import {
 	vertexGeminiAvailable,
@@ -300,6 +301,10 @@ async function handleCreate(req, res) {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	// Cookie-authenticated writes need the double-submit token; bearer callers are
+	// exempt inside requireCsrf (a token a browser never attaches on its own).
+	if (!(await requireCsrf(req, res, auth.userId))) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -1317,6 +1322,8 @@ async function handleFork(req, res, id) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
+	if (!(await requireCsrf(req, res, auth.userId))) return;
+
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
@@ -1365,6 +1372,8 @@ async function handleBookmark(req, res, id) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
+	if (!(await requireCsrf(req, res, auth.userId))) return;
+
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
@@ -1389,6 +1398,8 @@ async function handlePublish(req, res, id) {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+
+	if (!(await requireCsrf(req, res, auth.userId))) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);

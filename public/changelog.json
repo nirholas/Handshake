@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T06:34:39.535Z",
+	"generated_at": "2026-08-13T06:40:53.912Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -215,6 +215,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Publishing, forking, bookmarking, and creating an agent are now protected against forged requests",
+			"summary": "Every other signed-in write on three.ws (posting a review, buying a skill, pricing an asset) carries a single-use token that proves the request came from a page you were actually on. The four marketplace agent writes did not: creating an agent, forking one, bookmarking one, and publishing one. Publishing is the one that mattered most, because its request replaces an agent's system prompt, category, and tags, so an accepted forgery would change what your agent says to everyone who talks to it. All four now require the token, machine callers using an API key are unaffected, and every place in the site that performs these actions was updated to send it.",
+			"link": "/marketplace",
+			"tags": [
+				"security",
+				"fix"
 			]
 		},
 		{
@@ -464,6 +475,17 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "The speech and avatar guides stopped promising formats, counts, and model orders the code does not deliver",
+			"summary": "Five studio guides carried claims that had drifted away from the code. The Lipsync page's example asked the speech endpoint for an MP3 and saved the reply as one, but the free NVIDIA lane emits raw audio and always answers in WAV, so anyone following it ended up with a file whose name lied about its contents; the example now saves the response headers alongside the audio, and the page explains that the requested format is a request rather than a guarantee and which header tells you what you actually got. Voice Lab claimed roughly 850 voices with about 500 of them from Microsoft, a count the live Microsoft list no longer matches, and the provider tile in the voice picker quoted the same stale figure; both now point at the catalog endpoint, which reports the real per-provider totals for whatever deployment you are talking to. Voice Lab also promised synthesized clips are cached for 30 days, a limit nothing in the code sets, and now describes the cache as it actually behaves. The Genesis page described persona writing as trying a paid model first and falling back to free ones, the reverse of the platform's real free-providers-first order. And the Selfie to Avatar page attributed one step's image-quality setting to the wrong step, so both numbers it quoted belonged to code it was not describing.",
+			"link": "/docs/lipsync",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "The three.ws launchpad directory answers a bad filter instead of erroring out",
 			"summary": "The public directory of coins launched on the three.ws bonding curve accepts an agent filter, so a page can show only the coins one agent launched. A filter value that was not a real agent id went straight to the database, which rejected it and turned the whole request into an unexplained server error. Anything that is not a valid agent id now comes back immediately as a plain validation error naming the problem, so a mistyped link fails clearly instead of looking like the launchpad is down. The endpoint documentation now states the same contract, including the page-size and offset limits, and the behaviour is pinned by tests.",
 			"link": "/launches",
@@ -498,6 +520,28 @@
 			"title": "Three trading and fact-check guides now match what the code actually does",
 			"summary": "The Smart Money Radar guide listed the rules that earn a wallet its label but was missing the one added in August: a wallet with a sustained edge over a real sample (8 or more judged coins at a 35 percent or better win rate) counts as smart money even without a 70+ score, which is how most proven wallets qualify today. The Fact Check guide still described the old verdict math, so a reader computing an expected verdict by hand would get the wrong answer: the verdict is now read off the sources that actually took a stance, needs 70 percent agreement rather than 65, calls a single stance in otherwise-silent evidence insufficient, and scores confidence by how much of the evidence engaged the claim. That page also now lists the Google-grounded search rung at the top of its source chain and shows the real number of searches a check runs. The Guardian console guide said only a beneficiary can arm an inheritance when a guardian can too.",
 			"link": "/docs/smart-money",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Three tutorials quoted settings, fields, and links that had drifted from the code",
+			"summary": "The Run TRELLIS on Your Own NVIDIA NIM guide said the high quality tier runs 40 sampling steps when the code runs 50, showed the health check reporting an empty detail string where it really returns null, left the two prompt-strength settings the proxy always sends out of the wire contract it documents, and linked an operations runbook that is not published on the site. The ERC-8004 reputation tutorial printed an MCP response carrying a totalScore field the tool has never returned, and listed the recent vouches as a bare array when the tool wraps them together with the block range it scanned; both now match the real payload. The advanced Shopify store guide pointed its persona reference at a repository file that is not reachable on the web, and pinned an older tour engine than the Tour Builder actually hands you; the link now goes to the published package documentation and the pinned version matches the builder.",
+			"link": "/tutorials/nvidia-nim-self-host",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Two docs pages told you to run a command that no longer exists",
+			"summary": "The Quick Start page's tip for shrinking a large 3D model named a tool that was pulled from npm back in 2023, so the command it gave you failed instead of compressing anything. It now names the tool that is actually published, and the page also stopped claiming the avatar builder defaults to a local port; it is served from the site itself. On the ERC-8004 page, the snippet that shows you how to independently re-check a validation compared your freshly computed hash against a field the read function never returns, so the check always came back false. It now reads the field that carries the on-chain hash. The \"do I need crypto\" page also listed an agent's portable address in a form the resolver rejects, and now shows the form that works.",
+			"link": "/docs/quick-start",
 			"tags": [
 				"docs",
 				"fix"
@@ -8063,7 +8107,7 @@
 			"date": "2026-07-18",
 			"type": "launch",
 			"title": "Docs · Image to 3D",
-			"summary": "Turn 1 to 4 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.",
+			"summary": "Turn 1 to 6 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.",
 			"link": "/docs/image-to-3d",
 			"tags": [
 				"launch"
@@ -8133,7 +8177,7 @@
 			"date": "2026-07-18",
 			"type": "launch",
 			"title": "Docs · Restyle Studio",
-			"summary": "Re-skin any GLB without regenerating its mesh: 14 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.",
+			"summary": "Re-skin any GLB without regenerating its mesh: 18 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.",
 			"link": "/docs/restyle",
 			"tags": [
 				"launch"

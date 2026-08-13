@@ -3,6 +3,46 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Three tutorials quoted settings, fields, and links that had drifted from the code",
+			"summary": "The Run TRELLIS on Your Own NVIDIA NIM guide said the high quality tier runs 40 sampling steps when the code runs 50, showed the health check reporting an empty detail string where it really returns null, left the two prompt-strength settings the proxy always sends out of the wire contract it documents, and linked an operations runbook that is not published on the site. The ERC-8004 reputation tutorial printed an MCP response carrying a totalScore field the tool has never returned, and listed the recent vouches as a bare array when the tool wraps them together with the block range it scanned; both now match the real payload. The advanced Shopify store guide pointed its persona reference at a repository file that is not reachable on the web, and pinned an older tour engine than the Tour Builder actually hands you; the link now goes to the published package documentation and the pinned version matches the builder.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/tutorials/nvidia-nim-self-host"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The speech and avatar guides stopped promising formats, counts, and model orders the code does not deliver",
+			"summary": "Five studio guides carried claims that had drifted away from the code. The Lipsync page's example asked the speech endpoint for an MP3 and saved the reply as one, but the free NVIDIA lane emits raw audio and always answers in WAV, so anyone following it ended up with a file whose name lied about its contents; the example now saves the response headers alongside the audio, and the page explains that the requested format is a request rather than a guarantee and which header tells you what you actually got. Voice Lab claimed roughly 850 voices with about 500 of them from Microsoft, a count the live Microsoft list no longer matches, and the provider tile in the voice picker quoted the same stale figure; both now point at the catalog endpoint, which reports the real per-provider totals for whatever deployment you are talking to. Voice Lab also promised synthesized clips are cached for 30 days, a limit nothing in the code sets, and now describes the cache as it actually behaves. The Genesis page described persona writing as trying a paid model first and falling back to free ones, the reverse of the platform's real free-providers-first order. And the Selfie to Avatar page attributed one step's image-quality setting to the wrong step, so both numbers it quoted belonged to code it was not describing.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/lipsync"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Publishing, forking, bookmarking, and creating an agent are now protected against forged requests",
+			"summary": "Every other signed-in write on three.ws (posting a review, buying a skill, pricing an asset) carries a single-use token that proves the request came from a page you were actually on. The four marketplace agent writes did not: creating an agent, forking one, bookmarking one, and publishing one. Publishing is the one that mattered most, because its request replaces an agent's system prompt, category, and tags, so an accepted forgery would change what your agent says to everyone who talks to it. All four now require the token, machine callers using an API key are unaffected, and every place in the site that performs these actions was updated to send it.",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Two docs pages told you to run a command that no longer exists",
+			"summary": "The Quick Start page's tip for shrinking a large 3D model named a tool that was pulled from npm back in 2023, so the command it gave you failed instead of compressing anything. It now names the tool that is actually published, and the page also stopped claiming the avatar builder defaults to a local port; it is served from the site itself. On the ERC-8004 page, the snippet that shows you how to independently re-check a validation compared your freshly computed hash against a field the read function never returns, so the check always came back false. It now reads the field that carries the on-chain hash. The \"do I need crypto\" page also listed an agent's portable address in a form the resolver rejects, and now shows the form that works.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/quick-start"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "The Alibaba Cloud Marketplace blog post was missing the site footer",
 			"summary": "That post loaded the footer stylesheet but never the script that renders the footer, so it was the one post in the blog that ended at the last paragraph with no site navigation underneath: no links back to the product, the docs, the socials, or anything else the footer carries. Readers who reached the end had nowhere to go but the browser back button. The post now loads the same footer every other post does. Separately, the /play coin-communities write-up had no main landmark, so screen readers and reader-mode tools had no way to tell the article body apart from the header and footer chrome; its content is now wrapped in one.",
 			"tags": [
