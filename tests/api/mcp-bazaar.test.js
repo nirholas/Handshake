@@ -164,6 +164,43 @@ describe('x402 Bazaar MCP', () => {
 		expect(miss.result.structuredContent.count).toBe(0);
 	});
 
+	// A cap large enough that Number to String flips to exponential ("1e+21")
+	// used to reach parseAtomicAmount as a non-integer string and throw a
+	// TypeError out of filterByMaxPrice, failing the whole tool call.
+	it('search_services treats an oversized max_price_usdc as no cap', async () => {
+		bazState.search.mockResolvedValue({ resources: [item()], sources: [], errors: [] });
+		const r = await call('search_services', { query: 'x', max_price_usdc: 1e21 });
+		expect(r.error).toBeUndefined();
+		expect(r.result.isError).toBeUndefined();
+		expect(r.result.structuredContent.services).toHaveLength(1);
+	});
+
+	it('search_services caps at a large but representable price without erroring', async () => {
+		bazState.search.mockResolvedValue({ resources: [item()], sources: [], errors: [] });
+		const r = await call('search_services', { query: 'x', max_price_usdc: 1e15 });
+		expect(r.result.structuredContent.services).toHaveLength(1);
+	});
+
+	// `network` is a user-supplied wildcard pattern compiled to a RegExp. A bare
+	// "?" used to compile to /^?$/ and throw "Nothing to repeat"; a pattern that
+	// matches no network must return no services, not an error.
+	it('search_services returns no matches for a regex-metacharacter network', async () => {
+		bazState.search.mockResolvedValue({ resources: [item()], sources: [], errors: [] });
+		const r = await call('search_services', { query: 'x', network: '?' });
+		expect(r.error).toBeUndefined();
+		expect(r.result.isError).toBeUndefined();
+		expect(r.result.structuredContent.count).toBe(0);
+	});
+
+	it('search_services still honors the * wildcard in a network filter', async () => {
+		bazState.search.mockResolvedValue({ resources: [item()], sources: [], errors: [] });
+		const hit = await call('search_services', { query: 'x', network: 'eip155:*' });
+		expect(hit.result.structuredContent.count).toBe(1);
+		bazState.search.mockResolvedValue({ resources: [item()], sources: [], errors: [] });
+		const miss = await call('search_services', { query: 'x', network: 'solana:*' });
+		expect(miss.result.structuredContent.count).toBe(0);
+	});
+
 	it('browse_services lists without a query', async () => {
 		bazState.list.mockResolvedValue({ items: [item()], sources: [], errors: [] });
 		const r = await call('browse_services', {});

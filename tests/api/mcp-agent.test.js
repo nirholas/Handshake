@@ -44,7 +44,12 @@ const payer = await import('../../api/_lib/x402-user-payer.js');
 const { dispatch, isPublicTool } = await import('../../api/_mcpagent/dispatch.js');
 
 const ANON = { userId: null, rateKey: 'x402:anon', scope: '', source: 'x402' };
-const USER = { userId: 'user-1', rateKey: 'user-1', scope: 'wallet:read', source: 'bearer' };
+const USER = { userId: 'user-1', rateKey: 'user-1', scope: 'wallet:read wallet:write', source: 'bearer' };
+// Read grant only: may look at the wallet, may never spend from it.
+const READONLY = { userId: 'user-1', rateKey: 'user-1', scope: 'wallet:read', source: 'bearer' };
+// A token from a client that was never granted anything wallet-shaped, e.g. a
+// dynamically-registered client holding the default avatars:read.
+const NOSCOPE = { userId: 'user-1', rateKey: 'user-1', scope: 'avatars:read', source: 'bearer' };
 const call = (name, args, auth = USER) =>
 	dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }, auth);
 
@@ -110,6 +115,32 @@ describe('threews-agent MCP', () => {
 		expect(r.result.content[0].text).toContain('5 USDC');
 	});
 
+	it('wallet_status refuses a token with no wallet grant', async () => {
+		const r = await call('wallet_status', {}, NOSCOPE);
+		expect(r.result.isError).toBe(true);
+		expect(r.result.structuredContent).toMatchObject({
+			reason: 'insufficient_scope',
+			required: 'wallet:read',
+		});
+		expect(payer.getUserWalletStatus).not.toHaveBeenCalled();
+	});
+
+	it('wallet_status accepts wallet:write as proof of read access', async () => {
+		payerState.walletStatus = {
+			provisioned: false,
+			balances: {},
+			caps: {},
+			spend_enabled: false,
+		};
+		const r = await call(
+			'wallet_status',
+			{},
+			{ userId: 'user-1', rateKey: 'user-1', scope: 'wallet:write', source: 'bearer' },
+		);
+		expect(r.result.isError).toBeUndefined();
+		expect(r.result.structuredContent.signed_in).toBe(true);
+	});
+
 	it('find_services searches the live bazaar', async () => {
 		bazState.search.mockResolvedValue({
 			resources: [{ resource: 'https://svc.test', serviceName: 'Svc', minPriceLabel: '$0.01', networks: ['solana:*'], toolName: '' }],
@@ -153,6 +184,30 @@ describe('threews-agent MCP', () => {
 		expect(r.result.isError).toBe(true);
 		expect(r.result.content[0].text).toContain('no Solana wallet');
 		expect(r.result.structuredContent.reason).toBe('no_solana_wallet');
+	});
+
+	it('refuses to spend for a read-only token, before any payment call', async () => {
+		const r = await call('pay_and_call', { resource_url: 'https://paid.test/x' }, READONLY);
+		expect(payer.payExternalX402).not.toHaveBeenCalled();
+		expect(r.result.isError).toBe(true);
+		expect(r.result.structuredContent).toMatchObject({
+			reason: 'insufficient_scope',
+			required: 'wallet:write',
+		});
+	});
+
+	it('still hands a read-only token the manual pay link when spend is off', async () => {
+		payerState.spendEnabled = false;
+		const r = await call('pay_and_call', { resource_url: 'https://paid.test/x' }, READONLY);
+		expect(r.result.structuredContent).toMatchObject({ paid: false, reason: 'spend_disabled' });
+		expect(r.result.structuredContent.pay_link).toContain('https://three.ws/pay?resource=');
+	});
+
+	it('rejects an out-of-range max_price_usdc as invalid params, not an internal error', async () => {
+		const r = await call('find_services', { query: 'weather', max_price_usdc: 1e21 });
+		expect(r.error.code).toBe(-32602);
+		expect(r.error.message).toContain('max_price_usdc');
+		expect(bazState.search).not.toHaveBeenCalled();
 	});
 
 	it('enforces the pay rate limit before spending', async () => {

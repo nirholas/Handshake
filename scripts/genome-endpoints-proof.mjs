@@ -105,17 +105,11 @@ function startShim() {
 import http from 'node:http';
 import pg from ${JSON.stringify(path.join(root, 'node_modules/pg/esm/index.mjs'))};
 const pool = new pg.Pool({ connectionString: ${JSON.stringify(PG_URL)}, max: 8 });
-const NUMERIC_OIDS = new Set([700, 701, 1700]);
-const INT_OIDS = new Set([20, 21, 23, 26]);
-const JSON_OIDS = new Set([114, 3802]);
-function coerce(value, oid) {
-	if (value === null || value === undefined) return null;
-	if (oid === 16) return value === 't' || value === 'true';
-	if (INT_OIDS.has(oid)) { const n = BigInt(value); return n <= 9007199254740991n && n >= -9007199254740991n ? Number(n) : value; }
-	if (NUMERIC_OIDS.has(oid)) return Number(value);
-	if (JSON_OIDS.has(oid)) { try { return JSON.parse(value); } catch { return value; } }
-	return value;
-}
+// Neon's HTTP endpoint returns EVERY column as raw text and lets the driver's
+// own pg-types parsers turn it into a JS value. Coercing here as well double
+// parses: a pre-made boolean re-enters parseBool as a non-string and comes back
+// false, and a pre-parsed jsonb object makes JSON.parse throw on "[object
+// Object]". Raw text in, driver parsing out, exactly like production.
 http.createServer(async (req, res) => {
 	if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
 	let body = '';
@@ -323,7 +317,7 @@ async function main() {
 
 	const http = makeHttp();
 	const anon = makeHttp();
-	http.cookies.set('session', sessionToken);
+	http.cookies.set('__Host-sid', sessionToken);
 
 	// ── 4. edges ──────────────────────────────────────────────────────────────
 	step('4. GET /api/genome/edges');
@@ -531,6 +525,10 @@ async function main() {
 	const unhandled = serverLog.join('').match(/\[api\] unhandled/g) || [];
 	check('server logged no unhandled exception', unhandled.length === 0, `${unhandled.length} unhandled`);
 
+	if (failed > 0) {
+		console.log('\n-- server log tail (last 40 lines)');
+		console.log(serverLog.join('').split('\n').slice(-40).join('\n'));
+	}
 	console.log(`\n${failed === 0 ? 'ALL CHECKS PASSED' : `${failed} CHECK(S) FAILED`} - ${results.length} assertions`);
 	if (KEEP) console.log(`postgres left running: ${PG_CONTAINER} (${PG_URL})`);
 }

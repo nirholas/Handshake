@@ -9,7 +9,7 @@
 // drifted from the served copy (different limit clamping, different validation
 // message) until this guard was written.
 //
-// The guard therefore asserts both halves: every dispatcher action resolves to
+// The guard asserts both halves: every dispatcher action resolves to
 // [action].js and has a branch, and /api/kol/trades resolves to trades.js and is
 // absent from the dispatcher.
 

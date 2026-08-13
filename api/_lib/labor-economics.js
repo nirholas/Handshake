@@ -63,6 +63,33 @@ export function parseThree(value) {
 }
 
 /**
+ * Strict atomic-amount parse for UNTRUSTED input (request bodies). Returns a
+ * non-negative BigInt, or null when the value is not a whole number of atomics.
+ * toBig() above trusts its caller (it reads numeric(40,0) columns) and throws a
+ * SyntaxError on junk, which would surface to an API client as an opaque 500;
+ * every endpoint boundary parses through this instead and answers 400.
+ */
+export function parseAtomics(value) {
+	if (typeof value === 'bigint') return value >= 0n ? value : null;
+	if (typeof value === 'number') return Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : null;
+	if (typeof value !== 'string') return null;
+	const s = value.trim();
+	return /^\d+$/.test(s) ? BigInt(s) : null;
+}
+
+/**
+ * Strict $THREE-denominated parse for untrusted input: returns atomics, or null
+ * when the value is missing or not a finite non-negative number. Telling "not a
+ * number" apart from zero lets the caller say which of the two went wrong.
+ */
+export function parseThree(value) {
+	if (value === null || value === undefined || value === '') return null;
+	const n = Number(typeof value === 'string' ? value.trim() : value);
+	if (!Number.isFinite(n) || n < 0) return null;
+	return BigInt(Math.round(n * Number(ATOMICS_PER_TOKEN)));
+}
+
+/**
  * Transparent award score in [0,1]. Deterministic and explainable. A bid at or
  * above the full reward earns no price credit; a free, instant bid from a
  * perfect-reputation worker approaches 1.
