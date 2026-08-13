@@ -3864,6 +3864,20 @@ function triggerDownload(url, filename) {
 // animation-carrier rig (idle_female_jan25.glb is meshless: skeleton only).
 const PREVIEW_AVATAR_GLB = '/avatars/cz.glb';
 
+// The <agent-3d> loader ships a full Three.js bundle, and this modal stage is
+// the only place on the marketplace that renders the element. Loading it here,
+// on first modal open, keeps it off the page's critical path entirely (same
+// on-demand pattern as ensureModelViewer in src/agent-picker.js).
+let _agent3dLoaded = false;
+function ensureAgent3d() {
+	if (_agent3dLoaded || customElements.get('agent-3d')) return;
+	_agent3dLoaded = true;
+	const s = document.createElement('script');
+	s.type = 'module';
+	s.src = 'https://three.ws/agent-3d/latest/agent-3d.js';
+	document.head.appendChild(s);
+}
+
 let _animDetailId = null;
 let _animDetailEl = null;
 
@@ -3914,6 +3928,7 @@ async function loadAnimDetail(name) {
 function playAnimOnStage(anim) {
 	const stage = $('anim-detail-stage');
 	if (!stage) return;
+	ensureAgent3d();
 	teardownAnimDetailStage();
 	const load = $('anim-detail-stage-load');
 	stage.querySelectorAll('agent-3d').forEach((el) => el.remove());

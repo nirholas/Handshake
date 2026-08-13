@@ -1137,6 +1137,10 @@
 				}
 			}
 		</style>
+		<!-- Deferred, and placed BEFORE the model-viewer module: defer scripts and
+		     module scripts execute in document order, so the meshopt shim still
+		     registers its decoder before model-viewer's define runs. -->
+		<script src="/model-viewer-meshopt.js" defer></script>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -1175,7 +1179,6 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Create — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script src="/model-viewer-meshopt.js"></script>
 </head>
 	<body>
 		<div id="page-loading" aria-hidden="true">
@@ -1186,7 +1189,7 @@
 		<header>
 			<div id="nav-container"></div>
 		</header>
-		<script src="/nav.js"></script>
+		<script src="/nav.js" defer></script>
 		<!-- Bundled source module (src/shared/crypto-optional.js); self-mounts on
 		     the [data-crypto-optional] element below. -->
 		<script type="module" src="/src/shared/crypto-optional.js"></script>
@@ -1771,7 +1774,7 @@
 		</script>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
-		<script src="/footer.js"></script>
+		<script src="/footer.js" defer></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

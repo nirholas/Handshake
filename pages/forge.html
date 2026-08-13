@@ -37,6 +37,10 @@
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="preconnect" href="https://ajax.googleapis.com" />
+		<!-- Deferred, and placed BEFORE the model-viewer module: defer scripts and
+		     module scripts execute in document order, so the meshopt shim still
+		     registers its decoder before model-viewer's define runs. -->
+		<script src="/model-viewer-meshopt.js" defer></script>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -3335,7 +3339,6 @@
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Forge — Text & Image to 3D — three.ws">
-	<script src="/model-viewer-meshopt.js"></script>
 </head>
 	<body class="forge-page">
 		<div id="nav-container"></div>
@@ -4208,7 +4211,7 @@
 		<script type="module" src="/src/forge-more-like-this.js"></script>
 		<script type="module" src="/src/forge-wait.js"></script>
 		<div id="footer-container"></div>
-		<script src="/footer.js"></script>
+		<script src="/footer.js" defer></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

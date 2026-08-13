@@ -277,7 +277,8 @@ function renderOverview(host) {
 		),
 	);
 
-	// Checklist of setup steps — each links to the relevant tab.
+	// Checklist of setup steps. Each row is a real <button> so the keyboard can
+	// reach it, not a click-handling <div>.
 	const steps = [
 		{ done: payoutSet, label: 'Add a payout wallet', tab: 'wallets', hint: 'Where settled USDC lands' },
 		{ done: S.skus.length > 0, label: 'Create your first product', tab: 'products', hint: 'A paid endpoint or checkout link' },
@@ -287,10 +288,10 @@ function renderOverview(host) {
 	const checklist = el('div', { class: 'card' }, el('h2', {}, 'Get set up'), el('p', { class: 'sub' }, 'Four steps to a live x402 business.'));
 	for (const st of steps) {
 		checklist.append(
-			el('div', { class: 'list-item', style: 'cursor:pointer', onclick: () => go(st.tab) },
-				el('div', { class: 'avatar', style: `background:${st.done ? 'color-mix(in oklab,var(--success) 30%,transparent)' : 'var(--surface-3)'};color:${st.done ? 'var(--success)' : 'var(--ink-faint)'}` }, st.done ? '✓' : '○'),
-				el('div', { class: 'meta' }, el('div', { class: 't' }, st.label), el('div', { class: 's' }, st.hint)),
-				el('div', { class: 'acts' }, el('span', { class: `pill ${st.done ? 'ok' : ''}` }, st.done ? 'Done' : 'To do')),
+			el('button', { class: 'list-item step', type: 'button', onclick: () => go(st.tab) },
+				el('span', { class: 'avatar', 'aria-hidden': 'true', style: `background:${st.done ? 'color-mix(in oklab,var(--success) 30%,transparent)' : 'var(--surface-3)'};color:${st.done ? 'var(--success)' : 'var(--ink-faint)'}` }, st.done ? '✓' : '○'),
+				el('span', { class: 'meta' }, el('span', { class: 't' }, st.label), el('span', { class: 's' }, st.hint)),
+				el('span', { class: 'acts' }, el('span', { class: `pill ${st.done ? 'ok' : ''}` }, st.done ? 'Done' : 'To do')),
 			),
 		);
 	}
@@ -306,10 +307,12 @@ function renderOverview(host) {
 		for (const s of [...S.skus].sort((a, b) => Number(b.gross_atomics || 0) - Number(a.gross_atomics || 0))) {
 			tb.append(el('tr', {},
 				el('td', {}, el('b', { style: 'color:var(--ink-bright)' }, s.merchant_name || s.slug), el('div', { class: 's', style: 'color:var(--ink-dim);font-size:var(--text-sm)' }, s.action_name || '')),
-				el('td', {}, el('span', { class: 'pill' }, s.price_network || '—')),
+				el('td', {}, el('span', { class: 'pill' }, s.price_network || 'not set')),
 				el('td', {}, String(s.paid_calls || 0)),
 				el('td', {}, `$${fmtUsdc(s.gross_atomics)}`),
-				el('td', { style: 'text-align:right' }, el('a', { class: 'btn ghost sm', href: `/pay/c/${esc(s.slug)}`, target: '_blank' }, 'Open ↗')),
+				// setAttribute already handles HTML escaping; esc() here would put a
+				// literal &amp; into the URL, so the slug is encoded, not escaped.
+				el('td', { style: 'text-align:right' }, el('a', { class: 'btn ghost sm', href: `/pay/c/${encodeURIComponent(s.slug)}`, target: '_blank', rel: 'noopener' }, 'Open ↗')),
 			));
 		}
 		table.append(tb);
@@ -370,7 +373,7 @@ function productModal(sku = null) {
 	const v = sku || { target_method: 'GET', accent_color: '#0a84ff', active: true };
 	const body = el('div', {},
 		field('Display name', input({ id: 'p_merchant', value: v.merchant_name || '', placeholder: 'Acme Summaries', maxlength: 80 }), 'Shown on the checkout header'),
-		field('Action label', input({ id: 'p_action', value: v.action_name || '', placeholder: 'Summarize article', maxlength: 80 }), 'The button text — what the buyer gets'),
+		field('Action label', input({ id: 'p_action', value: v.action_name || '', placeholder: 'Summarize article', maxlength: 80 }), 'The button text: what the buyer gets'),
 		field('URL slug', input({ id: 'p_slug', value: v.slug || '', placeholder: 'acme-summarize', maxlength: 64, ...(editing ? { disabled: true } : {}) }), editing ? 'Slug is permanent' : 'Lowercase, hyphenated. Becomes /pay/c/<slug>'),
 		el('div', { class: 'cols-2' },
 			field('Paid endpoint (returns 402)', input({ id: 'p_endpoint', value: v.target_endpoint || '', placeholder: 'https://api.acme.com/paid/x', type: 'url' })),
@@ -424,7 +427,7 @@ async function saveProduct(editing, sku, close) {
 			await api(`/api/x402-skus?id=${sku.id}`, { method: 'PATCH', body: patch });
 		} else {
 			patch.slug = $('#p_slug').value.trim();
-			if (!/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(patch.slug)) throw new Error('Slug must be lowercase, hyphenated, 3–64 chars');
+			if (!/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(patch.slug)) throw new Error('Slug must be lowercase, hyphenated, 3 to 64 chars');
 			await api('/api/x402-skus', { method: 'POST', body: patch });
 		}
 		const { skus } = await api('/api/x402-skus');
@@ -455,7 +458,7 @@ function renderWallets(host) {
 	const m = S.settings || {};
 	host.innerHTML = '';
 
-	// Payout wallets — where settled funds land.
+	// Payout wallets: where settled funds land.
 	const payout = el('div', { class: 'card' },
 		el('h2', {}, 'Payout wallets'),
 		el('p', { class: 'sub' }, 'The most important setting on the platform: where settled USDC arrives. A wrong address sends real money to the wrong place.'),
@@ -468,10 +471,10 @@ function renderWallets(host) {
 	);
 	host.append(payout);
 
-	// Agent wallets — the fleet that auto-pays / receives with per-wallet caps.
+	// Agent wallets: the fleet that auto-pays / receives with per-wallet caps.
 	const agentCard = el('div', { class: 'card' },
 		el('div', { class: 'section-head' },
-			el('div', {}, el('h2', {}, 'Agent wallets'), el('p', { class: 'sub', style: 'margin:0' }, 'Named on-chain identities authorized to auto-pay (buyer) or receive (seller) on your behalf — each capped independently. The heart of an autonomous x402 business.')),
+			el('div', {}, el('h2', {}, 'Agent wallets'), el('p', { class: 'sub', style: 'margin:0' }, 'Named on-chain identities authorized to auto-pay (buyer) or receive (seller) on your behalf, each capped independently. The heart of an autonomous x402 business.')),
 			el('span', { class: 'spacer' }),
 			el('button', { class: 'btn primary sm', onclick: () => agentWalletModal() }, '+ Add agent wallet'),
 		),
@@ -483,9 +486,11 @@ function renderWallets(host) {
 		for (const w of wallets) {
 			agentCard.append(
 				el('div', { class: 'list-item' },
-					el('div', { class: 'avatar', style: `background:${w.role === 'payer' ? 'linear-gradient(135deg,#6366f1,#0a84ff)' : 'linear-gradient(135deg,#10b981,#059669)'}` }, w.role === 'payer' ? '↑' : '↓'),
+					el('div', { class: 'avatar', 'aria-hidden': 'true', style: `background:${w.role === 'payer' ? 'linear-gradient(135deg,#6366f1,#0a84ff)' : 'linear-gradient(135deg,#10b981,#059669)'}` }, w.role === 'payer' ? '↑' : '↓'),
 					el('div', { class: 'meta' },
-						el('div', { class: 't' }, esc(w.label), el('span', { class: `pill ${w.enabled ? 'ok' : 'warn'}`, style: 'margin-left:8px' }, w.enabled ? 'enabled' : 'paused')),
+						// A text node escapes itself; esc() here would surface a literal
+						// &amp; in a label the merchant typed.
+						el('div', { class: 't' }, w.label, el('span', { class: `pill ${w.enabled ? 'ok' : 'warn'}`, style: 'margin-left:8px' }, w.enabled ? 'enabled' : 'paused')),
 						el('div', { class: 's mono' }, `${w.chain} · ${w.role} · ${shortAddr(w.address)}${w.per_call_cap_atomics ? ` · ≤$${fmtUsdc(w.per_call_cap_atomics)}/call` : ''}${w.daily_cap_atomics ? ` · ≤$${fmtUsdc(w.daily_cap_atomics)}/day` : ''}`),
 					),
 					el('div', { class: 'acts' },
@@ -498,7 +503,7 @@ function renderWallets(host) {
 	}
 	host.append(agentCard);
 
-	// Move money — deposit (receive) + send USDC by name/address via Phantom.
+	// Move money: deposit (receive) + send USDC by name/address via Phantom.
 	host.append(renderMoneyTools(m));
 }
 
@@ -609,14 +614,14 @@ function agentWalletModal(w = null) {
 		field('Label', input({ id: 'aw_label', value: v.label || '', placeholder: 'Research autopay', maxlength: 60 })),
 		el('div', { class: 'cols-2' },
 			field('Chain', select('aw_chain', ['solana', 'base'], v.chain || 'solana')),
-			field('Role', select('aw_role', ['payer', 'payout'], v.role || 'payer', { payer: 'payer — auto-pays for services', payout: 'payout — receives funds' })),
+			field('Role', select('aw_role', ['payer', 'payout'], v.role || 'payer', { payer: 'payer (auto-pays for services)', payout: 'payout (receives funds)' })),
 		),
 		field('Address', input({ id: 'aw_addr', value: v.address || '', placeholder: 'wallet address', class: 'mono' }), 'Must match the chain above'),
 		el('div', { class: 'cols-2' },
 			field('Per-call cap (USDC)', input({ id: 'aw_call', value: v.per_call_cap_atomics ? fmtUsdc(v.per_call_cap_atomics) : '', type: 'number', min: '0', step: '0.01', placeholder: 'no cap' }), 'Max a single payment may move'),
 			field('Daily cap (USDC)', input({ id: 'aw_day', value: v.daily_cap_atomics ? fmtUsdc(v.daily_cap_atomics) : '', type: 'number', min: '0', step: '0.01', placeholder: 'no cap' }), 'Max in a rolling 24h'),
 		),
-		field('', switchEl('aw_enabled', v.enabled !== false, 'Enabled — may transact')),
+		field('', switchEl('aw_enabled', v.enabled !== false, 'Enabled (may transact)')),
 	);
 	const close = openModal(editing ? 'Edit agent wallet' : 'Add agent wallet', body, [
 		el('span', { class: 'spacer', style: 'margin-left:auto' }),
@@ -783,7 +788,7 @@ function renderSettings(host) {
 		el('button', { class: 'btn primary', id: 's_cors_save', onclick: saveCors }, 'Save origins'),
 	));
 
-	// Developer — facilitator, webhook, API key
+	// Developer: facilitator, webhook, API key
 	const keyState = m.api_key_prefix
 		? el('div', { class: 'list-item' },
 			el('div', { class: 'meta' }, el('div', { class: 't mono' }, `${m.api_key_prefix}……`), el('div', { class: 's' }, m.api_key_created_at ? `created ${new Date(m.api_key_created_at).toLocaleDateString()}` : 'active')),
@@ -797,7 +802,7 @@ function renderSettings(host) {
 			field('Settlement webhook (optional)', input({ id: 's_hook', value: m.webhook_url || '', placeholder: 'https://acme.com/webhooks/x402', type: 'url' })),
 		),
 		el('button', { class: 'btn primary', id: 's_dev_save', onclick: saveDeveloper, style: 'margin-bottom:16px' }, 'Save developer'),
-		el('label', { class: 'field', style: 'margin:0' }, el('span', { style: 'font-size:var(--text-sm);color:var(--ink-dim);font-weight:500' }, 'API key')),
+		el('div', { class: 'field', style: 'margin:0' }, el('span', { class: 'flab' }, 'API key')),
 		keyState,
 	));
 }
@@ -861,7 +866,7 @@ async function rotateKey() {
 		const { settings } = await api('/api/x402-merchant');
 		S.settings = settings;
 		const close = openModal('Your new API key', el('div', {},
-			el('p', { class: 'sub' }, 'Copy it now — it is shown once and stored only as a hash.'),
+			el('p', { class: 'sub' }, 'Copy it now. It is shown once and stored only as a hash.'),
 			el('div', { class: 'code' }, api_key, el('button', { class: 'btn primary sm copy', onclick: () => copy(api_key, 'API key copied') }, 'Copy')),
 		), [el('span', { class: 'spacer', style: 'margin-left:auto' }), el('button', { class: 'btn primary', onclick: () => { close(); renderSettings($('#sec-settings')); } }, 'Done')]);
 	} catch (e) { toast(e.message, 'err'); }
@@ -875,19 +880,22 @@ const BLOCK_TYPES = [
 	{ type: 'text', ic: '¶', label: 'Text' },
 	{ type: 'image', ic: '▣', label: 'Image' },
 	{ type: 'button', ic: '⬢', label: 'Button' },
-	{ type: 'divider', ic: '—', label: 'Divider' },
+	{ type: 'divider', ic: '─', label: 'Divider' },
 	{ type: 'footer', ic: '▭', label: 'Footer' },
 ];
 
 function renderStore(host) {
 	const m = S.settings || {};
-	S.layout = JSON.parse(JSON.stringify(m.store_layout || []));
+	// Unsaved blocks survive a trip to another tab; only a clean canvas is
+	// re-cloned from the saved settings.
+	if (!S.layoutDirty || !S.layout) S.layout = JSON.parse(JSON.stringify(m.store_layout || []));
 	host.innerHTML = '';
 
 	host.append(el('div', { class: 'card' },
 		el('div', { class: 'section-head' },
-			el('div', {}, el('h2', {}, 'Storefront builder'), el('p', { class: 'sub', style: 'margin:0' }, 'Drag blocks onto the canvas, reorder, and publish a shareable storefront — like a Shopify page for your x402 products.')),
+			el('div', {}, el('h2', {}, 'Storefront builder'), el('p', { class: 'sub', style: 'margin:0' }, 'Drag blocks onto the canvas, reorder, and publish a shareable storefront, like a Shopify page for your x402 products.')),
 			el('span', { class: 'spacer' }),
+			S.layoutDirty ? el('span', { class: 'pill warn' }, 'Unsaved changes') : null,
 			el('span', { class: `pill ${m.store_published ? 'ok' : ''}` }, m.store_published ? 'Published' : 'Draft'),
 		),
 		el('div', { class: 'cols-2' },
@@ -919,14 +927,23 @@ function renderStore(host) {
 
 function addBlock(type) {
 	const block = { id: uid('b'), type };
-	if (type === 'hero') { block.heading = S.settings.business_name || 'Welcome'; block.subheading = 'Pay with USDC — settled on-chain.'; block.align = 'center'; }
+	if (type === 'hero') { block.heading = S.settings.business_name || 'Welcome'; block.subheading = 'Pay with USDC, settled on-chain.'; block.align = 'center'; }
 	if (type === 'text') block.body = 'Tell buyers what you offer.';
 	if (type === 'button') { block.label = 'Get started'; block.href = location.origin; }
 	if (type === 'products') block.sku_ids = S.skus.filter((s) => s.active).slice(0, 12).map((s) => s.id);
 	if (type === 'product') block.sku_id = S.skus.find((s) => s.active)?.id;
 	if (type === 'footer') block.body = `© ${S.settings.business_name || 'your store'}`;
 	S.layout.push(block);
-	drawCanvas();
+	markLayoutDirty();
+}
+
+// Every canvas mutation routes through here so the "Unsaved changes" pill and
+// the keep-across-tabs behaviour can never drift from the actual edits.
+function markLayoutDirty() {
+	const wasDirty = S.layoutDirty;
+	S.layoutDirty = true;
+	if (wasDirty) drawCanvas();
+	else renderStore($('#sec-store'));
 }
 
 function drawCanvas() {
@@ -946,10 +963,10 @@ function drawCanvas() {
 			el('div', { class: 'bhead' },
 				el('span', { class: 'type' }, b.type),
 				el('div', { class: 'acts' },
-					el('button', { title: 'Move up', onclick: () => moveBlock(i, Math.max(0, i - 1)) }, '↑'),
-					el('button', { title: 'Move down', onclick: () => moveBlock(i, Math.min(S.layout.length - 1, i + 1)) }, '↓'),
-					el('button', { title: 'Edit', onclick: () => blockModal(b) }, '✎'),
-					el('button', { title: 'Remove', onclick: () => { S.layout.splice(i, 1); drawCanvas(); } }, '✕'),
+					el('button', { title: 'Move up', 'aria-label': `Move ${b.type} block up`, disabled: i === 0 || undefined, onclick: () => moveBlock(i, Math.max(0, i - 1)) }, '↑'),
+					el('button', { title: 'Move down', 'aria-label': `Move ${b.type} block down`, disabled: i === S.layout.length - 1 || undefined, onclick: () => moveBlock(i, Math.min(S.layout.length - 1, i + 1)) }, '↓'),
+					el('button', { title: 'Edit', 'aria-label': `Edit ${b.type} block`, onclick: () => blockModal(b) }, '✎'),
+					el('button', { title: 'Remove', 'aria-label': `Remove ${b.type} block`, onclick: () => { S.layout.splice(i, 1); markLayoutDirty(); } }, '✕'),
 				)),
 			el('div', { class: 'bprev' }, blockPreview(b)),
 		);
@@ -960,16 +977,16 @@ function moveBlock(from, to) {
 	if (from === to) return;
 	const [m] = S.layout.splice(from, 1);
 	S.layout.splice(to, 0, m);
-	drawCanvas();
+	markLayoutDirty();
 }
 function blockPreview(b) {
-	if (b.type === 'hero') return `${b.heading || ''} — ${b.subheading || ''}`;
+	if (b.type === 'hero') return `${b.heading || ''} / ${b.subheading || ''}`;
 	if (b.type === 'text' || b.type === 'footer') return (b.body || '').slice(0, 120);
 	if (b.type === 'button') return `[ ${b.label || 'Button'} ] → ${b.href || ''}`;
 	if (b.type === 'image') return b.image_url ? b.image_url : '(no image set)';
 	if (b.type === 'products') return `${(b.sku_ids || []).length} product${(b.sku_ids || []).length === 1 ? '' : 's'}`;
 	if (b.type === 'product') { const s = S.skus.find((x) => x.id === b.sku_id); return s ? `${s.merchant_name} · ${s.action_name}` : '(pick a product)'; }
-	if (b.type === 'divider') return '———';
+	if (b.type === 'divider') return '───';
 	return '';
 }
 
@@ -1002,7 +1019,7 @@ function blockModal(b) {
 	const close = openModal(`Edit ${b.type}`, el('div', {}, ...fields), [
 		el('span', { class: 'spacer', style: 'margin-left:auto' }),
 		el('button', { class: 'btn ghost', onclick: () => close() }, 'Cancel'),
-		el('button', { class: 'btn primary', onclick: () => { applyBlock(b); close(); drawCanvas(); } }, 'Apply'),
+		el('button', { class: 'btn primary', onclick: () => { applyBlock(b); close(); markLayoutDirty(); } }, 'Apply'),
 	]);
 }
 function applyBlock(b) {
@@ -1011,14 +1028,16 @@ function applyBlock(b) {
 	else if (b.type === 'button') { b.label = $('#bk_label').value; b.href = $('#bk_href').value; }
 	else if (b.type === 'image') b.image_url = $('#bk_img').value;
 	else if (b.type === 'product') b.sku_id = $('#bk_sku').value;
-	else if (b.type === 'products') b.sku_ids = $$('#root input[data-sku]:checked').map((i) => i.dataset.sku);
+	// The checkboxes live in the modal, which is appended to <body> next to
+	// #root, not inside it. Scoping this to #root silently saved an empty grid.
+	else if (b.type === 'products') b.sku_ids = $$('.scrim input[data-sku]:checked').map((i) => i.dataset.sku);
 }
 
 async function saveStore(publish) {
 	try {
 		const handle = $('#st_handle').value.trim().toLowerCase();
 		if (publish && !handle) throw new Error('Set a store handle before publishing');
-		if (handle && !/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(handle)) throw new Error('Handle must be lowercase, hyphenated, 3–40 chars');
+		if (handle && !/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(handle)) throw new Error('Handle must be lowercase, hyphenated, 3 to 40 chars');
 		// Strip empty image/button blocks the API would reject (httpsUrl required).
 		const layout = S.layout.filter((b) => {
 			if (b.type === 'image') return !!b.image_url;
@@ -1037,6 +1056,7 @@ async function saveStore(publish) {
 		if (handle) patch.store_handle = handle;
 		if (publish) patch.store_published = true;
 		await saveSettings(patch, publish ? 'Storefront published' : 'Draft saved');
+		S.layoutDirty = false;
 		renderStore($('#sec-store'));
 	} catch (e) {
 		toast(e.message, 'err');
@@ -1057,7 +1077,7 @@ function renderEmbed(host) {
 
 	host.append(el('div', { class: 'card' },
 		el('h2', {}, 'Embed builder'),
-		el('p', { class: 'sub' }, 'Configure a pay button and drop it onto any website — Wix, Shopify, a landing page, anywhere. It opens the x402 modal and settles in USDC.'),
+		el('p', { class: 'sub' }, 'Configure a pay button and drop it onto any website: Wix, Shopify, a landing page, anywhere. It opens the x402 modal and settles in USDC.'),
 		el('div', { class: 'cols-2' },
 			field('Product', selectFromSkus('em_sku', EMBED.sku)),
 			field('Button label', input({ id: 'em_label', placeholder: 'auto from product', value: EMBED.label })),
@@ -1144,11 +1164,19 @@ function drawEmbed() {
 }
 
 // ---------------------------------------------------------------- ui kit ------
+// A labelled control. The wrapper is a <div>, never a <label>: half the controls
+// here (the switches, the network checkboxes) are labels themselves, and a label
+// nested in a label is invalid markup that screen readers announce twice. The
+// caption points at the control with `for` when the control has an id, which is
+// the association an implicit wrapper was standing in for.
 function field(label, control, hint) {
-	return el('label', { class: 'field' },
-		label ? el('span', {}, label) : null,
+	const target = control.matches?.('input, select, textarea') ? control : control.querySelector?.('input, select, textarea');
+	const hintId = hint ? uid('h') : null;
+	if (hint && target?.id) target.setAttribute('aria-describedby', hintId);
+	return el('div', { class: 'field' },
+		label ? el(target?.id ? 'label' : 'span', { class: 'flab', ...(target?.id ? { for: target.id } : {}) }, label) : null,
 		control,
-		hint ? el('span', { class: 'hint' }, hint) : null);
+		hint ? el('span', { class: 'hint', id: hintId }, hint) : null);
 }
 function input(attrs) { return el('input', attrs); }
 function textarea(attrs) { const t = el('textarea', { ...attrs }); if (attrs.value) t.value = attrs.value; return t; }
@@ -1164,17 +1192,59 @@ function switchEl(id, checked, label) {
 }
 
 let scrim;
+let openDialog = null;
+
+// One dialog is open at a time. It is a real ARIA dialog: Escape closes it, Tab
+// stays inside it, focus lands on the first control and returns to whatever
+// opened it, so a keyboard user is never stranded behind the scrim.
 function openModal(title, bodyNode, actions) {
-	if (!scrim) { scrim = el('div', { class: 'scrim', onclick: (e) => { if (e.target === scrim) close(); } }); document.body.append(scrim); }
-	const modal = el('div', { class: 'modal' },
-		el('header', {}, el('h3', {}, title), el('button', { class: 'x', onclick: () => close() }, '×')),
+	if (!scrim) {
+		scrim = el('div', { class: 'scrim', onclick: (e) => { if (e.target === scrim) openDialog?.close(); } });
+		document.body.append(scrim);
+		document.addEventListener('keydown', onModalKey);
+	}
+	const titleId = uid('mt');
+	const modal = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId },
+		el('header', {}, el('h3', { id: titleId }, title), el('button', { class: 'x', type: 'button', 'aria-label': 'Close dialog', onclick: () => close() }, '×')),
 		el('div', { class: 'body' }, bodyNode),
 		el('div', { class: 'actions' }, ...actions.filter(Boolean)));
+
+	const returnFocus = document.activeElement;
+	openDialog?.close();
 	scrim.innerHTML = '';
 	scrim.append(modal);
 	scrim.classList.add('show');
-	function close() { scrim.classList.remove('show'); scrim.innerHTML = ''; }
+
+	function close() {
+		if (openDialog?.close !== close) return;
+		openDialog = null;
+		scrim.classList.remove('show');
+		scrim.innerHTML = '';
+		if (returnFocus?.isConnected) returnFocus.focus();
+	}
+	openDialog = { modal, close };
+
+	const first = focusables(modal)[0];
+	(first || modal).focus?.();
 	return close;
+}
+
+function focusables(root) {
+	return $$('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', root)
+		.filter((n) => n.offsetParent !== null || n === document.activeElement);
+}
+
+function onModalKey(e) {
+	if (!openDialog) return;
+	if (e.key === 'Escape') { e.preventDefault(); openDialog.close(); return; }
+	if (e.key !== 'Tab') return;
+	const items = focusables(openDialog.modal);
+	if (!items.length) return;
+	const first = items[0];
+	const last = items[items.length - 1];
+	if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+	else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+	else if (!openDialog.modal.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
 }
 
 // Load the x402 modal script once so the embed preview button is live.

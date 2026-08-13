@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-<script>/* three.ws theme boot — no-flash */(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.dataset.theme='light';}catch(e){}})();</script>
+<script>/* three.ws theme boot: no-flash */(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.dataset.theme='light';}catch(e){}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title data-i18n="x402_studio.meta_title">x402 Studio · three.ws</title>
-<meta name="description" content="The Stripe of x402. Configure prices, payout and agent wallets, products, security, CORS, charity and round-up giving — and publish a drag-and-drop storefront. All settled on-chain in USDC."  data-i18n-attr="content:x402_studio.meta_description"/>
-<meta property="og:title" content="x402 Studio — the Stripe of x402"  data-i18n-attr="content:x402_studio.meta_og_title"/>
+<meta name="description" content="The Stripe of x402. Configure prices, payout and agent wallets, products, security, CORS, charity and round-up giving, and publish a drag-and-drop storefront. All settled on-chain in USDC."  data-i18n-attr="content:x402_studio.meta_description"/>
+<meta property="og:title" content="x402 Studio: the Stripe of x402"  data-i18n-attr="content:x402_studio.meta_og_title"/>
 <meta property="og:description" content="Run a paid x402 business: agent wallets, products, a drag-and-drop storefront, charity + round-up giving. On-chain USDC settlement."  data-i18n-attr="content:x402_studio.meta_og_description"/>
 <meta property="og:type" content="website" />
 <link rel="icon" href="/favicon.ico" />
@@ -28,6 +28,13 @@ body {
 a { color: inherit; text-decoration: none; }
 h1,h2,h3,h4 { font-family: var(--font-display); margin: 0; color: var(--ink-bright); font-weight: var(--weight-semibold); letter-spacing: -0.01em; }
 button { font-family: inherit; }
+/* One explicit keyboard focus ring for every control, so the indicator never
+   depends on a UA default that a background or border rule can swallow. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+	border-radius: var(--radius-sm, 6px);
+}
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--stroke-strong); border-radius: 99px; }
 
@@ -88,7 +95,8 @@ button { font-family: inherit; }
 .row { display: flex; gap: var(--space-3); flex-wrap: wrap; }
 .grid { display: grid; gap: var(--space-3); }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--space-3); }
-.field label { font-size: var(--text-sm); color: var(--ink-dim); font-weight: 500; }
+.field > .flab { font-size: var(--text-sm); color: var(--ink-dim); font-weight: 500; }
+.field > label.flab { cursor: pointer; }
 .field .hint { font-size: var(--text-2xs); color: var(--ink-faint); }
 input, select, textarea {
 	width: 100%; padding: 9px 11px; background: var(--bg-1); color: var(--ink-bright);
@@ -134,10 +142,16 @@ tr:last-child td { border-bottom: 0; }
 
 .empty { text-align: center; padding: var(--space-7) var(--space-4); color: var(--ink-dim); }
 .empty .ico { font-size: 30px; opacity: .5; margin-bottom: 10px; }
-.empty h3 { color: var(--ink); margin-bottom: 6px; }
+.empty h1, .empty h3 { color: var(--ink); margin-bottom: 6px; }
+.empty .row { justify-content: center; }
 
 .list-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--stroke); border-radius: var(--radius-md); background: var(--surface-1); }
 .list-item + .list-item { margin-top: 8px; }
+/* The setup checklist rows are <button>s, so they need the element reset a div
+   never did: full width, inherited type, left-aligned text. */
+.list-item.step { width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.list-item.step:hover { background: var(--surface-2); border-color: var(--stroke-strong); }
+.list-item .meta .t, .list-item .meta .s { display: block; }
 .list-item .avatar { width: 38px; height: 38px; border-radius: var(--radius-md); display: grid; place-items: center; font-weight: 700; color: #fff; flex: none; overflow: hidden; }
 .list-item .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .list-item .meta { min-width: 0; flex: 1; }
@@ -200,16 +214,33 @@ tr:last-child td { border-bottom: 0; }
 .banner { display: flex; gap: 10px; align-items: flex-start; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--stroke); background: var(--surface-1); font-size: var(--text-md); color: var(--ink-dim); margin-bottom: var(--space-4); }
 .banner.warn { border-color: color-mix(in oklab, var(--warn) 40%, transparent); background: color-mix(in oklab, var(--warn) 10%, transparent); }
 .banner .ic { flex: none; }
-.section-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+/* Wraps rather than crushing the description into a one-word column when the
+   header and its action button cannot share a line (phone widths). */
+.section-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; }
+.section-head > div:first-child { flex: 1 1 260px; min-width: 0; }
 .section-head .spacer { margin-left: auto; }
+@media (max-width: 560px) {
+	.section-head .spacer { display: none; }
+	.section-head > .btn { flex: 1 1 100%; justify-content: center; }
+}
 
 @media (max-width: 860px) {
 	.app { grid-template-columns: 1fr; }
-	.side { position: static; height: auto; flex-direction: row; align-items: center; overflow-x: auto; padding: 8px; }
-	.side .brand, .side .foot { display: none; }
-	.nav { flex-direction: row; gap: 4px; }
+	/* min-width:0 is load-bearing: a grid item defaults to min-width:auto, so the
+	   tab strip's intrinsic width would stretch the whole shell past the
+	   viewport and clip every card to its right. */
+	.side { position: static; height: auto; align-items: stretch; padding: 8px; min-width: 0; }
+	.side .brand { display: none; }
+	/* The rail collapses to a scrolling tab strip, but its two outbound links
+	   stay on the page: hiding them made /x402 and the classic dashboard
+	   unreachable from a phone. */
+	.side .foot { margin-top: 6px; padding: 0 8px 2px; }
+	.nav { flex-direction: row; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+	.nav::-webkit-scrollbar { display: none; }
 	.nav .sep { display: none; }
-	.nav button { white-space: nowrap; }
+	.nav button { white-space: nowrap; width: auto; }
+	.topbar { padding: 12px var(--space-4); }
+	.content { padding: var(--space-4); }
 }
 </style>
 
@@ -222,19 +253,19 @@ tr:last-child td { border-bottom: 0; }
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:type" content="image/png">
-	<meta property="og:image:alt" content="x402 Studio — the Stripe of x402 — three.ws">
+	<meta property="og:image:alt" content="x402 Studio: the Stripe of x402 - three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="x402 Studio — the Stripe of x402 · three.ws" data-i18n-attr="content:x402_studio.meta_twitter_title">
+	<meta name="twitter:title" content="x402 Studio: the Stripe of x402 · three.ws" data-i18n-attr="content:x402_studio.meta_twitter_title">
 	<meta name="twitter:description" content="Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security." data-i18n-attr="content:x402_studio.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Studio%3A+the+Stripe+of+x402&amp;d=Merchant+console+to+run+a+paid+x402+business%3A+products+and+pricing%2C+payout+and+agent+wallets%2C+a+real+USDC+send%2Freceive+with+SNS+.sol+resolution%2C+a&amp;p=%2Fx402%2Fstudio">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"x402 Studio — the Stripe of x402","description":"Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.","url":"https://three.ws/x402/studio","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=x402+Studio+%E2%80%94+the+Stripe+of+x402&d=Merchant+console+to+run+a+paid+x402+business%3A+products+and+pricing%2C+payout+and+agent+wallets%2C+a+real+USDC+send%2Freceive+with+SNS+.sol+resolution%2C+a+drag-and-drop&p=%2Fx402%2Fstudio"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"X402","item":"https://three.ws/x402"},{"@type":"ListItem","position":3,"name":"Studio","item":"https://three.ws/x402/studio"}]}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"x402 Studio: the Stripe of x402","description":"Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.","url":"https://three.ws/x402/studio","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=x402+Studio%3A+the+Stripe+of+x402&d=Merchant+console+to+run+a+paid+x402+business%3A+products+and+pricing%2C+payout+and+agent+wallets%2C+a+real+USDC+send%2Freceive+with+SNS+.sol+resolution%2C+a+drag-and-drop&p=%2Fx402%2Fstudio"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"X402","item":"https://three.ws/x402"},{"@type":"ListItem","position":3,"name":"Studio","item":"https://three.ws/x402/studio"}]}]}</script>
 </head>
 <body>
 <div id="root">
 	<div class="empty" style="min-height:100dvh;display:grid;place-content:center;">
 		<div class="skeleton" style="width:220px;height:24px;margin:0 auto 12px"></div>
-		<div class="sub">Loading x402 Studio…</div>
+		<h1 class="sub" style="font-size:var(--text-md);font-weight:500">Loading x402 Studio…</h1>
 	</div>
 </div>
 <div class="toasts" id="toasts"></div>

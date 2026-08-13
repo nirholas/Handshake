@@ -3096,13 +3096,16 @@
 		 data-i18n-attr="content:marketplace.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Marketplace&amp;d=Buy+access+to+agents%2C+skills%2C+and+avatars+from+other+creators.&amp;p=%2Fmarketplace" />
 
+		<!-- Deferred, and placed BEFORE the model-viewer module: defer scripts and
+		     module scripts execute in document order, so the meshopt shim still
+		     registers its decoder before model-viewer's define runs. -->
+		<script src="/model-viewer-meshopt.js" defer></script>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
 			integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw"
 			crossorigin="anonymous"
 		></script>
-		<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="stylesheet" href="/mobile.css" />
@@ -3124,12 +3127,11 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Marketplace — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script src="/model-viewer-meshopt.js"></script>
 </head>
 	<body class="market-page">
 		<a class="skip-link" href="#main-content" data-i18n="marketplace.skip_to_content">Skip to content</a>
 		<div id="nav-container"></div>
-		<script src="/nav.js"></script>
+		<script src="/nav.js" defer></script>
 
 		<aside class="market-sidebar" id="market-sidebar">
 			<a href="/" class="market-logo">
@@ -5052,7 +5054,7 @@
 		</div>
 
 		<div id="footer-container"></div>
-		<script src="/footer.js"></script>
+		<script src="/footer.js" defer></script>
 		<script src="/brand.js" defer></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

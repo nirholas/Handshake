@@ -31,6 +31,10 @@
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<!-- Deferred, and placed BEFORE the model-viewer module: defer scripts and
+		     module scripts execute in document order, so the meshopt shim still
+		     registers its decoder before model-viewer's define runs. -->
+		<script src="/model-viewer-meshopt.js" defer></script>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"
@@ -56,13 +60,12 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Discover — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script src="/model-viewer-meshopt.js"></script>
 </head>
 	<body class="features-page explore-page">
 		<header>
 			<div id="nav-container"></div>
 		</header>
-		<script src="/nav.js"></script>
+		<script src="/nav.js" defer></script>
 
 		<main class="features-main explore-main">
 			<section class="explore-hero">

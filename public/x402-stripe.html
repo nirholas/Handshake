@@ -158,7 +158,11 @@
 		background: var(--border); border: 1px solid var(--border); border-radius: 14px;
 		overflow: hidden; margin-top: 40px;
 	}
-	@media (max-width: 720px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+	@media (max-width: 720px) {
+		.stats { grid-template-columns: repeat(2, 1fr); }
+		/* Five stats in two columns leave a dead cell; let the last one fill it. */
+		.stats .stat:last-child { grid-column: 1 / -1; }
+	}
 	.stat { background: var(--panel); padding: 16px 18px; }
 	.stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-2); margin-bottom: 7px; }
 	.stat .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
@@ -380,6 +384,11 @@
 	.tabs button:hover { color: var(--text); }
 	.tabs button.active { color: var(--text); border-bottom-color: var(--accent-blue); }
 	.codeblock { background: var(--code-bg); border: 1px solid var(--border); border-radius: 11px; padding: 14px 16px; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: #c8ccd4; white-space: pre; overflow-x: auto; position: relative; }
+	/* The floating Copy button would sit on top of the first line of code, and
+	   the drawer is never wide enough for that line to clear it. Reserve a row
+	   for the button rather than letting code scroll underneath it. */
+	.codeblock { padding-top: 42px; }
+	@media (max-width: 640px) { .snippet { padding-top: 42px; } }
 
 	.result { margin-top: 16px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 11px; padding: 14px 16px; font-size: 12.5px; display: none; }
 	.result.show { display: block; animation: rise 0.3s var(--ease); }
@@ -565,7 +574,7 @@
 
 <!-- Detail drawer -->
 <div class="overlay" id="drawerOverlay"></div>
-<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle"></aside>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" inert></aside>
 
 <div class="toast" id="toast">copied</div>
 
@@ -784,6 +793,7 @@
 	}
 
 	function skeletonGrid() {
+		$('#grid').style.display = 'grid';
 		$('#grid').innerHTML = Array.from({ length: 8 }).map(() =>
 			`<div class="card sk-card"><div class="top"><div class="l" style="width:60px"></div><div class="l" style="width:44px"></div></div><div class="l" style="width:70%;height:16px"></div><div class="l" style="width:100%"></div><div class="l" style="width:90%"></div><div class="l" style="width:40%"></div></div>`
 		).join('');
@@ -820,7 +830,10 @@
 		const url = 'https://three.ws' + item.path;
 		const fields = item.method === 'GET' ? item.params : item.bodyProps;
 		const sample = {};
-		fields.forEach((f) => { if (f.required || f.default != null) sample[f.name] = f.default != null ? f.default : (f.example != null ? f.example : (f.enum ? f.enum[0] : (f.type === 'string' ? '…' : 0))); });
+		// An ASCII placeholder, not a typographic ellipsis: the sample values get
+		// URL-encoded into the query string and "%E2%80%A6" tells a reader nothing.
+		const placeholder = (f) => (f.type === 'string' ? 'YOUR_' + String(f.name).replace(/[^A-Za-z0-9]+/g, '_').toUpperCase() : 0);
+		fields.forEach((f) => { if (f.required || f.default != null) sample[f.name] = f.default != null ? f.default : (f.example != null ? f.example : (f.enum ? f.enum[0] : placeholder(f))); });
 		if (lang === 'js') {
 			return `// Load once: <script type="module" src="https://three.ws/x402.js">\nconst { result, payment } = await window.X402.pay({\n  endpoint: '${item.path}',\n  method: '${item.method}',${item.method === 'POST' ? `\n  body: ${JSON.stringify(sample, null, 2).split('\n').join('\n  ')},` : Object.keys(sample).length ? `\n  // query: ${new URLSearchParams(sample).toString()}` : ''}\n});\nconsole.log(result, payment.transaction);`;
 		}
@@ -1023,12 +1036,36 @@
 	}
 
 	// ── Copy + toast ─────────────────────────────────────────────────────────
+	// navigator.clipboard is unavailable on insecure origins and can be denied by
+	// permission policy, so fall back to a selection copy before giving up. The
+	// button label is always restored, whichever branch ran.
+	function legacyCopy(text) {
+		const ta = document.createElement('textarea');
+		ta.value = text || '';
+		ta.setAttribute('readonly', '');
+		ta.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+		document.body.appendChild(ta);
+		ta.select();
+		let ok = false;
+		try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+		ta.remove();
+		return ok;
+	}
 	async function copyText(text, btn) {
+		let ok = false;
 		try {
-			await navigator.clipboard.writeText(text || '');
-			if (btn) { const o = btn.textContent; btn.textContent = '✓ Copied'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = o; btn.classList.remove('copied'); }, 1600); }
-			toast('Copied to clipboard');
-		} catch (e) { if (btn) btn.textContent = 'copy failed'; }
+			if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text || ''); ok = true; }
+		} catch (e) { ok = false; }
+		if (!ok) ok = legacyCopy(text);
+		if (btn) {
+			const label = btn.dataset.label || btn.textContent;
+			btn.dataset.label = label;
+			btn.textContent = ok ? '✓ Copied' : 'Copy failed';
+			btn.classList.toggle('copied', ok);
+			clearTimeout(btn._copyT);
+			btn._copyT = setTimeout(() => { btn.textContent = label; btn.classList.remove('copied'); }, 1600);
+		}
+		toast(ok ? 'Copied to clipboard' : 'Copy blocked by the browser, select the text and copy it manually');
 	}
 	let toastT;
 	function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1700); }
@@ -1046,8 +1083,12 @@
 		$('#sortSelect').addEventListener('change', (e) => { state.sort = e.target.value; renderGrid(); });
 		$$('.copy-btn[data-copy]').forEach((btn) => btn.addEventListener('click', () => copyText($('#' + btn.dataset.copy).textContent, btn)));
 		const nav = $('#nav'); const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8); onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
+		window.addEventListener('hashchange', openFromHash);
 
 		document.addEventListener('keydown', (e) => {
+			// The x402 checkout modal owns the keyboard while it is up: Escape must
+			// dismiss the payment, not the drawer holding its result behind it.
+			if ($('.x402-overlay.x402-open')) return;
 			const palOpen = $('#palette').classList.contains('show');
 			const drawerOpen = $('#drawer').classList.contains('show');
 			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palOpen ? closePalette() : openPalette(); return; }
@@ -1061,10 +1102,13 @@
 		});
 	}
 
+	// `#run=<path>` deep links open the drawer. Also fires on hashchange so a
+	// shared link clicked from inside the page works, not just a cold load.
 	function openFromHash() {
 		const m = /#run=([^&]+)/.exec(location.hash);
 		if (!m) return;
-		const path = decodeURIComponent(m[1]);
+		let path;
+		try { path = decodeURIComponent(m[1]); } catch (e) { return; }
 		const item = CATALOG.find((c) => c.path === path);
 		if (item) openDrawer(item.id);
 	}
@@ -1076,6 +1120,7 @@
 		STATS = stats.status === 'fulfilled' ? stats.value : null;
 		if (cat.status !== 'fulfilled' || !cat.value.length) { renderStats(); catalogError(); return; }
 		CATALOG = cat.value;
+		indexCalls();
 		renderStats(); renderChips(); renderGrid(); openFromHash();
 	}
 
