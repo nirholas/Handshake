@@ -480,4 +480,120 @@ check(
     str([p for p in oin_paths if "oin" in p]),
 )
 
+# ── OIN job executor ───────────────────────────────────────────────────────────
+# _oin_run_job is the whole path an outside node operator's traffic takes: it
+# validates the envelope, runs the same stylization pipeline as /process, and
+# hands the bytes to a sink for the OIN layer to sign. Drive it against a real
+# mesh and a real LocalResultSink, with only the network fetch replaced by the
+# bytes of a locally exported GLB, so nothing here is stubbed but the download.
+
+import tempfile  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+from oin_upload import LocalResultSink  # noqa: E402
+
+
+class RecordingReport:
+    """The report contract mount_oin hands an executor: exactly one call."""
+
+    def __init__(self):
+        self.calls = []
+
+    def done(self, *, url, data):
+        self.calls.append(("done", url, data))
+
+    def failed(self, *, code, message):
+        self.calls.append(("failed", code, message))
+
+
+source_glb = source_mesh().export(file_type="glb")
+_real_fetch_mesh = main._fetch_mesh
+main._fetch_mesh = lambda url: (source_glb, ".glb")
+try:
+    report = RecordingReport()
+    with tempfile.TemporaryDirectory() as artifact_dir:
+        sink = LocalResultSink(artifact_dir, "https://node.example/artifacts")
+        main._oin_run_job(
+            {
+                "job_id": "j_ok",
+                "input": {"data": "https://example.com/a.glb", "model": "lowpoly"},
+                "params": {"resolution": 8, "output_format": "glb"},
+            },
+            report,
+            sink,
+        )
+        check("an oin job reports exactly once", len(report.calls) == 1, str(report.calls))
+        kind, url, data = report.calls[0]
+        check("an oin job reports done with the sink's url", kind == "done" and url.endswith("/oin/j_ok.glb"),
+              f"{kind} {url}")
+        check(
+            "the signed bytes are the stored glb",
+            data[:4] == b"glTF" and (Path(artifact_dir) / "oin" / "j_ok.glb").read_bytes() == data,
+            f"bytes={len(data)}",
+        )
+        styled = main._load_single_mesh(data, ".glb")
+        check("the oin artifact is real stylized geometry", len(styled.faces) > 0, f"faces={len(styled.faces)}")
+
+    unknown_style = RecordingReport()
+    main._oin_run_job(
+        {"job_id": "j_style", "input": {"data": "https://example.com/a.glb", "model": "hologram"}},
+        unknown_style,
+        None,
+    )
+    check(
+        "an unknown style fails as bad_input before any work",
+        unknown_style.calls[0][:2] == ("failed", "bad_input"),
+        str(unknown_style.calls),
+    )
+
+    bad_format = RecordingReport()
+    main._oin_run_job(
+        {
+            "job_id": "j_fmt",
+            "input": {"data": "https://example.com/a.glb", "model": "voxel"},
+            "params": {"output_format": "usdz"},
+        },
+        bad_format,
+        None,
+    )
+    check(
+        "an unsupported output format fails as bad_input",
+        bad_format.calls[0][:2] == ("failed", "bad_input"),
+        str(bad_format.calls),
+    )
+
+    clamped = RecordingReport()
+    with tempfile.TemporaryDirectory() as artifact_dir:
+        main._oin_run_job(
+            {
+                "job_id": "j_clamp",
+                "input": {"data": "https://example.com/a.glb", "model": "lowpoly"},
+                "params": {"resolution": 100_000},
+            },
+            clamped,
+            LocalResultSink(artifact_dir, "https://node.example/artifacts"),
+        )
+    check(
+        "an out-of-range resolution is clamped, not rejected",
+        clamped.calls[0][0] == "done",
+        str(clamped.calls[0][:2]),
+    )
+
+    # An input the pipeline refuses is the caller's fault, not the node's: OIN
+    # verifiers treat node_error as a reliability signal against the operator.
+    main._fetch_mesh = lambda url: (trimesh.PointCloud(np.zeros((4, 3))).export(file_type="ply"), ".ply")
+    unusable = RecordingReport()
+    main._oin_run_job(
+        {"job_id": "j_bad_mesh", "input": {"data": "https://example.com/a.ply", "model": "voxel"}},
+        unusable,
+        None,
+    )
+    check(
+        "an unusable mesh fails as bad_input, not node_error",
+        unusable.calls[0][:2] == ("failed", "bad_input"),
+        str(unusable.calls),
+    )
+finally:
+    main._fetch_mesh = _real_fetch_mesh
+
 print(f"\n{PASS} checks passed")

@@ -2,7 +2,7 @@
 	"name": "@three-ws/multiplayer",
 	"version": "0.1.0",
 	"private": true,
-	"description": "Authoritative Colyseus server backing the /walk page on three.ws — rooms, schema state, anti-cheat clamps.",
+	"description": "Authoritative Colyseus server for the realtime worlds on three.ws (/play, /walk, /agora, /irl, /play/war, stages, /ar/studio): rooms, schema state, anti-cheat clamps.",
 	"type": "module",
 	"main": "src/index.js",
 	"scripts": {

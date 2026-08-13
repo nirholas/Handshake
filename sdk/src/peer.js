@@ -64,3 +64,20 @@ export async function loadSolanaWeb3(feature = 'Solana support') {
 	}
 	return _web3;
 }
+
+let _viem = null;
+
+/**
+ * Load `viem` v2 on demand.
+ * @param {string} [feature] What the caller needs the library for.
+ * @returns {Promise<typeof import('viem')>}
+ */
+export async function loadViem(feature = 'ERC-7710 delegation encoding') {
+	if (_viem) return _viem;
+	try {
+		_viem = await import('viem');
+	} catch (err) {
+		throw missingPeer('viem', feature, err);
+	}
+	return _viem;
+}

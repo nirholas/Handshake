@@ -1,9 +1,9 @@
-// x402 Studio — the merchant console for the "Stripe of x402".
+// x402 Studio: the merchant console for the "Stripe of x402".
 //
 // One page to run a paid x402 business on three.ws: products (SKUs), payout +
 // agent wallets, a drag-and-drop storefront, an embeddable button builder,
 // security/CORS, and charity + round-up giving. Everything here is wired to real
-// endpoints — /api/x402-merchant (settings), /api/x402-skus (products),
+// endpoints: /api/x402-merchant (settings), /api/x402-skus (products),
 // /api/x402/pay-by-name (USDC sends), /api/sns (name resolution). No mocks.
 
 const SOLANA_WEB3 = 'https://esm.sh/@solana/web3.js@1.95.3?bundle';
@@ -13,6 +13,10 @@ const S = {
 	settings: null,
 	skus: [],
 	tab: 'overview',
+	// Storefront blocks being edited. Kept across tab switches so a half-built
+	// layout survives a trip to Products and back; cleared once it is saved.
+	layout: null,
+	layoutDirty: false,
 };
 
 // ---------------------------------------------------------------- helpers ----
@@ -39,7 +43,7 @@ function uid(prefix = 'w') {
 	return prefix + '_' + Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 function shortAddr(a) {
-	if (!a) return '—';
+	if (!a) return 'not set';
 	return a.length > 14 ? a.slice(0, 6) + '…' + a.slice(-5) : a;
 }
 function fmtUsdc(atomics, decimals = USDC_DECIMALS) {
@@ -99,7 +103,7 @@ async function copy(text, label = 'Copied') {
 		await navigator.clipboard.writeText(text);
 		toast(label);
 	} catch {
-		toast('Copy failed — select manually', 'err');
+		toast('Copy failed. Select the text and copy manually.', 'err');
 	}
 }
 
@@ -122,14 +126,21 @@ async function boot() {
 	go(location.hash.replace('#', '') || 'overview');
 }
 
+// Signed-out and fatal screens replace the whole shell, so each carries the
+// page's single <h1>: every state of this route has exactly one top-level
+// heading, never zero.
 function renderSignIn() {
 	$('#root').innerHTML = '';
 	$('#root').append(
 		el('div', { class: 'empty', style: 'min-height:100dvh;display:grid;place-content:center;max-width:420px;margin:0 auto;padding:24px' },
-			el('div', { class: 'ico' }, '🔑'),
-			el('h3', {}, 'Sign in to open x402 Studio'),
+			el('div', { class: 'ico', 'aria-hidden': 'true' }, '🔑'),
+			el('h1', { style: 'font-size:var(--text-lg);margin-bottom:6px' }, 'Sign in to open x402 Studio'),
 			el('p', { class: 'sub' }, 'Your products, wallets, and storefront live on your three.ws account. Sign in to configure them.'),
 			el('a', { class: 'btn primary', href: `/login?next=${encodeURIComponent('/x402/studio')}`, style: 'margin-top:8px' }, 'Sign in →'),
+			el('p', { class: 'sub', style: 'margin-top:18px;font-size:var(--text-sm)' },
+				'New here? ',
+				el('a', { href: '/x402', style: 'color:var(--accent)' }, 'Read what x402 is'),
+				' first.'),
 		),
 	);
 }
@@ -137,11 +148,23 @@ function renderFatal(msg) {
 	$('#root').innerHTML = '';
 	$('#root').append(
 		el('div', { class: 'empty', style: 'min-height:100dvh;display:grid;place-content:center;max-width:460px;margin:0 auto;padding:24px' },
-			el('div', { class: 'ico' }, '⚠️'),
-			el('h3', {}, 'Studio could not load'),
+			el('div', { class: 'ico', 'aria-hidden': 'true' }, '⚠️'),
+			el('h1', { style: 'font-size:var(--text-lg);margin-bottom:6px' }, 'Studio could not load'),
 			el('p', { class: 'sub' }, msg),
-			el('button', { class: 'btn ghost', onclick: () => location.reload() }, 'Retry'),
+			el('p', { class: 'sub', style: 'font-size:var(--text-sm)' }, 'Your settings are safe. This is a load failure, not a data loss.'),
+			el('div', { class: 'row', style: 'justify-content:center' },
+				el('button', { class: 'btn primary', onclick: () => { $('#root').innerHTML = ''; $('#root').append(bootSkeleton()); boot(); } }, 'Try again'),
+				el('a', { class: 'btn ghost', href: '/dashboard/x402' }, 'Open the classic dashboard'),
+			),
 		),
+	);
+}
+
+// The same markup the static shell ships, rebuilt for an in-page retry.
+function bootSkeleton() {
+	return el('div', { class: 'empty', style: 'min-height:100dvh;display:grid;place-content:center;' },
+		el('div', { class: 'skeleton', style: 'width:220px;height:24px;margin:0 auto 12px' }),
+		el('h1', { class: 'sub', style: 'font-size:var(--text-md);font-weight:500' }, 'Loading x402 Studio…'),
 	);
 }
 
@@ -165,18 +188,21 @@ function renderShell() {
 	}
 	const side = el('aside', { class: 'side' },
 		el('a', { class: 'brand', href: '/' },
-			el('div', { class: 'mark' }, 'x4'),
+			el('div', { class: 'mark', 'aria-hidden': 'true' }, 'x4'),
 			el('div', { class: 'name', html: 'x402 Studio<small>the stripe of x402</small>' }),
 		),
 		nav,
+		// Also reachable at mobile widths: the CSS keeps this row visible when the
+		// rail collapses, so these two links never become dead ends on a phone.
 		el('div', { class: 'foot', html: 'On-chain USDC settlement · <a href="/x402">about x402</a> · <a href="/dashboard/x402">classic dashboard</a>' }),
 	);
 	const topbar = el('header', { class: 'topbar' },
 		el('h1', { id: 'tab-title' }, 'Overview'),
 		el('span', { class: 'spacer' }),
-		// No href until updateStoreLink() knows the published store handle.
-		el('a', { class: 'btn ghost sm', id: 'view-store', target: '_blank', style: 'display:none' }, 'View storefront ↗'),
-		el('button', { class: 'btn primary sm', onclick: () => go('products') }, '+ New product'),
+		// The storefront link is created by updateStoreLink() once a published
+		// handle exists; an <a> with no href is not a link, so none is rendered.
+		el('span', { id: 'view-store-slot' }),
+		el('button', { class: 'btn primary sm', onclick: () => { go('products'); productModal(); } }, '+ New product'),
 	);
 	const content = el('div', { class: 'content', id: 'content' });
 	for (const t of TABS) content.append(el('section', { id: `sec-${t.id}` }));
@@ -185,12 +211,17 @@ function renderShell() {
 }
 
 function updateStoreLink() {
-	const a = $('#view-store');
-	if (!a) return;
-	if (S.settings?.store_published && S.settings?.store_handle) {
-		a.href = `/store/${S.settings.store_handle}`;
-		a.style.display = '';
-	} else a.style.display = 'none';
+	const slot = $('#view-store-slot');
+	if (!slot) return;
+	slot.innerHTML = '';
+	if (!(S.settings?.store_published && S.settings?.store_handle)) return;
+	slot.append(el('a', {
+		class: 'btn ghost sm',
+		id: 'view-store',
+		href: `/store/${encodeURIComponent(S.settings.store_handle)}`,
+		target: '_blank',
+		rel: 'noopener',
+	}, 'View storefront ↗'));
 }
 
 const RENDERERS = {
@@ -235,8 +266,8 @@ function renderOverview(host) {
 	host.innerHTML = '';
 	host.append(
 		el('div', { class: 'banner' },
-			el('span', { class: 'ic' }, '✦'),
-			el('div', { html: 'Welcome to <b>x402 Studio</b> — build products, point them at a payout wallet, drop a pay button onto any site, and publish a storefront. Settlement happens on-chain in USDC.' }),
+			el('span', { class: 'ic', 'aria-hidden': 'true' }, '✦'),
+			el('div', { html: 'Welcome to <b>x402 Studio</b>. Build products, point them at a payout wallet, drop a pay button onto any site, and publish a storefront. Settlement happens on-chain in USDC.' }),
 		),
 		el('div', { class: 'stat-grid' },
 			stat('Gross settled', `$${fmtUsdc(gross)}`, `${totalCalls} paid call${totalCalls === 1 ? '' : 's'}`),

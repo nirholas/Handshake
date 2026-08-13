@@ -249,6 +249,7 @@
 		padding: 3px 9px; border-radius: 6px; flex: 0 0 auto; white-space: nowrap;
 	}
 	.card .price.free { color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 12%, transparent); border-color: color-mix(in srgb, var(--accent-blue) 26%, transparent); }
+	.card .price.dyn { color: var(--accent-amber); background: color-mix(in srgb, var(--accent-amber) 12%, transparent); border-color: color-mix(in srgb, var(--accent-amber) 26%, transparent); }
 	.card .title { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; line-height: 1.3; }
 	.card .desc { color: var(--muted); font-size: 13px; line-height: 1.5; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 	.card .meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-size: 11px; color: var(--muted-2); }
@@ -300,16 +301,18 @@
 	.overlay {
 		position: fixed; inset: 0; z-index: 80; background: var(--overlay);
 		backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
-		opacity: 0; pointer-events: none; transition: opacity 0.16s;
+		opacity: 0; pointer-events: none; visibility: hidden;
+		transition: opacity 0.16s, visibility 0s linear 0.16s;
 	}
-	.overlay.show { opacity: 1; pointer-events: auto; }
+	.overlay.show { opacity: 1; pointer-events: auto; visibility: visible; transition: opacity 0.16s, visibility 0s; }
 	.palette {
 		position: fixed; top: 12vh; left: 50%; transform: translateX(-50%) scale(0.98); z-index: 81;
 		width: min(620px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--border-strong);
 		border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
-		opacity: 0; pointer-events: none; transition: opacity 0.16s, transform 0.16s var(--ease);
+		opacity: 0; pointer-events: none; visibility: hidden;
+		transition: opacity 0.16s, transform 0.16s var(--ease), visibility 0s linear 0.16s;
 	}
-	.palette.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+	.palette.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); visibility: visible; transition: opacity 0.16s, transform 0.16s var(--ease), visibility 0s; }
 	.palette .pi { display: flex; align-items: center; gap: 11px; padding: 15px 18px; border-bottom: 1px solid var(--border); }
 	.palette .pi svg { width: 18px; height: 18px; color: var(--muted-2); }
 	.palette .pi input { flex: 1; background: none; border: none; color: var(--text); font-size: 16px; font-family: inherit; outline: none; }
@@ -332,10 +335,11 @@
 	.drawer {
 		position: fixed; top: 0; right: 0; bottom: 0; z-index: 81;
 		width: min(560px, 100vw); background: var(--bg); border-left: 1px solid var(--border-strong);
-		box-shadow: var(--shadow); transform: translateX(100%); transition: transform 0.26s var(--ease);
+		box-shadow: var(--shadow); transform: translateX(100%); visibility: hidden;
+		transition: transform 0.26s var(--ease), visibility 0s linear 0.26s;
 		display: flex; flex-direction: column; overflow: hidden;
 	}
-	.drawer.show { transform: none; }
+	.drawer.show { transform: none; visibility: visible; transition: transform 0.26s var(--ease), visibility 0s; }
 	.drawer .dh { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 12px; }
 	.drawer .dh .dmain { flex: 1; min-width: 0; }
 	.drawer .dh .dcat { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-blue); margin-bottom: 6px; }
@@ -348,6 +352,15 @@
 	.drawer .close:hover { color: var(--text); border-color: var(--border-strong); }
 	.drawer .db { flex: 1; overflow-y: auto; padding: 22px 24px; }
 	.drawer .ddesc { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0 0 22px; }
+	.drawer .pricenote {
+		display: flex; gap: 9px; align-items: flex-start;
+		background: color-mix(in srgb, var(--accent-amber) 9%, transparent);
+		border: 1px solid color-mix(in srgb, var(--accent-amber) 24%, transparent);
+		border-radius: 10px; padding: 11px 13px; margin: 0 0 22px;
+		color: var(--muted); font-size: 12.5px; line-height: 1.5;
+	}
+	.drawer .pricenote svg { width: 15px; height: 15px; flex: 0 0 auto; margin-top: 1px; color: var(--accent-amber); }
+	.drawer .pricenote b { color: var(--text); font-weight: 600; }
 	.drawer .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-2); font-weight: 600; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
 	.field { margin-bottom: 14px; }
 	.field label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
@@ -541,7 +554,7 @@
 
 <!-- Command palette -->
 <div class="overlay" id="paletteOverlay"></div>
-<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Search endpoints">
+<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Search endpoints" inert>
 	<div class="pi">
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
 		<input id="paletteInput" type="text" placeholder="Search endpoints by name, category, or path…" aria-label="Search endpoints" autocomplete="off" />
@@ -570,7 +583,33 @@
 		if (n < 1) return '$' + n.toFixed(n * 100 % 1 === 0 ? 2 : 3);
 		return '$' + n.toFixed(2);
 	};
-	const fmtNum = (n) => n == null ? '—' : n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : String(n);
+	const fmtNum = (n) => {
+		const v = Number(n);
+		if (n == null || !Number.isFinite(v)) return 'n/a';
+		return v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : String(v);
+	};
+
+	// ── Price labelling ────────────────────────────────────────────────────
+	// x402 endpoints price two ways: a fixed USDC amount, or `mode: "dynamic"`
+	// with a min/max band whose exact figure lands in the live 402 challenge
+	// (per-asset, per-rarity, per-skill). A dynamic endpoint is NOT free, so it
+	// never renders as "Free": it renders its floor and its band.
+	const priceChip = (p) => {
+		if (!p) return 'Free';
+		if (p.amount != null) return fmtUsd(p.amount);
+		if (p.min != null) return 'from ' + fmtUsd(p.min);
+		return 'Quoted live';
+	};
+	const priceFull = (p) => {
+		if (!p) return 'Free';
+		if (p.amount != null) return fmtUsd(p.amount);
+		if (p.min != null && p.max != null) return fmtUsd(p.min) + ' to ' + fmtUsd(p.max);
+		if (p.min != null) return 'from ' + fmtUsd(p.min);
+		return 'Quoted live';
+	};
+	const priceClass = (p) => (!p ? 'free' : p.amount != null ? '' : 'dyn');
+	const priceSort = (p) => (!p ? -1 : p.amount != null ? p.amount : (p.min != null ? p.min : 0));
+	const runLabel = (p) => (!p ? 'Run it free' : p.amount != null ? `Pay ${fmtUsd(p.amount)} &amp; run` : 'Pay the quoted price &amp; run');
 
 	// ── Category classification (derived from path + copy) ─────────────────
 	const CATS = [
@@ -623,7 +662,11 @@
 			for (const [verb, op] of Object.entries(ops)) {
 				if (!['get', 'post'].includes(verb) || !op || typeof op !== 'object') continue;
 				const pay = op['x-payment-info'];
-				const amt = pay && pay.price && pay.price.amount != null ? Number(pay.price.amount) : null;
+				const pr = (pay && pay.price) || null;
+				const num = (v) => (v == null || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
+				const price = pr
+					? { amount: num(pr.amount), min: num(pr.min), max: num(pr.max), note: (pay && pay.note) || '' }
+					: null;
 				const params = Array.isArray(op.parameters)
 					? op.parameters.filter((p) => p.in === 'query').map((p) => ({ name: p.name, required: !!p.required, ...schemaInfo(p.schema) }))
 					: [];
@@ -637,7 +680,7 @@
 				items.push({
 					id: op.operationId || (path + ':' + verb),
 					path, method: verb.toUpperCase(), title, desc,
-					priceUsd: amt, params, bodyProps,
+					price, params, bodyProps,
 					category: categorize(path, op.summary, op.description),
 				});
 			}
@@ -648,32 +691,43 @@
 		return Array.from(seen.values());
 	}
 
+	// The revenue report wraps its payload in `data` and keys per-endpoint rows
+	// by `endpoint`. Unwrap here so every reader below sees the report itself.
 	async function loadStats() {
 		try {
 			const r = await fetch('/api/x402-revenue?view=stats&period=24h', { headers: { accept: 'application/json' } });
 			if (!r.ok) return null;
-			return await r.json();
+			const j = await r.json();
+			return (j && j.data) || null;
 		} catch (e) { return null; }
 	}
 
-	function callsFor(path) {
-		if (!STATS || !Array.isArray(STATS.by_endpoint)) return 0;
-		const row = STATS.by_endpoint.find((e) => e.route === path);
-		return row ? row.count : 0;
+	let CALLS = new Map();
+	function indexCalls() {
+		CALLS = new Map();
+		const rows = STATS && Array.isArray(STATS.by_endpoint) ? STATS.by_endpoint : [];
+		for (const row of rows) {
+			const n = Number(row.count);
+			if (row.endpoint && Number.isFinite(n)) CALLS.set(row.endpoint, n);
+		}
 	}
+	const callsFor = (path) => CALLS.get(path) || 0;
 
 	// ── Stats bar ──────────────────────────────────────────────────────────
 	function renderStats() {
 		const set = (k, v) => { const el = $(`[data-stat="${k}"]`); if (el) { el.classList.remove('skeleton'); el.innerHTML = v; } };
 		set('endpoints', String(CATALOG.length));
 		if (STATS) {
-			set('settled', fmtNum(STATS.settled_count));
-			set('volume', '$' + Number(STATS.gross_usd || 0).toFixed(STATS.gross_usd < 100 ? 2 : 0));
-			set('success', STATS.success_rate != null ? Math.round(STATS.success_rate * 100) + '<small>%</small>' : '—');
-			set('payers', fmtNum(STATS.unique_payers));
+			const totals = STATS.totals || {};
+			const health = STATS.settlement_health || {};
+			const settled = health.settled != null ? health.settled : totals.total_payments;
+			const gross = Number(totals.gross_usd || 0);
+			set('settled', fmtNum(settled));
+			set('volume', '$' + gross.toFixed(gross < 100 ? 2 : 0));
+			set('success', health.success_rate != null ? Math.round(health.success_rate * 100) + '<small>%</small>' : 'n/a');
+			set('payers', fmtNum(totals.unique_payers));
 		} else {
-			['settled', 'volume', 'success', 'payers'].forEach((k) => set(k, '<small style="font-size:15px">—</small>'));
-			$('#eyebrowText').textContent = 'Live on Base & Solana mainnet';
+			['settled', 'volume', 'success', 'payers'].forEach((k) => set(k, '<small style="font-size:15px">n/a</small>'));
 		}
 	}
 
@@ -684,7 +738,7 @@
 		const cats = ['All', ...CATS.map((c) => c.key).filter((k) => counts[k]), ...(counts.Utility ? ['Utility'] : [])];
 		const uniq = [...new Set(cats)];
 		$('#chips').innerHTML = uniq.map((k) =>
-			`<button class="chip ${state.cat === k ? 'active' : ''}" role="tab" aria-selected="${state.cat === k}" data-cat="${esc(k)}">${k === 'All' ? 'All' : catIcon(k) + ' ' + esc(k)} <span class="n">${counts[k] || 0}</span></button>`
+			`<button class="chip ${state.cat === k ? 'active' : ''}" role="tab" aria-controls="grid" aria-selected="${state.cat === k}" data-cat="${esc(k)}">${k === 'All' ? 'All' : catIcon(k) + ' ' + esc(k)} <span class="n">${counts[k] || 0}</span></button>`
 		).join('');
 		$$('#chips .chip').forEach((el) => el.addEventListener('click', () => { state.cat = el.dataset.cat; renderChips(); renderGrid(); }));
 	}
@@ -697,9 +751,8 @@
 			const q = state.q.toLowerCase();
 			list = list.filter((c) => (c.title + ' ' + c.desc + ' ' + c.path + ' ' + c.category).toLowerCase().includes(q));
 		}
-		const price = (c) => c.priceUsd == null ? -1 : c.priceUsd;
-		if (state.sort === 'price-asc') list.sort((a, b) => price(a) - price(b));
-		else if (state.sort === 'price-desc') list.sort((a, b) => price(b) - price(a));
+		if (state.sort === 'price-asc') list.sort((a, b) => priceSort(a.price) - priceSort(b.price));
+		else if (state.sort === 'price-desc') list.sort((a, b) => priceSort(b.price) - priceSort(a.price));
 		else if (state.sort === 'name') list.sort((a, b) => a.title.localeCompare(b.title));
 		else list.sort((a, b) => callsFor(b.path) - callsFor(a.path) || a.title.localeCompare(b.title));
 		return list;
@@ -719,12 +772,12 @@
 		grid.style.display = 'grid';
 		grid.innerHTML = list.map((c, i) => {
 			const calls = callsFor(c.path);
-			return `<button class="card" data-id="${esc(c.id)}" style="animation-delay:${Math.min(i * 22, 300)}ms" aria-label="${esc(c.title)} — ${fmtUsd(c.priceUsd)}">
-				<div class="top"><span class="cat">${catIcon(c.category)} ${esc(c.category)}</span><span class="price ${c.priceUsd == null ? 'free' : ''}">${fmtUsd(c.priceUsd)}</span></div>
-				<div class="title">${esc(c.title)}</div>
-				<div class="desc">${esc(c.desc)}</div>
-				<div class="meta"><span class="verb">${c.method}</span><span>USDC · Base · Solana</span>${calls ? `<span class="calls">${fmtNum(calls)} calls/24h</span>` : ''}</div>
-				<div class="run"><span class="go">Inspect &amp; run <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+			return `<button class="card" data-id="${esc(c.id)}" style="animation-delay:${Math.min(i * 22, 300)}ms" aria-label="${esc(c.title)}, ${esc(priceFull(c.price))}, inspect and run">
+				<span class="top"><span class="cat">${catIcon(c.category)} ${esc(c.category)}</span><span class="price ${priceClass(c.price)}">${esc(priceChip(c.price))}</span></span>
+				<span class="title">${esc(c.title)}</span>
+				<span class="desc">${esc(c.desc)}</span>
+				<span class="meta"><span class="verb">${c.method}</span><span>USDC · Base · Solana</span>${calls ? `<span class="calls">${fmtNum(calls)} calls/24h</span>` : ''}</span>
+				<span class="run"><span class="go">Inspect &amp; run <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
 			</button>`;
 		}).join('');
 		$$('#grid .card').forEach((el) => el.addEventListener('click', () => openDrawer(el.dataset.id)));
@@ -738,7 +791,7 @@
 
 	function catalogError() {
 		$('#grid').style.display = 'block';
-		$('#grid').innerHTML = `<div class="state"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><h3>Couldn't load the catalog</h3><p>The discovery endpoint didn't respond. This works on the live site; check your connection and retry.</p><button class="btn" id="retryBtn">Retry</button></div>`;
+		$('#grid').innerHTML = `<div class="state"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><h3>Couldn't load the catalog</h3><p>The discovery document at <code>/openapi.json</code> didn't respond, so there are no endpoints to show. Check your connection, then retry.</p><button class="btn" id="retryBtn">Retry</button></div>`;
 		$('#retryBtn').addEventListener('click', boot);
 	}
 
@@ -769,7 +822,7 @@
 		const sample = {};
 		fields.forEach((f) => { if (f.required || f.default != null) sample[f.name] = f.default != null ? f.default : (f.example != null ? f.example : (f.enum ? f.enum[0] : (f.type === 'string' ? '…' : 0))); });
 		if (lang === 'js') {
-			return `// Loaded via &lt;script src="https://three.ws/x402.js"&gt;\nconst { result, payment } = await window.X402.pay({\n  endpoint: '${item.path}',\n  method: '${item.method}',${item.method === 'POST' ? `\n  body: ${JSON.stringify(sample, null, 2).split('\n').join('\n  ')},` : Object.keys(sample).length ? `\n  // query: ${esc(new URLSearchParams(sample).toString())}` : ''}\n});\nconsole.log(result, payment.transaction);`;
+			return `// Load once: <script type="module" src="https://three.ws/x402.js">\nconst { result, payment } = await window.X402.pay({\n  endpoint: '${item.path}',\n  method: '${item.method}',${item.method === 'POST' ? `\n  body: ${JSON.stringify(sample, null, 2).split('\n').join('\n  ')},` : Object.keys(sample).length ? `\n  // query: ${new URLSearchParams(sample).toString()}` : ''}\n});\nconsole.log(result, payment.transaction);`;
 		}
 		if (lang === 'curl') {
 			const q = item.method === 'GET' && Object.keys(sample).length ? '?' + new URLSearchParams(sample).toString() : '';
@@ -781,6 +834,18 @@
 
 	function renderCode(item) {
 		$('#codeOut').textContent = codeFor(item, drawerTab === 'try' ? 'js' : drawerTab);
+	}
+
+	// Dynamic pricing needs saying out loud: the buyer sees a band here and the
+	// exact figure in the 402 challenge, before any signature.
+	function dynamicPriceNote(item) {
+		const p = item.price;
+		if (!p || p.amount != null) return '';
+		const band = p.min != null && p.max != null
+			? `This endpoint prices per request, between <b>${esc(fmtUsd(p.min))}</b> and <b>${esc(fmtUsd(p.max))}</b>.`
+			: 'This endpoint prices per request.';
+		const why = p.note ? ' ' + esc(p.note) : ' The live 402 challenge quotes the exact amount before you sign.';
+		return `<p class="pricenote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span>${band}${why}</span></p>`;
 	}
 
 	function openDrawer(id) {
@@ -795,7 +860,7 @@
 				<div class="dmain">
 					<div class="dcat">${catIcon(item.category)} ${esc(item.category)}</div>
 					<h3 id="drawerTitle">${esc(item.title)}</h3>
-					<div class="dmeta"><span class="price">${fmtUsd(item.priceUsd)}</span><span class="verb">${item.method}</span><span class="path">${esc(item.path)}</span></div>
+					<div class="dmeta"><span class="price">${esc(priceFull(item.price))}</span><span class="verb">${item.method}</span><span class="path">${esc(item.path)}</span></div>
 				</div>
 				<button class="close" id="drawerClose" aria-label="Close">
 					<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -803,26 +868,28 @@
 			</div>
 			<div class="db">
 				<p class="ddesc">${esc(item.desc)}</p>
+				${dynamicPriceNote(item)}
 				<p class="lbl">Request${fields.length ? '' : ' · no parameters'}</p>
 				<div id="formWrap">${fields.length ? fields.map(fieldHtml).join('') : '<p class="field noparams">This endpoint takes no input — just run it.</p>'}</div>
 				<p class="lbl" style="margin-top:22px;">Integrate</p>
-				<div class="tabs" id="codeTabs">
-					<button data-tab="try" class="active">JavaScript</button>
-					<button data-tab="curl">cURL</button>
-					<button data-tab="python">Python</button>
+				<div class="tabs" id="codeTabs" role="tablist" aria-label="Code sample language">
+					<button data-tab="try" class="active" role="tab" aria-selected="true">JavaScript</button>
+					<button data-tab="curl" role="tab" aria-selected="false">cURL</button>
+					<button data-tab="python" role="tab" aria-selected="false">Python</button>
 				</div>
 				<div class="codeblock"><button class="copy-btn" id="codeCopy">Copy</button><span id="codeOut"></span></div>
 				<div class="result" id="drawerResult"></div>
 			</div>
 			<div class="df">
-				<button class="run-btn" id="runBtn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 3l14 9-14 9V3z"/></svg> Pay ${fmtUsd(item.priceUsd)} &amp; run</button>
+				<button class="run-btn" id="runBtn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 3l14 9-14 9V3z"/></svg> ${runLabel(item.price)}</button>
 				<p class="note">Real on-chain USDC · exact network shown at checkout · nothing charged until you approve</p>
 			</div>`;
 		renderCode(item);
 		$('#drawerClose').addEventListener('click', closeDrawer);
 		$$('#codeTabs button').forEach((b) => b.addEventListener('click', () => {
-			$$('#codeTabs button').forEach((x) => x.classList.remove('active'));
+			$$('#codeTabs button').forEach((x) => { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); });
 			b.classList.add('active');
+			b.setAttribute('aria-selected', 'true');
 			drawerTab = b.dataset.tab === 'try' ? 'try' : b.dataset.tab;
 			renderCode(item);
 		}));
@@ -830,6 +897,7 @@
 		$('#runBtn').addEventListener('click', () => runEndpoint(item));
 		$('#drawerOverlay').classList.add('show');
 		d.classList.add('show');
+		d.inert = false;
 		document.body.style.overflow = 'hidden';
 		const first = d.querySelector('input, select, textarea, button.run-btn');
 		if (first) setTimeout(() => first.focus(), 260);
@@ -837,7 +905,10 @@
 	}
 
 	function closeDrawer() {
-		$('#drawer').classList.remove('show');
+		const d = $('#drawer');
+		if (d.contains(document.activeElement)) document.activeElement.blur();
+		d.classList.remove('show');
+		d.inert = true;
 		$('#drawerOverlay').classList.remove('show');
 		document.body.style.overflow = '';
 		if (lastFocus && lastFocus.focus) lastFocus.focus();
@@ -907,13 +978,17 @@
 	function openPalette() {
 		$('#paletteOverlay').classList.add('show');
 		$('#palette').classList.add('show');
+		$('#palette').inert = false;
 		$('#paletteInput').value = '';
 		palPaint('');
 		setTimeout(() => $('#paletteInput').focus(), 60);
 	}
 	function closePalette() {
+		const p = $('#palette');
+		if (p.contains(document.activeElement)) document.activeElement.blur();
 		$('#paletteOverlay').classList.remove('show');
-		$('#palette').classList.remove('show');
+		p.classList.remove('show');
+		p.inert = true;
 	}
 	function palPaint(q) {
 		q = q.toLowerCase();
@@ -923,7 +998,7 @@
 		const list = $('#paletteList');
 		if (!palResults.length) { list.innerHTML = '<div class="pempty">No endpoints found</div>'; return; }
 		list.innerHTML = palResults.map((c, i) =>
-			`<div class="prow" role="option" data-i="${i}" aria-selected="${i === 0}"><div class="pcat">${catIcon(c.category)}</div><div class="pmain"><div class="pt">${esc(c.title)}</div><div class="pd">${esc(c.path)}</div></div><div class="pp">${fmtUsd(c.priceUsd)}</div></div>`
+			`<div class="prow" role="option" data-i="${i}" aria-selected="${i === 0}"><div class="pcat">${catIcon(c.category)}</div><div class="pmain"><div class="pt">${esc(c.title)}</div><div class="pd">${esc(c.path)}</div></div><div class="pp">${esc(priceChip(c.price))}</div></div>`
 		).join('');
 		$$('#paletteList .prow').forEach((el) => {
 			el.addEventListener('click', () => { closePalette(); openDrawer(palResults[+el.dataset.i].id); });

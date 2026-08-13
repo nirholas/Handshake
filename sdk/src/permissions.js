@@ -136,12 +136,13 @@ export class PermissionsClient {
 		const delegatorAddr = await signer.getAddress();
 		const expiry = Math.floor(Date.now() / 1000) + preset.expiryDays * 86400;
 
+		const allowedTargetsTerms = await encodeCaveats(
+			preset.targets.map((t) => ({ enforcer: t, terms: '0x', args: '0x' })),
+		);
 		const caveats = [
 			{
 				enforcer: CAVEAT_ENFORCERS.AllowedTargetsEnforcer[chainId],
-				terms: encodeCaveats(
-					preset.targets.map((t) => ({ enforcer: t, terms: '0x', args: '0x' })),
-				),
+				terms: allowedTargetsTerms,
 				args: '0x',
 			},
 			{

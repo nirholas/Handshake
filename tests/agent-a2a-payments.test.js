@@ -240,6 +240,32 @@ vi.mock('../api/_lib/ssrf-guard.js', () => ({
 	assertSafePublicUrl: vi.fn(async (u) => new URL(u)),
 }));
 
+// The handler re-resolves the mandate's subject agent from the DB (gate 4a) and
+// runs the payment through the agent's own custody policy (gate 4c). Both are
+// covered in depth by tests/a2a-payment-hardening.test.js; here they are stubbed
+// so these tests stay focused on mandate policy, budget ledger, and settlement.
+vi.mock('../api/_lib/db.js', () => ({
+	sql: vi.fn(async () => [{ id: 'agent-1', user_id: 'user-1', meta: {} }]),
+	isDbUnavailableError: () => false,
+	isDbCapacityError: () => false,
+	isStoragePressured: () => false,
+}));
+vi.mock('../api/_lib/avatar-wallet.js', () => ({ solUsdPrice: vi.fn(async () => 200) }));
+vi.mock('../api/_lib/audit.js', () => ({ logAudit: vi.fn() }));
+vi.mock('../api/_lib/anomaly-events.js', () => ({
+	guardOutboundAnomaly: vi.fn(async () => ({ decision: 'allow', verdict: null, anomalyId: null, froze: false })),
+}));
+vi.mock('../api/_lib/agent-trade-guards.js', async (importOriginal) => {
+	const actual = await importOriginal();
+	return {
+		...actual,
+		getSpendLimits: vi.fn(() => ({ frozen: false })),
+		reserveSpendUsd: vi.fn(async () => ({ reservationId: 7001, dailySpentUsd: 0 })),
+		releaseSpendReservation: vi.fn(async () => {}),
+		updateCustodyEvent: vi.fn(async () => {}),
+	};
+});
+
 vi.mock('../api/_lib/x402/a2a-client.js', () => ({
 	A2AClientError: class A2AClientError extends Error {
 		constructor(code, message, details) {

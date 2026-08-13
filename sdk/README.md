@@ -107,7 +107,7 @@ await agent.register({
 });
 ```
 
-Needs MetaMask (or any injected wallet) and a [web3.storage](https://web3.storage) API token. Requires a deployed ERC-8004 Identity Registry — set the address in `REGISTRY_DEPLOYMENTS` before calling.
+Needs MetaMask (or any injected wallet) and a [web3.storage](https://web3.storage) API token. The canonical ERC-8004 registry addresses ship built in for 15 mainnets and 7 testnets (see `REGISTRY_DEPLOYMENTS`); registration runs on whichever chain the connected wallet is on. For any other chain, set an env override (see "Configuring registry addresses" below).
 
 ## Generate `.well-known` manifests
 
@@ -171,14 +171,22 @@ import {
 
 ## Configuring registry addresses
 
-Before calling `register()`, set your Identity Registry address in `sdk/src/erc8004/abi.js`:
+The SDK ships the canonical ERC-8004 reference deployments (same CREATE2
+address on every chain) for Ethereum, Base, Arbitrum, Optimism, Polygon, BSC,
+Avalanche and the other chains listed in `REGISTRY_DEPLOYMENTS`, plus the
+matching testnets. On those chains `register()` works with no configuration.
 
-```js
-export const REGISTRY_DEPLOYMENTS = {
-	8453: { identityRegistry: '0xYourBaseMainnetAddress' },
-	84532: { identityRegistry: '0xYourBaseSepoliaAddress' },
-};
+To point a chain at a different deployment (or add a chain the table does not
+cover), set an env override before calling; it wins over the built-in table:
+
+```bash
+THREE_WS_REGISTRY_IDENTITY_<chainId>=0xYourIdentityRegistry
+THREE_WS_REGISTRY_REPUTATION_<chainId>=0xYourReputationRegistry
+THREE_WS_REGISTRY_VALIDATION_<chainId>=0xYourValidationRegistry
 ```
+
+A chain with neither a built-in entry nor an override throws a clear error
+instead of sending a transaction to the zero address.
 
 ## Permissions
 
@@ -286,7 +294,7 @@ try {
 - Changelog: https://three.ws/changelog
 - Sibling SDK: [`@three-ws/solana-agent`](https://www.npmjs.com/package/@three-ws/solana-agent)
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, see [LICENSE](./LICENSE)
 
 ---
 

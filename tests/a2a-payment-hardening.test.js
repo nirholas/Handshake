@@ -146,11 +146,16 @@ describe('per-counterparty daily ceiling', () => {
 const AGENT_ID = '33333333-3333-4333-8333-333333333333';
 const PEER_ENDPOINT = 'https://peer.example/a2a';
 
-const guardState = {
-	limits: { frozen: false },
-	reserve: null, // null = allow; an Error = block with it
-};
-const guardCalls = { reserve: [], release: [], update: [] };
+// Hoisted so the guards mock factory (which vitest runs during the first import
+// of agent-trade-guards, before this line of the module body executes) can see
+// them without hitting the temporal dead zone.
+const { guardState, guardCalls } = vi.hoisted(() => ({
+	guardState: {
+		limits: { frozen: false },
+		reserve: null, // null = allow; an Error = block with it
+	},
+	guardCalls: { reserve: [], release: [], update: [] },
+}));
 
 vi.mock('../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => ({ id: 'owner-1' })),
@@ -166,27 +171,24 @@ vi.mock('../api/_lib/ssrf-guard.js', () => ({
 	SsrfBlockedError: class SsrfBlockedError extends Error {},
 }));
 
-class TestSpendLimitError extends Error {
-	constructor(code, message, detail = {}) {
-		super(message);
-		this.name = 'SpendLimitError';
-		this.status = 403;
-		this.code = code;
-		this.detail = detail;
-	}
-}
-
-vi.mock('../api/_lib/agent-trade-guards.js', () => ({
-	SpendLimitError: TestSpendLimitError,
-	getSpendLimits: vi.fn(() => guardState.limits),
-	reserveSpendUsd: vi.fn(async (args) => {
-		guardCalls.reserve.push(args);
-		if (guardState.reserve) throw guardState.reserve;
-		return { reservationId: 4242, dailySpentUsd: 0 };
-	}),
-	releaseSpendReservation: vi.fn(async (id, reason) => { guardCalls.release.push({ id, reason }); }),
-	updateCustodyEvent: vi.fn(async (id, patch) => { guardCalls.update.push({ id, patch }); }),
-}));
+// Partial mock: the handler's ledger calls (reserve / release / finalize) are
+// stubbed so part 2 can steer them, while enforceSpendLimit,
+// normalizeSpendLimits, and SpendLimitError stay REAL so part 1 exercises the
+// actual policy code, not a copy of it.
+vi.mock('../api/_lib/agent-trade-guards.js', async (importOriginal) => {
+	const actual = await importOriginal();
+	return {
+		...actual,
+		getSpendLimits: vi.fn(() => guardState.limits),
+		reserveSpendUsd: vi.fn(async (args) => {
+			guardCalls.reserve.push(args);
+			if (guardState.reserve) throw guardState.reserve;
+			return { reservationId: 4242, dailySpentUsd: 0 };
+		}),
+		releaseSpendReservation: vi.fn(async (id, reason) => { guardCalls.release.push({ id, reason }); }),
+		updateCustodyEvent: vi.fn(async (id, patch) => { guardCalls.update.push({ id, patch }); }),
+	};
+});
 
 const clientState = { quoteCalls: 0, submitCalls: 0, submitResult: null };
 vi.mock('../api/_lib/x402/a2a-client.js', () => ({
@@ -335,7 +337,7 @@ describe('POST /api/agents/a2a-call — each spend ceiling blocks', () => {
 	for (const [code, message] of cases) {
 		it(`refuses the payment on ${code} and settles nothing`, async () => {
 			sqlState.queue.push(ownedAgent());
-			guardState.reserve = new TestSpendLimitError(code, message, {});
+			guardState.reserve = new SpendLimitError(code, message, {});
 
 			const { res, mandate } = await callWithMandate();
 

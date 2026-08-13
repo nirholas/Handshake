@@ -8,9 +8,14 @@ REST snapshot.
 It feeds the "liquidations pulse" strip on [three.ws/coins](https://three.ws/coins)
 via the proxy endpoint [`api/coin/liquidations.js`](../../api/coin/liquidations.js).
 
-Ported from a battle-tested 283-line SperaxOS collector — same stream URLs,
-per-exchange parsing, size buckets, reconnect/backoff, rolling window, and
-aggregate math.
+Originally ported from a battle-tested SperaxOS collector, then hardened:
+per-topic Bybit subscribe acks (the retired `liquidation.{SYMBOL}` topic used
+to fail silently), OKX contract-size conversion (the raw `sz` field counts
+contracts, not coins), a Binance geo-restriction probe, and per-lane health
+reporting on `/health`. Parsing and aggregate math live in
+[`src/collector.js`](src/collector.js) as pure functions covered by
+[`tests/liquidation-collector.test.js`](../../tests/liquidation-collector.test.js)
+at the repo root (run with `npx vitest run tests/liquidation-collector.test.js`).
 
 ## Why a separate service
 
@@ -46,9 +51,26 @@ minute or two of connecting.
 
 ### `GET /health`
 
+Reports the cache size plus per-lane stream health, because a silently dead
+lane is this service's main failure mode: an open socket proves nothing about
+delivery, so each lane exposes its state and event counters.
+
 ```json
-{ "ok": true, "cached": 1234, "uptime": 5821.4 }
+{
+	"ok": true,
+	"cached": 1234,
+	"uptime": 5821.4,
+	"okxContracts": 446,
+	"streams": {
+		"Binance": { "state": "restricted", "events": 0, "lastEventAt": null, "note": "Binance blocks this host region (HTTP 451); host the collector outside a restricted region to enable this lane" },
+		"Bybit": { "state": "connected", "events": 87, "lastEventAt": 1786611799168, "note": "" },
+		"OKX": { "state": "connected", "events": 402, "lastEventAt": 1786611800234, "note": "" }
+	}
+}
 ```
+
+- `state` is one of `starting`, `connecting`, `connected`, `reconnecting`, `degraded` (Bybit rejected one or more subscribe topics), `error`, or `restricted` (Binance answers HTTP 451 to this host region; the probe rechecks hourly and the lane lights up with no code change once the service is hosted outside a restricted region. US-hosted deployments, including Cloud Run `us-central1`, run with Bybit + OKX only).
+- `okxContracts` is the number of OKX swap contract specifications loaded; OKX liquidations for unknown instruments are dropped rather than sized by guesswork, because `sz` counts contracts (one BTC-USDT-SWAP contract is 0.01 BTC), not coins.
 
 ### `GET /liquidations`
 
@@ -97,7 +119,10 @@ BTC, ETH, SOL, DOGE, XRP, ARB, OP, AVAX, LINK, BNB, SUI, WIF, PEPE, BONK, INJ, T
 
 ## Deploy note
 
-Not a Vercel function — deploy to any always-on Node host (VM, Fly.io,
-Railway, a dedicated Cloud Run service with `min-instances=1`, etc.). The
-service reconnects each exchange stream automatically on disconnect (5s
-backoff) and exits cleanly on process signals delivered by the host platform.
+Not a Vercel function (see above). Production runs it as the Cloud Run
+service `liquidation-collector` (project `aerial-vehicle-466722-p5`, region
+`us-central1`, `min-instances=1`, unthrottled CPU) with the main deployment's
+`LIQUIDATION_COLLECTOR_URL` pointed at it; any always-on Node host works the
+same way. The service reconnects each exchange stream automatically on
+disconnect (5s backoff) and exits cleanly on process signals delivered by the
+host platform.

@@ -20,14 +20,23 @@
  * page session (no version constant to trust without the module).
  */
 
+// Fallback origin for a non-browser context. The wrapper is client-only, but a
+// module-level evaluation under SSR must not throw on a missing `location`.
+const THREE_WS_ORIGIN = 'https://three.ws';
+
 function _mod() {
-	// Resolve at runtime from the origin (public/risk-ack.js). Rollup resolves a
-	// string LITERAL even with @vite-ignore and fails the build ("failed to
-	// resolve import /risk-ack.js"); routing the specifier through a variable
-	// keeps the import non-analyzable, so it's left as a runtime import — exactly
-	// the browser-side deferral this wrapper is documented to provide.
-	const spec = '/risk-ack.js';
-	return import(/* @vite-ignore */ spec);
+	// Resolve at runtime from the serving origin (public/risk-ack.js). The
+	// specifier has to stay non-analyzable in TWO passes, not one: Rollup
+	// resolves a string literal even with @vite-ignore and fails our build, and
+	// a local `const spec = '/risk-ack.js'` gets constant-folded straight back
+	// into `import("/risk-ack.js")` in the emitted bundle, which then breaks any
+	// downstream bundler that re-processes the published @three-ws/avatar
+	// artifact (rolldown, rollup, and webpack all fail to resolve a
+	// root-absolute path). Building the URL from the live origin is an
+	// expression no optimizer can fold, so both passes leave it alone and the
+	// browser does the resolving, which is the deferral this wrapper documents.
+	const origin = globalThis.location?.origin || THREE_WS_ORIGIN;
+	return import(/* @vite-ignore */ `${origin}/risk-ack.js`);
 }
 
 // Same core wording as RISK_ACK_CONFIRM_TEXT in public/risk-ack.js — inlined

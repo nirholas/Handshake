@@ -21,7 +21,7 @@
  * silently emitting transactions to the zero address.
  */
 
-import { encodeAbiParameters, parseAbiParameters } from 'viem';
+import { loadViem } from '../peer.js';
 
 export const DELEGATION_MANAGER_ABI = [
 	'function disableDelegation(bytes32 delegationHash) external',
@@ -113,10 +113,14 @@ export function getCaveatEnforcer(name, chainId) {
  * ABI-encode an array of caveat objects into bytes for the DelegationManager.
  * Each caveat is `(address enforcer, bytes terms, bytes args)`.
  *
+ * Async because `viem` is an optional peer dependency resolved at call time
+ * (see ../peer.js); a consumer without viem installed must still be able to
+ * import this module.
+ *
  * @param {Array<{enforcer: string, terms: string, args: string}>} caveats
- * @returns {string} hex-encoded bytes
+ * @returns {Promise<string>} hex-encoded bytes
  */
-export function encodeCaveats(caveats) {
+export async function encodeCaveats(caveats) {
 	if (!Array.isArray(caveats)) {
 		throw new TypeError('encodeCaveats: expected an array of caveats');
 	}
@@ -134,6 +138,7 @@ export function encodeCaveats(caveats) {
 		}
 		return { enforcer: c.enforcer, terms, args };
 	});
+	const { encodeAbiParameters, parseAbiParameters } = await loadViem('encodeCaveats()');
 	return encodeAbiParameters(
 		parseAbiParameters('(address enforcer, bytes terms, bytes args)[]'),
 		[normalised],

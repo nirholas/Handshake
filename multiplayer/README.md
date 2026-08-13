@@ -1,8 +1,17 @@
 # three.ws · multiplayer
 
-Authoritative [Colyseus](https://colyseus.io/) server that powers the `/walk` page on three.ws.
+Authoritative [Colyseus](https://colyseus.io/) server for the realtime worlds on three.ws. One Node process hosts six room types:
 
-This process runs **outside** the Vercel deploy — Vercel doesn't host long-lived WebSockets, so this server lives next to the static site (Fly.io, Railway, Render, or a small VPS). The client at `three.ws/walk` connects to it over a WebSocket and exchanges player state through the `WalkRoom` defined in [`src/rooms/WalkRoom.js`](src/rooms/WalkRoom.js).
+| Room | Class | Powers |
+| --- | --- | --- |
+| `walk_world` | [`src/rooms/WalkRoom.js`](src/rooms/WalkRoom.js) | The open-world coin communities on `/play` and the walkaround world reached from `/walk`: movement, chat, voice signalling, voxel building, the in-game economy, combat, quests, and the minigames |
+| `agora_world` | [`src/rooms/AgoraRoom.js`](src/rooms/AgoraRoom.js) | `/agora` play mode: walk the Commons among the working citizens and other live humans |
+| `irl_world` | [`src/rooms/IrlRoom.js`](src/rooms/IrlRoom.js) | `/irl` geocell presence and ambient reactions |
+| `clash_arena` | [`src/rooms/ClashRoom.js`](src/rooms/ClashRoom.js) | Coin Wars battles on `/play/war` |
+| `stage_world` | [`src/rooms/StageRoom.js`](src/rooms/StageRoom.js) | Living Stages live performances |
+| `studio_world` | [`src/rooms/StudioRoom.js`](src/rooms/StudioRoom.js) | `/ar/studio` shared build-together rooms |
+
+This process runs as its own service, apart from the main web container: the request/response API and a long-lived WebSocket fleet have different scaling shapes, so the worlds get a dedicated deploy. Production is the `three-ws-multiplayer` Cloud Run service (see "Deploy" below). Clients resolve the host with [`src/shared/game-server-url.js`](../src/shared/game-server-url.js) in the web app: localhost first in dev, then the `walk-server` / `game-server` meta tag baked into the page.
 
 ## Run locally
 
@@ -15,7 +24,7 @@ npm run dev:multi            # boots the Colyseus server on :2567
 npm run dev:walk-all         # Vite (:3000) + Colyseus (:2567)
 ```
 
-The Vite dev page at `http://localhost:3000/walk` will autodiscover the server at `ws://localhost:2567`.
+The Vite dev pages at `http://localhost:3000/walk` and `http://localhost:3000/play` autodiscover the server at `ws://localhost:2567` (see [`src/walk-net.js`](../src/walk-net.js)), so no environment plumbing is needed.
 
 ## Configuration (env)
 
@@ -24,23 +33,26 @@ The Vite dev page at `http://localhost:3000/walk` will autodiscover the server a
 | `PORT` | `2567` | TCP port to bind |
 | `HOST` | `0.0.0.0` | Interface to bind |
 | `ALLOWED_ORIGINS` | `localhost:3000-3003,three.ws,www.three.ws` | Comma-separated origin allow-list for the WS upgrade. `*.vercel.app` and `*.three.ws` are always allowed so preview deploys connect. |
+| `WALK_ROOM_MAX_CLIENTS` | `100` | Per-room client cap for `walk_world` (clamped to 2-500) |
+| `REDIS_URI` | unset | Colyseus room registry + presence Redis; setting it switches on horizontal scaling (see Scaling notes) |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | unset | Durable persistence for builds, player profiles, cosmetics ownership, and the activity feed; memory-only without them |
 
 ## Endpoints
 
 | Route | Purpose |
 | --- | --- |
-| `/health`, `/healthz` | Liveness probe — returns `{ok:true}` |
-| `/colyseus` | Admin monitor UI ([@colyseus/monitor](https://docs.colyseus.io/tools/monitor/)) — protect this behind a reverse proxy or basic auth in prod |
-| WS upgrade | Colyseus protocol — clients connect with `new Client('ws://host:2567')` |
+| `/health`, `/healthz` | Liveness probe, returns `{ok:true}` |
+| `/colyseus` | Admin monitor UI ([@colyseus/monitor](https://docs.colyseus.io/tools/monitor/)); protect this behind a reverse proxy or basic auth in prod |
+| WS upgrade | Colyseus protocol; clients connect with `new Client('ws://host:2567')` |
 
 ## Anti-cheat
 
 Every `move` message is validated server-side in [`WalkRoom.js`](src/rooms/WalkRoom.js):
 
 - **Max-step clamp**: positions farther than `1.2 m` from the player's last position are rejected (legit deltas at 15Hz × 4 m/s run speed are ~0.27 m).
-- **World bounds**: a 60 m radius around origin; out-of-bounds positions are clamped.
+- **World bounds**: the square open-world district, ±198 m from origin on x/z (`WORLD_BOUND_M`, mirroring `DISTRICT.half` in [`src/game/world-zones.js`](../src/game/world-zones.js)); out-of-bounds positions are clamped.
 - **Y clamp**: vertical position pinned to `[-10, 10]`.
-- **Rate limit**: 30 moves/sec per client window — well above the 15Hz the client sends, so it absorbs jitter without dropping legit traffic.
+- **Rate limit**: 30 moves/sec per client window (twice the 15Hz the client sends), so it absorbs jitter without dropping legit traffic.
 - **Field types**: every numeric field is `Number.isFinite`-checked; motion strings are validated against an allow-list.
 
 ## Reconnects
@@ -71,28 +83,32 @@ BASE=https://three.ws node scripts/play-multiplayer-e2e.mjs   # against the live
 
 Two software-rendered 3D worlds at once is the heaviest thing you can ask a headless Chrome to do, so give the browser run a machine with headroom; the wire-level proof is the one to reach for on a busy box or in a tight loop.
 
-## Deploy to Fly.io
+There is also a fishing-lane smoke check in this directory: with a server on `:2567`, `node scripts/fish-smoke.mjs` joins `walk_world`, walks to the east pond, casts, and asserts the profile, catch notice, XP gain, and inventory land.
+
+## Deploy (Cloud Run, production)
+
+Production runs as the `three-ws-multiplayer` Cloud Run service in `us-central1`, separate from the main `three-ws-api` container. [`deploy-cloudrun.sh`](deploy-cloudrun.sh) is the whole deploy: Cloud Build builds the local [`Dockerfile`](Dockerfile), Cloud Run terminates TLS and hands back a stable https URL.
 
 ```bash
 cd multiplayer
-fly launch --no-deploy            # reads fly.toml (already in this dir)
-fly secrets set ALLOWED_ORIGINS=https://three.ws,https://www.three.ws
-fly deploy
+./deploy-cloudrun.sh          # override SERVICE/REGION/CPU/MEMORY/... via env
 ```
 
-After deploy, point the client at the new host by adding a meta tag to `walk.html`:
+Read the script's header before touching capacity: it re-applies its CPU/memory/concurrency defaults on every deploy, so a hand-raised limit on the live service survives exactly until the next deploy. Without `REDIS_URI` it pins max-instances to 1 on purpose; players in the same coin world must land on the same instance until the room registry is shared.
 
-```html
-<meta name="walk-server" content="wss://three-ws-multiplayer.fly.dev">
-```
+Clients find the server through meta tags baked into the pages (use the `wss://` form of the service URL):
+
+- `<meta name="walk-server">` in [`pages/temporary.html`](../pages/temporary.html), [`pages/agora.html`](../pages/agora.html), and [`pages/marketplace-walk.html`](../pages/marketplace-walk.html)
+- `<meta name="game-server">` in [`pages/play.html`](../pages/play.html)
+
+[`fly.toml`](fly.toml) is kept as an alternative host config (`fly launch --no-deploy`, set `ALLOWED_ORIGINS` and the Upstash secrets, `fly deploy`), but production is Cloud Run.
 
 ## Scaling notes
 
-- A single Node process holds many rooms (each room = one WalkRoom instance).
-- Each room caps at 100 clients by default (`MAX_CLIENTS_PER_ROOM` in [WalkRoom.js](src/rooms/WalkRoom.js), tunable via the `WALK_ROOM_MAX_CLIENTS` env var). Colyseus's matchmaker creates a new room when the current one fills.
-- Across machines: add [`@colyseus/redis-presence`](https://docs.colyseus.io/scalability/redis-presence/) + a Redis instance so matchmaking is cluster-aware. This is a config-only change to [`src/index.js`](src/index.js); add it when you cross ~200 concurrent players.
-- Memory budget: ~5 MB per 50-player room on Node 22. The default Fly VM (256 MB) holds plenty of rooms.
+- A single Node process holds many rooms; Colyseus's matchmaker creates a new room per coin world as needed and spills into a fresh one when a room fills.
+- `walk_world` caps at 100 clients per room by default (`MAX_CLIENTS_PER_ROOM` in [WalkRoom.js](src/rooms/WalkRoom.js), tunable via `WALK_ROOM_MAX_CLIENTS`, clamped to 2-500).
+- Across instances: horizontal scaling is already wired in [`src/index.js`](src/index.js). Set `REDIS_URI` (e.g. a Memorystore instance) and the server boots with `@colyseus/redis-driver` + `@colyseus/redis-presence`, making matchmaking cluster-aware; `deploy-cloudrun.sh` then allows multiple instances. Without it the server logs `single-instance mode` and must stay at one instance.
 
 ## What the schema looks like on the wire
 
-See [`src/schemas.js`](src/schemas.js). Each `Player` is 8 fields, encoded as a binary delta: only the fields that changed since the last patch are sent. At 15Hz × 50 players × ~24 bytes/player avg = ~18 KB/s outbound per fully-busy room — fine on any VPS.
+See [`src/schemas.js`](src/schemas.js). Each `Player` is 21 primitive fields (position, motion, identity, cosmetics, combat flags), encoded as a binary delta: only the fields that changed since the last patch are sent. The live wire budget is kept in the capacity comment above `MAX_CLIENTS_PER_ROOM` in [`WalkRoom.js`](src/rooms/WalkRoom.js): a full 100-client room costs each client roughly 40 KB/s down (99 peers × ~28 B average × 15 Hz), well inside both the container and a normal connection.
