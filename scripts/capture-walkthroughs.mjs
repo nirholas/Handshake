@@ -141,7 +141,7 @@ async function main() {
 				await page.waitForTimeout(SETTLE);
 				await applyBefore(page, step.before);
 				const hotspot = await measureHotspot(page, step.focus, viewport);
-				const pageTitle = await page.title();
+				const pageTitle = (await page.title()).replace(/[\u2014\u2013]/g, '-');
 				if (!VERIFY) {
 					await page.screenshot({ path: join(SHOT_DIR, file), type: 'jpeg', quality: 84 });
 				}
