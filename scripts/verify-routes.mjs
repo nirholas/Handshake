@@ -31,7 +31,7 @@
  *   node scripts/verify-routes.mjs --base=https://three.ws            # live sample
  *   node scripts/verify-routes.mjs --base=http://localhost:3000 --all # live, every route
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadRouteTable, resolveRequest } from './lib/vercel-routes.mjs';
@@ -82,6 +82,20 @@ for (const f of walk(resolve(ROOT, 'pages'), resolve(ROOT, 'pages'), ['.html']))
 for (const f of walk(resolve(ROOT, 'public'))) served.add(f); // public/ copied verbatim (all files)
 for (const f of walk(resolve(ROOT, 'docs'))) served.add('docs/' + f);
 for (const f of walk(resolve(ROOT, 'blog'))) served.add('blog/' + f);
+// The chat sub-app's build output (public/chat/index.html and assets) is a
+// gitignored `build:chat` artifact, so walking public/ misses it in any
+// workspace that hasn't built chat. Model it from its source of truth: the
+// chat workspace builds chat/index.html into ../public/chat (chat/vite.config.js
+// outDir), and build:gcp always runs build:chat before the deploy-time
+// check:dist, which independently verifies dist/chat/index.html exists. So
+// modeling the entry here cannot mask a production 404 from a skipped build.
+{
+	const chatVite = readFileSync(resolve(ROOT, 'chat/vite.config.js'), 'utf8');
+	const outDir = chatVite.match(/outDir:\s*['"]([^'"]+)['"]/)?.[1];
+	if (outDir === '../public/chat' && existsSync(resolve(ROOT, 'chat/index.html'))) {
+		served.add('chat/index.html');
+	}
+}
 
 // ───────────────────────── shared legacy-routes resolver ─────────────────────────
 // The matcher itself lives in scripts/lib/vercel-routes.mjs so this script and
