@@ -2645,6 +2645,10 @@
 			"dest": "/api/agents/wallet-embed"
 		},
 		{
+			"src": "/api/agents/onchain-history",
+			"dest": "/api/agents/onchain-history"
+		},
+		{
 			"src": "/api/agents/by-address/([^/]+)",
 			"dest": "/api/agents/by-address/[addr]?addr=$1"
 		},
@@ -4516,6 +4520,10 @@
 			"dest": "/api/erc8004/[action]?action=metadata"
 		},
 		{
+			"src": "/api/agent-subscriptions",
+			"dest": "/api/agent-subscriptions"
+		},
+		{
 			"src": "/api/subscriptions/plans(/.*)?",
 			"dest": "/api/subscriptions/plans.js"
 		},
@@ -5083,6 +5091,13 @@
 		{
 			"src": "/content-policy/?",
 			"dest": "/legal/content-policy.html"
+		},
+		{
+			"src": "/extension/?",
+			"status": 308,
+			"headers": {
+				"Location": "/docs/walk/chrome-extension"
+			}
 		},
 		{
 			"src": "/extension/auth-callback/?",

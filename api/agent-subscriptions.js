@@ -1,9 +1,13 @@
 /**
- * /api/subscriptions — manage recurring subscription records.
+ * /api/agent-subscriptions: manage recurring agent-delegation subscription records.
  *
- * POST   — create a subscription (viewer has already granted a delegation)
- * GET    — list subscriptions for the authenticated user
- * DELETE — soft-cancel a subscription (?id=<uuid>); does NOT revoke the delegation
+ * Distinct from /api/subscriptions (creator plan subscriptions over
+ * creator_subscriptions); this endpoint tracks delegation-backed recurring
+ * charges in agent_subscriptions, created by the subscription skill.
+ *
+ * POST:   create a subscription (viewer has already granted a delegation)
+ * GET:    list subscriptions for the authenticated user
+ * DELETE: soft-cancel a subscription (?id=<uuid>); does NOT revoke the delegation
  */
 
 import { sql } from './_lib/db.js';

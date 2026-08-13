@@ -56,7 +56,7 @@ export async function setup({ agent, host }) {
  * Viewer's initial subscription action — runs in the browser only.
  *
  * 1. Opens the grant modal pre-filled with the weekly 5 USDC scope.
- * 2. On successful grant, POSTs to /api/subscriptions.
+ * 2. On successful grant, POSTs to /api/agent-subscriptions.
  * 3. Confirms in chat with the expiry date.
  *
  * @param {{ agent: object, host: object, args: object }} opts
@@ -97,7 +97,7 @@ export async function execute({ agent, host, args }) {
 			.then((r) => (r.ok ? r.json() : null))
 			.then((j) => j?.data?.token || '')
 			.catch(() => '');
-		const res = await fetch('/api/subscriptions', {
+		const res = await fetch('/api/agent-subscriptions', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
 			credentials: 'include',
