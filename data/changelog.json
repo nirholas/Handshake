@@ -3,6 +3,53 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Copy-trading set up by an agent now keeps its alerts and can pay its leader",
+			"summary": "Agents that arrange copy-trading through the MCP tools hit three problems. A Telegram chat supplied for copy alerts was thrown away, and worse, adjusting an existing subscription erased the chat already set on the dashboard, so the alerts stopped. Subscriptions created this way also never recorded the leader payout wallet, which meant the leader performance fee could not be settled on them. And when the database was briefly unreachable, the tools answered with a confident wrong answer: your leader does not exist, or you have no subscriptions at all. Alerts and the payout wallet are now stored correctly, an outage says plainly that the service is temporarily unavailable, two agents subscribing at the same moment no longer collide, and a trader profile now returns the open positions it always advertised so a leader can be vetted before being copied.",
+			"tags": [
+				"fix"
+			],
+			"link": "/dashboard/copy"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Embedded agents keep their tool calls, and the free brain lane bills what it actually used",
+			"summary": "The we-pay brain behind every embedded agent streams its answers, and three things in that stream were wrong. Free providers were never asked to report how many tokens a streamed answer used, so the monthly token budget an owner sets on an agent counted zero for the lane most embeds run on: the budget could not be reached, and the usage screen showed no spend for real traffic. Groq reports those numbers in a field of its own, which was being ignored for the same reason; both are now read and charged. Tool calls fared worse: when a provider streamed a tool name in pieces, only the first piece survived, so the agent tried to call a tool that does not exist, and a call whose id never arrived was dropped in silence instead of being passed on. Finally, the second step of the automatic failover chain pointed at a model that no longer exists anywhere, so a rate-limited free lane skipped straight past it; it now points at a live free model on a separate account, and requests that leave the token limit unset no longer draw an avoidable rejection from Anthropic.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/api-reference"
+		},
+    {
+      "date": "2026-08-13",
+      "title": "The CC0 object library answers a bad page request instead of quietly handing back the wrong page",
+      "summary": "The free prop library behind /objects and the AR Studio Objects tray is also a public API anyone can page through. Ask it for a page size it cannot parse and it used to guess: a word where a number belongs silently returned a single object, a fractional page size handed back a fractional position to ask for next, and a page position sent without a page size was ignored outright. Every one of those looked like working pagination while quietly skipping or repeating props, so a script walking the whole catalogue could finish believing it had seen all 511 when it had not. Bad page requests now come back immediately as a clear error naming the parameter and the accepted range, while an oversized page still simply caps at the documented maximum. Separately, when the storage behind the library has a hiccup the endpoint still degrades to an empty list rather than an error page, but that emptiness is no longer cached for the next five minutes: the library reappears the moment storage recovers instead of staying blank long after.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/objects"
+    },
+		{
+			"date": "2026-08-13",
+			"title": "FBX export on the OKX 3D service line works again, and the Chinese-brief avatar prompt keeps its subject",
+			"summary": "The paid FBX export service at /api/okx/3d/fbx-export was handing the conversion engine the wrong field names, so every call came back as a bad-request error and no model was ever converted. Nobody was charged for the failed calls, but nobody got an FBX either. It now speaks the engine's own contract, honors the requested target format (FBX, OBJ, STL, PLY, USDZ, 3MF), and a new test holds each of the three engine-backed services to the schema its engine publishes so a renamed field cannot break a paid lane again. Separately, when the Agent Identity Studio prompt director is unavailable, a Chinese-language brand brief now contributes only its first sentence to the fallback prompt, the same way an English one does, instead of pushing the style hints out of the generator's prompt budget.",
+			"tags": [
+				"fix"
+			],
+			"link": "/api/okx/3d/catalog"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Rankings stops counting your own remixes, and the Daily Match board opens up to other sites",
+			"summary": "The Remixes Received ranking on /rankings was meant to count derivatives other creators made from your work. It was also counting your own refinements of your own model, and generations that never finished, so a creator could climb the board without anyone else touching their work. It now counts only finished derivatives made by someone else, which is what the board always claimed to measure. Separately, the public Daily Match standings endpoint sent no cross-origin permission header, so any site other than three.ws that tried to read the board was blocked by the browser. It now allows any origin, matching the unified leaderboard, and both boards are covered by tests.",
+			"tags": [
+				"fix"
+			],
+			"link": "/rankings"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "The three.ws launchpad directory answers a bad filter instead of erroring out",
 			"summary": "The public directory of coins launched on the three.ws bonding curve accepts an agent filter, so a page can show only the coins one agent launched. A filter value that was not a real agent id went straight to the database, which rejected it and turned the whole request into an unexplained server error. Anything that is not a valid agent id now comes back immediately as a plain validation error naming the problem, so a mistyped link fails clearly instead of looking like the launchpad is down. The endpoint documentation now states the same contract, including the page-size and offset limits, and the behaviour is pinned by tests.",
 			"tags": [

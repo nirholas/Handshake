@@ -31,6 +31,22 @@
 			<description>The Forever page writes your message into Bitcoin, then keeps a pay screen open while you send the payment from your own wallet. That screen is restored when you come back to the tab. If the inscription order behind it had since expired, the page had no way to say so: the server reported an order it could not find as a server fault, so the pay screen either sat there polling an order that no longer existed, or repainted itself empty with no charge address and no explanation. An order that no longer exists is now reported as exactly that, and the page retires it, tells you nothing was charged, and puts you back at the message box to start a new one. Three related fixes went in with it. An inscription that the provider rejected could come back marked as success, which briefly showed a pay screen for an order that was never created; every provider failure is now reported as one. A receive address with a typo is now caught by its checksum before the order is created, and tells you to recopy it from your wallet, rather than failing later with a message that explained nothing. And an order that expired unpaid is no longer counted as paid.</description>
 		</item>
 		<item>
+			<title>Embedded agents keep their tool calls, and the free brain lane bills what it actually used</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-08-13:Embedded agents keep their tool calls, and the free brain lane bills what it actually used</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The we-pay brain behind every embedded agent streams its answers, and three things in that stream were wrong. Free providers were never asked to report how many tokens a streamed answer used, so the monthly token budget an owner sets on an agent counted zero for the lane most embeds run on: the budget could not be reached, and the usage screen showed no spend for real traffic. Groq reports those numbers in a field of its own, which was being ignored for the same reason; both are now read and charged. Tool calls fared worse: when a provider streamed a tool name in pieces, only the first piece survived, so the agent tried to call a tool that does not exist, and a call whose id never arrived was dropped in silence instead of being passed on. Finally, the second step of the automatic failover chain pointed at a model that no longer exists anywhere, so a rate-limited free lane skipped straight past it; it now points at a live free model on a separate account, and requests that leave the token limit unset no longer draw an avoidable rejection from Anthropic.</description>
+		</item>
+		<item>
+			<title>FBX export on the OKX 3D service line works again, and the Chinese-brief avatar prompt keeps its subject</title>
+			<link>https://three.ws/api/okx/3d/catalog</link>
+			<guid isPermaLink="false">2026-08-13:FBX export on the OKX 3D service line works again, and the Chinese-brief avatar prompt keeps its subject</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The paid FBX export service at /api/okx/3d/fbx-export was handing the conversion engine the wrong field names, so every call came back as a bad-request error and no model was ever converted. Nobody was charged for the failed calls, but nobody got an FBX either. It now speaks the engine's own contract, honors the requested target format (FBX, OBJ, STL, PLY, USDZ, 3MF), and a new test holds each of the three engine-backed services to the schema its engine publishes so a renamed field cannot break a paid lane again. Separately, when the Agent Identity Studio prompt director is unavailable, a Chinese-language brand brief now contributes only its first sentence to the fallback prompt, the same way an English one does, instead of pushing the style hints out of the generator's prompt budget.</description>
+		</item>
+		<item>
 			<title>FBX export on the OKX 3D studio works again</title>
 			<link>https://three.ws/api/okx/3d/catalog</link>
 			<guid isPermaLink="false">2026-08-13:FBX export on the OKX 3D studio works again</guid>
@@ -55,6 +71,14 @@
 			<description>The Trust Layer endpoint that screens messages and proposed money moves through IBM Granite Guardian has an hourly platform-wide ceiling on how much model work it will pay for. That ceiling was being charged on every incoming request, including ones that were rejected before any model ran: a malformed body, a missing field, or a request arriving while the service is not configured. A single misbehaving client sending junk could therefore exhaust the shared budget and leave everyone else rate-limited for the rest of the hour without a single real assessment happening. The ceiling is now charged only when an assessment actually runs. Two error replies were also wrong in a way that misled callers: sending the wrong content type or a body over the size limit both came back as generic malformed JSON, so the fix looked like editing your payload when it was really a header or a smaller body. They now return the correct unsupported-media-type and payload-too-large codes, and the endpoint rejects a non-object body with a message that says so.</description>
 		</item>
 		<item>
+			<title>Rankings stops counting your own remixes, and the Daily Match board opens up to other sites</title>
+			<link>https://three.ws/rankings</link>
+			<guid isPermaLink="false">2026-08-13:Rankings stops counting your own remixes, and the Daily Match board opens up to other sites</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Remixes Received ranking on /rankings was meant to count derivatives other creators made from your work. It was also counting your own refinements of your own model, and generations that never finished, so a creator could climb the board without anyone else touching their work. It now counts only finished derivatives made by someone else, which is what the board always claimed to measure. Separately, the public Daily Match standings endpoint sent no cross-origin permission header, so any site other than three.ws that tried to read the board was blocked by the browser. It now allows any origin, matching the unified leaderboard, and both boards are covered by tests.</description>
+		</item>
+		<item>
 			<title>The $THREE tile on the live heatmap shows real buy pressure again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-13:The $THREE tile on the live heatmap shows real buy pressure again</guid>
@@ -77,6 +101,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every message and every autonomous money move an avatar makes is screened by the IBM Granite Guardian safety check before it runs. That check has an hourly platform-wide ceiling so one busy hour cannot run up an unbounded inference bill. The ceiling was being charged on every request that arrived, including ones that were rejected on the spot for a malformed body and never reached the safety model at all. A single client sending junk could therefore burn the whole platform hour and leave everyone else refused for real, valid checks. The ceiling is now charged only when an actual screening runs. Two error replies were also corrected: sending the wrong content type now answers 415 and an oversized body answers 413, instead of both being reported as generic bad input, so a caller can see which of the two to fix.</description>
+		</item>
+		<item>
+			<title>The CC0 object library answers a bad page request instead of quietly handing back the wrong page</title>
+			<link>https://three.ws/objects</link>
+			<guid isPermaLink="false">2026-08-13:The CC0 object library answers a bad page request instead of quietly handing back the wrong page</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The free prop library behind /objects and the AR Studio Objects tray is also a public API anyone can page through. Ask it for a page size it cannot parse and it used to guess: a word where a number belongs silently returned a single object, a fractional page size handed back a fractional position to ask for next, and a page position sent without a page size was ignored outright. Every one of those looked like working pagination while quietly skipping or repeating props, so a script walking the whole catalogue could finish believing it had seen all 511 when it had not. Bad page requests now come back immediately as a clear error naming the parameter and the accepted range, while an oversized page still simply caps at the documented maximum. Separately, when the storage behind the library has a hiccup the endpoint still degrades to an empty list rather than an error page, but that emptiness is no longer cached for the next five minutes: the library reappears the moment storage recovers instead of staying blank long after.</description>
 		</item>
 		<item>
 			<title>The decentralized inference demo stops sending your prompt to a gateway that is no longer Livepeer</title>

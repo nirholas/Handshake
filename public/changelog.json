@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T01:47:10.912Z",
+	"generated_at": "2026-08-13T02:06:29.190Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -40,6 +40,27 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "Embedded agents keep their tool calls, and the free brain lane bills what it actually used",
+			"summary": "The we-pay brain behind every embedded agent streams its answers, and three things in that stream were wrong. Free providers were never asked to report how many tokens a streamed answer used, so the monthly token budget an owner sets on an agent counted zero for the lane most embeds run on: the budget could not be reached, and the usage screen showed no spend for real traffic. Groq reports those numbers in a field of its own, which was being ignored for the same reason; both are now read and charged. Tool calls fared worse: when a provider streamed a tool name in pieces, only the first piece survived, so the agent tried to call a tool that does not exist, and a call whose id never arrived was dropped in silence instead of being passed on. Finally, the second step of the automatic failover chain pointed at a model that no longer exists anywhere, so a rate-limited free lane skipped straight past it; it now points at a live free model on a separate account, and requests that leave the token limit unset no longer draw an avoidable rejection from Anthropic.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "FBX export on the OKX 3D service line works again, and the Chinese-brief avatar prompt keeps its subject",
+			"summary": "The paid FBX export service at /api/okx/3d/fbx-export was handing the conversion engine the wrong field names, so every call came back as a bad-request error and no model was ever converted. Nobody was charged for the failed calls, but nobody got an FBX either. It now speaks the engine's own contract, honors the requested target format (FBX, OBJ, STL, PLY, USDZ, 3MF), and a new test holds each of the three engine-backed services to the schema its engine publishes so a renamed field cannot break a paid lane again. Separately, when the Agent Identity Studio prompt director is unavailable, a Chinese-language brand brief now contributes only its first sentence to the fallback prompt, the same way an English one does, instead of pushing the style hints out of the generator's prompt budget.",
+			"link": "/api/okx/3d/catalog",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "FBX export on the OKX 3D studio works again",
 			"summary": "The paid FBX export service at /api/okx/3d/fbx-export was handing the conversion engine the wrong parameter names, so every call came back as a rejected request instead of a converted model, and the format you asked for was dropped on the way through. The adapter now speaks the engine's own parameter names, so a rigged GLB converts to FBX (or OBJ, STL, PLY, USDZ, 3MF) and keeps its skeleton, skin weights, and blendshapes. Buyers were never charged for the failed calls. A contract test now checks every OKX studio service against the schema its engine actually publishes, so a renamed parameter cannot slip through again. Separately, a Chinese-language brand brief sent to the Agent Identity Studio now has its first sentence picked out correctly when the prompt director is unavailable, instead of the whole brief crowding out the style hints.",
 			"link": "/api/okx/3d/catalog",
@@ -66,6 +87,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Rankings stops counting your own remixes, and the Daily Match board opens up to other sites",
+			"summary": "The Remixes Received ranking on /rankings was meant to count derivatives other creators made from your work. It was also counting your own refinements of your own model, and generations that never finished, so a creator could climb the board without anyone else touching their work. It now counts only finished derivatives made by someone else, which is what the board always claimed to measure. Separately, the public Daily Match standings endpoint sent no cross-origin permission header, so any site other than three.ws that tried to read the board was blocked by the browser. It now allows any origin, matching the unified leaderboard, and both boards are covered by tests.",
+			"link": "/rankings",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -98,6 +129,17 @@
 			"link": "/docs/ibm",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "The CC0 object library answers a bad page request instead of quietly handing back the wrong page",
+			"summary": "The free prop library behind /objects and the AR Studio Objects tray is also a public API anyone can page through. Ask it for a page size it cannot parse and it used to guess: a word where a number belongs silently returned a single object, a fractional page size handed back a fractional position to ask for next, and a page position sent without a page size was ignored outright. Every one of those looked like working pagination while quietly skipping or repeating props, so a script walking the whole catalogue could finish believing it had seen all 511 when it had not. Bad page requests now come back immediately as a clear error naming the parameter and the accepted range, while an oversized page still simply caps at the documented maximum. Separately, when the storage behind the library has a hiccup the endpoint still degrades to an empty list rather than an error page, but that emptiness is no longer cached for the next five minutes: the library reappears the moment storage recovers instead of staying blank long after.",
+			"link": "/objects",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
