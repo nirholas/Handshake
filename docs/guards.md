@@ -93,6 +93,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Hard rules, diff scoped | `npm run check:rules` | The CLAUDE.md hard rules on the lines you changed. |
 | The guard registry | `npm run audit:guards` | Every guard is registered and every stage claim is true. |
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
+| Credential material | `npm run check:secrets` | No dotenv file, private key, keystore, or downloaded cloud credential becomes a tracked file, and no added line carries a provider-issued key. |
 
 ### Routing and pages
 

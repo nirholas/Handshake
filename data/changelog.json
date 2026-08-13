@@ -3,6 +3,44 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Publishing a Launchpad page can no longer be sniped by a second publisher",
+			"summary": "Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/launchpad"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "A bounty nobody bid on gets a second chance in the Labor Market",
+			"summary": "Autonomous workers bid on a new bounty the moment it is posted. If none of them matched it at that exact second, because no agent had licensed the skill yet, or the pitch writer was briefly unavailable, the bounty sat there silently and was never offered to a worker again. The market now re-offers a fresh bounty to newly eligible workers for an hour after it is posted, so a bounty posted a minute too early still finds its worker. In the other direction, a worker that has already bid is no longer asked again on every pass, which stops the same bid being rewritten once a minute and keeps the bid counts on the live market page honest.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/labor-market"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The Agent Galaxy recovers on its own after a database hiccup",
+			"summary": "The galaxy prepares its cache the first time it is asked for, and it remembered that preparation so later visitors did not have to wait for it. It also remembered a failure: if the database stumbled once during that first request, every visitor after it was handed the same stale failure until the server happened to restart, long after the database was fine. It now retries on the next visit, so a momentary blip costs one request instead of the rest of the day. Alongside it, the Digital Twin no longer loses its whole forecast and narration when the optional accuracy back-test comes back empty, and the twin, galaxy search, and Granite Vision now answer a malformed request with a clear explanation instead of a generic server error.",
+			"tags": [
+				"fix"
+			],
+			"link": "/galaxy"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Saving a mocap clip works again, and clips now resolve by their share name",
+			"summary": "Saving or deleting a recording in Mocap Studio was rejected every time: the page was not sending the security token the platform requires on a signed-in write, so the button reported a failure no matter what you did. Both work again, and a save that does fail now tells you the actual reason instead of a bare status code. Separately, a clip can now be fetched by its short name and not just its long id, so the share link the mocap SDK has always advertised finally opens the clip, in any letter case.",
+			"tags": [
+				"fix"
+			],
+			"link": "/mocap-studio"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Your Memetic Launcher settings can no longer be dropped behind a success message",
 			"summary": "The launcher's settings endpoint answered \"saved\" to any request whose body it could not actually read, so a badly formed save from a script or an agent looked like it worked while nothing changed. This config decides whether your launcher mints for real and how much SOL it may spend per day, so \"I switched it to preview and got an OK\" has to mean it is in preview. An unreadable save is now refused outright with a message naming what was wrong, and only a save the server genuinely understood reports success.",
 			"tags": [

@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-08-13T04:24:00.804Z",
+	"generated_at": "2026-08-13T04:33:25.502Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "A bounty nobody bid on gets a second chance in the Labor Market",
+			"summary": "Autonomous workers bid on a new bounty the moment it is posted. If none of them matched it at that exact second, because no agent had licensed the skill yet, or the pitch writer was briefly unavailable, the bounty sat there silently and was never offered to a worker again. The market now re-offers a fresh bounty to newly eligible workers for an hour after it is posted, so a bounty posted a minute too early still finds its worker. In the other direction, a worker that has already bid is no longer asked again on every pass, which stops the same bid being rewritten once a minute and keeps the bid counts on the live market page honest.",
+			"link": "/labor-market",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-08-13",
 			"type": "update",
@@ -123,9 +134,40 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "Publishing a Launchpad page can no longer be sniped by a second publisher",
+			"summary": "Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.",
+			"link": "/launchpad",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "Rankings stops counting your own remixes, and the Daily Match board opens up to other sites",
 			"summary": "The Remixes Received ranking on /rankings was meant to count derivatives other creators made from your work. It was also counting your own refinements of your own model, and generations that never finished, so a creator could climb the board without anyone else touching their work. It now counts only finished derivatives made by someone else, which is what the board always claimed to measure. Separately, the public Daily Match standings endpoint sent no cross-origin permission header, so any site other than three.ws that tried to read the board was blocked by the browser. It now allows any origin, matching the unified leaderboard, and both boards are covered by tests.",
 			"link": "/rankings",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Retro computing prompts are no longer refused by the 3D Studio safety gate",
+			"summary": "The free 3D Studio screens every prompt for age-inappropriate content before it starts generating. That screen matched the bare abbreviation \"cp\" as a whole word, so ordinary modeling prompts like \"a CP/M retro computer terminal\" or \"a CP violation physics diagram\" were refused, and refused under the harshest category the screen has. The abbreviation is gone and the spelled-out terms it stood for are now matched directly, so those prompts generate normally while the genuinely harmful ones are still blocked before any work starts.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Saving a mocap clip works again, and clips now resolve by their share name",
+			"summary": "Saving or deleting a recording in Mocap Studio was rejected every time: the page was not sending the security token the platform requires on a signed-in write, so the button reported a failure no matter what you did. Both work again, and a save that does fail now tells you the actual reason instead of a bare status code. Separately, a clip can now be fetched by its short name and not just its long id, so the share link the mocap SDK has always advertised finally opens the clip, in any letter case.",
+			"link": "/mocap-studio",
 			"tags": [
 				"fix"
 			]
@@ -150,6 +192,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "The Agent Galaxy recovers on its own after a database hiccup",
+			"summary": "The galaxy prepares its cache the first time it is asked for, and it remembered that preparation so later visitors did not have to wait for it. It also remembered a failure: if the database stumbled once during that first request, every visitor after it was handed the same stale failure until the server happened to restart, long after the database was fine. It now retries on the next visit, so a momentary blip costs one request instead of the rest of the day. Alongside it, the Digital Twin no longer loses its whole forecast and narration when the optional accuracy back-test comes back empty, and the twin, galaxy search, and Granite Vision now answer a malformed request with a clear explanation instead of a generic server error.",
+			"link": "/galaxy",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -285,6 +337,16 @@
 			"title": "Your friends list no longer goes blank when the database is mid-upgrade, and search finds unusual names",
 			"summary": "Two problems in the friends area. The friends list is built to survive an environment where the social tables have not been created yet: it shows an empty list instead of an error. That safety net was matching on the wording of the database error rather than its type, and the wording it looked for also appears when a single column is missing, which is what a partly-applied upgrade looks like. So during an upgrade the page answered normally and told you that you had no friends, no incoming requests, and no pending invites, with nothing anywhere reporting a fault. The safety net now recognises only a genuinely missing table, and any other database problem is reported as the error it is. Separately, friend search could not find a display name containing a backslash, and a search term ending in one quietly searched for something else, because the search was not escaping the backslash before handing the term to the database.",
 			"link": "/walk",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Your Memetic Launcher settings can no longer be dropped behind a success message",
+			"summary": "The launcher's settings endpoint answered \"saved\" to any request whose body it could not actually read, so a badly formed save from a script or an agent looked like it worked while nothing changed. This config decides whether your launcher mints for real and how much SOL it may spend per day, so \"I switched it to preview and got an OK\" has to mean it is in preview. An unreadable save is now refused outright with a message naming what was wrong, and only a save the server genuinely understood reports success.",
+			"link": "/launcher",
 			"tags": [
 				"fix"
 			]

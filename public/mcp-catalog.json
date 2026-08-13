@@ -6127,7 +6127,7 @@
 		{
 			"name": "get_wallet_portfolio",
 			"title": "KOL wallet portfolio + P&L",
-			"description": "Pull one KOL trader's live portfolio P&L card from the three.ws Birdeye proxy. Returns realized P&L, unrealized P&L (current open-position value), win rate, total trades, and the single highest-value token the wallet holds (symbol + USD value). Use this to size up a specific smart trader before copying or analyzing them. For ranking many traders at once use intel-mcp `kol_leaderboard`; this is the per-wallet deep dive. `has_activity:false` (all-zero P&L, no trades, no holding) means the proxy has no recorded portfolio for that address yet — an honest \"no data\", not a failure. Read-only live data.",
+			"description": "Pull one KOL trader's live portfolio card from three.ws. Returns current holdings (total USD value, position count, and the single highest-value token the wallet holds) from the Birdeye proxy, plus realized P&L, win rate, trade count and volume over the last 30 days FIFO-computed from that wallet's own on-chain trades. Use this to size up a specific smart trader before copying or analyzing them. For ranking many traders at once use intel-mcp `kol_leaderboard`; this is the per-wallet deep dive. A null P&L field (with `pnl_source: null`) means three.ws has no trade history for that wallet in the window, which is an honest \"unknown\", NOT a flat or losing record: never report it as zero profit. `has_activity:false` means no holdings and no trades. Read-only live data.",
 			"server": {
 				"id": "kol-mcp",
 				"title": "@three-ws/kol-mcp",
@@ -6152,7 +6152,7 @@
 					"wallet": {
 						"type": "string",
 						"minLength": 1,
-						"description": "The Solana wallet address of the KOL trader to pull a portfolio P&L card for."
+						"description": "The Solana wallet address of the KOL trader to pull a portfolio card for."
 					}
 				},
 				"required": [
