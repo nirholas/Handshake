@@ -43,14 +43,21 @@ payload at all (severity comes from the HTTP status).
 npm run triage:gcp                  # human report, last hour
 npm run triage:gcp -- --since 6h    # wider window
 npm run triage:gcp -- --json        # machine-readable, what agents consume
+npm run triage:gcp:deep             # everything: logs + version, TLS, fleet,
+                                    # pages, crons, DB, wallets
 ```
+
+`--deep` layers nine read-only probes (each wrapping an existing standalone
+audit) on top of the log sweep, so one command answers "what's wrong with
+three.ws?" across the whole surface instead of only what happened to log.
+`--skip <id,id>` drops individual probes.
 
 One run merges three signals:
 
 1. **`/api/healthz`** subsystem roll-up (database, cache, rate limiter,
    Helius, the Solana RPC lane tier, x402 ring, x402 settle rate, forge
-   generation, world, sniper, the OKX chat bot, x402 config): the platform
-   self-reports most degradations.
+   generation, agent index freshness, world, sniper, the OKX chat bot,
+   x402 config): the platform self-reports most degradations.
 2. **WARNING+ app logs across every service**, fingerprinted (ids, numbers,
    addresses, and URLs collapsed) so repeats group into one finding.
 3. **Request logs**: 5xx grouped per route, 429 noted.
@@ -71,7 +78,8 @@ script and document it in the runbook; the monitor stops flagging it from
 then on.
 
 Exit codes make it schedulable: `0` healthy or noise-only, `1` actionable
-findings (so `npm run triage:gcp || <alert>` works in any loop).
+findings, `2` usage error (so `npm run triage:gcp || <alert>` works in any
+loop).
 
 ## Running it continuously
 

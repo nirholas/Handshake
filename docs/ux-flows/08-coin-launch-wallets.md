@@ -180,8 +180,8 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 - **Prerequisites / gates:** Read-only wallet view is open. Autonomous SOL sends run through `/api/agent/send-sol` (optional `?token=` shared secret → `x-avatar-token` header). A server-side IBM Granite Guardian governance check can block a send.
 - **Steps (N):**
   1. Boot configures the avatar iframe (`?id=`/`?handle=`/`?model=`, transparent bg, overlay mode) and posts a `v1.avatar.hello`; queued speech/gestures flush on `v1.avatar.ready` (or a 5s resilience timeout).
-  2. `refreshWallet()` → `GET /api/agent/wallet` → renders balance (SOL + USD), network badge, short address + explorer link.
-  3. A "Fund your wallet" hint appears when the live balance can't cover a $1 send + fee buffer; user can copy the deposit address.
+  2. `refreshWallet()` → `GET /api/agent/wallet` → renders balance (SOL + USD), network badge, short address + explorer link. The API reports an unreadable balance as `balanceAvailable: false` instead of failing the response, so an RPC blip shows "balance unavailable" while the address + explorer link survive.
+  3. A "Fund your wallet" hint appears when the live balance can't cover a $1 send + fee buffer; user can copy the deposit address. An unknown balance never triggers the hint (unreachable RPC ≠ empty wallet).
   4. User chats; `ask()` streams an assistant reply, the avatar speaks/gestures, and the model may emit actions.
   5. On a `sendSol` action → a payment card renders ("Signing & broadcasting…"); `POST /api/agent/send-sol` with `{ usd, to? }`.
   6. On success → card flips to "Confirmed on-chain" with SOL amount, recipient, and a Solscan signature link; the avatar celebrates and the wallet refreshes.
@@ -189,7 +189,7 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 - **Decision points / branches:** avatar-source param (id/handle/model); send governance allowed vs blocked; send success vs fail; optional shared-secret token.
 - **External calls / dependencies:** `/api/agent/wallet`, `/api/agent/send-sol`, the chat/stream endpoint, `/avatar-embed.html`; Solscan (links). Real on-chain SOL transfer on success.
 - **Success state:** "Confirmed on-chain" payment card with signature link; avatar verbal + gesture confirmation.
-- **Empty / error states:** "wallet offline" balance fallback; fund-hint / low-balance states; payment-failed card + toast + avatar "didn't go through"; governance-blocked chip.
+- **Empty / error states:** "balance unavailable" chip (with fund hint suppressed) when the RPC is unreachable; fund-hint / low-balance states; payment-failed card + toast + avatar "didn't go through"; governance-blocked chip.
 - **Step count:** 6 required (+1 optional)
 
 ---

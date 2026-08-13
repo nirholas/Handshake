@@ -4,8 +4,8 @@ The world must load fast on event wifi and hold 60fps on a mid-range laptop. Mea
 
 ## Where the weight lives
 
-- Main world: `src/game/coincommunities.js` (4k+ lines; check what it imports eagerly vs lazily)
-- Population and props: `src/game/ambient-crowd.js`, `src/game/world-objects.js`, `src/game/terrain.js`, `src/game/build-voxels.js`
+- Main world: `src/game/coincommunities.js` (5k+ lines; check what it imports eagerly vs lazily)
+- Population and props: `src/game/ambient-crowd.js`, `src/game/world-objects.js`, `src/game/terrain.js`, `src/game/build-voxels.js`, `src/game/static-batch.js`
 - Shaders and environment: `src/game/water-shader.js`, `src/game/day-night.js`, `src/game/world-env.js`
 - Avatar pipeline: `src/game/boot-avatar.js`, `src/glb-canonicalize.js`, `src/animation-retarget.js`
 

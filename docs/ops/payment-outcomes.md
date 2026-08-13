@@ -49,6 +49,15 @@ top fault signatures. This is the same object `/api/healthz` consumes; it is
 included here so the board is complete without a second request. Its triage
 map lives in [production-log-triage.md](production-log-triage.md).
 
+The ring log is reason-blind for refusals that arrive over HTTP (they all read
+as `http_5xx`), so the sensor reconciles status-only 5xx faults against the
+facilitator's own book (`x402_self_facilitator_log.reject_reason`) for the same
+window and names the dominant cause in `ring_settle.metrics.cause`:
+`sponsor_floor` (the Solana accept was withdrawn under the SOL floor),
+`fee_governor` (deliberate spend pacing, a budget problem, not a rail fault),
+or `rail` (genuine settle faults). `governorSkips` is carried even on a healthy
+rate so a wallet sliding toward its budget shows up before the rate does.
+
 ### `sponsor` (live RPC + `x402_self_facilitator_log`)
 
 The fee wallet that pays every settle's SOL fee:
@@ -110,7 +119,8 @@ the floor, `sponsorKnownBelowFloor()` makes `buildRequirements()` withdraw the
 Solana accept from every 402 challenge, so the Solana-only ring never attempts a
 payment and there is nothing to reject. Settlements collapse while rail faults
 stay flat. The settle sensor reports that as `cause: sponsor_floor` (distinct
-from `rail`) in `ring_settle.metrics`; the accepts are checkable directly:
+from `fee_governor` and `rail`) in `ring_settle.metrics`; the accepts are
+checkable directly:
 
 ```sh
 curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'

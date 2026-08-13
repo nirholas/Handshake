@@ -51,9 +51,10 @@ Skills load automatically; invoke one directly with `/generate-3d-model`,
 
 ### b) Dropped into a project
 
-Copy (or symlink) any skill folder into a project's `.claude/skills/` — this repo
-does exactly that, symlinking every folder from `.agents/skills/` into
-[`.claude/skills/`](../.claude/skills/):
+Copy (or symlink) any skill folder into a project's `.claude/skills/`. This repo
+does exactly that: on every `npm install`,
+[`scripts/setup-claude-skills.mjs`](../scripts/setup-claude-skills.mjs) symlinks
+every folder from `.agents/skills/` into the gitignored `.claude/skills/`:
 
 ```bash
 cp -r .agents/skills/generate-3d-model  ~/my-project/.claude/skills/

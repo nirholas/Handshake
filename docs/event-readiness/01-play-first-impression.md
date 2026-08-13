@@ -19,7 +19,7 @@ https://three.ws/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=thr
 
 ## What to audit (walk it as a first-time visitor, in a real browser via `npm run dev`)
 
-1. **The blank-screen window.** Time from navigation to first meaningful paint of the world. Anything over a couple of seconds of dead screen needs a designed loading state: skeleton or branded loader with real progress (assets actually loading), never a fake timer.
+1. **The blank-screen window.** Time from navigation to first meaningful paint of the world. Anything over a couple of seconds of dead screen needs a designed loading state: skeleton or branded loader with real progress (assets actually loading), never a fake timer. Note `pages/play.html` already ships an inline boot watchdog: while the loading card is up, a failed same-origin script/stylesheet, an uncaught boot error, or 45s of silence swaps the spinner for a real error card with a retry, and it deliberately ignores blocked optional extras and flaky WebSocket reconnects (scope in `docs/play-boot-performance.md`). Build on that path; do not duplicate it.
 2. **Query-string identity.** The coin name, symbol, and image from the URL must be visibly used: page title, HUD, world signage. Verify the `image` param (an /api/img proxy URL) renders everywhere it should and has a fallback if the IPFS fetch fails.
 3. **Intro/onboarding flow.** Run it fresh (clear localStorage). Is it skippable? Does it explain movement, chat, and the economy in under 30 seconds? Does it re-appear when it should not?
 4. **HUD polish.** Every button: hover, active, focus states. Panel open/close transitions (opacity + transform, no pops). Consistent spacing and typography with the existing design tokens (`docs/DESIGN-TOKENS.md`).
