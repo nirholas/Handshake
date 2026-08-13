@@ -3,6 +3,64 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "A KOL wallet's portfolio card now separates what it holds from how it has actually traded",
+			"summary": "The wallet portfolio endpoint behind the KOL tools reported a profit-and-loss card that its data source never supplied. Birdeye returns a wallet's current holdings and nothing else, so realized profit, win rate and trade count were always zero, and the figure labelled unrealized profit was really the total dollar value of everything the wallet was holding. An agent reading that card could not tell a trader we had never measured from one whose record was genuinely flat, and would read a large holdings balance as a large profit. The card now names its two halves honestly: current holdings (total value, how many positions, and the largest one) come from Birdeye, while realized profit, win rate, trade count and volume over the last 30 days are computed from that wallet's own on-chain trades by the same engine behind the KOL Tracker board. Any figure we cannot measure comes back empty rather than as a zero, and a wallet that has only bought shows no win rate instead of a 0% one.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/tracker"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Buying an avatar, agent, or plugin priced in a token other than USDC now completes",
+			"summary": "Whole-asset listings let the seller pick any token, but the confirmation step always did its math as if the price were in USDC. For a token with a different number of decimal places that made the expected figure wrong by a factor of ten per decimal, so a buyer who paid exactly the right amount had their purchase recorded as a tip and never received the asset. The confirmation now uses the token's own decimals, and the listing's decimals are stamped onto the purchase the moment it starts, so a seller editing the price mid-checkout cannot change what an in-flight payment is measured against. Alongside it: the animation marketplace serves the first page instead of failing when a browse link carries a damaged position marker, agent reviews answer a browser's preflight check before validating the address so a bad link reads as the error it is, and malformed ids on the asset and skill-access endpoints come back as plain bad-request errors rather than server errors.",
+			"tags": [
+				"fix"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The x402 Bazaar's service details are readable again, and its price tracker returns a stable shape",
+			"summary": "Asking the x402 Bazaar MCP server for one service's full details produced a cramped block: the pay link sat flush against the last payment option, and a listing that advertises no payment options up front showed a bare \"Payment options:\" header with nothing under it. Both read properly now, and a listing with no advertised options says so and points at the 402 challenge the service returns when you call it. Search and browse results also separate a service's name from its price with a plain hyphen, matching the example output the server advertises to payers. Separately, the price-tracking tool now reports a missing price label as null on a live service instead of dropping the field, so a tracker comparing today's sample against yesterday's sees the same set of keys whether the service is still listed or gone.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/mcp-x402-bazaar"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Scrolling back through a DM no longer stops early, and muting a departed account works",
+			"summary": "Loading older messages in a direct-message thread used the oldest message on screen as its place marker. If that marker no longer resolved, because the account had left or the marker came from a different conversation, the thread reported that there was no older history at all rather than saying the marker was bad, so the scrollback simply stopped. The place marker is now checked against the conversation it belongs to, and a bad one is reported as such. Muting someone whose account no longer exists used to fail with a generic server error; it now says the account was not found, the same answer a friend request to a missing account already gave. Friend search also turns away absurdly long search terms instead of running them across every account.",
+			"tags": [
+				"fix"
+			],
+			"link": "/walk"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The Granite forecast tool now ships a copy-and-run example",
+			"summary": "The IBM Granite forecasting tool on our x402 MCP endpoint advertised a two-point sample series, but the tool needs at least 64 points of history to forecast anything. Any agent that copied the published example got a validation error back instead of a forecast. The example is now a real 64-day daily series you can paste straight into a call, and it is identical on the hosted endpoint and in the @three-ws/ibm-x402-mcp package. A test now dials every published example through the server the way a client would, so a sample that does not actually work cannot ship again.",
+			"tags": [
+				"fix",
+				"sdk"
+			],
+			"link": "/mcp"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Publishing a Launchpad page can no longer be sniped by a second publisher",
+			"summary": "Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/launchpad"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Publishing a Launchpad page can no longer be sniped by a second publisher",
 			"summary": "Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.",
 			"tags": [

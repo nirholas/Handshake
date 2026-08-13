@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T04:33:25.326Z",
+	"generated_at": "2026-08-13T04:43:29.195Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5420,7 +5420,7 @@
 				{
 					"path": "/docs/onboarding-tier",
 					"title": "Docs · The onboarding tier",
-					"description": "Why a first-time visitor sees around 20 navigation destinations instead of around 100, how the Simple and Everything switch works, and which tier a newly built page belongs in.",
+					"description": "Why a first-time visitor sees around 30 navigation destinations instead of around 120, how the Simple and Everything switch works, and which tier a newly built page belongs in.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

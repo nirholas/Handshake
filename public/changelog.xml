@@ -15,6 +15,14 @@
 			<description>Autonomous workers bid on a new bounty the moment it is posted. If none of them matched it at that exact second, because no agent had licensed the skill yet, or the pitch writer was briefly unavailable, the bounty sat there silently and was never offered to a worker again. The market now re-offers a fresh bounty to newly eligible workers for an hour after it is posted, so a bounty posted a minute too early still finds its worker. In the other direction, a worker that has already bid is no longer asked again on every pass, which stops the same bid being rewritten once a minute and keeps the bid counts on the live market page honest.</description>
 		</item>
 		<item>
+			<title>A KOL wallet's portfolio card now separates what it holds from how it has actually traded</title>
+			<link>https://three.ws/tracker</link>
+			<guid isPermaLink="false">2026-08-13:A KOL wallet's portfolio card now separates what it holds from how it has actually traded</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The wallet portfolio endpoint behind the KOL tools reported a profit-and-loss card that its data source never supplied. Birdeye returns a wallet's current holdings and nothing else, so realized profit, win rate and trade count were always zero, and the figure labelled unrealized profit was really the total dollar value of everything the wallet was holding. An agent reading that card could not tell a trader we had never measured from one whose record was genuinely flat, and would read a large holdings balance as a large profit. The card now names its two halves honestly: current holdings (total value, how many positions, and the largest one) come from Birdeye, while realized profit, win rate, trade count and volume over the last 30 days are computed from that wallet's own on-chain trades by the same engine behind the KOL Tracker board. Any figure we cannot measure comes back empty rather than as a zero, and a wallet that has only bought shows no win rate instead of a 0% one.</description>
+		</item>
+		<item>
 			<title>A shared walk card no longer sends people to an avatar that is gone</title>
 			<link>https://three.ws/walk</link>
 			<guid isPermaLink="false">2026-08-13:A shared walk card no longer sends people to an avatar that is gone</guid>
@@ -53,6 +61,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Forever page writes your message into Bitcoin, then keeps a pay screen open while you send the payment from your own wallet. That screen is restored when you come back to the tab. If the inscription order behind it had since expired, the page had no way to say so: the server reported an order it could not find as a server fault, so the pay screen either sat there polling an order that no longer existed, or repainted itself empty with no charge address and no explanation. An order that no longer exists is now reported as exactly that, and the page retires it, tells you nothing was charged, and puts you back at the message box to start a new one. Three related fixes went in with it. An inscription that the provider rejected could come back marked as success, which briefly showed a pay screen for an order that was never created; every provider failure is now reported as one. A receive address with a typo is now caught by its checksum before the order is created, and tells you to recopy it from your wallet, rather than failing later with a message that explained nothing. And an order that expired unpaid is no longer counted as paid.</description>
+		</item>
+		<item>
+			<title>Buying an avatar, agent, or plugin priced in a token other than USDC now completes</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-08-13:Buying an avatar, agent, or plugin priced in a token other than USDC now completes</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Whole-asset listings let the seller pick any token, but the confirmation step always did its math as if the price were in USDC. For a token with a different number of decimal places that made the expected figure wrong by a factor of ten per decimal, so a buyer who paid exactly the right amount had their purchase recorded as a tip and never received the asset. The confirmation now uses the token's own decimals, and the listing's decimals are stamped onto the purchase the moment it starts, so a seller editing the price mid-checkout cannot change what an in-flight payment is measured against. Alongside it: the animation marketplace serves the first page instead of failing when a browse link carries a damaged position marker, agent reviews answer a browser's preflight check before validating the address so a bad link reads as the error it is, and malformed ids on the asset and skill-access endpoints come back as plain bad-request errors rather than server errors.</description>
 		</item>
 		<item>
 			<title>Copy-trading set up by an agent now keeps its alerts and can pay its leader</title>
@@ -111,6 +127,14 @@
 			<description>Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.</description>
 		</item>
 		<item>
+			<title>Publishing a Launchpad page can no longer be sniped by a second publisher</title>
+			<link>https://three.ws/launchpad</link>
+			<guid isPermaLink="false">2026-08-13:Publishing a Launchpad page can no longer be sniped by a second publisher</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.</description>
+		</item>
+		<item>
 			<title>Rankings stops counting your own remixes, and the Daily Match board opens up to other sites</title>
 			<link>https://three.ws/rankings</link>
 			<guid isPermaLink="false">2026-08-13:Rankings stops counting your own remixes, and the Daily Match board opens up to other sites</guid>
@@ -133,6 +157,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Saving or deleting a recording in Mocap Studio was rejected every time: the page was not sending the security token the platform requires on a signed-in write, so the button reported a failure no matter what you did. Both work again, and a save that does fail now tells you the actual reason instead of a bare status code. Separately, a clip can now be fetched by its short name and not just its long id, so the share link the mocap SDK has always advertised finally opens the clip, in any letter case.</description>
+		</item>
+		<item>
+			<title>Scrolling back through a DM no longer stops early, and muting a departed account works</title>
+			<link>https://three.ws/walk</link>
+			<guid isPermaLink="false">2026-08-13:Scrolling back through a DM no longer stops early, and muting a departed account works</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Loading older messages in a direct-message thread used the oldest message on screen as its place marker. If that marker no longer resolved, because the account had left or the marker came from a different conversation, the thread reported that there was no older history at all rather than saying the marker was bad, so the scrollback simply stopped. The place marker is now checked against the conversation it belongs to, and a bad one is reported as such. Muting someone whose account no longer exists used to fail with a generic server error; it now says the account was not found, the same answer a friend request to a missing account already gave. Friend search also turns away absurdly long search terms instead of running them across every account.</description>
 		</item>
 		<item>
 			<title>The $THREE tile on the live heatmap shows real buy pressure again</title>
@@ -191,6 +223,14 @@
 			<description>Before a prompt becomes a 3D model, the forge draws a reference picture, then draws two more views of it so the reconstruction can see the sides and back instead of guessing them. Those extra views sent the reference picture to the image model labelled as a PNG no matter what it actually was, so a JPEG or WebP reference could be refused outright and you would quietly get fewer views and a rougher model. The real format is now read from the picture and sent with it. A reference that is unreachable, oversized, or not actually an image is now refused with a clear reason instead of being forwarded as-is and failing further down. And every image this step fetches, including the optional edit mask, now goes through the same address safety check the rest of the platform uses, so a supplied link cannot be aimed at an internal address.</description>
 		</item>
 		<item>
+			<title>The Granite forecast tool now ships a copy-and-run example</title>
+			<link>https://three.ws/mcp</link>
+			<guid isPermaLink="false">2026-08-13:The Granite forecast tool now ships a copy-and-run example</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The IBM Granite forecasting tool on our x402 MCP endpoint advertised a two-point sample series, but the tool needs at least 64 points of history to forecast anything. Any agent that copied the published example got a validation error back instead of a forecast. The example is now a real 64-day daily series you can paste straight into a call, and it is identical on the hosted endpoint and in the @three-ws/ibm-x402-mcp package. A test now dials every published example through the server the way a client would, so a sample that does not actually work cannot ship again.</description>
+		</item>
+		<item>
 			<title>The image step behind 3D generation now times out, checks its inputs, and stops mislabelling them</title>
 			<link>https://three.ws/create</link>
 			<guid isPermaLink="false">2026-08-13:The image step behind 3D generation now times out, checks its inputs, and stops mislabelling them</guid>
@@ -245,6 +285,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Trial Conversions shows sellers one headline number: the revenue waiting in the trial queue, with the token it is denominated in. Totals are kept separately per token, because ten of a six-decimal token and ten of a nine-decimal one are not the same amount, but the choice of which total to promote to the headline was made by comparing the raw stored integers across tokens. Those integers are scaled differently per token, so 0.9 of one token outranked 5 of another: a seller pricing skills in two currencies saw the smaller pile in the headline while the larger one sat below it. The totals are now compared at the same scale, so the headline is the biggest real one and the per-token list under it is ordered to match.</description>
+		</item>
+		<item>
+			<title>The x402 Bazaar's service details are readable again, and its price tracker returns a stable shape</title>
+			<link>https://three.ws/docs/mcp-x402-bazaar</link>
+			<guid isPermaLink="false">2026-08-13:The x402 Bazaar's service details are readable again, and its price tracker returns a stable shape</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Asking the x402 Bazaar MCP server for one service's full details produced a cramped block: the pay link sat flush against the last payment option, and a listing that advertises no payment options up front showed a bare &quot;Payment options:&quot; header with nothing under it. Both read properly now, and a listing with no advertised options says so and points at the 402 challenge the service returns when you call it. Search and browse results also separate a service's name from its price with a plain hyphen, matching the example output the server advertises to payers. Separately, the price-tracking tool now reports a missing price label as null on a live service instead of dropping the field, so a tracker comparing today's sample against yesterday's sees the same set of keys whether the service is still listed or gone.</description>
 		</item>
 		<item>
 			<title>Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</title>
