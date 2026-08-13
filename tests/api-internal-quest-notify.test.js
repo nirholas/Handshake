@@ -39,7 +39,7 @@ const ACCOUNT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
 beforeEach(() => {
 	verifyWorldServiceTokenMock.mockReset().mockResolvedValue(null);
-	insertNotificationMock.mockReset();
+	insertNotificationMock.mockReset().mockResolvedValue({ id: 'notif-1', in_app: true });
 });
 
 describe('POST /api/internal/quest-notify', () => {
@@ -60,7 +60,7 @@ describe('POST /api/internal/quest-notify', () => {
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
-		expect(parse(res)).toEqual({ ok: true });
+		expect(parse(res)).toEqual({ ok: true, id: 'notif-1' });
 		expect(insertNotificationMock).toHaveBeenCalledWith(ACCOUNT, 'quest_complete', {
 			mission: 'Vault heist',
 			gold: 250,
@@ -80,5 +80,48 @@ describe('POST /api/internal/quest-notify', () => {
 		await handler(req, res);
 		expect(res.statusCode).toBe(400);
 		expect(insertNotificationMock).not.toHaveBeenCalled();
+	});
+
+	it('waits for the insert and reports a null id when the bell row never landed', async () => {
+		// notify.js swallows a failed insert and resolves { id: null }. The endpoint
+		// must not answer before that resolves, and must not dress a dropped row up
+		// as a delivered one: the game server logs the report as landed on any 2xx.
+		verifyWorldServiceTokenMock.mockResolvedValue({ svc: 'world' });
+		let settle;
+		insertNotificationMock.mockReturnValue(new Promise((resolve) => { settle = resolve; }));
+		const req = mkReq({
+			headers: { authorization: 'Bearer faketoken' },
+			body: { accountUid: ACCOUNT, mission: 'Heist' },
+		});
+		const res = mkRes();
+		const done = handler(req, res);
+		await Promise.resolve();
+		expect(res.writableEnded).toBe(false);
+		settle({ id: null, in_app: false });
+		await done;
+		expect(res.statusCode).toBe(200);
+		expect(parse(res)).toEqual({ ok: true, id: null });
+	});
+
+	it('clamps a hostile payload instead of forwarding it verbatim', async () => {
+		verifyWorldServiceTokenMock.mockResolvedValue({ svc: 'world' });
+		const req = mkReq({
+			headers: { authorization: 'Bearer faketoken' },
+			body: {
+				accountUid: ACCOUNT,
+				mission: 'M'.repeat(400),
+				gold: -9999,
+				coop: 'yes',
+				coin: 'C'.repeat(100),
+			},
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(200);
+		const [, , payload] = insertNotificationMock.mock.calls[0];
+		expect(payload.mission).toHaveLength(120);
+		expect(payload.gold).toBe(0);
+		expect(payload.coop).toBe(true);
+		expect(payload.coin).toHaveLength(32);
 	});
 });
