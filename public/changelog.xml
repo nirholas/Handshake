@@ -527,6 +527,14 @@
 			<description>Every agent's Reasoning Ledger is a public, tamper-evident record of what it decided and why, so the reads behind it have to be honest. Three things were not. Asking for a page larger than the 200-decision maximum quietly returned a trimmed page and then reported that there was nothing after it, so a caller reading the whole history could stop early believing they had seen all of it; page sizes are now checked against the real maximum and the follow-on cursor is always correct. A malformed page cursor (a word where a sequence number belongs) came back as a generic internal error instead of saying what was wrong, and an unbounded search filter could drive a full scan of an agent's history; both now return a clear bad-request reply. And the timeline was publishing the name and picture of agents whose owners had made them private or deleted them: the decision history stays public, but an unlisted agent now appears as its id alone. The independent verification endpoint also shows the on-chain anchor even when verification fails, which is exactly when an auditor needs to see the commitment the altered history no longer matches.</description>
 		</item>
 		<item>
+			<title>The Solana agent SDK's staking tools are importable again, and its docs stopped overpromising</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:The Solana agent SDK's staking tools are importable again, and its docs stopped overpromising</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The @three-ws/solana-agent package documented nine tool-call actions on its solana-agent-kit entry point, but the three staking actions (stake, unstake, list stake accounts) were never re-exported, so importing them failed even though the code behind them existed and worked. They are now exported like the rest. The README also caught up with reality in three places: it now documents the fifth entry point (the provably-fair vanity wallet client), states the actual license instead of claiming Apache-2.0 while the LICENSE file says all rights reserved, and explains that zod is only needed when you use the solana-agent-kit entry, so a consumer following the install line no longer hits a surprise import error. The SDK also gained a test suite for its main SolanaAgent class covering both wallet factories and action delegation. Every documented export across all five entry points is now verified to load in both ESM and CommonJS. The fix reaches npm with the next @three-ws/solana-agent release.</description>
+		</item>
+		<item>
 			<title>The speech and avatar guides stopped promising formats, counts, and model orders the code does not deliver</title>
 			<link>https://three.ws/docs/lipsync</link>
 			<guid isPermaLink="false">2026-08-13:The speech and avatar guides stopped promising formats, counts, and model orders the code does not deliver</guid>
@@ -559,6 +567,14 @@
 			<description>The Scenes MCP page documented three tools, but the published server has had five for a while: export_scene merges an already-forged diorama into one GLB with named, selectable nodes, and build_world takes a single sentence all the way to a finished, openable world without a browser. Neither was written up anywhere, so nobody using an MCP client could find them. The x402 Wallet MCP page was missing pay_and_call's session-governed mode entirely, where a three.ws Payment Session pays on your behalf and the platform enforces the budget, allowlist, and per-transaction cap, so no private key sits on your machine at all; the idempotency key that makes a retry safe, and paying in $THREE where an endpoint accepts it, were undocumented too. Both pages also pinned a version number that had moved on, so they now point at the npm page instead of going stale again. Both pages were missing from the documentation sidebar, which meant the only way to reach them was to already know the URL.</description>
 		</item>
 		<item>
+			<title>The Walk Avatar Chrome extension keeps walking through page reloads, and its install link works</title>
+			<link>https://three.ws/docs/walk/chrome-extension</link>
+			<guid isPermaLink="false">2026-08-13:The Walk Avatar Chrome extension keeps walking through page reloads, and its install link works</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two fixes for the browser extension that walks your three.ws avatar across any website. First, the avatar now survives navigation: once you enable it on a tab, it automatically re-appears after every full page load on that tab instead of vanishing until you re-toggled it from the popup, and your per-site blocklist is re-checked on every navigation so it still never mounts where you told it not to. Second, three.ws/extension used to land on a 404; it now takes you to the extension guide, so the link the extension itself opens after install, and every link to it around the site, actually works. The extension also gained an automated build check so a broken package can no longer ship unnoticed.</description>
+		</item>
+		<item>
 			<title>The widget docs page rendered two footers, and eight docs pages were re-checked against the code</title>
 			<link>https://three.ws/docs/widgets</link>
 			<guid isPermaLink="false">2026-08-13:The widget docs page rendered two footers, and eight docs pages were re-checked against the code</guid>
@@ -581,6 +597,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The @three-ws/mcp-bridge MCP server filters x402 Bazaar services by price at discovery time, so an agent only sees paid tools it can actually afford. But when no spending cap was configured, discovery treated that as no limit and listed everything, while the payment guard still enforced its default $0.10 per-call cap: any service priced above it showed up in the tool list and then failed on every single call. Discovery and the payment guard now read the same effective cap, default included, so an unaffordable tool is never registered in the first place. The bridge also now reports its real package version to MCP clients instead of a hardcoded 1.0.0, and its test suite gained hermetic coverage of the stdio boot, Bazaar tool naming, and both of these behaviors. The fix ships to npm with the next @three-ws/mcp-bridge release.</description>
+		</item>
+		<item>
+			<title>The x402 catalog shows real prices and real 24h activity again</title>
+			<link>https://three.ws/x402</link>
+			<guid isPermaLink="false">2026-08-13:The x402 catalog shows real prices and real 24h activity again</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Six endpoints on the x402 catalog were labelled &quot;Free&quot; when they are not free at all: they price per request (per asset, per rarity, per skill, per vanity pattern), and the page had no way to say so. Those cards now show their price floor, the drawer shows the full band plus a note explaining what sets the exact figure, and the pay button no longer reads &quot;Pay Free &amp; run&quot;. The live activity strip along the top was reading the revenue report from the wrong place, so 24h settled, volume, success rate and unique payers were showing dashes or a fabricated $0; all four are live numbers again. For the same reason the &quot;Most used&quot; sort was doing nothing and no endpoint showed its calls-per-24h badge, so the busiest endpoints now genuinely sort first. Also fixed: the JavaScript and cURL snippets printed raw HTML entities instead of code and used an ellipsis placeholder that URL-encoded into gibberish, the Copy button sat on top of the first line of code, a copy on a browser that blocks the clipboard API now falls back instead of leaving the button stuck on &quot;copy failed&quot;, pressing Escape to dismiss a payment no longer also closes the endpoint behind it, shared /x402#run= links open the endpoint even when clicked from the page itself, and the search palette and detail drawer are no longer reachable by keyboard while closed.</description>
 		</item>
 		<item>
 			<title>Three announcement posts had no site navigation and scrolled sideways on a phone</title>
