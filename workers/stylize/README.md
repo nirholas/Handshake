@@ -39,6 +39,14 @@ input can never exhaust memory — resolution backs off automatically.
 Input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.fbx`, `.off`, `.dae`
 (FBX/DAE via `pyassimp`). Output formats: `glb` (default), `obj`, `stl`, `ply`.
 
+A glTF asset that declares `EXT_meshopt_compression` (what `gltfpack` emits, and
+what most three.ws avatars ship as) is transcoded to plain glTF with
+[`gltfpack`](https://github.com/zeux/meshoptimizer) before loading: trimesh has
+no decoder for that extension and fails on the compressed asset's fallback
+buffer, so every filter used to fail on those meshes. The binary is pinned by
+release tag and checksum in the [`Dockerfile`](Dockerfile); point `GLTFPACK_BIN`
+at your own copy to run that path locally.
+
 ## HTTP contract
 
 Bearer-authenticated on `/process` and `/tasks/:id`; `/styles` and `/health`
@@ -109,6 +117,18 @@ gallery. Public, no auth.
 { "ok": true, "service": "stylize", "styles": ["voxel", "brick", "voronoi", "lowpoly"] }
 ```
 
+### OIN routes (only with `OIN_ENABLED=true`)
+
+The same filters are also offered over the Open Inference Protocol
+([`specs/OPEN_INFERENCE_PROTOCOL.md`](../../specs/OPEN_INFERENCE_PROTOCOL.md)),
+so an outside node operator can run this worker and return signed receipts:
+`GET /.well-known/oin` (signed advertisement of the `mesh.stylize` capability),
+`POST /oin/jobs`, `GET /oin/jobs/:id`. The job envelope carries the mesh URL as
+`input.data` and the style as `input.model`, with `params.resolution` and
+`params.output_format` as the knobs; the response commits to the artifact's
+`sha256` and byte length, signed with `OIN_SIGNING_KEY`. Jobs use the same
+bearer secret as `/process`. With the flag unset none of these routes exist.
+
 ## Environment
 
 | Var | Required | Default | Meaning |
@@ -116,16 +136,26 @@ gallery. Public, no auth.
 | `API_KEY` | yes | — | Bearer secret for `/process` + `/tasks`. In production it is the shared model-worker key (Secret Manager `avatar-reconstruction-key`, mounted by `cloudbuild.yaml`). |
 | `GCS_BUCKET` | yes | — | Output bucket for stylized meshes (prod: `three-ws-avatar-reconstructions`). |
 | `MAX_CONCURRENT` | no | `2` | In-process semaphore bounding concurrent jobs. |
+| `GLTFPACK_BIN` | no | `gltfpack` | Path to the meshopt decoder. The image ships it on `PATH`. |
+| `OIN_ENABLED` | no | unset | `true` mounts the OIN routes (see below). Anything else leaves the worker byte-for-byte its pre-OIN self. |
+| `OIN_SIGNING_KEY` | with OIN | (none) | base64 Ed25519 seed. With `OIN_ENABLED=true` and no key the worker refuses to boot, so a node can never advertise a key it cannot sign with. |
+| `OIN_NODE_ID` | no | `three-ws-stylize` | Node identity in the advertisement. |
+| `OIN_RESULT_DIR` | no | unset | Write OIN artifacts to this directory instead of GCS. Set it and the worker skips the GCS client entirely, so a local run needs no cloud credentials. |
+| `OIN_RESULT_BASE_URL` | with `OIN_RESULT_DIR` | (none) | Public base URL the directory is served from; the signed `output.url` is built from it. |
 
 ## How it ships
 
-Deployed as the Cloud Run service **`stylize-service`** in **`us-central1`**,
-built by Cloud Build from [`cloudbuild.yaml`](cloudbuild.yaml) (CPU-only:
-`--cpu=8 --memory=16Gi`, `--min-instances=1 --max-instances=3`, 300 s timeout,
-run SA `avatar-reconstruction-sa`, build SA `three-ws-build@` as every build in
-this project must pin). It is kept warm rather than scaled to zero: a job itself
-finishes in under ten seconds, so a cold start on top of it would be the
-dominant stall in an interactive edit.
+Deployed as the Cloud Run service **`stylize-service`** in **`us-central1`**
+(live base URL `https://stylize-service-lp642k3kpa-uc.a.run.app`), built by Cloud
+Build from [`cloudbuild.yaml`](cloudbuild.yaml) (CPU-only: `--cpu=8
+--memory=16Gi`, `--min-instances=1 --max-instances=3`, 300 s timeout,
+`--no-cpu-throttling`, run SA `avatar-reconstruction-sa`, build SA
+`three-ws-build@` as every build in this project must pin). It is kept warm
+rather than scaled to zero: a job itself finishes in under ten seconds, so a cold
+start on top of it would be the dominant stall in an interactive edit. CPU
+throttling stays off because the work happens in a background task after the
+`202`, where a throttled container would crawl while still holding one of the
+two concurrency slots.
 
 Submit from the **repo root** and pass `SHORT_SHA` explicitly, since the config
 tags images with it and `gcloud builds submit` does not populate it:
@@ -163,7 +193,18 @@ API_KEY=dev-secret GCS_BUCKET=your-dev-bucket \
 
 (Uploads need Application Default Credentials with write access to
 `GCS_BUCKET`.) The container image installs `libassimp` + `libgl` system libs
-so FBX/DAE input and headless mesh IO work.
+so FBX/DAE input and headless mesh IO work, plus the pinned `gltfpack` binary
+for meshopt input.
+
+To run it as a self-hosted OIN node with no cloud account at all, keep results
+on disk and skip GCS entirely:
+
+```bash
+API_KEY=dev-secret GCS_BUCKET=unused \
+OIN_ENABLED=true OIN_SIGNING_KEY="$(python3 -c 'import base64,os;print(base64.b64encode(os.urandom(32)).decode())')" \
+OIN_RESULT_DIR=/tmp/oin-artifacts OIN_RESULT_BASE_URL=http://localhost:8080/artifacts \
+  uvicorn main:app --host 0.0.0.0 --port 8080
+```
 
 ## Tests
 
@@ -176,11 +217,14 @@ network, and no server: the catalog and its resolution bounds, request
 validation, scene loading, color preservation and the untextured fallback, all
 four filters (geometry, tint, and the shape property each one promises), the
 zero-extent refusal, the `MAX_VOXELS` / `MAX_LATTICE_EDGES` backoff, an export
-round-trip in every output format, the SSRF gate, the `401` contract, and the
-upload retry policy. It needs `trimesh`, `numpy`, `scipy`, `fastapi`,
-`pydantic`, and `google-cloud-storage`; `open3d` is optional locally (`_decimate`
-falls back to trimesh without it) and present in the image, so the Docker build
-gate is what exercises the open3d decimation path.
+round-trip in every output format, the SSRF gate, the `401` contract, the upload
+retry policy, the meshopt decode, the OIN protocol primitives, and the OIN job
+executor end to end against a real result sink. It needs `trimesh`, `numpy`,
+`scipy`, `pillow`, `fastapi` (its `TestClient`, so `httpx` too), `pydantic`, and
+`google-cloud-storage`. Two dependencies are optional locally and present in the
+image, so the Docker build gate is what exercises their paths: `open3d`
+(`_decimate` falls back to trimesh without it) and `gltfpack` (without it the
+suite pins the readable failure instead of round-tripping a compressed asset).
 
 ## Usage example
 
@@ -215,9 +259,11 @@ curl -s -X POST https://three.ws/api/forge-stylize \
 
 | File | Role |
 |------|------|
-| [`main.py`](main.py) | FastAPI app: filters, color sampler, task queue, GCS upload, routes. |
+| [`main.py`](main.py) | FastAPI app: filters, color sampler, mesh loading, task queue, GCS upload, routes, OIN executor. |
 | [`test_stylize.py`](test_stylize.py) | Core-path unit suite; also a Docker build gate. |
 | [`worker_security.py`](worker_security.py) | Shared bearer-auth, SSRF-safe fetch, error sanitizer. |
-| [`requirements.txt`](requirements.txt) | Pinned deps (`trimesh`, `open3d`, `scipy`, `pyassimp`, …). |
-| [`Dockerfile`](Dockerfile) | `python:3.11-slim` + assimp/GL system libs; uvicorn on `:8080`. |
+| [`oin.py`](oin.py) | OIN protocol layer: canonicalization, job digests, Ed25519 signing, the `/oin/*` routes. Vendored copy, kept byte-identical across workers. |
+| [`oin_upload.py`](oin_upload.py) | OIN result sinks: GCS in production, a local directory for self-hosted runs. |
+| [`requirements.txt`](requirements.txt) | Pinned deps (`trimesh`, `open3d`, `scipy`, `pyassimp`, `pynacl`, …). |
+| [`Dockerfile`](Dockerfile) | `python:3.11-slim` + assimp/GL system libs + pinned `gltfpack`; uvicorn on `:8080`. |
 | [`cloudbuild.yaml`](cloudbuild.yaml) | Cloud Build → Artifact Registry → Cloud Run deploy. |

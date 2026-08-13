@@ -197,6 +197,80 @@ try:
 except ValueError:
     check("geometry with no faces is rejected", True)
 
+# ── meshopt-compressed input ────────────────────────────────────────────────────
+# EXT_meshopt_compression is what gltfpack emits and what most three.ws avatars
+# ship as. trimesh has no decoder for it and dies on the fallback buffer with a
+# bare IndexError, so every style failed on our own avatars until the loader
+# started transcoding through gltfpack first.
+
+import io  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import tempfile  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+plain_glb = trimesh.Scene({"a": source_mesh()}).export(file_type="glb")
+check(
+    "a plain glb is not sent through the decoder",
+    not main._uses_meshopt(main._gltf_document(plain_glb, ".glb")),
+)
+check(
+    "a non-gltf payload has no gltf document",
+    main._gltf_document(b"ply\nformat ascii 1.0\n", ".ply") is None,
+)
+for declared in ("extensionsRequired", "extensionsUsed"):
+    check(
+        f"{declared}: {main.MESHOPT_EXTENSION} is detected",
+        main._uses_meshopt({declared: [main.MESHOPT_EXTENSION]}),
+    )
+
+if shutil.which(main.GLTFPACK_BIN):
+    # Round-trip through the real encoder: compress, then prove the loader gets
+    # usable geometry back out of a file trimesh cannot read on its own.
+    with tempfile.TemporaryDirectory() as packdir:
+        raw = Path(packdir) / "raw.glb"
+        packed = Path(packdir) / "packed.glb"
+        raw.write_bytes(plain_glb)
+        subprocess.run(
+            [main.GLTFPACK_BIN, "-i", str(raw), "-o", str(packed), "-cc"],
+            capture_output=True,
+            check=True,
+            timeout=main.GLTFPACK_TIMEOUT_S,
+        )
+        packed_bytes = packed.read_bytes()
+
+    check(
+        "a meshopt glb is detected as needing a decode",
+        main._uses_meshopt(main._gltf_document(packed_bytes, ".glb")),
+    )
+    try:
+        trimesh.load(io.BytesIO(packed_bytes), file_type="glb", force="mesh", process=False)
+        raw_load_failed = False
+    except Exception:  # noqa: BLE001: the exact trimesh error is not the contract
+        raw_load_failed = True
+    check("trimesh alone cannot read a meshopt glb", raw_load_failed)
+
+    decoded = main._load_single_mesh(packed_bytes, ".glb")
+    check(
+        "the loader returns real geometry for a meshopt glb",
+        len(decoded.faces) > 0 and len(decoded.vertices) > 0,
+        f"faces={len(decoded.faces)}",
+    )
+    styled_from_packed = main._stylize_lowpoly(decoded, 8)
+    check("a meshopt glb stylizes end to end", len(styled_from_packed.faces) > 0)
+else:
+    # No gltfpack locally: pin the failure contract instead, so a caller is told
+    # what the input needs rather than getting a bare loader crash.
+    try:
+        main._transcode_meshopt(plain_glb, ".glb")
+        check("a missing gltfpack is reported as a readable error", False, "no ValueError raised")
+    except ValueError as exc:
+        check(
+            "a missing gltfpack is reported as a readable error",
+            main.MESHOPT_EXTENSION in str(exc),
+            str(exc),
+        )
+
 # ── color preservation ──────────────────────────────────────────────────────────
 
 colored = source_mesh()
@@ -486,9 +560,6 @@ check(
 # hands the bytes to a sink for the OIN layer to sign. Drive it against a real
 # mesh and a real LocalResultSink, with only the network fetch replaced by the
 # bytes of a locally exported GLB, so nothing here is stubbed but the download.
-
-import tempfile  # noqa: E402
-from pathlib import Path  # noqa: E402
 
 from oin_upload import LocalResultSink  # noqa: E402
 
