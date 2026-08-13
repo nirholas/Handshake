@@ -1868,32 +1868,24 @@ async function handleX402Discovery(req, res) {
 
 // ── dispatcher ────────────────────────────────────────────────────────────────
 
-function handleChatPlugin(req, res) {
-	return json(
-		res,
-		200,
-		{
-			identifier: '3dagent',
-			schemaVersion: 1,
-			meta: {
-				title: 'three.ws',
-				description: 'Render a 3D avatar that reacts to the chat.',
-				avatar: 'https://three.ws/favicon.ico',
-				tags: ['avatar', '3d', 'agent'],
-			},
-			ui: { position: 'right', size: { width: 320, height: 420 } },
-			settings: [
-				{ name: 'agentId', type: 'string', required: true, title: 'Agent ID' },
-				{
-					name: 'apiOrigin',
-					type: 'string',
-					default: 'https://three.ws/',
-					title: 'API Origin',
-				},
-			],
-		},
-		{ 'cache-control': 'public, max-age=3600' },
+// LobeChat manifest. Single source of truth is the static file at
+// public/lobehub/plugin.json (also served by /api/lobehub/manifest); this
+// alias serves it at the /.well-known/chat-plugin.json URL the chat-plugin
+// README documents for the LobeChat plugin-store install flow. It previously
+// served a hardcoded pre-launch manifest with no `api` tools and no `ui.url`,
+// which installed as a plugin that could do nothing.
+let lobeChatManifest;
+try {
+	lobeChatManifest = JSON.parse(
+		readFileSync(join(process.cwd(), 'public/lobehub/plugin.json'), 'utf8'),
 	);
+} catch (err) {
+	console.error('[wk/chat-plugin] failed to load manifest', err);
+}
+
+function handleChatPlugin(req, res) {
+	if (!lobeChatManifest) return error(res, 500, 'internal_error', 'manifest unavailable');
+	return json(res, 200, lobeChatManifest, { 'cache-control': 'public, max-age=3600' });
 }
 
 // SperaxOS / plugin.delivery manifest. Single source of truth is the static
