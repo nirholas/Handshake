@@ -110,7 +110,15 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 	}
 	throw new Error(`unmodeled query: ${text}`);
 });
-vi.mock('../api/_lib/db.js', () => ({ sql: (strings, ...values) => sqlMock(strings, ...values) }));
+// http.js's wrap() classifies caught errors with these predicates, so the mock
+// has to export them alongside sql or every handler error becomes a crash
+// inside the catch block instead of the intended status code.
+vi.mock('../api/_lib/db.js', () => ({
+	sql: (strings, ...values) => sqlMock(strings, ...values),
+	isDbUnavailableError: () => false,
+	isDbCapacityError: () => false,
+	isStoragePressured: () => false,
+}));
 
 const getSessionUser = vi.fn();
 vi.mock('../api/_lib/auth.js', async () => {

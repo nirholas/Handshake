@@ -175,7 +175,7 @@ const { default: keysHandler } = await import('../../api/keys/index.js');
 const { default: keyByIdHandler } = await import('../../api/keys/[id].js');
 const { default: agentActionsHandler } = await import('../../api/agent-actions.js');
 const { default: agentMemoryHandler } = await import('../../api/agent-memory.js');
-const { default: subscriptionsHandler } = await import('../../api/subscriptions.js');
+const { default: subscriptionsHandler } = await import('../../api/agent-subscriptions.js');
 const { default: dcaHandler } = await import('../../api/dca-strategies.js');
 const { handleWithdraw } = await import('../../api/agents/solana-wallet.js');
 const { handleTrade } = await import('../../api/agents/solana-trade.js');
@@ -522,12 +522,12 @@ describe('POST/DELETE /api/agent-memory — CSRF gate', () => {
 	});
 });
 
-describe('POST/DELETE /api/subscriptions — CSRF gate', () => {
+describe('POST/DELETE /api/agent-subscriptions: CSRF gate', () => {
 	it('rejects session-authed POST without X-CSRF-Token (403 csrf_missing)', async () => {
 		authState.session = { id: 'user-1' };
 		const req = makeReq({
 			method: 'POST',
-			url: '/api/subscriptions',
+			url: '/api/agent-subscriptions',
 			body: {
 				agentId: '11111111-1111-1111-1111-111111111111',
 				delegationId: '22222222-2222-2222-2222-222222222222',
