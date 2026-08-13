@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T17:39:15.175Z",
+	"generated_at": "2026-08-13T23:06:09.212Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -392,6 +392,16 @@
 			"title": "Scrolling back through a DM no longer stops early, and muting a departed account works",
 			"summary": "Loading older messages in a direct-message thread used the oldest message on screen as its place marker. If that marker no longer resolved, because the account had left or the marker came from a different conversation, the thread reported that there was no older history at all rather than saying the marker was bad, so the scrollback simply stopped. The place marker is now checked against the conversation it belongs to, and a bad one is reported as such. Muting someone whose account no longer exists used to fail with a generic server error; it now says the account was not found, the same answer a friend request to a missing account already gave. Friend search also turns away absurdly long search terms instead of running them across every account.",
 			"link": "/walk",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Search engines can read the preview image on 69 pages again",
+			"summary": "Pages carry a hidden block of structured data that tells Google, Bing, and social platforms what the page is and which image represents it. On 69 pages that image address had been written with HTML escape codes in place of the plain characters, so anything reading the structured data got an address that would not load. The addresses are now written correctly on every affected page, and the tool that generates them was fixed at the source so newly published pages cannot pick the fault back up. Nothing about the pages themselves changed, only what machines read about them.",
+			"link": null,
 			"tags": [
 				"fix"
 			]

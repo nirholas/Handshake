@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Search engines can read the preview image on 69 pages again",
+			"summary": "Pages carry a hidden block of structured data that tells Google, Bing, and social platforms what the page is and which image represents it. On 69 pages that image address had been written with HTML escape codes in place of the plain characters, so anything reading the structured data got an address that would not load. The addresses are now written correctly on every affected page, and the tool that generates them was fixed at the source so newly published pages cannot pick the fault back up. Nothing about the pages themselves changed, only what machines read about them.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
 			"title": "The Walk Avatar Chrome extension keeps walking through page reloads, and its install link works",
 			"summary": "Two fixes for the browser extension that walks your three.ws avatar across any website. First, the avatar now survives navigation: once you enable it on a tab, it automatically re-appears after every full page load on that tab instead of vanishing until you re-toggled it from the popup, and your per-site blocklist is re-checked on every navigation so it still never mounts where you told it not to. Second, three.ws/extension used to land on a 404; it now takes you to the extension guide, so the link the extension itself opens after install, and every link to it around the site, actually works. The extension also gained an automated build check so a broken package can no longer ship unnoticed.",
 			"tags": [
