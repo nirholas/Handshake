@@ -71,6 +71,12 @@ import { runPumpAlertRules } from '../_lib/pump-alert-runner.js';
 import { publishUserEvent } from '../_lib/feed.js';
 import { confirmSkillPurchase } from '../_lib/purchase-confirm.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import {
+	OUTCOME,
+	applyChargeFailure,
+	chargeStatusFor,
+	classifyChargeFailure,
+} from '../_lib/recurring.js';
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
 
@@ -2891,6 +2897,8 @@ async function handleRunSubscriptions(req, res) {
 		charged: 0,
 		skipped: 0,
 		paused: 0,
+		// Retryable failures that left the schedule active for the next tick.
+		retrying: 0,
 		claimLost: 0,
 		errors: [],
 	};
@@ -2917,6 +2925,7 @@ async function handleRunSubscriptions(req, res) {
 				s.amount_per_period,
 				s.next_charge_at,
 				s.last_charge_at,
+				s.consecutive_failures,
 				d.status          AS delegation_status,
 				d.expires_at      AS delegation_expires_at,
 				d.chain_id,
@@ -2947,36 +2956,44 @@ async function handleRunSubscriptions(req, res) {
 		const ctx = { runId, subscriptionId: row.id, agentId: row.agent_id };
 
 		try {
-			// Guard: delegation must still be active.
+			// Guard: delegation must still be active. Nothing is attempted
+			// on-chain here, but the attempt is still recorded: a creator reading
+			// the ledger has to see why a period produced no money.
 			if (row.delegation_status !== 'active') {
-				await subPause(row.id, `delegation_${row.delegation_status}`);
-				report.paused++;
-				report.errors.push({ id: row.id, reason: `delegation_${row.delegation_status}` });
-				subLog('subscription_cron.paused', {
-					...ctx,
-					reason: `delegation_${row.delegation_status}`,
+				const applied = await subApplyFailure(row, ctx, {
+					code:
+						row.delegation_status === 'revoked'
+							? 'delegation_revoked'
+							: 'delegation_expired',
+					message: `delegation is ${row.delegation_status}`,
 				});
+				report.paused++;
+				report.errors.push({ id: row.id, code: applied.code, reason: applied.reason });
+				subLog('subscription_cron.paused', { ...ctx, code: applied.code });
 				continue;
 			}
 
 			// Guard: delegation must not be expired.
 			if (row.delegation_expires_at && new Date(row.delegation_expires_at) <= new Date()) {
-				await subPause(row.id, 'delegation_expired');
+				const applied = await subApplyFailure(row, ctx, {
+					code: 'delegation_expired',
+					message: 'delegation expiry has passed',
+				});
 				report.paused++;
-				report.errors.push({ id: row.id, reason: 'delegation_expired' });
-				subLog('subscription_cron.paused', { ...ctx, reason: 'delegation_expired' });
+				report.errors.push({ id: row.id, code: applied.code, reason: applied.reason });
+				subLog('subscription_cron.paused', { ...ctx, code: applied.code });
 				continue;
 			}
 
 			const usdcAddress = USDC_BY_CHAIN[row.chain_id];
 			if (!usdcAddress) {
-				await subPause(row.id, `chain_${row.chain_id}_unsupported`);
-				report.skipped++;
-				report.errors.push({ id: row.id, reason: `chain_${row.chain_id}_unsupported` });
-				subLog('subscription_cron.skipped', {
-					...ctx,
-					reason: `chain_${row.chain_id}_unsupported`,
+				const applied = await subApplyFailure(row, ctx, {
+					code: 'chain_not_supported',
+					message: `chain ${row.chain_id} has no USDC address configured`,
 				});
+				report.skipped++;
+				report.errors.push({ id: row.id, code: applied.code, reason: applied.reason });
+				subLog('subscription_cron.skipped', { ...ctx, code: applied.code });
 				continue;
 			}
 
@@ -3023,14 +3040,19 @@ async function handleRunSubscriptions(req, res) {
 					'onPeriod',
 				);
 			} catch (err) {
-				const reason =
-					(err.code === 'timeout' ? 'timeout: ' : '') + (err.message ?? 'unknown');
-				await subSafePause(row.id, reason, ctx);
-				report.paused++;
-				report.errors.push({ id: row.id, reason });
+				const applied = await subApplyFailure(row, ctx, {
+					code: err.code ?? 'unknown',
+					message: err.message ?? 'unknown',
+				});
+				if (applied.pause) report.paused++;
+				else report.retrying++;
+				report.errors.push({ id: row.id, code: applied.code, reason: applied.reason });
 				subLogError('subscription_cron.onperiod_threw', {
 					...ctx,
-					code: err.code ?? 'unknown',
+					code: applied.code,
+					outcome: applied.outcome,
+					paused: applied.pause,
+					willRetry: applied.retry,
 					message: err.message ?? 'unknown',
 					durationMs: Date.now() - rowStart,
 				});
@@ -3045,8 +3067,11 @@ async function handleRunSubscriptions(req, res) {
 				try {
 					await sql`
 						UPDATE agent_subscriptions
-						SET next_charge_at = ${nextChargeAt.toISOString()},
-						    last_error     = NULL
+						SET next_charge_at       = ${nextChargeAt.toISOString()},
+						    last_error           = NULL,
+						    last_error_code      = NULL,
+						    consecutive_failures = 0,
+						    last_tx_hash         = ${result.txHash ?? null}
 						WHERE id = ${row.id}
 					`;
 				} catch (err) {
@@ -3077,6 +3102,12 @@ async function handleRunSubscriptions(req, res) {
 					}),
 				);
 
+				await recordSubscriptionCharge(row, ctx, {
+					status: chargeStatusFor(OUTCOME.CHARGED),
+					outcome: OUTCOME.CHARGED,
+					txHash: result.txHash ?? null,
+				});
+
 				report.charged++;
 				subLog('subscription_cron.charged', {
 					...ctx,
@@ -3084,15 +3115,19 @@ async function handleRunSubscriptions(req, res) {
 					durationMs: Date.now() - rowStart,
 				});
 			} else {
-				const code = result?.code ?? 'unknown';
-				const message = result?.message ?? '';
-				await subSafePause(row.id, `${code}: ${message}`.slice(0, 500), ctx);
-				report.paused++;
-				report.errors.push({ id: row.id, code, message });
-				subLog('subscription_cron.paused', {
+				const applied = await subApplyFailure(row, ctx, {
+					code: result?.code ?? 'unknown',
+					message: result?.message ?? '',
+				});
+				if (applied.pause) report.paused++;
+				else report.retrying++;
+				report.errors.push({ id: row.id, code: applied.code, reason: applied.reason });
+				subLog('subscription_cron.charge_failed', {
 					...ctx,
-					code,
-					message,
+					code: applied.code,
+					outcome: applied.outcome,
+					paused: applied.pause,
+					willRetry: applied.retry,
 					durationMs: Date.now() - rowStart,
 				});
 			}
@@ -3120,6 +3155,7 @@ async function handleRunSubscriptions(req, res) {
 		processed: report.processed,
 		charged: report.charged,
 		paused: report.paused,
+		retrying: report.retrying,
 		skipped: report.skipped,
 		claimLost: report.claimLost,
 		errorCount: report.errors.length,
@@ -3131,9 +3167,86 @@ async function handleRunSubscriptions(req, res) {
 async function subPause(id, lastError) {
 	await sql`
 		UPDATE agent_subscriptions
-		SET status = 'paused', last_error = ${lastError}
+		SET status = 'paused', last_error = ${lastError}, paused_at = NOW()
 		WHERE id = ${id}
 	`;
+}
+
+/**
+ * Append one row to the subscription charge ledger. Best-effort: a ledger write
+ * must never turn a successful charge into a failed cron row, so failures are
+ * logged and swallowed.
+ */
+async function recordSubscriptionCharge(row, ctx, { status, outcome, code, error, txHash }) {
+	await sql`
+		INSERT INTO subscription_charges
+			(subscription_id, agent_id, payer_user_id, chain_id, amount, tx_hash,
+			 status, code, outcome, error, period_start_at)
+		VALUES
+			(${row.id}, ${row.agent_id}, ${row.user_id ?? null}, ${row.chain_id ?? null},
+			 ${row.amount_per_period}, ${txHash ?? null}, ${status}, ${code ?? null},
+			 ${outcome}, ${error ? String(error).slice(0, 500) : null},
+			 ${row.next_charge_at ?? null})
+		ON CONFLICT DO NOTHING
+	`.catch((err) =>
+		subLogError('subscription_cron.charge_record_failed', { ...ctx, message: err.message }),
+	);
+}
+
+/**
+ * Apply a failed charge to the schedule: record it in the ledger, then either
+ * leave the schedule active for another tick or pause it, per the shared rules
+ * in api/_lib/recurring.js.
+ *
+ * Releasing the period claim means restoring last_charge_at to what it was
+ * before this tick claimed the period. That is only safe because the retryable
+ * bucket is exactly the set of failures where the transfer provably never
+ * reached the chain; a timeout is classified ambiguous and never retried.
+ */
+async function subApplyFailure(row, ctx, failure) {
+	const { code, outcome, reason } = classifyChargeFailure(failure);
+	const applied = applyChargeFailure({
+		outcome,
+		consecutiveFailures: Number(row.consecutive_failures ?? 0),
+	});
+
+	await recordSubscriptionCharge(row, ctx, {
+		status: chargeStatusFor(outcome),
+		outcome,
+		code,
+		error: failure.message,
+	});
+
+	try {
+		if (applied.pause) {
+			await sql`
+				UPDATE agent_subscriptions
+				SET status               = 'paused',
+				    paused_at            = NOW(),
+				    last_error           = ${reason.slice(0, 500)},
+				    last_error_code      = ${code},
+				    consecutive_failures = ${applied.consecutiveFailures}
+				WHERE id = ${row.id}
+			`;
+		} else {
+			await sql`
+				UPDATE agent_subscriptions
+				SET last_charge_at       = ${row.last_charge_at ?? null},
+				    last_error           = ${reason.slice(0, 500)},
+				    last_error_code      = ${code},
+				    consecutive_failures = ${applied.consecutiveFailures}
+				WHERE id = ${row.id}
+			`;
+		}
+	} catch (err) {
+		subLogError('subscription_cron.apply_failure_failed', {
+			...ctx,
+			code,
+			message: err.message,
+		});
+	}
+
+	return { ...applied, code, outcome, reason };
 }
 
 // Like subPause but swallows its own errors so a DB hiccup during pause doesn't

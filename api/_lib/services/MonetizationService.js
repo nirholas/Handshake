@@ -524,6 +524,14 @@ export class MonetizationService {
 	 * Creator sales overview for the current user: per-sale ledger entries (skill
 	 * royalties + asset sales) plus pending/settled USD totals.
 	 *
+	 * Both royalty lanes land here. Rows billed in-process by skill-runtime carry
+	 * an agent_id and settle later through the EIP-7710 redeem leg; rows accrued
+	 * on the platform's own x402 rail (/api/x402/skill-call) have NO agent_id at
+	 * all, because the caller is an anonymous paying wallet rather than a
+	 * registered agent. Both joins are therefore LEFT joins: an inner join on
+	 * agent_identities silently dropped every per-call x402 royalty from this
+	 * surface, so authors earning on the rail saw an empty ledger and a $0 total.
+	 *
 	 * @returns {Promise<{pending_usd:number, settled_usd:number, entries:Array}>}
 	 */
 	async getCreatorSalesData() {
@@ -535,11 +543,17 @@ export class MonetizationService {
 				rl.price_usd,
 				rl.status,
 				rl.created_at,
+				rl.settled_at,
+				rl.source,
+				rl.network,
+				rl.tx_hash,
+				rl.platform_fee_usd,
 				ms.name  AS skill_name,
+				ms.slug  AS skill_slug,
 				ai.name  AS agent_name
 			FROM royalty_ledger rl
-			JOIN marketplace_skills ms ON ms.id = rl.skill_id
-			JOIN agent_identities   ai ON ai.id = rl.agent_id
+			LEFT JOIN marketplace_skills ms ON ms.id = rl.skill_id
+			LEFT JOIN agent_identities   ai ON ai.id = rl.agent_id
 			WHERE rl.author_user_id = ${userId}
 			ORDER BY rl.created_at DESC
 			LIMIT 100
@@ -574,31 +588,52 @@ export class MonetizationService {
 			// asset_purchases migration hasn't run yet — leave list empty.
 		}
 
-		const pending_usd = rows
-			.filter((r) => r.status === 'pending')
+		const sumBy = (status) => rows
+			.filter((r) => r.status === status)
 			.reduce((s, r) => s + Number(r.price_usd), 0);
 
-		const settled_usd = rows
-			.filter((r) => r.status === 'settled')
-			.reduce((s, r) => s + Number(r.price_usd), 0);
+		const pending_usd = sumBy('pending');
+		// Claimed by an in-flight settle pass: no longer 'pending', not yet in the
+		// author's wallet. Reported separately so neither total overstates itself.
+		const settling_usd = sumBy('settling');
+		const settled_usd = sumBy('settled');
+
+		// What the platform kept across these rows. Only the x402 rail records a
+		// per-row cut; runtime rows leave it null and contribute 0.
+		const platform_fee_usd = rows.reduce((s, r) => s + Number(r.platform_fee_usd ?? 0), 0);
 
 		const asset_settled_usd = assetRows.reduce((s, r) => s + Number(r.amount) / 1_000_000, 0);
 
 		const entries = rows.map((r) => ({
 			skill_name: r.skill_name,
+			skill_slug: r.skill_slug ?? null,
 			agent_name: r.agent_name,
 			price_usd: Number(r.price_usd),
+			platform_fee_usd: r.platform_fee_usd == null ? null : Number(r.platform_fee_usd),
 			status: r.status,
 			created_at: r.created_at,
+			settled_at: r.settled_at ?? null,
+			// Which rail earned it: 'x402' (per-call, paid straight to the author's
+			// wallet at settle) or 'skill-runtime' (in-process, settles via the
+			// flag-gated EIP-7710 redeem leg).
+			source: r.source ?? 'skill-runtime',
+			network: r.network ?? null,
+			tx_hash: r.tx_hash ?? null,
 			kind: 'skill',
 		}));
 		for (const r of assetRows) {
 			entries.push({
 				skill_name: `${r.item_type[0].toUpperCase()}${r.item_type.slice(1)} sale`,
+				skill_slug: null,
 				agent_name: r.item_name || '(deleted)',
 				price_usd: Number(r.amount) / 1_000_000,
+				platform_fee_usd: null,
 				status: 'settled',
 				created_at: r.confirmed_at || r.created_at,
+				settled_at: r.confirmed_at || null,
+				source: 'asset-sale',
+				network: null,
+				tx_hash: null,
 				kind: r.item_type,
 			});
 		}
@@ -606,7 +641,9 @@ export class MonetizationService {
 
 		return {
 			pending_usd,
+			settling_usd,
 			settled_usd: settled_usd + asset_settled_usd,
+			platform_fee_usd,
 			entries,
 		};
 	}
@@ -629,7 +666,8 @@ export class MonetizationService {
 	 * reconciled to the same revenue/withdrawal ledger buyers are billed from.
 	 *
 	 * @returns {Promise<{
-	 *   pending_usd:number, settled_usd:number, entries:Array,
+	 *   pending_usd:number, settling_usd:number, settled_usd:number,
+	 *   platform_fee_usd:number, entries:Array,
 	 *   splits:{ received_usd:number, distributions:Array },
 	 *   onchain_licenses:{ minted:number, by_agent:Array },
 	 *   withdrawable:{ available:number, earned:number, pending:number, withdrawn:number }

@@ -1164,6 +1164,49 @@ create index if not exists idx_subscriptions_due on agent_subscriptions(next_cha
 create index if not exists idx_subscriptions_user on agent_subscriptions(user_id);
 create index if not exists idx_subscriptions_agent on agent_subscriptions(agent_id);
 
+-- Lifecycle columns (migration 20260813191500_recurring_payment_lifecycle.sql).
+-- A retryable failure bumps consecutive_failures and leaves the schedule active
+-- so the next tick retries; the cron pauses it once the bound is hit. paused_at
+-- / resumed_at make an owner's pause and resume auditable.
+alter table agent_subscriptions add column if not exists consecutive_failures integer not null default 0;
+alter table agent_subscriptions add column if not exists last_error_code      text;
+alter table agent_subscriptions add column if not exists last_tx_hash         text;
+alter table agent_subscriptions add column if not exists paused_at            timestamptz;
+alter table agent_subscriptions add column if not exists resumed_at           timestamptz;
+
+-- ── subscription_charges — per-tick charge attempt log ──────────────────────
+-- The subscription mirror of dca_executions: one row per attempt, so a creator
+-- can see what a schedule actually paid and every failure keeps the code the
+-- cron classified it under.
+create table if not exists subscription_charges (
+    id                  uuid primary key default gen_random_uuid(),
+    subscription_id     uuid not null references agent_subscriptions(id) on delete cascade,
+    agent_id            uuid not null references agent_identities(id) on delete cascade,
+    payer_user_id       uuid references users(id) on delete set null,
+    chain_id            integer,
+    amount              text not null,
+    tx_hash             text,
+    status              text not null default 'pending',
+    code                text,
+    outcome             text,
+    error               text,
+    period_start_at     timestamptz,
+    charged_at          timestamptz not null default now(),
+
+    constraint subscription_charges_status_check
+        check (status in ('success', 'failed', 'aborted', 'unknown')),
+    constraint subscription_charges_outcome_check
+        check (outcome is null or outcome in ('charged', 'fatal', 'retryable', 'ambiguous'))
+);
+
+create index if not exists idx_subscription_charges_subscription
+    on subscription_charges(subscription_id, charged_at desc);
+create index if not exists idx_subscription_charges_agent
+    on subscription_charges(agent_id, charged_at desc);
+create unique index if not exists uq_subscription_charges_period
+    on subscription_charges(subscription_id, period_start_at)
+    where status = 'success' and period_start_at is not null;
+
 -- ── indexer_state — block cursor for the index-delegations cron ──────────────
 create table if not exists indexer_state (
     contract           text    not null,
@@ -1203,6 +1246,14 @@ create table if not exists dca_strategies (
 
 create index if not exists idx_dca_strategies_agent on dca_strategies(agent_id);
 create index if not exists idx_dca_strategies_next_exec on dca_strategies(next_execution_at) where status = 'active';
+
+-- Lifecycle columns (migration 20260813191500_recurring_payment_lifecycle.sql):
+-- same contract as agent_subscriptions above.
+alter table dca_strategies add column if not exists consecutive_failures integer not null default 0;
+alter table dca_strategies add column if not exists last_error           text;
+alter table dca_strategies add column if not exists last_error_code      text;
+alter table dca_strategies add column if not exists paused_at            timestamptz;
+alter table dca_strategies add column if not exists resumed_at           timestamptz;
 
 -- ── dca_executions — per-cron swap attempt log ───────────────────────────────
 create table if not exists dca_executions (
