@@ -736,7 +736,7 @@
 		"user": "Пользователь",
 		"view_agent": "Посмотреть агента →",
 		"view_on_marketplace": "Посмотреть на маркетплейсе ›",
-		"walk_through_your_agent_s_mind_every": "Погрузитесь в мысли вашего агента. Каждое воспоминание — это объект, который вы можете видеть, искать и формировать. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Открыть на весь экран ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Погрузитесь в мысли вашего агента. Каждое воспоминание — это объект, который вы можете видеть, искать и формировать. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Открыть на весь экран ↗</a>",
 		"website": "Веб-сайт",
 		"weekly": "Еженедельно",
 		"weekly_digest": "Еженедельный дайджест",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Она взбирается от буквы к букве, как канатоходец. Вершина каждой буквы — точка опоры — она присаживается, прыгает, снова присаживается."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Наведите на любое подчеркнутое слово → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">документация</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">цены</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">примеры</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Наведите на любое подчеркнутое слово → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">документация</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">цены</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">примеры</a>",
 		"hover_anywhere": "Наведите <em>куда угодно</em>.",
 		"meta_title": "Следование за курсором — three.ws",
 		"primary": "<span>Основной</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Создание 3D ИИ-агентов в прямом эфире — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Без слайдов, только практическая демонстрация — мы переходим от нуля к работающему, встраиваемому 3D-агенту в реальном времени, затем открываем дискуссию.",
 		"notify_me": "Уведомить меня",
-		"or_just_add_it_to_your_calendar": "Или просто <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">добавьте в календарь</a> и приходите.",
+		"or_just_add_it_to_your_calendar": "Или просто <a id=\"add-cal-2\" style=\"text-decoration:underline\">добавьте в календарь</a> и приходите.",
 		"prompt_agent": "Промпт → агент",
 		"read_the_ibm_write_up": "Прочитайте статью IBM",
 		"ship_at_scale": "Запускайте в масштабе",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Тур состоит из глав — от создания вашего первого агента до его вывода в ончейн.",
 		"want_this_on_your_own_site_or": "Хотите это на своем сайте или в магазине? Создайте его в <a href=\"/tour-builder\">Tour Builder</a> — без кода, оба режима включены.",
 		"what_you_ll_see": "Что вы увидите",
-		"you_have_a_tour_in_progress_pick": "У вас есть незавершенный тур — <a href=\"#\" id=\"tour-resume-link\">продолжить →</a>",
+		"you_have_a_tour_in_progress_pick": "У вас есть незавершенный тур — <button type=\"button\" id=\"tour-resume-link\">продолжить →</button>",
 		"you_re_in_control": "Вы управляете"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Рынок Grind-наград",
 		"grind_earn": "Искать и зарабатывать",
 		"grind_earn_2": "Искать и зарабатывать",
-		"hard_vanity_addresses_are_hours_to_years": "Поиск сложных vanity-адресов на одной машине занимает от часов до лет. Здесь вы <strong>депонируете USDC награду</strong>, и флот независимых воркеров параллельно ищет ваш шаблон — первое подтвержденное совпадение выигрывает. Прорыв: найденный ключ <strong>привязан к вашему ключу X25519</strong>, поэтому воркер получает награду, но <strong>никогда не видит ваш кошелек</strong>. Расчеты осуществляются без доверия через <a href=\"/x402\">x402</a>; невыполненные награды возвращаются по истечении срока. Или <a href=\"#\" id=\"lede-earn\">задействуйте свои свободные ядра</a> и зарабатывайте.",
+		"hard_vanity_addresses_are_hours_to_years": "Поиск сложных vanity-адресов на одной машине занимает от часов до лет. Здесь вы <strong>депонируете USDC награду</strong>, и флот независимых воркеров параллельно ищет ваш шаблон — первое подтвержденное совпадение выигрывает. Прорыв: найденный ключ <strong>привязан к вашему ключу X25519</strong>, поэтому воркер получает награду, но <strong>никогда не видит ваш кошелек</strong>. Расчеты осуществляются без доверия через <a href=\"/x402\">x402</a>; невыполненные награды возвращаются по истечении срока. Или <a href=\"#earn\" id=\"lede-earn\">задействуйте свои свободные ядра</a> и зарабатывайте.",
 		"i_ve_saved_my_private_key_somewhere": "Я сохранил свой приватный ключ в надежном месте.",
 		"label_optional_public": "Метка <span style=\"text-transform:none;color:#555\">(необязательно, публично)</span>",
 		"load_more": "Загрузить еще",

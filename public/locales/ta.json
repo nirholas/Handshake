@@ -736,7 +736,7 @@
 		"user": "பயனர்",
 		"view_agent": "ஏஜென்ட்டைப் பார் →",
 		"view_on_marketplace": "சந்தைப்பகுதியில் பார் ›",
-		"walk_through_your_agent_s_mind_every": "உங்கள் ஏஜென்ட்டின் மனதிற்குள் சென்று பாருங்கள். ஒவ்வொரு நினைவும் நீங்கள் பார்க்கக்கூடிய, தேடக்கூடிய மற்றும் வடிவமைக்கக்கூடிய ஒரு பொருள். <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">முழுத் திரையில் திற ↗</a>",
+		"walk_through_your_agent_s_mind_every": "உங்கள் ஏஜென்ட்டின் மனதிற்குள் சென்று பாருங்கள். ஒவ்வொரு நினைவும் நீங்கள் பார்க்கக்கூடிய, தேடக்கூடிய மற்றும் வடிவமைக்கக்கூடிய ஒரு பொருள். <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">முழுத் திரையில் திற ↗</a>",
 		"website": "வலைத்தளம்",
 		"weekly": "வாராந்திர",
 		"weekly_digest": "வாராந்திர சுருக்கம்",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "கயிறு ஏறுபவரைப் போல, அவள் ஒவ்வொரு எழுத்தாக ஏறுகிறாள். ஒவ்வொரு எழுத்தின் உச்சியும் ஒரு பிடிமானம் — அங்கே அமர்கிறாள், குதிக்கிறாள், மீண்டும் அமர்கிறாள்."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "அடிக்கோடிட்ட எந்த வார்த்தையின் மீதும் வட்டமிடுங்கள் → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "அடிக்கோடிட்ட எந்த வார்த்தையின் மீதும் வட்டமிடுங்கள் → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "<em>எங்கு வேண்டுமானாலும்</em> வட்டமிடுங்கள்.",
 		"meta_title": "கர்சர் பின்தொடரி — three.ws",
 		"primary": "<span>முதன்மை</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI எஜென்ட்களை நேரலையில் உருவாக்குதல் — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "எந்த ஸ்லைடுகள் இல்லை — எங்கள் நேரத்தில் செயல்படும், இணைக்கக்கூடிய 3D எஜென்ட்டை உருவாக்குகிறோம், பின்னர் கேள்விகளுக்கு திறந்துவைக்கிறோம்.",
 		"notify_me": "என்னை அறிவிக்கவும்",
-		"or_just_add_it_to_your_calendar": "அல்லது <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">உங்கள் காலண்டருக்கு அதைச் சேர்க்கவும்</a> மற்றும் வரவும்.",
+		"or_just_add_it_to_your_calendar": "அல்லது <a id=\"add-cal-2\" style=\"text-decoration:underline\">உங்கள் காலண்டருக்கு அதைச் சேர்க்கவும்</a> மற்றும் வரவும்.",
 		"prompt_agent": "முன்மொழிவு → எஜென்ட்",
 		"read_the_ibm_write_up": "IBM எழுத்து படிக்கவும்",
 		"ship_at_scale": "அளவுக்கு அனுப்பவும்",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "சுற்றுப்பயணம் அத்தியாயங்களாக இயங்குகிறது — உங்கள் முதல் முகவரியை உருவாக்குவதிலிருந்து அதை ஒழுங்கு செய்யும் வரை.",
 		"want_this_on_your_own_site_or": "உங்கள் சொந்த தளத்தில் அல்லது கடையில் இதை விரும்புகிறீர்களா? <a href=\"/tour-builder\">Tour Builder</a> இல் ஒன்றை உருவாக்குங்கள் — எந்த குறியீடும் இல்லை, இரண்டு முறைமைகள் உள்ளன.",
 		"what_you_ll_see": "நீங்கள் காணப்போகிறீர்கள்",
-		"you_have_a_tour_in_progress_pick": "நீங்கள் ஒரு சுற்றுப்பயணத்தில் இருக்கிறீர்கள் — <a href=\"#\" id=\"tour-resume-link\">அதை மீண்டும் எடுத்துக்கொள்ளுங்கள் →</a>",
+		"you_have_a_tour_in_progress_pick": "நீங்கள் ஒரு சுற்றுப்பயணத்தில் இருக்கிறீர்கள் — <button type=\"button\" id=\"tour-resume-link\">அதை மீண்டும் எடுத்துக்கொள்ளுங்கள் →</button>",
 		"you_re_in_control": "நீங்கள் கட்டுப்பாட்டில் இருக்கிறீர்கள்"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "கிரைண்ட்-பவுண்டி சந்தை",
 		"grind_earn": "கிரைண்ட் செய்து சம்பாதி",
 		"grind_earn_2": "கிரைண்ட் செய்து சம்பாதி",
-		"hard_vanity_addresses_are_hours_to_years": "கடினமான வேனிட்டி முகவரிகள் ஒரு இயந்திரத்தில் மணிநேரம் முதல் ஆண்டுகள் வரை ஆகும். இங்கே நீங்கள் <strong>ஒரு USDC பவுண்டியை எஸ்க்ரோ செய்கிறீர்கள்</strong> மற்றும் சுயாதீன பணியாளர்களின் குழு உங்கள் வடிவத்தை இணையாக கிரைண்ட் செய்கிறது — முதல் சரிபார்க்கப்பட்ட பொருத்தம் வெற்றிபெறும். திருப்புமுனை: கண்டறியப்பட்ட கீ உங்கள் X25519 கீக்கு <strong>முத்திரையிடப்பட்டுள்ளது</strong>, எனவே பணியாளர் பவுண்டியைப் பெறுகிறார், ஆனால் <strong>உங்கள் வாலட்டை ஒருபோதும் பார்க்கமாட்டார்</strong>. <a href=\"/x402\">x402</a> வழியாக தீர்வு நம்பகத்தன்மையற்றது; நிரப்பப்படாத பவுண்டிகள் காலாவதியானதும் திரும்பச் செலுத்தப்படும். அல்லது <a href=\"#\" id=\"lede-earn\">உங்கள் உதிரி கோர்களை வேலைக்கு அமர்த்தி</a> சம்பாதிக்கவும்.",
+		"hard_vanity_addresses_are_hours_to_years": "கடினமான வேனிட்டி முகவரிகள் ஒரு இயந்திரத்தில் மணிநேரம் முதல் ஆண்டுகள் வரை ஆகும். இங்கே நீங்கள் <strong>ஒரு USDC பவுண்டியை எஸ்க்ரோ செய்கிறீர்கள்</strong> மற்றும் சுயாதீன பணியாளர்களின் குழு உங்கள் வடிவத்தை இணையாக கிரைண்ட் செய்கிறது — முதல் சரிபார்க்கப்பட்ட பொருத்தம் வெற்றிபெறும். திருப்புமுனை: கண்டறியப்பட்ட கீ உங்கள் X25519 கீக்கு <strong>முத்திரையிடப்பட்டுள்ளது</strong>, எனவே பணியாளர் பவுண்டியைப் பெறுகிறார், ஆனால் <strong>உங்கள் வாலட்டை ஒருபோதும் பார்க்கமாட்டார்</strong>. <a href=\"/x402\">x402</a> வழியாக தீர்வு நம்பகத்தன்மையற்றது; நிரப்பப்படாத பவுண்டிகள் காலாவதியானதும் திரும்பச் செலுத்தப்படும். அல்லது <a href=\"#earn\" id=\"lede-earn\">உங்கள் உதிரி கோர்களை வேலைக்கு அமர்த்தி</a> சம்பாதிக்கவும்.",
 		"i_ve_saved_my_private_key_somewhere": "எனது தனிப்பட்ட கீயை பாதுகாப்பான இடத்தில் சேமித்து வைத்துள்ளேன்.",
 		"label_optional_public": "லேபிள் <span style=\"text-transform:none;color:#555\">(விரும்பினால், பொதுவானது)</span>",
 		"load_more": "மேலும் ஏற்றவும்",

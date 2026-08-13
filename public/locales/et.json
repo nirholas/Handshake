@@ -736,7 +736,7 @@
 		"user": "Kasutaja",
 		"view_agent": "Vaata agenti →",
 		"view_on_marketplace": "Vaata turuplatsil ›",
-		"walk_through_your_agent_s_mind_every": "Käi läbi oma agendi mõttemaailm. Iga mälu on objekt, mida saad näha, otsida ja kujundada. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Ava täisekraanil ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Käi läbi oma agendi mõttemaailm. Iga mälu on objekt, mida saad näha, otsida ja kujundada. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Ava täisekraanil ↗</a>",
 		"website": "Veebisait",
 		"weekly": "Iganädalane",
 		"weekly_digest": "Iganädalane kokkuvõte",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Ta ronib tähest täheni nagu köieronija. Iga tähe tipp on haardepunkt — ta peatub, hüppab, peatub uuesti."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Vii kursor mis tahes allajoonitud sõnale → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Vii kursor mis tahes allajoonitud sõnale → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Vii kursor <em>ükskõik kuhu</em>.",
 		"meta_title": "Kursori jälgija — three.ws",
 		"primary": "<span>Peamine</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI agentide loomine otseülekandes — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ei mingeid slaide, ainult praktiline ülevaade – loome reaalajas nullist töötava, manustatava 3D agendi ja seejärel avame arutelu.",
 		"notify_me": "Teavita mind",
-		"or_just_add_it_to_your_calendar": "Või lihtsalt <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">lisa see oma kalendrisse</a> ja tule kohale.",
+		"or_just_add_it_to_your_calendar": "Või lihtsalt <a id=\"add-cal-2\" style=\"text-decoration:underline\">lisa see oma kalendrisse</a> ja tule kohale.",
 		"prompt_agent": "Päring → agent",
 		"read_the_ibm_write_up": "Loe IBM-i ülevaadet",
 		"ship_at_scale": "Levita skaleeritavalt",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Tuur toimub peatükkidena — alates esimese agendi loomisest kuni selle ahelasse viimiseni.",
 		"want_this_on_your_own_site_or": "Tahad seda oma saidile või poodi? Loo see <a href=\"/tour-builder\">Tour Builderis</a> — koodivabalt, mõlemad režiimid kaasas.",
 		"what_you_ll_see": "Mida näed",
-		"you_have_a_tour_in_progress_pick": "Sul on tuur pooleli — <a href=\"#\" id=\"tour-resume-link\">jätka seda →</a>",
+		"you_have_a_tour_in_progress_pick": "Sul on tuur pooleli — <button type=\"button\" id=\"tour-resume-link\">jätka seda →</button>",
 		"you_re_in_control": "Sina juhid"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Töö-Preemia Turg",
 		"grind_earn": "Tööta ja teeni",
 		"grind_earn_2": "Grindi ja teeni",
-		"hard_vanity_addresses_are_hours_to_years": "Keeruliste vanity-aadresside leidmine ühel masinal võtab tunde kuni aastaid. Siin sa <strong>deponeerid USDC preemia</strong> ja sõltumatute töötajate võrgustik töötleb sinu mustrit paralleelselt — esimene kinnitatud vaste võidab. Läbimurre: leitud võti on <strong>sinu X25519 võtmega suletud</strong>, nii et töötaja teenib preemia, kuid <strong>ei näe kunagi sinu rahakotti</strong>. Arveldamine on usaldusvaba <a href=\"/x402\">x402</a> kaudu; täitmata preemiad tagastatakse aegumisel. Või <a href=\"#\" id=\"lede-earn\">pane oma vabad tuumad tööle</a> ja teeni.",
+		"hard_vanity_addresses_are_hours_to_years": "Keeruliste vanity-aadresside leidmine ühel masinal võtab tunde kuni aastaid. Siin sa <strong>deponeerid USDC preemia</strong> ja sõltumatute töötajate võrgustik töötleb sinu mustrit paralleelselt — esimene kinnitatud vaste võidab. Läbimurre: leitud võti on <strong>sinu X25519 võtmega suletud</strong>, nii et töötaja teenib preemia, kuid <strong>ei näe kunagi sinu rahakotti</strong>. Arveldamine on usaldusvaba <a href=\"/x402\">x402</a> kaudu; täitmata preemiad tagastatakse aegumisel. Või <a href=\"#earn\" id=\"lede-earn\">pane oma vabad tuumad tööle</a> ja teeni.",
 		"i_ve_saved_my_private_key_somewhere": "Olen oma privaatvõtme turvalisse kohta salvestanud.",
 		"label_optional_public": "Silt <span style=\"text-transform:none;color:#555\">(valikuline, avalik)</span>",
 		"load_more": "Laadi rohkem",

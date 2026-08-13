@@ -736,7 +736,7 @@
 		"user": "Użytkownik",
 		"view_agent": "Zobacz agenta →",
 		"view_on_marketplace": "Zobacz na marketplace ›",
-		"walk_through_your_agent_s_mind_every": "Przejdź przez umysł swojego agenta. Każde wspomnienie to obiekt, który możesz zobaczyć, przeszukać i kształtować. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Otwórz na pełnym ekranie ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Przejdź przez umysł swojego agenta. Każde wspomnienie to obiekt, który możesz zobaczyć, przeszukać i kształtować. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Otwórz na pełnym ekranie ↗</a>",
 		"website": "Strona internetowa",
 		"weekly": "Tygodniowo",
 		"weekly_digest": "Cotygodniowe podsumowanie",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Wspina się od litery do litery jak alpinista. Każdy szczyt litery to punkt zaczepienia — przysiada, skacze, przysiada ponownie."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Najedź na dowolne podkreślone słowo → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentacja</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">cennik</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">przykłady</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Najedź na dowolne podkreślone słowo → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentacja</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">cennik</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">przykłady</a>",
 		"hover_anywhere": "Najedź <em>gdziekolwiek</em>.",
 		"meta_title": "Śledzenie kursora — three.ws",
 		"primary": "<span>Główny</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Budowanie 3D AI Agentów na żywo — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Brak slajdów — tylko przejście na żywo — przechodzimy od niczego do działającego, osadzanego agenta 3D w czasie rzeczywistym, a potem otwieramy dyskusję.",
 		"notify_me": "Powiadom mnie",
-		"or_just_add_it_to_your_calendar": "Lub po prostu <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">dodaj to do swojego kalendarza</a> i przyjdź.",
+		"or_just_add_it_to_your_calendar": "Lub po prostu <a id=\"add-cal-2\" style=\"text-decoration:underline\">dodaj to do swojego kalendarza</a> i przyjdź.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Przeczytaj artykuł IBM",
 		"ship_at_scale": "Wysyłaj na dużą skalę",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Wycieczka przebiega w formie rozdziałów — od budowania swojego pierwszego agenta po przeniesienie go na łańcuch.",
 		"want_this_on_your_own_site_or": "Chcesz to na swojej stronie lub w sklepie? Zbuduj jedno w <a href=\"/tour-builder\">Tour Builder</a> — bez kodu, oba tryby w zestawie.",
 		"what_you_ll_see": "Co zobaczysz",
-		"you_have_a_tour_in_progress_pick": "Masz w toku wycieczkę — <a href=\"#\" id=\"tour-resume-link\">wznów ją →</a>",
+		"you_have_a_tour_in_progress_pick": "Masz w toku wycieczkę — <button type=\"button\" id=\"tour-resume-link\">wznów ją →</button>",
 		"you_re_in_control": "Ty masz kontrolę"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Rynek Nagród za Mielenie",
 		"grind_earn": "Miel i zarabiaj",
 		"grind_earn_2": "Miel i zarabiaj",
-		"hard_vanity_addresses_are_hours_to_years": "Trudne adresy vanity to godziny-lata pracy na jednej maszynie. Tutaj <strong>deponujesz nagrodę w USDC</strong>, a flota niezależnych pracowników mieli twój wzorzec równolegle — wygrywa pierwsze zweryfikowane dopasowanie. Przełom: znaleziony klucz jest <strong>zapieczętowany do twojego klucza X25519</strong>, więc pracownik zarabia nagrodę, ale <strong>nigdy nie widzi twojego portfela</strong>. Rozliczenie jest bez zaufania poprzez <a href=\"/x402\">x402</a>; niewypełnione nagrody są zwracane po wygaśnięciu. Albo <a href=\"#\" id=\"lede-earn\">wykorzystaj swoje wolne rdzenie</a> i zarabiaj.",
+		"hard_vanity_addresses_are_hours_to_years": "Trudne adresy vanity to godziny-lata pracy na jednej maszynie. Tutaj <strong>deponujesz nagrodę w USDC</strong>, a flota niezależnych pracowników mieli twój wzorzec równolegle — wygrywa pierwsze zweryfikowane dopasowanie. Przełom: znaleziony klucz jest <strong>zapieczętowany do twojego klucza X25519</strong>, więc pracownik zarabia nagrodę, ale <strong>nigdy nie widzi twojego portfela</strong>. Rozliczenie jest bez zaufania poprzez <a href=\"/x402\">x402</a>; niewypełnione nagrody są zwracane po wygaśnięciu. Albo <a href=\"#earn\" id=\"lede-earn\">wykorzystaj swoje wolne rdzenie</a> i zarabiaj.",
 		"i_ve_saved_my_private_key_somewhere": "Zapisałem swój klucz prywatny w bezpiecznym miejscu.",
 		"label_optional_public": "Etykieta <span style=\"text-transform:none;color:#555\">(opcjonalnie, publiczne)</span>",
 		"load_more": "Wczytaj więcej",

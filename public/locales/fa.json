@@ -736,7 +736,7 @@
 		"user": "کاربر",
 		"view_agent": "مشاهده ایجنت →",
 		"view_on_marketplace": "مشاهده در مارکت‌پلیس ›",
-		"walk_through_your_agent_s_mind_every": "در ذهن ایجنت خود قدم بزنید. هر حافظه یک شیء است که می‌توانید آن را ببینید، جستجو کنید و شکل دهید. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">باز کردن تمام صفحه ↗</a>",
+		"walk_through_your_agent_s_mind_every": "در ذهن ایجنت خود قدم بزنید. هر حافظه یک شیء است که می‌توانید آن را ببینید، جستجو کنید و شکل دهید. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">باز کردن تمام صفحه ↗</a>",
 		"website": "وب‌سایت",
 		"weekly": "هفتگی",
 		"weekly_digest": "خلاصه هفتگی",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "او حرف به حرف بالا می‌رود، مانند یک طناب‌باز. بالای هر حرف یک نقطه چنگ زدن است — او می‌نشیند، می‌پرد، و دوباره می‌نشیند."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "روی هر کلمه خط‌دار نگه دارید → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">مستندات</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">قیمت‌گذاری</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">نمونه‌ها</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "روی هر کلمه خط‌دار نگه دارید → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">مستندات</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">قیمت‌گذاری</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">نمونه‌ها</a>",
 		"hover_anywhere": "<em>هر جا</em> نگه دارید.",
 		"meta_title": "دنبال‌کننده مکان‌نما — three.ws",
 		"primary": "<span>اصلی</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "ساخت 3D AI Agents زنده — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "بدون اسلاید — ما از هیچ چیز به یک عامل 3D قابل جاسازی و کارآمد در زمان واقعی می‌رویم، سپس به سوالات پاسخ می‌دهیم.",
 		"notify_me": "به من اطلاع بده",
-		"or_just_add_it_to_your_calendar": "یا فقط <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">آن را به تقویم خود اضافه کنید</a> و حاضر شوید.",
+		"or_just_add_it_to_your_calendar": "یا فقط <a id=\"add-cal-2\" style=\"text-decoration:underline\">آن را به تقویم خود اضافه کنید</a> و حاضر شوید.",
 		"prompt_agent": "درخواست → عامل",
 		"read_the_ibm_write_up": "نوشتار IBM را بخوانید",
 		"ship_at_scale": "در مقیاس ارسال کنید",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "تور به صورت فصل‌ها اجرا می‌شود — از ساخت اولین عامل شما تا انتقال آن به زنجیره.",
 		"want_this_on_your_own_site_or": "می‌خواهید این را در سایت یا فروشگاه خود داشته باشید؟ یکی را در <a href=\"/tour-builder\">Tour Builder</a> بسازید — بدون کد، هر دو حالت شامل است.",
 		"what_you_ll_see": "چه چیزی خواهید دید",
-		"you_have_a_tour_in_progress_pick": "شما یک تور در حال انجام دارید — <a href=\"#\" id=\"tour-resume-link\">ادامه دهید →</a>",
+		"you_have_a_tour_in_progress_pick": "شما یک تور در حال انجام دارید — <button type=\"button\" id=\"tour-resume-link\">ادامه دهید →</button>",
 		"you_re_in_control": "شما در کنترل هستید"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "بازار جایزه-جستجو",
 		"grind_earn": "جستجو و کسب درآمد",
 		"grind_earn_2": "جستجو و کسب درآمد",
-		"hard_vanity_addresses_are_hours_to_years": "آدرس‌های ونیتی دشوار، ساعت‌ها تا سال‌ها روی یک ماشین زمان می‌برند. در اینجا شما <strong>یک جایزه USDC را به امانت می‌گذارید</strong> و ناوگانی از کارگران مستقل الگوی شما را به صورت موازی جستجو می‌کنند — اولین تطابق تایید شده برنده می‌شود. نوآوری: کلید یافت شده <strong>به کلید X25519 شما مهر و موم می‌شود</strong>، بنابراین کارگر جایزه را کسب می‌کند اما <strong>هرگز کیف پول شما را نمی‌بیند</strong>. تسویه حساب از طریق <a href=\"/x402\">x402</a> بدون نیاز به اعتماد انجام می‌شود؛ جوایز تکمیل نشده در زمان انقضا بازپرداخت می‌شوند. یا <a href=\"#\" id=\"lede-earn\">هسته‌های آزاد خود را به کار بگیرید</a> و کسب درآمد کنید.",
+		"hard_vanity_addresses_are_hours_to_years": "آدرس‌های ونیتی دشوار، ساعت‌ها تا سال‌ها روی یک ماشین زمان می‌برند. در اینجا شما <strong>یک جایزه USDC را به امانت می‌گذارید</strong> و ناوگانی از کارگران مستقل الگوی شما را به صورت موازی جستجو می‌کنند — اولین تطابق تایید شده برنده می‌شود. نوآوری: کلید یافت شده <strong>به کلید X25519 شما مهر و موم می‌شود</strong>، بنابراین کارگر جایزه را کسب می‌کند اما <strong>هرگز کیف پول شما را نمی‌بیند</strong>. تسویه حساب از طریق <a href=\"/x402\">x402</a> بدون نیاز به اعتماد انجام می‌شود؛ جوایز تکمیل نشده در زمان انقضا بازپرداخت می‌شوند. یا <a href=\"#earn\" id=\"lede-earn\">هسته‌های آزاد خود را به کار بگیرید</a> و کسب درآمد کنید.",
 		"i_ve_saved_my_private_key_somewhere": "کلید خصوصی خود را در مکانی امن ذخیره کرده‌ام.",
 		"label_optional_public": "برچسب <span style=\"text-transform:none;color:#555\">(اختیاری، عمومی)</span>",
 		"load_more": "بارگذاری بیشتر",

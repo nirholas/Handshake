@@ -736,7 +736,7 @@
 		"user": "صارف",
 		"view_agent": "ایجنٹ دیکھیں →",
 		"view_on_marketplace": "مارکیٹ پلیس پر دیکھیں ›",
-		"walk_through_your_agent_s_mind_every": "اپنے ایجنٹ کے ذہن میں جھانکیں۔ ہر یاد ایک ایسی آبجیکٹ ہے جسے آپ دیکھ، تلاش اور شکل دے سکتے ہیں۔ <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">فل سکرین کھولیں ↗</a>",
+		"walk_through_your_agent_s_mind_every": "اپنے ایجنٹ کے ذہن میں جھانکیں۔ ہر یاد ایک ایسی آبجیکٹ ہے جسے آپ دیکھ، تلاش اور شکل دے سکتے ہیں۔ <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">فل سکرین کھولیں ↗</a>",
 		"website": "ویب سائٹ",
 		"weekly": "ہفتہ وار",
 		"weekly_digest": "ہفتہ وار ڈائجسٹ",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "وہ ایک رسی چڑھنے والے کی طرح حرف بہ حرف چڑھتی ہے۔ ہر حرف کا اوپری حصہ ایک گرفت کا نقطہ ہے — وہ بیٹھتی ہے، چھلانگ لگاتی ہے اور پھر بیٹھتی ہے۔"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "کسی بھی انڈر لائن شدہ لفظ پر ہوور کریں → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "کسی بھی انڈر لائن شدہ لفظ پر ہوور کریں → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "ہوور کریں <em>anywhere</em>۔",
 		"meta_title": "کرسر فالوور — three.ws",
 		"primary": "<span>Primary</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI ایجنٹس کو لائیو بنانا — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "کوئی سلائیڈز نہیں — ہم کچھ سے ایک کام کرنے والے، ایڈ کرنے کے قابل 3D ایجنٹ کی طرف بڑھتے ہیں، پھر سوال و جواب کا آغاز کرتے ہیں۔",
 		"notify_me": "مجھے مطلع کریں",
-		"or_just_add_it_to_your_calendar": "یا بس <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">اپنے کیلنڈر میں شامل کریں</a> اور آئیں۔",
+		"or_just_add_it_to_your_calendar": "یا بس <a id=\"add-cal-2\" style=\"text-decoration:underline\">اپنے کیلنڈر میں شامل کریں</a> اور آئیں۔",
 		"prompt_agent": "پرامپٹ → ایجنٹ",
 		"read_the_ibm_write_up": "IBM کا مضمون پڑھیں",
 		"ship_at_scale": "اسکیل پر بھیجیں",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "یہ ٹور ابواب کی شکل میں چلتا ہے — اپنے پہلے ایجنٹ کی تعمیر سے لے کر اسے آن چین کرنے تک۔",
 		"want_this_on_your_own_site_or": "کیا آپ یہ اپنی سائٹ یا اسٹور پر چاہتے ہیں؟ <a href=\"/tour-builder\">ٹور بلڈر</a> میں ایک بنائیں — کوئی کوڈ نہیں، دونوں طریقے شامل ہیں۔",
 		"what_you_ll_see": "آپ کیا دیکھیں گے",
-		"you_have_a_tour_in_progress_pick": "آپ کے پاس ایک جاری ٹور ہے — <a href=\"#\" id=\"tour-resume-link\">اسے دوبارہ اٹھائیں →</a>",
+		"you_have_a_tour_in_progress_pick": "آپ کے پاس ایک جاری ٹور ہے — <button type=\"button\" id=\"tour-resume-link\">اسے دوبارہ اٹھائیں →</button>",
 		"you_re_in_control": "آپ کنٹرول میں ہیں"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "گرائنڈ-باؤنٹی مارکیٹ",
 		"grind_earn": "گرائنڈ کریں اور کمائیں",
 		"grind_earn_2": "گرائنڈ کریں اور کمائیں",
-		"hard_vanity_addresses_are_hours_to_years": "مشکل وینٹی ایڈریسز ایک مشین پر گھنٹوں سے سالوں تک کا وقت لیتے ہیں۔ یہاں آپ <strong>ایک USDC باؤنٹی ایسکرو کرتے ہیں</strong> اور آزاد ورکرز کا ایک فلیٹ آپ کے پیٹرن کو متوازی طور پر گرائنڈ کرتا ہے — پہلا تصدیق شدہ میچ جیت جاتا ہے۔ یہ ایک بڑی کامیابی ہے: ملی ہوئی کی <strong>آپ کی X25519 کی سے سیل کر دی جاتی ہے</strong>، تاکہ ورکر باؤنٹی کما سکے لیکن <strong>آپ کا والٹ کبھی نہ دیکھ سکے</strong>۔ سیٹلمنٹ <a href=\"/x402\">x402</a> کے ذریعے ٹرسٹ لیس ہوتی ہے؛ غیر پُر شدہ باؤنٹیز کی میعاد ختم ہونے پر رقم واپس کر دی جاتی ہے۔ یا <a href=\"#\" id=\"lede-earn\">اپنے اضافی کورز کو کام پر لگائیں</a> اور کمائیں۔",
+		"hard_vanity_addresses_are_hours_to_years": "مشکل وینٹی ایڈریسز ایک مشین پر گھنٹوں سے سالوں تک کا وقت لیتے ہیں۔ یہاں آپ <strong>ایک USDC باؤنٹی ایسکرو کرتے ہیں</strong> اور آزاد ورکرز کا ایک فلیٹ آپ کے پیٹرن کو متوازی طور پر گرائنڈ کرتا ہے — پہلا تصدیق شدہ میچ جیت جاتا ہے۔ یہ ایک بڑی کامیابی ہے: ملی ہوئی کی <strong>آپ کی X25519 کی سے سیل کر دی جاتی ہے</strong>، تاکہ ورکر باؤنٹی کما سکے لیکن <strong>آپ کا والٹ کبھی نہ دیکھ سکے</strong>۔ سیٹلمنٹ <a href=\"/x402\">x402</a> کے ذریعے ٹرسٹ لیس ہوتی ہے؛ غیر پُر شدہ باؤنٹیز کی میعاد ختم ہونے پر رقم واپس کر دی جاتی ہے۔ یا <a href=\"#earn\" id=\"lede-earn\">اپنے اضافی کورز کو کام پر لگائیں</a> اور کمائیں۔",
 		"i_ve_saved_my_private_key_somewhere": "میں نے اپنی پرائیویٹ کی کسی محفوظ جگہ پر محفوظ کر لی ہے۔",
 		"label_optional_public": "لیبل <span style=\"text-transform:none;color:#555\">(اختیاری، عوامی)</span>",
 		"load_more": "مزید لوڈ کریں",

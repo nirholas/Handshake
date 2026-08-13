@@ -736,7 +736,7 @@
 		"user": "Uporabnik",
 		"view_agent": "Ogled agenta →",
 		"view_on_marketplace": "Ogled na tržnici ›",
-		"walk_through_your_agent_s_mind_every": "Sprehodite se po mislih svojega agenta. Vsak spomin je objekt, ki ga lahko vidite, iščete in oblikujete. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Odpri celozaslonski način ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Sprehodite se po mislih svojega agenta. Vsak spomin je objekt, ki ga lahko vidite, iščete in oblikujete. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Odpri celozaslonski način ↗</a>",
 		"website": "Spletna stran",
 		"weekly": "Tedensko",
 		"weekly_digest": "Tedenski povzetek",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Plezalka se vzpenja od črke do črke kot plezalec po vrvi. Vsak vrh črke je oprijemna točka — usede se, skoči, in se spet usede."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Premakni kazalec nad katero koli podčrtano besedo → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentacija</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">cenik</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">primeri</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Premakni kazalec nad katero koli podčrtano besedo → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentacija</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">cenik</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">primeri</a>",
 		"hover_anywhere": "Premakni kazalec <em>kamor koli</em>.",
 		"meta_title": "Sledilec kazalca — three.ws",
 		"primary": "<span>Primarno</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Gradnja 3D AI agentov v živo — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Brez diapozitivov, le praktičen prikaz – v realnem času gremo od nič do delujočega, vdelanega 3D agenta, nato odpremo razpravo.",
 		"notify_me": "Obvesti me",
-		"or_just_add_it_to_your_calendar": "Ali pa ga preprosto <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">dodajte v svoj koledar</a> in se udeležite.",
+		"or_just_add_it_to_your_calendar": "Ali pa ga preprosto <a id=\"add-cal-2\" style=\"text-decoration:underline\">dodajte v svoj koledar</a> in se udeležite.",
 		"prompt_agent": "Poziv → agent",
 		"read_the_ibm_write_up": "Preberite članek IBM",
 		"ship_at_scale": "Uvedite v velikem obsegu",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Ogled poteka po poglavjih — od izgradnje vašega prvega agenta do njegovega prenosa na verigo.",
 		"want_this_on_your_own_site_or": "Želite to na svoji spletni strani ali v trgovini? Zgradite ga v <a href=\"/tour-builder\">Tour Builderju</a> — brez kode, oba načina vključena.",
 		"what_you_ll_see": "Kaj boste videli",
-		"you_have_a_tour_in_progress_pick": "Ogled je v teku — <a href=\"#\" id=\"tour-resume-link\">nadaljujte ga →</a>",
+		"you_have_a_tour_in_progress_pick": "Ogled je v teku — <button type=\"button\" id=\"tour-resume-link\">nadaljujte ga →</button>",
 		"you_re_in_control": "Nadzor je v vaših rokah"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Trg nagrad za rudarjenje",
 		"grind_earn": "Rudarite in zaslužite",
 		"grind_earn_2": "Brusi in zasluži",
-		"hard_vanity_addresses_are_hours_to_years": "Ustvarjanje težkih vanity naslovov na enem stroju traja ure do leta. Tukaj <strong>deponiraš USDC nagrado</strong> in flota neodvisnih delavcev vzporedno brusi tvoj vzorec — zmaga prvo preverjeno ujemanje. Preboj: najden ključ je <strong>zapečaten na tvoj ključ X25519</strong>, tako delavec zasluži nagrado, vendar <strong>nikoli ne vidi tvoje denarnice</strong>. Poravnava je brez zaupanja prek <a href=\"/x402\">x402</a>; neizpolnjene nagrade se ob izteku povrnejo. Ali pa <a href=\"#\" id=\"lede-earn\">uporabi svoja prosta jedra</a> in zasluži.",
+		"hard_vanity_addresses_are_hours_to_years": "Ustvarjanje težkih vanity naslovov na enem stroju traja ure do leta. Tukaj <strong>deponiraš USDC nagrado</strong> in flota neodvisnih delavcev vzporedno brusi tvoj vzorec — zmaga prvo preverjeno ujemanje. Preboj: najden ključ je <strong>zapečaten na tvoj ključ X25519</strong>, tako delavec zasluži nagrado, vendar <strong>nikoli ne vidi tvoje denarnice</strong>. Poravnava je brez zaupanja prek <a href=\"/x402\">x402</a>; neizpolnjene nagrade se ob izteku povrnejo. Ali pa <a href=\"#earn\" id=\"lede-earn\">uporabi svoja prosta jedra</a> in zasluži.",
 		"i_ve_saved_my_private_key_somewhere": "Svoj zasebni ključ sem shranil na varno.",
 		"label_optional_public": "Oznaka <span style=\"text-transform:none;color:#555\">(neobvezno, javno)</span>",
 		"load_more": "Naloži več",

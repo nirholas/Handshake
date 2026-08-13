@@ -736,7 +736,7 @@
 		"user": "ተጠቃሚ",
 		"view_agent": "ወኪሉን ይመልከቱ →",
 		"view_on_marketplace": "በገበያ ቦታ ይመልከቱ ›",
-		"walk_through_your_agent_s_mind_every": "የወኪልዎን አእምሮ ይቃኙ። እያንዳንዱ ትውስታ ማየት፣ መፈለግ እና ቅርፅ መስጠት የሚችሉት ነገር ነው። <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ሙሉ ማያ ገጽ ክፈት ↗</a>",
+		"walk_through_your_agent_s_mind_every": "የወኪልዎን አእምሮ ይቃኙ። እያንዳንዱ ትውስታ ማየት፣ መፈለግ እና ቅርፅ መስጠት የሚችሉት ነገር ነው። <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ሙሉ ማያ ገጽ ክፈት ↗</a>",
 		"website": "ድር ጣቢያ",
 		"weekly": "ሳምንታዊ",
 		"weekly_digest": "ሳምንታዊ ማጠቃለያ",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "እንደ ገመድ ተንጠልጣይ ፊደል በፊደል ትወጣለች። እያንዳንዱ ፊደል ጫፍ መያዣ ነጥብ ነው። ትቀመጣለች፣ ትዘልላለች፣ እንደገና ትቀመጣለች።"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "በማንኛውም የተሰመረበት ቃል ላይ ያንዣብቡ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ሰነዶች</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ዋጋ</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ምሳሌዎች</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "በማንኛውም የተሰመረበት ቃል ላይ ያንዣብቡ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ሰነዶች</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ዋጋ</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ምሳሌዎች</a>",
 		"hover_anywhere": "ያንዣብቡ <em>በየትኛውም ቦታ</em>።",
 		"meta_title": "የጠቋሚ ተከታይ — three.ws",
 		"primary": "<span>ዋና</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "ባለ 3D AI ወኪሎችን በቀጥታ መገንባት — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "ስላይዶች ብቻ የሉም — ከባዶ ወደ የሚሰራ፣ ሊገባ የሚችል ባለ 3D ወኪል በቀጥታ እንሄዳለን፣ ከዚያም ለጥያቄዎች ክፍት ይሆናል።",
 		"notify_me": "አሳውቀኝ",
-		"or_just_add_it_to_your_calendar": "ወይም በቀላሉ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ወደ ቀን መቁጠሪያዎ ያክሉት</a> እና ይምጡ።",
+		"or_just_add_it_to_your_calendar": "ወይም በቀላሉ <a id=\"add-cal-2\" style=\"text-decoration:underline\">ወደ ቀን መቁጠሪያዎ ያክሉት</a> እና ይምጡ።",
 		"prompt_agent": "ትዕዛዝ (Prompt) → ወኪል",
 		"read_the_ibm_write_up": "የIBMን ጽሑፍ ያንብቡ",
 		"ship_at_scale": "በትልቅ ደረጃ አቅርብ",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ጉብኝቱ በምዕራፎች ይካሄዳል — የመጀመሪያ ወኪልዎን ከመገንባት ጀምሮ እስከ ኦን-ቼይን ማድረስ ድረስ።",
 		"want_this_on_your_own_site_or": "ይህን በራስዎ ጣቢያ ወይም መደብር ላይ ይፈልጋሉ? በ<a href=\"/tour-builder\">Tour Builder</a> ውስጥ አንዱን ይገንቡ — ኮድ የለም፣ ሁለቱም ሁነታዎች ተካትተዋል።",
 		"what_you_ll_see": "የሚያዩት ነገር",
-		"you_have_a_tour_in_progress_pick": "በሂደት ላይ ያለ ጉብኝት አለዎት — <a href=\"#\" id=\"tour-resume-link\">ይቀጥሉበት →</a>",
+		"you_have_a_tour_in_progress_pick": "በሂደት ላይ ያለ ጉብኝት አለዎት — <button type=\"button\" id=\"tour-resume-link\">ይቀጥሉበት →</button>",
 		"you_re_in_control": "እርስዎ ነዎት የሚቆጣጠሩት"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "የመፍጨት-ሽልማት ገበያ",
 		"grind_earn": "ይፍጩ እና ያግኙ",
 		"grind_earn_2": "አድካሚ ስራ ሰርተው ያግኙ",
-		"hard_vanity_addresses_are_hours_to_years": "አድካሚ የቫኒቲ አድራሻዎች በአንድ ማሽን ላይ ሰዓታት ወይም ዓመታት ሊወስዱ ይችላሉ። እዚህ እርስዎ <strong>USDC ቦነስ</strong> ያስቀምጣሉ እና በርካታ ገለልተኛ ሰራተኞች የእርስዎን ስርዓተ-ጥለት በትይዩ ያፈላልጋሉ — የመጀመሪያው የተረጋገጠ ተዛማጅ ያሸንፋል። አዲስ ግኝቱ: የተገኘው ቁልፍ <strong>ከእርስዎ X25519 ቁልፍ ጋር የታሸገ</strong> ነው፣ ስለዚህ ሰራተኛው ቦነስ ያገኛል ነገር ግን <strong>የእርስዎን የኪስ ቦርሳ በፍጹም አያይም</strong>። ክፍያው <a href=\"/x402\">x402</a> በኩል እምነት የማይፈልግ ነው፤ ያልተሞሉ ቦነሶች ጊዜያቸው ሲያልቅ ይመለሳሉ። ወይም <a href=\"#\" id=\"lede-earn\">ትርፍ ኮሮችዎን ወደ ስራ ያውሉ</a> እና ያግኙ።",
+		"hard_vanity_addresses_are_hours_to_years": "አድካሚ የቫኒቲ አድራሻዎች በአንድ ማሽን ላይ ሰዓታት ወይም ዓመታት ሊወስዱ ይችላሉ። እዚህ እርስዎ <strong>USDC ቦነስ</strong> ያስቀምጣሉ እና በርካታ ገለልተኛ ሰራተኞች የእርስዎን ስርዓተ-ጥለት በትይዩ ያፈላልጋሉ — የመጀመሪያው የተረጋገጠ ተዛማጅ ያሸንፋል። አዲስ ግኝቱ: የተገኘው ቁልፍ <strong>ከእርስዎ X25519 ቁልፍ ጋር የታሸገ</strong> ነው፣ ስለዚህ ሰራተኛው ቦነስ ያገኛል ነገር ግን <strong>የእርስዎን የኪስ ቦርሳ በፍጹም አያይም</strong>። ክፍያው <a href=\"/x402\">x402</a> በኩል እምነት የማይፈልግ ነው፤ ያልተሞሉ ቦነሶች ጊዜያቸው ሲያልቅ ይመለሳሉ። ወይም <a href=\"#earn\" id=\"lede-earn\">ትርፍ ኮሮችዎን ወደ ስራ ያውሉ</a> እና ያግኙ።",
 		"i_ve_saved_my_private_key_somewhere": "የግል ቁልፌን ደህንነቱ በተጠበቀ ቦታ አስቀምጫለሁ።",
 		"label_optional_public": "መለያ <span style=\"text-transform:none;color:#555\">(አማራጭ፣ ይፋዊ)</span>",
 		"load_more": "ተጨማሪ ጫን",

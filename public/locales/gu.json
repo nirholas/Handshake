@@ -736,7 +736,7 @@
 		"user": "વપરાશકર્તા",
 		"view_agent": "એજન્ટ જુઓ →",
 		"view_on_marketplace": "માર્કેટપ્લેસ પર જુઓ ›",
-		"walk_through_your_agent_s_mind_every": "તમારા એજન્ટના મનમાં ડોકિયું કરો. દરેક મેમરી એક ઑબ્જેક્ટ છે જેને તમે જોઈ શકો છો, શોધી શકો છો અને આકાર આપી શકો છો. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">પૂર્ણ-સ્ક્રીન ખોલો ↗</a>",
+		"walk_through_your_agent_s_mind_every": "તમારા એજન્ટના મનમાં ડોકિયું કરો. દરેક મેમરી એક ઑબ્જેક્ટ છે જેને તમે જોઈ શકો છો, શોધી શકો છો અને આકાર આપી શકો છો. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">પૂર્ણ-સ્ક્રીન ખોલો ↗</a>",
 		"website": "વેબસાઇટ",
 		"weekly": "સાપ્તાહિક",
 		"weekly_digest": "સાપ્તાહિક સારાંશ",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "તે દોરડા પર ચડનારની જેમ અક્ષર-દર-અક્ષર ચઢે છે. દરેક અક્ષરની ટોચ એક પકડ બિંદુ છે — તે બેસે છે, કૂદે છે, ફરી બેસે છે."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "કોઈપણ રેખાંકિત શબ્દ પર હોવર કરો → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "કોઈપણ રેખાંકિત શબ્દ પર હોવર કરો → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "<em>ગમે ત્યાં</em> હોવર કરો.",
 		"meta_title": "કર્સર ફોલોઅર — three.ws",
 		"primary": "<span>પ્રાથમિક</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI એજન્ટ્સ લાઇવ બનાવી રહ્યા છીએ — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "ફક્ત સ્લાઇડ્સ-વૉકથ્રુ નહીં — અમે કંઈપણથી લઈને કાર્યરત, એમ્બેડ કરી શકાય તેવા 3D એજન્ટ સુધી રીઅલ ટાઇમમાં જઈએ છીએ, પછી ચર્ચા માટે ખુલ્લું મૂકીએ છીએ.",
 		"notify_me": "મને સૂચિત કરો",
-		"or_just_add_it_to_your_calendar": "અથવા ફક્ત તેને <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">તમારા કૅલેન્ડરમાં ઉમેરો</a> અને હાજર રહો.",
+		"or_just_add_it_to_your_calendar": "અથવા ફક્ત તેને <a id=\"add-cal-2\" style=\"text-decoration:underline\">તમારા કૅલેન્ડરમાં ઉમેરો</a> અને હાજર રહો.",
 		"prompt_agent": "પ્રોમ્પ્ટ → એજન્ટ",
 		"read_the_ibm_write_up": "IBM નો લેખ વાંચો",
 		"ship_at_scale": "મોટા પાયે શિપ કરો",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "આ પ્રવાસ પ્રકરણો તરીકે ચાલે છે — તમારા પ્રથમ એજન્ટને બનાવવાથી લઈને તેને ઑન-ચેઇન પર લઈ જવા સુધી.",
 		"want_this_on_your_own_site_or": "તમારી પોતાની સાઇટ અથવા સ્ટોર પર આ જોઈએ છે? <a href=\"/tour-builder\">ટૂર બિલ્ડર</a> માં એક બનાવો — કોઈ કોડ નહીં, બંને મોડ્સ શામેલ છે.",
 		"what_you_ll_see": "તમે શું જોશો",
-		"you_have_a_tour_in_progress_pick": "તમારી પાસે એક પ્રવાસ પ્રગતિમાં છે — <a href=\"#\" id=\"tour-resume-link\">તેને ફરીથી શરૂ કરો →</a>",
+		"you_have_a_tour_in_progress_pick": "તમારી પાસે એક પ્રવાસ પ્રગતિમાં છે — <button type=\"button\" id=\"tour-resume-link\">તેને ફરીથી શરૂ કરો →</button>",
 		"you_re_in_control": "તમે નિયંત્રણમાં છો"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ગ્રાઇન્ડ-બાઉન્ટી માર્કેટ",
 		"grind_earn": "ગ્રાઇન્ડ કરો અને કમાઓ",
 		"grind_earn_2": "ગ્રાઇન્ડ કરીને કમાઓ",
-		"hard_vanity_addresses_are_hours_to_years": "હાર્ડ વેનિટી એડ્રેસ એક મશીન પર કલાકોથી વર્ષોનો સમય લે છે. અહીં તમે <strong>એક USDC બાઉન્ટી</strong> એસ્ક્રો કરો છો અને સ્વતંત્ર કાર્યકરોનો સમુહ તમારી પેટર્નને સમાંતર રીતે ગ્રાઇન્ડ કરે છે — પ્રથમ ચકાસાયેલ મેચ જીતે છે. મુખ્ય વાત એ છે કે: મળેલ કી તમારા <strong>X25519 કી સાથે સીલ કરેલી હોય છે</strong>, જેથી કાર્યકર બાઉન્ટી કમાય છે છતાં <strong>તમારું વોલેટ ક્યારેય જોઈ શકતો નથી</strong>. <a href=\"/x402\">x402</a> દ્વારા સેટલમેન્ટ ટ્રસ્ટલેસ છે; ન ભરાયેલી બાઉન્ટી સમયસીમા સમાપ્ત થવા પર રિફંડ થાય છે. અથવા <a href=\"#\" id=\"lede-earn\">તમારા વધારાના કોર્સને કામ પર લગાડો</a> અને કમાઓ.",
+		"hard_vanity_addresses_are_hours_to_years": "હાર્ડ વેનિટી એડ્રેસ એક મશીન પર કલાકોથી વર્ષોનો સમય લે છે. અહીં તમે <strong>એક USDC બાઉન્ટી</strong> એસ્ક્રો કરો છો અને સ્વતંત્ર કાર્યકરોનો સમુહ તમારી પેટર્નને સમાંતર રીતે ગ્રાઇન્ડ કરે છે — પ્રથમ ચકાસાયેલ મેચ જીતે છે. મુખ્ય વાત એ છે કે: મળેલ કી તમારા <strong>X25519 કી સાથે સીલ કરેલી હોય છે</strong>, જેથી કાર્યકર બાઉન્ટી કમાય છે છતાં <strong>તમારું વોલેટ ક્યારેય જોઈ શકતો નથી</strong>. <a href=\"/x402\">x402</a> દ્વારા સેટલમેન્ટ ટ્રસ્ટલેસ છે; ન ભરાયેલી બાઉન્ટી સમયસીમા સમાપ્ત થવા પર રિફંડ થાય છે. અથવા <a href=\"#earn\" id=\"lede-earn\">તમારા વધારાના કોર્સને કામ પર લગાડો</a> અને કમાઓ.",
 		"i_ve_saved_my_private_key_somewhere": "મેં મારી પ્રાઇવેટ કી ક્યાંક સુરક્ષિત જગ્યાએ સાચવી રાખી છે.",
 		"label_optional_public": "લેબલ <span style=\"text-transform:none;color:#555\">(વૈકલ્પિક, સાર્વજનિક)</span>",
 		"load_more": "વધુ લોડ કરો",

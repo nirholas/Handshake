@@ -736,7 +736,7 @@
 		"user": "Defnyddiwr",
 		"view_agent": "Gweld asiant →",
 		"view_on_marketplace": "Gweld ar y farchnad ›",
-		"walk_through_your_agent_s_mind_every": "Cerddwch drwy feddwl eich asiant. Mae pob cof yn wrthrych y gallwch ei weld, ei chwilio, a'i siapio. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Agor sgrin lawn ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Cerddwch drwy feddwl eich asiant. Mae pob cof yn wrthrych y gallwch ei weld, ei chwilio, a'i siapio. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Agor sgrin lawn ↗</a>",
 		"website": "Gwefan",
 		"weekly": "Wythnosol",
 		"weekly_digest": "Crynodeb wythnosol",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Mae hi'n dringo llythyren wrth lythyren fel dringwr rhaff. Mae pen pob llythyren yn bwynt gafael — mae hi'n eistedd, yn neidio, ac yn eistedd eto."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Hofranwch dros unrhyw air wedi'i danlinellu → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Hofranwch dros unrhyw air wedi'i danlinellu → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Hofranwch <em>unrhyw le</em>.",
 		"meta_title": "Dilynwr cyrchwr — three.ws",
 		"primary": "<span>Cynradd</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Adeiladu Asiantau AI 3D yn Fyw — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Dim taith gerdded trwy sleidiau yn unig — rydym yn mynd o ddim i asiant 3D gweithredol, ymgorfforadwy mewn amser real, yna'n agor y llawr.",
 		"notify_me": "Hysbyswch fi",
-		"or_just_add_it_to_your_calendar": "Neu dim ond <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ychwanegwch ef at eich calendr</a> a dewch.",
+		"or_just_add_it_to_your_calendar": "Neu dim ond <a id=\"add-cal-2\" style=\"text-decoration:underline\">ychwanegwch ef at eich calendr</a> a dewch.",
 		"prompt_agent": "Anogaeth → asiant",
 		"read_the_ibm_write_up": "Darllenwch yr ysgrif IBM",
 		"ship_at_scale": "Cyflwyno ar raddfa",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Mae'r daith yn rhedeg fel penodau — o adeiladu eich asiant cyntaf i'w roi ar-gadwyn.",
 		"want_this_on_your_own_site_or": "Eisiau hyn ar eich safle neu siop eich hun? Adeiladwch un yn y <a href=\"/tour-builder\">Tour Builder</a> — dim cod, y ddau ddull wedi'u cynnwys.",
 		"what_you_ll_see": "Beth welwch chi",
-		"you_have_a_tour_in_progress_pick": "Mae gennych daith ar y gweill — <a href=\"#\" id=\"tour-resume-link\">ailafaelwch ynddi →</a>",
+		"you_have_a_tour_in_progress_pick": "Mae gennych daith ar y gweill — <button type=\"button\" id=\"tour-resume-link\">ailafaelwch ynddi →</button>",
 		"you_re_in_control": "Chi sy'n rheoli"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Marchnad Gwobrau Malu",
 		"grind_earn": "Malu ac ennill",
 		"grind_earn_2": "Malu a Ennill",
-		"hard_vanity_addresses_are_hours_to_years": "Mae cyfeiriadau vanity caled yn cymryd oriau i flynyddoedd ar un peiriant. Yma rydych chi'n <strong>escrowio USDC gwobr</strong> ac mae fflyd o weithwyr annibynnol yn malu eich patrwm yn gyfochrog — y cyfatebiad cyntaf a ddilysir sy'n ennill. Y datblygiad arloesol: mae'r allwedd a ddarganfuwyd wedi'i <strong>selio i'ch allwedd X25519</strong>, felly mae'r gweithiwr yn ennill y wobr ond <strong>nid yw byth yn gweld eich waled</strong>. Mae setliad yn ddi-ymddiried trwy <a href=\"/x402\">x402</a>; mae gwobrau heb eu llenwi'n cael eu had-dalu ar ôl dod i ben. Neu <a href=\"#\" id=\"lede-earn\">rhowch eich creiddiau sbâr i weithio</a> ac ennill.",
+		"hard_vanity_addresses_are_hours_to_years": "Mae cyfeiriadau vanity caled yn cymryd oriau i flynyddoedd ar un peiriant. Yma rydych chi'n <strong>escrowio USDC gwobr</strong> ac mae fflyd o weithwyr annibynnol yn malu eich patrwm yn gyfochrog — y cyfatebiad cyntaf a ddilysir sy'n ennill. Y datblygiad arloesol: mae'r allwedd a ddarganfuwyd wedi'i <strong>selio i'ch allwedd X25519</strong>, felly mae'r gweithiwr yn ennill y wobr ond <strong>nid yw byth yn gweld eich waled</strong>. Mae setliad yn ddi-ymddiried trwy <a href=\"/x402\">x402</a>; mae gwobrau heb eu llenwi'n cael eu had-dalu ar ôl dod i ben. Neu <a href=\"#earn\" id=\"lede-earn\">rhowch eich creiddiau sbâr i weithio</a> ac ennill.",
 		"i_ve_saved_my_private_key_somewhere": "Rwyf wedi cadw fy allwedd breifat mewn lle diogel.",
 		"label_optional_public": "Label <span style=\"text-transform:none;color:#555\">(dewisol, cyhoeddus)</span>",
 		"load_more": "Llwytho mwy",

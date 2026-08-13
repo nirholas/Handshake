@@ -736,7 +736,7 @@
 		"user": "Kullanıcı",
 		"view_agent": "Ajanı görüntüle →",
 		"view_on_marketplace": "Pazaryerinde görüntüle ›",
-		"walk_through_your_agent_s_mind_every": "Ajanınızın zihninde gezinin. Her anı, görebileceğiniz, arayabileceğiniz ve şekillendirebileceğiniz bir nesnedir. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Tam ekran aç ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Ajanınızın zihninde gezinin. Her anı, görebileceğiniz, arayabileceğiniz ve şekillendirebileceğiniz bir nesnedir. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Tam ekran aç ↗</a>",
 		"website": "Web sitesi",
 		"weekly": "Haftalık",
 		"weekly_digest": "Haftalık özet",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Halat tırmanıcısı gibi harften harfe tırmanır. Her harfin tepesi bir tutunma noktasıdır — tünelir, atlar, tekrar tünelir."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Altı çizili herhangi bir kelimenin üzerine gelin → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">belgeler</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">fiyatlandırma</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">örnekler</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Altı çizili herhangi bir kelimenin üzerine gelin → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">belgeler</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">fiyatlandırma</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">örnekler</a>",
 		"hover_anywhere": "<em>Herhangi bir yere</em> gelin.",
 		"meta_title": "İmleç takipçisi — three.ws",
 		"primary": "<span>Birincil</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI Ajansları Canlı İnşa Etme — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Sadece yürütme — hiçbir slayt yok, gerçek zamanlı olarak hiçbir şeyden çalışır, gömülebilir 3D ajansa geçiyoruz, sonra katılımcılara söz veriyoruz.",
 		"notify_me": "Beni bilgilendir",
-		"or_just_add_it_to_your_calendar": "Ya da sadece <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">takviminize ekleyin</a> ve gelin.",
+		"or_just_add_it_to_your_calendar": "Ya da sadece <a id=\"add-cal-2\" style=\"text-decoration:underline\">takviminize ekleyin</a> ve gelin.",
 		"prompt_agent": "İstem → ajans",
 		"read_the_ibm_write_up": "IBM yazısını okuyun",
 		"ship_at_scale": "Ölçekle gönder",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Tur, ilk ajanını oluşturmaktan onu zincire almaya kadar bölümler halinde ilerliyor.",
 		"want_this_on_your_own_site_or": "Bunu kendi sitenizde veya mağazanızda mı istiyorsunuz? <a href=\"/tour-builder\">Tur Oluşturucu</a> ile bir tane oluşturun — kod yok, her iki mod da dahil.",
 		"what_you_ll_see": "Görmekte olduğunuz şey",
-		"you_have_a_tour_in_progress_pick": "Devam eden bir turunuz var — <a href=\"#\" id=\"tour-resume-link\">devam et →</a>",
+		"you_have_a_tour_in_progress_pick": "Devam eden bir turunuz var — <button type=\"button\" id=\"tour-resume-link\">devam et →</button>",
 		"you_re_in_control": "Kontrol sende"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Kazı-Ödül Pazarı",
 		"grind_earn": "Kazı ve kazan",
 		"grind_earn_2": "Kazı ve kazan",
-		"hard_vanity_addresses_are_hours_to_years": "Zor vanity adresleri tek bir makinede saatler ila yıllar sürebilir. Burada <strong>bir USDC ödül emanet edersiniz</strong> ve bağımsız çalışanlardan oluşan bir filo deseninizi paralel olarak kazır — ilk doğrulanan eşleşme kazanır. Çığır açan nokta: bulunan anahtar <strong>X25519 anahtarınıza mühürlenir</strong>, böylece çalışan ödülü kazanır ancak <strong>cüzdanınızı asla görmez</strong>. Ödeme <a href=\"/x402\">x402</a> aracılığıyla güvene dayalı olmadan yapılır; dolmayan ödüller süre sonunda iade edilir. Ya da <a href=\"#\" id=\"lede-earn\">boş çekirdeklerinizi çalıştırın</a> ve kazanın.",
+		"hard_vanity_addresses_are_hours_to_years": "Zor vanity adresleri tek bir makinede saatler ila yıllar sürebilir. Burada <strong>bir USDC ödül emanet edersiniz</strong> ve bağımsız çalışanlardan oluşan bir filo deseninizi paralel olarak kazır — ilk doğrulanan eşleşme kazanır. Çığır açan nokta: bulunan anahtar <strong>X25519 anahtarınıza mühürlenir</strong>, böylece çalışan ödülü kazanır ancak <strong>cüzdanınızı asla görmez</strong>. Ödeme <a href=\"/x402\">x402</a> aracılığıyla güvene dayalı olmadan yapılır; dolmayan ödüller süre sonunda iade edilir. Ya da <a href=\"#earn\" id=\"lede-earn\">boş çekirdeklerinizi çalıştırın</a> ve kazanın.",
 		"i_ve_saved_my_private_key_somewhere": "Özel anahtarımı güvenli bir yere kaydettim.",
 		"label_optional_public": "Etiket <span style=\"text-transform:none;color:#555\">(isteğe bağlı, herkese açık)</span>",
 		"load_more": "Daha fazla yükle",

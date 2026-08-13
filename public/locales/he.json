@@ -736,7 +736,7 @@
 		"user": "משתמש",
 		"view_agent": "צפה בסוכן ←",
 		"view_on_marketplace": "צפה במרקטפלייס ›",
-		"walk_through_your_agent_s_mind_every": "היכנס למוחו של הסוכן שלך. כל זיכרון הוא אובייקט שתוכל לראות, לחפש ולעצב. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">פתח במסך מלא ↗</a>",
+		"walk_through_your_agent_s_mind_every": "היכנס למוחו של הסוכן שלך. כל זיכרון הוא אובייקט שתוכל לראות, לחפש ולעצב. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">פתח במסך מלא ↗</a>",
 		"website": "אתר אינטרנט",
 		"weekly": "שבועי",
 		"weekly_digest": "תקציר שבועי",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "היא מטפסת אות לאות כמו מטפסת חבלים. כל ראש אות הוא נקודת אחיזה — היא מתיישבת, קופצת, ומתיישבת שוב."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "רחף מעל כל מילה מודגשת בקו תחתון → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">תיעוד</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">תמחור</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">דוגמאות</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "רחף מעל כל מילה מודגשת בקו תחתון → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">תיעוד</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">תמחור</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">דוגמאות</a>",
 		"hover_anywhere": "רחף <em>בכל מקום</em>.",
 		"meta_title": "עוקב סמן — three.ws",
 		"primary": "<span>ראשי</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "בנייה של סוכני AI תלת-ממדיים בשידור חי — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "אין שקפים — רק הליכה צעד אחר צעד — אנחנו עוברים מכלום לסוכן תלת-ממדי עובד שניתן להטמיע בזמן אמת, ואז פותחים את הרצפה.",
 		"notify_me": "הודע לי",
-		"or_just_add_it_to_your_calendar": "או פשוט <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">הוסף את זה ללוח השנה שלך</a> והופיע.",
+		"or_just_add_it_to_your_calendar": "או פשוט <a id=\"add-cal-2\" style=\"text-decoration:underline\">הוסף את זה ללוח השנה שלך</a> והופיע.",
 		"prompt_agent": "הנחיה → סוכן",
 		"read_the_ibm_write_up": "קרא את המאמר של IBM",
 		"ship_at_scale": "שילוח בקנה מידה",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "הסיור מתנהל כפרקים — מהבנייה של הסוכן הראשון שלך ועד להעביר אותו לרשת.",
 		"want_this_on_your_own_site_or": "רוצה את זה באתר או בחנות שלך? בנה אחד ב<a href=\"/tour-builder\">בונה הסיורים</a> — ללא קוד, שני המודלים כלולים.",
 		"what_you_ll_see": "מה שתראה",
-		"you_have_a_tour_in_progress_pick": "יש לך סיור בתהליך — <a href=\"#\" id=\"tour-resume-link\">המשך אותו →</a>",
+		"you_have_a_tour_in_progress_pick": "יש לך סיור בתהליך — <button type=\"button\" id=\"tour-resume-link\">המשך אותו →</button>",
 		"you_re_in_control": "אתה שולט"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "שוק באונטי-טחינה",
 		"grind_earn": "טחן והרווח",
 		"grind_earn_2": "טחן והרווח",
-		"hard_vanity_addresses_are_hours_to_years": "כתובות וניטי קשות דורשות שעות עד שנים במכונה אחת. כאן אתה <strong>מפקיד באונטי USDC</strong> וצי של עובדים עצמאיים טוחן את התבנית שלך במקביל — ההתאמה המאומתת הראשונה זוכה. הפריצה: המפתח שנמצא <strong>אטום למפתח ה-X25519 שלך</strong>, כך שהעובד מרוויח את הבאונטי אך <strong>לעולם לא רואה את הארנק שלך</strong>. הסליקה היא ללא אמון באמצעות <a href=\"/x402\">x402</a>; באונטיז שלא מולאו מוחזרים עם פקיעת התוקף. או <a href=\"#\" id=\"lede-earn\">הפעל את הליבות הפנויות שלך</a> והרווח.",
+		"hard_vanity_addresses_are_hours_to_years": "כתובות וניטי קשות דורשות שעות עד שנים במכונה אחת. כאן אתה <strong>מפקיד באונטי USDC</strong> וצי של עובדים עצמאיים טוחן את התבנית שלך במקביל — ההתאמה המאומתת הראשונה זוכה. הפריצה: המפתח שנמצא <strong>אטום למפתח ה-X25519 שלך</strong>, כך שהעובד מרוויח את הבאונטי אך <strong>לעולם לא רואה את הארנק שלך</strong>. הסליקה היא ללא אמון באמצעות <a href=\"/x402\">x402</a>; באונטיז שלא מולאו מוחזרים עם פקיעת התוקף. או <a href=\"#earn\" id=\"lede-earn\">הפעל את הליבות הפנויות שלך</a> והרווח.",
 		"i_ve_saved_my_private_key_somewhere": "שמרתי את המפתח הפרטי שלי במקום בטוח.",
 		"label_optional_public": "תווית <span style=\"text-transform:none;color:#555\">(אופציונלי, ציבורי)</span>",
 		"load_more": "טען עוד",

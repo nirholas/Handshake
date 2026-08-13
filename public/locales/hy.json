@@ -736,7 +736,7 @@
 		"user": "Օգտատեր",
 		"view_agent": "Դիտել գործակալին →",
 		"view_on_marketplace": "Դիտել շուկայում ›",
-		"walk_through_your_agent_s_mind_every": "Ընկղմվեք ձեր գործակալի մտքերում։ Յուրաքանչյուր հիշողություն օբյեկտ է, որը կարող եք տեսնել, որոնել և ձևավորել։ <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Բացել ամբողջ էկրանով ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Ընկղմվեք ձեր գործակալի մտքերում։ Յուրաքանչյուր հիշողություն օբյեկտ է, որը կարող եք տեսնել, որոնել և ձևավորել։ <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Բացել ամբողջ էկրանով ↗</a>",
 		"website": "Կայք",
 		"weekly": "Շաբաթական",
 		"weekly_digest": "Շաբաթական ամփոփագիր",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Նա տառից տառ է բարձրանում պարանով բարձրացողի նման։ Յուրաքանչյուր տառի գագաթը բռնելու կետ է — նա նստում է, ցատկում, նորից նստում։"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Մկնիկը պահեք ցանկացած ընդգծված բառի վրա → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Մկնիկը պահեք ցանկացած ընդգծված բառի վրա → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Մկնիկը պահեք <em>ցանկացած տեղում</em>։",
 		"meta_title": "Կուրսորին հետևող — three.ws",
 		"primary": "<span>Առաջնային</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI գործակալների ստեղծում ուղիղ եթերում — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Առանց սլայդերի, միայն քայլ առ քայլ ցուցադրում. մենք զրոյից ստեղծում ենք աշխատող, ներդրվող 3D գործակալ իրական ժամանակում, այնուհետև բացում ենք քննարկումը։",
 		"notify_me": "Տեղեկացնել ինձ",
-		"or_just_add_it_to_your_calendar": "Կամ պարզապես <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ավելացրեք այն ձեր օրացույցում</a> և միացեք։",
+		"or_just_add_it_to_your_calendar": "Կամ պարզապես <a id=\"add-cal-2\" style=\"text-decoration:underline\">ավելացրեք այն ձեր օրացույցում</a> և միացեք։",
 		"prompt_agent": "Հուշում → գործակալ",
 		"read_the_ibm_write_up": "Կարդալ IBM-ի հոդվածը",
 		"ship_at_scale": "Տեղակայել լայնածավալ",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Շրջագայությունը բաժանված է գլուխների՝ ձեր առաջին գործակալը ստեղծելուց մինչև այն շղթայի վրա տեղադրելը։",
 		"want_this_on_your_own_site_or": "Ցանկանու՞մ եք սա ձեր սեփական կայքում կամ խանութում։ Ստեղծեք մեկը <a href=\"/tour-builder\">Tour Builder</a>-ում՝ առանց կոդի, ներառված են երկու ռեժիմներն էլ։",
 		"what_you_ll_see": "Ինչ կտեսնեք",
-		"you_have_a_tour_in_progress_pick": "Դուք ունեք ընթացիկ շրջագայություն — <a href=\"#\" id=\"tour-resume-link\">շարունակեք այն →</a>",
+		"you_have_a_tour_in_progress_pick": "Դուք ունեք ընթացիկ շրջագայություն — <button type=\"button\" id=\"tour-resume-link\">շարունակեք այն →</button>",
 		"you_re_in_control": "Դուք եք կառավարում"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Որոնման պարգևավճարների շուկա",
 		"grind_earn": "Աշխատիր և վաստակիր",
 		"grind_earn_2": "Աշխատիր և վաստակիր",
-		"hard_vanity_addresses_are_hours_to_years": "Մեկ մեքենայով բարդ vanity հասցեներ ստանալը ժամերից տարիներ է տևում։ Այստեղ դուք <strong>ավանդադրում եք USDC պարգևավճար</strong>, և անկախ աշխատողների մի ամբողջ նավատորմ զուգահեռաբար որոնում է ձեր նմուշը՝ առաջին հաստատված համընկնումը հաղթում է։ Հեղափոխությունը. գտնված բանալին <strong>կապված է ձեր X25519 բանալուն</strong>, այնպես որ աշխատողը ստանում է պարգևավճարը, բայց <strong>երբեք չի տեսնում ձեր դրամապանակը</strong>։ Հաշվարկը վստահություն չպահանջող է <a href=\"/x402\">x402</a> միջոցով. չլրացված պարգևավճարները վերադարձվում են ժամկետի ավարտից հետո։ Կամ <a href=\"#\" id=\"lede-earn\">գործի դրեք ձեր ազատ միջուկները</a> և վաստակեք։",
+		"hard_vanity_addresses_are_hours_to_years": "Մեկ մեքենայով բարդ vanity հասցեներ ստանալը ժամերից տարիներ է տևում։ Այստեղ դուք <strong>ավանդադրում եք USDC պարգևավճար</strong>, և անկախ աշխատողների մի ամբողջ նավատորմ զուգահեռաբար որոնում է ձեր նմուշը՝ առաջին հաստատված համընկնումը հաղթում է։ Հեղափոխությունը. գտնված բանալին <strong>կապված է ձեր X25519 բանալուն</strong>, այնպես որ աշխատողը ստանում է պարգևավճարը, բայց <strong>երբեք չի տեսնում ձեր դրամապանակը</strong>։ Հաշվարկը վստահություն չպահանջող է <a href=\"/x402\">x402</a> միջոցով. չլրացված պարգևավճարները վերադարձվում են ժամկետի ավարտից հետո։ Կամ <a href=\"#earn\" id=\"lede-earn\">գործի դրեք ձեր ազատ միջուկները</a> և վաստակեք։",
 		"i_ve_saved_my_private_key_somewhere": "Ես իմ անձնական բանալին պահել եմ անվտանգ տեղում։",
 		"label_optional_public": "Պիտակ <span style=\"text-transform:none;color:#555\">(ըստ ցանկության, հանրային)</span>",
 		"load_more": "Բեռնել ավելին",

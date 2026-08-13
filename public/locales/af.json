@@ -736,7 +736,7 @@
 		"user": "Gebruiker",
 		"view_agent": "Sien agent →",
 		"view_on_marketplace": "Sien op markplek ›",
-		"walk_through_your_agent_s_mind_every": "Loop deur jou agent se gedagtes. Elke geheue is 'n objek wat jy kan sien, soek en vorm. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Maak volskerm oop ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Loop deur jou agent se gedagtes. Elke geheue is 'n objek wat jy kan sien, soek en vorm. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Maak volskerm oop ↗</a>",
 		"website": "Webwerf",
 		"weekly": "Weekliks",
 		"weekly_digest": "Weeklikse opsomming",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Sy klim letter vir letter soos 'n touklimmer. Elke letter se bokant is 'n greepunt — sy sit, spring, sit weer."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Beweeg oor enige onderstreepte woord → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumente</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pryse</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">voorbeelde</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Beweeg oor enige onderstreepte woord → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumente</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pryse</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">voorbeelde</a>",
 		"hover_anywhere": "Beweeg oor <em>enige plek</em>.",
 		"meta_title": "Wyservolger — three.ws",
 		"primary": "<span>Primêr</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Bou 3D KI-agente Regstreeks — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Geen skyfies, slegs 'n praktiese demonstrasie — ons gaan van niks na 'n werkende, inbedbare 3D-agent in reële tyd, en open dan die vloer.",
 		"notify_me": "Stel my in kennis",
-		"or_just_add_it_to_your_calendar": "Of voeg dit net <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">by jou kalender</a> en daag op.",
+		"or_just_add_it_to_your_calendar": "Of voeg dit net <a id=\"add-cal-2\" style=\"text-decoration:underline\">by jou kalender</a> en daag op.",
 		"prompt_agent": "Opdrag → agent",
 		"read_the_ibm_write_up": "Lees die IBM-skrywe.",
 		"ship_at_scale": "Lewering op skaal",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Die toer loop as hoofstukke — van die bou van jou eerste agent tot die plaas daarvan op die ketting.",
 		"want_this_on_your_own_site_or": "Wil jy dit op jou eie webwerf of winkel hê? Bou een in die <a href=\"/tour-builder\">Tour Builder</a> — geen kode, albei modusse ingesluit.",
 		"what_you_ll_see": "Wat jy sal sien",
-		"you_have_a_tour_in_progress_pick": "'n Toer is aan die gang — <a href=\"#\" id=\"tour-resume-link\">gaan voort →</a>",
+		"you_have_a_tour_in_progress_pick": "'n Toer is aan die gang — <button type=\"button\" id=\"tour-resume-link\">gaan voort →</button>",
 		"you_re_in_control": "Jy is in beheer"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty Mark",
 		"grind_earn": "Grind en verdien",
 		"grind_earn_2": "Slyp & verdien",
-		"hard_vanity_addresses_are_hours_to_years": "Skaars vanity-adresse neem ure tot jare op een masjien. Hier <strong>deponeer jy 'n USDC beloning</strong> en 'n vloot onafhanklike werkers slyp jou patroon parallel — die eerste geverifieerde pasmaat wen. Die deurbraak: die gevindde sleutel is <strong>verseël aan jou X25519-sleutel</strong>, sodat die werker die beloning verdien, maar <strong>nooit jou beursie sien nie</strong>. Vereffening is vertroueloos via <a href=\"/x402\">x402</a>; onvervulde belonings word by verstryking terugbetaal. Of <a href=\"#\" id=\"lede-earn\">sit jou beskikbare kerns aan die werk</a> en verdien.",
+		"hard_vanity_addresses_are_hours_to_years": "Skaars vanity-adresse neem ure tot jare op een masjien. Hier <strong>deponeer jy 'n USDC beloning</strong> en 'n vloot onafhanklike werkers slyp jou patroon parallel — die eerste geverifieerde pasmaat wen. Die deurbraak: die gevindde sleutel is <strong>verseël aan jou X25519-sleutel</strong>, sodat die werker die beloning verdien, maar <strong>nooit jou beursie sien nie</strong>. Vereffening is vertroueloos via <a href=\"/x402\">x402</a>; onvervulde belonings word by verstryking terugbetaal. Of <a href=\"#earn\" id=\"lede-earn\">sit jou beskikbare kerns aan die werk</a> en verdien.",
 		"i_ve_saved_my_private_key_somewhere": "Ek het my private sleutel êrens veilig gestoor.",
 		"label_optional_public": "Etiket <span style=\"text-transform:none;color:#555\">(opsioneel, publiek)</span>",
 		"load_more": "Laai meer",

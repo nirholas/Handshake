@@ -736,7 +736,7 @@
 		"user": "Benutzer",
 		"view_agent": "Agent ansehen →",
 		"view_on_marketplace": "Auf dem Marktplatz ansehen ›",
-		"walk_through_your_agent_s_mind_every": "Erkunden Sie den Geist Ihres Agenten. Jede Erinnerung ist ein Objekt, das Sie sehen, suchen und formen können. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Im Vollbildmodus öffnen ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Erkunden Sie den Geist Ihres Agenten. Jede Erinnerung ist ein Objekt, das Sie sehen, suchen und formen können. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Im Vollbildmodus öffnen ↗</a>",
 		"website": "Website",
 		"weekly": "Wöchentlich",
 		"weekly_digest": "Wöchentlicher Digest",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Sie klettert Buchstabe für Buchstabe wie eine Seilkletterin. Jeder Buchstabentop ist ein Haltepunkt — sie verweilt, springt, verweilt erneut."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Fahren Sie über ein unterstrichenes Wort → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">Dokus</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">Preise</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">Beispiele</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Fahren Sie über ein unterstrichenes Wort → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">Dokus</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">Preise</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">Beispiele</a>",
 		"hover_anywhere": "Fahren Sie <em>überall</em> hin.",
 		"meta_title": "Cursor-Verfolger — three.ws",
 		"primary": "<span>Primär</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D-KI-Agenten live bauen — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Kein reiner Folien-Walkthrough – wir gehen in Echtzeit von Null zu einem funktionierenden, einbettbaren 3D-Agenten, dann öffnen wir die Diskussionsrunde.",
 		"notify_me": "Benachrichtigen Sie mich",
-		"or_just_add_it_to_your_calendar": "Oder fügen Sie es einfach <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">Ihrem Kalender hinzu</a> und nehmen Sie teil.",
+		"or_just_add_it_to_your_calendar": "Oder fügen Sie es einfach <a id=\"add-cal-2\" style=\"text-decoration:underline\">Ihrem Kalender hinzu</a> und nehmen Sie teil.",
 		"prompt_agent": "Prompt → Agent",
 		"read_the_ibm_write_up": "Lesen Sie den IBM-Bericht",
 		"ship_at_scale": "Skalierbar bereitstellen",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Die Tour ist in Kapitel unterteilt – vom Erstellen Ihres ersten Agenten bis zur On-Chain-Bereitstellung.",
 		"want_this_on_your_own_site_or": "Möchten Sie dies auf Ihrer eigenen Website oder in Ihrem Shop? Erstellen Sie eine im <a href=\"/tour-builder\">Tour Builder</a> – kein Code, beide Modi enthalten.",
 		"what_you_ll_see": "Was Sie sehen werden",
-		"you_have_a_tour_in_progress_pick": "Sie haben eine Tour im Gange – <a href=\"#\" id=\"tour-resume-link\">hier fortsetzen →</a>",
+		"you_have_a_tour_in_progress_pick": "Sie haben eine Tour im Gange – <button type=\"button\" id=\"tour-resume-link\">hier fortsetzen →</button>",
 		"you_re_in_control": "Sie haben die Kontrolle"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty-Markt",
 		"grind_earn": "Grinden & verdienen",
 		"grind_earn_2": "Grinden & verdienen",
-		"hard_vanity_addresses_are_hours_to_years": "Schwierige Vanity-Adressen dauern auf einer Maschine Stunden bis Jahre. Hier <strong>hinterlegst du eine USDC Bounty</strong> und eine Flotte unabhängiger Worker grindet dein Muster parallel – der erste verifizierte Treffer gewinnt. Der Durchbruch: Der gefundene Schlüssel ist <strong>an deinen X25519-Schlüssel versiegelt</strong>, sodass der Worker die Bounty verdient, aber <strong>deine Wallet nie sieht</strong>. Die Abwicklung erfolgt trustless über <a href=\"/x402\">x402</a>; nicht erfüllte Bounties werden bei Ablauf zurückerstattet. Oder <a href=\"#\" id=\"lede-earn\">setze deine freien Kerne ein</a> und verdiene.",
+		"hard_vanity_addresses_are_hours_to_years": "Schwierige Vanity-Adressen dauern auf einer Maschine Stunden bis Jahre. Hier <strong>hinterlegst du eine USDC Bounty</strong> und eine Flotte unabhängiger Worker grindet dein Muster parallel – der erste verifizierte Treffer gewinnt. Der Durchbruch: Der gefundene Schlüssel ist <strong>an deinen X25519-Schlüssel versiegelt</strong>, sodass der Worker die Bounty verdient, aber <strong>deine Wallet nie sieht</strong>. Die Abwicklung erfolgt trustless über <a href=\"/x402\">x402</a>; nicht erfüllte Bounties werden bei Ablauf zurückerstattet. Oder <a href=\"#earn\" id=\"lede-earn\">setze deine freien Kerne ein</a> und verdiene.",
 		"i_ve_saved_my_private_key_somewhere": "Ich habe meinen privaten Schlüssel sicher gespeichert.",
 		"label_optional_public": "Label <span style=\"text-transform:none;color:#555\">(optional, öffentlich)</span>",
 		"load_more": "Mehr laden",

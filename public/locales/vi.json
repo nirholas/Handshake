@@ -736,7 +736,7 @@
 		"user": "Người dùng",
 		"view_agent": "Xem tác nhân →",
 		"view_on_marketplace": "Xem trên marketplace ›",
-		"walk_through_your_agent_s_mind_every": "Khám phá tâm trí tác nhân của bạn. Mỗi ký ức là một đối tượng bạn có thể xem, tìm kiếm và định hình. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Mở toàn màn hình ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Khám phá tâm trí tác nhân của bạn. Mỗi ký ức là một đối tượng bạn có thể xem, tìm kiếm và định hình. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Mở toàn màn hình ↗</a>",
 		"website": "Website",
 		"weekly": "Hàng tuần",
 		"weekly_digest": "Tổng hợp hàng tuần",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Cô ấy leo từng chữ cái như một vận động viên leo dây. Mỗi đỉnh chữ cái là một điểm bám — cô ấy đậu, nhảy, rồi lại đậu."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Di chuột qua bất kỳ từ gạch chân nào → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">tài liệu</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">giá cả</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ví dụ</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Di chuột qua bất kỳ từ gạch chân nào → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">tài liệu</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">giá cả</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ví dụ</a>",
 		"hover_anywhere": "Di chuột <em>bất cứ đâu</em>.",
 		"meta_title": "Trình theo dõi con trỏ — three.ws",
 		"primary": "<span>Chính</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Xây dựng 3D AI Agents Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Không có slide — chỉ có hướng dẫn thực tế — chúng tôi đi từ không có gì đến một agent 3D có thể nhúng hoạt động trong thời gian thực, sau đó mở floor.",
 		"notify_me": "Thông báo cho tôi",
-		"or_just_add_it_to_your_calendar": "Hoặc chỉ cần <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">thêm nó vào lịch của bạn</a> và tham gia.",
+		"or_just_add_it_to_your_calendar": "Hoặc chỉ cần <a id=\"add-cal-2\" style=\"text-decoration:underline\">thêm nó vào lịch của bạn</a> và tham gia.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Đọc bài viết của IBM",
 		"ship_at_scale": "Vận chuyển quy mô lớn",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Chuyến tham quan diễn ra theo các chương — từ việc xây dựng đại lý đầu tiên của bạn đến việc đưa nó lên chuỗi.",
 		"want_this_on_your_own_site_or": "Muốn điều này trên trang web hoặc cửa hàng của riêng bạn? Xây dựng một cái trong <a href=\"/tour-builder\">Tour Builder</a> — không cần mã, cả hai chế độ đều có sẵn.",
 		"what_you_ll_see": "Những gì bạn sẽ thấy",
-		"you_have_a_tour_in_progress_pick": "Bạn có một chuyến tham quan đang diễn ra — <a href=\"#\" id=\"tour-resume-link\">tiếp tục →</a>",
+		"you_have_a_tour_in_progress_pick": "Bạn có một chuyến tham quan đang diễn ra — <button type=\"button\" id=\"tour-resume-link\">tiếp tục →</button>",
 		"you_re_in_control": "Bạn đang kiểm soát"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Thị trường Tiền thưởng Cày",
 		"grind_earn": "Cày & kiếm tiền",
 		"grind_earn_2": "Cày & kiếm tiền",
-		"hard_vanity_addresses_are_hours_to_years": "Các địa chỉ vanity khó có thể mất hàng giờ đến hàng năm trên một máy. Tại đây, bạn <strong>ký quỹ một khoản tiền thưởng USDC</strong> và một đội ngũ thợ độc lập sẽ cày mẫu của bạn song song — kết quả khớp được xác minh đầu tiên sẽ thắng. Điểm đột phá: khóa tìm được <strong>được niêm phong vào khóa X25519 của bạn</strong>, để thợ kiếm được tiền thưởng nhưng <strong>không bao giờ thấy ví của bạn</strong>. Thanh toán không cần tin cậy thông qua <a href=\"/x402\">x402</a>; các khoản tiền thưởng chưa được lấp đầy sẽ được hoàn lại khi hết hạn. Hoặc <a href=\"#\" id=\"lede-earn\">đặt các lõi dự phòng của bạn vào làm việc</a> và kiếm tiền.",
+		"hard_vanity_addresses_are_hours_to_years": "Các địa chỉ vanity khó có thể mất hàng giờ đến hàng năm trên một máy. Tại đây, bạn <strong>ký quỹ một khoản tiền thưởng USDC</strong> và một đội ngũ thợ độc lập sẽ cày mẫu của bạn song song — kết quả khớp được xác minh đầu tiên sẽ thắng. Điểm đột phá: khóa tìm được <strong>được niêm phong vào khóa X25519 của bạn</strong>, để thợ kiếm được tiền thưởng nhưng <strong>không bao giờ thấy ví của bạn</strong>. Thanh toán không cần tin cậy thông qua <a href=\"/x402\">x402</a>; các khoản tiền thưởng chưa được lấp đầy sẽ được hoàn lại khi hết hạn. Hoặc <a href=\"#earn\" id=\"lede-earn\">đặt các lõi dự phòng của bạn vào làm việc</a> và kiếm tiền.",
 		"i_ve_saved_my_private_key_somewhere": "Tôi đã lưu khóa riêng tư của mình ở một nơi an toàn.",
 		"label_optional_public": "Nhãn <span style=\"text-transform:none;color:#555\">(tùy chọn, công khai)</span>",
 		"load_more": "Tải thêm",

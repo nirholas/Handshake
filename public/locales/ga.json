@@ -736,7 +736,7 @@
 		"user": "Úsáideoir",
 		"view_agent": "Féach ar an ngníomhaire →",
 		"view_on_marketplace": "Féach ar an margadh ›",
-		"walk_through_your_agent_s_mind_every": "Siúil trí intinn do ghníomhaire. Is réad é gach cuimhne is féidir leat a fheiceáil, a chuardach, agus a mhúnlú. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Oscail lánscáileán ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Siúil trí intinn do ghníomhaire. Is réad é gach cuimhne is féidir leat a fheiceáil, a chuardach, agus a mhúnlú. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Oscail lánscáileán ↗</a>",
 		"website": "Suíomh Gréasáin",
 		"weekly": "Seachtainiúil",
 		"weekly_digest": "Achoimre sheachtainiúil",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Dreapann sí litir ar litir cosúil le dreapadóir rópa. Is pointe greama é barr gach litreach — suíonn sí, léimeann sí, suíonn sí arís."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Téigh os cionn aon fhocail fholínithe → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">praghsáil</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">samplaí</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Téigh os cionn aon fhocail fholínithe → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">praghsáil</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">samplaí</a>",
 		"hover_anywhere": "Téigh os cionn <em>áit ar bith</em>.",
 		"meta_title": "Leanúnaí cúrsóra — three.ws",
 		"primary": "<span>Príomhúil</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Gníomhairí AI 3D á dTógáil Beo — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Níl aon chur i láthair sleamhnán amháin ann — téimid ó rud ar bith go gníomhaire 3D feidhmiúil, inleabaithe i bhfíor-am, ansin osclaímid an plé.",
 		"notify_me": "Cuir in iúl dom",
-		"or_just_add_it_to_your_calendar": "Nó díreach <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">cuir le do fhéilire é</a> agus bí i láthair.",
+		"or_just_add_it_to_your_calendar": "Nó díreach <a id=\"add-cal-2\" style=\"text-decoration:underline\">cuir le do fhéilire é</a> agus bí i láthair.",
 		"prompt_agent": "Prasa → gníomhaire",
 		"read_the_ibm_write_up": "Léigh an tuairisc ó IBM",
 		"ship_at_scale": "Seol ar scála",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Ritheann an turas mar chaibidlí — ó do chéad ghníomhaire a thógáil go dtí é a chur ar an slabhra.",
 		"want_this_on_your_own_site_or": "Ar mhaith leat é seo ar do shuíomh nó siopa féin? Tóg ceann sa <a href=\"/tour-builder\">Tour Builder</a> — gan cód, an dá mhodh san áireamh.",
 		"what_you_ll_see": "Cad a fheicfidh tú",
-		"you_have_a_tour_in_progress_pick": "Tá turas ar siúl agat — <a href=\"#\" id=\"tour-resume-link\">pioc ar ais é →</a>",
+		"you_have_a_tour_in_progress_pick": "Tá turas ar siúl agat — <button type=\"button\" id=\"tour-resume-link\">pioc ar ais é →</button>",
 		"you_re_in_control": "Is tú atá i gceannas"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Margadh Duaise Meilte",
 		"grind_earn": "Meilt & tuilleamh",
 		"grind_earn_2": "Meilt & Tuilleamh",
-		"hard_vanity_addresses_are_hours_to_years": "Is féidir le seoltaí vanity crua uaireanta an chloig nó blianta a thógáil ar mheaisín amháin. Anseo <strong>cuireann tú USDC duais</strong> i dtaisce agus meileann cabhlach oibrithe neamhspleácha do phatrún go comhthreomhar — buann an chéad mheaitseáil fhíoraithe. An dul chun cinn: tá an eochair aimsithe <strong>séalaithe le d'eochair X25519</strong>, mar sin tuilleann an t-oibrí an duais ach <strong>ní fheiceann sé do sparán choíche</strong>. Tá an socrú gan iontaoibh trí <a href=\"/x402\">x402</a>; aisíocann duaiseanna neamhlíonta ar dhul in éag. Nó <a href=\"#\" id=\"lede-earn\">cuir do chroíleacáin spártha ag obair</a> agus tuill.",
+		"hard_vanity_addresses_are_hours_to_years": "Is féidir le seoltaí vanity crua uaireanta an chloig nó blianta a thógáil ar mheaisín amháin. Anseo <strong>cuireann tú USDC duais</strong> i dtaisce agus meileann cabhlach oibrithe neamhspleácha do phatrún go comhthreomhar — buann an chéad mheaitseáil fhíoraithe. An dul chun cinn: tá an eochair aimsithe <strong>séalaithe le d'eochair X25519</strong>, mar sin tuilleann an t-oibrí an duais ach <strong>ní fheiceann sé do sparán choíche</strong>. Tá an socrú gan iontaoibh trí <a href=\"/x402\">x402</a>; aisíocann duaiseanna neamhlíonta ar dhul in éag. Nó <a href=\"#earn\" id=\"lede-earn\">cuir do chroíleacáin spártha ag obair</a> agus tuill.",
 		"i_ve_saved_my_private_key_somewhere": "Tá mo eochair phríobháideach sábháilte agam áit éigin slán.",
 		"label_optional_public": "Lipéad <span style=\"text-transform:none;color:#555\">(roghnach, poiblí)</span>",
 		"load_more": "Luchtaigh níos mó",

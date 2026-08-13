@@ -736,7 +736,7 @@
 		"user": "Vartotojas",
 		"view_agent": "Peržiūrėti agentą →",
 		"view_on_marketplace": "Peržiūrėti prekyvietėje ›",
-		"walk_through_your_agent_s_mind_every": "Pasinerkite į savo agento mintis. Kiekvienas prisiminimas yra objektas, kurį galite matyti, ieškoti ir formuoti. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Atidaryti visame ekrane ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Pasinerkite į savo agento mintis. Kiekvienas prisiminimas yra objektas, kurį galite matyti, ieškoti ir formuoti. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Atidaryti visame ekrane ↗</a>",
 		"website": "Svetainė",
 		"weekly": "Kas savaitę",
 		"weekly_digest": "Savaitės apžvalga",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Ji kopia raide po raidės kaip laipiotojas virve. Kiekviena raidės viršūnė – atramos taškas – ji nutupia, šoka, vėl nutupia."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Užveskite ant bet kurio pabraukto žodžio → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentai</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">kainodara</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pavyzdžiai</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Užveskite ant bet kurio pabraukto žodžio → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentai</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">kainodara</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pavyzdžiai</a>",
 		"hover_anywhere": "Užveskite <em>bet kur</em>.",
 		"meta_title": "Kursoriaus sekėjas — three.ws",
 		"primary": "<span>Pagrindinis</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI agentų kūrimas tiesiogiai — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Jokių skaidrių – tik praktinis pristatymas: nuo nulio iki veikiančio, įterpiamo 3D agento realiuoju laiku, po to atveriame diskusiją.",
 		"notify_me": "Pranešti man",
-		"or_just_add_it_to_your_calendar": "Arba tiesiog <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">įsidėkite į kalendorių</a> ir prisijunkite.",
+		"or_just_add_it_to_your_calendar": "Arba tiesiog <a id=\"add-cal-2\" style=\"text-decoration:underline\">įsidėkite į kalendorių</a> ir prisijunkite.",
 		"prompt_agent": "Raginimas → agentas",
 		"read_the_ibm_write_up": "Skaitykite IBM aprašymą",
 		"ship_at_scale": "Pristatykite dideliu mastu",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Ekskursija vyksta skyriais – nuo pirmojo agento kūrimo iki jo perkėlimo į blokų grandinę.",
 		"want_this_on_your_own_site_or": "Norite to savo svetainėje ar parduotuvėje? Sukurkite tai <a href=\"/tour-builder\">Tour Builder</a> – be kodo, abu režimai įtraukti.",
 		"what_you_ll_see": "Ką pamatysite",
-		"you_have_a_tour_in_progress_pick": "Jūs turite pradėtą ekskursiją – <a href=\"#\" id=\"tour-resume-link\">tęskite →</a>",
+		"you_have_a_tour_in_progress_pick": "Jūs turite pradėtą ekskursiją – <button type=\"button\" id=\"tour-resume-link\">tęskite →</button>",
 		"you_re_in_control": "Jūs valdote"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "„Grind“ atlygių rinka",
 		"grind_earn": "„Grindinkite“ ir uždirbkite",
 		"grind_earn_2": "Kalk ir uždirbk",
-		"hard_vanity_addresses_are_hours_to_years": "Sudėtingų vanity adresų generavimas vienu kompiuteriu užtrunka nuo valandų iki metų. Čia jūs <strong>deponuojate USDC atlygį</strong>, o nepriklausomų darbuotojų komanda lygiagrečiai ieško jūsų modelio — laimi pirmasis patvirtintas atitikmuo. Proveržis: rastas raktas yra <strong>užšifruotas jūsų X25519 raktu</strong>, todėl darbuotojas uždirba atlygį, bet <strong>niekada nemato jūsų piniginės</strong>. Atsiskaitymas vyksta be pasitikėjimo per <a href=\"/x402\">x402</a>; neįvykdyti atlygiai grąžinami pasibaigus terminui. Arba <a href=\"#\" id=\"lede-earn\">įdarbinkite savo laisvus branduolius</a> ir uždirbkite.",
+		"hard_vanity_addresses_are_hours_to_years": "Sudėtingų vanity adresų generavimas vienu kompiuteriu užtrunka nuo valandų iki metų. Čia jūs <strong>deponuojate USDC atlygį</strong>, o nepriklausomų darbuotojų komanda lygiagrečiai ieško jūsų modelio — laimi pirmasis patvirtintas atitikmuo. Proveržis: rastas raktas yra <strong>užšifruotas jūsų X25519 raktu</strong>, todėl darbuotojas uždirba atlygį, bet <strong>niekada nemato jūsų piniginės</strong>. Atsiskaitymas vyksta be pasitikėjimo per <a href=\"/x402\">x402</a>; neįvykdyti atlygiai grąžinami pasibaigus terminui. Arba <a href=\"#earn\" id=\"lede-earn\">įdarbinkite savo laisvus branduolius</a> ir uždirbkite.",
 		"i_ve_saved_my_private_key_somewhere": "Aš išsaugojau savo privatų raktą saugioje vietoje.",
 		"label_optional_public": "Etiketė <span style=\"text-transform:none;color:#555\">(neprivaloma, vieša)</span>",
 		"load_more": "Įkelti daugiau",

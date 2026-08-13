@@ -736,7 +736,7 @@
 		"user": "Användare",
 		"view_agent": "Visa agent →",
 		"view_on_marketplace": "Visa på marknadsplats ›",
-		"walk_through_your_agent_s_mind_every": "Gå igenom din agents tankar. Varje minne är ett objekt du kan se, söka och forma. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Öppna helskärm ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Gå igenom din agents tankar. Varje minne är ett objekt du kan se, söka och forma. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Öppna helskärm ↗</a>",
 		"website": "Webbplats",
 		"weekly": "Veckovis",
 		"weekly_digest": "Veckosammanfattning",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Hon klättrar bokstav för bokstav som en repklättrare. Varje bokstavstopp är en greppunkt — hon vilar, hoppar, vilar igen."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Hovra över ett understruket ord → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">priser</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">exempel</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Hovra över ett understruket ord → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">priser</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">exempel</a>",
 		"hover_anywhere": "Hovra <em>var som helst</em>.",
 		"meta_title": "Musföljare — three.ws",
 		"primary": "<span>Primär</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Byggande av 3D AI-agenter live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ingen slides, bara genomgång — vi går från ingenting till en fungerande, inbäddad 3D-agent i realtid, sedan öppnar vi golvet.",
 		"notify_me": "Meddela mig",
-		"or_just_add_it_to_your_calendar": "Eller bara <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">lägg till det i din kalender</a> och dyka upp.",
+		"or_just_add_it_to_your_calendar": "Eller bara <a id=\"add-cal-2\" style=\"text-decoration:underline\">lägg till det i din kalender</a> och dyka upp.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Läs IBM:s sammanställning",
 		"ship_at_scale": "Leverera i stor skala",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Turen körs som kapitel — från att bygga din första agent till att ta den på kedjan.",
 		"want_this_on_your_own_site_or": "Vill du ha detta på din egen sida eller butik? Bygg en i <a href=\"/tour-builder\">Tour Builder</a> — ingen kod, båda lägen ingår.",
 		"what_you_ll_see": "Vad du kommer att se",
-		"you_have_a_tour_in_progress_pick": "Du har en tur på gång — <a href=\"#\" id=\"tour-resume-link\">plocka upp den igen →</a>",
+		"you_have_a_tour_in_progress_pick": "Du har en tur på gång — <button type=\"button\" id=\"tour-resume-link\">plocka upp den igen →</button>",
 		"you_re_in_control": "Du har kontrollen"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty Marknad",
 		"grind_earn": "Grinda & tjäna",
 		"grind_earn_2": "Grinda & tjäna",
-		"hard_vanity_addresses_are_hours_to_years": "Svåra vanity-adresser tar timmar till år på en maskin. Här <strong>deponerar du en USDC bounty</strong> och en flotta av oberoende arbetare grindar ditt mönster parallellt — den första verifierade matchningen vinner. Genombrottet: den hittade nyckeln är <strong>förseglad till din X25519-nyckel</strong>, så arbetaren tjänar bounty men <strong>ser aldrig din plånbok</strong>. Avräkningen är tillitslös via <a href=\"/x402\">x402</a>; ofyllda bounties återbetalas vid utgång. Eller <a href=\"#\" id=\"lede-earn\">sätt dina lediga kärnor i arbete</a> och tjäna.",
+		"hard_vanity_addresses_are_hours_to_years": "Svåra vanity-adresser tar timmar till år på en maskin. Här <strong>deponerar du en USDC bounty</strong> och en flotta av oberoende arbetare grindar ditt mönster parallellt — den första verifierade matchningen vinner. Genombrottet: den hittade nyckeln är <strong>förseglad till din X25519-nyckel</strong>, så arbetaren tjänar bounty men <strong>ser aldrig din plånbok</strong>. Avräkningen är tillitslös via <a href=\"/x402\">x402</a>; ofyllda bounties återbetalas vid utgång. Eller <a href=\"#earn\" id=\"lede-earn\">sätt dina lediga kärnor i arbete</a> och tjäna.",
 		"i_ve_saved_my_private_key_somewhere": "Jag har sparat min privata nyckel på ett säkert ställe.",
 		"label_optional_public": "Etikett <span style=\"text-transform:none;color:#555\">(valfritt, offentligt)</span>",
 		"load_more": "Ladda mer",

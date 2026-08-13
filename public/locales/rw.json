@@ -736,7 +736,7 @@
 		"user": "Umukoresha",
 		"view_agent": "Reba umukozi →",
 		"view_on_marketplace": "Reba ku isoko ›",
-		"walk_through_your_agent_s_mind_every": "Injira mu bitekerezo by'umukozi wawe. Buri bwibuke ni ikintu ushobora kubona, gushakisha, no guhindura. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Fungura umuzingo wose ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Injira mu bitekerezo by'umukozi wawe. Buri bwibuke ni ikintu ushobora kubona, gushakisha, no guhindura. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Fungura umuzingo wose ↗</a>",
 		"website": "Urubuga",
 		"weekly": "Buri cyumweru",
 		"weekly_digest": "Incamake y'icyumweru",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Azamuka inyuguti ku yindi nk'uzamuka umugozi. Buri hejuru y'inyuguti ni ahantu ho gufata — agahagarara, agasimbuka, akongera agahagarara."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Shyira kuresa ku ijambo ryose ryashushanyijweho → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Shyira kuresa ku ijambo ryose ryashushanyijweho → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Shyira kuresa <em>ahantu hose</em>.",
 		"meta_title": "Ugukurikira kuresa — three.ws",
 		"primary": "<span>Icy'ibanze</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Kubaka Abakozi ba AI ba 3D Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Nta ma-slide gusa — duhera ku busa tukagera ku mukozi wa 3D ukora, ushobora gushyirwa ahantu hose mu gihe nyacyo, hanyuma tugaha ijambo abandi.",
 		"notify_me": "Mmenyeshe",
-		"or_just_add_it_to_your_calendar": "Cyangwa se <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ushyire ku kalendari yawe</a> maze uzaze.",
+		"or_just_add_it_to_your_calendar": "Cyangwa se <a id=\"add-cal-2\" style=\"text-decoration:underline\">ushyire ku kalendari yawe</a> maze uzaze.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Soma inyandiko ya IBM",
 		"ship_at_scale": "Shyira hanze ku rwego runini",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Urugendo rugabanyijemo ibice — uhereye ku kubaka agent yawe ya mbere kugeza uyishyize kuri blockchain.",
 		"want_this_on_your_own_site_or": "Urashaka ibi kuri urubuga rwawe cyangwa iduka ryawe? Wubake kimwe muri <a href=\"/tour-builder\">Tour Builder</a> — nta code, uburyo bwombi burimo.",
 		"what_you_ll_see": "Ibyo uzabona",
-		"you_have_a_tour_in_progress_pick": "Ufite urugendo rwatangiye — <a href=\"#\" id=\"tour-resume-link\">rukomerezeho →</a>",
+		"you_have_a_tour_in_progress_pick": "Ufite urugendo rwatangiye — <button type=\"button\" id=\"tour-resume-link\">rukomerezeho →</button>",
 		"you_re_in_control": "Ni wowe ubifite mu ntoki"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Isoko ry'ibihembo bya Grind",
 		"grind_earn": "Kora cyane & winjize",
 		"grind_earn_2": "Kora & winjiza",
-		"hard_vanity_addresses_are_hours_to_years": "Aderesi za vanity zikomeye zifata amasaha kugeza ku myaka kuri mashini imwe. Hano, ushyira <strong>ingwate ya USDCbounty</strong> maze itsinda ry'abakozi bigenga rigakora kuri pateni yawe icyarimwe — uwabashije kubona ihuza bwa mbere niwe utsinda. Icyihariye: urufunguzo rwabonetse ruri <strong>rufunzwe kuri X25519 key yawe</strong>, bityo umukozi akabona bounty ariko <strong>ntabone na rimwe wallet yawe</strong>. Kwishyurana bikorwa nta kwizerana binyuze muri <a href=\"/x402\">x402</a>; bounties zitujujwe zisubizwa nyirazo igihe cyazo kirangiye. Cyangwa <a href=\"#\" id=\"lede-earn\">koresha cores zawe zitarimo gukora</a> maze winjize.",
+		"hard_vanity_addresses_are_hours_to_years": "Aderesi za vanity zikomeye zifata amasaha kugeza ku myaka kuri mashini imwe. Hano, ushyira <strong>ingwate ya USDCbounty</strong> maze itsinda ry'abakozi bigenga rigakora kuri pateni yawe icyarimwe — uwabashije kubona ihuza bwa mbere niwe utsinda. Icyihariye: urufunguzo rwabonetse ruri <strong>rufunzwe kuri X25519 key yawe</strong>, bityo umukozi akabona bounty ariko <strong>ntabone na rimwe wallet yawe</strong>. Kwishyurana bikorwa nta kwizerana binyuze muri <a href=\"/x402\">x402</a>; bounties zitujujwe zisubizwa nyirazo igihe cyazo kirangiye. Cyangwa <a href=\"#earn\" id=\"lede-earn\">koresha cores zawe zitarimo gukora</a> maze winjize.",
 		"i_ve_saved_my_private_key_somewhere": "Nabitse private key yanjye ahantu hizewe.",
 		"label_optional_public": "Izina <span style=\"text-transform:none;color:#555\">(bishobora kuba atari ngombwa, rusange)</span>",
 		"load_more": "Shyiramo ibindi",

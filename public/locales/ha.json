@@ -736,7 +736,7 @@
 		"user": "Mai amfani",
 		"view_agent": "Duba wakili →",
 		"view_on_marketplace": "Duba a kasuwa ›",
-		"walk_through_your_agent_s_mind_every": "Shiga cikin tunanin wakilinka. Kowane ƙwaƙwalwa abu ne da za ka iya gani, bincika, da tsara shi. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Bude cikakken allo ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Shiga cikin tunanin wakilinka. Kowane ƙwaƙwalwa abu ne da za ka iya gani, bincika, da tsara shi. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Bude cikakken allo ↗</a>",
 		"website": "Yanar gizo",
 		"weekly": "Mako-mako",
 		"weekly_digest": "Takaitaccen bayani na mako-mako",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Tana hawa harafi-harafi kamar mai hawan igiya. Kowane saman harafi wuri ne na riko — tana tsayawa, tana tsalle, ta sake tsayawa."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Nuna kowane kalma mai layi a ƙasa → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">takardu</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">farashi</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">misalai</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Nuna kowane kalma mai layi a ƙasa → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">takardu</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">farashi</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">misalai</a>",
 		"hover_anywhere": "Nuna <em>ko'ina</em>.",
 		"meta_title": "Mai bin siginan kwamfuta — three.ws",
 		"primary": "<span>Babban</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Gina Wakilan AI na 3D Kai Tsaye — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ba wai nuna hotuna kawai ba — za mu tashi daga babu zuwa wakilin 3D mai aiki, wanda za a iya shigar da shi, kai tsaye, sannan mu buɗe taro don tambayoyi.",
 		"notify_me": "Sanar da ni",
-		"or_just_add_it_to_your_calendar": "Ko dai kawai <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ƙara shi zuwa kalandarka</a> kuma ka zo.",
+		"or_just_add_it_to_your_calendar": "Ko dai kawai <a id=\"add-cal-2\" style=\"text-decoration:underline\">ƙara shi zuwa kalandarka</a> kuma ka zo.",
 		"prompt_agent": "Umarni → wakili",
 		"read_the_ibm_write_up": "Karanta bayanin IBM",
 		"ship_at_scale": "Aika ba tare da matsala ba",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Yawon shakatawa yana gudana a matsayin babi — daga gina wakilinka na farko zuwa sanya shi a kan blockchain.",
 		"want_this_on_your_own_site_or": "Kana son wannan a shafinka ko shagonka? Gina ɗaya a cikin <a href=\"/tour-builder\">Tour Builder</a> — ba tare da code ba, duka yanayin an haɗa su.",
 		"what_you_ll_see": "Abin da za ka gani",
-		"you_have_a_tour_in_progress_pick": "Kana da yawon shakatawa da ke gudana — <a href=\"#\" id=\"tour-resume-link\">ci gaba da shi →</a>",
+		"you_have_a_tour_in_progress_pick": "Kana da yawon shakatawa da ke gudana — <button type=\"button\" id=\"tour-resume-link\">ci gaba da shi →</button>",
 		"you_re_in_control": "Kai ne ke da iko"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Kasuwar Grind-Bounty",
 		"grind_earn": "Yi aiki tuƙuru & samu",
 		"grind_earn_2": "Yi aiki tuƙuru & samu",
-		"hard_vanity_addresses_are_hours_to_years": "Samun adireshin vanity mai wuya yana ɗaukar sa'o'i zuwa shekaru akan na'ura ɗaya. Anan za ka <strong>ajiye USDC lada</strong> kuma rundunar ma'aikata masu zaman kansu za su yi aiki akan tsarin ka a lokaci guda — wanda ya fara samun daidaito da aka tabbatar shi ne zai ci. Babban ci gaba: maɓallin da aka samu yana <strong>rufe ga maɓallin X25519 naka</strong>, don haka ma'aikacin zai sami ladan amma <strong>ba zai taɓa ganin walat ɗinka ba</strong>. Sasantawa ba tare da buƙatar amana ba ce ta hanyar <a href=\"/x402\">x402</a>; ladan da ba a cika ba za a mayar da shi idan lokaci ya ƙare. Ko kuma <a href=\"#\" id=\"lede-earn\">sanya ƙwayoyin ka marasa aiki su yi aiki</a> kuma ka samu.",
+		"hard_vanity_addresses_are_hours_to_years": "Samun adireshin vanity mai wuya yana ɗaukar sa'o'i zuwa shekaru akan na'ura ɗaya. Anan za ka <strong>ajiye USDC lada</strong> kuma rundunar ma'aikata masu zaman kansu za su yi aiki akan tsarin ka a lokaci guda — wanda ya fara samun daidaito da aka tabbatar shi ne zai ci. Babban ci gaba: maɓallin da aka samu yana <strong>rufe ga maɓallin X25519 naka</strong>, don haka ma'aikacin zai sami ladan amma <strong>ba zai taɓa ganin walat ɗinka ba</strong>. Sasantawa ba tare da buƙatar amana ba ce ta hanyar <a href=\"/x402\">x402</a>; ladan da ba a cika ba za a mayar da shi idan lokaci ya ƙare. Ko kuma <a href=\"#earn\" id=\"lede-earn\">sanya ƙwayoyin ka marasa aiki su yi aiki</a> kuma ka samu.",
 		"i_ve_saved_my_private_key_somewhere": "Na ajiye maɓallin sirri na a wani wuri mai aminci.",
 		"label_optional_public": "Lakabi <span style=\"text-transform:none;color:#555\">(na zaɓi, na jama'a)</span>",
 		"load_more": "Ƙara ɗorawa",

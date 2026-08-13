@@ -736,7 +736,7 @@
 		"user": "მომხმარებელი",
 		"view_agent": "აგენტის ნახვა →",
 		"view_on_marketplace": "მარკეტფლეისზე ნახვა ›",
-		"walk_through_your_agent_s_mind_every": "ჩაუღრმავდით თქვენი აგენტის გონებას. ყოველი მოგონება არის ობიექტი, რომლის დანახვა, ძიება და ფორმირება შეგიძლიათ. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">გახსენით სრულ ეკრანზე ↗</a>",
+		"walk_through_your_agent_s_mind_every": "ჩაუღრმავდით თქვენი აგენტის გონებას. ყოველი მოგონება არის ობიექტი, რომლის დანახვა, ძიება და ფორმირება შეგიძლიათ. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">გახსენით სრულ ეკრანზე ↗</a>",
 		"website": "ვებგვერდი",
 		"weekly": "ყოველკვირეული",
 		"weekly_digest": "ყოველკვირეული დაიჯესტი",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "ის ასოდან ასოზე ადის, თოკზე მცოცავივით. თითოეული ასოს ზედა ნაწილი საყრდენი წერტილია — ის ჯდება, ხტება, ისევ ჯდება."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "გადაიტანეთ კურსორი ნებისმიერ ხაზგასმულ სიტყვაზე → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">დოკუმენტაცია</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ფასები</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">მაგალითები</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "გადაიტანეთ კურსორი ნებისმიერ ხაზგასმულ სიტყვაზე → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">დოკუმენტაცია</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ფასები</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">მაგალითები</a>",
 		"hover_anywhere": "გადაიტანეთ კურსორი <em>ნებისმიერ ადგილას</em>.",
 		"meta_title": "კურსორის მიმდევარი — three.ws",
 		"primary": "<span>მთავარი</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI აგენტების შექმნა პირდაპირ ეთერში — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "მხოლოდ სლაიდების გარეშე განხილვა — ჩვენ არაფრიდან ვქმნით მოქმედ, ჩასაშენებელ 3D აგენტს რეალურ დროში, შემდეგ კი სიტყვას მოგცემთ.",
 		"notify_me": "შემატყობინე",
-		"or_just_add_it_to_your_calendar": "ან უბრალოდ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">დაამატეთ თქვენს კალენდარში</a> და გამოცხადდით.",
+		"or_just_add_it_to_your_calendar": "ან უბრალოდ <a id=\"add-cal-2\" style=\"text-decoration:underline\">დაამატეთ თქვენს კალენდარში</a> და გამოცხადდით.",
 		"prompt_agent": "მოთხოვნა → აგენტი",
 		"read_the_ibm_write_up": "წაიკითხეთ IBM-ის სტატია",
 		"ship_at_scale": "მასშტაბურად გაშვება",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ტური მიმდინარეობს თავებად — შენი პირველი აგენტის შექმნიდან მის ონ-ჩეინზე გადატანამდე.",
 		"want_this_on_your_own_site_or": "გინდა ეს შენს საიტზე ან მაღაზიაში? შექმენი <a href=\"/tour-builder\">Tour Builder</a>-ში — კოდის გარეშე, ორივე რეჟიმი შედის.",
 		"what_you_ll_see": "What you'll see",
-		"you_have_a_tour_in_progress_pick": "ტური მიმდინარეობს — <a href=\"#\" id=\"tour-resume-link\">გააგრძელე →</a>",
+		"you_have_a_tour_in_progress_pick": "ტური მიმდინარეობს — <button type=\"button\" id=\"tour-resume-link\">გააგრძელე →</button>",
 		"you_re_in_control": "შენ აკონტროლებ."
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "გრაინდ-ბაუნტის ბაზარი",
 		"grind_earn": "გრაინდი და გამომუშავება",
 		"grind_earn_2": "იმუშავე და გამოიმუშავე",
-		"hard_vanity_addresses_are_hours_to_years": "რთული vanity მისამართების მოპოვებას ერთ მანქანაზე საათებიდან წლებამდე სჭირდება. აქ თქვენ <strong>დეპონირებთ USDC ბაუნტის</strong> და დამოუკიდებელი მუშაკების ფლოტი პარალელურად ამუშავებს თქვენს შაბლონს — პირველი დადასტურებული შესატყვისი იმარჯვებს. გარღვევა: ნაპოვნი გასაღები <strong>დალუქულია თქვენს X25519 გასაღებზე</strong>, ასე რომ, მუშაკი იღებს ბაუნტის, მაგრამ <strong>არასოდეს ხედავს თქვენს საფულეს</strong>. ანგარიშსწორება უნდობელია <a href=\"/x402\">x402</a>-ის მეშვეობით; შეუსრულებელი ბაუნტები უბრუნდება ვადის გასვლისას. ან <a href=\"#\" id=\"lede-earn\">ჩართეთ თქვენი თავისუფალი ბირთვები სამუშაოში</a> და გამოიმუშავეთ.",
+		"hard_vanity_addresses_are_hours_to_years": "რთული vanity მისამართების მოპოვებას ერთ მანქანაზე საათებიდან წლებამდე სჭირდება. აქ თქვენ <strong>დეპონირებთ USDC ბაუნტის</strong> და დამოუკიდებელი მუშაკების ფლოტი პარალელურად ამუშავებს თქვენს შაბლონს — პირველი დადასტურებული შესატყვისი იმარჯვებს. გარღვევა: ნაპოვნი გასაღები <strong>დალუქულია თქვენს X25519 გასაღებზე</strong>, ასე რომ, მუშაკი იღებს ბაუნტის, მაგრამ <strong>არასოდეს ხედავს თქვენს საფულეს</strong>. ანგარიშსწორება უნდობელია <a href=\"/x402\">x402</a>-ის მეშვეობით; შეუსრულებელი ბაუნტები უბრუნდება ვადის გასვლისას. ან <a href=\"#earn\" id=\"lede-earn\">ჩართეთ თქვენი თავისუფალი ბირთვები სამუშაოში</a> და გამოიმუშავეთ.",
 		"i_ve_saved_my_private_key_somewhere": "ჩემი პირადი გასაღები უსაფრთხო ადგილას შევინახე.",
 		"label_optional_public": "დასახელება <span style=\"text-transform:none;color:#555\">(არასავალდებულო, საჯარო)</span>",
 		"load_more": "მეტის ჩატვირთვა",

@@ -736,7 +736,7 @@
 		"user": "Erabiltzailea",
 		"view_agent": "Ikusi agentea →",
 		"view_on_marketplace": "Ikusi merkatuan ›",
-		"walk_through_your_agent_s_mind_every": "Murgildu zure agentearen gogoan. Memoria bakoitza ikusi, bilatu eta moldatu dezakezun objektu bat da. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Ireki pantaila osoan ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Murgildu zure agentearen gogoan. Memoria bakoitza ikusi, bilatu eta moldatu dezakezun objektu bat da. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Ireki pantaila osoan ↗</a>",
 		"website": "Webgunea",
 		"weekly": "Astekoa",
 		"weekly_digest": "Asteko laburpena",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Letraz letra igotzen da, soka-eskalatzaile bat bezala. Letra bakoitzaren goialdea helduleku bat da — pausatu, salto egin eta berriro pausatzen da."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Pasatu kurtsorea azpimarratutako edozein hitzen gainetik → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentuak</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">prezioak</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">adibideak</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Pasatu kurtsorea azpimarratutako edozein hitzen gainetik → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentuak</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">prezioak</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">adibideak</a>",
 		"hover_anywhere": "Pasatu kurtsorea <em>edozein lekutan</em>.",
 		"meta_title": "Kurtsorearen jarraitzailea — three.ws",
 		"primary": "<span>Nagusia</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI Agenteak Zuzenean Eraikitzen — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ez diapositiba hutsezko aurkezpenik — hutsetik 3D agente funtzional eta txertagarri batera pasako gara zuzenean, eta gero galderak.",
 		"notify_me": "Jakinarazi",
-		"or_just_add_it_to_your_calendar": "Edo, besterik gabe, <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">gehitu zure egutegiari</a> eta agertu.",
+		"or_just_add_it_to_your_calendar": "Edo, besterik gabe, <a id=\"add-cal-2\" style=\"text-decoration:underline\">gehitu zure egutegiari</a> eta agertu.",
 		"prompt_agent": "Gonbita → agentea",
 		"read_the_ibm_write_up": "Irakurri IBMren txostena",
 		"ship_at_scale": "Eskalan hedatu",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Bisita kapitulutan antolatuta dago — zure lehen agentea eraikitzetik katean jartzera arte.",
 		"want_this_on_your_own_site_or": "Hau zure webgunean edo dendan nahi duzu? Bat eraiki <a href=\"/tour-builder\">Tour Builder</a>-en — koderik gabe, bi moduak barne.",
 		"what_you_ll_see": "Ikusiko duzuna",
-		"you_have_a_tour_in_progress_pick": "Bisita bat martxan duzu — <a href=\"#\" id=\"tour-resume-link\">berriro ekin →</a>",
+		"you_have_a_tour_in_progress_pick": "Bisita bat martxan duzu — <button type=\"button\" id=\"tour-resume-link\">berriro ekin →</button>",
 		"you_re_in_control": "Kontrola zuk duzu"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Sari Merkatua",
 		"grind_earn": "Grind eta irabazi",
 		"grind_earn_2": "Lana egin eta irabazi",
-		"hard_vanity_addresses_are_hours_to_years": "Vanity helbide zailak orduak edo urteak izan daitezke makina bakar batean. Hemen <strong>USDC sari bat</strong> gordailatzen duzu eta langile independenteen flota batek zure patroia paraleloan bilatzen du — lehen bat-etortze egiaztatuak irabazten du. Aurrerapena: aurkitutako gakoa zure X25519 gakoari <strong>zigilatuta dago</strong>, horrela langileak saria irabazten du, baina <strong>ez du inoiz zure zorroa ikusten</strong>. Likidazioa konfiantzarik gabekoa da <a href=\"/x402\">x402</a> bidez; bete gabeko sariak iraungitzean itzultzen dira. Edo <a href=\"#\" id=\"lede-earn\">jarri zure nukleo libreak lanean</a> eta irabazi.",
+		"hard_vanity_addresses_are_hours_to_years": "Vanity helbide zailak orduak edo urteak izan daitezke makina bakar batean. Hemen <strong>USDC sari bat</strong> gordailatzen duzu eta langile independenteen flota batek zure patroia paraleloan bilatzen du — lehen bat-etortze egiaztatuak irabazten du. Aurrerapena: aurkitutako gakoa zure X25519 gakoari <strong>zigilatuta dago</strong>, horrela langileak saria irabazten du, baina <strong>ez du inoiz zure zorroa ikusten</strong>. Likidazioa konfiantzarik gabekoa da <a href=\"/x402\">x402</a> bidez; bete gabeko sariak iraungitzean itzultzen dira. Edo <a href=\"#earn\" id=\"lede-earn\">jarri zure nukleo libreak lanean</a> eta irabazi.",
 		"i_ve_saved_my_private_key_somewhere": "Nire gako pribatua leku seguru batean gorde dut.",
 		"label_optional_public": "Etiketa <span style=\"text-transform:none;color:#555\">(aukerakoa, publikoa)</span>",
 		"load_more": "Gehiago kargatu",

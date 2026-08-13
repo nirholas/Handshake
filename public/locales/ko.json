@@ -736,7 +736,7 @@
 		"user": "사용자",
 		"view_agent": "에이전트 보기 →",
 		"view_on_marketplace": "마켓플레이스에서 보기 ›",
-		"walk_through_your_agent_s_mind_every": "에이전트의 사고 과정을 살펴보세요. 모든 기억은 보고, 검색하고, 형성할 수 있는 객체입니다. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">전체 화면 열기 ↗</a>",
+		"walk_through_your_agent_s_mind_every": "에이전트의 사고 과정을 살펴보세요. 모든 기억은 보고, 검색하고, 형성할 수 있는 객체입니다. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">전체 화면 열기 ↗</a>",
 		"website": "웹사이트",
 		"weekly": "주간",
 		"weekly_digest": "주간 요약",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "그녀는 로프 클라이머처럼 글자 하나하나를 타고 오릅니다. 각 글자의 상단은 잡을 수 있는 지점이며, 그녀는 그곳에 앉았다가 점프하고 다시 앉습니다."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "밑줄 친 단어 위에 마우스를 올리세요 → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">문서</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">가격</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">예시</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "밑줄 친 단어 위에 마우스를 올리세요 → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">문서</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">가격</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">예시</a>",
 		"hover_anywhere": "<em>아무 곳에나</em> 마우스를 올리세요.",
 		"meta_title": "커서 팔로워 — three.ws",
 		"primary": "<span>기본</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI 에이전트 라이브 구축 — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "슬라이드만 있는 설명은 없습니다 — 아무것도 없는 상태에서 작동하고 임베드 가능한 3D 에이전트를 실시간으로 만들고, 그 다음 질문을 받습니다.",
 		"notify_me": "알림 받기",
-		"or_just_add_it_to_your_calendar": "또는 그냥 <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">캘린더에 추가하고</a> 참여하세요.",
+		"or_just_add_it_to_your_calendar": "또는 그냥 <a id=\"add-cal-2\" style=\"text-decoration:underline\">캘린더에 추가하고</a> 참여하세요.",
 		"prompt_agent": "프롬프트 → 에이전트",
 		"read_the_ibm_write_up": "IBM 보고서 읽기",
 		"ship_at_scale": "대규모 출시",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "투어는 챕터 형식으로 진행됩니다 — 첫 에이전트 구축부터 온체인으로 가져가는 과정까지.",
 		"want_this_on_your_own_site_or": "당신의 사이트나 스토어에도 이 기능을 원하시나요? <a href=\"/tour-builder\">투어 빌더</a>에서 직접 만들어 보세요 — 코딩 없이, 두 가지 모드 모두 포함됩니다.",
 		"what_you_ll_see": "미리 보기",
-		"you_have_a_tour_in_progress_pick": "진행 중인 투어가 있습니다 — <a href=\"#\" id=\"tour-resume-link\">이어서 진행하기 →</a>",
+		"you_have_a_tour_in_progress_pick": "진행 중인 투어가 있습니다 — <button type=\"button\" id=\"tour-resume-link\">이어서 진행하기 →</button>",
 		"you_re_in_control": "당신이 주도합니다."
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "그라인드 현상금 마켓",
 		"grind_earn": "그라인드하고 수익 얻기",
 		"grind_earn_2": "그라인드하고 수익 얻기",
-		"hard_vanity_addresses_are_hours_to_years": "어려운 배니티 주소는 단일 머신으로 몇 시간에서 몇 년이 걸립니다. 여기서는 USDC 현상금을 <strong>에스크로에 예치하면</strong> 독립적인 작업자 플릿이 병렬로 패턴을 그라인딩합니다. 첫 번째 검증된 일치 항목이 승리합니다. 획기적인 점은 발견된 키가 <strong>귀하의 X25519 키에 봉인된다는 것입니다</strong>. 따라서 작업자는 현상금을 받지만 <strong>귀하의 지갑을 절대 볼 수 없습니다</strong>. 정산은 <a href=\"/x402\">x402</a>를 통해 트러스트리스하게 이루어지며, 미충족 현상금은 만료 시 환불됩니다. 또는 <a href=\"#\" id=\"lede-earn\">유휴 코어를 활용하여</a> 수익을 얻으세요.",
+		"hard_vanity_addresses_are_hours_to_years": "어려운 배니티 주소는 단일 머신으로 몇 시간에서 몇 년이 걸립니다. 여기서는 USDC 현상금을 <strong>에스크로에 예치하면</strong> 독립적인 작업자 플릿이 병렬로 패턴을 그라인딩합니다. 첫 번째 검증된 일치 항목이 승리합니다. 획기적인 점은 발견된 키가 <strong>귀하의 X25519 키에 봉인된다는 것입니다</strong>. 따라서 작업자는 현상금을 받지만 <strong>귀하의 지갑을 절대 볼 수 없습니다</strong>. 정산은 <a href=\"/x402\">x402</a>를 통해 트러스트리스하게 이루어지며, 미충족 현상금은 만료 시 환불됩니다. 또는 <a href=\"#earn\" id=\"lede-earn\">유휴 코어를 활용하여</a> 수익을 얻으세요.",
 		"i_ve_saved_my_private_key_somewhere": "개인 키를 안전한 곳에 저장했습니다.",
 		"label_optional_public": "라벨 <span style=\"text-transform:none;color:#555\">(선택 사항, 공개)</span>",
 		"load_more": "더 보기",

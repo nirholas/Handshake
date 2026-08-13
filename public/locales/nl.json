@@ -736,7 +736,7 @@
 		"user": "Gebruiker",
 		"view_agent": "Agent bekijken →",
 		"view_on_marketplace": "Bekijk op marketplace ›",
-		"walk_through_your_agent_s_mind_every": "Loop door de gedachten van je agent. Elke herinnering is een object dat je kunt zien, zoeken en vormen. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Open volledig scherm ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Loop door de gedachten van je agent. Elke herinnering is een object dat je kunt zien, zoeken en vormen. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Open volledig scherm ↗</a>",
 		"website": "Website",
 		"weekly": "Wekelijks",
 		"weekly_digest": "Wekelijkse samenvatting",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Ze klimt van letter naar letter als een touwklimmer. Elke lettertop is een houvast — ze strijkt neer, springt, strijkt opnieuw neer."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Beweeg over een onderstreept woord → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">prijzen</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">voorbeelden</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Beweeg over een onderstreept woord → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">prijzen</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">voorbeelden</a>",
 		"hover_anywhere": "Beweeg <em>overal</em>.",
 		"meta_title": "Cursorvolger — three.ws",
 		"primary": "<span>Primair</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI Agents Live Bouwen — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Geen slides, alleen een walkthrough — we gaan van niets naar een werkende, in te voegen 3D-agent in real-time, daarna openen we de vloer.",
 		"notify_me": "Stuur me een melding",
-		"or_just_add_it_to_your_calendar": "Of voeg het gewoon <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">toe aan je agenda</a> en kom opdagen.",
+		"or_just_add_it_to_your_calendar": "Of voeg het gewoon <a id=\"add-cal-2\" style=\"text-decoration:underline\">toe aan je agenda</a> en kom opdagen.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Lees de IBM-samenvatting",
 		"ship_at_scale": "Schaal verzenden",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "De rondleiding verloopt in hoofdstukken — van het bouwen van je eerste agent tot het op-chain brengen.",
 		"want_this_on_your_own_site_or": "Wil je dit op je eigen site of winkel? Bouw er een in de <a href=\"/tour-builder\">Tour Builder</a> — geen code, beide modi inbegrepen.",
 		"what_you_ll_see": "Wat je zult zien",
-		"you_have_a_tour_in_progress_pick": "Je hebt een rondleiding in uitvoering — <a href=\"#\" id=\"tour-resume-link\">pak het weer op →</a>",
+		"you_have_a_tour_in_progress_pick": "Je hebt een rondleiding in uitvoering — <button type=\"button\" id=\"tour-resume-link\">pak het weer op →</button>",
 		"you_re_in_control": "Jij hebt de controle"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty Markt",
 		"grind_earn": "Grind & verdien",
 		"grind_earn_2": "Grind & verdien",
-		"hard_vanity_addresses_are_hours_to_years": "Moeilijke vanity-adressen kosten uren tot jaren op één machine. Hier <strong>escrow je een USDC bounty</strong> en een vloot van onafhankelijke workers grindt je patroon parallel — de eerste geverifieerde match wint. De doorbraak: de gevonden sleutel is <strong>verzegeld aan je X25519 sleutel</strong>, zodat de worker de bounty verdient, maar <strong>nooit je wallet ziet</strong>. Afwikkeling is trustless via <a href=\"/x402\">x402</a>; niet-vervulde bounties worden terugbetaald bij verval. Of <a href=\"#\" id=\"lede-earn\">zet je ongebruikte cores aan het werk</a> en verdien.",
+		"hard_vanity_addresses_are_hours_to_years": "Moeilijke vanity-adressen kosten uren tot jaren op één machine. Hier <strong>escrow je een USDC bounty</strong> en een vloot van onafhankelijke workers grindt je patroon parallel — de eerste geverifieerde match wint. De doorbraak: de gevonden sleutel is <strong>verzegeld aan je X25519 sleutel</strong>, zodat de worker de bounty verdient, maar <strong>nooit je wallet ziet</strong>. Afwikkeling is trustless via <a href=\"/x402\">x402</a>; niet-vervulde bounties worden terugbetaald bij verval. Of <a href=\"#earn\" id=\"lede-earn\">zet je ongebruikte cores aan het werk</a> en verdien.",
 		"i_ve_saved_my_private_key_somewhere": "Ik heb mijn privésleutel ergens veilig opgeslagen.",
 		"label_optional_public": "Label <span style=\"text-transform:none;color:#555\">(optioneel, openbaar)</span>",
 		"load_more": "Meer laden",

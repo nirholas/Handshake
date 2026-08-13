@@ -736,7 +736,7 @@
 		"user": "Utilizator",
 		"view_agent": "Vezi agentul →",
 		"view_on_marketplace": "Vezi pe marketplace ›",
-		"walk_through_your_agent_s_mind_every": "Explorează mintea agentului tău. Fiecare memorie este un obiect pe care îl poți vedea, căuta și modela. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Deschide pe tot ecranul ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Explorează mintea agentului tău. Fiecare memorie este un obiect pe care îl poți vedea, căuta și modela. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Deschide pe tot ecranul ↗</a>",
 		"website": "Site web",
 		"weekly": "Săptămânal",
 		"weekly_digest": "Rezumat săptămânal",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Se cațără literă cu literă, ca un alpinist pe coardă. Fiecare vârf de literă este un punct de prindere — se așează, sare, se așează din nou."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Treci cu mouse-ul peste orice cuvânt subliniat → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">prețuri</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">exemple</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Treci cu mouse-ul peste orice cuvânt subliniat → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">prețuri</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">exemple</a>",
 		"hover_anywhere": "Treci cu mouse-ul <em>oriunde</em>.",
 		"meta_title": "Urmărire cursor — three.ws",
 		"primary": "<span>Principal</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Construirea Agenților AI 3D Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Fără diapozitive — doar o prezentare pas cu pas — trecem de la nimic la un agent 3D funcțional și integrabil în timp real, apoi deschidem discuția.",
 		"notify_me": "Notifică-mă",
-		"or_just_add_it_to_your_calendar": "Sau pur și simplu <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">adaugă-l în calendarul tău</a> și vino.",
+		"or_just_add_it_to_your_calendar": "Sau pur și simplu <a id=\"add-cal-2\" style=\"text-decoration:underline\">adaugă-l în calendarul tău</a> și vino.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Citește articolul IBM",
 		"ship_at_scale": "Livrăm la scară",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Turul se desfășoară ca niște capitole — de la construirea primului tău agent până la aducerea lui pe blockchain.",
 		"want_this_on_your_own_site_or": "Vrei asta pe propriul tău site sau magazin? Construiește unul în <a href=\"/tour-builder\">Tour Builder</a> — fără cod, ambele moduri incluse.",
 		"what_you_ll_see": "Ce vei vedea",
-		"you_have_a_tour_in_progress_pick": "Ai un tur în desfășurare — <a href=\"#\" id=\"tour-resume-link\">continuă-l →</a>",
+		"you_have_a_tour_in_progress_pick": "Ai un tur în desfășurare — <button type=\"button\" id=\"tour-resume-link\">continuă-l →</button>",
 		"you_re_in_control": "Ești la control"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Piața de Bounty-uri Grind",
 		"grind_earn": "Grind & Câștigă",
 		"grind_earn_2": "Grind & Câștigă",
-		"hard_vanity_addresses_are_hours_to_years": "Adresele vanity dificile necesită ore sau chiar ani pe o singură mașină. Aici tu <strong>pui în escrow un bounty USDC</strong>, iar o flotă de worker-i independenți lucrează intens la șablonul tău în paralel — primul care găsește o potrivire verificată câștigă. Inovația: cheia găsită este <strong>sigilată pentru cheia ta X25519</strong>, astfel worker-ul câștigă bounty-ul, dar <strong>nu îți vede niciodată portofelul</strong>. Decontarea este fără încredere prin <a href=\"/x402\">x402</a>; bounty-urile necompletate se rambursează la expirare. Sau <a href=\"#\" id=\"lede-earn\">pune-ți nucleele libere la treabă</a> și câștigă.",
+		"hard_vanity_addresses_are_hours_to_years": "Adresele vanity dificile necesită ore sau chiar ani pe o singură mașină. Aici tu <strong>pui în escrow un bounty USDC</strong>, iar o flotă de worker-i independenți lucrează intens la șablonul tău în paralel — primul care găsește o potrivire verificată câștigă. Inovația: cheia găsită este <strong>sigilată pentru cheia ta X25519</strong>, astfel worker-ul câștigă bounty-ul, dar <strong>nu îți vede niciodată portofelul</strong>. Decontarea este fără încredere prin <a href=\"/x402\">x402</a>; bounty-urile necompletate se rambursează la expirare. Sau <a href=\"#earn\" id=\"lede-earn\">pune-ți nucleele libere la treabă</a> și câștigă.",
 		"i_ve_saved_my_private_key_somewhere": "Am salvat cheia mea privată într-un loc sigur.",
 		"label_optional_public": "Etichetă <span style=\"text-transform:none;color:#555\">(opțional, public)</span>",
 		"load_more": "Încarcă mai multe",

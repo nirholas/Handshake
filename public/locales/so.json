@@ -736,7 +736,7 @@
 		"user": "Isticmaale",
 		"view_agent": "Fiiri wakiilka →",
 		"view_on_marketplace": "Ka fiiri suuqa ›",
-		"walk_through_your_agent_s_mind_every": "Dhex gal maskaxda wakiilkaaga. Xusuus kasta waa shay aad arki karto, baari karto, oo aad qaabayn karto. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Fur shaashad buuxda ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Dhex gal maskaxda wakiilkaaga. Xusuus kasta waa shay aad arki karto, baari karto, oo aad qaabayn karto. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Fur shaashad buuxda ↗</a>",
 		"website": "Website",
 		"weekly": "Toddobaadle",
 		"weekly_digest": "Warbixin toddobaadle ah",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Xaraf xaraf ayay u fuushaa sidii qof xarig fuulaya. Xaraf kasta oo sare waa meel lagu qabsado — way fadhiisataa, booddaa, mar kale ayayna fadhiisataa."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Dul saar eray kasta oo xariiqan → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Dul saar eray kasta oo xariiqan → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Dul saar <em>meel kasta</em>.",
 		"meta_title": "Raacaha cursorka — three.ws",
 		"primary": "<span>Asaasiga ah</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Dhisidda Wakiillada AI 3D si Toos ah — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ma jiraan bandhigyo kaliya — waxaan ka bilownaa waxba ilaa wakiil 3D ah oo shaqeynaya, la dhex-gelin karo waqti dhab ah, ka dibna waxaan fureynaa doodda.",
 		"notify_me": "I soo ogeysii",
-		"or_just_add_it_to_your_calendar": "Ama si fudud <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ku dar jadwalkaaga</a> oo soo xaadir.",
+		"or_just_add_it_to_your_calendar": "Ama si fudud <a id=\"add-cal-2\" style=\"text-decoration:underline\">ku dar jadwalkaaga</a> oo soo xaadir.",
 		"prompt_agent": "Amar → wakiil",
 		"read_the_ibm_write_up": "Akhri qoraalka IBM",
 		"ship_at_scale": "Gaadhsii baaxad weyn",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Dalxiisku wuxuu u socdaa cutubyo — laga bilaabo dhisidda wakiilkaaga ugu horreeya ilaa aad silsiladda ku geyso.",
 		"want_this_on_your_own_site_or": "Ma rabtaa tan goobtaada ama dukaankaaga? Mid ka dhis <a href=\"/tour-builder\">Tour Builder</a> — koodh la'aan, labada qaabna waa ku jiraan.",
 		"what_you_ll_see": "Waxa aad arki doonto",
-		"you_have_a_tour_in_progress_pick": "Waxaad leedahay dalxiis socda — <a href=\"#\" id=\"tour-resume-link\">dib u bilow →</a>",
+		"you_have_a_tour_in_progress_pick": "Waxaad leedahay dalxiis socda — <button type=\"button\" id=\"tour-resume-link\">dib u bilow →</button>",
 		"you_re_in_control": "Adiga ayaa maamulaya"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Suuqa Abaalmarinta-Grind",
 		"grind_earn": "Grind & kasbo",
 		"grind_earn_2": "Dadaal & kasbo",
-		"hard_vanity_addresses_are_hours_to_years": "Cinwaanada vanity-ga adag waxay qaataan saacado ilaa sanado hal mashiin. Halkan waxaad <strong>dhigaysaa USDC abaalmarin</strong> oo koox shaqaale madaxbannaan ah ayaa si isku mid ah u shaqeeya qaabkaaga — kii ugu horreeya ee la xaqiijiyo ayaa guuleysta. Horumarka: furaha la helay wuxuu <strong>ku xiran yahay furahaaga X25519</strong>, sidaa darteed shaqaaluhu wuxuu kasbadaa abaalmarinta laakiin <strong>waligiis ma arko boorsadaada</strong>. Xallinta waa mid aan la isku hallayn karin iyadoo la adeegsanayo <a href=\"/x402\">x402</a>; abaalmarinada aan la buuxin waxay soo noqdaan marka ay dhacaan. Ama <a href=\"#\" id=\"lede-earn\">ku shaqaysii qalabkaaga firaaqada ah</a> oo kasbo.",
+		"hard_vanity_addresses_are_hours_to_years": "Cinwaanada vanity-ga adag waxay qaataan saacado ilaa sanado hal mashiin. Halkan waxaad <strong>dhigaysaa USDC abaalmarin</strong> oo koox shaqaale madaxbannaan ah ayaa si isku mid ah u shaqeeya qaabkaaga — kii ugu horreeya ee la xaqiijiyo ayaa guuleysta. Horumarka: furaha la helay wuxuu <strong>ku xiran yahay furahaaga X25519</strong>, sidaa darteed shaqaaluhu wuxuu kasbadaa abaalmarinta laakiin <strong>waligiis ma arko boorsadaada</strong>. Xallinta waa mid aan la isku hallayn karin iyadoo la adeegsanayo <a href=\"/x402\">x402</a>; abaalmarinada aan la buuxin waxay soo noqdaan marka ay dhacaan. Ama <a href=\"#earn\" id=\"lede-earn\">ku shaqaysii qalabkaaga firaaqada ah</a> oo kasbo.",
 		"i_ve_saved_my_private_key_somewhere": "Waxaan furahayga gaarka ah ku kaydiyay meel ammaan ah.",
 		"label_optional_public": "Summad <span style=\"text-transform:none;color:#555\">(ikhtiyaari, dadweyne)</span>",
 		"load_more": "Soo shub wax badan",

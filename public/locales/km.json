@@ -736,7 +736,7 @@
 		"user": "អ្នកប្រើប្រាស់",
 		"view_agent": "មើលភ្នាក់ងារ →",
 		"view_on_marketplace": "មើលនៅលើទីផ្សារ ›",
-		"walk_through_your_agent_s_mind_every": "ស្វែងយល់ពីគំនិតរបស់ភ្នាក់ងារអ្នក។ រាល់ការចងចាំគឺជាវត្ថុដែលអ្នកអាចមើល ស្វែងរក និងរៀបចំបាន។ <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">បើកពេញអេក្រង់ ↗</a>",
+		"walk_through_your_agent_s_mind_every": "ស្វែងយល់ពីគំនិតរបស់ភ្នាក់ងារអ្នក។ រាល់ការចងចាំគឺជាវត្ថុដែលអ្នកអាចមើល ស្វែងរក និងរៀបចំបាន។ <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">បើកពេញអេក្រង់ ↗</a>",
 		"website": "គេហទំព័រ",
 		"weekly": "ប្រចាំសប្តាហ៍",
 		"weekly_digest": "សេចក្តីសង្ខេបប្រចាំសប្តាហ៍",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "នាងឡើងពីអក្សរមួយទៅអក្សរមួយ ដូចអ្នកឡើងខ្សែពួរ។ កំពូលអក្សរនីមួយៗជាចំណុចចាប់ — នាងទំ, លោត, ហើយទំម្ដងទៀត។"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "ដាក់កណ្ដុរលើពាក្យគូសបន្ទាត់ពីក្រោមណាមួយ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ឯកសារ</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">តម្លៃ</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ឧទាហរណ៍</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "ដាក់កណ្ដុរលើពាក្យគូសបន្ទាត់ពីក្រោមណាមួយ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ឯកសារ</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">តម្លៃ</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ឧទាហរណ៍</a>",
 		"hover_anywhere": "ដាក់កណ្ដុរ <em>គ្រប់ទីកន្លែង</em>។",
 		"meta_title": "អ្នកតាមដាន Cursor — three.ws",
 		"primary": "<span>ចម្បង</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "ការបង្កើតភ្នាក់ងារ AI 3D ផ្ទាល់ — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "គ្មានការបង្ហាញស្លាយតែមួយមុខទេ — យើងនឹងបង្កើតពីគ្មានអ្វីសោះទៅជាភ្នាក់ងារ 3D ដែលអាចដំណើរការ និងបង្កប់បានក្នុងពេលជាក់ស្តែង បន្ទាប់មកបើកឱកាសសួរឆ្លើយ។",
 		"notify_me": "ជូនដំណឹងខ្ញុំ",
-		"or_just_add_it_to_your_calendar": "ឬគ្រាន់តែ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">បន្ថែមវាទៅក្នុងប្រតិទិនរបស់អ្នក</a> ហើយចូលរួម។",
+		"or_just_add_it_to_your_calendar": "ឬគ្រាន់តែ <a id=\"add-cal-2\" style=\"text-decoration:underline\">បន្ថែមវាទៅក្នុងប្រតិទិនរបស់អ្នក</a> ហើយចូលរួម។",
 		"prompt_agent": "ពាក្យបញ្ជា → ភ្នាក់ងារ",
 		"read_the_ibm_write_up": "អានអត្ថបទរបស់ IBM",
 		"ship_at_scale": "ដាក់ឱ្យប្រើប្រាស់ក្នុងទ្រង់ទ្រាយធំ",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ដំណើរកម្សាន្តដំណើរការជាជំពូក — ចាប់ពីការបង្កើតភ្នាក់ងារដំបូងរបស់អ្នក រហូតដល់ការដាក់វាលើខ្សែសង្វាក់។",
 		"want_this_on_your_own_site_or": "ចង់បាននេះនៅលើគេហទំព័រ ឬហាងផ្ទាល់ខ្លួនរបស់អ្នកទេ? បង្កើតមួយនៅក្នុង <a href=\"/tour-builder\">Tour Builder</a> — មិនបាច់សរសេរកូដ រួមបញ្ចូលទាំងរបៀបទាំងពីរ។",
 		"what_you_ll_see": "អ្វីដែលអ្នកនឹងឃើញ",
-		"you_have_a_tour_in_progress_pick": "អ្នកមានដំណើរកម្សាន្តកំពុងដំណើរការ — <a href=\"#\" id=\"tour-resume-link\">បន្តវាឡើងវិញ →</a>",
+		"you_have_a_tour_in_progress_pick": "អ្នកមានដំណើរកម្សាន្តកំពុងដំណើរការ — <button type=\"button\" id=\"tour-resume-link\">បន្តវាឡើងវិញ →</button>",
 		"you_re_in_control": "អ្នកជាអ្នកគ្រប់គ្រង"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ទីផ្សាររង្វាន់ Grind",
 		"grind_earn": "Grind និងរកចំណូល",
 		"grind_earn_2": "កិន​រក​ចំណូល",
-		"hard_vanity_addresses_are_hours_to_years": "អាសយដ្ឋាន Vanity ពិបាកៗ អាចចំណាយពេលរាប់ម៉ោងទៅរាប់ឆ្នាំលើម៉ាស៊ីនតែមួយ។ នៅទីនេះ អ្នក <strong>ដាក់ប្រាក់ធានា USDC bounty</strong> ហើយក្រុមអ្នកធ្វើការឯករាជ្យនឹងកិនលំនាំរបស់អ្នកស្របគ្នា — ការផ្គូផ្គងដែលបានផ្ទៀងផ្ទាត់ដំបូងនឹងឈ្នះ។ ភាពជឿនលឿន៖ គន្លឹះដែលរកឃើញត្រូវបាន <strong>បិទភ្ជាប់ទៅនឹងគន្លឹះ X25519 របស់អ្នក</strong> ដូច្នេះអ្នកធ្វើការរកបាន bounty ប៉ុន្តែ <strong>មិនដែលឃើញកាបូបរបស់អ្នកទេ</strong>។ ការទូទាត់គឺគ្មានការជឿទុកចិត្តតាមរយៈ <a href=\"/x402\">x402</a>; bounties ដែលមិនបានបំពេញនឹងត្រូវបានបង្វិលសងវិញនៅពេលផុតកំណត់។ ឬ <a href=\"#\" id=\"lede-earn\">ដាក់ cores ទំនេររបស់អ្នកឱ្យដំណើរការ</a> ហើយរកចំណូល។",
+		"hard_vanity_addresses_are_hours_to_years": "អាសយដ្ឋាន Vanity ពិបាកៗ អាចចំណាយពេលរាប់ម៉ោងទៅរាប់ឆ្នាំលើម៉ាស៊ីនតែមួយ។ នៅទីនេះ អ្នក <strong>ដាក់ប្រាក់ធានា USDC bounty</strong> ហើយក្រុមអ្នកធ្វើការឯករាជ្យនឹងកិនលំនាំរបស់អ្នកស្របគ្នា — ការផ្គូផ្គងដែលបានផ្ទៀងផ្ទាត់ដំបូងនឹងឈ្នះ។ ភាពជឿនលឿន៖ គន្លឹះដែលរកឃើញត្រូវបាន <strong>បិទភ្ជាប់ទៅនឹងគន្លឹះ X25519 របស់អ្នក</strong> ដូច្នេះអ្នកធ្វើការរកបាន bounty ប៉ុន្តែ <strong>មិនដែលឃើញកាបូបរបស់អ្នកទេ</strong>។ ការទូទាត់គឺគ្មានការជឿទុកចិត្តតាមរយៈ <a href=\"/x402\">x402</a>; bounties ដែលមិនបានបំពេញនឹងត្រូវបានបង្វិលសងវិញនៅពេលផុតកំណត់។ ឬ <a href=\"#earn\" id=\"lede-earn\">ដាក់ cores ទំនេររបស់អ្នកឱ្យដំណើរការ</a> ហើយរកចំណូល។",
 		"i_ve_saved_my_private_key_somewhere": "ខ្ញុំបានរក្សាទុក private key របស់ខ្ញុំនៅកន្លែងមានសុវត្ថិភាពហើយ។",
 		"label_optional_public": "ស្លាក <span style=\"text-transform:none;color:#555\">(ស្រេចចិត្ត, សាធារណៈ)</span>",
 		"load_more": "ផ្ទុកបន្ថែមទៀត",

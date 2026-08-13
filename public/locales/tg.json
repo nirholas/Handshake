@@ -736,7 +736,7 @@
 		"user": "Истифодабаранда",
 		"view_agent": "Агентро дидан →",
 		"view_on_marketplace": "Дар бозор дидан ›",
-		"walk_through_your_agent_s_mind_every": "Ба зеҳни агенти худ ворид шавед. Ҳар як хотира объектест, ки шумо метавонед онро бубинед, ҷустуҷӯ кунед ва шакл диҳед. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Кушодани пурраэкран ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Ба зеҳни агенти худ ворид шавед. Ҳар як хотира объектест, ки шумо метавонед онро бубинед, ҷустуҷӯ кунед ва шакл диҳед. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Кушодани пурраэкран ↗</a>",
 		"website": "Сомона",
 		"weekly": "Ҳафтаина",
 		"weekly_digest": "Маҷмӯаи ҳафтаина",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Вай ҳарф ба ҳарф мисли кӯҳнаварди ресмонӣ боло мебарояд. Қуллаи ҳар ҳарф нуқтаи такягоҳ аст — вай менишинад, ҷаҳида, боз менишинад."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Мушро ба болои ҳар калимаи хаткашида баред → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ҳуҷҷатҳо</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">нархгузорӣ</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">мисолҳо</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Мушро ба болои ҳар калимаи хаткашида баред → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ҳуҷҷатҳо</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">нархгузорӣ</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">мисолҳо</a>",
 		"hover_anywhere": "Мушро ба <em>ҳар ҷое</em> баред.",
 		"meta_title": "Пайрави курсор — three.ws",
 		"primary": "<span>Асосӣ</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Сохтани агентҳои 3D AI мустақиман — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Намоиши бе слайдҳо — мо аз сифр то агенти 3D-и корӣ ва ҷойгиршаванда дар вақти воқеӣ меравем, баъдан ба саволу ҷавоб мегузарем.",
 		"notify_me": "Маро огоҳ кунед",
-		"or_just_add_it_to_your_calendar": "Ё танҳо онро ба <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">тақвими худ илова кунед</a> ва ҳозир шавед.",
+		"or_just_add_it_to_your_calendar": "Ё танҳо онро ба <a id=\"add-cal-2\" style=\"text-decoration:underline\">тақвими худ илова кунед</a> ва ҳозир шавед.",
 		"prompt_agent": "Дархост → агент",
 		"read_the_ibm_write_up": "Мақолаи IBM-ро хонед",
 		"ship_at_scale": "Дар миқёс татбиқ кунед",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Сафар дар шакли бобҳо сурат мегирад — аз сохтани агенти аввалини худ то ба занҷир гузоштани он.",
 		"want_this_on_your_own_site_or": "Мехоҳед инро дар сайти худ ё мағозаи худ дошта бошед? Якеро дар <a href=\"/tour-builder\">Tour Builder</a> созед — бе код, ҳарду режим дохил карда шудаанд.",
 		"what_you_ll_see": "Шумо чӣ хоҳед дид",
-		"you_have_a_tour_in_progress_pick": "Шумо сафари дар ҳоли иҷро доред — <a href=\"#\" id=\"tour-resume-link\">онро аз нав оғоз кунед →</a>",
+		"you_have_a_tour_in_progress_pick": "Шумо сафари дар ҳоли иҷро доред — <button type=\"button\" id=\"tour-resume-link\">онро аз нав оғоз кунед →</button>",
 		"you_re_in_control": "Идоракунӣ дар дасти шумост"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Бозори мукофотҳои корӣ",
 		"grind_earn": "Кор кунед ва ба даст оред",
 		"grind_earn_2": "Меҳнат кунед ва даромад гиред",
-		"hard_vanity_addresses_are_hours_to_years": "Суроғаҳои vanity-и мураккаб дар як мошин соатҳо то солҳоро мегиранд. Дар ин ҷо шумо <strong>як USDC мукофотпулӣ</strong>-ро ба эскро мегузоред ва як флоти коргарони мустақил намунаи шуморо ба таври параллелӣ коркард мекунанд — аввалин мувофиқати тасдиқшуда ғолиб меояд. Дастоварди бузург: калиди ёфтшуда ба <strong>калиди X25519-и шумо мӯҳр зада шудааст</strong>, бинобар ин коргар мукофотпулиро ба даст меорад, аммо <strong>ҳеҷ гоҳ ҳамёни шуморо намебинад</strong>. Ҳисоббаробаркунӣ тавассути <a href=\"/x402\">x402</a> беэътимод аст; мукофотпулиҳои пурра нашуда ҳангоми ба охир расидан баргардонида мешаванд. Ё <a href=\"#\" id=\"lede-earn\">ядроҳои эҳтиётии худро ба кор андозед</a> ва даромад гиред.",
+		"hard_vanity_addresses_are_hours_to_years": "Суроғаҳои vanity-и мураккаб дар як мошин соатҳо то солҳоро мегиранд. Дар ин ҷо шумо <strong>як USDC мукофотпулӣ</strong>-ро ба эскро мегузоред ва як флоти коргарони мустақил намунаи шуморо ба таври параллелӣ коркард мекунанд — аввалин мувофиқати тасдиқшуда ғолиб меояд. Дастоварди бузург: калиди ёфтшуда ба <strong>калиди X25519-и шумо мӯҳр зада шудааст</strong>, бинобар ин коргар мукофотпулиро ба даст меорад, аммо <strong>ҳеҷ гоҳ ҳамёни шуморо намебинад</strong>. Ҳисоббаробаркунӣ тавассути <a href=\"/x402\">x402</a> беэътимод аст; мукофотпулиҳои пурра нашуда ҳангоми ба охир расидан баргардонида мешаванд. Ё <a href=\"#earn\" id=\"lede-earn\">ядроҳои эҳтиётии худро ба кор андозед</a> ва даромад гиред.",
 		"i_ve_saved_my_private_key_somewhere": "Ман калиди хусусии худро дар ҷои бехатар нигоҳ доштаам.",
 		"label_optional_public": "Нишонӣ <span style=\"text-transform:none;color:#555\">(ихтиёрӣ, оммавӣ)</span>",
 		"load_more": "Бештар бор кунед",

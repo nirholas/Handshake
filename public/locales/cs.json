@@ -736,7 +736,7 @@
 		"user": "Uživatel",
 		"view_agent": "Zobrazit agenta →",
 		"view_on_marketplace": "Zobrazit na tržišti ›",
-		"walk_through_your_agent_s_mind_every": "Projděte si mysl svého agenta. Každá vzpomínka je objekt, který můžete vidět, prohledávat a formovat. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Otevřít na celou obrazovku ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Projděte si mysl svého agenta. Každá vzpomínka je objekt, který můžete vidět, prohledávat a formovat. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Otevřít na celou obrazovku ↗</a>",
 		"website": "Webové stránky",
 		"weekly": "Týdně",
 		"weekly_digest": "Týdenní přehled",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Šplhá z písmene na písmeno jako horolezec. Každý vrchol písmene je úchopový bod — usadí se, skočí, usadí se znovu."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Najeďte myší na jakékoli podtržené slovo → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentace</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ceny</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">příklady</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Najeďte myší na jakékoli podtržené slovo → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentace</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ceny</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">příklady</a>",
 		"hover_anywhere": "Najeďte myší <em>kamkoli</em>.",
 		"meta_title": "Sledovač kurzoru — three.ws",
 		"primary": "<span>Primární</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Vytváření 3D AI agentů naživo — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Žádné prezentace — pouze průvodce — přejdeme od ničeho k funkčnímu, vložitelnému 3D agentovi v reálném čase, poté otevřeme diskuzi.",
 		"notify_me": "Oznamte mi",
-		"or_just_add_it_to_your_calendar": "Nebo to prostě <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">přidejte do svého kalendáře</a> a přijďte.",
+		"or_just_add_it_to_your_calendar": "Nebo to prostě <a id=\"add-cal-2\" style=\"text-decoration:underline\">přidejte do svého kalendáře</a> a přijďte.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Přečtěte si článek od IBM",
 		"ship_at_scale": "Dodávejte ve velkém",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Průvodce probíhá jako kapitoly — od vytvoření vašeho prvního agenta po jeho přenesení na blockchain.",
 		"want_this_on_your_own_site_or": "Chcete to na své vlastní stránce nebo obchodě? Vytvořte si jeden v <a href=\"/tour-builder\">Tour Builder</a> — žádný kód, obě režimy zahrnuty.",
 		"what_you_ll_see": "Co uvidíte",
-		"you_have_a_tour_in_progress_pick": "Máte probíhající průvodce — <a href=\"#\" id=\"tour-resume-link\">pokračujte →</a>",
+		"you_have_a_tour_in_progress_pick": "Máte probíhající průvodce — <button type=\"button\" id=\"tour-resume-link\">pokračujte →</button>",
 		"you_re_in_control": "Ovládáte to vy"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Trh s odměnami za těžbu",
 		"grind_earn": "Těžte a vydělávejte",
 		"grind_earn_2": "Těžte a vydělávejte",
-		"hard_vanity_addresses_are_hours_to_years": "Náročné vanity adresy trvají hodiny až roky na jednom stroji. Zde <strong>uložíte odměnu USDC do úschovy</strong> a flotila nezávislých pracovníků těží váš vzor paralelně — první ověřená shoda vyhrává. Průlom: nalezený klíč je <strong>zapečetěn k vašemu X25519 klíči</strong>, takže pracovník získá odměnu, ale <strong>nikdy neuvidí vaši peněženku</strong>. Vypořádání probíhá bezdůvěrně přes <a href=\"/x402\">x402</a>; nevyplněné odměny se vrátí po vypršení platnosti. Nebo <a href=\"#\" id=\"lede-earn\">zapojte svá volná jádra do práce</a> a vydělávejte.",
+		"hard_vanity_addresses_are_hours_to_years": "Náročné vanity adresy trvají hodiny až roky na jednom stroji. Zde <strong>uložíte odměnu USDC do úschovy</strong> a flotila nezávislých pracovníků těží váš vzor paralelně — první ověřená shoda vyhrává. Průlom: nalezený klíč je <strong>zapečetěn k vašemu X25519 klíči</strong>, takže pracovník získá odměnu, ale <strong>nikdy neuvidí vaši peněženku</strong>. Vypořádání probíhá bezdůvěrně přes <a href=\"/x402\">x402</a>; nevyplněné odměny se vrátí po vypršení platnosti. Nebo <a href=\"#earn\" id=\"lede-earn\">zapojte svá volná jádra do práce</a> a vydělávejte.",
 		"i_ve_saved_my_private_key_somewhere": "Uložil jsem si svůj privátní klíč na bezpečné místo.",
 		"label_optional_public": "Popisek <span style=\"text-transform:none;color:#555\">(volitelné, veřejné)</span>",
 		"load_more": "Načíst další",

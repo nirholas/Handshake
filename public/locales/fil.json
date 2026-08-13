@@ -736,7 +736,7 @@
 		"user": "User",
 		"view_agent": "Tingnan ang ahente →",
 		"view_on_marketplace": "Tingnan sa marketplace ›",
-		"walk_through_your_agent_s_mind_every": "Lakbayin ang isip ng iyong ahente. Bawat alaala ay isang bagay na maaari mong makita, hanapin, at hubugin. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Buksan ang full-screen ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Lakbayin ang isip ng iyong ahente. Bawat alaala ay isang bagay na maaari mong makita, hanapin, at hubugin. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Buksan ang full-screen ↗</a>",
 		"website": "Website",
 		"weekly": "Lingguhan",
 		"weekly_digest": "Lingguhang digest",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Umaakyat siya mula letra patungong letra, parang rope-climber. Ang bawat tuktok ng letra ay pwedeng kapitan — dumadapo, lumulundag, at dumadapo muli."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "I-hover ang anumang salitang may salungguhit → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "I-hover ang anumang salitang may salungguhit → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Mag-hover <em>kahit saan</em>.",
 		"meta_title": "Tagasunod ng Cursor — three.ws",
 		"primary": "<span>Primary</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Bumubuo ng 3D AI Agents Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Walang slides — tatalon kami mula sa wala patungo sa isang gumaganang, ma-embed na 3D agent sa real time, pagkatapos ay bubuksan ang sahig.",
 		"notify_me": "Ipagbigay-alam mo sa akin",
-		"or_just_add_it_to_your_calendar": "O <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">idagdag ito sa iyong kalendaryo</a> at dumaan.",
+		"or_just_add_it_to_your_calendar": "O <a id=\"add-cal-2\" style=\"text-decoration:underline\">idagdag ito sa iyong kalendaryo</a> at dumaan.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Basahin ang IBM write-up",
 		"ship_at_scale": "Magpadala sa malaking sukat",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Ang tour ay tumatakbo bilang mga kabanata — mula sa paggawa ng iyong unang agent hanggang sa pagdadala nito sa on-chain.",
 		"want_this_on_your_own_site_or": "Gusto mo ito sa iyong sariling site o tindahan? Gumawa ng isa sa <a href=\"/tour-builder\">Tour Builder</a> — walang code, parehong mode ay kasama.",
 		"what_you_ll_see": "Ano ang makikita mo",
-		"you_have_a_tour_in_progress_pick": "Mayroon kang tour na isinasagawa — <a href=\"#\" id=\"tour-resume-link\">kunin ito muli →</a>",
+		"you_have_a_tour_in_progress_pick": "Mayroon kang tour na isinasagawa — <button type=\"button\" id=\"tour-resume-link\">kunin ito muli →</button>",
 		"you_re_in_control": "Ikaw ang may kontrol"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty Market",
 		"grind_earn": "Mag-grind at kumita",
 		"grind_earn_2": "Mag-grind at kumita",
-		"hard_vanity_addresses_are_hours_to_years": "Ang mahihirap na vanity address ay tumatagal ng oras hanggang taon sa isang makina. Dito, <strong>mag-e-escrow ka ng USDC bounty</strong> at isang fleet ng mga independent worker ang maggi-grind ng iyong pattern nang sabay-sabay — ang unang na-verify na tugma ang mananalo. Ang tagumpay: ang nahanap na key ay <strong>selyado sa iyong X25519 key</strong>, kaya kumikita ang worker ng bounty ngunit <strong>hindi nakikita ang iyong wallet</strong>. Ang settlement ay trustless sa pamamagitan ng <a href=\"/x402\">x402</a>; ang mga hindi napunan na bounty ay ibinabalik ang bayad sa pag-expire. O <a href=\"#\" id=\"lede-earn\">gamitin ang iyong mga spare core</a> at kumita.",
+		"hard_vanity_addresses_are_hours_to_years": "Ang mahihirap na vanity address ay tumatagal ng oras hanggang taon sa isang makina. Dito, <strong>mag-e-escrow ka ng USDC bounty</strong> at isang fleet ng mga independent worker ang maggi-grind ng iyong pattern nang sabay-sabay — ang unang na-verify na tugma ang mananalo. Ang tagumpay: ang nahanap na key ay <strong>selyado sa iyong X25519 key</strong>, kaya kumikita ang worker ng bounty ngunit <strong>hindi nakikita ang iyong wallet</strong>. Ang settlement ay trustless sa pamamagitan ng <a href=\"/x402\">x402</a>; ang mga hindi napunan na bounty ay ibinabalik ang bayad sa pag-expire. O <a href=\"#earn\" id=\"lede-earn\">gamitin ang iyong mga spare core</a> at kumita.",
 		"i_ve_saved_my_private_key_somewhere": "Na-save ko na ang aking pribadong key sa isang ligtas na lugar.",
 		"label_optional_public": "Label <span style=\"text-transform:none;color:#555\">(opsyonal, pampubliko)</span>",
 		"load_more": "Mag-load pa",

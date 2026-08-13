@@ -736,7 +736,7 @@
 		"user": "ব্যৱহাৰকাৰী",
 		"view_agent": "এজেণ্ট চাওক →",
 		"view_on_marketplace": "মাৰ্কেটপ্লেচত চাওক ›",
-		"walk_through_your_agent_s_mind_every": "আপোনাৰ এজেণ্টৰ মনৰ মাজেৰে খোজ কাঢ়ক। প্ৰতিটো স্মৃতি একোটা বস্তু যি আপুনি চাব, বিচাৰিব আৰু আকৃতি দিব পাৰে। <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">পূৰ্ণ পৰ্দাত খোলক ↗</a>",
+		"walk_through_your_agent_s_mind_every": "আপোনাৰ এজেণ্টৰ মনৰ মাজেৰে খোজ কাঢ়ক। প্ৰতিটো স্মৃতি একোটা বস্তু যি আপুনি চাব, বিচাৰিব আৰু আকৃতি দিব পাৰে। <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">পূৰ্ণ পৰ্দাত খোলক ↗</a>",
 		"website": "ৱেবছাইট",
 		"weekly": "সাপ্তাহিক",
 		"weekly_digest": "সাপ্তাহিক ডাইজেষ্ট",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "তাই আখৰে আখৰে বগাই যায়, যেন এজন ৰছী বগাওঁতা। প্ৰতিটো আখৰৰ ওপৰ অংশ এক ধৰিব পৰা স্থান — তাই তাতে বহে, জঁপিয়ায়, আকৌ বহে।"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "যিকোনো আণ্ডাৰলাইন কৰা শব্দৰ ওপৰত হোভাৰ কৰক → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "যিকোনো আণ্ডাৰলাইন কৰা শব্দৰ ওপৰত হোভাৰ কৰক → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "<em>যিকোনো ঠাইত</em> হোভাৰ কৰক।",
 		"meta_title": "কাৰ্ছাৰ অনুসৰণকাৰী — three.ws",
 		"primary": "<span>প্ৰাথমিক</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI এজেণ্ট লাইভ নিৰ্মাণ — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "কেৱল স্লাইডৰ ৱাকথ্ৰু নহয় — আমি শূন্যৰ পৰা এটা কাৰ্যক্ষম, এম্বেড কৰিব পৰা 3D এজেণ্টলৈ বাস্তৱ সময়ত আগবাঢ়িম, তাৰ পিছত আলোচনাৰ বাবে মুকলি কৰিম।",
 		"notify_me": "মোক জনাওক",
-		"or_just_add_it_to_your_calendar": "অথবা কেৱল ইয়াক আপোনাৰ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">কেলেণ্ডাৰত যোগ কৰক</a> আৰু উপস্থিত থাকক।",
+		"or_just_add_it_to_your_calendar": "অথবা কেৱল ইয়াক আপোনাৰ <a id=\"add-cal-2\" style=\"text-decoration:underline\">কেলেণ্ডাৰত যোগ কৰক</a> আৰু উপস্থিত থাকক।",
 		"prompt_agent": "প্ৰম্প্ট → এজেণ্ট",
 		"read_the_ibm_write_up": "IBM ৰ লিখনি পঢ়ক",
 		"ship_at_scale": "বৃহৎ পৰিসৰত প্ৰেৰণ কৰক",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ভ্ৰমণটো অধ্যায় হিচাপে চলে — আপোনাৰ প্ৰথম এজেণ্ট নিৰ্মাণ কৰাৰ পৰা ইয়াক অন-চেইনলৈ নিয়া পৰ্যন্ত।",
 		"want_this_on_your_own_site_or": "আপোনাৰ নিজৰ চাইট বা দোকানত এইটো বিচাৰে? <a href=\"/tour-builder\">ট্যুৰ বিল্ডাৰ</a>ত এটা নিৰ্মাণ কৰক — কোনো ক'ড নাই, দুয়োটা মোড অন্তৰ্ভুক্ত।",
 		"what_you_ll_see": "আপুনি কি দেখিব",
-		"you_have_a_tour_in_progress_pick": "আপোনাৰ এটা ভ্ৰমণ চলি আছে — <a href=\"#\" id=\"tour-resume-link\">ইয়াক পুনৰ আৰম্ভ কৰক →</a>",
+		"you_have_a_tour_in_progress_pick": "আপোনাৰ এটা ভ্ৰমণ চলি আছে — <button type=\"button\" id=\"tour-resume-link\">ইয়াক পুনৰ আৰম্ভ কৰক →</button>",
 		"you_re_in_control": "আপুনি নিয়ন্ত্ৰণত আছে"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "গ্ৰাইণ্ড-বাউণ্টি মাৰ্কেট",
 		"grind_earn": "গ্ৰাইণ্ড কৰক আৰু উপাৰ্জন কৰক",
 		"grind_earn_2": "প্ৰচেষ্টা কৰক আৰু উপাৰ্জন কৰক",
-		"hard_vanity_addresses_are_hours_to_years": "এটা মেচিনত হাৰ্ড ভেনিটি ঠিকনা উলিয়াবলৈ ঘণ্টাৰ পৰা বছৰলৈ সময় লাগে। ইয়াত আপুনি এটা USDC বাউণ্টি <strong> এস্ক্রো কৰে </strong> আৰু স্বাধীন কৰ্মীৰ এটা দলে সমান্তৰালকৈ আপোনাৰ পেটাৰ্ণ গ্ৰাইণ্ড কৰে — প্ৰথমটো সত্যায়িত মিলনে জয়ী হয়। যুগান্তকাৰী আৱিষ্কাৰ: উলিওৱা কীটো আপোনাৰ <strong> X25519 কীৰ সৈতে ছীল কৰা হয় </strong>, যাতে কৰ্মীয়ে বাউণ্টি অৰ্জন কৰে যদিও <strong> আপোনাৰ ৱালেট কেতিয়াও নেদেখে </strong>। নিষ্পত্তি <a href=\"/x402\">x402</a> ৰ জৰিয়তে বিশ্বাসহীনভাৱে হয়; পূৰণ নোহোৱা বাউণ্টিসমূহ ম্যাদ উকলিলে ঘূৰাই দিয়া হয়। অথবা আপোনাৰ <a href=\"#\" id=\"lede-earn\"> অতিৰিক্ত কোৰসমূহ কামত লগাওক </a> আৰু উপাৰ্জন কৰক।",
+		"hard_vanity_addresses_are_hours_to_years": "এটা মেচিনত হাৰ্ড ভেনিটি ঠিকনা উলিয়াবলৈ ঘণ্টাৰ পৰা বছৰলৈ সময় লাগে। ইয়াত আপুনি এটা USDC বাউণ্টি <strong> এস্ক্রো কৰে </strong> আৰু স্বাধীন কৰ্মীৰ এটা দলে সমান্তৰালকৈ আপোনাৰ পেটাৰ্ণ গ্ৰাইণ্ড কৰে — প্ৰথমটো সত্যায়িত মিলনে জয়ী হয়। যুগান্তকাৰী আৱিষ্কাৰ: উলিওৱা কীটো আপোনাৰ <strong> X25519 কীৰ সৈতে ছীল কৰা হয় </strong>, যাতে কৰ্মীয়ে বাউণ্টি অৰ্জন কৰে যদিও <strong> আপোনাৰ ৱালেট কেতিয়াও নেদেখে </strong>। নিষ্পত্তি <a href=\"/x402\">x402</a> ৰ জৰিয়তে বিশ্বাসহীনভাৱে হয়; পূৰণ নোহোৱা বাউণ্টিসমূহ ম্যাদ উকলিলে ঘূৰাই দিয়া হয়। অথবা আপোনাৰ <a href=\"#earn\" id=\"lede-earn\"> অতিৰিক্ত কোৰসমূহ কামত লগাওক </a> আৰু উপাৰ্জন কৰক।",
 		"i_ve_saved_my_private_key_somewhere": "মই মোৰ ব্যক্তিগত চাবিটো ক'ৰবাত সুৰক্ষিতভাৱে সংৰক্ষণ কৰিছো।",
 		"label_optional_public": "লেবেল <span style=\"text-transform:none;color:#555\">(ঐচ্ছিক, ৰাজহুৱা)</span>",
 		"load_more": "অধিক লোড কৰক",

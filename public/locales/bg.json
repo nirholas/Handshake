@@ -736,7 +736,7 @@
 		"user": "Потребител",
 		"view_agent": "Виж агента →",
 		"view_on_marketplace": "Виж на пазара ›",
-		"walk_through_your_agent_s_mind_every": "Навлез в съзнанието на своя агент. Всеки спомен е обект, който можеш да виждаш, търсиш и оформяш. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Отвори на цял екран ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Навлез в съзнанието на своя агент. Всеки спомен е обект, който можеш да виждаш, търсиш и оформяш. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Отвори на цял екран ↗</a>",
 		"website": "Уебсайт",
 		"weekly": "Седмично",
 		"weekly_digest": "Седмичен обзор",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Тя се катери буква по буква като катерач. Върхът на всяка буква е точка за захват — тя се спира, скача, спира отново."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Посочете всяка подчертана дума → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">документация</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">цени</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">примери</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Посочете всяка подчертана дума → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">документация</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">цени</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">примери</a>",
 		"hover_anywhere": "Посочете <em>навсякъде</em>.",
 		"meta_title": "Следящ курсора — three.ws",
 		"primary": "<span>Основен</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Създаване на 3D ИИ агенти на живо — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Без слайдове — само демонстрация — преминаваме от нищо до работещ, вграден 3D агент в реално време, след което отваряме пода.",
 		"notify_me": "Уведомете ме",
-		"or_just_add_it_to_your_calendar": "Или просто <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">добавете го в календара си</a> и се появете.",
+		"or_just_add_it_to_your_calendar": "Или просто <a id=\"add-cal-2\" style=\"text-decoration:underline\">добавете го в календара си</a> и се появете.",
 		"prompt_agent": "Подканата → агент",
 		"read_the_ibm_write_up": "Прочетете статията на IBM",
 		"ship_at_scale": "Доставяйте в мащаб",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Турът протича като глави — от изграждането на вашия първи агент до прехвърлянето му в блокчейн.",
 		"want_this_on_your_own_site_or": "Искате това на вашия собствен сайт или магазин? Създайте едно в <a href=\"/tour-builder\">Tour Builder</a> — без код, включени и двата режима.",
 		"what_you_ll_see": "Какво ще видите",
-		"you_have_a_tour_in_progress_pick": "Имате тур в процес — <a href=\"#\" id=\"tour-resume-link\">вземете го отново →</a>",
+		"you_have_a_tour_in_progress_pick": "Имате тур в процес — <button type=\"button\" id=\"tour-resume-link\">вземете го отново →</button>",
 		"you_re_in_control": "Вие сте на контрол"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Пазар за Grind награди",
 		"grind_earn": "Grind-вай и печели",
 		"grind_earn_2": "Grind-вай и печели",
-		"hard_vanity_addresses_are_hours_to_years": "Трудните vanity адреси отнемат часове до години на една машина. Тук вие <strong>депозирате USDC награда в ескроу</strong> и флотилия от независими работници търси вашия шаблон паралелно — първото потвърдено съвпадение печели. Пробивът: намереният ключ е <strong>запечатан към вашия X25519 ключ</strong>, така че работникът печели наградата, но <strong>никога не вижда вашия портфейл</strong>. Разплащането е без доверие чрез <a href=\"/x402\">x402</a>; непопълнените награди се възстановяват при изтичане. Или <a href=\"#\" id=\"lede-earn\">включете свободните си ядра на работа</a> и печелете.",
+		"hard_vanity_addresses_are_hours_to_years": "Трудните vanity адреси отнемат часове до години на една машина. Тук вие <strong>депозирате USDC награда в ескроу</strong> и флотилия от независими работници търси вашия шаблон паралелно — първото потвърдено съвпадение печели. Пробивът: намереният ключ е <strong>запечатан към вашия X25519 ключ</strong>, така че работникът печели наградата, но <strong>никога не вижда вашия портфейл</strong>. Разплащането е без доверие чрез <a href=\"/x402\">x402</a>; непопълнените награди се възстановяват при изтичане. Или <a href=\"#earn\" id=\"lede-earn\">включете свободните си ядра на работа</a> и печелете.",
 		"i_ve_saved_my_private_key_somewhere": "Запазих частния си ключ на сигурно място.",
 		"label_optional_public": "Етикет <span style=\"text-transform:none;color:#555\">(по избор, публичен)</span>",
 		"load_more": "Зареди още",

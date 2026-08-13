@@ -736,7 +736,7 @@
 		"user": "ผู้ใช้",
 		"view_agent": "ดูเอเจนต์ →",
 		"view_on_marketplace": "ดูบน Marketplace ›",
-		"walk_through_your_agent_s_mind_every": "สำรวจความคิดของเอเจนต์คุณ ทุกความทรงจำคือวัตถุที่คุณสามารถเห็น ค้นหา และปรับแต่งได้ <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">เปิดแบบเต็มหน้าจอ ↗</a>",
+		"walk_through_your_agent_s_mind_every": "สำรวจความคิดของเอเจนต์คุณ ทุกความทรงจำคือวัตถุที่คุณสามารถเห็น ค้นหา และปรับแต่งได้ <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">เปิดแบบเต็มหน้าจอ ↗</a>",
 		"website": "เว็บไซต์",
 		"weekly": "รายสัปดาห์",
 		"weekly_digest": "สรุปรายสัปดาห์",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "เธอปีนจากตัวอักษรหนึ่งไปยังอีกตัวอักษรหนึ่งเหมือนนักปีนเชือก ยอดของแต่ละตัวอักษรคือจุดยึด — เธอเกาะ, กระโดด, แล้วเกาะอีกครั้ง"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "เลื่อนเมาส์ไปที่คำที่ขีดเส้นใต้ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "เลื่อนเมาส์ไปที่คำที่ขีดเส้นใต้ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "เลื่อนเมาส์ไปที่ <em>ใดก็ได้</em>",
 		"meta_title": "ตัวติดตามเคอร์เซอร์ — three.ws",
 		"primary": "<span>หลัก</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "สร้าง 3D AI เอเจนต์สด — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "ไม่มีสไลด์ — เราจะไปจากศูนย์สู่เอเจนต์ 3D ที่ทำงานได้ในเวลาจริง จากนั้นเปิดให้ถามตอบ",
 		"notify_me": "แจ้งให้ฉันทราบ",
-		"or_just_add_it_to_your_calendar": "หรือแค่ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">เพิ่มลงในปฏิทินของคุณ</a> แล้วมาที่นี่",
+		"or_just_add_it_to_your_calendar": "หรือแค่ <a id=\"add-cal-2\" style=\"text-decoration:underline\">เพิ่มลงในปฏิทินของคุณ</a> แล้วมาที่นี่",
 		"prompt_agent": "คำสั่ง → เอเจนต์",
 		"read_the_ibm_write_up": "อ่านบทความของ IBM",
 		"ship_at_scale": "ส่งมอบในขนาดใหญ่",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ทัวร์จะดำเนินการเป็นบท — ตั้งแต่การสร้างเอเจนต์แรกของคุณไปจนถึงการนำมันเข้าสู่บล็อกเชน",
 		"want_this_on_your_own_site_or": "ต้องการสิ่งนี้บนเว็บไซต์หรือร้านค้าของคุณเอง? สร้างหนึ่งใน <a href=\"/tour-builder\">Tour Builder</a> — ไม่ต้องเขียนโค้ด ทั้งสองโหมดรวมอยู่ด้วย",
 		"what_you_ll_see": "สิ่งที่คุณจะเห็น",
-		"you_have_a_tour_in_progress_pick": "คุณมีทัวร์ที่กำลังดำเนินการ — <a href=\"#\" id=\"tour-resume-link\">หยิบมันขึ้นมาอีกครั้ง →</a>",
+		"you_have_a_tour_in_progress_pick": "คุณมีทัวร์ที่กำลังดำเนินการ — <button type=\"button\" id=\"tour-resume-link\">หยิบมันขึ้นมาอีกครั้ง →</button>",
 		"you_re_in_control": "คุณอยู่ในควบคุม"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ตลาด Bounty Grinding",
 		"grind_earn": "Grind และรับรางวัล",
 		"grind_earn_2": "Grind และรับรางวัล",
-		"hard_vanity_addresses_are_hours_to_years": "แอดเดรส Vanity ที่ยากต้องใช้เวลาหลายชั่วโมงถึงหลายปีบนเครื่องเดียว ที่นี่คุณ <strong>ฝาก Bounty USDC</strong> และกองทัพคนงานอิสระจะช่วยกัน Grinding รูปแบบของคุณพร้อมกัน — ผู้ที่พบการจับคู่ที่ได้รับการยืนยันคนแรกจะเป็นผู้ชนะ ความก้าวหน้าคือ: คีย์ที่พบจะถูก <strong>ผนึกไว้กับคีย์ X25519 ของคุณ</strong> ดังนั้นคนงานจะได้รับ Bounty แต่ <strong>ไม่เห็นกระเป๋าเงินของคุณ</strong> การชำระเงินเป็นแบบไร้ความเชื่อใจผ่าน <a href=\"/x402\">x402</a> Bounty ที่ไม่สำเร็จจะได้รับเงินคืนเมื่อหมดอายุ หรือ <a href=\"#\" id=\"lede-earn\">นำคอร์ที่ว่างของคุณมาทำงาน</a>และรับรางวัล",
+		"hard_vanity_addresses_are_hours_to_years": "แอดเดรส Vanity ที่ยากต้องใช้เวลาหลายชั่วโมงถึงหลายปีบนเครื่องเดียว ที่นี่คุณ <strong>ฝาก Bounty USDC</strong> และกองทัพคนงานอิสระจะช่วยกัน Grinding รูปแบบของคุณพร้อมกัน — ผู้ที่พบการจับคู่ที่ได้รับการยืนยันคนแรกจะเป็นผู้ชนะ ความก้าวหน้าคือ: คีย์ที่พบจะถูก <strong>ผนึกไว้กับคีย์ X25519 ของคุณ</strong> ดังนั้นคนงานจะได้รับ Bounty แต่ <strong>ไม่เห็นกระเป๋าเงินของคุณ</strong> การชำระเงินเป็นแบบไร้ความเชื่อใจผ่าน <a href=\"/x402\">x402</a> Bounty ที่ไม่สำเร็จจะได้รับเงินคืนเมื่อหมดอายุ หรือ <a href=\"#earn\" id=\"lede-earn\">นำคอร์ที่ว่างของคุณมาทำงาน</a>และรับรางวัล",
 		"i_ve_saved_my_private_key_somewhere": "ฉันได้บันทึกไพรเวทคีย์ของฉันไว้ในที่ปลอดภัยแล้ว",
 		"label_optional_public": "ป้ายกำกับ <span style=\"text-transform:none;color:#555\">(ไม่บังคับ, สาธารณะ)</span>",
 		"load_more": "โหลดเพิ่มเติม",

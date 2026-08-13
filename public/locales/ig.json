@@ -736,7 +736,7 @@
 		"user": "Onye ọrụ",
 		"view_agent": "Lelee onye nnọchi anya →",
 		"view_on_marketplace": "Lelee na ahịa ›",
-		"walk_through_your_agent_s_mind_every": "Gaafe uche onye nnọchi anya gị. Ncheta ọ bụla bụ ihe ị nwere ike ịhụ, chọọ, ma kpụzie. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Mepee ihuenyo zuru ezu ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Gaafe uche onye nnọchi anya gị. Ncheta ọ bụla bụ ihe ị nwere ike ịhụ, chọọ, ma kpụzie. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Mepee ihuenyo zuru ezu ↗</a>",
 		"website": "Ebe nrụọrụ weebụ",
 		"weekly": "Kwa izu",
 		"weekly_digest": "Nchịkọta kwa izu",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Ọ na-arịgo mkpụrụedemede site na mkpụrụedemede dị ka onye na-arịgo eriri. Elu mkpụrụedemede ọ bụla bụ ebe ijide aka — ọ na-anọdụ, na-awụli elu, na-anọdụ ọzọ."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Fegharịa n'elu okwu ọ bụla e dechiri akara → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">akwụkwọ</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ọnụahịa</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ihe atụ</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Fegharịa n'elu okwu ọ bụla e dechiri akara → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">akwụkwọ</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ọnụahịa</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ihe atụ</a>",
 		"hover_anywhere": "Fegharịa <em>ebe ọ bụla</em>.",
 		"meta_title": "Onye na-eso kọsọ — three.ws",
 		"primary": "<span>Isi</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Iwulite Ndị Ọrụ AI 3D N'ihu Ọha — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ọ dịghị naanị ihe ngosi — anyị na-esi na ihe ọ bụla gaa na onye ọrụ 3D na-arụ ọrụ, enwere ike itinye n'ime oge dị adị, wee nye ohere maka ajụjụ.",
 		"notify_me": "Gwa m",
-		"or_just_add_it_to_your_calendar": "Ma ọ bụ naanị <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">tinye ya na kalenda gị</a> wee pụta.",
+		"or_just_add_it_to_your_calendar": "Ma ọ bụ naanị <a id=\"add-cal-2\" style=\"text-decoration:underline\">tinye ya na kalenda gị</a> wee pụta.",
 		"prompt_agent": "Iwu → onye ọrụ",
 		"read_the_ibm_write_up": "Gụọ akụkọ IBM",
 		"ship_at_scale": "Zipụ n'ọtụtụ buru ibu",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Njem nlegharị anya ahụ na-aga dị ka isiokwu — site n'iwu onye nnọchi anya mbụ gị ruo n'ịkpọga ya na blockchain.",
 		"want_this_on_your_own_site_or": "Ị chọrọ nke a na saịtị ma ọ bụ ụlọ ahịa gị? Wuo otu na <a href=\"/tour-builder\">Tour Builder</a> — enweghị koodu, ụdị abụọ ahụ gụnyere.",
 		"what_you_ll_see": "Ihe ị ga-ahụ",
-		"you_have_a_tour_in_progress_pick": "Ị nwere njem nlegharị anya na-aga n'ihu — <a href=\"#\" id=\"tour-resume-link\">gaa n'ihu na ya →</a>",
+		"you_have_a_tour_in_progress_pick": "Ị nwere njem nlegharị anya na-aga n'ihu — <button type=\"button\" id=\"tour-resume-link\">gaa n'ihu na ya →</button>",
 		"you_re_in_control": "Ị na-achịkwa"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Ahịa Ụgwọ Ọrụ Ịrụ Ọrụ",
 		"grind_earn": "Rụọ ọrụ & nweta ego",
 		"grind_earn_2": "Gwuo & nweta",
-		"hard_vanity_addresses_are_hours_to_years": "Adreesị vanity siri ike na-ewe awa ruo afọ n'otu igwe. N'ebe a, ị <strong>na-etinye USDCbounty</strong> ma otu ìgwè ndị ọrụ nọọrọ onwe ha na-egwuo usoro gị n'otu oge — onye mbụ dakọtara nke a kwadoro na-emeri. Ihe ọhụrụ ahụ: igodo ahụ a chọtara bụ <strong>ejiri akara kpuchie ya na igodo X25519 gị</strong>, ya mere onye ọrụ ahụ na-enweta bounty mana <strong>ọ dịghị mgbe ọ hụrụ obere akpa gị</strong>. Ndozi bụ enweghị ntụkwasị obi site na <a href=\"/x402\">x402</a>; bounties a na-ejupụtaghị na-eweghachi ego mgbe oge ruru. Ma ọ bụ <a href=\"#\" id=\"lede-earn\">tinye cores gị ka ha rụọ ọrụ</a> ma nweta ego.",
+		"hard_vanity_addresses_are_hours_to_years": "Adreesị vanity siri ike na-ewe awa ruo afọ n'otu igwe. N'ebe a, ị <strong>na-etinye USDCbounty</strong> ma otu ìgwè ndị ọrụ nọọrọ onwe ha na-egwuo usoro gị n'otu oge — onye mbụ dakọtara nke a kwadoro na-emeri. Ihe ọhụrụ ahụ: igodo ahụ a chọtara bụ <strong>ejiri akara kpuchie ya na igodo X25519 gị</strong>, ya mere onye ọrụ ahụ na-enweta bounty mana <strong>ọ dịghị mgbe ọ hụrụ obere akpa gị</strong>. Ndozi bụ enweghị ntụkwasị obi site na <a href=\"/x402\">x402</a>; bounties a na-ejupụtaghị na-eweghachi ego mgbe oge ruru. Ma ọ bụ <a href=\"#earn\" id=\"lede-earn\">tinye cores gị ka ha rụọ ọrụ</a> ma nweta ego.",
 		"i_ve_saved_my_private_key_somewhere": "Echekwala m igodo nzuzo m n'ebe dị mma.",
 		"label_optional_public": "Aha <span style=\"text-transform:none;color:#555\">(nhọrọ, ọha)</span>",
 		"load_more": "Buo ọzọ",

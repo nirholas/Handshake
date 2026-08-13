@@ -736,7 +736,7 @@
 		"user": "Usuari",
 		"view_agent": "Veure agent →",
 		"view_on_marketplace": "Veure al marketplace ›",
-		"walk_through_your_agent_s_mind_every": "Explora la ment del teu agent. Cada memòria és un objecte que pots veure, cercar i modelar. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Obrir a pantalla completa ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Explora la ment del teu agent. Cada memòria és un objecte que pots veure, cercar i modelar. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Obrir a pantalla completa ↗</a>",
 		"website": "Lloc web",
 		"weekly": "Setmanal",
 		"weekly_digest": "Resum setmanal",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Escala lletra a lletra com una escaladora de corda. Cada lletra és un punt de suport — s'hi posa, salta, s'hi torna a posar."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Passa el ratolí per sobre de qualsevol paraula subratllada → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">preus</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">exemples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Passa el ratolí per sobre de qualsevol paraula subratllada → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">preus</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">exemples</a>",
 		"hover_anywhere": "Passa el ratolí per <em>qualsevol lloc</em>.",
 		"meta_title": "Seguidor de cursor — three.ws",
 		"primary": "<span>Principal</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Creant Agents d'IA 3D en Directe — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Sense diapositives, només una demostració pràctica — passem de zero a un agent 3D funcional i incrustable en temps real, i després obrim el torn de preguntes.",
 		"notify_me": "Notifica-m'ho",
-		"or_just_add_it_to_your_calendar": "O simplement <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">afegeix-ho al teu calendari</a> i assisteix.",
+		"or_just_add_it_to_your_calendar": "O simplement <a id=\"add-cal-2\" style=\"text-decoration:underline\">afegeix-ho al teu calendari</a> i assisteix.",
 		"prompt_agent": "Indicació → agent",
 		"read_the_ibm_write_up": "Llegeix l'article d'IBM",
 		"ship_at_scale": "Desplega a escala",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "El tour s'estructura en capítols — des de la creació del teu primer agent fins a portar-lo a la cadena.",
 		"want_this_on_your_own_site_or": "Vols això al teu propi lloc web o botiga? Crea'n un amb el <a href=\"/tour-builder\">Tour Builder</a> — sense codi, ambdós modes inclosos.",
 		"what_you_ll_see": "Què hi veuràs",
-		"you_have_a_tour_in_progress_pick": "Tens un tour en curs — <a href=\"#\" id=\"tour-resume-link\">reprendre'l →</a>",
+		"you_have_a_tour_in_progress_pick": "Tens un tour en curs — <button type=\"button\" id=\"tour-resume-link\">reprendre'l →</button>",
 		"you_re_in_control": "Tens el control"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Mercat de Recompenses de Treball",
 		"grind_earn": "Treballa i guanya",
 		"grind_earn_2": "Grinda i guanya",
-		"hard_vanity_addresses_are_hours_to_years": "Les adreces vanity complexes poden trigar d'hores a anys en una sola màquina. Aquí <strong>deposites una USDC recompensa</strong> i una flota de treballadors independents minera el teu patró en paral·lel — el primer que troba una coincidència verificada guanya. La innovació: la clau trobada està <strong>segellada a la teva clau X25519</strong>, de manera que el treballador guanya la recompensa però <strong>mai veu la teva cartera</strong>. La liquidació és trustless via <a href=\"/x402\">x402</a>; les recompenses no reclamades es reemborsen en expirar. O <a href=\"#\" id=\"lede-earn\">posa els teus nuclis lliures a treballar</a> i guanya.",
+		"hard_vanity_addresses_are_hours_to_years": "Les adreces vanity complexes poden trigar d'hores a anys en una sola màquina. Aquí <strong>deposites una USDC recompensa</strong> i una flota de treballadors independents minera el teu patró en paral·lel — el primer que troba una coincidència verificada guanya. La innovació: la clau trobada està <strong>segellada a la teva clau X25519</strong>, de manera que el treballador guanya la recompensa però <strong>mai veu la teva cartera</strong>. La liquidació és trustless via <a href=\"/x402\">x402</a>; les recompenses no reclamades es reemborsen en expirar. O <a href=\"#earn\" id=\"lede-earn\">posa els teus nuclis lliures a treballar</a> i guanya.",
 		"i_ve_saved_my_private_key_somewhere": "He guardat la meva clau privada en un lloc segur.",
 		"label_optional_public": "Etiqueta <span style=\"text-transform:none;color:#555\">(opcional, pública)</span>",
 		"load_more": "Carrega'n més",

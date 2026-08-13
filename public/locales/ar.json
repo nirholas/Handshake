@@ -736,7 +736,7 @@
 		"user": "المستخدم",
 		"view_agent": "عرض الوكيل ←",
 		"view_on_marketplace": "عرض في السوق ›",
-		"walk_through_your_agent_s_mind_every": "تصفح عقل وكيلك. كل ذاكرة هي كائن يمكنك رؤيته والبحث فيه وتشكيله. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">فتح ملء الشاشة ↗</a>",
+		"walk_through_your_agent_s_mind_every": "تصفح عقل وكيلك. كل ذاكرة هي كائن يمكنك رؤيته والبحث فيه وتشكيله. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">فتح ملء الشاشة ↗</a>",
 		"website": "الموقع الإلكتروني",
 		"weekly": "أسبوعي",
 		"weekly_digest": "ملخص أسبوعي",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "تتسلق حرفًا بحرف كمتسلق الحبال. كل قمة حرف هي نقطة ارتكاز — ترتكز، تقفز، ثم ترتكز مجددًا."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "مرر مؤشر الفأرة فوق أي كلمة مسطرة ← <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">الوثائق</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">التسعير</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">الأمثلة</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "مرر مؤشر الفأرة فوق أي كلمة مسطرة ← <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">الوثائق</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">التسعير</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">الأمثلة</a>",
 		"hover_anywhere": "مرر مؤشر الفأرة <em>في أي مكان</em>.",
 		"meta_title": "متتبع المؤشر — three.ws",
 		"primary": "<span>أساسي</span><span>←</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "بناء وكلاء الذكاء الاصطناعي ثلاثي الأبعاد مباشرةً — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "لا يوجد عرض شرائح فقط — ننتقل من لا شيء إلى وكيل ثلاثي الأبعاد عملي وقابل للتضمين في الوقت الفعلي، ثم نفتح المجال للمناقشة.",
 		"notify_me": "أعلمني",
-		"or_just_add_it_to_your_calendar": "أو فقط <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">أضفه إلى تقويمك</a> واحضر.",
+		"or_just_add_it_to_your_calendar": "أو فقط <a id=\"add-cal-2\" style=\"text-decoration:underline\">أضفه إلى تقويمك</a> واحضر.",
 		"prompt_agent": "مطالبة ← وكيل",
 		"read_the_ibm_write_up": "اقرأ مقال IBM",
 		"ship_at_scale": "انشر على نطاق واسع",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "تتم الجولة كفصول - من بناء وكيلك الأول إلى نقله على السلسلة.",
 		"want_this_on_your_own_site_or": "هل تريد هذا على موقعك الخاص أو متجرك؟ قم ببناء واحد في <a href=\"/tour-builder\">منشئ الجولات</a> - بدون كود، كلا الوضعين متضمنين.",
 		"what_you_ll_see": "ما ستراه",
-		"you_have_a_tour_in_progress_pick": "لديك جولة قيد التقدم - <a href=\"#\" id=\"tour-resume-link\">استأنفها →</a>",
+		"you_have_a_tour_in_progress_pick": "لديك جولة قيد التقدم - <button type=\"button\" id=\"tour-resume-link\">استأنفها →</button>",
 		"you_re_in_control": "أنت في السيطرة"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "سوق مكافآت البحث المكثف",
 		"grind_earn": "ابحث واكسب",
 		"grind_earn_2": "ابحث واكسب",
-		"hard_vanity_addresses_are_hours_to_years": "عناوين التجميل الصعبة تستغرق ساعات إلى سنوات على جهاز واحد. هنا، أنت <strong>تودع مكافأة USDC</strong> ويعمل أسطول من العمال المستقلين على البحث عن نمطك بالتوازي — أول تطابق مؤكد يفوز. الإنجاز: المفتاح الذي تم العثور عليه <strong>مختوم بمفتاح X25519 الخاص بك</strong>، لذا يكسب العامل المكافأة ومع ذلك <strong>لا يرى محفظتك أبدًا</strong>. تتم التسوية بدون ثقة عبر <a href=\"/x402\">x402</a>؛ والمكافآت غير المكتملة تسترد عند انتهاء الصلاحية. أو <a href=\"#\" id=\"lede-earn\">شغّل أنويتك الاحتياطية</a> واكسب.",
+		"hard_vanity_addresses_are_hours_to_years": "عناوين التجميل الصعبة تستغرق ساعات إلى سنوات على جهاز واحد. هنا، أنت <strong>تودع مكافأة USDC</strong> ويعمل أسطول من العمال المستقلين على البحث عن نمطك بالتوازي — أول تطابق مؤكد يفوز. الإنجاز: المفتاح الذي تم العثور عليه <strong>مختوم بمفتاح X25519 الخاص بك</strong>، لذا يكسب العامل المكافأة ومع ذلك <strong>لا يرى محفظتك أبدًا</strong>. تتم التسوية بدون ثقة عبر <a href=\"/x402\">x402</a>؛ والمكافآت غير المكتملة تسترد عند انتهاء الصلاحية. أو <a href=\"#earn\" id=\"lede-earn\">شغّل أنويتك الاحتياطية</a> واكسب.",
 		"i_ve_saved_my_private_key_somewhere": "لقد حفظت مفتاحي الخاص في مكان آمن.",
 		"label_optional_public": "تسمية <span style=\"text-transform:none;color:#555\">(اختياري، عام)</span>",
 		"load_more": "تحميل المزيد",

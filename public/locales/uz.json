@@ -736,7 +736,7 @@
 		"user": "Foydalanuvchi",
 		"view_agent": "Agentni ko'rish →",
 		"view_on_marketplace": "Bozorda ko'rish ›",
-		"walk_through_your_agent_s_mind_every": "Agentingizning ongini kezib chiqing. Har bir xotira siz ko'rishingiz, qidirishingiz va shakllantirishingiz mumkin bo'lgan ob'ektdir. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">To'liq ekranda ochish ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Agentingizning ongini kezib chiqing. Har bir xotira siz ko'rishingiz, qidirishingiz va shakllantirishingiz mumkin bo'lgan ob'ektdir. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">To'liq ekranda ochish ↗</a>",
 		"website": "Veb-sayt",
 		"weekly": "Haftalik",
 		"weekly_digest": "Haftalik xulosa",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "U arqonchi kabi harfma-harf ko'tariladi. Har bir harfning tepasi ushlash nuqtasi — u qo'nadi, sakraydi, yana qo'nadi."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Istalgan tagiga chizilgan so'z ustiga olib boring → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Istalgan tagiga chizilgan so'z ustiga olib boring → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Ustiga olib boring <em>anywhere</em>.",
 		"meta_title": "Kursor kuzatuvchisi — three.ws",
 		"primary": "<span>Primary</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI Agentlarini Jonli Qurish — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Slaydlarsiz, faqat amaliy koʻrsatma — hech narsadan ishlaydigan, joylashtiriladigan 3D agentiga real vaqtda oʻtamiz, soʻngra savol-javobga oʻtamiz.",
 		"notify_me": "Meni xabardor qiling",
-		"or_just_add_it_to_your_calendar": "Yoki shunchaki uni <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">kalendaringizga qoʻshing</a> va keling.",
+		"or_just_add_it_to_your_calendar": "Yoki shunchaki uni <a id=\"add-cal-2\" style=\"text-decoration:underline\">kalendaringizga qoʻshing</a> va keling.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "IBM maqolasini oʻqing",
 		"ship_at_scale": "Katta miqyosda tarqatish",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Tur boblar shaklida ishlaydi — birinchi agentingizni yaratishdan tortib, uni zanjirga chiqarishgacha.",
 		"want_this_on_your_own_site_or": "Buni oʻz saytingizda yoki doʻkoningizda xohlaysizmi? Uni <a href=\"/tour-builder\">Tour Builder</a>'da yarating — kodsiz, ikkala rejim ham kiritilgan.",
 		"what_you_ll_see": "Nimalarni koʻrasiz",
-		"you_have_a_tour_in_progress_pick": "Tur davom etmoqda — <a href=\"#\" id=\"tour-resume-link\">davom ettirish →</a>",
+		"you_have_a_tour_in_progress_pick": "Tur davom etmoqda — <button type=\"button\" id=\"tour-resume-link\">davom ettirish →</button>",
 		"you_re_in_control": "Nazorat sizda"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty bozori",
 		"grind_earn": "Grind qiling va ishlang",
 		"grind_earn_2": "Qidir va top",
-		"hard_vanity_addresses_are_hours_to_years": "Qiyin vanity manzillar bitta mashinada topish uchun soatlardan yillargacha vaqt ketadi. Bu yerda siz <strong>USDC mukofotni</strong> garovga qo'yasiz va mustaqil ishchilar guruhi sizning naqshingizni parallel ravishda qidiradi — birinchi tasdiqlangan moslik g'alaba qozonadi. Yutuq shundaki: topilgan kalit sizning X25519 kalitingizga <strong>muhrlangan</strong>, shuning uchun ishchi mukofotni oladi, lekin <strong>sizning hamyoningizni hech qachon ko'rmaydi</strong>. Hisob-kitob <a href=\"/x402\">x402</a> orqali ishonchga asoslanmagan tarzda amalga oshiriladi; to'ldirilmagan mukofotlar muddati tugagach qaytariladi. Yoki <a href=\"#\" id=\"lede-earn\">bo'sh turgan yadrolaringizni ishga soling</a> va daromad oling.",
+		"hard_vanity_addresses_are_hours_to_years": "Qiyin vanity manzillar bitta mashinada topish uchun soatlardan yillargacha vaqt ketadi. Bu yerda siz <strong>USDC mukofotni</strong> garovga qo'yasiz va mustaqil ishchilar guruhi sizning naqshingizni parallel ravishda qidiradi — birinchi tasdiqlangan moslik g'alaba qozonadi. Yutuq shundaki: topilgan kalit sizning X25519 kalitingizga <strong>muhrlangan</strong>, shuning uchun ishchi mukofotni oladi, lekin <strong>sizning hamyoningizni hech qachon ko'rmaydi</strong>. Hisob-kitob <a href=\"/x402\">x402</a> orqali ishonchga asoslanmagan tarzda amalga oshiriladi; to'ldirilmagan mukofotlar muddati tugagach qaytariladi. Yoki <a href=\"#earn\" id=\"lede-earn\">bo'sh turgan yadrolaringizni ishga soling</a> va daromad oling.",
 		"i_ve_saved_my_private_key_somewhere": "Men shaxsiy kalitimni xavfsiz joyga saqladim.",
 		"label_optional_public": "Yorliq <span style=\"text-transform:none;color:#555\">(ixtiyoriy, ommaviy)</span>",
 		"load_more": "Ko'proq yuklash",

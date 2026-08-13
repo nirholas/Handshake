@@ -736,7 +736,7 @@
 		"user": "کاروونکی",
 		"view_agent": "ایجنټ وګورئ →",
 		"view_on_marketplace": "په مارکیټ پلیس کې وګورئ ›",
-		"walk_through_your_agent_s_mind_every": "د خپل ایجنټ په ذهن کې وګرځئ. هره حافظه یو شی دی چې تاسو یې لیدلی، لټولی او بڼه ورکولی شئ. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">بشپړ سکرین خلاص کړئ ↗</a>",
+		"walk_through_your_agent_s_mind_every": "د خپل ایجنټ په ذهن کې وګرځئ. هره حافظه یو شی دی چې تاسو یې لیدلی، لټولی او بڼه ورکولی شئ. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">بشپړ سکرین خلاص کړئ ↗</a>",
 		"website": "ویب پاڼه",
 		"weekly": "اونیزه",
 		"weekly_digest": "اونیزه لنډیز",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "هغه د رسۍ خېژونکي په څېر له یوې توري څخه بلې ته خېژي. د هر توري پورتنۍ برخه د نیولو نقطه ده — هغه کښېني، ټوپ وهي، او بیا کښېني."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "په هرې تر کرښې لاندې کلمې باندې ماوس وګرځوئ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">اسناد</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">بیه</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">مثالونه</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "په هرې تر کرښې لاندې کلمې باندې ماوس وګرځوئ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">اسناد</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">بیه</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">مثالونه</a>",
 		"hover_anywhere": "<em>هرچیرې</em> ماوس وګرځوئ.",
 		"meta_title": "کرسر تعقیبوونکی — three.ws",
 		"primary": "<span>لومړنی</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "په ژوندۍ بڼه د 3D AI ایجنټانو جوړول — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "یوازې د سلایډونو له لارې تګ نشته — موږ له هیڅ شي څخه په ریښتیني وخت کې یو کاري، یوځای کېدونکی 3D ایجنټ جوړوو، بیا د پوښتنو لپاره فرصت ورکوو.",
 		"notify_me": "ما خبر کړه",
-		"or_just_add_it_to_your_calendar": "یا یوازې <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">خپل تقویم ته یې اضافه کړئ</a> او راشئ.",
+		"or_just_add_it_to_your_calendar": "یا یوازې <a id=\"add-cal-2\" style=\"text-decoration:underline\">خپل تقویم ته یې اضافه کړئ</a> او راشئ.",
 		"prompt_agent": "لارښوونه → ایجنټ",
 		"read_the_ibm_write_up": "د IBM لیکنه ولولئ",
 		"ship_at_scale": "په لویه کچه خپور کړئ",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "سفر د فصلونو په توګه پرمخ ځي — ستاسو د لومړي ایجنټ له جوړولو څخه تر بلاکچین ته یې لیږدولو پورې.",
 		"want_this_on_your_own_site_or": "دا په خپل سایټ یا پلورنځي کې غواړئ؟ په <a href=\"/tour-builder\">ټور بلډر</a> کې یې جوړ کړئ — کوډ ته اړتیا نشته، دواړه حالتونه پکې شامل دي.",
 		"what_you_ll_see": "څه به وګورئ",
-		"you_have_a_tour_in_progress_pick": "تاسو یو سفر په پرمختګ کې لرئ — <a href=\"#\" id=\"tour-resume-link\">بیا یې پیل کړئ →</a>",
+		"you_have_a_tour_in_progress_pick": "تاسو یو سفر په پرمختګ کې لرئ — <button type=\"button\" id=\"tour-resume-link\">بیا یې پیل کړئ →</button>",
 		"you_re_in_control": "تاسو په کنټرول کې یاست"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ګرینډ-انعام بازار",
 		"grind_earn": "ګرینډ او ګټه وکړئ",
 		"grind_earn_2": "کار وکړه او وګټه",
-		"hard_vanity_addresses_are_hours_to_years": "سخت وینټي ادرسونه په یوه ماشین کې له ساعتونو تر کلونو پورې وخت نیسي. دلته تاسو <strong>یو USDCباونټي</strong> ایسکرو کوئ او د خپلواکو کارګرانو یوه ډله ستاسو نمونه په موازي توګه ګرینډ کوي — لومړی تایید شوی میچ ګټي. پرمختګ دا دی: موندل شوې کیلي ستاسو <strong>X25519 کیلي ته مهر شوې ده</strong>، نو کارګر باونټي ګټي خو <strong>هیڅکله ستاسو والټ نه ویني</strong>. تصفیه د <a href=\"/x402\">x402</a> له لارې بې باوره ده؛ نه ډک شوي باونټي د پای ته رسیدو پر مهال بیرته ورکول کیږي. یا <a href=\"#\" id=\"lede-earn\">خپل اضافي کورونه کار ته واچوئ</a> او وګټئ.",
+		"hard_vanity_addresses_are_hours_to_years": "سخت وینټي ادرسونه په یوه ماشین کې له ساعتونو تر کلونو پورې وخت نیسي. دلته تاسو <strong>یو USDCباونټي</strong> ایسکرو کوئ او د خپلواکو کارګرانو یوه ډله ستاسو نمونه په موازي توګه ګرینډ کوي — لومړی تایید شوی میچ ګټي. پرمختګ دا دی: موندل شوې کیلي ستاسو <strong>X25519 کیلي ته مهر شوې ده</strong>، نو کارګر باونټي ګټي خو <strong>هیڅکله ستاسو والټ نه ویني</strong>. تصفیه د <a href=\"/x402\">x402</a> له لارې بې باوره ده؛ نه ډک شوي باونټي د پای ته رسیدو پر مهال بیرته ورکول کیږي. یا <a href=\"#earn\" id=\"lede-earn\">خپل اضافي کورونه کار ته واچوئ</a> او وګټئ.",
 		"i_ve_saved_my_private_key_somewhere": "ما خپله شخصي کیلي په یو خوندي ځای کې خوندي کړې ده.",
 		"label_optional_public": "لیبل <span style=\"text-transform:none;color:#555\">(اختیاري، عامه)</span>",
 		"load_more": "نور بار کړئ",

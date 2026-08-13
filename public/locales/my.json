@@ -736,7 +736,7 @@
 		"user": "အသုံးပြုသူ",
 		"view_agent": "အေးဂျင့်ကို ကြည့်ရန် →",
 		"view_on_marketplace": "စျေးကွက်တွင် ကြည့်ရန် ›",
-		"walk_through_your_agent_s_mind_every": "သင့်အေးဂျင့်၏ စိတ်ထဲသို့ ဝင်ရောက်ကြည့်ရှုပါ။ မှတ်ဉာဏ်တိုင်းသည် သင်မြင်နိုင်၊ ရှာဖွေနိုင်၊ ပုံဖော်နိုင်သည့် အရာဝတ္ထုတစ်ခုဖြစ်သည်။ <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">မျက်နှာပြင်အပြည့်ဖွင့်ရန် ↗</a>",
+		"walk_through_your_agent_s_mind_every": "သင့်အေးဂျင့်၏ စိတ်ထဲသို့ ဝင်ရောက်ကြည့်ရှုပါ။ မှတ်ဉာဏ်တိုင်းသည် သင်မြင်နိုင်၊ ရှာဖွေနိုင်၊ ပုံဖော်နိုင်သည့် အရာဝတ္ထုတစ်ခုဖြစ်သည်။ <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">မျက်နှာပြင်အပြည့်ဖွင့်ရန် ↗</a>",
 		"website": "ဝက်ဘ်ဆိုက်",
 		"weekly": "အပတ်စဉ်",
 		"weekly_digest": "အပတ်စဉ် အကျဉ်းချုပ်",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "သူမသည် ကြိုးတက်သမားကဲ့သို့ စာလုံးတစ်လုံးချင်းစီကို တက်လှမ်းသည်။ စာလုံးထိပ်တိုင်းသည် ဆုပ်ကိုင်စရာနေရာဖြစ်ပြီး သူမသည် နားခိုလိုက်၊ ခုန်လိုက်၊ ပြန်နားခိုလိုက် လုပ်သည်။"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "မျဉ်းသားထားသော စကားလုံးတစ်ခုခုပေါ်တွင် ရွှေ့ပါ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">စာရွက်စာတမ်းများ</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">စျေးနှုန်း</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ဥပမာများ</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "မျဉ်းသားထားသော စကားလုံးတစ်ခုခုပေါ်တွင် ရွှေ့ပါ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">စာရွက်စာတမ်းများ</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">စျေးနှုန်း</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ဥပမာများ</a>",
 		"hover_anywhere": "<em>ဘယ်နေရာမဆို</em> ရွှေ့ပါ။",
 		"meta_title": "ကာဆာနောက်လိုက် — three.ws",
 		"primary": "<span>အဓိက</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI Agent များကို တိုက်ရိုက်တည်ဆောက်ခြင်း — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Slide-သက်သက် လက်တွေ့ပြသခြင်း မဟုတ်ပါ။ ကျွန်ုပ်တို့သည် ဘာမှမရှိသည့် အခြေအနေမှ အလုပ်လုပ်နိုင်သော၊ ထည့်သွင်းနိုင်သော 3D agent တစ်ခုအထိ အချိန်နှင့်တစ်ပြေးညီ ဖန်တီးပြသပြီး မေးမြန်းရန် ဖွင့်ပေးပါမည်။",
 		"notify_me": "ကျွန်ုပ်ကို အကြောင်းကြားပါ။",
-		"or_just_add_it_to_your_calendar": "သို့မဟုတ် <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">သင့်ပြက္ခဒိန်တွင် ထည့်သွင်းပြီး</a> တက်ရောက်ပါ။",
+		"or_just_add_it_to_your_calendar": "သို့မဟုတ် <a id=\"add-cal-2\" style=\"text-decoration:underline\">သင့်ပြက္ခဒိန်တွင် ထည့်သွင်းပြီး</a> တက်ရောက်ပါ။",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "IBM ၏ ရေးသားချက်ကို ဖတ်ပါ။",
 		"ship_at_scale": "အကြီးစား ဖြန့်ချိပါ။",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ဒီခရီးစဉ်ကို အခန်းများအဖြစ် ပြုလုပ်ထားပါတယ် — သင့်ရဲ့ ပထမဆုံး agent ကို တည်ဆောက်တာကနေ on-chain ပေါ်တင်တာအထိပေါ့။",
 		"want_this_on_your_own_site_or": "ဒါကို သင့်ကိုယ်ပိုင် site ဒါမှမဟုတ် store မှာ ထားချင်လား။ <a href=\"/tour-builder\">Tour Builder</a> မှာ တစ်ခုတည်ဆောက်လိုက်ပါ — code မလိုပါဘူး၊ mode နှစ်မျိုးလုံး ပါဝင်ပါတယ်။",
 		"what_you_ll_see": "သင်ဘာတွေမြင်ရမလဲ",
-		"you_have_a_tour_in_progress_pick": "ခရီးစဉ်တစ်ခု လုပ်ဆောင်နေဆဲပါ — <a href=\"#\" id=\"tour-resume-link\">ပြန်စလိုက်ပါ →</a>",
+		"you_have_a_tour_in_progress_pick": "ခရီးစဉ်တစ်ခု လုပ်ဆောင်နေဆဲပါ — <button type=\"button\" id=\"tour-resume-link\">ပြန်စလိုက်ပါ →</button>",
 		"you_re_in_control": "သင်ထိန်းချုပ်နိုင်ပါတယ်"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty ဈေးကွက်",
 		"grind_earn": "Grind လုပ်ပြီး ဝင်ငွေရှာပါ။",
 		"grind_earn_2": "ကြိုးစားရှာဖွေပါ",
-		"hard_vanity_addresses_are_hours_to_years": "ခက်ခဲသော vanity address များသည် စက်တစ်လုံးတည်းဖြင့် ရှာဖွေပါက နာရီပေါင်းများစွာမှ နှစ်ပေါင်းများစွာ ကြာမြင့်နိုင်ပါသည်။ ဤနေရာတွင် သင်သည် <strong>USDC bounty</strong> ကို အပ်နှံထားပြီး လွတ်လပ်သော လုပ်သားအများအပြားက သင့်ပုံစံကို တစ်ပြိုင်နက်တည်း ရှာဖွေပေးပါသည်။ ပထမဆုံး အတည်ပြုနိုင်သော ကိုက်ညီမှုက အနိုင်ရရှိပါသည်။ ထူးခြားချက်မှာ- တွေ့ရှိသော key သည် သင့် <strong>X25519 key</strong> နှင့် ချိတ်ဆက်ထားသောကြောင့် လုပ်သားက bounty ကို ရရှိသော်လည်း <strong>သင့်ပိုက်ဆံအိတ်ကို လုံးဝမမြင်ရပါ</strong>။ ငွေပေးချေမှုသည် <a href=\"/x402\">x402</a> မှတစ်ဆင့် ယုံကြည်မှုမရှိဘဲ ဆောင်ရွက်ပါသည်။ မပြည့်စုံသော bounties များသည် သက်တမ်းကုန်ဆုံးပါက ပြန်အမ်းငွေရရှိမည်ဖြစ်သည်။ သို့မဟုတ် <a href=\"#\" id=\"lede-earn\">သင့်အားလပ်သော cores များကို အလုပ်လုပ်စေပြီး</a> ဝင်ငွေရှာပါ။",
+		"hard_vanity_addresses_are_hours_to_years": "ခက်ခဲသော vanity address များသည် စက်တစ်လုံးတည်းဖြင့် ရှာဖွေပါက နာရီပေါင်းများစွာမှ နှစ်ပေါင်းများစွာ ကြာမြင့်နိုင်ပါသည်။ ဤနေရာတွင် သင်သည် <strong>USDC bounty</strong> ကို အပ်နှံထားပြီး လွတ်လပ်သော လုပ်သားအများအပြားက သင့်ပုံစံကို တစ်ပြိုင်နက်တည်း ရှာဖွေပေးပါသည်။ ပထမဆုံး အတည်ပြုနိုင်သော ကိုက်ညီမှုက အနိုင်ရရှိပါသည်။ ထူးခြားချက်မှာ- တွေ့ရှိသော key သည် သင့် <strong>X25519 key</strong> နှင့် ချိတ်ဆက်ထားသောကြောင့် လုပ်သားက bounty ကို ရရှိသော်လည်း <strong>သင့်ပိုက်ဆံအိတ်ကို လုံးဝမမြင်ရပါ</strong>။ ငွေပေးချေမှုသည် <a href=\"/x402\">x402</a> မှတစ်ဆင့် ယုံကြည်မှုမရှိဘဲ ဆောင်ရွက်ပါသည်။ မပြည့်စုံသော bounties များသည် သက်တမ်းကုန်ဆုံးပါက ပြန်အမ်းငွေရရှိမည်ဖြစ်သည်။ သို့မဟုတ် <a href=\"#earn\" id=\"lede-earn\">သင့်အားလပ်သော cores များကို အလုပ်လုပ်စေပြီး</a> ဝင်ငွေရှာပါ။",
 		"i_ve_saved_my_private_key_somewhere": "ကျွန်ုပ်၏ private key ကို လုံခြုံသောနေရာတွင် သိမ်းဆည်းထားပါသည်။",
 		"label_optional_public": "အညွှန်း <span style=\"text-transform:none;color:#555\">(ရွေးချယ်နိုင်သည်၊ အများပြည်သူမြင်နိုင်သည်)</span>",
 		"load_more": "ထပ်မံတင်ပါ",

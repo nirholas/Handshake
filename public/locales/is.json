@@ -736,7 +736,7 @@
 		"user": "Notandi",
 		"view_agent": "Skoða umboðsmann →",
 		"view_on_marketplace": "Skoða á markaðstorgi ›",
-		"walk_through_your_agent_s_mind_every": "Gakktu í gegnum huga umboðsmannsins þíns. Sérhver minning er hlutur sem þú getur séð, leitað í og mótað. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Opna í fullum skjá ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Gakktu í gegnum huga umboðsmannsins þíns. Sérhver minning er hlutur sem þú getur séð, leitað í og mótað. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Opna í fullum skjá ↗</a>",
 		"website": "Vefsíða",
 		"weekly": "Vikulega",
 		"weekly_digest": "Vikuleg samantekt",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Hún klifrar staf frá staf líkt og reipaklifrari. Hver stafatoppur er gripstaður — hún sest, stekkur, sest aftur."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Sveimaðu yfir hvaða undirstrikað orð sem er → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">skjöl</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">verðlagning</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dæmi</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Sveimaðu yfir hvaða undirstrikað orð sem er → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">skjöl</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">verðlagning</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dæmi</a>",
 		"hover_anywhere": "Sveimaðu <em>hvar sem er</em>.",
 		"meta_title": "Músarfylgjandi — three.ws",
 		"primary": "<span>Aðal</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Byggja 3D gervigreindarumboðsmenn í beinni — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Engar glærur, aðeins sýnikennsla — við förum frá engu yfir í virkan, innfelldan 3D umboðsmann í rauntíma, síðan opnum við fyrir spurningar.",
 		"notify_me": "Láta mig vita",
-		"or_just_add_it_to_your_calendar": "Eða einfaldlega <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">bættu því við dagatalið þitt</a> og mættu.",
+		"or_just_add_it_to_your_calendar": "Eða einfaldlega <a id=\"add-cal-2\" style=\"text-decoration:underline\">bættu því við dagatalið þitt</a> og mættu.",
 		"prompt_agent": "Skipun → umboðsmaður",
 		"read_the_ibm_write_up": "Lestu grein IBM",
 		"ship_at_scale": "Dreifðu í stórum stíl",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Ferðin er í köflum — frá því að byggja fyrsta umboðsmanninn þinn til að setja hann á keðjuna.",
 		"want_this_on_your_own_site_or": "Viltu þetta á þinni eigin síðu eða verslun? Byggðu einn í <a href=\"/tour-builder\">Tour Builder</a> — enginn kóði, báðir stillingar innifaldir.",
 		"what_you_ll_see": "Það sem þú munt sjá",
-		"you_have_a_tour_in_progress_pick": "Þú ert með ferð í gangi — <a href=\"#\" id=\"tour-resume-link\">halda áfram →</a>",
+		"you_have_a_tour_in_progress_pick": "Þú ert með ferð í gangi — <button type=\"button\" id=\"tour-resume-link\">halda áfram →</button>",
 		"you_re_in_control": "Þú hefur stjórnina"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Vinnu-verðlaunamarkaður",
 		"grind_earn": "Vinna og afla",
 		"grind_earn_2": "Mala og græða",
-		"hard_vanity_addresses_are_hours_to_years": "Erfið vanity-vistföng taka klukkustundir til ára á einni vél. Hér <strong>leggur þú fram USDCverðlaun</strong> og floti sjálfstæðra verktaka malar mynstrið þitt samhliða — fyrsta staðfesta samsvörunin vinnur. Byltingin: fundni lykillinn er <strong>lokaður að þínum X25519 lykli</strong>, svo verktakinn fær verðlaunin en <strong>sér aldrei veskið þitt</strong>. Uppgjör er traustlaust í gegnum <a href=\"/x402\">x402</a>; óuppfyllt verðlaun endurgreiðast við fyrningu. Eða <a href=\"#\" id=\"lede-earn\">settu lausa kjarna þína í vinnu</a> og græddu.",
+		"hard_vanity_addresses_are_hours_to_years": "Erfið vanity-vistföng taka klukkustundir til ára á einni vél. Hér <strong>leggur þú fram USDCverðlaun</strong> og floti sjálfstæðra verktaka malar mynstrið þitt samhliða — fyrsta staðfesta samsvörunin vinnur. Byltingin: fundni lykillinn er <strong>lokaður að þínum X25519 lykli</strong>, svo verktakinn fær verðlaunin en <strong>sér aldrei veskið þitt</strong>. Uppgjör er traustlaust í gegnum <a href=\"/x402\">x402</a>; óuppfyllt verðlaun endurgreiðast við fyrningu. Eða <a href=\"#earn\" id=\"lede-earn\">settu lausa kjarna þína í vinnu</a> og græddu.",
 		"i_ve_saved_my_private_key_somewhere": "Ég hef vistað einkalykilinn minn á öruggum stað.",
 		"label_optional_public": "Merki <span style=\"text-transform:none;color:#555\">(valfrjálst, opinbert)</span>",
 		"load_more": "Hlaða meira",

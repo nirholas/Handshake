@@ -736,7 +736,7 @@
 		"user": "Lietotājs",
 		"view_agent": "Skatīt aģentu →",
 		"view_on_marketplace": "Skatīt tirgū ›",
-		"walk_through_your_agent_s_mind_every": "Ielūkojieties sava aģenta prātā. Katra atmiņa ir objekts, ko varat redzēt, meklēt un veidot. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Atvērt pilnekrāna režīmā ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Ielūkojieties sava aģenta prātā. Katra atmiņa ir objekts, ko varat redzēt, meklēt un veidot. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Atvērt pilnekrāna režīmā ↗</a>",
 		"website": "Vietne",
 		"weekly": "Iknedēļas",
 		"weekly_digest": "Iknedēļas apkopojums",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Viņa kāpj no burta uz burtu kā virves rāpējs. Katrs burta augšgals ir satvēriena punkts — viņa pietupstas, lec, atkal pietupstas."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Novietojiet kursoru virs jebkura pasvītrota vārda → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentācija</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">cenas</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">piemēri</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Novietojiet kursoru virs jebkura pasvītrota vārda → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentācija</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">cenas</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">piemēri</a>",
 		"hover_anywhere": "Novietojiet kursoru <em>jebkur</em>.",
 		"meta_title": "Kursora sekotājs — three.ws",
 		"primary": "<span>Primārais</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI aģentu veidošana tiešraidē — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Bez slaidiem, tikai demonstrācija — mēs reāllaikā izveidojam no nulles strādājošu, iegultu 3D aģentu, pēc tam atveram diskusiju.",
 		"notify_me": "Paziņot man",
-		"or_just_add_it_to_your_calendar": "Vai vienkārši <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">pievienojiet to savam kalendāram</a> un pievienojieties.",
+		"or_just_add_it_to_your_calendar": "Vai vienkārši <a id=\"add-cal-2\" style=\"text-decoration:underline\">pievienojiet to savam kalendāram</a> un pievienojieties.",
 		"prompt_agent": "Uzvedne → aģents",
 		"read_the_ibm_write_up": "Izlasiet IBM aprakstu",
 		"ship_at_scale": "Ieviesiet plašā mērogā",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Tūre norit nodaļās — no pirmā aģenta izveides līdz tā ievietošanai blokķēdē.",
 		"want_this_on_your_own_site_or": "Vēlies to savā vietnē vai veikalā? Izveido to <a href=\"/tour-builder\">Tour Builder</a> — bez koda, abi režīmi iekļauti.",
 		"what_you_ll_see": "Ko tu redzēsi",
-		"you_have_a_tour_in_progress_pick": "Tev ir iesākta tūre — <a href=\"#\" id=\"tour-resume-link\">atsāc to →</a>",
+		"you_have_a_tour_in_progress_pick": "Tev ir iesākta tūre — <button type=\"button\" id=\"tour-resume-link\">atsāc to →</button>",
 		"you_re_in_control": "Tu kontrolē"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-atlīdzību tirgus",
 		"grind_earn": "Strādāt un pelnīt",
 		"grind_earn_2": "Slīpē un pelni",
-		"hard_vanity_addresses_are_hours_to_years": "Sarežģītu vanity adrešu ģenerēšana vienā mašīnā prasa stundas vai pat gadus. Šeit tu <strong>deponē USDC atlīdzību</strong> un neatkarīgu darbinieku flote paralēli slīpē tavu modeli — uzvar pirmais verificētais atbilstības atradējs. Izrāviens: atrastā atslēga ir <strong>aizzīmogota ar tavu X25519 atslēgu</strong>, tāpēc darbinieks nopelna atlīdzību, bet <strong>nekad neredz tavu maku</strong>. Norēķins ir bezuzticības, izmantojot <a href=\"/x402\">x402</a>; neizpildītās atlīdzības tiek atmaksātas pēc termiņa beigām. Vai arī <a href=\"#\" id=\"lede-earn\">liec savus brīvos kodolus strādāt</a> un pelni.",
+		"hard_vanity_addresses_are_hours_to_years": "Sarežģītu vanity adrešu ģenerēšana vienā mašīnā prasa stundas vai pat gadus. Šeit tu <strong>deponē USDC atlīdzību</strong> un neatkarīgu darbinieku flote paralēli slīpē tavu modeli — uzvar pirmais verificētais atbilstības atradējs. Izrāviens: atrastā atslēga ir <strong>aizzīmogota ar tavu X25519 atslēgu</strong>, tāpēc darbinieks nopelna atlīdzību, bet <strong>nekad neredz tavu maku</strong>. Norēķins ir bezuzticības, izmantojot <a href=\"/x402\">x402</a>; neizpildītās atlīdzības tiek atmaksātas pēc termiņa beigām. Vai arī <a href=\"#earn\" id=\"lede-earn\">liec savus brīvos kodolus strādāt</a> un pelni.",
 		"i_ve_saved_my_private_key_somewhere": "Esmu saglabājis savu privāto atslēgu drošā vietā.",
 		"label_optional_public": "Etiķete <span style=\"text-transform:none;color:#555\">(pēc izvēles, publiska)</span>",
 		"load_more": "Ielādēt vairāk",

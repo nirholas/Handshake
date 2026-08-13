@@ -736,7 +736,7 @@
 		"user": "Olùmúlò",
 		"view_agent": "Wo aṣojú →",
 		"view_on_marketplace": "Wo lórí ọjà ›",
-		"walk_through_your_agent_s_mind_every": "Rìn la inú aṣojú rẹ lọ. Gbogbo ìrántí jẹ́ ohun kan tí o lè rí, wá, kí o sì tún ṣe. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Ṣí sí ojú-ìwé kíkún ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Rìn la inú aṣojú rẹ lọ. Gbogbo ìrántí jẹ́ ohun kan tí o lè rí, wá, kí o sì tún ṣe. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Ṣí sí ojú-ìwé kíkún ↗</a>",
 		"website": "Ojúlé wẹ́ẹ̀bù",
 		"weekly": "Ọ̀sẹ̀-ọ̀sẹ̀",
 		"weekly_digest": "Àkójọpọ̀ ọ̀sẹ̀",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Ó ń gun lẹ́tà sí lẹ́tà bíi akọ́gun okùn. Òkè lẹ́tà kọ̀ọ̀kan jẹ́ ibi ìdìmú — ó máa ń gbé, ó máa ń fò, ó sì tún máa ń gbé padà."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Fi kọ́sọ sí orí ọ̀rọ̀ tí a tẹ̀wé sí abẹ́ rẹ̀ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Fi kọ́sọ sí orí ọ̀rọ̀ tí a tẹ̀wé sí abẹ́ rẹ̀ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Fi kọ́sọ sí <em>ibikíbi</em>.",
 		"meta_title": "Atẹ̀lé kọ́sọ — three.ws",
 		"primary": "<span>Àkọ́kọ́</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Kíkọ́ Àṣàpẹẹrẹ 3D AI Láìsí Àlàfo — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Kì í ṣe àwòrán àfihàn lásán — a máa bẹ̀rẹ̀ láti òfo sí àṣàpẹẹrẹ 3D tó ń ṣiṣẹ́, tí a lè fi sínú ohun èlò ní àkókò gidi, lẹ́yìn náà a ó ṣí ààyè fún ìbéèrè.",
 		"notify_me": "Fún mi ní ìwífún",
-		"or_just_add_it_to_your_calendar": "Tàbí kí o kàn <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">fi kún orí kàlẹ́ńdà rẹ</a> kí o sì wá.",
+		"or_just_add_it_to_your_calendar": "Tàbí kí o kàn <a id=\"add-cal-2\" style=\"text-decoration:underline\">fi kún orí kàlẹ́ńdà rẹ</a> kí o sì wá.",
 		"prompt_agent": "Àṣẹ → àṣàpẹẹrẹ",
 		"read_the_ibm_write_up": "Ka àkọsílẹ̀ IBM",
 		"ship_at_scale": "Fi ránṣẹ́ ní ìwọ̀n púpọ̀",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Ìrìn àjò náà ń lọ nípa orí-ọ̀rọ̀ — láti kíkọ́ aṣojú àkọ́kọ́ rẹ títí di gbígbé e sórí ẹ̀wọ̀n.",
 		"want_this_on_your_own_site_or": "Ṣé o fẹ́ èyí lórí ojúlé ayélujára tàbí ilé ìtajà tìrẹ? Kọ́ ọ̀kan nínú <a href=\"/tour-builder\">Tour Builder</a> — kò sí koodu, àwọn ipò méjèèjì wà nínú rẹ̀.",
 		"what_you_ll_see": "Ohun tí o máa rí",
-		"you_have_a_tour_in_progress_pick": "O ní ìrìn àjò kan tí ó ń lọ lọ́wọ́ — <a href=\"#\" id=\"tour-resume-link\">tẹ̀síwájú láti ibi tí o ti dáwọ́ dúró →</a>",
+		"you_have_a_tour_in_progress_pick": "O ní ìrìn àjò kan tí ó ń lọ lọ́wọ́ — <button type=\"button\" id=\"tour-resume-link\">tẹ̀síwájú láti ibi tí o ti dáwọ́ dúró →</button>",
 		"you_re_in_control": "Ìwọ ni ó ń darí rẹ̀"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Ọjà Ẹ̀bùn-Ìṣiṣẹ́",
 		"grind_earn": "Ṣiṣẹ́ & jẹ èrè",
 		"grind_earn_2": "Ṣiṣẹ́ & Jere",
-		"hard_vanity_addresses_are_hours_to_years": "Àwọn àdírẹ́sì vanity tó le koko máa ń gba wákàtí sí ọdún lórí ẹ̀rọ kan. Níhìn-ín, o máa fi <strong>bounty USDC sílẹ̀ gẹ́gẹ́ bí ẹ̀rí </strong> tí àwọn òṣìṣẹ́ aládàáni púpọ̀ yóò sì wá àwòkọ́ṣe rẹ ní àkókò kan náà — èyí tó bá kọ́kọ́ bámu tí wọ́n sì fìdí rẹ̀ múlẹ̀ ló máa borí. Ìdàgbàsókè náà ni pé: kọ́kọ́rọ́ tí wọ́n rí náà ti <strong>di títì pa mọ́ fún kọ́kọ́rọ́ X25519 rẹ</strong>, nítorí náà, òṣìṣẹ́ náà máa jere bounty náà ṣùgbọ́n <strong>kò ní rí àpò rẹ rí</strong>. Ìparí ìṣòwò náà kò nílò ìgbẹ́kẹ̀lé nípasẹ̀ <a href=\"/x402\">x402</a>; àwọn bounty tí kò bá kún yóò padà sí ọ lọ́wọ́ nígbà tí àkókò bá parí. Tàbí <a href=\"#\" id=\"lede-earn\">fi àwọn cores rẹ tí kò ṣiṣẹ́ sílẹ̀ fún iṣẹ́</a> kí o sì jere.",
+		"hard_vanity_addresses_are_hours_to_years": "Àwọn àdírẹ́sì vanity tó le koko máa ń gba wákàtí sí ọdún lórí ẹ̀rọ kan. Níhìn-ín, o máa fi <strong>bounty USDC sílẹ̀ gẹ́gẹ́ bí ẹ̀rí </strong> tí àwọn òṣìṣẹ́ aládàáni púpọ̀ yóò sì wá àwòkọ́ṣe rẹ ní àkókò kan náà — èyí tó bá kọ́kọ́ bámu tí wọ́n sì fìdí rẹ̀ múlẹ̀ ló máa borí. Ìdàgbàsókè náà ni pé: kọ́kọ́rọ́ tí wọ́n rí náà ti <strong>di títì pa mọ́ fún kọ́kọ́rọ́ X25519 rẹ</strong>, nítorí náà, òṣìṣẹ́ náà máa jere bounty náà ṣùgbọ́n <strong>kò ní rí àpò rẹ rí</strong>. Ìparí ìṣòwò náà kò nílò ìgbẹ́kẹ̀lé nípasẹ̀ <a href=\"/x402\">x402</a>; àwọn bounty tí kò bá kún yóò padà sí ọ lọ́wọ́ nígbà tí àkókò bá parí. Tàbí <a href=\"#earn\" id=\"lede-earn\">fi àwọn cores rẹ tí kò ṣiṣẹ́ sílẹ̀ fún iṣẹ́</a> kí o sì jere.",
 		"i_ve_saved_my_private_key_somewhere": "Mo ti fi kọ́kọ́rọ́ àdáni mi pamọ́ sí ibìkan tó dájú.",
 		"label_optional_public": "Àmì <span style=\"text-transform:none;color:#555\">(kò pọn dandan, fún gbogbo ènìyàn)</span>",
 		"load_more": "Kó púpọ̀ sí i wá",

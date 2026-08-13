@@ -736,7 +736,7 @@
 		"user": "Bruger",
 		"view_agent": "Se agent →",
 		"view_on_marketplace": "Se på markedsplads ›",
-		"walk_through_your_agent_s_mind_every": "Gå gennem din agents tanker. Hvert minde er et objekt, du kan se, søge og forme. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Åbn fuldskærm ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Gå gennem din agents tanker. Hvert minde er et objekt, du kan se, søge og forme. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Åbn fuldskærm ↗</a>",
 		"website": "Hjemmeside",
 		"weekly": "Ugentlig",
 		"weekly_digest": "Ugentlig oversigt",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Hun klatrer fra bogstav til bogstav som en rebstiger. Hvert bogstavs top er et gribepunkt — hun sætter sig, hopper, sætter sig igen."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Hold musen over et understreget ord → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">priser</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">eksempler</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Hold musen over et understreget ord → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">priser</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">eksempler</a>",
 		"hover_anywhere": "Hold musen over <em>hvor som helst</em>.",
 		"meta_title": "Markørfølger — three.ws",
 		"primary": "<span>Primær</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Bygning af 3D AI Agenter Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ingen slides, kun walkthrough — vi går fra ingenting til en fungerende, indlejret 3D agent i realtid, derefter åbner vi op for spørgsmål.",
 		"notify_me": "Underret mig",
-		"or_just_add_it_to_your_calendar": "Eller bare <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">tilføj det til din kalender</a> og mød op.",
+		"or_just_add_it_to_your_calendar": "Eller bare <a id=\"add-cal-2\" style=\"text-decoration:underline\">tilføj det til din kalender</a> og mød op.",
 		"prompt_agent": "Prompt → agent",
 		"read_the_ibm_write_up": "Læs IBM's skrivelse",
 		"ship_at_scale": "Lever i stor skala",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Turen kører som kapitler — fra at bygge din første agent til at tage den on-chain.",
 		"want_this_on_your_own_site_or": "Vil du have dette på din egen side eller butik? Byg en i <a href=\"/tour-builder\">Tour Builder</a> — ingen kode, begge tilstande inkluderet.",
 		"what_you_ll_see": "Hvad du vil se",
-		"you_have_a_tour_in_progress_pick": "Du har en tur i gang — <a href=\"#\" id=\"tour-resume-link\">tag den op igen →</a>",
+		"you_have_a_tour_in_progress_pick": "Du har en tur i gang — <button type=\"button\" id=\"tour-resume-link\">tag den op igen →</button>",
 		"you_re_in_control": "Du har kontrol"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty Marked",
 		"grind_earn": "Grind & tjen",
 		"grind_earn_2": "Grind & tjen",
-		"hard_vanity_addresses_are_hours_to_years": "Svære vanity-adresser tager timer til år på én maskine. Her <strong>escrower du en USDC bounty</strong>, og en flåde af uafhængige arbejdere grinder dit mønster parallelt — det første verificerede match vinder. Gennembruddet: den fundne nøgle er <strong>forseglet til din X25519-nøgle</strong>, så arbejderen tjener bountyen, men <strong>ser aldrig din tegnebog</strong>. Afregning er tillidsløs via <a href=\"/x402\">x402</a>; uopfyldte bounties refunderes ved udløb. Eller <a href=\"#\" id=\"lede-earn\">sæt dine ledige kerner i arbejde</a> og tjen.",
+		"hard_vanity_addresses_are_hours_to_years": "Svære vanity-adresser tager timer til år på én maskine. Her <strong>escrower du en USDC bounty</strong>, og en flåde af uafhængige arbejdere grinder dit mønster parallelt — det første verificerede match vinder. Gennembruddet: den fundne nøgle er <strong>forseglet til din X25519-nøgle</strong>, så arbejderen tjener bountyen, men <strong>ser aldrig din tegnebog</strong>. Afregning er tillidsløs via <a href=\"/x402\">x402</a>; uopfyldte bounties refunderes ved udløb. Eller <a href=\"#earn\" id=\"lede-earn\">sæt dine ledige kerner i arbejde</a> og tjen.",
 		"i_ve_saved_my_private_key_somewhere": "Jeg har gemt min private nøgle et sikkert sted.",
 		"label_optional_public": "Etiket <span style=\"text-transform:none;color:#555\">(valgfri, offentlig)</span>",
 		"load_more": "Indlæs mere",

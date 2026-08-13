@@ -736,7 +736,7 @@
 		"user": "Пайдаланушы",
 		"view_agent": "Агентті көру →",
 		"view_on_marketplace": "Маркетплейстен көру ›",
-		"walk_through_your_agent_s_mind_every": "Агентіңіздің ойына еніңіз. Әр естелік – сіз көре, іздей және қалыптастыра алатын нысан. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Толық экранда ашу ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Агентіңіздің ойына еніңіз. Әр естелік – сіз көре, іздей және қалыптастыра алатын нысан. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Толық экранда ашу ↗</a>",
 		"website": "Веб-сайт",
 		"weekly": "Апталық",
 		"weekly_digest": "Апталық шолу",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Ол әріптен әріпке арқанға өрмелеуші сияқты өрмелейді. Әр әріптің жоғарғы жағы – тіреу нүктесі — ол қонады, секіреді, қайта қонады."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Меңзерді кез келген асты сызылған сөздің үстіне апарыңыз → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">құжаттар</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">бағалар</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">мысалдар</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Меңзерді кез келген асты сызылған сөздің үстіне апарыңыз → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">құжаттар</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">бағалар</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">мысалдар</a>",
 		"hover_anywhere": "Меңзерді <em>кез келген жерге</em> апарыңыз.",
 		"meta_title": "Меңзерді бақылаушы — three.ws",
 		"primary": "<span>Негізгі</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI агенттерін тікелей эфирде құру — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Тек слайдтарсыз шолу — біз ештеңеден жұмыс істейтін, ендірілетін 3D агентіне нақты уақытта өтеміз, содан кейін сөз береміз.",
 		"notify_me": "Маған хабарлаңыз",
-		"or_just_add_it_to_your_calendar": "Немесе жай ғана <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">күнтізбеңізге қосып</a> келіңіз.",
+		"or_just_add_it_to_your_calendar": "Немесе жай ғана <a id=\"add-cal-2\" style=\"text-decoration:underline\">күнтізбеңізге қосып</a> келіңіз.",
 		"prompt_agent": "Нұсқау → агент",
 		"read_the_ibm_write_up": "IBM мақаласын оқыңыз",
 		"ship_at_scale": "Ауқымды түрде жеткізіңіз",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Тур тараулар бойынша өтеді — алғашқы агентіңізді құрудан бастап оны тізбекке шығаруға дейін.",
 		"want_this_on_your_own_site_or": "Мұны өз сайтыңызда немесе дүкеніңізде қалайсыз ба? Оны <a href=\"/tour-builder\">Tour Builder</a>-де жасаңыз — кодсыз, екі режим де қамтылған.",
 		"what_you_ll_see": "Не көресіз",
-		"you_have_a_tour_in_progress_pick": "Сізде жалғасып жатқан тур бар — <a href=\"#\" id=\"tour-resume-link\">оны қайта бастаңыз →</a>",
+		"you_have_a_tour_in_progress_pick": "Сізде жалғасып жатқан тур бар — <button type=\"button\" id=\"tour-resume-link\">оны қайта бастаңыз →</button>",
 		"you_re_in_control": "Басқару сіздің қолыңызда"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-Bounty нарығы",
 		"grind_earn": "Grind және табыс табу",
 		"grind_earn_2": "Өңдеп тап",
-		"hard_vanity_addresses_are_hours_to_years": "Қиын vanity-адрестерді бір машинада табу сағаттардан жылдарға дейін созылады. Мұнда сіз <strong>USDC сыйақыны</strong> кепілге қоясыз және тәуелсіз жұмысшылар тобы сіздің үлгіңізді параллель өңдейді — бірінші расталған сәйкестік жеңеді. Жаңашылдық: табылған кілт сіздің X25519 кілтіңізге <strong>мөрленген</strong>, сондықтан жұмысшы сыйақыны алады, бірақ <strong>сіздің әмияныңызды ешқашан көрмейді</strong>. Есеп айырысу <a href=\"/x402\">x402</a> арқылы сенімсіз жүзеге асырылады; толтырылмаған сыйақылар мерзімі өткенде қайтарылады. Немесе <a href=\"#\" id=\"lede-earn\">бос ядроларыңызды жұмысқа қосып</a> табыс табыңыз.",
+		"hard_vanity_addresses_are_hours_to_years": "Қиын vanity-адрестерді бір машинада табу сағаттардан жылдарға дейін созылады. Мұнда сіз <strong>USDC сыйақыны</strong> кепілге қоясыз және тәуелсіз жұмысшылар тобы сіздің үлгіңізді параллель өңдейді — бірінші расталған сәйкестік жеңеді. Жаңашылдық: табылған кілт сіздің X25519 кілтіңізге <strong>мөрленген</strong>, сондықтан жұмысшы сыйақыны алады, бірақ <strong>сіздің әмияныңызды ешқашан көрмейді</strong>. Есеп айырысу <a href=\"/x402\">x402</a> арқылы сенімсіз жүзеге асырылады; толтырылмаған сыйақылар мерзімі өткенде қайтарылады. Немесе <a href=\"#earn\" id=\"lede-earn\">бос ядроларыңызды жұмысқа қосып</a> табыс табыңыз.",
 		"i_ve_saved_my_private_key_somewhere": "Мен жеке кілтімді қауіпсіз жерге сақтадым.",
 		"label_optional_public": "Белгі <span style=\"text-transform:none;color:#555\">(міндетті емес, жалпыға ортақ)</span>",
 		"load_more": "Көбірек жүктеу",

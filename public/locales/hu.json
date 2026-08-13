@@ -736,7 +736,7 @@
 		"user": "Felhasználó",
 		"view_agent": "Ügynök megtekintése →",
 		"view_on_marketplace": "Megtekintés a piactéren ›",
-		"walk_through_your_agent_s_mind_every": "Sétáljon végig ügynöke elméjében. Minden emlék egy objektum, amelyet láthat, kereshet és formálhat. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Teljes képernyős megnyitás ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Sétáljon végig ügynöke elméjében. Minden emlék egy objektum, amelyet láthat, kereshet és formálhat. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Teljes képernyős megnyitás ↗</a>",
 		"website": "Weboldal",
 		"weekly": "Hetente",
 		"weekly_digest": "Heti összefoglaló",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Betűről betűre mászik, mint egy kötélen mászó. Minden betű teteje egy fogáspont — megpihen, ugrik, majd újra megpihen."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Vidd az egeret bármely aláhúzott szó fölé → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentáció</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">árak</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">példák</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Vidd az egeret bármely aláhúzott szó fölé → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentáció</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">árak</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">példák</a>",
 		"hover_anywhere": "Vidd az egeret <em>bárhová</em>.",
 		"meta_title": "Kurzor követő — three.ws",
 		"primary": "<span>Elsődleges</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI Ügynökök Építése Élőben — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Nincs diavetítés, csak lépésről lépésre — semmiből egy működő, beágyazható 3D ügynökig valós időben, majd megnyitjuk a szót.",
 		"notify_me": "Értesítsen",
-		"or_just_add_it_to_your_calendar": "Vagy csak <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">adja hozzá a naptárához</a>, és jelenjen meg.",
+		"or_just_add_it_to_your_calendar": "Vagy csak <a id=\"add-cal-2\" style=\"text-decoration:underline\">adja hozzá a naptárához</a>, és jelenjen meg.",
 		"prompt_agent": "Prompt → ügynök",
 		"read_the_ibm_write_up": "Olvassa el az IBM írását",
 		"ship_at_scale": "Szállítás nagy léptékben",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Az útmutató fejezetekre bontva fut — az első ügynököd felépítésétől kezdve a láncra helyezéséig.",
 		"want_this_on_your_own_site_or": "Szeretnéd ezt a saját oldaladon vagy boltodban? Építs egyet a <a href=\"/tour-builder\">Tour Builder</a>-ben — kód nélkül, mindkét mód benne van.",
 		"what_you_ll_see": "Amit láthatsz",
-		"you_have_a_tour_in_progress_pick": "Folyamatban van egy útmutatód — <a href=\"#\" id=\"tour-resume-link\">vedd fel újra →</a>",
+		"you_have_a_tour_in_progress_pick": "Folyamatban van egy útmutatód — <button type=\"button\" id=\"tour-resume-link\">vedd fel újra →</button>",
 		"you_re_in_control": "Te irányítasz"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-jutalom piac",
 		"grind_earn": "Grindolj és keress",
 		"grind_earn_2": "Grindolj és keress",
-		"hard_vanity_addresses_are_hours_to_years": "A nehéz vanity címek megtalálása egy gépen óráktól évekig tarthat. Itt <strong>letétbe helyezel egy USDC jutalmat</strong>, és független dolgozók flottája párhuzamosan grindolja a mintádat — az első ellenőrzött találat nyer. Az áttörés: a megtalált kulcs <strong>a te X25519 kulcsodhoz van pecsételve</strong>, így a dolgozó megkapja a jutalmat, de <strong>soha nem látja a tárcádat</strong>. Az elszámolás bizalommentes <a href=\"/x402\">x402</a>-n keresztül; a nem teljesített jutalmak lejáratkor visszatérítésre kerülnek. Vagy <a href=\"#\" id=\"lede-earn\">állítsd munkába a szabad magjaidat</a> és keress.",
+		"hard_vanity_addresses_are_hours_to_years": "A nehéz vanity címek megtalálása egy gépen óráktól évekig tarthat. Itt <strong>letétbe helyezel egy USDC jutalmat</strong>, és független dolgozók flottája párhuzamosan grindolja a mintádat — az első ellenőrzött találat nyer. Az áttörés: a megtalált kulcs <strong>a te X25519 kulcsodhoz van pecsételve</strong>, így a dolgozó megkapja a jutalmat, de <strong>soha nem látja a tárcádat</strong>. Az elszámolás bizalommentes <a href=\"/x402\">x402</a>-n keresztül; a nem teljesített jutalmak lejáratkor visszatérítésre kerülnek. Vagy <a href=\"#earn\" id=\"lede-earn\">állítsd munkába a szabad magjaidat</a> és keress.",
 		"i_ve_saved_my_private_key_somewhere": "Elmentettem a privát kulcsomat egy biztonságos helyre.",
 		"label_optional_public": "Címke <span style=\"text-transform:none;color:#555\">(opcionális, nyilvános)</span>",
 		"load_more": "Több betöltése",

@@ -736,7 +736,7 @@
 		"user": "Користувач",
 		"view_agent": "Переглянути агента →",
 		"view_on_marketplace": "Переглянути на маркетплейсі ›",
-		"walk_through_your_agent_s_mind_every": "Пориньте у свідомість вашого агента. Кожен спогад — це об'єкт, який ви можете бачити, шукати та формувати. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Відкрити на весь екран ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Пориньте у свідомість вашого агента. Кожен спогад — це об'єкт, який ви можете бачити, шукати та формувати. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Відкрити на весь екран ↗</a>",
 		"website": "Вебсайт",
 		"weekly": "Щотижня",
 		"weekly_digest": "Щотижневий дайджест",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Вона підіймається від літери до літери, наче скелелаз. Кожна вершина літери — це точка опори: вона чіпляється, стрибає, знову чіпляється."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Наведіть курсор на будь-яке підкреслене слово → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">документація</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ціни</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">приклади</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Наведіть курсор на будь-яке підкреслене слово → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">документація</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ціни</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">приклади</a>",
 		"hover_anywhere": "Наведіть курсор <em>будь-де</em>.",
 		"meta_title": "Курсор-переслідувач — three.ws",
 		"primary": "<span>Основний</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Створення 3D AI агентів в реальному часі — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Без слайдів — ми йдемо від нуля до працюючого, вбудованого 3D агента в реальному часі, а потім відкриваємо дискусію.",
 		"notify_me": "Повідомте мене",
-		"or_just_add_it_to_your_calendar": "Або просто <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">додайте це до свого календаря</a> і приходьте.",
+		"or_just_add_it_to_your_calendar": "Або просто <a id=\"add-cal-2\" style=\"text-decoration:underline\">додайте це до свого календаря</a> і приходьте.",
 		"prompt_agent": "Запит → агент",
 		"read_the_ibm_write_up": "Прочитайте статтю IBM",
 		"ship_at_scale": "Випускайте в масштабах",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Екскурсія проходить у вигляді розділів — від створення вашого першого агента до перенесення його в блокчейн.",
 		"want_this_on_your_own_site_or": "Хочете це на своєму сайті чи в магазині? Створіть один у <a href=\"/tour-builder\">Tour Builder</a> — без коду, обидва режими включені.",
 		"what_you_ll_see": "Що ви побачите",
-		"you_have_a_tour_in_progress_pick": "У вас є екскурсія в процесі — <a href=\"#\" id=\"tour-resume-link\">продовжте її →</a>",
+		"you_have_a_tour_in_progress_pick": "У вас є екскурсія в процесі — <button type=\"button\" id=\"tour-resume-link\">продовжте її →</button>",
 		"you_re_in_control": "Ви контролюєте"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Ринок грінд-баунті",
 		"grind_earn": "Гріндити та заробляти",
 		"grind_earn_2": "Гріндити та заробляти",
-		"hard_vanity_addresses_are_hours_to_years": "Складні vanity-адреси генеруються годинами-роками на одній машині. Тут ви <strong>депонуєте USDC баунті</strong>, і флот незалежних воркерів гріндить ваш шаблон паралельно — перший підтверджений збіг виграє. Прорив: знайдений ключ <strong>запечатується вашим ключем X25519</strong>, тому воркер заробляє баунті, але <strong>ніколи не бачить вашого гаманця</strong>. Розрахунок відбувається без довіри через <a href=\"/x402\">x402</a>; незаповнені баунті повертаються після закінчення терміну дії. Або <a href=\"#\" id=\"lede-earn\">задійте свої вільні ядра</a> та заробляйте.",
+		"hard_vanity_addresses_are_hours_to_years": "Складні vanity-адреси генеруються годинами-роками на одній машині. Тут ви <strong>депонуєте USDC баунті</strong>, і флот незалежних воркерів гріндить ваш шаблон паралельно — перший підтверджений збіг виграє. Прорив: знайдений ключ <strong>запечатується вашим ключем X25519</strong>, тому воркер заробляє баунті, але <strong>ніколи не бачить вашого гаманця</strong>. Розрахунок відбувається без довіри через <a href=\"/x402\">x402</a>; незаповнені баунті повертаються після закінчення терміну дії. Або <a href=\"#earn\" id=\"lede-earn\">задійте свої вільні ядра</a> та заробляйте.",
 		"i_ve_saved_my_private_key_somewhere": "Я зберіг свій приватний ключ у надійному місці.",
 		"label_optional_public": "Мітка <span style=\"text-transform:none;color:#555\">(необов'язково, публічно)</span>",
 		"load_more": "Завантажити більше",

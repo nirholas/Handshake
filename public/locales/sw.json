@@ -736,7 +736,7 @@
 		"user": "Mtumiaji",
 		"view_agent": "Tazama wakala →",
 		"view_on_marketplace": "Tazama sokoni ›",
-		"walk_through_your_agent_s_mind_every": "Tembea katika akili ya wakala wako. Kila kumbukumbu ni kitu unachoweza kuona, kutafuta, na kuunda. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Fungua skrini nzima ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Tembea katika akili ya wakala wako. Kila kumbukumbu ni kitu unachoweza kuona, kutafuta, na kuunda. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Fungua skrini nzima ↗</a>",
 		"website": "Tovuti",
 		"weekly": "Kila wiki",
 		"weekly_digest": "Muhtasari wa wiki",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Anapanda herufi kwa herufi kama mpandaji kamba. Kila ncha ya herufi ni sehemu ya kushikia — anakaa, anaruka, anakaa tena."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Elekeza kishale kwenye neno lolote lililopigiwa mstari → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Elekeza kishale kwenye neno lolote lililopigiwa mstari → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Elekeza kishale <em>popote</em>.",
 		"meta_title": "Mfuatiliaji wa kishale — three.ws",
 		"primary": "<span>Kuu</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Kujenga Wakala wa 3D AI Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Hakuna slaidi — tunapita kutoka hakuna chochote hadi wakala wa 3D unaoweza kuingizwa unaofanya kazi kwa wakati halisi, kisha tunafungua sakafu.",
 		"notify_me": "Nijulishe",
-		"or_just_add_it_to_your_calendar": "Au ongeza tu <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">katika kalenda yako</a> na uonyeshe.",
+		"or_just_add_it_to_your_calendar": "Au ongeza tu <a id=\"add-cal-2\" style=\"text-decoration:underline\">katika kalenda yako</a> na uonyeshe.",
 		"prompt_agent": "Maelekezo → wakala",
 		"read_the_ibm_write_up": "Soma andiko la IBM",
 		"ship_at_scale": "Tuma kwa kiwango",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Ziara inakimbia kama sura — kutoka kujenga wakala wako wa kwanza hadi kuhamasisha kwenye blockchain.",
 		"want_this_on_your_own_site_or": "Unataka hii kwenye tovuti yako au duka? Jenga moja kwenye <a href=\"/tour-builder\">Mjenzi wa Ziara</a> — hakuna msimbo, mitindo yote imejumuishwa.",
 		"what_you_ll_see": "Unachokiona",
-		"you_have_a_tour_in_progress_pick": "Una ziara inayoendelea — <a href=\"#\" id=\"tour-resume-link\">ichukue tena →</a>",
+		"you_have_a_tour_in_progress_pick": "Una ziara inayoendelea — <button type=\"button\" id=\"tour-resume-link\">ichukue tena →</button>",
 		"you_re_in_control": "Wewe ndiye mwenye udhibiti"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Soko la Zawadi za Uchimbaji",
 		"grind_earn": "Chimbua & pata",
 		"grind_earn_2": "Chimbua & pata",
-		"hard_vanity_addresses_are_hours_to_years": "Anwani ngumu za 'vanity' huchukua masaa hadi miaka kwenye mashine moja. Hapa wewe <strong>unaweka dhamana ya zawadi ya USDC</strong> na kundi la wafanyakazi huru huchimbua muundo wako sambamba — anayelingana na kuthibitishwa kwanza hushinda. Mafanikio: ufunguo uliopatikana <strong>umefungwa kwa ufunguo wako wa X25519</strong>, hivyo mfanyakazi anapata zawadi lakini <strong>hatawahi kuona pochi yako</strong>. Malipo hayahitaji uaminifu kupitia <a href=\"/x402\">x402</a>; zawadi zisizojazwa zinarudishiwa pesa muda ukiisha. Au <a href=\"#\" id=\"lede-earn\">tumia cores zako za ziada kufanya kazi</a> na upate.",
+		"hard_vanity_addresses_are_hours_to_years": "Anwani ngumu za 'vanity' huchukua masaa hadi miaka kwenye mashine moja. Hapa wewe <strong>unaweka dhamana ya zawadi ya USDC</strong> na kundi la wafanyakazi huru huchimbua muundo wako sambamba — anayelingana na kuthibitishwa kwanza hushinda. Mafanikio: ufunguo uliopatikana <strong>umefungwa kwa ufunguo wako wa X25519</strong>, hivyo mfanyakazi anapata zawadi lakini <strong>hatawahi kuona pochi yako</strong>. Malipo hayahitaji uaminifu kupitia <a href=\"/x402\">x402</a>; zawadi zisizojazwa zinarudishiwa pesa muda ukiisha. Au <a href=\"#earn\" id=\"lede-earn\">tumia cores zako za ziada kufanya kazi</a> na upate.",
 		"i_ve_saved_my_private_key_somewhere": "Nimehifadhi ufunguo wangu wa siri mahali salama.",
 		"label_optional_public": "Lebo <span style=\"text-transform:none;color:#555\">(hiari, ya umma)</span>",
 		"load_more": "Pakia zaidi",

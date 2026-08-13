@@ -736,7 +736,7 @@
 		"user": "Käyttäjä",
 		"view_agent": "Näytä agentti →",
 		"view_on_marketplace": "Näytä markkinapaikalla ›",
-		"walk_through_your_agent_s_mind_every": "Käy läpi agenttisi mielen. Jokainen muisto on objekti, jonka voit nähdä, etsiä ja muokata. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Avaa koko näytöllä ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Käy läpi agenttisi mielen. Jokainen muisto on objekti, jonka voit nähdä, etsiä ja muokata. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Avaa koko näytöllä ↗</a>",
 		"website": "Verkkosivusto",
 		"weekly": "Viikoittain",
 		"weekly_digest": "Viikoittainen yhteenveto",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Hän kiipeää kirjaimesta kirjaimeen kuin köysikiipeilijä. Jokaisen kirjaimen yläosa on tarttumakohta – hän istahtaa, hyppää, istahtaa uudelleen."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Vie hiiri minkä tahansa alleviivatun sanan päälle → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentaatio</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">hinnasto</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">esimerkit</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Vie hiiri minkä tahansa alleviivatun sanan päälle → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumentaatio</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">hinnasto</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">esimerkit</a>",
 		"hover_anywhere": "Vie hiiri <em>minne tahansa</em>.",
 		"meta_title": "Kohdistimen seuraaja — three.ws",
 		"primary": "<span>Ensisijainen</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Rakennamme 3D AI Agentteja Livenä — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ei dioja — vain kävely läpi — siirrymme tyhjältä sivulta toimivaan, upotettavissa olevaan 3D agenttiin reaaliajassa, sitten avataan keskustelu.",
 		"notify_me": "Ilmoita minulle",
-		"or_just_add_it_to_your_calendar": "Tai lisää se vain <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">kalenteriisi</a> ja tule paikalle.",
+		"or_just_add_it_to_your_calendar": "Tai lisää se vain <a id=\"add-cal-2\" style=\"text-decoration:underline\">kalenteriisi</a> ja tule paikalle.",
 		"prompt_agent": "Kehote → agentti",
 		"read_the_ibm_write_up": "Lue IBM:n kirjoitus",
 		"ship_at_scale": "Toimitus suuressa mittakaavassa",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Kierros etenee lukuina — ensimmäisestä agentin rakentamisesta sen viemiseen ketjuun.",
 		"want_this_on_your_own_site_or": "Haluatko tämän omalle sivustollesi tai kauppaasi? Rakenna yksi <a href=\"/tour-builder\">Tour Builder</a> — ei koodia, molemmat tilat mukana.",
 		"what_you_ll_see": "Mitä näet",
-		"you_have_a_tour_in_progress_pick": "Sinulla on meneillään oleva kierros — <a href=\"#\" id=\"tour-resume-link\">jatka siitä →</a>",
+		"you_have_a_tour_in_progress_pick": "Sinulla on meneillään oleva kierros — <button type=\"button\" id=\"tour-resume-link\">jatka siitä →</button>",
 		"you_re_in_control": "Olet ohjaksissa"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Louhinta-palkkiomarkkinat",
 		"grind_earn": "Louhi ja ansaitse",
 		"grind_earn_2": "Louhi ja ansaitse",
-		"hard_vanity_addresses_are_hours_to_years": "Vaikeiden vanity-osoitteiden luominen yhdellä koneella kestää tunneista vuosiin. Täällä <strong>talletat USDC palkkion escrow'hun</strong> ja riippumattomien työntekijöiden laivasto työstää kuviotasi rinnakkain — ensimmäinen vahvistettu osuma voittaa. Läpimurto: löydetty avain on <strong>sinetöity X25519-avaimeesi</strong>, joten työntekijä ansaitsee palkkion, mutta <strong>ei koskaan näe lompakkoasi</strong>. Selvitys on luottamukseton <a href=\"/x402\">x402</a> kautta; täyttämättömät palkkiot palautetaan vanhenemisen yhteydessä. Tai <a href=\"#\" id=\"lede-earn\">pane vapaat ytimesi töihin</a> ja ansaitse.",
+		"hard_vanity_addresses_are_hours_to_years": "Vaikeiden vanity-osoitteiden luominen yhdellä koneella kestää tunneista vuosiin. Täällä <strong>talletat USDC palkkion escrow'hun</strong> ja riippumattomien työntekijöiden laivasto työstää kuviotasi rinnakkain — ensimmäinen vahvistettu osuma voittaa. Läpimurto: löydetty avain on <strong>sinetöity X25519-avaimeesi</strong>, joten työntekijä ansaitsee palkkion, mutta <strong>ei koskaan näe lompakkoasi</strong>. Selvitys on luottamukseton <a href=\"/x402\">x402</a> kautta; täyttämättömät palkkiot palautetaan vanhenemisen yhteydessä. Tai <a href=\"#earn\" id=\"lede-earn\">pane vapaat ytimesi töihin</a> ja ansaitse.",
 		"i_ve_saved_my_private_key_somewhere": "Olen tallentanut yksityisen avaimeni turvalliseen paikkaan.",
 		"label_optional_public": "Nimi <span style=\"text-transform:none;color:#555\">(valinnainen, julkinen)</span>",
 		"load_more": "Lataa lisää",

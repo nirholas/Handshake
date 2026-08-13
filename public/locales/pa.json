@@ -736,7 +736,7 @@
 		"user": "ਉਪਭੋਗਤਾ",
 		"view_agent": "ਏਜੰਟ ਦੇਖੋ →",
 		"view_on_marketplace": "ਮਾਰਕੀਟਪਲੇਸ 'ਤੇ ਦੇਖੋ ›",
-		"walk_through_your_agent_s_mind_every": "ਆਪਣੇ ਏਜੰਟ ਦੇ ਮਨ ਵਿੱਚੋਂ ਲੰਘੋ। ਹਰ ਯਾਦ ਇੱਕ ਵਸਤੂ ਹੈ ਜਿਸਨੂੰ ਤੁਸੀਂ ਦੇਖ ਸਕਦੇ ਹੋ, ਖੋਜ ਸਕਦੇ ਹੋ ਅਤੇ ਆਕਾਰ ਦੇ ਸਕਦੇ ਹੋ। <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ਪੂਰੀ ਸਕ੍ਰੀਨ ਖੋਲ੍ਹੋ ↗</a>",
+		"walk_through_your_agent_s_mind_every": "ਆਪਣੇ ਏਜੰਟ ਦੇ ਮਨ ਵਿੱਚੋਂ ਲੰਘੋ। ਹਰ ਯਾਦ ਇੱਕ ਵਸਤੂ ਹੈ ਜਿਸਨੂੰ ਤੁਸੀਂ ਦੇਖ ਸਕਦੇ ਹੋ, ਖੋਜ ਸਕਦੇ ਹੋ ਅਤੇ ਆਕਾਰ ਦੇ ਸਕਦੇ ਹੋ। <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ਪੂਰੀ ਸਕ੍ਰੀਨ ਖੋਲ੍ਹੋ ↗</a>",
 		"website": "ਵੈੱਬਸਾਈਟ",
 		"weekly": "ਹਫ਼ਤਾਵਾਰੀ",
 		"weekly_digest": "ਹਫ਼ਤਾਵਾਰੀ ਡਾਇਜੈਸਟ",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "ਉਹ ਇੱਕ ਰੱਸੀ-ਚੜ੍ਹਨ ਵਾਲੇ ਵਾਂਗ ਅੱਖਰ-ਦਰ-ਅੱਖਰ ਚੜ੍ਹਦੀ ਹੈ। ਹਰ ਅੱਖਰ ਦਾ ਸਿਖਰ ਇੱਕ ਪਕੜ ਬਿੰਦੂ ਹੈ — ਉਹ ਬੈਠਦੀ ਹੈ, ਛਾਲ ਮਾਰਦੀ ਹੈ, ਫਿਰ ਬੈਠਦੀ ਹੈ।"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "ਕਿਸੇ ਵੀ ਰੇਖਾਂਕਿਤ ਸ਼ਬਦ 'ਤੇ ਹੋਵਰ ਕਰੋ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ਦਸਤਾਵੇਜ਼</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ਕੀਮਤ</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ਉਦਾਹਰਨਾਂ</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "ਕਿਸੇ ਵੀ ਰੇਖਾਂਕਿਤ ਸ਼ਬਦ 'ਤੇ ਹੋਵਰ ਕਰੋ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ਦਸਤਾਵੇਜ਼</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ਕੀਮਤ</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ਉਦਾਹਰਨਾਂ</a>",
 		"hover_anywhere": "<em>ਕਿਤੇ ਵੀ</em> ਹੋਵਰ ਕਰੋ।",
 		"meta_title": "ਕਰਸਰ ਫਾਲੋਅਰ — three.ws",
 		"primary": "<span>ਮੁੱਖ</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI ਏਜੰਟ ਲਾਈਵ ਬਣਾਉਣਾ — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "ਸਿਰਫ਼ ਸਲਾਈਡਾਂ ਵਾਲਾ ਵਾਕਥਰੂ ਨਹੀਂ — ਅਸੀਂ ਅਸਲ ਸਮੇਂ ਵਿੱਚ ਕੁਝ ਵੀ ਨਹੀਂ ਤੋਂ ਇੱਕ ਕਾਰਜਸ਼ੀਲ, ਏਮਬੈਡ ਕਰਨ ਯੋਗ 3D ਏਜੰਟ ਤੱਕ ਜਾਂਦੇ ਹਾਂ, ਫਿਰ ਚਰਚਾ ਲਈ ਖੁੱਲ੍ਹਾ ਕਰਦੇ ਹਾਂ।",
 		"notify_me": "ਮੈਨੂੰ ਸੂਚਿਤ ਕਰੋ",
-		"or_just_add_it_to_your_calendar": "ਜਾਂ ਬੱਸ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ਇਸਨੂੰ ਆਪਣੇ ਕੈਲੰਡਰ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ</a> ਅਤੇ ਆ ਜਾਓ।",
+		"or_just_add_it_to_your_calendar": "ਜਾਂ ਬੱਸ <a id=\"add-cal-2\" style=\"text-decoration:underline\">ਇਸਨੂੰ ਆਪਣੇ ਕੈਲੰਡਰ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ</a> ਅਤੇ ਆ ਜਾਓ।",
 		"prompt_agent": "ਪ੍ਰੋਂਪਟ → ਏਜੰਟ",
 		"read_the_ibm_write_up": "IBM ਲੇਖ ਪੜ੍ਹੋ",
 		"ship_at_scale": "ਵੱਡੇ ਪੱਧਰ 'ਤੇ ਭੇਜੋ",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ਟੂਰ ਅਧਿਆਵਾਂ ਦੇ ਰੂਪ ਵਿੱਚ ਚੱਲਦਾ ਹੈ — ਤੁਹਾਡੇ ਪਹਿਲੇ ਏਜੰਟ ਨੂੰ ਬਣਾਉਣ ਤੋਂ ਲੈ ਕੇ ਇਸਨੂੰ ਆਨ-ਚੇਨ 'ਤੇ ਲੈ ਜਾਣ ਤੱਕ।",
 		"want_this_on_your_own_site_or": "ਕੀ ਤੁਸੀਂ ਇਸਨੂੰ ਆਪਣੀ ਸਾਈਟ ਜਾਂ ਸਟੋਰ 'ਤੇ ਚਾਹੁੰਦੇ ਹੋ? <a href=\"/tour-builder\">ਟੂਰ ਬਿਲਡਰ</a> ਵਿੱਚ ਇੱਕ ਬਣਾਓ — ਕੋਈ ਕੋਡ ਨਹੀਂ, ਦੋਵੇਂ ਮੋਡ ਸ਼ਾਮਲ ਹਨ।",
 		"what_you_ll_see": "ਤੁਸੀਂ ਕੀ ਦੇਖੋਗੇ",
-		"you_have_a_tour_in_progress_pick": "ਤੁਹਾਡਾ ਇੱਕ ਟੂਰ ਚੱਲ ਰਿਹਾ ਹੈ — <a href=\"#\" id=\"tour-resume-link\">ਇਸਨੂੰ ਦੁਬਾਰਾ ਸ਼ੁਰੂ ਕਰੋ →</a>",
+		"you_have_a_tour_in_progress_pick": "ਤੁਹਾਡਾ ਇੱਕ ਟੂਰ ਚੱਲ ਰਿਹਾ ਹੈ — <button type=\"button\" id=\"tour-resume-link\">ਇਸਨੂੰ ਦੁਬਾਰਾ ਸ਼ੁਰੂ ਕਰੋ →</button>",
 		"you_re_in_control": "ਤੁਸੀਂ ਕੰਟਰੋਲ ਵਿੱਚ ਹੋ"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ਗ੍ਰਾਈਂਡ-ਬਾਊਂਟੀ ਮਾਰਕੀਟ",
 		"grind_earn": "ਗ੍ਰਾਈਂਡ ਕਰੋ ਅਤੇ ਕਮਾਓ",
 		"grind_earn_2": "ਗ੍ਰਾਈਂਡ ਕਰੋ ਅਤੇ ਕਮਾਓ",
-		"hard_vanity_addresses_are_hours_to_years": "ਇੱਕ ਮਸ਼ੀਨ 'ਤੇ ਹਾਰਡ ਵੈਨਿਟੀ ਐਡਰੈੱਸ ਲੱਭਣ ਵਿੱਚ ਘੰਟਿਆਂ ਤੋਂ ਸਾਲ ਲੱਗ ਸਕਦੇ ਹਨ। ਇੱਥੇ ਤੁਸੀਂ <strong>ਇੱਕ USDC ਬਾਊਂਟੀ</strong> ਐਸਕਰੋ ਕਰਦੇ ਹੋ ਅਤੇ ਸੁਤੰਤਰ ਵਰਕਰਾਂ ਦਾ ਇੱਕ ਫਲੀਟ ਤੁਹਾਡੇ ਪੈਟਰਨ ਨੂੰ ਸਮਾਂਤਰ ਰੂਪ ਵਿੱਚ ਗ੍ਰਾਈਂਡ ਕਰਦਾ ਹੈ — ਪਹਿਲਾ ਪ੍ਰਮਾਣਿਤ ਮੈਚ ਜਿੱਤਦਾ ਹੈ। ਸਫਲਤਾ: ਲੱਭੀ ਗਈ ਕੁੰਜੀ <strong>ਤੁਹਾਡੀ X25519 ਕੁੰਜੀ ਨਾਲ ਸੀਲ ਕੀਤੀ ਜਾਂਦੀ ਹੈ</strong>, ਤਾਂ ਜੋ ਵਰਕਰ ਬਾਊਂਟੀ ਕਮਾ ਸਕੇ ਪਰ <strong>ਤੁਹਾਡਾ ਵਾਲਿਟ ਕਦੇ ਨਾ ਦੇਖੇ</strong>। ਨਿਪਟਾਰਾ <a href=\"/x402\">x402</a> ਰਾਹੀਂ ਭਰੋਸੇਮੰਦ ਹੈ; ਅਣਭਰੀਆਂ ਬਾਊਂਟੀਆਂ ਮਿਆਦ ਪੁੱਗਣ 'ਤੇ ਰਿਫੰਡ ਹੋ ਜਾਂਦੀਆਂ ਹਨ। ਜਾਂ <a href=\"#\" id=\"lede-earn\">ਆਪਣੇ ਵਾਧੂ ਕੋਰਾਂ ਨੂੰ ਕੰਮ 'ਤੇ ਲਗਾਓ</a> ਅਤੇ ਕਮਾਓ।",
+		"hard_vanity_addresses_are_hours_to_years": "ਇੱਕ ਮਸ਼ੀਨ 'ਤੇ ਹਾਰਡ ਵੈਨਿਟੀ ਐਡਰੈੱਸ ਲੱਭਣ ਵਿੱਚ ਘੰਟਿਆਂ ਤੋਂ ਸਾਲ ਲੱਗ ਸਕਦੇ ਹਨ। ਇੱਥੇ ਤੁਸੀਂ <strong>ਇੱਕ USDC ਬਾਊਂਟੀ</strong> ਐਸਕਰੋ ਕਰਦੇ ਹੋ ਅਤੇ ਸੁਤੰਤਰ ਵਰਕਰਾਂ ਦਾ ਇੱਕ ਫਲੀਟ ਤੁਹਾਡੇ ਪੈਟਰਨ ਨੂੰ ਸਮਾਂਤਰ ਰੂਪ ਵਿੱਚ ਗ੍ਰਾਈਂਡ ਕਰਦਾ ਹੈ — ਪਹਿਲਾ ਪ੍ਰਮਾਣਿਤ ਮੈਚ ਜਿੱਤਦਾ ਹੈ। ਸਫਲਤਾ: ਲੱਭੀ ਗਈ ਕੁੰਜੀ <strong>ਤੁਹਾਡੀ X25519 ਕੁੰਜੀ ਨਾਲ ਸੀਲ ਕੀਤੀ ਜਾਂਦੀ ਹੈ</strong>, ਤਾਂ ਜੋ ਵਰਕਰ ਬਾਊਂਟੀ ਕਮਾ ਸਕੇ ਪਰ <strong>ਤੁਹਾਡਾ ਵਾਲਿਟ ਕਦੇ ਨਾ ਦੇਖੇ</strong>। ਨਿਪਟਾਰਾ <a href=\"/x402\">x402</a> ਰਾਹੀਂ ਭਰੋਸੇਮੰਦ ਹੈ; ਅਣਭਰੀਆਂ ਬਾਊਂਟੀਆਂ ਮਿਆਦ ਪੁੱਗਣ 'ਤੇ ਰਿਫੰਡ ਹੋ ਜਾਂਦੀਆਂ ਹਨ। ਜਾਂ <a href=\"#earn\" id=\"lede-earn\">ਆਪਣੇ ਵਾਧੂ ਕੋਰਾਂ ਨੂੰ ਕੰਮ 'ਤੇ ਲਗਾਓ</a> ਅਤੇ ਕਮਾਓ।",
 		"i_ve_saved_my_private_key_somewhere": "ਮੈਂ ਆਪਣੀ ਨਿੱਜੀ ਕੁੰਜੀ ਕਿਸੇ ਸੁਰੱਖਿਅਤ ਥਾਂ 'ਤੇ ਸੁਰੱਖਿਅਤ ਕਰ ਲਈ ਹੈ।",
 		"label_optional_public": "ਲੇਬਲ <span style=\"text-transform:none;color:#555\">(ਵਿਕਲਪਿਕ, ਜਨਤਕ)</span>",
 		"load_more": "ਹੋਰ ਲੋਡ ਕਰੋ",

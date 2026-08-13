@@ -736,7 +736,7 @@
 		"user": "ಬಳಕೆದಾರ",
 		"view_agent": "ಏಜೆಂಟ್ ವೀಕ್ಷಿಸಿ →",
 		"view_on_marketplace": "ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ವೀಕ್ಷಿಸಿ ›",
-		"walk_through_your_agent_s_mind_every": "ನಿಮ್ಮ ಏಜೆಂಟ್‌ನ ಮನಸ್ಸಿನ ಮೂಲಕ ಸಾಗಿ. ಪ್ರತಿಯೊಂದು ಮೆಮೊರಿಯು ನೀವು ನೋಡಬಹುದಾದ, ಹುಡುಕಬಹುದಾದ ಮತ್ತು ರೂಪಿಸಬಹುದಾದ ಒಂದು ವಸ್ತುವಾಗಿದೆ. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ಪೂರ್ಣ ಪರದೆಯಲ್ಲಿ ತೆರೆಯಿರಿ ↗</a>",
+		"walk_through_your_agent_s_mind_every": "ನಿಮ್ಮ ಏಜೆಂಟ್‌ನ ಮನಸ್ಸಿನ ಮೂಲಕ ಸಾಗಿ. ಪ್ರತಿಯೊಂದು ಮೆಮೊರಿಯು ನೀವು ನೋಡಬಹುದಾದ, ಹುಡುಕಬಹುದಾದ ಮತ್ತು ರೂಪಿಸಬಹುದಾದ ಒಂದು ವಸ್ತುವಾಗಿದೆ. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ಪೂರ್ಣ ಪರದೆಯಲ್ಲಿ ತೆರೆಯಿರಿ ↗</a>",
 		"website": "ವೆಬ್‌ಸೈಟ್",
 		"weekly": "ಸಾಪ್ತಾಹಿಕ",
 		"weekly_digest": "ಸಾಪ್ತಾಹಿಕ ಸಾರಾಂಶ",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "ಅವಳು ಹಗ್ಗ ಹತ್ತುವವರಂತೆ ಅಕ್ಷರದಿಂದ ಅಕ್ಷರಕ್ಕೆ ಏರುತ್ತಾಳೆ. ಪ್ರತಿ ಅಕ್ಷರದ ಮೇಲ್ಭಾಗವು ಹಿಡಿತದ ಬಿಂದುವಾಗಿದೆ — ಅವಳು ಕುಳಿತುಕೊಳ್ಳುತ್ತಾಳೆ, ನೆಗೆಯುತ್ತಾಳೆ, ಮತ್ತೆ ಕುಳಿತುಕೊಳ್ಳುತ್ತಾಳೆ."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "ಯಾವುದೇ ಅಂಡರ್‌ಲೈನ್ ಮಾಡಿದ ಪದದ ಮೇಲೆ ಹೋವರ್ ಮಾಡಿ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "ಯಾವುದೇ ಅಂಡರ್‌ಲೈನ್ ಮಾಡಿದ ಪದದ ಮೇಲೆ ಹೋವರ್ ಮಾಡಿ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "ಹೋವರ್ <em>ಎಲ್ಲಿ ಬೇಕಾದರೂ</em>.",
 		"meta_title": "ಕರ್ಸರ್ ಅನುಸರಿಸುವಿಕೆ — three.ws",
 		"primary": "<span>ಪ್ರಾಥಮಿಕ</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI ಏಜೆಂಟ್‌ಗಳನ್ನು ಲೈವ್ ಆಗಿ ನಿರ್ಮಿಸುವುದು — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "ಕೇವಲ ಸ್ಲೈಡ್‌ಗಳಿಲ್ಲ, ಸಂಪೂರ್ಣ ವಾಕ್‌ಥ್ರೂ — ಶೂನ್ಯದಿಂದ ಕಾರ್ಯನಿರ್ವಹಿಸುವ, ಎಂಬೆಡ್ ಮಾಡಬಹುದಾದ 3D ಏಜೆಂಟ್‌ಗೆ ನೈಜ ಸಮಯದಲ್ಲಿ ಹೋಗುತ್ತೇವೆ, ನಂತರ ಚರ್ಚೆಗೆ ಮುಕ್ತ ಅವಕಾಶ.",
 		"notify_me": "ನನಗೆ ತಿಳಿಸಿ",
-		"or_just_add_it_to_your_calendar": "ಅಥವಾ ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್‌ಗೆ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ಸೇರಿಸಿ</a> ಮತ್ತು ಹಾಜರಾಗಿ.",
+		"or_just_add_it_to_your_calendar": "ಅಥವಾ ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್‌ಗೆ <a id=\"add-cal-2\" style=\"text-decoration:underline\">ಸೇರಿಸಿ</a> ಮತ್ತು ಹಾಜರಾಗಿ.",
 		"prompt_agent": "ಪ್ರಾಂಪ್ಟ್ → ಏಜೆಂಟ್",
 		"read_the_ibm_write_up": "IBM ವರದಿ ಓದಿ",
 		"ship_at_scale": "ದೊಡ್ಡ ಪ್ರಮಾಣದಲ್ಲಿ ವಿತರಿಸಿ",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ಟೂರ್ ಅಧ್ಯಾಯಗಳಾಗಿ ನಡೆಯುತ್ತದೆ — ನಿಮ್ಮ ಮೊದಲ ಏಜೆಂಟ್ ಅನ್ನು ನಿರ್ಮಿಸುವುದರಿಂದ ಹಿಡಿದು ಅದನ್ನು ಆನ್‌-ಚೈನ್‌ನಲ್ಲಿ ತೆಗೆದುಕೊಳ್ಳುವವರೆಗೆ.",
 		"want_this_on_your_own_site_or": "ಇದನ್ನು ನಿಮ್ಮ ಸ್ವಂತ ಸೈಟ್ ಅಥವಾ ಸ್ಟೋರ್‌ನಲ್ಲಿ ಬೇಕೇ? <a href=\"/tour-builder\">ಟೂರ್ ಬಿಲ್ಡರ್</a> ನಲ್ಲಿ ಒಂದನ್ನು ನಿರ್ಮಿಸಿ — ಕೋಡ್ ಇಲ್ಲ, ಎರಡೂ ಮೋಡ್‌ಗಳು ಸೇರಿವೆ.",
 		"what_you_ll_see": "ನೀವು ನೋಡುವುದು",
-		"you_have_a_tour_in_progress_pick": "ನಿಮ್ಮ ಟೂರ್ ಪ್ರಗತಿಯಲ್ಲಿದೆ — <a href=\"#\" id=\"tour-resume-link\">ಅದನ್ನು ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ →</a>",
+		"you_have_a_tour_in_progress_pick": "ನಿಮ್ಮ ಟೂರ್ ಪ್ರಗತಿಯಲ್ಲಿದೆ — <button type=\"button\" id=\"tour-resume-link\">ಅದನ್ನು ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ →</button>",
 		"you_re_in_control": "ನಿಯಂತ್ರಣ ನಿಮ್ಮ ಕೈಯಲ್ಲಿದೆ"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ಗ್ರೈಂಡ್-ಬೌಂಟಿ ಮಾರುಕಟ್ಟೆ",
 		"grind_earn": "ಗ್ರೈಂಡ್ ಮಾಡಿ & ಗಳಿಸಿ",
 		"grind_earn_2": "ಗ್ರೈಂಡ್ ಮಾಡಿ ಗಳಿಸಿ",
-		"hard_vanity_addresses_are_hours_to_years": "ಕಠಿಣ ವ್ಯಾನಿಟಿ ವಿಳಾಸಗಳನ್ನು ಒಂದೇ ಯಂತ್ರದಲ್ಲಿ ಪಡೆಯಲು ಗಂಟೆಗಳಿಂದ ವರ್ಷಗಳೇ ಬೇಕಾಗಬಹುದು. ಇಲ್ಲಿ ನೀವು <strong>ಒಂದು USDC ಬೌಂಟಿ</strong>ಯನ್ನು ಎಸ್ಕ್ರೋ ಮಾಡಿ ಮತ್ತು ಸ್ವತಂತ್ರ ಕಾರ್ಯಕರ್ತರ ಸಮೂಹವು ನಿಮ್ಮ ಪ್ಯಾಟರ್ನ್ ಅನ್ನು ಸಮಾನಾಂತರವಾಗಿ ಗ್ರೈಂಡ್ ಮಾಡುತ್ತದೆ — ಮೊದಲ ಪರಿಶೀಲಿಸಿದ ಹೊಂದಾಣಿಕೆ ಗೆಲ್ಲುತ್ತದೆ. ಪ್ರಮುಖ ಆವಿಷ್ಕಾರ: ಕಂಡುಬಂದ ಕೀಲಿಯು ನಿಮ್ಮ <strong>X25519 ಕೀಗೆ ಸೀಲ್ ಮಾಡಲ್ಪಟ್ಟಿರುತ್ತದೆ</strong>, ಆದ್ದರಿಂದ ಕಾರ್ಯಕರ್ತರು ಬೌಂಟಿ ಗಳಿಸುತ್ತಾರೆ, ಆದರೆ <strong>ನಿಮ್ಮ ವಾಲೆಟ್ ಅನ್ನು ಎಂದಿಗೂ ನೋಡುವುದಿಲ್ಲ</strong>. ವ್ಯವಹಾರವು <a href=\"/x402\">x402</a> ಮೂಲಕ ನಂಬಿಕೆಯಿಲ್ಲದೆ ನಡೆಯುತ್ತದೆ; ಭರ್ತಿಯಾಗದ ಬೌಂಟಿಗಳು ಅವಧಿ ಮುಗಿದ ನಂತರ ಮರುಪಾವತಿಯಾಗುತ್ತವೆ. ಅಥವಾ <a href=\"#\" id=\"lede-earn\">ನಿಮ್ಮ ಬಿಡುವಿನ ಕೋರ್‌ಗಳನ್ನು ಕೆಲಸಕ್ಕೆ ಹಾಕಿ</a> ಮತ್ತು ಗಳಿಸಿ.",
+		"hard_vanity_addresses_are_hours_to_years": "ಕಠಿಣ ವ್ಯಾನಿಟಿ ವಿಳಾಸಗಳನ್ನು ಒಂದೇ ಯಂತ್ರದಲ್ಲಿ ಪಡೆಯಲು ಗಂಟೆಗಳಿಂದ ವರ್ಷಗಳೇ ಬೇಕಾಗಬಹುದು. ಇಲ್ಲಿ ನೀವು <strong>ಒಂದು USDC ಬೌಂಟಿ</strong>ಯನ್ನು ಎಸ್ಕ್ರೋ ಮಾಡಿ ಮತ್ತು ಸ್ವತಂತ್ರ ಕಾರ್ಯಕರ್ತರ ಸಮೂಹವು ನಿಮ್ಮ ಪ್ಯಾಟರ್ನ್ ಅನ್ನು ಸಮಾನಾಂತರವಾಗಿ ಗ್ರೈಂಡ್ ಮಾಡುತ್ತದೆ — ಮೊದಲ ಪರಿಶೀಲಿಸಿದ ಹೊಂದಾಣಿಕೆ ಗೆಲ್ಲುತ್ತದೆ. ಪ್ರಮುಖ ಆವಿಷ್ಕಾರ: ಕಂಡುಬಂದ ಕೀಲಿಯು ನಿಮ್ಮ <strong>X25519 ಕೀಗೆ ಸೀಲ್ ಮಾಡಲ್ಪಟ್ಟಿರುತ್ತದೆ</strong>, ಆದ್ದರಿಂದ ಕಾರ್ಯಕರ್ತರು ಬೌಂಟಿ ಗಳಿಸುತ್ತಾರೆ, ಆದರೆ <strong>ನಿಮ್ಮ ವಾಲೆಟ್ ಅನ್ನು ಎಂದಿಗೂ ನೋಡುವುದಿಲ್ಲ</strong>. ವ್ಯವಹಾರವು <a href=\"/x402\">x402</a> ಮೂಲಕ ನಂಬಿಕೆಯಿಲ್ಲದೆ ನಡೆಯುತ್ತದೆ; ಭರ್ತಿಯಾಗದ ಬೌಂಟಿಗಳು ಅವಧಿ ಮುಗಿದ ನಂತರ ಮರುಪಾವತಿಯಾಗುತ್ತವೆ. ಅಥವಾ <a href=\"#earn\" id=\"lede-earn\">ನಿಮ್ಮ ಬಿಡುವಿನ ಕೋರ್‌ಗಳನ್ನು ಕೆಲಸಕ್ಕೆ ಹಾಕಿ</a> ಮತ್ತು ಗಳಿಸಿ.",
 		"i_ve_saved_my_private_key_somewhere": "ನನ್ನ ಖಾಸಗಿ ಕೀಲಿಯನ್ನು ಸುರಕ್ಷಿತ ಸ್ಥಳದಲ್ಲಿ ಉಳಿಸಿದ್ದೇನೆ.",
 		"label_optional_public": "ಲೇಬಲ್ <span style=\"text-transform:none;color:#555\">(ಐಚ್ಛಿಕ, ಸಾರ್ವಜನಿಕ)</span>",
 		"load_more": "ಇನ್ನಷ್ಟು ಲೋಡ್ ಮಾಡಿ",

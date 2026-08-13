@@ -736,7 +736,7 @@
 		"user": "පරිශීලකයා",
 		"view_agent": "නියෝජිතයා බලන්න →",
 		"view_on_marketplace": "වෙළඳපොලේ බලන්න ›",
-		"walk_through_your_agent_s_mind_every": "ඔබේ නියෝජිතයාගේ සිත තුළින් ගමන් කරන්න. සෑම මතකයක්ම ඔබට දැකීමට, සෙවීමට සහ හැඩගැස්වීමට හැකි වස්තුවකි. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">සම්පූර්ණ තිරය විවෘත කරන්න ↗</a>",
+		"walk_through_your_agent_s_mind_every": "ඔබේ නියෝජිතයාගේ සිත තුළින් ගමන් කරන්න. සෑම මතකයක්ම ඔබට දැකීමට, සෙවීමට සහ හැඩගැස්වීමට හැකි වස්තුවකි. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">සම්පූර්ණ තිරය විවෘත කරන්න ↗</a>",
 		"website": "වෙබ් අඩවිය",
 		"weekly": "සතිපතා",
 		"weekly_digest": "සතිපතා සාරාංශය",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "ඇය කඹ නගින්නියක් මෙන් අකුරෙන් අකුරට නගී. සෑම අකුරකම මුදුන අල්ලා ගැනීමට ස්ථානයකි — ඇය එහි වාඩි වී, පැන, නැවත වාඩි වේ."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "යටින් ඉරි ඇඳි ඕනෑම වචනයක් මතට යොමු කරන්න → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ලේඛන</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">මිලකරණය</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">උදාහරණ</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "යටින් ඉරි ඇඳි ඕනෑම වචනයක් මතට යොමු කරන්න → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ලේඛන</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">මිලකරණය</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">උදාහරණ</a>",
 		"hover_anywhere": "<em>ඕනෑම තැනකට</em> යොමු කරන්න.",
 		"meta_title": "කර්සරය අනුගමනය කරන්නා — three.ws",
 		"primary": "<span>ප්‍රාථමික</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "ත්‍රිමාණ AI නියෝජිතයන් සජීවීව ගොඩනැගීම — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "ස්ලයිඩ පමණක් සහිත ඉදිරිපත් කිරීමක් නොවේ — අපි කිසිවක් නොමැති තැන සිට ක්‍රියාකාරී, කාවැද්දිය හැකි ත්‍රිමාණ නියෝජිතයෙකු දක්වා සැබෑ වේලාවෙන් ගොස්, ඉන්පසු සාකච්ඡාවට විවෘත කරමු.",
 		"notify_me": "මට දැනුම් දෙන්න",
-		"or_just_add_it_to_your_calendar": "නැතහොත් <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ඔබේ දින දර්ශනයට එක් කරගන්න</a> සහ සහභාගී වන්න.",
+		"or_just_add_it_to_your_calendar": "නැතහොත් <a id=\"add-cal-2\" style=\"text-decoration:underline\">ඔබේ දින දර්ශනයට එක් කරගන්න</a> සහ සහභාගී වන්න.",
 		"prompt_agent": "විමසුම → නියෝජිතයා",
 		"read_the_ibm_write_up": "IBM වාර්තාව කියවන්න",
 		"ship_at_scale": "විශාල පරිමාණයෙන් යොදවන්න",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "සංචාරය පරිච්ඡේද ලෙස ක්‍රියාත්මක වේ — ඔබේ පළමු නියෝජිතයා ගොඩනැගීමේ සිට එය ඔන්-චේන් වෙත ගෙන යාම දක්වා.",
 		"want_this_on_your_own_site_or": "මෙය ඔබේම වෙබ් අඩවියේ හෝ වෙළඳසැලේ අවශ්‍යද? <a href=\"/tour-builder\">Tour Builder</a> තුළ එකක් සාදන්න — කේත රහිතව, මාදිලි දෙකම ඇතුළත් වේ.",
 		"what_you_ll_see": "ඔබ දකින දේ",
-		"you_have_a_tour_in_progress_pick": "ඔබට ක්‍රියාත්මක වෙමින් පවතින සංචාරයක් ඇත — <a href=\"#\" id=\"tour-resume-link\">එය නැවත ආරම්භ කරන්න →</a>",
+		"you_have_a_tour_in_progress_pick": "ඔබට ක්‍රියාත්මක වෙමින් පවතින සංචාරයක් ඇත — <button type=\"button\" id=\"tour-resume-link\">එය නැවත ආරම්භ කරන්න →</button>",
 		"you_re_in_control": "පාලනය ඔබ සතුයි"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Grind-ත්‍යාග වෙළඳපොළ",
 		"grind_earn": "Grind කර උපයන්න",
 		"grind_earn_2": "ග්‍රයින්ඩ් කර උපයන්න",
-		"hard_vanity_addresses_are_hours_to_years": "දුෂ්කර වැනිටි ලිපින තනි යන්ත්‍රයකින් සොයා ගැනීමට පැය ගණනක් සිට වසර ගණනක් ගතවේ. මෙහිදී ඔබ <strong> USDC බවුන්ටියක්</strong> එස්ක්‍රෝ කරන අතර ස්වාධීන සේවක කණ්ඩායමක් ඔබේ රටාව සමාන්තරව ග්‍රයින්ඩ් කරයි — පළමු සත්‍යාපිත ගැළපීම ජය ගනී. විප්ලවය: සොයාගත් යතුර <strong>ඔබේ X25519 යතුරට මුද්‍රා තබා ඇත</strong>, එබැවින් සේවකයා බවුන්ටිය උපයන නමුත් <strong>ඔබේ මුදල් පසුම්බිය කිසිදා නොදකියි</strong>. බේරුම්කරණය <a href=\"/x402\">x402</a> හරහා විශ්වාස රහිතව සිදු කෙරේ; නොපුරවන ලද බවුන්ටි කල් ඉකුත් වූ විට ආපසු ගෙවනු ලැබේ. නැතහොත් <a href=\"#\" id=\"lede-earn\">ඔබේ අමතර කෝර් ක්‍රියාත්මක කර</a> උපයන්න.",
+		"hard_vanity_addresses_are_hours_to_years": "දුෂ්කර වැනිටි ලිපින තනි යන්ත්‍රයකින් සොයා ගැනීමට පැය ගණනක් සිට වසර ගණනක් ගතවේ. මෙහිදී ඔබ <strong> USDC බවුන්ටියක්</strong> එස්ක්‍රෝ කරන අතර ස්වාධීන සේවක කණ්ඩායමක් ඔබේ රටාව සමාන්තරව ග්‍රයින්ඩ් කරයි — පළමු සත්‍යාපිත ගැළපීම ජය ගනී. විප්ලවය: සොයාගත් යතුර <strong>ඔබේ X25519 යතුරට මුද්‍රා තබා ඇත</strong>, එබැවින් සේවකයා බවුන්ටිය උපයන නමුත් <strong>ඔබේ මුදල් පසුම්බිය කිසිදා නොදකියි</strong>. බේරුම්කරණය <a href=\"/x402\">x402</a> හරහා විශ්වාස රහිතව සිදු කෙරේ; නොපුරවන ලද බවුන්ටි කල් ඉකුත් වූ විට ආපසු ගෙවනු ලැබේ. නැතහොත් <a href=\"#earn\" id=\"lede-earn\">ඔබේ අමතර කෝර් ක්‍රියාත්මක කර</a> උපයන්න.",
 		"i_ve_saved_my_private_key_somewhere": "මම මගේ පුද්ගලික යතුර ආරක්ෂිත ස්ථානයක සුරැකුවා.",
 		"label_optional_public": "ලේබලය <span style=\"text-transform:none;color:#555\">(විකල්ප, පොදු)</span>",
 		"load_more": "තවත් පූරණය කරන්න",

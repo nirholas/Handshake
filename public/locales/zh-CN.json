@@ -736,7 +736,7 @@
 		"user": "用户",
 		"view_agent": "查看代理 →",
 		"view_on_marketplace": "在市场中查看 ›",
-		"walk_through_your_agent_s_mind_every": "深入了解你的代理思维。每个记忆都是一个你可以查看、搜索和塑造的对象。<a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">全屏打开 ↗</a>",
+		"walk_through_your_agent_s_mind_every": "深入了解你的代理思维。每个记忆都是一个你可以查看、搜索和塑造的对象。<a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">全屏打开 ↗</a>",
 		"website": "网站",
 		"weekly": "每周",
 		"weekly_digest": "每周摘要",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "她像攀绳者一样，在字母间攀爬。每个字母顶部都是一个抓点 — 她栖息、跳跃、再次栖息。"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "悬停在任意带下划线的词语上 → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">文档</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">定价</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">示例</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "悬停在任意带下划线的词语上 → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">文档</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">定价</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">示例</a>",
 		"hover_anywhere": "悬停在 <em>任意位置</em>。",
 		"meta_title": "光标跟随者 — three.ws",
 		"primary": "<span>主要</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "现场构建 3D AI 智能体 — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "没有枯燥的幻灯片演示 — 我们将实时从零开始构建一个可工作的、可嵌入的 3D 智能体，然后开放提问。",
 		"notify_me": "通知我",
-		"or_just_add_it_to_your_calendar": "或者直接 <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">添加到你的日历</a> 并准时参加。",
+		"or_just_add_it_to_your_calendar": "或者直接 <a id=\"add-cal-2\" style=\"text-decoration:underline\">添加到你的日历</a> 并准时参加。",
 		"prompt_agent": "提示词 → 智能体",
 		"read_the_ibm_write_up": "阅读 IBM 的专题文章",
 		"ship_at_scale": "规模化交付",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "导览以章节形式进行 — 从构建你的第一个代理到将其上链。",
 		"want_this_on_your_own_site_or": "想在你的网站或商店上使用这个功能吗？在 <a href=\"/tour-builder\">Tour Builder</a> 中构建一个 — 无需代码，两种模式都包含在内。",
 		"what_you_ll_see": "预览内容",
-		"you_have_a_tour_in_progress_pick": "你有一个正在进行的导览 — <a href=\"#\" id=\"tour-resume-link\">继续 →</a>",
+		"you_have_a_tour_in_progress_pick": "你有一个正在进行的导览 — <button type=\"button\" id=\"tour-resume-link\">继续 →</button>",
 		"you_re_in_control": "由你掌控"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "算力赏金市场",
 		"grind_earn": "挖矿赚取",
 		"grind_earn_2": "挖矿赚取",
-		"hard_vanity_addresses_are_hours_to_years": "寻找一个高难度靓号地址，单台机器可能需要数小时乃至数年。在这里，你<strong>托管一笔 USDC 赏金</strong>，一支独立的算力大军将并行运算你的模式 — 首个验证匹配者获胜。突破性在于：找到的密钥将<strong>绑定到你的 X25519 密钥</strong>，因此工作者能获得赏金，但<strong>永远无法看到你的钱包</strong>。结算通过 <a href=\"/x402\">x402</a> 实现无信任化；未完成的赏金将在到期时退还。或者<a href=\"#\" id=\"lede-earn\">让你的闲置核心投入工作</a>并赚取收益。",
+		"hard_vanity_addresses_are_hours_to_years": "寻找一个高难度靓号地址，单台机器可能需要数小时乃至数年。在这里，你<strong>托管一笔 USDC 赏金</strong>，一支独立的算力大军将并行运算你的模式 — 首个验证匹配者获胜。突破性在于：找到的密钥将<strong>绑定到你的 X25519 密钥</strong>，因此工作者能获得赏金，但<strong>永远无法看到你的钱包</strong>。结算通过 <a href=\"/x402\">x402</a> 实现无信任化；未完成的赏金将在到期时退还。或者<a href=\"#earn\" id=\"lede-earn\">让你的闲置核心投入工作</a>并赚取收益。",
 		"i_ve_saved_my_private_key_somewhere": "我已将我的私钥安全保存。",
 		"label_optional_public": "标签 <span style=\"text-transform:none;color:#555\">(可选，公开)</span>",
 		"load_more": "加载更多",

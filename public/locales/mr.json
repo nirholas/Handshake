@@ -736,7 +736,7 @@
 		"user": "वापरकर्ता",
 		"view_agent": "एजंट पहा →",
 		"view_on_marketplace": "मार्केटप्लेसवर पहा ›",
-		"walk_through_your_agent_s_mind_every": "तुमच्या एजंटच्या मनात डोकावून पहा. प्रत्येक आठवण ही एक वस्तू आहे जी तुम्ही पाहू शकता, शोधू शकता आणि आकार देऊ शकता. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">पूर्ण स्क्रीन उघडा ↗</a>",
+		"walk_through_your_agent_s_mind_every": "तुमच्या एजंटच्या मनात डोकावून पहा. प्रत्येक आठवण ही एक वस्तू आहे जी तुम्ही पाहू शकता, शोधू शकता आणि आकार देऊ शकता. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">पूर्ण स्क्रीन उघडा ↗</a>",
 		"website": "वेबसाइट",
 		"weekly": "साप्ताहिक",
 		"weekly_digest": "साप्ताहिक सारांश",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "ती दोरीवर चढणाऱ्याप्रमाणे एका अक्षरावरून दुसऱ्या अक्षरावर चढते. प्रत्येक अक्षराचे वरचे टोक पकडण्याचे ठिकाण आहे — ती तिथे बसते, उडी मारते, पुन्हा बसते."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "कोणत्याही अधोरेखित शब्दावर कर्सर फिरवा → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">डॉक्युमेंट्स</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">किंमत</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">उदाहरणे</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "कोणत्याही अधोरेखित शब्दावर कर्सर फिरवा → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">डॉक्युमेंट्स</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">किंमत</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">उदाहरणे</a>",
 		"hover_anywhere": "कुठेही <em>कर्सर फिरवा</em>.",
 		"meta_title": "कर्सर फॉलोअर — three.ws",
 		"primary": "<span>प्राथमिक</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI एजंट्स लाईव्ह तयार करणे — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "फक्त वॉकथ्रू — आम्ही काहीही नसल्यापासून एक कार्यरत, एम्बेड करण्यायोग्य 3D एजंटमध्ये वास्तविक वेळेत जातो, नंतर फळा उघडतो.",
 		"notify_me": "मला सूचित करा",
-		"or_just_add_it_to_your_calendar": "किंवा फक्त <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">तुमच्या कॅलेंडरमध्ये जोडा</a> आणि उपस्थित रहा.",
+		"or_just_add_it_to_your_calendar": "किंवा फक्त <a id=\"add-cal-2\" style=\"text-decoration:underline\">तुमच्या कॅलेंडरमध्ये जोडा</a> आणि उपस्थित रहा.",
 		"prompt_agent": "प्रॉम्प्ट → एजंट",
 		"read_the_ibm_write_up": "IBM चा लेख वाचा",
 		"ship_at_scale": "स्केलवर शिप करा",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "टूर अध्यायांमध्ये चालतो — तुमचा पहिला एजंट तयार करण्यापासून ते ते ऑन-चेन घेण्यापर्यंत.",
 		"want_this_on_your_own_site_or": "हे तुमच्या स्वतःच्या साइटवर किंवा स्टोअरमध्ये हवे का? <a href=\"/tour-builder\">टूर बिल्डर</a> मध्ये एक तयार करा — कोणताही कोड नाही, दोन्ही मोड समाविष्ट आहेत.",
 		"what_you_ll_see": "तुम्ही काय पाहाल",
-		"you_have_a_tour_in_progress_pick": "तुमच्याकडे एक चालू टूर आहे — <a href=\"#\" id=\"tour-resume-link\">ते पुन्हा उचलणे →</a>",
+		"you_have_a_tour_in_progress_pick": "तुमच्याकडे एक चालू टूर आहे — <button type=\"button\" id=\"tour-resume-link\">ते पुन्हा उचलणे →</button>",
 		"you_re_in_control": "तुम्ही नियंत्रणात आहात"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ग्राइंड-बाऊंटी मार्केट",
 		"grind_earn": "ग्राइंड करा आणि कमवा",
 		"grind_earn_2": "ग्राइंड करा आणि कमवा",
-		"hard_vanity_addresses_are_hours_to_years": "हार्ड व्हॅनिटी ॲड्रेस एका मशीनवर शोधायला काही तास ते वर्षे लागू शकतात. येथे तुम्ही <strong>एक USDC बाऊंटी एस्क्रो करता</strong> आणि स्वतंत्र कामगारांचा एक फ्लीट तुमचा पॅटर्न समांतरपणे ग्राइंड करतो — पहिला सत्यापित जुळणारा पत्ता जिंकतो. यश हे आहे की, सापडलेली की <strong>तुमच्या X25519 कीला सील केलेली असते</strong>, त्यामुळे कामगार बाऊंटी कमावतो पण <strong>तुमचे वॉलेट कधीच पाहत नाही</strong>. सेटलमेंट <a href=\"/x402\">x402</a> द्वारे विश्वासहीन (trustless) असते; न भरलेल्या बाऊंटीजची मुदत संपल्यावर परतावा मिळतो. किंवा <a href=\"#\" id=\"lede-earn\">तुमचे अतिरिक्त कोअर कामाला लावा</a> आणि कमवा.",
+		"hard_vanity_addresses_are_hours_to_years": "हार्ड व्हॅनिटी ॲड्रेस एका मशीनवर शोधायला काही तास ते वर्षे लागू शकतात. येथे तुम्ही <strong>एक USDC बाऊंटी एस्क्रो करता</strong> आणि स्वतंत्र कामगारांचा एक फ्लीट तुमचा पॅटर्न समांतरपणे ग्राइंड करतो — पहिला सत्यापित जुळणारा पत्ता जिंकतो. यश हे आहे की, सापडलेली की <strong>तुमच्या X25519 कीला सील केलेली असते</strong>, त्यामुळे कामगार बाऊंटी कमावतो पण <strong>तुमचे वॉलेट कधीच पाहत नाही</strong>. सेटलमेंट <a href=\"/x402\">x402</a> द्वारे विश्वासहीन (trustless) असते; न भरलेल्या बाऊंटीजची मुदत संपल्यावर परतावा मिळतो. किंवा <a href=\"#earn\" id=\"lede-earn\">तुमचे अतिरिक्त कोअर कामाला लावा</a> आणि कमवा.",
 		"i_ve_saved_my_private_key_somewhere": "मी माझी प्रायव्हेट की सुरक्षित ठिकाणी सेव्ह केली आहे.",
 		"label_optional_public": "लेबल <span style=\"text-transform:none;color:#555\">(ऐच्छिक, सार्वजनिक)</span>",
 		"load_more": "आणखी लोड करा",

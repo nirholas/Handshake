@@ -736,7 +736,7 @@
 		"user": "Utent",
 		"view_agent": "Ara l-aġent →",
 		"view_on_marketplace": "Ara fuq il-marketplace ›",
-		"walk_through_your_agent_s_mind_every": "Idħol fil-moħħ tal-aġent tiegħek. Kull memorja hija oġġett li tista' tara, tfittex, u tifforma. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Iftaħ skrin sħiħ ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Idħol fil-moħħ tal-aġent tiegħek. Kull memorja hija oġġett li tista' tara, tfittex, u tifforma. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Iftaħ skrin sħiħ ↗</a>",
 		"website": "Websajt",
 		"weekly": "Kull ġimgħa",
 		"weekly_digest": "Sommarju ta' kull ġimgħa",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Titla' ittra b'ittra bħal min jitla' bil-ħabel. Kull quċċata ta' ittra hija punt ta' qabda — tistrieħ, taqbeż, tistrieħ mill-ġdid."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Għaddi l-maws fuq kwalunkwe kelma sottolinjata → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Għaddi l-maws fuq kwalunkwe kelma sottolinjata → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "Għaddi l-maws <em>kullimkien</em>.",
 		"meta_title": "Segwaċi tal-cursor — three.ws",
 		"primary": "<span>Primarju</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Bini ta' Aġenti AI 3D Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Ebda slides biss — immorru minn xejn għal aġent 3D jaħdem u inkorporabbli f'ħin reali, imbagħad niftħu għall-mistoqsijiet.",
 		"notify_me": "Avżani",
-		"or_just_add_it_to_your_calendar": "Jew sempliċement <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">żidha mal-kalendarju tiegħek</a> u ppreżenta ruħek.",
+		"or_just_add_it_to_your_calendar": "Jew sempliċement <a id=\"add-cal-2\" style=\"text-decoration:underline\">żidha mal-kalendarju tiegħek</a> u ppreżenta ruħek.",
 		"prompt_agent": "Prompt → aġent",
 		"read_the_ibm_write_up": "Aqra l-kitba ta' IBM",
 		"ship_at_scale": "Ibgħat fuq skala",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "It-tour jaħdem bħala kapitli — mill-bini tal-ewwel aġent tiegħek sa ma teħodha on-chain.",
 		"want_this_on_your_own_site_or": "Tixtieq dan fuq is-sit jew il-ħanut tiegħek? Ibni wieħed fil-<a href=\"/tour-builder\">Tour Builder</a> — bla kodiċi, iż-żewġ modi inklużi.",
 		"what_you_ll_see": "X'se tara",
-		"you_have_a_tour_in_progress_pick": "Għandek tour għaddej — <a href=\"#\" id=\"tour-resume-link\">erġa' aqbad minn fejn ħallejt →</a>",
+		"you_have_a_tour_in_progress_pick": "Għandek tour għaddej — <button type=\"button\" id=\"tour-resume-link\">erġa' aqbad minn fejn ħallejt →</button>",
 		"you_re_in_control": "Int fil-kontroll"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Suq tal-Grind-Bounty",
 		"grind_earn": "Ħin u aqla'",
 		"grind_earn_2": "Aħdem u aqla'",
-		"hard_vanity_addresses_are_hours_to_years": "Indirizzi vanity diffiċli jieħdu sigħat sa snin fuq magna waħda. Hawnhekk int <strong>tiddepożita USDC bounty</strong> u flotta ta' ħaddiema indipendenti jaħdmu fuq il-mudell tiegħek b'mod parallel — l-ewwel taqbila verifikata tirbaħ. L-innovazzjoni: iċ-ċavetta misjuba hija <strong>issiġillata għaċ-ċavetta X25519 tiegħek</strong>, hekk il-ħaddiem jaqla' l-bounty iżda <strong>qatt ma jara l-kartiera tiegħek</strong>. Is-saldu huwa mingħajr fiduċja permezz ta' <a href=\"/x402\">x402</a>; bounties mhux mimlija jiġu rimborsati mal-iskadenza. Jew <a href=\"#\" id=\"lede-earn\">poġġi l-cores żejda tiegħek jaħdmu</a> u aqla'.",
+		"hard_vanity_addresses_are_hours_to_years": "Indirizzi vanity diffiċli jieħdu sigħat sa snin fuq magna waħda. Hawnhekk int <strong>tiddepożita USDC bounty</strong> u flotta ta' ħaddiema indipendenti jaħdmu fuq il-mudell tiegħek b'mod parallel — l-ewwel taqbila verifikata tirbaħ. L-innovazzjoni: iċ-ċavetta misjuba hija <strong>issiġillata għaċ-ċavetta X25519 tiegħek</strong>, hekk il-ħaddiem jaqla' l-bounty iżda <strong>qatt ma jara l-kartiera tiegħek</strong>. Is-saldu huwa mingħajr fiduċja permezz ta' <a href=\"/x402\">x402</a>; bounties mhux mimlija jiġu rimborsati mal-iskadenza. Jew <a href=\"#earn\" id=\"lede-earn\">poġġi l-cores żejda tiegħek jaħdmu</a> u aqla'.",
 		"i_ve_saved_my_private_key_somewhere": "Salvajt iċ-ċavetta privata tiegħi f'post sigur.",
 		"label_optional_public": "Tikketta <span style=\"text-transform:none;color:#555\">(fakultattiva, pubblika)</span>",
 		"load_more": "Tagħbija aktar",

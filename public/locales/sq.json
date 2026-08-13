@@ -736,7 +736,7 @@
 		"user": "Përdorues",
 		"view_agent": "Shiko agjentin →",
 		"view_on_marketplace": "Shiko në treg ›",
-		"walk_through_your_agent_s_mind_every": "Hyni në mendjen e agjentit tuaj. Çdo kujtesë është një objekt që mund ta shihni, kërkoni dhe formësoni. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Hap ekranin e plotë ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Hyni në mendjen e agjentit tuaj. Çdo kujtesë është një objekt që mund ta shihni, kërkoni dhe formësoni. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Hap ekranin e plotë ↗</a>",
 		"website": "Uebsajt",
 		"weekly": "Javor",
 		"weekly_digest": "Përmbledhje javore",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Ajo ngjitet shkronjë pas shkronje si një alpiniste litarësh. Çdo majë shkronje është një pikë mbështetjeje — ajo qëndron, hidhet, qëndron sërish."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Kaloni me kursor mbi çdo fjalë të nënvizuar → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumente</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">çmime</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">shembuj</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Kaloni me kursor mbi çdo fjalë të nënvizuar → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumente</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">çmime</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">shembuj</a>",
 		"hover_anywhere": "Kaloni me kursor <em>kudo</em>.",
 		"meta_title": "Ndjekësi i kursorit — three.ws",
 		"primary": "<span>Kryesore</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Ndërtimi i Agjentëve 3D AI Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Pa prezantime me slide — kalojmë nga asgjëja në një agjent 3D funksional, të ngulitur në kohë reale, pastaj hapim diskutimin.",
 		"notify_me": "Njoftomëni",
-		"or_just_add_it_to_your_calendar": "Ose thjesht <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">shtojeni në kalendarin tuaj</a> dhe shfaquni.",
+		"or_just_add_it_to_your_calendar": "Ose thjesht <a id=\"add-cal-2\" style=\"text-decoration:underline\">shtojeni në kalendarin tuaj</a> dhe shfaquni.",
 		"prompt_agent": "Kërkesë → agjent",
 		"read_the_ibm_write_up": "Lexoni shkrimin e IBM-së",
 		"ship_at_scale": "Dërgo në shkallë",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Turi zhvillohet si kapituj — nga ndërtimi i agjentit tënd të parë deri në vendosjen e tij në zinxhir.",
 		"want_this_on_your_own_site_or": "E do këtë në faqen ose dyqanin tënd? Ndërto një në <a href=\"/tour-builder\">Tour Builder</a> — pa kod, të dyja modalitetet të përfshira.",
 		"what_you_ll_see": "Çfarë do të shohësh",
-		"you_have_a_tour_in_progress_pick": "Ke një tur në progres — <a href=\"#\" id=\"tour-resume-link\">rifilloje →</a>",
+		"you_have_a_tour_in_progress_pick": "Ke një tur në progres — <button type=\"button\" id=\"tour-resume-link\">rifilloje →</button>",
 		"you_re_in_control": "Ti ke kontrollin"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Tregu i Shpërblimeve Grind",
 		"grind_earn": "Grind & fito",
 		"grind_earn_2": "Grind & fito",
-		"hard_vanity_addresses_are_hours_to_years": "Adresat vanity të vështira kërkojnë orë deri në vite në një makinë. Këtu ti <strong>vendos në escrow një USDC shpërblim</strong> dhe një flotë punëtorësh të pavarur përpunojnë modelin tënd në paralel — ndeshja e parë e verifikuar fiton. Zbulimi: çelësi i gjetur është <strong>i vulosur në çelësin tënd X25519</strong>, kështu që punëtori fiton shpërblimin por <strong>nuk e sheh kurrë portofolin tënd</strong>. Zgjidhja është pa besim nëpërmjet <a href=\"/x402\">x402</a>; shpërblimet e paplotësuara rimbursohen në skadencë. Ose <a href=\"#\" id=\"lede-earn\">vër bërthamat e tua rezervë në punë</a> dhe fito.",
+		"hard_vanity_addresses_are_hours_to_years": "Adresat vanity të vështira kërkojnë orë deri në vite në një makinë. Këtu ti <strong>vendos në escrow një USDC shpërblim</strong> dhe një flotë punëtorësh të pavarur përpunojnë modelin tënd në paralel — ndeshja e parë e verifikuar fiton. Zbulimi: çelësi i gjetur është <strong>i vulosur në çelësin tënd X25519</strong>, kështu që punëtori fiton shpërblimin por <strong>nuk e sheh kurrë portofolin tënd</strong>. Zgjidhja është pa besim nëpërmjet <a href=\"/x402\">x402</a>; shpërblimet e paplotësuara rimbursohen në skadencë. Ose <a href=\"#earn\" id=\"lede-earn\">vër bërthamat e tua rezervë në punë</a> dhe fito.",
 		"i_ve_saved_my_private_key_somewhere": "E kam ruajtur çelësin tim privat diku të sigurt.",
 		"label_optional_public": "Etiketë <span style=\"text-transform:none;color:#555\">(opsionale, publike)</span>",
 		"load_more": "Ngarko më shumë",

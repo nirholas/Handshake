@@ -736,7 +736,7 @@
 		"user": "ຜູ້ໃຊ້",
 		"view_agent": "ເບິ່ງເອເຈັນ →",
 		"view_on_marketplace": "ເບິ່ງໃນຕະຫຼາດ ›",
-		"walk_through_your_agent_s_mind_every": "ສຳຫຼວດຄວາມຄິດຂອງເອເຈັນເຈົ້າ. ທຸກຄວາມຊົງຈຳແມ່ນວັດຖຸທີ່ເຈົ້າສາມາດເບິ່ງ, ຄົ້ນຫາ ແລະ ປັບແຕ່ງໄດ້. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ເປີດເຕັມຈໍ ↗</a>",
+		"walk_through_your_agent_s_mind_every": "ສຳຫຼວດຄວາມຄິດຂອງເອເຈັນເຈົ້າ. ທຸກຄວາມຊົງຈຳແມ່ນວັດຖຸທີ່ເຈົ້າສາມາດເບິ່ງ, ຄົ້ນຫາ ແລະ ປັບແຕ່ງໄດ້. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ເປີດເຕັມຈໍ ↗</a>",
 		"website": "ເວັບໄຊ",
 		"weekly": "ລາຍອາທິດ",
 		"weekly_digest": "ສະຫຼຸບລາຍອາທິດ",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "ນາງປີນຈາກຕົວອັກສອນໜຶ່ງໄປຫາອີກຕົວໜຶ່ງຄືກັບນັກປີນເຊືອກ. ແຕ່ລະປາຍຕົວອັກສອນແມ່ນຈຸດຈັບ — ນາງເກາະ, ໂດດ, ແລ້ວເກາະອີກ."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "ເລື່ອນເມົ້າໃສ່ຄຳທີ່ຂີດກ້ອງ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "ເລື່ອນເມົ້າໃສ່ຄຳທີ່ຂີດກ້ອງ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "ເລື່ອນເມົ້າ <em>anywhere</em>.",
 		"meta_title": "ຕົວຕິດຕາມເຄີເຊີ — three.ws",
 		"primary": "<span>Primary</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "ສ້າງຕົວແທນ AI 3D ແບບສົດໆ — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "ບໍ່ມີສະໄລ້ຢ່າງດຽວ — ພວກເຮົາຈະສ້າງຕົວແທນ 3D ທີ່ໃຊ້ງານໄດ້ ແລະ ຝັງໄດ້ແບບສົດໆ, ຈາກນັ້ນເປີດໂອກາດໃຫ້ຖາມ.",
 		"notify_me": "ແຈ້ງເຕືອນຂ້ອຍ",
-		"or_just_add_it_to_your_calendar": "ຫຼືພຽງແຕ່ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ເພີ່ມໃສ່ປະຕິທິນຂອງທ່ານ</a> ແລ້ວເຂົ້າຮ່ວມ.",
+		"or_just_add_it_to_your_calendar": "ຫຼືພຽງແຕ່ <a id=\"add-cal-2\" style=\"text-decoration:underline\">ເພີ່ມໃສ່ປະຕິທິນຂອງທ່ານ</a> ແລ້ວເຂົ້າຮ່ວມ.",
 		"prompt_agent": "ຄຳສັ່ງ → ຕົວແທນ",
 		"read_the_ibm_write_up": "ອ່ານບົດຄວາມຂອງ IBM",
 		"ship_at_scale": "ຈັດສົ່ງໃນຂະໜາດໃຫຍ່",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ທົວນີ້ຈະດຳເນີນເປັນບົດໆ — ຕັ້ງແຕ່ການສ້າງເອເຈັນທ໌ໂຕທຳອິດຂອງທ່ານ ຈົນເຖິງການນຳມັນຂຶ້ນສູ່ລະບົບຕ່ອງໂສ້.",
 		"want_this_on_your_own_site_or": "ຕ້ອງການສິ່ງນີ້ຢູ່ໃນເວັບໄຊ ຫຼືຮ້ານຄ້າຂອງທ່ານເອງບໍ? ສ້າງມັນໃນ <a href=\"/tour-builder\">Tour Builder</a> — ບໍ່ຕ້ອງຂຽນໂຄດ, ລວມທັງສອງໂໝດ.",
 		"what_you_ll_see": "ສິ່ງທີ່ທ່ານຈະໄດ້ເຫັນ",
-		"you_have_a_tour_in_progress_pick": "ທ່ານມີທົວທີ່ກຳລັງດຳເນີນຢູ່ — <a href=\"#\" id=\"tour-resume-link\">ສືບຕໍ່ →</a>",
+		"you_have_a_tour_in_progress_pick": "ທ່ານມີທົວທີ່ກຳລັງດຳເນີນຢູ່ — <button type=\"button\" id=\"tour-resume-link\">ສືບຕໍ່ →</button>",
 		"you_re_in_control": "ທ່ານເປັນຜູ້ຄວບຄຸມ"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ຕະຫຼາດລາງວັນ Grind",
 		"grind_earn": "Grind ແລະຫາເງິນ",
 		"grind_earn_2": "ຂຸດຄົ້ນ & ຫາເງິນ",
-		"hard_vanity_addresses_are_hours_to_years": "ທີ່ຢູ່ vanity ທີ່ຫາຍາກໃຊ້ເວລາຫຼາຍຊົ່ວໂມງຫາຫຼາຍປີໃນເຄື່ອງດຽວ. ຢູ່ທີ່ນີ້ທ່ານ <strong>ຝາກ USDC bounty</strong> ແລະກຸ່ມຄົນເຮັດວຽກອິດສະຫຼະຈະຂຸດຄົ້ນຮູບແບບຂອງທ່ານແບບຂະໜານກັນ — ຜູ້ທີ່ພົບຄູ່ທີ່ຖືກຕ້ອງກ່ອນຈະຊະນະ. ຄວາມກ້າວໜ້າ: ກະແຈທີ່ພົບເຫັນແມ່ນ <strong>ຜູກມັດກັບກະແຈ X25519 ຂອງທ່ານ</strong>, ດັ່ງນັ້ນຜູ້ເຮັດວຽກຈຶ່ງໄດ້ຮັບ bounty ແຕ່ <strong>ບໍ່ເຄີຍເຫັນກະເປົາເງິນຂອງທ່ານ</strong>. ການຊໍາລະແມ່ນບໍ່ຕ້ອງໄວ້ໃຈຜ່ານ <a href=\"/x402\">x402</a>; bounties ທີ່ບໍ່ສໍາເລັດຈະຖືກຄືນເງິນເມື່ອໝົດອາຍຸ. ຫຼື <a href=\"#\" id=\"lede-earn\">ນໍາໃຊ້ cores ທີ່ວ່າງຂອງທ່ານມາເຮັດວຽກ</a> ແລະຫາເງິນ.",
+		"hard_vanity_addresses_are_hours_to_years": "ທີ່ຢູ່ vanity ທີ່ຫາຍາກໃຊ້ເວລາຫຼາຍຊົ່ວໂມງຫາຫຼາຍປີໃນເຄື່ອງດຽວ. ຢູ່ທີ່ນີ້ທ່ານ <strong>ຝາກ USDC bounty</strong> ແລະກຸ່ມຄົນເຮັດວຽກອິດສະຫຼະຈະຂຸດຄົ້ນຮູບແບບຂອງທ່ານແບບຂະໜານກັນ — ຜູ້ທີ່ພົບຄູ່ທີ່ຖືກຕ້ອງກ່ອນຈະຊະນະ. ຄວາມກ້າວໜ້າ: ກະແຈທີ່ພົບເຫັນແມ່ນ <strong>ຜູກມັດກັບກະແຈ X25519 ຂອງທ່ານ</strong>, ດັ່ງນັ້ນຜູ້ເຮັດວຽກຈຶ່ງໄດ້ຮັບ bounty ແຕ່ <strong>ບໍ່ເຄີຍເຫັນກະເປົາເງິນຂອງທ່ານ</strong>. ການຊໍາລະແມ່ນບໍ່ຕ້ອງໄວ້ໃຈຜ່ານ <a href=\"/x402\">x402</a>; bounties ທີ່ບໍ່ສໍາເລັດຈະຖືກຄືນເງິນເມື່ອໝົດອາຍຸ. ຫຼື <a href=\"#earn\" id=\"lede-earn\">ນໍາໃຊ້ cores ທີ່ວ່າງຂອງທ່ານມາເຮັດວຽກ</a> ແລະຫາເງິນ.",
 		"i_ve_saved_my_private_key_somewhere": "ຂ້ອຍໄດ້ບັນທຶກກະແຈສ່ວນຕົວຂອງຂ້ອຍໄວ້ບ່ອນທີ່ປອດໄພແລ້ວ.",
 		"label_optional_public": "ປ້າຍຊື່ <span style=\"text-transform:none;color:#555\">(ທາງເລືອກ, ສາທາລະນະ)</span>",
 		"load_more": "ໂຫຼດເພີ່ມເຕີມ",

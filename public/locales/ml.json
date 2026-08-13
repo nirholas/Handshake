@@ -736,7 +736,7 @@
 		"user": "ഉപയോക്താവ്",
 		"view_agent": "ഏജന്റിനെ കാണുക →",
 		"view_on_marketplace": "മാർക്കറ്റ്‌പ്ലേസിൽ കാണുക ›",
-		"walk_through_your_agent_s_mind_every": "നിങ്ങളുടെ ഏജന്റിന്റെ മനസ്സിനുള്ളിലൂടെ സഞ്ചരിക്കുക. ഓരോ ഓർമ്മയും നിങ്ങൾക്ക് കാണാനും തിരയാനും രൂപപ്പെടുത്താനും കഴിയുന്ന ഒരു വസ്തുവാണ്. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">പൂർണ്ണ സ്ക്രീനിൽ തുറക്കുക ↗</a>",
+		"walk_through_your_agent_s_mind_every": "നിങ്ങളുടെ ഏജന്റിന്റെ മനസ്സിനുള്ളിലൂടെ സഞ്ചരിക്കുക. ഓരോ ഓർമ്മയും നിങ്ങൾക്ക് കാണാനും തിരയാനും രൂപപ്പെടുത്താനും കഴിയുന്ന ഒരു വസ്തുവാണ്. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">പൂർണ്ണ സ്ക്രീനിൽ തുറക്കുക ↗</a>",
 		"website": "വെബ്സൈറ്റ്",
 		"weekly": "പ്രതിവാരം",
 		"weekly_digest": "പ്രതിവാര സംഗ്രഹം",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "അവൾ ഒരു കയർ കയറുന്നയാളെപ്പോലെ അക്ഷരംതോറും കയറുന്നു. ഓരോ അക്ഷരത്തിൻ്റെയും മുകൾഭാഗം ഒരു പിടിത്തസ്ഥാനമാണ് — അവൾ തങ്ങുന്നു, ചാടുന്നു, വീണ്ടും തങ്ങുന്നു."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "അടിവരയിട്ട ഏതെങ്കിലും വാക്കിൽ ഹോവർ ചെയ്യുക → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "അടിവരയിട്ട ഏതെങ്കിലും വാക്കിൽ ഹോവർ ചെയ്യുക → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">docs</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">pricing</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">examples</a>",
 		"hover_anywhere": "ഹോവർ <em>anywhere</em>.",
 		"meta_title": "കഴ്സർ ഫോളോവർ — three.ws",
 		"primary": "<span>പ്രൈമറി</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI ഏജന്റുകൾ തത്സമയം നിർമ്മിക്കുന്നു — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "സ്ലൈഡുകൾ മാത്രമുള്ള അവതരണം ഇല്ല — ഞങ്ങൾ ഒന്നുമില്ലായ്മയിൽ നിന്ന് പ്രവർത്തിക്കുന്ന, ഉൾച്ചേർക്കാവുന്ന ഒരു 3D ഏജന്റിലേക്ക് തത്സമയം എത്തുന്നു, തുടർന്ന് ചർച്ചയ്ക്കായി തുറന്നുവിടുന്നു.",
 		"notify_me": "എന്നെ അറിയിക്കുക",
-		"or_just_add_it_to_your_calendar": "അല്ലെങ്കിൽ നിങ്ങളുടെ കലണ്ടറിൽ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ചേർക്കുക</a> എന്നിട്ട് വരുക.",
+		"or_just_add_it_to_your_calendar": "അല്ലെങ്കിൽ നിങ്ങളുടെ കലണ്ടറിൽ <a id=\"add-cal-2\" style=\"text-decoration:underline\">ചേർക്കുക</a> എന്നിട്ട് വരുക.",
 		"prompt_agent": "പ്രോംപ്റ്റ് → ഏജന്റ്",
 		"read_the_ibm_write_up": "IBM-ന്റെ ലേഖനം വായിക്കുക",
 		"ship_at_scale": "വലിയ തോതിൽ വിതരണം ചെയ്യുക",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ടൂർ അധ്യായങ്ങളായി പ്രവർത്തിക്കുന്നു — നിങ്ങളുടെ ആദ്യത്തെ ഏജന്റിനെ നിർമ്മിക്കുന്നത് മുതൽ അത് ഓൺ-ചെയിനിൽ എത്തിക്കുന്നത് വരെ.",
 		"want_this_on_your_own_site_or": "ഇത് നിങ്ങളുടെ സ്വന്തം സൈറ്റിലോ സ്റ്റോറിലോ വേണോ? <a href=\"/tour-builder\">ടൂർ ബിൽഡറിൽ</a> ഒന്ന് നിർമ്മിക്കുക — കോഡ് ആവശ്യമില്ല, രണ്ട് മോഡുകളും ഉൾപ്പെടുത്തിയിരിക്കുന്നു.",
 		"what_you_ll_see": "നിങ്ങൾ കാണാൻ പോകുന്നത്",
-		"you_have_a_tour_in_progress_pick": "നിങ്ങൾക്ക് ഒരു ടൂർ പുരോഗമിക്കുന്നുണ്ട് — <a href=\"#\" id=\"tour-resume-link\">അത് പുനരാരംഭിക്കുക →</a>",
+		"you_have_a_tour_in_progress_pick": "നിങ്ങൾക്ക് ഒരു ടൂർ പുരോഗമിക്കുന്നുണ്ട് — <button type=\"button\" id=\"tour-resume-link\">അത് പുനരാരംഭിക്കുക →</button>",
 		"you_re_in_control": "നിയന്ത്രണം നിങ്ങളുടെ കയ്യിലാണ്"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ഗ്രൈൻഡ്-ബൗണ്ടി മാർക്കറ്റ്",
 		"grind_earn": "ഗ്രൈൻഡ് ചെയ്യുക & നേടുക",
 		"grind_earn_2": "പ്രയത്നിച്ച് നേടുക",
-		"hard_vanity_addresses_are_hours_to_years": "ദുഷ്കരമായ വാനിറ്റി അഡ്രസ്സുകൾ: ഒരു മെഷീനിൽ മണിക്കൂറുകൾ മുതൽ വർഷങ്ങൾ വരെ. ഇവിടെ നിങ്ങൾ ഒരു USDC ബൗണ്ടി </strong> <strong>എസ്ക്രോ ചെയ്യുക, സ്വതന്ത്ര തൊഴിലാളികളുടെ ഒരു കൂട്ടം നിങ്ങളുടെ പാറ്റേൺ സമാന്തരമായി പ്രയത്നിക്കുന്നു — ആദ്യം സ്ഥിരീകരിച്ച പൊരുത്തം വിജയിക്കുന്നു. വഴിത്തിരിവ്: കണ്ടെത്തിയ കീ നിങ്ങളുടെ <strong>X25519 കീയിലേക്ക് </strong>സീൽ ചെയ്തിരിക്കുന്നു, അതിനാൽ തൊഴിലാളിക്ക് ബൗണ്ടി ലഭിക്കുന്നു, പക്ഷേ നിങ്ങളുടെ <strong>വാലറ്റ് </strong>ഒരിക്കലും കാണുന്നില്ല. തീർപ്പാക്കൽ <a href=\"/x402\">x402</a> വഴി വിശ്വാസരഹിതമാണ്; പൂരിപ്പിക്കാത്ത ബൗണ്ടികൾ കാലാവധി കഴിയുമ്പോൾ തിരികെ ലഭിക്കും. അല്ലെങ്കിൽ നിങ്ങളുടെ <a href=\"#\" id=\"lede-earn\">ഒഴിവുള്ള കോറുകൾ പ്രവർത്തിപ്പിച്ച് </a>സമ്പാദിക്കുക.",
+		"hard_vanity_addresses_are_hours_to_years": "ദുഷ്കരമായ വാനിറ്റി അഡ്രസ്സുകൾ: ഒരു മെഷീനിൽ മണിക്കൂറുകൾ മുതൽ വർഷങ്ങൾ വരെ. ഇവിടെ നിങ്ങൾ ഒരു USDC ബൗണ്ടി </strong> <strong>എസ്ക്രോ ചെയ്യുക, സ്വതന്ത്ര തൊഴിലാളികളുടെ ഒരു കൂട്ടം നിങ്ങളുടെ പാറ്റേൺ സമാന്തരമായി പ്രയത്നിക്കുന്നു — ആദ്യം സ്ഥിരീകരിച്ച പൊരുത്തം വിജയിക്കുന്നു. വഴിത്തിരിവ്: കണ്ടെത്തിയ കീ നിങ്ങളുടെ <strong>X25519 കീയിലേക്ക് </strong>സീൽ ചെയ്തിരിക്കുന്നു, അതിനാൽ തൊഴിലാളിക്ക് ബൗണ്ടി ലഭിക്കുന്നു, പക്ഷേ നിങ്ങളുടെ <strong>വാലറ്റ് </strong>ഒരിക്കലും കാണുന്നില്ല. തീർപ്പാക്കൽ <a href=\"/x402\">x402</a> വഴി വിശ്വാസരഹിതമാണ്; പൂരിപ്പിക്കാത്ത ബൗണ്ടികൾ കാലാവധി കഴിയുമ്പോൾ തിരികെ ലഭിക്കും. അല്ലെങ്കിൽ നിങ്ങളുടെ <a href=\"#earn\" id=\"lede-earn\">ഒഴിവുള്ള കോറുകൾ പ്രവർത്തിപ്പിച്ച് </a>സമ്പാദിക്കുക.",
 		"i_ve_saved_my_private_key_somewhere": "എന്റെ പ്രൈവറ്റ് കീ ഞാൻ സുരക്ഷിതമായ ഒരിടത്ത് സൂക്ഷിച്ചിട്ടുണ്ട്.",
 		"label_optional_public": "ലേബൽ <span style=\"text-transform:none;color:#555\">(ഓപ്ഷണൽ, പൊതുവായത്)</span>",
 		"load_more": "കൂടുതൽ ലോഡ് ചെയ്യുക",

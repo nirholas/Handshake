@@ -736,7 +736,7 @@
 		"user": "Χρήστης",
 		"view_agent": "Προβολή πράκτορα →",
 		"view_on_marketplace": "Προβολή στην αγορά ›",
-		"walk_through_your_agent_s_mind_every": "Περιηγηθείτε στο μυαλό του πράκτορά σας. Κάθε μνήμη είναι ένα αντικείμενο που μπορείτε να δείτε, να αναζητήσετε και να διαμορφώσετε. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Άνοιγμα σε πλήρη οθόνη ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Περιηγηθείτε στο μυαλό του πράκτορά σας. Κάθε μνήμη είναι ένα αντικείμενο που μπορείτε να δείτε, να αναζητήσετε και να διαμορφώσετε. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Άνοιγμα σε πλήρη οθόνη ↗</a>",
 		"website": "Ιστοσελίδα",
 		"weekly": "Εβδομαδιαία",
 		"weekly_digest": "Εβδομαδιαία σύνοψη",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Αυτή σκαρφαλώνει γράμμα-γράμμα σαν αναρριχήτρια. Κάθε κορυφή γράμματος είναι ένα σημείο πρόσφυσης — στέκεται, πηδάει, στέκεται ξανά."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Περάστε το ποντίκι πάνω από οποιαδήποτε υπογραμμισμένη λέξη → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">έγγραφα</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">τιμολόγηση</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">παραδείγματα</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Περάστε το ποντίκι πάνω από οποιαδήποτε υπογραμμισμένη λέξη → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">έγγραφα</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">τιμολόγηση</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">παραδείγματα</a>",
 		"hover_anywhere": "Περάστε το ποντίκι <em>οπουδήποτε</em>.",
 		"meta_title": "Ακόλουθος δρομέα — three.ws",
 		"primary": "<span>Πρωτεύον</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Κατασκευή 3D AI Agents Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Όχι διαφάνειες — μόνο περιήγηση — πηγαίνουμε από το τίποτα σε έναν λειτουργικό, ενσωματώσιμο 3D πράκτορα σε πραγματικό χρόνο, μετά ανοίγουμε το έδαφος.",
 		"notify_me": "Ενημερώστε με",
-		"or_just_add_it_to_your_calendar": "Ή απλώς <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">προσθέστε το στο ημερολόγιό σας</a> και ελάτε.",
+		"or_just_add_it_to_your_calendar": "Ή απλώς <a id=\"add-cal-2\" style=\"text-decoration:underline\">προσθέστε το στο ημερολόγιό σας</a> και ελάτε.",
 		"prompt_agent": "Εντολή → πράκτορας",
 		"read_the_ibm_write_up": "Διαβάστε την αναφορά της IBM",
 		"ship_at_scale": "Αποστολή σε κλίμακα",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Η ξενάγηση τρέχει ως κεφάλαια — από την κατασκευή του πρώτου σας πράκτορα μέχρι την μεταφορά του σε blockchain.",
 		"want_this_on_your_own_site_or": "Θέλετε αυτό στον δικό σας ιστότοπο ή κατάστημα; Δημιουργήστε ένα στο <a href=\"/tour-builder\">Tour Builder</a> — χωρίς κώδικα, και οι δύο τρόποι περιλαμβάνονται.",
 		"what_you_ll_see": "Τι θα δείτε",
-		"you_have_a_tour_in_progress_pick": "Έχετε μια ξενάγηση σε εξέλιξη — <a href=\"#\" id=\"tour-resume-link\">πάρτε την πίσω →</a>",
+		"you_have_a_tour_in_progress_pick": "Έχετε μια ξενάγηση σε εξέλιξη — <button type=\"button\" id=\"tour-resume-link\">πάρτε την πίσω →</button>",
 		"you_re_in_control": "Είστε στο έλεγχο"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Αγορά Grind-Bounty",
 		"grind_earn": "Εξορύξτε & κερδίστε",
 		"grind_earn_2": "Εξορύξτε & κερδίστε",
-		"hard_vanity_addresses_are_hours_to_years": "Οι δύσκολες vanity διευθύνσεις απαιτούν ώρες έως χρόνια σε μία μηχανή. Εδώ <strong>καταθέτετε ένα bounty USDC</strong> σε escrow και ένας στόλος ανεξάρτητων εργατών εξορύσσει το μοτίβο σας παράλληλα — η πρώτη επαληθευμένη αντιστοιχία κερδίζει. Η καινοτομία: το κλειδί που βρέθηκε είναι <strong>σφραγισμένο στο κλειδί σας X25519</strong>, έτσι ο εργάτης κερδίζει το bounty αλλά <strong>ποτέ δεν βλέπει το πορτοφόλι σας</strong>. Ο διακανονισμός είναι χωρίς εμπιστοσύνη μέσω <a href=\"/x402\">x402</a>· τα bounty που δεν συμπληρώνονται επιστρέφονται με τη λήξη. Ή <a href=\"#\" id=\"lede-earn\">βάλτε τους εφεδρικούς σας πυρήνες να δουλέψουν</a> και κερδίστε.",
+		"hard_vanity_addresses_are_hours_to_years": "Οι δύσκολες vanity διευθύνσεις απαιτούν ώρες έως χρόνια σε μία μηχανή. Εδώ <strong>καταθέτετε ένα bounty USDC</strong> σε escrow και ένας στόλος ανεξάρτητων εργατών εξορύσσει το μοτίβο σας παράλληλα — η πρώτη επαληθευμένη αντιστοιχία κερδίζει. Η καινοτομία: το κλειδί που βρέθηκε είναι <strong>σφραγισμένο στο κλειδί σας X25519</strong>, έτσι ο εργάτης κερδίζει το bounty αλλά <strong>ποτέ δεν βλέπει το πορτοφόλι σας</strong>. Ο διακανονισμός είναι χωρίς εμπιστοσύνη μέσω <a href=\"/x402\">x402</a>· τα bounty που δεν συμπληρώνονται επιστρέφονται με τη λήξη. Ή <a href=\"#earn\" id=\"lede-earn\">βάλτε τους εφεδρικούς σας πυρήνες να δουλέψουν</a> και κερδίστε.",
 		"i_ve_saved_my_private_key_somewhere": "Έχω αποθηκεύσει το ιδιωτικό μου κλειδί κάπου ασφαλές.",
 		"label_optional_public": "Ετικέτα <span style=\"text-transform:none;color:#555\">(προαιρετικό, δημόσιο)</span>",
 		"load_more": "Φόρτωση περισσότερων",

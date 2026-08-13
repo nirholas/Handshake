@@ -736,7 +736,7 @@
 		"user": "ଉପଭୋକ୍ତା",
 		"view_agent": "ଏଜେଣ୍ଟ ଦେଖନ୍ତୁ →",
 		"view_on_marketplace": "ମାର୍କେଟପ୍ଲେସରେ ଦେଖନ୍ତୁ ›",
-		"walk_through_your_agent_s_mind_every": "ଆପଣଙ୍କ ଏଜେଣ୍ଟର ମନ ଭିତରେ ଯାଆନ୍ତୁ। ପ୍ରତ୍ୟେକ ସ୍ମୃତି ଏକ ବସ୍ତୁ ଯାହାକୁ ଆପଣ ଦେଖିପାରିବେ, ଖୋଜିପାରିବେ ଏବଂ ଆକାର ଦେଇପାରିବେ। <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍ ଖୋଲନ୍ତୁ ↗</a>",
+		"walk_through_your_agent_s_mind_every": "ଆପଣଙ୍କ ଏଜେଣ୍ଟର ମନ ଭିତରେ ଯାଆନ୍ତୁ। ପ୍ରତ୍ୟେକ ସ୍ମୃତି ଏକ ବସ୍ତୁ ଯାହାକୁ ଆପଣ ଦେଖିପାରିବେ, ଖୋଜିପାରିବେ ଏବଂ ଆକାର ଦେଇପାରିବେ। <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍ ଖୋଲନ୍ତୁ ↗</a>",
 		"website": "ୱେବସାଇଟ୍",
 		"weekly": "ସାପ୍ତାହିକ",
 		"weekly_digest": "ସାପ୍ତାହିକ ଡାଇଜେଷ୍ଟ",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "ସେ ଦଉଡ଼ି ଚଢ଼ୁଥିବା ଲୋକ ପରି ଅକ୍ଷରରୁ ଅକ୍ଷରକୁ ଚଢ଼େ। ପ୍ରତ୍ୟେକ ଅକ୍ଷରର ଉପର ଭାଗ ଏକ ଧରିବା ବିନ୍ଦୁ ଅଟେ — ସେ ବସେ, ଡେଇଁପଡ଼େ, ପୁଣି ବସେ।"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "ଯେକୌଣସି ରେଖାଙ୍କିତ ଶବ୍ଦ ଉପରେ ହୋଭର୍ କରନ୍ତୁ → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ଡକ୍ୟୁମେଣ୍ଟ୍</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ମୂଲ୍ୟ</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ଉଦାହରଣ</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "ଯେକୌଣସି ରେଖାଙ୍କିତ ଶବ୍ଦ ଉପରେ ହୋଭର୍ କରନ୍ତୁ → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ଡକ୍ୟୁମେଣ୍ଟ୍</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ମୂଲ୍ୟ</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ଉଦାହରଣ</a>",
 		"hover_anywhere": "<em>ଯେକୌଣସି ସ୍ଥାନରେ</em> ହୋଭର୍ କରନ୍ତୁ।",
 		"meta_title": "କର୍ସର ଅନୁସରଣକାରୀ — three.ws",
 		"primary": "<span>ପ୍ରାଥମିକ</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AI ଏଜେଣ୍ଟ୍‌ଗୁଡ଼ିକୁ ଲାଇଭ୍ ନିର୍ମାଣ କରିବା — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "କେବଳ ସ୍ଲାଇଡ୍‌ରେ ୱାକ୍‌ଥ୍ରୁ ନୁହେଁ — ଆମେ କିଛି ନ ଥିବାରୁ ରିଅଲ୍ ଟାଇମ୍‌ରେ ଏକ କାର୍ଯ୍ୟକ୍ଷମ, ଏମ୍ବେଡ୍ କରିହେଉଥିବା 3D ଏଜେଣ୍ଟ୍ ପର୍ଯ୍ୟନ୍ତ ଯିବା, ତା'ପରେ ପ୍ରଶ୍ନୋତ୍ତର ପାଇଁ ସୁଯୋଗ ଦେବା।",
 		"notify_me": "ମୋତେ ସୂଚିତ କରନ୍ତୁ",
-		"or_just_add_it_to_your_calendar": "କିମ୍ବା କେବଳ <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">ଏହାକୁ ଆପଣଙ୍କ କ୍ୟାଲେଣ୍ଡରରେ ଯୋଡ଼ନ୍ତୁ</a> ଏବଂ ଯୋଗ ଦିଅନ୍ତୁ।",
+		"or_just_add_it_to_your_calendar": "କିମ୍ବା କେବଳ <a id=\"add-cal-2\" style=\"text-decoration:underline\">ଏହାକୁ ଆପଣଙ୍କ କ୍ୟାଲେଣ୍ଡରରେ ଯୋଡ଼ନ୍ତୁ</a> ଏବଂ ଯୋଗ ଦିଅନ୍ତୁ।",
 		"prompt_agent": "ପ୍ରମ୍ପ୍ଟ → ଏଜେଣ୍ଟ୍",
 		"read_the_ibm_write_up": "IBM ର ଲେଖା ପଢ଼ନ୍ତୁ",
 		"ship_at_scale": "ବୃହତ୍ ସ୍ତରରେ ପ୍ରକାଶ କରନ୍ତୁ",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ଟୁର୍ ଅଧ୍ୟାୟ ଭାବରେ ଚାଲେ — ଆପଣଙ୍କ ପ୍ରଥମ ଏଜେଣ୍ଟ୍ ନିର୍ମାଣ କରିବାରୁ ଆରମ୍ଭ କରି ଏହାକୁ ଅନ୍-ଚେନ୍‌କୁ ନେବା ପର୍ଯ୍ୟନ୍ତ।",
 		"want_this_on_your_own_site_or": "ଏହାକୁ ଆପଣଙ୍କ ନିଜ ସାଇଟ୍ କିମ୍ବା ଷ୍ଟୋର୍‌ରେ ଚାହୁଁଛନ୍ତି କି? <a href=\"/tour-builder\">ଟୁର୍ ବିଲ୍ଡର୍</a>ରେ ଗୋଟିଏ ନିର୍ମାଣ କରନ୍ତୁ — କୌଣସି କୋଡ୍ ନାହିଁ, ଉଭୟ ମୋଡ୍ ଅନ୍ତର୍ଭୁକ୍ତ।",
 		"what_you_ll_see": "ଆପଣ କ’ଣ ଦେଖିବେ",
-		"you_have_a_tour_in_progress_pick": "ଆପଣଙ୍କର ଏକ ଟୁର୍ ଚାଲୁ ରହିଛି — <a href=\"#\" id=\"tour-resume-link\">ଏହାକୁ ପୁଣି ଆରମ୍ଭ କରନ୍ତୁ →</a>",
+		"you_have_a_tour_in_progress_pick": "ଆପଣଙ୍କର ଏକ ଟୁର୍ ଚାଲୁ ରହିଛି — <button type=\"button\" id=\"tour-resume-link\">ଏହାକୁ ପୁଣି ଆରମ୍ଭ କରନ୍ତୁ →</button>",
 		"you_re_in_control": "ଆପଣ ନିୟନ୍ତ୍ରଣରେ ଅଛନ୍ତି।"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "ଗ୍ରାଇଣ୍ଡ୍-ବାଉଣ୍ଟି ମାର୍କେଟ୍",
 		"grind_earn": "ଗ୍ରାଇଣ୍ଡ୍ କରନ୍ତୁ ଏବଂ ରୋଜଗାର କରନ୍ତୁ",
 		"grind_earn_2": "ଗ୍ରାଇଣ୍ଡ୍ କରନ୍ତୁ ଏବଂ ରୋଜଗାର କରନ୍ତୁ",
-		"hard_vanity_addresses_are_hours_to_years": "ଗୋଟିଏ ମେସିନରେ ହାର୍ଡ ଭ୍ୟାନିଟି ଆଡ୍ରେସ୍ ତିଆରି କରିବାକୁ ଘଣ୍ଟା ଠାରୁ ବର୍ଷ ଲାଗିଯାଏ। ଏଠାରେ ଆପଣ ଏକ USDC ବାଉଣ୍ଟି <strong>ଏସ୍କ୍ରୋ କରନ୍ତି </strong> ଏବଂ ସ୍ୱାଧୀନ କର୍ମୀଙ୍କ ଏକ ଦଳ ସମାନ୍ତରାଳ ଭାବରେ ଆପଣଙ୍କ ପ୍ୟାଟର୍ନକୁ ଗ୍ରାଇଣ୍ଡ୍ କରନ୍ତି — ପ୍ରଥମ ଯାଞ୍ଚ ହୋଇଥିବା ମ୍ୟାଚ୍ ଜିତେ। ଏହି ସଫଳତା: ମିଳିଥିବା କି' ଆପଣଙ୍କ <strong>X25519 କି' ସହିତ ସିଲ୍ ହୋଇଛି</strong>, ତେଣୁ କର୍ମୀ ବାଉଣ୍ଟି ଅର୍ଜନ କରେ କିନ୍ତୁ <strong>ଆପଣଙ୍କ ୱାଲେଟ୍ କେବେ ଦେଖେ ନାହିଁ</strong>। <a href=\"/x402\">x402</a> ମାଧ୍ୟମରେ ସେଟେଲମେଣ୍ଟ୍ ଟ୍ରଷ୍ଟଲେସ୍ ଅଟେ; ଅପୂର୍ଣ୍ଣ ବାଉଣ୍ଟିଗୁଡ଼ିକ ଅବଧି ଶେଷ ହେବା ପରେ ଫେରସ୍ତ ହୁଏ। କିମ୍ବା <a href=\"#\" id=\"lede-earn\">ଆପଣଙ୍କ ଅତିରିକ୍ତ କୋର୍‌ଗୁଡ଼ିକୁ କାମରେ ଲଗାନ୍ତୁ</a> ଏବଂ ରୋଜଗାର କରନ୍ତୁ।",
+		"hard_vanity_addresses_are_hours_to_years": "ଗୋଟିଏ ମେସିନରେ ହାର୍ଡ ଭ୍ୟାନିଟି ଆଡ୍ରେସ୍ ତିଆରି କରିବାକୁ ଘଣ୍ଟା ଠାରୁ ବର୍ଷ ଲାଗିଯାଏ। ଏଠାରେ ଆପଣ ଏକ USDC ବାଉଣ୍ଟି <strong>ଏସ୍କ୍ରୋ କରନ୍ତି </strong> ଏବଂ ସ୍ୱାଧୀନ କର୍ମୀଙ୍କ ଏକ ଦଳ ସମାନ୍ତରାଳ ଭାବରେ ଆପଣଙ୍କ ପ୍ୟାଟର୍ନକୁ ଗ୍ରାଇଣ୍ଡ୍ କରନ୍ତି — ପ୍ରଥମ ଯାଞ୍ଚ ହୋଇଥିବା ମ୍ୟାଚ୍ ଜିତେ। ଏହି ସଫଳତା: ମିଳିଥିବା କି' ଆପଣଙ୍କ <strong>X25519 କି' ସହିତ ସିଲ୍ ହୋଇଛି</strong>, ତେଣୁ କର୍ମୀ ବାଉଣ୍ଟି ଅର୍ଜନ କରେ କିନ୍ତୁ <strong>ଆପଣଙ୍କ ୱାଲେଟ୍ କେବେ ଦେଖେ ନାହିଁ</strong>। <a href=\"/x402\">x402</a> ମାଧ୍ୟମରେ ସେଟେଲମେଣ୍ଟ୍ ଟ୍ରଷ୍ଟଲେସ୍ ଅଟେ; ଅପୂର୍ଣ୍ଣ ବାଉଣ୍ଟିଗୁଡ଼ିକ ଅବଧି ଶେଷ ହେବା ପରେ ଫେରସ୍ତ ହୁଏ। କିମ୍ବା <a href=\"#earn\" id=\"lede-earn\">ଆପଣଙ୍କ ଅତିରିକ୍ତ କୋର୍‌ଗୁଡ଼ିକୁ କାମରେ ଲଗାନ୍ତୁ</a> ଏବଂ ରୋଜଗାର କରନ୍ତୁ।",
 		"i_ve_saved_my_private_key_somewhere": "ମୁଁ ମୋର ପ୍ରାଇଭେଟ୍ କି'କୁ କୌଣସି ସୁରକ୍ଷିତ ସ୍ଥାନରେ ସେଭ୍ କରିଛି।",
 		"label_optional_public": "ଲେବଲ୍ <span style=\"text-transform:none;color:#555\">(ବୈକଳ୍ପିକ, ସାର୍ବଜନୀନ)</span>",
 		"load_more": "ଅଧିକ ଲୋଡ୍ କରନ୍ତୁ",

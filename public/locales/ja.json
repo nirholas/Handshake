@@ -736,7 +736,7 @@
 		"user": "ユーザー",
 		"view_agent": "エージェントを表示 →",
 		"view_on_marketplace": "マーケットプレイスで表示 ›",
-		"walk_through_your_agent_s_mind_every": "エージェントの思考を辿りましょう。すべての記憶は、表示、検索、形成が可能なオブジェクトです。<a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">全画面で開く ↗</a>",
+		"walk_through_your_agent_s_mind_every": "エージェントの思考を辿りましょう。すべての記憶は、表示、検索、形成が可能なオブジェクトです。<a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">全画面で開く ↗</a>",
 		"website": "ウェブサイト",
 		"weekly": "毎週",
 		"weekly_digest": "週刊ダイジェスト",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "彼女はロープクライマーのように文字から文字へと登ります。各文字の頂点がグリップポイントとなり、止まり、ジャンプし、また止まります。"
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "下線付きの単語にカーソルを合わせる → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ドキュメント</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">料金</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">例</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "下線付きの単語にカーソルを合わせる → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">ドキュメント</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">料金</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">例</a>",
 		"hover_anywhere": "<em>どこでも</em>ホバー。",
 		"meta_title": "カーソル追従 — three.ws",
 		"primary": "<span>プライマリ</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "3D AIエージェントをライブで構築 — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "スライドだけの説明ではありません — ゼロから実用的な埋め込み可能な3Dエージェントをリアルタイムで作成し、その後、質疑応答に移ります。",
 		"notify_me": "通知を受け取る",
-		"or_just_add_it_to_your_calendar": "または、単に<a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">カレンダーに追加</a>して参加するだけ。",
+		"or_just_add_it_to_your_calendar": "または、単に<a id=\"add-cal-2\" style=\"text-decoration:underline\">カレンダーに追加</a>して参加するだけ。",
 		"prompt_agent": "プロンプト → エージェント",
 		"read_the_ibm_write_up": "IBMの解説記事を読む",
 		"ship_at_scale": "大規模に展開",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "ツアーはチャプター形式で進行します — 最初のAIエージェント構築から、オンチェーン化まで。",
 		"want_this_on_your_own_site_or": "自分のサイトやストアにこれを導入したいですか？<a href=\"/tour-builder\">Tour Builder</a>で構築しましょう — コード不要、両モード対応。",
 		"what_you_ll_see": "内容",
-		"you_have_a_tour_in_progress_pick": "ツアーが進行中です — <a href=\"#\" id=\"tour-resume-link\">再開する →</a>",
+		"you_have_a_tour_in_progress_pick": "ツアーが進行中です — <button type=\"button\" id=\"tour-resume-link\">再開する →</button>",
 		"you_re_in_control": "あなたがコントロール。"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "グラインドバウンティマーケット",
 		"grind_earn": "グラインドして稼ぐ",
 		"grind_earn_2": "グラインドして稼ぐ",
-		"hard_vanity_addresses_are_hours_to_years": "難易度の高いバニティアドレスは、1台のマシンでは数時間から数年かかります。ここでは、<strong>USDCバウンティをエスクローし</strong>、独立したワーカーのフリートがあなたのパターンを並行してグラインドします — 最初に検証された一致が勝利します。画期的な点：見つかったキーは<strong>あなたのX25519キーに封印されるため</strong>、ワーカーはバウンティを獲得しますが、<strong>あなたのウォレットを見ることはありません</strong>。決済は<a href=\"/x402\">x402</a>を介してトラストレスに行われ、未達成のバウンティは期限切れ時に返金されます。または、<a href=\"#\" id=\"lede-earn\">余剰コアを稼働させて</a>稼ぎましょう。",
+		"hard_vanity_addresses_are_hours_to_years": "難易度の高いバニティアドレスは、1台のマシンでは数時間から数年かかります。ここでは、<strong>USDCバウンティをエスクローし</strong>、独立したワーカーのフリートがあなたのパターンを並行してグラインドします — 最初に検証された一致が勝利します。画期的な点：見つかったキーは<strong>あなたのX25519キーに封印されるため</strong>、ワーカーはバウンティを獲得しますが、<strong>あなたのウォレットを見ることはありません</strong>。決済は<a href=\"/x402\">x402</a>を介してトラストレスに行われ、未達成のバウンティは期限切れ時に返金されます。または、<a href=\"#earn\" id=\"lede-earn\">余剰コアを稼働させて</a>稼ぎましょう。",
 		"i_ve_saved_my_private_key_somewhere": "秘密鍵を安全な場所に保存しました。",
 		"label_optional_public": "ラベル <span style=\"text-transform:none;color:#555\">(任意、公開)</span>",
 		"load_more": "さらに読み込む",

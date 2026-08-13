@@ -736,7 +736,7 @@
 		"user": "Pengguna",
 		"view_agent": "Lihat agen →",
 		"view_on_marketplace": "Lihat di marketplace ›",
-		"walk_through_your_agent_s_mind_every": "Jelajahi pikiran agen Anda. Setiap memori adalah objek yang dapat Anda lihat, cari, dan bentuk. <a href=\"#\" id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Buka layar penuh ↗</a>",
+		"walk_through_your_agent_s_mind_every": "Jelajahi pikiran agen Anda. Setiap memori adalah objek yang dapat Anda lihat, cari, dan bentuk. <a id=\"mind-fullscreen-link\" target=\"_blank\" rel=\"noopener\" style=\"color:#9ad0ff\">Buka layar penuh ↗</a>",
 		"website": "Situs web",
 		"weekly": "Mingguan",
 		"weekly_digest": "Ringkasan mingguan",
@@ -4414,7 +4414,7 @@
 		"she_climbs_letter_to_letter_like_a": "Dia memanjat dari huruf ke huruf seperti pemanjat tali. Setiap puncak huruf adalah titik pegangan — dia bertengger, melompat, lalu bertengger lagi."
 	},
 	"demos_agents_cursor_follower": {
-		"hover_any_underlined_word_docs_pricing_examp": "Arahkan kursor ke kata bergaris bawah mana pun → <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumen</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">harga</a> · <a href=\"#\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">contoh</a>",
+		"hover_any_underlined_word_docs_pricing_examp": "Arahkan kursor ke kata bergaris bawah mana pun → <a href=\"/docs\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">dokumen</a> · <a href=\"/pricing\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">harga</a> · <a href=\"/examples\" data-target style=\"color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;\">contoh</a>",
 		"hover_anywhere": "Arahkan kursor <em>ke mana saja</em>.",
 		"meta_title": "Pengikut kursor — three.ws",
 		"primary": "<span>Utama</span><span>→</span>",
@@ -6491,7 +6491,7 @@
 		"meta_twitter_title": "Membangun 3D AI Agents Live — three.ws",
 		"no_slides_only_walkthrough_we_go_from": "Tidak ada slide — hanya panduan langsung — kami pergi dari tidak ada hingga agen 3D yang dapat disematkan yang berfungsi secara real-time, kemudian membuka sesi tanya jawab.",
 		"notify_me": "Beri tahu saya",
-		"or_just_add_it_to_your_calendar": "Atau cukup <a href=\"#\" id=\"add-cal-2\" style=\"text-decoration:underline\">tambahkan ke kalender Anda</a> dan hadir.",
+		"or_just_add_it_to_your_calendar": "Atau cukup <a id=\"add-cal-2\" style=\"text-decoration:underline\">tambahkan ke kalender Anda</a> dan hadir.",
 		"prompt_agent": "Prompt → agen",
 		"read_the_ibm_write_up": "Baca tulisan IBM",
 		"ship_at_scale": "Kirim dalam skala besar",
@@ -18651,7 +18651,7 @@
 		"the_tour_runs_as_chapters_from_building": "Tur berlangsung sebagai bab — dari membangun agen pertama Anda hingga membawanya ke on-chain.",
 		"want_this_on_your_own_site_or": "Ingin ini di situs atau toko Anda sendiri? Buat satu di <a href=\"/tour-builder\">Tour Builder</a> — tanpa kode, kedua mode termasuk.",
 		"what_you_ll_see": "Apa yang akan Anda lihat",
-		"you_have_a_tour_in_progress_pick": "Anda memiliki tur yang sedang berlangsung — <a href=\"#\" id=\"tour-resume-link\">lanjutkan →</a>",
+		"you_have_a_tour_in_progress_pick": "Anda memiliki tur yang sedang berlangsung — <button type=\"button\" id=\"tour-resume-link\">lanjutkan →</button>",
 		"you_re_in_control": "Anda yang mengendalikan"
 	},
 	"tour_builder": {
@@ -19071,7 +19071,7 @@
 		"grind_bounty_market": "Pasar Bounty Grind",
 		"grind_earn": "Grind & hasilkan",
 		"grind_earn_2": "Grind & hasilkan",
-		"hard_vanity_addresses_are_hours_to_years": "Alamat vanity sulit membutuhkan waktu berjam-jam hingga bertahun-tahun pada satu mesin. Di sini Anda <strong>meng-escrow bounty USDC</strong> dan armada pekerja independen menggiling pola Anda secara paralel — kecocokan terverifikasi pertama menang. Terobosan: kunci yang ditemukan <strong>tersegel ke kunci X25519 Anda</strong>, sehingga pekerja mendapatkan bounty namun <strong>tidak pernah melihat dompet Anda</strong>. Penyelesaian tanpa kepercayaan melalui <a href=\"/x402\">x402</a>; bounty yang tidak terisi dikembalikan saat kedaluwarsa. Atau <a href=\"#\" id=\"lede-earn\">manfaatkan core cadangan Anda</a> dan hasilkan.",
+		"hard_vanity_addresses_are_hours_to_years": "Alamat vanity sulit membutuhkan waktu berjam-jam hingga bertahun-tahun pada satu mesin. Di sini Anda <strong>meng-escrow bounty USDC</strong> dan armada pekerja independen menggiling pola Anda secara paralel — kecocokan terverifikasi pertama menang. Terobosan: kunci yang ditemukan <strong>tersegel ke kunci X25519 Anda</strong>, sehingga pekerja mendapatkan bounty namun <strong>tidak pernah melihat dompet Anda</strong>. Penyelesaian tanpa kepercayaan melalui <a href=\"/x402\">x402</a>; bounty yang tidak terisi dikembalikan saat kedaluwarsa. Atau <a href=\"#earn\" id=\"lede-earn\">manfaatkan core cadangan Anda</a> dan hasilkan.",
 		"i_ve_saved_my_private_key_somewhere": "Saya telah menyimpan kunci privat saya di tempat yang aman.",
 		"label_optional_public": "Label <span style=\"text-transform:none;color:#555\">(opsional, publik)</span>",
 		"load_more": "Muat lebih banyak",
