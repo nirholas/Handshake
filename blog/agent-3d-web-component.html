@@ -37,6 +37,9 @@
         code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
         pre { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 0 0 20px; }
         pre code { background: none; padding: 0; font-size: 14px; }
+        /* URLs and mint addresses are single unbreakable tokens: without this a
+           320px viewport scrolls sideways for the whole page. */
+        a, code { overflow-wrap: anywhere; }
         strong { color: #e7e7f5; }
         .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
         .post-back:hover { color: #9ad4ff; }
@@ -51,7 +54,7 @@
 </head>
 <body>
     <div id="nav-container"></div>
-    <main class="post-wrap">
+    <main class="post-wrap" id="main-content">
         <a class="post-back" href="/blog">&larr; Blog</a>
         <div class="post-meta">
             <span class="post-date">2026-05-23</span>

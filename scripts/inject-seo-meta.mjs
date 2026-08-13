@@ -317,24 +317,37 @@ async function main() {
 	let repointed = 0;
 	let alreadyComplete = 0;
 	let sharedShell = 0;
-	// Some routes (e.g. /tutorials/*) share one template file. A single static
-	// og:image/canonical can't be right for every route, and re-pointing each
-	// would thrash the same file, so the first route to land on a file owns its
-	// meta and later routes pointing at it are left alone (their per-route OG, if
-	// any, is a crawler-rewrite concern, not this static injector's).
-	const seenFiles = new Set();
+	// Some routes (e.g. /tutorials/*, /walkthroughs/*) share one template file. A
+	// single static og:image/canonical can't be right for every route, so a shared
+	// shell is left entirely to the serve-time rewriter (server/seo-head.mjs),
+	// which stamps each request path's own head.
+	//
+	// Letting the first route to land on a file own its meta was worse than doing
+	// nothing: seo-head.mjs treats a canonical that already matches the request
+	// path as "this page authored its own meta" and skips it, so the one stamped
+	// route was the only route on the shell that kept serving the shell's generic
+	// title and description while carrying that route's canonical and social card.
+	// /tutorials/text-to-3d and /walkthroughs/forge-your-first-3d-model both shipped
+	// that way. Resolve every target up front so a shell is recognised as shared
+	// before anything is written to it, not after.
+	const fileByPath = new Map();
+	const routesPerFile = new Map();
+	for (const { page } of targets) {
+		const file = resolveFile(page.path, router);
+		fileByPath.set(page.path, file);
+		if (file) routesPerFile.set(file, (routesPerFile.get(file) || 0) + 1);
+	}
 
 	for (const { page, sectionId } of targets) {
-		const file = resolveFile(page.path, router);
+		const file = fileByPath.get(page.path);
 		if (!file) {
 			unresolved.push(page.path);
 			continue;
 		}
-		if (seenFiles.has(file)) {
+		if (routesPerFile.get(file) > 1) {
 			sharedShell++;
 			continue;
 		}
-		seenFiles.add(file);
 		resolved++;
 		const original = await readFile(file, 'utf8');
 		// 1) Upgrade any legacy static share image to this page's dynamic card.
