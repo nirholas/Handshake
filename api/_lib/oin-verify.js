@@ -11,6 +11,7 @@
 //   digestJob: lowercase hex SHA-256 of the canonical envelope
 //   signResponse / signAdvertisement: fill in `signature` on the node side
 //   verifyResponse: returns { ok, verdict, ... } for a job/response pair
+//   verifyAdvertisement: same signature rule applied to /.well-known/oin
 //   verifyOutput: spec rule 6, hash the bytes at output.url and compare
 //
 // Verdicts are the exact codes the spec names: bad_shape, job_digest_mismatch,
@@ -113,6 +114,27 @@ function fail(verdict, detail) {
 	return { ok: false, verified: false, verdict, detail };
 }
 
+// The one signature rule both a response and an advertisement obey: drop
+// `signature`, canonicalize what remains, verify Ed25519 over those bytes.
+// Returns null on success, or a fail() result naming the verdict.
+function checkDetachedSignature(signed, pub) {
+	const { signature, ...unsigned } = signed;
+	let sigBytes;
+	try {
+		sigBytes = Buffer.from(signature, 'base64');
+	} catch {
+		return fail('bad_signature', 'signature is not valid base64');
+	}
+	if (sigBytes.length !== 64) return fail('bad_signature', 'Ed25519 signature must be 64 bytes');
+	let sigOk = false;
+	try {
+		sigOk = cryptoVerify(null, Buffer.from(canonicalize(unsigned), 'utf8'), pub, sigBytes);
+	} catch {
+		sigOk = false;
+	}
+	return sigOk ? null : fail('bad_signature', 'Ed25519 verification failed');
+}
+
 function verifyResponse(job, response, opts = {}) {
 	// Rule 1: shape.
 	if (!response || typeof response !== 'object' || Array.isArray(response)) {
@@ -157,22 +179,8 @@ function verifyResponse(job, response, opts = {}) {
 	}
 
 	// Rule 4: signature over the canonical response minus `signature`.
-	const { signature, ...unsigned } = response;
-	let sigBytes;
-	try {
-		sigBytes = Buffer.from(signature, 'base64');
-	} catch {
-		return fail('bad_signature', 'signature is not valid base64');
-	}
-	if (sigBytes.length !== 64) return fail('bad_signature', 'Ed25519 signature must be 64 bytes');
-	const payloadBytes = Buffer.from(canonicalize(unsigned), 'utf8');
-	let sigOk = false;
-	try {
-		sigOk = cryptoVerify(null, payloadBytes, pub, sigBytes);
-	} catch {
-		sigOk = false;
-	}
-	if (!sigOk) return fail('bad_signature', 'Ed25519 verification failed');
+	const sigFailure = checkDetachedSignature(response, pub);
+	if (sigFailure) return sigFailure;
 
 	// Rule 5: freshness against the job deadline and the verifier clock.
 	const completedMs = Date.parse(response.completed_at);
@@ -195,6 +203,55 @@ function verifyResponse(job, response, opts = {}) {
 		verdict: 'verified',
 		nodePubkey: response.node_pubkey,
 		status: response.status,
+	};
+}
+
+// A capability advertisement is verified by the same signature rule as a
+// response, minus the job binding and freshness checks (there is no job, and an
+// advertisement is regenerated per request). A requester runs this before it
+// trusts what a node claims it can do, and a directory service runs it on every
+// crawl. `opts.expectedPubkey` pins a key the caller already knows.
+function verifyAdvertisement(advertisement, opts = {}) {
+	if (!advertisement || typeof advertisement !== 'object' || Array.isArray(advertisement)) {
+		return fail('bad_shape', 'advertisement is not an object');
+	}
+	if (advertisement.spec !== OIN_SPEC) return fail('bad_shape', `spec must be ${OIN_SPEC}`);
+	for (const field of ['node_id', 'node_pubkey', 'generated_at', 'signature']) {
+		if (typeof advertisement[field] !== 'string' || !advertisement[field]) {
+			return fail('bad_shape', `missing field: ${field}`);
+		}
+	}
+	if (!Array.isArray(advertisement.capabilities) || advertisement.capabilities.length === 0) {
+		return fail('bad_shape', 'capabilities must be a non-empty array');
+	}
+	for (const cap of advertisement.capabilities) {
+		if (!cap || typeof cap !== 'object' || typeof cap.key !== 'string' || !cap.key) {
+			return fail('bad_shape', 'every capability needs a string key');
+		}
+	}
+	if (!advertisement.endpoints || typeof advertisement.endpoints !== 'object') {
+		return fail('bad_shape', 'endpoints must be an object');
+	}
+	if (advertisement.auth !== 'bearer' && advertisement.auth !== 'none') {
+		return fail('bad_shape', `auth must be bearer|none, got ${advertisement.auth}`);
+	}
+
+	const pub = pubKeyObjectFromField(advertisement.node_pubkey);
+	if (!pub) return fail('bad_pubkey', 'node_pubkey must be ed25519:<base64 32-byte key>');
+	if (opts.expectedPubkey && advertisement.node_pubkey !== opts.expectedPubkey) {
+		return fail('untrusted_node', `advertised key does not match pinned ${opts.expectedPubkey}`);
+	}
+
+	const sigFailure = checkDetachedSignature(advertisement, pub);
+	if (sigFailure) return sigFailure;
+
+	return {
+		ok: true,
+		verified: true,
+		verdict: 'verified',
+		nodeId: advertisement.node_id,
+		nodePubkey: advertisement.node_pubkey,
+		capabilities: advertisement.capabilities.map((c) => c.key),
 	};
 }
 
@@ -236,6 +293,7 @@ export {
 	pubkeyB64FromSecret,
 	signAdvertisement,
 	signResponse,
+	verifyAdvertisement,
 	verifyOutput,
 	verifyResponse,
 };

@@ -11,6 +11,7 @@ import {
 	pubkeyB64FromSecret,
 	signAdvertisement,
 	signResponse,
+	verifyAdvertisement,
 	verifyOutput,
 	verifyResponse,
 } from '../api/_lib/oin-verify.js';
@@ -237,6 +238,63 @@ describe('verifyOutput (rule 6)', () => {
 		const res = resWithOutput();
 		const out = await verifyOutput(res, async () => ({ ok: false, status: 403, headers: { get: () => null } }));
 		expect(out.verdict).toBe('output_digest_mismatch');
+	});
+});
+
+function makeAdvertisement(overrides = {}) {
+	return {
+		spec: 'oin/0.1',
+		node_id: 'node_test',
+		node_pubkey: NODE_PUBKEY,
+		generated_at: '2026-08-12T00:00:00.000Z',
+		capabilities: [{ key: 'mesh.stylize', version: '0.1', models: ['voxel'], pricing: { currency: 'USDC', unit: 'job', amount: '0.01' } }],
+		endpoints: { submit: '/oin/jobs', poll: '/oin/jobs/:id', health: '/health' },
+		auth: 'bearer',
+		...overrides,
+	};
+}
+
+describe('verifyAdvertisement', () => {
+	it('accepts a self-signed advertisement and reports its capabilities', () => {
+		const out = verifyAdvertisement(signAdvertisement(makeAdvertisement(), SEED_B64));
+		expect(out.ok).toBe(true);
+		expect(out.verdict).toBe('verified');
+		expect(out.nodeId).toBe('node_test');
+		expect(out.capabilities).toEqual(['mesh.stylize']);
+	});
+
+	it('bad_signature: pricing edited after signing', () => {
+		const signed = signAdvertisement(makeAdvertisement(), SEED_B64);
+		signed.capabilities[0].pricing.amount = '0';
+		expect(verifyAdvertisement(signed).verdict).toBe('bad_signature');
+	});
+
+	it('bad_signature: signed by a key other than the one advertised', () => {
+		const signed = signAdvertisement(makeAdvertisement(), OTHER_SEED_B64);
+		expect(verifyAdvertisement(signed).verdict).toBe('bad_signature');
+	});
+
+	it('untrusted_node: advertised key differs from the pinned key', () => {
+		const signed = signAdvertisement(makeAdvertisement(), SEED_B64);
+		const out = verifyAdvertisement(signed, { expectedPubkey: `ed25519:${pubkeyB64FromSecret(OTHER_SEED_B64)}` });
+		expect(out.verdict).toBe('untrusted_node');
+	});
+
+	it('bad_shape: no capabilities, unknown auth mode, or missing signature', () => {
+		expect(verifyAdvertisement(signAdvertisement(makeAdvertisement({ capabilities: [] }), SEED_B64)).verdict).toBe('bad_shape');
+		expect(verifyAdvertisement(signAdvertisement(makeAdvertisement({ auth: 'mtls' }), SEED_B64)).verdict).toBe('bad_shape');
+		expect(verifyAdvertisement(makeAdvertisement()).verdict).toBe('bad_shape');
+	});
+
+	it('bad_shape: a capability entry without a key', () => {
+		const signed = signAdvertisement(makeAdvertisement({ capabilities: [{ version: '0.1' }] }), SEED_B64);
+		expect(verifyAdvertisement(signed).verdict).toBe('bad_shape');
+	});
+
+	it('bad_pubkey: node_pubkey is not an ed25519 field', () => {
+		const signed = signAdvertisement(makeAdvertisement(), SEED_B64);
+		signed.node_pubkey = 'secp256k1:AAAA';
+		expect(verifyAdvertisement(signed).verdict).toBe('bad_pubkey');
 	});
 });
 

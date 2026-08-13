@@ -198,9 +198,29 @@ payment.
 ### Reference verifier
 
 [`api/_lib/oin-verify.js`](../api/_lib/oin-verify.js) implements rules 1-5 in
-dependency-free Node (Ed25519 via `crypto.createVerify`), plus an opt-in
-`verifyOutput()` for rule 6. It is the conformance target for third-party
+dependency-free Node (Ed25519 via `node:crypto`), plus an opt-in
+`verifyOutput()` for rule 6 and a `verifyAdvertisement()` that applies the same
+signature rule to `/.well-known/oin` (rules 1, 3, and 4; there is no job to bind
+and no deadline to miss). It is the conformance target for third-party
 verifiers.
+
+### Conformance runner
+
+[`scripts/oin-conformance.mjs`](../scripts/oin-conformance.mjs) drives a live
+node through the entire protocol and verifies every signature with the
+reference verifier: fetch and verify the advertisement, submit a job for an
+advertised capability, confirm the node's `job_digest` matches the requester's
+own canonicalization, poll to a terminal state, verify the signed response, then
+fetch the artifact and check rule 6. It exits 0 only when every step passes, so
+it is the check an operator runs before claiming a node speaks OIN.
+
+```bash
+node scripts/oin-conformance.mjs \
+  --node https://your-node.example \
+  --api-key "$NODE_API_KEY" \
+  --input https://three.ws/avatars/fox.glb \
+  --model voxel --params '{"resolution":24,"output_format":"glb"}'
+```
 
 ## Reference worker
 
@@ -213,6 +233,21 @@ behind a flag:
   or 64-byte expanded key). Unset with the flag on: the worker refuses to
   start, so a node can never advertise a key it cannot sign with.
 - With the flag off the worker is byte-for-byte its pre-OIN self.
+
+A node with no GCS bucket (any self-hosted operator) sets `OIN_RESULT_DIR` and
+`OIN_RESULT_BASE_URL` instead, and artifacts land on the filesystem under the
+URL the signature commits to. That is the whole local proof:
+
+```bash
+cd workers/stylize
+API_KEY=local GCS_BUCKET=unused OIN_ENABLED=true \
+OIN_SIGNING_KEY="$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")" \
+OIN_RESULT_DIR=/tmp/oin OIN_RESULT_BASE_URL=http://127.0.0.1:8402 \
+python -m uvicorn main:app --port 8401
+```
+
+with `/tmp/oin` served on port 8402, then point the conformance runner above at
+`http://127.0.0.1:8401`.
 
 The worker-side protocol layer is [`workers/stylize/oin.py`](../workers/stylize/oin.py),
 vendored byte-identical into any worker that adopts OIN (same pattern as

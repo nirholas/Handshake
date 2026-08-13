@@ -21,6 +21,9 @@ The specifications that define the three.ws embodied-agent platform: on-chain id
 - [`PROVENANCE_3D.md`](./PROVENANCE_3D.md): Verifiable 3D Provenance v1. C2PA-style signed content credentials for AI-generated 3D: creator, prompt, model, lineage and the GLB's content hash, ed25519-signed and anchored on Solana. Verification is free and public.
 - [`SIM_READINESS.md`](./SIM_READINESS.md): Simulation Readiness v1. The physics grade a 3D asset carries: watertightness, metric scale, mass and inertia, and a convex collision proxy, in four verdicts. Everything is derived from the mesh; anything unknowable from the geometry is reported as unknown rather than invented. Rides the provenance credential when signed.
 
+- [`OPEN_INFERENCE_PROTOCOL.md`](./OPEN_INFERENCE_PROTOCOL.md): Open Inference Protocol (OIN) v0.1. The vendor-neutral wire protocol for agent inference: a job envelope, a signed capability advertisement, and an Ed25519-signed response anyone can verify against the node's published key, so inference decouples from any single provider. Reference verifier in `api/_lib/oin-verify.js`; reference node in `workers/stylize`.
+- [`inference-receipts.md`](./inference-receipts.md): Inference Receipt v1. The settlement half of the same story: what a paid inference call hands back as proof (job, model, input/output hashes, node and issuer signatures, the settlement transaction) and how to verify it offline.
+
 ## Schema
 
 [`schema/`](./schema) holds the SQL DDL for the Postgres tables that back these specs (see `schema/README.md` for column-level docs):
