@@ -78,7 +78,7 @@ export const VOICE_PROVIDERS = Object.freeze([
 	{
 		id: 'edge',
 		label: 'Microsoft Edge',
-		tagline: 'Free · ~500 neural voices · 100+ locales',
+		tagline: 'Free · every Microsoft neural voice · 100+ locales',
 		billing: 'free',
 		usdPer1k: 0,
 		byok: false,
