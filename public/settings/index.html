@@ -935,7 +935,6 @@
 				// The catalog the user is shown IS the permission boundary: the seed POST
 				// sends only ticked keys, and the server refuses anything not in it.
 				let seedAgentId = '';
-				let seedCatalog = null;
 				let seedMounted = false;
 
 				const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -996,7 +995,6 @@
 					const root = document.getElementById('seed-catalog');
 					const revokeBtn = document.getElementById('seed-revoke-btn');
 					if (!root) return;
-					seedCatalog = data.catalog;
 
 					if (revokeBtn) {
 						revokeBtn.style.display = data.fact_count > 0 ? 'inline-flex' : 'none';

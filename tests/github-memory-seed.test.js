@@ -417,3 +417,20 @@ describe('settings consent panel wiring', () => {
 		expect(html).toContain('readmes: readmes.filter((k) => repos.includes(k))');
 	});
 });
+
+// The Disconnect button used to call a handler that was never defined, so the
+// reference threw and the whole GitHub card fell into "Could not load status"
+// for exactly the users who had something seeded to revoke.
+describe('settings disconnect handler', () => {
+	const html = readFileSync(new URL('../public/settings/index.html', import.meta.url), 'utf8');
+
+	it('defines the handler the Disconnect button is wired to', () => {
+		expect(html).toContain("addEventListener('click', disconnectGitHub)");
+		expect(html).toContain('async function disconnectGitHub()');
+	});
+
+	it('revokes through the account-wide disconnect endpoint and reports the deletion', () => {
+		expect(html).toContain("apiJson('/api/auth/github/disconnect', { method: 'POST' })");
+		expect(html).toContain('memories_deleted');
+	});
+});
