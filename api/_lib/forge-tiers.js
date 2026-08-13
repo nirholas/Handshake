@@ -127,10 +127,12 @@ export const BACKENDS = Object.freeze({
 		// the GPU warm, so there is no Replicate-style ~60 s cold start.
 		baseEta: 22,
 		credits: null,
-		// Free NVIDIA NIM lane — no vendor credit cost. This is what makes it the
-		// free-first draft default per platform policy.
+		// Free NVIDIA NIM lane: no vendor credit cost, which is why it stays in the
+		// free-first chain. It is not a named default (FREE_DEFAULT_FOR_TIERS names
+		// our own workers); it is the last free lane, so a text prompt still returns
+		// a model when every self-host worker and Space is cold or down.
 		free: true,
-		blurb: 'Free TRELLIS generation on NVIDIA NIM — the default lane for text prompts at draft and standard tiers; no vendor cost. Photo input uses the standing engine.',
+		blurb: 'Free TRELLIS generation on NVIDIA NIM: no vendor cost, and the free lane that answers a text prompt when our own GPU workers are cold. Photo input uses the standing engine.',
 	}),
 	huggingface: Object.freeze({
 		id: 'huggingface',
@@ -486,10 +488,11 @@ function freeLaneUsable(id, p, userImages) {
 }
 
 // Ordered list of every free lane that could serve this (path, tier, userImages)
-// request on this deployment, most-preferred first — the tier's named free engine
-// (NVIDIA's native text→3D at draft/standard, HuggingFace's textured engine at
-// high), then the per-path fallback chain (our self-host GPU workers, then the
-// free external Spaces). De-duplicated; only configured + capable lanes survive.
+// request on this deployment, most-preferred first: the tier's named free engine
+// (our self-host TRELLIS worker at draft/standard, our self-host Hunyuan3D worker
+// at high, per FREE_DEFAULT_FOR_TIERS), then the per-path fallback chain (the
+// self-host workers, then the free external Spaces, then the free NVIDIA NIM
+// lane). De-duplicated; only configured + capable lanes survive.
 // This is the single ordering both the env-only default and the health-aware
 // resolver walk, so they can never drift apart.
 export function freeLaneCandidates(p, tierId, userImages, subjectClass = null) {
