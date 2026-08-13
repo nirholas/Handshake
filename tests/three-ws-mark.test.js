@@ -110,7 +110,7 @@ describe('THREE_WS_VANITY', () => {
 });
 
 // ── grindVanityNode with THREE_WS_VANITY ───────────────────────────────────
-// Real CPU grind — sub-second for a 3-char case-insensitive prefix on an idle
+// Real CPU grind: sub-second for a 3-char case-insensitive prefix on an idle
 // core, but this suite runs it alongside 1500+ other files, so the WASM thread
 // may only see a fraction of a core. The grind budget must stay BELOW the test
 // timeout: that way a slow box fails with GrindExhaustedError (which carries
