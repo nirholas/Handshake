@@ -78,9 +78,8 @@ async function toggleAgentBookmarkFromCard(agentId, btn) {
 	btn.setAttribute('aria-pressed', String(!wasOn));
 	btn.textContent = !wasOn ? '★' : '☆';
 	try {
-		const r = await fetch(`${API}/marketplace/agents/${agentId}/bookmark`, {
+		const r = await apiWriteWithCsrf(`${API}/marketplace/agents/${agentId}/bookmark`, {
 			method: wasOn ? 'DELETE' : 'POST',
-			credentials: 'include',
 		});
 		if (!r.ok) throw new Error(`bookmark failed ${r.status}`);
 		const j = await r.json().catch(() => ({}));
@@ -5844,10 +5843,7 @@ async function fork() {
 	const id = detailState.agent.id;
 	if (btn) { btn.disabled = true; btn.textContent = 'Forking…'; }
 	try {
-		const r = await fetch(`${API}/marketplace/agents/${id}/fork`, {
-			method: 'POST',
-			credentials: 'include',
-		});
+		const r = await apiWriteWithCsrf(`${API}/marketplace/agents/${id}/fork`);
 		if (r.status === 401) {
 			location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
 			return;
@@ -5875,9 +5871,8 @@ async function toggleBookmark() {
 	const cur = detailState.bookmarked;
 	if (btn) btn.disabled = true;
 	try {
-		const r = await fetch(`${API}/marketplace/agents/${id}/bookmark`, {
+		const r = await apiWriteWithCsrf(`${API}/marketplace/agents/${id}/bookmark`, {
 			method: cur ? 'DELETE' : 'POST',
-			credentials: 'include',
 		});
 		if (r.status === 401) {
 			location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
@@ -6232,12 +6227,7 @@ async function publishExistingAgent(id, btn) {
 	row?.querySelector('.msm-error')?.remove();
 	try {
 		const body = catSel ? { category: catSel.value } : {};
-		const r = await fetch(`${API}/marketplace/agents/${id}/publish`, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			credentials: 'include',
-			body: JSON.stringify(body),
-		});
+		const r = await apiWriteWithCsrf(`${API}/marketplace/agents/${id}/publish`, { body });
 		const j = await r.json().catch(() => ({}));
 		if (!r.ok) throw new Error(j.error_description || 'Publish failed');
 		const item = (submitMine.items || []).find((a) => a.id === id);
@@ -6408,12 +6398,7 @@ function bindSubmit() {
 		btn.textContent = publish ? 'Publishing…' : 'Saving…';
 		try {
 			errorEl.hidden = true;
-			const r = await fetch(`${API}/marketplace/agents`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				credentials: 'include',
-				body: JSON.stringify(body),
-			});
+			const r = await apiWriteWithCsrf(`${API}/marketplace/agents`, { body });
 			const j = await r.json();
 			if (!r.ok) throw new Error(j.error_description || 'Submission failed');
 
@@ -7262,14 +7247,23 @@ async function getCsrfToken() {
 	const j = await r.json();
 	return j.data.token;
 }
-async function apiPostWithCsrf(url, body) {
+// Every state-changing call goes through here so the single-use token is always
+// attached. A bodyless write (bookmark on/off) still needs one: the server
+// rejects the request, not the payload.
+async function apiWriteWithCsrf(url, { method = 'POST', body = null } = {}) {
 	const token = await getCsrfToken();
+	const headers = { 'X-CSRF-Token': token };
+	if (body != null) headers['Content-Type'] = 'application/json';
 	return fetch(url, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
+		method,
+		headers,
 		credentials: 'include',
 		body: body == null ? undefined : JSON.stringify(body),
 	});
+}
+
+async function apiPostWithCsrf(url, body) {
+	return apiWriteWithCsrf(url, { method: 'POST', body });
 }
 
 async function createPendingPurchase(agentId, skill, durationHours = null) {

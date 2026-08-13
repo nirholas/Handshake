@@ -34,6 +34,7 @@ import {
 	openAssetPurchaseFlow,
 	formatAssetPrice,
 	apiPostWithCsrf,
+	apiWriteWithCsrf,
 	USDC_MAINNET_MINT,
 } from './shared/skill-purchase.js';
 import { log } from './shared/log.js';
@@ -298,9 +299,8 @@ function setBookmark(btn, on) {
 async function toggleBookmark(agentId, btn) {
 	const cur = btn.dataset.on === '1';
 	try {
-		const r = await fetch(`${API}/marketplace/agents/${agentId}/bookmark`, {
+		const r = await apiWriteWithCsrf(`${API}/marketplace/agents/${agentId}/bookmark`, {
 			method: cur ? 'DELETE' : 'POST',
-			credentials: 'include',
 		});
 		if (r.status === 401) {
 			location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
@@ -322,10 +322,7 @@ async function forkAgent(agentId) {
 	const btn = $('ad-fork');
 	if (btn) { btn.disabled = true; btn.textContent = 'Forking…'; }
 	try {
-		const r = await fetch(`${API}/marketplace/agents/${agentId}/fork`, {
-			method: 'POST',
-			credentials: 'include',
-		});
+		const r = await apiWriteWithCsrf(`${API}/marketplace/agents/${agentId}/fork`);
 		if (r.status === 401) {
 			location.href = `/login?next=${encodeURIComponent(location.pathname)}`;
 			return;

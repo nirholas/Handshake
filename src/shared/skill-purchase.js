@@ -577,15 +577,24 @@ async function getCsrfToken() {
 	_csrf = { token: j.data.token, expiresAt: Date.now() + (j.data.expires_in - 30) * 1000 };
 	return _csrf.token;
 }
-export async function apiPostWithCsrf(url, body) {
+// Any state-changing call, not just POST. A bodyless write (removing a bookmark
+// with DELETE) still carries the token: the server gates the request, not the
+// payload, and Content-Type is only sent when there is something to type.
+export async function apiWriteWithCsrf(url, { method = 'POST', body = null } = {}) {
 	const token = await getCsrfToken();
 	_csrf = null;
+	const headers = { 'X-CSRF-Token': token };
+	if (body != null) headers['Content-Type'] = 'application/json';
 	return fetch(url, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
+		method,
+		headers,
 		credentials: 'include',
 		body: body == null ? undefined : JSON.stringify(body),
 	});
+}
+
+export async function apiPostWithCsrf(url, body) {
+	return apiWriteWithCsrf(url, { method: 'POST', body });
 }
 
 async function buildSplTransferWithReference({ payer, recipient, mint, amount, reference }) {
