@@ -137,11 +137,11 @@ Postgres TCP, so a local run puts a Neon HTTP proxy in front of Postgres:
 
 ```bash
 docker run -d --name royalty-pg \
-  -e POSTGRES_PASSWORD=royalty -e POSTGRES_DB=threews -p 55433:5432 postgres:16-alpine
+  -e POSTGRES_PASSWORD=example -e POSTGRES_DB=threews -p 55433:5432 postgres:16-alpine
 docker network create royalty-net
 docker network connect royalty-net royalty-pg
 docker run -d --name royalty-proxy --network royalty-net -p 54331:4444 \
-  -e PG_CONNECTION_STRING="postgres://postgres:royalty@royalty-pg:5432/threews" \
+  -e PG_CONNECTION_STRING="postgres://postgres:example@royalty-pg:5432/threews" \
   ghcr.io/timowilhelm/local-neon-http-proxy:main
 
 # Load the schema plus the migrations the ledger path needs.
@@ -154,7 +154,7 @@ for m in 2026-04-30-agent-monetization.sql \
   docker exec royalty-pg psql -U postgres -d threews -f /m.sql
 done
 
-ROYALTY_PROOF_DATABASE_URL="postgres://postgres:royalty@localhost:54331/threews" \
+ROYALTY_PROOF_DATABASE_URL="postgres://postgres:example@localhost:54331/threews" \
 ROYALTY_PROOF_FETCH_ENDPOINT="http://localhost:54331/sql" \
   node scripts/royalty-proof.mjs
 ```
