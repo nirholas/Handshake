@@ -27,9 +27,13 @@
 //      the world that link points at and grants nothing without one.
 //   7. Agenda beats are ordered, non-negative, and land inside the window.
 //
-// There is no event to run? Delete public/event.json. Every surface handles an
-// absent config as a supported state and shows nothing, which is exactly right
-// between events. This check only fails on a config that is present and broken.
+// There is no event to run? Reset the file to its explicit no-event state
+// (`npm run event:schedule -- --clear --apply`). Every surface reads that as
+// "no event" and shows nothing, which is exactly right between events, and
+// /event.json keeps answering 200 so no visitor console carries a 404 and the
+// game server's minutely config poll stays quiet. This check fails on a config
+// that is present and broken, and on a missing file, which would resurrect
+// those 404s.
 //
 // Run: node scripts/check-event-window.mjs   (wired as `npm run check:event`)
 //      node scripts/check-event-window.mjs --at 2026-08-09T15:30:00Z
@@ -45,6 +49,33 @@ import { getCosmetic } from '../multiplayer/src/cosmetics-catalog.js';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const CONFIG_PATH = path.join(root, 'public/event.json');
 const MAX_DURATION_MS = 24 * 3600 * 1000;
+
+// The canonical between-events document. Every reader parses `startsAt: null`
+// as "no event" and mounts nothing, while the file's presence keeps /event.json
+// answering 200 for the four /play readers and the game server's config poll.
+// `npm run event:schedule -- --clear --apply` writes exactly this.
+export const NO_EVENT_DOC = {
+	id: null,
+	name: null,
+	tagline: null,
+	startsAt: null,
+	endsAt: null,
+	link: null,
+	note: 'No event is scheduled. This file stays in place between events so /event.json answers 200 with an explicit no-event state instead of putting a 404 in every visitor console. Schedule the next event with: npm run event:schedule -- --start <ISO> --duration <minutes> --apply',
+};
+
+/**
+ * True only for the explicit no-event document: `startsAt` literally null and
+ * no event-bearing field carrying anything. A config that nulls the window but
+ * keeps a name, link, souvenir or agenda is a broken event, not a resting
+ * state, and must keep failing validation loudly.
+ */
+export function isNoEventSentinel(doc) {
+	if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return false;
+	return doc.startsAt === null && doc.endsAt == null && doc.id == null
+		&& doc.name == null && doc.tagline == null && doc.link == null
+		&& doc.souvenir == null && doc.agenda == null;
+}
 
 const ZONES = [
 	['Pacific', 'America/Los_Angeles'],
@@ -109,7 +140,7 @@ export function validateEventConfig(doc, now = Date.now()) {
 			failures.push(
 				`the event window ENDED ${agoH}h ago (${isoOf(win.endsAt)} UTC), so the countdown, agenda, ` +
 				'fireworks, souvenir grant and event leaderboard are all silently dormant. ' +
-				'Reschedule with `npm run event:schedule -- --start <ISO> --duration <mins> --apply`, or delete public/event.json if the event is done.',
+				'Reschedule with `npm run event:schedule -- --start <ISO> --duration <mins> --apply`, or reset to the no-event state with `npm run event:schedule -- --clear --apply` if the event is done.',
 			);
 		}
 
@@ -187,11 +218,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 		process.exit(2);
 	}
 
-	// No config at all is a supported state: between events the platform owes the
-	// visitor zero pixels, and every reader already treats absent as "no event".
+	// The file must exist even between events: readers handle absence, but a
+	// missing file puts a 404 in every /play visitor's console (four readers
+	// fetch it per load) and an unreadable-config warn in the game server's
+	// minutely poll. The resting state is the explicit no-event document.
 	if (!existsSync(CONFIG_PATH)) {
-		console.log('[check-event] OK: no public/event.json, so no event is configured (a supported state)');
-		process.exit(0);
+		console.error('[check-event] public/event.json is MISSING. Between events it must carry the explicit no-event state, not be absent.');
+		console.error('[check-event] Restore it: npm run event:schedule -- --clear --apply');
+		process.exit(1);
 	}
 
 	let doc;
@@ -199,8 +233,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 		doc = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 	} catch (err) {
 		console.error(`[check-event] public/event.json is not valid JSON: ${err?.message || err}`);
-		console.error('[check-event] Every event surface would mount nothing. Fix the syntax or delete the file.');
+		console.error('[check-event] Every event surface would mount nothing. Fix the syntax, or reset with `npm run event:schedule -- --clear --apply`.');
 		process.exit(1);
+	}
+
+	if (isNoEventSentinel(doc)) {
+		console.log('[check-event] OK: public/event.json carries the explicit no-event state, so no event is configured (a supported state)');
+		process.exit(0);
 	}
 
 	const { failures, notes } = validateEventConfig(doc, now);

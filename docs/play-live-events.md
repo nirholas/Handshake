@@ -7,14 +7,17 @@ when each segment starts, and a synchronized fireworks show everyone watches
 together.
 
 Everything below is driven by one file, `public/event.json`.
-Create it, redeploy, and the event exists. Delete it and the world goes back to
-normal with no code change and no dead pixels.
+Schedule a window in it, redeploy, and the event exists. Reset it and the world
+goes back to normal with no code change and no dead pixels.
 
-**The repo ships without that file, and that is the resting state.** No event is
-scheduled right now, so `/event.json` answers 404, every surface below mounts
-nothing, and the world runs as a plain world. Scheduling an event means writing
-the file; ending one means deleting it again. Nothing in this document is live
-until that file exists.
+**Between events the file carries an explicit no-event state, and that is the
+resting state.** The file always exists (four /play readers fetch `/event.json`
+per load, and its absence would put a 404 in every visitor's console), but its
+window is explicitly null, so every surface below mounts nothing and the world
+runs as a plain world. Scheduling an event means writing a real window into the
+file (`npm run event:schedule -- --start <ISO> --duration <minutes> --apply`);
+ending one means resetting it (`npm run event:schedule -- --clear --apply`).
+Nothing in this document is live until a real window is scheduled.
 
 - **Surface:** `/play`, in the `$THREE` home town only (`isHomeTown()`).
 - **Modules:** [`src/game/meetup-event.js`](../src/game/meetup-event.js) (the view),
@@ -118,9 +121,9 @@ shifts it to a specific instant instead. This runs through
 `applyPreviewOverride()`, which every surface that reads the event shares, so a
 preview never drifts from the real thing.
 
-It shifts a configured event; it does not invent one. With no `public/event.json`
-present, `?meetup=now` has nothing to move and the world loads as usual, so write
-the file first.
+It shifts a configured event; it does not invent one. While `public/event.json`
+carries the no-event resting state, `?meetup=now` has nothing to move and the
+world loads as usual, so schedule a window first.
 
 ```
 http://localhost:3000/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three&meetup=now
@@ -129,7 +132,8 @@ http://localhost:3000/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&nam
 ## Verifying before an event
 
 The audit drives the real layer through a real browser, so it needs a
-`public/event.json` in place before you run it (see the note under Previewing).
+real window in `public/event.json` before you run it (see the note under
+Previewing).
 
 ```bash
 npm run dev            # terminal 1: vite on :3000

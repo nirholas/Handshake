@@ -32,6 +32,7 @@ import {
 import { boutiqueListings, boutiquePrice } from '../multiplayer/src/shop.js';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { isNoEventSentinel } from '../scripts/check-event-window.mjs';
 
 const SOUVENIR_ID = 'laurel-meetup';
 const EVENT_COIN = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -194,15 +195,20 @@ describe('the souvenir stays out of the shop economy', () => {
 
 const EVENT_CONFIG = fileURLToPath(new URL('../public/event.json', import.meta.url));
 
-// Between events the file is absent on purpose (every surface reads that as "no
-// event" and mounts nothing), so there is no shipped config to hold to account.
-// The server reads this exact file over HTTP at runtime. A typo in it is a
-// silent no-drop on the night of the event, which is the worst possible time to
-// find out. Read inside the tests, not in the suite body: a skipped suite still
-// has its body collected, so an eager read would throw with no event scheduled.
+// Between events the file carries the explicit no-event resting document (an
+// all-null window every surface reads as "no event"; it exists so /event.json
+// answers 200 instead of 404ing in visitor consoles), so there is no shipped
+// config to hold to account. The server reads this exact file over HTTP at
+// runtime. A typo in it is a silent no-drop on the night of the event, which is
+// the worst possible time to find out. Read inside the tests, not in the suite
+// body: a skipped suite still has its body collected, so an eager read would
+// throw on an unreadable file.
 const shippedEvent = () => JSON.parse(readFileSync(EVENT_CONFIG, 'utf8'));
+const restingState = () => {
+	try { return isNoEventSentinel(shippedEvent()); } catch { return false; }
+};
 
-describe.skipIf(!existsSync(EVENT_CONFIG))('the shipped event config', () => {
+describe.skipIf(!existsSync(EVENT_CONFIG) || restingState())('the shipped event config', () => {
 	it('declares a souvenir the server will actually grant', () => {
 		const drop = parseEventDrop(shippedEvent());
 		expect(drop).not.toBeNull();

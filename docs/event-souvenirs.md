@@ -43,9 +43,11 @@ Everything lives in one file: `public/event.json`, the
 same config that drives the countdown pill, the agenda drawer, and the fireworks
 finale.
 
-**That file is absent between events, which is the platform's resting state.**
-No event is scheduled right now, so nothing is being granted. Running one starts
-by writing the file, souvenir block included:
+**Between events that file carries an explicit no-event state (an all-null
+window), which is the platform's resting state.** The file itself always exists
+so `/event.json` answers 200 in every visitor console. No event is scheduled
+right now, so nothing is being granted. Running one starts by writing a real
+config into the file, souvenir block included:
 
 ```json
 {
@@ -80,9 +82,10 @@ Omit the `souvenir` block entirely to run an event with no drop.
    npx vitest run tests/event-souvenir.test.js
    ```
    The suite's last block reads the real `public/event.json` and fails if the
-   shipped config would grant nothing. It skips itself when there is no file, so
-   a green run between events proves the drop logic, not your window: write the
-   config first, then run it and read the count.
+   shipped config would grant nothing. It skips itself while the file carries
+   the no-event resting state, so a green run between events proves the drop
+   logic, not your window: write the config first, then run it and read the
+   count.
 4. **Deploy.** The game server fetches the config over HTTP and re-reads it
    every two minutes, so moving a window does not need a game-server redeploy.
    `EVENT_CONFIG_TTL_MS` tightens that interval while you are setting up.

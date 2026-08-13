@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { validateEventConfig, CONFIG_PATH, isoOf, zoneLines } from '../scripts/check-event-window.mjs';
+import {
+	validateEventConfig, isNoEventSentinel, NO_EVENT_DOC, CONFIG_PATH, isoOf, zoneLines,
+} from '../scripts/check-event-window.mjs';
 
 // The shape of public/event.json, minus the fields the validator ignores. Kept
 // close to the real file so a rule that only passes on a toy config fails here.
@@ -122,15 +124,41 @@ describe('validateEventConfig', () => {
 	});
 });
 
+// The between-events resting state: the file exists (so /event.json answers
+// 200 in every visitor console instead of 404ing four times per /play load)
+// and carries an explicitly null window every reader parses as "no event".
+describe('the no-event resting state', () => {
+	it('recognises the canonical resting document', () => {
+		expect(isNoEventSentinel(NO_EVENT_DOC)).toBe(true);
+	});
+
+	it('is what every reader parses as "no event"', () => {
+		expect(validateEventConfig(NO_EVENT_DOC, BEFORE).window).toBeNull();
+	});
+
+	// A config that nulls the window but keeps event-bearing fields is a broken
+	// event, not a resting state, and must keep failing validation loudly.
+	it('refuses a null window that still carries event fields', () => {
+		expect(isNoEventSentinel({ ...NO_EVENT_DOC, name: '$THREE meetup' })).toBe(false);
+		expect(isNoEventSentinel({ ...NO_EVENT_DOC, link: '/play?coin=x' })).toBe(false);
+		expect(isNoEventSentinel({ ...NO_EVENT_DOC, souvenir: { cosmeticId: 'laurel-meetup' } })).toBe(false);
+		expect(isNoEventSentinel(null)).toBe(false);
+		expect(isNoEventSentinel({})).toBe(false);
+	});
+});
+
 // The config that ships is the one that matters; a green suite over fixtures
 // while the real file is broken would be the same silent failure in a new place.
-// Between events there is no file at all (the documented "no event scheduled"
-// state every surface handles), so these run only when one is actually shipping.
+// Between events the file carries the no-event resting document (see above), so
+// these run only when an event is actually shipping.
 // Read inside the tests rather than in the suite body: vitest still collects a
-// skipped suite's body, so an eager read would throw with no event scheduled.
+// skipped suite's body, so an eager read would throw on an unreadable file.
 const shippedEvent = () => JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+const shippedIsResting = () => {
+	try { return isNoEventSentinel(shippedEvent()); } catch { return false; }
+};
 
-describe.skipIf(!existsSync(CONFIG_PATH))('the configured event that ships', () => {
+describe.skipIf(!existsSync(CONFIG_PATH) || shippedIsResting())('the configured event that ships', () => {
 	it('is coherent when judged at its own start', () => {
 		const doc = shippedEvent();
 		const { failures } = validateEventConfig(doc, Date.parse(doc.startsAt));

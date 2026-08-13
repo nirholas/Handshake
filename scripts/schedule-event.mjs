@@ -32,6 +32,11 @@
 //       live states can be walked in a browser. Prints the revert command,
 //       because a rehearsal left behind is the first bug listed above.
 //
+//   npm run event:schedule -- --clear --apply
+//       Reset the file to the explicit no-event state (the between-events
+//       resting document). The file is never deleted: absence puts a 404 in
+//       every /play visitor's console and a warn in the game server's poll.
+//
 //   Also: --name "..."  --tagline "..."  --duration <minutes>  --at <ISO>
 //   (--at judges the result from that instant instead of now, for proving a
 //   future window is correct today.)
@@ -39,7 +44,9 @@
 // Dry run is the default. Nothing is written without --apply.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { validateEventConfig, CONFIG_PATH, isoOf, zoneLines } from './check-event-window.mjs';
+import {
+	validateEventConfig, isNoEventSentinel, NO_EVENT_DOC, CONFIG_PATH, isoOf, zoneLines,
+} from './check-event-window.mjs';
 
 const argv = process.argv.slice(2);
 const flag = (name) => {
@@ -49,6 +56,7 @@ const flag = (name) => {
 const has = (name) => argv.includes(`--${name}`);
 
 const apply = has('apply');
+const clear = has('clear');
 const rehearse = flag('rehearse');
 const startArg = flag('start');
 const durationArg = flag('duration');
@@ -62,15 +70,27 @@ if (!Number.isFinite(judgeAt)) {
 	process.exit(2);
 }
 
+// --clear needs no readable config: it writes the resting document outright.
+if (clear) {
+	if (!apply) {
+		console.log('[event-schedule] DRY RUN: would reset public/event.json to the explicit no-event state.');
+		console.log('[event-schedule] Re-run with --apply to write it.');
+		process.exit(0);
+	}
+	writeFileSync(CONFIG_PATH, JSON.stringify(NO_EVENT_DOC, null, '\t') + '\n', 'utf8');
+	console.log('[event-schedule] WROTE public/event.json: the explicit no-event state.');
+	console.log('[event-schedule] Every surface now mounts nothing, and /event.json keeps answering 200.');
+	process.exit(0);
+}
+
 let doc;
 try {
 	doc = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 } catch (err) {
 	console.error(`[event-schedule] cannot read public/event.json: ${err?.message || err}`);
-	console.error('[event-schedule] Between events the file is deleted on purpose, so HEAD may not carry one.');
-	console.error('[event-schedule] Restore the last shipped config, then schedule on top of it:');
-	console.error('[event-schedule]   git show "$(git rev-list -1 HEAD -- public/event.json)^:public/event.json" > public/event.json');
-	console.error('[event-schedule] Or write a fresh one from the template in docs/play-live-events.md.');
+	console.error('[event-schedule] The file must exist even between events (its absence 404s in every /play console).');
+	console.error('[event-schedule] Restore the resting state, then schedule on top of it:');
+	console.error('[event-schedule]   npm run event:schedule -- --clear --apply');
 	process.exit(1);
 }
 
@@ -117,6 +137,13 @@ if (startsAt !== null) {
 }
 if (nameArg) doc.name = nameArg;
 if (taglineArg) doc.tagline = taglineArg;
+
+// Previewing the resting document is not a failure: there is simply no event.
+if (startsAt === null && !nameArg && !taglineArg && isNoEventSentinel(doc)) {
+	console.log('[event-schedule] no event is scheduled (public/event.json carries the explicit no-event state).');
+	console.log('[event-schedule] Schedule one with --start <ISO> --duration <minutes> --apply, or --rehearse 10 --apply for a walkthrough.');
+	process.exit(0);
+}
 
 // Validate the document as it would actually ship, with the deploy's own rules.
 const { failures, notes, window: win, state } = validateEventConfig(doc, judgeAt);
@@ -166,9 +193,11 @@ if (!apply) {
 const raw = readFileSync(CONFIG_PATH, 'utf8');
 const setString = (text, key, value) => {
 	// The value is JSON-encoded, so quotes and backslashes in a name are safe.
-	const pattern = new RegExp(`("${key}"\\s*:\\s*)"(?:[^"\\\\]|\\\\.)*"`);
+	// `null` is matched too: the no-event resting document carries every event
+	// field as null, and scheduling on top of it fills them in place.
+	const pattern = new RegExp(`("${key}"\\s*:\\s*)(?:"(?:[^"\\\\]|\\\\.)*"|null)`);
 	if (!pattern.test(text)) {
-		console.error(`[event-schedule] could not find a "${key}" string field to update in public/event.json`);
+		console.error(`[event-schedule] could not find a "${key}" field to update in public/event.json`);
 		process.exit(1);
 	}
 	return text.replace(pattern, (_m, head) => head + JSON.stringify(value));

@@ -1,0 +1,9 @@
+{
+	"id": null,
+	"name": null,
+	"tagline": null,
+	"startsAt": null,
+	"endsAt": null,
+	"link": null,
+	"note": "No event is scheduled. This file stays in place between events so /event.json answers 200 with an explicit no-event state instead of putting a 404 in every visitor console. Schedule the next event with: npm run event:schedule -- --start <ISO> --duration <minutes> --apply"
+}
