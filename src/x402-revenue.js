@@ -38,6 +38,7 @@ const state = {
 	pollTimer: null,
 	statsTimer: null,
 	firstChart: true,
+	feedState: 'loading', // mirrors the live-state chip, survives an i18n repaint
 	hasStats: false, // a successful stats render has landed at least once
 	hasFeed: false, // the feed has rendered rows or an honest empty state
 };
@@ -539,6 +540,7 @@ function clearFilters() {
 
 // ── feed ────────────────────────────────────────────────────────────────────
 function setFeedState(s) {
+	state.feedState = s;
 	const el = $('xr-feed-state');
 	if (!el) return;
 	el.dataset.state = s;
@@ -907,7 +909,7 @@ function wireSearch() {
 
 function wireKeys() {
 	document.addEventListener('keydown', (e) => {
-		const typing = e.target.matches('input, textarea, [contenteditable]');
+		const typing = !!e.target?.matches?.('input, textarea, [contenteditable]');
 		if (typing) {
 			if (e.key === 'Escape') e.target.blur();
 			return;
@@ -932,7 +934,9 @@ function onVisibility() {
 	if (document.hidden) {
 		if (!state.paused) setFeedState('paused');
 	} else {
-		setFeedState(state.paused ? 'paused' : state.latestTs ? 'live' : 'empty');
+		// Returning to a tab must not paint over a real failure with "no activity".
+		if (state.feedState === 'error') setFeedState('error');
+		else setFeedState(state.paused ? 'paused' : state.latestTs ? 'live' : 'empty');
 		if (!state.paused) pollDelta();
 		loadStats();
 	}
@@ -962,6 +966,19 @@ function init() {
 		if (!document.hidden) loadStats();
 	}, STATS_REFRESH_MS);
 	document.addEventListener('visibilitychange', onVisibility);
+	// The i18n runtime applies its catalog after first paint and again on every
+	// locale switch, rewriting annotated copy. Anything this page keeps live is
+	// re-asserted afterwards so a translation pass can never leave the feed
+	// reading "connecting…" while rows are streaming in.
+	window.addEventListener('i18n:change', reassertLiveText);
+}
+
+function reassertLiveText() {
+	setFeedState(state.feedState || 'loading');
+	for (const id of ['xr-window-label', 'xr-top-window', 'xr-net-window']) {
+		const el = $(id);
+		if (el) el.textContent = state.period;
+	}
 }
 
 if (document.readyState === 'loading') {

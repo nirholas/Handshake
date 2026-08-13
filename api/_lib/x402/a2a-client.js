@@ -28,21 +28,20 @@ import {
 	A2A_EXTENSIONS_HEADER,
 	A2A_X402_EXTENSION_URI,
 } from './a2a-server.js';
+import {
+	NETWORK_SOLANA_MAINNET,
+	NETWORK_SOLANA_DEVNET,
+	isSolanaNetwork,
+	solanaLocalTestNetwork,
+} from './solana-networks.js';
 
 export { A2A_EXTENSIONS_HEADER, A2A_X402_EXTENSION_URI };
 
 // Solana is the primary A2A settlement rail. CAIP-2 ids must match what the
-// server advertises (api/_lib/x402/a2a-server.js → NETWORK_SOLANA_*).
-export const NETWORK_SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
-export const NETWORK_SOLANA_DEVNET = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
-
-export function isSolanaNetwork(network) {
-	return (
-		network === NETWORK_SOLANA_MAINNET ||
-		network === NETWORK_SOLANA_DEVNET ||
-		network === 'solana'
-	);
-}
+// server advertises (api/_lib/x402/a2a-server.js → NETWORK_SOLANA_*); both the
+// ids and the rail predicate come from solana-networks.js so the client, the
+// spec module and the payload decoder can never drift apart.
+export { NETWORK_SOLANA_MAINNET, NETWORK_SOLANA_DEVNET, isSolanaNetwork };
 
 function isEvmExactNetwork(network) {
 	return /^eip155:\d+$/.test(network);
@@ -168,9 +167,27 @@ export async function buildSolanaExactPayload({ accept, signer, resource, rpcUrl
 			'buildSolanaExactPayload: a @solana/kit signer is required (try createSolanaSigner)',
 		);
 	}
+	// @x402/svm allowlists the three public Solana CAIP-2 ids, and it consults
+	// the network for exactly one thing: which RPC client to construct. On the
+	// local test lane we already hand it the RPC URL, so present the devnet
+	// shape to that selector while the payload keeps the lane's real id. The
+	// built transaction is unaffected: it is signed against the blockhash of
+	// whatever RPC `rpcUrl` names, which is the local validator.
+	const localLane = solanaLocalTestNetwork();
+	let schemeAccept = accept;
+	if (localLane && accept.network === localLane) {
+		if (!rpcUrl) {
+			throw new A2AClientError(
+				'missing_rpc_url',
+				'buildSolanaExactPayload: the local Solana test lane requires an explicit rpcUrl',
+				{ network: accept.network },
+			);
+		}
+		schemeAccept = { ...accept, network: NETWORK_SOLANA_DEVNET };
+	}
 	const { ExactSvmScheme } = await import('@x402/svm');
 	const scheme = new ExactSvmScheme(signer, rpcUrl ? { rpcUrl } : undefined);
-	const built = await scheme.createPaymentPayload(2, accept);
+	const built = await scheme.createPaymentPayload(2, schemeAccept);
 	return {
 		x402Version: built.x402Version || 2,
 		scheme: 'exact',

@@ -44,7 +44,12 @@ import {
 
 import { env } from './env.js';
 import { X402Error } from './x402-errors.js';
-import { confirmSolanaPayment, isSolanaNetwork } from './x402-solana-confirm.js';
+import { confirmSolanaPayment } from './x402-solana-confirm.js';
+import {
+	NETWORK_SOLANA_MAINNET,
+	NETWORK_SOLANA_DEVNET,
+	isSolanaNetwork,
+} from './x402/solana-networks.js';
 import {
 	PAYMENT_EVENT_TOPIC as BSC_PAYMENT_EVENT_TOPIC,
 	settleDirectPayment,
@@ -101,8 +106,9 @@ export const NETWORK_BASE_SEPOLIA = 'eip155:84532';
 export const NETWORK_ARBITRUM_MAINNET = 'eip155:42161';
 export const NETWORK_BSC_MAINNET = 'eip155:56';
 export { NETWORK_XLAYER_MAINNET };
-export const NETWORK_SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
-export const NETWORK_SOLANA_DEVNET = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
+// Solana ids come from x402/solana-networks.js, the one definition the whole
+// rail shares (see isSolanaNetwork above).
+export { NETWORK_SOLANA_MAINNET, NETWORK_SOLANA_DEVNET };
 
 // Networks the CDP facilitator settles when credentials are configured.
 // Confirmed against the live /supported probe, CDP advertises exact for Base
@@ -264,11 +270,7 @@ function getCdpHeadersFactory() {
 // verifyPayment, settlePayment, probeFacilitators) all route through here, so
 // this is the single seam that decides who settles each network.
 export function facilitatorFor(network) {
-	if (
-		network === NETWORK_SOLANA_MAINNET ||
-		network === NETWORK_SOLANA_DEVNET ||
-		network === 'solana'
-	) {
+	if (isSolanaNetwork(network)) {
 		// Solana resolution (see x402/ring-config.js): an explicit
 		// X402_FACILITATOR_URL_SOLANA always wins; otherwise
 		// X402_SELF_FACILITATOR_ENABLED=true defaults to our own

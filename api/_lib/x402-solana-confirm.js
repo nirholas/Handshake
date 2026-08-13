@@ -28,22 +28,14 @@ import {
 	getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 
-// CAIP-2 ids for Solana, inlined (rather than imported from x402-spec.js) to
-// keep this module free of a circular import — x402-spec.js imports us.
-const NETWORK_SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
-const NETWORK_SOLANA_DEVNET = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
-
 // SPL-Token instruction discriminators (first byte of instruction data).
 const IX_TRANSFER = 3;
 const IX_TRANSFER_CHECKED = 12;
 
-export function isSolanaNetwork(network) {
-	return (
-		network === NETWORK_SOLANA_MAINNET ||
-		network === NETWORK_SOLANA_DEVNET ||
-		network === 'solana'
-	);
-}
+// The CAIP-2 ids and the rail predicate live in x402/solana-networks.js, a leaf
+// module, so x402-spec.js (which imports us) can share one definition without a
+// circular import. Re-exported here because callers already import it from us.
+export { isSolanaNetwork } from './x402/solana-networks.js';
 
 // Normalize a VersionedTransaction's message into a flat list of
 // { programId: PublicKey, accountKeys: PublicKey[], data: Uint8Array } so we can

@@ -52,7 +52,15 @@ const FAMILIES = [
 	{ family: 'arbitrum', label: 'Arbitrum One', chainId: 42161, ids: ['eip155:42161', 'arbitrum'] },
 	{ family: 'optimism', label: 'Optimism', chainId: 10, ids: ['eip155:10', 'optimism'] },
 	{ family: 'polygon', label: 'Polygon', chainId: 137, ids: ['eip155:137', 'polygon'] },
-	{ family: 'xlayer', label: 'X Layer', chainId: 196, ids: ['eip155:196', 'xlayer', 'x-layer'] },
+	{
+		family: 'xlayer',
+		label: 'X Layer',
+		chainId: 196,
+		// Not in the ERC-8004 chain table (no registry deployment there), so the
+		// explorer is named here rather than left unresolvable.
+		explorer: 'https://www.oklink.com/xlayer',
+		ids: ['eip155:196', 'xlayer', 'x-layer'],
+	},
 ];
 
 const BY_ID = new Map();
@@ -60,7 +68,13 @@ for (const f of FAMILIES) for (const id of f.ids) BY_ID.set(id.toLowerCase(), f)
 
 const BY_FAMILY = new Map(FAMILIES.map((f) => [f.family, f]));
 
-const UNKNOWN = { family: 'unknown', label: 'Unknown network', cluster: null, chainId: null };
+const UNKNOWN = {
+	family: 'unknown',
+	label: 'Unknown network',
+	cluster: null,
+	chainId: null,
+	explorer: null,
+};
 
 const EVM_TX_RE = /^0x[0-9a-f]{64}$/i;
 
@@ -70,7 +84,7 @@ const EVM_TX_RE = /^0x[0-9a-f]{64}$/i;
  * the chain table, and any other `solana:<ref>` reads as Solana.
  *
  * @param {string|null|undefined} raw
- * @returns {{ id: string|null, family: string, label: string, cluster: string|null, chainId: number|null }}
+ * @returns {{ id: string|null, family: string, label: string, cluster: string|null, chainId: number|null, explorer: string|null }}
  */
 export function networkIdentity(raw) {
 	const id = typeof raw === 'string' ? raw.trim() : '';
@@ -84,6 +98,7 @@ export function networkIdentity(raw) {
 			label: known.label,
 			cluster: known.cluster || null,
 			chainId: known.chainId || null,
+			explorer: known.explorer || CHAIN_BY_ID[known.chainId]?.explorer || null,
 		};
 	}
 
@@ -97,12 +112,13 @@ export function networkIdentity(raw) {
 			label: chain?.name || `EVM chain ${chainId}`,
 			cluster: null,
 			chainId,
+			explorer: chain?.explorer || null,
 		};
 	}
 
 	// Any other Solana reference (a cluster we have not named) is still Solana.
 	if (/^solana:/i.test(id)) {
-		return { id, family: 'solana', label: 'Solana', cluster: null, chainId: null };
+		return { id, family: 'solana', label: 'Solana', cluster: null, chainId: null, explorer: null };
 	}
 
 	return { id, ...UNKNOWN };
@@ -153,10 +169,7 @@ export function revenueTxUrl(hash, raw) {
 	if (!sig) return null;
 	const net = networkIdentity(raw);
 
-	if (net.chainId) {
-		const explorer = CHAIN_BY_ID[net.chainId]?.explorer;
-		return explorer ? `${explorer}/tx/${sig}` : null;
-	}
+	if (net.chainId) return net.explorer ? `${net.explorer}/tx/${sig}` : null;
 	if (net.family.startsWith('solana')) {
 		return `https://solscan.io/tx/${sig}${net.cluster ? `?cluster=${net.cluster}` : ''}`;
 	}
