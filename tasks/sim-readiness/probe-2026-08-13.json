@@ -1,0 +1,2157 @@
+{
+  "base": "https://three.ws",
+  "gradedAt": "2026-08-13T09:01:54.783Z",
+  "summary": {
+    "forge": {
+      "total": 10,
+      "verdicts": {
+        "needs_repair": 7,
+        "needs_scale": 3
+      },
+      "blockers": {
+        "non_manifold_edges": 2,
+        "inconsistent_winding": 6,
+        "scale_normalized": 8,
+        "open_surface": 5
+      }
+    },
+    "authored": {
+      "total": 10,
+      "verdicts": {
+        "needs_repair": 8,
+        "simulation_ready": 2
+      },
+      "blockers": {
+        "open_surface": 7,
+        "non_manifold_edges": 1,
+        "inconsistent_winding": 3
+      }
+    }
+  },
+  "rows": [
+    {
+      "source": "forge",
+      "label": "auto-rig",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/69c2fbc9-9cd2-4909-bb37-d067807e0cf0.glb",
+      "backend": null,
+      "bytes": 23318520,
+      "ms": 4840,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "non_manifold_edges",
+          "inconsistent_winding",
+          "scale_normalized"
+        ],
+        "warnings": [
+          "skinned_geometry_graded_at_bind_pose"
+        ],
+        "geometry": {
+          "triangles": 38134,
+          "verticesRaw": 27065,
+          "verticesWelded": 19069,
+          "weldToleranceMeters": 0.0000157130055821692,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 1,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 38134,
+          "degenerateTriangles": 0,
+          "edges": 57199,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 2,
+          "inconsistentWindingEdges": 4,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 0.9989383518695831,
+          "sizeMeters": [
+            0.9176996052265167,
+            0.9989383518695831,
+            0.7930542528629303
+          ],
+          "centerOffsetMeters": [
+            0.03964121639728546,
+            -0.0003844648599624634,
+            0.003163471817970276
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": true
+        },
+        "mass": {
+          "volumeM3": 0.06530379648802655,
+          "surfaceAreaM2": 2.4067578768651017,
+          "centroid": [
+            0.0482520205801845,
+            -0.09207336834191167,
+            0.05361548395084601
+          ],
+          "inertiaUnitDensity": [
+            0.004921199238125993,
+            0.0010275632089552004,
+            0.001338474750589509,
+            0.0010275632089552004,
+            0.0043162222690072095,
+            -0.0011636063430495642,
+            0.0013384747505895093,
+            -0.0011636063430495642,
+            0.0056514176853901844
+          ],
+          "massAtWaterDensityKg": 65.30379648802655
+        },
+        "collision": {
+          "sampledPoints": 19069,
+          "hullVertices": 207,
+          "hullFaces": 410,
+          "hullTriangles": 410,
+          "hullVolumeM3": 0.3367118977004541,
+          "convexityRatio": 0.19394561621972192,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.4192085862159729,
+            -0.49985364079475403,
+            -0.3933636546134949
+          ],
+          "max": [
+            0.4984910190105438,
+            0.4990847110748291,
+            0.3996905982494354
+          ],
+          "size": [
+            0.9176996052265167,
+            0.9989383518695831,
+            0.7930542528629303
+          ],
+          "diagonal": 1.57130055821692,
+          "longestAxisMeters": 0.9989383518695831,
+          "center": [
+            0.03964121639728546,
+            -0.0003844648599624634,
+            0.003163471817970276
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "a low-poly treasure chest, iron-banded wood",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/7520dae7-e40e-4020-a2ad-1d88719de59a.glb",
+      "backend": "nvidia",
+      "bytes": 2301728,
+      "ms": 1963,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface",
+          "inconsistent_winding",
+          "scale_normalized"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 59056,
+          "verticesRaw": 42166,
+          "verticesWelded": 29482,
+          "weldToleranceMeters": 0.000016855089025346408,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 59056,
+          "degenerateTriangles": 0,
+          "edges": 88638,
+          "boundaryEdges": 111,
+          "nonManifoldEdges": 2,
+          "inconsistentWindingEdges": 3,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 0.9987725019454956,
+          "sizeMeters": [
+            0.9938066303730011,
+            0.9987725019454956,
+            0.9250633120536804
+          ],
+          "centerOffsetMeters": [
+            0.0027960091829299927,
+            -0.0010096430778503418,
+            -0.0034688711166381836
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": true
+        },
+        "mass": {
+          "volumeM3": 0.054774978748297266,
+          "surfaceAreaM2": 10.16966303841997,
+          "centroid": [
+            -0.007033500374154008,
+            -0.06603892345019426,
+            -0.008890425587900166
+          ],
+          "inertiaUnitDensity": [
+            0.009257473165945593,
+            -0.00007217247627731567,
+            0.000019798741421673207,
+            -0.00007217247627731534,
+            0.009723442042985607,
+            -0.000019616792064415883,
+            0.000019798741421674092,
+            -0.000019616792064415883,
+            0.010532628073893581
+          ],
+          "massAtWaterDensityKg": 54.774978748297265
+        },
+        "collision": {
+          "sampledPoints": 14741,
+          "hullVertices": 121,
+          "hullFaces": 238,
+          "hullTriangles": 238,
+          "hullVolumeM3": 0.6911268105511625,
+          "convexityRatio": 0.07925459975227281,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.49410730600357056,
+            -0.5003958940505981,
+            -0.4660005271434784
+          ],
+          "max": [
+            0.49969932436943054,
+            0.49837660789489746,
+            0.459062784910202
+          ],
+          "size": [
+            0.9938066303730011,
+            0.9987725019454956,
+            0.9250633120536804
+          ],
+          "diagonal": 1.6855089025346408,
+          "longestAxisMeters": 0.9987725019454956,
+          "center": [
+            0.0027960091829299927,
+            -0.0010096430778503418,
+            -0.0034688711166381836
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "a glazed ceramic teapot",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/9a226ae7-8b4e-4ac0-ba73-b97be55782ba.glb",
+      "backend": "nvidia",
+      "bytes": 1539880,
+      "ms": 2554,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface",
+          "scale_normalized"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 17182,
+          "verticesRaw": 10587,
+          "verticesWelded": 8616,
+          "weldToleranceMeters": 0.000012493362069697067,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 17182,
+          "degenerateTriangles": 0,
+          "edges": 25801,
+          "boundaryEdges": 56,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": false,
+          "windingConsistent": true,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 0.9929256439208984,
+          "sizeMeters": [
+            0.9929256439208984,
+            0.4782698303461075,
+            0.5883855819702148
+          ],
+          "centerOffsetMeters": [
+            -0.003628253936767578,
+            0.0015883669257164001,
+            0.00009313225746154785
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": true
+        },
+        "mass": {
+          "volumeM3": 0.009425545288354407,
+          "surfaceAreaM2": 2.0213318790934003,
+          "centroid": [
+            0.002532013242446123,
+            -0.027652705303965547,
+            -0.00047148370657946006
+          ],
+          "inertiaUnitDensity": [
+            0.00032814181983392406,
+            0.000004442587462931478,
+            5.020214003527143e-7,
+            0.000004442587462931527,
+            0.0006727526132071133,
+            7.726473637605867e-7,
+            5.020214003526544e-7,
+            7.726473637605977e-7,
+            0.0006486998636742155
+          ],
+          "massAtWaterDensityKg": 9.425545288354407
+        },
+        "collision": {
+          "sampledPoints": 8616,
+          "hullVertices": 697,
+          "hullFaces": 1390,
+          "hullTriangles": 1390,
+          "hullVolumeM3": 0.10928014831825555,
+          "convexityRatio": 0.08625121244257904,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.5000910758972168,
+            -0.23754654824733734,
+            -0.2940996587276459
+          ],
+          "max": [
+            0.49283456802368164,
+            0.24072328209877014,
+            0.29428592324256897
+          ],
+          "size": [
+            0.9929256439208984,
+            0.4782698303461075,
+            0.5883855819702148
+          ],
+          "diagonal": 1.2493362069697065,
+          "longestAxisMeters": 0.9929256439208984,
+          "center": [
+            -0.003628253936767578,
+            0.0015883669257164001,
+            0.00009313225746154785
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "a weathered brass diving helmet",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/a3dcf437-e132-4a32-ba83-e3d0ee917795.glb",
+      "backend": "nvidia",
+      "bytes": 2189336,
+      "ms": 4404,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface",
+          "inconsistent_winding",
+          "scale_normalized"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 38133,
+          "verticesRaw": 29677,
+          "verticesWelded": 19037,
+          "weldToleranceMeters": 0.000015469116969786396,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 38133,
+          "degenerateTriangles": 0,
+          "edges": 57207,
+          "boundaryEdges": 22,
+          "nonManifoldEdges": 4,
+          "inconsistentWindingEdges": 7,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 0.9999399781227112,
+          "sizeMeters": [
+            0.8233436942100525,
+            0.9999399781227112,
+            0.8456719219684601
+          ],
+          "centerOffsetMeters": [
+            -0.00036638975143432617,
+            -0.0007615387439727783,
+            0.00004579126834869385
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": true
+        },
+        "mass": {
+          "volumeM3": 0.03863040382802803,
+          "surfaceAreaM2": 5.765442168765199,
+          "centroid": [
+            -0.0006198508988838189,
+            -0.032289578589066247,
+            0.04391022655243138
+          ],
+          "inertiaUnitDensity": [
+            0.004360111015980752,
+            -0.0000013656124904180712,
+            -0.000020050847423151467,
+            -0.0000013656124904182474,
+            0.0037234174467036534,
+            -0.0002643795645476588,
+            -0.000020050847423151643,
+            -0.0002643795645476591,
+            0.004296544987016431
+          ],
+          "massAtWaterDensityKg": 38.63040382802803
+        },
+        "collision": {
+          "sampledPoints": 19037,
+          "hullVertices": 533,
+          "hullFaces": 1062,
+          "hullTriangles": 1062,
+          "hullVolumeM3": 0.41342871361903366,
+          "convexityRatio": 0.0934390925339191,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.41203823685646057,
+            -0.5007315278053284,
+            -0.42279016971588135
+          ],
+          "max": [
+            0.4113054573535919,
+            0.4992084503173828,
+            0.42288175225257874
+          ],
+          "size": [
+            0.8233436942100525,
+            0.9999399781227112,
+            0.8456719219684601
+          ],
+          "diagonal": 1.5469116969786394,
+          "longestAxisMeters": 0.9999399781227112,
+          "center": [
+            -0.00036638975143432617,
+            -0.0007615387439727783,
+            0.00004579126834869385
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "auto-rig",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/11491fd4-fb55-49ed-824d-2aabe2105a66.glb",
+      "backend": null,
+      "bytes": 14853380,
+      "ms": 3588,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "non_manifold_edges",
+          "inconsistent_winding",
+          "scale_normalized"
+        ],
+        "warnings": [
+          "skinned_geometry_graded_at_bind_pose"
+        ],
+        "geometry": {
+          "triangles": 21702,
+          "verticesRaw": 15622,
+          "verticesWelded": 10853,
+          "weldToleranceMeters": 0.000014236421643651894,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 1,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 21702,
+          "degenerateTriangles": 0,
+          "edges": 32552,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 1,
+          "inconsistentWindingEdges": 2,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 1.0004511773586273,
+          "sizeMeters": [
+            0.39288710057735443,
+            0.9335385262966156,
+            1.0004511773586273
+          ],
+          "centerOffsetMeters": [
+            -0.0005507543683052063,
+            0.0017957240343093872,
+            -0.0005742460489273071
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": true
+        },
+        "mass": {
+          "volumeM3": 0.04009071389337194,
+          "surfaceAreaM2": 1.3152618753331777,
+          "centroid": [
+            -0.00015137312799891423,
+            -0.09520671134046559,
+            0.21793922423657253
+          ],
+          "inertiaUnitDensity": [
+            0.0024179727768274184,
+            6.036728339097452e-8,
+            2.1311135084907663e-7,
+            6.036728339098829e-8,
+            0.0011140679892760164,
+            -0.0006507538943265968,
+            2.1311135084908976e-7,
+            -0.0006507538943265969,
+            0.0017590717272757592
+          ],
+          "massAtWaterDensityKg": 40.09071389337194
+        },
+        "collision": {
+          "sampledPoints": 10853,
+          "hullVertices": 271,
+          "hullFaces": 538,
+          "hullTriangles": 538,
+          "hullVolumeM3": 0.14835916767913426,
+          "convexityRatio": 0.27022741176385306,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.19699430465698242,
+            -0.4649735391139984,
+            -0.500799834728241
+          ],
+          "max": [
+            0.195892795920372,
+            0.4685649871826172,
+            0.49965134263038635
+          ],
+          "size": [
+            0.39288710057735443,
+            0.9335385262966156,
+            1.0004511773586273
+          ],
+          "diagonal": 1.4236421643651893,
+          "longestAxisMeters": 1.0004511773586273,
+          "center": [
+            -0.0005507543683052063,
+            0.0017957240343093872,
+            -0.0005742460489273071
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "a realistic humanoid character in T-pose wea",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ce919344-b5ce-49fd-ab0e-16113a061b81.glb",
+      "backend": "hunyuan3d",
+      "bytes": 4172344,
+      "ms": 1603,
+      "report": {
+        "readable": true,
+        "verdict": "needs_scale",
+        "blockers": [
+          "scale_normalized"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 30000,
+          "verticesRaw": 19438,
+          "verticesWelded": 14996,
+          "weldToleranceMeters": 0.000028007575486072043,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 30000,
+          "degenerateTriangles": 0,
+          "edges": 45000,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": true,
+          "windingConsistent": true,
+          "watertight": true
+        },
+        "scale": {
+          "longestAxisMeters": 1.9916160106658936,
+          "sizeMeters": [
+            1.9205259680747986,
+            1.9916160106658936,
+            0.43507300317287445
+          ],
+          "centerOffsetMeters": [
+            -0.0018750131130218506,
+            -0.0037890076637268066,
+            -0.005814500153064728
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": true
+        },
+        "mass": {
+          "volumeM3": 0.20323616926597418,
+          "surfaceAreaM2": 3.45995334890176,
+          "centroid": [
+            -0.00441303372749844,
+            0.12434704508300191,
+            -0.012971119231210786
+          ],
+          "inertiaUnitDensity": [
+            0.046050207824647964,
+            -0.000047053416718305084,
+            -0.000006729367647301614,
+            -0.000047053416718305775,
+            0.010146149735602433,
+            0.0002117763456290641,
+            -0.000006729367647301611,
+            0.00021177634562906405,
+            0.053349301238037
+          ],
+          "massAtWaterDensityKg": 203.23616926597418
+        },
+        "collision": {
+          "sampledPoints": 14996,
+          "hullVertices": 474,
+          "hullFaces": 944,
+          "hullTriangles": 944,
+          "hullVolumeM3": 0.6853410087948905,
+          "convexityRatio": 0.2965475094265064,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.9621379971504211,
+            -0.9995970129966736,
+            -0.22335100173950195
+          ],
+          "max": [
+            0.9583879709243774,
+            0.99201899766922,
+            0.2117220014333725
+          ],
+          "size": [
+            1.9205259680747986,
+            1.9916160106658936,
+            0.43507300317287445
+          ],
+          "diagonal": 2.800757548607204,
+          "longestAxisMeters": 1.9916160106658936,
+          "center": [
+            -0.0018750131130218506,
+            -0.0037890076637268066,
+            -0.005814500153064728
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "a realistic humanoid character in T-pose wea",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/04c2b2ef-7a0e-4e72-967e-e6f7c1ea0053.glb",
+      "backend": "trellis_selfhost",
+      "bytes": 3510636,
+      "ms": 1230,
+      "report": {
+        "readable": true,
+        "verdict": "needs_scale",
+        "blockers": [
+          "scale_normalized"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 16134,
+          "verticesRaw": 10966,
+          "verticesWelded": 8065,
+          "weldToleranceMeters": 0.000014083849541711883,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 16134,
+          "degenerateTriangles": 0,
+          "edges": 24201,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": true,
+          "windingConsistent": true,
+          "watertight": true
+        },
+        "scale": {
+          "longestAxisMeters": 0.9985482096672058,
+          "sizeMeters": [
+            0.9723859429359436,
+            0.9985482096672058,
+            0.2022751346230507
+          ],
+          "centerOffsetMeters": [
+            -0.0003787875175476074,
+            0.0006689727306365967,
+            0.0011272914707660675
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": true
+        },
+        "mass": {
+          "volumeM3": 0.022063633862363475,
+          "surfaceAreaM2": 0.8015544610225089,
+          "centroid": [
+            -0.00007160916837903257,
+            0.07338051354976195,
+            -0.007959014775367474
+          ],
+          "inertiaUnitDensity": [
+            0.0012834373702766716,
+            -0.00000174668984139184,
+            -2.3213357176872737e-8,
+            -0.0000017466898413918858,
+            0.00025080168412934404,
+            -0.000007386629315822466,
+            -2.3213357176874325e-8,
+            -0.000007386629315822457,
+            0.0014657461625973785
+          ],
+          "massAtWaterDensityKg": 22.063633862363474
+        },
+        "collision": {
+          "sampledPoints": 8065,
+          "hullVertices": 317,
+          "hullFaces": 630,
+          "hullTriangles": 630,
+          "hullVolumeM3": 0.08208575909888649,
+          "convexityRatio": 0.2687875961015846,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.4865717589855194,
+            -0.4986051321029663,
+            -0.10001027584075928
+          ],
+          "max": [
+            0.4858141839504242,
+            0.4999430775642395,
+            0.10226485878229141
+          ],
+          "size": [
+            0.9723859429359436,
+            0.9985482096672058,
+            0.2022751346230507
+          ],
+          "diagonal": 1.4083849541711881,
+          "longestAxisMeters": 0.9985482096672058,
+          "center": [
+            -0.0003787875175476074,
+            0.0006689727306365967,
+            0.0011272914707660675
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "a realistic humanoid character in T-pose wea",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/80be4125-1812-43ac-b4b0-b32c185822e0.glb",
+      "backend": "trellis_selfhost",
+      "bytes": 3656964,
+      "ms": 1131,
+      "report": {
+        "readable": true,
+        "verdict": "needs_scale",
+        "blockers": [
+          "scale_normalized"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 17760,
+          "verticesRaw": 12006,
+          "verticesWelded": 8878,
+          "weldToleranceMeters": 0.000013217812269441045,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 17760,
+          "degenerateTriangles": 0,
+          "edges": 26640,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": true,
+          "windingConsistent": true,
+          "watertight": true
+        },
+        "scale": {
+          "longestAxisMeters": 0.9993968307971954,
+          "sizeMeters": [
+            0.7947954833507538,
+            0.9993968307971954,
+            0.34148459136486053
+          ],
+          "centerOffsetMeters": [
+            -0.004462108016014099,
+            0.0001058727502822876,
+            -0.011106587946414948
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": true
+        },
+        "mass": {
+          "volumeM3": 0.02169833665441754,
+          "surfaceAreaM2": 0.827028932853354,
+          "centroid": [
+            0.04943565813345357,
+            0.07065567018029931,
+            -0.07503791909275263
+          ],
+          "inertiaUnitDensity": [
+            0.0013187536779258767,
+            0.000042647365755323164,
+            0.00002028906627400795,
+            0.00004264736575532314,
+            0.00023992170701607344,
+            -0.0000505170955896378,
+            0.00002028906627400795,
+            -0.00005051709558963781,
+            0.0014698172600707596
+          ],
+          "massAtWaterDensityKg": 21.69833665441754
+        },
+        "collision": {
+          "sampledPoints": 8878,
+          "hullVertices": 317,
+          "hullFaces": 630,
+          "hullTriangles": 630,
+          "hullVolumeM3": 0.103273648560811,
+          "convexityRatio": 0.2101052587644449,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.401859849691391,
+            -0.49959254264831543,
+            -0.18184888362884521
+          ],
+          "max": [
+            0.3929356336593628,
+            0.49980428814888,
+            0.15963570773601532
+          ],
+          "size": [
+            0.7947954833507538,
+            0.9993968307971954,
+            0.34148459136486053
+          ],
+          "diagonal": 1.3217812269441045,
+          "longestAxisMeters": 0.9993968307971954,
+          "center": [
+            -0.004462108016014099,
+            0.0001058727502822876,
+            -0.011106587946414948
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "a realistic humanoid character in T-pose wea",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/2aef00ab-aa93-4d5d-8fa4-3aa36c1a832b.glb",
+      "backend": "huggingface",
+      "bytes": 1202684,
+      "ms": 3015,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface",
+          "inconsistent_winding"
+        ],
+        "warnings": [
+          "degenerate_triangles"
+        ],
+        "geometry": {
+          "triangles": 85718,
+          "verticesRaw": 42957,
+          "verticesWelded": 42863,
+          "weldToleranceMeters": 0.000014355400638204238,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 85718,
+          "degenerateTriangles": 24,
+          "edges": 128580,
+          "boundaryEdges": 12,
+          "nonManifoldEdges": 3,
+          "inconsistentWindingEdges": 6,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 1.01720130443573,
+          "sizeMeters": [
+            1.01720130443573,
+            0.9941473007202148,
+            0.1942882537841797
+          ],
+          "centerOffsetMeters": [
+            0.002727687358856201,
+            -0.010780572891235352,
+            -0.10786545276641846
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.04844610599622415,
+          "surfaceAreaM2": 2.089185606313575,
+          "centroid": [
+            -0.002276891291288959,
+            -0.025003775185755594,
+            -0.11107716484417651
+          ],
+          "inertiaUnitDensity": [
+            0.003266852022710362,
+            0.000044430700153494616,
+            -0.00011759765714052143,
+            0.00004443070015349462,
+            0.003316359265041771,
+            0.0001405819609268985,
+            -0.00011759765714052152,
+            0.00014058196092689846,
+            0.0065160278577944646
+          ],
+          "massAtWaterDensityKg": 48.44610599622415
+        },
+        "collision": {
+          "sampledPoints": 14288,
+          "hullVertices": 593,
+          "hullFaces": 1182,
+          "hullTriangles": 1182,
+          "hullVolumeM3": 0.08704576825048121,
+          "convexityRatio": 0.5565590030386839,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.5058729648590088,
+            -0.5078542232513428,
+            -0.2050095796585083
+          ],
+          "max": [
+            0.5113283395767212,
+            0.48629307746887207,
+            -0.010721325874328613
+          ],
+          "size": [
+            1.01720130443573,
+            0.9941473007202148,
+            0.1942882537841797
+          ],
+          "diagonal": 1.4355400638204237,
+          "longestAxisMeters": 1.01720130443573,
+          "center": [
+            0.002727687358856201,
+            -0.010780572891235352,
+            -0.10786545276641846
+          ]
+        }
+      }
+    },
+    {
+      "source": "forge",
+      "label": "a realistic humanoid character in T-pose wea",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/e36ff16e-4143-4038-be25-2fe4405cacec.glb",
+      "backend": "huggingface",
+      "bytes": 1202684,
+      "ms": 3548,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface",
+          "inconsistent_winding"
+        ],
+        "warnings": [
+          "degenerate_triangles"
+        ],
+        "geometry": {
+          "triangles": 85718,
+          "verticesRaw": 42957,
+          "verticesWelded": 42863,
+          "weldToleranceMeters": 0.000014355400638204238,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 85718,
+          "degenerateTriangles": 24,
+          "edges": 128580,
+          "boundaryEdges": 12,
+          "nonManifoldEdges": 3,
+          "inconsistentWindingEdges": 6,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 1.01720130443573,
+          "sizeMeters": [
+            1.01720130443573,
+            0.9941473007202148,
+            0.1942882537841797
+          ],
+          "centerOffsetMeters": [
+            0.002727687358856201,
+            -0.010780572891235352,
+            -0.10786545276641846
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.04844610599622415,
+          "surfaceAreaM2": 2.089185606313575,
+          "centroid": [
+            -0.002276891291288959,
+            -0.025003775185755594,
+            -0.11107716484417651
+          ],
+          "inertiaUnitDensity": [
+            0.003266852022710362,
+            0.000044430700153494616,
+            -0.00011759765714052143,
+            0.00004443070015349462,
+            0.003316359265041771,
+            0.0001405819609268985,
+            -0.00011759765714052152,
+            0.00014058196092689846,
+            0.0065160278577944646
+          ],
+          "massAtWaterDensityKg": 48.44610599622415
+        },
+        "collision": {
+          "sampledPoints": 14288,
+          "hullVertices": 593,
+          "hullFaces": 1182,
+          "hullTriangles": 1182,
+          "hullVolumeM3": 0.08704576825048121,
+          "convexityRatio": 0.5565590030386839,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.5058729648590088,
+            -0.5078542232513428,
+            -0.2050095796585083
+          ],
+          "max": [
+            0.5113283395767212,
+            0.48629307746887207,
+            -0.010721325874328613
+          ],
+          "size": [
+            1.01720130443573,
+            0.9941473007202148,
+            0.1942882537841797
+          ],
+          "diagonal": 1.4355400638204237,
+          "longestAxisMeters": 1.01720130443573,
+          "center": [
+            0.002727687358856201,
+            -0.010780572891235352,
+            -0.10786545276641846
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "Adjustable Wrench",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/adjustable_wrench.glb",
+      "backend": "polyhaven",
+      "bytes": 2639744,
+      "ms": 590,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface"
+        ],
+        "warnings": [
+          "degenerate_triangles"
+        ],
+        "geometry": {
+          "triangles": 5388,
+          "verticesRaw": 4913,
+          "verticesWelded": 2868,
+          "weldToleranceMeters": 0.0000026493189339955324,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 5388,
+          "degenerateTriangles": 2,
+          "edges": 8246,
+          "boundaryEdges": 328,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": false,
+          "windingConsistent": true,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 0.2541303038597107,
+          "sizeMeters": [
+            0.06834418512880802,
+            0.2541303038597107,
+            0.030590344220399857
+          ],
+          "centerOffsetMeters": [
+            -0.018500215373933315,
+            0.07839477062225342,
+            -9.145587682723999e-7
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.0001474978037720523,
+          "surfaceAreaM2": 0.04421047251354452,
+          "centroid": [
+            -0.010281823474384433,
+            0.09066107565692319,
+            0.00000112213508821256
+          ],
+          "inertiaUnitDensity": [
+            7.907855176986404e-7,
+            9.154672498855153e-8,
+            -1.7344197798257374e-11,
+            9.154672498855148e-8,
+            4.223406628236289e-8,
+            1.3531522335585428e-10,
+            -1.734419779825709e-11,
+            1.3531522335585588e-10,
+            8.239797389812047e-7
+          ],
+          "massAtWaterDensityKg": 0.1474978037720523
+        },
+        "collision": {
+          "sampledPoints": 2868,
+          "hullVertices": 369,
+          "hullFaces": 734,
+          "hullTriangles": 734,
+          "hullVolumeM3": 0.00028133919833095135,
+          "convexityRatio": 0.5242703634867982,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.052672307938337326,
+            -0.04867038130760193,
+            -0.0152960866689682
+          ],
+          "max": [
+            0.015671877190470695,
+            0.20545992255210876,
+            0.015294257551431656
+          ],
+          "size": [
+            0.06834418512880802,
+            0.2541303038597107,
+            0.030590344220399857
+          ],
+          "diagonal": 0.2649318933995532,
+          "longestAxisMeters": 0.2541303038597107,
+          "center": [
+            -0.018500215373933315,
+            0.07839477062225342,
+            -9.145587682723999e-7
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "Alarm Clock 01",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/alarm_clock_01.glb",
+      "backend": "polyhaven",
+      "bytes": 3016476,
+      "ms": 646,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 8985,
+          "verticesRaw": 7203,
+          "verticesWelded": 4957,
+          "weldToleranceMeters": 0.0000022829222746850547,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 8985,
+          "degenerateTriangles": 0,
+          "edges": 13919,
+          "boundaryEdges": 883,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": false,
+          "windingConsistent": true,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 0.17415538430213928,
+          "sizeMeters": [
+            0.13165056705474854,
+            0.17415538430213928,
+            0.06674856878817081
+          ],
+          "centerOffsetMeters": [
+            0,
+            0.08584989607334137,
+            0.009131590835750103
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.0008071186822375233,
+          "surfaceAreaM2": 0.10107866065020331,
+          "centroid": [
+            -0.000012574905959430622,
+            0.06326209821941903,
+            0.010388194012389287
+          ],
+          "inertiaUnitDensity": [
+            0.0000010919395085807036,
+            2.1901995553991148e-10,
+            7.855739493702245e-11,
+            2.1901995553992171e-10,
+            9.73241730165423e-7,
+            2.0262414369891737e-8,
+            7.855739493702021e-11,
+            2.026241436989163e-8,
+            0.0000016455492648646683
+          ],
+          "massAtWaterDensityKg": 0.8071186822375234
+        },
+        "collision": {
+          "sampledPoints": 4957,
+          "hullVertices": 538,
+          "hullFaces": 1072,
+          "hullTriangles": 1072,
+          "hullVolumeM3": 0.0010457479524025634,
+          "convexityRatio": 0.7718099570582003,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.06582528352737427,
+            -0.0012277960777282715,
+            -0.024242693558335304
+          ],
+          "max": [
+            0.06582528352737427,
+            0.172927588224411,
+            0.04250587522983551
+          ],
+          "size": [
+            0.13165056705474854,
+            0.17415538430213928,
+            0.06674856878817081
+          ],
+          "diagonal": 0.22829222746850544,
+          "longestAxisMeters": 0.17415538430213928,
+          "center": [
+            0,
+            0.08584989607334137,
+            0.009131590835750103
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "All Purpose Cleaner",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/all_purpose_cleaner.glb",
+      "backend": "polyhaven",
+      "bytes": 1053708,
+      "ms": 184,
+      "report": {
+        "readable": true,
+        "verdict": "simulation_ready",
+        "blockers": [],
+        "warnings": [],
+        "geometry": {
+          "triangles": 4624,
+          "verticesRaw": 2796,
+          "verticesWelded": 2314,
+          "weldToleranceMeters": 0.0000037497581776527586,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 4624,
+          "degenerateTriangles": 0,
+          "edges": 6936,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": true,
+          "windingConsistent": true,
+          "watertight": true
+        },
+        "scale": {
+          "longestAxisMeters": 0.3197317017838941,
+          "sizeMeters": [
+            0.1568227931857109,
+            0.3197317017838941,
+            0.11741002649068832
+          ],
+          "centerOffsetMeters": [
+            0.0028396882116794586,
+            0.15995094707977842,
+            3.725290298461914e-9
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.0029824756256997794,
+          "surfaceAreaM2": 0.1367133728830866,
+          "centroid": [
+            -0.007197116013625801,
+            0.12239169305464276,
+            0.0000106480444135792
+          ],
+          "inertiaUnitDensity": [
+            0.000019644932203776876,
+            0.0000017276616680829341,
+            -1.1003202994900542e-9,
+            0.0000017276616680829341,
+            0.000006085132851961549,
+            9.94595804906218e-10,
+            -1.1003202994900474e-9,
+            9.945958049062474e-10,
+            0.000021494090198781435
+          ],
+          "massAtWaterDensityKg": 2.9824756256997795
+        },
+        "collision": {
+          "sampledPoints": 2314,
+          "hullVertices": 680,
+          "hullFaces": 1356,
+          "hullTriangles": 1356,
+          "hullVolumeM3": 0.0033202929339595537,
+          "convexityRatio": 0.8982567758390774,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.075571708381176,
+            0.0000850961878313683,
+            -0.058705009520053864
+          ],
+          "max": [
+            0.08125108480453491,
+            0.31981679797172546,
+            0.05870501697063446
+          ],
+          "size": [
+            0.1568227931857109,
+            0.3197317017838941,
+            0.11741002649068832
+          ],
+          "diagonal": 0.37497581776527583,
+          "longestAxisMeters": 0.3197317017838941,
+          "center": [
+            0.0028396882116794586,
+            0.15995094707977842,
+            3.725290298461914e-9
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "American Football",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/american_football.glb",
+      "backend": "polyhaven",
+      "bytes": 2669212,
+      "ms": 320,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "non_manifold_edges",
+          "inconsistent_winding"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 4480,
+          "verticesRaw": 3541,
+          "verticesWelded": 2246,
+          "weldToleranceMeters": 0.000005799638707696865,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 4480,
+          "degenerateTriangles": 0,
+          "edges": 6705,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 28,
+          "inconsistentWindingEdges": 30,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 0.45326216518878937,
+          "sizeMeters": [
+            0.45326216518878937,
+            0.25584322214126587,
+            0.2558432072401047
+          ],
+          "centerOffsetMeters": [
+            0.0008043423295021057,
+            -0.0014834105968475342,
+            -0.002032242715358734
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.01369491932210008,
+          "surfaceAreaM2": 0.3019525131079712,
+          "centroid": [
+            0.0008045844503232618,
+            -0.001418685622738239,
+            -0.0019443302578142658
+          ],
+          "inertiaUnitDensity": [
+            0.00008617648067354636,
+            1.8344834403021347e-7,
+            1.8427765563272098e-7,
+            1.834483440302139e-7,
+            0.0001621184033732884,
+            -8.701695445582742e-8,
+            1.8427765563272098e-7,
+            -8.701695445582747e-8,
+            0.00016206439625681633
+          ],
+          "massAtWaterDensityKg": 13.69491932210008
+        },
+        "collision": {
+          "sampledPoints": 2246,
+          "hullVertices": 575,
+          "hullFaces": 1146,
+          "hullTriangles": 1146,
+          "hullVolumeM3": 0.013720329181378785,
+          "convexityRatio": 0.9981480138746823,
+          "convexEnough": true
+        },
+        "bounds": {
+          "min": [
+            -0.22582674026489258,
+            -0.12940502166748047,
+            -0.12995384633541107
+          ],
+          "max": [
+            0.2274354249238968,
+            0.1264382004737854,
+            0.1258893609046936
+          ],
+          "size": [
+            0.45326216518878937,
+            0.25584322214126587,
+            0.2558432072401047
+          ],
+          "diagonal": 0.5799638707696865,
+          "longestAxisMeters": 0.45326216518878937,
+          "center": [
+            0.0008043423295021057,
+            -0.0014834105968475342,
+            -0.002032242715358734
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "Ammo Box",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ammo_box.glb",
+      "backend": "polyhaven",
+      "bytes": 1468700,
+      "ms": 313,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 4382,
+          "verticesRaw": 3978,
+          "verticesWelded": 2237,
+          "weldToleranceMeters": 0.0000032479621112697173,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 4382,
+          "degenerateTriangles": 0,
+          "edges": 6613,
+          "boundaryEdges": 80,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": false,
+          "windingConsistent": true,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 0.2578783482313156,
+          "sizeMeters": [
+            0.08656343817710876,
+            0.17747706174850464,
+            0.2578783482313156
+          ],
+          "centerOffsetMeters": [
+            3.725290298461914e-8,
+            0.08873853087425232,
+            0.00017645210027694702
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.003218011603003347,
+          "surfaceAreaM2": 0.23984456854799904,
+          "centroid": [
+            -1.020128095199531e-7,
+            0.08144851441727095,
+            -0.0016743967800885923
+          ],
+          "inertiaUnitDensity": [
+            0.000022734517628128548,
+            3.7537634549836955e-11,
+            2.5208262160005938e-11,
+            3.753763454987997e-11,
+            0.00001787262411848991,
+            2.004882861876342e-7,
+            2.520826215972374e-11,
+            2.004882861876341e-7,
+            0.00000828736671007936
+          ],
+          "massAtWaterDensityKg": 3.218011603003347
+        },
+        "collision": {
+          "sampledPoints": 2237,
+          "hullVertices": 206,
+          "hullFaces": 408,
+          "hullTriangles": 408,
+          "hullVolumeM3": 0.003396617183536071,
+          "convexityRatio": 0.9474166292867937,
+          "convexEnough": true
+        },
+        "bounds": {
+          "min": [
+            -0.0432816818356514,
+            0,
+            -0.12876272201538086
+          ],
+          "max": [
+            0.04328175634145737,
+            0.17747706174850464,
+            0.12911562621593475
+          ],
+          "size": [
+            0.08656343817710876,
+            0.17747706174850464,
+            0.2578783482313156
+          ],
+          "diagonal": 0.3247962111269717,
+          "longestAxisMeters": 0.2578783482313156,
+          "center": [
+            3.725290298461914e-8,
+            0.08873853087425232,
+            0.00017645210027694702
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "Anthurium Botany 01",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/anthurium_botany_01.glb",
+      "backend": "polyhaven",
+      "bytes": 3235240,
+      "ms": 1654,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface"
+        ],
+        "warnings": [
+          "degenerate_triangles"
+        ],
+        "geometry": {
+          "triangles": 67144,
+          "verticesRaw": 41917,
+          "verticesWelded": 36487,
+          "weldToleranceMeters": 0.000033614874635504234,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 67144,
+          "degenerateTriangles": 8,
+          "edges": 103588,
+          "boundaryEdges": 5744,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": false,
+          "windingConsistent": true,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 2.7960692942142487,
+          "sizeMeters": [
+            2.7960692942142487,
+            0.4996843384578824,
+            1.7977513819932938
+          ],
+          "centerOffsetMeters": [
+            -0.0219527930021286,
+            0.23950317269191146,
+            -0.24713466316461563
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.07446771019727538,
+          "surfaceAreaM2": 1.5030684110892987,
+          "centroid": [
+            -0.48864118094371944,
+            0.22481720671565833,
+            -0.07574048327155496
+          ],
+          "inertiaUnitDensity": [
+            0.005807922984100718,
+            0.000011694742707403852,
+            0.00024106201069800607,
+            0.000011694742707407321,
+            0.015095745915900174,
+            -0.00043223901505706145,
+            0.00024106201069800607,
+            -0.000432239015057061,
+            0.011062985431285477
+          ],
+          "massAtWaterDensityKg": 74.46771019727538
+        },
+        "collision": {
+          "sampledPoints": 18244,
+          "hullVertices": 89,
+          "hullFaces": 174,
+          "hullTriangles": 174,
+          "hullVolumeM3": 1.3082693869702702,
+          "convexityRatio": 0.056920777126590084,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -1.419987440109253,
+            -0.010338996537029743,
+            -1.1460103541612625
+          ],
+          "max": [
+            1.3760818541049957,
+            0.48934534192085266,
+            0.6517410278320312
+          ],
+          "size": [
+            2.7960692942142487,
+            0.4996843384578824,
+            1.7977513819932938
+          ],
+          "diagonal": 3.3614874635504233,
+          "longestAxisMeters": 2.7960692942142487,
+          "center": [
+            -0.0219527930021286,
+            0.23950317269191146,
+            -0.24713466316461563
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "Antique Ceramic Vase 01",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_ceramic_vase_01.glb",
+      "backend": "polyhaven",
+      "bytes": 524976,
+      "ms": 1551,
+      "report": {
+        "readable": true,
+        "verdict": "simulation_ready",
+        "blockers": [],
+        "warnings": [],
+        "geometry": {
+          "triangles": 9408,
+          "verticesRaw": 5024,
+          "verticesWelded": 4706,
+          "weldToleranceMeters": 0.000005685837158480044,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 9408,
+          "degenerateTriangles": 0,
+          "edges": 14112,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": true,
+          "windingConsistent": true,
+          "watertight": true
+        },
+        "scale": {
+          "longestAxisMeters": 0.439553053722193,
+          "sizeMeters": [
+            0.25502996146678925,
+            0.439553053722193,
+            0.25502994656562805
+          ],
+          "centerOffsetMeters": [
+            -7.450580596923828e-9,
+            0.2196584485245694,
+            0
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.004077901788642884,
+          "surfaceAreaM2": 0.6196940488177604,
+          "centroid": [
+            -8.699478013226986e-9,
+            0.2015676821766266,
+            1.8808628058899535e-8
+          ],
+          "inertiaUnitDensity": [
+            0.00007850484841153079,
+            2.852594761629978e-12,
+            8.362079951613312e-13,
+            2.8525947549529753e-12,
+            0.000044475202514095144,
+            1.3508285736518233e-11,
+            8.362079943126826e-13,
+            1.350828573670347e-11,
+            0.00007850484876278921
+          ],
+          "massAtWaterDensityKg": 4.077901788642884
+        },
+        "collision": {
+          "sampledPoints": 4706,
+          "hullVertices": 912,
+          "hullFaces": 1820,
+          "hullTriangles": 1820,
+          "hullVolumeM3": 0.01797796761911845,
+          "convexityRatio": 0.2268277413241244,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.12751498818397522,
+            -0.00011807833652710542,
+            -0.12751497328281403
+          ],
+          "max": [
+            0.12751497328281403,
+            0.4394349753856659,
+            0.12751497328281403
+          ],
+          "size": [
+            0.25502996146678925,
+            0.439553053722193,
+            0.25502994656562805
+          ],
+          "diagonal": 0.5685837158480044,
+          "longestAxisMeters": 0.439553053722193,
+          "center": [
+            -7.450580596923828e-9,
+            0.2196584485245694,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "Antique Estoc",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_estoc.glb",
+      "backend": "polyhaven",
+      "bytes": 2527020,
+      "ms": 919,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 8246,
+          "verticesRaw": 5537,
+          "verticesWelded": 4332,
+          "weldToleranceMeters": 0.000015451386272770644,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 8246,
+          "degenerateTriangles": 0,
+          "edges": 12543,
+          "boundaryEdges": 348,
+          "nonManifoldEdges": 0,
+          "inconsistentWindingEdges": 0,
+          "edgeManifold": false,
+          "windingConsistent": true,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 1.4923796574105361,
+          "sizeMeters": [
+            0.3715190589427948,
+            1.4923796574105361,
+            0.14909703046379125
+          ],
+          "centerOffsetMeters": [
+            -0.0000635981559753418,
+            0.5468716010748657,
+            -0.0007292944590871972
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.0009969741567205075,
+          "surfaceAreaM2": 0.17343776723493148,
+          "centroid": [
+            0.00020732124701777516,
+            0.2163727559438183,
+            0.0001327110918933918
+          ],
+          "inertiaUnitDensity": [
+            0.0001290195426160437,
+            6.659548619693372e-8,
+            5.629234147153942e-7,
+            6.659548619693267e-8,
+            0.0000026663364449176525,
+            -3.1388714803006733e-7,
+            5.62923414715394e-7,
+            -3.1388714803006733e-7,
+            0.00013120699484860866
+          ],
+          "massAtWaterDensityKg": 0.9969741567205075
+        },
+        "collision": {
+          "sampledPoints": 4332,
+          "hullVertices": 172,
+          "hullFaces": 340,
+          "hullTriangles": 340,
+          "hullVolumeM3": 0.014472174999393416,
+          "convexityRatio": 0.06888903407831197,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.18582312762737274,
+            -0.19931822763040236,
+            -0.07527780969098281
+          ],
+          "max": [
+            0.18569593131542206,
+            1.2930614297801337,
+            0.07381922077280842
+          ],
+          "size": [
+            0.3715190589427948,
+            1.4923796574105361,
+            0.14909703046379125
+          ],
+          "diagonal": 1.5451386272770642,
+          "longestAxisMeters": 1.4923796574105361,
+          "center": [
+            -0.0000635981559753418,
+            0.5468716010748657,
+            -0.0007292944590871972
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "Antique Katana 01",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_katana_01.glb",
+      "backend": "polyhaven",
+      "bytes": 646112,
+      "ms": 676,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface",
+          "inconsistent_winding"
+        ],
+        "warnings": [],
+        "geometry": {
+          "triangles": 6670,
+          "verticesRaw": 5685,
+          "verticesWelded": 3550,
+          "weldToleranceMeters": 0.000010115993148172234,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 6670,
+          "degenerateTriangles": 0,
+          "edges": 10259,
+          "boundaryEdges": 664,
+          "nonManifoldEdges": 156,
+          "inconsistentWindingEdges": 156,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 1.0029437839984894,
+          "sizeMeters": [
+            0.09337274730205536,
+            1.0029437839984894,
+            0.09337274730205536
+          ],
+          "centerOffsetMeters": [
+            0,
+            0.1948481649160385,
+            0
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.00033756013647489105,
+          "surfaceAreaM2": 0.10607014934602063,
+          "centroid": [
+            0.0060009748033603184,
+            -0.02927928944095236,
+            3.749287472122806e-9
+          ],
+          "inertiaUnitDensity": [
+            0.00001661915631380835,
+            1.0993567294212305e-8,
+            -8.78229285549824e-14,
+            1.099356729421247e-8,
+            7.074622601915289e-8,
+            -7.969562451604651e-14,
+            -8.782292855462537e-14,
+            -7.969562451253806e-14,
+            0.000016654893507383187
+          ],
+          "massAtWaterDensityKg": 0.337560136474891
+        },
+        "collision": {
+          "sampledPoints": 3550,
+          "hullVertices": 175,
+          "hullFaces": 346,
+          "hullTriangles": 346,
+          "hullVolumeM3": 0.0027808421519321933,
+          "convexityRatio": 0.12138773725087074,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.04668637365102768,
+            -0.3066237270832062,
+            -0.04668637365102768
+          ],
+          "max": [
+            0.04668637365102768,
+            0.6963200569152832,
+            0.04668637365102768
+          ],
+          "size": [
+            0.09337274730205536,
+            1.0029437839984894,
+            0.09337274730205536
+          ],
+          "diagonal": 1.0115993148172233,
+          "longestAxisMeters": 1.0029437839984894,
+          "center": [
+            0,
+            0.1948481649160385,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "source": "authored",
+      "label": "Arm Chair 01",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb",
+      "backend": "polyhaven",
+      "bytes": 768216,
+      "ms": 234,
+      "report": {
+        "readable": true,
+        "verdict": "needs_repair",
+        "blockers": [
+          "open_surface",
+          "inconsistent_winding"
+        ],
+        "warnings": [
+          "degenerate_triangles"
+        ],
+        "geometry": {
+          "triangles": 5625,
+          "verticesRaw": 3758,
+          "verticesWelded": 3087,
+          "weldToleranceMeters": 0.000015622533280314053,
+          "skippedPrimitives": 0,
+          "skinnedPrimitives": 0,
+          "generator": "glTF-Transform v4.4.0"
+        },
+        "topology": {
+          "triangles": 5625,
+          "degenerateTriangles": 1,
+          "edges": 8719,
+          "boundaryEdges": 564,
+          "nonManifoldEdges": 1,
+          "inconsistentWindingEdges": 1,
+          "edgeManifold": false,
+          "windingConsistent": false,
+          "watertight": false
+        },
+        "scale": {
+          "longestAxisMeters": 1.065087635157397,
+          "sizeMeters": [
+            0.8484309017658234,
+            1.065087635157397,
+            0.7657602727413177
+          ],
+          "centerOffsetMeters": [
+            1.4901161193847656e-8,
+            0.5321123208414065,
+            -0.03442646563053131
+          ],
+          "withinPhysicalWindow": true,
+          "normalizedGuess": false
+        },
+        "mass": {
+          "volumeM3": 0.2185980132934408,
+          "surfaceAreaM2": 2.9829535244534875,
+          "centroid": [
+            0.0021823004792611974,
+            0.3853672220468065,
+            -0.057763831977067456
+          ],
+          "inertiaUnitDensity": [
+            0.0174508909087314,
+            -0.000026871001402100882,
+            -0.000002926109118668669,
+            -0.000026871001402101018,
+            0.019685705166092554,
+            0.0038250735074752155,
+            -0.000002926109118668808,
+            0.0038250735074752164,
+            0.018283426901990425
+          ],
+          "massAtWaterDensityKg": 218.5980132934408
+        },
+        "collision": {
+          "sampledPoints": 3087,
+          "hullVertices": 218,
+          "hullFaces": 432,
+          "hullTriangles": 432,
+          "hullVolumeM3": 0.4527275519825416,
+          "convexityRatio": 0.48284671948101476,
+          "convexEnough": false
+        },
+        "bounds": {
+          "min": [
+            -0.4242154359817505,
+            -0.0004314967372920364,
+            -0.4173066020011902
+          ],
+          "max": [
+            0.4242154657840729,
+            1.064656138420105,
+            0.34845367074012756
+          ],
+          "size": [
+            0.8484309017658234,
+            1.065087635157397,
+            0.7657602727413177
+          ],
+          "diagonal": 1.5622533280314053,
+          "longestAxisMeters": 1.065087635157397,
+          "center": [
+            1.4901161193847656e-8,
+            0.5321123208414065,
+            -0.03442646563053131
+          ]
+        }
+      }
+    }
+  ]
+}
