@@ -37,13 +37,29 @@ struct roughly doubles throughput in WASM.
 
 ```bash
 cargo install wasm-pack   # once
-wasm-pack build --release --target web
+npm run build:wasm        # from the repo root
 ```
 
-Copy the artifacts from `pkg/` into `src/solana/vanity/wasm/` to update the
-module the site ships. The release profile pins `lto = "fat"`, a single
-codegen unit, and `wasm-opt -O3 --enable-simd`: keep those; the grinder's
-value is throughput.
+`npm run build:wasm` ([scripts/build-wasm.mjs](../../scripts/build-wasm.mjs))
+writes the artifacts straight into `src/solana/vanity/wasm/`, builds with
+`RUSTFLAGS='-C target-feature=+simd128'`, and restores that directory's
+README and `.gitignore`, both of which a bare `wasm-pack build` clobbers.
+The release profile pins `lto = "fat"`, a single codegen unit, and
+`wasm-opt -O3 --enable-simd`: keep those; the grinder's value is throughput.
 
 `publish = false` is intentional: this crate is an internal build input, not a
 published library.
+
+## Tests
+
+```bash
+cargo test
+```
+
+The native suite proves the "bit-for-bit identical" claim above against
+`ed25519-dalek` (dev-dependency only), and covers the secret-key layout,
+prefix/suffix/ignore-case matching, batch misses, and seed-counter
+wraparound. The JS side of the contract is covered by
+[tests/vanity-wasm-grinder.test.js](../../tests/vanity-wasm-grinder.test.js),
+which loads the checked-in artifact and cross-checks it against
+`@noble/curves`.
