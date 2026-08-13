@@ -235,6 +235,27 @@ describe('livepeerTextToImage', () => {
 		await expect(livepeerTextToImage('x', {})).rejects.toMatchObject({ code: 'provider_unreachable' });
 	});
 
+	// Node's fetch reports every transport fault as the bare string "fetch
+	// failed" and puts the real reason on err.cause. Losing that chain is losing
+	// the diagnosis: the measured public-gateway outage is a certificate that
+	// belongs to an unrelated domain, which reads identically to a DNS miss or a
+	// refused connection unless the cause is carried into the message.
+	it('carries the transport cause chain into the unreachable message', async () => {
+		const cause = Object.assign(new Error("Hostname/IP does not match certificate's altnames"), {
+			code: 'ERR_TLS_CERT_ALTNAME_INVALID',
+		});
+		fetchMock.mockRejectedValueOnce(Object.assign(new TypeError('fetch failed'), { cause }));
+		await expect(livepeerTextToImage('x', {})).rejects.toMatchObject({
+			code: 'provider_unreachable',
+			message: expect.stringContaining('ERR_TLS_CERT_ALTNAME_INVALID'),
+		});
+	});
+
+	it('reports a transport failure that carries no cause without inventing one', async () => {
+		fetchMock.mockRejectedValue(new Error('socket hang up'));
+		await expect(livepeerTextToImage('x', {})).rejects.toThrow(/socket hang up/);
+	});
+
 	it('codes 429 rate_limited and other non-2xx upstream_error', async () => {
 		fetchMock.mockResolvedValueOnce(gatewayResponse(429, 'slow down'));
 		await expect(livepeerTextToImage('x', {})).rejects.toMatchObject({ code: 'rate_limited', providerStatus: 429 });

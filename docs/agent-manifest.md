@@ -706,6 +706,8 @@ result        VERIFIED (ok)
 
 Add `--issuer <base58>` to require a specific signing identity, `--json` for machine-readable output, or `--file ./envelope.json` to check a local copy. Exit code is 0 when verified, 1 when verification fails, 2 when the document could not be fetched.
 
+The script queries `ipfs.io`, `dweb.link`, `w3s.link`, and `gateway.pinata.cloud` at the same time and uses whichever answers first, which is safe precisely because the gateway only supplies bytes: the signature check that follows is what establishes trust. The `source` line names the gateway that served your copy. For a manifest published in the last few hours, expect that to be the pinning provider's gateway. A new CID takes minutes to hours to propagate across the DHT, and until it does the other gateways answer 504 for a document that is genuinely pinned.
+
 In your own code, the verification primitive is pure and has no database or network dependency:
 
 ```js
@@ -770,6 +772,7 @@ With no pinning provider configured, manifests are still signed and stored, and 
 | `No registry deployed on chain X` | Chain has no known IdentityRegistry | Pass `registry=` override or use a supported chain. |
 | `Agent X on chain Y has no URI` | Token exists but `tokenURI` returned empty | Agent was registered without a manifest URI — re-register or update the token URI. |
 | `All IPFS gateways failed` | CID is not propagated or pinned | Re-pin with your IPFS provider; wait for propagation. |
+| `no IPFS gateway served <cid>` | A just-published CID has not reached the public gateways yet | Retry in a few minutes, or read it from the pinning provider's gateway, which holds it immediately. |
 
 ---
 

@@ -113,8 +113,17 @@ cd workers/rig
 python3 test_rig_glb.py     # skin authoring: skeleton, weights, morph targets
 python3 test_blendshapes.py # ARKit transfer: head mask, alignment, falloff
 python3 test_pipeline.py    # core path: the 52-bone Mixamo + ARKit-52 contract
+python3 test_gltf_meshopt.py # the meshopt decode every input GLB passes through
 npx vitest run tests/glb-canonicalize.test.js   # from the repo root
 ```
+
+An input GLB saved with `EXT_meshopt_compression` (what `gltfpack` emits, and
+what most three.ws avatars ship as) is transcoded to plain glTF by
+[`gltf_meshopt.py`](./gltf_meshopt.py) as soon as it is fetched, because neither
+trimesh nor pygltflib can decode that extension and rigging one used to fail
+outright. The `gltfpack` binary is pinned by release tag and checksum in the
+[`Dockerfile`](./Dockerfile); set `GLTFPACK_BIN` to point at your own copy when
+running that path locally.
 
 `test_pipeline.py` runs the two stages composed the way `main.py._rig_sync`
 composes them and asserts what the platform consumes: the exact 52 Mixamo bone

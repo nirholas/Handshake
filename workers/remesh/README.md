@@ -102,6 +102,14 @@ Remote URLs are fetched through the SSRF guard in
 [`worker_security.py`](./worker_security.py) — https-only, with private,
 loopback, link-local, and cloud-metadata addresses rejected.
 
+A glTF asset that declares `EXT_meshopt_compression` (what `gltfpack` emits, and
+what most three.ws avatars ship as) is transcoded to plain glTF by
+[`gltf_meshopt.py`](./gltf_meshopt.py) before loading. trimesh has no decoder for
+that extension and fails on the compressed asset's fallback buffer, so those
+meshes used to fail outright. The `gltfpack` binary is pinned by release tag and
+checksum in the [`Dockerfile`](./Dockerfile); set `GLTFPACK_BIN` to run that path
+against your own copy locally.
+
 ### `GET /tasks/{task_id}`
 
 ```json

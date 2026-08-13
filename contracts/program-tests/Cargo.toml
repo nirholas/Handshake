@@ -10,10 +10,13 @@ publish = false
 description = "Invariant tests for the three.ws Solana programs, run against real compiled bytecode in LiteSVM."
 
 [dependencies]
-
-[dev-dependencies]
 litesvm = "=0.15.2"
-solana-sdk = "3"
+solana-instruction = "3.4"
+solana-keypair = "3.1"
+solana-signer = "3.0"
+solana-transaction = "4.1"
+solana-pubkey = "3"
+solana-system-interface = "3.2"
 borsh = "1.5"
 sha2 = "0.10"
 

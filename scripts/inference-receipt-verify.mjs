@@ -57,6 +57,19 @@ function parseArgs(argv) {
 	return args;
 }
 
+// The two public Solana lanes, by CAIP-2 id (the id is `solana:` plus the first
+// 32 base58 characters of the cluster's genesis hash). Anything else is a
+// private or local lane: it gets named by its id and needs an explicit --rpc,
+// because there is no public endpoint to guess.
+const SOLANA_LANES = {
+	'solana:5eykt4usfv8p8njdtrepy1vzqkqzkvdp': { label: 'Solana mainnet', defaultRpc: 'https://api.mainnet-beta.solana.com' },
+	'solana:etwtrabzayq6imfeykouru166vu2xqa1': { label: 'Solana devnet', defaultRpc: 'https://api.devnet.solana.com' },
+};
+
+function laneOf(lowercaseNetwork) {
+	return SOLANA_LANES[lowercaseNetwork] || { label: lowercaseNetwork, defaultRpc: null };
+}
+
 // Read-only on-chain confirmation of the settlement transaction. Solana and
 // devnet first (the home lane); EVM receipts point the operator at their own
 // node because this script deliberately stays dependency-light.
@@ -70,8 +83,18 @@ async function confirmOnchain(receipt, rpcUrl) {
 			detail: `on-chain confirmation in this CLI covers Solana lanes; for ${network} confirm ${transaction} on any ${network} explorer or RPC`,
 		};
 	}
-	const devnet = n.includes('etwtrabzayq6imeykouru166vu2xqa1');
-	const url = rpcUrl || (devnet ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com');
+	// Name the lane from the receipt's own CAIP-2 id. Reporting anything that is
+	// not devnet as "mainnet" would tell an operator their payment settled on a
+	// chain it never touched, which is the one thing a verifier must never do.
+	const { label, defaultRpc } = laneOf(n);
+	const url = rpcUrl || defaultRpc;
+	if (!url) {
+		return {
+			verified: false,
+			status: 'rpc_required',
+			detail: `${network} is not a public Solana lane this CLI can assume an RPC for; re-run with --rpc <url>`,
+		};
+	}
 	try {
 		const res = await fetch(url, {
 			method: 'POST',
@@ -86,13 +109,13 @@ async function confirmOnchain(receipt, rpcUrl) {
 		if (!res.ok) throw new Error(`RPC HTTP ${res.status}`);
 		const data = await res.json();
 		const st = data?.result?.value?.[0];
-		if (!st) return { verified: false, status: 'not_found', detail: `signature not found on Solana ${devnet ? 'devnet' : 'mainnet'} (${url})` };
+		if (!st) return { verified: false, status: 'not_found', detail: `signature not found on ${label} (${url})` };
 		if (st.err) return { verified: false, status: 'failed', detail: 'transaction failed on-chain', slot: st.slot ?? null };
 		const confirmed = st.confirmationStatus === 'confirmed' || st.confirmationStatus === 'finalized';
 		return {
 			verified: confirmed,
 			status: st.confirmationStatus || 'processed',
-			detail: confirmed ? `settlement confirmed on Solana ${devnet ? 'devnet' : 'mainnet'}` : 'seen but not yet confirmed',
+			detail: confirmed ? `settlement confirmed on ${label}` : 'seen but not yet confirmed',
 			slot: st.slot ?? null,
 		};
 	} catch (err) {

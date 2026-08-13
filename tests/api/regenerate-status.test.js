@@ -20,6 +20,11 @@
 //   4. Ownership: another user's job id is a 404, not an oracle.
 //   5. The rig chain: a job parked at 'rigging' polls its child rig job via
 //      pollRiggingStage and reports the real post-call status.
+//   6. Provider routing: the poll uses the adapter for the provider stored on
+//      the row. ext_job_id is provider-shaped, so resolving by the current
+//      primary instead asks the wrong backend about an id it never issued.
+//   7. A job whose provider lost its credentials is left alone rather than
+//      failed, since it may still be running on a backend we can no longer ask.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -31,6 +36,9 @@ const state = {
 	userId: 'u1',
 	statusReturn: null,
 	persisted: [],
+	// undefined = the job's provider resolves normally; null = its credentials
+	// are gone, so there is nothing to poll with.
+	providerInstanceForJob: undefined,
 };
 
 function resetState() {
@@ -38,6 +46,7 @@ function resetState() {
 	state.userId = 'u1';
 	state.statusReturn = null;
 	state.persisted = [];
+	state.providerInstanceForJob = undefined;
 }
 
 // Job lookup + the in-flight status persist update. Branching on query text,
@@ -63,10 +72,18 @@ vi.mock('../../api/_lib/auth.js', () => ({
 }));
 
 const providerInstance = { status: vi.fn(async () => state.statusReturn) };
+// A spy, not a constant: the handler must hand this the row's own provider
+// name, and a job whose provider is no longer credentialed must resolve to no
+// instance without the row being touched.
+const getRegenProviderForJobMock = vi.fn(async (jobProvider) =>
+	state.providerInstanceForJob === undefined
+		? { name: jobProvider, instance: providerInstance }
+		: { name: jobProvider, instance: state.providerInstanceForJob },
+);
 vi.mock('../../api/_lib/regen-provider.js', () => ({
 	getRegenProvider: async () => ({ name: 'gcp', instance: providerInstance }),
 	getRegenProviderForMode: async () => ({ name: 'gcp', instance: providerInstance }),
-	getRegenProviderForJob: async () => ({ name: 'gcp', instance: providerInstance }),
+	getRegenProviderForJob: (...a) => getRegenProviderForJobMock(...a),
 	getRegenProviderByName: async () => ({ name: 'gcp', instance: providerInstance }),
 	getRegenProviderCandidates: async () => [{ name: 'gcp', instance: providerInstance }],
 	BYOK_REGEN_PROVIDERS: [],
@@ -205,5 +222,29 @@ describe('regenerate-status: capture-to-avatar poll contract', () => {
 		expect(body.status).toBe('running');
 		expect(finalizeReconstructStageMock).not.toHaveBeenCalled();
 		expect(state.persisted[0]).toMatchObject({ status: 'running' });
+	});
+
+	it("polls with the adapter for the row's own provider, not the current primary", async () => {
+		// ext_job_id is provider-shaped (the gcp adapter packs a base64url
+		// envelope; Replicate stores a bare prediction id), so resolving by the
+		// primary instead of the row would ask the wrong backend about an id it
+		// never issued and fail a capture that is generating fine.
+		state.job = baseJob({ provider: 'huggingface', ext_job_id: 'hf-task-7' });
+		state.statusReturn = { status: 'running' };
+		await poll('gcp-job-1');
+		expect(getRegenProviderForJobMock).toHaveBeenCalledWith('huggingface', expect.anything());
+		expect(providerInstance.status).toHaveBeenCalledWith('hf-task-7');
+	});
+
+	it('leaves the row untouched when the job provider is no longer credentialed', async () => {
+		// Nothing can poll this job any more. Reporting a failure here would be a
+		// lie about a job that may still be running; the row stays as-is and
+		// reconstruct-sweep is what eventually ages it out with an honest reason.
+		state.job = baseJob({ status: 'running' });
+		state.providerInstanceForJob = null;
+		const { body } = await poll('gcp-job-1');
+		expect(body.status).toBe('running');
+		expect(state.persisted).toHaveLength(0);
+		expect(providerInstance.status).not.toHaveBeenCalled();
 	});
 });

@@ -110,7 +110,7 @@ export const handleSignedManifest = wrap(async (req, res, id, action) => {
 			res,
 			404,
 			'not_published',
-			'this agent has no signed manifest yet — save its persona, or POST /api/agents/:id/manifest/publish',
+			'this agent has no signed manifest yet. Save its persona, or POST /api/agents/:id/manifest/publish',
 		);
 	}
 

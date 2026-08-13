@@ -85,6 +85,38 @@ Anyone can verify a result offline with only the node's public address:
 node src/cli.js verify receipt.json
 ```
 
+## The open protocol (OIN), and when to use it instead
+
+The contract above is the coordinator's: the platform hands out `llm.completion`
+jobs and this client claims them. It assumes a coordinator exists and that you
+have its shared secret.
+
+The [Open Inference Protocol](../specs/OPEN_INFERENCE_PROTOCOL.md) is the other
+direction: your node stands on its own and any requester can reach it, with no
+coordinator in the middle. You publish a signed capability advertisement at
+`GET /.well-known/oin` saying what you can run and what it costs, you accept job
+envelopes at `POST /oin/jobs`, and every result you return carries an Ed25519
+signature over a digest of the exact job plus a hash of the exact bytes you
+produced. Nothing about it is three.ws-specific, which is the point: a requester
+that has never heard of this platform can verify your work.
+
+Use the coordinator contract to sell compute into the platform's job queue; use
+OIN to be reachable by anyone. They share a key type (Ed25519) and coexist on
+one process, so a node can do both.
+
+The platform's mesh stylization worker is the reference OIN node
+([`workers/stylize/oin.py`](../workers/stylize/oin.py), enabled by
+`OIN_ENABLED=true`), and the conformance runner proves any node speaks the
+protocol before it takes a paying job:
+
+```bash
+node scripts/oin-conformance.mjs --node https://your-node.example \
+  --api-key "$NODE_API_KEY" --input https://three.ws/avatars/fox.glb
+```
+
+It exits 0 only when the advertisement signature, the job digest, the response
+signature, and the artifact hash all check out.
+
 ## Quickstart
 
 Requires Node.js 20+ and access to huggingface.co (one-time model download).

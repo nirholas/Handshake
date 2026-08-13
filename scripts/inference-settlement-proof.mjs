@@ -35,9 +35,25 @@
 // the ledger the payment actually settled on, never a devnet label it did not
 // earn.
 //
+// ── The database the settle gate needs ────────────────────────────────────
+// settlePayment() runs the settle-credit gate, which fails closed without a
+// database (by design: see api/_lib/x402/settle-credit.js). A local Postgres
+// behind a Neon-protocol proxy satisfies it without touching any real data:
+//
+//     docker network create threews-proof-net
+//     docker run -d --name threews-proof-pg --network threews-proof-net \
+//       -e POSTGRES_PASSWORD=proof -e POSTGRES_DB=threews postgres:16-alpine
+//     docker run -d --name threews-proof-neon --network threews-proof-net -p 4444:4444 \
+//       -e PG_CONNECTION_STRING=postgres://postgres:proof@threews-proof-pg:5432/threews \
+//       ghcr.io/timowilhelm/local-neon-http-proxy:main
+//     docker cp api/_lib/migrations threews-proof-pg:/migrations
+//     docker exec threews-proof-pg sh -c \
+//       'psql -U postgres -d threews -f /migrations/20260729000000_x402_settle_sig_unique.sql'
+//
 // Run: node scripts/inference-settlement-proof.mjs
 // Optional env: INFERENCE_PROOF_PROMPT, INFERENCE_PROOF_LANE,
-// INFERENCE_PROOF_LOCAL_RPC, SOLANA_DEVNET_RPC_URL.
+// INFERENCE_PROOF_LOCAL_RPC, SOLANA_DEVNET_RPC_URL, DATABASE_URL,
+// INFERENCE_PROOF_NEON_HTTP_ENDPOINT.
 
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -115,6 +131,19 @@ if (requestedLane === 'devnet') {
 
 process.env.X402_SELF_FACILITATOR_ENABLED = 'true';
 process.env.SOLANA_RPC_URL = rpcUrl;
+
+// The settle path runs the DB-backed settle-credit gate (one on-chain signature
+// credits at most one payment, api/_lib/x402/settle-credit.js). That gate fails
+// CLOSED with no database, and relaxing it for a proof run would defeat the
+// exact double-credit defence it was built for, so the proof brings its own
+// Postgres rather than bypassing it. `api/_lib/db.js` speaks Neon's HTTP
+// protocol; INFERENCE_PROOF_NEON_HTTP_ENDPOINT points that driver at a local
+// Neon-compatible proxy in front of an ordinary Postgres. See the header.
+if (process.env.INFERENCE_PROOF_NEON_HTTP_ENDPOINT) {
+	const { neonConfig } = await import('@neondatabase/serverless');
+	neonConfig.fetchEndpoint = process.env.INFERENCE_PROOF_NEON_HTTP_ENDPOINT;
+	log('lane', `neon HTTP driver pointed at ${process.env.INFERENCE_PROOF_NEON_HTTP_ENDPOINT}`);
+}
 
 const { caip2ForGenesisHash } = await import('../api/_lib/x402/solana-networks.js');
 const { NETWORK_SOLANA_DEVNET } = await import('../api/_lib/x402-spec.js');

@@ -125,7 +125,11 @@ pyrender so it runs anywhere, GPU or not:
 ```bash
 cd workers/texture
 python3 test_texture_projection.py   # camera, rasterizer, occlusion, blend
+python3 test_gltf_meshopt.py         # the meshopt decode every caller mesh passes through
 ```
+
+Both run as a Docker build gate, so a regression fails the image instead of
+reaching a user mid-retexture.
 
 ## API
 
@@ -134,6 +138,13 @@ Async task shape. Every route except `/health` requires
 `GET /tasks/:id` until `status` is `done` (with `result_url`) or `failed` (with
 `error`). Remote mesh and mask URLs are fetched through the SSRF guard in
 [`worker_security.py`](./worker_security.py).
+
+A mesh saved with `EXT_meshopt_compression` (what `gltfpack` emits, and what most
+three.ws avatars ship as) is transcoded to plain glTF by
+[`gltf_meshopt.py`](./gltf_meshopt.py) before loading: trimesh has no decoder for
+that extension, so those meshes used to fail outright. The `gltfpack` binary is
+pinned by release tag and checksum in the [`Dockerfile`](./Dockerfile); set
+`GLTFPACK_BIN` to point at your own copy locally.
 
 ### `POST /texture` → `202`
 

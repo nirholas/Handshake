@@ -10646,7 +10646,7 @@ three.ws ships in four phases. Each phase closes a specific gap between the curr
 | Phase | Theme                                                                                  | Status                                                                                                         |
 | ----- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | **0** | Platform foundations (viewer, runtime, ERC-8004 + Metaplex Core identity, embed layer) | ✅ Shipped                                                                                                     |
-| **1** | Selfie → Avatar engine (3-photo capture, hosted inference)                             | 🟡 In progress — capture UX + quality gates shipped; GPU reconstruction backend wiring                         |
+| **1** | Selfie → Avatar engine (3-photo capture, hosted inference)                             | 🟡 In progress: capture, reconstruction backend, rigging, R2 storage and draft mint are wired end to end; likeness fidelity is the open track |
 | **2** | Agent personalization + voice cloning                                                  | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
 | **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 In progress: bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; per-call skill royalties accrue on paid skill calls (`royalty_ledger`); contracts + audits next |
 | **4** | Open inference network (decentralized GPU layer)                                       | 🟡 Live core: open node-operator daemon + `/api/nodes` job queue with signed receipts shipped; Livepeer federation behind a flag                                                      |
@@ -10668,10 +10668,27 @@ The full stack is live at [three.ws](https://three.ws): WebGL viewer, LLM agent 
 
 **Deliverables**
 
-- Mobile-first capture UX with realtime quality gates (lighting, framing, blur)
-- Multi-view face reconstruction pipeline (FLAME / 3DMM fitting on top of a base body mesh)
-- Hosted inference workers (GPU-backed) for sub-minute generation
-- Output written directly to R2 and minted as a draft agent token — ERC-8004 on EVM, Metaplex Core asset on Solana
+- Mobile-first capture UX with realtime quality gates (lighting, framing, blur). Shipped: [src/selfie-capture.js](src/selfie-capture.js), [src/selfie-gates.js](src/selfie-gates.js)
+- Multi-view face reconstruction pipeline (landmark fitting on top of a base body mesh). Shipped: [workers/avatar-reconstruction](workers/avatar-reconstruction/) morphs a rigged template head to the person's 468 MediaPipe landmarks and projects the photo onto its skin
+- Hosted inference workers for sub-minute generation. Shipped on Cloud Run: submission, job status, the rig chain, and the abandoned-tab backstop are all live (see [Reconstruction backend](#reconstruction-backend-selfie--rigged-glb) below)
+- Output written directly to R2 and minted as a draft agent token: ERC-8004 on EVM, Metaplex Core asset on Solana. Shipped: [api/\_lib/reconstruct-finalize.js](api/_lib/reconstruct-finalize.js)
+
+**Open track:** likeness fidelity, measured by Identity Shape Error rather than by eye. The metric, the reference set and the adversarial set live in [workers/avatar-reconstruction/eval](workers/avatar-reconstruction/eval/); the program plan is [docs/avatar-fidelity-program.md](docs/avatar-fidelity-program.md).
+
+#### Reconstruction backend: selfie → rigged GLB
+
+The path a capture actually takes, end to end. Each hop is a real service; nothing here is stubbed.
+
+| Step | Where | What happens |
+| ---- | ----- | ------------ |
+| 1. Capture + gate | [src/selfie-pipeline.js](src/selfie-pipeline.js) | Three shots (frontal, left, right). The frontal must contain a face; every other gate is a warning the user can proceed past. Each shot is background-isolated and reframed to a head-and-shoulders square before it is sent. |
+| 2. Submit | `POST /api/avatars/reconstruct` | Resolves a provider (platform credentials first, then the caller's own key), submits, and writes an `avatar_regen_jobs` row. A submit that fails over to the next provider never double-charges. |
+| 3. Generate | Cloud Run worker | The worker fits the head geometry and skin to the photo and returns a rigged GLB. A capture it cannot use comes back classified as an input error, so the client can say what to fix instead of "try again". |
+| 4. Rig chain | [api/\_lib/reconstruct-finalize.js](api/_lib/reconstruct-finalize.js) | A mesh that arrives without a skeleton is sent to the rig worker. If rigging is unavailable or fails, the bare mesh is delivered tagged `unrigged`: the user is never left empty-handed. |
+| 5. Store + register | R2, `avatars`, `forge_creations` | The GLB is canonicalized (bone names, up-axis), stored in R2, and registered in the same Forge store the rest of the platform reads, so galleries, embeds and provenance see a capture like any other creation. |
+| 6. Draft mint | [api/\_lib/draft-mint.js](api/_lib/draft-mint.js) | Best-effort draft agent identity. A mint hiccup never fails a delivered avatar. |
+| 7. Poll | `GET /api/avatars/regenerate-status?jobId=…` | Drives steps 4 to 6 from the browser and reports `queued` / `running` / `rigging` / `done` / `failed`. |
+| 8. Backstop | [api/cron/reconstruct-sweep.js](api/cron/reconstruct-sweep.js) | Close the tab and the browser poll stops. The sweep runs the same finalize stages server-side, so an abandoned capture still lands in the user's library. |
 
 **Compute requirements**
 

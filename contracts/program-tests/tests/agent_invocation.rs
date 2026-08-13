@@ -7,12 +7,12 @@
 
 use litesvm::LiteSVM;
 use program_tests::*;
-use solana_sdk::instruction::{AccountMeta, Instruction};
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Keypair;
-use solana_sdk::signer::Signer;
-use solana_sdk::system_program;
-use solana_sdk::transaction::Transaction;
+use solana_instruction::{AccountMeta, Instruction};
+use solana_pubkey::Pubkey;
+use solana_keypair::Keypair;
+use solana_signer::Signer;
+use solana_system_interface::program as system_program;
+use solana_transaction::Transaction;
 
 const AGENT_SEED: &[u8] = b"agent";
 

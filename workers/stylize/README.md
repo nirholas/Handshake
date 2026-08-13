@@ -40,10 +40,11 @@ Input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.fbx`, `.off`, `.dae`
 (FBX/DAE via `pyassimp`). Output formats: `glb` (default), `obj`, `stl`, `ply`.
 
 A glTF asset that declares `EXT_meshopt_compression` (what `gltfpack` emits, and
-what most three.ws avatars ship as) is transcoded to plain glTF with
-[`gltfpack`](https://github.com/zeux/meshoptimizer) before loading: trimesh has
-no decoder for that extension and fails on the compressed asset's fallback
-buffer, so every filter used to fail on those meshes. The binary is pinned by
+what most three.ws avatars ship as) is transcoded to plain glTF by
+[`gltf_meshopt.py`](gltf_meshopt.py) before loading: trimesh has no decoder for
+that extension and fails on the compressed asset's fallback buffer, so every
+filter used to fail on those meshes. The
+[`gltfpack`](https://github.com/zeux/meshoptimizer) binary behind it is pinned by
 release tag and checksum in the [`Dockerfile`](Dockerfile); point `GLTFPACK_BIN`
 at your own copy to run that path locally.
 
@@ -262,6 +263,8 @@ curl -s -X POST https://three.ws/api/forge-stylize \
 | [`main.py`](main.py) | FastAPI app: filters, color sampler, mesh loading, task queue, GCS upload, routes, OIN executor. |
 | [`test_stylize.py`](test_stylize.py) | Core-path unit suite; also a Docker build gate. |
 | [`worker_security.py`](worker_security.py) | Shared bearer-auth, SSRF-safe fetch, error sanitizer. |
+| [`gltf_meshopt.py`](gltf_meshopt.py) | Shared `EXT_meshopt_compression` decode applied to every fetched mesh. Vendored byte-identical into every worker that loads a caller mesh; `npm run check:vendored` enforces that. |
+| [`test_gltf_meshopt.py`](test_gltf_meshopt.py) | Tests for the decode; a Docker build gate alongside the filter suite. |
 | [`oin.py`](oin.py) | OIN protocol layer: canonicalization, job digests, Ed25519 signing, the `/oin/*` routes. Vendored copy, kept byte-identical across workers. |
 | [`oin_upload.py`](oin_upload.py) | OIN result sinks: GCS in production, a local directory for self-hosted runs. |
 | [`requirements.txt`](requirements.txt) | Pinned deps (`trimesh`, `open3d`, `scipy`, `pyassimp`, `pynacl`, …). |

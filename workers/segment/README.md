@@ -36,6 +36,14 @@ Supported input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.fbx`,
 `worker_security.fetch_remote_bytes` (https-only, private/loopback/metadata IPs
 rejected, redirects re-validated per hop).
 
+A glTF asset that declares `EXT_meshopt_compression` (what `gltfpack` emits, and
+what most three.ws avatars ship as) is transcoded to plain glTF by
+[`gltf_meshopt.py`](./gltf_meshopt.py) before loading. trimesh has no decoder for
+that extension and fails on the compressed asset's fallback buffer, so those
+meshes used to fail outright. The `gltfpack` binary is pinned by release tag and
+checksum in the [`Dockerfile`](./Dockerfile); set `GLTFPACK_BIN` to run that path
+against your own copy locally.
+
 The parts are a strict **partition** of the input: same faces, redistributed,
 never repaired and never invented. (trimesh patches holes while splitting by
 default, which grew a real 17031-face forge model to 17050 faces across its
@@ -76,6 +84,8 @@ implementation.
 | `segment_core.py` | The geometry engine: `load_concatenated`, `segment`, `build_scene`, `manifest`. Trimesh + numpy + scipy. |
 | `test_segment_core.py` | Core-path tests for the geometry engine. No GCS, no network. Run as a Docker build gate. |
 | `worker_security.py` | Shared bearer-auth + SSRF-hardened fetch + opaque error helper. Byte-identical copy across all workers, so keep it in sync when editing. |
+| `gltf_meshopt.py` | Shared `EXT_meshopt_compression` decode (via the pinned `gltfpack` binary) applied to every fetched mesh. Byte-identical copy across the workers that load caller meshes; `npm run check:vendored` enforces that. |
+| `test_gltf_meshopt.py` | Tests for the decode, run as a Docker build gate alongside the core suite. |
 | `Dockerfile` | `python:3.11-slim` + native libs (`libgl1`, `libassimp5`, `libopenblas`); runs the test gate, then serves via `uvicorn` on port 8080. |
 | `cloudbuild.yaml` | Cloud Build to Artifact Registry to Cloud Run deploy. |
 

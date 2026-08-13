@@ -153,7 +153,12 @@ describe('computeView', () => {
 		const data = {
 			mint: 'MintAddr',
 			network: 'mainnet',
-			curve: { realSolReserves: String(20 * LAMPORTS), complete: false, isMayhemMode: false },
+			curve: {
+				realSolReserves: String(20 * LAMPORTS),
+				tokenTotalSupply: '1000000000000000', // 1B tokens at 6 decimals
+				complete: false,
+				isMayhemMode: false,
+			},
 			price: { buyPricePerToken: '30', marketCap: String(42 * LAMPORTS), isGraduated: false },
 			graduation: {
 				progressBps: 3450,
@@ -165,22 +170,37 @@ describe('computeView', () => {
 		expect(v.status).toBe('bonding');
 		expect(v.progress).toBeCloseTo(0.345, 5);
 		expect(v.progressPct).toBeCloseTo(34.5, 5);
-		expect(v.marketCapSol).toBe(42);
+		// 30 lamports per token × 1B tokens = 30 SOL. The SDK's `price.marketCap`
+		// is deliberately not used — see the derivation note in computeView.
+		expect(v.marketCapSol).toBeCloseTo(30, 6);
 		expect(v.raisedSol).toBe(18);
 		expect(v.hasUsd).toBe(false);
 		expect(v.marketCapUsd).toBeNull();
 	});
 
+	it('falls back to the fixed 1B pump.fun supply when the payload omits it', () => {
+		const v = computeView(
+			{
+				mint: 'M',
+				curve: { realSolReserves: '0', complete: false },
+				price: { buyPricePerToken: '30' },
+				graduation: { progressBps: 0, solAccumulated: '0' },
+			},
+			null,
+		);
+		expect(v.marketCapSol).toBeCloseTo(30, 6);
+	});
+
 	it('enriches with USD when a SOL price is supplied', () => {
 		const data = {
 			mint: 'M',
-			curve: { realSolReserves: '0', complete: false },
-			price: { marketCap: String(10 * LAMPORTS), buyPricePerToken: '0' },
+			curve: { realSolReserves: '0', complete: false, tokenTotalSupply: '1000000000000000' },
+			price: { marketCap: String(10 * LAMPORTS), buyPricePerToken: '10' },
 			graduation: { progressBps: 5000, solAccumulated: String(2 * LAMPORTS) },
 		};
 		const v = computeView(data, 150);
 		expect(v.hasUsd).toBe(true);
-		expect(v.marketCapUsd).toBe(1500);
+		expect(v.marketCapUsd).toBe(1500); // 10 SOL × $150
 		expect(v.raisedUsd).toBe(300);
 	});
 
@@ -248,17 +268,40 @@ describe('computeView', () => {
 		expect(v.marketCapUsd).toBe(10_000_000);
 	});
 
-	it('clamps the negative market cap a fresh curve can report to zero', () => {
+	// The SDK's `price.marketCap` goes negative on real curves — a live devnet
+	// coin 95% of the way to graduation reports -1.75 SOL while holding 30.3 SOL
+	// of virtual reserves. Reading it and clamping rendered "◎0" for a coin with
+	// a real price, which is why the market cap is derived from price × supply.
+	it('ignores the negative pseudo-market-cap the SDK reports', () => {
 		const data = {
 			mint: 'M',
 			network: 'mainnet',
-			curve: { realSolReserves: '0', complete: false, isMayhemMode: false },
+			curve: {
+				realSolReserves: '0',
+				tokenTotalSupply: '1000000000000000',
+				complete: false,
+				isMayhemMode: false,
+			},
 			price: { marketCap: '-2041006523', buyPricePerToken: '30', isGraduated: false },
 			graduation: { progressBps: 0, isGraduated: false, solAccumulated: '0' },
 		};
 		const v = computeView(data, 150);
 		expect(v.status).toBe('bonding');
 		expect(v.progress).toBe(0);
+		expect(v.marketCapSol).toBeCloseTo(30, 6);
+		expect(v.marketCapUsd).toBeCloseTo(4500, 6);
+	});
+
+	it('reports no market cap when the curve has no price yet', () => {
+		const v = computeView(
+			{
+				mint: 'M',
+				curve: { realSolReserves: '0', complete: false, tokenTotalSupply: '1000000000000000' },
+				price: { buyPricePerToken: '0' },
+				graduation: { progressBps: 0, solAccumulated: '0' },
+			},
+			150,
+		);
 		expect(v.marketCapSol).toBe(0);
 		expect(v.marketCapUsd).toBe(0);
 	});

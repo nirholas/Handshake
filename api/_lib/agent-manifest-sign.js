@@ -86,7 +86,7 @@ export function buildAgentManifest(a) {
 	if (!a || !a.agentId) throw new Error('buildAgentManifest: agentId is required');
 	const systemPrompt = str(a.systemPrompt);
 	if (!systemPrompt.trim()) {
-		throw new Error('buildAgentManifest: systemPrompt is required — an unconfigured agent has nothing to attest');
+		throw new Error('buildAgentManifest: systemPrompt is required. An unconfigured agent has nothing to attest');
 	}
 
 	const traits = {};

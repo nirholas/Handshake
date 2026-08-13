@@ -716,7 +716,7 @@ Installing is free and instant (`POST /api/skills/:id/install`, sign-in required
 - **Knowledge skills load into your chats.** `/api/chat` reads your installed skills at request time (`api/_lib/installed-skills.js`) and injects their playbooks into the system prompt, so your agent follows them anywhere you chat signed-in on three.ws (the `/app` workspace included). Budgets keep prompts sane: newest 8 installs, 6k chars per skill, 24k total. Each reply's SSE `done` event lists the slugs that were in context as `skills_applied`.
 - **Your installed set is one API call away.** `GET /api/skills?installed=true` (authed) returns the full payload, `content` and `schema_json` included, so an external agent, MCP client, or script can hydrate itself from your library.
 
-Paid skills price per *call*, not per install: the detail page shows an x402 endpoint (`GET /api/x402/skill-call?skill=<slug>`) any wallet can pay in USDC on Base, settling to the author.
+Paid skills price per *call*, not per install: the detail page shows an x402 endpoint (`GET /api/x402/skill-call?skill=<slug>`) any wallet can pay in USDC, settling to the author. The 402 challenge names the author's own wallet as the payee, so their share moves at settlement rather than being forwarded later, and Solana is offered first whenever the author has a Solana wallet. What the author keeps, where they watch it land, and how to verify a payout on-chain: [Skill royalties](./skill-royalties.md).
 
 Publish your own from the marketplace ("Publish a Skill") or `POST /api/skills` with `{ name, slug, description, category, tags, content }` (or `schema_json`).
 
