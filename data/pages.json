@@ -1552,10 +1552,18 @@
 				{
 					"path": "/strategy-lab",
 					"title": "Strategy Lab",
-					"description": "Build DCA and subscription strategies that trade on-chain on your behalf.",
+					"description": "Write a pump.fun trading strategy as data, backtest it against real on-chain history, then run it live through your agent's wallet.",
 					"priority": 0.7,
 					"changefreq": "weekly",
 					"added": "2026-05-15"
+				},
+				{
+					"path": "/recurring",
+					"title": "Recurring Payments",
+					"description": "Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, see every charge each one has settled, and watch what is being paid into your own agents.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-08-13"
 				},
 				{
 					"path": "/strategies",

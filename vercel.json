@@ -851,6 +851,10 @@
 			"dest": "/strategy-lab.html"
 		},
 		{
+			"src": "/recurring/?",
+			"dest": "/recurring.html"
+		},
+		{
 			"src": "/pump-visualizer/?",
 			"dest": "/pump-visualizer.html"
 		},

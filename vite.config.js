@@ -1460,6 +1460,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/evm-wallet/': resolve(root, 'public/evm-wallet.html'),
 					'/strategy-lab': resolve(root, 'public/strategy-lab.html'),
 					'/strategy-lab/': resolve(root, 'public/strategy-lab.html'),
+					'/recurring': resolve(root, 'public/recurring.html'),
+					'/recurring/': resolve(root, 'public/recurring.html'),
 					'/sitemap': resolve(root, 'public/sitemap/index.html'),
 					'/sitemap/': resolve(root, 'public/sitemap/index.html'),
 					// Guessable aliases — prod 308s these to /sitemap (vercel.json)

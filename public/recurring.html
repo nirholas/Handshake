@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8">
+	<title>Recurring payments · three.ws</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#0b0b0b">
+	<link rel="stylesheet" href="/nav.css">
+	<style>
+		:root {
+			--bg: #0b0b0b; --bg-2: #111111; --panel: #161616; --panel-2: #1d1d1d;
+			--border: #272727; --border-strong: #343434;
+			--text: #f0f2f8; --muted: #8a90a8; --muted-2: #6b7088;
+			--blue: #60a5fa; --green: #4ade80; --red: #f87171; --amber: #f59e0b; --purple: #a78bfa;
+			--mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+			--ok-bg: color-mix(in srgb, var(--green) 14%, transparent);
+			--warn-bg: color-mix(in srgb, var(--amber) 16%, transparent);
+			--bad-bg: color-mix(in srgb, var(--red) 15%, transparent);
+			--info-bg: color-mix(in srgb, var(--blue) 13%, transparent);
+			--shadow: 0 18px 48px rgba(0,0,0,.45);
+		}
+		html[data-theme='light'] {
+			--bg: #fafafa; --bg-2: #ffffff; --panel: #ffffff; --panel-2: #f4f4f5;
+			--border: #e5e7eb; --border-strong: #d4d4d8;
+			--text: #18181b; --muted: #52525b; --muted-2: #71717a;
+			--blue: #2563eb; --green: #16a34a; --red: #dc2626; --amber: #b45309; --purple: #7c3aed;
+			--shadow: 0 18px 48px rgba(0,0,0,.18);
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+		body {
+			font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+			-webkit-font-smoothing: antialiased; min-height: 100vh;
+		}
+		a { color: var(--blue); text-decoration: none; }
+		a:hover { text-decoration: underline; }
+		code, .mono { font-family: var(--mono); }
+		.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 4rem; }
+		@media (max-width: 720px) { .wrap { padding: 0 16px 3rem; } }
+		:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
+
+		/* ── Hero ─────────────────────────────────────────────── */
+		.hero { padding: 34px 0 8px; }
+		.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); font-weight: 600; margin-bottom: 10px; }
+		.eyebrow .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--purple); box-shadow: 0 0 0 0 rgba(167,139,250,.6); animation: pulse 2.4s infinite; }
+		@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(167,139,250,.6); } 50% { box-shadow: 0 0 0 6px rgba(167,139,250,0); } }
+		@media (prefers-reduced-motion: reduce) { .eyebrow .pulse { animation: none; } }
+		.hero h1 { font-size: 30px; line-height: 1.12; margin: 0 0 8px; letter-spacing: -.02em; }
+		.hero p.lead { color: var(--muted); margin: 0; font-size: 14.5px; max-width: 720px; }
+
+		h2 { font-size: 11px; margin: 0 0 .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+		.muted { color: var(--muted); }
+
+		/* ── Tabs ─────────────────────────────────────────────── */
+		.tabs { display: flex; gap: 4px; margin: 22px 0 16px; border-bottom: 1px solid var(--border); }
+		.tab {
+			appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
+			color: var(--muted); font: inherit; font-weight: 600; padding: .6rem .9rem; cursor: pointer;
+			transition: color .14s, border-color .14s;
+		}
+		.tab:hover { color: var(--text); }
+		.tab[aria-selected='true'] { color: var(--text); border-bottom-color: var(--purple); }
+		.tab .count { font-family: var(--mono); font-size: 11px; color: var(--muted-2); margin-left: 6px; }
+
+		/* ── Panels + stats ───────────────────────────────────── */
+		.panel { border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.1rem; background: var(--panel); }
+		.panel + .panel { margin-top: 1rem; }
+		.stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .7rem; margin-bottom: 1rem; }
+		@media (max-width: 860px) { .stats { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+		.stat { border: 1px solid var(--border); border-radius: 12px; padding: .8rem .9rem; background: var(--panel); }
+		.stat .k { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2); }
+		.stat .v { font-family: var(--mono); font-size: 20px; margin-top: 4px; letter-spacing: -.02em; }
+		.stat .v small { font-size: 12px; color: var(--muted); }
+
+		/* ── Schedule cards ───────────────────────────────────── */
+		.cards { display: flex; flex-direction: column; gap: .7rem; }
+		.card {
+			border: 1px solid var(--border); border-radius: 13px; background: var(--panel);
+			padding: .9rem 1rem; transition: border-color .14s, transform .14s;
+		}
+		.card:hover { border-color: var(--border-strong); }
+		.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+		.card-title { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+		.card-sub { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+		.amount { font-family: var(--mono); font-size: 17px; letter-spacing: -.02em; white-space: nowrap; }
+		.amount small { color: var(--muted); font-size: 11.5px; }
+
+		.meta { display: flex; flex-wrap: wrap; gap: .35rem 1.3rem; margin-top: .75rem; font-size: 12.5px; }
+		.meta div { display: flex; gap: .4rem; }
+		.meta .mk { color: var(--muted-2); }
+		.meta .mv { font-family: var(--mono); }
+
+		.pill {
+			display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+			padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; letter-spacing: .02em;
+		}
+		.pill.ok { background: var(--ok-bg); color: var(--green); border-color: color-mix(in srgb, var(--green) 35%, transparent); }
+		.pill.warn { background: var(--warn-bg); color: var(--amber); border-color: color-mix(in srgb, var(--amber) 35%, transparent); }
+		.pill.bad { background: var(--bad-bg); color: var(--red); border-color: color-mix(in srgb, var(--red) 35%, transparent); }
+		.pill.info { background: var(--info-bg); color: var(--blue); border-color: color-mix(in srgb, var(--blue) 35%, transparent); }
+		.pill.dim { background: var(--panel-2); color: var(--muted); border-color: var(--border); }
+
+		.notice { margin-top: .75rem; border-radius: 10px; padding: .6rem .75rem; font-size: 12.5px; line-height: 1.5; }
+		.notice.warn { background: var(--warn-bg); color: var(--text); border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent); }
+		.notice.bad { background: var(--bad-bg); color: var(--text); border: 1px solid color-mix(in srgb, var(--red) 30%, transparent); }
+		.notice strong { color: var(--amber); }
+		.notice.bad strong { color: var(--red); }
+
+		.actions { display: flex; gap: .45rem; margin-top: .8rem; flex-wrap: wrap; }
+
+		button, .btn {
+			appearance: none; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+			border: 1px solid var(--border-strong); background: var(--panel-2); color: var(--text);
+			padding: .42rem .8rem; border-radius: 9px; transition: background .13s, border-color .13s, transform .08s, opacity .13s;
+		}
+		button:hover:not(:disabled), .btn:hover { background: var(--panel); border-color: var(--blue); text-decoration: none; }
+		button:active:not(:disabled) { transform: translateY(1px); }
+		button:disabled { opacity: .45; cursor: not-allowed; }
+		button.primary { background: var(--blue); border-color: var(--blue); color: #04101f; }
+		button.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--blue); }
+		button.danger { color: var(--red); }
+		button.danger:hover:not(:disabled) { border-color: var(--red); }
+
+		/* ── Charge history ───────────────────────────────────── */
+		.history { margin-top: .85rem; border-top: 1px solid var(--border); padding-top: .7rem; }
+		table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+		th { text-align: left; font-weight: 600; color: var(--muted-2); font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; padding: .3rem .5rem .45rem 0; }
+		td { padding: .35rem .5rem .35rem 0; border-top: 1px solid var(--border); font-family: var(--mono); vertical-align: top; }
+		td.reason { font-family: inherit; color: var(--muted); }
+		.scroll-x { overflow-x: auto; }
+
+		/* ── Forms ────────────────────────────────────────────── */
+		.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .8rem; }
+		label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-2); font-weight: 600; margin-bottom: .3rem; }
+		select, input[type='number'] {
+			width: 100%; font: inherit; font-size: 13px; background: var(--bg-2); color: var(--text);
+			border: 1px solid var(--border-strong); border-radius: 9px; padding: .45rem .6rem;
+			transition: border-color .13s;
+		}
+		select:hover, input[type='number']:hover { border-color: var(--blue); }
+		.field-note { font-size: 11.5px; color: var(--muted-2); margin-top: .35rem; }
+
+		/* ── Empty / error / loading states ───────────────────── */
+		.state { text-align: center; padding: 2.4rem 1.2rem; border: 1px dashed var(--border-strong); border-radius: 14px; background: var(--panel); }
+		.state .icon { font-size: 26px; opacity: .8; }
+		.state h3 { margin: .6rem 0 .35rem; font-size: 15px; }
+		.state p { color: var(--muted); margin: 0 auto; max-width: 460px; font-size: 13px; line-height: 1.6; }
+		.state .actions { justify-content: center; }
+		.skel { display: block; border-radius: 9px; background: linear-gradient(90deg, var(--panel) 25%, var(--panel-2) 37%, var(--panel) 63%); background-size: 400% 100%; animation: shimmer 1.3s ease-in-out infinite; }
+		@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+		@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+		.skel-card { height: 108px; margin-bottom: .7rem; }
+
+		/* ── Modal ────────────────────────────────────────────── */
+		.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.62); display: flex; align-items: center; justify-content: center; padding: 1.2rem; z-index: 120; opacity: 0; pointer-events: none; transition: opacity .15s; }
+		.modal-backdrop.open { opacity: 1; pointer-events: auto; }
+		.modal { background: var(--panel); border: 1px solid var(--border-strong); border-radius: 14px; width: 100%; max-width: 440px; padding: 1.25rem 1.35rem; box-shadow: var(--shadow); transform: translateY(8px) scale(.985); transition: transform .15s; }
+		.modal-backdrop.open .modal { transform: none; }
+		.modal h3 { margin: 0 0 .5rem; font-size: 1.05rem; }
+		.modal p { margin: 0 0 .65rem; color: var(--muted); line-height: 1.55; font-size: 13px; }
+		.modal .modal-actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1.1rem; }
+
+		/* ── Toast ────────────────────────────────────────────── */
+		#toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+		.toast { background: var(--panel); border: 1px solid var(--border-strong); color: var(--text); padding: .55rem .9rem; border-radius: 999px; font-size: 12.5px; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); transition: opacity .18s, transform .18s; max-width: 90vw; }
+		.toast.show { opacity: 1; transform: none; }
+		.toast.bad { border-color: color-mix(in srgb, var(--red) 45%, transparent); }
+		.hidden { display: none !important; }
+	</style>
+
+	<meta name="description" content="Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, and see every charge they have ever made.">
+	<link rel="canonical" href="https://three.ws/recurring">
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="three.ws">
+	<meta property="og:title" content="Recurring payments · three.ws">
+	<meta property="og:description" content="Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, and see every charge they have ever made.">
+	<meta property="og:url" content="https://three.ws/recurring">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Recurring+payments&amp;d=Recurring+on-chain+payments+and+DCA+schedules%2C+with+every+charge+on+the+record.&amp;p=%2Frecurring">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="Recurring payments · three.ws">
+	<meta name="twitter:description" content="Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, and see every charge they have ever made.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Recurring+payments&amp;d=Recurring+on-chain+payments+and+DCA+schedules%2C+with+every+charge+on+the+record.&amp;p=%2Frecurring">
+	<meta name="twitter:site" content="@trythreews">
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Recurring payments","description":"Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, and see every charge they have ever made.","url":"https://three.ws/recurring","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image:alt" content="Recurring payments on three.ws">
+</head>
+<body>
+	<header><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="wrap">
+		<div class="hero">
+			<div class="eyebrow"><span class="pulse"></span> Recurring payments</div>
+			<h1>Money that moves on a schedule, with every charge on the record</h1>
+			<p class="lead">
+				A recurring payment pulls a fixed amount of USDC from your wallet on a period you
+				choose, inside a permission you signed once. A DCA schedule does the same and swaps
+				the result into a token. Both run on the hourly crons, both can be paused and resumed
+				without re-signing, and both keep a per-charge ledger you can read here.
+			</p>
+		</div>
+
+		<div class="tabs" role="tablist" aria-label="Recurring payment views">
+			<button class="tab" id="tab-outgoing" role="tab" aria-selected="true" aria-controls="view-outgoing">Outgoing<span class="count" id="count-outgoing"></span></button>
+			<button class="tab" id="tab-incoming" role="tab" aria-selected="false" aria-controls="view-incoming">Incoming<span class="count" id="count-incoming"></span></button>
+		</div>
+
+		<!-- ── Outgoing ─────────────────────────────────────────── -->
+		<section id="view-outgoing" role="tabpanel" aria-labelledby="tab-outgoing">
+			<div id="out-stats" class="stats hidden"></div>
+
+			<div class="panel" id="create-panel">
+				<h2>New recurring payment</h2>
+				<p class="muted" style="margin:0 0 .9rem;font-size:12.5px;">
+					A schedule spends a permission you already signed for one of your agents. Pick the
+					permission, set the amount and how often it should run.
+				</p>
+				<div class="form-grid">
+					<div>
+						<label for="c-agent">Agent</label>
+						<select id="c-agent"><option value="">Loading agents…</option></select>
+					</div>
+					<div>
+						<label for="c-delegation">Signed permission</label>
+						<select id="c-delegation" disabled><option value="">Pick an agent first</option></select>
+						<div class="field-note" id="c-delegation-note"></div>
+					</div>
+					<div>
+						<label for="c-amount">Amount per period (USDC)</label>
+						<input id="c-amount" type="number" min="0.000001" step="0.000001" value="5" inputmode="decimal">
+					</div>
+					<div>
+						<label for="c-period">How often</label>
+						<select id="c-period">
+							<option value="86400">Daily</option>
+							<option value="604800" selected>Weekly</option>
+							<option value="2592000">Every 30 days</option>
+						</select>
+					</div>
+				</div>
+				<div class="actions">
+					<button class="primary" id="c-submit" disabled>Create schedule</button>
+					<a class="btn" id="c-grant-link" href="/docs/permissions">Grant a new permission</a>
+				</div>
+			</div>
+
+			<div id="out-body" style="margin-top:1rem"></div>
+
+			<div class="panel" id="dca-panel" style="margin-top:1rem">
+				<h2>DCA schedules</h2>
+				<div id="dca-body"></div>
+			</div>
+		</section>
+
+		<!-- ── Incoming ─────────────────────────────────────────── -->
+		<section id="view-incoming" role="tabpanel" aria-labelledby="tab-incoming" class="hidden">
+			<div id="in-stats" class="stats hidden"></div>
+			<div id="in-body"></div>
+		</section>
+	</main>
+
+	<div class="modal-backdrop" id="confirm-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+		<div class="modal">
+			<h3 id="confirm-title">Cancel this schedule?</h3>
+			<p id="confirm-body"></p>
+			<p class="muted">Cancelling stops all future charges. It does not revoke the signed permission, and it cannot be undone: starting again means creating a new schedule.</p>
+			<div class="modal-actions">
+				<button id="confirm-no">Keep it</button>
+				<button class="danger" id="confirm-yes">Cancel schedule</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="toasts" aria-live="polite"></div>
+
+	<script type="module" src="/src/recurring.js"></script>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js" defer></script>
+	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
