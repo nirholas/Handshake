@@ -13,6 +13,22 @@ Every model three.ws generates can carry a **signed content credential** — cre
 curl "https://three.ws/api/provenance?src=https://three.ws/avatars/default.glb"
 ```
 
+The endpoint always hashes the bytes it fetched, so it answers for any model, anchored or not. The stock avatar has never been anchored, so it comes back `unknown` with a real hash:
+
+```jsonc
+{
+  "status": "unknown",
+  "reason": "no provenance credential is on record for this asset",
+  "badge": "Unverified",
+  "glbSha256": "1ec0913a5093301a69a6c1f29e8ff9bed10d9e39708126e2ca2c9a4d3d7df35c",
+  "credential": null,
+  "issuer": null,
+  "anchor": null
+}
+```
+
+Point it at a model that *has* been anchored and the credential and its on-chain anchor come back with it:
+
 ```jsonc
 {
   "status": "verified",              // verified | tampered | unknown

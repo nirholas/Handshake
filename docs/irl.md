@@ -101,7 +101,7 @@ The user-facing summary lives at [/irl-privacy](/irl-privacy); the engineering a
 
 ## Analytics
 
-/irl now has a real usage baseline. `api/_lib/irl-analytics.js` logs four events into `irl_events`: `pin_created` (tagged with the placement method: `webxr`, `quicklook`, camera `pin`, or `map`), `nearby_fetch`, `share_created`, and `share_viewed`. It is an append-only table that never stores a raw coordinate or device token (only a ~150m geocell and a 16-char hashed device prefix, matching the same coarsening the rest of IRL already uses). Events age out after 90 days via the existing hourly reaper ([api/cron/irl-reap.js](/api/cron/irl-reap.js)), the same bounded-retention discipline as the interaction trail.
+/irl now has a real usage baseline. `api/_lib/irl-analytics.js` logs four events into `irl_events`: `pin_created` (tagged with the placement method: `webxr`, `quicklook`, camera `pin`, or `map`), `nearby_fetch`, `share_created`, and `share_viewed`. It is an append-only table that never stores a raw coordinate or device token (only a ~150m geocell and a 16-char hashed device prefix, matching the same coarsening the rest of IRL already uses). Events age out after 90 days via the existing hourly reaper ([`api/cron/irl-reap.js`](../api/cron/irl-reap.js)), the same bounded-retention discipline as the interaction trail.
 
 The rollup is served at `GET /api/irl/analytics` (admin-gated via `x-ops-secret` or an admin session): pins placed and unique placers/browsers over 24h/7d/30d, a placement-method breakdown, the existing interaction (view/tap/message/pay) and confirmed Money Drop counts, share creation/view volume, and a 30-day daily series. Every number is a live query: nothing cached, sampled, or estimated.
 

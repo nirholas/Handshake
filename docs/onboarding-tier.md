@@ -8,7 +8,7 @@ promise (make a 3D avatar, give it a brain, put it on your site) was competing f
 attention with a trading terminal.
 
 The onboarding tier fixes that without deleting anything. A first-time visitor gets
-the **lite** tier: the ~27 destinations and the handful of homepage sections that
+the **lite** tier: the ~28 destinations and the handful of homepage sections that
 carry the core journey. Everything else is one click away behind a labelled control,
 and once a visitor asks for it, it stays open on every page and every visit.
 
@@ -20,9 +20,9 @@ and once a visitor asks for it, it stays open on every page and every visit.
 
 | Surface | Lite tier | Full tier |
 | --- | --- | --- |
-| Nav menus | Build, Discover, Learn (~27 links) | + Launch (~115 links in all) |
+| Nav menus | Build, Discover, Learn (~28 links) | + Launch (~119 links in all) |
 | Homepage | Hero, start path, Forge, embed demo, the three doors, community, pose, AR, showcase | + trading, capabilities grid, token economy, live economy, Oracle, pay-per-call, developer platform, the stack |
-| Mobile drawer | the same ~27 destinations in one flat list | all ~115 |
+| Mobile drawer | the same ~28 destinations in one flat list | all ~119 |
 
 Directly under the homepage hero sits the **start path**: three steps, each with an
 honest time estimate, in the order the product actually works.

@@ -222,7 +222,12 @@ await fetch('/api/permissions/revoke', {
 
 ## The permissions API
 
-All routes are under `/api/permissions/`. Responses use `{ ok: true, ... }` on success and `{ ok: false, error: '<code>', message: '...' }` on failure.
+All routes are under `/api/permissions/`. Responses use `{ ok: true, ... }` on success. Failures use the platform's standard error envelope, `{ error: '<code>', error_description: '...' }`:
+
+```sh
+curl -s 'https://three.ws/api/permissions/verify?hash=0x00&chainId=84532'
+# → {"error":"validation_error","error_description":"hash must be 0x + 64 hex chars"}
+```
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -307,7 +312,7 @@ The skill registry uses this declaration to show users what a skill needs before
 
 ## Error codes
 
-All error codes are OAuth-style strings returned as `error` in the `{ ok: false, error, message }` response shape:
+All error codes are OAuth-style strings. Over HTTP they arrive as `error` in the `{ error, error_description }` envelope above; from the browser helper `redeemFromSkill` they arrive as `code` in `{ ok: false, code, message }`:
 
 | Code | When | Recovery |
 |------|------|----------|

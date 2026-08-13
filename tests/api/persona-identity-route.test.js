@@ -164,6 +164,12 @@ describe('GET /api/mcp3d/persona-identity', () => {
 		expect(res.headers.allow).toBe('GET, HEAD, OPTIONS');
 	});
 
+	it('rejects an id shaped like a UUID, which is what the published examples used to show', async () => {
+		const { status, body } = await invoke('/api/mcp3d/persona-identity?id=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee');
+		expect(status).toBe(400);
+		expect(body.error).toBe('invalid_id');
+	});
+
 	it('503 wallet_unavailable when no persona wallet secret is configured', async () => {
 		const keys = ['PERSONA_WALLET_SECRET', 'WALLET_ENCRYPTION_KEY', 'JWT_SECRET'];
 		const kept = Object.fromEntries(keys.map((k) => [k, process.env[k]]));

@@ -4202,7 +4202,7 @@
 				{
 					"path": "/docs/onboarding-tier",
 					"title": "Docs · The onboarding tier",
-					"description": "Why a first-time visitor sees around 20 navigation destinations instead of around 100, how the Simple and Everything switch works, and which tier a newly built page belongs in.",
+					"description": "Why a first-time visitor sees around 30 navigation destinations instead of around 120, how the Simple and Everything switch works, and which tier a newly built page belongs in.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},

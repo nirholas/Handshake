@@ -82,10 +82,11 @@ Response:
 ```json
 {
   "ok": false,
-  "count": 4,
+  "count": 5,
   "findings": [
     { "severity": "error", "field": "payment.x402Version", "problem": "payment declares x402Version 1; server requires 2", "fix": "Set x402Version: 2." },
     { "severity": "error", "field": "payment.network", "problem": "network \"base\" is a shorthand, not the CAIP-2 id the rail matches on", "fix": "Use \"eip155:8453\"." },
+    { "severity": "error", "field": "payment.network", "problem": "you signed for \"base\" but the challenge only offers [eip155:8453]", "fix": "Pick one of the offered networks and re-sign against that accepts[] entry." },
     { "severity": "error", "field": "payment.authorization.value", "problem": "value \"0.01\" contains a decimal point", "fix": "Authorization value is atomic units as an integer string (\"10000\"), not a decimal token amount." },
     { "severity": "info", "field": "response.error", "problem": "server returned \"invalid_payment\"", "fix": "The payload was structurally valid but failed a check — usually underpayment, wrong payTo, or a malformed authorization. Run /api/x402/echo on your header to see the decoded amount/recipient." }
   ]

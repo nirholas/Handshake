@@ -46,12 +46,12 @@ export default {
 	// Mirrors buildBundle()'s settled 200 in api/x402/embody.js — the durable
 	// persona id, its GLB + viewer/profile URLs, and the paste-anywhere embed tag.
 	outputExample: {
-		agent_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+		agent_id: 'persona_8f2a1c9d4be6f70a1b2c',
 		glb_url: 'https://three.ws/cdn/personas/nova-scout/rigged.glb',
 		viewer_url: 'https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fpersonas%2Fnova-scout%2Frigged.glb',
-		profile_url: 'https://three.ws/embed/persona?persona=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee&state=idle',
-		embed_html: '<iframe src="https://three.ws/embed/persona?persona=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee&state=idle" width="360" height="480" loading="lazy" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups"></iframe>',
-		reload_url: 'https://three.ws/api/mcp3d/persona?id=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+		profile_url: 'https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c&state=idle',
+		embed_html: '<iframe src="https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c&state=idle" width="360" height="480" loading="lazy" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups"></iframe>',
+		reload_url: 'https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4be6f70a1b2c',
 		voice: 'nova',
 		rigged: true,
 		name: 'Nova Scout',

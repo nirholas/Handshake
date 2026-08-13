@@ -1,6 +1,6 @@
 # Deploying Agents On-Chain (Bulk)
 
-Give every three.ws agent a real on-chain identity: a **Metaplex Core NFT** minted into the **three.ws Agents collection** on Solana. This page is for platform admins and self-hosters; regular users register a single agent through the wallet-signed flow instead. It is the bulk/admin counterpart to the single-agent, user-signed flow in [Solana agents](solana.md): it deploys many agents server-side, with a live recording dashboard at `/admin/bulk-launch` and a CLI runner.
+Give every three.ws agent a real on-chain identity: a **Metaplex Core NFT** minted into the **three.ws Agents collection** on Solana. This page is for platform admins and self-hosters; regular users register a single agent through the wallet-signed flow instead. It is the bulk/admin counterpart to the single-agent, user-signed flow in [Solana agents](solana.md): it deploys many agents server-side through a CLI runner that reports every mint as it lands.
 
 > Not pump.fun. These are NFTs (on-chain identity), not tokens. The only coin three.ws ever references is `$THREE`; it appears in each asset's metadata as a link, nothing more.
 
@@ -216,7 +216,7 @@ registration runs through the CLI runner only
 `api/_lib/onchain-deploy.js` functions the dashboard did, so assets minted
 before and after the removal are identical.
 
-## Tutorial 4 — The full fleet
+## Tutorial 3 — The full fleet
 
 Once the canary checks out and the funder holds enough SOL (~0.004 × N):
 
@@ -226,7 +226,10 @@ node --env-file=.env scripts/deploy-agents-onchain.mjs --limit 500 --confirm
 # …re-run until "Found 0 agent(s)". Re-runs are safe.
 ```
 
-…or set **Agents per run = 500** on the dashboard and click Deploy, repeating until none remain. Run on **production** if you want per-agent ownership for wallet-less agents (see [Custody model](#custody-model)).
+`--limit` is clamped to 500 per run, so a larger fleet is several runs of the
+same command; already-deployed agents are skipped, so re-running is safe and
+costs nothing extra. Run on **production** if you want per-agent ownership for
+wallet-less agents (see [Custody model](#custody-model)).
 
 ---
 
