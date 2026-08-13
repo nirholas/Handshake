@@ -415,6 +415,14 @@
 			<description>/api/x402/inference-verify audits a metered-inference receipt from a paid llm-proxy call: it re-checks the issuer signature, the node's response signature, the prompt and response hashes against the raw text you supply, whether the settlement transaction actually confirmed on-chain, and whether the issuer is one of the platform's published signers. It is free and keyless, but it was missing from docs/x402-endpoints.md, so buyers and node operators had no way to find it. It now has a row in the free read surfaces table alongside the other verifier tools.</description>
 		</item>
 		<item>
+			<title>The GLB optimizer no longer hands back a bigger file than you gave it</title>
+			<link>https://three.ws/docs/media-api</link>
+			<guid isPermaLink="false">2026-08-13:The GLB optimizer no longer hands back a bigger file than you gave it</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Asking /api/avatar/optimize for Draco compression could return a model up to 19% LARGER than the source, with nothing in the response to warn you. Stored three.ws avatars are already quantized and meshopt-packed, and the optimizer was stacking Draco on top of that instead of choosing one scheme, then re-quantizing data that was already quantized. It now drops the competing compression, restores full-precision attributes before encoding, and keeps whichever result is genuinely smaller. If nothing beats the original it returns the original bytes untouched. Every response now says what you got: x-three-ws-optimize reports draco, meshopt, none or source, and x-three-ws-optimize-refused appears when Draco was asked for and dropped for making the file worse. Those headers plus the byte counts are readable from browser code for the first time. Measured on the two production sample avatars: Draco went from +19.0% to 0.0% on one and from +14.6% to a real -4.4% saving on the other.</description>
+		</item>
+		<item>
 			<title>The Granite forecast tool now ships a copy-and-run example</title>
 			<link>https://three.ws/docs/ibm-x402-mcp</link>
 			<guid isPermaLink="false">2026-08-13:The Granite forecast tool now ships a copy-and-run example</guid>

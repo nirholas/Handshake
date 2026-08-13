@@ -20896,6 +20896,16 @@
 				"docs"
 			],
 			"link": "/docs/x402-endpoints"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The GLB optimizer no longer hands back a bigger file than you gave it",
+			"summary": "Asking /api/avatar/optimize for Draco compression could return a model up to 19% LARGER than the source, with nothing in the response to warn you. Stored three.ws avatars are already quantized and meshopt-packed, and the optimizer was stacking Draco on top of that instead of choosing one scheme, then re-quantizing data that was already quantized. It now drops the competing compression, restores full-precision attributes before encoding, and keeps whichever result is genuinely smaller. If nothing beats the original it returns the original bytes untouched. Every response now says what you got: x-three-ws-optimize reports draco, meshopt, none or source, and x-three-ws-optimize-refused appears when Draco was asked for and dropped for making the file worse. Those headers plus the byte counts are readable from browser code for the first time. Measured on the two production sample avatars: Draco went from +19.0% to 0.0% on one and from +14.6% to a real -4.4% saving on the other.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/media-api"
 		}
 	]
 }

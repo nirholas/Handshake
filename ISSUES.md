@@ -231,6 +231,18 @@ wrong version is what a future reader would otherwise trust.
   stall (streaming 50 MB cap returning `413`/`504`, covered by
   `tests/avatar-optimize-source-cap.test.js`).
 
+  A second, unrelated defect on the same endpoint was found once the 500 was
+  gone and is **also closed (2026-08-13)**: `?draco=1` returned a file BIGGER
+  than its input (default.glb 748,088 to 890,160, +19.0%; michelle.glb 849,756
+  to 974,036, +14.6%) and said nothing about it. Cause: stored avatars are
+  quantized and meshopt-packed, gltf-transform keeps `EXT_meshopt_compression`
+  attached after reading, so Draco was layered beside the meshopt payload and
+  re-quantized already-quantized attributes. The pipeline now drops the other
+  mesh-compression scheme and dequantizes before encoding, keeps whichever
+  encoding is actually smaller, and falls back to the original bytes when
+  nothing helped. `x-three-ws-optimize` / `x-three-ws-optimize-refused` report
+  which happened. Pinned by `tests/avatar-optimize-never-inflates.test.js`.
+
 - **The autopilot spend default.** `POST /api/agents/:id/autopilot/run` read
   `body?.dry_run === true`, so a bare `POST {}` ran a REAL cycle while the
   sibling runner on the same wallet (`api/agents/wallet-intents.js`) read

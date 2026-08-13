@@ -177,13 +177,36 @@ Provide exactly one of `src` or `id`; the rest are optional.
 | `lod` | enum | `0` | `0` = source, `1` = conservative weld/dedup, `2` = more aggressive weld. |
 | `textureSize` | enum | `2048` | Max texture edge: `128`, `256`, `512`, `1024`, or `2048`. Larger textures are downscaled and re-encoded as WebP. |
 | `morphs` | enum | `all` | `arkit52` drops every morph target not in the ARKit-52 standard set (plus canonical aliases and visemes); `all` keeps everything. |
-| `draco` | flag | off | `draco=1` applies `KHR_draco_mesh_compression`. Smaller bytes, but the client needs a Draco decoder. |
+| `draco` | flag | off | `draco=1` *prefers* `KHR_draco_mesh_compression`, and the client then needs a Draco decoder. It is applied only when it actually shrinks the file (see the size contract below). |
 
 ### Response
 
 `200` with `model/gltf-binary` bytes, cached immutably (30 days in the
-browser, 1 year at the edge, keyed on the full URL). Headers
-`x-three-ws-source-bytes` and `x-three-ws-output-bytes` report the size delta.
+browser, 1 year at the edge, keyed on the full URL).
+
+### Size contract
+
+The endpoint never returns more bytes than it was given unless you asked for a
+change that genuinely alters the model. Stored three.ws avatars are already
+quantized and meshopt-packed, so layering Draco on top of that can easily make a
+file bigger; when it does, the endpoint keeps the better encoding (or hands back
+the original bytes) instead of honouring the flag into a worse result. The
+output declares **at most one** mesh-compression scheme, never Draco and meshopt
+together. Four response headers say exactly what happened, and all four are
+listed in `access-control-expose-headers` so browser `fetch()` can read them:
+
+| Header | Meaning |
+|--------|---------|
+| `x-three-ws-source-bytes` | Size of the source GLB. |
+| `x-three-ws-output-bytes` | Size of the body you received. |
+| `x-three-ws-optimize` | What the body is: `draco`, `meshopt`, `none` (no mesh compression), or `source` (the original bytes, returned unchanged because nothing the pipeline produced was smaller). |
+| `x-three-ws-optimize-refused` | `draco` when `draco=1` was requested and dropped because it grew the file. Absent otherwise. |
+
+The one case where the output may exceed the source is a request that really
+changed the model: a `lod` that collapsed vertices, a `morphs=arkit52` that
+dropped morph targets, or a `textureSize` that downscaled a texture. There you
+asked for different content, so you get it, and the byte headers still report
+the exact cost.
 
 ### Errors
 

@@ -16,12 +16,26 @@
 //   morphs=arkit52|all morph target filter.
 //                      arkit52 = drop morphs not in the ARKit-52 standard.
 //                      all     = keep every morph (default).
-//   draco=1            apply KHR_draco_mesh_compression. Smaller bytes, but
-//                      requires a Draco decoder on the client.
+//   draco=1            prefer KHR_draco_mesh_compression. Requires a Draco
+//                      decoder on the client. Honoured only when it actually
+//                      shrinks the file (see the size contract below).
 //
 // Response:
 //   model/gltf-binary body, cached at the edge for 1 year (immutable per
 //   src+params), browser cache 30d.
+//
+// Size contract: this endpoint never returns more bytes than it was given for a
+// content-preserving request (no lod, no morph filter, no explicit textureSize).
+// The output declares at most ONE mesh-compression scheme, and the response says
+// which:
+//   x-three-ws-optimize: draco | meshopt | none | source
+//     `source` means the pipeline could not beat the original and the original
+//     bytes were returned unchanged.
+//   x-three-ws-optimize-refused: draco
+//     present when draco=1 was asked for and dropped because it grew the file.
+//   x-three-ws-source-bytes / x-three-ws-output-bytes: the measured sizes.
+// All four are listed in access-control-expose-headers so browser callers can
+// read them.
 //
 // Errors:
 //   400 invalid_request          missing / malformed params
@@ -130,6 +144,10 @@ async function resolveSource({ src, id }) {
 // names + canonical aliases + visemes). Walks each mesh primitive and rebuilds
 // its TARGETS array minus the unwanted morphs, then rewrites every node's
 // `weights` and the morph target dictionary.
+//
+// Returns true only when a morph was actually dropped. A model that already
+// carries nothing but ARKit morphs is unchanged, and the caller uses that to
+// decide whether the request is still content-preserving.
 function filterMorphsToArkit52(doc) {
 	const allowed = new Set([
 		...ARKIT_52,
@@ -137,6 +155,7 @@ function filterMorphsToArkit52(doc) {
 		...Object.keys(MORPH_ALIASES),
 	]);
 
+	let changed = false;
 	for (const mesh of doc.getRoot().listMeshes()) {
 		const extras = mesh.getExtras() || {};
 		const names = Array.isArray(extras.targetNames) ? extras.targetNames : null;
@@ -162,7 +181,9 @@ function filterMorphsToArkit52(doc) {
 			...extras,
 			targetNames: keep.map((i) => names[i]),
 		});
+		changed = true;
 	}
+	return changed;
 }
 
 // Simplify mesh density via a heuristic decimation. Real meshopt simplification
@@ -170,14 +191,37 @@ function filterMorphsToArkit52(doc) {
 // drop trailing morph data and let `weld` collapse duplicate vertices, which
 // has a meaningful (10–25%) effect for hand-modeled meshes without quality
 // loss.
+// Total vertices across every primitive, used to tell a weld that collapsed
+// something from one that had nothing to collapse.
+function vertexCount(doc) {
+	let total = 0;
+	for (const mesh of doc.getRoot().listMeshes()) {
+		for (const prim of mesh.listPrimitives()) {
+			total += prim.getAttribute('POSITION')?.getCount() || 0;
+		}
+	}
+	return total;
+}
+
 async function applyLod(doc, lod) {
-	if (lod <= 0) return;
+	if (lod <= 0) return false;
 	// Compose the dedup+weld+prune passes for the lossless lod=1 tier.
+	const before = vertexCount(doc);
 	await doc.transform(weld({ tolerance: lod === 2 ? 0.0005 : 0.0001 }));
+	return vertexCount(doc) !== before;
 }
 
 async function applyTextureCap(doc, maxEdge) {
-	if (!maxEdge) return;
+	if (!maxEdge) return false;
+	// Only a texture that is actually over the cap loses pixels. Re-encoding one
+	// that already fits is a pure size optimization, so it must not count as a
+	// content change: otherwise a default (or ineffective) textureSize would stop
+	// the size guard from handing back the original bytes.
+	const resized = doc.getRoot().listTextures().some((tex) => {
+		const [w, h] = tex.getSize() || [0, 0];
+		return w > maxEdge || h > maxEdge;
+	});
+
 	// `textureCompress` from gltf-transform handles resize+re-encode in one
 	// pass; force webp output for ~30% size reduction over JPEG/PNG at
 	// equivalent perceptual quality.
@@ -185,7 +229,7 @@ async function applyTextureCap(doc, maxEdge) {
 	try {
 		sharp = (await import('sharp')).default;
 	} catch (_) {
-		return;
+		return false;
 	}
 	await doc.transform(
 		textureCompress({
@@ -195,6 +239,7 @@ async function applyTextureCap(doc, maxEdge) {
 			resize: [maxEdge, maxEdge],
 		}),
 	);
+	return resized;
 }
 
 let _ioPromise = null;
@@ -233,10 +278,101 @@ function transcodeIo() {
 	return _ioPromise;
 }
 
+// Mesh-compression schemes are mutually exclusive: a primitive compressed with
+// EXT_meshopt_compression cannot also be compressed with
+// KHR_draco_mesh_compression. Our stored avatars ship meshopt-packed, and
+// gltf-transform keeps the extension attached to the Document after reading, so
+// simply calling draco() re-encoded the meshopt payload AND added Draco beside
+// it. That is what made `?draco=1` return files 17-19% LARGER than the source.
+function dropMeshCompression(doc) {
+	for (const ext of doc.getRoot().listExtensionsUsed()) {
+		const name = ext.extensionName;
+		if (name === 'EXT_meshopt_compression' || name === 'KHR_draco_mesh_compression') {
+			ext.dispose();
+		}
+	}
+}
+
 async function applyDraco(doc) {
-	const { draco } = await import('@gltf-transform/functions');
-	// Draco encodes indexed primitives only, so weld before handing it the mesh.
-	await doc.transform(weld(), draco());
+	const { draco, dequantize } = await import('@gltf-transform/functions');
+	dropMeshCompression(doc);
+	// Draco quantizes internally. Handing it attributes that KHR_mesh_quantization
+	// already packed into normalized shorts is the classic way to grow a file, so
+	// restore float attributes first and let Draco do the quantization once.
+	// Draco also encodes indexed primitives only, hence the weld.
+	await doc.transform(dequantize(), weld(), draco());
+}
+
+// Which mesh-compression scheme a written document actually declares, so the
+// response can state what the caller received instead of what was requested.
+function meshCompressionScheme(doc) {
+	const used = doc.getRoot().listExtensionsUsed().map((e) => e.extensionName);
+	if (used.includes('KHR_draco_mesh_compression')) return 'draco';
+	if (used.includes('EXT_meshopt_compression')) return 'meshopt';
+	return 'none';
+}
+
+/**
+ * The whole transcode, with no HTTP or network in it: source GLB bytes in,
+ * optimized GLB bytes out, plus what was actually done to them.
+ *
+ * Guarantees, in order of application:
+ *   - the output declares at most ONE mesh-compression scheme;
+ *   - `draco` is honoured only when it beats the alternative encoding;
+ *   - a request that changed nothing about the model never returns more bytes
+ *     than it was given (the source is handed back instead).
+ *
+ * @param {Buffer} sourceBytes
+ * @param {{ lod?: number, textureSize?: number, morphs?: string, draco?: boolean }} opts
+ * @returns {Promise<{ bytes: Buffer|Uint8Array, scheme: 'draco'|'meshopt'|'none'|'source', refused: 'draco'|null }>}
+ */
+export async function optimizeGlb(sourceBytes, opts = {}) {
+	const { lod = 0, textureSize = 2048, morphs = 'all', draco = false } = opts;
+
+	const io = await transcodeIo();
+	const doc = await io.readBinary(sourceBytes);
+
+	await doc.transform(dedup(), prune({ keepLeaves: false, keepAttributes: false }));
+
+	// A requested transform that changed nothing leaves the request
+	// content-preserving, so an ineffective lod / morph filter / texture cap
+	// cannot cost the caller bytes.
+	let contentChanged = false;
+	if (morphs === 'arkit52' && filterMorphsToArkit52(doc)) contentChanged = true;
+	if (await applyLod(doc, lod)) contentChanged = true;
+	if (await applyTextureCap(doc, textureSize)) contentChanged = true;
+
+	let bytes = await io.writeBinary(doc);
+	let scheme = meshCompressionScheme(doc);
+	let refused = null;
+
+	if (draco) {
+		// Draco is a bet, not a guarantee: it compresses mesh primitives only, so
+		// on animation- or texture-dominated avatars it loses to the meshopt
+		// packing already on the source. Encode both and ship the smaller one
+		// rather than honouring the flag into a worse file.
+		await applyDraco(doc);
+		const dracoBytes = await io.writeBinary(doc);
+		if (dracoBytes.byteLength < bytes.byteLength) {
+			bytes = dracoBytes;
+			scheme = meshCompressionScheme(doc);
+		} else {
+			refused = 'draco';
+		}
+	}
+
+	// Last guard: when nothing about the model actually changed and the pipeline
+	// still produced something bigger than it was given, the honest answer is the
+	// original bytes. A transform that DID change the model (a real decimation, a
+	// real morph filter, a real texture downscale) is never substituted this way,
+	// because the caller wants the transformed model, not the smallest one.
+	if (!contentChanged && bytes.byteLength >= sourceBytes.byteLength) {
+		bytes = sourceBytes;
+		scheme = 'source';
+		if (draco) refused = 'draco';
+	}
+
+	return { bytes, scheme, refused };
 }
 
 export default wrap(async (req, res) => {
@@ -308,22 +444,13 @@ export default wrap(async (req, res) => {
 		clearTimeout(fetchTimer);
 	}
 
-	let outBytes;
+	let result;
 	try {
-		const io = await transcodeIo();
-		const doc = await io.readBinary(sourceBytes);
-
-		await doc.transform(dedup(), prune({ keepLeaves: false, keepAttributes: false }));
-
-		if (morphs === 'arkit52') filterMorphsToArkit52(doc);
-		await applyLod(doc, lod);
-		await applyTextureCap(doc, textureSize);
-		if (draco) await applyDraco(doc);
-
-		outBytes = await io.writeBinary(doc);
+		result = await optimizeGlb(sourceBytes, { lod, textureSize, morphs, draco });
 	} catch (err) {
 		return error(res, 500, 'transcode_failed', err?.message || 'transcode pipeline failed');
 	}
+	const { bytes: outBytes, scheme, refused } = result;
 
 	res.setHeader('content-type', 'model/gltf-binary');
 	res.setHeader('content-length', String(outBytes.byteLength));
@@ -331,6 +458,14 @@ export default wrap(async (req, res) => {
 	res.setHeader('access-control-allow-origin', '*');
 	res.setHeader('x-three-ws-source-bytes', String(sourceBytes.byteLength));
 	res.setHeader('x-three-ws-output-bytes', String(outBytes.byteLength));
+	res.setHeader('x-three-ws-optimize', scheme);
+	if (refused) res.setHeader('x-three-ws-optimize-refused', refused);
+	// Without this a browser fetch() cannot read any of the above, which made the
+	// byte headers unusable from the very clients this endpoint serves.
+	res.setHeader(
+		'access-control-expose-headers',
+		'x-three-ws-source-bytes, x-three-ws-output-bytes, x-three-ws-optimize, x-three-ws-optimize-refused',
+	);
 	res.statusCode = 200;
 	res.end(Buffer.from(outBytes));
 });
