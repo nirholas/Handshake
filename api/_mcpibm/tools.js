@@ -211,7 +211,7 @@ const CHAT_DESCRIPTION =
 
 const chatTool = {
 	name: 'ibm_granite_chat',
-	title: `IBM Granite Chat (${formatUsdPrice('ibm_granite_chat')})`,
+	title: 'IBM Granite Chat ($0.02)',
 	description: CHAT_DESCRIPTION,
 	annotations: generativeAnnotations,
 	inputSchema: {
@@ -316,7 +316,7 @@ function buildCodeSystemPrompt(task, language) {
 
 const codeTool = {
 	name: 'ibm_granite_code',
-	title: `IBM Granite Code (${formatUsdPrice('ibm_granite_code')})`,
+	title: 'IBM Granite Code ($0.025)',
 	description: CODE_DESCRIPTION,
 	annotations: generativeAnnotations,
 	inputSchema: {
@@ -389,7 +389,7 @@ const EMBED_DESCRIPTION =
 
 const embedTool = {
 	name: 'ibm_granite_embed',
-	title: `IBM Granite Embed (${formatUsdPrice('ibm_granite_embed')})`,
+	title: 'IBM Granite Embed ($0.005)',
 	description: EMBED_DESCRIPTION,
 	annotations: deterministicAnnotations,
 	inputSchema: {
@@ -486,7 +486,7 @@ function buildAnalysisPrompt(analysis_type, language) {
 
 const analyzeTool = {
 	name: 'ibm_granite_analyze',
-	title: `IBM Granite Analyze (${formatUsdPrice('ibm_granite_analyze')})`,
+	title: 'IBM Granite Analyze ($0.04)',
 	description: ANALYZE_DESCRIPTION,
 	annotations: generativeAnnotations,
 	inputSchema: {
@@ -596,7 +596,7 @@ const FREQ_EXAMPLES = '1min, 5min, 15min, 30min, 1h, 2h, 4h, 12h, 1D, 1W, 1ME';
 
 const forecastTool = {
 	name: 'ibm_granite_forecast',
-	title: `IBM Granite Forecast (${formatUsdPrice('ibm_granite_forecast')})`,
+	title: 'IBM Granite Forecast ($0.05)',
 	description: FORECAST_DESCRIPTION,
 	annotations: generativeAnnotations,
 	inputSchema: {

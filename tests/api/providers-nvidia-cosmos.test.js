@@ -1,4 +1,4 @@
-// NVIDIA Cosmos provider (api/_providers/nvidia-cosmos.js) — the free
+// NVIDIA Cosmos provider (api/_providers/nvidia-cosmos.js): the free
 // text→world VIDEO lane behind the platform NVIDIA_API_KEY.
 //
 // Same NVCF async gateway as the TRELLIS provider (202 + NVCF-REQID → poll
@@ -7,7 +7,7 @@
 // ships the MP4 in, the R2 persist, and the normalized error codes callers
 // route a dead lane around on.
 //
-// global fetch is stubbed and R2 is intercepted — no network, no live NVCF
+// global fetch is stubbed and R2 is intercepted: no network, no live NVCF
 // spend, and no mocked product data.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -59,7 +59,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('nvidia-cosmos provider — configuration', () => {
+describe('nvidia-cosmos provider: configuration', () => {
 	it('reports configured only while NVIDIA_API_KEY is present', () => {
 		expect(nvidiaCosmosConfigured()).toBe(true);
 		delete process.env.NVIDIA_API_KEY;
@@ -78,7 +78,7 @@ describe('nvidia-cosmos provider — configuration', () => {
 	});
 });
 
-describe('nvidia-cosmos provider — text→world submit', () => {
+describe('nvidia-cosmos provider: text→world submit', () => {
 	function stubAccept() {
 		const calls = [];
 		globalThis.fetch = vi.fn(async (url, opts = {}) => {
@@ -176,7 +176,7 @@ describe('nvidia-cosmos provider — text→world submit', () => {
 	});
 });
 
-describe('nvidia-cosmos provider — normalized submit errors', () => {
+describe('nvidia-cosmos provider: normalized submit errors', () => {
 	const CASES = [
 		{ status: 401, code: 'invalid_key', mapped: 401 },
 		{ status: 403, code: 'invalid_key', mapped: 401 },
@@ -236,7 +236,7 @@ describe('nvidia-cosmos provider — normalized submit errors', () => {
 	});
 });
 
-describe('nvidia-cosmos provider — 202-then-poll loop', () => {
+describe('nvidia-cosmos provider: 202-then-poll loop', () => {
 	it('reports running while NVCF returns 202', async () => {
 		globalThis.fetch = vi.fn(async (url) => {
 			expect(String(url)).toBe(`${NVCF_STATUS}/req-world-1`);

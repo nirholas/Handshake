@@ -348,8 +348,8 @@ async function main() {
 	check('stud POST refuses an agent you do not own', notOwned.status === 403, `status ${notOwned.status} ${notOwned.json?.error || ''}`);
 	const badId = await http.post('/api/genome/stud', { agent_id: 'nope' });
 	check('stud POST rejects a malformed id with 400 JSON', badId.status === 400 && badId.json?.error === 'validation_error', `status ${badId.status}`);
-	const missing = await http.post('/api/genome/stud', { agent_id: '11111111-1111-4111-8111-111111111111' });
-	check('stud POST 404s an unknown agent', missing.status === 404, `status ${missing.status}`);
+	const unknownAgent = await http.post('/api/genome/stud', { agent_id: '11111111-1111-4111-8111-111111111111' });
+	check('stud POST 404s an unknown agent', unknownAgent.status === 404, `status ${unknownAgent.status}`);
 
 	// Poison meta with a sibling key, then list: the write must preserve it.
 	await db.query(`update agent_identities set meta = meta || '{"sentinel":"keep-me"}'::jsonb where id = $1`, [parentA]);

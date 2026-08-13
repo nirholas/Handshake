@@ -80,6 +80,26 @@ global.fetch = vi.fn(async () => {
 		};
 	}
 	const body = state.fetchBody;
+	// A chunked response with no content-length, the shape a host uses to hide how
+	// much it is about to send. `streamChunks` yields those chunks so the handler's
+	// running byte cap is exercised on the stream rather than on a header.
+	if (state.streamChunks) {
+		const chunks = state.streamChunks;
+		return {
+			ok: true,
+			status: 200,
+			headers: {
+				get(h) {
+					if (h === 'content-type') return state.fetchContentType;
+					return null; // no content-length
+				},
+			},
+			body: (async function* () {
+				for (const c of chunks) yield c;
+			})(),
+			arrayBuffer: async () => Buffer.concat(chunks).buffer,
+		};
+	}
 	return {
 		ok: true,
 		status: 200,
@@ -149,6 +169,7 @@ beforeEach(() => {
 	state.fetchStatus = 200;
 	state.fetchContentType = 'image/jpeg';
 	state.fetchBody = Buffer.alloc(200);
+	state.streamChunks = null;
 	state.graniteText =
 		'{"appearance":"A sleek cobalt android.","vibe":"calm, precise","persona":"A reliable guide.","suggested_name":"Cobalt","bio":"Your co-pilot.","tone_tags":["calm","precise"],"voice":"warm and measured"}';
 	state.graniteThrows = false;
@@ -194,6 +215,9 @@ describe('GET /api/ibm/vision — subjects', () => {
 		const { status, body } = await invoke({ method: 'GET' });
 		expect(status).toBe(200);
 		expect(body.subjects).toEqual([]);
+		// Same shape as the success path, so a client reading the model name off
+		// the degraded response does not get undefined.
+		expect(body.visionModel).toBe(VISION_MODEL);
 	});
 
 	it('returns 405 for unsupported methods', async () => {
@@ -308,6 +332,51 @@ describe('POST /api/ibm/vision — server-side image fetch', () => {
 		});
 		expect(status).toBe(415);
 		expect(body.error).toBe('not_an_image');
+	});
+
+	// Several allowlisted hosts serve user-supplied content. A content-length
+	// header is a hint such a host can simply omit, so the 6MB ceiling has to hold
+	// on the stream: buffering first and measuring afterwards means the oversized
+	// body is already resident in memory by the time it is rejected.
+	it('returns 413 image_too_large for an oversized body with no content-length', async () => {
+		const chunk = Buffer.alloc(1024 * 1024); // 1MB per chunk
+		state.streamChunks = Array.from({ length: 8 }, () => chunk); // 8MB total
+		const { status, body } = await invoke({
+			method: 'POST',
+			body: { imageUrl: 'https://pub-test.r2.dev/huge.jpg' },
+		});
+		expect(status).toBe(413);
+		expect(body.error).toBe('image_too_large');
+	});
+
+	it('stops reading an oversized body instead of draining it', async () => {
+		const chunk = Buffer.alloc(1024 * 1024);
+		let pulled = 0;
+		state.streamChunks = {
+			[Symbol.iterator]: function* () {
+				for (let i = 0; i < 64; i++) {
+					pulled++;
+					yield chunk;
+				}
+			},
+		};
+		const { status } = await invoke({
+			method: 'POST',
+			body: { imageUrl: 'https://pub-test.r2.dev/endless.jpg' },
+		});
+		expect(status).toBe(413);
+		// 6MB cap: the read stops on the chunk that crosses it, not 64MB later.
+		expect(pulled).toBeLessThanOrEqual(7);
+	});
+
+	it('accepts a streamed body that stays under the cap', async () => {
+		state.streamChunks = [Buffer.alloc(1024), Buffer.alloc(2048)];
+		const { status, body } = await invoke({
+			method: 'POST',
+			body: { imageUrl: 'https://pub-test.r2.dev/small.jpg' },
+		});
+		expect(status).toBe(200);
+		expect(body.vision.suggested_name).toBe('Cobalt');
 	});
 });
 

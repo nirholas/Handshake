@@ -985,7 +985,17 @@ export default wrap(async (req, res) => {
 
 // ── Shape translation: Anthropic ⇄ OpenAI ────────────────────────────────────
 
-function anthropicBodyToOpenAI(body) {
+// Providers that implement OpenAI's `stream_options.include_usage` contract.
+// Without the flag a streaming completion carries no usage block at all, so the
+// monthly token budget, the spend ledger, and the usage event all read zero for
+// the lane embeds actually use (streaming is the default there). The rest of the
+// providers are left alone on purpose: they either already emit usage on the
+// final chunk (read opportunistically in pipeOpenAIAsAnthropic) or have not
+// documented the field, and an unknown-parameter 400 would silently drop the
+// lane out of the fallback chain.
+const STREAM_USAGE_PROVIDERS = new Set(['openrouter', 'groq', 'nvidia', 'sambanova', 'grok']);
+
+function anthropicBodyToOpenAI(body, { provider } = {}) {
 	const messages = [];
 	if (body.system) messages.push({ role: 'system', content: body.system });
 
@@ -1043,6 +1053,9 @@ function anthropicBodyToOpenAI(body) {
 		stream: !!body.stream,
 	};
 	if (typeof body.temperature === 'number') out.temperature = body.temperature;
+	if (out.stream && STREAM_USAGE_PROVIDERS.has(provider)) {
+		out.stream_options = { include_usage: true };
+	}
 
 	if (Array.isArray(body.tools) && body.tools.length) {
 		out.tools = body.tools.map((t) => ({
@@ -1160,8 +1173,10 @@ async function pipeOpenAIAsAnthropic(upstream, res, { model }) {
 		closeTextBlockIfOpen();
 		slot.anthropicIndex = nextBlockIndex++;
 		slot.started = true;
-		slot.id = openAIToolCall.id || `tool_${slot.anthropicIndex}`;
-		slot.name = openAIToolCall.function?.name || slot.name || '';
+		slot.id = openAIToolCall.id || slot.id || `tool_${slot.anthropicIndex}`;
+		// The buffered name wins: it already carries this chunk's fragment plus
+		// any earlier ones, while the chunk alone may hold only the last piece.
+		slot.name = slot.name || openAIToolCall.function?.name || '';
 		write(
 			{
 				type: 'content_block_start',
@@ -1174,6 +1189,22 @@ async function pipeOpenAIAsAnthropic(upstream, res, { model }) {
 
 	function finishToolBlocks() {
 		for (const slot of toolBlocks.values()) {
+			// A call whose id never arrived has no open block yet. Open it now and
+			// replay the buffered arguments: dropping it would leave the agent
+			// silently not calling a tool the model asked for.
+			if (!slot.started && (slot.name || slot.argsBuf)) {
+				startToolBlock(slot, { id: slot.id, function: { name: slot.name } });
+				if (slot.argsBuf) {
+					write(
+						{
+							type: 'content_block_delta',
+							index: slot.anthropicIndex,
+							delta: { type: 'input_json_delta', partial_json: slot.argsBuf },
+						},
+						'content_block_delta',
+					);
+				}
+			}
 			if (slot.started && !slot.finished) {
 				write(
 					{ type: 'content_block_stop', index: slot.anthropicIndex },
@@ -1203,9 +1234,12 @@ async function pipeOpenAIAsAnthropic(upstream, res, { model }) {
 					continue;
 				}
 
-				if (ev.usage) {
-					inputTokens = ev.usage.prompt_tokens ?? inputTokens;
-					outputTokens = ev.usage.completion_tokens ?? outputTokens;
+				// Groq reports streaming usage under `x_groq.usage` on the final
+				// chunk instead of the top-level field the OpenAI spec defines.
+				const usage = ev.usage || ev.x_groq?.usage;
+				if (usage) {
+					inputTokens = usage.prompt_tokens ?? inputTokens;
+					outputTokens = usage.completion_tokens ?? outputTokens;
 				}
 
 				const choice = ev.choices?.[0];
@@ -1237,10 +1271,13 @@ async function pipeOpenAIAsAnthropic(upstream, res, { model }) {
 							};
 							toolBlocks.set(idx, slot);
 						}
-						if (!slot.started && (tc.id || tc.function?.name)) {
+						// The function name can stream in fragments ahead of the id, so
+						// buffer it and open the block once the id lands (every provider
+						// observed sends the name whole alongside it) or once the first
+						// argument delta proves the name is complete.
+						if (!slot.started && tc.function?.name) slot.name += tc.function.name;
+						if (!slot.started && (tc.id || tc.function?.arguments != null)) {
 							startToolBlock(slot, tc);
-						} else if (tc.function?.name && !slot.started) {
-							slot.name += tc.function.name;
 						}
 						if (tc.function?.arguments) {
 							slot.argsBuf += tc.function.arguments;

@@ -1,4 +1,4 @@
-// Meshy BYOK provider (api/_providers/meshy.js) — wire contract + failure paths.
+// Meshy BYOK provider (api/_providers/meshy.js): wire contract + failure paths.
 //
 // Meshy backs two forge paths on two different API versions:
 //   text→geometry  POST /openapi/v2/text-to-3d  (mode "preview", no intermediate image)
@@ -19,7 +19,7 @@ afterEach(() => {
 
 const TIER = { id: 'standard', polycount: 30_000, pbr: false, hd: false };
 
-describe('meshy provider — construction', () => {
+describe('meshy provider: construction', () => {
 	it('refuses to construct without an API key', () => {
 		expect(() => createMeshyProvider('')).toThrowError(/key is required/i);
 		try {
@@ -30,7 +30,7 @@ describe('meshy provider — construction', () => {
 	});
 });
 
-describe('meshy provider — text→geometry submit', () => {
+describe('meshy provider: text→geometry submit', () => {
 	it('posts the v2 preview body and returns the text-to-3d poll handle', async () => {
 		let captured;
 		globalThis.fetch = vi.fn(async (url, opts) => {
@@ -50,7 +50,7 @@ describe('meshy provider — text→geometry submit', () => {
 		expect(out).toEqual({ kind: 'text-to-3d', taskId: 'task-abc' });
 	});
 
-	it('clamps a tier poly budget into Meshy\'s accepted 100–300,000 window', async () => {
+	it('clamps a tier poly budget into Meshy\'s accepted 100-300,000 window', async () => {
 		const bodies = [];
 		globalThis.fetch = vi.fn(async (url, opts) => {
 			bodies.push(JSON.parse(opts.body));
@@ -66,7 +66,7 @@ describe('meshy provider — text→geometry submit', () => {
 	});
 });
 
-describe('meshy provider — image→3D submit', () => {
+describe('meshy provider: image→3D submit', () => {
 	it('posts the v1 image body with the tier\'s PBR/HD knobs and an optional texture prompt', async () => {
 		let captured;
 		globalThis.fetch = vi.fn(async (url, opts) => {
@@ -104,7 +104,7 @@ describe('meshy provider — image→3D submit', () => {
 	});
 });
 
-describe('meshy provider — normalized submit errors', () => {
+describe('meshy provider: normalized submit errors', () => {
 	const CASES = [
 		{ status: 401, code: 'invalid_key', mapped: 401 },
 		{ status: 403, code: 'invalid_key', mapped: 401 },
@@ -150,7 +150,7 @@ describe('meshy provider — normalized submit errors', () => {
 	});
 });
 
-describe('meshy provider — status polling', () => {
+describe('meshy provider: status polling', () => {
 	it('polls the endpoint matching the task kind and resolves the GLB when SUCCEEDED', async () => {
 		let polled;
 		globalThis.fetch = vi.fn(async (url) => {

@@ -161,9 +161,11 @@ export function fallbackIdentityPrompt({ brief, styleHints }) {
 	// The style hints ARE the visual direction, give them priority and their own
 	// budget so a long brief can never crowd them out of the prompt.
 	const hints = styleHints ? cleanClause(clampPrompt(styleHints, 90)) : '';
-	// First sentence only (handles both Latin ".!?" and CJK "。！？").
+	// First sentence only. A Latin terminator is followed by a space; a CJK one
+	// usually is not, so that branch splits on a zero-width boundary instead, or
+	// a whole Chinese brief counts as one sentence and crowds out the hints.
 	const raw = String(brief ?? '').trim();
-	const firstSentence = raw.split(/(?<=[.!?。！？])\s+/)[0] || raw;
+	const firstSentence = raw.split(/(?<=[.!?])\s+|(?<=[。！？])\s*/)[0] || raw;
 	const subject = cleanClause(
 		clampPrompt(firstSentence, MAX_GENERATION_PROMPT_CHARS - 140 - (hints ? hints.length + 2 : 0)),
 	);
@@ -659,5 +661,3 @@ export function describeIdentityJob(state, { base = BASE } = {}) {
 	}
 	return body;
 }
-
-export { loadState as loadIdentityJob };

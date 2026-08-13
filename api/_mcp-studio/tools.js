@@ -234,6 +234,11 @@ function failureMessage(err) {
 			return 'This capability is temporarily unavailable. Please try again later.';
 		case 'generation_failed':
 			return 'Generation failed for this prompt. Try again (a retry is routed to a healthy engine) or rephrase it.';
+		// A dead handle, not a broken generator: the generic retry copy sent the
+		// caller back to a probe that can never succeed. Point them at the one
+		// action that does work.
+		case 'unknown_job':
+			return 'That job id is not recognized (it may be mistyped or expired). Start a new generation to get a fresh one.';
 		default:
 			return 'Could not generate the model right now. Please try again.';
 	}
@@ -467,22 +472,25 @@ async function handleForgeAvatar(args, _auth, req) {
 	try {
 		rigged = await rig(base, gen.glb_url, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS' });
 	} catch (err) {
-		// Generation succeeded but rigging failed — hand back the (unrigged) mesh so
+		// Generation succeeded but rigging failed: hand back the (unrigged) mesh so
 		// the work isn't lost, and say so plainly.
+		// It rides the SAME ok() envelope as every other success, because this
+		// hand-rolled one silently dropped what ok() adds: the /cdn rewrite (without
+		// it a bucket-domain GLB is unfetchable inside ChatGPT's cross-origin widget
+		// sandbox, so this path error-stated instead of showing the mesh it just
+		// saved), the AR launch link, and the Spatial MCP artifact. Only the
+		// narration differs, so a partial result stays as usable as a whole one.
+		const partial = ok({ glbUrl: gen.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: gen.preview_image_url });
 		return {
+			...partial,
 			content: [
 				{
 					type: 'text',
-					text: `Generated the mesh but auto-rigging failed (${failureMessage(err)}). You can still use the model: ${viewerUrl(base, gen.glb_url)}`,
+					text:
+						`Generated the mesh but auto-rigging failed (${failureMessage(err)}). The model itself is fine and ready to use.\n` +
+						partial.content[0].text,
 				},
 			],
-			structuredContent: {
-				kind: 'mesh',
-				glbUrl: gen.glb_url,
-				viewerUrl: viewerUrl(base, gen.glb_url),
-				format: 'glb',
-				...(prompt ? { prompt } : {}),
-			},
 		};
 	}
 	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, etaRemainingSeconds: rigged.eta_remaining_seconds });

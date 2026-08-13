@@ -29,6 +29,10 @@ const SCOPES = [
 	{ value: 'avatars:write',  label: 'avatars:write',  note: 'Create or modify avatars' },
 	{ value: 'avatars:delete', label: 'avatars:delete', note: 'Permanently remove avatars' },
 	{ value: 'profile',        label: 'profile',        note: 'Read the signed-in user record' },
+	{ value: 'memory:read',    label: 'memory:read',    note: 'Recall your agents’ stored memories' },
+	{ value: 'memory:write',   label: 'memory:write',   note: 'Store and forget agent memories' },
+	{ value: 'agents:read',    label: 'agents:read',    note: 'Read your agents and their identities' },
+	{ value: 'agents:write',   label: 'agents:write',   note: 'Create, update, and register agents' },
 ];
 
 const EXPIRY_OPTIONS = [

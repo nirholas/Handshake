@@ -230,12 +230,45 @@ const registerSchema = z.object({
 	client_uri: z.string().url().optional(),
 	logo_uri: z.string().url().optional(),
 	scope: z.string().max(500).optional(),
-	grant_types: z.array(z.string()).optional(),
-	response_types: z.array(z.string()).optional(),
+	grant_types: z.array(z.string()).min(1).max(8).optional(),
+	response_types: z.array(z.string()).min(1).max(8).optional(),
 	token_endpoint_auth_method: z.enum(['none', 'client_secret_basic', 'client_secret_post']).optional(),
 	software_id: z.string().max(120).optional(),
 	software_version: z.string().max(60).optional(),
 });
+
+// Schemes a browser or OS handler EXECUTES rather than navigates to. Zod's
+// .url() is a bare `new URL()` check, so `javascript:alert(document.cookie)` and
+// `data:text/html,<script>…` both pass it: without this list a self-registering
+// client could park a script URL in oauth_clients, and the consent page would
+// then splice its "origin" (the literal string `null`) into the CSP form-action
+// allowlist and 302 the browser at it after approval.
+const EXECUTABLE_URI_SCHEMES = new Set(['javascript:', 'data:', 'vbscript:', 'blob:', 'file:', 'about:', 'filesystem:', 'view-source:']);
+// RFC 8252 §8.3 permits loopback redirects over plain http, IPv6 included.
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+// Returns a rejection reason, or null when the URI is an acceptable target.
+function redirectUriRejection(uri) {
+	let u;
+	try { u = new URL(uri); } catch { return 'redirect_uri must be an absolute URI'; }
+	const scheme = u.protocol.toLowerCase();
+	if (EXECUTABLE_URI_SCHEMES.has(scheme)) return `redirect URI scheme "${scheme}" is not allowed`;
+	if (scheme === 'https:') return null;
+	if (scheme === 'http:') return LOOPBACK_HOSTS.has(u.hostname) ? null : 'non-https redirect URIs only allowed for localhost';
+	// A private-use scheme (RFC 8252 §7.1) is how native clients receive the
+	// code: `com.example.app:/oauth2redirect` or `myapp://callback`. The slash
+	// after the colon is what separates a navigable target from an inline
+	// payload, so require it for any scheme outside http/https.
+	if (!/^[a-z][a-z0-9+.-]*:\//i.test(uri)) return 'a private-use redirect URI needs a path, e.g. com.example.app:/callback';
+	return null;
+}
+
+// Mirrors what /.well-known/oauth-authorization-server advertises (api/wk.js).
+// RFC 7591 §3.2.2: metadata naming a grant or response type the server does not
+// support is rejected, rather than stored as a promise the token endpoint would
+// break later with `unsupported_grant_type`.
+const SUPPORTED_GRANT_TYPES = new Set(['authorization_code', 'refresh_token']);
+const SUPPORTED_RESPONSE_TYPES = new Set(['code']);
 
 async function handleRegister(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
@@ -244,8 +277,17 @@ async function handleRegister(req, res) {
 	if (!rl.success) return rateLimited(res, rl, 'too many registrations from this IP');
 	const body = parse(registerSchema, await readJson(req));
 	for (const uri of body.redirect_uris) {
-		const u = new URL(uri);
-		if (u.protocol === 'http:' && !/^localhost$|^127\.0\.0\.1$/.test(u.hostname)) return error(res, 400, 'invalid_redirect_uri', 'non-https redirect URIs only allowed for localhost');
+		const rejection = redirectUriRejection(uri);
+		if (rejection) return error(res, 400, 'invalid_redirect_uri', rejection);
+	}
+	if (body.grant_types) {
+		const unsupported = body.grant_types.filter((g) => !SUPPORTED_GRANT_TYPES.has(g));
+		if (unsupported.length) return error(res, 400, 'invalid_client_metadata', `unsupported grant_types: ${unsupported.join(', ')}`);
+		if (!body.grant_types.includes('authorization_code')) return error(res, 400, 'invalid_client_metadata', 'grant_types must include authorization_code');
+	}
+	if (body.response_types) {
+		const unsupported = body.response_types.filter((r) => !SUPPORTED_RESPONSE_TYPES.has(r));
+		if (unsupported.length) return error(res, 400, 'invalid_client_metadata', `unsupported response_types: ${unsupported.join(', ')}`);
 	}
 	const authMethod = body.token_endpoint_auth_method ?? 'none';
 	const clientType = authMethod === 'none' ? 'public' : 'confidential';
@@ -265,7 +307,7 @@ async function handleRevoke(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 	const form = await readForm(req);
-	const { token, token_type_hint, client_id, client_secret } = form;
+	const { token, client_id, client_secret } = form;
 	if (!token || !client_id) return error(res, 400, 'invalid_request', 'token and client_id required');
 	// Rate-limit per IP: revocation is unauthenticated for public clients, so cap
 	// it to deny a token-probing oracle / brute-force surface (RFC 7009 hardening).
@@ -278,7 +320,14 @@ async function handleRevoke(req, res) {
 		const hash = await sha256(client_secret ?? '');
 		if (!client.client_secret_hash || !constantTimeEquals(hash, client.client_secret_hash)) return error(res, 401, 'invalid_client', 'bad client credentials');
 	}
-	if (token_type_hint !== 'access_token') await revokeRefreshToken(token, client_id);
+	// `token_type_hint` is advisory and RFC 7009 §2.1 requires extending the
+	// search when the token is not found under the hinted type. Access tokens
+	// here are stateless JWTs with no server-side record to revoke, so the
+	// refresh-token lookup IS the whole search: skipping it on
+	// `token_type_hint=access_token` answered 200 OK to a client revoking a
+	// refresh token under a wrong hint while leaving that token live for its
+	// full 30-day life.
+	await revokeRefreshToken(token, client_id);
 	return json(res, 200, {});
 }
 

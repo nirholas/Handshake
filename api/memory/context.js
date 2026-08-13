@@ -14,6 +14,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { sql } from '../_lib/db.js';
 import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { computeContext, WORKING_TOKEN_BUDGET } from '../_lib/memory-store.js';
+import { isUuid } from '../_lib/validate.js';
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -38,6 +39,9 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId') || url.searchParams.get('agent_id');
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
+	// agent_identities.id is a uuid column: an unparseable id would otherwise reach
+	// Postgres and 500 (22P02) instead of telling the caller their input is wrong.
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 
 	const auth = await resolveAuth(req);
 	if (!auth) return json(res, 200, EMPTY);

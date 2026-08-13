@@ -7,6 +7,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let sessionUser = { id: 'user-1' };
 const dbRows = { user_wallets: [], native_launches: [], pending: [] };
+// Every SQL text the handler issued this test, so a validation guard can be
+// proven to short-circuit before the query rather than merely returning 400.
+const sqlCalls = [];
 
 vi.mock('../api/_lib/http.js', () => ({
 	wrap: (fn) => fn,
@@ -41,6 +44,7 @@ vi.mock('../api/_lib/auth.js', () => ({
 vi.mock('../api/_lib/db.js', () => ({
 	sql: (strings) => {
 		const text = strings.join(' ');
+		sqlCalls.push(text);
 		if (text.includes('from user_wallets')) return Promise.resolve(dbRows.user_wallets);
 		if (text.includes('from native_launches')) return Promise.resolve(dbRows.native_launches);
 		if (text.includes('from agent_registrations_pending')) return Promise.resolve(dbRows.pending);
@@ -103,6 +107,7 @@ beforeEach(() => {
 	dbRows.user_wallets = [];
 	dbRows.native_launches = [];
 	dbRows.pending = [];
+	sqlCalls.length = 0;
 	verifySignature.mockReset();
 	txInvokesDbcProgram.mockReset().mockReturnValue(true);
 	process.env.NATIVE_LAUNCH_CONFIG_KEY_DEVNET = CONFIG_KEY;
@@ -287,5 +292,68 @@ describe('launches', () => {
 			limit: 24,
 			network: 'devnet',
 		});
+	});
+
+	it('rejects a non-uuid agent_id before it ever reaches the uuid column', async () => {
+		// agent_id is compared against a uuid column. Passing it through
+		// unvalidated makes Postgres raise and the request answer 500.
+		const r = await call('launches', { query: { agent_id: 'not-a-uuid' } });
+		expect(r.status).toBe(400);
+		expect(r.body.error).toBe('validation_error');
+		expect(sqlCalls).toEqual([]);
+	});
+
+	it('shapes a launch row with its agent, and hides a private avatar thumbnail', async () => {
+		dbRows.native_launches = [
+			{
+				mint: MINT,
+				pool: 'PoolAddress11111111111111111111111111111111',
+				network: 'devnet',
+				name: 'Native Coin',
+				symbol: 'NTV',
+				metadata_uri: 'https://cf-ipfs.com/ipfs/bafkreiabc',
+				status: 'live',
+				created_at: '2026-08-13T00:00:00.000Z',
+				agent_id: 'agent-1',
+				agent_name: 'Scout',
+				avatar_thumbnail_key: 'thumbs/a.png',
+				avatar_visibility: 'public',
+			},
+			{
+				mint: MINT,
+				pool: 'PoolAddress11111111111111111111111111111111',
+				network: 'devnet',
+				name: 'Quiet Coin',
+				symbol: 'QIT',
+				metadata_uri: null,
+				status: 'live',
+				created_at: '2026-08-12T00:00:00.000Z',
+				agent_id: 'agent-2',
+				agent_name: 'Hidden',
+				avatar_thumbnail_key: 'thumbs/b.png',
+				avatar_visibility: 'private',
+			},
+		];
+		const r = await call('launches', { query: { network: 'devnet', limit: '1' } });
+		expect(r.status).toBe(200);
+		// limit=1 with two rows back means the query overfetched by one: the
+		// second row is the has_more probe, not a page entry.
+		expect(r.body.data.has_more).toBe(true);
+		expect(r.body.data.launches).toHaveLength(1);
+		const [first] = r.body.data.launches;
+		expect(first.lane).toBe('native');
+		// cf-ipfs.com stopped resolving in 2024, so a stored URL on it has to be
+		// rewritten onto a live gateway before it reaches a client.
+		expect(first.metadata_uri).toBe('https://dweb.link/ipfs/bafkreiabc');
+		expect(first.agent).toEqual({
+			id: 'agent-1',
+			name: 'Scout',
+			url: '/agents/agent-1',
+			avatar_thumbnail_url: 'https://cdn.test/thumbs/a.png',
+		});
+
+		dbRows.native_launches = [dbRows.native_launches[1]];
+		const priv = await call('launches', { query: { network: 'devnet' } });
+		expect(priv.body.data.launches[0].agent.avatar_thumbnail_url).toBeNull();
 	});
 });

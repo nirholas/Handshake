@@ -1,8 +1,12 @@
-// Consolidated KOL endpoints dispatcher.
+// Consolidated KOL endpoints dispatcher: /api/kol/{wallets,import-gmgn,
+// leaderboard,tracker}. The trade feed is the one KOL endpoint that lives in its
+// own file (api/kol/trades.js) because an exact file outranks this [action].js
+// in filesystem routing; see the DISPATCH note at the bottom.
 
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireAdmin } from '../_lib/admin.js';
+import { createCache } from '../_lib/mem-cache.js';
 import { loadWallets, saveImportedWallets } from '../../src/kol/wallet-store.js';
 
 // ── wallets (Birdeye P&L proxy) ───────────────────────────────────────────────
@@ -15,21 +19,20 @@ const CACHE_TTL_MS = 60_000;
 // row) for a full minute.
 const NEG_CACHE_TTL_MS = 15_000;
 const MAX_ADDRESSES = 20;
-const _cache = new Map(); // address → { data, ts } (hit) | { error: true, ts } (miss)
+// Keys are caller-supplied addresses, so an LRU bound (not a plain Map) is what
+// keeps a long-lived container from growing one entry per address ever queried:
+// the hand-rolled Map this replaced only ever dropped an entry that was asked
+// for again after it expired, so junk keys accumulated forever. Per-entry TTLs
+// still differ by outcome, which lru-cache takes on set().
+// Value: { data } (hit) | { error: true } (miss).
+const _cache = createCache({ max: 2_000 });
 
 function _getCached(addr) {
-	const entry = _cache.get(addr);
-	if (!entry) return null;
-	const ttl = entry.error ? NEG_CACHE_TTL_MS : CACHE_TTL_MS;
-	if (Date.now() - entry.ts > ttl) {
-		_cache.delete(addr);
-		return null;
-	}
-	return entry;
+	return _cache.get(addr) ?? null;
 }
 
 function _setCache(addr, data) {
-	_cache.set(addr, { data, ts: Date.now() });
+	_cache.set(addr, { data }, { ttl: CACHE_TTL_MS });
 }
 
 // Negative-cache a fetch failure instead of storing a normalized-from-null
@@ -37,7 +40,7 @@ function _setCache(addr, data) {
 // flat wallet, so callers would render an upstream outage as legitimate KOL
 // data. A miss entry is filtered out of the response and refreshed sooner.
 function _setCacheError(addr) {
-	_cache.set(addr, { error: true, ts: Date.now() });
+	_cache.set(addr, { error: true }, { ttl: NEG_CACHE_TTL_MS });
 }
 
 async function _fetchBirdeye(addr, apiKey) {
@@ -193,35 +196,6 @@ async function handleLeaderboard(req, res) {
 	return json(res, 200, { items });
 }
 
-// ── trades ────────────────────────────────────────────────────────────────────
-
-async function handleTrades(req, res) {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	if (!method(req, res, ['GET'])) return;
-	// fetchKolTrades fans out one Helius call per tracked wallet — meter per IP.
-	const rl = await limits.mcpIp(clientIp(req));
-	if (!rl.success) return rateLimited(res, rl);
-	const url = new URL(req.url, 'http://x');
-	const mint = url.searchParams.get('mint');
-	const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit') || '20')));
-	if (!mint) return error(res, 400, 'validation_error', 'mint is required');
-	const { KOL_WALLETS } = await import('../../src/kol/wallets.js');
-	const { fetchKolTrades } = await import('../../src/kol/trades.js');
-	let result;
-	try {
-		result = await fetchKolTrades({ mint, limit });
-	} catch (err) {
-		return error(
-			res,
-			err.status || 502,
-			err.code || 'provider_unavailable',
-			err.message || 'provider error',
-		);
-	}
-	res.setHeader('x-kol-source', result.source || 'unconfigured');
-	return json(res, 200, { mint, trades: result.trades, wallets: KOL_WALLETS.length });
-}
-
 // ── tracker ───────────────────────────────────────────────────────────────────
 
 async function handleTracker(req, res) {
@@ -242,10 +216,13 @@ async function handleTracker(req, res) {
 
 // ── dispatcher ────────────────────────────────────────────────────────────────
 
+// /api/kol/trades is deliberately absent: api/kol/trades.js is an exact file, so
+// filesystem precedence resolves that path to it and any branch here would be
+// unreachable code drifting away from the one that actually serves the feed.
+// tests/api/kol-route-resolution.test.js pins that split.
 const DISPATCH = {
 	'import-gmgn': handleImportGmgn,
 	leaderboard: handleLeaderboard,
-	trades: handleTrades,
 	tracker: handleTracker,
 	wallets: handleWallets,
 };

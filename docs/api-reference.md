@@ -3974,6 +3974,57 @@ protocol/chain/DEX-volume surfaces. (three.ws's Fear & Greed index is served by
 
 ---
 
+### Sentiment heatmap field
+
+```
+GET /api/intel/heatmap?limit=<1..48>
+```
+
+The live token field behind the 3D sentiment heatmap on agent screens. `$THREE`
+is always pinned first and flagged `featured`; the rest of the field is the
+pump.fun trending set (`frontend-api-v3.pump.fun/coins`) priced from
+Dexscreener's batch token endpoint. Tiles carry market data only: this endpoint
+never names or recommends any token beyond the anchor. `limit` defaults to 28.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"anchor": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+	"fetchedAt": "2026-08-13T00:58:12.004Z",
+	"tokens": [
+		{
+			"id": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"symbol": "three",
+			"name": "three.ws",
+			"image": "https://cdn.dexscreener.com/cms/images/...",
+			"priceUsd": 0.001625,
+			"change24h": -4.03,
+			"volume24h": 79088.64,
+			"marketCap": 1625310,
+			"featured": true,
+			"flow": { "buys24h": 22619, "sells24h": 7725, "buyPct": 75, "score": 0.491 }
+		}
+	]
+}
+```
+
+`flow` is an anchor-only enrichment read off the same Dexscreener pair as the
+tile: the 24h split between buy and sell swaps, with `score` =
+`(buys - sells) / (buys + sells)` in `[-1, 1]`. It is omitted when the anchor
+has no trades in the window. Non-anchor tiles never carry it.
+
+GET-only, CORS-open, rate-limited per IP. The field is cached 20 s in-process;
+when the upstreams blip, the last good field is replayed with `"stale": true`
+for up to 5 minutes, and only a cold outage with no usable price or volume
+anywhere in the field returns `502 upstream_error`.
+
+Client-side helpers for this feed (normalisation, momentum colouring, spike
+diffing, and a polling loop) live in `src/sentiment-heatmap-data.js`.
+
+---
+
 ### Related news
 
 ```
