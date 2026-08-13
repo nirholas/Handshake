@@ -681,7 +681,7 @@ export function mountCoinStatus(container, mint, opts = {}) {
 					const r = await fetch(`${COIN_ENDPOINT}?mint=${encodeURIComponent(mint)}`, { signal: sig });
 					if (r.ok) indexed = mapCoin(await r.json(), mint);
 				} catch (err) {
-					// A cancelled load is not an indexer failure — let it unwind.
+					// A cancelled load is not an indexer failure, so let it unwind.
 					if (err?.name === 'AbortError') throw err;
 				}
 				// The indexer does not know this coin, or could not be reached. The

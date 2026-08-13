@@ -150,7 +150,7 @@ async function main() {
 	routeApiCallsInProcess();
 	const { mapCurve, mountCoinStatus } = await import('../src/pump/coin-status-card.js');
 
-	console.log(`\nAgent-token market proof — ${network}`);
+	console.log(`\nAgent-token market proof: ${network}`);
 	console.log('─'.repeat(64));
 
 	let targets;
@@ -220,7 +220,7 @@ async function main() {
 
 	console.log('\n' + '─'.repeat(64));
 	if (!rendered) {
-		console.error('nothing rendered — the market lane is broken on this cluster');
+		console.error('nothing rendered: the market lane is broken on this cluster');
 		process.exit(1);
 	}
 	console.log(`rendered ${rendered} live market views on ${network}. No transaction was signed or sent.`);
