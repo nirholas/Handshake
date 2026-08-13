@@ -469,3 +469,4 @@ workers/garment-forge/assets/
 # ad-hoc runners an agent drops in the root, never part of a build or a deploy.
 .forge-q.mjs
 .mcp-forge-free-smoke.mjs
+.monetization-proof/
