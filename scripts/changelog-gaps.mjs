@@ -55,8 +55,21 @@ const TYPE_TAG = [
 // Subjects that are internal-only by nature: they change how we build or test,
 // not what a user or integrator sees. These never warrant a changelog entry,
 // so flagging them as gaps would be noise.
-const CHORE_SUBJECT = /^(chore|ci|test|tests|refactor|lint|style|build|bump|merge|revert|wip|typo|format)\b/i;
-const CHORE_KEYWORD = /\b(lockfile|package-lock|pnpm-lock|node_modules|gitignore|eslint|prettier|tsconfig|rename|dead code|dead-code|comment|whitespace|no-op|noop)\b/i;
+//
+// The audit alternate matches only a pure verification pass ("audit(x):
+// verify ... end to end", no semicolon clause): it shipped nothing, so it can
+// have no entry. An audit that also fixed something writes that fix after a
+// semicolon ("audit(avatars): batch 01 verified; fix upload proxy ...") and
+// deliberately stays visible to this scan. "Pending changes exported from
+// your codespace" is the GitHub codespace sync sweep; the pre-push subject
+// lint bans it going forward, so that alternate only matches historical ones.
+const CHORE_SUBJECT =
+	/^(chore|ci|test|tests|refactor|lint|style|build|bump|merge|revert|wip|typo|format)\b|^audit(\([^)]*\))?: [^;]*\bverif[^;]*$|^pending changes exported\b/i;
+// The tidied-comments alternate needs the tidying verb: "strip em-dashes from
+// comments" is a chore, "let holders post comments" is a feature, and a bare
+// \bcomments\b would hide the second behind the first.
+const CHORE_KEYWORD =
+	/\b(lockfile|package-lock|pnpm-lock|node_modules|gitignore|eslint|prettier|tsconfig|rename|dead code|dead-code|comment|whitespace|no-op|noop|em-dash(?:es)?|banned dash(?:es)?|push gate|dev server)\b|\b(?:strip|correct|reword|clean|tidy)\w*\b[^.]*\bcomments\b/i;
 
 // Paths that, if a commit touches ONLY these, make it internal regardless of
 // its subject. A commit that also touches product code is kept.
