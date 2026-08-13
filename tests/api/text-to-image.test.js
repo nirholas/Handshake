@@ -5,8 +5,8 @@
 //   • vertex-imagen must reject mangled service-account JSON with a designed
 //     `unconfigured` error, not a raw JSON.parse SyntaxError.
 //   • textToImage must fall back to Replicate flux when the preferred Vertex
-//     path throws for any reason (it previously trusted isConfigured() — which
-//     only checks GOOGLE_CLOUD_PROJECT — and never fell back).
+//     path throws for any reason (it previously trusted isConfigured(), which
+//     only checks GOOGLE_CLOUD_PROJECT, and never fell back).
 //   • A Vertex data: URI result must be persisted to object storage and
 //     returned as an https URL (Replicate caps inline data URIs well below an
 //     Imagen PNG's size, so forwarding the data URI breaks reconstruction).
@@ -72,7 +72,7 @@ function stubFetch(routes) {
 	return calls;
 }
 
-// NIM FLUX artifacts are JPEG (probed live — tasks/nvidia-nim/probes/flux.md),
+// NIM FLUX artifacts are JPEG (probed live, tasks/nvidia-nim/probes/flux.md),
 // so the fixture carries real JPEG magic bytes (ff d8 ff) for the format sniff.
 const NIM_JPEG_BYTES = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.from('nim-jpeg-bytes')]);
 
@@ -115,7 +115,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('textToImage — Vertex quality lane leads by default', () => {
+describe('textToImage: Vertex quality lane leads by default', () => {
 	it('serves from Vertex before NIM when both are configured (credit-burner first)', async () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
@@ -132,7 +132,7 @@ describe('textToImage — Vertex quality lane leads by default', () => {
 
 		expect(result.model).toBe('vertex-ai/gemini-2.5-flash-image');
 		expect(vertexState.generate).toHaveBeenCalledOnce();
-		expect(calls).toHaveLength(0); // NIM never touched — Vertex led and served
+		expect(calls).toHaveLength(0); // NIM never touched, Vertex led and served
 	});
 
 	it('falls from a failed Vertex lead to NIM without surfacing an error', async () => {
@@ -170,7 +170,7 @@ describe('textToImage — Vertex quality lane leads by default', () => {
 	});
 });
 
-describe('textToImage — NIM FLUX free lane (legacy NIM-first order)', () => {
+describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 	beforeEach(() => {
 		// These pin the legacy ladder (NIM → Vertex → Replicate), preserved
 		// behind VERTEX_IMAGEN_FIRST=0.
@@ -189,7 +189,7 @@ describe('textToImage — NIM FLUX free lane (legacy NIM-first order)', () => {
 		const result = await textToImage('a red teapot');
 
 		expect(result.model).toBe('black-forest-labs/flux.1-schnell');
-		// NIM output is JPEG — persisted bytes, key extension, and Content-Type
+		// NIM output is JPEG, persisted bytes, key extension, and Content-Type
 		// must all say jpeg, not png (regression cover for the probe finding).
 		expect(result.imageUrl).toMatch(/^https:\/\/cdn\.example\/forge\/refs\/.+\.jpg$/);
 		// NIM artifact persisted to R2; Vertex and Replicate left untouched.
@@ -291,7 +291,7 @@ describe('textToImage — NIM FLUX free lane (legacy NIM-first order)', () => {
 		}
 	});
 
-	it('does NOT retry a NIM timeout — hands off immediately to avoid a double wait', async () => {
+	it('does NOT retry a NIM timeout: hands off immediately to avoid a double wait', async () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		process.env.REPLICATE_API_TOKEN = 'r8_test_token';
 		const calls = stubFetch([
@@ -312,7 +312,7 @@ describe('textToImage — NIM FLUX free lane (legacy NIM-first order)', () => {
 		const result = await textToImage('a red teapot');
 
 		expect(result.imageUrl).toBe('https://replicate.delivery/out.png');
-		// NIM attempted exactly once — a timeout already burned the full window.
+		// NIM attempted exactly once, a timeout already burned the full window.
 		expect(calls.filter((c) => c.url.includes('ai.api.nvidia.com'))).toHaveLength(1);
 	});
 
@@ -364,7 +364,7 @@ describe('textToImage — NIM FLUX free lane (legacy NIM-first order)', () => {
 		const nimAfterFirst = calls.filter((c) => c.url.includes('ai.api.nvidia.com')).length;
 		expect(nimAfterFirst).toBe(1);
 
-		// Second call sees the cooldown and skips NIM straight to Replicate — no new NIM hit.
+		// Second call sees the cooldown and skips NIM straight to Replicate, no new NIM hit.
 		await textToImage('a blue teapot');
 		const nimAfterSecond = calls.filter((c) => c.url.includes('ai.api.nvidia.com')).length;
 		expect(nimAfterSecond).toBe(1);
@@ -383,7 +383,7 @@ function livepeerSuccessResponse(url = 'https://gateway.test/images/out.png') {
 	});
 }
 
-describe('textToImage — Livepeer federation lane counts as a real fallback', () => {
+describe('textToImage: Livepeer federation lane counts as a real fallback', () => {
 	beforeEach(() => {
 		process.env.LIVEPEER_FEDERATION_ENABLED = '1';
 		process.env.LIVEPEER_GATEWAY_URL = 'https://gateway.test';
@@ -429,7 +429,7 @@ describe('textToImage — Livepeer federation lane counts as a real fallback', (
 	});
 });
 
-describe('textToImage — Vertex → Replicate fallback', () => {
+describe('textToImage: Vertex → Replicate fallback', () => {
 	it('falls back to Replicate flux when the Vertex path throws', async () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
 		process.env.REPLICATE_API_TOKEN = 'r8_test_token';
@@ -464,7 +464,7 @@ describe('textToImage — Vertex → Replicate fallback', () => {
 		// The production incident: a low-credit Replicate account throttles
 		// prediction creation and its `detail` names the balance. We must parse the
 		// reset hint for backoff and keep the raw detail for logs (providerDetail),
-		// but the surfaced message must be clean — no credit numbers, no $ amounts.
+		// but the surfaced message must be clean, no credit numbers, no $ amounts.
 		process.env.REPLICATE_API_TOKEN = 'r8_test_token';
 		const RAW_DETAIL =
 			'Request was throttled. Your rate limit for creating predictions is reduced to 6 requests ' +
@@ -491,14 +491,14 @@ describe('textToImage — Vertex → Replicate fallback', () => {
 		expect(caught.code).toBe('rate_limited');
 		expect(caught.retryAfter).toBe(10); // parsed from "resets in ~10s"
 		expect(caught.providerDetail).toBe(RAW_DETAIL); // retained for server logs
-		expect(caught.message).toBe('Image generation is briefly busy upstream — please retry in a few seconds.');
+		expect(caught.message).toBe('Image generation is briefly busy upstream, please retry in a few seconds.');
 		expect(caught.message).not.toMatch(/credit|\$5|throttl|rate limit/i);
 	});
 
 	it('queues against the Replicate rate gate and waits for the reserved slot before submitting', async () => {
 		// Under the reduced-rate account state Replicate paces creation to 6/min; the
 		// gate reserves the next slot and tells us to hold for it. We must wait out
-		// that slot, THEN submit — never fire early into a throttle 429.
+		// that slot, THEN submit, never fire early into a throttle 429.
 		process.env.REPLICATE_API_TOKEN = 'r8_test_token';
 		rateState.result = { ok: true, waitMs: 5_000 };
 		const calls = stubFetch([['api.replicate.com', () => replicateSuccessResponse()]]);
@@ -510,7 +510,7 @@ describe('textToImage — Vertex → Replicate fallback', () => {
 			// Mid-wait: the reserved slot has not opened, so no prediction is created yet.
 			await vi.advanceTimersByTimeAsync(4_000);
 			expect(calls.some((c) => c.url.includes('api.replicate.com'))).toBe(false);
-			// Slot opens — the submit fires and resolves.
+			// Slot opens, the submit fires and resolves.
 			await vi.advanceTimersByTimeAsync(2_000);
 			const result = await p;
 			expect(result.imageUrl).toBe('https://replicate.delivery/out.png');
@@ -537,7 +537,7 @@ describe('textToImage — Vertex → Replicate fallback', () => {
 		expect(caught.code).toBe('rate_limited');
 		expect(caught.queued).toBe(true);
 		expect(caught.retryAfter).toBe(12); // ceil(12000ms / 1000)
-		// The Replicate prediction was never created — we shed before firing.
+		// The Replicate prediction was never created, we shed before firing.
 		expect(calls.some((c) => c.url.includes('api.replicate.com'))).toBe(false);
 		// The buyer-facing message names the queue, not the account's rate state.
 		expect(caught.message).not.toMatch(/credit|\$|throttl|rate limit/i);
@@ -546,7 +546,7 @@ describe('textToImage — Vertex → Replicate fallback', () => {
 	it('masks a Replicate 402 out-of-credit failure as a buyer-safe billing error', async () => {
 		// The incident the user hit: the free NIM lane fell through to the paid
 		// Replicate backstop, which had zero credit. Replicate returns the hard
-		// "purchase credit at replicate.com/billing" copy on a 402 — that vendor
+		// "purchase credit at replicate.com/billing" copy on a 402, that vendor
 		// billing page must never reach the buyer. We keep the raw detail for logs
 		// (providerDetail) but the surfaced message must be neutral.
 		process.env.REPLICATE_API_TOKEN = 'r8_test_token';
@@ -721,7 +721,7 @@ describe('textToImage — Vertex → Replicate fallback', () => {
 	});
 });
 
-describe('textToImage — VERTEX_IMAGEN_ENABLED gate', () => {
+describe('textToImage: VERTEX_IMAGEN_ENABLED gate', () => {
 	it('unset ⇒ current behavior: Vertex serves when the project is set', async () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
 		process.env.REPLICATE_API_TOKEN = 'r8_test_token';
@@ -776,7 +776,7 @@ describe('textToImage — VERTEX_IMAGEN_ENABLED gate', () => {
 	});
 });
 
-describe('enhanceFluxPrompt — realism + 3D-reference isolation suffixes', () => {
+describe('enhanceFluxPrompt: realism + 3D-reference isolation suffixes', () => {
 	const ISOLATION = ', isolated subject, bright studio lighting, plain white background';
 	const REALISM =
 		', photorealistic, true-to-life materials and surface detail, sharp focus, professional product photograph';
@@ -791,8 +791,8 @@ describe('enhanceFluxPrompt — realism + 3D-reference isolation suffixes', () =
 		expect(enhanceFluxPrompt('a red teapot')).toBe('a red teapot' + REALISM + ISOLATION);
 	});
 
-	it('respects a named art style — isolation stays, realism words are withheld', async () => {
-		// Regression (older): "cartoon"/"stylized" must never suppress isolation —
+	it('respects a named art style: isolation stays, realism words are withheld', async () => {
+		// Regression (older): "cartoon"/"stylized" must never suppress isolation,
 		// a cartoon fox still needs a plain background to reconstruct cleanly.
 		// New contract: those same words DO suppress the realism cues, which would
 		// otherwise fight the caller's explicit style.
@@ -816,12 +816,12 @@ describe('enhanceFluxPrompt — realism + 3D-reference isolation suffixes', () =
 		}
 	});
 
-	it('matches whole words only — substrings never trigger or suppress', async () => {
+	it('matches whole words only: substrings never trigger or suppress', async () => {
 		const enhanceFluxPrompt = await enhance();
 		// "light" inside "lightsaber" is not a composition cue…
 		expect(enhanceFluxPrompt('a glowing lightsaber')).toBe('a glowing lightsaber' + REALISM + ISOLATION);
 		// …and "cartoonish" IS a style signal via the word boundary on "cartoon"?
-		// No: \b matches inside "cartoonish" only at the start — the suffix "ish"
+		// No: \b matches inside "cartoonish" only at the start, the suffix "ish"
 		// keeps the word alive, so assert the boundary behaves as written.
 		expect(enhanceFluxPrompt('a legolas figure')).toBe('a legolas figure' + REALISM + ISOLATION);
 	});
@@ -833,7 +833,7 @@ describe('enhanceFluxPrompt — realism + 3D-reference isolation suffixes', () =
 	});
 });
 
-describe('vertex-imagen — service-account JSON hardening', () => {
+describe('vertex-imagen: service-account JSON hardening', () => {
 	it('rejects mangled GCP_SERVICE_ACCOUNT_JSON with a designed unconfigured error', async () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
 		// The classic secrets-UI mangle: escaped quotes but no usable key material.

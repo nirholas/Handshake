@@ -1,5 +1,5 @@
-// GET  /api/mocap/clips         — list (caller's own + ?include_public=true)
-// POST /api/mocap/clips         — create from inline frames JSON
+// GET  /api/mocap/clips, list (caller's own + ?include_public=true)
+// POST /api/mocap/clips, create from inline frames JSON
 //
 // The runtime-recorded format is the JSON object returned by FaceMocap
 // .getRecording(): `{ format, duration, frames: [{ t, shapes, mat? }] }`.
@@ -89,7 +89,7 @@ async function handleList(req, res, auth) {
 		cursorAt = decodeCursor(cursor);
 		// A cursor that does not decode to a real timestamp used to reach Postgres
 		// as an Invalid Date, whose toISOString() throws inside the driver and
-		// answered 500. It is caller input, so it answers 400 — and never a silent
+		// answered 500. It is caller input, so it answers 400, and never a silent
 		// restart at page one, which would loop a paginating client forever.
 		if (!cursorAt) return error(res, 400, 'invalid_cursor', 'cursor is malformed');
 	}
@@ -199,7 +199,7 @@ async function handleCreate(req, res, auth) {
 			res,
 			413,
 			'payload_too_large',
-			`inline clip exceeds ${MAX_BYTES_INLINE} bytes — record a shorter clip or split it`,
+			`inline clip exceeds ${MAX_BYTES_INLINE} bytes, record a shorter clip or split it`,
 		);
 	}
 	if (input.avatar_id) {

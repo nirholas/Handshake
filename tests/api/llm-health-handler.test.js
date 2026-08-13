@@ -1,10 +1,10 @@
-// GET /api/llm/health — the gate in front of the provider report.
+// GET /api/llm/health, the gate in front of the provider report.
 //
 // The report names every configured provider and quotes the upstream's own
 // error text, which is exactly the material an attacker wants: which vendor key
 // is dead, which account is out of credits, which lane is currently carrying
 // traffic. The probe itself is covered in llm-health-vertex.test.js; what is
-// pinned here is the handler around it — the cron secret gate (both header
+// pinned here is the handler around it, the cron secret gate (both header
 // forms), the method gate, the unconfigured-deployment response, and the ops
 // page that fires on a degraded verdict.
 

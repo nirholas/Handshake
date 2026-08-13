@@ -1,6 +1,6 @@
-// GET    /api/mocap/clips/:id  — fetch a clip (frames included)
-// PATCH  /api/mocap/clips/:id  — update metadata (name, description, tags, visibility, price)
-// DELETE /api/mocap/clips/:id  — soft-delete (owner only)
+// GET    /api/mocap/clips/:id, fetch a clip (frames included)
+// PATCH  /api/mocap/clips/:id, update metadata (name, description, tags, visibility, price)
+// DELETE /api/mocap/clips/:id, soft-delete (owner only)
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
@@ -47,7 +47,7 @@ export default wrap(async (req, res) => {
 	if (req.method === 'GET') return handleGet(req, res, auth, id);
 	if (!auth) return error(res, 401, 'unauthorized', 'authentication required');
 	// Cookie-session mutations need a CSRF token; bearer callers self-exempt
-	// inside requireCsrf. Mirrors api/avatars/[id].js — this endpoint is
+	// inside requireCsrf. Mirrors api/avatars/[id].js, this endpoint is
 	// credentialed CORS, and the allowlist includes partner origins, so a
 	// same-site cookie alone is not proof of intent.
 	if (!(await requireCsrf(req, res, auth.userId))) return;
@@ -78,7 +78,7 @@ async function handleGet(req, res, auth, id) {
 	}
 
 	// Bump play_count only when someone other than the owner fetches a
-	// playable clip — recording your own clip doesn't inflate counters.
+	// playable clip, recording your own clip doesn't inflate counters.
 	if (!ownerView) {
 		// Fire-and-forget; failure must not block the response.
 		queueMicrotask(async () => {

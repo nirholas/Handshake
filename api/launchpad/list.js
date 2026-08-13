@@ -1,6 +1,6 @@
 // GET /api/launchpad/list?limit=24&offset=0[&template=token-launchpad]
 //
-// Public showcase feed of published Launchpad Studio pages — powers the
+// Public showcase feed of published Launchpad Studio pages, powers the
 // "Built on three.ws" gallery on /launchpad so the surface opens with real
 // proof instead of an empty editor. Read-only, no auth: every row is already
 // public (is_public = true) and served at /p/<slug>.
@@ -8,7 +8,7 @@
 // Returns only the presentation-safe projection of each page's config (no
 // owner secret, no gated scene URL) plus the live view_count, so the gallery
 // can sort by "most viewed" without a second round trip. Cached briefly at the
-// edge — the showcase shifts slowly and many tabs hit it on page load.
+// edge, the showcase shifts slowly and many tabs hit it on page load.
 
 import { sql } from '../_lib/db.js';
 import { cors, error, json, method, wrap } from '../_lib/http.js';
@@ -97,7 +97,7 @@ export default wrap(async (req, res) => {
 	const pages = rows.slice(0, limit).map(toCard);
 
 	// Cheap aggregate so the hero can show a real "N pages live" stat. Counts the
-	// same set the caller is paging through — an unfiltered count next to a
+	// same set the caller is paging through, an unfiltered count next to a
 	// template-filtered list reads as "24 gated showrooms" when only one exists.
 	// Harmless if it races slightly with the list above.
 	let total = null;

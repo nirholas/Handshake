@@ -536,7 +536,7 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 		if (res.status === 429) {
 			if (detail) console.warn(`[text-to-image] replicate throttled: ${detail}`);
 			throw Object.assign(
-				new Error('Image generation is briefly busy upstream — please retry in a few seconds.'),
+				new Error('Image generation is briefly busy upstream, please retry in a few seconds.'),
 				{
 					code: 'rate_limited',
 					providerDetail: detail,

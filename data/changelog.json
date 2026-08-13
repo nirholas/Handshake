@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "FBX export on the OKX 3D studio works again",
+			"summary": "The paid FBX export service at /api/okx/3d/fbx-export was handing the conversion engine the wrong parameter names, so every call came back as a rejected request instead of a converted model, and the format you asked for was dropped on the way through. The adapter now speaks the engine's own parameter names, so a rigged GLB converts to FBX (or OBJ, STL, PLY, USDZ, 3MF) and keeps its skeleton, skin weights, and blendshapes. Buyers were never charged for the failed calls. A contract test now checks every OKX studio service against the schema its engine actually publishes, so a renamed parameter cannot slip through again. Separately, a Chinese-language brand brief sent to the Agent Identity Studio now has its first sentence picked out correctly when the prompt director is unavailable, instead of the whole brief crowding out the style hints.",
+			"tags": [
+				"fix"
+			],
+			"link": "/api/okx/3d/catalog"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "The decentralized inference demo stops sending your prompt to a gateway that is no longer Livepeer",
 			"summary": "The decentralized inference lab runs the same prompt through our own inference chain and through a Livepeer AI gateway, side by side. The free no-key gateway it used has not been Livepeer since early August: that hostname now points at an unrelated server. The demo kept posting prompts to it on every run and showing a bare connection error. It no longer dials that host at all. The decentralized card now reports the gateway as unavailable and names the two settings that bring it back (a Livepeer Studio key, or the address of a self-hosted gateway), and a self-hosted address is now honored by both this demo and the Forge Livepeer lane from one shared setting. The call also has a time limit, so a gateway that accepts the connection and then goes quiet can no longer hold up the reply from the other side of the comparison.",
 			"tags": [

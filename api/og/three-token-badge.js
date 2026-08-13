@@ -1,7 +1,7 @@
 /**
  * GET /api/og/three-token-badge
  *
- * Dynamic Open Graph image for the $THREE token — a shareable badge that
+ * Dynamic Open Graph image for the $THREE token, a shareable badge that
  * previews with live market data wherever the link is posted (X, Telegram,
  * Discord, Slack, iMessage, Farcaster).
  *
@@ -12,21 +12,21 @@
  * Every figure on the card is real, and read from the same two sources that back
  * GET /api/three-token/stats (what the /three-token page renders), so the card
  * and the page can never disagree:
- *   market data  — fetchTokenMarketData() (Birdeye → DexScreener → GeckoTerminal
+ *   market data, fetchTokenMarketData() (Birdeye → DexScreener → GeckoTerminal
  *                  failover with a stale cache)
- *   agent count  — the same agent_identities count the stats endpoint runs
+ *   agent count, the same agent_identities count the stats endpoint runs
  * Nothing is hardcoded. $THREE is the only coin this card ever references.
  *
  * The card degrades gracefully: if the stats fetch fails or a field is missing
- * we render the figure as "—" and still emit a valid, branded 1200×630 card —
+ * we render the figure as "-" and still emit a valid, branded 1200×630 card,
  * we never 5xx and never redirect to a static fallback over missing enrichment.
  *
  * Card anatomy (1200×630, dark):
- *   top      — three.ws wordmark + "TOKEN"
- *   hero     — $THREE glyph mark + symbol + truncated mint
- *   price    — large USD price + 24h change pill (green up / red down)
- *   stats    — market cap · holders · 24h volume · on-chain agents grid
- *   footer   — contract address + "three.ws/three-token"
+ *   top, three.ws wordmark + "TOKEN"
+ *   hero, $THREE glyph mark + symbol + truncated mint
+ *   price, large USD price + 24h change pill (green up / red down)
+ *   stats, market cap · holders · 24h volume · on-chain agents grid
+ *   footer, contract address + "three.ws/three-token"
  */
 
 import { cors, wrap } from '../_lib/http.js';
@@ -39,7 +39,7 @@ import { sql } from '../_lib/db.js';
 // the OG URL repeatedly) off the lambda and off the market-data providers.
 const CACHE = 'public, max-age=60, s-maxage=600, stale-while-revalidate=120';
 
-// $THREE brand gradient — the violet→cyan pair used across the platform.
+// $THREE brand gradient, the violet→cyan pair used across the platform.
 const C1 = '#8b5cf6';
 const C2 = '#06b6d4';
 const UP = '#10b981';
@@ -60,7 +60,7 @@ function shortMint(addr) {
 // USD price: keep enough significant digits for a sub-cent token without a wall
 // of zeros. >= $1 → 2dp; >= $0.01 → 4dp; otherwise 6 significant figures.
 function fmtPrice(n) {
-	if (n == null || !Number.isFinite(n)) return '—';
+	if (n == null || !Number.isFinite(n)) return '-';
 	if (n >= 1) return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 	if (n >= 0.01) return `$${n.toFixed(4)}`;
 	if (n <= 0) return '$0';
@@ -85,7 +85,7 @@ function heroTextWidth(s, fontSize) {
 
 // Compact USD for market cap / volume: $1.2M, $640K, $12.3B.
 function fmtCompactUsd(n) {
-	if (n == null || !Number.isFinite(n)) return '—';
+	if (n == null || !Number.isFinite(n)) return '-';
 	const abs = Math.abs(n);
 	if (abs >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
 	if (abs >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
@@ -94,7 +94,7 @@ function fmtCompactUsd(n) {
 }
 
 function fmtInt(n) {
-	if (n == null || !Number.isFinite(n)) return '—';
+	if (n == null || !Number.isFinite(n)) return '-';
 	return Math.round(n).toLocaleString('en-US');
 }
 
@@ -227,7 +227,7 @@ export default wrap(async (req, res) => {
 	try {
 		data = await loadBadgeData();
 	} catch {
-		// Never 5xx a crawler — render the branded card with blank figures.
+		// Never 5xx a crawler, render the branded card with blank figures.
 		data = { price: null, change24h: null, marketCap: null, volume24h: null, holders: null, agents: null };
 	}
 

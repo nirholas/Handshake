@@ -1,4 +1,4 @@
-// Launch Copilot — market-maker policy control surface.
+// Launch Copilot, market-maker policy control surface.
 //
 //   GET    /api/launch/mm?mint=&network=            → policy (public view) + presets
 //   GET    /api/launch/mm/:mint?state=1             → live state: policy + budget + recent actions
@@ -11,7 +11,7 @@
 //
 // A policy can only be attached to a coin launched THROUGH three.ws (a row in
 // pump_agent_mints) by its owner. The MM trades from that launch's own agent
-// wallet through the shared firewall + spend-guard + custody pipeline — this
+// wallet through the shared firewall + spend-guard + custody pipeline, this
 // endpoint never moves funds; it owns policy state + the kill switch, and routes
 // the owner to the agent wallet's audited withdraw flow for funds.
 
@@ -197,7 +197,7 @@ async function handlePost(req, res, url) {
 			return json(res, 200, { data: { policy: toPublicPolicy(row), withdraw_url: `/agent/${agentId}/wallet#withdraw` } });
 		}
 		if (action === 'withdraw') {
-			// The MM never holds custody — funds live in the agent wallet. Halt the
+			// The MM never holds custody, funds live in the agent wallet. Halt the
 			// maker, then route the owner to the wallet's audited withdraw flow.
 			const row = await upsertPolicy({ mint, network, agentId, userId: auth.userId, patch: { enabled: false, kill_switch: true } });
 			return json(res, 200, {
@@ -255,7 +255,7 @@ async function handleStream(req, res, url, headProbe = false) {
 		Connection: 'keep-alive',
 		'X-Accel-Buffering': 'no',
 	};
-	// A HEAD probe gets the headers a GET would send and nothing else — holding
+	// A HEAD probe gets the headers a GET would send and nothing else, holding
 	// the socket open for the full stream duration would answer nothing.
 	if (headProbe) {
 		res.writeHead(200, head);

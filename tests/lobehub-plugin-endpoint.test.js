@@ -1,5 +1,5 @@
 /**
- * api/lobehub/[action].js — the host-facing half of the LobeHub / LobeChat
+ * api/lobehub/[action].js, the host-facing half of the LobeHub / LobeChat
  * plugin (manifest, .well-known config, handshake).
  *
  * `api/_lib/db.js` and `api/_lib/rate-limit.js` are mocked so every branch runs
