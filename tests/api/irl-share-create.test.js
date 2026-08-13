@@ -66,7 +66,7 @@ vi.mock('../../api/_lib/auth.js', () => ({ getSessionUser: vi.fn(async () => nul
 // handler touches (hashing, validation, event logging) runs for real.
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: (...args) => putObject(...args),
-	publicUrl: (key) => `https://cdn.three.ws/${key}`,
+	publicUrl: (key) => `https://three.ws/cdn/${key}`,
 }));
 
 const handler = (await import('../../api/irl/share.js')).default;
@@ -109,7 +109,7 @@ describe('POST /api/irl/share', () => {
 		expect(r.status).toBe(201);
 		expect(r.body.token).toMatch(/^[A-Za-z0-9_-]{20,}$/);
 		expect(r.body.url).toBe(`https://three.ws/irl/s/${r.body.token}`);
-		expect(r.body.imageUrl).toBe(`https://cdn.three.ws/irl-share/${r.body.token}.png`);
+		expect(r.body.imageUrl).toBe(`https://three.ws/cdn/irl-share/${r.body.token}.png`);
 		expect(putObject).toHaveBeenCalledTimes(1);
 		expect(putObject.mock.calls[0][0].contentType).toBe('image/png');
 		expect(db.shares).toHaveLength(1);

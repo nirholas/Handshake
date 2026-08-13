@@ -654,7 +654,7 @@ three.ws signs and pins an agent's manifest automatically on every persona save.
       "toneTags": ["warm", "concise"],
       "traits": { "warmth": 0.8, "directness": 0.6 }
     },
-    "body": { "uri": "https://cdn.three.ws/...glb", "format": "gltf-binary" }
+    "body": { "uri": "https://three.ws/cdn/...glb", "format": "gltf-binary" }
   },
   "issuer": "6Yb...",
   "signedAt": "2026-08-11T12:00:00.000Z",

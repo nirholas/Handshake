@@ -129,7 +129,7 @@ curl -X POST https://three.ws/api/agents/tokens/plan-dry-run \
     "tx_bytes": 918,
     "instruction_count": 3,
     "mint_preview": "9wA…",
-    "metadata_uri": "https://cdn.three.ws/tm/1f0f8b1cba1c9f27.json",
+    "metadata_uri": "https://three.ws/cdn/tm/1f0f8b1cba1c9f27.json",
     "metadata_pinned": false,
     "simulation": { "error": null, "units_consumed": 121843, "logs": ["…"] }
   }

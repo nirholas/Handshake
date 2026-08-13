@@ -33,7 +33,7 @@ function fields(overrides = {}) {
 		toneTags: ['dry', 'precise'],
 		traits: { warmth: 0.2, directness: 0.9 },
 		greeting: 'What do you need?',
-		body: { uri: 'https://cdn.three.ws/avatars/vex.glb', format: 'gltf-binary' },
+		body: { uri: 'https://three.ws/cdn/avatars/vex.glb', format: 'gltf-binary' },
 		voice: { provider: 'browser', voiceId: 'default' },
 		skills: ['web-search'],
 		homeUrl: 'https://three.ws/agent/' + AGENT_ID,

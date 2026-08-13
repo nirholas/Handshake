@@ -76,7 +76,7 @@ function draft(overrides = {}) {
 			wallet: '0x00000000000000000000000000000000000000aa',
 			theme: 'dark',
 		},
-		avatar: { src: 'https://cdn.three.ws/a.glb', name: 'Ava' },
+		avatar: { src: 'https://three.ws/cdn/a.glb', name: 'Ava' },
 		copy: { headline: 'Ask Ava', tagline: 'Concierge', cta: 'Ask' },
 		monetize: { kind: 'per-question', price: 0.25, currency: 'USDC', chain: 'base' },
 		...overrides,

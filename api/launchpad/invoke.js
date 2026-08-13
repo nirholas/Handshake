@@ -145,7 +145,7 @@ const UNLOCK_BAZAAR = declareHttpDiscovery({
 		example: {
 			slug: 'my-showroom',
 			action: 'unlock',
-			unlockUrl: 'https://cdn.three.ws/scenes/private.glb',
+			unlockUrl: 'https://three.ws/cdn/scenes/private.glb',
 		},
 		schema: {
 			$schema: 'https://json-schema.org/draft/2020-12/schema',

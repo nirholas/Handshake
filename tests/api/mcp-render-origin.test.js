@@ -90,7 +90,7 @@ describe('render.js sanitizers', () => {
 // ── renderModelViewerHtml ───────────────────────────────────────────────────
 describe('renderModelViewerHtml', () => {
 	const BASE = {
-		src: 'https://cdn.three.ws/a.glb',
+		src: 'https://three.ws/cdn/a.glb',
 		name: 'Nova',
 		background: 'transparent',
 		height: '480px',
@@ -102,7 +102,7 @@ describe('renderModelViewerHtml', () => {
 	it('renders a complete viewer document with the caller-supplied model', () => {
 		const html = renderModelViewerHtml(BASE);
 		expect(html.startsWith('<!doctype html>')).toBe(true);
-		expect(html).toContain('src="https://cdn.three.ws/a.glb"');
+		expect(html).toContain('src="https://three.ws/cdn/a.glb"');
 		expect(html).toContain('<title>Nova</title>');
 		expect(html).toContain('alt="Nova"');
 		expect(html).toContain('auto-rotate');
