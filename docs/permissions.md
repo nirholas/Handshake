@@ -224,6 +224,7 @@ await fetch('/api/permissions/revoke', {
 
 All routes are under `/api/permissions/`. Responses use `{ ok: true, ... }` on success. Failures use the platform's standard error envelope, `{ error: '<code>', error_description: '...' }`:
 
+<!-- runnable: 400 the deliberately malformed hash is what demonstrates the error envelope -->
 ```sh
 curl -s 'https://three.ws/api/permissions/verify?hash=0x00&chainId=84532'
 # → {"error":"validation_error","error_description":"hash must be 0x + 64 hex chars"}

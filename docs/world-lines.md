@@ -484,6 +484,7 @@ A repeat call returns `200` with `already_completed: true` and the original proo
 
 Creator dashboard. Auth. Returns up to 100 of your quests including hidden and expired ones, each with the full `challenge_spec`, plus a completions heatmap grouped by coarse cell.
 
+<!-- runnable: 401 requires an authenticated session; with a real session cookie this returns 200 -->
 ```bash
 curl -s https://three.ws/api/irl/world-lines/mine -b 'session=<your session cookie>'
 ```
