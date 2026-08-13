@@ -91,6 +91,17 @@
 						<dl class="detail-dl" data-role="onchain-dl"></dl>
 					</div>
 
+					<!-- On-chain history, from the platform's own cross-chain index
+					     (agent_onchain_events). Solana and EVM both land here. -->
+					<div class="detail-panel detail-panel--full" data-role="history-panel" hidden>
+						<div class="detail-panel-head">
+							<span class="detail-panel-title" data-i18n="discover_detail.on_chain_history">On-chain history</span>
+							<span class="detail-panel-badge" data-role="history-count">0</span>
+						</div>
+						<ol class="detail-history" data-role="history"></ol>
+						<p class="detail-history-foot" data-role="history-foot"></p>
+					</div>
+
 					<!-- Avatar details (avatar only) -->
 					<div class="detail-panel" data-role="avatar-panel" hidden>
 						<div class="detail-panel-head">

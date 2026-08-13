@@ -314,7 +314,7 @@ if (typeof window !== 'undefined') {
 	}, { once: true });
 }
 
-function destroyCoinStatus() {
+export function destroyCoinStatus() {
 	while (coinStatusHandles.length) {
 		const h = coinStatusHandles.pop();
 		try {
@@ -547,7 +547,7 @@ function launchTimeAgo(iso) {
 	return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-async function renderLaunchHistory(container, agent) {
+export async function renderLaunchHistory(container, agent) {
 	if (!agent.id) return;
 	let coins = [];
 	try {
@@ -601,18 +601,23 @@ async function renderLaunchHistory(container, agent) {
 					'aria-label': `${coin.symbol || coin.name || 'coin'} on three.ws`,
 				});
 			box.appendChild(row);
-			if (isDevnet) {
-				// Devnet mints have no pump.fun market data — render the static row.
-				row.append(
-					el('span', { class: 'ad-launch-symbol', text: coin.symbol ? `$${coin.symbol}` : coin.name || '—' }),
-					el('span', { class: 'ad-mono ad-launch-mint', text: shortAddr(coin.mint) }),
-					el('span', { class: 'ad-launch-time', text: launchTimeAgo(coin.created_at) }),
-				);
-			} else {
-				// Live market cap + time stream in through the shared widget — one
-				// /api/pump/coin fetch per row, mapped and formatted in one place.
-				coinStatusHandles.push(mountCoinStatus(row, coin.mint, { variant: 'row' }));
-			}
+			// Live market cap + graduation stream in through the shared widget —
+			// one fetch per row, mapped and formatted in one place. A mainnet coin
+			// reads from pump.fun's indexer (falling back to its bonding curve
+			// while the indexer catches up); a devnet coin reads its curve off the
+			// cluster and renders in SOL, so a rehearsal launch shows real market
+			// state here instead of a lifeless symbol-and-address row.
+			coinStatusHandles.push(
+				mountCoinStatus(row, coin.mint, {
+					variant: 'row',
+					network: isDevnet ? 'devnet' : 'mainnet',
+					meta: {
+						symbol: coin.symbol || '',
+						name: coin.name || '',
+						createdAt: coin.created_at ? Date.parse(coin.created_at) || null : null,
+					},
+				}),
+			);
 		}
 	}
 
@@ -1436,20 +1441,25 @@ function render(agent) {
 		$('ad-token-body').classList.remove('ad-muted');
 		$('ad-token-body').textContent = '';
 		// Live token chip — symbol · price · market cap · graduation %, streamed
-		// and formatted by the shared coin-status widget. Devnet tokens (no
-		// pump.fun market data) fall back to a static symbol + mint row.
-		if (agent.token.cluster === 'devnet') {
-			$('ad-token-body').appendChild(
-				el('div', { class: 'ad-row ad-row-split' }, [
-					el('span', { text: agent.token.symbol || 'TOKEN' }),
-					el('span', { class: 'ad-mono', text: shortAddr(agent.token.mint) }),
-				]),
-			);
-		} else {
-			const chipBox = el('div', { class: 'ad-token-chip' });
-			$('ad-token-body').appendChild(chipBox);
-			coinStatusHandles.push(mountCoinStatus(chipBox, agent.token.mint, { variant: 'chip' }));
-		}
+		// and formatted by the shared coin-status widget. A devnet token has no
+		// pump.fun indexer behind it, so the widget reads its bonding curve
+		// straight off the cluster and prices it in SOL: the rehearsal launch is
+		// as legible on the profile as a mainnet one, without pretending a devnet
+		// coin is worth dollars.
+		const chipBox = el('div', { class: 'ad-token-chip' });
+		$('ad-token-body').appendChild(chipBox);
+		coinStatusHandles.push(
+			mountCoinStatus(chipBox, agent.token.mint, {
+				variant: 'chip',
+				network: agent.token.cluster === 'devnet' ? 'devnet' : 'mainnet',
+				meta: {
+					symbol: agent.token.symbol || '',
+					name: agent.token.name || '',
+					image: agent.token.image || '',
+					createdAt: agent.token.launched_at ? Date.parse(agent.token.launched_at) || null : null,
+				},
+			}),
+		);
 		const dashLink =
 			agent.token.pumpfun_url ||
 			(agent.token.cluster === 'devnet'

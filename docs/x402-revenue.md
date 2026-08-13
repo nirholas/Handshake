@@ -39,6 +39,51 @@ revenue mirror of the [Money Pulse](https://three.ws/pulse) and reads the public
 unauthenticated `GET /api/x402-revenue` (operational fields like IP and user agent
 are never exposed — only the on-chain-public route, amount, payer, and tx).
 
+### The public API: `GET /api/x402-revenue`
+
+No key, no auth, CORS open. Four views:
+
+| Request | Returns |
+| --- | --- |
+| `?view=stats&period=24h\|7d\|30d\|all` | totals, fee splits, per-endpoint, per-network, hourly/daily series, momentum vs the prior window, settlement health |
+| `?view=feed&limit=30&cursor=<iso>` | recent settlements, newest first, keyset-paged |
+| `?since=<iso>` | delta poll: only settlements newer than the cursor, never cached |
+| `?view=export&period=24h` | CSV of the window (max 5000 rows) |
+
+`?endpoint=<slug>` and `?network=<chain>` filter the feed and the export.
+
+**Chain values are CAIP-2, filters are chain families.** The ledger stores
+`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` and `eip155:8453`, so every settlement
+also carries a folded family slug and a readable label
+([`api/_lib/x402/revenue-networks.js`](../api/_lib/x402/revenue-networks.js)):
+
+```jsonc
+{
+  "route": "/api/x402/token-intel",
+  "network": "eip155:8453",        // raw ledger value, unchanged
+  "network_family": "base",        // what ?network= filters by
+  "network_label": "Base",         // what the UI renders
+  "amount_usd": 0.001,
+  "tx_url": "https://basescan.org/tx/0x…"  // that chain's explorer, null if unknown
+}
+```
+
+`?network=` accepts the family slug (`solana`, `base`, `bsc`), a legacy bare name,
+or a full CAIP-2 id: all three select the same rows, and an unrecognised value
+drops the filter instead of returning an empty feed. `by_network` in the stats
+view is folded the same way, one row per family with the raw ids it covers:
+
+```bash
+curl -s "https://three.ws/api/x402-revenue?view=stats&period=24h" | jq '.data.by_network'
+# [ { "network": "solana", "label": "Solana", "count": 414, "gross_usd": 8.508,
+#     "caip": ["solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"] } ]
+
+curl -s "https://three.ws/api/x402-revenue?view=feed&limit=5&network=base" | jq '.data.count'
+```
+
+CSV columns: `timestamp,endpoint,network,chain,amount_usd,asset,payer,tx_hash,tx_url`
+(`network` is the raw CAIP-2 id, `chain` its readable label).
+
 ---
 
 ## The settlement flow
@@ -75,7 +120,7 @@ CREATE TABLE x402_audit_log (
   route                TEXT NOT NULL,    -- e.g. '/api/x402/token-intel'
   resource_url         TEXT,
   payer                TEXT,             -- wallet address
-  network              TEXT,             -- e.g. 'solana' | 'base' | 'bsc'
+  network              TEXT,             -- CAIP-2 id, e.g. 'solana:5eykt4Us…' | 'eip155:8453'
   amount_atomics       TEXT,             -- USDC atomics (6 decimals): '10000' = $0.01
   asset                TEXT,
   tx_hash              TEXT,
