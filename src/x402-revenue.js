@@ -20,7 +20,7 @@ const STATS_REFRESH_MS = 60_000;
 const PERIODS = ['24h', '7d', '30d', 'all'];
 // Chain families the API filters by ('solana', 'base', 'eip155-8453', …). The
 // ledger stores CAIP-2 ids; the API folds them to these slugs, so the page never
-// needs a hardcoded chain list — it validates the shape and lets the API decide.
+// needs a hardcoded chain list: it validates the shape and lets the API decide.
 const NETWORK_SLUG_RE = /^[a-z0-9][a-z0-9-]{1,31}$/;
 
 const $ = (id) => document.getElementById(id);
@@ -663,7 +663,7 @@ function renderInitialFeed(events) {
 }
 
 // The feed could not be read at all. Say what happened, keep the filter escape
-// hatch reachable, and offer the retry — never leave skeletons pulsing forever.
+// hatch reachable, and offer the retry. Never leave skeletons pulsing forever.
 function renderFeedError(reason) {
 	const host = $('xr-feed');
 	if (!host) return;
