@@ -18,6 +18,9 @@ const state = {
 	agents: [],
 	cacheRow: null,
 	sqlCalls: [],
+	// How many CREATE TABLE calls should reject before the DDL starts succeeding,
+	// standing in for a transient database blip.
+	ddlFailures: 0,
 };
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -38,7 +41,13 @@ vi.mock('../../api/_lib/db.js', () => ({
 		const text = strings.join(' ');
 		state.sqlCalls.push(text);
 		if (text.includes('FROM agent_identities')) return state.agents;
-		if (text.includes('CREATE TABLE IF NOT EXISTS agent_galaxy_cache')) return [];
+		if (text.includes('CREATE TABLE IF NOT EXISTS agent_galaxy_cache')) {
+			if (state.ddlFailures > 0) {
+				state.ddlFailures--;
+				throw new Error('connection terminated unexpectedly');
+			}
+			return [];
+		}
 		if (text.includes('SELECT payload')) return state.cacheRow ? [state.cacheRow] : [];
 		if (text.includes('INSERT INTO agent_galaxy_cache')) {
 			state.cacheRow = {
@@ -124,8 +133,11 @@ function mkAgents(n) {
 	}));
 }
 
-function makeReq({ method = 'GET', url = '/api/ibm/galaxy', body = null } = {}) {
-	const req = body ? Readable.from([Buffer.from(JSON.stringify(body))]) : Readable.from([]);
+// `rawBody` sends the exact bytes instead of JSON.stringify(body), so a test can
+// post literal `null` or a bare string: valid JSON that is not an object.
+function makeReq({ method = 'GET', url = '/api/ibm/galaxy', body = null, rawBody = null } = {}) {
+	const payload = rawBody ?? (body ? JSON.stringify(body) : null);
+	const req = payload ? Readable.from([Buffer.from(payload)]) : Readable.from([]);
 	req.method = method;
 	req.url = url;
 	req.headers = {
@@ -169,6 +181,7 @@ beforeEach(() => {
 	state.agents = mkAgents(12);
 	state.cacheRow = null;
 	state.sqlCalls = [];
+	state.ddlFailures = 0;
 });
 
 describe('GET /api/ibm/galaxy', () => {
@@ -270,6 +283,20 @@ describe('POST /api/ibm/galaxy (semantic search)', () => {
 		expect(body.error).toBe('bad_request');
 	});
 
+	// `null` and `"hi"` parse as valid JSON, so readJson hands them straight back
+	// on the raw-stream path. Reading .query off a non-object used to throw a
+	// TypeError that wrap() sanitized into a 500 internal_error.
+	it.each([
+		['null', 'null'],
+		['a bare string', '"hi"'],
+		['a number', '42'],
+	])('rejects a JSON body that is %s with 400', async (_label, rawBody) => {
+		const { status, body } = await invoke({ method: 'POST', rawBody });
+		expect(status).toBe(400);
+		expect(body.error).toBe('bad_request');
+		expect(body.error_description).toMatch(/query is required/);
+	});
+
 	it('returns 503 when watsonx is not configured', async () => {
 		state.wxConfigured = false;
 		const { status, body } = await invoke({ method: 'POST', body: { query: 'anything' } });
@@ -282,6 +309,32 @@ describe('POST /api/ibm/galaxy (semantic search)', () => {
 		const { status, body } = await invoke({ method: 'POST', body: { query: 'anything' } });
 		expect(status).toBe(200);
 		expect(body.results).toEqual([]);
+	});
+});
+
+// The cache table is created lazily and the promise is memoized so concurrent
+// callers on a warm instance share one round-trip. Memoizing a REJECTED promise
+// would pin the galaxy down for the life of the instance: every later request
+// re-awaits the same failure, long after the database recovered.
+describe('lazy cache-table create', () => {
+	it('retries the create on the next request after a transient DB failure', async () => {
+		vi.resetModules();
+		const fresh = (await import('../../api/ibm/galaxy.js')).default;
+		const ddlCalls = () =>
+			state.sqlCalls.filter((t) => t.includes('CREATE TABLE IF NOT EXISTS agent_galaxy_cache'))
+				.length;
+
+		state.ddlFailures = 1;
+		const failed = makeRes();
+		await fresh(makeReq({}), failed);
+		expect(failed.statusCode).toBe(500);
+		expect(ddlCalls()).toBe(1);
+
+		const recovered = makeRes();
+		await fresh(makeReq({}), recovered);
+		expect(recovered.statusCode).toBe(200);
+		expect(ddlCalls()).toBe(2);
+		expect(JSON.parse(recovered.body).available).toBe(true);
 	});
 });
 

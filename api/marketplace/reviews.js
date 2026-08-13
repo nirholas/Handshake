@@ -37,6 +37,13 @@ async function resolveAuth(req) {
 }
 
 export default wrap(async (req, res) => {
+	// CORS first, before any input validation. Answering the preflight from inside
+	// the per-method handlers meant a malformed agent id (and a preflight that did
+	// not name its method) fell out as a bare 400 with no CORS headers at all, so
+	// the browser reported a CORS failure instead of the validation error the
+	// caller actually needed to see.
+	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
+
 	const url = new URL(req.url, 'http://x');
 	const parts = url.pathname.split('/').filter(Boolean); // [api, marketplace, agents, :id, reviews]
 	const agentId = url.searchParams.get('agent_id') || parts[3];
@@ -45,22 +52,15 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'agent_id required');
 	}
 
-	if (req.method === 'GET' || (req.method === 'OPTIONS' && req.headers['access-control-request-method'] === 'GET')) {
-		return handleList(req, res, agentId);
-	}
-	if (req.method === 'POST' || (req.method === 'OPTIONS' && req.headers['access-control-request-method'] === 'POST')) {
-		return handleUpsert(req, res, agentId);
-	}
-	if (req.method === 'DELETE' || (req.method === 'OPTIONS' && req.headers['access-control-request-method'] === 'DELETE')) {
-		return handleDelete(req, res, agentId);
-	}
+	if (req.method === 'GET') return handleList(req, res, agentId);
+	if (req.method === 'POST') return handleUpsert(req, res, agentId);
+	if (req.method === 'DELETE') return handleDelete(req, res, agentId);
 	return error(res, 405, 'method_not_allowed', 'GET/POST/DELETE only');
 });
 
 // ── list + summary ───────────────────────────────────────────────────────────
 
 async function handleList(req, res, agentId) {
-	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.widgetRead(clientIp(req));
@@ -138,7 +138,6 @@ async function handleList(req, res, agentId) {
 // ── upsert ───────────────────────────────────────────────────────────────────
 
 async function handleUpsert(req, res, agentId) {
-	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
 	const auth = await resolveAuth(req);
@@ -227,7 +226,6 @@ async function handleUpsert(req, res, agentId) {
 // ── delete ───────────────────────────────────────────────────────────────────
 
 async function handleDelete(req, res, agentId) {
-	if (cors(req, res, { methods: 'DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['DELETE'])) return;
 
 	const auth = await resolveAuth(req);

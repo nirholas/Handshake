@@ -123,8 +123,11 @@ import { allowedImageHost, buildPrompt, parseVision, VISION_MODEL } from '../../
 const TINY_PNG =
 	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
-function makeReq({ method = 'GET', url = '/api/ibm/vision', body = null } = {}) {
-	const base = body ? Readable.from([Buffer.from(JSON.stringify(body))]) : Readable.from([]);
+// `rawBody` sends the exact bytes instead of JSON.stringify(body), so a test can
+// post literal `null` or a bare string: valid JSON that is not an object.
+function makeReq({ method = 'GET', url = '/api/ibm/vision', body = null, rawBody = null } = {}) {
+	const payload = rawBody ?? (body ? JSON.stringify(body) : null);
+	const base = payload ? Readable.from([Buffer.from(payload)]) : Readable.from([]);
 	base.method = method;
 	base.url = url;
 	base.headers = {
@@ -245,6 +248,20 @@ describe('POST /api/ibm/vision — input validation', () => {
 
 	it('returns 400 bad_image when neither image nor imageUrl is provided', async () => {
 		const { status, body } = await invoke({ method: 'POST', body: { hint: 'hello' } });
+		expect(status).toBe(400);
+		expect(body.error).toBe('bad_image');
+	});
+
+	// `null` and `"hi"` parse as valid JSON, so readJson hands them straight back
+	// on the raw-stream path. Reading .image off a non-object used to throw a
+	// TypeError that wrap() sanitized into a 500 internal_error; malformed input
+	// belongs in the documented 400 contract.
+	it.each([
+		['null', 'null'],
+		['a bare string', '"hi"'],
+		['a number', '42'],
+	])('returns 400 bad_image for a JSON body that is %s', async (_label, rawBody) => {
+		const { status, body } = await invoke({ method: 'POST', rawBody });
 		expect(status).toBe(400);
 		expect(body.error).toBe('bad_image');
 	});

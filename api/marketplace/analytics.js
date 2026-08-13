@@ -1,13 +1,12 @@
 /**
  * GET /api/marketplace/analytics
  * Marketplace-wide analytics: top skills, top agents, daily sales volume.
- * Publicly readable — no sensitive user data is exposed (only aggregate counts
- * and revenue totals, with no PII). Admin callers see full data; public callers
- * get a trimmed summary view suitable for the public analytics page.
+ * Publicly readable and identical for every caller: the payload is aggregate
+ * counts and revenue totals with no PII, and nothing here is gated on who is
+ * asking, so no session is resolved.
  */
 
 import { sql } from '../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 
@@ -17,11 +16,6 @@ export default wrap(async (req, res) => {
 
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
-
-	// Resolve optional auth — admins get the full picture
-	const session = await getSessionUser(req);
-	const bearer = session ? null : await authenticateBearer(extractBearer(req));
-	const userId = session?.id ?? bearer?.userId ?? null;
 
 	// ── Top skills ────────────────────────────────────────────────────────────
 	// A `trial` row is a free grant: nothing was paid and `amount` is only the

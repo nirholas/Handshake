@@ -49,6 +49,11 @@ function mkRes() {
 	return {
 		statusCode: 200, headers: {}, body: undefined, writableEnded: false,
 		setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+		// json() only honours a Cache-Control the handler set itself if it can read
+		// it back; a real ServerResponse always can. A mock without getHeader made
+		// every response look uncached and reported the secure default `no-store`
+		// over whatever the handler chose, which is a lie about the platform.
+		getHeader(k) { return this.headers[String(k).toLowerCase()]; },
 		end(b) { this.body = b; this.writableEnded = true; },
 	};
 }
@@ -116,6 +121,25 @@ describe('potentialsByMint', () => {
 		expect(out).toHaveLength(2);
 		expect(out[0]).toMatchObject({ mint: MINT_6DP, decimals: 6, atomic: '5000000', display: '5' });
 		expect(out[1]).toMatchObject({ mint: THREE, decimals: 9, atomic: '900000000', display: '0.9' });
+	});
+
+	it('ranks by the quantity on screen, not by the raw atomic integer', () => {
+		// 0.9 of a 9-decimal token is 900000000 atomic and 5 of a 6-decimal token is
+		// only 5000000, so an atomic-first sort put the smaller pile at the head of
+		// the queue and the headline named it. Order has to follow the displayed
+		// magnitude, in both directions.
+		const smallerFirst = potentialsByMint([
+			{ price: { mint: THREE, decimals: 9 }, potential: { atomic: '900000000' } },
+			{ price: { mint: MINT_6DP, decimals: 6 }, potential: { atomic: '5000000' } },
+		]);
+		expect(smallerFirst.map((b) => b.display)).toEqual(['5', '0.9']);
+
+		// And when the 9-decimal mint genuinely holds more, it leads.
+		const largerFirst = potentialsByMint([
+			{ price: { mint: MINT_6DP, decimals: 6 }, potential: { atomic: '5000000' } },
+			{ price: { mint: THREE, decimals: 9 }, potential: { atomic: '9000000000' } },
+		]);
+		expect(largerFirst[0]).toMatchObject({ mint: THREE, display: '9' });
 	});
 
 	it('skips unpriced rows rather than counting them as zero-decimal dust', () => {

@@ -100,6 +100,11 @@ function mkRes() {
 	return {
 		statusCode: 200, headers: {}, body: undefined, writableEnded: false,
 		setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+		// json() only honours a Cache-Control the handler set itself if it can read
+		// it back; a real ServerResponse always can. Without getHeader the mock
+		// reported the secure `no-store` default over the edge cache skill-promo
+		// deliberately sets, which is a lie about the platform.
+		getHeader(k) { return this.headers[String(k).toLowerCase()]; },
 		end(b) { this.body = b; this.writableEnded = true; },
 	};
 }
@@ -232,9 +237,12 @@ describe('POST /api/marketplace/set-skill-price', () => {
 		ownedAgent();
 		clearListingSplitMock.mockRejectedValue(new Error('deadlock detected'));
 		const res = mkRes();
-		await expect(
-			setSkillPrice(priceReq({ agent_id: AGENT, skill: 'icon-set', amount: 5, currency_mint: MINT, split: [] }), res),
-		).rejects.toThrow('deadlock detected');
+		await setSkillPrice(priceReq({ agent_id: AGENT, skill: 'icon-set', amount: 5, currency_mint: MINT, split: [] }), res);
+		// wrap() answers an uncaught fault itself, so the caller sees a sanitized
+		// 500 rather than a rejected promise, and never the raw upstream message.
+		expect(res.statusCode).toBe(500);
+		expect(parseBody(res).error).toBe('internal_error');
+		expect(res.body).not.toMatch(/deadlock/);
 		// The price row must NOT have moved: only the ownership SELECT ran.
 		expect(sqlText()).toHaveLength(1);
 	});
@@ -298,7 +306,9 @@ describe('GET /api/marketplace/skill-promo', () => {
 
 	it('rejects a missing or malformed query with a 400, anonymously', async () => {
 		const res = mkRes();
-		await expect(skillPromo(promoReq('?agent_id=nope&skill='), res)).rejects.toMatchObject({ status: 400 });
+		await skillPromo(promoReq('?agent_id=nope&skill='), res);
+		expect(res.statusCode).toBe(400);
+		expect(parseBody(res).error).toBe('validation_error');
 		expect(describeSkillPromoMock).not.toHaveBeenCalled();
 	});
 
@@ -324,10 +334,11 @@ describe('GET /api/marketplace/skill-promo', () => {
 		expect(describeSkillPromoMock).toHaveBeenCalledWith(AGENT, 'icon-set');
 	});
 
-	it('rejects a write method', async () => {
+	it('rejects a write method before it ever reads the query', async () => {
 		const res = mkRes();
-		await skillPromo(promoReq('?agent_id=x&skill=y'), res, undefined);
-		expect(res.statusCode).toBe(404);
+		await skillPromo(mkReq({ url: `/api/marketplace/skill-promo?agent_id=${AGENT}&skill=icon-set`, method: 'POST' }), res);
+		expect(res.statusCode).toBe(405);
+		expect(describeSkillPromoMock).not.toHaveBeenCalled();
 	});
 });
 
@@ -352,7 +363,10 @@ describe('POST /api/marketplace/start-trial', () => {
 	it('rejects a malformed body with a 400', async () => {
 		getSessionUserMock.mockResolvedValue({ id: USER });
 		const res = mkRes();
-		await expect(startTrial(trialReq({ agent_id: 'nope', skill: '' }), res)).rejects.toMatchObject({ status: 400 });
+		await startTrial(trialReq({ agent_id: 'nope', skill: '' }), res);
+		expect(res.statusCode).toBe(400);
+		expect(parseBody(res).error).toBe('validation_error');
+		expect(sqlMock).not.toHaveBeenCalled();
 	});
 
 	it('refuses a skill that grants no free runs', async () => {
@@ -419,6 +433,11 @@ describe('POST /api/marketplace/start-trial', () => {
 			throw Object.assign(new Error('deadlock detected'), { code: '40P01' });
 		});
 		const res = mkRes();
-		await expect(startTrial(trialReq({ agent_id: AGENT, skill: 'icon-set' }), res)).rejects.toThrow('deadlock');
+		await startTrial(trialReq({ agent_id: AGENT, skill: 'icon-set' }), res);
+		// A deadlock is not a used trial: it must not be laundered into the 409 the
+		// unique-violation branch answers, and the SQLSTATE must not reach the caller.
+		expect(res.statusCode).toBe(500);
+		expect(parseBody(res).error).toBe('internal_error');
+		expect(res.body).not.toMatch(/40P01|deadlock|trial_used/);
 	});
 });

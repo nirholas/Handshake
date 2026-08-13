@@ -73,9 +73,11 @@ async function callGet(url) {
 	return { res, body: tryJson(res._body) };
 }
 
-async function callPost(body) {
+// `rawBody` sends the exact bytes instead of JSON.stringify(body), so a test can
+// post literal `null` or a bare string: valid JSON that is not an object.
+async function callPost(body, rawBody) {
 	const res = makeRes();
-	const buf = Buffer.from(JSON.stringify(body), 'utf8');
+	const buf = Buffer.from(rawBody ?? JSON.stringify(body), 'utf8');
 	await handler(
 		{
 			method: 'POST',
@@ -256,6 +258,34 @@ describe('GET /api/ibm/twin — full Granite pipeline', () => {
 		expect(typeof body.fidelity.directionalHit).toBe('boolean');
 	});
 
+	// A back-test forecast that answers with no points has nothing to score. Scoring
+	// it anyway indexed realized[-1] and threw, and the throw landed in the outer
+	// catch that reports a forecast failure: the projection, the ibm block, and the
+	// persona were all lost to a back-test that was only ever supplementary.
+	it('keeps the projection and persona when the back-test returns no points', async () => {
+		fetchOhlcv.mockResolvedValue({
+			candles: mkCandles(640),
+			base: { name: 'three', symbol: 'three', address: 'm' },
+			quote: { symbol: 'SOL' },
+			freq: '1h',
+			timeframe: 'hour',
+			aggregate: 1,
+		});
+		// First call is the live projection, second is the back-test.
+		watsonxForecast.mockReset();
+		watsonxForecast
+			.mockResolvedValueOnce(mkForecast(HORIZON, 101))
+			.mockResolvedValueOnce({ timestamps: [], values: [], model: 'ttm', inputWindow: 512 });
+
+		const { res, body } = await callGet(`/api/ibm/twin?pool=${POOL}`);
+		expect(res.statusCode).toBe(200);
+		expect(body.fidelity).toBeNull();
+		expect(body.projection.points).toHaveLength(HORIZON);
+		expect(body.ibm.configured).toBe(true);
+		expect(body.ibm.error).toBeUndefined();
+		expect(body.persona.text).toBeTruthy();
+	});
+
 	it('includes Guardian governance on the persona', async () => {
 		const { body } = await callGet(`/api/ibm/twin?pool=${POOL}`);
 		expect(body.governance).toBeTruthy();
@@ -383,6 +413,21 @@ describe('POST /api/ibm/twin — scenario simulation', () => {
 			scenario: { priceShockPct: -30, volatilityScale: 2, momentumFlip: true },
 		});
 		expect(body.scenario.label).toMatch(/-30%|demand shock/);
+	});
+
+	// `null` and `"hi"` parse as valid JSON, so readJson hands them straight back on
+	// the raw-stream path. Reading params off a non-object used to throw a TypeError
+	// that wrap() sanitized into a 500 internal_error; malformed input belongs in
+	// the documented 400 contract.
+	it.each([
+		['null', 'null'],
+		['a bare string', '"hi"'],
+		['a number', '42'],
+	])('rejects a JSON body that is %s with 400 bad_request', async (_label, rawBody) => {
+		const { res, body } = await callPost(undefined, rawBody);
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toBe('bad_request');
+		expect(body.error_description).toMatch(/provide \?pool=/);
 	});
 
 	it('uses "baseline (no perturbation)" label when scenario is empty', async () => {

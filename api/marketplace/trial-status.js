@@ -46,13 +46,18 @@ export function trialState(remaining, granted) {
 	return 'fresh';
 }
 
+/** A mint's decimal count, clamped to what an SPL mint can actually declare. */
+function decimalsOf(decimals) {
+	return Number.isFinite(Number(decimals)) ? Math.max(0, Math.min(18, Number(decimals))) : 6;
+}
+
 /**
  * Atomic token amounts are strings out of Postgres (they overflow a JS number
  * at 2^53). Format for display without ever going through Number().
  */
 export function formatAtomic(atomic, decimals = 6) {
 	const raw = String(atomic ?? '0').replace(/[^0-9]/g, '') || '0';
-	const d = Number.isFinite(Number(decimals)) ? Math.max(0, Math.min(18, Number(decimals))) : 6;
+	const d = decimalsOf(decimals);
 	const group = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 	if (d === 0) return group(raw.replace(/^0+(?=\d)/, ''));
 	const padded = raw.padStart(d + 1, '0');
@@ -85,8 +90,23 @@ export function potentialsByMint(entries) {
 			atomic: total.toString(),
 		});
 	}
-	return [...buckets.values()]
-		.sort((a, b) => (BigInt(a.atomic) === BigInt(b.atomic) ? 0 : BigInt(a.atomic) < BigInt(b.atomic) ? 1 : -1))
+	// Ordering has to compare the same unit the display string shows, not the raw
+	// atomic integer. Atomic counts are only comparable inside one mint (the whole
+	// reason the buckets exist), so sorting them directly reintroduced the bug this
+	// function was written to kill, one layer up: 0.9 of a 9-decimal token is
+	// 900000000 atomic and outranked 5 of a 6-decimal token (5000000), so the
+	// headline the seller reads named the SMALLER pile. Scale every bucket to a
+	// common exponent first. Without a price oracle this ranks quantity, not fiat
+	// value, which is exactly what the number on screen means.
+	const list = [...buckets.values()];
+	const scale = list.reduce((n, b) => Math.max(n, decimalsOf(b.decimals)), 0);
+	const magnitude = (b) => BigInt(b.atomic) * 10n ** BigInt(scale - decimalsOf(b.decimals));
+	return list
+		.sort((a, b) => {
+			const x = magnitude(a);
+			const y = magnitude(b);
+			return x === y ? 0 : x < y ? 1 : -1;
+		})
 		.map((b) => ({ ...b, display: formatAtomic(b.atomic, b.decimals) }));
 }
 

@@ -167,7 +167,12 @@ function encodeCursor({ createdAt }) {
 function decodeCursor(cursor) {
 	try {
 		const obj = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
-		return { createdAt: new Date(obj.c) };
+		const createdAt = new Date(obj.c);
+		// A cursor that decodes but carries an unparseable timestamp used to reach
+		// Postgres as an Invalid Date and take the whole feed down with a 500. It is
+		// a bad cursor like any other: drop it and serve page one.
+		if (Number.isNaN(createdAt.getTime())) return null;
+		return { createdAt };
 	} catch {
 		return null;
 	}

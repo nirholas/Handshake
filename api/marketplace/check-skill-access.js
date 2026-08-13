@@ -7,6 +7,7 @@ import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { MonetizationService } from '../_lib/services/MonetizationService.js';
+import { isUuid } from '../_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -25,6 +26,11 @@ export default wrap(async (req, res) => {
 	const skill = url.searchParams.get('skill');
 	if (!agentId || !skill) {
 		return error(res, 400, 'validation_error', 'agent_id and skill required');
+	}
+	// agent_skill_prices.agent_id is a uuid column: a malformed id would reach
+	// Postgres as 22P02 and surface as a 500 on plain bad input.
+	if (!isUuid(agentId)) {
+		return error(res, 400, 'validation_error', 'agent_id must be a valid uuid');
 	}
 
 	const service = new MonetizationService(userId);

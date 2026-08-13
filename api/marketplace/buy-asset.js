@@ -33,6 +33,7 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { rpcFallbackFromEnv } from '../_lib/solana/rpc-fallback.js';
+import { isUuid } from '../_lib/validate.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { buildGaslessPurchaseTx } from '../_lib/solana/gasless-tx.js';
 import { insertNotification } from '../_lib/notify.js';
@@ -105,6 +106,32 @@ async function getSellerForItem(itemType, itemId) {
 	return null;
 }
 
+// validateTransfer compares a UI amount, so the atomic price has to be scaled by
+// the MINT's decimals. Hardcoding 6 (USDC) silently rejected every payment for an
+// asset priced in any other mint: the buyer paid the right atoms, the comparison
+// was off by 10^(d-6), and confirm filed the purchase as 'tipped' instead of
+// granting it. The seller sets mint_decimals on the listing, so it is stamped onto
+// the purchase row at create time (a later price edit must not re-scale a payment
+// already in flight).
+function normalizeDecimals(value) {
+	const n = Number(value);
+	return Number.isInteger(n) && n >= 0 && n <= 18 ? n : 6;
+}
+
+// Decimals for a purchase row: the value stamped at create, else the live listing
+// (rows created before the stamp existed), else USDC's 6.
+async function purchaseMintDecimals(pur) {
+	const stamped = pur.metadata?.mint_decimals;
+	if (stamped != null) return normalizeDecimals(stamped);
+	const [price] = await sql`
+		SELECT mint_decimals FROM asset_prices
+		WHERE item_type = ${pur.item_type} AND item_id = ${pur.item_id}
+		  AND currency_mint = ${pur.currency_mint}
+		LIMIT 1
+	`;
+	return normalizeDecimals(price?.mint_decimals);
+}
+
 async function resolveSellerPayout(sellerUserId, chain) {
 	const [row] = await sql`
 		SELECT address FROM agent_payout_wallets
@@ -133,6 +160,13 @@ async function handleCreate(req, res) {
 	const itemId = String(body?.item_id || '').trim();
 	if (!ITEM_TYPES.includes(itemType) || !itemId) {
 		return error(res, 400, 'validation_error', 'item_type and item_id required');
+	}
+	// item_id is a uuid column everywhere it is used below (asset_prices,
+	// asset_purchases, avatars/agent_identities/plugins). A malformed id reaching
+	// Postgres throws 22P02, which surfaces as an unhandled 500 on what is really
+	// bad client input. Same guard as GET /api/marketplace/asset-price.
+	if (!isUuid(itemId)) {
+		return error(res, 400, 'validation_error', 'item_id must be a valid uuid');
 	}
 	// Optional connected-wallet pubkey → platform-sponsored (gasless) transaction.
 	const buyerPublicKey =
@@ -217,7 +251,7 @@ async function handleCreate(req, res) {
 
 	// Reuse a fresh pending row if one exists (idempotent retries).
 	const [pending] = await sql`
-		SELECT reference, amount, currency_mint, chain, expires_at
+		SELECT reference, amount, currency_mint, chain, expires_at, metadata
 		FROM asset_purchases
 		WHERE buyer_user_id = ${auth.userId}
 		  AND item_type = ${itemType} AND item_id = ${itemId}
@@ -236,16 +270,23 @@ async function handleCreate(req, res) {
 		const [inserted] = await sql`
 			INSERT INTO asset_purchases (
 				buyer_user_id, item_type, item_id, seller_user_id, status, reference,
-				amount, currency_mint, chain, payout_address, expires_at, referrer_user_id
+				amount, currency_mint, chain, payout_address, expires_at, referrer_user_id,
+				metadata
 			) VALUES (
 				${auth.userId}, ${itemType}, ${itemId}, ${seller.userId}, 'pending', ${reference},
 				${price.amount}, ${price.currency_mint}, ${price.chain}, ${payoutAddress},
-				now() + interval '30 minutes', ${referrerUserId}
+				now() + interval '30 minutes', ${referrerUserId},
+				${JSON.stringify({ mint_decimals: normalizeDecimals(price.mint_decimals) })}::jsonb
 			)
-			RETURNING reference, amount, currency_mint, chain, expires_at
+			RETURNING reference, amount, currency_mint, chain, expires_at, metadata
 		`;
 		row = inserted;
 	}
+
+	// The scale the buyer must pay at, and the one confirm will verify against: a
+	// reused pending row keeps the decimals it was created with, so a price edit
+	// mid-checkout can never move the goalposts under a payment already in flight.
+	const decimals = normalizeDecimals(row.metadata?.mint_decimals ?? price.mint_decimals);
 
 	// ── Autonomous path: the agent's own wallet pays, server-side ──────────────
 	if (agentId) {
@@ -254,7 +295,7 @@ async function handleCreate(req, res) {
 			auth,
 			agent: buyerAgent,
 			row,
-			price,
+			decimals,
 			payoutAddress,
 			itemType,
 			itemId,
@@ -277,7 +318,7 @@ async function handleCreate(req, res) {
 				mint: row.currency_mint,
 				creatorAtomics: BigInt(row.amount),
 				reference: row.reference,
-				decimals: price.mint_decimals,
+				decimals,
 			});
 			if (prepared) {
 				gaslessBlock = { transaction: prepared.transaction, gasless: true, fee_payer: prepared.feePayer };
@@ -295,7 +336,7 @@ async function handleCreate(req, res) {
 			amount: String(row.amount),
 			currency_mint: row.currency_mint,
 			chain: row.chain,
-			mint_decimals: price.mint_decimals,
+			mint_decimals: decimals,
 			expires_at: row.expires_at,
 			label,
 			message,
@@ -313,7 +354,7 @@ async function handleCreate(req, res) {
 // verify the on-chain transfer, then finalize through the SAME
 // finalizeAssetConfirm() the browser path uses — so receipts, revenue and
 // notifications are identical no matter who signed.
-async function payAsAgent({ res, auth, agent, row, price, payoutAddress, itemType, itemId, label, cap }) {
+async function payAsAgent({ res, auth, agent, row, decimals, payoutAddress, itemType, itemId, label, cap }) {
 	const fail = async (reason) => {
 		await sql`
 			UPDATE asset_purchases SET status = 'failed', updated_at = now()
@@ -378,7 +419,7 @@ async function payAsAgent({ res, auth, agent, row, price, payoutAddress, itemTyp
 				txSignature,
 				{
 					recipient: new PublicKey(payoutAddress),
-					amount: new BigNumber(row.amount).dividedBy(new BigNumber(10).pow(price.mint_decimals ?? 6)),
+					amount: new BigNumber(row.amount).dividedBy(new BigNumber(10).pow(decimals)),
 					splToken: new PublicKey(row.currency_mint),
 					reference: new PublicKey(row.reference),
 				},
@@ -458,7 +499,7 @@ async function handleConfirm(req, res, reference) {
 	const [pur] = await sql`
 		SELECT id, buyer_user_id, item_type, item_id, seller_user_id, status,
 		       amount, currency_mint, chain, tx_signature, expires_at, reference,
-		       payout_address, referrer_user_id
+		       payout_address, referrer_user_id, metadata
 		FROM asset_purchases
 		WHERE reference = ${reference} AND buyer_user_id = ${auth.userId}
 	`;
@@ -477,7 +518,7 @@ async function handleConfirm(req, res, reference) {
 	const refKey = new PublicKey(pur.reference);
 	const recipient = new PublicKey(pur.payout_address);
 	const splToken = new PublicKey(pur.currency_mint);
-	const decimals = 6;
+	const decimals = await purchaseMintDecimals(pur);
 	const expectedAmount = new BigNumber(pur.amount).dividedBy(new BigNumber(10).pow(decimals));
 
 	let signatureInfo;
