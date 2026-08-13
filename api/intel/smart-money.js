@@ -1,5 +1,5 @@
 /**
- * Smart-Money intel — public read API.
+ * Smart-Money intel: the public read API.
  *
  *   GET /api/intel/smart-money?mint=<addr>&network=mainnet
  *       → who reputable is net-buying this coin right now, a 0..100
@@ -9,12 +9,12 @@
  *       → one wallet's realized reputation card (also served by /api/intel/wallet/:addr)
  *
  * The edge: judge a coin by WHO is buying it, computed from real observed buys ⋈
- * real outcomes (graduated/pumped/rugged + ATH) — not a vanity list. The recompute
+ * real outcomes (graduated/pumped/rugged + ATH), not a vanity list. The recompute
  * job (api/cron/smart-money-graph) maintains the graph; this serves it. Public +
  * IP rate-limited, briefly cached. Honest zero-data: `computed:false` means the
  * graph doesn't have enough on-chain history for this coin yet.
  *
- * $THREE is the only coin three.ws promotes — this assesses whatever runtime mint
+ * $THREE is the only coin three.ws promotes. This assesses whatever runtime mint
  * the caller hands it and never names or recommends any token.
  */
 

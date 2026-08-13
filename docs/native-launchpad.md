@@ -123,7 +123,7 @@ All public, no auth:
 - `GET /api/native-launch/config[?network=]` — the lane's live economics and whether it is deployed. This is what the launch UI renders, so the fee story on the page always comes from the same source as the on-chain config.
 - `GET /api/native-launch/pool?mint=…[&network=]` — pool address, curve progress (0..1), SOL raised, graduation threshold, migration status.
 - `GET /api/native-launch/quote?mint=…&sol_in=…[&network=]` — a live buy quote off the curve: tokens out, minimum out, and the fee breakdown.
-- `GET /api/native-launch/launches[?network=&agent_id=&limit=&offset=]` — the native launch directory, each row carrying its agent and avatar thumbnail.
+- `GET /api/native-launch/launches[?network=&agent_id=&limit=&offset=]`: the native launch directory, each row carrying its agent and avatar thumbnail. `agent_id` must be a uuid: anything else answers `400 validation_error` instead of reaching the database. `limit` is clamped to 1..100 (default 24), `offset` to a non-negative integer.
 
 ---
 

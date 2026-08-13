@@ -127,6 +127,14 @@
 			<description>Every agent's Reasoning Ledger is a public, tamper-evident record of what it decided and why, so the reads behind it have to be honest. Three things were not. Asking for a page larger than the 200-decision maximum quietly returned a trimmed page and then reported that there was nothing after it, so a caller reading the whole history could stop early believing they had seen all of it; page sizes are now checked against the real maximum and the follow-on cursor is always correct. A malformed page cursor (a word where a sequence number belongs) came back as a generic internal error instead of saying what was wrong, and an unbounded search filter could drive a full scan of an agent's history; both now return a clear bad-request reply. And the timeline was publishing the name and picture of agents whose owners had made them private or deleted them: the decision history stays public, but an unlisted agent now appears as its id alone. The independent verification endpoint also shows the on-chain anchor even when verification fails, which is exactly when an auditor needs to see the commitment the altered history no longer matches.</description>
 		</item>
 		<item>
+			<title>The three.ws launchpad directory answers a bad filter instead of erroring out</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-08-13:The three.ws launchpad directory answers a bad filter instead of erroring out</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public directory of coins launched on the three.ws bonding curve accepts an agent filter, so a page can show only the coins one agent launched. A filter value that was not a real agent id went straight to the database, which rejected it and turned the whole request into an unexplained server error. Anything that is not a valid agent id now comes back immediately as a plain validation error naming the problem, so a mistyped link fails clearly instead of looking like the launchpad is down. The endpoint documentation now states the same contract, including the page-size and offset limits, and the behaviour is pinned by tests.</description>
+		</item>
+		<item>
 			<title>Docs · GitHub memory seeding</title>
 			<link>https://three.ws/docs/github-memory-seeding</link>
 			<guid isPermaLink="false">2026-08-12:Docs · GitHub memory seeding</guid>

@@ -2,7 +2,7 @@
 // ---------------------------------------------------------------------------
 // DeFi yield pools from DeFiLlama's keyless yields API (yields.llama.fi/pools),
 // filtered server-side and sorted by TVL desc. Backs the trading copilot and
-// future yield-discovery surfaces (consumers land separately — this task
+// future yield-discovery surfaces (consumers land separately: this task
 // ships the data layer + endpoint only). Real upstream data, no fabrication.
 //
 // Response: { pools: [{ pool, project, chain, symbol, tvlUsd, apy, apyBase,

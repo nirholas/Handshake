@@ -211,7 +211,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// A field with only $THREE (or empty) means the trending/Dexscreener upstreams
-	// blipped — serve the last good field as stale rather than collapsing to the
+	// blipped, so serve the last good field as stale rather than collapsing to the
 	// anchor alone, so the heatmap keeps breathing through the outage.
 	if (tokens.length <= 1 && _cache.value && now - _cache.storedAt <= STALE_MAX_MS) {
 		return json(res, 200, { ok: true, anchor: THREE_MINT, fetchedAt: new Date(_cache.storedAt).toISOString(), tokens: _cache.value.slice(0, limit), stale: true }, {

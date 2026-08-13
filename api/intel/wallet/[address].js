@@ -1,5 +1,5 @@
 /**
- * Wallet reputation — public read API.
+ * Wallet reputation: the public read API.
  *
  *   GET /api/intel/wallet/<address>?network=mainnet
  *       → one wallet's realized track record from the Smart-Money graph:
@@ -10,7 +10,7 @@
  * (api/cron/smart-money-graph). Public + IP rate-limited, briefly cached. Honest
  * zero-data: `computed:false` means we have no track record for this address yet.
  *
- * Public on-chain address analytics only — never exposes or stores private keys.
+ * Public on-chain address analytics only. Never exposes or stores private keys.
  */
 
 import { cors, json, method, wrap, rateLimited } from '../../_lib/http.js';
@@ -22,7 +22,7 @@ function normNetwork(v) {
 }
 
 // A base58 Solana address is 32–44 chars from the base58 alphabet. We don't need a
-// full decode here (the lookup degrades to zero-data on a miss anyway) — this just
+// full decode here (the lookup degrades to zero-data on a miss anyway). This just
 // rejects obvious garbage before a DB round-trip.
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 

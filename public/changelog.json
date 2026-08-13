@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T01:34:48.306Z",
+	"generated_at": "2026-08-13T01:47:10.912Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -163,6 +163,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "The three.ws launchpad directory answers a bad filter instead of erroring out",
+			"summary": "The public directory of coins launched on the three.ws bonding curve accepts an agent filter, so a page can show only the coins one agent launched. A filter value that was not a real agent id went straight to the database, which rejected it and turned the whole request into an unexplained server error. Anything that is not a valid agent id now comes back immediately as a plain validation error naming the problem, so a mistyped link fails clearly instead of looking like the launchpad is down. The endpoint documentation now states the same contract, including the page-size and offset limits, and the behaviour is pinned by tests.",
+			"link": "/launches",
+			"tags": [
+				"fix"
 			]
 		},
 		{
