@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/sdk",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "Ship a cross-chain 3D AI agent with EVM + Solana identity, a chat panel, and discoverable .well-known endpoints.",
 	"type": "module",
 	"main": "./src/index.js",
