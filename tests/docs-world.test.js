@@ -25,6 +25,22 @@ const nav = JSON.parse(readFileSync(resolve(root, 'docs/nav.json'), 'utf8'));
 // reach dist/docs, so a nav entry pointing into them would 404 in production.
 const PRIVATE_DOCS = ['internal', 'ops', 'security'];
 
+/**
+ * The rule that rewrites every /docs/<slug> to the SPA shell. Its regex has
+ * been re-spelled more than once (the slug class widened when nested docs
+ * landed), so match it by what it does, not by one exact string: a rule that
+ * sends a plain slug to the shell.
+ */
+function findDocsCatchAll(routes) {
+	return routes.findIndex(
+		(r) =>
+			r.dest === '/docs/index.html' &&
+			typeof r.src === 'string' &&
+			r.src.startsWith('/docs/(') &&
+			new RegExp('^' + r.src + '$').test('/docs/start-here'),
+	);
+}
+
 describe('docs/nav.json manifest', () => {
 	it('has sections with titles and links', () => {
 		expect(Array.isArray(nav.sections)).toBe(true);
@@ -50,8 +66,15 @@ describe('docs/nav.json manifest', () => {
 		for (const section of nav.sections) {
 			for (const link of section.links) {
 				if (!link.path) continue;
+				// A doc reaches /docs/<slug>.md from either source root: docs/ is
+				// copied into dist by copy-static-docs, and public/docs/ is served
+				// verbatim. Accepting only the first would fail a page that ships.
 				const file = resolve(root, 'docs', link.path + '.md');
-				expect(existsSync(file), `docs/${link.path}.md (from "${section.title}")`).toBe(true);
+				const publicFile = resolve(root, 'public/docs', link.path + '.md');
+				expect(
+					existsSync(file) || existsSync(publicFile),
+					`neither docs/${link.path}.md nor public/docs/${link.path}.md exists (from "${section.title}")`,
+				).toBe(true);
 				// Only nested paths can land in a private DIRECTORY; a root file like
 				// docs/security.md ships fine and shares a name with docs/security/.
 				if (link.path.includes('/')) {
@@ -87,7 +110,7 @@ describe('routing', () => {
 	it('vercel.json routes /docs/world before the docs SPA catch-all', () => {
 		const routes = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')).routes;
 		const worldIdx = routes.findIndex((r) => r.src === '/docs/world/?');
-		const catchAllIdx = routes.findIndex((r) => r.src === '/docs/([^./]+)/?');
+		const catchAllIdx = findDocsCatchAll(routes);
 		expect(worldIdx).toBeGreaterThanOrEqual(0);
 		expect(catchAllIdx).toBeGreaterThanOrEqual(0);
 		expect(worldIdx).toBeLessThan(catchAllIdx);
@@ -108,7 +131,8 @@ describe('routing', () => {
 		// the catch-all is what prevents that, so assert the behaviour, not the
 		// spelling: the catch-all must not match, and a later static rule must.
 		const routes = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')).routes;
-		const catchAllIdx = routes.findIndex((r) => r.src === '/docs/([^./]+)/?');
+		const catchAllIdx = findDocsCatchAll(routes);
+		expect(catchAllIdx, 'no /docs/<slug> catch-all route').toBeGreaterThanOrEqual(0);
 		expect(new RegExp('^' + routes[catchAllIdx].src + '$').test('/docs/nav.json')).toBe(false);
 
 		const staticIdx = routes.findIndex(
