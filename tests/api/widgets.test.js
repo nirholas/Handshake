@@ -663,6 +663,19 @@ describe('GET /api/widgets/og', () => {
 		expect(res._body).toContain('Tour');
 		expect(res._body).toContain('HOTSPOT TOUR');
 	});
+
+	// /w/:id points its og:image at this route, and the demo widgets are served
+	// from baked-in fixtures rather than the DB. Resolving them here is what keeps
+	// a shared demo link from previewing as the not-found card in Slack or X.
+	it('renders the demo fixtures without touching the database', async () => {
+		const req = mockReq({ method: 'GET', url: '/api/widgets/og?id=wdgt_demo_turntab' });
+		const res = mockRes();
+		await ogHandler(req, res);
+		expect(res.statusCode).toBe(200);
+		expect(res.headers['content-type']).toMatch(/svg/);
+		expect(res._body).toContain('Turntable Showcase');
+		expect(sqlQueue.length).toBe(0);
+	});
 });
 
 // ── GET /api/widgets/:id/transcripts ────────────────────────────────────────

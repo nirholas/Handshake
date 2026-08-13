@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Documentation links to operator-only pages no longer dead-end, and the Forge docs match the engine that actually runs",
+			"summary": "Fifteen documentation pages cite internal runbooks that live in the repository but are deliberately never published to the site. The reader was turning those citations into on-site links, so clicking one landed on a page that does not exist; they now open the file on GitHub in a new tab, like every other source citation. Separately, the Forge pages had drifted from the code: they still named NVIDIA's hosted lane as the default engine for text prompts, when draft and standard generations have been running on our own GPU workers for a while, with the NVIDIA lane kept as the last free fallback. The photo limit was documented as four images when the API accepts six, the Diorama example response was missing the wrapper key every client has to read, and the 3D API quickstart showed a job to poll for a call that usually answers with the finished model straight away. Every command and code sample on those pages was executed against production before being corrected.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/forge"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "The two MCP server docs that had drifted now list every tool the servers actually ship",
 			"summary": "The Scenes MCP page documented three tools, but the published server has had five for a while: export_scene merges an already-forged diorama into one GLB with named, selectable nodes, and build_world takes a single sentence all the way to a finished, openable world without a browser. Neither was written up anywhere, so nobody using an MCP client could find them. The x402 Wallet MCP page was missing pay_and_call's session-governed mode entirely, where a three.ws Payment Session pays on your behalf and the platform enforces the budget, allowlist, and per-transaction cap, so no private key sits on your machine at all; the idempotency key that makes a retry safe, and paying in $THREE where an endpoint accepts it, were undocumented too. Both pages also pinned a version number that had moved on, so they now point at the npm page instead of going stale again. Both pages were missing from the documentation sidebar, which meant the only way to reach them was to already know the URL.",
 			"tags": [
