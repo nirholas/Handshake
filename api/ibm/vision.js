@@ -174,7 +174,12 @@ async function handleVision(req, res) {
 
 	let body;
 	try {
-		body = await readJson(req, 9_000_000); // a base64 data URL of a snapshot can be large
+		// a base64 data URL of a snapshot can be large
+		const parsed = await readJson(req, 9_000_000);
+		// `null` / a bare string is valid JSON that readJson returns as-is on the
+		// raw-stream path, and reading .image off it throws a TypeError that surfaces
+		// as a 500. Malformed input takes the documented 400 bad_image path instead.
+		body = parsed && typeof parsed === 'object' ? parsed : {};
 	} catch (e) {
 		return error(res, e.status || 400, 'bad_request', e.message);
 	}

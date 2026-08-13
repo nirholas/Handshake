@@ -70,6 +70,17 @@ function ensureCacheTable() {
 			computed_at  timestamptz NOT NULL DEFAULT now()
 		)
 	`.then(() => true);
+	// Drop the latch if the DDL rejects. Caching the promise unconditionally means
+	// one transient DB blip (a dropped connection, a cold Neon branch) is memoized
+	// as a permanently rejected promise, and every later request on that warm
+	// instance re-awaits the same rejection: the galaxy stays down until the
+	// instance recycles, long after the database recovered. Clearing it lets the
+	// next caller retry the create, while concurrent callers still share one
+	// round-trip on the happy path.
+	_cacheReady = _cacheReady.catch((err) => {
+		_cacheReady = null;
+		throw err;
+	});
 	return _cacheReady;
 }
 
@@ -404,7 +415,11 @@ async function handleSearch(req, res) {
 
 	let body;
 	try {
-		body = await readJson(req, 8_000);
+		// A body of `null` / a bare string is valid JSON that readJson returns as-is
+		// on the raw-stream path, and reading .query off it throws a TypeError that
+		// surfaces as a 500. Malformed input answers 400 like every other bad body.
+		const parsed = await readJson(req, 8_000);
+		body = parsed && typeof parsed === 'object' ? parsed : {};
 	} catch (e) {
 		return error(res, e.status || 400, 'bad_request', e.message);
 	}

@@ -354,8 +354,13 @@ async function handleGet(req, res) {
 			inputWindow: projFc.inputWindow,
 		};
 
-		if (btFc && realized) {
-			const predicted = pointsFrom(btFc);
+		// An empty predicted series (a forecast that answers with no points) would
+		// make fidelityOf index realized[-1] and throw, and that throw lands in the
+		// outer catch below, which replaces the good `ibm` block with an error and
+		// skips the persona entirely. A back-test with nothing to score simply has
+		// no fidelity to report.
+		const predicted = btFc && realized ? pointsFrom(btFc) : null;
+		if (predicted?.length) {
 			const cutoffPrice = btSlice[btSlice.length - 1].c;
 			const f = fidelityOf(realized, predicted, cutoffPrice);
 			out.fidelity = {
@@ -395,7 +400,14 @@ async function handleGet(req, res) {
 
 // ── POST: a what-if simulation ────────────────────────────────────────────────
 async function handlePost(req, res) {
-	const body = await readJson(req);
+	// `null`, a bare string, or a number is valid JSON, and readJson hands it back
+	// as-is on the raw-stream path (Vercel-style invocation, the MCP server, a
+	// direct handler call). Reading params off it throws a TypeError that surfaces
+	// as a sanitized 500, when malformed input belongs in the documented 4xx
+	// contract. Collapsing a non-object to {} routes it through the normal
+	// bad_request path instead.
+	const parsed = await readJson(req);
+	const body = parsed && typeof parsed === 'object' ? parsed : {};
 	const { candles, token, freq, timeframe, aggregate } = await loadSeries(body);
 	const scenario = clampScenario(body.scenario);
 	const label = scenarioLabel(scenario);
