@@ -70,7 +70,9 @@ describe('epochs', () => {
 
 	it('never accrues past `now`, even for an open position', () => {
 		const now = E_START + 3_600;
-		expect(epochFraction({ openedAt: E_START, closedAt: null }, E, now)).toBe(round9(3_600 / 86_400));
+		// Spec section 4: overlap seconds over 86400, exact. No 9-decimal rounding
+		// here; that rule belongs to the section 5 earnings intermediates.
+		expect(epochFraction({ openedAt: E_START, closedAt: null }, E, now)).toBe(3_600 / 86_400);
 	});
 
 	it('returns zero for an epoch the position did not overlap', () => {
@@ -348,7 +350,3 @@ describe('registry extension: threews.unstake.v1', () => {
 		expect(validatePayload({ v: 1, kind: 'threews.unstake.v1', agent: AGENT_A, principal: '1' })).toBe(false);
 	});
 });
-
-function round9(n) {
-	return Math.round(n * 1e9) / 1e9;
-}

@@ -98,7 +98,10 @@ export function epochFraction(position, epoch, now) {
 	const from = Math.max(opened, start);
 	const to = Math.min(closed, end);
 	if (to <= from) return 0;
-	return round((to - from) / EPOCH_SECONDS);
+	// Exact by design (spec section 4): overlap seconds over 86400, no rounding.
+	// The 9-decimal rounding rule covers the section 5 earnings intermediates;
+	// rounding here would credit a one-second sliver as a fatter slice than it is.
+	return (to - from) / EPOCH_SECONDS;
 }
 
 /**
