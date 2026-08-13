@@ -15,6 +15,8 @@ import { z } from 'zod';
 // Sentry event plus an ops alert. Matches what gen_random_uuid() emits, in any
 // hex case, without demanding a specific version/variant nibble.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Mirrors the slug grammar api/mocap/clips.js accepts on create.
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
 
 const patchSchema = z.object({
 	name: z.string().trim().min(1).max(120).optional(),
@@ -35,34 +37,43 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'PATCH', 'DELETE'])) return;
 
-	const id =
+	const ident = parseIdent(
 		req.query?.id ||
-		new URL(req.url, 'http://x').pathname.split('/').filter(Boolean).pop();
-	if (!id || !UUID_RE.test(id)) {
-		return error(res, 400, 'invalid_request', 'id must be a clip UUID');
+			new URL(req.url, 'http://x').pathname.split('/').filter(Boolean).pop(),
+	);
+	if (!ident) {
+		return error(res, 400, 'invalid_request', 'id must be a clip UUID or slug');
 	}
 
 	const auth = await resolveAuth(req);
 
-	if (req.method === 'GET') return handleGet(req, res, auth, id);
+	if (req.method === 'GET') return handleGet(req, res, auth, ident);
 	if (!auth) return error(res, 401, 'unauthorized', 'authentication required');
 	// Cookie-session mutations need a CSRF token; bearer callers self-exempt
 	// inside requireCsrf. Mirrors api/avatars/[id].js, this endpoint is
 	// credentialed CORS, and the allowlist includes partner origins, so a
 	// same-site cookie alone is not proof of intent.
 	if (!(await requireCsrf(req, res, auth.userId))) return;
-	if (req.method === 'PATCH') return handlePatch(req, res, auth, id);
-	return handleDelete(req, res, auth, id);
+	if (req.method === 'PATCH') return handlePatch(req, res, auth, ident);
+	return handleDelete(req, res, auth, ident);
 });
 
-async function handleGet(req, res, auth, id) {
+async function handleGet(req, res, auth, ident) {
+	// A slug is unique per owner, not globally, so one can match rows belonging to
+	// several owners. Scope the match to what this caller may see, prefer their
+	// own clip, and break any remaining tie by age, so a slug lookup is stable
+	// instead of whichever row the planner happened to return first. An id lookup
+	// matches at most one row either way, so the extra clauses are inert for it.
+	const viewerId = auth?.userId || null;
 	const [row] = await sql`
 		select id, owner_id, avatar_id, slug, name, description, kind, format,
 		       duration_ms, frame_count, frames, tags, visibility,
 		       price_amount, price_currency, play_count,
 		       created_at, updated_at
 		from mocap_clips
-		where id = ${id} and deleted_at is null
+		where ${selectorFor(ident)} and deleted_at is null
+		  and (owner_id = ${viewerId} or visibility <> 'private')
+		order by (owner_id = ${viewerId}) desc nulls last, created_at asc
 		limit 1
 	`;
 	if (!row) return error(res, 404, 'not_found', 'clip not found');
@@ -83,7 +94,7 @@ async function handleGet(req, res, auth, id) {
 		// Fire-and-forget; failure must not block the response.
 		queueMicrotask(async () => {
 			try {
-				await sql`update mocap_clips set play_count = play_count + 1 where id = ${id}`;
+				await sql`update mocap_clips set play_count = play_count + 1 where id = ${row.id}`;
 			} catch (err) {
 				console.warn('[mocap] play_count update failed', err?.message);
 			}
@@ -120,7 +131,7 @@ async function handleGet(req, res, auth, id) {
 	});
 }
 
-async function handlePatch(req, res, auth, id) {
+async function handlePatch(req, res, auth, ident) {
 	if (auth.source === 'oauth' || auth.source === 'apikey') {
 		if (!hasScope(auth.scope, 'avatars:write'))
 			return error(res, 403, 'insufficient_scope', 'avatars:write required');
@@ -163,7 +174,7 @@ async function handlePatch(req, res, auth, id) {
 	const [row] = await sql`
 		update mocap_clips
 		${setClause}
-		where id = ${id} and owner_id = ${auth.userId} and deleted_at is null
+		where ${selectorFor(ident)} and owner_id = ${auth.userId} and deleted_at is null
 		returning id, slug, name, description, kind, format, duration_ms, frame_count,
 		          tags, visibility, avatar_id, price_amount, price_currency,
 		          created_at, updated_at
@@ -179,7 +190,7 @@ async function handlePatch(req, res, auth, id) {
 	});
 }
 
-async function handleDelete(req, res, auth, id) {
+async function handleDelete(req, res, auth, ident) {
 	if (auth.source === 'oauth' || auth.source === 'apikey') {
 		if (!hasScope(auth.scope, 'avatars:delete'))
 			return error(res, 403, 'insufficient_scope', 'avatars:delete required');
@@ -187,11 +198,27 @@ async function handleDelete(req, res, auth, id) {
 	const [row] = await sql`
 		update mocap_clips
 		set deleted_at = now()
-		where id = ${id} and owner_id = ${auth.userId} and deleted_at is null
+		where ${selectorFor(ident)} and owner_id = ${auth.userId} and deleted_at is null
 		returning id
 	`;
 	if (!row) return error(res, 404, 'not_found', 'clip not found or not yours');
 	return json(res, 200, { ok: true });
+}
+
+// The published @three-ws/mocap client takes `idOrSlug` on getClip/updateClip/
+// deleteClip and its README shares a saved clip as /mocap/<slug>, so both forms
+// have to resolve here. Rejecting the slug form answered 400 for a call the SDK
+// documents as supported. A uuid always wins the tie (it is also valid slug
+// text) because it selects one row globally.
+function parseIdent(raw) {
+	const value = typeof raw === 'string' ? raw.trim() : '';
+	if (UUID_RE.test(value)) return { column: 'id', value };
+	if (SLUG_RE.test(value)) return { column: 'slug', value };
+	return null;
+}
+
+function selectorFor(ident) {
+	return ident.column === 'id' ? sql`id = ${ident.value}` : sql`slug = ${ident.value}`;
 }
 
 async function resolveAuth(req) {

@@ -13,6 +13,11 @@ import { Viewer } from './viewer.js';
 import { FaceMocap } from './face-mocap.js';
 import { IdleAnimation } from './idle-animation.js';
 import { log } from './shared/log.js';
+// Saving and deleting a clip are cookie-session mutations, and the endpoints
+// gate those on a single-use X-CSRF-Token (api/_lib/csrf.js). A bare fetch()
+// never carries one, so every save and delete from this page answered 403
+// csrf_missing in production. apiFetch mints and attaches the token per call.
+import { apiFetch, noteSession } from './api.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -115,8 +120,12 @@ downloadBtn.addEventListener('click', () => downloadClip());
 async function fetchMe() {
 	try {
 		const r = await fetch('/api/auth/me', { credentials: 'include' });
-		if (!r.ok) return null;
+		if (!r.ok) {
+			noteSession(false);
+			return null;
+		}
 		const data = await r.json().catch(() => null);
+		noteSession(!!data?.user);
 		return data?.user || null;
 	} catch {
 		return null;
@@ -350,15 +359,16 @@ async function saveClip() {
 	saveBtn.disabled = true;
 	saveBtn.textContent = 'Saving…';
 	try {
-		const r = await fetch('/api/mocap/clips', {
+		const r = await apiFetch('/api/mocap/clips', {
 			method: 'POST',
-			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify(payload),
 		});
 		if (!r.ok) {
 			const body = await r.json().catch(() => null);
-			throw new Error(body?.message || `save failed (${r.status})`);
+			throw new Error(
+				body?.error_description || body?.message || `save failed (${r.status})`,
+			);
 		}
 		saveBtn.textContent = 'Saved';
 		nameInput.value = '';
@@ -449,11 +459,13 @@ async function playSavedClip(id) {
 async function deleteSavedClip(id) {
 	if (!confirm('Delete this clip?')) return;
 	try {
-		const r = await fetch(`/api/mocap/clips/${encodeURIComponent(id)}`, {
+		const r = await apiFetch(`/api/mocap/clips/${encodeURIComponent(id)}`, {
 			method: 'DELETE',
-			credentials: 'include',
 		});
-		if (!r.ok) throw new Error(`delete failed (${r.status})`);
+		if (!r.ok) {
+			const body = await r.json().catch(() => null);
+			throw new Error(body?.error_description || `delete failed (${r.status})`);
+		}
 		refreshClipList();
 	} catch (err) {
 		alert(err?.message || 'Could not delete.');
