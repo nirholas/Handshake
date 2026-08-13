@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T07:03:41.487Z",
+	"generated_at": "2026-08-13T07:51:28.485Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -114,6 +114,17 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "Documentation links to operator-only pages no longer dead-end, and the Forge docs match the engine that actually runs",
+			"summary": "Fifteen documentation pages cite internal runbooks that live in the repository but are deliberately never published to the site. The reader was turning those citations into on-site links, so clicking one landed on a page that does not exist; they now open the file on GitHub in a new tab, like every other source citation. Separately, the Forge pages had drifted from the code: they still named NVIDIA's hosted lane as the default engine for text prompts, when draft and standard generations have been running on our own GPU workers for a while, with the NVIDIA lane kept as the last free fallback. The photo limit was documented as four images when the API accepts six, the Diorama example response was missing the wrapper key every client has to read, and the 3D API quickstart showed a job to poll for a call that usually answers with the finished model straight away. Every command and code sample on those pages was executed against production before being corrected.",
+			"link": "/docs/forge",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "Embedded agents keep their tool calls, and the free brain lane bills what it actually used",
 			"summary": "The we-pay brain behind every embedded agent streams its answers, and three things in that stream were wrong. Free providers were never asked to report how many tokens a streamed answer used, so the monthly token budget an owner sets on an agent counted zero for the lane most embeds run on: the budget could not be reached, and the usage screen showed no spend for real traffic. Groq reports those numbers in a field of its own, which was being ignored for the same reason; both are now read and charged. Tool calls fared worse: when a provider streamed a tool name in pieces, only the first piece survived, so the agent tried to call a tool that does not exist, and a call whose id never arrived was dropped in silence instead of being passed on. Finally, the second step of the automatic failover chain pointed at a model that no longer exists anywhere, so a rate-limited free lane skipped straight past it; it now points at a live free model on a separate account, and requests that leave the token limit unset no longer draw an avoidable rejection from Anthropic.",
 			"link": "/docs/api-reference",
@@ -129,6 +140,17 @@
 			"summary": "The autonomous-trading post publishes a league table of all eleven armed agents, and each row offered a \"ledger\" link into that agent's full decision history. All eleven were 404s: the address they pointed at (/reasoning-ledger with the agent id in the query) is the form the trading API hands out and the form two docs pages tell you to use, but it was never in the site's route table, so only the shorter /ledger/<agentId> spelling worked. The route exists now, which fixes the links in the post and every link the API has been emitting alongside them. Those links also ask for a specific slice of the history (the buy decisions), and the ledger page had been quietly ignoring that and showing everything; it now opens on the slice you asked for, and changing the filter updates the address bar so the filtered view is the thing you can copy and send. One row in the same table linked to a block explorer with no address behind it and is no longer a link at all. In the Concierge post, the \"build tutorial\" link landed on the docs index instead of the tutorial. And on all ten blog pages the keyboard \"Skip to content\" link now has a real target in the page, so it works whether or not scripts are running.",
 			"link": "/blog/autonomous-trading-experiment",
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Every tutorial page now names itself, its in-page links work, and the free-3D tutorials match the engine that actually runs",
+			"summary": "All 69 tutorials share one page template, and the browser tab, the bookmark, and the shared link for every one of them read the same placeholder: 'three.ws - Tutorial'. The per-tutorial title was being written correctly and then translated back to the placeholder a moment later, so nothing downstream ever saw it; search engines were served the generic title and description on the text-to-3D tutorial too. Each tutorial now carries its own title, description, and social card everywhere. Jump links inside a tutorial (the 'see What's next' style references) were computing heading targets a different way than the documentation viewer does, so they scrolled nowhere; they now match, which also repairs the cross-tutorial links that pointed into them. On content: the free NVIDIA tutorial said every free generation runs on NVIDIA NIM, when draft and standard actually run on our own GPU workers first and fall through to the NVIDIA lane when those are busy, so it now explains both rungs and how to pin the NVIDIA one deliberately. The 3D API tutorial's download script threw away a busy-lane response as a fatal error; it now waits the interval the API asks for and retries, which is what makes a batch of prompts finish unattended. Every command and code sample on these pages was executed against production before publishing.",
+			"link": "/tutorials/nvidia-3d-free",
+			"tags": [
+				"docs",
 				"fix"
 			]
 		},
@@ -171,6 +193,17 @@
 			"link": "/hydrate",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "IRL endpoints answer bad input honestly, and the usage rollup works again",
+			"summary": "Audited the ten /api/irl endpoints against a real database. A pin, drop or interaction id that was not a UUID used to reach Postgres and come back as a server error; those requests are now a plain 400 that never touches the database. The site-wide /irl usage rollup had a broken daily-series query, and because the endpoint quietly served an empty summary when a query failed, it had been reporting zeros instead of real numbers; the query is fixed and a failure is now logged. A report filed from a device that sends its id in the header is once again recognised, so an owner cannot accidentally count as an independent reporter of their own pin, and repeat reports from one device still collapse into one. Captions shilling a coin whose ticker runs past ten characters are rejected like every other off-brand ticker.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -8605,7 +8638,7 @@
 			"date": "2026-07-17",
 			"type": "launch",
 			"title": "Image to 3D: Turn a Photo into a 3D Model",
-			"summary": "Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.",
+			"summary": "Upload a photo (or up to 6 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.",
 			"link": "/image-to-3d",
 			"tags": [
 				"launch"
@@ -25905,7 +25938,7 @@
 			"date": "2026-06-12",
 			"type": "launch",
 			"title": "Tutorial · Photos to 3D Model",
-			"summary": "Photograph a real object from up to four angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.",
+			"summary": "Photograph a real object from up to six angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.",
 			"link": "/tutorials/image-to-3d",
 			"tags": [
 				"launch"

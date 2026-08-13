@@ -423,7 +423,7 @@ Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D
 
 URL: https://three.ws/image-to-3d
 
-Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.
+Upload a photo (or up to 6 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.
 
 ### Forge Max: Highest-Quality Text & Image to 3D
 
@@ -2528,7 +2528,7 @@ Step-by-step: add a floating 3D avatar assistant to any website with one script 
 
 URL: https://three.ws/tutorials/image-to-3d
 
-Photograph a real object from up to four angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.
+Photograph a real object from up to six angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.
 
 ### Tutorial · Prompt Recipes for 3D Generation
 

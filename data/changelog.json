@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Every tutorial page now names itself, its in-page links work, and the free-3D tutorials match the engine that actually runs",
+			"summary": "All 69 tutorials share one page template, and the browser tab, the bookmark, and the shared link for every one of them read the same placeholder: 'three.ws - Tutorial'. The per-tutorial title was being written correctly and then translated back to the placeholder a moment later, so nothing downstream ever saw it; search engines were served the generic title and description on the text-to-3D tutorial too. Each tutorial now carries its own title, description, and social card everywhere. Jump links inside a tutorial (the 'see What's next' style references) were computing heading targets a different way than the documentation viewer does, so they scrolled nowhere; they now match, which also repairs the cross-tutorial links that pointed into them. On content: the free NVIDIA tutorial said every free generation runs on NVIDIA NIM, when draft and standard actually run on our own GPU workers first and fall through to the NVIDIA lane when those are busy, so it now explains both rungs and how to pin the NVIDIA one deliberately. The 3D API tutorial's download script threw away a busy-lane response as a fatal error; it now waits the interval the API asks for and retries, which is what makes a batch of prompts finish unattended. Every command and code sample on these pages was executed against production before publishing.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/tutorials/nvidia-3d-free"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Documentation links to operator-only pages no longer dead-end, and the Forge docs match the engine that actually runs",
 			"summary": "Fifteen documentation pages cite internal runbooks that live in the repository but are deliberately never published to the site. The reader was turning those citations into on-site links, so clicking one landed on a page that does not exist; they now open the file on GitHub in a new tab, like every other source citation. Separately, the Forge pages had drifted from the code: they still named NVIDIA's hosted lane as the default engine for text prompts, when draft and standard generations have been running on our own GPU workers for a while, with the NVIDIA lane kept as the last free fallback. The photo limit was documented as four images when the API accepts six, the Diorama example response was missing the wrapper key every client has to read, and the 3D API quickstart showed a job to poll for a call that usually answers with the finished model straight away. Every command and code sample on those pages was executed against production before being corrected.",
 			"tags": [

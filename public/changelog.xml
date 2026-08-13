@@ -87,6 +87,14 @@
 			<description>Agents that arrange copy-trading through the MCP tools hit three problems. A Telegram chat supplied for copy alerts was thrown away, and worse, adjusting an existing subscription erased the chat already set on the dashboard, so the alerts stopped. Subscriptions created this way also never recorded the leader payout wallet, which meant the leader performance fee could not be settled on them. And when the database was briefly unreachable, the tools answered with a confident wrong answer: your leader does not exist, or you have no subscriptions at all. Alerts and the payout wallet are now stored correctly, an outage says plainly that the service is temporarily unavailable, two agents subscribing at the same moment no longer collide, and a trader profile now returns the open positions it always advertised so a leader can be vetted before being copied.</description>
 		</item>
 		<item>
+			<title>Documentation links to operator-only pages no longer dead-end, and the Forge docs match the engine that actually runs</title>
+			<link>https://three.ws/docs/forge</link>
+			<guid isPermaLink="false">2026-08-13:Documentation links to operator-only pages no longer dead-end, and the Forge docs match the engine that actually runs</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Fifteen documentation pages cite internal runbooks that live in the repository but are deliberately never published to the site. The reader was turning those citations into on-site links, so clicking one landed on a page that does not exist; they now open the file on GitHub in a new tab, like every other source citation. Separately, the Forge pages had drifted from the code: they still named NVIDIA's hosted lane as the default engine for text prompts, when draft and standard generations have been running on our own GPU workers for a while, with the NVIDIA lane kept as the last free fallback. The photo limit was documented as four images when the API accepts six, the Diorama example response was missing the wrapper key every client has to read, and the 3D API quickstart showed a job to poll for a call that usually answers with the finished model straight away. Every command and code sample on those pages was executed against production before being corrected.</description>
+		</item>
+		<item>
 			<title>Embedded agents keep their tool calls, and the free brain lane bills what it actually used</title>
 			<link>https://three.ws/docs/api-reference</link>
 			<guid isPermaLink="false">2026-08-13:Embedded agents keep their tool calls, and the free brain lane bills what it actually used</guid>
@@ -101,6 +109,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The autonomous-trading post publishes a league table of all eleven armed agents, and each row offered a &quot;ledger&quot; link into that agent's full decision history. All eleven were 404s: the address they pointed at (/reasoning-ledger with the agent id in the query) is the form the trading API hands out and the form two docs pages tell you to use, but it was never in the site's route table, so only the shorter /ledger/&lt;agentId&gt; spelling worked. The route exists now, which fixes the links in the post and every link the API has been emitting alongside them. Those links also ask for a specific slice of the history (the buy decisions), and the ledger page had been quietly ignoring that and showing everything; it now opens on the slice you asked for, and changing the filter updates the address bar so the filtered view is the thing you can copy and send. One row in the same table linked to a block explorer with no address behind it and is no longer a link at all. In the Concierge post, the &quot;build tutorial&quot; link landed on the docs index instead of the tutorial. And on all ten blog pages the keyboard &quot;Skip to content&quot; link now has a real target in the page, so it works whether or not scripts are running.</description>
+		</item>
+		<item>
+			<title>Every tutorial page now names itself, its in-page links work, and the free-3D tutorials match the engine that actually runs</title>
+			<link>https://three.ws/tutorials/nvidia-3d-free</link>
+			<guid isPermaLink="false">2026-08-13:Every tutorial page now names itself, its in-page links work, and the free-3D tutorials match the engine that actually runs</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>All 69 tutorials share one page template, and the browser tab, the bookmark, and the shared link for every one of them read the same placeholder: 'three.ws - Tutorial'. The per-tutorial title was being written correctly and then translated back to the placeholder a moment later, so nothing downstream ever saw it; search engines were served the generic title and description on the text-to-3D tutorial too. Each tutorial now carries its own title, description, and social card everywhere. Jump links inside a tutorial (the 'see What's next' style references) were computing heading targets a different way than the documentation viewer does, so they scrolled nowhere; they now match, which also repairs the cross-tutorial links that pointed into them. On content: the free NVIDIA tutorial said every free generation runs on NVIDIA NIM, when draft and standard actually run on our own GPU workers first and fall through to the NVIDIA lane when those are busy, so it now explains both rungs and how to pin the NVIDIA one deliberately. The 3D API tutorial's download script threw away a busy-lane response as a fatal error; it now waits the interval the API asks for and retries, which is what makes a batch of prompts finish unattended. Every command and code sample on these pages was executed against production before publishing.</description>
 		</item>
 		<item>
 			<title>FBX export on the OKX 3D service line works again, and the Chinese-brief avatar prompt keeps its subject</title>
@@ -133,6 +149,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>If you registered an agent on-chain, the hydrate page finds it from your connected wallets and offers to import it into three.ws. Importing read two things: the registry entry on the chain, and the registration file the registry points at, which usually lives on IPFS. If that file did not load in five seconds, the whole import was refused, even though the part that actually matters, the chain saying you own the agent, had already answered. Public IPFS gateways throttle constantly, so owners were locked out of their own agents by a slow third party. The import now only needs the chain read to succeed; a registration file that will not load means the agent lands under its on-chain name and the metadata fills in on the next crawl. Two more changes went in alongside it: ownership is now re-checked against the live registry rather than the crawler's cached copy, so an agent you transferred away cannot be imported by the old wallet, and a chain that is unreachable now says so plainly and asks you to retry instead of reporting a generic failure. Separately, confirming a new registration now reads the transaction receipt over the same priority provider list the rest of the platform uses, instead of the slowest public fallbacks, which is what made a freshly mined registration occasionally come back as &quot;not yet mined&quot;.</description>
+		</item>
+		<item>
+			<title>IRL endpoints answer bad input honestly, and the usage rollup works again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:IRL endpoints answer bad input honestly, and the usage rollup works again</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Audited the ten /api/irl endpoints against a real database. A pin, drop or interaction id that was not a UUID used to reach Postgres and come back as a server error; those requests are now a plain 400 that never touches the database. The site-wide /irl usage rollup had a broken daily-series query, and because the endpoint quietly served an empty summary when a query failed, it had been reporting zeros instead of real numbers; the query is fixed and a failure is now logged. A report filed from a device that sends its id in the header is once again recognised, so an owner cannot accidentally count as an independent reporter of their own pin, and repeat reports from one device still collapse into one. Captions shilling a coin whose ticker runs past ten characters are rejected like every other off-brand ticker.</description>
 		</item>
 		<item>
 			<title>Labor Market API says what is wrong with a request instead of failing on it</title>
@@ -6548,7 +6572,7 @@
 			<guid isPermaLink="false">2026-07-17:Image to 3D: Turn a Photo into a 3D Model</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.</description>
+			<description>Upload a photo (or up to 6 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.</description>
 		</item>
 		<item>
 			<title>3D imports are now hardened against a memory-exhaustion crash</title>
@@ -19844,7 +19868,7 @@
 			<guid isPermaLink="false">2026-06-12:Tutorial · Photos to 3D Model</guid>
 			<pubDate>Fri, 12 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Photograph a real object from up to four angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.</description>
+			<description>Photograph a real object from up to six angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.</description>
 		</item>
 		<item>
 			<title>Tutorial · Prompt Recipes for 3D Generation</title>
