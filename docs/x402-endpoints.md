@@ -184,7 +184,7 @@ named in its description:
 Beneath the named endpoints sits the **datapoint fabric**: `/api/x402/d/<family>/…`
 (one route, `api/x402/d/[...path].js`) serves 1,000,000+ individually priced
 datapoints at **$0.0005** USDC each by default, overridable per family with
-`X402_PRICE_DATAPOINT_<FAMILY>`. See [Market data API](market-data-api.md#the-datapoint-fabric).
+`X402_PRICE_DATAPOINT_<FAMILY>`. See [Market data API](market-data-api.md#the-datapoint-fabric--1000000-standalone-endpoints).
 
 ## Agent & reputation endpoints
 

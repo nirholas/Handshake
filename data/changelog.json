@@ -20642,6 +20642,15 @@
 				"feature",
 				"security"
 			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "x402 and Premium docs now match the live endpoints",
+			"summary": "Audited the eight paid-endpoint and Premium documentation pages against the running code. Corrected the pump.fun launcher ticker-check example (it used a parameter the endpoint does not accept), refreshed the volume-loop spend cap and price range, repaired the payout source links and a dead datapoint-fabric anchor, dropped a stale archive article count, and made the free sample commands CI-verified so this class of drift fails the build next time.",
+			"tags": [
+				"docs",
+				"fix"
+			]
 		}
 	]
 }

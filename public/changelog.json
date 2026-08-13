@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T06:43:42.054Z",
+	"generated_at": "2026-08-13T06:44:32.304Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -564,6 +564,17 @@
 			"title": "Two docs pages told you to run a command that no longer exists",
 			"summary": "The Quick Start page's tip for shrinking a large 3D model named a tool that was pulled from npm back in 2023, so the command it gave you failed instead of compressing anything. It now names the tool that is actually published, and the page also stopped claiming the avatar builder defaults to a local port; it is served from the site itself. On the ERC-8004 page, the snippet that shows you how to independently re-check a validation compared your freshly computed hash against a field the read function never returns, so the check always came back false. It now reads the field that carries the on-chain hash. The \"do I need crypto\" page also listed an agent's portable address in a form the resolver rejects, and now shows the form that works.",
 			"link": "/docs/quick-start",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "x402 and Premium docs now match the live endpoints",
+			"summary": "Audited the eight paid-endpoint and Premium documentation pages against the running code. Corrected the pump.fun launcher ticker-check example (it used a parameter the endpoint does not accept), refreshed the volume-loop spend cap and price range, repaired the payout source links and a dead datapoint-fabric anchor, dropped a stale archive article count, and made the free sample commands CI-verified so this class of drift fails the build next time.",
+			"link": null,
 			"tags": [
 				"docs",
 				"fix"

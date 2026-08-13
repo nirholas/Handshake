@@ -431,6 +431,14 @@
 			<description>The Quick Start page's tip for shrinking a large 3D model named a tool that was pulled from npm back in 2023, so the command it gave you failed instead of compressing anything. It now names the tool that is actually published, and the page also stopped claiming the avatar builder defaults to a local port; it is served from the site itself. On the ERC-8004 page, the snippet that shows you how to independently re-check a validation compared your freshly computed hash against a field the read function never returns, so the check always came back false. It now reads the field that carries the on-chain hash. The &quot;do I need crypto&quot; page also listed an agent's portable address in a form the resolver rejects, and now shows the form that works.</description>
 		</item>
 		<item>
+			<title>x402 and Premium docs now match the live endpoints</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:x402 and Premium docs now match the live endpoints</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Audited the eight paid-endpoint and Premium documentation pages against the running code. Corrected the pump.fun launcher ticker-check example (it used a parameter the endpoint does not accept), refreshed the volume-loop spend cap and price range, repaired the payout source links and a dead datapoint-fabric anchor, dropped a stale archive article count, and made the free sample commands CI-verified so this class of drift fails the build next time.</description>
+		</item>
+		<item>
 			<title>Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</title>
 			<link>https://three.ws/dashboard/api</link>
 			<guid isPermaLink="false">2026-08-13:Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</guid>

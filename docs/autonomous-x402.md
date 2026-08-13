@@ -163,7 +163,8 @@ automatically (and `tests/x402-ring-catalog.test.js` fails until it is cataloged
 ## The Datapoint Fabric Volume Sweep
 
 One registry entry — `datapoint-volume-sweep`, pipeline `datapoint`, cooldown
-300s — settles real on-chain USDC against the [datapoint fabric](market-data-api.md#the-datapoint-fabric)
+300s, settles real on-chain USDC against the
+[datapoint fabric](market-data-api.md#the-datapoint-fabric--1000000-standalone-endpoints)
 (the 1,000,000+ endpoints served by the single `api/x402/d/[...path].js` route),
 which the Volume Bootstrap Loop above never touches (its rotation is the ~45
 *named* catalog endpoints flagged `autobuy: true`). On each run it advances its own Redis-backed cursor
