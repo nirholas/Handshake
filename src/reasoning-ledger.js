@@ -28,6 +28,15 @@ function timeAgo(iso) {
 	return `${Math.floor(s / 86400)}d ago`;
 }
 
+// The kind filter's options, defined once so the <select>, the deep-link
+// parser, and any future consumer cannot drift apart.
+const KIND_FILTERS = [
+	{ value: 'snipe', label: 'Snipe' },
+	{ value: 'exit', label: 'Exit' },
+	{ value: 'bounty_award', label: 'Bounty award' },
+	{ value: 'moderation', label: 'Moderation' },
+];
+
 function readAgentId() {
 	const m = location.pathname.match(/\/ledger\/([^/?#]+)/);
 	if (m) return decodeURIComponent(m[1]);
@@ -35,11 +44,19 @@ function readAgentId() {
 	return qs.get('agent') || qs.get('id') || null;
 }
 
+// `?kind=snipe` is how the sniper fleet, the blog, and the API's `ledger_url`
+// all link into a pre-filtered timeline. Anything not in KIND_FILTERS falls
+// back to "All kinds" rather than querying the API for a kind it cannot serve.
+function readKindFilter() {
+	const kind = new URLSearchParams(location.search).get('kind') || '';
+	return KIND_FILTERS.some((k) => k.value === kind) ? kind : '';
+}
+
 const state = {
 	agentId: readAgentId(),
 	data: null,
 	verify: null,
-	filters: { kind: '', q: '' },
+	filters: { kind: readKindFilter(), q: '' },
 	beforeSeq: null,
 	entries: [],
 	loadingMore: false,
@@ -293,10 +310,7 @@ function timelineSection() {
 				<div class="rl-search"><input id="rl-q" type="search" placeholder="Search rationale or token…" value="${esc(state.filters.q)}" aria-label="Search decisions" /></div>
 				<select class="rl-select" id="rl-kind" aria-label="Filter by kind">
 					<option value="">All kinds</option>
-					<option value="snipe"${state.filters.kind === 'snipe' ? ' selected' : ''}>Snipe</option>
-					<option value="exit"${state.filters.kind === 'exit' ? ' selected' : ''}>Exit</option>
-					<option value="bounty_award"${state.filters.kind === 'bounty_award' ? ' selected' : ''}>Bounty award</option>
-					<option value="moderation"${state.filters.kind === 'moderation' ? ' selected' : ''}>Moderation</option>
+					${KIND_FILTERS.map((k) => `<option value="${k.value}"${state.filters.kind === k.value ? ' selected' : ''}>${k.label}</option>`).join('')}
 				</select>
 			</div>
 			<div class="rl-timeline">${rows}</div>
@@ -392,10 +406,21 @@ function mountVerify() {
 	});
 }
 
+// Mirror the chosen kind back into the URL so the filtered view is the thing
+// the reader can copy out of the address bar, matching the links that arrive
+// here pre-filtered.
+function syncKindInUrl() {
+	const url = new URL(location.href);
+	if (state.filters.kind) url.searchParams.set('kind', state.filters.kind);
+	else url.searchParams.delete('kind');
+	history.replaceState(null, '', url);
+}
+
 let qTimer = null;
 function wireFilters() {
 	document.getElementById('rl-kind')?.addEventListener('change', (e) => {
 		state.filters.kind = e.target.value;
+		syncKindInUrl();
 		reloadTimeline();
 	});
 	document.getElementById('rl-q')?.addEventListener('input', (e) => {
