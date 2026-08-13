@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Your friends list no longer goes blank when the database is mid-upgrade, and search finds unusual names",
+			"summary": "Two problems in the friends area. The friends list is built to survive an environment where the social tables have not been created yet: it shows an empty list instead of an error. That safety net was matching on the wording of the database error rather than its type, and the wording it looked for also appears when a single column is missing, which is what a partly-applied upgrade looks like. So during an upgrade the page answered normally and told you that you had no friends, no incoming requests, and no pending invites, with nothing anywhere reporting a fault. The safety net now recognises only a genuinely missing table, and any other database problem is reported as the error it is. Separately, friend search could not find a display name containing a backslash, and a search term ending in one quietly searched for something else, because the search was not escaping the backslash before handing the term to the database.",
+			"tags": [
+				"fix"
+			],
+			"link": "/walk"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Copy-trading set up by an agent now keeps its alerts and can pay its leader",
 			"summary": "Agents that arrange copy-trading through the MCP tools hit three problems. A Telegram chat supplied for copy alerts was thrown away, and worse, adjusting an existing subscription erased the chat already set on the dashboard, so the alerts stopped. Subscriptions created this way also never recorded the leader payout wallet, which meant the leader performance fee could not be settled on them. And when the database was briefly unreachable, the tools answered with a confident wrong answer: your leader does not exist, or you have no subscriptions at all. Alerts and the payout wallet are now stored correctly, an outage says plainly that the service is temporarily unavailable, two agents subscribing at the same moment no longer collide, and a trader profile now returns the open positions it always advertised so a leader can be vetted before being copied.",
 			"tags": [
@@ -20,16 +29,16 @@
 			],
 			"link": "/docs/api-reference"
 		},
-    {
-      "date": "2026-08-13",
-      "title": "The CC0 object library answers a bad page request instead of quietly handing back the wrong page",
-      "summary": "The free prop library behind /objects and the AR Studio Objects tray is also a public API anyone can page through. Ask it for a page size it cannot parse and it used to guess: a word where a number belongs silently returned a single object, a fractional page size handed back a fractional position to ask for next, and a page position sent without a page size was ignored outright. Every one of those looked like working pagination while quietly skipping or repeating props, so a script walking the whole catalogue could finish believing it had seen all 511 when it had not. Bad page requests now come back immediately as a clear error naming the parameter and the accepted range, while an oversized page still simply caps at the documented maximum. Separately, when the storage behind the library has a hiccup the endpoint still degrades to an empty list rather than an error page, but that emptiness is no longer cached for the next five minutes: the library reappears the moment storage recovers instead of staying blank long after.",
-      "tags": [
-        "fix",
-        "improvement"
-      ],
-      "link": "/objects"
-    },
+		{
+			"date": "2026-08-13",
+			"title": "The CC0 object library answers a bad page request instead of quietly handing back the wrong page",
+			"summary": "The free prop library behind /objects and the AR Studio Objects tray is also a public API anyone can page through. Ask it for a page size it cannot parse and it used to guess: a word where a number belongs silently returned a single object, a fractional page size handed back a fractional position to ask for next, and a page position sent without a page size was ignored outright. Every one of those looked like working pagination while quietly skipping or repeating props, so a script walking the whole catalogue could finish believing it had seen all 511 when it had not. Bad page requests now come back immediately as a clear error naming the parameter and the accepted range, while an oversized page still simply caps at the documented maximum. Separately, when the storage behind the library has a hiccup the endpoint still degrades to an empty list rather than an error page, but that emptiness is no longer cached for the next five minutes: the library reappears the moment storage recovers instead of staying blank long after.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/objects"
+		},
 		{
 			"date": "2026-08-13",
 			"title": "FBX export on the OKX 3D service line works again, and the Chinese-brief avatar prompt keeps its subject",
