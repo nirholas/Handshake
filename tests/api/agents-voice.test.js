@@ -14,6 +14,10 @@ vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => false, drain: asyn
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 vi.mock('../../api/_lib/csrf.js', () => ({ requireCsrf: vi.fn(async () => true) }));
 
+// The stand-in for ELEVENLABS_API_KEY. Only its presence matters: no test
+// asserts on the value, and no request leaves the process.
+const PLATFORM_ELEVEN_KEY = 'test-platform-eleven-key';
+
 // ── Shared mutable state ──────────────────────────────────────────────────────
 const state = {
 	session: null,
@@ -28,6 +32,10 @@ const state = {
 	cloneThrowErr: null,
 	rateLimitOk: true,
 	creditsShort: false,
+	// Encrypted ElevenLabs key stored on the agent owner, keyed by provider slug.
+	// Null in every test here: these cover the platform lane, and the BYOK lane
+	// has its own coverage.
+	ownerProviderKeys: null,
 	sqlQueue: [],
 };
 
@@ -58,6 +66,16 @@ vi.mock('../../api/_lib/db.js', () => ({
 			.replace(/\s+/g, ' ')
 			.trim();
 
+		// The BYOK key lookup (api/_lib/agent-voice-key.js) runs alongside the
+		// voice queries but is not part of any test's ordered expectation, so it
+		// is answered here rather than allowed to consume a queued row and shift
+		// every later result by one.
+		if (q.startsWith('select') && q.includes('provider_keys') && q.includes('from users')) {
+			return Promise.resolve(
+				state.ownerProviderKeys ? [{ provider_keys: state.ownerProviderKeys }] : [],
+			);
+		}
+
 		if (state.sqlQueue.length) {
 			const next = state.sqlQueue.shift();
 			if (next instanceof Error) return Promise.reject(next);
@@ -80,8 +98,23 @@ vi.mock('../../api/_lib/db.js', () => ({
 }));
 
 // ── ElevenLabs mock ───────────────────────────────────────────────────────────
+// api/_lib/agent-voice-key.js imports elevenApiKey + resolveElevenKey from this
+// module, so the factory has to export them even though the handler itself does
+// not: vi.mock replaces the module for every importer in the graph, and a
+// missing export makes that transitive import throw instead of resolving.
 vi.mock('../../api/_lib/elevenlabs.js', () => ({
 	isConfigured: vi.fn(() => state.elevenConfigured),
+	elevenApiKey: vi.fn(() => (state.elevenConfigured ? PLATFORM_ELEVEN_KEY : null)),
+	// Mirrors the real precedence: a well-formed x-eleven-key header is BYOK and
+	// wins, otherwise the platform key serves the request (or nothing does).
+	resolveElevenKey: vi.fn((req) => {
+		const raw = req?.headers?.['x-eleven-key'];
+		const userKey = typeof raw === 'string' ? raw.trim() : '';
+		if (userKey && userKey.length <= 256 && /^[\x21-\x7e]+$/.test(userKey)) {
+			return { apiKey: userKey, byok: true };
+		}
+		return { apiKey: state.elevenConfigured ? PLATFORM_ELEVEN_KEY : null, byok: false };
+	}),
 	listVoices: vi.fn(async () => ({ voices: state.voices, cached: false })),
 	createClonedVoice: vi.fn(async () => {
 		if (state.cloneThrows)
@@ -436,7 +469,11 @@ describe('POST /api/agents/:id/voice/clone', () => {
 		];
 		const { status } = await invoke('POST', VALID_AUDIO, { action: 'clone' });
 		expect(status).toBe(500);
-		expect(vi.mocked(deleteVoice)).toHaveBeenCalledWith('cloned-1');
+		// The rollback deletes on the same account the clone was created on, so
+		// the credential travels with the call.
+		expect(vi.mocked(deleteVoice)).toHaveBeenCalledWith('cloned-1', {
+			apiKey: PLATFORM_ELEVEN_KEY,
+		});
 		expect(refundCreditsMock).toHaveBeenCalledWith(
 			expect.objectContaining({ action: 'voice.clone', amountUsd: 0.5 }),
 		);
@@ -487,6 +524,10 @@ describe('DELETE /api/agents/:id/voice', () => {
 			[],
 		];
 		await invoke('DELETE');
-		expect(vi.mocked(deleteVoice)).toHaveBeenCalledWith('my-clone');
+		// A clone only exists inside the account that made it, so freeing the slot
+		// has to name that account's key, not just the voice id.
+		expect(vi.mocked(deleteVoice)).toHaveBeenCalledWith('my-clone', {
+			apiKey: PLATFORM_ELEVEN_KEY,
+		});
 	});
 });
