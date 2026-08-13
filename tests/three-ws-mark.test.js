@@ -110,12 +110,15 @@ describe('THREE_WS_VANITY', () => {
 });
 
 // ── grindVanityNode with THREE_WS_VANITY ───────────────────────────────────
-// Real CPU grind — sub-second for a 3-char case-insensitive prefix but
-// marked with a longer timeout to be explicit.
+// Real CPU grind — sub-second for a 3-char case-insensitive prefix on an idle
+// core, but this suite runs it alongside 1500+ other files, so the WASM thread
+// may only see a fraction of a core. The grind budget must stay BELOW the test
+// timeout: that way a slow box fails with GrindExhaustedError (which carries
+// the attempt count and duration) instead of vitest's opaque wall-clock kill.
 
 describe('grindVanityNode({ ...THREE_WS_VANITY })', () => {
-	it('returns a publicKey that carries the three.ws mark', { timeout: 30_000 }, () => {
-		const result = grindVanityNode({ ...THREE_WS_VANITY });
+	it('returns a publicKey that carries the three.ws mark', { timeout: 120_000 }, () => {
+		const result = grindVanityNode({ ...THREE_WS_VANITY, timeBudgetMs: 90_000 });
 		expect(typeof result.publicKey).toBe('string');
 		expect(hasThreeWsMark(result.publicKey)).toBe(true);
 		expect(result.secretKey).toBeInstanceOf(Uint8Array);
