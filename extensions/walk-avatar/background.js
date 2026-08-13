@@ -184,11 +184,14 @@ function broadcast(message) {
 // ── Re-mount after full page loads ──────────────────────────────────────────
 // The popup records per-tab enable state in chrome.storage.session
 // (tab_enabled_<tabId>). A full navigation wipes the content scripts, so when
-// an enabled tab finishes loading, re-inject and re-mount the avatar. The
-// allow/blocklist is re-evaluated against the new URL, so navigating an
-// enabled tab onto a filtered site keeps the avatar off it.
+// an enabled tab loads, re-inject and re-mount the avatar. Fire on BOTH
+// 'loading' (commit) and 'complete': a reload that interrupts an in-flight
+// load can swallow the 'complete' transition entirely, and the injection
+// guard in content.js makes the double fire a no-op. The allow/blocklist is
+// re-evaluated against the new URL, so navigating an enabled tab onto a
+// filtered site keeps the avatar off it.
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-	if (changeInfo.status !== 'complete' || !tab.url) return;
+	if ((changeInfo.status !== 'loading' && changeInfo.status !== 'complete') || !tab.url) return;
 	if (!/^https?:/i.test(tab.url)) return;
 	if (tab.url.startsWith(THREEWS_ORIGIN + '/extension/auth-callback')) return;
 
