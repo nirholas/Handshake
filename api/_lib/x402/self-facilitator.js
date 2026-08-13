@@ -37,6 +37,17 @@ const COMPUTE_BUDGET_PROGRAM_ID = new PublicKey(
 	'ComputeBudget111111111111111111111111111111',
 );
 const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
+// SPL Memo, both live program ids. The reference x402 SVM client (@x402/svm,
+// which our own buildSolanaExactPayload delegates to) attaches a memo to every
+// `exact` payment it builds, so a facilitator that rejects memos cannot settle
+// a payment built by the standard client at all. Memo writes to the transaction
+// log and owns no accounts: it cannot move a lamport or a token, which is why it
+// is skipped here the same way a ComputeBudget instruction is. Its compute cost
+// still counts against the CU/fee ceiling enforced below.
+const MEMO_PROGRAM_IDS = [
+	new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
+	new PublicKey('Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo'),
+];
 
 // SPL Token instruction tag for TransferChecked. Plain Transfer (3) is rejected —
 // TransferChecked commits the mint + decimals, so we can trust the decoded mint.
@@ -224,6 +235,11 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 				cuPrice = readU64LE(data, 1);
 			}
 			// Other compute-budget tags carry no fund movement; ignore.
+			continue;
+		}
+
+		if (MEMO_PROGRAM_IDS.some((id) => programId.equals(id))) {
+			// Carries no fund movement (see MEMO_PROGRAM_IDS). Skipped, not counted.
 			continue;
 		}
 

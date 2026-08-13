@@ -117,10 +117,21 @@ async function loadPg() {
 	try {
 		return await import('pg');
 	} catch {
+		// A `--no-save` install is transient: any later `npm install` in this
+		// worktree prunes it, so a re-run lands here again. It can also leave a
+		// half-written node_modules/pg that resolves as a directory but has no
+		// entry point — hence the post-install re-import is checked, not assumed.
 		console.log('  installing pg (--no-save) for the local Postgres bridge');
 		const r = run('npm', ['i', '--no-save', '--no-audit', '--no-fund', 'pg'], { cwd: root });
 		if (r.code !== 0) throw new Error(`npm i pg failed: ${r.out.slice(-400)}`);
-		return await import('pg');
+		try {
+			return await import('pg');
+		} catch (e) {
+			throw new Error(
+				`pg still not importable after install (${e?.message || e}). ` +
+				'Run `npm i --no-save pg` yourself and re-run this proof.',
+			);
+		}
 	}
 }
 
@@ -138,18 +149,23 @@ await client.connect();
 // Raw text rows would break the guard SQL: a float8 cap parameter that comes
 // back as the string '1' makes Postgres compare 'double > text', and every cap
 // silently passes. Serialize per column type so the HTTP response carries real
-// JSON values the way Neon's own endpoint does. bool(16), ints(20,21,23,26),
-// floats(700,701,1700), and json/jsonb(114,3802) get typed values; everything
-// else stays text (uuid, timestamptz, ...) exactly like production.
+// JSON values the way Neon's own endpoint does. bool(16), ints(20,21,23,26) and
+// floats(700,701,1700) get typed values; everything else stays text (uuid,
+// timestamptz, ...) exactly like production.
+//
+// json/jsonb (114/3802) MUST stay text: the neon driver runs its own JSON.parse
+// over those columns, so handing it an already-parsed object makes it parse
+// String(object) and every query that selects a jsonb column dies with
+// '"[object Object]" is not valid JSON'. That is precisely the shape of every
+// agent policy read (SELECT meta FROM agent_identities), so parsing here turns
+// the whole proof into a false negative.
 const NUMERIC_OIDS = new Set([700, 701, 1700]);
 const INT_OIDS = new Set([20, 21, 23, 26]);
-const JSON_OIDS = new Set([114, 3802]);
 function coerce(value, oid) {
 	if (value === null || value === undefined) return null;
 	if (oid === 16) return value === 't' || value === 'true';
 	if (INT_OIDS.has(oid)) { const n = BigInt(value); return n <= 9007199254740991n && n >= -9007199254740991n ? Number(n) : value; }
 	if (NUMERIC_OIDS.has(oid)) return Number(value);
-	if (JSON_OIDS.has(oid)) { try { return JSON.parse(value); } catch { return value; } }
 	return value;
 }
 http.createServer(async (req, res) => {
@@ -547,6 +563,12 @@ process.stdin.on('data', (d) => {
 	// ── 5. receipts on the live local surface ────────────────────────────────
 	step('5. receipts - queryable per agent on the live HTTP surface');
 	{
+		// This section proves the receipt surface, not the ceilings — and the proof
+		// agent is still carrying section 2's $1/day cap plus its backfilled history.
+		// Open the policy back up so a seeding payment is refused only if something
+		// is genuinely broken.
+		await setLimits({ daily_usd: null, per_tx_usd: null, per_counterparty_daily_usd: null, withdraw_allowlist: [], frozen: false, require_capabilities: false });
+
 		// Confirmed payments with tx signatures: the receipt rows the owner reads.
 		const sigs = ['proofsigA111', 'proofsigB222', 'proofsigC333'];
 		const amounts = [[0.4, PEER_A], [0.35, PEER_A], [0.25, PEER_B]];
@@ -581,7 +603,20 @@ process.stdin.on('data', (d) => {
 			stdio: ['ignore', 'pipe', 'pipe'],
 		});
 		cleanup.push(() => server.kill('SIGKILL'));
-		server.stderr.on('data', () => {});
+		// Keep the server's own log instead of dropping it: the API answers a failed
+		// request with an opaque `ref`, so without the tail below a 500 here is
+		// undiagnosable and the proof reports "receipts unverified" with no reason.
+		const serverLog = [];
+		const captureLog = (d) => {
+			for (const line of String(d).split('\n')) {
+				if (!line.trim()) continue;
+				serverLog.push(line);
+				if (serverLog.length > 400) serverLog.shift();
+			}
+		};
+		server.stderr.on('data', captureLog);
+		server.stdout.on('data', captureLog);
+		const serverTail = (n = 12) => serverLog.slice(-n).map((l) => `\n      | ${l}`).join('');
 		await waitFor(async () => {
 			try {
 				const r = await fetch(`${HTTP_BASE}/api/version`);
@@ -593,8 +628,13 @@ process.stdin.on('data', (d) => {
 		const http = makeHttp();
 		const email = `proof-owner-${Date.now()}@proof.local`;
 		const reg = await http.req('POST', '/api/auth/register', { body: { email, password: 'proof-pass-12345', tosAccepted: true } });
-		check('owner registered through the real /register flow', reg.status === 200 || reg.status === 201,
-			reg.status === 200 || reg.status === 201 ? email : `status ${reg.status}: ${reg.text.slice(0, 200)}`);
+		const registered = reg.status === 200 || reg.status === 201;
+		check('owner registered through the real /register flow', registered,
+			registered ? email : `status ${reg.status}: ${reg.text.slice(0, 200)}${serverTail()}`);
+		// Every later check in this section signs in as that owner, so a failed
+		// registration is a dead end, not a partial result. Stop here with the
+		// server's own log attached rather than emitting a cascade of 401s.
+		if (!registered) throw new Error(`registration failed (${reg.status}) — the receipt-surface checks cannot run${serverTail(20)}`);
 
 		const csrf1 = await http.freshCsrf();
 		const created = await http.req('POST', '/api/agents', {
