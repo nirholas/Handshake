@@ -10,11 +10,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 process.env.PUBLIC_APP_ORIGIN ||= 'https://three.ws';
 
 // ── DB (registry + agent lookup) ─────────────────────────────────────────────
-const dbState = { agentRow: null, insertRow: null };
+const dbState = { agentRow: null, insertRow: null, insertError: null };
 vi.mock('../../api/_lib/db.js', () => ({
 	sql: vi.fn(async (strings) => {
 		const q = Array.isArray(strings) ? strings.join(' ') : String(strings);
-		if (q.includes('INSERT INTO agent_paid_services')) return [dbState.insertRow];
+		if (q.includes('INSERT INTO agent_paid_services')) {
+			if (dbState.insertError) throw dbState.insertError;
+			return [dbState.insertRow];
+		}
 		if (q.includes('agent_identities')) return dbState.agentRow ? [dbState.agentRow] : [];
 		return [];
 	}),
@@ -51,6 +54,37 @@ vi.mock('../../api/_lib/ssrf.js', () => {
 		}),
 	};
 });
+
+// ── Devnet faucet: the connection + confirmation the airdrop path uses ───────
+// requestDevnetAirdrop imports these lazily, so the mocks stand in for the RPC
+// without any devnet traffic. airdropState drives success vs. faucet failure.
+const airdropState = { signature: 'FaucetSig1111', requestError: null, confirmError: null };
+const requestAirdrop = vi.fn(async () => {
+	if (airdropState.requestError) throw airdropState.requestError;
+	return airdropState.signature;
+});
+vi.mock('../../api/_lib/agent-pumpfun.js', () => ({
+	solanaConnection: vi.fn(() => ({ requestAirdrop })),
+}));
+vi.mock('../../api/_lib/solana/confirm.js', () => ({
+	confirmOrThrow: vi.fn(async () => {
+		if (airdropState.confirmError) throw airdropState.confirmError;
+		return { value: { err: null } };
+	}),
+}));
+// PublicKey only has to accept the fixture address; every other web3 export
+// (LAMPORTS_PER_SOL, used to size the airdrop) stays real.
+vi.mock('@solana/web3.js', async (orig) => ({
+	...(await orig()),
+	PublicKey: class {
+		constructor(address) {
+			this.address = address;
+		}
+		toBase58() {
+			return this.address;
+		}
+	},
+}));
 
 // ── Imported-but-unused-here money core (must resolve) ───────────────────────
 vi.mock('../../api/_lib/x402-user-payer.js', () => ({
@@ -92,9 +126,13 @@ function ownedAgent(extra = {}) {
 beforeEach(() => {
 	dbState.agentRow = ownedAgent();
 	dbState.insertRow = null;
+	dbState.insertError = null;
 	walletState.created = true;
 	walletState.sol = 0.5;
 	walletState.usdc = 0;
+	airdropState.requestError = null;
+	airdropState.confirmError = null;
+	requestAirdrop.mockClear();
 });
 
 describe('agent-wallet MCP — provisioning + earning', () => {
@@ -155,6 +193,59 @@ describe('agent-wallet MCP — provisioning + earning', () => {
 		expect(r.result.structuredContent.sol_balance).toBe(0.5);
 		// Say so rather than dropping the argument in silence.
 		expect(r.result.content[0].text).toContain('Airdrop skipped');
+	});
+
+	it('airdrops 1 SOL on devnet and reports the signature', async () => {
+		walletState.sol = 1.5; // balances are read after the faucet lands
+		const r = await call('provision_wallet', {
+			agent_id: AGENT_ID,
+			cluster: 'devnet',
+			airdrop: true,
+		});
+		expect(requestAirdrop).toHaveBeenCalledTimes(1);
+		expect(r.result.structuredContent).toMatchObject({
+			ok: true,
+			cluster: 'devnet',
+			sol_balance: 1.5,
+			airdrop: { ok: true, signature: 'FaucetSig1111', sol: 1 },
+		});
+		expect(r.result.content[0].text).toContain('Airdropped 1 SOL on devnet');
+	});
+
+	it('never touches the faucet on devnet unless airdrop is asked for', async () => {
+		const r = await call('provision_wallet', { agent_id: AGENT_ID, cluster: 'devnet' });
+		expect(requestAirdrop).not.toHaveBeenCalled();
+		expect(r.result.structuredContent.airdrop).toBeUndefined();
+	});
+
+	it('still provisions when the faucet is rate limited, as a note not an error', async () => {
+		airdropState.requestError = new Error('429 Too Many Requests: airdrop limit reached');
+		const r = await call('provision_wallet', {
+			agent_id: AGENT_ID,
+			cluster: 'devnet',
+			airdrop: true,
+		});
+		// The wallet is real and returned; only the faucet failed.
+		expect(r.result.isError).toBeUndefined();
+		expect(r.result.structuredContent).toMatchObject({
+			ok: true,
+			address: 'SoLagentAddr1111',
+			airdrop: { ok: false, reason: 'faucet_rate_limited' },
+		});
+		expect(r.result.content[0].text).toContain('Devnet airdrop unavailable');
+	});
+
+	it('reports a faucet that never confirms as unavailable, not rate limited', async () => {
+		airdropState.confirmError = new Error('transaction was not confirmed in time');
+		const r = await call('provision_wallet', {
+			agent_id: AGENT_ID,
+			cluster: 'devnet',
+			airdrop: true,
+		});
+		expect(r.result.structuredContent.airdrop).toMatchObject({
+			ok: false,
+			reason: 'faucet_unavailable',
+		});
 	});
 
 	it('enforces the wallet:write scope', async () => {
@@ -233,6 +324,31 @@ describe('agent-wallet MCP — provisioning + earning', () => {
 		});
 		// price_usdc: 0 fails the schema (exclusiveMinimum) → -32602 invalid params.
 		expect(r.error?.code).toBe(-32602);
+	});
+
+	it('answers an exhausted slug allocation with a structured refusal', async () => {
+		dbState.agentRow = ownedAgent({ wallet_address: '0xAgentEvmWallet' });
+		// Every insert collides, so createPaidService burns its retries. The agent
+		// gets the designed reason rather than the driver's unique-violation text.
+		dbState.insertError = Object.assign(
+			new Error('duplicate key value violates unique constraint "agent_paid_services_slug_key"'),
+			{ code: '23505' },
+		);
+		const r = await call('monetize_endpoint', {
+			agent_id: AGENT_ID,
+			name: 'Weather API',
+			description: 'Live weather',
+			price_usdc: 0.01,
+			target_url: 'https://api.example.com/weather',
+		});
+		expect(r.result.isError).toBe(true);
+		expect(r.result.structuredContent).toMatchObject({
+			ok: false,
+			reason: 'slug_alloc_failed',
+			network: 'base',
+		});
+		// The pg constraint name never reaches the caller.
+		expect(JSON.stringify(r.result)).not.toContain('unique constraint');
 	});
 
 	it('requires sign-in for monetize_endpoint', async () => {

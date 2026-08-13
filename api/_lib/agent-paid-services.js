@@ -142,7 +142,19 @@ export async function createPaidService(input) {
 			throw err;
 		}
 	}
-	throw lastErr || new MonetizeError('failed to allocate a unique slug', 'slug_alloc_failed', 500);
+	// Every retry collided. Report it as the designed slug_alloc_failed rather
+	// than rethrowing the driver's unique-violation: the sole caller (the
+	// monetize_endpoint MCP tool) answers a MonetizeError with a structured
+	// { ok:false, reason } an agent can act on, while a raw pg error reaches it
+	// as an opaque sanitized string. The driver detail rides along as `cause`
+	// for the logs without leaking into the message.
+	const exhausted = new MonetizeError(
+		'could not allocate a unique service slug, try a different name',
+		'slug_alloc_failed',
+		500,
+	);
+	exhausted.cause = lastErr;
+	throw exhausted;
 }
 
 // Fetch one active service by slug for the hosted paywall to serve.
