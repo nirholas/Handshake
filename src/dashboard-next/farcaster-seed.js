@@ -193,7 +193,7 @@ export function mountFarcasterSeed(host, { agentId }) {
 			<div class="fc-seed">
 				<div class="fc-card">
 					<div style="display:flex;align-items:center;gap:10px">
-						${profile.pfp_url ? `<img src="${esc(profile.pfp_url)}" alt="" width="36" height="36" style="border-radius:50%;object-fit:cover;flex-shrink:0" />` : ''}
+						${profile.pfp_url ? `<img src="${esc(profile.pfp_url)}" alt="" width="36" height="36" loading="lazy" style="border-radius:50%;object-fit:cover;flex-shrink:0" />` : ''}
 						<div style="min-width:0">
 							<div style="font-size:13px;font-weight:600;color:${INK};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
 								${esc(profile.display_name || profile.fname || `FID ${profile.fid}`)}
