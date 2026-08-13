@@ -151,8 +151,8 @@ function evmExplorerTx(chain, txHash) {
 }
 
 /** Build the agent card the registry URI resolves to (three.ws Card v1 shape). */
-function buildDraftAgentCard({ agent, origin, publicUrl }) {
-	const image = agent.thumbnail_key ? publicUrl(agent.thumbnail_key) : `${origin}/og.png`;
+function buildDraftAgentCard({ agent, origin, publicUrl, thumbnailUrl }) {
+	const image = thumbnailUrl(agent.thumbnail_key) || `${origin}/og.png`;
 	const glb = agent.storage_key ? publicUrl(agent.storage_key) : null;
 	return {
 		name: agent.name || 'Agent',
@@ -198,8 +198,8 @@ async function evmDraftMint({ agent, userId, chainId }) {
 	const { address: evmAddress } = await getOrCreateAgentEvmWallet(agent.id, { chainId });
 	const provider = await evmFallbackProvider(chainId);
 
-	const { publicUrl } = await import('./r2.js');
-	const card = buildDraftAgentCard({ agent, origin: env.APP_ORIGIN, publicUrl });
+	const { publicUrl, thumbnailUrl } = await import('./r2.js');
+	const card = buildDraftAgentCard({ agent, origin: env.APP_ORIGIN, publicUrl, thumbnailUrl });
 	const metadataUri = await pinDraftCard(card, agent.id);
 
 	const { Contract, Wallet, Interface, parseEther, formatEther } = await import('ethers');
