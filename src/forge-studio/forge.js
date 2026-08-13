@@ -138,6 +138,9 @@ let lastJob = null; // { prompt, imageUrls } — for retry
 // server's own poll-time failover already walked the async lanes before this.
 let autoLaneHops = 0;
 let currentCreationId = null;
+// The rows currently rendered in "Your creations", kept so a delete can drop
+// one card in place (count, empty state) without a refetch.
+let galleryCreations = [];
 // The quality tier the on-screen result was produced at — drives the "Refine"
 // affordance, which re-runs the same job exactly one tier higher.
 let currentResultTier = null;
@@ -1749,6 +1752,7 @@ async function loadGallery() {
 		return;
 	}
 	els.creationsGrid.innerHTML = '';
+	galleryCreations = creations;
 	for (const c of creations) {
 		const card = document.createElement('button');
 		card.type = 'button';
@@ -1814,10 +1818,91 @@ async function loadGallery() {
 
 		card.addEventListener('click', () => openCreation(c));
 
-		els.creationsGrid.appendChild(card);
+		// The card is itself a <button>, so the delete control lives beside it in
+		// a positioning wrapper rather than nested inside (invalid HTML).
+		const cell = document.createElement('div');
+		cell.className = 'creation-wrap';
+		cell.appendChild(card);
+		if (c.id) cell.appendChild(makeDeleteButton(c, cell));
+		els.creationsGrid.appendChild(cell);
 	}
 	els.creationsCount.textContent = `${creations.length} saved`;
 	els.creations.classList.remove('is-hidden');
+}
+
+// Two-tap delete for a gallery card: the first tap arms a visible "Delete?"
+// confirm state, the second (within 4s) permanently deletes the creation
+// server-side (the stored model, its preview, and any uploaded reference
+// photos) and drops the card in place. Blur, Escape, or the timeout disarms.
+function makeDeleteButton(c, cell) {
+	const del = document.createElement('button');
+	del.type = 'button';
+	del.className = 'creation-del';
+	del.textContent = '×';
+	del.title = 'Delete this creation';
+	del.setAttribute('aria-label', `Delete: ${c.prompt || 'forged model'}`);
+	let armed = false;
+	let disarmTimer = 0;
+	const disarm = () => {
+		armed = false;
+		clearTimeout(disarmTimer);
+		del.classList.remove('is-armed');
+		del.textContent = '×';
+		del.title = 'Delete this creation';
+		del.setAttribute('aria-label', `Delete: ${c.prompt || 'forged model'}`);
+	};
+	del.addEventListener('blur', disarm);
+	del.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') disarm();
+	});
+	del.addEventListener('click', async (e) => {
+		// Never let a delete tap open the model underneath.
+		e.stopPropagation();
+		if (!armed) {
+			armed = true;
+			del.classList.add('is-armed');
+			del.textContent = 'Delete?';
+			del.title = 'Click again to permanently delete';
+			del.setAttribute('aria-label', 'Confirm permanent delete');
+			disarmTimer = setTimeout(disarm, 4000);
+			return;
+		}
+		clearTimeout(disarmTimer);
+		del.disabled = true;
+		del.textContent = '…';
+		let ok = false;
+		try {
+			const res = await fetch(`/api/forge-creation?id=${encodeURIComponent(c.id)}`, {
+				method: 'DELETE',
+				headers: CLIENT_HEADERS,
+			});
+			const body = await res.json().catch(() => ({}));
+			// A 404 means the row is already gone (deleted from another tab); the
+			// card should disappear either way.
+			ok = (res.ok && body?.deleted === true) || res.status === 404;
+		} catch {
+			ok = false;
+		}
+		if (!ok) {
+			del.disabled = false;
+			disarm();
+			del.title = "Couldn't delete. Check your connection and try again.";
+			return;
+		}
+		removeCreationFromGallery(c.id, cell);
+	});
+	return del;
+}
+
+// Drop a deleted creation's card in place: no refetch, no skeleton flash.
+// Keeps the count and empty state truthful, and clears the feedback handle so
+// a verdict can't target the deleted row.
+function removeCreationFromGallery(id, cell) {
+	cell.remove();
+	galleryCreations = galleryCreations.filter((x) => String(x.id) !== String(id));
+	if (els.creationsCount) els.creationsCount.textContent = `${galleryCreations.length} saved`;
+	if (galleryCreations.length === 0) els.creations.classList.add('is-hidden');
+	if (String(currentCreationId) === String(id)) currentCreationId = null;
 }
 
 // Load a creation into the viewer — shared by gallery card clicks and the

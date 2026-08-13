@@ -17,7 +17,7 @@ import { createHash } from 'node:crypto';
 import { randomUUID } from 'node:crypto';
 import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
-import { putObject, publicUrl } from './r2.js';
+import { putObject, publicUrl, deleteObject, keyFromPublicUrl } from './r2.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
@@ -61,6 +61,21 @@ export function hashClient(raw) {
 export function hashIp(ip) {
 	if (!ip) return null;
 	return createHash('sha256').update(`${CLIENT_SALT}:ip:${ip}`).digest('hex');
+}
+
+// Resolve the reference-view URLs a generation consumes down to the bucket keys
+// of the user's own uploads (forge/uploads/..., written by api/forge-upload.js).
+// Provider-hosted URLs (FLUX previews on a delivery CDN, pasted external links)
+// resolve to null and are dropped: they are not ours to delete. Returns a
+// deduplicated array, or null when nothing bucket-hosted is present, so the
+// column stays null for the text-to-3D majority.
+function sourceImageKeysFrom(urls) {
+	const keys = new Set();
+	for (const url of Array.isArray(urls) ? urls : []) {
+		const key = keyFromPublicUrl(url);
+		if (key && key.startsWith('forge/')) keys.add(key);
+	}
+	return keys.size ? [...keys].slice(0, 12) : null;
 }
 
 // Record a generation the moment it starts, so the prompt + reference image are
@@ -127,6 +142,13 @@ export async function createCreation({
 	path,
 	modelCategory,
 	userId,
+	// Every reference-view URL the generation consumes (multiview lanes pass the
+	// full list). Bucket-hosted ones (the user's own uploaded photos) are
+	// resolved to their object keys and remembered on the row so deleteCreation
+	// can erase the photos too. Defaults to the preview URL, which is the single
+	// reference view on every non-multiview lane, so callers that pass nothing
+	// still get their upload tracked.
+	sourceImageUrls = null,
 }) {
 	if (!forgeStoreEnabled()) return null;
 	const id = randomUUID();
@@ -134,18 +156,23 @@ export async function createCreation({
 	// it from the prompt so the model gets a real category at birth instead of
 	// defaulting to 'other' and leaving the category dimension dead.
 	const category = validModelCategory(modelCategory) ?? classifyModelCategory(prompt);
+	const sourceKeys = sourceImageKeysFrom(
+		Array.isArray(sourceImageUrls) && sourceImageUrls.length ? sourceImageUrls : [previewImageUrl],
+	);
 	try {
 		await sql`
 			insert into forge_creations
 				(id, client_key, ip_hash, prompt, aspect, preview_image_url,
 				 replicate_job_id, text_to_image_model, views_requested, views_used,
-				 multiview, backend, tier, path, status, outcome, model_category, user_id)
+				 multiview, backend, tier, path, status, outcome, model_category, user_id,
+				 source_image_keys)
 			values
 				(${id}, ${clientKey}, ${ipHash ?? null}, ${prompt}, ${aspect ?? null},
 				 ${previewImageUrl ?? null}, ${replicateJobId ?? null},
 				 ${textToImageModel ?? null}, ${viewsRequested ?? null}, ${viewsUsed ?? null},
 				 ${typeof multiview === 'boolean' ? multiview : null}, ${backend ?? null},
-				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category}, ${userId ?? null})
+				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category}, ${userId ?? null},
+				 ${sourceKeys ? JSON.stringify(sourceKeys) : null})
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.
@@ -555,6 +582,57 @@ export async function markFailed({ replicateJobId, clientKey, error }) {
 		}
 	} catch (err) {
 		console.error('[forge-store] markFailed failed:', err?.message);
+	}
+}
+
+// Permanently delete a creation: the stored mesh, the stored preview, every
+// recorded source upload (the user's reference photos), and the row itself.
+// Scoped to the owning client_key so one browser can never erase another's
+// work. Bucket objects go first: if storage refuses, the row survives and the
+// user can simply retry; deleting the row first would strand unreferenced
+// bytes with no handle left to retry from. The row delete then cascades
+// forge_votes and forge_comments; lineage children and forge_board_winners
+// null their reference (see the migrations that created those FKs).
+// Returns 'deleted' | 'not_found' | 'error' | 'unavailable'.
+export async function deleteCreation({ id, clientKey }) {
+	if (!forgeStoreEnabled() || !id || !clientKey) return 'unavailable';
+	try {
+		const rows = await sql`
+			select id, glb_key, glb_url, preview_key, preview_image_url, source_image_keys
+			from forge_creations
+			where id = ${id} and client_key = ${clientKey}
+			limit 1
+		`;
+		const row = rows[0];
+		if (!row) return 'not_found';
+
+		// Every bucket object the row points at. URL-derived keys cover legacy
+		// rows written before the *_key columns existed, and a preview that still
+		// points at the raw upload because the durable copy failed. The forge/
+		// prefix guard keeps a corrupted row from ever deleting outside the
+		// forge namespace.
+		const keys = new Set();
+		for (const k of [row.glb_key, row.preview_key]) {
+			if (typeof k === 'string' && k.startsWith('forge/')) keys.add(k);
+		}
+		for (const u of [row.glb_url, row.preview_image_url]) {
+			const k = keyFromPublicUrl(u);
+			if (k && k.startsWith('forge/')) keys.add(k);
+		}
+		for (const k of Array.isArray(row.source_image_keys) ? row.source_image_keys : []) {
+			if (typeof k === 'string' && k.startsWith('forge/')) keys.add(k);
+		}
+		await Promise.all([...keys].map((key) => deleteObject(key)));
+
+		await sql`delete from forge_creations where id = ${id} and client_key = ${clientKey}`;
+		return 'deleted';
+	} catch (err) {
+		if (isDbUnavailableError(err)) {
+			console.warn('[forge-store] deleteCreation skipped (db unavailable):', err?.message);
+			return 'unavailable';
+		}
+		console.error('[forge-store] deleteCreation failed:', err?.message);
+		return 'error';
 	}
 }
 

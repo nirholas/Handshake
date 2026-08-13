@@ -20,16 +20,25 @@
  *                     (same category first, newest, never the model itself)
  *   ?view=1           counts one page impression (fire-and-forget increment
  *                     of forge_creations.view_count; never blocks the read)
+ *
+ *   DELETE /api/forge-creation?id=<uuid>  → { deleted: true }
+ *
+ * Deletion is scoped to the owning browser (the x-forge-client header that
+ * scopes the gallery): only the client that forged a creation can delete it.
+ * It permanently removes the stored GLB, the stored preview, every recorded
+ * source upload (the reference photos an image-to-3D run was conditioned on),
+ * and the row itself, so a deleted creation is gone from the gallery, the
+ * community showcase, and the share/embed pages alike.
  */
 
 import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { getPublicCreation, listRelated, recordCreationView, hashClient, forgeStoreEnabled } from './_lib/forge-store.js';
+import { getPublicCreation, listRelated, recordCreationView, deleteCreation, hashClient, forgeStoreEnabled } from './_lib/forge-store.js';
 import { isUuid } from './_lib/validate.js';
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	if (!method(req, res, ['GET'])) return;
+	if (cors(req, res, { methods: 'GET,DELETE,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'DELETE'])) return;
 
 	const rl = await limits.mcp3dStatus(clientIp(req));
 	if (!rl.success) {
@@ -44,6 +53,26 @@ export default wrap(async (req, res) => {
 	const id = url.searchParams.get('id');
 	if (!id || !isUuid(id)) {
 		return json(res, 400, { enabled: true, creation: null, error: 'invalid id' });
+	}
+
+	if (req.method === 'DELETE') {
+		const rawClient = req.headers['x-forge-client'];
+		const clientHeader = Array.isArray(rawClient) ? rawClient[0] : rawClient;
+		if (!clientHeader) {
+			return json(res, 401, { error: 'missing_client', message: 'x-forge-client header required.' });
+		}
+		const outcome = await deleteCreation({ id, clientKey: hashClient(clientHeader) });
+		if (outcome === 'deleted') return json(res, 200, { deleted: true });
+		if (outcome === 'not_found') {
+			// Either the id doesn't exist or it belongs to another client; both
+			// answer the same so ids can't be probed for existence.
+			return json(res, 404, { deleted: false, error: 'not_found' });
+		}
+		return json(res, 503, {
+			deleted: false,
+			error: 'delete_failed',
+			message: 'Could not delete right now. Nothing was removed; try again shortly.',
+		});
 	}
 
 	// Optional anonymous browser id (same forge:cid the gallery uses) resolves

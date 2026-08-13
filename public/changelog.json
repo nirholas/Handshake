@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T07:51:28.485Z",
+	"generated_at": "2026-08-13T08:38:32.663Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -699,6 +699,17 @@
 			"tags": [
 				"docs",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "You can now delete your Forge creations, photos included",
+			"summary": "Every card in the \"Your creations\" gallery on /forge and the Forge Studio now carries a delete button (tap once to arm, tap again to confirm). Deleting a creation permanently erases everything the platform stored for it: the 3D model file, the preview image, and, for image-to-3D runs, the reference photos you uploaded. The model also disappears from the community showcase, share links and embeds at the same moment. Before this, a generated model and its source photo stayed on our storage forever with no way to remove them, which is not acceptable for anyone turning personal photos into 3D. Only the browser that forged a model can delete it.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{

@@ -145,6 +145,21 @@ function isAbsoluteUrl(key) {
 	return typeof key === 'string' && /^https?:\/\//i.test(key);
 }
 
+// Reverse of publicUrl(): resolve a public CDN URL back to the bucket key it
+// serves, or null when the URL lives outside our bucket. Lets deletion paths
+// find the stored object behind a URL-bearing column (e.g. a forge creation's
+// preview_image_url) so the bytes are actually removed, not just unlinked.
+export function keyFromPublicUrl(url) {
+	if (typeof url !== 'string' || !url.startsWith(`${env.S3_PUBLIC_DOMAIN}/`)) return null;
+	const path = url.slice(`${env.S3_PUBLIC_DOMAIN}/`.length).split(/[?#]/)[0];
+	if (!path) return null;
+	try {
+		return path.split('/').map(decodeURIComponent).join('/');
+	} catch {
+		return null;
+	}
+}
+
 // A thumbnail_key written by the pre-fix avatar-OG cache (it derived `_og.png`
 // from an absolute storage_key, so the "key" was a full origin URL that
 // publicUrl() passes through verbatim — pointing at the site instead of the R2

@@ -527,6 +527,14 @@
 			<description>Audited the eight paid-endpoint and Premium documentation pages against the running code. Corrected the pump.fun launcher ticker-check example (it used a parameter the endpoint does not accept), refreshed the volume-loop spend cap and price range, repaired the payout source links and a dead datapoint-fabric anchor, dropped a stale archive article count, and made the free sample commands CI-verified so this class of drift fails the build next time.</description>
 		</item>
 		<item>
+			<title>You can now delete your Forge creations, photos included</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-13:You can now delete your Forge creations, photos included</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every card in the &quot;Your creations&quot; gallery on /forge and the Forge Studio now carries a delete button (tap once to arm, tap again to confirm). Deleting a creation permanently erases everything the platform stored for it: the 3D model file, the preview image, and, for image-to-3D runs, the reference photos you uploaded. The model also disappears from the community showcase, share links and embeds at the same moment. Before this, a generated model and its source photo stayed on our storage forever with no way to remove them, which is not acceptable for anyone turning personal photos into 3D. Only the browser that forged a model can delete it.</description>
+		</item>
+		<item>
 			<title>Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</title>
 			<link>https://three.ws/dashboard/api</link>
 			<guid isPermaLink="false">2026-08-13:Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</guid>

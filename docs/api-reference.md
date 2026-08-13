@@ -1168,6 +1168,26 @@ creator attribution (`creatorUsername`, `creatorDisplayName`,
 first, newest, never the model itself. Geometry stats are not stored: the page
 reads triangles/vertices live from the free `GET /api/3d/inspect?url=<glb>`.
 
+### Delete a creation: `DELETE /api/forge-creation`
+
+```
+DELETE /api/forge-creation?id=<uuid>
+x-forge-client: <stable browser id>   # required: only the owner can delete
+→ { "deleted": true }
+```
+
+Permanent deletion for the "Your creations" gallery, scoped to the browser
+that forged the model (the same `forge:cid` id that scopes the gallery read).
+It erases everything the platform stored for that creation: the durable GLB,
+the preview image, any uploaded reference photos the generation was
+conditioned on (the image-to-3D source pictures), the row itself, and with it
+the model's presence in the community showcase, share links, and embeds.
+Votes and comments cascade away with the row. A missing client id is
+`401 missing_client`; an id that doesn't exist or belongs to another browser
+is `404 not_found` (indistinguishable on purpose, so ids can't be probed).
+On a storage fault nothing is removed and the response is `503 delete_failed`;
+retry safely.
+
 ### Model comments: `GET/POST/DELETE /api/forge-comments`
 
 ```
