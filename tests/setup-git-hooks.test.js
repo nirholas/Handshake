@@ -31,6 +31,7 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const installer = join(repoRoot, 'scripts', 'setup-git-hooks.mjs');
 const checkRules = join(repoRoot, 'scripts', 'check-rules.mjs');
+const checkSecrets = join(repoRoot, 'scripts', 'check-secrets.mjs');
 
 const ZERO = '0'.repeat(40);
 // Assembled at runtime so this file does not itself contain a literal the
@@ -42,7 +43,7 @@ let repo;
 let shimDir;
 
 /**
- * Copy the installer (and the checker the hook shells out to) into `dir` as
+ * Copy the installer (and both checkers the hook shells out to) into `dir` as
  * scripts/, mirroring the real layout.
  *
  * The installer deliberately resolves its target repo from its own file
@@ -55,6 +56,7 @@ function stageScripts(dir) {
 	mkdirSync(join(dir, 'scripts'), { recursive: true });
 	copyFileSync(installer, join(dir, 'scripts', 'setup-git-hooks.mjs'));
 	copyFileSync(checkRules, join(dir, 'scripts', 'check-rules.mjs'));
+	copyFileSync(checkSecrets, join(dir, 'scripts', 'check-secrets.mjs'));
 }
 
 /** Run the staged installer inside `dir`; returns { code, out }. */
@@ -110,8 +112,9 @@ beforeAll(() => {
 	repo = join(sandbox, 'repo');
 	mkdirSync(repo, { recursive: true });
 	git(repo, ['init', '-q']);
-	// The hook shells out to `node scripts/check-rules.mjs`, resolved against the
-	// pushing repo, so the checker has to exist here too.
+	// The hook shells out to `node scripts/check-rules.mjs` and
+	// `node scripts/check-secrets.mjs`, resolved against the pushing repo, so
+	// both checkers have to exist here too.
 	stageScripts(repo);
 	writeFileSync(join(repo, 'clean.js'), 'export const ok = 1;\n');
 	commitAll(repo, 'base');
