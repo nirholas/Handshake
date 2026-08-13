@@ -10,7 +10,7 @@
 // an optimization, it is the correctness property that keeps the cap from
 // starving the market: the scans are ordered oldest-first, so any row the driver
 // can never move occupies a slot on every tick forever. Two such rows existed:
-//   • a 'working' job whose worker never opted into autonomy, runAutopilot
+//   • a 'working' job whose worker never opted into autonomy. runAutopilot
 //     returns immediately for it, so it can only ever leave 'working' through
 //     the manual /deliver endpoint. Ten of them (a human sitting on ten jobs)
 //     used to consume the entire job batch and no autonomous job was ever driven
