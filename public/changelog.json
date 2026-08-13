@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T04:44:13.211Z",
+	"generated_at": "2026-08-13T04:47:29.698Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -249,6 +249,17 @@
 		{
 			"date": "2026-08-13",
 			"type": "update",
+			"title": "The agent-wallet MCP tools explain a failed listing instead of returning a database error",
+			"summary": "Publishing a paid endpoint with monetize_endpoint picks a short web address for the listing, and in the rare case where every attempt collided with an existing one, the tool passed the database's own unique-constraint text back to the calling agent, which read as an unexplained internal failure. It now answers with a named reason and plain advice (try a different name), in the same structured shape as every other refusal that tool can give, while the database detail goes to the logs only. The wallet tools' descriptions were also rewritten so their punctuation renders cleanly in every MCP client that shows them.",
+			"link": "/docs/mcp-tools",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
 			"title": "The AI safety check stays available even when someone floods it with bad requests",
 			"summary": "Every message and every autonomous money move an avatar makes is screened by the IBM Granite Guardian safety check before it runs. That check has an hourly platform-wide ceiling so one busy hour cannot run up an unbounded inference bill. The ceiling was being charged on every request that arrived, including ones that were rejected on the spot for a malformed body and never reached the safety model at all. A single client sending junk could therefore burn the whole platform hour and leave everyone else refused for real, valid checks. The ceiling is now charged only when an actual screening runs. Two error replies were also corrected: sending the wrong content type now answers 415 and an oversized body answers 413, instead of both being reported as generic bad input, so a caller can see which of the two to fix.",
 			"link": "/docs/ibm",
@@ -294,7 +305,7 @@
 			"type": "update",
 			"title": "The Granite forecast tool now ships a copy-and-run example",
 			"summary": "The IBM Granite forecasting tool on our x402 MCP endpoint advertised a two-point sample series, but the tool needs at least 64 points of history to forecast anything. Any agent that copied the published example got a validation error back instead of a forecast. The example is now a real 64-day daily series you can paste straight into a call, and it is identical on the hosted endpoint and in the @three-ws/ibm-x402-mcp package. A test now dials every published example through the server the way a client would, so a sample that does not actually work cannot ship again.",
-			"link": "/mcp",
+			"link": "/docs/ibm-x402-mcp",
 			"tags": [
 				"fix",
 				"sdk"

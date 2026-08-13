@@ -3284,7 +3284,7 @@ Load two or more characters at once, each with its own brain, memory, and person
 
 URL: https://three.ws/docs/onboarding-tier
 
-Why a first-time visitor sees around 20 navigation destinations instead of around 100, how the Simple and Everything switch works, and which tier a newly built page belongs in.
+Why a first-time visitor sees around 30 navigation destinations instead of around 120, how the Simple and Everything switch works, and which tier a newly built page belongs in.
 
 ### Docs · Deploying agents on-chain in bulk
 

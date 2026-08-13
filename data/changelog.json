@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "The agent-wallet MCP tools explain a failed listing instead of returning a database error",
+			"summary": "Publishing a paid endpoint with monetize_endpoint picks a short web address for the listing, and in the rare case where every attempt collided with an existing one, the tool passed the database's own unique-constraint text back to the calling agent, which read as an unexplained internal failure. It now answers with a named reason and plain advice (try a different name), in the same structured shape as every other refusal that tool can give, while the database detail goes to the logs only. The wallet tools' descriptions were also rewritten so their punctuation renders cleanly in every MCP client that shows them.",
+			"tags": [
+				"fix",
+				"sdk"
+			],
+			"link": "/docs/mcp-tools"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "A KOL wallet's portfolio card now separates what it holds from how it has actually traded",
 			"summary": "The wallet portfolio endpoint behind the KOL tools reported a profit-and-loss card that its data source never supplied. Birdeye returns a wallet's current holdings and nothing else, so realized profit, win rate and trade count were always zero, and the figure labelled unrealized profit was really the total dollar value of everything the wallet was holding. An agent reading that card could not tell a trader we had never measured from one whose record was genuinely flat, and would read a large holdings balance as a large profit. The card now names its two halves honestly: current holdings (total value, how many positions, and the largest one) come from Birdeye, while realized profit, win rate, trade count and volume over the last 30 days are computed from that wallet's own on-chain trades by the same engine behind the KOL Tracker board. Any figure we cannot measure comes back empty rather than as a zero, and a wallet that has only bought shows no win rate instead of a 0% one.",
 			"tags": [
@@ -47,7 +57,7 @@
 				"fix",
 				"sdk"
 			],
-			"link": "/mcp"
+			"link": "/docs/ibm-x402-mcp"
 		},
 		{
 			"date": "2026-08-13",

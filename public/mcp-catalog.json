@@ -8284,7 +8284,7 @@
 		{
 			"name": "copy_subscribe",
 			"title": "Subscribe to copy a trader",
-			"description": "Set up non-custodial copy-trading: mirror a leader agent's future pump.fun entries into your own wallet with your own sizing and risk caps. You supply your wallet address and the sizing rules; we never hold keys. The fan-out cron checks for new leader entries and generates sized intents you act on from /dashboard/copy. Provide leader_agent_id (from trader_leaderboard) and your Solana wallet address. Sizing rules: 'fixed' = exact SOL per trade, 'multiplier' = N× leader size, 'pct_balance' = % of your balance. Always set a per_trade_cap_sol and daily_budget_sol to limit exposure.",
+			"description": "Set up non-custodial copy-trading: mirror a leader agent's future pump.fun entries into your own wallet with your own sizing and risk caps. You supply your wallet address and the sizing rules; we never hold keys. The fan-out cron checks for new leader entries and generates sized intents you act on from /dashboard/copy. Provide leader_agent_id (from trader_leaderboard) and your Solana wallet address. Sizing rules: 'fixed' = exact SOL per trade, 'multiplier' = N× leader size, 'pct_balance' = % of your balance. Always set a per_trade_cap_sol and daily_budget_sol to limit exposure. Calling this again for the same leader and network updates that subscription in place: sizing, caps and perf_fee_bps are replaced by what you send, so anything you omit falls back to its default, while the Oracle-score floor, market-cap band and Telegram route are kept as they were. Clear those three from /dashboard/copy.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -8414,7 +8414,7 @@
 		{
 			"name": "create_gated_embed",
 			"title": "Create a token-gated embed",
-			"description": "Turn an avatar or on-chain agent you own into a holder-only interactive 3D embed. Visitors must prove — with a real, server-verified Solana SPL token balance, never a client-reported number — they hold at least min_amount of mint before the live scene renders; below that they see a designed locked teaser with a connect-wallet CTA. mint defaults to $THREE but accepts any SPL mint at runtime. Returns a ready-to-paste <three-d> embed snippet.",
+			"description": "Turn an avatar or on-chain agent you own into a holder-only interactive 3D embed. Visitors must prove, with a real, server-verified Solana SPL token balance and never a client-reported number, that they hold at least min_amount of mint before the live scene renders; below that they see a designed locked teaser with a connect-wallet CTA. mint defaults to $THREE but accepts any SPL mint at runtime. Returns a ready-to-paste <three-d> embed snippet.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -8442,7 +8442,7 @@
 					},
 					"mint": {
 						"type": "string",
-						"description": "SPL token mint holders must have a balance of. Defaults to $THREE (${…}) — pass a different mint to gate with another community's token."
+						"description": "SPL token mint holders must have a balance of. Defaults to $THREE (${…}). Pass a different mint to gate with another community's token."
 					},
 					"min_amount": {
 						"type": "number",
@@ -8494,7 +8494,7 @@
 					},
 					"params": {
 						"type": "object",
-						"description": "Endpoint-specific query params — see the endpoint summary in the tool description for required fields.",
+						"description": "Endpoint-specific query params. See the endpoint summary in the tool description for required fields.",
 						"additionalProperties": true,
 						"default": {}
 					}
@@ -8635,7 +8635,7 @@
 		{
 			"name": "garment_status",
 			"title": "Check a garment generation job",
-			"description": "Poll a generate_garment job. While running, reports the pipeline stage. When done, returns the published glb_url, manifest_url, thumbnail, measured bind coverage, and the occluded body regions — at that point the garment is already live in the wardrobe catalog.",
+			"description": "Poll a generate_garment job. While running, reports the pipeline stage. When done, returns the published glb_url, manifest_url, thumbnail, measured bind coverage, and the occluded body regions. At that point the garment is already live in the wardrobe catalog.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -8726,7 +8726,7 @@
 		{
 			"name": "get_3d_asset_onchain",
 			"title": "Resolve a 3D NFT to its live asset + provenance",
-			"description": "Resolve a Solana mint address to its live 3D asset: current holder, the interactive viewer link + GLB (confirmed live), baked provenance (creator, prompt, model, lineage, timestamp), and the enforced on-chain royalty terms. Works on any Metaplex Core mint — assets minted through three.ws also return their platform launch record. Read-only, public.",
+			"description": "Resolve a Solana mint address to its live 3D asset: current holder, the interactive viewer link + GLB (confirmed live), baked provenance (creator, prompt, model, lineage, timestamp), and the enforced on-chain royalty terms. Works on any Metaplex Core mint. Assets minted through three.ws also return their platform launch record. Read-only, public.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -8852,12 +8852,12 @@
 					"width": {
 						"type": "integer",
 						"default": 480,
-						"description": "Iframe width in px (clamped 240–1920)."
+						"description": "Iframe width in px (clamped 240-1920)."
 					},
 					"height": {
 						"type": "integer",
 						"default": 360,
-						"description": "Iframe height in px (clamped 180–1080)."
+						"description": "Iframe height in px (clamped 180-1080)."
 					},
 					"autorotate": {
 						"type": "boolean",
@@ -8927,7 +8927,7 @@
 		{
 			"name": "inspect_model",
 			"title": "Inspect glTF/GLB model",
-			"description": "Parse a remote GLB or glTF and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used. Pure inspection — no optimization advice.",
+			"description": "Parse a remote GLB or glTF and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used. Pure inspection, no optimization advice.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -9125,7 +9125,7 @@
 		{
 			"name": "mint_3d_asset",
 			"title": "Mint a 3D asset as a Solana NFT",
-			"description": "Mint a generated or owned GLB as a Metaplex Core NFT on Solana whose media is a LIVE, interactive 3D viewer (the rigged glTF model under animation_url — not a static image). Bakes provenance (creator, prompt, generation model, parent lineage, timestamp) into the metadata AND appends a signed, independently-verifiable record to the agent_actions provenance ledger; enforces capped creator royalties on secondary sales. Supply an owned avatar_id or a glb_url, and a recipient (owner_wallet, or your OAuth-linked Solana wallet). Devnet by default; pass network=\"mainnet\" for a real mainnet mint. Idempotent — a repeat call for the same asset returns the same mint. Royalty is capped at ${…}%. Naming parent_mint (a remix/derivative on mainnet) routes the parent creator's royalty slice out of THIS mint's fee as a real on-chain USDC transfer. Returns the mint address, explorer + viewer links, royalty terms, the provenance ledger reference, and (for a remix) the royalty settlement. Priced per call via x402 (USDC); an OAuth bearer token bypasses payment.",
+			"description": "Mint a generated or owned GLB as a Metaplex Core NFT on Solana whose media is a LIVE, interactive 3D viewer (the rigged glTF model under animation_url, not a static image). Bakes provenance (creator, prompt, generation model, parent lineage, timestamp) into the metadata AND appends a signed, independently-verifiable record to the agent_actions provenance ledger; enforces capped creator royalties on secondary sales. Supply an owned avatar_id or a glb_url, and a recipient (owner_wallet, or your OAuth-linked Solana wallet). Devnet by default; pass network=\"mainnet\" for a real mainnet mint. Idempotent (a repeat call for the same asset returns the same mint). Royalty is capped at ${…}%. Naming parent_mint (a remix/derivative on mainnet) routes the parent creator's royalty slice out of THIS mint's fee as a real on-chain USDC transfer. Returns the mint address, explorer + viewer links, royalty terms, the provenance ledger reference, and (for a remix) the royalty settlement. Priced per call via x402 (USDC); an OAuth bearer token bypasses payment.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -9313,7 +9313,7 @@
 							"lean",
 							"watch"
 						],
-						"description": "Alternative to min_score — acts on this tier and above."
+						"description": "Alternative to min_score: acts on this tier and above."
 					},
 					"categories": {
 						"type": "array",
@@ -9373,7 +9373,7 @@
 		{
 			"name": "oracle_coin",
 			"title": "Oracle verdict for one coin",
-			"description": "Get Oracle's full conviction verdict for a specific pump.fun coin by mint address. Returns the fused 0–100 conviction score, tier (prime/strong/lean/watch/avoid), all four pillar scores (pedigree = who's behind it, structure = how it's built, narrative = cultural fit, momentum = early trading signal), active badges (e.g. smart_money_early, narrative_match), and a machine-readable buy/watch/skip recommendation. If the coin isn't in the Oracle cache yet, it will be scored on-demand (may add ~1s latency).",
+			"description": "Get Oracle's full conviction verdict for a specific pump.fun coin by mint address. Returns the fused 0-100 conviction score, tier (prime/strong/lean/watch/avoid), all four pillar scores (pedigree = who's behind it, structure = how it's built, narrative = cultural fit, momentum = early trading signal), active badges (e.g. smart_money_early, narrative_match), and a machine-readable buy/watch/skip recommendation. If the coin isn't in the Oracle cache yet, it will be scored on-demand (may add ~1s latency).",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -9418,7 +9418,7 @@
 		{
 			"name": "oracle_top_plays",
 			"title": "Oracle top conviction plays",
-			"description": "Get the current top pump.fun launches ranked by Oracle conviction score. Each play includes a score (0–100), tier (prime/strong/lean/watch/avoid), four pillar scores (pedigree/structure/narrative/momentum), and an agent-ready recommendation with a suggested size_factor. Use this to decide which coins to buy before they move. Filter by min_score or category to narrow the signal.",
+			"description": "Get the current top pump.fun launches ranked by Oracle conviction score. Each play includes a score (0-100), tier (prime/strong/lean/watch/avoid), four pillar scores (pedigree/structure/narrative/momentum), and an agent-ready recommendation with a suggested size_factor. Use this to decide which coins to buy before they move. Filter by min_score or category to narrow the signal.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -9452,7 +9452,7 @@
 						"minimum": 0,
 						"maximum": 100,
 						"default": 72,
-						"description": "Minimum conviction score (0–100). Default 72 (strong+)."
+						"description": "Minimum conviction score (0-100). Default 72 (strong+)."
 					},
 					"category": {
 						"type": "string",
@@ -10092,7 +10092,7 @@
 					"speed": {
 						"type": "number",
 						"default": 1,
-						"description": "Playback rate, 0.25–1.5. Below 1 is a signer taking longer over the same signs."
+						"description": "Playback rate, 0.25-1.5. Below 1 is a signer taking longer over the same signs."
 					},
 					"max_seconds": {
 						"type": "number",
@@ -10178,7 +10178,7 @@
 		{
 			"name": "solana_agent_passport",
 			"title": "Get Solana agent passport",
-			"description": "Full discovery card for a Solana agent: identity (Metaplex Core asset), owner wallet, reputation summary, latest validation result, and attestation schema endpoint. Equivalent to an ERC-8004 passport — use this when one tool call should answer \"who is this agent and can I trust them?\".",
+			"description": "Full discovery card for a Solana agent: identity (Metaplex Core asset), owner wallet, reputation summary, latest validation result, and attestation schema endpoint. Equivalent to an ERC-8004 passport. Use this when one tool call should answer \"who is this agent and can I trust them?\".",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -10335,7 +10335,7 @@
 		{
 			"name": "token_snapshot",
 			"title": "Crypto token snapshot",
-			"description": "One-call snapshot for a Solana token mint, fanning out to whichever free crypto-data providers are registered on this deployment (DexScreener pairs, Jupiter price, Solana RPC supply) and merging what answers — degrades gracefully around any provider that is absent, unconfigured, or fails, never throwing on a partial result. Example mint: the $THREE CA \"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\". For pump.fun-specific bonding-curve / launch data use the pump_snapshot tool instead — this tool covers general market data.",
+			"description": "One-call snapshot for a Solana token mint, fanning out to whichever free crypto-data providers are registered on this deployment (DexScreener pairs, Jupiter price, Solana RPC supply) and merging what answers. Degrades gracefully around any provider that is absent, unconfigured, or fails, never throwing on a partial result. Example mint: the $THREE CA \"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\". For pump.fun-specific bonding-curve / launch data use the pump_snapshot tool instead. This tool covers general market data.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -10372,7 +10372,7 @@
 		{
 			"name": "trader_leaderboard",
 			"title": "Top pump.fun traders",
-			"description": "Get the top pump.fun traders on three.ws ranked by composite TraderScore (win rate + P&L + ROI + drawdown). Each row includes score (0–100), verified badge, closed trade count, win rate, realized P&L in SOL and USD, ROI %, max drawdown, and a 'recommendation' field: 'copy' = strong candidate, 'watch' = emerging, 'skip' = unproven. Use trader_profile to get full details before copying. Sort by 'score' (default), 'pnl', 'winrate', or 'roi'. Window: '24h', '7d', '30d' (default), or 'all'.",
+			"description": "Get the top pump.fun traders on three.ws ranked by composite TraderScore (win rate + P&L + ROI + drawdown). Each row includes score (0-100), verified badge, closed trade count, win rate, realized P&L in SOL and USD, ROI %, max drawdown, and a 'recommendation' field: 'copy' = strong candidate, 'watch' = emerging, 'skip' = unproven. Use trader_profile to get full details before copying. Sort by 'score' (default), 'pnl', 'winrate', or 'roi'. Window: '24h', '7d', '30d' (default), or 'all'.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -10500,7 +10500,7 @@
 		{
 			"name": "validate_model",
 			"title": "Validate glTF/GLB model",
-			"description": "Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns a structured report of errors, warnings, infos, and hints — the authoritative answer to \"is this file spec-compliant?\". SSRF-hardened: only public https URLs are fetched.",
+			"description": "Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns a structured report of errors, warnings, infos, and hints: the authoritative answer to \"is this file spec-compliant?\". SSRF-hardened: only public https URLs are fetched.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -13771,7 +13771,7 @@
 		{
 			"name": "bazaar_service_details",
 			"title": "Live price details for one x402 service",
-			"description": "Resolve the current live price of a single x402 service by its resource URL (and tool_name for MCP services). Returns the cheapest price across networks plus a per-network breakdown (amount in atomic units, asset, recipient) and whether the service is still listed and payable. Purpose-built for price tracking and cost-model maintenance — call it on a schedule to watch a dependency's price over time and detect hikes or drops. Use get_service instead when you also need the input/output schema and a ready pay link.",
+			"description": "Resolve the current live price of a single x402 service by its resource URL (and tool_name for MCP services). Returns the cheapest price across networks plus a per-network breakdown (amount in atomic units, asset, recipient) and whether the service is still listed and payable. Purpose-built for price tracking and cost-model maintenance. Call it on a schedule to watch a dependency's price over time and detect hikes or drops. Use get_service instead when you also need the input/output schema and a ready pay link.",
 			"server": {
 				"id": "threews-x402-bazaar",
 				"title": "x402 Bazaar",
@@ -13813,7 +13813,7 @@
 		{
 			"name": "browse_services",
 			"title": "Browse the x402 bazaar",
-			"description": "List paid agent services from the live x402 facilitator network without a search query — useful for \"what can I pay for?\". Returns services with price, networks, and resource URL, cheapest filters applied.",
+			"description": "List paid agent services from the live x402 facilitator network without a search query, useful for \"what can I pay for?\". Returns services with price, networks, and resource URL, cheapest filters applied.",
 			"server": {
 				"id": "threews-x402-bazaar",
 				"title": "x402 Bazaar",

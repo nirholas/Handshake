@@ -191,6 +191,14 @@
 			<description>The galaxy prepares its cache the first time it is asked for, and it remembered that preparation so later visitors did not have to wait for it. It also remembered a failure: if the database stumbled once during that first request, every visitor after it was handed the same stale failure until the server happened to restart, long after the database was fine. It now retries on the next visit, so a momentary blip costs one request instead of the rest of the day. Alongside it, the Digital Twin no longer loses its whole forecast and narration when the optional accuracy back-test comes back empty, and the twin, galaxy search, and Granite Vision now answer a malformed request with a clear explanation instead of a generic server error.</description>
 		</item>
 		<item>
+			<title>The agent-wallet MCP tools explain a failed listing instead of returning a database error</title>
+			<link>https://three.ws/docs/mcp-tools</link>
+			<guid isPermaLink="false">2026-08-13:The agent-wallet MCP tools explain a failed listing instead of returning a database error</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Publishing a paid endpoint with monetize_endpoint picks a short web address for the listing, and in the rare case where every attempt collided with an existing one, the tool passed the database's own unique-constraint text back to the calling agent, which read as an unexplained internal failure. It now answers with a named reason and plain advice (try a different name), in the same structured shape as every other refusal that tool can give, while the database detail goes to the logs only. The wallet tools' descriptions were also rewritten so their punctuation renders cleanly in every MCP client that shows them.</description>
+		</item>
+		<item>
 			<title>The AI safety check stays available even when someone floods it with bad requests</title>
 			<link>https://three.ws/docs/ibm</link>
 			<guid isPermaLink="false">2026-08-13:The AI safety check stays available even when someone floods it with bad requests</guid>
@@ -224,7 +232,7 @@
 		</item>
 		<item>
 			<title>The Granite forecast tool now ships a copy-and-run example</title>
-			<link>https://three.ws/mcp</link>
+			<link>https://three.ws/docs/ibm-x402-mcp</link>
 			<guid isPermaLink="false">2026-08-13:The Granite forecast tool now ships a copy-and-run example</guid>
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
