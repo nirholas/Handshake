@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T05:25:17.806Z",
+	"generated_at": "2026-08-13T05:33:48.518Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -78,6 +78,17 @@
 			"link": "/forever",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Blog posts end with the site footer again, and Skip to content lands where it should",
+			"summary": "Ten posts, including the Solana wallet, Pump.fun payments SDK, animation and emotion, IBM, Google Cloud, Sperax, Anthropic MCP registry and $THREE listing announcements, loaded the footer stylesheet but never rendered a footer. A reader who finished one of those articles had no way back into the site except the browser's back button: no docs, changelog, product or social links. All of them now mount the shared footer. Separately, the Skip to content link that opens every page pointed at an anchor most pages did not actually define, so it only worked on a plain click and did nothing when opened in a new tab or restored from a reloaded URL. The page body is now tagged as that link's real target everywhere.",
+			"link": "/blog",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

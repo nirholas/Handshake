@@ -63,6 +63,14 @@
 			<description>The Forever page writes your message into Bitcoin, then keeps a pay screen open while you send the payment from your own wallet. That screen is restored when you come back to the tab. If the inscription order behind it had since expired, the page had no way to say so: the server reported an order it could not find as a server fault, so the pay screen either sat there polling an order that no longer existed, or repainted itself empty with no charge address and no explanation. An order that no longer exists is now reported as exactly that, and the page retires it, tells you nothing was charged, and puts you back at the message box to start a new one. Three related fixes went in with it. An inscription that the provider rejected could come back marked as success, which briefly showed a pay screen for an order that was never created; every provider failure is now reported as one. A receive address with a typo is now caught by its checksum before the order is created, and tells you to recopy it from your wallet, rather than failing later with a message that explained nothing. And an order that expired unpaid is no longer counted as paid.</description>
 		</item>
 		<item>
+			<title>Blog posts end with the site footer again, and Skip to content lands where it should</title>
+			<link>https://three.ws/blog</link>
+			<guid isPermaLink="false">2026-08-13:Blog posts end with the site footer again, and Skip to content lands where it should</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Ten posts, including the Solana wallet, Pump.fun payments SDK, animation and emotion, IBM, Google Cloud, Sperax, Anthropic MCP registry and $THREE listing announcements, loaded the footer stylesheet but never rendered a footer. A reader who finished one of those articles had no way back into the site except the browser's back button: no docs, changelog, product or social links. All of them now mount the shared footer. Separately, the Skip to content link that opens every page pointed at an anchor most pages did not actually define, so it only worked on a plain click and did nothing when opened in a new tab or restored from a reloaded URL. The page body is now tagged as that link's real target everywhere.</description>
+		</item>
+		<item>
 			<title>Buying an avatar, agent, or plugin priced in a token other than USDC now completes</title>
 			<link>https://three.ws/marketplace</link>
 			<guid isPermaLink="false">2026-08-13:Buying an avatar, agent, or plugin priced in a token other than USDC now completes</guid>

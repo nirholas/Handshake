@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Blog posts end with the site footer again, and Skip to content lands where it should",
+			"summary": "Ten posts, including the Solana wallet, Pump.fun payments SDK, animation and emotion, IBM, Google Cloud, Sperax, Anthropic MCP registry and $THREE listing announcements, loaded the footer stylesheet but never rendered a footer. A reader who finished one of those articles had no way back into the site except the browser's back button: no docs, changelog, product or social links. All of them now mount the shared footer. Separately, the Skip to content link that opens every page pointed at an anchor most pages did not actually define, so it only worked on a plain click and did nothing when opened in a new tab or restored from a reloaded URL. The page body is now tagged as that link's real target everywhere.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/blog"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Labor Market API says what is wrong with a request instead of failing on it",
 			"summary": "Sending a bounty, job or bid id that was not a real id to the Labor Market endpoints produced a server fault, and in a couple of places leaked the database's own error text back to the caller. Every one of those endpoints now checks the id first and answers with a plain message naming the field. Posting a bounty is stricter too: a reward that is not a number is refused as bad input rather than crashing or being quietly read as zero, and a deadline that is not a real date is caught before the bounty is created. A delivered work item's text is now truncated to the documented limit for real, which it was not when the deliverable was sent as an object.",
 			"tags": [
