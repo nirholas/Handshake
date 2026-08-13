@@ -239,9 +239,17 @@
 				font-size: 13.5px;
 				color: #aeb6c6;
 			}
-			.tour-resume a {
+			.tour-resume a,
+			.tour-resume button {
 				color: var(--accent);
 				font-weight: 600;
+				background: none;
+				border: 0;
+				padding: 0;
+				font-family: inherit;
+				font-size: inherit;
+				cursor: pointer;
+				text-decoration: underline;
 			}
 			/* Stats */
 			.tour-stats {
@@ -384,7 +392,7 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Guided Tour — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Guided Tour","description":"A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it — voice plus an on-screen chat bubble, paced by you.","url":"https://three.ws/tour","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&amp;t=Guided+Tour&amp;d=A+3D+guide+walks+across+the+live+site%2C+points+at+every+feature%2C+and+narrates+what+each+one+does+and+how+to+use+it+%E2%80%94+voice+plus+an+on-screen+chat+bubble%2C+paced+b&amp;p=%2Ftour"}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Guided Tour","description":"A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it - voice plus an on-screen chat bubble, paced by you.","url":"https://three.ws/tour","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Guided+Tour&d=A+3D+guide+walks+across+the+live+site%2C+points+at+every+feature%2C+and+narrates+what+each+one+does+and+how+to+use+it+-+voice+plus+an+on-screen+chat+bubble%2C+paced+b&p=%2Ftour"}]}</script>
 </head>
 	<body class="tour-page">
 		<header><div id="nav-container"></div></header>
@@ -422,7 +430,7 @@
 					<a class="tour-btn" href="#how" data-i18n="tour.how_it_works">How it works</a>
 				</div>
 				<p class="tour-resume" id="tour-resume" data-i18n-html="tour.you_have_a_tour_in_progress_pick">
-					You have a tour in progress — <a href="#" id="tour-resume-link">pick it back up →</a>
+					You have a tour in progress. <button type="button" id="tour-resume-link">Pick it back up →</button>
 				</p>
 			</section>
 
@@ -558,8 +566,11 @@
 				if (!inProgress) {
 					resume.firstChild.textContent = 'Welcome back — your tour is bookmarked. ';
 				}
-				document.getElementById('tour-resume-link').addEventListener('click', (e) => {
-					e.preventDefault();
+				// Delegate from the paragraph: the i18n pass replaces its innerHTML
+				// for localized users, which would orphan a listener bound to the
+				// button itself.
+				resume.addEventListener('click', (e) => {
+					if (!e.target.closest('#tour-resume-link')) return;
 					fetch('/tour/curriculum.json', { cache: 'force-cache' })
 						.then((r) => r.json())
 						.then((c) => {

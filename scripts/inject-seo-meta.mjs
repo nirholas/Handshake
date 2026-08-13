@@ -44,7 +44,15 @@ function truncateAtWord(s, max) {
 	return (space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:]+$/, '');
 }
 
+// Page titles/descriptions in data/pages.json may predate the repo-wide dash
+// ban; every string this script WRITES must honor it, so normalize at the two
+// consumption points rather than editing the visible titles at their source.
+function deDash(s) {
+	return typeof s === 'string' ? s.replace(/\s*[\u2014\u2013]\s*/g, ' - ') : s;
+}
+
 function pageOgUrl(page, sectionId) {
+	page = { ...page, title: deDash(page.title), description: deDash(page.description) };
 	const q = new URLSearchParams();
 	q.set('s', sectionId || 'main');
 	q.set('t', page.title || 'three.ws');
@@ -157,10 +165,12 @@ const has = {
 	jsonld: (h) => /<script[^>]+application\/ld\+json/i.test(h),
 };
 
-// Pull an existing og:image URL so twitter:image can mirror it.
+// Pull an existing og:image URL so twitter:image can mirror it. The attribute
+// value is HTML-escaped in the document, so decode it back to the raw URL;
+// callers re-escape at each emission point (attributes yes, JSON-LD no).
 function existingOgImage(head) {
 	const m = head.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
-	return m ? m[1] : null;
+	return m ? m[1].replace(/&amp;/g, '&') : null;
 }
 
 const PAGE_OG_BASE = `${ORIGIN}/api/page-og`;
@@ -188,7 +198,26 @@ function repointShareImage(html, dynamicOg) {
 	return { html: next, changed };
 }
 
+// Heal JSON-LD written by an older version of this script, which copied the
+// HTML-escaped og:image attribute value straight into primaryImageOfPage, so
+// the structured-data URL carried literal `&amp;` between query params. Only
+// touches our own /api/page-og URLs; bespoke image URLs are left alone.
+function repairJsonLdImage(html) {
+	let changed = false;
+	const next = html.replace(
+		/("primaryImageOfPage":")([^"]*&amp;[^"]*)(")/g,
+		(full, pre, val, post) => {
+			const decoded = val.replace(/&amp;/g, '&');
+			if (!decoded.startsWith(`${PAGE_OG_BASE}?`)) return full;
+			changed = true;
+			return pre + decoded + post;
+		},
+	);
+	return { html: next, changed };
+}
+
 function buildTags(page, head, sectionId) {
+	page = { ...page, title: deDash(page.title), description: deDash(page.description) };
 	const url = `${ORIGIN}${page.path === '/' ? '/' : page.path}`;
 	const title = `${page.title} · three.ws`;
 	const desc = page.description || '';
@@ -315,6 +344,7 @@ async function main() {
 	let unresolved = [];
 	let changed = 0;
 	let repointed = 0;
+	let repaired = 0;
 	let alreadyComplete = 0;
 	let sharedShell = 0;
 	// Some routes (e.g. /tutorials/*, /walkthroughs/*) share one template file. A
@@ -352,11 +382,15 @@ async function main() {
 		const original = await readFile(file, 'utf8');
 		// 1) Upgrade any legacy static share image to this page's dynamic card.
 		const dynamicOg = pageOgUrl(page, sectionId);
-		const { html, changed: didRepoint } = repointShareImage(original, htmlEscape(dynamicOg));
-		// 2) Backfill any missing head tags (computed against the post-repoint head).
+		const repoint = repointShareImage(original, htmlEscape(dynamicOg));
+		const didRepoint = repoint.changed;
+		// 2) Heal HTML-escaped page-og URLs inside existing JSON-LD.
+		const repair = repairJsonLdImage(repoint.html);
+		const html = repair.html;
+		// 3) Backfill any missing head tags (computed against the post-repoint head).
 		const head = headOf(html);
 		const tags = buildTags(page, head, sectionId);
-		if (!tags.trim() && !didRepoint) {
+		if (!tags.trim() && !didRepoint && !repair.changed) {
 			alreadyComplete++;
 			continue;
 		}
@@ -365,6 +399,10 @@ async function main() {
 		if (didRepoint) {
 			repointed++;
 			console.log(`    ~ og:image/twitter:image → /api/page-og`);
+		}
+		if (repair.changed) {
+			repaired++;
+			console.log(`    ~ jsonld primaryImageOfPage unescaped`);
 		}
 		if (tags.trim()) {
 			const added = tags
@@ -390,7 +428,7 @@ async function main() {
 	}
 
 	console.log('\n──────────────────────────────────────────');
-	console.log(`targets: ${targets.length}  resolved: ${resolved}  shared-shell: ${sharedShell}  complete-already: ${alreadyComplete}  re-pointed: ${repointed}  ${WRITE ? 'written' : 'would-change'}: ${changed}`);
+	console.log(`targets: ${targets.length}  resolved: ${resolved}  shared-shell: ${sharedShell}  complete-already: ${alreadyComplete}  re-pointed: ${repointed}  jsonld-repaired: ${repaired}  ${WRITE ? 'written' : 'would-change'}: ${changed}`);
 	if (unresolved.length) console.log(`UNRESOLVED (${unresolved.length}): ${unresolved.join(', ')}`);
 	if (!WRITE) console.log('\n(dry-run — pass --write to apply)');
 }
