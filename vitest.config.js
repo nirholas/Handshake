@@ -81,5 +81,11 @@ export default defineConfig({
 		pool: 'forks',
 		maxForks: MAX_FORKS,
 		minForks: 1,
+		// The suite is ~22k tests across ~1570 files and runs in 88-182s here
+		// (warm vs cold), so no single test has any business taking five seconds.
+		// The default 300ms threshold flags most of the file list and therefore
+		// flags nothing; at 5s the reporter prints a short, honest list of the
+		// files worth looking at, which is what stops the total creeping back up.
+		slowTestThreshold: 5_000,
 	},
 });

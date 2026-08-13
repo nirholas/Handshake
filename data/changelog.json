@@ -20915,6 +20915,15 @@
 				"improvement"
 			],
 			"link": "/docs/media-api"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The full test suite runs again instead of timing out",
+			"summary": "npm run test:core was pinned to a single worker, which turned the 22,000-test suite into a roughly half-hour serial run that nobody waited for, so in practice the full suite stopped being run at all. Measured on the same machine, the suite finishes in 1.5 to 5 minutes at the default worker count. The single-worker mode was blamed on flaky tests under CPU contention, but back-to-back runs showed the moving failures were all tests that scan the working tree, shell out to git, or reach the network, and each passes on its own at full parallelism: serializing made the exposure window longer, not shorter. That mode is still available as npm run test:serial for diagnosing genuine cross-worker interference. Any single test slower than five seconds is now called out by the reporter so the total cannot quietly creep back up. The test docs also stated that a GitHub Actions workflow ran lint, typecheck and the suite on every push; that file does not exist and this repository has no CI, so the docs now name the local checks that really do run.",
+			"tags": [
+				"improvement",
+				"docs"
+			]
 		}
 	]
 }

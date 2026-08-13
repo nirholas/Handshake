@@ -2837,7 +2837,8 @@ There is **no GitHub Actions CI**: the project deliberately does not use `.githu
 | Script | Stack | Scope |
 |--------|-------|-------|
 | `test` | Vitest + Playwright | `vitest run && playwright test` — full suite |
-| `test:core` | Vitest (1 worker) | Deterministic unit runs |
+| `test:core` | Vitest | Full unit suite, no browser e2e (~90s warm) |
+| `test:serial` | Vitest (1 worker) | Diagnostic only: rules out cross-worker interference |
 | `test:e2e` | Playwright | Browser end-to-end |
 | `test:gate` | `test-gate.mjs` | Build-gate subset |
 | `test:pages` | `test-pages.mjs` | Per-page smoke |

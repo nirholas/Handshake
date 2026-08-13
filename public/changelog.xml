@@ -423,6 +423,14 @@
 			<description>/api/x402/inference-verify audits a metered-inference receipt from a paid llm-proxy call: it re-checks the issuer signature, the node's response signature, the prompt and response hashes against the raw text you supply, whether the settlement transaction actually confirmed on-chain, and whether the issuer is one of the platform's published signers. It is free and keyless, but it was missing from docs/x402-endpoints.md, so buyers and node operators had no way to find it. It now has a row in the free read surfaces table alongside the other verifier tools.</description>
 		</item>
 		<item>
+			<title>The full test suite runs again instead of timing out</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-13:The full test suite runs again instead of timing out</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>npm run test:core was pinned to a single worker, which turned the 22,000-test suite into a roughly half-hour serial run that nobody waited for, so in practice the full suite stopped being run at all. Measured on the same machine, the suite finishes in 1.5 to 5 minutes at the default worker count. The single-worker mode was blamed on flaky tests under CPU contention, but back-to-back runs showed the moving failures were all tests that scan the working tree, shell out to git, or reach the network, and each passes on its own at full parallelism: serializing made the exposure window longer, not shorter. That mode is still available as npm run test:serial for diagnosing genuine cross-worker interference. Any single test slower than five seconds is now called out by the reporter so the total cannot quietly creep back up. The test docs also stated that a GitHub Actions workflow ran lint, typecheck and the suite on every push; that file does not exist and this repository has no CI, so the docs now name the local checks that really do run.</description>
+		</item>
+		<item>
 			<title>The GLB optimizer no longer hands back a bigger file than you gave it</title>
 			<link>https://three.ws/docs/media-api</link>
 			<guid isPermaLink="false">2026-08-13:The GLB optimizer no longer hands back a bigger file than you gave it</guid>
