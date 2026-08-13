@@ -96,6 +96,34 @@ behind a broken replacement.
 
 ---
 
+## Configuration
+
+The consent catalog, the seed, and the revoke all run off a user's own OAuth
+token, so a deployment needs a GitHub OAuth app before the Connect button can
+do anything. Register one at
+[github.com/settings/developers](https://github.com/settings/developers) with
+the authorization callback URL set to `<your origin>/api/auth/github/callback`
+(production: `https://three.ws/api/auth/github/callback`), then set two
+variables on the API service:
+
+| Variable | Purpose |
+|---|---|
+| `GITHUB_OAUTH_CLIENT_ID` | The OAuth app's client ID, sent on the authorize redirect |
+| `GITHUB_OAUTH_CLIENT_SECRET` | The client secret, used for the code exchange and for revoking the grant on disconnect |
+
+The app requests `read:user` and `public_repo`, both read-only, and the access
+token is encrypted with a key derived from `JWT_SECRET` before it is stored, so
+rotating `JWT_SECRET` invalidates stored tokens (users reconnect) rather than
+decrypting them into garbage.
+
+Until both variables are present, `GET /api/auth/github/status` answers
+`configured: false`, `/api/auth/github/connect` answers `501 not_configured`,
+and the Settings card renders an explicit "unavailable on this deployment"
+state instead of a button that cannot work. Everything else on the lane is
+unaffected: no other feature depends on these variables.
+
+---
+
 ## API
 
 All three calls are owner-only: the session (or bearer) user must own the

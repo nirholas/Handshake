@@ -876,6 +876,12 @@
 							seedArea.style.display = 'block';
 							mountSeedPanel();
 						}
+					} else if (data.configured === false) {
+						// No OAuth app on this deployment. Say so plainly rather than
+						// offering a button whose only outcome is a 501 error page.
+						statusEl.textContent = 'GitHub connect is unavailable on this deployment';
+						actionsEl.innerHTML = '<span class="tag">Unavailable</span><a href="/docs/github-memory-seeding" class="btn sec" style="font-size:12px;padding:5px 14px;text-decoration:none">How this works</a>';
+						if (seedArea) seedArea.style.display = 'none';
 					} else {
 						statusEl.textContent = 'Not connected';
 						const agentId = _urlP.get('agent_id') || '';
@@ -891,7 +897,7 @@
 				if (ghMsg && ghResult) {
 					if (ghResult === 'connected') showMsg(ghMsg, 'ok', 'GitHub connected successfully.');
 					else if (ghResult === 'denied') showMsg(ghMsg, 'err', 'GitHub connection was cancelled.');
-					else if (ghResult === 'error') showMsg(ghMsg, 'err', 'GitHub connection failed — please try again.');
+					else if (ghResult === 'error') showMsg(ghMsg, 'err', 'GitHub connection failed. Please try again.');
 				}
 			}
 
@@ -903,6 +909,22 @@
 				let seedMounted = false;
 
 				const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+				// Every seeding panel needs the account's agents. /api/agents returns the
+				// full list; /api/agents/me returns one agent and creates it on first
+				// call, so it is the fallback that guarantees a brand-new account still
+				// has something to seed instead of an empty picker.
+				async function loadMyAgents() {
+					try {
+						const list = (await apiJson('/api/agents'))?.agents;
+						if (Array.isArray(list) && list.length) return list;
+					} catch {}
+					try {
+						const one = (await apiJson('/api/agents/me'))?.agent;
+						return one ? [one] : [];
+					} catch {}
+					return [];
+				}
 
 				function seedSelection() {
 					const root = document.getElementById('seed-catalog');
@@ -922,7 +944,7 @@
 					const summary = document.getElementById('consent-summary-text');
 					if (!root || !btn) return;
 					// A README can only be read for a repo that is itself selected, which is
-					// also what the server enforces — keeping the checkbox in lockstep means
+					// also what the server enforces, and keeping the checkbox in lockstep means
 					// the user never assembles a selection the API will reject.
 					const chosen = new Set([...root.querySelectorAll('input[data-repo]:checked')].map((i) => i.dataset.repo));
 					for (const box of root.querySelectorAll('input[data-readme]')) {
@@ -935,7 +957,7 @@
 					btn.disabled = count === 0;
 					if (summary) {
 						summary.textContent = count === 0
-							? 'Nothing selected — your agent will read nothing.'
+							? 'Nothing selected: your agent will read nothing.'
 							: `${count} item${count === 1 ? '' : 's'} selected${sel.readmes.length ? `, ${sel.readmes.length} README${sel.readmes.length === 1 ? '' : 's'}` : ''}. Nothing else is read or stored.`;
 					}
 				}
@@ -960,7 +982,7 @@
 					const p = data.catalog.profile;
 					const repos = data.catalog.repos || [];
 					const seededNote = data.seeded_at
-						? `<p class="muted" style="font-size:12px;margin:0 0 8px">Last seeded ${new Date(data.seeded_at).toLocaleString()} — ${data.fact_count} ${data.fact_count === 1 ? 'memory' : 'memories'} stored. Seeding again replaces them.</p>`
+						? `<p class="muted" style="font-size:12px;margin:0 0 8px">Last seeded ${new Date(data.seeded_at).toLocaleString()}, ${data.fact_count} ${data.fact_count === 1 ? 'memory' : 'memories'} stored. Seeding again replaces them.</p>`
 						: '';
 
 					const profileRow = p ? `
@@ -1026,10 +1048,7 @@
 					const fallback = document.getElementById('seed-agent-fallback');
 					const preset = _urlP.get('agent_id') || '';
 
-					let agents = [];
-					try {
-						agents = (await apiJson('/api/agents/me'))?.agents || [];
-					} catch { agents = []; }
+					const agents = await loadMyAgents();
 
 					if (agents.length) {
 						select.innerHTML = agents.map((a) => `<option value="${esc(a.id)}">${esc(a.name || a.id)}</option>`).join('');
@@ -1117,13 +1136,7 @@
 						// Seeding always targets one agent. With no ?agent_id= in the
 						// URL, fall back to the account's first agent so the card is
 						// usable from a bare /settings visit.
-						let agentId = null;
-						try {
-							const agents = await apiJson('/api/agents/me');
-							agentId = agents?.agents?.[0]?.id ?? null;
-						} catch {
-							agentId = null;
-						}
+						const agentId = (await loadMyAgents())[0]?.id ?? null;
 						if (agentId) {
 							renderXStatus(el, agentId, connectUrl);
 						} else {

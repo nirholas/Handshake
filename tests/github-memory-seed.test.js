@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import {
 	buildCatalog,
@@ -386,5 +387,33 @@ describe('toMemoryRows', () => {
 			repos: ['devuser/render-lab'],
 			readmes: [],
 		});
+	});
+});
+
+// The consent screen is part of the contract: if the panel cannot list the
+// account's agents, or offers a Connect button on a deployment that has no
+// GitHub OAuth app, the guarantees above never get a chance to apply.
+describe('settings consent panel wiring', () => {
+	const html = readFileSync(new URL('../public/settings/index.html', import.meta.url), 'utf8');
+
+	it('reads the agent list from /api/agents, which is the endpoint that returns one', () => {
+		expect(html).toContain("apiJson('/api/agents')");
+		// /api/agents/me answers { agent }, never { agents }. Reading .agents off it
+		// left every account with an empty picker and the manual-id fallback.
+		expect(html).not.toContain("apiJson('/api/agents/me'))?.agents");
+		expect(html).not.toContain('agents?.agents?.[0]?.id');
+	});
+
+	it('falls back to the single agent /api/agents/me returns', () => {
+		expect(html).toContain("apiJson('/api/agents/me'))?.agent");
+	});
+
+	it('renders an unavailable state instead of a dead Connect button when OAuth is unconfigured', () => {
+		expect(html).toContain('data.configured === false');
+		expect(html).toContain('GitHub connect is unavailable on this deployment');
+	});
+
+	it('sends only ticked repos, and a README only for a repo that is also ticked', () => {
+		expect(html).toContain('readmes: readmes.filter((k) => repos.includes(k))');
 	});
 });

@@ -173,12 +173,17 @@ async function handleStatus(req, res) {
 	const session = await getSessionUser(req);
 	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
 
+	// Whether this deployment has a GitHub OAuth app at all. Without it every
+	// connect click lands on a raw 501 from /connect, so the card needs to know
+	// before it renders a button that cannot work.
+	const configured = Boolean(env.GITHUB_OAUTH_CLIENT_ID && env.GITHUB_OAUTH_CLIENT_SECRET);
+
 	const [row] = await sql`
 		SELECT username, connected_at FROM social_connections
 		WHERE user_id = ${session.id} AND provider = 'github'
 	`;
 
-	if (!row) return json(res, 200, { connected: false, seeded_fact_count: 0 });
+	if (!row) return json(res, 200, { connected: false, configured, seeded_fact_count: 0 });
 
 	const [seeded] = await sql`
 		SELECT count(*)::int AS n
@@ -189,6 +194,7 @@ async function handleStatus(req, res) {
 
 	return json(res, 200, {
 		connected: true,
+		configured,
 		username: row.username,
 		connected_at: row.connected_at,
 		seeded_fact_count: seeded?.n ?? 0,
