@@ -54,6 +54,12 @@ GPU lane is busy. Any client you write has to handle both, and has to respect th
 [recipe page](/cookbook/text-to-3d-cli) walks through exactly why, and what
 happens when you ignore it.
 
+**If the command prints `rate_limited` instead:** every free rung was saturated at
+that moment, which is a busy signal rather than your quota, and it can land on the
+very first call of the day. The response carries `retry_after` in seconds. Wait
+that long and run the command again; at peak it can take several tries. That is
+also why the batching stage below caps its workers instead of fanning out wide.
+
 **Prompting for this tier.** The free lane is single-subject. "a brass watering
 can" produces a watering can. "a kitchen with a table, three chairs and a window"
 produces a blob. Describe one object, with material and shape, and stop there.

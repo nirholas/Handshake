@@ -84,7 +84,7 @@
 			slug: 'nvidia-3d-free',
 			tier: 'easy',
 			title: 'Generate 3D models free, powered by NVIDIA',
-			blurb: "The Forge's free text-to-3D runs on NVIDIA NIM with Microsoft TRELLIS — no key, no cost. Learn what the free lane does, when it kicks in, and how to watch TRELLIS rebuild a mesh live.",
+			blurb: "The Forge's free text-to-3D runs Microsoft TRELLIS, with NVIDIA NIM as the hosted rung behind our own GPU workers. No key, no cost. Learn when the NVIDIA lane serves your prompt, how to pin it, and how to watch TRELLIS rebuild a mesh live.",
 			builds: 'A 3D model generated free on the NVIDIA NIM lane, downloaded as a GLB',
 			time: '8 min',
 			previewModel: '/animations/robotexpressive.glb',

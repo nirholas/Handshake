@@ -17,7 +17,7 @@ GET  /api/forge?job=ID                        →  { status: "done", glb_url: "h
 GET  glb_url                                  →  your model
 ```
 
-One wrinkle worth knowing up front: on the fast free lane the first response can already be `status: "done"` with a `glb_url` — no polling needed. Handle both cases and you're done.
+Two wrinkles worth knowing up front. On the fast free lane the first response can already be `status: "done"` with a `glb_url`, so no polling is needed. And because the free lane is a shared GPU pool, the submit itself can answer `429 rate_limited` with a `retry_after` even on your very first call. Handle both and you're done.
 
 ---
 
@@ -88,14 +88,27 @@ import { writeFile } from 'node:fs/promises';
 const BASE = 'https://three.ws';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// A 429 is the shared free lane asking you to come back, not a failure, and it
+// can land on your very first call. The wait comes back in `retry_after` (and in
+// the Retry-After header); honour it and the submit eventually goes through.
+async function submitJob(body) {
+  for (;;) {
+    const res = await fetch(`${BASE}/api/forge`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const job = await res.json();
+    if (res.ok) return job;
+    if (res.status !== 429) throw new Error(job.message || job.error);
+    const wait = Number(job.retry_after || res.headers.get('retry-after') || 10);
+    console.log(`  lane busy, retrying in ${wait}s`);
+    await sleep(wait * 1000);
+  }
+}
+
 async function generateModel(prompt, tier = 'standard') {
-  const submit = await fetch(`${BASE}/api/forge`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ prompt, tier }),
-  });
-  let job = await submit.json();
-  if (!submit.ok) throw new Error(job.message || job.error);
+  let job = await submitJob({ prompt, tier });
 
   // Fast lane: the model may already be done in the first response.
   while (job.status !== 'done') {
@@ -123,7 +136,7 @@ Run it:
 node generate.js "a low-poly treasure chest, iron-banded wood"
 ```
 
-**Batch an asset pack** by looping prompts through `generateModel` one at a time. Keep it sequential: the endpoint is rate-limited per IP (about 60 free generations an hour), so a `Promise.all` over a hundred prompts will hit `429 rate_limited`. On a 429, wait and retry; it's a rolling window, not a ban.
+**Batch an asset pack** by looping prompts through `generateModel` one at a time. Keep it sequential: the endpoint is rate-limited per IP (about 60 free generations an hour), so a `Promise.all` over a hundred prompts will hit `429 rate_limited`. Because `submitJob` already backs off and retries, a batch survives both a busy lane and an exhausted window without any extra handling.
 
 ---
 
@@ -189,7 +202,7 @@ If you've never made an x402 call, start with [Build a paid x402 endpoint](/tuto
 
 | Response | Meaning | Fix |
 |----------|---------|-----|
-| `429 rate_limited` | Per-IP hourly window exhausted (about 60 free generations an hour) | Back off and retry; keep batches sequential |
+| `429 rate_limited` | Two causes, same code: the shared GPU lane is busy right now (`queued: false`, and it can hit your first call), or your per-IP hourly window is exhausted (about 60 free generations an hour) | Sleep for `retry_after` seconds and resubmit, as `submitJob` does in Step 3. Neither is a ban; keep batches sequential |
 | `422 image_not_usable` | Photo failed the vision pre-check | Reshoot per the `message`, or send `skip_validation: true` |
 | `402` on `tier: "high"` | High tier is hold-or-pay on platform engines | Hold $THREE (Bronze), pay per generation, use credits, or use the x402 endpoint |
 | `status: "failed"` mid-job | Upstream generation error | Read `error`; retry once — transient provider errors happen |
