@@ -9,6 +9,7 @@ import {
 	effectivePriceNow,
 	groupLedgerByStatus,
 	ledgerToCsv,
+	railLabel,
 	funnelStage,
 	TIER_LADDER,
 } from './creator-helpers.js';
@@ -157,19 +158,63 @@ describe('groupLedgerByStatus', () => {
 	});
 });
 
+const CSV_HEADER = 'Date,Type,Skill,Agent,Amount (USD),Platform fee (USD),Status,Rail,Chain,Transaction';
+
+describe('railLabel', () => {
+	it('names each earning rail', () => {
+		expect(railLabel('x402')).toBe('Per-call (x402)');
+		expect(railLabel('skill-runtime')).toBe('In-app call');
+		expect(railLabel('asset-sale')).toBe('Asset sale');
+	});
+	it('falls back to the in-app lane for an unknown or missing source', () => {
+		expect(railLabel(undefined)).toBe('In-app call');
+		expect(railLabel('something-new')).toBe('In-app call');
+	});
+});
+
 describe('ledgerToCsv', () => {
 	it('emits a header and escapes cells with commas/quotes', () => {
 		const csv = ledgerToCsv([
 			{ created_at: '2026-06-01', kind: 'skill', skill_name: 'Do, a thing', agent_name: 'Agent "X"', price_usd: 1.5, status: 'settled' },
 		]);
 		const lines = csv.split('\n');
-		expect(lines[0]).toBe('Date,Type,Skill,Agent,Amount (USD),Status');
+		expect(lines[0]).toBe(CSV_HEADER);
 		expect(lines[1]).toContain('"Do, a thing"');
 		expect(lines[1]).toContain('"Agent ""X"""');
-		expect(lines[1]).toContain('1.5000');
+		expect(lines[1]).toContain('1.500000');
 	});
+
+	it('carries the settlement provenance of a per-call royalty', () => {
+		const csv = ledgerToCsv(
+			[{
+				created_at: '2026-08-13', kind: 'skill', skill_name: 'Wallet Balance', agent_name: null,
+				price_usd: 0.24375, platform_fee_usd: 0.00625, status: 'settled',
+				source: 'x402', network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', tx_hash: '5xTxSignature',
+			}],
+			{ networkLabel: () => 'Solana' },
+		);
+		const row = csv.split('\n')[1];
+		expect(row).toContain('Per-call (x402)');
+		expect(row).toContain('Solana');
+		expect(row).toContain('5xTxSignature');
+		// Full USDC precision: per-call royalties are routinely sub-cent, so a
+		// 4-decimal export would round real money out of the author's records.
+		expect(row).toContain('0.243750');
+		expect(row).toContain('0.006250');
+	});
+
+	it('keeps a sub-cent royalty from rounding to zero', () => {
+		const csv = ledgerToCsv([{ created_at: '2026-08-13', price_usd: 0.000001, status: 'settled' }]);
+		expect(csv.split('\n')[1]).toContain('0.000001');
+	});
+
+	it('leaves the fee, chain and transaction blank rather than guessing', () => {
+		const csv = ledgerToCsv([{ created_at: '2026-08-13', price_usd: 1, status: 'pending', source: 'skill-runtime' }]);
+		expect(csv.split('\n')[1].endsWith(',,')).toBe(true);
+	});
+
 	it('handles empty input', () => {
-		expect(ledgerToCsv([])).toBe('Date,Type,Skill,Agent,Amount (USD),Status');
+		expect(ledgerToCsv([])).toBe(CSV_HEADER);
 	});
 });
 

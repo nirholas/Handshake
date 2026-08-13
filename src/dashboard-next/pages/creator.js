@@ -24,8 +24,14 @@ import {
 	effectivePriceNow,
 	groupLedgerByStatus,
 	ledgerToCsv,
+	railLabel,
 	funnelStage,
 } from './creator-helpers.js';
+// Chain identity lives in one place for the whole platform: the ledger stores
+// CAIP-2 ids ('solana:5eykt4Us…', 'eip155:8453') and this module owns the
+// id → label and id → explorer mapping, so a Base settlement never links to a
+// Solana explorer. Pure string/data code, safe in the browser bundle.
+import { networkLabel, revenueTxUrl } from '../../../api/_lib/x402/revenue-networks.js';
 
 const SOLANA_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
@@ -145,8 +151,20 @@ function renderAgentSelector(host, contentHost) {
 
 async function loadAndRender(host) {
 	if (!STATE.agents.length) {
+		// Royalties are AUTHOR-scoped, not agent-scoped: a marketplace skill author
+		// earns on every paid /api/x402/skill-call whether or not they ever
+		// registered an agent. Load the author ledger BEFORE the agent gate so a
+		// creator who is already being paid never hits a "create an agent" wall
+		// standing between them and their own money.
+		const earnings = await safe(() => get('/api/users/me/earnings'));
+		STATE.earnings = earnings || { pending_usd: 0, settled_usd: 0, entries: [] };
 		host.innerHTML = '';
-		host.appendChild(renderNoAgents());
+		if ((STATE.earnings.entries || []).length) {
+			host.appendChild(renderAuthorOnlyIntro());
+			host.appendChild(renderRoyaltyLedger());
+		} else {
+			host.appendChild(renderNoAgents());
+		}
 		return;
 	}
 
@@ -280,7 +298,10 @@ function renderEarningsHero() {
 	const net = Number(r.net_usdc || 0);
 	const fees = Number(r.total_fees_usdc || 0);
 	const count = Number(r.event_count || 0);
-	const pending = Number(STATE.earnings?.pending_usd || 0);
+	// Unsettled = not yet in the author's wallet. 'settling' rows are claimed by
+	// an in-flight redeem pass, so counting only 'pending' understated what the
+	// author is still owed.
+	const pending = Number(STATE.earnings?.pending_usd || 0) + Number(STATE.earnings?.settling_usd || 0);
 	const available = Number(STATE.balance?.available_usdc || 0);
 	const periodLabel = (PERIODS.find((p) => p.key === STATE.period) || PERIODS[1]).label.toLowerCase();
 
@@ -875,7 +896,7 @@ function renderRoyaltyLedger() {
 		body.innerHTML = `
 			<div style="overflow-x:auto">
 				<table class="cs-table">
-					<thead><tr><th scope="col">When</th><th scope="col">Skill</th><th scope="col">Agent</th><th scope="col" style="text-align:right">Amount</th><th scope="col">Status</th></tr></thead>
+					<thead><tr><th scope="col">When</th><th scope="col">Skill</th><th scope="col">Rail</th><th scope="col">Agent</th><th scope="col" style="text-align:right">Amount</th><th scope="col">Status</th></tr></thead>
 					<tbody>${sorted.map(ledgerRow).join('')}</tbody>
 				</table>
 			</div>
@@ -883,7 +904,7 @@ function renderRoyaltyLedger() {
 	}
 
 	panel.querySelector('[data-action="export"]')?.addEventListener('click', () => {
-		const csv = ledgerToCsv(entries);
+		const csv = ledgerToCsv(entries, { networkLabel });
 		downloadCsv(csv, `creator-royalties-${STATE.agentId?.slice(0, 8) || 'all'}.csv`);
 		toast('Royalty history exported');
 	});
@@ -901,12 +922,23 @@ function ledgerRow(e) {
 		settling: '<span class="cs-tag accent">Settling</span>',
 		failed: '<span class="cs-tag bad">Failed</span>',
 	}[e.status] || '<span class="cs-tag warn">Pending</span>';
+	// Per-call x402 rows carry the settlement transaction, so the amount links
+	// straight to the explorer: the author can verify their own payout on-chain
+	// instead of trusting this table. Rows with no tx (in-app calls awaiting the
+	// redeem leg) render the plain amount.
+	const txUrl = e.tx_hash ? revenueTxUrl(e.tx_hash, e.network) : null;
+	const amount = usd(Number(e.price_usd || 0));
+	const amountCell = txUrl
+		? `<a href="${esc(txUrl)}" target="_blank" rel="noopener" title="View this settlement on the explorer">${amount}</a>`
+		: amount;
+	const chain = e.network ? networkLabel(e.network) : '';
 	return `
 		<tr>
 			<td style="white-space:nowrap;color:var(--nxt-ink-dim)">${esc(relTime(e.created_at))}</td>
-			<td>${esc(e.skill_name || e.kind || '—')}</td>
-			<td style="color:var(--nxt-ink-dim)">${esc(e.agent_name || '—')}</td>
-			<td style="text-align:right">${usd(Number(e.price_usd || 0))}</td>
+			<td>${esc(e.skill_name || e.kind || '(removed)')}</td>
+			<td style="color:var(--nxt-ink-dim)">${esc(railLabel(e.source))}${chain ? ` · ${esc(chain)}` : ''}</td>
+			<td style="color:var(--nxt-ink-dim)">${esc(e.agent_name || 'Direct call')}</td>
+			<td style="text-align:right">${amountCell}</td>
 			<td>${tag}</td>
 		</tr>`;
 }
@@ -1009,6 +1041,26 @@ function openWithdrawModal(available, host) {
 async function reloadAgentPricing(host) {
 	renderSkeleton(host);
 	await loadAndRender(host);
+}
+
+// Shown to an author who earns skill royalties but has no agent yet: their
+// money first, the upsell second. The rest of Creator Studio (pricing rules,
+// payouts, per-agent analytics) genuinely needs an agent, so it stays behind
+// the link rather than rendering half-empty panels.
+function renderAuthorOnlyIntro() {
+	const el = document.createElement('div');
+	el.className = 'dn-panel';
+	const { totals } = groupLedgerByStatus(STATE.earnings?.entries || []);
+	const earned = totals.pending + totals.settling + totals.settled;
+	el.innerHTML = `
+		<div class="dn-panel-title">You're earning skill royalties</div>
+		<div class="dn-panel-sub">
+			You've earned ${esc(usd(earned))} from calls to skills you published to the marketplace.
+			Every paid call routes your share straight to your wallet.
+			Create an agent to unlock pricing rules, payouts, and per-skill analytics.
+		</div>
+		<a class="dn-btn primary" href="/dashboard/agents" style="margin-top:14px">Create an agent</a>`;
+	return el;
 }
 
 function renderNoAgents() {

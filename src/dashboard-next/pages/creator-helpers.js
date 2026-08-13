@@ -183,16 +183,47 @@ export function groupLedgerByStatus(entries) {
 	return { buckets, totals };
 }
 
-/** Build a CSV string from royalty-ledger / earnings entries for export. */
-export function ledgerToCsv(entries) {
-	const header = ['Date', 'Type', 'Skill', 'Agent', 'Amount (USD)', 'Status'];
+// Which rail earned a ledger entry, in the author's words. `source` comes from
+// royalty_ledger.source: 'x402' is a per-call payment on the platform's own
+// rail (the money routed to the author's wallet at settle time), while
+// 'skill-runtime' is an in-process invocation that settles later through the
+// delegated-permission redeem leg. Asset sales ride the same table for display.
+const RAIL_LABELS = Object.freeze({
+	x402: 'Per-call (x402)',
+	'skill-runtime': 'In-app call',
+	'asset-sale': 'Asset sale',
+});
+
+/**
+ * Human label for a royalty entry's earning rail.
+ * @param {string|null|undefined} source
+ * @returns {string}
+ */
+export function railLabel(source) {
+	return RAIL_LABELS[source] || RAIL_LABELS['skill-runtime'];
+}
+
+/**
+ * Build a CSV string from royalty-ledger / earnings entries for export.
+ * Carries the settlement provenance (rail, chain, transaction) so an exported
+ * row can be reconciled against the chain without opening the dashboard.
+ */
+export function ledgerToCsv(entries, { networkLabel = (n) => n || '' } = {}) {
+	const header = ['Date', 'Type', 'Skill', 'Agent', 'Amount (USD)', 'Platform fee (USD)', 'Status', 'Rail', 'Chain', 'Transaction'];
 	const rows = (entries || []).map((e) => [
 		csvCell(e?.created_at || ''),
 		csvCell(e?.kind || 'skill'),
 		csvCell(e?.skill_name || ''),
 		csvCell(e?.agent_name || ''),
-		csvCell(Number(e?.price_usd ?? 0).toFixed(4)),
+		// Six decimals, matching USDC's precision and the numeric(10,6) ledger
+		// column. Per-call royalties are routinely sub-cent, so the previous
+		// 4-decimal export rounded real money out of the author's own records.
+		csvCell(Number(e?.price_usd ?? 0).toFixed(6)),
+		csvCell(e?.platform_fee_usd == null ? '' : Number(e.platform_fee_usd).toFixed(6)),
 		csvCell(e?.status || ''),
+		csvCell(railLabel(e?.source)),
+		csvCell(e?.network ? networkLabel(e.network) : ''),
+		csvCell(e?.tx_hash || ''),
 	]);
 	return [header.map(csvCell).join(','), ...rows.map((r) => r.join(','))].join('\n');
 }
