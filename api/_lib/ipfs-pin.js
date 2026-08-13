@@ -1,5 +1,6 @@
 /**
- * IPFS pinning helper — single entry point for putting bytes on IPFS.
+ * IPFS transport helper: the single entry point for putting bytes on IPFS and
+ * for reading them back out of the public gateway network.
  *
  * Pump.fun's own frontend pins coin images and metadata JSON to IPFS (via
  * Pinata) and points the on-chain `uri` at `https://ipfs.io/ipfs/{cid}`.
@@ -8,7 +9,7 @@
  *
  * Provider order mirrors api/pinning/[action].js: Pinata (preferred),
  * web3.storage (fallback). When neither is configured, returns null so callers
- * fall back to R2 HTTPS hosting — a valid metadata URI, just not a CID.
+ * fall back to R2 HTTPS hosting, a valid metadata URI but not a CID.
  */
 
 const PINATA_FILE_ENDPOINT = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
@@ -17,6 +18,83 @@ const WEB3_STORAGE_ENDPOINT = 'https://api.web3.storage/upload';
 /** @returns {string} the public IPFS gateway URL pump.fun uses for a CID. */
 export function ipfsGatewayUrl(cid) {
 	return `https://ipfs.io/ipfs/${cid}`;
+}
+
+/**
+ * Gateways tried when reading content-addressed bytes back off IPFS.
+ *
+ * Two properties matter and they pull in opposite directions, so the list
+ * carries both kinds. The public gateways come first because verification is
+ * only meaningful if it does not route through us or our vendor. The pinning
+ * provider's own gateway comes last as the guaranteed-complete copy: a freshly
+ * pinned CID takes minutes to hours to propagate across the DHT, and until it
+ * does the public gateways answer 504 for a document that is perfectly pinned.
+ *
+ * Deliberately absent: cloudflare-ipfs.com and cf-ipfs.com (Cloudflare retired
+ * both in 2024, so they fail DNS, see src/ipfs.js) and flk-ipfs.xyz (no longer
+ * accepting connections). A dead host in a fallback chain is worse than no
+ * fallback: it burns the retry budget and reports a network error as a miss.
+ */
+export const IPFS_READ_GATEWAYS = [
+	'https://ipfs.io/ipfs/',
+	'https://dweb.link/ipfs/',
+	'https://w3s.link/ipfs/',
+	'https://gateway.pinata.cloud/ipfs/',
+];
+
+const GATEWAY_TIMEOUT_MS = 15000;
+
+/**
+ * Fetch a CID from every gateway at once and take the first usable answer.
+ *
+ * Concurrent on purpose. Walking the list serially makes the slowest gateway
+ * the floor on every read: a cold CID that one gateway serves in 6s would sit
+ * behind two 15s timeouts first, and a caller that gave up at 30s would call a
+ * retrievable document unretrievable.
+ *
+ * @param {string} cid
+ * @param {object} [opts]
+ * @param {number} [opts.maxBytes=1048576] reject bodies larger than this
+ * @param {string[]} [opts.gateways] override the gateway list (tests)
+ * @param {number} [opts.timeoutMs]
+ * @returns {Promise<{text:string, gateway:string}>}
+ * @throws {Error & {code:'gateway_unreachable'}} when no gateway serves it
+ */
+export async function fetchFromGateways(cid, { maxBytes = 1024 * 1024, gateways, timeoutMs } = {}) {
+	const list = gateways?.length ? gateways : IPFS_READ_GATEWAYS;
+	const budget = timeoutMs || GATEWAY_TIMEOUT_MS;
+	const failures = [];
+
+	const attempt = async (gateway) => {
+		const url = `${gateway}${cid}`;
+		const resp = await fetch(url, {
+			redirect: 'follow',
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(budget),
+		});
+		if (!resp.ok) throw new Error(`${resp.status}`);
+		if (Number(resp.headers.get('content-length') || 0) > maxBytes) throw new Error('too_large');
+		const text = await resp.text();
+		if (text.length > maxBytes) throw new Error('too_large');
+		return { text, gateway: url };
+	};
+
+	// Promise.any resolves on the first fulfilment and only rejects once every
+	// attempt has failed, which is exactly the semantics wanted here.
+	try {
+		return await Promise.any(
+			list.map((gateway) =>
+				attempt(gateway).catch((err) => {
+					failures.push(`${gateway} ${err?.message || 'error'}`);
+					throw err;
+				}),
+			),
+		);
+	} catch {
+		throw Object.assign(new Error(`no IPFS gateway served ${cid}: ${failures.join('; ')}`), {
+			code: 'gateway_unreachable',
+		});
+	}
 }
 
 // Bounded so a hung provider cannot hold an interactive request (persona save

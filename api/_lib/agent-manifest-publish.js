@@ -12,7 +12,7 @@
 
 import { sql } from './db.js';
 import { loadAttesterKeypair } from './attest-event.js';
-import { pinToIPFS, ipfsGatewayUrl, ipfsPinningConfigured } from './ipfs-pin.js';
+import { pinToIPFS, ipfsGatewayUrl, ipfsPinningConfigured, fetchFromGateways, IPFS_READ_GATEWAYS } from './ipfs-pin.js';
 import { publicUrl as r2PublicUrl } from './r2.js';
 import {
 	buildAgentManifest,
@@ -21,14 +21,12 @@ import {
 	manifestBodyDigest,
 } from './agent-manifest-sign.js';
 
-/** Public IPFS gateways tried, in order, when fetching a manifest by CID. */
-export const IPFS_GATEWAYS = [
-	'https://ipfs.io/ipfs/',
-	'https://dweb.link/ipfs/',
-	'https://cloudflare-ipfs.com/ipfs/',
-];
+/**
+ * Gateways a manifest can be fetched from, shared with every other IPFS reader
+ * on the platform (api/_lib/ipfs-pin.js) so a dead host is retired in one place.
+ */
+export const IPFS_GATEWAYS = IPFS_READ_GATEWAYS;
 
-const GATEWAY_TIMEOUT_MS = 12000;
 const MAX_ENVELOPE_BYTES = 1024 * 1024;
 
 function appOrigin() {
@@ -256,46 +254,25 @@ export async function publishAgentManifestSafely(agentId, opts) {
 }
 
 /**
- * Fetch a signed envelope by CID from the public IPFS gateways, in order.
- * Independent of our database on purpose: this is the same path an outside
- * verifier walks, so if it works here it works for them.
+ * Fetch a signed envelope by CID from the IPFS gateway network, taking the
+ * first gateway that answers. Independent of our database on purpose: this is
+ * the same path an outside verifier walks, so if it works here it works for
+ * them. The gateway that served it is returned so the caller can report which
+ * copy of the network it actually checked.
  *
  * @param {string} cid
  * @returns {Promise<{envelope:object, gateway:string}>}
  * @throws {Error & {code:string}} when no gateway returns usable JSON
  */
 export async function fetchEnvelopeFromIPFS(cid) {
-	const failures = [];
-	for (const gateway of IPFS_GATEWAYS) {
-		const url = `${gateway}${cid}`;
-		try {
-			const resp = await fetch(url, {
-				redirect: 'follow',
-				headers: { accept: 'application/json' },
-				signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS),
-			});
-			if (!resp.ok) {
-				failures.push(`${gateway} ${resp.status}`);
-				continue;
-			}
-			const length = Number(resp.headers.get('content-length') || 0);
-			if (length > MAX_ENVELOPE_BYTES) {
-				failures.push(`${gateway} too_large`);
-				continue;
-			}
-			const text = await resp.text();
-			if (text.length > MAX_ENVELOPE_BYTES) {
-				failures.push(`${gateway} too_large`);
-				continue;
-			}
-			return { envelope: JSON.parse(text), gateway: url };
-		} catch (err) {
-			failures.push(`${gateway} ${err?.message || 'error'}`);
-		}
+	const { text, gateway } = await fetchFromGateways(cid, { maxBytes: MAX_ENVELOPE_BYTES });
+	try {
+		return { envelope: JSON.parse(text), gateway };
+	} catch {
+		throw Object.assign(new Error(`${gateway} served ${cid} but it is not JSON`), {
+			code: 'gateway_unreachable',
+		});
 	}
-	throw Object.assign(new Error(`no IPFS gateway served ${cid}: ${failures.join('; ')}`), {
-		code: 'gateway_unreachable',
-	});
 }
 
 /**

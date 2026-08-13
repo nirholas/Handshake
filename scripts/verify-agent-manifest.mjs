@@ -19,8 +19,8 @@
 
 import { readFile } from 'node:fs/promises';
 import { verifyAgentManifest, sha256Hex } from '../api/_lib/agent-manifest-sign.js';
+import { fetchFromGateways } from '../api/_lib/ipfs-pin.js';
 
-const GATEWAYS = ['https://ipfs.io/ipfs/', 'https://dweb.link/ipfs/', 'https://cloudflare-ipfs.com/ipfs/'];
 const TIMEOUT_MS = 15000;
 
 function parseArgs(argv) {
@@ -44,21 +44,12 @@ const USAGE = `Verify a signed three.ws agent manifest.
   --json             print the result as JSON
 `;
 
-async function fetchFromGateways(cid) {
-	const failures = [];
-	for (const gateway of GATEWAYS) {
-		try {
-			const resp = await fetch(`${gateway}${cid}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-			if (!resp.ok) {
-				failures.push(`${gateway} -> HTTP ${resp.status}`);
-				continue;
-			}
-			return { envelope: await resp.json(), from: `${gateway}${cid}` };
-		} catch (err) {
-			failures.push(`${gateway} -> ${err?.message || 'failed'}`);
-		}
-	}
-	throw new Error(`no gateway served ${cid}\n  ${failures.join('\n  ')}`);
+// The gateway list and the concurrent read live in api/_lib/ipfs-pin.js, which
+// is dependency-free, so this script shares exactly the retrieval path the
+// platform uses without dragging in a database client.
+async function loadFromIPFS(cid) {
+	const { text, gateway } = await fetchFromGateways(cid);
+	return { envelope: JSON.parse(text), from: gateway };
 }
 
 async function resolveAgentCid(agentId, origin) {
@@ -85,7 +76,7 @@ async function main() {
 			source = args.file;
 		} else {
 			const cid = args.cid || (await resolveAgentCid(args.agent, args.origin || 'https://three.ws'));
-			const got = await fetchFromGateways(cid);
+			const got = await loadFromIPFS(cid);
 			envelope = got.envelope;
 			source = got.from;
 		}

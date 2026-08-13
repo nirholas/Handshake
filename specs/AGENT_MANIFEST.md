@@ -89,6 +89,20 @@ Everything is optional except `manifest.json` and a `body` reference.
 		},
 	},
 
+	// Persona — the compiled voice, described but never disclosed
+	"persona": {
+		"has_persona": true, // false when the agent still runs on no persona at all
+		"tone_tags": ["blunt", "dry", "analytical"],
+		"extracted_at": "2026-08-13T09:12:00Z", // null when the persona was hand-written
+		// Present only when an onboarding interview produced the voice.
+		// Counts and source only; the answers themselves stay private.
+		"interview": {
+			"source": "create-wizard", // "create-wizard" | "brain-studio"
+			"questions_answered": 7,
+			"questions_total": 7,
+		},
+	},
+
 	// Skills — capability bundles, composable, content-addressed
 	"skills": [
 		{ "uri": "skills/wave/", "version": "0.1.0" },
@@ -167,6 +181,26 @@ Skills load lazily. The `<agent-3d>` element emits `skill:loaded` events as each
 ### `tools`
 
 Built-in scene-tools available without any skill installed. Additional tools come from skills' `tools.json`. Tool names are merged; skill tools override built-ins if names collide (with a console warning).
+
+### `persona`
+
+Describes the agent's voice without ever disclosing it. The compiled system prompt is deliberately excluded (see "What is deliberately excluded" below): a manifest tells a consumer what an agent sounds like, never how to impersonate it.
+
+| Field | Meaning |
+| --- | --- |
+| `has_persona` | `true` once a compiled persona prompt is stored. `false` means the agent runs on the platform default and has no voice of its own yet. |
+| `tone_tags` | Up to 8 lowercase single-word tone descriptors. The one machine-readable handle on register, so a directory can facet on it. Empty array when none were set. |
+| `extracted_at` | When an onboarding interview last produced this persona. `null` for a hand-written persona, which is the normal case for an agent whose owner typed the profile directly. |
+| `interview` | Provenance for an interview-derived voice. **Absent entirely** when no interview ever ran, so its presence is itself the signal. |
+
+`interview` carries counts and origin only:
+
+- `source` is `create-wizard` when the interview ran before the agent existed (the create flow, via `POST /api/persona/interview`) or `brain-studio` when it was re-run against a live agent (`POST /api/agents/:id/persona/extract`).
+- `questions_answered` / `questions_total` say how much of the interview was actually filled in. The interview is optional question by question, so a voice built from 3 of 7 answers is a normal outcome, not a degraded one.
+
+**The answers are never published.** They are the owner's own words about their agent, held server-side in `persona_traits.interview` and reported here only as a count. A consumer can tell that a voice was interviewed and how thoroughly, and nothing more.
+
+Backwards compatibility: consumers must treat the whole `persona` block as optional. A manifest without it, or with `has_persona: false`, describes an agent that still speaks (on the platform default), so absence is never an error.
 
 ## Worked examples
 
@@ -467,7 +501,7 @@ The inner `sha256` is deliberately redundant with the outer signature. It lets a
 
 Five checks, all offline except the fetch:
 
-1. **Fetch** the CID from any IPFS gateway. `https://ipfs.io/ipfs/<cid>` is the default; `dweb.link` and `cloudflare-ipfs.com` are the documented fallbacks.
+1. **Fetch** the CID from any IPFS gateway. Any gateway will do, because the check that follows is cryptographic: the gateway supplies bytes, it does not vouch for them. three.ws queries `ipfs.io`, `dweb.link`, `w3s.link`, and `gateway.pinata.cloud` concurrently and takes the first that answers. Note that a just-published CID is often served only by the pinning provider's gateway at first: DHT propagation to the public gateways takes minutes to hours, during which the others correctly answer 504 for a document that is genuinely pinned.
 2. **Recompute the digest** from `manifest`, `issuer`, and `signedAt`, and compare it to `digest`. A mismatch means the document was edited after signing.
 3. **Verify the signature** over `"threews.agent.manifest.v1:" + digest` against `issuer`.
 4. **Check the issuer** against the identity you expect. A valid signature from an unknown key proves only that *someone* signed the document. `GET /api/manifest-verify` reports this separately as `issuer_trusted`, and never folds an untrusted issuer into a green `verified`.
@@ -505,6 +539,8 @@ Volatile operational state (view counts, balances, last-seen timestamps) never e
 
 A private avatar's body is omitted rather than embedded as a presigned URL: a URL that expires would turn a permanent document into a broken pointer.
 
+The compiled persona prompt is excluded from the live `GET /api/agents/:id/manifest` body, and so are any onboarding-interview answers behind it. The `persona` block describes the voice (see [`persona`](#persona)) without handing over the text needed to wear it. The signed envelope is the one place a prompt is disclosed, and only deliberately: `instructions` is inlined there so a reader can verify that the prompt they were shown is the prompt that actually runs (see "Inline instructions" above). Interview answers are never inlined, in either form.
+
 ### Publishing rules
 
 - Signing and pinning happen automatically on every persona save, extract, and restore, and never fail the save. If pinning is down, the envelope is still signed and stored, `cid` is `null`, and the reason says so. Nothing is ever reported as pinned when it is not.
@@ -512,6 +548,10 @@ A private avatar's body is omitted rather than embedded as a presigned URL: a UR
 - Re-saving an unchanged configuration does not pin a duplicate: the manifest body digest (issuer and timestamp excluded) is the idempotency key, and the existing CID is returned with `status: "unchanged"`.
 
 ## Changelog
+
+### v0.3.2 (2026-08-13)
+
+- Documented the `persona` block that `GET /api/agents/:id/manifest` has been serving: `has_persona`, `tone_tags`, `extracted_at`, and the optional `interview` provenance (`source`, `questions_answered`, `questions_total`). Descriptive only; the compiled prompt and the owner's interview answers are never published, and that exclusion is now stated where the other exclusions live. Documentation of existing behavior, so no version bump and no consumer change: the block stays optional and its absence stays valid.
 
 ### v0.3.1 (2026-08-11)
 
