@@ -2,6 +2,8 @@
 //
 //   POST /api/legal/tos-ack   { version?, context?, path? }
 //     → 200 { ok: true, version, recorded }
+//     → 400 invalid_body / invalid_version, 413 payload_too_large,
+//       415 unsupported_media_type when the body is not a readable acceptance
 //
 // The primary acceptance records are written inline by the auth endpoints
 // (register / login / SIWE / SIWS / Privy verify) when the client sends
@@ -36,7 +38,28 @@ export default wrap(async function handler(req, res) {
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const body = await readJson(req, 10_000).catch(() => null);
+	// An unreadable body must never become a recorded acceptance. Swallowing the
+	// read error left `body` null, and a null body then took the "no version
+	// sent, default to current" path below: a form POST with no JSON
+	// content-type, or a body past the size limit, answered 200 and wrote an
+	// evidentiary "accepted Terms v2" row for a request whose content was never
+	// read. Report what actually went wrong instead (413 oversized, 415 wrong
+	// content-type, 400 unparseable) and record nothing.
+	let body;
+	try {
+		body = await readJson(req, 10_000);
+	} catch (err) {
+		const status = err?.status === 413 || err?.status === 415 ? err.status : 400;
+		const code =
+			status === 413 ? 'payload_too_large' : status === 415 ? 'unsupported_media_type' : 'bad_request';
+		return error(res, status, code, err?.message || 'could not read request body');
+	}
+	// `{}` is a valid acceptance of the current version, but an array or any
+	// other non-object JSON is not an acceptance payload at all; it only reached
+	// the default-version path because `[].version` reads as undefined.
+	if (!body || typeof body !== 'object' || Array.isArray(body)) {
+		return error(res, 400, 'invalid_body', 'body must be a JSON object');
+	}
 	const raw = Number(body?.version);
 	const version = Number.isInteger(raw) && raw >= 1 && raw <= TOS_VERSION ? raw : TOS_VERSION;
 	if (body?.version !== undefined && version !== raw) {

@@ -2,6 +2,8 @@
 //
 //   POST /api/legal/risk-ack   { version, context?, path? }
 //     → 200 { ok: true, recorded }
+//     → 400 invalid_version, 413 payload_too_large,
+//       415 unsupported_media_type when the body is not a readable acceptance
 //
 // The client-side gate (public/risk-ack.js) fires this after the user accepts
 // the real-funds risk acknowledgment. The acceptance itself lives in the
@@ -45,7 +47,19 @@ export default wrap(async function handler(req, res) {
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const body = await readJson(req, 10_000).catch(() => null);
+	// Swallowing the read error collapsed every body failure into the version
+	// complaint below, so an oversized or non-JSON POST was told its `version`
+	// was wrong when the field was fine and the body was the problem. Report the
+	// real cause (413 oversized, 415 wrong content-type, 400 unparseable).
+	let body;
+	try {
+		body = await readJson(req, 10_000);
+	} catch (err) {
+		const status = err?.status === 413 || err?.status === 415 ? err.status : 400;
+		const code =
+			status === 413 ? 'payload_too_large' : status === 415 ? 'unsupported_media_type' : 'bad_request';
+		return error(res, status, code, err?.message || 'could not read request body');
+	}
 	const version = Number(body?.version);
 	if (!Number.isInteger(version) || version < 1 || version > RISK_ACK_VERSION) {
 		return error(

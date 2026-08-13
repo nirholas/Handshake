@@ -44,14 +44,14 @@ const { default: handler } = await import('../../api/legal/tos-ack.js');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function makeReq(body = null) {
-	const bodyStr = body ? JSON.stringify(body) : '';
+function makeReq(body = null, { contentType = 'application/json', raw = null } = {}) {
+	const bodyStr = raw ?? (body ? JSON.stringify(body) : '');
 	const req = Readable.from([Buffer.from(bodyStr)]);
 	req.method = 'POST';
 	req.url = '/api/legal/tos-ack';
 	req.headers = {
 		host: 'app.test',
-		...(body !== null ? { 'content-type': 'application/json' } : {}),
+		...(contentType ? { 'content-type': contentType } : {}),
 	};
 	return req;
 }
@@ -71,8 +71,8 @@ function makeRes() {
 	};
 }
 
-async function invoke(body) {
-	const req = makeReq(body);
+async function invoke(body, opts) {
+	const req = makeReq(body, opts);
 	const res = makeRes();
 	await handler(req, res);
 	// logAudit and the users-table stamp are fire-and-forget microtasks; flush
@@ -171,6 +171,41 @@ describe('POST /api/legal/tos-ack', () => {
 		const { status, body } = await invoke({ version: TOS_VERSION + 1 });
 		expect(status).toBe(400);
 		expect(body.error).toBe('invalid_version');
+	});
+
+	// The three cases below all used to answer 200 and write an evidentiary
+	// "accepted the current Terms" row: the body read failed (or produced a
+	// non-object), and an absent `version` then took the default-to-current
+	// path. A request we could not read is not evidence of an acceptance.
+	it('refuses a body sent without a JSON content-type', async () => {
+		const { status, body } = await invoke(null, {
+			contentType: 'application/x-www-form-urlencoded',
+			raw: 'version=2',
+		});
+		expect(status).toBe(415);
+		expect(body.error).toBe('unsupported_media_type');
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('refuses a body past the size limit', async () => {
+		const { status, body } = await invoke({ version: TOS_VERSION, pad: 'a'.repeat(11_000) });
+		expect(status).toBe(413);
+		expect(body.error).toBe('payload_too_large');
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('refuses a JSON body that is not an object', async () => {
+		const { status, body } = await invoke(null, { raw: '[]' });
+		expect(status).toBe(400);
+		expect(body.error).toBe('invalid_body');
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('refuses an unparseable body', async () => {
+		const { status, body } = await invoke(null, { raw: '{oops' });
+		expect(status).toBe(400);
+		expect(body.error).toBe('bad_request');
+		expect(sqlState.calls).toHaveLength(0);
 	});
 
 	it('rate limits', async () => {
