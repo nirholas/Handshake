@@ -1153,7 +1153,13 @@ Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.
 
 URL: https://three.ws/strategy-lab
 
-Build DCA and subscription strategies that trade on-chain on your behalf.
+Write a pump.fun trading strategy as data, backtest it against real on-chain history, then run it live through your agent's wallet.
+
+### Recurring Payments
+
+URL: https://three.ws/recurring
+
+Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, see every charge each one has settled, and watch what is being paid into your own agents.
 
 ### Strategy Objects
 
@@ -2433,6 +2439,12 @@ Browse the public three.ws agent marketplace and skills catalog over MCP.
 URL: https://three.ws/docs/skills
 
 Write, package, and monetize agent skills.
+
+### Docs · Skill royalties
+
+URL: https://three.ws/docs/skill-royalties
+
+Publish a skill, price it, and earn on every call. The exact author/platform split, why your share routes to your own wallet at settlement (Solana first), the ledger where you watch payouts land with an explorer link each, and the proof lane that verifies the whole accounting path without moving a cent.
 
 ### Docs · Widgets
 

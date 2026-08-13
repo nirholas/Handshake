@@ -3,6 +3,56 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "Your face scan keeps building even if the engine lineup changes mid-job",
+			"summary": "A scan in progress is tracked by an id that only the engine which started it can read. When the platform had more than one avatar engine available, the page checking on your scan could ask the wrong one, and it would answer that it had never heard of your job. Your avatar was generating perfectly well and you were told it had failed. The status check now always asks the engine that actually took your photos, and if that engine is no longer reachable it leaves your job alone for the server-side sweep to finish instead of declaring it dead.",
+			"tags": [
+				"fix"
+			],
+			"link": "/create/selfie"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Skill authors can finally see the per-call royalties they were already earning",
+			"summary": "Every paid call to a skill you published routes your share straight to your own wallet, and the platform has been recording each of those payouts. None of them reached your earnings page. The ledger behind Creator Studio only counted royalties that came from an agent running inside three.ws, and a payment made directly to your skill's paid endpoint has no agent attached to it, so every single one of those earnings was skipped on the way to the screen. Authors earning real money saw an empty ledger and a total of zero. Those payouts now appear where they always should have. Each row names the skill, the rail the payment came in on and the chain it settled on, and links the amount to that chain's block explorer, so you can verify your own payout on-chain rather than taking our word for it. The CSV export carries the same detail and now keeps the full six decimals a USDC payment actually has, instead of rounding sub-cent calls down. Money still on its way to you is counted separately from money already delivered, so neither total flatters itself. And because royalties belong to the author rather than to an agent, Creator Studio no longer asks you to create an agent before it will show you your own earnings.",
+			"tags": [
+				"fix",
+				"feature"
+			],
+			"link": "/dashboard/creator"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Endpoint Revenue names the chain each payment settled on, and its network filter works",
+			"summary": "The live revenue page records every settlement with the chain identifier the ledger stores, which is a long machine string such as solana:5eykt4Us and eip155:8453. Those raw strings were being shown to readers as the chain name, and the filter that was supposed to narrow the feed to one chain compared them against short names like 'solana', so it matched nothing: picking a network emptied the feed even though thousands of Solana payments were sitting right there. Chains now read as Solana, Base and BNB Chain across the feed, the network breakdown and the filter chips, and filtering by one of them returns its real settlements. Each row's explorer link now points at that chain's own explorer, so a Base payment opens on Basescan instead of a Solana explorer that could never find it. The breakdown rows are clickable filters too, the CSV export carries the readable chain name and the explorer link alongside the raw id, and when the revenue service cannot be reached the page now says so and offers a retry instead of leaving an endless loading shimmer.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/x402-revenue"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Verifying an agent's pinned manifest now works the moment it is published",
+			"summary": "Signed agent manifests are pinned to IPFS so anyone can fetch the CID and check for themselves what an agent was instructed to do. That check was reaching for gateways that could not answer: one of the three it tried had been retired by its operator in 2024 and no longer resolves at all, and the other two routinely return a timeout for a manifest published minutes ago, because a brand new CID takes hours to spread across the public IPFS network even when it is correctly pinned. A verifier doing everything right would be told the document was unavailable. Verification now queries four live gateways at once and uses whichever answers first, including the pinning provider's own, which holds a new document immediately. That turns a read that could fail after nearly a minute of waiting into one that succeeds in a few seconds, and it removes the case where a perfectly valid manifest looked unverifiable. The command line verifier, the public verification endpoint, and the spec all describe the same set of gateways.",
+			"tags": [
+				"fix",
+				"infra",
+				"docs"
+			],
+			"link": "/docs/agent-manifest"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Any inference node can now prove its results, and the platform's own worker speaks the open protocol",
+			"summary": "Agent inference no longer has to trust whoever ran it. The Open Inference Protocol is now a published specification: a job envelope, a signed advertisement in which a node states what it can run and what it charges, and a result the node signs with its own Ed25519 key. The signature covers a digest of the exact job it answered and a hash of the exact bytes it produced, so anyone holding the job and the response can confirm both, offline, without trusting the platform, the network, or the node's operator. Change one number in a finished result and verification fails. The platform's mesh stylization worker is the first node to speak it, behind a flag that leaves it unchanged when off, and an operator with no cloud storage bucket can sign artifacts straight off their own disk. A conformance runner drives any node through the whole protocol (advertise, submit, poll, verify, re-hash the artifact) and passes only when every signature checks out, so an operator can prove their machine is compatible before taking a single paying job. Signed failures count too: a node that declines a job leaves the same verifiable evidence a success does, which is what makes settlement and reputation fair in both directions.",
+			"tags": [
+				"feature",
+				"infra",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Your agent learns your GitHub work from a checklist you tick, and nothing else",
 			"summary": "Seeding an agent from GitHub now shows you the exact inventory first: your public profile, the repositories you pinned to your profile, your recent public repositories, and a separate tick for each repository's README. Whatever you leave unticked is never read, and the server rebuilds the same list when you press Seed, so a request naming anything you were not shown is refused outright rather than quietly seeding something else. Private repositories never appear in the list at all. Every stored memory records the exact set of boxes that produced it, so you can always see where a fact came from, and deleting them is one button on the agent or one Disconnect on the account, which removes every GitHub-derived memory across all your agents and revokes the access on GitHub's side too. Two fixes ship with it: the agent picker in Settings was reading the wrong field and never listed your agents, so the panel always fell back to asking for an agent ID by hand, and the Connect button on a deployment with no GitHub app configured now says so instead of opening an error page.",
 			"tags": [
@@ -10,6 +60,15 @@
 				"security"
 			],
 			"link": "/settings"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Answer seven questions and your agent has a voice",
+			"summary": "Writing a personality prompt from a blank box is the hardest part of building an agent, and it is the step where most people give up and settle for a generic assistant. The personality step of the create flow now offers an interview instead. Seven short questions, in plain language: what should it help people with, how should it sound, what should it know cold, write one line the way you want to hear it say something, what should it never do, what should it do when it is not sure, and any words or running jokes that belong to it. Answer in your own words, skip any question that does not apply, and the platform turns your answers into a real personality: the profile paragraph, the tone words, the phrases it reaches for, and where it sits on warmth, formality, directness, humour, and the rest. Everything it writes is yours to edit before you ship, and you can re-run the interview any time from the Brain Studio on an agent that already exists. Skipping the interview entirely is still a first-class choice; your agent gets a complete working personality built from its name and description, never an empty one. Your agent's public profile now says how thoroughly it was interviewed, without ever publishing your answers.",
+			"tags": [
+				"feature"
+			],
+			"link": "/create"
 		},
 		{
 			"date": "2026-08-13",

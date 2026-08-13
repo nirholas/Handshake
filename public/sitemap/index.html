@@ -83,7 +83,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 813 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 815 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -95,7 +95,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 813 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 815 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -103,6 +103,22 @@
 			<h2 id="sm-new-title">Newest<a class="sm-new-more" href="/changelog">full changelog &rarr;</a></h2>
 			<p class="sm-section-desc">The 9 most recently launched pages, straight to the live surface.</p>
 			<ul class="sm-list">
+				<li>
+					<a href="/recurring">
+						<span class="sm-new-date">Aug 13, 2026</span>
+						<span class="sm-title">Recurring Payments</span>
+						<span class="sm-path">/recurring</span>
+						<span class="sm-desc">Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, see every charge each one has settled, and watch what is being paid into your own agents.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/skill-royalties">
+						<span class="sm-new-date">Aug 13, 2026</span>
+						<span class="sm-title">Docs · Skill royalties</span>
+						<span class="sm-path">/docs/skill-royalties</span>
+						<span class="sm-desc">Publish a skill, price it, and earn on every call. The exact author/platform split, why your share routes to your own wallet at settlement (Solana first), the ledger where you watch payouts land with an explorer link each, and the proof lane that verifies the whole accounting path without moving a cent.</span>
+					</a>
+				</li>
 				<li>
 					<a href="/reputation/market">
 						<span class="sm-new-date">Aug 12, 2026</span>
@@ -157,22 +173,6 @@
 						<span class="sm-title">Docs · Agent tokens</span>
 						<span class="sm-path">/docs/agent-tokens</span>
 						<span class="sm-desc">Turn an agent into an economic object: a Solana coin whose identity belongs to the agent rather than to whoever filled in the launch form. Covers configuring a coin before it exists, rehearsing the launch for free, and the single command that launches it for real.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/analytics-retention">
-						<span class="sm-new-date">Aug 11, 2026</span>
-						<span class="sm-title">Docs · Week-2 retention on minted agents</span>
-						<span class="sm-path">/docs/analytics-retention</span>
-						<span class="sm-desc">How three.ws measures the one number that gates phase 2 of the roadmap: whether users come back to converse with the agent they minted. Defines the cohort, the return event, and the query behind the reported figure.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/tokens-xyz">
-						<span class="sm-new-date">Aug 11, 2026</span>
-						<span class="sm-title">Docs · Tokens API on three.ws</span>
-						<span class="sm-path">/docs/tokens-xyz</span>
-						<span class="sm-desc">The Solana Foundation asset layer wired into three.ws: how one canonical asset maps to every Solana mint that represents it, the batch market read that prices a whole portfolio in one call, and where it sits in the price failover chain behind Birdeye.</span>
 					</a>
 				</li>
 			</ul>
@@ -1136,7 +1136,7 @@
 
 		<section class="sm-section" id="crypto">
 			<header>
-				<h2>Crypto<span class="sm-count" data-count>135</span></h2>
+				<h2>Crypto<span class="sm-count" data-count>136</span></h2>
 				<p class="sm-section-desc">On-chain features: pay-per-call, token launches, vanity wallets.</p>
 			</header>
 			<ul class="sm-list">
@@ -1529,7 +1529,14 @@
 					<a href="/strategy-lab">
 						<span class="sm-title">Strategy Lab</span>
 						<span class="sm-path">/strategy-lab</span>
-						<span class="sm-desc">Build DCA and subscription strategies that trade on-chain on your behalf.</span>
+						<span class="sm-desc">Write a pump.fun trading strategy as data, backtest it against real on-chain history, then run it live through your agent's wallet.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/recurring">
+						<span class="sm-title">Recurring Payments</span>
+						<span class="sm-path">/recurring</span>
+						<span class="sm-desc">Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, see every charge each one has settled, and watch what is being paid into your own agents.</span>
 					</a>
 				</li>
 				<li>
@@ -2255,7 +2262,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>356</span></h2>
+				<h2>Learn<span class="sm-count" data-count>357</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -3013,6 +3020,13 @@
 						<span class="sm-title">Docs · Skills</span>
 						<span class="sm-path">/docs/skills</span>
 						<span class="sm-desc">Write, package, and monetize agent skills.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/skill-royalties">
+						<span class="sm-title">Docs · Skill royalties</span>
+						<span class="sm-path">/docs/skill-royalties</span>
+						<span class="sm-desc">Publish a skill, price it, and earn on every call. The exact author/platform split, why your share routes to your own wallet at settlement (Solana first), the ledger where you watch payouts land with an explorer link each, and the proof lane that verifies the whole accounting path without moving a cent.</span>
 					</a>
 				</li>
 				<li>

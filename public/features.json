@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T23:09:23.258Z",
+	"generated_at": "2026-08-13T23:40:29.715Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1899,8 +1899,18 @@
 				{
 					"path": "/strategy-lab",
 					"title": "Strategy Lab",
-					"description": "Build DCA and subscription strategies that trade on-chain on your behalf.",
+					"description": "Write a pump.fun trading strategy as data, backtest it against real on-chain history, then run it live through your agent's wallet.",
 					"added": "2026-05-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/recurring",
+					"title": "Recurring Payments",
+					"description": "Create, pause, resume and cancel recurring on-chain USDC payments and DCA schedules, see every charge each one has settled, and watch what is being paid into your own agents.",
+					"added": "2026-08-13",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -4002,6 +4012,16 @@
 					"title": "Docs · Skills",
 					"description": "Write, package, and monetize agent skills.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/skill-royalties",
+					"title": "Docs · Skill royalties",
+					"description": "Publish a skill, price it, and earn on every call. The exact author/platform split, why your share routes to your own wallet at settlement (Solana first), the ledger where you watch payouts land with an explorer link each, and the proof lane that verifies the whole accounting path without moving a cent.",
+					"added": "2026-08-13",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

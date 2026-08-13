@@ -857,6 +857,36 @@
 			const _xAgentId = _urlP.get('agent_id') || '';
 
 			// GitHub section
+			//
+			// Disconnecting is the account-wide revoke: the server deletes every
+			// GitHub-seeded memory across all of this user's agents in the same
+			// transaction that drops the connection, then asks GitHub to revoke the
+			// grant. The confirm says so, because the deletion cannot be undone.
+			async function disconnectGitHub() {
+				const btn = document.getElementById('github-disconnect-btn');
+				const msg = document.getElementById('github-msg');
+				if (!confirm('Disconnect GitHub? Every memory your agents learned from GitHub is deleted, and the access is revoked on GitHub.')) return;
+				if (btn) {
+					btn.disabled = true;
+					btn.textContent = 'Disconnecting…';
+				}
+				try {
+					const data = await apiJson('/api/auth/github/disconnect', { method: 'POST' });
+					const n = data?.memories_deleted ?? 0;
+					showMsg(msg, 'ok', n
+						? `GitHub disconnected. ${n} seeded ${n === 1 ? 'memory' : 'memories'} deleted.`
+						: 'GitHub disconnected.');
+				} catch (e) {
+					showMsg(msg, 'err', e.data?.error_description || 'Could not disconnect GitHub.');
+					if (btn) {
+						btn.disabled = false;
+						btn.textContent = 'Disconnect';
+					}
+					return;
+				}
+				loadGitHubStatus();
+			}
+
 			async function loadGitHubStatus() {
 				const statusEl = document.getElementById('github-status-text');
 				const actionsEl = document.getElementById('github-actions');
