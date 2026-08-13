@@ -35,7 +35,7 @@ The response sorts agents that need your action first, then those with an open p
 - Approve or decline a recovery: `POST /api/agents/:id/recovery/requests/:rid/{approve,decline}`
 - Confirm or decline an inheritance: `POST /api/agents/:id/recovery/requests/:rid/{confirm,decline}`
 - Complete a ready transfer: `POST /api/agents/:id/recovery/requests/:rid/complete`
-- Arm inheritance as a beneficiary when the owner has gone silent past their threshold: `POST /api/agents/:id/recovery/inheritance/arm`
+- Arm inheritance, as the beneficiary or a guardian, when the owner has gone silent past their threshold: `POST /api/agents/:id/recovery/inheritance/arm`
 
 ## Walkthrough
 
@@ -44,7 +44,7 @@ The response sorts agents that need your action first, then those with an open p
 3. If a process is open, the card tells its story in the agent's own voice ("I'm being recovered. If you trust this person is really my owner, approve."), plus the approval count, the safety-window countdown, and when it opened.
 4. Act. For a recovery you trust, click **Approve recovery** (or **Decline**). For an inheritance you believe is real, click **Confirm inheritance**. Each action asks you to confirm, because these are consequential.
 5. When the safety window has elapsed and the process is ready, click **Complete transfer** to pass control of the agent and its wallet to the new owner.
-6. If you are a beneficiary and the owner has gone silent past their threshold with no active process, you can try to arm inheritance, which begins the grace window.
+6. If you are the beneficiary or a guardian and the owner has gone silent past their threshold with no active process, you can try to arm inheritance, which begins the grace window.
 
 ## Examples
 

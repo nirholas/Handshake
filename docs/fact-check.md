@@ -23,10 +23,10 @@ The request routing:
 The fact-check pipeline (`runFactCheck`):
 
 1. Generate exactly 3 search queries with an LLM.
-2. Search across a source chain (Brave, Tavily, Exa, Serper, then keyless Wikipedia full-text and DuckDuckGo Instant Answer as always-available fallbacks) and take the top 5 unique results.
+2. Search across a source chain (Vertex-grounded Google Search, then Brave, Tavily, Exa, Serper, then keyless Wikipedia full-text and DuckDuckGo Instant Answer as always-available fallbacks) and take the top 5 unique results. Each keyed rung is skipped when its key is absent, so the chain runs whatever is configured and always reaches the keyless rungs.
 3. Run LLM stance extraction on each of the 5: an excerpt plus a stance of `supports`, `contradicts`, or `neutral`.
 4. Weight each source by an authority score, adjusted by strictness (`high` halves low-authority weights, `low` floors them, `medium` is the default).
-5. Compute the verdict: fewer than 2 sources is `insufficient`; a weighted support ratio above 0.65 is `supported`; a weighted contradiction ratio above 0.65 is `contradicted`; otherwise `mixed`. Confidence is the winning ratio.
+5. Compute the verdict over the stance-bearing evidence only, so tangential results cannot drown a clear answer. Fewer than 2 sources, zero weight, or no source that took a stance at all is `insufficient`, and so is a lone stance-bearing source lost in otherwise-silent evidence (under 30 percent coverage): evidence that never engages the claim is absence of evidence, not disagreement. Otherwise direction is judged over stance-bearing weight alone, 70 percent or more one way is `supported` or `contradicted` and a real split is `mixed`. Confidence blends that dominance with coverage, so a unanimous verdict read off thin engagement scores lower than one read off broad engagement.
 6. Build a cost breakdown and the attestation.
 
 The LLM routes through the platform's shared free-first policy (Groq and OpenRouter as funded defaults). Results are cached in Redis for 7 days keyed by a hash of the claim, strictness, and any image URL, so an identical claim (on either lane) never re-runs the live chain.
@@ -63,7 +63,7 @@ A free-lane response looks like:
   "sources": [
     { "url": "https://...", "title": "...", "excerpt": "...", "stance": "supports", "weight": 0.9 }
   ],
-  "costBreakdown": { "searchCalls": 2, "llmTokens": 1400, "totalUsdc": "0.100350" },
+  "costBreakdown": { "searchCalls": 3, "llmTokens": 1400, "totalUsdc": "0.100350" },
   "attestation": "sha256:...",
   "lane": "free",
   "free_remaining_today": 2

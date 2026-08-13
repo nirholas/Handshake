@@ -311,6 +311,14 @@
 			<description>Asking the x402 Bazaar MCP server for one service's full details produced a cramped block: the pay link sat flush against the last payment option, and a listing that advertises no payment options up front showed a bare &quot;Payment options:&quot; header with nothing under it. Both read properly now, and a listing with no advertised options says so and points at the 402 challenge the service returns when you call it. Search and browse results also separate a service's name from its price with a plain hyphen, matching the example output the server advertises to payers. Separately, the price-tracking tool now reports a missing price label as null on a live service instead of dropping the field, so a tracker comparing today's sample against yesterday's sees the same set of keys whether the service is still listed or gone.</description>
 		</item>
 		<item>
+			<title>Three trading and fact-check guides now match what the code actually does</title>
+			<link>https://three.ws/docs/smart-money</link>
+			<guid isPermaLink="false">2026-08-13:Three trading and fact-check guides now match what the code actually does</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The Smart Money Radar guide listed the rules that earn a wallet its label but was missing the one added in August: a wallet with a sustained edge over a real sample (8 or more judged coins at a 35 percent or better win rate) counts as smart money even without a 70+ score, which is how most proven wallets qualify today. The Fact Check guide still described the old verdict math, so a reader computing an expected verdict by hand would get the wrong answer: the verdict is now read off the sources that actually took a stance, needs 70 percent agreement rather than 65, calls a single stance in otherwise-silent evidence insufficient, and scores confidence by how much of the evidence engaged the claim. That page also now lists the Google-grounded search rung at the top of its source chain and shows the real number of searches a check runs. The Guardian console guide said only a beneficiary can arm an inheritance when a guardian can too.</description>
+		</item>
+		<item>
 			<title>Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</title>
 			<link>https://three.ws/dashboard/api</link>
 			<guid isPermaLink="false">2026-08-13:Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</guid>

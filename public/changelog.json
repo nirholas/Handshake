@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T05:14:30.316Z",
+	"generated_at": "2026-08-13T05:22:51.948Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -404,6 +404,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"type": "update",
+			"title": "Three trading and fact-check guides now match what the code actually does",
+			"summary": "The Smart Money Radar guide listed the rules that earn a wallet its label but was missing the one added in August: a wallet with a sustained edge over a real sample (8 or more judged coins at a 35 percent or better win rate) counts as smart money even without a 70+ score, which is how most proven wallets qualify today. The Fact Check guide still described the old verdict math, so a reader computing an expected verdict by hand would get the wrong answer: the verdict is now read off the sources that actually took a stance, needs 70 percent agreement rather than 65, calls a single stance in otherwise-silent evidence insufficient, and scores confidence by how much of the evidence engaged the claim. That page also now lists the Google-grounded search rung at the top of its source chain and shows the real number of searches a check runs. The Guardian console guide said only a beneficiary can arm an inheritance when a guardian can too.",
+			"link": "/docs/smart-money",
+			"tags": [
+				"docs",
+				"fix"
 			]
 		},
 		{
