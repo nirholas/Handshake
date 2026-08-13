@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "The Integrations page and its docs stopped showing \"avatar not found\" where the 3D demo should be",
+			"summary": "Every copy-paste avatar snippet on the Integrations page, the embed demo, and the Integrations doc pointed at a demo avatar whose record had been deleted in an earlier cleanup, so the headline 3D Avatar example rendered the words \"avatar not found\" instead of a character, and anyone who pasted the snippet into their own site got the same empty box. All nine references now use a live featured avatar, verified end to end in a real browser: the web component loads with no failed requests and a real 3D character renders on the page and in the pasted snippet.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/integrations"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The Examples Gallery came back, and seven docs pages stopped describing code that had changed",
+			"summary": "The Examples Gallery doc had been reduced to three lines of placeholder text by an interrupted test run, so a page advertised as copy-paste-ready code for the most common use cases opened to nothing at all; the full guide is restored, from the one-tag minimal embed through the React wrapper, the multi-agent scene, and the complete Coach Leo manifest, and its index of every runnable example in the repo is regenerated from what is actually on disk. Alongside it: the JavaScript API reference described a validator toggle, a scene-graph printer, and an alert-based error handler that no longer exist, and missed the load-progress callback and the model-loaded event that do; the Introduction listed five embeddable widgets when ten ship; two pages named older chat models than the brain router now offers; the Internationalization page called its lint command a build gate when nothing runs it for you; and the IRL page linked its retention cron at a live endpoint that answers with an authorization error instead of at the source file.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/examples"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Three tutorials quoted settings, fields, and links that had drifted from the code",
 			"summary": "The Run TRELLIS on Your Own NVIDIA NIM guide said the high quality tier runs 40 sampling steps when the code runs 50, showed the health check reporting an empty detail string where it really returns null, left the two prompt-strength settings the proxy always sends out of the wire contract it documents, and linked an operations runbook that is not published on the site. The ERC-8004 reputation tutorial printed an MCP response carrying a totalScore field the tool has never returned, and listed the recent vouches as a bare array when the tool wraps them together with the block range it scanned; both now match the real payload. The advanced Shopify store guide pointed its persona reference at a repository file that is not reachable on the web, and pinned an older tour engine than the Tour Builder actually hands you; the link now goes to the published package documentation and the pinned version matches the builder.",
 			"tags": [
