@@ -601,6 +601,12 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					if (data.texture_url) result.textureUrl = data.texture_url;
 					if (data.mode) result.mode = data.mode;
 				}
+				// The stylize worker reports the rebuilt mesh's face count and the
+				// forge's stylize panel renders it beside the result, so it has to
+				// survive the hop: without this it arrived as null every time.
+				if (mode === 'stylize' && typeof data.face_count === 'number') {
+					result.faceCount = data.face_count;
+				}
 				// Surface the parts manifest so callers can render a selectable
 				// part list without a second fetch.
 				if (mode === 'segment') {
