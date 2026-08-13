@@ -3,6 +3,64 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "The Alibaba Cloud Marketplace blog post was missing the site footer",
+			"summary": "That post loaded the footer stylesheet but never the script that renders the footer, so it was the one post in the blog that ended at the last paragraph with no site navigation underneath: no links back to the product, the docs, the socials, or anything else the footer carries. Readers who reached the end had nowhere to go but the browser back button. The post now loads the same footer every other post does. Separately, the /play coin-communities write-up had no main landmark, so screen readers and reader-mode tools had no way to tell the article body apart from the header and footer chrome; its content is now wrapped in one.",
+			"tags": [
+				"fix"
+			],
+			"link": "/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Every ledger link in the trading write-up went nowhere, and now they open the agent that made the trade",
+			"summary": "The autonomous-trading post publishes a league table of all eleven armed agents, and each row offered a \"ledger\" link into that agent's full decision history. All eleven were 404s: the address they pointed at (/reasoning-ledger with the agent id in the query) is the form the trading API hands out and the form two docs pages tell you to use, but it was never in the site's route table, so only the shorter /ledger/<agentId> spelling worked. The route exists now, which fixes the links in the post and every link the API has been emitting alongside them. Those links also ask for a specific slice of the history (the buy decisions), and the ledger page had been quietly ignoring that and showing everything; it now opens on the slice you asked for, and changing the filter updates the address bar so the filtered view is the thing you can copy and send. One row in the same table linked to a block explorer with no address behind it and is no longer a link at all. In the Concierge post, the \"build tutorial\" link landed on the docs index instead of the tutorial. And on all ten blog pages the keyboard \"Skip to content\" link now has a real target in the page, so it works whether or not scripts are running.",
+			"tags": [
+				"fix"
+			],
+			"link": "/blog/autonomous-trading-experiment"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Sharing a placement and opening a World Line quest both fail cleanly now",
+			"summary": "Three fixes to the IRL surfaces. Sharing a placed agent with a pin id that is not a real pin id used to come back as a generic internal error with a support reference, as if something had broken on our side; it now says plainly that the id is not a pin. The refusal you get when you try to share a placement you kept private told you to do the opposite of what actually fixes it, so the copy now tells you to make the pin public first. And the World Line quest feeds (the nearby list and a single quest page) could fail outright on a database that had never held a pin, because they read the pin table without ever creating it; they now share the pin feed’s own setup, along with its content guard, so a quest title is held to exactly the same coin and language rules a pin caption is.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The /play event and swarm guides stopped describing things that are not there",
+			"summary": "Two guides told you to edit a config file the platform no longer ships. The live-events and event-souvenir pages were written while an event was scheduled, and when that config was retired the pages kept describing it as present, so anyone following them hunted for a file that was not in the repo and could not tell whether the feature was broken or simply idle. Both now say plainly that no event is scheduled, that writing the file is how you schedule one, and that the preview flag and the browser audit both need it in place before they show anything. The /play hardening guide named five rate-limit buckets that do not exist under those names, sending anyone auditing the limiter to the wrong keys; it now names the real ones. The trading-swarms error table listed nine of the twenty codes the API actually returns, so a client written from it would fall through on a contribution that trips the per-member share cap, an invite-only swarm, or an exit blocked by open positions: all of those are documented now. And the IBM Community catalog picked up the group's fourth blog post and refreshed its snapshot counts.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/play-live-events"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "The Crypto Data API reference now matches the JSON the endpoints actually return",
+			"summary": "Three response samples on the free Crypto Data API page were wrong in ways that break code copied from them. A portfolio row publishes its share of the book as `sharePct`, not `pct`, so anyone charting from the documented sample got undefined on every row. The airdrops sample showed eligibility cutoffs of 70/40 when the live thresholds are 80/30, and gave its summary counts camelCase names the API does not use. The page also now states the real rate limit (60 requests per minute per IP) instead of calling it generous, and its EVM example uses an obvious placeholder rather than a dummy address that answers 400. Alongside it: the autonomous-economy page and the Start Here summary claimed the on-chain leak scanners run every minute (they run every 15 and every 10) and quoted a scanned-transaction count with no date on it, the Share and embed guide listed 5 of the 10 embeddable widget types and named the wrong one as the default, the first-agent guide pointed at a Voice tab the editor does not have, and the Walk avatar docs tab title now matches the name the rest of the site uses for that page.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/crypto-api"
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Four platform guides now show the responses and numbers the code really produces",
+			"summary": "The Permissions guide documented a failure body no permissions endpoint sends, so anyone writing error handling from it was matching on fields that never arrive; it now shows the real envelope, with a curl you can run, and separates it from the different shape the in-browser helper returns. The 3D provenance guide only ever showed a verified answer, even though its own example command asks about a model that was never anchored: the real unknown-but-hashed reply is now shown first, so nobody reads a correct answer as a broken endpoint. The bulk on-chain agent guide still told admins to use a dashboard that was removed with the admin panel, and misnumbered its last tutorial. And the onboarding tier page's menu counts had drifted behind the navigation itself. The persona key generator and the permissions smoke test also stopped naming the retired host in their setup instructions.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/permissions"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Blog posts end with the site footer again, and Skip to content lands where it should",
 			"summary": "Ten posts, including the Solana wallet, Pump.fun payments SDK, animation and emotion, IBM, Google Cloud, Sperax, Anthropic MCP registry and $THREE listing announcements, loaded the footer stylesheet but never rendered a footer. A reader who finished one of those articles had no way back into the site except the browser's back button: no docs, changelog, product or social links. All of them now mount the shared footer. Separately, the Skip to content link that opens every page pointed at an anchor most pages did not actually define, so it only worked on a plain click and did nothing when opened in a new tab or restored from a reloaded URL. The page body is now tagged as that link's real target everywhere.",
 			"tags": [
