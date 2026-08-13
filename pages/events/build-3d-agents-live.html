@@ -279,7 +279,7 @@
           <button type="submit" class="btn btn-primary" data-i18n="events_build_3d_agents_live.notify_me">Notify me</button>
         </form>
         <div class="msg" data-newsletter-msg role="status" aria-live="polite"></div>
-        <p class="fine" data-i18n-html="events_build_3d_agents_live.or_just_add_it_to_your_calendar">Or just <a href="#" id="add-cal-2" style="text-decoration:underline">add it to your calendar</a> and show up.</p>
+        <p class="fine" data-i18n-html="events_build_3d_agents_live.or_just_add_it_to_your_calendar">Or just <a id="add-cal-2" style="text-decoration:underline">add it to your calendar</a> and show up.</p>
       </div>
     </div>
   </section>
@@ -310,7 +310,12 @@
       + '&dates=' + gcalStamp(EVENT_START) + '/' + gcalStamp(EVENT_END)
       + '&details=' + encodeURIComponent('A live build session from three.ws — go from a single prompt to an embeddable 3D AI agent, then live Q&A. Join: https://three.ws/events/build-3d-agents-live')
       + '&location=' + encodeURIComponent('https://three.ws/events/build-3d-agents-live');
-    ['add-cal','add-cal-2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.href = gcal; });
+    // The i18n pass replaces the paragraph's innerHTML for localized users,
+    // which recreates #add-cal-2 without the href set here, so re-apply on
+    // every locale application, not just once at boot.
+    function applyCalLinks(){ ['add-cal','add-cal-2'].forEach(function(id){ var el=document.getElementById(id); if(el) el.href = gcal; }); }
+    applyCalLinks();
+    window.addEventListener('i18n:change', applyCalLinks);
 
     // ── Live countdown (real time) ──
     var $d=document.getElementById('cd-d'),$h=document.getElementById('cd-h'),$m=document.getElementById('cd-m'),$s=document.getElementById('cd-s');

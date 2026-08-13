@@ -281,7 +281,7 @@
 		// our Solana agents to their profile, external Solana to the 3D viewer or
 		// the on-chain explorer when there's nothing else to open. A registry row
 		// with no asset and no ref has nowhere real to go, so it returns null and
-		// the card renders without a link rather than with a dead href="#".
+		// the card renders without a link rather than with a dead stub link.
 		function hrefFor(a) {
 			if (a.kind === 'onchain' && a.chainId != null && a.agentId != null) {
 				return `/a/${encodeURIComponent(a.chainId)}/${encodeURIComponent(a.agentId)}`;
