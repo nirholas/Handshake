@@ -14,7 +14,12 @@ import { authorizeOps } from '../_lib/ops-auth.js';
 import { getIrlAnalyticsSummary } from '../_lib/irl-analytics.js';
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS', origins: 'same' })) return;
+	// Omitting `origins` IS the same-origin policy: cors() then falls back to the
+	// first-party allow-list in isAllowedOrigin(). Passing a sentinel string instead
+	// (`origins: 'same'`) reached `allowed.some(...)` on a string and threw, so every
+	// request carrying an Origin header - including the browser's preflight - came
+	// back 500 rather than a CORS decision.
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (req.method?.toUpperCase() !== 'GET') return error(res, 405, 'method_not_allowed', 'GET only');
 
 	const rl = await limits.authIp(clientIp(req));

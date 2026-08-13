@@ -103,7 +103,11 @@ async function runProbe(probe) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS', origins: 'same' })) return;
+	// Same-origin is what cors() does when `origins` is omitted (it falls back to the
+	// first-party allow-list). A sentinel string was not a supported value: it reached
+	// `allowed.some(...)` and threw, 500ing any request that carried an Origin header,
+	// preflights included. Same fix as api/irl/analytics.js.
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (req.method?.toUpperCase() !== 'GET') return error(res, 405, 'method_not_allowed', 'GET only');
 
 	const rl = await limits.authIp(clientIp(req));
