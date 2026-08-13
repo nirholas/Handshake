@@ -1,7 +1,7 @@
 // POST /api/launchpad/publish
 //
 // Persists a Launchpad Studio configuration to launchpad_pages so it can be
-// served at /p/<slug> and edited later. Anonymous publish is allowed — the
+// served at /p/<slug> and edited later. Anonymous publish is allowed: the
 // studio is the "Wix of 3D avatars" surface and must work for drive-by
 // creators with no account.
 //

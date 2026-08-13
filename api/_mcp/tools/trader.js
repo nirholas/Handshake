@@ -1,21 +1,25 @@
-// Trader MCP tools — leaderboard discovery + copy-trading for autonomous agents.
+// Trader MCP tools: leaderboard discovery + copy-trading for autonomous agents.
 //
 // Four tools that close the autonomous copy-trading loop:
 //
-//   trader_leaderboard  — public. Top agents ranked by composite TraderScore.
-//                         Each row carries win rate, realized P&L, ROI, and
-//                         a recommendation on whether to copy them.
+//   trader_leaderboard  unscoped. Top agents ranked by composite TraderScore.
+//                       Each row carries win rate, realized P&L, ROI, and
+//                       a recommendation on whether to copy them.
 //
-//   trader_profile      — public. Full track record for one agent: score,
-//                         all headline metrics, and the 10 most recent trades.
+//   trader_profile      unscoped. Full track record for one agent: score,
+//                       all headline metrics, and the 10 most recent trades.
 //
-//   copy_subscribe      — auth-gated (agents:write). Set up copy-trading: mirror
-//                         a leader's future entries to your own wallet with your
-//                         own sizing and risk caps. Non-custodial — we never
-//                         touch keys.
+//   copy_subscribe      auth-gated (agents:write). Set up copy-trading: mirror
+//                       a leader's future entries to your own wallet with your
+//                       own sizing and risk caps. Non-custodial: we never
+//                       touch keys.
 //
-//   copy_status         — auth-gated (agents:read). Check the caller's active
-//                         copy subscriptions and their execution counts.
+//   copy_status         auth-gated (agents:read). Check the caller's active
+//                       copy subscriptions and their execution counts.
+//
+// "unscoped" means no OAuth scope is required, not free: /api/mcp still gates
+// every tool here behind an OAuth token or an x402 payment (only
+// getting_started is exempt), so an anonymous caller gets a 402, never data.
 
 import { sql, isDbUnavailableError } from '../../_lib/db.js';
 import { limits } from '../../_lib/rate-limit.js';
@@ -118,7 +122,7 @@ export const toolDefs = [
 		title: 'Top pump.fun traders',
 		annotations: LIVE,
 		description:
-			"Get the top pump.fun traders on three.ws ranked by composite TraderScore (win rate + P&L + ROI + drawdown). Each row includes score (0–100), verified badge, closed trade count, win rate, realized P&L in SOL and USD, ROI %, max drawdown, and a 'recommendation' field: 'copy' = strong candidate, 'watch' = emerging, 'skip' = unproven. Use trader_profile to get full details before copying. Sort by 'score' (default), 'pnl', 'winrate', or 'roi'. Window: '24h', '7d', '30d' (default), or 'all'.",
+			"Get the top pump.fun traders on three.ws ranked by composite TraderScore (win rate + P&L + ROI + drawdown). Each row includes score (0-100), verified badge, closed trade count, win rate, realized P&L in SOL and USD, ROI %, max drawdown, and a 'recommendation' field: 'copy' = strong candidate, 'watch' = emerging, 'skip' = unproven. Use trader_profile to get full details before copying. Sort by 'score' (default), 'pnl', 'winrate', or 'roi'. Window: '24h', '7d', '30d' (default), or 'all'.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -189,7 +193,7 @@ export const toolDefs = [
 		},
 		async handler(args, auth) {
 			const agentId = (args?.agent_id || '').trim();
-			if (!isUuid(agentId)) return mcpErr('Invalid agent_id — must be a UUID (get it from trader_leaderboard).');
+			if (!isUuid(agentId)) return mcpErr('Invalid agent_id: must be a UUID (get it from trader_leaderboard).');
 
 			const network = NETWORKS.has(args?.network) ? args.network : 'mainnet';
 			const window  = WINDOWS.has(args?.window) ? args.window : 'all';
@@ -288,7 +292,7 @@ export const toolDefs = [
 		scope: 'agents:write',
 		annotations: WRITE,
 		description:
-			"Set up non-custodial copy-trading: mirror a leader agent's future pump.fun entries into your own wallet with your own sizing and risk caps. You supply your wallet address and the sizing rules; we never hold keys. The fan-out cron checks for new leader entries and generates sized intents you act on from /dashboard/copy. Provide leader_agent_id (from trader_leaderboard) and your Solana wallet address. Sizing rules: 'fixed' = exact SOL per trade, 'multiplier' = N× leader size, 'pct_balance' = % of your balance. Always set a per_trade_cap_sol and daily_budget_sol to limit exposure.",
+			"Set up non-custodial copy-trading: mirror a leader agent's future pump.fun entries into your own wallet with your own sizing and risk caps. You supply your wallet address and the sizing rules; we never hold keys. The fan-out cron checks for new leader entries and generates sized intents you act on from /dashboard/copy. Provide leader_agent_id (from trader_leaderboard) and your Solana wallet address. Sizing rules: 'fixed' = exact SOL per trade, 'multiplier' = N× leader size, 'pct_balance' = % of your balance. Always set a per_trade_cap_sol and daily_budget_sol to limit exposure. Calling this again for the same leader and network updates that subscription in place: sizing, caps and perf_fee_bps are replaced by what you send, so anything you omit falls back to its default, while the Oracle-score floor, market-cap band and Telegram route are kept as they were. Clear those three from /dashboard/copy.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -316,10 +320,10 @@ export const toolDefs = [
 			if (!auth.userId) return mcpErr('Sign in to a three.ws account to set up copy-trading.');
 
 			const leaderId = (args?.leader_agent_id || '').trim();
-			if (!isUuid(leaderId)) return mcpErr('Invalid leader_agent_id — must be a UUID from trader_leaderboard.');
+			if (!isUuid(leaderId)) return mcpErr('Invalid leader_agent_id: must be a UUID from trader_leaderboard.');
 
 			const wallet = (args?.copier_wallet || '').trim();
-			if (!BASE58_RE.test(wallet)) return mcpErr('Invalid copier_wallet — must be a base58 Solana address.');
+			if (!BASE58_RE.test(wallet)) return mcpErr('Invalid copier_wallet: must be a base58 Solana address.');
 
 			const network = NETWORKS.has(args?.network) ? args.network : 'mainnet';
 

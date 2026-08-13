@@ -12,6 +12,22 @@ import {
 import { extname, basename, relative, sep } from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { rewriteHead } from './server/seo-head.mjs';
+
+// Dev parity for production's per-request <head> rewrite (server/seo-head.mjs).
+// Shared-shell routes serve one template file for hundreds of paths (/docs/* and
+// /tutorials/*), so in dev every one of them presented the shell's own title,
+// description and canonical. Production rewrites that head from data/pages.json
+// before the response leaves Cloud Run; without this the SEO of a docs page can
+// only be checked after a deploy. Same module, same rules: a page whose shell
+// already owns its canonical is untouched, and any error serves the plain shell.
+function rewriteSeoHead(pathname, html) {
+	try {
+		return rewriteHead(pathname, html) || html;
+	} catch {
+		return html;
+	}
+}
 
 // The build emits two targets controlled by the TARGET env var:
 //
@@ -2047,7 +2063,7 @@ support: resolve(__dirname, 'pages/support.html'),
 						const fileUrl = '/' + rel;
 						const transformed = await server.transformIndexHtml(fileUrl, html);
 						res.setHeader('Content-Type', 'text/html; charset=utf-8');
-						res.end(transformed);
+						res.end(rewriteSeoHead(path, transformed));
 					} catch {
 						next();
 					}

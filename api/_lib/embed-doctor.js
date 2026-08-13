@@ -886,9 +886,10 @@ async function waitForEmbed(page, selector, budgetMs) {
  *
  * Returns null when the question could not be answered, never a guess.
  */
-async function measurePainted(page, selector) {
+async function measurePainted(page, selector, budgetMs) {
+	const deadline = Date.now() + budgetMs;
 	try {
-		const box = await page.evaluate((sel) => {
+		const box = await withDeadline(page.evaluate((sel) => {
 			const el = document.querySelector(sel);
 			if (!el) return null;
 			const r = el.getBoundingClientRect();
@@ -901,10 +902,15 @@ async function measurePainted(page, selector) {
 			const h = Math.min(r.bottom, window.innerHeight) - y;
 			if (w < 4 || h < 4) return null;
 			return { x, y, width: w, height: h };
-		}, selector);
+		}, selector), Math.max(1000, deadline - Date.now()), null);
 		if (!box) return null;
 
-		const png = await page.screenshot({ type: 'png', clip: box });
+		const png = await withDeadline(
+			page.screenshot({ type: 'png', clip: box }),
+			Math.max(1000, deadline - Date.now()),
+			null,
+		);
+		if (!png) return null;
 		const { default: sharp } = await import('sharp');
 		const stats = await sharp(png).stats();
 		// Three channels of near-zero deviation means every pixel is the same
@@ -985,21 +991,28 @@ function instrument(page) {
 	return { network, console: consoleMsgs, pageErrors };
 }
 
-/** Everything a diagnosis needs from a booted page, once it has settled. */
-async function harvest(page, { recorders, response, bootMs, platformOrigin, screenshot }) {
-	// A page that never yields its main thread (or one the watchdog closed) makes
-	// the probe reject. That is "we could not look", not "there is nothing there",
-	// and the difference has to survive into the report: honesty rule 1.
-	let probeFailed = false;
-	const probe = await page.evaluate(inPageProbe, EMBED_SELECTOR, SOURCE_ATTRIBUTES).catch(() => {
-		probeFailed = true;
-		return {
-			scripts: [],
-			element: null,
-			webgl: { available: null, renderer: null },
-			title: '',
-		};
-	});
+/** Everything a diagnosis needs from a booted page, once it has settled.
+ *  `deadlineAt` is the wall-clock instant every remaining step shares, so a
+ *  slow page cannot spend the whole request in one of them. */
+async function harvest(page, { recorders, response, bootMs, platformOrigin, screenshot, deadlineAt }) {
+	const left = (max) => Math.min(max, Math.max(1000, deadlineAt - Date.now()));
+
+	// A page that never yields its main thread never runs the probe, and
+	// `page.evaluate` has no deadline of its own. Giving up on it is "we could
+	// not look", not "there is nothing there", and the difference has to survive
+	// into the report: honesty rule 1.
+	const probed = await withDeadline(
+		page.evaluate(inPageProbe, EMBED_SELECTOR, SOURCE_ATTRIBUTES),
+		left(PROBE_MAX_MS),
+		null,
+	);
+	const probeFailed = probed === null;
+	const probe = probed || {
+		scripts: [],
+		element: null,
+		webgl: { available: null, renderer: null },
+		title: '',
+	};
 
 	const headers = (() => {
 		try {
@@ -1011,18 +1024,24 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 
 	const finalUrl = page.url();
 	const agentId = probe.element?.attributes?.['agent-id'] || null;
-	const agent = agentId ? await resolveAgent(agentId, { platformOrigin }) : null;
+	const agent = agentId
+		? await resolveAgent(agentId, { platformOrigin, timeoutMs: left(AGENT_LOOKUP_MAX_MS) })
+		: null;
 
 	if (probe.element?.canvas?.present) {
-		const painted = await measurePainted(page, EMBED_SELECTOR);
+		const painted = await measurePainted(page, EMBED_SELECTOR, left(PAINT_MAX_MS));
 		probe.element.canvas.blank = painted === null ? null : !painted;
 	}
 
+	// A screenshot of a busy WebGL page is the single slowest call here, and it
+	// is the least load-bearing: the report is complete without it.
 	let shot = null;
 	if (screenshot) {
-		shot = await page
-			.screenshot({ type: 'jpeg', quality: 62, encoding: 'base64', fullPage: false })
-			.catch(() => null);
+		shot = await withDeadline(
+			page.screenshot({ type: 'jpeg', quality: 62, encoding: 'base64', fullPage: false }),
+			left(SCREENSHOT_MAX_MS),
+			null,
+		);
 	}
 
 	return {
@@ -1046,16 +1065,57 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 	};
 }
 
+// ── Deadlines ─────────────────────────────────────────────────────────────────
+// The caller's `budgetMs` bounds how long the embed is given to paint, and
+// navigation has its own timeout, but every remaining page call (the probe, the
+// paint measurement, the screenshot) had none. On a page that keeps chromium
+// busy those calls dominate: inspecting the three.ws home page took 260 s for a
+// 10 s budget, four times the handler's declared 60 s ceiling, holding a request
+// and a browser open the whole time. So the whole inspection now shares one
+// wall-clock deadline, each step draws from what is left of it, and none of them
+// can be the reason a request outlives the handler.
+
+/** Navigation gets its own timeout; a page that will not load is not worth the
+ *  rest of the budget. */
+const NAV_TIMEOUT_MS = 25000;
+/** Per-step ceilings, each also clamped to whatever remains of the deadline. */
+const PROBE_MAX_MS = 8000;
+const AGENT_LOOKUP_MAX_MS = 6000;
+const PAINT_MAX_MS = 8000;
+const SCREENSHOT_MAX_MS = 8000;
+/** What the harvest steps above may add on top of navigation and the boot
+ *  budget, and the hard ceiling on one page's total lifetime. The ceiling is the
+ *  number that matters: it keeps the worst case inside the handler's
+ *  `maxDuration = 60`, whatever budget the caller asked for. */
+const HARVEST_GRACE_MS = 15000;
+const MAX_PAGE_LIFETIME_MS = 50000;
+
+function pageDeadline(budgetMs) {
+	return Math.min(MAX_PAGE_LIFETIME_MS, NAV_TIMEOUT_MS + budgetMs + HARVEST_GRACE_MS);
+}
+
 /**
- * Close the page once the whole inspection has outstayed its welcome.
- *
- * Every individual step is already bounded (navigation, boot budget, agent
- * lookup), but the in-page probe is not: a page that pegs its main thread never
- * runs it, and `page.evaluate` has no deadline of its own. Without this, one
- * such page holds a request and a chromium instance open indefinitely. Closing
- * the page rejects whatever is pending, and every caller of a page API here
- * already treats a rejection as "unknown", so the request unwinds into an
- * honest inconclusive report instead of hanging.
+ * Bound a page call that has no timeout of its own, resolving to `fallback`
+ * when the deadline passes or the call rejects. The abandoned call is cancelled
+ * for real when the caller closes the page in its `finally`, so nothing is left
+ * running behind the response.
+ */
+function withDeadline(promise, ms, fallback) {
+	let timer = null;
+	const timeout = new Promise((resolve) => {
+		timer = setTimeout(() => resolve(fallback), ms);
+		if (typeof timer.unref === 'function') timer.unref();
+	});
+	return Promise.race([Promise.resolve(promise).catch(() => fallback), timeout]).finally(() => {
+		if (timer) clearTimeout(timer);
+	});
+}
+
+/**
+ * Last-resort backstop: close the page once its lifetime is spent, so a call
+ * nothing else bounded cannot hold a chromium instance open. Every page API used
+ * here treats a rejection as "unknown", so the request unwinds into an honest
+ * inconclusive report rather than hanging.
  */
 function pageWatchdog(page, ms) {
 	const state = { firedAt: null };
@@ -1067,12 +1127,6 @@ function pageWatchdog(page, ms) {
 	state.clear = () => clearTimeout(timer);
 	return state;
 }
-
-/** How long past the caller's boot budget the probe, screenshot and agent
- *  lookup are allowed before the watchdog closes the page. Sized from the two
- *  bounded calls inside `harvest` (a 6 s agent lookup and a screenshot) with
- *  room to spare, and still well inside the handler's 60 s ceiling. */
-const HARVEST_GRACE_MS = 20000;
 
 /**
  * Diagnose a live URL.
@@ -1096,7 +1150,11 @@ export async function collectFromUrl({
 	const browser = await getBrowser();
 	const page = await browser.newPage();
 	const target = { kind: 'url', url };
-	const watchdog = pageWatchdog(page, budgetMs + HARVEST_GRACE_MS);
+	const lifetimeMs = pageDeadline(budgetMs);
+	const deadlineAt = Date.now() + lifetimeMs;
+	// The backstop fires a beat after the shared deadline, so the harvest steps
+	// get their full allowance and only a call that ignored it loses its page.
+	const watchdog = pageWatchdog(page, lifetimeMs + 2000);
 	try {
 		await page.setUserAgent(
 			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 three.ws-EmbedDoctor/1.0 (+https://three.ws/embed-doctor)',
@@ -1104,7 +1162,10 @@ export async function collectFromUrl({
 		const recorders = instrument(page);
 		let response = null;
 		try {
-			response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
+			response = await page.goto(url, {
+				waitUntil: 'domcontentloaded',
+				timeout: NAV_TIMEOUT_MS,
+			});
 		} catch (err) {
 			return {
 				target,
