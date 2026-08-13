@@ -63,7 +63,7 @@ function gradientForName(name) {
 }
 
 function x(s) {
-	return String(s || '')
+	return String(s ?? '')
 		.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
@@ -73,12 +73,17 @@ function trunc(s, n) {
 }
 
 // Race a best-effort enrichment against a deadline so one slow read never blocks
-// the unfurl. Resolves to `fallback` on timeout or any error.
+// the unfurl. Resolves to `fallback` on timeout or any error. The deadline timer
+// is cleared once the race settles: this handler runs on a long-lived container
+// and a crawler storm would otherwise leave five live timers per request holding
+// the event loop for the full budget after the response was already flushed.
 function withTimeout(promise, ms, fallback) {
+	let timer;
+	const deadline = new Promise((resolve) => { timer = setTimeout(() => resolve(fallback), ms); });
 	return Promise.race([
 		Promise.resolve(promise).catch(() => fallback),
-		new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
-	]);
+		deadline,
+	]).finally(() => clearTimeout(timer));
 }
 
 // Compact USD, matching src/shared/wallet-format.formatWalletUsd so the image
@@ -121,6 +126,29 @@ async function tipsCountFor(id) {
 	}
 }
 
+// Fetch and inline the avatar thumbnail as a data URI (public/unlisted only).
+// Size-capped both by the declared content-length and the decoded bytes so a
+// mis-declared or chunked response can't blow the card up. Any failure returns
+// null, which renders the gradient-initial portrait instead.
+async function loadAvatarImage(row) {
+	const CDN_BASE = env.S3_PUBLIC_DOMAIN || 'https://three.ws/cdn';
+	const thumbPublic = row.visibility === 'public' || row.visibility === 'unlisted';
+	if (!row.thumbnail_key || !thumbPublic) return null;
+	try {
+		const imgResp = await fetch(`${CDN_BASE}/${row.thumbnail_key}`, { signal: AbortSignal.timeout(3000) });
+		if (!imgResp.ok) return null;
+		const MAX = 2 * 1024 * 1024;
+		const declared = Number(imgResp.headers.get('content-length') || 0);
+		if (declared && declared > MAX) return null;
+		const ct = imgResp.headers.get('content-type') || 'image/jpeg';
+		const ab = await imgResp.arrayBuffer();
+		if (ab.byteLength > MAX) return null;
+		return { ct, b64: Buffer.from(ab).toString('base64') };
+	} catch {
+		return null;
+	}
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 
@@ -147,18 +175,7 @@ export default wrap(async (req, res) => {
 	// Respect visibility — a private agent must never render a public card.
 	if (row.visibility === 'private') return fallback(res);
 
-	const name = trunc(row.name || 'Agent', 30);
-
 	const solAddress = typeof row.meta?.solana_address === 'string' ? row.meta.solana_address : null;
-	const vanPrefix = row.meta?.solana_vanity_prefix || null;
-	const vanSuffix = row.meta?.solana_vanity_suffix || null;
-	const realPrefix = vanPrefix && solAddress?.startsWith(vanPrefix) ? vanPrefix : '';
-	const realSuffix = vanSuffix && solAddress?.endsWith(vanSuffix) ? vanSuffix : '';
-	const isVanity = Boolean(realPrefix || realSuffix);
-	const addrShort = solAddress
-		? `${realPrefix || solAddress.slice(0, 4)}…${realSuffix || solAddress.slice(-4)}`
-		: null;
-
 	// ── Real enrichments, each timeout-guarded so the card always renders ──────
 	const [balances, rep, pnl, tipsCount, achievements] = await Promise.all([
 		solAddress ? withTimeout(getBalances({ chain: 'solana', address: solAddress }), 3000, null) : null,
@@ -169,6 +186,35 @@ export default wrap(async (req, res) => {
 		// free; a cold miss that overruns the budget just omits the badge.
 		withTimeout(loadAgentAchievements(id), 2500, null),
 	]);
+
+	const avatarData = await loadAvatarImage(row);
+	const svg = renderCard({ id, row, solAddress, balances, rep, pnl, tipsCount, achievements, avatarData });
+
+	res.statusCode = 200;
+	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
+	res.setHeader('cache-control', CACHE);
+	res.end(svg);
+});
+
+/**
+ * The card itself, pure: given the agent row and its already-resolved (possibly
+ * null) enrichments it returns the 1200x630 SVG string. Keeping the layout free
+ * of I/O is what makes it testable without a database, a chain read or a CDN.
+ */
+export function renderCard({
+	id, row, solAddress = null, balances = null, rep = null,
+	pnl = { sol: 0, wins: 0 }, tipsCount = 0, achievements = null, avatarData = null,
+}) {
+	const name = trunc(row.name || 'Agent', 30);
+
+	const vanPrefix = row.meta?.solana_vanity_prefix || null;
+	const vanSuffix = row.meta?.solana_vanity_suffix || null;
+	const realPrefix = vanPrefix && solAddress?.startsWith(vanPrefix) ? vanPrefix : '';
+	const realSuffix = vanSuffix && solAddress?.endsWith(vanSuffix) ? vanSuffix : '';
+	const isVanity = Boolean(realPrefix || realSuffix);
+	const addrShort = solAddress
+		? `${realPrefix || solAddress.slice(0, 4)}…${realSuffix || solAddress.slice(-4)}`
+		: null;
 
 	const usd = balances ? walletUsdTotal(balances) : 0;
 	const tokens = balances?.tokens || [];
@@ -191,25 +237,6 @@ export default wrap(async (req, res) => {
 
 	const [c1, c2] = gradientForName(row.name);
 	const initial = (row.name || 'A')[0].toUpperCase();
-
-	// Avatar embed (public/unlisted only) — same path as before.
-	let avatarData = null;
-	const CDN_BASE = env.S3_PUBLIC_DOMAIN || 'https://three.ws/cdn';
-	const thumbPublic = row.visibility === 'public' || row.visibility === 'unlisted';
-	if (row.thumbnail_key && thumbPublic) {
-		try {
-			const imgResp = await fetch(`${CDN_BASE}/${row.thumbnail_key}`, { signal: AbortSignal.timeout(3000) });
-			if (imgResp.ok) {
-				const MAX = 2 * 1024 * 1024;
-				const declared = Number(imgResp.headers.get('content-length') || 0);
-				if (!declared || declared <= MAX) {
-					const ct = imgResp.headers.get('content-type') || 'image/jpeg';
-					const ab = await imgResp.arrayBuffer();
-					if (ab.byteLength <= MAX) avatarData = { ct, b64: Buffer.from(ab).toString('base64') };
-				}
-			}
-		} catch { /* gradient fallback */ }
-	}
 
 	const AV_CX = 215, AV_CY = 300, AV_R = 150;
 
@@ -257,7 +284,7 @@ export default wrap(async (req, res) => {
 		return seg;
 	}).join('\n');
 
-	const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+	return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
 		width="1200" height="630" viewBox="0 0 1200 630">
 	<defs>
 		<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
@@ -327,16 +354,18 @@ export default wrap(async (req, res) => {
 	<text x="440" y="615" font-family="Inter,system-ui,sans-serif" font-size="13" font-weight="600" fill="#5b5470">Tip it · Fork it · own its wallet</text>
 	<text x="1176" y="615" font-family="Inter,system-ui,sans-serif" font-size="13" fill="#5b5470" text-anchor="end">three.ws/agent/${x(id)}</text>
 </svg>`;
+}
 
-	res.statusCode = 200;
-	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
-	res.setHeader('cache-control', CACHE);
-	res.end(svg);
-});
-
+// Unknown, deleted, or private agent: hand the crawler the static branded card
+// (public/og-image.png) rather than a 4xx, so a stale or mistyped share link
+// still unfurls as three.ws instead of a broken-image box. The origin follows
+// the deployment, so a preview build never points its unfurls at production.
 function fallback(res) {
 	res.statusCode = 302;
-	res.setHeader('location', 'https://three.ws/og-image.png');
+	res.setHeader('location', `${env.APP_ORIGIN || 'https://three.ws'}/og-image.png`);
 	res.setHeader('cache-control', 'no-cache');
 	res.end();
 }
+
+// Exposed for unit tests: renders the card from fixed rows and enrichments.
+export const __testInternals = { renderCard, fmtUsd, headlineAchievement, gradientForName, trunc };
