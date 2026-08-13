@@ -55,14 +55,18 @@ extend that pack instead.
 
 | # | Work order | Severity | Reproduce with |
 |---|---|---|---|
-| 01 | [The gate is red: one page has no `[hidden]` guard](01-gate-red-hidden-guard.md) | P0 repo | `npm run gate` |
-| 02 | [Three eslint errors, one a real bug in a money test](02-lint-errors.md) | P1 | `npm run lint` |
 | 03 | [A declared cron has never run in production](03-cron-drift-garment-sweep.md) | P1 | `npm run check:cron-drift` |
-| 04 | [17 broken stops in the guided tour](04-tour-atlas-broken-stops.md) | P1 | `npm run audit:tour-atlas` |
-| 05 | [108 dead `#` links across the site](05-stub-hrefs-dead-paths.md) | P2 | `npm run audit:links` |
-| 06 | [A documented API call no longer answers as documented](06-runnable-docs-401.md) | P2 | `npm run check:runnable-docs` |
-| 07 | [`npm run test:core` never finishes](07-test-core-timeout.md) | P1 | `npm run test:core` |
-| 08 | [`optimize?draco=1` returns a BIGGER file, silently](08-avatar-optimize-inflates.md) | P1 | `curl` (in the file) |
+
+**One order left, and it is owner-gated.** Everything else this pack opened with
+shipped and was retired; [PROGRESS.md](PROGRESS.md) carries what changed and the
+verification output for each. Order 03's code-side questions are both answered
+in that log (the first sweep is safe at `*/10`, and the drift check's home is
+already registered in `data/guards.json`); what remains is creating the Cloud
+Scheduler job, which needs a `gcloud auth login` this workspace does not have.
+
+Retired 2026-08-13 after verification: 01 (gate green), 04 (tour atlas), 05
+(stub hrefs), 06 (runnable docs), 07 (`test:core`), 08 (optimizer inflation).
+Retired 2026-08-09: 02 (lint errors).
 
 Checks that were green on 2026-08-01 and are not represented here, so you do not
 re-run them hoping for work: `audit:docs` (1236 files), `audit:handlers` (1888

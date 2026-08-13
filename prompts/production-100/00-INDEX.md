@@ -58,9 +58,6 @@ top to bottom.
 | Order | What |
 |---|---|
 | [01-ship-readiness.md](01-ship-readiness.md) | The standing deploy order: clean test run, preflight, staged build, one-command ship for the owner, post-ship verification. Retires last in this category. |
-| [../fix-queue/01-gate-red-hidden-guard.md](../fix-queue/01-gate-red-hidden-guard.md) | `npm run gate` must be green before any ship. |
-| [../fix-queue/02-lint-errors.md](../fix-queue/02-lint-errors.md) | Lint errors, one a real bug in a money test. |
-| [../fix-queue/07-test-core-timeout.md](../fix-queue/07-test-core-timeout.md) | `test:core` must finish; a hanging suite hides regressions. |
 
 ### B. Money rail (Solana first; the platform's observable health)
 
@@ -77,10 +74,6 @@ top to bottom.
 | Order | What |
 |---|---|
 | [../fix-queue/03-cron-drift-garment-sweep.md](../fix-queue/03-cron-drift-garment-sweep.md) | A declared cron that has never run. |
-| [../fix-queue/04-tour-atlas-broken-stops.md](../fix-queue/04-tour-atlas-broken-stops.md) | 17 broken guided-tour stops. |
-| [../fix-queue/05-stub-hrefs-dead-paths.md](../fix-queue/05-stub-hrefs-dead-paths.md) | Dead `#` links across the site. |
-| [../fix-queue/06-runnable-docs-401.md](../fix-queue/06-runnable-docs-401.md) | A documented API call that no longer answers as documented. |
-| [../fix-queue/08-avatar-optimize-inflates.md](../fix-queue/08-avatar-optimize-inflates.md) | The optimizer that returns a bigger file, silently. |
 
 ### D. Quality bar (the GCP-credit quality campaign)
 
