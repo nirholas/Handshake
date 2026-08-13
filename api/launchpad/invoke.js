@@ -1,7 +1,7 @@
 // POST /api/launchpad/invoke?slug=<slug>[&action=unlock]
 //
 // The paid action behind a published Launchpad Studio page. Two templates use
-// it; the third (token-launchpad) does not — it redirects to /launch instead.
+// it; the third (token-launchpad) does not, it redirects to /launch instead.
 //
 //   • paid-concierge  → an x402-gated Q&A. The visitor pays the page's per-call
 //     price (USDC) to the CREATOR's wallet, then receives an answer generated
@@ -73,7 +73,7 @@ function buildAccept({ chain, priceAtomics, payTo, resourceUrl }) {
 			network: NETWORK_BASE_MAINNET,
 			payTo,
 			asset: env.X402_ASSET_ADDRESS_BASE,
-			// Base USDC's EIP-712 domain name is "USD Coin" — must match on-chain.
+			// Base USDC's EIP-712 domain name is "USD Coin", must match on-chain.
 			extra: { name: 'USD Coin', version: '2', decimals: USDC_DECIMALS },
 		};
 	}
@@ -88,7 +88,7 @@ function buildAccept({ chain, priceAtomics, payTo, resourceUrl }) {
 
 // Discovery metadata for the 402 challenge. build402Body() otherwise falls back
 // to the MCP server's default entry, which told every crawler that a launchpad
-// page takes a `tools/call` body for `validate_model` — an agent that indexed a
+// page takes a `tools/call` body for `validate_model`, an agent that indexed a
 // concierge page from that would never send the one field it actually needs.
 const CONCIERGE_BAZAAR = declareHttpDiscovery({
 	method: 'POST',
@@ -103,7 +103,7 @@ const CONCIERGE_BAZAAR = declareHttpDiscovery({
 				type: 'string',
 				minLength: 3,
 				maxLength: 2000,
-				description: 'The visitor question, answered in the page owner’s voice.',
+				description: "The visitor question, answered in the page owner's voice.",
 			},
 		},
 	},
@@ -139,7 +139,7 @@ const UNLOCK_BAZAAR = declareHttpDiscovery({
 		$schema: 'https://json-schema.org/draft/2020-12/schema',
 		type: 'object',
 		properties: {},
-		description: 'No body fields — the slug in the query string selects the showroom.',
+		description: 'No body fields, the slug in the query string selects the showroom.',
 	},
 	output: {
 		example: {
@@ -194,14 +194,14 @@ async function fulfillConcierge({ page, body }) {
 		track: { surface: 'launchpad-concierge', slug: page.slug },
 	});
 	return {
-		answer: (result?.text || '').trim() || 'No answer was generated — please try again.',
+		answer: (result?.text || '').trim() || 'No answer was generated, please try again.',
 		model: result?.model || null,
 	};
 }
 
 function fulfillUnlock({ page }) {
 	// The scene URL is withheld from the public /api/launchpad/get response for
-	// gated-showroom pages (see get.js) — paying here is the only way to obtain
+	// gated-showroom pages (see get.js), paying here is the only way to obtain
 	// it, so returning it after settlement IS the unlock.
 	const sceneSrc = page.config?.scene?.src || '';
 	if (!sceneSrc) {
@@ -218,7 +218,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const rl = await limits.authIp(clientIp(req));
-	if (!rl.success) return rateLimited(res, rl, 'too many requests — slow down');
+	if (!rl.success) return rateLimited(res, rl, 'too many requests, slow down');
 
 	const url = new URL(req.url, 'http://x');
 	const slug = (url.searchParams.get('slug') || '').toLowerCase();
@@ -235,7 +235,7 @@ export default wrap(async (req, res) => {
 			res,
 			400,
 			'no_paid_action',
-			'this launchpad has no paid action — token launches happen at /launch',
+			'this launchpad has no paid action, token launches happen at /launch',
 		);
 	}
 
@@ -279,7 +279,7 @@ export default wrap(async (req, res) => {
 	const paymentHeader = (req.headers['x-payment'] || '').toString().trim();
 
 	// Read the request body up front (question / unused for unlock). Safe to read
-	// even on the 402 path — verifyPayment only consumes the X-PAYMENT header.
+	// even on the 402 path, verifyPayment only consumes the X-PAYMENT header.
 	const body = await readJson(req).catch(() => ({}));
 
 	// ── Unpaid: issue the real 402 challenge ───────────────────────────────────
@@ -289,10 +289,11 @@ export default wrap(async (req, res) => {
 			accepts: [accept],
 			error: 'X-PAYMENT header is required',
 			description: isUnlock
-				? `Unlock the "${page.config?.copy?.headline || slug}" showroom — one-time USDC pass.`
-				: `Ask the "${page.config?.copy?.headline || slug}" concierge — pay-per-question in USDC.`,
+				? `Unlock the "${page.config?.copy?.headline || slug}" showroom, one-time USDC pass.`
+				: `Ask the "${page.config?.copy?.headline || slug}" concierge, pay-per-question in USDC.`,
 			serviceName: `launchpad:${slug}`,
 			tags: [isUnlock ? 'unlock' : 'concierge', 'launchpad', '3d'],
+			bazaar: isUnlock ? UNLOCK_BAZAAR : CONCIERGE_BAZAAR,
 		});
 		return;
 	}
