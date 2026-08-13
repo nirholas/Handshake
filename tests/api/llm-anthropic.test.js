@@ -132,7 +132,32 @@ globalThis.fetch = vi.fn(async (url, init) => {
 	return r;
 });
 
-const { default: handler } = await import('../../api/llm/anthropic.js');
+const {
+	default: handler,
+	modelFallbackChain,
+	resolveModelRoute,
+} = await import('../../api/llm/anthropic.js');
+
+// Upstream that answers with an SSE body, the shape both streaming lanes read
+// (`upstream.body.getReader()`); one reader chunk per array entry.
+function upstreamSse(chunks) {
+	const encoder = new TextEncoder();
+	let i = 0;
+	return {
+		ok: true,
+		status: 200,
+		headers: new Map([['content-type', 'text/event-stream']]),
+		body: {
+			getReader: () => ({
+				read: async () =>
+					i < chunks.length
+						? { done: false, value: encoder.encode(chunks[i++]) }
+						: { done: true, value: undefined },
+			}),
+		},
+		text: async () => chunks.join(''),
+	};
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -169,6 +194,10 @@ function makeRes() {
 		},
 		getHeader(k) {
 			return this.headers[k.toLowerCase()];
+		},
+		write(chunk) {
+			this.body += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
+			return true;
 		},
 		end(chunk) {
 			if (chunk !== undefined) this.body += chunk;
@@ -857,6 +886,185 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 			kind: 'llm',
 			tool: 'openrouter.chat',
 			agentId: 'agent-1',
+		});
+	});
+});
+
+// ── fallback-chain integrity ───────────────────────────────────────────────
+//
+// A rung the attempt loop cannot resolve is skipped in silence: the chain looks
+// four deep in the comments and runs three deep in production. Pin every rung
+// to the allowlist so the next edit cannot reintroduce a phantom step.
+
+describe('/api/llm/anthropic: fallback chain integrity', () => {
+	it('resolves every rung it lists to a real upstream route', () => {
+		process.env.OPENROUTER_API_KEY = 'sk-or-test';
+		process.env.GROQ_API_KEY = 'gsk-test';
+		process.env.NVIDIA_API_KEY = 'nv-test';
+		process.env.SAMBANOVA_API_KEY = 'sn-test';
+		const chain = modelFallbackChain('openai/gpt-oss-20b:free');
+		expect(chain.length).toBeGreaterThan(1);
+		for (const rung of chain) {
+			expect(resolveModelRoute(rung), `rung "${rung}" is not routable`).toBeTruthy();
+		}
+	});
+
+	it('keeps the paid Anthropic rung last among the keyed lanes', () => {
+		const chain = modelFallbackChain('openai/gpt-oss-20b:free');
+		expect(chain[chain.length - 1]).toBe('claude-haiku-4-5-20251001');
+	});
+});
+
+// ── Anthropic request shaping ──────────────────────────────────────────────
+
+describe('/api/llm/anthropic: Anthropic request shaping', () => {
+	it('supplies max_tokens when the caller omits it (the Messages API requires it)', async () => {
+		await invoke({ body: { messages: [{ role: 'user', content: 'hello' }] } });
+		const sent = JSON.parse(fetchState.calls[0].init.body);
+		expect(sent.max_tokens).toBe(4096);
+	});
+
+	it('keeps a caller-supplied max_tokens', async () => {
+		await invoke({ body: { ...VALID_BODY, max_tokens: 512 } });
+		const sent = JSON.parse(fetchState.calls[0].init.body);
+		expect(sent.max_tokens).toBe(512);
+	});
+});
+
+// ── streaming ──────────────────────────────────────────────────────────────
+//
+// Streaming is the lane every browser embed takes, and it was the untested one.
+// The OpenAI-shape upstreams are rewritten into Anthropic SSE on the fly, and
+// the token counters that enforce the monthly budget are fed from that stream.
+
+describe('/api/llm/anthropic: streaming, OpenAI-shape lanes', () => {
+	const monthKey = () => new Date().toISOString().slice(0, 7);
+
+	beforeEach(() => {
+		process.env.OPENROUTER_API_KEY = 'sk-or-test';
+		process.env.GROQ_API_KEY = 'gsk-test';
+	});
+
+	it('asks OpenAI-compatible providers for streaming usage', async () => {
+		fetchState.response = () => upstreamSse(['data: [DONE]\n\n']);
+		await invoke({ body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true } });
+		const sent = JSON.parse(fetchState.calls[0].init.body);
+		expect(sent.stream).toBe(true);
+		expect(sent.stream_options).toEqual({ include_usage: true });
+	});
+
+	it('does not send stream_options on a non-streaming request', async () => {
+		await invoke({ body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' } });
+		const sent = JSON.parse(fetchState.calls[0].init.body);
+		expect(sent.stream_options).toBeUndefined();
+	});
+
+	it('rewrites OpenAI deltas into Anthropic SSE and debits the usage chunk', async () => {
+		fetchState.response = () =>
+			upstreamSse([
+				'data: {"choices":[{"delta":{"content":"Hel"}}]}\n\n',
+				'data: {"choices":[{"delta":{"content":"lo"}}]}\n\n',
+				'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n\n',
+				'data: {"choices":[],"usage":{"prompt_tokens":12,"completion_tokens":5}}\n\n',
+				'data: [DONE]\n\n',
+			]);
+		const { res } = await invoke({
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true },
+		});
+		expect(res.headers['content-type']).toBe('text/event-stream');
+		expect(res.headers['x-llm-transport']).toBe('openrouter');
+		expect(res.body).toContain('event: message_start');
+		expect(res.body).toContain('"text_delta","text":"Hel"');
+		expect(res.body).toContain('"text_delta","text":"lo"');
+		expect(res.body).toContain('event: message_stop');
+		expect(res.writableEnded).toBe(true);
+		// The budget the handler enforces is fed from that usage chunk.
+		expect(redisStore.get(`llm:tokens:agent-1:${monthKey()}`)).toBe(17);
+		expect(usageEvents[0]).toMatchObject({ provider: 'openrouter', outputTokens: 5 });
+	});
+
+	it("reads Groq's x_groq.usage, which sits outside the OpenAI usage field", async () => {
+		fetchState.response = () =>
+			upstreamSse([
+				'data: {"choices":[{"delta":{"content":"hi"}}]}\n\n',
+				'data: {"choices":[{"delta":{},"finish_reason":"stop"}],"x_groq":{"usage":{"prompt_tokens":8,"completion_tokens":3}}}\n\n',
+				'data: [DONE]\n\n',
+			]);
+		await invoke({ body: { ...VALID_BODY, model: 'llama-3.3-70b-versatile', stream: true } });
+		expect(redisStore.get(`llm:tokens:agent-1:${monthKey()}`)).toBe(11);
+	});
+
+	it('converts a streamed tool call into an Anthropic tool_use block', async () => {
+		fetchState.response = () =>
+			upstreamSse([
+				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","function":{"name":"getTime","arguments":""}}]}}]}\n\n',
+				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\\"tz\\":"}}]}}]}\n\n',
+				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"UTC\\"}"}}]}}]}\n\n',
+				'data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}\n\n',
+				'data: [DONE]\n\n',
+			]);
+		const { res } = await invoke({
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true },
+		});
+		expect(res.body).toContain('"type":"tool_use","id":"call_1","name":"getTime"');
+		expect(res.body).toContain('"input_json_delta","partial_json":"{\\"tz\\":"');
+		expect(res.body).toContain('"input_json_delta","partial_json":"\\"UTC\\"}"');
+		expect(res.body).toContain('event: content_block_stop');
+		expect(res.body).toContain('"stop_reason":"tool_use"');
+	});
+
+	it('keeps a tool name that streams in fragments ahead of its id', async () => {
+		fetchState.response = () =>
+			upstreamSse([
+				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"name":"get"}}]}}]}\n\n',
+				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"name":"Time"}}]}}]}\n\n',
+				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{}"}}]}}]}\n\n',
+				'data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}\n\n',
+				'data: [DONE]\n\n',
+			]);
+		const { res } = await invoke({
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true },
+		});
+		expect(res.body).toContain('"name":"getTime"');
+		expect(res.body).not.toContain('"name":"get"');
+		expect(res.body).toContain('"input_json_delta","partial_json":"{}"');
+	});
+
+	it('emits a tool call whose id never arrived instead of dropping it', async () => {
+		fetchState.response = () =>
+			upstreamSse([
+				'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"name":"getTime"}}]}}]}\n\n',
+				'data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}\n\n',
+				'data: [DONE]\n\n',
+			]);
+		const { res } = await invoke({
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free', stream: true },
+		});
+		expect(res.body).toContain('"type":"tool_use"');
+		expect(res.body).toContain('"name":"getTime"');
+		expect(res.body).toContain('event: content_block_stop');
+	});
+});
+
+describe('/api/llm/anthropic: streaming, Anthropic lane', () => {
+	it('passes upstream Anthropic SSE through byte for byte and debits cache tokens', async () => {
+		const chunks = [
+			'event: message_start\ndata: {"type":"message_start","message":{"usage":{"input_tokens":30,"cache_creation_input_tokens":100,"cache_read_input_tokens":200}}}\n\n',
+			'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"hi"}}\n\n',
+			'event: message_delta\ndata: {"type":"message_delta","usage":{"output_tokens":9}}\n\n',
+		];
+		fetchState.response = () => upstreamSse(chunks);
+		const { res } = await invoke({ body: { ...VALID_BODY, stream: true } });
+		expect(res.body).toBe(chunks.join(''));
+		expect(res.headers['x-llm-transport']).toBe('anthropic');
+		const monthKey = new Date().toISOString().slice(0, 7);
+		// 30 uncached + 100 cache-write + 200 cache-read prompt tokens, 9 output.
+		expect(redisStore.get(`llm:tokens:agent-1:${monthKey}`)).toBe(339);
+		expect(usageEvents[0].meta).toMatchObject({
+			input_tokens: 330,
+			output_tokens: 9,
+			cache_write_tokens: 100,
+			cache_read_tokens: 200,
 		});
 	});
 });
