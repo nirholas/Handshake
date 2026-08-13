@@ -28,10 +28,18 @@ async function enforce(auth) {
 	}
 }
 
-// USDC and most x402 stablecoins use 6 decimals — convert a human dollar cap to
-// the atomic units filterByMaxPrice compares against.
+// USDC and most x402 stablecoins use 6 decimals, so convert a human dollar cap
+// to the atomic units filterByMaxPrice compares against. Returns null when the
+// cap is effectively unbounded (a number so large the conversion overflows),
+// telling the caller to skip the filter rather than reject the whole query.
 function usdcToAtomic(usd) {
-	return String(Math.round(Number(usd) * 1_000_000));
+	const atomic = Math.round(Number(usd) * 1_000_000);
+	if (!Number.isFinite(atomic)) return null;
+	if (atomic <= 0) return '0';
+	// String(1e21) is "1e+21", which parseAtomicAmount rejects as non-integer and
+	// filterByMaxPrice then throws on. BigInt renders full digits at any
+	// magnitude, so a large cap filters instead of failing the tool call.
+	return BigInt(atomic).toString();
 }
 
 // Project a normalized bazaar item down to the fields a client actually needs,
@@ -55,7 +63,10 @@ function slim(it) {
 function applyFilters(resources, { network, max_price_usdc }) {
 	let out = resources;
 	if (network) out = filterByNetwork(out, network);
-	if (max_price_usdc != null) out = filterByMaxPrice(out, usdcToAtomic(max_price_usdc));
+	if (max_price_usdc != null) {
+		const cap = usdcToAtomic(max_price_usdc);
+		if (cap !== null) out = filterByMaxPrice(out, cap);
+	}
 	return out;
 }
 

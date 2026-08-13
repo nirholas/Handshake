@@ -434,8 +434,13 @@ export function filterByNetwork(items, pattern) {
 function patternToRegex(pattern) {
 	if (pattern instanceof RegExp) return pattern;
 	// support wildcards like "eip155:*" or "solana:*"
+	// `*` is the ONLY wildcard; every other regex metacharacter is escaped to a
+	// literal. `?` used to be left unescaped, so a user-supplied `network=?`
+	// compiled to /^?$/ and threw "Nothing to repeat", 500ing /api/bazaar/list,
+	// /api/bazaar/search, /api/agora and the bazaar MCP discovery tools. A
+	// pattern that matches no network must return no items, not an error.
 	const escaped = String(pattern)
-		.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+		.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
 		.replace(/\*/g, '.*');
 	return new RegExp(`^${escaped}$`, 'i');
 }
