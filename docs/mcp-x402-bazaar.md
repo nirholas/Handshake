@@ -17,10 +17,47 @@ client. Registered with the MCP Registry as
 | `search_services(query, type?, network?, max_price_usdc?, limit?)` | Ranked search over the merged facilitator catalog. |
 | `browse_services(type?, network?, max_price_usdc?, limit?)` | List services without a query — "what can I pay for?". |
 | `get_service(resource_url, tool_name?)` | Full payment requirements (price, asset, network, recipient), input/output schema, and a ready pay link. |
+| `bazaar_service_details(resource_url, tool_name?)` | Live price only: cheapest across networks plus a per-network breakdown. Built for price tracking on a schedule. |
+| `getting_started(section?)` | Free, no auth or payment. An overview of the server, its tools, and how to connect. Call this first. |
 
 `type` is `http` (paid HTTP APIs) or `mcp` (paid MCP tools). `network` is a
 CAIP-2 id, e.g. `eip155:8453` (Base) or `solana:*`. `max_price_usdc` filters to
 services at or below a dollar ceiling.
+
+### Tracking a service's price over time
+
+`bazaar_service_details` is the one to poll. It returns the same
+`structuredContent` shape whether or not the service is still listed, so a
+tracker can diff two samples field by field without special-casing a
+disappearance:
+
+```json
+{
+  "service_key": "https://api.example.com/weather",
+  "available": true,
+  "networks": ["eip155:8453"],
+  "min_price_atomic": 1000,
+  "min_price_label": "0.001 USDC",
+  "prices": [
+    {
+      "network": "eip155:8453",
+      "amount_atomic": 1000,
+      "price": "0.001 USDC",
+      "asset": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "pay_to": "0x0E84dDEdAaE6A779c462C22a59F301EC31B6b808",
+      "scheme": "exact"
+    }
+  ]
+}
+```
+
+A service that has dropped off every facilitator is not an error: it comes back
+with the same keys, `available: false`, an empty `prices`, and `null` for both
+price fields. `min_price_label` is `null` (never absent) in both branches, so a
+missing label and a missing sample stay distinguishable.
+
+Use `get_service` instead when you also need the input/output schema and a pay
+link. `bazaar_service_details` deliberately omits both to stay cheap to poll.
 
 ## Use on claude.ai
 

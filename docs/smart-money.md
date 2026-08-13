@@ -30,7 +30,7 @@ dumpPenalty    = dump_rate * 0.4
 smart_money_score = round(clamp(win_rate + earlyBonus - dumpPenalty, 0, 100) * confidence, 1)
 ```
 
-The label follows from the profile: a creator with 3 or more launches, zero graduations, and at least 3 coins traded is a `rugger`; fewer than 4 judged coins is `fresh`; a dump rate of 60 percent or more is a `dumper`; a score of 70 or more is `smart_money`; 5 or more early entries with a win rate under 25 percent is a `sniper`; everything else is `neutral`.
+The label follows from the profile, evaluated in this order: a creator with 3 or more launches, zero graduations, and at least 3 coins traded is a `rugger`; fewer than 4 judged coins is `fresh`; a dump rate of 60 percent or more is a `dumper`; a score of 70 or more is `smart_money`; so is a sustained edge over a real sample, 8 or more judged coins at a 35 percent or better win rate (the pump.fun base rate is around 12 percent, so that is roughly a 3x edge); 5 or more early entries with a win rate under 25 percent is a `sniper`; everything else is `neutral`.
 
 **Phase C: score live coins.** For every coin launched in the last 3 hours, `coin_smart_money` is computed from its non-creator buyers (creators do not lend pedigree to their own coin):
 

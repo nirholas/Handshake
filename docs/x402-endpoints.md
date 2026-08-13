@@ -100,19 +100,19 @@ buyer's USDC settles **directly** to that wallet and the platform never holds it
 
 | Endpoint | Receiver | Source |
 | -------- | -------- | ------ |
-| `/api/x402/skill-call` | skill **author** | `author_payto_*` ([skill-call.js:159](../api/x402/skill-call.js#L159)) |
-| `/api/x402/service` | service **provider** | `row.payout_address` ([service.js:92](../api/x402/service.js#L92)) |
-| `/api/x402/asset-download` | 3D-asset **creator** | `creator_payto_*` ([asset-download.js:121](../api/x402/asset-download.js#L121)) |
-| `/api/x402/animation-download` | clip **creator** | `creator_payto_*` ([animation-download.js:112](../api/x402/animation-download.js#L112)) |
-| `/api/x402/pay-by-name` | **buyer-named** wallet | resolved name/`.sol`/address, direct SPL transfer ([pay-by-name.js:256](../api/x402/pay-by-name.js#L256)) |
+| `/api/x402/skill-call` | skill **author** | `author_payto_*` ([skill-call.js:196](../api/x402/skill-call.js#L196)) |
+| `/api/x402/service` | service **provider** | `row.payout_address` ([service.js:91](../api/x402/service.js#L91)) |
+| `/api/x402/asset-download` | 3D-asset **creator** | `creator_payto_*` ([asset-download.js:124](../api/x402/asset-download.js#L124)) |
+| `/api/x402/animation-download` | clip **creator** | `creator_payto_*` ([animation-download.js:115](../api/x402/animation-download.js#L115)) |
+| `/api/x402/pay-by-name` | **buyer-named** wallet | resolved name/`.sol`/address, direct SPL transfer ([pay-by-name.js:279](../api/x402/pay-by-name.js#L279)) |
 
 **2. Post-settlement split** — the USDC lands in the **platform receiver**, then a
 *separate* treasury forwards a share out-of-band (these are NOT `payTo` overrides):
 
 | Endpoint | Lands in | Then forwarded to | By |
 | -------- | -------- | ----------------- | -- |
-| `/api/x402/cosmetic-purchase` | platform receiver | **creator** 50% (≤90% cap) | `COSMETIC_SPLIT_TREASURY_SECRET_KEY_B64` ([cosmetics-economy.js:31](../api/_lib/cosmetics-economy.js#L31)) |
-| `/api/x402/dance-tip` | platform receiver | **dancer** (full tip) | `club-payouts` cron from `CLUB_SOLANA_TREASURY_SECRET_KEY_B64` ([club/sweep.js:19](../api/_lib/club/sweep.js#L19)) |
+| `/api/x402/cosmetic-purchase` | platform receiver | **creator** 50% (≤90% cap) | `COSMETIC_SPLIT_TREASURY_SECRET_KEY_B64` ([cosmetics-economy.js:203](../api/_lib/cosmetics-economy.js#L203); the 50% default and 90% ceiling are [L31-L32](../api/_lib/cosmetics-economy.js#L31)) |
+| `/api/x402/dance-tip` | platform receiver | **dancer** (full tip) | `club-payouts` cron ([club/sweep.js](../api/_lib/club/sweep.js)) paying from `CLUB_SOLANA_TREASURY_SECRET_KEY_B64` ([club/payouts.js:54](../api/_lib/club/payouts.js#L54)) |
 | `/api/x402/club-cover` | platform receiver (kept) | — (funds the club float; issues a door pass) | — |
 
 `/api/x402/ring-settle` is an **internal** primitive (`discoverable:false`) — it is
