@@ -6,7 +6,7 @@
 // 1. HEAD-OF-LINE STARVATION. Both scans are `ORDER BY created_at ASC LIMIT 10`,
 //    so a row the driver can never advance holds a slot on every tick forever.
 //    The job scan selected any 'working' job, but runAutopilot returns
-//    immediately unless the worker opted into autonomy — so ten jobs held by
+//    immediately unless the worker opted into autonomy, so ten jobs held by
 //    manual workers (who deliver through /deliver, on their own time) consumed
 //    the whole batch and no autonomous job was ever driven again. The bounty scan
 //    admitted any open bounty with >= 1 pending bid, but autoAwardIfReady
@@ -18,7 +18,7 @@
 //    number the economy heartbeat reports.
 // 3. NO ERROR ISOLATION OR REPORTING. Row reads inside the loop were unguarded,
 //    so one transient failure aborted the rest of the batch, and every driver
-//    failure was swallowed by `.catch(() => null)` — a fully stalled lane
+//    failure was swallowed by `.catch(() => null)`, a fully stalled lane
 //    reported `{ ok: true, settled: 0 }`, indistinguishable from a quiet minute.
 //
 // The sql double models only what those bugs turn on: which rows each scan asks
@@ -116,7 +116,7 @@ beforeEach(() => {
 	h.getJob.mockImplementation(async (id) => ({ id, status: 'delivered', worker_agent_id: 'w' }));
 });
 
-describe('labor tick — auth and method gates', () => {
+describe('labor tick: auth and method gates', () => {
 	it('rejects a caller without the cron secret', async () => {
 		const res = await tick({ headers: {} });
 		expect(res.statusCode).toBe(401);
@@ -130,7 +130,7 @@ describe('labor tick — auth and method gates', () => {
 	});
 });
 
-describe('labor tick — scans only rows it can advance', () => {
+describe('labor tick: scans only rows it can advance', () => {
 	it('requires an autonomous worker before scanning a working job', async () => {
 		await tick();
 		// A 'working' job is only admitted alongside an enabled worker policy: that
@@ -154,7 +154,7 @@ describe('labor tick — scans only rows it can advance', () => {
 	});
 });
 
-describe('labor tick — counting', () => {
+describe('labor tick: counting', () => {
 	it('reports real progress across both lanes', async () => {
 		bountyRows = [{ id: 'b1' }, { id: 'b2' }];
 		jobRows = [{ id: 'j1', bounty_id: 'b9', status: 'delivered' }];
@@ -194,7 +194,7 @@ describe('labor tick — counting', () => {
 	});
 });
 
-describe('labor tick — failure isolation', () => {
+describe('labor tick: failure isolation', () => {
 	it('finishes the batch when one row fails, and says which', async () => {
 		jobRows = [
 			{ id: 'j1', bounty_id: 'b1', status: 'delivered' },

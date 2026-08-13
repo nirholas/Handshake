@@ -1,5 +1,5 @@
 /**
- * GET /api/galaxy/flows — request handling + degraded-path contracts.
+ * GET /api/galaxy/flows, request handling + degraded-path contracts.
  *
  * The pure row shaping lives in tests/galaxy-flows.test.js. This file pins the
  * endpoint's own behaviour: how it sanitises query params before they reach
@@ -8,7 +8,7 @@
  *
  * The last-good snapshot is the load-bearing part. It is keyed by
  * (network, type, limit) only, so a delta poll and the first page collide on it
- * while carrying completely different slices of the feed — which is why only the
+ * while carrying completely different slices of the feed, which is why only the
  * first page may write or read it.
  */
 
@@ -180,7 +180,7 @@ describe('degraded paths', () => {
 
 	it('answers a failed delta poll with an empty window that echoes the client cursor', async () => {
 		const cur = encodeCursor('2026-08-12T09:00:00.000Z', 'c900');
-		// A stale first-page snapshot exists — the poll must NOT be answered with it,
+		// A stale first-page snapshot exists, the poll must NOT be answered with it,
 		// or the client rewinds its cursor and replays past flows as new light.
 		h.cache.set('galaxy:flows:lastgood:mainnet:all:50', { flows: [{ id: 'c1' }], head_cursor: 'OLDHEAD' });
 		h.failNext = true;

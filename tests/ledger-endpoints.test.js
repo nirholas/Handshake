@@ -1,5 +1,5 @@
 /**
- * GET /api/ledger/:agentId and GET /api/ledger/verify/:agentId — the two public
+ * GET /api/ledger/:agentId and GET /api/ledger/verify/:agentId, the two public
  * Reasoning Ledger reads.
  *
  * Both handlers run for real against an in-memory `sql` that speaks enough of the
@@ -85,7 +85,7 @@ const h = vi.hoisted(() => {
 					};
 				});
 		}
-		// Full chain, ascending — what the verify endpoint rehashes.
+		// Full chain, ascending, what the verify endpoint rehashes.
 		if (text.includes('from agent_decisions') && text.includes('order by seq asc')) {
 			const [agentId] = params;
 			return store.decisions.filter((d) => d.agent_id === agentId).sort((a, b) => Number(a.seq) - Number(b.seq)).map((d) => ({ ...d }));

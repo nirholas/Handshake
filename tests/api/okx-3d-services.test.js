@@ -396,7 +396,7 @@ describe('paid dispatch — verify → engine → settle', () => {
 });
 
 // The three tool-backed rows call an MCP tool handler DIRECTLY, bypassing the
-// studio dispatcher that would normally validate arguments — so a renamed key
+// studio dispatcher that would normally validate arguments, so a renamed key
 // fails at runtime, on a paid call, with nothing catching it in between. This
 // holds each adapter to the engine tool's own published schema.
 describe('engine argument contract', () => {

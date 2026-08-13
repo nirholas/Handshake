@@ -5,7 +5,7 @@
 // it does NOT do is decide how that reaches the client, and every handler used to
 // answer differently:
 //   - an unmapped 502 bubbled into wrap(), which logs `[api] unhandled`, captures
-//     to Sentry, and pages ops once per request — for someone else's rate limit;
+//     to Sentry, and pages ops once per request, for someone else's rate limit;
 //   - an unmapped 429/404 came back as `bad_request` with the vendor's raw body
 //     (ref ids and all) pasted into error_description;
 //   - a handler that forwarded `err.code` emitted `{"error": undefined}`, i.e. a

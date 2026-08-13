@@ -770,7 +770,7 @@ Beyond the feature areas above, the `api/` tree exposes many more surfaces. Comp
 | `/api/users/*` (16) vs `/api/user/*` (5) | — | Two namespaces: `users/` = public profiles/follows/referrals/earnings; `user/` = account wallet/settings |
 | `/api/rider/*`, `/api/play/*`, `/api/seed/*`, `/api/club/*` (incl. `tips-stream` SSE), `/api/tournaments/*`, `/api/clash/*` | — | Rider passes / play-pass / fixtures-seed / 3D-club tips / tournament + Coin Clash game surfaces |
 
-> Internal MCP handler implementations live in `api/_mcp`, `api/_mcp3d`, `api/_mcpagent`, `api/_mcpbazaar`, `api/_mcpibm`, `api/_mcp-studio` — see [MCP Layer](#mcp-layer).
+> Internal MCP handler implementations live in `api/_mcp`, `api/_mcp3d`, `api/_mcpagent`, `api/_mcpbazaar`, `api/_mcpibm`, `api/_mcp-studio`, see [MCP Layer](#mcp-layer).
 
 ---
 

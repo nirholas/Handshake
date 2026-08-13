@@ -178,7 +178,7 @@ async function invoke(reqOpts) {
 }
 
 beforeEach(() => {
-	vi.clearAllMocks(); // call counts only — the factory implementations survive
+	vi.clearAllMocks(); // call counts only, the factory implementations survive
 	state.wxConfigured = false;
 	state.guardianVerdict = 'No';
 	state.walletConfigured = false;
@@ -369,7 +369,7 @@ describe('POST /api/ibm/attest (notarize)', () => {
 // A GeckoTerminal fault is a third party's problem. It must come back with a real
 // error code (an upstream error carries a status but never a code, which used to
 // produce a body with no `error` field at all) and must not read as a 5xx bug.
-describe('GET /api/ibm/attest — market data upstream failures', () => {
+describe('GET /api/ibm/attest: market data upstream failures', () => {
 	it('maps a missing pool to 404 pool_not_found', async () => {
 		fetchOhlcv.mockRejectedValueOnce(upstreamFault(404));
 		const { status, body } = await invoke({ url: `/api/ibm/attest?pool=${POOL}` });

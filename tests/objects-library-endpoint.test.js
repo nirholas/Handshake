@@ -1,5 +1,5 @@
 /**
- * GET /api/objects/library — CC0 prop manifest proxy.
+ * GET /api/objects/library, CC0 prop manifest proxy.
  *
  * The endpoint proxies the R2-hosted object manifest (published by
  * scripts/build-object-library.mjs). Contract under test:

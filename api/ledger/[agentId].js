@@ -117,7 +117,7 @@ export default wrap(async (req, res) => {
 
 	// The track record is public by design; the agent's identity is not. An
 	// unlisted or deleted agent renders as the bare id, exactly like an id with no
-	// identity row — this endpoint used to select is_public and never read it, so
+	// identity row, this endpoint used to select is_public and never read it, so
 	// it published the name and avatar of every agent its owner had made private.
 	const named = !!identity && identity.is_public !== false && !identity.deleted_at;
 

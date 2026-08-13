@@ -325,7 +325,7 @@ describe('IBM Granite MCP — pricing', () => {
 // TOOL_PRICING, the map the 402 challenge and the settle path both read. A
 // number quoted anywhere else is a number a caller can be shown before paying a
 // different one.
-describe('IBM Granite MCP — advertised prices match the charged price', () => {
+describe('IBM Granite MCP: advertised prices match the charged price', () => {
 	const PRICED = Object.keys(TOOL_PRICING);
 
 	it('every priced tool title quotes its own price', () => {

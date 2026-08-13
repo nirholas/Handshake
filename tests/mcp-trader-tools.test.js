@@ -1,5 +1,5 @@
 /**
- * Trader MCP tools (api/_mcp/tools/trader.js) — the four tools that close the
+ * Trader MCP tools (api/_mcp/tools/trader.js), the four tools that close the
  * autonomous copy-trading loop: trader_leaderboard, trader_profile,
  * copy_subscribe, copy_status.
  *

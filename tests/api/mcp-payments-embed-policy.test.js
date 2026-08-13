@@ -1,4 +1,4 @@
-// api/_mcp/payments.js and api/_mcp/embed-policy.js — the two small shared
+// api/_mcp/payments.js and api/_mcp/embed-policy.js, the two small shared
 // modules the MCP servers reach for on the paid path and the embed gate.
 //
 // payments.js is the single error boundary for every hand-rolled x402 MCP

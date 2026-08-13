@@ -74,7 +74,7 @@ const searchCall = {
 	params: { name: 'search_services', arguments: { query: 'weather' } },
 };
 
-describe('POST /api/mcp-bazaar — unauthenticated challenge identity', () => {
+describe('POST /api/mcp-bazaar: unauthenticated challenge identity', () => {
 	it('plain x402 clients get a 402 naming the bazaar resource', async () => {
 		const res = makeRes();
 		await handler(makeReq({ body: searchCall }), res);
@@ -121,7 +121,7 @@ describe('POST /api/mcp-bazaar — unauthenticated challenge identity', () => {
 	});
 });
 
-describe('POST /api/mcp-bazaar — free discovery for plain clients', () => {
+describe('POST /api/mcp-bazaar: free discovery for plain clients', () => {
 	it('initialize with no credentials advertises the bazaar server', async () => {
 		const res = makeRes();
 		await handler(

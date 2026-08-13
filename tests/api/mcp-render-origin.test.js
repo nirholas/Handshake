@@ -1,4 +1,4 @@
-// api/_mcp/render.js and api/_mcp/origin.js — the two shared helpers behind
+// api/_mcp/render.js and api/_mcp/origin.js, the two shared helpers behind
 // every MCP tool that emits viewer HTML or an absolute link.
 //
 // render.js builds an HTML document from caller-supplied values, so its whole

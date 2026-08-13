@@ -114,7 +114,7 @@ async function handleAuthorize(req, res) {
 	if (!code_challenge_method) return error(res, 400, 'invalid_request', 'code_challenge_method required (must be S256)');
 	if (code_challenge_method !== 'S256') return error(res, 400, 'invalid_request', 'code_challenge_method must be S256');
 	const targetResource = canonicalResource(resource);
-	if (!targetResource) return error(res, 400, 'invalid_target', `unknown resource — this server only issues tokens for ${env.MCP_RESOURCE}`);
+	if (!targetResource) return error(res, 400, 'invalid_target', `unknown resource, this server only issues tokens for ${env.MCP_RESOURCE}`);
 	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
 	const client = rows[0];
 	if (!client) return error(res, 400, 'invalid_client', 'unknown client');
