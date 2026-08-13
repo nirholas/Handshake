@@ -10,15 +10,18 @@ npm run build:wasm
 ```
 
 The artifacts are checked into the repo so the app builds without a Rust
-toolchain at install time. CI / Vercel only need `npm install` + `npm run build`.
+toolchain at install time. CI only needs `npm install` + `npm run build`.
+This README and the `.gitignore` are rewritten by
+[scripts/build-wasm.mjs](../../../../scripts/build-wasm.mjs) after every
+build, because wasm-pack would otherwise clobber them.
 
 ## Files
 
-- `vanity_grinder.js`           — wasm-bindgen glue (default export `init`, named export `grind`)
-- `vanity_grinder_bg.wasm`      — the compiled WebAssembly module
-- `vanity_grinder.d.ts`         — TypeScript declarations
-- `vanity_grinder_bg.wasm.d.ts` — low-level wasm imports declarations
-- `package.json`                — generated package metadata (not published)
+- `vanity_grinder.js`: wasm-bindgen glue (default export `init`, named exports `grind`, `initSync`)
+- `vanity_grinder_bg.wasm`: the compiled WebAssembly module
+- `vanity_grinder.d.ts`: TypeScript declarations
+- `vanity_grinder_bg.wasm.d.ts`: low-level wasm imports declarations
+- `package.json`: generated package metadata (not published)
 
 ## API
 
