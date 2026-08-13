@@ -1,4 +1,4 @@
-// JSON-RPC dispatch for the x402 Bazaar MCP server — thin binding of the shared
+// JSON-RPC dispatch for the x402 Bazaar MCP server: a thin binding of the shared
 // payment-free dispatcher (api/_lib/mcp-dispatch.js) to this server's catalog.
 import { makeDispatcher, PROTOCOL_VERSION } from '../_lib/mcp-dispatch.js';
 import { TOOL_CATALOG, TOOLS } from './catalog.js';

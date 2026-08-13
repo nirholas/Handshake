@@ -1,9 +1,9 @@
-// x402 Bazaar MCP — discovery tools over the live x402 facilitator network.
+// x402 Bazaar MCP: discovery tools over the live x402 facilitator network.
 //
 // Every tool hits real facilitators (no cache of fake data): search and browse
 // the merged catalog of paid agent services, and pull the full payment + input
 // schema for any one service. The result is everything a client needs to decide
-// to pay and exactly how — price, network, recipient, and a ready pay link.
+// to pay and exactly how: price, network, recipient, and a ready pay link.
 import { limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import {
@@ -85,7 +85,7 @@ function formatList(items, { query } = {}) {
 	}
 	return items
 		.map((s, i) => {
-			const head = `${i + 1}. ${s.name || s.resource}${s.price ? ` — ${s.price}` : ''}`;
+			const head = `${i + 1}. ${s.name || s.resource}${s.price ? ` - ${s.price}` : ''}`;
 			const desc = s.description ? `\n   ${s.description}` : '';
 			const net = s.networks?.length ? `\n   networks: ${s.networks.join(', ')}` : '';
 			const res = `\n   ${s.tool_name ? `${s.resource} #${s.tool_name}` : s.resource}`;
@@ -95,7 +95,7 @@ function formatList(items, { query } = {}) {
 }
 
 // MCP tool annotations (2025-06-18 spec): every discovery tool is a read-only
-// query of the live facilitator network — listings and prices change between
+// query of the live facilitator network. Listings and prices change between
 // calls, so not idempotent. destructiveHint defaults to TRUE when omitted, so
 // it is set explicitly.
 const DISCOVERY_ANNOTATIONS = {
@@ -148,7 +148,7 @@ export const toolDefs = [
 		title: 'Browse the x402 bazaar',
 		annotations: DISCOVERY_ANNOTATIONS,
 		description:
-			'List paid agent services from the live x402 facilitator network without a search query — useful for "what can I pay for?". Returns services with price, networks, and resource URL, cheapest filters applied.',
+			'List paid agent services from the live x402 facilitator network without a search query, useful for "what can I pay for?". Returns services with price, networks, and resource URL, cheapest filters applied.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -207,15 +207,20 @@ export const toolDefs = [
 				scheme: a.scheme,
 			}));
 			const pay_link = payUrl(item.resource, item.toolName);
+			// Only the description is optional here. A blanket empty-string filter
+			// also swallowed the deliberate blank line before the pay link, so the
+			// URL rendered flush against the last payment option.
 			const lines = [
 				`${item.serviceName || item.resource}`,
-				item.description ? item.description : '',
+				...(item.description ? [item.description] : []),
 				`Price: ${item.minPriceLabel || 'see options'}`,
 				`Payment options:`,
-				...accepts.map((a) => `  • ${a.price} on ${a.network} → ${a.pay_to || '(recipient in challenge)'}`),
+				...(accepts.length
+					? accepts.map((a) => `  • ${a.price} on ${a.network} → ${a.pay_to || '(recipient in challenge)'}`)
+					: ['  (none advertised; the resource returns its 402 challenge on call)']),
 				``,
 				`Pay & call via three.ws: ${pay_link}`,
-			].filter((l) => l !== '');
+			];
 			return {
 				content: [{ type: 'text', text: lines.join('\n') }],
 				structuredContent: {
@@ -238,7 +243,7 @@ export const toolDefs = [
 		title: 'Live price details for one x402 service',
 		annotations: DISCOVERY_ANNOTATIONS,
 		description:
-			"Resolve the current live price of a single x402 service by its resource URL (and tool_name for MCP services). Returns the cheapest price across networks plus a per-network breakdown (amount in atomic units, asset, recipient) and whether the service is still listed and payable. Purpose-built for price tracking and cost-model maintenance — call it on a schedule to watch a dependency's price over time and detect hikes or drops. Use get_service instead when you also need the input/output schema and a ready pay link.",
+			"Resolve the current live price of a single x402 service by its resource URL (and tool_name for MCP services). Returns the cheapest price across networks plus a per-network breakdown (amount in atomic units, asset, recipient) and whether the service is still listed and payable. Purpose-built for price tracking and cost-model maintenance. Call it on a schedule to watch a dependency's price over time and detect hikes or drops. Use get_service instead when you also need the input/output schema and a ready pay link.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -255,8 +260,9 @@ export const toolDefs = [
 			const service_key = args.tool_name ? `${args.resource_url}#${args.tool_name}` : args.resource_url;
 
 			// A service that has dropped off every facilitator is itself a tracking
-			// signal (a dependency went away / was unpriced) — return available:false
-			// with a stable shape rather than an error so the tracker records the gap.
+			// signal (a dependency went away, or was unpriced), so return
+			// available:false in the same shape as a hit rather than an error. A
+			// price tracker records the gap instead of logging a failed call.
 			if (!item) {
 				return {
 					content: [
@@ -299,7 +305,10 @@ export const toolDefs = [
 					available: true,
 					networks: item.networks,
 					min_price_atomic: item.minPriceAtomic ?? null,
-					min_price_label: item.minPriceLabel || undefined,
+					// null, not undefined: the miss branch above emits null and a
+					// price tracker diffs the two shapes field by field. An undefined
+					// drops the key entirely once serialized to JSON.
+					min_price_label: item.minPriceLabel || null,
 					prices,
 				},
 			};
