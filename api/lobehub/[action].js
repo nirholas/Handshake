@@ -75,23 +75,31 @@ function originHostname(value) {
 // for the same reason; `verified` in the response tells the host which of the
 // two answers it got.
 async function lookupAgent(agentId) {
+	let row;
 	try {
-		const [row] = await sql`
+		[row] = await sql`
 			SELECT id, name FROM agent_identities
 			WHERE id = ${agentId} AND deleted_at IS NULL
 			LIMIT 1
 		`;
-		if (!row) return { verified: true, found: false, name: null, policy: null };
-		return {
-			verified: true,
-			found: true,
-			name: typeof row.name === 'string' ? row.name : null,
-			policy: await readEmbedPolicy(agentId),
-		};
 	} catch (err) {
 		console.warn('[lobehub/handshake] agent lookup failed, handshaking unverified:', err?.message);
 		return { verified: false, found: true, name: null, policy: null };
 	}
+	if (!row) return { verified: true, found: false, name: null, policy: null };
+
+	// The policy lives behind a second read, so it can fail on its own after the
+	// identity is already confirmed. Folding that failure into the catch above
+	// threw away an answer we had: the agent came back verified with a name, and
+	// the host was told the handshake was unverified and nameless. Degrade only
+	// the part that failed, and report the plugin's own hosts for the policy.
+	let policy = null;
+	try {
+		policy = await readEmbedPolicy(agentId);
+	} catch (err) {
+		console.warn('[lobehub/handshake] embed policy read failed, reporting plugin hosts only:', err?.message);
+	}
+	return { verified: true, found: true, name: typeof row.name === 'string' ? row.name : null, policy };
 }
 
 // Fold the agent owner's own embed policy (agent_identities.embed_policy, the
@@ -193,5 +201,11 @@ export default wrap(async (req, res) => {
 		});
 	}
 
+	// A misspelled action is read cross-origin like every other action here, and
+	// it is nearly always a typo in a host's integration. Answering without a
+	// CORS header hid the 404 behind an opaque browser network error, so the
+	// integrator never saw the message naming the problem. api/chat-plugin's
+	// unknown-tool branch is reachable for the same reason: it CORS-es first.
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
 	return error(res, 404, 'not_found', 'unknown lobehub action');
 });

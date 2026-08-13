@@ -191,6 +191,22 @@ describe('POST /api/lobehub/handshake', () => {
 		expect(origins.hosts).toEqual(['bad.example']);
 	});
 
+	it('keeps a confirmed agent verified when only the policy read fails', async () => {
+		// Two reads back the handshake. When the second one fails, the first has
+		// already confirmed the agent: reporting the handshake unverified and
+		// nameless threw away an answer we held.
+		sqlMock
+			.mockResolvedValueOnce([{ id: AGENT_ID, name: 'Ada' }])
+			.mockRejectedValueOnce(new Error('connection reset'));
+		const res = await call({ action: 'handshake', method: 'POST', body: { agentId: AGENT_ID } });
+		expect(res.statusCode).toBe(200);
+		const body = res.json();
+		expect(body.verified).toBe(true);
+		expect(body.agentName).toBe('Ada');
+		expect(body.embedPolicy.origins.mode).toBe('allowlist');
+		expect(body.embedPolicy.origins.hosts).toContain('chat.lobehub.com');
+	});
+
 	it('degrades to an unverified handshake when the database is unreachable', async () => {
 		sqlMock.mockRejectedValue(new Error('connection refused'));
 		const res = await call({ action: 'handshake', method: 'POST', body: { agentId: AGENT_ID } });
@@ -209,9 +225,19 @@ describe('POST /api/lobehub/handshake', () => {
 });
 
 describe('unknown lobehub action', () => {
-	it('404s rather than falling through', async () => {
+	it('404s rather than falling through, with a readable CORS header', async () => {
 		const res = await call({ action: 'bogus' });
 		expect(res.statusCode).toBe(404);
 		expect(res.json().error).toBe('not_found');
+		// A typo'd action is fetched from a browser like every valid one. Without
+		// this header the caller sees an opaque CORS failure instead of the 404
+		// that names the mistake.
+		expect(res.getHeader('access-control-allow-origin')).toBe('*');
+	});
+
+	it('answers a preflight for an unknown action instead of 404ing it', async () => {
+		const res = await call({ action: 'bogus', method: 'OPTIONS' });
+		expect(res.statusCode).toBe(204);
+		expect(res.getHeader('access-control-allow-origin')).toBe('*');
 	});
 });
