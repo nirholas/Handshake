@@ -1,15 +1,16 @@
-// POST /api/labor/tick — cron driver for the Agent Labor Market.
+// POST /api/labor/tick: cron driver for the Agent Labor Market.
 // Advances autonomous bounties that haven't reached a terminal state inline:
-//   • open bounties (collect auto-bids, auto-award if the poster opted in)
-//   • working jobs with an autonomous worker (perform → verify → settle)
+//   • open bounties that already drew bids (auto-award if the poster opted in)
+//   • recently posted bounties nobody has bid on yet (retry the auto-bid sweep)
+//   • working jobs with an autonomous worker (perform, verify, settle)
 //   • delivered/verifying jobs (settle now)
 // Authenticated with the Vercel cron Bearer secret. No-op (503) if unset.
 //
-// Both scans below are capped at BATCH so a tick stays inside its budget, and
-// both deliberately select ONLY rows this tick can actually advance. That is not
-// an optimization, it is the correctness property that keeps the cap from
-// starving the market: the scans are ordered oldest-first, so any row the driver
-// can never move occupies a slot on every tick forever. Two such rows existed:
+// Every scan below is capped at BATCH so a tick stays inside its budget, and each
+// deliberately selects ONLY rows this tick can actually advance. That is not an
+// optimization, it is the correctness property that keeps the cap from starving
+// the market: the scans are ordered oldest-first, so any row the driver can never
+// move occupies a slot on every tick forever. Two such rows existed:
 //   • a 'working' job whose worker never opted into autonomy. runAutopilot
 //     returns immediately for it, so it can only ever leave 'working' through
 //     the manual /deliver endpoint. Ten of them (a human sitting on ten jobs)
@@ -23,6 +24,17 @@
 // Same reasoning drives the job ordering: delivered/verifying jobs are one step
 // from releasing escrow, so they settle before working jobs spend the tick on an
 // LLM perform call.
+//
+// The zero-bid lane is the market's only bootstrap retry. Auto-bidding is gated
+// on the WORKER's policy (findAutoBidders reads worker_enabled), never on the
+// poster's, which is why /post calls runAutopilot for every bounty regardless of
+// the poster's settings. The award scan above cannot stand in for that: it needs
+// a pending bid AND a poster auto-award policy, so a bounty whose post-time sweep
+// matched nobody (no autonomous worker held the skill yet, or the pitch router
+// was down that second) had no path back to a bid, ever. It gets one here for a
+// bounded window: a row ages out of BID_RETRY_WINDOW on its own, so an unbiddable
+// bounty cannot squat a slot forever the way the two rows above used to. An
+// attempt with no matching worker costs one indexed SELECT and no LLM call.
 
 import { json, method, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
@@ -32,6 +44,10 @@ import { requireCron } from '../_lib/cron-auth.js';
 
 const BATCH = 10;
 const MAX_REPORTED_ERRORS = 5;
+// How long after posting a bounty keeps getting auto-bid sweeps. Long enough to
+// outlast a router outage or a worker enabling autonomy right after the post,
+// short enough that a bounty nobody can serve leaves the scan on its own.
+const BID_RETRY_WINDOW = '1 hour';
 
 export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST', 'GET'])) return;
@@ -54,6 +70,16 @@ export default wrap(async (req, res) => {
 		ORDER BY (pending_bids >= min_bids) DESC, created_at ASC
 		LIMIT ${BATCH}`;
 
+	const unbidBounties = await sql`
+		SELECT b.id FROM agent_bounties b
+		WHERE b.status = 'open'
+		  AND b.created_at > now() - ${BID_RETRY_WINDOW}::interval
+		  AND NOT EXISTS (
+		        SELECT 1 FROM agent_bids bd
+		         WHERE bd.bounty_id = b.id AND bd.status = 'pending')
+		ORDER BY b.created_at ASC
+		LIMIT ${BATCH}`;
+
 	const stuckJobs = await sql`
 		SELECT j.id, j.bounty_id, j.status FROM agent_jobs j
 		WHERE j.created_at < now() - interval '15 seconds'
@@ -66,8 +92,12 @@ export default wrap(async (req, res) => {
 		ORDER BY (j.status <> 'working') DESC, j.created_at ASC
 		LIMIT ${BATCH}`;
 
+	// The two bounty scans are disjoint by construction (one requires a pending
+	// bid, the other requires none), so no bounty is driven twice in a tick.
+	const bounties = [...openBounties, ...unbidBounties];
+
 	const results = {
-		scanned: openBounties.length + stuckJobs.length,
+		scanned: bounties.length + stuckJobs.length,
 		bids: 0, awarded: 0, settled: 0, failed: 0,
 	};
 	const errors = [];
@@ -82,7 +112,7 @@ export default wrap(async (req, res) => {
 		if (errors.length < MAX_REPORTED_ERRORS) errors.push(`${scope}: ${message.slice(0, 160)}`);
 	};
 
-	for (const b of openBounties) {
+	for (const b of bounties) {
 		try {
 			const r = await runAutopilot(b.id);
 			results.bids += r?.bids || 0;

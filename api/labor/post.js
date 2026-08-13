@@ -1,4 +1,4 @@
-// POST /api/labor/post — an agent (owned by the caller) posts a bounty and
+// POST /api/labor/post: an agent (owned by the caller) posts a bounty and
 // escrows the reward in $THREE from its own custodial wallet into real on-chain
 // escrow. Every guard is server-side: ownership, spend policy (per-tx + daily
 // ceiling + kill switch), and a fail-closed price feed so the spend is valued in
@@ -10,7 +10,7 @@
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { authWrite, loadOwnedAgent, requireSolanaWallet } from '../_lib/labor-auth.js';
+import { authWrite, loadOwnedAgent, ownershipError, requireSolanaWallet, requireUuid } from '../_lib/labor-auth.js';
 import { TOKEN_MINT } from '../_lib/token/config.js';
 import { getTokenPriceUsd } from '../_lib/token/price.js';
 import { recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
@@ -18,7 +18,7 @@ import {
 	SpendLimitError, reserveSpendUsd, releaseSpendReservation, updateCustodyEvent,
 } from '../_lib/agent-trade-guards.js';
 import { escrowConfigured, escrowAddressOrNull, fundEscrow } from '../_lib/labor-escrow.js';
-import { createBounty, setBountyEscrow, setBountyStatus, threeToAtomics, atomicsToThree, _toBig as toBig } from '../_lib/agent-labor.js';
+import { createBounty, setBountyEscrow, setBountyStatus, parseAtomics, parseThree, atomicsToThree, _toBig as toBig } from '../_lib/agent-labor.js';
 import { runAutopilot } from '../_lib/labor-settle.js';
 
 export default wrap(async (req, res) => {
@@ -36,11 +36,29 @@ export default wrap(async (req, res) => {
 	const { posterAgentId, title, spec, requiredSkill = null, rewardThree, rewardAtomics, deadline = null } = body;
 
 	if (!posterAgentId || typeof posterAgentId !== 'string') return error(res, 400, 'validation_error', 'posterAgentId is required');
-	if (!title || typeof title !== 'string' || title.length > 140) return error(res, 400, 'validation_error', 'title is required (≤140 chars)');
-	if (!spec || typeof spec !== 'string' || spec.length > 4000) return error(res, 400, 'validation_error', 'spec is required (≤4000 chars)');
+	if (!requireUuid(res, posterAgentId, 'posterAgentId')) return;
+	if (!title || typeof title !== 'string' || title.length > 140) return error(res, 400, 'validation_error', 'title is required (max 140 chars)');
+	if (!spec || typeof spec !== 'string' || spec.length > 4000) return error(res, 400, 'validation_error', 'spec is required (max 4000 chars)');
 
-	const reward = rewardAtomics != null ? toBig(rewardAtomics) : threeToAtomics(rewardThree);
+	// Parse the reward strictly. toBig() throws a SyntaxError on junk (an opaque
+	// 500 for what is plainly bad input) and threeToAtomics() silently returns
+	// zero, which reported "reward must be greater than zero" for a typo that was
+	// never a number at all. Both now answer a 400 that names the real problem.
+	if (rewardAtomics == null && rewardThree == null) {
+		return error(res, 400, 'validation_error', 'rewardThree or rewardAtomics is required');
+	}
+	const reward = rewardAtomics != null ? parseAtomics(rewardAtomics) : parseThree(rewardThree);
+	if (reward == null) return error(res, 400, 'validation_error', 'reward must be a non-negative amount of $THREE');
 	if (reward <= 0n) return error(res, 400, 'validation_error', 'reward must be greater than zero');
+
+	// A deadline lands in a timestamptz column, so an unparseable one used to
+	// blow up inside the INSERT as a 500 after the bounty row was already shaped.
+	let deadlineIso = null;
+	if (deadline != null && deadline !== '') {
+		const at = new Date(deadline);
+		if (Number.isNaN(at.getTime())) return error(res, 400, 'validation_error', 'deadline must be an ISO 8601 timestamp');
+		deadlineIso = at.toISOString();
+	}
 
 	if (!escrowConfigured()) {
 		return error(res, 503, 'escrow_unavailable', 'the labor-market escrow wallet is not configured on this server');
@@ -50,24 +68,24 @@ export default wrap(async (req, res) => {
 	try {
 		poster = requireSolanaWallet(await loadOwnedAgent(posterAgentId, userId));
 	} catch (e) {
-		return error(res, e.status || 400, e.code || 'bad_request', e.message);
+		return ownershipError(res, e);
 	}
 
 	// Value the reward in real USD for the spend policy. Fail closed if no price
-	// feed is live — a paid action must never proceed on a guessed price.
+	// feed is live: a paid action must never proceed on a guessed price.
 	let usd;
 	try {
 		const { priceUsd } = await getTokenPriceUsd();
 		usd = atomicsToThree(reward) * priceUsd;
 	} catch {
-		return error(res, 503, 'price_unavailable', 'live $THREE price is unavailable — cannot value the escrow; try again shortly');
+		return error(res, 503, 'price_unavailable', 'live $THREE price is unavailable, so the escrow cannot be valued; try again shortly');
 	}
 
 	// Create the bounty row first so the reservation + escrow can reference it.
 	const bounty = await createBounty({
 		posterAgentId, posterUserId: userId, title: title.trim(), spec: spec.trim(),
 		requiredSkill: requiredSkill ? String(requiredSkill).slice(0, 80) : null,
-		rewardAtomics: reward, deadline, auto: false,
+		rewardAtomics: reward, deadline: deadlineIso, auto: false,
 		meta: { reward_usd_at_post: usd },
 	});
 
@@ -87,8 +105,8 @@ export default wrap(async (req, res) => {
 		return error(res, 500, 'reserve_failed', 'could not reserve the escrow spend');
 	}
 
-	// Fund escrow on-chain: poster wallet → escrow wallet. A throw here means the
-	// transfer did not land, so release the hold and cancel — no money moved.
+	// Fund escrow on-chain: poster wallet to escrow wallet. A throw here means the
+	// transfer did not land, so release the hold and cancel; no money moved.
 	let fundSig;
 	try {
 		const posterKeypair = await recoverSolanaAgentKeypair(poster.meta.encrypted_solana_secret, {
@@ -99,7 +117,7 @@ export default wrap(async (req, res) => {
 		await releaseSpendReservation(reservationId, 'labor_escrow_fund_failed');
 		await setBountyStatus(bounty.id, 'cancelled');
 		console.error('[labor/post] escrow funding failed', e?.message);
-		return error(res, 502, 'escrow_fund_failed', `the bounty was not posted — no $THREE moved: ${e?.message || 'transfer failed'}`);
+		return error(res, 502, 'escrow_fund_failed', `the bounty was not posted, no $THREE moved: ${e?.message || 'transfer failed'}`);
 	}
 
 	await updateCustodyEvent(reservationId, { status: 'confirmed', signature: fundSig, meta: { settled: true } })

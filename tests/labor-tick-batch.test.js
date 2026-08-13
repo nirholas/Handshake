@@ -21,9 +21,19 @@
 //    failure was swallowed by `.catch(() => null)`, a fully stalled lane
 //    reported `{ ok: true, settled: 0 }`, indistinguishable from a quiet minute.
 //
+// A fourth, found by the 2026-08-13 re-audit of the same file:
+//
+// 4. NO BOOTSTRAP RETRY. The only bounty scan required a pending bid AND a
+//    poster policy with auto_award, but auto-bidding is gated on the WORKER's
+//    policy, never the poster's. A bounty whose post-time sweep matched nobody
+//    (no autonomous worker held the skill yet, or the pitch router was down that
+//    second) therefore had no path back to a bid, ever. The zero-bid lane gives
+//    it one inside a bounded window, so an unbiddable bounty still ages out
+//    instead of squatting a slot.
+//
 // The sql double models only what those bugs turn on: which rows each scan asks
 // for. A handler that drops the worker_enabled requirement, the min_bids
-// priority, or the per-row guards fails here.
+// priority, the zero-bid lane, or the per-row guards fails here.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -80,16 +90,23 @@ const req = (over = {}) => ({
 
 // The rows each scan would return, and the query text the handler asked with.
 let bountyRows;
+let unbidRows;
 let jobRows;
 let queries;
 
 function installSql() {
-	queries = { bounties: null, jobs: null };
+	queries = { bounties: null, unbid: null, jobs: null };
 	h.sql.mockImplementation((strings) => {
 		const q = Array.isArray(strings) ? strings.join(' ? ') : String(strings);
 		if (/FROM agent_bounties/i.test(q)) {
-			queries.bounties = q;
-			return Promise.resolve(bountyRows);
+			// The award lane joins the poster policy for min_bids; the bootstrap lane
+			// asks for the bounties that have no pending bid at all.
+			if (/min_bids/i.test(q)) {
+				queries.bounties = q;
+				return Promise.resolve(bountyRows);
+			}
+			queries.unbid = q;
+			return Promise.resolve(unbidRows);
 		}
 		if (/FROM agent_jobs/i.test(q)) {
 			queries.jobs = q;
@@ -108,6 +125,7 @@ async function tick(over) {
 beforeEach(() => {
 	vi.clearAllMocks();
 	bountyRows = [];
+	unbidRows = [];
 	jobRows = [];
 	installSql();
 	h.runAutopilot.mockResolvedValue({ bids: 0, awarded: false, settled: null, settledNow: false });
@@ -147,10 +165,37 @@ describe('labor tick: scans only rows it can advance', () => {
 		expect(queries.bounties).toMatch(/pending_bids >= min_bids\) DESC/);
 	});
 
-	it('bounds both scans inside the statement', async () => {
+	it('bounds every scan inside the statement', async () => {
 		await tick();
 		expect(queries.bounties).toMatch(/LIMIT/i);
+		expect(queries.unbid).toMatch(/LIMIT/i);
 		expect(queries.jobs).toMatch(/LIMIT/i);
+	});
+
+	it('retries the auto-bid sweep on open bounties nobody has bid on', async () => {
+		await tick();
+		// No pending bid, and no poster-policy join: auto-bidding is the worker's
+		// opt-in, so requiring the poster's auto_award here would strand the bounty.
+		expect(queries.unbid).toMatch(/NOT EXISTS/i);
+		expect(queries.unbid).toMatch(/agent_bids/);
+		expect(queries.unbid).not.toMatch(/agent_labor_policies/);
+	});
+
+	it('ages a bounty out of the bootstrap lane instead of retrying it forever', async () => {
+		await tick();
+		// A window is what stops an unbiddable bounty from holding a slot on every
+		// tick, the same head-of-line failure the other two scans were fixed for.
+		expect(queries.unbid).toMatch(/created_at > now\(\)/);
+		expect(queries.unbid).toMatch(/interval/);
+	});
+
+	it('drives a zero-bid bounty and counts the bids it wins', async () => {
+		unbidRows = [{ id: 'fresh' }];
+		h.runAutopilot.mockResolvedValue({ bids: 2, awarded: false, settled: null, settledNow: false });
+
+		const res = await tick();
+		expect(h.runAutopilot).toHaveBeenCalledWith('fresh');
+		expect(res.body).toMatchObject({ ok: true, scanned: 1, bids: 2, failed: 0 });
 	});
 });
 
@@ -184,6 +229,19 @@ describe('labor tick: counting', () => {
 
 		const res = await tick();
 		expect(res.body).toMatchObject({ scanned: 1, settled: 0 });
+	});
+
+	it('counts both bounty lanes and isolates a failure in either', async () => {
+		bountyRows = [{ id: 'awardable' }];
+		unbidRows = [{ id: 'fresh' }];
+		h.runAutopilot
+			.mockResolvedValueOnce({ bids: 0, awarded: true, settled: null, settledNow: false })
+			.mockRejectedValueOnce(new Error('router down'));
+
+		const res = await tick();
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toMatchObject({ ok: true, scanned: 2, awarded: 1, failed: 1 });
+		expect(res.body.errors[0]).toContain('fresh');
 	});
 
 	it('drives a working job without re-fetching its bounty', async () => {

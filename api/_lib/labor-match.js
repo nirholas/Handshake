@@ -82,8 +82,9 @@ async function generateAwardRationale({ bounty, bids, winner }) {
 
 /**
  * Place autonomous bids on an open bounty from every opted-in worker whose policy
- * matches its skill + reward floor. Idempotent per worker (upsert). Returns the
- * number of bids placed/updated.
+ * matches its skill + reward floor and that has not bid on it yet. Safe to repeat:
+ * a second sweep over the same bounty places no bid and spends no LLM call, so the
+ * returned count is always bids that are new this sweep.
  */
 export async function autoBidForBounty(bounty) {
 	if (!bounty || bounty.status !== 'open') return 0;
@@ -92,6 +93,7 @@ export async function autoBidForBounty(bounty) {
 		requiredSkill: bounty.required_skill || null,
 		rewardAtomics,
 		excludeAgentId: bounty.poster_agent_id,
+		bountyId: bounty.id,
 	});
 	let placed = 0;
 	for (const w of bidders) {

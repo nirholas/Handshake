@@ -1,9 +1,9 @@
-// POST /api/labor/release — a platform moderator force-resolves a bounty's
+// POST /api/labor/release: a platform moderator force-resolves a bounty's
 // on-chain escrow WITHOUT ever holding or seeing the escrow private key.
 //
 // The escrow secret lives only on the server (LABOR_ESCROW_SECRET_BASE58). A
 // moderator never owns it, never sees it, and never signs an escrow transaction
-// themselves — they authorize the move through their authenticated admin session
+// themselves: they authorize the move through their authenticated admin session
 // and the server signs. This is the human-override lane on top of the autonomous
 // verifier-gated settlement: use it to resolve a stuck or disputed bounty.
 //
@@ -18,6 +18,7 @@
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireAdmin, isAdminRequest } from '../_lib/admin.js';
+import { requireUuid } from '../_lib/labor-auth.js';
 import {
 	getBounty, getJobByBounty, getJob, markJobDelivered, setBountyStatus,
 	atomicsToThree, _toBig as toBig,
@@ -56,6 +57,7 @@ export default wrap(async (req, res) => {
 	const bountyId = body.bountyId;
 	const action = body.action === 'refund' ? 'refund' : body.action === 'release' ? 'release' : null;
 	if (!bountyId) return error(res, 400, 'validation_error', 'bountyId is required');
+	if (!requireUuid(res, bountyId, 'bountyId')) return;
 	if (!action) return error(res, 400, 'validation_error', "action must be 'release' or 'refund'");
 
 	const bounty = await getBounty(bountyId);
@@ -68,7 +70,7 @@ export default wrap(async (req, res) => {
 
 	// Open bounty (escrow funded, no worker awarded): only a refund makes sense.
 	if (!job) {
-		if (action === 'release') return error(res, 409, 'no_worker', 'no worker has been awarded — only refund is available');
+		if (action === 'release') return error(res, 409, 'no_worker', 'no worker has been awarded, so only refund is available');
 		await ensureEscrowGas().catch(() => {});
 		const to = await posterSolanaAddress(bounty);
 		if (!to) return error(res, 409, 'no_poster_wallet', 'poster has no Solana wallet to refund to');
@@ -76,12 +78,12 @@ export default wrap(async (req, res) => {
 		try {
 			refundSig = await payFromEscrow({ toAddress: to, amountAtomics: toBig(bounty.reward_atomics) });
 		} catch (e) {
-			return error(res, 502, 'refund_failed', `escrow refund did not land — no $THREE moved: ${e?.message || 'transfer failed'}`);
+			return error(res, 502, 'refund_failed', `escrow refund did not land, no $THREE moved: ${e?.message || 'transfer failed'}`);
 		}
 		await setBountyStatus(bounty.id, 'refunded', { refundSig });
 		emitReasoning({
 			agentId: bounty.poster_agent_id, kind: 'labor.moderator_refund',
-			summary: `Moderator refunded "${bounty.title}" — no worker awarded`,
+			summary: `Moderator refunded "${bounty.title}" (no worker awarded)`,
 			detail: { bounty_id: bounty.id, moderator, refund_sig: refundSig },
 		});
 		return json(res, 200, {
@@ -101,7 +103,7 @@ export default wrap(async (req, res) => {
 	const verdict = {
 		pass: action === 'release',
 		score: action === 'release' ? 1 : 0,
-		reason: `moderator ${action} by ${moderator.wallet || moderator.admin_id}${moderator.reason ? ` — ${moderator.reason}` : ''}`,
+		reason: `moderator ${action} by ${moderator.wallet || moderator.admin_id}${moderator.reason ? `: ${moderator.reason}` : ''}`,
 		moderator,
 	};
 

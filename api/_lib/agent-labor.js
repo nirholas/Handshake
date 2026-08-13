@@ -444,8 +444,20 @@ export async function upsertLaborPolicy(agentId, userId, patch) {
 	return shapePolicy(row);
 }
 
-/** Worker agents whose autonomous policy matches a bounty's skill + reward floor. */
-export async function findAutoBidders({ requiredSkill, rewardAtomics, excludeAgentId }) {
+/**
+ * Worker agents whose autonomous policy matches a bounty's skill + reward floor
+ * and who have not bid on it yet.
+ *
+ * `bountyId` excludes agents holding any bid row on that bounty, which is what
+ * makes the sweep safe to repeat. The cron drives an open bounty once a minute
+ * for as long as it stays open, and every one of those passes used to re-price
+ * and re-pitch the SAME workers: an LLM call each, once a minute, forever, on a
+ * bounty that is merely waiting for its poster's min_bids. It also flipped a bid
+ * the worker had moved out of 'pending' back to pending through upsertBid's ON
+ * CONFLICT, and reported each rewrite to the economy heartbeat as a fresh bid.
+ * A worker bids on a bounty once; changing that bid is the worker's call.
+ */
+export async function findAutoBidders({ requiredSkill, rewardAtomics, excludeAgentId, bountyId = null }) {
 	await ensureLaborTables();
 	const reward = String(toBig(rewardAtomics));
 	const rows = await sql`
@@ -457,6 +469,9 @@ export async function findAutoBidders({ requiredSkill, rewardAtomics, excludeAge
 		  AND p.agent_id != ${excludeAgentId}
 		  AND (p.min_reward_atomics IS NULL OR p.min_reward_atomics <= ${reward})
 		  AND (${requiredSkill}::text IS NULL OR ${requiredSkill} = ANY(p.skills))
+		  AND (${bountyId}::uuid IS NULL OR NOT EXISTS (
+		        SELECT 1 FROM agent_bids bd
+		         WHERE bd.bounty_id = ${bountyId} AND bd.worker_agent_id = p.agent_id))
 		LIMIT 25`;
 	return rows;
 }

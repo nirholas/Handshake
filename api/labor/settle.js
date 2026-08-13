@@ -1,11 +1,11 @@
-// POST /api/labor/settle — verify a delivered job and release escrow on-chain.
+// POST /api/labor/settle: verify a delivered job and release escrow on-chain.
 // Idempotent (job settle_key): a retry never double-pays. Callable by either
 // participant (poster or worker owner) so a stuck-but-delivered job can always be
-// resolved; the neutral verifier — not the caller — decides whether funds release.
+// resolved; the neutral verifier, not the caller, decides whether funds release.
 
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
-import { authWrite } from '../_lib/labor-auth.js';
+import { authWrite, requireUuid } from '../_lib/labor-auth.js';
 import { getJob, getJobByBounty, getBounty } from '../_lib/agent-labor.js';
 import { runSettlement } from '../_lib/labor-settle.js';
 
@@ -26,7 +26,13 @@ export default wrap(async (req, res) => {
 
 	const body = (await readJson(req)) || {};
 	const { jobId, bountyId } = body;
-	const job = jobId ? await getJob(jobId) : bountyId ? await getJobByBounty(bountyId) : null;
+	// Say "you sent nothing" rather than "the job does not exist": a caller that
+	// omitted both ids used to get a 404 and go hunting for a missing job.
+	if (!jobId && !bountyId) return error(res, 400, 'validation_error', 'jobId or bountyId is required');
+	if (jobId && !requireUuid(res, jobId, 'jobId')) return;
+	if (!jobId && !requireUuid(res, bountyId, 'bountyId')) return;
+
+	const job = jobId ? await getJob(jobId) : await getJobByBounty(bountyId);
 	if (!job) return error(res, 404, 'not_found', 'job not found');
 
 	if (!(await ownsEither(userId, job.poster_agent_id, job.worker_agent_id))) {
