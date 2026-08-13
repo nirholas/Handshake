@@ -114,9 +114,9 @@ export async function accrueSkillCallRoyalty(opts) {
 				(skill_id, agent_id, author_user_id, price_usd, status,
 				 settled_at, tx_hash, network, payer, source, platform_fee_usd)
 			VALUES
-				(${skillId}, null, ${authorId}, ${split.authorUsd}, 'settled',
+				(${skillId}, ${null}, ${authorId}, ${split.authorUsd}, ${'settled'},
 				 now(), ${opts.txHash ?? null}, ${opts.network ?? null},
-				 ${opts.payer ?? null}, 'x402', ${split.platformUsd})
+				 ${opts.payer ?? null}, ${'x402'}, ${split.platformUsd})
 			RETURNING id
 		`;
 		return { ok: true, accrual: { ...split, ledgerId: row?.id ?? null } };
