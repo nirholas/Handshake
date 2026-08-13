@@ -3,6 +3,32 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "@three-ws/sdk 0.2.3: works without optional wallet libraries installed",
+			"summary": "The browser SDK's permissions entry points failed to load for anyone who had not installed viem, even though viem is documented as optional and is only needed for delegation encoding. The SDK now loads viem the moment a delegation is actually encoded, the same way it already handles ethers and the Solana library, and a missing library produces a clear install instruction instead of a crash. The README also now reflects reality: on-chain registration works out of the box on the 22 chains with built-in canonical ERC-8004 registry addresses, with env-var overrides for custom deployments.",
+			"tags": [
+				"sdk",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "LobeChat install manifest now delivers the full avatar plugin",
+			"summary": "Installing three.ws in LobeChat via the documented manifest URL (three.ws/.well-known/chat-plugin.json) used to hand LobeChat a bare pre-launch manifest with no tools and no avatar panel, so the plugin installed but could never do anything. That URL now serves the complete plugin manifest, the same speak, gesture, emote, and render_agent toolset SperaxOS already gets, so the embodied 3D avatar sidebar works from a fresh LobeChat install. The plugin package itself also gained a Node-loadable entry point and automated test coverage of its host-side bridge.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-13",
+			"title": "Every dead placeholder link on the site now goes somewhere real",
+			"summary": "A sweep found 21 links across the site that pointed nowhere: demo call-to-action buttons, the tour's resume link, the event page's calendar link, and the bounty market's earn shortcut. Each one now does what it promises. Demo buttons that trigger an animation are real keyboard-accessible buttons, the cursor-follower demo's docs, pricing and examples words link to those actual pages, the builds-a-button demo's finished button really takes you to /create, and the calendar and tour links keep working in every language instead of only English.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Solana reads no longer fail when one RPC provider hangs",
 			"summary": "A scoping bug in the Solana RPC failover meant that a provider whose connection hung or dropped could crash the whole request instead of handing it to the next provider in the chain. Wallet sign-in for /play and other on-chain balance reads answered with a server error whenever the rotation landed on such a lane. The failover now rotates past a hung or unreachable provider exactly like any other refusal, so one bad node never takes a read down.",
 			"tags": [
