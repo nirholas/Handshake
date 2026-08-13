@@ -15,6 +15,7 @@
 // Transport: stdio. Claude Desktop launches the bridge with this server file
 // as `command` and reads/writes JSON-RPC frames over stdin/stdout.
 
+import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
@@ -24,8 +25,10 @@ import { discoverBazaarTools } from './bazaar-discover.js';
 import { assertPayableUrl } from './url-guard.js';
 import { asTextContent, asErrorContent } from './content.js';
 
-const BRIDGE_NAME = '3d-agent-x402-bridge';
-const BRIDGE_VERSION = '1.0.0';
+const BRIDGE_NAME = 'three-ws-x402-bridge';
+// Version is read from package.json so serverInfo can never drift from the
+// published package version (tests/bridge-boot.test.mjs asserts they match).
+const BRIDGE_VERSION = createRequire(import.meta.url)('../package.json').version;
 
 const log = (...args) => {
 	// MCP stdio: stdout is reserved for protocol frames. Diagnostics MUST go

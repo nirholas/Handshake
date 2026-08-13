@@ -4,15 +4,18 @@
 // real funds at risk — the bridge never tries to settle, we only exercise
 // the start-up path, tool listing, and the spending-cap abort).
 //
-// Test flow:
-//   1. Boot the bridge, send initialize/tools/list — assert call_paid_endpoint,
-//      list_bazaar_tools, refresh_bazaar exist + at least one paid_* dynamic tool.
-//   2. Call call_paid_endpoint on a real x402-paid resource with
-//      MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC=1 — assert the response carries
-//      the cap-exceeded error string.
-//   3. Re-launch the bridge and confirm ~/.x402-mcp-bridge/channels exists
-//      (storage directory survives restart). The channel file itself only
-//      writes after a real settlement, so we only assert the directory.
+// Test flow (two boots, because the per-call cap is also the discovery
+// filter: a cap of 1 atomic unit correctly hides every Bazaar tool, so the
+// discovery assertions and the cap-block assertion need different caps):
+//   1. Boot with the DEFAULT cap: assert call_paid_endpoint,
+//      list_bazaar_tools, refresh_bazaar exist + at least one paid_* dynamic
+//      tool, and extract a live resource URL from one.
+//   2. Re-boot with MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC=1 and discovery
+//      disabled: call call_paid_endpoint on that URL and assert the response
+//      carries the cap-exceeded error string.
+//   3. The second boot also proves the channels directory survives a restart.
+//      The channel file itself only writes after a real settlement, so we
+//      only assert the directory.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
@@ -101,32 +104,47 @@ function assert(cond, msg) {
 const tmpRoot = mkdtempSync(join(tmpdir(), 'x402-bridge-smoke-'));
 const channelsDir = join(tmpRoot, 'channels');
 
-const env = {
-	// Burner EVM key so the bridge can boot. We never make real settlements
-	// in this test, just exercise the start-up + cap-abort paths.
-	MCP_BRIDGE_EVM_PRIVATE_KEY: generatePrivateKey(),
+// Burner EVM key so the bridge can boot. We never make real settlements
+// in this test, just exercise the start-up + cap-abort paths.
+const burnerKey = generatePrivateKey();
+
+const discoveryEnv = {
+	MCP_BRIDGE_EVM_PRIVATE_KEY: burnerKey,
+	MCP_BRIDGE_DISCOVER_LIMIT: '20',
+	X402_MCP_BRIDGE_CHANNELS_DIR: channelsDir,
+};
+
+const cappedEnv = {
+	MCP_BRIDGE_EVM_PRIVATE_KEY: burnerKey,
 	MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC: '1', // 1 atomic unit = effectively zero
-	MCP_BRIDGE_DISCOVER_LIMIT: '5',
+	MCP_BRIDGE_DISCOVER_LIMIT: '0',
 	X402_MCP_BRIDGE_CHANNELS_DIR: channelsDir,
 };
 
 try {
-	await withBridge(env, async ({ send }) => {
+	// Boot 1 (default cap): discovery registers affordable Bazaar tools.
+	let resourceUrl = null;
+	await withBridge(discoveryEnv, async ({ send }) => {
 		const tools = await send('tools/list', {});
-		const names = (tools.result?.tools || []).map((t) => t.name);
+		const all = tools.result?.tools || [];
+		const names = all.map((t) => t.name);
 		console.log('  registered tools:', names.slice(0, 8).join(', '), '…');
 		assert(names.includes('call_paid_endpoint'), 'call_paid_endpoint registered');
 		assert(names.includes('list_bazaar_tools'), 'list_bazaar_tools registered');
 		assert(names.includes('refresh_bazaar'), 'refresh_bazaar registered');
 		assert(names.some((n) => n.startsWith('paid_')), 'at least one dynamic paid_* tool');
 
-		// Spending-cap check: call any real x402-paid endpoint with cap=1.
-		// The bridge SHOULD return an isError tool result mentioning the cap.
-		// We pick one of the discovered tools so the URL is guaranteed live.
-		const dynamicTool = (tools.result?.tools || []).find((t) => t.name.startsWith('paid_'));
-		const resourceUrl = dynamicTool ? dynamicTool.description.match(/Resource: (\S+)/)?.[1] : null;
+		// Pick a discovered tool so the URL is guaranteed live; prefer a GET
+		// endpoint so the request reaches the 402 payment step.
+		const dynamic = all.filter((t) => t.name.startsWith('paid_'));
+		const getTool = dynamic.find((t) => /Method: GET\./.test(t.description)) || dynamic[0];
+		resourceUrl = getTool ? getTool.description.match(/Resource: (\S+)/)?.[1] : null;
 		assert(!!resourceUrl, 'extracted resource URL from a dynamic tool description');
+	});
 
+	// Boot 2 (cap=1): the same URL must be refused by the spending cap before
+	// any payment is signed. This restart also proves channel-dir persistence.
+	await withBridge(cappedEnv, async ({ send }) => {
 		const call = await send('tools/call', {
 			name: 'call_paid_endpoint',
 			arguments: { url: resourceUrl, method: 'GET' },
@@ -137,14 +155,9 @@ try {
 			JSON.stringify(call);
 		assert(call.result?.isError === true, 'call_paid_endpoint returned isError for cap-blocked call');
 		assert(
-			/exceeds spending cap|cap (1|of)/i.test(text) || /aborted/i.test(text),
+			/exceeds per-call cap|exceeds spending cap|cap (1|of)/i.test(text) || /aborted/i.test(text),
 			'error text mentions the spending cap',
 		);
-	});
-
-	// Second boot: prove the channels directory survives.
-	await withBridge(env, async ({ send }) => {
-		await send('tools/list', {});
 	});
 	assert(existsSync(channelsDir), 'channels directory persists across bridge restarts');
 	assert(existsSync(join(channelsDir, 'client')), 'channels/client subdir created by FileClientChannelStorage');

@@ -102,8 +102,9 @@ function summarizeAccepts(accepts) {
 }
 
 function affordable(accepts) {
-	const cap = maxPriceAtomic({ strict: false });
-	if (cap === null) return true;
+	// Same effective cap the spending-cap hook enforces (including its default):
+	// a tool the hook would always refuse must never be registered.
+	const cap = maxPriceAtomic();
 	return accepts.some((a) => {
 		try {
 			return BigInt(a.amount) <= cap;

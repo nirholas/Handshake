@@ -108,24 +108,22 @@ async function main() {
 
 	// --- maxPriceAtomic shared helper ---
 	await withEnv({ MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC: undefined }, () => {
-		if (maxPriceAtomic({ strict: true }) !== 100_000n)
-			fail('maxPriceAtomic strict default should be 100_000n');
-		if (maxPriceAtomic({ strict: false }) !== null)
-			fail('maxPriceAtomic non-strict unset should be null');
+		if (maxPriceAtomic() !== 100_000n)
+			fail('maxPriceAtomic default should be 100_000n even when unset');
 	});
 	await withEnv({ MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC: '250000' }, () => {
-		if (maxPriceAtomic({ strict: false }) !== 250_000n)
+		if (maxPriceAtomic() !== 250_000n)
 			fail('maxPriceAtomic should parse env value');
 	});
 	await withEnv({ MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC: '-5' }, () => {
 		try {
-			maxPriceAtomic({ strict: true });
+			maxPriceAtomic();
 			fail('maxPriceAtomic should reject negative');
 		} catch {
 			/* expected */
 		}
 	});
-	pass('maxPriceAtomic strict/non-strict semantics');
+	pass('maxPriceAtomic effective-cap semantics');
 
 	console.log(`\nAll ${passed} url-guard checks passed.`);
 }

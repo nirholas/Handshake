@@ -23,17 +23,15 @@ import net from 'node:net';
 const DEFAULT_MAX_PRICE_ATOMIC = 100_000n; // $0.10 USDC
 
 // ---------------------------------------------------------------------------
-// Shared spend-limit parsing (de-duplicated from x402-axios-client.js and
-// bazaar-discover.js, which previously defined this with differing semantics).
-//
-// `strict: true`  → throw on a negative value, return the default when unset
-//                   (used by the spending-cap hook, which needs a real number).
-// `strict: false` → return null when unset (used by bazaar discovery, which
-//                   treats "no cap configured" as "show every tool").
+// Shared spend-limit parsing: the single source of truth for the effective
+// per-call cap. The spending-cap hook and Bazaar discovery MUST read the same
+// value; when they disagree, discovery registers tools whose every call the
+// hook then refuses. The cap always exists (default when unset), because the
+// hook enforces the default even when no env var is configured.
 // ---------------------------------------------------------------------------
-export function maxPriceAtomic({ strict = true } = {}) {
+export function maxPriceAtomic() {
 	const raw = process.env.MCP_BRIDGE_MAX_PRICE_PER_CALL_ATOMIC;
-	if (!raw) return strict ? DEFAULT_MAX_PRICE_ATOMIC : null;
+	if (!raw) return DEFAULT_MAX_PRICE_ATOMIC;
 	let v;
 	try {
 		v = BigInt(raw);
