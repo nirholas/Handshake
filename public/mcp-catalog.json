@@ -5464,7 +5464,7 @@
 		},
 		{
 			"name": "ibm_granite_analyze",
-			"title": "IBM Granite Analyze (${…})",
+			"title": "IBM Granite Analyze ($0.04)",
 			"description": "Structured document analysis powered by IBM Granite: extract entities, sentiment, risk signals, a concise summary, and recommended next steps from any text (contracts, reports, emails, code reviews, etc.). Returns a machine-readable JSON analysis. No IBM Cloud account required — pay $0.04 USDC per call via x402.",
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -5520,7 +5520,7 @@
 		},
 		{
 			"name": "ibm_granite_chat",
-			"title": "IBM Granite Chat (${…})",
+			"title": "IBM Granite Chat ($0.02)",
 			"description": "Chat completion powered by IBM Granite foundation models (default: ibm/granite-3-8b-instruct). Send a conversation as role/content message pairs and receive the assistant reply with token usage. No IBM Cloud account required — pay $0.02 USDC per call via x402.",
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -5600,7 +5600,7 @@
 		},
 		{
 			"name": "ibm_granite_code",
-			"title": "IBM Granite Code (${…})",
+			"title": "IBM Granite Code ($0.025)",
 			"description": "Code generation, review, refactoring, and explanation via IBM Granite instruct models. Provide a task type and code/prompt; receive the generated or reviewed code with explanation. No IBM Cloud account required — pay $0.025 USDC per call via x402.",
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -5661,7 +5661,7 @@
 		},
 		{
 			"name": "ibm_granite_embed",
-			"title": "IBM Granite Embed (${…})",
+			"title": "IBM Granite Embed ($0.005)",
 			"description": "Generate embedding vectors for one or more texts using IBM Granite (default: ibm/granite-embedding-278m-multilingual). Returns one float array per input, suitable for semantic search, RAG retrieval, and similarity scoring. Up to 64 texts per call. No IBM Cloud account required — pay $0.005 USDC per call via x402.",
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -5709,7 +5709,7 @@
 		},
 		{
 			"name": "ibm_granite_forecast",
-			"title": "IBM Granite Forecast (${…})",
+			"title": "IBM Granite Forecast ($0.05)",
 			"description": "Zero-shot time-series forecasting via IBM Granite TTM (Tiny Time Mixer). Provide a numeric series with ISO-8601 timestamps and a cadence, receive the forecast horizon. No training required. Suitable for revenue, traffic, sensor, energy, and financial series. No IBM Cloud account required — pay $0.05 USDC per call via x402.",
 			"server": {
 				"id": "ibm-x402-mcp-remote",

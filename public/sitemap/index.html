@@ -83,7 +83,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 810 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 814 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -95,7 +95,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 810 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 814 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -128,6 +128,22 @@
 					</a>
 				</li>
 				<li>
+					<a href="/docs/github-memory-seeding">
+						<span class="sm-new-date">Aug 12, 2026</span>
+						<span class="sm-title">Docs · GitHub memory seeding</span>
+						<span class="sm-path">/docs/github-memory-seeding</span>
+						<span class="sm-desc">Give an agent your work: your public GitHub profile plus the repositories and READMEs you pick, distilled into long-term memory so the agent speaks concretely about what you build instead of guessing. Consent is explicit and revoking it deletes every memory the grant produced.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/reputation-staking-market">
+						<span class="sm-new-date">Aug 12, 2026</span>
+						<span class="sm-title">Docs · Reputation Staking Market</span>
+						<span class="sm-path">/docs/reputation-staking-market</span>
+						<span class="sm-desc">Stake conviction on an agent and earn from its attested action history. Principal sits in a market escrow, yield is derived per epoch from the agent's signed on-chain attestations, and positions build on the existing threews.stake.v1 conviction signal.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/docs/farcaster-memory-seeding">
 						<span class="sm-new-date">Aug 11, 2026</span>
 						<span class="sm-title">Docs · Farcaster memory seeding</span>
@@ -136,43 +152,27 @@
 					</a>
 				</li>
 				<li>
+					<a href="/docs/agent-tokens">
+						<span class="sm-new-date">Aug 11, 2026</span>
+						<span class="sm-title">Docs · Agent tokens</span>
+						<span class="sm-path">/docs/agent-tokens</span>
+						<span class="sm-desc">Turn an agent into an economic object: a Solana coin whose identity belongs to the agent rather than to whoever filled in the launch form. Covers configuring a coin before it exists, rehearsing the launch for free, and the single command that launches it for real.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/analytics-retention">
+						<span class="sm-new-date">Aug 11, 2026</span>
+						<span class="sm-title">Docs · Week-2 retention on minted agents</span>
+						<span class="sm-path">/docs/analytics-retention</span>
+						<span class="sm-desc">How three.ws measures the one number that gates phase 2 of the roadmap: whether users come back to converse with the agent they minted. Defines the cohort, the return event, and the query behind the reported figure.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/docs/tokens-xyz">
 						<span class="sm-new-date">Aug 11, 2026</span>
 						<span class="sm-title">Docs · Tokens API on three.ws</span>
 						<span class="sm-path">/docs/tokens-xyz</span>
 						<span class="sm-desc">The Solana Foundation asset layer wired into three.ws: how one canonical asset maps to every Solana mint that represents it, the batch market read that prices a whole portfolio in one call, and where it sits in the price failover chain behind Birdeye.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/play/war">
-						<span class="sm-new-date">Aug 8, 2026</span>
-						<span class="sm-title">Coin Wars arena: two communities, one battlefield</span>
-						<span class="sm-path">/play/war</span>
-						<span class="sm-desc">The live Coin Wars arena. Enlist at your coin world's war portal, fight the rival community to the kill cap, and the result lands on the Elo ladder. You fight for the coin you hold.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/event-souvenirs">
-						<span class="sm-new-date">Aug 8, 2026</span>
-						<span class="sm-title">Docs · Event souvenirs: the wearable you keep</span>
-						<span class="sm-path">/docs/event-souvenirs</span>
-						<span class="sm-desc">The free commemorative wearable granted once to every player who is in the $THREE world while a live event is running: what it is, how the server decides who earns it, why it can never be bought, and how to equip it afterwards.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/play-live-events">
-						<span class="sm-new-date">Aug 8, 2026</span>
-						<span class="sm-title">Docs · Live events in the /play world</span>
-						<span class="sm-path">/docs/play-live-events</span>
-						<span class="sm-desc">How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/play-hardening">
-						<span class="sm-new-date">Aug 8, 2026</span>
-						<span class="sm-title">Docs · How /play stays safe, honest, and light</span>
-						<span class="sm-path">/docs/play-hardening</span>
-						<span class="sm-desc">The invariants that keep the Play world safe: untrusted names never become markup, a coin image cannot escape its CSS, a broken world link says so, a reconnect retires the peers who left, and everything the world loads gets freed. Each rule names the failure it prevents.</span>
 					</a>
 				</li>
 			</ul>
@@ -2255,7 +2255,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>353</span></h2>
+				<h2>Learn<span class="sm-count" data-count>357</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -2285,6 +2285,34 @@
 						<span class="sm-title">Docs · Run an inference node</span>
 						<span class="sm-path">/docs/inference-node-operator</span>
 						<span class="sm-desc">Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/agent-tokens">
+						<span class="sm-title">Docs · Agent tokens</span>
+						<span class="sm-path">/docs/agent-tokens</span>
+						<span class="sm-desc">Turn an agent into an economic object: a Solana coin whose identity belongs to the agent rather than to whoever filled in the launch form. Covers configuring a coin before it exists, rehearsing the launch for free, and the single command that launches it for real.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/analytics-retention">
+						<span class="sm-title">Docs · Week-2 retention on minted agents</span>
+						<span class="sm-path">/docs/analytics-retention</span>
+						<span class="sm-desc">How three.ws measures the one number that gates phase 2 of the roadmap: whether users come back to converse with the agent they minted. Defines the cohort, the return event, and the query behind the reported figure.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/github-memory-seeding">
+						<span class="sm-title">Docs · GitHub memory seeding</span>
+						<span class="sm-path">/docs/github-memory-seeding</span>
+						<span class="sm-desc">Give an agent your work: your public GitHub profile plus the repositories and READMEs you pick, distilled into long-term memory so the agent speaks concretely about what you build instead of guessing. Consent is explicit and revoking it deletes every memory the grant produced.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/reputation-staking-market">
+						<span class="sm-title">Docs · Reputation Staking Market</span>
+						<span class="sm-path">/docs/reputation-staking-market</span>
+						<span class="sm-desc">Stake conviction on an agent and earn from its attested action history. Principal sits in a market escrow, yield is derived per epoch from the agent's signed on-chain attestations, and positions build on the existing threews.stake.v1 conviction signal.</span>
 					</a>
 				</li>
 				<li>

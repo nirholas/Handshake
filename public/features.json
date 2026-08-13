@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T01:06:15.008Z",
+	"generated_at": "2026-08-13T01:12:12.149Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2961,6 +2961,46 @@
 					"path": "/docs/inference-node-operator",
 					"title": "Docs · Run an inference node",
 					"description": "Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.",
+					"added": "2026-08-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-tokens",
+					"title": "Docs · Agent tokens",
+					"description": "Turn an agent into an economic object: a Solana coin whose identity belongs to the agent rather than to whoever filled in the launch form. Covers configuring a coin before it exists, rehearsing the launch for free, and the single command that launches it for real.",
+					"added": "2026-08-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/analytics-retention",
+					"title": "Docs · Week-2 retention on minted agents",
+					"description": "How three.ws measures the one number that gates phase 2 of the roadmap: whether users come back to converse with the agent they minted. Defines the cohort, the return event, and the query behind the reported figure.",
+					"added": "2026-08-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/github-memory-seeding",
+					"title": "Docs · GitHub memory seeding",
+					"description": "Give an agent your work: your public GitHub profile plus the repositories and READMEs you pick, distilled into long-term memory so the agent speaks concretely about what you build instead of guessing. Consent is explicit and revoking it deletes every memory the grant produced.",
+					"added": "2026-08-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/reputation-staking-market",
+					"title": "Docs · Reputation Staking Market",
+					"description": "Stake conviction on an agent and earn from its attested action history. Principal sits in a market escrow, yield is derived per epoch from the agent's signed on-chain attestations, and positions build on the existing threews.stake.v1 conviction signal.",
 					"added": "2026-08-12",
 					"auth": null,
 					"indexable": true,

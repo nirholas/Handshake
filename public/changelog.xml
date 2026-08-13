@@ -15,12 +15,36 @@
 			<description>Sharing a walk produces a card you can post on Farcaster, with a button that opens that avatar walking. A cast stays up forever, but the avatar behind it does not: it can be deleted, or switched to private. When that happened the button still pointed at the missing avatar, so anyone who tapped it landed on a walk that could never load, and the card's second button pointed at the same place as the first, so both said the same thing. The card now checks the avatar before it builds. If the avatar is gone or private it drops the link and invites you to walk your own instead of handing you a dead button, and if the check itself cannot run the link is kept rather than thrown away. The second button now goes to the avatar builder, so the two buttons finally offer two different things. The card also carries its image dimensions now, which stops the preview from reflowing while it loads.</description>
 		</item>
 		<item>
+			<title>An expired Bitcoin inscription order now says so, instead of looking like a broken server</title>
+			<link>https://three.ws/forever</link>
+			<guid isPermaLink="false">2026-08-13:An expired Bitcoin inscription order now says so, instead of looking like a broken server</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Forever page writes your message into Bitcoin, then keeps a pay screen open while you send the payment from your own wallet. That screen is restored when you come back to the tab. If the inscription order behind it had since expired, the page had no way to say so: the server reported an order it could not find as a server fault, so the pay screen either sat there polling an order that no longer existed, or repainted itself empty with no charge address and no explanation. An order that no longer exists is now reported as exactly that, and the page retires it, tells you nothing was charged, and puts you back at the message box to start a new one. Three related fixes went in with it. An inscription that the provider rejected could come back marked as success, which briefly showed a pay screen for an order that was never created; every provider failure is now reported as one. A receive address with a typo is now caught by its checksum before the order is created, and tells you to recopy it from your wallet, rather than failing later with a message that explained nothing. And an order that expired unpaid is no longer counted as paid.</description>
+		</item>
+		<item>
 			<title>Importing an agent you already own on-chain no longer fails because its metadata host is slow</title>
 			<link>https://three.ws/hydrate</link>
 			<guid isPermaLink="false">2026-08-13:Importing an agent you already own on-chain no longer fails because its metadata host is slow</guid>
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>If you registered an agent on-chain, the hydrate page finds it from your connected wallets and offers to import it into three.ws. Importing read two things: the registry entry on the chain, and the registration file the registry points at, which usually lives on IPFS. If that file did not load in five seconds, the whole import was refused, even though the part that actually matters, the chain saying you own the agent, had already answered. Public IPFS gateways throttle constantly, so owners were locked out of their own agents by a slow third party. The import now only needs the chain read to succeed; a registration file that will not load means the agent lands under its on-chain name and the metadata fills in on the next crawl. Two more changes went in alongside it: ownership is now re-checked against the live registry rather than the crawler's cached copy, so an agent you transferred away cannot be imported by the old wallet, and a chain that is unreachable now says so plainly and asks you to retry instead of reporting a generic failure. Separately, confirming a new registration now reads the transaction receipt over the same priority provider list the rest of the platform uses, instead of the slowest public fallbacks, which is what made a freshly mined registration occasionally come back as &quot;not yet mined&quot;.</description>
+		</item>
+		<item>
+			<title>Docs · GitHub memory seeding</title>
+			<link>https://three.ws/docs/github-memory-seeding</link>
+			<guid isPermaLink="false">2026-08-12:Docs · GitHub memory seeding</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Give an agent your work: your public GitHub profile plus the repositories and READMEs you pick, distilled into long-term memory so the agent speaks concretely about what you build instead of guessing. Consent is explicit and revoking it deletes every memory the grant produced.</description>
+		</item>
+		<item>
+			<title>Docs · Reputation Staking Market</title>
+			<link>https://three.ws/docs/reputation-staking-market</link>
+			<guid isPermaLink="false">2026-08-12:Docs · Reputation Staking Market</guid>
+			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Stake conviction on an agent and earn from its attested action history. Principal sits in a market escrow, yield is derived per epoch from the agent's signed on-chain attestations, and positions build on the existing threews.stake.v1 conviction signal.</description>
 		</item>
 		<item>
 			<title>Docs · Run an inference node</title>
@@ -183,6 +207,14 @@
 			<description>Memory seeding already worked from GitHub and X; Farcaster now joins them, with consent built into the protocol itself. Farcaster has no login button we could use, so instead the account's own public record does the work: every Farcaster account publishes the wallets it controls, and you prove ownership by signing a one-time challenge with one of those wallets, Solana first. Nothing is read, let alone stored, before that signature checks out. The grant is read-only and narrow: your public profile and up to 100 recent casts, distilled into identity, facts, and your strongest posts, so the agent talks the way you talk. Changing your mind is one click: revoking the grant deletes every memory it produced, including anything an earlier grant left behind. The whole flow lives in the agent persona editor, and it works with no API key configured because the reader falls back to a public Farcaster hub.</description>
 		</item>
 		<item>
+			<title>Docs · Agent tokens</title>
+			<link>https://three.ws/docs/agent-tokens</link>
+			<guid isPermaLink="false">2026-08-11:Docs · Agent tokens</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn an agent into an economic object: a Solana coin whose identity belongs to the agent rather than to whoever filled in the launch form. Covers configuring a coin before it exists, rehearsing the launch for free, and the single command that launches it for real.</description>
+		</item>
+		<item>
 			<title>Docs · Farcaster memory seeding</title>
 			<link>https://three.ws/docs/farcaster-memory-seeding</link>
 			<guid isPermaLink="false">2026-08-11:Docs · Farcaster memory seeding</guid>
@@ -197,6 +229,14 @@
 			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The Solana Foundation asset layer wired into three.ws: how one canonical asset maps to every Solana mint that represents it, the batch market read that prices a whole portfolio in one call, and where it sits in the price failover chain behind Birdeye.</description>
+		</item>
+		<item>
+			<title>Docs · Week-2 retention on minted agents</title>
+			<link>https://three.ws/docs/analytics-retention</link>
+			<guid isPermaLink="false">2026-08-11:Docs · Week-2 retention on minted agents</guid>
+			<pubDate>Tue, 11 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws measures the one number that gates phase 2 of the roadmap: whether users come back to converse with the agent they minted. Defines the cohort, the return event, and the query behind the reported figure.</description>
 		</item>
 		<item>
 			<title>A Launch Copilot market-maker now tells you when its engine is not running</title>
