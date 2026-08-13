@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { AgentBridge } from './bridge';
-import { PluginSettings, DEFAULT_API_ORIGIN } from './config-schema';
+import { AgentBridge } from './bridge.js';
+import { PluginSettings, DEFAULT_API_ORIGIN } from './config-schema.js';
 
 export interface AgentPaneProps {
 	settings: PluginSettings;

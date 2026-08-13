@@ -4,7 +4,7 @@
  * Wire protocol v1 — envelope shape:
  *   { v: 1, source: 'agent-host' | 'agent-3d', id, inReplyTo?, kind, op, payload }
  *
- * Canonical spec: prompts/final-integration/01-embed-bridges.md
+ * Canonical spec: the "Wire protocol (v1)" section of chat-plugin/README.md
  */
 
 export type BridgeOp =
