@@ -23,8 +23,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
-vi.mock('../api/_lib/sentry.js', () => ({ captureException: () => {} }));
+vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
+vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 
 const state = {
 	job: null,
@@ -53,9 +53,9 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 	}
 	return [];
 });
-vi.mock('../api/_lib/db.js', () => ({ sql: (...a) => sqlMock(...a), isDbUnavailableError: () => false, isDbCapacityError: () => false }));
+vi.mock('../../api/_lib/db.js', () => ({ sql: (...a) => sqlMock(...a), isDbUnavailableError: () => false, isDbCapacityError: () => false }));
 
-vi.mock('../api/_lib/auth.js', () => ({
+vi.mock('../../api/_lib/auth.js', () => ({
 	getSessionUser: async () => ({ id: state.userId }),
 	authenticateBearer: async () => null,
 	extractBearer: () => null,
@@ -63,7 +63,7 @@ vi.mock('../api/_lib/auth.js', () => ({
 }));
 
 const providerInstance = { status: vi.fn(async () => state.statusReturn) };
-vi.mock('../api/_lib/regen-provider.js', () => ({
+vi.mock('../../api/_lib/regen-provider.js', () => ({
 	getRegenProvider: async () => ({ name: 'gcp', instance: providerInstance }),
 	getRegenProviderForMode: async () => ({ name: 'gcp', instance: providerInstance }),
 	getRegenProviderForJob: async () => ({ name: 'gcp', instance: providerInstance }),
@@ -74,16 +74,16 @@ vi.mock('../api/_lib/regen-provider.js', () => ({
 
 const finalizeReconstructStageMock = vi.fn(async () => ({ status: 'done', resultAvatarId: 'avatar-1' }));
 const pollRiggingStageMock = vi.fn(async () => ({ status: 'rigging' }));
-vi.mock('../api/_lib/reconstruct-finalize.js', () => ({
+vi.mock('../../api/_lib/reconstruct-finalize.js', () => ({
 	finalizeReconstructStage: (...a) => finalizeReconstructStageMock(...a),
 	pollRiggingStage: (...a) => pollRiggingStageMock(...a),
 }));
-vi.mock('../api/_lib/auto-rig.js', () => ({
+vi.mock('../../api/_lib/auto-rig.js', () => ({
 	finalizeAutoRigStage: vi.fn(async () => ({ status: 'done', resultAvatarId: 'sib-1' })),
 	rigInfoIsRigged: () => false,
 }));
 
-const { dispatch } = await import('../api/avatars/_actions.js');
+const { dispatch } = await import('../../api/avatars/_actions.js');
 
 function makeRes() {
 	return {
