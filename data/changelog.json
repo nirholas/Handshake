@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-13",
+			"title": "An expired Bitcoin inscription order now says so, instead of looking like a broken server",
+			"summary": "The Forever page writes your message into Bitcoin, then keeps a pay screen open while you send the payment from your own wallet. That screen is restored when you come back to the tab. If the inscription order behind it had since expired, the page had no way to say so: the server reported an order it could not find as a server fault, so the pay screen either sat there polling an order that no longer existed, or repainted itself empty with no charge address and no explanation. An order that no longer exists is now reported as exactly that, and the page retires it, tells you nothing was charged, and puts you back at the message box to start a new one. Three related fixes went in with it. An inscription that the provider rejected could come back marked as success, which briefly showed a pay screen for an order that was never created; every provider failure is now reported as one. A receive address with a typo is now caught by its checksum before the order is created, and tells you to recopy it from your wallet, rather than failing later with a message that explained nothing. And an order that expired unpaid is no longer counted as paid.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forever"
+		},
+		{
+			"date": "2026-08-13",
 			"title": "Importing an agent you already own on-chain no longer fails because its metadata host is slow",
 			"summary": "If you registered an agent on-chain, the hydrate page finds it from your connected wallets and offers to import it into three.ws. Importing read two things: the registry entry on the chain, and the registration file the registry points at, which usually lives on IPFS. If that file did not load in five seconds, the whole import was refused, even though the part that actually matters, the chain saying you own the agent, had already answered. Public IPFS gateways throttle constantly, so owners were locked out of their own agents by a slow third party. The import now only needs the chain read to succeed; a registration file that will not load means the agent lands under its on-chain name and the metadata fills in on the next crawl. Two more changes went in alongside it: ownership is now re-checked against the live registry rather than the crawler's cached copy, so an agent you transferred away cannot be imported by the old wallet, and a chain that is unreachable now says so plainly and asks you to retry instead of reporting a generic failure. Separately, confirming a new registration now reads the transaction receipt over the same priority provider list the rest of the platform uses, instead of the slowest public fallbacks, which is what made a freshly mined registration occasionally come back as \"not yet mined\".",
 			"tags": [
