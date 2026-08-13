@@ -984,6 +984,13 @@ export const limits = {
 		getLimiter('labor:bid', { limit: 60, window: '1 m' }).limit(userId),
 	oauthToken: (clientId) =>
 		getLimiter('oauth:token', { limit: 120, window: '1 m' }).limit(clientId),
+	// Stud-listing writes (POST /api/genome/stud): an owner toggling one of their
+	// agents into the public stud market and pricing it in $THREE. Each call is a
+	// single owner-scoped meta write, so the ceiling only needs to stop a scripted
+	// flood from churning the market ordering. Non-critical: a Redis outage must
+	// never lock an owner out of unlisting their own agent.
+	genomeStudWrite: (userId) =>
+		getLimiter('genome:stud:write', { limit: 30, window: '1 m' }).limit(userId),
 	upload: (userId) => getLimiter('upload', { limit: 60, window: '1 h' }).limit(userId),
 	// Auto-rig submission (api/_lib/auto-rig.js → maybeAutoRigAvatar). Every gate
 	// lands BEFORE a paid UniRig GPU rerig job is submitted to Replicate / the
@@ -1375,8 +1382,18 @@ export const limits = {
 		getLimiter('permissions:grant', { limit: 10, window: '1 h' }).limit(userId),
 	permissionsRevoke: (userId) =>
 		getLimiter('permissions:revoke', { limit: 20, window: '1 h' }).limit(userId),
+	// Developer API keys (api/keys). Minting is the expensive, abusable action, so
+	// it keeps the tight hourly bucket. Listing and revoking get their own buckets
+	// on purpose: when all three shared one, the dashboard's list-on-load plus
+	// list-after-every-mutation could burn the 30/h budget and then refuse the
+	// revoke, locking an owner out of killing a leaked key. A safety valve must
+	// never be throttled by the thing it protects against.
 	apiKeyManage: (userId) =>
 		getLimiter('api-key:manage', { limit: 30, window: '1 h' }).limit(userId),
+	apiKeyList: (userId) =>
+		getLimiter('api-key:list', { limit: 120, window: '1 m', local: true }).limit(userId),
+	apiKeyRevoke: (userId) =>
+		getLimiter('api-key:revoke', { limit: 60, window: '1 h' }).limit(userId),
 	// Unified API gateway (/api/v1/*). One bucket fronts every versioned endpoint,
 	// keyed per principal — API key id when present, else user id, else IP — so a
 	// single key's burst is bounded without one caller starving another. 120/min
@@ -1429,6 +1446,13 @@ export const limits = {
 	// outage should fail closed rather than uncap third-party order creation.
 	inscribeIp: (ip) =>
 		getLimiter('inscribe:ip', { limit: 10, window: '10 m', critical: true }).limit(ip),
+	// Forever/status: proxies OrdinalsBot's order lookup, also metered against the
+	// platform's key. The pay screen polls every 6s while the user waits on a
+	// Bitcoin confirmation, so the ceiling clears a long wait in a couple of tabs
+	// (50 polls per tab per 5 min) and still caps an anonymous scripted drain.
+	// Not critical: a Redis outage must never freeze a paying user's pay screen.
+	inscribeStatusIp: (ip) =>
+		getLimiter('inscribe:status:ip', { limit: 200, window: '5 m' }).limit(ip),
 	// IBM attest submit: broadcasts a fee-paying on-chain tx from the shared attester
 	// wallet. Per-attester-pubkey daily ceiling so concurrent calls can't drain the
 	// wallet's SOL via fees. Critical — fail closed in prod without Redis.
