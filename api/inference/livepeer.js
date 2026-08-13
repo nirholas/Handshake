@@ -88,6 +88,24 @@ function clampTemp(n, fallback = 0.7) {
 	return Math.min(Math.max(v, 0), 2);
 }
 
+// Reply text out of an OpenAI-compatible `message.content`.
+//
+// Orchestrators on the network run different inference servers, and the
+// OpenAI chat schema allows content to be either a plain string or an array
+// of typed parts. Treating the array case as a string turned a perfectly
+// valid gateway answer into a TypeError inside the leg, which surfaced as a
+// bare `leg_failed` with a JS message in the demo card. Normalize both here,
+// at the boundary, so everything downstream holds a string.
+function replyText(content) {
+	if (typeof content === 'string') return content;
+	if (Array.isArray(content)) {
+		return content
+			.map((part) => (typeof part === 'string' ? part : typeof part?.text === 'string' ? part.text : ''))
+			.join('');
+	}
+	return '';
+}
+
 // Platform LLM leg.
 //
 // The non-Livepeer side of the comparison runs on the platform's funded free
@@ -235,7 +253,7 @@ async function callLivepeer({ prompt, model, max_tokens, temperature }) {
 
 	if (Array.isArray(data.choices) && data.choices.length) {
 		const first = data.choices[0];
-		reply = first?.message?.content || first?.text || '';
+		reply = replyText(first?.message?.content) || replyText(first?.text);
 		prompt_tokens = data?.usage?.prompt_tokens ?? null;
 		completion_tokens = data?.usage?.completion_tokens ?? null;
 	} else if (typeof data.response === 'string') {

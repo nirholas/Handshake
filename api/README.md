@@ -32,7 +32,7 @@ The `_`-prefixed folders are imported by the endpoints; they are not routes:
 
 ### AI, chat, and inference
 - `chat.js` (Edge SSE, multi-provider routing across Groq / OpenRouter / OpenAI / Anthropic), `chat/`, `brain/chat.js`, `llm/anthropic.js`, `chat-skills.js`.
-- `inference/livepeer.js` — side-by-side Claude vs Livepeer LLM comparison.
+- `inference/livepeer.js`: side-by-side LLM comparison, the three.ws provider chain against a Livepeer AI gateway, each leg reporting its own latency, tokens, and error.
 - `tts/` — text-to-speech (`speak`, `edge`, `eleven`, `eleven-clone`).
 - `persona/`, `seed/` — persona extraction/preview and seed synthesis from X / GitHub / Farcaster.
 - `mcp.js` — MCP server over Streamable HTTP (MCP 2025-06-18, JSON-RPC 2.0): `POST` tool calls, `GET` SSE, `DELETE` terminate. `pump-fun-mcp.js` — the pump.fun MCP surface.

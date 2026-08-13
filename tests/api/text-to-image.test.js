@@ -383,6 +383,33 @@ function livepeerSuccessResponse(url = 'https://gateway.test/images/out.png') {
 	});
 }
 
+// A Livepeer job is TWO fetches against the same gateway host: POST
+// /text-to-image returns the job JSON, then the artifact URL it names is
+// downloaded and magic-byte verified before the lane is allowed to succeed.
+// Route the artifact path FIRST (stubFetch is first-match-wins on a substring)
+// so the download gets real PNG bytes instead of the job JSON, which the
+// provider correctly rejects as "no image signature".
+// A real PNG signature padded past the provider's 1 KB size floor, the same
+// fixture shape tests/livepeer-federation.test.js uses.
+const LIVEPEER_PNG_BYTES = Buffer.concat([
+	Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+	Buffer.alloc(2048, 1),
+]);
+
+function livepeerRoutes() {
+	return [
+		[
+			'gateway.test/images/',
+			() =>
+				new Response(LIVEPEER_PNG_BYTES, {
+					status: 200,
+					headers: { 'content-type': 'image/png' },
+				}),
+		],
+		['gateway.test', () => livepeerSuccessResponse()],
+	];
+}
+
 describe('textToImage: Livepeer federation lane counts as a real fallback', () => {
 	beforeEach(() => {
 		process.env.LIVEPEER_FEDERATION_ENABLED = '1';
@@ -394,14 +421,17 @@ describe('textToImage: Livepeer federation lane counts as a real fallback', () =
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		const calls = stubFetch([
 			['ai.api.nvidia.com', () => new Response('boom', { status: 500 })],
-			['gateway.test', () => livepeerSuccessResponse()],
+			...livepeerRoutes(),
 		]);
 
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.imageUrl).toBe('https://gateway.test/images/out.png');
-		expect(calls.some((c) => c.url.includes('gateway.test'))).toBe(true);
+		// The verified artifact is persisted to our own storage, so the lane
+		// returns the durable CDN URL, never the gateway's ephemeral one.
+		expect(result.imageUrl).toMatch(/^https:\/\/cdn\.example\/forge\/refs\/.+\.png$/);
+		expect(result.lane).toBe('livepeer');
+		expect(calls.some((c) => c.url.includes('gateway.test/images/'))).toBe(true);
 	});
 
 	it('hands a failed Vertex lead off to Livepeer when it is the only lane downstream', async () => {
@@ -410,13 +440,14 @@ describe('textToImage: Livepeer federation lane counts as a real fallback', () =
 		vertexState.generate = async () => {
 			throw new Error('vertex exploded');
 		};
-		const calls = stubFetch([['gateway.test', () => livepeerSuccessResponse()]]);
+		const calls = stubFetch(livepeerRoutes());
 
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.imageUrl).toBe('https://gateway.test/images/out.png');
-		expect(calls.some((c) => c.url.includes('gateway.test'))).toBe(true);
+		expect(result.imageUrl).toMatch(/^https:\/\/cdn\.example\/forge\/refs\/.+\.png$/);
+		expect(result.lane).toBe('livepeer');
+		expect(calls.some((c) => c.url.includes('gateway.test/images/'))).toBe(true);
 	});
 
 	it('still surfaces the upstream error when Livepeer federation is off', async () => {

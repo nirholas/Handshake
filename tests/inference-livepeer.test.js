@@ -246,6 +246,47 @@ describe('POST /api/inference/livepeer Livepeer leg', () => {
 		expect(json.livepeer.completion_tokens).toBe(30);
 	});
 
+	it('parses OpenAI content parts, which some orchestrators return instead of a string', async () => {
+		process.env.LIVEPEER_GATEWAY_URL = 'https://gateway.internal';
+		fetchMock.mockResolvedValue(
+			gatewayResponse(200, {
+				choices: [
+					{
+						message: {
+							role: 'assistant',
+							content: [{ type: 'text', text: 'part one ' }, { type: 'text', text: 'part two' }],
+						},
+					},
+				],
+				usage: { prompt_tokens: 9, completion_tokens: 4 },
+			}),
+		);
+
+		const { json } = await call(mkReq({ body: { prompt: 'hi' } }));
+
+		// Before this was normalized the array reached String.prototype.trim and
+		// threw, collapsing a good answer into a bare leg_failed.
+		expect(json.livepeer).toMatchObject({
+			ok: true,
+			reply: 'part one part two',
+			prompt_tokens: 9,
+			completion_tokens: 4,
+		});
+		expect(json.livepeer.error).toBeUndefined();
+	});
+
+	it('treats an unusable content shape as empty_response, never a thrown leg', async () => {
+		process.env.LIVEPEER_GATEWAY_URL = 'https://gateway.internal';
+		fetchMock.mockResolvedValue(gatewayResponse(200, { choices: [{ message: { content: { unexpected: true } } }] }));
+
+		const { res, json } = await call(mkReq({ body: { prompt: 'hi' } }));
+
+		expect(res.statusCode).toBe(200);
+		expect(json.livepeer).toMatchObject({ ok: false, error: 'empty_response' });
+		expect(json.livepeer.gateway).toBe('override');
+		expect(json.platform.ok).toBe(true);
+	});
+
 	it('codes a non-2xx gateway as upstream_error and keeps the request 200', async () => {
 		process.env.LIVEPEER_GATEWAY_URL = 'https://gateway.internal';
 		fetchMock.mockResolvedValue(gatewayResponse(503, 'no orchestrators available'));
