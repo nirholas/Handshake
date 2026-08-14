@@ -391,6 +391,46 @@ describe('402 challenge and pricing', () => {
 		expect(resource.tags).toContain('okx');
 	});
 
+	// priceBatch sums every priced tools/call so one X-PAYMENT must cover the
+	// whole batch. The X Layer accept leads accepts[] and verifyPayment selects
+	// by network, so pinning that entry to the single-identity list price let an
+	// OKX buyer run a 16-call batch for one identity's price. It must quote the
+	// same total the platform rails quote.
+	it('a batched create_identity prices the X Layer accept at the batch total, not one identity', async () => {
+		const res = makeRes();
+		const callFor = (id) => ({
+			jsonrpc: '2.0',
+			id,
+			method: 'tools/call',
+			params: { name: 'create_identity', arguments: { agent_name: `A${id}`, brief: 'a data agent' } },
+		});
+		await handler(makeReq({ body: [callFor(1), callFor(2), callFor(3)] }), res);
+		expect(res.statusCode).toBe(402);
+		const challenge = JSON.parse(res.body);
+		expect(challenge.accepts[0].network).toBe('eip155:196');
+		// 3 × $1.50 = $4.50, and every rail quotes the same number.
+		for (const a of challenge.accepts) {
+			expect(a.maxAmountRequired ?? a.amount ?? a.maxAmount).toBe('4500000');
+		}
+	});
+
+	// A batch with nothing priced has no total to quote, so the challenge falls
+	// back to the list price it advertises in the catalog and on the SSE lane.
+	it('an unpriced batch still challenges at the single-identity list price', async () => {
+		const res = makeRes();
+		await handler(
+			makeReq({
+				headers: { 'mcp-protocol-version': '2025-06-18' },
+				body: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+			}),
+			res,
+		);
+		expect(res.statusCode).toBe(401); // MCP protocol client: 401 + www-authenticate, same envelope
+		const challenge = JSON.parse(res.body);
+		expect(challenge.accepts[0].network).toBe('eip155:196');
+		expect(challenge.accepts[0].amount).toBe('1500000');
+	});
+
 	it('identity_status is free — served anonymously, no 402', async () => {
 		const res = makeRes();
 		await handler(
