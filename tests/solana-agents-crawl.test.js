@@ -6,6 +6,7 @@ import {
 	agencStatusLabel,
 	agencActive,
 } from '../api/_lib/solana-agents-normalize.js';
+import { remainingMs, withDeadline } from '../api/_lib/solana-agents-crawl.js';
 
 describe('solana-agents-crawl helpers', () => {
 	describe('truncate', () => {
@@ -98,6 +99,61 @@ describe('solana-agents-crawl helpers', () => {
 		it('passes through unknown string codes and nulls junk', () => {
 			expect(agencStatusLabel('weird')).toBe('weird');
 			expect(agencStatusLabel(99)).toBe(null);
+		});
+	});
+
+	// Registry enumeration (getProgramAccounts / Anchor .all()) takes no timeout of
+	// its own, so the crawl budget is only real if these two enforce it. A 2026-08-14
+	// audit run measured the cron at 272s against its declared 240s budget, inside
+	// 48s of Cloud Scheduler's 320s attempt deadline.
+	describe('remainingMs', () => {
+		it('falls back to the scan budget when no deadline is set', () => {
+			expect(remainingMs(undefined, 5_000)).toBe(5_000);
+			expect(remainingMs(null, 5_000)).toBe(5_000);
+		});
+		it('reports the time left, going negative once the deadline has passed', () => {
+			expect(remainingMs(Date.now() + 10_000)).toBeGreaterThan(9_000);
+			expect(remainingMs(Date.now() - 1_000)).toBeLessThan(0);
+		});
+	});
+
+	describe('withDeadline', () => {
+		it('returns the value when the call finishes in time', async () => {
+			await expect(withDeadline(Promise.resolve('scanned'), 1_000, 'gpa-v2')).resolves.toBe('scanned');
+		});
+
+		it('rejects with the budget label once the call overruns', async () => {
+			const hang = new Promise(() => {});
+			await expect(withDeadline(hang, 10, 'gpa-v2')).rejects.toThrow(/gpa-v2: exceeded its 0s budget/);
+		});
+
+		it('refuses to start a scan with no budget left', async () => {
+			await expect(withDeadline(Promise.resolve('x'), 0, 'agenc account scan'))
+				.rejects.toThrow(/no time left in the crawl budget/);
+			await expect(withDeadline(Promise.resolve('x'), -5_000, 'agenc account scan'))
+				.rejects.toThrow(/no time left in the crawl budget/);
+		});
+
+		it('surfaces the underlying failure unchanged when the call loses to nothing', async () => {
+			await expect(withDeadline(Promise.reject(new Error('504 Gateway Timeout')), 1_000, 'gpa-v1'))
+				.rejects.toThrow('504 Gateway Timeout');
+		});
+
+		// A scan that finishes after the timer fired must settle quietly. Left
+		// unhandled it would take the whole instance down long after the cron
+		// already returned its report.
+		it('swallows a rejection that lands after the budget expired', async () => {
+			const unhandled = [];
+			const onUnhandled = (err) => unhandled.push(err);
+			process.on('unhandledRejection', onUnhandled);
+			try {
+				const late = new Promise((_, reject) => setTimeout(() => reject(new Error('late 504')), 30));
+				await expect(withDeadline(late, 5, 'gpa-v2')).rejects.toThrow(/exceeded its/);
+				await new Promise((r) => setTimeout(r, 80));
+			} finally {
+				process.off('unhandledRejection', onUnhandled);
+			}
+			expect(unhandled).toEqual([]);
 		});
 	});
 });

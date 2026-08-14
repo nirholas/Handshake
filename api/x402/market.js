@@ -2,11 +2,10 @@
 //
 // Lists every paid /api/x402/market-* endpoint (the registry family plus the
 // hand-written siblings market-heatmap and market-mood) with its live price,
-// params, and a runnable example so an agent (or a human with curl) can
-// discover the whole
-// bundle in one unauthenticated call. The paid endpoints themselves are
-// x402-gated (USDC on Solana or Base); this index is free the same way
-// /api/crypto is free for the crypto bundle — discovery costs nothing,
+// params, and a runnable example, so an agent (or a human with curl) can
+// discover the whole bundle in one unauthenticated call. The paid endpoints
+// themselves are x402-gated (USDC on Solana or Base); this index is free the
+// same way /api/crypto is free for the crypto bundle. Discovery costs nothing,
 // data costs a micro-payment.
 
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';

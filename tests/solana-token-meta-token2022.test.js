@@ -20,6 +20,8 @@
  * caller gets billed for.
  */
 
+import { readFileSync } from 'node:fs';
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PublicKey } from '@solana/web3.js';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
@@ -29,16 +31,13 @@ const SYSTEM_PROGRAM = '11111111111111111111111111111112';
 
 // Real mainnet bytes: the $THREE mint account, carrying the metadataPointer and
 // tokenMetadata extensions (name "three.ws", symbol "three", ipfs.io uri).
-const THREE_MINT_ACCOUNT_B64 =
-	'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUIaigDGNAwAGAQAAAAAAAAAAAAAAAAAAAAAA' +
-	'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-	'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARIAQAAAAAAAAAAAAAAAAAAA' +
-	'AAAAAAAAAAAAAAAAAAAAAAAAAANmVY1rrT6TOBsHGhgrWf58Jwp3c966+FFfgpUEBdj8fEwCtAAAAAAAAAAA' +
-	'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA2ZVjWutPpM4GwcaGCtZ/nwnCndz3rr4UV+ClQQF2Px8IAAAAdG' +
-	'hyZWUud3MFAAAAdGhyZWVQAAAAaHR0cHM6Ly9pcGZzLmlvL2lwZnMvYmFma3JlaWZ0b3JnczVrbm9xcjN6NT' +
-	'N1bmpwZG1neWhwNGFiam5xamthc3QzaXEzdGZvZmV0bTJvb20AAAAA';
-
-const THREE_MINT_DATA = Buffer.from(THREE_MINT_ACCOUNT_B64, 'base64');
+const THREE_MINT_DATA = Buffer.from(
+	readFileSync(
+		new URL('./_fixtures/three-mint-token2022.base64', import.meta.url),
+		'utf8',
+	).trim(),
+	'base64',
+);
 
 // A classic SPL mint: 82 bytes, owned by the original token program, metadata
 // lives in a separate Metaplex PDA. Layout tail is what the reader parses.

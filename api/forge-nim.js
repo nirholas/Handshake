@@ -19,7 +19,7 @@
 //
 //   GET  /api/forge-nim?action=health → { configured, reachable, baseUrl }
 //
-// The NIM URL comes from MODEL_TRELLIS_URL; a request may override it (handy for
+// The NIM URL comes from NIM_TRELLIS_URL; a request may override it (handy for
 // pointing the demo at your own box), but the override is SSRF-guarded — only
 // https hosts that don't resolve to private/loopback/link-local/metadata space,
 // so this can never be turned into an internal-network probe.
@@ -109,14 +109,21 @@ function assertSafeBaseUrl(raw) {
 }
 
 // Resolve the NIM origin for this request. A caller-supplied baseUrl is SSRF
-// guarded; absent that, fall back to the operator-configured MODEL_TRELLIS_URL.
+// guarded; absent that, fall back to the operator-configured NIM_TRELLIS_URL.
+//
+// This deliberately does NOT read MODEL_TRELLIS_URL. That variable is the
+// platform-wide pointer to our own Cloud Run TRELLIS worker
+// (workers/model-trellis/), which speaks a different contract: an async
+// `/infer` + `/tasks/{id}` API, not the NIM's synchronous `/v1/infer`. Reading
+// it here made health report a configured, unreachable NIM and turned every
+// generation into a 404 against a service that was never a NIM.
 function resolveBaseUrl(requested) {
 	if (requested) return assertSafeBaseUrl(requested);
-	const configured = env.MODEL_TRELLIS_URL || process.env.MODEL_TRELLIS_URL;
+	const configured = env.NIM_TRELLIS_URL || process.env.NIM_TRELLIS_URL;
 	if (!configured) {
 		throw Object.assign(
 			new Error(
-				'No self-hosted TRELLIS NIM is configured. Set MODEL_TRELLIS_URL on the deployment, or pass a baseUrl pointing at your own NIM (nvcr.io/nim/microsoft/trellis).',
+				'No self-hosted TRELLIS NIM is configured. Set NIM_TRELLIS_URL on the deployment, or pass a baseUrl pointing at your own NIM (nvcr.io/nim/microsoft/trellis).',
 			),
 			// expose: this is a documented contract error, not a leaked runtime code,
 			// so wrap() may hand the caller the real reason instead of internal_error.
