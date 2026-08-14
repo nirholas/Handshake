@@ -836,6 +836,26 @@ function oracleTake(it) {
 	return `<div class="coin-take"><span class="ct-q">“</span><span><b>${lead}</b>: ${body}.${cat}</span></div>`;
 }
 
+/**
+ * What this score has been WORTH, not what it looks like. A conviction of 99 is
+ * a rank on a 0-100 line, and a card that shows the rank alone invites everyone
+ * to read it as 99% certain. This chip states the measured outcome for the
+ * score's band instead: how often a coin scored into it graduated or ran 2x
+ * without ever rugging, over every such coin the market has already resolved.
+ * Served with the feed (hit_rate/hit_rate_lift/hit_rate_n), fitted by
+ * scripts/oracle-calibrate.mjs.
+ */
+function oddsChip(it) {
+	const rate = Number(it.hit_rate);
+	const n = Number(it.hit_rate_n);
+	if (!Number.isFinite(rate) || !Number.isFinite(n) || n < 100) return '';
+	const pct = Math.round(rate * 100);
+	const lift = Number(it.hit_rate_lift);
+	const liftTxt = Number.isFinite(lift) ? `, ${lift}x the rate of a coin picked at random` : '';
+	const title = `Of the ${n.toLocaleString()} coins Oracle scored into this band that the market has since resolved, ${pct}% graduated or ran 2x or more without ever rugging${liftTxt}. The score ranks the odds of a run; this counts only the runs that survived.`;
+	return `<span class="chip odds" title="${esc(title)}"><b>${pct}%</b> held 2x+</span>`;
+}
+
 /** Pre-reasons fallback: synthesize from the pillars the card already shows. */
 function pillarTake(it, tier) {
 	const p = it.pillars || {};
@@ -862,8 +882,7 @@ function coinCard(it, watched = new Set()) {
 		'pedigree-flag':  { cls: 'flag', txt: 'creator ⚑',   title: 'The creator wallet has a rug history — the score is ceilinged regardless of its buyers' },
 		'thin-data':      { cls: 'thin', txt: 'thin data',    title: 'Much of this read rests on defaulted inputs — treat as a lead to watch, not a sized call' },
 		'news':           { cls: 'news', txt: 'news',         title: 'Riding a live news story — fast but fragile' },
-		'momentum':       { cls: 'mom',  txt: 'momentum',     title: 'Strong buy-side momentum' },
-		'prime':          { cls: 'prime', txt: 'prime',       title: 'Top-tier conviction (86+)' },
+		'momentum':       { cls: 'mom',  txt: 'momentum',     title: 'Buy-side momentum alone would carry this launch to prime' },
 	};
 	const badges = (it.badges || []).map((b) => {
 		const m = BADGE_META[b] || { cls: '', txt: b, title: '' };
