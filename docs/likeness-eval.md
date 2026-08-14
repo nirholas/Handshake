@@ -158,7 +158,8 @@ the two distributions is the evidence the instrument works.
 
 ## The first measurement (2026-08-14, `threews.likeness.sface.v1`)
 
-Every reconstruction in production at the time the harness landed, scored:
+The eleven reconstructions that existed in production when the harness landed,
+scored in one backfill:
 
 | | |
 |---|---|
@@ -191,6 +192,12 @@ consistent with the geometry-side ISE result.
 This is the baseline Phase 1 has to move. It is quoted here so the next run has
 something to be compared against, and it is only comparable within
 `threews.likeness.sface.v1`.
+
+The board will read one subject higher than this table. Verifying `--live`
+submitted a real reconstruction, which registered a generation record like any
+other, and the next backfill scored it at 2.32. The table above is deliberately
+left as the snapshot it was, rather than being rewritten every time the
+population grows.
 
 ## Reading the results
 
