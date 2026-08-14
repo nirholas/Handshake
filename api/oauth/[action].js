@@ -223,19 +223,22 @@ async function handleToken(req, res) {
 	if (!clientId) return error(res, 400, 'invalid_client', 'client_id required');
 	const rl = await limits.oauthToken(clientId);
 	if (!rl.success) return rateLimited(res, rl, 'too many token requests');
-	const auth = await authenticateClient(req, form);
-	if (!auth.ok) {
-		if (auth.reason === 'unknown_client') return error(res, 400, 'invalid_client', 'unknown client');
-		return invalidClientCredentials(req, res);
-	}
-	const client = auth.client;
 	// RFC 8707 §2.2: the token request MAY repeat `resource`, and a server that
 	// does not recognize the one it names MUST answer `invalid_target`. /oauth/
 	// authorize has enforced that since the audience bug; the token endpoint
 	// ignored the parameter, which reintroduced the exact failure canonicalResource
 	// exists to prevent: a client naming another resource got a 200 and a token
 	// whose `aud` was this server's, then hit 401s at every endpoint it tried.
+	// Checked before the client lookup, exactly as authorize does it: the answer
+	// is the same for every caller and it is already public in the well-known
+	// metadata, so there is nothing to gain from spending a query first.
 	if (!canonicalResource(form.resource)) return error(res, 400, 'invalid_target', `unknown resource, this server only issues tokens for ${env.MCP_RESOURCE}`);
+	const auth = await authenticateClient(req, form);
+	if (!auth.ok) {
+		if (auth.reason === 'unknown_client') return error(res, 400, 'invalid_client', 'unknown client');
+		return invalidClientCredentials(req, res);
+	}
+	const client = auth.client;
 	const grantType = form.grant_type;
 	if (grantType === 'authorization_code') {
 		const { code, redirect_uri, code_verifier } = form;

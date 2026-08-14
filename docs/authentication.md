@@ -536,7 +536,25 @@ curl -X POST https://three.ws/api/oauth/revoke \
   -d "token=$REFRESH_TOKEN"
 ```
 
-Registration returns `client_secret_expires_at: 0` alongside an issued secret: three.ws secrets do not expire, so rotate one by registering a new client.
+Registration returns `client_secret_expires_at: 0` alongside an issued secret: three.ws secrets do not expire, so rotate one by registering a new client. It also echoes back every optional field you registered (`client_uri`, `logo_uri`, `software_id`, `software_version`), so the response is the authoritative record of what was stored (RFC 7591 section 3.2.1). Do not re-register to "fix" a field you sent; a second registration issues a second `client_id`.
+
+A rejected secret returns `401` with `{"error": "invalid_client"}`. If you sent the credentials in the `Authorization` header, the response also carries a `WWW-Authenticate: Basic realm="oauth", error="invalid_client"` challenge, as RFC 6749 section 5.2 requires. Treat it as a permanent credential failure, not a retryable one.
+
+### Resource indicators (RFC 8707)
+
+three.ws issues access tokens for exactly one resource, its MCP server. If you pass `resource`, it must name that server; anything else is rejected with `invalid_target` at both `/api/oauth/authorize` and `/api/oauth/token`, rather than handing you a token whose audience is something you did not ask for. A trailing slash is ignored, and omitting the parameter entirely is fine.
+
+```bash
+# The canonical value, also published as `resource` in
+# /.well-known/oauth-protected-resource
+curl -X POST https://three.ws/api/oauth/token \
+  -d "grant_type=authorization_code" \
+  -d "client_id=$CLIENT_ID" \
+  -d "code=$CODE" \
+  -d "redirect_uri=$REDIRECT_URI" \
+  -d "code_verifier=$VERIFIER" \
+  -d "resource=https://three.ws/api/mcp"
+```
 
 For most use cases, API keys are simpler. OAuth is the right choice when you're building a product where your users grant your app access to their three.ws data.
 
