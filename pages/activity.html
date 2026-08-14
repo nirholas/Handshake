@@ -778,15 +778,15 @@
 				? 'Share of resolved Oracle calls that won. No call has resolved yet.'
 				: `Share of resolved Oracle calls (lean, strong, prime) that won.${bar != null ? ` Baseline across every scored coin: ${bar}%.` : ''}`;
 			const cells = [
-				['Agents armed', d.agents_armed != null ? d.agents_armed : '—', 'accent', 'Distinct 3D agents currently armed with Oracle conviction'],
-				['Scored 24h',   d.scored_24h   != null ? d.scored_24h   : '—', '', 'pump.fun coins the Oracle scored in the last 24 hours'],
-				['Open',         d.open_actions != null ? d.open_actions : '—', '', 'Agent positions still open (entered, not yet settled)'],
-				['Win rate',     d.win_rate     != null ? d.win_rate + '%' : '—', wrClass, wrTitle],
-				['Best ATH',     d.best_ath     != null ? d.best_ath.toFixed(1) + '×' : '—', d.best_ath != null ? 'up' : '', 'Highest peak multiple reached by any coin the Oracle called'],
-				['PnL (7d)',     pnlKnown ? (pnl >= 0 ? '+' : '') + sol(pnl) : '—', pnlKnown ? (pnl >= 0 ? 'up' : 'dn') : '', pnlKnown ? 'Realized SOL across agent positions settled in the last 7 days' : 'No agent position has settled with a realized figure in the last 7 days'],
-				['Prime coins',    d.prime_count  != null ? d.prime_count  : '—', d.prime_count  > 0 ? 'accent' : '', 'Coins currently sitting at prime conviction tier'],
-				['Strong coins',   d.strong_count != null ? d.strong_count : '—', '', 'Coins currently sitting at strong conviction tier'],
-				['All-time scored',d.scored_total != null ? d.scored_total.toLocaleString() : '—', '', 'Every coin the Oracle has ever scored'],
+				['Agents armed', d.agents_armed != null ? d.agents_armed : 'n/a', 'accent', 'Distinct 3D agents currently armed with Oracle conviction'],
+				['Scored 24h',   d.scored_24h   != null ? d.scored_24h   : 'n/a', '', 'pump.fun coins the Oracle scored in the last 24 hours'],
+				['Open',         d.open_actions != null ? d.open_actions : 'n/a', '', 'Agent positions still open (entered, not yet settled)'],
+				['Win rate',     d.win_rate     != null ? d.win_rate + '%' : 'n/a', wrClass, wrTitle],
+				['Best ATH',     d.best_ath     != null ? d.best_ath.toFixed(1) + '×' : 'n/a', d.best_ath != null ? 'up' : '', 'Highest peak multiple reached by any coin the Oracle called'],
+				['PnL (7d)',     pnlKnown ? (pnl >= 0 ? '+' : '') + sol(pnl) : 'n/a', pnlKnown ? (pnl >= 0 ? 'up' : 'dn') : '', pnlKnown ? 'Realized SOL across agent positions settled in the last 7 days' : 'No agent position has settled with a realized figure in the last 7 days'],
+				['Prime coins',    d.prime_count  != null ? d.prime_count  : 'n/a', d.prime_count  > 0 ? 'accent' : '', 'Coins currently sitting at prime conviction tier'],
+				['Strong coins',   d.strong_count != null ? d.strong_count : 'n/a', '', 'Coins currently sitting at strong conviction tier'],
+				['All-time scored',d.scored_total != null ? d.scored_total.toLocaleString() : 'n/a', '', 'Every coin the Oracle has ever scored'],
 			];
 			kpis.innerHTML = cells.map(([l, v, cls, tip]) =>
 				`<div class="ac-kpi" title="${esc(tip)}"><div class="v ${cls}">${v}</div><div class="l">${l}</div></div>`).join('');
@@ -869,9 +869,15 @@
 		async function loadStats() {
 			try {
 				const r = await fetch(`${STATS_API}?network=mainnet`, { headers: { accept: 'application/json' } });
-				if (!r.ok) return;
+				if (!r.ok) throw new Error('HTTP ' + r.status);
 				applyStats(await r.json());
-			} catch { /* KPIs fall back to activity summary */ }
+			} catch {
+				// Leave the skeleton up only while a request is genuinely in flight.
+				// Without this the tiles shimmered forever on a stats outage, which
+				// reads as "still loading" rather than "not available". renderKpis
+				// prints the placeholder glyph for every value it does not have.
+				renderKpis();
+			}
 		}
 
 		// ── SSE — real-time updates ──────────────────────────────────────────
@@ -1029,10 +1035,11 @@
 					const sym = (m.symbol || m.mint.slice(0, 6)).toUpperCase();
 					const av = imgSrc(m.image_uri, m.mint);
 					const up = (m.delta || 0) >= 0;
-					return `<a class="ac-li" href="/oracle/coin/${encodeURIComponent(m.mint)}">
+					const moveTitle = `Conviction moved ${m.first_score} to ${m.score} in the last 24h${m.tier_changed ? ', crossing a tier' : ''}`;
+					return `<a class="ac-li" href="/oracle/coin/${encodeURIComponent(m.mint)}" title="${esc(moveTitle)}">
 						<img class="ac-li-av" src="${esc(av)}" alt="" ${imgFallbackAttr} loading="lazy" />
 						<span class="ac-li-main"><span class="ac-li-name">$${esc(sym)}${m.tier_changed ? ' <span style="color:var(--ac-up);font-size:9px">▲ tier</span>' : ''}</span><span class="ac-li-sub">${esc(m.tier || '')} · score ${m.score ?? '—'}</span></span>
-						<span class="ac-li-r"><span class="ac-delta ${up ? 'up' : 'dn'}">${up ? '+' : ''}${m.delta}</span><span class="small">${m.first_score}→${m.score}</span></span>
+						<span class="ac-li-r"><span class="ac-delta ${up ? 'up' : 'dn'}">${up ? '+' : ''}${m.delta}</span><span class="small">${m.first_score} → ${m.score}</span></span>
 					</a>`;
 				}).join('');
 				return items[0];

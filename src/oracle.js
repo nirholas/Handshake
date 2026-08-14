@@ -802,9 +802,13 @@ const TAKE_LABEL = { pedigree: 'Who', structure: 'How', narrative: 'What', momen
  * than to nothing.
  */
 function reasonClause(r) {
-	const subject = String(r.subject || String(r.text || '').split(':')[0] || '').trim();
+	const text = String(r.text || '');
+	const subject = String(r.subject || text.split(':')[0] || '').trim();
 	if (!subject) return '';
-	const lift = Number(r.lift);
+	// A row cached before the engine emitted structured reasons still has both
+	// halves inside its sentence, so recover them rather than dropping the lift
+	// for as long as the old rows live.
+	const lift = Number.isFinite(Number(r.lift)) ? Number(r.lift) : Number(text.match(/\(([\d.]+)x base rate\)/)?.[1]);
 	if (!Number.isFinite(lift) || (lift > 0.85 && lift < 1.15)) return esc(subject);
 	return `${esc(subject)} <i>${lift}x base</i>`;
 }
@@ -832,7 +836,9 @@ function oracleTake(it) {
 	if (flags.includes('pedigree-flag')) body += '. Creator has a rug history';
 	else if (flags.includes('structure-flag')) body += '. Structure throws a flag';
 
-	const cat = it.category && it.category !== 'unknown' ? ` Riding a ${esc(it.category)} narrative.` : '';
+	const cat = it.category && it.category !== 'unknown'
+		? ` Riding ${/^[aeiou]/i.test(it.category) ? 'an' : 'a'} ${esc(it.category)} narrative.`
+		: '';
 	return `<div class="coin-take"><span class="ct-q">“</span><span><b>${lead}</b>: ${body}.${cat}</span></div>`;
 }
 
@@ -1475,7 +1481,7 @@ function renderEdge() {
 			<div class="edge-hero${beats ? '' : ' thin'}">
 				<p class="edge-hero-claim">Prime calls win <b class="win">${edge.prime_win_rate}%</b> of the time${beats ? `, vs <b>${edge.baseline_win_rate}%</b> for a coin picked at random` : ''}.</p>
 				<p class="edge-hero-sub">${beats
-					? `That's a <b style="color:var(--ink)">+${lift} point</b> lift over blind buying${mult ? ` — <b style="color:var(--ink)">${mult}×</b> the base rate` : ''}. ${ladderLine(edge)}`
+					? `That's a <b style="color:var(--ink)">+${lift} point</b> lift over blind buying${mult ? `, <b style="color:var(--ink)">${mult}×</b> the base rate` : ''}. ${ladderLine(edge)}`
 					: `Conviction isn't beating the market over this window yet. We show it anyway — no cherry-picking.`}</p>
 				${spikeLine(edge)}
 				<div class="edge-hero-metrics">
@@ -1506,10 +1512,10 @@ function renderEdge() {
 		<div class="dr-sec edge-sec">Calibration — realized win rate by score band</div>
 		<div class="cal">
 			${cal.slice().reverse().map(calRow).join('')}
-			<div class="cal-legend">
+		<div class="cal-legend">
 				<span><i class="li-real"></i>Realized win rate (bar fill)</span>
-				<span><i class="li-pred"></i>What the band predicts (midpoint)</span>
-				<span style="color:var(--faint)">A calibrated engine keeps the bar near the marker, climbing band over band.</span>
+				<span><i class="li-pred"></i>What the band claims, converted from the score</span>
+				<span style="color:var(--faint)">A score is a rank, not a percentage: 86 claims 55%. The marker is that converted claim, on the event the model was fitted to predict (a 3× run or a graduation), so the bar and the marker measure different things on purpose. "ran 3×" is the trained event's own realized rate.</span>
 			</div>
 		</div>` : '';
 
@@ -1566,7 +1572,7 @@ function calRow(c) {
 			<div class="cal-real" style="width:${hasData ? real : 0}%"></div>
 			<div class="cal-pred" style="left:${c.predicted}%"></div>
 		</div>
-		<div class="cal-val">${hasData ? `${real}%` : '<span style="color:var(--faint)">—</span>'}<small>pred ${c.predicted}%</small></div>
+		<div class="cal-val">${hasData ? `${real}%` : '<span style="color:var(--faint)">—</span>'}<small>claims ${c.predicted}%${c.realized_spike != null ? ` · ran 3× ${c.realized_spike}%` : ''}</small></div>
 	</div>`;
 }
 

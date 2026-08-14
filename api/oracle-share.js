@@ -83,6 +83,7 @@ export default wrap(async (req, res) => {
 				swCount: Number(row.smart_wallet_count || 0),
 				pedigree: Number(row.pedigree || 0), structure: Number(row.structure || 0),
 				narrative: Number(row.narrative || 0), momentum: Number(row.momentum || 0),
+				outcome: row,
 			}),
 			ogAlt: `${sym} Oracle conviction score ${score}`,
 		};
@@ -155,13 +156,28 @@ function redirect(res, to) {
 	res.end();
 }
 
-function buildDesc({ sym, name, score, tier, cat, swCount, pedigree, structure, narrative, momentum }) {
+function buildDesc({ sym, name, score, tier, cat, swCount, pedigree, structure, narrative, momentum, outcome }) {
 	const parts = [`Oracle scored ${sym} ${score}/100 (${tier} conviction)`];
 	if (cat) parts.push(`category: ${cat}`);
 	if (swCount > 0) parts.push(`${swCount} proven wallet${swCount === 1 ? '' : 's'} in`);
 	parts.push(`Who ${pedigree} · How ${structure} · What ${narrative} · Move ${momentum}`);
+	// A resolved coin says so in its own share preview. Boasting a 100/prime into
+	// a group chat for a launch that has since collapsed is the same stale verdict
+	// the hero used to show, just travelling further.
+	const since = descSince(outcome);
+	if (since) parts.push(since);
 	parts.push('proof.not.promises — three.ws Oracle');
 	return parts.join(' · ');
+}
+
+/** One clause for what the market did after the call, or '' while it is open. */
+function descSince(row) {
+	if (!row) return '';
+	const ath = row.ath_multiple != null ? Number(row.ath_multiple) : null;
+	const peak = Number.isFinite(ath) && ath > 0 ? `${ath.toFixed(1)}x` : null;
+	if (row.graduated === true) return peak ? `since: graduated, peaked ${peak}` : 'since: graduated';
+	if (row.rugged === true) return peak ? `since: ran ${peak}, then rugged` : 'since: rugged';
+	return peak ? `since: peaked ${peak}` : '';
 }
 
 function shortMint(m) { return `${m.slice(0, 6)}…${m.slice(-4)}`; }
@@ -367,7 +383,7 @@ export function outcomeStripHtml(row) {
 
 function fmtUsdShort(n) {
 	const v = Number(n);
-	if (!Number.isFinite(v)) return '—';
+	if (!Number.isFinite(v)) return 'n/a';
 	if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
 	if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
 	if (v >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
