@@ -219,8 +219,15 @@ function ensureNavStylesheet() {
 // handler below intercepts, but broken for the paths that bypass it (opening the
 // link in a new tab, copying its address, or restoring the fragment on reload).
 // So tag the resolved landmark up front and the href always has a real target.
+// Pages that hand-author their own skip link use one of two classes: `.skip-link`
+// (styled per-page) or `.h-skip-link` (styled by the shared rule in nav.css).
+// Guarding on `.nav-skip` alone missed both, so every one of those pages ended up
+// with two identical "Skip to content" anchors and keyboard users had to tab past
+// the same link twice before reaching the header.
+const SKIP_LINK_SELECTOR = '.nav-skip, .skip-link, .h-skip-link';
+
 function ensureSkipLink() {
-	if (!document.body || document.querySelector('.nav-skip')) return;
+	if (!document.body || document.querySelector(SKIP_LINK_SELECTOR)) return;
 	if (!document.getElementById('main-content')) {
 		const landmark = document.querySelector('main, [role="main"]');
 		if (landmark && !landmark.id) landmark.id = 'main-content';
