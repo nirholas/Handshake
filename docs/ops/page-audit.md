@@ -22,8 +22,11 @@ The sweep is read-only. It never mutates the target.
 ## Commands
 
 ```sh
+# One-time: provision the QA account if AUDIT_EMAIL / AUDIT_PASSWORD are absent
+npm run audit:web:provision
+
 # One-time: create the auth session (server-set HttpOnly cookie -> storageState)
-AUDIT_EMAIL=you@example.com AUDIT_PASSWORD=secret npm run audit:web:login
+npm run audit:web:login
 
 # Full sweep (picks up the saved session automatically)
 npm run audit:web
@@ -51,6 +54,32 @@ BASE_URL=http://localhost:3000 npm run audit:web   # vite dev server
 
 Local targets get an extra noise filter for failures that only exist because
 serverless functions and CDNs are absent under a bare dev server.
+
+## QA account
+
+The authed sweep signs in as a real member, so it needs `AUDIT_EMAIL` and
+`AUDIT_PASSWORD` in `.env`. If they are missing, `npm run audit:web:provision`
+(`scripts/provision-audit-account.mjs`) creates a fresh account by driving the
+real `/register` page in a headless Chromium: same form, same clickwrap
+checkbox, same `POST /api/auth/register` the page makes. It then proves the new
+credentials authenticate through `/api/auth/login` and writes them into `.env`
+(mode 0600), leaving every other line in the file untouched.
+
+```sh
+npm run audit:web:provision                                  # against production
+npm run audit:web:provision -- --username qa-audit-mine      # pick the username
+npm run audit:web:provision -- --print-only                  # don't touch .env
+BASE_URL=http://localhost:3000 npm run audit:web:provision   # against dev
+```
+
+The register form takes a username, not an email address, and the server
+derives `<username>@users.three.ws.local` as the account email. That derived
+address is what lands in `AUDIT_EMAIL`, because `/api/auth/login` treats any
+value containing `@` as an email lookup. No server-side code reads these two
+vars: they are a local-harness credential, so the Cloud Run service env does
+not need them. `scripts/likeness-eval.mjs`,
+`scripts/reconstruct-load-test.mjs` and `scripts/capture-bundles-media.mjs`
+read the same pair.
 
 ## Session file
 
