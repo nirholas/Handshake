@@ -1,6 +1,6 @@
-// GET  /api/monetization/prices?agent_id=X         — list active prices for an agent
-// PUT  /api/monetization/prices                     — set/update price for a skill (owner only)
-// DELETE /api/monetization/prices                   — remove price for a skill (owner only)
+// GET  /api/monetization/prices?agent_id=X         lists active prices for an agent
+// PUT  /api/monetization/prices                     sets/updates a skill price (owner only)
+// DELETE /api/monetization/prices                   removes a skill price (owner only)
 //
 // Body (PUT):    { agent_id, skill_name, price_usdc, currency_mint?, chain? }
 // Body (DELETE): { agent_id, skill_name, hard? }
@@ -123,7 +123,7 @@ export default wrap(async (req, res) => {
 		const isNft = gate_type === 'nft';
 
 		// For a price gate, convert price_usdc (float like 0.001) to atomic units.
-		// For an NFT gate there is no price — amount is stored as 0 so the row stays
+		// For an NFT gate there is no price, so amount is stored as 0 and the row stays
 		// a valid (premium, not free) entry while access is driven by the holding.
 		const amountAtomic = isNft ? 0 : Math.round(price_usdc * 1_000_000);
 		if (!isNft && amountAtomic < MIN_PRICE_ATOMIC) {

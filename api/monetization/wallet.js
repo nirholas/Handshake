@@ -1,5 +1,5 @@
-// GET /api/monetization/wallet?agent_id=X  — get payout wallet config
-// PUT /api/monetization/wallet              — set/update payout addresses
+// GET /api/monetization/wallet?agent_id=X  reads the payout wallet config
+// PUT /api/monetization/wallet              sets/updates payout addresses
 //
 // Body (PUT): { agent_id, evm_address?, solana_address?, preferred_network? }
 
@@ -90,7 +90,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// PUT — set/update payout addresses
+	// PUT: set/update payout addresses
 	// CSRF on state-changing session-cookie requests; bearer tokens are exempt
 	// (the token itself proves intent and isn't auto-attached by browsers).
 	if (!(await requireCsrf(req, res, userId))) return;

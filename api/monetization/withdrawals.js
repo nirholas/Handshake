@@ -1,5 +1,5 @@
-// GET  /api/monetization/withdrawals?agent_id=X     — list withdrawal history
-// POST /api/monetization/withdrawals                — request a withdrawal
+// GET  /api/monetization/withdrawals?agent_id=X     lists withdrawal history
+// POST /api/monetization/withdrawals                requests a withdrawal
 //
 // Body (POST): { agent_id, amount_usdc?, network? }
 //   amount_usdc = null  withdraw all available balance
@@ -157,7 +157,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// POST — request a withdrawal
+	// POST: request a withdrawal
 	const csrfOk = await requireCsrf(req, res, userId);
 	if (!csrfOk) return;
 
@@ -225,7 +225,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// Reserve the withdrawal atomically. The available-balance check above is a
-	// fast/UX pre-check only — on its own it's a TOCTOU hole: N concurrent
+	// fast/UX pre-check only. On its own it is a TOCTOU hole: N concurrent
 	// requests all read the same `available` and all insert, over-withdrawing
 	// past the real balance (the per-user rate limit admits several before any
 	// pending row is committed, so it can't guarantee integrity).
