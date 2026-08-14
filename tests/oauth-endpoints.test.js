@@ -201,6 +201,27 @@ async function approve(extra = {}) {
 	return call('authorize', { method: 'POST', form: { ...authorizeQuery(extra), csrf: await csrf(), decision: 'allow' } });
 }
 
+const CONFIDENTIAL_SECRET = 'the-real-secret';
+
+const basicHeader = (id, secret) => ({ authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}` });
+
+async function seedConfidentialClient() {
+	return seedClient({ client_type: 'confidential', client_secret_hash: await sha256(CONFIDENTIAL_SECRET), token_endpoint_auth: 'client_secret_basic' });
+}
+
+// A `client_secret_basic` client sends its credentials in the Authorization
+// header and nowhere else, so the form carries no client_id at all.
+async function issueTokensOverBasicAuth() {
+	const authorized = await approve();
+	const code = new URL(authorized.getHeader('location')).searchParams.get('code');
+	const res = await call('token', {
+		method: 'POST',
+		headers: basicHeader('mcp_test_client', CONFIDENTIAL_SECRET),
+		form: { grant_type: 'authorization_code', code, redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER },
+	});
+	return res.json();
+}
+
 async function issueTokens() {
 	const authorized = await approve();
 	const code = new URL(authorized.getHeader('location')).searchParams.get('code');
@@ -403,6 +424,19 @@ describe('POST /oauth/register', () => {
 		expect(db.clients[0].client_secret_hash).not.toBe(out.client_secret);
 	});
 
+	it('stamps client_secret_expires_at so a client can tell the secret never expires', async () => {
+		// RFC 7591 section 3.2.1 makes the field REQUIRED alongside an issued
+		// secret; without it a client cannot distinguish "never expires" from a
+		// field the server forgot to send.
+		const res = await call('register', { method: 'POST', jsonBody: { redirect_uris: ['https://client.example/cb'], token_endpoint_auth_method: 'client_secret_basic' } });
+		expect(res.json().client_secret_expires_at).toBe(0);
+	});
+
+	it('omits client_secret_expires_at for a public client that gets no secret', async () => {
+		const res = await call('register', { method: 'POST', jsonBody: { redirect_uris: ['https://client.example/cb'] } });
+		expect(res.json()).not.toHaveProperty('client_secret_expires_at');
+	});
+
 	it.each([
 		['javascript:alert(document.cookie)'],
 		['data:text/html,<script>alert(1)</script>'],
@@ -466,6 +500,27 @@ describe('POST /oauth/revoke', () => {
 		expect(res.statusCode).toBe(200);
 		expect(res.json()).toEqual({});
 	});
+
+	// RFC 7009 section 2.1: the client authenticates here exactly as it does at
+	// the token endpoint. Only the token endpoint read the Authorization header,
+	// so a `client_secret_basic` client was answered 400 (no client_id in the
+	// form) and 401 (bad credentials) and could never revoke anything it owned.
+	it('authenticates a client_secret_basic client from the Authorization header alone', async () => {
+		await seedConfidentialClient();
+		const { refresh_token } = await issueTokensOverBasicAuth();
+		const res = await call('revoke', { method: 'POST', headers: basicHeader('mcp_test_client', CONFIDENTIAL_SECRET), form: { token: refresh_token } });
+		expect(res.statusCode).toBe(200);
+		expect(db.refresh[0].revoked_at).toBeTruthy();
+	});
+
+	it('rejects a Basic header carrying the wrong secret', async () => {
+		await seedConfidentialClient();
+		const { refresh_token } = await issueTokensOverBasicAuth();
+		const res = await call('revoke', { method: 'POST', headers: basicHeader('mcp_test_client', 'guessed'), form: { token: refresh_token } });
+		expect(res.statusCode).toBe(401);
+		expect(res.json().error).toBe('invalid_client');
+		expect(db.refresh[0].revoked_at).toBeNull();
+	});
 });
 
 describe('POST /oauth/introspect', () => {
@@ -503,6 +558,24 @@ describe('POST /oauth/introspect', () => {
 		seedClient();
 		const res = await call('introspect', { method: 'POST', form: { token: 'not-a-token', client_id: 'mcp_test_client' } });
 		expect(res.json()).toEqual({ active: false });
+	});
+
+	// RFC 7662 section 2.1 carries the same client-authentication requirement as
+	// the token endpoint, and a `client_secret_basic` client has no other way to
+	// present its credentials.
+	it('authenticates a client_secret_basic client from the Authorization header alone', async () => {
+		await seedConfidentialClient();
+		const tokens = await issueTokensOverBasicAuth();
+		const res = await call('introspect', { method: 'POST', headers: basicHeader('mcp_test_client', CONFIDENTIAL_SECRET), form: { token: tokens.access_token } });
+		expect(res.json()).toMatchObject({ active: true, sub: 'user-1', token_type: 'Bearer' });
+	});
+
+	it('refuses to answer a Basic header carrying the wrong secret', async () => {
+		await seedConfidentialClient();
+		const tokens = await issueTokensOverBasicAuth();
+		const res = await call('introspect', { method: 'POST', headers: basicHeader('mcp_test_client', 'guessed'), form: { token: tokens.access_token } });
+		expect(res.statusCode).toBe(401);
+		expect(res.json().error).toBe('invalid_client');
 	});
 });
 
