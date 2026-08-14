@@ -111,7 +111,11 @@ export function renderAvatarThumb(url) {
 	if (!url) return Promise.resolve(null);
 	if (_cache.has(url)) return _cache.get(url);
 	const p = enqueueSnapshot(url).catch((err) => {
-		log.warn('[avatar-thumb] preview failed:', url, err?.message);
+		// A preview that never renders is a designed outcome, not a fault: the
+		// caller puts the chip's glyph back (_renderChipPreview), so the picker
+		// stays complete. An ad blocker on the avatar CDN, or a venue with no
+		// route to it, makes this the normal path rather than the rare one.
+		log.info('[avatar-thumb] preview failed:', url, err?.message);
 		return null;
 	});
 	_cache.set(url, p);

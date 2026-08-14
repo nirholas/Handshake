@@ -13,6 +13,7 @@
 // no visible interruption.
 
 import { fetchPlayConfig, signInToPlay, loadStoredPass, clearStoredPass, hasWallet, PlayAuthError } from './play-auth.js';
+import { log } from '../shared/log.js';
 
 const PHANTOM_INSTALL = 'https://phantom.app/download';
 
@@ -62,7 +63,11 @@ class Gate {
 			// the real authority — a genuinely-gated world refuses any unsigned room
 			// join, so the worst case here is an honest bounce at join, not free entry.
 			// This honors the self-healing contract documented at _ensurePlayAccess.
-			console.warn('[play-gate] gate probe failed, opening /play:', err?.message || err);
+			// Telemetry for a designed path, so it logs at info through the gated
+			// logger: a raw console.warn here announced our own fail-open branch as a
+			// defect in every visitor's console, including the ones this branch exists
+			// to serve (a venue filter or an ad blocker eating /api/play/config).
+			log.info('[play-gate] gate probe failed, opening /play:', err?.message || err);
 			this._finish({ required: false });
 			return;
 		}
