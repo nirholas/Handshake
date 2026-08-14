@@ -141,11 +141,14 @@ node --env-file=.env scripts/likeness-eval.mjs --backfill
 node --env-file=.env scripts/likeness-eval.mjs --live=10 --out=reports/likeness.json
 ```
 
-`--live` signs in with the QA account, submits real reconstructions built from
-**synthesised** subject descriptions (never real people's photos, for the same
-reason the reconstruction worker synthesises its reference set), polls each to
-completion, and scores the finished avatar against the exact reference image the
-pipeline built it from.
+`--live` signs in with the QA account and, for each subject, renders a headshot
+of a distinct avatar from the public library, submits that portrait as the
+reconstruction photo, polls the job to completion, and scores the finished
+avatar against the exact bytes it was built from. The subjects are therefore
+**synthesised**, never real people's photos, for the same reason the
+reconstruction worker synthesises its reference set. Live results are printed
+but deliberately **not** filed: a benchmark run is not a user's generation, and
+storing it would move the distribution the roadmap is judged on.
 
 Both modes print a **cross-subject control**: every avatar is also scored
 against every *other* subject's captures. A likeness number is unfalsifiable
