@@ -1,5 +1,5 @@
-// Crypto-news source registry — 192 live publisher feeds across 27 categories,
-// 33 of them international across 17 languages.
+// Crypto-news source registry: 197 live publisher feeds across 27 categories,
+// 34 of them international across 17 languages.
 //
 // Ported from the cryptocurrency.cv aggregator (same team; its Vercel deployment
 // is retired, so three.ws runs the aggregation natively). Keys and category
