@@ -2,7 +2,7 @@
 	"name": "@three-ws/avatar-agent",
 	"version": "1.2.2",
 	"mcpName": "io.github.nirholas/3D-AI-Agent-Avatar",
-	"description": "3D AI Agent Avatar — MCP server that spawns a textured GLB avatar, inspects/validates/optimizes any 3D model, gives the agent a Solana wallet + a voice, and ships full pump.fun powers (atomic Jito-bundled launches + creator-fee collection). Powered by three.ws.",
+	"description": "3D AI Agent Avatar \u2014 MCP server that spawns a textured GLB avatar, inspects/validates/optimizes any 3D model, gives the agent a Solana wallet + a voice, and ships full pump.fun powers (atomic Jito-bundled launches + creator-fee collection). Powered by three.ws.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
 	"license": "SEE LICENSE IN LICENSE",
@@ -59,10 +59,10 @@
 	},
 	"dependencies": {
 		"@gltf-transform/core": "^4.3.0",
-		"@grpc/grpc-js": "^1.14.4",
-		"@grpc/proto-loader": "^0.8.1",
 		"@gltf-transform/extensions": "^4.3.0",
 		"@gltf-transform/functions": "^4.3.0",
+		"@grpc/grpc-js": "^1.14.4",
+		"@grpc/proto-loader": "^0.8.1",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@nirholas/pump-sdk": "^1.30.0",
 		"@solana/spl-token": "^0.4.14",
@@ -72,6 +72,7 @@
 		"ethers": "^6.16.0",
 		"form-data": "^4.0.5",
 		"gltf-validator": "^2.0.0-dev.3.10",
+		"meshoptimizer": "^1.1.1",
 		"zod": "^3.23.8"
 	}
 }

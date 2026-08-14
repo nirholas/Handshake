@@ -272,3 +272,39 @@ describe('validateAndPersistGlb', () => {
 		await expect(validateAndPersistGlb(Buffer.from('not a glb'))).rejects.toBeInstanceOf(MaterialStudioError);
 	});
 });
+
+describe('meshopt-compressed sources', () => {
+	/** The fixture, re-encoded with EXT_meshopt_compression, as three.ws ships avatars. */
+	async function compressFixture() {
+		const { NodeIO } = await import('@gltf-transform/core');
+		const { ALL_EXTENSIONS, EXTMeshoptCompression } = await import('@gltf-transform/extensions');
+		const { MeshoptDecoder, MeshoptEncoder } = await import('meshoptimizer');
+		await Promise.all([MeshoptDecoder.ready, MeshoptEncoder.ready]);
+		const io = new NodeIO()
+			.registerExtensions(ALL_EXTENSIONS)
+			.registerDependencies({ 'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder });
+		const doc = await io.readBinary(new Uint8Array(fixtureBytes));
+		doc.createExtension(EXTMeshoptCompression).setRequired(true).setEncoderOptions({ method: EXTMeshoptCompression.EncoderMethod.QUANTIZE });
+		return Buffer.from(await io.writeBinary(doc));
+	}
+
+	it('restyles a compressed avatar instead of rejecting it as an invalid GLB', async () => {
+		// Regression: the reader registered the extension but never the codec, so
+		// every compressed source (most three.ws avatars) died as "failed to parse".
+		fixtureBytes = await compressFixture();
+		const { NodeIO } = await import('@gltf-transform/core');
+		const { ALL_EXTENSIONS } = await import('@gltf-transform/extensions');
+		const bare = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+		await expect(bare.readBinary(new Uint8Array(fixtureBytes))).rejects.toBeTruthy();
+
+		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
+		const result = await restyleMaterialFromInstruction({
+			glbUrl: FIXTURE_URL,
+			instruction: 'make it chrome',
+		});
+
+		expect(result.glbUrl).toMatch(persistedGlbUrl('material-studio/restyle'));
+		expect(result.materialsEdited).toBeGreaterThan(0);
+		expect(uploadedObjects).toHaveLength(1);
+	});
+});

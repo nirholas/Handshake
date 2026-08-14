@@ -2,13 +2,16 @@
 // a @gltf-transform/core Document, and serialize back to bytes when needed.
 //
 // The @gltf-transform NodeIO reader does the binary parsing (BIN chunk +
-// JSON chunk per the glTF 2.0 spec). We attach the Draco extension on
-// both reader + writer so already-Draco-compressed meshes round-trip
-// correctly.
+// JSON chunk per the glTF 2.0 spec). We attach the Draco AND meshopt codecs on
+// both reader + writer so an already-compressed mesh round-trips correctly.
+// Registering the extensions is not enough on its own: glTF-Transform needs the
+// codec injected too, and without the meshopt one every EXT_meshopt_compression
+// asset (the format most three.ws avatars ship as) failed to parse here.
 
 import { NodeIO } from '@gltf-transform/core';
 import { KHRDracoMeshCompression, ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import draco3dgltf from 'draco3dgltf';
+import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer';
 
 let _io = null;
 
@@ -16,12 +19,16 @@ async function buildIo() {
 	const [encoder, decoder] = await Promise.all([
 		draco3dgltf.createEncoderModule(),
 		draco3dgltf.createDecoderModule(),
+		MeshoptDecoder.ready,
+		MeshoptEncoder.ready,
 	]);
 	return new NodeIO()
 		.registerExtensions(ALL_EXTENSIONS)
 		.registerDependencies({
 			'draco3d.encoder': encoder,
 			'draco3d.decoder': decoder,
+			'meshopt.encoder': MeshoptEncoder,
+			'meshopt.decoder': MeshoptDecoder,
 		});
 }
 

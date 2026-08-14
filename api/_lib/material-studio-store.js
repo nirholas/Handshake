@@ -133,12 +133,24 @@ export async function validateGlbUrl(raw, field = 'glb_url') {
 // low for the (more common) code paths that never touch a document, e.g. the
 // discovery GET). ────────────────────────────────────────────────────────────
 
-async function loadDocument(bytes) {
-	const [{ NodeIO }, { ALL_EXTENSIONS }] = await Promise.all([
+// EXT_meshopt_compression is in ALL_EXTENSIONS, but glTF-Transform still needs
+// the codec injected before it can read or write one, and most three.ws avatars
+// ship compressed. Without it every compressed source failed here as
+// "source GLB failed to parse", which reads like a corrupt upload and is not.
+async function meshoptIO() {
+	const [{ NodeIO }, { ALL_EXTENSIONS }, { MeshoptDecoder, MeshoptEncoder }] = await Promise.all([
 		import('@gltf-transform/core'),
 		import('@gltf-transform/extensions'),
+		import('meshoptimizer'),
 	]);
-	const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+	await Promise.all([MeshoptDecoder.ready, MeshoptEncoder.ready]);
+	return new NodeIO()
+		.registerExtensions(ALL_EXTENSIONS)
+		.registerDependencies({ 'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder });
+}
+
+async function loadDocument(bytes) {
+	const io = await meshoptIO();
 	try {
 		return await io.readBinary(new Uint8Array(bytes));
 	} catch (err) {
@@ -150,9 +162,7 @@ async function loadDocument(bytes) {
 }
 
 async function writeAndValidate(doc) {
-	const { NodeIO } = await import('@gltf-transform/core');
-	const { ALL_EXTENSIONS } = await import('@gltf-transform/extensions');
-	const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+	const io = await meshoptIO();
 	const bytes = await io.writeBinary(doc);
 
 	const { validateBytes } = await import('gltf-validator');
