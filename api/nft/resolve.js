@@ -1,7 +1,8 @@
-import { env } from '../_lib/env.js';
 import { wrap, cors, error, json, readJson, method, rateLimited, serverError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { dasRpcUrl } from '../_lib/nft-gate.js';
+import { resolveGateway } from '../_lib/solana-agents-normalize.js';
 
 // NFT metadata is effectively immutable, but the Helius `getAsset` (DAS) and
 // Alchemy `getNFTMetadata` calls behind this endpoint are billed per request and
@@ -21,6 +22,21 @@ const RESOLVE_STALE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30d
 // mainnet and came back as a 404 or, worse, as an unrelated Ethereum token that
 // happens to share the contract/tokenId pair. Keep this list aligned with the
 // hosts in api/_lib/evm/rpc.js ALCHEMY_SUBDOMAIN.
+// A provider that answers but never finishes must not hold the request open
+// until the platform's own timeout fires; both upstreams are read-only lookups.
+const UPSTREAM_TIMEOUT_MS = 15000;
+
+// Read a JSON body without letting a non-JSON 200 (Helius answers quota refusals
+// and maintenance pages as plain text) escape as an unhandled parse crash. This
+// is a boundary, so it returns null instead of throwing.
+async function readJsonBody(resp) {
+	try {
+		return await resp.json();
+	} catch {
+		return null;
+	}
+}
+
 const ALCHEMY_NFT_HOST = {
 	1: 'eth-mainnet',
 	10: 'opt-mainnet',
