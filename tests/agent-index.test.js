@@ -20,6 +20,7 @@ import {
 import { normalizeEvent, toDate, agentRef, EVENT_CLASSES } from '../api/_lib/onchain-events.js';
 import { sweepCycleMin } from '../api/_lib/ops/index-lag.js';
 import { nextChunkSize, backoffChunkSize } from '../api/cron/[name].js';
+import { splitCapabilities } from '../api/explore-item.js';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -358,5 +359,32 @@ describe('sweepCycleMin', () => {
 
 	it('is null when nothing is queued', () => {
 		expect(sweepCycleMin(0)).toBe(null);
+	});
+});
+
+// ─── Directory detail fallback ───────────────────────────────────────────────
+// /discover lists external Solana agents from the crawled registry directory
+// and links every one to /discover/a/sol/<asset>, which is also where the
+// on-chain history panel lives. Those rows store capabilities as free text, not
+// as the skill records the platform's own agents carry.
+
+describe('splitCapabilities', () => {
+	it('splits the separators the registries actually publish', () => {
+		expect(splitCapabilities('chat, trade; render|3d')).toEqual(['chat', 'trade', 'render', '3d']);
+		expect(splitCapabilities('one\ntwo')).toEqual(['one', 'two']);
+	});
+
+	it('passes an array through and drops empties', () => {
+		expect(splitCapabilities(['a', '  ', 'b'])).toEqual(['a', 'b']);
+		expect(splitCapabilities(',, ,')).toEqual([]);
+	});
+
+	it('caps a keyword-stuffed row so it cannot flood the page', () => {
+		expect(splitCapabilities(Array.from({ length: 100 }, (_, i) => `c${i}`).join(','))).toHaveLength(24);
+	});
+
+	it('returns an empty list for a row with no capabilities at all', () => {
+		expect(splitCapabilities(null)).toEqual([]);
+		expect(splitCapabilities(undefined)).toEqual([]);
 	});
 });
