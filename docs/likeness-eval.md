@@ -153,6 +153,42 @@ without it, because a scorer that returned 0.8 for any two faces would look
 identical to a working one on the matched pairs alone. The separation between
 the two distributions is the evidence the instrument works.
 
+## The first measurement (2026-08-14, `threews.likeness.sface.v1`)
+
+Every reconstruction in production at the time the harness landed, scored:
+
+| | |
+|---|---|
+| Subjects | 11 (10 scored, 1 `no_captures`) |
+| Likeness score | min 1.51, mean 2.19, max 3.04 |
+| At or above the 4/5 gate | **0 of 10** |
+| Recognised as the same person (cosine >= 0.363) | 2 of 10 |
+| Matched cosine | min 0.093, median 0.218, mean 0.217, max 0.376 |
+| Cross-subject control | min -0.024, median 0.176, mean 0.181, max 0.549 |
+| Separation (matched mean minus control mean) | **0.035** |
+| Views that produced no detectable face | 3 of 30, all at 65 degrees |
+| Cost | ~80 s per subject |
+
+**Read the separation line first.** A matched pair (an avatar against its own
+source photo) scores barely above a mismatched one, and the control's best
+mismatch (0.549) beats every matched pair in the set. Some reconstructions
+resemble a *different* subject's photo more than their own.
+
+That is a finding about the pipeline, not about the instrument. The embedder
+separates faces strongly when the identity is actually present: scored across a
+35 degree turn on eleven studio-composed avatars, the same avatar matched itself
+at mean cosine 0.776 while different avatars sat at 0.443, a separation of 0.33
+rather than 0.035. The production reconstruction lane transfers a face texture
+onto a fixed template head, and by its own measurement only about 10% of the
+head's texels come from the photograph
+([avatar fidelity program](./avatar-fidelity-program.md)). A near-noise-floor
+identity reading is the number that shape of pipeline should produce, and it is
+consistent with the geometry-side ISE result.
+
+This is the baseline Phase 1 has to move. It is quoted here so the next run has
+something to be compared against, and it is only comparable within
+`threews.likeness.sface.v1`.
+
 ## Reading the results
 
 `/likeness-bench` (internal, admin or `x-ops-secret`) renders the distribution:
