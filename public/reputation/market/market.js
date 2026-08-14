@@ -281,9 +281,11 @@ function positionCard(p) {
 			</div>
 			<div style="margin-top:0.9rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
 				${
-					p.status === 'closed'
-						? `<a class="rsm-btn" href="${esc(explorerTx(p.settle_signature))}" target="_blank" rel="noopener noreferrer">Settlement ↗</a>`
-						: `<button class="rsm-btn primary" type="button" data-withdraw="${esc(p.signature)}">Withdraw principal + earnings</button>`
+					p.status !== 'closed'
+						? `<button class="rsm-btn primary" type="button" data-withdraw="${esc(p.signature)}">Withdraw principal + earnings</button>`
+						: p.settle_signature
+							? `<a class="rsm-btn" href="${esc(explorerTx(p.settle_signature))}" target="_blank" rel="noopener noreferrer">Settlement ↗</a>`
+							: '<span class="rsm-mono">settled</span>'
 				}
 				<span class="rsm-mono">${p.breakdown?.length ? `${p.breakdown.length} epoch${p.breakdown.length === 1 ? '' : 's'} accrued` : 'no epoch has accrued yet'}</span>
 			</div>
