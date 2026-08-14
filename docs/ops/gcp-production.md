@@ -41,7 +41,7 @@ allow-unauthenticated, runtime SA three-ws@…)
         │
 Data layer (unchanged by the migration — all vendor-neutral HTTP):
   Neon Postgres (DATABASE_URL) · Upstash Redis · Cloudflare R2 (S3_* / R2_*)
-Cloud Scheduler: one job per vercel.json cron (105 as of 2026-08-13) → GET /api/cron/* with
+Cloud Scheduler: one job per vercel.json cron (that array is the count) → GET /api/cron/* with
   `Authorization: Bearer $CRON_SECRET`
 ```
 
