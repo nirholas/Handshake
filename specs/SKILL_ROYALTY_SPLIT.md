@@ -66,6 +66,7 @@ One settled call produces at most one `royalty_ledger` row.
 | SR-16 | Rows are claimed atomically (`pending → settling`, conditional on still being `pending`) before any redeem. A concurrent pass claiming the same rows gets an empty set, so an on-chain payout runs at most once per row. |
 | SR-17 | A claim that lands below the dust threshold is released back to `pending` rather than paid, so a race can never trigger a payout whose gas exceeds its value. |
 | SR-18 | A failed redeem marks its claimed rows `failed`, never silently back to `pending`. A failure is visible state, not a retry loop. |
+| SR-21 | A row settled by the redeem leg records its chain (`network`, CAIP-2) in the same write as its `tx_hash`. A hash with no chain cannot be resolved to an explorer, and a consumer forced to guess would guess the platform default (Solana) for what is always an EVM redeem. |
 
 ## Reporting
 
@@ -79,7 +80,7 @@ One settled call produces at most one `royalty_ledger` row.
 Each invariant is covered by at least one positive and one negative test. The
 suites that prove them:
 
-- [`tests/skill-royalty.test.js`](../tests/skill-royalty.test.js): the split math (SR-1 … SR-5) and the flag gate (SR-15).
+- [`tests/skill-royalty.test.js`](../tests/skill-royalty.test.js): the split math (SR-1 … SR-5), the accrual writer (SR-10 … SR-13), the flag gate (SR-15), and the claim semantics that make a double payout impossible (SR-16 … SR-18, SR-21).
 - [`tests/skill-royalty-earnings.test.js`](../tests/skill-royalty-earnings.test.js): the read side, including the LEFT JOIN regression guard (SR-14) and separated totals (SR-19).
 - [`scripts/royalty-proof.mjs`](../scripts/royalty-proof.mjs): an end-to-end proof against a real Postgres, asserting SR-1, SR-4, SR-11, SR-12, SR-13, SR-14 and SR-20 in one run, moving no funds.
 

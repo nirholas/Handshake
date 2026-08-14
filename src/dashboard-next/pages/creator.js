@@ -926,7 +926,10 @@ function ledgerRow(e) {
 	// straight to the explorer: the author can verify their own payout on-chain
 	// instead of trusting this table. Rows with no tx (in-app calls awaiting the
 	// redeem leg) render the plain amount.
-	const txUrl = e.tx_hash ? revenueTxUrl(e.tx_hash, e.network) : null;
+	// Both a transaction AND its chain are required: revenueTxUrl falls back to
+	// the platform default chain for an unknown network, so linking a tx whose
+	// chain we do not know would point an EVM settlement at a Solana explorer.
+	const txUrl = e.tx_hash && e.network ? revenueTxUrl(e.tx_hash, e.network) : null;
 	const amount = usd(Number(e.price_usd || 0));
 	const amountCell = txUrl
 		? `<a href="${esc(txUrl)}" target="_blank" rel="noopener" title="View this settlement on the explorer">${amount}</a>`

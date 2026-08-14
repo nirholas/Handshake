@@ -137,9 +137,15 @@ export async function settleRoyalties(authorUserId) {
 
 		try {
 			const txHash = await _redeemForGroup({ ...group, total_usd: claimedTotal, ledger_ids: claimedIds }, authorUserId);
+			// Record the chain alongside the transaction. Without it a settled row
+			// carries a hash with no way to tell which explorer resolves it, and any
+			// consumer linking the tx has to guess (and would guess Solana, the
+			// platform default, for what is always an EVM redeem). CAIP-2, matching
+			// what the x402 rail writes, so both lanes read identically.
+			const network = `eip155:${group.chain_id}`;
 			await sql`
 				UPDATE royalty_ledger
-				SET status = 'settled', settled_at = now(), tx_hash = ${txHash}
+				SET status = 'settled', settled_at = now(), tx_hash = ${txHash}, network = ${network}
 				WHERE id = ANY(${claimedIds}::uuid[])
 			`;
 		} catch (e) {

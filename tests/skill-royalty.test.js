@@ -213,10 +213,15 @@ describe('settleRoyalties claim semantics (no double-pay)', () => {
 		process.env.SKILL_ROYALTIES_EVM_7710_ENABLED = 'true';
 	});
 
+	const realFetch = globalThis.fetch;
+
 	afterEach(() => {
 		delete process.env.SKILL_ROYALTIES_EVM_7710_ENABLED;
 		sqlMock.mockReset();
 		sqlMock.mockResolvedValue([{ id: 'ledger-1' }]);
+		// One case stubs the relayer call; never leave that stub in place for the
+		// next test, which must reach its own failure path for real.
+		globalThis.fetch = realFetch;
 	});
 
 	it('claims pending rows before redeeming, conditional on still being pending', async () => {
@@ -245,6 +250,28 @@ describe('settleRoyalties claim semantics (no double-pay)', () => {
 		const texts = sqlMock.mock.calls.map((c) => c[0].join('?'));
 		expect(texts.some((t) => /SET status = 'pending'/i.test(t))).toBe(true);
 		expect(texts.some((t) => /SET status = 'settled'/i.test(t))).toBe(false);
+	});
+
+	it('records the settlement chain next to the transaction hash', async () => {
+		respondWith({ claimed: [{ id: 'ledger-a', price_usd: 1.5 }] });
+		// Give the redeem a wallet to pay so it reaches the settled UPDATE.
+		sqlMock.mockImplementation(async (strings) => {
+			const text = Array.isArray(strings) ? strings.join('?') : String(strings);
+			if (/SELECT[\s\S]*FROM royalty_ledger rl/i.test(text)) return [GROUP];
+			if (/SET status = 'settling'/i.test(text)) return [{ id: 'ledger-a', price_usd: 1.5 }];
+			if (/FROM user_wallets/i.test(text)) return [{ address: '0x2222222222222222222222222222222222222222' }];
+			if (/FROM agent_delegations/i.test(text)) return [{ id: 'del-1', delegation_json: {}, scope: {} }];
+			return [];
+		});
+		globalThis.fetch = vi.fn(async () => ({ ok: true, json: async () => ({ tx_hash: '0xdeadbeef' }) }));
+
+		await settleRoyalties(AUTHOR);
+
+		const settle = sqlMock.mock.calls.find((c) => /SET status = 'settled'/i.test(c[0].join('?')));
+		expect(settle).toBeDefined();
+		// A hash with no chain cannot be resolved to an explorer by any consumer.
+		expect(settle[0].join('?')).toMatch(/network =/i);
+		expect(settle.slice(1)).toContain(`eip155:${GROUP.chain_id}`);
 	});
 
 	it('marks a group failed when the redeem cannot complete', async () => {
