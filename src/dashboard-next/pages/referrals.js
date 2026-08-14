@@ -57,7 +57,7 @@ function fmtUsd(n) {
 
 /** A conversion rate the API left null (empty prior stage) reads as a dash, never a fake 0%. */
 function fmtPct(n) {
-	return n == null ? '—' : `${Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 })}%`;
+	return n == null ? '-' : `${Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 })}%`;
 }
 
 /**
@@ -118,17 +118,17 @@ function expLabel(memberSince) {
 }
 
 function memberSinceLabel(memberSince) {
-	if (!memberSince) return '—';
+	if (!memberSince) return '-';
 	const d = new Date(memberSince);
-	if (Number.isNaN(d.getTime())) return '—';
+	if (Number.isNaN(d.getTime())) return '-';
 	return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
 /** "Jun 21, 2026": full signup date for the referrals table. */
 function fmtDate(value) {
-	if (!value) return '—';
+	if (!value) return '-';
 	const d = new Date(value);
-	if (Number.isNaN(d.getTime())) return '—';
+	if (Number.isNaN(d.getTime())) return '-';
 	return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
