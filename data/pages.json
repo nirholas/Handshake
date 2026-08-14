@@ -431,6 +431,15 @@
 					"description": "Index of live demos across the platform: viewers, agents, payments, and experiments.",
 					"priority": 0.6,
 					"changefreq": "weekly"
+				},
+				{
+					"path": "/demos/agents",
+					"title": "Agent Interaction Lab",
+					"description": "Fourteen prototypes exploring how a 3D agent physically inhabits a web page: real gravity, page elements as the playground, and the agent reacting to scroll, clicks, and the cursor.",
+					"priority": 0.5,
+					"changefreq": "weekly",
+					"indexable": false,
+					"added": "2026-08-14"
 				}
 			]
 		},
@@ -2731,6 +2740,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/draft-agent-mint",
+					"title": "Docs · Draft Agent Mint",
+					"description": "Every finished reconstruction is stored durably and minted as a draft on-chain agent identity: the Solana leg, the ERC-8004 leg, the flags that arm each one, and how to prove the whole path on devnet.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-08-14"
+				},
+				{
 					"path": "/docs/selfie-to-avatar",
 					"title": "Docs · Selfie to Avatar",
 					"description": "Point your camera at your face and get a rigged 3D avatar in about a minute, free and in the browser. The capture flow, the reconstruction pipeline, and where the avatar goes next.",
@@ -3783,14 +3800,14 @@
 				{
 					"path": "/docs/vaults",
 					"title": "Docs: USDC agent vaults",
-					"description": "A vault lets strangers put real USDC behind one trading agent, on terms the agent's owner publishes up front. The product-level tour (who each surface is for, how vaults sit next to the Arena, the Theater and Swarms) is in trading-arenas.md, under \"Back-an-Agent Vaults\". Read that first.",
+					"description": "A vault lets strangers put real USDC behind one trading agent, on terms the agent's owner publishes up front. The deep reference: every route and who may call it, the share and fee math, the guards in front of a trade, and the public audit ledger.",
 					"priority": 0.7,
 					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/user-wallet",
 					"title": "Docs: Your master wallet",
-					"description": "Every three.ws agent owns a wallet (agent-wallets.md). Separately, every user account can own one custodial wallet of its own: the master wallet. It is the financial hub for the person rather than the bot.",
+					"description": "Every user account can own one custodial wallet: the master wallet, the financial hub for the person rather than the bot. Provision it, read balances, send SOL or any SPL token, fund an agent, and read its on-chain history, with the spend safeguards on each route.",
 					"priority": 0.7,
 					"changefreq": "monthly"
 				},
@@ -3832,7 +3849,7 @@
 				{
 					"path": "/docs/press-kit",
 					"title": "Docs: Press kit",
-					"description": "Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at three lengths, the fast facts, and the rules that govern all of it.",
+					"description": "Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at four lengths, the fast facts, and the rules that govern all of it.",
 					"priority": 0.7,
 					"changefreq": "monthly"
 				},
