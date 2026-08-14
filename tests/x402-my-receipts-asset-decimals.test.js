@@ -2,46 +2,68 @@
  * /api/x402/my-receipts: the amount scale it hands a buyer.
  *
  * A receipt records the settlement `asset` verbatim, so the buyer's client has
- * an atomic amount and an asset address and nothing that says how to divide
- * one by the other. The endpoint resolves that scale server-side from the same
- * env config that builds the 402 accepts, and returns null for anything it does
- * not recognise, at which point the client renders raw atomic units: a $0.001
+ * an atomic amount and an asset address and nothing that says how to divide one
+ * by the other. The endpoint resolves that scale server-side from the same env
+ * config that builds the 402 accepts, and returns null for anything it does not
+ * recognise, at which point the client renders raw atomic units: a $0.001
  * payment reads as "1000".
  *
  * That makes the mapping a coverage problem, not a lookup problem. It shipped
- * covering USDC on Solana, Base, and BSC while the accepts list had grown two
- * more assets (USD₮0 on X Layer, $THREE on the Solana rail), so receipts from
- * either rail came back unscaled. This test derives the expectation from
- * buildExactRequirements rather than restating a list, so the next asset added
- * to an accept fails here instead of silently reaching buyers unscaled.
+ * covering USDC on Solana, Base, and BSC while the accepts had grown two more
+ * assets (USD₮0 on X Layer, $THREE on the Solana rail), so receipts from either
+ * rail came back unscaled and nothing failed.
+ *
+ * So the expectation here is derived, not restated: the accept builders are
+ * scanned for every `asset: env.X` they can emit, and each one must resolve.
+ * Advertising a new asset without teaching my-receipts its decimals fails this
+ * test instead of quietly reaching buyers.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
-// Receiver + fee-payer addresses gate which accepts are advertised at all.
-// Synthetic values: nothing here verifies or settles a payment.
-beforeAll(() => {
-	process.env.X402_PAY_TO_SOLANA ||= 'THREEsyntheticReceiver11111111111111111111111';
-	process.env.X402_FEE_PAYER_SOLANA ||= 'THREEsyntheticFeePayer111111111111111111111111';
-	process.env.X402_RING_SELF_PAY ||= 'true';
-	process.env.X402_PAY_TO_BASE ||= '0x1111111111111111111111111111111111111111';
-	process.env.X402_PAY_TO_BSC ||= '0x2222222222222222222222222222222222222222';
-	process.env.X402_PAY_TO_XLAYER ||= '0x3333333333333333333333333333333333333333';
-});
+import { describe, it, expect } from 'vitest';
 
-const { assetDecimals } = await import('../api/x402/my-receipts.js');
-const { buildExactRequirements } = await import('../api/_lib/x402-spec.js');
-const { env } = await import('../api/_lib/env.js');
+import { assetDecimals } from '../api/x402/my-receipts.js';
+import { env } from '../api/_lib/env.js';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const apiLib = join(here, '..', 'api', '_lib');
+
+// Every module that builds an `accepts[]` entry for a 402 challenge.
+const ACCEPT_BUILDERS = [
+	join(apiLib, 'x402-spec.js'),
+	join(apiLib, 'x402-paid-endpoint.js'),
+	join(apiLib, 'x402-xlayer-okx.js'),
+	join(apiLib, 'x402', 'a2a-server.js'),
+];
+
+function advertisedAssetVars() {
+	const found = new Set();
+	for (const file of ACCEPT_BUILDERS) {
+		const src = readFileSync(file, 'utf8');
+		for (const m of src.matchAll(/asset:\s*env\.([A-Z0-9_]+)/g)) found.add(m[1]);
+	}
+	return [...found].sort();
+}
 
 describe('assetDecimals covers every advertised settlement asset', () => {
-	it('resolves a scale for each asset in the live 402 accepts', () => {
-		const accepts = buildExactRequirements('https://three.ws/api/x402/notify');
-		expect(accepts.length).toBeGreaterThan(0);
+	it('finds the asset env vars the accept builders can emit', () => {
+		const vars = advertisedAssetVars();
+		// A scan that matches nothing would make every assertion below vacuous.
+		expect(vars.length).toBeGreaterThanOrEqual(4);
+		expect(vars).toContain('X402_ASSET_MINT_SOLANA');
+		expect(vars).toContain('X402_ASSET_ADDRESS_XLAYER');
+		expect(vars).toContain('THREE_TOKEN_MINT');
+	});
 
-		const unscaled = accepts
-			.map((a) => a.asset)
-			.filter(Boolean)
-			.filter((asset) => assetDecimals(asset) == null);
+	it('resolves a scale for each of them', () => {
+		const unscaled = advertisedAssetVars()
+			.map((name) => [name, env[name]])
+			.filter(([, address]) => address)
+			.filter(([, address]) => assetDecimals(address) == null)
+			.map(([name]) => name);
 
 		expect(unscaled).toEqual([]);
 	});
