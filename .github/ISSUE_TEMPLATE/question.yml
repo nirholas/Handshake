@@ -1,0 +1,51 @@
+name: Question / integration help
+description: Ask how to wire three.ws into your app, agent, or toolchain.
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask "how do I…" here: wiring an agent into Claude, Cursor, or your own runtime, embedding `<agent-3d>`, paying an x402 endpoint, or picking between approaches.
+        Check the [docs](https://three.ws/docs) first, and for anything private or account-specific email support@three.ws instead.
+        For security vulnerabilities, **do not open an issue** - see our [security policy](https://github.com/nirholas/three.ws/security/policy).
+  - type: textarea
+    id: question
+    attributes:
+      label: What are you trying to do?
+      description: Describe the outcome you want, not just the error. Include the code or config you already tried.
+      placeholder: I want to embed a three.ws avatar in a Next.js app and drive its mood from React state.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the platform is the question about?
+      options:
+        - Web app (viewer / studio / dashboard)
+        - API (api/ functions)
+        - SDK (avatar / payments / protocol / ui)
+        - MCP server
+        - Wallet / payments (x402)
+        - Embedding (`<agent-3d>` web component)
+        - Docs / changelog
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Relevant code, config, or output
+      description: Paste the snippet, request, or error you are working with. This will be rendered as code.
+      render: shell
+    validations:
+      required: false
+  - type: input
+    id: url
+    attributes:
+      label: Related URL or surface
+      description: The page, API route, SDK package, or doc the question is about.
+      placeholder: https://three.ws/docs/web-component
+    validations:
+      required: false

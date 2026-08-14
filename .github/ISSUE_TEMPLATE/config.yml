@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 💬 Discussions & questions
-    url: https://github.com/nirholas/three.ws/discussions
-    about: Ask questions, share builds, and propose ideas with the community.
+  - name: 📧 Private or account-specific help
+    url: mailto:support@three.ws
+    about: Billing, account issues, or anything you would rather not post publicly.
   - name: 🔒 Report a security vulnerability
     url: https://github.com/nirholas/three.ws/security/advisories/new
     about: Privately report a security issue. Please do NOT open a public issue.
