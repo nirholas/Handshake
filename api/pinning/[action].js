@@ -2,72 +2,166 @@ import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import {
+	IPFS_READ_GATEWAYS,
+	ipfsGatewayUrl,
+	ipfsPinningConfigured,
+	pinToIPFS,
+} from '../_lib/ipfs-pin.js';
 
 const MAX_R2_BYTES = 50 * 1024 * 1024;
 const MAX_DATA_URL_BYTES = 10 * 1024 * 1024;
-const CID_RE = /^[a-zA-Z0-9]+$/;
+
+// A CID is base58btc (v0, 46 chars) or base32 (v1, 59+), so the ceiling only has
+// to exclude the pathological. Unbounded, a 5000-character "cid" was accepted:
+// echoed back inside every gateway URL and forwarded into the provider's API on
+// each status call, turning one request into a much larger one for free.
+const CID_RE = /^[a-zA-Z0-9]{16,128}$/;
 
 function isOwnedR2Url(url) {
 	const domain = process.env.S3_PUBLIC_DOMAIN;
 	if (!domain) return false;
-	try {
-		const trimmed = domain.replace(/\/$/, '');
-		return url.startsWith(trimmed + '/');
-	} catch {
-		return false;
-	}
+	const trimmed = domain.replace(/\/$/, '');
+	return url.startsWith(trimmed + '/');
 }
 
-async function pinViaPinata(buf, filename) {
-	const form = new FormData();
-	form.append('file', new Blob([buf]), filename);
-	const resp = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-		method: 'POST',
-		headers: { Authorization: `Bearer ${process.env.PINATA_JWT}` },
-		body: form,
-		signal: AbortSignal.timeout(25000),
-	});
-	if (!resp.ok) {
-		const detail = await resp.text().catch(() => '');
-		throw Object.assign(new Error(`Pinata error ${resp.status}`), { status: 502, detail });
-	}
-	const data = await resp.json();
-	return { cid: data.IpfsHash, provider: 'pinata' };
+/** Every gateway worth handing a caller, from the one tested read list. */
+function gatewayUrlsFor(cid) {
+	return IPFS_READ_GATEWAYS.map((gateway) => `${gateway}${cid}`);
 }
 
-async function pinViaWeb3Storage(buf, filename) {
-	const resp = await fetch('https://api.web3.storage/upload', {
-		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${process.env.WEB3_STORAGE_TOKEN}`,
-			'X-NAME': filename,
-		},
-		body: buf,
-		signal: AbortSignal.timeout(25000),
-	});
-	if (!resp.ok) {
-		const detail = await resp.text().catch(() => '');
-		throw Object.assign(new Error(`Web3.Storage error ${resp.status}`), {
-			status: 502,
-			detail,
+function tooLarge(message) {
+	return Object.assign(new Error(message), { status: 413, code: 'payload_too_large' });
+}
+
+/**
+ * Buffer a response body, refusing to hold more than `maxBytes` at any point.
+ *
+ * A content-length pre-check alone is not a limit: the header is optional and
+ * a source that omits or understates it gets an unbounded read, because the
+ * whole body lands in memory before any post-hoc size check can run. Reading
+ * incrementally and cancelling the moment the running total crosses the cap
+ * keeps peak memory bounded whatever the source sends.
+ */
+async function readCappedBody(resp, maxBytes) {
+	if (Number(resp.headers.get('content-length') || 0) > maxBytes) {
+		throw tooLarge(`source exceeds ${Math.round(maxBytes / (1024 * 1024))} MB limit`);
+	}
+	const reader = resp.body?.getReader();
+	if (!reader) {
+		const buf = Buffer.from(await resp.arrayBuffer());
+		if (buf.byteLength > maxBytes) {
+			throw tooLarge(`source exceeds ${Math.round(maxBytes / (1024 * 1024))} MB limit`);
+		}
+		return buf;
+	}
+	const chunks = [];
+	let total = 0;
+	for (;;) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		total += value.byteLength;
+		if (total > maxBytes) {
+			await reader.cancel().catch(() => {});
+			throw tooLarge(`source exceeds ${Math.round(maxBytes / (1024 * 1024))} MB limit`);
+		}
+		chunks.push(value);
+	}
+	return Buffer.concat(chunks);
+}
+
+/**
+ * The name handed to the pinning provider. On the web3.storage lane it rides an
+ * HTTP header (`X-NAME`), so anything outside a conservative set is dropped
+ * rather than forwarded, and an entirely unusable name falls back to the kind's
+ * default instead of reaching the provider empty.
+ */
+function safeFilename(name, fallback) {
+	const cleaned = String(name || '')
+		.replace(/[^A-Za-z0-9._-]/g, '')
+		.slice(0, 128);
+	return cleaned || fallback;
+}
+
+/**
+ * What gets recorded as the pin's origin.
+ *
+ * A data: URL carries the entire payload, up to 10 MB of it. Persisting that
+ * verbatim would store a second copy of every inline pin in Postgres, in a
+ * column whose only job is to say where the bytes came from, and the database
+ * is the one resource here with a hard storage cap.
+ */
+function sourceUrlForRecord(sourceUrl, byteLength) {
+	if (!sourceUrl.startsWith('data:')) return sourceUrl;
+	const commaIdx = sourceUrl.indexOf(',');
+	return `${sourceUrl.slice(0, commaIdx)},<${byteLength} bytes inline>`;
+}
+
+let pinsTableReady = null;
+
+/**
+ * `create table if not exists` is a no-op after the first call but still costs a
+ * round trip, so it ran on the request path of every single pin. Once per
+ * process is enough; a failure clears the latch so the next request retries.
+ */
+function ensurePinsTable() {
+	if (!pinsTableReady) {
+		pinsTableReady = sql`
+			create table if not exists pins (
+				id         bigserial    primary key,
+				user_id    text         not null,
+				source_url text         not null,
+				cid        text         not null,
+				provider   text         not null,
+				kind       text         not null,
+				created_at timestamptz  not null default now()
+			)
+		`.catch((err) => {
+			pinsTableReady = null;
+			throw err;
 		});
 	}
-	const data = await resp.json();
-	return { cid: data.cid, provider: 'web3.storage' };
+	return pinsTableReady;
 }
 
-async function ensurePinsTable() {
-	await sql`
-		create table if not exists pins (
-			id         bigserial    primary key,
-			user_id    text         not null,
-			source_url text         not null,
-			cid        text         not null,
-			provider   text         not null,
-			kind       text         not null,
-			created_at timestamptz  not null default now()
-		)
-	`;
+/** Ask each configured provider whether it is holding this CID. */
+async function checkProviders(cid) {
+	const pinataJwt = process.env.PINATA_JWT;
+	const w3sToken = process.env.WEB3_STORAGE_TOKEN;
+	const checks = [];
+
+	if (pinataJwt) {
+		checks.push(
+			fetch(
+				`https://api.pinata.cloud/data/pinList?hashContains=${encodeURIComponent(cid)}&status=pinned`,
+				{ headers: { Authorization: `Bearer ${pinataJwt}` }, signal: AbortSignal.timeout(10000) },
+			)
+				.then(async (r) => {
+					if (!r.ok) return null;
+					const data = await r.json();
+					const pinned = (data.rows || []).some((row) => row.ipfs_pin_hash === cid);
+					return pinned ? 'pinata' : null;
+				})
+				.catch(() => null),
+		);
+	}
+
+	if (w3sToken) {
+		checks.push(
+			fetch(`https://api.web3.storage/status/${encodeURIComponent(cid)}`, {
+				headers: { Authorization: `Bearer ${w3sToken}` },
+				signal: AbortSignal.timeout(10000),
+			})
+				.then(async (r) => {
+					if (!r.ok) return null;
+					const data = await r.json();
+					return data.cid === cid ? 'web3.storage' : null;
+				})
+				.catch(() => null),
+		);
+	}
+
+	return (await Promise.all(checks)).filter(Boolean);
 }
 
 export default wrap(async (req, res) => {
@@ -96,9 +190,7 @@ export default wrap(async (req, res) => {
 			return error(res, 400, 'validation_error', 'kind must be "manifest" or "glb"');
 		}
 
-		const pinataJwt = process.env.PINATA_JWT;
-		const w3sToken = process.env.WEB3_STORAGE_TOKEN;
-		if (!pinataJwt && !w3sToken) {
+		if (!ipfsPinningConfigured()) {
 			return error(
 				res,
 				503,
@@ -107,8 +199,9 @@ export default wrap(async (req, res) => {
 			);
 		}
 
+		const defaultName = kind === 'glb' ? 'avatar.glb' : 'manifest.json';
 		let buf;
-		let filename = kind === 'glb' ? 'avatar.glb' : 'manifest.json';
+		let filename = defaultName;
 
 		if (sourceUrl.startsWith('data:')) {
 			const commaIdx = sourceUrl.indexOf(',');
@@ -136,13 +229,12 @@ export default wrap(async (req, res) => {
 				signal: AbortSignal.timeout(8000),
 			});
 			if (!head.ok) return error(res, 400, 'validation_error', 'source URL is not accessible');
-			const contentLength = parseInt(head.headers.get('content-length') || '0', 10);
-			if (contentLength > MAX_R2_BYTES) {
+			if (Number(head.headers.get('content-length') || 0) > MAX_R2_BYTES) {
 				return error(res, 413, 'payload_too_large', 'source exceeds 50 MB limit');
 			}
-			// redirect: 'manual' — the source is prefix-locked to our own R2 domain
-			// and R2 public buckets do not 302; refusing to follow any redirect keeps
-			// a future CDN/front-end change from silently widening the fetch target.
+			// The source is prefix-locked to our own R2 domain and R2 public buckets
+			// do not 302, so refusing to follow any redirect keeps a future CDN or
+			// front-end change from silently widening the fetch target.
 			const fetched = await fetch(sourceUrl, {
 				redirect: 'manual',
 				signal: AbortSignal.timeout(20000),
@@ -151,25 +243,24 @@ export default wrap(async (req, res) => {
 				return error(res, 502, 'fetch_failed', 'source URL returned an unexpected redirect');
 			}
 			if (!fetched.ok) return error(res, 502, 'fetch_failed', 'failed to fetch source URL');
-			buf = Buffer.from(await fetched.arrayBuffer());
-			const urlPath = new URL(sourceUrl).pathname;
-			filename = urlPath.split('/').pop() || filename;
+			buf = await readCappedBody(fetched, MAX_R2_BYTES);
+			filename = safeFilename(new URL(sourceUrl).pathname.split('/').pop(), defaultName);
 		}
 
-		const { cid, provider } = pinataJwt
-			? await pinViaPinata(buf, filename)
-			: await pinViaWeb3Storage(buf, filename);
+		const pinned = await pinToIPFS(buf, filename);
+		const { cid, provider } = pinned;
 
 		await ensurePinsTable();
 		await sql`
 			insert into pins (user_id, source_url, cid, provider, kind)
-			values (${userId}, ${sourceUrl}, ${cid}, ${provider}, ${kind})
+			values (${userId}, ${sourceUrlForRecord(sourceUrl, buf.byteLength)}, ${cid}, ${provider}, ${kind})
 		`;
 
 		return json(res, 200, {
 			ok: true,
 			cid,
-			gatewayUrl: `https://ipfs.io/ipfs/${cid}`,
+			gatewayUrl: ipfsGatewayUrl(cid),
+			gatewayUrls: gatewayUrlsFor(cid),
 			provider,
 		});
 	}
@@ -188,59 +279,37 @@ export default wrap(async (req, res) => {
 				res,
 				400,
 				'validation_error',
-				'cid query parameter is required and must be alphanumeric',
+				'cid query parameter is required and must be 16 to 128 alphanumeric characters',
 			);
 		}
 
-		const pinataJwt = process.env.PINATA_JWT;
-		const w3sToken = process.env.WEB3_STORAGE_TOKEN;
-		const checks = [];
-
-		if (pinataJwt) {
-			checks.push(
-				fetch(
-					`https://api.pinata.cloud/data/pinList?hashContains=${encodeURIComponent(cid)}&status=pinned`,
-					{ headers: { Authorization: `Bearer ${pinataJwt}` } },
-				)
-					.then(async (r) => {
-						if (!r.ok) return null;
-						const data = await r.json();
-						const pinned = (data.rows || []).some((row) => row.ipfs_pin_hash === cid);
-						return pinned ? 'pinata' : null;
-					})
-					.catch(() => null),
+		// With no provider configured there is nothing to ask, and answering
+		// `pinned: false` would state as fact something this deployment cannot
+		// know: an unconfigured checker and a genuinely unpinned CID are not the
+		// same answer, and a caller that acts on the second (re-pin, warn the
+		// user, fail a manifest attestation) must not be handed the first.
+		if (!ipfsPinningConfigured()) {
+			return error(
+				res,
+				503,
+				'pinning_unconfigured',
+				'no pinning provider configured; set PINATA_JWT or WEB3_STORAGE_TOKEN',
 			);
 		}
 
-		if (w3sToken) {
-			checks.push(
-				fetch(`https://api.web3.storage/status/${encodeURIComponent(cid)}`, {
-					headers: { Authorization: `Bearer ${w3sToken}` },
-				})
-					.then(async (r) => {
-						if (!r.ok) return null;
-						const data = await r.json();
-						return data.cid === cid ? 'web3.storage' : null;
-					})
-					.catch(() => null),
-			);
-		}
-
-		const providerResults = await Promise.all(checks);
-		const activeProviders = providerResults.filter(Boolean);
-		const pinned = activeProviders.length > 0;
+		const activeProviders = await checkProviders(cid);
 
 		return json(res, 200, {
 			cid,
-			pinned,
+			pinned: activeProviders.length > 0,
 			provider: activeProviders[0] || null,
-			gatewayUrls: [
-				`https://ipfs.io/ipfs/${cid}`,
-				`https://flk-ipfs.xyz/ipfs/${cid}`,
-				`https://dweb.link/ipfs/${cid}`,
-			],
+			gatewayUrls: gatewayUrlsFor(cid),
 		});
 	}
 
+	// CORS before the 404 so a browser caller reads the error envelope instead of
+	// an opaque network failure, and so a preflight for a mistyped action fails
+	// with a message rather than silence.
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	return error(res, 404, 'not_found', 'unknown pinning action');
 });

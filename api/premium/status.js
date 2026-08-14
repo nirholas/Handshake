@@ -5,11 +5,11 @@
 // purchase history), so it is gated behind wallet-ownership proof: the caller
 // signs `three.ws premium status\nWallet: <wallet>\nIssued At: <iso>` with the
 // wallet's key (SIWS/ed25519), same class of check the sibling
-// /api/x402/my-receipts uses. Key prefixes and usage counts only — the
+// /api/x402/my-receipts uses. Key prefixes and usage counts only: the
 // plaintext key is never re-derivable.
 //
 // Unauthenticated callers (no/invalid signature) get only the boolean pass
-// state { active, pass } — wallet addresses are public, so the sensitive
+// state { active, pass }. Wallet addresses are public, so the sensitive
 // fields must not leak to anyone who can name a wallet.
 
 import { cors, json, error, method, wrap, rateLimited } from '../_lib/http.js';

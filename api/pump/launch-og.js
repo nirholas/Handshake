@@ -21,7 +21,7 @@
  *   footer     — three.ws branding
  */
 
-import { cors, wrap } from '../_lib/http.js';
+import { cors, method, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -55,6 +55,16 @@ function fmtNum(v) {
 	if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
 	if (n < 0.001) return `$${n.toExponential(2)}`;
 	return `$${n.toFixed(4)}`;
+}
+
+// pump_coin_intel stores organic_score and bundle_score as 0..1 fractions (the
+// enrichment writes ratios, e.g. 0.4279), while the card draws them as percent
+// bars. Convert once, here, so a 43% organic launch renders a 43% bar instead of
+// the 0%/1px sliver it drew when the raw fraction was fed straight to the gauge.
+function scoreToPercent(v) {
+	const n = Number(v);
+	if (!Number.isFinite(n) || n <= 0) return 0;
+	return Math.min(100, n * 100);
 }
 
 function qualityColor(score) {
@@ -119,30 +129,41 @@ async function buildCardData(mint) {
 	const category = intel?.category || '';
 	const isThreeWsLaunch = !!reg;
 
-	// Fetch live price from pump.fun if no outcome (coin is still active).
-	let livePrice = null;
-	let liveMcap = null;
-	if (!outcome?.graduated && !outcome?.rugged) {
-		try {
-			const r = await fetch(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, {
-				headers: { accept: 'application/json' },
-				signal: AbortSignal.timeout(3000),
-			});
-			if (r.ok) {
-				const d = await r.json();
-				livePrice = d?.price_in_usd ?? d?.market_cap_in_usd ? null : null;
-				liveMcap = d?.market_cap_in_usd ?? null;
-			}
-		} catch { /* non-fatal */ }
-	}
+	// Live USD market cap from pump.fun, but only while the coin is still active:
+	// a graduated or rugged coin reads its number off the recorded outcome instead.
+	// The field is `usd_market_cap` (with `market_cap_usd` as the v2 alias); the
+	// card previously asked for a `market_cap_in_usd` key pump.fun does not emit,
+	// so MKT CAP silently never rendered for a live coin.
+	const wantsLiveMcap = !outcome?.graduated && !outcome?.rugged;
 
-	// Fetch logo in parallel with the live price lookup.
-	const [logoBase64] = await Promise.all([fetchLogoBase64(imageUri)]);
+	// Genuinely concurrent: the logo fetch and the market-cap lookup are two
+	// independent 3s-bounded round-trips, so the card costs one of them, not both.
+	const [logoBase64, liveMcap] = await Promise.all([
+		fetchLogoBase64(imageUri),
+		wantsLiveMcap ? fetchLiveMarketCap(mint) : Promise.resolve(null),
+	]);
 
-	return { name, symbol, imageUri, logoBase64, qualityScore, category, isThreeWsLaunch, intel, outcome, livePrice, liveMcap };
+	return { name, symbol, imageUri, logoBase64, qualityScore, category, isThreeWsLaunch, intel, outcome, liveMcap };
 }
 
-function renderCard(mint, d) {
+// Live USD market cap for a coin still on the curve. Any failure returns null and
+// the card falls back to the recorded outcome numbers, or omits the block.
+async function fetchLiveMarketCap(mint) {
+	try {
+		const r = await fetch(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, {
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(3000),
+		});
+		if (!r.ok) return null;
+		const d = await r.json();
+		const mcap = Number(d?.usd_market_cap ?? d?.market_cap_usd);
+		return Number.isFinite(mcap) && mcap > 0 ? mcap : null;
+	} catch {
+		return null;
+	}
+}
+
+export function renderCard(mint, d) {
 	const { name, symbol, logoBase64, qualityScore, category, isThreeWsLaunch, intel, outcome, liveMcap } = d;
 	const displayName = trunc(name || 'Unknown coin', 36);
 	const displaySym = symbol ? `$${symbol.toUpperCase()}` : '';
@@ -166,11 +187,12 @@ function renderCard(mint, d) {
 		<text x="908" y="552" fill="#22c55e" font-size="20" font-weight="500">LIVE</text>`;
 	}
 
-	// Organic vs bundle gauge bar (230 px wide).
-	const organic = Number(intel?.organic_score ?? 0);
+	// Organic vs bundle gauge bar (230 px wide, so 2.3 px per percentage point).
+	const organic = scoreToPercent(intel?.organic_score);
 	const organicW = Math.round(organic * 2.3);
-	const bundle = Number(intel?.bundle_score ?? 0);
-	const bundleColor = bundle > 0.3 ? '#ef4444' : '#f59e0b';
+	const bundle = scoreToPercent(intel?.bundle_score);
+	// 0.3 is the coordinated-launch threshold api/_lib/market-realness.js uses.
+	const bundleColor = bundle > 30 ? '#ef4444' : '#f59e0b';
 
 	// Horizontal divider y-position.
 	const imgBlock = logoBase64
@@ -273,6 +295,10 @@ function renderCard(mint, d) {
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Crawlers fetch og:image with GET, and several (Slack, iMessage) HEAD it
+	// first; nothing else should be able to spend a DB read plus two upstream
+	// round-trips on this route.
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const mint = (url.searchParams.get('mint') || '').trim();
@@ -289,7 +315,7 @@ export default wrap(async (req, res) => {
 		data = await buildCardData(mint);
 	} catch {
 		// Hard DB failure — serve a branded fallback card rather than 500.
-		data = { name: '', symbol: '', logoBase64: null, qualityScore: null, category: '', isThreeWsLaunch: false, intel: null, outcome: null, livePrice: null, liveMcap: null };
+		data = { name: '', symbol: '', logoBase64: null, qualityScore: null, category: '', isThreeWsLaunch: false, intel: null, outcome: null, liveMcap: null };
 	}
 
 	const svg = renderCard(mint, data);

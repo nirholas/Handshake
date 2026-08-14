@@ -1,10 +1,10 @@
-// GET /api/premium/plans — every premium tier, priced live in every accepted asset.
+// GET /api/premium/plans: every premium tier, priced live in every accepted asset.
 //
 // Public and cacheable (60 s): the dashboard's pricing cards render from this.
 // Three self-serve tiers (developer / pro / enterprise) differ on the enforced
 // per-key rate limit and licensing; every tier is payable in $THREE (at the
 // platform discount), SOL, or USDC on Solana. Each asset is priced
-// independently and a down oracle marks only that asset unavailable — USDC is
+// independently and a down oracle marks only that asset unavailable. USDC is
 // parity and can never fail, so there is always at least one payable rail.
 
 import { cors, json, method, wrap } from '../_lib/http.js';
@@ -61,7 +61,7 @@ export default wrap(async (req, res) => {
 				resources: PREMIUM_RESOURCES,
 				summary:
 					'Unmetered news-archive search at your tier’s rate limit via an x402_live_ API key ' +
-					'or a wallet signature (SIWX) — no per-call payments while the pass is active. ' +
+					'or a wallet signature (SIWX), with no per-call payments while the pass is active. ' +
 					'Pro and Enterprise include commercial use; Enterprise includes priority support ' +
 					'and bulk corpus arrangements.',
 			},

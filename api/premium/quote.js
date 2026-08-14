@@ -1,4 +1,4 @@
-// POST /api/premium/quote — lock a price and get the unsigned payment tx.
+// POST /api/premium/quote: lock a price and get the unsigned payment tx.
 //
 // body: { asset: 'THREE' | 'SOL' | 'USDC', wallet: '<base58>',
 //         plan?: 'developer' | 'pro' | 'enterprise' }   (default developer)
@@ -29,7 +29,7 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'bad_asset', 'asset must be THREE, SOL, or USDC');
 	}
 
-	// Session is optional — a raw-API buyer quotes with just a wallet; a
+	// Session is optional: a raw-API buyer quotes with just a wallet; a
 	// dashboard buyer gets the pass linked to their account for key management.
 	let userId = null;
 	try {
