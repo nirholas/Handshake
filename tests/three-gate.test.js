@@ -243,7 +243,15 @@ describe('<three-gate> — lifecycle & states', () => {
 		// Progress = held_usd (10) / required min_usd (25) = 40%.
 		const fill = root.querySelector('.tg-prog-fill');
 		expect(fill.getAttribute('style')).toContain('width:40%');
-		expect(root.querySelector('.tg-prog-cap').textContent).toMatch(/40% there/);
+		// The cap counts up from 0 with requestAnimationFrame (ui-juice `countUp`), so
+		// the two microtask ticks in `flush` land mid-animation whenever the machine is
+		// busy enough for a frame to fire first. Wait for the settled copy instead of
+		// racing the frame: the assertion is that it ARRIVES at "40% there", not that it
+		// skips the animation.
+		await vi.waitFor(
+			() => expect(root.querySelector('.tg-prog-cap').textContent).toMatch(/40% there/),
+			{ timeout: 4000, interval: 20 },
+		);
 
 		// Get $THREE → a real Jupiter swap URL for the canonical mint.
 		const get = root.querySelector('[data-tg-get]');

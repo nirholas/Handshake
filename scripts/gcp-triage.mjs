@@ -668,7 +668,7 @@ async function probeCronDrift() {
 	const sample = cats.map(([label, rows]) => `${label} (${rows.length}): ${rows.slice(0, 5).map((x) => x.path || x.id).join(', ')}`).join('\n');
 	return { status: 'findings', note: cats.map(([l, rows]) => `${rows.length} ${l}`).join(', '), findings: [deepFinding('cron-drift', 'env-action', 'cron declarations drifted from Cloud Scheduler', {
 		count: cats.reduce((n, [, rows]) => n + rows.length, 0), sample,
-		action: 'Re-sync Cloud Scheduler from vercel.json with node scripts/create-gcp-scheduler.mjs (config-only). A NOT ENABLED job can be a deliberate incident hold; confirm before resuming it. Invalid or duplicate declarations are code fixes in vercel.json.',
+		action: 'Re-sync Cloud Scheduler from vercel.json with node scripts/create-gcp-scheduler.mjs. That is config-only and leaves run state alone, so a missing job is created ENABLED and a mismatched schedule is corrected without disturbing the rest of the fleet. A NOT ENABLED job can be a deliberate incident hold: resume that one job by name (gcloud scheduler jobs resume cron--api-cron-<name>, note the double hyphen) rather than passing --resume, which restarts every job. Invalid or duplicate declarations are code fixes in vercel.json.',
 	})] };
 }
 
