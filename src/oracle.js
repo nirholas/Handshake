@@ -948,6 +948,7 @@ function coinCard(it, watched = new Set()) {
 			${it.smart_wallet_count ? `<span class="chip sm"><b>${it.smart_wallet_count}</b> smart in</span>` : ''}
 			${badges}
 			${oddsChip(it)}
+			${outcomeChip(it)}
 			${it.coin_first_seen_at ? `<span class="chip" title="Launch age — first seen on pump.fun">age <b>${ago(it.coin_first_seen_at)}</b></span>` : ''}
 			<span class="chip" title="When Oracle last scored this launch">scored ${ago(it.scored_at)} ago</span>
 		</div>`;
@@ -1410,6 +1411,37 @@ async function loadEdge() {
 	renderEdge();
 }
 
+/**
+ * Whether the ladder is ordered, said honestly. The old copy asserted "the win
+ * rate climbs with the score at every band, the ranking is calibrated, not
+ * noise" whenever the API returned monotonic:true, and the API returned true for
+ * any ladder whose dips stayed under 5 points. It dipped by more than that, so
+ * the page shipped a claim its own table contradicted. The API now counts an
+ * inversion only where the 95% intervals are disjoint, and names them, so this
+ * can quote the specific bands that break the order instead of hand-waving.
+ */
+function ladderLine(edge) {
+	const inv = edge?.ladder?.clean_win?.inversions || [];
+	if (edge?.monotonic) return 'And the win rate climbs with the score at every band we can measure: the ranking is calibrated, not noise.';
+	if (!inv.length) return 'The ladder is not yet ordered end to end; treat the middle bands with caution.';
+	const worst = inv[0];
+	return `The ladder is not ordered end to end: the <b>${esc(worst.band)}</b> band wins <b>${worst.realized}%</b> against <b>${worst.below_realized}%</b> for <b>${esc(worst.below_band)}</b>${inv.length > 1 ? `, and ${inv.length - 1} other pair${inv.length > 2 ? 's' : ''} invert` : ''}. Only the top band is a clean separation so far.`;
+}
+
+/**
+ * The other half of the truth: the engine was fitted to predict a 3x run or a
+ * graduation, judged whether or not the coin later collapsed, and the headline
+ * above grades it on the stricter question a holder cares about. Both numbers
+ * are real and they are far apart, so the page states which is which instead of
+ * letting one stand in for the other.
+ */
+function spikeLine(edge) {
+	if (edge?.prime_spike_rate == null) return '';
+	const rug = edge.prime_rug_rate;
+	const mult = edge.spike_edge_multiple;
+	return `<p class="edge-hero-sub">On the event the model was actually fitted to predict, a 3× run or a graduation, <b style="color:var(--ink)">${edge.prime_spike_rate}%</b> of Prime calls hit${edge.baseline_spike_rate != null ? ` against <b style="color:var(--ink)">${edge.baseline_spike_rate}%</b> for a random launch` : ''}${mult ? ` (<b style="color:var(--ink)">${mult}×</b>)` : ''}.${rug != null ? ` ${rug}% of them collapsed afterwards anyway, which is why the win rate above is the lower number: conviction ranks the odds of a run, never the odds of a safe hold.` : ''}</p>`;
+}
+
 function renderEdge() {
 	const wrap = $('#edgeWrap');
 	const bt = _backtest;
@@ -1443,8 +1475,9 @@ function renderEdge() {
 			<div class="edge-hero${beats ? '' : ' thin'}">
 				<p class="edge-hero-claim">Prime calls win <b class="win">${edge.prime_win_rate}%</b> of the time${beats ? `, vs <b>${edge.baseline_win_rate}%</b> for a coin picked at random` : ''}.</p>
 				<p class="edge-hero-sub">${beats
-					? `That's a <b style="color:var(--ink)">+${lift} point</b> lift over blind buying${mult ? ` — <b style="color:var(--ink)">${mult}×</b> the base rate` : ''}. ${mono ? 'And the win rate climbs with the score at every band — the ranking is calibrated, not noise.' : 'The ladder isn\'t fully monotonic yet — treat lower bands with caution.'}`
+					? `That's a <b style="color:var(--ink)">+${lift} point</b> lift over blind buying${mult ? ` — <b style="color:var(--ink)">${mult}×</b> the base rate` : ''}. ${ladderLine(edge)}`
 					: `Conviction isn't beating the market over this window yet. We show it anyway — no cherry-picking.`}</p>
+				${spikeLine(edge)}
 				<div class="edge-hero-metrics">
 					<span class="edge-chip ${beats ? 'ok' : ''}"><b class="${beats ? 'up' : ''}">${lift != null ? (lift >= 0 ? '+' : '') + lift + 'pt' : '—'}</b><span>edge lift</span></span>
 					${mult ? `<span class="edge-chip"><b>${mult}×</b><span>vs base rate</span></span>` : ''}

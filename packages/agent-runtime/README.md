@@ -132,11 +132,21 @@ When the user approves a pending call, continue with
 ```js
 import { computeEntryHash, verifyChain } from '@three-ws/agent-runtime';
 
-const rows = await loadAgentLedger(agentId); // ordered rows from your store
+// Each row is a ledger entry plus the two chain columns: `entryHash`
+// (computeEntryHash(entry, prevHash)) and `prevHash`, the first seeded with
+// LEDGER_GENESIS_HASH. verifyChain sorts by `seq`, so store order is fine.
+const rows = await loadAgentLedger(agentId);
 const result = verifyChain(rows);
-result.valid;      // false if any historical row was edited or deleted
-result.brokenAt;   // exact index where the chain first breaks
+result.valid;         // false if any historical row was edited or deleted
+result.brokenAtIndex; // index of the first broken link, -1 when the chain is intact
+result.brokenAtSeq;   // that row's `seq`, or null when intact
+result.reason;        // why it broke (null when intact)
 ```
+
+The hashed fields are fixed and ordered (`LEDGER_CANONICAL_FIELD_ORDER`:
+`seq, ts, userId, agentId, event, target, amountWei, valueUsd, txHash, reason,
+balanceBeforeWei, balanceAfterWei, network, detail`), so editing any one of
+them after the fact breaks that row's link and every link after it.
 
 ## Registering your tools
 

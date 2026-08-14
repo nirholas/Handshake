@@ -78,13 +78,17 @@ score = piecewise-linear map of p   # anchors: 5% -> 34, 12% -> 56, 30% -> 72, 5
 score = min(score, 45 if serial-rugger creator)
 ```
 
-The tier ladder is unchanged in public shape, but each boundary now states a measured probability:
+The tier ladder is unchanged in public shape, but each boundary now states a measured probability, and production has since graded it. The rates below are the live reading over the 61,916 scored coins the market had resolved as of 2026-08-14, measured against the event the score actually predicts (graduates, or peaks at 3x or more), not against the stricter holder-honest win:
 
-- **Prime, 86 and up.** P(good) at least 55 percent. On holdout this band observed 72.7 percent good.
-- **Strong, 72 to 85.** P(good) at least 30 percent (observed 36.5 percent).
-- **Lean, 56 to 71.** P(good) at least 12 percent, above base rate but not decisive (observed 16.8 percent).
-- **Watch, 34 to 55.** P(good) at least 5 percent. Below base rate; no edge.
-- **Avoid, below 34.** P(good) under 5 percent (observed 2.5 percent good, 96.3 percent rugged).
+| Tier | Score | Claims | Observed in production | n | vs base |
+| --- | --- | --- | --- | --- | --- |
+| **Prime** | 86 and up | P at least 55 percent | 68.4 percent | 1,032 | 6.5x |
+| **Strong** | 72 to 85 | P at least 30 percent | 31.8 percent | 968 | 3.0x |
+| **Lean** | 56 to 71 | P at least 12 percent | 20.7 percent | 3,717 | 2.0x |
+| **Watch** | 34 to 55 | P at least 5 percent | 12.0 percent | 11,876 | 1.1x |
+| **Avoid** | below 34 | P under 5 percent | 7.5 percent | 44,323 | 0.7x |
+
+Monotone, separated, and honest at every rung, which is why the ladder stays where it is. Every tier clears the probability it claims. The ladder lives in one place, `TIERS` and `SCORE_ANCHORS` in `api/_lib/oracle/conviction.js`, so the boundaries the API returns and the ones the UI paints can never disagree.
 
 Only prime and strong are act signals. A conviction engine that likes everything is a hype engine.
 
@@ -160,7 +164,16 @@ A score you cannot audit is an opinion. Oracle grades itself in public, and the 
 
 **Outcome grading.** Once the data brain labels a coin's ground truth (graduated, rugged, ATH multiple), every agent action on that coin is settled: did the conviction call pay off, what was the peak multiple, what was the realized PnL. A scored coin is a win if it graduated, or reached a 2 times or greater ATH multiple without rugging and without marking below half of entry; a loss if it rugged, marked below 0.5 times, or peaked below 1.2 times — loss conditions outrank a peak-based win, because a 2× wick on a position that then went to zero was exit liquidity, not a win; flat in between. Realized PnL is marked to market as `size · (current_mc / entry_mc − 1)`. This turns the action ledger into an honest win-rate record.
 
-**The backtest** at `/api/oracle/backtest` joins what the engine scored against what actually happened and returns hit-rate stats per tier. Only coins with a resolved outcome count; open positions are excluded. This is the honest answer to "does it actually work," updated continuously. It publishes four things: win rate by tier with a 95 percent Wilson confidence interval; a calibration ladder bucketing scores 0 to 10, up to 90 to 100 and comparing each bucket's realized win rate to what it predicts; a Brier score (mean squared error of score/100 against the binary outcome, lower is better, 0.25 is a coin flip); and the edge multiple, prime's win rate over the base rate, with a monotonicity check across tiers.
+**Two questions, never conflated.** Grading has to say which question it answers, because there are two and they have different answers. The **trained event** (`PREDICTED_EVENT` in `api/_lib/oracle/conviction.js`, id `spike_or_graduate`) is what the model was fitted on and what the score claims: the coin graduates, or peaks at 3x or more above its market cap at first sight. A later collapse does not undo a hit; conviction ranks the odds of a run, not the odds of a safe hold. The **holder-honest win** is the stricter, rug-aware definition in the paragraph above, and it is the right number for someone actually holding. Every surface that shows a realized rate now states which of the two it is, and the backtest ships both side by side. Presenting one as the other is what made a working engine read as a broken one.
+
+**The backtest** at `/api/oracle/backtest` joins what the engine scored against what actually happened and returns hit-rate stats per tier. Only coins with a resolved outcome count; open positions are excluded. This is the honest answer to "does it actually work," updated continuously. It publishes:
+
+- **Win rate by tier**, with a 95 percent Wilson confidence interval, for both definitions (`ci` on the holder-honest win, `spike_ci` on the trained event).
+- **A calibration ladder** in bands of 10. The band's `predicted` is the sample-weighted mean of the probability each score in it actually claims, computed with `probabilityFromScore()`. This matters: the 0-100 score line is **not** a percentage (86 claims P=0.55, 34 claims P=0.05), and every table we shipped before 2026-08-14 read `score/100` as the claim, overstating the engine's own confidence by up to 4x and making a calibrated ranking look wildly overconfident. Bands are assembled from a per-score aggregate rather than a band midpoint, so the claim tracks where the coins actually sit.
+- **A Brier score** (`brier_of` names the event, the trained one), computed per exact score against its own claimed probability rather than against a band midpoint, so it is exact. Lower is better; 0.25 is a coin flip.
+- **The edge multiple**, prime's rate over the base rate, and a monotonicity check. The ladder check counts an inversion only when two bands' 95 percent intervals are **disjoint**: a visible dip inside overlapping intervals is sampling noise, and the previous check both tolerated real inversions and reported `monotonic: true` over them.
+
+During a database outage the endpoint answers `503` rather than an empty record, so "no wins yet" can never be a dressed-up outage.
 
 **The wins gallery** at `/api/oracle/wins` shows proven calls filtered by period, tier, and minimum ATH multiple. It defaults to called tiers only (Lean, Strong, Prime) — a Watch or Avoid coin that mooned is market context, not proof of edge; pass `tier=all` to browse everything scored.
 
