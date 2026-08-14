@@ -65,7 +65,12 @@ export function normalizeForgeError(raw) {
 /** @type {Array<{ id: string, label: string, test: RegExp }>} */
 const CLASSES = [
 	{ id: 'timeout', label: 'timed out before the lane returned', test: /\btimed out\b|\btimeout\b|deadline exceeded|etimedout/ },
-	{ id: 'lost_task', label: 'lane lost the task (poll found nothing)', test: /task not found|prediction not found|job not found|unknown task|no such task|missing task/ },
+	// The two dominant real shapes both mean "the lane lost the job", and both
+	// used to land elsewhere: the self-host workers' own orphan reaper wording
+	// (workers/model-*/main.py) fell through to `other`, and NVIDIA's
+	// "NVCF request not found or expired" read as a generic 404. Measured on
+	// 2026-08-14 they were 19 of the prior week's 23 failures.
+	{ id: 'lost_task', label: 'lane lost the task (poll found nothing)', test: /task not found|prediction not found|job not found|request not found|unknown task|no such task|missing task|orphaned/ },
 	{ id: 'aborted', label: 'request aborted mid-flight', test: /\baborted\b|abortsignal|operation was canceled|canceled by (the )?client/ },
 	{ id: 'out_of_memory', label: 'worker ran out of memory', test: /out of memory|\boom\b|cuda out of memory|killed \(signal 9\)|exit 144/ },
 	{ id: 'rate_limited', label: 'lane rate limited or over quota', test: /rate limit|too many requests|\b429\b|quota exceeded|over quota/ },

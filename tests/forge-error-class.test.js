@@ -40,6 +40,16 @@ describe('classifyForgeError', () => {
 		expect(idOf('upstream returned 404 for the asset')).toBe('not_found_4xx');
 	});
 
+	// The two messages that actually dominate the ledger, verbatim from
+	// production on 2026-08-14 (19 of that week's 23 failures). Both mean the
+	// lane lost the job; neither matched before they were measured.
+	it('reads the real production lost-task wordings as lost_task', () => {
+		expect(idOf(
+			'task orphaned: no progress within 30 minutes (runner instance likely restarted mid-job); retry the request',
+		)).toBe('lost_task');
+		expect(idOf('NVCF request not found or expired')).toBe('lost_task');
+	});
+
 	it('classifies the transport and vendor failures forge actually records', () => {
 		expect(idOf('upstream returned 502 Bad Gateway')).toBe('upstream_5xx');
 		expect(idOf('service unavailable')).toBe('upstream_5xx');

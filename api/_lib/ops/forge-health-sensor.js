@@ -12,7 +12,12 @@
 // pages instead of hiding.
 //
 // Metric: done / (done + failed) over a rolling window. Still-running and queued
-// rows are excluded (not yet an outcome). The window is 6h because forge volume
+// rows are excluded (not yet an outcome), and so are attempts that were
+// automatically re-dispatched to another lane (`superseded_by IS NOT NULL`):
+// the successor row carries that same request to its real outcome, so counting
+// the attempt too would page on the failover machinery working. Measured on
+// 2026-08-14, 13 of the 14 trellis_selfhost orphan failures in the prior week
+// were recovered that way and every one of them counted against the lane here. The window is 6h because forge volume
 // is modest (~7 image jobs/hour) — long enough to carry a judge-able sample and
 // smooth the bursty failure pattern, short enough to surface a sustained
 // regression. Below MIN_ATTEMPTS the verdict is `unknown` (neutral, never pages).
@@ -81,7 +86,7 @@ export function classifyForgeBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = {
 		return {
 			status: 'unknown',
 			done, failed, attempts, rate: null, worstBackend, worstPath, topReason,
-			detail: `only ${attempts} finished generations in ${WINDOW_INTERVAL} — too few to judge`,
+			detail: `only ${attempts} finished generations in ${WINDOW_INTERVAL}, too few to judge`,
 		};
 	}
 
@@ -130,6 +135,7 @@ export async function gatherForgeHealth() {
 				       count(*)::int AS n
 				FROM forge_creations
 				WHERE created_at >= now() - ${WINDOW_INTERVAL}::interval
+				  AND superseded_by IS NULL
 				GROUP BY status, backend, path, reason
 			`
 		);

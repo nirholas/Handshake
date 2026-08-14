@@ -34,7 +34,13 @@
 import { sql } from '../_lib/db.js';
 import { cors, json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
-import { materializeCreation, markFailed, forgeStoreEnabled, createCreation } from '../_lib/forge-store.js';
+import {
+	materializeCreation,
+	markFailed,
+	markSupersededBy,
+	forgeStoreEnabled,
+	createCreation,
+} from '../_lib/forge-store.js';
 import { notifyForgeComplete, notifyForgeFailed } from '../_lib/forge-notify.js';
 import { createRegenProvider as createGcpProvider } from '../_providers/gcp.js';
 import { createNvidiaProvider } from '../_providers/nvidia.js';
@@ -148,6 +154,10 @@ export function decideFailedSweep({
 // resubmit to the next healthy lane instead. The successor gets its own
 // creation row (same client/user), so this same cron sweeps it to completion
 // and the completion notification still fires for a model, not a failure.
+//
+// Returns `{ successorId }` when the request now continues on another lane (the
+// caller links the two rows so the ledger shows a recovery, not a loss), or
+// null when nothing was redispatched.
 async function tryCronRedispatch(row, ageMinutes) {
 	const prior = await readCronHop(row.replicate_job_id);
 	const hop = prior ? prior.hop : 0;
@@ -157,10 +167,10 @@ async function tryCronRedispatch(row, ageMinutes) {
 		hasReferenceImage: Boolean(row.preview_image_url),
 		path: row.path,
 	});
-	if (decision !== 'redispatch') return false;
+	if (decision !== 'redispatch') return null;
 	const attempted = [...new Set([...(prior?.attempted || []), row.backend].filter(Boolean))];
 	const nextLane = await pickRedispatchLane({ attempted });
-	if (!nextLane) return false;
+	if (!nextLane) return null;
 	try {
 		const submitted = await submitFailoverJob({
 			backend: nextLane,
@@ -172,7 +182,7 @@ async function tryCronRedispatch(row, ageMinutes) {
 		// The redispatch reconstructs from the primary stored view, so a
 		// multi-view original degrades visibly (views_used: 1), never silently:
 		// the same provenance contract as the attended failover.
-		await createCreation({
+		const successorId = await createCreation({
 			clientKey: row.client_key,
 			userId: row.user_id ?? null,
 			prompt: row.prompt,
@@ -197,10 +207,10 @@ async function tryCronRedispatch(row, ageMinutes) {
 		console.warn(
 			`[forge-finalize] job failed on ${row.backend}; unattended auto-failover #${hop + 1} → ${nextLane}`,
 		);
-		return true;
+		return { successorId: successorId ?? null };
 	} catch (err) {
 		console.warn(`[forge-finalize] redispatch failed: ${err?.message || err}`);
-		return false;
+		return null;
 	}
 }
 
@@ -282,12 +292,24 @@ export default wrapCron(async (req, res) => {
 					continue;
 				}
 				if (row.backend) await markLaneUnhealthy(row.backend).catch(() => {});
-				if (await tryCronRedispatch(row, ageMinutes)) {
+				const redispatched = await tryCronRedispatch(row, ageMinutes);
+				if (redispatched) {
 					await markFailed({
 						replicateJobId: row.replicate_job_id,
 						clientKey: row.client_key,
 						error: status.error || 'generation failed',
 					});
+					// Link the attempt to its successor so the ledger reads as a
+					// recovery: without it the health sensor and the error report both
+					// count this row as a user-visible loss, when the request is in
+					// fact still running on another lane.
+					if (redispatched.successorId) {
+						await markSupersededBy({
+							replicateJobId: row.replicate_job_id,
+							clientKey: row.client_key,
+							successorId: redispatched.successorId,
+						});
+					}
 					out.failed_over++;
 					// No failure notification: the successor row carries the job on,
 					// and its completion (or terminal failure) notifies instead.

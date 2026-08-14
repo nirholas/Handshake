@@ -88,6 +88,7 @@ import {
 	createCreation,
 	materializeCreation,
 	markFailed,
+	markSupersededBy,
 	findByJob,
 } from './_lib/forge-store.js';
 import { getSessionUser } from './_lib/auth.js';
@@ -2948,7 +2949,7 @@ async function pollJob(req, res, jobId) {
 					// and the success path materializes into the store as usual. The
 					// redispatch reconstructs from the primary stored view, so a
 					// multi-view original degrades visibly (views_used: 1), never silently.
-					await createCreation({
+					const successorId = await createCreation({
 						clientKey,
 						userId: await sessionUserIdFromReq(req),
 						ipHash: hashIp(clientIp(req)),
@@ -2971,6 +2972,12 @@ async function pollJob(req, res, jobId) {
 						attempted,
 					});
 					if (bound) {
+						// Link the failed attempt to the successor now that the chain is
+						// durable, so the outcome ledger records a recovery rather than a
+						// loss (the health sensor and npm run forge:errors both read it).
+						if (successorId) {
+							await markSupersededBy({ replicateJobId: upstreamId, clientKey, successorId });
+						}
 						console.warn(
 							`[forge] job failed on ${failedBackend}; auto-failover #${hop + 1} → ${nextLane}`,
 						);

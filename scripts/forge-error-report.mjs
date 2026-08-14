@@ -16,6 +16,7 @@
  *   node scripts/forge-error-report.mjs --days 30
  *   node scripts/forge-error-report.mjs --days 7 --json
  *   node scripts/forge-error-report.mjs --class lost_task   # every message in one class
+ *   node scripts/forge-error-report.mjs --include-recovered # count failed-over attempts too
  *
  * Reads DATABASE_URL from .env.local, then .env, then the shell (same order as
  * scripts/apply-migrations.mjs). Read-only: it runs SELECTs and nothing else.
@@ -53,6 +54,11 @@ const flag = (name, fallback) => {
 const DAYS = Math.max(1, Math.min(365, Number(flag('days', '7')) || 7));
 const JSON_OUT = args.includes('--json');
 const ONLY_CLASS = flag('class', null);
+// A failed attempt that was automatically re-dispatched to another lane is not
+// a user-visible failure: the successor row carries the same request to its real
+// outcome. Ranking those by default puts a class the platform already recovers
+// from at rank 1, which is exactly how this report would waste a triager's day.
+const INCLUDE_RECOVERED = args.includes('--include-recovered');
 
 if (!process.env.DATABASE_URL) {
 	console.error('DATABASE_URL is not set. Add it to .env.local or export it in your shell.');
@@ -83,6 +89,7 @@ async function main() {
 		SELECT count(*) FILTER (WHERE status = 'done')::int    AS done,
 		       count(*) FILTER (WHERE status = 'failed')::int  AS failed,
 		       count(*) FILTER (WHERE status NOT IN ('done', 'failed'))::int AS open,
+		       count(*) FILTER (WHERE superseded_by IS NOT NULL)::int AS recovered,
 		       count(*)::int AS rows
 		FROM forge_creations
 		WHERE created_at >= now() - ${since}::interval
@@ -99,6 +106,7 @@ async function main() {
 		FROM forge_creations
 		WHERE status = 'failed'
 		  AND created_at >= now() - ${since}::interval
+		  AND (${INCLUDE_RECOVERED} OR superseded_by IS NULL)
 		ORDER BY created_at DESC
 	`;
 
@@ -135,16 +143,24 @@ async function main() {
 		}))
 		.sort((a, b) => b.count - a.count);
 
+	const done = totals?.done ?? 0;
+	const failedRows = totals?.failed ?? 0;
+	const recovered = totals?.recovered ?? 0;
+	// The attempts nobody recovered: one row per request the user actually lost.
+	const lost = Math.max(0, failedRows - recovered);
+	const judged = done + lost;
+
 	const report = {
 		windowDays: DAYS,
 		database: maskUrl(process.env.DATABASE_URL),
 		generations: totals?.rows ?? 0,
-		done: totals?.done ?? 0,
-		failed: totals?.failed ?? 0,
+		done,
+		failed: failedRows,
+		recovered,
+		lost,
 		stillOpen: totals?.open ?? 0,
-		successRate: (totals?.done ?? 0) + (totals?.failed ?? 0) > 0
-			? (totals.done) / (totals.done + totals.failed)
-			: null,
+		includesRecovered: INCLUDE_RECOVERED,
+		successRate: judged > 0 ? done / judged : null,
 		classes: ranked,
 	};
 
@@ -154,12 +170,20 @@ async function main() {
 	}
 
 	console.log(`Forge generation errors, last ${DAYS} day(s), on ${report.database}\n`);
-	console.log(`  generations ${report.generations}   done ${report.done}   failed ${report.failed}   still running ${report.stillOpen}`);
-	console.log(`  success rate ${report.successRate == null ? 'n/a (no finished generations)' : pct(report.done, report.done + report.failed)}\n`);
+	console.log(`  generations ${report.generations}   done ${done}   failed ${failedRows}   still running ${report.stillOpen}`);
+	console.log(`  of those failures, ${recovered} were re-dispatched to another lane and finished there; ${lost} were lost`);
+	console.log(`  success rate ${report.successRate == null ? 'n/a (no finished generations)' : pct(done, judged)} (recovered attempts are not counted against it)\n`);
 
 	if (!ranked.length) {
-		console.log('  No failed generations in this window. Nothing to rank.');
+		console.log(
+			recovered && !INCLUDE_RECOVERED
+				? `  No unrecovered failures in this window. Re-run with --include-recovered to rank the ${recovered} that failed over.`
+				: '  No failed generations in this window. Nothing to rank.',
+		);
 		return;
+	}
+	if (recovered && !INCLUDE_RECOVERED) {
+		console.log(`  (${recovered} recovered attempt(s) excluded; --include-recovered to rank them too)\n`);
 	}
 
 	if (ONLY_CLASS) {
