@@ -14,8 +14,7 @@ Concierge is the three.ws support-chat widget: a floating launcher that opens a 
 The one-tag embed:
 
 ```html
-<script type="module"
-        src="https://three.ws/concierge/concierge.global.js"
+<script src="https://three.ws/concierge/concierge.global.js"
         data-concierge
         data-site-name="Acme"
         data-accent="#f97316"

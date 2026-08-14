@@ -2489,7 +2489,7 @@
 		.vision-block{padding-bottom:0}
 		.vision-block .block-eyebrow{margin-bottom:24px}
 		.dragon-wrap{position:relative;height:76vh;min-height:420px;max-height:880px;overflow:hidden;background:#050505;cursor:crosshair;border-top:1px solid var(--hairline)}
-		.dragon-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.18);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;pointer-events:none;transition:opacity 1.5s ease;white-space:nowrap;z-index:5}
+		.dragon-hint{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.52);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;pointer-events:none;transition:opacity 1.5s ease;white-space:nowrap;z-index:5}
 		.dragon-hint.fade{opacity:0}
 		@media(max-width:720px){.dragon-wrap{height:55vh;min-height:300px}}
 		@media(prefers-reduced-motion:reduce){.dragon-wrap canvas{display:none}}

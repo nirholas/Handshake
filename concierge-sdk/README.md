@@ -18,8 +18,7 @@ Live demo: [three.ws/concierge](https://three.ws/concierge) (the widget on that 
 ### 1. One tag (no build, no account)
 
 ```html
-<script type="module"
-        src="https://three.ws/concierge/concierge.global.js"
+<script src="https://three.ws/concierge/concierge.global.js"
         data-concierge
         data-site-name="Acme"
         data-accent="#f97316"
@@ -86,8 +85,7 @@ It fetches these once (same-origin on the store, so no CORS wall), caches them f
 **Install** is the same one tag, dropped into `theme.liquid` before `</body>`:
 
 ```html
-<script type="module"
-        src="https://three.ws/concierge/concierge.global.js"
+<script src="https://three.ws/concierge/concierge.global.js"
         data-concierge
         data-site-name="Larkspur Supply"
         data-avatar="nova"

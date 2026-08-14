@@ -304,8 +304,10 @@ function pickTarget(el) {
 }
 
 // The demo storefront's links are scenery, not navigation: they exist so the
-// stage looks like a real shop you can point at. `href="#"` keeps them
-// focusable and hoverable like real links; this swallows the navigation.
+// stage looks like a real shop you can point at. They carry no href (an
+// href-less anchor is inert and stays out of the tab order, so the stage never
+// hands a keyboard user a row of dead stops); this swallows any click that a
+// styled child element still bubbles up.
 stage.addEventListener('click', (e) => {
 	if (e.target.closest('[data-demo-link]')) e.preventDefault();
 });

@@ -22,8 +22,7 @@ Prices and links on the cards come straight from your catalog, so the assistant 
 In your Shopify admin go to **Online Store → Themes → Edit code → `theme.liquid`**, and paste this just before `</body>`:
 
 ```html
-<script type="module"
-        src="https://three.ws/concierge/concierge.global.js"
+<script src="https://three.ws/concierge/concierge.global.js"
         data-concierge
         data-site-name="Your Store"
         data-avatar="nova"
@@ -82,7 +81,7 @@ Add-to-cart posts to Shopify's public `/cart/add.js` and fires a `cart:refresh` 
 Prefer to drive the pieces yourself instead of letting the widget do it? Loading the same one-tag build exposes every building block on `window.ThreeWsConcierge`, so you can run the retrieval step by hand and render your own cards:
 
 ```html
-<script type="module" src="https://three.ws/concierge/concierge.global.js"></script>
+<script src="https://three.ws/concierge/concierge.global.js"></script>
 <script type="module">
 	const { fetchCatalog, fetchPolicies, searchProducts, buildShoppingPayload } =
 		window.ThreeWsConcierge;
