@@ -10,7 +10,7 @@
 // wallet, for one), and sending them USDC would never make them spendable.
 //
 // Requires:
-//   CDP_API_KEY_ID + CDP_API_KEY_SECRET  (optional) — the Coinbase Developer
+//   CDP_API_KEY_ID + CDP_API_KEY_SECRET  (optional): the Coinbase Developer
 //                         Platform key pair, already used by the x402
 //                         facilitator.  When set, each call mints a single-use
 //                         Onramp session token bound to the user's Solana
@@ -20,7 +20,7 @@
 //                         the user sends to the address the overlay shows them.
 //
 // The address param is NOT a secret (it's a Solana public key) and is only
-// used as the deposit destination — it is safe to pass in a query string.
+// used as the deposit destination: it is safe to pass in a query string.
 
 import { cors, json, error, rateLimited, reportServerError, wrap } from '../_lib/http.js';
 import { isValidSolanaAddress } from '../_lib/validate.js';

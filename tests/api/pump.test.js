@@ -1,5 +1,5 @@
 // Tests for pump.fun integration endpoints. SDKs and Solana RPC are fully
-// mocked — no network, no chain. Verifies request/response shapes, auth,
+// mocked: no network, no chain. Verifies request/response shapes, auth,
 // validation, and that the right SDK calls are issued in the right order.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -32,7 +32,7 @@ vi.mock('../../api/_lib/db.js', () => ({
 // Any bucket resolves to "allowed". The handlers under test move between buckets
 // as page-load reads get isolated from write paths (authIp → authedReadIp → …);
 // enumerating names here just means a silent 500 ("limits.<name> is not a
-// function") the next time one is renamed — which is exactly what this mock did.
+// function") the next time one is renamed: which is exactly what this mock did.
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: new Proxy({}, { get: () => vi.fn(async () => ({ success: true })) }),
 	clientIp: vi.fn(() => '127.0.0.1'),
@@ -170,8 +170,8 @@ async function resetPumpMod() {
 const mintB58 = 'MintPubkey1111111111111111111111111111';
 const walletB58 = 'WalletPubkey111111111111111111111111111';
 const ataB58 = 'AtaPubkey1111111111111111111111111111111';
-// Long enough to clear the schema's 32-char floor, but not decodable as base58 —
-// the shape that used to slip past pubkey validation.
+// Long enough to clear the schema's 32-char floor, but not decodable as base58.
+// This is the shape that used to slip past pubkey validation.
 const badPubkey = '0OIl0OIl0OIl0OIl0OIl0OIl0OIl0OIl0OIl';
 
 describe('GET /api/pump/balances', () => {
@@ -375,7 +375,7 @@ describe('POST /api/pump/buy-confirm (quote-aware trade recording)', () => {
 		expect(v[5]).toBe(USDC_MINT); // quote_mint
 		expect(v[6]).toBe('USDC'); // quote_symbol
 		expect(v[7]).toBe('5000000'); // quote_amount = 5 USDC in 6-dec atoms
-		// sol_amount stays null for a USDC trade — never lands in the lamports column.
+		// sol_amount stays null for a USDC trade: never lands in the lamports column.
 		expect(v[4]).toBeNull();
 	});
 

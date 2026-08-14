@@ -6,7 +6,7 @@
 // signals + a 0..100 quality score, and labels outcomes after the fact. It WRITES
 // pump_coin_intel / pump_coin_wallets / pump_coin_outcomes / pump_intel_weights.
 // This endpoint READS them for the /coin-intel dashboard and any agent that wants
-// the same intelligence the sniper trades on — nothing here writes.
+// the same intelligence the sniper trades on: nothing here writes.
 //
 // Views (query param `view`, default `feed`):
 //   ?mint=<mint>            one coin: classification + signals + outcome + top wallets (bubble-map)
@@ -14,7 +14,7 @@
 //   ?view=leaderboard       highest-quality recent coins + confirmed winners (graduated/pumped)
 //   ?view=learning          learned per-signal weights + outcome distribution (what the model learned)
 //
-// Public, cacheable briefly. No auth — this is read-only market intelligence.
+// Public, cacheable briefly. No auth: this is read-only market intelligence.
 // Degrades gracefully (200 with degraded:true) if the engine tables don't exist
 // yet, so the dashboard can render its "engine warming up" state instead of 500ing.
 
@@ -42,7 +42,7 @@ const round = (x, p = 4) => {
 
 // Human verdict derived from the transparent quality score + hard risk flags.
 // Hard flags (a coordinated launch, a dev dump, a single whale owning the float)
-// force "avoid" regardless of score — those are the ones that lose money.
+// force "avoid" regardless of score: those are the ones that lose money.
 const HARD_FLAGS = ['bundle_launch', 'dev_dumped', 'single_whale'];
 function deriveVerdict(qualityScore, riskFlags) {
 	const flags = Array.isArray(riskFlags) ? riskFlags : [];
@@ -55,14 +55,14 @@ function deriveVerdict(qualityScore, riskFlags) {
 }
 
 // Classify one trader within a single coin's order book / holder list, from its
-// footprint on that coin. Labels stack — a wallet can be both a sniper and a whale.
-//   creator  — the coin's deployer
-//   bundled  — shares a SOL funder with ≥1 other buyer (coordinated launch wallet)
-//   sniper   — first trade landed within seconds of the coin appearing
-//   whale    — captured a large share of buy volume
-//   dumped   — sold ~all of what it bought (paper hands / exit)
-//   holding  — bought and never sold (diamond)
-//   flipped  — bought and partially sold
+// footprint on that coin. Labels stack: a wallet can be both a sniper and a whale.
+//   creator : the coin's deployer
+//   bundled : shares a SOL funder with ≥1 other buyer (coordinated launch wallet)
+//   sniper  : first trade landed within seconds of the coin appearing
+//   whale   : captured a large share of buy volume
+//   dumped  : sold ~all of what it bought (paper hands / exit)
+//   holding : bought and never sold (diamond)
+//   flipped : bought and partially sold
 function classifyWalletInCoin(w, { coinSeenMs, bundledClusters }) {
 	const labels = [];
 	if (w.is_creator) labels.push('creator');
@@ -100,7 +100,7 @@ function shapeCoin(r) {
 		website: r.website || null,
 		has_socials: !!(r.twitter || r.telegram || r.website),
 
-		// classification — the "what kind of coin is this" answer
+		// classification: the "what kind of coin is this" answer
 		category: r.category || 'unknown',
 		tags,
 		narrative: r.narrative || null,
@@ -146,7 +146,7 @@ function shapeCoin(r) {
 	};
 }
 
-// Stable column projection — explicit so added engine columns never break us and
+// Stable column projection: explicit so added engine columns never break us and
 // missing ones surface as a clean error we can degrade on.
 // Plain string (not a sql fragment) so this module can load without DATABASE_URL.
 const COIN_COLS =
@@ -175,7 +175,7 @@ async function getCoin(mint, network) {
 
 	const coin = shapeCoin(row);
 
-	// Outcome (labeled after the fact — may not exist yet).
+	// Outcome (labeled after the fact: may not exist yet).
 	let outcome = null;
 	try {
 		const [o] = await sql`
@@ -301,10 +301,10 @@ async function getLeaderboard({ network, limit }) {
 // Aggregates the per-coin wallet ledger into a cross-coin reputation per trader,
 // then labels it. win_rate is real: of the coins this wallet bought, the share
 // that graduated or pumped (only counted once ≥3 of its coins are labeled).
-//   smart_money — proven win-rate across enough labeled coins
-//   whale       — large lifetime buy volume
-//   serial      — trades a high number of distinct coins
-//   creator     — has deployed at least one observed coin
+//   smart_money: proven win-rate across enough labeled coins
+//   whale      : large lifetime buy volume
+//   serial     : trades a high number of distinct coins
+//   creator    : has deployed at least one observed coin
 async function getTraders({ network, limit }) {
 	const cap = Math.max(1, Math.min(100, limit || 40));
 	let traders = [];
@@ -432,7 +432,7 @@ export default wrap(async (req, res) => {
 
 	// Caller mistakes are answered as caller mistakes. Everything below this point
 	// reaching the `degraded` boundary means the ENGINE is down, which is what the
-	// dashboard's "warming up" state is for — a typo must never be reported as an
+	// dashboard's "warming up" state is for: a typo must never be reported as an
 	// outage, and an unknown view must never be silently served as the feed.
 	if (mint && !MINT_RE.test(mint)) {
 		return error(res, 400, 'invalid_mint', 'mint must be a base58 pump.fun address');

@@ -1,10 +1,10 @@
-// Tests for /api/purchase/skill — the Solana Pay TRANSACTION request that a
+// Tests for /api/purchase/skill: the Solana Pay TRANSACTION request that a
 // mobile wallet hits after scanning a skill-purchase QR.
 //
 // Runs fully offline: real @solana/web3.js + @solana/spl-token, a fake RPC that
 // returns a fixed blockhash, and an in-memory skill_purchases row. The two things
-// that matter here are (a) the endpoint never invents a purchase — it only serves
-// a pending row an authenticated checkout already created — and (b) the built
+// that matter here are (a) the endpoint never invents a purchase, it only serves
+// a pending row an authenticated checkout already created, and (b) the built
 // transaction has the exact shape api/_lib/purchase-confirm.js validates: the
 // reference-carrying creator leg LAST.
 

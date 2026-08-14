@@ -3,16 +3,16 @@
 // The financial core of monetization lives in three places, none of which had
 // direct coverage before this suite:
 //
-//   • api/_lib/fee.js          — platform fee split (calculateFee, getFeeBps)
-//   • api/_lib/monetization.js — recordRevenueEvent (revenue attribution +
+//   • api/_lib/fee.js         : platform fee split (calculateFee, getFeeBps)
+//   • api/_lib/monetization.js: recordRevenueEvent (revenue attribution +
 //                                fee/net split) and getAvailableBalance
 //                                (withdrawable-balance aggregation)
-//   • api/monetization/*.js    — the unified REST surface: prices.js (set/list
+//   • api/monetization/*.js   : the unified REST surface: prices.js (set/list
 //                                skill prices) and revenue.js (creator sales
 //                                aggregation)
 //
-// Money math is unforgiving, so every branch — validation, rounding, the
-// owner/non-owner gate, and the earned − pending − withdrawn arithmetic — is
+// Money math is unforgiving, so every branch: validation, rounding, the
+// owner/non-owner gate, and the earned − pending − withdrawn arithmetic: is
 // exercised here. The DB client is mocked with a queue-driven `sql` stub
 // (shared by the directly-called service functions and the HTTP handlers) so
 // the logic is tested in isolation from Neon, exactly as Prompt 18 specifies.
@@ -55,7 +55,7 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: {
 		authIp: vi.fn(async () => ({ success: rlState.success })),
 		// Session-scoped reads (api/monetization/revenue.js) moved off the strict
-		// credential `authIp` bucket onto `authedReadIp` — without it here the
+		// credential `authIp` bucket onto `authedReadIp`: without it here the
 		// handler throws "limits.authedReadIp is not a function" and 500s.
 		authedReadIp: vi.fn(async () => ({ success: rlState.success })),
 		publicIp: vi.fn(async () => ({ success: rlState.success })),
@@ -198,7 +198,7 @@ describe('recordRevenueEvent', () => {
 		sqlState.queue.push([{ id: 'rev-5' }]);
 		await recordRevenueEvent({ ...baseEvent, intentId: undefined, txHash: undefined });
 		// intent_id is UNIQUE, so distinct direct credits must NOT collide on a
-		// shared literal — each gets its own synthetic key.
+		// shared literal: each gets its own synthetic key.
 		expect(findInsert().values[1]).toMatch(/^direct_[0-9a-f-]{36}$/);
 	});
 
@@ -301,7 +301,7 @@ describe('getAvailableBalance', () => {
 	});
 });
 
-// ── 4. setSkillPrices — api/monetization/prices.js ──────────────────────────────
+// ── 4. setSkillPrices: api/monetization/prices.js ──────────────────────────────
 
 describe('prices endpoint (setSkillPrices)', () => {
 	it('lets an owner set a new price and returns 201', async () => {
@@ -564,7 +564,7 @@ describe('prices endpoint (setSkillPrices)', () => {
 	});
 });
 
-// ── 5. getCreatorSalesData — api/monetization/revenue.js ────────────────────────
+// ── 5. getCreatorSalesData: api/monetization/revenue.js ────────────────────────
 
 describe('revenue endpoint (getCreatorSalesData)', () => {
 	it('aggregates totals, per-skill, and per-day breakdowns', async () => {
@@ -726,7 +726,7 @@ describe('revenue endpoint (getCreatorSalesData)', () => {
 	});
 });
 
-// ── 6. payout wallets — api/monetization/wallet.js ──────────────────────────────
+// ── 6. payout wallets: api/monetization/wallet.js ──────────────────────────────
 
 describe('wallet endpoint (payout addresses)', () => {
 	const SOL_ADDRESS = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -898,7 +898,7 @@ describe('wallet endpoint (payout addresses)', () => {
 	});
 });
 
-// ── 7. withdrawals — api/monetization/withdrawals.js ────────────────────────────
+// ── 7. withdrawals: api/monetization/withdrawals.js ────────────────────────────
 
 describe('withdrawals endpoint', () => {
 	const SOL_ADDRESS = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -959,7 +959,7 @@ describe('withdrawals endpoint', () => {
 		});
 
 		expect(status).toBe(200);
-		// A NaN limit binds as NULL, which Postgres reads as "no limit" — the page
+		// A NaN limit binds as NULL, which Postgres reads as "no limit": the page
 		// size would silently become the whole table.
 		const list = sqlState.calls.find((c) => c.query.includes('agent_withdrawals'));
 		expect(list.values.slice(-2)).toEqual([20, 0]);

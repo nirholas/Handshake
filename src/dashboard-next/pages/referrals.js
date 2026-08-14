@@ -1,9 +1,9 @@
-// dashboard-next — Referrals.
+// dashboard-next: Referrals.
 //
 // A 3D, flippable membership card (the centrepiece) plus the referral link,
 // share actions, and live referral stats. Front shows the member's standing;
 // back shows a scannable QR for the referral link. Every number is real,
-// pulled from /api/users/referrals — no placeholders.
+// pulled from /api/users/referrals: no placeholders.
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, put, esc } from '../api.js';
@@ -12,7 +12,7 @@ import { toast } from '../../shared/toast.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
-// Canonical referral-code shape — mirrors REFERRAL_CODE_RE in
+// Canonical referral-code shape: mirrors REFERRAL_CODE_RE in
 // api/_lib/referrals.js. The server is authoritative; this gates the editor's
 // Save button and pre-filters obviously-invalid input before the availability
 // check fires.
@@ -107,7 +107,7 @@ function funnelPanel(funnel) {
 	`;
 }
 
-/** "06/27" — two years out, the card's notional validity. */
+/** "06/27": two years out, the card's notional validity. */
 function expLabel(memberSince) {
 	const base = memberSince ? new Date(memberSince) : new Date();
 	const exp = new Date(base.getTime());
@@ -124,7 +124,7 @@ function memberSinceLabel(memberSince) {
 	return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
-/** "Jun 21, 2026" — full signup date for the referrals table. */
+/** "Jun 21, 2026": full signup date for the referrals table. */
 function fmtDate(value) {
 	if (!value) return '—';
 	const d = new Date(value);
@@ -452,7 +452,7 @@ const ICONS = {
 	share: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="5" r="2.2"/><circle cx="5" cy="10" r="2.2"/><circle cx="15" cy="15" r="2.2"/><path d="M6.9 8.9l6.2-3M6.9 11.1l6.2 3"/></svg>',
 };
 
-// ── PNG export — draw the front face to a canvas for a shareable image ────────
+// ── PNG export: draw the front face to a canvas for a shareable image ────────
 
 function exportCardPNG(card, refUrl) {
 	const W = 1100, H = Math.round(W / 1.74), P = 56;
@@ -630,7 +630,7 @@ function wireCard(host, card, refUrl) {
 		apply();
 	};
 	flipBtn.addEventListener('click', flip);
-	// Tapping the card flips it too — but not when the user is dragging to tilt.
+	// Tapping the card flips it too: but not when the user is dragging to tilt.
 	cardEl.addEventListener('click', (e) => {
 		if (cardEl._dragged) { cardEl._dragged = false; return; }
 		if (e.target.closest('a')) return;
@@ -794,7 +794,7 @@ function wireCodeEditor(host, card) {
 			const cleaned = input.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, CODE_MAX);
 			if (cleaned !== input.value) {
 				input.value = cleaned;
-				// Place cursor at end of cleaned value — multi-char strips (e.g.
+				// Place cursor at end of cleaned value: multi-char strips (e.g.
 				// paste of "my-code!") may remove more than one character, making
 				// caret - 1 wrong. End-of-field is always safe and expected.
 				input.setSelectionRange(cleaned.length, cleaned.length);
@@ -845,7 +845,7 @@ function wireCodeEditor(host, card) {
 // Every member wears a "mode": user, beta, pro, holder, or three-dimensional.
 // The card shows the highest one as a pill; this panel shows the full ladder,
 // which badges you already hold, and what unlocks the rest. Data is real, from
-// /api/users/me/tier — holder status is read live from your on-chain $THREE.
+// /api/users/me/tier: holder status is read live from your on-chain $THREE.
 
 // Where a locked mode is earned, and where to go to get there. Derived modes
 // link to the surface that unlocks them; granted modes are invite-only.
@@ -1086,7 +1086,7 @@ function mountReferralsList(host, refUrl, seed) {
 				if (copyBtn) copyBtn.addEventListener('click', () => copyToClipboard(refUrl));
 				return;
 			}
-			// Past the last page (e.g. data shrank) — step back.
+			// Past the last page (e.g. data shrank): step back.
 			if (state.offset > 0) { go(Math.max(0, state.offset - state.limit)); return; }
 		}
 

@@ -1,4 +1,4 @@
-// GET /api/notifications — list recent notifications for the authenticated user.
+// GET /api/notifications: list recent notifications for the authenticated user.
 
 import { sql } from '../_lib/db.js';
 import { getRequestUser } from '../_lib/auth.js';
@@ -16,7 +16,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, 'http://x').searchParams;
-	// A non-numeric ?limit parses to NaN, and NaN survives both clamps — it then
+	// A non-numeric ?limit parses to NaN, and NaN survives both clamps: it then
 	// reached Postgres as `limit NaN` and 500'd the whole list. Fall back to the
 	// default instead, so a junk value degrades to the normal page.
 	const limitRaw = Number.parseInt(params.get('limit') || '20', 10);
@@ -27,7 +27,7 @@ export default wrap(async (req, res) => {
 	const type = /^[a-z0-9_]{1,40}$/.test(typeRaw) ? typeRaw : null;
 	// Optional cursor for "load more" on the full notification-center page
 	// (pages/notifications.html): pass the last row's created_at to page past it.
-	// The bell dropdown never sends this — it only ever wants the latest page.
+	// The bell dropdown never sends this: it only ever wants the latest page.
 	const beforeRaw = params.get('before');
 	const before = beforeRaw && !Number.isNaN(Date.parse(beforeRaw)) ? new Date(beforeRaw) : null;
 

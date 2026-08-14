@@ -32,7 +32,7 @@ export function generateReferralCode(length = 8) {
 export const REFERRAL_CODE_MIN_LEN = 3;
 export const REFERRAL_CODE_MAX_LEN = 20;
 
-// The canonical, storable shape of a referral code: A–Z and 0–9 only. Vanity
+// The canonical, storable shape of a referral code: A-Z and 0-9 only. Vanity
 // codes accept the full alphanumeric range; the generator stays restricted so
 // auto-minted codes remain easy to read aloud off a membership card.
 export const REFERRAL_CODE_RE = new RegExp(`^[A-Z0-9]{${REFERRAL_CODE_MIN_LEN},${REFERRAL_CODE_MAX_LEN}}$`);
@@ -50,7 +50,7 @@ const RESERVED_REFERRAL_CODES = new Set([
 
 /**
  * Normalize arbitrary user input to a canonical referral code, or null if it
- * can't be one. Trims, uppercases, and validates against the canonical shape —
+ * can't be one. Trims, uppercases, and validates against the canonical shape :
  * it never strips invalid characters (so "my-code" is rejected, not silently
  * mangled into "MYCODE"); callers surface the rejection to the user.
  *
@@ -71,7 +71,7 @@ export function isReservedReferralCode(code) {
 /**
  * Derive a canonical referral code candidate from a person's name. Strips
  * everything but letters and digits, uppercases, and clamps to the max length.
- * Returns null if nothing usable (≥ MIN_LEN chars) remains — e.g. a name that's
+ * Returns null if nothing usable (≥ MIN_LEN chars) remains: e.g. a name that's
  * all punctuation or an emoji.
  *
  * @param {string|null|undefined} name
@@ -90,7 +90,7 @@ export function slugifyReferralName(name) {
  * Ordered candidate codes for a new account: the user's name first (so the
  * default referral code reads like them), then the name plus a short random
  * suffix to ride out collisions while staying recognizable, then pure random
- * fallbacks. Finite — callers loop until an insert/update succeeds.
+ * fallbacks. Finite: callers loop until an insert/update succeeds.
  *
  * @param {string|null} name  display name or username to seed the default
  * @returns {Generator<string>}
@@ -203,7 +203,7 @@ export async function setReferralCode(userId, desired) {
 // Every user is a potential referrer, but only the email + SAML signup paths
 // mint a `referral_code` up front. Privy / SIWS / SIWE sign-ups (and any
 // pre-existing account) land with a NULL code. This lazily assigns one the
-// first time the user needs it — idempotent and race-safe via the UNIQUE
+// first time the user needs it: idempotent and race-safe via the UNIQUE
 // constraint + `WHERE referral_code IS NULL` guard.
 //
 // @param {string|number} userId
@@ -213,7 +213,7 @@ export async function ensureReferralCode(userId) {
   if (existing?.referral_code) return existing.referral_code;
 
   // Default the code to the member's name (then name+suffix, then random) so the
-  // first code they ever see reads like them — they can customize it later.
+  // first code they ever see reads like them: they can customize it later.
   for (const code of referralCodeCandidates(existing?.display_name || existing?.username)) {
     try {
       const [row] = await sql`
@@ -222,7 +222,7 @@ export async function ensureReferralCode(userId) {
         RETURNING referral_code
       `;
       if (row?.referral_code) return row.referral_code;
-      // A concurrent request assigned one first — read it back.
+      // A concurrent request assigned one first: read it back.
       const [now] = await sql`SELECT referral_code FROM users WHERE id = ${userId}`;
       if (now?.referral_code) return now.referral_code;
     } catch (err) {
@@ -246,7 +246,7 @@ export async function ensureReferralCode(userId) {
  * unit getMembershipCard / getReferredUsers read back.
  *
  * The DB credit is awaited (it's part of recording the sale); the email is
- * strictly best-effort — a send failure (or missing RESEND_API_KEY) is logged,
+ * strictly best-effort: a send failure (or missing RESEND_API_KEY) is logged,
  * never thrown, so it can never roll back or block the commission credit.
  *
  * @param {object} args
@@ -340,14 +340,14 @@ function clampOffset(offset) {
  * commission the referrer earned on it.
  *
  * Revenue is the sum of every CONFIRMED purchase a referred user made where this
- * user was the attributed referrer — across both monetization tables:
+ * user was the attributed referrer: across both monetization tables:
  *   • skill_purchases  (referrer_user_id, user_id, amount, status)
  *   • asset_purchases  (referrer_user_id, buyer_user_id, amount, status)
  * Amounts are atomic USDC units (6 decimals), the same unit purchase-confirm.js
  * accrues into users.referral_earnings_total. Commission is derived from the
  * configured referral BPS so the column matches what was actually credited.
  *
- * Sorted by revenue generated (desc), then most recent signup — the most
+ * Sorted by revenue generated (desc), then most recent signup: the most
  * valuable referrals surface first. Paginated via limit/offset.
  *
  * @param {string|number} userId  the referrer
@@ -373,7 +373,7 @@ export async function getReferredUsers(userId, opts = {}) {
   // Per-referred-user revenue, summed from both purchase tables. Each subquery
   // is correlated on the referred user's id AND keyed to this referrer so a
   // buyer's spend only counts toward the referrer who actually owns it. Only
-  // confirmed sales count — pending/expired/failed rows are excluded.
+  // confirmed sales count: pending/expired/failed rows are excluded.
   const rows = await sql`
     SELECT
       ru.id,
@@ -445,11 +445,11 @@ function pct(numerator, denominator) {
  * activations, plus the two conversion rates between them.
  *
  * Each stage is counted from the event that actually happened, in its own time:
- *   • visits      — rows POST /api/referral/visit wrote into referral_visits,
+ *   • visits     : rows POST /api/referral/visit wrote into referral_visits,
  *                   already deduped to one per (code, visitor, UTC day).
- *   • signups     — accounts attributed to this referrer that were created in
+ *   • signups    : accounts attributed to this referrer that were created in
  *                   the window.
- *   • activations — referred users who reached their first win in the window,
+ *   • activations: referred users who reached their first win in the window,
  *                   counted from the referred-side activation grant in
  *                   credit_ledger. Counting the referred side (not the
  *                   referrer's own grant) keeps the number honest when the
@@ -509,7 +509,7 @@ export async function getReferralFunnel(userId, opts = {}) {
  * referral code + count, lifetime referral earnings, and a derived score.
  *
  * `position` is the account's 1-based signup ordinal ("member #N"), a real,
- * monotonic number — not a synthetic rank. `score` is derived purely from
+ * monotonic number: not a synthetic rank. `score` is derived purely from
  * real referral activity so it can never drift from the underlying ledger.
  *
  * @param {string|number} userId
@@ -535,7 +535,7 @@ export async function getMembershipCard(userId) {
       AND deleted_at IS NULL
   `;
   // Platform-wide member count: a full-table COUNT(*) that is identical for
-  // every viewer and grows monotonically — cache for 60s instead of scanning
+  // every viewer and grows monotonically: cache for 60s instead of scanning
   // users on every member-card render.
   const total = await cacheWrap('users:total:active', 60, async () => {
     const [{ total }] = await sql`
@@ -552,7 +552,7 @@ export async function getMembershipCard(userId) {
 
   // Activation-reward credits: the two-sided "first win" bonus, paid as platform
   // credits (api/_lib/referral-rewards.js). Summed live from the credit ledger so
-  // the card reflects the full referral payoff — purchase commission AND the
+  // the card reflects the full referral payoff: purchase commission AND the
   // activation credits both sides earn.
   const [rewardRow] = await sql`
     SELECT COALESCE(SUM(amount_usd), 0)::float AS reward_usd, COUNT(*)::int AS reward_count

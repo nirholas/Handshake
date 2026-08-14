@@ -35,7 +35,7 @@ export function resolveProbeTarget(env = process.env) {
 	const apiKey = env.HELIUS_API_KEY || '';
 	const configured = env.SOLANA_RPC_URL || '';
 	if (configured && isHeliusUrl(configured)) return { url: configured, endpoint: 'helius-rpc' };
-	// A Helius key with a non-Helius SOLANA_RPC_URL still means we HAVE Helius —
+	// A Helius key with a non-Helius SOLANA_RPC_URL still means we HAVE Helius :
 	// probe Helius itself rather than mislabeling the other provider.
 	if (apiKey) return { url: `https://mainnet.helius-rpc.com/?api-key=${apiKey}`, endpoint: 'helius-rpc' };
 	return { url: '', endpoint: null };

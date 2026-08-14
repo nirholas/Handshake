@@ -3,15 +3,15 @@ import { cors, json, error, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getMembershipCard, getReferredUsers, getReferralFunnel } from '../_lib/referrals.js';
 
-// GET /api/users/referrals — the signed-in user's membership card payload:
+// GET /api/users/referrals: the signed-in user's membership card payload:
 // referral code (lazily minted if absent), referral count + lifetime earnings,
 // signup position ("member #N"), and a derived score. Also returns a real,
 // paginated per-referred-user breakdown (who signed up, when, revenue they
 // generated, and the commission earned) so the affiliate dashboard can show an
-// actionable referral table — not just a counter. Powers /dashboard/referrals.
+// actionable referral table: not just a counter. Powers /dashboard/referrals.
 //
-// Query params (optional): ?limit (1–100, default 20) & ?offset (>=0) page the
-// referred-user list, sorted by revenue generated (desc). ?funnel_days (1–365,
+// Query params (optional): ?limit (1-100, default 20) & ?offset (>=0) page the
+// referred-user list, sorted by revenue generated (desc). ?funnel_days (1-365,
 // default 30) sets the lookback for the `funnel` block, which reports the
 // visit → signup → activation conversion recorded by POST /api/referral/visit.
 export default wrap(async (req, res) => {
