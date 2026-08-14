@@ -79,6 +79,14 @@
 			<description>Two API endpoints were being swallowed by broader routing rules. The subscription skill's weekly USDC subscribe action posted to a path that a different subscription system answered, so every subscribe attempt failed validation; delegation-backed agent subscriptions now live at their own /api/agent-subscriptions path and the skill records them correctly. The public /api/agents/onchain-history endpoint, which returns an agent's verifiable on-chain event log with explorer links, was unreachable for the same reason and now resolves. The route audits that guard this now also model the chat app's build output, so /chat coverage is checked correctly in any workspace.</description>
 		</item>
 		<item>
+			<title>An agent coin now shows its real market on the agent page, including rehearsal launches</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-08-13:An agent coin now shows its real market on the agent page, including rehearsal launches</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When an agent launches its own coin, the agent's page is where people look for it. Two things were missing there. Coins launched through three.ws could not be read from their bonding curve at all, because the reader only recognised coins whose address ends in &quot;pump&quot; and ours are marked differently, so anything that depended on that read came back as &quot;no such coin&quot;. And a coin launched on the free rehearsal network showed nothing but a ticker and an address: no price, no market cap, no progress toward graduation, which made the free path a poor rehearsal for the real one. Both are fixed. The page now reads the coin's state straight off Solana whenever the market indexer does not know it yet, so a brand-new launch shows real numbers from its first minute instead of an empty card, and a rehearsal coin renders exactly like a live one, priced in SOL and clearly badged so nobody mistakes practice money for real money. Market caps are also computed correctly now: the figure the trading library reports goes negative on live curves, and coins that should have shown a real price were displaying zero.</description>
+		</item>
+		<item>
 			<title>An API key can no longer be minted with zero scopes</title>
 			<link>https://three.ws/docs/api-reference</link>
 			<guid isPermaLink="false">2026-08-13:An API key can no longer be minted with zero scopes</guid>
@@ -229,6 +237,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>If you registered an agent on-chain, the hydrate page finds it from your connected wallets and offers to import it into three.ws. Importing read two things: the registry entry on the chain, and the registration file the registry points at, which usually lives on IPFS. If that file did not load in five seconds, the whole import was refused, even though the part that actually matters, the chain saying you own the agent, had already answered. Public IPFS gateways throttle constantly, so owners were locked out of their own agents by a slow third party. The import now only needs the chain read to succeed; a registration file that will not load means the agent lands under its on-chain name and the metadata fills in on the next crawl. Two more changes went in alongside it: ownership is now re-checked against the live registry rather than the crawler's cached copy, so an agent you transferred away cannot be imported by the old wallet, and a chain that is unreachable now says so plainly and asks you to retry instead of reporting a generic failure. Separately, confirming a new registration now reads the transaction receipt over the same priority provider list the rest of the platform uses, instead of the slowest public fallbacks, which is what made a freshly mined registration occasionally come back as &quot;not yet mined&quot;.</description>
+		</item>
+		<item>
+			<title>Inference receipts settle on a reproducible test lane, and two chain-labelling bugs are fixed</title>
+			<link>https://three.ws/docs/inference-node-operator</link>
+			<guid isPermaLink="false">2026-08-13:Inference receipts settle on a reproducible test lane, and two chain-labelling bugs are fixed</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Paid inference on three.ws hands back a receipt that ties the payment to the exact job and answer it bought. Proving that end to end used to depend on the public Solana devnet faucet, which is often empty, so the proof could not be re-run on demand. It now runs against a Solana test validator on your own machine: it creates its own test token, settles a real on-chain payment through the normal payment path, and verifies the receipt against the job signature, with no faucet and no real funds. Running it surfaced three real defects, all fixed. Payments built by the standard x402 Solana client carry a short note attached to the transaction, and our own settlement service rejected every one of them, so any buyer using the standard client could not pay us at all. Both receipt verifiers also matched the devnet chain id by a text fragment that was missing a character, so it never matched: a devnet receipt was looked up on mainnet and reported as a mainnet payment. Verifiers now read the chain from the receipt itself, and a receipt from a chain with no public endpoint asks you for one instead of quietly checking the wrong chain.</description>
 		</item>
 		<item>
 			<title>IRL endpoints answer bad input honestly, and the usage rollup works again</title>
@@ -749,6 +765,14 @@
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Seeding an agent from GitHub now shows you the exact inventory first: your public profile, the repositories you pinned to your profile, your recent public repositories, and a separate tick for each repository's README. Whatever you leave unticked is never read, and the server rebuilds the same list when you press Seed, so a request naming anything you were not shown is refused outright rather than quietly seeding something else. Private repositories never appear in the list at all. Every stored memory records the exact set of boxes that produced it, so you can always see where a fact came from, and deleting them is one button on the agent or one Disconnect on the account, which removes every GitHub-derived memory across all your agents and revokes the access on GitHub's side too. Two fixes ship with it: the agent picker in Settings was reading the wrong field and never listed your agents, so the panel always fell back to asking for an agent ID by hand, and the Connect button on a deployment with no GitHub app configured now says so instead of opening an error page.</description>
+		</item>
+		<item>
+			<title>Your agent's cloned voice now speaks in embeds, not just on three.ws</title>
+			<link>https://three.ws/create-agent</link>
+			<guid isPermaLink="false">2026-08-13:Your agent's cloned voice now speaks in embeds, not just on three.ws</guid>
+			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Give an agent your voice in the Voice step of the agent builder and it now actually speaks with that voice wherever you put it. Cloning runs on ElevenLabs, and when you bring your own ElevenLabs key the cloned voice lives in your account, so a visitor listening to your agent has to be served on your key. The hosted embed was not telling the server which agent was speaking, so it was never allowed to use that key: the agent looked fine and simply stayed silent for everyone except you, with nothing to indicate why. It now names the agent on every request, so the voice plays for real visitors on any site the agent is embedded in. The embed also picks up the voice model and the stability, similarity and style settings you tuned, instead of falling back to the defaults, and the same fix applies to agents built on the SDK runtime. An agent with no voice bound still says so plainly rather than substituting a stranger's voice.</description>
 		</item>
 		<item>
 			<title>Your API keys now show whether they still work, and a key can no longer be issued with no permissions at all</title>

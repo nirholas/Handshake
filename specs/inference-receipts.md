@@ -139,6 +139,14 @@ The HTTP verifier and the CLI add one optional check on top:
 | -------------------- | ------------------------------------------------------------------- |
 | `onchain_settlement` | `payment.transaction` confirmed on `payment.network` (read-only RPC). |
 
+The lane for `onchain_settlement` comes from the receipt's own
+`payment.network`, compared in full against the canonical id. A verifier that
+guesses the lane can report a devnet payment as a mainnet one, which is a false
+statement about where money moved; both verifiers did exactly that until the
+phase-4 proof run caught it. A network with no public endpoint (the local test
+lane, a private cluster) is reported by its id and needs an explicit `--rpc`
+rather than being silently looked up on mainnet.
+
 A receipt is **verified** when every requested check passes. `prompt_binding`
 and `response_binding` are optional because a third party may hold only the
 receipt, not the raw text; the receipt still proves payment-to-job binding
@@ -156,16 +164,69 @@ without them.
 
 ## Activation and lanes
 
-- **Test lane (default for proof runs):** Solana devnet. The platform's
-  self-hosted facilitator already routes `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1`;
-  settle against it with devnet USDC and every check above runs identically.
-  No real funds move.
+A `payment.network` is a CAIP-2 id: `solana:` followed by the first 32 base58
+characters of that cluster's genesis hash. The id therefore *identifies the
+ledger*, which is what lets a receipt state where the money moved. The rail's
+one definition of the Solana lanes lives in
+[`api/_lib/x402/solana-networks.js`](../api/_lib/x402/solana-networks.js).
+
+- **Local test lane (default for proof runs):** a `solana-test-validator` on
+  the operator's machine. It is the reproducible lane: unlimited SOL, an SPL
+  mint the proof creates for itself, and no shared faucet to be rate-limited
+  by. A test validator generates a fresh genesis on every reset, so the lane's
+  id is derived at runtime from `getGenesisHash` and passed to the rail in
+  `X402_SOLANA_LOCAL_NETWORK`. That variable is unset in every deployed
+  environment, so the recognized networks there remain mainnet and devnet.
+  The lane is named honestly: settling on a local validator while labelling
+  the receipt as devnet would put a false chain id inside a signed attestation.
+- **Devnet:** `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1`, settled by the same
+  self-hosted facilitator with every check above running identically. It is the
+  shared public lane; its faucet is rate-limited per IP and is frequently dry on
+  shared CI egress, which is why the local lane is the default. No real funds
+  move on either.
 - **Mainnet:** the same receipt format with `payment.network` =
   `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp` (or any EVM lane the rail
   settles). Activation is setting `INFERENCE_SIGNING_KEY` (and optionally a
   distinct `INFERENCE_RECEIPT_SIGNING_KEY`) on the Cloud Run service env, an
   owner-gated deploy step. With the key unset, responses ship unsigned and no
   receipts are issued: that is the rollback position.
+
+## The proof run
+
+[`scripts/inference-settlement-proof.mjs`](../scripts/inference-settlement-proof.mjs)
+settles one real metered job end to end and verifies its receipt. It runs a
+real completion through the provider chain, signs the metered job, creates its
+own 6-decimal SPL mint on the test ledger, builds an `exact` payment with the
+reference client, puts it through `verifyPayment` → `settlePayment`, issues the
+receipt, and verifies it (including a tamper check and the on-chain leg). Every
+identity in the run is a throwaway keypair; no real asset appears anywhere.
+
+Two production guards stay ON during the proof and are pointed at the run's own
+throwaway payee and test mint rather than disabled: the facilitator's payTo
+allowlist (`X402_SELF_FACILITATOR_PAYTO_ALLOWLIST`) and its settleable-mint pin
+(`X402_ASSET_MINT_SOLANA`). A third, the DB-backed settle-credit gate
+([`api/_lib/x402/settle-credit.js`](../api/_lib/x402/settle-credit.js), one
+on-chain signature credits at most one payment), fails closed without a
+database, so the proof brings a local Postgres rather than relaxing it. The
+script header lists the containers.
+
+The facilitator is served on loopback for the run. With the self-hosted
+facilitator enabled the rail resolves it to `${APP_ORIGIN}/api/x402-facilitator`
+and calls it over HTTP, and `APP_ORIGIN` defaults to `https://three.ws`, so a
+proof run left alone would ask production to co-sign a test-lane payment.
+
+## Interop requirement: memos
+
+The reference x402 SVM client (`@x402/svm`, which
+[`buildSolanaExactPayload`](../api/_lib/x402/a2a-client.js) delegates to)
+attaches an SPL Memo to every `exact` payment it builds. Any facilitator
+settling these payments must accept the Memo program
+(`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`, and the legacy
+`Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo`) as a no-op instruction: memo
+owns no accounts and moves no lamports. Our own facilitator refused them until
+this proof run surfaced it, which made every standards-built payment
+unsettleable while our ring's own memo-free transactions passed. Covered by
+[`tests/x402-facilitator-memo-interop.test.js`](../tests/x402-facilitator-memo-interop.test.js).
 
 ## Security notes
 
