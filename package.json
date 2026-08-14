@@ -226,6 +226,7 @@
 		"audit:web": "node scripts/page-audit.mjs",
 		"audit:garments": "node scripts/audit-garments.mjs",
 		"audit:web:login": "node scripts/page-audit.mjs --login",
+		"audit:web:provision": "node scripts/provision-audit-account.mjs",
 		"logs": "node scripts/gcp-logs.mjs",
 		"logs:tail": "node scripts/gcp-logs.mjs --follow",
 		"gpu": "node scripts/gpu-capacity.mjs",
