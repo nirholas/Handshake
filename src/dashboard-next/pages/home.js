@@ -1215,8 +1215,8 @@ const DIRECTORY = [
 		group: 'Trading & Pump.fun',
 		items: [
 			{ href: '/pump-live',           title: 'Pump.fun Live',   sub: 'Real-time token feed and activity' },
-			{ href: '/pumpfun-trending',    title: 'Trending Tokens', sub: 'Top trending tokens right now' },
-			{ href: '/pumpfun-search',      title: 'Token Search',    sub: 'Search for any Pump.fun token' },
+			{ href: '/trending',            title: 'Trending',        sub: 'Top agents and conviction coins right now' },
+			{ href: '/pump-dashboard',      title: 'Token Scanner',   sub: 'Scanner, watchlists, quotes and live charts' },
 		],
 	},
 	{

@@ -431,7 +431,10 @@ function renderProfileActions(row, { username, userId, following, followedBy, ca
 			friendBtn.addEventListener('click', () => {
 				closeAvatarInspector();
 				if (typeof onOpenDM === 'function') onOpenDM(userId);
-				else window.location.href = '/friends';
+				// No DM surface on this host: /walk reads `?dm=` on load and opens the
+				// friends panel straight into that thread, so the button still lands
+				// the user in the conversation instead of on a page that never shipped.
+				else window.location.href = `/walk?dm=${encodeURIComponent(userId)}`;
 			});
 		} else if (outgoing) {
 			friendBtn.className = 'avi-act avi-act-ghost';

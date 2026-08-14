@@ -2753,8 +2753,8 @@ export class CoinCommunities {
 	// ── Friends (W09) ─────────────────────────────────────────────────────────
 	// The account-level social graph inside the world: who's online, which coin
 	// world they're standing in, and DM threads. `FriendsPanel` is a pure view over
-	// the shared `friendsClient`, so the same graph backs /play, /walk and the
-	// standalone /friends page, a DM read here is read everywhere.
+	// the shared `friendsClient`, so the same graph backs /play and /walk alike,
+	// and a DM read here is read everywhere.
 	//
 	// Presence is published by the room, not this panel: CommunityNet now carries a
 	// signed presence ticket into the join, so a player is visible to friends the

@@ -3073,6 +3073,12 @@ function inspectRemotePlayer(rp) {
 		username: rp.username || '',
 		avatarUrl: rp._avatarUrl,
 		facts: worldInspectFacts(),
+		// Walk has its own friends panel, so a DM opens here rather than sending the
+		// player to another surface and losing the world they are standing in.
+		onOpenDM: (userId) => {
+			openFriendsPanel();
+			_friendsPanel?.client?.openThread?.(userId);
+		},
 	}, { trigger: canvas });
 }
 function inspectSelfPlayer() {
