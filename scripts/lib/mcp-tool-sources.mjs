@@ -21,9 +21,14 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
 // Hosted servers whose tool defs live in a per-server directory.
 const HOSTED_TOOL_DIRS = ['api/_mcp/tools', 'api/_mcp3d/tools'];
 
-// Hosted servers that declare every tool in one file.
+// Hosted servers that declare every tool in one file. The free 3D Studio is the
+// one exception: its dispatcher merges TWO catalogs into the single tools/list
+// it serves, so both files belong here. Listing only tools.js hid the three
+// persona tools from every gate and from public/mcp-catalog.json while the
+// endpoint served them.
 const HOSTED_TOOL_FILES = [
 	'api/_mcp-studio/tools.js',
+	'api/_mcp-studio/persona-tools.js',
 	'api/_mcpagent/tools.js',
 	'api/_mcpbazaar/tools.js',
 	'api/_mcpibm/tools.js',

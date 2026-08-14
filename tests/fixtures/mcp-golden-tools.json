@@ -1,4 +1,30 @@
 {
+	"api/_mcp-studio/persona-tools.js": [
+		{
+			"name": "create_agent_persona",
+			"title": "Save a rigged model as a living, persistent agent body",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:CREATE_ANNOTATIONS",
+			"schemaHash": "8d7e3a088acc"
+		},
+		{
+			"name": "get_agent_persona",
+			"title": "Reload a persona by id (continuity across sessions)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:READ_ANNOTATIONS",
+			"schemaHash": "248584d714be"
+		},
+		{
+			"name": "persona_say",
+			"title": "Speak a reply through a persona — lip-sync + emotion + gesture",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:SAY_ANNOTATIONS",
+			"schemaHash": "9966d27830f0"
+		}
+	],
 	"api/_mcp-studio/tools.js": [
 		{
 			"name": "check_job",
