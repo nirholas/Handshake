@@ -97,6 +97,29 @@ html:not([data-theme='light']) {
 .tp-watch { background: var(--cv-surface-3); color: var(--cv-text-3); }
 .tp-avoid { background: var(--cv-red-soft); color: var(--cv-red); }
 
+/* What the score is worth, directly under it. Small on purpose: the dial stays
+   the headline, but it can no longer be read as a bare certainty. */
+.oc-odds {
+	margin: 0.75rem 0 0; text-align: center;
+	font-size: 0.75rem; line-height: 1.45; color: var(--cv-text-2);
+}
+.oc-odds b { color: var(--cv-text); font-family: var(--cv-font-mono); font-weight: 600; }
+.oc-odds-n { color: var(--cv-text-3); font-size: 0.6875rem; }
+.oc-odds-sub { display: block; margin-top: 0.375rem; color: var(--cv-text-3); font-size: 0.6875rem; }
+
+/* Ground truth since the call. A resolved outcome sits with the verdict, not two
+   screens below it, and carries its own colour so the eye finds it first. */
+.oc-since {
+	display: flex; flex-wrap: wrap; gap: 0.375rem; align-items: center;
+	margin-top: 1rem; padding-top: 0.875rem; border-top: 1px solid var(--cv-border);
+}
+.oc-since-lbl {
+	width: 100%; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.06em;
+	text-transform: uppercase; color: var(--cv-text-3);
+}
+.oc-since.bad .oc-since-lbl { color: var(--cv-red); }
+.oc-since.good .oc-since-lbl { color: var(--cv-green); }
+
 /* Pillar bars — Who / How / What / Move. */
 .pillars { display: grid; grid-template-columns: 1fr; gap: 0.625rem; margin-top: 1rem; }
 .pil .lab {
