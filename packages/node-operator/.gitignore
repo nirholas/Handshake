@@ -1,0 +1,9 @@
+# The node's ed25519 secret key. This IS the node identity, the payout
+# address, and the signing key for every result receipt. It must never be
+# committed; `src/index.js` writes it 0600 on first run.
+node-identity.json
+operator.config.json
+
+# Downloaded model weights (tens of MB) and installed dependencies.
+models/
+node_modules/

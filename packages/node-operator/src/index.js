@@ -36,12 +36,12 @@ async function main() {
 	}
 
 	console.log(`[node] identity ${identity.publicKey} (${source === 'generated' ? `generated, saved to ${identityPath}` : `from ${source}`})`);
-	console.log(`[node] platform ${cfg.platformUrl} · capability ${cfg.capability} · model ${cfg.model}`);
+	console.log(`[node] platform ${cfg.platformUrl} · capability ${cfg.capability} · model ${cfg.model} · device ${cfg.device}`);
 
 	if (args.has('--self-test')) {
 		console.log('[node] running proof workload self-test (first run downloads the model)...');
-		const result = await selfTest({ cacheDir: MODELS_DIR });
-		console.log(`[node] self-test ${result.ok ? 'OK' : 'FAILED'}: ${result.model}, ${result.dimensions} dims, ${result.elapsedMs}ms`);
+		const result = await selfTest({ cacheDir: MODELS_DIR, device: cfg.device, dtype: cfg.dtype });
+		console.log(`[node] self-test ${result.ok ? 'OK' : 'FAILED'}: ${result.model}, ${result.dimensions} dims, ran on ${result.device} (${result.dtype}) in ${result.elapsedMs}ms`);
 		process.exit(result.ok ? 0 : 1);
 	}
 
@@ -62,6 +62,8 @@ async function main() {
 		maxConcurrency: cfg.maxConcurrency,
 		jobTimeoutMs: cfg.jobTimeoutMs,
 		cacheDir: MODELS_DIR,
+		device: cfg.device,
+		dtype: cfg.dtype,
 	});
 
 	const shutdown = (signal) => {

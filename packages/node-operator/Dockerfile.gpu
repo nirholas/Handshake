@@ -1,0 +1,59 @@
+# syntax=docker/dockerfile:1
+# three.ws node operator client, NVIDIA GPU image.
+#
+#   docker build -f Dockerfile.gpu -t threews-node:gpu .
+#   docker run --gpus all -v threews-models:/app/models threews-node:gpu
+#
+# What makes this image different from the CPU one is the base layer, not the
+# client code. onnxruntime-node ships libonnxruntime_providers_cuda.so, but
+# that library dynamically links the CUDA 12 runtime and cuDNN 9; on a base
+# image without them the loader fails with
+# "libcublasLt.so.12: cannot open shared object file". The CUDA runtime image
+# below supplies exactly those libraries, and the NVIDIA Container Toolkit
+# (`--gpus all`) supplies the driver from the host.
+#
+# Requirements on the host: an NVIDIA driver new enough for CUDA 12 (>= 525)
+# and the NVIDIA Container Toolkit installed. Without `--gpus all` this image
+# runs, but DEVICE=cuda fails at startup rather than pretending.
+FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04
+
+# Node 22 from NodeSource: the Ubuntu archive's nodejs is too old for the
+# client's `node >= 20` engine and its native ESM usage.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get purge -y --auto-remove gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY src ./src
+
+# DEVICE=cuda is deliberate here rather than `auto`: an operator who built the
+# GPU image wants to know immediately if the GPU is not reachable, not to
+# discover a week later that every job ran on the CPU.
+ENV NODE_ENV=production \
+    PLATFORM_URL=https://three.ws \
+    MODEL=Xenova/all-MiniLM-L6-v2 \
+    CAPABILITY=text-embedding \
+    DEVICE=cuda \
+    POLL_INTERVAL_MS=5000 \
+    MAX_CONCURRENCY=1 \
+    IDENTITY_PATH=/app/node-identity.json \
+    HF_HOME=/app/models
+
+VOLUME ["/app/models"]
+
+# The CUDA base image has no unprivileged user; create one so the keypair and
+# the weights cache are not written as root.
+RUN useradd --create-home --shell /usr/sbin/nologin operator \
+    && mkdir -p /app/models \
+    && chown -R operator:operator /app
+
+USER operator
+
+CMD ["node", "src/index.js"]

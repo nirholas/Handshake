@@ -10,6 +10,8 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { DEVICES } from './inference.js';
+
 const DEFAULTS = {
 	platformUrl: 'https://three.ws',
 	model: 'Xenova/all-MiniLM-L6-v2',
@@ -18,6 +20,7 @@ const DEFAULTS = {
 	maxConcurrency: 1,
 	identityPath: 'node-identity.json',
 	jobTimeoutMs: 120_000,
+	device: 'auto',
 };
 
 /**
@@ -55,10 +58,17 @@ export function loadConfig({ env = process.env, cwd = process.cwd() } = {}) {
 		identityPath: pick('IDENTITY_PATH', 'identityPath', DEFAULTS.identityPath),
 		secretKey: env.OPERATOR_SECRET_KEY || file.secretKey || null,
 		label: pick('NODE_LABEL', 'label', null),
+		device: String(pick('DEVICE', 'device', DEFAULTS.device)).toLowerCase(),
+		// Left null on purpose: the runtime picks the precision that matches the
+		// chosen device (q8 on CPU, fp32 on GPU). Only override it deliberately.
+		dtype: pick('DTYPE', 'dtype', null),
 	};
 
 	if (!/^https?:\/\//.test(cfg.platformUrl)) {
 		throw new Error(`platformUrl must be an absolute http(s) URL, got: ${cfg.platformUrl}`);
+	}
+	if (!DEVICES.includes(cfg.device)) {
+		throw new Error(`DEVICE must be one of ${DEVICES.join(', ')}, got: ${cfg.device}`);
 	}
 	if (!Number.isInteger(cfg.maxConcurrency) || cfg.maxConcurrency < 1) {
 		throw new Error('maxConcurrency must be a positive integer');

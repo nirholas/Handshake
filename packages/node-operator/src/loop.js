@@ -20,6 +20,8 @@ export function createJobLoop({
 	pollIntervalMs = 5000,
 	maxConcurrency = 1,
 	cacheDir,
+	device = 'auto',
+	dtype,
 	jobTimeoutMs = 120_000,
 	log = console,
 	runJobImpl = runJob,
@@ -51,8 +53,8 @@ export function createJobLoop({
 	async function executeJob(job) {
 		const startedAt = Date.now();
 		try {
-			const { output, startedAt: t0, finishedAt: t1 } = await withTimeout(
-				runJobImpl(job, { cacheDir }),
+			const { output, startedAt: t0, finishedAt: t1, device: ranOn } = await withTimeout(
+				runJobImpl(job, { cacheDir, device, dtype, log }),
 				jobTimeoutMs,
 				`job ${job.id} exceeded ${jobTimeoutMs}ms`,
 			);
@@ -66,7 +68,7 @@ export function createJobLoop({
 			});
 			const res = await client.submitResult(job.id, { output, startedAt: t0, finishedAt: t1, receipt });
 			jobsDone.completed++;
-			log.log(`[node] job ${job.id} complete (${t1 - t0}ms inference, verified=${res?.verified ?? 'unknown'})`);
+			log.log(`[node] job ${job.id} complete (${t1 - t0}ms inference on ${ranOn ?? 'unknown device'}, verified=${res?.verified ?? 'unknown'})`);
 		} catch (err) {
 			jobsDone.failed++;
 			log.warn(`[node] job ${job.id} failed: ${err.message}`);

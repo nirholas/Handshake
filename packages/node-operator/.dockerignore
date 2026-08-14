@@ -1,0 +1,10 @@
+# Never bake an operator's identity, weights cache, or host node_modules into
+# an image: the keypair would ship to anyone who pulls it, and the other two
+# are rebuilt or re-downloaded inside the container anyway.
+node-identity.json
+operator.config.json
+models/
+node_modules/
+tests/
+scripts/
+README.md
