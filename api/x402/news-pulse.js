@@ -118,7 +118,7 @@ export default paidEndpoint({
 		if (!/^[A-Z0-9]{2,10}$/.test(rawTicker)) {
 			// Validation failure is thrown (not settled) so the buyer is not charged
 			// for a malformed request — the wrapper maps this to a 422 before settle.
-			throw Object.assign(new Error('ticker must be 2–10 alphanumeric characters, e.g. BTC'), {
+			throw Object.assign(new Error('ticker must be 2 to 10 alphanumeric characters, e.g. BTC'), {
 				status: 422,
 				code: 'invalid_ticker',
 			});

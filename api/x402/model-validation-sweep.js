@@ -17,6 +17,7 @@
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
+import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { sql } from '../_lib/db.js';
@@ -24,8 +25,7 @@ import { inspectModel, suggestOptimizations } from '../_lib/model-inspect.js';
 import { getObjectBuffer } from '../_lib/r2.js';
 
 const ROUTE = '/api/x402/model-validation-sweep';
-const MAX_BYTES = 16 * 1024 * 1024; // 16 MB cap — mirrors model-check.js
-const STALE_AFTER = "24 hours";
+const MAX_BYTES = 16 * 1024 * 1024; // 16 MB cap, mirrors model-check.js
 
 const DESCRIPTION =
 	'three.ws model quality sweep — picks the next public GLB avatar in the ' +
@@ -67,6 +67,10 @@ const OUTPUT_SCHEMA = {
 		ok: { type: 'boolean' },
 		skipped: { type: 'boolean' },
 		reason: { type: 'string' },
+		error: {
+			type: 'string',
+			description: 'Set with ok:false when the queued model could not be downloaded or parsed.',
+		},
 		avatar_id: { type: 'string', format: 'uuid' },
 		avatar_name: { type: ['string', 'null'] },
 		score: { type: 'integer', minimum: 0, maximum: 100 },
@@ -183,6 +187,9 @@ export default paidEndpoint({
 		serviceName: 'three.ws Model Validation Sweep',
 		tags: ['3d', 'gltf', 'glb', 'validation', 'quality', 'sweep'],
 	}),
+	// Same internal / subscription / OAuth bypass every other paid x402 route
+	// carries, so an operator can run the sweep without a payment leg.
+	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
 
 	async handler() {
 		await ensureSchema();

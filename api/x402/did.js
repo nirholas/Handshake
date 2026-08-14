@@ -260,6 +260,37 @@ async function readBody(req) {
 	}
 }
 
+// Turn one resolution attempt into the canary verdict. Pure (no I/O), so the
+// verdict logic is unit-testable without a live resolver, same pattern as
+// validateDidDocument above.
+//
+// `configured` answers "is a DID document published here", which only a real
+// HTTP answer can settle: 404 proves no document, any other status proves one
+// is being served. A transport failure (http_status 0: DNS, TLS, timeout)
+// proves neither, so it reports false rather than claiming a document we never
+// saw. `fetch_error` distinguishes that case from a genuine 404.
+export function summarizeResolution({ httpStatus, doc, latency_ms, did, fetchError = null }) {
+	const checks = validateDidDocument(doc);
+	const configured = httpStatus > 0 && httpStatus !== 404;
+	const malformed = httpStatus !== 200 || !checks.valid;
+	const within_latency = latency_ms <= MAX_LATENCY_MS;
+
+	return {
+		verified: !malformed && within_latency,
+		latency_ms,
+		did,
+		mode: 'verify',
+		resolved_did: typeof doc?.id === 'string' ? doc.id : null,
+		http_status: httpStatus,
+		within_latency,
+		malformed,
+		configured,
+		checks,
+		...(fetchError ? { fetch_error: fetchError } : {}),
+		ts: new Date().toISOString(),
+	};
+}
+
 async function runVerify({ did }) {
 	const url = `${publicOrigin()}/.well-known/did.json`;
 	const t0 = Date.now();
@@ -277,27 +308,8 @@ async function runVerify({ did }) {
 	} catch (err) {
 		fetchError = err?.message || 'fetch_failed';
 	}
-	const latency_ms = Date.now() - t0;
-	const configured = httpStatus !== 404;
-	const checks = validateDidDocument(doc);
-	const malformed = httpStatus !== 200 || !checks.valid;
-	const within_latency = latency_ms <= MAX_LATENCY_MS;
-	const verified = !malformed && within_latency;
 
-	return {
-		verified,
-		latency_ms,
-		did,
-		mode: 'verify',
-		resolved_did: typeof doc?.id === 'string' ? doc.id : null,
-		http_status: httpStatus,
-		within_latency,
-		malformed,
-		configured,
-		checks,
-		...(fetchError ? { fetch_error: fetchError } : {}),
-		ts: new Date().toISOString(),
-	};
+	return summarizeResolution({ httpStatus, doc, latency_ms: Date.now() - t0, did, fetchError });
 }
 
 // Sweep the N most recently created agent identities and check each for
@@ -366,8 +378,15 @@ const verifyCanary = paidEndpoint({
 });
 
 // ── Dispatch by method ───────────────────────────────────────────────────────
+// Only the two documented verbs are served. Anything else used to fall through
+// to the GET publisher, so a PUT or DELETE answered with the DID document,
+// which reads to a client (and to any cache in front of us) as if the write
+// succeeded. 405 says plainly that the resource is read-or-pay only.
 export default function handler(req, res) {
 	if (req.method === 'POST') return verifyCanary(req, res);
-	// GET / HEAD / OPTIONS → free DID document publisher.
-	return handleDidDocument(req, res);
+	if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+		return handleDidDocument(req, res);
+	}
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
+	return error(res, 405, 'method_not_allowed', 'use GET for the DID document or POST for the verification canary');
 }

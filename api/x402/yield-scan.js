@@ -155,7 +155,14 @@ export default paidEndpoint({
 		const limit = Math.min(50, Math.max(1, Number.isFinite(limitRaw) ? Math.floor(limitRaw) : 20));
 
 		let pools = null;
-		try { pools = await loadPools(); } catch { /* refund below */ }
+		try {
+			pools = await loadPools();
+		} catch (err) {
+			// Refuse BEFORE settlement (the throw below) so an upstream outage never
+			// charges the buyer. Log the cause so an upstream shape or availability
+			// change is diagnosable instead of surfacing only as a bare 503.
+			console.error('[yield-scan] pool feed unavailable; refusing before settlement', err?.message || err);
+		}
 		if (!pools) {
 			throw Object.assign(new Error('yield pool data is temporarily unavailable'), {
 				status: 503,

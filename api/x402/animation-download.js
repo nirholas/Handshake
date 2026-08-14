@@ -17,7 +17,7 @@ import { priceFor } from '../_lib/x402-prices.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { sql } from '../_lib/db.js';
 import { presignGet } from '../_lib/r2.js';
-import { error, json } from '../_lib/http.js';
+import { cors, error, json } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import animationDownloadListing from '../_lib/service-catalog/services/animation-download.js';
 
@@ -161,6 +161,15 @@ function sendDiscoveryChallenge(res, errText) {
 export const __test__ = { priceAtomics, buildSiwxStatement, buildPayToOverride, UUID_RE };
 
 export default async function handler(req, res) {
+	// Install CORS before anything else, for the same reason as
+	// asset-download.js: this handler answers the discovery challenge, the
+	// 400/404/502 errors and the free-listing 200 itself, before it ever
+	// delegates to paidEndpoint (which is what normally installs CORS). Without
+	// it the OPTIONS preflight fell through to a 402 carrying no
+	// Access-Control-Allow-Origin, leaving browser x402 clients unable to read
+	// the challenge. Same options paidEndpoint uses for a GET route.
+	if (cors(req, res, { methods: 'GET,HEAD,OPTIONS', origins: '*' })) return;
+
 	const paymentPresent = Boolean(req.headers['x-payment'] || req.headers['payment-signature']);
 
 	const id = req.query?.id ? String(req.query.id).trim() : '';

@@ -385,6 +385,30 @@ async function grindAndBuildReceipt({ prefix, suffix, ignoreCase, sealTo, client
 	return response;
 }
 
+// Cache-safe copy of a delivered receipt. The x402 replay/idempotency cache must
+// never hold spendable key material at rest (same rule as api/x402/vanity.js),
+// and TWO fields here are key-equivalent, so both have to go:
+//   1. the plaintext secret (secretKeyBase58 / secretKey / seed), present
+//      whenever the buyer did not pass sealTo;
+//   2. serverSeed, which is key-equivalent even on a SEALED delivery. The
+//      protocol is deterministic by design: masterSeed = HKDF(serverSeed ||
+//      clientSeed || requestNonce), and candidate `winningIndex` derives the
+//      Ed25519 secret from it. Anyone holding a full receipt can recompute the
+//      private key, which is exactly what makes the receipt verifiable.
+// What stays is everything that cannot reconstruct the key: `commitment` is a
+// preimage-resistant hash of serverSeed, and `sealedSecret` is ciphertext only
+// the buyer's X25519 key opens. A replayed payment therefore gets the public
+// metadata and an explicit marker, never a second copy of the secret.
+export function cacheSafeBody(result) {
+	const { secretKeyBase58, secretKey, seed, serverSeed, ...publicMeta } = result;
+	void secretKeyBase58; void secretKey; void seed; void serverSeed;
+	return JSON.stringify({
+		...publicMeta,
+		secret_omitted_from_cache: true,
+		note: 'The ground secret and the receipt\'s serverSeed are returned once, in the original response, and are never stored. Both are key-equivalent under three-vanity/v1, so neither is retained here. If you did not capture the receipt, grind again.',
+	});
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (req.method !== 'GET') {
@@ -510,7 +534,7 @@ export default wrap(async (req, res) => {
 			payloadHash,
 			paymentHash,
 			status: 200,
-			body,
+			body: cacheSafeBody(result),
 			contentType,
 			paymentResponseHeader,
 		});

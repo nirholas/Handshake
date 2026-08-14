@@ -7,9 +7,10 @@
 //
 // Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market) and the
 // pay-skills registry. For $0.001 USDC the server reads the token's on-chain
-// Metaplex metadata, resolves the off-chain JSON, fetches the image (when one
-// is exposed), and returns a themed binary glTF cube ready for any Three.js /
-// Babylon.js / model-viewer instance to render.
+// metadata (the Token-2022 TokenMetadata extension when the mint carries one,
+// else the Metaplex PDA), resolves the off-chain JSON, fetches the image (when
+// one is exposed), and returns a themed binary glTF cube ready for any
+// Three.js / Babylon.js / model-viewer instance to render.
 //
 // The cube is procedurally synthesized per request via @gltf-transform — no
 // templated asset, no headless WebGL, no S3. Output ships as base64 inside a
@@ -32,7 +33,6 @@ import {
 	resolveResourceUrl,
 	buildBazaarSchema,
 } from '../_lib/x402-spec.js';
-import { env } from '../_lib/env.js';
 import { createThemedGLB, colorFromMint } from '../_lib/glb-themer.js';
 import { fetchTokenMeta } from '../_lib/solana-token-meta.js';
 import {
@@ -92,10 +92,10 @@ const DISCOVERY_INPUT_SCHEMA = {
 const DISCOVERY_OUTPUT_EXAMPLE = {
 	mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
 	theme: {
-		name: 'three',
-		symbol: 'THREE',
-		color: [0.92, 0.45, 0.18],
-		hasImage: false,
+		name: 'three.ws',
+		symbol: 'three',
+		color: [0.235, 0.382, 0.865],
+		hasImage: true,
 	},
 	glb: {
 		mimeType: 'model/gltf-binary',
@@ -261,7 +261,7 @@ export default wrap(async (req, res) => {
 				res,
 				400,
 				'invalid_mint',
-				'mint must be a base58 SPL address (32–44 chars)',
+				'mint must be a base58 SPL address (32 to 44 chars)',
 			);
 		let result;
 		try {
@@ -331,7 +331,7 @@ export default wrap(async (req, res) => {
 	}
 	if (!BASE58_RE.test(mint)) {
 		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
-		return error(res, 400, 'invalid_mint', 'mint must be a base58 SPL address (32–44 chars)');
+		return error(res, 400, 'invalid_mint', 'mint must be a base58 SPL address (32 to 44 chars)');
 	}
 
 	let result;

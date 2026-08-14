@@ -177,6 +177,35 @@ describe('POST /api/x402/fact-check — free daily lane', () => {
 		expect(res.json().lane).not.toBe('free');
 	});
 
+	it('answers the free lane with the same allow-origin the paid rail sets', async () => {
+		// A cross-origin caller preflights (answered by the paid rail, allow-origin *)
+		// and then POSTs. Before the free lane set CORS itself, that second response
+		// carried no allow-origin and the browser discarded a perfectly good 200,
+		// so both a served check and a rejected one are asserted here.
+		const ok = await callFactCheck(
+			jsonReq({ claim: 'The sky is blue during the day.' }, { origin: 'https://example.com', ...freshIp() }),
+		);
+		expect(ok.statusCode).toBe(200);
+		expect(ok.getHeader('access-control-allow-origin')).toBe('*');
+
+		const bad = await callFactCheck(
+			jsonReq({ claim: 'hi' }, { origin: 'https://example.com', ...freshIp() }),
+		);
+		expect(bad.statusCode).toBe(400);
+		expect(bad.getHeader('access-control-allow-origin')).toBe('*');
+	});
+
+	it('answers an OPTIONS preflight with 204 and the paid rail header set', async () => {
+		const pre = Readable.from([]);
+		pre.method = 'OPTIONS';
+		pre.url = '/api/x402/fact-check';
+		pre.headers = { origin: 'https://example.com', ...freshIp() };
+		const res = await callFactCheck(pre);
+		expect(res.statusCode).toBe(204);
+		expect(res.getHeader('access-control-allow-origin')).toBe('*');
+		expect(String(res.getHeader('access-control-allow-methods'))).toContain('POST');
+	});
+
 	it('GET (or any non-POST) is left entirely to the paid rail', async () => {
 		// Credential-less wrong-method requests are discovery probes and receive
 		// the 402 challenge (x402-paid-endpoint.js method gate); a request

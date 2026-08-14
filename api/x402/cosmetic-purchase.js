@@ -17,15 +17,22 @@
 // on-chain payment itself is single-use (the facilitator won't settle the same
 // signed proof twice), and the ownership SET is idempotent, so the flow is safe
 // against replay and can never double-grant.
+//
+// The SIWX grant is keyed on (resource, wallet) and the resource URL carries the
+// cosmetic id, NOT the target account. So the free re-access path must re-check
+// entitlement itself (siwxReGrantAllowed below): without that, one purchase
+// would let the paying wallet sign the item onto an unlimited number of other
+// accounts for free. Re-access re-confirms an unlock; it never sells a new one.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema, paymentRequirements, send402 } from '../_lib/x402-spec.js';
+import { X402Error } from '../_lib/x402-errors.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { error } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { getCosmetic, priceUsdcAtomicsOf } from '../_lib/cosmetics.js';
-import { grantCosmeticOwnership, normalizeAccountId } from '../_lib/cosmetics-ownership.js';
+import { grantCosmeticOwnership, normalizeAccountId, ownsCosmetic } from '../_lib/cosmetics-ownership.js';
 import { recordSaleAndSplit, isMint } from '../_lib/cosmetics-economy.js';
 import cosmeticPurchaseListing from '../_lib/service-catalog/services/cosmetic-purchase.js';
 
@@ -147,6 +154,18 @@ function sendDiscoveryChallenge(res, errText) {
 	});
 }
 
+// Who may be re-granted an item on the FREE SIWX re-access path (no payment in
+// this request). Two cases are legitimate:
+//   • the signing wallet is the target account, the buyer re-confirming their
+//     own unlock from a new device or after a cache wipe;
+//   • the target account already owns the item, a guest profile re-confirming
+//     an unlock that was paid for earlier.
+// Anything else is a fresh sale and must be paid for. Pure; exported for tests.
+export function siwxReGrantAllowed({ account, payer, alreadyOwned }) {
+	if (alreadyOwned) return true;
+	return !!payer && normalizeAccountId(payer) === account;
+}
+
 // Per-item paidEndpoint built on the fly: the id picks the catalog row, which
 // dictates the USDC price; everything else is shared. Mirrors asset-download.js,
 // where the slug drives a per-row price + SIWX grant.
@@ -229,7 +248,28 @@ export default async function handler(req, res) {
 			ttlSeconds: null,
 			expirationSeconds: 300,
 		},
-		async handler({ requirement, payer }) {
+		async handler({ requirement, payer, bypass }) {
+			// Free SIWX re-access: nothing settled this call (no `requirement`) and
+			// no authorized bypass granted it (a subscription or scoped caller keeps
+			// its access). Only re-confirm an unlock the account is already entitled
+			// to; a signature must never unlock the item for a THIRD account. 402,
+			// not 403, so an x402 client falls straight through to paying for it.
+			if (!requirement && !bypass) {
+				const allowed = siwxReGrantAllowed({
+					account,
+					payer,
+					alreadyOwned: await ownsCosmetic(account, item.id),
+				});
+				if (!allowed) {
+					throw new X402Error(
+						'account_not_entitled',
+						`account "${account}" does not own "${item.name}". Signing in re-confirms an ` +
+						'unlock you already paid for; pay the challenge to unlock it for this account',
+						402,
+					);
+				}
+			}
+
 			// Record ownership BEFORE settlement returns to the buyer. grant throws
 			// (503) if the durable store is missing — fail closed, so we never settle
 			// a charge we can't record. Idempotent: a re-paid/replayed call just

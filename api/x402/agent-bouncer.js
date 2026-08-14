@@ -81,6 +81,7 @@ const INPUT_SCHEMA = {
 
 const OUTPUT_EXAMPLE = {
 	ok: true,
+	exists: true,
 	admitted: true,
 	banned: false,
 	tier: 'trusted',

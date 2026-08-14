@@ -22,7 +22,7 @@ import { buildBazaarSchema, paymentRequirements, send402 } from '../_lib/x402-sp
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { sql } from '../_lib/db.js';
-import { error } from '../_lib/http.js';
+import { cors, error, respondError } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { accrueSkillCallRoyalty } from '../_lib/skill-royalty.js';
 import skillCallListing from '../_lib/service-catalog/services/skill-call.js';
@@ -153,6 +153,12 @@ function sendDiscoveryChallenge(res, errText) {
 }
 
 export default async function handler(req, res) {
+	// paidEndpoint answers CORS itself, but every branch below can respond BEFORE
+	// one is built (discovery challenge, unknown slug, free skill), and an
+	// X-PAYMENT header always triggers a preflight. Without this the preflight was
+	// answered with a bare 402 and no allow-origin, so no browser wallet could pay.
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+
 	const slug = req.query?.skill ? String(req.query.skill).trim() : '';
 	const paymentPresent = Boolean(req.headers['x-payment'] || req.headers['payment-signature']);
 	if (!slug) {
@@ -169,7 +175,10 @@ export default async function handler(req, res) {
 	try {
 		skill = await loadSkill(slug);
 	} catch (err) {
-		return error(res, 502, 'skill_lookup_failed', err.message);
+		// respondError, not error(): a 5xx must not echo the driver's own message
+		// back to a buyer (the DB outage path answered "Missing required env var:
+		// DATABASE_URL"). It sanitizes and hands back a support ref instead.
+		return respondError(res, 502, 'skill_lookup_failed', err);
 	}
 	if (!skill) {
 		if (paymentPresent) {

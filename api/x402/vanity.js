@@ -649,6 +649,25 @@ export async function tryInstantFromInventory(pattern, { paymentId, purchaser })
 	return { result: withCert, item };
 }
 
+// Cache-safe copy of a delivered result. Never persist spendable key material at
+// rest: the live response delivers the ground secret once over TLS (this
+// endpoint's stated contract), and the x402 replay/idempotency cache must NOT
+// hold it, or a cache read or compromise would recover spendable keys for the
+// cache TTL. The plaintext secret fields are stripped from the STORED copy, so a
+// replayed payment receives the public metadata plus an explicit marker rather
+// than the key. A sealed response carries only ciphertext (sealedSecret), which
+// is safe at rest, so it is cached unchanged.
+export function cacheSafeBody(result) {
+	if (result?.sealed) return JSON.stringify(result);
+	const { secretKeyBase58, secretKey, mnemonic, ...publicMeta } = result;
+	void secretKeyBase58; void secretKey; void mnemonic;
+	return JSON.stringify({
+		...publicMeta,
+		secret_omitted_from_cache: true,
+		note: 'The ground secret is returned only once in the original response and is never stored. If you did not capture it, grind again.',
+	});
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (req.method !== 'GET') {
@@ -732,6 +751,21 @@ export default wrap(async (req, res) => {
 		);
 	}
 	if (acResult?.grantAccess) {
+		// The premium 4-5 char band is inventory-only. grindAndShape would reject
+		// it as pattern_too_long (the live grinder tops out at
+		// MAX_SERVER_PATTERN_LENGTH), and an access grant is not a purchase, so it
+		// cannot claim stock either. Say that plainly rather than surfacing a
+		// length error for a pattern we just confirmed IS in stock.
+		if (pattern.premiumOnly) {
+			return error(
+				res,
+				409,
+				'purchase_required',
+				`${pattern.combinedLength}-char patterns come only from the premium inventory, which is sold per item. ` +
+					`An access grant covers the live grind (1-${MAX_SERVER_PATTERN_LENGTH} chars); buy this pattern at ` +
+					`GET /api/x402/vanity-premium?prefix=${encodeURIComponent(pattern.prefix || '')}.`,
+			);
+		}
 		let result;
 		try {
 			result = await grindAndShape(pattern);
@@ -864,31 +898,13 @@ export default wrap(async (req, res) => {
 	res.end(body);
 
 	if (paymentId) {
-		// Never persist spendable key material at rest. The live response above
-		// delivers the ground secret once over TLS (this endpoint's stated
-		// contract); the x402 replay/idempotency cache must NOT hold it, or a
-		// Redis read or compromise would recover spendable keys for the cache TTL.
-		// Strip the plaintext secret fields from the STORED copy so a replayed
-		// payment receives the public metadata plus an explicit marker, not the
-		// key. Sealed responses carry only ciphertext (sealedSecret), which is
-		// safe at rest, so they are cached unchanged.
-		let storedBody = body;
-		if (!result?.sealed) {
-			const { secretKeyBase58, secretKey, mnemonic, ...publicMeta } = result;
-			void secretKeyBase58; void secretKey; void mnemonic;
-			storedBody = JSON.stringify({
-				...publicMeta,
-				secret_omitted_from_cache: true,
-				note: 'The ground secret is returned only once in the original response and is never stored. If you did not capture it, grind again.',
-			});
-		}
 		await storeResponse({
 			route: ROUTE,
 			paymentId,
 			payloadHash,
 			paymentHash,
 			status: 200,
-			body: storedBody,
+			body: cacheSafeBody(result),
 			contentType,
 			paymentResponseHeader,
 		});

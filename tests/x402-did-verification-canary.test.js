@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 process.env.X402_ASSET_MINT_SOLANA = USDC;
 
-const { validateDidDocument } = await import('../api/x402/did.js');
+const { validateDidDocument, summarizeResolution, default: didHandler } = await import('../api/x402/did.js');
 const { getFullRegistry } = await import('../api/_lib/x402/autonomous-registry.js');
 
 const goodJws = {
@@ -97,6 +97,64 @@ describe('validateDidDocument', () => {
 		const c = validateDidDocument({ ...goodJws, verificationMethod: [{ id: 'x' }] });
 		expect(c.has_verification_method).toBe(false);
 		expect(c.valid).toBe(false);
+	});
+});
+
+describe('summarizeResolution', () => {
+	it('verifies a healthy, fast resolution', () => {
+		const v = summarizeResolution({ httpStatus: 200, doc: goodJws, latency_ms: 120, did: 'did:three:canary' });
+		expect(v.verified).toBe(true);
+		expect(v.configured).toBe(true);
+		expect(v.malformed).toBe(false);
+		expect(v.within_latency).toBe(true);
+		expect(v.resolved_did).toBe('did:web:three.ws');
+		expect(v.fetch_error).toBeUndefined();
+	});
+
+	it('fails a healthy document that resolved too slowly', () => {
+		const v = summarizeResolution({ httpStatus: 200, doc: goodJws, latency_ms: 4000, did: 'd' });
+		expect(v.within_latency).toBe(false);
+		expect(v.malformed).toBe(false);
+		expect(v.verified).toBe(false);
+	});
+
+	it('reports not-configured on a 404 from the resolver', () => {
+		const v = summarizeResolution({ httpStatus: 404, doc: { error: 'not_configured' }, latency_ms: 40, did: 'd' });
+		expect(v.configured).toBe(false);
+		expect(v.verified).toBe(false);
+	});
+
+	it('never claims configured when the resolver was unreachable', () => {
+		// http_status 0 means DNS/TLS/timeout. We never saw an answer, so we
+		// cannot claim a document is published. The old code read 0 as "not 404"
+		// and reported configured:true for a resolver that was entirely dark.
+		const v = summarizeResolution({
+			httpStatus: 0, doc: null, latency_ms: 5000, did: 'd', fetchError: 'timeout',
+		});
+		expect(v.configured).toBe(false);
+		expect(v.verified).toBe(false);
+		expect(v.fetch_error).toBe('timeout');
+	});
+});
+
+describe('did endpoint method gate', () => {
+	function mockRes() {
+		const res = { statusCode: 0, body: '', headers: {} };
+		res.setHeader = (k, v) => { res.headers[k.toLowerCase()] = v; };
+		res.getHeader = (k) => res.headers[k.toLowerCase()];
+		res.status = (s) => { res.statusCode = s; return res; };
+		res.json = (o) => { res.body = JSON.stringify(o); res.writableEnded = true; return res; };
+		res.end = (b) => { res.body = b || res.body; res.writableEnded = true; };
+		return res;
+	}
+
+	it('405s a write verb instead of serving the DID document', async () => {
+		for (const method of ['PUT', 'DELETE', 'PATCH']) {
+			const res = mockRes();
+			await didHandler({ method, url: '/api/x402/did', headers: {} }, res);
+			expect(res.statusCode).toBe(405);
+			expect(JSON.parse(res.body).error).toBe('method_not_allowed');
+		}
 	});
 });
 

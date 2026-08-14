@@ -192,6 +192,23 @@ describe('cosmetic-purchase endpoint boundary', () => {
 		}
 	});
 
+	// The SIWX grant is keyed on (resource, wallet) and the resource URL carries
+	// the cosmetic id, not the target account, so without this guard a wallet
+	// that bought one skin could sign it onto unlimited other accounts for free.
+	it('siwxReGrantAllowed lets a buyer re-confirm but never sells a third account a free unlock', async () => {
+		const { siwxReGrantAllowed } = await import('../api/x402/cosmetic-purchase.js');
+		const wallet = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+		// The signing wallet re-confirming its own unlock.
+		expect(siwxReGrantAllowed({ account: wallet, payer: wallet, alreadyOwned: false })).toBe(true);
+		// A guest profile that already owns the item re-confirming it.
+		expect(siwxReGrantAllowed({ account: 'guest-1', payer: wallet, alreadyOwned: true })).toBe(true);
+		// A third account that never paid: this is a fresh sale, not a re-access.
+		expect(siwxReGrantAllowed({ account: 'guest-2', payer: wallet, alreadyOwned: false })).toBe(false);
+		// No signer at all cannot re-grant anything it does not already own.
+		expect(siwxReGrantAllowed({ account: 'guest-2', payer: null, alreadyOwned: false })).toBe(false);
+	});
+
 	it('issues a 402 priced in USDC for a premium cosmetic', async () => {
 		const r = await call({ id: 'skin-midnight', account: 'guest-1' });
 		expect(r.status).toBe(402);

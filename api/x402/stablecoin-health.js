@@ -32,12 +32,43 @@ function pctChange(now, prev) {
 	return ((now - prev) / prev) * 100;
 }
 
-function pegStatus(deviationBps) {
+export function pegStatus(deviationBps) {
 	if (deviationBps == null) return 'unknown';
 	const abs = Math.abs(deviationBps);
 	if (abs >= DEPEG_BPS) return 'depegged';
 	if (abs >= DRIFT_BPS) return 'drifting';
 	return 'on-peg';
+}
+
+// Normalize one upstream pegged asset into a scored coin row. Returns null for
+// anything that is not a USD-pegged asset with real circulating supply, so the
+// caller can skip it. Pure, so the peg verdict is testable without the network.
+export function toCoin(a) {
+	// USD-pegged assets only. The bps deviation math below is against $1.
+	if (a?.pegType !== 'peggedUSD') return null;
+	const circulating = Number(a?.circulating?.peggedUSD);
+	if (!Number.isFinite(circulating) || circulating <= 0) return null;
+	// Upstream omits `price` (null) for ~75 of the USD-pegged assets it tracks.
+	// Number(null) is 0, so coercing first scored every one of them as a total
+	// depeg (-10000 bps) and filled the alert list with coins that simply have
+	// no quote. Only an actual number is a price; anything else is unknown.
+	const price = typeof a.price === 'number' && Number.isFinite(a.price) ? a.price : null;
+	const deviationBps = price != null ? Math.round((price - 1) * 10_000) : null;
+	return {
+		symbol: typeof a.symbol === 'string' ? a.symbol : null,
+		name: typeof a.name === 'string' ? a.name : null,
+		price,
+		deviation_bps: deviationBps,
+		status: pegStatus(deviationBps),
+		mechanism: typeof a.pegMechanism === 'string' ? a.pegMechanism : null,
+		circulating_usd: circulating,
+		change_24h_pct: finite(pctChange(circulating, Number(a?.circulatingPrevDay?.peggedUSD))),
+		change_7d_pct: finite(pctChange(circulating, Number(a?.circulatingPrevWeek?.peggedUSD))),
+		change_30d_pct: finite(pctChange(circulating, Number(a?.circulatingPrevMonth?.peggedUSD))),
+		chains: a.chainCirculating && typeof a.chainCirculating === 'object'
+			? Object.keys(a.chainCirculating).length
+			: 0,
+	};
 }
 
 async function loadStablecoins() {
@@ -55,28 +86,10 @@ async function loadStablecoins() {
 	let totalCirculating = 0;
 	const coins = [];
 	for (const a of raw.peggedAssets) {
-		// USD-pegged assets only — the bps deviation math below is against $1.
-		if (a?.pegType !== 'peggedUSD') continue;
-		const circulating = Number(a?.circulating?.peggedUSD);
-		if (!Number.isFinite(circulating) || circulating <= 0) continue;
-		totalCirculating += circulating;
-		const price = finite(Number(a.price));
-		const deviationBps = price != null ? Math.round((price - 1) * 10_000) : null;
-		coins.push({
-			symbol: typeof a.symbol === 'string' ? a.symbol : null,
-			name: typeof a.name === 'string' ? a.name : null,
-			price,
-			deviation_bps: deviationBps,
-			status: pegStatus(deviationBps),
-			mechanism: typeof a.pegMechanism === 'string' ? a.pegMechanism : null,
-			circulating_usd: circulating,
-			change_24h_pct: finite(pctChange(circulating, Number(a?.circulatingPrevDay?.peggedUSD))),
-			change_7d_pct: finite(pctChange(circulating, Number(a?.circulatingPrevWeek?.peggedUSD))),
-			change_30d_pct: finite(pctChange(circulating, Number(a?.circulatingPrevMonth?.peggedUSD))),
-			chains: a.chainCirculating && typeof a.chainCirculating === 'object'
-				? Object.keys(a.chainCirculating).length
-				: 0,
-		});
+		const coin = toCoin(a);
+		if (!coin) continue;
+		totalCirculating += coin.circulating_usd;
+		coins.push(coin);
 	}
 	coins.sort((a, b) => b.circulating_usd - a.circulating_usd);
 

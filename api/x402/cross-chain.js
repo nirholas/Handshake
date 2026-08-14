@@ -127,8 +127,9 @@ const BRIDGE_PROBES = [
 		url:      'https://li.quest/v1/chains?chainTypes=SVM',
 		check: (data) => {
 			// Li.Fi chains endpoint returns { chains: [...] }. A non-empty array
-			// means the Solana lane is advertised. A maintenance_message on any
-			// chain signals partial degradation; we report that separately below.
+			// means the Solana lane is advertised; an empty one (or a body without
+			// the array) means Li.Fi is not routing SVM right now, which is the
+			// outage this probe exists to catch.
 			const chains = Array.isArray(data?.chains) ? data.chains : [];
 			return chains.length > 0;
 		},
@@ -160,8 +161,12 @@ async function probebridge({ chain, provider, url, check }) {
 		if (!res.ok) {
 			status = 'down';
 		} else {
+			// A 200 whose body will not parse as JSON is an error page from an
+			// edge/proxy in front of the provider, not a healthy API. Leave `data`
+			// null and let check() judge it. Every probe below reads a required
+			// field, so a null body classifies as down, which is the honest call.
 			let data = null;
-			try { data = await res.json(); } catch { /* binary/non-JSON response = treat as up */ }
+			try { data = await res.json(); } catch { /* null body → check() reports down */ }
 			const isUp = check(data);
 			if (!isUp) {
 				status = 'down';

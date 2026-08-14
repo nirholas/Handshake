@@ -249,7 +249,13 @@ export default paidEndpoint({
 
 	async handler() {
 		let gas = null;
-		try { gas = await loadGas(); } catch { /* refund below */ }
+		try {
+			gas = await loadGas();
+		} catch (err) {
+			// Every chain's failover set was exhausted. The buyer gets the 503 below
+			// (pre-settle, nothing charged); this is the only place the cause exists.
+			console.warn(`[x402/gas-oracle] gas load failed on every chain: ${err?.message || err}`);
+		}
 		if (!gas) {
 			throw Object.assign(new Error('gas data is temporarily unavailable on every chain'), {
 				status: 503,

@@ -57,19 +57,22 @@ function withinFreshnessWindow(issuedAt) {
 // Decimals for the settlement assets THIS deployment actually pays in, read
 // from the same env config that builds the 402 accepts — so a client never has
 // to keep its own copy of our asset addresses (which would silently drift the
-// day an asset is repointed). Every configured asset is 6-decimal USDC; an
+// day an asset is repointed). Every asset advertised in an accept is covered:
+// USDC on Solana/Base/BSC, USD₮0 on X Layer, and $THREE on the Solana rail. An
 // asset we don't recognise returns null and the client renders the raw atomic
 // amount rather than guessing a scale.
 function assetDecimals(asset) {
 	if (!asset) return null;
 	const want = String(asset).toLowerCase();
 	const configured = [
-		env.X402_ASSET_MINT_SOLANA,
-		env.X402_ASSET_ADDRESS_BASE,
-		env.X402_ASSET_ADDRESS_BSC,
+		[env.X402_ASSET_MINT_SOLANA, 6],
+		[env.X402_ASSET_ADDRESS_BASE, 6],
+		[env.X402_ASSET_ADDRESS_BSC, 6],
+		[env.X402_ASSET_ADDRESS_XLAYER, 6],
+		[env.THREE_TOKEN_MINT, env.THREE_TOKEN_DECIMALS],
 	];
-	for (const known of configured) {
-		if (known && String(known).toLowerCase() === want) return 6;
+	for (const [known, decimals] of configured) {
+		if (known && String(known).toLowerCase() === want) return decimals;
 	}
 	return null;
 }

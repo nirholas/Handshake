@@ -20,7 +20,7 @@
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
-import { readJson, json } from '../_lib/http.js';
+import { readJson } from '../_lib/http.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { getRemixSource, linkRefinement } from '../_lib/forge-store.js';
 import { settleRemixRoyalty } from '../_lib/remix-settlement.js';
@@ -221,15 +221,11 @@ export default paidEndpoint({
 		serviceName: 'Remix a 3D asset + royalties',
 		tags: ['3d', 'remix', 'royalties', 'generation'],
 	}),
-	handler: async ({ req, res, requirement }) => {
-		try {
-			return await handleRemix({ req, requirement });
-		} catch (err) {
-			if (err instanceof RemixError) {
-				json(res, err.status, { error: err.code, message: err.message });
-				return undefined; // response already written; paidEndpoint skips settle
-			}
-			throw err;
-		}
-	},
+	// RemixError carries .status + .code, which is exactly what paidEndpoint's own
+	// catch maps to a clean error response before settlement runs. Writing the
+	// response here instead made paidEndpoint see a handler that flushed without
+	// settling: it logged a payment_unsettled_flush leak, recorded a failed
+	// payment metric and threw, so every ordinary 400 (bad source id, empty
+	// instruction) read as a money leak in the x402 telemetry.
+	handler: handleRemix,
 });

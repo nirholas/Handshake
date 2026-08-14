@@ -5,7 +5,8 @@
 // before scheduling high-frequency oracle calls — if remaining_calls is low,
 // lower-priority entries yield their slot so oracle throughput is preserved.
 //
-// Body: { endpoint: "/api/x402/crypto-intel" }
+// Body: { endpoint: "/api/x402/crypto-intel" }, a metered route (/api/x402*,
+// /api/mcp*, /api/ibm-mcp); any other path is rejected 400 before the probe runs.
 //
 // Response:
 //   endpoint                   — echoed from body
@@ -44,15 +45,17 @@ const DESCRIPTION =
 	'USDC spend cap. Returns remaining_calls, reset_at, and cooldown_active so agents ' +
 	'can throttle dynamically instead of discovering the cap by failure.';
 
-const INPUT_SCHEMA = {
+export const INPUT_SCHEMA = {
 	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	required: ['endpoint'],
 	properties: {
 		endpoint: {
 			type: 'string',
-			description: 'Relative path of the target x402 endpoint, e.g. "/api/x402/crypto-intel".',
-			pattern: '^/api/',
+			description:
+				'Relative path of the target x402 endpoint, e.g. "/api/x402/crypto-intel". Must be a ' +
+				'metered route: /api/x402*, /api/mcp* or /api/ibm-mcp. Anything else is rejected 400.',
+			pattern: '^/api/(x402|mcp|ibm-mcp)([/?-]|$)',
 		},
 	},
 };
@@ -112,6 +115,24 @@ function nextUtcMidnight() {
 // Today's daily spend key used by the autonomous loop.
 function dailySpendKey() {
 	return `${DAILY_SPEND_PREFIX}${new Date().toISOString().slice(0, 10)}`;
+}
+
+// The probe below makes the server POST to `origin + endpoint` with no auth, so
+// a caller must not be able to aim it at an arbitrary internal route. Every HTTP
+// path the autonomous registry actually meters sits under one of these prefixes
+// (verified against getSelfRegistry()), which is also exactly the set of routes
+// that answer a 402 challenge, so this costs the product nothing.
+const PROBEABLE_PREFIXES = ['/api/x402', '/api/mcp', '/api/ibm-mcp'];
+
+function isProbeableEndpoint(endpoint) {
+	if (endpoint.includes('..')) return false;
+	return PROBEABLE_PREFIXES.some(
+		(prefix) =>
+			endpoint === prefix ||
+			endpoint.startsWith(`${prefix}/`) ||
+			endpoint.startsWith(`${prefix}?`) ||
+			endpoint.startsWith(`${prefix}-`),
+	);
 }
 
 // Probe the target endpoint (no payment header) to learn its 402 challenge price.
@@ -221,6 +242,14 @@ export default paidEndpoint({
 			const err = new Error('"endpoint" must be a relative /api/ path');
 			err.status = 400;
 			err.code = 'invalid_endpoint';
+			throw err;
+		}
+		if (!isProbeableEndpoint(endpoint)) {
+			const err = new Error(
+				`"endpoint" must be a metered x402 route (${PROBEABLE_PREFIXES.join(', ')})`,
+			);
+			err.status = 400;
+			err.code = 'endpoint_not_metered';
 			throw err;
 		}
 

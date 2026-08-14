@@ -16,6 +16,7 @@
 // upstream outages throw AFTER verify but BEFORE settle — never charged.
 
 import { paidEndpoint } from '../../_lib/x402-paid-endpoint.js';
+import { cors, error } from '../../_lib/http.js';
 import { buildBazaarSchema } from '../../_lib/x402-spec.js';
 import { installAccessControl } from '../../_lib/x402/access-control.js';
 import { withService } from '../../_lib/x402/bazaar-helpers.js';
@@ -94,15 +95,6 @@ function instanceFor(parsed) {
 	return inst;
 }
 
-function sendJson(res, status, obj) {
-	res.statusCode = status;
-	if (typeof res.setHeader === 'function') {
-		res.setHeader('content-type', 'application/json; charset=utf-8');
-		res.setHeader('access-control-allow-origin', '*');
-	}
-	res.end(JSON.stringify(obj));
-}
-
 export default async function handler(req, res) {
 	const pathname = (req.url || '').split('?')[0];
 	const segments = pathname.startsWith(PREFIX)
@@ -115,9 +107,12 @@ export default async function handler(req, res) {
 	try {
 		parsed = parseDatapointPath(segments);
 	} catch (err) {
-		return sendJson(res, err.status || 404, {
-			error: err.code || 'not_found',
-			message: err.message,
+		// Same error envelope every other api/ handler emits ({ error,
+		// error_description }), plus the two fields that make this particular
+		// 404 self-service: where the catalog lives and what the valid families
+		// are. A bad path is never cacheable, which error() enforces.
+		if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+		return error(res, err.status || 404, err.code || 'not_found', err.message, {
 			catalog: '/api/x402/d',
 			families: Object.keys(DATAPOINT_FAMILIES),
 		});

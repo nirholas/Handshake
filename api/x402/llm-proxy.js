@@ -44,6 +44,7 @@ import {
 	issueInferenceReceipt,
 } from '../_lib/inference-settlement.js';
 import { recordInferenceJob } from '../_lib/inference-jobs.js';
+import { priceFor } from '../_lib/x402-prices.js';
 import llmProxyListing from '../_lib/service-catalog/services/llm-proxy.js';
 
 const ROUTE = '/api/x402/llm-proxy';
@@ -170,7 +171,7 @@ const BAZAAR = {
 export default paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
-	priceAtomics: 5_000, // $0.005 USDC
+	priceAtomics: priceFor('llm-proxy', '5000'), // $0.005 USDC
 	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
@@ -228,10 +229,11 @@ export default paidEndpoint({
 
 		// Phase 4 metering: bind the job identity to hashes of the exact prompt
 		// and completion plus the provider-reported token counts, and sign that
-		// core. Unsigned when INFERENCE_SIGNING_KEY is unset (the rollback
-		// toggl metering core still ships so callers can re-hash.
+		// core. When INFERENCE_SIGNING_KEY is unset the signature is omitted but
+		// the metering core still ships, so a caller can re-hash the prompt and
+		// completion themselves and confirm the job identity.
 		const job = meterInferenceJob({
-			jobId: crypto.randomUUID(),
+			jobId: randomUUID(),
 			route: ROUTE,
 			model: result.model,
 			provider: result.provider,

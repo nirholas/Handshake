@@ -14,6 +14,7 @@
 
 import { SignJWT } from 'jose';
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody as readRawBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
@@ -27,18 +28,41 @@ const ROUTE = '/api/x402/auth-health';
 const CANARY_USER_ID = '00000000-0000-0000-0000-000000000000';
 const CANARY_CLIENT  = 'x402-auth-health-canary';
 const CANARY_SCOPE   = 'health:read';
+const SUPPORTED_MODE = 'session_lifecycle';
 
-async function readBody(req) {
+// Read the JSON body through the shared reader. The local hand-rolled version
+// this replaces drained the raw stream with no size cap and no stalled-stream
+// timeout, so an oversized or never-finished body pinned a Cloud Run
+// concurrency slot; _lib/http.js readBody enforces both and also handles the
+// bodies Express already parsed ahead of the handler. 1 MB matches every
+// neighbouring POST endpoint in this directory.
+async function readJsonBody(req) {
 	if (req.body && typeof req.body === 'object') return req.body;
 	try {
-		const chunks = [];
-		for await (const c of req) chunks.push(c);
-		const raw = Buffer.concat(chunks).toString('utf8');
+		const raw = (await readRawBody(req, 1_000_000)).toString('utf8').trim();
 		return raw ? JSON.parse(raw) : {};
 	} catch {
 		return {};
 	}
 }
+
+// Resolve and validate the requested mode, throwing rather than returning on a
+// bad one. paidEndpoint delivers before it settles, so a returned value is the
+// buyer's receipt: returning an error object here billed $0.001 for a 200
+// carrying no health check at all. A throw lands before settlement, so an
+// unsupported mode costs the caller nothing.
+function resolveMode(body) {
+	const mode = typeof body?.mode === 'string' ? body.mode.trim() : SUPPORTED_MODE;
+	if (mode !== SUPPORTED_MODE) {
+		throw Object.assign(
+			new Error(`unsupported mode "${mode}"; the only supported mode is "${SUPPORTED_MODE}"`),
+			{ status: 400, code: 'unsupported_mode' },
+		);
+	}
+	return mode;
+}
+
+export const __test__ = { resolveMode };
 
 async function runSessionLifecycle() {
 	const t0 = Date.now();
@@ -236,11 +260,7 @@ const authHealthEndpoint = paidEndpoint({
 	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
 
 	async handler({ req }) {
-		const body = await readBody(req);
-		const mode = typeof body.mode === 'string' ? body.mode.trim() : 'session_lifecycle';
-		if (mode !== 'session_lifecycle') {
-			return { error: 'unsupported_mode', supported: ['session_lifecycle'] };
-		}
+		resolveMode(await readJsonBody(req));
 		return runSessionLifecycle();
 	},
 });

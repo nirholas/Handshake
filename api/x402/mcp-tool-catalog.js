@@ -28,6 +28,7 @@ import { readBody } from '../_lib/http.js';
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
+import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor as x402PriceFor } from '../_lib/x402-prices.js';
 import { sql } from '../_lib/db.js';
@@ -188,6 +189,9 @@ export default paidEndpoint({
 		serviceName: 'three.ws MCP Tool Discovery',
 		tags: ['mcp', 'discovery', 'tools', 'catalog', 'feature-flag', 'agent'],
 	}),
+	// Same internal / subscription / OAuth bypass every other paid x402 route
+	// carries, so first-party callers read the catalog without a payment leg.
+	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
 
 	async handler({ req }) {
 		let mode = 'discover';

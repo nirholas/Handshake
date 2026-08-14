@@ -31,13 +31,16 @@ export default wrap(async (req, res) => {
 		// here would be indistinguishable from this endpoint being down.
 		return json(res, 200, { ...health, generated_at: new Date().toISOString() });
 	} catch (err) {
-		// Table absent (loop never ran) or DB hiccup — report empty-but-healthy so
-		// the dashboard shows "no data yet" instead of an error void.
+		// Table absent (loop never ran) means the backend simply has no verdict yet:
+		// report empty-but-healthy so the dashboard shows "no data yet" instead of
+		// an error void, matching readGraniteHealth's own no-row default. A real DB
+		// failure is different and must not claim healthy:true, or a dashboard reads
+		// green through an outage it cannot see.
 		const noData = /does not exist/i.test(err?.message || '');
 		return json(res, noData ? 200 : 503, {
 			ok: noData,
 			server: 'ibm-x402-mcp',
-			healthy: true,
+			healthy: noData,
 			latest: null,
 			window: { checks: 0, total_tokens: 0 },
 			generated_at: new Date().toISOString(),

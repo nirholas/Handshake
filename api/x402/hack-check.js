@@ -178,7 +178,14 @@ export default paidEndpoint({
 		const limit = Math.min(50, Math.max(1, Number.isFinite(limitRaw) ? Math.floor(limitRaw) : 10));
 
 		let data = null;
-		try { data = await loadDataset(); } catch { /* refund below */ }
+		try {
+			data = await loadDataset();
+		} catch (err) {
+			// The buyer gets the 503 below (pre-settle, so nothing is charged), but
+			// the upstream reason only exists here. Log it, or an outage stays
+			// invisible to ops until someone reads the refund count.
+			console.warn(`[x402/hack-check] exploit dataset load failed: ${err?.message || err}`);
+		}
 		if (!data || !data.hacks.length) {
 			throw Object.assign(new Error('exploit database is temporarily unavailable'), {
 				status: 503,

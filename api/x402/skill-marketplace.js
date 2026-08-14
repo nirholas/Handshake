@@ -313,7 +313,9 @@ function runCanaryExecute(skillName) {
 
 // ── Popular-skills query (POST mode="popular") ────────────────────────────────
 // Reads the real agent_hires ledger (completed hires, last 7 days) grouped by
-// skill_name and returns the top N skills by purchase count.
+// skill_name and returns the top N skills by purchase count. A database fault
+// propagates: the wrapper maps it to a 503 BEFORE settlement, so a buyer is
+// never charged for an empty list that reads like "nobody hired anything".
 async function loadPopularSkills(limit) {
 	const rows = await sql`
 		select
@@ -327,9 +329,9 @@ async function loadPopularSkills(limit) {
 		 group by h.skill_name
 		 order by purchases desc, h.skill_name asc
 		 limit ${limit}
-	`.catch(() => []);
+	`;
 
-	const skills = (rows || []).map((r) => ({
+	const skills = rows.map((r) => ({
 		id: r.id,
 		name: r.name,
 		purchases: Number(r.purchases || 0),
@@ -409,6 +411,7 @@ const postEndpoint = paidEndpoint({
 			'unsupported mode — use { mode: "canary_execute" }, { mode: "price_distribution" }, or { mode: "popular" }',
 		);
 		err.status = 400;
+		err.code = 'invalid_mode';
 		throw err;
 	},
 });

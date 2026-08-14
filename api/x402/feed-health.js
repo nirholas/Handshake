@@ -94,8 +94,9 @@ const BAZAAR = {
 const xmlParser = new XMLParser({ ignoreAttributes: false, parseTagValue: true });
 
 // Read the canonical changelog record from the compiled public asset. The file
-// is bundled into the Vercel deployment alongside the API so readFileSync is
-// safe here. We load it once per cold start — it only changes on deploy.
+// is baked into the container image alongside the API (server/index.mjs serves
+// both), so readFileSync is safe here. We load it once per cold start; it only
+// changes on deploy.
 let _changelogEntries = null;
 function getChangelogEntries() {
 	if (_changelogEntries) return _changelogEntries;

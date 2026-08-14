@@ -7,7 +7,7 @@
 //
 // Real-Time Fact Checker.
 //   • Free tier: 3 checks/day per IP — the REAL search+LLM chain, never a
-//     degraded fake (see 00-CONTEXT.md's no-mocks rule). Response carries
+//     degraded fake (see CLAUDE.md's no-mocks rule). Response carries
 //     `lane: "free"` and `free_remaining_today`.
 //   • Above the free tier (quota exhausted OR an X-PAYMENT header is present)
 //     the request falls through to the x402 rail: $0.10 base (100_000
@@ -21,9 +21,10 @@
 //                 costBreakdown, cachedAt?, attestation, lane, free_remaining_today? }
 
 import { createHash } from 'crypto';
-import { wrap, error, json, readBody } from '../_lib/http.js';
+import { cors, wrap, error, json, readBody } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { priceFor } from '../_lib/x402-prices.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
@@ -574,7 +575,7 @@ function paidHandler() {
 	_paid = paidEndpoint({
 		route: ROUTE,
 		method: 'POST',
-		priceAtomics: 100_000, // $0.10
+		priceAtomics: priceFor('fact-check', '100000'), // $0.10
 		networks: ['base', 'solana'],
 		description: DESCRIPTION,
 		bazaar: BAZAAR,
@@ -601,6 +602,12 @@ function paidHandler() {
 // ── Entry point: free daily quota → x402 fall-through ────────────────────────
 
 export default wrap(async function handler(req, res) {
+	// The paid rail sets these on every response it writes; the free lane runs
+	// outside it, so without this a cross-origin caller passed the OPTIONS
+	// preflight (answered by the paid rail) and then had the actual free-lane
+	// 200/400 blocked by the browser for lacking allow-origin. Same header set,
+	// same allowed methods, so both lanes look identical to a CORS reader.
+	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
 	if (req.method !== 'POST') return paidHandler()(req, res); // let the paid rail's own 405 speak
 
 	// Buffer the body once; the paid rail re-reads the same bytes

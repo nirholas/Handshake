@@ -134,6 +134,17 @@ curl -s https://three.ws/api/x402/verify-receipt \
 { "ok": true, "settlement": { "verified": true, "status": "confirmed", "detail": "settlement confirmed on Solana", "slot": 301234567 } }
 ```
 
+The settlement check also works over a plain `GET`, so you can confirm a
+settlement from a browser address bar, a `curl` one-liner, or an uptime probe
+with no request body:
+
+```bash
+curl -s 'https://three.ws/api/x402/verify-receipt?hash=<signature or txhash>&network=solana'
+```
+
+Attestation integrity stays `POST`-only, because it needs the whole attested
+object. When a `POST` body supplies `tx`, the body wins over the query string.
+
 ---
 
 ## The three probe endpoints
@@ -160,6 +171,11 @@ endpoint today before hitting its daily USDC spend cap — `remaining_calls`,
 ```bash
 curl -s https://three.ws/api/x402/rate-limit-probe -d '{ "endpoint": "/api/x402/forge" }'
 ```
+
+`endpoint` must be a metered route: a path under `/api/x402`, `/api/mcp`, or
+`/api/ibm-mcp`. Those are the only routes that answer a 402 challenge, so they
+are the only ones with a price to report; anything else is rejected `400
+endpoint_not_metered` before the probe runs.
 
 ### Permit2 paid demo: `GET /api/x402/permit2-paid-demo` *(paid, $0.001 USDC)*
 

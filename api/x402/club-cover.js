@@ -19,7 +19,6 @@ import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import {
-	issueCoverPass,
 	PASS_TTL_SEC,
 	normalizeWallet,
 	findBan,
@@ -195,8 +194,25 @@ const SNAPSHOT_INPUT_SCHEMA = {
 	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	properties: {
-		club: { type: 'string', description: 'Club label to snapshot.', default: 'three_holders' },
-		mode: { type: 'string', enum: ['snapshot'], default: 'snapshot' },
+		club: {
+			type: 'string',
+			description: 'Club label to snapshot. Used by mode "snapshot".',
+			default: 'three_holders',
+		},
+		mode: {
+			type: 'string',
+			enum: ['snapshot', 'revenue'],
+			default: 'snapshot',
+			description:
+				'"snapshot" returns club membership growth/churn; "revenue" returns the ' +
+				'door + floor revenue summary for the requested period.',
+		},
+		period: {
+			type: 'string',
+			enum: ['24h', '7d', '14d', '30d', 'all'],
+			default: '7d',
+			description: 'Revenue window. Used by mode "revenue"; anything else falls back to 7d.',
+		},
 	},
 };
 
@@ -219,14 +235,17 @@ const SNAPSHOT_OUTPUT_EXAMPLE = {
 	asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
 };
 
+// Two shapes share this response, keyed on `mode`. Only the fields both modes
+// always return are `required`; the membership block below is the "snapshot"
+// shape, and the revenue block after it is the "revenue" shape.
 const SNAPSHOT_OUTPUT_SCHEMA = {
 	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
-	required: ['ok', 'club', 'mode', 'member_count', 'active_last_7d', 'new_this_week', 'signal'],
+	required: ['ok', 'mode'],
 	properties: {
 		ok: { type: 'boolean', const: true },
 		club: { type: 'string' },
-		mode: { type: 'string', const: 'snapshot' },
+		mode: { type: 'string', enum: ['snapshot', 'revenue'] },
 		member_count: { type: 'integer', minimum: 0, description: 'Distinct wallets that ever paid into the club.' },
 		active_last_7d: { type: 'integer', minimum: 0, description: 'Distinct wallets active in the last 7 days.' },
 		new_this_week: { type: 'integer', minimum: 0, description: 'Distinct wallets whose first payment landed in the last 7 days.' },
@@ -236,6 +255,40 @@ const SNAPSHOT_OUTPUT_SCHEMA = {
 		headline: { type: 'string' },
 		confidence: { type: 'number', minimum: 0, maximum: 1 },
 		snapshot_at: { type: 'string', format: 'date-time' },
+		// mode "revenue" only. Door + floor take over the requested window.
+		period: { type: 'string', description: 'Canonical revenue window the summary covers.' },
+		since: { type: 'string', format: 'date-time', description: 'Start of the revenue window.' },
+		total_usdc: { type: 'string', description: 'Cover-charge (door) revenue over the window, in USDC.' },
+		cover: {
+			type: 'object',
+			description: 'Door take: settled cover charges over the window.',
+			properties: {
+				total_usdc: { type: 'string' },
+				total_atomics: { type: 'string' },
+				count: { type: 'integer', minimum: 0 },
+				unique_payers: { type: 'integer', minimum: 0 },
+			},
+		},
+		floor: {
+			type: 'object',
+			description: 'Floor take: settled dance tips over the window.',
+			properties: {
+				total_usdc: { type: 'string' },
+				total_atomics: { type: 'string' },
+				tip_count: { type: 'integer', minimum: 0 },
+			},
+		},
+		social_economy_usdc: { type: 'string', description: 'Door + floor combined, in USDC.' },
+		clubs: {
+			type: 'array',
+			description: 'Per-act revenue roster, highest earning first.',
+			items: { type: 'object' },
+		},
+		club_count: { type: 'integer', minimum: 0 },
+		top_club_id: { type: ['string', 'null'] },
+		top_club_revenue: { type: ['string', 'null'] },
+		top_club_display_name: { type: ['string', 'null'] },
+		generated_at: { type: 'string', format: 'date-time' },
 		payer: { type: ['string', 'null'] },
 		network: { type: ['string', 'null'] },
 		amountAtomics: { type: ['string', 'null'] },
@@ -265,9 +318,11 @@ const snapshotEndpoint = paidEndpoint({
 	priceAtomics: priceFor('club-cover', '10000'), // $0.01 USDC — same cover charge
 	networks: ['solana'],
 	description:
-		'three.ws Pole Club — pay $0.01 USDC for a live membership snapshot of the ' +
-		'club: all-time member count, members active in the last 7 days, and members ' +
-		'new this week, with a growth/churn signal. Pay-per-call in USDC on Solana mainnet.',
+		'three.ws Pole Club: pay $0.01 USDC for a live read of the club. mode:"snapshot" ' +
+		'(default) returns membership: all-time member count, members active in the last 7 ' +
+		'days, and members new this week, with a growth/churn signal. mode:"revenue" returns ' +
+		'the door + floor take for a period (24h, 7d, 14d, 30d, all). Pay-per-call in USDC on ' +
+		'Solana mainnet.',
 	bazaar: SNAPSHOT_BAZAAR,
 	service: withService({
 		serviceName: 'three.ws Club Membership',

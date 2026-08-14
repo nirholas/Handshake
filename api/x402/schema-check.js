@@ -89,8 +89,6 @@ const BAZAAR = {
 	}),
 };
 
-const SUPPORTED_APIS = new Set(['changelog_json']);
-
 // Validate the /changelog.json feed against its declared schema.
 // Returns { valid, version, entry_count, schema_errors }.
 function validateChangelogJson(data) {
@@ -160,13 +158,55 @@ function validateChangelogJson(data) {
 async function readBody(req) {
 	if (req.body && typeof req.body === 'object') return req.body;
 	try {
-		const chunks = [await readRawBody(req, 1_000_000)];
-		const raw = Buffer.concat(chunks).toString('utf8').trim();
+		const raw = (await readRawBody(req, 1_000_000)).toString('utf8').trim();
 		return raw ? JSON.parse(raw) : {};
 	} catch {
 		return {};
 	}
 }
+
+// Fetch /changelog.json and check it against the shape above. A fetch failure is
+// itself a finding (the feed holders read is down), so it resolves to a report
+// with valid:false rather than throwing: the buyer paid for a verdict and gets one.
+async function checkChangelogJson(origin, fetched_at) {
+	const url = `${origin}/changelog.json`;
+	let data = null;
+	let fetchError = null;
+
+	try {
+		const res = await fetch(url, {
+			headers: { accept: 'application/json', 'user-agent': 'threews-schema-check/1.0' },
+			signal: AbortSignal.timeout(10_000),
+		});
+		if (!res.ok) {
+			fetchError = `http_${res.status}`;
+		} else {
+			data = await res.json();
+		}
+	} catch (err) {
+		fetchError = err?.message || 'fetch_failed';
+	}
+
+	if (fetchError || data === null) {
+		return {
+			ok: false,
+			api: 'changelog_json',
+			valid: false,
+			version: null,
+			entry_count: 0,
+			schema_errors: [fetchError || 'fetch_failed'],
+			fetched_at,
+		};
+	}
+
+	const { valid, version, entry_count, schema_errors } = validateChangelogJson(data);
+	return { ok: true, api: 'changelog_json', valid, version, entry_count, schema_errors, fetched_at };
+}
+
+// Dispatch table: the enum in INPUT_SCHEMA, the 400 message and the runtime
+// branch all read from these keys, so adding a target is one entry, not four.
+const CHECKERS = { changelog_json: checkChangelogJson };
+const SUPPORTED_APIS = Object.keys(CHECKERS);
 
 export default paidEndpoint({
 	route: ROUTE,
@@ -180,56 +220,26 @@ export default paidEndpoint({
 		tags: ['schema', 'validation', 'changelog', 'health', 'api'],
 	}),
 
-	async handler(req) {
+	// paidEndpoint hands the handler a context object, NOT the request: taking
+	// `req` positionally here read the body off the context, found none, and made
+	// every paid call answer 'unsupported api "undefined"' after settling.
+	async handler({ req }) {
 		const body = await readBody(req);
 		const api = body?.api;
+		// hasOwn, not a bare lookup: `{"api":"constructor"}` would otherwise resolve
+		// to an inherited function and be called as if it were a checker.
+		const check = typeof api === 'string' && Object.hasOwn(CHECKERS, api) ? CHECKERS[api] : undefined;
 
-		if (!api || !SUPPORTED_APIS.has(api)) {
-			return {
-				ok: false,
-				error: `unsupported api "${api}"; supported: ${[...SUPPORTED_APIS].join(', ')}`,
-			};
+		// Thrown before settlement runs, so an unsupported target costs the caller
+		// nothing instead of billing them for an error body.
+		if (!check) {
+			const err = new Error(`unsupported api "${api}"; supported: ${SUPPORTED_APIS.join(', ')}`);
+			err.status = 400;
+			err.code = 'unsupported_api';
+			throw err;
 		}
 
 		const origin = (env.APP_ORIGIN || 'https://three.ws').replace(/\/$/, '');
-		const fetched_at = new Date().toISOString();
-
-		if (api === 'changelog_json') {
-			const url = `${origin}/changelog.json`;
-			let data = null;
-			let fetchError = null;
-
-			try {
-				const res = await fetch(url, {
-					headers: { accept: 'application/json', 'user-agent': 'threews-schema-check/1.0' },
-					signal: AbortSignal.timeout(10_000),
-				});
-				if (!res.ok) {
-					fetchError = `http_${res.status}`;
-				} else {
-					data = await res.json();
-				}
-			} catch (err) {
-				fetchError = err?.message || 'fetch_failed';
-			}
-
-			if (fetchError || data === null) {
-				return {
-					ok: false,
-					api,
-					valid: false,
-					version: null,
-					entry_count: 0,
-					schema_errors: [fetchError || 'fetch_failed'],
-					fetched_at,
-				};
-			}
-
-			const { valid, version, entry_count, schema_errors } = validateChangelogJson(data);
-			return { ok: true, api, valid, version, entry_count, schema_errors, fetched_at };
-		}
-
-		// Unreachable given the SUPPORTED_APIS guard above, but keeps linting clean.
-		return { ok: false, error: 'unhandled_api' };
+		return check(origin, new Date().toISOString());
 	},
 });

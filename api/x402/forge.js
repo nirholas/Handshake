@@ -263,7 +263,7 @@ async function persistRemoteGlb(url) {
 		const buf = Buffer.from(await res.arrayBuffer());
 		if (!buf.length) return null;
 		const { putObject, publicUrl } = await import('../_lib/r2.js');
-		const key = `forge/huggingface/${globalThis.crypto.randomUUID()}.glb`;
+		const key = `forge/huggingface/${randomUUID()}.glb`;
 		await putObject({ key, body: buf, contentType: 'model/gltf-binary' });
 		return publicUrl(key);
 	} catch {

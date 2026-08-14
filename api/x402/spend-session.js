@@ -61,6 +61,7 @@ const OUTPUT_EXAMPLE = {
 	mode: 'canary',
 	created: true,
 	consumed: true,
+	reason: null,
 	latency_ms: 12,
 	session_id: 'a3f3d6c2-1f1b-4f10-9b6c-1b1f5e0c9c34',
 	budget: 0.01,
@@ -80,6 +81,7 @@ const OUTPUT_SCHEMA = {
 		// canary fields
 		created: { type: 'boolean', description: 'Canary: DB INSERT succeeded.' },
 		consumed: { type: 'boolean', description: 'Canary: DB UPDATE (consume) succeeded.' },
+		reason: { type: ['string', 'null'], description: 'Canary: why created/consumed is false; null when the cycle succeeded.' },
 		latency_ms: { type: 'integer', minimum: 0, description: 'Canary: create+consume round-trip ms.' },
 		session_id: { type: 'string', format: 'uuid' },
 		budget: { type: ['number', 'null'] },
@@ -151,6 +153,7 @@ async function handleCanary({ meta, mode, budget }) {
 	const sessionId = randomUUID();
 	let created = false;
 	let consumed = false;
+	let reason = null;
 	const t0 = Date.now();
 
 	try {
@@ -171,8 +174,11 @@ async function handleCanary({ meta, mode, budget }) {
 			WHERE session_id = ${sessionId}
 		`;
 		consumed = true;
-	} catch {
-		// DB failure — created/consumed stay false; latency still captured below.
+	} catch (err) {
+		// A DB failure IS the canary's verdict, not an endpoint error: created and
+		// consumed stay false and the cause is reported so the alert is actionable
+		// instead of an unexplained false.
+		reason = err?.message ? String(err.message).slice(0, 300) : 'session_db_unavailable';
 	}
 
 	return {
@@ -180,6 +186,7 @@ async function handleCanary({ meta, mode, budget }) {
 		mode: 'canary',
 		created,
 		consumed,
+		reason,
 		latency_ms: Date.now() - t0,
 		session_id: sessionId,
 		budget,

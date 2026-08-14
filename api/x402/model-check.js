@@ -28,7 +28,6 @@ import {
 	resolveResourceUrl,
 	buildBazaarSchema,
 } from '../_lib/x402-spec.js';
-import { env } from '../_lib/env.js';
 import { inspectModel, suggestOptimizations } from '../_lib/model-inspect.js';
 import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
 import {

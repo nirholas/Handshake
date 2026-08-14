@@ -18,10 +18,17 @@
 //                        attested fields (verdict, confidence, claim, sources).
 //   tx.network         — CAIP-2 ("solana:…", "eip155:8453") or shorthand
 //                        ("solana", "base").
+//
+// GET carries no body, so check 2 also reads ?hash=&network= from the query
+// string: GET /api/x402/verify-receipt?hash=<sig>&network=solana. Check 1 needs
+// the whole attested object and stays POST-only. On POST the body wins whenever
+// it supplies `tx`.
 
 import { wrap, cors, method, json, error, readJson, rateLimited, setRateLimitHeaders } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { verifyAttestation } from '../_lib/x402/dev-tools.js';
+
+const ROUTE = '/api/x402/verify-receipt';
 
 // Map a network string (CAIP-2 or shorthand) to a chain family + EVM chainId.
 function resolveNetwork(network) {
@@ -70,6 +77,17 @@ async function confirmSettlementTx(hash, network) {
 	}
 }
 
+// Settlement inputs from the query string, so a plain GET (no body) can still
+// run check 2. Returns undefined when neither param is present, which keeps the
+// "nothing to verify" branch below intact for a bare GET.
+function txFromQuery(req) {
+	const q = req.query || {};
+	const hash = typeof q.hash === 'string' ? q.hash.trim() : '';
+	const network = typeof q.network === 'string' ? q.network.trim() : '';
+	if (!hash && !network) return undefined;
+	return { hash, network };
+}
+
 async function handle(req, res) {
 	const ip = clientIp(req);
 	const rl = await limits.x402DevToolIp(ip);
@@ -81,15 +99,20 @@ async function handle(req, res) {
 		try {
 			body = (await readJson(req)) || {};
 		} catch (err) {
-			return error(res, 400, 'invalid_json', err.message || 'request body must be valid JSON');
+			// readJson rejects a non-JSON content-type with status 415; keep that
+			// distinction instead of flattening every body problem into a 400.
+			const status = err.status || 400;
+			const code = status === 415 ? 'unsupported_media_type' : 'invalid_json';
+			return error(res, status, code, err.message || 'request body must be valid JSON');
 		}
 	}
 
 	const result = body.result;
-	const tx = body.tx;
+	const tx = body.tx !== undefined ? body.tx : txFromQuery(req);
 	if (result === undefined && tx === undefined) {
-		return error(res, 400, 'nothing_to_verify', 'provide `result` (an attested paid response) and/or `tx` ({ hash, network })', {
+		return error(res, 400, 'nothing_to_verify', 'POST `result` (an attested paid response) and/or `tx` ({ hash, network }); or GET ?hash=<tx>&network=<chain> to confirm a settlement only', {
 			example: { result: { verdict: 'true', confidence: 0.9, claim: '…', sources: ['https://…'], attestation: 'sha256:…' }, tx: { hash: '…', network: 'solana' } },
+			getExample: `${ROUTE}?hash=<settlement-signature-or-hash>&network=solana`,
 		});
 	}
 

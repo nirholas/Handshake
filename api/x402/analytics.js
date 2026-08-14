@@ -347,13 +347,18 @@ async function agentLeaderboardReport(limit, windowDays) {
 const AGENT_AUTONAMED_RE =
 	'^(Agent|My Agent|My First Agent|Demo Agent|Untitled.*|TEST|Test|test|mo[a-z0-9]{4,}|draft-[a-z0-9]+|new_project_[0-9]+|Avatar[ ]*#[0-9a-f]{4,}([ ]*agent)?|https?://.+)$';
 
-// Mints we can normalise to USD at query time.
-// Keys are lower-cased for comparison; display form preserved per-row via currencyLabel().
-const USDC_MINTS = new Set([
-	'epjfwdd5aufqssqem2qn1xzybapC8G4wEGGkZwyTDt1v', // Solana mainnet USDC
+// Mints we can normalise to USD at query time. Lookups compare against a
+// lower-cased mint, so the sets are normalised at construction rather than by
+// hand: a hand-lowered literal drifted (one entry kept its mixed-case tail),
+// which silently made every Solana-priced listing unpriceable and dropped it
+// out of the marketplace report's USD average. Display form is preserved
+// per-row via currencyLabel().
+const lowerSet = (mints) => new Set(mints.map((m) => m.toLowerCase()));
+const USDC_MINTS = lowerSet([
+	'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // Solana mainnet USDC
 	'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',   // Base USDC
 ]);
-const SOL_MINTS = new Set(['native', 'so11111111111111111111111111111111111111112']);
+const SOL_MINTS = lowerSet(['native', 'So11111111111111111111111111111111111111112']);
 
 function currencyLabel(mint) {
 	const m = String(mint || '').toLowerCase();
@@ -361,6 +366,11 @@ function currencyLabel(mint) {
 	if (SOL_MINTS.has(m)) return 'SOL';
 	return mint && mint.length > 10 ? `${mint.slice(0, 4)}…${mint.slice(-4)}` : String(mint || 'unknown');
 }
+
+// Exported for the currency-normalisation contract test: the marketplace
+// report's USD maths is only correct while every mint in these sets matches a
+// lower-cased lookup.
+export const __test__ = { USDC_MINTS, SOL_MINTS, currencyLabel };
 
 function roundNum(n, dp) {
 	if (n == null || !Number.isFinite(Number(n))) return null;

@@ -15,7 +15,7 @@ import { priceFor } from '../_lib/x402-prices.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { sql } from '../_lib/db.js';
 import { presignGet } from '../_lib/r2.js';
-import { error } from '../_lib/http.js';
+import { cors, error } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import assetDownloadListing from '../_lib/service-catalog/services/asset-download.js';
 
@@ -151,6 +151,16 @@ function sendDiscoveryChallenge(res, errText) {
 // Per-asset paidEndpoint built on the fly. The slug picks the row, which
 // dictates price + payout overrides + R2 key — everything else is shared.
 export default async function handler(req, res) {
+	// Install CORS before anything else. Every other x402 handler gets this from
+	// paidEndpoint's own first step, but this file answers the discovery probe,
+	// the 400/404/502 errors and the free-listing 200 itself, long before it
+	// delegates. Without it the OPTIONS preflight fell through to the discovery
+	// challenge and returned a 402 with no Access-Control-Allow-Origin, so a
+	// browser x402 client (the drop-in modal, x402-fetch) could never read the
+	// challenge it is supposed to pay. Same options paidEndpoint uses for a GET
+	// route, so the delegated path below stays byte-identical.
+	if (cors(req, res, { methods: 'GET,HEAD,OPTIONS', origins: '*' })) return;
+
 	const slug = req.query?.slug ? String(req.query.slug).trim() : '';
 	const paymentPresent = Boolean(req.headers['x-payment'] || req.headers['payment-signature']);
 	if (!slug) {

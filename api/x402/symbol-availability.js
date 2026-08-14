@@ -272,9 +272,8 @@ const BATCH_BAZAAR = {
 };
 
 async function readJsonBody(req) {
-	const chunks = [await readBody(req, 1_000_000)];
-	if (!chunks.length) return {};
-	return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+	const raw = (await readBody(req, 1_000_000)).toString('utf8');
+	return JSON.parse(raw || '{}');
 }
 
 const batchEndpoint = paidEndpoint({

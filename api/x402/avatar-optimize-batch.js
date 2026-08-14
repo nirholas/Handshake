@@ -18,6 +18,7 @@ import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
+import { priceFor } from '../_lib/x402-prices.js';
 import { sql } from '../_lib/db.js';
 import { publicUrl } from '../_lib/r2.js';
 import { inspectModel, suggestOptimizations } from '../_lib/model-inspect.js';
@@ -140,7 +141,10 @@ async function fetchModelBytes(url) {
 export default paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
-	priceAtomics: 1_000, // $0.001 USDC
+	// $0.001 USDC. Goes through priceFor so the documented
+	// X402_PRICE_AVATAR_OPTIMIZE_BATCH override actually applies; the literal it
+	// replaces made this the one endpoint in the directory ops could not reprice.
+	priceAtomics: priceFor('avatar-optimize-batch', '1000'),
 	networks: ['solana', 'base'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,

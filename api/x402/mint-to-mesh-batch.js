@@ -35,8 +35,8 @@ const DESCRIPTION =
 
 const INPUT_EXAMPLE = {
 	mints: [
-		'C3vQABCDEFGHJKLMNopqrstuvwxyZ12345abcdefghi',
-		'F7kXZYXWVUTSRQPONMLKJIHGFEDCba9876543210xyz',
+		'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+		'THREEsynthetic1111111111111111111111111111',
 	],
 };
 
@@ -59,11 +59,21 @@ const OUTPUT_EXAMPLE = {
 	results: [
 		{
 			ok: true,
-			mint: 'C3vQABCDEFGHJKLMNopqrstuvwxyZ12345abcdefghi',
-			theme: { name: 'Helios', symbol: 'HELIO', color: [220, 180, 80], hasImage: true },
-			glb: { mimeType: 'model/gltf-binary', bytes: 18000, base64: 'Z2xUR...' },
+			mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+			theme: {
+				name: 'three.ws',
+				symbol: 'three',
+				color: [0.235, 0.382, 0.865],
+				hasImage: true,
+			},
+			glb: { mimeType: 'model/gltf-binary', bytes: 583452, base64: 'Z2xURgIAAAAc5wgA...' },
 		},
-		{ ok: false, mint: 'F7kXZ...', error: 'meta_fetch_failed', error_description: 'RPC 429' },
+		{
+			ok: false,
+			mint: 'THREEsynthetic1111111111111111111111111111',
+			error: 'invalid_mint',
+			error_description: 'invalid mint address',
+		},
 	],
 	indexed_at: '2026-05-14T17:00:00Z',
 };
