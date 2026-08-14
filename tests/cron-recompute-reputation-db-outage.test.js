@@ -9,12 +9,12 @@
  * one signal that reputation had stopped refreshing was invisible to monitoring.
  *
  * Contracts under test:
- *   1. store  — listStaleAgents re-throws a db-unavailable error.
- *   2. store  — any other query failure still degrades to an empty batch.
- *   3. cron   — a db-unavailable error reaches wrapCron and answers with the
+ *   1. store  - listStaleAgents re-throws a db-unavailable error.
+ *   2. store  - any other query failure still degrades to an empty batch.
+ *   3. cron   - a db-unavailable error reaches wrapCron and answers with the
  *               platform-standard { ok:false, reason:'db_unavailable' }.
- *   4. cron   — a genuinely empty population still answers ok:true, scored:0.
- *   5. cron   — a non-DB failure stays contained as { ok:false, error }.
+ *   4. cron   - a genuinely empty population still answers ok:true, scored:0.
+ *   5. cron   - a non-DB failure stays contained as { ok:false, error }.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
