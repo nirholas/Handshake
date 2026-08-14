@@ -75,6 +75,70 @@ test('the geometry path attaches the BYOK provider key header', async () => {
 	assert.equal(calls[0].init.headers['x-forge-provider-key'], 'meshy_test_key');
 });
 
+test('a per-call providerKey overrides the client key and rides every poll', async () => {
+	const { fetch, calls } = stubFetch([
+		{ body: { job_id: 'j9', status: 'queued' } },
+		{ body: { job_id: 'j9', status: 'done', glb_url: 'https://three.ws/cdn/c.glb' } },
+	]);
+	const client = createForge({ fetch, providerKey: 'client_key' });
+	const res = await client.forge('a sword', { path: 'geometry', providerKey: 'call_key', pollIntervalMs: 1 });
+
+	assert.equal(res.glbUrl, 'https://three.ws/cdn/c.glb');
+	assert.equal(calls[0].init.headers['x-forge-provider-key'], 'call_key');
+	// The API re-resolves the BYOK key on every poll and fails the job without it.
+	assert.equal(calls[1].init.headers['x-forge-provider-key'], 'call_key');
+});
+
+test('getJob() reads one job and carries the BYOK key', async () => {
+	const { fetch, calls } = stubFetch([{ body: { job_id: 'j5', status: 'running' } }]);
+	const client = createForge({ fetch });
+	const job = await client.getJob('j5', { providerKey: 'meshy_test_key' });
+	assert.equal(calls[0].url.searchParams.get('job'), 'j5');
+	assert.equal(calls[0].init.headers['x-forge-provider-key'], 'meshy_test_key');
+	assert.equal(job.status, 'running');
+	assert.equal(job.jobId, 'j5');
+});
+
+test('payWith:x402 posts to the paid twin and polls the free job endpoint', async () => {
+	const { fetch, calls } = stubFetch([
+		{ body: { job_id: 'x402-token', status: 'queued', tier: 'draft', backend: 'nvidia' } },
+		{ body: { job_id: 'x402-token', status: 'done', glb_url: 'https://three.ws/cdn/paid.glb' } },
+	]);
+	const client = createForge({ fetch });
+	const res = await client.forge('a chrome robot', { payWith: 'x402', tier: 'draft', pollIntervalMs: 1 });
+
+	assert.equal(calls[0].url.pathname, '/api/x402/forge');
+	assert.equal(calls[0].init.method, 'POST');
+	const sent = JSON.parse(calls[0].init.body);
+	assert.deepEqual(sent, { prompt: 'a chrome robot', tier: 'draft' });
+	assert.equal(calls[1].url.pathname, '/api/forge');
+	assert.equal(calls[1].url.searchParams.get('job'), 'x402-token');
+	assert.equal(res.glbUrl, 'https://three.ws/cdn/paid.glb');
+});
+
+test('the x402 lane rejects the knobs it cannot honor, before any network call', async () => {
+	const { fetch, calls } = stubFetch([]);
+	const client = createForge({ fetch });
+	await assert.rejects(() => client.forge('x', { payWith: 'x402', backend: 'meshy' }), /does not accept: backend/);
+	await assert.rejects(() => client.forge('x', { payWith: 'x402', path: 'geometry' }), /does not accept: path/);
+	await assert.rejects(() => client.forge('x', { payWith: 'nope' }), /Invalid payWith/);
+	assert.equal(calls.length, 0);
+});
+
+test('an unpaid x402 call surfaces the challenge as PaymentRequiredError', async () => {
+	const accepts = [{ scheme: 'exact', network: 'solana:5eykt4Us…', maxAmountRequired: '50000' }];
+	const { fetch, calls } = stubFetch([
+		{ status: 402, body: { x402Version: 2, error: 'X-PAYMENT header is required', accepts } },
+	]);
+	const client = createForge({ fetch });
+	await assert.rejects(() => client.forge('a fox', { payWith: 'x402' }), (e) => {
+		assert.ok(e instanceof PaymentRequiredError);
+		assert.deepEqual(e.accepts, accepts);
+		return true;
+	});
+	assert.equal(calls[0].url.pathname, '/api/x402/forge');
+});
+
 test('needs_key (501) surfaces as a typed ThreeWsError', async () => {
 	const { fetch } = stubFetch([{ status: 501, body: { error: 'needs_key', message: 'Add a Meshy key.' } }]);
 	const client = createForge({ fetch });

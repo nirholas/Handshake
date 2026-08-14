@@ -31,14 +31,27 @@ export interface ForgeInput {
 export interface ForgeOptions {
 	path?: ForgePath;
 	tier?: ForgeTier;
-	/** Force a generation backend (`nvidia`, `huggingface`, `meshy`, `tripo`). */
+	/** Force a generation backend. See the live `catalog()` for the current ids. */
 	backend?: string;
-	/** Billing lane for paid tiers. */
-	payWith?: 'x402' | 'credits';
+	/**
+	 * Billing lane. Default: the account/credits lane on `/api/forge`.
+	 * `'x402'` routes to the pay-per-call twin `/api/x402/forge`, which rejects
+	 * `path`, `backend`, and `providerKey` because it picks its own lane.
+	 */
+	payWith?: 'credits' | 'x402';
+	/** BYOK provider key for this call. Overrides the client-level key. */
+	providerKey?: string;
 	/** Called on each poll tick with the latest job state. */
 	onProgress?: (job: ForgeResult) => void;
 	pollIntervalMs?: number;
 	timeoutMs?: number;
+	headers?: Record<string, string>;
+	signal?: AbortSignal;
+}
+
+export interface JobOptions {
+	/** BYOK provider key. Required to poll a job that was submitted with one. */
+	providerKey?: string;
 	headers?: Record<string, string>;
 	signal?: AbortSignal;
 }
@@ -78,10 +91,11 @@ export interface ForgeClient {
 	forge(promptOrInput: string | ForgeInput, opts?: ForgeOptions): Promise<ForgeResult>;
 	rig(glbUrl: string, opts?: ForgeOptions): Promise<ForgeResult>;
 	catalog(opts?: { signal?: AbortSignal }): Promise<Catalog>;
-	getJob(jobId: string, opts?: { signal?: AbortSignal }): Promise<ForgeResult>;
+	getJob(jobId: string, opts?: JobOptions): Promise<ForgeResult>;
 }
 
 export declare function createForge(options?: ForgeClientOptions): ForgeClient;
 export declare function forge(promptOrInput: string | ForgeInput, opts?: ForgeOptions): Promise<ForgeResult>;
 export declare function rig(glbUrl: string, opts?: ForgeOptions): Promise<ForgeResult>;
 export declare function catalog(opts?: { signal?: AbortSignal }): Promise<Catalog>;
+export declare function getJob(jobId: string, opts?: JobOptions): Promise<ForgeResult>;

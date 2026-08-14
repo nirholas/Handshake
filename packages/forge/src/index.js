@@ -8,6 +8,12 @@ export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js'
 
 const TIERS = ['draft', 'standard', 'high'];
 const PATHS = ['image', 'geometry', 'sketch'];
+const PAY_LANES = ['credits', 'x402'];
+
+// The browser-facing lane (account credits / free draft) and its pay-per-call
+// twin. They are separate endpoints, not a flag on one endpoint.
+const FORGE_ROUTE = '/api/forge';
+const X402_ROUTE = '/api/x402/forge';
 
 /**
  * Create a Forge client bound to a base URL, fetch, and optional auth/provider key.
@@ -17,11 +23,14 @@ const PATHS = ['image', 'geometry', 'sketch'];
  */
 export function createForge(options = {}) {
 	const request = createHttp(options);
-	const providerKey = options.providerKey || null;
+	const clientProviderKey = options.providerKey || null;
 
-	function providerHeaders(extra) {
+	// A BYOK key rides on every request that touches the job, submit AND poll:
+	// the API re-resolves it per poll and fails the job without it.
+	function providerHeaders(extra, perCallKey) {
 		const h = { ...(extra || {}) };
-		if (providerKey) h['x-forge-provider-key'] = providerKey;
+		const key = perCallKey || clientProviderKey;
+		if (key) h['x-forge-provider-key'] = key;
 		return h;
 	}
 
@@ -30,6 +39,7 @@ export function createForge(options = {}) {
 		const input = typeof promptOrInput === 'string' ? { prompt: promptOrInput } : { ...(promptOrInput || {}) };
 		const path = normalizeEnum(opts.path, PATHS, 'path');
 		const tier = normalizeEnum(opts.tier, TIERS, 'tier');
+		const payWith = normalizeEnum(opts.payWith, PAY_LANES, 'payWith');
 
 		if (!input.prompt && !(input.images && input.images.length)) {
 			throw new ThreeWsError('forge() needs a `prompt` or at least one image.', { code: 'invalid_input' });
@@ -38,6 +48,8 @@ export function createForge(options = {}) {
 			throw new ThreeWsError('The sketch path needs a `prompt` naming what the drawing depicts.', { code: 'invalid_input' });
 		}
 
+		if (payWith === 'x402') return forgeOverX402({ input, tier, path, opts });
+
 		const body = {
 			prompt: input.prompt,
 			image_urls: input.images,
@@ -45,17 +57,52 @@ export function createForge(options = {}) {
 			path,
 			tier,
 			backend: opts.backend,
-			pay_with: opts.payWith,
+			pay_with: payWith,
 		};
 
-		const submitted = await request('/api/forge', {
+		const headers = providerHeaders(opts.headers, opts.providerKey);
+		const submitted = await request(FORGE_ROUTE, {
 			method: 'POST',
 			body: prune(body),
-			headers: providerHeaders(opts.headers),
+			headers,
 			signal: opts.signal,
 		});
 
-		return resolveJob(submitted, opts);
+		return resolveJob(submitted, opts, headers);
+	}
+
+	// The pay-per-call twin. One USDC payment buys one generation, with no
+	// account and no key, so the BYOK/backend/path knobs of the credits lane do
+	// not apply: the server picks the lane from the input. Without a payment-aware
+	// `fetch` the first call throws PaymentRequiredError carrying the challenge.
+	async function forgeOverX402({ input, tier, path, opts }) {
+		const unsupported = [
+			opts.backend ? 'backend' : null,
+			path ? 'path' : null,
+			opts.providerKey || clientProviderKey ? 'providerKey' : null,
+		].filter(Boolean);
+		if (unsupported.length) {
+			throw new ThreeWsError(
+				`The x402 lane picks its own generation lane, so it does not accept: ${unsupported.join(', ')}. ` +
+					'Drop them, or use the default credits lane.',
+				{ code: 'invalid_input' },
+			);
+		}
+
+		const submitted = await request(X402_ROUTE, {
+			method: 'POST',
+			body: prune({
+				prompt: input.prompt,
+				image_urls: input.images,
+				aspect_ratio: input.aspectRatio,
+				tier,
+			}),
+			headers: { ...(opts.headers || {}) },
+			signal: opts.signal,
+		});
+		// The job token is polled for free on the shared endpoint, so resolution
+		// runs against /api/forge exactly as the credits lane does.
+		return resolveJob(submitted, opts, opts.headers || {});
 	}
 
 	/** Auto-rig an existing GLB into an animation-ready humanoid. */
@@ -63,28 +110,34 @@ export function createForge(options = {}) {
 		if (!glbUrl || typeof glbUrl !== 'string') {
 			throw new ThreeWsError('rig() needs a GLB url string.', { code: 'invalid_input' });
 		}
-		const submitted = await request('/api/forge', {
+		const headers = providerHeaders(opts.headers, opts.providerKey);
+		const submitted = await request(FORGE_ROUTE, {
 			method: 'POST',
 			query: { action: 'rig' },
 			body: { glb_url: glbUrl },
-			headers: providerHeaders(opts.headers),
+			headers,
 			signal: opts.signal,
 		});
-		return resolveJob(submitted, opts);
+		return resolveJob(submitted, opts, headers);
 	}
 
 	/** Fetch the live tier / backend / cost matrix. */
 	async function catalog(opts = {}) {
-		return request('/api/forge', { query: { catalog: '1' }, signal: opts.signal });
+		return request(FORGE_ROUTE, { query: { catalog: '1' }, signal: opts.signal });
 	}
 
 	/** Poll a single job once. */
 	async function getJob(jobId, opts = {}) {
-		return shape(await request('/api/forge', { query: { job: jobId }, signal: opts.signal }), options.baseUrl);
+		const res = await request(FORGE_ROUTE, {
+			query: { job: jobId },
+			headers: providerHeaders(opts.headers, opts.providerKey),
+			signal: opts.signal,
+		});
+		return shape(res, options.baseUrl);
 	}
 
 	// Poll a submitted job to completion (sync backends return done immediately).
-	async function resolveJob(submitted, opts) {
+	async function resolveJob(submitted, opts, headers) {
 		let job = shape(submitted, options.baseUrl);
 		opts.onProgress?.(job);
 		if (job.status === 'done' || !job.jobId) {
@@ -99,7 +152,8 @@ export function createForge(options = {}) {
 				throw new ThreeWsError(`Forge job ${job.jobId} did not finish within ${Math.round(timeoutMs / 1000)}s.`, { code: 'timeout' });
 			}
 			await delay(intervalMs, opts.signal);
-			job = shape(await request('/api/forge', { query: { job: job.jobId }, signal: opts.signal }), options.baseUrl);
+			const polled = await request(FORGE_ROUTE, { query: { job: job.jobId }, headers, signal: opts.signal });
+			job = shape(polled, options.baseUrl);
 			opts.onProgress?.(job);
 			if (job.status === 'failed') throw failed(job);
 		}
@@ -126,6 +180,10 @@ export function rig(glbUrl, opts) {
 /** Fetch the live tier / backend / cost matrix. */
 export function catalog(opts) {
 	return defaultClient().catalog(opts);
+}
+/** Read one job's current state without waiting for it to finish. */
+export function getJob(jobId, opts) {
+	return defaultClient().getJob(jobId, opts);
 }
 
 function shape(res, baseUrl) {
