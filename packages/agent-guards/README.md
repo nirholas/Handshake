@@ -109,6 +109,47 @@ The kill switch, in one line:
 await a.setTradeLimits({ kill_switch: true }); // every discretionary trade now rejected
 ```
 
+## Local guards (no network, no token)
+
+The package ships the guard pipeline itself as pure functions, not just a client
+for the hosted one. `policy()` normalizes a loose patch into the same bounded
+leash the server would store, and `guard()` runs a proposed movement through
+every predicate in the server's order. Nothing is fetched and nothing is signed,
+so this half needs no token and runs in a browser, a test, or a simulator:
+
+```js
+import { policy, guard } from '@three-ws/agent-guards';
+
+const p = policy({ per_trade_sol: 0.5, daily_budget_sol: 2, max_concurrent: 3 });
+
+guard({ side: 'buy', amountSol: 0.9, priceImpactPct: 2 }, p);
+// {
+//   allow: false,
+//   reason: 'per_trade_cap',
+//   message: 'This trade of 0.9 SOL is over the per-trade cap of 0.5 SOL. Lower the
+//             amount or raise the cap under Limits & Safety.',
+//   detail: { amount_lamports: '900000000', cap_lamports: '500000000' },
+// }
+```
+
+You supply the live numbers the guards compare against, exactly as the server
+does: `amountSol` (or `amountLamports`), `priceImpactPct`, `openCount`,
+`spentLamports` (rolling 24h SOL), `walletLamports`, `usdValue`, `spentUsd`, and
+`destination` for a withdraw. Omit one and the guard that needs it is skipped
+rather than guessing, so feed it everything you want enforced.
+
+| Export | Purpose |
+|---|---|
+| `policy(patch)` | Normalize + bound a patch. Clamps `max_price_impact_pct` to 0-100, `max_slippage_bps` to 0-10000, `max_concurrent` to 1-10000; booleans coerce strictly to `=== true`. |
+| `guard(tx, policy)` | Run every predicate in server order. Returns `{ allow, reason, message, detail }`. |
+| `checkKillSwitch` · `checkFrozen` · `checkPriceImpact` · `checkPerTradeCap` · `checkConcurrency` · `checkDailyBudgetLamports` · `checkPerTxUsd` · `checkDailyUsd` · `checkSolHeadroom` · `checkAllowlist` | The individual predicates. Each returns `null` when the trade clears, or `{ reason, detail }` when it blocks. |
+| `TRADE_LIMIT_DEFAULTS` · `SPEND_LIMIT_DEFAULTS` | The platform defaults applied when an owner has set no policy. |
+| `LAMPORTS_PER_SOL` · `SOL_FEE_HEADROOM_LAMPORTS` | The lamport constants the caps are denominated in (headroom is ~0.003 SOL). |
+
+Note the shape difference: the local `guard()` returns `allow`, while the hosted
+`checkTrade()` below returns `allowed`. The `reason` codes are identical across
+both, so a UI can share one renderer.
+
 ## API
 
 ### `guards(agentId, options?) → AgentGuards`
