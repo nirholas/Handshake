@@ -9,6 +9,7 @@
  *   node scripts/apply-migrations.mjs --check          # like the dry run, but exit 4 if anything is pending (deploy gate)
  *   node scripts/apply-migrations.mjs --apply          # apply pending migrations
  *   node scripts/apply-migrations.mjs --apply --file 2026-04-29-onchain-unified.sql
+ *   node scripts/apply-migrations.mjs --restamp --file <drifted file>  # comment-only edit, see below
  *
  * Tracking: each applied migration is recorded in `schema_migrations`
  * (filename + sha256 + applied_at). Re-running is a no-op for already-applied
@@ -20,6 +21,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { neon, Pool, neonConfig } from '@neondatabase/serverless';
@@ -51,6 +53,7 @@ for (const envFile of ['.env.local', '.env']) {
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
 const CHECK = args.includes('--check');
+const RESTAMP = args.includes('--restamp');
 const fileArgIdx = args.indexOf('--file');
 const ONLY = fileArgIdx >= 0 ? args[fileArgIdx + 1] : null;
 
@@ -87,10 +90,84 @@ async function listPending() {
 			fname,
 			body,
 			hash,
+			prior,
 			status: !prior ? 'pending' : prior === hash ? 'applied' : 'drift',
 		});
 	}
 	return out;
+}
+
+// Everything in a migration except its whole-line comments: the part a drift
+// check is actually protecting. Only leading `--` lines are dropped, never a
+// trailing comment, because `--` can live inside a string literal and stripping
+// it there would let a real statement change pass as "comments only".
+function schemaBytes(body) {
+	return body
+		.split('\n')
+		.filter((l) => !/^\s*--/.test(l))
+		.map((l) => l.trimEnd())
+		.filter((l) => l.trim() !== '')
+		.join('\n');
+}
+
+// The exact bytes that were applied, recovered from git by hash. The ledger
+// stores only a sha256, so the file's own history is the one place the applied
+// text still exists. Returns null when no committed version matches, which is
+// the honest answer for a file edited before it was ever committed.
+function appliedBytesFromGit(fname, sha256) {
+	const rel = path.posix.join('api/_lib/migrations', fname);
+	let commits;
+	try {
+		commits = execFileSync('git', ['log', '--format=%H', '--', rel], {
+			cwd: REPO_ROOT,
+			encoding: 'utf8',
+			maxBuffer: 32 * 1024 * 1024,
+		})
+			.split('\n')
+			.filter(Boolean);
+	} catch {
+		return null;
+	}
+	for (const commit of commits) {
+		let body;
+		try {
+			body = execFileSync('git', ['show', `${commit}:${rel}`], {
+				cwd: REPO_ROOT,
+				encoding: 'utf8',
+				maxBuffer: 32 * 1024 * 1024,
+			});
+		} catch {
+			continue;
+		}
+		if (createHash('sha256').update(body).digest('hex') === sha256) return { body, commit };
+	}
+	return null;
+}
+
+// Accept a comment-only edit to an already-applied migration by re-recording its
+// hash, instead of demanding the prose be reverted.
+//
+// Drift exists to catch a schema change smuggled into a file Postgres already
+// ran. A reworded comment is not that, and the repo has rules that force such
+// edits (the banned-dash rule rewrote one applied migration's header), so
+// "restore the applied bytes" and "obey the style rules" were a standoff that
+// left `db:check` red and blocked every deploy. This resolves it without
+// weakening the check: the applied text is recovered from git by its recorded
+// hash and compared statement-for-statement, and anything short of an exact
+// match is refused.
+async function restampOne(item) {
+	const found = appliedBytesFromGit(item.fname, item.prior);
+	if (!found) {
+		console.error(`  - ${item.fname}: no committed version matches the applied hash, cannot verify. Not restamped.`);
+		return false;
+	}
+	if (schemaBytes(found.body) !== schemaBytes(item.body)) {
+		console.error(`  - ${item.fname}: statements differ from what was applied (${found.commit.slice(0, 9)}). Roll forward with a NEW migration.`);
+		return false;
+	}
+	await sql`update schema_migrations set sha256 = ${item.hash} where filename = ${item.fname}`;
+	console.log(`  - ${item.fname}: comments only vs ${found.commit.slice(0, 9)}, hash re-recorded.`);
+	return true;
 }
 
 async function applyOne({ fname, body, hash }) {
@@ -138,15 +215,28 @@ async function main() {
 		console.log(`  [${i.status.padEnd(7)}] ${i.fname}`);
 	}
 
+	if (drift.length && RESTAMP) {
+		console.log(`\nRestamping ${drift.length} drifted migration(s) whose statements are unchanged:`);
+		let done = 0;
+		for (const d of drift) if (await restampOne(d)) done += 1;
+		if (done !== drift.length) {
+			console.error(`\n${drift.length - done} migration(s) could not be restamped. See above.`);
+			process.exit(3);
+		}
+		console.log('Done. Re-run without --restamp to see the status.');
+		return;
+	}
+
 	if (drift.length) {
 		console.error(
 			`\nERROR: ${drift.length} migration(s) have drifted (file changed after apply):`,
 		);
 		for (const d of drift) console.error(`  - ${d.fname}`);
 		console.error(
-			'Refusing to proceed. An applied migration is an immutable record of what ran —\n' +
-			'do NOT edit it. If the change was comment-only (schema byte-identical), restore\n' +
-			'the file to its applied bytes:  git show <commit-that-applied-it>^:<path> > <path>\n' +
+			'Refusing to proceed. An applied migration is an immutable record of what ran,\n' +
+			'so do NOT edit its statements. If the edit was comment-only, re-record the\n' +
+			'hash:  node scripts/apply-migrations.mjs --restamp   (it recovers the applied\n' +
+			'bytes from git and refuses if a single statement differs).\n' +
 			'If the schema genuinely needs to change, roll forward with a NEW migration.',
 		);
 		process.exit(3);
