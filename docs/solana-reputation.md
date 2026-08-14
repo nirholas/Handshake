@@ -78,6 +78,21 @@ The crawler (`crawlAgentAttestations`) calls `getSignaturesForAddress(asset)` fr
 - An **accept**/**dispute** is `verified` only if the signer is the agent owner.
 - **feedback**/**validation**/**task** are `verified` when structurally valid; their *trust tier* is decided at read time.
 
+### Staked conviction is reported net, not gross
+
+The `stake` block of the reputation response counts what is **still** staked. When a staker withdraws through the [Reputation Staking Market](reputation-staking-market.md), the escrow writes a `threews.unstake.v1` memo naming that stake, and the conviction it expressed stops counting: withdrawn conviction is not conviction. Only the market escrow's own settlements retire anything, so a stranger cannot deflate an agent's standing with a memo naming somebody else's stake.
+
+The history is reported alongside the net figure rather than erased:
+
+| Field | Meaning |
+|---|---|
+| `stake.total_lamports` | Net conviction: still staked right now. |
+| `stake.gross_lamports` | Everything ever staked behind this agent. |
+| `stake.retired_lamports` / `stake.retired_count` | What settlement gave back. |
+| `stake.count` / `stake.unique_stakers` / `stake.top_stakers` | Net: a fully withdrawn staker is no longer listed as backing the agent. |
+
+The rule is pinned in [`specs/REPUTATION_STAKING_MARKET.md`](../specs/REPUTATION_STAKING_MARKET.md) §3.3 and implemented by `netConviction` in `api/_lib/reputation-market.js`.
+
 ### The trust tiers (the Sybil-resistance ladder)
 
 The reputation API (`GET /api/agents/solana-reputation?asset=<pubkey>&network=<mainnet|devnet>`) doesn't return one number — it returns the same score computed at four trust levels, strongest first:

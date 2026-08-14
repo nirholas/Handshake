@@ -232,13 +232,27 @@ async function loadMarket() {
  */
 function syncWritability() {
 	const m = state.market;
-	const blocked = !m || !m.escrow || (state.network === 'mainnet' && !m.mainnet_open);
+	// Name the reason, never just grey the button out: a disabled control with no
+	// visible explanation reads as a broken page, and a title tooltip is invisible
+	// to touch and to screen readers.
+	let reason = '';
+	if (!m) reason = 'The market has not loaded yet, so staking is unavailable. Reload to try again.';
+	else if (!m.escrow) reason = `This deployment has no staking escrow configured on ${m.network}, so there is nowhere for principal to go. Nothing can be staked here yet.`;
+	else if (state.network === 'mainnet' && !m.mainnet_open) reason = 'Mainnet staking is owner-gated on this deployment. Devnet is open and free.';
+
+	const blocked = Boolean(reason);
 	for (const el of [els.stakeGo, els.recordForm.querySelector('button')]) {
 		el.disabled = blocked;
-		el.title = blocked ? 'This network is not open for staking on this deployment.' : '';
+		el.title = reason;
 	}
-	if (blocked && m && state.network === 'mainnet' && !m.mainnet_open) {
-		say(els.stakeMsg, 'Mainnet staking is owner-gated on this deployment. Devnet is open.', '');
+	els.stakeForm.setAttribute('aria-disabled', String(blocked));
+	if (blocked) {
+		say(els.stakeMsg, reason);
+		els.stakeMsg.dataset.blocked = '1';
+	} else if (els.stakeMsg.dataset.blocked) {
+		// Clear only a reason this function wrote, never a live signing status.
+		say(els.stakeMsg, '');
+		delete els.stakeMsg.dataset.blocked;
 	}
 }
 

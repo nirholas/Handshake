@@ -269,12 +269,21 @@ function shapeSolanaReputation(res) {
 	};
 }
 
+// `totalLamports` is NET conviction: settled positions are retired out of it
+// (REPUTATION_STAKING_MARKET.md §3.3). `grossLamports` and `retiredLamports` keep
+// the history readable, so "3 SOL staked, 2 withdrawn" is still tellable from
+// "1 SOL staked".
 function shapeStake(stake) {
-	if (!stake || typeof stake !== 'object') return { totalLamports: '0', count: 0, uniqueStakers: 0, topStakers: [] };
+	if (!stake || typeof stake !== 'object') {
+		return { totalLamports: '0', count: 0, uniqueStakers: 0, grossLamports: '0', retiredLamports: '0', retiredCount: 0, topStakers: [] };
+	}
 	return {
 		totalLamports: stake.total_lamports ?? '0',
 		count: stake.count ?? 0,
 		uniqueStakers: stake.unique_stakers ?? 0,
+		grossLamports: stake.gross_lamports ?? stake.total_lamports ?? '0',
+		retiredLamports: stake.retired_lamports ?? '0',
+		retiredCount: stake.retired_count ?? 0,
 		topStakers: Array.isArray(stake.top_stakers)
 			? stake.top_stakers.map((s) => ({ attester: s.attester ?? null, lamports: s.lamports ?? '0', score: s.score ?? null }))
 			: [],

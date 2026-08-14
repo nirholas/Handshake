@@ -135,6 +135,20 @@ surplus. If accrued earnings exceed the surplus, the payout clamps to the
 surplus and the settlement records `clamped: true`. Principal always returns
 in full.
 
+### What a withdrawal does to the agent's reputation
+
+Settling retires the conviction the stake expressed. The agent's reputation card
+(`GET /api/agents/solana-reputation`) counts what is **still** staked, so your
+position drops out of `stake.total_lamports` and out of `stake.top_stakers` the
+moment the settlement lands. Backing an agent and then walking away does not
+leave a permanent endorsement behind.
+
+The history is not erased: `stake.gross_lamports` still reports everything ever
+staked and `stake.retired_lamports` what settlement gave back, so "1 SOL staked,
+3 SOL withdrawn" stays distinguishable from "1 SOL staked". Only the market
+escrow's settlements retire anything, so nobody can deflate an agent's standing
+by writing a memo naming somebody else's stake. Spec §3.3.
+
 ## Verify it yourself
 
 The database behind the market is an index, not the ledger. Every position is
