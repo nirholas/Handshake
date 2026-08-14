@@ -31,12 +31,28 @@
 			<description>How three.ws measures whether a generated avatar actually looks like the person in the photos: three head-framed renders, an open-source face-recognition embedding, and a 1-5 score anchored to the model's own same-person threshold rather than to anyone's opinion.</description>
 		</item>
 		<item>
+			<title>Docs · pump.fun first-claims channel</title>
+			<link>https://three.ws/docs/pump-claims-channel</link>
+			<guid isPermaLink="false">2026-08-14:Docs · pump.fun first-claims channel</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.</description>
+		</item>
+		<item>
 			<title>Docs · Recurring payments</title>
 			<link>https://three.ws/docs/recurring-payments</link>
 			<guid isPermaLink="false">2026-08-14:Docs · Recurring payments</guid>
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Sign one permission, then a fixed USDC amount moves every day or week, or gets swapped into a token on a schedule. The lifecycle, the API, what every kind of failed charge does to a schedule, and the operator config settlement needs.</description>
+		</item>
+		<item>
+			<title>Docs · Site load performance</title>
+			<link>https://three.ws/docs/site-performance</link>
+			<guid isPermaLink="false">2026-08-14:Docs · Site load performance</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.</description>
 		</item>
 		<item>
 			<title>Docs · The Agent Index</title>
@@ -77,6 +93,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two of the scheduled jobs behind the trading fleet could fail without anything looking wrong. The job that reallocates budget across strategies talks to the database over a socket, and when that socket never opened the failure arrived as an object carrying no message at all. The job caught it, answered with an empty error string, and the scheduler recorded a success, so the health record stayed green while the loop did nothing. Failures of that kind are now recognised as what they are, a database that could not be reached, so the run is marked unhealthy and retried on the next tick instead of being logged as fine. Every page and endpoint that reads from the database inherits the same correction: this class of outage now returns a retryable service-unavailable response rather than an internal error. The fleet watchdog also gained a seventh check, over the calibration pass that measures whether a high-conviction coin actually wins as often as its score claims, so that loop can no longer go quiet unnoticed.</description>
+		</item>
+		<item>
+			<title>A dedicated channel for first-time pump.fun creator fee claims</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:A dedicated channel for first-time pump.fun creator fee claims</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The first time a coin creator pulls their accrued fees out of the vault is an irreversible on-chain signal that they are actually engaged with what they launched, and it was only visible by polling an API. There is now a delivery lane that posts each of those first claims to its own Telegram channel as it lands, one message per claim, with the creator, the amount in SOL, and links to the transaction and the coin. It keeps its own state so switching it on never dumps a backlog into the channel, it drains a backlog in order rather than skipping ahead if it falls behind, and it recognises claims by transaction rather than by timestamp, so two claims landing in the same second both get posted instead of one being silently dropped. The feed stays quiet until a claims indexer is configured: the direct on-chain fallback samples under a second of activity on a program this busy, which is not enough to tell a first claim from a repeat one.</description>
 		</item>
 		<item>
 			<title>A failed database migration can no longer freeze the schema in silence</title>
@@ -295,6 +319,14 @@
 			<description>Two accessibility defects on high-traffic pages are fixed. The shared navigation injects a Skip to content link as the first thing you reach with the Tab key, so keyboard and screen-reader users can jump straight to the page body instead of walking the whole header. It only checked for its own copy of that link before injecting, but roughly three dozen pages write the anchor into their own markup under a different class, so those pages ended up with two identical skip links and you had to tab past the same control twice to get anywhere. The check now recognises every variant, so there is exactly one skip link per page. On the homepage, the hint under the interactive dragon that reads move cursor, hold to breathe fire was drawn in white at 18 percent opacity over a near-black panel, about 1.6 to 1 against the background where the accessibility standard asks for at least 4.5 to 1; anyone in bright light or with reduced contrast sensitivity simply could not see the instruction for the thing it was explaining. It now sits at 5.7 to 1 and stays legible without changing the look of the scene. The Genesis and Walk pages also had a skip link with no styling rule attached, which left it as stray visible text above the header; both now use the shared style and hide until focused like every other page.</description>
 		</item>
 		<item>
+			<title>Links inside the tutorials now go where they say, and the AWS page names the right region</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Links inside the tutorials now go where they say, and the AWS page names the right region</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Every tutorial on the site is written as a markdown file that lives beside the other documentation, and the links inside it were written against that location. The page that renders them was reading those links as if they pointed at site addresses instead, so a tutorial that sent you to a related guide, or cited the exact source file a step describes, sent you to an address that does not exist. Links that reach across to another document, that point at a specific section of one, or that cite a file in the source tree are now each resolved to the right destination, with source files opening on GitHub. The scene tutorial's own list of related tutorials pointed at a secondary address that rendered them under a generic title, and now uses the real one. Separately, the AWS page claimed the platform's production deployment runs in AWS us-east-1. It does not: production runs on Google Cloud Run, and us-east-1 is where the AWS Marketplace billing and entitlement APIs are called. The page now says that instead.</description>
+		</item>
+		<item>
 			<title>Oracle pages now say the data is briefly unavailable instead of showing you a blank market</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Oracle pages now say the data is briefly unavailable instead of showing you a blank market</guid>
@@ -415,6 +447,14 @@
 			<description>The demos index has always carried a card for the agent interaction lab, the set of small pages where an avatar high-fives you, climbs the page title, bounces on a trampoline, or falls asleep when you leave it alone. Clicking that card gave you a 404. The lab hub lives in a folder rather than as a single page, and the rule that turns a demo name into a page file was sending the request to a file that never existed, so the one link into the lab was the only link on the index that could not be followed. The sub-demos were fine the whole time; only the door was missing. It is fixed, and the demo route map now records the whole lab, including the lost-avatar 404 page that has its own card on the index but was never listed.</description>
 		</item>
 		<item>
+			<title>The AR docs stopped handing readers three commands the tool rejects or quietly ruins</title>
+			<link>https://three.ws/docs/ar</link>
+			<guid isPermaLink="false">2026-08-14:The AR docs stopped handing readers three commands the tool rejects or quietly ruins</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Eight pages were read line by line against the code and the live site: the agent abilities dossier, news, the changelog, AR viewing, BNB payments, Agent Sniper, earned autonomy, and the agent personality tutorial. Every command printed on them was actually run. The AR page was wrong three times, and each one cost a reader real time. Its model optimization step used a flag the glTF tool does not accept, so the command simply failed. The line beside it promised a lossless result, when that tool compresses and simplifies by default: the file it produced could not be opened by the iPhone and Android AR viewers the page is about, and nothing said so. Its troubleshooting step for exactly that failure repeated the same rejected flag, so the fix for the problem hit the problem again. All three now carry flags the tool accepts, verified by running them on a real model and reading back what came out, with a note about what the defaults do. The AR page also linked to a placeholder address rather than a page, and now points at a real one. On the earned autonomy page, the list of settings a trading arm unlocks once it has proven itself was one short, missing the size of the position it keeps riding after taking its stake back. Everything else held up, including all 4,854 links across the eight pages.</description>
+		</item>
+		<item>
 			<title>The Arena now runs a daily competition on its own, instead of waiting for someone to host one</title>
 			<link>https://three.ws/arena</link>
 			<guid isPermaLink="false">2026-08-14:The Arena now runs a daily competition on its own, instead of waiting for someone to host one</guid>
@@ -439,12 +479,28 @@
 			<description>Paste a contract address into the CA to x402 tool and it generates the copy-paste code for calling the paid endpoint it just built for you. The cURL tab's second step told you to pay by running npx x402-fetch against the endpoint. That never worked: the published x402-fetch package is a library, not a command line tool, so anyone who copied it got an npm error about not being able to determine an executable to run, on their first attempt to pay us. The tab now shows the real two-step HTTP flow instead, taking the 402 and then replaying the same call with the payment header, and says outright that the Node and Agent tabs are what sign that header for you. Both commands were run end to end against the live endpoint before shipping. The docs page carries the same correction, and the vault and master wallet docs pages got proper search descriptions in place of ones that quoted raw filenames at readers.</description>
 		</item>
 		<item>
+			<title>The choreography docs no longer teach an example that quietly does nothing</title>
+			<link>https://three.ws/docs/choreography</link>
+			<guid isPermaLink="false">2026-08-14:The choreography docs no longer teach an example that quietly does nothing</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>A routine step can pin one specific animation clip instead of letting the gesture slot pick one, and the choreography reference showed how, with a shareable link that pinned the dance slot to the rumba clip. That example never pinned anything. Rumba is already the platform default for the dance slot, and the runtime deliberately drops a clip that matches the slot's own default, so that a shared routine still adapts to an agent that has remapped its gestures. Anyone copying the example got a step that resolved normally instead of the pinned motion they asked for, with nothing to indicate why. The example now pins a clip that is not the default, and the field reference states the drop rule outright. The selfie-to-avatar page also had a summary line quoting an older, lower head-coverage number than the measurement reported further down the same page, and the avatar-thumbnails page printed a sample coverage readout from a time when three quarters of avatars still had no preview image. Both now show figures taken from the running system.</description>
+		</item>
+		<item>
 			<title>The commit and changelog feeds can no longer repeat a post they already sent</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:The commit and changelog feeds can no longer repeat a post they already sent</guid>
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The jobs that deliver commits and changelog entries to the holders' Telegram channel take a lock so two overlapping runs cannot announce the same thing twice, and that lock lasts four minutes. But the calls they make to GitHub and Telegram had no time limit of their own, so a single stalled call could outlive the lock it was holding, let the next run pick the lock up, and post the same commits again. Every outbound call in those jobs is now bounded well inside the lock's lifetime, so the no-duplicates guarantee holds even when an upstream service hangs. The same missing limit is fixed across four other scheduled jobs: the wardrobe catalog audit, the garment job sweep, and the weekly quality benchmark, whose own run budget was previously advisory because it was only ever checked between requests and never during one. A stalled status check no longer fails a generation that is still healthy, and a slow download is no longer reported as a corrupted garment.</description>
+		</item>
+		<item>
+			<title>The commit feed went quiet for thirteen hours, and the reason it could not restart itself is fixed</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:The commit feed went quiet for thirteen hours, and the reason it could not restart itself is fixed</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every commit that lands on the platform is posted to the holders' Telegram channel as it happens. That feed stopped at 06:45 UTC and stayed silent for the rest of the day, and the cause was in how it found its place again after each run. It looked back over only the thirty most recent commits for the last one it had announced. On a day when work lands in bursts of twenty or thirty at a time, that marker regularly fell out of view, and when it did, the feed quietly skipped to the newest commit and posted nothing at all. Every commit in the gap was passed over with no record that anything had been missed, and because each run repeated the same skip, the feed had no way back on its own. It now pages back as far as five hundred commits to find its place, and when it is behind it works forward from the oldest commit it still owes rather than jumping to the front, so a backlog is delivered in order over the following runs instead of being discarded. Anything more than three days old is still left alone, so catching up can never flood the channel with history. The 117 commits missed during today's outage are not recoverable and will not appear.</description>
 		</item>
 		<item>
 			<title>The contracts that hold agent earnings, reputation stakes and skill licenses are now audit-ready</title>
@@ -533,6 +589,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The free front door to the paid market data API is where an agent looks before it buys anything. It only listed the seventeen endpoints in the core family, so the Market Heatmap and Market Mood endpoints were invisible to anyone discovering the bundle through it, and it quoted each endpoint's default price rather than the price the endpoint currently charges, so an operator price change left the index advertising a stale number. The index now builds itself from both sources, quotes the live price, and prints sub-cent prices in full instead of rounding them down to zero. Separately, a coin the upstream had not ranked yet could appear in the Market Heatmap board carrying rank 0; it now takes its position on the board instead.</description>
+		</item>
+		<item>
+			<title>The marketplace, the directory and the home page open with a lot less work behind them</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-08-14:The marketplace, the directory and the home page open with a lot less work behind them</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A Lighthouse sweep of eight pages against the live site found four costs that every visitor was paying for content they could not see. The marketplace was laying out its entire catalogue on first paint, a grid measured at over 31,000 pixels tall of which one screenful is visible, and the directory did the same at smaller scale; both now skip the offscreen rows until you scroll near them. The analytics library was loading in the page head on every route, which cost around a second of browser time before anything was interactive, and now waits for the first idle moment instead, with nothing dropped in between. The embeddable avatar bundle on our CDN was shipping unminified because of a build-tool rule meant for packages that get re-bundled, which does not apply to a file browsers download directly; it is now 2.77 MB instead of 4.24 MB, and 792 KB instead of 1.03 MB over the wire. And the thumbnails in both grids now decode off the critical path. The rules behind all four, and how to measure before changing any of them, are written up so the next change does not quietly undo one.</description>
 		</item>
 		<item>
 			<title>The MCP tool catalog now lists three tools it was hiding, and stops calling the x402 Bazaar free</title>

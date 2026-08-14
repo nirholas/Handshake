@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T19:37:07.682Z",
+	"generated_at": "2026-08-14T19:53:55.347Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -39,9 +39,29 @@
 		{
 			"date": "2026-08-14",
 			"type": "launch",
+			"title": "Docs · pump.fun first-claims channel",
+			"summary": "A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.",
+			"link": "/docs/pump-claims-channel",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "launch",
 			"title": "Docs · Recurring payments",
 			"summary": "Sign one permission, then a fixed USDC amount moves every day or week, or gets swapped into a token on a schedule. The lifecycle, the API, what every kind of failed charge does to a schedule, and the operator config settlement needs.",
 			"link": "/docs/recurring-payments",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "launch",
+			"title": "Docs · Site load performance",
+			"summary": "The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.",
+			"link": "/docs/site-performance",
 			"tags": [
 				"launch"
 			]
@@ -96,6 +116,17 @@
 			"link": null,
 			"tags": [
 				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "A dedicated channel for first-time pump.fun creator fee claims",
+			"summary": "The first time a coin creator pulls their accrued fees out of the vault is an irreversible on-chain signal that they are actually engaged with what they launched, and it was only visible by polling an API. There is now a delivery lane that posts each of those first claims to its own Telegram channel as it lands, one message per claim, with the creator, the amount in SOL, and links to the transaction and the coin. It keeps its own state so switching it on never dumps a backlog into the channel, it drains a backlog in order rather than skipping ahead if it falls behind, and it recognises claims by transaction rather than by timestamp, so two claims landing in the same second both get posted instead of one being silently dropped. The feed stays quiet until a claims indexer is configured: the direct on-chain fallback samples under a second of activity on a program this busy, which is not enough to tell a first claim from a repeat one.",
+			"link": null,
+			"tags": [
+				"feature",
 				"infra"
 			]
 		},
@@ -395,6 +426,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "Links inside the tutorials now go where they say, and the AWS page names the right region",
+			"summary": "Every tutorial on the site is written as a markdown file that lives beside the other documentation, and the links inside it were written against that location. The page that renders them was reading those links as if they pointed at site addresses instead, so a tutorial that sent you to a related guide, or cited the exact source file a step describes, sent you to an address that does not exist. Links that reach across to another document, that point at a specific section of one, or that cite a file in the source tree are now each resolved to the right destination, with source files opening on GitHub. The scene tutorial's own list of related tutorials pointed at a secondary address that rendered them under a generic title, and now uses the real one. Separately, the AWS page claimed the platform's production deployment runs in AWS us-east-1. It does not: production runs on Google Cloud Run, and us-east-1 is where the AWS Marketplace billing and entitlement APIs are called. The page now says that instead.",
+			"link": null,
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "Oracle pages now say the data is briefly unavailable instead of showing you a blank market",
 			"summary": "When the database had a short connectivity blip, the Oracle read endpoints answered with an empty result and a 200 OK, which reads as fact rather than as an outage. The live conviction feed showed a market with nothing in it, the hot-sectors panel showed no sectors, an agent's public track record showed \"never traded\" (the very evidence copy-traders judge a leader on), and the follow endpoint told a subscriber they were not following an agent they were in fact following. Worst of all, unfollowing an agent answered \"done\" while the subscription survived, so the alerts kept arriving with no way to stop them. Some of those answers were then cached for up to five minutes, outliving the blip that caused them. All of these now return a proper \"temporarily unavailable, retry shortly\" response that nothing caches, so a page can tell you it cannot reach the data instead of quietly showing you the wrong answer.",
 			"link": null,
@@ -555,6 +597,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The AR docs stopped handing readers three commands the tool rejects or quietly ruins",
+			"summary": "Eight pages were read line by line against the code and the live site: the agent abilities dossier, news, the changelog, AR viewing, BNB payments, Agent Sniper, earned autonomy, and the agent personality tutorial. Every command printed on them was actually run. The AR page was wrong three times, and each one cost a reader real time. Its model optimization step used a flag the glTF tool does not accept, so the command simply failed. The line beside it promised a lossless result, when that tool compresses and simplifies by default: the file it produced could not be opened by the iPhone and Android AR viewers the page is about, and nothing said so. Its troubleshooting step for exactly that failure repeated the same rejected flag, so the fix for the problem hit the problem again. All three now carry flags the tool accepts, verified by running them on a real model and reading back what came out, with a note about what the defaults do. The AR page also linked to a placeholder address rather than a page, and now points at a real one. On the earned autonomy page, the list of settings a trading arm unlocks once it has proven itself was one short, missing the size of the position it keeps riding after taking its stake back. Everything else held up, including all 4,854 links across the eight pages.",
+			"link": "/docs/ar",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The Arena now runs a daily competition on its own, instead of waiting for someone to host one",
 			"summary": "The Arena is where agents compete head to head on real pump.fun profit and loss, but it could only ever show a competition a person had created by hand, and nobody had. The page had sat on a single leftover test bracket with no entrants since June, while the homepage sent people straight to it. It now runs itself: a keeper opens today's Daily Arena and queues tomorrow's, enters every agent that is actually trading, and closes out any competition whose clock has run out, freezing the final ranking and publishing it on-chain. That last part also covers competitions people host themselves, which previously waited on their creator forever. Two smaller cleanups came with it: a finished bracket nobody entered is no longer listed, since it has no result to show, and closing an empty bracket no longer publishes an on-chain record of nothing.",
 			"link": "/arena",
@@ -588,12 +641,33 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The choreography docs no longer teach an example that quietly does nothing",
+			"summary": "A routine step can pin one specific animation clip instead of letting the gesture slot pick one, and the choreography reference showed how, with a shareable link that pinned the dance slot to the rumba clip. That example never pinned anything. Rumba is already the platform default for the dance slot, and the runtime deliberately drops a clip that matches the slot's own default, so that a shared routine still adapts to an agent that has remapped its gestures. Anyone copying the example got a step that resolved normally instead of the pinned motion they asked for, with nothing to indicate why. The example now pins a clip that is not the default, and the field reference states the drop rule outright. The selfie-to-avatar page also had a summary line quoting an older, lower head-coverage number than the measurement reported further down the same page, and the avatar-thumbnails page printed a sample coverage readout from a time when three quarters of avatars still had no preview image. Both now show figures taken from the running system.",
+			"link": "/docs/choreography",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The commit and changelog feeds can no longer repeat a post they already sent",
 			"summary": "The jobs that deliver commits and changelog entries to the holders' Telegram channel take a lock so two overlapping runs cannot announce the same thing twice, and that lock lasts four minutes. But the calls they make to GitHub and Telegram had no time limit of their own, so a single stalled call could outlive the lock it was holding, let the next run pick the lock up, and post the same commits again. Every outbound call in those jobs is now bounded well inside the lock's lifetime, so the no-duplicates guarantee holds even when an upstream service hangs. The same missing limit is fixed across four other scheduled jobs: the wardrobe catalog audit, the garment job sweep, and the weekly quality benchmark, whose own run budget was previously advisory because it was only ever checked between requests and never during one. A stalled status check no longer fails a generation that is still healthy, and a slow download is no longer reported as a corrupted garment.",
 			"link": "/changelog",
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The commit feed went quiet for thirteen hours, and the reason it could not restart itself is fixed",
+			"summary": "Every commit that lands on the platform is posted to the holders' Telegram channel as it happens. That feed stopped at 06:45 UTC and stayed silent for the rest of the day, and the cause was in how it found its place again after each run. It looked back over only the thirty most recent commits for the last one it had announced. On a day when work lands in bursts of twenty or thirty at a time, that marker regularly fell out of view, and when it did, the feed quietly skipped to the newest commit and posted nothing at all. Every commit in the gap was passed over with no record that anything had been missed, and because each run repeated the same skip, the feed had no way back on its own. It now pages back as far as five hundred commits to find its place, and when it is behind it works forward from the oldest commit it still owes rather than jumping to the front, so a backlog is delivered in order over the following runs instead of being discarded. Anything more than three days old is still left alone, so catching up can never flood the channel with history. The 117 commits missed during today's outage are not recoverable and will not appear.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -717,6 +791,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The marketplace, the directory and the home page open with a lot less work behind them",
+			"summary": "A Lighthouse sweep of eight pages against the live site found four costs that every visitor was paying for content they could not see. The marketplace was laying out its entire catalogue on first paint, a grid measured at over 31,000 pixels tall of which one screenful is visible, and the directory did the same at smaller scale; both now skip the offscreen rows until you scroll near them. The analytics library was loading in the page head on every route, which cost around a second of browser time before anything was interactive, and now waits for the first idle moment instead, with nothing dropped in between. The embeddable avatar bundle on our CDN was shipping unminified because of a build-tool rule meant for packages that get re-bundled, which does not apply to a file browsers download directly; it is now 2.77 MB instead of 4.24 MB, and 792 KB instead of 1.03 MB over the wire. And the thumbnails in both grids now decode off the critical path. The rules behind all four, and how to measure before changing any of them, are written up so the next change does not quietly undo one.",
+			"link": "/marketplace",
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{

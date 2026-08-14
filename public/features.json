@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T19:37:07.244Z",
+	"generated_at": "2026-08-14T19:53:54.807Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2948,6 +2948,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/site-performance",
+					"title": "Docs · Site load performance",
+					"description": "The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.",
+					"added": "2026-08-14",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/farcaster-memory-seeding",
 					"title": "Docs · Farcaster memory seeding",
 					"description": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
@@ -2982,6 +2992,16 @@
 					"title": "Docs · Run an inference node",
 					"description": "Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.",
 					"added": "2026-08-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/pump-claims-channel",
+					"title": "Docs · pump.fun first-claims channel",
+					"description": "A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.",
+					"added": "2026-08-14",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
