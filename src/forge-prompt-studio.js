@@ -187,6 +187,23 @@ function surprise() {
 	els.surprise?.classList.add('is-rolling');
 }
 
+// Write a generated prompt into a chip and take ownership of its text.
+//
+// The static chip labels in the HTML carry data-i18n keys so a no-JS visitor
+// still gets translated copy. Once we replace that label with a generated
+// prompt, the key no longer describes the node: i18n's applyCatalog walks
+// [data-i18n] whenever a catalog loads or the locale changes and would write
+// the original English string back over the generated one. That silently undid
+// every rotation (the "fresh set every visit" promise below), and because the
+// generated prompts are longer than the static ones the revert re-wrapped the
+// flex row and moved everything under it, which measured as the single largest
+// layout shift on /forge. Dropping the attribute hands the node to its real
+// owner, the same way nav-auth's data-auth-name guard does in src/i18n.js.
+function setChipPrompt(chip, text) {
+	chip.textContent = text;
+	chip.removeAttribute('data-i18n');
+}
+
 function shuffleChips() {
 	if (!els.examples) return;
 	// Seasonal presets (.chip--festive) are pinned: "More ideas" only rotates
@@ -202,7 +219,7 @@ function shuffleChips() {
 	});
 	const swap = () => {
 		chips.forEach((chip, i) => {
-			if (fresh[i]) chip.textContent = fresh[i];
+			if (fresh[i]) setChipPrompt(chip, fresh[i]);
 			chip.classList.remove('is-swapping');
 		});
 	};
@@ -224,7 +241,7 @@ function seedChips() {
 	if (!chips.length) return;
 	const fresh = generateDistinctForgePrompts(chips.length, undefined, Math.random, CHIP_MAXLEN);
 	chips.forEach((chip, i) => {
-		if (fresh[i]) chip.textContent = fresh[i];
+		if (fresh[i]) setChipPrompt(chip, fresh[i]);
 	});
 }
 
