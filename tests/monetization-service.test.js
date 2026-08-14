@@ -501,6 +501,40 @@ describe('prices endpoint (setSkillPrices)', () => {
 		expect(body.skill_name).toBe('echo');
 	});
 
+	// The dashboard's del() helper (src/dashboard-next/api.js) sends no body and
+	// no content-type, addressing the row with query parameters instead. Reading
+	// the body alone answered every "Remove price" click with 415 and removed
+	// nothing, so the query-string transport has to stay supported.
+	it('soft-deletes a price addressed by query string with no request body', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]); // ownership
+		sqlState.queue.push([{ id: 'price-1' }]); // UPDATE … RETURNING id
+
+		const { status, body } = await invoke(pricesHandler, {
+			method: 'DELETE',
+			url: `/api/monetization/prices?agent_id=${agent.id}&skill_name=echo`,
+		});
+
+		expect(status).toBe(200);
+		expect(body.deleted).toBe(true);
+		expect(body.skill_name).toBe('echo');
+	});
+
+	it('rejects a DELETE that names no agent in either transport', async () => {
+		const { session } = createTestAgent();
+		authState.session = session;
+
+		const { status, body } = await invoke(pricesHandler, {
+			method: 'DELETE',
+			url: '/api/monetization/prices?skill_name=echo',
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+	});
+
 	it('returns 404 when hard-deleting a price that does not exist', async () => {
 		const { agent, session } = createTestAgent();
 		authState.session = session;
