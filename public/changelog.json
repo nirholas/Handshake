@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T05:33:54.431Z",
+	"generated_at": "2026-08-14T05:39:14.846Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -461,6 +461,17 @@
 			"tags": [
 				"security",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Three paid x402 endpoints stop shortchanging the agents that call them",
+			"summary": "The JSON schema checker at /api/x402/schema-check never read the request body, so every paid call charged the caller and answered that the requested feed was unsupported. It now reads the body it was always meant to, validates the changelog feed for real, and refuses an unknown target with a 400 before any payment settles. The per-call skill gate at /api/x402/skill-call answered browser preflight requests with a payment challenge and no cross-origin headers, which made it uncallable from any in-browser wallet; it now answers preflight correctly on every path, and a database outage returns a plain retry-shortly message instead of echoing internal configuration detail. The paid capacity probe at /api/x402/rate-limit-probe now only accepts metered routes as its target, so a paying caller cannot aim the server's own price lookup at an unrelated internal route. The remix endpoint's refusals (unknown source, empty instruction) are no longer recorded as payment leaks in the x402 ledger.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
