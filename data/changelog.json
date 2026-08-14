@@ -3,6 +3,15 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "One cookbook recipe stopped introducing itself as a generic page in search results and shared links",
+      "summary": "All five cookbook recipes are drawn by one shared page template, and the server fills in each recipe's own title, description, and social card as the page is served. One recipe was skipping that step. The template carried a leftover marker naming a specific recipe as its own address, and the server reads that marker as this page already knows who it is, so it left that one page alone: text to 3D from the command line went out with the placeholder title every recipe shares and a one-line description that said nothing about it. Search results, and the preview card in any chat where the link was pasted, showed the placeholder instead of the recipe. The template now names the cookbook index rather than any single recipe, matching how the tutorial and walkthrough templates have always been set up, so all five recipes present themselves properly. A test now walks the real page templates and fails if any of them ever claims one of its own recipes again, which is what let this sit unnoticed.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/cookbook/text-to-3d-cli"
+    },
+    {
+      "date": "2026-08-14",
       "title": "The Forge gallery no longer goes quiet for hours after a model provider blips",
       "summary": "A job runs every minute to keep new models flowing into the Forge gallery, and it steps back when the upstream generator is failing so it is not hammering a dead lane. That step-back had no ceiling: each further failed attempt lengthened the pause, so a provider outage that lasted through a few retries could park the job for hours, and by the time the provider recovered nothing was left running to notice. The pause is now capped at an hour, so the job keeps checking back on its own and the gallery starts filling again as soon as generation works.",
       "tags": [
