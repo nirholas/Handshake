@@ -41,8 +41,8 @@ describe('grayFaceStats', () => {
 	});
 
 	it('handles degenerate sizes without NaN', () => {
-		expect(grayFaceStats(grey(2, 2, () => 50), 2, 2)).toEqual({ luma: 50, blurStddev: 0 });
-		expect(grayFaceStats([], 0, 0)).toEqual({ luma: 0, blurStddev: 0 });
+		expect(grayFaceStats(grey(2, 2, () => 50), 2, 2)).toEqual({ luma: 50, blurStddev: 0, clippedFrac: 0 });
+		expect(grayFaceStats([], 0, 0)).toEqual({ luma: 0, blurStddev: 0, clippedFrac: 0 });
 	});
 });
 
