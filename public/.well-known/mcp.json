@@ -30,7 +30,7 @@
 			"endpoint": "https://three.ws/api/mcp-studio",
 			"transport": "streamable-http",
 			"auth": "none",
-			"description": "Free text-to-3D, image-to-3D, and rigged avatars. No account, no payment.",
+			"description": "Free text-to-3D, image-to-3D, rigged avatars, and persistent talking personas. No account, no payment.",
 			"documentation": "https://three.ws/docs/mcp-studio"
 		},
 		{

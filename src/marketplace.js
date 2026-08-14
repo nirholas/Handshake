@@ -5437,14 +5437,14 @@ function renderSimilar(items) {
 		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
 	});
 
-	// "View more" toggles the side list between the top 4 and the full set,
-	// rather than dead-ending on an href="#". Only shown when there's more to see.
+	// "View more" toggles the side list between the top 4 and the full set.
+	// Only shown when there's more to see.
 	const renderSideList = (expanded) => {
 		const shown = expanded ? items : items.slice(0, 4);
 		const moreLabel = items.length > 4 ? (expanded ? 'Show less ‹' : 'View more ›') : '';
 		side.innerHTML =
 			`<div class="related-side-title">Related Agents${
-				moreLabel ? ` <a href="#" id="rel-more" role="button">${moreLabel}</a>` : ''
+				moreLabel ? ` <button type="button" id="rel-more" aria-expanded="${expanded}">${moreLabel}</button>` : ''
 			}</div>` +
 			shown
 				.map(
@@ -5464,11 +5464,13 @@ function renderSimilar(items) {
 		side.querySelectorAll('[data-id]').forEach((card) => {
 			card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
 		});
-		const moreLink = side.querySelector('#rel-more');
-		if (moreLink) {
-			moreLink.addEventListener('click', (e) => {
-				e.preventDefault();
+		const moreBtn = side.querySelector('#rel-more');
+		if (moreBtn) {
+			moreBtn.addEventListener('click', () => {
 				renderSideList(!expanded);
+				// Keep focus on the toggle across the re-render so a keyboard user
+				// stays where they were instead of being dropped to the page top.
+				side.querySelector('#rel-more')?.focus();
 			});
 		}
 	};
