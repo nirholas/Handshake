@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Recurring payments now have a home, a pause button, and a receipt for every charge",
+			"summary": "Sign one permission and a fixed amount of USDC moves to an agent every day or week, or gets swapped into a token on a schedule. Until now there was no page for any of that: you could start a schedule from a skill and then never see it again, and one bad hour on the network ended it for good, because nothing could turn a paused schedule back on. The new /recurring page is the whole life of a schedule in one place. Create one, pause it, resume it, cancel it, and read every charge it has ever made with the transaction hash next to it. A second tab shows what is being paid into your own agents, with the paying wallet and the running total. When a period fails you now get told why, in a sentence: a revoked permission pauses the schedule and says so, a wallet short of USDC keeps the schedule alive and retries once you top up, and a charge that timed out is never retried at all, because that is the one case that could take your money twice.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/recurring"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "The selfie camera now catches a blurry or blown-out shot before it costs you a build",
 			"summary": "The capture screen showed a green \"Sharp\" badge on frames that were smeared past recognition. Measured against six real portrait photographs, the blur floor sat below every reading a real photo can produce, so the gate never fired once: a shot ruined by camera shake sailed through and you found out a minute later, after the build. The floor is now calibrated from those measurements and sits in the gap between blurred and sharp faces, so \"Hold steady. The image is blurry.\" appears while you can still act on it. A face half-blown by window glare also used to pass, because averaging bright and shadowed halves lands back in the acceptable range; the camera now measures how much of your face is washed out and tells you to turn away from the window. Two capture bugs went with it: on a phone, the helper widgets pinned to the bottom of the screen sat on top of the camera and swallowed taps meant for the shutter and Cancel, and the Retake and Use this buttons stayed on screen during live capture. The shot check after the shutter is faster too.",
 			"tags": [

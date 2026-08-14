@@ -14,6 +14,7 @@
  */
 
 import { checkImageQuality, createQualitySession, preload } from './face-quality.js';
+import { GATES } from './selfie-gates.js';
 import { log } from './shared/log.js';
 
 const REQUIRED_SLOT = 'frontal';
@@ -450,7 +451,14 @@ function renderQualityBadges(container, report, slot) {
 		{ text: report.blurOk ? 'Sharp' : 'Blurry', ok: report.blurOk },
 	];
 
-	const lumaLabel = report.luma < 40 ? 'Too dark' : report.luma > 218 ? 'Bright' : 'Lit';
+	// Read the shared thresholds rather than repeating them: a local copy drifts
+	// silently, and it cannot see the blown-highlight gate at all, so the chip
+	// would read "Lit" while the hint underneath said the face was blown out.
+	const lumaLabel = report.luma < GATES.LUMA_MIN
+		? 'Too dark'
+		: report.luma > GATES.LUMA_MAX || (report.clippedFrac ?? 0) > GATES.CLIPPED_FRAC_MAX
+			? 'Blown out'
+			: 'Lit';
 	chips.push({ text: lumaLabel, ok: report.lumaOk });
 
 	container.innerHTML = chips.map((c) =>
