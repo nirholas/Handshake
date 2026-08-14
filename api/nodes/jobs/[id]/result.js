@@ -17,7 +17,7 @@
 
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../../../_lib/http.js';
 import { limits, clientIp } from '../../../_lib/rate-limit.js';
-import { completeJob, failJob, verifyResultReceipt, verifyNodeSignature } from '../../../_lib/inference-nodes.js';
+import { completeJob, failJob, getJob, verifyResultReceipt, verifyNodeSignature } from '../../../_lib/inference-nodes.js';
 
 const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
@@ -60,7 +60,6 @@ export default wrap(async (req, res) => {
 	// Recompute the receipt from the submitted fields and verify it. The job's
 	// claimed prompt/model come from the server's own record, so a node cannot
 	// sign a receipt over a different prompt than it was assigned.
-	const { getJob } = await import('../../_lib/inference-nodes.js');
 	const job = await getJob(jobId);
 	if (!job) return error(res, 404, 'job_not_found', 'no such job');
 	if (job.claimedBy !== node) return error(res, 403, 'not_job_owner', 'this node did not claim this job');

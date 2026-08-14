@@ -270,6 +270,14 @@ export async function failJob(jobId, { publicKey, error: errMsg }) {
 
 function bumpNodeCounter(publicKey, column) {
 	// Best-effort: the Redis result is authoritative; the counter is a rollup.
-	sql`update inference_nodes set ${sql(column)} = ${sql(column)} + 1, last_seen_at = now() where public_key = ${publicKey}`
-		.catch(() => {});
+	// The `.catch()` alone was not enough to make it so. Building the query
+	// THROWS synchronously when DATABASE_URL is absent (getSqlSafe raises
+	// before any promise exists), so the throw escaped past the catch and out
+	// of the un-awaited call into failJob's caller, 500-ing a result submission
+	// over a counter nobody reads on that path. Guard the construction too.
+	try {
+		Promise.resolve(
+			sql`update inference_nodes set ${sql(column)} = ${sql(column)} + 1, last_seen_at = now() where public_key = ${publicKey}`,
+		).catch(() => {});
+	} catch { /* no database configured: the rollup is optional, the result is not */ }
 }
