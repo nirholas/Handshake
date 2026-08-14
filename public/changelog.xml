@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Likeness evaluation</title>
+			<link>https://three.ws/docs/likeness-eval</link>
+			<guid isPermaLink="false">2026-08-14:Docs · Likeness evaluation</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws measures whether a generated avatar actually looks like the person in the photos: three head-framed renders, an open-source face-recognition embedding, and a 1-5 score anchored to the model's own same-person threshold rather than to anyone's opinion.</description>
+		</item>
+		<item>
 			<title>Docs · Recurring payments</title>
 			<link>https://three.ws/docs/recurring-payments</link>
 			<guid isPermaLink="false">2026-08-14:Docs · Recurring payments</guid>

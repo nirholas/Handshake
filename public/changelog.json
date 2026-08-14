@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-14T01:18:44.486Z",
+	"generated_at": "2026-08-14T01:24:36.143Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-14",
+			"type": "launch",
+			"title": "Docs · Likeness evaluation",
+			"summary": "How three.ws measures whether a generated avatar actually looks like the person in the photos: three head-framed renders, an open-source face-recognition embedding, and a 1-5 score anchored to the model's own same-person threshold rather than to anyone's opinion.",
+			"link": "/docs/likeness-eval",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-14",
 			"type": "launch",

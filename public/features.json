@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T01:18:44.431Z",
+	"generated_at": "2026-08-14T01:24:36.122Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2952,6 +2952,16 @@
 					"title": "Docs · Farcaster memory seeding",
 					"description": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
 					"added": "2026-08-11",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/likeness-eval",
+					"title": "Docs · Likeness evaluation",
+					"description": "How three.ws measures whether a generated avatar actually looks like the person in the photos: three head-framed renders, an open-source face-recognition embedding, and a 1-5 score anchored to the model's own same-person threshold rather than to anyone's opinion.",
+					"added": "2026-08-14",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
