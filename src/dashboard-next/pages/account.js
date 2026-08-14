@@ -113,7 +113,7 @@ async function copyToClipboard(text) {
 						<div class="dn-panel-title">Linked wallets</div>
 						<div class="dn-panel-sub" style="margin:0">Addresses that can claim royalties, pay for subscriptions, or sign as you.</div>
 					</div>
-					<a class="dn-btn primary" href="#wallets" data-link="wallets">+ Link wallet</a>
+					<button class="dn-btn primary" type="button" data-action="link-wallet">+ Link wallet</button>
 				</div>
 				<div data-slot="wallets">${skelStack(3)}</div>
 			</section>
@@ -184,6 +184,11 @@ async function copyToClipboard(text) {
 	const snsHost = main.querySelector('[data-slot="sns"]');
 	const delegationHost = main.querySelector('[data-slot="delegation"]');
 	const actionsHost = main.querySelector('[data-slot="actions"]');
+
+	// The section-header "+ Link wallet" sits outside the wallets slot, so it
+	// survives every re-render of that slot and is wired once here.
+	main.querySelector('#wallets [data-action="link-wallet"]')
+		.addEventListener('click', (e) => startWalletLink(walletsHost, e.currentTarget));
 
 	const wallets = await loadWallets(walletsHost);
 	renderSns(snsHost, wallets);
@@ -524,14 +529,72 @@ async function loadWallets(host) {
 	}
 }
 
+// Solana wallet providers, in the order the rest of the platform probes them
+// (see public/studio/launch-panel.js).
+function solanaProvider() {
+	return window.phantom?.solana || window.solana || window.backpack || window.solflare || null;
+}
+
+// Link a Solana wallet to this account with SIWS: the wallet signs a server-issued
+// message, so the link proves ownership without ever touching funds. `takeover`
+// moves a link that currently sits on another account, which the server only
+// allows once the same signature has proved ownership.
+async function linkSolanaWallet(provider, { takeover = false } = {}) {
+	const res = await provider.connect();
+	const address = res?.publicKey?.toString?.();
+	if (!address) throw new Error('Wallet did not return an address');
+
+	const nonce = await post('/api/auth/wallets/nonce-solana', { address, chainId: 'mainnet' });
+	const signed = await provider.signMessage(new TextEncoder().encode(nonce.message), 'utf8');
+	const signature = btoa(String.fromCharCode(...signed.signature));
+
+	await post('/api/auth/wallets/link-solana', { message: nonce.message, signature, takeover });
+	return address;
+}
+
+// A user declining the wallet prompt is a choice, not a failure worth shouting about.
+const isUserRejection = (err) => err?.code === 4001 || /reject|denied|cancel/i.test(err?.message || '');
+
+async function startWalletLink(host, btn) {
+	const provider = solanaProvider();
+	if (!provider) {
+		toast('No Solana wallet detected. Install Phantom, then try again.');
+		window.open('https://phantom.app/', '_blank', 'noopener');
+		return;
+	}
+	const label = btn.textContent;
+	btn.disabled = true;
+	btn.textContent = 'Check your wallet…';
+	try {
+		let address;
+		try {
+			address = await linkSolanaWallet(provider);
+		} catch (err) {
+			// The address is already linked elsewhere; the signature just proved it is
+			// this user's, so offer the move rather than dead-ending on the error.
+			if (err?.body?.takeover_available !== true) throw err;
+			if (!confirm('That wallet is linked to another account. Move it to this one?')) return;
+			address = await linkSolanaWallet(provider, { takeover: true });
+		}
+		toast(`Linked ${truncMid(address, 6, 4)}`);
+		await loadWallets(host);
+	} catch (err) {
+		if (!isUserRejection(err)) toast(err?.message ? `Link failed: ${err.message}` : 'Wallet link failed');
+	} finally {
+		btn.disabled = false;
+		btn.textContent = label;
+	}
+}
+
 function renderWallets(host, wallets) {
 	if (wallets.length === 0) {
 		host.innerHTML = `
 			<div class="dn-empty">
 				<h3>No wallets linked</h3>
 				<p>Link a wallet so you can claim royalties, pay for subscriptions, or sign as you.</p>
-				<a class="dn-btn primary" href="#wallets">+ Link wallet</a>
+				<button class="dn-btn primary" type="button" data-action="link-wallet">+ Link wallet</button>
 			</div>`;
+		host.querySelector('[data-action="link-wallet"]').addEventListener('click', (e) => startWalletLink(host, e.currentTarget));
 		return;
 	}
 
