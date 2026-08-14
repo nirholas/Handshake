@@ -51,6 +51,20 @@ describe('registry shape', () => {
 		// English feeds are the untagged default — never spelled out explicitly.
 		expect(entries.filter(([, s]) => s.language === 'en')).toHaveLength(0);
 	});
+
+	// Untagged means "English" to sourcesForLanguage(), so a non-English
+	// publisher that ships without a language tag silently interleaves its
+	// headlines into the default /api/news/feed view. BlockTempo (a Traditional
+	// Chinese Taiwanese outlet) did exactly that until 2026-08-14 — it reads as
+	// an English brand name, which is the trap. Pin the publishers whose feed
+	// language cannot be inferred from their name.
+	it('tags non-English publishers that carry an English brand name', () => {
+		for (const key of ['blocktempo']) {
+			expect(NEWS_SOURCES[key], `${key} left the registry`).toBeDefined();
+			expect(NEWS_SOURCES[key].language, `${key} must not fall into the untagged English pool`).toBe('zh');
+		}
+		expect(sourcesForLanguage('en')).not.toContain('blocktempo');
+	});
 });
 
 describe('hosts we must not regress onto', () => {

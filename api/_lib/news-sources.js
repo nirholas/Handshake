@@ -38,7 +38,7 @@ export const NEWS_SOURCES = {
 	bits_media: { name: 'Bits.Media', url: 'https://bits.media/rss2/', category: 'general', language: 'ru', region: 'europe' },
 	blockchainmedia: { name: 'Blockchain Media', url: 'https://blockchainmedia.id/feed/', category: 'general', language: 'id', region: 'asia' },
 	blockmedia: { name: 'Block Media', url: 'https://www.blockmedia.co.kr/feed/', category: 'general', language: 'ko', region: 'asia' },
-	blocktempo: { name: 'BlockTempo', url: 'https://www.blocktempo.com/feed/', category: 'general', tier: 'tier3', credibility: 0.75 },
+	blocktempo: { name: 'BlockTempo (動區動趨)', url: 'https://www.blocktempo.com/feed/', category: 'general', tier: 'tier3', credibility: 0.75, language: 'zh', region: 'asia' },
 	blockworks: { name: 'Blockworks', url: 'https://blockworks.co/feed', category: 'general', tier: 'tier2', credibility: 0.9 },
 	blokt: { name: 'Blokt', url: 'https://blokt.com/feed', category: 'general' },
 	btcecho: { name: 'BTC-ECHO', url: 'https://www.btc-echo.de/feed/', category: 'general', language: 'de', region: 'europe' },
