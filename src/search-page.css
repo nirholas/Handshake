@@ -85,6 +85,10 @@ body {
 .sr-empty-sub { max-width: 460px; margin: 0 auto 16px; font-size: var(--text-sm, .85rem); line-height: 1.5; }
 .sr-empty-ctas { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .sr-error a { color: var(--ink-bright, #fff); }
+/* Retry re-runs the search in place; it navigates nowhere, so it is a button
+   that reads as a link and keeps native keyboard and focus behaviour. */
+.sr-error button { appearance: none; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; color: var(--ink-bright, #fff); text-decoration: underline; text-underline-offset: 2px; }
+.sr-error button:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; border-radius: 2px; }
 
 /* Suggested-when-idle quick links (no query yet) */
 .sr-quicklinks { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-sm, 12px); margin-top: var(--space-lg, 24px); }

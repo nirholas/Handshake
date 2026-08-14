@@ -155,7 +155,7 @@ async function runSearch() {
 		grid.innerHTML = items.length ? items.map(cardHtml).join('') : emptyStateHtml();
 	} catch (err) {
 		if (controller.signal.aborted) return;
-		grid.innerHTML = `<div class="sr-error"><div class="sr-empty-title">Search is temporarily unavailable</div><p>${esc(err?.message || 'Please try again.')} — <a href="#" data-retry>Retry</a></p></div>`;
+		grid.innerHTML = `<div class="sr-error"><div class="sr-empty-title">Search is temporarily unavailable</div><p>${esc(err?.message || 'Please try again.')} <button type="button" data-retry>Retry</button></p></div>`;
 	} finally {
 		grid.removeAttribute('aria-busy');
 		state.loading = false;
@@ -181,7 +181,6 @@ function wireControls() {
 	});
 	$('sr-grid')?.addEventListener('click', (e) => {
 		if (e.target.closest('[data-retry]')) {
-			e.preventDefault();
 			runSearch();
 			return;
 		}

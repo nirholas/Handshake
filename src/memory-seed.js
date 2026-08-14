@@ -393,8 +393,8 @@ export function mountMemoryBrowser(host, opts = {}) {
 			state.memories = await loadAgentMemories(state.agentId);
 		} catch {
 			q('[data-grid]').innerHTML =
-				'<div class="mmb-empty"><h4>Could not load memories</h4><p>Check your connection, then <a href="#" data-mmb-retry>retry</a>.</p></div>';
-			q('[data-mmb-retry]')?.addEventListener('click', (e) => { e.preventDefault(); load(); }, { once: true });
+				'<div class="mmb-empty"><h4>Could not load memories</h4><p>Check your connection, then <button type="button" data-mmb-retry style="appearance:none;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline">retry</button>.</p></div>';
+			q('[data-mmb-retry]')?.addEventListener('click', () => load(), { once: true });
 			return;
 		}
 		render(state.memories);
