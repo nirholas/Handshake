@@ -66,7 +66,7 @@ The platform-wide aggregate is public:
 curl 'https://three.ws/api/custody/integrity'
 ```
 
-Anyone can also re-verify the current root at `three.ws/integrity`, and the standalone verifier lives at `three.ws/proof`.
+That endpoint is public and needs no account. The `/integrity` page that used to render it is switched off while on-chain anchoring is unavailable, so read the JSON directly (check `epochs_anchored` against `epochs_total` before treating a root as anchored). The standalone per-wallet verifier lives at `three.ws/proof`.
 
 ## API surface
 

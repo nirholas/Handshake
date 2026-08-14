@@ -75,5 +75,5 @@ The console reads this on load, resolves your viewer id (so it can tell whether 
 
 - [Custody you can verify](./custody.md) - the full recovery and inheritance model, the freeze switch, spend limits, and proof-of-custody
 - [Financial controls](./financial-controls.md) - the plain-English spend rules on the same wallet rails
-- [/integrity](https://three.ws/integrity) - the public Merkle attestation of every custodial wallet
+- `GET /api/custody/integrity` - the public Merkle attestation of every custodial wallet, as JSON (the page that rendered it is switched off while on-chain anchoring is unavailable)
 - [/proof](https://three.ws/proof) - verify your own wallet's inclusion in the attestation, in your browser
