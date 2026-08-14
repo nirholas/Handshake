@@ -106,6 +106,18 @@ function matchRoute(path) {
 	return null;
 }
 
+// Content trees that live at the repo root and are copied into dist/ verbatim by
+// the closeBundle plugins in vite.config.js (copy-docs, copy-blog, copy-src-to-
+// dist, the avatar-sdk mirror). `/blog/a-post.html` has no vercel route because
+// the slug route only matches extensionless paths, so without these the whole
+// blog reads as broken while production serves every one of them.
+const BUILD_COPIED_ROOTS = ['blog', 'docs', 'pump-fun-skills', 'avatar-sdk'];
+
+// Emitted at build time, so there is no source file to point at. vite-plugin-pwa
+// writes the web manifest from the `manifest` block in vite.config.js, which is
+// what the 250 pages linking `/manifest.webmanifest` actually get.
+const GENERATED_TARGETS = new Set(['/manifest.webmanifest']);
+
 // Does a clean path resolve to a real source file (what the catch-all serves)?
 function fileForCleanPath(path) {
 	const p = path.replace(/^\/+/, '').replace(/\/+$/, '');
@@ -114,6 +126,12 @@ function fileForCleanPath(path) {
 	// and rewritten to hashed assets at build time — resolve against the real tree.
 	if (p.startsWith('src/') || p.startsWith('node_modules/')) {
 		return fileExists(join(ROOT, p)) ? p : null;
+	}
+	if (BUILD_COPIED_ROOTS.includes(p.split('/')[0])) {
+		for (const c of [p, p + '.html', join(p, 'index.html')]) {
+			if (fileExists(join(ROOT, c))) return c;
+		}
+		return null;
 	}
 	const candidates = [
 		join('public', p),
@@ -153,6 +171,7 @@ function apiResolves(path) {
 function resolveInternal(rawTarget, baseDir) {
 	const target = rawTarget.split('#')[0].split('?')[0];
 	if (target === '') return { ok: true }; // pure #anchor / query on current page
+	if (GENERATED_TARGETS.has(target)) return { ok: true, via: 'build output' };
 	// Relative path (not root-absolute) → resolve against the file's own directory.
 	if (!target.startsWith('/')) {
 		return fileForRelative(target, baseDir) ? { ok: true } : { ok: false, kind: 'relative' };
