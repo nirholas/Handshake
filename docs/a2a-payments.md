@@ -44,13 +44,13 @@ token moves.
 
 | # | Gate | What it decides | Refusal code |
 |---|------|-----------------|--------------|
-| 1 | Mandate signature + ownership | Is this a real mandate, issued to this user, still unexpired? | `mandate_invalid`, `mandate_expired`, `mandate_not_yours` |
+| 1 | Mandate signature + ownership | Is this a real mandate, issued to this user, still unexpired? | `invalid_mandate`, `mandate_expired`, `mandate_not_yours` |
 | 2 | Subject agent | Does the agent the mandate names still exist, and is it still this user's? | `agent_not_found`, `agent_not_yours` |
 | 3 | Kill switch | Is the agent halted? Checked before the peer is even quoted | `wallet_frozen` |
-| 4 | Mandate per-call policy | Is this amount, network, currency and resource inside what was authorized? | `per_call_exceeded`, `network_not_allowed`, `resource_not_allowed` |
-| 5 | Peer reputation (opt-in) | Does the peer clear the caller's ERC-8004 trust bar? | `reputation_below_bar` |
+| 4 | Mandate per-call policy | Is this amount, network, currency and resource inside what was authorized? | `amount_over_per_call`, `currency_mismatch`, `network_not_allowed`, `resource_not_allowed` |
+| 5 | Peer reputation (opt-in) | Does the peer clear the caller's ERC-8004 trust bar? | `reputation_too_low`, `reputation_too_few_reviews`, `reputation_unavailable` |
 | 6 | Mandate cumulative budget | Would lifetime spend under this mandate exceed its total cap? | `budget_exceeded` |
-| 7 | The agent's own spend policy | Per-transaction, rolling-daily and per-counterparty ceilings, the owner's plain-English rules, the anomaly guard, any scoped capability | `per_tx_exceeded`, `daily_exceeded`, `counterparty_daily_exceeded`, `policy_denied`, `wallet_anomaly_frozen`, `capability_required` |
+| 7 | The agent's own spend policy | Per-transaction, rolling-daily and per-counterparty ceilings, the owner's plain-English rules, the anomaly guard, any scoped capability | `per_tx_exceeded`, `daily_exceeded`, `counterparty_daily_exceeded`, `policy_blocked`, `policy_step_up`, `policy_freeze`, `wallet_anomaly_frozen`, `capability_required` |
 
 Gate 7 is atomic: it enforces the ceilings **and** writes the payment's pending
 receipt row in one statement under a per-agent advisory lock, so concurrent
