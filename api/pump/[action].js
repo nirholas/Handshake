@@ -157,6 +157,30 @@ async function resolveAuth(req) {
 	return null;
 }
 
+/**
+ * Session lookup for the handlers that sign and BROADCAST with an agent's
+ * custodial keypair server-side (launch-agent, the *-agent fee cranks). Those
+ * need nothing from the caller but a cookie, so a cross-site POST alone was
+ * enough to mint a coin or sweep fees — the exact threat resolveAuth() guards
+ * against, which these paths were not routed through. Same rule as resolveAuth:
+ * the cookie path must prove same-site intent, reads stay open.
+ *
+ * Returns the session user, or null after writing the 401/403 response.
+ */
+async function requireSessionUser(req, res) {
+	const user = await getSessionUser(req);
+	if (!user) {
+		error(res, 401, 'unauthorized', 'sign in required');
+		return null;
+	}
+	const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(String(req.method || '').toUpperCase());
+	if (!isRead && !isSameSiteOrigin(req)) {
+		error(res, 403, 'forbidden', 'cross-site request blocked');
+		return null;
+	}
+	return user;
+}
+
 const wrapped = wrap(async (req, res) => {
 	const action = req.query?.action;
 	switch (action) {
@@ -1665,8 +1689,8 @@ async function handleLaunchAgent(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	const user = await requireSessionUser(req, res);
+	if (!user) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -3790,15 +3814,14 @@ async function handleSearch(req, res) {
 
 // ── deliver-telegram ──────────────────────────────────────────────────────────
 
-import { z as _z } from 'zod';
-const _deliverSchema = _z.object({
-	chatId: _z.union([_z.string(), _z.number()]),
-	signal: _z.object({
-		kind: _z.enum(['mint', 'whale', 'claim', 'graduation']),
-		mint: _z.string(),
-		summary: _z.string(),
-		refs: _z.array(_z.string()).optional(),
-		ts: _z.number().optional(),
+const _deliverSchema = z.object({
+	chatId: z.union([z.string(), z.number()]),
+	signal: z.object({
+		kind: z.enum(['mint', 'whale', 'claim', 'graduation']),
+		mint: z.string(),
+		summary: z.string(),
+		refs: z.array(z.string()).optional(),
+		ts: z.number().optional(),
 	}),
 });
 
@@ -3813,7 +3836,11 @@ async function handleDeliverTelegram(req, res) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'too many delivery requests');
 	const botToken = process.env.TELEGRAM_BOT_TOKEN;
-	if (!botToken) return error(res, 500, 'misconfigured', 'TELEGRAM_BOT_TOKEN is not set');
+	// An absent bot token is a deployment gap, not a server fault: 503 +
+	// not_configured is what every sibling handler answers, and it tells a client
+	// to stop retrying rather than to report a bug.
+	if (!botToken)
+		return error(res, 503, 'not_configured', 'Telegram delivery is not configured');
 	const raw = await readJson(req);
 	const { chatId, signal } = parse(_deliverSchema, raw);
 	const { sendTelegramSignal } = await import('../../src/pump/telegram-delivery.js');
@@ -4602,11 +4629,8 @@ async function signSendWithAgent({ network, agentKeypair, instructions, extraSig
 // wallet is the on-chain creator (agent_authority) of the coin. Returns
 // { agent, mintRow, loaded, creator } or sends an error and returns null.
 async function resolveAgentFeeContext(req, res, body) {
-	const user = await getSessionUser(req);
-	if (!user) {
-		error(res, 401, 'unauthorized', 'sign in required');
-		return null;
-	}
+	const user = await requireSessionUser(req, res);
+	if (!user) return null;
 
 	const agent = await resolveLaunchAgentId({
 		userId: user.id,

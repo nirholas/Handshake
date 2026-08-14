@@ -18,7 +18,8 @@
 import { sql } from '../db.js';
 import { TOKEN_MINT as THREE_MINT } from '../token/config.js';
 import { fetchHolderBalances } from './holders.js';
-import { acquireLock, releaseLock } from '../cache.js';
+import { jupiterTokenSearch } from '../token/jupiter.js';
+import { acquireLock, releaseLock, cacheGet, cacheSet } from '../cache.js';
 
 const UPSERT_CHUNK = 2000; // rows per batched upsert — mirrors persistHolderSnapshot
 // A snapshot older than this is treated as missing: the reader falls back to a
@@ -172,22 +173,59 @@ export async function readThreeHolderSnapshot({ allowStale = false } = {}) {
  * Cheap holder *count* for the public stats panel. Reads only the snapshot meta
  * row (one query, no balance rows) so the hot, edge-cached /api/three-token/stats
  * path never triggers the multi-second DAS walk that threeHolderBalances() can.
- * Returns null when there's no fresh snapshot so the caller can fall back to a
- * market-data figure (Birdeye) or render "—" — the leaderboard read self-heals a
- * stale/cold snapshot on its own.
+ * Returns null only when neither our snapshot nor the keyless fallback answers,
+ * so the caller renders a blank figure rather than a wrong one.
  */
 export async function threeHolderCount() {
 	try {
 		const [meta] = await sql`
 			select snapshot_at, holder_count from three_holder_snapshot_meta where id = 1
 		`;
-		if (!meta?.snapshot_at) return null;
-		const ageMs = Date.now() - new Date(meta.snapshot_at).getTime();
-		if (ageMs > MAX_SNAPSHOT_AGE_MS) return null;
-		const n = Number(meta.holder_count);
-		return Number.isFinite(n) && n > 0 ? n : null;
+		if (meta?.snapshot_at) {
+			const ageMs = Date.now() - new Date(meta.snapshot_at).getTime();
+			const n = Number(meta.holder_count);
+			if (ageMs <= MAX_SNAPSHOT_AGE_MS && Number.isFinite(n) && n > 0) return n;
+		}
 	} catch {
-		// Table not migrated yet / DB blip — signal "unknown" rather than erroring.
+		// Table not migrated yet / DB blip: fall through to the keyless rung.
+	}
+	return jupiterThreeHolderCount();
+}
+
+// Keyless holder-count rung, used whenever our own snapshot is missing or stale.
+//
+// Why it exists: the snapshot is refreshed by a Helius DAS walk
+// (api/cron/three-holders-snapshot.js), so an exhausted Helius quota freezes it.
+// The staleness gate above then correctly refuses the frozen number, and every
+// public surface that shows holders went blank indefinitely rather than for a
+// tick or two. Jupiter's token search carries a holderCount for any mint and
+// needs no key, so it keeps the figure real through a DAS outage instead of
+// blanking it. Deliberately NOT a substitute for the snapshot: it is a single
+// count with no per-wallet balances, so ranking and %-of-supply still come from
+// the snapshot alone.
+const JUP_HOLDERS_KEY = 'three:holders:jup-count';
+const JUP_HOLDERS_TTL_S = 300;
+const JUP_HOLDERS_TIMEOUT_MS = 4000;
+
+async function jupiterThreeHolderCount() {
+	try {
+		const cached = await cacheGet(JUP_HOLDERS_KEY);
+		if (Number.isFinite(cached?.count) && cached.count > 0) return cached.count;
+	} catch {
+		// Cache miss/outage just means we ask Jupiter directly.
+	}
+	try {
+		const rows = await jupiterTokenSearch(THREE_MINT, {
+			limit: 1,
+			signal: AbortSignal.timeout(JUP_HOLDERS_TIMEOUT_MS),
+		});
+		const row = rows.find((r) => r?.id === THREE_MINT) || rows[0];
+		const count = Number(row?.holderCount);
+		if (!Number.isFinite(count) || count <= 0) return null;
+		await cacheSet(JUP_HOLDERS_KEY, { count }, JUP_HOLDERS_TTL_S).catch(() => {});
+		return count;
+	} catch {
+		// Upstream down or throttled: unknown beats a fabricated number.
 		return null;
 	}
 }

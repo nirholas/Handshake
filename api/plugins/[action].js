@@ -383,7 +383,10 @@ async function handlePublish(req, res) {
 		RETURNING *
 	`;
 
-	return json(res, 200, { data: { plugin: toPlugin(row) } });
+	const [author] = await sql`SELECT display_name FROM users WHERE id = ${auth.userId}`;
+	return json(res, 200, {
+		data: { plugin: toPlugin({ ...row, author_display_name: author?.display_name ?? null }) },
+	});
 }
 
 // ── Install (counter) ─────────────────────────────────────────────────────────
@@ -392,11 +395,37 @@ async function handleInstall(req, res, id) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const rl = await limits.widgetRead(clientIp(req));
+	const ip = clientIp(req);
+	const rl = await limits.widgetRead(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
-	await sql`
-		UPDATE plugins SET install_count = install_count + 1 WHERE id = ${id} AND deleted_at IS NULL
+	// Same visibility rule as detail: a private plugin's counter is its author's
+	// business. Without this the endpoint confirmed a private plugin's existence
+	// and let anyone holding the UUID drive its install_count.
+	const auth = await resolveAuth(req);
+	const viewerId = auth?.userId ?? null;
+	const [target] = await sql`
+		SELECT id, install_count FROM plugins
+		WHERE id = ${id}
+		  AND deleted_at IS NULL
+		  AND (is_public = true OR author_id = ${viewerId}::uuid)
 	`;
-	return json(res, 200, { data: { ok: true } });
+	if (!target) return error(res, 404, 'not_found', 'plugin not found');
+
+	// One counted install per (IP, plugin) per 30 minutes. A repeat inside the
+	// window is not an error the client should surface (the marketplace fires this
+	// as fire-and-forget), so it answers 200 with counted:false and the unchanged
+	// total rather than a 429 the caller would have to special-case.
+	const dedupe = await limits.pluginInstallDedupe(`${ip}:${id}`);
+	if (!dedupe.success)
+		return json(res, 200, { data: { ok: true, counted: false, install_count: target.install_count } });
+
+	const [row] = await sql`
+		UPDATE plugins SET install_count = install_count + 1
+		WHERE id = ${id} AND deleted_at IS NULL
+		RETURNING install_count
+	`;
+	return json(res, 200, {
+		data: { ok: true, counted: true, install_count: row?.install_count ?? target.install_count + 1 },
+	});
 }

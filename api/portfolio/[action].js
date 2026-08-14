@@ -12,7 +12,7 @@
 import { cors, json, method, readJson, wrap, error, validationError, rateLimited } from '../_lib/http.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { evmFallbackProvider } from '../_lib/evm/rpc.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { limits } from '../_lib/rate-limit.js';
 import { getSessionUser, isSameSiteOrigin } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { logAudit } from '../_lib/audit.js';
@@ -20,6 +20,7 @@ import { sql } from '../_lib/db.js';
 import { getBalances, walletUsdTotal, invalidateBalances } from '../_lib/balances.js';
 import { recoverAgentKey, recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
 import { reverseLookupAddress, resolveSolanaRecipient } from '../../src/solana/sns.js';
+import { geckoFetch, htmlToText } from '../_lib/coingecko.js';
 import { env } from '../_lib/env.js';
 import { z } from 'zod';
 
@@ -44,6 +45,20 @@ async function lookupSnsCached(address) {
 
 const ETH_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
 const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+// Window length for /history and /asset, clamped to 1..365. Returns null on a
+// value that is not a whole number, which the caller answers with a 400.
+// `parseInt` used to swallow those: `?days=abc` became NaN and survived both
+// Math clamps, so /history handed Postgres `NaN days` (a 500 with a support ref)
+// and /asset silently shipped `chart.days: null` plus a `days=NaN` upstream URL
+// that could never return points.
+function parseDays(url, fallback) {
+	const raw = url.searchParams.get('days');
+	if (raw === null || raw.trim() === '') return fallback;
+	const n = Number(raw);
+	if (!Number.isInteger(n)) return null;
+	return Math.min(365, Math.max(1, n));
+}
 
 function parse(schema, raw) {
 	const r = schema.safeParse(raw);
@@ -188,7 +203,8 @@ async function handleHistory(req, res) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://localhost');
-	const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get('days') || '90', 10)));
+	const days = parseDays(url, 90);
+	if (days === null) return error(res, 400, 'validation_error', 'days must be a whole number');
 
 	const rows = await sql`
 		select captured_at, total_usd
@@ -224,7 +240,17 @@ function parseAmountToBaseUnits(amountStr, decimals) {
 	const [whole, frac = ''] = amountStr.split('.');
 	const fracPadded = (frac + '0'.repeat(decimals)).slice(0, decimals);
 	const combined = (whole + fracPadded).replace(/^0+/, '') || '0';
-	return BigInt(combined);
+	const units = BigInt(combined);
+	// The schema accepts "0", and any amount below one base unit truncates to the
+	// same place. Both would sign and broadcast a transfer that moves nothing and
+	// still burns a fee, so refuse before we touch a key.
+	if (units === 0n) {
+		const e = new Error(`amount is zero at ${decimals} decimals`);
+		e.code = 'validation_error';
+		e.status = 400;
+		throw e;
+	}
+	return units;
 }
 
 async function loadOwnedAgent(userId, agentId) {
@@ -237,7 +263,7 @@ async function loadOwnedAgent(userId, agentId) {
 	return row || null;
 }
 
-async function sendEvm({ agent, asset, recipient, amount, memo }) {
+async function sendEvm({ agent, asset, recipient, amount, memo, userId }) {
 	if (!ETH_ADDR_RE.test(recipient)) {
 		const e = new Error('invalid EVM recipient');
 		e.code = 'validation_error';
@@ -253,17 +279,21 @@ async function sendEvm({ agent, asset, recipient, amount, memo }) {
 	}
 	const chainId = agent.chain_id || 8453;
 
+	// loadOwnedAgent already proved this user owns the agent; pass the id through
+	// so the key-use and custody rows name the human who authorized the transfer.
+	// `agent.user_id` was always undefined here (the query does not select it), so
+	// every EVM send landed in the audit trail attributed to nobody.
 	const pkHex = await recoverAgentKey(encryptedKey, {
 		agentId: agent.id,
-		userId: agent.user_id ?? null,
+		userId: userId ?? null,
 		reason: `portfolio_send_${asset}`,
 	});
-	const { Wallet, parseEther, Contract } = await import('ethers');
+	const { Wallet, Contract } = await import('ethers');
 	const provider = await evmFallbackProvider(chainId);
 	const signer = new Wallet(pkHex, provider);
 
 	if (asset === 'native') {
-		const value = parseEther(amount);
+		const value = parseAmountToBaseUnits(amount, 18);
 		const tx = await signer.sendTransaction({ to: recipient, value, data: memo ? '0x' + Buffer.from(memo, 'utf8').toString('hex') : undefined });
 		return { tx_hash: tx.hash, chain_id: chainId };
 	}
@@ -285,7 +315,7 @@ async function sendEvm({ agent, asset, recipient, amount, memo }) {
 async function sendSolana({ agent, asset, recipient, amount, userId }) {
 	const { address: resolvedRecipient, resolved_from } = await resolveSolanaRecipient(recipient);
 	if (!resolvedRecipient) {
-		const e = new Error('invalid Solana recipient — must be a base58 address or a registered .sol name');
+		const e = new Error('invalid Solana recipient: must be a base58 address or a registered .sol name');
 		e.code = 'validation_error';
 		e.status = 400;
 		throw e;
@@ -299,9 +329,8 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 		throw e;
 	}
 
-	const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = await import('@solana/web3.js');
-	const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-	const conn = solanaConnection({ url: rpcUrl, commitment: 'confirmed' });
+	const { PublicKey, Transaction, SystemProgram } = await import('@solana/web3.js');
+	const conn = solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
 
 	const kp = await recoverSolanaAgentKeypair(encryptedSecret, {
 		userId,
@@ -313,7 +342,10 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 	const tx = new Transaction();
 
 	if (asset === 'native') {
-		const lamports = BigInt(Math.round(Number(amount) * LAMPORTS_PER_SOL));
+		// Decimal string to lamports as integers. `Number(amount) * LAMPORTS_PER_SOL`
+		// loses precision above ~9M SOL and can round a value up past the balance,
+		// which the RPC then rejects in preflight for no reason the user can see.
+		const lamports = parseAmountToBaseUnits(amount, 9);
 		tx.add(SystemProgram.transfer({ fromPubkey: kp.publicKey, toPubkey: recipientPk, lamports }));
 	} else {
 		if (!SOL_ADDR_RE.test(asset)) {
@@ -344,7 +376,7 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 	tx.sign(kp);
 
 	// Preflight runs on the RPC and throws synchronously if the tx would fail
-	// (insufficient lamports, missing ATA rent, etc.) — that gives us instant
+	// (insufficient lamports, missing ATA rent, etc.), which gives us instant
 	// validation feedback. We deliberately don't await confirmTransaction here:
 	// 'confirmed' commitment takes 10-30s under load and the function would
 	// time out (Vercel default 10s). The signature is the receipt.
@@ -381,7 +413,7 @@ async function handleSend(req, res) {
 		const out =
 			body.chain === 'solana'
 				? await sendSolana({ agent, asset: body.asset, recipient: body.recipient, amount: body.amount, userId: user.id })
-				: await sendEvm({ agent, asset: body.asset, recipient: body.recipient, amount: body.amount, memo: body.memo });
+				: await sendEvm({ agent, asset: body.asset, recipient: body.recipient, amount: body.amount, memo: body.memo, userId: user.id });
 
 		logAudit({
 			userId: user.id,
@@ -425,13 +457,44 @@ async function handleSend(req, res) {
 // Native maps to SOL on Solana and ETH on EVM (mainnet coin IDs are used for
 // the price chart; the holding is read directly from the live balances).
 
-async function cgFetch(url) {
-	const r = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
-	if (!r.ok) {
-		const text = await r.text().catch(() => '');
-		throw Object.assign(new Error(`coingecko ${r.status}: ${text.slice(0, 200)}`), { status: 502 });
-	}
-	return r.json();
+// Market metadata + price history for one asset. Both the native-coin and the
+// contract-addressed lookups return the same CoinGecko shape, so only the two
+// paths differ. Goes through the shared geckoFetch (demo API key, memory cache,
+// stale + durable last-good fallbacks) rather than a bare fetch: the keyless
+// public tier throttles our egress IP within minutes, and a raw fetch turned
+// that into a permanently empty market panel instead of recent data.
+async function loadMarket({ metaPath, chartPath, coingeckoId, days }) {
+	const [meta, chart] = await Promise.all([
+		geckoFetch(metaPath).catch(() => null),
+		geckoFetch(chartPath, { ttlMs: 5 * 60_000 }).catch(() => null),
+	]);
+
+	const market = meta
+		? {
+				name: meta.name,
+				price_usd: meta.market_data?.current_price?.usd ?? null,
+				change_24h_pct: meta.market_data?.price_change_percentage_24h ?? null,
+				change_7d_pct: meta.market_data?.price_change_percentage_7d ?? null,
+				change_30d_pct: meta.market_data?.price_change_percentage_30d ?? null,
+				market_cap_usd: meta.market_data?.market_cap?.usd ?? null,
+				total_volume_usd: meta.market_data?.total_volume?.usd ?? null,
+				high_24h_usd: meta.market_data?.high_24h?.usd ?? null,
+				low_24h_usd: meta.market_data?.low_24h?.usd ?? null,
+				ath_usd: meta.market_data?.ath?.usd ?? null,
+				ath_change_pct: meta.market_data?.ath_change_percentage?.usd ?? null,
+				description: htmlToText(meta.description?.en || '').split('. ').slice(0, 2).join('. '),
+				homepage: meta.links?.homepage?.[0] || null,
+				coingecko_id: meta.id || coingeckoId,
+			}
+		: null;
+
+	return {
+		market,
+		symbol: meta?.symbol ? String(meta.symbol).toUpperCase() : null,
+		logo: meta?.image?.small || meta?.image?.thumb || null,
+		points: (chart?.prices || []).map(([t, p]) => ({ t: new Date(t).toISOString(), price: p })),
+		days,
+	};
 }
 
 async function handleAsset(req, res) {
@@ -447,12 +510,13 @@ async function handleAsset(req, res) {
 	const url = new URL(req.url, 'http://localhost');
 	const chain = String(url.searchParams.get('chain') || '').toLowerCase();
 	const idRaw = String(url.searchParams.get('id') || '').trim();
-	const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get('days') || '30', 10)));
+	const days = parseDays(url, 30);
 
 	if (chain !== 'solana' && chain !== 'evm') {
 		return error(res, 400, 'validation_error', 'chain must be solana or evm');
 	}
 	if (!idRaw) return error(res, 400, 'validation_error', 'id required');
+	if (days === null) return error(res, 400, 'validation_error', 'days must be a whole number');
 
 	const isNative = idRaw === 'native';
 	const id = isNative ? 'native' : idRaw;
@@ -525,79 +589,18 @@ async function handleAsset(req, res) {
 	// 2) Pull market data + price history from CoinGecko.
 	//    For native: use coin id ("solana" or "ethereum").
 	//    For tokens: use /coins/{platform}/contract/{address}.
-	let market = null;
-	let chartPoints = [];
-	try {
-		if (isNative) {
-			const coinId = chain === 'solana' ? 'solana' : 'ethereum';
-			const [meta, chart] = await Promise.all([
-				cgFetch(
-					`https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`,
-				).catch(() => null),
-				cgFetch(
-					`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`,
-				).catch(() => null),
-			]);
-			if (meta) {
-				symbol = (meta.symbol || symbol || '').toUpperCase();
-				logo = logo || meta.image?.small || meta.image?.thumb || null;
-				market = {
-					name: meta.name,
-					price_usd: meta.market_data?.current_price?.usd ?? null,
-					change_24h_pct: meta.market_data?.price_change_percentage_24h ?? null,
-					change_7d_pct: meta.market_data?.price_change_percentage_7d ?? null,
-					change_30d_pct: meta.market_data?.price_change_percentage_30d ?? null,
-					market_cap_usd: meta.market_data?.market_cap?.usd ?? null,
-					total_volume_usd: meta.market_data?.total_volume?.usd ?? null,
-					high_24h_usd: meta.market_data?.high_24h?.usd ?? null,
-					low_24h_usd: meta.market_data?.low_24h?.usd ?? null,
-					ath_usd: meta.market_data?.ath?.usd ?? null,
-					ath_change_pct: meta.market_data?.ath_change_percentage?.usd ?? null,
-					description: (meta.description?.en || '').split('. ').slice(0, 2).join('. '),
-					homepage: meta.links?.homepage?.[0] || null,
-					coingecko_id: coinId,
-				};
-			}
-			if (chart?.prices?.length) {
-				chartPoints = chart.prices.map(([t, p]) => ({ t: new Date(t).toISOString(), price: p }));
-			}
-		} else {
-			const platform = chain === 'solana' ? 'solana' : 'ethereum';
-			const [meta, chart] = await Promise.all([
-				cgFetch(
-					`https://api.coingecko.com/api/v3/coins/${platform}/contract/${encodeURIComponent(id)}`,
-				).catch(() => null),
-				cgFetch(
-					`https://api.coingecko.com/api/v3/coins/${platform}/contract/${encodeURIComponent(id)}/market_chart?vs_currency=usd&days=${days}`,
-				).catch(() => null),
-			]);
-			if (meta) {
-				symbol = (meta.symbol || symbol || '').toUpperCase();
-				logo = logo || meta.image?.small || meta.image?.thumb || null;
-				market = {
-					name: meta.name,
-					price_usd: meta.market_data?.current_price?.usd ?? null,
-					change_24h_pct: meta.market_data?.price_change_percentage_24h ?? null,
-					change_7d_pct: meta.market_data?.price_change_percentage_7d ?? null,
-					change_30d_pct: meta.market_data?.price_change_percentage_30d ?? null,
-					market_cap_usd: meta.market_data?.market_cap?.usd ?? null,
-					total_volume_usd: meta.market_data?.total_volume?.usd ?? null,
-					high_24h_usd: meta.market_data?.high_24h?.usd ?? null,
-					low_24h_usd: meta.market_data?.low_24h?.usd ?? null,
-					ath_usd: meta.market_data?.ath?.usd ?? null,
-					ath_change_pct: meta.market_data?.ath_change_percentage?.usd ?? null,
-					description: (meta.description?.en || '').split('. ').slice(0, 2).join('. '),
-					homepage: meta.links?.homepage?.[0] || null,
-					coingecko_id: meta.id,
-				};
-			}
-			if (chart?.prices?.length) {
-				chartPoints = chart.prices.map(([t, p]) => ({ t: new Date(t).toISOString(), price: p }));
-			}
-		}
-	} catch (e) {
-		console.error('[portfolio/asset] coingecko fetch failed', e?.message);
-	}
+	const platform = chain === 'solana' ? 'solana' : 'ethereum';
+	const base = isNative ? `/coins/${platform}` : `/coins/${platform}/contract/${encodeURIComponent(id)}`;
+	const { market, symbol: cgSymbol, logo: cgLogo, points: chartPoints } = await loadMarket({
+		metaPath: isNative
+			? `${base}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`
+			: base,
+		chartPath: `${base}/market_chart?vs_currency=usd&days=${days}`,
+		coingeckoId: isNative ? platform : id,
+		days,
+	});
+	symbol = cgSymbol || symbol;
+	logo = logo || cgLogo;
 
 	// If CoinGecko gave us a more reliable spot price, use it for the holding
 	// USD calculation as well so the page is internally consistent.

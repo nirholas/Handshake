@@ -64,11 +64,18 @@ export function buildGhostSubscription({
 } = {}) {
 	const budget = num(budgetSol);
 	if (budget == null || budget <= 0) return { ok: false, error: 'budget must be a positive number of SOL' };
+	// An unrecognized rule used to fall through to 'fixed', so a caller asking for
+	// a multiplier-sized replay got a fixed-sized one and no hint that the request
+	// was ignored. A replay that silently simulates something else is worse than
+	// no replay: reject it and let the endpoint's invalid_sizing 400 fire.
+	if (!['fixed', 'multiplier'].includes(sizing_rule)) {
+		return { ok: false, error: 'sizing must be "fixed" or "multiplier"' };
+	}
 
 	// Deploy the budget in roughly ten slices, never more than a quarter of it in
 	// one trade, and recycle the whole budget at most once per UTC day.
 	const draft = {
-		sizing_rule: ['fixed', 'multiplier'].includes(sizing_rule) ? sizing_rule : 'fixed',
+		sizing_rule,
 		fixed_sol: num(fixed_sol) ?? round4(budget / 10),
 		multiplier: num(multiplier) ?? 0.1,
 		per_trade_cap_sol: num(per_trade_cap_sol) ?? round4(budget / 4),

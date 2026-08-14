@@ -71,7 +71,7 @@ async function loadHomeStats() {
 			$('t-widgets').textContent = nf.format(s.widgets);
 			$('t-chains').textContent = nf.format(s.chains);
 		}
-		if (platform.status === 'fulfilled') {
+		if (platform.status === 'fulfilled' && platform.value.available) {
 			$('t-avatars').textContent = nf.format(platform.value.avatars);
 			$('t-countries').textContent = nf.format(platform.value.countries);
 		}

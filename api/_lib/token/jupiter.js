@@ -100,17 +100,19 @@ export async function jupiterSwapTx({
  * token's full record: usdPrice, mcap, liquidity, holderCount, launchpad,
  * audit flags, and per-window stats.
  * @param {string} query               symbol, name, or mint address
- * @param {{ limit?: number }} [opts]  upstream caps at 100
+ * @param {{ limit?: number, signal?: AbortSignal }} [opts]  upstream caps at 100;
+ *   pass a signal to bound the call from a latency-sensitive path (an OG card,
+ *   a request handler), which otherwise waits on the platform default.
  * @returns {Promise<Array<object>>} raw Jupiter token records
  */
-export async function jupiterTokenSearch(query, { limit } = {}) {
+export async function jupiterTokenSearch(query, { limit, signal } = {}) {
 	if (!query) {
 		throw Object.assign(new Error('jupiterTokenSearch requires a query'), { code: 'bad_query' });
 	}
 	const u = new URL(`${JUP_TOKENS_URL}/search`);
 	u.searchParams.set('query', String(query));
 	if (limit) u.searchParams.set('limit', String(limit));
-	const data = await fetchJson(u.toString(), { headers: { accept: 'application/json' } });
+	const data = await fetchJson(u.toString(), { headers: { accept: 'application/json' }, signal });
 	return Array.isArray(data) ? data : [];
 }
 
