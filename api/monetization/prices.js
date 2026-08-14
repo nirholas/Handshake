@@ -17,6 +17,11 @@ const SKILL_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
 const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 // USDC has 6 decimals. 0.000001 USDC = 1 atomic unit.
 const MIN_PRICE_ATOMIC = 1;
+// Ceiling on a single skill price. Without it an absurd `price_usdc` (1e30, or
+// Infinity, which z.number() accepts on its own) is multiplied to atomic units
+// and overflows the bigint `amount` column, so Postgres rejects the INSERT and
+// the caller gets a 500 where a 400 is the truthful answer.
+const MAX_PRICE_USDC = 1_000_000;
 
 const putBody = z
 	.object({
@@ -24,7 +29,7 @@ const putBody = z
 		skill_name: z.string().trim().min(1).max(64).regex(SKILL_RE, 'skill_name must be alphanumeric with hyphens/underscores, max 64 chars'),
 		// Required for a price gate; ignored for an NFT gate (access is the holding,
 		// not a payment), so optional here and refined below.
-		price_usdc: z.number().positive().optional(),
+		price_usdc: z.number().finite().positive().max(MAX_PRICE_USDC, `price_usdc must be at most ${MAX_PRICE_USDC}`).optional(),
 		currency_mint: z.string().trim().min(1).max(100).default('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'),
 		chain: z.enum(['solana', 'base', 'evm']).default('solana'),
 		// Access gate: 'price' (default) sells the skill; 'nft' restricts it to

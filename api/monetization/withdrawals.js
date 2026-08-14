@@ -8,17 +8,23 @@ import { z } from 'zod';
 import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
-import { parse, isValidSolanaAddress, isValidEvmAddress, isUuid } from '../_lib/validate.js';
+import { parse, isUuid } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { parseLimit, parseOffset } from '../_lib/http-params.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { getAvailableBalance } from '../_lib/monetization.js';
 
 const MIN_WITHDRAWAL_USDC = 1; // 1 USDC minimum
 const MIN_WITHDRAWAL_ATOMIC = MIN_WITHDRAWAL_USDC * 1_000_000;
 
+// The lifecycle the payout cron (api/cron/[name].js) actually writes. Anything
+// else in `?status=` is a caller typo, and answering it with an empty page
+// reads as "you have no withdrawals" instead of "that filter is not a status".
+const WITHDRAWAL_STATUSES = ['pending', 'processing', 'completed', 'failed'];
+
 const postBody = z.object({
 	agent_id: z.string().uuid(),
-	amount_usdc: z.number().positive().nullable().optional(),
+	amount_usdc: z.number().finite().positive().nullable().optional(),
 });
 
 async function resolveUser(req) {
@@ -44,11 +50,17 @@ export default wrap(async (req, res) => {
 		const params = new URL(req.url, 'http://x').searchParams;
 		const agentId = params.get('agent_id') || null;
 		const statusFilter = params.get('status') || null;
-		const limit = Math.min(100, Math.max(1, parseInt(params.get('limit') || '20', 10)));
-		const offset = Math.max(0, parseInt(params.get('offset') || '0', 10));
+		// clampInt-backed so `?limit=abc` falls back to the default page instead of
+		// binding NaN, which reaches Postgres as NULL and silently removes the LIMIT.
+		const limit = parseLimit(params, { fallback: 20, max: 100 });
+		const offset = parseOffset(params);
 
 		if (agentId && !isUuid(agentId)) {
 			return error(res, 400, 'validation_error', 'agent_id must be a UUID');
+		}
+
+		if (statusFilter && !WITHDRAWAL_STATUSES.includes(statusFilter)) {
+			return error(res, 400, 'validation_error', `status must be one of: ${WITHDRAWAL_STATUSES.join(', ')}`);
 		}
 
 		// Verify agent ownership if specified

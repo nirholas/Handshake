@@ -73,6 +73,11 @@ function check(name, cond, detail) {
 	return !!cond;
 }
 
+// Everything the server process wrote. Kept at module scope so a fatal abort
+// can print it: a handler 500 is opaque from the HTTP side (wrap() answers with
+// an error ref only), and the matching stack is in here.
+const serverLog = [];
+
 // process helpers
 const cleanup = [];
 async function shutdown() {
@@ -319,7 +324,6 @@ async function main() {
 		stdio: ['ignore', 'pipe', 'pipe'],
 	});
 	if (!KEEP) cleanup.push(() => server.kill('SIGKILL'));
-	const serverLog = [];
 	server.stdout.on('data', (d) => serverLog.push(String(d)));
 	server.stderr.on('data', (d) => serverLog.push(String(d)));
 	await waitFor(async () => (await fetch(`${HTTP_BASE}/api/version`)).ok, { label: 'local server' });
@@ -687,6 +691,8 @@ main()
 	})
 	.catch(async (err) => {
 		console.error(`\nFATAL: ${err?.stack || err}`);
+		const tail = serverLog.join('').split('\n').slice(-40).join('\n').trim();
+		if (tail) console.error(`\nserver log (last 40 lines):\n${tail}`);
 		if (!KEEP) await shutdown();
 		process.exit(1);
 	});

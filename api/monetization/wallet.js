@@ -70,15 +70,15 @@ export default wrap(async (req, res) => {
 				ORDER BY agent_id NULLS LAST, is_default DESC, created_at DESC
 			`;
 
-		// Also build a summary view: resolve which addresses would be used for each chain
-		const evmWallet = wallets.find(
-			(w) =>
-				(w.chain === 'base' || w.chain === 'evm') &&
-				(agentId ? w.agent_id === agentId : true),
-		);
-		const solanaWallet = wallets.find(
-			(w) => w.chain === 'solana' && (agentId ? w.agent_id === agentId : true),
-		);
+		// Summary view: which address a payout would actually land on per chain.
+		// This must mirror the payout-wallet resolution in withdrawals.js, where an
+		// agent-specific row wins and a user-level row (agent_id IS NULL) is the
+		// fallback. The ORDER BY above already puts agent rows ahead of user-level
+		// ones, so the first match per chain is the row that would be paid; matching
+		// on agent_id alone would report "no wallet" for an agent that inherits one.
+		const resolveWallet = (chains) => wallets.find((w) => chains.includes(w.chain));
+		const evmWallet = resolveWallet(['base', 'evm']);
+		const solanaWallet = resolveWallet(['solana']);
 
 		return json(res, 200, {
 			wallets,
@@ -141,8 +141,7 @@ export default wrap(async (req, res) => {
 		await sql`
 			UPDATE agent_payout_wallets
 			SET is_default = false
-			WHERE user_id = ${userId} AND chain = 'solana'
-			  AND (agent_id = ${agent_id} OR (agent_id IS NULL AND ${agent_id}::uuid IS NULL))
+			WHERE user_id = ${userId} AND chain = 'solana' AND agent_id = ${agent_id}
 		`;
 
 		const [wallet] = await sql`
@@ -164,8 +163,7 @@ export default wrap(async (req, res) => {
 		await sql`
 			UPDATE agent_payout_wallets
 			SET is_default = false
-			WHERE user_id = ${userId} AND chain = 'base'
-			  AND (agent_id = ${agent_id} OR (agent_id IS NULL AND ${agent_id}::uuid IS NULL))
+			WHERE user_id = ${userId} AND chain = 'base' AND agent_id = ${agent_id}
 		`;
 
 		const [wallet] = await sql`

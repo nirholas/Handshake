@@ -12,11 +12,13 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
 
-const PERIOD_TO_INTERVAL = {
-	'1d': '1 day',
-	'7d': '7 days',
-	'30d': '30 days',
-	'90d': '90 days',
+// Window length per period, in milliseconds. `all` means no lower bound.
+const DAY_MS = 86_400_000;
+const PERIOD_TO_MS = {
+	'1d': DAY_MS,
+	'7d': 7 * DAY_MS,
+	'30d': 30 * DAY_MS,
+	'90d': 90 * DAY_MS,
 	'all': null,
 };
 
@@ -56,15 +58,14 @@ export default wrap(async (req, res) => {
 	}
 
 	const period = params.get('period') || '7d';
-	if (!PERIOD_TO_INTERVAL.hasOwnProperty(period)) {
-		return error(res, 400, 'validation_error', 'period must be one of: 1d, 7d, 30d, 90d, all');
+	if (!Object.hasOwn(PERIOD_TO_MS, period)) {
+		return error(res, 400, 'validation_error', `period must be one of: ${Object.keys(PERIOD_TO_MS).join(', ')}`);
 	}
 
-	const interval = PERIOD_TO_INTERVAL[period];
+	const windowMs = PERIOD_TO_MS[period];
 	const now = new Date();
-	const fromDate = interval
-		? new Date(now.getTime() - parseIntervalMs(interval))
-		: new Date('2020-01-01');
+	// `all` reaches back before the platform had any revenue events.
+	const fromDate = windowMs ? new Date(now.getTime() - windowMs) : new Date('2020-01-01');
 	const toDate = now;
 
 	// Build queries with conditional agent filter
@@ -142,11 +143,3 @@ export default wrap(async (req, res) => {
 		})),
 	});
 });
-
-function parseIntervalMs(interval) {
-	const m = /^(\d+)\s*(day|days|hour|hours)$/.exec(interval);
-	if (!m) return 7 * 86400e3;
-	const n = parseInt(m[1], 10);
-	const unit = m[2].startsWith('hour') ? 3600e3 : 86400e3;
-	return n * unit;
-}
