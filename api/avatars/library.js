@@ -10,8 +10,13 @@
 // Mirrors api/animations/library.js exactly: the GLBs (~3 GB) are far too large
 // for the deploy bundle, so they live on the R2 CDN and this endpoint proxies a
 // small manifest object with an edge cache. Every entry carries an absolute CDN
-// `url` (GLB) and `thumb` (PNG) the browser loads directly — R2 CORS allows GET
-// from web origins (scripts/set-r2-cors.mjs).
+// `url` (GLB) and `thumb` (PNG) the browser loads directly. The canonical R2
+// policy in scripts/set-r2-cors.mjs makes those reads world-open, but the LIVE
+// bucket policy is still the older origin allowlist, so a GLB fetched straight
+// from the CDN on a third-party origin gets no allow-origin header; measure it
+// with `node scripts/set-r2-cors.mjs --probe` and route third-party embeds
+// through /api/glb until it is corrected. This endpoint itself is allowlisted
+// too: cors() with no `origins` answers three.ws and its partner origins only.
 //
 // Returns { avatars: [], total: 0 } until the manifest is uploaded, so consumers
 // (the /characters gallery, the avatar picker's "Characters" tab) feature-detect
