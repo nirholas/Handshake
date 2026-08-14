@@ -1263,6 +1263,10 @@
 			"dest": "/api/trade-og.js"
 		},
 		{
+			"src": "/api/arena-og",
+			"dest": "/api/arena-og.js"
+		},
+		{
 			"src": "/api/trade-share",
 			"dest": "/api/trade-share.js"
 		},
