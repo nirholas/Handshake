@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-13T23:43:33.390Z",
+	"generated_at": "2026-08-14T00:46:09.399Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3712,6 +3712,16 @@
 					"title": "Docs · Agent Reputation",
 					"description": "Why autonomous agents need verifiable trust, and how three.ws delivers portable on-chain reputation.",
 					"added": "2026-06-22",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-index",
+					"title": "Docs · The Agent Index",
+					"description": "The platform's own cross-chain index of agent registrations, token launches, reputation attestations, transfers and delegations, Solana first: one public endpoint, absolute on-chain timestamps, and published index freshness.",
+					"added": "2026-08-14",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
