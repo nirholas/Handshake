@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Add funds now opens Coinbase on the buy step, not on a transfer you cannot make",
+			"summary": "The Add funds window hands you a Coinbase checkout with your three.ws wallet already filled in as the destination. That checkout was not told which step to open on, so Coinbase could land you on \"transfer from your Coinbase balance\", which is no help at all if you reached Add funds precisely because you hold nothing yet. It now always opens on the buy step for the asset you picked (USDC or SOL, both settling on Solana). The suggested dollar amount is also rounded to real dollars and cents before it reaches Coinbase, so an amount worked out from a shortfall can no longer show up as something like $25.777777 on the checkout screen or in the window itself.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"title": "The payment-outcome board no longer reports itself healthy while it is blind",
+			"summary": "One of the internal boards we watch payments with is built from three independent panels: payments arriving, settlements going out, and the fee wallet that pays for them. If a panel could not be read, the board swapped in an error for that panel but still answered with a plain success, so a read where all three had failed looked identical to a read where everything was fine. It now names every panel it could not see and answers with a partial-success status instead, which is what our alerting keys on. Separately, all three ops boards were spending the same strict per-address budget that guards sign-in attempts, so simply watching a dashboard could lock an operator out of logging in from that address. The boards now use the generous read budget the rest of the signed-in read surface uses.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Another site can no longer swap your agent's body or burn your avatar credits behind your back",
 			"summary": "The two avatar onboarding endpoints (the one that opens the photo editor, and the one that attaches a finished avatar to an agent) accepted a request that arrived with your login cookie but no proof you meant to send it. A page you had merely visited could therefore repoint your agent to a different body, or spend your hourly avatar-editor allowance, without you doing anything. Both now require the same one-time token every other account-changing action on three.ws already asks for, and both refuse the request outright without it. API-key callers are unaffected. A second change: when the photo editor is not configured in an environment, the request is turned away before it counts against your hourly allowance, so a temporary outage no longer locks you out of the flow for an hour once it is back.",
 			"tags": [
