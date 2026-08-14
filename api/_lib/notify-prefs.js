@@ -153,18 +153,27 @@ export function defaultMatrix() {
  * sparse prefs onto DEFAULTS. Returns { categories, telegram_chat_id }.
  */
 export async function resolvePrefs(userId) {
-	let stored = {};
+	return mergeWithDefaults(await readStoredPrefs(userId));
+}
+
+/**
+ * The caller's stored sparse override exactly as persisted, or `{}` when they
+ * have never saved. A partial update merges onto this rather than onto the
+ * resolved matrix, so a save never materialises today's defaults into the row
+ * and freezes them there.
+ */
+export async function readStoredPrefs(userId) {
 	try {
 		const [row] = await sql`
 			select prefs from notification_preferences where user_id = ${userId}
 		`;
-		stored = row?.prefs && typeof row.prefs === 'object' ? row.prefs : {};
+		return row?.prefs && typeof row.prefs === 'object' ? row.prefs : {};
 	} catch (err) {
-		// A missing table or transient DB error must never block delivery — fall
+		// A missing table or transient DB error must never block delivery. Fall
 		// back to defaults (in_app + push on) rather than dropping the notice.
 		console.error('[notify-prefs] resolve failed:', err.message);
+		return {};
 	}
-	return mergeWithDefaults(stored);
 }
 
 export function mergeWithDefaults(stored) {

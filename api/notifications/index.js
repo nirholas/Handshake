@@ -16,7 +16,11 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, 'http://x').searchParams;
-	const limit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20', 10)));
+	// A non-numeric ?limit parses to NaN, and NaN survives both clamps — it then
+	// reached Postgres as `limit NaN` and 500'd the whole list. Fall back to the
+	// default instead, so a junk value degrades to the normal page.
+	const limitRaw = Number.parseInt(params.get('limit') || '20', 10);
+	const limit = Number.isFinite(limitRaw) ? Math.min(50, Math.max(1, limitRaw)) : 20;
 	// Optional type filter (e.g. ?type=pump_alert). Validated against a strict
 	// shape so the parameter can't smuggle anything unexpected into the query.
 	const typeRaw = (params.get('type') || '').trim();

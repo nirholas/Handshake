@@ -5,6 +5,11 @@ import { getRequestUser } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error } from '../../_lib/http.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 
+// Matches the sibling DELETE handler: `user_notifications.id` is a uuid column,
+// so a non-uuid id is a client mistake to reject at the boundary, not a query to
+// send. Without this the cast failed inside Postgres and the caller got a 500.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -15,7 +20,9 @@ export default wrap(async (req, res) => {
 	if (!(await requireCsrf(req, res, user.id))) return;
 
 	const id = req.query?.id;
-	if (!id) return error(res, 400, 'validation_error', 'id required');
+	if (!id || !UUID_RE.test(String(id))) {
+		return error(res, 400, 'validation_error', 'a notification id (uuid) is required');
+	}
 
 	const [row] = await sql`
 		update user_notifications
