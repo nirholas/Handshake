@@ -107,10 +107,14 @@
 
 		.note { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; font-size: 14px; color: var(--muted); margin-top: 14px; }
 		.note strong { color: var(--text); }
-		.note a { color: #6fd6b8; text-decoration: none; }
-		.note a:hover { text-decoration: underline; }
+		/* Underlined at rest: these sit inside running text, where colour alone
+		   is not enough to mark a link (WCAG 1.4.1). */
+		.note a { color: #6fd6b8; text-decoration: underline; text-underline-offset: 2px; }
+		.note a:hover { text-decoration-thickness: 2px; }
 
 		.disclaimer { font-size: 12px; color: var(--muted); margin-top: 64px; line-height: 1.6; max-width: 720px; }
+		.disclaimer a { color: #6fd6b8; text-decoration: underline; text-underline-offset: 2px; }
+		.disclaimer a:hover { text-decoration-thickness: 2px; }
 
 		@media (max-width: 720px) {
 			main { padding: 52px 20px 96px; }
@@ -301,7 +305,7 @@ curl -s <span class="s">https://three.ws/api/mcp-studio</span> \
 		three.ws products that integrate with OpenAI platforms; it is not an OpenAI product and is not endorsed by
 		OpenAI beyond the partner designation shown. OpenAI, ChatGPT, and the OpenAI Partner Network badge are
 		trademarks of OpenAI. Learn more about the network at
-		<a href="https://openai.com/business/partners/" target="_blank" rel="noopener" style="color:#6fd6b8;text-decoration:none">openai.com/business/partners</a>.
+		<a href="https://openai.com/business/partners/" target="_blank" rel="noopener">openai.com/business/partners</a>.
 	</p>
 
 </main>
