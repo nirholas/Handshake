@@ -5428,7 +5428,7 @@
 				{
 					"path": "/legal/privacy",
 					"title": "Privacy Policy",
-					"description": "How three.ws handles user data.",
+					"description": "What data three.ws collects, why we hold it, who we share it with, how long we keep it, and the controls you have over it.",
 					"priority": 0.2,
 					"changefreq": "yearly",
 					"added": "2026-04-27"
