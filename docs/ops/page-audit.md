@@ -19,6 +19,13 @@ the dev console open:
 
 The sweep is read-only. It never mutates the target.
 
+Console output from the headless box's software GL stack (ANGLE over
+SwiftShader) is filtered out: `GL Driver Message (OpenGL, Performance, …)`
+advisories such as "GPU stall due to ReadPixels" come from the emulated driver
+rather than page code, and no visitor on a real GPU sees them. The filter is
+scoped to the Performance category, so a driver message in the Error category
+is still reported.
+
 ## Commands
 
 ```sh

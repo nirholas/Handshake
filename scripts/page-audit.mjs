@@ -88,6 +88,14 @@ const ALWAYS_IGNORE = [
 	// Errors raised inside the embedded DexScreener chart iframe (its own
 	// origin fetching its own backends) are theirs, not ours.
 	/dexscreener\.com/,
+	// Performance advisories emitted by the headless box's software GL stack
+	// (ANGLE over SwiftShader), e.g. "[.WebGL-0x…]GL Driver Message (OpenGL,
+	// Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels". They
+	// come from the emulated driver, not from page code, and no visitor on a
+	// real GPU ever sees them. Scoped to the Performance category on purpose:
+	// a driver message in the Error category is still a real WebGL fault and
+	// stays reportable.
+	/GL Driver Message \(OpenGL, Performance/,
 ];
 // Failures that only happen because serverless functions / CDNs aren't present
 // under a bare local dev server. Applied only when auditing localhost.
