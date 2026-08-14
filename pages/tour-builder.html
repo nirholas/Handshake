@@ -5,7 +5,7 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title data-i18n="tour_builder.meta_title">Tour Builder — design a 3D store guide, then paste it into Shopify | three.ws</title>
+<title data-i18n="tour_builder.meta_title">Tour Builder: design a 3D store guide, then paste it into Shopify | three.ws</title>
 <meta name="description" content="A live, no-code playground: point and click to build a 3D guide that walks your store and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme."  data-i18n-attr="content:tour_builder.meta_description"/>
 <link rel="canonical" href="https://three.ws/tour-builder" />
 <meta property="og:title" content="three.ws Tour Builder — build a walking 3D store guide, no code"  data-i18n-attr="content:tour_builder.meta_og_title"/>
@@ -44,6 +44,13 @@
 		transition: transform .28s cubic-bezier(.4,0,.2,1);
 	}
 	body.drawer-collapsed #drawer, body.previewing #drawer { transform: translateX(calc(-1 * var(--drawer-w))); }
+
+	/* Announced by assistive tech, never painted: the drawer's visible identity
+	   is the "Tour Builder" badge in .dr-head. */
+	.page-title-sr {
+		position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+		overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+	}
 
 	.dr-head { padding: 16px 18px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
 	.dr-logo { font-weight: 800; letter-spacing: .02em; font-size: 16px; }
@@ -237,6 +244,10 @@
 
 <!-- ══════════════════ EDITOR DRAWER ══════════════════ -->
 <aside id="drawer">
+	<!-- The page's own heading. The only other h1 belongs to the simulated
+	     storefront in #stage, so without this a screen reader announces the demo
+	     shop's hero as the title of the Tour Builder itself. -->
+	<h1 class="page-title-sr" data-i18n="tour_builder.page_heading">Tour Builder: design a 3D store guide, no code</h1>
 	<div class="dr-head">
 		<div class="dr-logo">three<b>.</b>ws</div>
 		<span class="dr-badge" data-i18n="tour_builder.tour_builder">Tour Builder</span>

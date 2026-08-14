@@ -18890,7 +18890,7 @@
 		"meta_description": "A live, no-code playground: point and click to build a 3D guide that walks your store and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.",
 		"meta_og_description": "Point, click, and narrate. Design a 3D guide on a live demo store, preview it, then paste it into Shopify.",
 		"meta_og_title": "three.ws Tour Builder — build a walking 3D store guide, no code",
-		"meta_title": "Tour Builder — design a 3D store guide, then paste it into Shopify | three.ws",
+		"meta_title": "Tour Builder: design a 3D store guide, then paste it into Shopify | three.ws",
 		"meta_twitter_description": "A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.",
 		"meta_twitter_title": "Tour Builder — design a 3D store guide, no code · three.ws",
 		"northwind_goods": "NORTHWIND GOODS",
@@ -18922,7 +18922,8 @@
 		"watch_it_exactly_as_your_vis_title": "Watch it exactly as your visitors will",
 		"what_customers_say": "What customers say",
 		"who_guides_the_tour": "Who guides the tour",
-		"wool_throw_oat": "Wool Throw — Oat"
+		"wool_throw_oat": "Wool Throw — Oat",
+		"page_heading": "Tour Builder: design a 3D store guide, no code"
 	},
 	"tracker": {
 		"24h": "24H",
