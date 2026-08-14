@@ -105,9 +105,12 @@
 		}
 		.ac-insight-card:hover { border-color: rgba(139,92,246,.4); transform: translateY(-1px); }
 		.ac-insight-card .ic { font-size: 18px; flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: rgba(255,255,255,.04); }
-		.ac-insight-card .it { min-width: 0; }
-		.ac-insight-card .ik { font-size: 9.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ac-faint); }
-		.ac-insight-card .iv { font-size: 13px; font-weight: 700; color: var(--ac-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		/* .it/.ik/.iv are inline <span>s inside a flex row: without an explicit
+		   block/flex display the kicker and the value run together on one line
+		   and the ellipsis truncation below never engages. */
+		.ac-insight-card .it { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+		.ac-insight-card .ik { display: block; font-size: 9.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ac-faint); }
+		.ac-insight-card .iv { display: block; font-size: 13px; font-weight: 700; color: var(--ac-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.ac-insight-card .iv .sub { font-weight: 600; font-size: 11.5px; color: var(--ac-muted); margin-left: 4px; }
 		.ac-insight-card .iv.up { color: var(--ac-up); }
 
@@ -300,13 +303,16 @@
 		.ac-li-rank.top { color: var(--ac-warn); }
 		.ac-li-av { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; border: 1px solid var(--ac-border); background: rgba(255,255,255,.05); flex-shrink: 0; }
 		.ac-li-av.round { border-radius: 50%; }
-		.ac-li-main { flex: 1; min-width: 0; }
-		.ac-li-name { font-size: 12.5px; font-weight: 600; color: var(--ac-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-		.ac-li-sub { font-size: 10.5px; color: var(--ac-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-		.ac-li-r { text-align: right; flex-shrink: 0; font-family: var(--font-mono, monospace); }
-		.ac-li-r .big { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+		/* Rail rows are name-over-subtitle and value-over-caption. Both stacks are
+		   built from inline <span>s, so they need an explicit column flex or the
+		   two lines collapse into one ("$VOOD ▲ tierprime · score 96"). */
+		.ac-li-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+		.ac-li-name { display: block; font-size: 12.5px; font-weight: 600; color: var(--ac-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.ac-li-sub { display: block; font-size: 10.5px; color: var(--ac-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.ac-li-r { text-align: right; flex-shrink: 0; font-family: var(--font-mono, monospace); display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+		.ac-li-r .big { display: block; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 		.ac-li-r .big.up { color: var(--ac-up); } .ac-li-r .big.dn { color: var(--ac-dn); }
-		.ac-li-r .small { font-size: 10px; color: var(--ac-faint); }
+		.ac-li-r .small { display: block; font-size: 10px; color: var(--ac-faint); }
 		.ac-li-r .small.up { color: var(--ac-up); } .ac-li-r .small.dn { color: var(--ac-dn); }
 		.ac-card-empty { padding: 16px 14px 18px; text-align: center; color: var(--ac-faint); font-size: 11.5px; line-height: 1.5; }
 		.ac-card-empty a { color: var(--ac-muted); }
@@ -351,7 +357,10 @@
 				<h1 data-i18n-html="activity.agent_activity"><span class="ac-pulse" id="ac-pulse" aria-hidden="true"></span>Agent Activity</h1>
 				<p data-i18n="activity.the_live_trading_floor_every_move_3d">The live trading floor. Every move 3D agents make on pump.fun, in real time — autonomous agents acting on Oracle conviction. Watch them trade, track outcomes, and copy the winners.</p>
 			</div>
-			<div class="ac-kpis" id="ac-kpis" aria-live="polite"></div>
+			<!-- Deliberately not a live region: the whole tile row is re-rendered on
+			     every streamed action, so aria-live here re-announces all nine
+			     numbers on each trade. The feed (role="feed") carries the news. -->
+			<div class="ac-kpis" id="ac-kpis" role="group" aria-label="Oracle platform stats"></div>
 		</div>
 
 		<div class="ac-layout">
@@ -723,9 +732,14 @@
 		// ── KPIs: merge /api/oracle/stats (always-present platform numbers) with
 		//    the activity summary (7-day action rollup). Stats wins for fields it
 		//    owns; activity fills PnL which stats doesn't carry. ──
-		const kpiData = { agents_armed: null, scored_24h: null, open_actions: null, win_rate: null, best_ath: null, total_pnl_sol: null, actions_7d: null, prime_count: null, strong_count: null, scored_total: null };
+		const kpiData = { agents_armed: null, scored_24h: null, open_actions: null, win_rate: null, market_base_rate: null, best_ath: null, total_pnl_sol: null, pnl_sample: 0, actions_7d: null, prime_count: null, strong_count: null, scored_total: null };
 		function mergeSummary(s) {
 			kpiData.actions_7d   = Number(s.total) || 0;
+			// pnl_sample counts the settled actions that actually carry a realized
+			// figure. Without it a window where nothing has settled sums to 0 and
+			// renders as a confident "+0.000", which reads as "broke even" when the
+			// truth is "no closed trade to measure yet".
+			kpiData.pnl_sample   = Number(s.pnl_sample) || 0;
 			kpiData.total_pnl_sol = Number(s.total_pnl_sol) || 0;
 			// Derive win rate from the 7d action rollup as a fallback if stats absent.
 			if (kpiData.win_rate == null && (s.wins + s.losses) > 0) {
@@ -738,6 +752,7 @@
 			kpiData.scored_24h   = Number(st.scored_24h)   || 0;
 			kpiData.open_actions = Number(st.open_actions)  || 0;
 			kpiData.win_rate     = st.win_rate != null ? Number(st.win_rate) : kpiData.win_rate;
+			kpiData.market_base_rate = st.market_base_rate != null ? Number(st.market_base_rate) : null;
 			kpiData.best_ath     = st.best_ath != null ? Number(st.best_ath) : null;
 			kpiData.prime_count  = st.prime_count  != null ? Number(st.prime_count)  : null;
 			kpiData.strong_count = st.strong_count != null ? Number(st.strong_count) : null;
@@ -747,20 +762,34 @@
 		function renderKpis() {
 			const kpis = document.getElementById('ac-kpis');
 			const d = kpiData;
+			// A realized PnL of 0 is only meaningful when something actually settled
+			// with a figure attached, so gate the tile on the sample size.
+			const pnlKnown = d.pnl_sample > 0 && d.total_pnl_sol != null;
 			const pnl = d.total_pnl_sol;
+			// Win rate is graded against the market's own base rate (every scored
+			// coin), not a hardcoded 50%: on pump.fun a 15% call hit rate against a
+			// 5% base rate is the Oracle winning, and painting it red said the
+			// opposite.
+			const bar = d.market_base_rate;
+			const wrClass = d.win_rate == null ? ''
+				: bar != null ? (d.win_rate >= bar ? 'up' : 'dn')
+				: (d.win_rate >= 50 ? 'up' : 'dn');
+			const wrTitle = d.win_rate == null
+				? 'Share of resolved Oracle calls that won. No call has resolved yet.'
+				: `Share of resolved Oracle calls (lean, strong, prime) that won.${bar != null ? ` Baseline across every scored coin: ${bar}%.` : ''}`;
 			const cells = [
-				['Agents armed', d.agents_armed != null ? d.agents_armed : '—', 'accent'],
-				['Scored 24h',   d.scored_24h   != null ? d.scored_24h   : '—', ''],
-				['Open',         d.open_actions != null ? d.open_actions : '—', ''],
-				['Win rate',     d.win_rate     != null ? d.win_rate + '%' : '—', d.win_rate != null ? (d.win_rate >= 50 ? 'up' : 'dn') : ''],
-				['Best ATH',     d.best_ath     != null ? d.best_ath.toFixed(1) + '×' : '—', d.best_ath != null ? 'up' : ''],
-				['PnL (7d)',     pnl != null ? (pnl >= 0 ? '+' : '') + sol(pnl) : '—', pnl != null ? (pnl >= 0 ? 'up' : 'dn') : ''],
-				['Prime coins',    d.prime_count  != null ? d.prime_count  : '—', d.prime_count  > 0 ? 'accent' : ''],
-				['Strong coins',   d.strong_count != null ? d.strong_count : '—', ''],
-				['All-time scored',d.scored_total != null ? d.scored_total.toLocaleString() : '—', ''],
+				['Agents armed', d.agents_armed != null ? d.agents_armed : '—', 'accent', 'Distinct 3D agents currently armed with Oracle conviction'],
+				['Scored 24h',   d.scored_24h   != null ? d.scored_24h   : '—', '', 'pump.fun coins the Oracle scored in the last 24 hours'],
+				['Open',         d.open_actions != null ? d.open_actions : '—', '', 'Agent positions still open (entered, not yet settled)'],
+				['Win rate',     d.win_rate     != null ? d.win_rate + '%' : '—', wrClass, wrTitle],
+				['Best ATH',     d.best_ath     != null ? d.best_ath.toFixed(1) + '×' : '—', d.best_ath != null ? 'up' : '', 'Highest peak multiple reached by any coin the Oracle called'],
+				['PnL (7d)',     pnlKnown ? (pnl >= 0 ? '+' : '') + sol(pnl) : '—', pnlKnown ? (pnl >= 0 ? 'up' : 'dn') : '', pnlKnown ? 'Realized SOL across agent positions settled in the last 7 days' : 'No agent position has settled with a realized figure in the last 7 days'],
+				['Prime coins',    d.prime_count  != null ? d.prime_count  : '—', d.prime_count  > 0 ? 'accent' : '', 'Coins currently sitting at prime conviction tier'],
+				['Strong coins',   d.strong_count != null ? d.strong_count : '—', '', 'Coins currently sitting at strong conviction tier'],
+				['All-time scored',d.scored_total != null ? d.scored_total.toLocaleString() : '—', '', 'Every coin the Oracle has ever scored'],
 			];
-			kpis.innerHTML = cells.map(([l, v, cls]) =>
-				`<div class="ac-kpi"><div class="v ${cls}">${v}</div><div class="l">${l}</div></div>`).join('');
+			kpis.innerHTML = cells.map(([l, v, cls, tip]) =>
+				`<div class="ac-kpi" title="${esc(tip)}"><div class="v ${cls}">${v}</div><div class="l">${l}</div></div>`).join('');
 		}
 		function kpiSkeleton() {
 			document.getElementById('ac-kpis').innerHTML = Array.from({length: 9}, () =>
