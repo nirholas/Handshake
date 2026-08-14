@@ -565,6 +565,41 @@ async function erc8004CrawlChain(chain) {
 		}
 	}
 
+	// Reputation logs were fetched from every chain on every tick and then used
+	// only to look up block timestamps: nothing decoded them, so the entire EVM
+	// trust dimension was discarded on arrival. A census of the index on
+	// 2026-08-14 found 9,231 EVM events across metadata, registration and
+	// transfer and exactly ZERO reputation events, while a 1,000-block sample of
+	// Base alone carried 8 NewFeedback logs. Decode them into the same batch.
+	for (const log of reputationLogs) {
+		try {
+			const ev = decodeReputationLog(log);
+			if (!ev) continue;
+			const ts = blockTimes[log.blockNumber];
+			if (!ts) continue; // absolute on-chain time or nothing, same rule as above
+			events.push({
+				chain: 'evm',
+				chainId: chain.id,
+				network: chain.testnet ? 'testnet' : 'mainnet',
+				agentRef: agentRef({ chain: 'evm', chainId: chain.id, agentId: ev.agentId }),
+				eventClass: ev.eventClass,
+				eventName: ev.eventName,
+				tx: ev.tx,
+				logIndex: ev.logIndex,
+				blockNumber: ev.blockNumber,
+				occurredAt: new Date(ts * 1000).toISOString(),
+				// The client is who left the feedback; a response is written by the
+				// responder, which is the agent's side of the exchange.
+				actor: ev.responder || ev.client || null,
+				counterparty: ev.responder ? ev.client || null : null,
+				payload: erc8004ReputationPayload(ev, chain),
+			});
+			byClass.reputation += 1;
+		} catch (decodeErr) {
+			console.warn('[crawl] reputation decode failed', chain.id, log.transactionHash, decodeErr.message);
+		}
+	}
+
 	const recorded = events.length ? await recordEvents(events) : { inserted: 0, rejected: 0 };
 
 	// Always advance cursor to toBlock so the next run continues from here.
@@ -620,6 +655,34 @@ async function erc8004RecordHead(chainId, headBlock, lastBlock) {
 // Per-class payload for the event index. Keeps the raw on-chain detail that the
 // agent-row columns cannot hold (which metadata key changed, the URI at the time
 // of the event, whether a transfer was the registration mint).
+// Per-class payload for a reputation event. Keeps the score with its decimals
+// (an int128 rendered as a decimal string, so nothing rounds), the tags that
+// say what the score is about, and the off-chain URI the attestation points at.
+function erc8004ReputationPayload(ev, chain) {
+	const base = {
+		registry: reputationRegistryFor(chain.testnet),
+		agentId: ev.agentId,
+		client: ev.client || null,
+		feedbackIndex: ev.feedbackIndex ?? null,
+	};
+	if (ev.type === 'feedback') {
+		return {
+			...base,
+			value: ev.value,
+			valueDecimals: ev.valueDecimals,
+			tag1: ev.tag1,
+			tag2: ev.tag2,
+			endpoint: ev.endpoint,
+			feedbackUri: ev.feedbackUri,
+			feedbackHash: ev.feedbackHash,
+		};
+	}
+	if (ev.type === 'feedback_response') {
+		return { ...base, responder: ev.responder, responseUri: ev.responseUri, responseHash: ev.responseHash };
+	}
+	return base;
+}
+
 function erc8004EventPayload(ev, chain) {
 	const base = { registry: chain.registry.toLowerCase(), agentId: ev.agentId };
 	if (ev.type === 'registered' || ev.type === 'uri_updated') {

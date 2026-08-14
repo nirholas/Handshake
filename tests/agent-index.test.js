@@ -21,6 +21,7 @@ import { normalizeEvent, toDate, agentRef, EVENT_CLASSES } from '../api/_lib/onc
 import { sweepCycleMin } from '../api/_lib/ops/index-lag.js';
 import { nextChunkSize, backoffChunkSize } from '../api/cron/[name].js';
 import { splitCapabilities } from '../api/explore-item.js';
+import { decodeReputationLog } from '../api/_lib/erc8004-reputation-events.js';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -386,5 +387,64 @@ describe('splitCapabilities', () => {
 	it('returns an empty list for a row with no capabilities at all', () => {
 		expect(splitCapabilities(null)).toEqual([]);
 		expect(splitCapabilities(undefined)).toEqual([]);
+	});
+});
+
+// ─── EVM reputation leg ──────────────────────────────────────────────────────
+// The reputation registry's logs were fetched from every chain on every tick
+// and then used only to look up block timestamps: nothing decoded them. A
+// census of the live index on 2026-08-14 found 9,231 EVM events across
+// metadata, registration and transfer, and exactly zero reputation events.
+
+describe('decodeReputationLog', () => {
+	// Captured verbatim from Base mainnet transaction
+	// 0xec66516180e67bb6a9a0352bdf2ed1a7f2d1605ac37dff94b1b4aaafe2730378.
+	const NEW_FEEDBACK_LOG = {
+		topics: [
+			'0x6a4a61743519c9d648a14e6493f47dbe3ff1aa29e7785c96c8326a205e58febc',
+			'0x0000000000000000000000000000000000000000000000000000000000006577',
+			'0x0000000000000000000000006b51d0d67ff41dab76e499546abe6b8b03cf8732',
+			'0xf238dbba46ca4d8272f320ebcffb24310138f9ea6c6609f439e562a0a3a13f26',
+		],
+		data: '0x00000000000000000000000000000000000000000000000000000000000007ee0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000001e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b6d696e65722d766f7563680000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007626f74636f696e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002268747470733a2f2f636f6f7264696e61746f722e6167656e746d6f6e65792e6e6574000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006068747470733a2f2f636f6f7264696e61746f722e6167656e746d6f6e65792e6e65742f76312f6d696e65722f3078366235316430643637666634316461623736653439393534366162653662386230336366383733322f73636f726563617264',
+		blockNumber: '0x2f9fbe2',
+		transactionHash: '0xec66516180e67bb6a9a0352bdf2ed1a7f2d1605ac37dff94b1b4aaafe2730378',
+		logIndex: '0xdf',
+	};
+
+	it('decodes a live NewFeedback into a reputation event', () => {
+		const ev = decodeReputationLog(NEW_FEEDBACK_LOG);
+		expect(ev.eventClass).toBe('reputation');
+		expect(ev.eventName).toBe('NewFeedback');
+		expect(ev.agentId).toBe('25975');
+		expect(ev.client).toBe('0x6b51d0d67ff41dab76e499546abe6b8b03cf8732');
+		expect(ev.tag1).toBe('miner-vouch');
+		// int128 kept as a decimal string so a large score never rounds.
+		expect(ev.value).toBe('1');
+		expect(ev.valueDecimals).toBe(0);
+	});
+
+	it('produces a row the index writer accepts', () => {
+		const ev = decodeReputationLog(NEW_FEEDBACK_LOG);
+		const row = normalizeEvent({
+			chain: 'evm',
+			chainId: 8453,
+			agentRef: agentRef({ chain: 'evm', chainId: 8453, agentId: ev.agentId }),
+			eventClass: ev.eventClass,
+			eventName: ev.eventName,
+			tx: ev.tx,
+			logIndex: ev.logIndex,
+			blockNumber: ev.blockNumber,
+			occurredAt: '2026-08-13T23:35:03.000Z',
+			actor: ev.client,
+			payload: { tag1: ev.tag1 },
+		});
+		expect(row).not.toBe(null);
+		expect(row.agentRef).toBe('8453:25975');
+		expect(row.eventClass).toBe('reputation');
+	});
+
+	it('ignores a log from another topic', () => {
+		expect(decodeReputationLog({ topics: ['0x' + '11'.repeat(32)], data: '0x' })).toBe(null);
 	});
 });
