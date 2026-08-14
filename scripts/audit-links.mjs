@@ -322,6 +322,13 @@ function record(target, file, line, isPrefix = false) {
 		return;
 	}
 	if (c.type === 'external') {
+		// `href = 'http://' + cap[0]` is an origin being assembled, not a link to
+		// the bare scheme. An internal prefix below stays worth resolving (its path
+		// head still catches a renamed route); a bare origin resolves to nothing.
+		if (isPrefix) {
+			findings.dynamic++;
+			return;
+		}
 		const list = findings.external.get(c.value) || [];
 		list.push({ file: rel, line });
 		findings.external.set(c.value, list);
