@@ -1,7 +1,7 @@
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, json, error, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { getMembershipCard, getReferredUsers } from '../_lib/referrals.js';
+import { getMembershipCard, getReferredUsers, getReferralFunnel } from '../_lib/referrals.js';
 
 // GET /api/users/referrals — the signed-in user's membership card payload:
 // referral code (lazily minted if absent), referral count + lifetime earnings,
@@ -11,7 +11,9 @@ import { getMembershipCard, getReferredUsers } from '../_lib/referrals.js';
 // actionable referral table — not just a counter. Powers /dashboard/referrals.
 //
 // Query params (optional): ?limit (1–100, default 20) & ?offset (>=0) page the
-// referred-user list, sorted by revenue generated (desc).
+// referred-user list, sorted by revenue generated (desc). ?funnel_days (1–365,
+// default 30) sets the lookback for the `funnel` block, which reports the
+// visit → signup → activation conversion recorded by POST /api/referral/visit.
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -28,10 +30,13 @@ export default wrap(async (req, res) => {
 	if (!card) return error(res, 404, 'not_found', 'user not found');
 
 	const url = new URL(req.url, 'http://localhost');
-	const referredUsers = await getReferredUsers(userId, {
-		limit: url.searchParams.get('limit'),
-		offset: url.searchParams.get('offset'),
-	});
+	const [referredUsers, funnel] = await Promise.all([
+		getReferredUsers(userId, {
+			limit: url.searchParams.get('limit'),
+			offset: url.searchParams.get('offset'),
+		}),
+		getReferralFunnel(userId, { days: url.searchParams.get('funnel_days') }),
+	]);
 
-	return json(res, 200, { ...card, referred_users: referredUsers });
+	return json(res, 200, { ...card, referred_users: referredUsers, funnel });
 });

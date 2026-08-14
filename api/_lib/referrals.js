@@ -423,6 +423,87 @@ export async function getReferredUsers(userId, opts = {}) {
   return { items, total: Number(total || 0), limit, offset, referral_commission_bps: bps };
 }
 
+// Funnel lookback bounds. 30 days matches the activation-reward cap window in
+// api/_lib/referral-rewards.js, so "this month" means the same thing on both
+// sides of the referral system.
+const FUNNEL_DAYS_DEFAULT = 30;
+const FUNNEL_DAYS_MAX = 365;
+
+function clampFunnelDays(days) {
+  const n = Number.parseInt(days, 10);
+  if (!Number.isFinite(n) || n <= 0) return FUNNEL_DAYS_DEFAULT;
+  return Math.min(n, FUNNEL_DAYS_MAX);
+}
+
+function pct(numerator, denominator) {
+  if (!denominator) return null;
+  return Math.round((numerator / denominator) * 1000) / 10;
+}
+
+/**
+ * The referrer's viral funnel over a trailing window: link visits, signups, and
+ * activations, plus the two conversion rates between them.
+ *
+ * Each stage is counted from the event that actually happened, in its own time:
+ *   • visits      — rows POST /api/referral/visit wrote into referral_visits,
+ *                   already deduped to one per (code, visitor, UTC day).
+ *   • signups     — accounts attributed to this referrer that were created in
+ *                   the window.
+ *   • activations — referred users who reached their first win in the window,
+ *                   counted from the referred-side activation grant in
+ *                   credit_ledger. Counting the referred side (not the
+ *                   referrer's own grant) keeps the number honest when the
+ *                   referrer has hit the 30-day reward cap and stopped being
+ *                   credited, and avoids miscounting the referrer's own welcome
+ *                   credit as one of their referrals.
+ *
+ * Conversion rates are null rather than 0 when the prior stage is empty, so the
+ * UI can say "no data yet" instead of showing a fake 0%.
+ *
+ * @param {string|number} userId  the referrer
+ * @param {{ days?: number|string }} [opts]
+ * @returns {Promise<{ days: number, visits: number, signups: number, activations: number, visit_to_signup_pct: number|null, signup_to_activation_pct: number|null }>}
+ */
+export async function getReferralFunnel(userId, opts = {}) {
+  const days = clampFunnelDays(opts.days);
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const [visitRow] = await sql`
+    SELECT COUNT(*)::int AS count FROM referral_visits
+    WHERE referrer_user_id = ${userId} AND created_at >= ${since}
+  `;
+  const [signupRow] = await sql`
+    SELECT COUNT(*)::int AS count FROM users
+    WHERE referred_by_id = ${userId} AND deleted_at IS NULL AND created_at >= ${since}
+  `;
+  const [activationRow] = await sql`
+    SELECT COUNT(*)::int AS count
+    FROM users ru
+    WHERE ru.referred_by_id = ${userId}
+      AND ru.deleted_at IS NULL
+      AND EXISTS (
+        SELECT 1 FROM credit_ledger cl
+        WHERE cl.user_id = ru.id
+          AND cl.ref_type = 'referral_activation'
+          AND cl.kind = 'grant'
+          AND cl.created_at >= ${since}
+      )
+  `;
+
+  const visits = Number(visitRow?.count || 0);
+  const signups = Number(signupRow?.count || 0);
+  const activations = Number(activationRow?.count || 0);
+
+  return {
+    days,
+    visits,
+    signups,
+    activations,
+    visit_to_signup_pct: pct(signups, visits),
+    signup_to_activation_pct: pct(activations, signups),
+  };
+}
+
 /**
  * Assemble the full membership-card payload for a user: signup position,
  * referral code + count, lifetime referral earnings, and a derived score.

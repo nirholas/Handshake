@@ -55,6 +55,58 @@ function fmtUsd(n) {
 	return Number(n || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
 
+/** A conversion rate the API left null (empty prior stage) reads as a dash, never a fake 0%. */
+function fmtPct(n) {
+	return n == null ? '—' : `${Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 })}%`;
+}
+
+/**
+ * The share funnel: link visits (POST /api/referral/visit), signups attributed
+ * to those links, and referrals who reached their first creation. Rendered only
+ * once at least one visit exists, so a member who has never shared sees the
+ * "How referrals work" steps instead of an all-zero table.
+ */
+function funnelPanel(funnel) {
+	if (!funnel || !Number(funnel.visits)) return '';
+	const visits = Number(funnel.visits) || 0;
+	const rows = [
+		{ label: 'Link visits', count: visits, rate: '', hint: 'People who opened your link' },
+		{
+			label: 'Signups',
+			count: Number(funnel.signups) || 0,
+			rate: fmtPct(funnel.visit_to_signup_pct),
+			hint: 'Visits that became accounts',
+		},
+		{
+			label: 'Activated',
+			count: Number(funnel.activations) || 0,
+			rate: fmtPct(funnel.signup_to_activation_pct),
+			hint: 'Signups that made a first creation',
+		},
+	];
+	return `
+		<section class="dn-panel" style="margin-top:20px" aria-label="Your share funnel">
+			<div class="dn-panel-title" style="margin-bottom:4px">Share funnel</div>
+			<p class="ref-funnel-note">Last ${fmtInt(funnel.days)} days. Visits are counted once per person per day.</p>
+			<div class="ref-funnel">
+				${rows
+					.map(
+						(r) => `
+					<div class="ref-funnel-row">
+						<div class="ref-funnel-head">
+							<span class="ref-funnel-label">${r.label}</span>
+							<span class="ref-funnel-value">${fmtInt(r.count)}${r.rate ? `<small>${r.rate}</small>` : ''}</span>
+						</div>
+						<div class="ref-funnel-bar"><i style="width:${Math.max(2, Math.round((r.count / visits) * 100))}%"></i></div>
+						<div class="ref-funnel-hint">${r.hint}</div>
+					</div>`,
+					)
+					.join('')}
+			</div>
+		</section>
+	`;
+}
+
 /** "06/27" — two years out, the card's notional validity. */
 function expLabel(memberSince) {
 	const base = memberSince ? new Date(memberSince) : new Date();
@@ -201,6 +253,18 @@ function injectStyles() {
 	.ref-tile-k{font-size:11.5px;color:var(--nxt-ink-fade);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
 	.ref-tile-v{font-size:24px;font-weight:700;letter-spacing:-0.01em;font-family:${MONO}}
 	.ref-tile-v small{font-size:13px;color:var(--nxt-ink-fade);font-weight:500;font-family:inherit}
+
+	.ref-funnel-note{margin:0 0 14px;font-size:12.5px;color:var(--nxt-ink-fade)}
+	.ref-funnel{display:flex;flex-direction:column;gap:14px}
+	.ref-funnel-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+	.ref-funnel-label{font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--nxt-ink-fade)}
+	.ref-funnel-value{font-size:19px;font-weight:700;font-family:${MONO};line-height:1}
+	.ref-funnel-value small{margin-left:8px;font-size:12px;font-weight:600;color:#c4b5fd;font-family:inherit}
+	.ref-funnel-bar{margin-top:7px;height:7px;border-radius:999px;background:rgba(255,255,255,.05);overflow:hidden}
+	.ref-funnel-bar i{display:block;height:100%;border-radius:999px;
+		background:linear-gradient(90deg,#a78bfa,#c4b5fd);transition:width .5s cubic-bezier(.22,1,.36,1)}
+	.ref-funnel-hint{margin-top:6px;font-size:12px;color:var(--nxt-ink-fade)}
+	@media (prefers-reduced-motion:reduce){.ref-funnel-bar i{transition:none}}
 	.ref-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
 	.ref-step{display:flex;gap:12px;align-items:flex-start}
 	.ref-step-n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
@@ -522,6 +586,8 @@ function renderCard(host, card) {
 			<div class="ref-tile"><div class="ref-tile-k">Reward credits</div><div class="ref-tile-v">${fmtUsd(card.reward_credits_usd || 0)}</div></div>
 			<div class="ref-tile"><div class="ref-tile-k">Score</div><div class="ref-tile-v">${fmtInt(card.score)}</div></div>
 		</div>
+
+		${funnelPanel(card.funnel)}
 
 		<section class="dn-panel" style="margin-top:20px" data-slot="tier-panel" aria-label="Your membership tier"></section>
 
