@@ -159,8 +159,15 @@
 			.sl-api-form .sl-chips { margin-top: 12px; }
 
 			.sl-api-out { margin-top: 26px; }
+			/* The action row and the request/response block describe a finished call,
+			   so they stay hidden until there is one. `loading` counts: the console
+			   auto-runs on load, and showing last call's body under the 55% dim below
+			   put a summary control on screen at a contrast no reader can meet (axe
+			   scores it serious) next to buttons that would act on stale output. */
 			.sl-api-out[data-state='idle'] .sl-api-actions,
 			.sl-api-out[data-state='idle'] .sl-api-code,
+			.sl-api-out[data-state='loading'] .sl-api-actions,
+			.sl-api-out[data-state='loading'] .sl-api-code,
 			.sl-api-out[data-state='error'] .sl-api-actions,
 			.sl-api-out[data-state='error'] .sl-api-code { display: none; }
 			.sl-api-out[data-state='loading'] { opacity: .55; }
