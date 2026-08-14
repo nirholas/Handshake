@@ -26,8 +26,10 @@
 //      cohort reads 1/2 rather than 2/2 or 1/1
 //   5. a visit inside the honeymoon week (days 0..6) does NOT count as retention,
 //      which is the whole reason the window starts at day 7
-//   6. re-running the rollup is idempotent (same numbers, no double count)
-//   7. the read endpoint is gated: 401 anonymous, 403 signed-in non-admin, and
+//   6. a cohort whose 14-day window has closed is marked complete and carries a
+//      final rate, which is what the dashboard's headline and target line read
+//   7. re-running the rollup is idempotent (same numbers, no double count)
+//   8. the read endpoint is gated: 401 anonymous, 403 signed-in non-admin, and
 //      the cohort numbers for an admin
 //
 // Mint seeding: minting for real is an irreversible on-chain write, so the two
@@ -68,6 +70,12 @@ const CRON_SECRET = 'retention-proof-cron-secret';
 // back puts today inside the honeymoon week the metric deliberately ignores.
 const MINT_DAYS_AGO_IN_WINDOW = 8;
 const MINT_DAYS_AGO_HONEYMOON = 2;
+// A cohort whose 14-day window has already closed, so the rollup can be checked
+// against a FINAL number (is_complete = true) and the dashboard has a real rate
+// to draw. 20 days back puts the whole window in the past; the visit lands on
+// day 9, inside days 7..13.
+const MINT_DAYS_AGO_CLOSED = 20;
+const CLOSED_VISIT_DAY_OFFSET = 9;
 
 // tiny transcript + assertion kit
 let failed = 0;
@@ -368,11 +376,13 @@ async function main() {
 	const retained = makeHttp();
 	const lapsed = makeHttp();
 	const visitor = makeHttp();
+	const closed = makeHttp();
 
 	const users = [
 		['retained owner', retained, `ret-owner-${stamp}@proof.local`],
 		['lapsed owner', lapsed, `lapsed-owner-${stamp}@proof.local`],
 		['unrelated visitor', visitor, `visitor-${stamp}@proof.local`],
+		['closed-cohort owner', closed, `closed-owner-${stamp}@proof.local`],
 	];
 	for (const [label, client, email] of users) {
 		const r = await client.req('POST', '/api/auth/register', { body: { email, password: 'proof-pass-12345', tosAccepted: true } });
@@ -389,17 +399,20 @@ async function main() {
 	const retainedAgent = await createAgent(retained, `ret-agent-${stamp}`);
 	const lapsedAgent = await createAgent(lapsed, `lapsed-agent-${stamp}`);
 	const honeymoonAgent = await createAgent(visitor, `honeymoon-agent-${stamp}`);
-	pass('three agents created through the real API');
+	const closedAgent = await createAgent(closed, `closed-agent-${stamp}`);
+	pass('four agents created through the real API');
 
 	// Seed the mint stamp. Minting for real is an irreversible on-chain write, so
 	// the proof writes the same `meta.onchain.confirmed_at` an on-chain
 	// registration writes, at an absolute date, in a throwaway database.
 	const inWindowMint = `${daysAgo(MINT_DAYS_AGO_IN_WINDOW)}T12:00:00Z`;
 	const honeymoonMint = `${daysAgo(MINT_DAYS_AGO_HONEYMOON)}T12:00:00Z`;
+	const closedMint = `${daysAgo(MINT_DAYS_AGO_CLOSED)}T12:00:00Z`;
 	for (const [agentId, mintedAt] of [
 		[retainedAgent, inWindowMint],
 		[lapsedAgent, inWindowMint],
 		[honeymoonAgent, honeymoonMint],
+		[closedAgent, closedMint],
 	]) {
 		await db.query(
 			`update agent_identities
@@ -408,7 +421,22 @@ async function main() {
 			[agentId, mintedAt],
 		);
 	}
-	pass('mint stamps seeded', `two owners at ${inWindowMint} (day ${MINT_DAYS_AGO_IN_WINDOW}), one at ${honeymoonMint} (day ${MINT_DAYS_AGO_HONEYMOON})`);
+	pass('mint stamps seeded', `two owners at ${inWindowMint} (day ${MINT_DAYS_AGO_IN_WINDOW}), one at ${honeymoonMint} (day ${MINT_DAYS_AGO_HONEYMOON}), one at ${closedMint} (day ${MINT_DAYS_AGO_CLOSED})`);
+
+	// One historical visit, written directly. Every other visit in this proof goes
+	// through the real HTTP handler, but that handler can only ever stamp TODAY,
+	// and a cohort whose window has closed needs a visit dated inside a window that
+	// ended days ago. Waiting 14 days is not an option, so the row is seeded at an
+	// absolute past date in the exact shape recordAgentOwnerVisit writes. It is
+	// what gives the rollup a final (is_complete) number and the dashboard a real
+	// rate to draw.
+	const closedVisitDay = daysAgo(MINT_DAYS_AGO_CLOSED - CLOSED_VISIT_DAY_OFFSET);
+	await db.query(
+		`insert into agent_owner_visits (user_id, agent_id, visit_day, viewed, conversed, first_seen_at, last_seen_at)
+		 values ((select user_id from agent_identities where id = $1), $1, $2::date, true, true, $2::timestamptz, $2::timestamptz)`,
+		[closedAgent, closedVisitDay],
+	);
+	pass('historical conversing visit seeded', `${closedVisitDay} (day ${CLOSED_VISIT_DAY_OFFSET} after that owner's mint)`);
 
 	step('4. the return-visit signal');
 	const today = daysAgo(0);
@@ -529,6 +557,24 @@ async function main() {
 		}
 	}
 	{
+		// The closed cohort: its window ended days ago, so its number is FINAL.
+		const closedWeek = isoWeekStart(daysAgo(MINT_DAYS_AGO_CLOSED));
+		const { rows } = await db.query(
+			`select minted_owners, retained_owners, retention_rate, is_complete,
+			        window_start::text as window_start, window_end::text as window_end
+			   from agent_retention_cohorts
+			  where cohort_week = $1::date and metric = 'week2_converse'`,
+			[closedWeek],
+		);
+		const c = rows[0];
+		check('a cohort whose window has closed is marked complete',
+			!!c && c.is_complete === true,
+			c ? `${closedWeek}: window ${c.window_start} .. ${c.window_end}, is_complete=${c.is_complete}` : 'cohort row missing');
+		check('the closed cohort carries a final converse rate',
+			!!c && Number(c.minted_owners) === 1 && Number(c.retained_owners) === 1 && Math.abs(Number(c.retention_rate) - 1) < 1e-9,
+			c ? `retained ${c.retained_owners}/${c.minted_owners} = ${c.retention_rate}` : 'cohort row missing');
+	}
+	{
 		// Idempotence: the rollup recomputes a trailing window every run, so a
 		// re-run must converge on the same numbers rather than double count.
 		const before = await db.query('select cohort_week::text, metric, minted_owners, retained_owners from agent_retention_cohorts order by cohort_week, metric');
@@ -563,8 +609,9 @@ async function main() {
 			mine ? `${mine.cohort_week}: ${mine.retained_owners}/${mine.minted_owners} = ${mine.retention_rate}` : 'cohort not served');
 		check('the roadmap target ships with the payload', r.json?.target === 0.3,
 			`target ${r.json?.target}`);
-		check('summary reports no complete cohort yet', r.json?.summary?.completeCohorts === 0,
-			`completeCohorts=${r.json?.summary?.completeCohorts} (every window is still open)`);
+		check('summary counts only the cohort whose window closed',
+			r.json?.summary?.completeCohorts === 1,
+			`completeCohorts=${r.json?.summary?.completeCohorts}, latestRate=${r.json?.summary?.latestRate}, pooledRate=${r.json?.summary?.pooledRate}`);
 	}
 
 	step('7. result');
