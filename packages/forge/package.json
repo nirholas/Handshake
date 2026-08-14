@@ -1,7 +1,7 @@
 {
   "name": "@three-ws/forge",
-  "version": "0.1.1",
-  "description": "Text/image/sketch → textured, rig-ready 3D GLB in one call. The three.ws Forge generation SDK — free TRELLIS lane, paid high-detail tiers, and auto-rigging.",
+  "version": "0.2.0",
+  "description": "Text/image/sketch to a textured, rig-ready 3D GLB in one call. The three.ws Forge generation SDK: free TRELLIS lane, pay-per-call USDC tiers over x402, and auto-rigging.",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
