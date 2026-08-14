@@ -40,6 +40,26 @@ describe('grayFaceStats', () => {
 		expect(smooth.blurStddev).toBeLessThan(GATES.BLUR_STDDEV_MIN);
 	});
 
+	it('keeps the blur floor above the blurred population measured on real faces', () => {
+		// Measured on six real portrait photographs framed as 720x1280 phone
+		// selfies: the worst heavily-blurred reading (GaussianBlur r=10) was
+		// 9.4, the least sharp real face read 22.8. A floor outside that band
+		// is decoration: it either never fires or rejects usable captures.
+		expect(GATES.BLUR_STDDEV_MIN).toBeGreaterThan(9.4);
+		expect(GATES.BLUR_STDDEV_MIN).toBeLessThan(22.8);
+	});
+
+	it('reports the blown-highlight share of the crop', () => {
+		const half = grayFaceStats(grey(16, 16, (x, y) => (y < 8 ? 255 : 128)), 16, 16);
+		expect(half.clippedFrac).toBeCloseTo(0.5, 5);
+		expect(grayFaceStats(grey(16, 16, () => 128), 16, 16).clippedFrac).toBe(0);
+	});
+
+	it('counts only pixels at or above the clip level', () => {
+		expect(grayFaceStats(grey(8, 8, () => GATES.CLIP_LEVEL - 1), 8, 8).clippedFrac).toBe(0);
+		expect(grayFaceStats(grey(8, 8, () => GATES.CLIP_LEVEL), 8, 8).clippedFrac).toBe(1);
+	});
+
 	it('handles degenerate sizes without NaN', () => {
 		expect(grayFaceStats(grey(2, 2, () => 50), 2, 2)).toEqual({ luma: 50, blurStddev: 0, clippedFrac: 0 });
 		expect(grayFaceStats([], 0, 0)).toEqual({ luma: 0, blurStddev: 0, clippedFrac: 0 });
@@ -126,6 +146,30 @@ describe('gradeFrame', () => {
 	it('accepts the exact luma boundaries', () => {
 		expect(gradeFrame({ ...goodFrontal, luma: GATES.LUMA_MIN }).lumaOk).toBe(true);
 		expect(gradeFrame({ ...goodFrontal, luma: GATES.LUMA_MAX }).lumaOk).toBe(true);
+	});
+
+	it('rejects a face blown out in patches even when its mean luma looks fine', () => {
+		// Window glare pins part of the face to white while the rest stays in
+		// shadow, so the mean lands mid-band. Clipping also *raises* Laplacian
+		// response, so neither the luma nor the blur gate can see it.
+		const g = gradeFrame({
+			...goodFrontal,
+			luma: 130,
+			clippedFrac: GATES.CLIPPED_FRAC_MAX + 0.05,
+		});
+		expect(g.lumaOk).toBe(false);
+		expect(g.allPass).toBe(false);
+		expect(g.reason).toMatch(/bright|light|window/i);
+	});
+
+	it('accepts the specular highlights every real face carries', () => {
+		const g = gradeFrame({ ...goodFrontal, clippedFrac: GATES.CLIPPED_FRAC_MAX });
+		expect(g.lumaOk).toBe(true);
+		expect(g.allPass).toBe(true);
+	});
+
+	it('treats a missing clipping measurement as unclipped', () => {
+		expect(gradeFrame(goodFrontal).lumaOk).toBe(true);
 	});
 
 	it('names the yaw fix before the blur fix when both fail', () => {

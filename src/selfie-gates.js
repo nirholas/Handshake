@@ -26,10 +26,25 @@
  *   (workers/avatar-reconstruction/eval/robustness.py `blurred`) models the
  *   defect as a Gaussian blur of radius longestEdge/220. BLUR_STDDEV_MIN is
  *   the live-feed equivalent: the Laplacian response stddev of a 64px face
- *   crop under that degradation drops well below 3.5 while handheld-sharp
- *   faces sit far above it. SHARPNESS_VAR_MIN = 90 is the same idea at
- *   still-photo resolution (variance, not stddev, at up to 1024px), the
- *   threshold src/selfie-refine.js has always applied at submit time.
+ *   crop. The value is measured, not assumed. Six real portrait photographs
+ *   were framed as 720x1280 phone selfies and scored through this module's
+ *   own math, sharp against the benchmark's exact degradations:
+ *
+ *     sharp                       22.8  23.4  23.7  27.4  38.3  39.4
+ *     GaussianBlur r=longest/220  10.6  12.6  13.8  14.0  14.8  15.7
+ *     GaussianBlur r=10            6.3   6.8   8.2   8.4   8.5   9.4
+ *
+ *   The previous floor of 3.5 sat below every one of those readings, so the
+ *   gate never fired on any real photograph, however badly blurred: it told
+ *   users "Sharp" on a frame smeared past recognition. 12 sits in the empty
+ *   band between the blurred and sharp populations, rejecting every
+ *   heavily-blurred sample while leaving the least-sharp real face nearly
+ *   2x of headroom. The mild benchmark degradation straddles it on purpose:
+ *   it costs identity stability but is not a reconstruction failure, and
+ *   over-rejecting a usable capture is worse than accepting a soft one.
+ *   SHARPNESS_VAR_MIN = 90 is the same idea at still-photo resolution
+ *   (variance, not stddev, at up to 1024px), the threshold
+ *   src/selfie-refine.js has always applied at submit time.
  * - Lighting: the robustness benchmark's `dim` degradation (brightness x0.42,
  *   "indoor evening") lands a typical selfie's mean face luma at the LUMA_MIN
  *   boundary, and the adversarial set's "hard-backlight, face in deep shadow"
