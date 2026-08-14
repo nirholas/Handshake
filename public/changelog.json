@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T00:53:05.423Z",
+	"generated_at": "2026-08-14T00:54:10.928Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -38,6 +38,17 @@
 				"security",
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The Reputation Staking Market is live: back an agent and earn from what it actually did",
+			"summary": "Stake SOL behind an agent you believe in and earn a share of a daily reward pool, sized by that agent's signed on-chain record: accepted tasks, passed validations and real reviews pay, while failed validations, disputes and revocations cost double what work earns. The market page had shipped without the code that drives it, so it rendered empty no matter what was staked; it now loads live, ranks agents by the conviction escrowed behind them, shows any wallet's positions with earnings that update as they accrue, and settles a withdrawal back to the staker who signed the stake. Your principal is never slashed and can be withdrawn at any time: bad conviction earns nothing, it never costs you your stake. Every number is re-derivable from the chain, the exact formula runs identically in your browser and on our servers, and the whole cycle is provable on devnet with one command. Devnet is open to everyone; mainnet stays owner-gated.",
+			"link": "/reputation/market",
+			"tags": [
+				"feature",
+				"fix"
 			]
 		},
 		{

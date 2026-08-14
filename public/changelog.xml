@@ -31,6 +31,14 @@
 			<description>An agent that pays other agents on its own is governed by the policy you set on its wallet: a ceiling per payment, a rolling 24-hour ceiling, a separate ceiling per payee so one peer cannot quietly absorb the whole day's budget, and a kill switch that halts every kind of autonomous spending the moment you flip it. Those rules were enforced wherever the platform asked for them, but the enforcement itself had a soft spot: code that asked the guard to check a payment without first loading the agent's settings was handed an empty policy, meaning no ceilings and no kill switch, and nothing anywhere said so. The guard now reads the agent's real policy itself in that case, and refuses outright to price a payment for an agent that no longer exists. Every ceiling and the kill switch are now proven, not asserted: one command spins up a real database and a real server, then shows each limit turning away an over-limit payment, eight simultaneous payments competing for the last dollar of headroom with exactly one getting through, a frozen agent halted before the other agent is even contacted while your own withdrawals stay open, and every settled payment coming back as a receipt with the payee, the amount and the transaction signature on your agent's ledger.</description>
 		</item>
 		<item>
+			<title>The Reputation Staking Market is live: back an agent and earn from what it actually did</title>
+			<link>https://three.ws/reputation/market</link>
+			<guid isPermaLink="false">2026-08-14:The Reputation Staking Market is live: back an agent and earn from what it actually did</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Stake SOL behind an agent you believe in and earn a share of a daily reward pool, sized by that agent's signed on-chain record: accepted tasks, passed validations and real reviews pay, while failed validations, disputes and revocations cost double what work earns. The market page had shipped without the code that drives it, so it rendered empty no matter what was staked; it now loads live, ranks agents by the conviction escrowed behind them, shows any wallet's positions with earnings that update as they accrue, and settles a withdrawal back to the staker who signed the stake. Your principal is never slashed and can be withdrawn at any time: bad conviction earns nothing, it never costs you your stake. Every number is re-derivable from the chain, the exact formula runs identically in your browser and on our servers, and the whole cycle is provable on devnet with one command. Devnet is open to everyone; mainnet stays owner-gated.</description>
+		</item>
+		<item>
 			<title>We can now tell whether people come back to the agent they minted</title>
 			<link>https://three.ws/docs/analytics-retention</link>
 			<guid isPermaLink="false">2026-08-14:We can now tell whether people come back to the agent they minted</guid>
