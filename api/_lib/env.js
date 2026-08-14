@@ -1390,14 +1390,17 @@ export const env = {
 		return opt('CLUB_BASE_RPC_URL', 'https://mainnet.base.org');
 	},
 
-	// NFT.Storage API token — required for MintScene tool (uploads GLB + thumbnail + metadata to IPFS).
-	// Obtain at https://nft.storage. When unset, /api/nft/mint-scene returns 503 not_configured.
+	// NFT.Storage API token, read by api/erc8004/[action].js only. Obtain at
+	// https://nft.storage. The MintScene tool no longer touches it: /api/nft/mint-scene
+	// pins through api/_lib/ipfs-pin.js (Pinata/web3.storage), so its 503 not_configured
+	// tracks PINATA_JWT, not this variable.
 	get NFT_STORAGE_TOKEN() {
 		return opt('NFT_STORAGE_TOKEN');
 	},
 
-	// Metaplex Bubblegum compressed-NFT tree config — optional. When both are set, MintScene
-	// uses the cNFT path (Bubblegum); otherwise falls back to a regular MPL Core NFT.
+	// Metaplex Bubblegum compressed-NFT tree config, optional and currently unread:
+	// /api/nft/mint-scene always mints a regular MPL Core asset (createV1). Setting
+	// these does not switch it to the cNFT path.
 	get BUBBLEGUM_MERKLE_TREE() {
 		return opt('BUBBLEGUM_MERKLE_TREE');
 	},

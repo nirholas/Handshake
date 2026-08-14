@@ -53,9 +53,6 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	if (!ipfsPinningConfigured())
-		return error(res, 503, 'not_configured', 'no IPFS pinning provider configured (set PINATA_JWT)');
-
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
@@ -66,6 +63,14 @@ export default wrap(async (req, res) => {
 	if (!session && !bearer) {
 		return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
 	}
+
+	// Auth first, then configuration. This check used to run ahead of both the
+	// rate limiter and the auth gate, so an anonymous caller was told the exact
+	// deployment secret the platform is missing (503 "set PINATA_JWT") and got
+	// there without spending a rate-limit token. A signed-in minter is who this
+	// message is for.
+	if (!ipfsPinningConfigured())
+		return error(res, 503, 'not_configured', 'no IPFS pinning provider configured (set PINATA_JWT)');
 
 	// A scene GLB plus its PNG thumbnail, base64-inflated by 4/3, comfortably
 	// clears readJson's 1 MB default, which rejected every real mint with a 413

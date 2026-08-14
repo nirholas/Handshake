@@ -17,13 +17,6 @@ const RESOLVE_TTL_SECONDS = 6 * 60 * 60; // 6h
 // descriptor during a Helius/Alchemy outage is correct, far better than a 502.
 const RESOLVE_STALE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30d
 
-// Alchemy NFT API host per EVM chainId. An id of the form
-// "chainId:contract:tokenId" (exactly what api/users/[username]/collectibles.js
-// emits for every EVM collectible) used to have its chainId parsed and then
-// thrown away, so a Base or Polygon NFT was always looked up on Ethereum
-// mainnet and came back as a 404 or, worse, as an unrelated Ethereum token that
-// happens to share the contract/tokenId pair. Keep this list aligned with the
-// hosts in api/_lib/evm/rpc.js ALCHEMY_SUBDOMAIN.
 // A provider that answers but never finishes must not hold the request open
 // until the platform's own timeout fires; both upstreams are read-only lookups.
 const UPSTREAM_TIMEOUT_MS = 15000;
@@ -114,6 +107,19 @@ function pickModel(doc) {
 	return { model: null, mime: null };
 }
 
+// Alchemy NFT API host per EVM chainId. An id of the form
+// "chainId:contract:tokenId" (exactly what api/users/[username]/collectibles.js
+// emits for every EVM collectible) used to have its chainId parsed and then
+// thrown away, so a Base or Polygon NFT was always looked up on Ethereum
+// mainnet and came back as a 404 or, worse, as an unrelated Ethereum token that
+// happens to share the contract/tokenId pair.
+//
+// This map is also the endpoint's supported-chain gate: a chainId missing here
+// is rejected 400 before either rung runs, so an omission costs the caller the
+// keyless on-chain read too, which needs no Alchemy key at all. Keep it aligned
+// with api/_lib/evm/rpc.js ALCHEMY_SUBDOMAIN, which is what let polygon-amoy and
+// avax-fuji drop out: both are in that map and in the chain registry with public
+// RPCs, and both answered "unsupported evm chainId" here regardless.
 const ALCHEMY_NFT_HOST = {
 	1: 'eth-mainnet',
 	10: 'opt-mainnet',
@@ -125,8 +131,11 @@ const ALCHEMY_NFT_HOST = {
 	43114: 'avax-mainnet',
 	59144: 'linea-mainnet',
 	534352: 'scroll-mainnet',
+	// testnets
 	84532: 'base-sepolia',
 	421614: 'arb-sepolia',
+	43113: 'avax-fuji',
+	80002: 'polygon-amoy',
 	11155111: 'eth-sepolia',
 	11155420: 'opt-sepolia',
 };
