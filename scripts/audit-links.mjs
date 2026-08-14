@@ -207,6 +207,90 @@ function concatenatedAfter(content, endIndex) {
 	return content[i] === '+';
 }
 
+// Prose in a comment is not a link. A comment explaining why a control became a
+// button, quoting the href="#" it replaced, must not read back as that stub.
+//
+// This needs a real forward pass, not a backwards search for the nearest `/*`:
+// a line comment mentioning `/api/coin/*` would open a block comment that never
+// closes, and every finding below it in the file would vanish. Tracking strings,
+// template literals (with `${…}` nesting) and regex literals keeps the scanner
+// in sync, so a comment is only a comment when it actually starts in code.
+
+// A `/` here starts a regex literal, not a division: nothing that could end an
+// operand precedes it. Getting this wrong only risks re-syncing on the next
+// quote, never a false comment.
+const REGEX_PRECEDERS = new Set(['', '(', ',', '=', ':', '[', '!', '&', '|', '?', '{', '}', ';', '+', '-', '*', '%', '^', '~', '<', '>', 'return']);
+
+function skipQuoted(content, i, quote) {
+	i++;
+	while (i < content.length) {
+		const ch = content[i];
+		if (ch === '\\') i += 2;
+		else if (ch === quote || ch === '\n') return i + 1; // newline: unterminated, re-sync
+		else i++;
+	}
+	return i;
+}
+
+function skipRegexLiteral(content, i) {
+	i++;
+	let inClass = false;
+	while (i < content.length) {
+		const ch = content[i];
+		if (ch === '\\') i += 2;
+		else if (ch === '\n') return i + 1; // unterminated, re-sync
+		else if (ch === '[') { inClass = true; i++; }
+		else if (ch === ']') { inClass = false; i++; }
+		else if (ch === '/' && !inClass) return i + 1;
+		else i++;
+	}
+	return i;
+}
+
+// Byte mask of the file: 1 where a character sits inside a JS comment.
+function commentMask(content) {
+	const mask = new Uint8Array(content.length);
+	const stack = [{ mode: 'code', depth: 0 }];
+	let prev = '';
+	let i = 0;
+	while (i < content.length) {
+		const top = stack[stack.length - 1];
+		const ch = content[i];
+		if (top.mode === 'template') {
+			if (ch === '\\') i += 2;
+			else if (ch === '`') { stack.pop(); i++; }
+			else if (ch === '$' && content[i + 1] === '{') { stack.push({ mode: 'code', depth: 0 }); i += 2; }
+			else i++;
+			continue;
+		}
+		if (ch === '/' && content[i + 1] === '/') {
+			const nl = content.indexOf('\n', i);
+			const stop = nl === -1 ? content.length : nl;
+			mask.fill(1, i, stop);
+			i = stop;
+			continue;
+		}
+		if (ch === '/' && content[i + 1] === '*') {
+			const close = content.indexOf('*/', i + 2);
+			const stop = close === -1 ? content.length : close + 2;
+			mask.fill(1, i, stop);
+			i = stop;
+			continue;
+		}
+		if (ch === '"' || ch === "'") { i = skipQuoted(content, i, ch); prev = 'x'; continue; }
+		if (ch === '`') { stack.push({ mode: 'template', depth: 0 }); i++; continue; }
+		if (ch === '/' && REGEX_PRECEDERS.has(prev)) { i = skipRegexLiteral(content, i); prev = 'x'; continue; }
+		if (ch === '{') { top.depth++; prev = ch; i++; continue; }
+		if (ch === '}') {
+			if (top.depth === 0 && stack.length > 1) { stack.pop(); i++; continue; }
+			top.depth--; prev = ch; i++; continue;
+		}
+		if (!/\s/.test(ch)) prev = ch;
+		i++;
+	}
+	return mask;
+}
+
 function lineOf(content, index) {
 	let line = 1;
 	for (let i = 0; i < index && i < content.length; i++) if (content[i] === '\n') line++;
@@ -221,8 +305,15 @@ const findings = {
 	scanned: 0,
 };
 
+// A JS assignment like `el.href = "/x"` is matched by both the attribute pass and
+// the navigation pass. Same file, same line, same target is one link, not two.
+const seen = new Set();
+
 function record(target, file, line, isPrefix = false) {
 	const rel = file.replace(ROOT + '/', '');
+	const dedupeKey = `${rel}:${line}:${target}`;
+	if (seen.has(dedupeKey)) return;
+	seen.add(dedupeKey);
 	const baseDir = dirname(rel); // for resolving relative links from this file's dir
 	const c = classifyTarget(target);
 	if (c.type === 'stub') {
@@ -246,21 +337,35 @@ function record(target, file, line, isPrefix = false) {
 }
 
 // Third-party/minified bundles whose internals aren't our navigable links.
-const VENDOR_RE = /(?:\/draco\/|\/three\/|\bvendor\b|\.min\.js$|wasm_wrapper)/;
+// Scoped to the real vendored trees: `public/three/` is the shipped three.js
+// runtime, while `src/three/` is OUR $THREE access SDK and must stay audited.
+const VENDOR_RE = /(?:^public\/three\/|\bvendor\b|\.min\.js$|wasm_wrapper)/;
+
+// Most of this app's markup is rendered from JS template strings, so the same
+// `href="…"` attributes live inside .js as inside .html. Scan them there too, but
+// with a narrower attribute set than the HTML pass: a bare `action="…"` in JS is
+// far more often a plain variable (`const action = 'delete'`) than a form target.
+const jsAttrRe = /(?<![\w-])(?:href|data-href|data-route|data-link|data-target-href)\s*=\s*("([^"]*)"|'([^']*)')/gi;
 
 function scanFile(file) {
 	const rel = file.replace(ROOT + '/', '');
 	if (VENDOR_RE.test(rel)) return; // skip vendored libs — not our link surface
 	const content = readFileSync(file, 'utf8');
 	const isJs = /\.m?js$/.test(file);
+	// Comment ranges only mean anything in JS; an HTML file's `<!-- -->` is a
+	// different shape and its inline <script> bodies are a small enough surface
+	// that the attribute pass below is authoritative there.
+	const mask = isJs ? commentMask(content) : null;
+	const inComment = (index) => mask !== null && mask[index] === 1;
 	findings.scanned++;
 	let m;
-	if (!isJs) {
-		htmlAttrRe.lastIndex = 0;
-		while ((m = htmlAttrRe.exec(content))) {
-			record(m[2] ?? m[3] ?? '', file, lineOf(content, m.index));
-		}
-		// Inline <script> nav + fetch inside HTML too.
+	const attrRe = isJs ? jsAttrRe : htmlAttrRe;
+	attrRe.lastIndex = 0;
+	while ((m = attrRe.exec(content))) {
+		if (inComment(m.index)) continue;
+		// `dot.href = '#' + section.id` is the head of a computed anchor, not a stub.
+		const isPrefix = isJs && concatenatedAfter(content, m.index + m[0].length);
+		record(m[2] ?? m[3] ?? '', file, lineOf(content, m.index), isPrefix);
 	}
 	jsNavRe.lastIndex = 0;
 	while ((m = jsNavRe.exec(content))) {
@@ -268,6 +373,7 @@ function scanFile(file) {
 		// `window.open('')` opens a blank tab the caller then writes into, a real
 		// pattern, not a link to nowhere.
 		if (target === '' && /^window\.open/i.test(m[1])) continue;
+		if (inComment(m.index)) continue;
 		record(target, file, lineOf(content, m.index), concatenatedAfter(content, m.index + m[0].length));
 	}
 	fetchRe.lastIndex = 0;
