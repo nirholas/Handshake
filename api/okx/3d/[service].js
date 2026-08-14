@@ -58,8 +58,8 @@ import {
 	PROTOCOL_VERSION,
 	identityX402Amount,
 	isPublicIdentityTool,
-	IDENTITY_CHALLENGE,
 } from '../../_okx3d/tools.js';
+import { IDENTITY_CHALLENGE } from '../../_okx3d/discovery.js';
 import { invokeRestService, isRestPaidService } from '../../_okx3d/rest-services.js';
 
 const BASE = 'https://three.ws';
@@ -85,14 +85,21 @@ async function probe(name, fn) {
 async function healthReport() {
 	const subsystems = await Promise.all([
 		probe('generation', async () => {
-			// /api/forge serves its catalog/config on GET without starting a job,
-			// reachable + parseable proves the generation front door is up.
-			const res = await fetch(`${BASE}/api/forge`, {
+			// ?catalog is the tier + backend matrix /api/forge serves without
+			// starting a job. A bare GET /api/forge answers 400 missing_job, which
+			// a broken generation lane returns just as happily, so probe the
+			// payload that actually proves the front door is up: reachable, and
+			// carrying at least one tier and one backend.
+			const res = await fetch(`${BASE}/api/forge?catalog`, {
 				headers: { accept: 'application/json' },
 				signal: AbortSignal.timeout(10_000),
 			});
-			if (res.status >= 500) throw new Error(`forge returned ${res.status}`);
-			return { status: res.status };
+			if (!res.ok) throw new Error(`forge catalog returned ${res.status}`);
+			const catalog = await res.json();
+			const tiers = Array.isArray(catalog?.tiers) ? catalog.tiers.length : 0;
+			const backends = Array.isArray(catalog?.backends) ? catalog.backends.length : 0;
+			if (!tiers || !backends) throw new Error('forge catalog empty');
+			return { tiers, backends };
 		}),
 		probe('render', async () => {
 			const res = await fetch(`${BASE}/api/render/avatar-clip`, {
@@ -143,6 +150,31 @@ async function healthReport() {
 		}),
 	]);
 	return { ok: subsystems.every((s) => s.ok), subsystems, checkedAt: new Date().toISOString() };
+}
+
+// /health is free and unauthenticated, and one call fans out to five
+// subsystems (three HTTP probes, an R2 head, an X Layer RPC read). Memoize the
+// report briefly and let concurrent callers share the in-flight probe, so a
+// poll loop costs the subsystems one sweep per window instead of one per
+// request. Same shape /api/forge?health uses. `checkedAt` in the body tells the
+// caller how old the reading is.
+const HEALTH_TTL_MS = 30_000;
+let healthMemo = { at: 0, report: null };
+let healthInFlight = null;
+
+async function cachedHealthReport() {
+	if (healthMemo.report && Date.now() - healthMemo.at < HEALTH_TTL_MS) return healthMemo.report;
+	if (!healthInFlight) {
+		healthInFlight = healthReport()
+			.then((report) => {
+				healthMemo = { at: Date.now(), report };
+				return report;
+			})
+			.finally(() => {
+				healthInFlight = null;
+			});
+	}
+	return healthInFlight;
 }
 
 // Per-service accepts: the OKX X Layer entry leads (that is the rail this
@@ -358,6 +390,19 @@ async function handleIdentityStudio(req, res) {
 	const batch = Array.isArray(body) ? body : [body];
 	if (batch.length > 16) return sendJsonRpcError(res, null, -32600, 'batch too large (max 16)');
 
+	// The JSON-RPC ids of the PAID calls in this batch. Settlement is judged on
+	// these responses alone: in a mixed batch (initialize + create_identity), a
+	// blanket "did anything succeed" charged the buyer the full identity price
+	// when create_identity failed validation but the free message beside it
+	// answered fine. Priced notifications carry no id, so an empty set falls
+	// back to judging the whole batch.
+	const pricedIds = new Set(
+		batch
+			.filter((m) => m?.method === 'tools/call' && identityX402Amount(m?.params?.name))
+			.map((m) => m?.id)
+			.filter((id) => id !== undefined && id !== null),
+	);
+
 	// Single-use lock on the payment proof across dispatch+settle, mirroring
 	// /api/mcp-3d, a replayed X-PAYMENT can't run a second job before the
 	// first settle lands.
@@ -385,7 +430,8 @@ async function handleIdentityStudio(req, res) {
 		// the payment is never settled, the pay-only-on-acceptance promise the
 		// catalog description makes.
 		if (x402Ctx) {
-			const anySuccess = responses.some((r) => r && !r.error && !(r.result && r.result.isError));
+			const judged = pricedIds.size ? responses.filter((r) => r && pricedIds.has(r.id)) : responses;
+			const anySuccess = judged.some((r) => r && !r.error && !(r.result && r.result.isError));
 			if (anySuccess) {
 				try {
 					const settled = await settlePayment({ verified: x402Ctx.verified });
@@ -425,8 +471,13 @@ export default wrap(async (req, res) => {
 	if (service === 'health') {
 		if (req.method !== 'GET' && req.method !== 'HEAD')
 			return json(res, 405, { error: 'method_not_allowed', message: 'health is GET-only' });
-		const report = await healthReport();
-		return json(res, report.ok ? 200 : 503, report, { 'cache-control': 'no-store' });
+		const report = await cachedHealthReport();
+		// A green reading is edge-cacheable for the memo window; a red one is
+		// not, so recovery shows up on the next request instead of waiting out a
+		// CDN entry.
+		return json(res, report.ok ? 200 : 503, report, {
+			'cache-control': report.ok ? 'public, max-age=15, s-maxage=30' : 'no-store',
+		});
 	}
 
 	if (service === 'identity-studio') return handleIdentityStudio(req, res);

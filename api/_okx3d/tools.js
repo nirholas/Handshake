@@ -1,13 +1,13 @@
-// Agent Identity Studio, MCP tool catalog, dispatcher, pricing, and 402
-// challenge metadata for the /api/okx/3d/identity-studio A2MCP endpoint.
-// Prices and descriptions come from api/_lib/okx-catalog.js (single source of
-// truth shared with the free catalog service and the OKX listing).
+// Agent Identity Studio, MCP tool catalog, dispatcher, and pricing for the
+// /api/okx/3d/identity-studio A2MCP endpoint. Prices and descriptions come from
+// api/_lib/okx-catalog.js (single source of truth shared with the free catalog
+// service and the OKX listing); the 402 challenge metadata lives next door in
+// ./discovery.js.
 
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { makeDispatcher, PROTOCOL_VERSION } from '../_lib/mcp-dispatch.js';
 import { buildGettingStartedTool, GETTING_STARTED_TOOL } from '../_lib/mcp-getting-started.js';
-import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { catalogEntry } from '../_lib/okx-catalog.js';
 import {
 	createIdentityJob,
@@ -164,16 +164,3 @@ export const dispatch = makeDispatcher({
 	tools: TOOLS,
 	logName: 'mcp-okx-identity',
 });
-
-// 402 challenge metadata: how facilitators/indexers see this endpoint.
-export const IDENTITY_CHALLENGE = {
-	description:
-		'three.ws Agent Identity Studio, A2MCP (MCP Streamable HTTP) service that turns an AI ' +
-		"agent's brand brief into a complete 3D identity: rigged GLB avatar + posed studio renders " +
-		`with an OKX-avatar-slot PFP crop. $${ENTRY.priceUsd} per identity, USDC via x402; job ` +
-		'status polling is free. Operated by three.ws.',
-	...withService({
-		serviceName: 'three.ws Agent Identity Studio',
-		tags: ['x402', 'mcp', '3d', 'avatar', 'identity', 'okx'],
-	}),
-};
