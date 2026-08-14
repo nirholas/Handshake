@@ -404,6 +404,50 @@ describe('POST /oauth/token', () => {
 		expect(res.statusCode).toBe(400);
 		expect(res.json().error).toBe('unsupported_grant_type');
 	});
+
+	it('challenges a Basic-auth client whose secret is wrong, so the 401 is not malformed', async () => {
+		// RFC 6749 section 5.2: a client that authenticated through the
+		// Authorization header MUST get WWW-Authenticate back naming that scheme.
+		await seedConfidentialClient();
+		const res = await call('token', {
+			method: 'POST',
+			headers: basicHeader('mcp_test_client', 'guessed'),
+			form: { grant_type: 'authorization_code', code: 'x', redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER },
+		});
+		expect(res.statusCode).toBe(401);
+		expect(res.getHeader('www-authenticate')).toMatch(/^Basic realm="oauth"/);
+	});
+
+	it('omits the challenge when the bad secret arrived in the form, not the header', async () => {
+		seedClient({ client_type: 'confidential', client_secret_hash: await sha256(CONFIDENTIAL_SECRET), token_endpoint_auth: 'client_secret_post' });
+		const res = await call('token', { method: 'POST', form: { grant_type: 'authorization_code', client_id: 'mcp_test_client', client_secret: 'guessed', code: 'x', redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER } });
+		expect(res.statusCode).toBe(401);
+		expect(res.getHeader('www-authenticate')).toBeUndefined();
+	});
+
+	it('rejects a token request naming another resource instead of minting an unusable token', async () => {
+		seedClient();
+		const res = await call('token', { method: 'POST', form: { grant_type: 'authorization_code', client_id: 'mcp_test_client', code: 'x', redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER, resource: 'https://evil.example/api/mcp' } });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().error).toBe('invalid_target');
+	});
+
+	it('accepts the canonical resource on the token request, trailing slash and all', async () => {
+		seedClient();
+		const authorized = await approve();
+		const code = new URL(authorized.getHeader('location')).searchParams.get('code');
+		const res = await call('token', { method: 'POST', form: { grant_type: 'authorization_code', client_id: 'mcp_test_client', code, redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER, resource: `${RESOURCE}/` } });
+		expect(res.statusCode).toBe(200);
+		expect((await verifyAccessToken(res.json().access_token)).aud).toBe(RESOURCE);
+	});
+
+	it('rejects a refresh exchange naming another resource', async () => {
+		seedClient();
+		const { refresh_token } = await issueTokens();
+		const res = await call('token', { method: 'POST', form: { grant_type: 'refresh_token', client_id: 'mcp_test_client', refresh_token, resource: 'https://evil.example/api/mcp' } });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().error).toBe('invalid_target');
+	});
 });
 
 describe('POST /oauth/register', () => {
@@ -435,6 +479,20 @@ describe('POST /oauth/register', () => {
 	it('omits client_secret_expires_at for a public client that gets no secret', async () => {
 		const res = await call('register', { method: 'POST', jsonBody: { redirect_uris: ['https://client.example/cb'] } });
 		expect(res.json()).not.toHaveProperty('client_secret_expires_at');
+	});
+
+	it('echoes back the optional metadata it stored, so a client is not told its fields were dropped', async () => {
+		// RFC 7591 section 3.2.1 makes the response the authoritative record of what
+		// was registered. These four were saved to oauth_clients but never returned,
+		// which reads as "rejected" and invites a re-registration under a new id.
+		const sent = { redirect_uris: ['https://client.example/cb'], client_name: 'Probe', client_uri: 'https://client.example', logo_uri: 'https://client.example/logo.png', software_id: 'probe-cli', software_version: '2.1.0' };
+		const out = (await call('register', { method: 'POST', jsonBody: sent })).json();
+		expect(out).toMatchObject({ client_uri: sent.client_uri, logo_uri: sent.logo_uri, software_id: sent.software_id, software_version: sent.software_version });
+	});
+
+	it('leaves the optional metadata out entirely when the client sent none', async () => {
+		const out = (await call('register', { method: 'POST', jsonBody: { redirect_uris: ['https://client.example/cb'] } })).json();
+		for (const k of ['client_uri', 'logo_uri', 'software_id', 'software_version']) expect(out).not.toHaveProperty(k);
 	});
 
 	it.each([
@@ -519,6 +577,7 @@ describe('POST /oauth/revoke', () => {
 		const res = await call('revoke', { method: 'POST', headers: basicHeader('mcp_test_client', 'guessed'), form: { token: refresh_token } });
 		expect(res.statusCode).toBe(401);
 		expect(res.json().error).toBe('invalid_client');
+		expect(res.getHeader('www-authenticate')).toMatch(/^Basic realm="oauth"/);
 		expect(db.refresh[0].revoked_at).toBeNull();
 	});
 });
@@ -576,6 +635,7 @@ describe('POST /oauth/introspect', () => {
 		const res = await call('introspect', { method: 'POST', headers: basicHeader('mcp_test_client', 'guessed'), form: { token: tokens.access_token } });
 		expect(res.statusCode).toBe(401);
 		expect(res.json().error).toBe('invalid_client');
+		expect(res.getHeader('www-authenticate')).toMatch(/^Basic realm="oauth"/);
 	});
 });
 

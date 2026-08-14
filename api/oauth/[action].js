@@ -196,6 +196,19 @@ async function authenticateClient(req, form) {
 	return { ok: true, client, clientId };
 }
 
+// RFC 6749 §5.2: when a client authenticated with the Authorization header and
+// the credentials are rejected, the 401 MUST carry a WWW-Authenticate challenge
+// naming the same scheme. Without it the response is a malformed 401, and the
+// HTTP clients that enforce that (fetch wrappers and OAuth libraries that retry
+// on a challenge) either loop on the same bad secret or surface a transport
+// error instead of "your client secret is wrong".
+function invalidClientCredentials(req, res) {
+	if (String(req.headers.authorization || '').toLowerCase().startsWith('basic ')) {
+		res.setHeader('www-authenticate', 'Basic realm="oauth", error="invalid_client", error_description="bad client credentials"');
+	}
+	return error(res, 401, 'invalid_client', 'bad client credentials');
+}
+
 function isSubsetScope(requested, stored) {
 	const allowed = new Set(stored.split(/\s+/).filter(Boolean));
 	const asked = requested.split(/\s+/).filter(Boolean);
@@ -213,9 +226,16 @@ async function handleToken(req, res) {
 	const auth = await authenticateClient(req, form);
 	if (!auth.ok) {
 		if (auth.reason === 'unknown_client') return error(res, 400, 'invalid_client', 'unknown client');
-		return error(res, 401, 'invalid_client', 'bad client credentials');
+		return invalidClientCredentials(req, res);
 	}
 	const client = auth.client;
+	// RFC 8707 §2.2: the token request MAY repeat `resource`, and a server that
+	// does not recognize the one it names MUST answer `invalid_target`. /oauth/
+	// authorize has enforced that since the audience bug; the token endpoint
+	// ignored the parameter, which reintroduced the exact failure canonicalResource
+	// exists to prevent: a client naming another resource got a 200 and a token
+	// whose `aud` was this server's, then hit 401s at every endpoint it tried.
+	if (!canonicalResource(form.resource)) return error(res, 400, 'invalid_target', `unknown resource, this server only issues tokens for ${env.MCP_RESOURCE}`);
 	const grantType = form.grant_type;
 	if (grantType === 'authorization_code') {
 		const { code, redirect_uri, code_verifier } = form;
@@ -339,7 +359,27 @@ async function handleRegister(req, res) {
 	// issued, with 0 meaning "never expires". Omitting it left a spec-following
 	// client with no way to tell a non-expiring secret from a missing field, and
 	// the secrets minted here genuinely have no expiry.
-	return json(res, 201, { client_id: clientId, ...(clientSecret ? { client_secret: clientSecret, client_secret_expires_at: 0 } : {}), client_id_issued_at: Math.floor(Date.now() / 1000), token_endpoint_auth_method: authMethod, redirect_uris: body.redirect_uris, grant_types: grantTypes, response_types: responseTypes, scope, client_name: body.client_name ?? 'MCP Client' });
+	//
+	// The same section makes the response the authoritative record of what was
+	// registered, so it echoes every optional field that was actually stored.
+	// Dropping logo_uri, client_uri, software_id and software_version told a
+	// client its metadata had been rejected when the row above had just saved it,
+	// and a client that re-registers to "fix" that gets a second client_id.
+	return json(res, 201, {
+		client_id: clientId,
+		...(clientSecret ? { client_secret: clientSecret, client_secret_expires_at: 0 } : {}),
+		client_id_issued_at: Math.floor(Date.now() / 1000),
+		token_endpoint_auth_method: authMethod,
+		redirect_uris: body.redirect_uris,
+		grant_types: grantTypes,
+		response_types: responseTypes,
+		scope,
+		client_name: body.client_name ?? 'MCP Client',
+		...(body.client_uri ? { client_uri: body.client_uri } : {}),
+		...(body.logo_uri ? { logo_uri: body.logo_uri } : {}),
+		...(body.software_id ? { software_id: body.software_id } : {}),
+		...(body.software_version ? { software_version: body.software_version } : {}),
+	});
 }
 
 // ── revoke ────────────────────────────────────────────────────────────────────
@@ -358,7 +398,7 @@ async function handleRevoke(req, res) {
 	const auth = await authenticateClient(req, form);
 	if (!auth.ok) {
 		if (auth.reason === 'unknown_client') return json(res, 200, {});
-		return error(res, 401, 'invalid_client', 'bad client credentials');
+		return invalidClientCredentials(req, res);
 	}
 	// `token_type_hint` is advisory and RFC 7009 §2.1 requires extending the
 	// search when the token is not found under the hinted type. Access tokens
@@ -387,7 +427,7 @@ async function handleIntrospect(req, res) {
 	const auth = await authenticateClient(req, form);
 	if (!auth.ok) {
 		if (auth.reason === 'unknown_client') return json(res, 200, { active: false });
-		return error(res, 401, 'invalid_client', 'bad client credentials');
+		return invalidClientCredentials(req, res);
 	}
 	const clientId = auth.clientId;
 	try {
