@@ -204,6 +204,27 @@ body.market-page > header {
 	align-content: start;
 }
 
+/* The discovery grid renders the whole catalogue at once. A Lighthouse desktop
+   trace measured #market-grid at 31,196px tall, of which one 940px screenful is
+   visible, and the browser paid full Style & Layout (11.8s) and Rendering
+   (16.1s) for every row of it on first render. `content-visibility: auto` skips
+   that work for a card until it nears the viewport and gives it back when the
+   card leaves. Both card types already clip their own contents (the avatar card
+   is `overflow: hidden`; the agent card's thumb uses a negative margin that
+   lands exactly on the padding box), so the paint containment this implies
+   changes nothing on screen. The size hints are a 4-column track at the grid's
+   240px minimum plus each card's body; the leading `auto` keyword hands the
+   browser the real measurement once a card has rendered, so a taller-than-hinted
+   card never leaves a gap or jumps the scrollbar. */
+.market-grid > .market-card-avatar {
+	content-visibility: auto;
+	contain-intrinsic-size: auto 250px auto 370px;
+}
+.market-grid > .market-card-agent {
+	content-visibility: auto;
+	contain-intrinsic-size: auto 250px auto 300px;
+}
+
 /* ── Category chips row ─────────────────────────────────────── */
 .market-cat-chips {
 	display: flex;

@@ -8375,6 +8375,18 @@ textarea.erc8004-code {
 		background 0.15s;
 	display: flex;
 	flex-direction: column;
+	/* /discover renders the whole directory in one grid, a few thousand pixels
+	   of cards, of which one screenful is visible. Without this the browser
+	   styles, lays out and paints every offscreen card on first render (3.1s of
+	   Style & Layout plus 1.3s of Rendering in a Lighthouse desktop trace).
+	   `auto` skips that work until a card nears the viewport and reverses it
+	   when the card leaves again. The card is already `overflow: hidden`, so the
+	   paint containment this implies changes nothing visually. The size hint is
+	   a 1:1 thumb plus the body rows at the grid's 260px minimum track; `auto`
+	   makes the browser replace it with the real measurement after the first
+	   render, so a card that renders taller never leaves a gap behind. */
+	content-visibility: auto;
+	contain-intrinsic-size: auto 260px auto 420px;
 }
 .explore-card:hover {
 	border-color: rgba(255, 255, 255, 0.18);
