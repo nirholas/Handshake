@@ -50,6 +50,14 @@ class Gate {
 	}
 
 	async _start() {
+		// Read the session cache FIRST, because reading is also how it is reaped:
+		// loadStoredPass() drops an entry that is expired or corrupt. Both early
+		// exits below (the config probe failing open, and a world whose gate is
+		// off) used to return before anything touched sessionStorage, so a dead
+		// token outlived the boot that should have retired it and stayed there for
+		// the rest of the tab's life, ready for the next reader to hand to a room
+		// join the server can only refuse.
+		const cached = loadStoredPass();
 		// Probe the gate before mounting anything — no flash when /play is open or a
 		// fresh cached pass exists. Only mount if sign-in is actually required.
 		let cfg;
@@ -79,7 +87,6 @@ class Gate {
 		}
 
 		// A still-fresh cached pass for this exact mint skips the wallet prompt.
-		const cached = loadStoredPass();
 		if (cached && cached.mint === cfg.mint) {
 			this._finish({ required: true, wallet: cached.wallet, playPass: cached.playPass, balance: cached.balance, symbol: cached.symbol });
 			return;

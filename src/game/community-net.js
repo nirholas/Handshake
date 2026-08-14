@@ -519,7 +519,14 @@ export class CommunityNet {
 				image: this.room.state.coinImage,
 			});
 		} catch (err) {
-			const msg = err?.message ?? String(err);
+			// Colyseus surfaces a failed matchmaking XHR as the raw ProgressEvent,
+			// which has no `message`, so the old `String(err)` fallback logged the
+			// literally useless "[object ProgressEvent]" and threw away the one fact
+			// worth knowing: which endpoint refused us. Name the target instead.
+			const msg = err?.message
+				|| (err?.code != null ? `code ${err.code}` : '')
+				|| (err?.target?.responseURL ? `no response from ${err.target.responseURL}` : '')
+				|| (err?.type ? `${err.type} from the game server` : String(err));
 			// A holder-gate refusal (onAuth threw) is terminal, not a flaky link,
 			// retrying with the same expired/invalid pass just loops. Surface it so
 			// the scene can route the player back to the gate, and stop here.
@@ -529,7 +536,13 @@ export class CommunityNet {
 				this._emit('denied', msg);
 				return;
 			}
-			log.warn('[community-net] connect failed:', msg);
+			// Designed failure state, so this is expected-path telemetry rather than
+			// a warning: the status drives the HUD's connection pill, the backoff
+			// below retries on its own, and retry() offers a manual reconnect after
+			// that. An unreachable game server is the normal case on a dev box and
+			// behind a venue filter, and announcing our own offline mode as a defect
+			// in every visitor's console said nothing they or we could act on.
+			log.info('[community-net] connect failed:', msg);
 			this._setStatus('failed', msg);
 			this._scheduleReconnect();
 		}

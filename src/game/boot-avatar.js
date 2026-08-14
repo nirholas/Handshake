@@ -125,7 +125,11 @@ function boot() {
 		loop(last, target);
 		done();
 	}).catch((err) => {
-		log.warn('[boot-avatar] avatar load failed:', err?.message);
+		// Designed path, logged as telemetry rather than a warning: the loader is
+		// released on the line below and the card styles itself for the no-avatar
+		// case, so a blocked or missing GLB costs a decoration, never the boot. It
+		// is also the normal outcome behind an ad blocker or a venue filter.
+		log.info('[boot-avatar] avatar load failed:', err?.message);
 		canvas.parentElement?.classList.add('kx-boot-noavatar');
 		done();
 	});

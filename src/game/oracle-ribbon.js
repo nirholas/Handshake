@@ -163,7 +163,9 @@ export function mountOracleRibbon(scene, opts = {}) {
 			if (data && data.history) buildSeries(series, data);
 		} catch (err) {
 			if (disposed || abort.signal.aborted) return;
-			log.warn('[oracle-ribbon] forecast fetch failed:', err?.message);
+			// The ribbon is decorative (see the retry note below), so its absence is
+			// a designed outcome and this is expected-path telemetry, not a warning.
+			log.info('[oracle-ribbon] forecast fetch failed:', err?.message);
 			// One retry ~30s later covers a transient blip / rate limit; beyond that
 			// the world simply renders without the line (decorative, not load-bearing).
 			if (!isRetry) retryTimer = setTimeout(() => load(true), 30_000);
