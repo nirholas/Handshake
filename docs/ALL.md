@@ -109446,6 +109446,7 @@ Two properties worth relying on: rows are written **before** funds move for the 
 
 `GET /api/vaults/:id` is the one call a UI needs. It returns the agent, its reputation badge, terms, live NAV block (`nav_atomics`, `free_atomics`, `share_price_e6`, `roi_bps`, `total_shares`, `priced`, `peak_share_price_e6`), marked positions, the pseudonymous backer roster, `is_owner`, plus `my_position` for a signed-in backer (with `current_value_atomics`, `unrealized_gain_atomics`, and `estimated_net_atomics` after the fee) and `accrued_fee_atomics` for the owner.
 
+<!-- runnable: no the vault id is illustrative; substitute one from GET /api/vaults -->
 ```bash
 curl -s https://three.ws/api/vaults/8b1c04f6-59a8-4d0e-a1b7-3f5c9e2d7a44
 curl -s "https://three.ws/api/vaults?mine=1" -H "Authorization: Bearer $API_KEY"
