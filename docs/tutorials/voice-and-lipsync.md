@@ -164,7 +164,26 @@ tts.onEnd = () => {
 
 `connectLipSync(audioSource)` ([`src/agent-avatar.js`](../../src/agent-avatar.js)) builds a fresh `LipSyncAnalyser` on the TTS `AnalyserNode`; every render frame the avatar samples it and writes viseme weights (or, on a viseme-less rig, drives `jawOpen` from the amplitude). `disconnectLipSync()` zeroes the viseme and `jawOpen`/`mouthOpen` morphs so the face eases back to rest instead of freezing on the last shape mid-word.
 
-For a cloned voice, construct the ElevenLabs provider with the `voice_id` from Step 4:
+For an agent that already has a voice bound (the Voice step of [/create-agent](https://three.ws/create-agent), or the agent editor), do not hand-build the config. Read the agent and let `agentVoiceConfig` map it:
+
+```js
+import { createTTS, agentVoiceConfig } from './runtime/speech.js';
+
+const { agent } = await fetch(`/api/agents/${agentId}`).then((r) => r.json());
+
+// null when nothing is bound: render your own "no voice" state, do not
+// substitute a default voice the owner never chose.
+const config = agentVoiceConfig(agent, { agentId });
+const tts = config ? createTTS(config) : null;
+```
+
+That single call carries four things a hand-written config keeps getting wrong:
+
+- **`agentId`**, the one that bites. `/api/tts/eleven` only spends the owner's own ElevenLabs credential when the request names the agent the voice belongs to. Leave it out and a voice cloned on a user's own key is unreachable to everyone except that signed-in owner: your embed goes silent for exactly the visitors it exists for, with no error anywhere.
+- **`voice_model`** and the saved **`voice_settings`**, so the agent speaks with the delivery its owner tuned rather than the library defaults.
+- **`proxyURL`**, which keeps every API key server-side.
+
+Building the provider directly is still fine when you own the voice id yourself (a lab, a fixed narrator) and no agent record is involved:
 
 ```js
 import { ElevenLabsTTS } from './runtime/speech.js';
@@ -173,6 +192,7 @@ const tts = new ElevenLabsTTS({
   voiceId: 'your-cloned-voice-id',     // from /api/tts/eleven-clone
   modelId: 'eleven_flash_v2_5',        // default
   proxyURL: '/api/tts/eleven',         // keeps the API key server-side
+  agentId,                             // required for an agent's own bound voice
   stability: 0.5,
   similarityBoost: 0.75,
   useSpeakerBoost: true,
