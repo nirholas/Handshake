@@ -166,7 +166,8 @@ with HTTP 422, which the test suite covers.
 ## Configuration reference
 
 Every setting is an environment variable; there is no config file to keep in
-sync. The full table is in [node-operator/README.md](../node-operator/README.md).
+sync. The full table is in
+[packages/node-operator/README.md](../packages/node-operator/README.md).
 
 | Variable | Default | Notes |
 |---|---|---|
