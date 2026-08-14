@@ -173,9 +173,9 @@ const TICKER_WORDS = new Map([
 // turned every "near-term profit booking" note into NEAR Protocol (the archive's
 // trending strip ranked NEAR third on the strength of it), "optimism" tagged
 // every hopeful Fed headline as OP, and "maker" tagged every market maker as
-// MKR. A false ticker is expensive here — it pins a price widget to an unrelated
+// MKR. A false ticker is expensive here: it pins a price widget to an unrelated
 // story, skews trending, and lets a non-crypto article through the display gate
-// on the strength of a detected ticker — so these count only when the text names
+// on the strength of a detected ticker, so these count only when the text names
 // the project rather than uses the word. A cashtag ($NEAR) still matches via the
 // pass above, and crypto-native coverage of these three reliably qualifies them.
 const QUALIFIED_TICKER_PHRASES = new Map([

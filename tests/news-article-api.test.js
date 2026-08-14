@@ -1,4 +1,4 @@
-// Coverage for api/news/article.js — the reader endpoint's input boundary and
+// Coverage for api/news/article.js: the reader endpoint's input boundary and
 // its write into the durable knowledge base.
 //
 // Two guarantees are load-bearing and both were previously unenforced:
@@ -102,7 +102,7 @@ describe('url validation', () => {
 			const out = await call(`/api/news/article?url=${encodeURIComponent(scheme)}`);
 			expect(out.status).toBe(400);
 			expect(out.body.error).toBe('bad_url');
-			// The refusal happens at the boundary — nothing is fetched, nothing
+			// The refusal happens at the boundary: nothing is fetched, nothing
 			// reaches the corpus.
 			expect(extractArticle).not.toHaveBeenCalled();
 			expect(recordExtraction).not.toHaveBeenCalled();

@@ -147,7 +147,7 @@ export default wrap(async (req, res) => {
 	}
 	// An article link is a web link. `new URL()` happily parses javascript:,
 	// file:, and data: URLs, and every rung of the extraction ladder then
-	// refuses them one by one — which used to end in a 200 carrying an empty
+	// refuses them one by one, which used to end in a 200 carrying an empty
 	// "Untitled" record. Reject the scheme here instead: a non-web URL is bad
 	// input, not an article we failed to read.
 	if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
@@ -268,7 +268,7 @@ export default wrap(async (req, res) => {
 	// Only rows carrying real body text are worth recording. A zero-content
 	// preview (every rung of the ladder refused the URL) grounds no agent and
 	// is never reused as the cross-instance cache above, which requires a
-	// page/reader row over 400 chars — so writing it only adds noise to the
+	// page/reader row over 400 chars, so writing it only adds noise to the
 	// corpus. It also closes the corpus to drive-by writes: this endpoint is
 	// public and unauthenticated, and the caller controls `url`, `title`, and
 	// `source`, so an arbitrary link used to mint a permanent knowledge row

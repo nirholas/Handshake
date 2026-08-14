@@ -1,4 +1,4 @@
-// Coverage for api/news/knowledge.js — the read side of the crypto knowledge
+// Coverage for api/news/knowledge.js: the read side of the crypto knowledge
 // base the 3D agents ground on.
 //
 // The guarantee under test: every row served carries real extracted body text.
