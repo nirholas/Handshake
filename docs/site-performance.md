@@ -30,6 +30,25 @@ Two things to know before reading a report:
 - **The score is not the byte count.** Performance is weighted Total Blocking Time 30%, Largest Contentful Paint 25%, Cumulative Layout Shift 25%, First Contentful Paint 10%, Speed Index 10%. A page can ship 4 MB and score well if none of it blocks; a page can ship 900 KB and score badly if all of it runs at once.
 - **Lighthouse 13 removed the audits everyone quotes.** `offscreen-images`, `uses-responsive-images`, `modern-image-formats` and `dom-size` are gone, replaced by the insight family: `image-delivery-insight`, `render-blocking-insight`, `cache-insight`, `legacy-javascript-insight`, `cls-culprits-insight`. A script that reads the old audit names throws on `undefined`.
 
+## The 2026-08-14 baseline
+
+Every page named in this table was measured against `https://three.ws` with Lighthouse 13.4.1 on 2026-08-14. **This is the baseline, not the current state**: the live build at the time was commit `0496089f0`, stamped `2026-08-14T01:24:52Z`, which predates rules 1, 2, 3 and the model-viewer half of rule 4, plus the chip fix in `a789c2f90`. Every one of those is committed and none of them was deployed when these numbers were taken, so treat the table as the problem statement each rule below was written against.
+
+| Page | Desktop | Mobile | Desktop TBT | Desktop CLS | Desktop bytes |
+|---|---|---|---|---|---|
+| `/` | 33 | 25 | 19,340ms | 0.009 | 3,715 KiB |
+| `/create` | 38 | 25 | 6,940ms | 0.013 | 1,892 KiB |
+| `/forge` | 32 | 20 | 12,560ms | 0.232 | 4,243 KiB |
+| `/marketplace` | 23 | 17 | 51,400ms | 0.178 | 4,748 KiB |
+| `/play` | 31 | 25 | 5,870ms | 0 | 2,317 KiB |
+| `/docs` | 39 | 35 | 4,490ms | 0.028 | 701 KiB |
+| `/discover` | 54 | 44 | 11,010ms | 0.022 | 10,952 KiB |
+| `/chat` | 28 | 25 | 6,390ms | 0.001 | 4,435 KiB |
+
+Total blocking time is what holds every one of these scores down, and it is 30% of the weighting on its own. Read the table by that column, not by the score.
+
+Two caveats worth knowing when you compare a later run against this one. The runs were taken on a shared build machine with other work in flight, so single-page scores move a few points between runs: `/create` measured 50 in a quieter run earlier the same day and 38 here. And `/marketplace` is heavy enough that Lighthouse itself gave up with `PROTOCOL_TIMEOUT` on the first attempt and needed a 90s `--max-wait-for-load` to complete at all, which is a finding in its own right.
+
 ---
 
 ## 1. A grid never lays out what nobody can see
@@ -116,6 +135,25 @@ Directory thumbnails are stored at 768x768 and painted into a 293px box; showcas
 The box is reserved by CSS rather than by `width`/`height` attributes, because these thumbnails are square-cropped with `object-fit: cover` at a size the markup does not know: `.explore-card-thumb` is `aspect-ratio: 1 / 1` and `#showcase .creation .thumb` is a fixed height. That is why the layout-shift numbers on both pages are near zero even though the images arrive late.
 
 **A reserved box is not optional.** If you add a thumbnail whose container has no `aspect-ratio` and no fixed height, add one, or the late image will shift everything under it.
+
+## 6. Whoever writes a node's text owns it, and i18n has to be told
+
+**Invariant: JavaScript that replaces the text of an element carrying `data-i18n` removes the attribute in the same statement.**
+
+`/forge` measured a CLS of 0.232 on desktop, and **0.1785 of it was a single shift**. A probe of the live page found the cause: at `DOMContentLoaded` the example-prompt chips held their randomized prompts and the row was 168px tall, and about a second later they had reverted to the static English labels from the HTML at 99px. That 69px collapse moved the quality tiles, the composer row, the Generate button and everything below them.
+
+The mechanism is ownership. The static chips carry `data-i18n` keys so a visitor with no JavaScript still gets translated copy. `applyCatalog` in `src/i18n.js` walks every `[data-i18n]` node whenever a catalog loads or the locale changes, and writes the keyed string back. Once the randomizer has replaced a chip's label, the key no longer describes that node, so i18n was faithfully undoing the rotation on every single load. The layout shift was the visible half of a functional bug: the "fresh set every visit" promise silently did not hold.
+
+The fix is one line next to the write, in `setChipPrompt()` in [src/forge-prompt-studio.js](../src/forge-prompt-studio.js):
+
+```js
+function setChipPrompt(chip, text) {
+	chip.textContent = text;
+	chip.removeAttribute('data-i18n');
+}
+```
+
+**Any node whose text becomes dynamic loses its `data-i18n` at the point it becomes dynamic.** Not later, not in a cleanup pass. `src/i18n.js` uses the same guard for `data-auth-name` in the nav.
 
 ---
 
