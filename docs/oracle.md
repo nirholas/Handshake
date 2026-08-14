@@ -92,7 +92,33 @@ Monotone, separated, and honest at every rung, which is why the ladder stays whe
 
 Only prime and strong are act signals. A conviction engine that likes everything is a hype engine.
 
-Every verdict also carries compact badges the UI renders as pills: `smart-money` (three or more proven wallets in), `structure-flag` (a strongly negative fitted structure bucket), `pedigree-flag` (the rugger cap fired), `news` (riding a live story), `momentum` (subscore 72 plus), `thin-data` (most model features unobserved), and `prime`. And every verdict ships its reasons in plain language ordered by evidence strength, each quoting the observed outcome rate for its bucket ("organic demand >=0.8: 60 percent of similar launches worked"). You never get a bare number.
+Every verdict also carries compact badges the UI renders as pills: `smart-money` (three or more proven wallets in), `structure-flag` (a strongly negative fitted structure bucket), `pedigree-flag` (the rugger cap fired), `news` (riding a live story), `momentum` (that pillar alone would reach prime, subscore 86 plus), and `thin-data` (most model features unobserved). There is deliberately no `prime` badge: the card paints the tier beside the score already, so it only ever restated the pill next to it, and a badge every top card carries is decoration rather than signal. The same reasoning moved `momentum` up from 72, where it fired on 93 percent of the live feed.
+
+And every verdict ships its reasons in plain language ordered by evidence strength, each quoting the observed outcome rate for its bucket. Each reason carries three fields beside the sentence, so a surface can render the evidence without parsing English back apart:
+
+| Field | Example | What it is |
+| --- | --- | --- |
+| `text` | `40+ early buyers: 80% of similar launches worked (6.8x base rate)` | The full sentence |
+| `subject` | `40+ early buyers` | What the model saw, in trader units |
+| `rate` | `80` | Percent of that bucket's training launches that were good |
+| `lift` | `6.8` | How many times the base rate that is |
+
+`subject` is phrased per fitted bucket rather than printed from the model's own labels: "40+ early buyers", not "unique_buyers >=40". You never get a bare number, and you never get a raw one either.
+
+### The holder's number: `hitRateFor(score)`
+
+The score ranks the odds of a *run*, judged independently of a later collapse (see PREDICTED_EVENT above). That is the right target for a ranking and the wrong one for someone deciding whether to hold, so every verdict and every feed row also carries the stricter measurement:
+
+```
+hit_rate       fraction of resolved coins in this score band that graduated
+               or ran 2x or more WITHOUT ever rugging
+hit_rate_lift  how many times the market's own base rate that is
+hit_rate_n     how many resolved coins the band's rate was measured over
+```
+
+It comes from `api/_lib/oracle/conviction-calibration.json`, an isotonic (pool-adjacent-violators) fit of the realized win rate per 10-point score band over every coin Oracle scored that the market has since resolved. At the 2026-08-14 fit: 61,916 coins, 5.4 percent base rate, and a top band (90 to 100) that held a clean 2x 26.3 percent of the time, 4.8x base. Isotonic rather than raw per-band rates because a band that dips below its neighbour on 500 samples is noise, and a ladder that steps backwards is worse than no ladder.
+
+Refit it with `node scripts/oracle-calibrate.mjs --write`. It reads the production database when `DATABASE_URL` is set and the live `/api/oracle/backtest` endpoint otherwise (the endpoint runs the same aggregation server-side), then prints the rungs the data can actually tell apart so the tier boundaries can be checked against them. Both numbers are real and they answer different questions; the rule is that any surface showing one has to say which one it is showing.
 
 ## Anatomy of a score
 
