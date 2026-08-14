@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Dakika chache hapa kawaida hubadilisha safari tatu kuwa moja.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Ripoti unyanyasaji au matumizi mabaya ya jukwaa</span>",
-		"ask_how_do_i_wire_this_into": "Uliza \"je, ninaweza vipi kuunganisha hii kwenye Claude / Cursor / wakala wangu?\" au linganisha mbinu na jamii na wasimamizi.",
 		"before_you_open_an_issue": "Kabla ya kufungua suala",
 		"check_your_environment_variables": "Angalia mabadiliko yako ya mazingira",
 		"copy": "Nakili",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Unda au angalia funguo ya API kwenye <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, na thibitisha kitambulisho cha mradi chini ya <em>watsonx.ai mradi → Simamia → Jumla</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Nyaraka na msaada maalum kwa MCP seva",
 		"discover": "Gundua",
-		"discussions": "Majadiliano",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Haki miliki / Arifa za kuondolewa za DMCA</span>",
 		"docs": "Nyaraka",
 		"docs_2": "Nyaraka",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws ni mradi huru, wa chanzo wazi. Server ya x402 MCP inajumuisha IBM Granite kupitia watsonx.ai; si bidhaa ya IBM na haipati msaada kutoka IBM. Kwa masuala ya IBM watsonx.ai jukwaa, Granite mfano, au bili za IBM, wasiliana na <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, na <em>watsonx.ai</em> ni alama za biashara za IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws ni jukwaa la 3D AI la chanzo wazi, na nyumbani kwa <strong>x402 MCP server kwa IBM Granite</strong>. Chagua njia inayofaa — ripoti za makosa na maombi ya vipengele yanaenda GitHub, maswali ya \"nifanyeje...\" yanaenda kwa Majadiliano, na chochote binafsi au maalum kwa akaunti kinaenda kwa barua pepe. Ripoti za usalama zina anwani yao wenyewe.",
 		"three_ws_is_an_open_source_project": "three.ws ni mradi wa chanzo wazi unaoungwa mkono na wasimamizi wake kwa juhudi bora.",
 		"verify_your_ibm_credentials_independently": "Thibitisha sifa zako za IBM kwa uhuru",
 		"what_to_expect": "Unachoweza kutarajia",

@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "ここで数分費やすことで、通常、3回のやり取りを1回に短縮できます。",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">悪用またはプラットフォームの誤用を報告</span>",
-		"ask_how_do_i_wire_this_into": "「これをClaude / Cursor / 私のエージェントにどう組み込むか？」と尋ねたり、コミュニティやメンテナーとアプローチを比較したりできます。",
 		"before_you_open_an_issue": "イシューをオープンする前に",
 		"check_your_environment_variables": "環境変数をチェック",
 		"copy": "コピー",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "<a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>でAPIキーを作成または確認し、<em>watsonx.aiプロジェクト → 管理 → 一般</em>でプロジェクトIDを確認してください。",
 		"dedicated_docs_support_for_the_mcp_server": "MCPサーバーの専用ドキュメントとサポート",
 		"discover": "探索",
-		"discussions": "ディスカッション",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">著作権侵害 / DMCAテイクダウン通知</span>",
 		"docs": "ドキュメント",
 		"docs_2": "ドキュメント",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.wsは独立したオープンソースプロジェクトです。x402MCPサーバーはwatsonx.aiを介してIBM Graniteを統合しますが、これはIBM製品ではなく、IBMによるサポートもありません。IBM watsonx.aiプラットフォーム、Graniteモデル、またはIBMの請求に関する問題については、<a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>にお問い合わせください。<em>Granite</em>、<em>watsonx</em>、および<em>watsonx.ai</em>はIBMの商標です。",
-		"three_ws_is_an_open_source_3d": "three.wsはオープンソースの3D AIエージェントプラットフォームであり、IBM Granite</strong>向けの<strong>x402MCPサーバーの本拠地です。適切なチャネルを選択してください — バグレポートと機能リクエストはGitHubへ、「どうすればいいですか？」といった質問はDiscussionsへ、プライベートな内容やアカウント固有の事柄はメールへ。セキュリティレポートには専用のアドレスがあります。",
 		"three_ws_is_an_open_source_project": "three.wsはオープンソースプロジェクトであり、メンテナーによって最大限の努力でサポートされています。",
 		"verify_your_ibm_credentials_independently": "IBMの資格情報を個別に検証する",
 		"what_to_expect": "期待できること",

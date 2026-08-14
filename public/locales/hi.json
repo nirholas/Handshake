@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "यहाँ कुछ मिनट आमतौर पर तीन राउंड-ट्रिप को एक में बदल देते हैं।",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">दुर्व्यवहार या प्लेटफॉर्म के दुरुपयोग की रिपोर्ट करें</span>",
-		"ask_how_do_i_wire_this_into": "पूछें \"मैं इसे क्लाउड / कर्सर / अपने एजेंट में कैसे वायर करूँ?\" या समुदाय और मेंटेनर्स के साथ अप्रोच की तुलना करें।",
 		"before_you_open_an_issue": "कोई इश्यू खोलने से पहले",
 		"check_your_environment_variables": "अपने एनवायरनमेंट वेरिएबल्स जांचें",
 		"copy": "कॉपी करें",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "<a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a> पर एक API कुंजी बनाएं या जांचें, और <em>watsonx.ai प्रोजेक्ट → मैनेज → जनरल</em> के तहत प्रोजेक्ट आईडी की पुष्टि करें।",
 		"dedicated_docs_support_for_the_mcp_server": "MCP सर्वर के लिए समर्पित डॉक्स और सपोर्ट।",
 		"discover": "डिस्कवर करें",
-		"discussions": "चर्चाएँ",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">कॉपीराइट / DMCA हटाने के नोटिस</span>",
 		"docs": "दस्तावेज़",
 		"docs_2": "दस्तावेज़",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws एक स्वतंत्र, ओपन-सोर्स प्रोजेक्ट है। x402 MCP सर्वर watsonx.ai के माध्यम से IBM Granite को एकीकृत करता है; यह IBM का उत्पाद नहीं है और इसे IBM द्वारा समर्थित नहीं किया जाता है। IBM watsonx.ai प्लेटफॉर्म, Granite मॉडल, या IBM बिलिंग संबंधी समस्याओं के लिए, <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a> से संपर्क करें। <em>Granite</em>, <em>watsonx</em>, और <em>watsonx.ai</em> IBM के ट्रेडमार्क हैं।",
-		"three_ws_is_an_open_source_3d": "three.ws एक ओपन-सोर्स 3D AI एजेंट प्लेटफॉर्म है, और IBM Granite</strong> के लिए <strong>x402 MCP सर्वर का घर है। उपयुक्त चैनल चुनें — बग रिपोर्ट और फीचर रिक्वेस्ट GitHub पर भेजें, “मैं कैसे करूँ…” वाले प्रश्न Discussions पर, और कोई भी निजी या अकाउंट-विशिष्ट जानकारी ईमेल पर। सुरक्षा रिपोर्टों के लिए एक अलग पता है।",
 		"three_ws_is_an_open_source_project": "three.ws एक ओपन-सोर्स प्रोजेक्ट है जिसे इसके मेंटेनर्स द्वारा सर्वोत्तम प्रयास के आधार पर सपोर्ट किया जाता है।",
 		"verify_your_ibm_credentials_independently": "अपने IBM क्रेडेंशियल को स्वतंत्र रूप से सत्यापित करें",
 		"what_to_expect": "क्या उम्मीद करें",

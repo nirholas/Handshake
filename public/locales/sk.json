@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Pár minút tu zvyčajne premení tri okruhy na jeden.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Nahlásiť zneužitie alebo zneužitie platformy</span>",
-		"ask_how_do_i_wire_this_into": "Opýtajte sa \"ako to zapojím do Claude / Cursor / môjho agenta?\" alebo porovnajte prístupy s komunitou a správcami.",
 		"before_you_open_an_issue": "Predtým, ako otvoríte problém",
 		"check_your_environment_variables": "Skontrolujte svoje environmentálne premenné",
 		"copy": "Kopírovať",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Vytvorte alebo skontrolujte API kľúč na <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, a potvrďte ID projektu pod <em>watsonx.ai projekt → Spravovať → Všeobecné</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Vyhradené dokumenty a podpora pre MCP server",
 		"discover": "Objavte",
-		"discussions": "Diskusie",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Oznámenia o porušení autorských práv / DMCA</span>",
 		"docs": "Dokumentácia",
 		"docs_2": "Dokumentácia",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws je nezávislý, open-source projekt. x402 MCP server integruje IBM Granite cez watsonx.ai; nie je to produkt IBM a nie je podporovaný IBM. Pre IBM watsonx.ai platformu, Granite model alebo problémy s fakturáciou IBM, kontaktujte <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, a <em>watsonx.ai</em> sú ochranné známky IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws je open-source platforma pre 3D AI agentov a domov <strong>x402 MCP servera pre IBM Granite</strong>. Vyberte kanál, ktorý vyhovuje — hlásenia chýb a požiadavky na funkcie idú na GitHub, otázky \"ako to…\" do Diskusií a čokoľvek súkromné alebo špecifické pre účet na e-mail. Bezpečnostné hlásenia majú svoju vlastnú adresu.",
 		"three_ws_is_an_open_source_project": "three.ws je open-source projekt podporovaný jeho správcami na základe najlepšieho úsilia.",
 		"verify_your_ibm_credentials_independently": "Overte svoje IBM poverenia nezávisle",
 		"what_to_expect": "Na čo sa pripraviť",

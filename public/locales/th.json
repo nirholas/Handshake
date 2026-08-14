@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "ไม่กี่นาทีที่นี่มักจะเปลี่ยนการเดินทางสามรอบให้เป็นหนึ่ง.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">รายงานการละเมิดหรือการใช้แพลตฟอร์มผิดวิธี</span>",
-		"ask_how_do_i_wire_this_into": "ถามว่า \"ฉันจะเชื่อมต่อสิ่งนี้กับ Claude / Cursor / ตัวแทนของฉันได้อย่างไร?\" หรือเปรียบเทียบแนวทางกับชุมชนและผู้ดูแล.",
 		"before_you_open_an_issue": "ก่อนที่คุณจะเปิดปัญหา",
 		"check_your_environment_variables": "ตรวจสอบตัวแปรสภาพแวดล้อมของคุณ",
 		"copy": "คัดลอก",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "สร้างหรือเช็ค API key ที่ <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a> และยืนยัน project id ภายใต้ <em>watsonx.ai project → จัดการ → ทั่วไป</em>",
 		"dedicated_docs_support_for_the_mcp_server": "เอกสารและการสนับสนุนเฉพาะสำหรับเซิร์ฟเวอร์ MCP",
 		"discover": "ค้นพบ",
-		"discussions": "การสนทนา",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">การแจ้งเตือนลิขสิทธิ์ / DMCA takedown</span>",
 		"docs": "เอกสาร",
 		"docs_2": "เอกสาร",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws เป็นโครงการโอเพนซอร์สที่เป็นอิสระ เซิร์ฟเวอร์ x402 MCP เชื่อมต่อกับ IBM Granite ผ่าน watsonx.ai; ไม่ใช่ผลิตภัณฑ์ของ IBM และไม่ได้รับการสนับสนุนจาก IBM สำหรับปัญหาเกี่ยวกับแพลตฟอร์ม IBM watsonx.ai, โมเดล Granite, หรือการเรียกเก็บเงินของ IBM ติดต่อ <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, และ <em>watsonx.ai</em> เป็นเครื่องหมายการค้าของ IBM",
-		"three_ws_is_an_open_source_3d": "three.ws เป็นแพลตฟอร์มเอเจนต์ AI 3D แบบโอเพนซอร์ส และเป็นบ้านของเซิร์ฟเวอร์ <strong>x402 MCP สำหรับ IBM Granite</strong>. เลือกช่องทางที่เหมาะสม — รายงานข้อบกพร่องและคำขอฟีเจอร์ไปที่ GitHub, คำถาม \"ฉันจะทำอย่างไร…\" ไปที่ Discussions, และสิ่งใดที่เป็นส่วนตัวหรือเฉพาะบัญชีให้ส่งทางอีเมล รายงานความปลอดภัยมีที่อยู่ของตัวเอง",
 		"three_ws_is_an_open_source_project": "three.ws เป็นโครงการโอเพนซอร์สที่ได้รับการสนับสนุนโดยผู้ดูแลในระดับที่พยายามอย่างดีที่สุด",
 		"verify_your_ibm_credentials_independently": "ตรวจสอบข้อมูลรับรอง IBM ของคุณอย่างอิสระ",
 		"what_to_expect": "สิ่งที่คาดหวัง",

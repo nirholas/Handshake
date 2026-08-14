@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Nkeji ole na ole ebe a na-agbanwekarị njem atọ gaa na otu.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Kọọ mmejọ ma ọ bụ ojiji na-ezighị ezi nke ikpo okwu</span>",
-		"ask_how_do_i_wire_this_into": "Jụọ \"kedu ka m ga-esi jikọọ nke a na Claude / Cursor / onye nnọchiteanya m?\" ma ọ bụ tụnyere ụzọ dị iche iche na obodo na ndị na-elekọta ya.",
 		"before_you_open_an_issue": "Tupu ị meghee nsogbu",
 		"check_your_environment_variables": "Lelee mgbanwe gburugburu ebe obibi gị",
 		"copy": "Detuo",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Mepụta ma ọ bụ lelee igodo API na <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, ma kwado ID ọrụ n'okpuru <em>watsonx.ai ọrụ → Jikwaa → Izugbe</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Akwụkwọ na nkwado raara onwe ya nye maka ihe nkesa MCP",
 		"discover": "Chọpụta",
-		"discussions": "Mkparịta ụka",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Ọkwa nwebisiinka / DMCA iwepụ</span>",
 		"docs": "Akwụkwọ",
 		"docs_2": "Akwụkwọ",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws bụ ọrụ nọọrọ onwe ya, nke mepere emepe. Ihe nkesa x402 MCP na-ejikọta IBM Granite site na watsonx.ai; ọ bụghị ngwaahịa IBM ma IBM anaghị akwado ya. Maka ikpo okwu IBM watsonx.ai, ihe nlereanya Granite, ma ọ bụ nsogbu ịkwụ ụgwọ IBM, kpọtụrụ <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">Nkwado IBM Cloud</a>. <em>Granite</em>, <em>watsonx</em>, na <em>watsonx.ai</em> bụ ụghalaahịa nke IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws bụ ikpo okwu AI agent 3D mepere emepe, na ebe obibi nke ihe nkesa <strong>x402 MCP maka IBM Granite</strong>. Họrọ ọwa dabara adaba — akụkọ ahụhụ na arịrịọ atụmatụ na-aga GitHub, ajụjụ \"kedu ka m ga-esi…\" na Mkparịta ụka, na ihe ọ bụla nzuzo ma ọ bụ nke metụtara akaụntụ na email. Akụkọ nchekwa nwere adreesị nke ha.",
 		"three_ws_is_an_open_source_project": "three.ws bụ ọrụ mepere emepe nke ndị na-elekọta ya na-akwado na mgbalị kacha mma.",
 		"verify_your_ibm_credentials_independently": "Nyochaa asambodo IBM gị n'onwe gị",
 		"what_to_expect": "Ihe a ga-atụ anya ya",

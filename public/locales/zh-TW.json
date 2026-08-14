@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "在這裡花幾分鐘通常能將三次往返轉變為一次。",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">舉報濫用或平台濫用</span>",
-		"ask_how_do_i_wire_this_into": "詢問「我該如何將這個接入 Claude / Cursor / 我的代理？」或與社區和維護者比較方法。",
 		"before_you_open_an_issue": "在你開啟問題之前",
 		"check_your_environment_variables": "檢查你的環境變數",
 		"copy": "複製",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "在 <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a> 創建或檢查 API 金鑰，並確認項目 ID 在 <em>watsonx.ai 項目 → 管理 → 一般</em>。",
 		"dedicated_docs_support_for_the_mcp_server": "專屬文檔與支援，針對 MCP 伺服器",
 		"discover": "探索",
-		"discussions": "討論",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">版權 / DMCA 撤回通知</span>",
 		"docs": "文檔",
 		"docs_2": "文檔",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws 是一個獨立的開源項目。x402 MCP 伺服器通過 watsonx.ai 整合 IBM Granite；這不是 IBM 產品，且不受 IBM 支持。對於 IBM watsonx.ai 平台、Granite 模型或 IBM 計費問題，請聯繫 <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>。<em>Granite</em>、<em>watsonx</em> 和 <em>watsonx.ai</em> 是 IBM 的商標。",
-		"three_ws_is_an_open_source_3d": "three.ws 是一個開源 3D AI 代理平台，也是 IBM Granite</strong> 的 <strong>x402 MCP 伺服器的家。選擇合適的渠道 — 錯誤報告和功能請求發送到 GitHub，\"我該如何…\" 問題發送到討論區，任何私密或帳戶特定的問題發送到電子郵件。安全報告有自己的地址。",
 		"three_ws_is_an_open_source_project": "three.ws 是一個開源項目，由其維護者根據最佳努力進行支持。",
 		"verify_your_ibm_credentials_independently": "獨立驗證您的 IBM 憑證",
 		"what_to_expect": "期待什麼",

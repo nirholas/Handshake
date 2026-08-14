@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Ìṣẹ́jú díẹ̀ níbí sábà máa ń sọ ìrìn-àjò mẹ́ta di ọ̀kan.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Fìdí ìlòkulò tàbí àìlò tó tọ́ lórí pátàfóòmù hàn</span>",
-		"ask_how_do_i_wire_this_into": "Béèrè pé \"báwo ni mo ṣe lè so èyí pọ̀ mọ́ Claude / Cursor / aṣojú mi?\" tàbí fi àwọn ọ̀nà ìgbéṣẹ́ wé ti àwùjọ àti àwọn olùtọ́jú.",
 		"before_you_open_an_issue": "Kí o tó ṣí ìṣòro kan",
 		"check_your_environment_variables": "Ṣàyẹ̀wò àwọn oníyàtọ̀ àyíká rẹ.",
 		"copy": "Daàkọ",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Ṣẹ̀dá tàbí ṣàyẹ̀wò kọ́kọ́rọ́ API kan ní <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, sì fìdí ID iṣẹ́ náà múlẹ̀ lábẹ́ <em>watsonx.ai iṣẹ́ → Ìṣàkóso → Gbogbogbòò</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Àwọn ìwé àkọsílẹ̀ àti ìtìlẹ́yìn tí a yàsọ́tọ̀ fún sẹ́fà MCP.",
 		"discover": "Ṣàwárí",
-		"discussions": "Àwọn ìjíròrò",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Àwọn àkíyèsí àṣẹ-ìwé / DMCA ìyọkúrò</span>",
 		"docs": "Àwọn ìwé àkọsílẹ̀",
 		"docs_2": "Àwọn ìwé àkọsílẹ̀",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws jẹ iṣẹ akanṣe ominira, orisun-ìmọ. Olupin x402 MCP ṣepọ IBM Granite nipasẹ watsonx.ai; kii ṣe ọja IBM ati pe IBM ko ṣe atilẹyin rẹ. Fun pẹpẹ IBM watsonx.ai, awoṣe Granite, tabi awọn ọran isanwo IBM, kan si <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, ati <em>watsonx.ai</em> jẹ aami-iṣowo ti IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws jẹ pẹpẹ oluranlowo AI 3D orisun-ìmọ, ati ibi ti olupin <strong>x402 MCP fun IBM Granite</strong> wa. Yan ikanni ti o baamu — awọn ijabọ aṣiṣe ati awọn ibeere ẹya tuntun lọ si GitHub, awọn ibeere \"bawo ni mo ṣe le…\" lọ si Awọn ijiroro, ati ohunkohun ti ikọkọ tabi ti akọọlẹ kan pato si imeeli. Awọn ijabọ aabo ni adirẹsi tiwọn.",
 		"three_ws_is_an_open_source_project": "three.ws jẹ iṣẹ akanṣe orisun-ìmọ ti awọn olutọju rẹ ṣe atilẹyin lori ipilẹ ipa ti o dara julọ.",
 		"verify_your_ibm_credentials_independently": "Ṣayẹwo awọn iwe-ẹri IBM rẹ ni ominira",
 		"what_to_expect": "Ohun ti o le reti",

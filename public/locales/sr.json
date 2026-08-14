@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Nekoliko minuta ovde obično skraćuje tri koraka na jedan.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Prijavite zloupotrebu ili zloupotrebu platforme</span>",
-		"ask_how_do_i_wire_this_into": "Pitajte „kako ovo da povežem sa Claude-om / Cursor-om / mojim agentom?“ ili uporedite pristupe sa zajednicom i održavaocima.",
 		"before_you_open_an_issue": "Pre otvaranja problema",
 		"check_your_environment_variables": "Proverite svoje promenljive okruženja",
 		"copy": "Kopiraj",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Kreirajte ili proverite API ključ na <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, i potvrdite ID projekta pod <em>watsonx.ai projekat → Upravljanje → Opšte</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Namenska dokumentacija i podrška za MCP server",
 		"discover": "Istražite",
-		"discussions": "Diskusije",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Obaveštenja o autorskim pravima / DMCA uklanjanju</span>",
 		"docs": "Dokumentacija",
 		"docs_2": "Dokumentacija",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws je nezavisan, open-source projekat. x402 MCP server integriše IBM Granite putem watsonx.ai; nije IBM proizvod i nije podržan od strane IBM-a. Za IBM watsonx.ai platformu, Granite model ili probleme sa naplatom IBM-a, kontaktirajte <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud podršku</a>. <em>Granite</em>, <em>watsonx</em> i <em>watsonx.ai</em> su zaštitni znakovi IBM-a.",
-		"three_ws_is_an_open_source_3d": "three.ws je open-source 3D AI agentska platforma i dom <strong>x402 MCP servera za IBM Granite</strong>. Izaberite odgovarajući kanal — prijave grešaka i zahtevi za funkcije idu na GitHub, pitanja „kako da…“ na Discussions, a sve privatno ili specifično za nalog na imejl. Bezbednosni izveštaji dobijaju svoju adresu.",
 		"three_ws_is_an_open_source_project": "three.ws je open-source projekat podržan od strane svojih održavalaca po najboljim mogućnostima.",
 		"verify_your_ibm_credentials_independently": "Proverite svoje IBM akreditive nezavisno",
 		"what_to_expect": "Šta očekivati",

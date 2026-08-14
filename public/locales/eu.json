@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Hemen minutu batzuk pasatzeak normalean hiru joan-etorri bakarrean bihurtzen ditu.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Abusua edo plataformaren erabilera okerra salatu</span>",
-		"ask_how_do_i_wire_this_into": "Galdetu \"nola konektatzen dut hau Claude / Cursor / nire agentearekin?\" edo alderatu ikuspegiak komunitatearekin eta mantentzaileekin.",
 		"before_you_open_an_issue": "Arazo bat ireki aurretik",
 		"check_your_environment_variables": "Egiaztatu zure ingurune-aldagaiak",
 		"copy": "Kopiatu",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Sortu edo egiaztatu API gako bat hemen: <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, eta berretsi proiektuaren IDa <em>watsonx.ai proiektua → Kudeatu → Orokorra</em> atalean.",
 		"dedicated_docs_support_for_the_mcp_server": "MCP zerbitzarirako dokumentazio eta laguntza dedikatua",
 		"discover": "Ezagutu",
-		"discussions": "Eztabaidak",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Copyright / DMCA kentze-oharrak</span>",
 		"docs": "Dokumentazioa",
 		"docs_2": "Dokumentazioa",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws proiektu independente eta kode irekikoa da. x402 MCP zerbitzariak IBM Granite integratzen du watsonx.ai bidez; ez da IBM produktu bat eta ez du IBMk onartzen. IBM watsonx.ai plataformarako, Granite modelorako edo IBM fakturazio arazoetarako, jarri harremanetan <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>-ekin. <em>Granite</em>, <em>watsonx</em> eta <em>watsonx.ai</em> IBMren marka erregistratuak dira.",
-		"three_ws_is_an_open_source_3d": "three.ws kode irekiko 3D AI agente plataforma bat da, eta IBM Granite</strong>-rako <strong>x402 MCP zerbitzariaren egoitza. Aukeratu egokitzen den kanala — akatsen txostenak eta funtzio eskaerak GitHub-era doaz, \"nola egin dezaket…\" galderak Eztabaidetara, eta pribatua edo kontu-espezifikoa den edozer posta elektronikora. Segurtasun txostenek beren helbidea dute.",
 		"three_ws_is_an_open_source_project": "three.ws kode irekiko proiektu bat da, bere mantentzaileek ahalegin onenaren arabera babestua.",
 		"verify_your_ibm_credentials_independently": "Egiaztatu zure IBM kredentzialak modu independentean",
 		"what_to_expect": "Zer espero",

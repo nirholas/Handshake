@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Dažas minūtes šeit parasti trīs apmaiņas pārvērš vienā.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Ziņot par ļaunprātīgu izmantošanu vai platformas neatbilstošu lietošanu</span>",
-		"ask_how_do_i_wire_this_into": "Jautājiet: \"kā es to savienoju ar Claude / Cursor / savu aģentu?\" vai salīdziniet pieejas ar kopienu un uzturētājiem.",
 		"before_you_open_an_issue": "Pirms iesniedzat problēmu",
 		"check_your_environment_variables": "Pārbaudiet savus vides mainīgos",
 		"copy": "Kopēt",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Izveidojiet vai pārbaudiet API atslēgu vietnē <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, un apstipriniet projekta ID zem <em>watsonx.ai projekts → Pārvaldīt → Vispārīgi</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Īpaša dokumentācija un atbalsts MCP serverim",
 		"discover": "Atklāt",
-		"discussions": "Diskusijas",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Autortiesību / DMCA noņemšanas paziņojumi</span>",
 		"docs": "Dokumentācija",
 		"docs_2": "Dokumentācija",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws ir neatkarīgs, atvērtā koda projekts. x402 MCP serveris integrē IBM Granite caur watsonx.ai; tas nav IBM produkts un to neatbalsta IBM. Par IBM watsonx.ai platformas, Granite modeļa vai IBM rēķinu jautājumiem sazinieties ar <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em> un <em>watsonx.ai</em> ir IBM preču zīmes.",
-		"three_ws_is_an_open_source_3d": "three.ws ir atvērtā koda 3D AI aģentu platforma un <strong>x402 MCP servera mājvieta IBM Granite</strong>. Izvēlieties piemērotāko kanālu — kļūdu ziņojumi un funkciju pieprasījumi tiek sūtīti uz GitHub, jautājumi \"kā es varu…\" uz Diskusijām, un viss privātais vai ar kontu saistītais uz e-pastu. Drošības ziņojumiem ir sava adrese.",
 		"three_ws_is_an_open_source_project": "three.ws ir atvērtā koda projekts, ko tā uzturētāji atbalsta, pieliekot maksimālas pūles.",
 		"verify_your_ibm_credentials_independently": "Pārbaudiet savus IBM akreditācijas datus neatkarīgi",
 		"what_to_expect": "Kas sagaidāms",

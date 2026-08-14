@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Ychydig funudau yma fel arfer yn troi tri thaith gron yn un.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Adrodd am gamdriniaeth neu gamddefnydd platfform</span>",
-		"ask_how_do_i_wire_this_into": "Gofynnwch \"sut ydw i'n cysylltu hwn i Claude / Cursor / fy asiant?\" neu cymharwch ddulliau gyda'r gymuned a'r cynhalwyr.",
 		"before_you_open_an_issue": "Cyn i chi agor mater",
 		"check_your_environment_variables": "Gwiriwch eich newidynnau amgylchedd",
 		"copy": "Copïo",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Creu neu wirio allwedd API yn <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, a chadarnhau ID y prosiect o dan <em>watsonx.ai prosiect → Rheoli → Cyffredinol</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Dogfennau a chymorth pwrpasol ar gyfer gweinydd MCP",
 		"discover": "Darganfod",
-		"discussions": "Trafodaethau",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Hysbysiadau tynnu i lawr Hawlfraint / DMCA</span>",
 		"docs": "Dogfennau",
 		"docs_2": "Dogfennau",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "Mae three.ws yn brosiect annibynnol, ffynhonnell agored. Mae gweinydd x402 MCP yn integreiddio IBM Granite trwy watsonx.ai; nid yw'n gynnyrch IBM ac nid yw'n cael ei gefnogi gan IBM. Ar gyfer problemau platfform IBM watsonx.ai, model Granite, neu filio IBM, cysylltwch â <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">Cymorth Cwmwl IBM</a>. Mae <em>Granite</em>, <em>watsonx</em>, a <em>watsonx.ai</em> yn nodau masnach IBM.",
-		"three_ws_is_an_open_source_3d": "Mae three.ws yn blatfform asiant AI 3D ffynhonnell agored, ac yn gartref i weinydd <strong>x402 MCP ar gyfer IBM Granite</strong>. Dewiswch y sianel sy'n addas — mae adroddiadau namau a cheisiadau nodwedd yn mynd i GitHub, cwestiynau \"sut mae gwneud…\" i Drafodaethau, ac unrhyw beth preifat neu benodol i gyfrif i e-bost. Mae adroddiadau diogelwch yn cael eu cyfeiriad eu hunain.",
 		"three_ws_is_an_open_source_project": "Mae three.ws yn brosiect ffynhonnell agored a gefnogir gan ei gynhalwyr ar sail gorau-gyrhaeddiad.",
 		"verify_your_ibm_credentials_independently": "Gwiriwch eich tystlythyrau IBM yn annibynnol",
 		"what_to_expect": "Beth i'w ddisgwyl",

@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "כמה דקות כאן בדרך כלל הופכות שלוש נסיעות הלוך ושוב לאחת.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">דווח על ניצול או שימוש לרעה בפלטפורמה</span>",
-		"ask_how_do_i_wire_this_into": "שאל \"איך אני מחבר את זה ל-Claude / Cursor / הסוכן שלי?\" או השווה גישות עם הקהילה והמנהלים.",
 		"before_you_open_an_issue": "לפני שאתה פותח בעיה",
 		"check_your_environment_variables": "בדוק את משתני הסביבה שלך",
 		"copy": "העתק",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "צור או בדוק מפתח API ב-<a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, ואשר את מזהה הפרויקט תחת <em>watsonx.ai פרויקט → ניהול → כללי</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "תיעוד ותמיכה ייעודיים עבור השרת MCP",
 		"discover": "גלה",
-		"discussions": "דיונים",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">הודעות הסרה של זכויות יוצרים / DMCA</span>",
 		"docs": "תיעוד",
 		"docs_2": "תיעוד",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws הוא פרויקט עצמאי בקוד פתוח. השרת x402 MCP משלב את IBM Granite דרך watsonx.ai; זה לא מוצר של IBM ואינו נתמך על ידי IBM. עבור בעיות פלטפורמה IBM watsonx.ai, מודל Granite, או בעיות חיוב של IBM, פנה ל-<a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, ו<em>watsonx.ai</em> הם סימני מסחר של IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws הוא פלטפורמת סוכן AI תלת-ממדית בקוד פתוח, ובית השרת <strong>x402 MCP עבור IBM Granite</strong>. בחר את הערוץ שמתאים — דיווחי באגים ובקשות תכונה הולכים ל-GitHub, שאלות \"איך אני...\" לדיונים, וכל דבר פרטי או ספציפי לחשבון לאימייל. דיווחי אבטחה מקבלים כתובת משלהם.",
 		"three_ws_is_an_open_source_project": "three.ws הוא פרויקט בקוד פתוח הנתמך על ידי המתחזקים שלו במאמץ הטוב ביותר.",
 		"verify_your_ibm_credentials_independently": "אמת את האישורים שלך ב-IBM באופן עצמאי",
 		"what_to_expect": "מה לצפות",

@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Cúpla nóiméad anseo, de ghnáth déanann sé trí thuras fillte amháin.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Tuairiscigh mí-úsáid nó mí-úsáid ardáin</span>",
-		"ask_how_do_i_wire_this_into": "Fiafraigh \"conas a nascaim é seo le Claude / Cursor / mo ghníomhaire?\" nó déan comparáid idir cur chuige leis an bpobal agus leis na cothaitheoirí.",
 		"before_you_open_an_issue": "Sula n-ardóidh tú saincheist",
 		"check_your_environment_variables": "Seiceáil do chuid athróg comhshaoil",
 		"copy": "Cóipeáil",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Cruthaigh nó seiceáil eochair API ag <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, agus deimhnigh an t-aitheantas tionscadail faoi <em>watsonx.ai tionscadal → Bainistigh → Ginearálta</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Doiciméid & tacaíocht tiomnaithe don fhreastalaí MCP",
 		"discover": "Faigh amach",
-		"discussions": "Pléití",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Fógraí Baint anuas Cóipchirt / DMCA</span>",
 		"docs": "Doiciméid",
 		"docs_2": "Doiciméid",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "Is tionscadal neamhspleách, foinse oscailte é three.ws. Comhtháthaíonn freastalaí x402 MCP IBM Granite trí watsonx.ai; ní táirge IBM é agus ní thacaíonn IBM leis. Maidir le saincheisteanna ardáin IBM watsonx.ai, samhail Granite, nó billeála IBM, déan teagmháil le <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">Tacaíocht IBM Cloud</a>. Is trádmharcanna de chuid IBM iad <em>Granite</em>, <em>watsonx</em>, agus <em>watsonx.ai</em>.",
-		"three_ws_is_an_open_source_3d": "Is ardán gníomhaire AI 3D foinse oscailte é three.ws, agus baile an fhreastalaí <strong>x402 MCP do IBM Granite</strong>. Roghnaigh an cainéal a oireann — téann tuarascálacha fabhtanna agus iarratais gné chuig GitHub, ceisteanna \"conas a dhéanaim…\" chuig Pléití, agus aon rud príobháideach nó a bhaineann go sonrach le cuntas chuig ríomhphost. Faigheann tuarascálacha slándála a seoladh féin.",
 		"three_ws_is_an_open_source_project": "Is tionscadal foinse oscailte é three.ws a dtacaíonn a chothaitheoirí leis ar bhonn na hiarrachta is fearr.",
 		"verify_your_ibm_credentials_independently": "Fíoraigh do dhintiúir IBM go neamhspleách",
 		"what_to_expect": "Cad atá le súil leis",

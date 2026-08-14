@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Dhowr daqiiqo oo halkan ah waxay caadiyan saddex safar oo is-daba-joog ah ka dhigtaa mid keliya.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Ka warbixi xadgudubka ama si xun u isticmaalka madal</span>",
-		"ask_how_do_i_wire_this_into": "Weydii \"sideen tan ugu xiraa Claude / Cursor / wakiilkayga?\" ama isbarbardhig hababka bulshada iyo kuwa dayactirayaasha.",
 		"before_you_open_an_issue": "Kahor intaadan furi arrin",
 		"check_your_environment_variables": "Hubi doorsoomayaasha deegaankaaga",
 		"copy": "Koobiyeey",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Samee ama hubi furaha API-ga ee <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, oo xaqiiji aqoonsiga mashruuca hoosta <em>watsonx.ai mashruuc → Maamul → Guud</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Dukumentiyo gaar ah & taageero loogu talagalay server-ka MCP",
 		"discover": "Soo hel",
-		"discussions": "Doodo",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Ogeysiisyada ka saarista xuquuqda daabacaadda / DMCA</span>",
 		"docs": "Dukumentiyo",
 		"docs_2": "Dukumentiyo",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws waa mashruuc madax-bannaan, il furan. Serverka x402 MCP wuxuu isku xiraa IBM Granite isagoo isticmaalaya watsonx.ai; ma aha badeecad IBM ah mana taageerto IBM. Wixii ku saabsan madal IBM watsonx.ai, moodelka Granite, ama arrimaha biilasha IBM, la xiriir <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, iyo <em>watsonx.ai</em> waa calaamado ganacsi oo IBM leedahay.",
-		"three_ws_is_an_open_source_3d": "three.ws waa madal wakiilada AI ee 3D ah oo il furan, iyo hoyga serverka <strong>x402 MCP ee IBM Granite</strong>. Dooro kanaalka ku habboon — warbixinnada cilladaha iyo codsiyada astaamaha waxay aadaan GitHub, su'aalaha \"sideen u sameeyaa…\" waxay aadaan Discussions, iyo wax kasta oo gaar ah ama akoon-gaar ah waxay aadaan email. Warbixinnada amniga waxay leeyihiin cinwaan u gaar ah.",
 		"three_ws_is_an_open_source_project": "three.ws waa mashruuc il furan oo ay taageeraan dayactirayaasheeda si dadaal wanaagsan ah.",
 		"verify_your_ibm_credentials_independently": "Xaqiiji aqoonsigaaga IBM si madax-bannaan",
 		"what_to_expect": "Maxaa la filan karaa",

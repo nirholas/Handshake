@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Чанд дақиқа дар ин ҷо одатан се муроҷиатро ба як мегардонад.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Дар бораи сӯиистифода ё истифодаи нодурусти платформа хабар диҳед</span>",
-		"ask_how_do_i_wire_this_into": "Пурсед: \"Чӣ тавр ман инро ба Claude / Cursor / агенти худ пайваст кунам?\" ё усулҳоро бо ҷомеа ва нигоҳдорандагон муқоиса кунед.",
 		"before_you_open_an_issue": "Пеш аз кушодани масъала",
 		"check_your_environment_variables": "Тағйирёбандаҳои муҳити худро тафтиш кунед",
 		"copy": "Нусхабардорӣ",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Калиди API-ро дар <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a> эҷод ё тафтиш кунед ва ID-и лоиҳаро дар зери <em>watsonx.ai лоиҳа → Идоракунӣ → Умумӣ</em> тасдиқ кунед.",
 		"dedicated_docs_support_for_the_mcp_server": "Ҳуҷҷатҳо ва дастгирии махсус барои сервери MCP",
 		"discover": "Кашф кунед",
-		"discussions": "Муҳокимаҳо",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Огоҳиномаҳои ҳуқуқи муаллифӣ / DMCA оид ба хориҷкунӣ</span>",
 		"docs": "Ҳуҷҷатҳо",
 		"docs_2": "Ҳуҷҷатҳо",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws як лоиҳаи мустақил ва кушодаасос мебошад. Сервери x402 MCP IBM Granite-ро тавассути watsonx.ai муттаҳид мекунад; он маҳсулоти IBM нест ва аз ҷониби IBM дастгирӣ намешавад. Барои платформаи IBM watsonx.ai, модели Granite, ё масъалаҳои ҳисоббарории IBM, бо <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a> тамос гиред. <em>Granite</em>, <em>watsonx</em>, ва <em>watsonx.ai</em> тамғаҳои молии IBM мебошанд.",
-		"three_ws_is_an_open_source_3d": "three.ws як платформаи кушодаасоси агентҳои 3D AI мебошад ва хонаи сервери <strong>x402 MCP барои IBM Granite</strong> аст. Каналеро интихоб кунед, ки мувофиқ аст — гузоришҳои хатогиҳо ва дархостҳои хусусиятҳо ба GitHub мераванд, саволҳои \"чӣ тавр ман…\" ба Баҳсҳо (Discussions), ва ҳама чизи хусусӣ ё марбут ба ҳисоб ба почтаи электронӣ. Гузоришҳои амниятӣ суроғаи худро доранд.",
 		"three_ws_is_an_open_source_project": "three.ws як лоиҳаи кушодаасос мебошад, ки аз ҷониби нигоҳдорандагони худ бо кӯшиши ҳадди аксар дастгирӣ мешавад.",
 		"verify_your_ibm_credentials_independently": "Маълумоти эътимоднокии IBM-и худро мустақилона тасдиқ кунед",
 		"what_to_expect": "Чиро интизор шавед",

@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "මෙහි ගත කරන සුළු වේලාවක් සාමාන්‍යයෙන් ගමන් තුනක් එකක් බවට පත් කරයි.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">අනිසි භාවිතය හෝ වේදිකාවේ අනිසි භාවිතය වාර්තා කරන්න</span>",
-		"ask_how_do_i_wire_this_into": "\"මම මෙය Claude / Cursor / මගේ නියෝජිතයාට සම්බන්ධ කරන්නේ කෙසේද?\" කියා අසන්න, නැතහොත් ප්‍රජාව සහ නඩත්තුකරුවන් සමඟ ප්‍රවේශයන් සංසන්දනය කරන්න.",
 		"before_you_open_an_issue": "ගැටලුවක් විවෘත කිරීමට පෙර",
 		"check_your_environment_variables": "ඔබේ පරිසර විචල්‍යයන් පරීක්ෂා කරන්න",
 		"copy": "පිටපත් කරන්න",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "<a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a> හි API යතුරක් සාදන්න හෝ පරීක්ෂා කරන්න, සහ <em>watsonx.ai project → Manage → General</em> යටතේ ඇති ව්‍යාපෘති හැඳුනුම්පත තහවුරු කරන්න.",
 		"dedicated_docs_support_for_the_mcp_server": "MCP සේවාදායකය සඳහා කැපවූ ලේඛන සහ සහාය",
 		"discover": "සොයා ගන්න",
-		"discussions": "සාකච්ඡා",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">ප්‍රකාශන හිමිකම් / DMCA ඉවත් කිරීමේ දැන්වීම්</span>",
 		"docs": "ලේඛන",
 		"docs_2": "ලේඛන",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws යනු ස්වාධීන, විවෘත මූලාශ්‍ර ව්‍යාපෘතියකි. x402 MCP සර්වරය IBM Granite watsonx.ai හරහා ඒකාබද්ධ කරයි; එය IBM නිෂ්පාදනයක් නොවන අතර IBM විසින් සහාය නොදක්වයි. IBM watsonx.ai වේදිකා, Granite මාදිලි, හෝ IBM බිල්පත් ගැටළු සඳහා, <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a> අමතන්න. <em>Granite</em>, <em>watsonx</em>, සහ <em>watsonx.ai</em> යනු IBM හි වෙළඳ ලකුණු වේ.",
-		"three_ws_is_an_open_source_3d": "three.ws යනු විවෘත මූලාශ්‍ර 3D AI නියෝජිත වේදිකාවක් වන අතර, IBM Granite</strong> සඳහා වන <strong>x402 MCP සර්වරයේ නිවහනයි. ගැලපෙන නාලිකාව තෝරන්න — දෝෂ වාර්තා සහ විශේෂාංග ඉල්ලීම් GitHub වෙත, \"මා කරන්නේ කෙසේද…\" ප්‍රශ්න Discussions වෙත, සහ පුද්ගලික හෝ ගිණුමට අදාළ ඕනෑම දෙයක් ඊමේල් වෙත. ආරක්ෂක වාර්තා සඳහා වෙනම ලිපිනයක් ඇත.",
 		"three_ws_is_an_open_source_project": "three.ws යනු එහි නඩත්තුකරුවන් විසින් උපරිම උත්සාහයෙන් සහාය දක්වන විවෘත මූලාශ්‍ර ව්‍යාපෘතියකි.",
 		"verify_your_ibm_credentials_independently": "ඔබේ IBM අක්තපත්‍ර ස්වාධීනව සත්‍යාපනය කරන්න",
 		"what_to_expect": "අපේක්ෂා කළ යුත්තේ කුමක්ද?",

@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "여기서 몇 분이면 보통 세 번의 왕복을 한 번으로 줄여줍니다.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">남용 또는 플랫폼 오용 신고</span>",
-		"ask_how_do_i_wire_this_into": "\"이것을 Claude / Cursor / 내 에이전트에 어떻게 연결하나요?\"라고 질문하거나 커뮤니티 및 관리자와 접근 방식을 비교하세요.",
 		"before_you_open_an_issue": "이슈를 열기 전에",
 		"check_your_environment_variables": "환경 변수를 확인하세요.",
 		"copy": "복사",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "<a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>에서 API 키를 생성하거나 확인하고, <em>watsonx.ai 프로젝트 → 관리 → 일반</em>에서 프로젝트 ID를 확인하세요.",
 		"dedicated_docs_support_for_the_mcp_server": "MCP 서버를 위한 전용 문서 및 지원",
 		"discover": "발견하기",
-		"discussions": "토론",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">저작권 / DMCA 삭제 요청</span>",
 		"docs": "문서",
 		"docs_2": "문서",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws은 독립적인 오픈소스 프로젝트입니다. x402 MCP 서버는 watsonx.ai를 통해 IBM Granite를 통합하며, 이는 IBM 제품이 아니며 IBM에서 지원하지 않습니다. IBM watsonx.ai 플랫폼, Granite 모델 또는 IBM 청구 문제에 대해서는 <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>에 문의하십시오. <em>Granite</em>, <em>watsonx</em>, 그리고 <em>watsonx.ai</em>은 IBM의 상표입니다.",
-		"three_ws_is_an_open_source_3d": "three.ws는 오픈소스 3D AI 에이전트 플랫폼이며, IBM Granite</strong>용 <strong>x402 MCP 서버의 본거지입니다. 적합한 채널을 선택하세요 — 버그 보고 및 기능 요청은 GitHub로, \"어떻게 해야 하나요…\" 질문은 Discussions로, 개인적이거나 계정 관련 문의는 이메일로 보내주세요. 보안 보고서는 별도의 주소를 사용합니다.",
 		"three_ws_is_an_open_source_project": "three.ws은 오픈소스 프로젝트이며 유지보수 담당자들이 최선을 다해 지원합니다.",
 		"verify_your_ibm_credentials_independently": "IBM 자격 증명을 독립적으로 확인하세요.",
 		"what_to_expect": "예상되는 사항",

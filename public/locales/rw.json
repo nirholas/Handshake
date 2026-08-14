@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Iminota mike umara hano isanzwe igabanya ibiganiro byinshi bikaba kimwe.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Tanga raporo y'ihohoterwa cyangwa ikoreshwa nabi rya platform</span>",
-		"ask_how_do_i_wire_this_into": "Baza uti \"nshobora gute guhuza ibi na Claude / Cursor / umukozi wanjye?\" cyangwa ugereranye uburyo n'umuryango n'abashinzwe kubungabunga.",
 		"before_you_open_an_issue": "Mbere yo gutanga ikibazo",
 		"check_your_environment_variables": "Genzura variables z'ibidukikije byawe",
 		"copy": "Kopi",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Kora cyangwa ugenzure API key kuri <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, kandi wemeze project id munsi ya <em>watsonx.ai project → Manage → General</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Inyandiko zihariye n'ubufasha kuri seriveri ya MCP",
 		"discover": "Menya",
-		"discussions": "Ibiganiro",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Amabwiriza yo gukuraho ibyanditswe bifite uburenganzira bw'umwanditsi / DMCA</span>",
 		"docs": "Inyandiko",
 		"docs_2": "Inyandiko",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws ni umushinga wigenga, ukoresha code ifunguye. Seriveri ya x402 MCP ihuza IBM Granite binyuze muri watsonx.ai; ntabwo ari ibicuruzwa bya IBM kandi ntabwo ishyigikiwe na IBM. Ku bibazo bya platform ya IBM watsonx.ai, model ya Granite, cyangwa ibijyanye no kwishyura IBM, hamagara <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, na <em>watsonx.ai</em> ni ibirango bya IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws ni urubuga rukoresha code ifunguye rwa 3D AI agent, kandi niho seriveri ya <strong>x402 MCP ya IBM Granite</strong> iherereye. Hitamo uburyo bukwiriye — raporo z'ibibazo n'ibisabwa bishya bijya kuri GitHub, ibibazo bya \"mbikora gute...\" bijya muri Discussions, n'ikindi cyose cyihariye cyangwa kijyanye na konti kikoherezwa kuri imeri. Raporo z'umutekano zifite adiresi yazo bwite.",
 		"three_ws_is_an_open_source_project": "three.ws ni umushinga ukoresha code ifunguye ushyigikiwe n'abawucunga uko bashoboye.",
 		"verify_your_ibm_credentials_independently": "Genzura ibyangombwa byawe bya IBM ku giti cyawe.",
 		"what_to_expect": "Ibyo kwitega",

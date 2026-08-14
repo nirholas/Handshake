@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "እዚህ ጥቂት ደቂቃዎች ሶስት ጊዜ ከመመላለስ ያድናሉ።",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">በደል ወይም የመድረክ አላግባብ መጠቀምን ሪፖርት ያድርጉ</span>",
-		"ask_how_do_i_wire_this_into": "\"ይህን እንዴት ከClaude / Cursor / የእኔ ወኪል ጋር አገናኘዋለሁ?\" ብለው ይጠይቁ ወይም አቀራረቦችን ከማህበረሰቡ እና ከጥገና ሰጪዎች ጋር ያነጻጽሩ።",
 		"before_you_open_an_issue": "ችግር ከማቅረብዎ በፊት",
 		"check_your_environment_variables": "የአካባቢ ተለዋዋጮችዎን ያረጋግጡ",
 		"copy": "ቅዳ",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "በ<a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a> የኤፒአይ ቁልፍ ይፍጠሩ ወይም ያረጋግጡ፣ እና የፕሮጀክት መታወቂያውን ከ<em>watsonx.ai ፕሮጀክት → አስተዳድር → አጠቃላይ</em> ስር ያረጋግጡ።",
 		"dedicated_docs_support_for_the_mcp_server": "ለMCP ሰርቨር የተሰጡ ሰነዶች እና ድጋፍ",
 		"discover": "ያግኙ",
-		"discussions": "ውይይቶች",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">የቅጂ መብት / DMCA የማውረድ ማስታወቂያዎች</span>",
 		"docs": "ሰነዶች",
 		"docs_2": "ሰነዶች",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws ገለልተኛ፣ ክፍት ምንጭ ፕሮጀክት ነው። የx402 MCP ሰርቨር አይቢኤም Graniteን በwatsonx.ai በኩል ያዋህዳል። እሱ የIBM ምርት አይደለም እና በIBM አይደገፍም። ለIBM watsonx.ai ፕላትፎርም፣ ለGranite ሞዴል፣ ወይም ለIBM የክፍያ ጉዳዮች፣ <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>ን ያግኙ። <em>Granite</em>፣ <em>watsonx</em>፣ እና <em>watsonx.ai</em> የIBM የንግድ ምልክቶች ናቸው።",
-		"three_ws_is_an_open_source_3d": "three.ws ክፍት ምንጭ 3D AI ወኪል ፕላትፎርም ነው፣ እና ለIBM Granite</strong> የ<strong>x402 MCP ሰርቨር መገኛ ነው። የሚስማማውን ቻናል ይምረጡ — የስህተት ሪፖርቶች እና የባህሪ ጥያቄዎች ወደ GitHub ይሄዳሉ፣ \"እንዴት ነው…\" የሚሉ ጥያቄዎች ወደ Discussions፣ እና ማንኛውም የግል ወይም ከመለያ ጋር የተያያዘ ነገር ወደ ኢሜይል ይላካል። የደህንነት ሪፖርቶች የራሳቸው አድራሻ አላቸው።",
 		"three_ws_is_an_open_source_project": "three.ws በተንከባካቢዎቹ የተቻለውን ያህል ጥረት በማድረግ የሚደገፍ ክፍት ምንጭ ፕሮጀክት ነው።",
 		"verify_your_ibm_credentials_independently": "የIBM ምስክርነቶችዎን በተናጥል ያረጋግጡ",
 		"what_to_expect": "ምን ይጠበቃል",

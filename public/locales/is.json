@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Nokkrar mínútur hér stytta oft þrjár ferðir fram og til baka í eina.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Tilkynna misnotkun eða óviðeigandi notkun vettvangs</span>",
-		"ask_how_do_i_wire_this_into": "Spyrðu „hvernig tengi ég þetta við Claude / Cursor / umboðsmanninn minn?“ eða berðu saman aðferðir við samfélagið og viðhaldsaðila.",
 		"before_you_open_an_issue": "Áður en þú opnar mál",
 		"check_your_environment_variables": "Athugaðu umhverfisbreyturnar þínar",
 		"copy": "Afrita",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Búðu til eða athugaðu API lykil á <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, og staðfestu verkefnisauðkenni undir <em>watsonx.ai verkefni → Stjórna → Almennt</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Sérstök skjöl og stuðningur fyrir MCP netþjóninn",
 		"discover": "Uppgötva",
-		"discussions": "Umræður",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Tilkynningar um höfundarrétt / DMCA niðurtöku</span>",
 		"docs": "Skjöl",
 		"docs_2": "Skjöl",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws er sjálfstætt, opinn hugbúnaðarverkefni. x402 MCP netþjónninn samþættir IBM Granite í gegnum watsonx.ai; hann er ekki IBM vara og er ekki studdur af IBM. Fyrir IBM watsonx.ai vettvang, Granite líkan eða reikningsmál hjá IBM, hafðu samband við <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, og <em>watsonx.ai</em> eru vörumerki IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws er opinn hugbúnaðarvettvangur fyrir 3D gervigreindarumboðsmenn og heimili <strong>x402 MCP netþjónsins fyrir IBM Granite</strong>. Veldu þann farveg sem hentar — villutilkynningar og eiginleikabeiðnir fara á GitHub, „hvernig geri ég…“ spurningar á Discussions, og allt sem er einkamál eða reikningstengt á tölvupóst. Öryggisskýrslur fá sitt eigið heimilisfang.",
 		"three_ws_is_an_open_source_project": "three.ws er opinn hugbúnaðarverkefni stutt af viðhaldsaðilum sínum eftir bestu getu.",
 		"verify_your_ibm_credentials_independently": "Staðfestu IBM skilríki þín sjálfstætt",
 		"what_to_expect": "Hvað má búast við",

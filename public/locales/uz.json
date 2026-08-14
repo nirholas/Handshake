@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Bu yerda bir necha daqiqa odatda uchta borib-kelishni bittaga aylantiradi.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Suiste'mol yoki platformadan notoʻgʻri foydalanish haqida xabar bering</span>",
-		"ask_how_do_i_wire_this_into": "“Buni Claude / Cursor / agentimga qanday ulashim mumkin?” deb soʻrang yoki hamjamiyat va texnik xizmat koʻrsatuvchilar bilan yondashuvlarni solishtiring.",
 		"before_you_open_an_issue": "Muammoni ochishdan oldin",
 		"check_your_environment_variables": "Atrof-muhit oʻzgaruvchilaringizni tekshiring",
 		"copy": "Nusxalash",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "<a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a> manzilida API kalitini yarating yoki tekshiring va <em>watsonx.ai loyiha → Boshqarish → Umumiy</em> ostidagi loyiha identifikatorini tasdiqlang.",
 		"dedicated_docs_support_for_the_mcp_server": "MCP serveri uchun maxsus hujjatlar va qoʻllab-quvvatlash",
 		"discover": "Kashf etish",
-		"discussions": "Munozaralar",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Mualliflik huquqi / DMCA olib tashlash bildirishnomalari</span>",
 		"docs": "Hujjatlar",
 		"docs_2": "Hujjatlar",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws mustaqil, ochiq kodli loyihadir. x402 MCP serveri IBM Graniteni watsonx.ai orqali integratsiya qiladi; u IBM mahsuloti emas va IBM tomonidan qoʻllab-quvvatlanmaydi. IBM watsonx.ai platformasi, Granite modeli yoki IBM hisob-kitob muammolari uchun <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a> bilan bogʻlaning. <em>Granite</em>, <em>watsonx</em> va <em>watsonx.ai</em> IBM savdo belgilaridir.",
-		"three_ws_is_an_open_source_3d": "three.ws ochiq kodli 3D AI agent platformasi va IBM Granite</strong> uchun <strong>x402 MCP serverining uyidir. Mos keladigan kanalni tanlang — xato hisobotlari va funksiya soʻrovlari GitHubga, \"qanday qilib…\" savollari Discussionsga, va har qanday shaxsiy yoki akkauntga oid narsalar elektron pochtaga yuboriladi. Xavfsizlik hisobotlari uchun alohida manzil mavjud.",
 		"three_ws_is_an_open_source_project": "three.ws ochiq kodli loyiha boʻlib, uni qoʻllab-quvvatlovchilar tomonidan eng yaxshi saʼy-harakatlar asosida qoʻllab-quvvatlanadi.",
 		"verify_your_ibm_credentials_independently": "IBM hisob maʼlumotlaringizni mustaqil ravishda tekshiring",
 		"what_to_expect": "Nimani kutish kerak",

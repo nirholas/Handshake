@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "بضع دقائق هنا عادةً ما تحول ثلاث رحلات ذهاب وإياب إلى واحدة.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">الإبلاغ عن إساءة الاستخدام أو سوء استخدام المنصة</span>",
-		"ask_how_do_i_wire_this_into": "اسأل \"كيف أوصل هذا إلى كلود / كيرسور / وكيلتي؟\" أو قارن الأساليب مع المجتمع والمشرفين.",
 		"before_you_open_an_issue": "قبل أن تفتح قضية",
 		"check_your_environment_variables": "تحقق من متغيرات البيئة الخاصة بك",
 		"copy": "نسخ",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "أنشئ أو تحقق من مفتاح API في <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>، وتأكد من معرف المشروع تحت <em>watsonx.ai المشروع → إدارة → عام</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "وثائق ودعم مخصص لخادم MCP",
 		"discover": "اكتشف",
-		"discussions": "نقاشات",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">حقوق الطبع والنشر / إشعارات سحب DMCA</span>",
 		"docs": "وثائق",
 		"docs_2": "وثائق",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws هو مشروع مستقل ومفتوح المصدر. خادم x402 MCP يدمج IBM Granite عبر watsonx.ai؛ ليس منتجًا من IBM ولا يتم دعمه من قبل IBM. لمشاكل منصة IBM watsonx.ai، نموذج Granite، أو فواتير IBM، اتصل بـ <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">دعم IBM Cloud</a>. <em>Granite</em>، <em>watsonx</em>، و<em>watsonx.ai</em> هي علامات تجارية لشركة IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws هي منصة مفتوحة المصدر لوكلاء الذكاء الاصطناعي ثلاثي الأبعاد، وموطن خادم <strong>x402 MCP لـ IBM Granite</strong>. اختر القناة المناسبة — تقارير الأخطاء وطلبات الميزات تذهب إلى GitHub، وأسئلة \"كيف أفعل...\" إلى المناقشات، وأي شيء خاص أو متعلق بالحساب عبر البريد الإلكتروني. تقارير الأمان لها عنوانها الخاص.",
 		"three_ws_is_an_open_source_project": "three.ws هو مشروع مفتوح المصدر مدعوم من قبل القائمين عليه على أساس أفضل جهد.",
 		"verify_your_ibm_credentials_independently": "تحقق من بيانات اعتماد IBM الخاصة بك بشكل مستقل",
 		"what_to_expect": "ماذا تتوقع",

@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Ftit minuti hawn normalment jibdlu tliet vjaġġi 'l hemm u 'l hawn f'wieħed.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Irrapporta abbuż jew użu ħażin tal-pjattaforma</span>",
-		"ask_how_do_i_wire_this_into": "Staqsi \"kif inqabbad dan ma' Claude / Cursor / l-aġent tiegħi?\" jew qabbel approċċi mal-komunità u l-manutenzjonisti.",
 		"before_you_open_an_issue": "Qabel ma tiftaħ issue",
 		"check_your_environment_variables": "Iċċekkja l-varjabbli tal-ambjent tiegħek",
 		"copy": "Ikkopja",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Oħloq jew iċċekkja API key fuq <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, u kkonferma l-ID tal-proġett taħt <em>watsonx.ai proġett → Immaniġġja → Ġenerali</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Dokumentazzjoni u appoġġ dedikati għas-server MCP",
 		"discover": "Skopri",
-		"discussions": "Diskussjonijiet",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Avviżi ta' tneħħija ta' Copyright / DMCA</span>",
 		"docs": "Dokumentazzjoni",
 		"docs_2": "Dokumentazzjoni",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws huwa proġett indipendenti u open-source. Is-server x402 MCP jintegra IBM Granite permezz ta' watsonx.ai; mhuwiex prodott tal-IBM u mhuwiex appoġġjat mill-IBM. Għal kwistjonijiet ta' pjattaforma IBM watsonx.ai, mudell Granite, jew kontijiet tal-IBM, ikkuntattja <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, u <em>watsonx.ai</em> huma trademarks tal-IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws hija pjattaforma open-source ta' aġenti AI 3D, u dar tas-server <strong>x402 MCP għal IBM Granite</strong>. Agħżel il-kanal li jaqbel — rapporti ta' bugs u talbiet għal karatteristiċi jmorru fuq GitHub, mistoqsijiet \"kif nagħmel…\" għal Discussions, u kull ħaġa privata jew speċifika għall-kont għall-email. Rapporti ta' sigurtà jiksbu l-indirizz tagħhom stess.",
 		"three_ws_is_an_open_source_project": "three.ws huwa proġett open-source appoġġjat mill-manutenzjonisti tiegħu fuq bażi ta' l-aħjar sforz.",
 		"verify_your_ibm_credentials_independently": "Ivverifika l-kredenzjali tal-IBM tiegħek b'mod indipendenti",
 		"what_to_expect": "X'għandek tistenna",

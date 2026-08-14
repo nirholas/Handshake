@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Kelios minutės čia paprastai tris keliones pirmyn ir atgal paverčia viena.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Pranešti apie piktnaudžiavimą ar netinkamą platformos naudojimą</span>",
-		"ask_how_do_i_wire_this_into": "Klauskite „kaip tai prijungti prie Claude / Cursor / mano agento?“ arba palyginkite metodus su bendruomene ir prižiūrėtojais.",
 		"before_you_open_an_issue": "Prieš pranešdami apie problemą",
 		"check_your_environment_variables": "Patikrinkite savo aplinkos kintamuosius",
 		"copy": "Kopijuoti",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Sukurkite arba patikrinkite API raktą adresu <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, ir patvirtinkite projekto ID skiltyje <em>watsonx.ai projektas → Valdymas → Bendra</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Specialūs dokumentai ir palaikymas MCP serveriui",
 		"discover": "Atrasti",
-		"discussions": "Diskusijos",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Autorių teisių / DMCA pašalinimo pranešimai</span>",
 		"docs": "Dokumentai",
 		"docs_2": "Dokumentai",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws yra nepriklausomas, atvirojo kodo projektas. x402 MCP serveris integruoja IBM Granite per watsonx.ai; tai nėra IBM produktas ir nėra palaikomas IBM. Dėl IBM watsonx.ai platformos, Granite modelio ar IBM atsiskaitymo problemų kreipkitės į <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em> ir <em>watsonx.ai</em> yra IBM prekių ženklai.",
-		"three_ws_is_an_open_source_3d": "three.ws yra atvirojo kodo 3D AI agentų platforma ir <strong>x402 MCP serverio, skirto IBM Granite</strong>, namai. Pasirinkite tinkamą kanalą – klaidų pranešimai ir funkcijų užklausos siunčiami į GitHub, „kaip man...“ klausimai į Discussions, o bet kas privatu ar susiję su paskyra – el. paštu. Saugumo pranešimai turi savo adresą.",
 		"three_ws_is_an_open_source_project": "three.ws yra atvirojo kodo projektas, palaikomas jo prižiūrėtojų dedant visas pastangas.",
 		"verify_your_ibm_credentials_independently": "Patikrinkite savo IBM kredencialus savarankiškai",
 		"what_to_expect": "Ko tikėtis",

@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Qualche minuto qui di solito trasforma tre viaggi in uno.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Segnala abusi o uso improprio della piattaforma</span>",
-		"ask_how_do_i_wire_this_into": "Chiedi \"come posso collegare questo a Claude / Cursor / il mio agente?\" o confronta approcci con la comunità e i manutentori.",
 		"before_you_open_an_issue": "Prima di aprire un problema",
 		"check_your_environment_variables": "Controlla le tue variabili d'ambiente",
 		"copy": "Copia",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Crea o controlla una chiave API su <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, e conferma l'ID progetto sotto <em>watsonx.ai progetto → Gestisci → Generale</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Documentazione e supporto dedicati per il server MCP",
 		"discover": "Scopri",
-		"discussions": "Discussioni",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Copyright / Notifiche di rimozione DMCA</span>",
 		"docs": "Documentazione",
 		"docs_2": "Documentazione",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws è un progetto indipendente e open-source. Il x402 MCP server integra IBM Granite tramite watsonx.ai; non è un prodotto IBM e non è supportato da IBM. Per problemi relativi a IBM watsonx.ai piattaforma, Granite modello, o fatturazione IBM, contatta <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, e <em>watsonx.ai</em> sono marchi di IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws è una piattaforma open-source per agenti AI 3D, e casa del <strong>x402 MCP server per IBM Granite</strong>. Scegli il canale che fa per te — i report di bug e le richieste di funzionalità vanno su GitHub, le domande \"come faccio a...\" su Discussions, e qualsiasi cosa privata o specifica dell'account via email. I report di sicurezza hanno il loro indirizzo.",
 		"three_ws_is_an_open_source_project": "three.ws è un progetto open-source supportato dai suoi manutentori su base di sforzo massimo.",
 		"verify_your_ibm_credentials_independently": "Verifica le tue credenziali IBM in modo indipendente",
 		"what_to_expect": "Cosa aspettarsi",

@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "دلته څو دقیقې معمولاً درې تګ راتګونه په یوه بدلوي.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">د ناوړه ګټې اخیستنې یا د پلیټ فارم ناسم کارونې راپور ورکړئ</span>",
-		"ask_how_do_i_wire_this_into": "پوښتنه وکړئ چې 'زه دا څنګه کلاوډ / کرسر / خپل ایجنټ سره وصل کړم؟' یا د ټولنې او ساتونکو سره طریقې پرتله کړئ.",
 		"before_you_open_an_issue": "مخکې لدې چې یوه مسله پرانیزئ",
 		"check_your_environment_variables": "خپل د چاپیریال متغیرات وګورئ",
 		"copy": "کاپی",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "په <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a> کې د API کیلي جوړه یا وګورئ، او د <em>watsonx.ai پروژې → مدیریت → عمومي</em> لاندې د پروژې ID تایید کړئ.",
 		"dedicated_docs_support_for_the_mcp_server": "د MCP سرور لپاره وقف شوي اسناد او ملاتړ",
 		"discover": "کشف کړئ",
-		"discussions": "بحثونه",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">د کاپي حق / DMCA لرې کولو خبرتیاوې</span>",
 		"docs": "اسناد",
 		"docs_2": "اسناد",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws یوه خپلواکه، خلاصې سرچینې پروژه ده. د x402 MCP سرور د watsonx.ai له لارې IBM Granite مدغم کوي؛ دا د IBM محصول نه دی او د IBM لخوا ملاتړ نه کیږي. د IBM watsonx.ai پلیټفارم، Granite ماډل، یا د IBM بلینګ مسلو لپاره، د <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM کلاوډ ملاتړ</a> سره اړیکه ونیسئ. <em>Granite</em>، <em>watsonx</em>، او <em>watsonx.ai</em> د IBM سوداګریزې نښې دي.",
-		"three_ws_is_an_open_source_3d": "three.ws یو خلاصې سرچینې 3D AI ایجنټ پلیټفارم دی، او د IBM Granite</strong> لپاره د <strong>x402 MCP سرور کور دی. هغه چینل غوره کړئ چې مناسب وي — د بګ راپورونه او د ځانګړتیاوو غوښتنې GitHub ته ځي، \"زه څنګه کولی شم…\" پوښتنې بحثونو ته، او هر هغه څه چې شخصي یا د حساب پورې اړوند وي بریښنالیک ته. د امنیت راپورونه خپله پته لري.",
 		"three_ws_is_an_open_source_project": "three.ws یو خلاصې سرچینې پروژه ده چې د خپلو ساتونکو لخوا د غوره هڅو پر بنسټ ملاتړ کیږي.",
 		"verify_your_ibm_credentials_independently": "خپل د IBM اعتبارونه په خپلواکه توګه تایید کړئ",
 		"what_to_expect": "څه تمه ولرئ",

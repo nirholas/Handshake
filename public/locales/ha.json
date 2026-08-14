@@ -18234,7 +18234,6 @@
 	"support": {
 		"a_few_minutes_here_usually_turns_three": "Wasu mintuna anan yawanci suna mai da tafiye-tafiye uku zuwa ɗaya.",
 		"abuse_three_ws_report_abuse_or_platform": "<a href=\"mailto:abuse@three.ws\">abuse@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Bayar da rahoton cin zarafi ko rashin amfani da dandamali</span>",
-		"ask_how_do_i_wire_this_into": "Tambayi \"ta yaya zan haɗa wannan zuwa Claude / Cursor / wakilina?\" ko kwatanta hanyoyin tare da al'umma da masu kula.",
 		"before_you_open_an_issue": "Kafin ka buɗe matsala",
 		"check_your_environment_variables": "Duba masu canjin muhallinka",
 		"copy": "Kwafa",
@@ -18254,7 +18253,6 @@
 		"create_or_check_an_api_key_at": "Ƙirƙira ko duba maɓallin API a <a href=\"https://cloud.ibm.com/iam/apikeys\" target=\"_blank\" rel=\"noopener\">cloud.ibm.com/iam/apikeys</a>, kuma tabbatar da ID na aikin a ƙarƙashin <em>watsonx.ai aiki → Gudanarwa → Janar</em>.",
 		"dedicated_docs_support_for_the_mcp_server": "Takardu da tallafi na musamman don sabar MCP",
 		"discover": "Gano",
-		"discussions": "Tattaunawa",
 		"dmca_three_ws_copyright_dmca_takedown_notice": "<a href=\"mailto:dmca@three.ws\">dmca@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Sanarwar cire haƙƙin mallaka / DMCA</span>",
 		"docs": "Takardu",
 		"docs_2": "Takardu",
@@ -18302,7 +18300,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
 		"three_ws_is_an_independent_open_source": "three.ws aiki ne mai zaman kansa, buɗaɗɗen tushe. Sabar x402 MCP tana haɗa IBM Granite ta hanyar watsonx.ai; ba samfurin IBM bane kuma IBM baya tallafa masa. Don dandamalin IBM watsonx.ai, samfurin Granite, ko matsalolin biyan kuɗi na IBM, tuntuɓi <a href=\"https://cloud.ibm.com/unifieddeliveryportal\" target=\"_blank\" rel=\"noopener\">IBM Cloud Support</a>. <em>Granite</em>, <em>watsonx</em>, da <em>watsonx.ai</em> alamun kasuwanci ne na IBM.",
-		"three_ws_is_an_open_source_3d": "three.ws dandamali ne na buɗaɗɗen tushe na 3D AI agent, kuma gida ne ga sabar <strong>x402 MCP don IBM Granite</strong>. Zaɓi tashar da ta dace — rahotannin kuskure da buƙatun fasali suna zuwa GitHub, tambayoyin \"yaya zan yi…\" zuwa Discussions, da duk wani abu mai zaman kansa ko na asusu zuwa imel. Rahotannin tsaro suna da adireshinsu na musamman.",
 		"three_ws_is_an_open_source_project": "three.ws aiki ne na buɗaɗɗen tushe wanda masu kula da shi ke tallafawa bisa ƙoƙari mafi kyau.",
 		"verify_your_ibm_credentials_independently": "Ka tabbatar da takardun shaidarka na IBM da kanka",
 		"what_to_expect": "Abin da za a jira",
