@@ -3,6 +3,46 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "A batched order on the OKX Agent Identity Studio can no longer be paid at the price of one identity",
+			"summary": "The Agent Identity Studio accepts several calls in a single request, and its price is the sum of every paid call in that request. The OKX X Layer payment option, the one an OKX buyer's tooling selects first, was quoting a flat one-identity price no matter how many identities the request actually ordered, so a multi-identity order could be paid at the price of one. Every payment option on that endpoint now quotes the same total, and a request with nothing chargeable in it still quotes the normal list price. Two smaller fixes ride along: a paid response now lets browser-based buyers read the settlement receipt header it has always sent, and the free catalog and health endpoints answer errors in the same shape as the paid endpoints beside them, with an Allow header naming the methods they take.",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"link": "/docs/okx-marketplace"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "The crypto knowledge base the agents read from only holds stories we could actually read",
+			"summary": "The news reader recorded every URL it was handed into the durable corpus the 3D agents ground their crypto answers on, including ones no extraction attempt could read. That left headline-only rows with no article behind them, and because the reader is a public endpoint whose caller supplies the link, the headline, and the source name, a single request could plant a permanent entry with any headline someone chose. The reader now refuses anything that is not an ordinary web link, records only stories that yielded real article text, and the knowledge API filters the empty rows already on file out of every answer.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/markets/news"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Crypto news stops leading with gold prices and Indian equities",
+			"summary": "The filter that decides whether a story from a broad outlet belongs in a crypto feed matched its keyword list as raw text, so \"defi\" fired inside the ordinary word \"defied\" and three Economic Times headlines about Indian share prices led /markets/news and the top of the daily digest. The ticker detector had the same flaw: it read the English word \"near\" as NEAR Protocol, \"optimism\" as OP, and \"maker\" as MKR, which pinned live price widgets to unrelated stories and pushed NEAR to third place in the archive trending strip on the strength of phrases like \"near-term profit booking\". Both now match whole words, and those three projects count only when the story actually names them. Separately, the FXStreet feed we pull was the publisher site-wide one (gold, EUR/JPY, central banks) rather than its crypto desk, so \"India Gold price today\" arrived pre-approved; it now points at the crypto feed.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/markets/news"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Connecting an app to your account now fails loudly instead of handing it a token that works nowhere",
+			"summary": "The OAuth server three.ws uses to connect outside apps (Claude Desktop, Claude Code, any MCP client) had three ways of telling a client the wrong story. An app that named a different resource when trading its authorization code for a token was quietly handed a three.ws token anyway, so it thought it was connected and then hit an error on every single request it made. An app whose client secret was rejected got a bare 401 with no challenge header, which several OAuth libraries retry forever instead of reporting as a wrong secret. And an app that registered a homepage, a logo, or its software version got a confirmation that omitted all of them, which reads as \"rejected\" and pushes it to register a second time under a new identity. All three now answer plainly: a wrong resource is refused up front with invalid_target, a rejected secret comes back with the challenge header the spec requires, and the registration confirmation lists everything that was actually saved.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/docs/authentication"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Oracle pages now say the data is briefly unavailable instead of showing you a blank market",
 			"summary": "When the database had a short connectivity blip, the Oracle read endpoints answered with an empty result and a 200 OK, which reads as fact rather than as an outage. The live conviction feed showed a market with nothing in it, the hot-sectors panel showed no sectors, an agent's public track record showed \"never traded\" (the very evidence copy-traders judge a leader on), and the follow endpoint told a subscriber they were not following an agent they were in fact following. Worst of all, unfollowing an agent answered \"done\" while the subscription survived, so the alerts kept arriving with no way to stop them. Some of those answers were then cached for up to five minutes, outliving the blip that caused them. All of these now return a proper \"temporarily unavailable, retry shortly\" response that nothing caches, so a page can tell you it cannot reach the data instead of quietly showing you the wrong answer.",
 			"tags": [

@@ -31,6 +31,14 @@
 			<description>The platform's own cross-chain index of agent registrations, token launches, reputation attestations, transfers and delegations, Solana first: one public endpoint, absolute on-chain timestamps, and published index freshness.</description>
 		</item>
 		<item>
+			<title>A batched order on the OKX Agent Identity Studio can no longer be paid at the price of one identity</title>
+			<link>https://three.ws/docs/okx-marketplace</link>
+			<guid isPermaLink="false">2026-08-14:A batched order on the OKX Agent Identity Studio can no longer be paid at the price of one identity</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The Agent Identity Studio accepts several calls in a single request, and its price is the sum of every paid call in that request. The OKX X Layer payment option, the one an OKX buyer's tooling selects first, was quoting a flat one-identity price no matter how many identities the request actually ordered, so a multi-identity order could be paid at the price of one. Every payment option on that endpoint now quotes the same total, and a request with nothing chargeable in it still quotes the normal list price. Two smaller fixes ride along: a paid response now lets browser-based buyers read the settlement receipt header it has always sent, and the free catalog and health endpoints answer errors in the same shape as the paid endpoints beside them, with an Allow header naming the methods they take.</description>
+		</item>
+		<item>
 			<title>A bounty that does not exist now says so, instead of blaming pump.fun</title>
 			<link>https://three.ws/bounties</link>
 			<guid isPermaLink="false">2026-08-14:A bounty that does not exist now says so, instead of blaming pump.fun</guid>
@@ -95,12 +103,28 @@
 			<description>BlockTempo, a Taiwanese crypto publisher that writes in Traditional Chinese, was listed in our news source registry without a language tag. Untagged sources are treated as English, so its headlines were being mixed into the default feed on /markets/news, the markets hub strip, and the RSS mirror, where they read as noise to anyone browsing in English. It is now tagged Chinese: the English feed is English only, and BlockTempo shows up when you pick Chinese from the language selector, alongside PANews. Nothing else about the feed changed.</description>
 		</item>
 		<item>
+			<title>Connecting an app to your account now fails loudly instead of handing it a token that works nowhere</title>
+			<link>https://three.ws/docs/authentication</link>
+			<guid isPermaLink="false">2026-08-14:Connecting an app to your account now fails loudly instead of handing it a token that works nowhere</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The OAuth server three.ws uses to connect outside apps (Claude Desktop, Claude Code, any MCP client) had three ways of telling a client the wrong story. An app that named a different resource when trading its authorization code for a token was quietly handed a three.ws token anyway, so it thought it was connected and then hit an error on every single request it made. An app whose client secret was rejected got a bare 401 with no challenge header, which several OAuth libraries retry forever instead of reporting as a wrong secret. And an app that registered a homepage, a logo, or its software version got a confirmation that omitted all of them, which reads as &quot;rejected&quot; and pushes it to register a second time under a new identity. All three now answer plainly: a wrong resource is refused up front with invalid_target, a rejected secret comes back with the challenge header the spec requires, and the registration confirmation lists everything that was actually saved.</description>
+		</item>
+		<item>
 			<title>Controls that promised an action and did nothing now actually do it</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Controls that promised an action and did nothing now actually do it</guid>
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Several buttons across the site were links pointing at nothing, so clicking them moved the page to the top and nothing else happened. On a coin or category page whose market data failed to load, &quot;Reload the page&quot; was one of them: the one control offered for recovery had no handler at all, so a reader who hit a data outage had no way out of it. It now re-runs the real request in place, skeletons and all, so a recovered feed repaints without a full page load. The &quot;+ Link wallet&quot; button on your account page was the same kind of dead end, pointing back at the section it already sat in; it now opens your Solana wallet, signs the ownership message, and links the wallet to your account, including moving a wallet that is currently linked somewhere else once your signature has proved it is yours. Clear filter on derivatives, Show all on stablecoins, Retry on search and on the world generator, skip for now in the dashboard checklist, Create one in the agent registry, and View more in Related Agents were all links pretending to be buttons; they are real buttons now, which means they answer the space bar, sit in the tab order where you expect, and show a visible focus ring. Picking a coin in the compare search is announced properly to a screen reader as you arrow through the list.</description>
+		</item>
+		<item>
+			<title>Crypto news stops leading with gold prices and Indian equities</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-08-14:Crypto news stops leading with gold prices and Indian equities</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The filter that decides whether a story from a broad outlet belongs in a crypto feed matched its keyword list as raw text, so &quot;defi&quot; fired inside the ordinary word &quot;defied&quot; and three Economic Times headlines about Indian share prices led /markets/news and the top of the daily digest. The ticker detector had the same flaw: it read the English word &quot;near&quot; as NEAR Protocol, &quot;optimism&quot; as OP, and &quot;maker&quot; as MKR, which pinned live price widgets to unrelated stories and pushed NEAR to third place in the archive trending strip on the strength of phrases like &quot;near-term profit booking&quot;. Both now match whole words, and those three projects count only when the story actually names them. Separately, the FXStreet feed we pull was the publisher site-wide one (gold, EUR/JPY, central banks) rather than its crypto desk, so &quot;India Gold price today&quot; arrived pre-approved; it now points at the crypto feed.</description>
 		</item>
 		<item>
 			<title>Every agent now has a verifiable on-chain history you can read on its page</title>
@@ -173,6 +197,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>Before an outside firm can review the contracts behind agent royalties, reputation staking and wallet delegation, someone has to write down what those contracts promise and then prove it holds. That pack now exists and is public. Every value-bearing contract has numbered invariants, each backed by a test proving the property holds and a second test proving that an attacker trying to break it is rejected, alongside a threat model naming what is worth stealing, who could try, and what stops them. The Solidity contracts sit at 100% test coverage across 242 tests. The two Solana programs, which had no automated tests at all, now have 32 running against their real compiled on-chain bytecode rather than a stand-in, with the real token programs loaded. Two standard analyzers were run across everything, and every finding is either fixed or answered in writing. One of those fixes closes a real gap: a cross-chain permission request that was declined rather than failed outright would have credited a seller and charged a buyer for access that was never going to be granted.</description>
+		</item>
+		<item>
+			<title>The crypto knowledge base the agents read from only holds stories we could actually read</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-08-14:The crypto knowledge base the agents read from only holds stories we could actually read</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The news reader recorded every URL it was handed into the durable corpus the 3D agents ground their crypto answers on, including ones no extraction attempt could read. That left headline-only rows with no article behind them, and because the reader is a public endpoint whose caller supplies the link, the headline, and the source name, a single request could plant a permanent entry with any headline someone chose. The reader now refuses anything that is not an ordinary web link, records only stories that yielded real article text, and the knowledge API filters the empty rows already on file out of every answer.</description>
 		</item>
 		<item>
 			<title>The free object library can no longer be emptied by one bad upload</title>
