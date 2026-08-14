@@ -441,7 +441,13 @@ function renderCard(item) {
  */
 function renderThumb({ image, glbUrl, has3d, alt }) {
 	if (image) {
-		return `<img src="${escapeAttr(image)}" alt="${escapeAttr(alt || '')}" loading="lazy" data-fallback="element" data-fallback-class="explore-card-ph" data-fallback-text="${has3d ? '🎭' : '🤖'}" />`;
+		// `decoding="async"` keeps the decode of every directory thumbnail off the
+		// critical rendering path. These are 768px source images painted into a
+		// 293px box, so a synchronous decode of a grid's worth of them lands as
+		// main-thread blocking time right when the page is trying to become
+		// interactive. The box itself is already reserved by CSS
+		// (.explore-card-thumb is `aspect-ratio: 1 / 1`), so nothing shifts.
+		return `<img src="${escapeAttr(image)}" alt="${escapeAttr(alt || '')}" loading="lazy" decoding="async" data-fallback="element" data-fallback-class="explore-card-ph" data-fallback-text="${has3d ? '🎭' : '🤖'}" />`;
 	}
 	if (glbUrl) {
 		return `<model-viewer

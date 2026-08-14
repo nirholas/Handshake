@@ -384,6 +384,12 @@ function buildCard(c) {
 		const img = document.createElement('img');
 		img.className = 'thumb';
 		img.loading = 'lazy';
+		// Decode off the critical path: showcase thumbs are full-size renders
+		// painted into a 200px-tall box, and a synchronous decode of a grid's
+		// worth of them shows up as main-thread blocking time. The box is
+		// CSS-reserved (`#showcase .creation .thumb` is a fixed height), so
+		// deferring the decode cannot shift layout.
+		img.decoding = 'async';
 		img.alt = '';
 		img.src = c.preview_image_url;
 		img.onerror = () => {
