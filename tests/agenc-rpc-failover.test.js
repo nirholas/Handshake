@@ -170,4 +170,74 @@ describe('rotateRpc', () => {
 		expect(thrown.message).toContain('503 Service Unavailable');
 		expect(seen).toEqual(endpoints);
 	});
+
+	// The failure mode the other cases could not see: a lane that accepts the
+	// connection and then answers nothing. `createAgenCClient` builds a plain
+	// `new Connection(rpcUrl)`, which never gets the rotating fetch's own
+	// per-attempt bound, so undici's defaults let a stalled provider hold the
+	// request for minutes with nothing thrown to rotate on. list-tasks surfaced it
+	// first because getTasksByCreator is a getProgramAccounts memcmp scan.
+	it('rotates past a lane that hangs instead of answering', async () => {
+		vi.useFakeTimers();
+		try {
+			const endpoints = lanes(2);
+			const seen = [];
+			const pending = rotateRpc({
+				cluster: 'mainnet',
+				endpoints,
+				createClient: clientFactory,
+				run: async (c) => {
+					seen.push(c.rpcUrl);
+					// The first lane never settles, exactly like a provider that swallows
+					// a heavy getProgramAccounts scan.
+					if (c.rpcUrl === endpoints[0]) return new Promise(() => {});
+					return { ok: true, via: c.rpcUrl };
+				},
+			});
+			await vi.advanceTimersByTimeAsync(10_000);
+			await expect(pending).resolves.toEqual({ ok: true, via: endpoints[1] });
+			expect(seen).toEqual([endpoints[0], endpoints[1]]);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('does not leave the attempt timer pending when a lane answers in time', async () => {
+		vi.useFakeTimers();
+		try {
+			const endpoints = lanes(2);
+			const out = await rotateRpc({
+				cluster: 'mainnet',
+				endpoints,
+				createClient: clientFactory,
+				run: async (c) => ({ ok: true, via: c.rpcUrl }),
+			});
+			expect(out).toEqual({ ok: true, via: endpoints[0] });
+			// A won race must clear its timer, or every served request leaves one
+			// armed behind the response.
+			expect(vi.getTimerCount()).toBe(0);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('exhausts the chain when every lane hangs', async () => {
+		vi.useFakeTimers();
+		try {
+			const endpoints = lanes(3);
+			const pending = rotateRpc({
+				cluster: 'mainnet',
+				endpoints,
+				createClient: clientFactory,
+				run: async () => new Promise(() => {}),
+			}).catch((err) => err);
+			await vi.advanceTimersByTimeAsync(10_000 * 3);
+			const thrown = await pending;
+			expect(thrown).toBeInstanceOf(RpcChainExhausted);
+			expect(thrown.tried).toBe(3);
+			expect(thrown.message).toContain('timed out');
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });

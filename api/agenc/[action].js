@@ -159,11 +159,37 @@ export class RpcChainExhausted extends Error {
 	}
 }
 
+// A lane that ACCEPTS the connection and then never answers is the one failure
+// this rotation could not see. `createAgenCClient` builds a plain
+// `new Connection(rpcUrl)`, so it never gets the rotating fetch's own
+// ATTEMPT_TIMEOUT_MS bound (that only wraps multi-endpoint Connections); undici's
+// defaults then run to minutes with nothing thrown, so `rotateRpc` sat on a dead
+// provider instead of moving to the next one. `getTasksByCreator` is the read
+// that exposed it: it is a getProgramAccounts memcmp scan, the heaviest call
+// shape here and the first any provider stalls or silently drops. Bounding each
+// attempt turns that silence back into a rotate-worthy failure.
+const AGENC_ATTEMPT_TIMEOUT_MS = 10_000;
+
+// Reject with a transient, rotate-worthy error once an attempt outruns its
+// budget. The message is deliberately shaped to match `isTransientRpcError`, so
+// a stall cools the lane exactly like a timeout reported by the provider itself.
+function attemptTimeout(rpcUrl) {
+	let timer;
+	const promise = new Promise((_, reject) => {
+		timer = setTimeout(() => {
+			reject(new Error(`Solana RPC lane timed out after ${AGENC_ATTEMPT_TIMEOUT_MS}ms: ${rpcUrl}`));
+		}, AGENC_ATTEMPT_TIMEOUT_MS);
+	});
+	// Never hold the process open on the loser of the race.
+	timer?.unref?.();
+	return { promise, cancel: () => clearTimeout(timer) };
+}
+
 // Run `run` against an AgenC client, rotating to the next endpoint whenever one
 // fails in a way the next provider may not share (401/403/404/408/410/429/5xx,
-// timeouts, network blips). A real request error, e.g. a malformed account the
-// chain decodes the same way everywhere, is re-thrown on the first endpoint
-// rather than replayed nine times.
+// timeouts, network blips) or simply stops answering. A real request error, e.g.
+// a malformed account the chain decodes the same way everywhere, is re-thrown on
+// the first endpoint rather than replayed nine times.
 export async function rotateRpc({ cluster, endpoints, createClient, run }) {
 	let last = null;
 	for (const rpcUrl of endpoints) {
@@ -176,14 +202,19 @@ export async function rotateRpc({ cluster, endpoints, createClient, run }) {
 			last = err;
 			continue;
 		}
+		const bound = attemptTimeout(rpcUrl);
 		try {
-			return await run(client);
+			return await Promise.race([run(client), bound.promise]);
 		} catch (err) {
 			const status = rpcStatus(err);
 			if (!shouldRotate(status) && !isTransientRpcError(err)) throw err;
 			const ms = markEndpointCooldown(rpcUrl, status || 429, String(err?.message || ''));
 			console.info(`[agenc] rpc lane failed (${status || 'transient'}), cooling ${Math.round(ms / 1000)}s, rotating`);
 			last = err;
+		} finally {
+			// Runs on success, rotation, and the re-thrown non-rotatable error alike,
+			// so a won race never leaves a timer pending behind the response.
+			bound.cancel();
 		}
 	}
 	throw new RpcChainExhausted(cluster, endpoints.length, last);
