@@ -3021,6 +3021,12 @@
 					"added": "2026-06-22"
 				},
 				{
+					"path": "/docs/agent-index",
+					"title": "Docs · The Agent Index",
+					"description": "The platform's own cross-chain index of agent registrations, token launches, reputation attestations, transfers and delegations, Solana first: one public endpoint, absolute on-chain timestamps, and published index freshness.",
+					"added": "2026-08-14"
+				},
+				{
 					"path": "/docs/trust-primitives",
 					"title": "Docs · Trust Primitives",
 					"description": "Cross-chain Agent Reputation: score any wallet, mint, or agent id (Solana or EVM) 0-100 from real on-chain evidence before your agent pays, trades, or delegates.",

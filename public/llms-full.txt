@@ -2260,6 +2260,12 @@ URL: https://three.ws/docs/agent-reputation
 
 Why autonomous agents need verifiable trust, and how three.ws delivers portable on-chain reputation.
 
+### Docs · The Agent Index
+
+URL: https://three.ws/docs/agent-index
+
+The platform's own cross-chain index of agent registrations, token launches, reputation attestations, transfers and delegations, Solana first: one public endpoint, absolute on-chain timestamps, and published index freshness.
+
 ### Docs · Trust Primitives
 
 URL: https://three.ws/docs/trust-primitives
