@@ -79,6 +79,23 @@ const NAV_TIMEOUT_MS = Number(process.env.NAV_TIMEOUT_MS) || 60_000;
 // pass on its own merits.
 const ATTEMPTS = Math.max(1, Number(process.env.ATTEMPTS) || 4);
 
+// Transport failures the harness suffers, which product code cannot cause.
+// This worktree is shared by many concurrent agents: their containers add and
+// remove veths, and Chromium answers by aborting every in-flight request (even
+// to localhost) with ERR_NETWORK_CHANGED, while a dev server starved behind a
+// load average in the hundreds resets or closes sockets outright. A page that
+// hit one of these is half-loaded, so nothing observed afterwards describes
+// /play. The navigation path already treated exactly these as infra; a scenario
+// that meets one on a SUBRESOURCE instead only ever reached the console, where
+// it read as a product defect and put a fabricated outage in the report.
+//
+// Surrender is not softening: the scenario is retried from scratch and still
+// has to pass on its own merits, and a reset that reproduces through every
+// attempt ends the scenario as NOT RUN, which the summary names and the exit
+// code fails on.
+const HOST_TRANSPORT_ERROR =
+	/ERR_NETWORK_CHANGED|ERR_CONNECTION_(RESET|CLOSED|ABORTED)|ERR_EMPTY_RESPONSE|ERR_SOCKET_NOT_CONNECTED/i;
+
 // ── Hostile inputs ───────────────────────────────────────────────────────────
 // Every payload calls the same sentinel, so one flag proves script execution
 // regardless of which vector fired.
@@ -363,7 +380,12 @@ async function runScenario(base, sc) {
 		if (type !== 'error' && type !== 'warning') return;
 		const text = msg.text();
 		if (isIgnorableConsole(text)) return;
-		consoleIssues.push(`${type}: ${text}`);
+		// Chromium's "Failed to load resource: net::ERR_x" never names the request
+		// in its own text, so that finding alone cannot be acted on: it says
+		// something broke without saying what. The console location carries the
+		// failing URL, so keep it alongside.
+		const url = msg.location?.()?.url || '';
+		consoleIssues.push(url && !text.includes(url) ? `${type}: ${text} [${url}]` : `${type}: ${text}`);
 	});
 	page.on('pageerror', (err) => {
 		const m = String(err?.message || err);
@@ -394,7 +416,8 @@ async function runScenario(base, sc) {
 		// No scenario ever routes the document (see notDocument), so product code
 		// cannot produce it, and reporting it per scenario turned one dead server
 		// into sixteen fabricated "/play is down" findings.
-		if (/Page crashed|Target (page|closed)|browser has been closed|Target crashed|ERR_NETWORK_CHANGED|ERR_CONNECTION_(REFUSED|RESET)|ERR_EMPTY_RESPONSE/i.test(m)) {
+		if (/Page crashed|Target (page|closed)|browser has been closed|Target crashed|ERR_CONNECTION_REFUSED/i.test(m)
+			|| HOST_TRANSPORT_ERROR.test(m)) {
 			return { infra: m, findings: [], consoleIssues: [], pageErrors: [] };
 		}
 		findings.push(`navigation failed: ${m}`);
@@ -406,9 +429,10 @@ async function runScenario(base, sc) {
 	// Network churn mid-scenario aborts subresource loads wholesale (see the
 	// infra note above), so every observation below would describe a page the
 	// harness broke, not one /play broke. Surrender the scenario for a retry.
-	if (consoleIssues.some((t) => t.includes('ERR_NETWORK_CHANGED'))) {
+	const transportHit = [...consoleIssues, ...pageErrors].find((t) => HOST_TRANSPORT_ERROR.test(t));
+	if (transportHit) {
 		await teardown();
-		return { infra: 'host network changed mid-scenario (ERR_NETWORK_CHANGED)', findings: [], consoleIssues: [], pageErrors: [] };
+		return { infra: `host transport failure mid-scenario (${transportHit})`, findings: [], consoleIssues: [], pageErrors: [] };
 	}
 
 	const o = await page.evaluate(() => {
