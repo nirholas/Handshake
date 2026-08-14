@@ -214,7 +214,7 @@ const { url, bytes, ms } = await renderThumbnail({
 console.log(url, bytes, ms); // https://<cdn>/thumb/<id>.png 104356 5182
 
 console.log(await coverage());
-// { total: 12754, covered: 2988, missing: 9766, exhausted: 0 }
+// { total: 26398, covered: 26361, missing: 37, exhausted: 33 }
 ```
 
 `renderThumbnail()` uploads the PNG **before** it writes the key, so a failed upload

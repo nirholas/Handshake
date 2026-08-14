@@ -7,8 +7,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 const root = process.cwd();
 const SCRIPT = join(root, 'scripts/build-examples-index.mjs');
@@ -17,8 +18,8 @@ const JSON_OUT = join(root, 'data/examples.json');
 const START = '<!-- BEGIN GENERATED EXAMPLES INDEX (npm run build:examples) -->';
 const END = '<!-- END GENERATED EXAMPLES INDEX -->';
 
-function run() {
-	return execFileSync('node', [SCRIPT], { cwd: root, encoding: 'utf8' });
+function run(env = {}) {
+	return execFileSync('node', [SCRIPT], { cwd: root, encoding: 'utf8', env: { ...process.env, ...env } });
 }
 
 function handWrittenPart(text) {
@@ -38,11 +39,11 @@ describe('examples index generator', () => {
 		if (originalJson !== null) writeFileSync(JSON_OUT, originalJson);
 	}
 
-	// afterEach never runs if the run is interrupted (a killed CI job, a Ctrl-C,
-	// a vitest timeout), which would leave the real docs/examples.md holding the
-	// malformed fixture below and every later run failing on a doc no one edited.
-	// The same restore is therefore armed at the process level for the signals a
-	// test run actually dies from.
+	// afterEach never runs if the run is interrupted (a killed CI job, a Ctrl-C, a
+	// vitest timeout). The malformed fixture no longer goes anywhere near the real
+	// doc, so the worst an interrupt can now leave behind is a correctly
+	// regenerated file, but restoring on the catchable signals still keeps the
+	// shared worktree byte-identical to how the run found it.
 	const onExit = () => restore();
 	const onSignal = () => {
 		restore();
@@ -95,9 +96,20 @@ describe('examples index generator', () => {
 
 	it('refuses to write when the markers are malformed instead of rewriting the file', () => {
 		// An END with no START is the shape that would make a naive indexOf pair
-		// slice away real content.
-		writeFileSync(DOC, `# Examples Gallery\n\nHand written prose.\n\n${END}\n`);
-		expect(() => run()).toThrow();
-		expect(readFileSync(DOC, 'utf8')).toContain('Hand written prose.');
+		// slice away real content. The broken fixture goes in a scratch file, not
+		// the real docs/examples.md: a fork killed between the write and the
+		// restore used to leave the repo holding it, and every later run then
+		// failed on a doc nobody had edited.
+		const dir = mkdtempSync(join(tmpdir(), 'examples-index-'));
+		const scratch = join(dir, 'examples.md');
+		try {
+			writeFileSync(scratch, `# Examples Gallery\n\nHand written prose.\n\n${END}\n`);
+			expect(() => run({ EXAMPLES_DOC: scratch })).toThrow();
+			expect(readFileSync(scratch, 'utf8')).toContain('Hand written prose.');
+			// The real doc is untouched by the refusal.
+			expect(readFileSync(DOC, 'utf8')).toContain(START);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
 	});
 });

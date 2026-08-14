@@ -18,7 +18,7 @@
 // or an HTML <title>/comment, never from a hand-kept list here.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, statSync, renameSync } from 'node:fs';
-import { join, relative, basename, dirname } from 'node:path';
+import { join, relative, resolve, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Write through a temp file in the same directory, then rename. rename(2) is
@@ -302,7 +302,18 @@ writeAtomic(OUT, `${JSON.stringify(payload, null, '\t')}\n`);
 // Mirror the same index into docs/examples.md between markers, so the doc's
 // inventory is regenerated rather than hand-kept. Everything outside the
 // markers is hand-written and left untouched.
-const DOC = join(root, 'docs/examples.md');
+//
+// EXAMPLES_DOC retargets that mirror at another file. The marker-guard test
+// needs to feed this generator a deliberately broken doc, and doing that to the
+// real docs/examples.md leaves the repo holding the broken fixture whenever the
+// run dies before its restore (a SIGKILLed vitest fork, a cancelled CI job),
+// which then fails every later run against a doc nobody edited. Pointing the
+// test at a scratch file keeps the hazard out of the worktree entirely.
+const DOC = process.env.EXAMPLES_DOC ? resolve(process.env.EXAMPLES_DOC) : join(root, 'docs/examples.md');
+// Repo-relative reads best for the real doc; anything outside the repo (a test's
+// scratch file) is named in full rather than as a pile of `../`.
+const _docRel = relative(root, DOC);
+const DOC_LABEL = !_docRel || _docRel.startsWith('..') ? DOC : _docRel;
 const START = '<!-- BEGIN GENERATED EXAMPLES INDEX (npm run build:examples) -->';
 const END = '<!-- END GENERATED EXAMPLES INDEX -->';
 
@@ -360,7 +371,7 @@ if (startAt !== -1 && endAt !== -1 && endAt > startAt) {
 	next = `${doc.trimEnd()}\n\n---\n\n${block}\n`;
 } else {
 	throw new Error(
-		`docs/examples.md has a malformed generated block (START at ${startAt}, END at ${endAt}). ` +
+		`${DOC_LABEL} has a malformed generated block (START at ${startAt}, END at ${endAt}). ` +
 			'Fix or remove the markers by hand; refusing to rewrite the file.',
 	);
 }
@@ -370,7 +381,7 @@ if (startAt !== -1 && endAt !== -1 && endAt > startAt) {
 const handWritten = (text) => text.split(START)[0].trim().length;
 if (handWritten(next) < handWritten(doc)) {
 	throw new Error(
-		'Refusing to write docs/examples.md: the hand-written section above the generated block ' +
+		`Refusing to write ${DOC_LABEL}: the hand-written section above the generated block ` +
 			`would shrink from ${handWritten(doc)} to ${handWritten(next)} characters.`,
 	);
 }
