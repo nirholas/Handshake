@@ -4690,6 +4690,10 @@
 			"dest": "/api/plugins/[action]?id=$1&sub=install"
 		},
 		{
+			"src": "/api/plugins",
+			"dest": "/api/plugins/[action]?action=list"
+		},
+		{
 			"src": "/api/plugins/(categories|list|import|publish)",
 			"dest": "/api/plugins/[action]?action=$1"
 		},

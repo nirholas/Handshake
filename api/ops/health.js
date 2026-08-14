@@ -4,7 +4,9 @@
 // from Redis. Requires x-ops-secret header (OPS_SECRET env var). If the env
 // var is unset, falls back to CRON_SECRET so ops pages work without extra setup.
 
-import { cors, error, json, wrap, rateLimited } from '../_lib/http.js';
+import { readFileSync } from 'node:fs';
+import { CronExpressionParser } from 'cron-parser';
+import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { cacheGet } from '../_lib/cache.js';
 import { env } from '../_lib/env.js';
@@ -16,6 +18,9 @@ const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
 
 // ── Subsystems to probe live ─────────────────────────────────────────────────
 // Each probe hits a real endpoint from outside. Grouped by category.
+// A POST probe may carry `headers` + `body`: a handler that gates on
+// content-type answers 415 to a bare POST, which is a probe bug, not a
+// subsystem fault (see the x402_pay entry).
 const PROBES = [
 	// Core
 	{ id: 'site', cat: 'core', label: 'Website', path: '/', expect: 200 },
@@ -25,7 +30,12 @@ const PROBES = [
 	{ id: 'x402_discovery', cat: 'x402', label: 'x402 discovery', path: '/.well-known/x402.json', expect: 200 },
 	{ id: 'x402_dance_tip', cat: 'x402', label: 'dance-tip endpoint', path: '/api/x402/dance-tip', expect: 402 },
 	{ id: 'x402_mint_batch', cat: 'x402', label: 'mint-to-mesh-batch', path: '/api/x402/mint-to-mesh-batch', method: 'POST', expect: 402 },
-	{ id: 'x402_pay', cat: 'x402', label: 'x402-pay handler', path: '/api/x402-pay', method: 'POST', expect: [200, 400, 401] },
+	// A bodyless POST is answered 415 ("content-type must be application/json")
+	// before the handler runs, so the probe measured its own missing header
+	// forever. An empty JSON object reaches the dispatcher and comes back 400
+	// (invalid_tool): proof the handler is alive and validating, and it invokes
+	// no tool, so the probe stays read-only.
+	{ id: 'x402_pay', cat: 'x402', label: 'x402-pay handler', path: '/api/x402-pay', method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}', expect: [200, 400, 401] },
 	// Pumpfun / trading
 	{ id: 'pump_action', cat: 'trading', label: 'Pump action API', path: '/api/pump/launches', expect: [200, 400, 401, 404] },
 	{ id: 'oracle_feed', cat: 'trading', label: 'Oracle feed', path: '/api/oracle/feed', expect: [200, 401] },
@@ -50,34 +60,90 @@ const PROBES = [
 ];
 
 // ── Crons we expect to have heartbeats ──────────────────────────────────────
-// stale_after_ms: how long before we consider a missing heartbeat a problem.
-const CRONS = [
-	{ id: 'uptime-check', label: 'Uptime monitor', stale_after_ms: 15 * 60 * 1000 },
-	{ id: 'pulse-tick', label: 'Pulse tick', stale_after_ms: 15 * 60 * 1000 },
-	{ id: 'oracle-score', label: 'Oracle score', stale_after_ms: 20 * 60 * 1000 },
-	{ id: 'oracle-digest', label: 'Oracle digest', stale_after_ms: 70 * 60 * 1000 },
-	{ id: 'three-holders-snapshot', label: 'THREE holders snapshot', stale_after_ms: 70 * 60 * 1000 },
-	{ id: 'payment-session-sweep', label: 'Payment session sweep', stale_after_ms: 15 * 60 * 1000 },
-	{ id: 'flush-usage-events', label: 'Flush usage events', stale_after_ms: 20 * 60 * 1000 },
-	{ id: 'reflect-sweep', label: 'Reflect sweep', stale_after_ms: 70 * 60 * 1000 },
-	{ id: 'forge-seed-cron', label: 'Forge seed', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'avaturn-seed-cron', label: 'Avaturn seed', stale_after_ms: 6 * 60 * 60 * 1000 },
-	{ id: 'smart-money-rollup', label: 'Smart money rollup', stale_after_ms: 70 * 60 * 1000 },
-	{ id: 'smart-money-graph', label: 'Smart money graph', stale_after_ms: 70 * 60 * 1000 },
-	{ id: 'dead-man-switch', label: 'Dead man switch', stale_after_ms: 15 * 60 * 1000 },
-	{ id: 'world-health', label: 'World health', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'quota-check', label: 'Quota check', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'recompute-reputation', label: 'Reputation recompute', stale_after_ms: 6 * 60 * 60 * 1000 },
-	{ id: 'copy-fanout', label: 'Copy fanout', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'mirror-fanout', label: 'Mirror fanout', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'signal-fanout', label: 'Signal fanout', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'strategy-fanout', label: 'Strategy fanout', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'gmgn-seed', label: 'GMGN seed', stale_after_ms: 70 * 60 * 1000 },
-	{ id: 'intel-learn', label: 'Intel learn', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'wallet-intents', label: 'Wallet intents', stale_after_ms: 15 * 60 * 1000 },
-	{ id: 'auto-rig-sweep', label: 'Auto rig sweep', stale_after_ms: 40 * 60 * 1000 },
-	{ id: 'radar-watchlist', label: 'Radar watchlist', stale_after_ms: 40 * 60 * 1000 },
-];
+// Every cron's staleness window is DERIVED from the schedule it actually runs
+// on (vercel.json `crons`, the same array Cloud Scheduler is seeded from), never
+// hand-set. Hand-set windows drift the moment a schedule changes, and three of
+// them had: oracle-digest (daily 08:00) and gmgn-seed (daily 03:00) carried a
+// 70-minute window and dead-man-switch (daily 05:00) a 15-minute one, so all
+// three read as failing for ~23 hours of every day and /api/ops/health could
+// never answer ok:true. A board that is always red is a board nobody reads.
+//
+// Window = one and a half cadences plus 30 minutes of slack: a single late tick
+// is tolerated, a stopped cron is caught within half a cadence of its next miss.
+const STALE_SLACK_MS = 30 * 60 * 1000;
+// Used only when a schedule cannot be read (vercel.json unreadable, expression
+// unparseable): generous enough not to invent failures, tight enough to notice.
+const DEFAULT_STALE_AFTER_MS = 70 * 60 * 1000;
+
+/** Cron id (the path segment under /api/cron/) → its schedule expression. */
+function loadCronSchedules() {
+	try {
+		const raw = readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8');
+		const crons = JSON.parse(raw).crons || [];
+		return new Map(
+			crons.map((c) => [String(c.path || '').replace(/^\/api\/cron\//, '').split('?')[0], c.schedule]),
+		);
+	} catch {
+		return new Map();
+	}
+}
+
+// The widest gap between consecutive fires, so a schedule with uneven spacing
+// (`0 9,17 * * *`) is measured by its longest quiet stretch, not its shortest.
+export function cadenceMs(schedule) {
+	if (!schedule) return null;
+	try {
+		const it = CronExpressionParser.parse(schedule, { tz: 'UTC' });
+		const fires = [it.next().getTime(), it.next().getTime(), it.next().getTime(), it.next().getTime()];
+		let widest = 0;
+		for (let i = 1; i < fires.length; i++) widest = Math.max(widest, fires[i] - fires[i - 1]);
+		return widest > 0 ? widest : null;
+	} catch {
+		return null;
+	}
+}
+
+export function deriveStaleAfterMs(schedule) {
+	const cadence = cadenceMs(schedule);
+	if (!cadence) return DEFAULT_STALE_AFTER_MS;
+	return Math.round(cadence * 1.5) + STALE_SLACK_MS;
+}
+
+const CRON_SCHEDULES = loadCronSchedules();
+
+// `driven_by` names the cron that fires this one as a fan-out target rather than
+// a scheduler job of its own (api/cron/economy-tick.js): its cadence is the
+// driver's cadence, and it has no `crons` entry to read.
+export const CRONS = [
+	{ id: 'uptime-check', label: 'Uptime monitor' },
+	{ id: 'pulse-tick', label: 'Pulse tick', driven_by: 'economy-tick' },
+	{ id: 'oracle-score', label: 'Oracle score' },
+	{ id: 'oracle-digest', label: 'Oracle digest' },
+	{ id: 'three-holders-snapshot', label: 'THREE holders snapshot' },
+	{ id: 'payment-session-sweep', label: 'Payment session sweep' },
+	{ id: 'flush-usage-events', label: 'Flush usage events' },
+	{ id: 'reflect-sweep', label: 'Reflect sweep' },
+	{ id: 'forge-seed-cron', label: 'Forge seed' },
+	{ id: 'avaturn-seed-cron', label: 'Avaturn seed' },
+	{ id: 'smart-money-rollup', label: 'Smart money rollup' },
+	{ id: 'smart-money-graph', label: 'Smart money graph' },
+	{ id: 'dead-man-switch', label: 'Dead man switch' },
+	{ id: 'world-health', label: 'World health' },
+	{ id: 'quota-check', label: 'Quota check' },
+	{ id: 'recompute-reputation', label: 'Reputation recompute' },
+	{ id: 'copy-fanout', label: 'Copy fanout' },
+	{ id: 'mirror-fanout', label: 'Mirror fanout' },
+	{ id: 'signal-fanout', label: 'Signal fanout' },
+	{ id: 'strategy-fanout', label: 'Strategy fanout' },
+	{ id: 'gmgn-seed', label: 'GMGN seed' },
+	{ id: 'intel-learn', label: 'Intel learn' },
+	{ id: 'wallet-intents', label: 'Wallet intents' },
+	{ id: 'auto-rig-sweep', label: 'Auto rig sweep' },
+	{ id: 'radar-watchlist', label: 'Radar watchlist' },
+].map((c) => {
+	const schedule = CRON_SCHEDULES.get(c.driven_by || c.id) || null;
+	return { ...c, schedule, stale_after_ms: deriveStaleAfterMs(schedule) };
+});
 
 async function runProbe(probe) {
 	const url = `${ORIGIN}${probe.path}`;
@@ -89,7 +155,8 @@ async function runProbe(probe) {
 			method: probe.method || 'GET',
 			redirect: 'manual',
 			signal: controller.signal,
-			headers: { 'user-agent': 'threews-ops-health/1.0' },
+			headers: { 'user-agent': 'threews-ops-health/1.0', ...(probe.headers || {}) },
+			...(probe.body ? { body: probe.body } : {}),
 		});
 		const ms = Date.now() - t0;
 		const expected = Array.isArray(probe.expect) ? probe.expect : [probe.expect];
@@ -108,7 +175,9 @@ export default wrap(async (req, res) => {
 	// `allowed.some(...)` and threw, 500ing any request that carried an Origin header,
 	// preflights included. Same fix as api/irl/analytics.js.
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	if (req.method?.toUpperCase() !== 'GET') return error(res, 405, 'method_not_allowed', 'GET only');
+	// The shared gate, like every neighbouring ops handler: it answers HEAD as
+	// GET (RFC 9110) and sends the Allow header a bare 405 was missing.
+	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -134,6 +203,10 @@ export default wrap(async (req, res) => {
 			return {
 				id: cron.id,
 				label: cron.label,
+				// Both the schedule and the window it produced, so an operator
+				// reading a stale row can tell a stopped cron from a bad window.
+				schedule: cron.schedule,
+				staleAfterMs: cron.stale_after_ms,
 				ok: hb?.ok ?? null,
 				lastRan,
 				msSince,
