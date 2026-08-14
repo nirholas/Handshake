@@ -140,6 +140,7 @@ Response:
 | Read API | [api/analytics/retention.js](../api/analytics/retention.js) |
 | Chart | [src/dashboard-next/pages/analytics.js](../src/dashboard-next/pages/analytics.js) |
 | Tests | [tests/retention-cohorts.test.js](../tests/retention-cohorts.test.js) |
+| End-to-end proof | [scripts/retention-metric-proof.mjs](../scripts/retention-metric-proof.mjs) |
 
 Apply the migration with `npm run db:status` to preview and `npm run db:migrate` to apply (it applies every pending migration immediately, with no dry run).
 
@@ -150,5 +151,32 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" https://three.ws/api/cron/retent
 ```
 
 It answers with the cohort count it wrote and the newest complete cohort's rate.
+
+### Verifying it end to end
+
+The unit tests cover the arithmetic against in-memory rows. The parts only a real
+database can answer (the four-CTE cohort aggregate, the jsonb regex guard on the
+mint stamp, the upsert on the composite key, and whether Postgres `date_trunc`
+agrees with the JavaScript `isoWeekStart`) are covered by a proof script that
+runs the whole path for real:
+
+```bash
+node scripts/retention-metric-proof.mjs
+```
+
+It starts a throwaway Postgres in Docker, applies the schema and every
+migration, boots the real server, registers real users through `/api/auth/register`,
+creates real agents, writes the visit through the real `GET /api/agents/:id`
+handler, runs the real rollup behind the real cron gate, and reads the number
+back from the real admin-gated endpoint. Nothing is mocked and nothing is minted
+on-chain: the two cohort owners get the same `meta.onchain.confirmed_at` stamp an
+on-chain registration writes, at an absolute date, in a database that is deleted
+when the run ends. Add `--keep` to leave the stack up and curl it by hand.
+
+Beyond the happy path it pins the properties that make the number trustworthy: a
+second open on the same day does not add a row, a non-owner viewing the agent is
+not tracked at all, an owner who visits during the honeymoon week does not count
+as retained, a second rollup run is idempotent, and the read endpoint answers 401
+anonymous and 403 to a signed-in non-admin.
 
 If you extend the metric, keep two properties: the retention window must stay anchored to each owner's own mint instant, and every stored date must stay absolute. Both are what make a cohort row still readable a year later.

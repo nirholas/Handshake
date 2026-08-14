@@ -158,16 +158,15 @@ function startShim() {
 import http from 'node:http';
 import pg from ${JSON.stringify(pgEsmEntry())};
 const pool = new pg.Pool({ connectionString: ${JSON.stringify(PG_URL)}, max: 8 });
-const NUMERIC_OIDS = new Set([700, 701, 1700]);
-const INT_OIDS = new Set([20, 21, 23, 26]);
-const JSON_OIDS = new Set([114, 3802]);
-function coerce(value, oid) {
-	if (value === null || value === undefined) return null;
-	if (oid === 16) return value === 't' || value === 'true';
-	if (INT_OIDS.has(oid)) { const n = BigInt(value); return n <= 9007199254740991n && n >= -9007199254740991n ? Number(n) : value; }
-	if (NUMERIC_OIDS.has(oid)) return Number(value);
-	if (JSON_OIDS.has(oid)) { try { return JSON.parse(value); } catch { return value; } }
-	return value;
+// Values go back as raw Postgres wire text, exactly as Neon's own HTTP endpoint
+// returns them. The driver runs pg-types' parser per column OID on what it
+// receives (processQueryResult in @neondatabase/serverless), so coercing here
+// would double-parse: a jsonb column would arrive as an object and blow up on
+// JSON.parse("[object Object]"), and a bool would arrive as \`true\` and fail the
+// parser's \`v === 't'\` test, silently reading false. Pass through and let the
+// real driver do the real conversion.
+function coerce(value) {
+	return value === null || value === undefined ? null : value;
 }
 http.createServer(async (req, res) => {
 	if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
@@ -184,7 +183,7 @@ http.createServer(async (req, res) => {
 			});
 			return {
 				fields: r.fields.map((f) => ({ name: f.name, dataTypeID: f.dataTypeID })),
-				rows: r.rows.map((row) => row.map((v, i) => coerce(v, r.fields[i].dataTypeID))),
+				rows: r.rows.map((row) => row.map((v) => coerce(v))),
 				rowCount: r.rowCount, command: r.command,
 			};
 		};
