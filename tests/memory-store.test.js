@@ -163,7 +163,7 @@ describe('buildGraph', () => {
 // `FROM ( VALUES … ) AS v(…)` shape, and that shape is where the whole feature
 // died: a parameter inside a standalone VALUES list has no target column to
 // infer a type from, so Postgres resolves it to text (see
-// tests/db-sql-compose.test.js — the driver binds every param as a string), and
+// tests/db-sql-compose.test.js, where the driver binds every param as a string), and
 // text is not assignable to a uuid column. The upsert raised
 // `column "agent_id" is of type uuid but expression is of type text` on every
 // call, ensureEntities caught it and returned {processed: 0}, and so no entity

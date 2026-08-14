@@ -127,11 +127,11 @@ or an input object.
 | `path` | `'image' \| 'geometry' \| 'sketch'` | `'image'` | How geometry is produced, see [How it works](#how-it-works). |
 | `tier` | `'draft' \| 'standard' \| 'high'` | `'standard'` | Polygon budget + texture richness. |
 | `backend` | `string` | auto | Force a generation backend. Read the live ids from `catalog()`. |
-| `providerKey` | `string` | — | BYOK key for the `geometry` path (Meshy/Tripo/Rodin). Overrides the client-level key, and is resent on every poll. |
+| `providerKey` | `string` | n/a | BYOK key for the `geometry` path (Meshy/Tripo/Rodin). Overrides the client-level key, and is resent on every poll. |
 | `payWith` | `'credits' \| 'x402'` | `'credits'` | Billing lane, see [Pricing](#pricing). `'x402'` switches endpoints. |
 | `pollIntervalMs` | `number` | `2500` | Gap between job polls. |
 | `timeoutMs` | `number` | `180000` | Give up on a job that never finishes. |
-| `headers` | `object` | — | Extra headers merged into every request for this call. |
+| `headers` | `object` | n/a | Extra headers merged into every request for this call. |
 | `signal` | `AbortSignal` | — | Cancel an in-flight generation. |
 | `onProgress` | `(job) => void` | — | Called on each poll tick with the latest job state. |
 
@@ -286,7 +286,7 @@ Once paid, the job token is polled for free on the shared
 
 | `code` | HTTP | Meaning | Recovery |
 |---|---|---|---|
-| `invalid_input` | — | Rejected client-side before any request: unknown `tier`/`path`/`payWith`, no prompt and no image, or an x402 call carrying `path`/`backend`/`providerKey`. | Fix the call. |
+| `invalid_input` | n/a | Rejected client-side before any request: unknown `tier`/`path`/`payWith`, no prompt and no image, or an x402 call carrying `path`/`backend`/`providerKey`. | Fix the call. |
 | `needs_key` | 501 | The selected BYOK backend needs your own provider key. | Pass `providerKey`. |
 | `backend_unconfigured` | 501 | That backend has no credential on the server. | Omit `backend` to auto-route, or pick another. |
 | `unconfigured` | 503 | No generation backend is configured at all. | Retry later, or self-host. |
@@ -296,8 +296,8 @@ Once paid, the job token is polled for free on the shared
 | `insufficient_credits` | 402 | The account's credit balance is too low. | Top up, or use `payWith: 'x402'`. |
 | `unauthorized` | 401 | The credits lane needs a signed-in account. | Authenticate, or use `payWith: 'x402'`. |
 | `rate_limited` | 429 | Too many submissions from this IP. | Honour `retryAfter` on the error. |
-| `timeout` | — | The job did not finish within `timeoutMs`. | Raise `timeoutMs`, or resume with `getJob(jobId)`. |
-| `network_error` | — | The request never reached the API. | Check connectivity / `baseUrl`. |
+| `timeout` | n/a | The job did not finish within `timeoutMs`. | Raise `timeoutMs`, or resume with `getJob(jobId)`. |
+| `network_error` | n/a | The request never reached the API. | Check connectivity / `baseUrl`. |
 | `generation_failed` | — | The backend produced no usable mesh. | Retry, or change `path`/`backend`. |
 
 Every state is designed: a missing key returns `needs_key` (not a crash), an
@@ -351,7 +351,7 @@ const rigged = await rig(base.glbUrl);
 
 - [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) — render and animate the GLB Forge produces.
 - [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk) — a rigged Forge model as a page companion.
-- [`@three-ws/x402-mcp`](https://www.npmjs.com/package/@three-ws/x402-mcp) — pay any x402 endpoint from a Solana keypair.
+- [`@three-ws/x402-mcp`](https://www.npmjs.com/package/@three-ws/x402-mcp): pay any x402 endpoint from a Solana keypair.
 - [`@three-ws/avatar-schema`](https://www.npmjs.com/package/@three-ws/avatar-schema) — validate on-chain avatar manifests.
 
 ---
