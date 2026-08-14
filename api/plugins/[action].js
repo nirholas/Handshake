@@ -14,12 +14,23 @@ import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { fetchSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
+import {
+	fetchSafePublicUrlPinned,
+	MaxBytesExceededError,
+	SsrfBlockedError,
+} from '../_lib/ssrf-guard.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { isUuid } from '../_lib/validate.js';
 
 const VALID_SORTS = new Set(['popular', 'new', 'az']);
 const MAX_MANIFEST_BYTES = 64 * 1024; // 64 KB
 const FETCH_TIMEOUT_MS = 8000;
+// identifier is half of the (identifier, author_id) unique key and is echoed
+// back in every listing, so it gets a length ceiling rather than inheriting the
+// unbounded `text` column. api[] is capped for the same reason: the manifest is
+// stored whole and re-served on every detail read.
+const MAX_IDENTIFIER_LENGTH = 128;
+const MAX_TOOLS = 100;
 
 // ── Manifest validation — LobeHub/pai-chat ToolManifest format ───────────────
 // Required: identifier, meta.title, api[]
@@ -31,9 +42,12 @@ function validateManifest(json) {
 		throw new Error('Missing identifier');
 	if (!/^[a-z0-9._-]+$/i.test(json.identifier))
 		throw new Error('identifier must be alphanumeric with dots, hyphens, or underscores');
+	if (json.identifier.length > MAX_IDENTIFIER_LENGTH)
+		throw new Error(`identifier must be ${MAX_IDENTIFIER_LENGTH} characters or fewer`);
 	if (!json.meta?.title) throw new Error('Missing meta.title');
 	if (!Array.isArray(json.api) || !json.api.length)
 		throw new Error('api must be a non-empty array');
+	if (json.api.length > MAX_TOOLS) throw new Error(`api must declare at most ${MAX_TOOLS} tools`);
 	for (const tool of json.api) {
 		if (!tool.name || !tool.description)
 			throw new Error(`Tool "${tool.name || '?'}" missing name or description`);
@@ -142,7 +156,13 @@ async function handleList(req, res, url) {
 	const sort = VALID_SORTS.has(sortParam) ? sortParam : 'popular';
 	const cursor = url.searchParams.get('cursor') || null;
 	const limit = Math.min(40, Math.max(1, Number(url.searchParams.get('limit')) || 20));
-	const offset = cursor ? Math.max(0, Number(cursor)) : 0;
+	// The cursor is this endpoint's own opaque offset, handed back as next_cursor.
+	// A hand-typed one still has to be a non-negative integer: Number('abc') is
+	// NaN, and NaN reaching OFFSET made Postgres throw, which surfaced as a 500
+	// for what is plainly a client fault.
+	const offset = cursor === null ? 0 : Number(cursor);
+	if (!Number.isInteger(offset) || offset < 0)
+		return error(res, 400, 'validation_error', 'cursor must be a non-negative integer');
 	const qLike = q ? `%${q}%` : null;
 	const fetchLimit = limit + 1;
 
@@ -186,6 +206,14 @@ async function handleDetail(req, res, id) {
 	const rl = await limits.widgetRead(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
+	// `is_public: false` is a real publish option, and list/categories both honor
+	// it. Detail used to read by id alone, so anyone holding the UUID could pull
+	// an unpublished plugin's full manifest. Gate it the same way: public to
+	// everyone, private to its author only. An anonymous reader has a null viewer
+	// id, and `author_id = NULL` is never true, so the row simply 404s for them.
+	const auth = await resolveAuth(req);
+	const viewerId = auth?.userId ?? null;
+
 	const [row] = await sql`
 		SELECT p.*, u.display_name AS author_display_name,
 		       ap.amount        AS asset_price_amount,
@@ -196,7 +224,9 @@ async function handleDetail(req, res, id) {
 		LEFT JOIN users u ON u.id = p.author_id
 		LEFT JOIN asset_prices ap
 		       ON ap.item_type = 'plugin' AND ap.item_id = p.id AND ap.is_active = true
-		WHERE p.id = ${id} AND p.deleted_at IS NULL
+		WHERE p.id = ${id}
+		  AND p.deleted_at IS NULL
+		  AND (p.is_public = true OR p.author_id = ${viewerId}::uuid)
 	`;
 	if (!row) return error(res, 404, 'not_found', 'plugin not found');
 
@@ -209,7 +239,7 @@ async function handleImport(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const rl = await limits.widgetRead(clientIp(req));
+	const rl = await limits.pluginImportIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = await readJson(req);
@@ -225,32 +255,44 @@ async function handleImport(req, res) {
 	if (!['https:', 'http:'].includes(parsed.protocol))
 		return error(res, 400, 'validation_error', 'manifest_url must be http or https');
 
-	// Fetch the manifest server-side to avoid CORS issues. fetchSafePublicUrl
-	// DNS-resolves the host (and every redirect hop) and rejects private,
-	// loopback, link-local, and cloud-metadata ranges so a user-supplied
-	// manifest_url can't be used to probe internal services (SSRF).
+	// Fetch the manifest server-side to avoid CORS issues. The pinned variant
+	// DNS-resolves the host (and every redirect hop), rejects private, loopback,
+	// link-local, and cloud-metadata ranges, and connects straight to the address
+	// it validated so a hostile resolver cannot rebind between the check and the
+	// socket. It is the right variant here because the fetched body is handed
+	// back to the caller rather than merely rendered.
+	//
+	// maxBytes aborts the transfer the instant it crosses the manifest ceiling,
+	// from the advertised content-length up front and from the streamed bytes
+	// after that. Reading the body first and measuring it afterwards, as this
+	// used to, let a hostile host stream gigabytes into the instance before the
+	// size check ever ran.
 	let manifest;
 	try {
 		const ac = new AbortController();
 		const timer = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
 		let resp;
 		try {
-			resp = await fetchSafePublicUrl(
+			resp = await fetchSafePublicUrlPinned(
 				manifestUrl,
 				{ signal: ac.signal },
-				{ allowHttp: true },
+				{ allowHttp: true, maxBytes: MAX_MANIFEST_BYTES },
 			);
 		} finally {
 			clearTimeout(timer);
 		}
 		if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-		const text = await resp.text();
-		if (text.length > MAX_MANIFEST_BYTES)
-			throw new Error(`Manifest exceeds ${MAX_MANIFEST_BYTES / 1024}KB limit`);
-		manifest = JSON.parse(text);
+		manifest = JSON.parse(await resp.text());
 	} catch (err) {
 		if (err instanceof SsrfBlockedError)
 			return error(res, 400, 'validation_error', `manifest_url rejected: ${err.message}`);
+		if (err instanceof MaxBytesExceededError)
+			return error(
+				res,
+				422,
+				'fetch_failed',
+				`Manifest exceeds the ${MAX_MANIFEST_BYTES / 1024}KB limit`,
+			);
 		return error(res, 422, 'fetch_failed', `Could not fetch manifest: ${err.message}`);
 	}
 
@@ -282,8 +324,12 @@ async function handlePublish(req, res) {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'authentication required');
+	// Cookie sessions are attached by the browser on any cross-site POST, so the
+	// only thing separating a real publish from one a hostile page triggered is
+	// the double-submit token. Bearer callers are exempt inside requireCsrf.
+	if (!(await requireCsrf(req, res, auth.userId))) return;
 
-	const rl = await limits.widgetRead(clientIp(req));
+	const rl = await limits.pluginPublishUser(auth.userId);
 	if (!rl.success) return rateLimited(res, rl);
 
 	const raw = await readJson(req);
@@ -308,7 +354,10 @@ async function handlePublish(req, res) {
 		? manifest.meta.tags.slice(0, 20).map((t) => String(t).slice(0, 40))
 		: [];
 
-	// Upsert on identifier + author so re-publishing updates the record
+	// Upsert on identifier + author so re-publishing updates the record.
+	// The RETURNING row carries author_id but no author_display_name, so the
+	// author's name is joined back on afterwards: without it this endpoint answered
+	// with a half-populated `author` object that list and detail both fill in.
 	const [row] = await sql`
 		INSERT INTO plugins (author_id, identifier, manifest_url, manifest_json, name, description, category, tags, is_public)
 		VALUES (

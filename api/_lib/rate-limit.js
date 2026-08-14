@@ -1190,6 +1190,13 @@ export const limits = {
 	// still stops a scripted flood. Page-load-critical clusters additionally get
 	// their own dedicated buckets below so one surface can never starve another.
 	publicIp: (ip) => getLimiter('public:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	// Fiat onramp checkout links (/api/onramp/link). Unlike the generic public read,
+	// each configured call mints a single-use session token against Coinbase's CDP
+	// API, so an unauthenticated flood here is upstream quota burn, not just our CPU.
+	// 20 per 5 min per IP covers a user reopening the Add funds overlay and switching
+	// between USDC and SOL several times, and nothing legitimate needs more.
+	onrampLinkIp: (ip) =>
+		getLimiter('onramp:link:ip', { limit: 20, window: '5 m', local: true }).limit(ip),
 	// /irl coordinate reads (pins nearby, drops nearby, world-lines nearby). These
 	// are the only public reads that reveal WHERE another user placed something, so
 	// their ceiling is a privacy budget, not a flood guard, and it must not drift
@@ -1308,6 +1315,27 @@ export const limits = {
 	// Skills marketplace browse — isolated bucket so traffic on other public endpoints
 	// can't starve the skills list. 60/min per IP.
 	skillsBrowse: (ip) => getLimiter('skills:browse', { limit: 60, window: '1 m' }).limit(ip),
+	// Plugin manifest import (POST /api/plugins/import). Every call makes the
+	// server fetch a caller-supplied URL, so this is the one plugin lane that can
+	// be turned into an egress amplifier: 600/min (the generic browse ceiling) is
+	// 600 outbound requests a minute per IP pointed wherever the caller likes.
+	// 20 per 5 min is more imports than any human performs and still lets a
+	// developer iterate on a manifest they are debugging.
+	pluginImportIp: (ip) =>
+		getLimiter('plugin:import:ip', { limit: 20, window: '5 m' }).limit(ip),
+	// Plugin publish (POST /api/plugins/publish). Keyed on the authenticated user
+	// rather than the IP because the row it writes is owned by that account.
+	// Re-publishing the same identifier is an upsert, so the ceiling only bounds
+	// how many DISTINCT plugin rows one account can create per hour.
+	pluginPublishUser: (userId) =>
+		getLimiter('plugin:publish:user', { limit: 30, window: '1 h' }).limit(userId),
+	// Install-counter dedupe (POST /api/plugins/:id/install), same shape as
+	// avatarViewIp: one counted install per (IP, plugin) per 30 minutes so a user
+	// who reinstalls a plugin four times moves install_count by one. NOT local:
+	// a per-instance counter would let the same caller count once per warm Cloud
+	// Run instance, which is exactly the inflation this bucket exists to stop.
+	pluginInstallDedupe: (ipAndPlugin) =>
+		getLimiter('plugin:install:dedupe', { limit: 1, window: '30 m' }).limit(ipAndPlugin),
 	// Marketplace agent preview chat — anonymous "try before fork" flow on the
 	// agent detail page. Strict per-IP and per-agent caps so one client can't
 	// drain LLM credits and one agent can't starve the global pool.
