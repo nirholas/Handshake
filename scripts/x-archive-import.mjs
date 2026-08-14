@@ -101,12 +101,12 @@ async function importScrape(client, scrape) {
 					tweet_id, handle, author_handle, url, text, posted_at,
 					is_retweet, is_reply, is_pinned, has_image, has_video, has_card,
 					hashtags, mentions, urls,
-					likes, retweets, replies, views, views_label, views_exact, measured_at
+					likes, retweets, replies, views, views_label, views_exact, metrics_source, measured_at
 				) values (
 					$1, $2, $3, $4, $5, $6,
 					$7, $8, $9, $10, $11, $12,
 					$13, $14, $15,
-					$16, $17, $18, $19, $20, $21, $22
+					$16, $17, $18, $19, $20, $21, $22, $23
 				)
 				on conflict (tweet_id) do update set
 					url         = excluded.url,
@@ -121,6 +121,7 @@ async function importScrape(client, scrape) {
 					views       = excluded.views,
 					views_label = excluded.views_label,
 					views_exact = excluded.views_exact,
+					metrics_source = excluded.metrics_source,
 					measured_at = excluded.measured_at,
 					updated_at  = now()
 				-- Only accept a scrape that is newer than the one already on the
@@ -133,7 +134,7 @@ async function importScrape(client, scrape) {
 					p.tweetId, p.handle, p.authorHandle, p.url, p.text, p.postedAt,
 					p.isRetweet, p.isReply, p.isPinned, p.hasImage, p.hasVideo, p.hasCard,
 					p.hashtags, p.mentions, p.urls,
-					p.likes, p.retweets, p.replies, p.views, p.viewsLabel, p.viewsExact, p.measuredAt,
+					p.likes, p.retweets, p.replies, p.views, p.viewsLabel, p.viewsExact, p.metricsSource, p.measuredAt,
 				],
 			);
 			if (res.rowCount) {
@@ -142,10 +143,10 @@ async function importScrape(client, scrape) {
 			}
 
 			await client.query(
-				`insert into x_account_post_snapshots (tweet_id, import_id, captured_at, likes, retweets, replies, views, views_label)
-				 values ($1, $2, $3, $4, $5, $6, $7, $8)
+				`insert into x_account_post_snapshots (tweet_id, import_id, captured_at, likes, retweets, replies, views, views_label, metrics_source)
+				 values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 				 on conflict (tweet_id, captured_at) do nothing`,
-				[p.tweetId, importId, p.measuredAt, p.likes, p.retweets, p.replies, p.views, p.viewsLabel],
+				[p.tweetId, importId, p.measuredAt, p.likes, p.retweets, p.replies, p.views, p.viewsLabel, p.metricsSource],
 			);
 		}
 

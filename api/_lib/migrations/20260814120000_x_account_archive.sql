@@ -80,7 +80,11 @@ create table if not exists x_account_posts (
 	views_label   text,
 	views_exact   boolean     not null default false,
 
-	measured_at   timestamptz,                    -- scrape time behind the metrics above
+	-- 'scrape' (timeline, counters may be late or rounded) or 'x-api-v2'
+	-- (public_metrics, exact). The analysis trusts a zero from the API and
+	-- distrusts a zero from a scrape, so provenance has to survive the write.
+	metrics_source text      not null default 'scrape',
+	measured_at   timestamptz,                    -- when the metrics above were observed
 	first_seen_at timestamptz not null default now(),
 	updated_at    timestamptz not null default now()
 );
@@ -99,11 +103,12 @@ create table if not exists x_account_post_snapshots (
 	tweet_id    text        not null references x_account_posts(tweet_id) on delete cascade,
 	import_id   uuid        not null references x_account_imports(id) on delete cascade,
 	captured_at timestamptz not null,
-	likes       integer,
-	retweets    integer,
-	replies     integer,
-	views       integer,
-	views_label text
+	likes          integer,
+	retweets       integer,
+	replies        integer,
+	views          integer,
+	views_label    text,
+	metrics_source text not null default 'scrape'
 );
 
 -- One measurement per post per scrape instant. A re-import of the same file is

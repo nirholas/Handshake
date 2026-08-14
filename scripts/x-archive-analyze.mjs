@@ -84,7 +84,7 @@ async function loadFromDb() {
 		select tweet_id, handle, author_handle, url, text, posted_at,
 		       is_retweet, is_reply, is_pinned, has_image, has_video, has_card,
 		       hashtags, mentions, urls,
-		       likes, retweets, replies, views, views_label, views_exact, measured_at
+		       likes, retweets, replies, views, views_label, views_exact, metrics_source, measured_at
 		from x_account_posts
 		order by posted_at desc
 	`;
@@ -114,6 +114,7 @@ async function loadFromDb() {
 			views: r.views,
 			viewsLabel: r.views_label,
 			viewsExact: r.views_exact,
+			metricsSource: r.metrics_source,
 			measuredAt: r.measured_at ? new Date(r.measured_at).toISOString() : null,
 		};
 		if (!accounts.has(r.handle)) {

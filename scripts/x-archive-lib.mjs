@@ -38,6 +38,9 @@ export function parseCount(raw) {
 // named in the report; `npm run x:archive:refresh` replaces them with exact
 // counts from the X API.
 export function isMetricsSuspect(post) {
+	// The X API returns public_metrics exactly, so a zero from it is a real
+	// zero and must not be second-guessed by a heuristic built for the scraper.
+	if (post.metricsSource === 'x-api-v2') return post.likes === null || post.likes === undefined;
 	if (post.likes === null || post.likes === undefined) return true;
 	if (post.likes > 0) return false;
 	return (post.retweets || 0) > 0 || (post.replies || 0) >= 2 || (post.views || 0) >= 1000;
@@ -59,7 +62,7 @@ export function authorOf(raw, fallbackHandle) {
 }
 
 // One scraped tweet -> the canonical row shape shared by the DB and the report.
-export function normalizePost(raw, { handle }) {
+export function normalizePost(raw, { handle, metricsSource = 'scrape' }) {
 	const id = String(raw.id || '').trim();
 	if (!id) throw new Error('tweet is missing an id');
 	const posted = raw.timestamp ? new Date(raw.timestamp) : null;
@@ -98,6 +101,7 @@ export function normalizePost(raw, { handle }) {
 		views: views.value,
 		viewsLabel: views.label,
 		viewsExact: views.exact,
+		metricsSource,
 		measuredAt: raw.scrapedAt || null,
 	};
 
@@ -113,10 +117,14 @@ export function normalizeScrape(doc, { sourceText = null } = {}) {
 	if (!scrapedAt || Number.isNaN(scrapedAt.getTime())) throw new Error('scrape file has no usable `scrapedAt`');
 	if (!Array.isArray(doc.tweets)) throw new Error('scrape file has no `tweets` array');
 
+	// A file written by scripts/x-archive-refresh.mjs declares its provenance;
+	// anything else is a timeline scrape with the counter caveats that implies.
+	const metricsSource = doc.source === 'x-api-v2' ? 'x-api-v2' : 'scrape';
+
 	const seen = new Set();
 	const posts = [];
 	for (const raw of doc.tweets) {
-		const post = normalizePost(raw, { handle });
+		const post = normalizePost(raw, { handle, metricsSource });
 		if (seen.has(post.tweetId)) continue; // a scrape can re-see a post while scrolling
 		seen.add(post.tweetId);
 		post.measuredAt = post.measuredAt || scrapedAt.toISOString();
@@ -125,6 +133,7 @@ export function normalizeScrape(doc, { sourceText = null } = {}) {
 
 	return {
 		handle,
+		metricsSource,
 		scrapedAt: scrapedAt.toISOString(),
 		posts,
 		sha256: sourceText === null ? null : createHash('sha256').update(sourceText).digest('hex'),
