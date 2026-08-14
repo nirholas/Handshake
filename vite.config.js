@@ -2125,7 +2125,34 @@ support: resolve(__dirname, 'pages/support.html'),
 						.split('/')
 						.pop();
 					if (EMBED_FILES.has(filename)) return [];
-					const SNIPPET = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){window.__posthog_blocked=!0},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias set_config reset opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_distinct_id get_session_id get_session_replay_url register register_once unregister on onFeatureFlags reloadFeatureFlags getFeatureFlag getFeatureFlagPayload isFeatureEnabled addExceptionStep captureException".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);posthog.init('phc_kvi8nrXqrNkLNy2NhaiwkbGyj77XpSJo54P5k2ZHYo9n',{api_host:'/ingest',ui_host:'https://us.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'})`;
+					// The snippet below is PostHog's stock loader with ONE change: the
+					// trailing `posthog.init(...)` is wrapped in `whenIdle(...)`.
+					//
+					// The stock snippet calls init() inline in <head>, and init() is
+					// what inserts the <script src=".../static/array.js"> tag. That put
+					// the analytics library into the page-load window on every route: a
+					// Lighthouse desktop trace of / measured 1,110 ms of script
+					// evaluation and a 907 ms long task for array.js, and /create paid
+					// 837 ms of its 5,400 ms total blocking time for the same file. No
+					// pixel of the product depends on it.
+					//
+					// Nothing is dropped by moving the call. The IIFE still runs
+					// synchronously, so `window.posthog` and every capture method exist
+					// from the first line of <head> onward; calls made before the real
+					// library arrives queue on the stub array and replay once it loads.
+					// That queueing is the whole point of PostHog's stub, and the init
+					// arguments ride along in `posthog._i`.
+					//
+					// The wait is bounded at 2s and falls back to a plain timer where
+					// requestIdleCallback is missing (Safari), so a visitor who leaves
+					// early loses at most a 2s window rather than an unbounded one.
+					// Waiting for the `load` event instead would have meant a 12s delay
+					// on the heaviest page, which is the wrong trade.
+					const whenIdle = (body) =>
+						`!function(){var f=function(){${body}};'requestIdleCallback'in window?requestIdleCallback(f,{timeout:2000}):setTimeout(f,1200)}();`;
+					const SNIPPET = `!function(t,e){var o,n,p,r;e.__SV||(window.posthog&&window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){window.__posthog_blocked=!0},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias set_config reset opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_distinct_id get_session_id get_session_replay_url register register_once unregister on onFeatureFlags reloadFeatureFlags getFeatureFlag getFeatureFlagPayload isFeatureEnabled addExceptionStep captureException".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);${whenIdle(
+						`posthog.init('phc_kvi8nrXqrNkLNy2NhaiwkbGyj77XpSJo54P5k2ZHYo9n',{api_host:'/ingest',ui_host:'https://us.posthog.com',defaults:'2026-01-30',person_profiles:'identified_only'})`,
+					)}`;
 					return [{ tag: 'script', children: SNIPPET, injectTo: 'head' }];
 				},
 			},
