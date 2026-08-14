@@ -5,8 +5,16 @@
 // (USD joined by mint, SOL leg detected, atomic→human, the on-chain bridge kept).
 // Fixture mirrors a real livestream-api.pump.fun/bounties/tasks item.
 
-import { describe, it, expect } from 'vitest';
-import { normalizeTask, normalizeSubmission, WSOL_MINT } from '../api/_lib/pump-go.js';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import {
+	normalizeTask,
+	normalizeSubmission,
+	getBounty,
+	getSubmissions,
+	listBounties,
+	PumpGoError,
+	WSOL_MINT,
+} from '../api/_lib/pump-go.js';
 
 const TASK = {
 	taskId: 'b4a26396-75a7-4bce-a3b5-e3c99aaa73c1',
@@ -142,5 +150,58 @@ describe('normalizeSubmission', () => {
 
 	it('returns null for garbage', () => {
 		expect(normalizeSubmission(undefined)).toBeNull();
+	});
+});
+
+// The error code travels to the client as the `error` field of the API envelope
+// (api/pump-bounties/[id].js), so a bounty that simply does not exist must not
+// be reported as an upstream fault. These pin that mapping.
+describe('PumpGoError status/code mapping', () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	function respond({ status = 200, body = {}, text = null }) {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+			status,
+			ok: status >= 200 && status < 300,
+			json: () => (text === null ? Promise.resolve(body) : Promise.reject(new SyntaxError('not json'))),
+		});
+	}
+
+	it('maps an upstream 404 to a 404 not_found, not an upstream fault', async () => {
+		respond({ status: 404 });
+		const err = await getBounty('7fcd01f0-a7cc-4c51-9c02-367a17021b77').catch((e) => e);
+		expect(err).toBeInstanceOf(PumpGoError);
+		expect(err.status).toBe(404);
+		expect(err.code).toBe('not_found');
+	});
+
+	it('maps any other upstream failure to a 502 pump_go_upstream', async () => {
+		respond({ status: 503 });
+		const err = await listBounties({ limit: 10 }).catch((e) => e);
+		expect(err.status).toBe(502);
+		expect(err.code).toBe('pump_go_upstream');
+	});
+
+	it('maps an unreachable upstream to a 504', async () => {
+		vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('connect ECONNREFUSED'));
+		const err = await listBounties({}).catch((e) => e);
+		expect(err.status).toBe(504);
+		expect(err.code).toBe('pump_go_upstream');
+	});
+
+	it('maps a non-JSON 200 to a 502 rather than crashing the handler', async () => {
+		respond({ status: 200, text: '<html>maintenance</html>' });
+		const err = await getSubmissions('7fcd01f0-a7cc-4c51-9c02-367a17021b77').catch((e) => e);
+		expect(err.status).toBe(502);
+		expect(err.code).toBe('pump_go_upstream');
+	});
+
+	it('returns the normalized bounty on the success path', async () => {
+		respond({ status: 200, body: TASK });
+		const bounty = await getBounty(TASK.taskId);
+		expect(bounty.taskId).toBe(TASK.taskId);
+		expect(bounty.reward.sol).toBe(0.5);
 	});
 });
