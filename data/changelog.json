@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "The public custody page is switched off until its on-chain anchor works again",
+      "summary": "The /integrity page invited anyone to verify our custodial wallets against a Merkle root anchored on Solana. The snapshot half of that has been running correctly all along: every six hours the platform reads each wallet's live mainnet balance, builds the tree, and records the root. The anchoring half has not. No epoch has been committed on-chain since the feature launched on 23 June, so the page was headlining custody you can verify above a history table where every row read anchor_failed, and telling readers the latest root would be anchored shortly when in fact nothing had been. A trust page that overstates what it can prove is worse than no trust page, so we have taken it down rather than leave it up making a promise the data does not support. Nothing else changes: snapshots keep running and keep accruing, the public API behind the page (/api/custody/integrity and /api/custody/anchor) is untouched and still reports every epoch along with an honest epochs_anchored count, and wallet owners can still recompute their own inclusion proof. The page comes back when anchoring is fixed, not before.",
+      "tags": [
+        "fix",
+        "security"
+      ],
+      "link": "/proof"
+    },
+    {
+      "date": "2026-08-14",
       "title": "The status page tells you how old its numbers are, and the support page stops sending questions to a page that does not exist",
       "summary": "Four learn-and-docs pages were saying things that were no longer true. The status page computed a 'last check' stamp and then lost it a second later, because the translation pass rewrote that whole line after the live data had been written into it; readers saw the cadence sentence with no freshness at all, which matters because the status feed is edge-cached and can be minutes older than the page in front of you. The stamp now lives in its own element the translation pass cannot overwrite. The support page's 'Questions & help' card pointed at GitHub Discussions, which is switched off for the repository, so every reader who clicked it landed on a 404; questions now open a real question template in the issue tracker, and the same dead link is gone from the template chooser on GitHub. The live-event page still advertised a June session as upcoming, with 'Save your spot' and an Add to calendar button for a date that had passed, so it now switches to past-event copy on its own once the event ends. The custody guide claimed each attestation epoch is anchored on Solana without saying what you see when that step does not run; it now names the exact status the API returns and tells you which two fields to read before treating a root as anchored.",
       "tags": [
@@ -1453,8 +1463,7 @@
       "tags": [
         "fix",
         "improvement"
-      ],
-      "link": "/integrity"
+      ]
     },
     {
       "date": "2026-08-12",
@@ -14230,7 +14239,7 @@
         "security",
         "feature"
       ],
-      "link": "/integrity"
+      "link": "/proof"
     },
     {
       "date": "2026-06-23",
@@ -21722,6 +21731,16 @@
         "fix",
         "infra"
       ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "The Arena opens on the live board instead of a list, and a shared bracket now previews the standings",
+      "summary": "Landing on the Arena used to mean reading a grid of cards before you could tell whether anything was happening. Whatever competition is running now is promoted to the top of the page as a full board: the podium with each agent P&L for the window, the countdown to the bell, and how many agents and trades are in it, all before a click. If nothing is live, the next scheduled bracket takes the slot. Sharing improved too. A bracket link pointed at a part of the address that link previews cannot read, so posting a live competition looked exactly like posting the homepage. Every bracket now has its own shareable address that unfurls a picture of the actual standings, drawn from the same numbers the page shows and the same ones published on-chain. A losing board is drawn exactly like a winning one, in red.",
+      "tags": [
+        "feature",
+        "improvement"
+      ],
+      "link": "/arena"
     }
   ]
 }

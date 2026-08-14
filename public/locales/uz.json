@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Merkle bargingizni qayta hisoblang, yoʻlni bosib oʻting va uni zanjirdagi ildizga qarshi tasdiqlang — bularning barchasi brauzeringizda.",
 		"meta_og_title": "Saqlovni tekshirish · three.ws",
 		"meta_title": "Saqlovni tekshirish · three.ws",
-		"verify_your_custody": "Saqlovingizni tekshiring",
-		"your_wallet_s_balance_and_authorized_state": "Hamyoningiz balansi va ruxsat berilgan holati ildizi Solanaga bogʻlangan Merkle daraxtiga kiritilgan. Bu sahifa bargingizni qayta hisoblaydi, oʻsha ildizga yoʻlni bosib oʻtadi va bogʻlovchini toʻgʻridan-toʻgʻri zanjirdan tashqaridan oʻqiydi — bularning barchasi brauzeringizda. Biz sizga hammasi joyida deb aytmaymiz; siz oʻzingiz tekshirasiz. Platforma boʻylab umumiy rasmni <a href=\"/integrity\">ommaviy yaxlitlik sahifasida</a> koʻring."
+		"verify_your_custody": "Saqlovingizni tekshiring"
 	},
 	"protocol": {
 		"defi": "DeFi",

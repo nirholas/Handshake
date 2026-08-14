@@ -16314,8 +16314,7 @@
 		"meta_og_description": "重新计算 Merkle 叶子，遍历路径，对照链上根进行确认 — 完全在您的浏览器中。",
 		"meta_og_title": "验证托管 · three.ws",
 		"meta_title": "验证托管 · three.ws",
-		"verify_your_custody": "验证您的托管",
-		"your_wallet_s_balance_and_authorized_state": "您的钱包余额和授权状态已提交至 Merkle 树，其根锚定在 Solana 上。此页面会在您的浏览器中重新计算您的叶子节点，遍历到该根节点的路径，并直接从链下读取锚点。我们从不告诉您一切正常；您亲自验证。在 <a href=\"/integrity\">公共完整性页面</a> 上查看平台整体情况。"
+		"verify_your_custody": "验证您的托管"
 	},
 	"protocol": {
 		"defi": "DeFi",

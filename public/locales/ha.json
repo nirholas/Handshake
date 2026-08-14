@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Sake lissafa ganyen Merkle ɗinka, bi hanyar, kuma tabbatar da shi akan tushen da ke kan sarkar — gabaɗaya a cikin burauzarka.",
 		"meta_og_title": "Tabbatar da Riƙo · three.ws",
 		"meta_title": "Tabbatar da Riƙo · three.ws",
-		"verify_your_custody": "Tabbatar da riƙonka",
-		"your_wallet_s_balance_and_authorized_state": "Ma'aunin walat ɗinka da halin izini an sadaukar da su ga bishiyar Merkle wanda tushensa yake kan Solana. Wannan shafin yana sake lissafa ganyenka, yana bi hanyar zuwa wannan tushen, kuma yana karanta anka kai tsaye daga wajen sarkar — duk a cikin burauzarka. Ba ma taɓa gaya maka cewa yana da kyau ba; kai ne ke bincika shi. Duba cikakken hoto na dandamali a shafin <a href=\"/integrity\">mutunci na jama'a</a>."
+		"verify_your_custody": "Tabbatar da riƙonka"
 	},
 	"protocol": {
 		"defi": "DeFi",

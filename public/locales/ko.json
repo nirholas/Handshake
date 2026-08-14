@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Merkle 리프를 재계산하고, 경로를 따라가며, 온체인 루트와 비교하여 확인하세요 — 브라우저에서 직접.",
 		"meta_og_title": "커스터디 검증 · three.ws",
 		"meta_title": "커스터디 검증 · three.ws",
-		"verify_your_custody": "보유 자산 확인",
-		"your_wallet_s_balance_and_authorized_state": "귀하의 지갑 잔액과 승인 상태는 Solana에 루트가 앵커링된 머클 트리에 커밋됩니다. 이 페이지는 브라우저에서 귀하의 리프를 재계산하고, 해당 루트까지의 경로를 따라가며, 온체인 외부에서 앵커를 직접 읽습니다. 저희가 괜찮다고 말하지 않습니다. 직접 확인하세요. <a href=\"/integrity\">공개 무결성 페이지</a>에서 플랫폼 전체 현황을 확인하세요."
+		"verify_your_custody": "보유 자산 확인"
 	},
 	"protocol": {
 		"defi": "DeFi",

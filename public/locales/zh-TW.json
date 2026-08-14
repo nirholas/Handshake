@@ -16314,8 +16314,7 @@
 		"meta_og_description": "重新計算你的 Merkle 樹葉，走過路徑，並與鏈上根部進行確認 — 完全在你的瀏覽器中。",
 		"meta_og_title": "驗證保管 · three.ws",
 		"meta_title": "驗證保管 · three.ws",
-		"verify_your_custody": "驗證你的保管",
-		"your_wallet_s_balance_and_authorized_state": "你的錢包餘額和授權狀態已提交到一個 Merkle 樹，其根部錨定於 Solana。此頁面重新計算你的樹葉，走到該根部，並直接從鏈外讀取錨點 — 全部在你的瀏覽器中。我們從不告訴你這樣就可以；你自己檢查。查看 <a href=\"/integrity\"> 公共完整性頁面</a>上的整體情況。"
+		"verify_your_custody": "驗證你的保管"
 	},
 	"protocol": {
 		"defi": "DeFi",

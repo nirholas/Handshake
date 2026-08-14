@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Számold újra a Merkle leveled, járd be az utat, és erősítsd meg az on-chain gyökérrel — teljesen a böngésződben.",
 		"meta_og_title": "Ellenőrizd az Őrzést · three.ws",
 		"meta_title": "Ellenőrizd az Őrzést · three.ws",
-		"verify_your_custody": "Ellenőrizd az őrzésed",
-		"your_wallet_s_balance_and_authorized_state": "A pénztárcád egyenlege és engedélyezett állapota egy Merkle fába van elkötelezve, amelynek gyökere a Solana-n van rögzítve. Ez az oldal újraszámolja a leveled, bejárja az utat a gyökérhez, és közvetlenül leolvassa az ankorát off-chain — mindezt a böngésződben. Soha nem mondjuk, hogy rendben van; te ellenőrzöd. Nézd meg a platform egészére vonatkozó képet a <a href=\"/integrity\">nyilvános integritási oldalon</a>."
+		"verify_your_custody": "Ellenőrizd az őrzésed"
 	},
 	"protocol": {
 		"defi": "DeFi",

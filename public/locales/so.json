@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Dib u xisaabi caleentaada Merkle, mar jidka, oo ku xaqiiji xididka silsiladda ku xiran — gebi ahaanba biraawsarkaaga.",
 		"meta_og_title": "Xaqiiji Mas'uuliyadda · three.ws",
 		"meta_title": "Xaqiiji Mas'uuliyadda · three.ws",
-		"verify_your_custody": "Xaqiiji mas'uuliyaddaada",
-		"your_wallet_s_balance_and_authorized_state": "Hadhaaga boorsadaada iyo xaaladda la oggolaaday waxay ku xiran yihiin geed Merkle ah oo xididkiisu ku xiran yahay Solana. Boggan wuxuu dib u xisaabinayaa caleentaada, wuxuu marayaa jidka xididkaas, wuxuuna si toos ah uga akhriyaa xididka silsiladda dibaddeeda — dhammaan biraawsarkaaga. Weligeen kuma sheegno inay hagaagsan tahay; adigaa hubiya. Ka eeg sawirka guud ee madal-weynaha bogga daahfurnaanta dadweynaha ee <a href=\"/integrity\"> </a>."
+		"verify_your_custody": "Xaqiiji mas'uuliyaddaada"
 	},
 	"protocol": {
 		"defi": "DeFi",

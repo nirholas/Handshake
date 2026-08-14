@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Muling kalkulahin ang iyong Merkle leaf, sundan ang landas, at kumpirmahin ito laban sa on-chain root — lahat sa iyong browser.",
 		"meta_og_title": "Beripikahin ang Pag-aari · three.ws",
 		"meta_title": "Beripikahin ang Pag-aari · three.ws",
-		"verify_your_custody": "Beripikahin ang iyong pag-aari",
-		"your_wallet_s_balance_and_authorized_state": "Ang balanse at awtorisadong estado ng iyong wallet ay nakatalaga sa isang Merkle tree na ang ugat ay nakatali sa Solana. Ang pahinang ito ay muling kinakalkula ang iyong leaf, sinusundan ang landas patungo sa ugat, at binabasa ang anchor nang direkta mula sa off-chain — lahat sa iyong browser. Hindi namin sinasabi na ayos lang; ikaw ang nagche-check. Tingnan ang kabuuang larawan sa <a href=\"/integrity\">public integrity page</a>."
+		"verify_your_custody": "Beripikahin ang iyong pag-aari"
 	},
 	"protocol": {
 		"defi": "DeFi",

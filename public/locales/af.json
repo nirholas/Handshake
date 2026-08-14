@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Herbereken jou Merkle-blaar, volg die pad, en bevestig dit teen die on-chain wortel — alles in jou blaaier.",
 		"meta_og_title": "Verifieer Bewaring · three.ws",
 		"meta_title": "Verifieer Bewaring · three.ws",
-		"verify_your_custody": "Verifieer jou bewaring",
-		"your_wallet_s_balance_and_authorized_state": "Jou beursie se balans en gemagtigde toestand is vasgelê in 'n Merkle-boom waarvan die wortel op Solana geanker is. Hierdie bladsy herbereken jou blaar, volg die pad na daardie wortel, en lees die anker direk off-chain — alles in jou blaaier. Ons sê nooit vir jou dis reg nie; jy kontroleer dit. Sien die platformwye prentjie op die <a href=\"/integrity\">openbare integriteitsblad</a>."
+		"verify_your_custody": "Verifieer jou bewaring"
 	},
 	"protocol": {
 		"defi": "DeFi",

@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Berechnen Sie Ihr Merkle-Blatt neu, gehen Sie den Pfad entlang und bestätigen Sie es gegen den On-Chain-Root — vollständig in Ihrem Browser.",
 		"meta_og_title": "Verwahrung verifizieren · three.ws",
 		"meta_title": "Verwahrung verifizieren · three.ws",
-		"verify_your_custody": "Verwahrung verifizieren",
-		"your_wallet_s_balance_and_authorized_state": "Der Saldo und der autorisierte Status Ihrer Wallet werden in einem Merkle-Baum hinterlegt, dessen Wurzel auf Solana verankert ist. Diese Seite berechnet Ihr Blatt neu, geht den Pfad zu dieser Wurzel und liest den Anker direkt off-chain aus – alles in Ihrem Browser. Wir sagen Ihnen nie, dass es in Ordnung ist; Sie prüfen es selbst. Das plattformweite Bild finden Sie auf der <a href=\"/integrity\">Seite zur öffentlichen Integrität</a>."
+		"verify_your_custody": "Verwahrung verifizieren"
 	},
 	"protocol": {
 		"defi": "DeFi",

@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Rikalkuloni fletën tuaj Merkle, ndiqni rrugën dhe konfirmojeni atë kundrejt rrënjës on-chain — tërësisht në shfletuesin tuaj.",
 		"meta_og_title": "Verifiko Kujdestarinë · three.ws",
 		"meta_title": "Verifiko Kujdestarinë · three.ws",
-		"verify_your_custody": "Verifiko kujdestarinë tënde",
-		"your_wallet_s_balance_and_authorized_state": "Bilanci dhe gjendja e autorizuar e portofolit tuaj janë të angazhuara në një pemë Merkle, rrënja e së cilës është ankoruar në Solana. Kjo faqe rikalkulon fletën tuaj, ndjek rrugën deri te ajo rrënjë dhe lexon ankorën direkt off-chain — të gjitha në shfletuesin tuaj. Ne nuk ju themi kurrë që është në rregull; ju e kontrolloni. Shihni pamjen e plotë të platformës në <a href=\"/integrity\">faqen e integritetit publik</a>."
+		"verify_your_custody": "Verifiko kujdestarinë tënde"
 	},
 	"protocol": {
 		"defi": "DeFi",

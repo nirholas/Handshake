@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Laske Merkle-lehtesi, kulje polku ja vahvista se on-chain juurelle — täysin selaimessasi.",
 		"meta_og_title": "Vahvista hallinta · three.ws",
 		"meta_title": "Vahvista hallinta · three.ws",
-		"verify_your_custody": "Vahvista hallintasi",
-		"your_wallet_s_balance_and_authorized_state": "Lompakkosi saldo ja valtuustila on sitoutettu Merkle-puuhun, jonka juuri on ankkuroitu Solana:een. Tämä sivu laskee lehtesi, kulkee polun tuolle juurelle ja lukee ankkurin suoraan off-chain — kaikki selaimessasi. Emme koskaan sano, että se on kunnossa; sinä tarkistat sen. Katso koko alustan kuva <a href=\"/integrity\"> julkisella eheyssivulla</a>."
+		"verify_your_custody": "Vahvista hallintasi"
 	},
 	"protocol": {
 		"defi": "DeFi",

@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Pārrēķini savu Merkle lapu, izseko ceļu un apstiprini to pret ķēdes sakni — pilnībā savā pārlūkprogrammā.",
 		"meta_og_title": "Pārbaudīt glabāšanu · three.ws",
 		"meta_title": "Pārbaudīt glabāšanu · three.ws",
-		"verify_your_custody": "Pārbaudi savu glabāšanu",
-		"your_wallet_s_balance_and_authorized_state": "Tava maka bilance un autorizētais stāvoklis ir piesaistīti Merkle kokam, kura sakne ir nostiprināta uz Solana. Šī lapa pārrēķina tavu lapu, izseko ceļu līdz šai saknei un nolasa enkuru tieši ārpus ķēdes — viss tavā pārlūkprogrammā. Mēs nekad nesakām, ka viss ir kārtībā; tu to pārbaudi. Skatiet platformas mēroga attēlu <a href=\"/integrity\">publiskās integritātes lapā</a>."
+		"verify_your_custody": "Pārbaudi savu glabāšanu"
 	},
 	"protocol": {
 		"defi": "DeFi",

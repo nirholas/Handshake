@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T06:31:12.596Z",
+	"generated_at": "2026-08-14T06:42:43.712Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -405,6 +405,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The Arena opens on the live board instead of a list, and a shared bracket now previews the standings",
+			"summary": "Landing on the Arena used to mean reading a grid of cards before you could tell whether anything was happening. Whatever competition is running now is promoted to the top of the page as a full board: the podium with each agent P&L for the window, the countdown to the bell, and how many agents and trades are in it, all before a click. If nothing is live, the next scheduled bracket takes the slot. Sharing improved too. A bracket link pointed at a part of the address that link previews cannot read, so posting a live competition looked exactly like posting the homepage. Every bracket now has its own shareable address that unfurls a picture of the actual standings, drawn from the same numbers the page shows and the same ones published on-chain. A losing board is drawn exactly like a winning one, in red.",
+			"link": "/arena",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The commit and changelog feeds can no longer repeat a post they already sent",
 			"summary": "The jobs that deliver commits and changelog entries to the holders' Telegram channel take a lock so two overlapping runs cannot announce the same thing twice, and that lock lasts four minutes. But the calls they make to GitHub and Telegram had no time limit of their own, so a single stalled call could outlive the lock it was holding, let the next run pick the lock up, and post the same commits again. Every outbound call in those jobs is now bounded well inside the lock's lifetime, so the no-duplicates guarantee holds even when an upstream service hangs. The same missing limit is fixed across four other scheduled jobs: the wardrobe catalog audit, the garment job sweep, and the weekly quality benchmark, whose own run budget was previously advisory because it was only ever checked between requests and never during one. A stalled status check no longer fails a generation that is still healthy, and a slow download is no longer reported as a corrupted garment.",
 			"link": "/changelog",
@@ -557,6 +568,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The public custody page is switched off until its on-chain anchor works again",
+			"summary": "The /integrity page invited anyone to verify our custodial wallets against a Merkle root anchored on Solana. The snapshot half of that has been running correctly all along: every six hours the platform reads each wallet's live mainnet balance, builds the tree, and records the root. The anchoring half has not. No epoch has been committed on-chain since the feature launched on 23 June, so the page was headlining custody you can verify above a history table where every row read anchor_failed, and telling readers the latest root would be anchored shortly when in fact nothing had been. A trust page that overstates what it can prove is worse than no trust page, so we have taken it down rather than leave it up making a promise the data does not support. Nothing else changes: snapshots keep running and keep accruing, the public API behind the page (/api/custody/integrity and /api/custody/anchor) is untouched and still reports every epoch along with an honest epochs_anchored count, and wallet owners can still recompute their own inclusion proof. The page comes back when anchoring is fixed, not before.",
+			"link": "/proof",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -1998,7 +2020,7 @@
 			"type": "update",
 			"title": "The public custody anchor lookup answers a bad epoch instead of erroring out",
 			"summary": "Anyone can look up the on-chain anchor for a Proof-of-Custody epoch at /api/custody/anchor. Ask it for an epoch number too large to be a real round and it used to fail with an internal server error, which reads like the custody service is down rather than like a typo in the request. It now answers a plain \"that is not a valid epoch\" for malformed input, keeps 404 for an epoch that has not happened yet, and reads the newest epoch with a single lookup instead of pulling the whole integrity aggregate it then threw away.",
-			"link": "/integrity",
+			"link": null,
 			"tags": [
 				"fix",
 				"improvement"
@@ -19293,7 +19315,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Custody Integrity",
-			"summary": "Provable, on-chain-anchored custody for every three.ws agent wallet. The platform commits a Merkle root over every wallet's on-chain state to Solana: verify the latest root yourself, no account required.",
+			"summary": "The public proof behind three.ws custodial agent wallets: every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Check the latest root yourself, with no account and no trust required.",
 			"link": "/integrity",
 			"tags": [
 				"launch"
@@ -20278,7 +20300,7 @@
 			"type": "update",
 			"title": "Proof-of-Custody: verify your agent wallet's custody on-chain yourself",
 			"summary": "Custodial means we hold your wallet's keys and sign for you, so now we make that custody provable instead of asking you to take our word for it. Every few hours the platform snapshots every custodial wallet's public state (its address, live on-chain balance, and a fingerprint of its authorized-event history), builds a Merkle tree over all wallets, and commits the single root to Solana in a real transaction. Open the new Proof of Custody tab in your wallet, or the standalone verifier, and your browser does the checking itself: it recomputes your wallet's leaf from the public data, walks the Merkle path to the root, reads the anchoring transaction straight from a public Solana RPC, and confirms the on-chain root matches. You get a clear green 'verified on-chain' with the explorer link, or an honest red state naming exactly which step failed, never a fake badge. It also reconciles movement: every drop in your balance between snapshots is mapped to an authorized, logged withdraw or spend, and any outflow the ledger can't explain is loudly flagged. The new public integrity page shows the latest root, its anchor transaction, the wallet count and aggregate balance, and lets anyone re-verify the platform's custody on-chain with no account. Don't trust, verify.",
-			"link": "/integrity",
+			"link": "/proof",
 			"tags": [
 				"security",
 				"feature"

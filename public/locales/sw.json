@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Rehesha jani lako la Merkle, tembea njia, na thibitisha dhidi ya mzizi wa blockchain — kabisa kwenye kivinjari chako.",
 		"meta_og_title": "Thibitisha Uhifadhi · three.ws",
 		"meta_title": "Thibitisha Uhifadhi · three.ws",
-		"verify_your_custody": "Thibitisha uhifadhi wako",
-		"your_wallet_s_balance_and_authorized_state": "Salio la pochi yako na hali iliyoidhinishwa zimehifadhiwa kwenye mti wa Merkle ambao mzizi wake umeimarishwa kwenye Solana. Ukurasa huu unarehesha jani lako, unatembea njia hadi mzizi huo, na unasoma kiambatisho moja kwa moja nje ya blockchain — yote kwenye kivinjari chako. Hatukuambia ni sawa; unakagua mwenyewe. Tazama picha ya jumla kwenye ukurasa wa uaminifu wa <a href=\"/integrity\">public </a>."
+		"verify_your_custody": "Thibitisha uhifadhi wako"
 	},
 	"protocol": {
 		"defi": "DeFi",

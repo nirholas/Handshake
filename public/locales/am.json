@@ -16314,8 +16314,7 @@
 		"meta_og_description": "የእርስዎን Merkle leaf እንደገና ያሰሉ፣ መንገዱን ይከተሉ እና በኦን-ቼይን ስር ጋር ያረጋግጡት — ሙሉ በሙሉ በብሮውዘርዎ ውስጥ።",
 		"meta_og_title": "ይዞታን ያረጋግጡ · three.ws",
 		"meta_title": "ይዞታን ያረጋግጡ · three.ws",
-		"verify_your_custody": "ይዞታዎን ያረጋግጡ",
-		"your_wallet_s_balance_and_authorized_state": "የቦርሳዎ ቀሪ ሂሳብ እና የተፈቀደለት ሁኔታ ስሩ በSolana ላይ በተሰካ Merkle tree ውስጥ ተመዝግቧል። ይህ ገጽ የእርስዎን leaf እንደገና ያሰላል፣ ወደዚያ ስር የሚወስደውን መንገድ ይከተላል፣ እና መልህቁን በቀጥታ ከቼይን ውጪ ያነባል — ሁሉም በብሮውዘርዎ ውስጥ። እኛ ጥሩ ነው ብለን አንነግርዎትም፤ እርስዎ እራስዎ ያረጋግጡታል። የመድረክ-አቀፍ ምስሉን በ<a href=\"/integrity\">የህዝብ ታማኝነት ገጽ</a> ላይ ይመልከቱ።"
+		"verify_your_custody": "ይዞታዎን ያረጋግጡ"
 	},
 	"protocol": {
 		"defi": "ዲፋይ",

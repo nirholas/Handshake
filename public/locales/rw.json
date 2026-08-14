@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Ongera ubare Merkle leaf yawe, ukurikire inzira, kandi uyihamye ku muzi uri kuri blockchain — byose muri mushakisha yawe.",
 		"meta_og_title": "Genzura Ububiko · three.ws",
 		"meta_title": "Genzura Ububiko · three.ws",
-		"verify_your_custody": "Genzura ububiko bwawe",
-		"your_wallet_s_balance_and_authorized_state": "Amafaranga ari mu ikofi yawe n'imiterere yemewe byashyizwe muri Merkle tree ifite umuzi ushinzwe kuri Solana. Iyi paji yongera kubara leaf yawe, ikurikira inzira igana kuri uwo muzi, kandi isoma anchor iturutse kuri blockchain — byose muri mushakisha yawe. Ntabwo tukubwira ko byose ari sawa; wowe urabigenzura. Reba ishusho y'urubuga rwose kuri <a href=\"/integrity\">paji y'ubunyangamugayo rusange</a>."
+		"verify_your_custody": "Genzura ububiko bwawe"
 	},
 	"protocol": {
 		"defi": "DeFi",

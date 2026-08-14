@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Herbereken je Merkle leaf, loop het pad en bevestig het tegen de on-chain root — volledig in je browser.",
 		"meta_og_title": "Verifieer Bewaring · three.ws",
 		"meta_title": "Verifieer Bewaring · three.ws",
-		"verify_your_custody": "Verifieer je bewaring",
-		"your_wallet_s_balance_and_authorized_state": "Het saldo en de geautoriseerde status van je wallet zijn vastgelegd in een Merkle-boom waarvan de root is verankerd op Solana. Deze pagina herberekent je leaf, loopt het pad naar die root en leest de anchor rechtstreeks off-chain — alles in je browser. We zeggen nooit dat het goed is; jij controleert het. Zie het platformbrede overzicht op de <a href=\"/integrity\"> publieke integriteitspagina</a>."
+		"verify_your_custody": "Verifieer je bewaring"
 	},
 	"protocol": {
 		"defi": "DeFi",

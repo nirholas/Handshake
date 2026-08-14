@@ -16505,8 +16505,7 @@
 		"meta_og_description": "Recompute your Merkle leaf, walk the path, and confirm it against the on-chain root — entirely in your browser.",
 		"meta_og_title": "Verify Custody · three.ws",
 		"meta_title": "Verify Custody · three.ws",
-		"verify_your_custody": "Verify your custody",
-		"your_wallet_s_balance_and_authorized_state": "Your wallet's balance and authorized-state are committed to a Merkle tree whose root is anchored on Solana. This page recomputes your leaf, walks the path to that root, and reads the anchor straight off-chain — all in your browser. We never tell you it's fine; you check it. See the platform-wide picture on the <a href=\"/integrity\">public integrity page</a>."
+		"verify_your_custody": "Verify your custody"
 	},
 	"protocol": {
 		"defi": "DeFi",
@@ -18889,10 +18888,10 @@
 		"load_a_ready_made_tour_then_edit": "Load a ready-made tour, then edit it exactly like your own.",
 		"meta_description": "A live, no-code playground: point and click to build a 3D guide that walks your store and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.",
 		"meta_og_description": "Point, click, and narrate. Design a 3D guide on a live demo store, preview it, then paste it into Shopify.",
-		"meta_og_title": "three.ws Tour Builder — build a walking 3D store guide, no code",
+		"meta_og_title": "three.ws Tour Builder: build a walking 3D store guide, no code",
 		"meta_title": "Tour Builder: design a 3D store guide, then paste it into Shopify | three.ws",
 		"meta_twitter_description": "A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.",
-		"meta_twitter_title": "Tour Builder — design a 3D store guide, no code · three.ws",
+		"meta_twitter_title": "Tour Builder: design a 3D store guide, no code · three.ws",
 		"northwind_goods": "NORTHWIND GOODS",
 		"northwind_started_in_a_garage_kiln_in": "Northwind started in a garage kiln in 2019. Today we partner with eleven independent workshops across the Pacific Northwest, paying fair rates and releasing pieces only when they're ready. No seasons rushed, no corners cut.",
 		"not_right_for_your_home_send_it": "Not right for your home? Send it back within 60 days, no questions.",

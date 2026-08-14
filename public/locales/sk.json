@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Prepočítajte si svoj Merkle list, prejdite cestu a potvrďte ho proti on-chain koreňu — úplne vo svojom prehliadači.",
 		"meta_og_title": "Overiť správu · three.ws",
 		"meta_title": "Overiť správu · three.ws",
-		"verify_your_custody": "Overte si svoju správu",
-		"your_wallet_s_balance_and_authorized_state": "Zostatok vašej peňaženky a autorizovaný stav sú zapísané v Merkle strome, ktorého koreň je zakotvený na Solana. Táto stránka prepočítava váš list, prechádza cestou k tomu koreňu a číta kotvu priamo mimo chain — všetko vo vašom prehliadači. Nikdy vám nepovieme, že je to v poriadku; skontrolujte si to. Pozrite sa na celkový obraz na stránke verejnej integrity <a href=\"/integrity\"></a>."
+		"verify_your_custody": "Overte si svoju správu"
 	},
 	"protocol": {
 		"defi": "DeFi",

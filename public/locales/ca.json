@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Recalcula la teva fulla Merkle, segueix el camí i confirma-la amb l'arrel on-chain — tot des del teu navegador.",
 		"meta_og_title": "Verifica la Custòdia · three.ws",
 		"meta_title": "Verifica la Custòdia · three.ws",
-		"verify_your_custody": "Verifica la teva custòdia",
-		"your_wallet_s_balance_and_authorized_state": "El saldo de la teva cartera i el seu estat autoritzat estan compromesos en un arbre Merkle l'arrel del qual està ancorada a Solana. Aquesta pàgina recalcula la teva fulla, segueix el camí fins a aquesta arrel i llegeix l'àncora directament off-chain — tot des del teu navegador. Mai et diem que està bé; tu ho comproves. Consulta la visió general de la plataforma a la <a href=\"/integrity\">pàgina d'integritat pública</a>."
+		"verify_your_custody": "Verifica la teva custòdia"
 	},
 	"protocol": {
 		"defi": "DeFi",

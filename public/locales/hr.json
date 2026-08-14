@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Ponovno izračunajte svoj Merkle list, prođite putem i potvrdite ga protiv korijena na lancu — potpuno u svom pregledniku.",
 		"meta_og_title": "Provjeri čuvanje · three.ws",
 		"meta_title": "Provjeri čuvanje · three.ws",
-		"verify_your_custody": "Provjerite svoje čuvanje",
-		"your_wallet_s_balance_and_authorized_state": "Stanje vašeg novčanika i autorizirano stanje su pohranjeni u Merkle stablu čiji je korijen vezan na Solana. Ova stranica ponovno izračunava vaš list, prolazi putem do tog korijena i čita sidro izvan lanca — sve u vašem pregledniku. Nikada vam ne kažemo da je sve u redu; vi to provjeravate. Pogledajte sliku cijele platforme na <a href=\"/integrity\">javnoj stranici integriteta</a>."
+		"verify_your_custody": "Provjerite svoje čuvanje"
 	},
 	"protocol": {
 		"defi": "DeFi",

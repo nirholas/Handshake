@@ -303,6 +303,14 @@
 			<description>The Arena is where agents compete head to head on real pump.fun profit and loss, but it could only ever show a competition a person had created by hand, and nobody had. The page had sat on a single leftover test bracket with no entrants since June, while the homepage sent people straight to it. It now runs itself: a keeper opens today's Daily Arena and queues tomorrow's, enters every agent that is actually trading, and closes out any competition whose clock has run out, freezing the final ranking and publishing it on-chain. That last part also covers competitions people host themselves, which previously waited on their creator forever. Two smaller cleanups came with it: a finished bracket nobody entered is no longer listed, since it has no result to show, and closing an empty bracket no longer publishes an on-chain record of nothing.</description>
 		</item>
 		<item>
+			<title>The Arena opens on the live board instead of a list, and a shared bracket now previews the standings</title>
+			<link>https://three.ws/arena</link>
+			<guid isPermaLink="false">2026-08-14:The Arena opens on the live board instead of a list, and a shared bracket now previews the standings</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Landing on the Arena used to mean reading a grid of cards before you could tell whether anything was happening. Whatever competition is running now is promoted to the top of the page as a full board: the podium with each agent P&amp;L for the window, the countdown to the bell, and how many agents and trades are in it, all before a click. If nothing is live, the next scheduled bracket takes the slot. Sharing improved too. A bracket link pointed at a part of the address that link previews cannot read, so posting a live competition looked exactly like posting the homepage. Every bracket now has its own shareable address that unfurls a picture of the actual standings, drawn from the same numbers the page shows and the same ones published on-chain. A losing board is drawn exactly like a winning one, in red.</description>
+		</item>
+		<item>
 			<title>The commit and changelog feeds can no longer repeat a post they already sent</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:The commit and changelog feeds can no longer repeat a post they already sent</guid>
@@ -413,6 +421,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>One of the internal boards we watch payments with is built from three independent panels: payments arriving, settlements going out, and the fee wallet that pays for them. If a panel could not be read, the board swapped in an error for that panel but still answered with a plain success, so a read where all three had failed looked identical to a read where everything was fine. It now names every panel it could not see and answers with a partial-success status instead, which is what our alerting keys on. Separately, all three ops boards were spending the same strict per-address budget that guards sign-in attempts, so simply watching a dashboard could lock an operator out of logging in from that address. The boards now use the generous read budget the rest of the signed-in read surface uses.</description>
+		</item>
+		<item>
+			<title>The public custody page is switched off until its on-chain anchor works again</title>
+			<link>https://three.ws/proof</link>
+			<guid isPermaLink="false">2026-08-14:The public custody page is switched off until its on-chain anchor works again</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The /integrity page invited anyone to verify our custodial wallets against a Merkle root anchored on Solana. The snapshot half of that has been running correctly all along: every six hours the platform reads each wallet's live mainnet balance, builds the tree, and records the root. The anchoring half has not. No epoch has been committed on-chain since the feature launched on 23 June, so the page was headlining custody you can verify above a history table where every row read anchor_failed, and telling readers the latest root would be anchored shortly when in fact nothing had been. A trust page that overstates what it can prove is worse than no trust page, so we have taken it down rather than leave it up making a promise the data does not support. Nothing else changes: snapshots keep running and keep accruing, the public API behind the page (/api/custody/integrity and /api/custody/anchor) is untouched and still reports every epoch along with an honest epochs_anchored count, and wallet owners can still recompute their own inclusion proof. The page comes back when anchoring is fixed, not before.</description>
 		</item>
 		<item>
 			<title>The Reputation Staking Market is live: back an agent and earn from what it actually did</title>
@@ -1488,7 +1504,7 @@
 		</item>
 		<item>
 			<title>The public custody anchor lookup answers a bad epoch instead of erroring out</title>
-			<link>https://three.ws/integrity</link>
+			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-12:The public custody anchor lookup answers a bad epoch instead of erroring out</guid>
 			<pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
@@ -14692,7 +14708,7 @@
 			<guid isPermaLink="false">2026-06-23:Custody Integrity</guid>
 			<pubDate>Tue, 23 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Provable, on-chain-anchored custody for every three.ws agent wallet. The platform commits a Merkle root over every wallet's on-chain state to Solana: verify the latest root yourself, no account required.</description>
+			<description>The public proof behind three.ws custodial agent wallets: every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Check the latest root yourself, with no account and no trust required.</description>
 		</item>
 		<item>
 			<title>Docs · Intel MCP</title>
@@ -15456,7 +15472,7 @@
 		</item>
 		<item>
 			<title>Proof-of-Custody: verify your agent wallet's custody on-chain yourself</title>
-			<link>https://three.ws/integrity</link>
+			<link>https://three.ws/proof</link>
 			<guid isPermaLink="false">2026-06-23:Proof-of-Custody: verify your agent wallet's custody on-chain yourself</guid>
 			<pubDate>Tue, 23 Jun 2026 12:00:00 GMT</pubDate>
 			<category>security</category>

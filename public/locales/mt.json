@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Ikkalkula mill-ġdid il-werqa Merkle tiegħek, imxi t-triq, u kkonfermaha kontra l-għerq on-chain — kollha fil-browser tiegħek.",
 		"meta_og_title": "Ivverifika l-Kustodja · three.ws",
 		"meta_title": "Ivverifika l-Kustodja · three.ws",
-		"verify_your_custody": "Ivverifika l-kustodja tiegħek",
-		"your_wallet_s_balance_and_authorized_state": "Il-bilanċ tal-kartiera tiegħek u l-istat awtorizzat huma impenjati f'siġra Merkle li l-għerq tagħha huwa ankrat fuq Solana. Din il-paġna tikkalkula mill-ġdid il-werqa tiegħek, timxi t-triq lejn dak l-għerq, u taqra l-ankra direttament off-chain — kollha fil-browser tiegħek. Aħna qatt ma ngħidulek li kollox tajjeb; int tiċċekkjaha. Ara l-istampa tal-pjattaforma kollha fuq il-<a href=\"/integrity\">paġna tal-integrità pubblika</a>."
+		"verify_your_custody": "Ivverifika l-kustodja tiegħek"
 	},
 	"protocol": {
 		"defi": "DeFi",

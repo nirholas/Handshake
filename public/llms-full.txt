@@ -985,12 +985,6 @@ URL: https://three.ws/tracker
 
 Solana crypto KOLs ranked by realized P&L computed from their own wallet's on-chain trade history, with win rate, volume, trade count, and X follower counts for verified handles.
 
-### Custody Integrity
-
-URL: https://three.ws/integrity
-
-Provable, on-chain-anchored custody for every three.ws agent wallet. The platform commits a Merkle root over every wallet's on-chain state to Solana: verify the latest root yourself, no account required.
-
 ### Verify Custody
 
 URL: https://three.ws/proof
@@ -998,6 +992,12 @@ Auth: required (sign-in)
 Indexable: no (excluded from sitemap)
 
 Verify your own three.ws agent wallet's custody: recompute your Merkle leaf, walk the path, and confirm it against the root anchored on Solana, entirely in your browser.
+
+### Custody Integrity
+
+URL: https://three.ws/integrity
+
+The public proof behind three.ws custodial agent wallets: every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Check the latest root yourself, with no account and no trust required.
 
 ### Agent Labor Market
 

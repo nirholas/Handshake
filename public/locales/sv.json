@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Beräkna om ditt Merkle-blad, gå vägen och bekräfta det mot den on-chain roten — helt i din webbläsare.",
 		"meta_og_title": "Verifiera förvaring · three.ws",
 		"meta_title": "Verifiera förvaring · three.ws",
-		"verify_your_custody": "Verifiera din förvaring",
-		"your_wallet_s_balance_and_authorized_state": "Din plånboks saldo och auktoriserade tillstånd är knutna till ett Merkle-träd vars rot är förankrad på Solana. Denna sida beräknar om ditt blad, går vägen till den roten och läser förankringen direkt off-chain — allt i din webbläsare. Vi säger aldrig att det är okej; du kontrollerar det. Se den plattformsomspännande bilden på <a href=\"/integrity\"> offentliga integritetssidan</a>."
+		"verify_your_custody": "Verifiera din förvaring"
 	},
 	"protocol": {
 		"defi": "DeFi",

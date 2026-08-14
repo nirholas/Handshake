@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Rekalkuler ditt Merkle-blad, gå stien, og bekreft det mot den on-chain roten — helt i nettleseren din.",
 		"meta_og_title": "Verifiser forvaltning · three.ws",
 		"meta_title": "Verifiser forvaltning · three.ws",
-		"verify_your_custody": "Verifiser din forvaltning",
-		"your_wallet_s_balance_and_authorized_state": "Din lommeboks saldo og autoriserte tilstand er forpliktet til et Merkle-tre hvis rot er forankret på Solana. Denne siden rekalkulerer ditt blad, går stien til den roten, og leser ankeret rett fra kjeden — alt i nettleseren din. Vi sier aldri at det er greit; du sjekker det. Se plattformens helhet på <a href=\"/integrity\"> offentlig integritetsside </a>."
+		"verify_your_custody": "Verifiser din forvaltning"
 	},
 	"protocol": {
 		"defi": "DeFi",

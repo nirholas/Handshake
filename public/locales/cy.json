@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Ail-gyfrifwch eich deilen Merkle, dilynwch y llwybr, a chadarnhewch hi yn erbyn y gwraidd ar-gadwyn — yn gyfan gwbl yn eich porwr.",
 		"meta_og_title": "Dilysu Dalfa · three.ws",
 		"meta_title": "Dilysu Dalfa · three.ws",
-		"verify_your_custody": "Dilyswch eich dalfa",
-		"your_wallet_s_balance_and_authorized_state": "Mae balans a chyflwr awdurdodedig eich waled wedi'u cyflwyno i goeden Merkle y mae ei gwraidd wedi'i angori ar Solana. Mae'r dudalen hon yn ail-gyfrifo'ch deilen, yn dilyn y llwybr i'r gwraidd hwnnw, ac yn darllen yr angor yn syth oddi ar y gadwyn — i gyd yn eich porwr. Nid ydym byth yn dweud wrthych ei fod yn iawn; rydych chi'n ei wirio. Gweler y darlun ar draws y platfform ar dudalen integredd cyhoeddus <a href=\"/integrity\"></a>."
+		"verify_your_custody": "Dilyswch eich dalfa"
 	},
 	"protocol": {
 		"defi": "DeFi",

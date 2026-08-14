@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Tính toán lại lá Merkle của bạn, đi theo đường dẫn, và xác nhận nó với gốc trên chuỗi — hoàn toàn trong trình duyệt của bạn.",
 		"meta_og_title": "Xác Minh Quyền Sở Hữu · three.ws",
 		"meta_title": "Xác Minh Quyền Sở Hữu · three.ws",
-		"verify_your_custody": "Xác minh quyền sở hữu của bạn",
-		"your_wallet_s_balance_and_authorized_state": "Số dư ví của bạn và trạng thái được ủy quyền đã được cam kết vào một cây Merkle có gốc được neo trên Solana. Trang này tính toán lại lá của bạn, đi theo đường dẫn đến gốc đó, và đọc neo trực tiếp từ off-chain — tất cả trong trình duyệt của bạn. Chúng tôi không bao giờ nói với bạn rằng mọi thứ đều ổn; bạn tự kiểm tra. Xem bức tranh toàn cảnh trên trang <a href=\"/integrity\">tính toàn vẹn công khai</a>."
+		"verify_your_custody": "Xác minh quyền sở hữu của bạn"
 	},
 	"protocol": {
 		"defi": "DeFi",

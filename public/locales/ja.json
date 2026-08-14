@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Merkleリーフを再計算し、パスをたどり、オンチェーンルートとブラウザ内で照合します。",
 		"meta_og_title": "カストディを検証 · three.ws",
 		"meta_title": "カストディを検証 · three.ws",
-		"verify_your_custody": "カストディを検証",
-		"your_wallet_s_balance_and_authorized_state": "ウォレットの残高と承認済み状態は、Solanaにアンカーされたマークルツリーのルートにコミットされます。このページは、あなたのリーフを再計算し、そのルートへのパスを辿り、アンカーをオフチェーンから直接読み取ります。これらすべてがブラウザ内で完結します。私たちは「問題ない」とは言いません。あなたがご自身で確認するのです。プラットフォーム全体の状況は、<a href=\"/integrity\">公開整合性ページ</a>でご確認ください。"
+		"verify_your_custody": "カストディを検証"
 	},
 	"protocol": {
 		"defi": "DeFi",

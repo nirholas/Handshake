@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Recalculez votre feuille Merkle, parcourez le chemin et confirmez-la par rapport à la racine on-chain — entièrement dans votre navigateur.",
 		"meta_og_title": "Vérifier la garde · three.ws",
 		"meta_title": "Vérifier la garde · three.ws",
-		"verify_your_custody": "Vérifiez votre garde",
-		"your_wallet_s_balance_and_authorized_state": "Le solde et l'état autorisé de votre portefeuille sont enregistrés dans un arbre de Merkle dont la racine est ancrée sur Solana. Cette page recalcule votre feuille, parcourt le chemin jusqu'à cette racine et lit l'ancre directement depuis la chaîne — le tout dans votre navigateur. Nous ne vous disons jamais que c'est bon ; vous le vérifiez. Consultez la vue d'ensemble de la plateforme sur la <a href=\"/integrity\">page d'intégrité publique</a>."
+		"verify_your_custody": "Vérifiez votre garde"
 	},
 	"protocol": {
 		"defi": "DeFi",

@@ -16314,8 +16314,7 @@
 		"meta_og_description": "Recalculează-ți frunza Merkle, parcurge calea și confirmă-o față de rădăcina on-chain — complet în browserul tău.",
 		"meta_og_title": "Verifică Custodia · three.ws",
 		"meta_title": "Verifică Custodia · three.ws",
-		"verify_your_custody": "Verifică-ți custodia",
-		"your_wallet_s_balance_and_authorized_state": "Soldul și starea autorizată a portofelului tău sunt angajate într-un arbore Merkle a cărui rădăcină este ancorată pe Solana. Această pagină recalculează-ți frunza, parcurge calea către acea rădăcină și citește ancora direct off-chain — totul în browserul tău. Nu îți spunem că e bine; verifici tu. Vezi imaginea de ansamblu pe pagina de integritate publică <a href=\"/integrity\"></a>."
+		"verify_your_custody": "Verifică-ți custodia"
 	},
 	"protocol": {
 		"defi": "DeFi",
