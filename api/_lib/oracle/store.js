@@ -192,6 +192,21 @@ export async function feedSince({ network = 'mainnet', sinceIso, limit = 40 } = 
 	return rows.map(rowToFeedItem);
 }
 
+/**
+ * The resolved market outcome on a feed row, or null when the join was not part
+ * of the query (feedSince) or the market has not resolved the coin yet.
+ * @param {object} r
+ */
+function outcomeFromRow(r) {
+	if (r.graduated == null && r.rugged == null && r.ath_multiple == null) return null;
+	const ath = r.ath_multiple != null ? Number(r.ath_multiple) : null;
+	return {
+		graduated: r.graduated === true,
+		rugged: r.rugged === true,
+		ath_multiple: Number.isFinite(ath) ? ath : null,
+	};
+}
+
 function rowToFeedItem(r) {
 	// Compact conviction trajectory for the inline card sparkline: the recorded
 	// history points (24h, ≤16) with the live score guaranteed as the final point.
@@ -223,11 +238,18 @@ function rowToFeedItem(r) {
 		hit_rate: odds.rate,
 		hit_rate_lift: odds.lift,
 		hit_rate_n: odds.n,
+		hit_rate_band: odds.band,
+		base_rate: odds.baseRate,
 		category: r.category,
 		smart_wallet_count: r.smart_wallet_count,
 		scored_at: r.scored_at,
 		coin_first_seen_at: r.coin_first_seen_at,
 		spark: spark.length >= 2 ? spark : null,
+		// Ground truth, carried on the card itself. The feed ranks by score, so its
+		// top rows are the boldest calls, and a resolved one whose verdict is stated
+		// without its result is the whole reason the engine reads as broken. Absent
+		// (undefined) for callers that do not join outcomes, e.g. the SSE stream.
+		outcome: outcomeFromRow(r),
 	};
 }
 
@@ -265,11 +287,10 @@ export async function readCoin(mint, network = 'mainnet') {
 		reasons: cached?.reasons || [],
 		components: cached?.components || null,
 		structure_cap: cached?.structure_cap ?? null,
-		// What the score is worth in outcomes, and what event it was fitted to
-		// predict. Served with every verdict so no surface has to guess: a bare
-		// "100" invites the reader to hear "certain", and the honest answer (this
-		// band of calls has won 26% of the time, 4.8x the market) is one field away.
-		hit_rate: cached?.score != null ? hitRateFor(Number(cached.score)) : null,
+		// The event the score was fitted to predict, so no surface has to guess.
+		// A bare "100" invites the reader to hear "certain"; the verdict travels
+		// with what it claims (a 3x run or a graduation, not a safe hold) and, on
+		// the conviction object above, with what that band has actually returned.
 		predicts: PREDICTED_EVENT,
 		narrative: narr,
 		outcome,

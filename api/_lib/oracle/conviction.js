@@ -261,30 +261,39 @@ const FEATURE_TEXT = {
 	category: 'narrative category',
 };
 
+const CREATOR_TEXT = {
+	has_wins: 'creator has shipped a graduated launch before',
+	serial_no_wins: 'creator has 5+ prior launches, none graduated',
+	repeat_no_wins: 'creator relaunches without a single graduation',
+	first_launch: 'first launch from this creator',
+	unknown: 'creator history unknown',
+};
+
+// Features whose reason reads as a fact about the launch rather than a
+// measurement of it, so the sentence says "such launches" instead of "similar".
+const SUCH = new Set(['creator_record', 'category', 'dev_sold']);
+
+/**
+ * The subject half of a reason: what the model actually saw, with no outcome
+ * statistics attached. Emitted alongside the full sentence because a card has
+ * room for the observation but not the sentence, and a card that re-derives it
+ * by splitting the sentence on a colon breaks the first time the wording moves.
+ */
+function reasonSubject(feature, bucketLabel) {
+	if (feature.key === 'creator_record') return CREATOR_TEXT[bucketLabel] || bucketLabel;
+	if (feature.key === 'category') return `${bucketLabel} narrative`;
+	if (feature.key === 'dev_sold') return bucketLabel === '>=0.5' ? 'dev sold inside the window' : 'dev held through the window';
+	return `${FEATURE_TEXT[feature.key] || feature.key} ${bucketLabel}`;
+}
+
 function reasonText(feature, bucketLabel, stats) {
-	const what = FEATURE_TEXT[feature.key] || feature.key;
 	const rate = Math.round((stats?.good_rate ?? 0) * 100);
 	const rel = MODEL.base_good_rate > 0 ? (stats?.good_rate ?? 0) / MODEL.base_good_rate : 0;
 	const vs = rel >= 1.15 ? `${rel.toFixed(1)}x base rate`
 		: rel <= 0.85 ? `${rel.toFixed(1)}x base rate`
 		: 'near base rate';
-	if (feature.key === 'creator_record') {
-		const CREATOR_TEXT = {
-			has_wins: 'creator has shipped a graduated launch before',
-			serial_no_wins: 'creator has 5+ prior launches, none graduated',
-			repeat_no_wins: 'creator relaunches without a single graduation',
-			first_launch: 'first launch from this creator',
-			unknown: 'creator history unknown',
-		};
-		return `${CREATOR_TEXT[bucketLabel] || bucketLabel}: ${rate}% of such launches worked (${vs})`;
-	}
-	if (feature.key === 'category') {
-		return `${bucketLabel} narrative: ${rate}% of such launches worked (${vs})`;
-	}
-	if (feature.key === 'dev_sold') {
-		return `${bucketLabel === '>=0.5' ? 'dev sold inside the window' : 'dev held through the window'}: ${rate}% of such launches worked (${vs})`;
-	}
-	return `${what} ${bucketLabel}: ${rate}% of similar launches worked (${vs})`;
+	const kind = SUCH.has(feature.key) ? 'such' : 'similar';
+	return `${reasonSubject(feature, bucketLabel)}: ${rate}% of ${kind} launches worked (${vs})`;
 }
 
 // ── Smart-money overlay (expert priors, in log-odds) ─────────────────────────
@@ -428,10 +437,19 @@ export function convict(intel = {}) {
 		.filter((h) => h.stats && Math.abs(h.w) >= 0.08)
 		.sort((a, b) => Math.abs(b.w) - Math.abs(a.w))
 		.slice(0, 7)
-		.map((h) => ({
-			pillar: h.pillar,
-			text: reasonText(MODEL.features.find((f) => f.key === h.key), h.bucket, h.stats),
-		}));
+		.map((h) => {
+			const feature = MODEL.features.find((f) => f.key === h.key);
+			const rel = MODEL.base_good_rate > 0 ? h.stats.good_rate / MODEL.base_good_rate : null;
+			return {
+				pillar: h.pillar,
+				text: reasonText(feature, h.bucket, h.stats),
+				// Structured twin of `text` so a card can render the observation and
+				// its lift without re-parsing English.
+				subject: reasonSubject(feature, h.bucket),
+				rate: Math.round(h.stats.good_rate * 100),
+				lift: rel == null ? null : Number(rel.toFixed(1)),
+			};
+		});
 	const reasons = [
 		...overlay.reasons.map((t) => ({ pillar: 'pedigree', text: t })),
 		...modelReasons,
@@ -445,9 +463,13 @@ export function convict(intel = {}) {
 	if (evaled.hits.some((h) => h.pillar === 'structure' && h.w <= -0.5)) badges.push('structure-flag');
 	if (cap < 100) badges.push('pedigree-flag');
 	if (String(intel.narrative?.category || intel.category).toLowerCase() === 'news') badges.push('news');
-	if (pillars.momentum >= 72) badges.push('momentum');
+	// Momentum earns a badge only when that pillar's evidence ALONE would carry
+	// the coin to prime. At the old 72 it fired on 93% of the live feed, which is
+	// a decoration, not a signal.
+	if (pillars.momentum >= 86) badges.push('momentum');
 	if (confidence < 45) badges.push('thin-data');
-	if (score >= 86) badges.push('prime');
+	// No 'prime' badge: the card renders the tier next to the score already, so it
+	// only ever restated the pill beside it.
 
 	return {
 		score,
