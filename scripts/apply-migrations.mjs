@@ -11,6 +11,10 @@
  *   node scripts/apply-migrations.mjs --apply --file 2026-04-29-onchain-unified.sql
  *   node scripts/apply-migrations.mjs --restamp --file <drifted file>  # comment-only edit, see below
  *
+ * Exit codes: 2 no DATABASE_URL, 3 drift (or an unrestampable one), 4 pending
+ * under --check, 5 a migration failed to apply (the ones queued behind it are
+ * named and stay pending).
+ *
  * Tracking: each applied migration is recorded in `schema_migrations`
  * (filename + sha256 + applied_at). Re-running is a no-op for already-applied
  * files (and refuses if the file's hash drifted since application).
@@ -265,7 +269,38 @@ async function main() {
 	console.log(
 		`\nApplying ${pending.length} migration(s) to ${maskUrl(process.env.DATABASE_URL)} …`,
 	);
-	for (const i of pending) await applyOne(i);
+	// A failure stops the run: order is load-bearing, and a later file may depend
+	// on the one that just died. What must NOT happen is stopping quietly. The
+	// bare `FAILED: <postgres message>` this used to print named neither the file
+	// nor the queue behind it, so a single broken migration froze the schema at
+	// that point while every later migration stayed pending and unmentioned. The
+	// database then drifts behind the deployed code silently: shipped handlers
+	// query columns their migration never got to add, and the first symptom is a
+	// production `column "x" does not exist`, nowhere near the real cause.
+	for (const [idx, i] of pending.entries()) {
+		try {
+			await applyOne(i);
+		} catch (err) {
+			console.log('FAILED');
+			const blocked = pending.slice(idx + 1);
+			console.error(`\nERROR applying ${i.fname}: ${err?.message || err}`);
+			console.error(`  ${idx} migration(s) applied before it; this one rolled back.`);
+			if (blocked.length) {
+				console.error(`  ${blocked.length} migration(s) behind it are STILL PENDING and were not attempted:`);
+				for (const b of blocked.slice(0, 10)) console.error(`    - ${b.fname}`);
+				if (blocked.length > 10) console.error(`    … and ${blocked.length - 10} more`);
+			} else {
+				console.error('  It was the last one in the queue; nothing is queued behind it.');
+			}
+			console.error(
+				'\nThe schema is now behind the code by everything listed above. Fix the failing\n' +
+				'migration (roll forward with a NEW file; never edit an applied one), then re-run\n' +
+				'`npm run db:migrate` to drain the rest of the queue.',
+			);
+			process.exitCode = 5;
+			return;
+		}
+	}
 	console.log('Done.');
 }
 
