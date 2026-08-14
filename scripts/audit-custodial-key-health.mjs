@@ -34,6 +34,17 @@ import { readFileSync } from 'node:fs';
 const AS_JSON = process.argv.includes('--json');
 const PLATFORM_ONLY = process.argv.includes('--platform-only');
 
+// In --json mode stdout carries ONE value: the report. The Solana connection
+// lane logs its failovers ("[solana-rpc] ... demoting that method") on stdout,
+// and a single such line ahead of the payload makes the whole thing unparseable
+// to anything reading stdout as JSON. That is not hypothetical: it is what left
+// the gcp-triage custodial-keys probe blind with "unparseable custodial audit
+// output" while the audit itself was working fine. Diagnostics belong on stderr
+// here, so a human still sees them and the parser still gets clean JSON. The
+// report is written through emitJson, which keeps the real stdout writer.
+const emitJson = console.log.bind(console);
+if (AS_JSON) console.log = (...args) => console.error(...args);
+
 // Same ownership markers the reclaim leg uses (api/_lib/economy-sweepback.js):
 // platform agents live under one owner email or the agent-email suffix.
 const PLATFORM_OWNER_EMAIL = 'agents@three.ws';
@@ -188,7 +199,7 @@ const report = {
 };
 
 if (AS_JSON) {
-	console.log(JSON.stringify(report, null, 2));
+	emitJson(JSON.stringify(report, null, 2));
 	process.exit(0);
 }
 
