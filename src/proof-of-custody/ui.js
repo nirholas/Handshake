@@ -118,7 +118,7 @@ export function renderProofUI(panel, { proof, verify, shareBase = '/proof', ctx 
 			hero.classList.add('is-pending');
 			seal.innerHTML = '◷';
 			title.textContent = 'Awaiting on-chain anchor';
-			sub.textContent = 'Your inclusion proof is internally consistent, but this epoch has not been committed on-chain yet. Verification completes once the root is anchored (usually within a few hours).';
+			sub.textContent = 'Your inclusion proof is internally consistent: your wallet is in the tree with the balance and ledger head shown. The epoch itself has not been committed on-chain, so this is not yet timestamped by a public chain. On-chain anchoring is currently unavailable, so do not expect that step to complete on its own.';
 		} else {
 			hero.classList.add('is-failed');
 			seal.innerHTML = '✕';
