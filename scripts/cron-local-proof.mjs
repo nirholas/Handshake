@@ -240,11 +240,21 @@ async function bootstrapSchema(pool, { passes = 4 } = {}) {
 		.sort()
 		.map((f) => path.join('api/_lib/migrations', f));
 
+	// Transaction-control statements are dropped so each statement autocommits on
+	// its own. Many migrations wrap their body in `begin; … commit;`, and inside
+	// an explicit transaction the FIRST unsatisfiable statement aborts the whole
+	// block: every statement that already succeeded is rolled back and every one
+	// after it fails with "current transaction is aborted". That is how
+	// forge_creations.user_id went missing here while its own ALTER was fine, and
+	// it made a local-only schema gap look like a handler bug.
+	const TX_CONTROL = /^(begin|start\s+transaction|commit|end|rollback)\b/i;
+
 	let pending = [];
 	for (const rel of [...base, ...migrations]) {
 		const abs = path.join(root, rel);
 		if (!fs.existsSync(abs)) continue;
 		for (const stmt of splitStatements(fs.readFileSync(abs, 'utf8'))) {
+			if (TX_CONTROL.test(stmt)) continue;
 			pending.push({ file: rel, stmt });
 		}
 	}

@@ -31,7 +31,10 @@ export default wrapCron(async (req, res) => {
 	// forever (the serial 100/run era ended with an 11-day labeling blackout and a
 	// 370k backlog). 1500/run ≈ 144k/day: catches up a backlog in days, then
 	// idles cheaply (the query returns only unlabeled coins).
-	const { labeled } = await labelOutcomes({ network: NETWORK, limit: 1500, minAgeMinutes: 60 });
+	// A coin the pump.fun lookup could not answer for is recorded 'unknown', which
+	// is a "we do not know yet", not a verdict. labelOutcomes retries those on a
+	// backoff on top of this budget, and `relabeled` reports how many it rescued.
+	const { labeled, relabeled } = await labelOutcomes({ network: NETWORK, limit: 1500, minAgeMinutes: 60 });
 
 	// Retrain once there's enough labeled history. Skips quietly below the floor.
 	// The sample ceiling keeps the training query's memory bounded (the signals

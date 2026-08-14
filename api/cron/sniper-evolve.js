@@ -17,6 +17,7 @@
 //   plus the EVOLVE_* tunables read by runEvolve (fleet budget, floors, samples).
 
 import { json, method, wrapCron } from '../_lib/http.js';
+import { isDbUnavailableError } from '../_lib/db.js';
 import { runEvolve } from '../../scripts/sniper-evolve.mjs';
 import { requireCron } from '../_lib/cron-auth.js';
 
@@ -38,6 +39,19 @@ export default wrapCron(async (req, res) => {
 			applied: result.applied,
 		});
 	} catch (err) {
-		return json(res, 200, { ok: false, error: err.message, log: lines.slice(-8) });
+		// A database outage is the platform-wide case wrapCron already owns: let it
+		// through so the tick heartbeats UNHEALTHY and answers with the same
+		// {ok:false, reason:'db_unavailable'} shape every other cron does. Swallowing
+		// it here answered 200 and left wrapCron writing a SUCCESS heartbeat, which
+		// is precisely how a dead learning loop hides behind a green check (the
+		// failure this fleet's own loops-health watchdog exists to catch).
+		if (isDbUnavailableError(err)) throw err;
+		// Never report a failure with no diagnostic. The neon Pool rejects with an
+		// Error carrying an EMPTY message on a transport-level fault, so the raw
+		// `err.message` shipped `{"ok":false,"error":""}`: an operator reading that
+		// learns only that something went wrong, never what.
+		const detail = err?.message || (err?.name ? `${err.name} (no message)` : String(err) || 'unknown error');
+		console.error('[sniper-evolve] failed:', detail);
+		return json(res, 200, { ok: false, error: detail, log: lines.slice(-8) });
 	}
 });
