@@ -81,3 +81,36 @@ describe('cronSecretFromArgs', () => {
 		expect(cronSecretFromArgs(['--env-file', 'prod.env'], () => 'DATABASE_URL=x\n')).toBe(null);
 	});
 });
+
+// The cron count is quoted as a literal in prose across the repo, and every copy
+// rots the moment a cron lands: on 2026-08-14 vercel.json held 107 while
+// README.md said 105 and docs/build.md said 103. scripts/check-claude-md.mjs
+// already pins the number in CLAUDE.md; this covers the other prose that states
+// it, so adding a cron fails here instead of silently making three docs wrong.
+describe('the documented cron count', () => {
+	const QUOTING_FILES = ['README.md', 'docs/build.md'];
+	// Only "<N> crons/entries in vercel.json" phrasings. Incident write-ups that
+	// count crons which SKIPPED (docs/ops/db-retention.md, production-log-triage)
+	// are historical records of a different quantity and must not be swept in.
+	const QUOTED = /\((\d{2,4}) entries on \d{4}-\d{2}-\d{2}\)|\b(\d{2,4}) crons in `vercel\.json`/g;
+
+	it('matches the vercel.json crons array everywhere it is stated', () => {
+		const expected = JSON.parse(readFileSync('vercel.json', 'utf8')).crons.length;
+		const wrong = [];
+		let quotes = 0;
+		for (const file of QUOTING_FILES) {
+			const text = readFileSync(file, 'utf8');
+			for (const m of text.matchAll(QUOTED)) {
+				quotes += 1;
+				const stated = Number(m[1] ?? m[2]);
+				if (stated === expected) continue;
+				const line = text.slice(0, m.index).split('\n').length;
+				wrong.push(`${file}:${line} says ${stated}, vercel.json declares ${expected}`);
+			}
+		}
+		expect(wrong, `stale cron counts:\n  ${wrong.join('\n  ')}`).toEqual([]);
+		expect(quotes, 'the count pattern matched nothing; the prose was reworded').toBeGreaterThanOrEqual(
+			QUOTING_FILES.length,
+		);
+	});
+});
