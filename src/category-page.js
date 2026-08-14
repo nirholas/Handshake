@@ -321,10 +321,13 @@ function renderError() {
 		<h1 class="cv-h1">Category data unavailable</h1>
 		<div class="cv-empty" style="text-align:left">
 			<p style="margin:0">The market data source is temporarily unreachable. This usually clears in
-			under a minute. <a href="#" data-action="reload">Reload the page</a> or head back to the
+			under a minute. <button type="button" class="cv-linkbtn" data-action="retry">Try again</button> or head back to the
 			<a href="/categories">categories index</a>.</p>
 		</div>`;
 	clearBelowHero();
+	// Re-run the real load rather than reloading the document: the skeletons come
+	// back and a recovered API repaints in place.
+	$('cat-hero').querySelector('[data-action="retry"]').addEventListener('click', () => main());
 }
 
 // ── SEO / document metadata ──────────────────────────────────────────────────

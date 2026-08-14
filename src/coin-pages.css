@@ -867,7 +867,10 @@ html.cv-page,
 	box-shadow: var(--cv-shadow-dropdown);
 	overflow: hidden;
 }
-.cv-search-pop a {
+/* Options are anchors on /coins (each one navigates to a coin page) and plain
+   elements on /compare (picking one adds a column, it navigates nowhere).
+   Style the role, not the tag, so both listboxes look identical. */
+.cv-search-pop [role='option'] {
 	display: flex;
 	align-items: center;
 	gap: 0.625rem;
@@ -875,9 +878,10 @@ html.cv-page,
 	text-decoration: none;
 	color: var(--cv-text);
 	font-size: 0.875rem;
+	cursor: pointer;
 }
-.cv-search-pop a:hover,
-.cv-search-pop a[data-active='1'] {
+.cv-search-pop [role='option']:hover,
+.cv-search-pop [role='option'][data-active='1'] {
 	background: var(--cv-surface-2);
 }
 .cv-search-pop img {
@@ -957,6 +961,30 @@ html.cv-page,
 }
 .cv-empty a {
 	color: var(--cv-accent);
+}
+
+/* An in-prose control that acts on this page (retry, clear a filter) is a button,
+   not a link: it navigates nowhere. It still reads as a link so the sentence it
+   sits in keeps working, and it gets the keyboard and focus behaviour a native
+   button already carries. */
+.cv-linkbtn {
+	appearance: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	font: inherit;
+	color: var(--cv-accent);
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.cv-linkbtn:hover {
+	color: var(--cv-accent-hover);
+}
+.cv-linkbtn:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: 2px;
 }
 
 .cv-skel {

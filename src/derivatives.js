@@ -174,9 +174,8 @@ function renderTable() {
 
 	const rows = sortedTickers();
 	if (!rows.length) {
-		el.innerHTML = `<div class="cv-empty">No perpetual markets for ${esc(state.filter)}. <a href="#" id="dv-clear">Clear filter</a></div>`;
-		$('dv-clear')?.addEventListener('click', (e) => {
-			e.preventDefault();
+		el.innerHTML = `<div class="cv-empty">No perpetual markets for ${esc(state.filter)}. <button type="button" class="cv-linkbtn" id="dv-clear">Clear filter</button></div>`;
+		$('dv-clear')?.addEventListener('click', () => {
 			state.filter = 'all';
 			buildFilters();
 			renderTable();

@@ -162,9 +162,8 @@ function renderTable() {
 		return;
 	}
 	if (!rows.length) {
-		el.innerHTML = `<div class="cv-empty">No stablecoins match this filter. <a href="#" data-reset="1">Show all</a>.</div>`;
-		el.querySelector('[data-reset]')?.addEventListener('click', (e) => {
-			e.preventDefault();
+		el.innerHTML = `<div class="cv-empty">No stablecoins match this filter. <button type="button" class="cv-linkbtn" data-reset="1">Show all</button>.</div>`;
+		el.querySelector('[data-reset]')?.addEventListener('click', () => {
 			setFilter('all');
 		});
 		return;
