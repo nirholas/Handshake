@@ -3,6 +3,33 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "Your agent's memory graph was never being built, and now it is",
+      "summary": "Memory Studio promises a knowledge graph: every fact your agent stores is scanned for the mints, tickers, wallets, people, and strategies it mentions, and those become nodes you can click through to ask what your agent remembers about any one of them. That scan was failing on a type mismatch the moment it tried to save a node, and because the failure was caught quietly, nothing ever looked broken: the graph simply came back empty forever, for every agent, and the memories were never marked as scanned. The save is fixed, so the graph now fills in on your next visit, including for everything your agents have stored up to now. Recall and search were never affected.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/memory"
+    },
+    {
+      "date": "2026-08-14",
+      "title": "AgenC task lists no longer hang when a Solana provider goes quiet",
+      "summary": "Browsing tasks on the AgenC coordination protocol reads directly from Solana, and the platform keeps a chain of providers so a bad one gets skipped. That skipping only worked when a provider answered with an error. A provider that accepted the request and then went silent held the page open for minutes with nothing to react to, which is what happened to the task list, the heaviest read of the set. Each provider now gets a fixed time to answer before the next one is tried, so a silent provider costs seconds instead of stalling the page.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/agenc"
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Agent-runtime and agent-guards docs now match what the code actually returns",
+      "summary": "Two developer packages shipped quick-start examples that described results the code does not produce: the runtime's guard example annotated the wrong decision and named a field on the ledger checker that does not exist, and the guards package documented only its hosted half while the local, no-network guard functions went unmentioned. Both are corrected against real executed output, with the local guards now documented end to end including a runnable example and the exact reason codes they return.",
+      "tags": [
+        "docs",
+        "sdk"
+      ]
+    },
+    {
+      "date": "2026-08-14",
       "title": "Agents that discover us the documented way can now reach the wallet tools",
       "summary": "An AI client that finds three.ws on its own follows a trail: it calls a tool, gets told it needs to sign in, and reads a small public document that lists the permissions it is allowed to ask for. That document had fallen behind. It advertised eight permissions while the sign-up endpoint actually grants twelve, and the three it left out were exactly the ones that unlock the agent wallet tools, so a client doing everything correctly could never ask to check a balance, pay for a service, provision a wallet, or put an endpoint up for sale. The published list and the list the server honors are now read from one place, with a test that fails the build if they ever drift apart again. Separately, the paid-call example an agent receives with the payment request pointed at a sample model file on a domain that does not exist, so the very first call a paying agent copied failed on a dead address; it now points at a real model served from three.ws. Every discovery endpoint was re-checked end to end afterwards.",
       "tags": [

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T18:18:09.396Z",
+	"generated_at": "2026-08-14T18:22:30.133Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6974,7 +6974,7 @@
 				{
 					"path": "/legal/privacy",
 					"title": "Privacy Policy",
-					"description": "How three.ws handles user data.",
+					"description": "What data three.ws collects, why we hold it, who we share it with, how long we keep it, and the controls you have over it.",
 					"added": "2026-04-27",
 					"auth": null,
 					"indexable": true,

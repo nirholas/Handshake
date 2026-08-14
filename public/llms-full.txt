@@ -320,6 +320,13 @@ URL: https://three.ws/demos
 
 Index of live demos across the platform: viewers, agents, payments, and experiments.
 
+### Agent Interaction Lab
+
+URL: https://three.ws/demos/agents
+Indexable: no (excluded from sitemap)
+
+Fourteen prototypes exploring how a 3D agent physically inhabits a web page: real gravity, page elements as the playground, and the agent reacting to scroll, clicks, and the cursor.
+
 ## Build
 
 Create and customize an agent.
@@ -2038,6 +2045,12 @@ URL: https://three.ws/docs/mocap-studio
 
 Drive a 3D avatar's face live from your webcam in the browser: MediaPipe face landmarks mapped to ARKit blendshapes, smoothing, record and replay, and save.
 
+### Docs · Draft Agent Mint
+
+URL: https://three.ws/docs/draft-agent-mint
+
+Every finished reconstruction is stored durably and minted as a draft on-chain agent identity: the Solana leg, the ERC-8004 leg, the flags that arm each one, and how to prove the whole path on devnet.
+
 ### Docs · Selfie to Avatar
 
 URL: https://three.ws/docs/selfie-to-avatar
@@ -2930,13 +2943,13 @@ Every three.ws agent owns one custodial Solana wallet. Seven owner-only HTTP sur
 
 URL: https://three.ws/docs/vaults
 
-A vault lets strangers put real USDC behind one trading agent, on terms the agent's owner publishes up front. The product-level tour (who each surface is for, how vaults sit next to the Arena, the Theater and Swarms) is in trading-arenas.md, under "Back-an-Agent Vaults". Read that first.
+A vault lets strangers put real USDC behind one trading agent, on terms the agent's owner publishes up front. The deep reference: every route and who may call it, the share and fee math, the guards in front of a trade, and the public audit ledger.
 
 ### Docs: Your master wallet
 
 URL: https://three.ws/docs/user-wallet
 
-Every three.ws agent owns a wallet (agent-wallets.md). Separately, every user account can own one custodial wallet of its own: the master wallet. It is the financial hub for the person rather than the bot.
+Every user account can own one custodial wallet: the master wallet, the financial hub for the person rather than the bot. Provision it, read balances, send SOL or any SPL token, fund an agent, and read its on-chain history, with the spend safeguards on each route.
 
 ### Docs: Copy Trading
 
@@ -2972,7 +2985,7 @@ URL: https://three.ws/docs/viability
 
 URL: https://three.ws/docs/press-kit
 
-Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at three lengths, the fast facts, and the rules that govern all of it.
+Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at four lengths, the fast facts, and the rules that govern all of it.
 
 ### Docs: Partner ecosystem
 
@@ -4202,7 +4215,7 @@ Every three.ws policy in one place, plus which address to use to report copyrigh
 
 URL: https://three.ws/legal/privacy
 
-How three.ws handles user data.
+What data three.ws collects, why we hold it, who we share it with, how long we keep it, and the controls you have over it.
 
 ### End-User License Agreement
 

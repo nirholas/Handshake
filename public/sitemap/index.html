@@ -83,7 +83,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 818 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 820 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -95,7 +95,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 818 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 820 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -109,6 +109,14 @@
 						<span class="sm-title">Docs · Likeness evaluation</span>
 						<span class="sm-path">/docs/likeness-eval</span>
 						<span class="sm-desc">How three.ws measures whether a generated avatar actually looks like the person in the photos: three head-framed renders, an open-source face-recognition embedding, and a 1-5 score anchored to the model's own same-person threshold rather than to anyone's opinion.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/draft-agent-mint">
+						<span class="sm-new-date">Aug 14, 2026</span>
+						<span class="sm-title">Docs · Draft Agent Mint</span>
+						<span class="sm-path">/docs/draft-agent-mint</span>
+						<span class="sm-desc">Every finished reconstruction is stored durably and minted as a draft on-chain agent identity: the Solana leg, the ERC-8004 leg, the flags that arm each one, and how to prove the whole path on devnet.</span>
 					</a>
 				</li>
 				<li>
@@ -167,14 +175,6 @@
 						<span class="sm-desc">Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.</span>
 					</a>
 				</li>
-				<li>
-					<a href="/docs/github-memory-seeding">
-						<span class="sm-new-date">Aug 12, 2026</span>
-						<span class="sm-title">Docs · GitHub memory seeding</span>
-						<span class="sm-path">/docs/github-memory-seeding</span>
-						<span class="sm-desc">Give an agent your work: your public GitHub profile plus the repositories and READMEs you pick, distilled into long-term memory so the agent speaks concretely about what you build instead of guessing. Consent is explicit and revoking it deletes every memory the grant produced.</span>
-					</a>
-				</li>
 			</ul>
 		</section>
 		<nav class="sm-toc" aria-label="Sections">
@@ -192,7 +192,7 @@
 		</nav>
 		<section class="sm-section" id="main">
 			<header>
-				<h2>Main<span class="sm-count" data-count>51</span></h2>
+				<h2>Main<span class="sm-count" data-count>52</span></h2>
 				<p class="sm-section-desc">Entry points into the product.</p>
 			</header>
 			<ul class="sm-list">
@@ -551,6 +551,13 @@
 						<span class="sm-title">Lab Demos</span>
 						<span class="sm-path">/demos</span>
 						<span class="sm-desc">Index of live demos across the platform: viewers, agents, payments, and experiments.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/demos/agents">
+						<span class="sm-title">Agent Interaction Lab<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/demos/agents</span>
+						<span class="sm-desc">Fourteen prototypes exploring how a 3D agent physically inhabits a web page: real gravity, page elements as the playground, and the agent reacting to scroll, clicks, and the cursor.</span>
 					</a>
 				</li>
 			</ul>
@@ -2255,7 +2262,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>361</span></h2>
+				<h2>Learn<span class="sm-count" data-count>362</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -2551,6 +2558,13 @@
 						<span class="sm-title">Docs · Mocap Studio</span>
 						<span class="sm-path">/docs/mocap-studio</span>
 						<span class="sm-desc">Drive a 3D avatar's face live from your webcam in the browser: MediaPipe face landmarks mapped to ARKit blendshapes, smoothing, record and replay, and save.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/draft-agent-mint">
+						<span class="sm-title">Docs · Draft Agent Mint</span>
+						<span class="sm-path">/docs/draft-agent-mint</span>
+						<span class="sm-desc">Every finished reconstruction is stored durably and minted as a draft on-chain agent identity: the Solana leg, the ERC-8004 leg, the flags that arm each one, and how to prove the whole path on devnet.</span>
 					</a>
 				</li>
 				<li>
@@ -3593,14 +3607,14 @@
 					<a href="/docs/vaults">
 						<span class="sm-title">Docs: USDC agent vaults</span>
 						<span class="sm-path">/docs/vaults</span>
-						<span class="sm-desc">A vault lets strangers put real USDC behind one trading agent, on terms the agent's owner publishes up front. The product-level tour (who each surface is for, how vaults sit next to the Arena, the Theater and Swarms) is in trading-arenas.md, under &quot;Back-an-Agent Vaults&quot;. Read that first.</span>
+						<span class="sm-desc">A vault lets strangers put real USDC behind one trading agent, on terms the agent's owner publishes up front. The deep reference: every route and who may call it, the share and fee math, the guards in front of a trade, and the public audit ledger.</span>
 					</a>
 				</li>
 				<li>
 					<a href="/docs/user-wallet">
 						<span class="sm-title">Docs: Your master wallet</span>
 						<span class="sm-path">/docs/user-wallet</span>
-						<span class="sm-desc">Every three.ws agent owns a wallet (agent-wallets.md). Separately, every user account can own one custodial wallet of its own: the master wallet. It is the financial hub for the person rather than the bot.</span>
+						<span class="sm-desc">Every user account can own one custodial wallet: the master wallet, the financial hub for the person rather than the bot. Provision it, read balances, send SOL or any SPL token, fund an agent, and read its on-chain history, with the spend safeguards on each route.</span>
 					</a>
 				</li>
 				<li>
@@ -3642,7 +3656,7 @@
 					<a href="/docs/press-kit">
 						<span class="sm-title">Docs: Press kit</span>
 						<span class="sm-path">/docs/press-kit</span>
-						<span class="sm-desc">Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at three lengths, the fast facts, and the rules that govern all of it.</span>
+						<span class="sm-desc">Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at four lengths, the fast facts, and the rules that govern all of it.</span>
 					</a>
 				</li>
 				<li>
@@ -5088,7 +5102,7 @@
 					<a href="/legal/privacy">
 						<span class="sm-title">Privacy Policy</span>
 						<span class="sm-path">/legal/privacy</span>
-						<span class="sm-desc">How three.ws handles user data.</span>
+						<span class="sm-desc">What data three.ws collects, why we hold it, who we share it with, how long we keep it, and the controls you have over it.</span>
 					</a>
 				</li>
 				<li>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T18:18:09.426Z",
+	"generated_at": "2026-08-14T18:22:30.219Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -123,11 +123,32 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "AgenC task lists no longer hang when a Solana provider goes quiet",
+			"summary": "Browsing tasks on the AgenC coordination protocol reads directly from Solana, and the platform keeps a chain of providers so a bad one gets skipped. That skipping only worked when a provider answered with an error. A provider that accepted the request and then went silent held the page open for minutes with nothing to react to, which is what happened to the task list, the heaviest read of the set. Each provider now gets a fixed time to answer before the next one is tried, so a silent provider costs seconds instead of stalling the page.",
+			"link": "/agenc",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "Agent share cards keep their portrait, and a sealed-drop card always paints a real theme",
 			"summary": "The image an agent link unfurls with inlines the agent's avatar thumbnail. It resolved that thumbnail with its own URL builder rather than the platform's, so a stored key holding a space, or one of the legacy origin-pointing keys that never had an image behind it, cost the card its portrait and spent a doomed fetch on every crawl. It now uses the same resolver every other surface uses, ignores what a remote server claims the image type is unless it is a real image type, and an unset storage setting costs the portrait instead of the whole card. Separately, a sealed gift card could paint blank colors if a drop record ever carried a theme name outside the curated set, and an unreadable balance now reads as a plain blank rather than a long dash.",
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Agent-runtime and agent-guards docs now match what the code actually returns",
+			"summary": "Two developer packages shipped quick-start examples that described results the code does not produce: the runtime's guard example annotated the wrong decision and named a field on the ledger checker that does not exist, and the guards package documented only its hosted half while the local, no-network guard functions went unmentioned. Both are corrected against real executed output, with the local guards now documented end to end including a runnable example and the exact reason codes they return.",
+			"link": null,
+			"tags": [
+				"docs",
+				"sdk"
 			]
 		},
 		{
@@ -926,6 +947,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Your agent's memory graph was never being built, and now it is",
+			"summary": "Memory Studio promises a knowledge graph: every fact your agent stores is scanned for the mints, tickers, wallets, people, and strategies it mentions, and those become nodes you can click through to ask what your agent remembers about any one of them. That scan was failing on a type mismatch the moment it tried to save a node, and because the failure was caught quietly, nothing ever looked broken: the graph simply came back empty forever, for every agent, and the memories were never marked as scanned. The save is fixed, so the graph now fills in on your next visit, including for everything your agents have stored up to now. Recall and search were never affected.",
+			"link": "/memory",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -30125,7 +30156,7 @@
 			"date": "2026-04-27",
 			"type": "launch",
 			"title": "Privacy Policy",
-			"summary": "How three.ws handles user data.",
+			"summary": "What data three.ws collects, why we hold it, who we share it with, how long we keep it, and the controls you have over it.",
 			"link": "/legal/privacy",
 			"tags": [
 				"launch"
