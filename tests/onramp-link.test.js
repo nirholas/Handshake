@@ -97,6 +97,9 @@ describe('GET /api/onramp/link', () => {
 		expect(url.searchParams.get('defaultAsset')).toBe('USDC');
 		expect(url.searchParams.get('presetFiatAmount')).toBe('50');
 		expect(url.searchParams.get('fiatCurrency')).toBe('USD');
+		// Everyone arriving here has nothing to transfer, so the widget must open
+		// on the buy flow rather than Coinbase's "send from your balance" one.
+		expect(url.searchParams.get('defaultExperience')).toBe('buy');
 		// The deprecated pre-session-token parameters must never come back: Coinbase
 		// stopped honouring them, so a URL carrying them lands the buyer on an error.
 		expect(url.searchParams.get('appId')).toBeNull();
@@ -165,6 +168,33 @@ describe('GET /api/onramp/link', () => {
 		const res3 = mkRes();
 		await handler(mkReq({ query: `?address=${ADDRESS}&amount=1` }), res3);
 		expect(parse(res3).amount).toBe(10);
+
+		const res4 = mkRes();
+		await handler(mkReq({ query: `?address=${ADDRESS}&amount=-5` }), res4);
+		expect(parse(res4).amount).toBe(10);
+
+		const res5 = mkRes();
+		await handler(mkReq({ query: `?address=${ADDRESS}&amount=1e400` }), res5);
+		expect(parse(res5).amount).toBe(500);
+	});
+
+	it('rounds the preset amount to real dollars and cents', async () => {
+		vi.stubEnv('CDP_API_KEY_ID', 'key-id');
+		vi.stubEnv('CDP_API_KEY_SECRET', 'key-secret');
+		createTokenMock.mockResolvedValue('session-token-abc');
+
+		// A query string can carry more precision than money has. Coinbase renders
+		// presetFiatAmount verbatim and the overlay echoes it back to the user, so
+		// neither may ever show $25.777777.
+		const res = mkRes();
+		await handler(mkReq({ query: `?address=${ADDRESS}&amount=25.777777` }), res);
+		const body = parse(res);
+		expect(body.amount).toBe(25.78);
+		expect(new URL(body.url).searchParams.get('presetFiatAmount')).toBe('25.78');
+
+		const res2 = mkRes();
+		await handler(mkReq({ query: `?address=${ADDRESS}&amount=33.5` }), res2);
+		expect(parse(res2).amount).toBe(33.5);
 	});
 
 	it('rejects anything that is not a Solana public key', async () => {
