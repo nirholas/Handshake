@@ -204,8 +204,21 @@ export async function handleSse(req, res, { resourcePath = '/api/mcp', challenge
 	res.end();
 }
 
-export function handleTerminate(_req, res) {
-	// Stateless per-request server — nothing to tear down.
+export function handleTerminate(req, res) {
+	// This server is stateless per request and never issues an Mcp-Session-Id, so
+	// any session id a caller presents names a session that does not exist here.
+	// The Streamable HTTP transport says a server MUST answer 404 for a session
+	// id it no longer holds, which is the client's signal to start a fresh
+	// session; answering 204 would tell the client we tore down a session we
+	// never had. A DELETE with no session id is the ordinary polite teardown:
+	// nothing to release, 204.
+	const sessionId = req.headers?.['mcp-session-id'];
+	if (sessionId) {
+		res.statusCode = 404;
+		res.setHeader('content-type', 'application/json');
+		res.end(JSON.stringify({ error: 'unknown_session', message: 'no such MCP session; start a new one' }));
+		return;
+	}
 	res.statusCode = 204;
 	res.end();
 }

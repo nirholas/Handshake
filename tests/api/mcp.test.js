@@ -441,6 +441,19 @@ describe('Protocol layer', () => {
 		expect(status).toBe(204);
 	});
 
+	it('DELETE with an Mcp-Session-Id returns 404 (no such session here)', async () => {
+		// This server never issues a session id, so any id a client presents came
+		// from somewhere else. The Streamable HTTP transport reads 404 as "start a
+		// new session"; 204 would claim we tore down a session we never held.
+		const { status, body } = await invoke({
+			method: 'DELETE',
+			headers: { 'mcp-session-id': 'sess-from-another-server' },
+		});
+
+		expect(status).toBe(404);
+		expect(body.error).toBe('unknown_session');
+	});
+
 	it('GET without bearer returns 401 + WWW-Authenticate (OAuth discovery) with x402 envelope attached', async () => {
 		// MCP protocol clients (mcp-protocol-version header) get 401 per the MCP
 		// authorization spec; bare x402 agents get 402 (covered in Authentication).

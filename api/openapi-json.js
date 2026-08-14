@@ -275,16 +275,32 @@ export default wrap(async (req, res) => {
 					// Session teardown, part of the MCP Streamable HTTP transport and
 					// advertised in this route's own `allow` header. The server is
 					// stateless per request, so there is nothing to tear down and the
-					// call always answers 204; a client that ends sessions politely
-					// should still be able to find it in the spec.
+					// call answers 204; a client that ends sessions politely should
+					// still be able to find it in the spec. A caller that presents an
+					// Mcp-Session-Id names a session this server never issued, so that
+					// gets the transport's 404 "start a new session" instead.
 					delete: {
 						operationId: 'mcp_terminate_session',
 						security: [],
 						summary: 'Terminate an MCP session',
 						description:
-							'Ends the caller\'s MCP session. This server handles every request statelessly, so no session state is held and the call is a successful no-op.',
+							'Ends the caller\'s MCP session. This server handles every request statelessly, so no session state is held and a plain DELETE is a successful no-op.',
+						parameters: [
+							{
+								name: 'Mcp-Session-Id',
+								in: 'header',
+								required: false,
+								schema: { type: 'string' },
+								description:
+									'Session to end. This server never issues one, so any value names a session it does not hold.',
+							},
+						],
 						responses: {
 							204: { description: 'Session ended; no content' },
+							404: {
+								description:
+									'Unknown session: the supplied Mcp-Session-Id was never issued by this server, so the client should start a new session',
+							},
 						},
 					},
 				},
