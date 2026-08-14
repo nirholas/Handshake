@@ -62,10 +62,37 @@ export function prizeWalletConfigured() {
 	return !!resolvePrizeKeyBase58();
 }
 
-/** Why settlement is blocked in this environment, or null if it can run. */
-export function settlementBlockReason(network) {
+/**
+ * Is this tournament's pool one the platform wallet is willing to pay?
+ *
+ * Nothing escrows a prize today: POST /api/tournaments takes `prize_pool_three` on
+ * the creator's word and never asks them to deposit it, while settlement pays real
+ * $THREE out of the PLATFORM wallet. Unbounded, that combination turns tournament
+ * creation into a withdrawal form on the treasury (declare a pool, enter your own
+ * agent, clear the gates with a handful of cheap trades, settle). So the platform
+ * only pays what it actually stands behind: its own house arena, or a user pool
+ * within the ceiling a deployment explicitly opted into.
+ *
+ * Ranking, attestation, and the whole competition are untouched by this: only the
+ * payout is gated, and it is gated loudly rather than silently.
+ */
+export function poolBacked(tournament) {
+	const pool = BigInt(tournament?.prize_pool_three || 0);
+	if (pool <= 0n) return true; // nothing to pay
+	if ((tournament?.entry_rules || {}).house) return true; // the platform's own bracket
+	const ceiling = Number(env.ARENA_UNFUNDED_PRIZE_MAX_THREE || 0);
+	if (!Number.isFinite(ceiling) || ceiling <= 0) return false;
+	return pool <= BigInt(Math.floor(ceiling)) * 10n ** BigInt(env.THREE_TOKEN_DECIMALS);
+}
+
+/**
+ * Why settlement is blocked, or null if it can run. Pass the tournament to include
+ * the funding check; with only a network it answers the environment question alone.
+ */
+export function settlementBlockReason(network, tournament = null) {
 	if (network === 'devnet') return 'devnet_no_prizes';
 	if (!resolvePrizeKeyBase58()) return 'payout_unconfigured';
+	if (tournament && !poolBacked(tournament)) return 'pool_unfunded';
 	return null;
 }
 
@@ -82,7 +109,7 @@ export function settlementBlockReason(network) {
 export async function settleTournament(tournament, entries) {
 	const network = tournament.network;
 	const mint = env.THREE_TOKEN_MINT;
-	const blockAll = settlementBlockReason(network);
+	const blockAll = settlementBlockReason(network, tournament);
 
 	const winners = entries.filter((e) => BigInt(e.prize_three || 0) > 0n && e.status !== 'withdrawn');
 	const results = [];
@@ -103,8 +130,10 @@ export async function settleTournament(tournament, entries) {
 		if (blockAll) {
 			const note =
 				blockAll === 'payout_unconfigured'
-					? 'prize wallet unconfigured — set THREE_PRIZE_PAYOUT_KEY (Base58 64-byte secret holding $THREE)'
-					: 'devnet tournaments do not pay real $THREE prizes';
+					? 'prize wallet unconfigured: set THREE_PRIZE_PAYOUT_KEY (Base58 64-byte secret holding $THREE)'
+					: blockAll === 'pool_unfunded'
+						? 'this prize pool was declared but never funded, so the platform wallet will not pay it (see ARENA_UNFUNDED_PRIZE_MAX_THREE)'
+						: 'devnet tournaments do not pay real $THREE prizes';
 			await recordSettlement({ tournamentId: tournament.id, agentId: e.agent_id, status: 'blocked', note });
 			blocked += 1;
 			results.push({ agent_id: e.agent_id, status: 'blocked', reason: blockAll, note });

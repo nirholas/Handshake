@@ -752,6 +752,184 @@
 .sk-card {
 	height: 168px;
 }
+.sk-row {
+	height: 58px;
+	margin-bottom: 0.4rem;
+}
+
+/* ── Main event ───────────────────────────────────────────────────────────
+ * The competition happening right now, promoted out of the card grid and given
+ * the whole width. A grid of equal-weight cards reads as a directory; this reads
+ * as a broadcast, which is what a live board actually is. */
+.main-event {
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	background: var(--surface-1);
+	padding: clamp(1rem, 2.6vw, 1.5rem);
+	margin-bottom: var(--space-lg);
+}
+/* A live board earns an accent edge; an upcoming one stays quiet so the two are
+ * never confused at a glance. */
+.main-event.me-live {
+	border-color: color-mix(in srgb, var(--accent) 42%, var(--stroke));
+	box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent),
+		0 18px 48px -32px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.main-event.me-live::before {
+	content: '';
+	position: absolute;
+	inset: 0 0 auto 0;
+	height: 2px;
+	background: linear-gradient(90deg, transparent, var(--accent), transparent);
+	opacity: 0.75;
+}
+.me-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--space-sm);
+	margin-bottom: var(--space-md);
+}
+.me-kicker {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--text-xs);
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--ink-dim);
+	margin-bottom: 0.4rem;
+}
+.me-head h2 {
+	margin: 0;
+	font-size: clamp(1.3rem, 3vw, 1.9rem);
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+}
+.me-clock {
+	text-align: right;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+.me-clock-k {
+	font-size: var(--text-xs);
+	text-transform: uppercase;
+	letter-spacing: 0.09em;
+	color: var(--ink-dim);
+}
+.me-clock-v {
+	font-family: var(--font-mono);
+	font-size: clamp(1.1rem, 2.6vw, 1.5rem);
+	font-variant-numeric: tabular-nums;
+	color: var(--ink-bright);
+}
+.me-board {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.me-row {
+	display: grid;
+	grid-template-columns: 2.2rem 2.2rem 1fr auto;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.6rem 0.75rem;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	background: var(--surface-2);
+	color: inherit;
+	text-decoration: none;
+	transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+.me-row:hover,
+.me-row:focus-visible {
+	transform: translateX(3px);
+	border-color: color-mix(in srgb, var(--accent) 45%, var(--stroke));
+	background: var(--surface-3, var(--surface-2));
+}
+.me-row.me-lead {
+	border-color: color-mix(in srgb, var(--accent) 34%, var(--stroke));
+}
+.me-place {
+	font-size: 1.15rem;
+	text-align: center;
+}
+.me-face {
+	width: 2.2rem;
+	height: 2.2rem;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 1px solid var(--stroke);
+}
+.me-face.ph {
+	display: grid;
+	place-items: center;
+	font-size: var(--text-xs);
+	font-weight: var(--weight-semibold);
+	background: var(--surface-1);
+	color: var(--ink-dim);
+}
+.me-who {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 0;
+}
+.me-name {
+	font-weight: var(--weight-semibold);
+	color: var(--ink-bright);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.me-sub {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: var(--text-xs);
+	color: var(--ink-dim);
+}
+.me-pnl {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+	font-size: clamp(1rem, 2.2vw, 1.25rem);
+	font-weight: var(--weight-semibold);
+	white-space: nowrap;
+}
+.me-empty {
+	padding: 1.1rem 0.9rem;
+	border: 1px dashed var(--stroke);
+	border-radius: var(--radius-md);
+	color: var(--ink-dim);
+	font-size: var(--text-ui);
+}
+.me-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-sm);
+	margin-top: var(--space-md);
+}
+.me-foot {
+	margin-left: auto;
+	font-size: var(--text-xs);
+	color: var(--ink-dim);
+	font-variant-numeric: tabular-nums;
+}
+@media (max-width: 560px) {
+	.me-row {
+		grid-template-columns: 1.8rem 1.8rem 1fr auto;
+		gap: 0.5rem;
+	}
+	.me-foot {
+		margin-left: 0;
+		width: 100%;
+	}
+}
 .state {
 	text-align: center;
 	padding: clamp(2rem, 8vw, 4.5rem) 1rem;
@@ -1315,11 +1493,16 @@
 	.badge-live .dot,
 	.skeleton,
 	.row.flash,
+	.me-row,
 	.arena-modal,
 	.arena-modal .sheet,
 	.arena-toast {
 		animation: none !important;
 		transition: none !important;
+	}
+	.me-row:hover,
+	.me-row:focus-visible {
+		transform: none;
 	}
 }
 

@@ -228,7 +228,7 @@ export async function settleNow(tournamentId, { now = Date.now() } = {}) {
 
 	return {
 		...result,
-		block_reason: settlementBlockReason(tournament.network),
+		block_reason: settlementBlockReason(tournament.network, tournament),
 		status: allPaid ? 'settled' : tournament.status,
 	};
 }

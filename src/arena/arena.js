@@ -188,6 +188,12 @@ async function renderList() {
 		),
 	);
 
+	// The main event slot sits above the tabs and is filled once we know whether
+	// anything is live. Created up front so the board lands in place rather than
+	// pushing the tabs down after the fetch resolves.
+	const marquee = h('section', { id: 'main-event' });
+	root.append(marquee);
+
 	const tabsBar = h('div', { class: 'arena-tabs', role: 'tablist', 'aria-label': 'Tournament phase' });
 	root.append(tabsBar);
 	const body = h('div', { id: 'list-body', role: 'tabpanel', tabindex: '-1' });
@@ -299,6 +305,124 @@ async function renderList() {
 
 	paintGroup(body, groups);
 	startCountdowns();
+
+	// The marquee is a bonus on top of a page that already works, so it loads
+	// after the list has painted and never blocks it.
+	paintMainEvent(marquee, groups.live[0] || groups.upcoming[0] || null);
+}
+
+/**
+ * The main event: the competition happening RIGHT NOW, rendered as a live board
+ * instead of another card in a grid.
+ *
+ * The Arena's list view used to open on a wall of equal-weight cards, which reads
+ * as a directory even when a competition is mid-flight. A spectator landing here
+ * should see the thing worth watching (who is winning, by how much, how long is
+ * left) without a click, because that is the screen worth screenshotting and the
+ * only one that answers "is anything happening here".
+ */
+async function paintMainEvent(slot, t) {
+	if (!t) return;
+	const live = t.phase === 'live';
+	slot.replaceChildren(
+		h(
+			'div',
+			{ class: `main-event me-${t.phase}` },
+			h(
+				'div',
+				{ class: 'me-head' },
+				h(
+					'div',
+					{},
+					h('div', { class: 'me-kicker' }, statusBadge(t), live ? 'Main event' : 'Up next'),
+					h('h2', {}, t.name),
+				),
+				h(
+					'div',
+					{ class: 'me-clock' },
+					h('span', { class: 'me-clock-k' }, live ? 'Closes in' : 'Opens in'),
+					h(
+						'span',
+						{ class: 'me-clock-v', dataset: { countdown: live ? t.ends_at : t.starts_at, doneLabel: 'now' } },
+						'…',
+					),
+				),
+			),
+			h('div', { class: 'me-board', id: 'me-board' }, ...Array.from({ length: 3 }, () => h('div', { class: 'skeleton sk-row' }))),
+			h(
+				'div',
+				{ class: 'me-actions' },
+				h('a', { class: 'btn btn-primary', href: `#/t/${t.id}` }, live ? 'Watch live' : 'View the card'),
+				h('button', { class: 'btn btn-ghost', type: 'button', onclick: () => shareTournament(t) }, '↗ Share'),
+				h('span', { class: 'me-foot', id: 'me-foot' }),
+			),
+		),
+	);
+	startCountdowns();
+
+	let data;
+	try {
+		data = await fetchJSON(`/api/tournaments/${t.id}`);
+	} catch {
+		// The marquee is decoration over a working list; a failed fetch removes it
+		// rather than showing an error the visitor can do nothing about.
+		slot.replaceChildren();
+		return;
+	}
+
+	const board = document.getElementById('me-board');
+	const foot = document.getElementById('me-foot');
+	if (!board) return;
+
+	const ranked = (data.standings || []).filter((s) => s.rank != null).slice(0, 3);
+	if (!ranked.length) {
+		board.replaceChildren(
+			h(
+				'div',
+				{ class: 'me-empty' },
+				t.phase === 'live'
+					? 'No ranked trades yet. The first agent to close a position inside the window takes the lead.'
+					: 'The board opens when the window does. Only trades opened inside it count.',
+			),
+		);
+	} else {
+		board.replaceChildren(...ranked.map((s) => medalRow(s, t.id)));
+	}
+
+	if (foot) {
+		const trades = (data.standings || []).reduce((a, s) => a + (s.metrics?.closed_count ?? s.in_window_trades ?? 0), 0);
+		const bits = [`${(data.standings || []).length} agents`];
+		if (trades > 0) bits.push(`${trades} trades in window`);
+		if (Number(data.tournament?.prize_pool_three) > 0) bits.push(`${fmtThree(data.tournament.prize_pool_three)} $THREE`);
+		foot.textContent = bits.join(' · ');
+	}
+}
+
+const MEDALS = ['🥇', '🥈', '🥉'];
+
+/** One podium row in the main event: place, agent, the number, the receipts. */
+function medalRow(s, tournamentId) {
+	const pnl = s.metrics?.realized_pnl_sol;
+	return h(
+		'a',
+		{ class: `me-row${s.rank === 1 ? ' me-lead' : ''}`, href: `#/t/${tournamentId}` },
+		h('span', { class: 'me-place' }, MEDALS[s.rank - 1] || `#${s.rank}`),
+		s.image
+			? h('img', { class: 'me-face', src: s.image, alt: '', loading: 'lazy' })
+			: h('span', { class: 'me-face ph' }, initialsOf(s.agent_name)),
+		h(
+			'span',
+			{ class: 'me-who' },
+			h('span', { class: 'me-name' }, s.agent_name || 'Agent'),
+			h(
+				'span',
+				{ class: 'me-sub' },
+				`${s.metrics?.closed_count ?? s.in_window_trades ?? 0} trades`,
+				s.metrics?.verified ? h('span', { class: 'badge badge-verified mini-badge' }, '✓') : null,
+			),
+		),
+		h('span', { class: `me-pnl ${pnl > 0 ? 'pnl-pos' : pnl < 0 ? 'pnl-neg' : ''}` }, fmtSol(pnl)),
+	);
 }
 
 function paintGroup(body, groups) {

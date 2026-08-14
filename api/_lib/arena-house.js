@@ -272,7 +272,12 @@ export async function sweepFinished({ network = 'mainnet', now = Date.now(), lim
 				attestation: result.attestation?.status || null,
 				ranked: result.standings.filter((s) => s.rank != null).length,
 			};
-			if (BigInt(t.prize_pool_three || 0) > 0n) {
+			// Auto-settlement is for the house bracket ONLY. A user-declared pool is
+			// escrowed nowhere (POST /api/tournaments takes the number on the creator's
+			// word), so paying one from the platform wallet on a timer would turn
+			// tournament creation into a scheduled treasury withdrawal. Those stay
+			// creator-driven, and poolBacked() gates the payout itself either way.
+			if ((t.entry_rules || {}).house && BigInt(t.prize_pool_three || 0) > 0n) {
 				const settled = await settleNow(t.id, { now }).catch((err) => ({ error: err.message }));
 				out.settlement = settled.error ? { error: settled.error } : { block_reason: settled.block_reason || null };
 			}

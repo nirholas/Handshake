@@ -86,7 +86,7 @@ async function handleState(req, res, id) {
 
 	const now = Date.now();
 	const view = await loadStandings(tournament, { now });
-	const settlement = settlementSummary(view.standings, tournament.network);
+	const settlement = settlementSummary(view.standings, tournament.network, tournament);
 
 	return json(
 		res,
@@ -113,10 +113,10 @@ async function handleState(req, res, id) {
 	);
 }
 
-function settlementSummary(standings, network) {
+function settlementSummary(standings, network, tournament) {
 	const winners = standings.filter((s) => BigInt(s.persisted_prize_three_atomics || 0) > 0n);
 	return {
-		block_reason: settlementBlockReason(network),
+		block_reason: settlementBlockReason(network, tournament),
 		winners: winners.map((s) => ({
 			agent_id: s.agent_id,
 			agent_name: s.agent_name,

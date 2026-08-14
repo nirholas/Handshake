@@ -1522,6 +1522,16 @@ export const env = {
 	get ARENA_DAILY_PRIZE_THREE() {
 		return opt('ARENA_DAILY_PRIZE_THREE', '0');
 	},
+	// Ceiling, in whole $THREE, on what the platform prize wallet will pay out for a
+	// pool it did not fund. Anyone signed in can create a tournament and declare any
+	// prize_pool_three they like without depositing a lamport, so without a ceiling
+	// the create endpoint is a withdrawal form on the treasury. Default 0: a
+	// user-declared pool settles as BLOCKED(pool_unfunded) with the reason shown,
+	// while the house arena (which the platform runs and funds) is unaffected. Raise
+	// this only for a deployment that intends to sponsor user-hosted prizes.
+	get ARENA_UNFUNDED_PRIZE_MAX_THREE() {
+		return opt('ARENA_UNFUNDED_PRIZE_MAX_THREE', '0');
+	},
 	// Burn address — defaults to the Solana incinerator, whose associated token
 	// account is unspendable (no key exists), so tokens transferred there are
 	// permanently removed from circulation. Verifiable as a plain destination.

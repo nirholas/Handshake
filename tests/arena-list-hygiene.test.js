@@ -14,7 +14,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { visibleTournaments } from '../api/tournaments/index.js';
-
 describe('visibleTournaments', () => {
 	it('hides a finished bracket nobody entered', () => {
 		const rows = [
