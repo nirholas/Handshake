@@ -177,6 +177,21 @@ describe('gradeFrame', () => {
 		expect(g.reason).toMatch(/straight on/i);
 	});
 
+	it('blames the light, not the hands, when a dim frame also reads as blurry', () => {
+		// A dim room suppresses contrast, so the Laplacian response collapses
+		// and the blur gate trips alongside the luma one. "Hold steady" would
+		// send the user to fix a symptom while the room stayed dark.
+		const g = gradeFrame({ ...goodFrontal, luma: GATES.LUMA_MIN - 5, blur: 0 });
+		expect(g.blurOk).toBe(false);
+		expect(g.lumaOk).toBe(false);
+		expect(g.reason).toMatch(/dark|light/i);
+	});
+
+	it('still names blur when the frame is well lit', () => {
+		const g = gradeFrame({ ...goodFrontal, blur: 0 });
+		expect(g.reason).toMatch(/steady|blurry/i);
+	});
+
 	it('falls back to the frontal window for an unknown slot', () => {
 		const g = gradeFrame({ ...goodFrontal, slot: 'profile' });
 		expect(g.yawOk).toBe(true);

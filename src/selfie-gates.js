@@ -189,12 +189,17 @@ export function gradeFrame(m) {
 				: `Turn your head ${slot === 'left' ? 'left' : 'right'} about 45°.`;
 	} else if (!centered) {
 		reason = 'Center your face in the oval.';
-	} else if (!blurOk) {
-		reason = 'Hold steady. The image is blurry.';
 	} else if (tooDark) {
+		// Lighting is named before blur on purpose. A dim frame carries little
+		// contrast, so its Laplacian response collapses too and it trips the
+		// blur gate as well: telling that user to "hold steady" sends them to
+		// fix the symptom while the room stays dark. Light is the root cause,
+		// and fixing it usually clears the blur reading with it.
 		reason = 'Too dark. Find better light.';
 	} else if (blownOut) {
 		reason = 'Too bright. Move out of direct light or turn away from the window.';
+	} else if (!blurOk) {
+		reason = 'Hold steady. The image is blurry.';
 	}
 
 	return {
