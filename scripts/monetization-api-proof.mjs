@@ -59,6 +59,11 @@ const EVM_PAYOUT = '0x1111111111111111111111111111111111111111';
 // saves here on chain 'base'.
 const EVM_LEGACY = '0x2222222222222222222222222222222222222222';
 
+// One client address per actor. See makeHttp() for why they must not share one.
+const OWNER_IP = '198.51.100.11';
+const OTHER_IP = '198.51.100.12';
+const SOLO_IP = '198.51.100.13';
+
 // tiny transcript + assertion kit
 let failed = 0;
 function step(name) {
@@ -191,8 +196,17 @@ neonConfig.fetchEndpoint = () => ${JSON.stringify(SHIM_URL)};
 	return { preloadPath };
 }
 
-// HTTP client with a cookie jar
-function makeHttp() {
+// HTTP client with a cookie jar, pinned to one client IP.
+//
+// Every actor gets its own address because the strict per-IP credential bucket
+// (rate-limit.js `authIp`, 50 requests / 10 min) is what most of these calls
+// draw on. Sharing 127.0.0.1 across all three actors made the run's own volume
+// the binding constraint: adding checks anywhere starved the assertions further
+// down with a 429 that says nothing about the handlers. Three separate users on
+// three separate addresses is also the shape production actually sees. The
+// per-USER budgets (`withdrawalPerUser`) are unaffected, so the "a sixth POST in
+// a day is rate limited" check still exercises the real ceiling.
+function makeHttp(ip) {
 	const cookies = new Map();
 	function capture(res) {
 		const set = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
@@ -209,6 +223,7 @@ function makeHttp() {
 		const res = await fetch(HTTP_BASE + p, {
 			method,
 			headers: {
+				'x-forwarded-for': ip,
 				...(anonymous ? {} : { cookie: cookieHeader() }),
 				...(body !== undefined ? { 'content-type': 'application/json' } : {}),
 				...headers,
@@ -326,14 +341,14 @@ async function main() {
 	pass('live server up', `${HTTP_BASE} (api/version 200)`);
 
 	// Owner + a second user, both registered through the real flow.
-	const http = makeHttp();
+	const http = makeHttp(OWNER_IP);
 	const stamp = Date.now();
 	const ownerEmail = `mon-owner-${stamp}@proof.local`;
 	const reg = await http.req('POST', '/api/auth/register', { body: { email: ownerEmail, password: 'proof-pass-12345', tosAccepted: true } });
 	check('owner registered through the real /register flow', reg.status < 300,
 		reg.status < 300 ? ownerEmail : `status ${reg.status}: ${reg.text.slice(0, 200)}`);
 
-	const other = makeHttp();
+	const other = makeHttp(OTHER_IP);
 	const otherEmail = `mon-other-${stamp}@proof.local`;
 	const reg2 = await other.req('POST', '/api/auth/register', { body: { email: otherEmail, password: 'proof-pass-12345', tosAccepted: true } });
 	check('second (non-owner) user registered', reg2.status < 300, `status ${reg2.status}`);
@@ -568,7 +583,7 @@ async function main() {
 	// `withdrawalPerUser`), and a refused request still spends one. So the
 	// refusal probes run as their own throwaway user, leaving the owner's whole
 	// budget for the real reservations in step 7.
-	const solo = makeHttp();
+	const solo = makeHttp(SOLO_IP);
 	const soloEmail = `mon-solo-${stamp}@proof.local`;
 	const soloReg = await solo.req('POST', '/api/auth/register', { body: { email: soloEmail, password: 'proof-pass-12345', tosAccepted: true } });
 	const soloAgent = await solo.write('POST', '/api/agents', { name: `mon-solo-${stamp}`, description: 'withdrawal refusal probes' });
