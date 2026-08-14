@@ -103,6 +103,14 @@
 			<description>The image an agent link unfurls with inlines the agent's avatar thumbnail. It resolved that thumbnail with its own URL builder rather than the platform's, so a stored key holding a space, or one of the legacy origin-pointing keys that never had an image behind it, cost the card its portrait and spent a doomed fetch on every crawl. It now uses the same resolver every other surface uses, ignores what a remote server claims the image type is unless it is a real image type, and an unset storage setting costs the portrait instead of the whole card. Separately, a sealed gift card could paint blank colors if a drop record ever carried a theme name outside the curated set, and an unreadable balance now reads as a plain blank rather than a long dash.</description>
 		</item>
 		<item>
+			<title>Agents that discover us the documented way can now reach the wallet tools</title>
+			<link>https://three.ws/docs/mcp-agent</link>
+			<guid isPermaLink="false">2026-08-14:Agents that discover us the documented way can now reach the wallet tools</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An AI client that finds three.ws on its own follows a trail: it calls a tool, gets told it needs to sign in, and reads a small public document that lists the permissions it is allowed to ask for. That document had fallen behind. It advertised eight permissions while the sign-up endpoint actually grants twelve, and the three it left out were exactly the ones that unlock the agent wallet tools, so a client doing everything correctly could never ask to check a balance, pay for a service, provision a wallet, or put an endpoint up for sale. The published list and the list the server honors are now read from one place, with a test that fails the build if they ever drift apart again. Separately, the paid-call example an agent receives with the payment request pointed at a sample model file on a domain that does not exist, so the very first call a paying agent copied failed on a dead address; it now points at a real model served from three.ws. Every discovery endpoint was re-checked end to end afterwards.</description>
+		</item>
+		<item>
 			<title>An Oracle coin page now tells you what happened after the call, and stops letting a score be read as a percentage</title>
 			<link>https://three.ws/oracle</link>
 			<guid isPermaLink="false">2026-08-14:An Oracle coin page now tells you what happened after the call, and stops letting a score be read as a percentage</guid>
@@ -349,6 +357,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The holder count on the /three-token page, and on the badge image that previews wherever a $THREE link is shared, had been showing a dash instead of a number. Our own holder snapshot is rebuilt from a Solana indexer that has been refusing the scan, and once the snapshot went stale the page correctly declined to show an out-of-date figure, so the count simply disappeared rather than being briefly missing. Holder count now falls back to a second, independent source when our snapshot cannot refresh, so the figure stays real and current through an indexer outage. The share card was also reading a narrower set of sources than the page it mirrors, which is why the two could disagree; both now read the same ones. Separately, a shared agent link unfurls noticeably faster: the card was fetching the agent's portrait only after every other lookup had finished, and now fetches it alongside them.</description>
+		</item>
+		<item>
+			<title>The activity floor stops reporting a flat week when nothing has closed yet</title>
+			<link>https://three.ws/activity</link>
+			<guid isPermaLink="false">2026-08-14:The activity floor stops reporting a flat week when nothing has closed yet</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The header on the live agent activity page counted a week of wins, losses and profit from the moment each position was opened, not the moment it resolved. A conviction position routinely takes days or weeks to settle, so by the time a trade had a result it had already aged out of the window that was supposed to count it. The tiles were therefore pinned at zero wins, zero losses and a confident PnL of plus zero forever, which reads as a floor that traded all week and broke exactly even. Entries are now counted on when the agent acted and results on when they settled, and the endpoint also reports how many closed positions carry a realized figure, so a genuinely flat week is told apart from a week with nothing closed yet: the tile says not available instead of inventing a zero. The win rate is graded against the market's own base rate rather than a hardcoded fifty percent, so a hit rate several times better than a random launch stops being painted red. Every tile now explains what it measures on hover, the stats row no longer re-reads all nine numbers to a screen reader on every incoming trade, and a stats outage shows the real values it has instead of shimmering as though it were still loading. Two lists on the page, the movers and winners rails and the insight strip, had their two-line rows collapsing onto a single run-on line; both stack properly again and truncate long names instead of overflowing.</description>
 		</item>
 		<item>
 			<title>The agent directory describes itself correctly in all 84 languages again</title>
