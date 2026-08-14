@@ -140,7 +140,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Guard | Command | Protects |
 |---|---|---|
 | CSP-safe inline markup | `npm run audit:inline-handlers` | No served HTML carries an inline event handler attribute or a `javascript:` URL. |
-| Live CSP sweep | `npm run audit:csp` | No page violates the Content-Security-Policy the server sends with it. |
+| Live CSP sweep | `npm run audit:csp` | No page violates the Content-Security-Policy the server sends with it, and every response carries the security headers `vercel.json` declares. `--headers-only --base https://three.ws` checks the header half against a live origin with no browser. |
 | Console sweep | `npm run audit:console` | A clean browser console on every route, desktop and mobile. |
 | `/play` failure modes | `npm run audit:play-failures` | `/play` stays usable when its dependencies fail, and hostile deep-link params never execute. |
 | Overlapping fixed overlays | `npm run audit:overlays` | No persistent floating widget can cover another one's controls. |

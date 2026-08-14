@@ -3,6 +3,25 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "The legal pages now say what is in them, and call the terms by their real name",
+      "summary": "The six pages under three.ws/legal (the index, privacy policy, terms of service, end-user license agreement, risk disclosure, and content policy) were audited in a real browser at phone and desktop widths. Every page loads, every link on them resolves, and the layout holds at 320 pixels wide. Three things were wrong. The terms of service was filed under the name Terms of Use in the site's page index, so a search result or a shared link showed one name while the document itself showed another; it is now Terms of Service everywhere. The privacy policy, the terms, and the EULA each carried a search-result description that only restated their title, so a search engine or a chat preview told you nothing about what was inside; each now describes what the document actually covers. And several of the policies linked to each other by their raw file names rather than their real addresses, which split the same document across two web addresses; they now all use the address shown in the browser bar. The content policy was also missing its publication date in the page index, which is what the changelog and sitemap read.",
+      "tags": [
+        "fix",
+        "docs"
+      ],
+      "link": "/legal"
+    },
+    {
+      "date": "2026-08-14",
+      "title": "The security headers every three.ws page serves are now checked against the live site, not just the config",
+      "summary": "Every page three.ws serves carries a set of browser security rules: which scripts are allowed to run, that the connection must stay encrypted, that browsers must not second-guess a file's type, how much of the current address is passed on when you follow a link, and who is allowed to put a three.ws page inside a frame. Those rules are written in one config file, but until now nothing checked that the site actually answered with them. The sweep that loads real pages in a real browser now also compares each response against that config, and it can be pointed at the live site to check the whole catalogue in about a minute. Running it against production found no gap: all 25 of the most script-heavy pages, and the rest of the catalogue with them, serve exactly the rules the config declares. Two fixes came out of building it. Files that are not web pages, like robots.txt and the machine-readable service descriptions, were being reported as wrong when they were correct. And a page whose file changed while the server was running could be sent with the script rules of the previous version, which would have blocked its own scripts and shown a blank page; the server now notices the change and recomputes them.",
+      "tags": [
+        "security",
+        "infra"
+      ]
+    },
+    {
+      "date": "2026-08-14",
       "title": "The 3D viewer no longer starts up blank when its box has not been measured yet",
       "summary": "Every page that shows a 3D avatar builds its viewer the moment the page's script runs. On pages where the area holding the avatar has not been given its size yet, because the layout lands a frame later or the panel starts hidden, that meant the viewer was built at zero pixels wide and zero pixels tall. Graphics drivers reject an image with no width or height, so the viewer came up against a surface the driver had refused to create: the browser console filled with rejected-texture and incomplete-surface errors, and on the mocap studio the avatar stage was the one that hit it. The viewer now starts at a minimum size and resizes itself to the real box on the first frame that has one, which it was already set up to do for every later resize. Nothing changes for a page whose avatar area is measured up front, which is most of them.",
       "tags": [

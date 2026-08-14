@@ -249,20 +249,36 @@ function resolveStatic(pathname) {
 }
 
 // Static HTML gets its CSP tightened to the inline scripts it actually
-// contains (see server/csp-hashes.mjs). dist/ is immutable for the lifetime of
-// a deploy, so each file is read and hashed at most once per process; the
+// contains (see server/csp-hashes.mjs). In production dist/ is immutable for
+// the lifetime of a deploy, so each file is read and hashed at most once; the
 // response itself still streams from res.sendFile.
+//
+// The cache is keyed by the file's size and mtime rather than its path alone,
+// because "immutable" is only true of the container. Run this server against a
+// working tree and a rebuild rewrites dist/ underneath it: sendFile then
+// streams the new bytes while the header still carries the old file's hashes,
+// and every inline script on that page is blocked. That is a page-blanking
+// failure produced entirely by a stale cache, and one statSync per HTML
+// response is a cheap way to never see it again.
 const staticCspCache = new Map();
 
 function cspForStaticHtml(file) {
-	if (staticCspCache.has(file)) return staticCspCache.get(file);
+	let stamp = '';
+	try {
+		const st = statSync(file);
+		stamp = `${st.size}:${st.mtimeMs}`;
+	} catch {
+		// Unreadable stat: fall through to a read, which reports its own failure.
+	}
+	const hit = staticCspCache.get(file);
+	if (hit && hit.stamp === stamp) return hit.html;
 	let html = null;
 	try {
 		html = readFileSync(file, 'utf8');
 	} catch (err) {
 		console.error(`[csp] could not read ${file} for hashing:`, err.message);
 	}
-	staticCspCache.set(file, html);
+	staticCspCache.set(file, { stamp, html });
 	return html;
 }
 
