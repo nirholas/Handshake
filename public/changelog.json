@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T01:24:36.143Z",
+	"generated_at": "2026-08-14T01:34:37.884Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -93,6 +93,18 @@
 				"security",
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The MCP tool catalog now lists three tools it was hiding, and stops calling the x402 Bazaar free",
+			"summary": "The public tool catalog at /mcp-tools is generated from the code so it cannot drift, which is exactly why two wrong things in it went unnoticed. The free 3D Studio connector builds its tool list from two source files and the generator only ever read one of them, so the three persona tools that give a generated body a name, bring it back in a later session, and make it lip-sync a reply were served by the endpoint but missing from the catalog, from the machine-readable /mcp-catalog.json an agent fetches to discover what it can call, and from the two build gates that hold every published tool to its declared contract and its declared safety annotations. All three are now covered by both gates and appear in the catalog. Separately, the x402 Bazaar was labelled as needing no account and no payment; a real search call with neither returns a payment request, so the catalog now says OAuth or x402, matching the server, its documentation, and the fleet directory at /.well-known/mcp.json.",
+			"link": "/mcp-tools",
+			"tags": [
+				"fix",
+				"docs",
+				"sdk"
 			]
 		},
 		{
