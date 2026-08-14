@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T01:38:40.987Z",
+	"generated_at": "2026-08-14T01:50:42.874Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -46,6 +46,17 @@
 				"infra",
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Controls that promised an action and did nothing now actually do it",
+			"summary": "Several buttons across the site were links pointing at nothing, so clicking them moved the page to the top and nothing else happened. On a coin or category page whose market data failed to load, \"Reload the page\" was one of them: the one control offered for recovery had no handler at all, so a reader who hit a data outage had no way out of it. It now re-runs the real request in place, skeletons and all, so a recovered feed repaints without a full page load. The \"+ Link wallet\" button on your account page was the same kind of dead end, pointing back at the section it already sat in; it now opens your Solana wallet, signs the ownership message, and links the wallet to your account, including moving a wallet that is currently linked somewhere else once your signature has proved it is yours. Clear filter on derivatives, Show all on stablecoins, Retry on search and on the world generator, skip for now in the dashboard checklist, Create one in the agent registry, and View more in Related Agents were all links pretending to be buttons; they are real buttons now, which means they answer the space bar, sit in the tab order where you expect, and show a visible focus ring. Picking a coin in the compare search is announced properly to a screen reader as you arrow through the list.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

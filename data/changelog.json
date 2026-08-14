@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "The agent directory describes itself correctly in all 84 languages again",
+			"summary": "The English description Google and every social preview show for the agent directory was updated a while back to say the directory spans Solana and every supported EVM chain. The 84 translated versions were never updated with it, so a reader in Spanish, Japanese, Arabic or any other language got the older, vaguer line that named no chain at all. All 84 now carry the current wording, with Solana and three.ws left in their real spelling rather than bent to fit each language's grammar. Retired copy was cleared out at the same time: eight strings that no page shows anymore had been sitting in every one of the 84 catalogs, which is 672 dead entries the site was shipping to readers for no reason.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/agents"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Controls that promised an action and did nothing now actually do it",
+			"summary": "Several buttons across the site were links pointing at nothing, so clicking them moved the page to the top and nothing else happened. On a coin or category page whose market data failed to load, \"Reload the page\" was one of them: the one control offered for recovery had no handler at all, so a reader who hit a data outage had no way out of it. It now re-runs the real request in place, skeletons and all, so a recovered feed repaints without a full page load. The \"+ Link wallet\" button on your account page was the same kind of dead end, pointing back at the section it already sat in; it now opens your Solana wallet, signs the ownership message, and links the wallet to your account, including moving a wallet that is currently linked somewhere else once your signature has proved it is yours. Clear filter on derivatives, Show all on stablecoins, Retry on search and on the world generator, skip for now in the dashboard checklist, Create one in the agent registry, and View more in Related Agents were all links pretending to be buttons; they are real buttons now, which means they answer the space bar, sit in the tab order where you expect, and show a visible focus ring. Picking a coin in the compare search is announced properly to a screen reader as you arrow through the list.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
 			"title": "The MCP tool catalog now lists three tools it was hiding, and stops calling the x402 Bazaar free",
 			"summary": "The public tool catalog at /mcp-tools is generated from the code so it cannot drift, which is exactly why two wrong things in it went unnoticed. The free 3D Studio connector builds its tool list from two source files and the generator only ever read one of them, so the three persona tools that give a generated body a name, bring it back in a later session, and make it lip-sync a reply were served by the endpoint but missing from the catalog, from the machine-readable /mcp-catalog.json an agent fetches to discover what it can call, and from the two build gates that hold every published tool to its declared contract and its declared safety annotations. All three are now covered by both gates and appear in the catalog. Separately, the x402 Bazaar was labelled as needing no account and no payment; a real search call with neither returns a payment request, so the catalog now says OAuth or x402, matching the server, its documentation, and the fleet directory at /.well-known/mcp.json.",
 			"tags": [
