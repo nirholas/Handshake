@@ -1,4 +1,4 @@
-// GET /api/premium/mine — the signed-in user's premium passes and keys.
+// GET /api/premium/mine: the signed-in user's premium passes and keys.
 //
 // Session-cookie authed (the billing dashboard's data source). Returns passes
 // purchased while signed in (user_id-linked) plus, when the account has a

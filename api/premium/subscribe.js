@@ -1,13 +1,13 @@
-// POST /api/premium/subscribe — redeem a paid quote for a 30-day premium pass.
+// POST /api/premium/subscribe: redeem a paid quote for a 30-day premium pass.
 //
 // body: { quote_id, tx_signature }
-// →     200 { pass, api_key?, renewed }   — api_key (x402_live_…) is returned
-//                                           exactly once, on first key mint
-//       202 { pending: true }             — tx not confirmed yet; poll again
-//       4xx { error }                     — mismatch / expired / already used
+// →     200 { pass, api_key?, renewed }   api_key (x402_live_…) is returned
+//                                         exactly once, on first key mint
+//       202 { pending: true }             tx not confirmed yet; poll again
+//       4xx { error }                     mismatch / expired / already used
 //
 // Verification is against the LANDED transaction (balance delta to the
-// treasury, quoted wallet among the signers) and the persisted quote — never
+// treasury, quoted wallet among the signers) and the persisted quote, never
 // client-supplied numbers. tx_signature is UNIQUE, so replays and double
 // submits idempotently return the already-issued pass.
 
@@ -18,11 +18,15 @@ import { getSessionUser } from '../_lib/auth.js';
 import { verifyPassPayment, activatePass } from '../_lib/premium.js';
 
 // A quote is redeemable for 30 minutes after creation (10-min price lock plus
-// grace for slow confirmation) — the price was locked at signing time, and the
+// grace for slow confirmation). The price was locked at signing time, and the
 // blockhash in the built tx expires long before this window anyway.
 const REDEEM_WINDOW_MS = 30 * 60_000;
 
 const SIG_RE = /^[1-9A-HJ-NP-Za-km-z]{64,96}$/;
+// premium_quotes.id is a uuid column, so anything else is not a lookup miss but
+// a driver-level type error (SQLSTATE 22P02) that would 500 the request. Shape
+// the id at the boundary and answer with the same 4xx the caller can act on.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*', credentials: true })) return;
@@ -35,6 +39,9 @@ export default wrap(async (req, res) => {
 	const quoteId = String(body?.quote_id || '').trim();
 	const txSignature = String(body?.tx_signature || '').trim();
 	if (!quoteId) return error(res, 400, 'bad_quote', 'quote_id is required');
+	if (!UUID_RE.test(quoteId)) {
+		return error(res, 400, 'bad_quote', 'quote_id must be the uuid returned by /api/premium/quote');
+	}
 	if (!SIG_RE.test(txSignature)) {
 		return error(res, 400, 'bad_signature', 'tx_signature must be a base58 Solana signature');
 	}
@@ -48,12 +55,12 @@ export default wrap(async (req, res) => {
 	}
 
 	const [quote] = await sql`select * from premium_quotes where id = ${quoteId} limit 1`;
-	if (!quote) return error(res, 404, 'quote_not_found', 'unknown quote_id — request a fresh quote');
+	if (!quote) return error(res, 404, 'quote_not_found', 'unknown quote_id, request a fresh quote');
 	if (quote.status === 'used' && quote.tx_signature !== txSignature) {
 		return error(res, 409, 'quote_used', 'this quote was already redeemed with a different transaction');
 	}
 	if (Date.now() - new Date(quote.created_at).getTime() > REDEEM_WINDOW_MS) {
-		return error(res, 410, 'quote_expired', 'quote expired — request a fresh quote and pay again');
+		return error(res, 410, 'quote_expired', 'quote expired, request a fresh quote and pay again');
 	}
 
 	const verdict = await verifyPassPayment(quote, txSignature);

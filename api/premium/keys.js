@@ -1,10 +1,10 @@
-// POST /api/premium/keys — rotate or revoke the signed-in user's premium key.
+// POST /api/premium/keys: rotate or revoke the signed-in user's premium key.
 //
 // body: { action: 'rotate' | 'revoke', id: '<x402 subscription id>' }
 //
 // Session + CSRF authed. Only keys minted by a premium-pass purchase that is
 // linked to this user (meta.source = 'premium-pass', meta.user_id = session
-// user) can be managed here — partner/AWS keys live at
+// user) can be managed here. Partner/AWS keys live at
 // /api/user/x402-subscriptions, and wallet-only purchases (no session at buy
 // time) manage nothing here by design: the key follows the account that
 // bought it.
@@ -54,10 +54,17 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { revoked: true, id }, { 'cache-control': 'no-store' });
 	}
 
-	// rotate — revoke the old credential, mint a replacement with the same
-	// expiry/limits/meta, and re-point the pass rows at the new key.
-	if (key.revoked_at) return error(res, 409, 'key_revoked', 'key is revoked — buy or renew a pass to get a new one');
-	await revokeSubscription(id);
+	// rotate: mint a replacement with the same expiry/limits/meta, re-point the
+	// pass rows at it, and only then revoke the old credential.
+	//
+	// The order is load-bearing. Revoking first means a failed mint leaves a
+	// paying customer with no key at all and no way back (a second rotate hits
+	// the key_revoked branch below), so a transient DB blip would cost them the
+	// pass they paid for. Minting first makes the worst case a stale key that
+	// still expires with the pass, and the buyer is never locked out. A failed
+	// revoke still propagates as a 5xx so a rotation is never reported as done
+	// while the old credential is live.
+	if (key.revoked_at) return error(res, 409, 'key_revoked', 'key is revoked: buy or renew a pass to get a new one');
 	const fresh = await createSubscription({
 		name: key.name,
 		rateLimitPerMinute: key.rate_limit_per_minute,
@@ -69,6 +76,7 @@ export default wrap(async (req, res) => {
 		update premium_passes set api_subscription_id = ${fresh.id}
 		where api_subscription_id = ${id}
 	`;
+	await revokeSubscription(id);
 	return json(
 		res, 200,
 		{ rotated: true, id: fresh.id, key_prefix: fresh.key_prefix, api_key: fresh.token },
