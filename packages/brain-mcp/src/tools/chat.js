@@ -27,7 +27,7 @@ export const def = {
 		'the conversation so far (roles `user`/`assistant`); add system instructions via `system`. The route ' +
 		'streams and auto-falls-back across mirrors/free tiers if the chosen model is briefly down — this tool ' +
 		'collapses that into one reply and reports the actual route taken, token usage, and timing. ' +
-		'Paid first-party flagships (Claude, GPT-4o, o3, Qwen Plus, DeepSeek) need a three.ws API key ' +
+		'Paid first-party flagships (Claude, GPT-5, o3, Grok, Qwen Plus, DeepSeek) need a three.ws API key ' +
 		'(set THREE_WS_API_KEY); the free open-weight tiers (GPT-OSS 120B, NVIDIA NIM models) need none. ' +
 		'Read-only: a completion does not change any platform state.',
 	inputSchema: {
@@ -40,7 +40,7 @@ export const def = {
 			.string()
 			.min(1)
 			.optional()
-			.describe('Provider/model key from list_providers (e.g. "claude-sonnet-4-6", "gpt-4o", "deepseek-r1"). Defaults to "gpt-oss-120b".'),
+			.describe('Provider/model key from list_providers (e.g. "claude-sonnet-5", "gpt-5.4", "deepseek-r1"). Defaults to "gpt-oss-120b".'),
 		system: z
 			.string()
 			.max(8000)

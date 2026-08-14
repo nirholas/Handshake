@@ -13,7 +13,8 @@ export const def = {
 	description:
 		'List every LLM the three.ws router can run a completion through — one entry per provider/model. ' +
 		'Each entry has: `key` (the id you pass to `chat`), `label` (human name), `network` (e.g. Anthropic, ' +
-		'OpenAI, DashScope, NVIDIA NIM, IBM watsonx.ai), `tier` (flagship | balanced | fast | reasoning), ' +
+		'OpenAI, xAI, DashScope, NVIDIA NIM, IBM watsonx.ai), `tier` (flagship | balanced | fast | reasoning | ' +
+		'pro | coding), ' +
 		'`maxOutput` (max output tokens), `description`, `available` (true when the server currently holds a ' +
 		'working key/route for it), and `requiresAuth` (true when it is a paid first-party model that needs a ' +
 		'three.ws API key — set THREE_WS_API_KEY; false for the free open-weight tiers). Call this first to ' +

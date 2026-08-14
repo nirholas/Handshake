@@ -34,7 +34,7 @@ npx @three-ws/copy-mcp
 
 ## Quick start
 
-Copy trading is account-scoped, so set `THREE_WS_API_KEY` to a three.ws API key (`sk_live_…` / `sk_test_…`) or OAuth access token — mint one at [three.ws/settings/api-keys](https://three.ws/settings/api-keys).
+Copy trading is account-scoped, so set `THREE_WS_API_KEY` to a three.ws API key (`sk_live_…` / `sk_test_…`) or OAuth access token. Mint one at [three.ws/dashboard/developers](https://three.ws/dashboard/developers).
 
 **Claude Code**, one line:
 
@@ -180,8 +180,8 @@ A failed tool call returns an MCP error result (`isError: true`) whose text is a
 | `missing_credential` | The tool needs auth and `THREE_WS_API_KEY` is unset. Thrown before any request is sent. | Set the key. |
 | `validation_error` | Bad arguments caught client-side, e.g. `sizing_rule: "fixed"` without a positive `fixed_sol`. | Fix the call. |
 | `no_changes` | `update_subscription` was called with only an `id`. | Pass at least one field to change. |
-| `not_found` | The subscription `id` does not exist on this account. | Check `list_subscriptions`. |
-| `upstream_error` | The API rejected the request; `status` carries the HTTP code (`400` bad fields, `401` bad/expired credential, `429` rate-limited). | Act on the message and `status`. |
+| `not_found` | `update_subscription` was given an `id` that is not one of your subscriptions. | Check `list_subscriptions`. |
+| `upstream_error` | The API rejected the request; `status` carries the HTTP code (`400` bad fields, `401` bad/expired credential, `404` no such subscription on `cancel_subscription`, `409` no such pending intent on `record_execution`, `429` rate-limited). | Act on the message and `status`. |
 | `timeout` | No response within `THREE_WS_TIMEOUT_MS`. | Retry or raise the timeout. |
 | `network_error` | The request never reached the API (DNS, offline, TLS). | Check connectivity / `THREE_WS_BASE`. |
 | `bad_config` | `THREE_WS_TIMEOUT_MS` is not a positive number. Thrown while the server starts (module load), so the process exits before serving. | Fix the env var. |

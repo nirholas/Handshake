@@ -31,7 +31,7 @@
 			"environmentVariables": [
 				{
 					"name": "THREE_WS_API_KEY",
-					"description": "Your three.ws bearer credential — an API key (sk_live_… / sk_test_…) or OAuth access token. Every copy-trade subscription, intent, and fee is scoped to the account it identifies. Required for all tools except a leader's public aggregate earnings. Mint one at https://three.ws/settings/api-keys. Treat like cash.",
+					"description": "Your three.ws bearer credential: an API key (sk_live_… / sk_test_…) or OAuth access token. Every copy-trade subscription, intent, and fee is scoped to the account it identifies. Required for all tools except a leader's public aggregate earnings. Mint one at https://three.ws/dashboard/developers. Treat like cash.",
 					"format": "string",
 					"isRequired": true,
 					"isSecret": true

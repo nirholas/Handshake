@@ -20,7 +20,7 @@ export const THREE_WS_BASE = env('THREE_WS_BASE', 'https://three.ws').replace(/\
 // The copier's bearer credential. Read lazily (empty default) so importing the
 // module — and therefore buildServer() in the offline tests — never requires a
 // key; account-scoped tools throw a clear `missing_credential` at call time if
-// it is absent. Mint one at https://three.ws/settings/api-keys.
+// it is absent. Mint one at https://three.ws/dashboard/developers.
 export const THREE_WS_API_KEY = env('THREE_WS_API_KEY', '');
 
 // Per-request timeout (ms). These are live reads/writes against the copy engine

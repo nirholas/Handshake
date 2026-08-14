@@ -23,8 +23,8 @@ export async function apiRequest(path, { method = 'GET', query, body, auth = tru
 		throw Object.assign(
 			new Error(
 				'This action is account-scoped. Set THREE_WS_API_KEY to a three.ws API key ' +
-					'(sk_live_… / sk_test_…) or OAuth access token — mint one at ' +
-					'https://three.ws/settings/api-keys.',
+					'(sk_live_… / sk_test_…) or OAuth access token. Mint one at ' +
+					'https://three.ws/dashboard/developers.',
 			),
 			{ code: 'missing_credential', status: 401 },
 		);

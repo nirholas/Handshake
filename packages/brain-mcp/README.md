@@ -90,13 +90,13 @@ Both responses below are shape illustrations — the live provider set and gener
 > {}
 {
   "ok": true,
-  "count": 18,
-  "available": 11,
+  "count": 34,
+  "available": 33,
   "default_provider": "gpt-oss-120b",
   "providers": [
-    { "key": "gpt-oss-120b", "label": "GPT-OSS 120B", "network": "OpenAI · OpenRouter", "tier": "balanced", "maxOutput": 8192, "available": true, "requiresAuth": false },
-    { "key": "claude-sonnet-4-6", "label": "Claude Sonnet 4.6", "network": "Anthropic", "tier": "balanced", "maxOutput": 16384, "available": true, "requiresAuth": true },
-    { "key": "deepseek-r1", "label": "DeepSeek R1", "network": "DeepSeek", "tier": "reasoning", "maxOutput": 8192, "available": true, "requiresAuth": true }
+    { "key": "gpt-oss-120b", "label": "GPT-OSS 120B", "network": "OpenAI · OpenRouter", "tier": "balanced", "maxOutput": 8192, "description": "Open-weight 120B from OpenAI. Fast, capable, free tier. Platform default.", "available": true, "requiresAuth": false },
+    { "key": "claude-sonnet-5", "label": "Claude Sonnet 5", "network": "Anthropic", "tier": "balanced", "maxOutput": 16384, "description": "Near-Opus quality on coding and agentic work at Sonnet cost. Best for most tasks.", "available": true, "requiresAuth": true },
+    { "key": "deepseek-r1", "label": "DeepSeek R1", "network": "DeepSeek", "tier": "reasoning", "maxOutput": 8192, "description": "Open reasoning model. Strong at math and code.", "available": true, "requiresAuth": true }
     /* … */
   ]
 }
@@ -105,14 +105,14 @@ Both responses below are shape illustrations — the live provider set and gener
 ```jsonc
 // chat (example response)
 > {
-    "provider": "claude-sonnet-4-6",
+    "provider": "claude-sonnet-5",
     "system": "You are terse.",
     "messages": [{ "role": "user", "content": "Name three Solana RPC methods." }]
   }
 {
   "ok": true,
-  "provider": "claude-sonnet-4-6",
-  "model": "Claude Sonnet 4.6",
+  "provider": "claude-sonnet-5",
+  "model": "Claude Sonnet 5",
   "network": "Anthropic",
   "tier": "balanced",
   "routed_via": null,
@@ -124,16 +124,16 @@ Both responses below are shape illustrations — the live provider set and gener
 
 `routed_via` is `null` when the requested provider answered directly; otherwise it names the mirror or free-tier route the router fell back to (so you always get an answer even if the first choice is briefly down).
 
-> Model availability is dynamic. Always call `list_providers` first rather than hardcoding a key — the current Claude ids are `claude-fable-5`, `claude-opus-4-7`, `claude-sonnet-4-6`, and `claude-haiku-4-5`, but the live list is the source of truth.
+> Model availability is dynamic. Always call `list_providers` first rather than hardcoding a key. The current Claude ids are `claude-fable-5`, `claude-opus-5`, `claude-sonnet-5`, `claude-opus-4-7`, `claude-sonnet-4-6`, and `claude-haiku-4-5`, but the live list is the source of truth.
 
 ## Authentication
 
 | Model class                                                                  | Needs a key?                |
 | ---------------------------------------------------------------------------- | --------------------------- |
-| Free open-weight tiers (GPT-OSS 120B, NVIDIA NIM: Nemotron / Kimi / Llama 4) | No                          |
+| Free open-weight tiers (GPT-OSS 120B, and the NVIDIA NIM set: Nemotron 3 Super / Nemotron Super 49B / Nemotron Nano / DeepSeek V4 / Kimi K2 / Llama 4 Maverick / MiniMax M2) | No |
 | Paid first-party flagships (Claude, GPT-5.6, o3, Qwen Plus, DeepSeek, …)     | Yes — set `THREE_WS_API_KEY` |
 
-Create an API key at [three.ws/account](https://three.ws/account). Without it, paid models return a sign-in error and `list_providers` flags them with `requiresAuth: true`.
+Create an API key at [three.ws/dashboard/developers](https://three.ws/dashboard/developers). Without it, paid models return a sign-in error and `list_providers` flags them with `requiresAuth: true`.
 
 ## Requirements
 

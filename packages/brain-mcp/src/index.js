@@ -7,7 +7,7 @@
 //   • chat           — run a chat completion through whichever one fits
 //
 // A thin wrapper over the three.ws API (POST /api/brain/chat). The route fronts
-// Claude, GPT-4o, o3, Qwen, DeepSeek, NVIDIA Nemotron, IBM Granite, and more, and
+// Claude, GPT-5, o3, Grok, Qwen, DeepSeek, NVIDIA Nemotron, IBM Granite, and more, and
 // auto-falls-back across mirrors/free tiers on an upstream outage. The free
 // open-weight tiers need no key; paid first-party flagships unlock with a
 // three.ws API key (THREE_WS_API_KEY).
@@ -45,7 +45,7 @@ export function buildServer() {
 			capabilities: { tools: {} },
 			instructions:
 				'three.ws Brain MCP — any model, one interface. list_providers discovers every LLM the router can ' +
-				'run a completion through (Claude, GPT-4o, o3, Qwen, DeepSeek, NVIDIA Nemotron, IBM Granite, and ' +
+				'run a completion through (Claude, GPT-5, o3, Grok, Qwen, DeepSeek, NVIDIA Nemotron, IBM Granite, and ' +
 				'more), each with its key, network, tier, max output, live availability, and whether it needs auth. ' +
 				'chat runs a completion through the chosen provider and returns the full reply as one message, plus ' +
 				'the route actually taken, token usage, and timing — the router transparently falls back across ' +

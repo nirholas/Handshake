@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "The 3D generation SDK can finally pay per call, and its bring-your-own-key option actually does something",
+      "summary": "The npm package that turns a prompt into a 3D model documented two things it did not do. It listed a per-call option for supplying your own Meshy or Tripo key, and that option was read from nowhere: the key was silently dropped, so anyone following the README's own example was told to add a key that the generator then said was missing. It also documented paying per call in USDC as the default billing lane, when the flag it described was ignored by the endpoint it was sent to. Both are now real. A key passed on the call is used, overrides the one set on the client, and is resent on every status check, which the generator requires and the old code never did, so a job started with your own key could never be polled to completion. The pay-per-call lane now routes to the endpoint that actually accepts payment, quotes Solana USDC, and hands back a job you poll for free, and it refuses upfront the options it cannot honour rather than accepting them and ignoring them. The package now also exposes a way to read one job's state without waiting for it, so a generation survives a restart. Alongside that, the reference pages listed a price and a set of engines that had both moved on, named an error the service never returns, and pointed at three addresses that no longer exist: the sign-up link for API keys in the copy-trading and LLM router packages went to a dead page, as did the link to the 3D studio tool server. All of them now resolve.",
+      "tags": [
+        "sdk",
+        "fix",
+        "docs"
+      ]
+    },
+    {
+      "date": "2026-08-14",
       "title": "The AR docs stopped handing readers three commands the tool rejects or quietly ruins",
       "summary": "Eight pages were read line by line against the code and the live site: the agent abilities dossier, news, the changelog, AR viewing, BNB payments, Agent Sniper, earned autonomy, and the agent personality tutorial. Every command printed on them was actually run. The AR page was wrong three times, and each one cost a reader real time. Its model optimization step used a flag the glTF tool does not accept, so the command simply failed. The line beside it promised a lossless result, when that tool compresses and simplifies by default: the file it produced could not be opened by the iPhone and Android AR viewers the page is about, and nothing said so. Its troubleshooting step for exactly that failure repeated the same rejected flag, so the fix for the problem hit the problem again. All three now carry flags the tool accepts, verified by running them on a real model and reading back what came out, with a note about what the defaults do. The AR page also linked to a placeholder address rather than a page, and now points at a real one. On the earned autonomy page, the list of settings a trading arm unlocks once it has proven itself was one short, missing the size of the position it keeps riding after taking its stake back. Everything else held up, including all 4,854 links across the eight pages.",
       "tags": [

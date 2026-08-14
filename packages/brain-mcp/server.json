@@ -38,7 +38,7 @@
 				},
 				{
 					"name": "THREE_WS_API_KEY",
-					"description": "Optional three.ws API key (sk_live_… / sk_test_…) or OAuth access token, sent as a Bearer token. Required only to use paid first-party flagships (Claude, GPT-4o, o3, Qwen Plus, DeepSeek). Free open-weight tiers (GPT-OSS 120B, NVIDIA NIM models) work with no key. Create one at https://three.ws/account.",
+					"description": "Optional three.ws API key (sk_live_… / sk_test_…) or OAuth access token, sent as a Bearer token. Required only to use paid first-party flagships (Claude, GPT-5, o3, Grok, Qwen Plus, DeepSeek). Free open-weight tiers (GPT-OSS 120B, NVIDIA NIM models) work with no key. Create one at https://three.ws/dashboard/developers.",
 					"format": "string",
 					"isRequired": false,
 					"isSecret": true
