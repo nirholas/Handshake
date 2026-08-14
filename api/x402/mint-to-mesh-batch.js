@@ -172,7 +172,9 @@ export default paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
 	priceAtomics: priceFor('mint-to-mesh-batch', '50000'),
-	networks: ['base', 'solana'],
+	// Solana leads the accepts: this is the home chain, and a client that takes
+	// the first accept settles there. Base follows as the alternative rail.
+	networks: ['solana', 'base'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({

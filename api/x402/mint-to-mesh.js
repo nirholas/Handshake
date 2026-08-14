@@ -17,11 +17,12 @@
 // JSON envelope so x402 facilitators that struggle with binary bodies still
 // receive a clean response.
 //
-// Networks: Base mainnet (EIP-3009 + Permit2 sibling) and Solana mainnet
-// (USDC). verifyPayment / settlePayment in x402-spec.js routes per-network:
-// Base via X402_FACILITATOR_URL_BASE and Solana via X402_FACILITATOR_URL_SOLANA
-// (PayAI by default for both). The Solana entry is omitted when
-// X402_PAY_TO_SOLANA is unset so the 402 challenge stays valid.
+// Networks: Solana mainnet (USDC) leads the accepts, with Base mainnet
+// (EIP-3009 + Permit2 sibling) as the alternative rail. verifyPayment /
+// settlePayment in x402-spec.js routes per-network: Solana via
+// X402_FACILITATOR_URL_SOLANA and Base via X402_FACILITATOR_URL_BASE (PayAI by
+// default for both). The Solana entry is omitted when X402_PAY_TO_SOLANA is
+// unset so the 402 challenge stays valid.
 
 import { wrap, cors, error } from '../_lib/http.js';
 import {
@@ -69,7 +70,7 @@ const ROUTE_DESCRIPTION =
 	'on-chain Metaplex metadata so downstream agents can introspect mint, name, ' +
 	'symbol, and timestamp. Useful for any agent that needs an instantly renderable ' +
 	'3D representation of a token (in-game items, leaderboards, NFT-of-token, AR ' +
-	'previews). Pay-per-call in USDC on Base mainnet.';
+	'previews). Pay-per-call in USDC on Solana mainnet, or on Base.';
 
 const DISCOVERY_INPUT_EXAMPLE = {
 	mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
