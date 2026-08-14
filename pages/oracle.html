@@ -168,6 +168,10 @@
 		.coin-take { display: flex; align-items: flex-start; gap: 7px; font-size: 12.5px; line-height: 1.4; color: var(--ink); margin: 2px 0 2px; padding: 9px 11px; border-radius: 10px; background: rgba(255,255,255,0.035); border: 1px solid var(--line); }
 		.coin-take .ct-q { font: 800 13px/1 var(--mono); color: var(--faint); flex-shrink: 0; margin-top: 1px; }
 		.coin-take b { color: var(--ink); font-weight: 700; }
+		/* The lift on a piece of evidence: how many times the base rate that
+		   bucket has historically hit. Monospace so the numbers line up down a
+		   column of cards, dimmed so the observation stays the sentence. */
+		.coin-take i { font: 600 11.5px/1 var(--mono); font-style: normal; color: var(--muted); white-space: nowrap; }
 		.tierpill { display: inline-block; font: 700 9.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; padding: 4px 7px; border-radius: 6px; margin-top: 4px; }
 		.tp-prime, .tp-strong { background: color-mix(in srgb, var(--up) 18%, transparent); color: var(--up); }
 		.tp-lean { background: color-mix(in srgb, var(--gold) 16%, transparent); color: var(--gold); }
@@ -192,6 +196,11 @@
 		.chip.mom { color: var(--up); border-color: color-mix(in srgb, var(--up) 30%, var(--line)); }
 		.chip.prime { color: var(--violet); border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); background: color-mix(in srgb, var(--violet) 10%, transparent); }
 		.chip.thin { color: var(--muted); border-style: dashed; }
+		/* Realized outcome for the score's band. Deliberately quiet: it is the
+		   sober number beside a loud one, and it should read as a footnote to the
+		   score rather than compete with it. */
+		.chip.odds { color: var(--muted); border-style: dotted; cursor: help; }
+		.chip.odds b { color: var(--ink); }
 
 		/* wallet leaderboard */
 		.lwrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow); }
