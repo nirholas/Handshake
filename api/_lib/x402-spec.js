@@ -1313,13 +1313,18 @@ export function buildBazaarSchema({
 // `{method,input,inputSchema,output:{example,schema}}` shape v1 used is no
 // longer indexed by the CDP Bazaar.
 export function bazaarExtension() {
+	// The sample body is what a buyer replays after settling the 402, so the URL
+	// in it has to be a model that actually resolves. example.com/model.glb made
+	// the documented first call fail on a DNS-shaped error that reads like a
+	// broken endpoint; this is the same GLB the agent card advertises for
+	// validate_model, served from our own origin.
 	const exampleBody = {
 		jsonrpc: '2.0',
 		id: 1,
 		method: 'tools/call',
 		params: {
 			name: 'validate_model',
-			arguments: { url: 'https://example.com/model.glb' },
+			arguments: { url: 'https://three.ws/avatars/cesium-man.glb' },
 		},
 	};
 	const exampleResponse = {
