@@ -65,10 +65,12 @@ If nothing in the catalog fits, it says so honestly and points the shopper to a 
 There is no crawler and no vector database. Every Shopify storefront exposes its catalog publicly, and the widget reads it directly:
 
 ```
-GET https://your-store.myshopify.com/products.json?limit=250   → catalog
-GET https://your-store.myshopify.com/collections.json          → collections
-GET https://your-store.myshopify.com/policies/shipping-policy   → shipping
-GET https://your-store.myshopify.com/policies/refund-policy     → returns
+GET https://your-store.myshopify.com/products.json?limit=250&page=N  → catalog (paginated)
+GET https://your-store.myshopify.com/collections.json?limit=250      → collections
+GET https://your-store.myshopify.com/policies/shipping-policy        → shipping
+GET https://your-store.myshopify.com/policies/refund-policy          → returns
+GET https://your-store.myshopify.com/policies/privacy-policy         → privacy
+GET https://your-store.myshopify.com/policies/terms-of-service       → terms
 ```
 
 On the store these are same-origin, so there is no CORS wall. The widget fetches them once, caches them for the session, and for each question runs a small keyword retrieval to pick the handful of products the shopper asked about. Only that handful, plus a compact store summary and the relevant policy, is sent to the answer endpoint. The answer streams back grounded in exactly those products, and the cards are rendered from the same set, so what the assistant says and what it shows always match.
@@ -77,23 +79,30 @@ Add-to-cart posts to Shopify's public `/cart/add.js` and fires a `cart:refresh` 
 
 ## Do it in code
 
-Prefer to wire it yourself, or run your own backend? The same building blocks are exported from [`@three-ws/concierge`](https://www.npmjs.com/package/@three-ws/concierge):
+Prefer to drive the pieces yourself instead of letting the widget do it? Loading the same one-tag build exposes every building block on `window.ThreeWsConcierge`, so you can run the retrieval step by hand and render your own cards:
 
-```js
-import {
-	fetchCatalog, fetchPolicies, searchProducts, buildShoppingPayload,
-} from '@three-ws/concierge';
+```html
+<script type="module" src="https://three.ws/concierge/concierge.global.js"></script>
+<script type="module">
+	const { fetchCatalog, fetchPolicies, searchProducts, buildShoppingPayload } =
+		window.ThreeWsConcierge;
 
-const catalog = await fetchCatalog({ shop: 'your-store.myshopify.com' });
-const policies = await fetchPolicies({ shop: 'your-store.myshopify.com' });
+	const shop = 'your-store.myshopify.com';
+	const catalog = await fetchCatalog({ shop });
+	const policies = await fetchPolicies({ shop });
 
-const question = 'a warm wool scarf under $60';
-const recommended = searchProducts(catalog.products, question, 4);
-const shopping = buildShoppingPayload(catalog, recommended, policies, question);
-// → POST { message: question, shopping } to /api/concierge, render `recommended` as cards
+	const question = 'a warm wool scarf under $60';
+	const recommended = searchProducts(catalog.products, question, 4);
+	const shopping = buildShoppingPayload(catalog, recommended, policies, question);
+	// POST { message: question, shopping } to /api/concierge, render `recommended` as cards
+</script>
 ```
 
-`searchProducts` returns already-ranked, price-filtered products. `buildShoppingPayload` bounds what is sent to the model. Point `endpoint` at your own SSE server if you want to host the answer engine yourself; the [wire format](/docs/concierge) is documented.
+`fetchCatalog` paginates `products.json` and returns `{ store, origin, currency, products, collections }`, where each product is normalized to `{ title, handle, url, priceMin, priceMax, currency, image, variantId, available, onSale, tags, summary }`. `searchProducts` returns already-ranked, price-filtered products (cap 8, default 4). `buildShoppingPayload` bounds what is sent to the model, returning `{ store, currency, summary, collections, policies, products }`.
+
+Run this **on the store's own origin**. Shopify serves `products.json` and the policy pages without CORS headers, so the same calls from another domain fetch the catalog but come back with empty policies. Pass `fetchImpl` to either function to route them through your own proxy if you need them off-origin.
+
+The [wire format](/docs/concierge) for the answer endpoint is documented, so you can point a self-hosted SSE server at the same payload.
 
 ## Related
 
