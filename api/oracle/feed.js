@@ -1,17 +1,18 @@
 /**
- * Oracle — live conviction feed.
+ * Oracle: live conviction feed.
  *
  *   GET /api/oracle/feed?network=mainnet&limit=50&min_score=0&tier=strong&category=ai
  *
  * Serves the materialized oracle_conviction cache (one fast indexed read). On a
  * cold cache it opportunistically scores a handful of recent coins straight from
- * the data brain (no LLM — DB-only, fast) so the feed is never empty before the
+ * the data brain (no LLM, DB-only, fast) so the feed is never empty before the
  * ingestion augmentor has swept. Also returns the conviction-tier backtest so
  * the UI can prove the edge.
  */
 
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { isDbUnavailableError } from '../_lib/db.js';
 import { readFeed, convictionBacktest, scoreCoin } from '../_lib/oracle/store.js';
 import { recentMints } from '../_lib/oracle/sources.js';
 
@@ -55,6 +56,18 @@ export default wrap(async (req, res) => {
 	}, { 'Cache-Control': 'public, max-age=3, stale-while-revalidate=15' });
 });
 
+// A read fault degrades to an empty feed, which the cold-start path above then
+// tries to warm. A connectivity failure must NOT take that route: it is not "no
+// coins scored yet", and treating it as one made the outage far more expensive
+// than the outage itself. Every request answered 200 with an empty feed (so the
+// page rendered a dead market as fact), and on the way there it fired eight
+// scoreCoin() calls that could not possibly persist. Rethrowing hands it to
+// wrap() for the shared 503 + Retry-After and skips the pointless warm attempt.
 async function safeFeed(opts) {
-	try { return await readFeed(opts); } catch { return []; }
+	try {
+		return await readFeed(opts);
+	} catch (err) {
+		if (isDbUnavailableError(err)) throw err;
+		return [];
+	}
 }

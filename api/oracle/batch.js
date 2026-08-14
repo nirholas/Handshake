@@ -1,12 +1,12 @@
 /**
- * Oracle — batch conviction scores for multiple mints.
+ * Oracle: batch conviction scores for multiple mints.
  *
  *   GET /api/oracle/batch?mints=<m1>,<m2>,...&network=mainnet
  *
  * Accepts up to 20 base58 mints (comma-separated). Returns a map of
  *   { mint → { score, tier, pillars: { pedigree, structure, narrative, momentum } } }
  * for every mint that exists in the oracle_conviction cache. Mints with no
- * cached score are omitted (not an error — means unscored).
+ * cached score are omitted (not an error: it means unscored).
  *
  * Used by the watchlist page and any surface that needs conviction badges for
  * a known set of coins without issuing N individual /api/oracle/coin requests.

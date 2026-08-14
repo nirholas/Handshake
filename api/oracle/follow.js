@@ -1,5 +1,5 @@
 /**
- * Oracle — agent follower subscriptions (the Watch tier of social copy-trading).
+ * Oracle: agent follower subscriptions (the Watch tier of social copy-trading).
  *
  *   GET    /api/oracle/follow?agent_id=<uuid>&chat_id=<telegram>&network=mainnet
  *          → { following: bool, min_score: int|null }
@@ -22,10 +22,27 @@
 
 import { cors, json, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { sql } from '../_lib/db.js';
+import { sql, isDbUnavailableError } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
+
+// Every read here is a subscription FACT the caller acts on: "am I following?",
+// "does this agent exist?", "did my unsubscribe land?". A blanket `.catch()`
+// turned a database outage into a confident wrong answer for all three: the GET
+// reported `following: false` to a subscriber who was in fact subscribed, the
+// POST reported `agent not found` for an agent that plainly exists, and the
+// DELETE reported `{ ok: true }` while the row survived, so the caller believed
+// they had unsubscribed and kept receiving Telegram alerts with no way to stop
+// them. Rethrowing a connectivity failure hands it to wrap(), which answers the
+// shared 503 + Retry-After that tells the caller to try again. A genuine
+// statement-level fault still degrades to the empty result the callers expect.
+function orRethrowIfDbDown(fallback) {
+	return (err) => {
+		if (isDbUnavailableError(err)) throw err;
+		return fallback;
+	};
+}
 const CHAT_ID_RE = /^-?\d{1,20}$|^@[a-zA-Z0-9_]{5,32}$/;
 function validateChatId(v) {
 	return typeof v === 'string' && CHAT_ID_RE.test(v.trim());
@@ -44,7 +61,7 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', origins: '*' })) return;
 	const ip = clientIp(req);
 
-	// ── GET — check follow status ─────────────────────────────────────────────
+	// ── GET: check follow status ────────────────────────────────────────────
 	// Branch on req.method directly: the shared method() helper writes a 405 and
 	// ends the response on the first mismatch, so calling it per-branch (GET first)
 	// would 405 every POST/DELETE before its branch was reached. A single trailing
@@ -65,7 +82,7 @@ export default wrap(async (req, res) => {
 			select min_score from oracle_followers
 			where agent_id = ${agentId} and chat_id = ${chatId} and network = ${network}
 			limit 1
-		`.catch(() => []);
+		`.catch(orRethrowIfDbDown([]));
 
 		return json(res, 200, {
 			following:  rows.length > 0,
@@ -73,7 +90,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// ── POST — subscribe or update ────────────────────────────────────────────
+	// ── POST: subscribe or update ───────────────────────────────────────────
 	if (req.method === 'POST') {
 		const rl = await limits.oracleFollowIp(ip);
 		if (!rl.success) return rateLimited(res, rl);
@@ -92,14 +109,14 @@ export default wrap(async (req, res) => {
 		// Ensure the agent exists (guard against phantom subscriptions)
 		const agentRows = await sql`
 			select id from agent_identities where id = ${agentId} and deleted_at is null limit 1
-		`.catch(() => []);
+		`.catch(orRethrowIfDbDown([]));
 		if (!agentRows.length) return error(res, 404, 'not_found', 'agent not found');
 
 		const existing = await sql`
 			select id from oracle_followers
 			where agent_id = ${agentId} and chat_id = ${chatId} and network = ${network}
 			limit 1
-		`.catch(() => []);
+		`.catch(orRethrowIfDbDown([]));
 
 		if (existing.length) {
 			await sql`
@@ -118,7 +135,7 @@ export default wrap(async (req, res) => {
 		return json(res, 201, { ok: true, action: 'subscribed', min_score: minScore });
 	}
 
-	// ── DELETE — unsubscribe ──────────────────────────────────────────────────
+	// ── DELETE: unsubscribe ─────────────────────────────────────────────────
 	if (req.method === 'DELETE') {
 		const rl = await limits.publicIp(ip);
 		if (!rl.success) return rateLimited(res, rl);
@@ -133,10 +150,14 @@ export default wrap(async (req, res) => {
 		if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agent_id must be a UUID');
 		if (!validateChatId(chatId)) return error(res, 400, 'validation_error', 'chat_id must be a numeric Telegram ID or @handle');
 
+		// No `.catch()` swallow: this statement IS the response. Reporting
+		// `{ ok: true }` on a delete that never ran leaves the follower subscribed
+		// and still receiving alerts while believing they opted out. Let wrap()
+		// answer 503 (outage) or 500 (real fault) so the caller can retry.
 		await sql`
 			delete from oracle_followers
 			where agent_id = ${agentId} and chat_id = ${chatId} and network = ${network}
-		`.catch(() => {});
+		`;
 
 		return json(res, 200, { ok: true });
 	}

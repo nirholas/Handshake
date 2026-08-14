@@ -1,5 +1,5 @@
 /**
- * Oracle — conviction accuracy backtest.
+ * Oracle: conviction accuracy backtest.
  *
  *   GET /api/oracle/backtest?period=7d&tier=prime&network=mainnet
  *
@@ -7,15 +7,15 @@
  * (ground truth: graduated, rugged, ATH multiple) and returns hit-rate stats
  * per tier. This is the honest answer to "does the oracle engine actually work?"
  *
- * Only coins with a resolved outcome are counted — open positions are excluded
+ * Only coins with a resolved outcome are counted: open positions are excluded
  * from the win-rate calculation so the denominator is accurate.
  *
  * Params:
- *   period   — 1d | 7d | 30d | 90d | all (default: 30d)
- *   tier     — prime | strong | lean | watch | avoid | all (default: all)
- *   network  — mainnet | devnet (default: mainnet)
+ *   period   : 1d | 7d | 30d | 90d | all (default: 30d)
+ *   tier     : prime | strong | lean | watch | avoid | all (default: all)
+ *   network  : mainnet | devnet (default: mainnet)
  *
- * Cached for 5 minutes — the DB table is large and this query is expensive.
+ * Cached for 5 minutes: the DB table is large and this query is expensive.
  */
 
 import { cors, json, method, rateLimited } from '../_lib/http.js';
@@ -34,10 +34,10 @@ const _cache = new Map(); // key → { data, at }
 function cacheKey(period, tier, network) { return `${period}:${tier}:${network}`; }
 
 /**
- * Wilson score interval — the honest 95% confidence band for a win rate. Unlike
+ * Wilson score interval: the honest 95% confidence band for a win rate. Unlike
  * the naive ±√(p(1-p)/n), it stays inside [0,1] and is well-behaved at small n,
  * which is exactly the regime a young backtest lives in. Returned as integer
- * percentages so the UI can render "68% (54–80)" without further math.
+ * percentages so the UI can render "68% (54-80)" without further math.
  *
  * @param {number} wins
  * @param {number} n      resolved sample (wins + losses)
@@ -64,13 +64,13 @@ async function query(days, tier, network) {
 	// ── per-tier breakdown ────────────────────────────────────────────────────
 	const tierFilter = tier !== 'all' ? sql`and c.tier = ${tier}` : sql``;
 	const periodFilter = days != null ? sql`and c.scored_at >= now() - (${days} || ' days')::interval` : sql``;
-	// Quote/stablecoin/LST mints are not coins — exclude them from every accuracy
+	// Quote/stablecoin/LST mints are not coins, so exclude them from every accuracy
 	// calc so a stray cached USDC row can't poison the win-rate or top performers.
 	const quoteFilter = sql`and c.mint <> all(${QUOTE_MINT_LIST}::text[])`;
 
 	// Win = graduated OR (ath ≥ 2 AND not rugged). The "not rugged" clause is
 	// load-bearing: a bundle that spikes 2× and collapses is an exit-liquidity
-	// event, not a win — counting it would let pump-and-dumps inflate the very
+	// event, not a win: counting it would let pump-and-dumps inflate the very
 	// number that's supposed to expose them. Keep in sync with stats.js/wins.js.
 	const rows = await sql`
 		select
@@ -119,7 +119,7 @@ async function query(days, tier, network) {
 	// REALIZED win rate per band. A trustworthy engine produces a monotonic ladder
 	// (higher band → higher realized rate) that tracks the band's own prediction.
 	// Brier = mean squared error of score/100 (treated as a probability) vs the
-	// 0/1 outcome — one number for "how well-calibrated overall" (lower is better).
+	// 0/1 outcome: one number for "how well-calibrated overall" (lower is better).
 	// This pass is unconditional on tier so the baseline is the true market rate.
 	const calRows = await sql`
 		select
@@ -144,7 +144,7 @@ async function query(days, tier, network) {
 			const hi = r.bucket * 10;
 			const realized = r.n ? Math.round((r.wins / r.n) * 100) : null;
 			return {
-				band: `${lo}–${hi}`,
+				band: `${lo}-${hi}`,
 				lo, hi,
 				n: r.n,
 				wins: r.wins,

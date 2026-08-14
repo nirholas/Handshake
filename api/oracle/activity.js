@@ -1,5 +1,5 @@
 /**
- * Oracle — global action activity feed.
+ * Oracle: global action activity feed.
  *
  *   GET /api/oracle/activity
  *       ?network=mainnet     default: mainnet
@@ -12,7 +12,7 @@
  *
  * Public, IP rate-limited, 15-second CDN cache. Returns actions from
  * oracle_watch_actions joined to agent_identities so the feed shows real
- * agent names and avatars — the "trading floor" view of all autonomous
+ * agent names and avatars: the "trading floor" view of all autonomous
  * agents acting on conviction in real time.
  */
 
@@ -109,7 +109,7 @@ export default wrap(async (req, res) => {
 	const items = rows.map(shapeRow);
 
 	// Summary counts for the header KPIs. `.then(r => r[0])` already unwraps the
-	// single aggregate row, so assign it directly — array-destructuring a plain
+	// single aggregate row, so assign it directly. Array-destructuring a plain
 	// row object (or the null/undefined the catch/empty-result yields) throws
 	// "(intermediate value) is not iterable" and 500s the endpoint.
 	const summary = await sql`

@@ -1,20 +1,20 @@
 /**
- * Oracle — category intelligence summary.
+ * Oracle: category intelligence summary.
  *
  *   GET /api/oracle/categories?network=mainnet&hours=24
  *
  * Aggregates oracle_conviction rows from the last `hours` window by category,
  * returning per-category stats sorted by average conviction score:
  *
- *   category        — the narrative label
- *   total           — total coins scored in this category in the window
- *   avg_score       — mean conviction score
- *   prime_count     — coins at prime tier (score ≥ 86)
- *   strong_count    — coins at strong tier (72–85)
- *   best_score      — highest single score in this category
- *   best_mint       — mint address of the best coin
- *   best_symbol     — symbol of the best coin
- *   best_image_uri  — image of the best coin
+ *   category        : the narrative label
+ *   total           : total coins scored in this category in the window
+ *   avg_score       : mean conviction score
+ *   prime_count     : coins at prime tier (score >= 86)
+ *   strong_count    : coins at strong tier (72 to 85)
+ *   best_score      : highest single score in this category
+ *   best_mint       : mint address of the best coin
+ *   best_symbol     : symbol of the best coin
+ *   best_image_uri  : image of the best coin
  *
  * Use this endpoint to render a "hot sectors" panel that tells users which
  * narrative categories are generating the highest conviction right now.
@@ -24,7 +24,7 @@
 
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { sql } from '../_lib/db.js';
+import { sql, isDbUnavailableError } from '../_lib/db.js';
 import { QUOTE_MINT_LIST } from '../_lib/quote-mints.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
@@ -76,7 +76,15 @@ export default wrap(async (req, res) => {
 		join best_coin bc on bc.category = a.category
 		order by a.avg_score desc, a.prime_count desc, a.total desc
 		limit 12
-	`.catch(() => []);
+	`.catch((err) => {
+		// A connectivity failure is not "no hot sectors right now". Returning [] for
+		// it served a confident empty panel with a 5-minute CDN cache, so a blip
+		// lasting seconds showed users a dead market for the next five minutes.
+		// Rethrow so wrap() answers 503 + Retry-After and nothing caches the lie;
+		// a statement-level fault still degrades to the empty panel.
+		if (isDbUnavailableError(err)) throw err;
+		return [];
+	});
 
 	const items = rows.map((r) => ({
 		category:       r.category,

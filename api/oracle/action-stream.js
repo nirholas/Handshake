@@ -1,5 +1,5 @@
 /**
- * Oracle — live agent action stream (SSE).
+ * Oracle: live agent action stream (SSE).
  *
  *   GET /api/oracle/action-stream?network=mainnet&mode=live|simulate
  *
@@ -8,11 +8,11 @@
  * /activity trading-floor page with sub-5-second latency instead of 30s polling.
  *
  * Events:
- *   hello  — sent on connect with network + ts
- *   action — a new oracle_watch_actions row (entry or outcome update)
- *   settle — an existing action whose outcome just changed (win/loss/flat)
- *   ping   — keepalive every 15s
- *   bye    — server rotating the connection after MAX_DURATION_MS
+ *   hello  : sent on connect with network + ts
+ *   action : a new oracle_watch_actions row (entry or outcome update)
+ *   settle : an existing action whose outcome just changed (win/loss/flat)
+ *   ping   : keepalive every 15s
+ *   bye    : server rotating the connection after MAX_DURATION_MS
  *
  * The client reconnects automatically via EventSource's built-in retry.
  * It passes `?since=<iso>` on reconnect so no events are missed.
@@ -157,7 +157,7 @@ export default async function handleActionStream(req, res) {
 				send('settle', shapeAction(r));
 			}
 			if (settles.length) settleCursor = settles[settles.length - 1].settled_at;
-		} catch { /* transient — next tick */ }
+		} catch { /* transient, retried on the next tick */ }
 	};
 
 	const pollTimer = setInterval(poll, POLL_MS);

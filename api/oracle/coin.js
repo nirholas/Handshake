@@ -1,11 +1,11 @@
 /**
- * Oracle — full intel for one coin.
+ * Oracle: full intel for one coin.
  *
  *   GET /api/oracle/coin?mint=<mint>&network=mainnet
  *
  * Returns the fused conviction verdict (lazy-scored with a fresh narrative read
  * on a cache miss), the transparent pillar reasons, the narrative classification,
- * the ground-truth outcome if known, and the live "who's in" trader breakdown —
+ * the ground-truth outcome if known, and the live "who's in" trader breakdown:
  * every early wallet labeled by its data-brain archetype + track record. This is
  * the trader-classification surface the product is built around.
  */
@@ -38,18 +38,18 @@ export default wrap(async (req, res) => {
 		try {
 			scored = await scoreCoin(mint, { network, classify: true, persist: true });
 		} catch {
-			// Scoring threw — the intel store / DB is degraded, NOT "coin unknown".
+			// Scoring threw: the intel store / DB is degraded, NOT "coin unknown".
 			// A 404 here would let clients and the CDN cache a transient outage as an
 			// authoritative "this mint doesn't exist". Surface 503 so callers retry.
-			return error(res, 503, 'scoring_unavailable', 'coin scoring is temporarily unavailable — retry shortly');
+			return error(res, 503, 'scoring_unavailable', 'coin scoring is temporarily unavailable, retry shortly');
 		}
 		if (!scored) {
-			// Clean empty result — the coin is genuinely unknown to the data brain.
+			// Clean empty result: the coin is genuinely unknown to the data brain.
 			// This is a stable, idempotent fact (coins are ingested by the always-on
 			// observer, never inline here), so cache the negative answer briefly at the
 			// CDN. The always-on polling surfaces (coin page, oracle UI) would otherwise
 			// re-spin this function and re-run assembleIntel on every poll for a mint the
-			// brain has never seen — one such mint produced hundreds of redundant
+			// brain has never seen. One such mint produced hundreds of redundant
 			// invocations. The window is short enough that a coin becoming known surfaces
 			// within seconds.
 			return json(res, 404, { error: 'not_found', error_description: 'this mint has not been observed yet', mint, network }, {
@@ -57,9 +57,9 @@ export default wrap(async (req, res) => {
 			});
 		}
 		coin = await safeReadCoin(mint, network);
-		// Scoring succeeded but the warm re-read came back empty (read-path blip) —
+		// Scoring succeeded but the warm re-read came back empty (read-path blip), so
 		// don't return a hollow 200; treat it as transient.
-		if (!coin) return error(res, 503, 'scoring_unavailable', 'coin scoring is temporarily unavailable — retry shortly');
+		if (!coin) return error(res, 503, 'scoring_unavailable', 'coin scoring is temporarily unavailable, retry shortly');
 	}
 
 	return json(res, 200, { network, mint, ...coin }, {
