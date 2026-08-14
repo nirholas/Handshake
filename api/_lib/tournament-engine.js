@@ -166,7 +166,12 @@ export async function finalizeTournament(tournament, { now = Date.now() } = {}) 
 
 	// Attest on-chain — best-effort, honestly reported.
 	let attestation = null;
-	if (tournament.attestation_sig) {
+	if (!view.standings.length) {
+		// Nobody entered: there is no result to commit. Broadcasting a memo of an
+		// empty board would burn a real signature (and real lamports) to prove
+		// nothing, so an empty tournament closes unattested and says so.
+		attestation = { status: 'skipped', signature: null, url: null, reason: 'no_entrants' };
+	} else if (tournament.attestation_sig) {
 		attestation = {
 			status: 'deduped',
 			signature: tournament.attestation_sig,

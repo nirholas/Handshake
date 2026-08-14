@@ -1514,6 +1514,14 @@ export const env = {
 	get THREE_PRIZE_PAYOUT_KEY() {
 		return opt('THREE_PRIZE_PAYOUT_KEY');
 	},
+	// Prize pool, in whole $THREE, for the always-on daily house arena that
+	// api/cron/arena-tick.js keeps running. Unset (or 0) means the daily runs as
+	// a bragging-rights bracket with no pool, which is the honest default: the
+	// pool is applied ONLY when THREE_PRIZE_PAYOUT_KEY is also configured, so the
+	// Arena never advertises a prize that would settle as BLOCKED.
+	get ARENA_DAILY_PRIZE_THREE() {
+		return opt('ARENA_DAILY_PRIZE_THREE', '0');
+	},
 	// Burn address — defaults to the Solana incinerator, whose associated token
 	// account is unspendable (no key exists), so tokens transferred there are
 	// permanently removed from circulation. Verifiable as a plain destination.

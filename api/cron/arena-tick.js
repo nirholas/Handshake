@@ -15,7 +15,7 @@
 //
 // Every stage reports honestly and independently; a failure in one is recorded
 // in the response and does not starve the others. Idempotent by construction,
-// so the 5-minute cadence is a safety net rather than a requirement.
+// so the schedule in vercel.json is a safety net rather than a requirement.
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';

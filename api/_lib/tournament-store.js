@@ -46,6 +46,14 @@ export function ensureTournamentTables() {
 		`;
 		await sql`create index if not exists tournaments_status_start_idx on tournaments (status, starts_at desc)`;
 		await sql`create index if not exists tournaments_network_end_idx on tournaments (network, ends_at desc)`;
+		// One house arena per day per network, so two overlapping keeper ticks can never
+		// split a day's entrants across two boards. Mirrors the index in
+		// migrations/20260814180000_arena_house_daily.sql for a fresh bootstrap.
+		await sql`
+			create unique index if not exists tournaments_house_window_uniq
+				on tournaments (network, starts_at)
+				where (entry_rules->>'house') is not null
+		`;
 		await sql`
 			create table if not exists tournament_entries (
 				id                 uuid primary key default gen_random_uuid(),
