@@ -67,6 +67,62 @@ describe('registry shape', () => {
 	});
 });
 
+// The feed count is quoted as a literal in product copy, MCP tool descriptions,
+// and docs, and every one of those copies went stale the moment six subreddits
+// joined the registry: the markets hub advertised 192 feeds while the registry
+// held 197, and three docs still said 191. A number restated in ten places and
+// derived in none will always drift, so the registry is the single source of
+// truth and this test fails the next time a feed lands without the copy moving.
+describe('the advertised feed count matches the registry', () => {
+	const QUOTING_FILES = [
+		'api/_lib/news-sources.js',
+		'src/markets-page.js',
+		'src/dashboard-next/pages/data-api.js',
+		'mcp-server/src/index.js',
+		'mcp-server/src/tools/crypto-news.js',
+		'mcp-server/README.md',
+		'STRUCTURE.md',
+		'docs/coin-pages.md',
+		'docs/api-reference.md',
+		'docs/agent-abilities/ABILITIES.md',
+		'docs/agent-abilities/FULL-ARTICLE.md',
+		'docs/agent-abilities/chapters/15-appendix.md',
+	];
+	// Both phrasings the repo uses for the CURRENT registry size. Deliberately
+	// anchored on the word "publisher" (or the MCP tool title's "live, N feeds")
+	// so the registry header's own history of what was dropped ("~450 feeds"
+	// upstream, 28 substack, 43 medium) stays out: those are real counts of
+	// something else, not stale copies of this one.
+	const QUOTED = [
+		/(\d{2,4})\s+(?:live\s+)?publisher(?:\s+RSS\/Atom)?\s+feeds\b/gi,
+		/\blive,\s*(\d{2,4})\s+feeds\b/gi,
+	];
+
+	it('quotes the live registry size everywhere the number appears', async () => {
+		const { readFileSync } = await import('node:fs');
+		const expected = String(entries.length);
+		const wrong = [];
+		let quotes = 0;
+		for (const file of QUOTING_FILES) {
+			const text = readFileSync(file, 'utf8');
+			for (const pattern of QUOTED) {
+				for (const m of text.matchAll(pattern)) {
+					quotes += 1;
+					if (m[1] === expected) continue;
+					const line = text.slice(0, m.index).split('\n').length;
+					wrong.push(`${file}:${line} says "${m[0].trim()}", registry has ${expected}`);
+				}
+			}
+		}
+		expect(wrong, `stale feed counts:\n  ${wrong.join('\n  ')}`).toEqual([]);
+		// A pattern that stops matching would pass this test silently while the
+		// copy rots, so assert the sweep is still finding the copies it guards.
+		expect(quotes, 'the count patterns matched nothing; the copy was reworded').toBeGreaterThanOrEqual(
+			QUOTING_FILES.length,
+		);
+	});
+});
+
 describe('hosts we must not regress onto', () => {
 	// substack.com and mirror.xyz sit behind a Cloudflare bot challenge: every
 	// feed on them answers 403 to server-side fetches, so they can never be

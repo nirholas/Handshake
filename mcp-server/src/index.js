@@ -65,7 +65,7 @@ const SERVER_INSTRUCTIONS =
 	'transport spec). FOUR tools need no payment, wallet, or API key to start: forge_free generates a ' +
 	'textured 3D GLB from a text prompt on the free NVIDIA NIM (Microsoft TRELLIS) lane and returns a ' +
 	'GLB URL + three.ws viewer link — use it for zero-cost text→3D — and the crypto-news trio: ' +
-	'crypto_news (live headlines from 192 publisher feeds, filterable by category/source/language/search, ' +
+	'crypto_news (live headlines from 197 publisher feeds, filterable by category/source/language/search, ' +
 	'fully free), crypto_news_digest (the last 1–72h clustered into distinct narratives with stance, ' +
 	'tickers, and every covering outlet — the right first call for "what happened in crypto today", fully ' +
 	'free), and crypto_news_archive (search 660,000+ articles back to September 2017 by ' +

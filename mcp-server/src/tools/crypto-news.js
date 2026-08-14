@@ -1,5 +1,5 @@
 // `crypto_news` — FREE MCP tool: live crypto headlines from the three.ws
-// native aggregator (192 publisher RSS/Atom feeds across 27 categories and
+// native aggregator (197 publisher RSS/Atom feeds across 27 categories and
 // 17 languages, per-source cached with serve-stale-on-error). No payment, no
 // key. Backed by GET /api/news/feed — the same endpoint behind
 // three.ws/markets/news.
@@ -12,7 +12,7 @@ import { NEWS_API_BASE, newsApiGet, slimArticle } from './_news-core.js';
 
 const TOOL_NAME = 'crypto_news';
 const TOOL_DESCRIPTION =
-	'Live crypto news headlines aggregated by three.ws directly from 192 publisher RSS/Atom feeds — ' +
+	'Live crypto news headlines aggregated by three.ws directly from 197 publisher RSS/Atom feeds — ' +
 	'CoinDesk, The Block, Decrypt, CoinTelegraph, SEC press, exchange blogs, research desks, and ' +
 	'international outlets in 17 languages. Filter by category (bitcoin, ethereum, solana, defi, nft, ' +
 	'trading, research, security, regulation-adjacent geopolitical, and more), by a single source key, ' +
@@ -59,7 +59,7 @@ export function buildCryptoNewsTool() {
 	const handler = free({ toolName: TOOL_NAME, inputSchema: inputJsonSchema }, (args) => runCryptoNews(args));
 	return {
 		name: TOOL_NAME,
-		title: 'Crypto news (live, 192 feeds)',
+		title: 'Crypto news (live, 197 feeds)',
 		description: TOOL_DESCRIPTION,
 		inputSchema: inputZodShape,
 		// Read-only view over a live feed: repeat calls are safe but not

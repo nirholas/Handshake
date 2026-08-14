@@ -414,7 +414,7 @@ function renderCatalog() {
 		['GET /api/news/archive', 'Search 660k+ articles back to 2017 — keyword, ticker, source, date, sentiment, language', 'Premium · 60/day free · $0.001/search'],
 		['GET /api/news/archive?stats=true', 'Corpus statistics + month range', 'Free'],
 		['GET /api/news/archive?trending=true', 'Most-covered tickers of the newest archive weeks', 'Free'],
-		['GET /api/news/feed', 'Live headlines from 192 publisher feeds', 'Free'],
+		['GET /api/news/feed', 'Live headlines from 197 publisher feeds', 'Free'],
 		['GET /api/news/digest', 'Last 1–72 h clustered into narratives with stance + tickers', 'Free'],
 	].map(([ep, what, access]) => `
 		<tr><td><code>${esc(ep)}</code></td><td>${esc(what)}</td><td>${esc(access)}</td></tr>`).join('');
