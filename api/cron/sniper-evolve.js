@@ -46,10 +46,12 @@ export default wrapCron(async (req, res) => {
 		// is precisely how a dead learning loop hides behind a green check (the
 		// failure this fleet's own loops-health watchdog exists to catch).
 		if (isDbUnavailableError(err)) throw err;
-		// Never report a failure with no diagnostic. The neon Pool rejects with an
-		// Error carrying an EMPTY message on a transport-level fault, so the raw
-		// `err.message` shipped `{"ok":false,"error":""}`: an operator reading that
-		// learns only that something went wrong, never what.
+		// Never report a failure with no diagnostic. Not every rejection reaching
+		// here is an Error: the neon Pool rejects with a message-less ErrorEvent on
+		// a transport fault (now classified above), and the raw `err.message` for
+		// one shipped `{"ok":false,"error":""}`. An operator reading that learns
+		// only that something went wrong, never what. Keep the floor for whatever
+		// non-Error the next driver throws.
 		const detail = err?.message || (err?.name ? `${err.name} (no message)` : String(err) || 'unknown error');
 		console.error('[sniper-evolve] failed:', detail);
 		return json(res, 200, { ok: false, error: detail, log: lines.slice(-8) });
