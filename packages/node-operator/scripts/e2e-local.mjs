@@ -16,6 +16,7 @@
  */
 
 import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
 import { createRequire } from 'node:module';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,10 +27,25 @@ import { verifyResult } from '../src/signing.js';
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG = join(__dirname, '..');
-const PORT = 3199;
-const PLATFORM = `http://127.0.0.1:${PORT}`;
 
 const log = (...a) => console.log('[e2e]', ...a);
+
+/**
+ * Reserve a free TCP port for the platform server.
+ *
+ * This used to be hardcoded to 3199, which turned any crashed run into a trap:
+ * the orphaned server kept the port, the next run's readiness probe found it,
+ * and every call went to a process still pointing at the previous run's
+ * (now dead) Redis shim. The failure surfaced as "database temporarily
+ * unavailable" on register, which looks nothing like the actual cause.
+ */
+async function freePort() {
+	const probe = createServer();
+	await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
+	const { port } = probe.address();
+	await new Promise((resolve) => probe.close(resolve));
+	return port;
+}
 
 async function waitFor(url, tries = 60) {
 	for (let i = 0; i < tries; i++) {
@@ -48,7 +64,9 @@ async function main() {
 	const redisUrl = await shim.listen();
 	log('redis shim up at', redisUrl);
 
-	// 2. Platform server against the shim.
+	// 2. Platform server against the shim, on a port nothing else holds.
+	const PORT = await freePort();
+	const PLATFORM = `http://127.0.0.1:${PORT}`;
 	const server = spawn(process.execPath, [join(PKG, '../../server/index.mjs')], {
 		env: {
 			...process.env,
@@ -63,6 +81,15 @@ async function main() {
 		stdio: ['ignore', 'pipe', 'pipe'],
 	});
 	server.stderr.on('data', (d) => process.stderr.write(`[server] ${d}`));
+	// The boot log is noisy and nobody reads it, but an unread pipe fills its
+	// 64KB buffer and then blocks the server mid-request, so it must be drained.
+	server.stdout.resume();
+	// A crash anywhere below must still take the child with it; otherwise the
+	// orphan outlives this process and poisons the next run.
+	const killServer = () => { if (!server.killed) server.kill('SIGKILL'); };
+	process.once('exit', killServer);
+	process.once('uncaughtException', killServer);
+	process.once('unhandledRejection', killServer);
 	const serverUp = waitFor(`${PLATFORM}/api/version`).catch(() => waitFor(`${PLATFORM}/`));
 	try {
 		await serverUp;
