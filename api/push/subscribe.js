@@ -7,7 +7,7 @@
 //
 // The subscription object is exactly what `pushManager.subscribe()` returns
 // (`.toJSON()`): { endpoint, keys: { p256dh, auth } }. Endpoints are unique
-// globally — a re-subscribe upserts so the latest owner wins and stale rows
+// globally, so a re-subscribe upserts: the latest owner wins and stale rows
 // from a previous account on the same device are reclaimed.
 
 import { z } from 'zod';
