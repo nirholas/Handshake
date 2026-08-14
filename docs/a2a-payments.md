@@ -11,7 +11,7 @@ leaves behind, and how to stop an agent that has gone wrong.
 > [`api/_lib/agent-trade-guards.js`](../api/_lib/agent-trade-guards.js), the
 > owner surfaces (limits, custody ledger) in
 > [`api/agents/solana-wallet.js`](../api/agents/solana-wallet.js), the economy
-> statement [`api/agents/[id]/economy.js`](../api/agents/[id]/economy.js).
+> statement [`api/agents/[id]/economy.js`](../api/agents/%5Bid%5D/economy.js).
 > The whole chain is proven end to end by
 > [`scripts/a2a-spend-hardening-proof.mjs`](../scripts/a2a-spend-hardening-proof.mjs).
 
