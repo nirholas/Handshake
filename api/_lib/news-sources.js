@@ -155,7 +155,11 @@ export const NEWS_SOURCES = {
 	coinalyze_blog: { name: 'Coinalyze Blog', url: 'https://coinalyze.net/blog/feed/', category: 'trading' },
 	comparic: { name: 'Comparic', url: 'https://comparic.pl/feed/', category: 'trading', language: 'pl', region: 'europe' },
 	finbold: { name: 'Finbold', url: 'https://finbold.com/feed/', category: 'trading' },
-	fxstreet_crypto: { name: 'FXStreet Crypto', url: 'https://www.fxstreet.com/rss', category: 'trading' },
+	// /rss is FXStreet's SITE-WIDE feed (gold, EUR/JPY, central banks) and this
+	// entry's `trading` category is crypto-native, so every one of those bypassed
+	// the relevance gate: "India Gold price today" led /markets/news. /rss/crypto
+	// is the publisher's crypto desk, which is what the key always claimed.
+	fxstreet_crypto: { name: 'FXStreet Crypto', url: 'https://www.fxstreet.com/rss/crypto', category: 'trading' },
 	tradingview_crypto: { name: 'TradingView Crypto Ideas', url: 'https://www.tradingview.com/feed/?sort=recent&stream=crypto', category: 'trading' },
 	u_today: { name: 'U.Today', url: 'https://u.today/rss', category: 'trading', tier: 'tier3', credibility: 0.7 },
 
