@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "అంగీకారం",
 		"accounts": "ఖాతాలు",
-		"by_installing_or_using_the_three_ws": "three.ws వాక్ అవతార్ ఎక్స్‌టెన్షన్‌ను ఇన్‌స్టాల్ చేయడం లేదా ఉపయోగించడం ద్వారా, మీరు ఈ నిబంధనలకు మరియు <a href=\"https://three.ws/legal/terms\">three.ws సేవా నిబంధనలకు</a> అంగీకరిస్తారు. మీరు అంగీకరించకపోతే, ఎక్స్‌టెన్షన్‌ను అన్‌ఇన్‌స్టాల్ చేయండి.",
+		"by_installing_or_using_the_three_ws": "three.ws వాక్ అవతార్ ఎక్స్‌టెన్షన్‌ను ఇన్‌స్టాల్ చేయడం లేదా ఉపయోగించడం ద్వారా, మీరు ఈ నిబంధనలకు మరియు <a href=\"https://three.ws/legal/tos\">three.ws సేవా నిబంధనలకు</a> అంగీకరిస్తారు. మీరు అంగీకరించకపోతే, ఎక్స్‌టెన్షన్‌ను అన్‌ఇన్‌స్టాల్ చేయండి.",
 		"contact": "సంప్రదించండి",
 		"disclaimer": "నిరాకరణ",
 		"intellectual_property": "మేధో సంపత్తి",
@@ -6603,7 +6603,7 @@
 		"meta_title": "సేవా నిబంధనలు — three.ws వాక్ అవతార్ ఎక్స్‌టెన్షన్",
 		"meta_twitter_title": "సేవా నిబంధనలు — three.ws వాక్ అవతార్ ఎక్స్‌టెన్షన్",
 		"service": "సేవ",
-		"signing_in_is_optional_an_account_is": "సైన్ ఇన్ చేయడం ఐచ్ఛికం. మీ స్వంత three.ws అవతార్‌లను యాక్సెస్ చేయడానికి ఒక ఖాతా అవసరం. ఖాతా వినియోగం <a href=\"https://three.ws/legal/terms\">three.ws సేవా నిబంధనల</a> ద్వారా నియంత్రించబడుతుంది.",
+		"signing_in_is_optional_an_account_is": "సైన్ ఇన్ చేయడం ఐచ్ఛికం. మీ స్వంత three.ws అవతార్‌లను యాక్సెస్ చేయడానికి ఒక ఖాతా అవసరం. ఖాతా వినియోగం <a href=\"https://three.ws/legal/tos\">three.ws సేవా నిబంధనల</a> ద్వారా నియంత్రించబడుతుంది.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "సేవా నిబంధనలు",
 		"the_extension_code_and_three_ws_brand": "ఎక్స్‌టెన్షన్ కోడ్ మరియు three.ws బ్రాండ్ three.ws / నిర్హోలాస్ యాజమాన్యంలో ఉన్నాయి. మీరు సృష్టించిన అవతార్‌లు మీవే, three.ws అవతార్ లైసెన్స్‌కు లోబడి ఉంటాయి.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "ఒక సర్వర్ వర్కర్ ప్రతి ఫ్రేమ్‌లో మీ శరీర భంగిమను ట్రాక్ చేస్తుంది మరియు దానిని ప్లాట్‌ఫారమ్ యొక్క ప్రామాణిక స్కెలిటన్‌పై పరిష్కరిస్తుంది — ఇక్కడ ప్రతి అవతార్ యానిమేషన్‌ను నడిపించే అదే రీటార్గెట్ ఇంజిన్. ఇది మిమ్మల్ని మాస్క్‌గా కూడా విభజిస్తుంది.",
-		"any_rigged_humanoid_glb_works_one_you": "ఏదైనా రిగ్ చేయబడిన హ్యూమనాయిడ్ GLB పని చేస్తుంది — మీరు <a href=\"/create\">జనరేట్ చేసిన</a>ది, <a href=\"/capture-avatar\">సెల్ఫీ నుండి క్యాప్చర్ చేసిన</a>ది, లేదా మెష్ నుండి రిగ్ చేయబడినది.",
+		"any_rigged_humanoid_glb_works_one_you": "ఏదైనా రిగ్ చేయబడిన హ్యూమనాయిడ్ GLB పని చేస్తుంది — మీరు <a href=\"/create\">జనరేట్ చేసిన</a>ది, <a href=\"/create/selfie\">సెల్ఫీ నుండి క్యాప్చర్ చేసిన</a>ది, లేదా మెష్ నుండి రిగ్ చేయబడినది.",
 		"avatar": "అవతార్",
 		"capturing_your_motion": "మీ కదలికను క్యాప్చర్ చేయడం",
 		"drop_a_video_of_one_person": "ఒక వ్యక్తి వీడియోను డ్రాప్ చేయండి",

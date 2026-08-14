@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "قبولیت",
 		"accounts": "اکاؤنٹس",
-		"by_installing_or_using_the_three_ws": "three.ws واک اوتار ایکسٹینشن کو انسٹال یا استعمال کرکے، آپ ان شرائط اور <a href=\"https://three.ws/legal/terms\">three.ws سروس کی شرائط</a> سے اتفاق کرتے ہیں۔ اگر آپ متفق نہیں ہیں، تو ایکسٹینشن کو ان انسٹال کر دیں۔",
+		"by_installing_or_using_the_three_ws": "three.ws واک اوتار ایکسٹینشن کو انسٹال یا استعمال کرکے، آپ ان شرائط اور <a href=\"https://three.ws/legal/tos\">three.ws سروس کی شرائط</a> سے اتفاق کرتے ہیں۔ اگر آپ متفق نہیں ہیں، تو ایکسٹینشن کو ان انسٹال کر دیں۔",
 		"contact": "رابطہ",
 		"disclaimer": "دستبرداری",
 		"intellectual_property": "دانشورانہ ملکیت",
@@ -6603,7 +6603,7 @@
 		"meta_title": "سروس کی شرائط — three.ws واک اوتار ایکسٹینشن",
 		"meta_twitter_title": "سروس کی شرائط — three.ws واک اوتار ایکسٹینشن",
 		"service": "سروس",
-		"signing_in_is_optional_an_account_is": "سائن ان کرنا اختیاری ہے۔ اپنے three.ws اوتار تک رسائی کے لیے ایک اکاؤنٹ درکار ہے۔ اکاؤنٹ کا استعمال <a href=\"https://three.ws/legal/terms\">three.ws سروس کی شرائط</a> کے تحت ہوتا ہے۔",
+		"signing_in_is_optional_an_account_is": "سائن ان کرنا اختیاری ہے۔ اپنے three.ws اوتار تک رسائی کے لیے ایک اکاؤنٹ درکار ہے۔ اکاؤنٹ کا استعمال <a href=\"https://three.ws/legal/tos\">three.ws سروس کی شرائط</a> کے تحت ہوتا ہے۔",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "سروس کی شرائط",
 		"the_extension_code_and_three_ws_brand": "ایکسٹینشن کوڈ اور three.ws برانڈ three.ws / Nirholas کی ملکیت ہیں۔ آپ کے بنائے ہوئے اوتار آپ کے ہیں، جو three.ws اوتار لائسنس کے تابع ہیں۔",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "ایک سرور ورکر ہر فریم میں آپ کے جسم کے پوز کو ٹریک کرتا ہے اور اسے پلیٹ فارم کے کینونیکل سکیلیٹن پر حل کرتا ہے — وہی ریٹارگٹ انجن جو یہاں ہر اوتار اینیمیشن کو چلاتا ہے۔ یہ آپ کو ایک ماسک میں بھی تقسیم کرتا ہے۔",
-		"any_rigged_humanoid_glb_works_one_you": "کوئی بھی رگڈ ہیومنائیڈ GLB کام کرتا ہے — ایک جسے آپ نے <a href=\"/create\">جنریٹ کیا</a>، <a href=\"/capture-avatar\">سیلفی سے کیپچر کیا</a>، یا میش سے رگ کیا۔",
+		"any_rigged_humanoid_glb_works_one_you": "کوئی بھی رگڈ ہیومنائیڈ GLB کام کرتا ہے — ایک جسے آپ نے <a href=\"/create\">جنریٹ کیا</a>، <a href=\"/create/selfie\">سیلفی سے کیپچر کیا</a>، یا میش سے رگ کیا۔",
 		"avatar": "اوتار",
 		"capturing_your_motion": "آپ کی حرکت کو کیپچر کرنا",
 		"drop_a_video_of_one_person": "ایک شخص کی ویڈیو ڈراپ کریں",

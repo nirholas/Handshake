@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Hyväksyminen",
 		"accounts": "Tilit",
-		"by_installing_or_using_the_three_ws": "Asentamalla tai käyttämällä three.ws Walk Avatar -laajennusta hyväksyt nämä ehdot ja <a href=\"https://three.ws/legal/terms\">three.ws käyttöehdot</a>. Jos et hyväksy, poista laajennus.",
+		"by_installing_or_using_the_three_ws": "Asentamalla tai käyttämällä three.ws Walk Avatar -laajennusta hyväksyt nämä ehdot ja <a href=\"https://three.ws/legal/tos\">three.ws käyttöehdot</a>. Jos et hyväksy, poista laajennus.",
 		"contact": "Yhteystiedot",
 		"disclaimer": "Vastuuvapauslauseke",
 		"intellectual_property": "Immateriaalioikeudet",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Käyttöehdot — three.ws Walk Avatar -laajennus",
 		"meta_twitter_title": "Käyttöehdot — three.ws Walk Avatar -laajennus",
 		"service": "Palvelu",
-		"signing_in_is_optional_an_account_is": "Sisäänkirjautuminen on vapaaehtoista. Tili vaaditaan omien three.ws-avatarien käyttämiseen. Tilin käyttöä säätelevät <a href=\"https://three.ws/legal/terms\">three.ws käyttöehdot</a>.",
+		"signing_in_is_optional_an_account_is": "Sisäänkirjautuminen on vapaaehtoista. Tili vaaditaan omien three.ws-avatarien käyttämiseen. Tilin käyttöä säätelevät <a href=\"https://three.ws/legal/tos\">three.ws käyttöehdot</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Käyttöehdot",
 		"the_extension_code_and_three_ws_brand": "Laajennuksen koodi ja three.ws-brändi ovat three.ws / Nirholasin omistuksessa. Luomasi avatarit ovat sinun, three.ws-avatar-lisenssin ehtojen mukaisesti.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Palvelintyöntekijä seuraa kehosi asentoa jokaisessa ruudussa ja sovittaa sen alustan kanoniseen luurankoon — sama uudelleenkohdistusmoottori, joka ohjaa kaikkia avatar-animaatioita täällä. Se myös segmentoi sinut maskiksi.",
-		"any_rigged_humanoid_glb_works_one_you": "Mikä tahansa rigattu humanoidi GLB toimii — sellainen, jonka olet <a href=\"/create\">generoinut</a>, <a href=\"/capture-avatar\">kaapannut selfiestä</a> tai rigannut meshistä.",
+		"any_rigged_humanoid_glb_works_one_you": "Mikä tahansa rigattu humanoidi GLB toimii — sellainen, jonka olet <a href=\"/create\">generoinut</a>, <a href=\"/create/selfie\">kaapannut selfiestä</a> tai rigannut meshistä.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Liikkeesi kaappaus",
 		"drop_a_video_of_one_person": "Pudota video yhdestä henkilöstä",

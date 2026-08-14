@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Kwemera",
 		"accounts": "Konti",
-		"by_installing_or_using_the_three_ws": "Mu gushyiramo cyangwa gukoresha extension ya three.ws Walk Avatar, wemera aya magambo n'amabwiriza ya <a href=\"https://three.ws/legal/terms\">three.ws Terms of Service</a>. Niba utabyemera, kuraho extension.",
+		"by_installing_or_using_the_three_ws": "Mu gushyiramo cyangwa gukoresha extension ya three.ws Walk Avatar, wemera aya magambo n'amabwiriza ya <a href=\"https://three.ws/legal/tos\">three.ws Terms of Service</a>. Niba utabyemera, kuraho extension.",
 		"contact": "Twandikire",
 		"disclaimer": "Ubwishingizi",
 		"intellectual_property": "Umutungo bwite mu by'ubwenge",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Amabwiriza y'ikoreshwa — three.ws Walk Avatar Extension",
 		"meta_twitter_title": "Amabwiriza y'ikoreshwa — three.ws Walk Avatar Extension",
 		"service": "Serivisi",
-		"signing_in_is_optional_an_account_is": "Kwinjira ni amahitamo. Konti irakenewe kugira ngo ubashe kubona avatar zawe za three.ws. Ikoreshwa rya konti rigengwa n'amabwiriza ya <a href=\"https://three.ws/legal/terms\">three.ws Terms of Service</a>.",
+		"signing_in_is_optional_an_account_is": "Kwinjira ni amahitamo. Konti irakenewe kugira ngo ubashe kubona avatar zawe za three.ws. Ikoreshwa rya konti rigengwa n'amabwiriza ya <a href=\"https://three.ws/legal/tos\">three.ws Terms of Service</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Amabwiriza y'ikoreshwa",
 		"the_extension_code_and_three_ws_brand": "Kode ya extension n'ikimenyetso cya three.ws bya three.ws / Nirholas. Avatar ukora ni izawe, zigengwa n'uruhushya rwa avatar ya three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Seriveri ikurikirana imiterere y'umubiri wawe muri buri shusho, ikayishyira ku gishushanyo mbonera cy'umubiri cy'urubuga. Iyi ni yo moteri ihindura imiterere y'imigendekere ya avatar zose ziri hano. Inagutandukanya ikagushyira mu gishushanyo cy'igifuniko (mask).",
-		"any_rigged_humanoid_glb_works_one_you": "GLB iyo ari yo yose yateguwe neza irakora — iyo <a href=\"/create\">wakoreye</a>, <a href=\"/capture-avatar\">wafashe muri selfie</a>, cyangwa yateguwe kuva kuri mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "GLB iyo ari yo yose yateguwe neza irakora — iyo <a href=\"/create\">wakoreye</a>, <a href=\"/create/selfie\">wafashe muri selfie</a>, cyangwa yateguwe kuva kuri mesh.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Gufata imigendekere yawe",
 		"drop_a_video_of_one_person": "Shyiramo videwo y'umuntu umwe",

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "ការទទួលយក",
 		"accounts": "គណនី",
-		"by_installing_or_using_the_three_ws": "តាមរយៈការដំឡើង ឬប្រើប្រាស់កម្មវិធីបន្ថែម three.ws Walk Avatar អ្នកយល់ព្រមតាមលក្ខខណ្ឌទាំងនេះ និង <a href=\"https://three.ws/legal/terms\">three.ws លក្ខខណ្ឌនៃសេវាកម្ម</a>។ ប្រសិនបើអ្នកមិនយល់ព្រម សូមលុបកម្មវិធីបន្ថែមនេះចោល។",
+		"by_installing_or_using_the_three_ws": "តាមរយៈការដំឡើង ឬប្រើប្រាស់កម្មវិធីបន្ថែម three.ws Walk Avatar អ្នកយល់ព្រមតាមលក្ខខណ្ឌទាំងនេះ និង <a href=\"https://three.ws/legal/tos\">three.ws លក្ខខណ្ឌនៃសេវាកម្ម</a>។ ប្រសិនបើអ្នកមិនយល់ព្រម សូមលុបកម្មវិធីបន្ថែមនេះចោល។",
 		"contact": "ទំនាក់ទំនង",
 		"disclaimer": "ការបដិសេធការទទួលខុសត្រូវ",
 		"intellectual_property": "ទ្រព្យសម្បត្តិបញ្ញា",
@@ -6603,7 +6603,7 @@
 		"meta_title": "លក្ខខណ្ឌនៃសេវាកម្ម — កម្មវិធីបន្ថែម three.ws Walk Avatar",
 		"meta_twitter_title": "លក្ខខណ្ឌនៃសេវាកម្ម — កម្មវិធីបន្ថែម three.ws Walk Avatar",
 		"service": "សេវាកម្ម",
-		"signing_in_is_optional_an_account_is": "ការចូលប្រើគឺស្រេចចិត្ត។ គណនីមួយត្រូវបានទាមទារដើម្បីចូលប្រើ avatar three.ws ផ្ទាល់ខ្លួនរបស់អ្នក។ ការប្រើប្រាស់គណនីត្រូវបានគ្រប់គ្រងដោយ <a href=\"https://three.ws/legal/terms\">three.ws លក្ខខណ្ឌនៃសេវាកម្ម</a>។",
+		"signing_in_is_optional_an_account_is": "ការចូលប្រើគឺស្រេចចិត្ត។ គណនីមួយត្រូវបានទាមទារដើម្បីចូលប្រើ avatar three.ws ផ្ទាល់ខ្លួនរបស់អ្នក។ ការប្រើប្រាស់គណនីត្រូវបានគ្រប់គ្រងដោយ <a href=\"https://three.ws/legal/tos\">three.ws លក្ខខណ្ឌនៃសេវាកម្ម</a>។",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "លក្ខខណ្ឌនៃសេវាកម្ម",
 		"the_extension_code_and_three_ws_brand": "កូដកម្មវិធីបន្ថែម និងម៉ាកយីហោ three.ws ត្រូវបានគ្រប់គ្រងដោយ three.ws / Nirholas។ Avatar ដែលអ្នកបង្កើតគឺជារបស់អ្នក ដោយស្ថិតនៅក្រោមអាជ្ញាប័ណ្ណ avatar three.ws។",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "កម្មករ server តាមដានឥរិយាបថរាងកាយរបស់អ្នកក្នុងគ្រប់ frame ហើយដោះស្រាយវាទៅលើគ្រោងឆ្អឹង canonical របស់ platform — ម៉ាស៊ីន retarget ដូចគ្នាដែលជំរុញរាល់ចលនារូបតំណាងនៅទីនេះ។ វាក៏បំបែកអ្នកទៅជា mask ផងដែរ។",
-		"any_rigged_humanoid_glb_works_one_you": "រាល់ GLB humanoid ដែលបាន rig គឺអាចប្រើបាន — មួយដែលអ្នកបាន <a href=\"/create\">បង្កើត</a>, <a href=\"/capture-avatar\">ចាប់យកពី selfie</a>, ឬ rig ពី mesh។",
+		"any_rigged_humanoid_glb_works_one_you": "រាល់ GLB humanoid ដែលបាន rig គឺអាចប្រើបាន — មួយដែលអ្នកបាន <a href=\"/create\">បង្កើត</a>, <a href=\"/create/selfie\">ចាប់យកពី selfie</a>, ឬ rig ពី mesh។",
 		"avatar": "អាវ៉ាតា",
 		"capturing_your_motion": "ចាប់យកចលនារបស់អ្នក",
 		"drop_a_video_of_one_person": "ទម្លាក់វីដេអូរបស់មនុស្សម្នាក់",

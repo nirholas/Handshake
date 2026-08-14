@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Onarpena",
 		"accounts": "Kontuak",
-		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar luzapena instalatuz edo erabiliz, baldintza hauek eta <a href=\"https://three.ws/legal/terms\">three.ws Zerbitzu-baldintzak</a> onartzen dituzu. Ados ez bazaude, desinstalatu luzapena.",
+		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar luzapena instalatuz edo erabiliz, baldintza hauek eta <a href=\"https://three.ws/legal/tos\">three.ws Zerbitzu-baldintzak</a> onartzen dituzu. Ados ez bazaude, desinstalatu luzapena.",
 		"contact": "Harremanetarako",
 		"disclaimer": "Ezespena",
 		"intellectual_property": "Jabetza Intelektuala",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Zerbitzu-baldintzak — three.ws Walk Avatar Luzapena",
 		"meta_twitter_title": "Zerbitzu-baldintzak — three.ws Walk Avatar Luzapena",
 		"service": "Zerbitzua",
-		"signing_in_is_optional_an_account_is": "Saioa hastea aukerakoa da. Kontu bat behar da zure three.ws avatarrak atzitzeko. Kontuaren erabilera <a href=\"https://three.ws/legal/terms\">three.ws Zerbitzu-baldintzak</a>-ek arautzen dute.",
+		"signing_in_is_optional_an_account_is": "Saioa hastea aukerakoa da. Kontu bat behar da zure three.ws avatarrak atzitzeko. Kontuaren erabilera <a href=\"https://three.ws/legal/tos\">three.ws Zerbitzu-baldintzak</a>-ek arautzen dute.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Zerbitzu-baldintzak",
 		"the_extension_code_and_three_ws_brand": "Luzapenaren kodea eta three.ws marka three.ws / Nirholas-en jabetzakoak dira. Sortzen dituzun avatarrak zurenak dira, three.ws avatar lizentziaren arabera.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Zerbitzari-langile batek zure gorputz-jarrera jarraitzen du fotograma bakoitzean eta plataformaren eskeleto kanonikoan ebazten du — hemen avatar animazio guztiak bultzatzen dituen birbideratze-motor berak. Gainera, maskara batean segmentatzen zaitu.",
-		"any_rigged_humanoid_glb_works_one_you": "Edozein gizaki-itxurako GLBk balio du — zuk <a href=\"/create\">sortutakoa</a>, <a href=\"/capture-avatar\">selfie batetik hartutakoa</a>, edo sare batetik erregulatutakoa.",
+		"any_rigged_humanoid_glb_works_one_you": "Edozein gizaki-itxurako GLBk balio du — zuk <a href=\"/create\">sortutakoa</a>, <a href=\"/create/selfie\">selfie batetik hartutakoa</a>, edo sare batetik erregulatutakoa.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Zure mugimendua harrapatzen",
 		"drop_a_video_of_one_person": "Pertsona bakarreko bideo bat jaregin",

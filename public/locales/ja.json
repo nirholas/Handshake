@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "同意",
 		"accounts": "アカウント",
-		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar拡張機能をインストールまたは使用することにより、本規約および<a href=\"https://three.ws/legal/terms\">three.ws利用規約</a>に同意するものとします。同意しない場合は、拡張機能をアンインストールしてください。",
+		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar拡張機能をインストールまたは使用することにより、本規約および<a href=\"https://three.ws/legal/tos\">three.ws利用規約</a>に同意するものとします。同意しない場合は、拡張機能をアンインストールしてください。",
 		"contact": "お問い合わせ",
 		"disclaimer": "免責事項",
 		"intellectual_property": "知的財産",
@@ -6603,7 +6603,7 @@
 		"meta_title": "利用規約 — three.ws Walk Avatar拡張機能",
 		"meta_twitter_title": "利用規約 — three.ws Walk Avatar拡張機能",
 		"service": "サービス",
-		"signing_in_is_optional_an_account_is": "サインインは任意です。自身のthree.wsアバターにアクセスするにはアカウントが必要です。アカウントの使用は、<a href=\"https://three.ws/legal/terms\">three.ws利用規約</a>に準拠します。",
+		"signing_in_is_optional_an_account_is": "サインインは任意です。自身のthree.wsアバターにアクセスするにはアカウントが必要です。アカウントの使用は、<a href=\"https://three.ws/legal/tos\">three.ws利用規約</a>に準拠します。",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "利用規約",
 		"the_extension_code_and_three_ws_brand": "拡張機能のコードおよびthree.wsブランドは、three.ws / Nirholasが所有しています。作成したアバターは、three.wsアバターライセンスに従い、お客様のものです。",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "サーバーワーカーが毎フレームあなたの体のポーズを追跡し、プラットフォームの標準スケルトンに適用します。これは、すべてのアバターアニメーションを駆動するリターゲットエンジンと同じものです。同時に、あなたをマスクとして切り抜きます。",
-		"any_rigged_humanoid_glb_works_one_you": "リグ付けされたヒューマノイドGLBなら何でも動作します — あなたが<a href=\"/create\">生成した</a>もの、<a href=\"/capture-avatar\">自撮りからキャプチャした</a>もの、またはメッシュからリグ付けしたもの。",
+		"any_rigged_humanoid_glb_works_one_you": "リグ付けされたヒューマノイドGLBなら何でも動作します — あなたが<a href=\"/create\">生成した</a>もの、<a href=\"/create/selfie\">自撮りからキャプチャした</a>もの、またはメッシュからリグ付けしたもの。",
 		"avatar": "アバター",
 		"capturing_your_motion": "モーションをキャプチャ中",
 		"drop_a_video_of_one_person": "一人の人物が映った動画をドロップ",

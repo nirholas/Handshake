@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "接受",
 		"accounts": "账户",
-		"by_installing_or_using_the_three_ws": "安装或使用 three.ws Walk Avatar 扩展程序，即表示您同意这些条款以及 <a href=\"https://three.ws/legal/terms\">three.ws 服务条款</a>。如果您不同意，请卸载本扩展程序。",
+		"by_installing_or_using_the_three_ws": "安装或使用 three.ws Walk Avatar 扩展程序，即表示您同意这些条款以及 <a href=\"https://three.ws/legal/tos\">three.ws 服务条款</a>。如果您不同意，请卸载本扩展程序。",
 		"contact": "联系方式",
 		"disclaimer": "免责声明",
 		"intellectual_property": "知识产权",
@@ -6603,7 +6603,7 @@
 		"meta_title": "服务条款 — three.ws Walk Avatar 扩展程序",
 		"meta_twitter_title": "服务条款 — three.ws Walk Avatar 扩展程序",
 		"service": "服务",
-		"signing_in_is_optional_an_account_is": "登录是可选的。访问您自己的 three.ws 头像需要账户。账户使用受 <a href=\"https://three.ws/legal/terms\">three.ws 服务条款</a> 的约束。",
+		"signing_in_is_optional_an_account_is": "登录是可选的。访问您自己的 three.ws 头像需要账户。账户使用受 <a href=\"https://three.ws/legal/tos\">three.ws 服务条款</a> 的约束。",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "服务条款",
 		"the_extension_code_and_three_ws_brand": "本扩展程序代码和 three.ws 品牌由 three.ws / Nirholas 所有。您创建的头像归您所有，但须遵守 three.ws 头像许可协议。",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "服务器工作器逐帧追踪你的身体姿态，并将其解析到平台的标准骨架上——这与驱动此处所有虚拟形象动画的重定向引擎相同。它还会将你分割成一个蒙版。",
-		"any_rigged_humanoid_glb_works_one_you": "任何绑定好的人形GLB都适用——无论是你<a href=\"/create\">生成</a>的，<a href=\"/capture-avatar\">通过自拍捕捉</a>的，还是从网格模型绑定而来的。",
+		"any_rigged_humanoid_glb_works_one_you": "任何绑定好的人形GLB都适用——无论是你<a href=\"/create\">生成</a>的，<a href=\"/create/selfie\">通过自拍捕捉</a>的，还是从网格模型绑定而来的。",
 		"avatar": "虚拟形象",
 		"capturing_your_motion": "捕捉你的动作",
 		"drop_a_video_of_one_person": "拖入一个单人视频",

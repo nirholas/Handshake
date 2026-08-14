@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Sprejetje",
 		"accounts": "Računi",
-		"by_installing_or_using_the_three_ws": "Z namestitvijo ali uporabo razširitve three.ws Walk Avatar se strinjate s temi pogoji in <a href=\"https://three.ws/legal/terms\">three.ws Pogoji storitve</a>. Če se ne strinjate, odstranite razširitev.",
+		"by_installing_or_using_the_three_ws": "Z namestitvijo ali uporabo razširitve three.ws Walk Avatar se strinjate s temi pogoji in <a href=\"https://three.ws/legal/tos\">three.ws Pogoji storitve</a>. Če se ne strinjate, odstranite razširitev.",
 		"contact": "Kontakt",
 		"disclaimer": "Omejitev odgovornosti",
 		"intellectual_property": "Intelektualna lastnina",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Pogoji storitve — razširitev three.ws Walk Avatar",
 		"meta_twitter_title": "Pogoji storitve — razširitev three.ws Walk Avatar",
 		"service": "Storitev",
-		"signing_in_is_optional_an_account_is": "Prijava je neobvezna. Račun je potreben za dostop do vaših three.ws avatarjev. Uporabo računa urejajo <a href=\"https://three.ws/legal/terms\">three.ws Pogoji storitve</a>.",
+		"signing_in_is_optional_an_account_is": "Prijava je neobvezna. Račun je potreben za dostop do vaših three.ws avatarjev. Uporabo računa urejajo <a href=\"https://three.ws/legal/tos\">three.ws Pogoji storitve</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Pogoji storitve",
 		"the_extension_code_and_three_ws_brand": "Koda razširitve in blagovna znamka three.ws sta v lasti three.ws / Nirholas. Avatarji, ki jih ustvarite, so vaši, v skladu z licenco za avatarje three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Strežniški delavec sledi tvoji telesni drži v vsaki sličici in jo reši na kanonični skelet platforme — isti mehanizem za ponovno ciljanje, ki poganja vsako animacijo avatarja tukaj. Prav tako te segmentira v masko.",
-		"any_rigged_humanoid_glb_works_one_you": "Deluje vsak riggan humanoidni GLB – tisti, ki si ga <a href=\"/create\">generiral</a>, <a href=\"/capture-avatar\">zajel iz selfija</a> ali riggal iz mreže.",
+		"any_rigged_humanoid_glb_works_one_you": "Deluje vsak riggan humanoidni GLB – tisti, ki si ga <a href=\"/create\">generiral</a>, <a href=\"/create/selfie\">zajel iz selfija</a> ali riggal iz mreže.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Zajemanje tvojega gibanja",
 		"drop_a_video_of_one_person": "Naloži video ene osebe",

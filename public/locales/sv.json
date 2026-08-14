@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Godkännande",
 		"accounts": "Konton",
-		"by_installing_or_using_the_three_ws": "Genom att installera eller använda three.ws Walk Avatar-tillägget godkänner du dessa villkor och <a href=\"https://three.ws/legal/terms\">three.ws användarvillkoren</a>. Om du inte godkänner, avinstallera tillägget.",
+		"by_installing_or_using_the_three_ws": "Genom att installera eller använda three.ws Walk Avatar-tillägget godkänner du dessa villkor och <a href=\"https://three.ws/legal/tos\">three.ws användarvillkoren</a>. Om du inte godkänner, avinstallera tillägget.",
 		"contact": "Kontakt",
 		"disclaimer": "Friskrivning",
 		"intellectual_property": "Immateriella rättigheter",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Användarvillkor — three.ws Walk Avatar Extension",
 		"meta_twitter_title": "Användarvillkor — three.ws Walk Avatar Extension",
 		"service": "Tjänst",
-		"signing_in_is_optional_an_account_is": "Inloggning är valfritt. Ett konto krävs för att komma åt dina egna three.ws avatarer. Användning av kontot regleras av <a href=\"https://three.ws/legal/terms\">three.ws användarvillkoren</a>.",
+		"signing_in_is_optional_an_account_is": "Inloggning är valfritt. Ett konto krävs för att komma åt dina egna three.ws avatarer. Användning av kontot regleras av <a href=\"https://three.ws/legal/tos\">three.ws användarvillkoren</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Användarvillkor",
 		"the_extension_code_and_three_ws_brand": "Tilläggets kod och three.ws varumärke ägs av three.ws / Nirholas. Avatarer du skapar är dina, i enlighet med three.ws avatarlicensen.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "En serverarbetare spårar din kroppsposition i varje bildruta och överför den till plattformens kanoniska skelett — samma retargeting-motor som driver varje avataranimation här. Den segmenterar dig också till en mask.",
-		"any_rigged_humanoid_glb_works_one_you": "Valfri riggad humanoid GLB fungerar — en du <a href=\"/create\">genererat</a>, <a href=\"/capture-avatar\">fångat från en selfie</a>, eller riggat från ett nät.",
+		"any_rigged_humanoid_glb_works_one_you": "Valfri riggad humanoid GLB fungerar — en du <a href=\"/create\">genererat</a>, <a href=\"/create/selfie\">fångat från en selfie</a>, eller riggat från ett nät.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Fångar din rörelse",
 		"drop_a_video_of_one_person": "Ladda upp en video med en person",

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Chấp thuận",
 		"accounts": "Tài khoản",
-		"by_installing_or_using_the_three_ws": "Bằng cách cài đặt hoặc sử dụng tiện ích mở rộng three.ws Walk Avatar, bạn đồng ý với các điều khoản này và <a href=\"https://three.ws/legal/terms\">three.ws Điều khoản dịch vụ</a>. Nếu bạn không đồng ý, hãy gỡ cài đặt tiện ích.",
+		"by_installing_or_using_the_three_ws": "Bằng cách cài đặt hoặc sử dụng tiện ích mở rộng three.ws Walk Avatar, bạn đồng ý với các điều khoản này và <a href=\"https://three.ws/legal/tos\">three.ws Điều khoản dịch vụ</a>. Nếu bạn không đồng ý, hãy gỡ cài đặt tiện ích.",
 		"contact": "Liên hệ",
 		"disclaimer": "Tuyên bố từ chối trách nhiệm",
 		"intellectual_property": "Sở hữu trí tuệ",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Điều khoản dịch vụ — Tiện ích mở rộng three.ws Walk Avatar",
 		"meta_twitter_title": "Điều khoản dịch vụ — Tiện ích mở rộng three.ws Walk Avatar",
 		"service": "Dịch vụ",
-		"signing_in_is_optional_an_account_is": "Đăng nhập là tùy chọn. Cần có tài khoản để truy cập các avatar three.ws của riêng bạn. Việc sử dụng tài khoản được điều chỉnh bởi <a href=\"https://three.ws/legal/terms\">three.ws Điều khoản dịch vụ</a>.",
+		"signing_in_is_optional_an_account_is": "Đăng nhập là tùy chọn. Cần có tài khoản để truy cập các avatar three.ws của riêng bạn. Việc sử dụng tài khoản được điều chỉnh bởi <a href=\"https://three.ws/legal/tos\">three.ws Điều khoản dịch vụ</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Điều khoản dịch vụ",
 		"the_extension_code_and_three_ws_brand": "Mã tiện ích và thương hiệu three.ws thuộc sở hữu của three.ws / Nirholas. Các avatar bạn tạo là của bạn, tuân theo giấy phép avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Một worker máy chủ theo dõi tư thế cơ thể của bạn trong từng khung hình và áp dụng nó vào bộ xương chuẩn của nền tảng — cùng một công cụ retarget điều khiển mọi hoạt ảnh avatar tại đây. Nó cũng tách bạn ra thành một lớp mặt nạ.",
-		"any_rigged_humanoid_glb_works_one_you": "Bất kỳ GLB hình người được rig nào cũng hoạt động — một cái bạn <a href=\"/create\">tạo ra</a>, <a href=\"/capture-avatar\">chụp từ ảnh tự sướng</a>, hoặc được rig từ một lưới.",
+		"any_rigged_humanoid_glb_works_one_you": "Bất kỳ GLB hình người được rig nào cũng hoạt động — một cái bạn <a href=\"/create\">tạo ra</a>, <a href=\"/create/selfie\">chụp từ ảnh tự sướng</a>, hoặc được rig từ một lưới.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Ghi lại chuyển động của bạn",
 		"drop_a_video_of_one_person": "Kéo thả video một người",

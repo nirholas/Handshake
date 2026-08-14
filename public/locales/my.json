@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "လက်ခံခြင်း",
 		"accounts": "အကောင့်များ",
-		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar extension ကို ထည့်သွင်းခြင်း သို့မဟုတ် အသုံးပြုခြင်းဖြင့် သင်သည် ဤစည်းကမ်းသတ်မှတ်ချက်များနှင့် <a href=\"https://three.ws/legal/terms\">three.ws ဝန်ဆောင်မှုစည်းကမ်းများ</a> ကို သဘောတူပါသည်။ သဘောမတူပါက extension ကို ဖြုတ်ပါ။",
+		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar extension ကို ထည့်သွင်းခြင်း သို့မဟုတ် အသုံးပြုခြင်းဖြင့် သင်သည် ဤစည်းကမ်းသတ်မှတ်ချက်များနှင့် <a href=\"https://three.ws/legal/tos\">three.ws ဝန်ဆောင်မှုစည်းကမ်းများ</a> ကို သဘောတူပါသည်။ သဘောမတူပါက extension ကို ဖြုတ်ပါ။",
 		"contact": "ဆက်သွယ်ရန်",
 		"disclaimer": "ငြင်းဆိုချက်",
 		"intellectual_property": "ဉာဏပစ္စည်းမူပိုင်ခွင့်",
@@ -6603,7 +6603,7 @@
 		"meta_title": "ဝန်ဆောင်မှုစည်းကမ်းများ — three.ws Walk Avatar Extension",
 		"meta_twitter_title": "ဝန်ဆောင်မှုစည်းကမ်းများ — three.ws Walk Avatar Extension",
 		"service": "ဝန်ဆောင်မှု",
-		"signing_in_is_optional_an_account_is": "အကောင့်ဝင်ခြင်းသည် ရွေးချယ်နိုင်ပါသည်။ သင်၏ three.ws avatars များကို အသုံးပြုရန် အကောင့်တစ်ခု လိုအပ်ပါသည်။ အကောင့်အသုံးပြုခြင်းကို <a href=\"https://three.ws/legal/terms\">three.ws ဝန်ဆောင်မှုစည်းကမ်းများ</a> က အုပ်ချုပ်ပါသည်။",
+		"signing_in_is_optional_an_account_is": "အကောင့်ဝင်ခြင်းသည် ရွေးချယ်နိုင်ပါသည်။ သင်၏ three.ws avatars များကို အသုံးပြုရန် အကောင့်တစ်ခု လိုအပ်ပါသည်။ အကောင့်အသုံးပြုခြင်းကို <a href=\"https://three.ws/legal/tos\">three.ws ဝန်ဆောင်မှုစည်းကမ်းများ</a> က အုပ်ချုပ်ပါသည်။",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "ဝန်ဆောင်မှုစည်းကမ်းများ",
 		"the_extension_code_and_three_ws_brand": "ဤ extension code နှင့် three.ws brand ကို three.ws / Nirholas က ပိုင်ဆိုင်ပါသည်။ သင်ဖန်တီးသော avatars များသည် three.ws avatar လိုင်စင်နှင့်အညီ သင့်ပိုင်ဆိုင်မှုဖြစ်သည်။",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "ဆာဗာ ဝန်ဆောင်မှုပေးသူသည် ဖရိမ်တိုင်းတွင် သင့်ခန္ဓာကိုယ်အနေအထားကို ခြေရာခံပြီး ပလက်ဖောင်း၏ canonical skeleton ပေါ်တွင် ဖြေရှင်းပေးသည် — ဤနေရာရှိ avatar animation တိုင်းကို မောင်းနှင်သည့် retarget engine နှင့် အတူတူပင်။ ၎င်းသည် သင့်ကို mask တစ်ခုအဖြစ် ပိုင်းခြားပေးသည်။",
-		"any_rigged_humanoid_glb_works_one_you": "မည်သည့် rigged humanoid GLB မဆို အသုံးပြုနိုင်ပါသည်။ သင် <a href=\"/create\">ဖန်တီးထားသည်ဖြစ်စေ</a>၊ <a href=\"/capture-avatar\">selfie မှ ရိုက်ယူထားသည်ဖြစ်စေ</a> သို့မဟုတ် mesh မှ rigged လုပ်ထားသည်ဖြစ်စေ အဆင်ပြေပါသည်။",
+		"any_rigged_humanoid_glb_works_one_you": "မည်သည့် rigged humanoid GLB မဆို အသုံးပြုနိုင်ပါသည်။ သင် <a href=\"/create\">ဖန်တီးထားသည်ဖြစ်စေ</a>၊ <a href=\"/create/selfie\">selfie မှ ရိုက်ယူထားသည်ဖြစ်စေ</a> သို့မဟုတ် mesh မှ rigged လုပ်ထားသည်ဖြစ်စေ အဆင်ပြေပါသည်။",
 		"avatar": "အဗာတာ",
 		"capturing_your_motion": "သင့်လှုပ်ရှားမှုကို ဖမ်းယူခြင်း",
 		"drop_a_video_of_one_person": "လူတစ်ဦးတည်းပါဝင်သော ဗီဒီယိုကို ထည့်သွင်းပါ။",

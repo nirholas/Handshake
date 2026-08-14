@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Aċċettazzjoni",
 		"accounts": "Kontijiet",
-		"by_installing_or_using_the_three_ws": "Billi tinstalla jew tuża l-estensjoni three.ws Walk Avatar, taqbel ma' dawn it-termini u t-<a href=\"https://three.ws/legal/terms\">three.ws Termini ta' Servizz</a>. Jekk ma taqbilx, iddiżinstalla l-estensjoni.",
+		"by_installing_or_using_the_three_ws": "Billi tinstalla jew tuża l-estensjoni three.ws Walk Avatar, taqbel ma' dawn it-termini u t-<a href=\"https://three.ws/legal/tos\">three.ws Termini ta' Servizz</a>. Jekk ma taqbilx, iddiżinstalla l-estensjoni.",
 		"contact": "Kuntatt",
 		"disclaimer": "Ċaħda ta' Responsabbiltà",
 		"intellectual_property": "Proprjetà Intellettwali",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Termini ta' Servizz — Estensjoni three.ws Walk Avatar",
 		"meta_twitter_title": "Termini ta' Servizz — Estensjoni three.ws Walk Avatar",
 		"service": "Servizz",
-		"signing_in_is_optional_an_account_is": "Id-dħul huwa fakultattiv. Kont huwa meħtieġ biex taċċessa l-avatars three.ws tiegħek. L-użu tal-kont huwa rregolat mit-<a href=\"https://three.ws/legal/terms\">three.ws Termini ta' Servizz</a>.",
+		"signing_in_is_optional_an_account_is": "Id-dħul huwa fakultattiv. Kont huwa meħtieġ biex taċċessa l-avatars three.ws tiegħek. L-użu tal-kont huwa rregolat mit-<a href=\"https://three.ws/legal/tos\">three.ws Termini ta' Servizz</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Termini ta' Servizz",
 		"the_extension_code_and_three_ws_brand": "Il-kodiċi tal-estensjoni u l-marka three.ws huma proprjetà ta' three.ws / Nirholas. L-avatars li toħloq huma tiegħek, soġġetti għal-liċenzja tal-avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Worker tas-server isegwi l-pożizzjoni ta' ġismek f'kull frame u jsolviha fuq l-iskeletru kanoniku tal-pjattaforma — l-istess magna ta' retargeting li tmexxi kull animazzjoni ta' avatar hawn. Tissegmentak ukoll f'maskra.",
-		"any_rigged_humanoid_glb_works_one_you": "Kull GLB umanojde rriggjat jaħdem — wieħed li <a href=\"/create\">ġġenerajt</a>, <a href=\"/capture-avatar\">qbadt minn selfie</a>, jew irriggjat minn mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "Kull GLB umanojde rriggjat jaħdem — wieħed li <a href=\"/create\">ġġenerajt</a>, <a href=\"/create/selfie\">qbadt minn selfie</a>, jew irriggjat minn mesh.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Niġbdu l-moviment tiegħek",
 		"drop_a_video_of_one_person": "Iddreggja video ta' persuna waħda",

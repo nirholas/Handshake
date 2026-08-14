@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Қабылдау",
 		"accounts": "Аккаунттар",
-		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar кеңейтімін орнату немесе пайдалану арқылы сіз осы шарттармен және <a href=\"https://three.ws/legal/terms\">three.ws Қызмет көрсету шарттарымен</a> келісесіз. Егер келіспесеңіз, кеңейтімді жойыңыз.",
+		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar кеңейтімін орнату немесе пайдалану арқылы сіз осы шарттармен және <a href=\"https://three.ws/legal/tos\">three.ws Қызмет көрсету шарттарымен</a> келісесіз. Егер келіспесеңіз, кеңейтімді жойыңыз.",
 		"contact": "Байланыс",
 		"disclaimer": "Жауапкершіліктен бас тарту",
 		"intellectual_property": "Зияткерлік меншік",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Қызмет көрсету шарттары — three.ws Walk Avatar кеңейтімі",
 		"meta_twitter_title": "Қызмет көрсету шарттары — three.ws Walk Avatar кеңейтімі",
 		"service": "Қызмет",
-		"signing_in_is_optional_an_account_is": "Кіру міндетті емес. Өзіңіздің three.ws аватарларыңызға қол жеткізу үшін аккаунт қажет. Аккаунтты пайдалану <a href=\"https://three.ws/legal/terms\">three.ws Қызмет көрсету шарттарымен</a> реттеледі.",
+		"signing_in_is_optional_an_account_is": "Кіру міндетті емес. Өзіңіздің three.ws аватарларыңызға қол жеткізу үшін аккаунт қажет. Аккаунтты пайдалану <a href=\"https://three.ws/legal/tos\">three.ws Қызмет көрсету шарттарымен</a> реттеледі.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Қызмет көрсету шарттары",
 		"the_extension_code_and_three_ws_brand": "Кеңейтім коды мен three.ws бренді three.ws / Nirholas-қа тиесілі. Сіз жасаған аватарлар three.ws аватар лицензиясына сәйкес сіздікі болып табылады.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Сервер жұмысшысы әр кадрда денеңіздің қалпын қадағалайды және оны платформаның канондық қаңқасына бейімдейді — мұндағы әрбір аватар анимациясын басқаратын сол қайта бағыттау қозғалтқышы. Ол сондай-ақ сізді маскаға бөледі.",
-		"any_rigged_humanoid_glb_works_one_you": "Кез келген ригтелген гуманоидты GLB жұмыс істейді — сіз <a href=\"/create\">жасаған</a>, <a href=\"/capture-avatar\">селфиден түсірілген</a> немесе мештен ригтелген.",
+		"any_rigged_humanoid_glb_works_one_you": "Кез келген ригтелген гуманоидты GLB жұмыс істейді — сіз <a href=\"/create\">жасаған</a>, <a href=\"/create/selfie\">селфиден түсірілген</a> немесе мештен ригтелген.",
 		"avatar": "Аватар",
 		"capturing_your_motion": "Қозғалысыңызды түсіру",
 		"drop_a_video_of_one_person": "Бір адамның бейнесін жүктеңіз",

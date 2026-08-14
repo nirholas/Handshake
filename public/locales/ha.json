@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Yarda",
 		"accounts": "Asusu",
-		"by_installing_or_using_the_three_ws": "Ta hanyar shigarwa ko amfani da ƙarin three.ws Walk Avatar, kun yarda da waɗannan sharuɗɗa da <a href=\"https://three.ws/legal/terms\">three.ws Sharuɗɗan Sabis</a>. Idan ba ku yarda ba, cire ƙarin.",
+		"by_installing_or_using_the_three_ws": "Ta hanyar shigarwa ko amfani da ƙarin three.ws Walk Avatar, kun yarda da waɗannan sharuɗɗa da <a href=\"https://three.ws/legal/tos\">three.ws Sharuɗɗan Sabis</a>. Idan ba ku yarda ba, cire ƙarin.",
 		"contact": "Tuntuɓa",
 		"disclaimer": "Sanarwa ta Musamman",
 		"intellectual_property": "Dukiya ta Hankali",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Sharuɗɗan Sabis — three.ws Walk Avatar Extension",
 		"meta_twitter_title": "Sharuɗɗan Sabis — three.ws Walk Avatar Extension",
 		"service": "Sabis",
-		"signing_in_is_optional_an_account_is": "Shiga ba tilas ba ne. Ana buƙatar asusu don samun damar avatar ɗinka na three.ws. Amfani da asusu yana ƙarƙashin <a href=\"https://three.ws/legal/terms\">three.ws Sharuɗɗan Sabis</a>.",
+		"signing_in_is_optional_an_account_is": "Shiga ba tilas ba ne. Ana buƙatar asusu don samun damar avatar ɗinka na three.ws. Amfani da asusu yana ƙarƙashin <a href=\"https://three.ws/legal/tos\">three.ws Sharuɗɗan Sabis</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Sharuɗɗan Sabis",
 		"the_extension_code_and_three_ws_brand": "Lambar ƙarin da alamar three.ws mallakar three.ws / Nirholas ne. Avatar da ka ƙirƙira naka ne, ƙarƙashin lasisin avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Ma'aikacin sabar yana bin diddigin yanayin jikinka a kowane firam kuma yana warware shi zuwa ga kwarangwal na asali na dandalin – injin sake niyya guda ɗaya wanda ke tafiyar da kowane motsin avatar a nan. Hakanan yana raba ka zuwa abin rufe fuska.",
-		"any_rigged_humanoid_glb_works_one_you": "Duk wani GLB mai kama da mutum da aka yi masa rigging yana aiki — wanda ka <a href=\"/create\">ƙirƙira</a>, <a href=\"/capture-avatar\">ɗauka daga selfie</a>, ko kuma aka yi masa rigging daga mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "Duk wani GLB mai kama da mutum da aka yi masa rigging yana aiki — wanda ka <a href=\"/create\">ƙirƙira</a>, <a href=\"/create/selfie\">ɗauka daga selfie</a>, ko kuma aka yi masa rigging daga mesh.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Ɗaukar motsinka",
 		"drop_a_video_of_one_person": "Jefa bidiyon mutum ɗaya",

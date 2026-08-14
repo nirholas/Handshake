@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Принятие",
 		"accounts": "Аккаунты",
-		"by_installing_or_using_the_three_ws": "Устанавливая или используя расширение three.ws Walk Avatar, вы соглашаетесь с настоящими условиями и <a href=\"https://three.ws/legal/terms\">three.ws Условиями обслуживания</a>. Если вы не согласны, удалите расширение.",
+		"by_installing_or_using_the_three_ws": "Устанавливая или используя расширение three.ws Walk Avatar, вы соглашаетесь с настоящими условиями и <a href=\"https://three.ws/legal/tos\">three.ws Условиями обслуживания</a>. Если вы не согласны, удалите расширение.",
 		"contact": "Контакты",
 		"disclaimer": "Отказ от ответственности",
 		"intellectual_property": "Интеллектуальная собственность",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Условия обслуживания — three.ws Расширение Walk Avatar",
 		"meta_twitter_title": "Условия обслуживания — three.ws Расширение Walk Avatar",
 		"service": "Сервис",
-		"signing_in_is_optional_an_account_is": "Вход в систему необязателен. Для доступа к вашим собственным аватарам three.ws требуется учетная запись. Использование учетной записи регулируется <a href=\"https://three.ws/legal/terms\">three.ws Условиями обслуживания</a>.",
+		"signing_in_is_optional_an_account_is": "Вход в систему необязателен. Для доступа к вашим собственным аватарам three.ws требуется учетная запись. Использование учетной записи регулируется <a href=\"https://three.ws/legal/tos\">three.ws Условиями обслуживания</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Условия обслуживания",
 		"the_extension_code_and_three_ws_brand": "Код расширения и бренд three.ws принадлежат three.ws / Nirholas. Созданные вами аватары принадлежат вам, в соответствии с лицензией на аватары three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Серверный воркер отслеживает позу вашего тела в каждом кадре и проецирует ее на канонический скелет платформы — тот же движок ретаргетинга, который используется для каждой анимации аватара здесь. Он также выделяет вас в маску.",
-		"any_rigged_humanoid_glb_works_one_you": "Подойдет любой риггированный гуманоидный GLB — тот, который вы <a href=\"/create\">сгенерировали</a>, <a href=\"/capture-avatar\">захватили с селфи</a> или риггировали из меша.",
+		"any_rigged_humanoid_glb_works_one_you": "Подойдет любой риггированный гуманоидный GLB — тот, который вы <a href=\"/create\">сгенерировали</a>, <a href=\"/create/selfie\">захватили с селфи</a> или риггировали из меша.",
 		"avatar": "Аватар",
 		"capturing_your_motion": "Захватываем ваше движение",
 		"drop_a_video_of_one_person": "Перетащите видео с одним человеком",

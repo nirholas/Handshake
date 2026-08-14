@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Acceptation",
 		"accounts": "Comptes",
-		"by_installing_or_using_the_three_ws": "En installant ou en utilisant l'extension three.ws Walk Avatar, vous acceptez ces conditions et les <a href=\"https://three.ws/legal/terms\">Conditions d'utilisation</a> de three.ws. Si vous n'êtes pas d'accord, désinstallez l'extension.",
+		"by_installing_or_using_the_three_ws": "En installant ou en utilisant l'extension three.ws Walk Avatar, vous acceptez ces conditions et les <a href=\"https://three.ws/legal/tos\">Conditions d'utilisation</a> de three.ws. Si vous n'êtes pas d'accord, désinstallez l'extension.",
 		"contact": "Contact",
 		"disclaimer": "Avertissement",
 		"intellectual_property": "Propriété intellectuelle",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Conditions d'utilisation — Extension three.ws Walk Avatar",
 		"meta_twitter_title": "Conditions d'utilisation — Extension three.ws Walk Avatar",
 		"service": "Service",
-		"signing_in_is_optional_an_account_is": "La connexion est facultative. Un compte est nécessaire pour accéder à vos propres avatars three.ws. L'utilisation du compte est régie par les <a href=\"https://three.ws/legal/terms\">Conditions d'utilisation</a> de three.ws.",
+		"signing_in_is_optional_an_account_is": "La connexion est facultative. Un compte est nécessaire pour accéder à vos propres avatars three.ws. L'utilisation du compte est régie par les <a href=\"https://three.ws/legal/tos\">Conditions d'utilisation</a> de three.ws.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Conditions d'utilisation",
 		"the_extension_code_and_three_ws_brand": "Le code de l'extension et la marque three.ws sont la propriété de three.ws / Nirholas. Les avatars que vous créez vous appartiennent, sous réserve de la licence d'avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Un worker serveur suit la pose de votre corps à chaque image et l'adapte au squelette canonique de la plateforme — le même moteur de retargeting qui anime tous les avatars ici. Il vous segmente également en un masque.",
-		"any_rigged_humanoid_glb_works_one_you": "Tout GLB humanoïde riggé fonctionne — que vous l'ayez <a href=\"/create\">généré</a>, <a href=\"/capture-avatar\">capturé à partir d'un selfie</a>, ou riggé à partir d'un maillage.",
+		"any_rigged_humanoid_glb_works_one_you": "Tout GLB humanoïde riggé fonctionne — que vous l'ayez <a href=\"/create\">généré</a>, <a href=\"/create/selfie\">capturé à partir d'un selfie</a>, ou riggé à partir d'un maillage.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Capture de votre mouvement",
 		"drop_a_video_of_one_person": "Déposez une vidéo d'une seule personne",

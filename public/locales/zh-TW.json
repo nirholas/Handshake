@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "接受",
 		"accounts": "帳戶",
-		"by_installing_or_using_the_three_ws": "安裝或使用three.ws Walk Avatar 擴充功能，即表示您同意這些條款以及<a href=\"https://three.ws/legal/terms\">three.ws服務條款</a>。如果您不同意，請解除安裝此擴充功能。",
+		"by_installing_or_using_the_three_ws": "安裝或使用three.ws Walk Avatar 擴充功能，即表示您同意這些條款以及<a href=\"https://three.ws/legal/tos\">three.ws服務條款</a>。如果您不同意，請解除安裝此擴充功能。",
 		"contact": "聯絡方式",
 		"disclaimer": "免責聲明",
 		"intellectual_property": "智慧財產權",
@@ -6603,7 +6603,7 @@
 		"meta_title": "服務條款 — three.ws Walk Avatar 擴充功能",
 		"meta_twitter_title": "服務條款 — three.ws Walk Avatar 擴充功能",
 		"service": "服務",
-		"signing_in_is_optional_an_account_is": "登入是可選的。存取您自己的three.ws虛擬人偶需要帳戶。帳戶使用受<a href=\"https://three.ws/legal/terms\">three.ws服務條款</a>管轄。",
+		"signing_in_is_optional_an_account_is": "登入是可選的。存取您自己的three.ws虛擬人偶需要帳戶。帳戶使用受<a href=\"https://three.ws/legal/tos\">three.ws服務條款</a>管轄。",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "服務條款",
 		"the_extension_code_and_three_ws_brand": "此擴充功能程式碼和three.ws品牌由three.ws / Nirholas 擁有。您建立的虛擬人偶歸您所有，但須遵守three.ws虛擬人偶授權。",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "伺服器工作者會追蹤您每一幀的身體姿勢，並將其解析到平台的標準骨架上 — 這與驅動此處所有虛擬替身動畫的重定向引擎相同。它還會將您分割成一個遮罩。",
-		"any_rigged_humanoid_glb_works_one_you": "任何綁定好骨架的人形GLB都適用 — 無論是您<a href=\"/create\">生成</a>的，<a href=\"/capture-avatar\">從自拍捕捉</a>的，或是從網格模型綁定骨架的。",
+		"any_rigged_humanoid_glb_works_one_you": "任何綁定好骨架的人形GLB都適用 — 無論是您<a href=\"/create\">生成</a>的，<a href=\"/create/selfie\">從自拍捕捉</a>的，或是從網格模型綁定骨架的。",
 		"avatar": "虛擬替身",
 		"capturing_your_motion": "捕捉您的動作",
 		"drop_a_video_of_one_person": "拖放一個單人影片",

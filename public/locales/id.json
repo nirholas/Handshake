@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Penerimaan",
 		"accounts": "Akun",
-		"by_installing_or_using_the_three_ws": "Dengan menginstal atau menggunakan ekstensi three.ws Walk Avatar, Anda menyetujui persyaratan ini dan <a href=\"https://three.ws/legal/terms\">three.ws Ketentuan Layanan</a>. Jika Anda tidak setuju, hapus instalasi ekstensi.",
+		"by_installing_or_using_the_three_ws": "Dengan menginstal atau menggunakan ekstensi three.ws Walk Avatar, Anda menyetujui persyaratan ini dan <a href=\"https://three.ws/legal/tos\">three.ws Ketentuan Layanan</a>. Jika Anda tidak setuju, hapus instalasi ekstensi.",
 		"contact": "Kontak",
 		"disclaimer": "Penyangkalan",
 		"intellectual_property": "Kekayaan Intelektual",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Ketentuan Layanan — three.ws Ekstensi Walk Avatar",
 		"meta_twitter_title": "Ketentuan Layanan — three.ws Ekstensi Walk Avatar",
 		"service": "Layanan",
-		"signing_in_is_optional_an_account_is": "Masuk bersifat opsional. Akun diperlukan untuk mengakses avatar three.ws Anda sendiri. Penggunaan akun diatur oleh <a href=\"https://three.ws/legal/terms\">three.ws Ketentuan Layanan</a>.",
+		"signing_in_is_optional_an_account_is": "Masuk bersifat opsional. Akun diperlukan untuk mengakses avatar three.ws Anda sendiri. Penggunaan akun diatur oleh <a href=\"https://three.ws/legal/tos\">three.ws Ketentuan Layanan</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Ketentuan Layanan",
 		"the_extension_code_and_three_ws_brand": "Kode ekstensi dan merek three.ws dimiliki oleh three.ws / Nirholas. Avatar yang Anda buat adalah milik Anda, tunduk pada lisensi avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Sebuah worker server melacak pose tubuh Anda di setiap frame dan memetakannya ke kerangka kanonik platform — mesin retarget yang sama yang menggerakkan setiap animasi avatar di sini. Ini juga memisahkan Anda menjadi sebuah mask.",
-		"any_rigged_humanoid_glb_works_one_you": "Setiap GLB humanoid yang sudah di-rig berfungsi — yang Anda <a href=\"/create\">buat</a>, <a href=\"/capture-avatar\">tangkap dari selfie</a>, atau di-rig dari mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "Setiap GLB humanoid yang sudah di-rig berfungsi — yang Anda <a href=\"/create\">buat</a>, <a href=\"/create/selfie\">tangkap dari selfie</a>, atau di-rig dari mesh.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Menangkap gerakan Anda",
 		"drop_a_video_of_one_person": "Jatuhkan video satu orang",

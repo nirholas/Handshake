@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "स्वीकृति",
 		"accounts": "खाते",
-		"by_installing_or_using_the_three_ws": "three.ws वॉक अवतार एक्सटेंशन को इंस्टॉल या उपयोग करके, आप इन शर्तों और <a href=\"https://three.ws/legal/terms\">three.ws सेवा की शर्तों</a> से सहमत होते हैं। यदि आप सहमत नहीं हैं, तो एक्सटेंशन को अनइंस्टॉल करें।",
+		"by_installing_or_using_the_three_ws": "three.ws वॉक अवतार एक्सटेंशन को इंस्टॉल या उपयोग करके, आप इन शर्तों और <a href=\"https://three.ws/legal/tos\">three.ws सेवा की शर्तों</a> से सहमत होते हैं। यदि आप सहमत नहीं हैं, तो एक्सटेंशन को अनइंस्टॉल करें।",
 		"contact": "संपर्क",
 		"disclaimer": "अस्वीकरण",
 		"intellectual_property": "बौद्धिक संपदा",
@@ -6603,7 +6603,7 @@
 		"meta_title": "सेवा की शर्तें — three.ws वॉक अवतार एक्सटेंशन",
 		"meta_twitter_title": "सेवा की शर्तें — three.ws वॉक अवतार एक्सटेंशन",
 		"service": "सेवा",
-		"signing_in_is_optional_an_account_is": "साइन इन करना वैकल्पिक है। अपने three.ws अवतारों तक पहुँचने के लिए एक खाते की आवश्यकता होती है। खाते का उपयोग <a href=\"https://three.ws/legal/terms\">three.ws सेवा की शर्तों</a> द्वारा नियंत्रित होता है।",
+		"signing_in_is_optional_an_account_is": "साइन इन करना वैकल्पिक है। अपने three.ws अवतारों तक पहुँचने के लिए एक खाते की आवश्यकता होती है। खाते का उपयोग <a href=\"https://three.ws/legal/tos\">three.ws सेवा की शर्तों</a> द्वारा नियंत्रित होता है।",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "सेवा की शर्तें",
 		"the_extension_code_and_three_ws_brand": "एक्सटेंशन कोड और three.ws ब्रांड three.ws / Nirholas के स्वामित्व में हैं। आपके द्वारा बनाए गए अवतार आपके हैं, जो three.ws अवतार लाइसेंस के अधीन हैं।",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "एक सर्वर वर्कर हर फ्रेम में आपके शरीर की मुद्रा को ट्रैक करता है और इसे प्लेटफ़ॉर्म के कैनोनिकल स्केलेटन पर हल करता है — वही रिटारगेट इंजन जो यहां हर अवतार एनीमेशन को चलाता है। यह आपको एक मास्क में भी सेगमेंट करता है।",
-		"any_rigged_humanoid_glb_works_one_you": "कोई भी रिग्ड ह्यूमनॉइड GLB काम करता है — जिसे आपने <a href=\"/create\">जनरेट किया</a>, <a href=\"/capture-avatar\">सेल्फ़ी से कैप्चर किया</a>, या एक मेश से रिग किया।",
+		"any_rigged_humanoid_glb_works_one_you": "कोई भी रिग्ड ह्यूमनॉइड GLB काम करता है — जिसे आपने <a href=\"/create\">जनरेट किया</a>, <a href=\"/create/selfie\">सेल्फ़ी से कैप्चर किया</a>, या एक मेश से रिग किया।",
 		"avatar": "अवतार",
 		"capturing_your_motion": "आपकी गति को कैप्चर करना",
 		"drop_a_video_of_one_person": "एक व्यक्ति का वीडियो डालें",

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Qəbul",
 		"accounts": "Hesablar",
-		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar genişləndirməsini quraşdırmaqla və ya istifadə etməklə, siz bu şərtləri və <a href=\"https://three.ws/legal/terms\">three.ws Xidmət Şərtlərini</a> qəbul edirsiniz. Əgər razılaşmırsınızsa, genişləndirməni silin.",
+		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar genişləndirməsini quraşdırmaqla və ya istifadə etməklə, siz bu şərtləri və <a href=\"https://three.ws/legal/tos\">three.ws Xidmət Şərtlərini</a> qəbul edirsiniz. Əgər razılaşmırsınızsa, genişləndirməni silin.",
 		"contact": "Əlaqə",
 		"disclaimer": "Məsuliyyətdən imtina",
 		"intellectual_property": "Əqli Mülkiyyət",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Xidmət Şərtləri — three.ws Walk Avatar Genişləndirməsi",
 		"meta_twitter_title": "Xidmət Şərtləri — three.ws Walk Avatar Genişləndirməsi",
 		"service": "Xidmət",
-		"signing_in_is_optional_an_account_is": "Daxil olmaq könüllüdür. Öz three.ws avatarlarınıza daxil olmaq üçün hesab tələb olunur. Hesabın istifadəsi <a href=\"https://three.ws/legal/terms\">three.ws Xidmət Şərtləri</a> ilə tənzimlənir.",
+		"signing_in_is_optional_an_account_is": "Daxil olmaq könüllüdür. Öz three.ws avatarlarınıza daxil olmaq üçün hesab tələb olunur. Hesabın istifadəsi <a href=\"https://three.ws/legal/tos\">three.ws Xidmət Şərtləri</a> ilə tənzimlənir.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Xidmət Şərtləri",
 		"the_extension_code_and_three_ws_brand": "Genişləndirmə kodu və three.ws brendi three.ws / Nirholas-a məxsusdur. Yaratdığınız avatarlar sizə məxsusdur, three.ws avatar lisenziyasına uyğun olaraq.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Server işçisi hər kadrda bədən pozanızı izləyir və onu platformanın kanonik skeletinə tətbiq edir — buradakı hər bir avatar animasiyasını idarə edən eyni retarget mühərriki. O, həmçinin sizi maskaya ayırır.",
-		"any_rigged_humanoid_glb_works_one_you": "İstənilən riglənmiş humanoid GLB işləyir — sizin <a href=\"/create\">yaratdığınız</a>, <a href=\"/capture-avatar\">selfiedən çəkdiyiniz</a> və ya meshdən riglədiyiniz.",
+		"any_rigged_humanoid_glb_works_one_you": "İstənilən riglənmiş humanoid GLB işləyir — sizin <a href=\"/create\">yaratdığınız</a>, <a href=\"/create/selfie\">selfiedən çəkdiyiniz</a> və ya meshdən riglədiyiniz.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Hərəkətinizin qeydə alınması",
 		"drop_a_video_of_one_person": "Bir nəfərin videosunu yükləyin",

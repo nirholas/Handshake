@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "القبول",
 		"accounts": "الحسابات",
-		"by_installing_or_using_the_three_ws": "بتثبيت أو استخدام ملحق three.ws Walk Avatar، فإنك توافق على هذه الشروط و<a href=\"https://three.ws/legal/terms\">three.ws شروط الخدمة</a>. إذا لم توافق، قم بإلغاء تثبيت الملحق.",
+		"by_installing_or_using_the_three_ws": "بتثبيت أو استخدام ملحق three.ws Walk Avatar، فإنك توافق على هذه الشروط و<a href=\"https://three.ws/legal/tos\">three.ws شروط الخدمة</a>. إذا لم توافق، قم بإلغاء تثبيت الملحق.",
 		"contact": "اتصل بنا",
 		"disclaimer": "إخلاء المسؤولية",
 		"intellectual_property": "الملكية الفكرية",
@@ -6603,7 +6603,7 @@
 		"meta_title": "شروط الخدمة — ملحق three.ws Walk Avatar",
 		"meta_twitter_title": "شروط الخدمة — ملحق three.ws Walk Avatar",
 		"service": "الخدمة",
-		"signing_in_is_optional_an_account_is": "تسجيل الدخول اختياري. للوصول إلى صورك الرمزية three.ws الخاصة بك، يلزم وجود حساب. يخضع استخدام الحساب لـ <a href=\"https://three.ws/legal/terms\">three.ws شروط الخدمة</a>.",
+		"signing_in_is_optional_an_account_is": "تسجيل الدخول اختياري. للوصول إلى صورك الرمزية three.ws الخاصة بك، يلزم وجود حساب. يخضع استخدام الحساب لـ <a href=\"https://three.ws/legal/tos\">three.ws شروط الخدمة</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "شروط الخدمة",
 		"the_extension_code_and_three_ws_brand": "رمز الملحق وعلامة three.ws التجارية مملوكة لـ three.ws / Nirholas. الصور الرمزية التي تنشئها هي ملكك، وتخضع لترخيص الصورة الرمزية three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "يتتبع عامل الخادم وضعية جسمك في كل إطار ويحللها على الهيكل العظمي الأساسي للمنصة — وهو نفس محرك إعادة الاستهداف الذي يشغل كل حركة رمزية هنا. كما يقوم بتقسيمك إلى قناع.",
-		"any_rigged_humanoid_glb_works_one_you": "أي GLB بشري مُجهز يعمل — واحد قمت بـ <a href=\"/create\">إنشائه</a>، <a href=\"/capture-avatar\">التقطته من صورة سيلفي</a>، أو جهزته من شبكة.",
+		"any_rigged_humanoid_glb_works_one_you": "أي GLB بشري مُجهز يعمل — واحد قمت بـ <a href=\"/create\">إنشائه</a>، <a href=\"/create/selfie\">التقطته من صورة سيلفي</a>، أو جهزته من شبكة.",
 		"avatar": "الأفاتار",
 		"capturing_your_motion": "التقاط حركتك",
 		"drop_a_video_of_one_person": "أسقط فيديو لشخص واحد",

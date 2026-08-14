@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Accettazione",
 		"accounts": "Account",
-		"by_installing_or_using_the_three_ws": "Installando o utilizzando l'estensione three.ws Walk Avatar, accetti questi termini e le <a href=\"https://three.ws/legal/terms\">Condizioni d'uso</a> di three.ws. Se non sei d'accordo, disinstalla l'estensione.",
+		"by_installing_or_using_the_three_ws": "Installando o utilizzando l'estensione three.ws Walk Avatar, accetti questi termini e le <a href=\"https://three.ws/legal/tos\">Condizioni d'uso</a> di three.ws. Se non sei d'accordo, disinstalla l'estensione.",
 		"contact": "Contatti",
 		"disclaimer": "Dichiarazione di non responsabilità",
 		"intellectual_property": "Proprietà intellettuale",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Termini di Servizio — Estensione three.ws Walk Avatar",
 		"meta_twitter_title": "Termini di Servizio — Estensione three.ws Walk Avatar",
 		"service": "Servizio",
-		"signing_in_is_optional_an_account_is": "L'accesso è facoltativo. È richiesto un account per accedere ai tuoi avatar three.ws. L'uso dell'account è regolato dai <a href=\"https://three.ws/legal/terms\">three.ws Termini di Servizio</a>.",
+		"signing_in_is_optional_an_account_is": "L'accesso è facoltativo. È richiesto un account per accedere ai tuoi avatar three.ws. L'uso dell'account è regolato dai <a href=\"https://three.ws/legal/tos\">three.ws Termini di Servizio</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Termini di Servizio",
 		"the_extension_code_and_three_ws_brand": "Il codice dell'estensione e il brand three.ws sono di proprietà di three.ws / Nirholas. Gli avatar che crei sono tuoi, soggetti alla licenza avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Un worker del server traccia la tua posa corporea in ogni fotogramma e la risolve sullo scheletro canonico della piattaforma — lo stesso motore di retargeting che anima ogni avatar qui. Ti segmenta anche in una maschera.",
-		"any_rigged_humanoid_glb_works_one_you": "Qualsiasi GLB umanoide riggato funziona — uno che hai <a href=\"/create\">generato</a>, <a href=\"/capture-avatar\">catturato da un selfie</a>, o riggato da una mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "Qualsiasi GLB umanoide riggato funziona — uno che hai <a href=\"/create\">generato</a>, <a href=\"/create/selfie\">catturato da un selfie</a>, o riggato da una mesh.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Cattura del tuo movimento",
 		"drop_a_video_of_one_person": "Trascina un video di una persona",

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Ìfọwọ́sí.",
 		"accounts": "Àwọn àkọọ́lẹ̀.",
-		"by_installing_or_using_the_three_ws": "Nípa fífi tàbí lílo ìfàgùn three.ws Walk Avatar, o gbà sí àwọn àdéhùn wọ̀nyí àti <a href=\"https://three.ws/legal/terms\">three.ws Àdéhùn Ìṣiṣẹ́</a>. Tí o kò bá gbà, yọ ìfàgùn náà kúrò.",
+		"by_installing_or_using_the_three_ws": "Nípa fífi tàbí lílo ìfàgùn three.ws Walk Avatar, o gbà sí àwọn àdéhùn wọ̀nyí àti <a href=\"https://three.ws/legal/tos\">three.ws Àdéhùn Ìṣiṣẹ́</a>. Tí o kò bá gbà, yọ ìfàgùn náà kúrò.",
 		"contact": "Ìbáṣepọ̀.",
 		"disclaimer": "Ìkìlọ̀.",
 		"intellectual_property": "Ohun Ìní Ọpọlọ.",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Àdéhùn Ìṣiṣẹ́ — Ìfàgùn three.ws Walk Avatar.",
 		"meta_twitter_title": "Àdéhùn Ìṣiṣẹ́ — Ìfàgùn three.ws Walk Avatar.",
 		"service": "Ìṣiṣẹ́.",
-		"signing_in_is_optional_an_account_is": "Wíwọlé kò pọn dandan. Àkọọ́lẹ̀ pọn dandan láti wọlé sí àwọn àwòrán-ara three.ws tirẹ. Lílo àkọọ́lẹ̀ wà lábẹ́ <a href=\"https://three.ws/legal/terms\">three.ws Àdéhùn Ìṣiṣẹ́</a>.",
+		"signing_in_is_optional_an_account_is": "Wíwọlé kò pọn dandan. Àkọọ́lẹ̀ pọn dandan láti wọlé sí àwọn àwòrán-ara three.ws tirẹ. Lílo àkọọ́lẹ̀ wà lábẹ́ <a href=\"https://three.ws/legal/tos\">three.ws Àdéhùn Ìṣiṣẹ́</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Àdéhùn Ìṣiṣẹ́.",
 		"the_extension_code_and_three_ws_brand": "Kóòdù ìfàgùn àti àmì three.ws jẹ́ ti three.ws / Nirholas. Àwọn àwòrán-ara tí o dá jẹ́ tirẹ, lábẹ́ ìwé-àṣẹ àwòrán-ara three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Olùṣiṣẹ́ sẹ́fà kan ń tọpasẹ̀ ìdúró ara rẹ ní gbogbo àwòrán, ó sì yanju rẹ̀ sí orí eegun ìpilẹ̀ṣẹ̀ pátákì ti pátàfọ́ọ̀mù náà — ẹ̀rọ ìtún-ìfojúsùn kan náà tó ń darí gbogbo ìṣiṣẹ́ àwòrán níbí. Ó tún ya ọ sọ́tọ̀ sí ìbòjú kan.",
-		"any_rigged_humanoid_glb_works_one_you": "Gbogbo GLB ènìyàn tí a ti ríìgì yóò ṣiṣẹ́ — èyí tí o <a href=\"/create\">ṣẹ̀dá</a>, tí a <a href=\"/capture-avatar\">yà láti inú fọ́tò ara ẹni</a>, tàbí tí a ríìgì láti inú méṣì.",
+		"any_rigged_humanoid_glb_works_one_you": "Gbogbo GLB ènìyàn tí a ti ríìgì yóò ṣiṣẹ́ — èyí tí o <a href=\"/create\">ṣẹ̀dá</a>, tí a <a href=\"/create/selfie\">yà láti inú fọ́tò ara ẹni</a>, tàbí tí a ríìgì láti inú méṣì.",
 		"avatar": "Àfihàn",
 		"capturing_your_motion": "Mímú ìrìn rẹ",
 		"drop_a_video_of_one_person": "Fi fídíò ènìyàn kan sílẹ̀",

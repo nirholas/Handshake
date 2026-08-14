@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Ukwamukela",
 		"accounts": "Ama-akhawunti",
-		"by_installing_or_using_the_three_ws": "Ngokufaka noma ngokusebenzisa isandiso se-three.ws Walk Avatar, uyavumelana nale migomo kanye ne-<a href=\"https://three.ws/legal/terms\">three.ws Imigomo Yesevisi</a>. Uma ungavumelani, khipha isandiso.",
+		"by_installing_or_using_the_three_ws": "Ngokufaka noma ngokusebenzisa isandiso se-three.ws Walk Avatar, uyavumelana nale migomo kanye ne-<a href=\"https://three.ws/legal/tos\">three.ws Imigomo Yesevisi</a>. Uma ungavumelani, khipha isandiso.",
 		"contact": "Xhumana",
 		"disclaimer": "Ukuzihlangula",
 		"intellectual_property": "Impahla Yengqondo",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Imigomo Yesevisi — Isandiso se-three.ws Walk Avatar",
 		"meta_twitter_title": "Imigomo Yesevisi — Isandiso se-three.ws Walk Avatar",
 		"service": "Isevisi",
-		"signing_in_is_optional_an_account_is": "Ukungena ngemvume kuyazikhethela. I-akhawunti iyadingeka ukuze ufinyelele ama-avatar akho e-three.ws. Ukusetshenziswa kwe-akhawunti kubuswa yi-<a href=\"https://three.ws/legal/terms\">three.ws Imigomo Yesevisi</a>.",
+		"signing_in_is_optional_an_account_is": "Ukungena ngemvume kuyazikhethela. I-akhawunti iyadingeka ukuze ufinyelele ama-avatar akho e-three.ws. Ukusetshenziswa kwe-akhawunti kubuswa yi-<a href=\"https://three.ws/legal/tos\">three.ws Imigomo Yesevisi</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>.",
 		"terms_of_service": "Imigomo Yesevisi",
 		"the_extension_code_and_three_ws_brand": "Ikhodi yesandiso kanye nomkhiqizo we-three.ws kungokuka-three.ws / Nirholas. Ama-avatar owadalayo angawakho, ngaphansi kwelayisensi ye-avatar ye-three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Umsebenzi weseva ulandelela ukuma komzimba wakho kuhlaka ngalunye futhi ukuxazululela kuhlaka oluyinhloko lweplatifomu — injini efanayo yokubuyisela eqhuba konke ukugqwayiza kwe-avatar lapha. Iphinde ikuhlukanise ube imaski.",
-		"any_rigged_humanoid_glb_works_one_you": "Noma yimuphi umuntu oyisithombe esakhiwe GLB uyasebenza — lowo owu-<a href=\"/create\">khiqizile</a>, <a href=\"/capture-avatar\">owuthwebule ku-selfie</a>, noma owakhiwe nge-mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "Noma yimuphi umuntu oyisithombe esakhiwe GLB uyasebenza — lowo owu-<a href=\"/create\">khiqizile</a>, <a href=\"/create/selfie\">owuthwebule ku-selfie</a>, noma owakhiwe nge-mesh.",
 		"avatar": "I-avatar",
 		"capturing_your_motion": "Ukuthwebula ukunyakaza kwakho",
 		"drop_a_video_of_one_person": "Faka ividiyo yomuntu oyedwa",

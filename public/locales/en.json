@@ -6649,7 +6649,7 @@
 	"extension_terms": {
 		"acceptance": "Acceptance",
 		"accounts": "Accounts",
-		"by_installing_or_using_the_three_ws": "By installing or using the three.ws Walk Avatar extension, you agree to these terms and the <a href=\"https://three.ws/legal/terms\">three.ws Terms of Service</a>. If you do not agree, uninstall the extension.",
+		"by_installing_or_using_the_three_ws": "By installing or using the three.ws Walk Avatar extension, you agree to these terms and the <a href=\"https://three.ws/legal/tos\">three.ws Terms of Service</a>. If you do not agree, uninstall the extension.",
 		"contact": "Contact",
 		"disclaimer": "Disclaimer",
 		"intellectual_property": "Intellectual Property",
@@ -6659,7 +6659,7 @@
 		"meta_title": "Terms of Service — three.ws Walk Avatar Extension",
 		"meta_twitter_title": "Terms of Service — three.ws Walk Avatar Extension",
 		"service": "Service",
-		"signing_in_is_optional_an_account_is": "Signing in is optional. An account is required to access your own three.ws avatars. Account use is governed by the <a href=\"https://three.ws/legal/terms\">three.ws Terms of Service</a>.",
+		"signing_in_is_optional_an_account_is": "Signing in is optional. An account is required to access your own three.ws avatars. Account use is governed by the <a href=\"https://three.ws/legal/tos\">three.ws Terms of Service</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Terms of Service",
 		"the_extension_code_and_three_ws_brand": "The extension code and three.ws brand are owned by three.ws / Nirholas. Avatars you create are yours, subject to the three.ws avatar license.",
@@ -11361,7 +11361,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "A server worker tracks your body pose in every frame and solves it onto the platform's canonical skeleton — the same retarget engine that drives every avatar animation here. It also segments you out into a mask.",
-		"any_rigged_humanoid_glb_works_one_you": "Any rigged humanoid GLB works — one you <a href=\"/create\">generated</a>, <a href=\"/capture-avatar\">captured from a selfie</a>, or rigged from a mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "Any rigged humanoid GLB works — one you <a href=\"/create\">generated</a>, <a href=\"/create/selfie\">captured from a selfie</a>, or rigged from a mesh.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Capturing your motion",
 		"drop_a_video_of_one_person": "Drop a video of one person",

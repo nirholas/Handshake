@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Прийняття",
 		"accounts": "Облікові записи",
-		"by_installing_or_using_the_three_ws": "Встановлюючи або використовуючи розширення three.ws Walk Avatar, ви погоджуєтеся з цими умовами та <a href=\"https://three.ws/legal/terms\">three.ws Умовами надання послуг</a>. Якщо ви не згодні, видаліть розширення.",
+		"by_installing_or_using_the_three_ws": "Встановлюючи або використовуючи розширення three.ws Walk Avatar, ви погоджуєтеся з цими умовами та <a href=\"https://three.ws/legal/tos\">three.ws Умовами надання послуг</a>. Якщо ви не згодні, видаліть розширення.",
 		"contact": "Контакти",
 		"disclaimer": "Відмова від відповідальності",
 		"intellectual_property": "Інтелектуальна власність",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Умови надання послуг — розширення three.ws Walk Avatar",
 		"meta_twitter_title": "Умови надання послуг — розширення three.ws Walk Avatar",
 		"service": "Сервіс",
-		"signing_in_is_optional_an_account_is": "Вхід не є обов'язковим. Обліковий запис потрібен для доступу до ваших власних аватарів three.ws. Використання облікового запису регулюється <a href=\"https://three.ws/legal/terms\">three.ws Умовами надання послуг</a>.",
+		"signing_in_is_optional_an_account_is": "Вхід не є обов'язковим. Обліковий запис потрібен для доступу до ваших власних аватарів three.ws. Використання облікового запису регулюється <a href=\"https://three.ws/legal/tos\">three.ws Умовами надання послуг</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">підтримка@three.ws</a>",
 		"terms_of_service": "Умови надання послуг",
 		"the_extension_code_and_three_ws_brand": "Код розширення та бренд three.ws належать three.ws / Nirholas. Створені вами аватари є вашими, згідно з ліцензією на аватари three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Серверний воркер відстежує позу вашого тіла в кожному кадрі та накладає її на канонічний скелет платформи — той самий рушій ретаргетингу, що керує кожною анімацією аватара тут. Він також виділяє вас у маску.",
-		"any_rigged_humanoid_glb_works_one_you": "Працює будь-який рігнений гуманоїдний GLB — той, що ви <a href=\"/create\">згенеровали</a>, <a href=\"/capture-avatar\">захопили з селфі</a> або рігнули з меша.",
+		"any_rigged_humanoid_glb_works_one_you": "Працює будь-який рігнений гуманоїдний GLB — той, що ви <a href=\"/create\">згенеровали</a>, <a href=\"/create/selfie\">захопили з селфі</a> або рігнули з меша.",
 		"avatar": "Аватар",
 		"capturing_your_motion": "Захоплення вашого руху",
 		"drop_a_video_of_one_person": "Перетягніть відео з однією людиною",

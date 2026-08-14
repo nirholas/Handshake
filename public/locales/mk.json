@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Прифаќање",
 		"accounts": "Сметки",
-		"by_installing_or_using_the_three_ws": "Со инсталирање или користење на екстензијата three.ws Walk Avatar, се согласувате со овие услови и со <a href=\"https://three.ws/legal/terms\">three.ws Условите за користење</a>. Ако не се согласувате, деинсталирајте ја екстензијата.",
+		"by_installing_or_using_the_three_ws": "Со инсталирање или користење на екстензијата three.ws Walk Avatar, се согласувате со овие услови и со <a href=\"https://three.ws/legal/tos\">three.ws Условите за користење</a>. Ако не се согласувате, деинсталирајте ја екстензијата.",
 		"contact": "Контакт",
 		"disclaimer": "Одрекување од одговорност",
 		"intellectual_property": "Интелектуална сопственост",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Услови за користење — three.ws Walk Avatar Extension",
 		"meta_twitter_title": "Услови за користење — three.ws Walk Avatar Extension",
 		"service": "Услуга",
-		"signing_in_is_optional_an_account_is": "Најавувањето е опционално. Сметка е потребна за пристап до вашите three.ws аватари. Користењето на сметката е регулирано со <a href=\"https://three.ws/legal/terms\">three.ws Условите за користење</a>.",
+		"signing_in_is_optional_an_account_is": "Најавувањето е опционално. Сметка е потребна за пристап до вашите three.ws аватари. Користењето на сметката е регулирано со <a href=\"https://three.ws/legal/tos\">three.ws Условите за користење</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Услови за користење",
 		"the_extension_code_and_three_ws_brand": "Кодот на екстензијата и брендот three.ws се во сопственост на three.ws / Nirholas. Аватарите што ги креирате се ваши, предмет на лиценцата за three.ws аватари.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Серверски работник ја следи вашата телесна поза во секоја рамка и ја решава на канонскиот скелет на платформата — истиот ретаргетен мотор што ја движи секоја анимација на аватар овде. Исто така, ве сегментира во маска.",
-		"any_rigged_humanoid_glb_works_one_you": "Секој ригуван хуманоиден GLB функционира — оној што сте го <a href=\"/create\">генерирале</a>, <a href=\"/capture-avatar\">фатиле од селфи</a>, или ригувале од мрежа.",
+		"any_rigged_humanoid_glb_works_one_you": "Секој ригуван хуманоиден GLB функционира — оној што сте го <a href=\"/create\">генерирале</a>, <a href=\"/create/selfie\">фатиле од селфи</a>, или ригувале од мрежа.",
 		"avatar": "Аватар",
 		"capturing_your_motion": "Снимање на вашето движење",
 		"drop_a_video_of_one_person": "Вметнете видео од едно лице",

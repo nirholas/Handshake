@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Αποδοχή",
 		"accounts": "Λογαριασμοί",
-		"by_installing_or_using_the_three_ws": "Με την εγκατάσταση ή χρήση της επέκτασης three.ws Walk Avatar, συμφωνείτε με αυτούς τους όρους και τους <a href=\"https://three.ws/legal/terms\">three.ws Όρους Παροχής Υπηρεσιών</a>. Αν δεν συμφωνείτε, απεγκαταστήστε την επέκταση.",
+		"by_installing_or_using_the_three_ws": "Με την εγκατάσταση ή χρήση της επέκτασης three.ws Walk Avatar, συμφωνείτε με αυτούς τους όρους και τους <a href=\"https://three.ws/legal/tos\">three.ws Όρους Παροχής Υπηρεσιών</a>. Αν δεν συμφωνείτε, απεγκαταστήστε την επέκταση.",
 		"contact": "Επικοινωνία",
 		"disclaimer": "Αποποίηση Ευθύνης",
 		"intellectual_property": "Πνευματική Ιδιοκτησία",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Όροι Παροχής Υπηρεσιών — Επέκταση three.ws Walk Avatar",
 		"meta_twitter_title": "Όροι Παροχής Υπηρεσιών — Επέκταση three.ws Walk Avatar",
 		"service": "Υπηρεσία",
-		"signing_in_is_optional_an_account_is": "Η σύνδεση είναι προαιρετική. Απαιτείται λογαριασμός για την πρόσβαση στα δικά σας avatar three.ws. Η χρήση του λογαριασμού διέπεται από τους <a href=\"https://three.ws/legal/terms\">three.ws Όρους Παροχής Υπηρεσιών</a>.",
+		"signing_in_is_optional_an_account_is": "Η σύνδεση είναι προαιρετική. Απαιτείται λογαριασμός για την πρόσβαση στα δικά σας avatar three.ws. Η χρήση του λογαριασμού διέπεται από τους <a href=\"https://three.ws/legal/tos\">three.ws Όρους Παροχής Υπηρεσιών</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Όροι Παροχής Υπηρεσιών",
 		"the_extension_code_and_three_ws_brand": "Ο κώδικας της επέκτασης και το brand three.ws ανήκουν στην three.ws / Nirholas. Τα avatar που δημιουργείτε είναι δικά σας, υπόκεινται στην άδεια χρήσης avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Ένας server worker παρακολουθεί τη στάση του σώματός σας σε κάθε καρέ και την εφαρμόζει στον κανονικό σκελετό της πλατφόρμας — την ίδια μηχανή επαναστόχευσης που κινεί κάθε κινούμενη εικόνα avatar εδώ. Επίσης, σας διαχωρίζει σε μια μάσκα.",
-		"any_rigged_humanoid_glb_works_one_you": "Οποιοδήποτε rigged ανθρωποειδές GLB λειτουργεί — ένα που <a href=\"/create\">δημιουργήσατε</a>, <a href=\"/capture-avatar\">καταγράψατε από μια selfie</a>, ή κάνατε rig από ένα πλέγμα.",
+		"any_rigged_humanoid_glb_works_one_you": "Οποιοδήποτε rigged ανθρωποειδές GLB λειτουργεί — ένα που <a href=\"/create\">δημιουργήσατε</a>, <a href=\"/create/selfie\">καταγράψατε από μια selfie</a>, ή κάνατε rig από ένα πλέγμα.",
 		"avatar": "Άβαταρ",
 		"capturing_your_motion": "Καταγραφή της κίνησής σας",
 		"drop_a_video_of_one_person": "Σύρετε ένα βίντεο ενός ατόμου",

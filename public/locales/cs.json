@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Přijetí",
 		"accounts": "Účty",
-		"by_installing_or_using_the_three_ws": "Instalací nebo používáním rozšíření three.ws Walk Avatar souhlasíte s těmito podmínkami a s <a href=\"https://three.ws/legal/terms\">three.ws Podmínkami služby</a>. Pokud nesouhlasíte, odinstalujte rozšíření.",
+		"by_installing_or_using_the_three_ws": "Instalací nebo používáním rozšíření three.ws Walk Avatar souhlasíte s těmito podmínkami a s <a href=\"https://three.ws/legal/tos\">three.ws Podmínkami služby</a>. Pokud nesouhlasíte, odinstalujte rozšíření.",
 		"contact": "Kontakt",
 		"disclaimer": "Zřeknutí se odpovědnosti",
 		"intellectual_property": "Duševní vlastnictví",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Podmínky služby — rozšíření three.ws Walk Avatar",
 		"meta_twitter_title": "Podmínky služby — rozšíření three.ws Walk Avatar",
 		"service": "Služba",
-		"signing_in_is_optional_an_account_is": "Přihlášení je volitelné. Účet je vyžadován pro přístup k vašim vlastním three.ws avatarům. Používání účtu se řídí <a href=\"https://three.ws/legal/terms\">three.ws Podmínkami služby</a>.",
+		"signing_in_is_optional_an_account_is": "Přihlášení je volitelné. Účet je vyžadován pro přístup k vašim vlastním three.ws avatarům. Používání účtu se řídí <a href=\"https://three.ws/legal/tos\">three.ws Podmínkami služby</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Podmínky služby",
 		"the_extension_code_and_three_ws_brand": "Kód rozšíření a značka three.ws jsou vlastnictvím three.ws / Nirholas. Avatary, které vytvoříte, jsou vaše, s výhradou licence avatarů three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Serverový proces sleduje vaši tělesnou pózu v každém snímku a aplikuje ji na kanonický skelet platformy — stejný retargetingový engine, který pohání každou animaci avatara zde. Také vás segmentuje do masky.",
-		"any_rigged_humanoid_glb_works_one_you": "Funguje jakýkoli rigovaný humanoidní GLB — ten, který jste <a href=\"/create\">vygenerovali</a>, <a href=\"/capture-avatar\">zachytili ze selfie</a>, nebo rigovali z meshe.",
+		"any_rigged_humanoid_glb_works_one_you": "Funguje jakýkoli rigovaný humanoidní GLB — ten, který jste <a href=\"/create\">vygenerovali</a>, <a href=\"/create/selfie\">zachytili ze selfie</a>, nebo rigovali z meshe.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Zachycení vašeho pohybu",
 		"drop_a_video_of_one_person": "Přetáhněte video jedné osoby",

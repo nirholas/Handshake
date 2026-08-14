@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Accept",
 		"accounts": "Konti",
-		"by_installing_or_using_the_three_ws": "Ved at installere eller bruge three.ws Walk Avatar-udvidelsen accepterer du disse vilkår og <a href=\"https://three.ws/legal/terms\">three.ws Servicevilkår</a>. Hvis du ikke accepterer, skal du afinstallere udvidelsen.",
+		"by_installing_or_using_the_three_ws": "Ved at installere eller bruge three.ws Walk Avatar-udvidelsen accepterer du disse vilkår og <a href=\"https://three.ws/legal/tos\">three.ws Servicevilkår</a>. Hvis du ikke accepterer, skal du afinstallere udvidelsen.",
 		"contact": "Kontakt",
 		"disclaimer": "Ansvarsfraskrivelse",
 		"intellectual_property": "Intellektuel ejendom",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Servicevilkår — three.ws Walk Avatar-udvidelse",
 		"meta_twitter_title": "Servicevilkår — three.ws Walk Avatar-udvidelse",
 		"service": "Service",
-		"signing_in_is_optional_an_account_is": "Login er valgfrit. En konto er påkrævet for at få adgang til dine egne three.ws-avatarer. Kontobrug er underlagt <a href=\"https://three.ws/legal/terms\">three.ws Servicevilkår</a>.",
+		"signing_in_is_optional_an_account_is": "Login er valgfrit. En konto er påkrævet for at få adgang til dine egne three.ws-avatarer. Kontobrug er underlagt <a href=\"https://three.ws/legal/tos\">three.ws Servicevilkår</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Servicevilkår",
 		"the_extension_code_and_three_ws_brand": "Udvidelseskoden og three.ws-brandet ejes af three.ws / Nirholas. Avatarer, du opretter, er dine, underlagt three.ws-avatarlincensen.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "En server-worker sporer din kropsholdning i hver frame og overfører den til platformens kanoniske skelet — den samme retarget-motor, der driver enhver avatar-animation her. Den segmenterer dig også ud i en maske.",
-		"any_rigged_humanoid_glb_works_one_you": "Enhver rigget humanoid GLB virker — en du <a href=\"/create\">genererede</a>, <a href=\"/capture-avatar\">optog fra en selfie</a>, eller riggede fra et mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "Enhver rigget humanoid GLB virker — en du <a href=\"/create\">genererede</a>, <a href=\"/create/selfie\">optog fra en selfie</a>, eller riggede fra et mesh.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Optager din bevægelse",
 		"drop_a_video_of_one_person": "Drop en video af én person",

@@ -380,7 +380,7 @@
 			builds: 'An agent that remembers your preferences and corrections across every conversation',
 			time: '25 min',
 			previewModel: '/avatars/cz.glb',
-			ctaPrimary: { label: 'Open Library', href: '/library' },
+			ctaPrimary: { label: 'Open Library', href: '/dashboard/library#tab=memory' },
 		},
 		{
 			slug: 'animate-your-avatar',

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Acceptance",
 		"accounts": "Accounts",
-		"by_installing_or_using_the_three_ws": "three.ws ୱାକ୍ ଅଭାଟାର୍ ଏକ୍ସଟେନ୍ସନ୍ ଇନଷ୍ଟଲ୍ କିମ୍ବା ବ୍ୟବହାର କରି, ଆପଣ ଏହି ସର୍ତ୍ତାବଳୀ ଏବଂ <a href=\"https://three.ws/legal/terms\">three.ws ସେବା ସର୍ତ୍ତାବଳୀ</a> ସହିତ ସହମତ ଅଟନ୍ତି। ଯଦି ଆପଣ ସହମତ ନୁହଁନ୍ତି, ତେବେ ଏକ୍ସଟେନ୍ସନ୍ ଅନଇନଷ୍ଟଲ୍ କରନ୍ତୁ।",
+		"by_installing_or_using_the_three_ws": "three.ws ୱାକ୍ ଅଭାଟାର୍ ଏକ୍ସଟେନ୍ସନ୍ ଇନଷ୍ଟଲ୍ କିମ୍ବା ବ୍ୟବହାର କରି, ଆପଣ ଏହି ସର୍ତ୍ତାବଳୀ ଏବଂ <a href=\"https://three.ws/legal/tos\">three.ws ସେବା ସର୍ତ୍ତାବଳୀ</a> ସହିତ ସହମତ ଅଟନ୍ତି। ଯଦି ଆପଣ ସହମତ ନୁହଁନ୍ତି, ତେବେ ଏକ୍ସଟେନ୍ସନ୍ ଅନଇନଷ୍ଟଲ୍ କରନ୍ତୁ।",
 		"contact": "Contact",
 		"disclaimer": "Disclaimer",
 		"intellectual_property": "ବୌଦ୍ଧିକ ସମ୍ପତ୍ତି",
@@ -6603,7 +6603,7 @@
 		"meta_title": "ସେବା ସର୍ତ୍ତାବଳୀ — three.ws ୱାକ୍ ଅଭାଟାର ଏକ୍ସଟେନ୍ସନ୍",
 		"meta_twitter_title": "ସେବା ସର୍ତ୍ତାବଳୀ — three.ws ୱାକ୍ ଅଭାଟାର ଏକ୍ସଟେନ୍ସନ୍",
 		"service": "Service",
-		"signing_in_is_optional_an_account_is": "ସାଇନ୍ ଇନ୍ କରିବା ବୈକଳ୍ପିକ। ନିଜର three.ws ଅଭାଟାର୍‌ଗୁଡ଼ିକୁ ପ୍ରବେଶ କରିବା ପାଇଁ ଏକ ଆକାଉଣ୍ଟ୍ ଆବଶ୍ୟକ। ଆକାଉଣ୍ଟ୍ ବ୍ୟବହାର <a href=\"https://three.ws/legal/terms\">three.ws ସେବା ସର୍ତ୍ତାବଳୀ</a> ଦ୍ୱାରା ନିୟନ୍ତ୍ରିତ।",
+		"signing_in_is_optional_an_account_is": "ସାଇନ୍ ଇନ୍ କରିବା ବୈକଳ୍ପିକ। ନିଜର three.ws ଅଭାଟାର୍‌ଗୁଡ଼ିକୁ ପ୍ରବେଶ କରିବା ପାଇଁ ଏକ ଆକାଉଣ୍ଟ୍ ଆବଶ୍ୟକ। ଆକାଉଣ୍ଟ୍ ବ୍ୟବହାର <a href=\"https://three.ws/legal/tos\">three.ws ସେବା ସର୍ତ୍ତାବଳୀ</a> ଦ୍ୱାରା ନିୟନ୍ତ୍ରିତ।",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "ସେବା ସର୍ତ୍ତାବଳୀ",
 		"the_extension_code_and_three_ws_brand": "ଏହି ଏକ୍ସଟେନ୍ସନ୍ କୋଡ୍ ଏବଂ three.ws ବ୍ରାଣ୍ଡ three.ws / Nirholas ଙ୍କ ମାଲିକାନାରେ ଅଛି। ଆପଣ ସୃଷ୍ଟି କରୁଥିବା ଆଭାଟାରଗୁଡ଼ିକ ଆପଣଙ୍କର, ଯାହା three.ws ଆଭାଟାର ଲାଇସେନ୍ସ ଅଧୀନରେ ରହିବ।",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "ଏକ ସର୍ଭର ୱାର୍କର ପ୍ରତି ଫ୍ରେମରେ ଆପଣଙ୍କ ଶରୀରର ପୋଜ୍ ଟ୍ରାକ୍ କରେ ଏବଂ ଏହାକୁ ପ୍ଲାଟଫର୍ମର କାନୋନିକାଲ୍ ସ୍କେଲିଟନ୍ ଉପରେ ସଲ୍ଭ କରେ — ଏଠାରେ ପ୍ରତ୍ୟେକ ଅଭାତାର ଆନିମେସନ୍ ଚଳାଉଥିବା ସମାନ ରିଟାର୍ଗେଟ୍ ଇଞ୍ଜିନ୍। ଏହା ଆପଣଙ୍କୁ ଏକ ମାସ୍କରେ ବିଭକ୍ତ ମଧ୍ୟ କରେ।",
-		"any_rigged_humanoid_glb_works_one_you": "ଯେକୌଣସି ରିଗ୍ଡ ହ୍ୟୁମାନଏଡ୍ GLB କାମ କରେ — ଗୋଟିଏ ଯାହାକୁ ଆପଣ <a href=\"/create\">ଜେନେରେଟ୍ କରିଛନ୍ତି</a>, <a href=\"/capture-avatar\">ସେଲ୍ଫିରୁ କ୍ୟାପଚର୍ କରିଛନ୍ତି</a>, କିମ୍ବା ଏକ ମେଶ୍‌ରୁ ରିଗ୍ କରିଛନ୍ତି।",
+		"any_rigged_humanoid_glb_works_one_you": "ଯେକୌଣସି ରିଗ୍ଡ ହ୍ୟୁମାନଏଡ୍ GLB କାମ କରେ — ଗୋଟିଏ ଯାହାକୁ ଆପଣ <a href=\"/create\">ଜେନେରେଟ୍ କରିଛନ୍ତି</a>, <a href=\"/create/selfie\">ସେଲ୍ଫିରୁ କ୍ୟାପଚର୍ କରିଛନ୍ତି</a>, କିମ୍ବା ଏକ ମେଶ୍‌ରୁ ରିଗ୍ କରିଛନ୍ତି।",
 		"avatar": "Avatar",
 		"capturing_your_motion": "ଆପଣଙ୍କ ଗତି କ୍ୟାପଚର୍ କରିବା",
 		"drop_a_video_of_one_person": "ଜଣେ ବ୍ୟକ୍ତିଙ୍କର ଏକ ଭିଡିଓ ଡ୍ରପ୍ କରନ୍ତୁ",

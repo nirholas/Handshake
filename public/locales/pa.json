@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "ਸਵੀਕ੍ਰਿਤੀ",
 		"accounts": "ਖਾਤੇ",
-		"by_installing_or_using_the_three_ws": "three.ws ਵਾਕ ਅਵਤਾਰ ਐਕਸਟੈਂਸ਼ਨ ਨੂੰ ਸਥਾਪਤ ਜਾਂ ਵਰਤ ਕੇ, ਤੁਸੀਂ ਇਹਨਾਂ ਸ਼ਰਤਾਂ ਅਤੇ <a href=\"https://three.ws/legal/terms\">three.ws ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ</a> ਨਾਲ ਸਹਿਮਤ ਹੁੰਦੇ ਹੋ। ਜੇਕਰ ਤੁਸੀਂ ਸਹਿਮਤ ਨਹੀਂ ਹੋ, ਤਾਂ ਐਕਸਟੈਂਸ਼ਨ ਨੂੰ ਅਣਇੰਸਟਾਲ ਕਰੋ।",
+		"by_installing_or_using_the_three_ws": "three.ws ਵਾਕ ਅਵਤਾਰ ਐਕਸਟੈਂਸ਼ਨ ਨੂੰ ਸਥਾਪਤ ਜਾਂ ਵਰਤ ਕੇ, ਤੁਸੀਂ ਇਹਨਾਂ ਸ਼ਰਤਾਂ ਅਤੇ <a href=\"https://three.ws/legal/tos\">three.ws ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ</a> ਨਾਲ ਸਹਿਮਤ ਹੁੰਦੇ ਹੋ। ਜੇਕਰ ਤੁਸੀਂ ਸਹਿਮਤ ਨਹੀਂ ਹੋ, ਤਾਂ ਐਕਸਟੈਂਸ਼ਨ ਨੂੰ ਅਣਇੰਸਟਾਲ ਕਰੋ।",
 		"contact": "ਸੰਪਰਕ",
 		"disclaimer": "ਬੇਦਾਅਵਾ",
 		"intellectual_property": "ਬੌਧਿਕ ਸੰਪਤੀ",
@@ -6603,7 +6603,7 @@
 		"meta_title": "ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ — three.ws ਵਾਕ ਅਵਤਾਰ ਐਕਸਟੈਂਸ਼ਨ",
 		"meta_twitter_title": "ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ — three.ws ਵਾਕ ਅਵਤਾਰ ਐਕਸਟੈਂਸ਼ਨ",
 		"service": "ਸੇਵਾ",
-		"signing_in_is_optional_an_account_is": "ਸਾਈਨ ਇਨ ਕਰਨਾ ਵਿਕਲਪਿਕ ਹੈ। ਤੁਹਾਡੇ ਆਪਣੇ three.ws ਅਵਤਾਰਾਂ ਤੱਕ ਪਹੁੰਚ ਕਰਨ ਲਈ ਇੱਕ ਖਾਤੇ ਦੀ ਲੋੜ ਹੈ। ਖਾਤੇ ਦੀ ਵਰਤੋਂ <a href=\"https://three.ws/legal/terms\">three.ws ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ</a> ਦੁਆਰਾ ਨਿਯੰਤਰਿਤ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।",
+		"signing_in_is_optional_an_account_is": "ਸਾਈਨ ਇਨ ਕਰਨਾ ਵਿਕਲਪਿਕ ਹੈ। ਤੁਹਾਡੇ ਆਪਣੇ three.ws ਅਵਤਾਰਾਂ ਤੱਕ ਪਹੁੰਚ ਕਰਨ ਲਈ ਇੱਕ ਖਾਤੇ ਦੀ ਲੋੜ ਹੈ। ਖਾਤੇ ਦੀ ਵਰਤੋਂ <a href=\"https://three.ws/legal/tos\">three.ws ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ</a> ਦੁਆਰਾ ਨਿਯੰਤਰਿਤ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ",
 		"the_extension_code_and_three_ws_brand": "ਐਕਸਟੈਂਸ਼ਨ ਕੋਡ ਅਤੇ three.ws ਬ੍ਰਾਂਡ three.ws / ਨਿਰਹੋਲਾਸ ਦੀ ਮਲਕੀਅਤ ਹਨ। ਤੁਹਾਡੇ ਦੁਆਰਾ ਬਣਾਏ ਗਏ ਅਵਤਾਰ ਤੁਹਾਡੇ ਹਨ, ਜੋ three.ws ਅਵਤਾਰ ਲਾਇਸੈਂਸ ਦੇ ਅਧੀਨ ਹਨ।",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "ਇੱਕ ਸਰਵਰ ਵਰਕਰ ਹਰ ਫਰੇਮ ਵਿੱਚ ਤੁਹਾਡੇ ਸਰੀਰ ਦੀ ਮੁਦਰਾ ਨੂੰ ਟਰੈਕ ਕਰਦਾ ਹੈ ਅਤੇ ਇਸਨੂੰ ਪਲੇਟਫਾਰਮ ਦੇ ਕੈਨੋਨੀਕਲ ਪਿੰਜਰ 'ਤੇ ਹੱਲ ਕਰਦਾ ਹੈ — ਉਹੀ ਰੀਟਾਰਗੇਟ ਇੰਜਣ ਜੋ ਇੱਥੇ ਹਰ ਅਵਤਾਰ ਐਨੀਮੇਸ਼ਨ ਨੂੰ ਚਲਾਉਂਦਾ ਹੈ। ਇਹ ਤੁਹਾਨੂੰ ਇੱਕ ਮਾਸਕ ਵਿੱਚ ਵੀ ਵੰਡਦਾ ਹੈ।",
-		"any_rigged_humanoid_glb_works_one_you": "ਕੋਈ ਵੀ ਰਿਗਡ ਹਿਊਮਨੋਇਡ GLB ਕੰਮ ਕਰਦਾ ਹੈ — ਇੱਕ ਜੋ ਤੁਸੀਂ <a href=\"/create\">ਤਿਆਰ ਕੀਤਾ</a>, <a href=\"/capture-avatar\">ਸੈਲਫੀ ਤੋਂ ਕੈਪਚਰ ਕੀਤਾ</a>, ਜਾਂ ਇੱਕ ਮੈਸ਼ ਤੋਂ ਰਿਗਡ ਕੀਤਾ।",
+		"any_rigged_humanoid_glb_works_one_you": "ਕੋਈ ਵੀ ਰਿਗਡ ਹਿਊਮਨੋਇਡ GLB ਕੰਮ ਕਰਦਾ ਹੈ — ਇੱਕ ਜੋ ਤੁਸੀਂ <a href=\"/create\">ਤਿਆਰ ਕੀਤਾ</a>, <a href=\"/create/selfie\">ਸੈਲਫੀ ਤੋਂ ਕੈਪਚਰ ਕੀਤਾ</a>, ਜਾਂ ਇੱਕ ਮੈਸ਼ ਤੋਂ ਰਿਗਡ ਕੀਤਾ।",
 		"avatar": "ਅਵਤਾਰ",
 		"capturing_your_motion": "ਤੁਹਾਡੀ ਗਤੀ ਨੂੰ ਕੈਪਚਰ ਕਰਨਾ",
 		"drop_a_video_of_one_person": "ਇੱਕ ਵਿਅਕਤੀ ਦੀ ਵੀਡੀਓ ਸੁੱਟੋ",

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "පිළිගැනීම",
 		"accounts": "ගිණුම්",
-		"by_installing_or_using_the_three_ws": "three.ws වෝක් අවතාර දිගුව ස්ථාපනය කිරීමෙන් හෝ භාවිතා කිරීමෙන්, ඔබ මෙම නියමයන්ට සහ <a href=\"https://three.ws/legal/terms\">three.ws සේවා නියමයන්ට</a> එකඟ වේ. ඔබ එකඟ නොවන්නේ නම්, දිගුව අස්ථාපනය කරන්න.",
+		"by_installing_or_using_the_three_ws": "three.ws වෝක් අවතාර දිගුව ස්ථාපනය කිරීමෙන් හෝ භාවිතා කිරීමෙන්, ඔබ මෙම නියමයන්ට සහ <a href=\"https://three.ws/legal/tos\">three.ws සේවා නියමයන්ට</a> එකඟ වේ. ඔබ එකඟ නොවන්නේ නම්, දිගුව අස්ථාපනය කරන්න.",
 		"contact": "සම්බන්ධ වන්න",
 		"disclaimer": "වගකීම් අත්හැරීම",
 		"intellectual_property": "බුද්ධිමය දේපල",
@@ -6603,7 +6603,7 @@
 		"meta_title": "සේවා නියමයන් — three.ws වෝක් අවතාර දිගුව",
 		"meta_twitter_title": "සේවා නියමයන් — three.ws වෝක් අවතාර දිගුව",
 		"service": "සේවාව",
-		"signing_in_is_optional_an_account_is": "පුරනය වීම විකල්පයකි. ඔබගේම three.ws අවතාර වෙත ප්‍රවේශ වීමට ගිණුමක් අවශ්‍ය වේ. ගිණුම් භාවිතය <a href=\"https://three.ws/legal/terms\">three.ws සේවා නියමයන්ට</a> යටත් වේ.",
+		"signing_in_is_optional_an_account_is": "පුරනය වීම විකල්පයකි. ඔබගේම three.ws අවතාර වෙත ප්‍රවේශ වීමට ගිණුමක් අවශ්‍ය වේ. ගිණුම් භාවිතය <a href=\"https://three.ws/legal/tos\">three.ws සේවා නියමයන්ට</a> යටත් වේ.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "සේවා නියමයන්",
 		"the_extension_code_and_three_ws_brand": "දිගු කේතය සහ three.ws සන්නාමය three.ws / Nirholas සතු වේ. ඔබ සාදන අවතාර ඔබගේ වන අතර, ඒවා three.ws අවතාර බලපත්‍රයට යටත් වේ.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "සර්වර් වර්කර් එකක් සෑම රාමුවකම ඔබේ ශරීර ඉරියව්ව නිරීක්ෂණය කර, වේදිකාවේ කැනොනිකල් ඇටසැකිල්ලට එය විසඳයි — මෙහි ඇති සෑම අවතාර සජීවිකරණයක්ම ධාවනය කරන එකම නැවත ඉලක්ක කිරීමේ එන්ජිමයි. එය ඔබව වෙස්මුහුණකට වෙන් කරයි.",
-		"any_rigged_humanoid_glb_works_one_you": "ඕනෑම රිග් කළ මානව රූපී GLB ක්‍රියා කරයි — ඔබ <a href=\"/create\">ජනනය කළ</a>, <a href=\"/capture-avatar\">සෙල්ෆියකින් ලබාගත්</a>, හෝ දැලකින් රිග් කළ එකක්.",
+		"any_rigged_humanoid_glb_works_one_you": "ඕනෑම රිග් කළ මානව රූපී GLB ක්‍රියා කරයි — ඔබ <a href=\"/create\">ජනනය කළ</a>, <a href=\"/create/selfie\">සෙල්ෆියකින් ලබාගත්</a>, හෝ දැලකින් රිග් කළ එකක්.",
 		"avatar": "අවතාරය",
 		"capturing_your_motion": "ඔබේ චලනය ග්‍රහණය කර ගැනීම",
 		"drop_a_video_of_one_person": "එක් පුද්ගලයෙකුගේ වීඩියෝවක් දමන්න",

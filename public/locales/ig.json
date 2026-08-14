@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Nnabata",
 		"accounts": "Akaụntụ",
-		"by_installing_or_using_the_three_ws": "Site n'itinye ma ọ bụ iji mgbakwunye three.ws Walk Avatar, ị kwenyere na usoro ndị a na <a href=\"https://three.ws/legal/terms\">three.ws Usoro Ọrụ</a>. Ọ bụrụ na ị kwenyeghị, wepụ mgbakwunye ahụ.",
+		"by_installing_or_using_the_three_ws": "Site n'itinye ma ọ bụ iji mgbakwunye three.ws Walk Avatar, ị kwenyere na usoro ndị a na <a href=\"https://three.ws/legal/tos\">three.ws Usoro Ọrụ</a>. Ọ bụrụ na ị kwenyeghị, wepụ mgbakwunye ahụ.",
 		"contact": "Kpọtụrụ",
 		"disclaimer": "Nkwupụta Nkwụsị Ọrụ",
 		"intellectual_property": "Ihe Onwunwe Ọgụgụ Isi",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Usoro Ọrụ — Mgbakwunye three.ws Walk Avatar",
 		"meta_twitter_title": "Usoro Ọrụ — Mgbakwunye three.ws Walk Avatar",
 		"service": "Ọrụ",
-		"signing_in_is_optional_an_account_is": "Ịbanye bụ nhọrọ. Achọrọ akaụntụ iji nweta avatar three.ws nke gị. Ojiji akaụntụ na-agbaso <a href=\"https://three.ws/legal/terms\">three.ws Usoro Ọrụ</a>.",
+		"signing_in_is_optional_an_account_is": "Ịbanye bụ nhọrọ. Achọrọ akaụntụ iji nweta avatar three.ws nke gị. Ojiji akaụntụ na-agbaso <a href=\"https://three.ws/legal/tos\">three.ws Usoro Ọrụ</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Usoro Ọrụ",
 		"the_extension_code_and_three_ws_brand": "Koodu mgbakwunye na akara three.ws bụ nke three.ws / Nirholas. Avatars ị mepụtara bụ nke gị, dabere na ikike avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Onye ọrụ sava na-enyocha ọnọdụ ahụ gị na frame ọ bụla ma dozie ya na ọkpụkpụ canonical nke ikpo okwu — otu injin retarget ahụ na-akwọ animation avatar ọ bụla ebe a. Ọ na-ekewa gị n'ime ihe mkpuchi.",
-		"any_rigged_humanoid_glb_works_one_you": "GLB mmadụ ọ bụla e mere ka ọ rụọ ọrụ na-arụ ọrụ — nke i <a href=\"/create\">mepụtara</a>, <a href=\"/capture-avatar\">were site na selfie</a>, ma ọ bụ mee ka ọ rụọ ọrụ site na mesh.",
+		"any_rigged_humanoid_glb_works_one_you": "GLB mmadụ ọ bụla e mere ka ọ rụọ ọrụ na-arụ ọrụ — nke i <a href=\"/create\">mepụtara</a>, <a href=\"/create/selfie\">were site na selfie</a>, ma ọ bụ mee ka ọ rụọ ọrụ site na mesh.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Ịdekọ mmegharị gị",
 		"drop_a_video_of_one_person": "Tụnye vidiyo nke otu onye",

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Acceptare",
 		"accounts": "Conturi",
-		"by_installing_or_using_the_three_ws": "Prin instalarea sau utilizarea extensiei three.ws Walk Avatar, ești de acord cu acești termeni și cu <a href=\"https://three.ws/legal/terms\">three.ws Termenii de Serviciu</a>. Dacă nu ești de acord, dezinstalează extensia.",
+		"by_installing_or_using_the_three_ws": "Prin instalarea sau utilizarea extensiei three.ws Walk Avatar, ești de acord cu acești termeni și cu <a href=\"https://three.ws/legal/tos\">three.ws Termenii de Serviciu</a>. Dacă nu ești de acord, dezinstalează extensia.",
 		"contact": "Contact",
 		"disclaimer": "Declinarea responsabilității",
 		"intellectual_property": "Proprietate Intelectuală",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Termeni de Serviciu — Extensia three.ws Walk Avatar",
 		"meta_twitter_title": "Termeni de Serviciu — Extensia three.ws Walk Avatar",
 		"service": "Serviciu",
-		"signing_in_is_optional_an_account_is": "Conectarea este opțională. Un cont este necesar pentru a accesa propriile avatare three.ws. Utilizarea contului este guvernată de <a href=\"https://three.ws/legal/terms\">three.ws Termenii de Serviciu</a>.",
+		"signing_in_is_optional_an_account_is": "Conectarea este opțională. Un cont este necesar pentru a accesa propriile avatare three.ws. Utilizarea contului este guvernată de <a href=\"https://three.ws/legal/tos\">three.ws Termenii de Serviciu</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Termeni de Serviciu",
 		"the_extension_code_and_three_ws_brand": "Codul extensiei și brandul three.ws sunt deținute de three.ws / Nirholas. Avatarele pe care le creezi îți aparțin, sub rezerva licenței de avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Un worker de server urmărește poziția corpului tău în fiecare cadru și o aplică pe scheletul canonic al platformei — același motor de retargeting care animă fiecare avatar de aici. De asemenea, te segmentează într-o mască.",
-		"any_rigged_humanoid_glb_works_one_you": "Orice GLB umanoid rigat funcționează — unul pe care l-ai <a href=\"/create\">generat</a>, <a href=\"/capture-avatar\">capturat dintr-un selfie</a>, sau rigat dintr-o plasă.",
+		"any_rigged_humanoid_glb_works_one_you": "Orice GLB umanoid rigat funcționează — unul pe care l-ai <a href=\"/create\">generat</a>, <a href=\"/create/selfie\">capturat dintr-un selfie</a>, sau rigat dintr-o plasă.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Capturarea mișcării tale",
 		"drop_a_video_of_one_person": "Încarcă un videoclip cu o singură persoană",

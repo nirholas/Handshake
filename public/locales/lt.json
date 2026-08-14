@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Priėmimas",
 		"accounts": "Paskyros",
-		"by_installing_or_using_the_three_ws": "Įdiegdami arba naudodami three.ws Walk Avatar plėtinį, sutinkate su šiomis sąlygomis ir <a href=\"https://three.ws/legal/terms\">three.ws paslaugų teikimo sąlygomis</a>. Jei nesutinkate, pašalinkite plėtinį.",
+		"by_installing_or_using_the_three_ws": "Įdiegdami arba naudodami three.ws Walk Avatar plėtinį, sutinkate su šiomis sąlygomis ir <a href=\"https://three.ws/legal/tos\">three.ws paslaugų teikimo sąlygomis</a>. Jei nesutinkate, pašalinkite plėtinį.",
 		"contact": "Kontaktas",
 		"disclaimer": "Atsakomybės apribojimas",
 		"intellectual_property": "Intelektinė nuosavybė",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Paslaugų teikimo sąlygos — three.ws Walk Avatar plėtinys",
 		"meta_twitter_title": "Paslaugų teikimo sąlygos — three.ws Walk Avatar plėtinys",
 		"service": "Paslauga",
-		"signing_in_is_optional_an_account_is": "Prisijungimas yra neprivalomas. Paskyra reikalinga norint pasiekti savo three.ws avatarus. Paskyros naudojimą reglamentuoja <a href=\"https://three.ws/legal/terms\">three.ws paslaugų teikimo sąlygos</a>.",
+		"signing_in_is_optional_an_account_is": "Prisijungimas yra neprivalomas. Paskyra reikalinga norint pasiekti savo three.ws avatarus. Paskyros naudojimą reglamentuoja <a href=\"https://three.ws/legal/tos\">three.ws paslaugų teikimo sąlygos</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Paslaugų teikimo sąlygos",
 		"the_extension_code_and_three_ws_brand": "Plėtinio kodas ir three.ws prekės ženklas priklauso three.ws / Nirholas. Jūsų sukurti avatarai yra jūsų, atsižvelgiant į three.ws avataro licenciją.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Serverio darbuotojas seka jūsų kūno pozą kiekviename kadre ir pritaiko ją platformos kanoniniam skeletui – tai tas pats retargeting variklis, kuris valdo kiekvieną avataro animaciją čia. Jis taip pat atskiria jus į kaukę.",
-		"any_rigged_humanoid_glb_works_one_you": "Bet koks sujungtas (rigged) humanoidas GLB veikia – tą, kurį <a href=\"/create\">sukūrėte</a>, <a href=\"/capture-avatar\">nufilmavote asmenukėje</a> arba sujungėte iš tinklelio.",
+		"any_rigged_humanoid_glb_works_one_you": "Bet koks sujungtas (rigged) humanoidas GLB veikia – tą, kurį <a href=\"/create\">sukūrėte</a>, <a href=\"/create/selfie\">nufilmavote asmenukėje</a> arba sujungėte iš tinklelio.",
 		"avatar": "Avataras",
 		"capturing_your_motion": "Jūsų judesio fiksavimas",
 		"drop_a_video_of_one_person": "Įkelkite vieno asmens vaizdo įrašą",

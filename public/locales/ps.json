@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "منل",
 		"accounts": "حسابونه",
-		"by_installing_or_using_the_three_ws": "د three.ws واک اوتار توسیع په نصبولو یا کارولو سره، تاسو په دې شرایطو او د <a href=\"https://three.ws/legal/terms\">three.ws خدماتو شرایطو</a> موافق یاست. که تاسو موافق نه یاست، توسیع غیر نصب کړئ.",
+		"by_installing_or_using_the_three_ws": "د three.ws واک اوتار توسیع په نصبولو یا کارولو سره، تاسو په دې شرایطو او د <a href=\"https://three.ws/legal/tos\">three.ws خدماتو شرایطو</a> موافق یاست. که تاسو موافق نه یاست، توسیع غیر نصب کړئ.",
 		"contact": "اړیکه",
 		"disclaimer": "د مسؤلیت ردول",
 		"intellectual_property": "فکري ملکیت",
@@ -6603,7 +6603,7 @@
 		"meta_title": "د خدمت شرایط — three.ws واک اوتار توسیع",
 		"meta_twitter_title": "د خدمت شرایط — three.ws واک اوتار توسیع",
 		"service": "خدمت",
-		"signing_in_is_optional_an_account_is": "ننوتل اختیاري دي. ستاسو خپلو three.ws اوتارونو ته د لاسرسي لپاره حساب اړین دی. د حساب کارول د <a href=\"https://three.ws/legal/terms\">three.ws خدمت شرایطو </a> لخوا اداره کیږي.",
+		"signing_in_is_optional_an_account_is": "ننوتل اختیاري دي. ستاسو خپلو three.ws اوتارونو ته د لاسرسي لپاره حساب اړین دی. د حساب کارول د <a href=\"https://three.ws/legal/tos\">three.ws خدمت شرایطو </a> لخوا اداره کیږي.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "د خدماتو شرایط",
 		"the_extension_code_and_three_ws_brand": "د توسیع کوډ او د three.ws برانډ د three.ws / نیرولاس ملکیت دی. هغه اوتارونه چې تاسو یې جوړوئ ستاسو دي، د three.ws اوتار جواز تابع دي.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "یو سرور کارګر په هره چوکاټ کې ستاسو د بدن حالت تعقیبوي او د پلیټفارم په کینونیکي کنکال یې حل کوي – هماغه بیا په نښه کولو انجن چې دلته هر اوتار حرکت پرمخ وړي. دا تاسو په ماسک کې هم ویشي.",
-		"any_rigged_humanoid_glb_works_one_you": "هر ډول ریګ شوی بشري GLB کار کوي – یو چې تاسو <a href=\"/create\">تولید کړی وي</a>، <a href=\"/capture-avatar\">له سیلفي څخه نیول شوی وي</a>، یا له میش څخه ریګ شوی وي.",
+		"any_rigged_humanoid_glb_works_one_you": "هر ډول ریګ شوی بشري GLB کار کوي – یو چې تاسو <a href=\"/create\">تولید کړی وي</a>، <a href=\"/create/selfie\">له سیلفي څخه نیول شوی وي</a>، یا له میش څخه ریګ شوی وي.",
 		"avatar": "اوتار",
 		"capturing_your_motion": "ستاسو د حرکت نیول",
 		"drop_a_video_of_one_person": "د یوه کس ویډیو وغورځوئ",

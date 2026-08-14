@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "સ્વીકૃતિ",
 		"accounts": "એકાઉન્ટ્સ",
-		"by_installing_or_using_the_three_ws": "three.ws વૉક અવતાર એક્સ્ટેંશન ઇન્સ્ટોલ કરીને અથવા તેનો ઉપયોગ કરીને, તમે આ શરતો અને <a href=\"https://three.ws/legal/terms\">three.ws સેવાની શરતો</a> સાથે સંમત થાઓ છો. જો તમે સંમત ન હો, તો એક્સ્ટેંશન અનઇન્સ્ટોલ કરો.",
+		"by_installing_or_using_the_three_ws": "three.ws વૉક અવતાર એક્સ્ટેંશન ઇન્સ્ટોલ કરીને અથવા તેનો ઉપયોગ કરીને, તમે આ શરતો અને <a href=\"https://three.ws/legal/tos\">three.ws સેવાની શરતો</a> સાથે સંમત થાઓ છો. જો તમે સંમત ન હો, તો એક્સ્ટેંશન અનઇન્સ્ટોલ કરો.",
 		"contact": "સંપર્ક",
 		"disclaimer": "અસ્વીકરણ",
 		"intellectual_property": "બૌદ્ધિક સંપત્તિ",
@@ -6603,7 +6603,7 @@
 		"meta_title": "સેવાની શરતો — three.ws વૉક અવતાર એક્સ્ટેંશન",
 		"meta_twitter_title": "સેવાની શરતો — three.ws વૉક અવતાર એક્સ્ટેંશન",
 		"service": "સેવા",
-		"signing_in_is_optional_an_account_is": "સાઇન ઇન કરવું વૈકલ્પિક છે. તમારા પોતાના three.ws અવતારને ઍક્સેસ કરવા માટે એકાઉન્ટ આવશ્યક છે. એકાઉન્ટનો ઉપયોગ <a href=\"https://three.ws/legal/terms\">three.ws સેવાની શરતો</a> દ્વારા સંચાલિત થાય છે.",
+		"signing_in_is_optional_an_account_is": "સાઇન ઇન કરવું વૈકલ્પિક છે. તમારા પોતાના three.ws અવતારને ઍક્સેસ કરવા માટે એકાઉન્ટ આવશ્યક છે. એકાઉન્ટનો ઉપયોગ <a href=\"https://three.ws/legal/tos\">three.ws સેવાની શરતો</a> દ્વારા સંચાલિત થાય છે.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "સેવાની શરતો",
 		"the_extension_code_and_three_ws_brand": "એક્સ્ટેંશન કોડ અને three.ws બ્રાન્ડ three.ws / Nirholas ની માલિકીના છે. તમે બનાવેલા અવતાર તમારા છે, જે three.ws અવતાર લાઇસન્સને આધીન છે.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "એક સર્વર વર્કર તમારી શરીરની મુદ્રાને દરેક ફ્રેમમાં ટ્રૅક કરે છે અને તેને પ્લેટફોર્મના કેનોનિકલ સ્કેલેટન પર સોલ્વ કરે છે — આ એ જ રીટાર્ગેટ એન્જિન છે જે અહીં દરેક અવતાર એનિમેશનને ચલાવે છે. તે તમને માસ્કમાં પણ વિભાજિત કરે છે.",
-		"any_rigged_humanoid_glb_works_one_you": "કોઈપણ રિગ્ડ હ્યુમનોઇડ GLB કામ કરે છે — એક જે તમે <a href=\"/create\">જનરેટ કર્યો હોય</a>, <a href=\"/capture-avatar\">સેલ્ફીમાંથી કેપ્ચર કર્યો હોય</a>, અથવા મેશમાંથી રિગ કર્યો હોય.",
+		"any_rigged_humanoid_glb_works_one_you": "કોઈપણ રિગ્ડ હ્યુમનોઇડ GLB કામ કરે છે — એક જે તમે <a href=\"/create\">જનરેટ કર્યો હોય</a>, <a href=\"/create/selfie\">સેલ્ફીમાંથી કેપ્ચર કર્યો હોય</a>, અથવા મેશમાંથી રિગ કર્યો હોય.",
 		"avatar": "અવતાર",
 		"capturing_your_motion": "તમારી ગતિ કેપ્ચર કરી રહ્યા છીએ",
 		"drop_a_video_of_one_person": "એક વ્યક્તિનો વિડિઓ ડ્રોપ કરો",

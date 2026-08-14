@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "গ্রহণযোগ্যতা",
 		"accounts": "অ্যাকাউন্টস",
-		"by_installing_or_using_the_three_ws": "three.ws ওয়াক অ্যাভাটার এক্সটেনশন ইনস্টল বা ব্যবহার করার মাধ্যমে, আপনি এই শর্তাবলী এবং <a href=\"https://three.ws/legal/terms\">three.ws পরিষেবার শর্তাবলী</a>-তে সম্মত হন। যদি আপনি সম্মত না হন, তাহলে এক্সটেনশনটি আনইনস্টল করুন।",
+		"by_installing_or_using_the_three_ws": "three.ws ওয়াক অ্যাভাটার এক্সটেনশন ইনস্টল বা ব্যবহার করার মাধ্যমে, আপনি এই শর্তাবলী এবং <a href=\"https://three.ws/legal/tos\">three.ws পরিষেবার শর্তাবলী</a>-তে সম্মত হন। যদি আপনি সম্মত না হন, তাহলে এক্সটেনশনটি আনইনস্টল করুন।",
 		"contact": "যোগাযোগ",
 		"disclaimer": "দাবিত্যাগ",
 		"intellectual_property": "মেধা সম্পত্তি",
@@ -6603,7 +6603,7 @@
 		"meta_title": "পরিষেবার শর্তাবলী — three.ws Walk Avatar Extension",
 		"meta_twitter_title": "পরিষেবার শর্তাবলী — three.ws Walk Avatar Extension",
 		"service": "পরিষেবা",
-		"signing_in_is_optional_an_account_is": "সাইন ইন করা ঐচ্ছিক। আপনার নিজস্ব three.ws অবতার অ্যাক্সেস করতে একটি অ্যাকাউন্ট আবশ্যক। অ্যাকাউন্ট ব্যবহার <a href=\"https://three.ws/legal/terms\">three.ws পরিষেবার শর্তাবলী</a> দ্বারা নিয়ন্ত্রিত।",
+		"signing_in_is_optional_an_account_is": "সাইন ইন করা ঐচ্ছিক। আপনার নিজস্ব three.ws অবতার অ্যাক্সেস করতে একটি অ্যাকাউন্ট আবশ্যক। অ্যাকাউন্ট ব্যবহার <a href=\"https://three.ws/legal/tos\">three.ws পরিষেবার শর্তাবলী</a> দ্বারা নিয়ন্ত্রিত।",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "পরিষেবার শর্তাবলী",
 		"the_extension_code_and_three_ws_brand": "এক্সটেনশন কোড এবং three.ws ব্র্যান্ড three.ws / Nirholas-এর মালিকানাধীন। আপনার তৈরি করা অবতারগুলি আপনারই, three.ws অবতার লাইসেন্সের শর্তাধীন।",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "একটি সার্ভার ওয়ার্কার প্রতিটি ফ্রেমে আপনার শরীরের পোজ ট্র্যাক করে এবং প্ল্যাটফর্মের ক্যানোনিকাল স্কেলেটনে সেটিকে সমাধান করে — এখানে প্রতিটি অবতার অ্যানিমেশন চালিত করে এমন একই রি-টার্গেট ইঞ্জিন। এটি আপনাকে একটি মাস্কে সেগমেন্টও করে।",
-		"any_rigged_humanoid_glb_works_one_you": "যেকোনো রিগড হিউম্যানয়েড GLB কাজ করে — যা আপনি <a href=\"/create\">তৈরি করেছেন</a>, <a href=\"/capture-avatar\">সেলফি থেকে ক্যাপচার করেছেন</a>, অথবা একটি মেশ থেকে রিগ করেছেন।",
+		"any_rigged_humanoid_glb_works_one_you": "যেকোনো রিগড হিউম্যানয়েড GLB কাজ করে — যা আপনি <a href=\"/create\">তৈরি করেছেন</a>, <a href=\"/create/selfie\">সেলফি থেকে ক্যাপচার করেছেন</a>, অথবা একটি মেশ থেকে রিগ করেছেন।",
 		"avatar": "অবতার",
 		"capturing_your_motion": "আপনার গতি ক্যাপচার করা হচ্ছে",
 		"drop_a_video_of_one_person": "একজন ব্যক্তির একটি ভিডিও ড্রপ করুন",

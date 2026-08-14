@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Kabul",
 		"accounts": "Hesaplar",
-		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar uzantısını yükleyerek veya kullanarak, bu şartları ve <a href=\"https://three.ws/legal/terms\">three.ws Hizmet Şartları</a>'nı kabul etmiş olursunuz. Kabul etmiyorsanız, uzantıyı kaldırın.",
+		"by_installing_or_using_the_three_ws": "three.ws Walk Avatar uzantısını yükleyerek veya kullanarak, bu şartları ve <a href=\"https://three.ws/legal/tos\">three.ws Hizmet Şartları</a>'nı kabul etmiş olursunuz. Kabul etmiyorsanız, uzantıyı kaldırın.",
 		"contact": "İletişim",
 		"disclaimer": "Yasal Uyarı",
 		"intellectual_property": "Fikri Mülkiyet",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Hizmet Şartları — three.ws Walk Avatar Uzantısı",
 		"meta_twitter_title": "Hizmet Şartları — three.ws Walk Avatar Uzantısı",
 		"service": "Hizmet",
-		"signing_in_is_optional_an_account_is": "Oturum açmak isteğe bağlıdır. Kendi three.ws avatarlarınıza erişmek için bir hesap gereklidir. Hesap kullanımı <a href=\"https://three.ws/legal/terms\">three.ws Hizmet Şartları</a>'na tabidir.",
+		"signing_in_is_optional_an_account_is": "Oturum açmak isteğe bağlıdır. Kendi three.ws avatarlarınıza erişmek için bir hesap gereklidir. Hesap kullanımı <a href=\"https://three.ws/legal/tos\">three.ws Hizmet Şartları</a>'na tabidir.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">destek@three.ws</a>",
 		"terms_of_service": "Hizmet Şartları",
 		"the_extension_code_and_three_ws_brand": "Uzantı kodu ve three.ws markası three.ws / Nirholas'a aittir. Oluşturduğunuz avatarlar, three.ws avatar lisansına tabi olmak üzere size aittir.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Bir sunucu çalışanı her karede vücut pozunuzu takip eder ve bunu platformun kanonik iskeletine çözer — buradaki her avatar animasyonunu yönlendiren aynı yeniden hedefleme motoru. Ayrıca sizi bir maske haline getirir.",
-		"any_rigged_humanoid_glb_works_one_you": "Herhangi bir rigged insansı GLB çalışır — ister <a href=\"/create\">oluşturduğunuz</a>, ister <a href=\"/capture-avatar\">bir selfieden yakaladığınız</a> veya bir mesh'ten riglediğiniz olsun.",
+		"any_rigged_humanoid_glb_works_one_you": "Herhangi bir rigged insansı GLB çalışır — ister <a href=\"/create\">oluşturduğunuz</a>, ister <a href=\"/create/selfie\">bir selfieden yakaladığınız</a> veya bir mesh'ten riglediğiniz olsun.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Hareketinizi yakalama",
 		"drop_a_video_of_one_person": "Tek kişilik bir video bırakın",

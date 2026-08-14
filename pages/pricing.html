@@ -1373,7 +1373,7 @@
 					} catch {}
 					if (user && ['pro', 'team', 'enterprise'].includes(user.plan)) {
 						proCta.textContent = 'You’re on ' + (user.plan === 'pro' ? 'Pro ✓' : user.plan[0].toUpperCase() + user.plan.slice(1) + ' ✓');
-						proCta.href = '/account';
+						proCta.href = '/dashboard/account';
 					}
 				}
 

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Aceitação",
 		"accounts": "Contas",
-		"by_installing_or_using_the_three_ws": "Ao instalar ou usar a extensão three.ws Walk Avatar, você concorda com estes termos e com os <a href=\"https://three.ws/legal/terms\">three.ws Termos de Serviço</a>. Se você não concordar, desinstale a extensão.",
+		"by_installing_or_using_the_three_ws": "Ao instalar ou usar a extensão three.ws Walk Avatar, você concorda com estes termos e com os <a href=\"https://three.ws/legal/tos\">three.ws Termos de Serviço</a>. Se você não concordar, desinstale a extensão.",
 		"contact": "Contato",
 		"disclaimer": "Isenção de Responsabilidade",
 		"intellectual_property": "Propriedade Intelectual",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Termos de Serviço — three.ws Walk Avatar Extension",
 		"meta_twitter_title": "Termos de Serviço — three.ws Walk Avatar Extension",
 		"service": "Serviço",
-		"signing_in_is_optional_an_account_is": "O login é opcional. Uma conta é necessária para acessar seus próprios avatares three.ws. O uso da conta é regido pelos <a href=\"https://three.ws/legal/terms\">three.ws Termos de Serviço</a>.",
+		"signing_in_is_optional_an_account_is": "O login é opcional. Uma conta é necessária para acessar seus próprios avatares three.ws. O uso da conta é regido pelos <a href=\"https://three.ws/legal/tos\">three.ws Termos de Serviço</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Termos de Serviço",
 		"the_extension_code_and_three_ws_brand": "O código da extensão e a marca three.ws são de propriedade de three.ws / Nirholas. Os avatares que você cria são seus, sujeitos à licença de avatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Um worker de servidor rastreia sua pose corporal em cada frame e a aplica ao esqueleto canônico da plataforma — o mesmo motor de retargeting que impulsiona todas as animações de avatar aqui. Ele também segmenta você em uma máscara.",
-		"any_rigged_humanoid_glb_works_one_you": "Qualquer GLB humanoide rigado funciona — um que você <a href=\"/create\">gerou</a>, <a href=\"/capture-avatar\">capturou de uma selfie</a>, ou rigou a partir de uma malha.",
+		"any_rigged_humanoid_glb_works_one_you": "Qualquer GLB humanoide rigado funciona — um que você <a href=\"/create\">gerou</a>, <a href=\"/create/selfie\">capturou de uma selfie</a>, ou rigou a partir de uma malha.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Capturando seu movimento",
 		"drop_a_video_of_one_person": "Arraste um vídeo de uma pessoa",

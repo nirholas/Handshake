@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "গ্ৰহণযোগ্যতা",
 		"accounts": "একাউণ্টসমূহ",
-		"by_installing_or_using_the_three_ws": "three.ws ৱাক অৱতাৰ এক্সটেনচন ইনষ্টল বা ব্যৱহাৰ কৰি, আপুনি এই চৰ্তসমূহ আৰু <a href=\"https://three.ws/legal/terms\">three.ws সেৱাৰ চৰ্তসমূহ</a> সৈতে সন্মত হয়। যদি আপুনি সন্মত নহয়, তেন্তে এক্সটেনচনটো আনইনষ্টল কৰক।",
+		"by_installing_or_using_the_three_ws": "three.ws ৱাক অৱতাৰ এক্সটেনচন ইনষ্টল বা ব্যৱহাৰ কৰি, আপুনি এই চৰ্তসমূহ আৰু <a href=\"https://three.ws/legal/tos\">three.ws সেৱাৰ চৰ্তসমূহ</a> সৈতে সন্মত হয়। যদি আপুনি সন্মত নহয়, তেন্তে এক্সটেনচনটো আনইনষ্টল কৰক।",
 		"contact": "যোগাযোগ",
 		"disclaimer": "দাবী অস্বীকাৰ",
 		"intellectual_property": "বৌদ্ধিক সম্পত্তি",
@@ -6603,7 +6603,7 @@
 		"meta_title": "সেৱাৰ চৰ্তসমূহ — three.ws ৱাক অৱতাৰ এক্সটেনচন",
 		"meta_twitter_title": "সেৱাৰ চৰ্তসমূহ — three.ws ৱাক অৱতাৰ এক্সটেনচন",
 		"service": "সেৱা",
-		"signing_in_is_optional_an_account_is": "ছাইন ইন কৰাটো ঐচ্ছিক। আপোনাৰ নিজৰ three.ws অৱতাৰসমূহ এক্সেছ কৰিবলৈ এটা একাউণ্টৰ প্ৰয়োজন। একাউণ্টৰ ব্যৱহাৰ <a href=\"https://three.ws/legal/terms\">three.ws সেৱাৰ চৰ্তসমূহ</a> দ্বাৰা নিয়ন্ত্ৰিত হয়।",
+		"signing_in_is_optional_an_account_is": "ছাইন ইন কৰাটো ঐচ্ছিক। আপোনাৰ নিজৰ three.ws অৱতাৰসমূহ এক্সেছ কৰিবলৈ এটা একাউণ্টৰ প্ৰয়োজন। একাউণ্টৰ ব্যৱহাৰ <a href=\"https://three.ws/legal/tos\">three.ws সেৱাৰ চৰ্তসমূহ</a> দ্বাৰা নিয়ন্ত্ৰিত হয়।",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "সেৱাৰ চৰ্তসমূহ",
 		"the_extension_code_and_three_ws_brand": "এক্সটেনচন ক'ড আৰু three.ws ব্ৰেণ্ড three.ws / নিৰহ'লাছৰ মালিকানাধীন। আপুনি সৃষ্টি কৰা অৱতাৰসমূহ আপোনাৰ, three.ws অৱতাৰ অনুজ্ঞাপত্ৰৰ অধীনত।",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "এটা চাৰ্ভাৰ ৱৰ্কাৰে প্ৰতিটো ফ্ৰেমত আপোনাৰ শৰীৰৰ ভংগীমা ট্ৰেক কৰে আৰু ইয়াক প্লেটফৰ্মৰ কেননিকেল স্কেলেটনত সমাধান কৰে — ইয়াৰ প্ৰতিটো অৱতাৰ এনিমেচন চলোৱা একেটা ৰিটাৰ্গেট ইঞ্জিন। ই আপোনাক এটা মাস্কত বিভক্তও কৰে।",
-		"any_rigged_humanoid_glb_works_one_you": "যিকোনো ৰিগড হিউমেনইড GLB কাম কৰে — এটা যি আপুনি <a href=\"/create\">জেন্গাৰেট কৰিছিল</a>, <a href=\"/capture-avatar\">এটা চেলফিৰ পৰা কেপচাৰ কৰিছিল</a>, বা এটা মেছৰ পৰা ৰিগ কৰিছিল।",
+		"any_rigged_humanoid_glb_works_one_you": "যিকোনো ৰিগড হিউমেনইড GLB কাম কৰে — এটা যি আপুনি <a href=\"/create\">জেন্গাৰেট কৰিছিল</a>, <a href=\"/create/selfie\">এটা চেলফিৰ পৰা কেপচাৰ কৰিছিল</a>, বা এটা মেছৰ পৰা ৰিগ কৰিছিল।",
 		"avatar": "অৱতাৰ",
 		"capturing_your_motion": "আপোনাৰ গতি কেপচাৰ কৰা হৈছে",
 		"drop_a_video_of_one_person": "এজন ব্যক্তিৰ এটা ভিডিঅ' ড্ৰপ কৰক",

@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Derbyniad",
 		"accounts": "Cyfrifon",
-		"by_installing_or_using_the_three_ws": "Drwy osod neu ddefnyddio estyniad three.ws Walk Avatar, rydych chi'n cytuno i'r telerau hyn a <a href=\"https://three.ws/legal/terms\">three.ws Telerau Gwasanaeth</a>. Os nad ydych chi'n cytuno, dadosodwch yr estyniad.",
+		"by_installing_or_using_the_three_ws": "Drwy osod neu ddefnyddio estyniad three.ws Walk Avatar, rydych chi'n cytuno i'r telerau hyn a <a href=\"https://three.ws/legal/tos\">three.ws Telerau Gwasanaeth</a>. Os nad ydych chi'n cytuno, dadosodwch yr estyniad.",
 		"contact": "Cyswllt",
 		"disclaimer": "Ymwadiad",
 		"intellectual_property": "Eiddo Deallusol",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Telerau Gwasanaeth — Estyniad three.ws Walk Avatar",
 		"meta_twitter_title": "Telerau Gwasanaeth — Estyniad three.ws Walk Avatar",
 		"service": "Gwasanaeth",
-		"signing_in_is_optional_an_account_is": "Mae mewngofnodi'n ddewisol. Mae angen cyfrif i gael mynediad at eich afatarau three.ws eich hun. Llywodraethir defnydd cyfrif gan <a href=\"https://three.ws/legal/terms\">three.ws Telerau Gwasanaeth</a>.",
+		"signing_in_is_optional_an_account_is": "Mae mewngofnodi'n ddewisol. Mae angen cyfrif i gael mynediad at eich afatarau three.ws eich hun. Llywodraethir defnydd cyfrif gan <a href=\"https://three.ws/legal/tos\">three.ws Telerau Gwasanaeth</a>.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Telerau Gwasanaeth",
 		"the_extension_code_and_three_ws_brand": "Mae cod yr estyniad a brand three.ws yn eiddo i three.ws / Nirholas. Mae afatarau rydych chi'n eu creu yn eiddo i chi, yn amodol ar drwydded afatar three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Mae gweithiwr gweinydd yn olrhain ystum eich corff ym mhob ffrâm ac yn ei ddatrys ar sgerbwd canonig y platfform — yr un injan ail-dargedu sy'n gyrru pob animeiddiad avatar yma. Mae hefyd yn eich segmentu allan i fasg.",
-		"any_rigged_humanoid_glb_works_one_you": "Mae unrhyw GLB dynol rigiedig yn gweithio — un a <a href=\"/create\">gynhyrchwyd</a> gennych chi, <a href=\"/capture-avatar\">ei ddal o hunlun</a>, neu ei rigio o rwyll.",
+		"any_rigged_humanoid_glb_works_one_you": "Mae unrhyw GLB dynol rigiedig yn gweithio — un a <a href=\"/create\">gynhyrchwyd</a> gennych chi, <a href=\"/create/selfie\">ei ddal o hunlun</a>, neu ei rigio o rwyll.",
 		"avatar": "Afatar",
 		"capturing_your_motion": "Dal eich symudiad",
 		"drop_a_video_of_one_person": "Gollwng fideo o un person",

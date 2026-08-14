@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "Elfogadás",
 		"accounts": "Fiókok",
-		"by_installing_or_using_the_three_ws": "A three.ws Walk Avatar kiterjesztés telepítésével vagy használatával elfogadja ezeket a feltételeket és a <a href=\"https://three.ws/legal/terms\">three.ws Szolgáltatási Feltételeket</a>. Ha nem ért egyet, távolítsa el a kiterjesztést.",
+		"by_installing_or_using_the_three_ws": "A three.ws Walk Avatar kiterjesztés telepítésével vagy használatával elfogadja ezeket a feltételeket és a <a href=\"https://three.ws/legal/tos\">three.ws Szolgáltatási Feltételeket</a>. Ha nem ért egyet, távolítsa el a kiterjesztést.",
 		"contact": "Kapcsolat",
 		"disclaimer": "Jogi nyilatkozat",
 		"intellectual_property": "Szellemi tulajdon",
@@ -6603,7 +6603,7 @@
 		"meta_title": "Szolgáltatási Feltételek — three.ws Walk Avatar Kiterjesztés",
 		"meta_twitter_title": "Szolgáltatási Feltételek — three.ws Walk Avatar Kiterjesztés",
 		"service": "Szolgáltatás",
-		"signing_in_is_optional_an_account_is": "A bejelentkezés opcionális. Saját three.ws avatarjai eléréséhez fiók szükséges. A fiókhasználatot a <a href=\"https://three.ws/legal/terms\">three.ws Szolgáltatási Feltételek</a> szabályozzák.",
+		"signing_in_is_optional_an_account_is": "A bejelentkezés opcionális. Saját three.ws avatarjai eléréséhez fiók szükséges. A fiókhasználatot a <a href=\"https://three.ws/legal/tos\">three.ws Szolgáltatási Feltételek</a> szabályozzák.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "Szolgáltatási Feltételek",
 		"the_extension_code_and_three_ws_brand": "A kiterjesztés kódja és a three.ws márka tulajdonosa: three.ws / Nirholas. Az Ön által létrehozott avatarok az Ön tulajdonát képezik, a three.ws avatar licenc feltételei szerint.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "Egy szerveroldali folyamat minden képkockán követi a testtartásodat és ráilleszti a platform kanonikus csontvázára — ugyanaz a retargeting motor, ami itt minden avatar animációt meghajt. Emellett maszkot is készít rólad.",
-		"any_rigged_humanoid_glb_works_one_you": "Bármilyen riggelt humanoid GLB működik — amit <a href=\"/create\">generáltál</a>, <a href=\"/capture-avatar\">szelfiből rögzítettél</a>, vagy hálóból riggeltél.",
+		"any_rigged_humanoid_glb_works_one_you": "Bármilyen riggelt humanoid GLB működik — amit <a href=\"/create\">generáltál</a>, <a href=\"/create/selfie\">szelfiből rögzítettél</a>, vagy hálóból riggeltél.",
 		"avatar": "Avatar",
 		"capturing_your_motion": "Mozgásod rögzítése",
 		"drop_a_video_of_one_person": "Tölts fel egy videót egy személyről",

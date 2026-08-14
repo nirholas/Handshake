@@ -6593,7 +6593,7 @@
 	"extension_terms": {
 		"acceptance": "קבלה",
 		"accounts": "חשבונות",
-		"by_installing_or_using_the_three_ws": "על ידי התקנה או שימוש בהרחבת three.ws Walk Avatar, אתם מסכימים לתנאים אלה ול<a href=\"https://three.ws/legal/terms\">תנאי השירות</a> של three.ws. אם אינכם מסכימים, הסירו את ההרחבה.",
+		"by_installing_or_using_the_three_ws": "על ידי התקנה או שימוש בהרחבת three.ws Walk Avatar, אתם מסכימים לתנאים אלה ול<a href=\"https://three.ws/legal/tos\">תנאי השירות</a> של three.ws. אם אינכם מסכימים, הסירו את ההרחבה.",
 		"contact": "יצירת קשר",
 		"disclaimer": "הצהרת אחריות",
 		"intellectual_property": "קניין רוחני",
@@ -6603,7 +6603,7 @@
 		"meta_title": "תנאי שירות — הרחבת three.ws Walk Avatar",
 		"meta_twitter_title": "תנאי שירות — הרחבת three.ws Walk Avatar",
 		"service": "שירות",
-		"signing_in_is_optional_an_account_is": "הכניסה היא אופציונלית. נדרש חשבון כדי לגשת לאווטארים של three.ws שלכם. השימוש בחשבון כפוף ל<a href=\"https://three.ws/legal/terms\">תנאי השירות</a> של three.ws.",
+		"signing_in_is_optional_an_account_is": "הכניסה היא אופציונלית. נדרש חשבון כדי לגשת לאווטארים של three.ws שלכם. השימוש בחשבון כפוף ל<a href=\"https://three.ws/legal/tos\">תנאי השירות</a> של three.ws.",
 		"support_three_ws": "<a href=\"mailto:support@three.ws\">support@three.ws</a>",
 		"terms_of_service": "תנאי שירות",
 		"the_extension_code_and_three_ws_brand": "קוד ההרחבה והמותג three.ws בבעלות three.ws / Nirholas. אווטארים שאתם יוצרים הם שלכם, בכפוף לרישיון האווטאר של three.ws.",
@@ -11253,7 +11253,7 @@
 	},
 	"motion_swap": {
 		"a_server_worker_tracks_your_body_pose": "תהליך שרת עוקב אחר תנוחת הגוף שלך בכל פריים וממפה אותה לשלד הקנוני של הפלטפורמה — אותו מנוע ריטארגטינג שמניע כל אנימציית אווטאר כאן. הוא גם מפריד אותך למסכה.",
-		"any_rigged_humanoid_glb_works_one_you": "כל GLB הומנואידי מרוגל יעבוד — כזה ש-<a href=\"/create\">יצרתם</a>, <a href=\"/capture-avatar\">צילמתם מסלפי</a>, או ריגלתם ממודל תלת-ממדי.",
+		"any_rigged_humanoid_glb_works_one_you": "כל GLB הומנואידי מרוגל יעבוד — כזה ש-<a href=\"/create\">יצרתם</a>, <a href=\"/create/selfie\">צילמתם מסלפי</a>, או ריגלתם ממודל תלת-ממדי.",
 		"avatar": "אווטאר",
 		"capturing_your_motion": "לכידת התנועה שלך",
 		"drop_a_video_of_one_person": "גרור סרטון של אדם אחד",
