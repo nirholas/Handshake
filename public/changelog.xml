@@ -39,6 +39,14 @@
 			<description>The bounty board at /bounties mirrors the public pump.fun GO board. When you opened a bounty link that had been deleted or mistyped, the page reported it the same way it reports pump.fun being down, so there was no way to tell a dead link from an outage. A bounty that genuinely is not there now answers as not found, and a real upstream problem keeps its own separate answer. A second, quieter case got fixed with it: when the submissions list for a bounty failed to load, the page showed the bounty with zero submissions and said nothing, which looks identical to a bounty nobody has entered. That failure is now recorded, so a pump.fun outage shows up as an outage rather than as a board that suddenly looks unpopular.</description>
 		</item>
 		<item>
+			<title>Add funds now opens Coinbase on the buy step, not on a transfer you cannot make</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Add funds now opens Coinbase on the buy step, not on a transfer you cannot make</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Add funds window hands you a Coinbase checkout with your three.ws wallet already filled in as the destination. That checkout was not told which step to open on, so Coinbase could land you on &quot;transfer from your Coinbase balance&quot;, which is no help at all if you reached Add funds precisely because you hold nothing yet. It now always opens on the buy step for the asset you picked (USDC or SOL, both settling on Solana). The suggested dollar amount is also rounded to real dollars and cents before it reaches Coinbase, so an amount worked out from a shortfall can no longer show up as something like $25.777777 on the checkout screen or in the window itself.</description>
+		</item>
+		<item>
 			<title>Another site can no longer swap your agent's body or burn your avatar credits behind your back</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Another site can no longer swap your agent's body or burn your avatar credits behind your back</guid>
@@ -197,6 +205,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The trading floor at /activity reconnects to its live feed by telling the server the timestamp it last saw. If that timestamp arrived malformed, the server opened the stream anyway and then silently failed every lookup behind it: the page stayed connected, showed no error, and never received another action for as long as it was open. It now rejects the bad timestamp up front with a clear message so the page reconnects cleanly instead of sitting on a dead feed. Three neighbouring Oracle endpoints got the same treatment: a malformed paging cursor on the activity feed, and a non-text agent or chat id sent to the follow endpoint, used to come back as an unexplained server error and now come back as a plain description of what was wrong. An unreadable result limit on an agent's public track record no longer wipes out its recent-trade list. The activity feed and the calibration report also now allow cross-site reads, matching every other public Oracle endpoint.</description>
+		</item>
+		<item>
+			<title>The payment-outcome board no longer reports itself healthy while it is blind</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:The payment-outcome board no longer reports itself healthy while it is blind</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>One of the internal boards we watch payments with is built from three independent panels: payments arriving, settlements going out, and the fee wallet that pays for them. If a panel could not be read, the board swapped in an error for that panel but still answered with a plain success, so a read where all three had failed looked identical to a read where everything was fine. It now names every panel it could not see and answers with a partial-success status instead, which is what our alerting keys on. Separately, all three ops boards were spending the same strict per-address budget that guards sign-in attempts, so simply watching a dashboard could lock an operator out of logging in from that address. The boards now use the generous read budget the rest of the signed-in read surface uses.</description>
 		</item>
 		<item>
 			<title>The Reputation Staking Market is live: back an agent and earn from what it actually did</title>
