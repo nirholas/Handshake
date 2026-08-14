@@ -3,6 +3,15 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "The example responses in four API guides now match what the API actually returns",
+      "summary": "The docs for ghost-copy, Trader Passport, the wallet portfolio, and the airdrop checker each show a sample JSON response so you can see the shape before you write any code. Those samples had fallen behind the endpoints: they were missing whole fields that the live API returns, including the timestamp on an airdrop scan, the window start and per-trade detail on a ghost-copy replay, and the issuer note, verification instructions, and generation time on a passport. Anyone building against the samples would have concluded those fields did not exist. Every sample was re-checked field by field against a live call to the running endpoint and corrected, and the places where a sample is deliberately shortened are now marked as shortened instead of looking complete.",
+      "tags": [
+        "docs"
+      ],
+      "link": "/docs/trader-passport"
+    },
+    {
+      "date": "2026-08-14",
       "title": "Your agent's memory graph was never being built, and now it is",
       "summary": "Memory Studio promises a knowledge graph: every fact your agent stores is scanned for the mints, tickers, wallets, people, and strategies it mentions, and those become nodes you can click through to ask what your agent remembers about any one of them. That scan was failing on a type mismatch the moment it tried to save a node, and because the failure was caught quietly, nothing ever looked broken: the graph simply came back empty forever, for every agent, and the memories were never marked as scanned. The save is fixed, so the graph now fills in on your next visit, including for everything your agents have stored up to now. Recall and search were never affected.",
       "tags": [
