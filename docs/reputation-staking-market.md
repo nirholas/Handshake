@@ -150,6 +150,23 @@ settlement. It takes no arguments:
 node scripts/reputation-market-proof.mjs
 ```
 
+### When the faucet says no
+
+The public devnet faucet rate-limits per source IP, so a shared machine (a
+Codespace, a CI runner, an office network) can find it already exhausted by
+someone else and the run stops at `fund` with a 429. The proof does not depend
+on the faucet: fund any devnet keypair once at
+[faucet.solana.com](https://faucet.solana.com), then hand the proof its secret
+and it funds each run itself.
+
+```bash
+REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY=<base58 secret> node scripts/reputation-market-proof.mjs
+```
+
+The funder needs roughly 0.02 SOL per run and is only ever debited to the
+throwaway staker the run generates. If it is short, the proof says which account
+holds how much and what it needs, rather than failing at a later stage.
+
 ## HTTP surface
 
 | Endpoint | Method | Purpose |

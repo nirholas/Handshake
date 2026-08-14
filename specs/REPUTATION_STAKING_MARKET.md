@@ -288,10 +288,16 @@ Every write refuses on `mainnet` unless the owner gate in §1 is open, with
 ## 10. Reference cycle
 
 `scripts/reputation-market-proof.mjs` runs the whole contract against Solana
-devnet with airdropped lamports: fund, stake, verify, accrue against real
-attested action history, withdraw, and re-read the chain to confirm the
-settlement. It is the executable form of this spec and takes no arguments:
+devnet: fund, stake, verify, accrue against real attested action history,
+withdraw, and re-read the chain to confirm the settlement. It is the executable
+form of this spec and takes no arguments:
 
 ```bash
 node scripts/reputation-market-proof.mjs
 ```
+
+Funding has two rungs, in order: `REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY` (a
+keypair funded once, out of band) and the public devnet faucet. The faucet
+rate-limits per source IP, so it is the fallback rather than the contract; a run
+from an IP the faucet has cut off is a funding problem, never a statement about
+the market itself.
