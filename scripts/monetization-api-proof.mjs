@@ -54,6 +54,10 @@ const TMP = path.join(root, '.monetization-proof');
 const USDC_SOL = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const SOL_PAYOUT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const EVM_PAYOUT = '0x1111111111111111111111111111111111111111';
+// A second EVM address, saved through /api/billing/payout-wallets under the
+// legacy chain label 'evm', used to prove it cannot shadow the address the owner
+// saves here on chain 'base'.
+const EVM_LEGACY = '0x2222222222222222222222222222222222222222';
 
 // tiny transcript + assertion kit
 let failed = 0;
@@ -426,6 +430,42 @@ async function main() {
 		const r = await http.write('DELETE', '/api/monetization/prices', { agent_id: agentId, skill_name: 'ghost-skill', hard: true });
 		check('DELETE of a skill with no price row -> 404', r.status === 404, `status ${r.status}`);
 	}
+	{
+		// The dashboard's del() helper (src/dashboard-next/api.js) sends no body and
+		// no content-type, addressing the row with query parameters instead. Every
+		// "Remove price" button on the monetize and creator pages goes through it,
+		// so a body-only DELETE reader makes all of them dead.
+		await http.write('PUT', '/api/monetization/prices', { agent_id: agentId, skill_name: 'querydel', price_usdc: 0.02 });
+		const r = await http.write('DELETE', `/api/monetization/prices?agent_id=${agentId}&skill_name=querydel`);
+		const list = await http.req('GET', `/api/monetization/prices?agent_id=${agentId}`, { anonymous: true });
+		check('DELETE addressed by query string, the shape the dashboard sends -> 200',
+			r.status === 200 && !list.json.prices.some((p) => p.skill_name === 'querydel'),
+			`status ${r.status}, ${list.json?.prices?.length} price(s) left`);
+	}
+	{
+		const r = await http.write('DELETE', '/api/monetization/prices?skill_name=querydel');
+		check('DELETE with neither a body nor an agent_id -> 400', r.status === 400, `status ${r.status}`);
+	}
+	{
+		// The embed's skill-access gate reads prices through the shared cache (1h
+		// TTL), so a write that skips invalidation keeps quoting buyers the old
+		// amount for an hour. Warm the cache, edit the price, read it back.
+		await http.write('PUT', '/api/monetization/prices', { agent_id: agentId, skill_name: 'cached', price_usdc: 0.25 });
+		const warm = await http.req('GET', `/api/agents/${agentId}/skill-access`, { anonymous: true });
+		await http.write('PUT', '/api/monetization/prices', { agent_id: agentId, skill_name: 'cached', price_usdc: 0.75 });
+		const after = await http.req('GET', `/api/agents/${agentId}/skill-access`, { anonymous: true });
+		check('a price edit is visible immediately through the cached skill-access gate',
+			Number(warm.json?.data?.skill_prices?.cached?.amount) === 250_000
+			&& Number(after.json?.data?.skill_prices?.cached?.amount) === 750_000,
+			`warm ${warm.json?.data?.skill_prices?.cached?.amount}, after ${after.json?.data?.skill_prices?.cached?.amount}`);
+	}
+	{
+		const r = await http.write('DELETE', `/api/monetization/prices?agent_id=${agentId}&skill_name=cached`);
+		const gate = await http.req('GET', `/api/agents/${agentId}/skill-access`, { anonymous: true });
+		check('removing a price clears it from the cached gate too',
+			r.status === 200 && !('cached' in (gate.json?.data?.skill_prices || {})),
+			`status ${r.status}, gate keys ${Object.keys(gate.json?.data?.skill_prices || {}).join(',') || 'none'}`);
+	}
 
 	// wallet.js
 	step('4. /api/monetization/wallet');
@@ -483,6 +523,29 @@ async function main() {
 		const list = await http.req('GET', `/api/monetization/wallet?agent_id=${agentId}`);
 		check('re-PUT upserts rather than duplicating', r.status === 200 && list.json.wallets.length === 2,
 			`${list.json?.wallets?.length} wallet rows after the second PUT`);
+	}
+	{
+		// 'base' and 'evm' are one payout rail carrying two chain labels, and the
+		// unique key is (user_id, agent_id, chain), so /api/billing/payout-wallets
+		// can leave a default 'evm' row sitting beside this endpoint's 'base' row.
+		// Both resolvers (here and in withdrawals.js) order by is_default then
+		// created_at, and an upsert never moves created_at, so the stale sibling
+		// used to outrank the address the owner had just saved and the payout went
+		// to the replaced address.
+		const legacy = await http.write('POST', '/api/billing/payout-wallets', {
+			address: EVM_LEGACY, chain: 'evm', agent_id: agentId, is_default: true,
+		});
+		const r = await http.write('PUT', '/api/monetization/wallet', { agent_id: agentId, evm_address: EVM_PAYOUT });
+		const list = await http.req('GET', `/api/monetization/wallet?agent_id=${agentId}`);
+		const { rows } = await db.query(
+			`select count(*)::int as n from agent_payout_wallets
+			 where agent_id = $1 and chain in ('base', 'evm') and is_default`,
+			[agentId],
+		);
+		check('a legacy evm row cannot shadow the newly saved EVM payout address',
+			legacy.status < 300 && r.status === 200
+			&& list.json?.resolved?.evm_address === EVM_PAYOUT && rows[0].n === 1,
+			`legacy ${legacy.status}, resolved ${list.json?.resolved?.evm_address}, ${rows[0].n} default row(s) on the EVM rail`);
 	}
 
 	// withdrawals.js, empty-balance paths

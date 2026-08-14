@@ -22,6 +22,7 @@
 import { cors, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
+import { publicUrl } from '../_lib/r2.js';
 import { isUuid } from '../_lib/validate.js';
 import { getBalances, walletUsdTotal } from '../_lib/balances.js';
 import { getAgentReputation } from '../_lib/trust/wallet-reputation.js';
@@ -126,21 +127,47 @@ async function tipsCountFor(id) {
 	}
 }
 
+// The image types a social crawler will rasterize out of an inline data URI. The
+// value is read off a remote response header and lands inside an SVG attribute,
+// so it is matched against this set rather than interpolated: a quoted or
+// parameterized content-type would otherwise break out of the href.
+const IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']);
+function imageMime(header) {
+	const mime = String(header || '').split(';')[0].trim().toLowerCase();
+	return IMAGE_MIME.has(mime) ? mime : 'image/jpeg';
+}
+
+// Where the thumbnail actually lives, or null when there is nothing safe to
+// render: no thumbnail, a non-public avatar, or an unconfigured bucket domain.
+// publicUrl() is the same resolver avatar-og.js uses, so a key that is already an
+// absolute URL (imported/externally-hosted avatars) passes through and a key with
+// spaces or a "#" gets encoded instead of producing a dead CDN fetch. It reads
+// env.S3_PUBLIC_DOMAIN, which THROWS when unset, and that must degrade to the
+// gradient portrait: an unconfigured var may never 503 a crawler.
+function thumbnailUrl(row) {
+	const thumbPublic = row?.visibility === 'public' || row?.visibility === 'unlisted';
+	if (!row?.thumbnail_key || !thumbPublic) return null;
+	try {
+		return publicUrl(row.thumbnail_key);
+	} catch {
+		return null;
+	}
+}
+
 // Fetch and inline the avatar thumbnail as a data URI (public/unlisted only).
 // Size-capped both by the declared content-length and the decoded bytes so a
 // mis-declared or chunked response can't blow the card up. Any failure returns
 // null, which renders the gradient-initial portrait instead.
 async function loadAvatarImage(row) {
-	const CDN_BASE = env.S3_PUBLIC_DOMAIN || 'https://three.ws/cdn';
-	const thumbPublic = row.visibility === 'public' || row.visibility === 'unlisted';
-	if (!row.thumbnail_key || !thumbPublic) return null;
+	const src = thumbnailUrl(row);
+	if (!src) return null;
 	try {
-		const imgResp = await fetch(`${CDN_BASE}/${row.thumbnail_key}`, { signal: AbortSignal.timeout(3000) });
+		const imgResp = await fetch(src, { signal: AbortSignal.timeout(3000) });
 		if (!imgResp.ok) return null;
 		const MAX = 2 * 1024 * 1024;
 		const declared = Number(imgResp.headers.get('content-length') || 0);
 		if (declared && declared > MAX) return null;
-		const ct = imgResp.headers.get('content-type') || 'image/jpeg';
+		const ct = imageMime(imgResp.headers.get('content-type'));
 		const ab = await imgResp.arrayBuffer();
 		if (ab.byteLength > MAX) return null;
 		return { ct, b64: Buffer.from(ab).toString('base64') };
