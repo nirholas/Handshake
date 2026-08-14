@@ -3,6 +3,23 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "Scheduled X posts actually get published, and a draft you already approved leaves the review queue",
+      "summary": "A post you schedule is stored in one table, and two generations of that table had been declared in the codebase with different column names. Which one a given database ended up with came down to whichever definition it happened to run first, and nothing forced the issue, so it could silently be the wrong one. On a database that got the wrong one, the job that publishes due posts failed the instant it started, every minute, and the schedule panel itself errored on load: nothing you queued was ever posted and you could not see the queue to find out. The table is now reconciled to the shape the app reads, from either starting point, and any post an older database had already sent is carried across so the publisher does not send it a second time. The approve-and-reject queue behind Draft with AI had the same split, where a draft you had already resolved could sit in the pending list forever, and it is fixed the same way.",
+      "tags": [
+        "fix"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Revoking an agent's spending permission is now noticed on every chain, not just the first one",
+      "summary": "The indexer that watches for a revoked or spent agent permission walks six chains on every run, under a single shared time budget. Ethereum mainnet is first in that list and by far the slowest, because its nodes will only answer 25 blocks of history at a time, so it routinely used the whole budget before any other chain was reached. A chain that indexes nothing also never records how far it got, so on the next run it started over from the current chain tip: the later chains, Base included, were not merely slow, they never made progress at all, and a revocation there could stay unnoticed indefinitely. Each chain now gets its own share of the budget, whichever chain goes first rotates on every run, and a run reports which chains it reached instead of reporting an empty scan as a completed one.",
+      "tags": [
+        "fix",
+        "infra"
+      ]
+    },
+    {
+      "date": "2026-08-14",
       "title": "The Smart Money Radar stops going blank when pump.fun rate-limits us",
       "summary": "Every coin the platform watches gets a verdict recorded after the fact (did it graduate, pump, go flat, or rug), and that verdict is what the Smart Money Radar and the Pre-Launch Radar are built from. The verdict came from a single live lookup against pump.fun, and any hiccup there (a rate limit, a timeout, a coin aged out of their index) was written down as \"unknown\" and never looked at again. Unknown coins are skipped by the wallet-reputation graph and by the proven-creator list, so a few throttled minutes could permanently erase whole batches of coins from both radars. Two changes fix it. We now cross-check against our own graduation index, which we build independently, so a coin we already watched graduate is scored as graduated no matter what the third-party lookup says. And an unknown is now treated as \"not yet known\": it is retried on a backoff for the first week of a coin's life instead of standing as a permanent answer.",
       "tags": [

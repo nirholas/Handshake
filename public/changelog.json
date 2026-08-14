@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T06:07:47.190Z",
+	"generated_at": "2026-08-14T06:09:52.979Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -333,6 +333,27 @@
 			"title": "Removing a skill price works again, price edits reach buyers instantly, and a withdrawal cannot pay an address you replaced",
 			"summary": "Three fixes to the creator monetization tools. The Remove button on a skill price did nothing: the dashboard addressed the row in the web address while the API only read it from the request body, so every click came back as an error. Price changes were also invisible to buyers for up to an hour, because the cached catalog the agent embed reads its paid-skill gate from was never refreshed after an edit, leaving the old amount on offer and keeping a removed skill locked. And a payout address saved on an EVM chain could be shadowed by an older address stored under the earlier chain label, so a withdrawal could land on the address you had just replaced. Saving a new EVM address now retires the old one across the whole rail.",
 			"link": "/dashboard/monetize",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Revoking an agent's spending permission is now noticed on every chain, not just the first one",
+			"summary": "The indexer that watches for a revoked or spent agent permission walks six chains on every run, under a single shared time budget. Ethereum mainnet is first in that list and by far the slowest, because its nodes will only answer 25 blocks of history at a time, so it routinely used the whole budget before any other chain was reached. A chain that indexes nothing also never records how far it got, so on the next run it started over from the current chain tip: the later chains, Base included, were not merely slow, they never made progress at all, and a revocation there could stay unnoticed indefinitely. Each chain now gets its own share of the budget, whichever chain goes first rotates on every run, and a run reports which chains it reached instead of reporting an empty scan as a completed one.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Scheduled X posts actually get published, and a draft you already approved leaves the review queue",
+			"summary": "A post you schedule is stored in one table, and two generations of that table had been declared in the codebase with different column names. Which one a given database ended up with came down to whichever definition it happened to run first, and nothing forced the issue, so it could silently be the wrong one. On a database that got the wrong one, the job that publishes due posts failed the instant it started, every minute, and the schedule panel itself errored on load: nothing you queued was ever posted and you could not see the queue to find out. The table is now reconciled to the shape the app reads, from either starting point, and any post an older database had already sent is carried across so the publisher does not send it a second time. The approve-and-reject queue behind Draft with AI had the same split, where a draft you had already resolved could sit in the pending list forever, and it is fixed the same way.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
