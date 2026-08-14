@@ -2914,6 +2914,12 @@ URL: https://three.ws/docs/creator-portfolio
 
 Everything a creator makes on three.ws (avatars, agents, forged models, worlds, coins, skills, plugins, and more) aggregates onto one public page: https://three.ws/u/<username>.
 
+### Docs: Autonomous agent-to-agent payments
+
+URL: https://three.ws/docs/a2a-payments
+
+How one three.ws agent pays another agent's paid endpoint with no human approving each payment: how the spending mandate is issued, every gate a payment passes, the record each one leaves behind, and how to stop an agent that has gone wrong.
+
 ### Docs: Agent wallet control API
 
 URL: https://three.ws/docs/agent-wallet-api

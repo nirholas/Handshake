@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T00:50:28.718Z",
+	"generated_at": "2026-08-14T00:53:05.423Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -26,6 +26,18 @@
 				"feature",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The limits you set on an agent's spending can no longer be skipped",
+			"summary": "An agent that pays other agents on its own is governed by the policy you set on its wallet: a ceiling per payment, a rolling 24-hour ceiling, a separate ceiling per payee so one peer cannot quietly absorb the whole day's budget, and a kill switch that halts every kind of autonomous spending the moment you flip it. Those rules were enforced wherever the platform asked for them, but the enforcement itself had a soft spot: code that asked the guard to check a payment without first loading the agent's settings was handed an empty policy, meaning no ceilings and no kill switch, and nothing anywhere said so. The guard now reads the agent's real policy itself in that case, and refuses outright to price a payment for an agent that no longer exists. Every ceiling and the kill switch are now proven, not asserted: one command spins up a real database and a real server, then shows each limit turning away an over-limit payment, eight simultaneous payments competing for the last dollar of headroom with exactly one getting through, a frozen agent halted before the other agent is even contacted while your own withdrawals stay open, and every settled payment coming back as a receipt with the payee, the amount and the transaction signature on your agent's ledger.",
+			"link": "/docs/a2a-payments",
+			"tags": [
+				"security",
+				"improvement",
+				"docs"
 			]
 		},
 		{

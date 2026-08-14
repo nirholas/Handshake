@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T00:50:28.672Z",
+	"generated_at": "2026-08-14T00:53:05.233Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4801,6 +4801,16 @@
 					"path": "/docs/creator-portfolio",
 					"title": "Docs: Creator portfolio",
 					"description": "Everything a creator makes on three.ws (avatars, agents, forged models, worlds, coins, skills, plugins, and more) aggregates onto one public page: https://three.ws/u/<username>.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/a2a-payments",
+					"title": "Docs: Autonomous agent-to-agent payments",
+					"description": "How one three.ws agent pays another agent's paid endpoint with no human approving each payment: how the spending mandate is issued, every gate a payment passes, the record each one leaves behind, and how to stop an agent that has gone wrong.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

@@ -3767,6 +3767,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/a2a-payments",
+					"title": "Docs: Autonomous agent-to-agent payments",
+					"description": "How one three.ws agent pays another agent's paid endpoint with no human approving each payment: how the spending mandate is issued, every gate a payment passes, the record each one leaves behind, and how to stop an agent that has gone wrong.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/agent-wallet-api",
 					"title": "Docs: Agent wallet control API",
 					"description": "Every three.ws agent owns one custodial Solana wallet. Seven owner-only HTTP surfaces hang off it, and this is their developer reference: exact routes, exact request and response JSON, exact error codes, and a working curl call for each.",
