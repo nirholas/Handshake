@@ -9,7 +9,23 @@
 //   3. Live 402 challenge — each thin route module builds a real paidEndpoint
 //      whose unpaid response advertises the registry's exact price.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// The sector builder is swappable so the upstream-failure suite below can drive
+// a real provider error (429, 401) through the fetcher without a network call.
+// Unswapped it delegates to the real module, so every other suite is untouched.
+const realCategories = await vi.importActual('../api/coin/categories.js');
+const categoriesImpl = { fn: realCategories.buildCategories };
+vi.mock('../api/coin/categories.js', () => ({
+	buildCategories: (...args) => categoriesImpl.fn(...args),
+}));
+
+function categoriesBuilder(fn) {
+	categoriesImpl.fn = fn;
+	return () => {
+		categoriesImpl.fn = realCategories.buildCategories;
+	};
+}
 
 // Discovery env must be set BEFORE the paid-endpoint stack loads — same stub
 // set tests/service-catalog.test.js uses.
@@ -131,11 +147,66 @@ describe('market-data fetcher validation', () => {
 		});
 	});
 
+	it('market-fees rejects an unknown type instead of silently serving fees', async () => {
+		await expectRejection(MARKET_FETCHERS['market-fees'](params({ type: 'revenu' })), {
+			status: 422,
+			code: 'invalid_type',
+		});
+	});
+
 	it('market-yields rejects a malformed pool uuid', async () => {
 		await expectRejection(MARKET_FETCHERS['market-yields'](params({ pool: 'not-a-uuid' })), {
 			status: 422,
 			code: 'invalid_pool',
 		});
+	});
+});
+
+// ── Upstream failure translation ────────────────────────────────────────────
+//
+// A provider throttle is OUR downtime, not the buyer's fault. Passing the
+// upstream status through told a paying agent it was rate limited (on an
+// endpoint sold as having no per-IP limits) and leaked the provider name and
+// internal path in the error text. Only genuine caller faults survive intact.
+describe('market-data upstream failure translation', () => {
+	const throwing = (status, message) => async () => {
+		throw Object.assign(new Error(message), { status });
+	};
+
+	it('reports an upstream 429 as retryable downtime, leaking no provider detail', async () => {
+		const restore = categoriesBuilder(throwing(429, 'CoinGecko 429 for /coins/categories?order=market_cap_desc'));
+		try {
+			await expectRejection(MARKET_FETCHERS['market-categories'](params()), {
+				status: 503,
+				code: 'data_unavailable',
+			});
+		} finally {
+			restore();
+		}
+	});
+
+	it('reports an upstream auth fault as downtime too', async () => {
+		const restore = categoriesBuilder(throwing(401, 'CoinGecko 401 for /coins/categories'));
+		try {
+			await expectRejection(MARKET_FETCHERS['market-categories'](params()), {
+				status: 503,
+				code: 'data_unavailable',
+			});
+		} finally {
+			restore();
+		}
+	});
+
+	it('still passes a genuine caller fault (404) through untouched', async () => {
+		const restore = categoriesBuilder(throwing(404, 'no such category'));
+		try {
+			await expectRejection(MARKET_FETCHERS['market-categories'](params()), {
+				status: 404,
+				code: undefined,
+			});
+		} finally {
+			restore();
+		}
 	});
 });
 

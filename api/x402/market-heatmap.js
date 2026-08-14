@@ -30,6 +30,16 @@ let _cache = null; // { coins, source, expiresAt }
 
 const finite = (n) => (Number.isFinite(n) ? n : null);
 
+// Market-cap rank, or the row's board position when the upstream has none.
+// CoinGecko sends `market_cap_rank: null` for coins it has not ranked, and
+// Number(null) is 0, so a plain finite() check let a nonsense rank of 0 through
+// instead of falling back. Ranks are 1-based; anything else takes the fallback.
+// (The CoinPaprika branch already filters rank > 0, so both sources agree.)
+export const rankOr = (raw, fallback) => {
+	const n = Number(raw);
+	return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+};
+
 async function fetchCoinGecko() {
 	const url =
 		'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc' +
@@ -42,7 +52,7 @@ async function fetchCoinGecko() {
 	const raw = await r.json();
 	if (!Array.isArray(raw) || !raw.length) throw new Error('coingecko empty');
 	return raw.map((c, i) => ({
-		rank: finite(Number(c.market_cap_rank)) ?? i + 1,
+		rank: rankOr(c.market_cap_rank, i + 1),
 		symbol: typeof c.symbol === 'string' ? c.symbol.toUpperCase() : null,
 		name: typeof c.name === 'string' ? c.name : null,
 		price_usd: finite(Number(c.current_price)),
@@ -106,7 +116,11 @@ async function loadBoard() {
 	return _cache;
 }
 
-function breadth(coins) {
+// Market breadth over the board's 24h moves. A +/- 0.05% dead band keeps
+// rounding noise out of the advancer/decliner split, and coins the upstream
+// could not price (change_24h null) are excluded rather than counted as flat,
+// so the three buckets always sum to the number of coins actually measured.
+export function breadth(coins) {
 	const moves = coins.map((c) => c.change_24h).filter((n) => n != null);
 	const advancers = moves.filter((n) => n > 0.05).length;
 	const decliners = moves.filter((n) => n < -0.05).length;

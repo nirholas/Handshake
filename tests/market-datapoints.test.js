@@ -297,4 +297,17 @@ describe('dynamic datapoint route', () => {
 		expect(res.statusCode).toBe(422);
 		expect(JSON.parse(res.body).error).toBe('invalid_id');
 	});
+
+	it('rejects a bad path in the same error envelope every other api handler uses', async () => {
+		// A caller written against any other three.ws endpoint reads
+		// error_description; this route used to answer `message` alone.
+		const res = await drive('/api/x402/d/global/not-a-metric');
+		expect(res.statusCode).toBe(404);
+		const body = JSON.parse(res.body);
+		expect(body.error).toBe('unknown_metric');
+		expect(body.error_description).toContain('unknown metric');
+		expect(body.families).toContain('global');
+		// An error is never cacheable, whatever the paid path advertises.
+		expect(String(res.headers['cache-control'])).toContain('no-store');
+	});
 });

@@ -2,7 +2,7 @@
 
 The same live market data behind every three.ws `/markets` page — coin prices, DeFi TVL, yields, stablecoins, gas, derivatives, exploits, and more — packaged as **17 paid endpoints agents can discover and buy autonomously**. No API key, no signup, no subscription: request an endpoint, receive an HTTP 402 challenge, pay a USDC micro-payment on Solana or Base, get the data.
 
-- **Free index (start here):** [`GET /api/x402/market`](https://three.ws/api/x402/market) — lists every endpoint with price, params, and a runnable example
+- **Free index (start here):** [`GET /api/x402/market`](https://three.ws/api/x402/market): lists every paid `market-*` endpoint with its live price, params, and a runnable example, including the `market-heatmap` and `market-mood` siblings below
 - **Discovery:** every endpoint is listed in [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json), so x402scan, agentic.market, and CDP Bazaar crawlers index it automatically
 - **Pricing:** $0.001 USDC per call for every category; the `market-pulse` bundle is $0.005
 - **Rails:** x402 v2, `exact` scheme — USDC on Solana mainnet or Base mainnet
@@ -28,7 +28,7 @@ The browser pages (`/coins`, `/yields`, `/gas`, …) stay free for humans, with 
 | `GET /api/x402/market-chains` | $0.001 | Chains ranked by TVL with share of total locked value |
 | `GET /api/x402/market-yields` | $0.001 | ~15k yield pools, filterable/sortable; `?pool=<uuid>` for APY history |
 | `GET /api/x402/market-stablecoins` | $0.001 | Top 100 stablecoins by supply with peg health |
-| `GET /api/x402/market-fees` | $0.001 | Protocol fees (`?type=fees`) or revenue (`?type=revenue`) rankings |
+| `GET /api/x402/market-fees` | $0.001 | Protocol fees (`?type=fees`, the default) or revenue (`?type=revenue`) rankings; any other `type` is a 422 |
 | `GET /api/x402/market-dex-volumes` | $0.001 | Top 100 DEXs by 24h volume with market share |
 | `GET /api/x402/market-hacks` | $0.001 | Full DeFi exploit database, searchable, with loss stats |
 | `GET /api/x402/market-pulse` | $0.005 | **The bundle**: global + Fear & Greed + top-10 coins + trending + gas + DeFi TVL + stablecoins + DEX volume + fees in one call |
@@ -104,6 +104,11 @@ A failed upstream never charges you: the endpoint verifies payment, runs the dat
 | 404 | `not_found` / `pool_not_found` | Unknown coin id, contract, or pool uuid |
 | 422 | `invalid_*` | A parameter failed validation (message says which) |
 | 503 | `data_unavailable` | Upstream outage — retry shortly; you were not charged |
+
+There is no 429 on this API. These endpoints impose no per-IP rate limit, so a
+provider-side throttle upstream of us is reported as the 503 above, never as a
+rate-limit status attributed to you. Retry logic should treat `data_unavailable`
+as the single retryable class.
 
 ## Related
 

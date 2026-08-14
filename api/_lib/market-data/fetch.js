@@ -36,15 +36,26 @@ const fail = (status, code, message) => {
 
 const invalid = (code, message) => fail(422, code, message);
 
+// Only these upstream statuses describe something the CALLER got wrong, and so
+// are the only ones worth repeating back verbatim. Everything else is our
+// problem to report as downtime. 429/401/403 matter most: api/_lib/coingecko.js
+// rethrows the provider's status as-is, so passing them through told a paying
+// buyer "you are rate limited" on an endpoint whose whole pitch is no per-IP
+// rate limits, and leaked the provider name plus the internal upstream path in
+// the error text.
+const CALLER_FAULT_STATUSES = new Set([400, 404, 422]);
+
 // Wrap an upstream call so an outage surfaces as a 503 the payment wrapper
-// short-circuits BEFORE settling — a paid endpoint never charges for downtime.
-// 4xx errors thrown by builders (unknown coin, unknown pool) pass through.
+// short-circuits BEFORE settling: a paid endpoint never charges for downtime.
+// Genuine caller faults thrown by builders (unknown coin, unknown pool) pass
+// through; every other failure, throttles and upstream auth faults included,
+// becomes the documented 503.
 async function upstream(label, fn) {
 	try {
 		return await fn();
 	} catch (err) {
-		if (err?.status && err.status < 500) throw err;
-		fail(503, 'data_unavailable', `live ${label} data is temporarily unavailable — retry shortly`);
+		if (CALLER_FAULT_STATUSES.has(err?.status)) throw err;
+		fail(503, 'data_unavailable', `live ${label} data is temporarily unavailable, retry shortly`);
 	}
 }
 
@@ -180,9 +191,16 @@ export const MARKET_FETCHERS = {
 
 	'market-stablecoins': () => upstream('stablecoin', () => buildStablecoins()),
 
+	// A typo in ?type= must refuse rather than quietly serve the other dataset:
+	// validation runs pre-settle, so a 422 is free, while a silent fallback to
+	// 'fees' charges the buyer for data they did not ask for. Same contract as
+	// market-derivatives' ?view=.
 	'market-fees': async (params) => {
-		const type = params.get('type') === 'revenue' ? 'revenue' : 'fees';
-		return upstream('protocol fee', () => buildFees(type));
+		const type = (params.get('type') || '').trim().toLowerCase();
+		if (type && type !== 'fees' && type !== 'revenue') {
+			invalid('invalid_type', "type must be 'fees' or 'revenue'");
+		}
+		return upstream('protocol fee', () => buildFees(type || 'fees'));
 	},
 
 	'market-dex-volumes': () => upstream('DEX volume', () => buildDexVolumes()),
