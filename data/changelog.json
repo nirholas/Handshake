@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Oracle pages now say the data is briefly unavailable instead of showing you a blank market",
+			"summary": "When the database had a short connectivity blip, the Oracle read endpoints answered with an empty result and a 200 OK, which reads as fact rather than as an outage. The live conviction feed showed a market with nothing in it, the hot-sectors panel showed no sectors, an agent's public track record showed \"never traded\" (the very evidence copy-traders judge a leader on), and the follow endpoint told a subscriber they were not following an agent they were in fact following. Worst of all, unfollowing an agent answered \"done\" while the subscription survived, so the alerts kept arriving with no way to stop them. Some of those answers were then cached for up to five minutes, outliving the blip that caused them. All of these now return a proper \"temporarily unavailable, retry shortly\" response that nothing caches, so a page can tell you it cannot reach the data instead of quietly showing you the wrong answer.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Add funds now opens Coinbase on the buy step, not on a transfer you cannot make",
 			"summary": "The Add funds window hands you a Coinbase checkout with your three.ws wallet already filled in as the destination. That checkout was not told which step to open on, so Coinbase could land you on \"transfer from your Coinbase balance\", which is no help at all if you reached Add funds precisely because you hold nothing yet. It now always opens on the buy step for the asset you picked (USDC or SOL, both settling on Solana). The suggested dollar amount is also rounded to real dollars and cents before it reaches Coinbase, so an amount worked out from a shortfall can no longer show up as something like $25.777777 on the checkout screen or in the window itself.",
 			"tags": [

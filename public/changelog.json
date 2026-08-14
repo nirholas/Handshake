@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T04:51:17.819Z",
+	"generated_at": "2026-08-14T04:55:15.928Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -144,6 +144,17 @@
 				"feature",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Oracle pages now say the data is briefly unavailable instead of showing you a blank market",
+			"summary": "When the database had a short connectivity blip, the Oracle read endpoints answered with an empty result and a 200 OK, which reads as fact rather than as an outage. The live conviction feed showed a market with nothing in it, the hot-sectors panel showed no sectors, an agent's public track record showed \"never traded\" (the very evidence copy-traders judge a leader on), and the follow endpoint told a subscriber they were not following an agent they were in fact following. Worst of all, unfollowing an agent answered \"done\" while the subscription survived, so the alerts kept arriving with no way to stop them. Some of those answers were then cached for up to five minutes, outliving the blip that caused them. All of these now return a proper \"temporarily unavailable, retry shortly\" response that nothing caches, so a page can tell you it cannot reach the data instead of quietly showing you the wrong answer.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
