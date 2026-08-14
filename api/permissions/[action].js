@@ -8,12 +8,13 @@
  * POST /api/permissions/revoke
  * GET  /api/permissions/verify
  *
- * Routed via vercel.json — see top of file path patterns.
+ * Routed by the filesystem resolver in server/index.mjs: the trailing path
+ * segment lands in req.query.action.
  */
 
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { ethers, Wallet, Contract, Interface, getAddress, isAddress } from 'ethers';
+import { ethers, Wallet, Contract, Interface, isAddress } from 'ethers';
 import { evmFallbackProvider } from '../_lib/evm/rpc.js';
 
 import { sql } from '../_lib/db.js';
@@ -351,11 +352,19 @@ async function handleList(req, res) {
 		return error(res, 400, 'validation_error', 'chainId must be a positive integer');
 	}
 
-	const limitParam = Math.min(
-		200,
-		Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)),
-	);
-	const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10));
+	// Reject non-numeric paging here: an unparsed NaN reaches Postgres as `LIMIT
+	// NaN::int` and surfaces as a 500 db_error, which reads like an outage for what
+	// is plain caller error.
+	const rawLimit = url.searchParams.get('limit');
+	const rawOffset = url.searchParams.get('offset');
+	if (rawLimit !== null && !/^\d+$/.test(rawLimit)) {
+		return error(res, 400, 'validation_error', 'limit must be a non-negative integer');
+	}
+	if (rawOffset !== null && !/^\d+$/.test(rawOffset)) {
+		return error(res, 400, 'validation_error', 'offset must be a non-negative integer');
+	}
+	const limitParam = Math.min(200, Math.max(1, parseInt(rawLimit || '50', 10)));
+	const offset = Math.max(0, parseInt(rawOffset || '0', 10));
 
 	// agentId-only path: public, no auth required
 	if (agentId && !delegator) {
@@ -888,9 +897,18 @@ async function handleRedeem(req, res) {
 	}
 	const spendReservationId = reserveRows[0].id;
 
+	// Every exit from here on must release the reservation, or a request that never
+	// reached the chain keeps consuming the delegation's period budget forever
+	// ('pending' rows count toward the cap; only 'failed' is excluded).
+	const releaseReservation = () =>
+		sql`UPDATE usage_events SET status = 'failed' WHERE id = ${spendReservationId}`.catch(
+			(err) => console.error('[permissions/redeem] reservation release failed', err?.message),
+		);
+
 	// ── Build signer ───────────────────────────────────────────────────────
 	const rpcUrl = getRpcUrl(chainId);
 	if (!rpcUrl) {
+		await releaseReservation();
 		return error(
 			res,
 			502,
@@ -905,6 +923,7 @@ async function handleRedeem(req, res) {
 		// AGENT_RELAYER_KEY is never logged — only use it to construct the Wallet
 		signer = new Wallet(env.AGENT_RELAYER_KEY, provider);
 	} catch {
+		await releaseReservation();
 		return error(res, 500, 'internal_error', 'failed to initialise relayer signer');
 	}
 
@@ -921,7 +940,7 @@ async function handleRedeem(req, res) {
 	} catch (err) {
 		// The on-chain submit never landed — release the reservation so it stops
 		// counting toward the period cap (mark 'failed', excluded from the sum).
-		await sql`UPDATE usage_events SET status = 'failed' WHERE id = ${spendReservationId}`.catch(() => {});
+		await releaseReservation();
 		if (err instanceof PermissionError && err.code === 'delegation_revoked') {
 			// Auto-sync status in DB
 			sql`UPDATE agent_delegations SET status = 'revoked' WHERE id = ${id}`.catch(() => {});
@@ -1240,7 +1259,10 @@ async function verifyCheckDisabled(hash, chainId) {
 		DELEGATION_MANAGER_ABI,
 		provider,
 	);
-	return manager.isDelegationDisabled(hash);
+	// The on-chain method is `disabledDelegations(bytes32)`; that is the only name
+	// DELEGATION_MANAGER_ABI declares, so calling anything else here resolves to
+	// undefined on the Contract and turns every verify into a 502.
+	return manager.disabledDelegations(hash);
 }
 
 function verifyWithTimeout(promise, ms) {

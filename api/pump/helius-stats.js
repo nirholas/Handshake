@@ -2,7 +2,9 @@
 // --------------------------
 // Lightweight network/feed health endpoint for the /pumpfun page. Returns:
 //   - sol_price (USD, cached upstream)
-//   - helius { enabled, slot, blockTime, network } when HELIUS_API_KEY is set
+//   - helius { enabled, slot, network, endpoint } when Helius is reachable,
+//     plus `error` when the probe itself failed (so a dead RPC reads as dead
+//     rather than as a silent slot:null)
 //   - feed { mints, graduations } counts from the in-process replay buffer
 //
 // Designed to be polled every ~5s by the page to drive the live network panel
@@ -21,16 +23,29 @@ import { solPriceUsd, solPriceInfo, solChange24hPct } from '../_lib/sol-price.js
 
 let _heliusCache = { value: null, at: 0 };
 
+const isHeliusUrl = (u) => u.includes('helius-rpc.com') || u.includes('helius.dev');
+
+// Which RPC this panel should actually probe, and what to honestly call it.
+// SOLANA_RPC_URL is frequently a non-Helius provider (the shared failover chain
+// points elsewhere), so keying "is this Helius?" off the presence of the API key
+// alone reported a magicblock/quicknode endpoint as `endpoint: 'helius-rpc'` and
+// then blanked its slot when that provider refused us. Resolve the URL FIRST,
+// then let the URL decide the label.
+export function resolveProbeTarget(env = process.env) {
+	const apiKey = env.HELIUS_API_KEY || '';
+	const configured = env.SOLANA_RPC_URL || '';
+	if (configured && isHeliusUrl(configured)) return { url: configured, endpoint: 'helius-rpc' };
+	// A Helius key with a non-Helius SOLANA_RPC_URL still means we HAVE Helius —
+	// probe Helius itself rather than mislabeling the other provider.
+	if (apiKey) return { url: `https://mainnet.helius-rpc.com/?api-key=${apiKey}`, endpoint: 'helius-rpc' };
+	return { url: '', endpoint: null };
+}
+
 async function getHeliusInfo() {
-	const apiKey = process.env.HELIUS_API_KEY || '';
-	// Key-only configs (no SOLANA_RPC_URL) still get a working probe endpoint —
-	// otherwise enabled:true would pair with a guaranteed-unreachable empty URL.
-	const rpcUrl =
-		process.env.SOLANA_RPC_URL ||
-		(apiKey ? `https://mainnet.helius-rpc.com/?api-key=${apiKey}` : '');
-	const isHelius = !!apiKey || rpcUrl.includes('helius-rpc.com') || rpcUrl.includes('helius.dev');
-	if (!isHelius) return { enabled: false };
+	const { url: rpcUrl, endpoint } = resolveProbeTarget();
+	if (!rpcUrl) return { enabled: false };
 	if (Date.now() - _heliusCache.at < 4_000 && _heliusCache.value) return _heliusCache.value;
+	let value;
 	try {
 		const ctrl = new AbortController();
 		const tid = setTimeout(() => ctrl.abort(), 1500);
@@ -44,15 +59,23 @@ async function getHeliusInfo() {
 		});
 		clearTimeout(tid);
 		const d = await r.json();
-		const slot = Number(d?.result) || null;
-		const value = { enabled: true, slot, network: 'mainnet', endpoint: 'helius-rpc' };
-		_heliusCache = { value, at: Date.now() };
-		return value;
+		const slot = Number.isFinite(Number(d?.result)) ? Number(d.result) : null;
+		// A JSON-RPC error body is a 200 at the HTTP layer. Reporting it as a bare
+		// slot:null read as "quiet chain" for months; say what actually happened.
+		value = slot != null
+			? { enabled: true, slot, network: 'mainnet', endpoint }
+			: {
+					enabled: true,
+					slot: null,
+					network: 'mainnet',
+					endpoint,
+					error: String(d?.error?.message || 'rpc_error').slice(0, 120),
+				};
 	} catch {
-		const value = { enabled: true, slot: null, network: 'mainnet', error: 'unreachable' };
-		_heliusCache = { value, at: Date.now() };
-		return value;
+		value = { enabled: true, slot: null, network: 'mainnet', endpoint, error: 'unreachable' };
 	}
+	_heliusCache = { value, at: Date.now() };
+	return value;
 }
 
 export default wrap(async (req, res) => {

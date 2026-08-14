@@ -4,6 +4,8 @@ import { json, error, wrap } from '../_lib/http.js';
 
 const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Process-local Birdeye response cache. Keeps the function instance from
 // hammering Birdeye when many tabs poll the same mint within a few seconds.
 // Vercel functions warm-start across requests, so this is meaningful even
@@ -40,6 +42,11 @@ export default wrap(async (req, res) => {
 
 	const agentId = new URL(req.url, 'http://x').searchParams.get('agent_id');
 	if (!agentId) return error(res, 400, 'missing_agent_id', 'agent_id is required');
+	// agent_id lands in a uuid-typed column. Without this guard Postgres raises
+	// "invalid input syntax for type uuid" and the caller gets a 500 for what is
+	// plainly their own typo.
+	if (!UUID_RE.test(agentId))
+		return error(res, 400, 'invalid_agent_id', 'agent_id must be a UUID');
 
 	const [agent] = await sql`
 		SELECT meta FROM agent_identities

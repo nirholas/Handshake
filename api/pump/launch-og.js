@@ -171,7 +171,7 @@ export function renderCard(mint, d) {
 	const mcText = mc ? fmtNum(mc) : '';
 
 	const qColor = qualityColor(qualityScore);
-	const qText = qualityScore != null ? String(Math.round(qualityScore)) : '—';
+	const qText = qualityScore != null ? String(Math.round(qualityScore)) : '-';
 
 	let outcomePill = '';
 	if (outcome?.graduated) {

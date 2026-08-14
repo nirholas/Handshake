@@ -18,10 +18,12 @@
 // Degrades gracefully (200 with degraded:true) if the engine tables don't exist
 // yet, so the dashboard can render its "engine warming up" state instead of 500ing.
 
-import { cors, json, method, wrap } from '../_lib/http.js';
+import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { sql, isDbUnavailableError } from '../_lib/db.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
+const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const VIEWS = new Set(['feed', 'leaderboard', 'learning', 'traders']);
 
 const num = (v) => {
 	if (v == null) return null;
@@ -428,6 +430,25 @@ export default wrap(async (req, res) => {
 	const mint = (params.get('mint') || '').trim();
 	const view = mint ? 'coin' : (params.get('view') || 'feed');
 
+	// Caller mistakes are answered as caller mistakes. Everything below this point
+	// reaching the `degraded` boundary means the ENGINE is down, which is what the
+	// dashboard's "warming up" state is for — a typo must never be reported as an
+	// outage, and an unknown view must never be silently served as the feed.
+	if (mint && !MINT_RE.test(mint)) {
+		return error(res, 400, 'invalid_mint', 'mint must be a base58 pump.fun address');
+	}
+	if (!mint && !VIEWS.has(view)) {
+		return error(res, 400, 'invalid_view', `view must be one of: ${[...VIEWS].join(', ')}`);
+	}
+	const minQualityRaw = params.get('minQuality');
+	let minQuality = null;
+	if (minQualityRaw != null && minQualityRaw !== '') {
+		minQuality = Number(minQualityRaw);
+		if (!Number.isInteger(minQuality) || minQuality < 0 || minQuality > 100) {
+			return error(res, 400, 'invalid_min_quality', 'minQuality must be an integer from 0 to 100');
+		}
+	}
+
 	try {
 		let payload;
 		switch (view) {
@@ -449,7 +470,7 @@ export default wrap(async (req, res) => {
 					network,
 					limit: parseInt(params.get('limit') || '60', 10),
 					category: params.get('category') || null,
-					minQuality: params.get('minQuality') ? parseInt(params.get('minQuality'), 10) : null,
+					minQuality,
 					verdict: params.get('verdict') || null,
 					q: (params.get('q') || '').trim() || null,
 				});

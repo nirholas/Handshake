@@ -121,6 +121,23 @@ const RPC = {
 	devnet: process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com',
 };
 
+/**
+ * Read and clamp a `?limit=` query param.
+ *
+ * `Number('abc')` is NaN, and NaN survives every Math.min/Math.max clamp, so the
+ * naive `Math.min(Math.max(1, Number(param || 50)), max)` shape forwards a NaN
+ * straight into SQL `limit`, into an upstream query string, and into the feed
+ * slice. A single typo'd limit therefore answered 200 with an empty feed rather
+ * than the default page. Anything non-numeric falls back to `fallback`; a real
+ * number is floored and clamped into [1, max].
+ */
+function readLimit(url, fallback, max) {
+	const param = url.searchParams.get('limit');
+	const raw = param == null || param === '' ? NaN : Number(param);
+	const n = Number.isFinite(raw) ? Math.floor(raw) : fallback;
+	return Math.min(Math.max(1, n), max);
+}
+
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) {
@@ -2189,7 +2206,7 @@ async function handlePaymentsList(req, res) {
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const mint = url.searchParams.get('mint');
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
-	const limit = Math.min(Number(url.searchParams.get('limit') || 50), 500);
+	const limit = readLimit(url, 50, 500);
 	const wantsPending = url.searchParams.get('include_pending') === '1';
 
 	// Pending payments expose unconfirmed invoices — require auth.
@@ -3480,7 +3497,7 @@ async function handleChannelFeed(req, res) {
 	const rl = await limits.mcpIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 	const url = new URL(req.url, `http://${req.headers.host}`);
-	const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit') || 50)), 200);
+	const limit = readLimit(url, 50, 200);
 	const kinds = url.searchParams.get('kinds') || null;
 	// `signal` is one of the four kinds buildFeed knows and the only one that
 	// carries agent attribution (which agent earned the reputation event, and how
@@ -3549,7 +3566,7 @@ async function handleTrending(req, res) {
 		return json(res, 200, TRENDING_CACHE.body);
 	}
 	const url = new URL(req.url, `http://${req.headers.host}`);
-	const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit') || 50)), 100);
+	const limit = readLimit(url, 50, 100);
 	const upstream = new URL('/coins', PUMP_FRONTEND_BASE);
 	upstream.searchParams.set('offset', '0');
 	upstream.searchParams.set('limit', String(limit));
@@ -3665,7 +3682,7 @@ async function handleCoinTrades(req, res) {
 	const mint = (url.searchParams.get('mint') || '').trim();
 	if (!MINT_RE.test(mint))
 		return error(res, 400, 'invalid_mint', 'mint must be a base58 address');
-	const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit') || 30)), 100);
+	const limit = readLimit(url, 30, 100);
 	const upstream = `${PUMP_SWAP_BASE}/v2/coins/${mint}/trades?limit=${limit}`;
 	// "Recent trades" is a soft, continuously-polled feed (the homepage live card
 	// re-fetches every ~4s). A transient pump.fun swap-API blip means "no new data

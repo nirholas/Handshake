@@ -7,8 +7,13 @@
 // Real endpoints:
 //   GET  /api/agents                       { agents: [...] }
 //   GET  /api/pump/by-agent?agent_id=:id   { token, stats }
-//   POST /api/pump/withdraw-prep           body { agent_id, amount }
-//   POST /api/pump/withdraw-confirm        body { tx }
+//
+// Withdrawal is driven by the <agent-token-widget> this page renders, not by
+// this module, and it runs against the real schemas those endpoints accept:
+//   POST /api/pump/withdraw-prep
+//        body { mint, authority_wallet, receiver_ata, network } -> { tx_base64 }
+//   POST /api/pump/withdraw-confirm
+//        body { mint, network, tx_signature } -> { ok, slot, block_time }
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, esc, ApiError } from '../api.js';
