@@ -18,8 +18,8 @@
  * the handler wrote.
  *
  * What it proves, per cron:
- *   auth      unauthenticated GET is rejected (401, or 503 when CRON_SECRET is
- *             unset) and never executes the body
+ *   auth      unauthenticated GET is rejected (401 or 403, or 503 when
+ *             CRON_SECRET is unset) and never executes the body
  *   run       an authenticated GET completes without an unhandled error
  *   idempotent a second authenticated GET behaves the same as the first
  *
@@ -31,6 +31,7 @@
  * Usage:
  *   node scripts/cron-local-proof.mjs                      # the default batch
  *   node scripts/cron-local-proof.mjs --crons irl-reap,uptime-check
+ *   node scripts/cron-local-proof.mjs --crons /api/llm/health   # non-cron path
  *   node scripts/cron-local-proof.mjs --bootstrap          # apply schema first
  *   node scripts/cron-local-proof.mjs --keep               # leave the server up
  *
@@ -391,9 +392,23 @@ async function startServer(preload) {
 }
 
 // ── probes ───────────────────────────────────────────────────────────────────
+
+/**
+ * The route a named cron is invoked on. A bare name is an /api/cron/* handler,
+ * which is nearly all of them; a name given as a full path lets the harness
+ * cover the scheduled endpoints that live outside that prefix (vercel.json
+ * drives /api/llm/health on the same cron secret, for one) without a second
+ * copy of the server, shim and auth plumbing.
+ * @param {string} name
+ * @returns {string}
+ */
+export function cronRoute(name) {
+	return name.startsWith('/') ? name : `/api/cron/${name}`;
+}
+
 async function call(base, name, { auth }) {
 	const t0 = Date.now();
-	const res = await fetch(`${base}/api/cron/${name}`, {
+	const res = await fetch(`${base}${cronRoute(name)}`, {
 		headers: auth ? { authorization: `Bearer ${CRON_SECRET}` } : {},
 	}).catch((e) => ({ status: 0, _err: e }));
 	if (!res || res.status === 0) {
@@ -452,7 +467,12 @@ async function main() {
 		const first = await call(base, name, { auth: true });
 		const second = await call(base, name, { auth: true });
 
-		const authOk = unauth.status === 401 || unauth.status === 503;
+		// 401 from the shared gate, 403 from the handlers that answer an unknown
+		// caller without conceding that a credential would have helped
+		// (/api/llm/health names providers and quota detail behind it), 503 when
+		// CRON_SECRET is unset. All three are a closed door; anything else ran the
+		// body for an anonymous caller.
+		const authOk = [401, 403, 503].includes(unauth.status);
 		const runOk = first.status >= 200 && first.status < 500 && first.status !== 0;
 		const idemOk = runOk && second.status === first.status;
 
