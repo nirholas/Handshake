@@ -50,16 +50,20 @@ Set two environment variables on your three.ws deployment. Production runs on Go
 
 | Variable | What it is |
 |----------|-----------|
-| `MODEL_TRELLIS_URL` | The public https origin of your NIM, e.g. `https://trellis.yourdomain.com` |
-| `NVIDIA_API_KEY` | Bearer token forwarded to the NIM (if your gateway requires auth) |
+| `NIM_TRELLIS_URL` | The public https origin of your NIM, e.g. `https://trellis.yourdomain.com` |
+| `NIM_TRELLIS_KEY` | Bearer token forwarded to the NIM (if your gateway requires auth). `NVIDIA_API_KEY` is accepted as a fallback |
 
 ```bash
 gcloud run services update three-ws-api --region us-central1 \
-  --update-env-vars MODEL_TRELLIS_URL=https://trellis.yourdomain.com
+  --update-env-vars NIM_TRELLIS_URL=https://trellis.yourdomain.com
 
 gcloud run services update three-ws-api --region us-central1 \
-  --update-env-vars NVIDIA_API_KEY=your-ngc-token
+  --update-env-vars NIM_TRELLIS_KEY=your-ngc-token
 ```
+
+`--update-env-vars` merges into the existing set. Never use `--set-env-vars` for a single key: it replaces the service's entire environment.
+
+`NIM_TRELLIS_URL` is deliberately separate from `MODEL_TRELLIS_URL`. The latter points at the platform's own Cloud Run TRELLIS worker, which speaks an async `/infer` plus `/tasks/{id}` API rather than the NIM's synchronous `/v1/infer`, so the two are never interchangeable.
 
 Confirm three.ws can see it:
 
@@ -156,10 +160,11 @@ The proxy normalizes every documented artifact shape (inline `base64`, a bare st
 
 | Symptom | Cause & fix |
 |---------|-------------|
-| `configured: false` from health | `MODEL_TRELLIS_URL` isn't set on the deployment |
-| `reachable: false` | The NIM's `/v1/health/ready` didn't answer — check the container and your TLS front |
+| `configured: false` from health | `NIM_TRELLIS_URL` isn't set on the deployment |
+| `reachable: false` | The NIM's `/v1/health/ready` didn't answer. Check the container and your TLS front |
 | `nim_timeout` (504) | Cold `large:image` start; retry once the GPU is warm |
-| `nim_auth` (502) | The NIM rejected the bearer — check `NVIDIA_API_KEY` or your gateway auth |
+| `nim_auth` (502) | The NIM rejected the bearer. Check `NIM_TRELLIS_KEY` (or `NVIDIA_API_KEY`) or your gateway auth |
+| `nim_error` (502) with a 404 body | The base URL isn't serving the NIM contract. A plain `/infer` API is not a NIM: the container must answer `POST /v1/infer` |
 | `bad_base_url` (400) | An override `baseUrl` was http, an IP literal, or a private/`.internal` host |
 
 ---
