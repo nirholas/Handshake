@@ -1,5 +1,8 @@
 // MCP server — Streamable HTTP transport (MCP 2025-06-18, JSON-RPC 2.0)
-// POST /api/mcp  — tool calls   GET /api/mcp  — SSE   DELETE /api/mcp  — terminate session
+// POST /api/mcp: tool calls. DELETE /api/mcp: terminate session (stateless, 204).
+// GET /api/mcp serves the OAuth + x402 challenge to an unauthenticated caller so
+// clients can discover how to pay or sign in; there is no server-to-client
+// subscription yet, so an authenticated GET answers 405 with `allow: POST, DELETE`.
 import { cors, readJson, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { settlePayment, encodePaymentResponseHeader } from './_lib/x402-spec.js';

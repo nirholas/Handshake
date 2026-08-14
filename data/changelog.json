@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "The machine-readable API spec stops telling agents they need a login for a lane they can just pay for",
+      "summary": "Agents and crawlers read /openapi.json to work out how to call this platform without a human present, and two of its entries were sending them the wrong way. The MCP endpoint was listed as requiring a bearer token or an API key, when in fact an unauthenticated call answers with a payment challenge: an agent can settle in USDC and get to work with no key, no token, and no account at all, and a credential is accepted but never required. Any agent that trusted the spec went off to obtain a login it did not need. The spec also described only the paid half of the Forge generation lane, hiding the free price lookup on the same address that lets an agent read the per-tier pricing and the accepted request shape before it commits any money. Both are corrected, the session-teardown call the MCP route already advertises in its own headers is documented, and the human API reference now matches. The sitemap, robots.txt, llms.txt, and llms-full.txt feeds were swept in the same pass and every address they publish was confirmed to resolve.",
+      "tags": [
+        "fix",
+        "docs"
+      ],
+      "link": "/docs/api-reference"
+    },
+    {
+      "date": "2026-08-14",
       "title": "Comments on your models now read as a sentence in the bell and file under the Social tab",
       "summary": "When someone comments on a model you made, you get a notification. It was arriving half-built. The notification centre sorts every alert into a tab (Sales, Social, Creations, and so on) using a list it keeps in the browser, and comments were missing from that list, so a comment landed in Account and Security instead of Social, next to withdrawals and security warnings. The bell had the same gap from the other side: with no wording written for the comment alert, it fell back to printing the raw internal name of the event, so the row simply read comment, with no hint of who wrote it or what they said. Comments now sort into Social, matching the preference switches in settings that were already treating them as social, and the row reads as a real sentence naming the commenter and quoting the opening of what they wrote. Three documentation pages were corrected against the code in the same pass: the Notifications reference was missing comments from its category table, the Agent Symphony page was missing five Agora arena and guild events from its sound map, and the Character Library page described its API as callable from any website when it has always answered three.ws and its partner sites only.",
       "tags": [
