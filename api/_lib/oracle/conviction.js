@@ -30,26 +30,75 @@
 //   - One hard cap: a serial-rugger creator still ceilings the final score.
 //     The data agrees with this one (5+ launches, 0 graduations: 0.26x base).
 //
-// What the score MEANS now: the model's calibrated P(good) mapped through
-// fixed probability anchors so the public tier boundaries land on real odds:
-// Watch starts at P>=5%, Lean at 12%, Strong at 30%, Prime at 55%. On the
-// holdout, the P>=0.55 band observed 73.5% good. A tier is now a claim about
-// measured frequency, not a vibe.
+// What the score MEANS: the model's P(good) mapped through fixed probability
+// anchors onto the 0-100 line. That number is a RANK, and it is the training
+// label's probability, not the platform's win rate. The two were never the
+// same and for a long time nothing said so, which is how a card could read
+// "conviction 99" while that band went on to win 26% of the time.
+//
+// So the tier ladder no longer sits on the training anchors. It sits on
+// conviction-calibration.json: an isotonic fit of the REALIZED win rate per
+// score band over every coin Oracle scored that the market has since resolved
+// (61,916 coins at the 2026-08-14 fit, win = graduated or >= 2x ATH without
+// rugging, base rate 5.4%). That fit exposes exactly five rungs the data can
+// tell apart, and the tier boundaries are their edges:
+//
+//   Avoid   score  0-10    0.7% win   0.13x base
+//   Watch   score 10-40    4.9% win   0.89x base
+//   Lean    score 40-60    7.3% win   1.34x base
+//   Strong  score 60-90   15.0% win   2.75x base
+//   Prime   score 90-100  26.3% win   4.82x base
+//
+// The old ladder (86/72/56/34) split the flat 60-90 plateau into Prime and
+// Strong, so those two tiers were statistically identical (12% vs 13%), while
+// Watch sat below Avoid. Every rung above is now a distinct measured claim, and
+// hitRateFor() serves the rate itself so the UI can quote the odds instead of
+// letting a 99 imply 99%. Refit with scripts/oracle-calibrate.mjs.
 
 import MODEL_JSON from './conviction-model.json' with { type: 'json' };
+import CALIBRATION_JSON from './conviction-calibration.json' with { type: 'json' };
 import { isProven, isFlagged } from './archetype.js';
 
 export const MODEL = MODEL_JSON;
+export const CALIBRATION = CALIBRATION_JSON;
 
-// Tier thresholds on the final 0-100 score (public ladder, unchanged from v1)
-// and the P(good) each boundary is anchored to by the score map below.
+// Tier thresholds on the final 0-100 score, set on the rung edges of the
+// realized-outcome fit above.
 const TIERS = [
-	{ min: 86, tier: 'prime', label: 'Prime' },
-	{ min: 72, tier: 'strong', label: 'Strong' },
-	{ min: 56, tier: 'lean', label: 'Lean' },
-	{ min: 34, tier: 'watch', label: 'Watch' },
+	{ min: 90, tier: 'prime', label: 'Prime' },
+	{ min: 60, tier: 'strong', label: 'Strong' },
+	{ min: 40, tier: 'lean', label: 'Lean' },
+	{ min: 10, tier: 'watch', label: 'Watch' },
 	{ min: 0, tier: 'avoid', label: 'Avoid' },
 ];
+
+/** The public tier for a 0-100 conviction score. Single source of the ladder. */
+export function tierForScore(score) {
+	const s = clamp(num(score));
+	return TIERS.find((t) => s >= t.min) || TIERS[TIERS.length - 1];
+}
+
+/**
+ * The realized hit rate for a score, straight from the production calibration.
+ * This is what the score is worth in outcomes: of every resolved coin Oracle
+ * scored into this band, `rate` is the fraction that won and `lift` is how many
+ * times the market's own base rate that is.
+ *
+ * @param {number} score 0-100 conviction
+ * @returns {{rate:number, lift:number, band:string, n:number, baseRate:number}}
+ */
+export function hitRateFor(score) {
+	const s = clamp(num(score));
+	const bands = CALIBRATION.bands || [];
+	const band = bands.find((b) => s >= b.lo && s < b.hi) || bands[bands.length - 1] || null;
+	return {
+		rate: band ? band.calibrated : CALIBRATION.base_rate,
+		lift: band ? band.lift : 1,
+		band: band ? `${band.lo}-${band.hi}` : null,
+		n: band ? band.n : 0,
+		baseRate: CALIBRATION.base_rate,
+	};
+}
 
 // Piecewise-linear map from model probability to the 0-100 score line, anchored
 // so each tier boundary corresponds to a fixed P(good). Monotone, invertible.
@@ -62,6 +111,30 @@ const SCORE_ANCHORS = [
 	[A.prime, 86],
 	[1, 100],
 ];
+
+export { SCORE_ANCHORS };
+
+// What the score PREDICTS, stated once here so every surface can quote it
+// instead of implying something broader. The training label is
+// `outcome in ('graduated','pumped')`, where 'pumped' means the coin peaked at
+// >= 3x its market cap at first sight (workers/agent-sniper/intel/learn.js), and
+// that label is deliberately judged INDEPENDENTLY of a later collapse: a launch
+// that ran 6x and then rugged is a hit. So conviction ranks the odds of a RUN,
+// never the odds of a safe hold, and a high score on a coin whose chart is now
+// dead is not necessarily a miss.
+//
+// Three surfaces grade the engine on a different, stricter question instead
+// (graduated, or >= 2x while never rugging: api/oracle/{stats,backtest,wins}.js).
+// That number is the right one for a holder and the wrong one for judging the
+// ranking, so anything that shows it must show WHICH question it answers. Both
+// are real; presenting one as the other is what made a working engine read as a
+// broken one.
+export const PREDICTED_EVENT = Object.freeze({
+	id: 'spike_or_graduate',
+	label: 'graduates, or peaks at 3x or more above its market cap at first sight',
+	short: 'spikes 3x or graduates',
+	caveat: 'A later collapse does not undo a hit. Conviction ranks the odds of a run, not the odds of a safe hold.',
+});
 
 const clamp = (n, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));
 const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v) : d);
@@ -76,6 +149,27 @@ export function scoreFromProbability(p) {
 		if (x <= p1) return clamp(Math.round(s0 + ((x - p0) / (p1 - p0)) * (s1 - s0)));
 	}
 	return 100;
+}
+
+/**
+ * Inverse of scoreFromProbability: the P(PREDICTED_EVENT) a given score actually
+ * claims. The score line is not a percentage (a score of 86 claims 55%, not
+ * 86%), so any surface comparing a score to a realized rate has to convert
+ * first. Every calibration table we shipped used score/100 as the prediction,
+ * which overstated the engine's own claim by up to 4x and made a working ranking
+ * look wildly overconfident on top of its real overconfidence.
+ *
+ * @param {number} score 0-100 conviction score
+ * @returns {number} probability in [0,1]
+ */
+export function probabilityFromScore(score) {
+	const s = clamp(num(score));
+	for (let i = 1; i < SCORE_ANCHORS.length; i++) {
+		const [p0, s0] = SCORE_ANCHORS[i - 1];
+		const [p1, s1] = SCORE_ANCHORS[i];
+		if (s <= s1) return s1 === s0 ? p1 : p0 + ((s - s0) / (s1 - s0)) * (p1 - p0);
+	}
+	return 1;
 }
 
 // ── Feature extraction ────────────────────────────────────────────────────────

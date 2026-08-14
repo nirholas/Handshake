@@ -3,8 +3,13 @@
 //
 // For every mint the fleet really traded, this joins the coin's Oracle conviction
 // to the fleet's realized outcome, buckets by conviction band, and computes the
-// REALIZED win rate per band. A well-calibrated Oracle has an 80-conviction band
-// winning ~80% of the time; drift means the score is over- or under-confident.
+// REALIZED win rate per band. The band's claim is probabilityFromScore(mean
+// score), because the score line is not a percentage (86 claims P=0.55, not
+// 0.86); drift against that claim means the score is over- or under-confident.
+// Note the fleet's "win" here is a positive realized PnL on a real fill, a third
+// question again: neither the engine's trained event (a 3x spike or graduation)
+// nor the site's rug-aware win rate. Exit timing belongs to the fleet, so a gap
+// between this table and /api/oracle/backtest is expected, not a bug.
 //
 // It writes oracle_calibration (per band: samples, observed win rate, mean
 // conviction, mean realized PnL%, and a BOUNDED correction_factor). The factor is
@@ -22,6 +27,7 @@
 import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { probabilityFromScore } from '../_lib/oracle/conviction.js';
 
 const BANDS = [
 	{ lo: 0, hi: 30 }, { lo: 30, hi: 50 }, { lo: 50, hi: 70 }, { lo: 70, hi: 85 }, { lo: 85, hi: 101 },
@@ -57,7 +63,10 @@ export default wrapCron(async (req, res) => {
 		const observed = samples ? wins / samples : null;
 		const avgConv = samples ? inBand.reduce((s, r) => s + Number(r.score), 0) / samples : null;
 		const avgPct = samples ? inBand.reduce((s, r) => s + (Number(r.pnl_pct) || 0), 0) / samples : null;
-		const predicted = avgConv != null ? avgConv / 100 : null;
+		// What the band CLAIMS, not the band's own number: the score line is not a
+		// percentage (86 claims P=0.55), so avgConv/100 compared a probability to a
+		// score and reported drift that was really a unit mismatch.
+		const predicted = avgConv != null ? probabilityFromScore(avgConv) : null;
 		let factor = 1;
 		if (samples >= MIN_BAND_SAMPLE && predicted && predicted > 0.01 && observed != null) {
 			factor = clamp(observed / predicted, FACTOR_MIN, FACTOR_MAX);

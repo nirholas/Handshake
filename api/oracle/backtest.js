@@ -22,6 +22,7 @@ import { cors, json, method, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { QUOTE_MINT_LIST } from '../_lib/quote-mints.js';
+import { PREDICTED_EVENT, probabilityFromScore } from '../_lib/oracle/conviction.js';
 
 const PERIODS = { '1d': 1, '7d': 7, '30d': 30, '90d': 90, 'all': null };
 const TIERS = new Set(['prime', 'strong', 'lean', 'watch', 'avoid', 'all']);
@@ -54,6 +55,37 @@ export function wilson(wins, n, z = 1.96) {
 	const lo = Math.max(0, Math.round((centre - margin) * 100));
 	const hi = Math.min(100, Math.round((centre + margin) * 100));
 	return { lo, hi, width: hi - lo };
+}
+
+/**
+ * Is the ladder actually ordered? The old check allowed a 5-point drop per step
+ * and then reported `monotonic: true` on a ladder that visibly dipped, which the
+ * /oracle page turned into "the win rate climbs at every band, the ranking is
+ * calibrated, not noise". This counts an inversion only when a higher band scores
+ * WORSE than a lower one and their 95% intervals are disjoint, so noise cannot
+ * explain it away and a real inversion cannot be tolerated away either.
+ *
+ * @param {Array<object>} bands calibration bands, ascending
+ * @param {string} rateKey band field holding the realized rate
+ * @param {string} ciKey   band field holding that rate's Wilson interval
+ * @param {number} minN    bands thinner than this are too noisy to judge
+ */
+export function ladderCheck(bands, rateKey, ciKey, minN = 100) {
+	const seq = bands.filter((b) => b.n >= minN && b[rateKey] != null && b[ciKey]);
+	const inversions = [];
+	for (let i = 1; i < seq.length; i++) {
+		for (let j = 0; j < i; j++) {
+			const lower = seq[j];
+			const higher = seq[i];
+			if (higher[rateKey] >= lower[rateKey]) continue;
+			if (higher[ciKey].hi >= lower[ciKey].lo) continue; // intervals overlap: noise, not an inversion
+			inversions.push({
+				band: higher.band, realized: higher[rateKey],
+				below_band: lower.band, below_realized: lower[rateKey],
+			});
+		}
+	}
+	return { monotonic: inversions.length === 0, judged_bands: seq.length, inversions: inversions.slice(0, 8) };
 }
 
 async function query(days, tier, network) {
@@ -114,19 +146,28 @@ async function query(days, tier, network) {
 	agg.ci = wilson(agg.wins, resolved);
 
 	// ── score-band calibration + Brier score ───────────────────────────────────
-	// The conviction score claims to rank coins by win probability. Calibration is
-	// the proof: bucket every resolved coin by its score band and measure the
-	// REALIZED win rate per band. A trustworthy engine produces a monotonic ladder
-	// (higher band → higher realized rate) that tracks the band's own prediction.
-	// Brier = mean squared error of score/100 (treated as a probability) vs the
-	// 0/1 outcome: one number for "how well-calibrated overall" (lower is better).
-	// This pass is unconditional on tier so the baseline is the true market rate.
-	const calRows = await sql`
+	// Calibration answers "does a score mean what it claims?", and that only works
+	// if both halves speak the same language. Two bugs used to break that:
+	//
+	//   1. The band's prediction was its own midpoint, i.e. score/100 read as a
+	//      percentage. The score line is NOT a percentage: 86 claims P=0.55 and 34
+	//      claims P=0.05 (conviction.js SCORE_ANCHORS). Every published table
+	//      therefore overstated the engine's claim by up to 4x. probabilityFromScore
+	//      converts, so predicted is now what the engine actually said.
+	//   2. Realized was the rug-aware win rate, which is NOT the event the model was
+	//      trained to predict. That grades the ranking on a stricter question and
+	//      makes a calibrated engine look broken. Both now ship side by side:
+	//      realized_spike is the trained event (PREDICTED_EVENT: graduated or >= 3x
+	//      ATH, a later collapse allowed), realized stays the holder-honest win.
+	//
+	// Grouping by exact score instead of by band keeps the Brier score exact (each
+	// score carries its own claimed probability) and costs at most 101 rows.
+	const scoreRows = await sql`
 		select
-			least(width_bucket(c.score, 0, 100, 10), 10)                          as bucket,
+			c.score::int                                                          as score,
 			count(*)::int                                                         as n,
-			count(*) filter (where o.graduated or (o.ath_multiple >= 2 and not coalesce(o.rugged, false)))::int as wins,
-			round(avg(c.score)::numeric, 1)                                       as avg_score
+			count(*) filter (where o.graduated or o.ath_multiple >= 3)::int       as spikes,
+			count(*) filter (where o.graduated or (o.ath_multiple >= 2 and not coalesce(o.rugged, false)))::int as wins
 		from oracle_conviction c
 		join pump_coin_outcomes o on o.mint = c.mint
 		where c.network = ${network}
@@ -137,58 +178,78 @@ async function query(days, tier, network) {
 		order by 1
 	`.catch(() => []);
 
-	const calibration = calRows
-		.filter((r) => r.bucket >= 1 && r.bucket <= 10)
-		.map((r) => {
-			const lo = (r.bucket - 1) * 10;
-			const hi = r.bucket * 10;
-			const realized = r.n ? Math.round((r.wins / r.n) * 100) : null;
-			return {
-				band: `${lo}-${hi}`,
-				lo, hi,
-				n: r.n,
-				wins: r.wins,
-				avg_score: r.avg_score != null ? Number(r.avg_score) : (lo + hi) / 2,
-				predicted: Math.round((lo + hi) / 2),       // band midpoint as a % prediction
-				realized,                                    // realized win rate in the band
-				ci: wilson(r.wins, r.n),
-			};
+	// Bands of 10, assembled from the per-score aggregate. `predicted` is the
+	// sample-weighted mean of the probability each score in the band claims, so it
+	// tracks where the coins actually sit rather than an assumed midpoint.
+	const bands = [];
+	for (let lo = 0; lo < 100; lo += 10) {
+		const hi = lo + 10;
+		const inBand = scoreRows.filter((r) => {
+			const s = Number(r.score);
+			return s >= lo && (hi === 100 ? s <= 100 : s < hi);
 		});
+		const n = inBand.reduce((a, r) => a + r.n, 0);
+		if (!n) continue;
+		const wins = inBand.reduce((a, r) => a + r.wins, 0);
+		const spikes = inBand.reduce((a, r) => a + r.spikes, 0);
+		const scoreSum = inBand.reduce((a, r) => a + Number(r.score) * r.n, 0);
+		const claimSum = inBand.reduce((a, r) => a + probabilityFromScore(Number(r.score)) * r.n, 0);
+		bands.push({
+			band: `${lo}-${hi}`,
+			lo, hi, n, wins, spikes,
+			avg_score: Number((scoreSum / n).toFixed(1)),
+			predicted: Math.round((claimSum / n) * 100),
+			realized: Math.round((wins / n) * 100),
+			realized_spike: Math.round((spikes / n) * 100),
+			ci: wilson(wins, n),
+			spike_ci: wilson(spikes, n),
+		});
+	}
+	const calibration = bands;
+
+	// Brier against the event the model was trained on, using each score's own
+	// claimed probability. Lower is better; 0.25 is a coin flip.
+	let brierSum = 0;
+	let brierN = 0;
+	for (const r of scoreRows) {
+		const p = probabilityFromScore(Number(r.score));
+		brierSum += r.spikes * (1 - p) ** 2 + (r.n - r.spikes) * p ** 2;
+		brierN += r.n;
+	}
+	const brier = brierN ? Number((brierSum / brierN).toFixed(4)) : null;
 
 	// Market baseline: a coin drawn at random from everything Oracle scored.
-	const baseRow = await sql`
-		select
-			count(*)::int                                                   as n,
-			count(*) filter (where o.graduated or (o.ath_multiple >= 2 and not coalesce(o.rugged, false)))::int as wins,
-			round(avg(power((c.score / 100.0) - (case when o.graduated or (o.ath_multiple >= 2 and not coalesce(o.rugged, false)) then 1 else 0 end), 2))::numeric, 4) as brier
-		from oracle_conviction c
-		join pump_coin_outcomes o on o.mint = c.mint
-		where c.network = ${network}
-		  and (o.graduated or o.rugged or o.ath_multiple is not null)
-		  ${quoteFilter}
-		  ${periodFilter}
-	`.then((r) => r[0] || {}).catch(() => ({}));
-
-	const baselineN = Number(baseRow.n) || 0;
-	const baselineWinRate = baselineN ? Math.round((Number(baseRow.wins) / baselineN) * 100) : null;
-	const brier = baseRow.brier != null ? Number(baseRow.brier) : null;
+	const baselineN = brierN;
+	const baselineWins = scoreRows.reduce((a, r) => a + r.wins, 0);
+	const baselineSpikes = scoreRows.reduce((a, r) => a + r.spikes, 0);
+	const baselineWinRate = baselineN ? Math.round((baselineWins / baselineN) * 100) : null;
+	const baselineSpikeRate = baselineN ? Math.round((baselineSpikes / baselineN) * 100) : null;
 
 	// Edge summary: does conviction actually beat blind buying, and does the ladder
-	// climb in the right order?
+	// climb in the right order? Reported on both metrics, because the engine ranks
+	// the spike and the page quotes the clean win.
 	const primeRow = rows.find((r) => r.tier === 'prime');
 	const primeResolved = primeRow ? primeRow.wins + primeRow.losses : 0;
 	const primeWinRate = primeResolved ? Math.round((primeRow.wins / primeResolved) * 100) : null;
-	const orderedRealized = calibration.map((c) => c.realized).filter((v) => v != null);
-	const monotonic = orderedRealized.length >= 2
-		&& orderedRealized.every((v, i) => i === 0 || v >= orderedRealized[i - 1] - 5); // ≤5pt tolerance
+	const primeSpikeRate = primeRow?.total ? Math.round((primeRow.three_x / primeRow.total) * 100) : null;
+	const primeRugRate = primeRow?.total ? Math.round((primeRow.rugged / primeRow.total) * 100) : null;
+	const cleanLadder = ladderCheck(bands, 'realized', 'ci');
+	const spikeLadder = ladderCheck(bands, 'realized_spike', 'spike_ci');
 	const edge = {
+		predicts: PREDICTED_EVENT,
 		baseline_win_rate: baselineWinRate,
+		baseline_spike_rate: baselineSpikeRate,
 		baseline_n: baselineN,
 		prime_win_rate: primeWinRate,
+		prime_spike_rate: primeSpikeRate,
+		prime_rug_rate: primeRugRate,
 		prime_lift: (primeWinRate != null && baselineWinRate != null) ? primeWinRate - baselineWinRate : null,
 		edge_multiple: (primeWinRate != null && baselineWinRate) ? Number((primeWinRate / baselineWinRate).toFixed(2)) : null,
-		monotonic,
+		spike_edge_multiple: (primeSpikeRate != null && baselineSpikeRate) ? Number((primeSpikeRate / baselineSpikeRate).toFixed(2)) : null,
+		monotonic: cleanLadder.monotonic,
+		ladder: { clean_win: cleanLadder, spike: spikeLadder },
 		brier,
+		brier_of: PREDICTED_EVENT.id,
 	};
 
 	// ── top performers in the period ─────────────────────────────────────────
@@ -225,8 +286,17 @@ async function query(days, tier, network) {
 			ten_x: r.ten_x,
 			graduated: r.graduated,
 			rugged: r.rugged,
+			// Rates on the full resolved sample for this tier. spike_rate is the event
+			// the score was fitted to predict, rug_rate is the part a holder feels and
+			// the score never claimed to rule out. A tier card that shows only one of
+			// the three is the reason a 100/prime call on a dead chart reads as a lie.
+			spike_rate: r.total ? Math.round((r.three_x / r.total) * 100) : null,
+			spike_ci: wilson(r.three_x, r.total),
+			rug_rate: r.total ? Math.round((r.rugged / r.total) * 100) : null,
+			graduated_rate: r.total ? Math.round((r.graduated / r.total) * 100) : null,
 		})),
 		aggregate: agg,
+		predicts: PREDICTED_EVENT,
 		calibration,
 		edge,
 		top_performers: top.map((r) => ({
