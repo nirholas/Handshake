@@ -152,7 +152,11 @@ export class WorldBuildStore {
 		} catch (err) {
 			const message = err?.message || 'load failed';
 			this.lastError = message;
-			log.warn('[world-persist] load failed', this.worldId, message);
+			// The contract above is that a failed read resolves with an `error` for
+			// the caller to render, so this line is telemetry for a designed return
+			// value, not a fault report. Warning here also double-reported every
+			// outage, once from this store and once from the caller that handled it.
+			log.info('[world-persist] load failed', this.worldId, message);
 			return { doc: null, etag: null, version: 0, error: message };
 		}
 	}

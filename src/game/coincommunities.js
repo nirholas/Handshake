@@ -4200,7 +4200,10 @@ export class CoinCommunities {
 			// The player may have left (or hopped coins) while the read was in flight.
 			if (this._worldStore !== store || epoch !== this._enterEpoch) return;
 			if (error) {
-				log.warn('[coincommunities] world build load failed:', error);
+				// Designed degradation: the world opens without its persisted props
+				// and the store keeps serving saves, so this is expected-path
+				// telemetry rather than a warning, matching _loadCoins above.
+				log.info('[coincommunities] world build load failed:', error);
 				return;
 			}
 			this._restorePersistedBuild(doc);
