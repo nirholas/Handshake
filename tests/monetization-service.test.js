@@ -725,3 +725,409 @@ describe('revenue endpoint (getCreatorSalesData)', () => {
 		expect(body.error).toBe('rate_limited');
 	});
 });
+
+// ── 6. payout wallets — api/monetization/wallet.js ──────────────────────────────
+
+describe('wallet endpoint (payout addresses)', () => {
+	const SOL_ADDRESS = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+	const EVM_ADDRESS = '0x1111111111111111111111111111111111111111';
+
+	it('returns 401 when unauthenticated', async () => {
+		const { agent } = createTestAgent();
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'GET',
+			url: `/api/monetization/wallet?agent_id=${agent.id}`,
+		});
+
+		expect(status).toBe(401);
+		expect(body.error).toBe('unauthorized');
+	});
+
+	it('returns 400 on a malformed agent_id', async () => {
+		authState.session = { id: 'user-1' };
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'GET',
+			url: '/api/monetization/wallet?agent_id=not-a-uuid',
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+	});
+
+	it("returns 403 for someone else's agent", async () => {
+		const { agent } = createTestAgent();
+		authState.session = { id: 'user-1' };
+
+		sqlState.queue.push([{ id: agent.id, user_id: 'a-different-user' }]);
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'GET',
+			url: `/api/monetization/wallet?agent_id=${agent.id}`,
+		});
+
+		expect(status).toBe(403);
+		expect(body.error).toBe('forbidden');
+	});
+
+	it('resolves an inherited user-level wallet, matching what a withdrawal pays out to', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]); // ownership
+		// No agent-specific row: only a user-level (agent_id NULL) payout wallet,
+		// which is exactly the row withdrawals.js falls back to.
+		sqlState.queue.push([
+			{ id: 'w1', agent_id: null, address: SOL_ADDRESS, chain: 'solana', is_default: true, preferred_network: 'solana' },
+		]);
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'GET',
+			url: `/api/monetization/wallet?agent_id=${agent.id}`,
+		});
+
+		expect(status).toBe(200);
+		expect(body.resolved.solana_address).toBe(SOL_ADDRESS);
+		expect(body.resolved.evm_address).toBeNull();
+	});
+
+	it('reports no wallet when the user has none configured', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+		sqlState.queue.push([]);
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'GET',
+			url: `/api/monetization/wallet?agent_id=${agent.id}`,
+		});
+
+		expect(status).toBe(200);
+		expect(body.wallets).toEqual([]);
+		expect(body.resolved).toEqual({ evm_address: null, solana_address: null, preferred_network: 'solana' });
+	});
+
+	it('rejects a PUT with no address at all', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'PUT',
+			url: '/api/monetization/wallet',
+			body: { agent_id: agent.id },
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+	});
+
+	it('rejects a malformed Solana payout address', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'PUT',
+			url: '/api/monetization/wallet',
+			body: { agent_id: agent.id, solana_address: 'not-base58-0OIl' },
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+	});
+
+	it('rejects a malformed EVM payout address', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'PUT',
+			url: '/api/monetization/wallet',
+			body: { agent_id: agent.id, evm_address: '0xnope' },
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+	});
+
+	it('upserts both chains and echoes the resolved addresses', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]); // ownership
+		sqlState.queue.push([]); // clear solana default
+		sqlState.queue.push([{ id: 'w-sol', agent_id: agent.id, address: SOL_ADDRESS, chain: 'solana', is_default: true, preferred_network: 'solana' }]);
+		sqlState.queue.push([]); // clear base default
+		sqlState.queue.push([{ id: 'w-evm', agent_id: agent.id, address: EVM_ADDRESS, chain: 'base', is_default: true, preferred_network: 'solana' }]);
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'PUT',
+			url: '/api/monetization/wallet',
+			body: { agent_id: agent.id, solana_address: SOL_ADDRESS, evm_address: EVM_ADDRESS },
+		});
+
+		expect(status).toBe(200);
+		expect(body.wallets).toHaveLength(2);
+		expect(body.resolved.solana_address).toBe(SOL_ADDRESS);
+		expect(body.resolved.evm_address).toBe(EVM_ADDRESS);
+		const upserts = sqlState.calls.filter((c) => c.query.includes('ON CONFLICT'));
+		expect(upserts).toHaveLength(2);
+	});
+
+	it('returns 404 when the agent does not exist', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([]); // no agent row
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'PUT',
+			url: '/api/monetization/wallet',
+			body: { agent_id: agent.id, solana_address: SOL_ADDRESS },
+		});
+
+		expect(status).toBe(404);
+		expect(body.error).toBe('not_found');
+	});
+});
+
+// ── 7. withdrawals — api/monetization/withdrawals.js ────────────────────────────
+
+describe('withdrawals endpoint', () => {
+	const SOL_ADDRESS = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+	// getAvailableBalance issues four queries: earned, pending/withdrawn, and the
+	// two split-adjustment lookups.
+	function queueBalance({ earned, pending = 0n, withdrawn = 0n }) {
+		sqlState.queue.push([{ earned }]);
+		sqlState.queue.push([{ pending, withdrawn }]);
+		sqlState.queue.push([{ amt: 0n }]);
+		sqlState.queue.push([{ amt: 0n }]);
+	}
+
+	it('returns 401 when unauthenticated', async () => {
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'GET',
+			url: '/api/monetization/withdrawals',
+		});
+
+		expect(status).toBe(401);
+		expect(body.error).toBe('unauthorized');
+	});
+
+	it('returns 400 on a malformed agent_id', async () => {
+		authState.session = { id: 'user-1' };
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'GET',
+			url: '/api/monetization/withdrawals?agent_id=not-a-uuid',
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+	});
+
+	it('rejects an unknown status filter instead of answering with an empty page', async () => {
+		authState.session = { id: 'user-1' };
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'GET',
+			url: '/api/monetization/withdrawals?status=bogus-status',
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('falls back to the default page when limit/offset are junk', async () => {
+		authState.session = { id: 'user-1' };
+
+		sqlState.queue.push([]); // withdrawal list
+		queueBalance({ earned: 0n });
+
+		const { status } = await invoke(withdrawalsHandler, {
+			method: 'GET',
+			url: '/api/monetization/withdrawals?limit=abc&offset=xyz',
+		});
+
+		expect(status).toBe(200);
+		// A NaN limit binds as NULL, which Postgres reads as "no limit" — the page
+		// size would silently become the whole table.
+		const list = sqlState.calls.find((c) => c.query.includes('agent_withdrawals'));
+		expect(list.values.slice(-2)).toEqual([20, 0]);
+	});
+
+	it('clamps an oversized limit to the maximum page', async () => {
+		authState.session = { id: 'user-1' };
+
+		sqlState.queue.push([]);
+		queueBalance({ earned: 0n });
+
+		await invoke(withdrawalsHandler, {
+			method: 'GET',
+			url: '/api/monetization/withdrawals?limit=5000',
+		});
+
+		const list = sqlState.calls.find((c) => c.query.includes('agent_withdrawals'));
+		expect(list.values.slice(-2)).toEqual([100, 0]);
+	});
+
+	it('lists withdrawals alongside the derived balance', async () => {
+		authState.session = { id: 'user-1' };
+
+		sqlState.queue.push([
+			{
+				id: 'wd-1', agent_id: 'agent-1', amount: 4_000_000n, currency_mint: USDC_MINT,
+				chain: 'solana', to_address: SOL_ADDRESS, status: 'pending', tx_signature: null,
+				error_message: null, created_at: '2026-06-18T00:00:00Z', updated_at: '2026-06-18T00:00:00Z',
+			},
+		]);
+		queueBalance({ earned: 5_850_000n, pending: 4_000_000n });
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'GET',
+			url: '/api/monetization/withdrawals',
+		});
+
+		expect(status).toBe(200);
+		expect(body.withdrawals).toHaveLength(1);
+		expect(body.withdrawals[0]).toMatchObject({
+			amount_usdc: 4,
+			amount_atomic: 4_000_000,
+			status: 'pending',
+			destination_address: SOL_ADDRESS,
+			tx_hash: null,
+		});
+		expect(body.balance.available_usdc).toBe(1.85);
+		expect(body.balance.pending_usdc).toBe(4);
+	});
+
+	it('refuses a withdrawal before a payout wallet is configured', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]); // ownership
+		sqlState.queue.push([]); // no payout wallet
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'POST',
+			url: '/api/monetization/withdrawals',
+			body: { agent_id: agent.id, amount_usdc: 5 },
+		});
+
+		expect(status).toBe(422);
+		expect(body.error).toBe('no_payout_wallet');
+	});
+
+	it('refuses an amount under the 1 USDC minimum', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+		sqlState.queue.push([{ address: SOL_ADDRESS, chain: 'solana', preferred_network: 'solana' }]);
+		queueBalance({ earned: 10_000_000n });
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'POST',
+			url: '/api/monetization/withdrawals',
+			body: { agent_id: agent.id, amount_usdc: 0.5 },
+		});
+
+		expect(status).toBe(422);
+		expect(body.error).toBe('below_minimum');
+	});
+
+	it('refuses an amount beyond the available balance', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+		sqlState.queue.push([{ address: SOL_ADDRESS, chain: 'solana', preferred_network: 'solana' }]);
+		queueBalance({ earned: 2_000_000n });
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'POST',
+			url: '/api/monetization/withdrawals',
+			body: { agent_id: agent.id, amount_usdc: 100 },
+		});
+
+		expect(status).toBe(422);
+		expect(body.error).toBe('insufficient_balance');
+	});
+
+	it('reserves a pending withdrawal for the full available balance', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+		sqlState.queue.push([{ address: SOL_ADDRESS, chain: 'solana', preferred_network: 'solana' }]);
+		queueBalance({ earned: 5_850_000n });
+		sqlState.queue.push([]); // pg_advisory_xact_lock
+		sqlState.queue.push([
+			{
+				id: 'wd-1', agent_id: agent.id, amount: 5_850_000n, currency_mint: USDC_MINT,
+				chain: 'solana', to_address: SOL_ADDRESS, status: 'pending', tx_signature: null,
+				created_at: '2026-06-18T00:00:00Z', updated_at: '2026-06-18T00:00:00Z',
+			},
+		]);
+
+		// amount_usdc omitted → drain the whole available balance.
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'POST',
+			url: '/api/monetization/withdrawals',
+			body: { agent_id: agent.id },
+		});
+
+		expect(status).toBe(201);
+		expect(body.withdrawal.amount_atomic).toBe(5_850_000);
+		expect(body.withdrawal.status).toBe('pending');
+		expect(body.withdrawal.destination_address).toBe(SOL_ADDRESS);
+		expect(body.balance.available_usdc).toBe(0);
+		// The reservation is serialized behind an advisory lock, not a bare INSERT.
+		expect(sqlState.calls.some((c) => c.query.includes('pg_advisory_xact_lock'))).toBe(true);
+	});
+
+	it('turns a lost race for the same balance into a 422, not an over-withdrawal', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+		sqlState.queue.push([{ address: SOL_ADDRESS, chain: 'solana', preferred_network: 'solana' }]);
+		queueBalance({ earned: 5_850_000n });
+		sqlState.queue.push([]); // pg_advisory_xact_lock
+		sqlState.queue.push([]); // conditional INSERT … SELECT inserted nothing
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'POST',
+			url: '/api/monetization/withdrawals',
+			body: { agent_id: agent.id, amount_usdc: 4 },
+		});
+
+		expect(status).toBe(422);
+		expect(body.error).toBe('insufficient_balance');
+	});
+
+	it("returns 403 against someone else's agent", async () => {
+		const { agent } = createTestAgent();
+		authState.session = { id: 'user-1' };
+
+		sqlState.queue.push([{ id: agent.id, user_id: 'a-different-user' }]);
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'POST',
+			url: '/api/monetization/withdrawals',
+			body: { agent_id: agent.id, amount_usdc: 5 },
+		});
+
+		expect(status).toBe(403);
+		expect(body.error).toBe('forbidden');
+	});
+});

@@ -94,6 +94,11 @@ vi.mock('../../api/_lib/pump.js', () => ({
 		transaction: { message: { accountKeys: [{ pubkey: { toString: () => 'MintPubkey1111111111111111111111111111' } }] } },
 		meta: {},
 	})),
+	// The confirm guards are pure functions over an already-parsed tx; their own
+	// program-id logic is covered in tests/pump-tx-program-guard.test.js against
+	// the real module. Here they are switches the confirm tests flip per case.
+	txInvokesPumpProgram: vi.fn(() => true),
+	txInvokesAgentPaymentsProgram: vi.fn(() => true),
 	buildUnsignedTxBase64: vi.fn(async () => 'BASE64TX'),
 }));
 
@@ -150,10 +155,24 @@ function resetAll() {
 	mockPumpAgent.getBalances.mockClear();
 }
 
+// Restore the pump.js mock's per-test overrides. Kept separate from resetAll so
+// only the suites that flip a guard pay the dynamic import.
+async function resetPumpMod() {
+	const pumpMod = await import('../../api/_lib/pump.js');
+	pumpMod.txInvokesPumpProgram.mockReturnValue(true);
+	pumpMod.txInvokesAgentPaymentsProgram.mockReturnValue(true);
+	pumpMod.solanaPubkey.mockImplementation((s) =>
+		s ? { toBase58: () => s, toString: () => s } : null,
+	);
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────
 const mintB58 = 'MintPubkey1111111111111111111111111111';
 const walletB58 = 'WalletPubkey111111111111111111111111111';
 const ataB58 = 'AtaPubkey1111111111111111111111111111111';
+// Long enough to clear the schema's 32-char floor, but not decodable as base58 —
+// the shape that used to slip past pubkey validation.
+const badPubkey = '0OIl0OIl0OIl0OIl0OIl0OIl0OIl0OIl0OIl';
 
 describe('GET /api/pump/balances', () => {
 	beforeEach(resetAll);
@@ -402,6 +421,7 @@ describe('POST /api/pump/buy-confirm (quote-aware trade recording)', () => {
 
 describe('POST /api/pump/withdraw-prep', () => {
 	beforeEach(resetAll);
+	beforeEach(resetPumpMod);
 
 	it('builds withdraw ix for owner', async () => {
 		authState.session = { id: 'user-1' };
@@ -437,6 +457,49 @@ describe('POST /api/pump/withdraw-prep', () => {
 			},
 		});
 		expect(res.statusCode).toBe(403);
+	});
+
+	it('blocks a cross-site cookie-authed POST before it reaches the mint lookup', async () => {
+		authState.session = { id: 'user-1' };
+		sqlState.queue = [[{
+			id: 'mint-1', mint: mintB58, user_id: 'user-1',
+			agent_authority: walletB58, network: 'devnet',
+		}]];
+		const handler = pumpAction('withdraw-prep');
+		const { res, json } = await invoke(handler, {
+			method: 'POST', url: '/api/pump/withdraw-prep',
+			headers: { origin: 'https://evil.example' },
+			body: {
+				mint: mintB58, authority_wallet: walletB58, receiver_ata: ataB58,
+				network: 'devnet',
+			},
+		});
+		expect(res.statusCode).toBe(403);
+		expect(json.error_description).toMatch(/cross-site/);
+		expect(mockPumpAgentOffline.withdraw).not.toHaveBeenCalled();
+	});
+
+	it('400s on an unparseable currency_token_program instead of silently dropping it', async () => {
+		authState.session = { id: 'user-1' };
+		sqlState.queue = [[{
+			id: 'mint-1', mint: mintB58, user_id: 'user-1',
+			agent_authority: walletB58, network: 'devnet',
+		}]];
+		const pumpMod = await import('../../api/_lib/pump.js');
+		pumpMod.solanaPubkey.mockImplementation((s) =>
+			!s || s === badPubkey ? null : { toBase58: () => s, toString: () => s },
+		);
+		const handler = pumpAction('withdraw-prep');
+		const { res, json } = await invoke(handler, {
+			method: 'POST', url: '/api/pump/withdraw-prep',
+			body: {
+				mint: mintB58, authority_wallet: walletB58, receiver_ata: ataB58,
+				network: 'devnet', currency_token_program: badPubkey,
+			},
+		});
+		expect(res.statusCode).toBe(400);
+		expect(json.error_description).toBe('invalid currency_token_program');
+		expect(mockPumpAgentOffline.withdraw).not.toHaveBeenCalled();
 	});
 });
 
@@ -480,6 +543,7 @@ describe('GET /api/pump/by-agent', () => {
 
 describe('POST /api/pump/withdraw-confirm', () => {
 	beforeEach(resetAll);
+	beforeEach(resetPumpMod);
 
 	it('confirms withdraw tx for owner', async () => {
 		authState.session = { id: 'user-1' };
@@ -523,6 +587,66 @@ describe('POST /api/pump/withdraw-confirm', () => {
 			body: { mint: mintB58, network: 'mainnet', tx_signature: 'a'.repeat(88) },
 		});
 		expect(res.statusCode).toBe(403);
+	});
+
+	it('422s a succeeded tx that never ran the agent-payments program', async () => {
+		authState.session = { id: 'user-1' };
+		sqlState.queue = [
+			[{ id: 'mint-1', mint: mintB58, user_id: 'user-1', agent_authority: walletB58, network: 'mainnet' }],
+		];
+		const pumpMod = await import('../../api/_lib/pump.js');
+		// A plain SPL transfer touching both accounts: confirmed, succeeded, and
+		// not a withdrawal.
+		pumpMod.verifySignature.mockResolvedValueOnce({
+			transaction: { message: { accountKeys: [
+				{ pubkey: { toString: () => mintB58 } },
+				{ pubkey: { toString: () => walletB58 } },
+			] } },
+			meta: {},
+			slot: 22222,
+		});
+		pumpMod.txInvokesAgentPaymentsProgram.mockReturnValue(false);
+		const handler = pumpAction('withdraw-confirm');
+		const { res, json } = await invoke(handler, {
+			method: 'POST',
+			url: '/api/pump/withdraw-confirm',
+			body: { mint: mintB58, network: 'mainnet', tx_signature: 'a'.repeat(88) },
+		});
+		expect(res.statusCode).toBe(422);
+		expect(json.error).toBe('not_a_withdrawal');
+	});
+
+	it('422s rather than 500s when the parsed tx carries no account list', async () => {
+		authState.session = { id: 'user-1' };
+		sqlState.queue = [
+			[{ id: 'mint-1', mint: mintB58, user_id: 'user-1', agent_authority: walletB58, network: 'mainnet' }],
+		];
+		const pumpMod = await import('../../api/_lib/pump.js');
+		pumpMod.verifySignature.mockResolvedValueOnce({ transaction: { message: {} }, meta: {} });
+		const handler = pumpAction('withdraw-confirm');
+		const { res, json } = await invoke(handler, {
+			method: 'POST',
+			url: '/api/pump/withdraw-confirm',
+			body: { mint: mintB58, network: 'mainnet', tx_signature: 'a'.repeat(88) },
+		});
+		expect(res.statusCode).toBe(422);
+		expect(json.error).toBe('mint_not_in_tx');
+	});
+
+	it('blocks a cross-site cookie-authed POST', async () => {
+		authState.session = { id: 'user-1' };
+		sqlState.queue = [
+			[{ id: 'mint-1', mint: mintB58, user_id: 'user-1', agent_authority: walletB58, network: 'mainnet' }],
+		];
+		const handler = pumpAction('withdraw-confirm');
+		const { res, json } = await invoke(handler, {
+			method: 'POST',
+			url: '/api/pump/withdraw-confirm',
+			headers: { origin: 'https://evil.example' },
+			body: { mint: mintB58, network: 'mainnet', tx_signature: 'a'.repeat(88) },
+		});
+		expect(res.statusCode).toBe(403);
+		expect(json.error_description).toMatch(/cross-site/);
 	});
 });
 

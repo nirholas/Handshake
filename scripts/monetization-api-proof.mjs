@@ -124,8 +124,11 @@ async function loadPg() {
 }
 
 // neon HTTP shim: bridges api/_lib/db.js (neon serverless HTTP driver) onto the
-// local Postgres. Column values are serialized per type OID so the driver sees
-// the same JSON shapes Neon's own endpoint returns.
+// local Postgres. The driver sends `Neon-Raw-Text-Output: true` and runs its own
+// pg-types parsers over every value, so the shim must hand back the raw wire
+// text Neon's endpoint returns. Coercing here (parsing a jsonb column, say)
+// double-parses on the client and blows up as `"[object Object]" is not valid
+// JSON` inside the driver, which surfaces as an opaque handler 500.
 function startShim() {
 	fs.mkdirSync(TMP, { recursive: true });
 	const preloadPath = path.join(TMP, 'preload.mjs');
@@ -134,17 +137,6 @@ function startShim() {
 import http from 'node:http';
 import pg from ${JSON.stringify(path.join(root, 'node_modules/pg/esm/index.mjs'))};
 const pool = new pg.Pool({ connectionString: ${JSON.stringify(PG_URL)}, max: 8 });
-const NUMERIC_OIDS = new Set([700, 701, 1700]);
-const INT_OIDS = new Set([20, 21, 23, 26]);
-const JSON_OIDS = new Set([114, 3802]);
-function coerce(value, oid) {
-	if (value === null || value === undefined) return null;
-	if (oid === 16) return value === 't' || value === 'true';
-	if (INT_OIDS.has(oid)) { const n = BigInt(value); return n <= 9007199254740991n && n >= -9007199254740991n ? Number(n) : value; }
-	if (NUMERIC_OIDS.has(oid)) return Number(value);
-	if (JSON_OIDS.has(oid)) { try { return JSON.parse(value); } catch { return value; } }
-	return value;
-}
 http.createServer(async (req, res) => {
 	if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
 	let body = '';
@@ -161,7 +153,7 @@ http.createServer(async (req, res) => {
 			});
 			return {
 				fields: r.fields.map((f) => ({ name: f.name, dataTypeID: f.dataTypeID })),
-				rows: r.rows.map((row) => row.map((v, i) => coerce(v, r.fields[i].dataTypeID))),
+				rows: r.rows,
 				rowCount: r.rowCount, command: r.command,
 			};
 		};
