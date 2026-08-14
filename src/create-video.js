@@ -104,6 +104,12 @@ async function fetchSignedGlbUrl(id) {
 	}
 }
 
+// The viewer starts with no src: this page redirects a signed-out visitor to
+// /login, and a model download started before that check is torn down by the
+// redirect, which model-viewer reports as an uncaught "Failed to fetch" (once
+// more per texture it was mid-way through decoding). Every path out of
+// loadAvatars() selects an avatar, and selectAvatar() sets the src, so the
+// model still loads the moment the account is known.
 function addDefaultThumb() {
 	const url = '/avatars/default.glb';
 	const thumb = createThumb('default', url, null, 'Default');

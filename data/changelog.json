@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "The video studio stops loading an avatar it is about to throw away",
+      "summary": "Open /create/video signed out and the page did two things at once: it started downloading the default avatar model, and it checked whether you were signed in so it could send you to the login page. The redirect always won, which killed the model download halfway through and left an error in the browser console for the abandoned file, plus one more for every texture the viewer had started unpacking. Nothing was broken on screen, but a signed-out visitor was made to pull down three quarters of a megabyte of 3D model on their way to a login form, on whatever connection they happened to be on. The page now waits until it knows who you are before it loads anything: signed in, the avatar appears exactly as before, picked from your own avatars with the bundled one as the fallback; signed out, nothing is fetched and the console stays clean.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/create/video"
+    },
+    {
+      "date": "2026-08-14",
       "title": "Eight more docs pages audited, and the embed snippet that would have failed on paste is fixed",
       "summary": "A line-by-line sweep of the walk leaderboard, Atlas, repository guards, wallet sign-in, spending envelope, avatar image render, character library embed, and skill trial pages, with every command in them run against the live API. The embed tutorial pinned a Subresource Integrity hash that no longer matched the script it names, so a reader who pasted it got a blank box and a browser console error instead of a character; it now carries the hash the site itself publishes. The skill trial page printed a start-trial response the endpoint never returns, and now shows the real one plus the two refusals a seller has to handle. The walk leaderboard page listed the walk documentation set with two pages missing. The Atlas page said the slash key always opens search, when a page that claims that key keeps it. The spending envelope page quoted a free-call note with the wrong wording and now matches the API, and the render tutorial's optimizer figures were stale, so it now tells you to read the byte headers instead of the printed numbers.",
       "tags": [
