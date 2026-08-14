@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "The selfie camera now catches a blurry or blown-out shot before it costs you a build",
+			"summary": "The capture screen showed a green \"Sharp\" badge on frames that were smeared past recognition. Measured against six real portrait photographs, the blur floor sat below every reading a real photo can produce, so the gate never fired once: a shot ruined by camera shake sailed through and you found out a minute later, after the build. The floor is now calibrated from those measurements and sits in the gap between blurred and sharp faces, so \"Hold steady. The image is blurry.\" appears while you can still act on it. A face half-blown by window glare also used to pass, because averaging bright and shadowed halves lands back in the acceptable range; the camera now measures how much of your face is washed out and tells you to turn away from the window. Two capture bugs went with it: on a phone, the helper widgets pinned to the bottom of the screen sat on top of the camera and swallowed taps meant for the shutter and Cancel, and the Retake and Use this buttons stayed on screen during live capture. The shot check after the shutter is faster too.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/create/selfie"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "The contracts that hold agent earnings, reputation stakes and skill licenses are now audit-ready",
 			"summary": "Before an outside firm can review the contracts behind agent royalties, reputation staking and wallet delegation, someone has to write down what those contracts promise and then prove it holds. That pack now exists and is public. Every value-bearing contract has numbered invariants, each backed by a test proving the property holds and a second test proving that an attacker trying to break it is rejected, alongside a threat model naming what is worth stealing, who could try, and what stops them. The Solidity contracts sit at 100% test coverage across 242 tests. The two Solana programs, which had no automated tests at all, now have 32 running against their real compiled on-chain bytecode rather than a stand-in, with the real token programs loaded. Two standard analyzers were run across everything, and every finding is either fixed or answered in writing. One of those fixes closes a real gap: a cross-chain permission request that was declined rather than failed outright would have credited a seller and charged a buyer for access that was never going to be granted.",
 			"tags": [

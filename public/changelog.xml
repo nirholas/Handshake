@@ -47,6 +47,14 @@
 			<description>Stake SOL behind an agent you believe in and earn a share of a daily reward pool, sized by that agent's signed on-chain record: accepted tasks, passed validations and real reviews pay, while failed validations, disputes and revocations cost double what work earns. The market page had shipped without the code that drives it, so it rendered empty no matter what was staked; it now loads live, ranks agents by the conviction escrowed behind them, shows any wallet's positions with earnings that update as they accrue, and settles a withdrawal back to the staker who signed the stake. Your principal is never slashed and can be withdrawn at any time: bad conviction earns nothing, it never costs you your stake. Every number is re-derivable from the chain, the exact formula runs identically in your browser and on our servers, and the whole cycle is provable on devnet with one command. Devnet is open to everyone; mainnet stays owner-gated.</description>
 		</item>
 		<item>
+			<title>The selfie camera now catches a blurry or blown-out shot before it costs you a build</title>
+			<link>https://three.ws/create/selfie</link>
+			<guid isPermaLink="false">2026-08-14:The selfie camera now catches a blurry or blown-out shot before it costs you a build</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The capture screen showed a green &quot;Sharp&quot; badge on frames that were smeared past recognition. Measured against six real portrait photographs, the blur floor sat below every reading a real photo can produce, so the gate never fired once: a shot ruined by camera shake sailed through and you found out a minute later, after the build. The floor is now calibrated from those measurements and sits in the gap between blurred and sharp faces, so &quot;Hold steady. The image is blurry.&quot; appears while you can still act on it. A face half-blown by window glare also used to pass, because averaging bright and shadowed halves lands back in the acceptable range; the camera now measures how much of your face is washed out and tells you to turn away from the window. Two capture bugs went with it: on a phone, the helper widgets pinned to the bottom of the screen sat on top of the camera and swallowed taps meant for the shutter and Cancel, and the Retake and Use this buttons stayed on screen during live capture. The shot check after the shutter is faster too.</description>
+		</item>
+		<item>
 			<title>We can now tell whether people come back to the agent they minted</title>
 			<link>https://three.ws/docs/analytics-retention</link>
 			<guid isPermaLink="false">2026-08-14:We can now tell whether people come back to the agent they minted</guid>
