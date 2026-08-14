@@ -74,7 +74,7 @@ Grotesk display face).
   live trade page on that venue), price, spread, +2% / −2% order-book depth,
   24h volume, and a color-coded trust rating. Stale/anomalous rows are dimmed.
 - **Related news** — live articles mentioning the coin, from the native
-  three.ws aggregator (`api/_lib/news.js`; 191 publisher feeds in the
+  three.ws aggregator (`api/_lib/news.js`; 197 publisher feeds in the
   `api/_lib/news-sources.js` registry).
 - **About + links** — plain-text description, official site / social /
   explorer pills, plus whitepaper, forum, chat, announcement, and extra-repo
@@ -154,14 +154,23 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
   feed, falling back to Hyperliquid's keyless info API
   ([`api/_lib/hyperliquid.js`](../api/_lib/hyperliquid.js)): one venue instead of
   dozens, but live price/funding/OI/volume for ~200 perps beats a 502. The
-  response carries a `source` marker.
+  response carries a `source` marker. Riding alongside whichever source answered
+  is a `deribit` block ([`api/_lib/deribit.js`](../api/_lib/deribit.js)): index
+  prices, funding-carrying perp tickers, and per-asset options aggregates from
+  Deribit's keyless public API. It is fetched in parallel and fails soft to
+  `null`, so an unreachable Deribit never delays or blanks the perp table.
 - **SOL spot** — seven sources server-side (CoinGecko, Jupiter, Kraken,
   Coinbase, DefiLlama, DIA, Bitfinex) and four browser-side, CORS-safe ones.
-- **Solana token panels** — Birdeye → DexScreener → GeckoTerminal → DefiLlama →
-  Raydium (see
+- **Solana token panels**: Birdeye → Tokens API → DexScreener → GeckoTerminal →
+  DefiLlama → Raydium (see
   [`api/_lib/market/token-market.js`](../api/_lib/market/token-market.js)).
-  The Raydium rung is price-only and covers only Raydium-pooled tokens, but it
-  indexes its own AMM, so it stays up when every aggregator is rate-limited.
+  The Tokens API rung (`api.tokens.xyz`, the Solana Foundation's canonical asset
+  index) carries the same full field set as Birdeye, holder count and
+  circulating supply included, so it is a like-for-like second rather than a
+  degraded fallback; it sits behind Birdeye only because Birdeye is our own
+  direct read. The Raydium rung is price-only and covers only Raydium-pooled
+  tokens, but it indexes its own AMM, so it stays up when every aggregator is
+  rate-limited.
 - **Trending** (`/api/coin/trending`) — CoinGecko `/search/trending` → GeckoTerminal
   on-chain trending. CoinGecko ranks by search interest across all chains; the
   free fallback ranks by on-chain pool activity, scoped to Solana so every
@@ -212,8 +221,11 @@ the coin's detail page. The layout is computed client-side from the existing
 
 ### `/fear-greed` — Fear & Greed index
 
-The market's mood as a single 0–100 score on a live semicircle **gauge**, with a
-week-over-week delta and its classification (Extreme Fear → Extreme Greed). Below
+The market's mood as a single 0 to 100 score on a live semicircle **gauge**, with
+a week-over-week delta and its classification (Extreme Fear → Extreme Greed).
+The delta is only drawn when the requested window actually contains a reading a
+full week old: otherwise `previous_week` comes back null and the page omits the
+comparison rather than score the current reading against itself. Below
 it, an **interactive history chart** (30D / 90D / 1Y) with a crosshair tooltip,
 and a labelled scale. Data is the alternative.me index — the same source the
 `/coins` stats bar uses — served through `/api/coin/fear-greed`.
@@ -507,8 +519,8 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/global`      | CoinGecko `/global` + alternative.me Fear & Greed          | 120 s        |
 | `/api/coin/fear-greed`  | alternative.me `/fng` (current + history)                  | 300 s        |
 | `/api/coin/gas`         | public Ethereum RPC `eth_feeHistory` + CoinGecko ETH price | 15 s         |
-| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 191 publisher feeds) | 300 s        |
-| `/api/news/feed`        | native aggregator: 191 publisher RSS/Atom feeds (`api/_lib/news-sources.js`), per-source cache + serve-stale | 120 s |
+| `/api/coin/news`        | native aggregator (`api/_lib/news.js`, 197 publisher feeds) | 300 s        |
+| `/api/news/feed`        | native aggregator: 197 publisher RSS/Atom feeds (`api/_lib/news-sources.js`), per-source cache + serve-stale | 120 s |
 | `/api/news/article`     | publisher page fetch (SSRF-guarded) → publisher feed body → preview; LLM analysis via the platform chain (`api/_lib/llm.js`) with extractive fallback | 1800 s |
 | `/api/news/archive`     | `gs://three-ws-news-archive` (662k-article JSONL corpus + indexes on GCS) | 300 s / 3600 s |
 | `/api/coin/liquidations`| `services/liquidation-collector` (Binance/Bybit/OKX public liquidation WebSocket streams) | 15 s, `503` no-fallback offline |
