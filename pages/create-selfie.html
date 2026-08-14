@@ -1009,16 +1009,36 @@
 				filter: brightness(0.92);
 			}
 
+			/* The camera is a full-screen modal, so it has to sit above the corner
+			   stack (helper widgets, language switcher, getting-started pill),
+			   which mounts at --z-corner-stack. At the old z-index of 1000 that
+			   stack rendered ON TOP of the capture bar and, being fixed to the
+			   bottom edge on phones, swallowed taps meant for the shutter and
+			   Cancel. --z-overlay-modal is the platform's own token for exactly
+			   this layer (public/corner-stack.js defines the ladder). */
 			#cam-overlay {
 				position: fixed;
 				inset: 0;
 				background: #000;
-				z-index: 1000;
+				z-index: var(--z-overlay-modal, 2147483600);
 				display: none;
 				flex-direction: column;
 			}
 			#cam-overlay.open {
 				display: flex;
+			}
+			/* The action groups use display:contents so their buttons join the
+			   .cam-bar flex row directly. An inline display:contents would beat
+			   the UA's [hidden]{display:none}, which left the review buttons
+			   visible during live capture (and vice versa); scoping both rules
+			   here keeps `hidden` authoritative. */
+			#cam-actions-live,
+			#cam-actions-review {
+				display: contents;
+			}
+			#cam-actions-live[hidden],
+			#cam-actions-review[hidden] {
+				display: none;
 			}
 			#cam-stage {
 				position: relative;
@@ -1989,7 +2009,7 @@
 			<div id="cam-error" hidden></div>
 			<div id="cam-review-verdict" role="status" aria-live="polite" hidden></div>
 			<div class="cam-bar">
-				<div id="cam-actions-live" style="display: contents">
+				<div id="cam-actions-live">
 					<button type="button" data-cam-action="cancel" data-i18n="create_selfie.cancel">Cancel</button>
 					<button
 						type="button"
@@ -2000,7 +2020,7 @@
 					 data-i18n-attr="aria-label:create_selfie.take_photo_arialabel"></button>
 					<div class="spacer"></div>
 				</div>
-				<div id="cam-actions-review" hidden style="display: contents">
+				<div id="cam-actions-review" hidden>
 					<button type="button" data-cam-action="retake" data-i18n="create_selfie.retake">Retake</button>
 					<button type="button" data-cam-action="use" data-i18n="create_selfie.use_this">Use this</button>
 				</div>
