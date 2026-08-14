@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent Interaction Lab</title>
+			<link>https://three.ws/demos/agents</link>
+			<guid isPermaLink="false">2026-08-14:Agent Interaction Lab</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Fourteen prototypes exploring how a 3D agent physically inhabits a web page: real gravity, page elements as the playground, and the agent reacting to scroll, clicks, and the cursor.</description>
+		</item>
+		<item>
+			<title>Docs · Draft Agent Mint</title>
+			<link>https://three.ws/docs/draft-agent-mint</link>
+			<guid isPermaLink="false">2026-08-14:Docs · Draft Agent Mint</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every finished reconstruction is stored durably and minted as a draft on-chain agent identity: the Solana leg, the ERC-8004 leg, the flags that arm each one, and how to prove the whole path on devnet.</description>
+		</item>
+		<item>
 			<title>Docs · Likeness evaluation</title>
 			<link>https://three.ws/docs/likeness-eval</link>
 			<guid isPermaLink="false">2026-08-14:Docs · Likeness evaluation</guid>
@@ -87,6 +103,14 @@
 			<description>The image an agent link unfurls with inlines the agent's avatar thumbnail. It resolved that thumbnail with its own URL builder rather than the platform's, so a stored key holding a space, or one of the legacy origin-pointing keys that never had an image behind it, cost the card its portrait and spent a doomed fetch on every crawl. It now uses the same resolver every other surface uses, ignores what a remote server claims the image type is unless it is a real image type, and an unset storage setting costs the portrait instead of the whole card. Separately, a sealed gift card could paint blank colors if a drop record ever carried a theme name outside the curated set, and an unreadable balance now reads as a plain blank rather than a long dash.</description>
 		</item>
 		<item>
+			<title>An Oracle coin page now tells you what happened after the call, and stops letting a score be read as a percentage</title>
+			<link>https://three.ws/oracle</link>
+			<guid isPermaLink="false">2026-08-14:An Oracle coin page now tells you what happened after the call, and stops letting a score be read as a percentage</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A conviction of 100 sitting above a chart that had already spiked and collapsed looked like a broken engine. It was not: the score is a rank on a 0 to 100 line, fitted to predict that a launch runs 3x or graduates, and it says nothing about whether the run survives. Nothing on the page said that, and the ground truth was buried below the fold. The verdict card now carries both missing sentences right under the dial. It quotes what calls in that band actually did, measured over resolved coins rather than inferred from the score (26 percent of calls in the 90-100 band went on to graduate or run 2x without ever rugging, 4.8 times what a random launch manages), it says how early the call was made, and it says plainly that the score ranks the odds of a run and not the odds of a safe hold. Under that, once the market has settled a coin, a Since the call line states the outcome in the order a holder reads it: peak multiple, graduated or rugged, and what it is worth now. Both lines are rendered on the server, so a link pasted into a chat shows the outcome in the preview instead of a bare triumphant number, and the feed at /oracle carries the same outcome as a chip on every resolved card. The accuracy pages were reporting three numbers wrong in the same way. The calibration table, its Brier score, and the calibration cron all read a score of 86 as a claim of 86 percent when the model claims 55, which overstated the engine's own confidence by up to four times and made a calibrated ranking look wildly overconfident; all three now use the real score-to-probability map, and the table publishes both the trained event and the stricter rug-aware win side by side so neither is presented as the other. The monotonicity check was also flattering itself: it tolerated any dip under five points, which was exactly the size of the dip in production, and reported the ladder as calibrated anyway. It now counts an inversion whenever two bands' confidence intervals cannot overlap, and the page names the bands that failed instead of asserting that all is well.</description>
+		</item>
+		<item>
 			<title>Another site can no longer swap your agent's body or burn your avatar credits behind your back</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Another site can no longer swap your agent's body or burn your avatar credits behind your back</guid>
@@ -143,6 +167,14 @@
 			<description>BlockTempo, a Taiwanese crypto publisher that writes in Traditional Chinese, was listed in our news source registry without a language tag. Untagged sources are treated as English, so its headlines were being mixed into the default feed on /markets/news, the markets hub strip, and the RSS mirror, where they read as noise to anyone browsing in English. It is now tagged Chinese: the English feed is English only, and BlockTempo shows up when you pick Chinese from the language selector, alongside PANews. Nothing else about the feed changed.</description>
 		</item>
 		<item>
+			<title>Comments on your models now read as a sentence in the bell and file under the Social tab</title>
+			<link>https://three.ws/notifications</link>
+			<guid isPermaLink="false">2026-08-14:Comments on your models now read as a sentence in the bell and file under the Social tab</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When someone comments on a model you made, you get a notification. It was arriving half-built. The notification centre sorts every alert into a tab (Sales, Social, Creations, and so on) using a list it keeps in the browser, and comments were missing from that list, so a comment landed in Account and Security instead of Social, next to withdrawals and security warnings. The bell had the same gap from the other side: with no wording written for the comment alert, it fell back to printing the raw internal name of the event, so the row simply read comment, with no hint of who wrote it or what they said. Comments now sort into Social, matching the preference switches in settings that were already treating them as social, and the row reads as a real sentence naming the commenter and quoting the opening of what they wrote. Three documentation pages were corrected against the code in the same pass: the Notifications reference was missing comments from its category table, the Agent Symphony page was missing five Agora arena and guild events from its sound map, and the Character Library page described its API as callable from any website when it has always answered three.ws and its partner sites only.</description>
+		</item>
+		<item>
 			<title>Connecting an app to your account now fails loudly instead of handing it a token that works nowhere</title>
 			<link>https://three.ws/docs/authentication</link>
 			<guid isPermaLink="false">2026-08-14:Connecting an app to your account now fails loudly instead of handing it a token that works nowhere</guid>
@@ -183,12 +215,36 @@
 			<description>The Draft and Draft x3 buttons in the agent's X panel asked the server for tweet options and got back a differently shaped answer, so the panel cleared itself and showed nothing every time. Drafting now returns the options it was asked for: one per click of Draft x3, each written from its own angle, in the tone picked in the panel and in the voice of the agent it belongs to, with Thread mode splitting a completion into real thread parts. Drafting is also gated like every other write, so another site cannot spend a signed-in account's model budget. Elsewhere on the same panel, a malformed id or agent filter now comes back as a plain validation error instead of a server error, approving a queued post can no longer be published twice by a double click, and scheduling has a sane ceiling on how many posts and rules one account can queue.</description>
 		</item>
 		<item>
+			<title>Eight docs pages checked line by line, and four stale claims corrected</title>
+			<link>https://three.ws/docs/partners</link>
+			<guid isPermaLink="false">2026-08-14:Eight docs pages checked line by line, and four stale claims corrected</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>A sweep of the viability, press kit, partners, agent identities, OKX marketplace, avatar engines, stage, and world lines pages, with every command in them actually run and every link followed. Four things were wrong and are now right. The partners page pointed the NVIDIA row at a docs path when the card on the live page goes to /nvidia. The agent identity docs claimed a job handle expires after about thirty days, which nothing in the code enforces; the page now states what is true, that the signed handle carries no expiry and the job record stays readable. The marketplace page showed a create call replying with a queued status and a generation stage, neither of which the endpoint has ever returned, so an agent coding against the sample would have waited on a state that never arrives; the page and the endpoint's own published example now show the running status and generate stage the code emits. The same page read as though our marketplace listing were live when it is still in review, and now says so plainly. The world lines anti-cheat table was also missing one of the per-IP limits it lists.</description>
+		</item>
+		<item>
 			<title>Every agent now has a verifiable on-chain history you can read on its page</title>
 			<link>https://three.ws/docs/agent-index</link>
 			<guid isPermaLink="false">2026-08-14:Every agent now has a verifiable on-chain history you can read on its page</guid>
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Agents do things on-chain after they are registered: they launch a token, collect reputation attestations, change hands, delegate execution rights. Until now the platform recorded only who an agent currently was, so all of that history was dropped, and anyone who wanted it had to scan a chain themselves. Open any agent under the Discover directory and there is now an On-chain history panel: a timeline of everything the platform has indexed for that agent, each entry stamped with the real time the chain says it happened and linked to the transaction on a block explorer so you can check it yourself. The same data is available to developers as one public endpoint. Three failures were fixed to make it real. The Solana half of the indexer was crashing on every single agent it looked at, so despite tracking more than fifteen hundred agents it had recorded zero events; it now records them, and a token launch names the agent's actual coin instead of the wrapped SOL that paid for it. On the EVM side, five of the twenty-two supported chains were producing blocks faster than the indexer could read them, so their backlog grew every hour while the status page called them healthy: the indexer now widens its reading window until it catches up, and the status page publishes how many blocks behind the worst chain is, as a number. Reputation was the third: the platform was already asking every EVM chain for agent feedback and vouches on every pass, then throwing the answers away, so not a single reputation event had ever reached the index. Those now land alongside the rest of an agent's history, with the score, its tags, and a link to the attestation.</description>
+		</item>
+		<item>
+			<title>Every avatar you scan now arrives with an on-chain identity of its own, minted for you in the background</title>
+			<link>https://three.ws/create/selfie</link>
+			<guid isPermaLink="false">2026-08-14:Every avatar you scan now arrives with an on-chain identity of its own, minted for you in the background</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When a scan or a prompt finishes building your avatar, the finished model is written to permanent storage and the agent behind it is given a real on-chain identity at the same moment. It is a Metaplex Core asset on Solana, minted into the platform's own agent collection with the royalty terms and registry enrolment every other platform mint carries, and it is owned by the agent's own wallet rather than by us. There is no wallet prompt, no fee, and no step to remember: by the time the avatar shows up in your library the identity already exists and anyone can look it up. It is created as a draft, which means it says the agent exists and this is its avatar, not that it is live and taking work. Going live stays a deliberate choice you make later. If the mint cannot run for any reason your avatar is completely unaffected, because it is already delivered and saved before the mint is ever attempted. Agents that want an Ethereum-side identity as well can have one registered under the ERC-8004 standard, and the whole path is now documented, including the single setting an operator flips to arm it for the main Solana network and the script that proves the whole chain end to end on the test network.</description>
+		</item>
+		<item>
+			<title>Every Oracle card now says why that coin scored, and what a score like it has actually been worth</title>
+			<link>https://three.ws/oracle</link>
+			<guid isPermaLink="false">2026-08-14:Every Oracle card now says why that coin scored, and what a score like it has actually been worth</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The live conviction board had a copy problem that made a working engine look like a broken one. Each card carried a one-line read of the launch, and that line was assembled from whichever of the four pillars scored highest. Buy-side momentum is the highest pillar on about nine in ten of the coins at the top of the feed, so nine in ten cards printed the same sentence, word for word, down the whole page. Two hundred cards, one take, nothing learned. Meanwhile the engine had already written a specific, quantified reason for every single coin, and it was only visible if you opened the coin. Those reasons now ship with the feed, so each card quotes its own evidence and the historical lift behind it: 40+ early buyers at 6.8x the base rate, top holder at 5-15%, more sellers than buyers. Each reason is phrased in the units a trader thinks in rather than the model's internal labels. Every card also carries a second, quieter number: how often a coin scored into that band went on to graduate or run 2x or more without ever rugging, measured across the 61,916 scored coins the market has already resolved. That is deliberately a stricter question than the score answers, because the score ranks the odds of a run and says nothing about surviving it, and a holder is entitled to both numbers rather than being left to read a conviction of 99 as a 99 percent chance of anything. Two badges were cleaned up in the same pass: the prime pill that only ever repeated the tier printed beside it is gone, and the momentum badge, which was firing on 93 percent of the live feed, now appears only when buy pressure alone would carry a launch to prime.</description>
 		</item>
 		<item>
 			<title>Keyboard users stop tabbing past the same Skip to content link twice, and the homepage hint is readable again</title>
@@ -303,6 +359,14 @@
 			<description>The English description Google and every social preview show for the agent directory was updated a while back to say the directory spans Solana and every supported EVM chain. The 84 translated versions were never updated with it, so a reader in Spanish, Japanese, Arabic or any other language got the older, vaguer line that named no chain at all. All 84 now carry the current wording, with Solana and three.ws left in their real spelling rather than bent to fit each language's grammar. Retired copy was cleared out at the same time: eight strings that no page shows anymore had been sitting in every one of the 84 catalogs, which is 672 dead entries the site was shipping to readers for no reason.</description>
 		</item>
 		<item>
+			<title>The agent interaction lab is reachable again from the demos index</title>
+			<link>https://three.ws/demos/</link>
+			<guid isPermaLink="false">2026-08-14:The agent interaction lab is reachable again from the demos index</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The demos index has always carried a card for the agent interaction lab, the set of small pages where an avatar high-fives you, climbs the page title, bounces on a trampoline, or falls asleep when you leave it alone. Clicking that card gave you a 404. The lab hub lives in a folder rather than as a single page, and the rule that turns a demo name into a page file was sending the request to a file that never existed, so the one link into the lab was the only link on the index that could not be followed. The sub-demos were fine the whole time; only the door was missing. It is fixed, and the demo route map now records the whole lab, including the lost-avatar 404 page that has its own card on the index but was never listed.</description>
+		</item>
+		<item>
 			<title>The Arena now runs a daily competition on its own, instead of waiting for someone to host one</title>
 			<link>https://three.ws/arena</link>
 			<guid isPermaLink="false">2026-08-14:The Arena now runs a daily competition on its own, instead of waiting for someone to host one</guid>
@@ -317,6 +381,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Landing on the Arena used to mean reading a grid of cards before you could tell whether anything was happening. Whatever competition is running now is promoted to the top of the page as a full board: the podium with each agent P&amp;L for the window, the countdown to the bell, and how many agents and trades are in it, all before a click. If nothing is live, the next scheduled bracket takes the slot. Sharing improved too. A bracket link pointed at a part of the address that link previews cannot read, so posting a live competition looked exactly like posting the homepage. Every bracket now has its own shareable address that unfurls a picture of the actual standings, drawn from the same numbers the page shows and the same ones published on-chain. A losing board is drawn exactly like a winning one, in red.</description>
+		</item>
+		<item>
+			<title>The CA to x402 tool stops handing out a command that cannot run</title>
+			<link>https://three.ws/ca2x402</link>
+			<guid isPermaLink="false">2026-08-14:The CA to x402 tool stops handing out a command that cannot run</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Paste a contract address into the CA to x402 tool and it generates the copy-paste code for calling the paid endpoint it just built for you. The cURL tab's second step told you to pay by running npx x402-fetch against the endpoint. That never worked: the published x402-fetch package is a library, not a command line tool, so anyone who copied it got an npm error about not being able to determine an executable to run, on their first attempt to pay us. The tab now shows the real two-step HTTP flow instead, taking the 402 and then replaying the same call with the payment header, and says outright that the Node and Agent tabs are what sign that header for you. Both commands were run end to end against the live endpoint before shipping. The docs page carries the same correction, and the vault and master wallet docs pages got proper search descriptions in place of ones that quoted raw filenames at readers.</description>
 		</item>
 		<item>
 			<title>The commit and changelog feeds can no longer repeat a post they already sent</title>
@@ -391,6 +463,14 @@
 			<description>Every build runs a link audit that walks the site and fails if any link points at a page that does not exist. It was only ever reading three directories, and the docs reader, the blog, and the chat app live in three more that the router serves just as publicly. So those pages shipped unchecked while the audit still reported a clean zero, which is the worst way for a safety check to fail: green with the gap intact. The audit now walks every directory the router can serve a page out of, and a new test derives that list from the routing table itself, so the next section added to the site cannot quietly slip past it. Two smaller blind spots went with it: a code sample printed on a documentation page was being read as if it were a real link on that page, and a link built up in JavaScript from several pieces was being reported as a dead one. Three genuinely dead links found along the way are fixed, and the audit is now part of the pre-build gate rather than something someone has to remember to run.</description>
 		</item>
 		<item>
+			<title>The machine-readable API spec stops telling agents they need a login for a lane they can just pay for</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-08-14:The machine-readable API spec stops telling agents they need a login for a lane they can just pay for</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Agents and crawlers read /openapi.json to work out how to call this platform without a human present, and two of its entries were sending them the wrong way. The MCP endpoint was listed as requiring a bearer token or an API key, when in fact an unauthenticated call answers with a payment challenge: an agent can settle in USDC and get to work with no key, no token, and no account at all, and a credential is accepted but never required. Any agent that trusted the spec went off to obtain a login it did not need. The spec also described only the paid half of the Forge generation lane, hiding the free price lookup on the same address that lets an agent read the per-tier pricing and the accepted request shape before it commits any money. Both are corrected, the session-teardown call the MCP route already advertises in its own headers is documented, and the human API reference now matches. The sitemap, robots.txt, llms.txt, and llms-full.txt feeds were swept in the same pass and every address they publish was confirmed to resolve.</description>
+		</item>
+		<item>
 			<title>The market data index now shows every paid endpoint, at the price you will actually be charged</title>
 			<link>https://three.ws/docs/market-data-api</link>
 			<guid isPermaLink="false">2026-08-14:The market data index now shows every paid endpoint, at the price you will actually be charged</guid>
@@ -405,6 +485,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The public tool catalog at /mcp-tools is generated from the code so it cannot drift, which is exactly why two wrong things in it went unnoticed. The free 3D Studio connector builds its tool list from two source files and the generator only ever read one of them, so the three persona tools that give a generated body a name, bring it back in a later session, and make it lip-sync a reply were served by the endpoint but missing from the catalog, from the machine-readable /mcp-catalog.json an agent fetches to discover what it can call, and from the two build gates that hold every published tool to its declared contract and its declared safety annotations. All three are now covered by both gates and appear in the catalog. Separately, the x402 Bazaar was labelled as needing no account and no payment; a real search call with neither returns a payment request, so the catalog now says OAuth or x402, matching the server, its documentation, and the fleet directory at /.well-known/mcp.json.</description>
+		</item>
+		<item>
+			<title>The one-tag Shopify shopping assistant installs again, and three guides stop teaching things the code never did</title>
+			<link>https://three.ws/tutorials/shopify-shopping-assistant</link>
+			<guid isPermaLink="false">2026-08-14:The one-tag Shopify shopping assistant installs again, and three guides stop teaching things the code never did</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The install snippet for the Shopify shopping assistant carried a module attribute on its script tag, which quietly made it unloadable on every store: a module script is fetched cross-origin under stricter rules than a plain one, and the file it points at does not send the headers those rules require, so the widget simply never appeared. The tag is corrected everywhere it is published, so pasting it into a theme works on the first try. The self-hosted NVIDIA TRELLIS lane had a similar mismatch underneath: when no dedicated address was set it fell back to the address of our own generation worker, which answers a different protocol, so the health check reported a ready service and every generation then failed against it. That lane now reads only its own setting and says plainly when one is missing. Three tutorials were rewritten against the code they describe: the ERC-8004 reputation guide was calling three contract functions and one agent tool that do not exist on the live registry and now documents the real interface, the Solana reputation guide pointed at paid lookups that were never shipped and now shows the free ones that are, and the Tour Builder page was missing a heading for screen readers.</description>
 		</item>
 		<item>
 			<title>The Oracle live action stream no longer goes quiet after a bad reconnect</title>
@@ -461,6 +549,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The capture screen showed a green &quot;Sharp&quot; badge on frames that were smeared past recognition. Measured against six real portrait photographs, the blur floor sat below every reading a real photo can produce, so the gate never fired once: a shot ruined by camera shake sailed through and you found out a minute later, after the build. The floor is now calibrated from those measurements and sits in the gap between blurred and sharp faces, so &quot;Hold steady. The image is blurry.&quot; appears while you can still act on it. A face half-blown by window glare also used to pass, because averaging bright and shadowed halves lands back in the acceptable range; the camera now measures how much of your face is washed out and tells you to turn away from the window. Two capture bugs went with it: on a phone, the helper widgets pinned to the bottom of the screen sat on top of the camera and swallowed taps meant for the shutter and Cancel, and the Retake and Use this buttons stayed on screen during live capture. The shot check after the shutter is faster too.</description>
+		</item>
+		<item>
+			<title>The server-side agent stops falling through its own free lanes, and the cookbook command you copy now runs</title>
+			<link>https://three.ws/docs/agent-runtime</link>
+			<guid isPermaLink="false">2026-08-14:The server-side agent stops falling through its own free lanes, and the cookbook command you copy now runs</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The tool-using agent behind the server tools model in chat, and the trading copilot beside it, both run on one shared list of language-model providers tried in order until one answers. Two rungs of that list were broken in ways nobody could see from the outside. The first OpenRouter rung named a paid model, so it either billed the platform key against our own free-first policy or was refused outright, and every OpenRouter rung after it named a model id that had since been retired, so those answered with a not-found error rather than a result. With that whole tier effectively dead, one busy moment on the remaining fast lane dropped the agent straight onto the last resort and the request failed. All OpenRouter rungs now ride the same live free model the rest of the platform uses, and two more genuinely free lanes with full tool-calling support were added to the chain, so the loop has independent quota to fall back on instead of one shared pool. Four documentation pages were corrected against the code they describe in the same pass: the agent runtime page listed a guard response shape that did not match what the endpoint returns, the Nemotron spotlight quoted an image-check prompt with a paragraph missing and a vision model list that skipped one of its own lanes, and the two command-line cookbook recipes named a flag the script does not accept and a file length it had outgrown. The recipe file you download is the same file that was wrong, so that flag works now when you paste the line straight out of the page.</description>
 		</item>
 		<item>
 			<title>The Smart Money Radar stops going blank when pump.fun rate-limits us</title>
