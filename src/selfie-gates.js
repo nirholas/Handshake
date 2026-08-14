@@ -52,12 +52,16 @@ export const SLOT_PRESETS = Object.freeze({
 
 export const GATES = Object.freeze({
 	/** Laplacian-response stddev floor on the 64px live face crop. */
-	BLUR_STDDEV_MIN: 3.5,
+	BLUR_STDDEV_MIN: 12,
 	/** Variance-of-Laplacian floor for still photos at up to 1024px. */
 	SHARPNESS_VAR_MIN: 90,
 	/** Mean face luma bounds (Rec. 601, 0..255). */
 	LUMA_MIN: 40,
 	LUMA_MAX: 218,
+	/** Max share of the face crop allowed to be blown to near-white. */
+	CLIPPED_FRAC_MAX: 0.18,
+	/** A face pixel at or above this luma carries no recoverable texture. */
+	CLIP_LEVEL: 250,
 	/** Max nose offset from frame centre, as a fraction of frame size. */
 	CENTER_TOL_X: 0.22,
 	CENTER_TOL_Y: 0.28,
@@ -66,24 +70,34 @@ export const GATES = Object.freeze({
 });
 
 /**
- * Mean luma and Laplacian-response stddev of an 8-bit grey buffer.
- * This is the live viewfinder's blur/lighting measurement, extracted pure so
- * it can be pinned by unit tests. `blurStddev` is the standard deviation of a
- * 4-neighbour Laplacian over the interior pixels: sharp facial detail yields
- * strong high-frequency response, defocus and motion blur collapse it.
+ * Mean luma, blown-highlight share, and Laplacian-response stddev of an 8-bit
+ * grey buffer. This is the live viewfinder's blur/lighting measurement,
+ * extracted pure so it can be pinned by unit tests. `blurStddev` is the
+ * standard deviation of a 4-neighbour Laplacian over the interior pixels:
+ * sharp facial detail yields strong high-frequency response, defocus and
+ * motion blur collapse it. `clippedFrac` is the share of pixels at or above
+ * CLIP_LEVEL, which mean luma cannot see: a face half-blown by window glare
+ * still averages into the accepted band while carrying no texture where it
+ * counts, and clipping raises the Laplacian response rather than lowering it,
+ * so the blur gate cannot catch it either.
  *
  * @param {Uint8Array|Uint8ClampedArray|Float32Array|number[]} grey row-major, length w*h
  * @param {number} w
  * @param {number} h
- * @returns {{ luma: number, blurStddev: number }}
+ * @returns {{ luma: number, blurStddev: number, clippedFrac: number }}
  */
 export function grayFaceStats(grey, w, h) {
 	const n = w * h;
-	if (n === 0) return { luma: 0, blurStddev: 0 };
+	if (n === 0) return { luma: 0, blurStddev: 0, clippedFrac: 0 };
 	let lumaSum = 0;
-	for (let i = 0; i < n; i++) lumaSum += grey[i];
+	let clipped = 0;
+	for (let i = 0; i < n; i++) {
+		lumaSum += grey[i];
+		if (grey[i] >= GATES.CLIP_LEVEL) clipped++;
+	}
 	const luma = lumaSum / n;
-	if (w < 3 || h < 3) return { luma, blurStddev: 0 };
+	const clippedFrac = clipped / n;
+	if (w < 3 || h < 3) return { luma, blurStddev: 0, clippedFrac };
 	let ls = 0;
 	let ls2 = 0;
 	let ln = 0;
@@ -103,7 +117,7 @@ export function grayFaceStats(grey, w, h) {
 	}
 	const mean = ls / ln;
 	const blurStddev = Math.sqrt(Math.max(0, ls2 / ln - mean * mean));
-	return { luma, blurStddev };
+	return { luma, blurStddev, clippedFrac };
 }
 
 /**
@@ -117,6 +131,7 @@ export function grayFaceStats(grey, w, h) {
  *   noseX?: number|null, noseY?: number|null,
  *   blur?: number,
  *   luma?: number,
+ *   clippedFrac?: number,
  * }} m `blur` is the grayFaceStats blurStddev; noseX/noseY are normalised 0..1.
  * @returns {{
  *   faceFound: boolean, yawOk: boolean, centered: boolean,
@@ -146,7 +161,10 @@ export function gradeFrame(m) {
 		Math.abs(m.noseX - 0.5) < GATES.CENTER_TOL_X &&
 		Math.abs(m.noseY - 0.5) < GATES.CENTER_TOL_Y;
 	const blurOk = (m.blur ?? 0) >= GATES.BLUR_STDDEV_MIN;
-	const lumaOk = (m.luma ?? 0) >= GATES.LUMA_MIN && (m.luma ?? 0) <= GATES.LUMA_MAX;
+	const tooDark = (m.luma ?? 0) < GATES.LUMA_MIN;
+	const blownOut =
+		(m.luma ?? 0) > GATES.LUMA_MAX || (m.clippedFrac ?? 0) > GATES.CLIPPED_FRAC_MAX;
+	const lumaOk = !tooDark && !blownOut;
 
 	let reason = null;
 	if (!yawOk) {
@@ -158,11 +176,10 @@ export function gradeFrame(m) {
 		reason = 'Center your face in the oval.';
 	} else if (!blurOk) {
 		reason = 'Hold steady. The image is blurry.';
-	} else if (!lumaOk) {
-		reason =
-			(m.luma ?? 0) < GATES.LUMA_MIN
-				? 'Too dark. Find better light.'
-				: 'Too bright. Reduce glare.';
+	} else if (tooDark) {
+		reason = 'Too dark. Find better light.';
+	} else if (blownOut) {
+		reason = 'Too bright. Move out of direct light or turn away from the window.';
 	}
 
 	return {

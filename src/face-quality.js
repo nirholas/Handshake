@@ -83,6 +83,7 @@ export { SLOT_PRESETS };
  * @property {number|null} roll
  * @property {number} blur
  * @property {number} luma
+ * @property {number} clippedFrac Share of the face crop blown to near-white.
  * @property {string|null} reason User-facing retake prompt; null when allPass.
  * @property {Array|null} landmarks
  */
@@ -166,7 +167,7 @@ export async function createQualitySession(videoEl, canvasEl, opts = {}) {
 			return {
 				...gradeFrame({ faceFound: false }),
 				yaw: null, pitch: null, roll: null,
-				blur: 0, luma: 0, landmarks: null,
+				blur: 0, luma: 0, clippedFrac: 0, landmarks: null,
 			};
 		}
 
@@ -184,6 +185,7 @@ export async function createQualitySession(videoEl, canvasEl, opts = {}) {
 			noseY: nose ? nose.y : null,
 			blur: q.blur,
 			luma: q.luma,
+			clippedFrac: q.clippedFrac,
 		});
 
 		return {
@@ -193,6 +195,7 @@ export async function createQualitySession(videoEl, canvasEl, opts = {}) {
 			roll: pose.roll,
 			blur: q.blur,
 			luma: q.luma,
+			clippedFrac: q.clippedFrac,
 			landmarks: lms,
 		};
 	}
@@ -242,7 +245,7 @@ export async function createQualitySession(videoEl, canvasEl, opts = {}) {
 		const fy = Math.max(0, (minY - pad)) * vh;
 		const fw = Math.min(vw - fx, (maxX - minX + 2 * pad) * vw);
 		const fh = Math.min(vh - fy, (maxY - minY + 2 * pad) * vh);
-		if (fw < 4 || fh < 4) return { luma: 0, blur: 0 };
+		if (fw < 4 || fh < 4) return { luma: 0, blur: 0, clippedFrac: 0 };
 
 		_qCtx.drawImage(video, fx, fy, fw, fh, 0, 0, SIZE, SIZE);
 		const { data: d } = _qCtx.getImageData(0, 0, SIZE, SIZE);
@@ -250,8 +253,8 @@ export async function createQualitySession(videoEl, canvasEl, opts = {}) {
 		for (let i = 0, j = 0; i < d.length; i += 4, j++) {
 			grays[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
 		}
-		const { luma, blurStddev } = grayFaceStats(grays, SIZE, SIZE);
-		return { luma, blur: blurStddev };
+		const { luma, blurStddev, clippedFrac } = grayFaceStats(grays, SIZE, SIZE);
+		return { luma, blur: blurStddev, clippedFrac };
 	}
 
 	return session;
@@ -308,7 +311,7 @@ export async function checkImageQuality(source, slot = 'frontal') {
 		return {
 			...gradeFrame({ faceFound: false }),
 			yaw: null, pitch: null, roll: null,
-			blur: 0, luma: 0, landmarks: null,
+			blur: 0, luma: 0, clippedFrac: 0, landmarks: null,
 		};
 	}
 
@@ -324,6 +327,7 @@ export async function checkImageQuality(source, slot = 'frontal') {
 		noseY: nose ? nose.y : null,
 		blur: q.blur,
 		luma: q.luma,
+		clippedFrac: q.clippedFrac,
 	});
 
 	return {
@@ -333,6 +337,7 @@ export async function checkImageQuality(source, slot = 'frontal') {
 		roll: pose.roll,
 		blur: q.blur,
 		luma: q.luma,
+		clippedFrac: q.clippedFrac,
 		landmarks: lms,
 	};
 }
@@ -350,7 +355,7 @@ function measureStillFace(source, lms) {
 	const SIZE = 64;
 	const sw = source.videoWidth || source.naturalWidth || source.width;
 	const sh = source.videoHeight || source.naturalHeight || source.height;
-	if (!sw || !sh) return { luma: 0, blur: 0 };
+	if (!sw || !sh) return { luma: 0, blur: 0, clippedFrac: 0 };
 	let minX = 1, minY = 1, maxX = 0, maxY = 0;
 	for (const lm of lms) {
 		if (lm.x < minX) minX = lm.x;
@@ -363,18 +368,18 @@ function measureStillFace(source, lms) {
 	const fy = Math.max(0, minY - pad) * sh;
 	const fw = Math.min(sw - fx, (maxX - minX + 2 * pad) * sw);
 	const fh = Math.min(sh - fy, (maxY - minY + 2 * pad) * sh);
-	if (fw < 4 || fh < 4) return { luma: 0, blur: 0 };
+	if (fw < 4 || fh < 4) return { luma: 0, blur: 0, clippedFrac: 0 };
 
 	const canvas = document.createElement('canvas');
 	canvas.width = canvas.height = SIZE;
 	const ctx = canvas.getContext('2d', { willReadFrequently: true });
-	if (!ctx) return { luma: 0, blur: 0 };
+	if (!ctx) return { luma: 0, blur: 0, clippedFrac: 0 };
 	ctx.drawImage(source, fx, fy, fw, fh, 0, 0, SIZE, SIZE);
 	const { data: d } = ctx.getImageData(0, 0, SIZE, SIZE);
 	const grays = new Float32Array(SIZE * SIZE);
 	for (let i = 0, j = 0; i < d.length; i += 4, j++) {
 		grays[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
 	}
-	const { luma, blurStddev } = grayFaceStats(grays, SIZE, SIZE);
-	return { luma, blur: blurStddev };
+	const { luma, blurStddev, clippedFrac } = grayFaceStats(grays, SIZE, SIZE);
+	return { luma, blur: blurStddev, clippedFrac };
 }
