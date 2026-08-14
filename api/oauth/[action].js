@@ -154,16 +154,48 @@ async function handleAuthorize(req, res) {
 
 // ── token ─────────────────────────────────────────────────────────────────────
 
-function basicAuthUser(req) {
+// RFC 6749 §2.3.1 credentials from the Authorization header, or null when the
+// header is absent or carries no `id:secret` pair.
+function basicAuthCredentials(req) {
 	const h = req.headers.authorization || '';
 	if (!h.toLowerCase().startsWith('basic ')) return null;
-	try { return Buffer.from(h.slice(6), 'base64').toString('utf8').split(':')[0]; } catch { return null; }
+	let decoded;
+	try { decoded = Buffer.from(h.slice(6), 'base64').toString('utf8'); } catch { return null; }
+	const sep = decoded.indexOf(':');
+	if (sep < 0) return null;
+	return { id: decoded.slice(0, sep), secret: decoded.slice(sep + 1) };
 }
-function basicAuthPass(req) {
-	const h = req.headers.authorization || '';
-	if (!h.toLowerCase().startsWith('basic ')) return null;
-	try { return Buffer.from(h.slice(6), 'base64').toString('utf8').split(':').slice(1).join(':'); } catch { return null; }
+
+function resolveClientId(req, form) {
+	return form.client_id || basicAuthCredentials(req)?.id || null;
 }
+
+// RFC 7009 §2.1 (revoke) and RFC 7662 §2.1 (introspect) both require a client to
+// authenticate exactly as it does at the token endpoint. Only the token endpoint
+// read the Authorization header, so a client that registered with
+// `token_endpoint_auth_method=client_secret_basic` and then sent its credentials
+// the only way that method allows got a 400 for a missing client_id at both
+// other endpoints, and a 401 the moment it added client_id to the form: it had
+// no way to revoke or introspect a token it owned. One resolver for all three.
+// Returns { ok: true, client, clientId } or { ok: false, reason, clientId },
+// where reason is 'no_client_id' | 'unknown_client' | 'bad_credentials'; each
+// caller maps the failure to the status its RFC prescribes.
+async function authenticateClient(req, form) {
+	const clientId = resolveClientId(req, form);
+	if (!clientId) return { ok: false, reason: 'no_client_id', clientId: null };
+	const rows = await sql`select * from oauth_clients where client_id = ${clientId} limit 1`;
+	const client = rows[0];
+	if (!client) return { ok: false, reason: 'unknown_client', clientId };
+	if (client.client_type === 'confidential') {
+		const secret = form.client_secret || basicAuthCredentials(req)?.secret || '';
+		const providedHash = await sha256(secret);
+		if (!client.client_secret_hash || !constantTimeEquals(providedHash, client.client_secret_hash)) {
+			return { ok: false, reason: 'bad_credentials', clientId };
+		}
+	}
+	return { ok: true, client, clientId };
+}
+
 function isSubsetScope(requested, stored) {
 	const allowed = new Set(stored.split(/\s+/).filter(Boolean));
 	const asked = requested.split(/\s+/).filter(Boolean);
@@ -174,18 +206,16 @@ async function handleToken(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 	const form = await readForm(req);
-	const clientId = form.client_id || basicAuthUser(req);
+	const clientId = resolveClientId(req, form);
 	if (!clientId) return error(res, 400, 'invalid_client', 'client_id required');
 	const rl = await limits.oauthToken(clientId);
 	if (!rl.success) return rateLimited(res, rl, 'too many token requests');
-	const rows = await sql`select * from oauth_clients where client_id = ${clientId} limit 1`;
-	const client = rows[0];
-	if (!client) return error(res, 400, 'invalid_client', 'unknown client');
-	if (client.client_type === 'confidential') {
-		const secret = form.client_secret || basicAuthPass(req) || '';
-		const providedHash = await sha256(secret);
-		if (!client.client_secret_hash || !constantTimeEquals(providedHash, client.client_secret_hash)) return error(res, 401, 'invalid_client', 'bad client credentials');
+	const auth = await authenticateClient(req, form);
+	if (!auth.ok) {
+		if (auth.reason === 'unknown_client') return error(res, 400, 'invalid_client', 'unknown client');
+		return error(res, 401, 'invalid_client', 'bad client credentials');
 	}
+	const client = auth.client;
 	const grantType = form.grant_type;
 	if (grantType === 'authorization_code') {
 		const { code, redirect_uri, code_verifier } = form;
@@ -305,7 +335,11 @@ async function handleRegister(req, res) {
 	const grantTypes = body.grant_types ?? ['authorization_code', 'refresh_token'];
 	const responseTypes = body.response_types ?? ['code'];
 	await sql`insert into oauth_clients (client_id, client_secret_hash, client_type, name, logo_uri, client_uri, redirect_uris, grant_types, response_types, token_endpoint_auth, scope, software_id, software_version, dynamically_registered) values (${clientId}, ${secretHash}, ${clientType}, ${body.client_name ?? 'MCP Client'}, ${body.logo_uri ?? null}, ${body.client_uri ?? null}, ${body.redirect_uris}, ${grantTypes}, ${responseTypes}, ${authMethod}, ${scope}, ${body.software_id ?? null}, ${body.software_version ?? null}, true)`;
-	return json(res, 201, { client_id: clientId, ...(clientSecret ? { client_secret: clientSecret } : {}), client_id_issued_at: Math.floor(Date.now() / 1000), token_endpoint_auth_method: authMethod, redirect_uris: body.redirect_uris, grant_types: grantTypes, response_types: responseTypes, scope, client_name: body.client_name ?? 'MCP Client' });
+	// RFC 7591 §3.2.1 makes client_secret_expires_at REQUIRED whenever a secret is
+	// issued, with 0 meaning "never expires". Omitting it left a spec-following
+	// client with no way to tell a non-expiring secret from a missing field, and
+	// the secrets minted here genuinely have no expiry.
+	return json(res, 201, { client_id: clientId, ...(clientSecret ? { client_secret: clientSecret, client_secret_expires_at: 0 } : {}), client_id_issued_at: Math.floor(Date.now() / 1000), token_endpoint_auth_method: authMethod, redirect_uris: body.redirect_uris, grant_types: grantTypes, response_types: responseTypes, scope, client_name: body.client_name ?? 'MCP Client' });
 }
 
 // ── revoke ────────────────────────────────────────────────────────────────────
@@ -314,18 +348,17 @@ async function handleRevoke(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 	const form = await readForm(req);
-	const { token, client_id, client_secret } = form;
-	if (!token || !client_id) return error(res, 400, 'invalid_request', 'token and client_id required');
+	const { token } = form;
+	const clientId = resolveClientId(req, form);
+	if (!token || !clientId) return error(res, 400, 'invalid_request', 'token and client_id required');
 	// Rate-limit per IP: revocation is unauthenticated for public clients, so cap
 	// it to deny a token-probing oracle / brute-force surface (RFC 7009 hardening).
 	const rlRevoke = await limits.authIp(clientIp(req));
 	if (!rlRevoke.success) return rateLimited(res, rlRevoke);
-	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
-	const client = rows[0];
-	if (!client) return json(res, 200, {});
-	if (client.client_type === 'confidential') {
-		const hash = await sha256(client_secret ?? '');
-		if (!client.client_secret_hash || !constantTimeEquals(hash, client.client_secret_hash)) return error(res, 401, 'invalid_client', 'bad client credentials');
+	const auth = await authenticateClient(req, form);
+	if (!auth.ok) {
+		if (auth.reason === 'unknown_client') return json(res, 200, {});
+		return error(res, 401, 'invalid_client', 'bad client credentials');
 	}
 	// `token_type_hint` is advisory and RFC 7009 §2.1 requires extending the
 	// search when the token is not found under the hinted type. Access tokens
@@ -334,7 +367,7 @@ async function handleRevoke(req, res) {
 	// `token_type_hint=access_token` answered 200 OK to a client revoking a
 	// refresh token under a wrong hint while leaving that token live for its
 	// full 30-day life.
-	await revokeRefreshToken(token, client_id);
+	await revokeRefreshToken(token, auth.clientId);
 	return json(res, 200, {});
 }
 
@@ -344,29 +377,29 @@ async function handleIntrospect(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 	const form = await readForm(req);
-	const { token, client_id, client_secret } = form;
-	if (!token || !client_id) return error(res, 400, 'invalid_request', 'token and client_id required');
+	const { token } = form;
+	const requestedClientId = resolveClientId(req, form);
+	if (!token || !requestedClientId) return error(res, 400, 'invalid_request', 'token and client_id required');
 	// Rate-limit per IP: introspection is unauthenticated for public clients
 	// (RFC 7662 §2.1). Capping it denies a token validity/scope/sub probing oracle.
 	const rlIntrospect = await limits.authIp(clientIp(req));
 	if (!rlIntrospect.success) return rateLimited(res, rlIntrospect);
-	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
-	const client = rows[0];
-	if (!client) return json(res, 200, { active: false });
-	if (client.client_type === 'confidential') {
-		const hash = await sha256(client_secret ?? '');
-		if (!client.client_secret_hash || !constantTimeEquals(hash, client.client_secret_hash)) return error(res, 401, 'invalid_client', 'bad client credentials');
+	const auth = await authenticateClient(req, form);
+	if (!auth.ok) {
+		if (auth.reason === 'unknown_client') return json(res, 200, { active: false });
+		return error(res, 401, 'invalid_client', 'bad client credentials');
 	}
+	const clientId = auth.clientId;
 	try {
 		const payload = await verifyAccessToken(token);
-		if (payload.client_id && payload.client_id !== client_id) return json(res, 200, { active: false });
+		if (payload.client_id && payload.client_id !== clientId) return json(res, 200, { active: false });
 		return json(res, 200, { active: true, scope: payload.scope, client_id: payload.client_id, sub: payload.sub, aud: payload.aud, iss: payload.iss, exp: payload.exp, iat: payload.iat, token_type: 'Bearer' });
 	} catch {
 		const h = await sha256(token);
-		const r = await sql`select user_id, scope, expires_at, revoked_at from oauth_refresh_tokens where token_hash = ${h} and client_id = ${client_id} limit 1`;
+		const r = await sql`select user_id, scope, expires_at, revoked_at from oauth_refresh_tokens where token_hash = ${h} and client_id = ${clientId} limit 1`;
 		const row = r[0];
 		if (!row || row.revoked_at || new Date(row.expires_at) < new Date()) return json(res, 200, { active: false });
-		return json(res, 200, { active: true, scope: row.scope, client_id, sub: row.user_id, token_type: 'refresh_token' });
+		return json(res, 200, { active: true, scope: row.scope, client_id: clientId, sub: row.user_id, token_type: 'refresh_token' });
 	}
 }
 
