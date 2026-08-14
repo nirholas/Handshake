@@ -10649,7 +10649,7 @@ three.ws ships in four phases. Each phase closes a specific gap between the curr
 | **1** | Selfie → Avatar engine (3-photo capture, hosted inference)                             | 🟡 In progress: capture, reconstruction backend, rigging, R2 storage and draft mint are wired end to end; likeness fidelity is the open track |
 | **2** | Agent personalization + voice cloning                                                  | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
 | **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 In progress: bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; per-call skill royalties accrue on paid skill calls (`royalty_ledger`); contracts + audits next |
-| **4** | Open inference network (decentralized GPU layer)                                       | 🟡 Live core: open node-operator daemon + `/api/nodes` job queue with signed receipts shipped; Livepeer federation behind a flag                                                      |
+| **4** | Open inference network (decentralized GPU layer)                                       | 🟡 Live core: open node-operator client (CPU + CUDA images) + `/api/nodes` job queue with signed, server-recomputed receipts shipped; Livepeer federation behind a flag               |
 
 ---
 
@@ -10748,7 +10748,7 @@ The path a capture actually takes, end to end. Each hop is a real service; nothi
 - Onchain settlement for inference jobs — pay-per-token with cryptographic receipts
 - Federation with existing decentralized compute networks where appropriate
 
-**Shipped so far:** anyone can run a node today. The [node-operator/](node-operator/) daemon registers with the coordinator, claims `llm.completion` jobs from the `/api/nodes` queue, and returns results signed with the node's Solana key over a canonical receipt binding job, model, and input/output hashes. Paid inference on `/api/x402/llm-proxy` settles through the metered hook on the x402 paid-endpoint wrapper, and `POST /api/x402/inference-verify` publishes the platform signing key so receipts verify offline. Operator guide: [docs/inference-node-operator.md](docs/inference-node-operator.md).
+**Shipped so far:** anyone can run a node today. The [packages/node-operator/](packages/node-operator/) client registers with the coordinator using a signature under its own Solana ed25519 key (no shared secret to leak), claims jobs from the `/api/nodes` queue, executes them with a real open model on CPU or CUDA, and returns results signed over a canonical receipt binding job, model, and input/output hashes, which the coordinator recomputes before accepting. `npm run e2e` in that package proves the whole loop against the real handlers. Paid inference on `/api/x402/llm-proxy` settles through the metered hook on the x402 paid-endpoint wrapper, and `POST /api/x402/inference-verify` publishes the platform signing key so receipts verify offline. Wire contract: [specs/inference-nodes.md](specs/inference-nodes.md). Operator guide: [docs/inference-node-operator.md](docs/inference-node-operator.md).
 
 **Compute requirements**
 

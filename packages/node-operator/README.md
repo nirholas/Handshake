@@ -10,6 +10,7 @@
   <a href="#install">Install</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#configuration">Configuration</a> ·
+  <a href="#hardware">Hardware</a> ·
   <a href="#wire-protocol">Wire protocol</a> ·
   <a href="#receipts">Receipts</a> ·
   <a href="https://three.ws">three.ws</a>
@@ -346,9 +347,30 @@ console.log(loop.stats); // { completed, failed }
 ## Testing
 
 ```sh
-npm test                      # unit suite
-node scripts/e2e-local.mjs    # end-to-end against a local fake platform
+npm test        # unit suite: identity, signing, config, device selection, the loop
+npm run e2e     # full local proof against the real platform handlers
 ```
+
+`npm run e2e` is not a mock. It boots the actual platform server
+([server/index.mjs](../../server/index.mjs), serving the real
+[api/nodes/*](../../api/nodes) handlers) against an in-process Redis shim that
+speaks the Upstash REST wire format, enqueues a real job, and drives the real
+client through register, poll, model execution, signing and submission. It
+exits non-zero unless the coordinator recomputes the receipt and verifies it:
+
+```
+[e2e] [node] job job_e2e_1786739629649 complete (5115ms inference on cpu, verified=true)
+[e2e] RESULT VERIFIED
+node public key : EoZB1MExfAiLhrzpCdRwf9w2rBzAWx6iaraStRvYgKc7
+model           : Xenova/all-MiniLM-L6-v2
+embedding dims  : 384
+verified        : true (recomputed payload + ed25519 against node key)
+E2E PASS
+```
+
+The coordinator side of the same contract is covered by
+[tests/inference-nodes-coordinator.test.js](../../tests/inference-nodes-coordinator.test.js)
+at the repo root, which runs the real Upstash client against the same shim.
 
 `createIdentityFromSeed(seed)` in [src/identity.js](src/identity.js) derives a
 reproducible keypair from a 32-byte seed, for tests and fixture nodes. Never
@@ -356,6 +378,8 @@ use it for a real operator identity: it puts key material in config.
 
 ## Related
 
-- [specs/OPEN_INFERENCE_PROTOCOL.md](../../specs/OPEN_INFERENCE_PROTOCOL.md) - the vendor-neutral OIN wire protocol this network is converging on.
-- [specs/inference-receipts.md](../../specs/inference-receipts.md) - the receipt format and verification rules.
+- [specs/inference-nodes.md](../../specs/inference-nodes.md) - the coordinator wire contract this client implements, with error codes and threat model.
+- [specs/OPEN_INFERENCE_PROTOCOL.md](../../specs/OPEN_INFERENCE_PROTOCOL.md) - the vendor-neutral OIN protocol for nodes that want to be callable directly, with no coordinator.
+- [specs/inference-receipts.md](../../specs/inference-receipts.md) - how an x402 payment is bound to the job it bought.
+- [docs/inference-node-operator.md](../../docs/inference-node-operator.md) - the operator guide.
 - [STRUCTURE.md](../../STRUCTURE.md) - where every three.ws surface lives.
