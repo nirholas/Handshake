@@ -61,7 +61,7 @@ function withinFreshnessWindow(issuedAt) {
 // USDC on Solana/Base/BSC, USD₮0 on X Layer, and $THREE on the Solana rail. An
 // asset we don't recognise returns null and the client renders the raw atomic
 // amount rather than guessing a scale.
-function assetDecimals(asset) {
+export function assetDecimals(asset) {
 	if (!asset) return null;
 	const want = String(asset).toLowerCase();
 	const configured = [

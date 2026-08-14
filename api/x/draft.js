@@ -15,7 +15,10 @@ import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 import { MAX_TWEET_LEN } from '../_lib/x-post.js';
 
 const MAX_DRAFTS = 3;
-const MAX_PROMPT_LEN = 500;
+// The dashboard sends whatever is in the compose box as the prompt, and that box
+// legitimately holds a whole multi-part thread, so the ceiling has to clear a few
+// tweets' worth of text while still bounding what reaches the model.
+const MAX_PROMPT_LEN = 2000;
 const MAX_THREAD_PARTS = 5;
 
 // Mirrors the tone select in the dashboard X panel (src/dashboard/dashboard.js).

@@ -21,7 +21,27 @@ Object.assign(process.env, {
 	X402_FEE_PAYER_SOLANA: 'So11111111111111111111111111111111111111112',
 });
 
-const { rankOr, breadth, OUTPUT_SCHEMA } = await import('../api/x402/market-heatmap.js');
+const { finite, rankOr, breadth, OUTPUT_SCHEMA } = await import('../api/x402/market-heatmap.js');
+
+describe('finite', () => {
+	it('passes real numbers through, including a legitimate zero', () => {
+		expect(finite(118250)).toBe(118250);
+		expect(finite('2.4')).toBe(2.4);
+		expect(finite(0)).toBe(0);
+		expect(finite(-1.5)).toBe(-1.5);
+	});
+
+	it('reports an absent value as null instead of inventing a 0', () => {
+		// Number(null) and Number('') are both 0: coercing first would publish a
+		// "the coin moved 0%" claim for a window the upstream never priced.
+		expect(finite(null)).toBeNull();
+		expect(finite(undefined)).toBeNull();
+		expect(finite('')).toBeNull();
+		expect(finite('n/a')).toBeNull();
+		expect(finite(Number.NaN)).toBeNull();
+		expect(finite(Number.POSITIVE_INFINITY)).toBeNull();
+	});
+});
 
 describe('rankOr', () => {
 	it('keeps a real 1-based rank', () => {

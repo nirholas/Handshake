@@ -218,6 +218,15 @@ describe('POST /api/x/draft', () => {
 		expect(llmComplete).not.toHaveBeenCalled();
 	});
 
+	it('accepts a full thread pasted into the compose box but bounds what reaches the model', async () => {
+		llmComplete.mockResolvedValue({ text: 'ok' });
+		const wholeThread = 'x'.repeat(1500);
+		expect((await call(draft, { method: 'POST', url: '/api/x/draft', body: { prompt: wholeThread } })).statusCode).toBe(200);
+		const tooLong = await call(draft, { method: 'POST', url: '/api/x/draft', body: { prompt: 'x'.repeat(2001) } });
+		expect(tooLong.statusCode).toBe(400);
+		expect(llmComplete).toHaveBeenCalledTimes(1);
+	});
+
 	it('rejects an unknown tone', async () => {
 		const res = await call(draft, { method: 'POST', url: '/api/x/draft', body: { tone: 'shakespearean' } });
 		expect(res.statusCode).toBe(400);

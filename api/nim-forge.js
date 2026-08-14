@@ -12,12 +12,16 @@
 //
 // The hosted NVIDIA preview rejects real images (only its 4 sample example_ids,
 // verified live) — so this demo only works against a self-hosted NIM. Point
-// NIM_TRELLIS_URL (or MODEL_TRELLIS_URL) at it.
+// NIM_TRELLIS_URL at it.
 
 import { wrap, cors, json, method, readJson, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 
-const NIM_URL = process.env.NIM_TRELLIS_URL || process.env.MODEL_TRELLIS_URL || '';
+// NIM_TRELLIS_URL only. MODEL_TRELLIS_URL points at our own Cloud Run TRELLIS
+// worker (workers/model-trellis/), whose async `/infer` + `/tasks/{id}` API is
+// not the NIM contract, so falling back to it reported the demo as configured
+// and then 404'd every generation.
+const NIM_URL = process.env.NIM_TRELLIS_URL || '';
 const NIM_KEY = process.env.NIM_TRELLIS_KEY || process.env.NVIDIA_API_KEY || '';
 
 // A self-host NIM reconstructs in ~15–45 s on an L4; give the synchronous call
@@ -96,7 +100,7 @@ export default wrap(async (req, res) => {
 		return json(res, 503, {
 			error: 'unconfigured',
 			message:
-				'Self-hosted TRELLIS NIM is not configured. Set NIM_TRELLIS_URL (or MODEL_TRELLIS_URL) to your NIM base URL.',
+				'Self-hosted TRELLIS NIM is not configured. Set NIM_TRELLIS_URL to your NIM base URL.',
 		});
 	}
 
