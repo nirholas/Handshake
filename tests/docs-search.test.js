@@ -7,8 +7,9 @@
 // is never an exception: it is a search that quietly stops finding things.
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import {
 	buildIndex,
@@ -22,6 +23,7 @@ import {
 } from '../scripts/build-docs-search-index.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
+const DOCS_DIR = resolve(ROOT, 'docs');
 
 // The runtime is a browser script that assigns itself onto the global.
 await import('../public/docs-search.js');
@@ -268,6 +270,17 @@ describe('docs search: the real corpus', () => {
 	});
 
 	it('is deterministic, so --check can trust a byte comparison', () => {
-		expect(JSON.stringify(buildIndex())).toBe(JSON.stringify(index));
+		// Both builds read a snapshot of the corpus, not docs/ itself. Comparing a
+		// build taken now against the one beforeAll took measures whether any agent
+		// sharing this worktree edited a doc in between, which they routinely do;
+		// determinism is a property of the builder over a fixed input, so the input
+		// has to be held still to test it.
+		const snapshot = mkdtempSync(join(tmpdir(), 'docs-search-'));
+		try {
+			cpSync(DOCS_DIR, snapshot, { recursive: true });
+			expect(JSON.stringify(buildIndex(snapshot))).toBe(JSON.stringify(buildIndex(snapshot)));
+		} finally {
+			rmSync(snapshot, { recursive: true, force: true });
+		}
 	});
 });
