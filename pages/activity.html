@@ -875,7 +875,7 @@
 				// Leave the skeleton up only while a request is genuinely in flight.
 				// Without this the tiles shimmered forever on a stats outage, which
 				// reads as "still loading" rather than "not available". renderKpis
-				// prints the placeholder glyph for every value it does not have.
+				// prints "n/a" for every value it does not have.
 				renderKpis();
 			}
 		}
