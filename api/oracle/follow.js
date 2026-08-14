@@ -33,7 +33,7 @@ function validateChatId(v) {
 
 // JSON bodies are caller-controlled, so a field can arrive as any type. `(v ||
 // '').trim()` blows up on a number or a boolean (`(123).trim is not a function`),
-// which wrap() turns into a 500 for what is plainly a 400 — posting
+// which wrap() turns into a 500 for what is plainly a 400: posting
 // {"agent_id": 12345} answered internal_error. Reduce every field to a string
 // here and let the validators below reject it with the right status.
 function asTrimmedString(v) {

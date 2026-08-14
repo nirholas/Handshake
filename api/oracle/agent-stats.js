@@ -35,7 +35,7 @@ export default async function handleAgentStats(req, res) {
 	const params = new URL(req.url, 'http://x').searchParams;
 	const agentId = params.get('agent_id') || '';
 	const network = NETWORKS.has(params.get('network')) ? params.get('network') : 'mainnet';
-	// parseInt('abc') is NaN, and Math.max/min propagate it — an unparseable limit
+	// parseInt('abc') is NaN, and Math.max/min propagate it, so an unparseable limit
 	// used to reach the SQL `limit NaN`, which the store's read catches into an
 	// empty array. The caller then got a 200 whose summary said 17 actions next to
 	// an empty recent_actions and an empty by_tier. Fall back to the documented
