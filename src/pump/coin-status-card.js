@@ -483,7 +483,19 @@ function skeleton(variant) {
 function errorState(variant, retry) {
 	return el('div', { class: `csc csc-${variant} csc-error`, role: 'alert' }, [
 		el('span', { class: 'csc-error-msg', text: 'Coin data unavailable.' }),
-		el('button', { class: 'csc-retry', type: 'button', text: 'Retry', onclick: retry }),
+		el('button', {
+			class: 'csc-retry',
+			type: 'button',
+			text: 'Retry',
+			// Hosts mount this inside a link (an agent profile's launch-history
+			// rows are anchors), so a bare click would navigate away from the page
+			// instead of retrying the load.
+			onclick: (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				retry();
+			},
+		}),
 	]);
 }
 

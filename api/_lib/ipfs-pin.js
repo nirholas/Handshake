@@ -42,7 +42,13 @@ export const IPFS_READ_GATEWAYS = [
 	'https://gateway.pinata.cloud/ipfs/',
 ];
 
-const GATEWAY_TIMEOUT_MS = 15000;
+// Sized against measured cold reads of a freshly pinned manifest: the provider
+// gateway answered in 6 to 12 seconds across repeated samples. A 15s budget put
+// the slowest of those within 3s of being cut off and reported as unretrievable,
+// which is the one outcome this path must not produce for a document that is
+// genuinely pinned. Because the gateways race, this budget is only ever paid in
+// full when every one of them fails.
+const GATEWAY_TIMEOUT_MS = 25000;
 
 /**
  * Fetch a CID from every gateway at once and take the first usable answer.

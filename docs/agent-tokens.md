@@ -15,7 +15,7 @@ Solana; there is no EVM leg.
 | --- | --- | --- |
 | **Token plan** | `agent_token_plans`, one row per (agent, network) | The coin this agent is configured to become. Saved, editable, costs nothing, mints nothing. |
 | **Launch record** | `pump_agent_mints` | A coin this agent actually launched through three.ws. Powers [/launches](https://three.ws/launches), the agent profile's launch history, and `GET /api/v1/pump/launches`. |
-| **Live market** | pump.fun / the bonding curve | Price, market cap and graduation progress, rendered on the agent's pages from the mint in the launch record. |
+| **Live market** | pump.fun's indexer, or the bonding curve on chain | Price, market cap and graduation progress, rendered on the agent's pages from the mint in the launch record. See [where the market numbers come from](#where-the-market-numbers-come-from). |
 
 A plan becomes a launch record the moment a launch confirms: the plan flips to
 `launched`, records its mint, and stops being editable. The configuration that
@@ -210,6 +210,49 @@ The profile at `/agents/:id` renders all three objects on one card:
 
 The panel is `src/agent-token-plan.js` and is self-contained: mount it on any
 surface with an agent id.
+
+### Where the market numbers come from
+
+`mountCoinStatus` (`src/pump/coin-status-card.js`) reads two sources and
+normalizes both into one shape, so the chip, the row and the card never know
+which answered:
+
+| Source | Endpoint | Used when |
+| --- | --- | --- |
+| pump.fun's indexer | `GET /api/pump/coin?mint=…` | Mainnet, once pump.fun has indexed the coin. Carries the logo and 24h volume. |
+| The bonding curve itself | `GET /api/pump/curve?mint=…&network=…` | Every devnet coin, and any mainnet coin the indexer has not caught up to or cannot be reached for. Read straight off the cluster. |
+
+Two consequences worth knowing:
+
+- **A devnet coin is priced in SOL, not dollars, and badged `DEVNET`.** Devnet
+  SOL is not worth money, so rendering a rehearsal coin's market cap as `$…`
+  would be a fiction. It shows `◎31.00` and links to the explorer rather than to
+  a pump.fun page that does not exist for that cluster. This is what makes the
+  free rehearsal path render exactly like the real thing.
+- **A fresh mainnet launch is never blank.** The indexer takes minutes to notice
+  a new coin; the curve answers immediately, so the profile shows real market
+  state from the first block.
+
+Market cap is derived as per-token price × total supply. pump.fun sells a fixed
+supply entirely through the curve, so that product is the market cap. (The
+SDK's own `price.marketCap` field is not usable for this: on a live devnet curve
+95% of the way to graduation it reports a negative number.)
+
+### Proving the lane without spending anything
+
+```bash
+node scripts/agent-token-market-proof.mjs                    # devnet
+node scripts/agent-token-market-proof.mjs --network mainnet  # real agent tokens
+node scripts/agent-token-market-proof.mjs --mint <base58> --network devnet
+```
+
+The script walks the whole path with real data: it discovers real mints (from
+three.ws's own launch directory on mainnet, from the pump.fun program's live
+bonding curves on devnet), runs the same `getCurveView` the endpoint relays,
+normalizes it through `mapCurve`, mounts the real widget in a DOM, and prints the
+text a visitor would read. Nothing is signed, broadcast or spent; it is a read of
+state that already exists on chain. It exits non-zero if nothing renders, so it
+doubles as a check on the lane.
 
 ## Related
 
