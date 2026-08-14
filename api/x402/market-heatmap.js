@@ -6,13 +6,16 @@
 // normalized snapshot.
 //
 // Dual live sources with automatic failover: CoinGecko /coins/markets first
-// (richest fields), CoinPaprika /tickers second (keyless, but only sixty
-// requests an HOUR shared across every caller on this deployment — see
-// api/_lib/coinpaprika.js) — so one upstream rate-limit never breaks a paid
-// call. Cached 60 s in-memory. No mock path — if both sources fail the handler
-// throws BEFORE settlement so the buyer is never charged.
+// (richest fields, read through the shared keyed client in
+// api/_lib/coingecko.js so a throttle is answered with its last-good copy),
+// CoinPaprika /tickers second (keyless, but only sixty requests an HOUR shared
+// across every caller on this deployment, see api/_lib/coinpaprika.js), so one
+// upstream rate-limit never breaks a paid call. Cached 60 s in-memory. No mock
+// path: if both sources fail the handler throws BEFORE settlement so the buyer
+// is never charged.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { geckoFetch } from '../_lib/coingecko.js';
 import { PAPRIKA_BASE, isPaprikaBenched, notePaprikaStatus } from '../_lib/coinpaprika.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
@@ -49,16 +52,20 @@ export const rankOr = (raw, fallback) => {
 	return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 };
 
+// Routed through the shared CoinGecko client rather than a bare fetch to the
+// public host. That client sends COINGECKO_API_KEY (a far higher rate limit
+// than the keyless tier this endpoint used to hit), benches a rejected key and
+// retries keyless, and serves its in-memory or durable last-good copy when the
+// upstream throttles. Without it a paid call answered a 429 by falling to
+// CoinPaprika, whose free budget is sixty requests an HOUR shared across the
+// whole deployment, so a busy minute turned a $0.002 call into a 503 while
+// fresher data sat in the platform cache.
 async function fetchCoinGecko() {
-	const url =
-		'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc' +
-		`&per_page=${MAX_LIMIT}&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d`;
-	const r = await fetch(url, {
-		headers: { accept: 'application/json' },
-		signal: AbortSignal.timeout(8000),
-	});
-	if (!r.ok) throw new Error(`coingecko ${r.status}`);
-	const raw = await r.json();
+	const raw = await geckoFetch(
+		'/coins/markets?vs_currency=usd&order=market_cap_desc' +
+			`&per_page=${MAX_LIMIT}&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d`,
+		{ ttlMs: TTL_MS },
+	);
 	if (!Array.isArray(raw) || !raw.length) throw new Error('coingecko empty');
 	return raw.map((c, i) => ({
 		rank: rankOr(c.market_cap_rank, i + 1),

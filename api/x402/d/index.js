@@ -136,8 +136,12 @@ export default wrap(async (req, res) => {
 				},
 				{ 'cache-control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=1800' },
 			);
-		} catch {
-			return error(res, 502, 'upstream_error', 'id catalog is unavailable right now — retry shortly');
+		} catch (err) {
+			// The caller gets a retryable 502, but an id-space outage is an upstream
+			// incident someone has to diagnose, and this is the only place the cause
+			// exists. Swallowing it silently left ops with a 502 and no lead.
+			console.warn(`[x402/d] id expansion for "${family}" failed:`, err?.message || err);
+			return error(res, 502, 'upstream_error', 'id catalog is unavailable right now, retry shortly');
 		}
 	}
 
