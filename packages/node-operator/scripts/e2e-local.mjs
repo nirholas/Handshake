@@ -150,7 +150,10 @@ async function main() {
 		log('client completed the job');
 
 		// 5. Read the job back and verify the receipt cryptographically.
-		const stored = JSON.parse(await shimClient.get(`ijob:${jobId}`));
+		// The Upstash client deserializes on read, so a JSON value comes back as
+		// an object already; only a non-JSON value arrives as a string.
+		const rawStored = await shimClient.get(`ijob:${jobId}`);
+		const stored = typeof rawStored === 'string' ? JSON.parse(rawStored) : rawStored;
 		if (stored.status !== 'done') throw new Error(`job status is ${stored.status}, expected done`);
 		const { output, receipt, startedAt, finishedAt } = stored;
 		const verified = await verifyResult(
