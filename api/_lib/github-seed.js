@@ -18,6 +18,14 @@ export const MAX_SELECTED_REPOS = 12;
 export const MAX_README_CHARS = 8000;
 export const MAX_FACTS = 20;
 export const MAX_FACT_CHARS = 600;
+/**
+ * Top-ranked facts promoted to the always-in-context working tier. The rest
+ * land in `recall`, where they surface only when a message happens to match
+ * them. Without this promotion a GitHub seed answers "what do you know about
+ * my work?" with nothing, because the working context the agent always carries
+ * is `pinned = true OR tier = 'working'` and the column defaults to `recall`.
+ */
+export const WORKING_TIER_FACTS = 5;
 
 const REPO_KEY = /^[A-Za-z0-9][A-Za-z0-9-]{0,38}\/[A-Za-z0-9._-]{1,100}$/;
 
@@ -294,18 +302,25 @@ export function selectionManifest(resolved) {
 }
 
 export function toMemoryRows(agentId, facts, { login, resolved, seededAt }) {
-	const context = {
-		source: GITHUB_SEED_SOURCE,
-		login,
-		seeded_at: seededAt,
-		selection: selectionManifest(resolved),
-	};
-	return facts.map((fact) => ({
+	const selection = selectionManifest(resolved);
+	return facts.map((fact, index) => ({
 		agent_id: agentId,
 		type: 'reference',
 		content: fact,
 		tags: GITHUB_SEED_TAGS,
-		context,
-		salience: 0.7,
+		// `rank` preserves the order the distiller emitted, which the salience
+		// below encodes for retrieval and the UI reads back to show the user
+		// which facts their agent leads with.
+		context: {
+			source: GITHUB_SEED_SOURCE,
+			login,
+			seeded_at: seededAt,
+			rank: index + 1,
+			selection,
+		},
+		// Chat keeps the ten highest-salience memories, so a flat score would
+		// truncate the distiller's ranking arbitrarily.
+		salience: Number((0.7 - index * 0.01).toFixed(2)),
+		tier: index < WORKING_TIER_FACTS ? 'working' : 'recall',
 	}));
 }
