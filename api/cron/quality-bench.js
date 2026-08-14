@@ -81,7 +81,15 @@ export default wrapCron(async (req, res) => {
 	// budget, not free time in front of it.
 	const startedAt = Date.now();
 	const deadlineAt = startedAt + BUDGET_MS;
-	const baseUrl = `https://${req.headers.host || 'three.ws'}`;
+	// The sweep drives our own deployment over HTTP, so it needs this service's
+	// own origin. Cloud Run always sets x-forwarded-proto, which is what makes
+	// production https; hardcoding the scheme instead made the bench unrunnable
+	// against a plain local server, so the one cron in this batch that could not
+	// be proven outside production was the one whose job is proving quality.
+	// Same derivation api/ar.js and api/irl/share.js already use.
+	const host = req.headers.host || 'three.ws';
+	const proto = req.headers['x-forwarded-proto'] || (/^localhost|127\.0\.0\.1/.test(host) ? 'http' : 'https');
+	const baseUrl = `${proto}://${host}`;
 
 	let catalog;
 	try {
