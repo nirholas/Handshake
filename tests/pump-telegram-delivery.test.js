@@ -163,10 +163,14 @@ describe('POST /api/pump/deliver-telegram', () => {
 		expect(json.error).toBe('unauthorized');
 	});
 
-	it('returns 500 when TELEGRAM_BOT_TOKEN is not set', async () => {
+	it('returns 503 not_configured when TELEGRAM_BOT_TOKEN is not set', async () => {
+		// An absent bot token is a deployment gap, not a server fault. 503 is what
+		// every sibling handler answers, and it tells a client to stop retrying
+		// instead of reporting a bug. The message names no env var to a caller who
+		// cannot set one.
 		const { res, json } = await callEndpoint({ chatId: '123', signal: SIGNAL });
-		expect(res.statusCode).toBe(500);
-		expect(json.error_description).toMatch(/TELEGRAM_BOT_TOKEN/);
+		expect(res.statusCode).toBe(503);
+		expect(json.error).toBe('not_configured');
 	});
 
 	it('returns 400 when chatId is missing', async () => {

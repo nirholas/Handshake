@@ -8,7 +8,8 @@
  * supplied Telegram chat ID so the user can confirm their setup is working
  * before they arm their agent and wait for a real signal.
  *
- * Auth: session cookie or bearer token. Rate-limited to 2/min per IP.
+ * Auth: session cookie or bearer token. Rate-limited per IP by
+ * limits.oracleTelegramTestIp (see api/_lib/rate-limit.js for the ceiling).
  */
 
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';

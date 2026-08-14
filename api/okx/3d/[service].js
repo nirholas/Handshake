@@ -157,13 +157,19 @@ async function healthReport() {
 // report briefly and let concurrent callers share the in-flight probe, so a
 // poll loop costs the subsystems one sweep per window instead of one per
 // request. Same shape /api/forge?health uses. `checkedAt` in the body tells the
-// caller how old the reading is.
-const HEALTH_TTL_MS = 30_000;
+// caller how old the reading is, and OKX_HEALTH_TTL_MS tunes the window (0
+// disables the memo and probes on every request).
+const HEALTH_TTL_DEFAULT_MS = 30_000;
 let healthMemo = { at: 0, report: null };
 let healthInFlight = null;
 
+function healthTtlMs() {
+	const raw = Number(process.env.OKX_HEALTH_TTL_MS);
+	return Number.isFinite(raw) && raw >= 0 ? raw : HEALTH_TTL_DEFAULT_MS;
+}
+
 async function cachedHealthReport() {
-	if (healthMemo.report && Date.now() - healthMemo.at < HEALTH_TTL_MS) return healthMemo.report;
+	if (healthMemo.report && Date.now() - healthMemo.at < healthTtlMs()) return healthMemo.report;
 	if (!healthInFlight) {
 		healthInFlight = healthReport()
 			.then((report) => {

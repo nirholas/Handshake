@@ -14774,7 +14774,7 @@
 		"the_same_free_lane_as_a_rest": "「three.ws 3D Studio」カスタムGPTのREST Actionsサーフェスと同等の無料レーン。13歳以上向けのセーフティゲートと、ストア基準に準拠したクリーンな応答を提供します。コネクタサポートなしのプランが対象です。",
 		"three_ws_3d_studio_apps_sdk": "three.ws 3Dスタジオ (Apps SDK)",
 		"three_ws_has_been_named_an_openai": "three.wsはOpenAIパートナーネットワークにおいて、<strong>OpenAI Select Partner</strong>に認定されました。プラットフォームの無料3D Studioコネクタは、文章からインタラクティブなテクスチャ付き3Dモデルを生成し、会話中にインラインでレンダリング。さらにリギング、アニメーション化、AR空間への配置まで行います。キーもアカウントも費用も一切不要です。",
-		"three_ws_is_an_independent_member_of": "three.wsは、OpenAIパートナーネットワークのSelectティアに属する独立したメンバーです。このページでは、OpenAIプラットフォームと連携するthree.ws製品について説明しています。本製品はOpenAIの製品ではなく、表示されているパートナー指定以上のOpenAIによる承認はありません。OpenAI、ChatGPT、およびOpenAIパートナーネットワークのバッジはOpenAIの商標です。ネットワークの詳細については、<a href=\"https://openai.com/business/partners/\" target=\"_blank\" rel=\"noopener\" style=\"color:#6fd6b8;text-decoration:none\">openai.com/business/partners</a>をご覧ください。",
+		"three_ws_is_an_independent_member_of": "three.wsは、OpenAIパートナーネットワークのSelectティアに属する独立したメンバーです。このページでは、OpenAIプラットフォームと連携するthree.ws製品について説明しています。本製品はOpenAIの製品ではなく、表示されているパートナー指定以上のOpenAIによる承認はありません。OpenAI、ChatGPT、およびOpenAIパートナーネットワークのバッジはOpenAIの商標です。ネットワークの詳細については、<a href=\"https://openai.com/business/partners/\" target=\"_blank\" rel=\"noopener\">openai.com/business/partners</a>をご覧ください。",
 		"transport": "トランスポート",
 		"try_it_in_the_browser": "ブラウザで試す",
 		"turn_a_generated_avatar_into_a_persistent": "生成されたアバターを、IDで再ロード可能な永続的な名前付きボディとして扱えます。",

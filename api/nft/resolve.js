@@ -3,6 +3,8 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { dasRpcUrl } from '../_lib/nft-gate.js';
 import { resolveGateway } from '../_lib/solana-agents-normalize.js';
+import { fetchTokenMeta } from '../_lib/solana-token-meta.js';
+import { evmFallbackProvider } from '../_lib/evm/rpc.js';
 
 // NFT metadata is effectively immutable, but the Helius `getAsset` (DAS) and
 // Alchemy `getNFTMetadata` calls behind this endpoint are billed per request and
@@ -37,6 +39,81 @@ async function readJsonBody(resp) {
 	}
 }
 
+// Metadata documents are small JSON files; anything larger is not one.
+const MAX_METADATA_BYTES = 512 * 1024;
+
+/**
+ * Read an NFT metadata document from a token `uri`.
+ *
+ * Handles the three forms in the wild: an https URL, a decentralized pointer
+ * (ipfs:// or ar://, normalized to a gateway), and a fully on-chain
+ * `data:application/json` URI. Returns null on anything unreadable, so callers
+ * treat a bad document the same as a missing one.
+ */
+async function fetchMetadataDoc(uri) {
+	if (!uri) return null;
+	const raw = String(uri).trim();
+	if (raw.startsWith('data:application/json')) {
+		const comma = raw.indexOf(',');
+		if (comma < 0) return null;
+		const payload = raw.slice(comma + 1);
+		const body = /;base64/i.test(raw.slice(0, comma))
+			? Buffer.from(payload, 'base64').toString('utf8')
+			: decodeURIComponent(payload);
+		try {
+			return JSON.parse(body);
+		} catch {
+			return null;
+		}
+	}
+	const url = resolveGateway(raw);
+	if (!url || !/^https?:\/\//i.test(url)) return null;
+	let resp;
+	try {
+		resp = await fetch(url, {
+			redirect: 'follow',
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+		});
+	} catch {
+		return null;
+	}
+	if (!resp.ok) return null;
+	if (Number(resp.headers.get('content-length') || 0) > MAX_METADATA_BYTES) return null;
+	const text = await resp.text().catch(() => '');
+	if (!text || text.length > MAX_METADATA_BYTES) return null;
+	try {
+		return JSON.parse(text);
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Pick the 3D model out of a metadata document.
+ *
+ * `properties.files[]` with a `model/*` type is the Metaplex convention our own
+ * mints write; `animation_url` pointing at a .glb/.gltf is what most EVM
+ * collections use. Test the extension against the path only, since a gateway
+ * URL carries a query string after it.
+ */
+function pickModel(doc) {
+	const files = Array.isArray(doc?.properties?.files) ? doc.properties.files : [];
+	const modelFile = files.find((f) => {
+		const t = f?.type || f?.mime;
+		return typeof t === 'string' && t.startsWith('model/') && f?.uri;
+	});
+	if (modelFile) return { model: resolveGateway(modelFile.uri), mime: modelFile.type || modelFile.mime };
+	const animation = typeof doc?.animation_url === 'string' ? doc.animation_url : null;
+	if (animation && /\.(glb|gltf)(\?|$)/i.test(animation)) {
+		return {
+			model: resolveGateway(animation),
+			mime: /\.gltf(\?|$)/i.test(animation) ? 'model/gltf+json' : 'model/gltf-binary',
+		};
+	}
+	return { model: null, mime: null };
+}
+
 const ALCHEMY_NFT_HOST = {
 	1: 'eth-mainnet',
 	10: 'opt-mainnet',
@@ -53,6 +130,90 @@ const ALCHEMY_NFT_HOST = {
 	11155111: 'eth-sepolia',
 	11155420: 'opt-sepolia',
 };
+
+/**
+ * Keyless Solana rung: read the Metaplex metadata account over the platform's
+ * ordinary RPC failover chain and follow its `uri`.
+ *
+ * Helius DAS is metered, and on 2026-08-14 the account was capped ("max usage
+ * reached" on every getAsset), which took this endpoint to a blanket 502 with
+ * no way back. An NFT's metadata is public data on a public chain: nothing about
+ * reading it requires a billed indexer. This rung is slower (an account read
+ * plus a document fetch instead of one indexed call), so it runs only after DAS
+ * has failed.
+ *
+ * @returns {Promise<object|null>} the resolved descriptor, or null when the
+ *   token exists but names no metadata document.
+ */
+async function resolveSolanaOnChain(id) {
+	const meta = await fetchTokenMeta(id, { includeImage: false });
+	const doc = meta.raw;
+	if (!doc && !meta.name) return null;
+	const { model, mime } = pickModel(doc);
+	return {
+		name: meta.name || id,
+		image: resolveGateway(meta.imageUrl) || null,
+		model: model || null,
+		mime: mime || null,
+		source: 'solana-rpc',
+	};
+}
+
+// ERC-721 and ERC-1155 both expose the metadata pointer, under different names.
+// Probing tokenURI first matches the far more common standard for 3D collectibles.
+const NFT_URI_ABI = [
+	'function tokenURI(uint256 tokenId) view returns (string)',
+	'function uri(uint256 id) view returns (string)',
+	'function name() view returns (string)',
+];
+
+/**
+ * Keyless EVM rung: read the token's own metadata pointer through the chain's
+ * RPC failover list, for the same reason as the Solana rung above (Alchemy
+ * answered "Monthly capacity limit exceeded" on every getNFTMetadata call).
+ *
+ * @returns {Promise<object|null>} the resolved descriptor, or null when neither
+ *   metadata interface answers.
+ */
+async function resolveEvmOnChain(chainId, contractAddress, tokenId) {
+	const { Contract } = await import('ethers');
+	const provider = await evmFallbackProvider(chainId);
+	const contract = new Contract(contractAddress, NFT_URI_ABI, provider);
+
+	let uri = null;
+	for (const method of ['tokenURI', 'uri']) {
+		try {
+			uri = await contract[method](tokenId);
+			if (uri) break;
+		} catch {
+			uri = null;
+		}
+	}
+	if (!uri) return null;
+
+	// ERC-1155 metadata URIs carry a literal {id} placeholder the client must
+	// substitute with the zero-padded 64-hex token id.
+	if (uri.includes('{id}')) {
+		uri = uri.replace('{id}', BigInt(tokenId).toString(16).padStart(64, '0'));
+	}
+
+	const doc = await fetchMetadataDoc(uri);
+	if (!doc) return null;
+	const { model, mime } = pickModel(doc);
+	let collection = null;
+	try {
+		collection = await contract.name();
+	} catch {
+		collection = null;
+	}
+	return {
+		name: doc.name || collection || `${contractAddress}:${tokenId}`,
+		image: resolveGateway(doc.image || doc.image_url) || null,
+		model: model || null,
+		mime: mime || null,
+		source: 'evm-rpc',
+	};
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res)) return;
@@ -90,9 +251,21 @@ export default wrap(async (req, res) => {
 		await cacheSet(staleKey, result, RESOLVE_STALE_TTL_SECONDS).catch(() => {});
 		return result;
 	};
-	// Provider unreachable → serve the last-known-good descriptor if we have one,
-	// else fall through to the caller's error. Immutable metadata makes this safe.
-	const serveStaleOr = async (onMiss) => {
+	// Indexer unusable (unreachable, capped, or misconfigured) → in order: read the
+	// chain directly, then serve the last-known-good descriptor, then surface the
+	// caller's error. The direct read comes first because it is authoritative and
+	// current; the stale tier is safe only because metadata is effectively
+	// immutable, so it is the second choice, not the first.
+	const rescue = async (onChain, onMiss) => {
+		try {
+			const direct = await onChain();
+			if (direct) return json(res, 200, await store(direct));
+		} catch (err) {
+			if (err?.code === 'mint_not_found' || err?.code === 'invalid_mint') {
+				return error(res, err.status === 400 ? 400 : 404, err.status === 400 ? 'bad_request' : 'not_found', err.message);
+			}
+			console.error('[nft/resolve] direct chain read failed', err?.message);
+		}
 		const lastGood = await cacheGet(staleKey).catch(() => null);
 		if (lastGood) {
 			console.warn('[nft/resolve] upstream unreachable, serving last-known-good for %s', cacheKey);
@@ -102,6 +275,8 @@ export default wrap(async (req, res) => {
 	};
 
 	if (chain === 'solana') {
+		const solanaRescue = (onMiss) => rescue(() => resolveSolanaOnChain(id), onMiss);
+
 		// `getAsset` is a DAS method, and Helius is the only provider in our stack
 		// that serves it. Reading SOLANA_RPC_URL here pointed the call at whatever
 		// general-purpose RPC was configured (production runs magicblock), which
@@ -111,11 +286,13 @@ export default wrap(async (req, res) => {
 		// dedicated HELIUS_API_KEY.
 		const rpcUrl = dasRpcUrl();
 		if (!rpcUrl) {
-			return error(
-				res,
-				503,
-				'not_configured',
-				'HELIUS_API_KEY not configured; solana nft resolution is unavailable',
+			return solanaRescue(() =>
+				error(
+					res,
+					503,
+					'not_configured',
+					'HELIUS_API_KEY not configured and the token names no readable metadata',
+				),
 			);
 		}
 		let resp;
@@ -128,21 +305,21 @@ export default wrap(async (req, res) => {
 			});
 		} catch (err) {
 			console.error('[nft/resolve] Helius network error', err?.message);
-			return serveStaleOr(() =>
+			return solanaRescue(() =>
 				serverError(res, 502, 'upstream_error', new Error('Helius unreachable')),
 			);
 		}
 		if (!resp.ok) {
 			const txt = await resp.text().catch(() => '');
 			console.error('[nft/resolve] Helius error', resp.status, txt);
-			return serveStaleOr(() =>
+			return solanaRescue(() =>
 				serverError(res, 502, 'upstream_error', new Error(`Helius error ${resp.status}`)),
 			);
 		}
 		const data = await readJsonBody(resp);
 		if (!data) {
 			console.error('[nft/resolve] Helius returned a non-JSON body');
-			return serveStaleOr(() =>
+			return solanaRescue(() =>
 				serverError(res, 502, 'upstream_error', new Error('Helius returned a non-JSON body')),
 			);
 		}
@@ -152,7 +329,7 @@ export default wrap(async (req, res) => {
 			// misconfiguration. Only a real DAS miss is a 404.
 			if (data.error.code === -32601) {
 				console.error('[nft/resolve] configured RPC does not serve DAS getAsset');
-				return serveStaleOr(() =>
+				return solanaRescue(() =>
 					serverError(res, 502, 'upstream_error', new Error(`DAS getAsset unsupported: ${msg}`)),
 				);
 			}
@@ -198,6 +375,17 @@ export default wrap(async (req, res) => {
 	if (!host) {
 		return error(res, 400, 'bad_request', `unsupported evm chainId ${parts[0]}`);
 	}
+	// Both the Alchemy call and the on-chain rung take these verbatim, so reject a
+	// malformed pair here rather than paying an upstream round-trip to be told.
+	if (!/^0x[0-9a-fA-F]{40}$/.test(contractAddress)) {
+		return error(res, 400, 'bad_request', 'evm contract must be a 0x-prefixed 20-byte address');
+	}
+	if (!/^(0x[0-9a-fA-F]+|\d+)$/.test(tokenId)) {
+		return error(res, 400, 'bad_request', 'evm tokenId must be decimal or 0x-hex');
+	}
+
+	const evmRescue = (onMiss) =>
+		rescue(() => resolveEvmOnChain(chainId, contractAddress, tokenId), onMiss);
 
 	// `env` exposes no ALCHEMY getter, so the previous `env.ALCHEMY_API_KEY` read
 	// was undefined in every environment: the whole EVM branch built a URL with a
@@ -206,7 +394,14 @@ export default wrap(async (req, res) => {
 	// scene/gate-check.js do) and say plainly when it is missing.
 	const apiKey = process.env.ALCHEMY_API_KEY;
 	if (!apiKey) {
-		return error(res, 503, 'not_configured', 'ALCHEMY_API_KEY not configured; evm nft resolution is unavailable');
+		return evmRescue(() =>
+			error(
+				res,
+				503,
+				'not_configured',
+				'ALCHEMY_API_KEY not configured and the token names no readable metadata',
+			),
+		);
 	}
 	const url = `https://${host}.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${encodeURIComponent(contractAddress)}&tokenId=${encodeURIComponent(tokenId)}`;
 	let resp;
@@ -214,7 +409,7 @@ export default wrap(async (req, res) => {
 		resp = await fetch(url, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
 	} catch (err) {
 		console.error('[nft/resolve] Alchemy network error', err?.message);
-		return serveStaleOr(() =>
+		return evmRescue(() =>
 			serverError(res, 502, 'upstream_error', new Error('Alchemy unreachable')),
 		);
 	}
@@ -224,14 +419,14 @@ export default wrap(async (req, res) => {
 			return error(res, 404, 'not_found', `Alchemy error ${resp.status}: ${txt}`);
 		}
 		console.error('[nft/resolve] Alchemy error', resp.status, txt);
-		return serveStaleOr(() =>
+		return evmRescue(() =>
 			serverError(res, 502, 'upstream_error', new Error(`Alchemy error ${resp.status}`)),
 		);
 	}
 	const data = await readJsonBody(resp);
 	if (!data) {
 		console.error('[nft/resolve] Alchemy returned a non-JSON body');
-		return serveStaleOr(() =>
+		return evmRescue(() =>
 			serverError(res, 502, 'upstream_error', new Error('Alchemy returned a non-JSON body')),
 		);
 	}

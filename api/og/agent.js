@@ -177,7 +177,10 @@ export default wrap(async (req, res) => {
 
 	const solAddress = typeof row.meta?.solana_address === 'string' ? row.meta.solana_address : null;
 	// ── Real enrichments, each timeout-guarded so the card always renders ──────
-	const [balances, rep, pnl, tipsCount, achievements] = await Promise.all([
+	// The avatar fetch belongs in this batch, not after it: it is an independent
+	// CDN read, so awaiting it separately added its own budget on top of the
+	// slowest enrichment on every cold unfurl instead of overlapping with them.
+	const [balances, rep, pnl, tipsCount, achievements, avatarData] = await Promise.all([
 		solAddress ? withTimeout(getBalances({ chain: 'solana', address: solAddress }), 3000, null) : null,
 		withTimeout(getAgentReputation(id, { lite: true }), 3000, null),
 		withTimeout(realizedPnlFor(id), 2000, { sol: 0, wins: 0 }),
@@ -185,9 +188,9 @@ export default wrap(async (req, res) => {
 		// Best-effort: a warm cache (the profile page just loaded it) makes this
 		// free; a cold miss that overruns the budget just omits the badge.
 		withTimeout(loadAgentAchievements(id), 2500, null),
+		loadAvatarImage(row),
 	]);
 
-	const avatarData = await loadAvatarImage(row);
 	const svg = renderCard({ id, row, solAddress, balances, rep, pnl, tipsCount, achievements, avatarData });
 
 	res.statusCode = 200;

@@ -35,7 +35,9 @@ export const DELEGATION_MANAGER_ABI = [
 	'function disableDelegation(tuple(address delegate, address delegator, bytes32 authority, tuple(address enforcer, bytes terms, bytes args)[] caveats, uint256 salt, bytes signature) _delegation) external',
 
 	// Public mapping: true if the delegation hash has been disabled on-chain
-	// (on-chain name is disabledDelegations; isDelegationDisabled in task spec maps here)
+	// The revocation getter. This exact name is what every caller must use: an
+	// ethers Contract resolves an unknown method to undefined, so a near-miss
+	// spelling throws "not a function" at call time rather than failing loudly here.
 	'function disabledDelegations(bytes32 delegationHash) external view returns (bool isDisabled)',
 
 	// Returns the keccak256 hash for a delegation (used for revoke checks and signing)

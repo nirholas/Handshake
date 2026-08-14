@@ -25,7 +25,7 @@ import { loadViem } from '../peer.js';
 
 export const DELEGATION_MANAGER_ABI = [
 	'function disableDelegation(bytes32 delegationHash) external',
-	'function isDelegationDisabled(bytes32 delegationHash) external view returns (bool)',
+	'function disabledDelegations(bytes32 delegationHash) external view returns (bool)',
 	'event DisabledDelegation(bytes32 indexed delegationHash)',
 ];
 

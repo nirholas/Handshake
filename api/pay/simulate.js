@@ -1,4 +1,4 @@
-// POST /api/pay/simulate — dry-run a payment session policy against real prices.
+// POST /api/pay/simulate: dry-run a payment session policy against real prices.
 //
 // The problem this solves: authorizing an agent budget is a guess. You pick
 // $10 and a $0.50 per-transaction cap because those are round numbers, hand the
@@ -268,8 +268,25 @@ export function buildSteps(calls, priced, network) {
 					error_message: `No ${network} payment option (offered: ${offered.join(', ') || 'none'})`,
 					networks_offered: offered,
 				};
+			} else if (entry.rail.amount_atomics === null) {
+				// describeRail reports a null price rather than guessing zero when a
+				// challenge quotes something that is not an integer of atomic units.
+				// Coercing that to 0n here would put a "settles for free" row in the
+				// timeline for a call the executor refuses outright.
+				problems.push({
+					url: call.url,
+					code: 'unreadable_price',
+					message: `Endpoint charges on ${entry.rail.network ?? network} but quoted a price that could not be read`,
+				});
+				pricing = {
+					source: 'unpriced',
+					amount_usd: null,
+					network: entry.rail.network,
+					error: 'unreadable_price',
+					error_message: 'Endpoint quoted a price that is not a whole number of atomic units',
+				};
 			} else {
-				amountAtomics = BigInt(entry.rail.amount_atomics ?? 0);
+				amountAtomics = BigInt(entry.rail.amount_atomics);
 				pricing = {
 					source: 'probed',
 					amount_usd: entry.rail.amount_usd,

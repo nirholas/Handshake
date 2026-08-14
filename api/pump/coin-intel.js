@@ -13,7 +13,7 @@
  * IP rate-limited; every number traces to an on-chain trade we observed.
  */
 
-import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 
@@ -113,10 +113,15 @@ export default wrap(async (req, res) => {
 
 	// ── single coin ───────────────────────────────────────────────────────────
 	if (mint) {
-		if (mint.length < 32 || mint.length > 64) return json(res, 400, { error: 'invalid mint' });
+		// Same envelope every other handler answers with ({error, error_description});
+		// a bare {error} left every client that reads error_description with undefined.
+		if (mint.length < 32 || mint.length > 64) {
+			return error(res, 400, 'invalid_mint', 'mint must be 32 to 64 characters');
+		}
 		const [row] = await sql`select * from pump_coin_intel where mint = ${mint} limit 1`;
 		if (!row) {
-			return json(res, 404, { error: 'not_found', mint, hint: 'coin not observed (too old, or launched before the intel engine, or still mid-observation)' });
+			const hint = 'coin not observed (too old, or launched before the intel engine, or still mid-observation)';
+			return json(res, 404, { error: 'not_found', error_description: hint, mint, hint });
 		}
 		const out = shapeRow(row);
 		out.smart_money_notable = Array.isArray(row.smart_money_notable) ? row.smart_money_notable : [];

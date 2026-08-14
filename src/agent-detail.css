@@ -2377,6 +2377,29 @@ div.ad-hero-avatar canvas {
 	color: var(--ad-dim);
 	text-align: center;
 }
+.payment-qr-swap {
+	border: 0;
+	background: none;
+	padding: 4px 6px;
+	border-radius: 6px;
+	font: inherit;
+	font-size: 11px;
+	color: var(--ad-muted);
+	text-decoration: underline;
+	cursor: pointer;
+	transition: color 0.15s ease, background 0.15s ease;
+}
+.payment-qr-swap:hover {
+	color: var(--ad-text);
+	background: rgba(255, 255, 255, 0.06);
+}
+.payment-qr-swap:active {
+	background: rgba(255, 255, 255, 0.1);
+}
+.payment-qr-swap:focus-visible {
+	outline: 2px solid var(--ad-text);
+	outline-offset: 2px;
+}
 .payment-status {
 	font-size: 13px;
 	margin-top: 12px;

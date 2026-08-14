@@ -1019,6 +1019,11 @@ export const limits = {
 			critical: true,
 		}).limit('global'),
 	avatarPatch: (userId) => getLimiter('avatar:patch', { limit: 20, window: '1 h' }).limit(userId),
+	// Attaching an avatar to an agent (api/onboarding/link-avatar). Onboarding
+	// links once and reassignment is rare, so this is generous for real use while
+	// bounding a script that churns an agent's body. Its own bucket rather than
+	// avatarPatch's: editing avatar metadata must not exhaust the link budget.
+	avatarLink: (userId) => getLimiter('avatar:link', { limit: 30, window: '1 h' }).limit(userId),
 	prefsWrite: (userId) => getLimiter('prefs:write', { limit: 30, window: '1 h' }).limit(userId),
 	// Claiming a reputation-unlocked cosmetic onto an agent (api/agents/:id/unlocks).
 	// A low-frequency owner action; this just bounds abusive retries.

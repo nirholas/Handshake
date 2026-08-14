@@ -1,8 +1,10 @@
 // GET  /api/monetization/withdrawals?agent_id=X     — list withdrawal history
 // POST /api/monetization/withdrawals                — request a withdrawal
 //
-// Body (POST): { agent_id, amount_usdc? }
-//   amount_usdc = null → withdraw all available balance
+// Body (POST): { agent_id, amount_usdc?, network? }
+//   amount_usdc = null  withdraw all available balance
+//   network             'solana' (default) | 'base' | 'evm'; picks which saved
+//                       payout wallet, and therefore which balance, is drawn on
 
 import { z } from 'zod';
 import { sql } from '../_lib/db.js';
@@ -25,7 +27,35 @@ const WITHDRAWAL_STATUSES = ['pending', 'processing', 'completed', 'failed'];
 const postBody = z.object({
 	agent_id: z.string().uuid(),
 	amount_usdc: z.number().finite().positive().nullable().optional(),
+	// Which payout rail to draw on. Omitted means "use the saved preference",
+	// which falls back to Solana, the home chain.
+	network: z.enum(['solana', 'base', 'evm']).optional(),
 });
+
+// `base` and `evm` are the same rail: rows written by wallet.js carry chain
+// 'base', while older rows carry 'evm'.
+const NETWORK_CHAINS = {
+	solana: ['solana'],
+	base: ['base', 'evm'],
+	evm: ['base', 'evm'],
+};
+
+/**
+ * Choose the payout wallet a withdrawal should land on.
+ * An explicit `network` is honored exactly (no silent cross-chain fallback, so a
+ * caller asking for Base never gets paid on Solana). Otherwise the stored
+ * preference wins, then Solana, then whatever the user has configured.
+ *
+ * @param {Array<{address: string, chain: string, preferred_network: string|null}>} wallets
+ *        Candidates, already ordered agent-specific first.
+ * @param {string|undefined} network
+ * @returns {{address: string, chain: string, preferred_network: string|null}|undefined}
+ */
+function pickPayoutWallet(wallets, network) {
+	const on = (net) => wallets.find((w) => (NETWORK_CHAINS[net] ?? []).includes(w.chain));
+	if (network) return on(network);
+	return on(wallets[0].preferred_network ?? 'solana') ?? on('solana') ?? wallets[0];
+}
 
 async function resolveUser(req) {
 	const session = await getSessionUser(req);
@@ -135,7 +165,7 @@ export default wrap(async (req, res) => {
 	if (!rlUser.success) return rateLimited(res, rlUser, 'too many withdrawal requests');
 
 	const body = parse(postBody, await readJson(req));
-	const { agent_id, amount_usdc } = body;
+	const { agent_id, amount_usdc, network } = body;
 
 	// Verify agent ownership
 	const [agent] = await sql`
@@ -145,8 +175,8 @@ export default wrap(async (req, res) => {
 	if (!agent) return error(res, 404, 'not_found', 'Agent not found');
 	if (agent.user_id !== userId) return error(res, 403, 'forbidden', 'You don\'t own this agent');
 
-	// Resolve payout wallet
-	const [wallet] = await sql`
+	// Resolve payout wallet. Agent-specific rows outrank the user-level fallback.
+	const wallets = await sql`
 		SELECT address, chain, preferred_network
 		FROM agent_payout_wallets
 		WHERE user_id = ${userId} AND (agent_id = ${agent_id} OR agent_id IS NULL)
@@ -154,10 +184,19 @@ export default wrap(async (req, res) => {
 			CASE WHEN agent_id = ${agent_id} THEN 0 ELSE 1 END,
 			is_default DESC,
 			created_at DESC
-		LIMIT 1
 	`;
-	if (!wallet) {
+	if (!wallets.length) {
 		return error(res, 422, 'no_payout_wallet', 'Configure a payout wallet before requesting a withdrawal');
+	}
+
+	// The chain decides the currency, and the currency decides which balance is
+	// withdrawable, so picking the wrong wallet strands real earnings. Taking the
+	// most recently saved row did exactly that: a user who added an EVM address
+	// after their Solana one could no longer withdraw Solana revenue, because the
+	// balance was then read in Base USDC and came back as zero.
+	const wallet = pickPayoutWallet(wallets, network);
+	if (!wallet) {
+		return error(res, 422, 'no_payout_wallet', `No payout wallet configured for ${network}`);
 	}
 
 	// Determine currency mint based on chain

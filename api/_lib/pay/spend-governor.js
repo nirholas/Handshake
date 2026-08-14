@@ -84,15 +84,28 @@ export function hashToken(token) {
 	return createHmac('sha256', hmacKey()).update(String(token)).digest('hex');
 }
 
+// A session id is a v4 UUID. The shape is checked, not just the length: the
+// value goes straight into a `uuid` column comparison, and Postgres answers a
+// non-UUID string with a cast error, not with "no rows". Without this, any
+// 36-character blob inside a token turned an unauthenticated bad-token attempt
+// into a 500 instead of the invalid_token the caller should see.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Is this string safe to compare against a uuid column? */
+export function isSessionId(value) {
+	return UUID_RE.test(String(value ?? ''));
+}
+
 // Extract sessionId from a token without verifying it. Used for DB lookup before
 // the constant-time hash comparison.
 export function extractSessionId(token) {
 	const s = String(token || '');
 	if (!s.startsWith(TOKEN_PREFIX)) return null;
 	const rest = s.slice(TOKEN_PREFIX.length);
-	// Format after prefix: <uuid>_<random> — uuid is exactly 36 chars
+	// Format after prefix: <uuid>_<random>, and a UUID is exactly 36 chars.
 	if (rest.length < 37 || rest[36] !== '_') return null;
-	return rest.slice(0, 36);
+	const id = rest.slice(0, 36);
+	return isSessionId(id) ? id : null;
 }
 
 /** Turn a policy rejection from policy.js into the thrown governance error. */

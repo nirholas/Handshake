@@ -517,6 +517,27 @@ If you're building a third-party app that users authorize to access their three.
 
 PKCE (S256) is mandatory. The authorization server metadata is at `/.well-known/oauth-authorization-server`.
 
+### Client authentication
+
+Public clients (`token_endpoint_auth_method: "none"`, the default from dynamic registration) get no secret and identify themselves with a `client_id` form field.
+
+Confidential clients present their secret the same way at `/api/oauth/token`, `/api/oauth/revoke`, and `/api/oauth/introspect`, using whichever method they registered:
+
+```bash
+# client_secret_basic: credentials in the Authorization header, nothing in the form
+curl -X POST https://three.ws/api/oauth/revoke \
+  -u "$CLIENT_ID:$CLIENT_SECRET" \
+  -d "token=$REFRESH_TOKEN"
+
+# client_secret_post: credentials in the form body
+curl -X POST https://three.ws/api/oauth/revoke \
+  -d "client_id=$CLIENT_ID" \
+  -d "client_secret=$CLIENT_SECRET" \
+  -d "token=$REFRESH_TOKEN"
+```
+
+Registration returns `client_secret_expires_at: 0` alongside an issued secret: three.ws secrets do not expire, so rotate one by registering a new client.
+
 For most use cases, API keys are simpler. OAuth is the right choice when you're building a product where your users grant your app access to their three.ws data.
 
 ---

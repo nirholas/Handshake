@@ -90,7 +90,7 @@ import {
 	solanaPubkey,
 } from '../_lib/pump.js';
 
-// Wrapped SOL mint — required as the quoteMint for SOL-paired V2 instructions
+// Wrapped SOL mint: required as the quoteMint for SOL-paired V2 instructions
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 import { solanaConnection, loadAgentForSigning } from '../_lib/agent-pumpfun.js';
 import { connectPumpFunFeed } from '../_lib/pumpfun-ws-feed.js';
@@ -155,6 +155,30 @@ async function resolveAuth(req) {
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (bearer) return { userId: bearer.userId };
 	return null;
+}
+
+/**
+ * Session lookup for the handlers that sign and BROADCAST with an agent's
+ * custodial keypair server-side (launch-agent, the *-agent fee cranks). Those
+ * need nothing from the caller but a cookie, so a cross-site POST alone was
+ * enough to mint a coin or sweep fees: the exact threat resolveAuth() guards
+ * against, which these paths were not routed through. Same rule as resolveAuth:
+ * the cookie path must prove same-site intent, reads stay open.
+ *
+ * Returns the session user, or null after writing the 401/403 response.
+ */
+async function requireSessionUser(req, res) {
+	const user = await getSessionUser(req);
+	if (!user) {
+		error(res, 401, 'unauthorized', 'sign in required');
+		return null;
+	}
+	const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(String(req.method || '').toUpperCase());
+	if (!isRead && !isSameSiteOrigin(req)) {
+		error(res, 403, 'forbidden', 'cross-site request blocked');
+		return null;
+	}
+	return user;
 }
 
 const wrapped = wrap(async (req, res) => {
@@ -251,7 +275,7 @@ const wrapped = wrap(async (req, res) => {
 	}
 });
 
-// SSE actions bypass wrap()'s JSON-error fallback — they manage their own response writes.
+// SSE actions bypass wrap()'s JSON-error fallback: they manage their own response writes.
 export default async function dispatcher(req, res) {
 	if (req.query?.action === 'strategy-run') return handleStrategyRun(req, res);
 	if (req.query?.action === 'vanity-keygen') return handleVanityKeygen(req, res);
@@ -303,7 +327,7 @@ async function handleBalances(req, res) {
 			},
 		});
 	} catch (err) {
-		// Most common: agent not yet bound to mint → PDA missing. Sanitize the 5xx —
+		// Most common: agent not yet bound to mint → PDA missing. Sanitize the 5xx :
 		// web3.js network errors embed the keyed Helius RPC URL in err.message.
 		return respondError(res, 502, 'pump_agent_error', err);
 	}
@@ -316,7 +340,7 @@ const buyPrepSchema = z
 		mint: z.string().min(32).max(44),
 		network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 		// For SOL-paired coins pass `sol`; for USDC-paired coins pass `usdc_amount`.
-		// Exactly one must be provided — validation enforced below.
+		// Exactly one must be provided: validation enforced below.
 		sol: z.number().positive().max(50).optional(),
 		usdc_amount: z.number().positive().max(1_000_000).optional(),
 		// Optional explicit quote mint. When omitted the server auto-detects from
@@ -350,7 +374,7 @@ async function handleBuyPrep(req, res) {
 		const { isLegacyQuoteMint, getBuyTokenAmountFromSolAmount } =
 			await import('@pump-fun/pump-sdk');
 		// @pump-fun SDK builders take slippage as a PERCENT (1 = 1%), not a
-		// fraction — see api/_lib/pump-trade-args.js for the unit derivation.
+		// fraction: see api/_lib/pump-trade-args.js for the unit derivation.
 		const slippagePct = slippagePercentFromBps(body.slippage_bps);
 
 		// The base mint's owner decides base_token_program: create_v2 coins are
@@ -365,7 +389,7 @@ async function handleBuyPrep(req, res) {
 			);
 		const baseTokenProgram = resolveTokenProgramForMintOwner(mintInfo.owner);
 
-		// Fetch bonding curve state — also gives us the on-chain quote_mint.
+		// Fetch bonding curve state: also gives us the on-chain quote_mint.
 		// Pass the real token program so the user-ATA existence check resolves
 		// the correct (possibly Token-2022) associated account.
 		let buyState = null;
@@ -414,14 +438,14 @@ async function handleBuyPrep(req, res) {
 
 		if (buyState && buyState.bondingCurve && !buyState.bondingCurve.complete) {
 			// Unified v2 interface for every coin type (SOL- and USDC-paired,
-			// SPL and Token-2022 base mints) per the upstream migration guidance —
+			// SPL and Token-2022 base mints) per the upstream migration guidance :
 			// docs/pumpfun-program/UPSTREAM-buy-sell-v2-announcement.md.
 			const [global, feeConfig] = await Promise.all([
 				sdk.fetchGlobal(),
 				sdk.fetchFeeConfig().catch(() => null),
 			]);
 			// buy_v2's `amount` arg is the base-token quantity to buy and must be
-			// > 0 (docs/instructions/BUY.md) — derive it from the quote input.
+			// > 0 (docs/instructions/BUY.md): derive it from the quote input.
 			const tokenAmount = getBuyTokenAmountFromSolAmount({
 				global,
 				feeConfig,
@@ -634,7 +658,7 @@ const sellPrepSchema = z.object({
 	tokens: z.string().regex(/^\d+$/, 'tokens must be a base-units integer string'),
 	slippage_bps: z.number().int().min(0).max(5000).default(100),
 	wallet_address: z.string().min(32).max(44),
-	// Optional — auto-detected from on-chain bonding curve when omitted.
+	// Optional: auto-detected from on-chain bonding curve when omitted.
 	quote_mint: z.string().min(32).max(44).optional(),
 });
 
@@ -658,11 +682,11 @@ async function handleSellPrep(req, res) {
 		const { isLegacyQuoteMint, getSellSolAmountFromTokenAmount } =
 			await import('@pump-fun/pump-sdk');
 		const tokens = new BN(body.tokens);
-		// SDK builders take slippage as a PERCENT — see api/_lib/pump-trade-args.js.
+		// SDK builders take slippage as a PERCENT: see api/_lib/pump-trade-args.js.
 		const slippagePct = slippagePercentFromBps(body.slippage_bps);
 
 		// base_token_program must match the mint owner (Token-2022 for create_v2
-		// coins, SPL for legacy) — docs/instructions/SELL.md #4.
+		// coins, SPL for legacy): docs/instructions/SELL.md #4.
 		const mintInfo = await connection.getAccountInfo(mintPk);
 		if (!mintInfo)
 			return error(
@@ -688,7 +712,7 @@ async function handleSellPrep(req, res) {
 		if (!quoteMintPk) quoteMintPk = solanaPubkey(WSOL_MINT);
 
 		const isUsdcQuote = !isLegacyQuoteMint(quoteMintPk);
-		// SOL curves store quoteMint as PublicKey.default — surface wrapped SOL.
+		// SOL curves store quoteMint as PublicKey.default: surface wrapped SOL.
 		const quoteMintDisplay = isUsdcQuote ? quoteMintPk.toString() : WSOL_MINT;
 
 		// quote_token_program must match the quote mint's owner.
@@ -724,7 +748,7 @@ async function handleSellPrep(req, res) {
 			const ixs = [];
 			if (isUsdcQuote) {
 				// sell_v2 pays proceeds into the seller's quote ATA, which the
-				// program does NOT init (SELL.md #16) — create it idempotently.
+				// program does NOT init (SELL.md #16): create it idempotently.
 				const spl = await import('@solana/spl-token');
 				const userQuoteAta = spl.getAssociatedTokenAddressSync(
 					quoteMintPk,
@@ -875,7 +899,7 @@ async function handleSellConfirm(req, res) {
 	if (mintId) {
 		// The sell-confirm payload only carries the token quantity, so derive the
 		// proceeds (quote received) from the verified tx's on-chain balance delta
-		// rather than trusting client input — real settled amount, not an estimate.
+		// rather than trusting client input: real settled amount, not an estimate.
 		const { quote_mint, quote_symbol } = tradeQuoteColumns({
 			quoteMint: mintRow?.quote_mint,
 			network: body.network,
@@ -925,7 +949,7 @@ const buildMetadataSchema = z.object({
 	twitter: z.string().trim().max(200).optional(),
 	website: z.string().trim().max(200).optional(),
 	telegram: z.string().trim().max(200).optional(),
-	// Base64 data URL: "data:image/png;base64,..." — max 4 MB raw.
+	// Base64 data URL: "data:image/png;base64,...": max 4 MB raw.
 	// Cap the string at 6 MB chars to safely cover 4 MB raw (base64 inflates ~4/3 → ~5.59 M)
 	// plus the data URL header. Raw-byte ceiling is re-checked after decode.
 	image_data_url: z.string().max(6_000_000).optional(),
@@ -959,7 +983,7 @@ async function handleBuildMetadata(req, res) {
 
 	// ── Resolve image bytes ─────────────────────────────────────────────────
 	// We want raw bytes (not just an HTTPS URL) so the image can be pinned to
-	// IPFS alongside the metadata — matching pump.fun's native upload flow.
+	// IPFS alongside the metadata: matching pump.fun's native upload flow.
 	let imageBuf = null;
 	let imageContentType = 'image/png';
 	let imageExt = 'png';
@@ -1058,15 +1082,15 @@ async function handleBuildMetadata(req, res) {
 
 // Build the pump.fun launch instructions for the requested coin variant.
 // All variants now go through createV2* (token-2022). Pump.fun no longer
-// accepts V1 (SPL Token) launches — calling the deprecated createInstruction /
+// accepts V1 (SPL Token) launches: calling the deprecated createInstruction /
 // createAndBuyInstructions paths returned tokens the pump.fun program rejected.
 // mayhemMode toggles the high-volatility curve; agent binding is appended by
 // the caller when applicable.
 //
 // creator is the on-chain "creator" (recipient of creator rewards / royalties).
 // signer is the wallet that signs the tx, pays fees, and (if solBuyIn>0) funds
-// the initial buy. When the caller omits signer it defaults to creator —
-// preserving the legacy single-wallet semantics — but split mode is supported
+// the initial buy. When the caller omits signer it defaults to creator :
+// preserving the legacy single-wallet semantics: but split mode is supported
 // so a treasury / DAO wallet can be the creator while a contributor wallet
 // signs and pays.
 async function buildLaunchInstructions({
@@ -1096,7 +1120,7 @@ async function buildLaunchInstructions({
 		if (hasBuy) {
 			const quoteAmount = new BN(Math.round(usdcBuyIn * 1_000_000));
 			// Pass `quoteMint` so the SDK seeds a fresh curve from
-			// `initial_virtual_quote_reserves` (USDC) rather than the SOL reserves —
+			// `initial_virtual_quote_reserves` (USDC) rather than the SOL reserves :
 			// otherwise the base-token estimate is priced against the wrong pool and
 			// the create+buy can over/under-spend or revert on max_quote_cost.
 			const tokenAmount = pumpSdk.getBuyTokenAmountFromSolAmount({
@@ -1183,7 +1207,7 @@ const launchPrepSchema = z
 		avatar_id: z.string().uuid().optional(),
 		wallet_address: z.string().min(32).max(44), // the SIGNER — signs the tx, pays fees, funds initial buy
 		// Optional on-chain creator address (the recipient of pump.fun creator
-		// rewards / royalties). When omitted, defaults to wallet_address —
+		// rewards / royalties). When omitted, defaults to wallet_address :
 		// preserving the legacy single-wallet flow. When provided and different,
 		// it must be another Solana wallet linked to the same user account
 		// (validated at /api/pump/launch-prep). Enables team/DAO launches where
@@ -1192,7 +1216,7 @@ const launchPrepSchema = z
 		name: z.string().trim().min(1).max(32),
 		symbol: z.string().trim().min(1).max(10),
 		// Bound the metadata URI so name(32)+symbol(10)+uri always fit inside
-		// Solana's 1232-byte transaction packet — an unbounded URI is what pushed
+		// Solana's 1232-byte transaction packet: an unbounded URI is what pushed
 		// the create message past the limit and threw "encoding overruns
 		// Uint8Array" at sign time. 200 matches pump.fun's own URI ceiling; the
 		// 413 guard at sign time remains as a defence-in-depth backstop.
@@ -1202,21 +1226,21 @@ const launchPrepSchema = z
 		sol_buy_in: z.number().nonnegative().max(50).default(0), // SOL-paired initial buy, capped 50 SOL
 		usdc_buy_in: z.number().nonnegative().max(1_000_000).default(0), // USDC-paired initial buy
 		// Quote currency for the coin. `quote_currency: 'usdc'` is the friendly
-		// form — the server resolves the network-correct USDC mint. `quote_mint`
+		// form: the server resolves the network-correct USDC mint. `quote_mint`
 		// is the explicit form (any non-WSOL mint → stable-paired v2 coin via
 		// createV2AndBuyV2Instructions). When neither is set, the coin is
 		// SOL-paired (existing behaviour). quote_currency wins when both appear.
 		quote_currency: z.enum(['sol', 'usdc']).optional(),
 		quote_mint: z.string().min(32).max(44).optional(),
 		// Optional client-ground vanity mint address. When provided, the client
-		// already holds the secret key locally and will co-sign in the wallet —
+		// already holds the secret key locally and will co-sign in the wallet :
 		// the server never sees the secret. When omitted, the server falls back
 		// to a fresh Keypair.generate() and returns the secret key for co-sign.
 		mint_address: z.string().min(32).max(44).optional(),
 		// Coin variant:
-		//   'agent'   — pump.fun coin + on-chain agent (buyback-bound)
-		//   'regular' — plain pump.fun coin, no agent binding
-		//   'mayhem'  — pump.fun mayhem-mode coin (V2 instruction set, token-2022)
+		//   'agent'  : pump.fun coin + on-chain agent (buyback-bound)
+		//   'regular': plain pump.fun coin, no agent binding
+		//   'mayhem' : pump.fun mayhem-mode coin (V2 instruction set, token-2022)
 		coin_type: z.enum(['regular', 'mayhem', 'agent']).default('agent'),
 		// Optional Launch Copilot attach: a market-maker policy to arm on this coin
 		// the moment it's confirmed (the success screen can also attach one after).
@@ -1499,7 +1523,7 @@ async function handleLaunchConfirm(req, res) {
 	if (!accountKeys.includes(p.mint)) {
 		return error(res, 422, 'mint_not_in_tx', 'mint pubkey not present in tx');
 	}
-	// Prove the confirmed tx actually ran the pump.fun program — not just a tx
+	// Prove the confirmed tx actually ran the pump.fun program: not just a tx
 	// that happens to reference the mint pubkey. Without this, a confirmed memo
 	// or transfer touching the new mint account could be recorded as a launch.
 	if (!txInvokesPumpProgram(tx)) {
@@ -1527,7 +1551,7 @@ async function handleLaunchConfirm(req, res) {
 	await sql`delete from agent_registrations_pending where id=${pending.id}`;
 
 	// Launch Copilot: if the launcher armed a market-maker policy at prep time,
-	// attach it now from the launch's own agent wallet. Best-effort — a bad policy
+	// attach it now from the launch's own agent wallet. Best-effort: a bad policy
 	// (e.g. an anti-manipulation cap breach) must never fail the confirmed launch;
 	// the owner can fix + arm it from the success screen. The MM trades only
 	// through the shared firewall/spend-guard/custody path.
@@ -1623,7 +1647,7 @@ async function handleAgentWallet(req, res) {
 //
 // Server-side mirror of launch-prep + launch-confirm: builds, signs, and
 // submits a pump.fun launch transaction using the agent's custodial Solana
-// keypair. The user's connected wallet is not involved — the agent wallet
+// keypair. The user's connected wallet is not involved: the agent wallet
 // pays for rent, fees, and any initial buy. PumpAgent.create is bound when
 // buyback_bps > 0.
 
@@ -1634,7 +1658,7 @@ const launchAgentSchema = z
 		name: z.string().trim().min(1).max(32),
 		symbol: z.string().trim().min(1).max(10),
 		// Bound the metadata URI so name(32)+symbol(10)+uri always fit inside
-		// Solana's 1232-byte transaction packet — an unbounded URI is what pushed
+		// Solana's 1232-byte transaction packet: an unbounded URI is what pushed
 		// the create message past the limit and threw "encoding overruns
 		// Uint8Array" at sign time. 200 matches pump.fun's own URI ceiling; the
 		// 413 guard at sign time remains as a defence-in-depth backstop.
@@ -1665,8 +1689,8 @@ async function handleLaunchAgent(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	const user = await requireSessionUser(req, res);
+	if (!user) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -1691,7 +1715,7 @@ async function handleLaunchAgent(req, res) {
 
 	// Mint keypair: client-supplied (vanity) or server-ground with the three.ws mark.
 	// This path signs server-side with the agent custodial wallet, so the server
-	// always holds the mint secret — supplied or ground.
+	// always holds the mint secret: supplied or ground.
 	const enforceMark = env.THREE_WS_MARK_ENFORCE !== '0' && env.THREE_WS_MARK_ENFORCE !== 'false';
 	let mintKeypair;
 	if (body.mint_address && body.mint_secret_key_b64) {
@@ -1838,7 +1862,7 @@ async function handleLaunchAgent(req, res) {
 	// Spend-policy gate: this path signs server-side with the agent's custodial
 	// wallet, so a stolen session could otherwise drive an arbitrarily large SOL
 	// dev-buy (up to the schema max) to drain the wallet. Reserve the SOL outflow
-	// against the agent's per-tx + rolling-24h caps BEFORE broadcasting — atomic,
+	// against the agent's per-tx + rolling-24h caps BEFORE broadcasting: atomic,
 	// so concurrent launches can't both pass, and the launch is recorded toward
 	// the daily cap. A USDC-paired dev buy moves no SOL (amount 0). Released on
 	// send failure, finalized with the signature on success.
@@ -1873,7 +1897,7 @@ async function handleLaunchAgent(req, res) {
 	} catch (err) {
 		await releaseSpend(reservation.reservationId);
 		// A message too large for Solana's packet limit now surfaces here (compile
-		// happens inside submitProtected) — keep the actionable 413 rather than 502.
+		// happens inside submitProtected): keep the actionable 413 rather than 502.
 		if (/too large|overruns/i.test(err?.message || '')) {
 			return error(res, 413, 'launch_payload_too_large', 'token launch transaction exceeds Solana size limits — shorten the token name or metadata URI');
 		}
@@ -1894,7 +1918,7 @@ async function handleLaunchAgent(req, res) {
 
 	// Finalize the spend reservation in place: merge the launch metadata + tx
 	// signature into the reserved row and mark it confirmed. This replaces the
-	// previous standalone insert — the reserved row already carries `solAmount`
+	// previous standalone insert: the reserved row already carries `solAmount`
 	// (so the launch counts toward the daily cap, which the old `sol_buy_in`-keyed
 	// row never did), and reusing it avoids double-recording the launch.
 	await finalizeSpend(reservation.reservationId, {
@@ -2122,7 +2146,7 @@ async function handleAcceptPaymentConfirm(req, res) {
 		return error(res, 422, 'mint_not_in_tx', 'agent mint not in tx accounts');
 	}
 
-	// The declared payer must have signed the tx — a signature that didn't
+	// The declared payer must have signed the tx: a signature that didn't
 	// involve this payer can't satisfy this invoice.
 	const signed = tx.transaction.message.accountKeys.some(
 		(k) => (k.pubkey || k).toString() === payment.payer_wallet && k.signer === true,
@@ -2132,7 +2156,7 @@ async function handleAcceptPaymentConfirm(req, res) {
 
 	// Verify the agent's payment vault was actually credited the invoiced amount
 	// of the invoiced currency. Without this, "the mint pubkey appears in the tx"
-	// is not proof of payment — any cheap unrelated tx referencing the mint would
+	// is not proof of payment: any cheap unrelated tx referencing the mint would
 	// pass. The vault is the ATA owned by the TokenAgentPayments PDA for this mint.
 	const { agentPda } = await getPumpAgentOffline({
 		network: payment.network,
@@ -2209,7 +2233,7 @@ async function handlePaymentsList(req, res) {
 	const limit = readLimit(url, 50, 500);
 	const wantsPending = url.searchParams.get('include_pending') === '1';
 
-	// Pending payments expose unconfirmed invoices — require auth.
+	// Pending payments expose unconfirmed invoices: require auth.
 	if (wantsPending) {
 		const auth = await resolveAuth(req);
 		if (!auth) return error(res, 401, 'unauthorized', 'sign in required to view pending payments');
@@ -2366,7 +2390,7 @@ async function handlePortfolio(req, res) {
 		});
 	}
 	// Supplement SOL basis from legacy agent_actions only for mints with no ledger
-	// rows — keeps historical portfolios intact without double-counting.
+	// rows: keeps historical portfolios intact without double-counting.
 	for (const row of recentBuys) {
 		const p = row.payload || {};
 		if (!p.mint || basisByMint.has(p.mint)) continue;
@@ -2425,7 +2449,7 @@ async function handlePortfolio(req, res) {
 		}),
 	);
 
-	// Per-quote subtotals — the fix for summing mismatched units. Each quote
+	// Per-quote subtotals: the fix for summing mismatched units. Each quote
 	// asset (SOL, USDC, …) gets its own value / cost-basis / PnL totals.
 	const subtotals = {};
 	for (const p of priced) {
@@ -2446,7 +2470,7 @@ async function handlePortfolio(req, res) {
 		s.unrealizedPnlPct = s.costBasis > 0 ? (s.unrealizedPnl / s.costBasis) * 100 : null;
 	}
 
-	// Top-level SOL totals stay backward-compatible — now scoped to SOL-paired
+	// Top-level SOL totals stay backward-compatible: now scoped to SOL-paired
 	// holdings only (no cross-unit summing).
 	const solSub = subtotals.SOL ?? { value: 0, costBasis: 0 };
 	const totalValueSol = solSub.value;
@@ -2505,7 +2529,7 @@ async function handleLaunches(req, res) {
 	}
 
 	// Query + row-shaping lives in api/_lib/pump-agent-launches.js, shared with
-	// the free GET /api/v1/pump/launches endpoint — one query, two doors.
+	// the free GET /api/v1/pump/launches endpoint: one query, two doors.
 	const { launches, has_more: hasMore } = await queryAgentLaunches({
 		network,
 		agentId,
@@ -2516,7 +2540,7 @@ async function handleLaunches(req, res) {
 
 	const body = { data: { launches, has_more: hasMore, offset, limit, network, min_tier: minTierParam || null } };
 	LAUNCHES_CACHE.set(cacheKey, { at: now, body });
-	// Keep the per-instance cache bounded — feed pages only ever walk forward.
+	// Keep the per-instance cache bounded: feed pages only ever walk forward.
 	if (LAUNCHES_CACHE.size > 200) {
 		const oldest = LAUNCHES_CACHE.keys().next().value;
 		LAUNCHES_CACHE.delete(oldest);
@@ -2595,7 +2619,7 @@ async function handleByAgent(req, res) {
 		from pump_buyback_runs where mint_id=${row.id}
 	`;
 
-	// Burns feed (separate from payments feed) — recent confirmed buyback runs
+	// Burns feed (separate from payments feed): recent confirmed buyback runs
 	// for the dashboard / passport "🔥 burns" stream.
 	const burnsFeed = await sql`
 		select id, currency_mint, tx_signature, burn_amount, created_at
@@ -2637,7 +2661,7 @@ async function handleQuote(req, res) {
 	const slippageBps = Number.isFinite(Number(slippageRaw))
 		? Math.max(0, Math.min(5000, Number(slippageRaw)))
 		: 100;
-	// AMM SDK pricing takes slippage as a PERCENT (1 = 1%) — pump-trade-args.js.
+	// AMM SDK pricing takes slippage as a PERCENT (1 = 1%): pump-trade-args.js.
 	const slippagePct = slippagePercentFromBps(slippageBps);
 
 	const mint = solanaPubkey(mintStr);
@@ -2652,7 +2676,7 @@ async function handleQuote(req, res) {
 		} = await import('@pump-fun/pump-sdk');
 		const LAMPORTS_PER_SOL_Q = web3.LAMPORTS_PER_SOL || 1_000_000_000;
 
-		// Fetch bonding curve — exposes on-chain quote_mint for V2 coins.
+		// Fetch bonding curve: exposes on-chain quote_mint for V2 coins.
 		let curve = null;
 		try {
 			if (sdk.fetchBuyState) {
@@ -2742,7 +2766,7 @@ async function handleQuote(req, res) {
 				mint: mintStr,
 				network,
 				graduated: false,
-				// SOL curves store quoteMint as PublicKey.default — surface wSOL.
+				// SOL curves store quoteMint as PublicKey.default: surface wSOL.
 				quote_mint: isUsdcQuote ? quoteMintPk.toString() : WSOL_MINT,
 				bonding_curve: {
 					real_quote_reserves:
@@ -2828,7 +2852,7 @@ async function handleQuote(req, res) {
 					feeConfig,
 				});
 				// buyQuoteInput is a quote-input swap: slippage widens the max quote
-				// spend (maxQuote), not a token floor — surface that real bound.
+				// spend (maxQuote), not a token floor: surface that real bound.
 				const maxQuoteIn =
 					r.maxQuote != null ? Number(r.maxQuote.toString()) / QUOTE_UNIT : null;
 				quote = {
@@ -3126,7 +3150,7 @@ async function handleStrategyBacktest(req, res) {
 	const rt = makeRuntime();
 
 	// Reject a semantically-broken spec up front with field-level issues, before
-	// sourcing mints or replaying — same validator the validate endpoint uses.
+	// sourcing mints or replaying: same validator the validate endpoint uses.
 	const vr = await rt.invoke('pump-fun-strategy.validateStrategy', {
 		strategy: body.strategy,
 		network,
@@ -3204,7 +3228,7 @@ async function handleStrategyCloseAll(req, res) {
 }
 
 // ── strategy-run ───────────────────────────────────────────────────────────
-// SSE — manages its own response writes; routed before wrap() above.
+// SSE: manages its own response writes; routed before wrap() above.
 
 async function loadAgentWalletForStrategy(agentId, userId) {
 	const [row] = await sql`
@@ -3245,7 +3269,7 @@ async function handleStrategyRun(req, res) {
 	// Pre-flight semantic validation BEFORE switching to SSE, so a broken spec
 	// (or a quote-asset mismatch on a listed coin) is rejected with a clean JSON
 	// error rather than streaming a doomed run. Same validator the validate
-	// endpoint and the runner use — they cannot disagree.
+	// endpoint and the runner use: they cannot disagree.
 	{
 		const mintInfo = await resolveStrategyMintInfo(body.strategy?.scan?.mints, network);
 		const vr = await makeRuntime().invoke('pump-fun-strategy.validateStrategy', {
@@ -3358,7 +3382,7 @@ async function handleStrategyRun(req, res) {
 }
 
 // ── live-stream ────────────────────────────────────────────────────────────
-// SSE — fans out the PumpPortal WebSocket feed to browser clients.
+// SSE: fans out the PumpPortal WebSocket feed to browser clients.
 // Routed before wrap() above. No auth; rate-limited by IP.
 
 const liveStreamKindSchema = z.enum(['all', 'mint', 'graduation']).default('all');
@@ -3393,7 +3417,7 @@ async function handleLiveStream(req, res) {
 	}, 15_000);
 
 	// Rotate the stream a few seconds BEFORE the Vercel function maxDuration
-	// (60s — see vercel.json → functions["api/pump/[action].js"]). Ending the
+	// (60s: see vercel.json → functions["api/pump/[action].js"]). Ending the
 	// response ourselves emits a clean `end` event and lets EventSource
 	// reconnect; letting Vercel hit the hard limit instead kills the function
 	// and logs a "Task timed out" error on every long-lived client connection.
@@ -3686,7 +3710,7 @@ async function handleCoinTrades(req, res) {
 	const upstream = `${PUMP_SWAP_BASE}/v2/coins/${mint}/trades?limit=${limit}`;
 	// "Recent trades" is a soft, continuously-polled feed (the homepage live card
 	// re-fetches every ~4s). A transient pump.fun swap-API blip means "no new data
-	// right now", not a hard error — so degrade to an empty 200 with `no-store`
+	// right now", not a hard error: so degrade to an empty 200 with `no-store`
 	// rather than a 5xx the browser console logs on every poll. The next poll
 	// retries immediately and the card recovers the moment upstream is back.
 	const stale = (extra = {}) => {
@@ -3770,7 +3794,7 @@ async function handleSearch(req, res) {
 			signal: AbortSignal.timeout(8000),
 		});
 	} catch {
-		// Upstream timeout/network blip — an empty result set beats a 500 on search.
+		// Upstream timeout/network blip: an empty result set beats a 500 on search.
 		return json(res, 200, []);
 	}
 	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
@@ -3790,15 +3814,14 @@ async function handleSearch(req, res) {
 
 // ── deliver-telegram ──────────────────────────────────────────────────────────
 
-import { z as _z } from 'zod';
-const _deliverSchema = _z.object({
-	chatId: _z.union([_z.string(), _z.number()]),
-	signal: _z.object({
-		kind: _z.enum(['mint', 'whale', 'claim', 'graduation']),
-		mint: _z.string(),
-		summary: _z.string(),
-		refs: _z.array(_z.string()).optional(),
-		ts: _z.number().optional(),
+const _deliverSchema = z.object({
+	chatId: z.union([z.string(), z.number()]),
+	signal: z.object({
+		kind: z.enum(['mint', 'whale', 'claim', 'graduation']),
+		mint: z.string(),
+		summary: z.string(),
+		refs: z.array(z.string()).optional(),
+		ts: z.number().optional(),
 	}),
 });
 
@@ -3813,7 +3836,11 @@ async function handleDeliverTelegram(req, res) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'too many delivery requests');
 	const botToken = process.env.TELEGRAM_BOT_TOKEN;
-	if (!botToken) return error(res, 500, 'misconfigured', 'TELEGRAM_BOT_TOKEN is not set');
+	// An absent bot token is a deployment gap, not a server fault: 503 +
+	// not_configured is what every sibling handler answers, and it tells a client
+	// to stop retrying rather than to report a bug.
+	if (!botToken)
+		return error(res, 503, 'not_configured', 'Telegram delivery is not configured');
 	const raw = await readJson(req);
 	const { chatId, signal } = parse(_deliverSchema, raw);
 	const { sendTelegramSignal } = await import('../../src/pump/telegram-delivery.js');
@@ -4009,7 +4036,7 @@ async function handleCollectCreatorFeePrep(req, res) {
 // Builds the tx that distributes accumulated creator fees to shareholders
 // defined in the coin's fee-sharing config. For graduated coins the SDK
 // automatically prepends a `transfer_creator_fees_to_pump_v2` instruction so
-// AMM-side fees are consolidated into the bonding-curve vault first — no
+// AMM-side fees are consolidated into the bonding-curve vault first: no
 // separate transfer call is needed at this layer.
 //
 // ATA initialization for non-native quotes (e.g. USDC) is handled internally
@@ -4070,10 +4097,10 @@ async function handleDistributeCreatorFeesPrep(req, res) {
 
 // ── update-fee-shares-prep ────────────────────────────────────────────────
 // Step 2 of the fee-sharing lifecycle. The current sharing_config admin
-// finalises the shareholder list (1–10 entries, share_bps must sum to 10_000).
+// finalises the shareholder list (1-10 entries, share_bps must sum to 10_000).
 // This sweeps any pending AMM + bonding-curve fees, applies the new
 // distribution, and (in version-1 configs) permanently revokes further
-// updates — so for v1 callers should call it exactly once after
+// updates: so for v1 callers should call it exactly once after
 // create-fee-sharing-prep.
 // Docs: https://github.com/pump-fun/pump-public-docs/blob/main/docs/instructions/CREATOR_FEE_SHARING.md
 
@@ -4085,7 +4112,7 @@ const updateFeeSharesSchema = z.object({
 	// sharing_config. Right after create-fee-sharing-prep this is `[creator]`
 	// at 10_000 bps; after a prior update it's whatever was last set. The SDK
 	// uses these to derive the existing PDA accounts that must be passed in.
-	// Optional — when omitted the handler decodes the current set from the
+	// Optional: when omitted the handler decodes the current set from the
 	// on-chain sharing_config so the client never has to track it.
 	current_shareholders: z.array(z.string().min(32).max(44)).min(1).max(10).optional(),
 	new_shareholders: z
@@ -4280,7 +4307,7 @@ async function handleCreateFeeSharingPrep(req, res) {
 
 // Soft ownership guard for connected-wallet fee/delegation actions. If this mint
 // was launched through three.ws (a pump_agent_mints row exists), it must belong
-// to the session user — this stops one account building fee txs against another
+// to the session user: this stops one account building fee txs against another
 // account's coin. Coins launched outside three.ws have no row and are allowed
 // (the on-chain sharing-config admin signature is the real gate either way).
 async function assertCoinNotOwnedByOther({ userId, mint, network, res }) {
@@ -4304,7 +4331,7 @@ const SOCIAL_PLATFORM_ID = { pump: 0, x: 1, github: 2 };
 // Turns a GitHub identity into a concrete fee-share recipient address so the
 // delegation UI never has to know the mapping. If the GitHub user is on
 // three.ws (linked via the existing GitHub OAuth) and has a linked Solana
-// wallet, we return that wallet — a fully-claimable shareholder paid by the
+// wallet, we return that wallet: a fully-claimable shareholder paid by the
 // permissionless distribute crank. Otherwise we return the pump.fun social-fee
 // escrow PDA for their numeric id; fees can be routed into it, but the final
 // claim is brokered by pump.fun's own app (we don't hold the social-claim
@@ -4435,7 +4462,7 @@ async function handleCreateSocialFeePdaPrep(req, res) {
 // sharing-config shareholders, or direct creator), the claimable vault balance
 // (pump native vault + AMM WSOL vault), graduation status, and the on-chain
 // sharing-config shareholders if one exists. Mirrors the coin-fees skill's
-// fetch-fee-info.mjs so the studio shows real, on-chain numbers — no estimates.
+// fetch-fee-info.mjs so the studio shows real, on-chain numbers: no estimates.
 // Public read (rate-limited) so anyone can inspect a coin's fee posture before
 // claiming a delegated share.
 
@@ -4602,11 +4629,8 @@ async function signSendWithAgent({ network, agentKeypair, instructions, extraSig
 // wallet is the on-chain creator (agent_authority) of the coin. Returns
 // { agent, mintRow, loaded, creator } or sends an error and returns null.
 async function resolveAgentFeeContext(req, res, body) {
-	const user = await getSessionUser(req);
-	if (!user) {
-		error(res, 401, 'unauthorized', 'sign in required');
-		return null;
-	}
+	const user = await requireSessionUser(req, res);
+	if (!user) return null;
 
 	const agent = await resolveLaunchAgentId({
 		userId: user.id,
@@ -4681,7 +4705,7 @@ async function handleCollectCreatorFeeAgent(req, res) {
 		const onlineSdk = new OnlinePumpSdk(connection);
 		const creatorPk = ctx.loaded.keypair.publicKey;
 		// Snapshot the creator's SOL before the sweep so we can report the exact
-		// lamports the claim delivered (net of tx fee) — callers (the launcher
+		// lamports the claim delivered (net of tx fee): callers (the launcher
 		// claimer, the studio) need the real figure, not a boolean.
 		const balanceBefore = await connection.getBalance(creatorPk).catch(() => null);
 		const ixs = await onlineSdk.collectCoinCreatorFeeInstructions(creatorPk, creatorPk);
@@ -4761,7 +4785,7 @@ async function handleDistributeCreatorFeesAgent(req, res) {
 // ── fee-sharing-agent ──────────────────────────────────────────────────────
 // Server-signs the full delegation lifecycle with the agent custodial wallet:
 // creates the sharing config if absent, then sets the shareholder split. This
-// is the on-chain mechanism behind "reward" coins — creator fees are split to a
+// is the on-chain mechanism behind "reward" coins: creator fees are split to a
 // list of delegated wallets (e.g. GitHub contributors) who can each claim their
 // share via distribute. Shares are basis points and must sum to 10000.
 
@@ -4826,14 +4850,14 @@ async function handleFeeSharingAgent(req, res) {
 		const creator = ctx.loaded.keypair.publicKey;
 
 		// The sharing-config account existing on-chain means the split has already
-		// been initialized — skip creation and go straight to updating shares.
+		// been initialized: skip creation and go straight to updating shares.
 		const cfgPda = feeSharingConfigPda(mintPk);
 		const cfgInfo = await connection.getAccountInfo(cfgPda);
 		const configExists = !!cfgInfo;
 
 		const signatures = [];
 
-		// Step 1 — create the config if it doesn't exist yet. A fresh config seeds
+		// Step 1: create the config if it doesn't exist yet. A fresh config seeds
 		// the creator as the sole shareholder at 10000 bps.
 		if (!configExists) {
 			const bcInfo = await connection.getAccountInfo(bondingCurvePda(mintPk));
@@ -4856,7 +4880,7 @@ async function handleFeeSharingAgent(req, res) {
 			);
 		}
 
-		// Step 2 — set the shareholder split. Right after creation the current set
+		// Step 2: set the shareholder split. Right after creation the current set
 		// is [creator] at 10000 bps; otherwise it's whatever the cached config holds.
 		const cached = Array.isArray(ctx.mintRow.sharing_config?.shareholders)
 			? ctx.mintRow.sharing_config.shareholders
@@ -4923,7 +4947,7 @@ async function handleFeeSharingAgent(req, res) {
 // numeric id is what pump.fun's social-fee program keys on (platform=2), and
 // the avatar/profile let the launch UI confirm "rewards → @handle" before the
 // user delegates fees. Read-only; best-effort (GitHub rate-limits unauthed IPs
-// at 60/hr — set GITHUB_TOKEN to raise that).
+// at 60/hr: set GITHUB_TOKEN to raise that).
 
 async function handleGithubResolve(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -4967,7 +4991,7 @@ async function handleGithubResolve(req, res) {
 }
 
 // Read pump.fun's global FeeProgramGlobal account and decode the single field we
-// need — `social_claim_authority` — the only signer allowed to release social
+// need: `social_claim_authority`: the only signer allowed to release social
 // (GitHub/X) fee claims. We surface it so the UI can be honest that claiming
 // native social rewards is gated by pump.fun, not self-custodial. No exported
 // decoder exists for FeeProgramGlobal, so we slice the known layout:
@@ -4987,8 +5011,8 @@ async function readSocialClaimAuthority(connection) {
 // ── social-fee-claim-status ────────────────────────────────────────────────
 // Read-only view of a GitHub/X identity's pump.fun social-fee PDA: how much has
 // accrued and been claimed, and the gated deep-link to claim it. We CANNOT build
-// a claim tx ourselves — claim_social_fee_pda requires pump.fun's global
-// `social_claim_authority` to co-sign — so this endpoint is read + deep-link.
+// a claim tx ourselves: claim_social_fee_pda requires pump.fun's global
+// `social_claim_authority` to co-sign: so this endpoint is read + deep-link.
 // Self-custodial "reward" delegation is the fee-sharing split (see
 // fee-sharing-agent / update-fee-shares-prep), which IS claimable directly.
 
@@ -5028,7 +5052,7 @@ async function handleSocialFeeClaimStatus(req, res) {
 					last_claimed: d.lastClaimed?.toString?.() ?? '0',
 				};
 			} catch {
-				/* layout drift — still return the balance */
+				/* layout drift: still return the balance */
 			}
 		}
 

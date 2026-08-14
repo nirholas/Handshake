@@ -1,4 +1,4 @@
-// POST /api/pay/execute — execute an x402 payment using a Payment Session token.
+// POST /api/pay/execute: execute an x402 payment using a Payment Session token.
 //
 // This is the core "agent proposes spend, governance enforces" endpoint.
 // The agent presents:
@@ -22,8 +22,7 @@
 // token, which is a time-bounded spending grant, not wallet access.
 
 import {
-	Connection, PublicKey, Keypair, TransactionMessage, VersionedTransaction,
-	ComputeBudgetProgram,
+	PublicKey, TransactionMessage, VersionedTransaction, ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
 	getAssociatedTokenAddressSync,
@@ -46,7 +45,6 @@ import {
 } from '../_lib/pay/probe.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import {
-	usdToAtomics,
 	atomicsToUsd,
 	verifySessionToken,
 	reserveSessionSpend,
@@ -132,21 +130,45 @@ async function probe402(rawUrl, { method, body }) {
 			status: 422, code: 'missing_fee_payer',
 		});
 	}
+	if (!accept.payTo) {
+		throw Object.assign(new Error('Solana 402 challenge is missing payTo'), {
+			status: 422, code: 'missing_pay_to',
+		});
+	}
+
+	// The price is third-party input and every later step treats it as a BigInt:
+	// it sizes the budget reservation and the transfer instruction. Parsing it
+	// here means a challenge quoting "1.5" or "free" is a 422 about the service,
+	// not an uncaught throw that reserves nothing and reports a 500.
+	let amountAtomics;
+	try {
+		amountAtomics = BigInt(accept.amount);
+	} catch {
+		throw Object.assign(
+			new Error(`Service quoted an unreadable price (${accept.amount})`),
+			{ status: 422, code: 'invalid_amount', detail: { amount: accept.amount ?? null } },
+		);
+	}
+	if (amountAtomics <= 0n) {
+		throw Object.assign(
+			new Error('Service quoted a non-positive price, which cannot be paid'),
+			{ status: 422, code: 'invalid_amount', detail: { amount: String(amountAtomics) } },
+		);
+	}
 
 	const resource =
 		challenge.resource && typeof challenge.resource === 'object'
 			? challenge.resource
 			: { url: typeof challenge.resource === 'string' ? challenge.resource : rawUrl };
 
-	return { challenge, accept, resource };
+	return { challenge, accept, resource, amountAtomics };
 }
 
 // ── Build and sign the Solana USDC transfer ─────────────────────────────────
-async function buildSolanaPayload({ accept, buyer, conn, resourceUrl }) {
+async function buildSolanaPayload({ accept, amount, buyer, conn, resourceUrl }) {
 	const mint = new PublicKey(accept.asset);
 	const payTo = new PublicKey(accept.payTo);
 	const feePayer = new PublicKey(accept.extra.feePayer);
-	const amount = BigInt(accept.amount);
 
 	const senderAta = getAssociatedTokenAddressSync(
 		mint, buyer.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -220,7 +242,11 @@ export default wrap(async (req, res) => {
 	const idempotencyKey = body.idempotency_key ?? null;
 
 	try {
-		validatePublicUrl(targetUrl);
+		// allowHttp is pinned off rather than left to the default, which relaxes
+		// to http outside production. This endpoint hands a caller-chosen URL a
+		// signed payment; a plaintext hop is not something a dev box should allow
+		// when the error message promises https.
+		validatePublicUrl(targetUrl, { allowHttp: false });
 	} catch {
 		return error(res, 400, 'invalid_url', 'url must be a public https endpoint');
 	}
@@ -246,7 +272,7 @@ export default wrap(async (req, res) => {
 		return error(res, err.status ?? 502, err.code ?? 'probe_failed', err.message, err.detail);
 	}
 
-	// Endpoint is free — return the result directly without touching the session
+	// Endpoint is free: return the result directly without touching the session
 	if (probeResult.free) {
 		return json(res, 200, {
 			ok: true,
@@ -257,11 +283,10 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const { accept, resource } = probeResult;
-	const amountAtomics = BigInt(accept.amount);
+	const { accept, resource, amountAtomics } = probeResult;
 	const amountUsd = atomicsToUsd(amountAtomics);
 
-	// Phase 2: governance enforcement — check session, allowlist, budget (atomic)
+	// Phase 2: governance enforcement (check session, allowlist, budget) is atomic
 	let sessionRecord, reservationId;
 	try {
 		const reservation = await reserveSessionSpend({
@@ -287,13 +312,22 @@ export default wrap(async (req, res) => {
 		keypair = loadSolanaKeypair();
 	} catch (err) {
 		await rollbackReservation(sessionRecord.id, amountAtomics).catch(() => {});
-		return error(res, 503, 'wallet_unconfigured', 'Platform Solana payment wallet is not configured');
+		// loadSolanaKeypair separates "no key configured" from "key present but
+		// undecodable". Collapsing both into wallet_unconfigured sent an operator
+		// looking for a missing env var that was in fact already set.
+		return error(
+			res,
+			err.status ?? 503,
+			err.code ?? 'wallet_unconfigured',
+			err.message || 'Platform Solana payment wallet is not configured',
+		);
 	}
 	payerAddress = keypair.publicKey.toBase58();
 	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
 	try {
 		paymentPayload = await buildSolanaPayload({
 			accept,
+			amount: amountAtomics,
 			buyer: keypair,
 			conn,
 			resourceUrl: resource.url || targetUrl,
@@ -341,7 +375,7 @@ export default wrap(async (req, res) => {
 	const payer = settled?.payer || payerAddress;
 	const durationMs = Date.now() - t0;
 
-	// Explicit pre-settlement rejection — no funds moved, safe to roll back
+	// Explicit pre-settlement rejection: no funds moved, safe to roll back
 	if (paid.status === 402) {
 		await rollbackReservation(sessionRecord.id, amountAtomics).catch(() => {});
 		await recordExecution({
@@ -365,7 +399,7 @@ export default wrap(async (req, res) => {
 			typeof paidJson === 'object' ? paidJson : null);
 	}
 
-	// Non-402 non-success — chain state uncertain
+	// Non-402 non-success: chain state uncertain
 	if (!paid.ok) {
 		await recordExecution({
 			sessionId: sessionRecord.id,
@@ -385,10 +419,10 @@ export default wrap(async (req, res) => {
 			idempotencyKey,
 		}).catch(() => {});
 		return error(res, 502, 'upstream_error',
-			`Endpoint returned HTTP ${paid.status} after payment — check wallet activity before retrying.`);
+			`Endpoint returned HTTP ${paid.status} after payment. Check wallet activity before retrying.`);
 	}
 
-	// Phase 5: success — record the settled execution
+	// Phase 5: success, record the settled execution
 	await recordExecution({
 		sessionId: sessionRecord.id,
 		userId: sessionRecord.user_id,

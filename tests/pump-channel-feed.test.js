@@ -156,6 +156,39 @@ describe('channel-feed endpoint', () => {
 		expect(body.items.length).toBeLessThanOrEqual(5);
 	});
 
+	it('serves the default page when limit is not a number', async () => {
+		// `Number('abc')` is NaN and NaN survives every Math.min/Math.max clamp, so
+		// the old parse handed a NaN limit to each source query and to the feed
+		// slice: a single typo'd limit answered 200 with an empty feed. A caller
+		// that mistypes the page size still gets the feed, never a silent blank.
+		mintsMock.mockResolvedValueOnce(
+			Array.from({ length: 30 }, (_, i) => ({
+				signature: `nan${i}`,
+				mint: `M${i}`,
+				timestamp: i,
+			})),
+		);
+
+		const res = mockRes();
+		await handler(mockReq('?limit=abc'), res);
+
+		expect(res.statusCode).toBe(200);
+		const body = JSON.parse(res.body);
+		expect(body.items.length).toBe(30);
+		// The sources are asked for a real number, never NaN.
+		expect(mintsMock).toHaveBeenCalledWith(50);
+	});
+
+	it('clamps a limit above the ceiling instead of forwarding it', async () => {
+		mintsMock.mockResolvedValueOnce([]);
+
+		const res = mockRes();
+		await handler(mockReq('?limit=9999'), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(mintsMock).toHaveBeenCalledWith(200);
+	});
+
 	it('normalizes tx_signature fallback', async () => {
 		claimsMock.mockResolvedValueOnce([
 			{ tx_signature: 'claimsig', mint: 'CM1', timestamp: 500 },

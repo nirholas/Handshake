@@ -1433,12 +1433,48 @@ async function startQrPurchase() {
 	url.searchParams.set('label', purchase.label || `Skill: ${skill}`);
 	url.searchParams.set('message', purchase.message || `Unlock '${skill}'`);
 
+	// Solana Pay TRANSACTION request for the same pending purchase. The server
+	// builds the transfer (api/purchase/skill.js), which is what lets the platform
+	// sponsor the network fee for a buyer holding only USDC, create a missing
+	// creator token account, and settle the treasury fee leg in one signature.
+	// The transfer-request link above stays as the fallback rail for wallets that
+	// do not implement transaction requests.
+	const txRequestUrl = `solana:${encodeURIComponent(
+		`${window.location.origin}/api/purchase/skill?reference=${encodeURIComponent(purchase.reference)}`,
+	)}`;
+
 	const qrEl = $('payment-qr');
 	if (qrEl) {
-		qrEl.innerHTML = `<canvas id="payment-qr-canvas" width="240" height="240"></canvas>
-			<p class="muted small">Scan with a Solana Pay wallet (Phantom mobile, Solflare mobile, etc.)</p>`;
 		const QRCode = await import('qrcode');
-		await (QRCode.default ?? QRCode).toCanvas(document.getElementById('payment-qr-canvas'), url.toString(), { width: 240 });
+		const rails = {
+			sponsored: {
+				url: txRequestUrl,
+				note: 'Scan with a Solana Pay wallet (Phantom mobile, Solflare mobile, etc.). No SOL needed: we cover the network fee.',
+				swap: 'Wallet rejected the code? Use a direct transfer',
+			},
+			direct: {
+				url: url.toString(),
+				note: `Scan to send ${human} directly from your wallet. You pay the Solana network fee.`,
+				swap: 'Back to the fee-free code',
+			},
+		};
+		const drawRail = async (name) => {
+			const rail = rails[name];
+			qrEl.innerHTML = `<canvas id="payment-qr-canvas" width="240" height="240"></canvas>
+				<p class="muted small">${escapeHtml(rail.note)}</p>
+				<button type="button" class="payment-qr-swap" data-qr-swap>${escapeHtml(rail.swap)}</button>`;
+			await (QRCode.default ?? QRCode).toCanvas(
+				document.getElementById('payment-qr-canvas'),
+				rail.url,
+				{ width: 240 },
+			);
+			qrEl.querySelector('[data-qr-swap]')?.addEventListener('click', () => {
+				drawRail(name === 'sponsored' ? 'direct' : 'sponsored').catch((e) =>
+					log.error('[skill-purchase] qr swap failed', e),
+				);
+			});
+		};
+		await drawRail('sponsored');
 	}
 
 	const qrSuccess = async () => {

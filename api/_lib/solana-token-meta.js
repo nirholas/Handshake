@@ -170,7 +170,14 @@ export async function fetchTokenImage(imageUrl) {
  *   imageUrl: string|null,
  *   image: { bytes: Uint8Array, mimeType: string } | null,
  *   externalUrl: string|null,
+ *   raw: object|null,
  * }>}
+ *
+ * `raw` is the parsed off-chain JSON document verbatim (null when the token has
+ * no `uri` or it could not be read). The named fields above cover what a token
+ * profile needs; a caller after anything else in the document (`animation_url`,
+ * `properties.files`, attributes) would otherwise have to fetch and parse the
+ * same document a second time.
  */
 export async function fetchTokenMeta(mint, { network = 'mainnet', includeImage = true } = {}) {
 	const pk = solanaPubkey(mint);
@@ -212,5 +219,6 @@ export async function fetchTokenMeta(mint, { network = 'mainnet', includeImage =
 		imageUrl,
 		image,
 		externalUrl,
+		raw: off || null,
 	};
 }

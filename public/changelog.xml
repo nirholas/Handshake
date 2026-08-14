@@ -39,12 +39,28 @@
 			<description>The bounty board at /bounties mirrors the public pump.fun GO board. When you opened a bounty link that had been deleted or mistyped, the page reported it the same way it reports pump.fun being down, so there was no way to tell a dead link from an outage. A bounty that genuinely is not there now answers as not found, and a real upstream problem keeps its own separate answer. A second, quieter case got fixed with it: when the submissions list for a bounty failed to load, the page showed the bounty with zero submissions and said nothing, which looks identical to a bounty nobody has entered. That failure is now recorded, so a pump.fun outage shows up as an outage rather than as a board that suddenly looks unpopular.</description>
 		</item>
 		<item>
+			<title>Apps that sign in with a client secret can now revoke and inspect their own tokens</title>
+			<link>https://three.ws/docs/authentication</link>
+			<guid isPermaLink="false">2026-08-14:Apps that sign in with a client secret can now revoke and inspect their own tokens</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If you connect an app to three.ws over OAuth and registered it with a client secret sent in the Authorization header (client_secret_basic, the standard choice for server-side apps), only the token endpoint accepted those credentials. Revoking a token or checking whether one is still valid answered that the client_id was missing, and answered that the credentials were bad the moment you added it, so a confidential app had no way to sign a user out or verify a token it owned. All three endpoints now take the same credentials, in the header or in the form body, exactly as the OAuth revocation and introspection standards require. Dynamic client registration also now returns client_secret_expires_at alongside a new secret, so your client can tell that a three.ws secret never expires rather than guessing from a missing field.</description>
+		</item>
+		<item>
 			<title>Avatar likeness is now measured against your photos, not assumed</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Avatar likeness is now measured against your photos, not assumed</guid>
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The promise behind the selfie flow is that the avatar looks like you, and until now nothing on the platform checked that. Two quality systems already existed and neither answered the question: one scores whether a generated model looks photorealistic, which a beautiful model of a stranger passes easily, and the other scores the head's shape offline against a synthetic test set and kept no record per avatar. Every finished reconstruction is now rendered from three angles and compared to the photos it was built from using the same kind of face-recognition model a phone uses to decide a face unlocks it. That produces a score out of 5 filed against the generation itself, and the scale is anchored to the model's own published cut-off for &quot;same person&quot; rather than to anyone's opinion, so 4 out of 5 means confidently you and not arguably you. A weekly sweep keeps the numbers current, and one of the three angles is a turned head on purpose: an avatar built by painting a photo onto a template can look right face-on and fall apart the moment it turns, and that is now a number somebody can see. The score is a measurement, never a guess: when the photos have no usable face, or the finished model has no recognisable face at all, it says which, instead of quietly reporting a bad score.</description>
+		</item>
+		<item>
+			<title>Buying a skill from your phone no longer needs SOL in your wallet</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-08-14:Buying a skill from your phone no longer needs SOL in your wallet</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The QR code in the skill payment modal now hands your wallet a transaction we build for you, instead of asking the wallet to compose the transfer itself. Three things change for the buyer: three.ws pays the Solana network fee, so a wallet holding only USDC can complete the purchase; a creator who has never received this token before no longer causes the payment to fail, because the missing token account is created in the same transaction; and the whole payment still settles under one signature. Wallets that do not support this newer Solana Pay flow are one click away from the classic direct-transfer QR, which stays available under the code.</description>
 		</item>
 		<item>
 			<title>Controls that promised an action and did nothing now actually do it</title>
@@ -61,6 +77,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Agents do things on-chain after they are registered: they launch a token, collect reputation attestations, change hands, delegate execution rights. Until now the platform recorded only who an agent currently was, so all of that history was dropped, and anyone who wanted it had to scan a chain themselves. Open any agent under the Discover directory and there is now an On-chain history panel: a timeline of everything the platform has indexed for that agent, each entry stamped with the real time the chain says it happened and linked to the transaction on a block explorer so you can check it yourself. The same data is available to developers as one public endpoint. Three failures were fixed to make it real. The Solana half of the indexer was crashing on every single agent it looked at, so despite tracking more than fifteen hundred agents it had recorded zero events; it now records them, and a token launch names the agent's actual coin instead of the wrapped SOL that paid for it. On the EVM side, five of the twenty-two supported chains were producing blocks faster than the indexer could read them, so their backlog grew every hour while the status page called them healthy: the indexer now widens its reading window until it catches up, and the status page publishes how many blocks behind the worst chain is, as a number. Reputation was the third: the platform was already asking every EVM chain for agent feedback and vouches on every pass, then throwing the answers away, so not a single reputation event had ever reached the index. Those now land alongside the rest of an agent's history, with the score, its tags, and a link to the attestation.</description>
+		</item>
+		<item>
+			<title>Platform counters stop reporting zero when the numbers are simply unavailable</title>
+			<link>https://three.ws/monitor</link>
+			<guid isPermaLink="false">2026-08-14:Platform counters stop reporting zero when the numbers are simply unavailable</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public stats behind the home page and the monitor board (agents, avatars, widgets, views, countries, chains) used to answer with a row of zeroes whenever the database could not be reached, and that fabricated all-zero snapshot was then cached for five minutes at the edge, so the platform looked empty long after it had recovered. It now says the figures are unavailable instead, caches that for fifteen seconds, and the monitor board keeps the last real numbers on screen rather than flashing zeroes. The chain counter is also a real count again: it reads the mainnets that actually carry an indexed agent plus Solana, instead of a hardcoded six that had drifted from reality.</description>
 		</item>
 		<item>
 			<title>Recurring payments now have a home, a pause button, and a receipt for every charge</title>
@@ -111,6 +135,14 @@
 			<description>The public tool catalog at /mcp-tools is generated from the code so it cannot drift, which is exactly why two wrong things in it went unnoticed. The free 3D Studio connector builds its tool list from two source files and the generator only ever read one of them, so the three persona tools that give a generated body a name, bring it back in a later session, and make it lip-sync a reply were served by the endpoint but missing from the catalog, from the machine-readable /mcp-catalog.json an agent fetches to discover what it can call, and from the two build gates that hold every published tool to its declared contract and its declared safety annotations. All three are now covered by both gates and appear in the catalog. Separately, the x402 Bazaar was labelled as needing no account and no payment; a real search call with neither returns a payment request, so the catalog now says OAuth or x402, matching the server, its documentation, and the fleet directory at /.well-known/mcp.json.</description>
 		</item>
 		<item>
+			<title>The Oracle live action stream no longer goes quiet after a bad reconnect</title>
+			<link>https://three.ws/activity</link>
+			<guid isPermaLink="false">2026-08-14:The Oracle live action stream no longer goes quiet after a bad reconnect</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The trading floor at /activity reconnects to its live feed by telling the server the timestamp it last saw. If that timestamp arrived malformed, the server opened the stream anyway and then silently failed every lookup behind it: the page stayed connected, showed no error, and never received another action for as long as it was open. It now rejects the bad timestamp up front with a clear message so the page reconnects cleanly instead of sitting on a dead feed. Three neighbouring Oracle endpoints got the same treatment: a malformed paging cursor on the activity feed, and a non-text agent or chat id sent to the follow endpoint, used to come back as an unexplained server error and now come back as a plain description of what was wrong. An unreadable result limit on an agent's public track record no longer wipes out its recent-trade list. The activity feed and the calibration report also now allow cross-site reads, matching every other public Oracle endpoint.</description>
+		</item>
+		<item>
 			<title>The Reputation Staking Market is live: back an agent and earn from what it actually did</title>
 			<link>https://three.ws/reputation/market</link>
 			<guid isPermaLink="false">2026-08-14:The Reputation Staking Market is live: back an agent and earn from what it actually did</guid>
@@ -133,6 +165,22 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The roadmap's phase-2 bar is that owners return to converse with the agent they minted, and until now nothing on the platform could say whether that was happening. It can now, and without a third-party analytics tag: when you open your own agent, the platform records one coarse row saying that you (the owner) came back to that agent on that calendar day, and nothing else. No IP address, no device fingerprint, no session trail, no per-request log, and nobody but the owner is tracked, so the record can answer the one question it exists for and nothing more invasive. A weekly job groups owners by the week they minted their first agent and works out how many returned during the second week, and the internal analytics dashboard charts that rate per cohort against the 30% target. Every date it stores is a real calendar date rather than an offset from whenever the number was computed, so a cohort read a year from now still means what it meant the day it was written. The whole path is covered end to end against a real database, which also turned up and fixed a long-standing flaw that broke sign-ups on any freshly created database.</description>
+		</item>
+		<item>
+			<title>Withdrawing your agent token's earnings is confirmed against the real payout, and cannot be triggered from another site</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Withdrawing your agent token's earnings is confirmed against the real payout, and cannot be triggered from another site</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Two fixes to the withdraw flow on your agent's pump.fun token. The confirmation step used to accept any successful Solana transaction that simply mentioned your token and its authority wallet, which an ordinary transfer or memo does, and report it back as a completed payout; it now requires that the payments program actually ran, the same check the launch flow already made. Both withdraw steps also now reject requests that arrive from a site other than three.ws while riding your signed-in session, so a page you happen to have open elsewhere cannot start a withdrawal on your behalf. Alongside that, an unreadable token-program value in a withdraw request is now refused up front with a clear message instead of being quietly ignored and producing a transaction that only failed after you had signed it.</description>
+		</item>
+		<item>
+			<title>Your referrals page now shows how many people actually opened your link</title>
+			<link>https://three.ws/dashboard/referrals</link>
+			<guid isPermaLink="false">2026-08-14:Your referrals page now shows how many people actually opened your link</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every three.ws referral link already recorded a visit when someone opened it, but nothing ever showed you those numbers. The referrals dashboard now has a Share funnel: link visits, how many of those visits became signups, and how many of those signups went on to make their first creation, with the conversion rate between each step over the last 30 days. Visits are counted once per person per day, so refreshing a link does not inflate the number, and the page only shows the funnel once you have at least one visit. The same data is available on the referrals API as a funnel block, with an optional lookback window.</description>
 		</item>
 		<item>
 			<title>Docs · Skill royalties</title>

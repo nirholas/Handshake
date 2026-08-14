@@ -260,9 +260,10 @@ GET https://three.ws/api/oracle/trades?mint=<mint>
 - Conviction for up to 20 mints at once at `/api/oracle/batch`.
 - Score time series at `/api/oracle/history`, biggest conviction moves at `/api/oracle/movers`, accuracy stats at `/api/oracle/backtest`, proven calls at `/api/oracle/wins`, agent rankings at `/api/oracle/leaderboard`.
 - Global KPIs, per-category intel, symbol search, a single agent's record, and the global action feed at `/api/oracle/stats`, `/categories`, `/search`, `/agent-stats`, and `/activity`.
+- Realized calibration per conviction band at `/api/oracle/calibration`: the fleet's actual win rate from real fills, next to what the band predicted, plus the bounded correction factor the scorer applies.
 - A dynamic 1200x630 OpenGraph conviction card (SVG) for sharing a coin at `/api/oracle/og`.
 
-The write endpoints, all auth-scoped: `GET·POST /api/oracle/watch` reads or arms an agent's watch config with server-side validation clamping every limit; `POST·DELETE /api/oracle/follow` subscribes a Telegram chat to an agent's signals; `POST /api/oracle/test-alert` sends a test alert; `POST /api/oracle/social` ingests tweets to additively boost virality (never downgrades an LLM read).
+The write endpoints. Two are auth-scoped to the agent's owner: `GET·POST /api/oracle/watch` reads or arms an agent's watch config with server-side validation clamping every limit, and `POST /api/oracle/test-alert` sends a test alert. Two are public and IP rate-limited instead: `POST·DELETE /api/oracle/follow` subscribes a Telegram chat to an agent's signals (the chat id the caller supplies is the identity, so there is no session to scope to), and `POST /api/oracle/social` ingests tweets to additively boost virality (never downgrades an LLM read).
 
 ### Through MCP
 

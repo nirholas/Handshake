@@ -142,6 +142,20 @@ describe('GET /api/notifications', () => {
 		expect(listQuery().values).toContain(20);
 	});
 
+	// NaN passes straight through Math.min/Math.max, so a junk ?limit used to
+	// reach Postgres as `limit NaN` and 500 the whole inbox.
+	it('falls back to the default page size when limit is not a number', async () => {
+		for (const limit of ['abc', '', 'NaN', '1e', '#20']) {
+			sqlCalls.length = 0;
+			const { res } = await call(listHandler, { query: { limit } });
+			expect(res.statusCode).toBe(200);
+			const bound = listQuery().values.find((v) => typeof v === 'number');
+			expect(Number.isFinite(bound)).toBe(true);
+			expect(bound).toBeGreaterThanOrEqual(1);
+			expect(bound).toBeLessThanOrEqual(50);
+		}
+	});
+
 	it('applies a well-formed type filter and ignores a malformed one', async () => {
 		await call(listHandler, { query: { type: 'pump_alert' } });
 		expect(listQuery().text).toMatch(/type = /);
@@ -195,7 +209,7 @@ describe('POST /api/notifications/read-all', () => {
 	});
 
 	it('marks the caller unread rows read and reports how many', async () => {
-		dbState.marked = [{ count: 4 }, { count: 4 }, { count: 4 }, { count: 4 }];
+		dbState.marked = [{ id: 'n1' }, { id: 'n2' }, { id: 'n3' }, { id: 'n4' }];
 		const { res, body } = await call(readAllHandler, { method: 'POST' });
 		expect(res.statusCode).toBe(200);
 		expect(body.marked_read).toBe(4);
@@ -203,6 +217,21 @@ describe('POST /api/notifications/read-all', () => {
 		const [update] = sqlCalls.filter((c) => /update user_notifications/.test(c.text));
 		expect(update.text).toMatch(/read_at is null/);
 		expect(update.values).toContain(USER.id);
+	});
+
+	// Postgres rejects a window function in RETURNING ("window functions are not
+	// allowed in RETURNING"), so the `count(*) over ()` form this used to send
+	// threw on every single call and the bell's "mark all read" was a permanent
+	// 500. The count has to come from the returned row list, not from the query.
+	it('counts the returned rows instead of aggregating inside RETURNING', async () => {
+		dbState.marked = [{ id: 'n1' }, { id: 'n2' }];
+		const { body } = await call(readAllHandler, { method: 'POST' });
+		expect(body.marked_read).toBe(2);
+
+		const [update] = sqlCalls.filter((c) => /update user_notifications/.test(c.text));
+		const returning = update.text.slice(update.text.toLowerCase().lastIndexOf('returning'));
+		expect(returning).not.toMatch(/over\s*\(/i);
+		expect(returning).not.toMatch(/count\s*\(/i);
 	});
 
 	it('reports zero, not null, when there was nothing unread', async () => {

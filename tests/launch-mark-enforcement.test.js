@@ -7,6 +7,8 @@
 //   4. THREE_WS_MARK_ENFORCE=0        → legacy path (no mark required)
 //   5. launch-agent, no mint supplied → server grinds a 3ws mint
 //   6. launch-agent, unmarked pair    → 400 unbranded_mint
+//   7. launch-agent, cross-site POST  → 403, before any keypair or chain work
+//   8. launch-agent, no session       → 401
 //
 // All network / Solana RPC calls are mocked. The vanity grinder is also mocked
 // so tests are deterministic and fast (the real grind is covered by
@@ -17,11 +19,12 @@ import { Readable } from 'node:stream';
 import { hasThreeWsMark } from '../src/solana/vanity/brand.js';
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
-const authState = { session: null };
+const authState = { session: null, sameSite: true };
 vi.mock('../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => authState.session),
 	authenticateBearer: vi.fn(async () => null),
 	extractBearer: vi.fn(() => null),
+	isSameSiteOrigin: vi.fn(() => authState.sameSite),
 }));
 
 // ── SQL ──────────────────────────────────────────────────────────────────────
@@ -159,10 +162,13 @@ vi.mock('@pump-fun/pump-sdk', () => ({
 }));
 
 // ── agent-pumpfun — Solana connection + keypair loader ────────────────────────
-const agentPumpfunState = { connection: null, loadResult: null };
+const agentPumpfunState = { connection: null, loadResult: null, loadCalls: 0 };
 vi.mock('../api/_lib/agent-pumpfun.js', () => ({
 	solanaConnection: vi.fn(() => agentPumpfunState.connection),
-	loadAgentForSigning: vi.fn(async () => agentPumpfunState.loadResult),
+	loadAgentForSigning: vi.fn(async () => {
+		agentPumpfunState.loadCalls++;
+		return agentPumpfunState.loadResult;
+	}),
 }));
 
 // ── Request/response helpers (mirror tests/api/pump.test.js) ─────────────────
@@ -205,10 +211,12 @@ function pumpAction(action) {
 
 function resetAll() {
 	authState.session = null;
+	authState.sameSite = true;
 	sqlState.queue = [];
 	sqlState.calls = [];
 	agentPumpfunState.connection = null;
 	agentPumpfunState.loadResult = null;
+	agentPumpfunState.loadCalls = 0;
 }
 
 // ── Shared fixtures ───────────────────────────────────────────────────────────
@@ -397,5 +405,36 @@ describe('POST /api/pump/launch-agent — brand-mark enforcement', () => {
 
 		expect(res.statusCode).toBe(400);
 		expect(json.error).toBe('unbranded_mint');
+	});
+
+	// launch-agent signs and broadcasts with the agent's CUSTODIAL keypair: the
+	// caller supplies no signature, so a session cookie alone was enough to mint a
+	// coin and spend the agent's SOL from any origin. The cookie path must prove
+	// same-site intent before it reaches any of that.
+	it('403s a cross-site POST before it touches the agent keypair or the chain', async () => {
+		authState.session = { id: 'user-1' };
+		authState.sameSite = false;
+		sqlState.queue = [[{ id: 'agent-1', name: 'Foo' }]];
+
+		const { res, json } = await invoke(pumpAction('launch-agent'), {
+			method: 'POST', url: '/api/pump/launch-agent',
+			body: baseAgentBody,
+		});
+
+		expect(res.statusCode).toBe(403);
+		expect(json.error).toBe('forbidden');
+		// Nothing was resolved, loaded, or queried on the caller's behalf.
+		expect(sqlState.calls).toHaveLength(0);
+		expect(agentPumpfunState.loadCalls).toBe(0);
+	});
+
+	it('still 401s an unauthenticated POST', async () => {
+		authState.session = null;
+		const { res, json } = await invoke(pumpAction('launch-agent'), {
+			method: 'POST', url: '/api/pump/launch-agent',
+			body: baseAgentBody,
+		});
+		expect(res.statusCode).toBe(401);
+		expect(json.error).toBe('unauthorized');
 	});
 });

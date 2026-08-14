@@ -11,6 +11,8 @@
  *   hero right  — name, symbol, category
  *   center      — conviction score (large), tier badge
  *   pillars     — four labeled bars (Who / How / What / Move)
+ *   right lower — market cap (live for an unresolved coin, last recorded once
+ *                 it graduated or rugged)
  *   bottom-right — smart wallet count, graduated/live pill
  *   footer      — "proof.not.promises"
  */
@@ -39,6 +41,16 @@ function trunc(s, n) {
 
 function shortMint(m) {
 	return `${m.slice(0, 6)}…${m.slice(-4)}`;
+}
+
+/** Compact USD for the card: $1.2M / $845K / $912. Null for anything unusable. */
+function fmtUsd(v) {
+	const n = Number(v);
+	if (!Number.isFinite(n) || n <= 0) return null;
+	if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+	if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
+	if (n >= 1e3) return `$${Math.round(n / 1e3)}K`;
+	return `$${Math.round(n)}`;
 }
 
 function tierColor(tier) {
@@ -121,24 +133,38 @@ async function buildCardData(mint) {
 		} catch { /* non-fatal */ }
 	}
 
-	// Fetch live market cap if not yet resolved
-	let liveMcap = null;
-	if (!outcome?.graduated && !outcome?.rugged) {
-		try {
-			const r = await fetch(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, {
-				headers: { accept: 'application/json' },
-				signal: AbortSignal.timeout(3000),
-			});
-			if (r.ok) {
-				const d = await r.json();
-				liveMcap = d?.market_cap_in_usd ?? null;
-			}
-		} catch { /* non-fatal */ }
-	}
+	// Live market cap, but only while the coin is still on the curve: a graduated
+	// or rugged coin reads its number off the recorded outcome instead.
+	const wantsLiveMcap = !outcome?.graduated && !outcome?.rugged;
 
-	const logoBase64 = await fetchLogoBase64(imageUri);
+	// Two independent 3s-bounded round-trips, so the card costs one of them,
+	// not both in series.
+	const [logoBase64, liveMcap] = await Promise.all([
+		fetchLogoBase64(imageUri),
+		wantsLiveMcap ? fetchLiveMarketCap(mint) : Promise.resolve(null),
+	]);
 
 	return { cv, outcome, name, symbol, logoBase64, category, liveMcap };
+}
+
+// Live USD market cap for a coin still on the curve. pump.fun emits
+// `usd_market_cap` (with `market_cap_usd` as the v2 alias); this card used to ask
+// for a `market_cap_in_usd` key that does not exist, so the number was fetched on
+// every render and always came back null. Any failure returns null and the card
+// falls back to the recorded outcome cap, or omits the block.
+async function fetchLiveMarketCap(mint) {
+	try {
+		const r = await fetch(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, {
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(3000),
+		});
+		if (!r.ok) return null;
+		const d = await r.json();
+		const mcap = Number(d?.usd_market_cap ?? d?.market_cap_usd);
+		return Number.isFinite(mcap) && mcap > 0 ? mcap : null;
+	} catch {
+		return null;
+	}
 }
 
 function pillarBar(label, val, color, x0, y0) {
@@ -153,7 +179,7 @@ function pillarBar(label, val, color, x0, y0) {
 	<text x="${x0 + barW + 12}" y="${y0 + 17}" fill="${color}" font-size="14" font-weight="700">${x(txt)}</text>`;
 }
 
-function renderCard(mint, d) {
+export function renderCard(mint, d) {
 	const { cv, outcome, name, symbol, logoBase64, category, liveMcap } = d;
 
 	const score   = cv?.score != null ? Math.round(Number(cv.score)) : null;
@@ -187,6 +213,20 @@ function renderCard(mint, d) {
 		? `<image href="${logoBase64}" x="80" y="148" width="112" height="112" clip-path="url(#imgCircle)"/>`
 		: `<rect x="80" y="148" width="112" height="112" rx="56" fill="#1a1d2e"/>
 		   <text x="136" y="225" text-anchor="middle" fill="#4b5563" font-size="44">${x((displaySym || displayName)[0] || '?')}</text>`;
+
+	// Market cap. A live coin gets the price the pump.fun frontend reports right
+	// now; a graduated/rugged one gets the last cap the outcome tracker recorded,
+	// which is the only honest figure once the curve is gone.
+	const mcapValue = fmtUsd(liveMcap) || fmtUsd(outcome?.last_market_cap_usd);
+	const mcapLabel = liveMcap != null ? 'MARKET CAP' : 'LAST MARKET CAP';
+	const mcapBlock = mcapValue
+		? `<text x="730" y="424" fill="rgba(229,229,229,0.35)"
+		      font-family="Inter,-apple-system,system-ui,sans-serif"
+		      font-size="13" letter-spacing="2">${x(mcapLabel)}</text>
+		<text x="730" y="466" fill="#e5e5e5"
+		      font-family="Inter,-apple-system,system-ui,sans-serif"
+		      font-size="36" font-weight="600" letter-spacing="-0.5">${x(mcapValue)}</text>`
+		: '';
 
 	// Smart wallet count badge
 	const smBadge = smCount != null
@@ -270,6 +310,9 @@ function renderCard(mint, d) {
 	${pillarBar('HOW · STRUCTURE', pillar('structure'), '#22d3ee', 730, 210)}
 	${pillarBar('WHAT · NARRATIVE', pillar('narrative'), '#fbbf24', 730, 272)}
 	${pillarBar('MOVE · MOMENTUM', pillar('momentum'), '#f472b6', 730, 334)}
+
+	<!-- Market cap -->
+	${mcapBlock}
 
 	<!-- Smart wallet count -->
 	${smBadge}

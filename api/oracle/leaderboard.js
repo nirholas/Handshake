@@ -1,23 +1,29 @@
 /**
- * Oracle — agent conviction leaderboard.
+ * Oracle: agent conviction leaderboard.
  *
  *   GET /api/oracle/leaderboard?network=mainnet&limit=20&min_actions=3
  *
  * Returns agents ranked by Oracle conviction win rate across their full action
  * ledger. Only agents with at least `min_actions` resolved (non-open) actions
- * are included — this prevents 1-trade wonders from dominating. Includes name,
+ * are included: this prevents 1-trade wonders from dominating. Includes name,
  * avatar, and summary stats so the caller needs no extra fetch.
  *
  * Cache: 120s public CDN.
  */
 
-import { cors, json, method, rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 
-export default async function handleOracleLeaderboard(req, res) {
+/** parseInt that never leaks NaN into a bound query parameter. */
+function intParam(raw, fallback, min, max) {
+	const n = parseInt(raw ?? '', 10);
+	return Math.min(max, Math.max(min, Number.isFinite(n) ? n : fallback));
+}
+
+export default wrap(async function handleOracleLeaderboard(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
@@ -27,17 +33,21 @@ export default async function handleOracleLeaderboard(req, res) {
 
 	const params = new URL(req.url, 'http://x').searchParams;
 	const network = NETWORKS.has(params.get('network')) ? params.get('network') : 'mainnet';
-	const limit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20', 10)));
-	const minActions = Math.max(1, parseInt(params.get('min_actions') || '3', 10));
+	const limit = intParam(params.get('limit'), 20, 1, 50);
+	const minActions = intParam(params.get('min_actions'), 3, 1, 1000);
 
 	// Aggregate per agent: count wins, losses, open, realized PnL, total size.
-	// Join agent_identities for display fields. Filter to agents with enough
-	// resolved actions to trust the win rate.
+	// Join agent_identities for display fields (its portrait lives in
+	// profile_image_url, with avatar_url as the fallback: there is no
+	// image_url column, and selecting one returned an empty board on every
+	// request). Filter to agents with enough resolved actions to trust the
+	// win rate. No .catch() swallow here: this query IS the response, so an
+	// empty array must mean "nobody qualifies", never "the query broke".
 	const rows = await sql`
 		select
 			a.agent_id,
 			i.name            as agent_name,
-			i.image_url       as agent_image,
+			coalesce(i.profile_image_url, i.avatar_url) as agent_image,
 			count(*)::int     as total,
 			count(*) filter (where a.outcome = 'win')::int   as wins,
 			count(*) filter (where a.outcome = 'loss')::int  as losses,
@@ -45,9 +55,9 @@ export default async function handleOracleLeaderboard(req, res) {
 			coalesce(sum(a.realized_pnl_sol), 0)::float      as realized_pnl_sol,
 			coalesce(sum(a.size_sol), 0)::float               as deployed_sol
 		from oracle_watch_actions a
-		left join agent_identities i on i.id = a.agent_id
+		left join agent_identities i on i.id = a.agent_id and i.deleted_at is null
 		where a.network = ${network}
-		group by a.agent_id, i.name, i.image_url
+		group by a.agent_id, i.name, i.profile_image_url, i.avatar_url
 		having count(*) filter (where a.outcome in ('win','loss')) >= ${minActions}
 		order by
 			round(
@@ -56,7 +66,7 @@ export default async function handleOracleLeaderboard(req, res) {
 			) desc nulls last,
 			count(*) desc
 		limit ${limit}
-	`.catch(() => []);
+	`;
 
 	const agents = rows.map((r, idx) => {
 		const resolved = r.wins + r.losses;
@@ -85,4 +95,4 @@ export default async function handleOracleLeaderboard(req, res) {
 		min_actions: minActions,
 		agents,
 	}, { 'cache-control': 'public, max-age=120, s-maxage=120' });
-}
+});
