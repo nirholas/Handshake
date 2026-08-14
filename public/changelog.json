@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T01:50:42.874Z",
+	"generated_at": "2026-08-14T01:59:11.511Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -80,6 +80,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The agent directory describes itself correctly in all 84 languages again",
+			"summary": "The English description Google and every social preview show for the agent directory was updated a while back to say the directory spans Solana and every supported EVM chain. The 84 translated versions were never updated with it, so a reader in Spanish, Japanese, Arabic or any other language got the older, vaguer line that named no chain at all. All 84 now carry the current wording, with Solana and three.ws left in their real spelling rather than bent to fit each language's grammar. Retired copy was cleared out at the same time: eight strings that no page shows anymore had been sitting in every one of the 84 catalogs, which is 672 dead entries the site was shipping to readers for no reason.",
+			"link": "/agents",
+			"tags": [
+				"fix",
+				"docs"
 			]
 		},
 		{

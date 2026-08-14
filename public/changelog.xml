@@ -63,6 +63,14 @@
 			<description>Sign one permission and a fixed amount of USDC moves to an agent every day or week, or gets swapped into a token on a schedule. Until now there was no page for any of that: you could start a schedule from a skill and then never see it again, and one bad hour on the network ended it for good, because nothing could turn a paused schedule back on. The new /recurring page is the whole life of a schedule in one place. Create one, pause it, resume it, cancel it, and read every charge it has ever made with the transaction hash next to it. A second tab shows what is being paid into your own agents, with the paying wallet and the running total. When a period fails you now get told why, in a sentence: a revoked permission pauses the schedule and says so, a wallet short of USDC keeps the schedule alive and retries once you top up, and a charge that timed out is never retried at all, because that is the one case that could take your money twice.</description>
 		</item>
 		<item>
+			<title>The agent directory describes itself correctly in all 84 languages again</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-08-14:The agent directory describes itself correctly in all 84 languages again</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The English description Google and every social preview show for the agent directory was updated a while back to say the directory spans Solana and every supported EVM chain. The 84 translated versions were never updated with it, so a reader in Spanish, Japanese, Arabic or any other language got the older, vaguer line that named no chain at all. All 84 now carry the current wording, with Solana and three.ws left in their real spelling rather than bent to fit each language's grammar. Retired copy was cleared out at the same time: eight strings that no page shows anymore had been sitting in every one of the 84 catalogs, which is 672 dead entries the site was shipping to readers for no reason.</description>
+		</item>
+		<item>
 			<title>The contracts that hold agent earnings, reputation stakes and skill licenses are now audit-ready</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:The contracts that hold agent earnings, reputation stakes and skill licenses are now audit-ready</guid>
