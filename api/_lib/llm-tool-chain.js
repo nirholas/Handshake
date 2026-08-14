@@ -10,6 +10,7 @@
 // handles them all.
 
 import { env } from './env.js';
+import { DEFAULT_FREE_MODEL } from './chat-models.js';
 import {
 	vertexGeminiAvailable,
 	vertexGeminiModel,
@@ -33,13 +34,24 @@ export function providerChain() {
 	if (env.GROQ_API_KEY) {
 		chain.push({ name: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', key: env.GROQ_API_KEY, model: 'llama-3.3-70b-versatile' });
 	}
+	// Same Llama 3.3 70B on Cerebras' free tier: a second independent quota pool
+	// for the 70B class, so a throttled Groq does not take the whole class down.
+	if (env.CEREBRAS_API_KEY) {
+		chain.push({ name: 'cerebras', url: 'https://api.cerebras.ai/v1/chat/completions', key: env.CEREBRAS_API_KEY, model: 'llama-3.3-70b' });
+	}
+	// EVERY OpenRouter rung rides DEFAULT_FREE_MODEL, exactly like api/_lib/llm.js.
+	// This lane used to send the PAID meta-llama/llama-3.3-70b-instruct on the
+	// primary key and the retired meta-llama/llama-3.3-70b-instruct:free on the
+	// fallbacks, so the rung either billed the platform key (against policy) or
+	// 404'd on a dead model id. Both halves are the same fix: name the live free
+	// model, and keep it in step with chat-models.js.
 	const orKeys = [...new Set([env.OPENROUTER_API_KEY, ...(env.OPENROUTER_FALLBACK_KEYS || [])].filter(Boolean))];
 	orKeys.forEach((key, i) => {
 		chain.push({
 			name: i === 0 ? 'openrouter' : `openrouter#${i + 1}`,
 			url: 'https://openrouter.ai/api/v1/chat/completions',
 			key,
-			model: i === 0 ? 'meta-llama/llama-3.3-70b-instruct' : 'meta-llama/llama-3.3-70b-instruct:free',
+			model: DEFAULT_FREE_MODEL,
 			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
 		});
 	});
@@ -57,6 +69,12 @@ export function providerChain() {
 	}
 	if (env.ZAI_API_KEY) {
 		chain.push({ name: 'zai', url: 'https://api.z.ai/api/paas/v4/chat/completions', key: env.ZAI_API_KEY, model: 'glm-4.7-flash' });
+	}
+	// Gemini Flash-Lite on the AI Studio free tier: an external free quota with
+	// full OpenAI-compatible tool calling, so the loop still has a free rung left
+	// when every Llama-class lane above is throttled at once.
+	if (env.GEMINI_API_KEY) {
+		chain.push({ name: 'gemini', url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', key: env.GEMINI_API_KEY, model: 'gemini-2.5-flash-lite' });
 	}
 	if (env.OPENAI_API_KEY) {
 		chain.push({ name: 'openai', url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.4-nano' });
