@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T06:53:19.831Z",
+	"generated_at": "2026-08-14T07:08:06.310Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -517,6 +517,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The link checker now covers the docs, blog, and chat pages it had been skipping, and three dead links are fixed",
+			"summary": "Every build runs a link audit that walks the site and fails if any link points at a page that does not exist. It was only ever reading three directories, and the docs reader, the blog, and the chat app live in three more that the router serves just as publicly. So those pages shipped unchecked while the audit still reported a clean zero, which is the worst way for a safety check to fail: green with the gap intact. The audit now walks every directory the router can serve a page out of, and a new test derives that list from the routing table itself, so the next section added to the site cannot quietly slip past it. Two smaller blind spots went with it: a code sample printed on a documentation page was being read as if it were a real link on that page, and a link built up in JavaScript from several pieces was being reported as a dead one. Three genuinely dead links found along the way are fixed, and the audit is now part of the pre-build gate rather than something someone has to remember to run.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The market data index now shows every paid endpoint, at the price you will actually be charged",
 			"summary": "The free front door to the paid market data API is where an agent looks before it buys anything. It only listed the seventeen endpoints in the core family, so the Market Heatmap and Market Mood endpoints were invisible to anyone discovering the bundle through it, and it quoted each endpoint's default price rather than the price the endpoint currently charges, so an operator price change left the index advertising a stale number. The index now builds itself from both sources, quotes the live price, and prints sub-cent prices in full instead of rounding them down to zero. Separately, a coin the upstream had not ranked yet could appear in the Market Heatmap board carrying rank 0; it now takes its position on the board instead.",
 			"link": "/docs/market-data-api",
@@ -729,6 +740,17 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Withdrawing a reputation stake now stops counting as a vote of confidence",
+			"summary": "You can back an agent by staking SOL behind it, and the agent's reputation card shows how much conviction is escrowed and who put it there. Until now that figure only ever went up: withdrawing your stake returned your money but left your endorsement standing forever, so an agent could show several SOL of backing that nobody was actually behind any more. The card now counts what is still staked. The moment a withdrawal settles, that position drops out of the total and its owner drops out of the list of backers. Nothing is hidden by the change: the card also reports everything ever staked and everything settlement gave back, so a long track record of people staking and withdrawing still reads as one. Only the market's own escrow can retire a position, so nobody can make an agent look abandoned by publishing a note about somebody else's stake, and the total can never be pushed below zero. The staking market page also now says why staking is closed when a network has no escrow configured, instead of showing a greyed-out button with no explanation.",
+			"link": "/reputation/market",
+			"tags": [
+				"fix",
+				"feature"
 			]
 		},
 		{

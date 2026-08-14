@@ -3,6 +3,45 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "Comments on your models now read as a sentence in the bell and file under the Social tab",
+      "summary": "When someone comments on a model you made, you get a notification. It was arriving half-built. The notification centre sorts every alert into a tab (Sales, Social, Creations, and so on) using a list it keeps in the browser, and comments were missing from that list, so a comment landed in Account and Security instead of Social, next to withdrawals and security warnings. The bell had the same gap from the other side: with no wording written for the comment alert, it fell back to printing the raw internal name of the event, so the row simply read comment, with no hint of who wrote it or what they said. Comments now sort into Social, matching the preference switches in settings that were already treating them as social, and the row reads as a real sentence naming the commenter and quoting the opening of what they wrote. Three documentation pages were corrected against the code in the same pass: the Notifications reference was missing comments from its category table, the Agent Symphony page was missing five Agora arena and guild events from its sound map, and the Character Library page described its API as callable from any website when it has always answered three.ws and its partner sites only.",
+      "tags": [
+        "fix",
+        "docs"
+      ],
+      "link": "/notifications"
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Every avatar you scan now arrives with an on-chain identity of its own, minted for you in the background",
+      "summary": "When a scan or a prompt finishes building your avatar, the finished model is written to permanent storage and the agent behind it is given a real on-chain identity at the same moment. It is a Metaplex Core asset on Solana, minted into the platform's own agent collection with the royalty terms and registry enrolment every other platform mint carries, and it is owned by the agent's own wallet rather than by us. There is no wallet prompt, no fee, and no step to remember: by the time the avatar shows up in your library the identity already exists and anyone can look it up. It is created as a draft, which means it says the agent exists and this is its avatar, not that it is live and taking work. Going live stays a deliberate choice you make later. If the mint cannot run for any reason your avatar is completely unaffected, because it is already delivered and saved before the mint is ever attempted. Agents that want an Ethereum-side identity as well can have one registered under the ERC-8004 standard, and the whole path is now documented, including the single setting an operator flips to arm it for the main Solana network and the script that proves the whole chain end to end on the test network.",
+      "tags": [
+        "feature",
+        "docs"
+      ],
+      "link": "/create/selfie"
+    },
+    {
+      "date": "2026-08-14",
+      "title": "The link checker now covers the docs, blog, and chat pages it had been skipping, and three dead links are fixed",
+      "summary": "Every build runs a link audit that walks the site and fails if any link points at a page that does not exist. It was only ever reading three directories, and the docs reader, the blog, and the chat app live in three more that the router serves just as publicly. So those pages shipped unchecked while the audit still reported a clean zero, which is the worst way for a safety check to fail: green with the gap intact. The audit now walks every directory the router can serve a page out of, and a new test derives that list from the routing table itself, so the next section added to the site cannot quietly slip past it. Two smaller blind spots went with it: a code sample printed on a documentation page was being read as if it were a real link on that page, and a link built up in JavaScript from several pieces was being reported as a dead one. Three genuinely dead links found along the way are fixed, and the audit is now part of the pre-build gate rather than something someone has to remember to run.",
+      "tags": [
+        "fix",
+        "infra"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Withdrawing a reputation stake now stops counting as a vote of confidence",
+      "summary": "You can back an agent by staking SOL behind it, and the agent's reputation card shows how much conviction is escrowed and who put it there. Until now that figure only ever went up: withdrawing your stake returned your money but left your endorsement standing forever, so an agent could show several SOL of backing that nobody was actually behind any more. The card now counts what is still staked. The moment a withdrawal settles, that position drops out of the total and its owner drops out of the list of backers. Nothing is hidden by the change: the card also reports everything ever staked and everything settlement gave back, so a long track record of people staking and withdrawing still reads as one. Only the market's own escrow can retire a position, so nobody can make an agent look abandoned by publishing a note about somebody else's stake, and the total can never be pushed below zero. The staking market page also now says why staking is closed when a network has no escrow configured, instead of showing a greyed-out button with no explanation.",
+      "tags": [
+        "fix",
+        "feature"
+      ],
+      "link": "/reputation/market"
+    },
+    {
+      "date": "2026-08-14",
       "title": "Keyboard users stop tabbing past the same Skip to content link twice, and the homepage hint is readable again",
       "summary": "Two accessibility defects on high-traffic pages are fixed. The shared navigation injects a Skip to content link as the first thing you reach with the Tab key, so keyboard and screen-reader users can jump straight to the page body instead of walking the whole header. It only checked for its own copy of that link before injecting, but roughly three dozen pages write the anchor into their own markup under a different class, so those pages ended up with two identical skip links and you had to tab past the same control twice to get anywhere. The check now recognises every variant, so there is exactly one skip link per page. On the homepage, the hint under the interactive dragon that reads move cursor, hold to breathe fire was drawn in white at 18 percent opacity over a near-black panel, about 1.6 to 1 against the background where the accessibility standard asks for at least 4.5 to 1; anyone in bright light or with reduced contrast sensitivity simply could not see the instruction for the thing it was explaining. It now sits at 5.7 to 1 and stays legible without changing the look of the scene. The Genesis and Walk pages also had a skip link with no styling rule attached, which left it as stray visible text above the header; both now use the shared style and hide until focused like every other page.",
       "tags": [
