@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Apps that sign in with a client secret can now revoke and inspect their own tokens",
+			"summary": "If you connect an app to three.ws over OAuth and registered it with a client secret sent in the Authorization header (client_secret_basic, the standard choice for server-side apps), only the token endpoint accepted those credentials. Revoking a token or checking whether one is still valid answered that the client_id was missing, and answered that the credentials were bad the moment you added it, so a confidential app had no way to sign a user out or verify a token it owned. All three endpoints now take the same credentials, in the header or in the form body, exactly as the OAuth revocation and introspection standards require. Dynamic client registration also now returns client_secret_expires_at alongside a new secret, so your client can tell that a three.ws secret never expires rather than guessing from a missing field.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/docs/authentication"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Withdrawing your agent token's earnings is confirmed against the real payout, and cannot be triggered from another site",
+			"summary": "Two fixes to the withdraw flow on your agent's pump.fun token. The confirmation step used to accept any successful Solana transaction that simply mentioned your token and its authority wallet, which an ordinary transfer or memo does, and report it back as a completed payout; it now requires that the payments program actually ran, the same check the launch flow already made. Both withdraw steps also now reject requests that arrive from a site other than three.ws while riding your signed-in session, so a page you happen to have open elsewhere cannot start a withdrawal on your behalf. Alongside that, an unreadable token-program value in a withdraw request is now refused up front with a clear message instead of being quietly ignored and producing a transaction that only failed after you had signed it.",
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Buying a skill from your phone no longer needs SOL in your wallet",
 			"summary": "The QR code in the skill payment modal now hands your wallet a transaction we build for you, instead of asking the wallet to compose the transfer itself. Three things change for the buyer: three.ws pays the Solana network fee, so a wallet holding only USDC can complete the purchase; a creator who has never received this token before no longer causes the payment to fail, because the missing token account is created in the same transaction; and the whole payment still settles under one signature. Wallets that do not support this newer Solana Pay flow are one click away from the classic direct-transfer QR, which stays available under the code.",
 			"tags": [

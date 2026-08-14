@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T02:20:27.503Z",
+	"generated_at": "2026-08-14T02:25:27.033Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -56,6 +56,17 @@
 				"infra",
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Buying a skill from your phone no longer needs SOL in your wallet",
+			"summary": "The QR code in the skill payment modal now hands your wallet a transaction we build for you, instead of asking the wallet to compose the transfer itself. Three things change for the buyer: three.ws pays the Solana network fee, so a wallet holding only USDC can complete the purchase; a creator who has never received this token before no longer causes the payment to fail, because the missing token account is created in the same transaction; and the whole payment still settles under one signature. Wallets that do not support this newer Solana Pay flow are one click away from the classic direct-transfer QR, which stays available under the code.",
+			"link": "/marketplace",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -202,6 +213,17 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Withdrawing your agent token's earnings is confirmed against the real payout, and cannot be triggered from another site",
+			"summary": "Two fixes to the withdraw flow on your agent's pump.fun token. The confirmation step used to accept any successful Solana transaction that simply mentioned your token and its authority wallet, which an ordinary transfer or memo does, and report it back as a completed payout; it now requires that the payments program actually ran, the same check the launch flow already made. Both withdraw steps also now reject requests that arrive from a site other than three.ws while riding your signed-in session, so a page you happen to have open elsewhere cannot start a withdrawal on your behalf. Alongside that, an unreadable token-program value in a withdraw request is now refused up front with a clear message instead of being quietly ignored and producing a transaction that only failed after you had signed it.",
+			"link": null,
+			"tags": [
+				"security",
+				"fix"
 			]
 		},
 		{
