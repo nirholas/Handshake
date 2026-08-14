@@ -3,6 +3,15 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "The 3D viewer no longer starts up blank when its box has not been measured yet",
+      "summary": "Every page that shows a 3D avatar builds its viewer the moment the page's script runs. On pages where the area holding the avatar has not been given its size yet, because the layout lands a frame later or the panel starts hidden, that meant the viewer was built at zero pixels wide and zero pixels tall. Graphics drivers reject an image with no width or height, so the viewer came up against a surface the driver had refused to create: the browser console filled with rejected-texture and incomplete-surface errors, and on the mocap studio the avatar stage was the one that hit it. The viewer now starts at a minimum size and resizes itself to the real box on the first frame that has one, which it was already set up to do for every later resize. Nothing changes for a page whose avatar area is measured up front, which is most of them.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/mocap-studio"
+    },
+    {
+      "date": "2026-08-14",
       "title": "One cookbook recipe stopped introducing itself as a generic page in search results and shared links",
       "summary": "All five cookbook recipes are drawn by one shared page template, and the server fills in each recipe's own title, description, and social card as the page is served. One recipe was skipping that step. The template carried a leftover marker naming a specific recipe as its own address, and the server reads that marker as this page already knows who it is, so it left that one page alone: text to 3D from the command line went out with the placeholder title every recipe shares and a one-line description that said nothing about it. Search results, and the preview card in any chat where the link was pasted, showed the placeholder instead of the recipe. The template now names the cookbook index rather than any single recipe, matching how the tutorial and walkthrough templates have always been set up, so all five recipes present themselves properly. A test now walks the real page templates and fails if any of them ever claims one of its own recipes again, which is what let this sit unnoticed.",
       "tags": [
