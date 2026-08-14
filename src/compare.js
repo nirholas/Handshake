@@ -412,30 +412,34 @@ function wireSearch() {
 	const close = () => {
 		pop.hidden = true;
 		input.setAttribute('aria-expanded', 'false');
+		input.removeAttribute('aria-activedescendant');
 		active = -1;
 	};
 
 	function renderPop() {
 		if (!items.length) {
 			pop.innerHTML = `<div class="none">No coins match “${esc(lastQuery)}”.</div>`;
+			input.removeAttribute('aria-activedescendant');
 		} else {
+			// Picking an option adds a comparison column, it does not navigate, so an
+			// option is a listbox option and never a link. Focus stays on the input
+			// (the combobox pattern); aria-activedescendant is what moves.
 			pop.innerHTML = items
 				.map(
 					(c, i) => `
-				<a href="#" role="option" data-id="${esc(c.id)}" data-active="${i === active ? 1 : 0}" aria-selected="${i === active}">
+				<div id="cmp-opt-${i}" role="option" data-id="${esc(c.id)}" data-active="${i === active ? 1 : 0}" aria-selected="${i === active}">
 					${c.thumb ? `<img loading="lazy" decoding="async" src="${esc(c.thumb)}" alt="" width="20" height="20" data-no-dark-filter />` : ''}
 					<span>${esc(c.name)}</span>
 					<span class="sym">${esc(c.symbol)}</span>
 					${c.rank != null ? `<span class="rk">#${c.rank}</span>` : ''}
-				</a>`,
+				</div>`,
 				)
 				.join('');
-			pop.querySelectorAll('a[data-id]').forEach((a) =>
-				a.addEventListener('click', (e) => {
-					e.preventDefault();
-					pick(a.dataset.id);
-				}),
+			pop.querySelectorAll('[data-id]').forEach((opt) =>
+				opt.addEventListener('click', () => pick(opt.dataset.id)),
 			);
+			if (active >= 0) input.setAttribute('aria-activedescendant', `cmp-opt-${active}`);
+			else input.removeAttribute('aria-activedescendant');
 		}
 		pop.hidden = false;
 		input.setAttribute('aria-expanded', 'true');

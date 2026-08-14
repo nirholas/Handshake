@@ -996,7 +996,7 @@ function renderOnboarding(host, { avatars, agents, widgets }) {
 					<div class="dnx-ob-active-detail">${esc(activeStep.detail)}</div>
 					<div class="dnx-ob-active-actions">
 						<a class="dn-btn dnx-ob-active-cta" href="${activeStep.href}">${esc(activeStep.cta)} →</a>
-						${activeStep.optional ? `<span class="dnx-ob-active-skip">or <a href="#" data-ob-skip>skip for now</a></span>` : ''}
+						${activeStep.optional ? `<span class="dnx-ob-active-skip">or <button type="button" data-ob-skip>skip for now</button></span>` : ''}
 					</div>
 				</div>
 			</div>
@@ -2187,8 +2187,9 @@ function injectStyles() {
 			box-shadow: 0 4px 18px -6px rgba(255,255,255,0.4);
 		}
 		.dnx-ob-active-skip { font-size: 12px; color: var(--nxt-ink-fade); }
-		.dnx-ob-active-skip a { color: var(--nxt-ink-fade); text-decoration: underline; }
-		.dnx-ob-active-skip a:hover { color: var(--nxt-ink); }
+		.dnx-ob-active-skip button { appearance: none; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; color: var(--nxt-ink-fade); text-decoration: underline; }
+		.dnx-ob-active-skip button:hover { color: var(--nxt-ink); }
+		.dnx-ob-active-skip button:focus-visible { outline: 2px solid var(--nxt-accent, currentColor); outline-offset: 2px; border-radius: 2px; }
 
 		/* Future (upcoming) steps — minimal */
 		.dnx-ob-future-list {

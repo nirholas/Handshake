@@ -2981,9 +2981,8 @@ export class RegisterUI {
 					return oc?.family === 'solana' && (oc?.cluster === 'devnet') === wantDevnet;
 				});
 				if (!agents.length) {
-					list.innerHTML = `<div class="erc8004-muted">No agents minted on ${esc(network)} yet. <a class="erc8004-link" data-role="goto-create" href="#">Create one →</a> or <a class="erc8004-link" href="/discover" target="_blank" rel="noopener">browse the on-chain directory ↗</a>.</div>`;
-					list.querySelector('[data-role="goto-create"]').addEventListener('click', (e) => {
-						e.preventDefault();
+					list.innerHTML = `<div class="erc8004-muted">No agents minted on ${esc(network)} yet. <button type="button" class="erc8004-link" data-role="goto-create">Create one →</button> or <a class="erc8004-link" href="/discover" target="_blank" rel="noopener">browse the on-chain directory ↗</a>.</div>`;
+					list.querySelector('[data-role="goto-create"]').addEventListener('click', () => {
 						this._setTab('create');
 					});
 					return;

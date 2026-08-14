@@ -313,14 +313,11 @@ function failGeneration(message, { unconfigured = false } = {}) {
 	els.secondary.style.display = lastVideoUrl ? 'flex' : 'none';
 	showNote(
 		unconfigured ? 'info' : 'err',
-		`${message}${unconfigured ? '' : ' <a href="#" id="cz-retry">Retry</a>'}`,
+		`${message}${unconfigured ? '' : ' <button type="button" id="cz-retry">Retry</button>'}`,
 	);
 	const retry = $('cz-retry');
 	if (retry) {
-		retry.addEventListener('click', (e) => {
-			e.preventDefault();
-			generate();
-		});
+		retry.addEventListener('click', () => generate());
 	}
 }
 
