@@ -324,10 +324,13 @@ async function handleRestService(req, res, entry) {
 		const responseBody = JSON.stringify({ service: entry.id, price_usd: entry.priceUsd, ...result });
 		res.statusCode = 200;
 		// v2 header name (OKX buyers decode PAYMENT-RESPONSE) + the legacy name
-		// for x402 SDK clients paying over the platform rails.
+		// for x402 SDK clients paying over the platform rails. Both are already
+		// in the expose list cors() set at the top of this handler; do not
+		// re-set access-control-expose-headers here, an earlier narrowing to
+		// just the two v2 names hid x-payment-response from cross-origin
+		// readers on the one response that actually carries it.
 		res.setHeader('PAYMENT-RESPONSE', paymentResponse);
 		res.setHeader('x-payment-response', paymentResponse);
-		res.setHeader('access-control-expose-headers', 'PAYMENT-REQUIRED, PAYMENT-RESPONSE');
 		res.setHeader('cache-control', 'no-store');
 		res.setHeader('content-type', contentType);
 		res.end(responseBody);
@@ -354,14 +357,17 @@ async function handleIdentityStudio(req, res) {
 	const resourceUrl = resolveResourceUrl(req, resourcePath);
 	// The flagship sells on OKX.AI, so its 402 must LEAD with the X Layer
 	// (eip155:196) accept, exactly like the WO-03 REST services, or an OKX
-	// buyer can't pay it. Priced at the create_identity fee; gated on the X Layer
-	// envs being present. Prepended into the MCP challenge + verify path.
-	const xlayerAccepts = xlayerSettleable()
-		? [okxXLayerAccept(resourceUrl, catalogEntry('identity-studio').amountAtomics)]
-		: [];
+	// buyer can't pay it. Gated on the X Layer envs being present. Prepended
+	// into the MCP challenge + verify path.
+	const listPrice = catalogEntry('identity-studio').amountAtomics;
+	const xlayerAcceptsFor = (amount) => (xlayerSettleable() ? [okxXLayerAccept(resourceUrl, amount)] : []);
 
 	if (req.method === 'GET' || req.method === 'HEAD')
-		return handleSse(req, res, { resourcePath, challenge: IDENTITY_CHALLENGE, extraAccepts: xlayerAccepts });
+		return handleSse(req, res, {
+			resourcePath,
+			challenge: IDENTITY_CHALLENGE,
+			extraAccepts: xlayerAcceptsFor(listPrice),
+		});
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
@@ -372,12 +378,20 @@ async function handleIdentityStudio(req, res) {
 		isFreeName: isPublicIdentityTool,
 	});
 
+	// The X Layer accept must quote the SAME batch total the platform rails
+	// quote. Pinned to the single-identity list price, a 16-call batch verified
+	// (and settled) against ONE identity's price on the OKX rail: the exact
+	// underpayment priceBatch was written to close, reopened by the rail that
+	// leads accepts[]. A batch with no priced call has nothing to sum, so the
+	// challenge falls back to the list price it advertises everywhere else.
+	const extraAccepts = xlayerAcceptsFor(x402Amount || listPrice);
+
 	const result = await authenticateRequest(req, res, {
 		x402Amount,
 		resourcePath,
 		challenge: IDENTITY_CHALLENGE,
 		allowFree: allFree || (isDiscoveryOnlyBatch(body) && !isMcpProtocolClient(req)),
-		extraAccepts: xlayerAccepts,
+		extraAccepts,
 	});
 	if (!result) return;
 	const { auth, x402Ctx } = result;
@@ -468,15 +482,22 @@ export default wrap(async (req, res) => {
 
 	const service = serviceFrom(req);
 
+	// Every error on this surface answers in one envelope ({error,
+	// error_description}, no-store): a buyer parsing a 405 from /catalog and a
+	// 405 from /text-to-3d must not need two error readers.
 	if (service === 'catalog') {
-		if (req.method !== 'GET' && req.method !== 'HEAD')
-			return json(res, 405, { error: 'method_not_allowed', message: 'catalog is GET-only' });
+		if (req.method !== 'GET' && req.method !== 'HEAD') {
+			res.setHeader('allow', 'GET, HEAD');
+			return error(res, 405, 'method_not_allowed', 'catalog is GET-only');
+		}
 		return json(res, 200, catalogIndex(), { 'cache-control': 'public, max-age=300' });
 	}
 
 	if (service === 'health') {
-		if (req.method !== 'GET' && req.method !== 'HEAD')
-			return json(res, 405, { error: 'method_not_allowed', message: 'health is GET-only' });
+		if (req.method !== 'GET' && req.method !== 'HEAD') {
+			res.setHeader('allow', 'GET, HEAD');
+			return error(res, 405, 'method_not_allowed', 'health is GET-only');
+		}
 		const report = await cachedHealthReport();
 		// A green reading is edge-cacheable for the memo window; a red one is
 		// not, so recovery shows up on the next request instead of waiting out a
@@ -491,11 +512,13 @@ export default wrap(async (req, res) => {
 	if (isRestPaidService(service)) return handleRestService(req, res, catalogEntry(service));
 
 	const known = catalogEntry(service);
-	return json(res, 404, {
-		error: 'unknown_service',
-		message: known
+	return error(
+		res,
+		404,
+		'unknown_service',
+		known
 			? `service "${service}" is catalogued but not yet routable, see the catalog for status`
 			: `no such service "${service}"`,
-		services: OKX_CATALOG.map((e) => e.endpoint),
-	});
+		{ services: OKX_CATALOG.map((e) => e.endpoint) },
+	);
 });
