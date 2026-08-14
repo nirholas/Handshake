@@ -362,6 +362,8 @@ async function runScenario(base, sc) {
 	};
 	const consoleIssues = [];
 	const pageErrors = [];
+	// Every URL this scenario deliberately broke, recorded as the route fires.
+	const injectedURLs = new Set();
 
 	// Sentinel + payload-echo harness, installed before any page script runs.
 	await context.addInitScript(`
@@ -385,6 +387,17 @@ async function runScenario(base, sc) {
 		// something broke without saying what. The console location carries the
 		// failing URL, so keep it alongside.
 		const url = msg.location?.()?.url || '';
+		// Chromium reports a blocked or faulted subresource as its own console
+		// error ("Failed to load resource: net::ERR_BLOCKED_BY_CLIENT", "…status
+		// of 500"). When the scenario is the thing that broke that request, the
+		// line is the injection talking, not /play: the request itself is correct
+		// behaviour, and no product change can silence a message the network stack
+		// emits before any of our code hears about it. A real visitor behind uBlock
+		// sees exactly the same line. Counting it made every injection scenario
+		// fail on its own premise while saying nothing about how the page coped.
+		// Keyed on the exact URLs this harness faulted, so a resource that broke on
+		// its own is still a finding, as is anything our code logs about the block.
+		if (url && injectedURLs.has(url) && /^Failed to load resource\b/i.test(text)) return;
 		consoleIssues.push(url && !text.includes(url) ? `${type}: ${text} [${url}]` : `${type}: ${text}`);
 	});
 	page.on('pageerror', (err) => {
@@ -392,7 +405,14 @@ async function runScenario(base, sc) {
 		if (!isIgnorableConsole(m)) pageErrors.push(`pageerror: ${m}`);
 	});
 
-	for (const r of sc.routes || []) await page.route(r.match, r.handler);
+	for (const r of sc.routes || []) {
+		await page.route(r.match, (route) => {
+			// Documents are always continued (see notDocument), so only the
+			// subresources this scenario actually faults are recorded.
+			if (route.request().resourceType() !== 'document') injectedURLs.add(route.request().url());
+			return r.handler(route);
+		});
+	}
 
 	const findings = [];
 	try {
