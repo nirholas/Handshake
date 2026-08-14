@@ -399,6 +399,14 @@
 			<description>The capture screen showed a green &quot;Sharp&quot; badge on frames that were smeared past recognition. Measured against six real portrait photographs, the blur floor sat below every reading a real photo can produce, so the gate never fired once: a shot ruined by camera shake sailed through and you found out a minute later, after the build. The floor is now calibrated from those measurements and sits in the gap between blurred and sharp faces, so &quot;Hold steady. The image is blurry.&quot; appears while you can still act on it. A face half-blown by window glare also used to pass, because averaging bright and shadowed halves lands back in the acceptable range; the camera now measures how much of your face is washed out and tells you to turn away from the window. Two capture bugs went with it: on a phone, the helper widgets pinned to the bottom of the screen sat on top of the camera and swallowed taps meant for the shutter and Cancel, and the Retake and Use this buttons stayed on screen during live capture. The shot check after the shutter is faster too.</description>
 		</item>
 		<item>
+			<title>The Smart Money Radar stops going blank when pump.fun rate-limits us</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:The Smart Money Radar stops going blank when pump.fun rate-limits us</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every coin the platform watches gets a verdict recorded after the fact (did it graduate, pump, go flat, or rug), and that verdict is what the Smart Money Radar and the Pre-Launch Radar are built from. The verdict came from a single live lookup against pump.fun, and any hiccup there (a rate limit, a timeout, a coin aged out of their index) was written down as &quot;unknown&quot; and never looked at again. Unknown coins are skipped by the wallet-reputation graph and by the proven-creator list, so a few throttled minutes could permanently erase whole batches of coins from both radars. Two changes fix it. We now cross-check against our own graduation index, which we build independently, so a coin we already watched graduate is scored as graduated no matter what the third-party lookup says. And an unknown is now treated as &quot;not yet known&quot;: it is retried on a backoff for the first week of a coin's life instead of standing as a permanent answer.</description>
+		</item>
+		<item>
 			<title>The stablecoin peg monitor stops calling an unpriced coin a depeg</title>
 			<link>https://three.ws/docs/x402-endpoints</link>
 			<guid isPermaLink="false">2026-08-14:The stablecoin peg monitor stops calling an unpriced coin a depeg</guid>

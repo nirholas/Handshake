@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T05:57:09.144Z",
+	"generated_at": "2026-08-14T06:01:47.900Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -536,6 +536,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The Smart Money Radar stops going blank when pump.fun rate-limits us",
+			"summary": "Every coin the platform watches gets a verdict recorded after the fact (did it graduate, pump, go flat, or rug), and that verdict is what the Smart Money Radar and the Pre-Launch Radar are built from. The verdict came from a single live lookup against pump.fun, and any hiccup there (a rate limit, a timeout, a coin aged out of their index) was written down as \"unknown\" and never looked at again. Unknown coins are skipped by the wallet-reputation graph and by the proven-creator list, so a few throttled minutes could permanently erase whole batches of coins from both radars. Two changes fix it. We now cross-check against our own graduation index, which we build independently, so a coin we already watched graduate is scored as graduated no matter what the third-party lookup says. And an unknown is now treated as \"not yet known\": it is retried on a backoff for the first week of a coin's life instead of standing as a permanent answer.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
