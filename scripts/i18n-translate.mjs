@@ -264,15 +264,25 @@ export function configError(message) {
 /**
  * Should this failure abort the run instead of falling back to English?
  *
- * True for anything that means "the credentials are wrong", which fails
- * identically on every key: an absent key or project (configError), and an
- * auth rejection from the provider (401/403). The English fallback exists for
- * the occasional value a model cannot render as valid JSON; applied to a
- * credential failure it silently rewrites a whole catalog into English and
- * exits 0.
+ * True for anything that means "this key will never be served", which fails
+ * identically on every key: an absent key or project (configError), an auth
+ * rejection from the provider (401/403), and an exhausted balance (402). The
+ * English fallback exists for the occasional value a model cannot render as
+ * valid JSON; applied to a whole-account failure it silently rewrites a whole
+ * catalog into English and exits 0.
+ *
+ * 402 is here because leaving it out cost a real catalog. A funded OpenRouter
+ * key with a spent balance answers every request `402 Insufficient credits`,
+ * which is neither a config error nor an auth rejection, so the run treated it
+ * as a per-key rendering failure: halve, retry, halve again, and bake English
+ * on each lone key. 198 Spanish keys were rewritten into English and the run
+ * exited 0. A payment wall is a property of the account, not of the string
+ * being translated, so no amount of retrying or splitting changes the outcome.
  */
 export function isFatalAuthFailure(err) {
-	return Boolean(err?.isConfigError || err?.status === 401 || err?.status === 403);
+	return Boolean(
+		err?.isConfigError || err?.status === 401 || err?.status === 402 || err?.status === 403,
+	);
 }
 
 function modelName() {

@@ -139,6 +139,18 @@ describe('isFatalAuthFailure', () => {
 		expect(isFatalAuthFailure(Object.assign(new Error('vertex 403'), { status: 403 }))).toBe(true);
 	});
 
+	// Regression: a spent OpenRouter balance answers every call `402 Insufficient
+	// credits`. Classified as retryable, that walked the halve-and-retry path down
+	// to single keys and baked English into 198 of them, exiting 0. A payment wall
+	// belongs to the account, not to the string, so splitting can never help.
+	it('is fatal on a 402, which is a spent balance and not a bad string', () => {
+		expect(
+			isFatalAuthFailure(
+				Object.assign(new Error('openrouter 402: Insufficient credits'), { status: 402 }),
+			),
+		).toBe(true);
+	});
+
 	it('is NOT fatal on a rate limit, which retry and backoff do handle', () => {
 		expect(isFatalAuthFailure(Object.assign(new Error('429'), { status: 429 }))).toBe(false);
 	});
