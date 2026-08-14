@@ -117,6 +117,14 @@ x402-test-wallets/
 pump-sdk-case-study.html
 .claude/scheduled_tasks.lock
 threews-launch-week-case-study.html
+# Hidden one-off verification/debug scripts agents drop in the repo root. They
+# hardcode a single session's scratchpad path, so they are dead the moment that
+# session ends, and a `git add -A` sweep commits them permanently. A check that
+# is worth keeping belongs in scripts/ with a name and no session-local paths.
+# Matches the whole family (.verify-x.mjs, .probe-verify.mjs, .reel-probe4.mjs,
+# .atlas-dbg.mjs): a dotfile .mjs in the root is always one of these, never
+# config, so the pattern stays broad on purpose.
+/.*.mjs
 
 # Temp working directories
 .tmp/
