@@ -159,6 +159,14 @@ let listCache = null;
 const listState = { tab: 'live' };
 const TAB_KEYS = ['live', 'upcoming', 'finished'];
 const TAB_LABELS = { live: 'Live', upcoming: 'Upcoming', finished: 'Finished' };
+/**
+ * The tournament promoted into the main event slot. Held here so the grid below
+ * can leave it out: rendering the same competition twice on one screen, once as
+ * a full live board and again as a card, reads as padding. The tab COUNTS still
+ * include it, because the count is a fact about the phase and not about this
+ * page's layout.
+ */
+let promotedId = null;
 
 async function renderList() {
 	stopStream();
@@ -306,9 +314,13 @@ async function renderList() {
 	paintGroup(body, groups);
 	startCountdowns();
 
-	// The marquee is a bonus on top of a page that already works, so it loads
-	// after the list has painted and never blocks it.
-	paintMainEvent(marquee, groups.live[0] || groups.upcoming[0] || null);
+	// Promote the live competition (or the next one up) into the main event, then
+	// repaint the grid so it is not listed twice on the same screen. The marquee
+	// itself loads its board after the list has painted and never blocks it.
+	const promoted = groups.live[0] || groups.upcoming[0] || null;
+	promotedId = promoted?.id || null;
+	if (promotedId) paintGroup(body, groups);
+	paintMainEvent(marquee, promoted);
 }
 
 /**
@@ -426,13 +438,30 @@ function medalRow(s, tournamentId) {
 }
 
 function paintGroup(body, groups) {
-	const items = groups[listState.tab];
+	const all = groups[listState.tab];
+	const items = all.filter((t) => t.id !== promotedId);
 	if (!items.length) {
-		body.replaceChildren(emptyForTab(listState.tab));
+		// Distinguish "this tab is empty" from "its only entry is the board above",
+		// because the second is not an empty state and must not read like one.
+		body.replaceChildren(all.length ? promotedOnlyState() : emptyForTab(listState.tab));
 		return;
 	}
 	body.replaceChildren(h('div', { class: 'tourn-grid' }, ...items.map(tournamentCard)));
 	startCountdowns();
+}
+
+/**
+ * Shown when a tab's only tournament is the one already promoted up top. Slim on
+ * purpose: this is a pointer, not an empty state, and giving it the full-height
+ * empty-state box would make a populated page look barren.
+ */
+function promotedOnlyState() {
+	return h(
+		'div',
+		{ class: 'state state-slim' },
+		h('p', {}, 'The board above is the only competition in this phase. Host another and it lands here.'),
+		h('button', { class: 'btn btn-primary', type: 'button', onclick: openCreateModal }, '+ Create tournament'),
+	);
 }
 
 function emptyForTab(tab) {

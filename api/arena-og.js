@@ -183,9 +183,12 @@ export default wrap(async (req, res) => {
 
 const MEDALS = ['1st', '2nd', '3rd'];
 
-/** One podium row, laid out on a fixed 96px rhythm starting at y=350. */
+/**
+ * One podium row, on a fixed 72px rhythm from y=342, so three rows finish at 546
+ * and clear the 566 footer bar rather than tucking under it.
+ */
 function podiumRow(s, i) {
-	const y = 350 + i * 74;
+	const y = 342 + i * 72;
 	const pnl = s.metrics?.realized_pnl_sol;
 	const color = pnl > 0 ? POS : pnl < 0 ? NEG : FLAT;
 	const closed = s.metrics?.closed_count ?? s.in_window_trades ?? 0;

@@ -937,6 +937,21 @@
 	border-radius: var(--radius-lg);
 	color: var(--ink-dim);
 }
+/* A pointer rather than an empty state: the page above it is full, so this must
+   not claim the height a genuine "nothing here" box does. */
+.state-slim {
+	padding: clamp(1.1rem, 3vw, 1.6rem) 1rem;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-sm);
+	text-align: left;
+}
+.state-slim p {
+	margin: 0;
+	font-size: var(--text-ui);
+}
 /* A state that IS the whole page (load failure, stale link) carries the route's
    only <h1>, so it has to read identically to the in-page <h3> variants. */
 .state h1,
