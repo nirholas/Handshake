@@ -29,8 +29,33 @@ export function parseCount(raw) {
 	return { value: Math.round(n * scale), exact: scale === 1, label };
 }
 
+// A scraped counter that cannot be true. X's timeline renders like counts
+// lazily, so a scroll-based scrape regularly captures a post at "0 likes" that
+// clearly earned engagement: 56 of the first 214 @trythreews posts came back
+// that way, including one with 6.8K views and 16 replies. Treating those as
+// real zeros would drag every median down and fill the "worst posts" table with
+// scraper artifacts instead of weak writing. They stay in the archive and are
+// named in the report; `npm run x:archive:refresh` replaces them with exact
+// counts from the X API.
+export function isMetricsSuspect(post) {
+	if (post.likes === null || post.likes === undefined) return true;
+	if (post.likes > 0) return false;
+	return (post.retweets || 0) > 0 || (post.replies || 0) >= 2 || (post.views || 0) >= 1000;
+}
+
 function textList(v) {
 	return Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim()) : [];
+}
+
+// Who wrote a post, read from its permalink. A profile scrape returns the whole
+// timeline, and a repost or quote of someone else's post keeps THEIR permalink,
+// so the author is the one fact that separates "we wrote this" from "we
+// amplified this". The scrape's own isRetweet flag does not: it came back false
+// for all 145 reposts in the first @trythreews archive. Getting this wrong
+// silently credits another account's reach to our writing.
+export function authorOf(raw, fallbackHandle) {
+	const m = String(raw.url || '').match(/(?:twitter|x)\.com\/([^/]+)\/status\//i);
+	return m ? m[1].toLowerCase() : fallbackHandle;
 }
 
 // One scraped tweet -> the canonical row shape shared by the DB and the report.
@@ -48,14 +73,17 @@ export function normalizePost(raw, { handle }) {
 	const media = raw.media || {};
 	const type = raw.type || {};
 	const extracted = raw.extracted || {};
+	const authorHandle = authorOf(raw, handle);
 
-	return {
+	const post = {
 		tweetId: id,
 		handle,
+		authorHandle,
+		isOwn: authorHandle === handle.toLowerCase(),
 		url: raw.url || `https://x.com/${handle}/status/${id}`,
 		text: typeof raw.text === 'string' ? raw.text : '',
 		postedAt: posted.toISOString(),
-		isRetweet: Boolean(type.isRetweet),
+		isRetweet: Boolean(type.isRetweet) || authorHandle !== handle.toLowerCase(),
 		isReply: Boolean(type.isReply),
 		isPinned: Boolean(type.isPinned),
 		hasImage: Boolean(media.hasImage),
@@ -72,6 +100,9 @@ export function normalizePost(raw, { handle }) {
 		viewsExact: views.exact,
 		measuredAt: raw.scrapedAt || null,
 	};
+
+	post.metricsSuspect = isMetricsSuspect(post);
+	return post;
 }
 
 // A whole scrape file -> { handle, scrapedAt, posts, sha256 }.
@@ -252,7 +283,15 @@ function summarizeGroup(posts, baselineMedian) {
 // a pure function of this object, so the same numbers can feed a page or an API
 // later without re-deriving anything.
 export function analyze(posts, { handle = null, minPostsForLift = 5 } = {}) {
-	const corpus = posts.filter((p) => !p.isRetweet);
+	// Only what the account itself wrote. Reposts and quotes of other accounts
+	// carry the original author's engagement, which is not evidence about our
+	// writing, and the scraper's counters for them are unreliable besides.
+	const own = (p) => (p.isOwn === undefined ? !p.isRetweet : p.isOwn);
+	const amplified = posts.filter((p) => !own(p));
+	const ownPosts = posts.filter(own);
+	const suspect = ownPosts.filter((p) => (p.metricsSuspect === undefined ? isMetricsSuspect(p) : p.metricsSuspect));
+	const suspectIds = new Set(suspect.map((p) => p.tweetId));
+	const corpus = ownPosts.filter((p) => !suspectIds.has(p.tweetId));
 	const eng = corpus.map(engagements);
 	const baseline = median(eng) || 0;
 	const rates = corpus.map(engagementRate).filter((r) => r !== null);
@@ -319,10 +358,26 @@ export function analyze(posts, { handle = null, minPostsForLift = 5 } = {}) {
 		handle,
 		generatedFrom: {
 			posts: posts.length,
+			ownPosts: ownPosts.length,
 			analyzed: corpus.length,
-			retweetsExcluded: posts.length - corpus.length,
+			retweetsExcluded: amplified.length,
+			suspectExcluded: suspect.length,
+			suspectSample: suspect
+				.slice()
+				.sort((a, b) => (b.views || 0) - (a.views || 0))
+				.slice(0, 5)
+				.map((p) => ({ tweetId: p.tweetId, url: p.url, postedAt: p.postedAt, views: p.views, replies: p.replies })),
 			firstPostAt: sortedByDate[0]?.postedAt || null,
 			lastPostAt: sortedByDate[sortedByDate.length - 1]?.postedAt || null,
+		},
+		// Reposts are excluded from every measurement above, but who we amplify
+		// is its own marketing fact, so it is reported rather than dropped.
+		amplified: {
+			count: amplified.length,
+			byAuthor: [...amplified.reduce((m, p) => m.set(p.authorHandle || 'unknown', (m.get(p.authorHandle || 'unknown') || 0) + 1), new Map())]
+				.map(([author, count]) => ({ author, count }))
+				.sort((a, b) => b.count - a.count)
+				.slice(0, 15),
 		},
 		totals,
 		distribution: {

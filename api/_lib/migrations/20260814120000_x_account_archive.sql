@@ -48,7 +48,13 @@ create unique index if not exists x_account_imports_source_uniq
 
 create table if not exists x_account_posts (
 	tweet_id      text primary key,
-	handle        text        not null,
+	handle        text        not null,          -- the archived account
+	-- Who actually wrote the post, read from its permalink. A profile scrape
+	-- returns the whole timeline, so a repost of someone else's post arrives
+	-- with THEIR handle and THEIR engagement. 145 of the first 359 @trythreews
+	-- rows are exactly that, and the scraper's own isRetweet flag was false on
+	-- every one of them. Analysis filters on author_handle = handle.
+	author_handle text        not null,
 	url           text        not null,
 	text          text        not null,
 	posted_at     timestamptz not null,
@@ -80,12 +86,13 @@ create table if not exists x_account_posts (
 );
 
 -- "Best posts" and "what did we ship that week" are the two queries this table
--- exists to answer.
+-- exists to answer, and both only ever look at posts the account wrote itself.
 create index if not exists x_account_posts_handle_posted_idx
 	on x_account_posts (handle, posted_at desc);
 
-create index if not exists x_account_posts_likes_idx
-	on x_account_posts (handle, likes desc nulls last);
+create index if not exists x_account_posts_own_likes_idx
+	on x_account_posts (handle, likes desc nulls last)
+	where author_handle = handle;
 
 create table if not exists x_account_post_snapshots (
 	id          bigserial   primary key,
