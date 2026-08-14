@@ -1076,6 +1076,9 @@
 				z-index: 3;
 				padding-top: 50px;
 			}
+			/* Chips sit directly on the camera feed, which can be anything from a
+			   dark room to a blown-out window. They keep an opaque dark base in
+			   every state so the live verdict stays readable against both. */
 			.cam-badge-chip {
 				font-size: 10.5px;
 				font-weight: 600;
@@ -1083,20 +1086,20 @@
 				border-radius: 6px;
 				letter-spacing: 0.03em;
 				text-transform: uppercase;
-				background: rgba(0, 0, 0, 0.55);
-				border: 1px solid rgba(255, 255, 255, 0.1);
-				color: rgba(255, 255, 255, 0.5);
+				background: rgba(0, 0, 0, 0.62);
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				color: rgba(255, 255, 255, 0.62);
 				backdrop-filter: blur(6px);
 			}
 			.cam-badge-chip.ok {
 				color: var(--accent);
-				border-color: rgba(255, 255, 255, 0.25);
-				background: rgba(255, 255, 255, 0.1);
+				border-color: rgba(255, 255, 255, 0.35);
+				background: rgba(0, 0, 0, 0.62);
 			}
 			.cam-badge-chip.bad {
-				color: #ff6b6b;
-				border-color: rgba(255, 107, 107, 0.3);
-				background: rgba(255, 107, 107, 0.08);
+				color: #ff8b8b;
+				border-color: rgba(255, 107, 107, 0.55);
+				background: rgba(74, 12, 12, 0.72);
 			}
 			.cam-prompt {
 				position: absolute;
@@ -1141,15 +1144,25 @@
 				stroke-dasharray: 0;
 				filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
 			}
+			/* The retake prompt is the whole point of the gates, so it cannot wash
+			   out against a bright frame: it carries its own scrim rather than
+			   relying on the underlying image being dark. */
 			.cam-hint {
 				position: absolute;
 				bottom: 100px;
-				left: 0;
-				right: 0;
+				left: 12px;
+				right: 12px;
+				width: fit-content;
+				max-width: calc(100% - 24px);
+				margin: 0 auto;
 				text-align: center;
-				color: rgba(255, 255, 255, 0.85);
+				color: #fff;
 				font-size: 13px;
-				padding: 8px 18px;
+				line-height: 1.4;
+				padding: 8px 14px;
+				border-radius: 10px;
+				background: rgba(0, 0, 0, 0.62);
+				backdrop-filter: blur(6px);
 				pointer-events: none;
 				transition: opacity 200ms;
 			}
