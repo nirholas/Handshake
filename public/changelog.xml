@@ -31,6 +31,14 @@
 			<description>The platform's own cross-chain index of agent registrations, token launches, reputation attestations, transfers and delegations, Solana first: one public endpoint, absolute on-chain timestamps, and published index freshness.</description>
 		</item>
 		<item>
+			<title>3D collectible lookups reach more chains, and scene minting stops naming a missing secret</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:3D collectible lookups reach more chains, and scene minting stops naming a missing secret</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The endpoint behind the in-chat 3D NFT viewer kept its own hand-copied list of which EVM networks it could look a collectible up on. The copy had drifted from the list the rest of the platform uses: two test networks were missing outright, so a collectible on either was refused as an unsupported network before anything was tried, even though the viewer can read those tokens straight off the chain without an indexer at all. The endpoint now derives that list from one shared source, so the two cannot drift apart again, and it admits any network the platform can actually reach. It also honors per-network indexer keys the way the rest of the stack does, instead of reading only the single shared key, and when a lookup cannot be indexed it now says which of the two reasons applies. Separately, the scene-minting endpoint answered anonymous callers with the name of the storage secret the deployment was missing, and did so before spending a rate-limit token; it now requires a signed-in minter first, so that message reaches only the people it is meant for.</description>
+		</item>
+		<item>
 			<title>A batched order on the OKX Agent Identity Studio can no longer be paid at the price of one identity</title>
 			<link>https://three.ws/docs/okx-marketplace</link>
 			<guid isPermaLink="false">2026-08-14:A batched order on the OKX Agent Identity Studio can no longer be paid at the price of one identity</guid>
@@ -53,6 +61,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Add funds window hands you a Coinbase checkout with your three.ws wallet already filled in as the destination. That checkout was not told which step to open on, so Coinbase could land you on &quot;transfer from your Coinbase balance&quot;, which is no help at all if you reached Add funds precisely because you hold nothing yet. It now always opens on the buy step for the asset you picked (USDC or SOL, both settling on Solana). The suggested dollar amount is also rounded to real dollars and cents before it reaches Coinbase, so an amount worked out from a shortfall can no longer show up as something like $25.777777 on the checkout screen or in the window itself.</description>
+		</item>
+		<item>
+			<title>Agent share cards keep their portrait, and a sealed-drop card always paints a real theme</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Agent share cards keep their portrait, and a sealed-drop card always paints a real theme</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The image an agent link unfurls with inlines the agent's avatar thumbnail. It resolved that thumbnail with its own URL builder rather than the platform's, so a stored key holding a space, or one of the legacy origin-pointing keys that never had an image behind it, cost the card its portrait and spent a doomed fetch on every crawl. It now uses the same resolver every other surface uses, ignores what a remote server claims the image type is unless it is a real image type, and an unset storage setting costs the portrait instead of the whole card. Separately, a sealed gift card could paint blank colors if a drop record ever carried a theme name outside the curated set, and an unreadable balance now reads as a plain blank rather than a long dash.</description>
 		</item>
 		<item>
 			<title>Another site can no longer swap your agent's body or burn your avatar credits behind your back</title>
@@ -165,6 +181,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Sign one permission and a fixed amount of USDC moves to an agent every day or week, or gets swapped into a token on a schedule. Until now there was no page for any of that: you could start a schedule from a skill and then never see it again, and one bad hour on the network ended it for good, because nothing could turn a paused schedule back on. The new /recurring page is the whole life of a schedule in one place. Create one, pause it, resume it, cancel it, and read every charge it has ever made with the transaction hash next to it. A second tab shows what is being paid into your own agents, with the paying wallet and the running total. When a period fails you now get told why, in a sentence: a revoked permission pauses the schedule and says so, a wallet short of USDC keeps the schedule alive and retries once you top up, and a charge that timed out is never retried at all, because that is the one case that could take your money twice.</description>
+		</item>
+		<item>
+			<title>Removing a skill price works again, price edits reach buyers instantly, and a withdrawal cannot pay an address you replaced</title>
+			<link>https://three.ws/dashboard/monetize</link>
+			<guid isPermaLink="false">2026-08-14:Removing a skill price works again, price edits reach buyers instantly, and a withdrawal cannot pay an address you replaced</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes to the creator monetization tools. The Remove button on a skill price did nothing: the dashboard addressed the row in the web address while the API only read it from the request body, so every click came back as an error. Price changes were also invisible to buyers for up to an hour, because the cached catalog the agent embed reads its paid-skill gate from was never refreshed after an edit, leaving the old amount on offer and keeping a removed skill locked. And a payout address saved on an EVM chain could be shadowed by an older address stored under the earlier chain label, so a withdrawal could land on the address you had just replaced. Saving a new EVM address now retires the old one across the whole rail.</description>
 		</item>
 		<item>
 			<title>Sharing a build now checks that the coin world you are sharing to is real</title>

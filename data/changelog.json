@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Agent share cards keep their portrait, and a sealed-drop card always paints a real theme",
+			"summary": "The image an agent link unfurls with inlines the agent's avatar thumbnail. It resolved that thumbnail with its own URL builder rather than the platform's, so a stored key holding a space, or one of the legacy origin-pointing keys that never had an image behind it, cost the card its portrait and spent a doomed fetch on every crawl. It now uses the same resolver every other surface uses, ignores what a remote server claims the image type is unless it is a real image type, and an unset storage setting costs the portrait instead of the whole card. Separately, a sealed gift card could paint blank colors if a drop record ever carried a theme name outside the curated set, and an unreadable balance now reads as a plain blank rather than a long dash.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Removing a skill price works again, price edits reach buyers instantly, and a withdrawal cannot pay an address you replaced",
+			"summary": "Three fixes to the creator monetization tools. The Remove button on a skill price did nothing: the dashboard addressed the row in the web address while the API only read it from the request body, so every click came back as an error. Price changes were also invisible to buyers for up to an hour, because the cached catalog the agent embed reads its paid-skill gate from was never refreshed after an edit, leaving the old amount on offer and keeping a removed skill locked. And a payout address saved on an EVM chain could be shadowed by an older address stored under the earlier chain label, so a withdrawal could land on the address you had just replaced. Saving a new EVM address now retires the old one across the whole rail.",
+			"tags": [
+				"fix"
+			],
+			"link": "/dashboard/monetize"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "A batched order on the OKX Agent Identity Studio can no longer be paid at the price of one identity",
 			"summary": "The Agent Identity Studio accepts several calls in a single request, and its price is the sum of every paid call in that request. The OKX X Layer payment option, the one an OKX buyer's tooling selects first, was quoting a flat one-identity price no matter how many identities the request actually ordered, so a multi-identity order could be paid at the price of one. Every payment option on that endpoint now quotes the same total, and a request with nothing chargeable in it still quotes the normal list price. Two smaller fixes ride along: a paid response now lets browser-based buyers read the settlement receipt header it has always sent, and the free catalog and health endpoints answer errors in the same shape as the paid endpoints beside them, with an Allow header naming the methods they take.",
 			"tags": [
@@ -21446,6 +21463,15 @@
 				"fix",
 				"sdk",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"title": "3D collectible lookups reach more chains, and scene minting stops naming a missing secret",
+			"summary": "The endpoint behind the in-chat 3D NFT viewer kept its own hand-copied list of which EVM networks it could look a collectible up on. The copy had drifted from the list the rest of the platform uses: two test networks were missing outright, so a collectible on either was refused as an unsupported network before anything was tried, even though the viewer can read those tokens straight off the chain without an indexer at all. The endpoint now derives that list from one shared source, so the two cannot drift apart again, and it admits any network the platform can actually reach. It also honors per-network indexer keys the way the rest of the stack does, instead of reading only the single shared key, and when a lookup cannot be indexed it now says which of the two reasons applies. Separately, the scene-minting endpoint answered anonymous callers with the name of the storage secret the deployment was missing, and did so before spending a rate-limit token; it now requires a signed-in minter first, so that message reaches only the people it is meant for.",
+			"tags": [
+				"fix",
+				"security"
 			]
 		}
 	]
