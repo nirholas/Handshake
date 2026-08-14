@@ -12,6 +12,19 @@ Run these against production first to find real user-facing breakage, then again
 - `npm run audit:console`: console errors per page. `npm run audit:overlays`, `npm run audit:inline-handlers`, `npm run audit:routes`, `npm run audit:route-shadowing`: overlay/handler/route health.
 - `npm run audit:docs`: dead doc links and commands naming scripts that no longer exist.
 
+`audit:console` drives a real browser per route, so a machine already busy with
+other browser fleets or test workers distorts it: navigations blow the 30s
+budget and the dev server itself can miss its boot window, and both land in the
+report as page failures they are not. It reuses a dev server already answering
+on :3000 when there is one, which is the cheapest way to keep a long sweep
+honest. Four env knobs cover the rest: `CONCURRENCY` (default 5) routes checked
+at once, `SETTLE_MS` (default 3000) the per-route wait for async work to land,
+`SERVER_BOOT_MS` (default 240000) how long Vite gets to come up, and
+`REUSE_PROBE_MS` (default 20000) how long the :3000 reuse probe waits for an
+answer. Lower the first, raise the rest, on a loaded box. Treat a run whose
+failures are all navigation timeouts or `net::ERR_*` as unmeasured rather than
+red, and re-run it when the machine is quiet.
+
 ## What to do
 
 1. Run the full battery above. Triage every failure into: broken for users (fix now), cosmetic (fix now if under 15 minutes), false positive (note why).
