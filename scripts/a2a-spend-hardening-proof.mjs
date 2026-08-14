@@ -15,8 +15,15 @@
 //      uses (PUT /api/agents/:id/solana/limits -> the very next reserve throws).
 // This script is the second half of that proof.
 //
+// Every guard call below deliberately passes NEITHER a pre-resolved `limits`
+// object NOR the agent's `meta`, because that is the shape autonomy actually
+// takes: a background caller with an agent id and an amount. The guard has to
+// resolve the real policy itself, so each block here is also a proof that the
+// enforcement fails closed on its inputs.
+//
 // What it proves, in order:
-//   1. per_tx_usd            an over-cap reserve is rejected; an at-cap one lands
+//   1. per_tx_usd            an over-cap reserve is rejected; an at-cap one lands,
+//                            and an unknown agent is refused outright
 //   2. daily_usd             a wallet at its rolling-24h ceiling rejects the next
 //                            reserve, and 8 CONCURRENT reserves cannot race past it
 //   3. per_counterparty_daily_usd  a payee at its ceiling rejects more, while the
@@ -454,6 +461,15 @@ process.stdin.on('data', (d) => {
 		const at = await callErr('reserveSpendUsd', spend({ usdValue: 1 }));
 		check('at-cap reserve allowed', !at.thrown && !!at.out?.reservationId, at.thrown?.message || `reservation ${at.out?.reservationId}`);
 		if (at.out?.reservationId) await call('releaseSpendReservation', at.out.reservationId, 'proof_cleanup');
+
+		// Every reserve in this proof passes NEITHER `limits` NOR `meta`, so the
+		// block above came from the policy the guard read off the agent row itself.
+		// The other half of that guarantee: an agent that no longer exists can hold
+		// no policy, so its spend is refused rather than waved through an empty one.
+		const ghost = await callErr('reserveSpendUsd', spend({ agentId: '00000000-0000-0000-0000-000000000000' }));
+		check('a spend for an agent that does not exist is refused, not defaulted',
+			ghost.thrown?.code === 'agent_not_found',
+			ghost.thrown ? `${ghost.thrown.code}: ${ghost.thrown.message}` : 'ERROR: reserve was allowed');
 	}
 
 	// ── 2. daily ceiling + concurrency race ──────────────────────────────────

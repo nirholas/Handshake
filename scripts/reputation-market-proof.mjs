@@ -23,8 +23,16 @@
 // Either way the proof settles with a real signature; mode 2 exists so the
 // proof is runnable by anyone with no credentials at all.
 //
+// Staker funding, in order:
+//   1. REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY (a keypair you funded once)
+//   2. the public devnet faucet
+// The faucet rate-limits per source IP, so a shared machine can find it already
+// exhausted. Rung 1 exists for exactly that case: fund any devnet keypair once
+// at https://faucet.solana.com and the proof never touches the faucet again.
+//
 // Env (all optional):
 //   REPUTATION_MARKET_ESCROW_SECRET_KEY  escrow secret (base58/base64/JSON)
+//   REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY  pre-funded staker funder
 //   SOLANA_RPC_URL_DEVNET                devnet RPC override
 //   REPUTATION_MARKET_EPOCH_POOL_LAMPORTS  epoch pool for the quote
 //                                          (default 2000000: 0.002 SOL)
@@ -55,6 +63,7 @@ const NETWORK = 'devnet';
 const STAKE_LAMPORTS = 2_000_000n; // 0.002 SOL, twice the minimum
 const DEFAULT_POOL_LAMPORTS = 2_000_000n;
 const AIRDROP_LAMPORTS = 100_000_000; // 0.1 SOL per request, devnet-friendly
+const FUNDER_FEE_HEADROOM = 5_000n; // one signature's fee, so the funder can pay for its own transfer
 const CONFIRM_TIMEOUT_MS = 60_000;
 
 const results = [];
@@ -79,12 +88,50 @@ async function fundWithAirdrops(conn, pubkey, targetLamports) {
 			} catch (err) {
 				// Devnet faucets rate-limit hard; back off and retry.
 				await new Promise((r) => setTimeout(r, 3_000 * (attempt + 1)));
-				if (attempt === 4) throw new Error(`airdrop failed: ${err.message}`);
+				if (attempt === 4) {
+					throw new Error(
+						`airdrop failed: ${err.message}\n` +
+							'The public devnet faucet rate-limits per source IP, so a shared machine can exhaust it ' +
+							'for everyone on it. Fund any devnet keypair once at https://faucet.solana.com and re-run ' +
+							'with REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY set to its secret; the proof then needs no faucet.',
+					);
+				}
 			}
 		}
 		balance = BigInt(await conn.getBalance(pubkey, 'confirmed'));
 	}
 	return balance;
+}
+
+/**
+ * Fund the staker for the run. The faucet is one rung, not the only one: a
+ * pre-funded keypair in REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY takes
+ * priority, which is what makes the proof runnable from a machine whose IP the
+ * public devnet faucet has already cut off.
+ */
+async function fundStaker(conn, pubkey, targetLamports) {
+	const secret = process.env.REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY;
+	const bytes = secret ? decodeAttesterSecret(secret) : null;
+	if (!bytes) return { balance: await fundWithAirdrops(conn, pubkey, targetLamports), source: 'faucet' };
+
+	const funder = Keypair.fromSecretKey(bytes);
+	const need = BigInt(targetLamports) + FUNDER_FEE_HEADROOM;
+	const held = BigInt(await conn.getBalance(funder.publicKey, 'confirmed'));
+	if (held < need) {
+		throw new Error(
+			`funder ${funder.publicKey.toBase58()} holds ${held} lamports but needs ${need}. ` +
+				`Top it up on ${NETWORK} at https://faucet.solana.com and re-run.`,
+		);
+	}
+
+	const tx = new Transaction().add(
+		SystemProgram.transfer({ fromPubkey: funder.publicKey, toPubkey: pubkey, lamports: Number(targetLamports) }),
+	);
+	await sendAndConfirm(conn, tx, [funder], { commitment: 'confirmed', timeoutMs: CONFIRM_TIMEOUT_MS });
+	return {
+		balance: BigInt(await conn.getBalance(pubkey, 'confirmed')),
+		source: `funder ${funder.publicKey.toBase58()}`,
+	};
 }
 
 async function attest(conn, signer, agentAsset, payload) {
@@ -121,8 +168,8 @@ const main = async () => {
 	const escrow = escrowKeypair.publicKey;
 	step('config', true, `network=${NETWORK} escrow=${escrow.toBase58()} (${escrowMode})`);
 
-	await fundWithAirdrops(conn, staker.publicKey, 20_000_000); // stake + fees + headroom
-	step('fund', true, `staker=${staker.publicKey.toBase58()}`);
+	const funded = await fundStaker(conn, staker.publicKey, 20_000_000); // stake + fees + headroom
+	step('fund', true, `staker=${staker.publicKey.toBase58()} via ${funded.source}`);
 
 	const poolLamports = process.env.REPUTATION_MARKET_EPOCH_POOL_LAMPORTS
 		? BigInt(process.env.REPUTATION_MARKET_EPOCH_POOL_LAMPORTS)

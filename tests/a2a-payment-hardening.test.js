@@ -141,6 +141,75 @@ describe('per-counterparty daily ceiling', () => {
 	});
 });
 
+// ── 1b. the policy resolves fail-closed ───────────────────────────────────────
+//
+// The ceilings above are only guarantees if there is no way to call the guard
+// that skips them. There used to be one: with neither `limits` nor `meta`, both
+// shared guards fell back to an empty default policy (every cap null, frozen
+// false), so a caller that forgot to load the agent row spent unbounded and
+// nothing said so. The guard now reads the agent's real policy itself.
+
+const AGENT_ROW = (spendLimits) => [{ user_id: 'owner-1', meta: { spend_limits: spendLimits } }];
+
+describe('spend policy resolution', () => {
+	it('reads the kill switch off the agent row when the caller passes neither limits nor meta', async () => {
+		sqlState.queue.push(AGENT_ROW({ frozen: true }));
+		await expect(
+			enforceSpendLimit({ agentId: 'agent-1', category: 'x402', usdValue: 1, destination: PEER_A }),
+		).rejects.toMatchObject({ code: 'wallet_frozen' });
+	});
+
+	it('reads the per-transaction ceiling off the agent row the same way', async () => {
+		sqlState.queue.push(AGENT_ROW({ per_tx_usd: 1 }));
+		await expect(
+			enforceSpendLimit({ agentId: 'agent-1', category: 'x402', usdValue: 5, destination: PEER_A }),
+		).rejects.toMatchObject({ code: 'per_tx_exceeded' });
+	});
+
+	it('refuses the spend outright when the agent row is gone', async () => {
+		// A deleted agent can hold no policy, so there is nothing to enforce against.
+		// Fail closed: refuse, never fall through to an unrestricted wallet.
+		sqlState.queue.push([]);
+		await expect(
+			enforceSpendLimit({ agentId: 'agent-1', category: 'x402', usdValue: 1, destination: PEER_A }),
+		).rejects.toMatchObject({ code: 'agent_not_found' });
+	});
+
+	it('does not re-read the row when the caller already resolved the limits', async () => {
+		// The safety net must not cost every well-behaved call site an extra query.
+		await expect(
+			enforceSpendLimit({
+				agentId: 'agent-1',
+				limits: normalizeSpendLimits({ per_tx_usd: 10 }),
+				policyRules: null,
+				category: 'x402',
+				usdValue: 1,
+				destination: PEER_A,
+			}),
+		).resolves.toMatchObject({ ok: true });
+		expect(sqlState.calls.some((c) => /FROM agent_identities/.test(c.query))).toBe(false);
+	});
+
+	it('honors an explicitly empty meta as an explicitly empty policy', async () => {
+		// `meta: {}` is a real answer from the caller ("this agent has set nothing"),
+		// not a missing one, so it must not trigger the row read.
+		await expect(
+			enforceSpendLimit({ agentId: 'agent-1', meta: {}, category: 'x402', usdValue: 1000, destination: PEER_A }),
+		).resolves.toMatchObject({ ok: true });
+		expect(sqlState.calls.some((c) => /FROM agent_identities/.test(c.query))).toBe(false);
+	});
+
+	it('halts the atomic reserve on the same row-resolved kill switch', async () => {
+		// Part 2 stubs reserveSpendUsd to steer the handler, so reach past the stub
+		// for the real one: both guards have to resolve the policy the same way.
+		const real = await vi.importActual('../api/_lib/agent-trade-guards.js');
+		sqlState.queue.push(AGENT_ROW({ frozen: true, daily_usd: 1000 }));
+		await expect(
+			real.reserveSpendUsd({ agentId: 'agent-1', category: 'x402', usdValue: 1, destination: PEER_A }),
+		).rejects.toMatchObject({ code: 'wallet_frozen' });
+	});
+});
+
 // ── 2. the a2a-call handler ───────────────────────────────────────────────────
 
 const AGENT_ID = '33333333-3333-4333-8333-333333333333';
