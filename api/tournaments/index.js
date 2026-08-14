@@ -59,6 +59,16 @@ export function publicTournament(row, now = Date.now()) {
 	};
 }
 
+/**
+ * Drop dead rows from the public list. A finished tournament nobody entered has no
+ * result to show. It is a husk, and rendering it makes the Arena look like a
+ * graveyard of empty brackets. Live and upcoming ones stay visible at 0 entrants:
+ * those are still joinable, and hiding them would hide the thing you can act on.
+ */
+export function visibleTournaments(rows) {
+	return rows.filter((r) => r.phase !== 'finished' || Number(r.entrant_count || 0) > 0);
+}
+
 function atomicsToThree(atomics, decimals) {
 	const a = BigInt(atomics);
 	if (a === 0n) return 0;
@@ -104,10 +114,11 @@ export default wrap(async (req, res) => {
 		const phase = PHASES.has(params.get('phase')) ? params.get('phase') : null;
 		const now = Date.now();
 		const rows = await listTournaments({ network, phase, now });
+		const visible = visibleTournaments(rows);
 		return json(
 			res,
 			200,
-			{ tournaments: rows.map((r) => publicTournament(r, now)), t: now },
+			{ tournaments: visible.map((r) => publicTournament(r, now)), t: now },
 			{ 'cache-control': 'public, max-age=10, s-maxage=20' },
 		);
 	}
