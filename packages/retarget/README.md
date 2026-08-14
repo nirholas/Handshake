@@ -1,10 +1,10 @@
 # @three-ws/retarget
 
-> **Retarget animations onto any humanoid GLB.** One package that maps any rig's bone names onto a canonical skeleton, retargets clips onto it with rest-pose and hip-axis correction, and drives them with a crossfading runtime — so no humanoid ever freezes in a T-pose.
+> **Retarget animations onto any humanoid GLB.** One package that maps any rig's bone names onto a canonical skeleton, retargets clips onto it with rest-pose and hip-axis correction, and drives them with a crossfading runtime, so no humanoid ever freezes in a T-pose.
 
-This is the animation engine behind every avatar on [three.ws](https://three.ws) — the same code that lets [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk), [`@three-ws/tour`](https://www.npmjs.com/package/@three-ws/tour), and the platform's viewers animate a GLB from **any** source without a curated rig allowlist. Extracted here so you can use it with plain Three.js.
+This is the animation engine behind every avatar on [three.ws](https://three.ws): the same code that lets [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk), [`@three-ws/tour`](https://www.npmjs.com/package/@three-ws/tour), and the platform's viewers animate a GLB from **any** source without a curated rig allowlist. Extracted here so you can use it with plain Three.js.
 
-**Rig conventions it understands out of the box:** Mixamo (`mixamorig:LeftArm`), Avaturn / Wolf3D, VRM 0.x / VRoid (`J_Bip_L_UpperArm`), VRM 1.0, Daz/Genesis, MakeHuman, Unreal mannequin, HumanIK/Maya, Blender `.L`/`.R`, bare `shoulderL`-style names, and casing/separator variants of all of them. A rig that genuinely isn't a skinned humanoid is detected and refused cleanly — never half-animated.
+**Rig conventions it understands out of the box:** Mixamo (`mixamorig:LeftArm`), Avaturn / Wolf3D, VRM 0.x / VRoid (`J_Bip_L_UpperArm`), VRM 1.0, Daz/Genesis, MakeHuman, Unreal mannequin, HumanIK/Maya, Blender `.L`/`.R`, bare `shoulderL`-style names, and casing/separator variants of all of them. A rig that genuinely isn't a skinned humanoid is detected and refused cleanly, never half-animated.
 
 ---
 
@@ -16,7 +16,7 @@ npm install @three-ws/retarget three
 
 `three` is a peer dependency (>= 0.150).
 
-## Quick start — play a clip on a rig it was never made for
+## Quick start: play a clip on a rig it was never made for
 
 ```js
 import { AnimationMixer } from 'three';
@@ -72,7 +72,7 @@ if (manager.supportsCanonicalClips()) {
 manager.update(deltaSeconds);
 ```
 
-The clip URLs above are real — three.ws serves its shared clip library with open CORS, so the snippet runs as-is. Ship your own clips in production if you need guaranteed availability.
+The clip URLs above are real: three.ws serves its shared clip library with open CORS, so the snippet runs as-is. Ship your own clips in production if you need guaranteed availability.
 
 ## API surface
 
@@ -83,7 +83,7 @@ The clip URLs above are real — three.ws serves its shared clip library with op
 | `canonicalizeBoneName(name)` | One bone name → canonical name (or passthrough) |
 | `canonicalizeJointNodes(json)` | Rename joints across a parsed glTF JSON tree |
 | `canonicalizeArmatureOrientation(json)` | Normalize armature up-axis quirks |
-| `canonicalizeGLBBones(arrayBuffer)` | The whole pipeline on a GLB binary — byte-exact when nothing needs changing |
+| `canonicalizeGLBBones(arrayBuffer)` | The whole pipeline on a GLB binary, byte-exact when nothing needs changing |
 
 **Retarget** (`animation-retarget`):
 | Export | What it does |
@@ -101,19 +101,19 @@ The clip URLs above are real — three.ws serves its shared clip library with op
 | `AnimationManager` | attach/detach, `setAnimationDefs`, `loadAll`, `crossfadeTo`, overlays, `supportsCanonicalClips()`, fallen-pose guards, `update(dt)` |
 | `measureHipsTiltDeg(clip, model, map)` | Diagnostic: how far a retargeted clip tilts the hips |
 
-**Reference data:** `CANONICAL_REST`, `CANONICAL_REST_WORLD` — the canonical rig's rest quaternions the corrections are computed against.
+**Reference data:** `CANONICAL_REST` and `CANONICAL_REST_WORLD` hold the canonical rig's rest quaternions the corrections are computed against.
 
 ## How it works
 
 Retargeting quality comes from doing the correction in world space: for each bone the engine computes `q' = L · q · R`, where `L`/`R` are derived from the difference between the clip's canonical rest pose and the target rig's actual rest pose (so an A-pose character plays T-pose clips without shoulder skew), plus a hip-space fix for rigs whose hips aren't Y-up. Coverage below 50% of the canonical bones aborts the retarget instead of producing a half-puppet.
 
-Hit a skeleton convention it doesn't know? Add the bone-name mapping to the canonicalizer and it works everywhere at once — that's the design: **map names once, never maintain a rig allowlist.**
+Hit a skeleton convention it doesn't know? Add the bone-name mapping to the canonicalizer and it works everywhere at once; that's the design: **map names once, never maintain a rig allowlist.**
 
 ## Related packages
 
-- [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk) — a walking avatar companion for any site, built on this engine
-- [`@three-ws/tour`](https://www.npmjs.com/package/@three-ws/tour) — guided site tours with a walking narrator
-- [`@three-ws/page-agent`](https://www.npmjs.com/package/@three-ws/page-agent) — a docked, talking page narrator
+- [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk): a walking avatar companion for any site, built on this engine
+- [`@three-ws/tour`](https://www.npmjs.com/package/@three-ws/tour): guided site tours with a walking narrator
+- [`@three-ws/page-agent`](https://www.npmjs.com/package/@three-ws/page-agent): a docked, talking page narrator
 
 ## License
 

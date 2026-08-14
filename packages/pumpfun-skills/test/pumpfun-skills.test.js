@@ -8,13 +8,13 @@ import {
 } from '../src/index.js';
 
 // $THREE is the only coin. Tests use the real $THREE mint or a clearly-synthetic
-// placeholder — never a third-party mint.
+// placeholder, never a third-party mint.
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const SYNTH_MINT = 'THREEsynthetic1111111111111111111111111111';
 const WALLET = 'YourWa11et1111111111111111111111111111111111';
 
 // A scripted fetch double: each call shifts the next queued response and records
-// the request. No network, no real endpoints — we assert on request shaping and
+// the request. No network, no real endpoints, we assert on request shaping and
 // response parsing, which is all the SDK is responsible for.
 function stubFetch(responses) {
 	const calls = [];

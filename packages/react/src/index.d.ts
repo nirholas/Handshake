@@ -19,7 +19,7 @@ export interface Agent3DProps {
   ground?: boolean;
   /** Allow orbit drag on desktop. Defaults to `true`. */
   orbit?: boolean;
-  /** Walk-speed multiplier (0.3–3). Applied live once the scene is ready. */
+  /** Walk-speed multiplier (0.3-3). Applied live once the scene is ready. */
   speed?: number;
   /** Container width. Number is treated as px. Defaults to `"100%"`. */
   width?: string | number;
@@ -49,7 +49,7 @@ export interface Agent3DHandle {
   setMotion: (motion: 'idle' | 'walk' | 'run') => void;
   /** Switch the environment preset live. */
   setEnvironment: (env: string) => void;
-  /** Set the walk-speed multiplier live (0.3–3). */
+  /** Set the walk-speed multiplier live (0.3-3). */
   setSpeed: (value: number) => void;
   /** Show a speech bubble above the avatar. */
   narrate: (text: string) => void;
@@ -63,5 +63,5 @@ export declare const Agent3D: React.ForwardRefExoticComponent<
   Agent3DProps & React.RefAttributes<Agent3DHandle>
 >;
 
-/** Alias for {@link Agent3D} — matches existing three.ws embed snippets. */
+/** Alias for {@link Agent3D}, matches existing three.ws embed snippets. */
 export declare const WalkEmbed: typeof Agent3D;

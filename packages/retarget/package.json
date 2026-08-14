@@ -1,7 +1,7 @@
 {
 	"name": "@three-ws/retarget",
 	"version": "0.1.1",
-	"description": "Retarget animations onto any humanoid GLB. Canonicalizes bone names from Mixamo, Avaturn, VRM/VRoid, Daz/Genesis, MakeHuman, Unreal, and Blender rigs onto one canonical skeleton, retargets clips with rest-pose and hip-axis correction, and drives them with a crossfading runtime — so no rig ever freezes in a T-pose.",
+	"description": "Retarget animations onto any humanoid GLB. Canonicalizes bone names from Mixamo, Avaturn, VRM/VRoid, Daz/Genesis, MakeHuman, Unreal, and Blender rigs onto one canonical skeleton, retargets clips with rest-pose and hip-axis correction, and drives them with a crossfading runtime, so no rig ever freezes in a T-pose.",
 	"keywords": [
 		"three.js",
 		"animation",

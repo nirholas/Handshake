@@ -20,7 +20,7 @@ export class ThreeWsError extends Error {
 
 /**
  * Thrown on HTTP 402. The endpoint wants payment before it will do the work.
- * `accepts` is the x402 challenge (asset/amount/network/payTo) when present —
+ * `accepts` is the x402 challenge (asset/amount/network/payTo) when present;
  * pass a payment-aware `fetch` (e.g. @three-ws/x402-fetch) to settle it
  * automatically, or read `accepts` and pay it yourself.
  */
@@ -63,7 +63,7 @@ export function createHttp(opts = {}) {
 	const baseUrl = resolveBaseUrl(opts.baseUrl);
 	const fetchImpl = opts.fetch || (typeof globalThis !== 'undefined' ? globalThis.fetch : undefined);
 	if (typeof fetchImpl !== 'function') {
-		throw new ThreeWsError('No fetch implementation available — run on Node 18+ or pass { fetch }.', { code: 'no_fetch' });
+		throw new ThreeWsError('No fetch implementation available: run on Node 18+ or pass { fetch }.', { code: 'no_fetch' });
 	}
 	const baseHeaders = { accept: 'application/json', ...(opts.headers || {}) };
 	if (opts.apiKey) baseHeaders.authorization = `Bearer ${opts.apiKey}`;

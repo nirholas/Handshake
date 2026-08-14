@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createReputation, SUPPORTED_CHAINS, ThreeWsError } from '../src/index.js';
 
 // A scripted fetch double: each call shifts the next queued response and records
-// the request. No network, no real endpoints — we assert on request shaping and
+// the request. No network, no real endpoints, we assert on request shaping and
 // response parsing, which is all the SDK is responsible for.
 function stubFetch(responses) {
 	const calls = [];
@@ -23,7 +23,7 @@ function stubFetch(responses) {
 	return { fetch, calls };
 }
 
-// A synthetic Solana asset address (base58) — never a real third-party mint.
+// A synthetic Solana asset address (base58): never a real third-party mint.
 const SYNTH_ASSET = 'THREEsynthetic1111111111111111111111111111';
 const AGENT_UUID = '7b9a4f30-2d11-4e2d-9d12-1cdb1f6a3a55';
 

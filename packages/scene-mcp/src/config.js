@@ -1,7 +1,7 @@
 // Centralized env + HTTP base for the scene MCP.
 //
 // This server is a thin, read-mostly wrapper over the PUBLIC three.ws HTTP
-// API (/api/diorama). It signs nothing and holds no secret — the only knobs
+// API (/api/diorama). It signs nothing and holds no secret; the only knobs
 // are which deployment to talk to and how long to wait. Nothing about how a
 // world is composed is baked in here; it all comes from the live endpoint.
 

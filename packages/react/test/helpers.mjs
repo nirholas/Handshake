@@ -1,7 +1,7 @@
 // Shared helpers for the @three-ws/react test suite.
 //
 // Tests run against the built bundles in dist/ (the artifact that actually
-// ships) — `npm test` triggers a fresh build via the pretest hook. Rendering
+// ships): `npm test` triggers a fresh build via the pretest hook. Rendering
 // is done with react-dom/server so no DOM shim is needed: everything the
 // component puts in markup (iframe src, wrapper styles, pass-through props)
 // is asserted on the serialized HTML string.

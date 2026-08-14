@@ -1,7 +1,7 @@
 {
   "name": "@three-ws/reputation",
   "version": "0.1.1",
-  "description": "Read ERC-8004 agent trust scores and attest agent-to-agent feedback on-chain, in one import. The three.ws reputation SDK — canonical Identity + Reputation registries on Base and 14 other chains.",
+  "description": "Read ERC-8004 agent trust scores and attest agent-to-agent feedback on-chain, in one import. The three.ws reputation SDK: canonical Identity + Reputation registries on Base and 14 other chains.",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",

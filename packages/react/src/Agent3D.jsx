@@ -48,7 +48,7 @@ function buildEmbedSrc({
 }
 
 /**
- * <Agent3D> — embeds a three.ws walking 3D AI agent via a sandboxed iframe.
+ * <Agent3D> embeds a three.ws walking 3D AI agent via a sandboxed iframe.
  *
  * The 3D runtime (Three.js / WebGL) lives inside three.ws; this component is a
  * thin, dependency-free wrapper around the embed player and its postMessage
@@ -95,7 +95,7 @@ const Agent3D = forwardRef(function Agent3D(
     [baseUrl, agentId, avatarId, controls, background, environment, autoplay, ground, orbit],
   );
 
-  // The only origin we trust for inbound messages — derived from the embed URL.
+  // The only origin we trust for inbound messages, derived from the embed URL.
   const targetOrigin = useMemo(() => new URL(src).origin, [src]);
 
   const post = useCallback(

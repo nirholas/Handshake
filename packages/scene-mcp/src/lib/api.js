@@ -1,4 +1,4 @@
-// Real HTTP access to the three.ws API. No mocks, no fixtures — every call is
+// Real HTTP access to the three.ws API. No mocks, no fixtures: every call is
 // a live request to THREE_WS_BASE. Errors are normalized into a single shape so
 // tool handlers can surface a clean message + status to the MCP client.
 
@@ -10,7 +10,7 @@ import { THREE_WS_BASE, HTTP_TIMEOUT_MS, USER_AGENT } from '../config.js';
  * @param {string} path  Endpoint path beginning with `/` (e.g. `/api/diorama`).
  * @param {{ method?: string, query?: Record<string, unknown>, body?: unknown, timeoutMs?: number }} [opts]
  *   `timeoutMs` overrides the default per-call timeout (THREE_WS_TIMEOUT_MS) for
- *   calls known to run long server-side work — e.g. a full compose+forge+export
+ *   calls known to run long server-side work, e.g. a full compose+forge+export
  *   build, which chains several real generations. Every other call is unaffected.
  * @returns {Promise<any>} Parsed JSON response.
  * @throws {Error} with `.code` ('timeout' | 'network_error' | 'upstream_error'),

@@ -1,4 +1,4 @@
-// `get_scene` — fetch a saved diorama by id. Read-only.
+// `get_scene`: fetch a saved diorama by id. Read-only.
 //
 // Wraps GET /api/diorama?id=<uuid>.
 

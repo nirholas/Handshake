@@ -1,11 +1,11 @@
-// @three-ws/retarget — published-surface smoke tests.
+// @three-ws/retarget: published-surface smoke tests.
 // =====================================================
 // The engine's deep behavioral coverage lives in the monorepo suite
 // (tests/glb-canonicalize.test.js, tests/animation-retarget.test.js,
-// tests/animation-upright-invariant.test.js — ~2.8k lines, run by root
+// tests/animation-upright-invariant.test.js, ~2.8k lines, run by root
 // vitest). This file guards the PACKAGE: the bundled dist exposes the full
 // export surface and the canonicalizer actually resolves real-world rig
-// names. `node --test`, runs against dist/ (build first — prepublishOnly does).
+// names. `node --test`, runs against dist/ (build first; prepublishOnly does).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

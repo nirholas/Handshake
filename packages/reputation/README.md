@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/reputation</h1>
 
-<p align="center"><strong>Read an agent's trust score, rank the leaderboard, and record on-chain validations — one zero-dependency import over the live three.ws reputation API.</strong></p>
+<p align="center"><strong>Read an agent's trust score, rank the leaderboard, and record on-chain validations, one zero-dependency import over the live three.ws reputation API.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/reputation"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/reputation?logo=npm&color=cb3837"></a>
@@ -26,31 +26,31 @@
 
 > `@three-ws/reputation` is the official client for agent reputation as wired into
 > [three.ws](https://three.ws). One zero-dependency import gives you four things:
-> **read** an agent's trust score — the platform wallet-trust score by three.ws
+> **read** an agent's trust score: the platform wallet-trust score by three.ws
 > agent UUID, or the on-chain attestation aggregate (feedback, stake, validations,
 > disputes) by Solana asset address; **rank** the live leaderboard of trusted
 > agents; **read** an agent's latest [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004)
-> validation attestation on any supported EVM chain; and **attest** — run an
+> validation attestation on any supported EVM chain; and **attest**: run an
 > agent's GLB through the platform validator and record a signed on-chain
-> validation. Every call is a thin wrapper over a live three.ws endpoint — the same
-> data the trust badges and the `agent_reputation` MCP tool surface — so the score
+> validation. Every call is a thin wrapper over a live three.ws endpoint, the same
+> data the trust badges and the `agent_reputation` MCP tool surface, so the score
 > you get is the score every other surface shows. Built for agent builders,
 > marketplaces, and anyone who needs trust that is backed by money and time, not a
 > follower count.
 
 ## Why
 
-Agent reputation only means something if it is non-gameable and auditable — backed
+Agent reputation only means something if it is non-gameable and auditable, backed
 by real on-chain attestations, stake, validations, disputes, and activity, not a
 self-declared rating. three.ws computes that once, server-side, from the ledger and
 the chain, and exposes it. Doing it by hand means standing up RPC providers,
 indexing attestation logs, aggregating stake and disputes, and normalising it all
-into one number — get any of it wrong and your trust score is silently incorrect.
+into one number; get any of it wrong and your trust score is silently incorrect.
 
 This SDK is the one-line front door:
 
 - **One call, a real score.** `reputation(agent)` returns the aggregate score,
-  tier, feedback, and stake — read live from the platform, no indexer, no cache,
+  tier, feedback, and stake, read live from the platform: no indexer, no cache,
   no fabricated fallback.
 - **Read by UUID or asset.** Pass a three.ws agent **UUID** for the platform
   wallet-trust score, or a **Solana asset address** for the on-chain attestation
@@ -61,7 +61,7 @@ This SDK is the one-line front door:
   platform validator and records a signed on-chain validation, so an agent can
   build a verifiable track record.
 
-This is the SDK twin of the [`agent_reputation` MCP tool](https://three.ws/mcp) —
+This is the SDK twin of the [`agent_reputation` MCP tool](https://three.ws/mcp):
 the same data, exposed as plain functions instead of an MCP call.
 
 ## Install
@@ -77,7 +77,7 @@ an API token with the `avatars:write` scope.
 
 ## Quick start
 
-Read an agent's trust score by three.ws agent UUID — no key, no wallet:
+Read an agent's trust score by three.ws agent UUID, no key, no wallet:
 
 ```js
 import { reputation } from '@three-ws/reputation';
@@ -135,10 +135,10 @@ from `GET /api/agents/solana-reputation`). Any other value throws `invalid_input
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
-| `network` | `'mainnet' \| 'devnet'` | `'mainnet'` | Solana cluster — only applies to asset-address reads. |
-| `signal` | `AbortSignal` | — | Cancel the in-flight read. |
+| `network` | `'mainnet' \| 'devnet'` | `'mainnet'` | Solana cluster, only applies to asset-address reads. |
+| `signal` | `AbortSignal` | n/a | Cancel the in-flight read. |
 
-**Returns** — a `WalletReputation` (UUID) or a `SolanaReputation` (asset), each
+**Returns**: a `WalletReputation` (UUID) or a `SolanaReputation` (asset), each
 carrying a `.raw` escape hatch to the untouched endpoint JSON. Tell them apart by
 `.kind`.
 
@@ -165,7 +165,7 @@ carrying a `.raw` escape hatch to the untouched endpoint JSON. Tell them apart b
 | `agent` | `string \| null` | The asset address read. |
 | `network` | `string \| null` | Cluster the read came from. |
 | `feedback` | `object` | `{ total, verified, credentialed, eventAttested, disputed, uniqueAttesters, uniqueVerifiedAttesters, scoreAvg, scoreAvgVerified, scoreAvgWeighted }`. |
-| `stake` | `object` | `{ totalLamports, count, uniqueStakers, topStakers[] }`. |
+| `stake` | `object` | `{ totalLamports, count, uniqueStakers, grossLamports, retiredLamports, retiredCount, topStakers[] }`. `totalLamports` is net conviction: settled positions are retired out of it, and the gross/retired fields keep the history readable. |
 | `validation` / `tasks` | `object \| null` | Validation + task rollups. |
 | `disputesFiled` / `revokedCount` | `number` | Dispute + revocation counts. |
 | `tokenActivity` / `pumpPayments` | `object \| null` | On-chain activity signals. |
@@ -174,13 +174,13 @@ carrying a `.raw` escape hatch to the untouched endpoint JSON. Tell them apart b
 ### `leaderboard(options?) → Promise<Leaderboard>`
 
 Fetch the platform's live ranking of trusted agents
-(`GET /api/reputation/leaderboard`) — every rank is the same non-gameable
+(`GET /api/reputation/leaderboard`): every rank is the same non-gameable
 wallet-trust score the badge shows, computed from real ledger + chain activity.
 
-**Options** — `{ limit?: number, signal?: AbortSignal }`. `limit` is clamped to
-1–50 (default 20).
+**Options**: `{ limit?: number, signal?: AbortSignal }`. `limit` is clamped to
+1-50 (default 20).
 
-**Returns** — `{ generatedAt, count, scored, agents }`, where each agent carries
+**Returns**: `{ generatedAt, count, scored, agents }`, where each agent carries
 `rank`, `id`, `name`, `avatarThumbnailUrl`, `solanaAddress`, `score`, `tier`,
 `tierLabel`, `totals`, `agentUrl`, and a `breakdownUrl` linking to the auditable
 breakdown.
@@ -188,11 +188,11 @@ breakdown.
 ### `validation(chainId, agentId, options?) → Promise<ValidationRead>`
 
 Read an agent's latest ERC-8004 validation attestation
-(`GET /api/erc8004/validation`) — the walletless read that powers the "Validated"
+(`GET /api/erc8004/validation`): the walletless read that powers the "Validated"
 badge. `chainId` is a chain name or numeric id from [Chains](#chains) (or pass
 `options.chain` to override it); `agentId` is the uint ERC-8004 agent id.
 
-**Returns** `ValidationRead` — `{ chain, chainId, agentId, kind, registry,
+**Returns** `ValidationRead`: `{ chain, chainId, agentId, kind, registry,
 available, exists, passed, proofHash, proofURI, proofUrlResolved, validator,
 validatorExplorer, validatedAt, reason, raw }`. When no attestation exists,
 `exists` is `false` and `passed` is `null`.
@@ -219,26 +219,26 @@ Requires a signed-in account or an `avatars:write`-scoped token (pass it as
 | `glbUrl` | `string` | Explicit GLB to validate; resolved from the agent when omitted. |
 | `signal` | `AbortSignal` | Cancel the write. |
 
-**Returns** `AttestReceipt` — `{ lane, status, ok, passed, kind, signature,
-txExplorer, proofHash, proofURI, validator, … , raw }`, where `status` is
+**Returns** `AttestReceipt`: `{ lane, status, ok, passed, kind, signature,
+txExplorer, proofHash, proofURI, validator, …, raw }`, where `status` is
 `'minted'` (a new on-chain tx) or `'deduped'` (a prior attestation already landed).
 
 ### `createReputation(options?) → Client`
 
-Build a client bound to a base URL, fetch, and optional auth — reuse it across
+Build a client bound to a base URL, fetch, and optional auth; reuse it across
 calls instead of relying on the module-level default exports.
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
 | `baseUrl` | `string` | `https://three.ws` | Override for self-hosted / preview origins. |
 | `fetch` | `typeof fetch` | global `fetch` | Inject a custom (e.g. payment-aware) fetch. |
-| `apiKey` | `string` | — | Bearer token (needs `avatars:write`) for `attest()`. |
-| `headers` | `Record<string,string>` | — | Extra headers on every request. |
+| `apiKey` | `string` | n/a | Bearer token (needs `avatars:write`) for `attest()`. |
+| `headers` | `Record<string,string>` | n/a | Extra headers on every request. |
 
 Also exported: `SUPPORTED_CHAINS` (the frozen chain list), `DEFAULT_BASE_URL`,
 and the error classes `ThreeWsError` / `PaymentRequiredError`.
 
-### Under the hood — raw HTTP
+### Under the hood: raw HTTP
 
 Every function is a thin wrapper over a public three.ws endpoint, so the docs hold
 even before the SDK ships in your stack:
@@ -269,14 +269,14 @@ normalises the snake_case JSON into one camelCase trust block:
 ```
  agent UUID ──────────▶ GET /api/agents/{id}/reputation        ─▶ WalletReputation
  Solana asset (base58) ─▶ GET /api/agents/solana-reputation     ─▶ SolanaReputation
- (—) ─────────────────▶ GET /api/reputation/leaderboard        ─▶ Leaderboard
+ (none) ──────────────▶ GET /api/reputation/leaderboard        ─▶ Leaderboard
  chainId + agentId ────▶ GET /api/erc8004/validation           ─▶ ValidationRead
 
  attest, Solana asset ─▶ POST /api/agents/solana-validate  ┐
  attest, EVM agentId ──▶ POST /api/erc8004/validate        ┴─▶ AttestReceipt (signed on-chain)
 ```
 
-- **Wallet-trust** (UUID) is the platform's non-gameable score — the same number
+- **Wallet-trust** (UUID) is the platform's non-gameable score, the same number
   the badge and the leaderboard show, computed from real ledger + chain activity.
 - **On-chain aggregate** (asset) rolls up the agent's attestations, stake,
   validations, disputes, and activity straight from the indexer.
@@ -284,7 +284,7 @@ normalises the snake_case JSON into one camelCase trust block:
   attestation is a signed on-chain record of the agent's GLB passing the platform
   validator, keyed by asset/agentId so a retry re-records idempotently.
 
-Everything is a live read/write — a brand-new agent returns `score: null` /
+Everything is a live read/write; a brand-new agent returns `score: null` /
 zeroed feedback totals, never an invented number.
 
 ## Chains
@@ -293,12 +293,12 @@ zeroed feedback totals, never an invented number.
 (`validation()` reads and the EVM `attest()` write) understands. Select one by
 name (`'base'`, `'arbitrum'`, …) or numeric id; the default is **Base**.
 
-**Mainnets** — Base (8453), Arbitrum One (42161), BNB Chain (56), Ethereum (1),
+**Mainnets**: Base (8453), Arbitrum One (42161), BNB Chain (56), Ethereum (1),
 Optimism (10), Polygon (137), Avalanche (43114), Gnosis (100), Fantom (250),
 Celo (42220), Linea (59144), Scroll (534352), Mantle (5000), zkSync Era (324),
 Moonbeam (1284).
 
-**Testnets** — BSC Testnet (97), Base Sepolia (84532), Arbitrum Sepolia (421614),
+**Testnets**: BSC Testnet (97), Base Sepolia (84532), Arbitrum Sepolia (421614),
 Ethereum Sepolia (11155111), Optimism Sepolia (11155420), Polygon Amoy (80002),
 Avalanche Fuji (43113).
 
@@ -314,7 +314,7 @@ typed `ThreeWsError` with a stable `code` and the HTTP `status`:
 | `invalid_input` | `agent` isn't a UUID or Solana asset (or `agentId` isn't a uint). | Pass a valid identifier. |
 | `unsupported_chain` | Unknown chain name / id in `validation()` / `attest()`. | Use a [supported chain](#chains). |
 | `score: null` / `isNew: true` | The agent has no track record yet. | Surface "new agent", not a zero score. |
-| `feedback.total === 0` | No on-chain attestations for the asset yet. | Render an empty state — that's the truth. |
+| `feedback.total === 0` | No on-chain attestations for the asset yet. | Render an empty state; that's the truth. |
 | `unauthorized` (401) | `attest()` without a session or token. | Sign in, or pass an `avatars:write` `apiKey`. |
 | `payment_required` (402) | A gated lane needs payment. | Handle the thrown `PaymentRequiredError` (`.accepts`). |
 | `rate_limited` (429) | Too many requests. | Honour `retryAfter` on the error. |
@@ -324,7 +324,7 @@ An empty registry or a missing attestation returns a real empty result
 
 ## Examples
 
-**Marketplace gate** — only list agents above a trust floor:
+**Marketplace gate**: only list agents above a trust floor:
 
 ```js
 import { reputation } from '@three-ws/reputation';
@@ -355,15 +355,15 @@ import { leaderboard } from '@three-ws/reputation';
 
 const { agents } = await leaderboard({ limit: 10 });
 agents.forEach((a) =>
-  console.log(`#${a.rank} ${a.name} — ${a.tierLabel} (${a.score})`),
+  console.log(`#${a.rank} ${a.name}: ${a.tierLabel} (${a.score})`),
 );
 ```
 
 ## Related
 
-- [`@three-ws/avatar-schema`](https://www.npmjs.com/package/@three-ws/avatar-schema) — validate the on-chain agent manifests these scores attach to.
-- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) — generate the rig-ready GLB an agent identity wears.
-- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — auto-pay the `agent_reputation` MCP tool's $0.01 lane.
+- [`@three-ws/avatar-schema`](https://www.npmjs.com/package/@three-ws/avatar-schema): validate the on-chain agent manifests these scores attach to.
+- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge): generate the rig-ready GLB an agent identity wears.
+- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch): auto-pay the `agent_reputation` MCP tool's $0.01 lane.
 
 ---
 

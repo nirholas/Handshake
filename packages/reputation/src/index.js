@@ -1,4 +1,4 @@
-// @three-ws/reputation — read ERC-8004 agent trust scores and attest
+// @three-ws/reputation: read ERC-8004 agent trust scores and attest
 // agent-to-agent feedback on-chain, in one import. Zero runtime deps: every
 // on-chain read/write is done server-side by the three.ws platform endpoints
 // this client wraps (the same registries the `agent_reputation` MCP tool reads),
@@ -129,7 +129,7 @@ export function createReputation(options = {}) {
 
 	/**
 	 * Read the latest on-chain ERC-8004 validation attestation for an agent
-	 * (GET /api/erc8004/validation) — the walletless identity-bearing read that
+	 * (GET /api/erc8004/validation): the walletless identity-bearing read that
 	 * powers the "Validated" badge. `chain` selects the network.
 	 */
 	async function validation(chainId, agentId, opts = {}) {

@@ -2,7 +2,7 @@
 //
 // Importing src/index.js is side-effect-free: the stdio transport only
 // connects when the file is the process entry point, and buildServer() needs
-// no key or signer. These tests run offline — they never touch the network.
+// no key or signer. These tests run offline; they never touch the network.
 //
 // Run: node --test packages/scene-mcp/test/registration.test.mjs
 
@@ -41,7 +41,7 @@ test('non-read-only tools set destructiveHint explicitly (spec default is TRUE w
 			assert.equal(
 				typeof tool.annotations.destructiveHint,
 				'boolean',
-				`${tool.name} is not read-only — destructiveHint must be explicit`,
+				`${tool.name} is not read-only; destructiveHint must be explicit`,
 			);
 		}
 	}

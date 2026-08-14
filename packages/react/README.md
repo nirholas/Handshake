@@ -1,7 +1,7 @@
 # @three-ws/react
 
 React components for embedding [three.ws](https://three.ws) 3D AI agents. Drop a
-walking 3D avatar into any React app in two lines — no Three.js, no WebGL setup,
+walking 3D avatar into any React app in two lines: no Three.js, no WebGL setup,
 no build config. The 3D runtime lives inside three.ws and renders through a
 sandboxed iframe.
 
@@ -53,7 +53,7 @@ export function Avatar() {
 // Later, drive the live embed:
 ref.current.setMotion('walk');     // 'idle' | 'walk' | 'run'
 ref.current.setAvatar('av-1234');  // swap avatar live
-ref.current.setSpeed(1.5);         // walk-speed multiplier (0.3–3)
+ref.current.setSpeed(1.5);         // walk-speed multiplier (0.3-3)
 ref.current.narrate('Hi there!');  // speech bubble over the avatar
 ref.current.setEnvironment('studio');
 ref.current.resetPose();
@@ -63,8 +63,8 @@ ref.current.resetPose();
 
 | Prop          | Type                                  | Default        | Description                                            |
 |---------------|---------------------------------------|----------------|--------------------------------------------------------|
-| `agentId`     | `string` (required)                   | —              | The three.ws agent ID — its avatar is rendered.        |
-| `avatarId`    | `string`                              | —              | Override the agent's default avatar.                   |
+| `agentId`     | `string` (required)                   | n/a            | The three.ws agent ID whose avatar is rendered.        |
+| `avatarId`    | `string`                              | n/a            | Override the agent's default avatar.                   |
 | `baseUrl`     | `string`                              | `"https://three.ws"` | Embed origin (self-hosted / staging players).    |
 | `controls`    | `"joystick" \| "keyboard" \| "none"`  | `"joystick"`   | Movement controls.                                     |
 | `background`  | `string`                              | transparent    | `"transparent"` or a hex color like `"#1b1b1b"`.       |
@@ -72,13 +72,13 @@ ref.current.resetPose();
 | `autoplay`    | `boolean`                             | `false`        | Autoplay an idle walk loop.                            |
 | `ground`      | `boolean`                             | `true`         | Show the shadow ground disc.                           |
 | `orbit`       | `boolean`                             | `true`         | Allow orbit drag on desktop.                           |
-| `speed`       | `number`                              | `1`            | Walk-speed multiplier (0.3–3), applied once ready.     |
+| `speed`       | `number`                              | `1`            | Walk-speed multiplier (0.3-3), applied once ready.     |
 | `width`       | `string \| number`                    | `"100%"`       | Container width (number → px).                         |
 | `height`      | `string \| number`                    | `"600px"`      | Container height (number → px).                        |
-| `onLoad`      | `() => void`                          | —              | Fires when the 3D scene is ready.                      |
-| `onError`     | `(err: Error) => void`                | —              | Fires on load failure.                                 |
-| `className`   | `string`                              | —              | CSS class on the wrapper `<div>`.                      |
-| `style`       | `React.CSSProperties`                 | —              | Inline styles on the wrapper `<div>`.                  |
+| `onLoad`      | `() => void`                          | n/a            | Fires when the 3D scene is ready.                      |
+| `onError`     | `(err: Error) => void`                | n/a            | Fires on load failure.                                 |
+| `className`   | `string`                              | n/a            | CSS class on the wrapper `<div>`.                      |
+| `style`       | `React.CSSProperties`                 | n/a            | Inline styles on the wrapper `<div>`.                  |
 | `title`       | `string`                              | three.ws title | Accessible title for the underlying iframe.            |
 
 ### Imperative handle (via `ref`)
@@ -89,7 +89,7 @@ ref.current.resetPose();
 | `setAvatar(id)`           | Swap the rendered avatar live.               |
 | `setMotion(motion)`       | `"idle" \| "walk" \| "run"`.                 |
 | `setEnvironment(env)`     | Switch the environment preset live.          |
-| `setSpeed(value)`         | Set the walk-speed multiplier (0.3–3).       |
+| `setSpeed(value)`         | Set the walk-speed multiplier (0.3-3).       |
 | `narrate(text)`           | Show a speech bubble above the avatar.       |
 | `resetPose()`             | Recenter the avatar on the ground.           |
 | `iframe`                  | The underlying `HTMLIFrameElement` (or null).|
@@ -97,7 +97,7 @@ ref.current.resetPose();
 ## Security
 
 Inbound `postMessage` events are accepted **only** from the three.ws origin and
-**only** from this component's own iframe — messages from any other origin or
+**only** from this component's own iframe; messages from any other origin or
 window are ignored. This is enforced regardless of which `onLoad`/`onError`
 handlers you pass.
 
@@ -108,7 +108,7 @@ No `@types` install needed.
 
 ## Requirements
 
-`react` and `react-dom` `>= 17` are peer dependencies — the package never bundles
+`react` and `react-dom` `>= 17` are peer dependencies; the package never bundles
 its own React.
 
 ## Links

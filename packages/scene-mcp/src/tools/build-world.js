@@ -1,4 +1,4 @@
-// `build_world` — one sentence → a fully forged, exported 3D world. No browser.
+// `build_world`: one sentence → a fully forged, exported 3D world. No browser.
 //
 // Wraps POST /api/diorama {action:'build'}. Runs the ENTIRE diorama pipeline
 // server-side in one call: compose the plan (free-first LLM chain), forge
@@ -8,7 +8,7 @@
 // agents/MCP clients that have no browser to drive that flow.
 //
 // Real generation work (an LLM completion plus N free-lane 3D forges), so this
-// can legitimately take minutes for a full object set — the tool requests a
+// can legitimately take minutes for a full object set, so the tool requests a
 // long timeout accordingly. A forge failure on some objects never fails the
 // whole call: the returned diorama reflects exactly what forged, and `skipped`
 // names the rest, so you always get the best real world the platform could
@@ -26,7 +26,7 @@ export const def = {
 	title: 'Build a complete 3D world from one sentence (no browser needed)',
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call — it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not.',
+		'One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call; it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not.',
 	inputSchema: {
 		prompt: z
 			.string()

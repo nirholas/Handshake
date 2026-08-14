@@ -1,8 +1,8 @@
-// `compose_scene` — turn one sentence into a placed 3D diorama plan.
+// `compose_scene`: turn one sentence into a placed 3D diorama plan.
 //
 // Wraps POST /api/diorama {action:'compose'}. The platform's free-first LLM
 // chain decomposes the sentence into a mood/palette/ground plus a set of
-// single-object forge prompts with positions — the same plan the three.ws
+// single-object forge prompts with positions, the same plan the three.ws
 // diorama page then forges into meshes. Returns the plan; nothing is persisted.
 
 import { z } from 'zod';
@@ -15,11 +15,11 @@ export const def = {
 	name: 'compose_scene',
 	title: 'Compose a 3D diorama plan from one sentence',
 	// Not a pure read: it drives a server-side LLM completion. It mutates no
-	// state, so it is not destructive — but annotation-aware clients should
+	// state, so it is not destructive, but annotation-aware clients should
 	// still surface it rather than silently auto-running inference.
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2–8 placed objects — each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference.',
+		'Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2-8 placed objects, each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference.',
 	inputSchema: {
 		prompt: z
 			.string()

@@ -94,7 +94,7 @@ export interface SolanaReputation {
 export type ReputationResult = WalletReputation | SolanaReputation;
 
 export interface LeaderboardOptions {
-	/** 1–50, default 20. */
+	/** 1-50, default 20. */
 	limit?: number;
 	signal?: AbortSignal;
 }

@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/pumpfun-skills</h1>
 
-<p align="center"><strong>pump.fun launch + trade as composable agent tools — create a coin, swap, and read creator fees, with a runtime-supplied mint.</strong></p>
+<p align="center"><strong>pump.fun launch + trade as composable agent tools: create a coin, swap, and read creator fees, with a runtime-supplied mint.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/pumpfun-skills"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/pumpfun-skills?logo=npm&color=cb3837"></a>
@@ -24,13 +24,13 @@
 ---
 
 > `@three-ws/pumpfun-skills` is the official client for the three.ws **pump.fun
-> skill set** — the same launch/trade/fee plumbing the three.ws agents use,
+> skill set**: the same launch/trade/fee plumbing the three.ws agents use,
 > exposed as plain functions instead of [Agent Skills](https://agentskills.io)
 > tools. It wraps pump.fun's agent transaction API
 > (`https://fun-block.pump.fun/agents/*`), which builds the unsigned or
 > mint-signed Solana transaction for you, and the public coins read API
 > (`frontend-api-v3.pump.fun/coins-v2`). Every function is **coin-agnostic**:
-> the mint, amounts, and wallet are supplied at call time — nothing is
+> the mint, amounts, and wallet are supplied at call time; nothing is
 > hardcoded. You build, you co-sign, you broadcast. It pairs with
 > [`@three-ws/agent-payments`](https://www.npmjs.com/package/@three-ws/agent-payments)
 > for tokenized-agent invoices and the three.ws launch feed.
@@ -40,11 +40,11 @@
 Launching and trading on pump.fun by hand means juggling two SDKs
 (`@pump-fun/pump-sdk`, `@pump-fun/pump-swap-sdk`), deriving PDAs, detecting
 whether a coin is still on the bonding curve or has graduated to an AMM pool,
-quoting slippage, and assembling a versioned transaction — before you ever ask
+quoting slippage, and assembling a versioned transaction, all before you ever ask
 the user to sign. These skills collapse that into three calls:
 
 - **One call, a ready transaction.** `createCoin({...})` returns a
-  base64 transaction with the mint keypair already signed — you only co-sign
+  base64 transaction with the mint keypair already signed; you only co-sign
   with the wallet and submit.
 - **State-aware swaps.** `swap({...})` auto-detects bonding curve vs. graduated
   AMM and builds the correct route, with slippage and optional Jito MEV
@@ -53,10 +53,10 @@ the user to sign. These skills collapse that into three calls:
   (creator, cashback, or a sharing config), reports vault balances, and
   `collectFees({...})` builds the claim or distribution transaction.
 - **Mint supplied at runtime.** Pass any pump.fun mint you control. There is no
-  coin list, no allowlist — generic plumbing, your inputs.
+  coin list, no allowlist: generic plumbing, your inputs.
 
 This is the SDK twin of the `pumpfun_create_coin`, `pumpfun_swap`, and
-`pumpfun_collect_fees` MCP/skill tools — same endpoints, plain functions.
+`pumpfun_collect_fees` MCP/skill tools: same endpoints, plain functions.
 
 ## Install
 
@@ -67,7 +67,7 @@ npm install @three-ws/pumpfun-skills
 Works in Node 18+ and the browser (uses `fetch`). To sign and broadcast the
 transactions these functions return, add `@solana/web3.js`. The fee-reading
 calls go through pump.fun's read API; the build calls go through pump.fun's
-agent API — no key, no three.ws account required.
+agent API; no key, no three.ws account required.
 
 ## Quick start
 
@@ -190,7 +190,7 @@ bonding-curve, pool, cashback, and sharing-config state. No transaction, no RPC.
 ### `collectFees(input) → Promise<BuiltTx>`
 
 Build a transaction to collect creator fees, or distribute them via the sharing
-config — auto-detected from on-chain state. Wraps `POST /agents/collect-fees`.
+config, auto-detected from on-chain state. Wraps `POST /agents/collect-fees`.
 
 | Field | Type | Notes |
 |---|---|---|
@@ -216,7 +216,7 @@ exactly `10000`). Mode is auto-detected if omitted. Wraps
 
 ## How it works
 
-Two surfaces, one rule — **the function builds, you sign**:
+Two surfaces, one rule (**the function builds, you sign**):
 
 ```
 createCoin / swap        coinFees                 collectFees / sharingConfig
@@ -238,7 +238,7 @@ base64 transaction        FeeInfo JSON               base64 transaction
 
 - **Build calls** post your inputs (plus `encoding: 'base64'`) to the pump.fun
   agent API and get back a transaction. `create-coin` returns it with the new
-  **mint keypair already signed** — you only add the wallet signature. `swap`,
+  **mint keypair already signed**: you only add the wallet signature. `swap`,
   `collect-fees`, and `sharing-config` return a transaction for the wallet to
   sign outright.
 - **Read calls** (`coinFees`) hit `coins-v2`, which carries the bonding-curve,
@@ -246,7 +246,7 @@ base64 transaction        FeeInfo JSON               base64 transaction
   balances from it. No wallet, no signing, no RPC.
 - **State detection is automatic.** `swap` and `collectFees` inspect whether the
   coin is still on the bonding curve or graduated to an AMM pool and build the
-  correct route — you never branch on it yourself.
+  correct route; you never branch on it yourself.
 
 Override the read backend (e.g. for devnet) with the `PUMP_COINS_V2_BASE`
 environment variable; the build API base is `https://fun-block.pump.fun/agents`.
@@ -267,12 +267,12 @@ never swallowed:
 | `coinFees` | empty `coins-v2` body | Wrong cluster, or coin missing. | Set `PUMP_COINS_V2_BASE` for devnet. |
 | any | `frontRunningProtection: true`, no `tipAmount` | Jito route needs a tip. | Pass `tipAmount` (SOL). |
 
-A built transaction is **partially signed at most** — it is never broadcast for
+A built transaction is **partially signed at most**: it is never broadcast for
 you. Submitting (and paying network fees) is always the caller's step.
 
 ## Examples
 
-**Read before you claim** — never build a no-op collection:
+**Read before you claim**: never build a no-op collection:
 
 ```js
 import { coinFees, collectFees } from '@three-ws/pumpfun-skills';
@@ -318,9 +318,9 @@ const { transaction } = await swap({
 
 ## Related
 
-- [`@three-ws/agent-payments`](https://www.npmjs.com/package/@three-ws/agent-payments) — tokenized-agent invoices and on-chain payment verification.
-- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — pay-per-call USDC settlement for agent services.
-- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) — generate the 3D avatar that fronts a tokenized agent.
+- [`@three-ws/agent-payments`](https://www.npmjs.com/package/@three-ws/agent-payments): tokenized-agent invoices and on-chain payment verification.
+- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch): pay-per-call USDC settlement for agent services.
+- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge): generate the 3D avatar that fronts a tokenized agent.
 
 ---
 

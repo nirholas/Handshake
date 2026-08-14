@@ -1,15 +1,15 @@
-// @three-ws/pumpfun-skills — pump.fun launch + trade as composable agent tools.
+// @three-ws/pumpfun-skills: pump.fun launch + trade as composable agent tools.
 // The SDK twin of the pumpfun_create_coin / pumpfun_swap / pumpfun_collect_fees
 // skills: every build call posts your inputs to pump.fun's agent transaction API
 // and hands back a base64 transaction you co-sign and broadcast; coinFees reads
 // the public coins-v2 API. The mint, amounts, and wallet are supplied at call
-// time — nothing is hardcoded. See README.md for the full reference.
+// time, nothing is hardcoded. See README.md for the full reference.
 
 import { createHttp, ThreeWsError } from './http.js';
 
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
 
-/** pump.fun's agent transaction API — builds the unsigned/mint-signed tx. */
+/** pump.fun's agent transaction API: builds the unsigned/mint-signed tx. */
 export const AGENT_API_BASE = 'https://fun-block.pump.fun/agents';
 /** pump.fun's public coins read API. Override with PUMP_COINS_V2_BASE. */
 export const COINS_V2_BASE = 'https://frontend-api-v3.pump.fun/coins-v2';
@@ -22,8 +22,8 @@ const FEE_DESTINATIONS = ['creator', 'cashback', 'sharing_config'];
  * Create a pump.fun skills client bound to a transport, agent API base, and
  * coins read base. For most callers the default exports
  * (`createCoin` / `swap` / `coinFees` / `collectFees` / `sharingConfig`) are
- * enough; use this to reuse configuration — a payment-aware `fetch`, a devnet
- * read backend, or a custom agent origin — across many calls.
+ * enough; use this to reuse configuration (a payment-aware `fetch`, a devnet
+ * read backend, or a custom agent origin) across many calls.
  *
  * @param {object} [options]
  * @param {string} [options.agentBaseUrl]  Agent build API origin (default fun-block.pump.fun/agents).
@@ -289,7 +289,7 @@ function validateShareholders(shareholders) {
 	}
 }
 
-// Jito routing needs a tip — fail fast before the build call rather than letting
+// Jito routing needs a tip: fail fast before the build call rather than letting
 // pump.fun reject it (mirrors the README's edge-case table).
 function assertJitoTip(input, fn) {
 	if (input.frontRunningProtection && (input.tipAmount === undefined || input.tipAmount === null)) {

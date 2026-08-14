@@ -3,7 +3,7 @@
 // =======================================================================
 // The entry re-exports the engine from the monorepo source; esbuild bundles
 // those files (and the tiny shared logger) into dist/index.mjs, leaving only
-// `three` external as the peer dependency — the same publish pattern as
+// `three` external as the peer dependency, the same publish pattern as
 // @three-ws/walk.
 
 import { build } from 'esbuild';

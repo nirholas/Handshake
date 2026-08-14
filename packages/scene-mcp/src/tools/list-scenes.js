@@ -1,4 +1,4 @@
-// `list_scenes` — browse recent or featured dioramas. Read-only.
+// `list_scenes`: browse recent or featured dioramas. Read-only.
 //
 // Wraps GET /api/diorama?list=recent|featured&limit=<n>.
 
@@ -11,7 +11,7 @@ export const def = {
 	title: 'List recent or featured dioramas',
 	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'Browse the public diorama gallery — the most recent saved worlds, or the featured set. Returns a list of cards (id, title, mood, thumbnail/preview, view count) plus each world\'s viewer URL. Read-only.',
+		'Browse the public diorama gallery: the most recent saved worlds, or the featured set. Returns a list of cards (id, title, mood, thumbnail/preview, view count) plus each world\'s viewer URL. Read-only.',
 	inputSchema: {
 		list: z
 			.enum(['recent', 'featured'])
@@ -23,7 +23,7 @@ export const def = {
 			.min(1)
 			.max(50)
 			.optional()
-			.describe('How many to return (1–50, default 24).'),
+			.describe('How many to return (1-50, default 24).'),
 	},
 	async handler(args) {
 		const scope = args?.list === 'featured' ? 'featured' : 'recent';
