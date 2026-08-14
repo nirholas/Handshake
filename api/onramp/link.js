@@ -3,7 +3,7 @@
 // Returns a URL the client should open (in a popup) to let the user buy the
 // requested asset without leaving the app.  Tries Coinbase's hosted onramp
 // (destination wallet pre-filled) first, then falls back to that asset's
-// Coinbase buy page.
+// Coinbase price page, which carries Coinbase's own buy panel.
 //
 // `asset` is USDC (default) or SOL.  Both settle on Solana.  SOL exists because
 // some wallets on this platform pay in native lamports (the agent-economy demo
@@ -16,7 +16,7 @@
 //                         Onramp session token bound to the user's Solana
 //                         wallet and returns a pre-populated Coinbase checkout.
 //                         When absent (or when Coinbase rejects the call), the
-//                         URL falls back to that asset's Coinbase buy page and
+//                         URL falls back to that asset's Coinbase price page and
 //                         the user sends to the address the overlay shows them.
 //
 // The address param is NOT a secret (it's a Solana public key) and is only
@@ -58,6 +58,10 @@ function buildCoinbaseOnrampUrl(sessionToken, assetTicker, amount) {
 		defaultAsset: assetTicker,
 		presetFiatAmount: String(amount),
 		fiatCurrency: 'USD',
+		// Without this Coinbase can open on the "transfer from your Coinbase
+		// balance" experience.  Everyone who reaches this endpoint got here from
+		// "Add funds" because they have nothing to transfer, so pin the buy flow.
+		defaultExperience: 'buy',
 	});
 	return `https://pay.coinbase.com/buy/select-asset?${params}`;
 }
@@ -75,6 +79,21 @@ function buildCoinbaseFallbackUrl(asset) {
 	return ASSETS[asset].fallbackUrl;
 }
 
+/**
+ * The fiat amount to preset, as a spendable USD figure.  `amount` arrives from a
+ * query string, so it can be absent, unparseable, negative, or carry more
+ * precision than money has: Coinbase renders presetFiatAmount verbatim, and the
+ * overlay echoes this number back to the user, so both need real dollars.
+ *
+ * @param {string|null} raw  the amount query parameter
+ * @returns {number} a USD amount within the supported range, rounded to cents
+ */
+function normalizeAmount(raw) {
+	const parsed = Number(raw) || DEFAULT_AMOUNT_USD;
+	const clamped = Math.max(MIN_AMOUNT_USD, Math.min(MAX_AMOUNT_USD, parsed));
+	return Math.round(clamped * 100) / 100;
+}
+
 async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (req.method !== 'GET') return error(res, 405, 'method_not_allowed', 'GET only');
@@ -87,11 +106,7 @@ async function handler(req, res) {
 
 	const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 	const address = url.searchParams.get('address') || '';
-	const amountRaw = url.searchParams.get('amount');
-	const amount = Math.max(
-		MIN_AMOUNT_USD,
-		Math.min(MAX_AMOUNT_USD, Number(amountRaw) || DEFAULT_AMOUNT_USD),
-	);
+	const amount = normalizeAmount(url.searchParams.get('amount'));
 	const assetRaw = (url.searchParams.get('asset') || DEFAULT_ASSET).toUpperCase();
 	const asset = Object.hasOwn(ASSETS, assetRaw) ? assetRaw : DEFAULT_ASSET;
 
