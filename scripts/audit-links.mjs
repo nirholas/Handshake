@@ -347,16 +347,37 @@ const VENDOR_RE = /(?:^public\/three\/|\bvendor\b|\.min\.js$|wasm_wrapper)/;
 // far more often a plain variable (`const action = 'delete'`) than a form target.
 const jsAttrRe = /(?<![\w-])(?:href|data-href|data-route|data-link|data-target-href)\s*=\s*("([^"]*)"|'([^']*)')/gi;
 
+// An HTML file's inert regions: a rendered code sample (`<pre>`/`<code>`) is text
+// on the page, not navigation, and an `<!-- -->` comment is not markup at all.
+// A docs page quoting `action="Summarize"` inside a JSX sample must not read back
+// as a form target, exactly as a JS comment quoting an href must not read back as
+// a link.
+const htmlInertRe = /<(pre|code)\b[^>]*>[\s\S]*?<\/\1>|<!--[\s\S]*?-->/gi;
+// An inline <script> body is JS, so JS rules apply inside it: its comments are
+// comments, and `a.href = '#' + doc` is the head of a computed anchor.
+const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+
+function htmlMask(content) {
+	const mask = new Uint8Array(content.length);
+	let m;
+	htmlInertRe.lastIndex = 0;
+	while ((m = htmlInertRe.exec(content))) mask.fill(1, m.index, m.index + m[0].length);
+	scriptRe.lastIndex = 0;
+	while ((m = scriptRe.exec(content))) {
+		const bodyStart = m.index + m[0].length - '</script>'.length - m[1].length;
+		const sub = commentMask(m[1]);
+		for (let i = 0; i < sub.length; i++) if (sub[i]) mask[bodyStart + i] = 1;
+	}
+	return mask;
+}
+
 function scanFile(file) {
 	const rel = file.replace(ROOT + '/', '');
 	if (VENDOR_RE.test(rel)) return; // skip vendored libs — not our link surface
 	const content = readFileSync(file, 'utf8');
 	const isJs = /\.m?js$/.test(file);
-	// Comment ranges only mean anything in JS; an HTML file's `<!-- -->` is a
-	// different shape and its inline <script> bodies are a small enough surface
-	// that the attribute pass below is authoritative there.
-	const mask = isJs ? commentMask(content) : null;
-	const inComment = (index) => mask !== null && mask[index] === 1;
+	const mask = isJs ? commentMask(content) : htmlMask(content);
+	const inComment = (index) => mask[index] === 1;
 	findings.scanned++;
 	let m;
 	const attrRe = isJs ? jsAttrRe : htmlAttrRe;
@@ -364,7 +385,9 @@ function scanFile(file) {
 	while ((m = attrRe.exec(content))) {
 		if (inComment(m.index)) continue;
 		// `dot.href = '#' + section.id` is the head of a computed anchor, not a stub.
-		const isPrefix = isJs && concatenatedAfter(content, m.index + m[0].length);
+		// True in an inline <script> as much as in a .js file; a real markup
+		// attribute is never followed by a `+`, so the test is safe on both.
+		const isPrefix = concatenatedAfter(content, m.index + m[0].length);
 		record(m[2] ?? m[3] ?? '', file, lineOf(content, m.index), isPrefix);
 	}
 	jsNavRe.lastIndex = 0;
@@ -439,7 +462,12 @@ async function probeExternal(urls) {
 
 // ── Run ──────────────────────────────────────────────────────────────────────
 const exts = new Set(['.html', '.js', '.mjs']);
-const files = [...walk(join(ROOT, 'pages'), exts), ...walk(join(ROOT, 'public'), exts), ...walk(join(ROOT, 'src'), exts)];
+// Every tree vercel.json can route a request into. `docs/`, `blog/` and `chat/`
+// sit at the repo root as siblings of `pages/` and serve real 200s in production
+// (see the dangling-route check below, which already resolves dests there), so a
+// dead link in one of them ships exactly as visibly as a dead link in `pages/`.
+const LINK_SURFACES = ['pages', 'public', 'src', 'docs', 'blog', 'chat'];
+const files = LINK_SURFACES.flatMap((d) => walk(join(ROOT, d), exts));
 for (const f of files) scanFile(f);
 
 const dangling = danglingRoutes();

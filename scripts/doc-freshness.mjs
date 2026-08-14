@@ -76,6 +76,12 @@ const GENERATED = [
 	/^public\/nav-data\.js$/,
 	/^public\/docs-freshness\.json$/,
 	/^public\/page-index\.json$/,
+	// The whole locale tree is derived, not authored: `scripts/i18n-extract.mjs`
+	// pulls locales/en.json out of the annotated HTML, `scripts/i18n-translate.mjs`
+	// machine-translates every other language from it, and
+	// `scripts/build-page-index.mjs` writes localized-pages.json. A translation
+	// pass touching 100 files is not evidence that a doc's prose went wrong.
+	/^public\/locales\//,
 ];
 
 /** Top-level directories that hold shippable code. A path outside these is not ours. */
@@ -102,6 +108,17 @@ const CODE_DIRS = new Set([
 
 // ── Collecting the docs ──────────────────────────────────────────────────────
 
+/**
+ * Generated aggregates restate the whole corpus in one file, so they inherit
+ * every other doc's dependencies and light up permanently. Worse, they cannot be
+ * refreshed by a writer: the fix is always re-running the generator, which says
+ * nothing about whether the prose is right. Their share of each dependency also
+ * dilutes the specificity weighting that makes the ranking useful. Every other
+ * doc tool here already skips them (audit-docs, check-runnable-docs,
+ * build-docs-search-index); this one now agrees.
+ */
+const GENERATED_DOCS = new Set(['docs/ALL.md', 'docs/EVERYTHING.md', 'EVERYTHING.md']);
+
 /** Every markdown file a reader can reach, plus the two root docs that matter. */
 function collectDocs() {
 	const out = [];
@@ -111,7 +128,7 @@ function collectDocs() {
 			if (entry.isDirectory()) {
 				if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
 				walk(rel);
-			} else if (entry.name.endsWith('.md')) {
+			} else if (entry.name.endsWith('.md') && !GENERATED_DOCS.has(rel)) {
 				out.push(rel);
 			}
 		}
