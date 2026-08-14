@@ -126,6 +126,27 @@ non-revoked `threews.stake.v1` lamports minus the principal of every verified
 `threews.unstake.v1` that names one of them. Withdrawn conviction is not
 conviction.
 
+A settlement only retires conviction when its attester is the market escrow of
+§2. Settlements are escrow-signed by construction (§3.2), so honouring any
+structurally valid unstake memo would let a stranger deflate an agent's standing
+with a memo naming somebody else's stake signature. A deployment with no escrow
+configured retires nothing and reports the gross figure.
+
+Retirement is applied per stake signature and clamped to that stake's own
+principal, so an over-stated `principal` can never consume a different staker's
+conviction and net stake can never go negative. Two settlements naming one stake
+retire it once, at the larger of the two, never at their sum.
+
+The endpoint reports the retired history alongside the net figure rather than
+erasing it: `stake.total_lamports` is net, `stake.gross_lamports` is everything
+ever staked, and `stake.retired_lamports` / `stake.retired_count` are what
+settlement gave back. `stake.count`, `stake.unique_stakers` and
+`stake.top_stakers` all count net conviction, so a fully withdrawn staker is not
+listed as backing the agent.
+
+Implemented by `netConviction` in `api/_lib/reputation-market.js`, which is pure
+and reproduces this rule without a database (`tests/reputation-net-conviction.test.js`).
+
 ## 4. Epochs
 
 An epoch is one UTC day: `epoch = floor(unixSeconds / 86400)`. Epoch `e` spans
