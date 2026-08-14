@@ -1267,6 +1267,14 @@
 			"dest": "/api/arena-og.js"
 		},
 		{
+			"src": "/api/arena-share",
+			"dest": "/api/arena-share.js"
+		},
+		{
+			"src": "/arena/t/([0-9a-fA-F-]+)/?",
+			"dest": "/api/arena-share?id=$1"
+		},
+		{
 			"src": "/api/trade-share",
 			"dest": "/api/trade-share.js"
 		},
