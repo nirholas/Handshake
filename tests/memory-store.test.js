@@ -3,7 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Mocks ─────────────────────────────────────────────────────────────────
 // `sql` is a tagged template — mock it as a fn returning queued FIFO results.
 const sqlMock = vi.fn();
-vi.mock('../api/_lib/db.js', () => ({ sql: sqlMock, isDbUnavailableError: () => false, isDbCapacityError: () => false }));
+// `sqlValues` stays real: it is what builds the multi-row VALUES fragment the
+// entity upsert binds, so a stub would hide exactly the shape those tests read.
+// It needs no database (it only composes strings + params), and db.js reaches
+// for DATABASE_URL lazily, so importing the actual module here is free.
+vi.mock('../api/_lib/db.js', async () => {
+	const actual = await vi.importActual('../api/_lib/db.js');
+	return { sqlValues: actual.sqlValues, sql: sqlMock, isDbUnavailableError: () => false, isDbCapacityError: () => false };
+});
 
 // Control embedding configuration / vectors per test.
 const embeddingsConfigured = vi.fn(() => true);
@@ -21,6 +28,7 @@ const {
 	searchMemories,
 	computeContext,
 	buildGraph,
+	ensureEntities,
 	estimateTokens,
 	defaultTier,
 	WORKING_TOKEN_BUDGET,
@@ -148,5 +156,73 @@ describe('buildGraph', () => {
 		queueSql([]); // entities
 		const g = await buildGraph('agent1');
 		expect(g).toEqual({ nodes: [], edges: [], stats: { entities: 0, edges: 0 } });
+	});
+});
+
+// The lazy mining pass every graph read runs first. Its writes use the
+// `FROM ( VALUES … ) AS v(…)` shape, and that shape is where the whole feature
+// died: a parameter inside a standalone VALUES list has no target column to
+// infer a type from, so Postgres resolves it to text (see
+// tests/db-sql-compose.test.js — the driver binds every param as a string), and
+// text is not assignable to a uuid column. The upsert raised
+// `column "agent_id" is of type uuid but expression is of type text` on every
+// call, ensureEntities caught it and returned {processed: 0}, and so no entity
+// row was ever written and every agent's graph came back permanently empty
+// while nothing 500'd. Verified against a real Postgres before the fix landed.
+describe('ensureEntities', () => {
+	/** Reassemble the SQL text of the nth `sql` call from its template strings. */
+	function queryText(callIndex) {
+		return sqlMock.mock.calls[callIndex][0].join(' ');
+	}
+
+	it('casts every uuid-bound column out of the untyped VALUES list', async () => {
+		queueSql([
+			{ id: 'm1', content: 'Never risk more than 2% per trade', tags: ['strategy'], context: {} },
+		]);
+		queueSql([
+			{ id: 'ent-strategy', kind: 'strategy', normalized: 'never risk more than 2% per trade' },
+			{ id: 'ent-topic', kind: 'topic', normalized: 'strategy' },
+		]);
+		queueSql([]); // link insert
+		queueSql([]); // entities_extracted update
+
+		const out = await ensureEntities('11111111-1111-4111-8111-111111111111');
+		expect(out).toEqual({ processed: 1, remaining: 0 });
+
+		const upsert = queryText(1);
+		expect(upsert).toContain('INSERT INTO agent_memory_entities');
+		expect(upsert).toContain('v.agent_id::uuid');
+
+		const links = queryText(2);
+		expect(links).toContain('INSERT INTO agent_memory_entity_links');
+		expect(links).toContain('v.entity_id::uuid');
+		expect(links).toContain('v.memory_id::uuid');
+	});
+
+	it('links a memory to every entity mined from it and marks it processed', async () => {
+		queueSql([
+			{ id: 'm1', content: 'Never risk more than 2% per trade', tags: ['strategy'], context: {} },
+		]);
+		queueSql([
+			{ id: 'ent-strategy', kind: 'strategy', normalized: 'never risk more than 2% per trade' },
+			{ id: 'ent-topic', kind: 'topic', normalized: 'strategy' },
+		]);
+		queueSql([]);
+		queueSql([]);
+
+		await ensureEntities('11111111-1111-4111-8111-111111111111');
+
+		// The link insert binds (entity_id, memory_id) pairs, two per memory here:
+		// the 'strategy' node the text mined and the 'strategy' topic from the tag.
+		const linkParams = sqlMock.mock.calls[2].slice(1).flatMap((v) => v?.values ?? []);
+		expect(linkParams).toEqual(['ent-topic', 'm1', 'ent-strategy', 'm1']);
+	});
+
+	it('still marks a memory processed when it mines no entities', async () => {
+		queueSql([{ id: 'm1', content: 'nothing notable here', tags: [], context: {} }]);
+		queueSql([]); // the entities_extracted update
+		const out = await ensureEntities('11111111-1111-4111-8111-111111111111');
+		expect(out).toEqual({ processed: 1, remaining: 0 });
+		expect(queryText(1)).toContain('SET entities_extracted = true');
 	});
 });

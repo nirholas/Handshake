@@ -299,9 +299,20 @@ export async function ensureEntities(agentId, cap = ENTITY_CAP) {
 		const entityRows = [...byKey.values()].map((e) => [
 			agentId, e.kind, e.label, e.normalized, e.count, JSON.stringify(e.meta || {}),
 		]);
+		// `v.agent_id::uuid` is load-bearing, exactly like the ::uuid casts on the
+		// link insert below. A parameter inside a standalone `VALUES` list has no
+		// column to infer its type from, so Postgres resolves it to text, and
+		// text is not assignable to a uuid column: this statement raised
+		// `column "agent_id" is of type uuid but expression is of type text` on
+		// every call. The catch below swallowed it as a warning, so nothing 500'd
+		// and nothing looked broken from the outside; instead `entities_extracted`
+		// was never set, no entity row was ever written, and every agent's
+		// knowledge graph (graph(), entities(), memoriesFor()) came back
+		// permanently empty. The sibling insert never had the bug because it
+		// casts. Keep both casts.
 		const upserted = await sql`
 			INSERT INTO agent_memory_entities (agent_id, kind, label, normalized, mention_count, salience, meta)
-			SELECT v.agent_id, v.kind, v.label, v.normalized, v.cnt::int,
+			SELECT v.agent_id::uuid, v.kind, v.label, v.normalized, v.cnt::int,
 			       LEAST(1.0, 0.5 + 0.05 * (v.cnt::int - 1)), v.meta::jsonb
 			FROM ( VALUES ${sqlValues(entityRows)} ) AS v(agent_id, kind, label, normalized, cnt, meta)
 			ON CONFLICT (agent_id, kind, normalized) DO UPDATE
