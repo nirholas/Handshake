@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T02:13:56.333Z",
+	"generated_at": "2026-08-14T02:20:27.503Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -84,6 +84,16 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "Platform counters stop reporting zero when the numbers are simply unavailable",
+			"summary": "The public stats behind the home page and the monitor board (agents, avatars, widgets, views, countries, chains) used to answer with a row of zeroes whenever the database could not be reached, and that fabricated all-zero snapshot was then cached for five minutes at the edge, so the platform looked empty long after it had recovered. It now says the figures are unavailable instead, caches that for fifteen seconds, and the monitor board keeps the last real numbers on screen rather than flashing zeroes. The chain counter is also a real count again: it reads the mainnets that actually carry an indexed agent plus Solana, instead of a hardcoded six that had drifted from reality.",
+			"link": "/monitor",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "Recurring payments now have a home, a pause button, and a receipt for every charge",
 			"summary": "Sign one permission and a fixed amount of USDC moves to an agent every day or week, or gets swapped into a token on a schedule. Until now there was no page for any of that: you could start a schedule from a skill and then never see it again, and one bad hour on the network ended it for good, because nothing could turn a paused schedule back on. The new /recurring page is the whole life of a schedule in one place. Create one, pause it, resume it, cancel it, and read every charge it has ever made with the transaction hash next to it. A second tab shows what is being paid into your own agents, with the paying wallet and the running total. When a period fails you now get told why, in a sentence: a revoked permission pauses the schedule and says so, a wallet short of USDC keeps the schedule alive and retries once you top up, and a charge that timed out is never retried at all, because that is the one case that could take your money twice.",
 			"link": "/recurring",
@@ -153,6 +163,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The Oracle live action stream no longer goes quiet after a bad reconnect",
+			"summary": "The trading floor at /activity reconnects to its live feed by telling the server the timestamp it last saw. If that timestamp arrived malformed, the server opened the stream anyway and then silently failed every lookup behind it: the page stayed connected, showed no error, and never received another action for as long as it was open. It now rejects the bad timestamp up front with a clear message so the page reconnects cleanly instead of sitting on a dead feed. Three neighbouring Oracle endpoints got the same treatment: a malformed paging cursor on the activity feed, and a non-text agent or chat id sent to the follow endpoint, used to come back as an unexplained server error and now come back as a plain description of what was wrong. An unreadable result limit on an agent's public track record no longer wipes out its recent-trade list. The activity feed and the calibration report also now allow cross-site reads, matching every other public Oracle endpoint.",
+			"link": "/activity",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The Reputation Staking Market is live: back an agent and earn from what it actually did",
 			"summary": "Stake SOL behind an agent you believe in and earn a share of a daily reward pool, sized by that agent's signed on-chain record: accepted tasks, passed validations and real reviews pay, while failed validations, disputes and revocations cost double what work earns. The market page had shipped without the code that drives it, so it rendered empty no matter what was staked; it now loads live, ranks agents by the conviction escrowed behind them, shows any wallet's positions with earnings that update as they accrue, and settles a withdrawal back to the staker who signed the stake. Your principal is never slashed and can be withdrawn at any time: bad conviction earns nothing, it never costs you your stake. Every number is re-derivable from the chain, the exact formula runs identically in your browser and on our servers, and the whole cycle is provable on devnet with one command. Devnet is open to everyone; mainnet stays owner-gated.",
 			"link": "/reputation/market",
@@ -181,6 +202,17 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Your referrals page now shows how many people actually opened your link",
+			"summary": "Every three.ws referral link already recorded a visit when someone opened it, but nothing ever showed you those numbers. The referrals dashboard now has a Share funnel: link visits, how many of those visits became signups, and how many of those signups went on to make their first creation, with the conversion rate between each step over the last 30 days. Visits are counted once per person per day, so refreshing a link does not inflate the number, and the page only shows the funnel once you have at least one visit. The same data is available on the referrals API as a funnel block, with an optional lookback window.",
+			"link": "/dashboard/referrals",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
