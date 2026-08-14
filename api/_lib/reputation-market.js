@@ -621,6 +621,127 @@ export async function quotePosition({ position, network, now, env = process.env 
 	return byPosition.get(position.id) || { lamports: 0n, byEpoch: [] };
 }
 
+// ── net conviction (spec §3.3) ──────────────────────────────────────────────
+
+/**
+ * Net staked conviction for one agent: verified `threews.stake.v1` lamports minus
+ * the principal every settlement retired. Spec §3.3, "withdrawn conviction is not
+ * conviction".
+ *
+ * Only the escrow's own unstake memos retire anything. A settlement is
+ * escrow-signed by construction (spec §3.2), so honouring any structurally valid
+ * unstake would let a stranger deflate an agent's conviction with a memo naming
+ * somebody else's stake signature. A deployment with no escrow configured retires
+ * nothing, which reports the gross figure rather than a wrong net one.
+ *
+ * @returns {Promise<{total_lamports: string, count: number, unique_stakers: number,
+ *   gross_lamports: string, retired_lamports: string, retired_count: number,
+ *   top_stakers: Array<{attester: string, lamports: string, score: number|null}>}>}
+ */
+export async function netStakeForAgent({ asset, network, limit = 5, env = process.env }) {
+	const net = normalizeNetwork(network);
+	let escrow = null;
+	try {
+		escrow = marketConfig(net, env).escrow?.toBase58() || null;
+	} catch {
+		// A misconfigured escrow must not take the whole reputation card down; it
+		// only means nothing is credited as retired.
+		escrow = null;
+	}
+
+	const stakes = await sql`
+		select signature, attester,
+			coalesce(payload->>'lamports', '0') as lamports,
+			(payload->>'score')::int as score
+		from solana_attestations
+		where agent_asset = ${asset} and network = ${net}
+		  and kind = 'threews.stake.v1' and verified = true and revoked = false
+	`;
+
+	// No escrow configured means no settlement this deployment can vouch for, so
+	// nothing is retired and the answer is the gross figure.
+	const retirements = escrow
+		? await sql`
+			select payload->>'stake' as stake_signature, payload->>'principal' as principal
+			from solana_attestations
+			where agent_asset = ${asset} and network = ${net}
+			  and kind = ${UNSTAKE_KIND} and verified = true and revoked = false
+			  and attester = ${escrow}
+		`
+		: [];
+
+	return netConviction({ stakes, retirements, limit });
+}
+
+/**
+ * Fold indexed stakes and the settlements that retired them into the net
+ * conviction figure. Pure, so the rule in spec §3.3 is testable without a
+ * database and reproduces identically wherever it runs.
+ *
+ * Retirement is per stake signature and clamped to that stake's own principal, so
+ * an over-stated `principal` in one settlement can never eat a different staker's
+ * conviction, and net conviction can never go negative.
+ *
+ * @param {object} input
+ * @param {Array<{signature: string, attester: string, lamports: string, score: number|null}>} input.stakes
+ * @param {Array<{stake_signature: string, principal: string}>} input.retirements
+ * @param {number} [input.limit] how many top stakers to return
+ */
+export function netConviction({ stakes = [], retirements = [], limit = 5 } = {}) {
+	// A stake settles once; if the index somehow holds two settlements naming it,
+	// the largest is the one that retires it, never their sum.
+	const retiredBySignature = new Map();
+	for (const r of retirements) {
+		const sig = r?.stake_signature;
+		if (!sig) continue;
+		const principal = toBigInt(String(r.principal ?? '0'));
+		const prev = retiredBySignature.get(sig) ?? 0n;
+		if (principal > prev) retiredBySignature.set(sig, principal);
+	}
+
+	let gross = 0n;
+	let retired = 0n;
+	let total = 0n;
+	let retiredCount = 0;
+	let openCount = 0;
+	const byAttester = new Map();
+
+	for (const s of stakes) {
+		const principal = toBigInt(String(s?.lamports ?? '0'));
+		const claimed = retiredBySignature.get(s?.signature) ?? 0n;
+		const back = claimed > principal ? principal : claimed;
+		const remaining = principal - back;
+
+		gross += principal;
+		retired += back;
+		total += remaining;
+		if (back > 0n) retiredCount++;
+		if (remaining <= 0n) continue;
+
+		openCount++;
+		const prev = byAttester.get(s.attester) || { lamports: 0n, score: null };
+		prev.lamports += remaining;
+		const score = Number.isInteger(s?.score) ? s.score : null;
+		if (score !== null) prev.score = prev.score === null ? score : Math.max(prev.score, score);
+		byAttester.set(s.attester, prev);
+	}
+
+	const top = [...byAttester.entries()]
+		.sort((a, b) => (a[1].lamports === b[1].lamports ? 0 : b[1].lamports > a[1].lamports ? 1 : -1))
+		.slice(0, limit)
+		.map(([attester, v]) => ({ attester, lamports: v.lamports.toString(), score: v.score }));
+
+	return {
+		total_lamports: total.toString(),
+		count: openCount,
+		unique_stakers: byAttester.size,
+		gross_lamports: gross.toString(),
+		retired_lamports: retired.toString(),
+		retired_count: retiredCount,
+		top_stakers: top,
+	};
+}
+
 // ── market listing ──────────────────────────────────────────────────────────
 
 const LISTING_WINDOW_EPOCHS = 7;

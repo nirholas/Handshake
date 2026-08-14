@@ -23,6 +23,7 @@ import {
 	AGENT_COLLECTION,
 } from '../../_lib/solana-collection.js';
 import { KIND_MAP, crawlAgentAttestations } from '../../_lib/solana-attestations.js';
+import { netStakeForAgent } from '../../_lib/reputation-market.js';
 import {
 	mintAttestation,
 	loadAttesterKeypair,
@@ -1133,27 +1134,9 @@ export const handleReputation = wrap(async (req, res) => {
 
 	const [cursor] = await sql`select last_indexed_at from solana_attestations_cursor where agent_asset = ${asset} limit 1`;
 
-	const [stakeAgg] = await sql`
-		select
-			coalesce(sum((payload->>'lamports')::numeric), 0)::text as total_lamports,
-			count(*)::int as stake_count,
-			count(distinct attester)::int as unique_stakers
-		from solana_attestations
-		where agent_asset = ${asset} and network = ${network}
-		  and kind = 'threews.stake.v1' and verified = true and revoked = false
-	`;
-
-	const topStakers = await sql`
-		select attester,
-			sum((payload->>'lamports')::numeric)::text as lamports,
-			max((payload->>'score')::int) as score
-		from solana_attestations
-		where agent_asset = ${asset} and network = ${network}
-		  and kind = 'threews.stake.v1' and verified = true and revoked = false
-		group by attester
-		order by sum((payload->>'lamports')::numeric) desc
-		limit 5
-	`;
+	// Net, not gross: a settled position's conviction is retired the moment the
+	// escrow's threews.unstake.v1 memo lands. Spec §3.3 (specs/REPUTATION_STAKING_MARKET.md).
+	const stakeAgg = await netStakeForAgent({ asset, network });
 
 	let pumpfunRows = [];
 	try {
@@ -1187,14 +1170,13 @@ export const handleReputation = wrap(async (req, res) => {
 		tasks: { offered: counts.tasks_offered, accepted: counts.tasks_accepted },
 		disputes_filed: counts.disputes_filed, revoked_count: counts.revoked_count,
 		stake: {
-			total_lamports: stakeAgg?.total_lamports || '0',
-			count: stakeAgg?.stake_count || 0,
-			unique_stakers: stakeAgg?.unique_stakers || 0,
-			top_stakers: topStakers.map((r) => ({
-				attester: r.attester,
-				lamports: r.lamports,
-				score: r.score,
-			})),
+			total_lamports: stakeAgg.total_lamports,
+			count: stakeAgg.count,
+			unique_stakers: stakeAgg.unique_stakers,
+			gross_lamports: stakeAgg.gross_lamports,
+			retired_lamports: stakeAgg.retired_lamports,
+			retired_count: stakeAgg.retired_count,
+			top_stakers: stakeAgg.top_stakers,
 		},
 		last_indexed_at: cursor?.last_indexed_at || null,
 	});
