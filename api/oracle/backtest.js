@@ -70,6 +70,64 @@ export function wilson(wins, n, z = 1.96) {
  * @param {string} ciKey   band field holding that rate's Wilson interval
  * @param {number} minN    bands thinner than this are too noisy to judge
  */
+/**
+ * Roll the per-score aggregate into bands of 10. `predicted` is the
+ * sample-weighted mean of the probability each score in the band actually claims,
+ * so it follows where the coins sit instead of assuming the band midpoint.
+ *
+ * @param {Array<{score:number, n:number, spikes:number, wins:number}>} scoreRows
+ */
+export function assembleBands(scoreRows) {
+	const bands = [];
+	for (let lo = 0; lo < 100; lo += 10) {
+		const hi = lo + 10;
+		const inBand = scoreRows.filter((r) => {
+			const s = Number(r.score);
+			return s >= lo && (hi === 100 ? s <= 100 : s < hi);
+		});
+		const n = inBand.reduce((a, r) => a + r.n, 0);
+		if (!n) continue;
+		const wins = inBand.reduce((a, r) => a + r.wins, 0);
+		const spikes = inBand.reduce((a, r) => a + r.spikes, 0);
+		const scoreSum = inBand.reduce((a, r) => a + Number(r.score) * r.n, 0);
+		const claimSum = inBand.reduce((a, r) => a + probabilityFromScore(Number(r.score)) * r.n, 0);
+		const avgScore = Number((scoreSum / n).toFixed(1));
+		bands.push({
+			band: `${lo}-${hi}`,
+			lo, hi, n, wins, spikes,
+			avg_score: avgScore,
+			predicted: Math.round((claimSum / n) * 100),
+			realized: Math.round((wins / n) * 100),
+			realized_spike: Math.round((spikes / n) * 100),
+			// The rug-aware win rate the shipped calibration expects for this band.
+			// In-sample by construction (the isotonic fit reads this same resolved
+			// set), so it is the ladder's stated claim, not independent evidence.
+			predicted_win: Math.round(hitRateFor(avgScore).rate * 100),
+			ci: wilson(wins, n),
+			spike_ci: wilson(spikes, n),
+		});
+	}
+	return bands;
+}
+
+/**
+ * Brier score against the event the model was trained on, using each score's own
+ * claimed probability. Lower is better; 0.25 is a coin flip. Computed per exact
+ * score rather than per band so no coin is graded against a neighbour's claim.
+ *
+ * @param {Array<{score:number, n:number, spikes:number}>} scoreRows
+ */
+export function brierScore(scoreRows) {
+	let sum = 0;
+	let n = 0;
+	for (const r of scoreRows) {
+		const p = probabilityFromScore(Number(r.score));
+		sum += r.spikes * (1 - p) ** 2 + (r.n - r.spikes) * p ** 2;
+		n += r.n;
+	}
+	return n ? Number((sum / n).toFixed(4)) : null;
+}
+
 export function ladderCheck(bands, rateKey, ciKey, minN = 100) {
 	const seq = bands.filter((b) => b.n >= minN && b[rateKey] != null && b[ciKey]);
 	const inversions = [];
@@ -178,53 +236,12 @@ async function query(days, tier, network) {
 		order by 1
 	`.catch(() => []);
 
-	// Bands of 10, assembled from the per-score aggregate. `predicted` is the
-	// sample-weighted mean of the probability each score in the band claims, so it
-	// tracks where the coins actually sit rather than an assumed midpoint.
-	const bands = [];
-	for (let lo = 0; lo < 100; lo += 10) {
-		const hi = lo + 10;
-		const inBand = scoreRows.filter((r) => {
-			const s = Number(r.score);
-			return s >= lo && (hi === 100 ? s <= 100 : s < hi);
-		});
-		const n = inBand.reduce((a, r) => a + r.n, 0);
-		if (!n) continue;
-		const wins = inBand.reduce((a, r) => a + r.wins, 0);
-		const spikes = inBand.reduce((a, r) => a + r.spikes, 0);
-		const scoreSum = inBand.reduce((a, r) => a + Number(r.score) * r.n, 0);
-		const claimSum = inBand.reduce((a, r) => a + probabilityFromScore(Number(r.score)) * r.n, 0);
-		const avgScore = Number((scoreSum / n).toFixed(1));
-		bands.push({
-			band: `${lo}-${hi}`,
-			lo, hi, n, wins, spikes,
-			avg_score: avgScore,
-			predicted: Math.round((claimSum / n) * 100),
-			realized: Math.round((wins / n) * 100),
-			realized_spike: Math.round((spikes / n) * 100),
-			// The rug-aware win rate the shipped calibration expects for this band.
-			// In-sample by construction (the isotonic fit reads this same resolved
-			// set), so it is the ladder's stated claim, not independent evidence.
-			predicted_win: Math.round(hitRateFor(avgScore).rate * 100),
-			ci: wilson(wins, n),
-			spike_ci: wilson(spikes, n),
-		});
-	}
+	const bands = assembleBands(scoreRows);
 	const calibration = bands;
-
-	// Brier against the event the model was trained on, using each score's own
-	// claimed probability. Lower is better; 0.25 is a coin flip.
-	let brierSum = 0;
-	let brierN = 0;
-	for (const r of scoreRows) {
-		const p = probabilityFromScore(Number(r.score));
-		brierSum += r.spikes * (1 - p) ** 2 + (r.n - r.spikes) * p ** 2;
-		brierN += r.n;
-	}
-	const brier = brierN ? Number((brierSum / brierN).toFixed(4)) : null;
+	const brier = brierScore(scoreRows);
 
 	// Market baseline: a coin drawn at random from everything Oracle scored.
-	const baselineN = brierN;
+	const baselineN = scoreRows.reduce((a, r) => a + r.n, 0);
 	const baselineWins = scoreRows.reduce((a, r) => a + r.wins, 0);
 	const baselineSpikes = scoreRows.reduce((a, r) => a + r.spikes, 0);
 	const baselineWinRate = baselineN ? Math.round((baselineWins / baselineN) * 100) : null;

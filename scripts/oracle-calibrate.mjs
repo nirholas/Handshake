@@ -134,6 +134,12 @@ function plateaus(bands, tol = 0.05) {
 	return out;
 }
 
+// Guarded so the fit helpers above can be imported (and unit-tested) without a
+// bare `import` firing a production query and a file write.
+if (!import.meta.main) {
+	// Imported for its exports only.
+} else {
+
 const dbUrl = databaseUrl();
 const { source, bands: raw } = dbUrl ? await loadFromDb(dbUrl) : await loadFromApi();
 
@@ -187,4 +193,6 @@ if (process.argv.includes('--write')) {
 	console.log(`\nwrote ${OUT_PATH.pathname}`);
 } else {
 	console.log('\n(dry run; pass --write to update conviction-calibration.json)');
+}
+
 }
