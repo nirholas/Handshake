@@ -1,8 +1,11 @@
 // POST /api/persona/extract
 // Synthesizes a structured persona JSON from a short onboarding interview.
-// Runs through the shared LLM helper (api/_lib/llm.js) for Anthropic-first
-// ordered failover: server Anthropic → Groq → OpenRouter, so a single upstream
-// 429/5xx fails over to the next provider instead of returning a hard 502.
+// Runs through the shared LLM helper (api/_lib/llm.js), which owns the ordered
+// failover chain (free lanes first, the GCP-credits Vertex anchor behind them,
+// the paid server keys last), so a single upstream 429/5xx falls through to the
+// next provider instead of returning a hard 502. Do not restate the provider
+// order here: providerChain() in api/_lib/llm.js is the only source of truth
+// for it, and a copy of the list in this comment goes stale silently.
 
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
@@ -87,14 +90,17 @@ const handler = wrap(async (req, res) => {
 		return error(res, 401, 'unauthorized', 'Sign in to build your persona.');
 	}
 
-	// Each call is a paid LLM completion on the server key — meter per user so a
-	// free-signup loop can't run up an unbounded bill (5/day, matches the sibling
-	// agents/:id/persona route).
-	const rl = await limits.personaExtract(userId);
-	if (!rl.success) return rateLimited(res, rl);
-
+	// Validate BEFORE metering. The limiter exists to bound LLM spend (see below),
+	// and a rejected body spends nothing, so charging it against a 5/day budget
+	// just burns the user's quota on their own typos.
 	const body = await readJson(req);
 	const input = validateInput(body);
+
+	// Each call is a metered LLM completion, so meter per user as well: a
+	// free-signup loop must not be able to run up an unbounded bill (5/day,
+	// matching the sibling agents/:id/persona route).
+	const rl = await limits.personaExtract(userId);
+	if (!rl.success) return rateLimited(res, rl);
 
 	let userMessage;
 	if (input.mode === 'freeform') {
@@ -123,7 +129,15 @@ const handler = wrap(async (req, res) => {
 		return error(res, err?.status || 502, 'upstream_error', 'Persona extraction is briefly unavailable. Please try again.');
 	}
 
+	// llmComplete prefers returning an empty-but-valid completion over throwing
+	// when every provider answered 200 with no content. That is a failure for this
+	// endpoint, not a persona, so surface it as a retryable 502 rather than
+	// letting JSON.parse('') report it as a malformed model response.
 	const raw = completion.text;
+	if (!raw) {
+		return error(res, 502, 'upstream_error', 'The model returned an empty response. Please try again.');
+	}
+
 	let persona;
 	try {
 		const stripped = raw
@@ -166,6 +180,15 @@ const handler = wrap(async (req, res) => {
 				? persona.sample_greeting.trim().slice(0, 400)
 				: '',
 	};
+
+	// Well-formed JSON with nothing usable in it (e.g. a bare `{}`) would otherwise
+	// render as a blank persona card the user cannot act on. communication_style
+	// is excluded from this check because it always defaults to a value.
+	if (!normalized.tone && !normalized.sample_greeting
+		&& !normalized.vocabulary.length && !normalized.interests.length) {
+		console.error('[persona/extract] model returned an empty persona', raw.slice(0, 500));
+		return error(res, 502, 'parse_error', 'The model returned an empty persona. Please try again.');
+	}
 
 	const usage = completion.usage;
 
