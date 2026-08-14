@@ -294,35 +294,39 @@ us-central1, mostly named `cron--api-cron-<name>` (a few older ones use a bare
 name, so **match by target URI, not by job name**, when auditing). Vercel's crons
 died with the deployment, so there is no double-fire risk.
 
-**The mirror is not automatically enforced — verify it after editing `crons`.**
-As of 2026-07-25 there were 98 entries in `vercel.json` and 96 scheduler jobs;
-five declared crons had **no scheduler job at all** and had therefore never run
-in production: `kol-tracker-refresh`, `forge-thumbnail-backfill`,
-`forge-off-crown`, `quality-bench`, and `confirm-pending-purchases` (that last
-one has no handler file either — it is a phantom entry that would 404, so
-nothing is stuck behind it). Declaring a cron in `vercel.json` does nothing on
-its own; only the sync script below creates the job.
+**The mirror is not automatically enforced: verify it after editing `crons`.**
+Declaring a cron in `vercel.json` does nothing on its own; only the sync script
+below creates the job. That gap has bitten repeatedly (on 2026-07-25 five
+declared crons had no scheduler job at all and had therefore never run in
+production: `kol-tracker-refresh`, `forge-thumbnail-backfill`,
+`forge-off-crown`, `quality-bench`, `confirm-pending-purchases`), so audit with
+the two checks rather than by eye:
 
 ```bash
-# Audit: which declared crons have no scheduler job targeting them?
-python3 - <<'EOF'
-import json, subprocess
-crons = [c['path'] for c in json.load(open('vercel.json'))['crons']]
-jobs = json.loads(subprocess.run(['gcloud','scheduler','jobs','list','--location','us-central1',
-  '--project','aerial-vehicle-466722-p5','--format=json'], capture_output=True, text=True).stdout)
-have = {(j.get('httpTarget') or {}).get('uri','').split('.run.app',1)[-1].split('?')[0] for j in jobs}
-print('\n'.join(p for p in crons if p not in have) or 'all mirrored')
-EOF
+# Which declared crons are missing, paused, or on a different schedule than
+# vercel.json says? Needs a live gcloud session; add --json for a report.
+npm run check:cron-drift
+
+# Do the handlers behind them route, load, run, and refuse an anonymous caller?
+npm run audit:cron-liveness
 ```
 
 ```bash
-# Sync after editing crons in vercel.json (idempotent create-or-update):
-CRON_SECRET=<value> node scripts/create-gcp-scheduler.mjs --resume
+# Sync after editing crons in vercel.json. Idempotent create-or-update, and
+# CONFIG ONLY: it never changes whether an existing job is running, so it is safe
+# to re-run during an incident hold. A job it creates starts ENABLED.
+CRON_SECRET=<value> node scripts/create-gcp-scheduler.mjs
 
-# List / pause / force-run:
+# Blanket run-state levers, explicit and mutually exclusive:
+CRON_SECRET=<value> node scripts/create-gcp-scheduler.mjs --pause   # stop the whole fleet
+CRON_SECRET=<value> node scripts/create-gcp-scheduler.mjs --resume  # recover from --pause
+
+# List / pause / force-run one job. Note the DOUBLE hyphen after the `cron`
+# prefix: the cron path's leading slash becomes a hyphen of its own, and a
+# single-hyphen name fails with NOT_FOUND.
 gcloud scheduler jobs list --location us-central1 --project aerial-vehicle-466722-p5
-gcloud scheduler jobs pause  cron-api-cron-economy-tick --location us-central1 --project aerial-vehicle-466722-p5
-gcloud scheduler jobs run    cron-api-cron-uptime-check --location us-central1 --project aerial-vehicle-466722-p5
+gcloud scheduler jobs pause  cron--api-cron-economy-tick --location us-central1 --project aerial-vehicle-466722-p5
+gcloud scheduler jobs run    cron--api-cron-uptime-check --location us-central1 --project aerial-vehicle-466722-p5
 ```
 
 **CRON_SECRET:** was EMPTY on Vercel (every cron guard fail-closed with 503 —
@@ -331,7 +335,7 @@ and set in two places: the Cloud Run service env and every Scheduler job's
 Authorization header. **Recover it any time from either place:**
 
 ```bash
-gcloud scheduler jobs describe cron-api-cron-uptime-check --location us-central1 \
+gcloud scheduler jobs describe cron--api-cron-uptime-check --location us-central1 \
   --project aerial-vehicle-466722-p5 --format="value(httpTarget.headers)"
 ```
 
