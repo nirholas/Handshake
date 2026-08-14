@@ -176,7 +176,14 @@ when the run ends. Add `--keep` to leave the stack up and curl it by hand.
 Beyond the happy path it pins the properties that make the number trustworthy: a
 second open on the same day does not add a row, a non-owner viewing the agent is
 not tracked at all, an owner who visits during the honeymoon week does not count
-as retained, a second rollup run is idempotent, and the read endpoint answers 401
-anonymous and 403 to a signed-in non-admin.
+as retained, a cohort whose 14-day window has closed is marked complete and
+carries a final rate, a second rollup run is idempotent, and the read endpoint
+answers 401 anonymous and 403 to a signed-in non-admin.
+
+One visit in that run is written straight to the table rather than through the
+handler: a closed cohort needs a visit dated inside a window that ended days ago,
+and the handler can only ever stamp today. It is seeded at an absolute past date
+in the exact shape `recordAgentOwnerVisit` writes, and it is what gives the
+dashboard a completed cohort to draw.
 
 If you extend the metric, keep two properties: the retention window must stay anchored to each owner's own mint instant, and every stored date must stay absolute. Both are what make a cohort row still readable a year later.
