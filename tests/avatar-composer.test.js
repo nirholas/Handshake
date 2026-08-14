@@ -126,12 +126,19 @@ describe('composeStudioAvatar', () => {
 
 		expect(descriptor.identity).toBeTruthy();
 		expect(meshes.length).toBeGreaterThan(3);
-	}, 30_000);
+		// No per-test budget: one composition loads several real GLB bases off disk
+		// and re-serialises them, measured at 17s idle here and well past 30s when
+		// the rest of the suite is competing for the box. A tighter-than-global
+		// ceiling on it asserts nothing about the composer and fails on scheduling,
+		// so this inherits the configured testTimeout instead.
+	});
 
 	it('is deterministic: the same seed composes byte-identical output', async () => {
 		const profile = { gender: 'male', ethnicityKey: 'nordic', ageKey: 'young-adult', build: 'lean' };
 		const a = await composeStudioAvatar({ profile, seed: 'det-1', loadBase });
 		const b = await composeStudioAvatar({ profile, seed: 'det-1', loadBase });
 		expect(Buffer.from(a.bytes).equals(Buffer.from(b.bytes))).toBe(true);
-	}, 30_000);
+		// Two full compositions, so roughly twice the cost of the test above; the
+		// same reasoning applies and it inherits the configured testTimeout.
+	});
 });

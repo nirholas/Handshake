@@ -151,5 +151,10 @@ describe('evm eoa grinder · encrypted keystore export round-trip', () => {
 		expect(recovered.address.toLowerCase()).toBe(address);
 		// Wrong password must fail — never silently return a different key.
 		await expect(Wallet.fromEncryptedJson(json, 'wrong')).rejects.toThrow();
-	}, 30_000);
+		// No per-test budget: this runs three real scrypt derivations at ethers'
+		// default keystore cost (N=131072) - encrypt, decrypt, wrong-password
+		// decrypt - which is ~31s on this box and slower under suite load. The
+		// point of the test is the round trip at the cost the UI actually uses, so
+		// it inherits the configured testTimeout rather than racing a stopwatch.
+	});
 });

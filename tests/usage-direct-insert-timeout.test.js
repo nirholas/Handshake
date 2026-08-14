@@ -37,7 +37,13 @@ describe('recordEvent direct-insert fallback (buffer down)', () => {
 		// never awaiting the DB write.
 		const ret = recordEvent({ userId: 'u1', kind: 'avatar_fetch' });
 		expect(ret).toBeUndefined();
-		expect(Date.now() - startedAt).toBeLessThan(50);
+		// The `sql` mock above never settles, so a recordEvent that awaited the
+		// write could not have returned here at all. The wall-clock bound is only a
+		// second smoke check on top of that, and it is set well under the 2500ms
+		// fallback budget rather than at a few milliseconds: a fork descheduled by
+		// its five busy peers can lose tens of milliseconds between two statements,
+		// which says nothing about whether this call blocks.
+		expect(Date.now() - startedAt).toBeLessThan(1_000);
 
 		// Wait past the 2.5s fallback budget (plus retry backoff) but far under 15s.
 		await new Promise((r) => setTimeout(r, 4_000));
