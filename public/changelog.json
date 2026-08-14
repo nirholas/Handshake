@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T18:22:30.219Z",
+	"generated_at": "2026-08-14T19:37:07.682Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -102,6 +102,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "A failed database migration can no longer freeze the schema in silence",
+			"summary": "Every deploy carries database migrations that must run before the new code does. When one of them failed, the runner printed a single line with the database's own error and stopped, naming neither the file that failed nor the migrations queued behind it. Those stayed unapplied and unmentioned, so the site ended up serving code that reads columns the database never got, and the first visible symptom was an unrelated-looking error on a live page. The runner now names the failing file, how many ran before it, and every migration still waiting, and the deploy step that catches a database running behind the code is now part of the documented deploy path instead of something you had to remember to run.",
+			"link": null,
+			"tags": [
+				"infra",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "A paid-call share link now previews on Slack, Telegram and LinkedIn",
 			"summary": "Every settled x402 call has a permalink whose social preview image is drawn on demand. Slack, Telegram and LinkedIn ask an image URL for its type and size before they fetch it, and this one answered \"method not allowed\" to that probe, so the card silently never appeared on those platforms. It answers them now. Three more fixes to the same card: a receipt is captioned with the network it actually settled on rather than always reading mainnet; a link shared in the seconds before its receipt finishes saving, or during a cache outage, is retried a minute later instead of being pinned to the generic card for an hour; and a damaged record shows a plain \"unknown\" rather than a \"NaNd ago\" timestamp or an invented amount.",
 			"link": "/pay",
@@ -118,6 +129,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "AgenC task lists no longer hang when a Solana provider goes quiet",
+			"summary": "Reading the AgenC task board scans the whole coordination program on Solana, the heaviest request we make of any provider. We already move to the next provider when one refuses us, but we had no answer for a provider that accepts the request and then never replies. Nothing was thrown, so nothing switched over, and the read sat there until the browser gave up. Each attempt now gets its own ten second budget, and a provider that runs past it is treated exactly like one that refused: parked for a cooldown, with the read retried on the next provider in the chain. If every provider stalls you get a clear try again shortly response instead of an endless wait.",
+			"link": "/docs/agenc",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -611,6 +633,16 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The example responses in four API guides now match what the API actually returns",
+			"summary": "The docs for ghost-copy, Trader Passport, the wallet portfolio, and the airdrop checker each show a sample JSON response so you can see the shape before you write any code. Those samples had fallen behind the endpoints: they were missing whole fields that the live API returns, including the timestamp on an airdrop scan, the window start and per-trade detail on a ghost-copy replay, and the issuer note, verification instructions, and generation time on a passport. Anyone building against the samples would have concluded those fields did not exist. Every sample was re-checked field by field against a live call to the running endpoint and corrected, and the places where a sample is deliberately shortened are now marked as shortened instead of looking complete.",
+			"link": "/docs/trader-passport",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The free fact-check lane is callable from a browser again, and two paid endpoints answer to the price you set",
 			"summary": "A site calling the fact checker from a browser got a confusing failure: the preflight check said the call was allowed, then the browser threw away the answer. The free daily lane was not sending the cross-origin headers the paid lane sends, so a perfectly good verdict never reached the page. Both lanes now answer identically, whether the check succeeds or the claim is rejected. Separately, the fact checker and the paid LLM proxy were the last two paid endpoints whose price was fixed in code: every other one can be repriced at deploy time, and now these two can too, with no code change. The IBM Granite health feed also stops reporting itself healthy when its own database read fails, so a dashboard cannot show green through an outage. Exploit-history and gas-oracle outages are now written to the server log rather than disappearing silently, which is the difference between an alert and a mystery.",
 			"link": "/docs/x402-endpoints",
@@ -876,6 +908,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "Three pieces of docs text that were too faint to read comfortably are now legible",
+			"summary": "An accessibility sweep of the documentation found three places where text sat below the readable-contrast standard against the surface behind it: the comment lines inside every code sample, which is where most of our samples put the explanation, the See what changed link on the page-freshness banner, and the Live label on runnable code blocks. All three came from the same habit of dimming text that was already dark, and all three are now above the standard in both the dark and light themes. The status page KPI labels got the same treatment. Nothing moved and no wording changed, the affected text is simply readable now.",
+			"link": "/docs/custody",
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "Token-to-3D calls return the real coin again, and receipts show the amount you actually paid",
 			"summary": "Paying to turn a Solana token into a 3D mesh handed back an untitled, untextured cube for most of today's coins, $THREE included. The server only knew how to read a token's name, symbol and artwork from the older of the two places Solana stores it, and every launch since the Token-2022 change keeps that information inside the coin's own account instead. Those coins now come back with their real name, symbol and logo baked onto the mesh. The same read now refuses an address that is not a coin at all, rather than charging for a blank cube, and the batch call's published example uses a coin that actually works if you copy it. Separately, the receipts page could not scale amounts paid on X Layer or in $THREE, so a one-tenth-of-a-cent payment could read as a raw 1000; both now display correctly.",
 			"link": "/docs/x402-endpoints",
@@ -947,6 +990,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Your agent's memory graph was always empty. It is not any more",
+			"summary": "Every memory your agent stores is scanned for the things it mentions: tokens, tickers, wallets, people, and the trading rules you told it to follow. Those become the nodes of a knowledge graph you can browse, so you can ask what your agent remembers about one specific token and read back every memory that touched it. The scan ran correctly and then failed at the last step, when it tried to save what it found, because of a type mismatch on one database column. The failure was recorded quietly rather than shown, so nothing ever looked broken: memories saved fine, search worked fine, and the graph simply came back empty for every agent, forever. The save now works, memories that were skipped get scanned the next time you open the graph, and a test covers the exact shape that broke.",
+			"link": "/docs/memory",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -11149,7 +11202,7 @@
 			"date": "2026-07-14",
 			"type": "launch",
 			"title": "End-User License Agreement",
-			"summary": "License terms for the three.ws Seeker/Saga app.",
+			"summary": "License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.",
 			"link": "/legal/eula",
 			"tags": [
 				"launch"
@@ -21274,6 +21327,16 @@
 		{
 			"date": "2026-06-21",
 			"type": "launch",
+			"title": "Content Policy",
+			"summary": "What you may publish, mint, and monetise on three.ws: prohibited content, agent behaviour, marketplace listings, and how we enforce.",
+			"link": "/legal/content-policy",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-06-21",
+			"type": "launch",
 			"title": "Credits",
 			"summary": "Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.",
 			"link": "/credits",
@@ -30165,8 +30228,8 @@
 		{
 			"date": "2026-04-27",
 			"type": "launch",
-			"title": "Terms of Use",
-			"summary": "Terms of service for three.ws.",
+			"title": "Terms of Service",
+			"summary": "The agreement between you and three.ws: your account, acceptable use, payments and on-chain activity, liability, and DMCA takedowns.",
 			"link": "/legal/tos",
 			"tags": [
 				"launch"

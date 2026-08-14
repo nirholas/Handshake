@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T18:22:30.133Z",
+	"generated_at": "2026-08-14T19:37:07.244Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6984,7 +6984,7 @@
 				{
 					"path": "/legal/eula",
 					"title": "End-User License Agreement",
-					"description": "License terms for the three.ws Seeker/Saga app.",
+					"description": "License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.",
 					"added": "2026-07-14",
 					"auth": null,
 					"indexable": true,
@@ -6993,8 +6993,8 @@
 				},
 				{
 					"path": "/legal/tos",
-					"title": "Terms of Use",
-					"description": "Terms of service for three.ws.",
+					"title": "Terms of Service",
+					"description": "The agreement between you and three.ws: your account, acceptable use, payments and on-chain activity, liability, and DMCA takedowns.",
 					"added": "2026-04-27",
 					"auth": null,
 					"indexable": true,
@@ -7014,8 +7014,8 @@
 				{
 					"path": "/legal/content-policy",
 					"title": "Content Policy",
-					"description": "What you may publish, mint, and monetise on the platform.",
-					"added": null,
+					"description": "What you may publish, mint, and monetise on three.ws: prohibited content, agent behaviour, marketplace listings, and how we enforce.",
+					"added": "2026-06-21",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

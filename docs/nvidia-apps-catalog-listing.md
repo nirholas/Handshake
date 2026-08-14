@@ -109,6 +109,43 @@ All in the repo, web-ready:
 - Full press kit: `public/brand/three-ws-press-kit.zip`
 - Screenshots: capture live from https://three.ws/forge (generation in progress plus result), https://three.ws/agora (3D world), and https://three.ws/character-library (rigged character grid) at 1920x1080
 
+## Second product record: the `<agent-3d>` digital-human embed
+
+A genuinely distinct shipping surface with its own NVIDIA story, filed as a separate portal product AFTER the main record is corrected. It targets the Digital Humans / conversational AI workload filter, which the main (Generative AI content creation) entry does not.
+
+**Product name:** three.ws Agent Embed (`<agent-3d>`)
+
+**Stage:** Shipping
+
+**Acceleration:** GPU Accelerated
+
+**Product URL:** https://three.ws/docs/embedding
+
+### Short description (about 130 characters)
+
+> One script tag puts a talking, lip-synced 3D AI agent on any website. Voice by NVIDIA Riva, facial animation by Audio2Face-3D.
+
+### Medium description (about 500 characters)
+
+> The `<agent-3d>` web component embeds a live, conversational 3D avatar on any site with one script tag: no plugins, no framework requirements. The avatar listens (NVIDIA Riva ASR), reasons (Nemotron via NIM APIs), speaks (Riva Magpie multilingual TTS), and moves its face in real time from NVIDIA Audio2Face-3D ARKit blendshape tracks, mapped at runtime onto whatever morph convention the visitor's avatar ships (ARKit-52, VRM vowels, Oculus visemes). Every reply is gated by NemoGuard content safety.
+
+### Technologies Used (this record)
+
+- Riva (ASR + Magpie TTS over NVCF gRPC)
+- Audio2Face (A2F-3D blendshape streams driving browser playback)
+- NIM APIs (Nemotron brains, NemoGuard safety)
+- CUDA Toolkit / cuDNN (the avatar bodies it renders come from the L4 fleet)
+
+Nothing else checked. TensorRT/Triton/Omniverse stay unchecked here too.
+
+### Links (this record)
+
+- Docs: https://three.ws/docs/embedding
+- Live A2F demo: https://three.ws/demos/audio2face
+- Voice stack source: https://github.com/nirholas/three.ws/tree/main/src/voice
+
+---
+
 ## Submission checklist
 
 1. Log in to the Inception portal, go to Profile, then Add product.
@@ -117,3 +154,6 @@ All in the repo, web-ready:
 4. Check every NVIDIA technology the form offers that appears in the list above; check nothing that does not.
 5. Upload the logo mark and OG image; add screenshots if the form accepts them.
 6. Submit. Listings are reviewed on a rolling basis; note the submission date in this doc when done.
+7. Correct the existing record per the Status section (move Riva/Audio2Face/NIM to Used, drop DeepVariant NIM) BEFORE adding anything new.
+8. Add the `<agent-3d>` embed as a second product using its section above. Do not file more records than these two: duplicates read as noise to the curator.
+9. Send the inclusion-request email in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) to inceptionprogram@nvidia.com and record the send date there.

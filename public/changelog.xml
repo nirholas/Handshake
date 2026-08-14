@@ -79,6 +79,14 @@
 			<description>Two of the scheduled jobs behind the trading fleet could fail without anything looking wrong. The job that reallocates budget across strategies talks to the database over a socket, and when that socket never opened the failure arrived as an object carrying no message at all. The job caught it, answered with an empty error string, and the scheduler recorded a success, so the health record stayed green while the loop did nothing. Failures of that kind are now recognised as what they are, a database that could not be reached, so the run is marked unhealthy and retried on the next tick instead of being logged as fine. Every page and endpoint that reads from the database inherits the same correction: this class of outage now returns a retryable service-unavailable response rather than an internal error. The fleet watchdog also gained a seventh check, over the calibration pass that measures whether a high-conviction coin actually wins as often as its score claims, so that loop can no longer go quiet unnoticed.</description>
 		</item>
 		<item>
+			<title>A failed database migration can no longer freeze the schema in silence</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:A failed database migration can no longer freeze the schema in silence</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Every deploy carries database migrations that must run before the new code does. When one of them failed, the runner printed a single line with the database's own error and stopped, naming neither the file that failed nor the migrations queued behind it. Those stayed unapplied and unmentioned, so the site ended up serving code that reads columns the database never got, and the first visible symptom was an unrelated-looking error on a live page. The runner now names the failing file, how many ran before it, and every migration still waiting, and the deploy step that catches a database running behind the code is now part of the documented deploy path instead of something you had to remember to run.</description>
+		</item>
+		<item>
 			<title>A paid-call share link now previews on Slack, Telegram and LinkedIn</title>
 			<link>https://three.ws/pay</link>
 			<guid isPermaLink="false">2026-08-14:A paid-call share link now previews on Slack, Telegram and LinkedIn</guid>
@@ -93,6 +101,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Add funds window hands you a Coinbase checkout with your three.ws wallet already filled in as the destination. That checkout was not told which step to open on, so Coinbase could land you on &quot;transfer from your Coinbase balance&quot;, which is no help at all if you reached Add funds precisely because you hold nothing yet. It now always opens on the buy step for the asset you picked (USDC or SOL, both settling on Solana). The suggested dollar amount is also rounded to real dollars and cents before it reaches Coinbase, so an amount worked out from a shortfall can no longer show up as something like $25.777777 on the checkout screen or in the window itself.</description>
+		</item>
+		<item>
+			<title>AgenC task lists no longer hang when a Solana provider goes quiet</title>
+			<link>https://three.ws/docs/agenc</link>
+			<guid isPermaLink="false">2026-08-14:AgenC task lists no longer hang when a Solana provider goes quiet</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Reading the AgenC task board scans the whole coordination program on Solana, the heaviest request we make of any provider. We already move to the next provider when one refuses us, but we had no answer for a provider that accepts the request and then never replies. Nothing was thrown, so nothing switched over, and the read sat there until the browser gave up. Each attempt now gets its own ten second budget, and a provider that runs past it is treated exactly like one that refused: parked for a cooldown, with the read retried on the next provider in the chain. If every provider stalls you get a clear try again shortly response instead of an endless wait.</description>
 		</item>
 		<item>
 			<title>AgenC task lists no longer hang when a Solana provider goes quiet</title>
@@ -455,6 +471,14 @@
 			<description>Every hour a scheduled job copies the latest crypto news into the permanent archive behind the markets pages, so that a story stays readable at its own link long after it has rotated out of the live feed. Before writing anything, the job asks Google Cloud for the credentials it needs. That request can come back empty for a moment, usually because the credential service itself is briefly unreachable rather than because anything is actually misconfigured, and the job treated that as a crash: it returned an unexplained internal error and raised an alert, which read as though the archive were broken. It now recognises a missing credential for what it is, records the hour as a skipped run with the reason stated plainly, and picks up again on the next pass. Nothing is lost when that happens, because each article is filed under a fingerprint of its own link, so the next successful run archives exactly the stories the skipped one would have and never files a duplicate. A genuine storage failure is still reported loudly.</description>
 		</item>
 		<item>
+			<title>The example responses in four API guides now match what the API actually returns</title>
+			<link>https://three.ws/docs/trader-passport</link>
+			<guid isPermaLink="false">2026-08-14:The example responses in four API guides now match what the API actually returns</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The docs for ghost-copy, Trader Passport, the wallet portfolio, and the airdrop checker each show a sample JSON response so you can see the shape before you write any code. Those samples had fallen behind the endpoints: they were missing whole fields that the live API returns, including the timestamp on an airdrop scan, the window start and per-trade detail on a ghost-copy replay, and the issuer note, verification instructions, and generation time on a passport. Anyone building against the samples would have concluded those fields did not exist. Every sample was re-checked field by field against a live call to the running endpoint and corrected, and the places where a sample is deliberately shortened are now marked as shortened instead of looking complete.</description>
+		</item>
+		<item>
 			<title>The free fact-check lane is callable from a browser again, and two paid endpoints answer to the price you set</title>
 			<link>https://three.ws/docs/x402-endpoints</link>
 			<guid isPermaLink="false">2026-08-14:The free fact-check lane is callable from a browser again, and two paid endpoints answer to the price you set</guid>
@@ -647,6 +671,14 @@
 			<description>The JSON schema checker at /api/x402/schema-check never read the request body, so every paid call charged the caller and answered that the requested feed was unsupported. It now reads the body it was always meant to, validates the changelog feed for real, and refuses an unknown target with a 400 before any payment settles. The per-call skill gate at /api/x402/skill-call answered browser preflight requests with a payment challenge and no cross-origin headers, which made it uncallable from any in-browser wallet; it now answers preflight correctly on every path, and a database outage returns a plain retry-shortly message instead of echoing internal configuration detail. The paid capacity probe at /api/x402/rate-limit-probe now only accepts metered routes as its target, so a paying caller cannot aim the server's own price lookup at an unrelated internal route. The remix endpoint's refusals (unknown source, empty instruction) are no longer recorded as payment leaks in the x402 ledger.</description>
 		</item>
 		<item>
+			<title>Three pieces of docs text that were too faint to read comfortably are now legible</title>
+			<link>https://three.ws/docs/custody</link>
+			<guid isPermaLink="false">2026-08-14:Three pieces of docs text that were too faint to read comfortably are now legible</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>An accessibility sweep of the documentation found three places where text sat below the readable-contrast standard against the surface behind it: the comment lines inside every code sample, which is where most of our samples put the explanation, the See what changed link on the page-freshness banner, and the Live label on runnable code blocks. All three came from the same habit of dimming text that was already dark, and all three are now above the standard in both the dark and light themes. The status page KPI labels got the same treatment. Nothing moved and no wording changed, the affected text is simply readable now.</description>
+		</item>
+		<item>
 			<title>Token-to-3D calls return the real coin again, and receipts show the amount you actually paid</title>
 			<link>https://three.ws/docs/x402-endpoints</link>
 			<guid isPermaLink="false">2026-08-14:Token-to-3D calls return the real coin again, and receipts show the amount you actually paid</guid>
@@ -701,6 +733,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Seeding an agent from your GitHub profile and repositories stored the facts correctly, but filed all of them in the tier the agent only consults when a message happens to match one. So the seed worked and yet asking your agent an open question like 'what do you know about my work?' could come back with nothing, because nothing in the question named a repository. The five top-ranked facts from a seed now sit in the context the agent always carries, so they ground an answer without being prompted for by name; the rest stay searchable exactly as before and still surface when you ask about that specific project. Facts also keep the order they were distilled in, which matters because each reply carries only the ten strongest memories, and until now that cut was made arbitrarily among facts that all scored the same. Nothing about what is read or stored changes: the seed still reads only the profile, repositories, and READMEs you ticked, and disconnecting GitHub still deletes every fact it wrote across all your agents.</description>
+		</item>
+		<item>
+			<title>Your agent's memory graph was always empty. It is not any more</title>
+			<link>https://three.ws/docs/memory</link>
+			<guid isPermaLink="false">2026-08-14:Your agent's memory graph was always empty. It is not any more</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every memory your agent stores is scanned for the things it mentions: tokens, tickers, wallets, people, and the trading rules you told it to follow. Those become the nodes of a knowledge graph you can browse, so you can ask what your agent remembers about one specific token and read back every memory that touched it. The scan ran correctly and then failed at the last step, when it tried to save what it found, because of a type mismatch on one database column. The failure was recorded quietly rather than shown, so nothing ever looked broken: memories saved fine, search worked fine, and the graph simply came back empty for every agent, forever. The save now works, memories that were skipped get scanned the next time you open the graph, and a test covers the exact shape that broke.</description>
 		</item>
 		<item>
 			<title>Your agent's memory graph was never being built, and now it is</title>
@@ -8460,7 +8500,7 @@
 			<guid isPermaLink="false">2026-07-14:End-User License Agreement</guid>
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>License terms for the three.ws Seeker/Saga app.</description>
+			<description>License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.</description>
 		</item>
 		<item>
 			<title>&quot;Deploy onchain&quot; now opens the real deploy flow with your model loaded</title>
@@ -16215,6 +16255,14 @@
 			<description>Configure your 3D agent to trade Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and Telegram alerts, then arm it in simulate or live mode. Every action is graded against the outcome.</description>
 		</item>
 		<item>
+			<title>Content Policy</title>
+			<link>https://three.ws/legal/content-policy</link>
+			<guid isPermaLink="false">2026-06-21:Content Policy</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What you may publish, mint, and monetise on three.ws: prohibited content, agent behaviour, marketplace listings, and how we enforce.</description>
+		</item>
+		<item>
 			<title>Credits</title>
 			<link>https://three.ws/credits</link>
 			<guid isPermaLink="false">2026-06-21:Credits</guid>
@@ -23127,12 +23175,12 @@
 			<description>What data three.ws collects, why we hold it, who we share it with, how long we keep it, and the controls you have over it.</description>
 		</item>
 		<item>
-			<title>Terms of Use</title>
+			<title>Terms of Service</title>
 			<link>https://three.ws/legal/tos</link>
-			<guid isPermaLink="false">2026-04-27:Terms of Use</guid>
+			<guid isPermaLink="false">2026-04-27:Terms of Service</guid>
 			<pubDate>Mon, 27 Apr 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Terms of service for three.ws.</description>
+			<description>The agreement between you and three.ws: your account, acceptable use, payments and on-chain activity, liability, and DMCA takedowns.</description>
 		</item>
 		<item>
 			<title>Tutorial · Build a custom skill</title>
