@@ -1572,7 +1572,7 @@ function calRow(c) {
 			<div class="cal-real" style="width:${hasData ? real : 0}%"></div>
 			<div class="cal-pred" style="left:${c.predicted}%"></div>
 		</div>
-		<div class="cal-val">${hasData ? `${real}%` : '<span style="color:var(--faint)">—</span>'}<small>claims ${c.predicted}%${c.realized_spike != null ? ` · ran 3× ${c.realized_spike}%` : ''}</small></div>
+		<div class="cal-val">${hasData ? `${real}%` : '<span style="color:var(--faint)">n/a</span>'}<small>claims ${c.predicted}%${c.realized_spike != null ? ` · ran 3× ${c.realized_spike}%` : ''}</small></div>
 	</div>`;
 }
 
