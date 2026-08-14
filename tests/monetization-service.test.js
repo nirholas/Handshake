@@ -76,6 +76,8 @@ const { recordRevenueEvent, getAvailableBalance } = await import('../api/_lib/mo
 const { calculateFee, getFeeBps } = await import('../api/_lib/fee.js');
 const { default: pricesHandler } = await import('../api/monetization/prices.js');
 const { default: revenueHandler } = await import('../api/monetization/revenue.js');
+const { default: walletHandler } = await import('../api/monetization/wallet.js');
+const { default: withdrawalsHandler } = await import('../api/monetization/withdrawals.js');
 
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
@@ -433,6 +435,40 @@ describe('prices endpoint (setSkillPrices)', () => {
 		expect(body.error).toBe('validation_error');
 	});
 
+	it('rejects a price above the ceiling with 400 rather than overflowing the column', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		// 1e30 USDC becomes 1e36 atomic units, far past the bigint `amount` column.
+		// Without the ceiling this reached Postgres and came back as a 500.
+		const { status, body } = await invoke(pricesHandler, {
+			method: 'PUT',
+			url: '/api/monetization/prices',
+			body: { agent_id: agent.id, skill_name: 'echo', price_usdc: 1e30 },
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+		// The ownership lookup must not even have run: validation fails first.
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
+	it('rejects a non-finite price with 400', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		// JSON.parse('1e400') is Infinity, so a caller can put a non-finite number
+		// on the wire even though JSON.stringify can never emit one.
+		const { status, body } = await invoke(pricesHandler, {
+			method: 'PUT',
+			url: '/api/monetization/prices',
+			body: `{"agent_id":"${agent.id}","skill_name":"echo","price_usdc":1e400}`,
+		});
+
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+	});
+
 	it('rejects an invalid skill_name with a validation error', async () => {
 		const { agent, session } = createTestAgent();
 		authState.session = session;
@@ -580,6 +616,36 @@ describe('revenue endpoint (getCreatorSalesData)', () => {
 		expect(body.event_count).toBe(0);
 		expect(body.by_skill).toEqual([]);
 		expect(body.by_day).toEqual([]);
+	});
+
+	it('bounds each period to its own window and leaves `all` unbounded', async () => {
+		const DAY_MS = 86_400_000;
+		for (const [period, expectedMs] of [['1d', DAY_MS], ['30d', 30 * DAY_MS], ['90d', 90 * DAY_MS]]) {
+			sqlState.calls = [];
+			sqlState.queue = [];
+			authState.session = { id: 'user-1' };
+			sqlState.queue.push([{ gross_total: 0n, fee_total: 0n, net_total: 0n, event_count: 0 }]);
+			sqlState.queue.push([]);
+			sqlState.queue.push([]);
+
+			const { status } = await invoke(revenueHandler, {
+				method: 'GET',
+				url: `/api/monetization/revenue?period=${period}`,
+			});
+
+			expect(status).toBe(200);
+			const [, fromDate, toDate] = sqlState.calls[0].values;
+			expect(toDate.getTime() - fromDate.getTime()).toBe(expectedMs);
+		}
+
+		sqlState.calls = [];
+		sqlState.queue = [];
+		sqlState.queue.push([{ gross_total: 0n, fee_total: 0n, net_total: 0n, event_count: 0 }]);
+		sqlState.queue.push([]);
+		sqlState.queue.push([]);
+		await invoke(revenueHandler, { method: 'GET', url: '/api/monetization/revenue?period=all' });
+		const [, allFrom] = sqlState.calls[0].values;
+		expect(allFrom.getFullYear()).toBeLessThanOrEqual(2020);
 	});
 
 	it('returns 401 when unauthenticated', async () => {

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "The free object library can no longer be emptied by one bad upload",
+			"summary": "The CC0 prop library at /objects reads a single index file from the CDN. If that file were ever uploaded truncated or in the wrong shape, the gallery treated it as a library with nothing in it and told the CDN to remember that answer for the next five minutes, so a bad upload kept the shelves bare long after it was replaced. A damaged index is now handled the same way as the CDN being briefly unreachable: the page stays quiet, nothing gets cached, and the props come back on the very next request. Two smaller fixes went with it: a request with a broken page cursor (a limit of \"abc\", a negative offset) is rejected outright instead of first fetching an index it was never going to use, and the developer documentation no longer claims the library API can be called from any website, which it cannot; it answers three.ws and its partner sites, and everything it points at is still yours to download and reuse anywhere.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/objects"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "The agent directory describes itself correctly in all 84 languages again",
 			"summary": "The English description Google and every social preview show for the agent directory was updated a while back to say the directory spans Solana and every supported EVM chain. The 84 translated versions were never updated with it, so a reader in Spanish, Japanese, Arabic or any other language got the older, vaguer line that named no chain at all. All 84 now carry the current wording, with Solana and three.ws left in their real spelling rather than bent to fit each language's grammar. Retired copy was cleared out at the same time: eight strings that no page shows anymore had been sitting in every one of the 84 catalogs, which is 672 dead entries the site was shipping to readers for no reason.",
 			"tags": [
