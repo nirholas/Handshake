@@ -16,6 +16,7 @@ import {
 	buildMasker,
 	lintLocale,
 	mergeOrdered,
+	pruneStale,
 	missingKeys,
 	untranslatedCount,
 	flatten,
@@ -182,5 +183,51 @@ describe('merge + diff', () => {
 		expect(getDeep(merged, 'b.d')).toBe('tres'); // preserved
 		expect('stale' in merged).toBe(false); // pruned (not in source)
 		expect(Object.keys(flatten(merged)).sort()).toEqual(['a', 'b.c', 'b.d']);
+	});
+});
+
+// One key renamed in the source is 84 lint failures, one per catalog, and the
+// only cure used to be a full translate run, so a purely subtractive fix was
+// hostage to a working backend. `npm run i18n:prune` is that fix standalone.
+describe('pruneStale', () => {
+	const source = { a: '1', b: { c: '2', d: '3' } };
+
+	it('drops keys the source no longer defines and reports them by dotted name', () => {
+		const target = { a: 'uno', b: { c: 'dos', d: 'tres', gone: 'x' }, retired: 'y' };
+		const { pruned, removed } = pruneStale(source, target);
+		expect(removed.sort()).toEqual(['b.gone', 'retired']);
+		expect(Object.keys(flatten(pruned)).sort()).toEqual(['a', 'b.c', 'b.d']);
+	});
+
+	// The whole point of a separate prune: unlike mergeOrdered it must never
+	// materialize a key the locale has not been translated for. An empty string
+	// there reads as "present but blank", which drops the language out of the
+	// runtime manifest and hides the work from the next translate run.
+	it('never invents an empty value for a key the target has not translated yet', () => {
+		const { pruned, removed } = pruneStale(source, { a: 'uno' });
+		expect(removed).toEqual([]);
+		expect(Object.keys(flatten(pruned))).toEqual(['a']);
+		expect(missingKeys(source, pruned).sort()).toEqual(['b.c', 'b.d']);
+	});
+
+	it('removes a namespace the source retired, naming its leaves not the namespace', () => {
+		const target = { a: 'uno', b: { c: 'dos', d: 'tres' }, old_page: { title: 'x', lede: 'y' } };
+		const { pruned, removed } = pruneStale(source, target);
+		expect(removed.sort()).toEqual(['old_page.lede', 'old_page.title']);
+		expect('old_page' in pruned).toBe(false);
+	});
+
+	// A source key that became a namespace (or the reverse) is a rename, not a
+	// value: keeping the old leaf would leave the runtime reading a string where
+	// it now expects an object.
+	it('drops a leaf the source turned into a namespace', () => {
+		const { pruned, removed } = pruneStale(source, { a: 'uno', b: 'stale string' });
+		expect(removed).toEqual(['b']);
+		expect(pruned).toEqual({ a: 'uno' });
+	});
+
+	it('is idempotent: a pruned catalog has nothing left to drop', () => {
+		const once = pruneStale(source, { a: 'uno', retired: 'y' }).pruned;
+		expect(pruneStale(source, once).removed).toEqual([]);
 	});
 });
