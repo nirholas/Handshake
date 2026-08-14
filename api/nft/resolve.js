@@ -102,12 +102,29 @@ export default wrap(async (req, res) => {
 	};
 
 	if (chain === 'solana') {
+		// `getAsset` is a DAS method, and Helius is the only provider in our stack
+		// that serves it. Reading SOLANA_RPC_URL here pointed the call at whatever
+		// general-purpose RPC was configured (production runs magicblock), which
+		// answers a JSON-RPC -32601 that the code below then reported to the user as
+		// "Asset not found": a real, resolvable NFT read as nonexistent. dasRpcUrl()
+		// is the same resolver api/_lib/nft-gate.js gates on, and prefers the
+		// dedicated HELIUS_API_KEY.
+		const rpcUrl = dasRpcUrl();
+		if (!rpcUrl) {
+			return error(
+				res,
+				503,
+				'not_configured',
+				'HELIUS_API_KEY not configured; solana nft resolution is unavailable',
+			);
+		}
 		let resp;
 		try {
-			resp = await fetch(env.SOLANA_RPC_URL, {
+			resp = await fetch(rpcUrl, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getAsset', params: { id } }),
+				signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
 			});
 		} catch (err) {
 			console.error('[nft/resolve] Helius network error', err?.message);
@@ -122,12 +139,27 @@ export default wrap(async (req, res) => {
 				serverError(res, 502, 'upstream_error', new Error(`Helius error ${resp.status}`)),
 			);
 		}
-		const data = await resp.json();
+		const data = await readJsonBody(resp);
+		if (!data) {
+			console.error('[nft/resolve] Helius returned a non-JSON body');
+			return serveStaleOr(() =>
+				serverError(res, 502, 'upstream_error', new Error('Helius returned a non-JSON body')),
+			);
+		}
 		if (data.error) {
 			const msg = data.error.message || JSON.stringify(data.error);
+			// -32601 is "the endpoint does not implement this method", an operator
+			// misconfiguration. Only a real DAS miss is a 404.
+			if (data.error.code === -32601) {
+				console.error('[nft/resolve] configured RPC does not serve DAS getAsset');
+				return serveStaleOr(() =>
+					serverError(res, 502, 'upstream_error', new Error(`DAS getAsset unsupported: ${msg}`)),
+				);
+			}
 			return error(res, 404, 'not_found', `Asset not found: ${msg}`);
 		}
 		const asset = data.result;
+		if (!asset) return error(res, 404, 'not_found', `Asset not found: ${id}`);
 		const name = asset?.content?.metadata?.name || asset?.id || id;
 		const files = asset?.content?.files || [];
 		const modelFile = files.find((f) => f.mime && f.mime.startsWith('model/'));
@@ -135,10 +167,14 @@ export default wrap(async (req, res) => {
 			asset?.content?.links?.image ||
 			files.find((f) => f.mime && f.mime.startsWith('image/'))?.uri ||
 			null;
+		// The chat NFT viewer hands `model` and `image` straight to GLTFLoader and an
+		// <img>, and a browser cannot fetch an ipfs:// URI. Metadata that stores raw
+		// ipfs:// pointers rendered as a blank canvas; resolveGateway is the same
+		// normalizer the Solana agent index uses and leaves https URLs untouched.
 		const result = await store({
 			name,
-			image: imageUrl,
-			model: modelFile?.uri || null,
+			image: resolveGateway(imageUrl),
+			model: resolveGateway(modelFile?.uri) || null,
 			mime: modelFile?.mime || null,
 			source: 'helius',
 		});
@@ -175,7 +211,7 @@ export default wrap(async (req, res) => {
 	const url = `https://${host}.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${encodeURIComponent(contractAddress)}&tokenId=${encodeURIComponent(tokenId)}`;
 	let resp;
 	try {
-		resp = await fetch(url);
+		resp = await fetch(url, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
 	} catch (err) {
 		console.error('[nft/resolve] Alchemy network error', err?.message);
 		return serveStaleOr(() =>
@@ -192,17 +228,24 @@ export default wrap(async (req, res) => {
 			serverError(res, 502, 'upstream_error', new Error(`Alchemy error ${resp.status}`)),
 		);
 	}
-	const data = await resp.json();
+	const data = await readJsonBody(resp);
+	if (!data) {
+		console.error('[nft/resolve] Alchemy returned a non-JSON body');
+		return serveStaleOr(() =>
+			serverError(res, 502, 'upstream_error', new Error('Alchemy returned a non-JSON body')),
+		);
+	}
 	const name = data.name || data.contract?.name || id;
-	const animationUrl = data.raw?.metadata?.animation_url || null;
+	const animationUrl = resolveGateway(data.raw?.metadata?.animation_url);
 	const imageUrl = data.image?.cachedUrl || data.media?.[0]?.gateway || null;
 
-	// animation_url may be a glTF/GLB
+	// animation_url may be a glTF/GLB. Test the extension on the path only: a
+	// gateway URL carries a query string, and ".glb?filename=x" ends in neither.
 	let model = null;
 	let mime = null;
 	if (animationUrl && /\.(glb|gltf)(\?|$)/i.test(animationUrl)) {
 		model = animationUrl;
-		mime = animationUrl.toLowerCase().endsWith('.gltf') ? 'model/gltf+json' : 'model/gltf-binary';
+		mime = /\.gltf(\?|$)/i.test(animationUrl) ? 'model/gltf+json' : 'model/gltf-binary';
 	}
 
 	const result = await store({ name, image: imageUrl, model, mime, source: 'alchemy' });
