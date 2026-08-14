@@ -960,7 +960,7 @@ export const env = {
 		return opt('X402_ADVERTISE_BASE', 'false') === 'true';
 	},
 	// CAIP-2 id of a local `solana-test-validator` lane, e.g.
-	// `solana:8p5TJ23ZcDXq5QA3vGbpf2sXZ25f`. Set only when running a proof or a
+	// `solana:8p5TJ23ZcDXq5QA3vGbpf2sXZ25f69YW`. Set only when running a proof or a
 	// test against a validator on this machine; unset everywhere deployed, which
 	// leaves the recognized Solana networks at mainnet + devnet. See
 	// api/_lib/x402/solana-networks.js and specs/inference-receipts.md.
