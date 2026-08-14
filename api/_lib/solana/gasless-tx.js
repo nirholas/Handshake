@@ -129,7 +129,7 @@ export async function buildGaslessPurchaseTx({
 
 	const instructions = [];
 
-	// Platform fee leg — same transaction, atomic with the seller leg. It goes
+	// Platform fee leg, same transaction, atomic with the seller leg. It goes
 	// FIRST because @solana/pay's validateTransfer only ever inspects the LAST
 	// instruction: with the fee leg last, confirm would decode the treasury
 	// transfer, find no reference key on it, and reject a perfectly good payment

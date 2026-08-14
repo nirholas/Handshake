@@ -2,9 +2,9 @@
  * Solana Pay TRANSACTION request for a pending skill purchase.
  *
  *   GET  /api/purchase/skill?reference=<base58>
- *        → { label, icon } — what the wallet shows before it asks to sign.
+ *        → { label, icon }: what the wallet shows before it asks to sign.
  *   POST /api/purchase/skill?reference=<base58>   body: { account: <base58> }
- *        → { transaction: <base64>, message } — the prepared purchase transfer.
+ *        → { transaction: <base64>, message }: the prepared purchase transfer.
  *
  * Why this exists next to the plain `solana:<recipient>?amount=…` transfer-request
  * QR (src/shared/skill-purchase.js): a transfer request can only express ONE leg
@@ -159,7 +159,7 @@ export default wrap(async (req, res) => {
 		);
 	}
 
-	// Creator leg LAST, carrying the Solana Pay reference — this is the
+	// Creator leg LAST, carrying the Solana Pay reference: this is the
 	// instruction findReference locates and validateTransfer checks.
 	const creatorIx = createTransferCheckedInstruction(
 		buyerAta,
