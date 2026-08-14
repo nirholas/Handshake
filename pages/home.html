@@ -363,7 +363,12 @@
 </section>
 
 <!-- ── CAPABILITY STRIP ───────────────────────────────────────────── -->
-<div class="capability-strip" id="capability-strip" aria-hidden="true">
+<!-- tabindex="-1" is load-bearing: the strip clips a wider-than-viewport track
+     with overflow:hidden, and Chrome puts every such scroll container in the tab
+     order. That made an aria-hidden decorative marquee keyboard-focusable, so
+     keyboard users landed on a stop screen readers announce as nothing at all
+     (axe aria-hidden-focus). The negative tabindex opts the scroller out. -->
+<div class="capability-strip" id="capability-strip" aria-hidden="true" tabindex="-1">
 	<div class="cap-fade cap-fade--l"></div>
 	<div class="cap-track">
 		<div class="cap-inner">

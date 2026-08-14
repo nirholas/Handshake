@@ -1094,10 +1094,13 @@
 					.replace(/ /g, '-');
 			}
 
+			// Returns whether the anchor actually matched something on the page, so a
+			// caller can tell "scrolled to the heading" from "there is no such
+			// heading here" and decide what the hash meant instead.
 			function scrollToAnchor(anchor) {
 				if (!anchor) {
 					window.scrollTo({ top: 0 });
-					return;
+					return true;
 				}
 				let target = document.getElementById(anchor);
 				if (!target) {
@@ -1111,6 +1114,7 @@
 				}
 				if (target) target.scrollIntoView({ block: 'start' });
 				else window.scrollTo({ top: 0 });
+				return Boolean(target);
 			}
 
 			function buildSidebar(filter) {
@@ -1514,7 +1518,25 @@
 					renderLoadFailure(content, path, anchor, err);
 				}
 
-				scrollToAnchor(anchor);
+				// A cold load of /docs/<page>#<hash> is ambiguous. Usually the hash is
+				// a heading on that page, which is why currentRoute() reads it that
+				// way. But the sidebar and the prev/next pager mint doc-path hashes,
+				// so the URL a reader copies after clicking one (for example
+				// /docs/payment-sessions#custody) means "open the custody doc". When
+				// the hash matches no heading here but does name a real doc, follow
+				// it, and rewrite the address bar to that doc's own path so the link
+				// is shareable the next time.
+				const routed = anchor && anchor !== path && ALL_PAGES.find(p => p.path === anchor);
+				if (routed && !scrollToAnchor(anchor)) {
+					history.replaceState(null, '', '/docs/' + routed.path);
+					// The served <head> still describes the page in the URL we arrived
+					// on, so the tab would name the wrong doc after this redirect.
+					document.title = 'Docs: ' + routed.label + ' · three.ws';
+					loadedPath = routed.path;
+					await loadPage(routed.path, '');
+					return;
+				}
+				if (!routed) scrollToAnchor(anchor);
 				buildSidebar(document.getElementById('search-input').value);
 			}
 

@@ -8,7 +8,9 @@ box opens over whatever you are doing. Type a page name, a URL fragment, or a
 plain-English goal. Press Enter to go there. Press Escape to carry on where you
 were.
 
-`/` also opens it, as long as you are not already typing in a field.
+`/` also opens it, as long as you are not already typing in a field and the page
+itself did not claim that key first (pages with their own "press / to search"
+hint keep it; Atlas listens in the bubble phase and stands down).
 
 There are two halves, and the second one is the interesting one.
 

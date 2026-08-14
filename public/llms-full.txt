@@ -1799,6 +1799,12 @@ URL: https://three.ws/docs
 
 Full documentation: SDKs, API reference, embedding, agent system, smart contracts.
 
+### Docs · Site load performance
+
+URL: https://three.ws/docs/site-performance
+
+The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.
+
 ### Docs · Farcaster memory seeding
 
 URL: https://three.ws/docs/farcaster-memory-seeding
@@ -1822,6 +1828,12 @@ Seed an agent's memory from your X account behind an explicit, versioned consent
 URL: https://three.ws/docs/inference-node-operator
 
 Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.
+
+### Docs · pump.fun first-claims channel
+
+URL: https://three.ws/docs/pump-claims-channel
+
+A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.
 
 ### Docs · Agent tokens
 
@@ -4221,13 +4233,13 @@ What data three.ws collects, why we hold it, who we share it with, how long we k
 
 URL: https://three.ws/legal/eula
 
-License terms for the three.ws Seeker/Saga app.
+License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.
 
-### Terms of Use
+### Terms of Service
 
 URL: https://three.ws/legal/tos
 
-Terms of service for three.ws.
+The agreement between you and three.ws: your account, acceptable use, payments and on-chain activity, liability, and DMCA takedowns.
 
 ### Risk Disclosure
 
@@ -4239,7 +4251,7 @@ Risk disclosure for real-funds features: experimental software, total-loss risk,
 
 URL: https://three.ws/legal/content-policy
 
-What you may publish, mint, and monetise on the platform.
+What you may publish, mint, and monetise on three.ws: prohibited content, agent behaviour, marketplace listings, and how we enforce.
 
 ## Machine-readable
 

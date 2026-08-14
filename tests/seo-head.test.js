@@ -114,3 +114,95 @@ describe('the canonical contract check-pages sweeps against', () => {
 		expect(canonicalOf('<head><title>x</title></head>')).toBeNull();
 	});
 });
+
+// A shared shell that carries a member route's canonical exempts exactly that
+// one route from the rewrite, because rewriteHead reads a matching canonical as
+// "this page authored its own meta". The result is invisible from every other
+// route in the section: /cookbook/text-to-3d-cli shipped the generic recipe
+// shell title and description for months while its four sibling recipes were
+// stamped correctly. scripts/inject-seo-meta.mjs refuses to write a member
+// route's meta onto a shared shell, but that guard landed after the stamp did
+// and never removes an existing one, so the invariant is pinned here instead.
+describe('shared shells never exempt one of their own routes', () => {
+	const vercel = JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+
+	// The router rule inject-seo-meta.mjs resolves against: GET routes whose
+	// dest lands on a static .html file, with $1-style captures expanded.
+	const router = (vercel.routes || [])
+		.filter((r) => r && typeof r.src === 'string' && typeof r.dest === 'string')
+		.filter((r) => !r.methods || r.methods.includes('GET'))
+		.map((r) => {
+			const dest = r.dest.split('?')[0];
+			try {
+				return { re: new RegExp(r.src.startsWith('^') ? r.src : `^${r.src}$`), dest };
+			} catch {
+				return null;
+			}
+		})
+		.filter(Boolean);
+
+	function resolveShell(routePath) {
+		for (const { re, dest } of router) {
+			const m = re.exec(routePath);
+			if (!m) continue;
+			const expanded = dest.replace(/\$(\d)/g, (_, i) => m[Number(i)] ?? '');
+			if (!expanded.endsWith('.html')) continue;
+			const rel = expanded.replace(/^\//, '');
+			for (const base of ['pages', 'public', '.']) {
+				const file = path.join(ROOT, base, rel);
+				try {
+					return { file, html: readFileSync(file, 'utf8') };
+				} catch {
+					continue;
+				}
+			}
+		}
+		return null;
+	}
+
+	const routesByShell = new Map();
+	for (const section of pagesJson.sections || []) {
+		for (const page of section.pages || []) {
+			if (!page.path || page.path.startsWith('http')) continue;
+			if (page.indexable === false || page.auth === 'required') continue;
+			const shell = resolveShell(page.path);
+			if (!shell) continue;
+			if (!routesByShell.has(shell.file)) routesByShell.set(shell.file, { html: shell.html, paths: [] });
+			routesByShell.get(shell.file).paths.push(page.path);
+		}
+	}
+
+	it('finds the known shared shells', () => {
+		const shared = [...routesByShell.values()].filter((s) => s.paths.length > 1);
+		expect(shared.length).toBeGreaterThan(0);
+	});
+
+	// A "member shell" serves only descendants of some parent path and never the
+	// parent itself: pages/recipe.html answers the four /cookbook/<slug> recipes
+	// but not /cookbook, which has its own file. Every route it serves is a peer,
+	// so it has no route of its own to author a head for, and claiming one is
+	// always the bug. Shells that do own a route are excluded by construction:
+	// docs/index.html serves /docs alongside /docs/*, and pages/forge.html serves
+	// /forge next to /image-to-3d and /forge-max, which share no parent at all.
+	function memberShellParent(paths) {
+		const parents = new Set(paths.map((p) => p.slice(0, p.lastIndexOf('/')) || '/'));
+		if (parents.size !== 1) return null;
+		const parent = [...parents][0];
+		// Sharing the site root is not a family: pages/forge.html answers /forge,
+		// /image-to-3d and /forge-max, three unrelated top-level products, and the
+		// head it ships is genuinely /forge's.
+		if (parent === '/') return null;
+		return paths.includes(parent) ? null : parent;
+	}
+
+	it('rewrites every catalogued route a member shell serves', () => {
+		const exempt = [];
+		for (const [file, { html, paths }] of routesByShell) {
+			if (paths.length < 2 || !memberShellParent(paths)) continue;
+			for (const p of paths) {
+				if (rewriteHead(p, html) === null) exempt.push(`${path.relative(ROOT, file)} exempts ${p}`);
+			}
+		}
+		expect(exempt).toEqual([]);
+	});
+});

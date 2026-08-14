@@ -83,7 +83,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 820 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 822 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -95,7 +95,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 820 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 822 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -104,11 +104,27 @@
 			<p class="sm-section-desc">The 9 most recently launched pages, straight to the live surface.</p>
 			<ul class="sm-list">
 				<li>
+					<a href="/docs/site-performance">
+						<span class="sm-new-date">Aug 14, 2026</span>
+						<span class="sm-title">Docs · Site load performance</span>
+						<span class="sm-path">/docs/site-performance</span>
+						<span class="sm-desc">The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/docs/likeness-eval">
 						<span class="sm-new-date">Aug 14, 2026</span>
 						<span class="sm-title">Docs · Likeness evaluation</span>
 						<span class="sm-path">/docs/likeness-eval</span>
 						<span class="sm-desc">How three.ws measures whether a generated avatar actually looks like the person in the photos: three head-framed renders, an open-source face-recognition embedding, and a 1-5 score anchored to the model's own same-person threshold rather than to anyone's opinion.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/pump-claims-channel">
+						<span class="sm-new-date">Aug 14, 2026</span>
+						<span class="sm-title">Docs · pump.fun first-claims channel</span>
+						<span class="sm-path">/docs/pump-claims-channel</span>
+						<span class="sm-desc">A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.</span>
 					</a>
 				</li>
 				<li>
@@ -157,22 +173,6 @@
 						<span class="sm-title">Reputation Staking Market</span>
 						<span class="sm-path">/reputation/market</span>
 						<span class="sm-desc">Stake conviction on an agent and earn from its attested action history: escrowed principal, per-epoch yield derived from signed on-chain attestations, withdraw any time.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/x-memory-seeding">
-						<span class="sm-new-date">Aug 12, 2026</span>
-						<span class="sm-title">Docs · X memory seeding</span>
-						<span class="sm-path">/docs/x-memory-seeding</span>
-						<span class="sm-desc">Seed an agent's memory from your X account behind an explicit, versioned consent: only your profile and recent original public posts are read, they are distilled into short facts (never stored verbatim), and revoking consent or disconnecting X deletes every memory the grant produced.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/inference-node-operator">
-						<span class="sm-new-date">Aug 12, 2026</span>
-						<span class="sm-title">Docs · Run an inference node</span>
-						<span class="sm-path">/docs/inference-node-operator</span>
-						<span class="sm-desc">Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.</span>
 					</a>
 				</li>
 			</ul>
@@ -2262,7 +2262,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>362</span></h2>
+				<h2>Learn<span class="sm-count" data-count>364</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -2271,6 +2271,13 @@
 						<span class="sm-title">Docs</span>
 						<span class="sm-path">/docs</span>
 						<span class="sm-desc">Full documentation: SDKs, API reference, embedding, agent system, smart contracts.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/site-performance">
+						<span class="sm-title">Docs · Site load performance</span>
+						<span class="sm-path">/docs/site-performance</span>
+						<span class="sm-desc">The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.</span>
 					</a>
 				</li>
 				<li>
@@ -2299,6 +2306,13 @@
 						<span class="sm-title">Docs · Run an inference node</span>
 						<span class="sm-path">/docs/inference-node-operator</span>
 						<span class="sm-desc">Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/pump-claims-channel">
+						<span class="sm-title">Docs · pump.fun first-claims channel</span>
+						<span class="sm-path">/docs/pump-claims-channel</span>
+						<span class="sm-desc">A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.</span>
 					</a>
 				</li>
 				<li>
@@ -5109,14 +5123,14 @@
 					<a href="/legal/eula">
 						<span class="sm-title">End-User License Agreement</span>
 						<span class="sm-path">/legal/eula</span>
-						<span class="sm-desc">License terms for the three.ws Seeker/Saga app.</span>
+						<span class="sm-desc">License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.</span>
 					</a>
 				</li>
 				<li>
 					<a href="/legal/tos">
-						<span class="sm-title">Terms of Use</span>
+						<span class="sm-title">Terms of Service</span>
 						<span class="sm-path">/legal/tos</span>
-						<span class="sm-desc">Terms of service for three.ws.</span>
+						<span class="sm-desc">The agreement between you and three.ws: your account, acceptable use, payments and on-chain activity, liability, and DMCA takedowns.</span>
 					</a>
 				</li>
 				<li>
@@ -5130,7 +5144,7 @@
 					<a href="/legal/content-policy">
 						<span class="sm-title">Content Policy</span>
 						<span class="sm-path">/legal/content-policy</span>
-						<span class="sm-desc">What you may publish, mint, and monetise on the platform.</span>
+						<span class="sm-desc">What you may publish, mint, and monetise on three.ws: prohibited content, agent behaviour, marketplace listings, and how we enforce.</span>
 					</a>
 				</li>
 			</ul>

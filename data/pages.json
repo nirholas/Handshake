@@ -2408,6 +2408,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/site-performance",
+					"title": "Docs · Site load performance",
+					"description": "The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-14"
+				},
+				{
 					"path": "/docs/farcaster-memory-seeding",
 					"title": "Docs · Farcaster memory seeding",
 					"description": "Give an agent your Farcaster voice with explicit consent: ownership is proved by signing a challenge with a wallet the fid itself verified on the protocol (Solana first), only your public profile and casts are read, and revoking the grant deletes every memory it produced.",
@@ -2438,6 +2446,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-12"
+				},
+				{
+					"path": "/docs/pump-claims-channel",
+					"title": "Docs · pump.fun first-claims channel",
+					"description": "A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-14"
 				},
 				{
 					"path": "/docs/agent-tokens",
@@ -5436,15 +5452,15 @@
 				{
 					"path": "/legal/eula",
 					"title": "End-User License Agreement",
-					"description": "License terms for the three.ws Seeker/Saga app.",
+					"description": "License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.",
 					"priority": 0.2,
 					"changefreq": "yearly",
 					"added": "2026-07-14"
 				},
 				{
 					"path": "/legal/tos",
-					"title": "Terms of Use",
-					"description": "Terms of service for three.ws.",
+					"title": "Terms of Service",
+					"description": "The agreement between you and three.ws: your account, acceptable use, payments and on-chain activity, liability, and DMCA takedowns.",
 					"priority": 0.2,
 					"changefreq": "yearly",
 					"added": "2026-04-27"
@@ -5460,9 +5476,10 @@
 				{
 					"path": "/legal/content-policy",
 					"title": "Content Policy",
-					"description": "What you may publish, mint, and monetise on the platform.",
-					"priority": 0.6,
-					"changefreq": "weekly"
+					"description": "What you may publish, mint, and monetise on three.ws: prohibited content, agent behaviour, marketplace listings, and how we enforce.",
+					"priority": 0.2,
+					"changefreq": "yearly",
+					"added": "2026-06-21"
 				}
 			]
 		},

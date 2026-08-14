@@ -48,12 +48,15 @@ ENV NODE_ENV=production \
 
 VOLUME ["/app/models"]
 
-# The CUDA base image has no unprivileged user; create one so the keypair and
-# the weights cache are not written as root.
-RUN useradd --create-home --shell /usr/sbin/nologin operator \
+# The CUDA base image has no unprivileged application user; create one so the
+# keypair and the weights cache are not written as root. The group is created
+# explicitly because Ubuntu already ships a legacy system group named
+# `operator`, which makes a bare `useradd operator` fail with exit code 9.
+RUN groupadd --system nodeop \
+    && useradd --system --create-home --gid nodeop --shell /usr/sbin/nologin nodeop \
     && mkdir -p /app/models \
-    && chown -R operator:operator /app
+    && chown -R nodeop:nodeop /app
 
-USER operator
+USER nodeop
 
 CMD ["node", "src/index.js"]

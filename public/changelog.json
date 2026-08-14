@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T19:53:55.347Z",
+	"generated_at": "2026-08-14T20:22:41.996Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -559,6 +559,18 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The 3D generation SDK can finally pay per call, and its bring-your-own-key option actually does something",
+			"summary": "The npm package that turns a prompt into a 3D model documented two things it did not do. It listed a per-call option for supplying your own Meshy or Tripo key, and that option was read from nowhere: the key was silently dropped, so anyone following the README's own example was told to add a key that the generator then said was missing. It also documented paying per call in USDC as the default billing lane, when the flag it described was ignored by the endpoint it was sent to. Both are now real. A key passed on the call is used, overrides the one set on the client, and is resent on every status check, which the generator requires and the old code never did, so a job started with your own key could never be polled to completion. The pay-per-call lane now routes to the endpoint that actually accepts payment, quotes Solana USDC, and hands back a job you poll for free, and it refuses upfront the options it cannot honour rather than accepting them and ignoring them. The package now also exposes a way to read one job's state without waiting for it, so a generation survives a restart. Alongside that, the reference pages listed a price and a set of engines that had both moved on, named an error the service never returns, and pointed at three addresses that no longer exist: the sign-up link for API keys in the copy-trading and LLM router packages went to a dead page, as did the link to the 3D studio tool server. All of them now resolve.",
+			"link": null,
+			"tags": [
+				"sdk",
+				"fix",
+				"docs"
 			]
 		},
 		{

@@ -270,6 +270,6 @@ The anonymous id is generated and persisted by the walk runtime in `localStorage
 ## Related
 
 - [Add the Walk Companion to your site](./tutorials/walk-companion.md), the hands-on path from a copy-paste iframe to the `@three-ws/walk` package, including the surfaces that produce the metrics ranked here.
-- The walk documentation set on the site, served from `public/docs/walk/`: `/docs/walk` (index), `/docs/walk/walk-page`, `/docs/walk/embed-iframe`, `/docs/walk/embed-sdk`, `/docs/walk/companion-mode`, `/docs/walk/chrome-extension`, `/docs/walk/postmessage-events`, and `/docs/walk/analytics`, which covers the per-creator dashboard fed by the same ingest.
+- The walk documentation set on the site, served from `public/docs/walk/`: `/docs/walk` (index), `/docs/walk/getting-started`, `/docs/walk/walk-page`, `/docs/walk/embed-iframe`, `/docs/walk/embed-sdk`, `/docs/walk/companion-mode`, `/docs/walk/chrome-extension`, `/docs/walk/postmessage-events`, `/docs/walk/changelog`, and `/docs/walk/analytics`, which covers the per-creator dashboard fed by the same ingest.
 - The creator-side view of this data: `three.ws/walk-analytics`, backed by `GET /api/walk/analytics`.
 - [World Lines](./world-lines.md), for movement claims that carry a verifiable agent signature rather than a leaderboard rank.

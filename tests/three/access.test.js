@@ -81,6 +81,15 @@ async function freshModule() {
 	return import('../../src/three/access.js');
 }
 
+// The gate modal arrives through a dynamic import of ./gate-modal.js, so the
+// first open in a fork pays that chunk's cold load. vi.waitFor's 1s default does
+// not cover it under suite load, and the miss is not contained: the modal opens
+// anyway a moment later, lands in the shared jsdom body after this test's
+// cleanup, and the next test then drives THAT overlay instead of its own and
+// hangs until the global timeout. That is exactly the pair of failures this
+// budget removes; the assertions are unchanged.
+const GATE_WAIT = { timeout: 30_000, interval: 20 };
+
 beforeEach(() => {
 	accessState = { status: 200, body: locked('sign_in') };
 	passState = { status: 201, body: { pass: makePass(600), tier: { level: 1, id: 'bronze', label: 'Bronze' }, held_usd: 40 } };
@@ -220,7 +229,7 @@ describe('ensureFeatureAccess — the gate', () => {
 		const { ensureFeatureAccess } = await freshModule();
 		accessState.body = locked('sign_in');
 		const p = ensureFeatureAccess('forge.high');
-		await vi.waitFor(() => expect(document.querySelector('.tga-overlay')).toBeTruthy());
+		await vi.waitFor(() => expect(document.querySelector('.tga-overlay')).toBeTruthy(), GATE_WAIT);
 		expect(document.querySelector('.tga-title')).toBeTruthy();
 		// Cancel via the close button → resolves { ok:false }.
 		document.querySelector('[data-act="close"]').click();
@@ -233,7 +242,7 @@ describe('ensureFeatureAccess — the gate', () => {
 		const { ensureFeatureAccess } = await freshModule();
 		accessState.body = locked('insufficient_tier');
 		const p = ensureFeatureAccess('forge.high');
-		await vi.waitFor(() => expect(document.querySelector('.tga-overlay')).toBeTruthy());
+		await vi.waitFor(() => expect(document.querySelector('.tga-overlay')).toBeTruthy(), GATE_WAIT);
 		// User acquires $THREE in another tab: the next read is eligible + a pass mints.
 		accessState.body = eligible();
 		document.querySelector('[data-act="recheck"]').click();

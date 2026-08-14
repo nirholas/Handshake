@@ -59,15 +59,20 @@ Prove your host can run the workload before you register:
 npm start -- --self-test
 ```
 
-The first run downloads `Xenova/all-MiniLM-L6-v2` (~90 MB, Apache-2.0,
-quantized ONNX) into `./models` and caches it there. Expect output like:
+The first run downloads `Xenova/all-MiniLM-L6-v2` (Apache-2.0; 23 MB as the q8
+graph the CPU uses, 90 MB as the fp32 graph a GPU uses) into `./models` and
+caches it there. Expect output like:
 
 ```
 [node] identity 7Xf3...q9Zk (generated, saved to /path/node-identity.json)
-[node] platform https://three.ws · capability text-embedding · model Xenova/all-MiniLM-L6-v2
+[node] platform https://three.ws · capability text-embedding · model Xenova/all-MiniLM-L6-v2 · device auto
 [node] running proof workload self-test (first run downloads the model)...
-[node] self-test OK: Xenova/all-MiniLM-L6-v2, 384 dims, 812ms
+[node] self-test OK: Xenova/all-MiniLM-L6-v2, 384 dims, ran on cpu (q8) in 1932ms
 ```
+
+`ran on cpu` / `ran on cuda` is the point of the self-test: it reports the
+device that actually executed the forward pass, so "is my GPU being used?" is
+answered before you register, not guessed at later.
 
 Then register and start earning:
 
@@ -87,7 +92,9 @@ drains in-flight jobs and exits cleanly.
 | `npm start -- --self-test` | Run the proof workload locally and exit; exit code 1 on failure. |
 | `npm start -- --pubkey` | Print this node's base58 public key and exit. |
 | `npm run register` | Alias for `--register-only`. |
+| `npm run self-test` | Alias for `--self-test`. |
 | `npm test` | Run the vitest suite. |
+| `npm run e2e` | End-to-end proof against the real platform handlers (see [Testing](#testing)). |
 
 ## Identity
 
@@ -127,6 +134,8 @@ fails at boot with a readable message rather than mid-job.
 | `IDENTITY_PATH` | `identityPath` | `node-identity.json` | Where the keypair is persisted. Relative paths resolve against the working directory. |
 | `OPERATOR_SECRET_KEY` | `secretKey` | none | 64-byte ed25519 secret key, base58 or base64. Overrides the identity file. |
 | `NODE_LABEL` | `label` | none | Human-readable name shown alongside the node. |
+| `DEVICE` | `device` | `auto` | Execution device: `auto`, `cpu`, `cuda`, `webgpu`, `dml`, `coreml`. See [Hardware](#hardware). |
+| `DTYPE` | `dtype` | per device | Weight precision override: `q8`, `fp16`, `fp32`, `q4`. Defaults to `q8` on CPU and `fp32` on GPU. |
 
 A minimal `operator.config.json`:
 
@@ -139,21 +148,72 @@ A minimal `operator.config.json`:
 }
 ```
 
+## Hardware
+
+`DEVICE=auto` (the default) checks for an attached NVIDIA driver
+(`/dev/nvidiactl`, `/dev/nvidia0`, or `/proc/driver/nvidia/version`) and uses
+CUDA when one is present, CPU otherwise. The check comes first for a practical
+reason: the GPU path wants the 90 MB fp32 graph and the CPU path wants the
+23 MB q8 graph, so probing before downloading saves every CPU-only operator a
+download they can never execute.
+
+Setting `DEVICE` explicitly disables the fallback. `DEVICE=cuda` on a host
+without a working CUDA 12 runtime **exits non-zero at startup** with the
+loader's own error rather than quietly running on the CPU:
+
+```
+[node] fatal: could not load Xenova/all-MiniLM-L6-v2 on any of [cuda] ->
+  cuda: OrtSessionOptionsAppendExecutionProvider_Cuda: Failed to load shared library
+```
+
+That is deliberate. An operator who paid for a GPU should find out in the
+first second, not from a month of CPU-speed earnings.
+
+GPU support is real and comes from `onnxruntime-node` (bundled with
+`@huggingface/transformers` v4), which ships
+`libonnxruntime_providers_cuda.so` for linux/x64. It needs the CUDA 12 runtime
+and cuDNN 9 present in the container or on the host, plus an NVIDIA driver
+>= 525 and the NVIDIA Container Toolkit. That is exactly what `Dockerfile.gpu`
+provides.
+
 ### Docker
 
-A `Dockerfile` ships with the package. Mount a volume at `/app/models` so model
-weights survive restarts, and one for the identity file so the node keeps its
-key:
+Two images ship with the package because the difference is the base layer, not
+the code: CUDA's runtime libraries are not in the slim Node image, so running
+the CPU image with `--gpus all` does not get you GPU inference.
+
+CPU:
 
 ```sh
-docker build -t three-ws-node .
+docker build -t three-ws-node:cpu .
 docker run -d --name three-ws-node \
   -e NODE_LABEL=atlas-01 \
   -e MAX_CONCURRENCY=4 \
   -v three-ws-models:/app/models \
   -v three-ws-identity:/app/identity \
   -e IDENTITY_PATH=/app/identity/node-identity.json \
-  three-ws-node
+  three-ws-node:cpu
+```
+
+NVIDIA GPU:
+
+```sh
+docker build -f Dockerfile.gpu -t three-ws-node:gpu .
+docker run -d --name three-ws-node --gpus all \
+  -e NODE_LABEL=atlas-gpu-01 \
+  -v three-ws-models:/app/models \
+  -v three-ws-identity:/app/identity \
+  -e IDENTITY_PATH=/app/identity/node-identity.json \
+  three-ws-node:gpu
+```
+
+Both mount `/app/models` so weights survive restarts and a separate volume for
+the identity file so the node keeps its key (and its earnings history) across
+container replacement. Verify either image before you leave it running:
+
+```sh
+docker run --rm three-ws-node:cpu node src/index.js --self-test
+docker run --rm --gpus all three-ws-node:gpu node src/index.js --self-test
 ```
 
 ## The proof workload
@@ -171,15 +231,21 @@ Richer models plug into the same `runJob()` interface:
 ```js
 import { runJob, selfTest } from './src/inference.js';
 
-const { output, startedAt, finishedAt } = await runJob(
+const { output, startedAt, finishedAt, device } = await runJob(
   { id: 'job-1', model: 'Xenova/all-MiniLM-L6-v2', input: { text: 'hello' } },
-  { cacheDir: './models' },
+  { cacheDir: './models', device: 'auto' },
 );
 // output -> { kind: 'text-embedding', model, dimensions: 384, embedding: [...] }
+// device -> 'cpu' | 'cuda': what actually ran it
 
 await selfTest({ cacheDir: './models' });
-// -> { ok: true, model, dimensions: 384, elapsedMs: 812 }
+// -> { ok: true, model, dimensions: 384, device: 'cpu', dtype: 'q8', elapsedMs: 1932 }
 ```
+
+`output` carries no device or dtype field on purpose. The receipt hashes that
+object, so two honest nodes running the same job must produce the same output
+regardless of the hardware underneath. Runtime details belong in the
+operator's logs, not in a signed result other nodes have to match.
 
 ## Wire protocol
 

@@ -233,6 +233,32 @@ loads real pages in a real browser against a running server and fails on any
 `securitypolicyviolation` event, which is the only way to confirm a policy the
 way a browser applies it. Add `--all` to sweep every route in `data/pages.json`.
 
+The same sweep also checks that each response carried the headers `vercel.json`
+declares for its path, resolved through the server's own route resolver
+(`server/route-resolve.mjs`) rather than a second copy of the rules. A green run
+over pages that answered 404, or over an origin serving no policy at all, has
+happened twice and proves nothing, so a page that does not load is a hard
+failure. The comparison itself lives in `scripts/lib/csp-headers.mjs` and is
+pinned by `tests/csp-headers-compare.test.js`: a document must arrive with
+`'unsafe-inline'` replaced by the SHA-256 hashes of its own inline scripts, and
+every other declared security header (HSTS, `X-Content-Type-Options`,
+`Referrer-Policy`, `Permissions-Policy`, any `X-` header, and every other CSP
+directive including `frame-ancestors`) must match byte-for-byte.
+
+To verify a live origin, `--headers-only` runs that header comparison over plain
+requests with no browser:
+
+```bash
+node scripts/audit-csp.mjs --headers-only --base https://three.ws        # default page set
+node scripts/audit-csp.mjs --headers-only --base https://three.ws --all  # every catalogued route
+```
+
+It proves strictly less than the browser sweep (nothing evaluates the policy),
+and it is the half that scales: the full catalogue takes about ninety seconds.
+Only HTML documents are rewritten by `server/csp-hashes.mjs`, so only they are
+held to the hash rewrite; `robots.txt`, `llms.txt`, `openapi.json` and the
+`.well-known` documents have to carry the declared policy untouched instead.
+
 Both of those earned their keep immediately, and the two things they caught are
 the reason neither is optional:
 

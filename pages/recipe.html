@@ -57,21 +57,29 @@
 		<script src="/model-viewer-meshopt.js"></script>
 		<script src="/tutorial-figures.js"></script>
 	
-	<link rel="canonical" href="https://three.ws/cookbook/text-to-3d-cli">
+	<!-- This file is the SHARED shell for every /cookbook/<slug> route, so its
+	     head names the cookbook index, never one recipe. server/seo-head.mjs
+	     rewrites the head per request from data/pages.json, and it treats a
+	     canonical that already equals the request path as "this page authored
+	     its own meta" and skips it. A canonical naming a real recipe therefore
+	     silently exempted exactly that recipe from the rewrite: /cookbook/text-to-3d-cli
+	     was the one route in the section still serving this shell's generic
+	     title and description. Same shape as pages/tutorial.html and
+	     pages/walkthrough.html, which point at /tutorials and /walkthroughs. -->
+	<link rel="canonical" href="https://three.ws/cookbook">
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:url" content="https://three.ws/cookbook/text-to-3d-cli">
-	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Recipe%3A+text+to+3D+from+the+command+line&amp;d=A+standard-library+Python+CLI+that+turns+a+sentence+into+a+downloaded+GLB.+Handles+the+inline-versus-queued+response+split%2C+honors+the+server+poll+hint+so+it&amp;p=%2Fcookbook%2Ftext-to-3d-cli">
+	<meta property="og:url" content="https://three.ws/cookbook">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Cookbook&amp;d=Runnable+recipes+for+building+with+three.ws&amp;p=%2Fcookbook">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:type" content="image/png">
-	<meta property="og:image:alt" content="Recipe: text to 3D from the command line: three.ws">
+	<meta property="og:image:alt" content="The three.ws Cookbook">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Recipe: text to 3D from the command line · three.ws">
-	<meta name="twitter:description" content="A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.">
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Recipe%3A+text+to+3D+from+the+command+line&amp;d=A+standard-library+Python+CLI+that+turns+a+sentence+into+a+downloaded+GLB.+Handles+the+inline-versus-queued+response+split%2C+honors+the+server+poll+hint+so+it&amp;p=%2Fcookbook%2Ftext-to-3d-cli">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Recipe: text to 3D from the command line","description":"A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.","url":"https://three.ws/cookbook/text-to-3d-cli","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&t=Recipe%3A+text+to+3D+from+the+command+line&d=A+standard-library+Python+CLI+that+turns+a+sentence+into+a+downloaded+GLB.+Handles+the+inline-versus-queued+response+split%2C+honors+the+server+poll+hint+so+it&p=%2Fcookbook%2Ftext-to-3d-cli"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Cookbook","item":"https://three.ws/cookbook"},{"@type":"ListItem","position":3,"name":"Text To 3d Cli","item":"https://three.ws/cookbook/text-to-3d-cli"}]}]}</script>
+	<meta name="twitter:title" content="three.ws Cookbook recipe">
+	<meta name="twitter:description" content="A runnable three.ws cookbook recipe: the file, why it is shaped that way, and what it produces.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Cookbook&amp;d=Runnable+recipes+for+building+with+three.ws&amp;p=%2Fcookbook">
 </head>
 	<body>
 		<div class="cb-page">
