@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Another site can no longer swap your agent's body or burn your avatar credits behind your back",
+			"summary": "The two avatar onboarding endpoints (the one that opens the photo editor, and the one that attaches a finished avatar to an agent) accepted a request that arrived with your login cookie but no proof you meant to send it. A page you had merely visited could therefore repoint your agent to a different body, or spend your hourly avatar-editor allowance, without you doing anything. Both now require the same one-time token every other account-changing action on three.ws already asks for, and both refuse the request outright without it. API-key callers are unaffected. A second change: when the photo editor is not configured in an environment, the request is turned away before it counts against your hourly allowance, so a temporary outage no longer locks you out of the flow for an hour once it is back.",
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Sharing a build now checks that the coin world you are sharing to is real",
 			"summary": "When you screenshot a voxel build in a coin's /play world and share it, the build is filed under that coin's address. The endpoint only checked that the address was the right length, not that it was an address at all, so anything between 32 and 64 characters was accepted and filed away under its own storage slot. It now checks the format the way every other coin-world surface does: a Solana mint or an EVM contract address gets through, anything else is turned away before it reaches storage. Real worlds are unaffected, on both Solana and the EVM chains. The live event board picked up its own test coverage in the same pass, including a check that a player's account key never appears in what the board sends to the browser.",
 			"tags": [

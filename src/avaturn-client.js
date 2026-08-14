@@ -20,6 +20,8 @@
  *   });
  */
 
+import { consumeCsrfToken } from './api.js';
+
 const SESSION_ENDPOINT = '/api/onboarding/avaturn-session';
 const OVERALL_TIMEOUT_MS = 120_000;
 // Reject immediately if session expires within this many ms.
@@ -66,11 +68,21 @@ export function blobToDataUrl(blob) {
  */
 export async function createAvaturnSession({ front, left, right }) {
 	let res;
+	// The endpoint is a cookie-session mutation, so it carries the double-submit
+	// CSRF check (api/_lib/csrf.js). apiFetch() would attach the token for us but
+	// it also redirects the page to /login on a 401, which would swallow the
+	// 'auth' AvaturnError callers below depend on; consumeCsrfToken() is the
+	// documented escape hatch for exactly that case. A null token (signed out)
+	// still goes out and comes back as the 401 this client already handles.
+	const csrfToken = await consumeCsrfToken().catch(() => null);
 	try {
 		res = await fetch(SESSION_ENDPOINT, {
 			method: 'POST',
 			credentials: 'include',
-			headers: { 'content-type': 'application/json' },
+			headers: {
+				'content-type': 'application/json',
+				...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+			},
 			// API schema field is 'frontal'; caller-facing param is 'front' for brevity.
 			body: JSON.stringify({ photos: { frontal: front, left, right } }),
 		});

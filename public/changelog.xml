@@ -39,6 +39,14 @@
 			<description>The bounty board at /bounties mirrors the public pump.fun GO board. When you opened a bounty link that had been deleted or mistyped, the page reported it the same way it reports pump.fun being down, so there was no way to tell a dead link from an outage. A bounty that genuinely is not there now answers as not found, and a real upstream problem keeps its own separate answer. A second, quieter case got fixed with it: when the submissions list for a bounty failed to load, the page showed the bounty with zero submissions and said nothing, which looks identical to a bounty nobody has entered. That failure is now recorded, so a pump.fun outage shows up as an outage rather than as a board that suddenly looks unpopular.</description>
 		</item>
 		<item>
+			<title>Another site can no longer swap your agent's body or burn your avatar credits behind your back</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Another site can no longer swap your agent's body or burn your avatar credits behind your back</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The two avatar onboarding endpoints (the one that opens the photo editor, and the one that attaches a finished avatar to an agent) accepted a request that arrived with your login cookie but no proof you meant to send it. A page you had merely visited could therefore repoint your agent to a different body, or spend your hourly avatar-editor allowance, without you doing anything. Both now require the same one-time token every other account-changing action on three.ws already asks for, and both refuse the request outright without it. API-key callers are unaffected. A second change: when the photo editor is not configured in an environment, the request is turned away before it counts against your hourly allowance, so a temporary outage no longer locks you out of the flow for an hour once it is back.</description>
+		</item>
+		<item>
 			<title>Apps that sign in with a client secret can now revoke and inspect their own tokens</title>
 			<link>https://three.ws/docs/authentication</link>
 			<guid isPermaLink="false">2026-08-14:Apps that sign in with a client secret can now revoke and inspect their own tokens</guid>
@@ -61,6 +69,22 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The QR code in the skill payment modal now hands your wallet a transaction we build for you, instead of asking the wallet to compose the transfer itself. Three things change for the buyer: three.ws pays the Solana network fee, so a wallet holding only USDC can complete the purchase; a creator who has never received this token before no longer causes the payment to fail, because the missing token account is created in the same transaction; and the whole payment still settles under one signature. Wallets that do not support this newer Solana Pay flow are one click away from the classic direct-transfer QR, which stays available under the code.</description>
+		</item>
+		<item>
+			<title>Buying USDC or SOL from Add funds again opens a checkout with your wallet already filled in</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Buying USDC or SOL from Add funds again opens a checkout with your wallet already filled in</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Add funds overlay builds a Coinbase checkout link for your three.ws wallet. It was still building that link the old way, passing the destination wallet in the URL, which Coinbase stopped accepting when it moved to server-minted session tokens. The link is now minted through Coinbase's current onramp API: one single-use token per click, bound to your Solana address and the asset you picked, so the checkout opens with the destination, the asset, and your chosen amount already set instead of dropping you on a generic buy page. If Coinbase is unreachable, funding does not break: you still get a working buy page and the address to send to, exactly as before. The endpoint is also rate limited now, so nobody can drive our Coinbase quota by hammering it.</description>
+		</item>
+		<item>
+			<title>Chinese headlines no longer show up in the English crypto news feed</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-08-14:Chinese headlines no longer show up in the English crypto news feed</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>BlockTempo, a Taiwanese crypto publisher that writes in Traditional Chinese, was listed in our news source registry without a language tag. Untagged sources are treated as English, so its headlines were being mixed into the default feed on /markets/news, the markets hub strip, and the RSS mirror, where they read as noise to anyone browsing in English. It is now tagged Chinese: the English feed is English only, and BlockTempo shows up when you pick Chinese from the language selector, alongside PANews. Nothing else about the feed changed.</description>
 		</item>
 		<item>
 			<title>Controls that promised an action and did nothing now actually do it</title>
@@ -87,12 +111,36 @@
 			<description>The public stats behind the home page and the monitor board (agents, avatars, widgets, views, countries, chains) used to answer with a row of zeroes whenever the database could not be reached, and that fabricated all-zero snapshot was then cached for five minutes at the edge, so the platform looked empty long after it had recovered. It now says the figures are unavailable instead, caches that for fifteen seconds, and the monitor board keeps the last real numbers on screen rather than flashing zeroes. The chain counter is also a real count again: it reads the mainnets that actually carry an indexed agent plus Solana, instead of a hardcoded six that had drifted from reality.</description>
 		</item>
 		<item>
+			<title>Plugin marketplace: no more duplicate listings, and private plugins stay private</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-08-14:Plugin marketplace: no more duplicate listings, and private plugins stay private</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The plugin grid listed every built-in plugin twice (two Calculators, two Weathers, and so on) because the platform's seed rows were inserted a second time without the duplicate check ever catching them. There are now seven built-ins again, one of each, and the database refuses a duplicate outright. Three plugin API fixes ship with it: a plugin published as private was readable in full by anyone who knew its link, and its install counter could be driven by anyone; recording an install now reports the real new total instead of always answering &quot;ok&quot;, and counts one install per person per plugin rather than one per click; and asking for a page of plugins with a malformed cursor now returns a plain validation error rather than a server error.</description>
+		</item>
+		<item>
 			<title>Recurring payments now have a home, a pause button, and a receipt for every charge</title>
 			<link>https://three.ws/recurring</link>
 			<guid isPermaLink="false">2026-08-14:Recurring payments now have a home, a pause button, and a receipt for every charge</guid>
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Sign one permission and a fixed amount of USDC moves to an agent every day or week, or gets swapped into a token on a schedule. Until now there was no page for any of that: you could start a schedule from a skill and then never see it again, and one bad hour on the network ended it for good, because nothing could turn a paused schedule back on. The new /recurring page is the whole life of a schedule in one place. Create one, pause it, resume it, cancel it, and read every charge it has ever made with the transaction hash next to it. A second tab shows what is being paid into your own agents, with the paying wallet and the running total. When a period fails you now get told why, in a sentence: a revoked permission pauses the schedule and says so, a wallet short of USDC keeps the schedule alive and retries once you top up, and a charge that timed out is never retried at all, because that is the one case that could take your money twice.</description>
+		</item>
+		<item>
+			<title>Sharing a build now checks that the coin world you are sharing to is real</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-14:Sharing a build now checks that the coin world you are sharing to is real</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>When you screenshot a voxel build in a coin's /play world and share it, the build is filed under that coin's address. The endpoint only checked that the address was the right length, not that it was an address at all, so anything between 32 and 64 characters was accepted and filed away under its own storage slot. It now checks the format the way every other coin-world surface does: a Solana mint or an EVM contract address gets through, anything else is turned away before it reaches storage. Real worlds are unaffected, on both Solana and the EVM chains. The live event board picked up its own test coverage in the same pass, including a check that a player's account key never appears in what the board sends to the browser.</description>
+		</item>
+		<item>
+			<title>The $THREE holder count is back on the token page and its share card</title>
+			<link>https://three.ws/three-token</link>
+			<guid isPermaLink="false">2026-08-14:The $THREE holder count is back on the token page and its share card</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The holder count on the /three-token page, and on the badge image that previews wherever a $THREE link is shared, had been showing a dash instead of a number. Our own holder snapshot is rebuilt from a Solana indexer that has been refusing the scan, and once the snapshot went stale the page correctly declined to show an out-of-date figure, so the count simply disappeared rather than being briefly missing. Holder count now falls back to a second, independent source when our snapshot cannot refresh, so the figure stays real and current through an indexer outage. The share card was also reading a narrower set of sources than the page it mirrors, which is why the two could disagree; both now read the same ones. Separately, a shared agent link unfurls noticeably faster: the card was fetching the agent's portrait only after every other lookup had finished, and now fetches it alongside them.</description>
 		</item>
 		<item>
 			<title>The agent directory describes itself correctly in all 84 languages again</title>
@@ -117,6 +165,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The CC0 prop library at /objects reads a single index file from the CDN. If that file were ever uploaded truncated or in the wrong shape, the gallery treated it as a library with nothing in it and told the CDN to remember that answer for the next five minutes, so a bad upload kept the shelves bare long after it was replaced. A damaged index is now handled the same way as the CDN being briefly unreachable: the page stays quiet, nothing gets cached, and the props come back on the very next request. Two smaller fixes went with it: a request with a broken page cursor (a limit of &quot;abc&quot;, a negative offset) is rejected outright instead of first fetching an index it was never going to use, and the developer documentation no longer claims the library API can be called from any website, which it cannot; it answers three.ws and its partner sites, and everything it points at is still yours to download and reuse anywhere.</description>
+		</item>
+		<item>
+			<title>The internal money and platform health boards tell the truth again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:The internal money and platform health boards tell the truth again</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three internal dashboards watch the platform for us: one for site and cron health, one for every money subsystem, one for payment outcomes. Two of them had gone quietly wrong. The platform board judged each scheduled job against a hand-written idea of how often it should run, and three jobs that run once a day were being judged against a window of minutes, so they reported as broken for roughly 23 hours out of every day and the board could never come back all-clear; every job is now measured against the schedule it genuinely runs on. One of its probes was also posting to a payments endpoint without declaring it was sending JSON, so it had been failing on its own mistake rather than on anything real. The money board was reading the wrong timestamp column on two payment logs and showing no activity at all for a payment ring that settles thousands of payments a day. It also accepted the credential our fund-moving scheduled jobs carry as an ops password; it now takes the same admin sign-in as the other boards, so an ops credential can never be escalated into triggering a payment job.</description>
 		</item>
 		<item>
 			<title>The limits you set on an agent's spending can no longer be skipped</title>

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import { env } from '../_lib/env.js';
@@ -29,8 +30,24 @@ const avaturnSchema = z.object({
 // an identity failure (401): answering 401 sends a machine client back to a token
 // exchange that would mint the exact same token again. Mirrors the 403
 // `insufficient_scope` answer in api/erc8004/[action].js and api/agents.js.
+//
+// Both actions are cookie-session-reachable POSTs that change server state, so
+// both also need the double-submit CSRF check every other session mutation in
+// api/ carries (api/avatars/_actions.js, api/friends/index.js). Without it a
+// cross-site form POST rode the victim's cookie: link-avatar would repoint their
+// agent's body (force:true even overrides an existing link) and avaturn-session
+// would burn their avatar-provider quota, both while the attacker page ignored
+// the CORS-blocked response it never needed to read. requireCsrf() exempts
+// bearer callers, so API-key clients are unaffected.
 // Returns the user id, or null after having already written the error response.
 async function resolveOnboardingUser(req, res, signInMessage) {
+	const userId = await resolveIdentity(req, res, signInMessage);
+	if (!userId) return null;
+	if (!(await requireCsrf(req, res, userId))) return null;
+	return userId;
+}
+
+async function resolveIdentity(req, res, signInMessage) {
 	const session = await getSessionUser(req);
 	if (session) return session.id;
 	const bearer = await authenticateBearer(extractBearer(req));
@@ -50,11 +67,15 @@ async function handleAvaturnSession(req, res) {
 	if (!method(req, res, ['POST'])) return;
 	const userId = await resolveOnboardingUser(req, res, 'sign in to create an avatar');
 	if (!userId) return;
+	// The not-configured check precedes the limiters on purpose: where the key is
+	// absent no request can ever succeed, so charging the caller's hourly upload
+	// budget for a guaranteed 501 only locks them out of the flow for an hour
+	// once the operator does set the key.
+	if (!env.AVATURN_API_KEY) return error(res, 501, 'not_configured', 'Avatar editor is not available right now. Please try again later.');
 	const rlUser = await limits.upload(userId);
 	if (!rlUser.success) return rateLimited(res, rlUser, 'too many avatar attempts, try again later');
 	const rlIp = await limits.authIp(clientIp(req));
 	if (!rlIp.success) return rateLimited(res, rlIp, 'too many requests from this network');
-	if (!env.AVATURN_API_KEY) return error(res, 501, 'not_configured', 'Avatar editor is not available right now. Please try again later.');
 	const body = parse(avaturnSchema, await readJson(req, 8_000_000));
 	try {
 		const session = await createProviderSession(userId, body);

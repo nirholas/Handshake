@@ -256,6 +256,24 @@
 			const $ = (sel, root = document) => root.querySelector(sel);
 			const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+			// Both submit endpoints below are cookie-session mutations behind the
+			// double-submit CSRF check (api/_lib/csrf.js), so each POST needs its
+			// own freshly minted token: they are single-use and burned on first
+			// use, which is why this mints per call rather than caching one.
+			// Signed-out visitors get null and the POST answers 401, which the
+			// submit handler already surfaces.
+			async function csrfHeader() {
+				try {
+					const r = await fetch('/api/csrf-token', { credentials: 'include' });
+					if (!r.ok) return {};
+					const j = await r.json();
+					const token = j?.data?.token || j?.token;
+					return token ? { 'x-csrf-token': token } : {};
+				} catch {
+					return {};
+				}
+			}
+
 			// ── Face quality scoring ─────────────────────────────────────────────
 			// Blur:  variance of the 4-neighbour Laplacian on a 64×64 face crop.
 			//        Scores below BLUR_MIN indicate the frame is too blurry to use.
@@ -886,7 +904,7 @@
 					const nativeRes = await fetch('/api/avatars/reconstruct', {
 						method: 'POST',
 						credentials: 'include',
-						headers: { 'content-type': 'application/json' },
+						headers: { 'content-type': 'application/json', ...(await csrfHeader()) },
 						body: JSON.stringify({
 							name: `Selfie ${new Date().toISOString().slice(0, 10)}`,
 							photos: [photos.frontal, photos.left, photos.right],
@@ -919,7 +937,7 @@
 					const res = await fetch('/api/onboarding/avaturn-session', {
 						method: 'POST',
 						credentials: 'include',
-						headers: { 'content-type': 'application/json' },
+						headers: { 'content-type': 'application/json', ...(await csrfHeader()) },
 						body: JSON.stringify({
 							photos,
 							body_type: state.bodyType,

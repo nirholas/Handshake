@@ -165,9 +165,14 @@ You have two paths:
 **Reassign it deliberately.** If you want this avatar to become the face of a *specific* existing agent, attach it explicitly:
 
 ```js
+// Session-cookie calls carry a CSRF token. Tokens are single-use, so mint a
+// fresh one per request. (API-key callers send `Authorization: Bearer <key>`
+// with the `avatars:write` scope instead and skip this step.)
+const { token } = await (await fetch('/api/csrf-token', { credentials: 'include' })).json();
+
 await fetch('/api/onboarding/link-avatar', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
   credentials: 'include',
   body: JSON.stringify({
     avatarId: '0f25b676-e27b-4929-875c-4135fea0f635',   // your id from /avatars/<id>
@@ -177,7 +182,7 @@ await fetch('/api/onboarding/link-avatar', {
 // → { agent: { id, avatar_id, updated_at } }
 ```
 
-`force: true` overrides an avatar the agent already has. Omit it (or set `false`) to only attach when the agent has no avatar yet. Either way the call is owner-scoped — you can only attach avatars to agents you own.
+`force: true` overrides an avatar the agent already has. Omit it (or set `false`) to only attach when the agent has no avatar yet. Either way the call is owner-scoped: you can only attach avatars to agents you own.
 
 Once linked, give the agent a [personality](/tutorials/agent-personality) and a [brain](/tutorials/connect-ai-brain), then [share it](/tutorials/share-your-agent) or embed it on a site.
 
