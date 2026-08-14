@@ -140,7 +140,12 @@ export default wrap(async (req, res) => {
 			LIMIT 1
 		`;
 
-		if (!rows.length) return error(res, 404, 'not_found', 'solana agent not found');
+		// Not one of ours: fall back to the crawled directory of external Solana
+		// agents. /discover lists those rows and links every one of them to
+		// /discover/a/sol/<asset>, so without this branch the home chain's whole
+		// external directory (the Metaplex and AgenC registries) is a wall of dead
+		// links while the EVM half opens fine.
+		if (!rows.length) return solanaDirectoryItem(res, id);
 
 		const r = rows[0];
 		const asset = r.meta?.sol_mint_address;
@@ -167,6 +172,77 @@ export default wrap(async (req, res) => {
 
 	return error(res, 400, 'validation_error', 'kind must be onchain, avatar, or solana');
 });
+
+/**
+ * Serve one external Solana agent from the crawled registry directory, in the
+ * same item shape the native branch returns so the detail page renders it
+ * without a second code path. Matches on the Metaplex Core asset or the
+ * registry account, because /discover links whichever of the two it has.
+ *
+ * @param {import('http').ServerResponse} res
+ * @param {string} id asset or registry ref from the URL
+ */
+async function solanaDirectoryItem(res, id) {
+	const rows = await sql`
+		SELECT source, ref, owner, asset, name, description, image, glb_url,
+		       endpoint, capabilities, has_3d, x402_support, network, registered_at
+		FROM solana_agents_index
+		WHERE active = true
+		  AND (asset = ${id} OR ref = ${id})
+		LIMIT 1
+	`;
+
+	if (!rows.length) return error(res, 404, 'not_found', 'solana agent not found');
+
+	const r = rows[0];
+	const asset = r.asset || r.ref;
+	const cluster = r.network === 'devnet' ? '?cluster=devnet' : '';
+	const item = {
+		kind: 'solana',
+		asset,
+		name: r.name || 'Solana Agent',
+		description: r.description || '',
+		image: r.image || null,
+		has3d: !!r.glb_url,
+		glbUrl: r.glb_url || null,
+		// Directory rows carry capabilities as free text (the registries publish a
+		// comma or space separated list, not a JSON array), while the native branch
+		// returns real skill records. Split it into the same slot so the page has
+		// one shape to render.
+		skills: splitCapabilities(r.capabilities),
+		owner: r.owner,
+		ownerShort: shortAddr(r.owner),
+		// registered_at on a crawled row is first-seen, not on-chain registration
+		// time. The On-chain history panel is where the real registration
+		// timestamp comes from, read from the event index.
+		createdAt: r.registered_at,
+		network: r.network || 'mainnet',
+		source: r.source,
+		endpoint: r.endpoint || null,
+		x402Support: !!r.x402_support,
+		viewerUrl: r.glb_url ? `/app#model=${encodeURIComponent(r.glb_url)}` : null,
+		explorerUrl: asset ? `https://solscan.io/token/${asset}${cluster}` : null,
+		ownerExplorerUrl: r.owner ? `https://solscan.io/account/${r.owner}${cluster}` : null,
+	};
+
+	return json(res, 200, { item });
+}
+
+/**
+ * Split a crawled directory row's free-text capabilities into a list, capped so
+ * a registry entry padded with hundreds of keywords cannot flood the page.
+ * @param {unknown} raw
+ * @returns {string[]}
+ */
+export function splitCapabilities(raw) {
+	if (Array.isArray(raw)) return raw.map((s) => String(s).trim()).filter(Boolean).slice(0, 24);
+	if (typeof raw !== 'string') return [];
+	return raw
+		.split(/[,;|\n]+/)
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.slice(0, 24);
+}
 
 function shortAddr(a) {
 	if (!a || a.length < 10) return a || '';
