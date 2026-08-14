@@ -153,6 +153,8 @@ fee-on-transfer and rebasing tokens, and MEV searchers watching the buyback.
 | F-AP-9 | A malicious router or receiver reenters to spend a vault twice. | Critical | Reentrancy guards on every value-moving path, effects written before the external call. | `AP-13` |
 | F-AP-10 | An agent becomes unmanageable because its authority is set to the zero address. | High | Authority transfer rejects zero and is restricted to the current authority. | `AP-12` |
 | F-AP-11 | A searcher sandwiches the buyback swap and the protocol burns fewer tokens than the market price implies. | Medium | Not a contract control: the swap calldata is built off-chain with slippage limits, and the call reverts if it returns nothing. Operational, see accepted risks. | `AP-9` |
+| F-AP-12 | Anyone but the agent's authority withdraws that agent's accrued earnings, or redirects them to a zero receiver. | Critical | `withdraw` is authority-gated, rejects a zero receiver, and pays exactly the withdraw vault before zeroing it. | `AP-11` |
+| F-AP-13 | A buyback split above 100% starves the withdraw vault, or an update sneaks past the bound. | High | `buybackBps` is bounded by `BPS_DENOMINATOR` at creation and on every update. | `AP-2` |
 
 **Accepted:** `buybackTrigger` takes attacker-shaped input (arbitrary calldata to
 an external address) by construction, because the contract must work with any DEX.
@@ -181,6 +183,7 @@ anyone who can craft a transaction.
 | F-SL-7 | A burn is pointed at a different license's NFT mint. | Medium | The mint must equal the one recorded on the license. | `SL-6` |
 | F-SL-8 | The lifetime counter wraps and corrupts marketplace accounting. | Low | Checked addition; the instruction fails closed at the boundary. | `SL-7` |
 | F-SL-9 | A hostile minter mints unpaid licenses at scale. | High | Not prevented in-contract by design: it is contained by rotating the minter (`set_minter`) and by the fact that the minter cannot rotate itself. | `SL-1` |
+| F-SL-10 | An oversized or empty skill name inflates the account, breaks the PDA seed derivation, or creates a license nothing can look up. | Medium | The name is required to be non-empty and at most 64 bytes, which is what bounds both the account size and the hashed seed. | `SL-4` |
 
 **Accepted, and worth an auditor's attention:**
 
@@ -232,6 +235,8 @@ interesting failure modes live.
 | F-GV-5 | A failed settlement leaves the pair permanently unable to transact. | Medium | The purchase guard clears on failure and on revoke. | `GV-2` |
 | F-GV-6 | A forged ack marks a sale Granted with an attacker-chosen policy id. | High | Acks are accepted only from the real PermissionHub, and only on the permission channel. | `GV-6` |
 | F-GV-7 | A refund callback reenters `buy` or `withdraw`. | Critical | Reentrancy guards, including against cross-function reentrancy. | `GV-8` |
+| F-GV-8 | The vault holds less ETH than it owes sellers, so the last withdrawal fails. | Critical | The balance is greater than or equal to the sum of `pendingWithdrawals` at every point outside a call frame. | `GV-5` |
+| F-GV-9 | A buyer, or a third party, revokes a grant the seller wanted to keep, or revokes twice. | Medium | `revoke` is seller-only, requires the Granted state, and moves the sale to Revoked exactly once. | `GV-7` |
 
 **Accepted:** a buyer's practical access depends on BNB Greenfield honoring the
 policy, which is outside this contract. The vault proves the payment-to-permission
@@ -250,6 +255,8 @@ is an incident rather than a bug. Addresses in
 | F-TWP-2 | A caller chooses their own price. | High | The amount is always the stored `pricePerCall`. | `TWP-2` |
 | F-TWP-3 | Ownership is renounced to the zero address, stranding the USDC balance. | High | Zero rejected on transfer and in the constructor. | `TWP-3`, `TWP-5` |
 | F-TWP-4 | Native currency accumulates with no way to withdraw it. | Low | No payable function, no fallback. | `TWP-6` |
+| F-TWP-5 | A failed token call during `withdraw` is reported as a success, so the operator believes settled revenue moved when it did not. | High | The withdrawal sends the entire balance to the current owner and reverts, moving nothing, if the token call fails. | `TWP-4` |
+| F-TWF-3 | The factory is drained or bricked through state or value it holds. | Low | It holds no state, has no privileged role, and forwards no value. | `TWF-4` |
 | F-TWF-1 | A failed CREATE2 deployment is reported as a success and the platform trusts an empty address. | High | A zero return reverts. | `TWF-1` |
 | F-TWF-2 | An existing deployment is silently replaced at a predicted address. | High | CREATE2 returns zero for an occupied address, which reverts. | `TWF-3` |
 
