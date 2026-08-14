@@ -55,7 +55,7 @@ describe('registry shape', () => {
 	// Untagged means "English" to sourcesForLanguage(), so a non-English
 	// publisher that ships without a language tag silently interleaves its
 	// headlines into the default /api/news/feed view. BlockTempo (a Traditional
-	// Chinese Taiwanese outlet) did exactly that until 2026-08-14 — it reads as
+	// Chinese Taiwanese outlet) did exactly that until 2026-08-14: it reads as
 	// an English brand name, which is the trap. Pin the publishers whose feed
 	// language cannot be inferred from their name.
 	it('tags non-English publishers that carry an English brand name', () => {
