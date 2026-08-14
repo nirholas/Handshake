@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T02:11:01.680Z",
+	"generated_at": "2026-08-14T02:13:56.333Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,16 @@
 			"link": "/docs/agent-index",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "A bounty that does not exist now says so, instead of blaming pump.fun",
+			"summary": "The bounty board at /bounties mirrors the public pump.fun GO board. When you opened a bounty link that had been deleted or mistyped, the page reported it the same way it reports pump.fun being down, so there was no way to tell a dead link from an outage. A bounty that genuinely is not there now answers as not found, and a real upstream problem keeps its own separate answer. A second, quieter case got fixed with it: when the submissions list for a bounty failed to load, the page showed the bounty with zero submissions and said nothing, which looks identical to a bounty nobody has entered. That failure is now recorded, so a pump.fun outage shows up as an outage rather than as a board that suddenly looks unpopular.",
+			"link": "/bounties",
+			"tags": [
+				"fix"
 			]
 		},
 		{
