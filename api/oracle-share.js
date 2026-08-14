@@ -302,10 +302,76 @@ function heroHtml({ mint, row, pump, origin }) {
 			</div>
 			<div class="oc-conv-card" aria-label="Oracle conviction">
 				${dial}
+				<div id="ocOdds">${oddsHtml}</div>
 				${pillars}
+				<div id="ocSince">${sinceHtml}</div>
 			</div>
 		</div>
 	</section>`;
+}
+
+/**
+ * What the score is worth, under the score. Reads the production calibration
+ * (conviction-calibration.json: realized win rate per score band over every coin
+ * Oracle scored that the market has since resolved) so the claim next to the
+ * number is a measured frequency instead of an implied one.
+ *
+ * @param {number} score   0-100 conviction
+ * @param {string} scoredAt when the verdict was written
+ * @param {string} firstSeen when the coin first surfaced (the call's lead time)
+ */
+export function verdictOddsHtml(score, scoredAt, firstSeen) {
+	const hr = hitRateFor(Number(score));
+	if (!hr || hr.rate == null || !hr.n) return '';
+	const rate = Math.round(hr.rate * 100);
+	const base = Math.round((hr.baseRate || 0) * 100);
+	const lift = hr.lift != null ? Number(hr.lift).toFixed(1) : null;
+	const lead = leadSeconds(scoredAt, firstSeen);
+	return `<p class="oc-odds">
+		<b>${rate}%</b> of calls in the ${esc(hr.band || '')} band have won<span class="oc-odds-n"> (n=${hr.n.toLocaleString('en-US')})</span>${lift ? `, <b>${esc(lift)}x</b> the ${base}% a random launch wins` : ''}.
+		<span class="oc-odds-sub">Scored ${lead ? `${lead} after this coin surfaced` : 'at launch'}, from the first ~90s of trading. It ranks the odds of a 3x run or graduation, not the odds of a safe hold.</span>
+	</p>`;
+}
+
+/** Seconds/minutes between a launch first surfacing and Oracle scoring it. */
+function leadSeconds(scoredAt, firstSeen) {
+	if (!scoredAt || !firstSeen) return null;
+	const secs = Math.round((new Date(scoredAt).getTime() - new Date(firstSeen).getTime()) / 1000);
+	if (!Number.isFinite(secs) || secs < 0) return null;
+	return secs < 90 ? `${secs}s` : `${Math.round(secs / 60)}m`;
+}
+
+/**
+ * What the market did with this coin AFTER the call. A resolved outcome outranks
+ * the verdict on the page: the score is a prediction, this is the answer.
+ *
+ * @param {{graduated?:boolean, rugged?:boolean, ath_multiple?:number|string, last_market_cap_usd?:number|string}|null} row
+ */
+export function outcomeStripHtml(row) {
+	if (!row) return '';
+	const ath = row.ath_multiple != null ? Number(row.ath_multiple) : null;
+	const mc = row.last_market_cap_usd != null ? Number(row.last_market_cap_usd) : null;
+	const graduated = row.graduated === true;
+	const rugged = row.rugged === true;
+	if (!graduated && !rugged && !(ath > 0)) return '';
+	const verdict = graduated
+		? '<span class="chip sm">graduated ✓</span>'
+		: rugged ? '<span class="chip flag">rugged ✕</span>' : '<span class="chip">still live</span>';
+	return `<div class="oc-since ${rugged && !graduated ? 'bad' : graduated ? 'good' : ''}">
+		<span class="oc-since-lbl">Since the call</span>
+		${ath > 0 ? `<span class="chip" title="Peak market cap versus its market cap when Oracle scored it">peak <b>${ath.toFixed(1)}x</b></span>` : ''}
+		${verdict}
+		${mc != null ? `<span class="chip" title="Market cap now">now <b>${esc(fmtUsdShort(mc))}</b></span>` : ''}
+	</div>`;
+}
+
+function fmtUsdShort(n) {
+	const v = Number(n);
+	if (!Number.isFinite(v)) return '—';
+	if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
+	if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
+	if (v >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
+	return `$${v.toFixed(0)}`;
 }
 
 function pumpUrl(mint) { return `https://pump.fun/coin/${mint}`; }

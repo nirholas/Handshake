@@ -150,9 +150,11 @@ export async function readFeed({ network = 'mainnet', limit = 50, minScore = 0, 
 	const rows = await sql`
 		select c.mint, c.symbol, c.name, c.image_uri, c.score, c.tier,
 		       c.pedigree, c.structure, c.narrative, c.momentum,
-		       c.badges, c.category, c.smart_wallet_count, c.scored_at, c.coin_first_seen_at,
+		       c.badges, c.reasons, c.category, c.smart_wallet_count, c.scored_at, c.coin_first_seen_at,
+		       o.graduated, o.rugged, o.ath_multiple,
 		       hist.spark
 		from oracle_conviction c
+		left join pump_coin_outcomes o on o.mint = c.mint
 		left join lateral (
 			select array_agg(h.score order by h.scored_at)::int[] as spark
 			from (
@@ -195,11 +197,32 @@ function rowToFeedItem(r) {
 	// history points (24h, ≤16) with the live score guaranteed as the final point.
 	let spark = Array.isArray(r.spark) ? r.spark.map(Number).filter(Number.isFinite) : [];
 	if (r.score != null && (spark.length === 0 || spark[spark.length - 1] !== r.score)) spark.push(r.score);
+
+	// The strongest fitted evidence behind this specific score. The feed used to
+	// ship the number alone, so every card had to fall back to a per-tier
+	// template and the whole page read as one sentence copy-pasted 200 times,
+	// even though the engine had already written a different, quantified reason
+	// for each coin. Three is what a card can show; the rest are on the coin page.
+	const reasons = Array.isArray(r.reasons)
+		? r.reasons
+			.filter((x) => x && x.text)
+			.slice(0, 3)
+			.map((x) => ({ pillar: x.pillar || null, text: String(x.text) }))
+		: [];
+
+	// What the score has been worth in resolved outcomes, so no surface has to
+	// treat a 0-100 rank as if it were a percentage.
+	const odds = hitRateFor(r.score);
+
 	return {
 		mint: r.mint, symbol: r.symbol, name: r.name, image_uri: r.image_uri,
 		score: r.score, tier: r.tier,
 		pillars: { pedigree: r.pedigree, structure: r.structure, narrative: r.narrative, momentum: r.momentum },
 		badges: r.badges || [],
+		reasons,
+		hit_rate: odds.rate,
+		hit_rate_lift: odds.lift,
+		hit_rate_n: odds.n,
 		category: r.category,
 		smart_wallet_count: r.smart_wallet_count,
 		scored_at: r.scored_at,
