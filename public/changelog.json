@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T02:08:00.332Z",
+	"generated_at": "2026-08-14T02:11:01.680Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -102,6 +102,17 @@
 			"tags": [
 				"security",
 				"infra",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The free object library can no longer be emptied by one bad upload",
+			"summary": "The CC0 prop library at /objects reads a single index file from the CDN. If that file were ever uploaded truncated or in the wrong shape, the gallery treated it as a library with nothing in it and told the CDN to remember that answer for the next five minutes, so a bad upload kept the shelves bare long after it was replaced. A damaged index is now handled the same way as the CDN being briefly unreachable: the page stays quiet, nothing gets cached, and the props come back on the very next request. Two smaller fixes went with it: a request with a broken page cursor (a limit of \"abc\", a negative offset) is rejected outright instead of first fetching an index it was never going to use, and the developer documentation no longer claims the library API can be called from any website, which it cannot; it answers three.ws and its partner sites, and everything it points at is still yours to download and reuse anywhere.",
+			"link": "/objects",
+			"tags": [
+				"fix",
 				"docs"
 			]
 		},

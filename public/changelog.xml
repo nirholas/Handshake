@@ -79,6 +79,14 @@
 			<description>Before an outside firm can review the contracts behind agent royalties, reputation staking and wallet delegation, someone has to write down what those contracts promise and then prove it holds. That pack now exists and is public. Every value-bearing contract has numbered invariants, each backed by a test proving the property holds and a second test proving that an attacker trying to break it is rejected, alongside a threat model naming what is worth stealing, who could try, and what stops them. The Solidity contracts sit at 100% test coverage across 242 tests. The two Solana programs, which had no automated tests at all, now have 32 running against their real compiled on-chain bytecode rather than a stand-in, with the real token programs loaded. Two standard analyzers were run across everything, and every finding is either fixed or answered in writing. One of those fixes closes a real gap: a cross-chain permission request that was declined rather than failed outright would have credited a seller and charged a buyer for access that was never going to be granted.</description>
 		</item>
 		<item>
+			<title>The free object library can no longer be emptied by one bad upload</title>
+			<link>https://three.ws/objects</link>
+			<guid isPermaLink="false">2026-08-14:The free object library can no longer be emptied by one bad upload</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The CC0 prop library at /objects reads a single index file from the CDN. If that file were ever uploaded truncated or in the wrong shape, the gallery treated it as a library with nothing in it and told the CDN to remember that answer for the next five minutes, so a bad upload kept the shelves bare long after it was replaced. A damaged index is now handled the same way as the CDN being briefly unreachable: the page stays quiet, nothing gets cached, and the props come back on the very next request. Two smaller fixes went with it: a request with a broken page cursor (a limit of &quot;abc&quot;, a negative offset) is rejected outright instead of first fetching an index it was never going to use, and the developer documentation no longer claims the library API can be called from any website, which it cannot; it answers three.ws and its partner sites, and everything it points at is still yours to download and reuse anywhere.</description>
+		</item>
+		<item>
 			<title>The limits you set on an agent's spending can no longer be skipped</title>
 			<link>https://three.ws/docs/a2a-payments</link>
 			<guid isPermaLink="false">2026-08-14:The limits you set on an agent's spending can no longer be skipped</guid>
