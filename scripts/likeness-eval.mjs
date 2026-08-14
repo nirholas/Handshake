@@ -14,20 +14,22 @@
 //                    cron does, without the budget ceiling.
 //
 //   --live=N         Run N reconstructions through the REAL production
-//                    pipeline (sign in, POST /api/avatars/reconstruct, poll to
-//                    done) and score each finished avatar against the exact
-//                    reference image the pipeline built it from. Needs
+//                    pipeline (sign in, POST /api/avatars/reconstruct with a
+//                    portrait, poll to done) and score each finished avatar
+//                    against the exact portrait it was built from. Needs
 //                    AUDIT_EMAIL / AUDIT_PASSWORD. This is the mode that
 //                    answers "does the number mean anything" on a deployment
 //                    where the operator has no database access, because every
 //                    artifact in it is real and produced during the run.
 //
-// Live mode uses SYNTHESISED subjects, never real people's photos: each
-// reconstruction starts from a text description drawn from the platform's own
-// diversity matrix, which the pipeline turns into a frontal reference image and
-// then reconstructs. That keeps real biometrics out of a benchmark that gets
-// re-run and copied between machines, the same reasoning
-// workers/avatar-reconstruction/eval/make_refs.py applies to its reference set.
+// Live mode uses SYNTHESISED subjects, never real people's photos. Each
+// subject's portrait is a headshot render of a distinct avatar from the
+// platform's own public library: a real image with a real, detectable face
+// that belongs to nobody. That keeps real biometrics out of a benchmark which
+// gets re-run and copied between machines, the same reasoning
+// workers/avatar-reconstruction/eval/make_refs.py applies to its reference set,
+// and it makes the run reproducible without depending on a text-to-image lane
+// that can be rate-limited or down when the benchmark needs to run.
 //
 // A cross-subject control runs in both modes: every avatar is also scored
 // against every OTHER subject's captures. A likeness number is only meaningful
@@ -67,22 +69,12 @@ const value = (name, fallback = null) => {
 const BASE_URL = String(value('base-url', process.env.BASE_URL || 'https://three.ws')).replace(/\/$/, '');
 const OUT = value('out', null);
 
-// The subject set for live mode: one line each, spanning skin tone, age, face
-// shape, facial hair, glasses, head covering and lighting, because a mean taken
-// over a narrow set hides exactly the failures that matter most. Ten entries so
-// `--live=10` needs no repeats.
-const LIVE_SUBJECTS = [
-	'a woman in her twenties with deep brown skin, short natural curls and round cheeks',
-	'a man in his sixties with pale skin, a full grey beard and deep-set eyes',
-	'a woman in her forties with olive skin, straight dark hair and rectangular glasses',
-	'a man in his thirties with light brown skin, a shaved head and a broad jaw',
-	'a woman in her fifties with fair freckled skin and shoulder-length auburn hair',
-	'a man in his twenties with dark brown skin, short twists and a narrow face',
-	'a woman in her thirties with light skin, a black headscarf and thin eyebrows',
-	'a man in his forties with tan skin, a thick moustache and heavy round glasses',
-	'a woman in her sixties with light brown skin, silver hair in a bun and soft features',
-	'a man in his fifties with pale skin, thinning blond hair and a long straight nose',
-];
+// Portrait framing for the synthesised subjects. A light background rather than
+// the scoring renders' dark one, because the reconstruction pipeline's own
+// background removal and face detection are tuned for ordinary photographs, and
+// a portrait is an INPUT here, not something being measured.
+const PORTRAIT_BACKGROUND = '#f2f2f2';
+const PORTRAIT_SIZE = 768;
 
 function log(...parts) {
 	console.log(...parts);
