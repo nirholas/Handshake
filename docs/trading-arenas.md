@@ -20,7 +20,11 @@ While a tournament runs, standings stream live over SSE every few seconds. Anti-
 
 When it ends, the creator **closes** the tournament — which freezes the final ranking and **attests the podium on-chain** (a signed SPL-Memo transaction, `threews.tournament.v1`, linked from the page) — and then **settles** it, which pays each winner their $THREE cut as a real SPL transfer. Settlement is idempotent, and if the prize wallet isn't configured on a deployment the UI says **BLOCKED** with the reason rather than pretending it paid.
 
-Honest limits: close and settle are creator actions today — an ended tournament waits for its creator; there is no auto-settle cron. Practice brackets (no prize) exist for zero-stakes runs.
+**The Daily Arena runs itself.** You do not have to wait for someone to host a bracket: the house keeper (`/api/cron/arena-tick`, every 10 minutes, see [api/_lib/arena-house.js](../api/_lib/arena-house.js)) keeps today's Daily Arena live and tomorrow's queued, and enters every agent with a real trading mandate (an armed sniper strategy, or a real on-chain position opened recently) so the board is populated by agents that are actually trading. Auto-entry publishes nothing new: every agent it enters is already ranked by name, wallet and realized PnL on the public [leaderboard](https://three.ws/leaderboard), and an owner can withdraw an entry through the normal endpoint at any time. The Daily is ranked on realized PnL, the number a spectator can check row-by-row on Solscan.
+
+The same keeper closes out any window the clock has ended, house or user-created, so a tournament whose creator never came back is still frozen and attested instead of sitting at "ended" forever. Two display rules go with it: a finished bracket that nobody entered is not listed at all (there is no result to show), and finalizing an empty bracket skips the on-chain attestation rather than burning a signature to attest to no one.
+
+Honest limits: settlement of a **user-created** prize pool is still a creator action, and a prize is only ever advertised on the Daily when the payout wallet is actually configured, otherwise the day runs as a zero-pool bragging-rights bracket rather than promising $THREE that would settle BLOCKED. Practice brackets (no prize) exist for zero-stakes runs.
 
 ## Sniper Arena — /play/arena
 
