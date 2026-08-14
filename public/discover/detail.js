@@ -497,9 +497,14 @@ async function fetchOnchainHistory(query, $) {
 	$('history-count').textContent = String(events.length);
 
 	if (!events.length) {
-		list.innerHTML = data.indexLag?.crawled
-			? '<li class="detail-history-empty">No on-chain events recorded for this agent yet. The indexer has looked and found nothing beyond its registration.</li>'
-			: '<li class="detail-history-empty">This agent has not been crawled yet. Its history will appear here after the next indexer pass.</li>';
+		// Three genuinely different states, and conflating them is how an outage
+		// gets read as "this agent has done nothing".
+		const lagState = data.indexLag || {};
+		list.innerHTML = lagState.error
+			? '<li class="detail-history-empty">The indexer could not read this agent on its last pass, so this list is not a statement about the agent. It retries automatically.</li>'
+			: lagState.crawled
+				? '<li class="detail-history-empty">No on-chain events recorded for this agent yet. The indexer has looked and found nothing beyond its registration.</li>'
+				: '<li class="detail-history-empty">This agent has not been crawled yet. Its history will appear here after the next indexer pass.</li>';
 	} else {
 		list.innerHTML = events
 			.map((ev) => {
