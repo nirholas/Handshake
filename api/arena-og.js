@@ -45,7 +45,7 @@ function trunc(s, n) {
 }
 
 /** Shrink the title as it lengthens so a long tournament name never overflows. */
-function titleSize(text) {
+export function titleSize(text) {
 	const len = String(text || '').length;
 	if (len <= 18) return 58;
 	if (len <= 26) return 48;
@@ -53,7 +53,7 @@ function titleSize(text) {
 	return 34;
 }
 
-function fmtSol(n) {
+export function fmtSol(n) {
 	if (n == null || !Number.isFinite(Number(n))) return 'n/a';
 	const v = Number(n);
 	const digits = v !== 0 && Math.abs(v) < 1 ? 3 : 2;
@@ -61,7 +61,7 @@ function fmtSol(n) {
 }
 
 /** Human window label: how long is left, or how long it ran. */
-function windowLabel(t, status, now) {
+export function windowLabel(t, status, now) {
 	const end = new Date(t.ends_at).getTime();
 	const start = new Date(t.starts_at).getTime();
 	if (status === 'upcoming' || status === 'draft') return `Opens ${relative(start - now)}`;
@@ -82,7 +82,7 @@ function relative(deltaMs) {
 	return deltaMs > 0 ? `in ${label}` : `${label} ago`;
 }
 
-function stateStamp(status) {
+export function stateStamp(status) {
 	if (status === 'live') return { label: 'LIVE · MAINNET ON-CHAIN', color: POS };
 	if (status === 'upcoming' || status === 'draft') return { label: 'ENTRIES OPEN', color: '#fbbf24' };
 	if (status === 'cancelled') return { label: 'CANCELLED', color: FLAT };
@@ -218,7 +218,7 @@ function metric(x0, y0, label, value, color) {
 	</g>`;
 }
 
-function poolToThree(atomics, decimals) {
+export function poolToThree(atomics, decimals) {
 	try {
 		const a = BigInt(atomics || 0);
 		if (a === 0n) return 0;
@@ -229,7 +229,7 @@ function poolToThree(atomics, decimals) {
 	}
 }
 
-function fmtThree(v) {
+export function fmtThree(v) {
 	if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
 	if (v >= 1000) return `${(v / 1000).toFixed(1)}K`;
 	return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
