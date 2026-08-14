@@ -131,9 +131,14 @@ have no USDC balance watchdog.**
 reserve-first), autonomous-loop daily cap (`X402_AUTONOMOUS_DAILY_CAP_ATOMIC`,
 default $15), pumpfun spend-policy
 (`daily_sol_cap` default 5), agent-wallet bridge caps, a2a mandate budget, labor
-escrow. **Cross-path USD caps (`agent-trade-guards.js` `daily_usd`/`per_tx_usd`)
-default to `null` = uncapped** — an agent whose owner never set limits has no USD
-ceiling.
+escrow. **Cross-path USD caps (`agent-trade-guards.js` `daily_usd`/`per_tx_usd`/
+`per_counterparty_daily_usd`) default to `null` = uncapped**: an agent whose
+owner never set limits has no USD ceiling. What an owner DOES set is now
+unskippable: both shared guards read the agent's real policy from its row when
+the caller passes neither `limits` nor `meta`, and refuse a spend for an agent
+that no longer exists, so no call site can reach the signing boundary with an
+empty default policy. Proven end to end against a real Postgres by
+`npm run prove:a2a-spend` ([`scripts/a2a-spend-hardening-proof.mjs`](../scripts/a2a-spend-hardening-proof.mjs)).
 
 **Kill switches** — per-agent wallet freeze (`spend_limits.frozen`, instant,
 auto-set by the anomaly engine), per-agent/strategy `kill_switch`, worker global

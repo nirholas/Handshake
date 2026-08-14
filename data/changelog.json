@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "The limits you set on an agent's spending can no longer be skipped",
+			"summary": "An agent that pays other agents on its own is governed by the policy you set on its wallet: a ceiling per payment, a rolling 24-hour ceiling, a separate ceiling per payee so one peer cannot quietly absorb the whole day's budget, and a kill switch that halts every kind of autonomous spending the moment you flip it. Those rules were enforced wherever the platform asked for them, but the enforcement itself had a soft spot: code that asked the guard to check a payment without first loading the agent's settings was handed an empty policy, meaning no ceilings and no kill switch, and nothing anywhere said so. The guard now reads the agent's real policy itself in that case, and refuses outright to price a payment for an agent that no longer exists. Every ceiling and the kill switch are now proven, not asserted: one command spins up a real database and a real server, then shows each limit turning away an over-limit payment, eight simultaneous payments competing for the last dollar of headroom with exactly one getting through, a frozen agent halted before the other agent is even contacted while your own withdrawals stay open, and every settled payment coming back as a receipt with the payee, the amount and the transaction signature on your agent's ledger.",
+			"tags": [
+				"security",
+				"improvement",
+				"docs"
+			],
+			"link": "/docs/a2a-payments"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Every agent now has a verifiable on-chain history you can read on its page",
 			"summary": "Agents do things on-chain after they are registered: they launch a token, collect reputation attestations, change hands, delegate execution rights. Until now the platform recorded only who an agent currently was, so all of that history was dropped, and anyone who wanted it had to scan a chain themselves. Open any agent under the Discover directory and there is now an On-chain history panel: a timeline of everything the platform has indexed for that agent, each entry stamped with the real time the chain says it happened and linked to the transaction on a block explorer so you can check it yourself. The same data is available to developers as one public endpoint. Two failures were fixed to make it real. The Solana half of the indexer was crashing on every single agent it looked at, so despite tracking more than fifteen hundred agents it had recorded zero events; it now records them, and a token launch names the agent's actual coin instead of the wrapped SOL that paid for it. On the EVM side, five of the twenty-two supported chains were producing blocks faster than the indexer could read them, so their backlog grew every hour while the status page called them healthy: the indexer now widens its reading window until it catches up, and the status page publishes how many blocks behind the worst chain is, as a number.",
 			"tags": [
