@@ -413,11 +413,19 @@
 				<div class="st-kpi"><div class="st-kpi-val" id="st-kpi-latency">—</div><div class="st-kpi-label">avg response</div></div>
 			</div>
 
-			<p class="st-meta" id="st-meta" data-i18n-html="status.probed_every_5_minutes_from_outside_our">
-				Probed every 5 minutes from outside our infrastructure.
-				<a href="/api/status" style="color: inherit">JSON feed</a> ·
-				<a href="/api/status?format=svg" style="color: inherit">status badge</a> ·
-				<a href="/changelog" style="color: inherit">Changelog</a>
+			<!-- The cadence sentence is i18n-managed, so the live "last check" stamp
+			     gets its own sibling span: the i18n pass rewrites #st-meta's innerHTML
+			     wholesale on every locale application, which used to wipe the stamp a
+			     second after the fetch wrote it. Keeping them separate makes the stamp
+			     survive by construction instead of depending on script ordering. -->
+			<p class="st-meta">
+				<span id="st-meta" data-i18n-html="status.probed_every_5_minutes_from_outside_our">
+					Probed every 5 minutes from outside our infrastructure.
+					<a href="/api/status" style="color: inherit">JSON feed</a> ·
+					<a href="/api/status?format=svg" style="color: inherit">status badge</a> ·
+					<a href="/changelog" style="color: inherit">Changelog</a>
+				</span>
+				<span id="st-checked" hidden></span>
 			</p>
 			<p class="st-meta" id="st-build" hidden>
 				<!-- filled from /api/version: the exact commit + Cloud Run revision live now -->
@@ -468,7 +476,7 @@
 			const banner = document.getElementById('st-banner');
 			const bannerDot = document.getElementById('st-banner-dot');
 			const bannerText = document.getElementById('st-banner-text');
-			const meta = document.getElementById('st-meta');
+			const checkedAtEl = document.getElementById('st-checked');
 			const list = document.getElementById('st-services');
 			const subsWrap = document.getElementById('st-subsystems');
 			const subsList = document.getElementById('st-sublist');
@@ -643,9 +651,12 @@
 				}
 				if (data.checkedAt) {
 					const ago = Math.max(0, Math.round((Date.now() - data.checkedAt) / 60000));
-					meta.firstChild.textContent = `Probed every 5 minutes from outside our infrastructure — last check ${
+					// Responses are edge-cached (max-age=60), so a reader can be looking
+					// at a round that is minutes older than the page load. Say how old.
+					checkedAtEl.textContent = `Last check ${
 						ago === 0 ? 'under a minute' : `${ago} min`
-					} ago. `;
+					} ago.`;
+					checkedAtEl.hidden = false;
 				}
 
 				list.innerHTML = '';

@@ -45,7 +45,7 @@ export async function chargeSubscription(subscriptionId) {
 		SELECT
 			cs.id, cs.plan_id, cs.subscriber_user_id, cs.wallet_address,
 			cs.current_period_end, cs.payment_method, cs.chain, cs.currency_mint,
-			sp.price_usd, sp.creator_id,
+			sp.price_usd, sp.creator_id, sp.agent_id,
 			u.email AS subscriber_email,
 			payout.address AS payout_address
 		FROM creator_subscriptions cs
@@ -68,6 +68,15 @@ export async function chargeSubscription(subscriptionId) {
 		// subscriber where to pay. Surface this as a configuration failure
 		// rather than silently treating it as a pending charge.
 		return { success: false, error: 'creator_payout_wallet_missing' };
+	}
+
+	if (!row.agent_id) {
+		// The renewal intent is an agent-scoped payable row (agent_payment_intents
+		// .agent_id is NOT NULL and references agent_identities), so a plan that
+		// was never attached to an agent has nothing to bill against. Say that
+		// plainly here rather than letting the insert below fail as an opaque
+		// intent_create_failed the creator cannot act on.
+		return { success: false, error: 'plan_agent_missing' };
 	}
 
 	// Create the pending payment record — idempotently. At most one pending
@@ -137,7 +146,7 @@ export async function chargeSubscription(subscriptionId) {
 				 start_time, end_time, status, cluster, payload, expires_at)
 			VALUES
 				(${intentId}, ${row.subscriber_user_id},
-				 ${row.creator_id}, ${row.currency_mint || 'USDC'},
+				 ${row.agent_id}, ${row.currency_mint || 'USDC'},
 				 ${amountAtomics}, ${memo},
 				 ${now}, ${expiresAt}, 'pending',
 				 ${row.chain === 'solana' ? 'mainnet' : row.chain || 'evm'},
@@ -152,8 +161,20 @@ export async function chargeSubscription(subscriptionId) {
 				 ${expiresAt})
 		`;
 	} catch (err) {
-		// Intent insert failed — roll the payment row back to 'failed' so it
-		// doesn't sit in pending forever and the next cron pass can retry.
+		// Log the cause before collapsing it to a code. The caller only ever sees
+		// 'intent_create_failed', so discarding `err` here left a total billing
+		// outage (a NOT NULL / foreign-key violation on the intent row) looking
+		// like a transient blip in the cron report and in the ops alert.
+		console.error(
+			JSON.stringify({
+				event: 'subscription_billing.intent_create_failed',
+				subscriptionId,
+				paymentId: payment.id,
+				error: err?.message || String(err),
+			}),
+		);
+		// Roll the payment row back to 'failed' so it doesn't sit in pending
+		// forever and the next cron pass can retry.
 		await sql`
 			UPDATE subscription_payments
 			SET status = 'failed'

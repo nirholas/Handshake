@@ -34,6 +34,54 @@ const FETCH_TIMEOUT_MS = 6_000;
 // metadata document. Also the streaming cap the pinned guard enforces.
 const MAX_METADATA_BYTES = 1024 * 1024;
 
+// Cap for a single registry-enumeration call when the caller passes no deadline.
+// Enumeration is the phase that actually blocks: a getProgramAccounts scan over
+// a whole program routinely takes tens of seconds and can hang for minutes on a
+// throttled, rate-limited, or 504-ing RPC.
+const SCAN_BUDGET_MS = 90_000;
+
+// Per-HTTP-request cap for the Anchor account scan, so a stalled socket is
+// released instead of held until the whole scan budget burns down.
+const RPC_REQUEST_TIMEOUT_MS = 30_000;
+
+/** Milliseconds left before `deadline`, or `fallbackMs` when the caller set none. */
+export function remainingMs(deadline, fallbackMs = SCAN_BUDGET_MS) {
+	if (!deadline) return fallbackMs;
+	return deadline - Date.now();
+}
+
+// Bound a call that takes no timeout of its own.
+//
+// Neither umi's GPA builder nor Anchor's account fetcher accepts a deadline, and
+// the per-account `deadline` checks in the crawl loops below are only reached
+// AFTER enumeration returns. So a slow upstream blew straight through the budget
+// the cron hands down: an audit run measured 272s against a declared 240s, which
+// is inside 48s of the 320s attempt deadline Cloud Scheduler gives the job
+// (scripts/create-gcp-scheduler.mjs). Past that the request is abandoned and
+// retried, and the crawl never completes at all. Bounding the enumeration itself
+// is what makes that budget real.
+export async function withDeadline(promise, ms, label) {
+	// `tracked` never rejects, so an enumeration that settles AFTER the timer
+	// fired resolves quietly instead of surfacing as an unhandled rejection on an
+	// instance that has already moved on.
+	const tracked = promise.then((value) => ({ value }), (error) => ({ error }));
+	if (ms <= 0) throw new Error(`${label}: no time left in the crawl budget`);
+	let timer;
+	const expiry = new Promise((resolve) => {
+		timer = setTimeout(
+			() => resolve({ error: new Error(`${label}: exceeded its ${Math.round(ms / 1000)}s budget`) }),
+			ms,
+		);
+	});
+	try {
+		const settled = await Promise.race([tracked, expiry]);
+		if (settled.error) throw settled.error;
+		return settled.value;
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
 // Pick the best available mainnet RPC. solanaRpcEndpoints prefers Helius (which
 // also answers DAS getAsset on the same URL), falling back to public nodes.
 function mainnetRpc() {
@@ -161,10 +209,14 @@ export async function crawlMetaplexAgents({ deadline } = {}) {
 	// Enumerate both account versions. getDeserialized() returns every account of
 	// the type owned by the program — the full registry, not just ours.
 	const accounts = [];
-	for (const [label, gpa] of [['v2', gpaV2], ['v1', gpaV1]]) {
-		if (!gpa) continue;
+	// Split whatever budget is left evenly across the scans still to run, so a
+	// slow v2 cannot silently starve v1 of every remaining millisecond.
+	const scans = [['v2', gpaV2], ['v1', gpaV1]].filter(([, gpa]) => gpa);
+	for (let i = 0; i < scans.length; i++) {
+		const [label, gpa] = scans[i];
+		const share = Math.floor(remainingMs(deadline) / (scans.length - i));
 		try {
-			const list = await gpa.getDeserialized();
+			const list = await withDeadline(gpa.getDeserialized(), share, `gpa-${label}`);
 			for (const acc of list) accounts.push({ label, acc });
 		} catch (err) {
 			report.errors.push({ stage: `gpa-${label}`, error: err.message || String(err) });
@@ -224,7 +276,13 @@ export async function crawlAgencAgents({ deadline } = {}) {
 		const { AGENC_COORDINATION_IDL } = await import('@tetsuo-ai/protocol');
 		bs58 = (await import('bs58')).default;
 
-		const connection = new Connection(rpcUrl, 'confirmed');
+		// A per-request timeout on top of the scan-wide deadline below: without it
+		// a stalled socket is held for the whole budget, and Anchor's account
+		// fetcher offers no timeout of its own.
+		const connection = new Connection(rpcUrl, {
+			commitment: 'confirmed',
+			fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(RPC_REQUEST_TIMEOUT_MS) }),
+		});
 		// Read-only provider: an ephemeral wallet that never signs. Anchor needs a
 		// payer/publicKey slot to construct the provider; the account namespace we
 		// use (.all()) only reads.
@@ -246,7 +304,11 @@ export async function crawlAgencAgents({ deadline } = {}) {
 	try {
 		// `agentRegistration` is the AgenC agent account (verified against
 		// @tetsuo-ai/sdk's getAccount2(program, "agentRegistration")).
-		accounts = await program.account.agentRegistration.all();
+		accounts = await withDeadline(
+			program.account.agentRegistration.all(),
+			remainingMs(deadline),
+			'agenc account scan',
+		);
 	} catch (err) {
 		report.errors.push({ stage: 'all', error: err.message || String(err) });
 		return report;

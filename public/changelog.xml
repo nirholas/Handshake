@@ -143,6 +143,14 @@
 			<description>The filter that decides whether a story from a broad outlet belongs in a crypto feed matched its keyword list as raw text, so &quot;defi&quot; fired inside the ordinary word &quot;defied&quot; and three Economic Times headlines about Indian share prices led /markets/news and the top of the daily digest. The ticker detector had the same flaw: it read the English word &quot;near&quot; as NEAR Protocol, &quot;optimism&quot; as OP, and &quot;maker&quot; as MKR, which pinned live price widgets to unrelated stories and pushed NEAR to third place in the archive trending strip on the strength of phrases like &quot;near-term profit booking&quot;. Both now match whole words, and those three projects count only when the story actually names them. Separately, the FXStreet feed we pull was the publisher site-wide one (gold, EUR/JPY, central banks) rather than its crypto desk, so &quot;India Gold price today&quot; arrived pre-approved; it now points at the crypto feed.</description>
 		</item>
 		<item>
+			<title>Draft with AI actually returns drafts, and the X panel stops 500ing on a bad id</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Draft with AI actually returns drafts, and the X panel stops 500ing on a bad id</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Draft and Draft x3 buttons in the agent's X panel asked the server for tweet options and got back a differently shaped answer, so the panel cleared itself and showed nothing every time. Drafting now returns the options it was asked for: one per click of Draft x3, each written from its own angle, in the tone picked in the panel and in the voice of the agent it belongs to, with Thread mode splitting a completion into real thread parts. Drafting is also gated like every other write, so another site cannot spend a signed-in account's model budget. Elsewhere on the same panel, a malformed id or agent filter now comes back as a plain validation error instead of a server error, approving a queued post can no longer be published twice by a double click, and scheduling has a sane ceiling on how many posts and rules one account can queue.</description>
+		</item>
+		<item>
 			<title>Every agent now has a verifiable on-chain history you can read on its page</title>
 			<link>https://three.ws/docs/agent-index</link>
 			<guid isPermaLink="false">2026-08-14:Every agent now has a verifiable on-chain history you can read on its page</guid>
@@ -157,6 +165,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the database had a short connectivity blip, the Oracle read endpoints answered with an empty result and a 200 OK, which reads as fact rather than as an outage. The live conviction feed showed a market with nothing in it, the hot-sectors panel showed no sectors, an agent's public track record showed &quot;never traded&quot; (the very evidence copy-traders judge a leader on), and the follow endpoint told a subscriber they were not following an agent they were in fact following. Worst of all, unfollowing an agent answered &quot;done&quot; while the subscription survived, so the alerts kept arriving with no way to stop them. Some of those answers were then cached for up to five minutes, outliving the blip that caused them. All of these now return a proper &quot;temporarily unavailable, retry shortly&quot; response that nothing caches, so a page can tell you it cannot reach the data instead of quietly showing you the wrong answer.</description>
+		</item>
+		<item>
+			<title>Paying to resolve a name that does not exist no longer costs anything</title>
+			<link>https://three.ws/docs/x402-endpoints</link>
+			<guid isPermaLink="false">2026-08-14:Paying to resolve a name that does not exist no longer costs anything</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The paid name-resolution call on /api/x402/pay-by-name sells one thing: the on-chain address behind a @username, a .sol name, or a raw wallet. When the name resolved to nothing it still took the $0.001 toll and handed back an empty answer. It now returns a plain 404 and leaves the payment unspent, so a buyer only ever pays for an address they actually received. Two smaller corrections shipped alongside: the pump launch feed's headline fields (newest mint, name and symbol) kept describing the newest launch when the list is ranked by liquidity instead of by age, rather than whichever coin happened to sit at the top; and internal and subscription callers can once again reach the Permit2 gas-sponsoring demo on deployments that have no card-facilitator credentials, since those callers never sign a payment in the first place.</description>
 		</item>
 		<item>
 			<title>Platform counters stop reporting zero when the numbers are simply unavailable</title>
@@ -255,6 +271,14 @@
 			<description>An agent that pays other agents on its own is governed by the policy you set on its wallet: a ceiling per payment, a rolling 24-hour ceiling, a separate ceiling per payee so one peer cannot quietly absorb the whole day's budget, and a kill switch that halts every kind of autonomous spending the moment you flip it. Those rules were enforced wherever the platform asked for them, but the enforcement itself had a soft spot: code that asked the guard to check a payment without first loading the agent's settings was handed an empty policy, meaning no ceilings and no kill switch, and nothing anywhere said so. The guard now reads the agent's real policy itself in that case, and refuses outright to price a payment for an agent that no longer exists. Every ceiling and the kill switch are now proven, not asserted: one command spins up a real database and a real server, then shows each limit turning away an over-limit payment, eight simultaneous payments competing for the last dollar of headroom with exactly one getting through, a frozen agent halted before the other agent is even contacted while your own withdrawals stay open, and every settled payment coming back as a receipt with the payee, the amount and the transaction signature on your agent's ledger.</description>
 		</item>
 		<item>
+			<title>The market data index now shows every paid endpoint, at the price you will actually be charged</title>
+			<link>https://three.ws/docs/market-data-api</link>
+			<guid isPermaLink="false">2026-08-14:The market data index now shows every paid endpoint, at the price you will actually be charged</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The free front door to the paid market data API is where an agent looks before it buys anything. It only listed the seventeen endpoints in the core family, so the Market Heatmap and Market Mood endpoints were invisible to anyone discovering the bundle through it, and it quoted each endpoint's default price rather than the price the endpoint currently charges, so an operator price change left the index advertising a stale number. The index now builds itself from both sources, quotes the live price, and prints sub-cent prices in full instead of rounding them down to zero. Separately, a coin the upstream had not ranked yet could appear in the Market Heatmap board carrying rank 0; it now takes its position on the board instead.</description>
+		</item>
+		<item>
 			<title>The MCP tool catalog now lists three tools it was hiding, and stops calling the x402 Bazaar free</title>
 			<link>https://three.ws/mcp-tools</link>
 			<guid isPermaLink="false">2026-08-14:The MCP tool catalog now lists three tools it was hiding, and stops calling the x402 Bazaar free</guid>
@@ -269,6 +293,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The trading floor at /activity reconnects to its live feed by telling the server the timestamp it last saw. If that timestamp arrived malformed, the server opened the stream anyway and then silently failed every lookup behind it: the page stayed connected, showed no error, and never received another action for as long as it was open. It now rejects the bad timestamp up front with a clear message so the page reconnects cleanly instead of sitting on a dead feed. Three neighbouring Oracle endpoints got the same treatment: a malformed paging cursor on the activity feed, and a non-text agent or chat id sent to the follow endpoint, used to come back as an unexplained server error and now come back as a plain description of what was wrong. An unreadable result limit on an agent's public track record no longer wipes out its recent-trade list. The activity feed and the calibration report also now allow cross-site reads, matching every other public Oracle endpoint.</description>
+		</item>
+		<item>
+			<title>The paid Market Data API stops blaming buyers for a data provider's rate limit</title>
+			<link>https://three.ws/docs/market-data-api</link>
+			<guid isPermaLink="false">2026-08-14:The paid Market Data API stops blaming buyers for a data provider's rate limit</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When an upstream data provider throttled us, the paid market endpoints (sectors, exchanges, derivatives, chains, DeFi, DEX volumes, fees) passed that straight back as a 429 rate-limit error, which read as if the caller had exceeded a limit on three.ws. These endpoints have no per-IP rate limit, so that was never true, and the error text also repeated the provider's name and our internal request path. A provider outage or throttle now comes back as the documented, retryable 503 data_unavailable and nothing else, so an agent's retry logic backs off for the right reason. Separately, market-fees used to quietly serve the fees table when asked for a mistyped type, charging for a dataset the caller did not ask for; an unrecognized type is now rejected before payment settles, so the call is free and the mistake is visible.</description>
 		</item>
 		<item>
 			<title>The payment-outcome board no longer reports itself healthy while it is blind</title>
@@ -293,6 +325,22 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The capture screen showed a green &quot;Sharp&quot; badge on frames that were smeared past recognition. Measured against six real portrait photographs, the blur floor sat below every reading a real photo can produce, so the gate never fired once: a shot ruined by camera shake sailed through and you found out a minute later, after the build. The floor is now calibrated from those measurements and sits in the gap between blurred and sharp faces, so &quot;Hold steady. The image is blurry.&quot; appears while you can still act on it. A face half-blown by window glare also used to pass, because averaging bright and shadowed halves lands back in the acceptable range; the camera now measures how much of your face is washed out and tells you to turn away from the window. Two capture bugs went with it: on a phone, the helper widgets pinned to the bottom of the screen sat on top of the camera and swallowed taps meant for the shutter and Cancel, and the Retake and Use this buttons stayed on screen during live capture. The shot check after the shutter is faster too.</description>
+		</item>
+		<item>
+			<title>The stablecoin peg monitor stops calling an unpriced coin a depeg</title>
+			<link>https://three.ws/docs/x402-endpoints</link>
+			<guid isPermaLink="false">2026-08-14:The stablecoin peg monitor stops calling an unpriced coin a depeg</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The paid peg monitor at /api/x402/stablecoin-health scores every USD-pegged stablecoin against $1. Its upstream feed leaves the price blank for a large minority of the coins it tracks, and the monitor was reading that blank as a price of zero, so 75 coins with no quote at all were reported as fully depegged and shipped in the depeg alert list. They now report a status of unknown with a null price, which cut the alert list from 120 entries to the 46 coins that are genuinely off peg. Two paid endpoints alongside it stopped selling a wrong answer during a database outage: the skill marketplace's most-purchased-skills mode was returning an empty list that read like nobody hired anything, and now fails cleanly before the payment settles, while the spend-session canary reports why its create-and-consume cycle failed instead of an unexplained false.</description>
+		</item>
+		<item>
+			<title>The vanity grinders stop keeping any copy of a key you bought, and receipt checks now work from a plain link</title>
+			<link>https://three.ws/docs/x402-dev-tools</link>
+			<guid isPermaLink="false">2026-08-14:The vanity grinders stop keeping any copy of a key you bought, and receipt checks now work from a plain link</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Two changes to the pay-per-call vanity endpoints and the free receipt verifier. First, security: when a paid call is retried, the server keeps a short-lived copy of the original response so you are never charged twice. On the provably-fair grinder that copy included the receipt's serverSeed, and the seed is enough to recompute the private key, so a retry cache that was only ever meant to hold public metadata was in fact holding key material. The stored copy is now stripped of the secret and the seed on both grinders, sealed deliveries included, and a retry returns the public metadata with a plain note that the key was delivered once. The key you receive in the live response is unchanged. Second, the free receipt verifier can now confirm a settlement transaction over a plain GET link: /api/x402/verify-receipt?hash=&lt;tx&gt;&amp;network=solana, which works from a browser, a curl one-liner, or an uptime probe with no request body. Checking an attestation still uses POST because it needs the whole signed object.</description>
 		</item>
 		<item>
 			<title>We can now tell whether people come back to the agent they minted</title>

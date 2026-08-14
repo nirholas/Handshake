@@ -222,6 +222,25 @@ describe('an overlapping run losing the GCS generation guard', () => {
 		expect(JSON.parse(statsWrite.body).sources.coindesk).toBe(2108);
 	});
 
+	it('degrades to a skipped run when GCP credentials are unavailable', async () => {
+		const { getGcpAccessToken } = await import('../api/_lib/gcp-auth.js');
+		getGcpAccessToken.mockRejectedValueOnce(
+			Object.assign(new Error('No GCP credentials found.'), { code: 'unconfigured' }),
+		);
+		const res = await call('/api/cron/news-archive-append');
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.ok).toBe(false);
+		expect(res._json.body.reason).toBe('gcp_unconfigured');
+		expect(res._json.body.appended).toBe(0);
+		expect(writes).toHaveLength(0);
+	});
+
+	it('a credential failure that is not `unconfigured` still fails the run', async () => {
+		const { getGcpAccessToken } = await import('../api/_lib/gcp-auth.js');
+		getGcpAccessToken.mockRejectedValueOnce(new Error('token exchange returned 500'));
+		await expect(call('/api/cron/news-archive-append')).rejects.toThrow(/token exchange/);
+	});
+
 	it('a real GCS write failure still fails the run', async () => {
 		const base = global.fetch;
 		global.fetch = vi.fn(async (url, opts = {}) => {

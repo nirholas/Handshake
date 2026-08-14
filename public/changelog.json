@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T05:11:16.171Z",
+	"generated_at": "2026-08-14T05:33:54.431Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -191,6 +191,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "Draft with AI actually returns drafts, and the X panel stops 500ing on a bad id",
+			"summary": "The Draft and Draft x3 buttons in the agent's X panel asked the server for tweet options and got back a differently shaped answer, so the panel cleared itself and showed nothing every time. Drafting now returns the options it was asked for: one per click of Draft x3, each written from its own angle, in the tone picked in the panel and in the voice of the agent it belongs to, with Thread mode splitting a completion into real thread parts. Drafting is also gated like every other write, so another site cannot spend a signed-in account's model budget. Elsewhere on the same panel, a malformed id or agent filter now comes back as a plain validation error instead of a server error, approving a queued post can no longer be published twice by a double click, and scheduling has a sane ceiling on how many posts and rules one account can queue.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "Every agent now has a verifiable on-chain history you can read on its page",
 			"summary": "Agents do things on-chain after they are registered: they launch a token, collect reputation attestations, change hands, delegate execution rights. Until now the platform recorded only who an agent currently was, so all of that history was dropped, and anyone who wanted it had to scan a chain themselves. Open any agent under the Discover directory and there is now an On-chain history panel: a timeline of everything the platform has indexed for that agent, each entry stamped with the real time the chain says it happened and linked to the transaction on a block explorer so you can check it yourself. The same data is available to developers as one public endpoint. Three failures were fixed to make it real. The Solana half of the indexer was crashing on every single agent it looked at, so despite tracking more than fifteen hundred agents it had recorded zero events; it now records them, and a token launch names the agent's actual coin instead of the wrapped SOL that paid for it. On the EVM side, five of the twenty-two supported chains were producing blocks faster than the indexer could read them, so their backlog grew every hour while the status page called them healthy: the indexer now widens its reading window until it catches up, and the status page publishes how many blocks behind the worst chain is, as a number. Reputation was the third: the platform was already asking every EVM chain for agent feedback and vouches on every pass, then throwing the answers away, so not a single reputation event had ever reached the index. Those now land alongside the rest of an agent's history, with the score, its tags, and a link to the attestation.",
 			"link": "/docs/agent-index",
@@ -209,6 +220,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Paying to resolve a name that does not exist no longer costs anything",
+			"summary": "The paid name-resolution call on /api/x402/pay-by-name sells one thing: the on-chain address behind a @username, a .sol name, or a raw wallet. When the name resolved to nothing it still took the $0.001 toll and handed back an empty answer. It now returns a plain 404 and leaves the payment unspent, so a buyer only ever pays for an address they actually received. Two smaller corrections shipped alongside: the pump launch feed's headline fields (newest mint, name and symbol) kept describing the newest launch when the list is ranked by liquidity instead of by age, rather than whichever coin happened to sit at the top; and internal and subscription callers can once again reach the Permit2 gas-sponsoring demo on deployments that have no card-facilitator credentials, since those callers never sign a payment in the first place.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -347,6 +368,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The market data index now shows every paid endpoint, at the price you will actually be charged",
+			"summary": "The free front door to the paid market data API is where an agent looks before it buys anything. It only listed the seventeen endpoints in the core family, so the Market Heatmap and Market Mood endpoints were invisible to anyone discovering the bundle through it, and it quoted each endpoint's default price rather than the price the endpoint currently charges, so an operator price change left the index advertising a stale number. The index now builds itself from both sources, quotes the live price, and prints sub-cent prices in full instead of rounding them down to zero. Separately, a coin the upstream had not ranked yet could appear in the Market Heatmap board carrying rank 0; it now takes its position on the board instead.",
+			"link": "/docs/market-data-api",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The MCP tool catalog now lists three tools it was hiding, and stops calling the x402 Bazaar free",
 			"summary": "The public tool catalog at /mcp-tools is generated from the code so it cannot drift, which is exactly why two wrong things in it went unnoticed. The free 3D Studio connector builds its tool list from two source files and the generator only ever read one of them, so the three persona tools that give a generated body a name, bring it back in a later session, and make it lip-sync a reply were served by the endpoint but missing from the catalog, from the machine-readable /mcp-catalog.json an agent fetches to discover what it can call, and from the two build gates that hold every published tool to its declared contract and its declared safety annotations. All three are now covered by both gates and appear in the catalog. Separately, the x402 Bazaar was labelled as needing no account and no payment; a real search call with neither returns a payment request, so the catalog now says OAuth or x402, matching the server, its documentation, and the fleet directory at /.well-known/mcp.json.",
 			"link": "/mcp-tools",
@@ -365,6 +397,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The paid Market Data API stops blaming buyers for a data provider's rate limit",
+			"summary": "When an upstream data provider throttled us, the paid market endpoints (sectors, exchanges, derivatives, chains, DeFi, DEX volumes, fees) passed that straight back as a 429 rate-limit error, which read as if the caller had exceeded a limit on three.ws. These endpoints have no per-IP rate limit, so that was never true, and the error text also repeated the provider's name and our internal request path. A provider outage or throttle now comes back as the documented, retryable 503 data_unavailable and nothing else, so an agent's retry logic backs off for the right reason. Separately, market-fees used to quietly serve the fees table when asked for a mistyped type, charging for a dataset the caller did not ask for; an unrecognized type is now rejected before payment settles, so the call is free and the mistake is visible.",
+			"link": "/docs/market-data-api",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -398,6 +440,27 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The stablecoin peg monitor stops calling an unpriced coin a depeg",
+			"summary": "The paid peg monitor at /api/x402/stablecoin-health scores every USD-pegged stablecoin against $1. Its upstream feed leaves the price blank for a large minority of the coins it tracks, and the monitor was reading that blank as a price of zero, so 75 coins with no quote at all were reported as fully depegged and shipped in the depeg alert list. They now report a status of unknown with a null price, which cut the alert list from 120 entries to the 46 coins that are genuinely off peg. Two paid endpoints alongside it stopped selling a wrong answer during a database outage: the skill marketplace's most-purchased-skills mode was returning an empty list that read like nobody hired anything, and now fails cleanly before the payment settles, while the spend-session canary reports why its create-and-consume cycle failed instead of an unexplained false.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The vanity grinders stop keeping any copy of a key you bought, and receipt checks now work from a plain link",
+			"summary": "Two changes to the pay-per-call vanity endpoints and the free receipt verifier. First, security: when a paid call is retried, the server keeps a short-lived copy of the original response so you are never charged twice. On the provably-fair grinder that copy included the receipt's serverSeed, and the seed is enough to recompute the private key, so a retry cache that was only ever meant to hold public metadata was in fact holding key material. The stored copy is now stripped of the secret and the seed on both grinders, sealed deliveries included, and a retry returns the public metadata with a plain note that the key was delivered once. The key you receive in the live response is unchanged. Second, the free receipt verifier can now confirm a settlement transaction over a plain GET link: /api/x402/verify-receipt?hash=<tx>&network=solana, which works from a browser, a curl one-liner, or an uptime probe with no request body. Checking an attestation still uses POST because it needs the whole signed object.",
+			"link": "/docs/x402-dev-tools",
+			"tags": [
+				"security",
+				"improvement"
 			]
 		},
 		{
