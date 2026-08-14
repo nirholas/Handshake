@@ -21,7 +21,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRedisShim } from '../tests/redis-shim.js';
 import { createIdentity } from '../src/identity.js';
-import { verifyResultReceipt } from '../src/signing.js';
+import { verifyResult } from '../src/signing.js';
 
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -64,7 +64,6 @@ async function main() {
 	});
 	server.stderr.on('data', (d) => process.stderr.write(`[server] ${d}`));
 	const serverUp = waitFor(`${PLATFORM}/api/version`).catch(() => waitFor(`${PLATFORM}/`));
-	let client;
 	try {
 		await serverUp;
 		log('platform server up at', PLATFORM);
@@ -125,7 +124,7 @@ async function main() {
 		const stored = JSON.parse(await shimClient.get(`ijob:${jobId}`));
 		if (stored.status !== 'done') throw new Error(`job status is ${stored.status}, expected done`);
 		const { output, receipt, startedAt, finishedAt } = stored;
-		const verified = await verifyResultReceipt(
+		const verified = await verifyResult(
 			{ jobId, model: output.model, prompt, output, startedAt, finishedAt },
 			receipt,
 		);
