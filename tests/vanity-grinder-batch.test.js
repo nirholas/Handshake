@@ -120,7 +120,7 @@ describe('batch vanity grinder end to end', () => {
 		}
 	});
 
-	it('never writes plaintext key material to disk', () => {
+	it('never writes plaintext key material to disk', async () => {
 		const raw = readFileSync(out(), 'utf8');
 		for (const r of records) {
 			// No plaintext-bearing field survives into the record.
@@ -129,11 +129,34 @@ describe('batch vanity grinder end to end', () => {
 			expect(typeof r.secretCiphertext).toBe('string');
 			expect(r.secretCiphertext.length).toBeGreaterThan(64);
 		}
-		// And the ciphertext is genuinely opaque: no base58 run long enough to be a
-		// 64-byte Solana secret key appears anywhere in the file.
-		const base58Runs = raw.match(/[1-9A-HJ-NP-Za-km-z]{80,}/g) || [];
-		for (const run of base58Runs) {
-			expect(() => bs58.decode(run)).toThrow();
+		// And the ciphertext is genuinely opaque. This used to be checked by scanning
+		// the file for base58-looking runs of 80+ characters and asserting each one
+		// failed to decode, which cannot work: the pattern matches only base58
+		// alphabet characters, so every run it finds decodes fine. The assertion
+		// therefore passed only on the runs where the random ciphertext happened to
+		// contain no such substring, and failed outright on the runs where it did.
+		// Open each record instead and look for the exact secret this file exists to
+		// keep off disk, in every encoding it could plausibly leak as.
+		process.env.WALLET_ENCRYPTION_KEY = TEST_KEY;
+		delete process.env.VANITY_KMS_KEY;
+		const { openSecret } = await import('../api/_lib/vanity-vault.js');
+		for (const r of records) {
+			const plain = JSON.parse(await openSecret(r.secretCiphertext, r.secretScheme));
+			const secretKey = Buffer.from(Uint8Array.from(plain.secretKey));
+			// The 32-byte seed alone reconstructs the keypair, so it counts as a leak
+			// just as much as the full 64-byte key does.
+			const seed = secretKey.subarray(0, 32);
+			for (const leak of [
+				plain.secretKeyBase58,
+				bs58.encode(secretKey),
+				secretKey.toString('hex'),
+				secretKey.toString('base64'),
+				bs58.encode(seed),
+				seed.toString('hex'),
+				seed.toString('base64'),
+			]) {
+				expect(raw).not.toContain(leak);
+			}
 		}
 	});
 
