@@ -38,6 +38,15 @@ vi.mock('../api/_lib/face-embed.js', async () => {
 	return { ...actual, embedFace: (...a) => embedFace(...a) };
 });
 
+// The store's read path is exercised against a stand-in `sql` tag so the
+// null-vs-zero contract below is testable without a database.
+const sqlRows = vi.fn();
+vi.mock('../api/_lib/db.js', () => ({
+	sql: (...a) => sqlRows(...a),
+	isDbUnavailableError: () => false,
+}));
+vi.mock('../api/_lib/env.js', () => ({ databaseConfigured: () => true }));
+
 const {
 	LIKENESS_VIEWS,
 	SFACE_SAME_IDENTITY_COSINE,
@@ -45,7 +54,7 @@ const {
 	cosineToScore5,
 	scoreLikeness,
 } = await import('../api/_lib/likeness-score.js');
-const { capturesFromParams } = await import('../api/_lib/likeness-store.js');
+const { capturesFromParams, recentLikenessScores } = await import('../api/_lib/likeness-store.js');
 
 // A unit vector at a chosen angle from the reference, so a test can request an
 // exact cosine instead of hoping a random pair lands near one.
@@ -260,5 +269,66 @@ describe('capturesFromParams', () => {
 		expect(capturesFromParams(null)).toEqual([]);
 		expect(capturesFromParams('not json')).toEqual([]);
 		expect(capturesFromParams({ images: [null, 42, ''] })).toEqual([]);
+	});
+});
+
+describe('recentLikenessScores column mapping', () => {
+	it('keeps "not measured" null instead of reporting it as zero', async () => {
+		// A single-capture reconstruction stores capture_cohesion as NULL, because
+		// agreement between photos is undefined with one photo. Number(null) is 0
+		// and Number.isFinite(0) is true, so a naive conversion turns that into a
+		// cohesion of 0.000, which reads as "these photos are of different people":
+		// the opposite of what the row says.
+		sqlRows.mockResolvedValueOnce([
+			{
+				creation_id: 'c-1',
+				status: 'ok',
+				likeness_score: '4.12',
+				identity_cosine: '0.7011',
+				mean_score: null,
+				worst_cosine: null,
+				turn_falloff: null,
+				same_identity: true,
+				captures_total: 1,
+				captures_embedded: 1,
+				capture_cohesion: null,
+				views_scored: 3,
+				score_ms: 61000,
+				scored_at: '2026-08-14T01:00:00.000Z',
+			},
+		]);
+
+		const [row] = await recentLikenessScores({ limit: 1 });
+		expect(row.captureCohesion).toBeNull();
+		expect(row.meanScore).toBeNull();
+		expect(row.turnFalloff).toBeNull();
+		// Real numeric columns still come back as numbers, not strings.
+		expect(row.likenessScore).toBe(4.12);
+		expect(row.identityCosine).toBeCloseTo(0.7011, 6);
+	});
+
+	it('preserves a genuine zero, which is a different fact from null', async () => {
+		sqlRows.mockResolvedValueOnce([
+			{
+				creation_id: 'c-2',
+				status: 'ok',
+				likeness_score: '2.0',
+				identity_cosine: '0.2',
+				mean_score: '2.0',
+				worst_cosine: '0.2',
+				turn_falloff: 0,
+				same_identity: false,
+				captures_total: 3,
+				captures_embedded: 3,
+				capture_cohesion: 0,
+				views_scored: 3,
+				score_ms: 60000,
+				scored_at: '2026-08-14T01:00:00.000Z',
+			},
+		]);
+
+		const [row] = await recentLikenessScores({ limit: 1 });
+		expect(row.turnFalloff).toBe(0);
+		expect(row.captureCohesion).toBe(0);
 	});
 });

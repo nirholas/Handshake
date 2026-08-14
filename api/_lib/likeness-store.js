@@ -173,6 +173,19 @@ function intOrNull(v) {
 	return Number.isFinite(v) ? Math.round(v) : null;
 }
 
+// Read-side companion to numOrNull, and NOT the same function: `Number(null)`
+// is 0 and `Number.isFinite(0)` is true, so putting a nullable column through
+// numOrNull turns "not measured" into a real reading of zero. That is not a
+// cosmetic difference here. capture_cohesion is null for a single-photo
+// capture because agreement between photos is undefined with one photo, and
+// surfacing that as 0.000 reads as "these photos are of different people",
+// which is the opposite of what the row says.
+function columnNumber(v) {
+	if (v === null || v === undefined) return null;
+	const n = Number(v);
+	return Number.isFinite(n) ? n : null;
+}
+
 // Histogram edges in the roadmap's own units. The 4.0 boundary is the gate the
 // phase is verified against, so it is a bucket edge rather than something a
 // reader has to compute from a chart.
@@ -243,13 +256,13 @@ export async function likenessDistribution({ days = 30, scorerVersion = SCORER_V
 			atOrAboveGate: agg?.at_or_above_gate ?? 0,
 			gateRate: scored ? (agg.at_or_above_gate ?? 0) / scored : null,
 			sameIdentity: agg?.same_identity ?? 0,
-			meanScore: numOrNull(Number(agg?.mean_score)),
-			medianScore: numOrNull(Number(agg?.median_score)),
-			minScore: numOrNull(Number(agg?.min_score)),
-			maxScore: numOrNull(Number(agg?.max_score)),
-			meanCosine: numOrNull(Number(agg?.mean_cosine)),
-			meanTurnFalloff: numOrNull(Number(agg?.mean_turn_falloff)),
-			meanScoreMs: numOrNull(Number(agg?.mean_score_ms)),
+			meanScore: columnNumber(agg?.mean_score),
+			medianScore: columnNumber(agg?.median_score),
+			minScore: columnNumber(agg?.min_score),
+			maxScore: columnNumber(agg?.max_score),
+			meanCosine: columnNumber(agg?.mean_cosine),
+			meanTurnFalloff: columnNumber(agg?.mean_turn_falloff),
+			meanScoreMs: columnNumber(agg?.mean_score_ms),
 			histogram: SCORE_BUCKETS.map((b, i) => ({ ...b, count: counts.get(i + 1) || 0 })),
 			statuses: statuses.map((s) => ({ status: s.status, count: s.n })),
 		};
@@ -279,15 +292,15 @@ export async function recentLikenessScores({ limit = 25, scorerVersion = SCORER_
 		return rows.map((r) => ({
 			creationId: r.creation_id,
 			status: r.status,
-			likenessScore: numOrNull(Number(r.likeness_score)),
-			identityCosine: numOrNull(Number(r.identity_cosine)),
-			meanScore: numOrNull(Number(r.mean_score)),
-			worstCosine: numOrNull(Number(r.worst_cosine)),
-			turnFalloff: numOrNull(Number(r.turn_falloff)),
+			likenessScore: columnNumber(r.likeness_score),
+			identityCosine: columnNumber(r.identity_cosine),
+			meanScore: columnNumber(r.mean_score),
+			worstCosine: columnNumber(r.worst_cosine),
+			turnFalloff: columnNumber(r.turn_falloff),
 			sameIdentity: r.same_identity,
 			capturesTotal: r.captures_total,
 			capturesEmbedded: r.captures_embedded,
-			captureCohesion: numOrNull(Number(r.capture_cohesion)),
+			captureCohesion: columnNumber(r.capture_cohesion),
 			viewsScored: r.views_scored,
 			scoreMs: r.score_ms,
 			scoredAt: r.scored_at,
