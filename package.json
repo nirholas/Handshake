@@ -159,6 +159,7 @@
 		"i18n:extract": "node scripts/i18n-extract.mjs",
 		"i18n:translate": "node scripts/i18n-translate.mjs",
 		"i18n:lint": "node scripts/i18n-translate.mjs --lint",
+		"i18n:prune": "node scripts/i18n-translate.mjs --prune",
 		"i18n:repair": "node scripts/i18n-translate.mjs --repair",
 		"i18n:backfill": "node scripts/i18n-backfill.mjs",
 		"changelog:gaps": "node scripts/changelog-gaps.mjs",

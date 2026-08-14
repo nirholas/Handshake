@@ -32,6 +32,7 @@
 //   node scripts/i18n-translate.mjs --locale=es     # one locale
 //   node scripts/i18n-translate.mjs --force         # retranslate everything
 //   node scripts/i18n-translate.mjs --lint          # validate only (build gate, no API key needed)
+//   node scripts/i18n-translate.mjs --prune         # drop keys the source dropped (no API key needed)
 //   node scripts/i18n-translate.mjs --repair        # re-translate only lint-failing keys
 //   node scripts/i18n-translate.mjs --dry-run       # report what would translate
 //   node scripts/i18n-translate.mjs --concurrency=8 # widen the chunk pool for a bulk run
@@ -52,6 +53,7 @@ import {
 	missingKeys,
 	untranslatedCount,
 	mergeOrdered,
+	pruneStale,
 	buildMasker,
 	lintLocale,
 	markupDrift,
@@ -121,6 +123,43 @@ function runLint() {
 		process.exit(1);
 	}
 	console.log('\ni18n lint passed.');
+}
+
+// --- prune mode: drop stale keys, no network -------------------------------
+//
+// A key renamed or deleted in the source leaves its old translation behind in
+// all 84 catalogs, and lint counts every copy ("stale key (not in source)"), so
+// one renamed key is 84 failures. A full translate run cleans them up as a side
+// effect (persist() rebuilds each catalog from the source), but that needs a
+// working backend, which makes a purely subtractive fix hostage to a provider
+// outage or an exhausted quota. Prune is that fix on its own: no API key, no
+// network, and it only ever deletes.
+function runPrune() {
+	let removedTotal = 0;
+	let touched = 0;
+	for (const code of targets) {
+		const target = readJSON(localePath(code));
+		if (!target) {
+			console.log(`◦ ${code}: not generated yet (skipped)`);
+			continue;
+		}
+		const { pruned, removed } = pruneStale(source, target);
+		if (!removed.length) {
+			console.log(`• ${code}: nothing stale`);
+			continue;
+		}
+		if (!flag('dry-run')) {
+			writeFileSync(localePath(code), JSON.stringify(pruned, null, '\t') + '\n');
+		}
+		removedTotal += removed.length;
+		touched++;
+		console.log(
+			`→ ${code}: ${flag('dry-run') ? 'would drop' : 'dropped'} ${removed.length} stale key(s): ${removed.join(', ')}`,
+		);
+	}
+	console.log(
+		`\ni18n-prune: ${flag('dry-run') ? 'would drop' : 'dropped'} ${removedTotal} stale key(s) across ${touched} locale(s).`,
+	);
 }
 
 // --- chunking --------------------------------------------------------------
@@ -866,6 +905,7 @@ async function repairLocale(code, maxAttempts = 4) {
 
 async function main() {
 	if (flag('lint')) return runLint();
+	if (flag('prune')) return runPrune();
 	if (flag('repair')) {
 		writeManifest();
 		const results = await pool(targets, 1, (c) => repairLocale(c));

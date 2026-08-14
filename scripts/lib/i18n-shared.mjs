@@ -91,6 +91,43 @@ export function staleKeys(source, target) {
 	return Object.keys(tgt).filter((k) => !(k in src));
 }
 
+// Drop every key the source no longer defines, leaving everything else byte-identical.
+//
+// This is the subtractive half of what `persist()` does, split out because the
+// two halves have very different requirements. `mergeOrdered` rebuilds the whole
+// catalog from the source, so it materializes an EMPTY STRING for every key the
+// locale has not been translated for yet — which turns a "missing key" into an
+// "empty value", inflates the file, and (because writeManifest counts empty
+// values) silently drops the language out of the picker. Pruning must never do
+// any of that, so it only deletes: a key absent from the source goes, and a
+// namespace left with no keys goes with it. Returns the pruned copy plus the
+// dotted keys removed, so a caller can report exactly what it dropped.
+export function pruneStale(source, target) {
+	const removed = [];
+	const walk = (src, tgt, prefix) => {
+		const out = {};
+		for (const [k, v] of Object.entries(tgt || {})) {
+			const key = prefix ? `${prefix}.${k}` : k;
+			const sv = isPlainObject(src) ? src[k] : undefined;
+			if (isPlainObject(v)) {
+				// A namespace survives only while it still holds a key. Recursing
+				// with `sv` undefined removes the whole subtree and records every
+				// leaf under it, so the report names real keys, not namespaces.
+				const child = walk(isPlainObject(sv) ? sv : undefined, v, key);
+				if (Object.keys(child).length) out[k] = child;
+				continue;
+			}
+			if (sv === undefined || isPlainObject(sv)) {
+				removed.push(key);
+				continue;
+			}
+			out[k] = v;
+		}
+		return out;
+	};
+	return { pruned: walk(source, target, ''), removed };
+}
+
 // Deep-merge translated values into an existing target, preserving key order of
 // the source so committed diffs stay readable.
 export function mergeOrdered(source, existing = {}, translated = {}) {
