@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T06:42:43.463Z",
+	"generated_at": "2026-08-14T06:53:19.616Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1633,16 +1633,6 @@
 					"added": "2026-06-23",
 					"auth": "required",
 					"indexable": false,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/integrity",
-					"title": "Custody Integrity",
-					"description": "The public proof behind three.ws custodial agent wallets: every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Check the latest root yourself, with no account and no trust required.",
-					"added": "2026-06-23",
-					"auth": null,
-					"indexable": true,
 					"tags": [],
 					"showcase": false
 				},

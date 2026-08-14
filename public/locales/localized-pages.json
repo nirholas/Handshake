@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 355,
+	"count": 354,
 	"paths": [
 		"/",
 		"/3d",
@@ -128,7 +128,6 @@
 		"/ibm/hello",
 		"/ibm/x402-demo",
 		"/integrations",
-		"/integrity",
 		"/irl",
 		"/irl-privacy",
 		"/labor-market",

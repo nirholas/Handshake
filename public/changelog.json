@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T06:42:43.712Z",
+	"generated_at": "2026-08-14T06:53:19.831Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -251,6 +251,16 @@
 				"feature",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Keyboard users stop tabbing past the same Skip to content link twice, and the homepage hint is readable again",
+			"summary": "Two accessibility defects on high-traffic pages are fixed. The shared navigation injects a Skip to content link as the first thing you reach with the Tab key, so keyboard and screen-reader users can jump straight to the page body instead of walking the whole header. It only checked for its own copy of that link before injecting, but roughly three dozen pages write the anchor into their own markup under a different class, so those pages ended up with two identical skip links and you had to tab past the same control twice to get anywhere. The check now recognises every variant, so there is exactly one skip link per page. On the homepage, the hint under the interactive dragon that reads move cursor, hold to breathe fire was drawn in white at 18 percent opacity over a near-black panel, about 1.6 to 1 against the background where the accessibility standard asks for at least 4.5 to 1; anyone in bright light or with reduced contrast sensitivity simply could not see the instruction for the thing it was explaining. It now sits at 5.7 to 1 and stays legible without changing the look of the scene. The Genesis and Walk pages also had a skip link with no styling rule attached, which left it as stray visible text above the header; both now use the shared style and hide until focused like every other page.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -730,6 +740,17 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Your agent now leads with the GitHub work you seeded it from",
+			"summary": "Seeding an agent from your GitHub profile and repositories stored the facts correctly, but filed all of them in the tier the agent only consults when a message happens to match one. So the seed worked and yet asking your agent an open question like 'what do you know about my work?' could come back with nothing, because nothing in the question named a repository. The five top-ranked facts from a seed now sit in the context the agent always carries, so they ground an answer without being prompted for by name; the rest stay searchable exactly as before and still surface when you ask about that specific project. Facts also keep the order they were distilled in, which matters because each reply carries only the ten strongest memories, and until now that cut was made arbitrarily among facts that all scored the same. Nothing about what is read or stored changes: the seed still reads only the profile, repositories, and READMEs you ticked, and disconnecting GitHub still deletes every fact it wrote across all your agents.",
+			"link": "/docs/github-memory-seeding",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -19307,16 +19328,6 @@
 			"title": "Cosmos: Living Worlds",
 			"summary": "Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.",
 			"link": "/cosmos",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-06-23",
-			"type": "launch",
-			"title": "Custody Integrity",
-			"summary": "The public proof behind three.ws custodial agent wallets: every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Check the latest root yourself, with no account and no trust required.",
-			"link": "/integrity",
 			"tags": [
 				"launch"
 			]

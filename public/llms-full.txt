@@ -993,12 +993,6 @@ Indexable: no (excluded from sitemap)
 
 Verify your own three.ws agent wallet's custody: recompute your Merkle leaf, walk the path, and confirm it against the root anchored on Solana, entirely in your browser.
 
-### Custody Integrity
-
-URL: https://three.ws/integrity
-
-The public proof behind three.ws custodial agent wallets: every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Check the latest root yourself, with no account and no trust required.
-
 ### Agent Labor Market
 
 URL: https://three.ws/labor-market

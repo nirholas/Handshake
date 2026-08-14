@@ -191,6 +191,14 @@
 			<description>Agents do things on-chain after they are registered: they launch a token, collect reputation attestations, change hands, delegate execution rights. Until now the platform recorded only who an agent currently was, so all of that history was dropped, and anyone who wanted it had to scan a chain themselves. Open any agent under the Discover directory and there is now an On-chain history panel: a timeline of everything the platform has indexed for that agent, each entry stamped with the real time the chain says it happened and linked to the transaction on a block explorer so you can check it yourself. The same data is available to developers as one public endpoint. Three failures were fixed to make it real. The Solana half of the indexer was crashing on every single agent it looked at, so despite tracking more than fifteen hundred agents it had recorded zero events; it now records them, and a token launch names the agent's actual coin instead of the wrapped SOL that paid for it. On the EVM side, five of the twenty-two supported chains were producing blocks faster than the indexer could read them, so their backlog grew every hour while the status page called them healthy: the indexer now widens its reading window until it catches up, and the status page publishes how many blocks behind the worst chain is, as a number. Reputation was the third: the platform was already asking every EVM chain for agent feedback and vouches on every pass, then throwing the answers away, so not a single reputation event had ever reached the index. Those now land alongside the rest of an agent's history, with the score, its tags, and a link to the attestation.</description>
 		</item>
 		<item>
+			<title>Keyboard users stop tabbing past the same Skip to content link twice, and the homepage hint is readable again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Keyboard users stop tabbing past the same Skip to content link twice, and the homepage hint is readable again</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two accessibility defects on high-traffic pages are fixed. The shared navigation injects a Skip to content link as the first thing you reach with the Tab key, so keyboard and screen-reader users can jump straight to the page body instead of walking the whole header. It only checked for its own copy of that link before injecting, but roughly three dozen pages write the anchor into their own markup under a different class, so those pages ended up with two identical skip links and you had to tab past the same control twice to get anywhere. The check now recognises every variant, so there is exactly one skip link per page. On the homepage, the hint under the interactive dragon that reads move cursor, hold to breathe fire was drawn in white at 18 percent opacity over a near-black panel, about 1.6 to 1 against the background where the accessibility standard asks for at least 4.5 to 1; anyone in bright light or with reduced contrast sensitivity simply could not see the instruction for the thing it was explaining. It now sits at 5.7 to 1 and stays legible without changing the look of the scene. The Genesis and Walk pages also had a skip link with no styling rule attached, which left it as stray visible text above the header; both now use the shared style and hide until focused like every other page.</description>
+		</item>
+		<item>
 			<title>Oracle pages now say the data is briefly unavailable instead of showing you a blank market</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Oracle pages now say the data is briefly unavailable instead of showing you a blank market</guid>
@@ -541,6 +549,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>Two fixes to the withdraw flow on your agent's pump.fun token. The confirmation step used to accept any successful Solana transaction that simply mentioned your token and its authority wallet, which an ordinary transfer or memo does, and report it back as a completed payout; it now requires that the payments program actually ran, the same check the launch flow already made. Both withdraw steps also now reject requests that arrive from a site other than three.ws while riding your signed-in session, so a page you happen to have open elsewhere cannot start a withdrawal on your behalf. Alongside that, an unreadable token-program value in a withdraw request is now refused up front with a clear message instead of being quietly ignored and producing a transaction that only failed after you had signed it.</description>
+		</item>
+		<item>
+			<title>Your agent now leads with the GitHub work you seeded it from</title>
+			<link>https://three.ws/docs/github-memory-seeding</link>
+			<guid isPermaLink="false">2026-08-14:Your agent now leads with the GitHub work you seeded it from</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Seeding an agent from your GitHub profile and repositories stored the facts correctly, but filed all of them in the tier the agent only consults when a message happens to match one. So the seed worked and yet asking your agent an open question like 'what do you know about my work?' could come back with nothing, because nothing in the question named a repository. The five top-ranked facts from a seed now sit in the context the agent always carries, so they ground an answer without being prompted for by name; the rest stay searchable exactly as before and still surface when you ask about that specific project. Facts also keep the order they were distilled in, which matters because each reply carries only the ten strongest memories, and until now that cut was made arbitrarily among facts that all scored the same. Nothing about what is read or stored changes: the seed still reads only the profile, repositories, and READMEs you ticked, and disconnecting GitHub still deletes every fact it wrote across all your agents.</description>
 		</item>
 		<item>
 			<title>Your referrals page now shows how many people actually opened your link</title>
@@ -14701,14 +14717,6 @@
 			<pubDate>Tue, 23 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.</description>
-		</item>
-		<item>
-			<title>Custody Integrity</title>
-			<link>https://three.ws/integrity</link>
-			<guid isPermaLink="false">2026-06-23:Custody Integrity</guid>
-			<pubDate>Tue, 23 Jun 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>The public proof behind three.ws custodial agent wallets: every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Check the latest root yourself, with no account and no trust required.</description>
 		</item>
 		<item>
 			<title>Docs · Intel MCP</title>
