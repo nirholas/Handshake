@@ -11,6 +11,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Readable } from 'node:stream';
+import { encodeAbiParameters, parseAbiParameters } from 'viem';
 
 process.env.PUBLIC_APP_ORIGIN = 'https://three.ws';
 process.env.X402_PAY_TO_BASE ||= '0x0000000000000000000000000000000000000001';
@@ -85,7 +86,16 @@ vi.mock('../../api/_lib/llm.js', () => ({
 
 // The pipeline is a pure HTTP client over three.ws surfaces — mock global
 // fetch with a tiny programmable router.
-const fetchRoutes = { chat: null, forgeSubmit: null, forgePoll: null, rig: null, render: null, ref: null };
+const fetchRoutes = {
+	chat: null,
+	forgeSubmit: null,
+	forgePoll: null,
+	rig: null,
+	render: null,
+	manifest: null,
+	rpc: null,
+	ref: null,
+};
 function jsonResponse(status, body) {
 	return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
@@ -97,6 +107,46 @@ const FORGE_CATALOG = {
 	backends: [{ id: 'trellis' }, { id: 'hunyuan3d' }],
 };
 
+// The payment-rail probe drives a real viem public client over chain 196, so
+// the only honest seam is the JSON-RPC wire itself. Answer the three calls
+// xlayerRailHealth() makes (block height, the fee token's symbol(), the
+// relayer's balance) with correctly encoded results.
+function jsonRpcBody(init) {
+	if (!init?.body || typeof init.body !== 'string') return null;
+	try {
+		const parsed = JSON.parse(init.body);
+		const one = Array.isArray(parsed) ? parsed[0] : parsed;
+		return one?.jsonrpc === '2.0' && typeof one.method === 'string' ? one : null;
+	} catch {
+		return null;
+	}
+}
+
+const XLAYER_RPC_RESULTS = {
+	eth_chainId: '0xc4',
+	eth_blockNumber: '0x40c8c01',
+	eth_getBalance: '0x2386f26fc10000',
+	eth_call: encodeAbiParameters(parseAbiParameters('string'), ['USD₮0']),
+	eth_gasPrice: '0x3b9aca00',
+};
+
+function healthyXlayerRpc(_url, init) {
+	const rpc = jsonRpcBody(init);
+	const result = XLAYER_RPC_RESULTS[rpc?.method] ?? '0x';
+	return jsonResponse(200, { jsonrpc: '2.0', id: rpc?.id ?? 1, result });
+}
+
+// The five subsystems GET /health actually probes: the forge tier/backend
+// matrix, the renderer's pose catalog, R2 (the in-memory mock above), the
+// animation clip manifest, and the X Layer rail. Mount a healthy shape for
+// each so the green path is proven through the real probe plumbing.
+function mountHealthyProbes() {
+	fetchRoutes.forgeSubmit = () => jsonResponse(200, FORGE_CATALOG);
+	fetchRoutes.render = () => jsonResponse(200, { poses: ['idle', 'walk', 'tpose'] });
+	fetchRoutes.manifest = () => jsonResponse(200, { animations: [{ id: 'idle' }, { id: 'walk' }] });
+	fetchRoutes.rpc = healthyXlayerRpc;
+}
+
 const realFetch = globalThis.fetch;
 beforeEach(() => {
 	r2Store.clear();
@@ -106,6 +156,10 @@ beforeEach(() => {
 	fetchRoutes.forgePoll = () => jsonResponse(200, { status: 'running' });
 	fetchRoutes.rig = () => jsonResponse(200, { job_id: 'forge-rig-1', status: 'queued' });
 	fetchRoutes.render = () => new Response(new Uint8Array(MODEL_PNG), { status: 200 });
+	fetchRoutes.manifest = () => jsonResponse(200, { animations: [{ id: 'idle' }] });
+	// Default: no rail. A case that wants a green payment-rail probe calls
+	// mountHealthyProbes().
+	fetchRoutes.rpc = () => new Response('rpc unavailable', { status: 503 });
 	fetchRoutes.ref = () => new Response(new Uint8Array([0xff]), { status: 206, headers: { 'content-type': 'image/png' } });
 	globalThis.fetch = vi.fn(async (url, init = {}) => {
 		const u = String(url);
@@ -114,6 +168,8 @@ beforeEach(() => {
 		if (u.includes('/api/forge?job=')) return fetchRoutes.forgePoll(u, init);
 		if (u.includes('/api/forge')) return fetchRoutes.forgeSubmit(u, init);
 		if (u.includes('/api/render/avatar-clip')) return fetchRoutes.render(u, init);
+		if (u.includes('/animations/manifest.json')) return fetchRoutes.manifest(u, init);
+		if (jsonRpcBody(init)) return fetchRoutes.rpc(u, init);
 		return fetchRoutes.ref(u, init);
 	});
 	return () => {
@@ -261,7 +317,7 @@ describe('free lanes over HTTP', () => {
 	// report is memoized for OKX_HEALTH_TTL_MS: a poll loop costs one sweep per
 	// window, not one per request.
 	it('GET /health memoizes the sweep within the TTL window', async () => {
-		fetchRoutes.forgeSubmit = () => jsonResponse(200, FORGE_CATALOG);
+		mountHealthyProbes();
 		// First call with the memo off, so this case sweeps for real and seeds a
 		// reading of its own instead of inheriting an earlier test's.
 		const first = makeRes();

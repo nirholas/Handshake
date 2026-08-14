@@ -65,8 +65,17 @@ vi.mock('../../api/_lib/db.js', async () => {
 	};
 });
 
-// A Neon transport failure, exactly as db.js classifies one.
-const CONN_ERROR = new Error('Error connecting to database: fetch failed');
+// A Neon transport failure, shaped the way the driver actually throws one: the
+// `name` field is load-bearing, because db.js only treats a connection-level
+// message as an outage when it arrives on a NeonDbError (or a bare fetch
+// TypeError). A plain Error with the same text is NOT an outage to the
+// classifier, so a fixture without the name would silently test nothing.
+const CONN_ERROR = Object.assign(new Error('Error connecting to database: fetch failed'), {
+	name: 'NeonDbError',
+});
+// The other real-world outage shape: an unset or rotated DATABASE_URL, which
+// makes the lazy client construction throw a plain Error.
+const NO_URL_ERROR = new Error('Missing required env var: DATABASE_URL');
 // A deterministic SQL bug. Never a 503: the empty-result degrade is correct here.
 const STATEMENT_ERROR = new Error('column "nope" does not exist');
 
@@ -118,7 +127,7 @@ beforeEach(() => {
 describe('the classifier these handlers branch on', () => {
 	it('separates a connectivity failure from a statement fault', () => {
 		expect(isDbUnavailableError(CONN_ERROR)).toBe(true);
-		expect(isDbUnavailableError(new Error('Missing required env var: DATABASE_URL'))).toBe(true);
+		expect(isDbUnavailableError(NO_URL_ERROR)).toBe(true);
 		expect(isDbUnavailableError(STATEMENT_ERROR)).toBe(false);
 	});
 });
@@ -183,9 +192,10 @@ describe('/api/oracle/follow', () => {
 	});
 
 	it('DELETE propagates a failed delete instead of confirming an unsubscribe that never ran', async () => {
-		nextDbError = CONN_ERROR;
+		// Uses the unset-DATABASE_URL shape so both outage shapes are exercised.
+		nextDbError = NO_URL_ERROR;
 		const req = fakeReq('/api/oracle/follow', { method: 'DELETE', body: { agent_id: AGENT_ID, chat_id: '12345' } });
-		await expect(follow(req, fakeRes())).rejects.toThrow(/connecting to database/);
+		await expect(follow(req, fakeRes())).rejects.toThrow(/DATABASE_URL/);
 	});
 
 	it('GET still answers 200 following: false when the subscription genuinely is absent', async () => {
