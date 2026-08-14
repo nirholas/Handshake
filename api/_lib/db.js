@@ -179,6 +179,16 @@ export function sqlValues(rows) {
 // DB-unavailable alert per hour is enough.
 export function isDbUnavailableError(err) {
 	if (!err) return false;
+	// The WebSocket Pool (used by the scripts that share code with crons, e.g.
+	// scripts/sniper-evolve.mjs) does NOT reject with an Error at all when its
+	// socket fails to come up: it rejects with a DOM-style ErrorEvent whose only
+	// own property is `stack`, whose `name` and `message` are both empty, and
+	// whose String() is "[object ErrorEvent]". Every message-based branch below
+	// therefore reads it as a code bug and 500s it. It is the opposite: a socket
+	// that never opened is the purest form of "the request never reached
+	// Postgres". Matched structurally, since there is no text to match on.
+	if (typeof ErrorEvent !== 'undefined' && err instanceof ErrorEvent) return true;
+	if (err.type === 'error' && 'error' in err && !(err instanceof Error)) return true;
 	// esbuild minifies class names (e.g. NeonDbError → Pt in the bundle), so
 	// err.constructor.name is unreliable in production. Use err.name instead —
 	// NeonDbError explicitly sets `this.name = 'NeonDbError'` via a class field,

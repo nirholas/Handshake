@@ -6,7 +6,7 @@ import {
 } from '../workers/agent-sniper/intel/signals.js';
 import { heuristicClassify, _internals as classifyInternals } from '../workers/agent-sniper/intel/classify.js';
 import { scoreIntel } from '../workers/agent-sniper/scorer.js';
-import { correlation, deriveOutcome, learnedScore } from '../workers/agent-sniper/intel/learn.js';
+import { applyGraduationTruth, correlation, deriveOutcome, learnedScore } from '../workers/agent-sniper/intel/learn.js';
 
 const SOL = _internals.LAMPORTS_PER_SOL;
 
@@ -261,6 +261,45 @@ describe('deriveOutcome', () => {
 	});
 	it('returns unknown when the coin cannot be fetched', () => {
 		expect(deriveOutcome(null, 100).outcome).toBe('unknown');
+	});
+});
+
+describe('applyGraduationTruth', () => {
+	it('leaves the derived outcome alone when we indexed no graduation', () => {
+		const derived = deriveOutcome({ usd_market_cap: 20000, market_cap: 100 }, 100);
+		expect(applyGraduationTruth(derived, null)).toEqual(derived);
+		expect(applyGraduationTruth(derived, undefined)).toEqual(derived);
+	});
+
+	it('rescues a coin the pump.fun lookup could not answer for', () => {
+		// The exact production hole: fetchCoin returns null on a 429, deriveOutcome
+		// can only say 'unknown', and our own graduation index knows better.
+		const o = applyGraduationTruth(deriveOutcome(null, 100), { ath_market_cap: 250000, market_cap_usd: 90000 });
+		expect(o.outcome).toBe('graduated');
+		expect(o.graduated).toBe(true);
+		expect(o.ath_market_cap_usd).toBe(250000);
+		expect(o.last_market_cap_usd).toBe(90000);
+	});
+
+	it('never flags a graduated coin as rugged', () => {
+		// A stale sub-$3k bonding-curve mark makes deriveOutcome call it rugged.
+		const derived = deriveOutcome({ usd_market_cap: 1000, market_cap: 5 }, 100);
+		expect(derived.rugged).toBe(true);
+		expect(applyGraduationTruth(derived, { ath_market_cap: 300000 }).rugged).toBe(false);
+	});
+
+	it('keeps the live market caps when the lookup did answer', () => {
+		const derived = deriveOutcome({ complete: true, usd_market_cap: 90000, market_cap: 400 }, 50);
+		const o = applyGraduationTruth(derived, { ath_market_cap: 1, market_cap_usd: 2 });
+		expect(o.last_market_cap_usd).toBe(90000);
+		expect(o.ath_market_cap_usd).toBe(90000);
+	});
+
+	it('ignores non-numeric caps on the graduation row', () => {
+		const o = applyGraduationTruth(deriveOutcome(null, 100), { ath_market_cap: null, market_cap_usd: undefined });
+		expect(o.outcome).toBe('graduated');
+		expect(o.ath_market_cap_usd).toBeNull();
+		expect(o.last_market_cap_usd).toBeNull();
 	});
 });
 

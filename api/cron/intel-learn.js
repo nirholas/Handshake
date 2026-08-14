@@ -50,6 +50,7 @@ export default wrapCron(async (req, res) => {
 	return json(res, 200, {
 		ok: true,
 		labeled,
+		relabeled,
 		trained: train.trained,
 		sample_size: train.sample_size,
 		weights: train.weights || null,
