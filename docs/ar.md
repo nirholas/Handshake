@@ -346,10 +346,11 @@ Add `allow="xr-spatial-tracking"` to the `<iframe>` tag.
 
 ### Draco GLB fails in Quick Look or Scene Viewer
 
-Decompress the file first:
+Decompress the file first. `--compress false` drops `KHR_draco_mesh_compression`
+on the way out, and `--simplify false` keeps the mesh you already have:
 
 ```bash
-npx @gltf-transform/cli optimize model.glb uncompressed.glb --no-draco
+npx @gltf-transform/cli optimize model.glb uncompressed.glb --compress false --simplify false
 ```
 
 Or generate an uncompressed variant and use it as `ios-src` / for Scene Viewer while keeping the Draco-compressed one for the WebXR viewer.
