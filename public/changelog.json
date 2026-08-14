@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T06:09:52.979Z",
+	"generated_at": "2026-08-14T06:11:58.376Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -529,6 +529,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The paid Market Heatmap stops going dark when its data provider throttles a busy minute",
+			"summary": "The Market Heatmap endpoint asked CoinGecko for the board over the keyless public tier, ignoring the account key and the cached last-good copy every other market surface on the platform reads through. A throttled minute therefore dropped it straight onto its backup provider, whose free allowance is sixty requests an hour shared across the whole deployment, so a paid call could come back as a temporary outage while fresh data was already sitting in the platform's own cache. It now reads through that shared client: the key raises the ceiling, a rejected key is retried without it, and a throttle is answered with the last good board instead of a refusal. As before, a call that cannot be served is refused before payment settles, so a buyer is never charged for one.",
+			"link": "/docs/market-data-api",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The payment-outcome board no longer reports itself healthy while it is blind",
 			"summary": "One of the internal boards we watch payments with is built from three independent panels: payments arriving, settlements going out, and the fee wallet that pays for them. If a panel could not be read, the board swapped in an error for that panel but still answered with a plain success, so a read where all three had failed looked identical to a read where everything was fine. It now names every panel it could not see and answers with a partial-success status instead, which is what our alerting keys on. Separately, all three ops boards were spending the same strict per-address budget that guards sign-in attempts, so simply watching a dashboard could lock an operator out of logging in from that address. The boards now use the generous read budget the rest of the signed-in read surface uses.",
 			"link": null,
@@ -589,6 +600,16 @@
 			"tags": [
 				"security",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Three paid three.ws services were invisible in the public x402 directory",
+			"summary": "An hourly job keeps the platform's paid, agent-callable services listed on 402index, the public directory other agents search when they need a service to pay for. Before submitting a service the job confirmed the endpoint was really deployed, and it used a strict test: send a bare request and require a payment-required answer back. That test quietly disqualified any service whose paywall sits behind a parameter rather than on the bare address. Premium vanity addresses are exactly that shape: asking with no parameters is a free browse of what is in stock, and only naming a specific address asks for payment. The job cannot construct a valid paid request for an arbitrary service, so there was no hour on which such a service could ever have passed the test, and it was skipped in silence on every tick. Three live paid services were affected and had never been listed: premium vanity addresses, the pipeline endpoint, and pay-by-name. The check now asks the question it always meant to ask, which is whether the route exists at all. A missing route or a failing origin still keeps a service out of the directory, so the limited number of submissions allowed per hour is still protected, but a service that is genuinely deployed now gets listed whatever shape its paywall takes.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "The paid Market Heatmap stops going dark when its data provider throttles a busy minute",
+      "summary": "The Market Heatmap endpoint asked CoinGecko for the board over the keyless public tier, ignoring the account key and the cached last-good copy every other market surface on the platform reads through. A throttled minute therefore dropped it straight onto its backup provider, whose free allowance is sixty requests an hour shared across the whole deployment, so a paid call could come back as a temporary outage while fresh data was already sitting in the platform's own cache. It now reads through that shared client: the key raises the ceiling, a rejected key is retried without it, and a throttle is answered with the last good board instead of a refusal. As before, a call that cannot be served is refused before payment settles, so a buyer is never charged for one.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/docs/market-data-api"
+    },
+    {
+      "date": "2026-08-14",
       "title": "Scheduled X posts actually get published, and a draft you already approved leaves the review queue",
       "summary": "A post you schedule is stored in one table, and two generations of that table had been declared in the codebase with different column names. Which one a given database ended up with came down to whichever definition it happened to run first, and nothing forced the issue, so it could silently be the wrong one. On a database that got the wrong one, the job that publishes due posts failed the instant it started, every minute, and the schedule panel itself errored on load: nothing you queued was ever posted and you could not see the queue to find out. The table is now reconciled to the shape the app reads, from either starting point, and any post an older database had already sent is carried across so the publisher does not send it a second time. The approve-and-reject queue behind Draft with AI had the same split, where a draft you had already resolved could sit in the pending list forever, and it is fixed the same way.",
       "tags": [
@@ -21655,6 +21665,14 @@
       "tags": [
         "fix",
         "infra"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Three paid three.ws services were invisible in the public x402 directory",
+      "summary": "An hourly job keeps the platform's paid, agent-callable services listed on 402index, the public directory other agents search when they need a service to pay for. Before submitting a service the job confirmed the endpoint was really deployed, and it used a strict test: send a bare request and require a payment-required answer back. That test quietly disqualified any service whose paywall sits behind a parameter rather than on the bare address. Premium vanity addresses are exactly that shape: asking with no parameters is a free browse of what is in stock, and only naming a specific address asks for payment. The job cannot construct a valid paid request for an arbitrary service, so there was no hour on which such a service could ever have passed the test, and it was skipped in silence on every tick. Three live paid services were affected and had never been listed: premium vanity addresses, the pipeline endpoint, and pay-by-name. The check now asks the question it always meant to ask, which is whether the route exists at all. A missing route or a failing origin still keeps a service out of the directory, so the limited number of submissions allowed per hour is still protected, but a service that is genuinely deployed now gets listed whatever shape its paywall takes.",
+      "tags": [
+        "fix"
       ]
     }
   ]

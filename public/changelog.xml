@@ -391,6 +391,14 @@
 			<description>When an upstream data provider throttled us, the paid market endpoints (sectors, exchanges, derivatives, chains, DeFi, DEX volumes, fees) passed that straight back as a 429 rate-limit error, which read as if the caller had exceeded a limit on three.ws. These endpoints have no per-IP rate limit, so that was never true, and the error text also repeated the provider's name and our internal request path. A provider outage or throttle now comes back as the documented, retryable 503 data_unavailable and nothing else, so an agent's retry logic backs off for the right reason. Separately, market-fees used to quietly serve the fees table when asked for a mistyped type, charging for a dataset the caller did not ask for; an unrecognized type is now rejected before payment settles, so the call is free and the mistake is visible.</description>
 		</item>
 		<item>
+			<title>The paid Market Heatmap stops going dark when its data provider throttles a busy minute</title>
+			<link>https://three.ws/docs/market-data-api</link>
+			<guid isPermaLink="false">2026-08-14:The paid Market Heatmap stops going dark when its data provider throttles a busy minute</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Market Heatmap endpoint asked CoinGecko for the board over the keyless public tier, ignoring the account key and the cached last-good copy every other market surface on the platform reads through. A throttled minute therefore dropped it straight onto its backup provider, whose free allowance is sixty requests an hour shared across the whole deployment, so a paid call could come back as a temporary outage while fresh data was already sitting in the platform's own cache. It now reads through that shared client: the key raises the ceiling, a rejected key is retried without it, and a throttle is answered with the last good board instead of a refusal. As before, a call that cannot be served is refused before payment settles, so a buyer is never charged for one.</description>
+		</item>
+		<item>
 			<title>The payment-outcome board no longer reports itself healthy while it is blind</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:The payment-outcome board no longer reports itself healthy while it is blind</guid>
@@ -437,6 +445,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>Two changes to the pay-per-call vanity endpoints and the free receipt verifier. First, security: when a paid call is retried, the server keeps a short-lived copy of the original response so you are never charged twice. On the provably-fair grinder that copy included the receipt's serverSeed, and the seed is enough to recompute the private key, so a retry cache that was only ever meant to hold public metadata was in fact holding key material. The stored copy is now stripped of the secret and the seed on both grinders, sealed deliveries included, and a retry returns the public metadata with a plain note that the key was delivered once. The key you receive in the live response is unchanged. Second, the free receipt verifier can now confirm a settlement transaction over a plain GET link: /api/x402/verify-receipt?hash=&lt;tx&gt;&amp;network=solana, which works from a browser, a curl one-liner, or an uptime probe with no request body. Checking an attestation still uses POST because it needs the whole signed object.</description>
+		</item>
+		<item>
+			<title>Three paid three.ws services were invisible in the public x402 directory</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Three paid three.ws services were invisible in the public x402 directory</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An hourly job keeps the platform's paid, agent-callable services listed on 402index, the public directory other agents search when they need a service to pay for. Before submitting a service the job confirmed the endpoint was really deployed, and it used a strict test: send a bare request and require a payment-required answer back. That test quietly disqualified any service whose paywall sits behind a parameter rather than on the bare address. Premium vanity addresses are exactly that shape: asking with no parameters is a free browse of what is in stock, and only naming a specific address asks for payment. The job cannot construct a valid paid request for an arbitrary service, so there was no hour on which such a service could ever have passed the test, and it was skipped in silence on every tick. Three live paid services were affected and had never been listed: premium vanity addresses, the pipeline endpoint, and pay-by-name. The check now asks the question it always meant to ask, which is whether the route exists at all. A missing route or a failing origin still keeps a service out of the directory, so the limited number of submissions allowed per hour is still protected, but a service that is genuinely deployed now gets listed whatever shape its paywall takes.</description>
 		</item>
 		<item>
 			<title>Three paid x402 endpoints stop shortchanging the agents that call them</title>
