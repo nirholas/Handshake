@@ -63,9 +63,13 @@ async function loadAndRender(root) {
 		safe(() => get('/api/billing/summary')),
 		safe(() => get(`/api/monetization/revenue?period=${range.key}`)),
 		// Platform-wide week-2 retention on minted agents. Admin-only upstream, so
-		// a non-admin gets a 403 that `safe` turns into null and the panel simply
-		// does not appear — no error, no empty shell.
-		safe(() => get('/api/analytics/retention?metric=week2_converse&weeks=12')),
+		// only an admin session asks for it. Every other user would get a
+		// guaranteed 403, which `safe` swallows but the browser still logs as a
+		// failed request on every analytics load; skipping the call keeps a normal
+		// user's network panel clean and the retention panel simply does not appear.
+		me?.is_admin
+			? safe(() => get('/api/analytics/retention?metric=week2_converse&weeks=12'))
+			: Promise.resolve(null),
 	]);
 
 	// Every primary surface (revenue, agents, widgets, summary) failing means the
