@@ -330,6 +330,11 @@ function rank(cursor) {
 	return Math.min(ageMin, 1);
 }
 
+// Concurrent eth_getBlockByNumber calls while stamping a range's event blocks.
+// See the loop in erc8004CrawlChain for why this is bounded rather than a single
+// Promise.all over every block in the window.
+const ERC8004_BLOCKTIME_CONCURRENCY = 8;
+
 // Ceiling for the adaptive window. Public RPCs commonly cap eth_getLogs at
 // 2,000 to 10,000 blocks; the crawl walks up toward this and backs off the
 // moment a provider says no, so no chain needs its limit hardcoded here.
@@ -455,20 +460,29 @@ async function erc8004CrawlChain(chain) {
 	const allLogs = [...logs, ...reputationLogs];
 	if (allLogs.length > 0) {
 		const uniqueBlockHexes = [...new Set(allLogs.map((l) => l.blockNumber))];
-		await Promise.all(
-			uniqueBlockHexes.map(async (bn) => {
-				try {
-					const block = await erc8004RpcCall(
-						chain.rpcUrls ?? chain.rpcUrl,
-						'eth_getBlockByNumber',
-						[bn, false],
-					);
-					blockTimes[bn] = block ? Number.parseInt(block.timestamp, 16) : null;
-				} catch {
-					// registered_at will be null for this block
-				}
-			}),
-		);
+		// Bounded fan-out, not one request per block all at once. The window this
+		// crawl asks for grows while a chain is behind, so a catching-up chain can
+		// return several hundred distinct event blocks in a single tick, and firing
+		// that many concurrent eth_getBlockByNumber calls is the reliable way to
+		// get rate-limited off every lane at once. A log whose timestamp cannot be
+		// read is still applied to the agent row; it just does not enter the event
+		// index, which refuses to invent a time.
+		for (let i = 0; i < uniqueBlockHexes.length; i += ERC8004_BLOCKTIME_CONCURRENCY) {
+			await Promise.all(
+				uniqueBlockHexes.slice(i, i + ERC8004_BLOCKTIME_CONCURRENCY).map(async (bn) => {
+					try {
+						const block = await erc8004RpcCall(
+							chain.rpcUrls ?? chain.rpcUrl,
+							'eth_getBlockByNumber',
+							[bn, false],
+						);
+						blockTimes[bn] = block ? Number.parseInt(block.timestamp, 16) : null;
+					} catch {
+						// registered_at will be null for this block
+					}
+				}),
+			);
+		}
 	}
 
 	let inserted = 0;
@@ -2809,12 +2823,13 @@ async function handleRunDca(req, res) {
 			// One classifier decides what a failure means, shared with the
 			// subscription cron and with the API that renders it to the owner
 			// (api/_lib/recurring.js).
-			const { code, outcome, reason } = classifyChargeFailure({
+			const { code, outcome, reason, platform } = classifyChargeFailure({
 				code: err.code,
 				message: err.message,
 			});
 			const applied = applyChargeFailure({
 				outcome,
+				platform,
 				consecutiveFailures: Number(strategy.consecutive_failures ?? 0),
 			});
 
@@ -3205,16 +3220,25 @@ async function handleRunSubscriptions(req, res) {
 
 			// Atomic claim: mark this period as being processed by writing
 			// last_charge_at = NOW(). Matches only if:
-			//   - next_charge_at hasn't moved (no racing writer),
-			//   - status is still active,
+			//   - the schedule is still active and still due,
 			//   - last_charge_at is NULL OR < next_charge_at (not already claimed for this period).
-			// If 0 rows returned, another worker claimed this period — skip.
+			// If 0 rows returned, another worker claimed this period, so skip.
+			//
+			// Dueness is re-tested server-side (`next_charge_at <= NOW()`) rather
+			// than by comparing against the timestamp we selected. Postgres stores
+			// timestamptz to the microsecond and the driver hands it back as a JS
+			// Date, which truncates to the millisecond: an equality check against
+			// the round-tripped value silently never matches for any row whose
+			// next_charge_at carries sub-millisecond digits, and that schedule then
+			// never charges again. The last_charge_at guard is what actually makes
+			// the claim idempotent per period; the equality added nothing but that
+			// failure mode.
 			const claim = await sql`
 				UPDATE agent_subscriptions
 				SET last_charge_at = NOW()
 				WHERE id = ${row.id}
 				  AND status = 'active'
-				  AND next_charge_at = ${row.next_charge_at}
+				  AND next_charge_at <= NOW()
 				  AND (last_charge_at IS NULL OR last_charge_at < next_charge_at)
 				RETURNING id
 			`;
@@ -3410,9 +3434,10 @@ async function recordSubscriptionCharge(row, ctx, { status, outcome, code, error
  * reached the chain; a timeout is classified ambiguous and never retried.
  */
 async function subApplyFailure(row, ctx, failure) {
-	const { code, outcome, reason } = classifyChargeFailure(failure);
+	const { code, outcome, reason, platform } = classifyChargeFailure(failure);
 	const applied = applyChargeFailure({
 		outcome,
+		platform,
 		consecutiveFailures: Number(row.consecutive_failures ?? 0),
 	});
 

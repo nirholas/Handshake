@@ -94,7 +94,8 @@ const REASONS = {
 	delegation_gone: 'The signed permission behind this schedule is gone. Grant a new one to restart it.',
 	delegation_not_found: 'The signed permission behind this schedule no longer exists. Grant a new one to restart it.',
 	delegation_revoked: 'The signed permission was revoked. Grant a new one to restart this schedule.',
-	feature_disabled: 'On-chain relaying is switched off on this deployment. Nothing was charged.',
+	feature_disabled:
+		'On-chain relaying is switched off on this deployment, so nothing was charged. The schedule stays active and keeps trying.',
 	insufficient_balance: 'Your wallet did not hold enough USDC for this charge. Top it up and the next run will retry.',
 	internal_error: 'The charge failed inside the relayer. The next run will retry.',
 	no_tx_hash: 'The relayer accepted the charge but returned no transaction. The next run will retry.',
@@ -104,7 +105,8 @@ const REASONS = {
 	scope_exceeded: 'This charge is larger than the permission you signed allows for the period. Grant a wider permission to restart it.',
 	target_not_allowed: 'The permission you signed does not cover this payment target.',
 	timeout: 'The charge timed out, so we cannot tell whether it landed. The schedule is paused so it can never double-charge; check the transaction before resuming.',
-	unauthorized: 'The relayer rejected our credentials. Nothing was charged.',
+	unauthorized:
+		'The relayer rejected our own credentials, so nothing was charged. The schedule stays active while we fix it.',
 	unsupported_chain: 'This chain is no longer supported for recurring charges.',
 	validation_error: 'The charge was rejected as malformed. Nothing was charged.',
 };
@@ -190,18 +192,23 @@ export function classifyChargeFailure({ code, message } = {}) {
 /**
  * Decide what a classified failure does to the schedule row.
  *
- * @param {{ outcome: string, consecutiveFailures: number }} opts
- *   consecutiveFailures is the count BEFORE this failure.
+ * @param {{ outcome: string, consecutiveFailures: number, platform?: boolean }} opts
+ *   consecutiveFailures is the count BEFORE this failure; `platform` marks an
+ *   outage on our side rather than a problem with the schedule.
  * @returns {{ pause: boolean, retry: boolean, consecutiveFailures: number }}
  *   `retry` means release the period claim so the next tick picks the row up
  *   again; `pause` means stop scheduling it until the owner resumes.
  */
-export function applyChargeFailure({ outcome, consecutiveFailures = 0 }) {
+export function applyChargeFailure({ outcome, consecutiveFailures = 0, platform = false }) {
 	const current = Number(consecutiveFailures) || 0;
 	// A deliberate skip is not a failure: the counter must not creep toward a
 	// pause across a volatile week.
 	if (outcome === OUTCOME.SKIPPED) {
 		return { pause: false, retry: false, consecutiveFailures: current };
+	}
+	// A platform outage retries indefinitely and never counts against the owner.
+	if (platform) {
+		return { pause: false, retry: true, consecutiveFailures: current };
 	}
 	const next = current + 1;
 	if (outcome === OUTCOME.FATAL) return { pause: true, retry: false, consecutiveFailures: next };

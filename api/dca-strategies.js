@@ -305,7 +305,7 @@ export default wrap(async (req, res) => {
 					LIMIT 1
 				) AS last_execution,
 				(
-					SELECT COUNT(*) FROM dca_executions e
+					SELECT COUNT(*)::int FROM dca_executions e
 					WHERE e.strategy_id = s.id AND e.status = 'success'
 				) AS executions_total
 			FROM dca_strategies s
