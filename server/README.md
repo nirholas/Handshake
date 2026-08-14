@@ -101,12 +101,21 @@ frontend changes.
 
 ## Crons
 
-The 76 schedules in `vercel.json` are mirrored to Cloud Scheduler jobs
-(us-central1) by [`scripts/create-gcp-scheduler.mjs`](../scripts/create-gcp-scheduler.mjs).
-Each job calls its `/api/cron/*` path with `Authorization: Bearer $CRON_SECRET`
-— the same header contract the handlers already validate. The script is
-idempotent (create-or-update) and creates jobs **paused** unless `--resume`
-is passed; see its header comment for the double-fire safety rules.
+The schedules declared in `vercel.json`'s `crons` array are mirrored to Cloud
+Scheduler jobs (us-central1) by
+[`scripts/create-gcp-scheduler.mjs`](../scripts/create-gcp-scheduler.mjs). Each
+job calls its `/api/cron/*` path with `Authorization: Bearer $CRON_SECRET`, the
+same header contract the handlers already validate.
+
+The script is idempotent (create-or-update) and **config only**: it writes
+schedule, target, method, deadline and header, and never changes whether an
+existing job is running. Jobs it creates start ENABLED, because a declared cron
+that is created paused never fires and nothing in the config would show it. The
+blanket run-state levers are explicit: `--pause` stops every job, `--resume`
+restarts every job.
+
+Verify the mirror with `npm run check:cron-drift` (declared vs. live schedules
+and run state) and the handlers behind it with `npm run audit:cron-liveness`.
 
 ## Env
 

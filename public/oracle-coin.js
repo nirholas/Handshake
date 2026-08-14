@@ -123,7 +123,67 @@
 		const rs = (d.reasons || []).map((r) => r.text).filter(Boolean);
 		if (!rs.length) return '';
 		const body = rs.slice(0, 2).map((t) => t.replace(/\.$/, '')).join('; ');
-		return `<div class="coin-take"><span class="ct-q">“</span><span><b>${esc(lead)} at ${c.score}</b> — ${esc(body)}.</span></div>`;
+		// A resolved coin gets its result first. Pitching a launch in the present
+		// tense ("a prime setup at 100") next to a chart that already died is what
+		// made a correct call read as a broken one: the call was about the first 90
+		// seconds, the chart is about everything since, and only one of them was on
+		// the page. The reasons still follow, because why the engine said it stays
+		// the interesting part once you know how it ended.
+		const past = outcomeSentence(d.outcome);
+		return `<div class="coin-take"><span class="ct-q">“</span><span>${past
+			? `<b>${esc(past)}</b> Oracle called it ${esc(String(lead).toLowerCase())} at ${c.score} from ${esc(body)}.`
+			: `<b>${esc(lead)} at ${c.score}</b> from ${esc(body)}.`}</span></div>`;
+	}
+
+	// One plain sentence for what the market did after the call. Mirrors
+	// outcomeStripHtml() in api/oracle-share.js (buildless file, no imports).
+	function outcomeSentence(out) {
+		if (!out) return '';
+		const ath = out.ath_multiple != null ? Number(out.ath_multiple) : null;
+		const peak = ath > 0 ? `peaked at ${ath.toFixed(1)}x` : null;
+		if (out.graduated) return peak ? `It graduated, ${peak}.` : 'It graduated.';
+		if (out.rugged) return peak ? `It ran to ${ath.toFixed(1)}x and then rugged.` : 'It rugged.';
+		if (peak) return `It has ${peak} so far.`;
+		return '';
+	}
+
+	// The dial's two honesty lines, mirroring verdictOddsHtml()/outcomeStripHtml()
+	// in api/oracle-share.js. The server renders both for any coin it already had a
+	// verdict for; these fill them in for a lazy-scored launch and refresh them
+	// once the live read lands.
+	function oddsHtml(c) {
+		if (!c || c.hit_rate == null || !c.hit_rate_n) return '';
+		const rate = Math.round(Number(c.hit_rate) * 100);
+		const base = Math.round(Number(c.base_rate || 0) * 100);
+		const lift = c.hit_rate_lift != null ? Number(c.hit_rate_lift).toFixed(1) : null;
+		const lead = leadTime(c.scored_at, c.coin_first_seen_at);
+		return `<p class="oc-odds">
+			<b>${rate}%</b> of calls in the ${esc(c.hit_rate_band || '')} band have won<span class="oc-odds-n"> (n=${Number(c.hit_rate_n).toLocaleString('en-US')})</span>${lift ? `, <b>${esc(lift)}x</b> the ${base}% a random launch wins` : ''}.
+			<span class="oc-odds-sub">Scored ${lead ? `${lead} after this coin surfaced` : 'at launch'}, from the first ~90s of trading. It ranks the odds of a 3x run or graduation, not the odds of a safe hold.</span>
+		</p>`;
+	}
+
+	function leadTime(scoredAt, firstSeen) {
+		if (!scoredAt || !firstSeen) return null;
+		const secs = Math.round((new Date(scoredAt).getTime() - new Date(firstSeen).getTime()) / 1000);
+		if (!Number.isFinite(secs) || secs < 0) return null;
+		return secs < 90 ? `${secs}s` : `${Math.round(secs / 60)}m`;
+	}
+
+	function sinceHtml(out) {
+		if (!out) return '';
+		const ath = out.ath_multiple != null ? Number(out.ath_multiple) : null;
+		const mc = out.last_market_cap_usd != null ? Number(out.last_market_cap_usd) : null;
+		if (!out.graduated && !out.rugged && !(ath > 0)) return '';
+		const verdict = out.graduated
+			? '<span class="chip sm">graduated ✓</span>'
+			: out.rugged ? '<span class="chip flag">rugged ✕</span>' : '<span class="chip">still live</span>';
+		return `<div class="oc-since ${out.rugged && !out.graduated ? 'bad' : out.graduated ? 'good' : ''}">
+			<span class="oc-since-lbl">Since the call</span>
+			${ath > 0 ? `<span class="chip" title="Peak market cap versus its market cap when Oracle scored it">peak <b>${ath.toFixed(1)}x</b></span>` : ''}
+			${verdict}
+			${mc != null ? `<span class="chip" title="Market cap now">now <b>${fmtUsd(mc)}</b></span>` : ''}
+		</div>`;
 	}
 
 	function structurePanel(st) {
@@ -940,12 +1000,16 @@
 	// Patch the server-rendered hero dial + pillars once a live verdict arrives.
 	// For a fresh launch the SSR hero shows a "reading" state; this fills it in the
 	// moment /api/oracle/coin returns a score, so the top of the page never lies.
-	function updateHero(c) {
+	function updateHero(c, outcome) {
 		const dial = $('#ocDial');
 		if (dial && c.score != null) {
 			dial.className = `dial t-${c.tier || 'watch'}`;
 			dial.innerHTML = `<b>${c.score}</b><div class="tierpill tp-${esc(c.tier || 'watch')}">${esc(c.tier || 'watch')} conviction</div>`;
 		}
+		const odds = $('#ocOdds');
+		if (odds) { const h = oddsHtml(c); if (h) odds.innerHTML = h; }
+		const since = $('#ocSince');
+		if (since) { const h = sinceHtml(outcome); if (h) since.innerHTML = h; }
 		const p = c.pillars || {};
 		const set = (kind, val) => {
 			const el = $(`#ocPillars .pil.${kind}`);
@@ -1013,7 +1077,7 @@
 		if (!col) return;
 		const c = data.conviction;
 		document.title = `${c.symbol ? `$${c.symbol}` : mint.slice(0, 8)} — ${c.score}/100 ${c.tier || ''} conviction · Oracle · three.ws`;
-		updateHero(c);
+		updateHero(c, data.outcome);
 		const reasons = (data.reasons || []).map((r) => `<div class="reason"><span class="rdot ${esc(r.pillar)}"></span><span>${esc(r.text)}</span></div>`).join('') || '<div class="state" style="padding:20px 0">No breakdown available.</div>';
 		const narr = data.narrative;
 		const whos = (data.whos_in || []).map(whoRow).join('') || '<div class="state" style="padding:20px 0">No wallet footprint recorded yet.</div>';
