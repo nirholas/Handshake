@@ -781,6 +781,14 @@ function renderTheme() {
 // to carry a public avatar GLB, so each card shows a live rotating model. We
 // reshuffle client-side too, so revisiting the page varies the order even when
 // the API response is served from cache.
+//
+// Each viewer ships `data-src` rather than `src`, the same contract the grid
+// cards and the hero carousel already use: observeCardModelViewers() promotes
+// it on first intersect and adds `auto-rotate` there, so a strip nobody has
+// scrolled to never downloads a GLB, never stands up a WebGL context, and never
+// runs a raf loop. Shipping `src` here left this the last eager model-viewer
+// surface on the page, and model-viewer was the single most expensive script on
+// it: 7,924ms of evaluation in a Lighthouse desktop trace of /marketplace.
 function renderThemePicks() {
 	const row = $('market-theme-picks');
 	if (!row) return;
@@ -802,10 +810,9 @@ function renderThemePicks() {
 					${views > 0 ? `<span class="market-theme-pick-views">⊙ ${fmtNumber(views)}</span>` : ''}
 					<span class="market-theme-pick-placeholder" aria-hidden="true">${escapeHtml(initial(a.name || 'A'))}</span>
 					<model-viewer
-						src="${escapeHtml(a.avatar_glb_url)}"
+						data-src="${escapeHtml(a.avatar_glb_url)}"
 						alt="${escapeHtml(a.name || 'Agent')}"
 						${a.thumbnail_url ? `poster="${escapeHtml(a.thumbnail_url)}"` : ''}
-						auto-rotate
 						autoplay
 						rotation-per-second="22deg"
 						interaction-prompt="none"
@@ -844,6 +851,9 @@ function renderThemePicks() {
 			);
 		}
 	});
+	// Hand the freshly built viewers to the shared observer so their data-src is
+	// promoted when, and only when, the strip is actually near the viewport.
+	observeCardModelViewers();
 }
 
 // Fisher–Yates shuffle. Browser-only path, so Math.random is fine here.
@@ -1522,7 +1532,9 @@ function observeCardModelViewers() {
 			{ rootMargin: '200px 0px', threshold: 0.01 },
 		);
 	}
-	document.querySelectorAll('.market-card-avatar model-viewer, .market-grid model-viewer').forEach((mv) => {
+	const LAZY_VIEWERS =
+		'.market-card-avatar model-viewer, .market-grid model-viewer, .market-theme-pick model-viewer';
+	document.querySelectorAll(LAZY_VIEWERS).forEach((mv) => {
 		if (mv.dataset.observed) return;
 		mv.dataset.observed = '1';
 		cardObserver.observe(mv);

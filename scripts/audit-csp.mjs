@@ -31,12 +31,21 @@
 // documented transform (drop 'unsafe-inline', add 'sha256-…'); every other
 // directive and every other security header must match the route table exactly.
 //
+// `--headers-only` answers the narrower question ("does this origin serve the
+// headers the route table declares?") with a plain fetch and no browser. It is
+// the only mode that can sweep production honestly: a real browser loading 200
+// live pages is minutes of work and is at the mercy of whatever else the
+// machine is doing, while the header comparison is deterministic. It proves
+// strictly less than the full run (nothing evaluates the policy), so it is an
+// addition to the browser sweep, never a substitute for it.
+//
 // Usage:
 //   node server/index.mjs &                     # or any origin serving dist/
 //   node scripts/audit-csp.mjs                  # sweeps the default page set
 //   node scripts/audit-csp.mjs --base http://127.0.0.1:8099
 //   node scripts/audit-csp.mjs --base https://three.ws   # audit production
 //   node scripts/audit-csp.mjs --all            # every page in data/pages.json
+//   node scripts/audit-csp.mjs --headers-only --base https://three.ws --all
 //   node scripts/audit-csp.mjs /pay /studio     # only these paths
 
 import { readFileSync } from 'node:fs';
@@ -44,6 +53,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { loadRouteTable, resolvePhase1 } from '../server/route-resolve.mjs';
+import { headerProblems as compareHeaders } from './lib/csp-headers.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -82,6 +92,7 @@ const args = process.argv.slice(2);
 const baseIdx = args.indexOf('--base');
 const BASE = baseIdx === -1 ? 'http://127.0.0.1:8099' : args[baseIdx + 1];
 const wantAll = args.includes('--all');
+const headersOnly = args.includes('--headers-only');
 const explicit = args.filter((a) => a.startsWith('/'));
 
 function allCataloguedPaths() {
@@ -103,16 +114,10 @@ const SETTLE_MS = Number(process.env.CSP_AUDIT_SETTLE_MS) || 3500;
 
 const { phase1Routes } = loadRouteTable(path.join(ROOT, 'vercel.json'));
 
-// The security headers vercel.json is expected to put on a document. Anything
-// the route table declares for a path is checked; this list is what makes a
-// MISSING declaration visible too, so deleting the global header rule fails
-// here instead of shipping a bare-headed site.
-const REQUIRED_ON_HTML = [
-	'content-security-policy',
-	'strict-transport-security',
-	'x-content-type-options',
-	'referrer-policy',
-];
+// What counts as a header problem lives in scripts/lib/csp-headers.mjs, next to
+// the tests that pin it. It checks the headers a path declares AND that the
+// document ones are declared at all, so deleting the global header rule from
+// vercel.json fails here instead of shipping a bare-headed site.
 
 /** The header bag vercel.json declares for `pathname`, per the server's resolver. */
 function declaredHeaders(pathname, base) {
@@ -125,93 +130,41 @@ function declaredHeaders(pathname, base) {
 	return bag;
 }
 
-/** "a 'b' c; d 'e'" -> Map{ a => Set{'b','c'}, d => Set{'e'} } */
-function parsePolicy(value) {
-	const directives = new Map();
-	for (const chunk of String(value).split(';')) {
-		const parts = chunk.trim().split(/\s+/).filter(Boolean);
-		if (!parts.length) continue;
-		directives.set(parts[0].toLowerCase(), new Set(parts.slice(1)));
-	}
-	return directives;
-}
-
-const setsEqual = (a, b) => a.size === b.size && [...a].every((v) => b.has(v));
-
-/**
- * Differences between the policy the route table declares and the one the
- * response carried, allowing only the rewrite server/csp-hashes.mjs performs:
- * within script-src / script-src-elem, `'unsafe-inline'` is replaced by any
- * number of `'sha256-…'` sources. Everything else must survive byte-for-byte.
- */
-function policyDiff(declared, served) {
-	const want = parsePolicy(declared);
-	const got = parsePolicy(served);
-	const problems = [];
-	for (const [name, wantSources] of want) {
-		const gotSources = got.get(name);
-		if (!gotSources) {
-			problems.push(`directive "${name}" is missing from the served policy`);
-			continue;
-		}
-		const hashable = name === 'script-src' || name === 'script-src-elem';
-		const expected = new Set(wantSources);
-		const actual = new Set(gotSources);
-		if (hashable) {
-			expected.delete("'unsafe-inline'");
-			for (const src of [...actual]) if (src.startsWith("'sha256-")) actual.delete(src);
-		}
-		if (setsEqual(expected, actual)) continue;
-		const missing = [...expected].filter((s) => !actual.has(s));
-		const extra = [...actual].filter((s) => !expected.has(s));
-		problems.push(
-			`directive "${name}" differs${missing.length ? ` (missing ${missing.join(' ')})` : ''}` +
-				`${extra.length ? ` (unexpected ${extra.join(' ')})` : ''}`,
-		);
-	}
-	return problems;
-}
-
 /**
  * Every way the response's security headers fail to be what the repo says it
  * serves for this path.
  */
 function headerProblems(pathname, base, servedHeaders) {
-	const want = declaredHeaders(pathname, base);
-	const problems = [];
-
-	for (const name of REQUIRED_ON_HTML) {
-		if (!want[name]) problems.push(`vercel.json declares no ${name} for this path`);
-	}
-
-	for (const [name, expected] of Object.entries(want)) {
-		// Only security headers are the subject here. Cache and CORS values are
-		// legitimately rewritten by the CDN and by conditional-request handling.
-		if (!name.startsWith('x-') && !REQUIRED_ON_HTML.includes(name) && name !== 'permissions-policy') {
-			continue;
-		}
-		const served = servedHeaders[name];
-		if (served === undefined) {
-			problems.push(`${name} was declared but the response did not carry it`);
-			continue;
-		}
-		if (name === 'content-security-policy') {
-			problems.push(...policyDiff(expected, served));
-			continue;
-		}
-		if (served.trim() !== expected.trim()) {
-			problems.push(`${name} is "${served}" but vercel.json declares "${expected}"`);
-		}
-	}
-	return problems;
+	return compareHeaders(declaredHeaders(pathname, base), servedHeaders);
 }
 
-const browser = await chromium.launch({
-	args: ['--no-sandbox', '--disable-dev-shm-usage'],
-});
+/**
+ * The header half of the audit for one path, over a plain request. No policy is
+ * evaluated: a clean result here means the response carried what vercel.json
+ * declares, nothing more.
+ */
+async function auditHeaders(p) {
+	const violations = [];
+	const errors = [];
+	const headers = [];
+	let status = 0;
+	try {
+		const res = await fetch(BASE + p, { redirect: 'follow' });
+		await res.arrayBuffer();
+		status = res.status;
+		if (status < 400) {
+			const bag = {};
+			for (const [k, v] of res.headers) bag[k.toLowerCase()] = v;
+			headers.push(...headerProblems(new URL(res.url).pathname, BASE, bag));
+		}
+	} catch (err) {
+		errors.push(`request: ${err.message}`);
+	}
+	return { status, violations, errors, headers };
+}
 
-const results = [];
-for (const p of paths) {
+/** The full audit for one path: load it in a real browser and collect what the policy blocked. */
+async function auditInBrowser(browser, p) {
 	const context = await browser.newContext();
 	const page = await context.newPage();
 	const violations = [];
@@ -253,6 +206,18 @@ for (const p of paths) {
 		errors.push(`navigation: ${err.message}`);
 	}
 	await context.close();
+	return { status, violations, errors, headers };
+}
+
+const browser = headersOnly
+	? null
+	: await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+
+const results = [];
+for (const p of paths) {
+	const { status, violations, errors, headers } = headersOnly
+		? await auditHeaders(p)
+		: await auditInBrowser(browser, p);
 	// A page that never loaded, or answered with an error status, proves
 	// nothing: it has no inline scripts to block. Counting it as clean is how a
 	// sweep reports success over a wiped dist/ or a server that died halfway.
@@ -275,7 +240,7 @@ for (const p of paths) {
 	console.log(`[${mark}] ${String(status).padEnd(3)} ${p}${note}`);
 }
 
-await browser.close();
+if (browser) await browser.close();
 
 const failed = results.filter((r) => r.violations.length > 0);
 const unreachable = results.filter((r) => r.unreachable);
@@ -305,7 +270,11 @@ if (misheaded.length) {
 
 if (failed.length === 0) {
 	console.log(`\nCSP audit: clean across ${results.length} page(s) on ${BASE}`);
-	console.log('Each page loaded, carried the policy vercel.json declares, and fired no violation.');
+	console.log(
+		headersOnly
+			? 'Each response carried the headers vercel.json declares. No policy was evaluated: rerun without --headers-only for that.'
+			: 'Each page loaded, carried the policy vercel.json declares, and fired no violation.',
+	);
 	process.exit(0);
 }
 

@@ -119,6 +119,37 @@ describe('shared circuit breaker (in-memory fallback)', () => {
 		await circuitRecordSuccess(name);
 		expect((await circuitState(name)).open).toBe(false);
 	});
+
+	it('caps the open window so a long outage cannot silence a cron for hours', async () => {
+		// failures only reset on a success, so an uncapped (failures × baseMs) window
+		// grows without bound: the every-minute seed crons would back off past the
+		// point where they still look alive. The clamp keeps the retry cadence
+		// bounded no matter how long the provider stays down.
+		const name = 'test-breaker-cap';
+		const baseMs = 10 * 60_000;
+		const maxMs = 60 * 60_000;
+		for (let i = 0; i < 40; i++) {
+			await circuitRecordFailure(name, { threshold: 3, baseMs, maxMs });
+		}
+		const state = await circuitState(name);
+		expect(state.failures).toBe(40);
+		expect(state.open).toBe(true);
+		// 40 × 10min would be 400 minutes without the clamp.
+		expect(state.openUntil - Date.now()).toBeLessThanOrEqual(maxMs);
+		expect(state.openUntil - Date.now()).toBeGreaterThan(maxMs - 60_000);
+		await circuitRecordSuccess(name);
+		expect((await circuitState(name)).open).toBe(false);
+	});
+
+	it('defaults the cap when a caller passes only threshold and baseMs', async () => {
+		const name = 'test-breaker-default-cap';
+		for (let i = 0; i < 40; i++) {
+			await circuitRecordFailure(name, { threshold: 3, baseMs: 10 * 60_000 });
+		}
+		const state = await circuitState(name);
+		expect(state.open).toBe(true);
+		expect(state.openUntil - Date.now()).toBeLessThanOrEqual(60 * 60_000);
+	});
 });
 
 describe('SCALE_LIMITS', () => {

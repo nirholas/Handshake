@@ -74,9 +74,17 @@ const ASSET_CATCHALL = '/(.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2|woff|
 const isCatchAll = (src) => src === '/(.*)' || src === ASSET_CATCHALL;
 
 const isRedirect = (r) => typeof r.status === 'number' && r.status >= 300 && r.status < 400;
+// The terminal `{"src":"/(?!_vercel/).*","status":404,"dest":"/404.html"}` rewrite
+// is the miss handler, not a destination. It carries a dest and its src is not the
+// literal `/(.*)` catch-all, so without this it entered the route table, matched
+// every path, and made every root-absolute link resolve: the broken-link count
+// read 0 because nothing could ever be counted, not because nothing was broken.
+const isErrorFallback = (r) => typeof r.status === 'number' && r.status >= 400;
 // Specific routes that resolve a request to something: a rewrite (dest) OR a
 // 3xx redirect to a real page. Both are valid link destinations.
-const destRoutes = (vercel.routes || []).filter((r) => (r.dest || isRedirect(r)) && !isCatchAll(r.src));
+const destRoutes = (vercel.routes || []).filter(
+	(r) => (r.dest || isRedirect(r)) && !isCatchAll(r.src) && !isErrorFallback(r)
+);
 
 const compiledRoutes = destRoutes.map((r) => {
 	let s = r.src;
@@ -364,6 +372,21 @@ const htmlInertRe = /<(pre|code)\b[^>]*>[\s\S]*?<\/\1>|<!--[\s\S]*?-->/gi;
 // comments, and `a.href = '#' + doc` is the head of a computed anchor.
 const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
 
+// `<link rel="preconnect" href="https://fonts.gstatic.com">` names an origin to
+// open a socket to, not a document to navigate to. Probing it as a link reports
+// the font API root as a dead 404 forever, on pages whose fonts load fine. The
+// stylesheet request itself is a separate <link> and stays audited. These hints
+// also appear inside JS template strings (api/discover-detail.js renders one),
+// so both mask paths apply it.
+const linkHintRe = /<link\b[^>]*\brel\s*=\s*["']?(?:preconnect|dns-prefetch)\b[^>]*>/gi;
+
+function maskLinkHints(content, mask) {
+	linkHintRe.lastIndex = 0;
+	let m;
+	while ((m = linkHintRe.exec(content))) mask.fill(1, m.index, m.index + m[0].length);
+	return mask;
+}
+
 function htmlMask(content) {
 	const mask = new Uint8Array(content.length);
 	let m;
@@ -383,7 +406,7 @@ function scanFile(file) {
 	if (VENDOR_RE.test(rel)) return; // skip vendored libs — not our link surface
 	const content = readFileSync(file, 'utf8');
 	const isJs = /\.m?js$/.test(file);
-	const mask = isJs ? commentMask(content) : htmlMask(content);
+	const mask = maskLinkHints(content, isJs ? commentMask(content) : htmlMask(content));
 	const inComment = (index) => mask[index] === 1;
 	findings.scanned++;
 	let m;
@@ -436,31 +459,85 @@ function danglingRoutes() {
 }
 
 // ── External liveness (opt-in) ───────────────────────────────────────────────
+
+// A bare `fetch` sends no User-Agent that any CDN recognizes, so Cloudflare and
+// friends answer with a TLS reset or an interstitial. That read back as a dead
+// link for pages a browser opens fine (t.me, solflare.com, ibm.com), which is
+// worse than no report: a list that is mostly false positives gets ignored, and
+// the real 404 hiding in it ships. Ask for the page the way a browser does.
+const PROBE_HEADERS = {
+	'user-agent':
+		'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+	accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+	'accept-language': 'en-US,en;q=0.9',
+};
+
+// x.com serves a logged-out `/status/<id>` page as a 404 to every client that
+// does not run its JS, including a real browser with cookies cleared. The probe
+// therefore cannot tell a live post from a deleted one there, so it must not
+// claim either. Profiles and every other path still get probed normally.
+const UNPROBEABLE_RE = /^https?:\/\/(?:www\.)?(?:x|twitter)\.com\/[^/]+\/status\//i;
+
+// 401/403/429/405 mean the host answered but bot-blocks automated probes, so the
+// page exists. Only 404/410/5xx and DNS/timeout failures are truly dead.
+const aliveStatus = (s) => s < 400 || [401, 403, 405, 429].includes(s);
+
+// A HEAD is cheap but some hosts route it differently from a GET: alibabacloud
+// sends one to a geo-router that 500s while the GET loads the page. A 404, an
+// explicit method rejection, or any 5xx therefore earns one GET before the link
+// is called dead. 403 is deliberately absent: it already reads as alive, and
+// re-asking a bot-blocking CDN with a GET trades that answer for a reset.
+const retryWithGet = (s) => s === 404 || s === 405 || s === 501 || s >= 500;
+
+// undici caps response headers at 16 KB and throws past it. The host answered,
+// so the page is there; only the probe could not read the preamble.
+const ANSWERED_ANYWAY = new Set(['UND_ERR_HEADERS_OVERFLOW']);
+
+function errorCode(e) {
+	if (e.name === 'AbortError') return 'timeout';
+	const code = e.cause?.code || e.cause?.name;
+	return code ? `error:${code}` : 'error';
+}
+
 async function probeExternal(urls) {
 	const dead = [];
-	const queue = [...urls];
-	const CONCURRENCY = 12;
+	const queue = urls.filter((u) => !UNPROBEABLE_RE.test(u));
+	// Eight at a time, not twelve: the probe shares one egress with whatever else
+	// this machine is doing, and a saturated pool shows up as ETIMEDOUT on live
+	// hosts, which is exactly the false positive this whole pass exists to kill.
+	const CONCURRENCY = 8;
 	async function worker() {
 		while (queue.length) {
 			const url = queue.shift();
-			let ok = false;
-			let status = 0;
-			try {
+			const once = async (method) => {
 				const ctrl = new AbortController();
-				const t = setTimeout(() => ctrl.abort(), 10000);
-				let res = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: ctrl.signal });
-				if (res.status === 405 || res.status === 403 || res.status === 501) {
-					res = await fetch(url, { method: 'GET', redirect: 'follow', signal: ctrl.signal });
+				const t = setTimeout(() => ctrl.abort(), 15000);
+				try {
+					const res = await fetch(url, { method, redirect: 'follow', signal: ctrl.signal, headers: PROBE_HEADERS });
+					return { status: res.status };
+				} catch (e) {
+					if (ANSWERED_ANYWAY.has(e.cause?.code)) return { status: 200 };
+					return { error: errorCode(e) };
+				} finally {
+					clearTimeout(t);
 				}
-				clearTimeout(t);
-				status = res.status;
-				// 401/403/429/405 mean the host answered but bot-blocks automated probes —
-				// the page exists. Only 404/410/5xx and DNS/timeout failures are truly dead.
-				ok = res.status < 400 || [401, 403, 405, 429].includes(res.status);
-			} catch (e) {
-				status = e.name === 'AbortError' ? 'timeout' : 'error';
+			};
+			let res = await once('HEAD');
+			// A network error is as often this machine's egress as the host, and a
+			// method rejection says nothing about the page, so both earn a GET. The
+			// GET answers the actual question, but a GET that itself fails to connect
+			// must not overwrite an answer the host already gave. A failed retry gets
+			// one more attempt after a pause, since a saturated pool clears on its own.
+			if (res.error || retryWithGet(res.status)) {
+				let retry = await once('GET');
+				if (retry.error) {
+					await new Promise((r) => setTimeout(r, 1500));
+					retry = await once('GET');
+				}
+				if (!retry.error) res = retry;
 			}
-			if (!ok) dead.push({ url, status });
+			if (res.error) dead.push({ url, status: res.error });
+			else if (!aliveStatus(res.status)) dead.push({ url, status: res.status });
 		}
 	}
 	await Promise.all(Array.from({ length: CONCURRENCY }, worker));

@@ -117,7 +117,9 @@ const gateBatchSize = () => intEnv('SEED_CRON_GATE', 2, { min: 1, max: 10 });
 // every cron lambda sees the same open/closed decision; without that, each instance
 // would rediscover a provider outage on its own and keep submitting into a dead
 // lane. When CIRCUIT_THRESHOLD consecutive forge submits fail the circuit opens for
-// (failures × CIRCUIT_BASE_MS) so the cron goes quiet during provider outages.
+// (failures × CIRCUIT_BASE_MS), capped by forge-scale's CIRCUIT_MAX_OPEN_MS, so the
+// cron goes quiet during a provider outage but still re-probes the lane at least
+// once an hour instead of backing off into silence for the rest of the day.
 const CIRCUIT_NAME = 'forge-seed';
 const CIRCUIT_THRESHOLD = 3;
 const CIRCUIT_BASE_MS = 10 * 60_000; // 10 min × consecutive failures

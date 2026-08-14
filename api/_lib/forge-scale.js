@@ -323,21 +323,37 @@ export async function circuitState(name) {
 }
 
 // Record one failure; opens the breaker for (failures × baseMs) once threshold is
-// reached. Returns the new consecutive-failure count.
-export async function circuitRecordFailure(name, { threshold, baseMs }) {
+// reached, clamped to maxMs. Returns the new consecutive-failure count.
+//
+// The clamp is load-bearing. `failures` only resets on a success, and the counter
+// key is refreshed on every recorded failure, so a provider outage that outlives
+// one retry cycle keeps extending the window: 12 consecutive failures already park
+// a per-minute cron for two hours, and it grows from there with no natural
+// ceiling. That turns a transient upstream blip into a seeder that has gone quiet
+// for most of a day, which reads from the outside as a dead cron rather than a
+// backed-off one. Capping the window keeps the retry cadence bounded, so the cron
+// re-probes the provider at least once per CIRCUIT_MAX_OPEN_MS and resumes on its
+// own the moment the outage clears.
+const CIRCUIT_MAX_OPEN_MS = 60 * 60_000;
+
+const openWindowMs = (failures, baseMs, maxMs) => Math.min(failures * baseMs, maxMs);
+
+export async function circuitRecordFailure(name, { threshold, baseMs, maxMs = CIRCUIT_MAX_OPEN_MS }) {
 	if (!redis) {
 		const c = memCircuit(name);
 		c.failures++;
-		if (c.failures >= threshold) c.openUntil = Date.now() + c.failures * baseMs;
+		if (c.failures >= threshold) c.openUntil = Date.now() + openWindowMs(c.failures, baseMs, maxMs);
 		return c.failures;
 	}
 	try {
 		const failures = await redis.incr(`${CIRCUIT_PREFIX}${name}:failures`);
 		await redis.expire(`${CIRCUIT_PREFIX}${name}:failures`, CIRCUIT_TTL_S);
 		if (failures >= threshold) {
-			await redis.set(`${CIRCUIT_PREFIX}${name}:openUntil`, String(Date.now() + failures * baseMs), {
-				ex: CIRCUIT_TTL_S,
-			});
+			await redis.set(
+				`${CIRCUIT_PREFIX}${name}:openUntil`,
+				String(Date.now() + openWindowMs(failures, baseMs, maxMs)),
+				{ ex: CIRCUIT_TTL_S },
+			);
 		}
 		return failures;
 	} catch {

@@ -290,6 +290,16 @@ export class Viewer {
 		this.scene = new Scene();
 		this.scene.background = this.backgroundColor;
 
+		// The host element can still be unlaid-out at construction (hidden tab,
+		// CSS not applied yet, flex parent that sizes on the next frame). A 0-px
+		// renderer/composer allocates zero-dimension GL textures, which the
+		// driver rejects (glTexStorage2D: dimensions must be > 0) and every
+		// subsequent clear/blit/draw then fails against an incomplete
+		// framebuffer. Start at 1 px and let the ResizeObserver below re-size to
+		// the real box on the first frame that has one.
+		const initialWidth = Math.max(1, el.clientWidth);
+		const initialHeight = Math.max(1, el.clientHeight);
+
 		const fov = options.preset === Preset.ASSET_GENERATOR ? (0.8 * 180) / Math.PI : 60;
 		const aspect = el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 1;
 		this.defaultCamera = new PerspectiveCamera(fov, aspect, 0.01, 1000);
@@ -323,7 +333,7 @@ export class Viewer {
 		// biggest lever after MSAA on weak mobile GPUs.
 		const dprCap = this._lowPower ? 1 : (options.maxPixelRatio ?? (options.kiosk ? 1.5 : 2));
 		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
-		this.renderer.setSize(el.clientWidth, el.clientHeight);
+		this.renderer.setSize(initialWidth, initialHeight);
 
 		// Ground contact shadow (the one rendering-quality gap vs the
 		// model-viewer surfaces). Cheap when nothing casts; skipped entirely on
@@ -372,8 +382,8 @@ export class Viewer {
 		// into a richer look. Screenshot capture bypasses this — see screenshot.js.
 		this.state.cinematicPreset = options.cinematicPreset ?? DEFAULT_CINEMATIC_PRESET;
 		this._cinematic = new CinematicPipeline(this.renderer, this.scene, this.activeCamera, {
-			width: el.clientWidth,
-			height: el.clientHeight,
+			width: initialWidth,
+			height: initialHeight,
 			preset: this.state.cinematicPreset,
 		});
 		this._composer = this._cinematic.composer;

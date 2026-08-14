@@ -105,6 +105,14 @@ function freePort() {
 
 const PROBE_BASE = 'http://127.0.0.1:3000';
 
+// Dev-server readiness budget. A shared/loaded box (several agents running
+// browser fleets and test workers at once) starves Vite's boot: it answers
+// eventually, just not inside a short window. Waiting longer only delays the
+// sweep on a busy machine; it never changes what counts as a console error.
+// Raise SERVER_BOOT_MS if a run still dies with "vite did not become ready".
+const SERVER_BOOT_MS = Number(process.env.SERVER_BOOT_MS || 240_000);
+const REUSE_PROBE_MS = Number(process.env.REUSE_PROBE_MS || 20_000);
+
 async function warmupDeps(base) {
 	// Hit a few dep-heavy pages so Vite pre-bundles before the timed sweep,
 	// otherwise the first real navigation eats the optimizer's reload.
@@ -119,7 +127,7 @@ async function warmupDeps(base) {
 }
 
 async function startServer() {
-	if (await probe(`${PROBE_BASE}/`, 5000)) {
+	if (await probe(`${PROBE_BASE}/`, REUSE_PROBE_MS)) {
 		console.log(C.d('  reusing dev server on :3000'));
 		// localhost (not 127.0.0.1) — some CDN CORS configs allow it, fewer spurious errors.
 		const navBase = 'http://localhost:3000';
@@ -135,11 +143,11 @@ async function startServer() {
 	});
 	const probeBase = `http://127.0.0.1:${port}`;
 	const navBase = `http://localhost:${port}`;
-	const deadline = Date.now() + 90_000;
+	const deadline = Date.now() + SERVER_BOOT_MS;
 	process.stdout.write(`  starting Vite on :${port} `);
 	while (Date.now() < deadline) {
 		if (child.exitCode != null) throw new Error(`vite exited early (code ${child.exitCode})`);
-		if (await probe(`${probeBase}/`, 2000)) {
+		if (await probe(`${probeBase}/`, 10_000)) {
 			process.stdout.write('\n');
 			break;
 		}
@@ -148,7 +156,7 @@ async function startServer() {
 	}
 	if (Date.now() >= deadline) {
 		child.kill('SIGKILL');
-		throw new Error('vite did not become ready within 90s');
+		throw new Error(`vite did not become ready within ${Math.round(SERVER_BOOT_MS / 1000)}s`);
 	}
 	await warmupDeps(navBase);
 	return { base: navBase, stop: async () => child.kill('SIGTERM') };

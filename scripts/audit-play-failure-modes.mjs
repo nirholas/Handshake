@@ -96,6 +96,27 @@ const ATTEMPTS = Math.max(1, Number(process.env.ATTEMPTS) || 4);
 const HOST_TRANSPORT_ERROR =
 	/ERR_NETWORK_CHANGED|ERR_CONNECTION_(RESET|CLOSED|ABORTED)|ERR_EMPTY_RESPONSE|ERR_SOCKET_NOT_CONNECTED/i;
 
+// Playwright bounds navigations and actions, but NOT page.evaluate() or a
+// context/browser close, and on this box those are exactly the calls that stop
+// coming back: /play runs a rAF loop over two WebGL contexts, and when the host
+// is oversubscribed several hundred deep the renderer stops servicing the CDP
+// channel altogether. The sweep then sat on one scenario forever, printing
+// nothing, which is worse than either a pass or a finding because it never
+// reaches the other seventeen. Bound both, and treat a breach as infra so the
+// scenario is retried and, failing that, counted NOT RUN.
+const OBSERVE_TIMEOUT_MS = Number(process.env.OBSERVE_TIMEOUT_MS) || 90_000;
+const TEARDOWN_TIMEOUT_MS = 15_000;
+
+function withTimeout(promise, ms, label) {
+	let timer;
+	return Promise.race([
+		Promise.resolve(promise).finally(() => clearTimeout(timer)),
+		new Promise((_, reject) => {
+			timer = setTimeout(() => reject(new Error(`${label} did not return within ${ms}ms`)), ms);
+		}),
+	]);
+}
+
 // ── Hostile inputs ───────────────────────────────────────────────────────────
 // Every payload calls the same sentinel, so one flag proves script execution
 // regardless of which vector fired.
@@ -295,6 +316,21 @@ async function baseAlive(base, timeoutMs = 5000) {
 	}
 }
 
+// Wait for the origin to answer again before spending an attempt on it. A dev
+// server in this worktree restarts itself every time another agent edits .env or
+// .env.local, and every request inside that window is refused. Retrying straight
+// into the gap burned attempts on a server that was seconds away from being back,
+// and a scenario that ran out of them was reported NOT RUN for a reason that had
+// nothing to do with /play.
+async function waitForBase(base, timeoutMs = 90_000) {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		if (await baseAlive(base, 5000)) return true;
+		await new Promise((r) => setTimeout(r, 2000));
+	}
+	return false;
+}
+
 function freePort() {
 	return new Promise((resolve, reject) => {
 		const srv = createServer();
@@ -356,9 +392,13 @@ async function runScenario(base, sc) {
 	const browser = await chromium.launch({ headless: !process.env.HEADFUL });
 	const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	// Close the process, not just the context. Every exit path goes through this.
+	// A wedged renderer can swallow the graceful close too, and an unbounded close
+	// hangs the whole sweep on a scenario that already produced its verdict. Bound
+	// it and move on; Playwright kills the browser processes it launched when this
+	// process exits, so the worst case is one idle chromium until the run ends.
 	const teardown = async () => {
-		await context.close().catch(() => {});
-		await browser.close().catch(() => {});
+		await withTimeout(context.close(), TEARDOWN_TIMEOUT_MS, 'context.close').catch(() => {});
+		await withTimeout(browser.close(), TEARDOWN_TIMEOUT_MS, 'browser.close').catch(() => {});
 	};
 	const consoleIssues = [];
 	const pageErrors = [];
@@ -440,6 +480,19 @@ async function runScenario(base, sc) {
 			|| HOST_TRANSPORT_ERROR.test(m)) {
 			return { infra: m, findings: [], consoleIssues: [], pageErrors: [] };
 		}
+		// A navigation that ran out its budget is the ambiguous case: either the
+		// document genuinely never reaches DOMContentLoaded, or this box (load in
+		// the hundreds, memory exhausted) never gave the renderer enough CPU to get
+		// there. Ask the origin directly, then retry rather than ruling on one
+		// sample. A real hang reproduces on every attempt and still ends the
+		// scenario, so nothing is excused here; what is avoided is one starved
+		// attempt being published as "/play never loaded".
+		if (/Timeout .*exceeded/i.test(m)) {
+			const t0 = Date.now();
+			const served = await baseAlive(base, 10_000);
+			const how = served ? `origin served / in ${Date.now() - t0}ms` : 'origin did not answer either';
+			return { infra: `${m.split('\n')[0]} (${how})`, findings: [], consoleIssues: [], pageErrors: [] };
+		}
 		findings.push(`navigation failed: ${m}`);
 		return { findings, consoleIssues, pageErrors };
 	}
@@ -455,7 +508,7 @@ async function runScenario(base, sc) {
 		return { infra: `host transport failure mid-scenario (${transportHit})`, findings: [], consoleIssues: [], pageErrors: [] };
 	}
 
-	const o = await page.evaluate(() => {
+	const observe = () => page.evaluate(() => {
 		const loader = document.getElementById('kx-loading');
 		const hidden = !loader || loader.classList.contains('kx-hidden');
 		const errorCard = !!document.querySelector('.kx-boot-error');
@@ -498,6 +551,16 @@ async function runScenario(base, sc) {
 			rejections: window.__rejections || [],
 		};
 	});
+
+	let o;
+	try {
+		o = await withTimeout(observe(), OBSERVE_TIMEOUT_MS, 'page.evaluate');
+	} catch (err) {
+		// The renderer stopped answering (see OBSERVE_TIMEOUT_MS). Nothing was
+		// observed, so there is nothing to judge /play on.
+		await teardown();
+		return { infra: String(err?.message || err), findings: [], consoleIssues: [], pageErrors: [] };
+	}
 
 	// ── Universal assertions ────────────────────────────────────────────────
 	if (o.xss) findings.push('SCRIPT EXECUTED from a query parameter (window.__xss set)');
@@ -554,6 +617,7 @@ async function main() {
 				// A network-change storm usually settles within seconds, so back off a
 				// little further each time rather than landing in the same window twice.
 				await new Promise((r) => setTimeout(r, 3000 * (attempt - 1)));
+				await waitForBase(server.base);
 				res = await runScenario(server.base, sc);
 			}
 			if (res.infra) {
