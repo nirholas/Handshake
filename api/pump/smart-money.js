@@ -18,11 +18,16 @@
  * recorded on-chain.
  */
 
-import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
+import { cors, json, method, error, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 
 const NETWORK = 'mainnet';
+// Solana addresses are base58 and 32-44 chars. Rejecting anything else at the
+// boundary keeps a malformed address from spending a DB round-trip, and answers
+// "that is not an address" instead of the "no track record yet" a real-but-unknown
+// wallet gets, which are different facts.
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const lamportsToSol = (v) => (v == null ? 0 : Math.round((Number(BigInt(v)) / 1e9) * 1000) / 1000);
 const numOr = (v, d = 0) => (v == null ? d : Number(v));
 
@@ -36,8 +41,20 @@ export default wrap(async (req, res) => {
 	const wallet = url.searchParams.get('wallet');
 	const mint = url.searchParams.get('mint');
 
-	if (wallet) return walletCard(res, wallet.trim());
-	if (mint) return coinDetail(res, mint.trim());
+	if (wallet) {
+		const addr = wallet.trim();
+		if (!BASE58_RE.test(addr)) {
+			return error(res, 400, 'invalid_wallet', 'wallet must be a base58 Solana address');
+		}
+		return walletCard(res, addr);
+	}
+	if (mint) {
+		const addr = mint.trim();
+		if (!BASE58_RE.test(addr)) {
+			return error(res, 400, 'invalid_mint', 'mint must be a base58 Solana address');
+		}
+		return coinDetail(res, addr);
+	}
 	if (url.searchParams.has('leaderboard')) return leaderboard(res, url);
 	return feed(res, url);
 });

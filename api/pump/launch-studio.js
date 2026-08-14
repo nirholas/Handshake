@@ -48,5 +48,5 @@ export default wrap(async (req, res) => {
 		return json(res, 200, plan, { 'cache-control': 'public, max-age=30, s-maxage=120' });
 	}
 
-	return error(res, 400, 'bad_request', "unknown action — use 'list' or 'preview'");
+	return error(res, 400, 'bad_request', "unknown action: use 'list' or 'preview'");
 });

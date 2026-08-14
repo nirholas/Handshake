@@ -7,7 +7,8 @@
 // fee split / reference key land in the compiled message.
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import { Keypair, VersionedTransaction } from '@solana/web3.js';
+import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 
 import {
 	buildGaslessPurchaseTx,
@@ -106,6 +107,25 @@ describe('buildGaslessPurchaseTx', () => {
 		expect(txSplit.message.staticAccountKeys.length).toBeGreaterThan(
 			txSingle.message.staticAccountKeys.length,
 		);
+	});
+
+	it('closes a split transaction with the reference-carrying seller leg', async () => {
+		// @solana/pay's validateTransfer only inspects the LAST instruction and
+		// requires the reference to ride it, so the fee leg must come first. With
+		// the order flipped, confirm rejects a paid purchase as "invalid references".
+		const split = await buildGaslessPurchaseTx({
+			...baseArgs,
+			creatorAtomics: 900_000n,
+			platformFeeAtomics: 100_000n,
+			platformFeeWallet: TREASURY.publicKey.toBase58(),
+		});
+		const tx = VersionedTransaction.deserialize(Buffer.from(split.transaction, 'base64'));
+		const keys = tx.message.staticAccountKeys;
+		const last = tx.message.compiledInstructions[tx.message.compiledInstructions.length - 1];
+		expect(keys[last.accountKeyIndexes[last.accountKeyIndexes.length - 1]].equals(REFERENCE)).toBe(true);
+
+		const sellerAta = getAssociatedTokenAddressSync(MINT.publicKey, SELLER.publicKey);
+		expect(last.accountKeyIndexes.some((i) => keys[i].equals(sellerAta))).toBe(true);
 	});
 });
 

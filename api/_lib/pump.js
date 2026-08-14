@@ -20,7 +20,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { solanaConnection } from './solana/connection.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
-import { PUMP_PROGRAM_ID } from './solana/programs.js';
+import { PUMP_PROGRAM_ID, PUMP_AGENT_PAYMENTS_PROGRAM_ID } from './solana/programs.js';
 
 // @solana/web3.js calls console.error() on every 429 retry attempt. Those
 // retries succeed (callers see a resolved value, not a thrown error), but
@@ -244,6 +244,15 @@ export function txProgramIds(tx) {
 // discriminator, so a new create variant keeps confirming cleanly.
 export function txInvokesPumpProgram(tx) {
 	return txProgramIds(tx).has(PUMP_PROGRAM_ID);
+}
+
+// True when a confirmed tx actually invoked the three.ws agent-payments program.
+// withdraw-confirm uses this for the same reason launch-confirm asserts the
+// bonding-curve program: a succeeded tx that merely *lists* the agent mint and
+// its authority among its accounts (any transfer or memo touching them does)
+// would otherwise be reported back as a confirmed payout.
+export function txInvokesAgentPaymentsProgram(tx) {
+	return txProgramIds(tx).has(PUMP_AGENT_PAYMENTS_PROGRAM_ID);
 }
 
 // Resolve the canonical pump.fun AMM pool for `mint` (post-graduation). Pass

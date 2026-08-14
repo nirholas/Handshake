@@ -13,6 +13,11 @@
 export const PUMP_PROGRAM_ID = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 export const PUMP_AMM_PROGRAM_ID = 'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA';
 export const PUMP_FEE_PROGRAM_ID = 'pfeeUxB6jkeY1Hxd7CsFCAjcbHA9rWtchMGdZ6VojVZ';
+// three.ws agent-payments program: the on-chain escrow that agent tokens
+// receive payments into and that `withdraw` pays out from. Mirrors
+// PUMP_AGENT_PAYMENTS_PROGRAM_ID exported by @three-ws/agent-payments; kept here
+// so a confirm handler can assert the program ran without importing the SDK.
+export const PUMP_AGENT_PAYMENTS_PROGRAM_ID = 'AgenTMiC2hvxGebTsgmsD4HHBa8WEcqGFf87iwRRxLo7';
 export const PUMPFUN_FEE_ACCOUNT = 'CebN5WGQ4jvEPvsVU4EoHEpgzq1VV7AbCJ5GEFDM97zC';
 export const PUMPFUN_MIGRATION_AUTHORITY = '39azUYFWPz3VHgKCf3VChUwbpURdCHRxjWVowf5jUJjg';
 export const WSOL_MINT = 'So11111111111111111111111111111111111111112';

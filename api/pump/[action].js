@@ -86,6 +86,7 @@ import {
 	buildUnsignedTxBase64,
 	verifySignature,
 	txInvokesPumpProgram,
+	txInvokesAgentPaymentsProgram,
 	solanaPubkey,
 } from '../_lib/pump.js';
 
@@ -2946,8 +2947,8 @@ async function handleWithdrawPrep(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -2962,7 +2963,7 @@ async function handleWithdrawPrep(req, res) {
 		where m.mint=${body.mint} and m.network=${body.network} limit 1
 	`;
 	if (!row) return error(res, 404, 'not_found', 'agent mint not registered');
-	if (row.user_id !== user.id) return error(res, 403, 'forbidden', 'not your agent');
+	if (row.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 	if (row.agent_authority && row.agent_authority !== body.authority_wallet) {
 		return error(res, 403, 'forbidden', 'authority does not match');
 	}
@@ -2973,14 +2974,21 @@ async function handleWithdrawPrep(req, res) {
 	const currency = solanaPubkey(currencyStr);
 	if (!currency) return error(res, 400, 'validation_error', 'invalid currency_mint');
 
+	// An unparseable token program used to be dropped silently, which built a tx
+	// against the default SPL program and only failed once the user had signed it.
+	// Reject it here instead, where the caller can still fix the request.
+	let tokenProgram;
+	if (body.currency_token_program) {
+		tokenProgram = solanaPubkey(body.currency_token_program);
+		if (!tokenProgram) {
+			return error(res, 400, 'validation_error', 'invalid currency_token_program');
+		}
+	}
+
 	const { offline } = await getPumpAgentOffline({
 		network: body.network,
 		mint: body.mint,
 	});
-
-	const tokenProgram = body.currency_token_program
-		? solanaPubkey(body.currency_token_program)
-		: undefined;
 
 	const ix = await offline.withdraw({
 		authority,
@@ -3015,8 +3023,8 @@ async function handleWithdrawConfirm(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -3028,7 +3036,7 @@ async function handleWithdrawConfirm(req, res) {
 		where mint=${body.mint} and network=${body.network} limit 1
 	`;
 	if (!row) return error(res, 404, 'not_found', 'agent mint not registered');
-	if (row.user_id !== user.id) return error(res, 403, 'forbidden', 'not your agent');
+	if (row.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	let tx;
 	try {
@@ -3037,12 +3045,28 @@ async function handleWithdrawConfirm(req, res) {
 		return error(res, e.status || 422, e.code || 'tx_failed', e.message);
 	}
 
-	const accountKeys = tx.transaction.message.accountKeys.map((k) => (k.pubkey || k).toString());
+	// A versioned tx resolved through an address-lookup table can come back with
+	// its account list under a different shape; treat a missing list as "no match"
+	// rather than letting `.map` throw the whole confirm into a 500.
+	const accountKeys = (tx.transaction?.message?.accountKeys || []).map((k) =>
+		(k.pubkey || k).toString(),
+	);
 	if (!accountKeys.includes(body.mint)) {
 		return error(res, 422, 'mint_not_in_tx', 'mint not present in tx accounts');
 	}
 	if (row.agent_authority && !accountKeys.includes(row.agent_authority)) {
 		return error(res, 422, 'authority_not_in_tx', 'agent authority not present in tx');
+	}
+	// Account presence alone is not a payout: any succeeded transfer or memo that
+	// touches the mint and the authority satisfies it. Require that the
+	// agent-payments program actually ran before reporting a confirmed withdrawal.
+	if (!txInvokesAgentPaymentsProgram(tx)) {
+		return error(
+			res,
+			422,
+			'not_a_withdrawal',
+			'tx did not invoke the agent-payments program',
+		);
 	}
 
 	return json(res, 200, {

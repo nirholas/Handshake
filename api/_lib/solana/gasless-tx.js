@@ -127,9 +127,14 @@ export async function buildGaslessPurchaseTx({
 	);
 	creatorIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
 
-	const instructions = [creatorIx];
+	const instructions = [];
 
-	// Platform fee leg — same transaction, atomic with the seller leg.
+	// Platform fee leg — same transaction, atomic with the seller leg. It goes
+	// FIRST because @solana/pay's validateTransfer only ever inspects the LAST
+	// instruction: with the fee leg last, confirm would decode the treasury
+	// transfer, find no reference key on it, and reject a perfectly good payment
+	// as "invalid references". The seller leg therefore always closes the
+	// transaction (api/_lib/purchase-confirm.js validates exactly this shape).
 	if (platformFeeAtomics > 0n && platformFeeWallet) {
 		const feeAta = getAssociatedTokenAddressSync(mintKey, new PublicKey(platformFeeWallet));
 		instructions.push(
@@ -143,6 +148,8 @@ export async function buildGaslessPurchaseTx({
 			),
 		);
 	}
+
+	instructions.push(creatorIx);
 
 	const { blockhash } = await connection.getLatestBlockhash('confirmed');
 	const messageV0 = new TransactionMessage({
