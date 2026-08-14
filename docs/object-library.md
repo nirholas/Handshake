@@ -35,7 +35,7 @@ Gallery controls:
 
 ## API: `GET /api/objects/library`
 
-Public, no authentication, CORS-open to GET from web origins. The endpoint proxies a small manifest JSON from the R2 CDN (`objects/library/manifest.json`) with an edge cache (`Cache-Control: public, s-maxage=300, stale-while-revalidate=3600`). The GLB and thumbnail bytes never pass through the API: every entry carries absolute CDN URLs the browser loads directly. It mirrors the [Character Library API](./character-library.md) exactly, with `objects` in place of `avatars`.
+Public, no authentication, `GET` and `OPTIONS` only (`HEAD` is answered like `GET`). Browser `fetch` from a third-party origin is not enabled: like the [Character Library API](./character-library.md), the endpoint sends `Access-Control-Allow-Origin` only for three.ws and its partner origins, and the R2 CDN holding the GLBs is scoped the same way. Call it server-side, or from a three.ws page, and the assets it points at are still yours to download and redistribute anywhere (a download or a server-side fetch is not CORS-gated; only in-browser cross-origin reads are). The endpoint proxies a small manifest JSON from the R2 CDN (`objects/library/manifest.json`) with an edge cache (`Cache-Control: public, s-maxage=300, stale-while-revalidate=3600`). The GLB and thumbnail bytes never pass through the API: every entry carries absolute CDN URLs the browser loads directly. It mirrors the [Character Library API](./character-library.md) exactly, with `objects` in place of `avatars`.
 
 ### Query parameters
 

@@ -178,4 +178,63 @@ describe('GET /api/objects/library', () => {
 		expect(body.error).toBe('invalid_offset');
 		expect(body.error_description).toContain('limit');
 	});
+
+	// A doomed request must not pay for an upstream read first. The 400 cannot
+	// change based on what R2 returns, so fetching the manifest anyway is pure
+	// added latency on every client-side pagination bug.
+	it('rejects a malformed cursor without touching storage', async () => {
+		publish();
+		getObjectBuffer.mockClear();
+		const { res } = await get('?limit=abc');
+		expect(res.statusCode).toBe(400);
+		expect(getObjectBuffer).not.toHaveBeenCalled();
+	});
+
+	// ── Corrupt manifests are an outage, not an empty library ────────────────
+	it('degrades without caching when the manifest is not valid JSON', async () => {
+		getObjectBuffer.mockResolvedValue(Buffer.from('{"objects": [truncated'));
+		const { res, body } = await get();
+		expect(res.statusCode).toBe(200);
+		expect(body.objects).toEqual([]);
+		expect(res.getHeader('cache-control')).toBe('no-store');
+	});
+
+	it('degrades without caching when the manifest carries no object list', async () => {
+		// Parses fine, but a `null` / wrong-shape body means a bad upload, and
+		// caching "no objects" for 300s would outlive the bad upload.
+		for (const bad of ['null', '{"objects":"nope"}', '"a string"']) {
+			getObjectBuffer.mockResolvedValue(Buffer.from(bad));
+			const { res, body } = await get();
+			expect(res.statusCode).toBe(200);
+			expect(body.objects).toEqual([]);
+			expect(body.total).toBe(0);
+			expect(res.getHeader('cache-control')).toBe('no-store');
+		}
+	});
+
+	it('keeps the normal cache for a manifest that is legitimately empty', async () => {
+		getObjectBuffer.mockResolvedValue(Buffer.from('{"objects":[]}'));
+		const { res, body } = await get();
+		expect(body.objects).toEqual([]);
+		expect(res.getHeader('cache-control')).toContain('s-maxage=300');
+	});
+
+	it('does not cache a degraded response on the paginated path either', async () => {
+		getObjectBuffer.mockRejectedValue(new Error('socket hang up'));
+		const { res, body } = await get('?limit=2');
+		expect(res.statusCode).toBe(200);
+		expect(body.objects).toEqual([]);
+		expect(body.next_offset).toBe(null);
+		expect(res.getHeader('cache-control')).toBe('no-store');
+	});
+
+	// HEAD must behave like GET (api/_lib/http.js normalizes it); Node strips the
+	// body. A handler that fell through on HEAD would hang until the timeout.
+	it('answers HEAD like GET', async () => {
+		publish();
+		const res = fakeRes();
+		await handler(fakeReq('HEAD'), res);
+		expect(res.statusCode).toBe(200);
+		expect(res.getHeader('cache-control')).toContain('s-maxage=300');
+	});
 });
