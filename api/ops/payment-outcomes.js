@@ -15,11 +15,17 @@
 //                  over a stated window) and the runway in days that implies,
 //                  including the threshold the scheduled monitor alerts on.
 //
+// The panels are read independently and a failed one does not blank the others.
+// `ok` says whether all three rendered (never whether payments are healthy, which
+// is a per-panel verdict); the ones that failed are named in `degraded` and the
+// response is 207 Multi-Status, matching /api/ops/health.
+//
 // Auth: authorizeOps (admin session, or x-ops-secret / OPS_SECRET): the same
 // gate as /api/ops/health, so ops tooling reuses one stored secret.
 // Read-only; moves no funds; reads balances via RPC only.
 
-import { cors, json, method, wrap, error } from '../_lib/http.js';
+import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
 import { gatherX402SettleHealth } from '../_lib/ops/x402-settle-health.js';
@@ -162,6 +168,16 @@ async function sponsorBoard() {
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
+
+	// Every request here runs a session lookup before the gate can answer, then
+	// three aggregate queries and a live RPC balance read, so an unauthorized
+	// flood is expensive. `authedReadIp` (300/5m), not the strict `authIp`
+	// credential bucket: an ops board is polled, and draining the login budget of
+	// the office IP that watches it is exactly the cross-contamination that bucket
+	// was split out to end.
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
 	const auth = await authorizeOps(req);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'ops secret or admin session required');
 
@@ -174,11 +190,23 @@ export default wrap(async (req, res) => {
 	]);
 	const unwrap = (r) => (r.status === 'fulfilled' ? r.value : { error: r.reason?.message || 'unavailable' });
 
-	return json(res, 200, {
-		ok: true,
-		generated_at: new Date().toISOString(),
+	const panels = {
 		inbound: unwrap(inbound),
 		ring_settle: unwrap(ringSettle),
 		sponsor: unwrap(sponsor),
+	};
+	// `ok` reports whether the BOARD rendered, not whether payments are healthy
+	// (that verdict is per panel). It used to be the literal `true`, so a read
+	// where all three panels threw still answered 200 ok:true with three error
+	// objects in the body: a monitoring surface that reports success while it is
+	// blind. A failed panel now names itself in `degraded` and the response is
+	// 207 Multi-Status, the same convention /api/ops/health uses.
+	const degraded = Object.keys(panels).filter((k) => panels[k]?.error);
+
+	return json(res, degraded.length ? 207 : 200, {
+		ok: degraded.length === 0,
+		degraded,
+		generated_at: new Date().toISOString(),
+		...panels,
 	}, { 'cache-control': 'no-store' });
 });

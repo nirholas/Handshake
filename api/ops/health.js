@@ -1,8 +1,11 @@
 // GET /api/ops/health — comprehensive internal platform health check.
 //
 // Returns live probe results for every critical subsystem + cron heartbeats
-// from Redis. Requires x-ops-secret header (OPS_SECRET env var). If the env
-// var is unset, falls back to CRON_SECRET so ops pages work without extra setup.
+// from Redis. Auth is authorizeOps (api/_lib/ops-auth.js): an admin session, or
+// x-ops-secret / Authorization Bearer matching OPS_SECRET. It is deliberately
+// never CRON_SECRET, the credential the crons that move real funds carry, so a
+// leaked ops password cannot be escalated into triggering a payment job. With no
+// OPS_SECRET configured the gate is open off-production and denies in production.
 
 import { readFileSync } from 'node:fs';
 import { CronExpressionParser } from 'cron-parser';
@@ -179,7 +182,11 @@ export default wrap(async (req, res) => {
 	// GET (RFC 9110) and sends the Allow header a bare 405 was missing.
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.authIp(clientIp(req));
+	// `authedReadIp` (300/5m), not the strict `authIp` credential bucket. This is a
+	// polled read board, and every poll used to spend the same 50/10m budget that
+	// gates logins from that IP, so watching the dashboard could 429 an operator's
+	// sign-in. Same reason `authedReadIp` was split out for authed reads at large.
+	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	// Hardened ops gate: admin session or a dedicated
