@@ -39,6 +39,13 @@ function flush() {
 	return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+// vi.waitFor's 1s default is a stopwatch on a jsdom render chain, not an
+// assertion about the modal: these polls span connect -> balance read -> render
+// across several stubbed-rAF macrotasks, which a fork sharing the box with five
+// busy peers can easily stretch past a second. The assertions are unchanged;
+// only the patience is.
+const WAIT = { timeout: 15_000, interval: 20 };
+
 describe('x402 payment modal — trust + a11y', () => {
 	let background;
 
@@ -144,7 +151,7 @@ describe('x402 payment modal — trust + a11y', () => {
 		// full-suite CPU load, so poll for the state instead.
 		await vi.waitFor(() => {
 			expect(document.querySelector('.x402-insuff-title')).toBeTruthy();
-		});
+		}, WAIT);
 
 		expect(document.querySelector('.x402-insuff-title')?.textContent).toMatch(/not enough/i);
 		expect(document.body.textContent).toContain('short by');
@@ -230,7 +237,7 @@ describe('x402 payment modal: agent wallet method', () => {
 		p.catch(() => {});
 		await vi.waitFor(() => {
 			expect(document.querySelector('[data-agent-wallet="agent-1"]')).toBeTruthy();
-		});
+		}, WAIT);
 
 		const funded = document.querySelector('[data-agent-wallet="agent-1"]');
 		expect(funded.disabled).toBe(false);
@@ -255,11 +262,11 @@ describe('x402 payment modal: agent wallet method', () => {
 		const p = pay({ endpoint: '/api/x402/demo', merchant: 'Acme', action: 'Run' });
 		await vi.waitFor(() => {
 			expect(document.querySelector('[data-agent-wallet="agent-1"]')).toBeTruthy();
-		});
+		}, WAIT);
 		document.querySelector('[data-agent-wallet="agent-1"]').click();
 		await vi.waitFor(() => {
 			expect(document.querySelector('.x402-receipt-title')).toBeTruthy();
-		});
+		}, WAIT);
 
 		// The settle POST carried the owner CSRF token, the agent id, and the
 		// ABSOLUTE endpoint URL (the server probes it independently).
@@ -291,7 +298,7 @@ describe('x402 payment modal: agent wallet method', () => {
 		p.catch(() => {});
 		await vi.waitFor(() => {
 			expect(document.querySelector('[data-wallet="phantom"]')).toBeTruthy();
-		});
+		}, WAIT);
 		await flush();
 		expect(document.querySelector('[data-agent-wallet]')).toBe(null);
 		expect(document.body.textContent).not.toContain('Your agents');
