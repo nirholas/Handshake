@@ -31,6 +31,7 @@ const MODEL_URL =
 
 let _modPromise = null;
 let _landmarkerPromise = null;
+let _imageLandmarkerPromise = null;
 
 function loadModule() {
 	if (!_modPromise) {
@@ -56,6 +57,30 @@ function loadLandmarker() {
 		throw err;
 	});
 	return _landmarkerPromise;
+}
+
+/**
+ * IMAGE-mode landmarker for one-shot stills, cached like the VIDEO one.
+ * Every review shot and every upload used to build and tear down its own,
+ * which re-reads the ~5MB model and re-initialises the GPU delegate while the
+ * user waits on "Checking shot..." right after the shutter fires.
+ */
+function loadImageLandmarker() {
+	if (_imageLandmarkerPromise) return _imageLandmarkerPromise;
+	_imageLandmarkerPromise = (async () => {
+		const { FilesetResolver, FaceLandmarker } = await loadModule();
+		const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
+		return FaceLandmarker.createFromOptions(vision, {
+			baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
+			runningMode: 'IMAGE',
+			numFaces: 1,
+			outputFaceBlendshapes: false,
+		});
+	})().catch((err) => {
+		_imageLandmarkerPromise = null;
+		throw err;
+	});
+	return _imageLandmarkerPromise;
 }
 
 /** Pre-warm the model download. */
@@ -294,17 +319,8 @@ export function estimateHeadPose(lms) {
  * @returns {Promise<QualityReport>}
  */
 export async function checkImageQuality(source, slot = 'frontal') {
-	const mod = await loadModule();
-	const { FilesetResolver, FaceLandmarker } = mod;
-	const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
-	const imgLandmarker = await FaceLandmarker.createFromOptions(vision, {
-		baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
-		runningMode: 'IMAGE',
-		numFaces: 1,
-		outputFaceBlendshapes: false,
-	});
+	const imgLandmarker = await loadImageLandmarker();
 	const result = imgLandmarker.detect(source);
-	imgLandmarker.close();
 
 	const lms = result.faceLandmarks?.[0];
 	if (!lms || lms.length < 468) {

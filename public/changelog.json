@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T00:56:39.870Z",
+	"generated_at": "2026-08-14T01:01:14.295Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -26,6 +26,18 @@
 				"feature",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The contracts that hold agent earnings, reputation stakes and skill licenses are now audit-ready",
+			"summary": "Before an outside firm can review the contracts behind agent royalties, reputation staking and wallet delegation, someone has to write down what those contracts promise and then prove it holds. That pack now exists and is public. Every value-bearing contract has numbered invariants, each backed by a test proving the property holds and a second test proving that an attacker trying to break it is rejected, alongside a threat model naming what is worth stealing, who could try, and what stops them. The Solidity contracts sit at 100% test coverage across 242 tests. The two Solana programs, which had no automated tests at all, now have 32 running against their real compiled on-chain bytecode rather than a stand-in, with the real token programs loaded. Two standard analyzers were run across everything, and every finding is either fixed or answered in writing. One of those fixes closes a real gap: a cross-chain permission request that was declined rather than failed outright would have credited a seller and charged a buyer for access that was never going to be granted.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra",
+				"docs"
 			]
 		},
 		{
