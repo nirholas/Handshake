@@ -71,12 +71,14 @@ const createCreation = vi.fn(async (args) => {
 	return `creation-${rows.size}`;
 });
 const markFailed = vi.fn(async () => {});
+const markSupersededBy = vi.fn(async () => true);
 vi.mock('../../api/_lib/forge-store.js', () => ({
 	hashClient: (v) => `client:${v || 'anon'}`,
 	hashIp: (v) => `ip:${v}`,
 	createCreation: (...a) => createCreation(...a),
 	materializeCreation: vi.fn(async ({ glbUrl }) => ({ id: 'creation-x', glbUrl })),
 	markFailed: (...a) => markFailed(...a),
+	markSupersededBy: (...a) => markSupersededBy(...a),
 	findByJob: vi.fn(async ({ replicateJobId }) => rows.get(replicateJobId) ?? null),
 }));
 
@@ -158,6 +160,7 @@ beforeEach(() => {
 	submitSeq = 0;
 	createCreation.mockClear();
 	markFailed.mockClear();
+	markSupersededBy.mockClear();
 });
 
 describe('poll-time failover: first hop', () => {
@@ -182,6 +185,11 @@ describe('poll-time failover: first hop', () => {
 		await poll(JOB);
 		expect(markFailed).toHaveBeenCalledTimes(1);
 		expect(createCreation).toHaveBeenCalledTimes(1);
+		// The failed attempt is linked to its successor once the chain is durable,
+		// so the outcome ledger reads the hop as a recovery rather than a loss.
+		expect(markSupersededBy).toHaveBeenCalledWith(
+			expect.objectContaining({ replicateJobId: ORIGINAL_TASK, successorId: expect.any(String) }),
+		);
 		// The redispatch reconstructs from the single stored view, and says so.
 		expect(createCreation.mock.calls[0][0]).toMatchObject({
 			previewImageUrl: 'https://cdn.example/ref.png',
