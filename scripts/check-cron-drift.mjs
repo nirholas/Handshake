@@ -24,6 +24,9 @@ import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CronExpressionParser } from 'cron-parser';
+// The job-id derivation lives with the script that creates the jobs. Two copies
+// that drift by one character make every live job read as MISSING.
+import { jobId } from './create-gcp-scheduler.mjs';
 
 const execFileP = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -34,12 +37,6 @@ const LOCATION = 'us-central1';
 const argv = process.argv.slice(2);
 const OFFLINE = argv.includes('--offline');
 const AS_JSON = argv.includes('--json');
-
-// Must match scripts/create-gcp-scheduler.mjs exactly, or every job reads as
-// missing.
-function jobId(cronPath) {
-	return `cron-${cronPath.replace(/[^a-zA-Z0-9]+/g, '-')}`.slice(0, 500);
-}
 
 /** Parse a cron expression, returning its next fire times or an error. */
 function validate(schedule) {
