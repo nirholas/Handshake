@@ -29,10 +29,10 @@
 -- rather than the person. report carries per-view statuses and cosines only;
 -- rejected captures are recorded by index and reason.
 --
--- Draft: written by this change, NOT applied. Run `npm run db:status` to
--- confirm it reads as pending before `npm run db:migrate` applies it, and read
--- that status first: db:migrate applies EVERY pending migration, not just this
--- one.
+-- Applied 2026-08-14 with `scripts/apply-migrations.mjs --apply --file
+-- 20260814000000_avatar_likeness_scores.sql`, i.e. this file alone rather than
+-- `npm run db:migrate`, because that script applies EVERY pending migration and
+-- seven belonging to other in-flight work were queued behind it.
 
 create table if not exists avatar_likeness_scores (
 	creation_id       uuid primary key references forge_creations(id) on delete cascade,
