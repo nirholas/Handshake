@@ -28,12 +28,21 @@ const MAX_LIMIT = 100;
 
 let _cache = null; // { coins, source, expiresAt }
 
-const finite = (n) => (Number.isFinite(n) ? n : null);
+// A numeric field, or null when the upstream had no value for it. The raw value
+// is inspected before coercion because Number(null) and Number('') are both 0,
+// so coercing first turned "CoinGecko has no 7 d change for this coin" into a
+// paid claim that the coin moved 0%. The output schema declares every one of
+// these nullable; an absent number must stay absent.
+export const finite = (raw) => {
+	if (raw == null || raw === '') return null;
+	const n = Number(raw);
+	return Number.isFinite(n) ? n : null;
+};
 
 // Market-cap rank, or the row's board position when the upstream has none.
-// CoinGecko sends `market_cap_rank: null` for coins it has not ranked, and
-// Number(null) is 0, so a plain finite() check let a nonsense rank of 0 through
-// instead of falling back. Ranks are 1-based; anything else takes the fallback.
+// CoinGecko sends `market_cap_rank: null` for coins it has not ranked, and the
+// same Number(null) trap put a nonsense rank of 0 in the paid payload instead
+// of falling back. Ranks are 1-based; anything else takes the fallback.
 // (The CoinPaprika branch already filters rank > 0, so both sources agree.)
 export const rankOr = (raw, fallback) => {
 	const n = Number(raw);
@@ -55,12 +64,12 @@ async function fetchCoinGecko() {
 		rank: rankOr(c.market_cap_rank, i + 1),
 		symbol: typeof c.symbol === 'string' ? c.symbol.toUpperCase() : null,
 		name: typeof c.name === 'string' ? c.name : null,
-		price_usd: finite(Number(c.current_price)),
-		change_1h: finite(Number(c.price_change_percentage_1h_in_currency)),
-		change_24h: finite(Number(c.price_change_percentage_24h_in_currency ?? c.price_change_percentage_24h)),
-		change_7d: finite(Number(c.price_change_percentage_7d_in_currency)),
-		market_cap_usd: finite(Number(c.market_cap)),
-		volume_24h_usd: finite(Number(c.total_volume)),
+		price_usd: finite(c.current_price),
+		change_1h: finite(c.price_change_percentage_1h_in_currency),
+		change_24h: finite(c.price_change_percentage_24h_in_currency ?? c.price_change_percentage_24h),
+		change_7d: finite(c.price_change_percentage_7d_in_currency),
+		market_cap_usd: finite(c.market_cap),
+		volume_24h_usd: finite(c.total_volume),
 	}));
 }
 
@@ -88,12 +97,12 @@ async function fetchCoinPaprika() {
 				rank: Number(c.rank),
 				symbol: typeof c.symbol === 'string' ? c.symbol.toUpperCase() : null,
 				name: typeof c.name === 'string' ? c.name : null,
-				price_usd: finite(Number(q.price)),
-				change_1h: finite(Number(q.percent_change_1h)),
-				change_24h: finite(Number(q.percent_change_24h)),
-				change_7d: finite(Number(q.percent_change_7d)),
-				market_cap_usd: finite(Number(q.market_cap)),
-				volume_24h_usd: finite(Number(q.volume_24h)),
+				price_usd: finite(q.price),
+				change_1h: finite(q.percent_change_1h),
+				change_24h: finite(q.percent_change_24h),
+				change_7d: finite(q.percent_change_7d),
+				market_cap_usd: finite(q.market_cap),
+				volume_24h_usd: finite(q.volume_24h),
 			};
 		});
 }

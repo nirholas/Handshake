@@ -248,7 +248,7 @@ async function health(req, res) {
 	let reachable = false;
 	let detail = null;
 	try {
-		const key = env.NVIDIA_API_KEY || process.env.NVIDIA_API_KEY;
+		const key = env.NIM_TRELLIS_KEY || process.env.NIM_TRELLIS_KEY || env.NVIDIA_API_KEY || process.env.NVIDIA_API_KEY;
 		const r = await fetch(`${baseUrl}${READY_PATH}`, {
 			headers: key ? { authorization: `Bearer ${key}` } : {},
 			signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
@@ -321,7 +321,7 @@ async function infer(req, res) {
 	}
 	if (seed !== null) payload.seed = seed;
 
-	const key = env.NVIDIA_API_KEY || process.env.NVIDIA_API_KEY;
+	const key = env.NIM_TRELLIS_KEY || process.env.NIM_TRELLIS_KEY || env.NVIDIA_API_KEY || process.env.NVIDIA_API_KEY;
 	const t0 = Date.now();
 	let upstream;
 	try {
@@ -350,7 +350,7 @@ async function infer(req, res) {
 	if (!upstream.ok) {
 		const detail = (await upstream.text().catch(() => '')).slice(0, 300);
 		if (upstream.status === 401 || upstream.status === 403) {
-			return error(res, 502, 'nim_auth', 'The NIM rejected the request (auth). Check NVIDIA_API_KEY or the gateway.');
+			return error(res, 502, 'nim_auth', 'The NIM rejected the request (auth). Check NIM_TRELLIS_KEY / NVIDIA_API_KEY or the gateway.');
 		}
 		return error(res, 502, 'nim_error', `NIM /v1/infer returned ${upstream.status}${detail ? `: ${detail}` : ''}`);
 	}
