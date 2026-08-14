@@ -78,12 +78,20 @@ const verdict = await chain.evaluate({
   userTier: 'pro',
 });
 
-verdict.decision;      // 'require_approval'  (above the auto-execute ceiling)
-verdict.blockedBy;     // undefined
-verdict.modifiedArguments; // { ..., slippageBps: 100 }  (MEV clamp)
-verdict.coverageScore; // 100
-verdict.blindSpots;    // structured gaps, e.g. VALUE_UNRESOLVED, SPEND_UNSCOPED
+verdict.decision;      // 'block'        ($18,400 is over the $5,000 per-tx envelope)
+verdict.blockedBy;     // 'spend_guard'  the layer that decided it
+verdict.modifiedArguments; // { ..., slippageBps: 100 }  (MEV clamp, still applied)
+verdict.coverageScore; // 74   two layers were left unwired below
+verdict.blindSpots;    // [CAPABILITY_UNWIRED, PERMISSION_UNWIRED]
 ```
+
+The capability and permission layers report themselves as blind spots because
+this chain was built without a `checkCapability` / `checkPermission` resolver.
+Inject both (each an `async (request) => ({ allowed })` backed by your
+capability-token and permission records) and the same call scores `100` with no
+blind spots. Raise `perTxMaxUsd` above the notional and the decision becomes
+`require_approval` instead of `block`, driven by the trade guard's
+auto-execute ceiling.
 
 The layer order is `security_blacklist → intervention → capability →
 permission → defi_guard → spend_guard → x402`. The chain never

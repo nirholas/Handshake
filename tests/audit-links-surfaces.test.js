@@ -1,32 +1,24 @@
-// Link audit: the gate itself, plus the coverage invariant behind it.
+// Link audit: the coverage invariant behind the gate.
 //
 // `npm run audit:links` only proves what it walks. For a long time it walked
 // pages/, public/ and src/ and nothing else, while vercel.json routed real
 // requests into docs/, blog/ and chat/ too. Those trees served 200s in
-// production with their dead links unaudited, and the audit still reported a
-// clean zero, which is the worst possible failure for a gate: green with the
-// hole intact.
+// production with their links unaudited, and the audit still reported a clean
+// zero, which is the worst failure a gate can have: green with the hole intact.
 //
-// So two things are pinned here:
-//
-//   1. The gate result. No broken internal link, no stub href, no dangling
-//      route, anywhere the audit walks.
-//   2. The walk itself. Every top-level tree vercel.json can route an .html
-//      request into must appear in the script's LINK_SURFACES list, so the
-//      next content tree added at the repo root cannot quietly escape the
-//      audit the way docs/ and blog/ did.
+// The findings themselves are gated by `npm run audit:links` (wired into
+// `npm run gate`), which reads ~2100 files and is too slow to belong in the
+// unit suite. What belongs here is the cheap invariant that gate depends on:
+// every top-level tree vercel.json can route an .html request into must appear
+// in the script's LINK_SURFACES list, so the next content tree added at the
+// repo root cannot quietly escape the audit the way docs/ and blog/ did.
 
 import { describe, it, expect } from 'vitest';
-import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const SCRIPT = join(ROOT, 'scripts', 'audit-links.mjs');
-
-const report = JSON.parse(
-	execFileSync('node', [SCRIPT, '--json'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }),
-);
 
 // The trees the script declares it walks, read from its source so the test
 // tracks the real list rather than a copy that can drift out of step.
@@ -53,29 +45,23 @@ function routedRootTrees() {
 	return [...trees];
 }
 
-describe('link audit', () => {
-	it('finds no broken internal links', () => {
-		expect(report.brokenInternal).toEqual([]);
-	});
-
-	it('finds no stub hrefs', () => {
-		expect(report.stubs).toEqual([]);
-	});
-
-	it('finds no dangling routes', () => {
-		expect(report.danglingRoutes).toEqual([]);
-	});
-
+describe('link audit coverage', () => {
 	it('walks every root tree vercel.json routes html into', () => {
 		const declared = declaredSurfaces();
-		for (const tree of routedRootTrees()) {
+		const routed = routedRootTrees();
+		expect(routed.length, 'vercel.json should route html into at least one root tree').toBeGreaterThan(0);
+		for (const tree of routed) {
 			expect(declared, `vercel.json routes /${tree}/**.html but audit-links.mjs never walks it`).toContain(tree);
 		}
 	});
 
-	it('scans more than the three original surfaces', () => {
-		// A guard against the walk silently collapsing back: docs/ and blog/ alone
-		// are ~46 files, so a regression to pages+public+src shows up as a drop.
-		expect(report.scannedFiles).toBeGreaterThan(2028);
+	it('still walks the three original surfaces', () => {
+		const declared = declaredSurfaces();
+		for (const tree of ['pages', 'public', 'src']) expect(declared).toContain(tree);
+	});
+
+	it('is wired into the gate so a dead link fails a build, not just a manual run', () => {
+		const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+		expect(pkg.scripts.gate).toContain('audit:links');
 	});
 });

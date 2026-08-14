@@ -856,6 +856,28 @@ function oddsChip(it) {
 	return `<span class="chip odds" title="${esc(title)}"><b>${pct}%</b> held 2x+</span>`;
 }
 
+/**
+ * How this specific call ended, on the card. The feed ranks by score, so its top
+ * rows are the boldest calls, and a resolved one that shows only its verdict is
+ * why a working engine reads as a broken one: the score is about the launch's
+ * first 90 seconds, the outcome is about everything since, and the card used to
+ * carry only the first. Served with the feed (outcome), null until the market
+ * resolves the coin.
+ */
+function outcomeChip(it) {
+	const out = it.outcome;
+	if (!out) return '';
+	const ath = Number(out.ath_multiple);
+	const peak = Number.isFinite(ath) && ath > 0 ? `${ath.toFixed(1)}x` : null;
+	if (out.graduated) {
+		return `<span class="chip sm" title="This launch graduated to a DEX${peak ? `, peaking at ${peak} its market cap when Oracle scored it` : ''}.">graduated ✓${peak ? ` <b>${peak}</b>` : ''}</span>`;
+	}
+	if (out.rugged) {
+		return `<span class="chip flag" title="${peak ? `This launch ran to ${peak} and then collapsed. ` : 'This launch collapsed. '}The call was about the odds of a run, not the odds of a safe hold.">${peak ? `ran <b>${peak}</b>, ` : ''}rugged ✕</span>`;
+	}
+	return peak ? `<span class="chip" title="Peak market cap versus its market cap when Oracle scored it">peak <b>${peak}</b></span>` : '';
+}
+
 /** Pre-reasons fallback: synthesize from the pillars the card already shows. */
 function pillarTake(it, tier) {
 	const p = it.pillars || {};
