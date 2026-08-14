@@ -405,7 +405,14 @@
 
 			<div class="st-banner" id="st-banner" role="status" aria-live="polite">
 				<span class="st-dot" id="st-banner-dot" aria-hidden="true"></span>
-				<span id="st-banner-text" data-i18n="status.checking_platform_status">Checking platform status…</span>
+				<!-- The live verdict is written straight onto #st-banner-text, so the
+				     translatable placeholder is a child rather than this element's own
+				     i18n binding: the first render removes that child, and the i18n pass
+				     then has no node here to repaint. Bound directly, it painted
+				     "Checking platform status…" back over the real verdict a second after
+				     the fetch resolved, leaving a red banner claiming it was still
+				     checking. -->
+				<span id="st-banner-text"><span data-i18n="status.checking_platform_status">Checking platform status…</span></span>
 			</div>
 			<div class="st-summary st-skel" id="st-summary" aria-label="Fleet summary">
 				<div class="st-kpi"><div class="st-kpi-val" id="st-kpi-uptime">—</div><div class="st-kpi-label">90-day uptime</div></div>
