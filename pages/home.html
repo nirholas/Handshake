@@ -1402,7 +1402,7 @@
 		mv.setAttribute('environment-image', 'neutral');
 		mv.setAttribute('camera-controls', '');
 		// Defer the ~1.5MB GLB fetch until the card nears the viewport instead
-		// of pulling every model on first paint — that eager burst was failing
+		// of pulling every model on first paint. That eager burst was failing
 		// on mobile (aborted loads under memory/network pressure) and flooding
 		// the error reporter. The poster (the lightweight forge preview image)
 		// shows instantly and remains as a graceful fallback if the mesh can't

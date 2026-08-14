@@ -96,7 +96,7 @@ export function staleKeys(source, target) {
 // This is the subtractive half of what `persist()` does, split out because the
 // two halves have very different requirements. `mergeOrdered` rebuilds the whole
 // catalog from the source, so it materializes an EMPTY STRING for every key the
-// locale has not been translated for yet — which turns a "missing key" into an
+// locale has not been translated for yet, which turns a "missing key" into an
 // "empty value", inflates the file, and (because writeManifest counts empty
 // values) silently drops the language out of the picker. Pruning must never do
 // any of that, so it only deletes: a key absent from the source goes, and a
