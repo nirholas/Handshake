@@ -22,7 +22,7 @@ import { cors, json, method, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { QUOTE_MINT_LIST } from '../_lib/quote-mints.js';
-import { PREDICTED_EVENT, probabilityFromScore } from '../_lib/oracle/conviction.js';
+import { PREDICTED_EVENT, probabilityFromScore, hitRateFor } from '../_lib/oracle/conviction.js';
 
 const PERIODS = { '1d': 1, '7d': 7, '30d': 30, '90d': 90, 'all': null };
 const TIERS = new Set(['prime', 'strong', 'lean', 'watch', 'avoid', 'all']);
@@ -194,13 +194,18 @@ async function query(days, tier, network) {
 		const spikes = inBand.reduce((a, r) => a + r.spikes, 0);
 		const scoreSum = inBand.reduce((a, r) => a + Number(r.score) * r.n, 0);
 		const claimSum = inBand.reduce((a, r) => a + probabilityFromScore(Number(r.score)) * r.n, 0);
+		const avgScore = Number((scoreSum / n).toFixed(1));
 		bands.push({
 			band: `${lo}-${hi}`,
 			lo, hi, n, wins, spikes,
-			avg_score: Number((scoreSum / n).toFixed(1)),
+			avg_score: avgScore,
 			predicted: Math.round((claimSum / n) * 100),
 			realized: Math.round((wins / n) * 100),
 			realized_spike: Math.round((spikes / n) * 100),
+			// The rug-aware win rate the shipped calibration expects for this band.
+			// In-sample by construction (the isotonic fit reads this same resolved
+			// set), so it is the ladder's stated claim, not independent evidence.
+			predicted_win: Math.round(hitRateFor(avgScore).rate * 100),
 			ci: wilson(wins, n),
 			spike_ci: wilson(spikes, n),
 		});

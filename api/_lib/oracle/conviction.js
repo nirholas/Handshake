@@ -30,30 +30,22 @@
 //   - One hard cap: a serial-rugger creator still ceilings the final score.
 //     The data agrees with this one (5+ launches, 0 graduations: 0.26x base).
 //
-// What the score MEANS: the model's P(good) mapped through fixed probability
-// anchors onto the 0-100 line. That number is a RANK, and it is the training
-// label's probability, not the platform's win rate. The two were never the
-// same and for a long time nothing said so, which is how a card could read
-// "conviction 99" while that band went on to win 26% of the time.
+// What the score MEANS now: the model's calibrated P(good) mapped through
+// fixed probability anchors so the public tier boundaries land on real odds:
+// Watch starts at P>=5%, Lean at 12%, Strong at 30%, Prime at 55%. A tier is a
+// claim about measured frequency, not a vibe, and production agrees. Over the
+// 61,916 scored coins the market has resolved (2026-08-14), the rate at which
+// each tier went on to do what the score predicts (see PREDICTED_EVENT below):
 //
-// So the tier ladder no longer sits on the training anchors. It sits on
-// conviction-calibration.json: an isotonic fit of the REALIZED win rate per
-// score band over every coin Oracle scored that the market has since resolved
-// (61,916 coins at the 2026-08-14 fit, win = graduated or >= 2x ATH without
-// rugging, base rate 5.4%). That fit exposes exactly five rungs the data can
-// tell apart, and the tier boundaries are their edges:
+//   Prime   n=1032   68.4%   6.5x base      (claims >= 55%)
+//   Strong  n= 968   31.8%   3.0x base      (claims >= 30%)
+//   Lean    n=3717   20.7%   2.0x base      (claims >= 12%)
+//   Watch   n=11876  12.0%   1.1x base      (claims >=  5%)
+//   Avoid   n=44323   7.5%   0.7x base
 //
-//   Avoid   score  0-10    0.7% win   0.13x base
-//   Watch   score 10-40    4.9% win   0.89x base
-//   Lean    score 40-60    7.3% win   1.34x base
-//   Strong  score 60-90   15.0% win   2.75x base
-//   Prime   score 90-100  26.3% win   4.82x base
-//
-// The old ladder (86/72/56/34) split the flat 60-90 plateau into Prime and
-// Strong, so those two tiers were statistically identical (12% vs 13%), while
-// Watch sat below Avoid. Every rung above is now a distinct measured claim, and
-// hitRateFor() serves the rate itself so the UI can quote the odds instead of
-// letting a 99 imply 99%. Refit with scripts/oracle-calibrate.mjs.
+// Monotone, separated, and honest at every rung, so the ladder stays where it
+// is. What is NOT honest is quoting that ladder next to the stricter question a
+// holder actually asks, which is what hitRateFor() below exists to answer.
 
 import MODEL_JSON from './conviction-model.json' with { type: 'json' };
 import CALIBRATION_JSON from './conviction-calibration.json' with { type: 'json' };
@@ -62,13 +54,13 @@ import { isProven, isFlagged } from './archetype.js';
 export const MODEL = MODEL_JSON;
 export const CALIBRATION = CALIBRATION_JSON;
 
-// Tier thresholds on the final 0-100 score, set on the rung edges of the
-// realized-outcome fit above.
+// Tier thresholds on the final 0-100 score (public ladder, unchanged from v1)
+// and the P(good) each boundary is anchored to by the score map below.
 const TIERS = [
-	{ min: 90, tier: 'prime', label: 'Prime' },
-	{ min: 60, tier: 'strong', label: 'Strong' },
-	{ min: 40, tier: 'lean', label: 'Lean' },
-	{ min: 10, tier: 'watch', label: 'Watch' },
+	{ min: 86, tier: 'prime', label: 'Prime' },
+	{ min: 72, tier: 'strong', label: 'Strong' },
+	{ min: 56, tier: 'lean', label: 'Lean' },
+	{ min: 34, tier: 'watch', label: 'Watch' },
 	{ min: 0, tier: 'avoid', label: 'Avoid' },
 ];
 
@@ -79,10 +71,16 @@ export function tierForScore(score) {
 }
 
 /**
- * The realized hit rate for a score, straight from the production calibration.
- * This is what the score is worth in outcomes: of every resolved coin Oracle
- * scored into this band, `rate` is the fraction that won and `lift` is how many
- * times the market's own base rate that is.
+ * The holder's number for a score: of every resolved coin Oracle scored into
+ * this band, the fraction that graduated or ran >= 2x WITHOUT ever rugging, and
+ * how many times the market's base rate that is. Isotonic-fitted over the
+ * realized outcome set by scripts/oracle-calibrate.mjs.
+ *
+ * This deliberately grades a stricter event than the score predicts: conviction
+ * ranks the odds of a run, this counts only runs that did not end in a rug. It
+ * is therefore always the smaller number, and the gap between them IS the
+ * information (a band that spikes often and survives rarely is a band to trade,
+ * not to hold). Any surface showing one must name which one it is showing.
  *
  * @param {number} score 0-100 conviction
  * @returns {{rate:number, lift:number, band:string, n:number, baseRate:number}}

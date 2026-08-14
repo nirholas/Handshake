@@ -21,6 +21,7 @@ import { sql } from './_lib/db.js';
 import { cors, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { terminalLinks } from '../src/shared/trading-terminals.js';
+import { hitRateFor } from './_lib/oracle/conviction.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PUMP_V3 = 'https://frontend-api-v3.pump.fun';
@@ -37,12 +38,19 @@ export default wrap(async (req, res) => {
 
 	let row = null;
 	try {
+		// The outcome joins in here, not just in the client hydration, because the
+		// hero is what a share preview and a first paint show. A 100/prime dial on a
+		// coin the market already resolved is the single most misleading thing this
+		// page can render, and it rendered it for as long as the ground truth lived
+		// only in a chip below the fold.
 		[row] = await sql`
-			select symbol, name, image_uri, score, tier,
-			       pedigree, structure, narrative, momentum,
-			       smart_wallet_count, category, scored_at
-			from oracle_conviction
-			where mint = ${mint} and network = 'mainnet'
+			select c.symbol, c.name, c.image_uri, c.score, c.tier,
+			       c.pedigree, c.structure, c.narrative, c.momentum,
+			       c.smart_wallet_count, c.category, c.scored_at, c.coin_first_seen_at,
+			       o.graduated, o.rugged, o.ath_multiple, o.last_market_cap_usd
+			from oracle_conviction c
+			left join pump_coin_outcomes o on o.mint = c.mint
+			where c.mint = ${mint} and c.network = 'mainnet'
 			limit 1
 		`;
 	} catch {
@@ -219,6 +227,17 @@ function heroHtml({ mint, row, pump, origin }) {
 	const dial = score == null
 		? `<div class="dial t-watch" id="ocDial"><b>··</b><div class="tierpill tp-watch">reading conviction</div></div>`
 		: `<div class="dial t-${esc(tier)}" id="ocDial"><b>${score}</b><div class="tierpill tp-${esc(tier)}">${esc(tier)} conviction</div></div>`;
+
+	// The two lines that keep the dial honest, both rendered server-side so they
+	// are in the first paint and in the share preview, not hydrated in late:
+	//
+	//   odds  - what this band of calls has actually returned, so a 100 reads as
+	//           "26% of these won, 4.8x the market" instead of as a certainty.
+	//   since - what the market has since done with this exact coin. The page had
+	//           this fact all along and buried it in a chip below the fold, which
+	//           is how a dead chart ended up next to an unqualified 100/prime.
+	const oddsHtml = score == null ? '' : verdictOddsHtml(score, row?.scored_at, row?.coin_first_seen_at);
+	const sinceHtml = outcomeStripHtml(row);
 
 	const pillars = `<div class="pillars" id="ocPillars">
 		${pillarBar('ped', 'Who',  row?.pedigree)}

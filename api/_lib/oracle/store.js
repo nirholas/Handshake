@@ -7,7 +7,7 @@
 import { sql } from '../db.js';
 import { assembleIntel, walletProfile, coinOutcome } from './sources.js';
 import { classifyNarrative } from './narrative.js';
-import { convict } from './conviction.js';
+import { convict, hitRateFor, PREDICTED_EVENT } from './conviction.js';
 import { summarizeActions } from './settle.js';
 import { evaluateExit } from './exit.js';
 import { knownWallet } from './known-wallets.js';
@@ -242,6 +242,12 @@ export async function readCoin(mint, network = 'mainnet') {
 		reasons: cached?.reasons || [],
 		components: cached?.components || null,
 		structure_cap: cached?.structure_cap ?? null,
+		// What the score is worth in outcomes, and what event it was fitted to
+		// predict. Served with every verdict so no surface has to guess: a bare
+		// "100" invites the reader to hear "certain", and the honest answer (this
+		// band of calls has won 26% of the time, 4.8x the market) is one field away.
+		hit_rate: cached?.score != null ? hitRateFor(Number(cached.score)) : null,
+		predicts: PREDICTED_EVENT,
 		narrative: narr,
 		outcome,
 		whos_in: whosIn.map((w) => {
