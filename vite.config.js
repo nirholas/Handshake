@@ -3035,6 +3035,36 @@ support: resolve(__dirname, 'pages/support.html'),
 	],
 };
 
+// Vite hard-codes `minifyWhitespace: false` for every ES library build (see
+// resolveEsbuildTranspileOptions in vite/dist/node): the assumption is that a
+// lib output is re-bundled by the consumer, so keeping whitespace preserves
+// `/*#__PURE__*/` annotations for their tree-shaker. Our lib output is not an
+// npm dependency — it is the CDN bundle browsers download from
+// /agent-3d/latest/agent-3d.js — and the option is forced, so no `build.minify`
+// or `esbuild` setting can turn it back on. This renderChunk pass strips the
+// whitespace esbuild left behind, which took the shipped bundle from 4.24 MB to
+// 2.77 MB raw (1.03 MB → 792 KB gzipped) and cut the parse cost that dominated
+// the homepage's blocking time. Identifiers and syntax are already minified by
+// Vite's own pass, so only whitespace is touched here.
+function minifyLibWhitespace() {
+	return {
+		name: 'threews-lib-minify-whitespace',
+		apply: 'build',
+		async renderChunk(code, chunk) {
+			const { transform } = await import('esbuild');
+			const res = await transform(code, {
+				loader: 'js',
+				minifyWhitespace: true,
+				minifyIdentifiers: false,
+				minifySyntax: false,
+				legalComments: 'none',
+				sourcefile: chunk.fileName,
+			});
+			return { code: res.code, map: null };
+		},
+	};
+}
+
 // Library build — the web component + public API, for CDN drop-in:
 //   <script type="module" src="https://cdn.example.com/agent-3d.js"></script>
 //
@@ -3042,6 +3072,7 @@ support: resolve(__dirname, 'pages/support.html'),
 // zero-install embed). Size will be ~600-900KB gzipped; split via dynamic
 // imports in a later pass.
 const libConfig = {
+	plugins: [minifyLibWhitespace()],
 	resolve: {
 		dedupe: ['three'],
 	},
