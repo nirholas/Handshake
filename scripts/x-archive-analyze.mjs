@@ -10,7 +10,7 @@
  *   node scripts/x-archive-analyze.mjs --stdout             # print the report instead of writing files
  *
  * Writes docs/x-archive/<handle>-engagement.md (the readable report) and
- * data/x-archive/reports/<handle>-engagement.json (the same numbers as data).
+ * data/x-archive/analysis/<handle>-engagement.json (the same numbers as data).
  */
 
 import { readFileSync } from 'node:fs';
@@ -31,7 +31,7 @@ import {
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, '..');
 const DOC_DIR = path.resolve(REPO_ROOT, 'docs', 'x-archive');
-const REPORT_DIR = path.resolve(REPO_ROOT, ARCHIVE_DIR, 'reports');
+const REPORT_DIR = path.resolve(REPO_ROOT, ARCHIVE_DIR, 'analysis');
 
 for (const envFile of ['.env.local', '.env']) {
 	try {

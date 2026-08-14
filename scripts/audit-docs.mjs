@@ -310,6 +310,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['event-x-posts', 'internal: ready-to-paste X post drafts; posting is owner-gated'],
 	['x-meetup-posts', 'internal: ready-to-paste X post drafts; posting is owner-gated'],
 	['x402-solana-july-roundup-response', 'internal: ready-to-paste X reply draft; posting is owner-gated'],
+	['x-archive', 'internal: marketing analytics over our own X timeline, not a reader-facing product doc'],
 ]);
 const GENERATED_DOCS = new Set(['ALL', 'EVERYTHING', 'README']);
 
