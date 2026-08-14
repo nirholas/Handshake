@@ -273,6 +273,76 @@ const CREATOR_TEXT = {
 // measurement of it, so the sentence says "such launches" instead of "similar".
 const SUCH = new Set(['creator_record', 'category', 'dev_sold']);
 
+// One card-ready phrase per fitted bucket. The fallback below ("organic demand
+// 0.6-0.8") is readable to whoever fitted the model and to nobody else, and it
+// was fine while reasons only ever appeared in a diagnostic list. They are the
+// headline of every feed card now, so each bucket says what it means in the
+// units a trader already thinks in.
+const PHRASE = {
+	organic_score: {
+		'<0.2': 'almost no organic demand', '0.2-0.4': 'weak organic demand',
+		'0.4-0.6': 'middling organic demand', '0.6-0.8': 'solid organic demand',
+		'>=0.8': 'strong organic demand',
+	},
+	bundle_score: {
+		'<0.1': 'no sign of a bundled launch', '0.1-0.3': 'faint bundling',
+		'0.3-0.5': 'partly bundled', '>=0.5': 'heavily bundled',
+	},
+	snipe_ratio: {
+		'<0.1': 'barely sniped at open', '0.1-0.3': 'lightly sniped at open',
+		'0.3-0.7': 'heavily sniped at open', '>=0.7': 'almost entirely sniped at open',
+	},
+	coordination_score: {
+		'<0.1': 'buyers acting independently', '0.1-0.3': 'some coordinated buying',
+		'>=0.3': 'coordinated buying',
+	},
+	timing_entropy: {
+		'<0.2': 'buys landing in one burst', '0.2-0.4': 'buys clustered in time',
+		'0.4-0.6': 'buys moderately spread out', '0.6-0.8': 'buys well spread in time',
+		'>=0.8': 'buys evenly spread in time',
+	},
+	concentration_top1: {
+		'<0.05': 'no holder above 5%', '0.05-0.15': 'top holder at 5-15%',
+		'0.15-0.3': 'top holder at 15-30%', '>=0.3': 'top holder above 30%',
+	},
+	concentration_top10: {
+		'<0.3': 'top 10 under 30% of supply', '0.3-0.9': 'top 10 holding 30-90%',
+		'>=0.9': 'top 10 holding over 90%',
+	},
+	unique_buyers: {
+		'<1': 'no buyers yet', '1-5': 'under 5 early buyers', '5-15': '5-15 early buyers',
+		'15-40': '15-40 early buyers', '>=40': '40+ early buyers',
+	},
+	buy_sell_ratio: {
+		'<0.5': 'more sellers than buyers', '0.5-1': 'sells keeping pace with buys',
+		'1-2': 'buys leading sells', '2-4': 'buys 2-4x the sells', '>=4': 'buys 4x+ the sells',
+		null: 'nobody has sold yet',
+	},
+	buy_volume_sol: {
+		'<0.5': 'under 0.5 SOL bought', '0.5-8': '0.5-8 SOL bought early',
+		'8-25': '8-25 SOL bought early', '>=25': '25+ SOL bought early',
+	},
+	largest_buy_sol: {
+		'<0.2': 'no buy above 0.2 SOL', '0.2-2.5': 'biggest buy 0.2-2.5 SOL',
+		'2.5-5': 'biggest buy 2.5-5 SOL', '>=5': 'a 5+ SOL single buy',
+	},
+	avg_buy_sol: {
+		'<0.05': 'dust-sized average buy', '0.05-0.5': 'average buy 0.05-0.5 SOL',
+		'>=0.5': 'average buy above 0.5 SOL',
+	},
+	dev_buy_sol: {
+		'<0.05': 'dev barely bought their own launch', '0.05-0.5': 'dev bought 0.05-0.5 SOL',
+		'0.5-2': 'dev bought 0.5-2 SOL', '>=2': 'dev bought 2+ SOL of their own launch',
+	},
+	mc_sol_first_seen: {
+		'<28': 'spotted below a 28 SOL cap', '28-30': 'spotted at a 28-30 SOL cap',
+		'30-35': 'spotted at a 30-35 SOL cap', '>=35': 'already past a 35 SOL cap when spotted',
+	},
+	dev_sold: {
+		'<0.5': 'dev held through the window', '>=0.5': 'dev sold inside the window',
+	},
+};
+
 /**
  * The subject half of a reason: what the model actually saw, with no outcome
  * statistics attached. Emitted alongside the full sentence because a card has
@@ -282,7 +352,8 @@ const SUCH = new Set(['creator_record', 'category', 'dev_sold']);
 function reasonSubject(feature, bucketLabel) {
 	if (feature.key === 'creator_record') return CREATOR_TEXT[bucketLabel] || bucketLabel;
 	if (feature.key === 'category') return `${bucketLabel} narrative`;
-	if (feature.key === 'dev_sold') return bucketLabel === '>=0.5' ? 'dev sold inside the window' : 'dev held through the window';
+	const phrased = PHRASE[feature.key]?.[bucketLabel];
+	if (phrased) return phrased;
 	return `${FEATURE_TEXT[feature.key] || feature.key} ${bucketLabel}`;
 }
 
