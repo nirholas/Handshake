@@ -109,9 +109,10 @@ describe('distinct-signature guard — same-amount payments must never collide',
 		// transactions — the mechanism behind the duplicate-settle defect. What must
 		// still hold is the pair of properties this test has always guarded: no
 		// repeats inside a window, and every drawn nonce maps to a fee-safe config.
+		const SAMPLE = 200;
 		const seen = new Set();
 		const ceiling = ringMaxFeePerTxLamports();
-		for (let i = 0; i < 200; i++) {
+		for (let i = 0; i < SAMPLE; i++) {
 			const n = pay.nextAutoNonce();
 			expect(n).toBeGreaterThanOrEqual(0);
 			expect(n).toBeLessThan(pay.RING_NONCE_SPACE);
@@ -122,7 +123,14 @@ describe('distinct-signature guard — same-amount payments must never collide',
 			}
 			seen.add(n);
 		}
-		expect(seen.size).toBe(200);
+		// Draws are independent, so demanding 200/200 distinct values asserts a
+		// property a CSPRNG cannot promise: with a 4.08M slot space the birthday
+		// bound puts one repeat in a 200-draw sample at ~0.5%, which made this
+		// test fail roughly once every two hundred suite runs on nothing but luck.
+		// Two repeats is ~1e-5, so that is the line: it still catches a genuinely
+		// narrowed space (a regression to the old 997-slot cycle collides ~87% of
+		// the time here) without failing on the sampling itself.
+		expect(SAMPLE - seen.size).toBeLessThanOrEqual(1);
 	});
 });
 

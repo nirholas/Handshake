@@ -5571,8 +5571,8 @@ Clients should treat `404` as terminal and stop polling.
 ## Plugin Marketplace API
 
 Tool plugins in the LobeHub / pai-chat `ToolManifest` format: the catalog behind
-the plugin grid on [/marketplace](/marketplace) and the picker on
-[/avatar](/avatar). A manifest declares an `identifier`, a `meta.title`, and a
+the plugin grid on [/marketplace](/marketplace) and the picker on an avatar's
+own page (`/avatars/<id>`). A manifest declares an `identifier`, a `meta.title`, and a
 non-empty `api[]` of tool definitions; the platform stores it verbatim and
 re-serves it, so a client that understands the format can install straight from
 a listing.
