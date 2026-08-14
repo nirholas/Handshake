@@ -44,6 +44,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -51,10 +52,18 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PG_URL = process.env.CRON_PROOF_DATABASE_URL
 	|| 'postgresql://b05:b05@127.0.0.1:55705/b05';
 
-// A local-only secret. The gate compares it in constant time against whatever
-// the caller presents, so a value generated here exercises the identical path a
-// Cloud Scheduler OIDC bearer takes in production.
-const CRON_SECRET = process.env.CRON_PROOF_SECRET || 'local-cron-proof-secret';
+// A local-only secret, unique per run. The gate compares it in constant time
+// against whatever the caller presents, so a value generated here exercises the
+// identical path a Cloud Scheduler OIDC bearer takes in production.
+//
+// Unique per run, not a fixed string, because several audits run this harness at
+// once in a shared worktree. A constant secret let a run whose port had been
+// taken by a NEIGHBOUR's server probe that server and read its answers as its
+// own: the neighbour's crons, the neighbour's database. With a per-run secret a
+// stray server can only ever answer 401, which the identity check below turns
+// into a loud failure instead of a plausible-looking result.
+const CRON_SECRET = process.env.CRON_PROOF_SECRET
+	|| `local-cron-proof-${process.pid}-${randomUUID()}`;
 
 const DEFAULT_CRONS = [
 	'irl-reap',
@@ -85,8 +94,16 @@ async function shutdown() {
 }
 process.on('SIGINT', async () => { await shutdown(); process.exit(130); });
 
-async function freePort(start) {
-	for (let p = start; p < start + 200; p++) {
+// Probing a port frees it again before the caller can bind it, so two runs that
+// probe at the same moment both get the same "free" port. Spreading the scan
+// start across runs makes that collision vanishingly unlikely; the identity
+// check on the started server catches the remainder.
+function scanStart(base, span = 200) {
+	return base + ((process.pid * 7) % span);
+}
+
+async function freePort(start, span = 200) {
+	for (let p = start; p < start + span; p++) {
 		const ok = await new Promise((resolve) => {
 			const s = net.createServer();
 			s.once('error', () => resolve(false));
@@ -178,7 +195,7 @@ async function runBatch(pool, queries, headers) {
 }
 
 async function startShim(pool) {
-	const port = await freePort(54800);
+	const port = await freePort(scanStart(54800, 400), 400);
 	const server = http.createServer(async (req, res) => {
 		if (req.method !== 'POST') { res.writeHead(405); res.end(); return; }
 		let body = '';
@@ -322,7 +339,8 @@ async function bootstrapSchema(pool, { passes = 4 } = {}) {
 
 // ── server ───────────────────────────────────────────────────────────────────
 async function startServer(preload) {
-	const port = await freePort(8410);
+	const port = await freePort(scanStart(8410, 400), 400);
+	let exited = null;
 	const child = spawn('node', [path.join(root, 'server/index.mjs')], {
 		cwd: root,
 		env: {
@@ -339,12 +357,36 @@ async function startServer(preload) {
 	child.stdout.pipe(log);
 	child.stderr.pipe(log);
 	cleanup.push(() => { child.kill('SIGKILL'); });
+	// A server that loses the bind (port taken between the probe and the spawn)
+	// or dies on boot must stop the run here. Without this the readiness probe
+	// below is answered by whoever DOES hold the port, and every cron result
+	// afterwards describes a server this run never started.
+	child.on('exit', (code, signal) => { exited = signal ? `signal ${signal}` : `code ${code}`; });
 
 	const base = `http://127.0.0.1:${port}`;
 	await waitFor(async () => {
+		if (exited) throw new Error(`server exited (${exited}), see ${logPath}`);
 		const r = await fetch(`${base}/api/healthz`).catch(() => null);
 		return r && r.status < 600;
 	}, { label: `server on :${port}`, tries: 120 });
+	if (exited) throw new Error(`server exited (${exited}), see ${logPath}`);
+
+	// Identity check. Our child binds the wildcard address, but a process already
+	// bound to 127.0.0.1 specifically keeps winning loopback connections, so
+	// "the child started" does not prove the child is who answers. The per-run
+	// CRON_SECRET is known only to this run's server: anyone else returns 401,
+	// which must read as a harness fault, never as "the cron refused the
+	// scheduler". Costs one real tick of the probe cron against this run's own
+	// throwaway database.
+	const probe = await fetch(`${base}/api/cron/uptime-check`, {
+		headers: { authorization: `Bearer ${CRON_SECRET}` },
+	}).catch(() => null);
+	if (probe && probe.status === 401) {
+		throw new Error(
+			`port ${port} is served by a different process (it rejects this run's cron secret). `
+			+ 'Another cron-local-proof run is probably using it; re-run to pick a new port.',
+		);
+	}
 	return { base, logPath, child };
 }
 

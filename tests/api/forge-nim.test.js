@@ -17,7 +17,11 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 }));
 
 const ORIGINAL_FETCH = globalThis.fetch;
-const ENV_KEYS = ['MODEL_TRELLIS_URL', 'NVIDIA_API_KEY'];
+// MODEL_TRELLIS_URL is cleared too, and never set: it points at our own async
+// Cloud Run TRELLIS worker, and api/forge-nim.js deliberately does not read it.
+// Clearing it keeps an ambient value out of these cases and lets the last case
+// below prove the handler still reports unconfigured when only it is set.
+const ENV_KEYS = ['NIM_TRELLIS_URL', 'MODEL_TRELLIS_URL', 'NVIDIA_API_KEY'];
 const saved = {};
 
 beforeEach(() => {
@@ -106,8 +110,20 @@ describe('GET /api/forge-nim?action=health', () => {
 		expect(body.reachable).toBe(false);
 	});
 
+	it('still reports unconfigured when only MODEL_TRELLIS_URL is set', async () => {
+		// MODEL_TRELLIS_URL points at our own async Cloud Run TRELLIS worker, which
+		// speaks /infer + /tasks/{id}, not the NIM's synchronous /v1/infer. Reading it
+		// here reported a configured, unreachable NIM and 404ed every generation.
+		process.env.MODEL_TRELLIS_URL = 'https://trellis-worker.example.run.app';
+		const fetchMock = vi.fn(async () => jsonResponse({ status: 'ready' }));
+		globalThis.fetch = fetchMock;
+		const { body } = await dispatch(makeReq({ method: 'GET', url: '/api/forge-nim?action=health' }), makeRes());
+		expect(body.configured).toBe(false);
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
 	it('reports live when the configured NIM ready check passes', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		const fetchMock = vi.fn(async () => jsonResponse({ status: 'ready' }));
 		globalThis.fetch = fetchMock;
 		const { body } = await dispatch(makeReq({ method: 'GET', url: '/api/forge-nim?action=health' }), makeRes());
@@ -118,7 +134,7 @@ describe('GET /api/forge-nim?action=health', () => {
 	});
 
 	it('reports down when the ready check is unreachable', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		globalThis.fetch = vi.fn(async () => {
 			throw new Error('ECONNREFUSED');
 		});
@@ -131,7 +147,7 @@ describe('GET /api/forge-nim?action=health', () => {
 
 describe('POST /api/forge-nim — image mode', () => {
 	it('forwards a data-uri image to /v1/infer and returns the synchronous GLB', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app/';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app/';
 		const glb = fakeGlb(96);
 		const fetchMock = vi.fn(async () => jsonResponse({ artifacts: [{ base64: glb.toString('base64') }] }));
 		globalThis.fetch = fetchMock;
@@ -161,7 +177,7 @@ describe('POST /api/forge-nim — image mode', () => {
 	});
 
 	it('decodes a raw binary (model/gltf-binary) NIM response', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		const glb = fakeGlb(48);
 		globalThis.fetch = vi.fn(async () => binaryResponse(glb));
 		const { body } = await dispatch(
@@ -173,7 +189,7 @@ describe('POST /api/forge-nim — image mode', () => {
 	});
 
 	it('rejects image mode with no image', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		const { res, body } = await dispatch(makeReq({ body: { mode: 'image' } }), makeRes());
 		expect(res.statusCode).toBe(400);
 		expect(body.error || body.code).toBeTruthy();
@@ -182,7 +198,7 @@ describe('POST /api/forge-nim — image mode', () => {
 
 describe('POST /api/forge-nim — text mode', () => {
 	it('shapes the prompt and posts a text invoke', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		const glb = fakeGlb(32);
 		const fetchMock = vi.fn(async () => jsonResponse({ artifacts: [{ base64: glb.toString('base64') }] }));
 		globalThis.fetch = fetchMock;
@@ -195,7 +211,7 @@ describe('POST /api/forge-nim — text mode', () => {
 	});
 
 	it('rejects a too-short prompt', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		const { res } = await dispatch(makeReq({ body: { mode: 'text', prompt: 'a' } }), makeRes());
 		expect(res.statusCode).toBe(400);
 	});
@@ -244,7 +260,7 @@ describe('POST /api/forge-nim — configuration & SSRF', () => {
 
 describe('POST /api/forge-nim — upstream failures', () => {
 	it('maps a 401 from the NIM to an auth boundary error', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		globalThis.fetch = vi.fn(async () => ({
 			ok: false,
 			status: 401,
@@ -261,7 +277,7 @@ describe('POST /api/forge-nim — upstream failures', () => {
 	});
 
 	it('surfaces an empty-artifact response as a clean error', async () => {
-		process.env.MODEL_TRELLIS_URL = 'https://nim.example.run.app';
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		globalThis.fetch = vi.fn(async () => jsonResponse({ artifacts: [] }));
 		const { res, body } = await dispatch(
 			makeReq({ body: { mode: 'image', image: 'data:image/png;base64,iVBORw0KGgo=' } }),
