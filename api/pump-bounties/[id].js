@@ -28,7 +28,12 @@ export default wrap(async (req, res) => {
 	try {
 		[bounty, submissions] = await Promise.all([
 			getBounty(id),
-			getSubmissions(id, { limit: 50 }).catch(() => ({ items: [], nextCursor: null })),
+			getSubmissions(id, { limit: 50 }).catch((e) => {
+				// Degrading to an empty list is deliberate, but a silent degrade hides a
+				// real pump.fun outage behind a page that just looks unpopular. Log it.
+				console.warn(`[pump-bounties] submissions for ${id} unavailable: ${e.message}`);
+				return { items: [], nextCursor: null };
+			}),
 		]);
 	} catch (e) {
 		if (e instanceof PumpGoError) return error(res, e.status, e.code, e.message);

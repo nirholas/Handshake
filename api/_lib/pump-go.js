@@ -22,13 +22,15 @@ const TIMEOUT_MS = 10_000;
 const MAX_LIMIT = 50;
 
 // Upstream error with an HTTP status, so handlers surface a real envelope rather
-// than a misleading empty list when pump.fun is down.
+// than a misleading empty list when pump.fun is down. The code travels with the
+// status: a bounty that does not exist is a client-side 404 (`not_found`), not
+// an upstream fault, and callers branch on the code rather than the prose.
 export class PumpGoError extends Error {
-	constructor(message, status = 502) {
+	constructor(message, status = 502, code = 'pump_go_upstream') {
 		super(message);
 		this.name = 'PumpGoError';
 		this.status = status;
-		this.code = 'pump_go_upstream';
+		this.code = code;
 	}
 }
 
@@ -47,7 +49,7 @@ async function pumpGoGet(path) {
 	} catch (e) {
 		throw new PumpGoError(`pump.fun GO unreachable: ${e.message}`, 504);
 	}
-	if (res.status === 404) throw new PumpGoError('bounty not found', 404);
+	if (res.status === 404) throw new PumpGoError('bounty not found', 404, 'not_found');
 	if (!res.ok) throw new PumpGoError(`pump.fun GO upstream ${res.status}`, 502);
 	try {
 		return await res.json();
