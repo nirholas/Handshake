@@ -332,12 +332,19 @@ Declaring a cron in `vercel.json` does nothing on its own; only the sync script
 below creates the job. That gap has bitten repeatedly (on 2026-07-25 five
 declared crons had no scheduler job at all and had therefore never run in
 production: `kol-tracker-refresh`, `forge-thumbnail-backfill`,
-`forge-off-crown`, `quality-bench`, `confirm-pending-purchases`), so audit with
-the two checks rather than by eye:
+`forge-off-crown`, `quality-bench`, `confirm-pending-purchases`; again on
+2026-08-14 for `retention-rollup` and `likeness-eval`), so audit with the two
+checks rather than by eye:
 
 ```bash
 # Which declared crons are missing, paused, or on a different schedule than
 # vercel.json says? Needs a live gcloud session; add --json for a report.
+# Each MISSING row also says WHY, from production's own answer on that path:
+#   "deployed, never synced" -> the handler is live and only the job is absent,
+#                               so the sync below fixes it right now.
+#   "handler not deployed"   -> the path 404s, so its job belongs to the deploy
+#                               that ships the handler; syncing now would only
+#                               schedule a 404 every run.
 npm run check:cron-drift
 
 # Do the handlers behind them route, load, run, and refuse an anonymous caller?

@@ -116,6 +116,10 @@ restarts every job.
 
 Verify the mirror with `npm run check:cron-drift` (declared vs. live schedules
 and run state) and the handlers behind it with `npm run audit:cron-liveness`.
+A cron with no job at all is reported with the reason production gives for it:
+`deployed, never synced` means the handler is live and a sync fixes it now,
+while `handler not deployed` means the path still 404s, so its job belongs to
+the deploy that ships the handler.
 
 ## Env
 
