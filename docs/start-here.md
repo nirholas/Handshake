@@ -183,6 +183,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Farcaster memory seeding](./farcaster-memory-seeding.md): give an agent your Farcaster voice, proved with a wallet the account already verified, and revoke it in one click
 - [X memory seeding](./x-memory-seeding.md): seed an agent from your public X posts behind an explicit, versioned consent you can revoke (revocation deletes what the seed wrote)
 - [The catalog quality gate](./seed-quality.md): how a platform-seeded model earns its slot in the public catalog, the two stages it must pass, and why a rejected asset is kept rather than deleted
+- [Likeness evaluation](./likeness-eval.md): the Phase 1 verification metric, measured rather than asserted. Every reconstruction is rendered at three yaws and compared to the photos it was built from with an open-source face-recognition embedding, so "4 out of 5" means one fixed, calibrated thing
 - [Examples gallery](./examples.md): copy-paste-ready code for common use cases
 - [Cookbook](/cookbook): recipes you download and run, each one a real file executed against the live API, with the prose explaining why it is shaped that way
 - [Premium](./premium.md): the monthly Data API pass, one on-chain payment replacing per-call micropayments for 30 days
