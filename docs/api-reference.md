@@ -3340,11 +3340,16 @@ DELETE /api/mcp
 
 Model Context Protocol endpoint — exposes three.ws as a JSON-RPC 2.0 tool server compatible with Claude and other MCP clients.
 
-**Authentication:** Bearer OAuth access token or API key.
+**Authentication:** optional. This is a pay-per-call endpoint: an unauthenticated
+request answers `402` with an x402 challenge, so a caller can settle in USDC with no
+key, token, or account. A bearer OAuth access token or API key is accepted instead of
+payment, and discovery-only calls (such as `tools/list`) are free either way.
 
 **POST** — send JSON-RPC 2.0 requests. Batch requests supported (max 32 per request).
 
-**GET** — SSE notification stream (reserved for future use).
+**GET** returns the OAuth + x402 challenge to an unauthenticated caller so clients can
+discover how to pay or sign in. No notification stream is held yet, so an authenticated
+GET answers `405` with `allow: POST, DELETE`.
 
 **DELETE** — terminate session.
 
@@ -4230,7 +4235,7 @@ GET /api/coin/news?q=<coin name>&limit=8
 
 Returns `{ "articles": [{ title, link, description, image, source,
 published_at }], "source": "three.ws" }`. Served by the native three.ws
-aggregator (`api/_lib/news.js` — 197 publisher feeds, per-source 5-minute cache
+aggregator (`api/_lib/news.js`: 197 publisher feeds, per-source 5-minute cache
 with serve-stale-on-error).
 
 ---

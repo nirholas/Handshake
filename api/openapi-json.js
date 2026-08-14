@@ -220,7 +220,7 @@ export default wrap(async (req, res) => {
 						summary: 'MCP tool call',
 						description:
 							'JSON-RPC 2.0 request to the MCP server. Supports tools for 3D avatar management, model validation, inspection, and optimization.',
-						// Pay-first, credentials optional — the same shape the aggregator's
+						// Pay-first, credentials optional: the same shape the aggregator's
 						// paid lanes use above. A bare probe answers 402 with a full x402
 						// challenge, so a caller settles in USDC and needs no key, token,
 						// or account; a bearer token or API key is accepted but never
@@ -270,6 +270,21 @@ export default wrap(async (req, res) => {
 								amount: '0.001',
 							},
 							protocols: X402_PROTOCOLS,
+						},
+					},
+					// Session teardown, part of the MCP Streamable HTTP transport and
+					// advertised in this route's own `allow` header. The server is
+					// stateless per request, so there is nothing to tear down and the
+					// call always answers 204; a client that ends sessions politely
+					// should still be able to find it in the spec.
+					delete: {
+						operationId: 'mcp_terminate_session',
+						security: [],
+						summary: 'Terminate an MCP session',
+						description:
+							'Ends the caller\'s MCP session. This server handles every request statelessly, so no session state is held and the call is a successful no-op.',
+						responses: {
+							204: { description: 'Session ended; no content' },
 						},
 					},
 				},
@@ -690,7 +705,7 @@ export default wrap(async (req, res) => {
 						security: [],
 						summary: 'Forge pricing and input schema (free, no payment)',
 						description:
-							'Free price/usage discovery for the Forge generation lane. Returns the per-tier USDC pricing, the accepted request body schema, and the free poll endpoint. No payment, no credentials, and no generation — POST the same path to actually generate.',
+							'Free price/usage discovery for the Forge generation lane. Returns the per-tier USDC pricing, the accepted request body schema, and the free poll endpoint. No payment, no credentials, and no generation. POST the same path to actually generate.',
 						responses: {
 							200: {
 								description: 'Price catalog and input schema',
