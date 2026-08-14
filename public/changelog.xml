@@ -55,6 +55,14 @@
 			<description>The bounty board at /bounties mirrors the public pump.fun GO board. When you opened a bounty link that had been deleted or mistyped, the page reported it the same way it reports pump.fun being down, so there was no way to tell a dead link from an outage. A bounty that genuinely is not there now answers as not found, and a real upstream problem keeps its own separate answer. A second, quieter case got fixed with it: when the submissions list for a bounty failed to load, the page showed the bounty with zero submissions and said nothing, which looks identical to a bounty nobody has entered. That failure is now recorded, so a pump.fun outage shows up as an outage rather than as a board that suddenly looks unpopular.</description>
 		</item>
 		<item>
+			<title>A database blip during a scheduled job now reads as a database blip, not a healthy run</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:A database blip during a scheduled job now reads as a database blip, not a healthy run</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two of the scheduled jobs behind the trading fleet could fail without anything looking wrong. The job that reallocates budget across strategies talks to the database over a socket, and when that socket never opened the failure arrived as an object carrying no message at all. The job caught it, answered with an empty error string, and the scheduler recorded a success, so the health record stayed green while the loop did nothing. Failures of that kind are now recognised as what they are, a database that could not be reached, so the run is marked unhealthy and retried on the next tick instead of being logged as fine. Every page and endpoint that reads from the database inherits the same correction: this class of outage now returns a retryable service-unavailable response rather than an internal error. The fleet watchdog also gained a seventh check, over the calibration pass that measures whether a high-conviction coin actually wins as often as its score claims, so that loop can no longer go quiet unnoticed.</description>
+		</item>
+		<item>
 			<title>A paid-call share link now previews on Slack, Telegram and LinkedIn</title>
 			<link>https://three.ws/pay</link>
 			<guid isPermaLink="false">2026-08-14:A paid-call share link now previews on Slack, Telegram and LinkedIn</guid>
@@ -413,6 +421,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The JSON schema checker at /api/x402/schema-check never read the request body, so every paid call charged the caller and answered that the requested feed was unsupported. It now reads the body it was always meant to, validates the changelog feed for real, and refuses an unknown target with a 400 before any payment settles. The per-call skill gate at /api/x402/skill-call answered browser preflight requests with a payment challenge and no cross-origin headers, which made it uncallable from any in-browser wallet; it now answers preflight correctly on every path, and a database outage returns a plain retry-shortly message instead of echoing internal configuration detail. The paid capacity probe at /api/x402/rate-limit-probe now only accepts metered routes as its target, so a paying caller cannot aim the server's own price lookup at an unrelated internal route. The remix endpoint's refusals (unknown source, empty instruction) are no longer recorded as payment leaks in the x402 ledger.</description>
+		</item>
+		<item>
+			<title>Token-to-3D calls return the real coin again, and receipts show the amount you actually paid</title>
+			<link>https://three.ws/docs/x402-endpoints</link>
+			<guid isPermaLink="false">2026-08-14:Token-to-3D calls return the real coin again, and receipts show the amount you actually paid</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Paying to turn a Solana token into a 3D mesh handed back an untitled, untextured cube for most of today's coins, $THREE included. The server only knew how to read a token's name, symbol and artwork from the older of the two places Solana stores it, and every launch since the Token-2022 change keeps that information inside the coin's own account instead. Those coins now come back with their real name, symbol and logo baked onto the mesh. The same read now refuses an address that is not a coin at all, rather than charging for a blank cube, and the batch call's published example uses a coin that actually works if you copy it. Separately, the receipts page could not scale amounts paid on X Layer or in $THREE, so a one-tenth-of-a-cent payment could read as a raw 1000; both now display correctly.</description>
 		</item>
 		<item>
 			<title>We can now tell whether people come back to the agent they minted</title>

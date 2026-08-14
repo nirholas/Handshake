@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T05:54:23.149Z",
+	"generated_at": "2026-08-14T05:57:09.144Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -66,6 +66,17 @@
 			"link": "/bounties",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "A database blip during a scheduled job now reads as a database blip, not a healthy run",
+			"summary": "Two of the scheduled jobs behind the trading fleet could fail without anything looking wrong. The job that reallocates budget across strategies talks to the database over a socket, and when that socket never opened the failure arrived as an object carrying no message at all. The job caught it, answered with an empty error string, and the scheduler recorded a success, so the health record stayed green while the loop did nothing. Failures of that kind are now recognised as what they are, a database that could not be reached, so the run is marked unhealthy and retried on the next tick instead of being logged as fine. Every page and endpoint that reads from the database inherits the same correction: this class of outage now returns a retryable service-unavailable response rather than an internal error. The fleet watchdog also gained a seventh check, over the calibration pass that measures whether a high-conviction coin actually wins as often as its score claims, so that loop can no longer go quiet unnoticed.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -557,6 +568,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Token-to-3D calls return the real coin again, and receipts show the amount you actually paid",
+			"summary": "Paying to turn a Solana token into a 3D mesh handed back an untitled, untextured cube for most of today's coins, $THREE included. The server only knew how to read a token's name, symbol and artwork from the older of the two places Solana stores it, and every launch since the Token-2022 change keeps that information inside the coin's own account instead. Those coins now come back with their real name, symbol and logo baked onto the mesh. The same read now refuses an address that is not a coin at all, rather than charging for a blank cube, and the batch call's published example uses a coin that actually works if you copy it. Separately, the receipts page could not scale amounts paid on X Layer or in $THREE, so a one-tenth-of-a-cent payment could read as a raw 1000; both now display correctly.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"fix"
 			]
 		},
 		{
