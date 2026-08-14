@@ -4,7 +4,12 @@ import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { dasRpcUrl } from '../_lib/nft-gate.js';
 import { resolveGateway } from '../_lib/solana-agents-normalize.js';
 import { fetchTokenMeta } from '../_lib/solana-token-meta.js';
-import { evmFallbackProvider } from '../_lib/evm/rpc.js';
+import {
+	evmFallbackProvider,
+	evmRpcEndpoints,
+	alchemyNftBaseUrl,
+	alchemySupportsChain,
+} from '../_lib/evm/rpc.js';
 
 // NFT metadata is effectively immutable, but the Helius `getAsset` (DAS) and
 // Alchemy `getNFTMetadata` calls behind this endpoint are billed per request and
@@ -106,39 +111,6 @@ function pickModel(doc) {
 	}
 	return { model: null, mime: null };
 }
-
-// Alchemy NFT API host per EVM chainId. An id of the form
-// "chainId:contract:tokenId" (exactly what api/users/[username]/collectibles.js
-// emits for every EVM collectible) used to have its chainId parsed and then
-// thrown away, so a Base or Polygon NFT was always looked up on Ethereum
-// mainnet and came back as a 404 or, worse, as an unrelated Ethereum token that
-// happens to share the contract/tokenId pair.
-//
-// This map is also the endpoint's supported-chain gate: a chainId missing here
-// is rejected 400 before either rung runs, so an omission costs the caller the
-// keyless on-chain read too, which needs no Alchemy key at all. Keep it aligned
-// with api/_lib/evm/rpc.js ALCHEMY_SUBDOMAIN, which is what let polygon-amoy and
-// avax-fuji drop out: both are in that map and in the chain registry with public
-// RPCs, and both answered "unsupported evm chainId" here regardless.
-const ALCHEMY_NFT_HOST = {
-	1: 'eth-mainnet',
-	10: 'opt-mainnet',
-	56: 'bnb-mainnet',
-	137: 'polygon-mainnet',
-	324: 'zksync-mainnet',
-	8453: 'base-mainnet',
-	42161: 'arb-mainnet',
-	43114: 'avax-mainnet',
-	59144: 'linea-mainnet',
-	534352: 'scroll-mainnet',
-	// testnets
-	84532: 'base-sepolia',
-	421614: 'arb-sepolia',
-	43113: 'avax-fuji',
-	80002: 'polygon-amoy',
-	11155111: 'eth-sepolia',
-	11155420: 'opt-sepolia',
-};
 
 /**
  * Keyless Solana rung: read the Metaplex metadata account over the platform's
@@ -380,8 +352,13 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'bad_request', 'evm id must be "contract:tokenId" or "chainId:contract:tokenId"');
 	}
 
-	const host = ALCHEMY_NFT_HOST[chainId];
-	if (!host) {
+	// Gate on whether the platform can reach the chain AT ALL, not on whether the
+	// indexer covers it. The keyless rung below reads the token's own metadata
+	// pointer over the chain's public RPC list and needs no Alchemy host, so a
+	// chain the registry knows is resolvable even when the indexer is not an
+	// option. A chainId nothing in the stack has an endpoint for still 400s here
+	// rather than timing out against nothing.
+	if (evmRpcEndpoints(chainId).length === 0) {
 		return error(res, 400, 'bad_request', `unsupported evm chainId ${parts[0]}`);
 	}
 	// Both the Alchemy call and the on-chain rung take these verbatim, so reject a
@@ -399,20 +376,22 @@ export default wrap(async (req, res) => {
 	// `env` exposes no ALCHEMY getter, so the previous `env.ALCHEMY_API_KEY` read
 	// was undefined in every environment: the whole EVM branch built a URL with a
 	// literal "undefined" key and answered 502 on a 401 from Alchemy, configured
-	// or not. Read the raw var (the same way collectibles.js, balances.js and
-	// scene/gate-check.js do) and say plainly when it is missing.
-	const apiKey = process.env.ALCHEMY_API_KEY;
-	if (!apiKey) {
+	// or not. alchemyNftBaseUrl resolves the host and the key together, honoring
+	// the per-chain key overrides (ALCHEMY_BASE_KEY and friends) that the RPC lane
+	// already respects, and returns null when either half is absent.
+	const baseUrl = alchemyNftBaseUrl(chainId);
+	if (!baseUrl) {
+		// Two different operator problems wear the same null, and telling them
+		// apart is the difference between "provision a key" and "this chain has no
+		// indexer, the keyless rung is all there is".
+		const reason = alchemySupportsChain(chainId)
+			? `no Alchemy API key configured for chainId ${chainId}`
+			: `Alchemy does not index chainId ${chainId}`;
 		return evmRescue(() =>
-			error(
-				res,
-				503,
-				'not_configured',
-				'ALCHEMY_API_KEY not configured and the token names no readable metadata',
-			),
+			error(res, 503, 'not_configured', `${reason} and the token names no readable metadata`),
 		);
 	}
-	const url = `https://${host}.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${encodeURIComponent(contractAddress)}&tokenId=${encodeURIComponent(tokenId)}`;
+	const url = `${baseUrl}/getNFTMetadata?contractAddress=${encodeURIComponent(contractAddress)}&tokenId=${encodeURIComponent(tokenId)}`;
 	let resp;
 	try {
 		resp = await fetch(url, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });

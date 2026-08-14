@@ -49,11 +49,41 @@ const ALCHEMY_CHAIN_KEY = {
 	42161: 'ALCHEMY_ARB_KEY',
 };
 
+function alchemyKey(chainId) {
+	const chainKeyName = ALCHEMY_CHAIN_KEY[chainId];
+	return (chainKeyName && process.env[chainKeyName]) || process.env.ALCHEMY_API_KEY || null;
+}
+
 function alchemyUrl(chainId) {
 	const sub = ALCHEMY_SUBDOMAIN[chainId];
-	const chainKeyName = ALCHEMY_CHAIN_KEY[chainId];
-	const key = (chainKeyName && process.env[chainKeyName]) || process.env.ALCHEMY_API_KEY;
+	const key = alchemyKey(chainId);
 	return sub && key ? `https://${sub}.g.alchemy.com/v2/${key}` : null;
+}
+
+/**
+ * Alchemy NFT API v3 base URL for a chain, or null when the chain has no Alchemy
+ * host or no key is configured for it. The NFT API shares the JSON-RPC API's
+ * network slugs, so deriving it here is what keeps /api/nft/resolve aligned with
+ * this module: it used to carry its own hand-copied host map, which silently
+ * lost polygon-amoy and avax-fuji (both rejected as "unsupported chainId" even
+ * though the keyless on-chain rung could read them), and it read the shared
+ * ALCHEMY_API_KEY directly, so a deployment using the per-chain overrides above
+ * had a working RPC lane and a dead NFT lane.
+ */
+export function alchemyNftBaseUrl(chainId) {
+	const sub = ALCHEMY_SUBDOMAIN[chainId];
+	const key = alchemyKey(chainId);
+	return sub && key ? `https://${sub}.g.alchemy.com/nft/v3/${key}` : null;
+}
+
+/**
+ * True when Alchemy publishes a host for this chain, independent of whether a
+ * key is configured. Call sites that must distinguish "we cannot index this
+ * chain at all" from "we could, but the key is missing" need this, since
+ * alchemyNftBaseUrl collapses both to null.
+ */
+export function alchemySupportsChain(chainId) {
+	return Boolean(ALCHEMY_SUBDOMAIN[chainId]);
 }
 
 // Hosts that answer a server-side keyless POST with a guaranteed failure, so
