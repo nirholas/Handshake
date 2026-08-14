@@ -1229,6 +1229,14 @@
 		--poster-color: transparent;
 		background: transparent;
 	}
+	/* Stand-in for the mesh until the strip nears the viewport. Matches the
+	   viewer's box exactly so the swap to <model-viewer> shifts nothing. */
+	.hcf-poster {
+		width: 100%; height: 100%;
+		object-fit: contain;
+		display: block;
+		background: transparent;
+	}
 	.hcf-ph {
 		position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
 	}
@@ -1356,6 +1364,15 @@
 		return 'radial-gradient(120% 100% at 50% 0%, hsl(' + hue + ',28%,13%) 0%, hsl(' + ((hue+40)%360) + ',18%,8%) 100%)';
 	}
 
+	// This strip sits several screens below the fold, but it used to build a grid
+	// of live <model-viewer> elements during page load: the CDN element bundle
+	// alone cost ~1.4s of main-thread scripting inside the Total Blocking Time
+	// window, for a section the visitor had not scrolled to. Cards now render
+	// immediately as poster images (same markup, same height, so nothing shifts)
+	// and upgrade to real meshes when the section approaches the viewport.
+	var viewersLive = false;
+	var pendingViewerCards = [];
+
 	const MV_SRC = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
 	function ensureModelViewer() {
 		if (customElements.get('model-viewer')) return;
@@ -1371,6 +1388,37 @@
 		document.head.appendChild(s);
 	}
 
+	// Replace a card's poster with the live rotating mesh.
+	function mountViewer(wrap, c) {
+		var mv = document.createElement('model-viewer');
+		mv.setAttribute('src', c.glb_url);
+		mv.setAttribute('auto-rotate', '');
+		mv.setAttribute('auto-rotate-delay', '0');
+		mv.setAttribute('rotation-per-second', '20deg');
+		mv.setAttribute('interaction-prompt', 'none');
+		mv.setAttribute('disable-zoom', '');
+		mv.setAttribute('shadow-intensity', '0');
+		mv.setAttribute('exposure', '0.92');
+		mv.setAttribute('environment-image', 'neutral');
+		mv.setAttribute('camera-controls', '');
+		// Defer the ~1.5MB GLB fetch until the card nears the viewport instead
+		// of pulling every model on first paint — that eager burst was failing
+		// on mobile (aborted loads under memory/network pressure) and flooding
+		// the error reporter. The poster (the lightweight forge preview image)
+		// shows instantly and remains as a graceful fallback if the mesh can't
+		// load, so a card is never blank.
+		mv.setAttribute('loading', 'lazy');
+		if (c.preview_image_url) mv.setAttribute('poster', c.preview_image_url);
+		mv.setAttribute('aria-label', c.prompt || 'Forged 3D model');
+		mv.style.cssText = 'width:100%;height:100%;--poster-color:transparent;background:transparent;';
+		var poster = wrap.querySelector('.hcf-poster');
+		if (poster) poster.remove();
+		wrap.appendChild(mv);
+	}
+
+	// A card with its real prompt, link and gradient, but a poster image instead
+	// of a live <model-viewer>. Same DOM shape and therefore the exact same
+	// height as the upgraded card, so promoting it later shifts nothing.
 	function buildCard(c) {
 		var card = document.createElement('a');
 		card.className = 'hcf-card';
@@ -1381,29 +1429,22 @@
 		wrap.className = 'hcf-viewer-wrap';
 		wrap.style.background = promptGrad(c.prompt);
 
-		if (c.glb_url) {
-			var mv = document.createElement('model-viewer');
-			mv.setAttribute('src', c.glb_url);
-			mv.setAttribute('auto-rotate', '');
-			mv.setAttribute('auto-rotate-delay', '0');
-			mv.setAttribute('rotation-per-second', '20deg');
-			mv.setAttribute('interaction-prompt', 'none');
-			mv.setAttribute('disable-zoom', '');
-			mv.setAttribute('shadow-intensity', '0');
-			mv.setAttribute('exposure', '0.92');
-			mv.setAttribute('environment-image', 'neutral');
-			mv.setAttribute('camera-controls', '');
-			// Defer the ~1.5MB GLB fetch until the card nears the viewport instead
-			// of pulling every model on first paint — that eager burst was failing
-			// on mobile (aborted loads under memory/network pressure) and flooding
-			// the error reporter. The poster (the lightweight forge preview image)
-			// shows instantly and remains as a graceful fallback if the mesh can't
-			// load, so a card is never blank.
-			mv.setAttribute('loading', 'lazy');
-			if (c.preview_image_url) mv.setAttribute('poster', c.preview_image_url);
-			mv.setAttribute('aria-label', c.prompt || 'Forged 3D model');
-			mv.style.cssText = 'width:100%;height:100%;--poster-color:transparent;background:transparent;';
-			wrap.appendChild(mv);
+		if (c.glb_url && !viewersLive) {
+			// Deferred phase: show the forge preview image the viewer would have
+			// used as its poster. Visually near-identical, costs one small image
+			// instead of the model-viewer bundle plus a ~1.5MB mesh.
+			if (c.preview_image_url) {
+				var img = document.createElement('img');
+				img.className = 'hcf-poster';
+				img.src = c.preview_image_url;
+				img.loading = 'lazy';
+				img.decoding = 'async';
+				img.alt = c.prompt || 'Forged 3D model';
+				wrap.appendChild(img);
+			}
+			pendingViewerCards.push({ wrap: wrap, item: c });
+		} else if (c.glb_url) {
+			mountViewer(wrap, c);
 		} else {
 			var ph = document.createElement('div');
 			ph.className = 'hcf-ph';
@@ -1473,7 +1514,8 @@
 	}
 
 	function render() {
-		ensureModelViewer();
+		if (viewersLive) ensureModelViewer();
+		pendingViewerCards = [];
 		track.innerHTML = '';
 		knownIds = new Set();
 		var count = expanded ? MAX : INITIAL;
@@ -1508,6 +1550,9 @@
 	function startPolling() {
 		stopPolling();
 		if (sort !== 'fresh') return;
+		// No live refresh for a strip that is still off-screen; the approach
+		// observer starts it the moment the section actually matters.
+		if (!viewersLive) return;
 		pollTimer = setInterval(function() {
 			if (document.hidden || sort !== 'fresh') return;
 			var seq = reqSeq;
@@ -1582,6 +1627,23 @@
 		if (document.hidden) stopPolling();
 		else if (sort === 'fresh' && !pollTimer && !section.hidden) startPolling();
 	});
+
+	// Promote every poster card to a live mesh once the strip is one screen away,
+	// and keep every later render (sort switch, Show more, live prepend) on the
+	// live path from then on.
+	if (section) {
+		var mvObs = new IntersectionObserver(function(entries) {
+			if (!entries[0].isIntersecting) return;
+			mvObs.disconnect();
+			viewersLive = true;
+			ensureModelViewer();
+			var queued = pendingViewerCards;
+			pendingViewerCards = [];
+			queued.forEach(function(q) { mountViewer(q.wrap, q.item); });
+			if (sort === 'fresh' && !pollTimer && !section.hidden) startPolling();
+		}, { rootMargin: '400px' });
+		mvObs.observe(section);
+	}
 
 	load('fresh');
 })();
@@ -3571,7 +3633,29 @@
 		}
 	}
 </script>
-<script type="module" src="/dragon-section.js"></script>
+<!-- The dragon is a decorative canvas backdrop well below the fold, but its
+     one-time build (text layout, tunnel geometry, dragon rig, first static
+     frame) is ~1.8s of main-thread scripting. Loaded eagerly it landed
+     entirely inside the page-load window and was one of the largest single
+     contributors to Total Blocking Time. Deferred to the section's approach,
+     it costs nothing until the visitor has scrolled most of the page. -->
+<script type="module">
+	const dragonRoot = document.getElementById('dragon-canvas-wrap');
+	if (dragonRoot) {
+		const io = new IntersectionObserver(entries => {
+			if (!entries[0].isIntersecting) return;
+			io.disconnect();
+			// public/ asset, not a bundled source module: inject the tag rather
+			// than import() so Vite resolves it as a static file, exactly as the
+			// model-viewer loader on this page does.
+			const s = document.createElement('script');
+			s.type = 'module';
+			s.src = '/dragon-section.js';
+			document.body.appendChild(s);
+		}, { rootMargin: '200px' });
+		io.observe(dragonRoot);
+	}
+</script>
 <script type="module" src="/src/home-bento.js"></script>
 
 <!-- On-chain Identity: real Solana (Metaplex Core) deploy. Module scope so we
