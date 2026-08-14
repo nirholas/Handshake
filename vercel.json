@@ -6018,6 +6018,10 @@
 			"schedule": "*/5 * * * *"
 		},
 		{
+			"path": "/api/cron/pump-claims-push",
+			"schedule": "*/5 * * * *"
+		},
+		{
 			"path": "/api/cron/forge-off-crown",
 			"schedule": "7 0 * * 1"
 		},
