@@ -71,6 +71,14 @@ const SETTLE_MS = 20_000;
 // pass instead of a fabricated "the world hung" finding.
 const NAV_TIMEOUT_MS = Number(process.env.NAV_TIMEOUT_MS) || 60_000;
 
+// How many times a scenario may be surrendered to a harness infra failure before
+// it is written off as NOT RUN. Two was not enough on this box: the interface
+// churn that produces ERR_NETWORK_CHANGED arrives in bursts wide enough to eat
+// an attempt and its immediate retry, which cost whole scenarios of real
+// coverage. Attempts never soften an assertion; a scenario still has to run and
+// pass on its own merits.
+const ATTEMPTS = Math.max(1, Number(process.env.ATTEMPTS) || 4);
+
 // ── Hostile inputs ───────────────────────────────────────────────────────────
 // Every payload calls the same sentinel, so one flag proves script execution
 // regardless of which vector fired.
@@ -493,20 +501,20 @@ async function main() {
 	try {
 		for (const sc of scenarios) {
 			process.stdout.write(`  ${C.c(sc.id.padEnd(18))} ${C.d(sc.title)}\n`);
-			// Give a browser that died of resource starvation one more chance before
-			// giving up on the scenario. Two crashes in a row is a machine that cannot
-			// run this audit, not a verdict on /play.
+			// Give a browser that died of resource starvation more chances before
+			// giving up on the scenario. ATTEMPTS failures in a row is a machine that
+			// cannot run this audit, not a verdict on /play.
 			let res = await runScenario(server.base, sc);
-			if (res.infra) {
-				console.log(`      ${C.y('↻')} ${C.d(`harness infra failure (${res.infra.split('\n')[0]}), retrying`)}`);
-				// A network-change storm usually settles within seconds; give it a
-				// moment so the retry does not land inside the same churn window.
-				await new Promise((r) => setTimeout(r, 3000));
+			for (let attempt = 2; res.infra && attempt <= ATTEMPTS; attempt++) {
+				console.log(`      ${C.y('↻')} ${C.d(`harness infra failure (${res.infra.split('\n')[0]}), retrying ${attempt}/${ATTEMPTS}`)}`);
+				// A network-change storm usually settles within seconds, so back off a
+				// little further each time rather than landing in the same window twice.
+				await new Promise((r) => setTimeout(r, 3000 * (attempt - 1)));
 				res = await runScenario(server.base, sc);
 			}
 			if (res.infra) {
 				notRun.push({ sc, why: res.infra.split('\n')[0] });
-				console.log(`      ${C.y('!')} ${C.y('NOT RUN')} ${C.d('two harness infra failures in a row (starved browser or network churn)')}`);
+				console.log(`      ${C.y('!')} ${C.y('NOT RUN')} ${C.d(`${ATTEMPTS} harness infra failures in a row (starved browser or network churn)`)}`);
 				// Distinguish one starved browser from a vanished origin. Grinding the
 				// rest of the sweep against a dev server another agent just killed
 				// costs minutes and buries the real cause under a wall of identical
