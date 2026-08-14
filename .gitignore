@@ -484,3 +484,6 @@ workers/garment-forge/assets/
 contracts/program-tests/target/
 # Scratch output from scripts/retention-metric-proof.mjs.
 .retention-proof/
+
+# Downloaded ONNX weights cached by the node-operator self-test (23 MB+, fetched on demand)
+packages/node-operator/models/
