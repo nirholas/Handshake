@@ -36,7 +36,7 @@ Two things to know before reading a report:
 
 **Invariant: any grid that renders a whole catalogue in one pass gives its cards `content-visibility: auto` and a `contain-intrinsic-size` hint.**
 
-`/marketplace` renders the entire catalogue into `#market-grid` on first paint. A desktop trace measured that element at **31,196px tall**, of which one 940px screenful is visible. The browser styled, laid out and painted all of it: **11.8s of Style & Layout and 16.1s of Rendering**, for roughly thirty screenfuls nobody had scrolled to. `/discover` had the same shape at smaller scale, 3.1s of Style & Layout and 1.3s of Rendering.
+`/marketplace` renders the entire catalogue into `#market-grid` on first paint. A desktop trace measured that element at **31,196px tall**, of which one 940px screenful is visible. The browser styled, laid out and painted all of it. In the sweep of 2026-08-14 that page spent **21,203ms in Style & Layout and 19,634ms in Rendering**, roughly forty seconds of work for thirty screenfuls nobody had scrolled to, and it is why `/marketplace` is the worst-scoring page on the site (23 desktop, 51,400ms total blocking time). `/discover` has the same shape at smaller scale.
 
 `content-visibility: auto` makes the browser skip that work for an element until it nears the viewport, and hand it back when the element leaves again. The rules live in [public/marketplace.css](../public/marketplace.css) and the `.explore-card` block of [public/style.css](../public/style.css).
 
@@ -69,7 +69,9 @@ Vite hard-codes `minifyWhitespace: false` for every ES library build (`resolveEs
 
 Our lib output is not an npm dependency. It is the file a browser downloads from `/agent-3d/latest/agent-3d.js` when a third-party page drops in an `<agent-3d>` tag, and the homepage loads it too. Because the option is forced rather than defaulted, no `build.minify` or `esbuild` setting in the config can turn it back on.
 
-A `renderChunk` pass that runs esbuild with `minifyWhitespace: true` (and identifiers and syntax left alone, since Vite's own pass already handled those) took the shipped bundle from **4,244,387 bytes to 2,773,654** raw, and **1,031,741 to 792,118** gzipped. On the homepage, `agent-3d.js` was 2,293ms of script evaluation and two long tasks of 1,299ms and 526ms.
+A `renderChunk` pass that runs esbuild with `minifyWhitespace: true` (and identifiers and syntax left alone, since Vite's own pass already handled those) took the shipped bundle from **4,244,387 bytes to 3,433,103** raw, and from **1,031,741 to 853,007** gzipped at `gzip -9`. That is 811,284 fewer bytes, 19.1%. On the homepage, `agent-3d.js` was 2,293ms of script evaluation and two long tasks of 1,299ms and 526ms.
+
+Measure the right file. `dist-lib/` also holds `agent-3d.umd.cjs`, which is naturally smaller (2,761,457 bytes) because it is a different format, and quoting it makes the win look better than it is. [scripts/publish-lib.mjs](../scripts/publish-lib.mjs) mirrors the **ES** build, `dist-lib/agent-3d.js`, to `/agent-3d/<version>/`, so that is the file a browser downloads.
 
 **Do not "simplify" this away by trusting `build.minify`.** Check the byte count of `dist-lib/agent-3d.js` after any change to the lib config; a jump back over 4 MB means the plugin stopped running.
 
@@ -88,6 +90,12 @@ The homepage is 14,825px tall. Three of its sections are expensive enough that l
 All three are gated in [pages/home.html](../pages/home.html) with a `rootMargin: '200px'` observer, so none of them costs anything until the visitor has scrolled to them. The gates are measurably honest: at `DOMContentLoaded` the dragon sits at 3,753px against a trigger threshold of viewport + 200px = 1,140px, so it does not fire on load.
 
 **The exception that proves the rule is the `<agent-3d>` loader.** It stays eager in `<head>` on the homepage, and that is correct: `bootHeroAvatar()` in [src/home-live-agents.js](../src/home-live-agents.js) runs at module top level and the hero stage is the above-the-fold LCP element. Deferring the custom-element definition would not remove the work, it would move it behind the largest paint. Rule 3 is what makes that eager load affordable.
+
+The same rule covers 3D viewers, and it needs its own mechanism because the platform default does not work. **`loading="lazy"` on a `<model-viewer>` is not enough on a page that renders many of them.** Slides in a carousel occupy one box and are hidden with opacity rather than `display`, so every one of them intersects the viewport at once and model-viewer's own lazy loading holds nothing back; a grid card is a different shape but the cost is the same once the cards are on screen.
+
+So [src/marketplace.js](../src/marketplace.js) uses a `data-src` contract instead. A viewer ships `data-src` rather than `src`, and `observeCardModelViewers()` promotes it to `src` on first intersect at a 200px margin, adds `auto-rotate` there, and *removes* `auto-rotate` when the element leaves so an offscreen viewer is not running a raf loop. The grid cards and the hero carousel already worked this way. The themed-picks strip did not, and that made it the last eager viewer on the page. On `/marketplace`, `model-viewer` was the single most expensive script in the trace at **7,924ms of evaluation**.
+
+**A new `<model-viewer>` on a multi-viewer page ships `data-src`, or it is eager.** There is no third option, and the attribute that looks like it should handle this does not.
 
 **Before you gate something, check where it actually is.** Paste this into DevTools:
 
@@ -110,6 +118,21 @@ The box is reserved by CSS rather than by `width`/`height` attributes, because t
 **A reserved box is not optional.** If you add a thumbnail whose container has no `aspect-ratio` and no fixed height, add one, or the late image will shift everything under it.
 
 ---
+
+## Open: directory thumbnails are served with no cache headers at all
+
+This one is measured, understood, and deliberately not fixed yet, because the safe fix is larger than it looks.
+
+`/discover` downloads **28 images totalling 9,360 KiB**, of which 27 are avatar thumbnails at roughly 280 KB each. Every one of them comes from the Cloudflare `pub-*.r2.dev` public endpoint, which answers with **no `Cache-Control` header at all**: Lighthouse's `cache-insight` reports a cache lifetime of 0 for 29 resources, so a returning visitor re-downloads all of it.
+
+The repository already has the fix. `/cdn/<key>` ([api/cdn-object.js](../api/cdn-object.js)) proxies the same bucket and answers `public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800` for `thumb/` keys. Verified against a live key from the feed, both routes return the identical 289,539-byte PNG and only the first-party one carries the header.
+
+What makes it non-trivial is that `thumbnailUrl()` in [api/\_lib/r2.js](../api/_lib/r2.js) is deliberately the single resolver for a stored thumbnail key, and its output goes to more places than a page:
+
+- `GET /api/explore` is a **documented public endpoint** (see [the API reference](./api-reference.md)), so its `image` field has third-party consumers and cannot become a site-relative path.
+- The same helper feeds the image baked into on-chain token metadata via `api/_lib/draft-mint.js`, which is written once and cannot be corrected afterwards.
+
+The shape of the fix is therefore a second helper, absolute rather than relative, applied only to first-party page feeds and never to the metadata writer, plus an addition to [tests/thumbnail-url-guard.test.js](../tests/thumbnail-url-guard.test.js) so the split stays honest. Sizing the thumbnails is worth doing in the same pass: they are stored at 768x768 and painted into a 293px box.
 
 ## Known costs that are not bugs
 
