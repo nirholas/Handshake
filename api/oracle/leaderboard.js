@@ -1,11 +1,11 @@
 /**
- * Oracle — agent conviction leaderboard.
+ * Oracle: agent conviction leaderboard.
  *
  *   GET /api/oracle/leaderboard?network=mainnet&limit=20&min_actions=3
  *
  * Returns agents ranked by Oracle conviction win rate across their full action
  * ledger. Only agents with at least `min_actions` resolved (non-open) actions
- * are included — this prevents 1-trade wonders from dominating. Includes name,
+ * are included: this prevents 1-trade wonders from dominating. Includes name,
  * avatar, and summary stats so the caller needs no extra fetch.
  *
  * Cache: 120s public CDN.
@@ -38,7 +38,7 @@ export default wrap(async function handleOracleLeaderboard(req, res) {
 
 	// Aggregate per agent: count wins, losses, open, realized PnL, total size.
 	// Join agent_identities for display fields (its portrait lives in
-	// profile_image_url, with avatar_url as the fallback — there is no
+	// profile_image_url, with avatar_url as the fallback: there is no
 	// image_url column, and selecting one returned an empty board on every
 	// request). Filter to agents with enough resolved actions to trust the
 	// win rate. No .catch() swallow here: this query IS the response, so an
