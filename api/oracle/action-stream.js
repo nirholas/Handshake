@@ -18,9 +18,10 @@
  * It passes `?since=<iso>` on reconnect so no events are missed.
  */
 
-import { cors, method, rateLimited } from '../_lib/http.js';
+import { cors, method, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
+import { isoTimestamp } from '../_lib/validate.js';
 
 const NETWORKS     = new Set(['mainnet', 'devnet']);
 const MODES        = new Set(['live', 'simulate']);
@@ -111,9 +112,18 @@ export default async function handleActionStream(req, res) {
 	const url     = new URL(req.url, `http://${req.headers.host || 'x'}`);
 	const network = NETWORKS.has(url.searchParams.get('network')) ? url.searchParams.get('network') : 'mainnet';
 	const mode    = MODES.has(url.searchParams.get('mode'))       ? url.searchParams.get('mode')    : null;
-	// Client passes `since` on reconnect to avoid gaps.
+	// Client passes `since` on reconnect to avoid gaps. Validate it BEFORE the
+	// stream headers go out: an unparseable cursor makes every `::timestamptz`
+	// cast below reject, both poll queries swallow that rejection, and the client
+	// then holds an open stream that emits hello + ping forever and never a single
+	// action. EventSource reconnects with the same bad cursor, so the stall is
+	// permanent and silent. A 400 tells the caller what is actually wrong.
 	const sinceParam = url.searchParams.get('since');
-	let cursor    = sinceParam ? sinceParam : new Date(Date.now() - 10_000).toISOString();
+	const since      = sinceParam ? isoTimestamp(sinceParam) : null;
+	if (sinceParam && !since) {
+		return error(res, 400, 'validation_error', 'since must be an ISO 8601 timestamp');
+	}
+	let cursor    = since || new Date(Date.now() - 10_000).toISOString();
 	let settleCursor = cursor;
 
 	res.writeHead(200, {

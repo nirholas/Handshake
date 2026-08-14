@@ -172,6 +172,21 @@ export function isUuid(value) {
 	return typeof value === 'string' && UUID_RE.test(value);
 }
 
+// Pagination / stream cursors arrive as caller-controlled strings and end up
+// interpolated into a `::timestamptz` cast. Postgres rejects anything it cannot
+// parse, so an unvalidated cursor turns a typo into either a 500 (the handler
+// lets the query error bubble) or a permanently empty result (the handler
+// swallows it) — both wrong answers to what is plainly a client fault. Normalize
+// here: a parseable instant comes back in ISO form, ready to hand straight to
+// the cast; anything else comes back null so the caller can answer 400.
+export function isoTimestamp(value) {
+	if (typeof value !== 'string') return null;
+	const trimmed = value.trim();
+	if (!trimmed) return null;
+	const ms = Date.parse(trimmed);
+	return Number.isNaN(ms) ? null : new Date(ms).toISOString();
+}
+
 export function isValidSolanaAddress(address) {
 	return typeof address === 'string' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
 }

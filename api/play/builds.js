@@ -21,8 +21,21 @@ const MAX_BLOCKS = 6000;
 // screenshot can't bloat a coin's storage.
 const MAX_THUMB_CHARS = 280_000; // ~210 KB decoded
 
+// The mint is not just an identifier here: it becomes the Redis key a coin's
+// featured builds live under. So its FORMAT is checked, not only its length,
+// which is what api/play/population.js does with the same coin-world identifier
+// and what billboard-store.js does with the same kind of per-coin Redis key.
+// Base58 covers Solana worlds, 0x-hex covers the EVM ones; a length check alone
+// let any 32-to-64-character string mint a key from an unauthenticated publish.
+const SOLANA_MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+function isCoinWorld(v) {
+	const s = String(v || '').trim();
+	return SOLANA_MINT_RE.test(s) || EVM_ADDRESS_RE.test(s);
+}
+
 const publishSchema = z.object({
-	mint: z.string().trim().min(32).max(64),
+	mint: z.string().trim().refine(isCoinWorld),
 	title: z.string().trim().max(60).optional().default(''),
 	author: z.string().trim().max(32).optional().default(''),
 	blocks: z.number().int().min(0).max(MAX_BLOCKS),
@@ -40,7 +53,7 @@ export default wrap(async (req, res) => {
 		const rl = await limits.publicIp(clientIp(req));
 		if (!rl.success) return rateLimited(res, rl);
 		const mint = String(req.query?.mint || '').trim();
-		if (!mint || mint.length < 32 || mint.length > 64) {
+		if (!isCoinWorld(mint)) {
 			return error(res, 400, 'bad_mint', 'a valid coin mint is required');
 		}
 		try {

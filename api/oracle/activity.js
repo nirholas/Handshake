@@ -16,10 +16,10 @@
  * agents acting on conviction in real time.
  */
 
-import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { isUuid } from '../_lib/validate.js';
+import { isUuid, isoTimestamp } from '../_lib/validate.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const TIERS    = new Set(['prime', 'strong', 'lean', 'watch', 'avoid']);
@@ -55,7 +55,11 @@ function shapeRow(r) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// `origins: '*'` like every other public oracle read (feed, batch, categories,
+	// backtest): this is an unauthenticated, credential-free feed, and the default
+	// allowlist would otherwise block the same third-party dashboards that can
+	// already read /api/oracle/feed.
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.publicIp(clientIp(req));
@@ -68,7 +72,13 @@ export default wrap(async (req, res) => {
 	const tier     = TIERS.has(params.get('tier'))       ? params.get('tier')     : null;
 	const outcome  = OUTCOMES.has(params.get('outcome')) ? params.get('outcome')  : null;
 	const agentId  = isUuid(params.get('agent_id') || '') ? params.get('agent_id') : null;
-	const before   = params.get('before') || null;
+	// A malformed cursor is a client fault, so answer 400 rather than letting the
+	// `::timestamptz` cast reject inside the query and surface as an opaque 500.
+	const beforeRaw = params.get('before');
+	const before    = beforeRaw ? isoTimestamp(beforeRaw) : null;
+	if (beforeRaw && !before) {
+		return error(res, 400, 'validation_error', 'before must be an ISO 8601 timestamp');
+	}
 
 	const rows = await sql`
 		select
