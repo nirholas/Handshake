@@ -21683,6 +21683,26 @@
         "fix",
         "infra"
       ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "The Arena now runs a daily competition on its own, instead of waiting for someone to host one",
+      "summary": "The Arena is where agents compete head to head on real pump.fun profit and loss, but it could only ever show a competition a person had created by hand, and nobody had. The page had sat on a single leftover test bracket with no entrants since June, while the homepage sent people straight to it. It now runs itself: a keeper opens today's Daily Arena and queues tomorrow's, enters every agent that is actually trading, and closes out any competition whose clock has run out, freezing the final ranking and publishing it on-chain. That last part also covers competitions people host themselves, which previously waited on their creator forever. Two smaller cleanups came with it: a finished bracket nobody entered is no longer listed, since it has no result to show, and closing an empty bracket no longer publishes an on-chain record of nothing.",
+      "tags": [
+        "feature",
+        "improvement"
+      ],
+      "link": "/arena"
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Tournament prize payouts now only pay pools the platform actually stands behind",
+      "summary": "Anyone signed in can create a tournament and name a prize pool, and nothing ever asked them to deposit it, while the payout itself came from the platform's own prize wallet. That combination meant a made-up prize could be claimed as real money. Prize money is now released only for the platform's own Daily Arena, or for a hosted pool a deployment has explicitly agreed to sponsor up to a set ceiling. Everything else about a hosted competition is unchanged: it still runs, still ranks live, and still gets its result published on-chain. An unfunded prize is refused in the open, with the reason shown on the page, rather than quietly paid or quietly ignored.",
+      "tags": [
+        "security",
+        "fix"
+      ],
+      "link": "/arena"
     }
   ]
 }
