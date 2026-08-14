@@ -170,7 +170,19 @@ async function tryCronRedispatch(row, ageMinutes) {
 	if (decision !== 'redispatch') return null;
 	const attempted = [...new Set([...(prior?.attempted || []), row.backend].filter(Boolean))];
 	const nextLane = await pickRedispatchLane({ attempted });
-	if (!nextLane) return null;
+	if (!nextLane) {
+		// The one recoverable failure that stays lost, and it used to leave no
+		// trace: every other outcome here logs, so a silent return read as "we
+		// never tried". Measured on 2026-08-14: of the 14 self-host orphans in the
+		// prior week, 13 failed over and the single loss came through this branch,
+		// with nothing in the logs to say whether a lane was picked at all. A
+		// declined failover is a capacity signal (every alternative lane already
+		// attempted or cooled by markLaneUnhealthy), so say so.
+		console.warn(
+			`[forge-finalize] job failed on ${row.backend}; no redispatch lane available (attempted: ${attempted.join(', ') || 'none'}), leaving it terminal`,
+		);
+		return null;
+	}
 	try {
 		const submitted = await submitFailoverJob({
 			backend: nextLane,
