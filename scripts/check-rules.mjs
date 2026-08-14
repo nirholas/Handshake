@@ -88,6 +88,12 @@ const SKIP = [
 	// still held to the typography rule, by scripts/audit-guards.mjs.
 	/^data\/guards\.json$/,
 	/^public\/guards\.json$/,
+	// Captured third-party text, stored verbatim as evidence. The X account
+	// archive is what was actually published, character for character, so
+	// rewriting its typography to satisfy a house rule would falsify the
+	// record the archive exists to preserve. The rule applies to prose we
+	// write, not to prose we transcribe.
+	/^data\/x-archive\//,
 ];
 const skipped = (file) => SKIP.some((re) => re.test(file));
 
