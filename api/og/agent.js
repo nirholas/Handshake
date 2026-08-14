@@ -22,7 +22,7 @@
 import { cors, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
-import { publicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { isUuid } from '../_lib/validate.js';
 import { getBalances, walletUsdTotal } from '../_lib/balances.js';
 import { getAgentReputation } from '../_lib/trust/wallet-reputation.js';
@@ -138,17 +138,18 @@ function imageMime(header) {
 }
 
 // Where the thumbnail actually lives, or null when there is nothing safe to
-// render: no thumbnail, a non-public avatar, or an unconfigured bucket domain.
-// publicUrl() is the same resolver avatar-og.js uses, so a key that is already an
-// absolute URL (imported/externally-hosted avatars) passes through and a key with
-// spaces or a "#" gets encoded instead of producing a dead CDN fetch. It reads
-// env.S3_PUBLIC_DOMAIN, which THROWS when unset, and that must degrade to the
-// gradient portrait: an unconfigured var may never 503 a crawler.
-function thumbnailUrl(row) {
+// render: no thumbnail, a non-public avatar, a legacy origin-pointing key, or an
+// unconfigured bucket domain. r2.thumbnailUrl() is the one resolver every read
+// path uses (tests/thumbnail-url-guard.test.js pins that), so a key with spaces
+// gets encoded and a poisoned `*_og.png` key is dropped instead of costing the
+// card a doomed 404 fetch. It reads env.S3_PUBLIC_DOMAIN, which THROWS when
+// unset, and that must degrade to the gradient portrait: an unconfigured var may
+// never 503 a crawler.
+function avatarImageUrl(row) {
 	const thumbPublic = row?.visibility === 'public' || row?.visibility === 'unlisted';
 	if (!row?.thumbnail_key || !thumbPublic) return null;
 	try {
-		return publicUrl(row.thumbnail_key);
+		return thumbnailUrl(row.thumbnail_key);
 	} catch {
 		return null;
 	}
@@ -159,7 +160,7 @@ function thumbnailUrl(row) {
 // mis-declared or chunked response can't blow the card up. Any failure returns
 // null, which renders the gradient-initial portrait instead.
 async function loadAvatarImage(row) {
-	const src = thumbnailUrl(row);
+	const src = avatarImageUrl(row);
 	if (!src) return null;
 	try {
 		const imgResp = await fetch(src, { signal: AbortSignal.timeout(3000) });
@@ -399,5 +400,5 @@ function fallback(res) {
 
 // Exposed for unit tests: renders the card from fixed rows and enrichments.
 export const __testInternals = {
-	renderCard, fmtUsd, headlineAchievement, gradientForName, trunc, imageMime, thumbnailUrl,
+	renderCard, fmtUsd, headlineAchievement, gradientForName, trunc, imageMime, avatarImageUrl,
 };

@@ -308,7 +308,7 @@ describe('og/agent', () => {
 	// boundaries: where the bytes are fetched from, and what the remote server says
 	// they are. Neither may throw, and neither may reach the SVG unvalidated.
 	describe('avatar thumbnail resolution', () => {
-		const { thumbnailUrl, imageMime } = agentInternals;
+		const { avatarImageUrl, imageMime } = agentInternals;
 		const KEY = 'u/42/thumbs/nova card.png';
 		let savedDomain;
 
@@ -319,26 +319,26 @@ describe('og/agent', () => {
 		});
 
 		it('resolves a bucket key through the CDN domain and passes an absolute one through', () => {
-			process.env.S3_PUBLIC_DOMAIN = 'https://cdn.three.ws';
-			expect(thumbnailUrl({ visibility: 'public', thumbnail_key: KEY }))
-				.toBe('https://cdn.three.ws/u/42/thumbs/nova%20card.png');
-			expect(thumbnailUrl({ visibility: 'unlisted', thumbnail_key: 'https://img.example/a b.png' }))
+			process.env.S3_PUBLIC_DOMAIN = 'https://three.ws/cdn';
+			expect(avatarImageUrl({ visibility: 'public', thumbnail_key: KEY }))
+				.toBe('https://three.ws/cdn/u/42/thumbs/nova%20card.png');
+			expect(avatarImageUrl({ visibility: 'unlisted', thumbnail_key: 'https://img.example/a b.png' }))
 				.toBe('https://img.example/a b.png');
 		});
 
 		it('renders no avatar for a private or thumbnail-less agent', () => {
-			process.env.S3_PUBLIC_DOMAIN = 'https://cdn.three.ws';
-			expect(thumbnailUrl({ visibility: 'private', thumbnail_key: KEY })).toBeNull();
-			expect(thumbnailUrl({ visibility: 'public', thumbnail_key: null })).toBeNull();
-			expect(thumbnailUrl(null)).toBeNull();
+			process.env.S3_PUBLIC_DOMAIN = 'https://three.ws/cdn';
+			expect(avatarImageUrl({ visibility: 'private', thumbnail_key: KEY })).toBeNull();
+			expect(avatarImageUrl({ visibility: 'public', thumbnail_key: null })).toBeNull();
+			expect(avatarImageUrl(null)).toBeNull();
 		});
 
 		// Failure path: the bucket domain is unset. env.S3_PUBLIC_DOMAIN throws on a
 		// missing var, and that must cost the portrait, never the whole card.
 		it('degrades to the gradient portrait when the bucket domain is unconfigured', () => {
 			delete process.env.S3_PUBLIC_DOMAIN;
-			expect(() => thumbnailUrl({ visibility: 'public', thumbnail_key: KEY })).not.toThrow();
-			expect(thumbnailUrl({ visibility: 'public', thumbnail_key: KEY })).toBeNull();
+			expect(() => avatarImageUrl({ visibility: 'public', thumbnail_key: KEY })).not.toThrow();
+			expect(avatarImageUrl({ visibility: 'public', thumbnail_key: KEY })).toBeNull();
 		});
 
 		it('pins a hostile remote content-type to a known image type', () => {
