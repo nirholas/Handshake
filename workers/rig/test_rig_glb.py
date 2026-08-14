@@ -21,7 +21,8 @@ import numpy as np
 import pygltflib
 import trimesh
 
-from rig_glb import build_rigged_glb
+from gltf_meshopt import decode_if_meshopt, GLTFPACK_BIN, GLTFPACK_TIMEOUT_S
+from rig_glb import build_rigged_glb, validate_input_mesh
 
 _COMP = {5126: ("<f4", 4), 5121: ("<u1", 1), 5123: ("<u2", 2), 5125: ("<u4", 4)}
 _NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT4": 16}
@@ -327,6 +328,47 @@ def test_divergent_instances_rejected():
     _check(False, "expected RuntimeError for divergent instances")
 
 
+def test_meshopt_input_decoded():
+    """A compressed avatar reaches the rigger as readable geometry.
+
+    Most three.ws avatars ship with EXT_meshopt_compression, which neither
+    trimesh nor pygltflib can decode, so rigging one failed on its own input
+    validation until main.py started transcoding the fetched bytes. Without the
+    gltfpack binary (a local run outside the image) there is nothing to compress
+    with, so the case announces a skip rather than passing silently.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+    from pathlib import Path as _Path
+
+    if not shutil.which(GLTFPACK_BIN):
+        print("skip  meshopt input (no gltfpack binary)")
+        return
+
+    source = trimesh.creation.icosphere(subdivisions=2)
+    plain = trimesh.Scene({"a": source}).export(file_type="glb")
+    with tempfile.TemporaryDirectory() as tmp:
+        raw, packed = _Path(tmp) / "raw.glb", _Path(tmp) / "packed.glb"
+        raw.write_bytes(plain)
+        subprocess.run(
+            [GLTFPACK_BIN, "-i", str(raw), "-o", str(packed), "-cc"],
+            capture_output=True, check=True, timeout=GLTFPACK_TIMEOUT_S,
+        )
+        packed_bytes = packed.read_bytes()
+
+    try:
+        validate_input_mesh(packed_bytes)
+        _check(False, "compressed input rejected before the decode")
+    except Exception:
+        _check(True, "compressed input is unusable before the decode")
+
+    decoded, _ = decode_if_meshopt(packed_bytes, ".glb")
+    validate_input_mesh(decoded)
+    mesh = trimesh.load(io.BytesIO(decoded), file_type="glb", force="mesh")
+    _check(len(mesh.faces) == len(source.faces), "decoded input keeps every face")
+
+
 if __name__ == "__main__":
     try:
         test_skeleton_and_skinning()
@@ -336,6 +378,7 @@ if __name__ == "__main__":
         test_dirty_weights_no_collapse()
         test_nonidentity_node_baked()
         test_divergent_instances_rejected()
+        test_meshopt_input_decoded()
     except AssertionError:
         print("\nFAILED")
         sys.exit(1)
