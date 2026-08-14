@@ -146,7 +146,7 @@ describe('run-subscriptions: a recoverable failure', () => {
 		// so the next tick's `last_charge_at < next_charge_at` guard passes and
 		// the row is genuinely picked up again. Without this the schedule looks
 		// active but can never charge.
-		const release = updateMatching(/SET last_charge_at\s*=\s*\$/i)[0];
+		const release = updateMatching(/SET last_charge_at\s*=\s*\?/i)[0];
 		expect(release).toBeTruthy();
 		expect(release.vals[0]).toBe(null);
 		expect(release.q).not.toMatch(/status\s*=\s*'paused'/);
@@ -192,7 +192,7 @@ describe('run-subscriptions: a platform outage', () => {
 		expect(updateMatching(/status\s*=\s*'paused'/i)).toHaveLength(0);
 		// The counter stays where it was: nine platform outages must not consume
 		// a budget meant for problems the owner can actually fix.
-		expect(updateMatching(/SET last_charge_at\s*=\s*\$/i)[0].vals).toContain(9);
+		expect(updateMatching(/SET last_charge_at\s*=\s*\?/i)[0].vals).toContain(9);
 	});
 });
 
@@ -203,7 +203,7 @@ describe('run-subscriptions: a timeout', () => {
 		const { body } = await run();
 		expect(body).toMatchObject({ paused: 1, retrying: 0 });
 		expect(charges[0]).toMatchObject({ status: 'unknown', outcome: 'ambiguous', code: 'timeout' });
-		expect(updateMatching(/SET last_charge_at\s*=\s*\$/i)).toHaveLength(0);
+		expect(updateMatching(/SET last_charge_at\s*=\s*\?/i)).toHaveLength(0);
 	});
 });
 
