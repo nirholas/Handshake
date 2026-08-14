@@ -10,6 +10,7 @@ import {
 	selectionManifest,
 	selectionSchema,
 	toMemoryRows,
+	WORKING_TIER_FACTS,
 	GITHUB_SEED_TAGS,
 	MAX_CATALOG_REPOS,
 	MAX_FACTS,
@@ -358,6 +359,35 @@ describe('toMemoryRows', () => {
 			salience: 0.7,
 		});
 		expect(rows[0].context.source).toBe('github_seed');
+	});
+
+	// A seeded fact the agent never carries cannot be spoken about unprompted:
+	// the working context is `pinned OR tier = 'working'` and the column
+	// defaults to 'recall', so the top facts have to say so explicitly.
+	it('promotes the top-ranked facts to the always-in-context working tier', () => {
+		const facts = Array.from({ length: WORKING_TIER_FACTS + 3 }, (_, i) => `fact ${i + 1}`);
+		const rows = toMemoryRows('agent-1', facts, {
+			login: 'devuser',
+			resolved,
+			seededAt: '2026-08-11T10:00:00.000Z',
+		});
+
+		expect(rows.slice(0, WORKING_TIER_FACTS).every((r) => r.tier === 'working')).toBe(true);
+		expect(rows.slice(WORKING_TIER_FACTS).every((r) => r.tier === 'recall')).toBe(true);
+	});
+
+	it('ranks facts so chat keeps the distiller order instead of truncating it arbitrarily', () => {
+		const rows = toMemoryRows('agent-1', ['first', 'second', 'third'], {
+			login: 'devuser',
+			resolved,
+			seededAt: '2026-08-11T10:00:00.000Z',
+		});
+
+		expect(rows.map((r) => r.context.rank)).toEqual([1, 2, 3]);
+		expect(rows.map((r) => r.salience)).toEqual([0.7, 0.69, 0.68]);
+		for (let i = 1; i < rows.length; i += 1) {
+			expect(rows[i].salience).toBeLessThan(rows[i - 1].salience);
+		}
 	});
 
 	it('records the exact selection on every row as the consent audit trail', () => {

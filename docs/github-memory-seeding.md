@@ -84,10 +84,17 @@ selection, so the promise and the code cannot drift apart.
 Each fact becomes one row in `agent_memories`:
 
 - `type: 'reference'`, tagged `github` and `github_seed`.
-- Salience `0.7`, inside the band the chat runtime pages into recall.
+- Salience from `0.7` down, one step per rank, so the order the distiller
+  emitted survives into retrieval. Chat keeps only the ten highest-salience
+  memories per reply, and a flat score would cut that list arbitrarily.
+- `tier`: the top five facts are `working`, the rest `recall`. The working tier
+  is what the agent always carries, so those five ground an open question like
+  "what do you know about my work?" without needing the message to match them.
+  The `recall` remainder still surfaces through semantic and lexical search
+  when a message is about that repository.
 - `context` carries `source: 'github_seed'`, your handle, the seed timestamp,
-  and the selection manifest, so every memory can be audited back to the exact
-  set of checkboxes that produced it.
+  the fact's `rank`, and the selection manifest, so every memory can be audited
+  back to the exact set of checkboxes that produced it.
 
 Re-seeding the same agent replaces the previous GitHub batch atomically: the
 old rows and the new rows swap inside one transaction, so a failure mid-run

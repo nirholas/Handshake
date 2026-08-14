@@ -157,8 +157,8 @@ export default async function handleMemorySeed(req, res, agentId) {
 		sql`DELETE FROM agent_memories WHERE agent_id = ${agentId} AND context->>'source' = 'github_seed'`,
 		...rows.map(
 			(row) => sql`
-			INSERT INTO agent_memories (agent_id, type, content, tags, context, salience)
-			VALUES (${row.agent_id}, ${row.type}, ${row.content}, ${row.tags}, ${JSON.stringify(row.context)}::jsonb, ${row.salience})
+			INSERT INTO agent_memories (agent_id, type, content, tags, context, salience, tier)
+			VALUES (${row.agent_id}, ${row.type}, ${row.content}, ${row.tags}, ${JSON.stringify(row.context)}::jsonb, ${row.salience}, ${row.tier})
 		`,
 		),
 	]);
