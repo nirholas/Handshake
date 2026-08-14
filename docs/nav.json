@@ -600,6 +600,10 @@
 					"path": "agent-wallet-api"
 				},
 				{
+					"label": "Agent-to-agent payments (limits & kill switch)",
+					"path": "a2a-payments"
+				},
+				{
 					"label": "USDC agent vaults",
 					"path": "vaults"
 				},
