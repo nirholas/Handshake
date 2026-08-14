@@ -273,8 +273,11 @@ point: the protocol wraps existing capability instead of replacing it.
 
 ## Out of scope for v0.1
 
-- On-chain settlement and receipts (Phase 4 roadmap item; `payment` is the
-  reserved hook).
+- On-chain settlement and receipts. `payment` is the reserved hook, and the
+  adjacent [inference-receipts.md](inference-receipts.md) already settles paid
+  LLM inference the same way (a signed job, a signed response, and a confirmed
+  transaction anyone can re-check offline). Binding an OIN response to a
+  settlement receipt is a v0.2 concern.
 - Streaming responses and chunked artifact proofs.
 - Multi-node redundancy (the same job run by N nodes with cross-checks).
 - Anything EVM-specific: the signature curve is Ed25519; an EVM-flavored
