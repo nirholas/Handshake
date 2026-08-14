@@ -128,14 +128,6 @@
 		</item>
 		<item>
 			<title>AgenC task lists no longer hang when a Solana provider goes quiet</title>
-			<link>https://three.ws/docs/agenc</link>
-			<guid isPermaLink="false">2026-08-14:AgenC task lists no longer hang when a Solana provider goes quiet</guid>
-			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>Reading the AgenC task board scans the whole coordination program on Solana, the heaviest request we make of any provider. We already move to the next provider when one refuses us, but we had no answer for a provider that accepts the request and then never replies. Nothing was thrown, so nothing switched over, and the read sat there until the browser gave up. Each attempt now gets its own ten second budget, and a provider that runs past it is treated exactly like one that refused: parked for a cooldown, with the read retried on the next provider in the chain. If every provider stalls you get a clear try again shortly response instead of an endless wait.</description>
-		</item>
-		<item>
-			<title>AgenC task lists no longer hang when a Solana provider goes quiet</title>
 			<link>https://three.ws/agenc</link>
 			<guid isPermaLink="false">2026-08-14:AgenC task lists no longer hang when a Solana provider goes quiet</guid>
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
@@ -253,6 +245,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Several buttons across the site were links pointing at nothing, so clicking them moved the page to the top and nothing else happened. On a coin or category page whose market data failed to load, &quot;Reload the page&quot; was one of them: the one control offered for recovery had no handler at all, so a reader who hit a data outage had no way out of it. It now re-runs the real request in place, skeletons and all, so a recovered feed repaints without a full page load. The &quot;+ Link wallet&quot; button on your account page was the same kind of dead end, pointing back at the section it already sat in; it now opens your Solana wallet, signs the ownership message, and links the wallet to your account, including moving a wallet that is currently linked somewhere else once your signature has proved it is yours. Clear filter on derivatives, Show all on stablecoins, Retry on search and on the world generator, skip for now in the dashboard checklist, Create one in the agent registry, and View more in Related Agents were all links pretending to be buttons; they are real buttons now, which means they answer the space bar, sit in the tab order where you expect, and show a visible focus ring. Picking a coin in the compare search is announced properly to a screen reader as you arrow through the list.</description>
+		</item>
+		<item>
+			<title>Cookbook posters came back, and a docs link you copy now reopens the page you were reading</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Cookbook posters came back, and a docs link you copy now reopens the page you were reading</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Eight developer pages were read against the code they describe and exercised in a real browser: the MCP 3D tool and CI asset gate recipes, and the payment sessions, developer platform, media API, agent-forged gallery, generation watch, and KOL tracker guides. Two things were broken for readers. Every cookbook recipe that shows a poster image was rendering without it: the figure system accepted three kinds of illustration and silently deleted the fourth, which is the kind the recipe posters use, with nothing in the page or the console to say a picture had gone missing. All of them render again. Separately, the previous/next buttons and the sidebar at the bottom of a documentation page produced a link that only worked while you stayed on the page: copy it, share it, or reload it, and you landed back on the page you started from instead of the one the link named. Those links now open the page they promise, correct the address bar to that page's own permanent link, and rename the browser tab to match, while in-page section links still jump to the section as before. The pages themselves were corrected where they had drifted from the code: the gallery's sample receipt quoted an old price for the tier it describes, the media API's two library samples reported counts no live response would return, and the KOL tracker described all four of its endpoints as sharing one dispatcher when the trade feed is served by its own file. Every command and code sample printed on the eight pages was run, and every link on them resolves.</description>
 		</item>
 		<item>
 			<title>Creator subscriptions renew again instead of failing every billing run in silence</title>
@@ -541,6 +541,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>The docs for ghost-copy, Trader Passport, the wallet portfolio, and the airdrop checker each show a sample JSON response so you can see the shape before you write any code. Those samples had fallen behind the endpoints: they were missing whole fields that the live API returns, including the timestamp on an airdrop scan, the window start and per-trade detail on a ghost-copy replay, and the issuer note, verification instructions, and generation time on a passport. Anyone building against the samples would have concluded those fields did not exist. Every sample was re-checked field by field against a live call to the running endpoint and corrected, and the places where a sample is deliberately shortened are now marked as shortened instead of looking complete.</description>
+		</item>
+		<item>
+			<title>The Forge gallery no longer goes quiet for hours after a model provider blips</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-14:The Forge gallery no longer goes quiet for hours after a model provider blips</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A job runs every minute to keep new models flowing into the Forge gallery, and it steps back when the upstream generator is failing so it is not hammering a dead lane. That step-back had no ceiling: each further failed attempt lengthened the pause, so a provider outage that lasted through a few retries could park the job for hours, and by the time the provider recovered nothing was left running to notice. The pause is now capped at an hour, so the job keeps checking back on its own and the gallery starts filling again as soon as generation works.</description>
 		</item>
 		<item>
 			<title>The free fact-check lane is callable from a browser again, and two paid endpoints answer to the price you set</title>

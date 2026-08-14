@@ -585,6 +585,41 @@ export async function markFailed({ replicateJobId, clientKey, error }) {
 	}
 }
 
+/**
+ * Link a failed attempt to the successor row that re-ran it on another lane.
+ *
+ * Both failover paths already resubmit the original inputs and create a
+ * successor creation row; without this link the ledger shows only the failure,
+ * so the health sensor and the error report count a recovered attempt as a
+ * user-visible loss (see the migration 20260814200000_forge_failover_supersede
+ * for the production numbers that motivated it).
+ *
+ * Best-effort by design: the failover itself has already succeeded by the time
+ * this runs, and losing the annotation must never turn a recovered generation
+ * into a failed one.
+ *
+ * @param {{ replicateJobId: string, clientKey: string, successorId: string }} input
+ * @returns {Promise<boolean>} true when a row was annotated.
+ */
+export async function markSupersededBy({ replicateJobId, clientKey, successorId }) {
+	if (!forgeStoreEnabled() || !replicateJobId || !successorId) return false;
+	try {
+		const rows = await sql`
+			update forge_creations
+			set superseded_by = ${successorId}, updated_at = now()
+			where replicate_job_id = ${replicateJobId}
+			  and client_key = ${clientKey}
+			  and status = 'failed'
+			  and superseded_by is null
+			returning id
+		`;
+		return rows.length > 0;
+	} catch (err) {
+		console.error('[forge-store] markSupersededBy failed:', err?.message);
+		return false;
+	}
+}
+
 // Permanently delete a creation: the stored mesh, the stored preview, every
 // recorded source upload (the user's reference photos), and the row itself.
 // Scoped to the owning client_key so one browser can never erase another's
