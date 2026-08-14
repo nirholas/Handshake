@@ -14774,7 +14774,7 @@
 		"the_same_free_lane_as_a_rest": "與 REST Actions 介面相同的免費通道，適用於「three.ws 3D Studio」自訂 GPT，設有 13 歲以上安全門檻並提供符合商店規範的回應。涵蓋不支援連接器的方案。",
 		"three_ws_3d_studio_apps_sdk": "three.ws 3D Studio (應用程式 SDK)",
 		"three_ws_has_been_named_an_openai": "three.ws 已獲選為 OpenAI 合作夥伴網路中的 <strong>OpenAI Select Partner</strong>。該平台的免費 3D Studio 連接器能將一句話轉化為互動式、帶有紋理的 3D 模型，並在對話中即時渲染，接著進行綁定、動畫製作，並透過 AR 將其置於您的空間。無需金鑰、無需帳戶、無需費用。",
-		"three_ws_is_an_independent_member_of": "three.ws 是 OpenAI 合作夥伴網路中 Select 等級的獨立成員。本頁面介紹與 OpenAI 平台整合的 three.ws 產品；它並非 OpenAI 產品，且 OpenAI 除所示的合作夥伴稱號外，不為其背書。OpenAI、ChatGPT 和 OpenAI 合作夥伴網路徽章均為 OpenAI 的商標。欲了解更多關於此網路的資訊，請造訪 <a href=\"https://openai.com/business/partners/\" target=\"_blank\" rel=\"noopener\" style=\"color:#6fd6b8;text-decoration:none\">openai.com/business/partners</a>。",
+		"three_ws_is_an_independent_member_of": "three.ws 是 OpenAI 合作夥伴網路中 Select 等級的獨立成員。本頁面介紹與 OpenAI 平台整合的 three.ws 產品；它並非 OpenAI 產品，且 OpenAI 除所示的合作夥伴稱號外，不為其背書。OpenAI、ChatGPT 和 OpenAI 合作夥伴網路徽章均為 OpenAI 的商標。欲了解更多關於此網路的資訊，請造訪 <a href=\"https://openai.com/business/partners/\" target=\"_blank\" rel=\"noopener\">openai.com/business/partners</a>。",
 		"transport": "傳輸",
 		"try_it_in_the_browser": "在瀏覽器中試用",
 		"turn_a_generated_avatar_into_a_persistent": "將生成的虛擬替身轉化為可透過 ID 重新載入的持久性具名實體。",
