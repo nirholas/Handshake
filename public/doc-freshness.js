@@ -121,7 +121,10 @@ function injectStyle() {
 .doc-freshness.is-stale .doc-freshness-chip{color:#ff8f6b}
 .doc-freshness.is-conceptual .doc-freshness-chip{opacity:0.62}
 .doc-freshness-text{flex:1 1 240px;min-width:0;opacity:0.78}
-.doc-freshness-link{flex:none;color:inherit;opacity:0.72;text-decoration:none;border-bottom:1px solid currentColor;
+/* The link is a control, not prose, so it cannot be dimmed the way
+   .doc-freshness-text is: at 0.72 it measured 4.01:1 against the banner
+   background, under AA. 0.88 keeps it visibly secondary at 5.4:1. */
+.doc-freshness-link{flex:none;color:inherit;opacity:0.88;text-decoration:none;border-bottom:1px solid currentColor;
 	padding-bottom:1px;transition:opacity .15s ease}
 .doc-freshness-link:hover{opacity:1}
 .doc-freshness-link:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:3px}

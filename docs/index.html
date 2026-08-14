@@ -771,6 +771,14 @@
 				background: transparent !important;
 				padding: 0 !important;
 			}
+			/* atom-one-dark comments ship as #5c6370, which is 3.13:1 against
+			   the code-block background below and fails AA. Comments carry the
+			   explanation in most of our samples, so they get a readable tone
+			   rather than a decorative one. */
+			.hljs-comment,
+			.hljs-quote {
+				color: #7d8496 !important;
+			}
 
 			/* Anchor IDs — offset for fixed header */
 			.docs-content h2[id],

@@ -14,6 +14,10 @@
 	--dlive-line: var(--border, rgba(255, 255, 255, 0.09));
 	--dlive-text: var(--text-body, rgba(224, 224, 224, 0.88));
 	--dlive-muted: var(--text-muted, rgba(224, 224, 224, 0.62));
+	/* Accent-on-accent-wash text. The raw accent over the badge's 14% wash of
+	   itself lands at 3.38:1, under AA for 11.5px type, so badge text steps
+	   away from the wash: toward white on dark, toward ink on light. */
+	--dlive-accent-text: color-mix(in srgb, var(--dlive-accent) 70%, #ffffff);
 	margin: 1.35rem 0;
 	border: 1px solid var(--dlive-line);
 	border-radius: var(--dlive-radius);
@@ -27,6 +31,7 @@
 	--dlive-line: rgba(10, 12, 20, 0.12);
 	--dlive-text: #1b1d24;
 	--dlive-muted: rgba(27, 29, 36, 0.62);
+	--dlive-accent-text: color-mix(in srgb, var(--dlive-accent) 72%, #0a0c14);
 }
 
 /* ── Toolbar ──────────────────────────────────────────────────────────────── */
@@ -55,7 +60,7 @@
 	font-size: 11.5px;
 	font-weight: 650;
 	letter-spacing: 0.02em;
-	color: var(--dlive-accent);
+	color: var(--dlive-accent-text);
 	background: color-mix(in srgb, var(--dlive-accent) 14%, transparent);
 	border: 1px solid color-mix(in srgb, var(--dlive-accent) 32%, transparent);
 	white-space: nowrap;
