@@ -755,9 +755,17 @@ async function loadMore() {
 		);
 	} catch {
 		if (more) more.textContent = 'Load older settlements';
+		toast('Could not load older settlements. Try again.');
 		return;
 	}
-	const { data } = res.ok ? await res.json() : { data: null };
+	if (!res.ok) {
+		// Keep the cursor: a failed page must stay retryable, not silently retire
+		// the button and strand the rest of the ledger behind it.
+		if (more) more.textContent = 'Load older settlements';
+		toast('Could not load older settlements. Try again.');
+		return;
+	}
+	const { data } = await res.json();
 	const host = $('xr-feed');
 	const events = (data?.events || []).filter((e) => !state.seen.has(e.id));
 	if (host && events.length) {

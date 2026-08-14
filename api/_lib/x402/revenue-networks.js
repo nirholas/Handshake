@@ -17,22 +17,25 @@
 // its own explorer and returns null rather than guessing.
 
 import { CHAIN_BY_ID } from '../erc8004-chains.js';
+import { NETWORK_SOLANA_MAINNET, NETWORK_SOLANA_DEVNET } from './solana-networks.js';
 
 // Families we name explicitly. `ids` lists every raw value the ledger may hold
 // for that family: the canonical CAIP-2 id first, then legacy spellings. The
 // table is the single source of truth for both directions (id → family and
-// family → ids), so display and filtering can never disagree.
+// family → ids), so display and filtering can never disagree. The two Solana
+// cluster ids come from solana-networks.js, the rail's one definition of them,
+// so a settlement can never be written under an id this table would not fold.
 const FAMILIES = [
 	{
 		family: 'solana',
 		label: 'Solana',
-		ids: ['solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', 'solana:mainnet', 'solana', 'mainnet'],
+		ids: [NETWORK_SOLANA_MAINNET, 'solana:mainnet', 'solana', 'mainnet'],
 	},
 	{
 		family: 'solana-devnet',
 		label: 'Solana devnet',
 		cluster: 'devnet',
-		ids: ['solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1', 'solana:devnet', 'devnet'],
+		ids: [NETWORK_SOLANA_DEVNET, 'solana:devnet', 'devnet'],
 	},
 	{
 		family: 'solana-testnet',
@@ -49,7 +52,12 @@ const FAMILIES = [
 	},
 	{ family: 'bsc', label: 'BNB Chain', chainId: 56, ids: ['eip155:56', 'bsc', 'bnb'] },
 	{ family: 'ethereum', label: 'Ethereum', chainId: 1, ids: ['eip155:1', 'ethereum'] },
-	{ family: 'arbitrum', label: 'Arbitrum One', chainId: 42161, ids: ['eip155:42161', 'arbitrum'] },
+	{
+		family: 'arbitrum',
+		label: 'Arbitrum One',
+		chainId: 42161,
+		ids: ['eip155:42161', 'arbitrum'],
+	},
 	{ family: 'optimism', label: 'Optimism', chainId: 10, ids: ['eip155:10', 'optimism'] },
 	{ family: 'polygon', label: 'Polygon', chainId: 137, ids: ['eip155:137', 'polygon'] },
 	{
@@ -118,7 +126,14 @@ export function networkIdentity(raw) {
 
 	// Any other Solana reference (a cluster we have not named) is still Solana.
 	if (/^solana:/i.test(id)) {
-		return { id, family: 'solana', label: 'Solana', cluster: null, chainId: null, explorer: null };
+		return {
+			id,
+			family: 'solana',
+			label: 'Solana',
+			cluster: null,
+			chainId: null,
+			explorer: null,
+		};
 	}
 
 	return { id, ...UNKNOWN };

@@ -1,0 +1,80 @@
+
+Detector: reentrancy-balance
+Reentrancy in AgentPayments.buybackTrigger(address,address,address,bytes) (src/AgentPayments.sol#255-298):
+	External call allowing reentrancy:
+	- (ok,None) = swapRouter.call{value: spend}(swapData) (src/AgentPayments.sol#280)
+	Balance read before the call:
+	- agentBefore = IERC20(agentToken).balanceOf(address(this)) (src/AgentPayments.sol#277)
+	Possible stale balance used after the call in a condition:
+	- bought == 0 (src/AgentPayments.sol#290)
+		- stale variable `bought`
+Reentrancy in AgentPayments.buybackTrigger(address,address,address,bytes) (src/AgentPayments.sol#255-298):
+	External call allowing reentrancy:
+	- (ok_scope_0,None) = swapRouter.call(swapData) (src/AgentPayments.sol#284)
+	Balance read before the call:
+	- agentBefore = IERC20(agentToken).balanceOf(address(this)) (src/AgentPayments.sol#277)
+	Possible stale balance used after the call in a condition:
+	- bought == 0 (src/AgentPayments.sol#290)
+		- stale variable `bought`
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities
+
+Detector: reentrancy-eth
+Reentrancy in AgentPayments.buybackTrigger(address,address,address,bytes) (src/AgentPayments.sol#255-298):
+	External calls:
+	- (ok,None) = swapRouter.call{value: spend}(swapData) (src/AgentPayments.sol#280)
+	- (ok_scope_0,None) = swapRouter.call(swapData) (src/AgentPayments.sol#284)
+	External calls sending eth:
+	- (ok,None) = swapRouter.call{value: spend}(swapData) (src/AgentPayments.sol#280)
+	State variables written after the call(s):
+	- acct.tokensBurned += bought (src/AgentPayments.sol#295)
+	AgentPayments._accounts (src/AgentPayments.sol#69) can be used in cross function reentrancies:
+	- AgentPayments.distributePayments(address,address) (src/AgentPayments.sol#226-241)
+	- AgentPayments.getBalances(address,address) (src/AgentPayments.sol#379-386)
+	- AgentPayments.getPaymentStats(address,address) (src/AgentPayments.sol#388-395)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-1
+
+Detector: incorrect-equality
+AgentPayments._settle(address,address,uint256,uint256,uint64,int64,int64,address) (src/AgentPayments.sol#191-218) uses a dangerous strict equality:
+	- received == 0 (src/AgentPayments.sol#202)
+AgentPayments.buybackTrigger(address,address,address,bytes) (src/AgentPayments.sol#255-298) uses a dangerous strict equality:
+	- bought == 0 (src/AgentPayments.sol#290)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dangerous-strict-equalities
+
+Detector: timestamp
+AgentPayments._settle(address,address,uint256,uint256,uint64,int64,int64,address) (src/AgentPayments.sol#191-218) uses timestamp for comparisons
+	Dangerous comparisons:
+	- startTime != 0 && block.timestamp < uint256(uint64(startTime)) (src/AgentPayments.sol#206)
+	- endTime != 0 && block.timestamp > uint256(uint64(endTime)) (src/AgentPayments.sol#207)
+IdentityRegistry.setAgentWallet(uint256,address,uint256,bytes) (src/IdentityRegistry.sol#148-171) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp > deadline (src/IdentityRegistry.sol#154)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+
+Detector: low-level-calls
+Low level call in AgentPayments.buybackTrigger(address,address,address,bytes) (src/AgentPayments.sol#255-298):
+	- (ok,None) = swapRouter.call{value: spend}(swapData) (src/AgentPayments.sol#280)
+	- (ok_scope_0,None) = swapRouter.call(swapData) (src/AgentPayments.sol#284)
+Low level call in AgentPayments.withdraw(address,address,address) (src/AgentPayments.sol#306-331):
+	- (ok,None) = receiver.call{value: amount}() (src/AgentPayments.sol#324)
+Low level call in GreenfieldVault.buy(bytes32,bytes) (src/GreenfieldVault.sol#199-242):
+	- (ok,None) = msg.sender.call{value: refund}() (src/GreenfieldVault.sol#239)
+Low level call in GreenfieldVault.revoke(uint256) (src/GreenfieldVault.sol#291-315):
+	- (ok,None) = msg.sender.call{value: refund}() (src/GreenfieldVault.sol#312)
+Low level call in GreenfieldVault.withdraw() (src/GreenfieldVault.sol#320-327):
+	- (ok,None) = msg.sender.call{value: amount}() (src/GreenfieldVault.sol#324)
+Low level call in IdentityRegistry.withdraw(uint256,address,uint256) (src/IdentityRegistry.sol#241-252):
+	- (ok,None) = recipient.call{value: amountWei}() (src/IdentityRegistry.sol#249)
+Low level call in IdentityRegistry.spend(uint256,address,uint256,string) (src/IdentityRegistry.sol#268-282):
+	- (ok,None) = recipient.call{value: amountWei}() (src/IdentityRegistry.sol#279)
+Low level call in ReputationRegistry.withdrawStake(uint256) (src/ReputationRegistry.sol#189-200):
+	- (ok,None) = address(msg.sender).call{value: amount}() (src/ReputationRegistry.sol#196)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
+
+Detector: missing-inheritance
+IdentityRegistry (src/IdentityRegistry.sol#15-295) should inherit from IIdentityRegistry (src/IIdentityRegistry.sol#14-20)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-inheritance
+
+Detector: naming-convention
+Function IdentityRegistry.DOMAIN_SEPARATOR() (src/IdentityRegistry.sol#292-294) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+. analyzed (44 contracts with 102 detectors), 17 result(s) found

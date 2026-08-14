@@ -15,6 +15,7 @@
 //! ```
 
 use litesvm::LiteSVM;
+use solana_clock::Clock;
 use sha2::{Digest, Sha256};
 use solana_pubkey::Pubkey;
 use std::path::PathBuf;
@@ -75,7 +76,8 @@ pub fn load_program(svm: &mut LiteSVM, program_id: Pubkey, crate_dir: &str, so_n
             path.display()
         )
     });
-    svm.add_program(program_id, &bytes);
+    svm.add_program(program_id, &bytes)
+        .unwrap_or_else(|e| panic!("loading {so_name} into the VM failed: {e:?}"));
 }
 
 /// Derive the associated token account for `(owner, mint)`, the same derivation
@@ -147,6 +149,22 @@ pub fn decode_token_account(data: &[u8]) -> TokenAccountState {
         amount: u64::from_le_bytes(data[64..72].try_into().unwrap()),
         state: data[108],
     }
+}
+
+/// A fixed, realistic wall-clock time for the VM: 2026-01-01T00:00:00Z.
+///
+/// LiteSVM boots with `unix_timestamp == 0`, which no real cluster ever reports.
+/// The programs under test stamp `Clock::get()?.unix_timestamp` into account
+/// state and treat `0` as "not set", so tests must run against a clock that
+/// looks like a real one. Fixed rather than "now" so runs stay reproducible.
+pub const TEST_UNIX_TIMESTAMP: i64 = 1_767_225_600;
+
+/// Point the VM's clock at [`TEST_UNIX_TIMESTAMP`].
+pub fn set_realistic_clock(svm: &mut LiteSVM) {
+    let mut clock = svm.get_sysvar::<Clock>();
+    clock.unix_timestamp = TEST_UNIX_TIMESTAMP;
+    clock.epoch_start_timestamp = TEST_UNIX_TIMESTAMP;
+    svm.set_sysvar(&clock);
 }
 
 /// Borsh-encode a string argument (4-byte little-endian length, then bytes).

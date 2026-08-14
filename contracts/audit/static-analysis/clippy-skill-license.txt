@@ -1,0 +1,12 @@
+src/lib.rs:30:1: warning: unexpected `cfg` condition value: `custom-heap`
+src/lib.rs:30:1: warning: unexpected `cfg` condition value: `solana`
+src/lib.rs:30:1: warning: unexpected `cfg` condition value: `custom-panic`
+src/lib.rs:30:1: warning: unexpected `cfg` condition value: `anchor-debug`
+src/lib.rs:202:10: warning: unexpected `cfg` condition value: `anchor-debug`
+src/lib.rs:219:10: warning: unexpected `cfg` condition value: `anchor-debug`
+src/lib.rs:232:10: warning: unexpected `cfg` condition value: `anchor-debug`
+src/lib.rs:302:10: warning: unexpected `cfg` condition value: `anchor-debug`
+src/lib.rs:334:10: warning: unexpected `cfg` condition value: `anchor-debug`
+src/lib.rs:30:1: warning: use of deprecated method `anchor_lang::prelude::AccountInfo::<'a>::realloc`: Use AccountInfo::resize() instead
+warning: `skill-license` (lib test) generated 17 warnings (17 duplicates)
+warning: `skill-license` (lib) generated 17 warnings (7 duplicates)

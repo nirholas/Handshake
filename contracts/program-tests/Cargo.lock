@@ -1627,10 +1627,10 @@ dependencies = [
 name = "program-tests"
 version = "0.1.0"
 dependencies = [
- "borsh",
  "litesvm",
  "sha2 0.10.9",
  "solana-builtins",
+ "solana-clock",
  "solana-instruction",
  "solana-keypair",
  "solana-program-runtime",

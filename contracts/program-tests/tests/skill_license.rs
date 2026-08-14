@@ -34,16 +34,18 @@ struct License {
 }
 
 fn decode_license(data: &[u8]) -> License {
+    // discriminator 8 | authority 32 | agent_mint 32 | nft_mint 32
+    // | skill_hash 32 | purchase_date 8 | revoked_at 8 | bump 1 | name (4 + len)
     let p = |o: usize| Pubkey::new_from_array(data[o..o + 32].try_into().unwrap());
-    let name_len = u32::from_le_bytes(data[129..133].try_into().unwrap()) as usize;
+    let name_len = u32::from_le_bytes(data[153..157].try_into().unwrap()) as usize;
     License {
         authority: p(8),
         agent_mint: p(40),
         nft_mint: p(72),
-        skill_hash: data[104..136 - 32].try_into().unwrap(),
+        skill_hash: data[104..136].try_into().unwrap(),
         purchase_date: i64::from_le_bytes(data[136..144].try_into().unwrap()),
         revoked_at: i64::from_le_bytes(data[144..152].try_into().unwrap()),
-        skill_name: String::from_utf8(data[133..133 + name_len].to_vec()).unwrap(),
+        skill_name: String::from_utf8(data[157..157 + name_len].to_vec()).unwrap(),
     }
 }
 
@@ -61,6 +63,7 @@ impl Harness {
     /// Boot the VM, load the program, and initialize the singleton marketplace.
     fn new() -> Self {
         let mut svm = LiteSVM::new();
+        set_realistic_clock(&mut svm);
         let program_id = pk(SKILL_LICENSE_ID);
         load_program(&mut svm, program_id, "skill-license", "skill_license.so");
 
@@ -555,6 +558,30 @@ fn a_stranger_cannot_burn_someone_elses_license() {
         h.svm.get_account(&license).is_some_and(|a| !a.data.is_empty()),
         "the license must survive the attempt"
     );
+}
+
+/// SL-6 (negative): a burn must name the mint recorded on the license. Pointing
+/// it at a different license's NFT mint is rejected, so one purchase can never
+/// be used to destroy the token backing another.
+#[test]
+fn burning_with_a_foreign_mint_is_rejected() {
+    let mut h = Harness::new();
+    h.mint("summarize").unwrap();
+    h.mint("render").unwrap();
+
+    let owner = h.owner.insecure_clone();
+    let foreign_mint = h.nft_mint_pda(&owner.pubkey(), &h.agent_mint, "render");
+    let mut ix = h.burn_ix(&owner.pubkey(), &owner.pubkey(), "summarize");
+    ix.accounts[2] = AccountMeta::new(foreign_mint, false);
+
+    let logs = h
+        .send(ix, &owner, &[&owner])
+        .expect_err("a burn naming a foreign mint must be rejected");
+    assert!(
+        logs_have_anchor_error(&logs, "MintMismatch"),
+        "expected MintMismatch, got {logs:?}"
+    );
+    assert_eq!(h.license_of("summarize").revoked_at, 0);
 }
 
 // ── SL-7: the lifetime counter uses checked arithmetic ───────────────────────

@@ -27,8 +27,20 @@
 	left: max(-20%, calc((100% - 100vw) / 2 + 12px));
 	right: max(-20%, calc((100% - 100vw) / 2 + 12px));
 	height: 420px;
-	mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
-	-webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+	mask-image: linear-gradient(
+		to right,
+		transparent,
+		#000 32px,
+		#000 calc(100% - 32px),
+		transparent
+	);
+	-webkit-mask-image: linear-gradient(
+		to right,
+		transparent,
+		#000 32px,
+		#000 calc(100% - 32px),
+		transparent
+	);
 	background:
 		radial-gradient(
 			60% 80% at 20% 0%,

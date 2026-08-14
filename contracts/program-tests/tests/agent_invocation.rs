@@ -26,6 +26,7 @@ struct Harness {
 impl Harness {
     fn new() -> Self {
         let mut svm = LiteSVM::new();
+        set_realistic_clock(&mut svm);
         let program_id = pk(AGENT_INVOCATION_ID);
         load_program(
             &mut svm,
@@ -104,7 +105,7 @@ impl Harness {
     }
 
     /// Send a transaction the invoker does NOT sign, using a separate fee payer.
-    fn send_unsigned_by_invoker(&mut self, ix: Instruction) -> Result<Vec<String>, String> {
+    fn send_unsigned_by_invoker(&mut self, ix: Instruction) -> Result<Vec<String>, Vec<String>> {
         let payer = Keypair::new();
         self.svm.airdrop(&payer.pubkey(), 1_000_000_000).unwrap();
         self.svm.expire_blockhash();
@@ -116,7 +117,7 @@ impl Harness {
         );
         match self.svm.send_transaction(tx) {
             Ok(meta) => Ok(meta.logs),
-            Err(failed) => Err(format!("{:?}", failed.err)),
+            Err(failed) => Err(failed.meta.logs),
         }
     }
 }
@@ -179,12 +180,12 @@ fn unsigned_invoker_is_rejected() {
         "summarize",
         "{}",
     );
-    let err = h
+    let logs = h
         .send_unsigned_by_invoker(ix)
         .expect_err("an unsigned invoker must be rejected");
     assert!(
-        err.contains("Signature") || err.contains("signer"),
-        "expected a missing-signature failure, got {err}"
+        logs_have_anchor_error(&logs, "AccountNotSigner"),
+        "expected AccountNotSigner, got {logs:?}"
     );
 }
 

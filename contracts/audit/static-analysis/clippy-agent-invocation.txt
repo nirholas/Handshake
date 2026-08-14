@@ -1,0 +1,8 @@
+src/lib.rs:16:1: warning: unexpected `cfg` condition value: `custom-heap`
+src/lib.rs:16:1: warning: unexpected `cfg` condition value: `solana`
+src/lib.rs:16:1: warning: unexpected `cfg` condition value: `custom-panic`
+src/lib.rs:16:1: warning: unexpected `cfg` condition value: `anchor-debug`
+src/lib.rs:76:10: warning: unexpected `cfg` condition value: `anchor-debug`
+src/lib.rs:16:1: warning: use of deprecated method `anchor_lang::prelude::AccountInfo::<'a>::realloc`: Use AccountInfo::resize() instead
+warning: `agent-invocation` (lib) generated 13 warnings (9 duplicates)
+warning: `agent-invocation` (lib test) generated 13 warnings (11 duplicates)
