@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { cors, json, method, wrap, error } from './_lib/http.js';
 import { env } from './_lib/env.js';
+import { REGISTERABLE_SCOPES, SUPPORTED_SCOPES } from './_lib/oauth-scopes.js';
 import {
 	paymentRequirements,
 	bazaarExtension,
@@ -162,28 +163,9 @@ function handleOauthAuthServer(req, res) {
 				'client_secret_basic',
 				'client_secret_post',
 			],
-			scopes_supported: [
-				'avatars:read',
-				'avatars:write',
-				'avatars:delete',
-				'profile',
-				'offline_access',
-				// Agent memory MCP tools (remember / recall / forget).
-				'memory:read',
-				'memory:write',
-				// On-chain agent identity MCP tools (register_agent / identity_check).
-				'agents:read',
-				'agents:write',
-				// USE-21 auth-hints: paid endpoints advertise these scopes for
-				// Bearer-token bypass via the auth-hints extension.
-				'read:agent-reputation',
-				'x402:bypass',
-				// Agent wallet MCP (api/mcp-agent): read status, provision a wallet,
-				// and publish a paid endpoint to earn USDC.
-				'wallet:read',
-				'wallet:write',
-				'services:write',
-			],
+			// Everything this AS can issue: the self-registerable scopes plus the
+			// USE-21 auth-hints scopes paid endpoints accept for Bearer bypass.
+			scopes_supported: [...SUPPORTED_SCOPES],
 			service_documentation: `${base}/docs/mcp`,
 			ui_locales_supported: ['en'],
 		},
@@ -202,16 +184,13 @@ function handleOauthProtectedResource(req, res) {
 			authorization_servers: [env.APP_ORIGIN],
 			bearer_methods_supported: ['header'],
 			resource_documentation: `${env.APP_ORIGIN}/docs/mcp`,
-			scopes_supported: [
-				'avatars:read',
-				'avatars:write',
-				'avatars:delete',
-				'profile',
-				'memory:read',
-				'memory:write',
-				'agents:read',
-				'agents:write',
-			],
+			// Exactly what /api/oauth/register will keep for a self-registering
+			// client. A discovery-driven MCP client reads its scope list from
+			// here, so a scope missing from this array is a scope it never asks
+			// for: publishing fewer than the endpoint grants left the whole
+			// agent-wallet server (wallet:read / wallet:write / services:write)
+			// unreachable through the documented flow.
+			scopes_supported: [...REGISTERABLE_SCOPES],
 		},
 		{ 'cache-control': 'public, max-age=300' },
 	);

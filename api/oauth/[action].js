@@ -14,6 +14,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import { z } from 'zod';
 import { parse } from '../_lib/validate.js';
+import { filterRegisterableScope } from '../_lib/oauth-scopes.js';
 
 // ── authorize ─────────────────────────────────────────────────────────────────
 
@@ -51,26 +52,10 @@ function canonicalResource(requested) {
 	return strip(requested) === strip(env.MCP_RESOURCE) ? env.MCP_RESOURCE : null;
 }
 
-// Scopes a dynamically-registered client may request. Anything outside this set
-// (notably privileged scopes like `permissions:redeem`, which authorizes
-// gas-spending on-chain redemption) is silently dropped at registration so a
-// self-registering client can never mint a token carrying it.
-const REGISTERABLE_SCOPES = new Set([
-	'avatars:read', 'avatars:write', 'avatars:delete', 'profile',
-	'memory:read', 'memory:write', 'agents:read', 'agents:write', 'offline_access',
-	// The wallet/services scopes gate the agent-wallet MCP server
-	// (api/mcp-agent). They are registerable because the user approves each one
-	// by name on the consent screen and every spend they authorize is still
-	// bounded by the server-side caps and THREEWS_AGENT_PAY_ENABLED. Omitting
-	// them left wallet_status, pay_and_call, provision_wallet and
-	// monetize_endpoint unreachable for every dynamically-registered client.
-	'wallet:read', 'wallet:write', 'services:write',
-]);
-
-function filterRegisterableScope(requested) {
-	const kept = String(requested || '').split(/\s+/).filter((s) => REGISTERABLE_SCOPES.has(s));
-	return kept.length ? kept.join(' ') : 'avatars:read';
-}
+// The registerable scope set and the filter that enforces it live in
+// ../_lib/oauth-scopes.js, shared with api/wk.js so the scopes this endpoint
+// keeps and the scopes /.well-known/oauth-protected-resource advertises are
+// read from one array and cannot drift apart.
 
 function scopeLabel(s) {
 	const labels = { 'avatars:read': 'Read your avatars', 'avatars:write': 'Create and update avatars', 'avatars:delete': 'Delete your avatars', profile: 'See your name and email', offline_access: 'Stay signed in across sessions', 'memory:read': 'Recall your agents’ memories', 'memory:write': 'Store and forget your agents’ memories', 'agents:read': 'Screen your agents’ identities', 'agents:write': 'Register your agents on-chain', 'wallet:read': 'See your agent wallet balance and spending caps', 'wallet:write': 'Spend USDC from your agent wallet, within your caps', 'services:write': 'Publish paid services that earn USDC to your agent wallet' };
