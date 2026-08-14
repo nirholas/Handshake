@@ -20,7 +20,10 @@ import { sql } from '../_lib/db.js';
 const NETWORKS = new Set(['mainnet', 'devnet']);
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// `origins: '*'` like every other public oracle read: these win rates trace to
+	// on-chain trades anyone can verify, so there is nothing here the default
+	// allowlist is protecting.
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.mcpIp(clientIp(req));

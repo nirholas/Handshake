@@ -35,7 +35,13 @@ export default async function handleAgentStats(req, res) {
 	const params = new URL(req.url, 'http://x').searchParams;
 	const agentId = params.get('agent_id') || '';
 	const network = NETWORKS.has(params.get('network')) ? params.get('network') : 'mainnet';
-	const limit = Math.min(50, Math.max(1, parseInt(params.get('limit') || '20', 10)));
+	// parseInt('abc') is NaN, and Math.max/min propagate it — an unparseable limit
+	// used to reach the SQL `limit NaN`, which the store's read catches into an
+	// empty array. The caller then got a 200 whose summary said 17 actions next to
+	// an empty recent_actions and an empty by_tier. Fall back to the documented
+	// default instead of shipping that contradiction.
+	const limitRaw = parseInt(params.get('limit') || '20', 10);
+	const limit = Number.isFinite(limitRaw) ? Math.min(50, Math.max(1, limitRaw)) : 20;
 
 	if (!isUuid(agentId)) {
 		return json(res, 400, { error: 'invalid_agent_id', message: 'agent_id must be a UUID' });
@@ -66,8 +72,8 @@ export default async function handleAgentStats(req, res) {
 		else if (a.outcome === 'loss') byTier[a.tier].losses++;
 	}
 	for (const t of Object.values(byTier)) {
-		const res = t.wins + t.losses;
-		t.win_rate = res > 0 ? Math.round((t.wins / res) * 100) : null;
+		const resolved = t.wins + t.losses;
+		t.win_rate = resolved > 0 ? Math.round((t.wins / resolved) * 100) : null;
 	}
 
 	return json(res, 200, {

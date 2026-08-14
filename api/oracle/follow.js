@@ -31,6 +31,15 @@ function validateChatId(v) {
 	return typeof v === 'string' && CHAT_ID_RE.test(v.trim());
 }
 
+// JSON bodies are caller-controlled, so a field can arrive as any type. `(v ||
+// '').trim()` blows up on a number or a boolean (`(123).trim is not a function`),
+// which wrap() turns into a 500 for what is plainly a 400 — posting
+// {"agent_id": 12345} answered internal_error. Reduce every field to a string
+// here and let the validators below reject it with the right status.
+function asTrimmedString(v) {
+	return typeof v === 'string' ? v.trim() : '';
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', origins: '*' })) return;
 	const ip = clientIp(req);
@@ -72,8 +81,8 @@ export default wrap(async (req, res) => {
 		const body = await readJson(req).catch(() => null);
 		if (!body) return error(res, 400, 'invalid_json', 'request body must be valid JSON');
 
-		const agentId  = (body.agent_id  || '').trim();
-		const chatId   = (body.chat_id   || '').trim();
+		const agentId  = asTrimmedString(body.agent_id);
+		const chatId   = asTrimmedString(body.chat_id);
 		const network  = NETWORKS.has(body.network) ? body.network : 'mainnet';
 		const minScore = Math.min(100, Math.max(0, Number(body.min_score ?? 54) || 54));
 
@@ -117,8 +126,8 @@ export default wrap(async (req, res) => {
 		const body = await readJson(req).catch(() => null);
 		if (!body) return error(res, 400, 'invalid_json', 'request body must be valid JSON');
 
-		const agentId = (body.agent_id || '').trim();
-		const chatId  = (body.chat_id  || '').trim();
+		const agentId = asTrimmedString(body.agent_id);
+		const chatId  = asTrimmedString(body.chat_id);
 		const network = NETWORKS.has(body.network) ? body.network : 'mainnet';
 
 		if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agent_id must be a UUID');
