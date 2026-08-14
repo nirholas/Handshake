@@ -176,7 +176,7 @@ export function isUuid(value) {
 // interpolated into a `::timestamptz` cast. Postgres rejects anything it cannot
 // parse, so an unvalidated cursor turns a typo into either a 500 (the handler
 // lets the query error bubble) or a permanently empty result (the handler
-// swallows it) — both wrong answers to what is plainly a client fault. Normalize
+// swallows it). Both are wrong answers to what is plainly a client fault. Normalize
 // here: a parseable instant comes back in ISO form, ready to hand straight to
 // the cast; anything else comes back null so the caller can answer 400.
 export function isoTimestamp(value) {
