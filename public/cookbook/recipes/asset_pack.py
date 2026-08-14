@@ -13,7 +13,7 @@ each result, and writes a self-contained gallery you can open in a browser:
 Usage:
 
     python3 asset_pack.py "a clay flower pot" "a woven basket" "a brass watering can"
-    python3 asset_pack.py --prompts prompts.txt --out ./garden-pack --workers 3
+    python3 asset_pack.py --prompts-file prompts.txt --out ./garden-pack --workers 3
 
 Standard library only. No API key, no account.
 

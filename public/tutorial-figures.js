@@ -7,6 +7,7 @@
  *   ![The Forge with a prompt typed in](figure:page:/forge)
  *   ![Michelle, the default rigged avatar](figure:glb:/avatars/michelle.glb)
  *   ![Drag to orbit the model](figure:live:/avatars/michelle.glb)
+ *   ![The chest this recipe built](figure:img:/cookbook/posters/text-to-3d-cli.png)
  *
  * Left alone, marked turns that into <img src="figure:page:/forge">, and the
  * browser immediately tries to fetch it: one guaranteed-failing request per
@@ -25,8 +26,15 @@
  *
  * Every kind has a real fallback, so a missing capture degrades instead of
  * breaking: a model figure falls back to the interactive <model-viewer> of the
- * same GLB, and a page figure falls back to a link card that opens the real
- * page. A tutorial never renders a broken image icon.
+ * same GLB, a page figure falls back to a link card that opens the real page,
+ * and an `img` figure falls back to the committed file it names. A tutorial
+ * never renders a broken image icon.
+ *
+ * The kind list here must match KINDS in scripts/capture-tutorial-media.mjs.
+ * When it did not, every `figure:img:` in the cookbook was parsed as unknown,
+ * mountFigure returned null, and mount() removed the slot: four recipe posters
+ * and a tutorial's figures vanished from the rendered page with nothing in the
+ * console to say so.
  */
 (function () {
 	'use strict';
@@ -78,7 +86,7 @@
 		var colon = body.indexOf(':');
 		if (colon === -1) return null;
 		var kind = body.slice(0, colon);
-		if (kind !== 'page' && kind !== 'glb' && kind !== 'live') return null;
+		if (kind !== 'page' && kind !== 'glb' && kind !== 'live' && kind !== 'img') return null;
 		var rest = body.slice(colon + 1);
 		var q = rest.indexOf('?');
 		return {
@@ -138,7 +146,9 @@
 
 	function buildImage(record, alt) {
 		var frame = el('div', 'tfig-frame tfig-frame-img');
-		frame.style.aspectRatio = record.width + ' / ' + record.height;
+		// An adopted `img` with no capture yet carries a src and nothing else, so
+		// the intrinsic-size box and the blur-up placeholder are both optional.
+		if (record.width && record.height) frame.style.aspectRatio = record.width + ' / ' + record.height;
 		if (record.placeholder) {
 			frame.style.backgroundImage = 'url("' + record.placeholder + '")';
 			frame.classList.add('is-loading');
@@ -146,8 +156,8 @@
 		var img = new Image();
 		img.src = record.src;
 		img.alt = alt;
-		img.width = record.width;
-		img.height = record.height;
+		if (record.width) img.width = record.width;
+		if (record.height) img.height = record.height;
 		img.loading = 'lazy';
 		img.decoding = 'async';
 		img.className = 'tfig-img';
@@ -192,14 +202,20 @@
 		var zoomable = null;
 		var kindBadge = null;
 
+		// An `img` names a file already committed under public/, so it has an
+		// honest fallback of its own: the committed file. Without this it would
+		// fall through to the page card and offer to "open the page" at a .png.
+		var shot = record;
+		if (!shot && directive.kind === 'img') shot = { src: directive.target };
+
 		if (directive.kind === 'live' || (!record && (directive.kind === 'glb' || directive.kind === 'live'))) {
 			var orbit = (record && record.orbit) || directive.params.get('orbit');
 			var frame = el('div', 'tfig-frame tfig-frame-live');
 			frame.appendChild(buildViewer(directive.target, orbit));
 			body.appendChild(frame);
 			kindBadge = badge(ICON_ORBIT, 'Drag to orbit');
-		} else if (record && record.src) {
-			var built = buildImage(record, alt);
+		} else if (shot && shot.src) {
+			var built = buildImage(shot, alt);
 			body.appendChild(built.frame);
 			zoomable = built;
 			kindBadge = badge(ICON_ZOOM, 'Click to enlarge');
@@ -231,7 +247,7 @@
 		if (kindBadge) caption.appendChild(kindBadge);
 		figure.appendChild(caption);
 
-		return { figure: figure, alt: alt, record: record, kind: directive.kind, target: directive.target };
+		return { figure: figure, alt: alt, record: shot, kind: directive.kind, target: directive.target };
 	}
 
 	// ── Lightbox ───────────────────────────────────────────────────────────────

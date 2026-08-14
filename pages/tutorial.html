@@ -1412,7 +1412,26 @@
 					// were already reserved, and nothing below them moves.
 					window.tutorialFigures?.mount(article);
 
-					// Rewrite internal .md links and /docs/* refs so they navigate cleanly
+					// Rewrite the links a tutorial's markdown carries so they navigate
+					// cleanly from /tutorials/<slug>. Every relative href in the file was
+					// written against its real location, docs/tutorials/<slug>.md, so it
+					// has to be resolved against that path and not against the page URL:
+					// "../web-component.md" means docs/web-component.md, and reading it as
+					// a site path sends the reader nowhere. Three destinations exist.
+					const REPO = 'https://github.com/nirholas/three.ws/blob/main';
+					// docs/internal, docs/ops and docs/security stay in the repo and are
+					// filtered out of dist/docs by the copy-static-docs plugin in
+					// vite.config.js, so a tutorial citing one is citing source: send it to
+					// GitHub. Routing it to /docs/ would 404 in production only, because dev
+					// serves the whole docs/ tree off disk.
+					const REPO_ONLY_DOCS = new Set(['internal', 'ops', 'security']);
+					const isRepoOnlyDoc = (abs) =>
+						REPO_ONLY_DOCS.has(abs.slice('/docs/'.length).split('/')[0]);
+					const toRepo = (a, abs, section) => {
+						a.href = REPO + abs + (section ? '#' + section : '');
+						a.target = '_blank';
+						a.rel = 'noopener';
+					};
 					article.querySelectorAll('a[href]').forEach((a) => {
 						const h = a.getAttribute('href');
 						if (
@@ -1422,12 +1441,36 @@
 							h.startsWith('mailto:')
 						)
 							return;
-						if (h.endsWith('.md')) {
-							const rel = h.replace(/^\/docs\//, '').replace(/\.md$/, '');
-							if (rel.startsWith('tutorials/')) {
-								a.href = '/' + rel;
-							} else {
-								a.href = '/docs/#' + rel;
+						// "guide.md#section" is one link, not two: split the heading off so a
+						// cross-doc link that also targets a section reaches the doc AND
+						// scrolls, instead of failing the .md test and rendering unrewritten.
+						const hashAt = h.indexOf('#');
+						const target = hashAt === -1 ? h : h.slice(0, hashAt);
+						const section = hashAt === -1 ? '' : h.slice(hashAt + 1);
+						const base = location.origin + '/docs/tutorials/' + slug;
+						if (target.endsWith('.md')) {
+							const abs = new URL(target, base).pathname;
+							if (!abs.startsWith('/docs/') || isRepoOnlyDoc(abs)) {
+								toRepo(a, abs, section);
+								return;
+							}
+							const doc = abs.slice('/docs/'.length).replace(/\.md$/, '');
+							const path = doc.startsWith('tutorials/')
+								? '/' + doc
+								: '/docs/' + doc;
+							a.href = path + (section ? '#' + section : '');
+							return;
+						}
+						// A relative link to repo source (../../src/agent-avatar.js,
+						// ../../public/animations/clips). Tutorials cite code constantly and
+						// this page serves tutorials, not the tree, so these resolve into
+						// site paths that do not exist. Send them to the file on GitHub.
+						// Site-absolute links (/pose, /docs/img/x.webp) are real routes and
+						// are left alone.
+						if (target.startsWith('.')) {
+							const abs = new URL(target, base).pathname;
+							if (!abs.startsWith('/docs/') || isRepoOnlyDoc(abs)) {
+								toRepo(a, abs, section);
 							}
 						}
 					});
