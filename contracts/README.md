@@ -7,6 +7,10 @@
 > as a local reference implementation — useful if you ever need to fork, audit,
 > or run a private deployment.
 
+> **Reviewing these contracts?** Start at [`AUDIT-README.md`](./AUDIT-README.md):
+> scope, deploy status, where the money is, the invariant ids, and the exact
+> commands that reproduce every coverage and static-analysis number.
+
 Three registries implementing [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) for the `3d-agent` project:
 
 - **IdentityRegistry** — ERC-721 agents with `tokenURI`, delegated wallet (EIP-712), and key/value metadata.

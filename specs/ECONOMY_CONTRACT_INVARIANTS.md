@@ -12,11 +12,8 @@ Read this together with:
 - [`contracts/DEPLOYMENTS.md`](../contracts/DEPLOYMENTS.md) - the deploy-status table: which bytecode is live, at which address, on which chains, and how each address is verified.
 - [`SECURITY.md`](./SECURITY.md) - the abuse vectors against agent registration that sit upstream of these contracts.
 
-A dedicated audit pack (a single review entry point plus a per-contract threat
-model and committed static-analysis findings) is scoped in
-[`prompts/swarm-100/roadmap-p3-contracts-audit-pack.md`](../prompts/swarm-100/roadmap-p3-contracts-audit-pack.md)
-and has not been written yet. Until it lands, this document plus the two files
-above are the review surface.
+- [`ECONOMY_CONTRACT_THREAT_MODEL.md`](./ECONOMY_CONTRACT_THREAT_MODEL.md) - the attacker's-eye companion: assets, actors, and the failure mode each invariant exists to stop.
+- [`contracts/AUDIT-README.md`](../contracts/AUDIT-README.md) - the entry point for a review engagement, with the commands that reproduce every coverage and static-analysis number quoted anywhere in this pack.
 
 ## How to read an invariant
 
@@ -29,7 +26,10 @@ states and **all** callers, not as a description of the happy path. Each one is
 covered by at least one positive test (the property holds when it should) and at
 least one negative test (the property is enforced against a caller who tries to
 break it). The test that proves an invariant names its id in a comment, so
-`grep -rn "AP-7" contracts/test` finds the proof.
+`grep -rn "AP-7" contracts/test` finds the proof for a Solidity contract and
+`grep -rn "SL-3" contracts/program-tests` finds it for a Solana program. The
+Solana proofs run the real compiled bytecode in LiteSVM, not a stub; see
+[`contracts/program-tests/README.md`](../contracts/program-tests/README.md).
 
 Invariants marked **[deployed]** govern bytecode that is already live on a public
 chain (see the deploy-status table in [`contracts/DEPLOYMENTS.md`](../contracts/DEPLOYMENTS.md)). Those are the
@@ -134,6 +134,7 @@ cross-chain on payment. The wire format for the objects it sells is
 | GV-6 | `greenfieldCall` is accepted only from the real PermissionHub and only on the permission channel. Success records the real policy id and marks the sale Granted; failure marks it Failed and clears the purchase guard. |
 | GV-7 | `revoke` is restricted to the sale's seller and to a sale in the Granted state, and it moves the sale to Revoked exactly once. |
 | GV-8 | `buy`, `revoke`, and `withdraw` are non-reentrant, including against cross-function reentrancy from a refund callback. |
+| GV-9 | A PermissionHub request that is declined rather than reverted (a `false` return) fails the whole call. `buy` never credits a seller for a permission that will not be minted, and `revoke` never marks a sale Revoked while the buyer keeps a live grant. |
 
 ## WorldMoves (`WM-*`)
 
