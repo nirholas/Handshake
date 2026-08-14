@@ -503,6 +503,14 @@
 			<description>Anyone signed in can create a tournament and name a prize pool, and nothing ever asked them to deposit it, while the payout itself came from the platform's own prize wallet. That combination meant a made-up prize could be claimed as real money. Prize money is now released only for the platform's own Daily Arena, or for a hosted pool a deployment has explicitly agreed to sponsor up to a set ceiling. Everything else about a hosted competition is unchanged: it still runs, still ranks live, and still gets its result published on-chain. An unfunded prize is refused in the open, with the reason shown on the page, rather than quietly paid or quietly ignored.</description>
 		</item>
 		<item>
+			<title>Two chains that had quietly stopped feeding the cross-chain agent directory are indexing again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Two chains that had quietly stopped feeding the cross-chain agent directory are indexing again</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The agent directory lists agents registered on twenty-two EVM networks, kept current by a job that walks each network's registry in windows of blocks every fifteen minutes. That window grows while a network is behind and shrinks when a node refuses the request, and the two rules deadlocked each other: a refusal recorded the smaller window but left the backlog wide, so the very next run doubled straight back to the size that had just been refused. Two networks sat in that loop indefinitely, reading zero blocks per run while their backlogs grew, and nothing looked wrong because every run still reported success. A refused window is now retried at half the width immediately, inside the same run, so a run that overshoots still delivers blocks instead of nothing. A second fault sat underneath it on one test network, whose configured nodes decline every log query outright, at any width, so no amount of shrinking could ever have helped; that refusal was being misread as a complaint about size. The job now tells the two apart, and that network has been pointed at a node that serves the query. Confirmed over consecutive runs: one network caught fully up, the other began clearing its backlog.</description>
+		</item>
+		<item>
 			<title>We can now tell whether people come back to the agent they minted</title>
 			<link>https://three.ws/docs/analytics-retention</link>
 			<guid isPermaLink="false">2026-08-14:We can now tell whether people come back to the agent they minted</guid>

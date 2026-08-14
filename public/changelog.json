@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T06:21:51.382Z",
+	"generated_at": "2026-08-14T06:25:06.666Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -675,6 +675,17 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Two chains that had quietly stopped feeding the cross-chain agent directory are indexing again",
+			"summary": "The agent directory lists agents registered on twenty-two EVM networks, kept current by a job that walks each network's registry in windows of blocks every fifteen minutes. That window grows while a network is behind and shrinks when a node refuses the request, and the two rules deadlocked each other: a refusal recorded the smaller window but left the backlog wide, so the very next run doubled straight back to the size that had just been refused. Two networks sat in that loop indefinitely, reading zero blocks per run while their backlogs grew, and nothing looked wrong because every run still reported success. A refused window is now retried at half the width immediately, inside the same run, so a run that overshoots still delivers blocks instead of nothing. A second fault sat underneath it on one test network, whose configured nodes decline every log query outright, at any width, so no amount of shrinking could ever have helped; that refusal was being misread as a complaint about size. The job now tells the two apart, and that network has been pointed at a node that serves the query. Confirmed over consecutive runs: one network caught fully up, the other began clearing its backlog.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
