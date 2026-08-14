@@ -3310,6 +3310,12 @@ URL: https://three.ws/docs/onchain-agents
 
 Give every agent a real on-chain identity as an NFT minted into the three.ws Agents collection on Solana. Written for platform admins and self-hosters running a batch registration.
 
+### Docs · Recurring payments
+
+URL: https://three.ws/docs/recurring-payments
+
+Sign one permission, then a fixed USDC amount moves every day or week, or gets swapped into a token on a schedule. The lifecycle, the API, what every kind of failed charge does to a schedule, and the operator config settlement needs.
+
 ### Docs · Permissions and delegation
 
 URL: https://three.ws/docs/permissions

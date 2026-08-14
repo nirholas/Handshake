@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T01:02:56.820Z",
+	"generated_at": "2026-08-14T01:18:44.431Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5462,6 +5462,16 @@
 					"title": "Docs · Deploying agents on-chain in bulk",
 					"description": "Give every agent a real on-chain identity as an NFT minted into the three.ws Agents collection on Solana. Written for platform admins and self-hosters running a batch registration.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/recurring-payments",
+					"title": "Docs · Recurring payments",
+					"description": "Sign one permission, then a fixed USDC amount moves every day or week, or gets swapped into a token on a schedule. The lifecycle, the API, what every kind of failed charge does to a schedule, and the operator config settlement needs.",
+					"added": "2026-08-14",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

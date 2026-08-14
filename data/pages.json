@@ -4235,6 +4235,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/recurring-payments",
+					"title": "Docs · Recurring payments",
+					"description": "Sign one permission, then a fixed USDC amount moves every day or week, or gets swapped into a token on a schedule. The lifecycle, the API, what every kind of failed charge does to a schedule, and the operator config settlement needs.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-14"
+				},
+				{
 					"path": "/docs/permissions",
 					"title": "Docs · Permissions and delegation",
 					"description": "As agents sign transactions, call external APIs, and spend on your behalf, what the agent is allowed to do becomes the central question. The permission model, how delegation is scoped, and how to revoke it.",
