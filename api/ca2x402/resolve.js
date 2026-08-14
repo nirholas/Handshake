@@ -39,8 +39,10 @@ function buildSnippets(endpointUrl) {
 	const curl =
 		`# 1) See the price (returns HTTP 402 + payment requirements)\n` +
 		`curl -i "${endpointUrl}"\n\n` +
-		`# 2) Pay & call in one step with the x402 CLI\n` +
-		`npx x402-fetch "${endpointUrl}"`;
+		`# 2) Pay: sign the requirement from step 1 into a base64 X-PAYMENT header,\n` +
+		`#    then replay the same call with it. The Node tab below builds that\n` +
+		`#    header for you; export it as X_PAYMENT to finish here in curl.\n` +
+		`curl -i -H "X-PAYMENT: $X_PAYMENT" "${endpointUrl}"`;
 
 	const node =
 		`import { wrapFetchWithPayment } from 'x402-fetch';\n` +
