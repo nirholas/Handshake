@@ -12,6 +12,7 @@ import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/
 import { parse, isUuid } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { invalidateSkillPriceCache } from '../_lib/skill-price-cache.js';
 
 const SKILL_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
 const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -160,6 +161,12 @@ export default wrap(async (req, res) => {
 				updated_at          = now()
 		`;
 
+		// Every read path for a skill price goes through the shared price cache
+		// (1h TTL): the embed's skill-access gate, the marketplace detail fetch,
+		// the agent detail GET. Without this the owner's new price is invisible to
+		// buyers until the TTL lapses, so the gate keeps quoting the old amount.
+		await invalidateSkillPriceCache(agent_id);
+
 		const [row] = await sql`
 			SELECT id, skill, currency_mint, chain, amount, is_active,
 			       gate_type, nft_collection_mint, created_at, updated_at
@@ -170,8 +177,12 @@ export default wrap(async (req, res) => {
 		return json(res, existing ? 200 : 201, { price: formatPrice(row) });
 	}
 
-	// DELETE
-	const body = parse(deleteBody, await readJson(req));
+	// DELETE. The row is addressable two ways: a JSON body (API clients, the SDK)
+	// or query parameters. The dashboard's `del()` helper sends neither a body nor
+	// a content-type (src/dashboard-next/api.js), so reading the body alone
+	// answered every "Remove price" click in the monetize and creator pages with
+	// 415 content-type must be application/json, and the button removed nothing.
+	const body = parse(deleteBody, await readDeleteTarget(req));
 	const { agent_id, skill_name: skill, hard } = body;
 
 	const ownership = await verifyAgentOwnership(agent_id, userId);
@@ -197,8 +208,28 @@ export default wrap(async (req, res) => {
 		if (!updated) return error(res, 404, 'not_found', 'Price not found for this skill');
 	}
 
+	await invalidateSkillPriceCache(agent_id);
+
 	return json(res, 200, { deleted: true, agent_id, skill_name: skill });
 });
+
+// Merge the DELETE target from whichever transport the caller used. A JSON body
+// wins over the query string when both carry the same field; a missing field
+// stays `undefined` so the zod schema reports it rather than binding an empty
+// string that would fail as a malformed UUID.
+async function readDeleteTarget(req) {
+	const params = new URL(req.url, 'http://x').searchParams;
+	const sent = (req.headers['content-type'] || '').includes('application/json')
+		? await readJson(req)
+		: null;
+	const body = sent && typeof sent === 'object' ? sent : {};
+	const hardParam = params.get('hard');
+	return {
+		agent_id: body.agent_id ?? params.get('agent_id') ?? undefined,
+		skill_name: body.skill_name ?? params.get('skill_name') ?? undefined,
+		hard: body.hard ?? (hardParam === null ? undefined : hardParam === 'true' || hardParam === '1'),
+	};
+}
 
 function formatPrice(row) {
 	const gateType = row.gate_type === 'nft' ? 'nft' : 'price';

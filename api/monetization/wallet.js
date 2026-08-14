@@ -158,12 +158,21 @@ export default wrap(async (req, res) => {
 		results.push(wallet);
 	}
 
-	// Upsert EVM wallet
+	// Upsert EVM wallet.
+	// 'base' and 'evm' are one rail with two historical chain labels, and the
+	// unique key is (user_id, agent_id, chain), so a user can hold a row under
+	// each: /api/billing/payout-wallets accepts chain 'evm', this endpoint always
+	// writes 'base'. Clearing the default on 'base' alone left the sibling 'evm'
+	// row flagged default too, and both resolvers here and in withdrawals.js order
+	// by `is_default DESC, created_at DESC` before picking the first EVM-rail row.
+	// The newly saved address does not move created_at (the table has no
+	// updated_at), so the older row won the tie and the withdrawal paid out to the
+	// address the owner had just replaced. Clear the whole rail instead.
 	if (evm_address) {
 		await sql`
 			UPDATE agent_payout_wallets
 			SET is_default = false
-			WHERE user_id = ${userId} AND chain = 'base' AND agent_id = ${agent_id}
+			WHERE user_id = ${userId} AND chain IN ('base', 'evm') AND agent_id = ${agent_id}
 		`;
 
 		const [wallet] = await sql`
