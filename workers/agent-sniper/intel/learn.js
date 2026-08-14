@@ -1,9 +1,9 @@
-// Coin Intelligence — the learning loop.
+// Coin Intelligence - the learning loop.
 //
 // Watching is only half of "learns from watching". Here we:
-//   1. labelOutcomes()  — revisit observed coins after the fact and record what
+//   1. labelOutcomes()  - revisit observed coins after the fact and record what
 //      actually happened (graduated / pumped / flat / rugged) as ground truth.
-//   2. trainWeights()   — correlate each launch-time signal with good outcomes
+//   2. trainWeights()   - correlate each launch-time signal with good outcomes
 //      and persist per-signal weights the scorer reads. The dataset grows, the
 //      weights sharpen, the sniper's judgment improves. No black box: weights
 //      are plain correlations anyone can inspect.
@@ -14,7 +14,7 @@
 const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins';
 const FETCH_TIMEOUT_MS = 4_000;
 
-// Signals we train on — all are ~0..1 (or normalized below). Counts are excluded;
+// Signals we train on - all are ~0..1 (or normalized below). Counts are excluded;
 // their information is already captured by the ratio signals.
 export const TRAINABLE_SIGNALS = [
 	'organic_score', 'bundle_score', 'snipe_ratio', 'coordination_score',
@@ -116,7 +116,7 @@ const BUCKET_DIMS = [
  * "good" = graduated or pumped. Baseline = overall fraction that are good.
  * Buckets with < MIN_BUCKET_SIZE samples are omitted (noise, not signal).
  *
- * @param {Array} rows — labeled DB rows (need direct column values)
+ * @param {Array} rows - labeled DB rows (need direct column values)
  * @returns {{ [signal]: { [bucket]: { win_rate, count, baseline_win_rate } } }}
  */
 export function computeConditionalWinRates(rows) {
@@ -214,7 +214,7 @@ export function deriveOutcome(coin, mcSolFirstSeen) {
 
 	// The rugged flag is judged independently of the outcome label. A coin that
 	// pumped 3× and THEN collapsed is still outcome 'pumped' (the learner's
-	// "was buying at first sight good?" question), but it IS rugged — win-rate
+	// "was buying at first sight good?" question), but it IS rugged - win-rate
 	// metrics downstream must not count a spike-then-collapse as a clean win.
 	const rugged = !graduated && (
 		(lastMultiple != null && lastMultiple <= 0.25) ||
@@ -229,6 +229,35 @@ export function deriveOutcome(coin, mcSolFirstSeen) {
 	return { outcome, graduated, rugged, ath_multiple, last_market_cap_usd: usdMc, ath_market_cap_usd: athUsd };
 }
 
+/**
+ * Overlay our OWN graduation ground truth on a derived outcome.
+ *
+ * deriveOutcome reads one source: a live pump.fun coin lookup. That source fails
+ * open to 'unknown' on any hiccup (404, 429, timeout), and it is the only thing
+ * that ever decided whether a coin graduated - even though we independently
+ * index every graduation ourselves into pumpfun_graduations. A mint present in
+ * that feed graduated; that is a fact, not an opinion, and it stays true when
+ * the coin API is rate-limited or has aged the mint out of its index. Applying
+ * it here rescues the single most valuable label from a third party's uptime.
+ *
+ * @param {ReturnType<typeof deriveOutcome>} outcome
+ * @param {{ ath_market_cap?:number, market_cap_usd?:number }|null|undefined} grad
+ *   the pumpfun_graduations row for this mint, if we indexed one.
+ */
+export function applyGraduationTruth(outcome, grad) {
+	if (!grad) return outcome;
+	const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+	return {
+		...outcome,
+		outcome: 'graduated',
+		graduated: true,
+		// A graduated coin is never a rug, same invariant deriveOutcome holds.
+		rugged: false,
+		ath_market_cap_usd: outcome.ath_market_cap_usd ?? num(grad.ath_market_cap),
+		last_market_cap_usd: outcome.last_market_cap_usd ?? num(grad.market_cap_usd),
+	};
+}
+
 // How many pump.fun coin lookups run at once inside labelOutcomes. The coin API
 // tolerates modest parallelism fine; 8 keeps a 500-coin batch under ~30s instead
 // of the serial ~8 minutes that let the labeler drown in the firehose (labels
@@ -236,8 +265,25 @@ export function deriveOutcome(coin, mcSolFirstSeen) {
 // 100-per-15-min loop).
 const LABEL_CONCURRENCY = 8;
 
+// 'unknown' means "the coin API did not answer us", never "this coin had no
+// outcome" - fetchCoin returns null on a 404, a 429, and a timeout alike. The
+// row was still written, and the candidate query only ever looked for coins with
+// NO outcome row, so a single throttled wave used to bury those mints as
+// permanently unjudged: excluded from the wallet graph
+// (recompute-wallet-graph.js filters outcome <> 'unknown') and from the radar's
+// proven-creator query, with nothing that could ever revisit them. These two
+// bounds make 'unknown' provisional instead: retried on a backoff, and only
+// while the coin is young enough that a verdict is still worth having.
+const RELABEL_AFTER_MINUTES = 6 * 60;
+const RELABEL_MAX_AGE_DAYS = 7;
+// Retry budget, ADDED to the caller's limit rather than taken out of it: the
+// primary budget has to outrun a ~30k/day firehose, so retries must never
+// cannibalize it.
+const RELABEL_BUDGET_RATIO = 0.2;
+
 /**
- * Label coins observed ≥ minAgeMinutes ago that have no outcome yet.
+ * Label coins observed ≥ minAgeMinutes ago that have no outcome yet, plus a
+ * bounded tail of coins an earlier run could only mark 'unknown'.
  *
  * Throughput is load-bearing: the firehose adds ~30k coins/day and every one of
  * them needs a verdict for the Oracle/intel learners to have ground truth.
@@ -249,25 +295,64 @@ const LABEL_CONCURRENCY = 8;
  * A deadline bounds the wall clock (the coin API can degrade to per-call
  * timeouts); whatever isn't reached this run is picked up by the next.
  *
- * @returns {Promise<{ labeled: number }>}
+ * @returns {Promise<{ labeled: number, relabeled: number }>}
  */
 export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMinutes = 60, deadlineMs = 180_000 } = {}) {
 	const sql = await getSql();
-	if (!sql) return { labeled: 0 };
+	if (!sql) return { labeled: 0, relabeled: 0 };
 	const startedAt = Date.now();
 
-	const rows = await sql`
-		select i.mint, i.signals, i.category, i.first_seen_at,
-		       wr.creator_count, wr.creator_wins, wr.dump_rate
-		from pump_coin_intel i
-		left join pump_coin_outcomes o on o.mint = i.mint
-		left join wallet_reputation wr on wr.wallet = i.creator and wr.network = i.network
-		where i.network = ${network}
-		  and o.mint is null
-		  and i.first_seen_at <= now() - (${minAgeMinutes} || ' minutes')::interval
-		order by i.first_seen_at asc
-		limit ${Math.max(1, Math.min(2000, limit | 0))}
-	`;
+	const primaryLimit = Math.max(1, Math.min(2000, limit | 0));
+	const retryLimit = Math.max(1, Math.round(primaryLimit * RELABEL_BUDGET_RATIO));
+
+	const [fresh, retries] = await Promise.all([
+		sql`
+			select i.mint, i.signals, i.category, i.first_seen_at,
+			       wr.creator_count, wr.creator_wins, wr.dump_rate
+			from pump_coin_intel i
+			left join pump_coin_outcomes o on o.mint = i.mint
+			left join wallet_reputation wr on wr.wallet = i.creator and wr.network = i.network
+			where i.network = ${network}
+			  and o.mint is null
+			  and i.first_seen_at <= now() - (${minAgeMinutes} || ' minutes')::interval
+			order by i.first_seen_at asc
+			limit ${primaryLimit}
+		`,
+		// Oldest-stamped unknown first, so the retry tail drains FIFO and no coin
+		// is perpetually overtaken.
+		sql`
+			select i.mint, i.signals, i.category, i.first_seen_at,
+			       wr.creator_count, wr.creator_wins, wr.dump_rate
+			from pump_coin_outcomes o
+			join pump_coin_intel i on i.mint = o.mint
+			left join wallet_reputation wr on wr.wallet = i.creator and wr.network = i.network
+			where i.network = ${network}
+			  and o.outcome = 'unknown'
+			  and o.labeled_at <= now() - (${RELABEL_AFTER_MINUTES} || ' minutes')::interval
+			  and i.first_seen_at > now() - (${RELABEL_MAX_AGE_DAYS} || ' days')::interval
+			order by o.labeled_at asc
+			limit ${retryLimit}
+		`,
+	]);
+	const rows = [...fresh, ...retries];
+	const retryMints = new Set(retries.map((r) => r.mint));
+
+	// Our own graduation index - authoritative, and unaffected by whatever the
+	// coin API is doing this minute. One round trip for the whole batch.
+	const gradByMint = new Map();
+	if (rows.length) {
+		try {
+			const grads = await sql`
+				select mint, ath_market_cap, market_cap_usd
+				from pumpfun_graduations
+				where mint = any(${rows.map((r) => r.mint)})
+			`;
+			for (const g of grads) gradByMint.set(g.mint, g);
+		} catch (err) {
+			// Losing the overlay costs accuracy on this batch, never the batch.
+			console.warn('[coin-intel] graduation truth read failed:', err?.message);
+		}
+	}
 
 	// Fetch pump.fun state concurrently in fixed-size waves.
 	const results = [];
@@ -278,11 +363,12 @@ export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMi
 		for (let j = 0; j < wave.length; j++) {
 			const row = wave[j];
 			const mcSol = Number(row.signals?.mc_sol_first_seen) || 0;
-			results.push({ row, o: deriveOutcome(coins[j], mcSol) });
+			results.push({ row, o: applyGraduationTruth(deriveOutcome(coins[j], mcSol), gradByMint.get(row.mint)) });
 		}
 	}
 
 	let labeled = 0;
+	let relabeled = 0;
 	const BATCH = 50;
 	for (let i = 0; i < results.length; i += BATCH) {
 		const batch = results.slice(i, i + BATCH);
@@ -311,6 +397,9 @@ export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMi
 					outcome = excluded.outcome, labeled_at = now()
 			`;
 			labeled += batch.length;
+			// A retry only counts as rescued when it came back with a real verdict;
+			// one that is still 'unknown' just had its backoff re-armed.
+			relabeled += batch.filter((b) => retryMints.has(b.row.mint) && b.o.outcome !== 'unknown').length;
 		} catch (err) {
 			console.warn('[coin-intel] label outcome batch failed:', err?.message);
 			continue;
@@ -349,11 +438,11 @@ export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMi
 			console.warn('[coin-intel] training snapshot batch failed:', err?.message);
 		}
 	}
-	return { labeled };
+	return { labeled, relabeled };
 }
 
 // Pearson correlation of a signal against a binary good/bad label. Returns 0
-// when there's no variance (degenerate) — a 0 weight, i.e. "no information".
+// when there's no variance (degenerate) - a 0 weight, i.e. "no information".
 export function correlation(pairs) {
 	const xs = [], ys = [];
 	for (const [x, y] of pairs) {
