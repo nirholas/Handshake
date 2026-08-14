@@ -221,6 +221,8 @@ export async function activateSubscription(checkout, txSignature, buyerWallet = 
 			    current_period_end = ${end.toISOString()},
 			    payment_method = 'solana',
 			    wallet_address = ${buyerWallet},
+			    chain = ${checkout.chain || 'solana'},
+			    currency_mint = ${checkout.currency_mint},
 			    cancelled_at = NULL
 			WHERE id = ${existing.id}
 			RETURNING id, plan_id, status, current_period_start, current_period_end
@@ -229,10 +231,11 @@ export async function activateSubscription(checkout, txSignature, buyerWallet = 
 		[subscription] = await sql`
 			INSERT INTO creator_subscriptions
 				(plan_id, subscriber_user_id, status, current_period_start, current_period_end,
-				 payment_method, wallet_address)
+				 payment_method, wallet_address, chain, currency_mint)
 			VALUES
 				(${checkout.plan_id}, ${checkout.user_id}, 'active', ${start.toISOString()},
-				 ${end.toISOString()}, 'solana', ${buyerWallet})
+				 ${end.toISOString()}, 'solana', ${buyerWallet},
+				 ${checkout.chain || 'solana'}, ${checkout.currency_mint})
 			RETURNING id, plan_id, status, current_period_start, current_period_end
 		`;
 	}
