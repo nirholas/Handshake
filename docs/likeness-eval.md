@@ -64,11 +64,11 @@ anchors the mapping is linear.
 A missing input is reported as a status, never scored as a zero, because these
 are three different findings that a single low number would hide:
 
-- `captures_unusable` — no input photo contained a findable face. A
+- `captures_unusable`: no input photo contained a findable face. A
   capture-quality problem; nothing can be concluded about the avatar.
-- `render_unusable` — no render contained a findable face. The reconstruction
+- `render_unusable`: no render contained a findable face. The reconstruction
   did not produce something recognisable as a head.
-- `ok` with a low score — the avatar has a face, and it is not this person's.
+- `ok` with a low score: the avatar has a face, and it is not this person's.
 
 `budget_exhausted` is a fourth: a sweep cut short by its time budget covers
 fewer views than a complete one, so its score is withheld rather than compared
@@ -76,12 +76,12 @@ against runs that were not truncated.
 
 ### Secondary readings
 
-- **turn falloff** — head-on cosine minus the worst view's. A pipeline that only
+- **turn falloff**: head-on cosine minus the worst view's. A pipeline that only
   holds up frontally is visible here and in no single-view number.
-- **capture cohesion** — mean pairwise cosine among the input photos. A selfie
+- **capture cohesion**: mean pairwise cosine among the input photos. A selfie
   set whose own photos only agree at 0.5 cannot support a claim about the avatar
   at 0.6.
-- **captures embedded / total** — how much of the input the measurement rests on.
+- **captures embedded / total**: how much of the input the measurement rests on.
 
 ## The models, and why these two
 
@@ -179,10 +179,9 @@ and reason only.
 
 ## Related
 
-- [Selfie to avatar](./selfie-to-avatar.md) — the capture flow being measured
-- [Avatar fidelity program](./avatar-fidelity-program.md) — the tracks this
+- [Selfie to avatar](./selfie-to-avatar.md): the capture flow being measured
+- [Avatar fidelity program](./avatar-fidelity-program.md): the tracks this
   metric scores
-- [Realism quality bench](../data/quality-bench/README.md) — the sibling harness
+- [Realism quality bench](../data/quality-bench/README.md): the sibling harness
   for photorealism
-- [Reconstruction fidelity evaluation](../workers/avatar-reconstruction/eval/README.md)
-  — the geometry-side metric
+- [Reconstruction fidelity evaluation](../workers/avatar-reconstruction/eval/README.md): the geometry-side metric

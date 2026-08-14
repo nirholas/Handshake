@@ -92,8 +92,8 @@
 		const windowSelect = document.getElementById('lk-window');
 
 		const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-		const fmt = (n, d = 2) => (typeof n === 'number' && Number.isFinite(n) ? n.toFixed(d) : '—');
-		const pct = (n) => (typeof n === 'number' && Number.isFinite(n) ? `${(n * 100).toFixed(0)}%` : '—');
+		const fmt = (n, d = 2) => (typeof n === 'number' && Number.isFinite(n) ? n.toFixed(d) : '-');
+		const pct = (n) => (typeof n === 'number' && Number.isFinite(n) ? `${(n * 100).toFixed(0)}%` : '-');
 
 		function scoreClass(score) {
 			if (typeof score !== 'number') return '';
@@ -123,9 +123,9 @@
 					<td class="num ${scoreClass(r.likenessScore)}"><b>${fmt(r.likenessScore)}</b></td>
 					<td class="num">${fmt(r.identityCosine, 3)}</td>
 					<td class="num">${fmt(r.turnFalloff, 3)}</td>
-					<td class="num">${r.capturesEmbedded ?? '—'} / ${r.capturesTotal ?? '—'}</td>
-					<td class="num">${r.viewsScored ?? '—'}</td>
-					<td>${r.scoredAt ? esc(new Date(r.scoredAt).toISOString().slice(0, 16).replace('T', ' ')) : '—'}</td>
+					<td class="num">${r.capturesEmbedded ?? '-'} / ${r.capturesTotal ?? '-'}</td>
+					<td class="num">${r.viewsScored ?? '-'}</td>
+					<td>${r.scoredAt ? esc(new Date(r.scoredAt).toISOString().slice(0, 16).replace('T', ' ')) : '-'}</td>
 				</tr>`).join('');
 		}
 
@@ -159,7 +159,7 @@
 					</div>
 					<div class="lk-cell">
 						<div class="lk-cell-label">Range</div>
-						<div class="lk-cell-value">${fmt(d.minScore)} – ${fmt(d.maxScore)}</div>
+						<div class="lk-cell-value">${fmt(d.minScore)} to ${fmt(d.maxScore)}</div>
 						<div class="lk-cell-note">mean cosine ${fmt(d.meanCosine, 3)}</div>
 					</div>
 					<div class="lk-cell">
@@ -174,7 +174,7 @@
 					</div>
 					<div class="lk-cell">
 						<div class="lk-cell-label">Cost per score</div>
-						<div class="lk-cell-value">${d.meanScoreMs ? `${(d.meanScoreMs / 1000).toFixed(1)}s` : '—'}</div>
+						<div class="lk-cell-value">${d.meanScoreMs ? `${(d.meanScoreMs / 1000).toFixed(1)}s` : '-'}</div>
 						<div class="lk-cell-note">3 renders + embeddings</div>
 					</div>
 				</div>
