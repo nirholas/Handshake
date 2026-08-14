@@ -45,8 +45,12 @@ import path from 'node:path';
 // Pinned to one opencv_zoo commit, not to `main`: a moving ref means a model
 // swap could land in a cron run nobody triggered, and every stored score before
 // it would silently stop being comparable.
+// opencv_zoo keeps its weights in Git LFS, so raw.githubusercontent.com serves
+// the 130-byte pointer file rather than the model. github.com/<repo>/raw/<ref>
+// resolves LFS; the SHA-256 check below is what caught the difference, and is
+// the reason the URL form is worth a comment rather than a silent constant.
 const ZOO_COMMIT = '47534e27c9851bb1128ccc0102f1145e27f23f98';
-const ZOO_RAW = `https://raw.githubusercontent.com/opencv/opencv_zoo/${ZOO_COMMIT}/models`;
+const ZOO_RAW = `https://github.com/opencv/opencv_zoo/raw/${ZOO_COMMIT}/models`;
 
 export const MODELS = {
 	detect: {
