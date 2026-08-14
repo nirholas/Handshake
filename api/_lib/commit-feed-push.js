@@ -5,18 +5,47 @@
 // /api/cron/commit-feed-push on Cloud Scheduler.
 //
 // State (app_settings key `commit_feed_push_telegram`):
-//   { lastSha: string|null }
+//   { lastSha: string|null, lastDate: string|null }
 // The cron walks GitHub's commit list for `main`, finds lastSha, and posts
 // everything newer, oldest-first, so message order matches commit order.
 // On first run (no state yet) it seeds lastSha from the newest commit
 // without posting anything, so deploying this feature never dumps repo
 // history into the channel.
+//
+// Two properties keep the feed honest on a repo that commits in bursts of
+// 20-30 at a time (which this one does, several times a day):
+//
+//   1. The commit list is PAGINATED until lastSha is found, not capped at a
+//      single page. With one page, any gap wider than that page (a burst, or
+//      a few missed ticks) put lastSha out of view, and the lane then reseeded
+//      to HEAD and dropped every commit in between without a trace. On
+//      2026-08-14 that stranded 117 commits: the feed went quiet at 06:45 UTC
+//      and could not have recovered on its own.
+//   2. The per-run cap posts the OLDEST pending commits, not the newest, and
+//      advances state one commit at a time. A backlog bigger than one run
+//      therefore drains in commit order over the following ticks instead of
+//      being skipped.
+//
+// `lastDate` is the fallback ordering key for the case pagination still can't
+// cover (state older than the whole lookback window): selection falls back to
+// "committed after lastDate", so the lane resyncs without either duplicating
+// or silently skipping. CUTOFF_DAYS bounds any catch-up, so a reset can never
+// flood the channel with history.
 
 import { sql } from './db.js';
 
 const REPO = 'nirholas/three.ws';
 const BASE = 'https://three.ws';
 const TELEGRAM_LIMIT = 15; // per run; Bot API allows ~20 msg/min per chat
+const PER_PAGE = 100; // GitHub's maximum for /commits
+// Five pages = 500 commits of catch-up. Comfortably covers a day of this
+// repo's output, so a lane that stalls for a full day still resumes exactly
+// where it left off. A normal tick finds lastSha on page 1 and stops there,
+// so the steady-state cost stays one GitHub request per run.
+const MAX_LOOKBACK_PAGES = 5;
+// Nothing older than this is ever posted, however far behind the state is.
+// A catch-up drains a backlog; it must never replay history.
+const CUTOFF_DAYS = 3;
 const TELEGRAM_PACE_MS = 3500;
 const LOCK_KEY = 'commit_feed_push_lock';
 const LOCK_TTL_S = 240;
@@ -71,27 +100,83 @@ export async function releaseLock() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function fetchRecentCommits() {
+async function fetchCommitPage(page) {
 	const headers = { accept: 'application/vnd.github+json', 'user-agent': 'three.ws-commit-feed' };
 	const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
 	if (token) headers.authorization = `Bearer ${token}`;
-	const res = await fetch(`https://api.github.com/repos/${REPO}/commits?sha=main&per_page=30`, {
-		headers,
-		signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS),
-	});
-	if (!res.ok) throw new Error(`GitHub commits fetch failed (${res.status})`);
+	const url = `https://api.github.com/repos/${REPO}/commits?sha=main&per_page=${PER_PAGE}&page=${page}`;
+	const res = await fetch(url, { headers, signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS) });
+	if (!res.ok) {
+		// An exhausted rate limit and a broken request both surface as 403.
+		// Name the difference: unauthenticated GitHub allows 60 requests/hour
+		// per egress IP, which a shared Cloud Run address can burn through
+		// without this cron doing anything wrong.
+		if (res.headers.get('x-ratelimit-remaining') === '0') {
+			const reset = Number(res.headers.get('x-ratelimit-reset')) * 1000;
+			const until = Number.isFinite(reset) ? new Date(reset).toISOString() : 'unknown';
+			throw new Error(
+				`GitHub rate limit exhausted (resets ${until}); set GITHUB_TOKEN to raise it above 60/hour`,
+			);
+		}
+		throw new Error(`GitHub commits fetch failed (${res.status})`);
+	}
 	return res.json();
 }
 
-// Returns commits newer than `lastSha`, oldest-first. If lastSha is absent
-// from the fetched page (unset, or more than 30 commits stale), returns []
-// and lets the caller reseed from the newest commit instead of flooding the
-// channel with backlog.
-function newCommitsSince(commits, lastSha) {
+// The ordering key GitHub itself sorts /commits by. Author date survives a
+// rebase unchanged and can therefore run backwards through the list, so it is
+// only the fallback.
+export function commitDate(commit) {
+	return commit?.commit?.committer?.date || commit?.commit?.author?.date || '';
+}
+
+// Walks back through the commit list until `lastSha` is in hand, so a gap
+// wider than one page still resolves to an exact resume point. Stops early on
+// the first page that has fallen past the cutoff (nothing older is postable
+// anyway) and on a short page (end of history).
+export async function fetchCommitsSince(lastSha, { getPage = fetchCommitPage, now = Date.now() } = {}) {
+	const oldestPostable = now - CUTOFF_DAYS * 86_400_000;
+	const commits = [];
+	for (let page = 1; page <= MAX_LOOKBACK_PAGES; page++) {
+		const batch = await getPage(page);
+		if (!Array.isArray(batch) || batch.length === 0) break;
+		commits.push(...batch);
+		if (!lastSha) break; // first run seeds from HEAD; one page is plenty
+		if (batch.some((c) => c.sha === lastSha)) return { commits, found: true };
+		if (batch.length < PER_PAGE) break;
+		const oldest = Date.parse(commitDate(batch[batch.length - 1]));
+		if (Number.isFinite(oldest) && oldest < oldestPostable) break;
+	}
+	return { commits, found: lastSha ? commits.some((c) => c.sha === lastSha) : false };
+}
+
+// Returns the commits to post, oldest-first, from a newest-first GitHub list.
+//
+// `found` selects by position, which is exact. Otherwise the state is older
+// than the whole lookback window and `lastDate` selects by commit time, which
+// resyncs without duplicating already-posted commits. With neither, the caller
+// has nothing to anchor to and reseeds.
+export function newCommitsSince(commits, { lastSha, lastDate } = {}, now = Date.now()) {
 	if (!lastSha) return { commits: [], reseed: true };
+	const oldestPostable = now - CUTOFF_DAYS * 86_400_000;
+	const postable = (c) => {
+		const t = Date.parse(commitDate(c));
+		return Number.isFinite(t) && t >= oldestPostable;
+	};
+
 	const idx = commits.findIndex((c) => c.sha === lastSha);
-	if (idx === -1) return { commits: [], reseed: true };
-	return { commits: commits.slice(0, idx).reverse(), reseed: false };
+	if (idx !== -1) {
+		return { commits: commits.slice(0, idx).reverse().filter(postable), reseed: false };
+	}
+	if (!lastDate) return { commits: [], reseed: true };
+
+	const after = Date.parse(lastDate);
+	if (!Number.isFinite(after)) return { commits: [], reseed: true };
+	const newer = commits.filter((c) => {
+		const t = Date.parse(commitDate(c));
+		return Number.isFinite(t) && t > after;
+	});
+	return { commits: newer.reverse().filter(postable), reseed: false, resynced: true };
 }
 
 const escapeHtml = (s) =>
@@ -195,32 +280,56 @@ export async function pushTelegramLane() {
 	const chatId = process.env.TELEGRAM_COMMITS_CHAT_ID || process.env.TELEGRAM_CHANGELOG_CHAT_ID;
 	if (!botToken || !chatId) return { skipped: 'not_configured' };
 
-	const state = (await getState(STATE_KEY)) || { lastSha: null };
-	const commits = await fetchRecentCommits();
+	const state = (await getState(STATE_KEY)) || { lastSha: null, lastDate: null };
+	const { commits, found } = await fetchCommitsSince(state.lastSha);
 	if (commits.length === 0) return { posted: 0 };
 
-	const { commits: pending, reseed } = newCommitsSince(commits, state.lastSha);
+	if (state.lastSha && !found) {
+		console.warn(
+			`[commit-feed] lastSha ${state.lastSha} is outside the last ${MAX_LOOKBACK_PAGES * PER_PAGE} commits; resyncing by commit date`,
+		);
+	}
+
+	const { commits: pending, reseed, resynced } = newCommitsSince(commits, state, Date.now());
 	if (reseed) {
-		await setState(STATE_KEY, { lastSha: commits[0].sha });
+		await setState(STATE_KEY, { lastSha: commits[0].sha, lastDate: commitDate(commits[0]) });
 		return { posted: 0, seeded: true };
 	}
-	if (pending.length === 0) return { posted: 0 };
+	if (pending.length === 0) {
+		// Caught up, or everything still pending has aged past the cutoff.
+		// Either way, pin state to HEAD so the next tick starts from a sha that
+		// is inside the lookback window.
+		if (!found) {
+			await setState(STATE_KEY, { lastSha: commits[0].sha, lastDate: commitDate(commits[0]) });
+		}
+		return { posted: 0, resynced: Boolean(resynced) };
+	}
 
-	const capped = pending.slice(-TELEGRAM_LIMIT);
-	const dropped = pending.length - capped.length;
+	// Oldest-first: a backlog larger than one run drains across the following
+	// ticks in commit order. Taking the newest instead would advance state past
+	// everything older and lose it.
+	const batch = pending.slice(0, TELEGRAM_LIMIT);
+	const backlog = pending.length - batch.length;
+	if (backlog > 0) {
+		console.warn(`[commit-feed] ${backlog} commits still queued after this run; draining ${TELEGRAM_LIMIT}/tick`);
+	}
 
 	let sent = 0;
-	let lastSha = state.lastSha;
+	let { lastSha, lastDate } = state;
 	try {
-		for (const commit of capped) {
+		for (const commit of batch) {
 			await sendTelegram(botToken, chatId, formatTelegramMessage(commit), commitPreviewUrl(commit));
 			lastSha = commit.sha;
+			lastDate = commitDate(commit);
 			sent++;
-			await setState(STATE_KEY, { lastSha });
+			// Written per commit, not per run: a tick killed mid-batch (the Cloud
+			// Run request deadline is shorter than a full paced run) resumes at
+			// the next commit rather than repeating the ones already delivered.
+			await setState(STATE_KEY, { lastSha, lastDate });
 			await sleep(TELEGRAM_PACE_MS);
 		}
 	} catch (err) {
-		return { posted: sent, dropped, error: String(err?.message || err) };
+		return { posted: sent, backlog, error: String(err?.message || err) };
 	}
-	return { posted: sent, dropped };
+	return { posted: sent, backlog, resynced: Boolean(resynced) };
 }

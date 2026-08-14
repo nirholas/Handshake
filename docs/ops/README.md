@@ -13,6 +13,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [livepeer-federation.md](livepeer-federation.md) | Phase 4 compute federation: the Livepeer text-to-image adapter, the measured gateway state, and the recommendation on whether to expand. |
 | [gcp-logs.md](gcp-logs.md) | Production log reading and automated triage tools for the Cloud Run fleet. |
 | [production-log-triage.md](production-log-triage.md) | Known error/warning signature map: what each recurring log signature means and the fix. |
+| [forge-error-triage.md](forge-error-triage.md) | `npm run forge:errors`: which 3D generation failures actually recur, ranked by class and lane over a real window. |
 | [payment-outcomes.md](payment-outcomes.md) | The payment-outcome board (`GET /api/ops/payment-outcomes`): verify-reject, settle-fail, replay, and sponsor-runway signals and how to read them in an incident. |
 | [solana-rpc-lanes.md](solana-rpc-lanes.md) | The Solana RPC tier end to end: one-sweep diagnosis, per-lane method capability, what must rotate vs fail, config traps, recovery. |
 | [llm-lanes.md](llm-lanes.md) | The LLM provider chain end to end: which rungs serve, why the paid ones are dead, how spend is metered, the one-command Claude rollout, and per-lane probes. |

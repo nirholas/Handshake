@@ -4,6 +4,9 @@ import {
 	prettyHeadline,
 	commitPreviewUrl,
 	formatTelegramMessage,
+	commitDate,
+	fetchCommitsSince,
+	newCommitsSince,
 } from '../api/_lib/commit-feed-push.js';
 import commitOg from '../api/commit-og.js';
 
@@ -73,6 +76,118 @@ describe('commitPreviewUrl', () => {
 		expect(u.searchParams.get('t')).toBe('Feature');
 		expect(u.searchParams.get('d')).toBe('add a thing');
 		expect(u.searchParams.get('author')).toBe('nirholas');
+	});
+});
+
+// A newest-first GitHub page, one commit per minute counting backwards from
+// `startMs`, matching the order /commits returns.
+const NOW = Date.parse('2026-08-14T19:00:00Z');
+function history(count, startMs = NOW) {
+	return Array.from({ length: count }, (_, i) => ({
+		sha: `sha${String(i).padStart(4, '0')}`,
+		commit: {
+			message: `fix: commit ${i}`,
+			author: { name: 'nirholas', date: new Date(startMs - i * 60_000).toISOString() },
+			committer: { date: new Date(startMs - i * 60_000).toISOString() },
+		},
+		author: { login: 'nirholas' },
+	}));
+}
+
+describe('fetchCommitsSince', () => {
+	it('pages back until lastSha is found instead of giving up after one page', async () => {
+		const all = history(300);
+		const pages = [];
+		const getPage = async (p) => {
+			pages.push(p);
+			return all.slice((p - 1) * 100, p * 100);
+		};
+		// sha0117 is the 118th commit: page 1 cannot see it, page 2 can.
+		const { commits, found } = await fetchCommitsSince('sha0117', { getPage, now: NOW });
+		expect(found).toBe(true);
+		expect(pages).toEqual([1, 2]);
+		expect(commits.length).toBe(200);
+	});
+
+	it('stops on page one when lastSha is right there', async () => {
+		const all = history(300);
+		const pages = [];
+		const getPage = async (p) => {
+			pages.push(p);
+			return all.slice((p - 1) * 100, p * 100);
+		};
+		const { found } = await fetchCommitsSince('sha0005', { getPage, now: NOW });
+		expect(found).toBe(true);
+		expect(pages).toEqual([1]);
+	});
+
+	it('stops paging once the history falls past the cutoff', async () => {
+		// One commit per hour: page 1 alone reaches back past the 3-day cutoff.
+		const all = history(500, NOW).map((c, i) => {
+			const d = new Date(NOW - i * 3_600_000).toISOString();
+			return { ...c, commit: { ...c.commit, author: { ...c.commit.author, date: d }, committer: { date: d } } };
+		});
+		const pages = [];
+		const getPage = async (p) => {
+			pages.push(p);
+			return all.slice((p - 1) * 100, p * 100);
+		};
+		const { found } = await fetchCommitsSince('sha0499', { getPage, now: NOW });
+		expect(found).toBe(false);
+		expect(pages).toEqual([1]);
+	});
+
+	it('reads a single page when there is no state to resume from', async () => {
+		const pages = [];
+		const getPage = async (p) => {
+			pages.push(p);
+			return history(300).slice((p - 1) * 100, p * 100);
+		};
+		await fetchCommitsSince(null, { getPage, now: NOW });
+		expect(pages).toEqual([1]);
+	});
+});
+
+describe('newCommitsSince', () => {
+	it('returns everything newer than lastSha, oldest-first', () => {
+		const commits = history(10);
+		const { commits: pending, reseed } = newCommitsSince(commits, { lastSha: 'sha0003' }, NOW);
+		expect(reseed).toBe(false);
+		expect(pending.map((c) => c.sha)).toEqual(['sha0002', 'sha0001', 'sha0000']);
+	});
+
+	it('keeps a burst backlog whole rather than dropping it', () => {
+		// The bug this replaces capped at 30 fetched commits and reseeded past
+		// the rest; 117 behind must now come back as 117 pending.
+		const commits = history(200);
+		const { commits: pending, reseed } = newCommitsSince(commits, { lastSha: 'sha0117' }, NOW);
+		expect(reseed).toBe(false);
+		expect(pending.length).toBe(117);
+		expect(pending[0].sha).toBe('sha0116'); // oldest first
+		expect(pending[pending.length - 1].sha).toBe('sha0000');
+	});
+
+	it('falls back to lastDate when lastSha is outside the window', () => {
+		const commits = history(10);
+		const { commits: pending, reseed, resynced } = newCommitsSince(
+			commits,
+			{ lastSha: 'gone-in-a-rebase', lastDate: commitDate(commits[3]) },
+			NOW,
+		);
+		expect(reseed).toBe(false);
+		expect(resynced).toBe(true);
+		expect(pending.map((c) => c.sha)).toEqual(['sha0002', 'sha0001', 'sha0000']);
+	});
+
+	it('never posts commits older than the cutoff', () => {
+		const commits = history(10, Date.parse('2026-08-01T00:00:00Z'));
+		const { commits: pending } = newCommitsSince(commits, { lastSha: 'sha0009' }, NOW);
+		expect(pending).toEqual([]);
+	});
+
+	it('reseeds when there is no anchor at all', () => {
+		expect(newCommitsSince(history(5), { lastSha: null }, NOW).reseed).toBe(true);
+		expect(newCommitsSince(history(5), { lastSha: 'unknown' }, NOW).reseed).toBe(true);
 	});
 });
 
