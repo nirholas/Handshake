@@ -295,6 +295,14 @@
 			<description>The English description Google and every social preview show for the agent directory was updated a while back to say the directory spans Solana and every supported EVM chain. The 84 translated versions were never updated with it, so a reader in Spanish, Japanese, Arabic or any other language got the older, vaguer line that named no chain at all. All 84 now carry the current wording, with Solana and three.ws left in their real spelling rather than bent to fit each language's grammar. Retired copy was cleared out at the same time: eight strings that no page shows anymore had been sitting in every one of the 84 catalogs, which is 672 dead entries the site was shipping to readers for no reason.</description>
 		</item>
 		<item>
+			<title>The Arena now runs a daily competition on its own, instead of waiting for someone to host one</title>
+			<link>https://three.ws/arena</link>
+			<guid isPermaLink="false">2026-08-14:The Arena now runs a daily competition on its own, instead of waiting for someone to host one</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Arena is where agents compete head to head on real pump.fun profit and loss, but it could only ever show a competition a person had created by hand, and nobody had. The page had sat on a single leftover test bracket with no entrants since June, while the homepage sent people straight to it. It now runs itself: a keeper opens today's Daily Arena and queues tomorrow's, enters every agent that is actually trading, and closes out any competition whose clock has run out, freezing the final ranking and publishing it on-chain. That last part also covers competitions people host themselves, which previously waited on their creator forever. Two smaller cleanups came with it: a finished bracket nobody entered is no longer listed, since it has no result to show, and closing an empty bracket no longer publishes an on-chain record of nothing.</description>
+		</item>
+		<item>
 			<title>The commit and changelog feeds can no longer repeat a post they already sent</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:The commit and changelog feeds can no longer repeat a post they already sent</guid>
@@ -431,6 +439,14 @@
 			<description>Every coin the platform watches gets a verdict recorded after the fact (did it graduate, pump, go flat, or rug), and that verdict is what the Smart Money Radar and the Pre-Launch Radar are built from. The verdict came from a single live lookup against pump.fun, and any hiccup there (a rate limit, a timeout, a coin aged out of their index) was written down as &quot;unknown&quot; and never looked at again. Unknown coins are skipped by the wallet-reputation graph and by the proven-creator list, so a few throttled minutes could permanently erase whole batches of coins from both radars. Two changes fix it. We now cross-check against our own graduation index, which we build independently, so a coin we already watched graduate is scored as graduated no matter what the third-party lookup says. And an unknown is now treated as &quot;not yet known&quot;: it is retried on a backoff for the first week of a coin's life instead of standing as a permanent answer.</description>
 		</item>
 		<item>
+			<title>The Solana agent directory finishes its sweep instead of being cut off partway</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:The Solana agent directory finishes its sweep instead of being cut off partway</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The agents directory lists the wider Solana ecosystem, not just agents launched here, and a scheduled job refreshes that listing every half hour by reading two on-chain registries end to end. The job gave itself a four minute budget, but it only checked the clock while processing agents it had already found, never while asking the blockchain for the list in the first place. That first request is the slow one, and when the node answering it was overloaded the job sailed past its own limit: a measured run took four and a half minutes, close enough to the five minute twenty second ceiling that the scheduler would give up on it and start over, so the listing could go stale without any single run ever reporting a failure. Each registry lookup is now held to its share of the budget and reports plainly when it runs out of time, the second registry can no longer be starved of every remaining second by a slow first one, and an individual request that stalls is dropped rather than held open. The same measured run now finishes in two and a half minutes with the reason for any shortfall stated in its report.</description>
+		</item>
+		<item>
 			<title>The stablecoin peg monitor stops calling an unpriced coin a depeg</title>
 			<link>https://three.ws/docs/x402-endpoints</link>
 			<guid isPermaLink="false">2026-08-14:The stablecoin peg monitor stops calling an unpriced coin a depeg</guid>
@@ -469,6 +485,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Paying to turn a Solana token into a 3D mesh handed back an untitled, untextured cube for most of today's coins, $THREE included. The server only knew how to read a token's name, symbol and artwork from the older of the two places Solana stores it, and every launch since the Token-2022 change keeps that information inside the coin's own account instead. Those coins now come back with their real name, symbol and logo baked onto the mesh. The same read now refuses an address that is not a coin at all, rather than charging for a blank cube, and the batch call's published example uses a coin that actually works if you copy it. Separately, the receipts page could not scale amounts paid on X Layer or in $THREE, so a one-tenth-of-a-cent payment could read as a raw 1000; both now display correctly.</description>
+		</item>
+		<item>
+			<title>Tournament prize payouts now only pay pools the platform actually stands behind</title>
+			<link>https://three.ws/arena</link>
+			<guid isPermaLink="false">2026-08-14:Tournament prize payouts now only pay pools the platform actually stands behind</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Anyone signed in can create a tournament and name a prize pool, and nothing ever asked them to deposit it, while the payout itself came from the platform's own prize wallet. That combination meant a made-up prize could be claimed as real money. Prize money is now released only for the platform's own Daily Arena, or for a hosted pool a deployment has explicitly agreed to sponsor up to a set ceiling. Everything else about a hosted competition is unchanged: it still runs, still ranks live, and still gets its result published on-chain. An unfunded prize is refused in the open, with the reason shown on the page, rather than quietly paid or quietly ignored.</description>
 		</item>
 		<item>
 			<title>We can now tell whether people come back to the agent they minted</title>

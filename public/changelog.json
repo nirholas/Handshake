@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T06:12:25.928Z",
+	"generated_at": "2026-08-14T06:17:17.265Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -394,6 +394,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The Arena now runs a daily competition on its own, instead of waiting for someone to host one",
+			"summary": "The Arena is where agents compete head to head on real pump.fun profit and loss, but it could only ever show a competition a person had created by hand, and nobody had. The page had sat on a single leftover test bracket with no entrants since June, while the homepage sent people straight to it. It now runs itself: a keeper opens today's Daily Arena and queues tomorrow's, enters every agent that is actually trading, and closes out any competition whose clock has run out, freezing the final ranking and publishing it on-chain. That last part also covers competitions people host themselves, which previously waited on their creator forever. Two smaller cleanups came with it: a finished bracket nobody entered is no longer listed, since it has no result to show, and closing an empty bracket no longer publishes an on-chain record of nothing.",
+			"link": "/arena",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The commit and changelog feeds can no longer repeat a post they already sent",
 			"summary": "The jobs that deliver commits and changelog entries to the holders' Telegram channel take a lock so two overlapping runs cannot announce the same thing twice, and that lock lasts four minutes. But the calls they make to GitHub and Telegram had no time limit of their own, so a single stalled call could outlive the lock it was holding, let the next run pick the lock up, and post the same commits again. Every outbound call in those jobs is now bounded well inside the lock's lifetime, so the no-duplicates guarantee holds even when an upstream service hangs. The same missing limit is fixed across four other scheduled jobs: the wardrobe catalog audit, the garment job sweep, and the weekly quality benchmark, whose own run budget was previously advisory because it was only ever checked between requests and never during one. A stalled status check no longer fails a generation that is still healthy, and a slow download is no longer reported as a corrupted garment.",
 			"link": "/changelog",
@@ -584,6 +595,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The Solana agent directory finishes its sweep instead of being cut off partway",
+			"summary": "The agents directory lists the wider Solana ecosystem, not just agents launched here, and a scheduled job refreshes that listing every half hour by reading two on-chain registries end to end. The job gave itself a four minute budget, but it only checked the clock while processing agents it had already found, never while asking the blockchain for the list in the first place. That first request is the slow one, and when the node answering it was overloaded the job sailed past its own limit: a measured run took four and a half minutes, close enough to the five minute twenty second ceiling that the scheduler would give up on it and start over, so the listing could go stale without any single run ever reporting a failure. Each registry lookup is now held to its share of the budget and reports plainly when it runs out of time, the second registry can no longer be starved of every remaining second by a slow first one, and an individual request that stalls is dropped rather than held open. The same measured run now finishes in two and a half minutes with the reason for any shortfall stated in its report.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The stablecoin peg monitor stops calling an unpriced coin a depeg",
 			"summary": "The paid peg monitor at /api/x402/stablecoin-health scores every USD-pegged stablecoin against $1. Its upstream feed leaves the price blank for a large minority of the coins it tracks, and the monitor was reading that blank as a price of zero, so 75 coins with no quote at all were reported as fully depegged and shipped in the depeg alert list. They now report a status of unknown with a null price, which cut the alert list from 120 entries to the 46 coins that are genuinely off peg. Two paid endpoints alongside it stopped selling a wrong answer during a database outage: the skill marketplace's most-purchased-skills mode was returning an empty list that read like nobody hired anything, and now fails cleanly before the payment settles, while the spend-session canary reports why its create-and-consume cycle failed instead of an unexplained false.",
 			"link": "/docs/x402-endpoints",
@@ -630,6 +652,17 @@
 			"summary": "Paying to turn a Solana token into a 3D mesh handed back an untitled, untextured cube for most of today's coins, $THREE included. The server only knew how to read a token's name, symbol and artwork from the older of the two places Solana stores it, and every launch since the Token-2022 change keeps that information inside the coin's own account instead. Those coins now come back with their real name, symbol and logo baked onto the mesh. The same read now refuses an address that is not a coin at all, rather than charging for a blank cube, and the batch call's published example uses a coin that actually works if you copy it. Separately, the receipts page could not scale amounts paid on X Layer or in $THREE, so a one-tenth-of-a-cent payment could read as a raw 1000; both now display correctly.",
 			"link": "/docs/x402-endpoints",
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Tournament prize payouts now only pay pools the platform actually stands behind",
+			"summary": "Anyone signed in can create a tournament and name a prize pool, and nothing ever asked them to deposit it, while the payout itself came from the platform's own prize wallet. That combination meant a made-up prize could be claimed as real money. Prize money is now released only for the platform's own Daily Arena, or for a hosted pool a deployment has explicitly agreed to sponsor up to a set ceiling. Everything else about a hosted competition is unchanged: it still runs, still ranks live, and still gets its result published on-chain. An unfunded prize is refused in the open, with the reason shown on the page, rather than quietly paid or quietly ignored.",
+			"link": "/arena",
+			"tags": [
+				"security",
 				"fix"
 			]
 		},

@@ -21674,6 +21674,15 @@
       "tags": [
         "fix"
       ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "The Solana agent directory finishes its sweep instead of being cut off partway",
+      "summary": "The agents directory lists the wider Solana ecosystem, not just agents launched here, and a scheduled job refreshes that listing every half hour by reading two on-chain registries end to end. The job gave itself a four minute budget, but it only checked the clock while processing agents it had already found, never while asking the blockchain for the list in the first place. That first request is the slow one, and when the node answering it was overloaded the job sailed past its own limit: a measured run took four and a half minutes, close enough to the five minute twenty second ceiling that the scheduler would give up on it and start over, so the listing could go stale without any single run ever reporting a failure. Each registry lookup is now held to its share of the budget and reports plainly when it runs out of time, the second registry can no longer be starved of every remaining second by a slow first one, and an individual request that stalls is dropped rather than held open. The same measured run now finishes in two and a half minutes with the reason for any shortfall stated in its report.",
+      "tags": [
+        "fix",
+        "infra"
+      ]
     }
   ]
 }
