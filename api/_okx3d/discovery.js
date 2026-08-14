@@ -51,8 +51,8 @@ function identityBazaarExtension() {
 			structuredContent: {
 				ok: true,
 				job_id: 'idj_abc123',
-				status: 'queued',
-				stage: 'generation',
+				status: 'running',
+				stage: 'generate',
 				eta_seconds: 300,
 				poll_tool: 'identity_status',
 			},
