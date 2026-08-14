@@ -155,10 +155,11 @@ cleanly: a pose that will not solve logs and leaves the warp-only skin in place.
 It runs *after* the geometry morph, since projecting onto the template and then
 morphing would slide the texture off the features it was sampled from.
 
-> **Fixed in this change:** `precompute_uv.py` and `glb_ops` previously read the
-> interleaved head buffer stride-unaware, so `face_uv_map.json` was built on
-> corrupted vertex data. The reader is now stride-aware, which also repairs the
-> Phase-1 texture correspondence.
+> **Every buffer read is stride-aware.** The head's vertex attributes share one
+> interleaved bufferView, so `precompute_uv.py` and `glb_ops` honour
+> `bufferView.byteStride` on every accessor read and write. A stride-unaware read
+> silently interleaves POSITION with NORMAL, which builds `face_uv_map.json` on
+> corrupted vertex data and breaks the Phase-1 texture correspondence too.
 
 ## Licensing — why this stack
 
@@ -186,7 +187,7 @@ each link:
 | **v1 (shipped)** | Real face-shape morph (sparse) | MediaPipe Face Mesh | Apache-2.0 — clean |
 | **v2 (recommended)** | Dense identity geometry, fused via `register_head_to_target` | **MICA + FLAME**, commercial licence from MPI | Paid MPI commercial licence — clean once signed. FLAME's fixed topology + expression basis map straight to ARKit |
 | **v2 (fallback)** | Dense identity, no licence fee | HRN re-based on **FLAME-2023-Open** (CC-BY-4.0) | Clean, but weeks of GPU R&D to retrain the identity regressor |
-| **v2 (texture)** SHIPPED | Projective texturing off the morphed mesh: fills ears, jawline and neck from the *same* photo (10.4% to 37.5% of the head) | none, geometry we already have | Clean; no new model or licence |
+| **v2 (texture)** SHIPPED | Projective texturing off the morphed mesh: fills ears, jawline and neck from the *same* photo (10.5% to 41.1% of the head) | none, geometry we already have | Clean; no new model or licence |
 | **v3 (texture)** | Inpaint what no camera saw (scalp, far cheek) | **Imagen** inpaint on Vertex AI | GCP, pre-approved |
 | **v3** | Drop the RPM-template dependency for a fully-owned body | **Anny** (parametric body) + **ICT-FaceKit** (ARKit-52) + deformation transfer | Anny Apache-2.0 + CC0; ICT-FaceKit + DT MIT — clean |
 

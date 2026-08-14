@@ -129,7 +129,7 @@ Server-side, `complete` runs eight steps in this order, and each one can end the
 | Farm a quest for many collectibles | `(world_line_id, completer_hash)` is unique. One proof per visitor per quest, whether identified by account or device token. |
 | Lift someone else's proof and claim it | The signed bytes include the completer's salted hash, so a proof only ever attests to one visitor. |
 | Mint proofs without the agent | The signing key is the agent's custodial wallet, and the verifier checks against the pubkey captured at creation. |
-| Script the endpoints | Per-IP limits: 15 creates per 10 min, 30 challenges per 5 min, 20 completes per 5 min, 240 public reads per min, 30 fix mints per min. |
+| Script the endpoints | Per-IP limits: 15 creates per 10 min, 30 challenges per 5 min, 20 completes per 5 min, 240 public reads per min, 60 nearby lookups per min, 30 fix mints per min. |
 
 ---
 

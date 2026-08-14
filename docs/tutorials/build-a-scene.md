@@ -159,7 +159,7 @@ When the scene looks right, open **File → Export** and choose a format. For a 
 
 The Export submenu also offers single-object/whole-scene formats for specific pipelines: **OBJ** and **DRC** (these export the *selected* object — select a mesh first), and **PLY**, **STL** (ASCII and binary variants), and **USDZ** for the whole scene. Reach for these only when a downstream tool requires them; for everything on three.ws, **GLB** is the right choice.
 
-The file downloads through your browser. That's your finished scene — re-import it anywhere, [view it in AR](/docs/tutorials/view-in-ar), or hand it to another agent.
+The file downloads through your browser. That's your finished scene: re-import it anywhere, [view it in AR](/tutorials/view-in-ar), or hand it to another agent.
 
 > **Save the editable project too.** Export bakes the scene into a delivery format. To keep working on it later with full editor state, use **File → Save**, which writes a `project.json` you can reopen with **File → Open**. The autosaved browser copy persists between visits, but `project.json` is your portable, backup-able source of truth.
 
@@ -205,8 +205,8 @@ The leverage of [Scene Studio](/scene) is that it's a *real* editor producing a 
 
 ## See also
 
-- [Generate a 3D model from text](/docs/tutorials/text-to-3d) — make GLBs to import here.
-- [Image to 3D](/docs/tutorials/image-to-3d) — turn a photo into a model.
-- [Upload a custom GLB](/docs/tutorials/upload-custom-glb) — bring your own assets in.
-- [View in AR](/docs/tutorials/view-in-ar) — open your exported scene on a phone.
-- [Swap an avatar in the studio](/docs/tutorials/swap-avatar-in-studio) — work with avatars across the editors.
+- [Generate a 3D model from text](/tutorials/text-to-3d): make GLBs to import here.
+- [Image to 3D](/tutorials/image-to-3d): turn a photo into a model.
+- [Upload a custom GLB](/tutorials/upload-custom-glb): bring your own assets in.
+- [View in AR](/tutorials/view-in-ar): open your exported scene on a phone.
+- [Swap an avatar in the studio](/tutorials/swap-avatar-in-studio): work with avatars across the editors.

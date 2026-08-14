@@ -66,7 +66,7 @@ mapping (`TYPE_CATEGORY`) lives in
 |---|---|---|
 | Sales & earnings | `sales` | `skill_purchased`, `asset_purchased`, `sale`, `payment-earned`, `payment_received`, `referral_earned`, `referral_signup`, `referral_reward`, `pump_launch_filled`, `royalty_paid` |
 | Purchases | `purchases` | `skill_purchase_confirmed`, `asset_purchase_confirmed`, `skill_gift_received`, `skill_gift_sent` |
-| Social | `social` | `remix`, `reply`, `embed`, `mention`, `fork`, `follow`, `dm_received`, `agent_review`, `quest_complete` |
+| Social | `social` | `remix`, `reply`, `comment`, `embed`, `mention`, `fork`, `follow`, `dm_received`, `agent_review`, `quest_complete` |
 | In person | `irl` | `irl_interaction`, `irl_reply` |
 | Market alerts | `alerts` | `pump_alert` |
 | Creations | `creations` | `forge_complete`, `forge_failed` |

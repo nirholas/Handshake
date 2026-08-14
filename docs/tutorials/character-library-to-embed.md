@@ -205,7 +205,7 @@ One script tag, one element. Create `index.html`:
   <script
     type="module"
     src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
-    integrity="sha384-qsd2ZiZi75y0AgsaG8CdbA7MwEkqQI8/s04Eiw8ti0NFNbSD+0CpcU331csU01fn"
+    integrity="sha384-qCG5gH4q2+k2Gsf98zs9RFXyN8iezoklCWt63pA2Xk2YF7Onae4rfUwu+oZSqRzN"
     crossorigin="anonymous"
   ></script>
 

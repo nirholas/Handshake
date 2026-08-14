@@ -53,10 +53,16 @@ usable reference: it should show ONE clear physical subject (an object, characte
 creature, or person) that could plausibly be turned into a 3D model.
 
 Reply ONLY with compact JSON, no prose, in exactly this shape:
-{"usable":true|false,"subject":"<2-5 word description>","issue":"none"|"text_screenshot"
-|"multiple_subjects"|"no_clear_subject"|"too_dark_or_blurry"|"abstract_or_diagram"}
+{"usable":true|false,"subject":"<2-5 word description of the main subject, or empty>",
+"issue":"none"|"text_screenshot"|"multiple_subjects"|"no_clear_subject"
+|"too_dark_or_blurry"|"abstract_or_diagram"}
 
-When in doubt, mark usable=true. A borderline photo still reconstructs.
+Mark usable=false ONLY when the image is genuinely unsuitable: a screenshot of
+text/UI (text_screenshot), a busy scene with no single dominant subject
+(multiple_subjects), no recognizable object at all (no_clear_subject), too
+dark/blurry to make out (too_dark_or_blurry), or an abstract pattern/chart/diagram
+(abstract_or_diagram). When in doubt, mark usable=true. A borderline photo still
+reconstructs.
 ```
 
 The model answering that question is **`nvidia/nemotron-nano-12b-v2-vl`**. It returns in **1-2 seconds**. It costs us nothing. And it turned "your 3D model is garbage" into this:
@@ -73,14 +79,16 @@ For a small reference image, `nemotron-nano-12b-v2-vl` consumes roughly **281 pr
 
 Nemotron Nano won on the axis that actually mattered. The 12B VL model is not competing with a frontier model on essay quality. It is being asked whether there is one clear object in a photograph, and that is a question it answers reliably, in 1-2 seconds, for nothing.
 
-Our vision chain, in order:
+Our free vision lanes, in order (from [`api/_lib/vision.js`](../api/_lib/vision.js), which
+the validator above calls):
 
 ```js
 const NVIDIA_VISION_MODELS = [
   'nvidia/nemotron-nano-12b-v2-vl',      // leads: smallest image token footprint
   'meta/llama-3.2-11b-vision-instruct',  // different family = independent failure modes
 ];
-// paid vision-capable backstop appended last, and only if its key is set
+// then our own GCP-credits Vertex Gemini anchor, and a paid vision-capable
+// backstop last, only if its key is set
 ```
 
 Note the comment on line two, because it is the load-bearing design decision in this file. The second lane is a **different model family**, not a bigger checkpoint of the first. A retry against the same family is a re-roll, not a fallback. If Nemotron Nano's failure mode is triggered by an input, Nemotron Super's probably is too. Llama 3.2 Vision fails differently. That is the whole point of having it.

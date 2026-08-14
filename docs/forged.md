@@ -46,7 +46,9 @@ runs as a registry entry inside that loop, and on each run it:
    5,000 distinct prompts, and a per-hour hash walk selects one. Two runs in the
    same hour pick the same prop, which the paid endpoint's idempotency guard
    collapses instead of double-charging.
-2. **Pays `POST /api/x402/forge` for a standard-tier generation.** The payment
+2. **Pays `POST /api/x402/forge` for a standard-tier generation** ($0.15 USDC,
+   the standard-tier price in
+   [api/_lib/forge-tiers.js](../api/_lib/forge-tiers.js)). The payment
    is a real on-chain USDC transfer from the loop's seeder wallet, settled by
    the platform's self-hosted facilitator on Solana mainnet. The same seeder
    wallet is the `x402-ring-payer` signer in the
@@ -92,7 +94,7 @@ The response carries the props plus aggregate stats:
 			"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/nvidia/5ab878cd-513d-4fb6-94b8-d389f7d7e433.glb",
 			"novelty": 0.41,
 			"cluster_id": 3,
-			"price_usdc": 0.05,
+			"price_usdc": 0.15,
 			"payer": "7sk…full base58 wallet…",
 			"payer_short": "7skQxs…9fWn",
 			"tx_sig": "5Yw…settlement signature…",
@@ -104,7 +106,7 @@ The response carries the props plus aggregate stats:
 		"total": 120,
 		"done": 112,
 		"queued": 5,
-		"spent_usdc": 5.6,
+		"spent_usdc": 18,
 		"categories": { "container": 18, "furniture": 15 },
 		"latest_ts": "2026-07-29T14:00:11.000Z"
 	}

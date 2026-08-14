@@ -80,10 +80,10 @@ The same contract as the rest of the platform's money surfaces:
 		"other": { "usd": 234.56, "pct": 19, "count": 5 }
 	},
 	"topAssets": [
-		{ "symbol": "SOL", "usd": 800, "pct": 64.8, "slot": 1, "logo": "…", "id": "native" }
+		{ "symbol": "SOL", "name": "Solana", "usd": 800, "pct": 64.8, "slot": 1, "logo": "…", "id": "native" }
 	],
 	"rows": [
-		{ "id": "…", "symbol": "SOL", "kind": "native", "class": "major", "amount": 4.2, "price": 190.4, "usd": 800, "change24h": 2.1, "sharePct": 64.8 }
+		{ "id": "native", "symbol": "SOL", "name": "Solana", "kind": "native", "class": "major", "amount": 4.2, "price": 190.4, "usd": 800, "change24h": 2.1, "logo": "…", "sharePct": 64.8 }
 	],
 	"tokenCount": 8,
 	"truncated": false,

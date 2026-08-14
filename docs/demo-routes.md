@@ -1,7 +1,7 @@
 # Demo routes
 
 The canonical map of every `/demo/*` and `/demos/*` route as of
-2026-08-05. Update whenever a route is added, removed, or moved.
+2026-08-14. Update whenever a route is added, removed, or moved.
 
 The demo namespace splits in two:
 
@@ -18,8 +18,9 @@ Vite dev-server middleware is in [vite.config.js](../vite.config.js).
 Both must be kept in sync.
 
 Every row below was verified against production (`https://three.ws`)
-with `curl -sIL`, not read from config alone.
-See [Verification notes](#verification-notes-2026-08-05) at the end.
+with `curl -sIL`, not read from config alone. Rows added after that
+sweep are marked in the [Verification notes](#verification-notes-2026-08-05)
+at the end, which also records what each later pass actually checked.
 
 ## Routes
 
@@ -34,6 +35,7 @@ See [Verification notes](#verification-notes-2026-08-05) at the end.
 | `/demo/avatar-os/combined.html` | `public/demo/avatar-os/combined.html` | Studio + selfie shown side-by-side. |
 | `/demos/` | `public/demos/index.html` | Index of all lab demos. |
 | `/demos/3d-home` | `public/demos/3d-home.html` | "Give your AI a body" homepage demo. |
+| `/demos/404.html` | `public/demos/404.html` | Lost-avatar 404 page: she falls in from off-screen, lands on the `0` with a dust splash, and runs offscreen before the redirect fires. Carries its own card in the `/demos/` index and doubles as the lab's not-found page; `noindex`. |
 | `/demos/audio2face` | `public/demos/audio2face.html` | NVIDIA Audio2Face-3D lipsync: type text, hear it in NVIDIA Magpie's voice, watch the avatar's face animate via ARKit blendshapes. |
 | `/demos/avatar-sdk` | `public/demos/avatar-sdk.html` | `@three-ws/avatar` SDK walkthrough. |
 | `/demos/bonding-curve` | `public/demos/bonding-curve.html` | Bonding curve simulator. |
@@ -61,9 +63,13 @@ See [Verification notes](#verification-notes-2026-08-05) at the end.
 | `/demos/voice-clone` | `public/demos/voice-clone.html` | Voice cloning demo. |
 | `/demos/walk-embed-sdk` | `public/demos/walk-embed-sdk.html` | Walk animation embed via SDK. |
 
-`public/demos/404.html` (`/demos/404`) is the lab's designed not-found
-page, not a content demo — the `/demos/` index also embeds it as a
-hidden empty-state. It is intentionally omitted from the table above.
+`public/demos/404.html` does double duty: it is the lab's designed
+not-found page (the `/demos/` index embeds it as a hidden empty-state)
+and a demo in its own right, carrying its own card in the index grid.
+That card is why it is listed in the table above. The extensionless
+`/demos/404` resolves to the same file through the generic rewrite, but
+nothing links it that way and the page is `noindex`, so prefer the
+explicit `.html` form the index card uses.
 
 The legacy `/lipsync`, `/lipsync/mic`, and `/audio2face` shortcuts in
 `vercel.json` still resolve to the `/demos/lipsync-*.html` and
@@ -78,13 +84,16 @@ Single-purpose demos of an avatar reacting to the page. Index hub is
 `/demos/` index. Each page lives at `public/demos/agents/<slug>.html` and
 is served straight from the filesystem at that `.html` path; the
 extensionless `/demos/agents/<slug>` form is a dev-only convenience
-(`vite.config.js` middleware). `vercel.json` has no `/demos/agents/*`
-rewrite, so in production the `.html` form (the one the hub links) is the
-only one that resolves; extensionless agent URLs 404. The routes below
-use the canonical `.html` form.
+(`vite.config.js` middleware). The only `/demos/agents` rule in
+`vercel.json` is the hub rewrite (`/demos/agents` and `/demos/agents/`
+both serve `public/demos/agents/index.html`), so in production the
+`.html` form is the only one that resolves for a sub-demo, which is the
+form the hub links. Extensionless agent slugs 404. The routes below use
+that canonical `.html` form.
 
 | Route | Page file | What it does |
 |---|---|---|
+| `/demos/agents` | `public/demos/agents/index.html` | Hub for the lab below, linked from the `/demos/` index. `/demos/agents/` reaches it too, via the sitewide trailing-slash 301. |
 | `/demos/agents/auto-rig.html` | `public/demos/agents/auto-rig.html` | Auto-rigging an imported mesh. |
 | `/demos/agents/builds-button.html` | `public/demos/agents/builds-button.html` | Agent assembles a CTA button. |
 | `/demos/agents/climb-title.html` | `public/demos/agents/climb-title.html` | Agent climbs the page title. |
@@ -170,14 +179,16 @@ Re-verified against production (`https://three.ws`) with `curl -sIL`:
   `vercel.json` rewrite) and the `.html` form; in-page links use `.html`.
 - All 17 `/demos/agents/<slug>.html` pages return 200. The extensionless
   form 404s in production (dev-only, see the agents section above).
-- **Known production gap:** `/demos/agents` and `/demos/agents/` both
-  404 in production. The generic `/demos/([^/.]+)` rewrite maps
-  `/demos/agents` to the nonexistent `/demos/agents.html`, and the
-  trailing-slash form is 301-normalized to the slashless one before the
-  directory index can resolve. Only `/demos/agents/index.html` serves the
-  hub, yet the `/demos/` index links `/demos/agents/`. The dev server
-  serves both forms (explicit `fileMap` entries in `vite.config.js`), so
-  the breakage is invisible in dev.
+- **The `/demos/agents` hub 404 recorded here is fixed** (2026-08-14).
+  It was a real production gap for as long as the hub existed: the
+  generic `/demos/([^/.]+)` rewrite mapped `/demos/agents` to the
+  nonexistent `/demos/agents.html`, and the trailing-slash form is
+  301-normalized to the slashless one before any directory index can
+  resolve, so the `/demos/` index linked a URL that could not be served.
+  It stayed invisible because the dev server has explicit `fileMap`
+  entries for both forms in `vite.config.js`. `vercel.json` now carries
+  a `/demos/agents` rewrite to `/demos/agents/index.html`, placed above
+  the generic slug rule so it wins. It ships with the next deploy.
 - Directory URLs with a trailing slash (`/demos/`, `/demo/`,
   `/demo/avatar-os/`) return **301** to the slashless form, which serves
   the index with 200.
@@ -187,3 +198,23 @@ Re-verified against production (`https://three.ws`) with `curl -sIL`:
   sub-pages.
 - `/app-demo` and `/avatar-studio-demo` have been removed (pages and
   routes are gone; both 404) and no longer appear in the tables above.
+
+## Later pass (2026-08-14)
+
+Not a production sweep. Every route in the tables was resolved through
+the same route table the server runs (`scripts/lib/page-routing.mjs`
+loads `vercel.json` and `server/index.mjs` serves from it), against the
+files on disk. That catches a route pointing at nothing, which is what
+the agents-hub gap was; it does not catch CDN or revision problems, so
+the 200s above still come from the 2026-08-05 curl sweep.
+
+- All 62 rows resolve to a built file, with two deliberate exceptions:
+  the `/coin` and `/coin/` rows resolve to a 301, and their second
+  column names the redirect target rather than a file.
+- Every `.html` file under `public/demos/` and `public/demo/` now has a
+  row. Two had none: `public/demos/agents/index.html`, covered in prose
+  but absent from the agents table, and `public/demos/404.html`, which
+  was deliberately excluded as "not a content demo" despite carrying its
+  own card in the `/demos/` index grid.
+- The `/demos/<slug>` count is unchanged at 27. The two rows added here
+  are the agents hub and the 404 page, neither of which is a lab slug.

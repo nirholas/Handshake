@@ -108,7 +108,9 @@ The endpoint is an A2MCP service: MCP Streamable HTTP, JSON-RPC `tools/call` ove
 }
 ```
 
-`identity_status` is free, unauthenticated, and needs nothing but the job token (which is HMAC-signed, so it is the only capability required to read a job). Jobs persist for about 30 days. While running:
+`identity_status` is free, unauthenticated, and needs nothing but the job token (which is HMAC-signed, so it is the only capability required to read a job). The token carries no
+expiry, and the job document lives in object storage, so a handle stays pollable. While
+running:
 
 ```json
 {
@@ -205,3 +207,4 @@ Two environment overrides help a batch run outlast the rig lane's rate-limit bac
 - [Viewer](./viewer.md): the `/viewer` surface the `viewer_url` deep link opens.
 - [MCP servers](./mcp.md): the wider set of three.ws MCP endpoints this one follows the transport conventions of.
 - [Avatar Engines Atlas](./avatar-engines.md): what engine families exist for building human avatars, and which of them are wired into the commercial pipeline.
+- [Draft agent mint](./draft-agent-mint.md): the inactive on-chain identity minted for every finished reconstruction, Solana first with ERC-8004 alongside it.

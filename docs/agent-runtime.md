@@ -103,9 +103,12 @@ curl -s https://three.ws/api/agent/guard \
   }'
 ```
 
-Response: one verdict per call, each with `decision`, `blockedBy`, a per-layer trace
-(`layers`), `warnings`, `blindSpots`, `coverageScore`, and `modifiedArguments` when the
-engine recommends safer parameters (the chat client applies these before executing).
+Response: `{ "engine": "@three-ws/agent-runtime", "verdicts": [...] }`, one entry per call,
+each `{ identifier, apiName, verdict }`. The verdict always carries `decision`, `reason`, a
+per-layer trace (`layers`), `warnings`, `blindSpots`, `coverageScore`, and `totalElapsedMs`.
+Two fields appear only when they apply: `blockedBy` (plus a `code`) names the layer that
+refused a `block`, and `modifiedArguments` carries safer parameters when the engine
+recommends them (the chat client applies those before executing).
 
 Body fields: `calls[]` (each: `identifier`, `apiName`, `arguments`, optional `valueUsd`,
 `protocol`, `destination`, `token`, `interventionConfig`, `executionPath`, `x402`), plus

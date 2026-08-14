@@ -35,8 +35,10 @@ curl -s https://three.ws/api/avatar/render | jq 'keys'
 ```
 
 ```json
-["endpoint", "description", "parameters", "poses", "scenes", "example"]
+["description", "endpoint", "example", "parameters", "poses", "scenes"]
 ```
+
+(`jq 'keys'` sorts alphabetically. Use `jq 'keys_unsorted'` if you want the order the endpoint actually emits.)
 
 That response is the machine-readable source of truth, which matters more than it sounds: it means a code generator, an LLM tool definition, or a build script never has to hardcode a list that can drift. Look at the camera presets:
 
@@ -90,10 +92,15 @@ curl -s https://three.ws/api/avatars/featured \
 ```
 81a076b6-55ff-49a2-b007-1d88e7dce2aa  ansem-with-animation
 bea9f0b9-3442-4544-84df-912989e86211  Boss Vernington
+4f00c120-b3af-4f2b-9e0c-f34a71df8d37  Boss Vernington
 13f259c7-7024-4d68-b1f0-dbbf52c06209  Michelle
-9c192f82-059f-44b3-b21d-100583c743fd  LittlestTokyo
 a4bad2f5-8a07-43cf-82e5-b6ba1314441e  Selfie Girl
+9c192f82-059f-44b3-b21d-100583c743fd  LittlestTokyo
+3cbc5b19-bb36-4658-a569-d0c2f7cb6dab  Horse
+72bc0b6d-7888-4923-a532-16b0b4d7b58b  CZ
 ```
+
+That list is live and its order changes as avatars are featured, so read it rather than pasting it. Two names can repeat with different IDs, because a name is a label and the UUID is the identity.
 
 Two of those get used throughout this tutorial, and the difference between them is the single most important practical fact on this page:
 

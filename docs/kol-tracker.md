@@ -4,7 +4,7 @@ The KOL Tracker ranks Solana KOLs by realized P&L computed from their own wallet
 
 Page: [/tracker](https://three.ws/tracker)
 
-API: `/api/kol/tracker` (the board), with sibling reads `/api/kol/leaderboard`, `/api/kol/trades`, and `/api/kol/wallets` from the same dispatcher.
+API: `/api/kol/tracker` (the board), with sibling reads `/api/kol/leaderboard`, `/api/kol/wallets`, and `/api/kol/trades`.
 
 ## Why it exists
 
@@ -46,7 +46,7 @@ Each integration degrades honestly: a missing key or an upstream outage yields a
 
 ## API
 
-All reads are public, CORS-open, and IP rate-limited (600 requests per minute per IP; over that returns 429). The dispatcher is `api/kol/[action].js`.
+All reads are public, CORS-open, and IP rate-limited (600 requests per minute per IP; over that returns 429). `tracker`, `leaderboard`, `wallets`, and the admin import share one dispatcher, `api/kol/[action].js`; `/api/kol/trades` is served by its own exact file, `api/kol/trades.js`, which wins on filesystem precedence.
 
 ### `GET /api/kol/tracker`
 

@@ -60,7 +60,9 @@ Three layers behind it:
 {
 	"address": "…",
 	"family": "solana",
+	"ts": "2026-08-06T20:00:00.000Z",
 	"activity": {
+		"family": "solana",
 		"tx_count": 342, "days_active": 61, "account_age_days": 410,
 		"last_active_days": 1, "unique_tokens": 12, "chains_active": 1,
 		"contract_interactions": null, "volume_usd": null,

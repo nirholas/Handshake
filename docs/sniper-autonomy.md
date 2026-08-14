@@ -58,19 +58,21 @@ so anything that does not pass a tier is unchanged.
 ### 2. Which fields the optimizer may touch at all
 
 Every tier can tune stops, take-profit, hold time, the quality and oracle floors,
-and position size. Reaching `trusted` unlocks four more:
+and position size. Reaching `trusted` unlocks five more (`TIER_UNLOCKS` in
+[`api/_lib/sniper-autonomy.js`](../api/_lib/sniper-autonomy.js)):
 
 - `llm_min_confidence`: a profitable judge earns a lower bar, so it acts on more
   of what it sees instead of passing on launches it would have won.
 - `min_market_cap_usd` / `max_market_cap_usd`: a wider hunting ground, widened
   outward only. An arm with no band set is already unrestricted and nothing here
   will restrict it.
-- `initials_out_multiple`, the proactive
+- `initials_out_multiple` / `moonbag_min_pct`, the proactive
   [take-initials ladder](./trading-experiment.md): recover the stake as soon as
-  the position hits 2x rather than waiting for an exit to trigger. Turned on only
-  for an arm whose winners demonstrably run past its average exit. Note this is
-  only the *early* recovery: never fully selling a winner is fleet-wide policy
-  that applies at every tier, ladder or no ladder.
+  the position hits 2x rather than waiting for an exit to trigger, and size the
+  moon bag that keeps riding. Turned on only for an arm whose winners
+  demonstrably run past its average exit. Note this is only the *early*
+  recovery: never fully selling a winner is fleet-wide policy that applies at
+  every tier, ladder or no ladder.
 
 `autonomous` adds `max_creator_launches`, so a proven arm can test whether a
 prolific creator is really a bad one.

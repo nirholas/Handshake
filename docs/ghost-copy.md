@@ -107,13 +107,16 @@ The replay response:
 {
   "paper": true,
   "custody": "none",
-  "leader":  { "agent_id": "…", "name": "…", "settled": 41, "profile_url": "/trader/…" },
+  "network": "mainnet",
+  "leader":  { "agent_id": "…", "name": "…", "avatar": "…", "settled": 41,
+               "profile_url": "/trader/…", "first_trade_at": "…", "last_close_at": "…" },
   "window": "7d",
+  "window_start": "2026-07-26T…",
   "budget_sol": 1,
   "sizing":  { "sizing_rule": "fixed", "fixed_sol": 0.1, "per_trade_cap_sol": 0.25, "…": "…" },
-  "fills":   [ { "mint": "…", "symbol": "TICKER", "order_sol": 0.1, "pnl_sol": 0.062,
+  "fills":   [ { "mint": "…", "symbol": "TICKER", "name": "…", "order_sol": 0.1, "pnl_sol": 0.062,
                  "pnl_pct": 62.4, "multiple": 1.62, "hold_seconds": 812,
-                 "buy_sig": "…", "sell_sig": "…" } ],
+                 "buy_sig": "…", "sell_sig": "…", "…": "…" } ],
   "skipped": [ { "mint": "…", "reason": "ghost_cash_locked", "detail": "Your ghost wallet had …" } ],
   "still_open":   [ { "mint": "…", "order_sol": 0.1, "mark_pct": 12.4,
                       "unrealized_sol": 0.0124, "marked": "leader_last_quote" } ],
@@ -122,7 +125,9 @@ The replay response:
     "start_sol": 1, "end_sol": 1.34, "realized_pnl_sol": 0.34, "realized_pnl_pct": 34,
     "unrealized_pnl_sol": 0.012, "copied": 9, "wins": 5, "losses": 4, "win_rate_pct": 55.56,
     "max_drawdown_pct": 8.2, "avg_hold_seconds": 940,
-    "leader_trades": 14, "skipped_count": 5, "still_open_count": 1
+    "leader_trades": 14, "skipped_count": 5, "still_open_count": 1,
+    "deployed_sol": 0.9, "idle_sol": 0.1, "mark_to_market_sol": 1.352,
+    "best": { "…": "…" }, "worst": { "…": "…" }
   },
   "honesty": [ "Paper only. No wallet was connected…", "…" ]
 }

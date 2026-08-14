@@ -236,17 +236,23 @@ Poor AR performance almost always traces to model size or geometry complexity. A
 **Optimization tools:**
 
 ```bash
-# Draco compress and optimize with gltf-transform (WebXR only — may break Quick Look/Scene Viewer)
-npx @gltf-transform/cli optimize model.glb optimized.glb --draco
+# Draco compress and optimize with gltf-transform (WebXR only; may break Quick Look/Scene Viewer)
+npx @gltf-transform/cli optimize model.glb optimized.glb --compress draco
 
-# Lossless optimization (safe for all three AR methods)
-npx @gltf-transform/cli optimize model.glb optimized.glb
+# Geometry left uncompressed and unsimplified (safe for all three AR methods)
+npx @gltf-transform/cli optimize model.glb optimized.glb --compress false --simplify false
 
 # Resize textures
 npx @gltf-transform/cli resize model.glb small.glb --width 1024 --height 1024
 ```
 
-> **Draco and Quick Look / Scene Viewer:** Draco-compressed GLBs require the Three.js Draco decoder — Quick Look and Scene Viewer don't include one, so they may refuse to load Draco GLBs. If you want AR across all three methods, compress with basis/KTX2 textures only, and leave geometry uncompressed.
+> **`optimize` compresses by default.** With no `--compress` flag it writes
+> `EXT_meshopt_compression` + `KHR_mesh_quantization`, and `--simplify` is on by
+> default too, so a bare `optimize` is neither lossless nor loadable by Quick
+> Look and Scene Viewer. Pass `--compress false --simplify false` for the
+> all-methods-safe output above.
+
+> **Draco and Quick Look / Scene Viewer:** Draco-compressed GLBs require the Three.js Draco decoder. Quick Look and Scene Viewer don't include one, so they may refuse to load Draco GLBs. If you want AR across all three methods, compress with basis/KTX2 textures only, and leave geometry uncompressed.
 
 ---
 
@@ -456,7 +462,7 @@ How this link ships through ChatGPT end to end (the app connector, the custom GP
 
 - [AR on the homepage](https://three.ws/#home-ar) — live demo with real Forge models
 - [Blog: See Your 3D Avatar in the Real World](https://three.ws/blog/see-your-3d-in-ar) — full walkthrough
-- [Avatar AR page](/avatars/:id/ar) — the dedicated AR experience for any avatar
+- Avatar AR page at `/avatars/<id>/ar`: the dedicated AR experience for any saved avatar. Open it from any avatar's **AR** tab, or start from [AR Forge](/ar).
 - [Walk feature](/features/walk) — WebXR immersive walk mode (different from placement AR)
 - [Web component reference](/docs/web-component): full `<agent-3d>` attribute list
 - [Embedding guide](/docs/embedding) — iframe setup with XR permissions

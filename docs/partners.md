@@ -17,7 +17,7 @@ Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquir
 | Amazon Web Services | Cloud | `/aws` | [AWS Marketplace](./aws-marketplace.md), [listing kit](./aws-marketplace-listing-kit.md), [partner spotlight](./aws-partner-spotlight.md) |
 | Google Cloud | Cloud | `/blog/three-ws-google-cloud-partnership` | [Production runbook](./ops/gcp-production.md), [credits plan](./ops/gcp-credits-plan.md), [model workers](./ops/gcp-model-workers.md) |
 | Alibaba Cloud | Cloud | `/blog/three-ws-alibaba-cloud-partnership` | [Listings and distribution](./listings.md), [the model router](./brain.md) |
-| NVIDIA | Inception | `/docs/nvidia-inception` | [NVIDIA Inception](./nvidia-inception.md), [NVIDIA models](./nvidia-models.md), [Nemotron spotlight](./nvidia-nemotron-spotlight.md) |
+| NVIDIA | Inception | `/nvidia` | [NVIDIA Inception](./nvidia-inception.md), [NVIDIA models](./nvidia-models.md), [Nemotron spotlight](./nvidia-nemotron-spotlight.md) |
 | HackerNoon | Media | `/blog/three-ws-hackernoon-partnership` | [Syndication](./syndication.md), [Listings and distribution](./listings.md) |
 | Quicknode | Infrastructure | `/blog/three-ws-quicknode-startup-program` | [Solana integration](./solana.md), [Listings and distribution](./listings.md) |
 

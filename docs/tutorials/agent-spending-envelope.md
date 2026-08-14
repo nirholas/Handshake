@@ -141,6 +141,12 @@ curl -s $BASE/api/x402/rate-limit-probe | jq '{
       "amount": "1000",
       "asset": "<the Solana USDC mint>",
       "feePayer": true
+    },
+    {
+      "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+      "amount": "10000000",
+      "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+      "feePayer": true
     }
   ],
   "what": "Rate-Limit Capacity Probe - pay $0.001 USDC to learn how many more calls the x402 autonomous loop can make to a target endpoint..."
@@ -149,8 +155,9 @@ curl -s $BASE/api/x402/rate-limit-probe | jq '{
 
 Three things to read off that:
 
-- **`amount` is in atomic units**, and USDC has 6 decimals, so `1000` is $0.001. A session's `max_per_tx_usd` is expressed in dollars, so the cap you want here is anything above `0.001`.
-- **The accept must be on a `solana...` network** and must carry `extra.feePayer`. `POST /api/pay/execute` settles on Solana only. An endpoint that offers no Solana option fails with `no_solana_accept` and your budget is never touched.
+- **`amount` is in atomic units**, and USDC has 6 decimals, so `1000` is $0.001. A session's `max_per_tx_usd` is expressed in dollars, so the cap you want here is anything above `0.001`. Do not size the cap from the second entry: that is the same endpoint priced in $THREE, and a session never pays it.
+- **The accept must be on a `solana...` network** and must carry `extra.feePayer`. `POST /api/pay/execute` settles on Solana only. When an endpoint advertises more than one Solana accept, execute picks the one whose `asset` is the Solana USDC mint, so the USDC price is the one your budget is charged. An endpoint that offers no Solana option fails with `no_solana_accept` and your budget is never touched.
+- **A Solana accept can disappear for a while.** An endpoint drops its Solana entries whenever the platform's fee-payer sponsor cannot co-sign (for example while its wallet sits under its SOL settle floor), leaving only Base accepts. That is a transient operational state, not a change in the endpoint's price: retry the probe rather than re-plumbing the tutorial onto another chain.
 - **The service fee payer covers the Solana transaction fee.** Your budget is charged the payment amount and nothing else.
 
 This same endpoint answers a genuinely useful question (how much x402 capacity is left before a rate limit bites), which is why it makes a good first purchase instead of a throwaway. Browse more at [/bazaar](/bazaar), or read the [x402 protocol doc](/docs/x402.md) for how the challenge is constructed.

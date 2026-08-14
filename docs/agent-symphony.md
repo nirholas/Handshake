@@ -47,14 +47,15 @@ visualization, and its own mute button in the legend.
 |---|---|---|
 | `money` | `payment`, `agora-earned` | A plucked triangle wave with a sine shimmer one octave up, 0.8s decay. |
 | `bass` | `coin-buy` | A sine one octave below the note's pitch that glides down another octave over half a second. Whale buys are felt, not just heard. |
-| `bell` | `agent-deploy`, `agent-onchain`, `member-join`, `agora-registered` | An FM bell: sine carrier with an inharmonic partial at the classic 2.76 bell ratio, 1.4s ring. |
-| `arp` | `level-up`, `world-join`, `mission-complete`, `agora-task-posted`, `agora-hired`, `agora-task-claimed`, `agora-task-completed`, `agora-vouched` | The actor's stable three-note ascending motif, plucked at 90ms intervals. |
+| `bell` | `agent-deploy`, `agent-onchain`, `member-join`, `agora-registered`, `agora-arena-lost` | An FM bell: sine carrier with an inharmonic partial at the classic 2.76 bell ratio, 1.4s ring. |
+| `arp` | `level-up`, `world-join`, `mission-complete`, `agora-task-posted`, `agora-hired`, `agora-task-claimed`, `agora-task-completed`, `agora-vouched`, `agora-arena-entered`, `agora-guild-joined`, `agora-guild-contributed` | The actor's stable three-note ascending motif, plucked at 90ms intervals. |
 | `alarm` | `agent-guard`, `agora-flagged` | Two short square waves a minor second apart: deliberate dissonance for safety refusals and flagged proofs. |
-| `jackpot` | `jackpot` | A sawtooth glissando through a resonant bandpass filter, rising two octaves, with sparkle plucks of the actor's motif on top. |
+| `jackpot` | `jackpot`, `agora-arena-won` | A sawtooth glissando through a resonant bandpass filter, rising two octaves, with sparkle plucks of the actor's motif on top. |
 
 Any feed type without a mapping falls back to the `bell` voice, so a new
 `ALLOWED_TYPES` entry is audible on day one; give it a proper voice mapping in
-`TYPE_TO_CATEGORY` when you add one.
+`TYPE_TO_CATEGORY` when you add one. `war-result` is the one allow-listed type
+riding that fallback today.
 
 ### Pitch, loudness, and identity
 

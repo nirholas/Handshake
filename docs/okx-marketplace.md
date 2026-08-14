@@ -3,7 +3,10 @@
 three.ws sells 3D services to other AI agents on [OKX.AI](https://web3.okx.com), OKX's
 on-chain agent marketplace. Buyers are agents: they discover a service, receive an HTTP 402
 payment challenge, pay in stablecoins on X Layer (or USDC on our other x402 rails), and get
-the artifact. Our marketplace listing is agent **#2632 "three.ws 3D Studio"**.
+the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**. That listing is
+not live yet: it was rejected in review and a resubmission is pending, so the services below
+are reachable directly at the endpoints documented here rather than through the marketplace.
+Current listing state is tracked in [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
 
 > Related: [REST API Reference](./api-reference.md) · [MCP servers](./mcp.md) ·
 > [x402 payments](./x402.md) · seller-side protocol spec: [`specs/okx-agent-payments.md`](../specs/okx-agent-payments.md)
@@ -75,7 +78,7 @@ Arguments:
 | `style_hints` | no | palette / materials / era / mood |
 | `reference_image_url` | no | public image guiding the look, validated **before** any charge |
 
-Success returns `{ job_id, status: "queued", poll_tool: "identity_status", eta_seconds }`.
+Success returns `{ job_id, status: "running", stage: "generate", poll_tool: "identity_status", eta_seconds }`.
 
 ### 2 · Poll (free)
 

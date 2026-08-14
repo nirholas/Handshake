@@ -501,7 +501,7 @@ Pagination is opt-in and backward compatible:
       "license": "Mixamo"
     }
   ],
-  "total": 106,
+  "total": 107,
   "generated_at": "2026-07-01T00:00:00.000Z"
 }
 ```
@@ -552,7 +552,7 @@ for the full parameter table.
       "source": "polyhaven"
     }
   ],
-  "total": 0,
+  "total": 511,
   "generated_at": "2026-07-01T00:00:00.000Z"
 }
 ```

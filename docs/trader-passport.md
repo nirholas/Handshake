@@ -50,12 +50,17 @@ The response:
   "kind": "threews.tradescore.v1",
   "issuer": {
     "name": "three.ws",
+    "kind": "threews.tradescore.v1",
     "attester": "<ISSUER_PUBKEY>",
+    "attester_url": "https://solscan.io/account/<ISSUER_PUBKEY>",
     "memo_program": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
-    "cadence": "daily"
+    "cadence": "daily",
+    "note": "Scores are re-derived from on-chain fills and committed …"
   },
   "status": "attested",
+  "unattested_reason": null,
   "credential": {
+    "kind": "threews.tradescore.v1",
     "signature": "<TX_SIGNATURE>",
     "slot": 300123456,
     "block_time": "2026-06-14T09:00:00.000Z",
@@ -63,16 +68,22 @@ The response:
     "window": "all",
     "attester": "<ISSUER_PUBKEY>",
     "subject": "<BASE58_WALLET>",
+    "agent_id": "<uuid>",
+    "revoked": false,
     "well_formed": true,
     "schema_problems": [],
-    "snapshot": { "score": 78, "closed": 41, "win_rate": 0.61, "realized_pnl_sol": 12.5, "self_dealing_excluded": 2 },
+    "snapshot": { "score": 78, "closed": 41, "win_rate": 0.61, "realized_pnl_sol": 12.5, "self_dealing_excluded": 2, "…": "…" },
     "explorer_url": "https://solscan.io/tx/<TX_SIGNATURE>"
   },
   "credential_age_days": 1,
   "history": [{ "day": "2026-06-14", "score": 78, "signature": "<TX_SIGNATURE>" }],
   "live": { "score": 81, "closed": 44, "win_rate": 0.58, "realized_pnl_sol": 10.25 },
   "drift": { "moved": true, "fields": { "score": { "attested": 78, "live": 81, "delta": 3 } } },
-  "verify": { "url": "https://three.ws/api/trader-passport/verify?signature=<TX_SIGNATURE>&network=mainnet" }
+  "verify": {
+    "url": "https://three.ws/api/trader-passport/verify?signature=<TX_SIGNATURE>&network=mainnet",
+    "how": "Fetch the attestation transaction from any Solana RPC, read the SPL-Memo payload, …"
+  },
+  "generated_at": "2026-06-15T09:02:11.418Z"
 }
 ```
 
@@ -93,8 +104,14 @@ This endpoint reads **no three.ws database**. It fetches the transaction from a 
 5. the signer matches the `attester` you pinned, and the subject matches the `wallet` you passed.
 
 ```json
-{ "valid": true, "found": true, "attester": "<ISSUER_PUBKEY>", "subject": "<BASE58_WALLET>",
-  "slot": 300123456, "block_time": "2026-06-14T09:00:00.000Z", "payload": { "score": 78 }, "reasons": [] }
+{ "valid": true, "found": true, "network": "mainnet", "signature": "<TX_SIGNATURE>",
+  "attester": "<ISSUER_PUBKEY>", "subject": "<BASE58_WALLET>",
+  "slot": 300123456, "block_time": "2026-06-14T09:00:00.000Z",
+  "payload": { "score": 78, "…": "…" }, "reasons": [],
+  "explorer_url": "https://solscan.io/tx/<TX_SIGNATURE>",
+  "kind": "threews.tradescore.v1",
+  "memo_program": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+  "checked_at": "2026-06-15T09:02:11.418Z" }
 ```
 
 Every failed check appears in `reasons[]`, so `valid: false` always says why. `wallet` and `attester` are optional; omit them and you get the on-chain facts without the equality checks. An RPC that is unreachable returns a `502 rpc_failed` error rather than a false `valid: false`: an unanswered question is not a negative verdict.

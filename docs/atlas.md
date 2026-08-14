@@ -1,6 +1,6 @@
 # Atlas: one keystroke to anywhere
 
-three.ws has more than 650 public routes. Atlas is the layer that makes that
+three.ws has more than 700 public routes. Atlas is the layer that makes that
 navigable instead of overwhelming.
 
 Press **Cmd+K** (Ctrl+K on Windows and Linux) on any page of the site. A search
@@ -45,9 +45,9 @@ Query: "get paid"
 
   Get paid per API call
   Meter any endpoint with x402 and let other agents pay to use it.
-    1. Wire the paywall in x402 Studio.              -> /x402/studio
-    2. Follow the worked example end to end.         -> /tutorials/paid-x402-endpoint
-    3. Watch the receipts and revenue come in.       -> /x402-revenue
+    1. Wire the paywall in x402 Studio.                        -> /x402/studio
+    2. Follow the worked example of a paid endpoint end to end. -> /tutorials/paid-x402-endpoint
+    3. Watch the receipts and revenue come in.                 -> /x402-revenue
 ```
 
 Tasks appear above page results and only on a real signal (an exact-ish match on

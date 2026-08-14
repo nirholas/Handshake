@@ -34,7 +34,7 @@ Compose one at **[three.ws/choreograph](https://three.ws/choreograph)**. This pa
 | `loop` | `true` restarts the routine instead of ending it. Use it for waiting states, not greetings. |
 | `steps` | 1 to 24 beats, played back to back in order. |
 | `steps[].slot` | One of the 19 gesture slots ([the vocabulary](animations.md#agent-slots)). Required. |
-| `steps[].clip` | Optional. Pins this step to one specific clip instead of letting the slot resolve. `null` is the normal case. |
+| `steps[].clip` | Optional. Pins this step to one specific clip instead of letting the slot resolve. `null` is the normal case. Naming the slot's own platform default is stored as `null`, because pinning today's default would freeze the step against a later remap. |
 | `steps[].hold` | How long the beat occupies the timeline, 0.2 to 20 seconds. Defaults to 1.6. |
 | `steps[].speed` | Playback rate, 0.25 to 3. A step at `2` occupies half its `hold` on the timeline. |
 
@@ -198,7 +198,7 @@ Name|slot:hold[*speed][@clip],slot:hold,…
 
 - `Welcome|wave:2,nod:1.2` gives two beats
 - `Slow%20clap|celebrate:3*0.5` plays at half speed
-- `Encore|dance:4@rumba` pins a specific clip
+- `Encore|dance:4@av-offabean-dance` pins a specific clip (naming the slot's default instead, `@rumba`, stores `null` and leaves the slot resolving)
 - `Waiting~loop|patience:3,fidget:2.4` sets `loop` via the `~loop` suffix on the name
 
 `encodeRoutine()` and `decodeRoutine()` in the runtime module are the canonical implementations. A malformed link throws with the reason rather than dropping steps quietly, and the studio shows that reason instead of silently loading something else.
