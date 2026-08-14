@@ -112,17 +112,34 @@ export default wrap(async (req, res) => {
 	// single aggregate row, so assign it directly. Array-destructuring a plain
 	// row object (or the null/undefined the catch/empty-result yields) throws
 	// "(intermediate value) is not iterable" and 500s the endpoint.
+	//
+	// Two windows, deliberately: entries are counted on when the agent acted,
+	// resolutions on when they settled. A conviction position routinely takes
+	// days or weeks to resolve, so windowing wins/losses/PnL on acted_at made
+	// them structurally 0 forever (an action old enough to have settled had
+	// already aged out of its own window). pnl_sample reports how many settled
+	// rows actually carry a realized figure, so a caller can tell "flat" apart
+	// from "nothing measured".
 	const summary = await sql`
 		select
-			count(*)                                             as total,
-			count(*) filter (where mode = 'live')               as live_count,
-			count(*) filter (where outcome = 'win')             as wins,
-			count(*) filter (where outcome = 'loss')            as losses,
-			coalesce(sum(realized_pnl_sol) filter (where realized_pnl_sol is not null), 0) as total_pnl_sol,
-			count(distinct agent_id)                            as agent_count
+			count(*) filter (where acted_at > now() - interval '7 days')   as total,
+			count(*) filter (where mode = 'live'
+			                   and acted_at > now() - interval '7 days')   as live_count,
+			count(*) filter (where outcome = 'win'
+			                   and settled_at > now() - interval '7 days') as wins,
+			count(*) filter (where outcome = 'loss'
+			                   and settled_at > now() - interval '7 days') as losses,
+			coalesce(sum(realized_pnl_sol) filter (
+				where realized_pnl_sol is not null
+				  and settled_at > now() - interval '7 days'), 0)          as total_pnl_sol,
+			count(*) filter (where realized_pnl_sol is not null
+			                   and settled_at > now() - interval '7 days') as pnl_sample,
+			count(distinct agent_id) filter (
+				where acted_at > now() - interval '7 days')                as agent_count
 		from oracle_watch_actions
 		where network = ${network}
-		  and acted_at > now() - interval '7 days'
+		  and (acted_at > now() - interval '7 days'
+		       or settled_at > now() - interval '7 days')
 	`.then((r) => r[0]).catch(() => null);
 
 	return json(res, 200, {
@@ -135,6 +152,7 @@ export default wrap(async (req, res) => {
 			wins:        Number(summary.wins)        || 0,
 			losses:      Number(summary.losses)      || 0,
 			total_pnl_sol: Number(summary.total_pnl_sol) || 0,
+			pnl_sample:  Number(summary.pnl_sample)  || 0,
 			agent_count: Number(summary.agent_count) || 0,
 		} : null,
 	}, { 'cache-control': 'public, max-age=15, s-maxage=30' });
