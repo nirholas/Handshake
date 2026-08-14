@@ -161,20 +161,40 @@ const TICKER_WORDS = new Map([
 	['tether', 'USDT'], ['usdt', 'USDT'], ['usdc', 'USDC'], ['avalanche', 'AVAX'],
 	['avax', 'AVAX'], ['polkadot', 'DOT'], ['chainlink', 'LINK'], ['litecoin', 'LTC'],
 	['polygon', 'MATIC'], ['tron', 'TRX'], ['shiba inu', 'SHIB'], ['shib', 'SHIB'],
-	['sui', 'SUI'], ['aptos', 'APT'], ['near', 'NEAR'], ['arbitrum', 'ARB'], ['optimism', 'OP'],
-	['pepe', 'PEPE'], ['bonk', 'BONK'], ['aave', 'AAVE'], ['uniswap', 'UNI'], ['maker', 'MKR'],
+	['sui', 'SUI'], ['aptos', 'APT'], ['arbitrum', 'ARB'],
+	['pepe', 'PEPE'], ['bonk', 'BONK'], ['aave', 'AAVE'], ['uniswap', 'UNI'],
 	['stellar', 'XLM'], ['monero', 'XMR'], ['cosmos', 'ATOM'], ['filecoin', 'FIL'],
 	['hedera', 'HBAR'], ['injective', 'INJ'], ['celestia', 'TIA'], ['jito', 'JTO'],
 	['jupiter', 'JUP'], ['worldcoin', 'WLD'], ['toncoin', 'TON'], ['hyperliquid', 'HYPE'],
+]);
+
+// Projects whose bare name is ALSO an ordinary English or finance word. They
+// were in the wordlist above and tagged the language, not the coin: "near"
+// turned every "near-term profit booking" note into NEAR Protocol (the archive's
+// trending strip ranked NEAR third on the strength of it), "optimism" tagged
+// every hopeful Fed headline as OP, and "maker" tagged every market maker as
+// MKR. A false ticker is expensive here — it pins a price widget to an unrelated
+// story, skews trending, and lets a non-crypto article through the display gate
+// on the strength of a detected ticker — so these count only when the text names
+// the project rather than uses the word. A cashtag ($NEAR) still matches via the
+// pass above, and crypto-native coverage of these three reliably qualifies them.
+const QUALIFIED_TICKER_PHRASES = new Map([
+	['near protocol', 'NEAR'], ['near foundation', 'NEAR'],
+	['optimism network', 'OP'], ['optimism mainnet', 'OP'], ['op mainnet', 'OP'],
+	['op token', 'OP'], ['optimism collective', 'OP'],
+	['makerdao', 'MKR'], ['maker dao', 'MKR'], ['maker protocol', 'MKR'], ['mkr', 'MKR'],
 ]);
 
 export function extractTickers(text) {
 	const found = new Set();
 	const t = String(text || '');
 	for (const m of t.matchAll(/\$([A-Z][A-Z0-9]{1,9})\b/g)) found.add(m[1]);
-	const lower = ` ${t.toLowerCase().replace(/[^a-z0-9$ ]/g, ' ')} `;
+	const lower = ` ${t.toLowerCase().replace(/[^a-z0-9$ ]/g, ' ').replace(/\s+/g, ' ')} `;
 	for (const [word, sym] of TICKER_WORDS) {
 		if (lower.includes(` ${word} `)) found.add(sym);
+	}
+	for (const [phrase, sym] of QUALIFIED_TICKER_PHRASES) {
+		if (lower.includes(` ${phrase} `)) found.add(sym);
 	}
 	return [...found].slice(0, 8);
 }

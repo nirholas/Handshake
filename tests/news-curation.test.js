@@ -57,6 +57,45 @@ describe('isCryptoRelevant', () => {
 		expect(isCryptoRelevant({ source_key: BROAD_KEY, title: 'Inflation cools, stocks rally, GDP revised up' })).toBe(false);
 	});
 
+	// Regression: the lexicon was matched as raw substrings, so "defi" fired
+	// inside "defied" and three Economic Times equities headlines led the crypto
+	// feed and the daily digest. Every entry here is an ordinary English word
+	// that contains a lexicon term but is not about crypto.
+	it('does not match a lexicon term buried inside an ordinary word', () => {
+		const notCrypto = [
+			'FIIs dumped nearly Rs 1 lakh crore worth of these 10 stocks but 8 defied the selloff',
+			'Budget deficit widens as spending climbs',
+			'The definition of a recession is contested',
+			'Protesters show defiance outside parliament',
+			'Whether the Fed cuts in September is still unclear',
+			'Together, the two firms employ 40,000 people',
+		];
+		for (const title of notCrypto) {
+			expect(isCryptoRelevant({ source_key: BROAD_KEY, title, tickers: [] })).toBe(false);
+		}
+	});
+
+	// The other half of the same change: whole-word matching must not start
+	// dropping real crypto coverage, including the prefix families and the
+	// hyphenated compounds the beat is written in.
+	it('still matches whole words, prefix families, plurals, and hyphenated compounds', () => {
+		const crypto = [
+			'Cryptocurrency exchange volumes surge',
+			'Cryptoassets draw institutional flows',
+			'Tokenized treasuries pass $5B',
+			'Blockchain-based settlement goes live',
+			'Wallet-to-wallet transfers are now instant',
+			'DAOs vote on a treasury policy',
+			'NFTs return to volume growth',
+			'On-chain volume hits a record',
+			'Tether clears its first KPMG audit',
+			'USDC supply hits a record high',
+		];
+		for (const title of crypto) {
+			expect(isCryptoRelevant({ source_key: BROAD_KEY, title, tickers: [] })).toBe(true);
+		}
+	});
+
 	it('falls back to the content test for an unknown source key', () => {
 		expect(isCryptoRelevant({ source_key: 'not_in_registry', title: 'Bitcoin surges' })).toBe(true);
 		expect(isCryptoRelevant({ source_key: 'not_in_registry', title: 'A weather report' })).toBe(false);

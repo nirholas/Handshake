@@ -14,6 +14,10 @@
 //   (none)                      → the latest recorded stories + corpus stats
 //
 // Lightweight rows by default; add &full=1 for the extracted body + coins.
+//
+// Every row this endpoint serves carries real extracted body text. A story the
+// extraction ladder could not read is not knowledge, so it never appears here
+// and its id answers 404 rather than a headline-only shell.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -25,6 +29,16 @@ import { suppression, isSuppressed, excerptParagraphs } from '../_lib/news-right
 // same rights boundary the reader uses applies on the way out: withdrawn
 // stories are dropped entirely, and `paragraphs` is capped to a lead excerpt.
 // Callers wanting the whole article follow `url` to the publisher.
+// A row only belongs in the grounding corpus if it actually carries extracted
+// body text. Zero-content rows are the residue of a story every extraction
+// rung refused (a paywall, a bot wall, or a link that was never an article):
+// they hold a headline and nothing an agent can reason over, and they are the
+// shape a drive-by write to /api/news/article leaves behind. Filtered here so
+// the corpus already on disk is clean on the way out, not just from now on.
+function hasBody(record) {
+	return Number(record?.content_chars) > 0;
+}
+
 function publicRecord(record) {
 	if (!record) return record;
 	if (!Array.isArray(record.paragraphs)) return record;
@@ -53,7 +67,7 @@ export default wrap(async (req, res) => {
 		const sup = suppression({ id });
 		if (sup) return error(res, 410, 'removed', 'this story was withdrawn at the rightsholder’s request');
 		const record = await getExtraction(id);
-		if (!record) return error(res, 404, 'not_found', 'no knowledge recorded for this story yet');
+		if (!record || !hasBody(record)) return error(res, 404, 'not_found', 'no knowledge recorded for this story yet');
 		if (isSuppressed(record)) return error(res, 410, 'removed', 'this story was withdrawn at the rightsholder’s request');
 		return json(res, 200, publicRecord(record), headers);
 	}
@@ -67,6 +81,6 @@ export default wrap(async (req, res) => {
 		queryKnowledge({ ticker: ticker || null, q: q || null, limit, full }),
 		knowledgeStats(),
 	]);
-	const visible = articles.filter((a) => !isSuppressed(a)).map(publicRecord);
+	const visible = articles.filter((a) => hasBody(a) && !isSuppressed(a)).map(publicRecord);
 	return json(res, 200, { articles: visible, stats, query: { ticker: ticker || null, q: q || null, full } }, headers);
 });

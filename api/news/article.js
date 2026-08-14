@@ -139,12 +139,21 @@ export default wrap(async (req, res) => {
 	const params = new URL(req.url, 'http://x').searchParams;
 	const rawUrl = (params.get('url') || '').replace(/^<!\[CDATA\[/, '').replace(/\]\]>$/, '').trim();
 	if (!rawUrl) return error(res, 400, 'bad_url', 'url is required');
-	let target;
+	let parsed;
 	try {
-		target = new URL(rawUrl).toString();
+		parsed = new URL(rawUrl);
 	} catch {
 		return error(res, 400, 'bad_url', 'url is not a valid absolute URL');
 	}
+	// An article link is a web link. `new URL()` happily parses javascript:,
+	// file:, and data: URLs, and every rung of the extraction ladder then
+	// refuses them one by one — which used to end in a 200 carrying an empty
+	// "Untitled" record. Reject the scheme here instead: a non-web URL is bad
+	// input, not an article we failed to read.
+	if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+		return error(res, 400, 'bad_url', 'url must be an http(s) article link');
+	}
+	const target = parsed.toString();
 
 	// Withdrawn publisher (or a taken-down story reached by its link) — refuse
 	// before fetching anything. 410: the resource is permanently gone from here.
@@ -255,7 +264,16 @@ export default wrap(async (req, res) => {
 
 	// Record into the durable knowledge base the 3D agents read from. Fire-and-
 	// forget: a persistence hiccup must never fail the reader response.
-	recordExtraction(value).catch(() => {});
+	//
+	// Only rows carrying real body text are worth recording. A zero-content
+	// preview (every rung of the ladder refused the URL) grounds no agent and
+	// is never reused as the cross-instance cache above, which requires a
+	// page/reader row over 400 chars — so writing it only adds noise to the
+	// corpus. It also closes the corpus to drive-by writes: this endpoint is
+	// public and unauthenticated, and the caller controls `url`, `title`, and
+	// `source`, so an arbitrary link used to mint a permanent knowledge row
+	// with an attacker-chosen headline behind a single GET.
+	if (value.content_chars > 0) recordExtraction(value).catch(() => {});
 
 	return json(res, 200, publicView(value), cacheHeaders);
 });

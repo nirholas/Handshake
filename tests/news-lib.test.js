@@ -117,6 +117,34 @@ describe('enrichment', () => {
 		);
 	});
 
+	// Regression: three project names are also ordinary English words, and the
+	// bare wordlist tagged the word rather than the coin. "near-term profit
+	// booking" became NEAR Protocol (enough hits to rank NEAR third in the
+	// archive's trending strip), "cautious optimism" became OP, and a market
+	// maker became MKR. A false ticker pins a price widget to an unrelated story
+	// and lets it through the crypto display gate, so these three now need the
+	// project named.
+	it('does not read the English words near, optimism, and maker as tickers', () => {
+		for (const text of [
+			'Gold falls as analysts expect near-term profit booking',
+			'Shares near a record high on Wall Street',
+			'Cautious optimism returns to markets before the Fed',
+			'Market maker liquidity thinned overnight',
+			'Policy makers weigh a rate cut',
+		]) {
+			expect(extractTickers(text)).toEqual([]);
+		}
+	});
+
+	it('still detects those three when the project is actually named', () => {
+		expect(extractTickers('NEAR Protocol rallies 12% on new validators')).toContain('NEAR');
+		expect(extractTickers('MakerDAO votes to raise the stability fee')).toContain('MKR');
+		expect(extractTickers('OP Mainnet sequencer revenue climbs')).toContain('OP');
+		expect(extractTickers('$NEAR and $OP lead layer-1 gains')).toEqual(
+			expect.arrayContaining(['NEAR', 'OP']),
+		);
+	});
+
 	it('scores clearly positive and negative headlines apart', () => {
 		const pos = lexiconSentiment('Bitcoin surges to all-time high after ETF approval');
 		const neg = lexiconSentiment('Exchange hacked, funds stolen in $40M exploit');

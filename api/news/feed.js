@@ -19,6 +19,9 @@
 //   limit     1–50 (default 30)
 //   offset    pagination offset
 //   meta=1    include the source registry + category + language lists
+//   raw=1     bypass the editorial display gate (crypto-relevant + above the
+//             quality floor) and return the unfiltered aggregate. Debugging and
+//             parity checks only; the human-facing feeds never set it.
 //
 // Aggregation results are cached per source for 5 minutes inside
 // api/_lib/news.js, so this endpoint is cheap under load; CDN caches 120s.

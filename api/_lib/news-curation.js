@@ -57,18 +57,25 @@ const CRYPTO_NATIVE_CATEGORIES = new Set([
 // developer — is a mixed source: its article must prove it is about crypto.
 
 // Crypto topical lexicon for the per-article relevance gate. Kept lowercase and
-// matched as substrings against `${title} ${description}`. Deliberately broad
-// on the crypto side (better to admit a borderline crypto story than drop a
-// real one), while excluding the generic finance words that a non-crypto
-// markets story would trip ("stocks", "inflation", "GDP" are NOT here).
+// matched as WHOLE WORDS against `${title} ${description}` (see CRYPTO_TERM_RE
+// below). Deliberately broad on the crypto side (better to admit a borderline
+// crypto story than drop a real one), while excluding the generic finance words
+// that a non-crypto markets story would trip ("stocks", "inflation", "GDP" are
+// NOT here).
 const CRYPTO_TERMS = [
 	'crypto',
 	'bitcoin',
 	'btc',
 	'ethereum',
-	'ether ',
+	'ether',
 	'blockchain',
 	'stablecoin',
+	// The major stablecoins by name and symbol. "Tether" used to squeak through
+	// only because the old substring test found "ether" inside it; a mainstream
+	// outlet's Tether story is squarely on topic and now says so explicitly.
+	'tether',
+	'usdt',
+	'usdc',
 	'defi',
 	'web3',
 	'altcoin',
@@ -96,10 +103,34 @@ const CRYPTO_TERMS = [
 	'staking',
 	'metamask',
 	'ledger',
-	'defi',
-	'dao ',
+	'dao',
 	'wallet',
 ];
+
+// Terms that are deliberately a PREFIX, not a word, because they head a family
+// of endings the whole-word matcher would otherwise reject: cryptocurrency /
+// cryptoassets, tokenize / tokenization / tokenized.
+const CRYPTO_PREFIX_TERMS = new Set(['crypto', 'tokeniz']);
+
+// Whole-word matcher for the lexicon.
+//
+// This was a plain `includes()` substring test, and short terms quietly matched
+// inside ordinary English: "defi" fired on "defied", which put three Indian
+// equities headlines ("FIIs dumped … but 8 defied the selloff") at the top of
+// the crypto news feed and the daily digest. "deficit", "definition", and
+// "defiance" were the same story waiting to happen, and "ether" matched inside
+// "tether". A leading \b plus a trailing "not another letter" guard keeps every
+// real hit (matching is case-insensitive, so DeFi/BTC/DAO all land, and the
+// guard still admits the hyphenated compounds crypto writing is full of:
+// blockchain-based, wallet-to-wallet) while refusing the mid-word ones. An
+// optional plural "s" keeps DAOs, NFTs, and wallets matching.
+const CRYPTO_TERM_RE = new RegExp(
+	CRYPTO_TERMS.map((term) => {
+		const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		return CRYPTO_PREFIX_TERMS.has(term) ? `\\b${escaped}` : `\\b${escaped}s?(?![a-z])`;
+	}).join('|'),
+	'i',
+);
 
 /** Runtime-tunable credibility floor (0–1). */
 export const DEFAULT_MIN_CREDIBILITY = (() => {
@@ -127,8 +158,7 @@ export function isCryptoRelevant(a) {
 	// assuming either way.
 	if (Array.isArray(a.tickers) && a.tickers.length) return true;
 
-	const hay = ` ${String(a.title || '')} ${String(a.description || '')} `.toLowerCase();
-	return CRYPTO_TERMS.some((t) => hay.includes(t));
+	return CRYPTO_TERM_RE.test(`${String(a.title || '')} ${String(a.description || '')}`);
 }
 
 /**
