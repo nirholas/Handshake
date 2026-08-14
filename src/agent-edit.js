@@ -2183,22 +2183,22 @@ async function refreshBalances() {
     const r = await apiFetch(`${API_BASE}/portfolio/summary`, { credentials: 'include' });
     if (!r.ok) return;
     const j = await r.json();
+    // /api/portfolio/summary returns each wallet as { usd, native, tokens }.
+    // This read used `usd_total` and a flat `assets` array, neither of which the
+    // route has ever sent, so the panel showed 0 / 0 / $0.00 for every agent.
     const mine = (j.wallets || []).filter((w) => w.agent_id === agentId);
     let solBal = null, usdcBal = null, totalUsd = 0;
     for (const w of mine) {
-      totalUsd += Number(w.usd_total || 0);
-      for (const a of (w.assets || [])) {
-        if (w.chain === 'solana') {
-          if (a.symbol === 'SOL') solBal = a;
-          if (a.symbol === 'USDC') usdcBal = a;
-        }
-      }
+      totalUsd += Number(w.usd || 0);
+      if (w.chain !== 'solana') continue;
+      if (w.native?.symbol === 'SOL') solBal = w.native;
+      usdcBal = (w.tokens || []).find((t) => t.symbol === 'USDC') || usdcBal;
     }
     $('wallet-sol-balance').textContent = solBal ? Number(solBal.amount).toFixed(4) : '0';
     $('wallet-usdc-balance').textContent = usdcBal ? Number(usdcBal.amount).toFixed(2) : '0';
     $('wallet-total-usd').textContent = `$${totalUsd.toFixed(2)}`;
   } catch {
-    // Balance fetch is non-fatal — addresses are still useful.
+    // Balance fetch is non-fatal, the addresses above are still useful.
   }
 }
 
@@ -2243,15 +2243,21 @@ $('send-cancel').addEventListener('click', () => { $('send-modal').hidden = true
 
 $('send-confirm').addEventListener('click', async () => {
   const status = $('send-status');
-  const asset = $('send-asset').value;
-  const to = $('send-to').value.trim();
-  const amount = parseFloat($('send-amount').value);
-  if (!to || !(amount > 0)) {
+  const picked = $('send-asset').value;
+  const recipient = $('send-to').value.trim();
+  // Send the typed decimal string, not a re-serialized float: `parseFloat(…)
+  // .toString()` turns a small amount into exponential notation ("1e-7"), which
+  // the route's amount regex rejects.
+  const amount = $('send-amount').value.trim();
+  if (!recipient || !(parseFloat(amount) > 0)) {
     status.textContent = 'Recipient and positive amount required.';
     status.className = 'form-status err';
     return;
   }
-  if (!confirm(`Send ${amount} ${asset.toUpperCase()} to ${to}?`)) return;
+  // The route takes 'native' for SOL and a mint address for an SPL token; the
+  // select's raw 'sol'/'usdc' values were rejected as an unknown asset.
+  const asset = picked === 'sol' ? 'native' : USDC_MINT;
+  if (!confirm(`Send ${amount} ${picked.toUpperCase()} to ${recipient}?`)) return;
   status.textContent = 'Sending…';
   status.className = 'form-status';
   try {
@@ -2259,11 +2265,11 @@ $('send-confirm').addEventListener('click', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ agent_id: agentId, chain: 'solana', asset, to, amount: amount.toString() }),
+      body: JSON.stringify({ agent_id: agentId, chain: 'solana', asset, recipient, amount }),
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
-    status.textContent = `Sent. tx ${j.signature?.slice(0, 8) || ''}…`;
+    status.textContent = `Sent. tx ${j.tx_hash?.slice(0, 8) || ''}…`;
     status.className = 'form-status ok';
     $('send-to').value = '';
     $('send-amount').value = '';

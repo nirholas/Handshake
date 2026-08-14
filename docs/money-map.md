@@ -168,7 +168,7 @@ watched for silence. One board rolls it all up.
 | **Economy-master breach/tamper** | Unrecorded outbound + hash-chain integrity of the funding root | `api/cron/economy-reconcile.js` (`*/30`) |
 | **Zero-activity tripwire** | Enabled-but-silent money loops (the alarm the ring outage lacked) | `api/_lib/financial-tripwire.js`, wired for `x402_autonomous_loop` in the leak-scan cron |
 | **Reconciliation** | Ring settlements/sweeps + revenue vs chain | `ring-reconciliation.js`, `revenue-reconciliation.js` |
-| **Unified board** | Per-subsystem open critical/warn verdicts + last activity, one call | `GET /api/ops/money-health` (admin) |
+| **Unified board** | Per-subsystem open critical/warn verdicts + last activity, one call | `GET /api/ops/money-health` (admin session, or `x-ops-secret: $OPS_SECRET`) |
 
 Guardrails on outflow: the economy master is funder-only with reserve/per-transfer/
 per-run caps and a registry allowlist; the ring can only settle to allowlisted

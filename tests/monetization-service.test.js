@@ -1115,6 +1115,57 @@ describe('withdrawals endpoint', () => {
 		expect(body.error).toBe('insufficient_balance');
 	});
 
+	it('pays out on Solana even when an EVM wallet was saved more recently', async () => {
+		const { agent, session } = createTestAgent();
+		const EVM_ADDRESS = '0x1111111111111111111111111111111111111111';
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+		// Ordered newest-first, so the EVM row leads. Taking it would price the
+		// withdrawal in Base USDC and strand the Solana balance at zero.
+		sqlState.queue.push([
+			{ address: EVM_ADDRESS, chain: 'base', preferred_network: 'solana' },
+			{ address: SOL_ADDRESS, chain: 'solana', preferred_network: 'solana' },
+		]);
+		queueBalance({ earned: 5_000_000n });
+		sqlState.queue.push([]); // advisory lock
+		sqlState.queue.push([
+			{
+				id: 'wd-1', agent_id: agent.id, amount: 4_000_000n, currency_mint: USDC_MINT,
+				chain: 'solana', to_address: SOL_ADDRESS, status: 'pending', tx_signature: null,
+				created_at: '2026-06-18T00:00:00Z', updated_at: '2026-06-18T00:00:00Z',
+			},
+		]);
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'POST',
+			url: '/api/monetization/withdrawals',
+			body: { agent_id: agent.id, amount_usdc: 4 },
+		});
+
+		expect(status).toBe(201);
+		expect(body.withdrawal.chain).toBe('solana');
+		expect(body.withdrawal.destination_address).toBe(SOL_ADDRESS);
+		expect(body.withdrawal.currency_mint).toBe(USDC_MINT);
+	});
+
+	it('refuses an explicit network the user has no wallet on, instead of paying out elsewhere', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]);
+		sqlState.queue.push([{ address: SOL_ADDRESS, chain: 'solana', preferred_network: 'solana' }]);
+
+		const { status, body } = await invoke(withdrawalsHandler, {
+			method: 'POST',
+			url: '/api/monetization/withdrawals',
+			body: { agent_id: agent.id, amount_usdc: 5, network: 'base' },
+		});
+
+		expect(status).toBe(422);
+		expect(body.error).toBe('no_payout_wallet');
+	});
+
 	it("returns 403 against someone else's agent", async () => {
 		const { agent } = createTestAgent();
 		authState.session = { id: 'user-1' };

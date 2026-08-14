@@ -97,6 +97,8 @@ export async function signDelegation(unsigned, signer) {
  * @param {number}   opts.chainId  EVM chain ID
  * @param {string}   [opts.rpcUrl] RPC endpoint URL
  * @returns {Promise<{ valid: boolean; reason?: string }>}
+ * @throws {PermissionError} 'chain_not_supported' with no RPC or no deployment,
+ *   'rpc_error' when the chain could not answer (never reported as valid).
  */
 export async function isDelegationValid({ hash, chainId, rpcUrl }) {
 	const url = rpcUrl ?? (typeof process !== 'undefined' ? process.env[`RPC_URL_${chainId}`] : null);
@@ -113,8 +115,9 @@ export async function isDelegationValid({ hash, chainId, rpcUrl }) {
 		throw new PermissionError('chain_not_supported', err.message);
 	}
 
-	// eth_call: isDelegationDisabled(bytes32)
-	const callData = '0x' + 'a1a5bdd0' + hash.replace('0x', '').padStart(64, '0');
+	// eth_call: disabledDelegations(bytes32) — keccak256 selector 0x2d40d052.
+	// This is the only revocation getter the deployed DelegationManager exposes.
+	const callData = '0x2d40d052' + hash.replace('0x', '').padStart(64, '0');
 	const res = await fetch(url, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
@@ -126,7 +129,16 @@ export async function isDelegationValid({ hash, chainId, rpcUrl }) {
 		}),
 	});
 	const json = await res.json();
-	const disabled = json.result === '0x' + '1'.padStart(64, '0');
+	// Never fail open: a revocation check that could not read the chain must say
+	// so, or a caller treats an unanswered question as "still valid" and honours a
+	// delegation the owner already disabled.
+	if (json?.error || typeof json?.result !== 'string') {
+		throw new PermissionError(
+			'rpc_error',
+			json?.error?.message || 'delegation revocation check did not return a result',
+		);
+	}
+	const disabled = BigInt(json.result || '0x0') !== 0n;
 	return disabled ? { valid: false, reason: 'delegation_revoked' } : { valid: true };
 }
 

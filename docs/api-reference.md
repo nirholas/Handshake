@@ -3677,6 +3677,181 @@ The budget is deliberately *not* restored on `settle_uncertain`. Releasing it wo
 
 ---
 
+## Monetization API
+
+```
+GET    /api/monetization/prices?agent_id=…  List an agent's priced and gated skills (public)
+PUT    /api/monetization/prices             Set or update the price/gate for one skill
+DELETE /api/monetization/prices             Deactivate (or hard-delete) a skill's price
+GET    /api/monetization/revenue            Aggregated earnings for your agents
+GET    /api/monetization/wallet             Read the payout addresses on file
+PUT    /api/monetization/wallet             Save a Solana and/or EVM payout address
+GET    /api/monetization/withdrawals        Withdrawal history plus the live balance
+POST   /api/monetization/withdrawals        Reserve a withdrawal of the available balance
+```
+
+The seller side of the agent economy: you price a skill, buyers pay for it through the [x402 endpoints](#x402-paid-endpoints--sign-in-with-x-siwx), the platform books a revenue event with its fee split, and you withdraw the net to an address you registered in advance.
+
+All amounts on the wire are USDC. Every response carries both a human `*_usdc` float and an `*_atomic` integer (6 decimals, so `1 USDC = 1000000`); use the atomic value for anything that has to add up.
+
+**Auth.** Everything except the public price listing needs a session cookie or an API key bearer token. Writes made with a cookie also need a CSRF token (`GET /api/csrf-token`, then send it as `x-csrf-token`); bearer-token callers are exempt, because the token itself proves intent.
+
+### GET /api/monetization/prices
+
+Public and unauthenticated: this is how a buyer discovers what an agent charges. `agent_id` is required and must be a UUID.
+
+```bash
+curl "https://three.ws/api/monetization/prices?agent_id=$AGENT_ID"
+```
+
+**200 OK**
+
+```json
+{
+	"prices": [
+		{
+			"id": "9c1f…",
+			"skill_name": "summarize",
+			"price_usdc": 0.05,
+			"amount_atomic": 50000,
+			"currency_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+			"chain": "solana",
+			"is_active": true,
+			"gate_type": "price",
+			"nft_collection_mint": null,
+			"created_at": "2026-08-01T10:00:00.000Z",
+			"updated_at": "2026-08-01T10:00:00.000Z"
+		}
+	]
+}
+```
+
+Only active entries are listed. An unknown `agent_id` is a `404 not_found`, not an empty list.
+
+### PUT /api/monetization/prices
+
+Owner only. Creates the entry (`201`) or updates it in place (`200`), keyed on `(agent_id, skill_name)`.
+
+| Field                 | Type    | Default         | Notes                                                                        |
+| --------------------- | ------- | --------------- | ---------------------------------------------------------------------------- |
+| `agent_id`            | string  | required        | UUID of an agent you own.                                                     |
+| `skill_name`          | string  | required        | Up to 64 chars, alphanumeric plus `-` and `_`.                                |
+| `price_usdc`          | number  | required        | Required for a price gate. 0.000001 to 1000000. Rounded to atomic units.      |
+| `currency_mint`       | string  | Solana USDC     | Mint the price is denominated in.                                             |
+| `chain`               | string  | `"solana"`      | `solana`, `base`, or `evm`.                                                   |
+| `gate_type`           | string  | `"price"`       | `price` sells the skill; `nft` restricts it to holders of a collection.       |
+| `nft_collection_mint` | string  | `null`          | Required when `gate_type` is `nft`. Base58 Solana address.                    |
+
+```bash
+curl -X PUT https://three.ws/api/monetization/prices \
+  -H "Authorization: Bearer $THREE_WS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id":"'$AGENT_ID'","skill_name":"summarize","price_usdc":0.05}'
+```
+
+An NFT gate stores a zero amount: access is the holding, not a payment. A `price_usdc` below `0.000001` rounds to zero atomic units and is refused, and one above `1000000` is refused rather than overflowing the ledger column.
+
+### DELETE /api/monetization/prices
+
+Owner only. Body: `{ agent_id, skill_name, hard? }`. The default is a soft delete (the row is deactivated and disappears from the public listing, and re-pricing the skill later revives it). `hard: true` removes the row outright. Either way, a skill with no price row is a `404 not_found`.
+
+### GET /api/monetization/revenue
+
+Aggregated earnings across every agent you own, or one agent with `?agent_id=`.
+
+`period` is one of `1d`, `7d`, `30d`, `90d`, `all` and defaults to `7d`. Anything else is a `400`.
+
+```bash
+curl "https://three.ws/api/monetization/revenue?period=30d" \
+  -H "Authorization: Bearer $THREE_WS_API_KEY"
+```
+
+**200 OK**
+
+```json
+{
+	"total_usdc": 6,
+	"total_fees_usdc": 0.15,
+	"net_usdc": 5.85,
+	"event_count": 3,
+	"total_atomic": 6000000,
+	"fees_atomic": 150000,
+	"net_atomic": 5850000,
+	"by_skill": [{ "skill": "summarize", "total": 2.925, "total_atomic": 2925000, "count": 1 }],
+	"by_day": [{ "date": "2026-08-01", "total": 5.85, "total_atomic": 5850000, "count": 3 }]
+}
+```
+
+`total` is gross, `net` is what you can withdraw, and the difference is the platform fee. Scoping to an agent you do not own is a `403`.
+
+### GET /api/monetization/wallet
+
+Returns every payout row on file plus a `resolved` summary of the address a payout would actually land on per chain. The resolution matches what a withdrawal does: an agent-specific row wins, and a user-level row (saved with no agent) is the fallback.
+
+```json
+{
+	"wallets": [{ "id": "…", "agent_id": "…", "address": "FeMb…", "chain": "solana", "is_default": true, "preferred_network": "solana", "created_at": "…" }],
+	"resolved": { "evm_address": null, "solana_address": "FeMb…", "preferred_network": "solana" }
+}
+```
+
+### PUT /api/monetization/wallet
+
+Body: `{ agent_id, solana_address?, evm_address?, preferred_network? }`. At least one address is required. Addresses are validated (base58 for Solana, `0x` + 40 hex for EVM) and upserted per `(user, agent, chain)`, so re-saving replaces rather than duplicates. `preferred_network` (`solana` by default) decides which rail a withdrawal draws on when you do not name one.
+
+### GET /api/monetization/withdrawals
+
+History plus the live balance. Optional `agent_id`, `status` (`pending`, `processing`, `completed`, `failed`), `limit` (1 to 100, default 20) and `offset`. An unrecognised `status` is a `400` rather than a silently empty page.
+
+```json
+{
+	"withdrawals": [
+		{
+			"id": "…", "agent_id": "…", "amount_usdc": 4, "amount_atomic": 4000000,
+			"currency_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+			"chain": "solana", "destination_address": "FeMb…", "status": "pending",
+			"tx_hash": null, "error": null,
+			"requested_at": "2026-08-01T10:00:00.000Z", "processed_at": null
+		}
+	],
+	"balance": { "earned_usdc": 5.85, "withdrawn_usdc": 0, "pending_usdc": 4, "available_usdc": 1.85 }
+}
+```
+
+`available = earned - pending - withdrawn`, so a reservation that has not settled yet is already deducted.
+
+### POST /api/monetization/withdrawals
+
+Reserves a withdrawal against the available balance. The destination is never accepted from the client: it is resolved from the payout wallets you saved, so a caller can only ever withdraw to an address they registered.
+
+| Field         | Type   | Default    | Notes                                                              |
+| ------------- | ------ | ---------- | ------------------------------------------------------------------ |
+| `agent_id`    | string | required   | UUID of an agent you own.                                          |
+| `amount_usdc` | number | whole balance | Minimum 1 USDC. Omit or send `null` to drain what is available. |
+| `network`     | string | preference | `solana` (the default rail), `base`, or `evm`.                     |
+
+```bash
+curl -X POST https://three.ws/api/monetization/withdrawals \
+  -H "Authorization: Bearer $THREE_WS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id":"'$AGENT_ID'","amount_usdc":4}'
+```
+
+**201 Created** returns the reserved row with `status: "pending"` and the updated balance. `/api/cron/process-withdrawals` picks it up, sends the transfer, and moves it to `processing` then `completed` (or `failed`, with `error` set).
+
+| Status | Error                  | Meaning                                                                     |
+| ------ | ---------------------- | --------------------------------------------------------------------------- |
+| 422    | `no_payout_wallet`     | No payout address saved for the chain being drawn on.                        |
+| 422    | `below_minimum`        | Under the 1 USDC floor.                                                      |
+| 422    | `insufficient_balance` | More than `available`, or a concurrent request reserved it first.            |
+| 429    | `rate_limited`         | Withdrawal requests are capped at 5 per user per day, refusals included.     |
+
+Naming a `network` you have no wallet on is refused rather than quietly paid out on another chain. Without one, the saved `preferred_network` decides, falling back to Solana.
+
+The reservation is serialized behind a per-(user, currency) advisory lock and re-derives the balance inside the transaction, so concurrent requests cannot both pass the balance check and over-withdraw.
+
+---
+
 ## Coin Market Data API
 
 Public, unauthenticated, CORS-open proxies over CoinGecko (plus a news
@@ -4993,6 +5168,192 @@ The same stamp is served statically at `/build-info.json`.
 
 ---
 
+## Platform Stats API
+
+```
+GET /api/platform/stats
+```
+
+Aggregate, public-safe traction counters for the marketing home page, the
+[monitor board](/monitor), and any unauthenticated surface that wants to show
+real numbers. No auth, CORS open to any origin, every figure a count that
+exposes no individual user. Cached 5 minutes at the CDN and 5 minutes in the
+process, so a burst of home page hits costs one set of queries.
+
+**Response**
+
+```json
+{
+	"available": true,
+	"agents": 3140,
+	"views": 593,
+	"chats": 29,
+	"avatars": 25835,
+	"countries": 29,
+	"widgets": 613,
+	"chains": 12,
+	"generated": "2026-08-14T02:16:27.780Z"
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `agents` | Live agent identities |
+| `views` | All-time widget views |
+| `chats` | All-time widget chat threads |
+| `avatars` | Avatars (GLBs) in the library |
+| `countries` | Distinct countries a widget view came from |
+| `widgets` | Live widgets |
+| `chains` | Mainnets carrying an indexed ERC-8004 agent, plus Solana |
+
+`chains` is derived, never a constant: it counts the distinct chain ids in the
+ERC-8004 index that the registry in `api/_lib/erc8004-chains.js` marks as
+mainnet, and adds Solana when Solana carries at least one attestation. Testnet
+ids (Sepolia, Base Sepolia, Amoy, Fuji) are excluded, which is why this reads
+lower than the raw distinct-chain count in `/api/home-stats`.
+
+**When the database is unreachable**
+
+```json
+{ "available": false, "reason": "db_unavailable" }
+```
+
+Still `200`, but cached for 15 seconds only. Check `available` before reading
+any counter: this endpoint never substitutes a zero for a number it could not
+count, so a failed read must not be rendered as "0 agents".
+
+```bash
+curl -s https://three.ws/api/platform/stats | jq 'select(.available) | {agents, avatars, chains}'
+```
+
+The sibling `/api/home-stats` uses the same `available` contract for the home
+page strip (on-chain agents, attestations, forge models).
+
+---
+
+## Referrals API
+
+Every three.ws account carries a referral code. A share link is any page URL
+with `?ref=CODE` on it. Two endpoints cover the loop: a public beacon that
+records the visit, and an authenticated read that returns the sharer's card,
+their referred users, and the funnel those visits roll up into.
+
+### Record a referral-link visit
+
+```
+POST /api/referral/visit
+```
+
+Public and unauthenticated by design: the visitor has no account yet. This is
+the top of the referral funnel, and without it only signups are visible, so the
+visit to signup conversion is unknowable.
+
+`public/referral-capture.js` fires this automatically on the auth pages when a
+`?ref=` parameter is present, so a normal three.ws share link needs no extra
+wiring. Call it directly only if you are hosting your own landing page for a
+three.ws referral link.
+
+**Request body**
+
+| Field  | Type   | Description                                                  |
+| ------ | ------ | ------------------------------------------------------------ |
+| `code` | string | Required. The referral code, 3-20 characters of `A-Z0-9`. Matched case-insensitively. |
+
+**Response**
+
+```json
+{ "ok": true }
+```
+
+```bash
+curl -s -X POST https://three.ws/api/referral/visit \
+  -H 'content-type: application/json' \
+  -d '{"code":"ADA99"}'
+```
+
+Privacy and counting rules, both deliberate:
+
+- No raw IP or user agent is stored. The visitor is identified only by
+  `sha256(ip + user-agent + code)`.
+- A visitor counts once per code per UTC day. A refresh or a replay returns
+  `200 {"ok": true}` and writes nothing, so the funnel cannot be inflated by
+  reloading a link.
+- An unknown code still records a visit with no referrer attached, so traffic on
+  a dead or mistyped link stays visible instead of vanishing.
+
+A malformed or missing code returns `400 invalid_code`. The endpoint is rate
+limited per IP; over the limit returns `429` with a `retry-after` header.
+
+---
+
+### Get my referral card, referrals, and funnel
+
+```
+GET /api/users/referrals
+```
+
+Requires a session cookie or a bearer token. Returns the signed-in user's
+membership card, a paginated breakdown of who they referred and what those
+referrals earned them, and the share funnel built from the visit beacons above.
+
+**Query parameters**
+
+| Parameter     | Type    | Description                                                        |
+| ------------- | ------- | ------------------------------------------------------------------ |
+| `limit`       | integer | Referred-user page size, 1-100 (default: 20)                       |
+| `offset`      | integer | Referred-user page offset, >= 0 (default: 0)                       |
+| `funnel_days` | integer | Funnel lookback in days, 1-365 (default: 30)                       |
+
+**Response**
+
+```json
+{
+	"referral_code": "ADA99",
+	"referred_users_count": 12,
+	"referral_earnings_usd": 41.5,
+	"reward_credits_usd": 6,
+	"position": 1204,
+	"total_members": 27745,
+	"score": 161,
+	"referred_users": {
+		"items": [],
+		"total": 12,
+		"limit": 20,
+		"offset": 0,
+		"referral_commission_bps": 500
+	},
+	"funnel": {
+		"days": 30,
+		"visits": 200,
+		"signups": 50,
+		"activations": 20,
+		"visit_to_signup_pct": 25,
+		"signup_to_activation_pct": 40
+	}
+}
+```
+
+| Funnel field               | Meaning |
+|---|---|
+| `visits`                   | Deduped link visits recorded in the window |
+| `signups`                  | Accounts attributed to this referrer, created in the window |
+| `activations`              | Referred users who reached their first creation in the window |
+| `visit_to_signup_pct`      | `signups / visits`, one decimal |
+| `signup_to_activation_pct` | `activations / signups`, one decimal |
+
+Both percentages are `null`, never `0`, when the stage above them is empty, so a
+brand-new sharer reads as "no data yet" rather than "0% conversion". Amounts
+ending in `_usd` are dollars; the matching `_total` fields are atomic USDC units
+(6 decimals).
+
+```bash
+curl -s -b cookies.txt 'https://three.ws/api/users/referrals?funnel_days=7' | jq .funnel
+```
+
+`/dashboard/referrals` renders exactly this payload.
+
+---
+
 ## Solana Actions API (Blinks)
 
 three.ws publishes a Solana Action so "Claim Your 3D Avatar" unfurls as a Blink
@@ -5204,6 +5565,168 @@ transaction is unbroadcast or unindexed, or if Esplora is unreachable, it is
 An id that OrdinalsBot does not know is a `404`, even though OrdinalsBot itself
 reports it as `HTTP 200` with `{"status":"error","error":"invalid orderId"}`.
 Clients should treat `404` as terminal and stop polling.
+
+---
+
+## Plugin Marketplace API
+
+Tool plugins in the LobeHub / pai-chat `ToolManifest` format: the catalog behind
+the plugin grid on [/marketplace](/marketplace) and the picker on
+[/avatar](/avatar). A manifest declares an `identifier`, a `meta.title`, and a
+non-empty `api[]` of tool definitions; the platform stores it verbatim and
+re-serves it, so a client that understands the format can install straight from
+a listing.
+
+All five routes live in `api/plugins/[action].js`.
+
+### List plugins
+
+```
+GET /api/plugins
+GET /api/plugins/list?category=&q=&sort=&cursor=&limit=
+```
+
+Public, unauthenticated. Both paths are the same handler; the bare collection
+path is the canonical one.
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `category` | all | Exact category slug, as returned by `/api/plugins/categories` |
+| `q` | none | Case-insensitive substring match on name or description (first 80 chars used) |
+| `sort` | `popular` | `popular` (install count), `new` (newest first), or `az` (name). An unknown value falls back to `popular`. |
+| `limit` | `20` | 1 to 40 |
+| `cursor` | `0` | Opaque offset. Pass back the `next_cursor` from the previous page verbatim. |
+
+`cursor` must be a non-negative integer; anything else is a `400`
+(`validation_error`), never a 500. `next_cursor` is `null` on the last page.
+
+```bash
+curl -s 'https://three.ws/api/plugins/list?sort=az&limit=2' | jq '.data.items[].identifier'
+```
+
+```json
+{
+  "data": {
+    "items": [
+      {
+        "id": "764f3eb7-7691-485e-b147-53080bd9f5f9",
+        "identifier": "web-search",
+        "manifest_url": null,
+        "manifest_json": { "identifier": "web-search", "meta": {}, "api": [] },
+        "name": "Web Search",
+        "description": "Search the web for up-to-date information.",
+        "category": "web-search",
+        "tags": ["search", "web", "utility"],
+        "install_count": 0,
+        "avg_rating": 0,
+        "author": null,
+        "created_at": "2026-05-02T07:43:09.276Z",
+        "price": null
+      }
+    ],
+    "next_cursor": "20"
+  }
+}
+```
+
+`author` is `null` for the platform's built-in plugins. `price` is `null` unless
+the plugin carries an active row in `asset_prices`.
+
+### Categories
+
+```
+GET /api/plugins/categories
+```
+
+Every category that has at least one public plugin, with its count, ordered by
+count. Cached 60 seconds. `{"data":{"categories":[{"slug":"tools","count":4}]}}`.
+
+### Get a plugin
+
+```
+GET /api/plugins/:id
+```
+
+`:id` is the plugin UUID. A plugin published with `is_public: false` is visible
+only to its author (session cookie or bearer token); to everyone else it is a
+`404`, the same answer as an id that does not exist.
+
+### Record an install
+
+```
+POST /api/plugins/:id/install
+```
+
+Increments the public install counter. No auth: the marketplace fires it when a
+visitor installs a plugin into their own client.
+
+```json
+{ "data": { "ok": true, "counted": true, "install_count": 4 } }
+```
+
+Deduplicated to one counted install per (IP, plugin) per 30 minutes. A repeat
+inside that window is still a `200`, with `counted: false` and the unchanged
+total, so a client never has to special-case it. An unknown or non-visible
+plugin is a `404`.
+
+### Import a manifest by URL
+
+```
+POST /api/plugins/import
+```
+
+```json
+{ "manifest_url": "https://example.com/plugin.json" }
+```
+
+Fetches the URL server-side (so the browser is not blocked by the host's CORS
+policy), validates it as a manifest, and returns it with a `_manifest_url` field
+added. It writes nothing: the caller decides whether to install locally or
+publish. 20 requests per 5 minutes per IP.
+
+The fetch is SSRF-guarded. The host and every redirect hop is DNS-resolved and
+checked before the socket opens, and private, loopback, link-local, and cloud
+metadata ranges are refused (`400`, `validation_error`). The transfer is capped
+at 64 KB and aborted mid-stream if the host exceeds it (`422`, `fetch_failed`).
+
+**Errors:** `400` (missing / unparseable / non-http `manifest_url`, blocked
+host), `422` (`fetch_failed` for a non-2xx, unparseable, or oversized response;
+`invalid_manifest` when the JSON is not a manifest), `429`.
+
+### Publish a plugin
+
+```
+POST /api/plugins/publish
+```
+
+Requires authentication (session cookie or bearer token) and, for a cookie
+session, an `X-CSRF-Token` header from `GET /api/csrf-token`. 30 per hour per
+user.
+
+```json
+{
+  "manifest_json": {
+    "identifier": "my-plugin",
+    "meta": { "title": "My Plugin", "description": "Does a thing.", "category": "tools" },
+    "api": [{ "name": "do_thing", "description": "Does the thing" }]
+  },
+  "manifest_url": "https://example.com/plugin.json",
+  "is_public": true
+}
+```
+
+An upsert on `(identifier, author_id)`, so re-publishing the same identifier
+updates your existing row rather than creating a second one. `is_public: false`
+keeps the plugin out of the list and the category counts and restricts detail
+reads to you. Responds with the same plugin shape the list returns.
+
+**Manifest rules:** `identifier` is required, alphanumeric plus `.`, `-`, `_`,
+and at most 128 characters; `meta.title` is required; `api` must be a non-empty
+array of at most 100 tools, each with a `name` and a `description`. A violation
+is a `422` (`invalid_manifest`) naming the specific rule.
+
+**Errors:** `401` (no auth), `403` (`csrf_missing` / `csrf_invalid`), `400`
+(malformed body), `422` (`invalid_manifest`), `429`.
 
 ---
 

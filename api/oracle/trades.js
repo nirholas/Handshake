@@ -13,7 +13,7 @@
  * Max duration: 45 s (client must reconnect on 'bye').
  */
 
-import { cors, method, rateLimited } from '../_lib/http.js';
+import { cors, method, rateLimited, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { knownWallet } from '../_lib/oracle/known-wallets.js';
@@ -28,18 +28,26 @@ const PING_INTERVAL_MS = 12_000;
 // ── wallet annotation cache ───────────────────────────────────────────────────
 // Pre-load the known traders for this coin once; annotate each trade in memory.
 
+// `pump_coin_wallets` is keyed on mint alone (no network column — the roster is
+// per-coin and a mint only ever exists on one network), while the reputation
+// ledger is keyed on (wallet, network). Joining them with `using (wallet,
+// network)` therefore fails outright, and the reputation score column is
+// `smart_money_score`, not `score`. Both mistakes were silent: the catch below
+// swallowed the error and every trade streamed with a null label, which is the
+// one thing this endpoint exists to provide. `tag` is seed-only — the ledger
+// has no such column.
 async function loadWalletRoster(mint, network) {
 	try {
 		const rows = await sql`
 			select
 				w.wallet,
-				coalesce(r.label, 'unproven')    as label,
-				coalesce(r.score, 0)::numeric    as score,
-				r.win_rate,
-				r.tag
+				coalesce(r.label, 'unproven')             as label,
+				coalesce(r.smart_money_score, 0)::numeric as score,
+				r.win_rate
 			from pump_coin_wallets w
-			left join wallet_reputation r using (wallet, network)
-			where w.mint = ${mint} and w.network = ${network}
+			left join wallet_reputation r on r.wallet = w.wallet and r.network = ${network}
+			where w.mint = ${mint}
+			order by (w.buy_lamports - w.sell_lamports) desc
 			limit 200
 		`;
 		const map = new Map();
@@ -47,15 +55,16 @@ async function loadWalletRoster(mint, network) {
 			// Fold in the seed if the live DB doesn't have a label yet.
 			let label = r.label;
 			let score = Number(r.score);
-			let tag   = r.tag;
+			let tag   = null;
 			if (label === 'unproven' || !label) {
 				const known = knownWallet(r.wallet);
-				if (known) { label = known.label; score = known.score; tag = known.tag || tag; }
+				if (known) { label = known.label; score = known.score; tag = known.tag || null; }
 			}
 			map.set(r.wallet, { label, score, win_rate: r.win_rate, tag });
 		}
 		return map;
-	} catch {
+	} catch (e) {
+		console.warn('[oracle/trades] roster load failed:', e?.message);
 		return new Map();
 	}
 }
@@ -100,11 +109,7 @@ export default async function handleOracleTrades(req, res) {
 	const mint    = url.searchParams.get('mint') || '';
 	const network = NETWORKS.has(url.searchParams.get('network')) ? url.searchParams.get('network') : 'mainnet';
 
-	if (!MINT_RE.test(mint)) {
-		res.writeHead(400, { 'Content-Type': 'application/json' });
-		res.end(JSON.stringify({ error: 'invalid mint' }));
-		return;
-	}
+	if (!MINT_RE.test(mint)) return error(res, 400, 'validation_error', 'a valid base58 mint is required');
 
 	// Pre-load the roster (non-blocking — if it fails we still stream trades).
 	const roster = await loadWalletRoster(mint, network);

@@ -7,7 +7,7 @@
  *       &tier=called|prime|strong|lean|watch|avoid|all  default: called
  *       &min_ath=1           minimum ATH multiple to include
  *       &limit=50            max 100
- *       &before=<iso>        pagination cursor (scored_at <)
+ *       &before=<cursor>     pagination cursor, echoed from next_before
  *
  * Returns oracle_conviction rows that have a resolved outcome in
  * pump_coin_outcomes, ordered by ATH multiple descending. This is the
@@ -27,17 +27,49 @@
  * Public, IP rate-limited, 5-min CDN cache.
  */
 
-import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
+import { isoTimestamp } from '../_lib/validate.js';
 import { QUOTE_MINT_LIST } from '../_lib/quote-mints.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const TIERS    = new Set(['called', 'prime', 'strong', 'lean', 'watch', 'avoid', 'all']);
 const PERIODS  = { '7d': 7, '30d': 30, '90d': 90, 'all': null };
+const MINT_RE  = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const NUMERIC_RE = /^\d+(\.\d+)?$/;
 
 // The tiers the oracle actually tells people to act on.
 const CALLED_TIERS = ['lean', 'strong', 'prime'];
+
+// ── keyset pagination ─────────────────────────────────────────────────────────
+// The gallery is ordered by ATH multiple, not by time, so a scored_at-only
+// cursor silently drops every remaining row that happens to be newer than the
+// last row of the previous page — on a 3-row page of the live feed that was 4
+// of the next 6 wins, gone. The cursor therefore carries the whole sort key:
+// "<ath_multiple>|<scored_at ISO>|<mint>". The ATH component is kept as the
+// exact numeric string Postgres returned, never a float round-trip, so the row
+// comparison lands on the same row the previous page ended on.
+
+function parseCursor(raw) {
+	if (!raw) return { ok: true, cursor: null };
+	const parts = String(raw).split('|');
+	// A bare timestamp is a cursor minted before the sort key landed (an open
+	// tab, a bookmarked call). Honour it on scored_at alone rather than 400ing.
+	if (parts.length === 1) {
+		const ts = isoTimestamp(parts[0]);
+		return ts ? { ok: true, cursor: { ath: null, ts, mint: null } } : { ok: false, cursor: null };
+	}
+	if (parts.length !== 3) return { ok: false, cursor: null };
+	const [ath, rawTs, mint] = parts;
+	const ts = isoTimestamp(rawTs);
+	if (!NUMERIC_RE.test(ath) || !ts || !MINT_RE.test(mint)) return { ok: false, cursor: null };
+	return { ok: true, cursor: { ath, ts, mint } };
+}
+
+function encodeCursor(row) {
+	return `${row.ath_multiple}|${new Date(row.scored_at).toISOString()}|${row.mint}`;
+}
 
 function shapeRow(r) {
 	return {
@@ -80,13 +112,17 @@ export default wrap(async (req, res) => {
 	const tier    = TIERS.has(params.get('tier'))    ? params.get('tier')    : 'called';
 	const minAth  = Math.max(1, Number(params.get('min_ath')) || 2);
 	const limit   = Math.max(1, Math.min(100, parseInt(params.get('limit'), 10) || 50));
-	const before  = params.get('before') || null;
+
+	const { ok: cursorOk, cursor } = parseCursor(params.get('before'));
+	if (!cursorOk) return error(res, 400, 'validation_error', 'before must be a cursor echoed from next_before');
 
 	const tierFilter = tier === 'all' ? sql``
 		: tier === 'called' ? sql`and c.tier = any(${CALLED_TIERS}::text[])`
 		: sql`and c.tier = ${tier}`;
 	const periodFilter = days != null     ? sql`and c.scored_at >= now() - (${days} || ' days')::interval` : sql``;
-	const beforeFilter = before           ? sql`and c.scored_at < ${before}::timestamptz` : sql``;
+	const beforeFilter = !cursor ? sql``
+		: cursor.ath == null ? sql`and c.scored_at < ${cursor.ts}::timestamptz`
+		: sql`and (o.ath_multiple, c.scored_at, c.mint) < (${cursor.ath}::numeric, ${cursor.ts}::timestamptz, ${cursor.mint})`;
 
 	const rows = await sql`
 		select
@@ -102,7 +138,7 @@ export default wrap(async (req, res) => {
 		  ${tierFilter}
 		  ${periodFilter}
 		  ${beforeFilter}
-		order by o.ath_multiple desc nulls last, c.scored_at desc
+		order by o.ath_multiple desc, c.scored_at desc, c.mint desc
 		limit ${limit}
 	`.catch((e) => {
 		throw new Error(`wins query failed: ${e.message}`);
@@ -128,7 +164,7 @@ export default wrap(async (req, res) => {
 
 	const s = summary[0] || {};
 	const items = rows.map(shapeRow);
-	const next_before = items.length >= limit ? items[items.length - 1].scored_at : null;
+	const next_before = rows.length >= limit ? encodeCursor(rows[rows.length - 1]) : null;
 
 	return json(res, 200, {
 		network,

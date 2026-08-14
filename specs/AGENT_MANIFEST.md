@@ -418,7 +418,7 @@ Hosts resolve a delegation in this order:
 1. **If `envelope` is present (inline)** — use it directly. Envelope was validated at grant time; treat as equivalent to the fetched form.
 2. **Else fetch from `uri`** — resolve via IPFS gateway (with fallback), Arweave, or HTTPS, using the same resolution rules as `body.uri`.
 3. **Verify `hash` matches** — compute `keccak256(envelope)` and compare to the `hash` field. Abort if mismatch.
-4. **Verify signature on-chain** — call `DelegationManager.isDelegationDisabled(hash)` to confirm the delegation has not been revoked, and verify the envelope's EIP-712 signature against the delegator address before trusting.
+4. **Verify signature on-chain** — call `DelegationManager.disabledDelegations(hash)` to confirm the delegation has not been revoked, and verify the envelope's EIP-712 signature against the delegator address before trusting.
 
 Verification occurs before any redemption attempt. If any step fails, do not proceed to redeem.
 

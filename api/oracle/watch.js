@@ -18,6 +18,7 @@ import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
+import { isUuid } from '../_lib/validate.js';
 import { z } from 'zod';
 import { getWatch, upsertWatch, recentActions, actionsSummary } from '../_lib/oracle/store.js';
 
@@ -74,6 +75,10 @@ export default wrap(async (req, res) => {
 		const agentId = (url.searchParams.get('agent_id') || '').trim();
 		const network = NETWORKS.has(url.searchParams.get('network')) ? url.searchParams.get('network') : 'mainnet';
 		if (!agentId) return error(res, 400, 'validation_error', 'agent_id is required');
+		// A non-uuid can never match agent_identities.id — without this the query
+		// below throws `invalid input syntax for type uuid`, the catch swallows it,
+		// and the caller is told they do not own an agent that cannot exist.
+		if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agent_id must be a uuid');
 		if (!(await ownsAgent(userId, agentId))) return error(res, 403, 'forbidden', 'you do not own this agent');
 
 		const [watch, actions, summary] = await Promise.all([

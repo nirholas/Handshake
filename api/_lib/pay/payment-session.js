@@ -181,7 +181,7 @@ export async function getPaymentSession(sessionId, userId) {
  * List sessions for a user. Returns latest-first.
  */
 export async function listPaymentSessions(userId, { status, limit = 20, cursor } = {}) {
-	const lim = Math.min(Number(limit) || 20, 100);
+	const lim = Math.min(Math.max(Math.floor(Number(limit)) || 20, 1), 100);
 	const rows = await sql`
 		SELECT id, user_id, agent_id, label, budget_usdc, spent_usdc,
 		       max_per_tx_usdc, allowed_hosts, network, status, expires_at,
@@ -270,7 +270,7 @@ export async function cancelPaymentSession(sessionId, userId) {
  * List executions for a session.
  */
 export async function listSessionExecutions(sessionId, userId, { limit = 20, cursor } = {}) {
-	const lim = Math.min(Number(limit) || 20, 100);
+	const lim = Math.min(Math.max(Math.floor(Number(limit)) || 20, 1), 100);
 	const rows = await sql`
 		SELECT id, endpoint_url, endpoint_host, method, amount_usdc,
 		       network, tx_hash, payer_address, payee_address,

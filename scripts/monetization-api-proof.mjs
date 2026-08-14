@@ -501,23 +501,50 @@ async function main() {
 			&& r.json?.withdrawals?.length === 0 && r.json?.balance?.available_usdc === 0,
 			`status ${r.status}, available ${r.json?.balance?.available_usdc}`);
 	}
+	// Withdrawal POSTs are rate limited to 5 per user per day (rate-limit.js,
+	// `withdrawalPerUser`), and a refused request still spends one. So the
+	// refusal probes run as their own throwaway user, leaving the owner's whole
+	// budget for the real reservations in step 7.
+	const solo = makeHttp();
+	const soloEmail = `mon-solo-${stamp}@proof.local`;
+	const soloReg = await solo.req('POST', '/api/auth/register', { body: { email: soloEmail, password: 'proof-pass-12345', tosAccepted: true } });
+	const soloAgent = await solo.write('POST', '/api/agents', { name: `mon-solo-${stamp}`, description: 'withdrawal refusal probes' });
+	const soloAgentId = soloAgent.json?.agent?.id || soloAgent.json?.data?.id || soloAgent.json?.id;
+	check('third (refusal-probe) user and agent created', soloReg.status < 300 && !!soloAgentId,
+		soloAgentId ? `agent ${soloAgentId}` : `register ${soloReg.status}, agent ${soloAgent.status}`);
+	if (!soloAgentId) throw new Error('cannot continue without the refusal-probe agent');
 	{
-		const r = await http.write('POST', '/api/monetization/withdrawals', { agent_id: agentId, amount_usdc: 5 });
+		const r = await solo.write('POST', '/api/monetization/withdrawals', { agent_id: soloAgentId, amount_usdc: 5 });
+		check('POST before any payout wallet exists -> 422 no_payout_wallet', r.status === 422 && r.json?.error === 'no_payout_wallet',
+			`status ${r.status}, ${r.json?.error}`);
+	}
+	await solo.write('PUT', '/api/monetization/wallet', { agent_id: soloAgentId, solana_address: SOL_PAYOUT });
+	{
+		const r = await solo.write('POST', '/api/monetization/withdrawals', { agent_id: soloAgentId, amount_usdc: 5, network: 'base' });
+		check('POST on a chain with no wallet -> 422 rather than paying out on another chain',
+			r.status === 422 && r.json?.error === 'no_payout_wallet', `status ${r.status}, ${r.json?.error}`);
+	}
+	{
+		const r = await solo.write('POST', '/api/monetization/withdrawals', { agent_id: soloAgentId, amount_usdc: 5 });
 		check('POST with a zero balance -> 422 insufficient_balance', r.status === 422 && r.json?.error === 'insufficient_balance',
 			`status ${r.status}, ${r.json?.error}`);
 	}
 	{
-		const r = await http.write('POST', '/api/monetization/withdrawals', { agent_id: agentId, amount_usdc: 0.5 });
+		const r = await solo.write('POST', '/api/monetization/withdrawals', { agent_id: soloAgentId, amount_usdc: 0.5 });
 		check('POST below the 1 USDC minimum -> 422 below_minimum', r.status === 422 && r.json?.error === 'below_minimum',
 			`status ${r.status}, ${r.json?.error}`);
 	}
 	{
-		const r = await http.write('POST', '/api/monetization/withdrawals', { agent_id: GHOST, amount_usdc: 5 });
+		const r = await solo.write('POST', '/api/monetization/withdrawals', { agent_id: GHOST, amount_usdc: 5 });
 		check('POST for an unknown agent -> 404', r.status === 404, `status ${r.status}`);
 	}
 	{
 		const r = await other.write('POST', '/api/monetization/withdrawals', { agent_id: agentId, amount_usdc: 5 });
 		check("POST against someone else's agent -> 403", r.status === 403, `status ${r.status}`);
+	}
+	{
+		const r = await solo.write('POST', '/api/monetization/withdrawals', { agent_id: soloAgentId, amount_usdc: 5 });
+		check('a sixth POST in a day is rate limited -> 429', r.status === 429, `status ${r.status}`);
 	}
 
 	// seeded revenue, then revenue.js and a live withdrawal
@@ -594,11 +621,16 @@ async function main() {
 	}
 	{
 		const r = await http.write('POST', '/api/monetization/withdrawals', { agent_id: agentId, amount_usdc: 4 });
-		check('POST reserves a pending withdrawal -> 201', r.status === 201
+		// The EVM payout row was saved after the Solana one. Taking the newest row
+		// would price this withdrawal in Base USDC, where the balance is zero, and
+		// refuse it. Solana is the home chain and the saved preference, so it wins.
+		check('POST reserves a pending withdrawal -> 201, on Solana', r.status === 201
 			&& r.json?.withdrawal?.status === 'pending'
 			&& r.json.withdrawal.amount_atomic === 4_000_000
+			&& r.json.withdrawal.chain === 'solana'
+			&& r.json.withdrawal.currency_mint === USDC_SOL
 			&& r.json.withdrawal.destination_address === SOL_PAYOUT,
-			`status ${r.status}, ${r.json?.withdrawal?.amount_usdc} USDC to ${r.json?.withdrawal?.destination_address?.slice(0, 8)}`);
+			`status ${r.status}, ${r.json?.withdrawal?.amount_usdc} USDC on ${r.json?.withdrawal?.chain} to ${r.json?.withdrawal?.destination_address?.slice(0, 8)}`);
 	}
 	{
 		const r = await http.write('POST', '/api/monetization/withdrawals', { agent_id: agentId, amount_usdc: 4 });

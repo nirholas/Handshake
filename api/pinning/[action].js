@@ -124,7 +124,19 @@ function ensurePinsTable() {
 	return pinsTableReady;
 }
 
-/** Ask each configured provider whether it is holding this CID. */
+/**
+ * Ask each configured provider whether it is holding this CID.
+ *
+ * Every check reports one of three outcomes, and the third is the reason this
+ * does not just return a boolean. A provider that answers "I am not holding it"
+ * and a provider that never answered at all (expired token, rate limit, network
+ * fault) are different facts, and collapsing them into `pinned: false` reports a
+ * broken checker as a missing file. A rotated Pinata JWT made this concrete
+ * during the audit of this endpoint: every request 401'd upstream and the
+ * endpoint kept replying `pinned: false, provider: null`, with a 200.
+ *
+ * @returns {Promise<{holders: string[], failures: string[], answered: number}>}
+ */
 async function checkProviders(cid) {
 	const pinataJwt = process.env.PINATA_JWT;
 	const w3sToken = process.env.WEB3_STORAGE_TOKEN;
@@ -137,12 +149,12 @@ async function checkProviders(cid) {
 				{ headers: { Authorization: `Bearer ${pinataJwt}` }, signal: AbortSignal.timeout(10000) },
 			)
 				.then(async (r) => {
-					if (!r.ok) return null;
+					if (!r.ok) return { provider: 'pinata', failed: true };
 					const data = await r.json();
 					const pinned = (data.rows || []).some((row) => row.ipfs_pin_hash === cid);
-					return pinned ? 'pinata' : null;
+					return { provider: 'pinata', held: pinned };
 				})
-				.catch(() => null),
+				.catch(() => ({ provider: 'pinata', failed: true })),
 		);
 	}
 
@@ -153,15 +165,20 @@ async function checkProviders(cid) {
 				signal: AbortSignal.timeout(10000),
 			})
 				.then(async (r) => {
-					if (!r.ok) return null;
+					if (!r.ok) return { provider: 'web3.storage', failed: true };
 					const data = await r.json();
-					return data.cid === cid ? 'web3.storage' : null;
+					return { provider: 'web3.storage', held: data.cid === cid };
 				})
-				.catch(() => null),
+				.catch(() => ({ provider: 'web3.storage', failed: true })),
 		);
 	}
 
-	return (await Promise.all(checks)).filter(Boolean);
+	const results = await Promise.all(checks);
+	return {
+		holders: results.filter((r) => r.held).map((r) => r.provider),
+		failures: results.filter((r) => r.failed).map((r) => r.provider),
+		answered: results.filter((r) => !r.failed).length,
+	};
 }
 
 export default wrap(async (req, res) => {
@@ -297,12 +314,28 @@ export default wrap(async (req, res) => {
 			);
 		}
 
-		const activeProviders = await checkProviders(cid);
+		const { holders, failures, answered } = await checkProviders(cid);
+
+		// No provider managed to answer: same rule as the unconfigured case above.
+		// Reporting `pinned: false` here would blame the document for a fault in
+		// the checker.
+		if (answered === 0) {
+			return error(
+				res,
+				503,
+				'pinning_check_failed',
+				`could not reach any pinning provider (${failures.join(', ')}); retry shortly`,
+			);
+		}
 
 		return json(res, 200, {
 			cid,
-			pinned: activeProviders.length > 0,
-			provider: activeProviders[0] || null,
+			pinned: holders.length > 0,
+			provider: holders[0] || null,
+			// A partial answer is still an answer, but the caller has to be able to
+			// see that one provider was never asked before treating `pinned: false`
+			// as proof the CID is gone.
+			unreachableProviders: failures,
 			gatewayUrls: gatewayUrlsFor(cid),
 		});
 	}

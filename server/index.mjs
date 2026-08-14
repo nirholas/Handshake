@@ -501,9 +501,12 @@ app.use((err, req, res, next) => {
 		// Surface a specific code + human message so client error paths (which
 		// read error/error_description) say something actionable.
 		if (err?.type === 'entity.too.large' || status === 413) {
+			// Quote BODY_LIMIT rather than a literal: this said "under 4 MB" long
+			// after the cap moved to 8 MB, so a caller inside the real limit was
+			// told to shrink a payload that was already small enough.
 			res.status(413).json({
 				error: 'payload_too_large',
-				error_description: 'Request body is too large. Images must be under 4 MB.',
+				error_description: `Request body is too large. Keep it under ${BODY_LIMIT.toUpperCase().replace('MB', ' MB')}.`,
 				message: err.message,
 			});
 			return;

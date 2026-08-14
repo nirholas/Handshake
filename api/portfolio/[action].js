@@ -2,6 +2,7 @@
 //
 //   GET  /api/portfolio/summary?snapshot=1   → live aggregated balances; opt. snapshot
 //   GET  /api/portfolio/history?days=30      → past snapshots for the chart
+//   GET  /api/portfolio/asset?chain&id&days  → one token across every agent wallet
 //   POST /api/portfolio/send                 → server-signed transfer from an agent wallet
 //
 // All endpoints require a session cookie and operate only on agents owned by
@@ -21,6 +22,10 @@ import { getBalances, walletUsdTotal, invalidateBalances } from '../_lib/balance
 import { recoverAgentKey, recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
 import { reverseLookupAddress, resolveSolanaRecipient } from '../../src/solana/sns.js';
 import { geckoFetch, htmlToText } from '../_lib/coingecko.js';
+import { fetchTokenMarketData } from '../_lib/market/token-market.js';
+import { fetchCoinPriceUsdOrNull } from '../_lib/market-fallbacks.js';
+import { solPriceUsd, solChange24hPct } from '../_lib/sol-price.js';
+import { fetchFirstOrNull } from '../../src/shared/failover-fetch.js';
 import { env } from '../_lib/env.js';
 import { z } from 'zod';
 
@@ -497,6 +502,69 @@ async function loadMarket({ metaPath, chartPath, coingeckoId, days }) {
 	};
 }
 
+// Every field /asset publishes under `market`, so a fallback source that only
+// carries a price still produces the same object shape for the page.
+const EMPTY_MARKET = {
+	name: null,
+	price_usd: null,
+	change_24h_pct: null,
+	change_7d_pct: null,
+	change_30d_pct: null,
+	market_cap_usd: null,
+	total_volume_usd: null,
+	high_24h_usd: null,
+	low_24h_usd: null,
+	ath_usd: null,
+	ath_change_pct: null,
+	description: '',
+	homepage: null,
+	coingecko_id: null,
+};
+
+// CoinGecko is the only source with the full descriptive block, and it is also
+// the first to throttle: its keyless tier 429s a shared datacenter egress IP
+// within minutes, which left this page with `market: null` and a $0 valuation
+// for holdings the user really has. Fall back to the price lanes the platform
+// already runs, Solana first: the mint cascade (Birdeye, DexScreener,
+// GeckoTerminal, DefiLlama, Raydium), the SOL spot lane, the coingecko-id spot
+// lane for ETH, and DefiLlama's contract oracle for an ERC-20. These carry
+// price and (where available) 24h change, cap and volume; the descriptive
+// fields stay null and the page already degrades on those.
+async function fallbackMarket({ chain, id, isNative }) {
+	if (chain === 'solana') {
+		if (isNative) {
+			const [price, change] = await Promise.all([solPriceUsd(), solChange24hPct()]);
+			return price > 0 ? { name: 'Solana', price_usd: price, change_24h_pct: change } : null;
+		}
+		const md = await fetchTokenMarketData(id);
+		if (!md?.price_usd) return null;
+		return {
+			price_usd: md.price_usd,
+			change_24h_pct: md.price_change_24h ?? null,
+			market_cap_usd: md.market_cap ?? null,
+			total_volume_usd: md.volume_24h ?? null,
+		};
+	}
+	if (isNative) {
+		const price = await fetchCoinPriceUsdOrNull('ethereum');
+		return price > 0 ? { name: 'Ethereum', price_usd: price } : null;
+	}
+	const price = await fetchFirstOrNull(
+		[
+			{
+				name: 'llama-contract',
+				url: `https://coins.llama.fi/prices/current/ethereum:${id}`,
+				parse: async (r) => {
+					const p = Number((await r.json())?.coins?.[`ethereum:${id}`]?.price);
+					return Number.isFinite(p) && p > 0 ? p : null;
+				},
+			},
+		],
+		{ timeoutMs: 6000, label: `evm-token-price:${id.slice(0, 10)}` },
+	);
+	return price > 0 ? { price_usd: price } : null;
+}
+
 async function handleAsset(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -591,7 +659,7 @@ async function handleAsset(req, res) {
 	//    For tokens: use /coins/{platform}/contract/{address}.
 	const platform = chain === 'solana' ? 'solana' : 'ethereum';
 	const base = isNative ? `/coins/${platform}` : `/coins/${platform}/contract/${encodeURIComponent(id)}`;
-	const { market, symbol: cgSymbol, logo: cgLogo, points: chartPoints } = await loadMarket({
+	let { market, symbol: cgSymbol, logo: cgLogo, points: chartPoints } = await loadMarket({
 		metaPath: isNative
 			? `${base}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`
 			: base,
@@ -602,7 +670,16 @@ async function handleAsset(req, res) {
 	symbol = cgSymbol || symbol;
 	logo = logo || cgLogo;
 
-	// If CoinGecko gave us a more reliable spot price, use it for the holding
+	if (!market?.price_usd) {
+		try {
+			const fb = await fallbackMarket({ chain, id, isNative });
+			if (fb) market = { ...EMPTY_MARKET, ...(market || {}), ...fb };
+		} catch (e) {
+			console.error('[portfolio/asset] price fallback failed', e?.message);
+		}
+	}
+
+	// If the market lane gave us a more reliable spot price, use it for the holding
 	// USD calculation as well so the page is internally consistent.
 	if (market?.price_usd && totalAmount > 0) {
 		totalUsd = totalAmount * market.price_usd;
@@ -614,7 +691,11 @@ async function handleAsset(req, res) {
 		chain,
 		id,
 		is_native: isNative,
-		symbol: symbol || (chain === 'solana' ? 'SOL' : 'ETH'),
+		// Only a native asset may fall back to the chain's coin symbol. An unknown
+		// mint or contract used to answer "SOL"/"ETH" here, so the page labelled a
+		// token nobody could price as the chain's native coin. Unlabelled tokens
+		// get a short address instead, which every consumer can render as-is.
+		symbol: symbol || (isNative ? (chain === 'solana' ? 'SOL' : 'ETH') : `${id.slice(0, 4)}..${id.slice(-4)}`),
 		logo,
 		decimals,
 		unit_price_usd: unitPrice,

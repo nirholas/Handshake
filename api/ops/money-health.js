@@ -38,7 +38,7 @@ const SUBSYSTEMS = [
 // other failure (a renamed column, a dead connection) is a bug, and it rethrows
 // so the board 500s loudly instead of reporting a silent, permanent null. Same
 // convention as the verdict query below.
-async function lastActivity(table, ts) {
+export async function lastActivity(table, ts) {
 	if (!table) return null;
 	try {
 		const rows = await sql(`SELECT extract(epoch from max(${ts})) * 1000 AS ms FROM ${table}`);

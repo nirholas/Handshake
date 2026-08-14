@@ -326,7 +326,7 @@ export default wrap(async (req, res) => {
 	const params = new URL(req.url, 'http://x').searchParams;
 	const mint = (params.get('mint') || '').trim();
 	if (!isPlausibleMint(mint)) {
-		return error(res, 400, 'bad_mint', 'mint must be a base58 Solana address (32–44 chars)');
+		return error(res, 400, 'bad_mint', 'mint must be a base58 Solana address (32 to 44 chars)');
 	}
 	const interval = normalizeInterval(params.get('interval'));
 

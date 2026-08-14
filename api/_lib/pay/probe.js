@@ -13,6 +13,23 @@ import { validatePublicUrl, resolvePublicHost, pinnedAgent, SsrfError } from '..
 /** Canonical USDC mint on Solana mainnet. */
 export const USDC_SOLANA_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
+/** Canonical USDC contract on Base mainnet, for the secondary EVM rail. */
+export const USDC_BASE_ADDRESS = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
+
+/**
+ * How a session's network name maps onto the network ids a 402 challenge uses.
+ *
+ * A session stores the short name ("solana", "base"), but the wire format is
+ * CAIP-2: every live Base endpoint advertises `eip155:8453`, never `base`.
+ * Matching the short name against the challenge by prefix alone therefore found
+ * nothing for a Base session, so the simulator reported "no base payment option"
+ * for endpoints that were charging on Base right in front of it.
+ */
+const NETWORK_ALIASES = Object.freeze({
+	solana: ['solana'],
+	base: ['base', 'eip155:8453'],
+});
+
 export const DEFAULT_TIMEOUT_MS = 20_000;
 
 export function safeJson(text) {
@@ -85,7 +102,10 @@ export function describeRail(accept) {
 		// Every asset we transact in uses 6 decimals; a rail that does not is
 		// reported with a null price rather than a wrong one.
 		amount_usd: atomics === null ? null : Number(atomics) / 1_000_000,
-		usdc: accept?.asset === USDC_SOLANA_MINT || /usdc/i.test(String(accept?.extra?.name ?? '')),
+		usdc:
+			accept?.asset === USDC_SOLANA_MINT ||
+			String(accept?.asset ?? '').toLowerCase() === USDC_BASE_ADDRESS ||
+			/usdc/i.test(String(accept?.extra?.name ?? '')),
 	};
 }
 
@@ -145,7 +165,16 @@ export async function probePrice(rawUrl, { method = 'GET', body = null, timeoutM
  */
 export function selectRail(rails, network = 'solana') {
 	const want = String(network || 'solana').toLowerCase();
-	const onNetwork = rails.filter((r) => typeof r.network === 'string' && r.network.toLowerCase().startsWith(want));
+	const ids = NETWORK_ALIASES[want] ?? [want];
+	const onNetwork = rails.filter(
+		(r) =>
+			typeof r.network === 'string' &&
+			ids.some((id) => r.network.toLowerCase().startsWith(id)),
+	);
 	if (onNetwork.length === 0) return null;
-	return onNetwork.find((r) => r.usdc) ?? onNetwork[0];
+	// A rail whose amount could not be parsed is worse than no rail: settling on
+	// it would mean signing for a price nobody read. Prefer a readable one.
+	const readable = onNetwork.filter((r) => r.amount_atomics !== null);
+	const pool = readable.length ? readable : onNetwork;
+	return pool.find((r) => r.usdc) ?? pool[0];
 }

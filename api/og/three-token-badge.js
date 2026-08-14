@@ -9,11 +9,14 @@
  * with image/svg+xml + a CDN cache header, no heavy canvas/satori deps in the
  * serverless bundle. Social crawlers accept image/svg+xml for og:image.
  *
- * Every figure on the card is real, and read from the same two sources that back
- * GET /api/three-token/stats (what the /three-token page renders), so the card
- * and the page can never disagree:
+ * Every figure on the card is real, and read from the same three sources that
+ * back GET /api/three-token/stats (what the /three-token page renders), so the
+ * card and the page can never disagree:
  *   market data, fetchTokenMarketData() (Birdeye → DexScreener → GeckoTerminal
  *                  failover with a stale cache)
+ *   holders,     threeHolderCount() (our own snapshot, then a keyless rung),
+ *                  because the market sources that answer without a Birdeye key
+ *                  carry no holder count at all
  *   agent count, the same agent_identities count the stats endpoint runs
  * Nothing is hardcoded. $THREE is the only coin this card ever references.
  *
@@ -32,6 +35,7 @@
 import { cors, wrap } from '../_lib/http.js';
 import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
 import { fetchTokenMarketData } from '../_lib/market/token-market.js';
+import { threeHolderCount } from '../_lib/coin/three-holders.js';
 import { sql } from '../_lib/db.js';
 
 // Edge-cache the card: 60s fresh, 10m at the CDN, serve-stale-while-revalidate.
@@ -107,17 +111,23 @@ function fmtPct(n) {
 // Resolve every datum the card shows from real sources, each independently
 // resilient so one failing provider blanks a single figure rather than the card.
 async function loadBadgeData() {
-	const [market, agentRow] = await Promise.all([
+	const [market, agentRow, holderCount] = await Promise.all([
 		fetchTokenMarketData(THREE_MINT).catch(() => null),
 		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`
 			.catch(() => [{ total: null }]),
+		// Same holder source /api/three-token/stats reads, and for the same reason:
+		// the keyless market rungs (DexScreener / GeckoTerminal) carry no holder
+		// count, so whenever Birdeye is unkeyed or quota-benched this is the only
+		// thing standing between the card and a permanently blank HOLDERS cell.
+		// Omitting it here is what let the card and the page disagree.
+		threeHolderCount().catch(() => null),
 	]);
 	return {
 		price: market?.price_usd ?? null,
 		change24h: market?.price_change_24h ?? null,
 		marketCap: market?.market_cap ?? null,
 		volume24h: market?.volume_24h ?? null,
-		holders: market?.holders ?? null,
+		holders: market?.holders ?? holderCount ?? null,
 		agents: agentRow?.[0]?.total ?? null,
 	};
 }

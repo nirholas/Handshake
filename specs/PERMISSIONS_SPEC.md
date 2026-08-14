@@ -128,7 +128,7 @@ Redemption is the path from a skill requesting an on-chain action to a confirmed
 
 **Race condition.** A redemption submitted before the revoke transaction confirms, but processed concurrently, may succeed on-chain. The on-chain caveats remain the authority: if the revoke confirms first, the redemption reverts. If the redemption confirms first, it is valid. There is no off-chain mechanism to prevent this window — operators should treat `scope + expiry` as the primary blast-radius control, not the race-free revocation guarantee.
 
-**Verify endpoint.** `GET /api/permissions/verify?hash=0x...&chainId=N` performs a real-time on-chain read (`DelegationManager.isDelegationDisabled(hash)`) before returning `{ valid }`, giving callers a fresh view independent of the indexer lag.
+**Verify endpoint.** `GET /api/permissions/verify?hash=0x...&chainId=N` performs a real-time on-chain read (`DelegationManager.disabledDelegations(hash)`) before returning `{ valid }`, giving callers a fresh view independent of the indexer lag.
 
 ---
 

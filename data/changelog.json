@@ -3,6 +3,64 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Sharing a build now checks that the coin world you are sharing to is real",
+			"summary": "When you screenshot a voxel build in a coin's /play world and share it, the build is filed under that coin's address. The endpoint only checked that the address was the right length, not that it was an address at all, so anything between 32 and 64 characters was accepted and filed away under its own storage slot. It now checks the format the way every other coin-world surface does: a Solana mint or an EVM contract address gets through, anything else is turned away before it reaches storage. Real worlds are unaffected, on both Solana and the EVM chains. The live event board picked up its own test coverage in the same pass, including a check that a player's account key never appears in what the board sends to the browser.",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "The internal money and platform health boards tell the truth again",
+			"summary": "Three internal dashboards watch the platform for us: one for site and cron health, one for every money subsystem, one for payment outcomes. Two of them had gone quietly wrong. The platform board judged each scheduled job against a hand-written idea of how often it should run, and three jobs that run once a day were being judged against a window of minutes, so they reported as broken for roughly 23 hours out of every day and the board could never come back all-clear; every job is now measured against the schedule it genuinely runs on. One of its probes was also posting to a payments endpoint without declaring it was sending JSON, so it had been failing on its own mistake rather than on anything real. The money board was reading the wrong timestamp column on two payment logs and showing no activity at all for a payment ring that settles thousands of payments a day. It also accepted the credential our fund-moving scheduled jobs carry as an ops password; it now takes the same admin sign-in as the other boards, so an ops credential can never be escalated into triggering a payment job.",
+			"tags": [
+				"fix",
+				"infra",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Buying USDC or SOL from Add funds again opens a checkout with your wallet already filled in",
+			"summary": "The Add funds overlay builds a Coinbase checkout link for your three.ws wallet. It was still building that link the old way, passing the destination wallet in the URL, which Coinbase stopped accepting when it moved to server-minted session tokens. The link is now minted through Coinbase's current onramp API: one single-use token per click, bound to your Solana address and the asset you picked, so the checkout opens with the destination, the asset, and your chosen amount already set instead of dropping you on a generic buy page. If Coinbase is unreachable, funding does not break: you still get a working buy page and the address to send to, exactly as before. The endpoint is also rate limited now, so nobody can drive our Coinbase quota by hammering it.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Chinese headlines no longer show up in the English crypto news feed",
+			"summary": "BlockTempo, a Taiwanese crypto publisher that writes in Traditional Chinese, was listed in our news source registry without a language tag. Untagged sources are treated as English, so its headlines were being mixed into the default feed on /markets/news, the markets hub strip, and the RSS mirror, where they read as noise to anyone browsing in English. It is now tagged Chinese: the English feed is English only, and BlockTempo shows up when you pick Chinese from the language selector, alongside PANews. Nothing else about the feed changed.",
+			"tags": [
+				"fix"
+			],
+			"link": "/markets/news"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Plugin marketplace: no more duplicate listings, and private plugins stay private",
+			"summary": "The plugin grid listed every built-in plugin twice (two Calculators, two Weathers, and so on) because the platform's seed rows were inserted a second time without the duplicate check ever catching them. There are now seven built-ins again, one of each, and the database refuses a duplicate outright. Three plugin API fixes ship with it: a plugin published as private was readable in full by anyone who knew its link, and its install counter could be driven by anyone; recording an install now reports the real new total instead of always answering \"ok\", and counts one install per person per plugin rather than one per click; and asking for a page of plugins with a malformed cursor now returns a plain validation error rather than a server error.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "The $THREE holder count is back on the token page and its share card",
+			"summary": "The holder count on the /three-token page, and on the badge image that previews wherever a $THREE link is shared, had been showing a dash instead of a number. Our own holder snapshot is rebuilt from a Solana indexer that has been refusing the scan, and once the snapshot went stale the page correctly declined to show an out-of-date figure, so the count simply disappeared rather than being briefly missing. Holder count now falls back to a second, independent source when our snapshot cannot refresh, so the figure stays real and current through an indexer outage. The share card was also reading a narrower set of sources than the page it mirrors, which is why the two could disagree; both now read the same ones. Separately, a shared agent link unfurls noticeably faster: the card was fetching the agent's portrait only after every other lookup had finished, and now fetches it alongside them.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/three-token"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Apps that sign in with a client secret can now revoke and inspect their own tokens",
 			"summary": "If you connect an app to three.ws over OAuth and registered it with a client secret sent in the Authorization header (client_secret_basic, the standard choice for server-side apps), only the token endpoint accepted those credentials. Revoking a token or checking whether one is still valid answered that the client_id was missing, and answered that the credentials were bad the moment you added it, so a confidential app had no way to sign a user out or verify a token it owned. All three endpoints now take the same credentials, in the header or in the form body, exactly as the OAuth revocation and introspection standards require. Dynamic client registration also now returns client_secret_expires_at alongside a new secret, so your client can tell that a three.ws secret never expires rather than guessing from a missing field.",
 			"tags": [

@@ -157,4 +157,8 @@ curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'
   inbound panel reads), `api/_lib/economy-ledger.js` (`recordAgentReclaim`, the
   durable trail for every self-heal attempt).
 - `/api/ops/money-health` is the complementary board: open reconciliation
-  verdicts per money subsystem rather than live payment outcomes.
+  verdicts per money subsystem rather than live payment outcomes. It takes the
+  same gate as this endpoint (admin session or `x-ops-secret`). Until
+  2026-08-14 it ran its own gate that accepted a `CRON_SECRET` bearer, so an ops
+  script pointed at it with the cron credential now gets a 401: send
+  `x-ops-secret: $OPS_SECRET` (Secret Manager: `ops-dashboard-secret`) instead.

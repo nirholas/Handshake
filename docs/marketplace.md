@@ -70,6 +70,40 @@ Both skill and asset purchases follow the same three-step pattern:
 Pending rows carry an `expires_at`; an unpaid reference simply expires and a fresh
 one is issued on the next prepare.
 
+### Paying from a phone: the transaction request
+
+Step 2 has two rails, and both settle the same pending row through the same
+`reference`, so step 3 is unchanged either way.
+
+- **Transfer request** (`solana:<recipient>?amount=…&spl-token=…&reference=…`) is
+  the plain deep link. The scanning wallet builds the transfer itself, which means
+  the buyer needs SOL for the network fee and the seller's token account must
+  already exist.
+- **Transaction request** ([`api/purchase/skill.js`](../api/purchase/skill.js)) is
+  the sponsored rail the QR encodes by default. The wallet fetches the transfer
+  from us instead of composing it:
+
+  ```
+  GET  /api/purchase/skill?reference=<base58>   → { label, icon }
+  POST /api/purchase/skill?reference=<base58>   { "account": "<buyer base58>" }
+                                                → { transaction: "<base64>", message }
+  ```
+
+  Because the server composes it, the transaction can do three things the deep
+  link cannot: the marketplace payer signs as fee payer (a buyer holding only
+  USDC needs no SOL), missing associated token accounts are created idempotently,
+  and the platform fee leg rides the same signature as the seller leg.
+
+The endpoint never creates a purchase. It only serves a `pending` row that the
+authenticated `POST /api/marketplace/purchase` already wrote, so an unknown or
+expired reference is a `404` / `410` and there is no way to mint an unattributed
+purchase from an unauthenticated wallet. The seller leg is always the **last**
+instruction and carries the reference, because `validateTransfer` in step 3
+inspects only the last instruction; a fee leg is placed before it.
+
+The payment modal shows the sponsored QR first and offers a one-click swap to the
+direct-transfer QR for wallets that do not implement transaction requests.
+
 ## Pricing and payout
 
 - Prices are set per listing (`set-skill-price.js`, `asset-price.js`) with an

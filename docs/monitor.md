@@ -86,8 +86,11 @@ page where you would do that.
 
 **Nothing is simulated.** There is no sample data, no placeholder row, and no
 fabricated number anywhere on this page. When the platform is quiet, the board
-shows zeroes and says so. `/api/home-stats` returning `available:false` leaves
-the previous totals in place rather than rendering a made-up figure.
+shows zeroes and says so. `/api/home-stats` or `/api/platform/stats` returning
+`available:false` leaves the previous totals in place rather than rendering a
+made-up figure. Neither endpoint reports a zero it did not count: a read that
+fails answers `available:false` under a 15-second cache instead of shipping an
+all-zero payload behind the usual multi-minute one.
 
 ---
 

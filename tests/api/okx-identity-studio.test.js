@@ -21,6 +21,10 @@ process.env.X402_PAY_TO_XLAYER ||= '0x75d00a2713565171f33216e5aa2a375e076ecf69';
 process.env.X402_XLAYER_RELAYER_KEY ||=
 	'0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
 process.env.JWT_SECRET ||= 'okx-identity-test-secret';
+// /health memoizes its subsystem sweep in production; disable the memo by
+// default here so each case sees its own probes, and opt back in where the
+// cache itself is under test.
+process.env.OKX_HEALTH_TTL_MS = '0';
 
 vi.mock('../../api/_lib/auth.js', () => ({
 	extractBearer: () => null,
@@ -85,6 +89,14 @@ const fetchRoutes = { chat: null, forgeSubmit: null, forgePoll: null, rig: null,
 function jsonResponse(status, body) {
 	return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
+// What GET /api/forge?catalog really answers with: the tier + backend matrix
+// the health probe requires before it calls the generation lane up.
+const FORGE_CATALOG = {
+	paths: ['image', 'geometry'],
+	tiers: [{ id: 'draft' }, { id: 'standard' }],
+	backends: [{ id: 'trellis' }, { id: 'hunyuan3d' }],
+};
+
 const realFetch = globalThis.fetch;
 beforeEach(() => {
 	r2Store.clear();
@@ -203,31 +215,7 @@ describe('free lanes over HTTP', () => {
 	});
 
 	it('GET /health runs real probes and reports per-subsystem status', async () => {
-		fetchRoutes.forgeSubmit = () => jsonResponse(200, { tiers: [] });
-		fetchRoutes.render = () => jsonResponse(200, { poses: [{ id: 'tpose' }] });
-		// WO-03 probes: the retarget clip manifest, and the X Layer JSON-RPC
-		// calls behind the payment-rail probe (block height + USD₮0 symbol read).
-		fetchRoutes.ref = (u, init) => {
-			if (String(u).includes('/animations/manifest.json')) {
-				return jsonResponse(200, [{ name: 'idle', url: '/animations/idle.json' }]);
-			}
-			let rpc = {};
-			try {
-				rpc = JSON.parse(init?.body || '{}');
-			} catch {
-				/* not JSON-RPC */
-			}
-			const reply = (result) => jsonResponse(200, { jsonrpc: '2.0', id: rpc.id ?? 1, result });
-			if (rpc.method === 'eth_blockNumber') return reply('0x10');
-			if (rpc.method === 'eth_chainId') return reply('0xc4');
-			if (rpc.method === 'eth_call') {
-				// ABI-encoded string "USD₮0" — the on-chain symbol() return value.
-				return reply(
-					'0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000007555344e282ae3000000000000000000000000000000000000000000000000000',
-				);
-			}
-			return jsonResponse(404, {});
-		};
+		mountHealthyProbes();
 		const res = makeRes();
 		await handler(makeReq({ method: 'GET', service: 'health' }), res);
 		expect(res.statusCode).toBe(200);
@@ -246,11 +234,51 @@ describe('free lanes over HTTP', () => {
 
 	it('GET /health goes 503 when a subsystem is down — never a hardcoded ok', async () => {
 		fetchRoutes.render = () => new Response(null, { status: 500 });
-		fetchRoutes.forgeSubmit = () => jsonResponse(200, { tiers: [] });
+		fetchRoutes.forgeSubmit = () => jsonResponse(200, FORGE_CATALOG);
 		const res = makeRes();
 		await handler(makeReq({ method: 'GET', service: 'health' }), res);
 		expect(res.statusCode).toBe(503);
 		expect(JSON.parse(res.body).ok).toBe(false);
+	});
+
+	// The generation probe used to GET /api/forge bare, which answers 400
+	// missing_job whether the lane is healthy or not — it only failed on a 5xx.
+	// It now reads ?catalog and requires a real tier + backend matrix.
+	it('GET /health fails generation on an empty forge catalog, not just on a 5xx', async () => {
+		fetchRoutes.forgeSubmit = (u) => {
+			expect(String(u)).toContain('/api/forge?catalog');
+			return jsonResponse(200, { tiers: [], backends: [] });
+		};
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'health' }), res);
+		expect(res.statusCode).toBe(503);
+		const generation = JSON.parse(res.body).subsystems.find((s) => s.name === 'generation');
+		expect(generation.ok).toBe(false);
+		expect(generation.error).toContain('empty');
+	});
+
+	// /health is free, unauthenticated, and fans out to five subsystems, so the
+	// report is memoized for OKX_HEALTH_TTL_MS: a poll loop costs one sweep per
+	// window, not one per request.
+	it('GET /health memoizes the sweep within the TTL window', async () => {
+		fetchRoutes.forgeSubmit = () => jsonResponse(200, FORGE_CATALOG);
+		// First call with the memo off, so this case sweeps for real and seeds a
+		// reading of its own instead of inheriting an earlier test's.
+		const first = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'health' }), first);
+		const probesAfterFirst = globalThis.fetch.mock.calls.length;
+		expect(probesAfterFirst).toBeGreaterThan(0);
+
+		process.env.OKX_HEALTH_TTL_MS = '60000';
+		try {
+			const second = makeRes();
+			await handler(makeReq({ method: 'GET', service: 'health' }), second);
+			expect(globalThis.fetch.mock.calls.length).toBe(probesAfterFirst);
+			expect(JSON.parse(second.body).checkedAt).toBe(JSON.parse(first.body).checkedAt);
+			expect(second.headers['cache-control']).toBe('public, max-age=15, s-maxage=30');
+		} finally {
+			process.env.OKX_HEALTH_TTL_MS = '0';
+		}
 	});
 
 	it('unknown service 404s with the service index', async () => {
@@ -307,6 +335,60 @@ describe('402 challenge and pricing', () => {
 		// The legacy rails still follow, so non-OKX agents can pay too (Base here).
 		expect(challenge.accepts.length).toBeGreaterThan(1);
 		expect(challenge.accepts.slice(1).some((a) => a.network !== 'eip155:196')).toBe(true);
+	});
+
+	// The 402 envelope is how a buying agent learns to call this server. It used
+	// to inherit build402Body's default bazaar entry, which describes the main
+	// /api/mcp server and told buyers to call validate_model — a tool this
+	// dispatcher does not have, so an agent that followed it paid $1.50 and then
+	// sent a call that could only be rejected.
+	it('the 402 bazaar extension describes THIS server: create_identity, never validate_model', async () => {
+		const res = makeRes();
+		await handler(
+			makeReq({
+				body: {
+					jsonrpc: '2.0',
+					id: 1,
+					method: 'tools/call',
+					params: { name: 'create_identity', arguments: { agent_name: 'X', brief: 'a data agent' } },
+				},
+			}),
+			res,
+		);
+		expect(res.statusCode).toBe(402);
+		const challenge = JSON.parse(res.body);
+		const bazaar = challenge.extensions.bazaar;
+		expect(bazaar.discoverable).toBe(true);
+		expect(bazaar.info.input.method).toBe('POST');
+		expect(bazaar.info.input.body.params.name).toBe('create_identity');
+		// The advertised example arguments must satisfy the tool's real schema.
+		const validateArgs = tools.TOOLS.create_identity.validate;
+		expect(validateArgs(bazaar.info.input.body.params.arguments)).toBe(true);
+		expect(bazaar.info.output.example.result.structuredContent.poll_tool).toBe('identity_status');
+		const advertised = JSON.stringify(bazaar);
+		expect(advertised).not.toContain('validate_model');
+		for (const name of ['create_identity', 'identity_status', 'getting_started']) {
+			expect(advertised).toContain(name);
+		}
+	});
+
+	it('the 402 resource metadata keeps the okx tag inside the 5-tag Bazaar cap', async () => {
+		const res = makeRes();
+		await handler(
+			makeReq({
+				body: {
+					jsonrpc: '2.0',
+					id: 1,
+					method: 'tools/call',
+					params: { name: 'create_identity', arguments: { agent_name: 'X', brief: 'a data agent' } },
+				},
+			}),
+			res,
+		);
+		const { resource } = JSON.parse(res.body);
+		expect(resource.serviceName).toBe('three.ws Agent Identity Studio');
+		expect(resource.tags.length).toBeLessThanOrEqual(5);
+		expect(resource.tags).toContain('okx');
 	});
 
 	it('identity_status is free — served anonymously, no 402', async () => {

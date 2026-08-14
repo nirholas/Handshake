@@ -66,6 +66,19 @@ describe('buildGhostSubscription', () => {
 		expect(buildGhostSubscription({}).ok).toBe(false);
 	});
 
+	it('rejects an unrecognized sizing rule instead of silently replaying a different one', () => {
+		// A caller asking for a rule we do not have used to get a `fixed` replay
+		// with no signal that the request was dropped, which makes the whole
+		// simulation answer a question nobody asked.
+		const bad = buildGhostSubscription({ budgetSol: 1, sizing_rule: 'martingale' });
+		expect(bad.ok).toBe(false);
+		expect(bad.error).toMatch(/fixed.*multiplier/);
+		// The two real rules, and the absent-means-default case, still pass.
+		expect(buildGhostSubscription({ budgetSol: 1, sizing_rule: 'fixed' }).value.sizing_rule).toBe('fixed');
+		expect(buildGhostSubscription({ budgetSol: 1, sizing_rule: 'multiplier' }).value.sizing_rule).toBe('multiplier');
+		expect(buildGhostSubscription({ budgetSol: 1, sizing_rule: undefined }).value.sizing_rule).toBe('fixed');
+	});
+
 	it('honors explicit overrides over the derived defaults', () => {
 		const { value } = buildGhostSubscription({ budgetSol: 2, fixed_sol: 0.05, max_open_copies: 2 });
 		expect(value.fixed_sol).toBe(0.05);

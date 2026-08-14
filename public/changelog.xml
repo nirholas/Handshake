@@ -39,6 +39,14 @@
 			<description>The bounty board at /bounties mirrors the public pump.fun GO board. When you opened a bounty link that had been deleted or mistyped, the page reported it the same way it reports pump.fun being down, so there was no way to tell a dead link from an outage. A bounty that genuinely is not there now answers as not found, and a real upstream problem keeps its own separate answer. A second, quieter case got fixed with it: when the submissions list for a bounty failed to load, the page showed the bounty with zero submissions and said nothing, which looks identical to a bounty nobody has entered. That failure is now recorded, so a pump.fun outage shows up as an outage rather than as a board that suddenly looks unpopular.</description>
 		</item>
 		<item>
+			<title>Apps that sign in with a client secret can now revoke and inspect their own tokens</title>
+			<link>https://three.ws/docs/authentication</link>
+			<guid isPermaLink="false">2026-08-14:Apps that sign in with a client secret can now revoke and inspect their own tokens</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If you connect an app to three.ws over OAuth and registered it with a client secret sent in the Authorization header (client_secret_basic, the standard choice for server-side apps), only the token endpoint accepted those credentials. Revoking a token or checking whether one is still valid answered that the client_id was missing, and answered that the credentials were bad the moment you added it, so a confidential app had no way to sign a user out or verify a token it owned. All three endpoints now take the same credentials, in the header or in the form body, exactly as the OAuth revocation and introspection standards require. Dynamic client registration also now returns client_secret_expires_at alongside a new secret, so your client can tell that a three.ws secret never expires rather than guessing from a missing field.</description>
+		</item>
+		<item>
 			<title>Avatar likeness is now measured against your photos, not assumed</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Avatar likeness is now measured against your photos, not assumed</guid>

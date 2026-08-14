@@ -23,6 +23,12 @@ import { solPriceUsd, solPriceInfo, solChange24hPct } from '../_lib/sol-price.js
 
 let _heliusCache = { value: null, at: 0 };
 
+// Drops the 4s probe cache. Exported for tests, which would otherwise read one
+// case's cached probe result as the next case's answer.
+export function _resetHeliusCache() {
+	_heliusCache = { value: null, at: 0 };
+}
+
 const isHeliusUrl = (u) => u.includes('helius-rpc.com') || u.includes('helius.dev');
 
 // Which RPC this panel should actually probe, and what to honestly call it.
@@ -58,6 +64,17 @@ async function getHeliusInfo() {
 			}),
 		});
 		clearTimeout(tid);
+		// A rejected key answers with a plain-text body ("Unauthorized"), which
+		// makes r.json() throw and would otherwise be filed as "unreachable". The
+		// status is the actionable part: rotate the key, don't chase the network.
+		if (!r.ok) {
+			value = {
+				enabled: true, slot: null, network: 'mainnet', endpoint,
+				error: `http_${r.status}`,
+			};
+			_heliusCache = { value, at: Date.now() };
+			return value;
+		}
 		const d = await r.json();
 		const slot = Number.isFinite(Number(d?.result)) ? Number(d.result) : null;
 		// A JSON-RPC error body is a 200 at the HTTP layer. Reporting it as a bare
