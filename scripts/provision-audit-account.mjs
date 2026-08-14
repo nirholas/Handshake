@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * provision-audit-account.mjs — create the QA account the authed sweeps need.
+ * provision-audit-account.mjs: create the QA account the authed sweeps need.
  *
  * `npm run audit:web:login` (and the other authed harnesses: likeness-eval,
  * reconstruct-load-test, capture-bundles-media) sign in with AUDIT_EMAIL /

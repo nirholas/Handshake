@@ -12,7 +12,7 @@ import { NEWS_API_BASE, newsApiGet, slimArticle } from './_news-core.js';
 
 const TOOL_NAME = 'crypto_news';
 const TOOL_DESCRIPTION =
-	'Live crypto news headlines aggregated by three.ws directly from 197 publisher RSS/Atom feeds — ' +
+	'Live crypto news headlines aggregated by three.ws directly from 197 publisher RSS/Atom feeds, ' +
 	'CoinDesk, The Block, Decrypt, CoinTelegraph, SEC press, exchange blogs, research desks, and ' +
 	'international outlets in 17 languages. Filter by category (bitcoin, ethereum, solana, defi, nft, ' +
 	'trading, research, security, regulation-adjacent geopolitical, and more), by a single source key, ' +

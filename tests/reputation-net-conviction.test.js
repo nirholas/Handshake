@@ -1,4 +1,4 @@
-// Reputation Staking Market — net conviction (spec §3.3).
+// Reputation Staking Market: net conviction (spec §3.3).
 //
 // `GET /api/agents/solana-reputation` reports what is STILL staked behind an
 // agent, not what was ever staked. A settled position's conviction is retired the
