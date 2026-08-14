@@ -26,9 +26,14 @@
 		ul { padding-left: 20px; }
 		li { margin-bottom: 6px; }
 		a { color: var(--ink-bright); }
-		table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+		table { width: 100%; border-collapse: collapse; margin: 0; font-size: 14px; min-width: 420px; }
 		th { text-align: left; color: var(--ink-bright); padding: 8px 12px; border-bottom: 1px solid var(--stroke-strong); }
 		td { padding: 8px 12px; border-bottom: 1px solid var(--hairline); color: var(--ink); vertical-align: top; }
+		/* The data table's shortest readable width is wider than a 320px phone,
+		   so it scrolls inside its own box rather than pushing the whole page
+		   sideways. Focusable and labelled, so it is reachable by keyboard. */
+		.table-scroll { overflow-x: auto; margin: 16px 0; }
+		.table-scroll:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
 		hr { border: none; border-top: 1px solid var(--stroke); margin: 48px 0; }
 		.foot { color: var(--ink-faint); font-size: 13px; }
 	</style>
@@ -64,6 +69,7 @@
 	<p data-i18n="legal_privacy.this_privacy_policy_explains_how_three_ws">This Privacy Policy explains how three.ws ("we", "us", "our") collects, uses, and shares information about you when you use three.ws (the "Service"). We take your privacy seriously and collect only what we need to operate.</p>
 
 	<h2 data-i18n="legal_privacy.1_information_we_collect">1. Information We Collect</h2>
+	<div class="table-scroll" role="region" tabindex="0" aria-label="Information we collect" data-i18n-attr="aria-label:legal_privacy.table_information_we_collect_label">
 	<table>
 		<tr><th data-i18n="legal_privacy.category">Category</th><th data-i18n="legal_privacy.examples">Examples</th><th data-i18n="legal_privacy.why">Why</th></tr>
 		<tr><td data-i18n="legal_privacy.account_identifiers">Account identifiers</td><td data-i18n="legal_privacy.wallet_address_email_optional_username_displ">Wallet address, email (optional), username, display name</td><td data-i18n="legal_privacy.authentication_account_management">Authentication &amp; account management</td></tr>
@@ -74,6 +80,7 @@
 		<tr><td data-i18n="legal_privacy.legal_acceptance_records">Legal acceptance records</td><td data-i18n="legal_privacy.terms_of_service_version_accepted_risk_discl">Terms of Service version accepted, Risk Disclosure version accepted, timestamp, IP address, user agent, which flow recorded it</td><td data-i18n="legal_privacy.proof_of_agreement_legal_compliance">Proof of agreement, legal compliance</td></tr>
 		<tr><td data-i18n="legal_privacy.email_if_provided">Email (if provided)</td><td data-i18n="legal_privacy.email_address_for_transactional_messages">Email address for transactional messages</td><td data-i18n="legal_privacy.account_notices_subscription_receipts">Account notices, subscription receipts</td></tr>
 	</table>
+	</div>
 	<p data-i18n-html="legal_privacy.we_do_not_collect_advertising_identifiers_us">We do <strong>not</strong> collect advertising identifiers, use third-party tracking pixels, or sell personal data to any third party.</p>
 
 	<h2 data-i18n="legal_privacy.2_how_we_use_your_information">2. How We Use Your Information</h2>

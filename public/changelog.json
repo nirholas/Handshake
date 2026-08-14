@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T20:51:25.884Z",
+	"generated_at": "2026-08-14T21:10:59.178Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -956,6 +956,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The privacy policy's data table no longer pushes the page sideways on a phone",
+			"summary": "The privacy policy lists what three.ws collects in a three-column table: the category, an example, and why we hold it. On a narrow phone screen that table was wider than the screen, and because it sat in the normal flow of the page it dragged the entire document sideways with it, so every paragraph and heading in the policy scrolled left and right too. The table now scrolls on its own inside a box the width of the screen, and the rest of the page stays put. The box is reachable with the keyboard and announced to screen readers, so the table can be read across without a mouse. Checked at phone, tablet, and desktop widths.",
+			"link": "/legal/privacy",
+			"tags": [
+				"fix"
 			]
 		},
 		{

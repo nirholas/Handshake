@@ -10556,7 +10556,8 @@
 		"what_we_return_a_public_url_to": "<strong>What we return:</strong> a public URL to the generated GLB model (hosted on our CDN) and a link to view it. The response contains no account identifiers or personal data. Generated model files are served from public URLs so you can download and share them; treat a model URL as public.",
 		"why": "Why",
 		"you_have_the_right_to_lodge_a": "You have the right to lodge a complaint with your local supervisory authority. You may also contact us first at <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a>; we would welcome the chance to resolve your concern directly.",
-		"you_have_the_rights_to_know_access": "You have the rights to know, access, correct, delete, and port your personal information, and to not be discriminated against for exercising them. Exercise them via <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Section 6). We verify requests using your signed-in session, your account email, or a message signed by your wallet. An authorized agent may act for you with written permission."
+		"you_have_the_rights_to_know_access": "You have the rights to know, access, correct, delete, and port your personal information, and to not be discriminated against for exercising them. Exercise them via <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Section 6). We verify requests using your signed-in session, your account email, or a message signed by your wallet. An authorized agent may act for you with written permission.",
+		"table_information_we_collect_label": "Information we collect"
 	},
 	"legal_risk": {
 		"10_contact": "10. Contact",
