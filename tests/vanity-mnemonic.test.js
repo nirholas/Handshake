@@ -182,7 +182,12 @@ describe('grindVanityMnemonic', () => {
 		expect(expectedMnemonicAttempts('Az', '', false)).toBeLessThan(
 			expectedMnemonicAttempts('zz', '', false) / 50,
 		);
-		const r = grindVanityMnemonic({ prefix: 'Az', timeBudgetMs: 45_000 });
+		// ~982 expected attempts, about 3 s at the reference rate. The budget is a
+		// WALL-CLOCK one, so on a host busy with the rest of this suite the same
+		// work can take an order of magnitude longer and exhaust a tight budget:
+		// that is what the 45 s version of this line flaked on. The assertion is
+		// unchanged; only the headroom is, and the vitest timeout still bounds it.
+		const r = grindVanityMnemonic({ prefix: 'Az', timeBudgetMs: 110_000 });
 		expect(r.publicKey.startsWith('Az')).toBe(true);
 	});
 
