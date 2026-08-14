@@ -184,7 +184,7 @@ async function insertSeedAvatar({
 			${userId},
 			${toSlug(prompt)},
 			${toTitle(prompt)},
-			${'AI-generated ' + modelCategory + ' — forged on three.ws'},
+			${'AI-generated ' + modelCategory + ', forged on three.ws'},
 			fc.glb_key,
 			coalesce(fc.size_bytes, 0),
 			'model/gltf-binary',
@@ -725,7 +725,7 @@ async function startNextJob(origin, claimed = new Set()) {
 	if (submit.timedOut) {
 		await noteCircuitFailure();
 		await sql`delete from users where id = ${user.id}`.catch(() => {});
-		return { ok: false, reason: 'forge submit timed out — will retry next tick' };
+		return { ok: false, reason: 'forge submit timed out, will retry next tick' };
 	}
 
 	if (submit.status !== 200) {
