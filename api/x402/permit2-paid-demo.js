@@ -193,6 +193,52 @@ export default wrap(async (req, res) => {
 		serviceName: 'three.ws Permit2 Demo',
 		tags: ['x402', 'permit2', 'eip2612', 'gasless', 'demo'],
 	});
+
+	// USE-23: bypass payment for internal / subscription / OAuth callers. This
+	// runs BEFORE buildRequirements on purpose. A bypass caller never signs a
+	// payment, so the CDP credentials that Permit2 settlement needs are
+	// irrelevant to them; building requirements first made the whole bypass
+	// branch unreachable on any deployment without CDP creds (it 402'd instead).
+	// The Permit2 payload-shape check below is skipped for the same reason:
+	// there is no payload to validate.
+	const acResult = await accessControl(req, routeConfig);
+	if (acResult?.abort) {
+		if (acResult.headers) {
+			for (const [k, v] of Object.entries(acResult.headers)) res.setHeader(k, v);
+		}
+		return error(
+			res,
+			acResult.status || 403,
+			acResult.code || 'access_denied',
+			acResult.reason || 'access denied',
+		);
+	}
+	if (acResult?.grantAccess) {
+		const result = {
+			ok: true,
+			demo: 'permit2-eip2612-gas-sponsoring',
+			method: 'permit2',
+			supportsEip2612: true,
+			bypass: acResult.reason,
+			payer: null,
+			network: NETWORK_BASE_MAINNET,
+			asset: env.X402_ASSET_ADDRESS_BASE || null,
+			amountAtomics: PRICE_ATOMICS,
+			transaction: null,
+			explorer: null,
+			settledAt: null,
+			proxy: X402_EXACT_PERMIT2_PROXY,
+		};
+		if (acResult.headers) {
+			for (const [k, v] of Object.entries(acResult.headers)) res.setHeader(k, v);
+		}
+		res.setHeader('x-payment-bypass', acResult.reason || 'granted');
+		res.setHeader('cache-control', 'no-store');
+		res.setHeader('content-type', 'application/json; charset=utf-8');
+		res.end(JSON.stringify(result));
+		return;
+	}
+
 	let requirements;
 	try {
 		requirements = buildRequirements(resourceUrl);
@@ -226,47 +272,6 @@ export default wrap(async (req, res) => {
 		tags: service.tags,
 		iconUrl: service.iconUrl,
 	};
-
-	// USE-23: bypass payment for internal / subscription / OAuth callers.
-	// The Permit2 demo skips its payload-shape check on bypass — the bypass
-	// caller never signed a payment, so there's nothing to validate.
-	const acResult = await accessControl(req, routeConfig);
-	if (acResult?.abort) {
-		if (acResult.headers) {
-			for (const [k, v] of Object.entries(acResult.headers)) res.setHeader(k, v);
-		}
-		return error(
-			res,
-			acResult.status || 403,
-			acResult.code || 'access_denied',
-			acResult.reason || 'access denied',
-		);
-	}
-	if (acResult?.grantAccess) {
-		const result = {
-			ok: true,
-			demo: 'permit2-eip2612-gas-sponsoring',
-			method: 'permit2',
-			supportsEip2612: true,
-			bypass: acResult.reason,
-			payer: null,
-			network: requirements[0]?.network || null,
-			asset: requirements[0]?.asset || null,
-			amountAtomics: requirements[0]?.amount || null,
-			transaction: null,
-			explorer: null,
-			settledAt: null,
-			proxy: X402_EXACT_PERMIT2_PROXY,
-		};
-		if (acResult.headers) {
-			for (const [k, v] of Object.entries(acResult.headers)) res.setHeader(k, v);
-		}
-		res.setHeader('x-payment-bypass', acResult.reason || 'granted');
-		res.setHeader('cache-control', 'no-store');
-		res.setHeader('content-type', 'application/json; charset=utf-8');
-		res.end(JSON.stringify(result));
-		return;
-	}
 
 	const paymentHeader = req.headers['x-payment'] || req.headers['payment-signature'];
 	if (!paymentHeader) return send402(res, challenge);

@@ -340,11 +340,18 @@ async function markAgentTokens(launches) {
 	}
 }
 
-async function loadRecentLaunches({ limit, sort }) {
-	const n = Math.min(25, Math.max(1, Number(limit) || 10));
-	const raw = await recentPumpLaunches({ network: 'mainnet', limit: n });
-	const launches = await markAgentTokens(raw);
+// Build the LIST-mode response from the raw (newest-first) feed. Exported for
+// tests: the newest_* fields must keep describing the NEWEST launch even under
+// sort=liquidity, so `newest` is read off the feed BEFORE the re-rank. Reading
+// index 0 of the already-sorted array reported the highest-liquidity launch as
+// the newest one, which only looked right whenever the two happened to coincide.
+export function summarizeLaunches(feed, sort) {
+	const newest = feed.reduce(
+		(best, l) => (best == null || (l?.created_at ?? -Infinity) > (best.created_at ?? -Infinity) ? l : best),
+		null,
+	);
 
+	const launches = feed.slice();
 	// sort='liquidity' re-ranks by initial bonding-curve SOL reserves, highest first.
 	if (sort === 'liquidity') {
 		launches.sort((a, b) => (b.liquidity_sol ?? 0) - (a.liquidity_sol ?? 0));
@@ -353,7 +360,6 @@ async function loadRecentLaunches({ limit, sort }) {
 	const liq = launches.map((l) => l.liquidity_sol).filter((v) => v != null && v > 0);
 	const avgLiq = liq.length ? liq.reduce((a, b) => a + b, 0) / liq.length : null;
 	const maxLiq = liq.length ? Math.max(...liq) : null;
-	const newest = launches[sort === 'liquidity' ? 0 : 0]; // feed is newest-first from source
 
 	return {
 		network: 'mainnet',
@@ -365,6 +371,16 @@ async function loadRecentLaunches({ limit, sort }) {
 		avg_initial_liquidity_sol: avgLiq != null ? Math.round(avgLiq * 1e4) / 1e4 : null,
 		max_initial_liquidity_sol: maxLiq != null ? Math.round(maxLiq * 1e4) / 1e4 : null,
 		launches,
+	};
+}
+
+async function loadRecentLaunches({ limit, sort }) {
+	const n = Math.min(25, Math.max(1, Number(limit) || 10));
+	const raw = await recentPumpLaunches({ network: 'mainnet', limit: n });
+	const feed = await markAgentTokens(raw);
+
+	return {
+		...summarizeLaunches(feed, sort),
 		queried_at: new Date().toISOString(),
 	};
 }
@@ -546,9 +562,8 @@ async function detectWhaleActivity(limit) {
 // Read + parse the JSON body off the raw request stream (same idiom as the
 // other POST x402 endpoints — req.body is not pre-parsed in this runtime).
 async function readJsonBody(req) {
-	const chunks = [await readBody(req, 1_000_000)];
-	if (!chunks.length) return {};
-	return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+	const raw = await readBody(req, 1_000_000);
+	return JSON.parse(Buffer.from(raw).toString('utf8') || '{}');
 }
 
 const WHALE_DESCRIPTION =

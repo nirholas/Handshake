@@ -1,5 +1,5 @@
-// GET    /api/x/status   — connection + quota + tier
-// DELETE /api/x/status   — disconnect
+// GET    /api/x/status: connection + quota + tier
+// DELETE /api/x/status: disconnect
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';

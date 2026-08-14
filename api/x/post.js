@@ -15,7 +15,7 @@ export default wrap(async (req, res) => {
 	const user = await getSessionUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
-	// Publishing to the user's connected X account is a sensitive state change —
+	// Publishing to the user's connected X account is a sensitive state change,
 	// gate it behind CSRF like the rest of the write surface (marketplace, etc.),
 	// and rate-limit so a leaked session can't spam the account.
 	if (!(await requireCsrf(req, res, user.id))) return;

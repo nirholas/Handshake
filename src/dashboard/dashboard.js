@@ -1082,7 +1082,7 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 
 	async function generateDrafts(count) {
 		try {
-			const r = await fetch('/api/x/draft', {
+			const r = await apiFetch('/api/x/draft', {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },

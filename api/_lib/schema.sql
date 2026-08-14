@@ -2104,17 +2104,29 @@ CREATE TABLE IF NOT EXISTS x_triggers (
 CREATE INDEX IF NOT EXISTS x_triggers_user_enabled ON x_triggers(user_id) WHERE enabled;
 CREATE INDEX IF NOT EXISTS x_triggers_agent_enabled ON x_triggers(agent_id) WHERE enabled;
 
+-- Shape matches what /api/cron/run-x-scheduled-posts and /api/x/schedule read and
+-- write (posted_at, tweet_id, error, attempts), not the vestigial published_at
+-- column this file used to declare. See
+-- api/_lib/migrations/20260814060000_x_social_publish_state.sql for why the two
+-- generations diverged and how an already-provisioned database is reconciled.
 CREATE TABLE IF NOT EXISTS x_scheduled_posts (
-    id           uuid        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id      uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    agent_id     uuid        REFERENCES agent_identities(id) ON DELETE SET NULL,
-    text         text        NOT NULL,
-    scheduled_at timestamptz NOT NULL,
-    published_at timestamptz,
-    created_at   timestamptz NOT NULL DEFAULT now()
+    id                uuid        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id           uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    agent_id          text,
+    text              text        NOT NULL,
+    thread_parts      jsonb,
+    reply_to_tweet_id text,
+    scheduled_at      timestamptz NOT NULL,
+    posted_at         timestamptz,
+    tweet_id          text,
+    error             text,
+    attempts          int         NOT NULL DEFAULT 0,
+    created_at        timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS x_scheduled_posts_pending
-    ON x_scheduled_posts(scheduled_at) WHERE published_at IS NULL;
+CREATE INDEX IF NOT EXISTS x_scheduled_due_idx
+    ON x_scheduled_posts(scheduled_at) WHERE posted_at IS NULL AND error IS NULL;
+CREATE INDEX IF NOT EXISTS x_scheduled_user_idx
+    ON x_scheduled_posts(user_id, scheduled_at DESC);
 
 -- ── walk metrics / events / achievements ────────────────────────────────────
 -- See api/_lib/migrations/20260621140000_walk_metrics.sql for the full rationale.
@@ -2225,18 +2237,24 @@ create unique index if not exists walk_control_commands_dedup
     on walk_control_commands (session_id, kind, dedup_key)
     where dedup_key is not null;
 
+-- Shape matches what /api/x/reviews reads and writes (status + resolved_at), not
+-- the vestigial approved/reviewed_at pair this file used to declare. See
+-- api/_lib/migrations/20260814060000_x_social_publish_state.sql for why the two
+-- generations diverged and how an already-provisioned database is reconciled.
 CREATE TABLE IF NOT EXISTS x_pending_reviews (
     id           uuid        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id      uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     trigger_id   uuid        REFERENCES x_triggers(id) ON DELETE SET NULL,
-    agent_id     uuid        REFERENCES agent_identities(id) ON DELETE SET NULL,
+    agent_id     text,
     text         text        NOT NULL,
-    reviewed_at  timestamptz,
-    approved     boolean,
+    thread_parts jsonb,
+    status       text        NOT NULL DEFAULT 'pending'
+                             CHECK (status IN ('pending', 'approved', 'rejected')),
+    resolved_at  timestamptz,
     created_at   timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS x_pending_reviews_user_pending
-    ON x_pending_reviews(user_id) WHERE reviewed_at IS NULL;
+CREATE INDEX IF NOT EXISTS x_pending_reviews_user_pending_idx
+    ON x_pending_reviews(user_id, created_at DESC) WHERE status = 'pending';
 
 -- ── club_tips — backfill amount_atomics ──────────────────────────────────────
 ALTER TABLE club_tips ADD COLUMN IF NOT EXISTS amount_atomics numeric;

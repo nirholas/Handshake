@@ -126,7 +126,15 @@ async function handlePaidNameResolve(req, res, body) {
 		});
 	}
 
+	// Resolve BEFORE settling. A name that resolves to nothing has no value to
+	// sell, so the payment is left unspent and the buyer can retry or pay a
+	// different endpoint. Settling first would have charged $0.001 for an
+	// { address: null } answer, which is exactly what the pipeline stages take
+	// care never to do.
 	const resolved = await resolveName(name);
+	if (!resolved?.address) {
+		return error(res, 404, 'not_found', `could not resolve "${name}" (payment was not taken)`);
+	}
 
 	let settleResult;
 	try {
@@ -150,9 +158,9 @@ async function handlePaidNameResolve(req, res, body) {
 	return json(res, 200, {
 		data: {
 			name,
-			address: resolved?.address ?? null,
-			verified: isOnCurveAddress(resolved?.address),
-			source: resolved?.source ?? null,
+			address: resolved.address,
+			verified: isOnCurveAddress(resolved.address),
+			source: resolved.source ?? null,
 		},
 	});
 }

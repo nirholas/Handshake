@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Paying to resolve a name that does not exist no longer costs anything",
+			"summary": "The paid name-resolution call on /api/x402/pay-by-name sells one thing: the on-chain address behind a @username, a .sol name, or a raw wallet. When the name resolved to nothing it still took the $0.001 toll and handed back an empty answer. It now returns a plain 404 and leaves the payment unspent, so a buyer only ever pays for an address they actually received. Two smaller corrections shipped alongside: the pump launch feed's headline fields (newest mint, name and symbol) kept describing the newest launch when the list is ranked by liquidity instead of by age, rather than whichever coin happened to sit at the top; and internal and subscription callers can once again reach the Permit2 gas-sponsoring demo on deployments that have no card-facilitator credentials, since those callers never sign a payment in the first place.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/x402-endpoints"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Agent share cards keep their portrait, and a sealed-drop card always paints a real theme",
 			"summary": "The image an agent link unfurls with inlines the agent's avatar thumbnail. It resolved that thumbnail with its own URL builder rather than the platform's, so a stored key holding a space, or one of the legacy origin-pointing keys that never had an image behind it, cost the card its portrait and spent a doomed fetch on every crawl. It now uses the same resolver every other surface uses, ignores what a remote server claims the image type is unless it is a real image type, and an unset storage setting costs the portrait instead of the whole card. Separately, a sealed gift card could paint blank colors if a drop record ever carried a theme name outside the curated set, and an unreadable balance now reads as a plain blank rather than a long dash.",
 			"tags": [
