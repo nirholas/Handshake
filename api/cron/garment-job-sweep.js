@@ -21,6 +21,14 @@
 import { error, json, method, reportServerError, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
+// The worker answers as soon as it has taken the lock and queued the claimable
+// records; it does not hold the connection for the re-driven generations. So a
+// response this call is still waiting on after two minutes means the worker is
+// wedged, not busy. Without a ceiling that wait runs to Cloud Run's 900s request
+// timeout, long past Cloud Scheduler's 320s attempt deadline, and a cron that
+// fires every 10 minutes stacks a new hung request on top of the last one.
+const SWEEP_TIMEOUT_MS = 120_000;
+
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
@@ -37,6 +45,7 @@ export default wrapCron(async (req, res) => {
 		method: 'POST',
 		headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
 		body: '{}',
+		signal: AbortSignal.timeout(SWEEP_TIMEOUT_MS),
 	}).catch((err) => {
 		reportServerError(err instanceof Error ? err : new Error(String(err)), {
 			code: 'garment_sweep_unreachable',

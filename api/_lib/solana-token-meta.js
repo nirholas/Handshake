@@ -9,6 +9,11 @@
 // the on-chain decode (no off-chain JSON or image bytes resolution).
 
 import { PublicKey } from '@solana/web3.js';
+import {
+	TOKEN_2022_PROGRAM_ID,
+	TOKEN_PROGRAM_ID,
+	getTokenMetadata,
+} from '@solana/spl-token';
 import { getConnection, solanaPubkey } from './pump.js';
 
 const METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
@@ -50,6 +55,27 @@ async function fetchOnchainMetadata(connection, mintPk) {
 		name: readPaddedStr(NAME_MAX),
 		symbol: readPaddedStr(SYMBOL_MAX),
 		uri: readPaddedStr(URI_MAX),
+	};
+}
+
+/**
+ * Read the metadata a Token-2022 mint carries inside its own account, in the
+ * `TokenMetadata` extension, instead of in a separate Metaplex PDA. Every
+ * pump.fun launch since the Token-2022 cutover stores it this way (the platform
+ * coin $THREE included), and those mints have NO Metaplex account at all, so a
+ * PDA-only reader reports them as nameless and image-less.
+ *
+ * Returns the same { name, symbol, uri } shape as the Metaplex path, or null
+ * when the mint is classic SPL or carries no metadata extension.
+ */
+async function fetchToken2022Metadata(connection, mintPk, ownerProgram) {
+	if (ownerProgram !== TOKEN_2022_PROGRAM_ID.toBase58()) return null;
+	const md = await getTokenMetadata(connection, mintPk, undefined, TOKEN_2022_PROGRAM_ID);
+	if (!md) return null;
+	return {
+		name: (md.name || '').trim(),
+		symbol: (md.symbol || '').trim(),
+		uri: (md.uri || '').trim(),
 	};
 }
 
@@ -197,8 +223,20 @@ export async function fetchTokenMeta(mint, { network = 'mainnet', includeImage =
 		err.status = 404;
 		throw err;
 	}
+	// An address can exist on-chain without being a token mint at all (a program,
+	// a PDA, a wallet). Reading metadata off one of those yields an untitled
+	// husk, so reject it here rather than charging a caller for a nameless
+	// result: only the two SPL token programs own real mints.
+	const owner = accountInfo.owner?.toBase58?.() || '';
+	if (owner !== TOKEN_PROGRAM_ID.toBase58() && owner !== TOKEN_2022_PROGRAM_ID.toBase58()) {
+		const err = new Error(`address is not an SPL token mint on ${network}`);
+		err.code = 'mint_not_found';
+		err.status = 404;
+		throw err;
+	}
 
-	const onchain = await fetchOnchainMetadata(connection, pk);
+	const onchain = (await fetchToken2022Metadata(connection, pk, owner))
+		|| (await fetchOnchainMetadata(connection, pk));
 	const off = onchain?.uri ? await fetchOffchainJson(onchain.uri) : null;
 
 	const name = (off?.name || onchain?.name || '').toString().trim() || null;

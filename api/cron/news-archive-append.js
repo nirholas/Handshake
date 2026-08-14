@@ -152,7 +152,24 @@ export default wrapCron(async (req, res) => {
 	const month = nowIso.slice(0, 7); // YYYY-MM
 
 	let token = null;
-	if (!dryRun) token = await getGcpAccessToken();
+	if (!dryRun) {
+		// getGcpAccessToken() throws `unconfigured` both when no credentials are
+		// set AND when the Cloud Run metadata server is momentarily unreachable.
+		// Unguarded, that turned a transient credential blip into an opaque 500
+		// ("internal error, quote ref …") and an ops page, for the same reason the
+		// generation-guard race below is caught rather than thrown: the archiver
+		// is content-addressed and hourly, so a skipped run costs nothing but a
+		// delay. Degrade the way wrapCron degrades an unavailable DB - a 200 the
+		// scheduler will not retry-storm, carrying ok:false so monitoring can see
+		// the archiver is not writing.
+		try {
+			token = await getGcpAccessToken();
+		} catch (err) {
+			if (err?.code !== 'unconfigured') throw err;
+			console.error('news-archive-append: no GCP credentials, skipping this run:', err.message);
+			return json(res, 200, { ok: false, month, appended: 0, reason: 'gcp_unconfigured' });
+		}
+	}
 
 	// Live sweep across every source - the aggregator serves from its
 	// per-source cache, so this is one bounded fan-out at most. The limit must

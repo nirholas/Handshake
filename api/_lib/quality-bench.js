@@ -91,7 +91,12 @@ export async function judgeOnce({ png, promptEntry, viewLabel }) {
 			] },
 		],
 	};
-	const res = await fetch(vertexGeminiChatUrl(), { method: 'POST', headers, body: JSON.stringify(body) });
+	const res = await fetch(vertexGeminiChatUrl(), {
+		method: 'POST',
+		headers,
+		body: JSON.stringify(body),
+		signal: AbortSignal.timeout(JUDGE_TIMEOUT_MS),
+	});
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok) throw new Error(`judge call ${res.status}: ${JSON.stringify(data).slice(0, 300)}`);
 	const content = data?.choices?.[0]?.message?.content || '';
@@ -111,8 +116,22 @@ function sleep(ms) {
 	return new Promise((r) => setTimeout(r, ms));
 }
 
+// Per-request ceilings. Every outbound call here needs one: the cron caller's
+// `deadlineAt` is only ever consulted BETWEEN steps, so a single request that
+// hangs sails straight past the budget no matter how carefully the loop above it
+// counts. That is not hypothetical, it is the 2026-08-10 failure recorded in
+// api/cron/quality-bench.js's header (900s spent, 504 from Cloud Run, Scheduler
+// left holding DEADLINE_EXCEEDED). A catalog read and a forge submit are small
+// JSON round trips; a poll is one status read, not the generation itself.
+const CATALOG_TIMEOUT_MS = 15_000;
+const SUBMIT_TIMEOUT_MS = 60_000;
+const POLL_TIMEOUT_MS = 30_000;
+// The judge spends ~1300 reasoning tokens before its verdict, so it is the
+// slowest call here by design. Generous, but still a ceiling.
+const JUDGE_TIMEOUT_MS = 120_000;
+
 export async function loadCatalog(baseUrl) {
-	const res = await fetch(`${baseUrl}/api/forge?catalog`);
+	const res = await fetch(`${baseUrl}/api/forge?catalog`, { signal: AbortSignal.timeout(CATALOG_TIMEOUT_MS) });
 	if (!res.ok) throw new Error(`catalog fetch failed: ${res.status}`);
 	return res.json();
 }
@@ -136,6 +155,7 @@ export async function submitForge(baseUrl, { prompt, mode, referenceImageUrl, ti
 		method: 'POST',
 		headers: { 'content-type': 'application/json', ...forgeSeedHeaders() },
 		body: JSON.stringify(body),
+		signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS),
 	});
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok) {
@@ -158,7 +178,21 @@ export async function pollForge(baseUrl, jobId, { timeoutMs = 10 * 60 * 1000, in
 	const budgetBound = deadlineAt < ownDeadline;
 	const deadline = budgetBound ? deadlineAt : ownDeadline;
 	while (Date.now() < deadline) {
-		const res = await fetch(`${baseUrl}/api/forge?job=${encodeURIComponent(jobId)}`);
+		// Clamped to whatever runway is actually left, so the last poll of a run
+		// cannot overshoot the deadline the caller is being held to.
+		const pollMs = Math.max(1, Math.min(POLL_TIMEOUT_MS, deadline - Date.now()));
+		let res;
+		try {
+			res = await fetch(`${baseUrl}/api/forge?job=${encodeURIComponent(jobId)}`, {
+				signal: AbortSignal.timeout(pollMs),
+			});
+		} catch {
+			// One status read stalling says nothing about the generation behind it,
+			// so keep waiting on the next tick rather than failing a job that is
+			// still healthy. The deadline above, not this request, ends the wait.
+			await sleep(Math.max(0, Math.min(intervalMs, deadline - Date.now())));
+			continue;
+		}
 		const data = await res.json().catch(() => ({}));
 		if (!res.ok) throw new Error(data?.error || `poll ${res.status}`);
 		if (data.status === 'done') return data;

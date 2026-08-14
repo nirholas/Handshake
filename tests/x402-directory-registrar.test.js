@@ -8,8 +8,8 @@
 //   - the window never exceeds the 402index rate-limit size;
 //   - an empty catalog stays total (no modulo-by-zero NaN).
 
-import { describe, it, expect } from 'vitest';
-import { registrarWindow } from '../api/cron/x402-directory-registrar.js';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { registrarWindow, probeDeployed } from '../api/cron/x402-directory-registrar.js';
 
 const HOUR_MS = 3_600_000;
 
@@ -76,5 +76,74 @@ describe('registrarWindow', () => {
 		const w = registrarWindow(catalog, 1_800_000 * HOUR_MS, 5);
 		expect(w.windows).toBe(2);
 		expect(w.batch.length).toBe(5);
+	});
+});
+
+// The probe decides whether an entry is worth one of 402index's 10
+// registrations/hour. It used to demand a bare 402, which permanently and
+// silently excluded every endpoint that paywalls behind a parameter: three.ws's
+// /api/x402/vanity-premium answers 200 to a parameterless GET (the free
+// inventory browse) and 402 only to ?address=<in-stock base58>. The registrar
+// cannot synthesize a valid paid request for an arbitrary endpoint, so there was
+// no tick on which such an entry could ever have been listed. These pin the
+// corrected contract: only a 404, a 5xx, or an unreachable origin means "not
+// deployed".
+describe('probeDeployed', () => {
+	const entry = { slug: 'demo', endpoint: 'https://three.ws/api/x402/demo', method: 'GET' };
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	function stubStatus(status) {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => ({ status })),
+		);
+	}
+
+	it('accepts a bare 402 (single-mode paid endpoint)', async () => {
+		stubStatus(402);
+		expect(await probeDeployed(entry)).toEqual({ live: true, status: 402 });
+	});
+
+	it('accepts a 200 browse response (paywall behind a query parameter)', async () => {
+		stubStatus(200);
+		expect(await probeDeployed(entry)).toEqual({ live: true, status: 200 });
+	});
+
+	it.each([401, 403, 405, 429])('accepts %i as proof the route is deployed', async (status) => {
+		stubStatus(status);
+		expect(await probeDeployed(entry)).toEqual({ live: true, status });
+	});
+
+	it('rejects a 404 as not deployed', async () => {
+		stubStatus(404);
+		expect(await probeDeployed(entry)).toEqual({ live: false, status: 404, reason: 'origin_404' });
+	});
+
+	it.each([500, 502, 503])('rejects %i as not deployed', async (status) => {
+		stubStatus(status);
+		expect(await probeDeployed(entry)).toEqual({ live: false, status, reason: `origin_${status}` });
+	});
+
+	it('rejects an unreachable origin', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => {
+				throw new Error('connect ECONNREFUSED');
+			}),
+		);
+		expect(await probeDeployed(entry)).toEqual({ live: false, reason: 'origin_unreachable' });
+	});
+
+	it('sends a JSON body on a POST entry and none on a GET entry', async () => {
+		const spy = vi.fn(async () => ({ status: 402 }));
+		vi.stubGlobal('fetch', spy);
+		await probeDeployed({ ...entry, method: 'POST' });
+		expect(spy.mock.calls[0][1].body).toBe('{}');
+		expect(spy.mock.calls[0][1].headers['content-type']).toBe('application/json');
+		await probeDeployed(entry);
+		expect(spy.mock.calls[1][1].body).toBeUndefined();
 	});
 });

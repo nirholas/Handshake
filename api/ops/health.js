@@ -143,6 +143,19 @@ export const CRONS = [
 	{ id: 'wallet-intents', label: 'Wallet intents' },
 	{ id: 'auto-rig-sweep', label: 'Auto rig sweep' },
 	{ id: 'radar-watchlist', label: 'Radar watchlist' },
+	// Preview-coverage crons. Every agent card, forge card, and marketplace
+	// listing renders a real image only because one of these keeps draining its
+	// backlog; when one stops, the surfaces degrade to gradient placeholders
+	// slowly enough that nobody notices for weeks. They all wrote heartbeats
+	// already (wrapCron does it for every cron), but nothing surfaced them, so
+	// the only way to tell a stalled one from a healthy one was gcloud.
+	{ id: 'agent-avatar-backfill', label: 'Agent avatar backfill' },
+	{ id: 'avatar-thumbnail-backfill', label: 'Avatar thumbnail backfill' },
+	{ id: 'avatar-thumbnail-render', label: 'Avatar thumbnail render' },
+	{ id: 'forge-thumbnail-backfill', label: 'Forge thumbnail backfill' },
+	{ id: 'coin-intel-observe', label: 'Coin intel observe' },
+	{ id: 'unstoppable-tick', label: 'Unstoppable agent tick' },
+	{ id: 'sketchfab-showcase', label: 'Sketchfab showcase' },
 ].map((c) => {
 	const schedule = CRON_SCHEDULES.get(c.driven_by || c.id) || null;
 	return { ...c, schedule, stale_after_ms: deriveStaleAfterMs(schedule) };

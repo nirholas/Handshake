@@ -13,9 +13,9 @@
 //     after they enter the service catalog, and description drift on the
 //     directory heals itself on the next pass.
 //   • 402index rate-limits registration to 10/hour/IP; WINDOW=8 stays under.
-//   • Each candidate is first probed against our own origin for a live 402 —
-//     registering a not-yet-deployed route burns a rate-limited slot on a
-//     probe failure at their end.
+//   • Each candidate is first probed against our own origin to confirm the
+//     route is deployed. Registering a not-yet-deployed route burns a
+//     rate-limited slot on a probe failure at their end.
 //
 // Registrar strategy + the manual surfaces (x402scan, Bazaar, PR-based lists):
 // docs/x402-distribution.md. One-off/local batches: scripts/x402-register-directories.mjs.
@@ -28,7 +28,28 @@ const FOUR02INDEX_REGISTER = 'https://402index.io/api/v1/register';
 const WINDOW = 8;
 const HOUR_MS = 3_600_000;
 
-async function serves402(entry) {
+/**
+ * Is this catalog endpoint actually deployed at our origin?
+ *
+ * The probe exists for exactly one reason: keep a not-yet-shipped route from
+ * burning one of 402index's 10 registrations/hour. So the question it must
+ * answer is "does this route exist", NOT "does a bare, parameterless request
+ * come back 402". Those two differ for any endpoint whose paywall sits behind a
+ * parameter: `/api/x402/vanity-premium` answers 200 to a bare GET (the free
+ * inventory browse) and 402 only to `?address=<in-stock base58>` (the buy).
+ * Demanding a bare 402 excluded every such paid endpoint from the directory
+ * permanently and silently, on every hourly tick, forever, and the registrar has no
+ * way to synthesize a valid paid request for an arbitrary endpoint, so there was
+ * no tick on which it could ever have passed.
+ *
+ * An undeployed route answers a clean JSON 404 from our origin, so 404 / 5xx /
+ * unreachable is the honest "not deployed" signal and every other status (402,
+ * 200, 401, 405, …) proves the route is live and worth listing.
+ *
+ * @param {object} entry live x402 catalog entry
+ * @returns {Promise<{ live: boolean, status?: number, reason?: string }>}
+ */
+export async function probeDeployed(entry) {
 	try {
 		const r = await fetch(entry.endpoint, {
 			method: entry.method,
@@ -39,9 +60,12 @@ async function serves402(entry) {
 			...(entry.method === 'POST' ? { body: '{}' } : {}),
 			signal: AbortSignal.timeout(10_000),
 		});
-		return r.status === 402;
+		if (r.status === 404 || r.status >= 500) {
+			return { live: false, status: r.status, reason: `origin_${r.status}` };
+		}
+		return { live: true, status: r.status };
 	} catch {
-		return false;
+		return { live: false, reason: 'origin_unreachable' };
 	}
 }
 
@@ -98,14 +122,14 @@ export default wrapCron(async (req, res) => {
 
 	const results = [];
 	for (const entry of batch) {
-		const live = await serves402(entry);
-		if (!live) {
-			results.push({ slug: entry.slug, action: 'skipped', reason: 'no_402_in_production' });
+		const probe = await probeDeployed(entry);
+		if (!probe.live) {
+			results.push({ slug: entry.slug, action: 'skipped', reason: probe.reason });
 			continue;
 		}
 		try {
 			const r = await upsertAt402Index(entry);
-			results.push({ slug: entry.slug, action: 'upserted', ok: r.ok, status: r.status });
+			results.push({ slug: entry.slug, action: 'upserted', ok: r.ok, status: r.status, probe: probe.status });
 			if (!r.ok) console.warn(`[x402-directory-registrar] ${entry.slug} → ${r.status} ${r.body}`);
 		} catch (err) {
 			results.push({ slug: entry.slug, action: 'error', error: err.message });

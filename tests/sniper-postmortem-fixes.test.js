@@ -108,6 +108,28 @@ describe('classifyLoopHealth (count rows, not status codes)', () => {
 		expect(names).toContain('outcome-labeling');
 		expect(names).toContain('llm-judging');
 		expect(names).toContain('oracle-scoring');
+		// Bridge 3 (api/cron/oracle-calibrate) writes every conviction band on every
+		// pass, so it is exactly the kind of unconditional writer this watchdog can
+		// hold to a deadline.
+		expect(names).toContain('oracle-calibration');
+	});
+
+	it('leaves out loops whose writer is conditional on real trades', () => {
+		// oracle-realized-labels only produces a row per mint the fleet really
+		// closed. An idle or paper-only fleet writes nothing while working fine, so
+		// probing it here would page forever. Guard the omission so it stays
+		// deliberate rather than looking like something nobody got around to.
+		expect(LOOPS.map((l) => l.table)).not.toContain('oracle_realized_outcomes');
+	});
+
+	it('holds the calibration loop to two missed 6h runs', () => {
+		const calibration = LOOPS.find((l) => l.name === 'oracle-calibration');
+		expect(calibration.table).toBe('oracle_calibration');
+		expect(calibration.column).toBe('updated_at');
+		expect(calibration.networkColumn).toBe('network');
+		// One skipped run is fine; two in a row means the bridge stopped measuring.
+		expect(classifyLoopHealth([probe('oracle-calibration', 7 * 3600_000)], NOW).stale).toHaveLength(0);
+		expect(classifyLoopHealth([probe('oracle-calibration', 14 * 3600_000)], NOW).stale).toHaveLength(1);
 	});
 
 	it('passes loops with fresh rows', () => {

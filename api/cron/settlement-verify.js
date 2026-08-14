@@ -16,10 +16,25 @@
 //
 // Idempotent and swarm-safe: promotion flips verified_at from null in a
 // conditional UPDATE, so overlapping ticks cannot double-count a tip.
+//
+// Failure reporting: each lane is caught so one broken lane cannot strand the
+// other, but a caught error must never be invisible. wrapCron only heartbeats
+// ok:false and pages ops when a handler THROWS, so a lane error swallowed into
+// the 200 body would leave this sweep silently dead: tips stop being promoted,
+// every tick still answers 200, and nothing reads the body. A lane that errors
+// therefore flips ok:false and pages ops (deduped per lane per hour).
+//
+// The tables both lanes read are created lazily by their write endpoints
+// (show_tips/stages by api/stage/index.js, irl_interactions by the IRL pay
+// path), so a deployment that has never hosted a show or taken an IRL pay is
+// missing them legitimately. Those are probed with to_regclass and reported as
+// absent rather than as an error, the same guard api/cron/irl-reap.js uses, so
+// a fresh deployment never pages for a table nobody has needed yet.
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { sendOpsAlert } from '../_lib/alerts.js';
 import { verifySettlement } from '../_lib/settlement-verify.js';
 import { promoteTip } from '../stage/tip.js';
 import { hostPayoutWallets } from '../_lib/stage-wallets.js';
@@ -34,6 +49,23 @@ const GRACE_MINUTES = 60;
 // Bound the batch so a tick stays well inside maxDuration; the next one picks up
 // the rest.
 const BATCH = 40;
+
+// Which of the lazily-created tables this sweep reads actually exist yet. One
+// round trip, no error path: to_regclass returns null for an absent relation
+// instead of raising, so this can run against a database that has never served
+// a show or an IRL pay.
+async function presentTables() {
+	const [row] = await sql`
+		SELECT
+			to_regclass('public.show_tips')        AS show_tips,
+			to_regclass('public.stages')           AS stages,
+			to_regclass('public.irl_interactions') AS irl_interactions
+	`;
+	return {
+		stageTips: Boolean(row?.show_tips && row?.stages),
+		irlPays: Boolean(row?.irl_interactions),
+	};
+}
 
 async function sweepStageTips() {
 	const rows = await sql`
@@ -80,7 +112,7 @@ async function sweepIrlPays() {
 		WHERE type = 'pay' AND verified_at IS NULL
 		ORDER BY created_at ASC
 		LIMIT ${BATCH}
-	`.catch(() => []);
+	`;
 	let promoted = 0; let discarded = 0; let stillPending = 0;
 	for (const row of rows) {
 		const recipients = await agentPayoutWallets(row.agent_id);
@@ -113,10 +145,36 @@ export default wrapCron(async (req, res) => {
 	if (!requireCron(req, res)) return;
 
 	const t0 = Date.now();
-	// One failing lane must not strand the other: both run, both report.
+
+	// A probe failure is a real database fault, not a missing table, so it is
+	// left to throw into wrapCron (which classifies db-unavailable separately and
+	// pages ops on anything else).
+	const present = await presentTables();
+
+	// One failing lane must not strand the other: both run, both report. A lane
+	// whose tables do not exist yet reports skipped; a lane that genuinely errors
+	// reports the error AND pages ops below.
 	const [tips, pays] = await Promise.all([
-		sweepStageTips().catch((err) => ({ error: err?.message || String(err) })),
-		sweepIrlPays().catch((err) => ({ error: err?.message || String(err) })),
+		present.stageTips
+			? sweepStageTips().catch((err) => ({ error: err?.message || String(err) }))
+			: Promise.resolve({ skipped: 'table_absent' }),
+		present.irlPays
+			? sweepIrlPays().catch((err) => ({ error: err?.message || String(err) }))
+			: Promise.resolve({ skipped: 'table_absent' }),
 	]);
-	return json(res, 200, { ok: true, tips, pays, took_ms: Date.now() - t0 });
+
+	// Surface a swallowed lane failure. Without this the sweep answers 200
+	// forever while no tip is ever promoted again. Deduped per lane per hour by
+	// sendOpsAlert's signature so a persistent fault pages once, not every tick.
+	const broken = [['tips', tips], ['pays', pays]].filter(([, lane]) => lane?.error);
+	for (const [lane, result] of broken) {
+		console.error('[settlement-verify] lane failed', { lane, error: result.error });
+		sendOpsAlert(
+			'Settlement sweep lane failing',
+			`The ${lane} lane of /api/cron/settlement-verify errored: ${result.error}. Settlements in that lane are not being resolved, so verified payments stay quarantined.`,
+			{ signature: `settlement-verify:${lane}:${Math.floor(Date.now() / 3_600_000)}` },
+		);
+	}
+
+	return json(res, 200, { ok: broken.length === 0, tips, pays, took_ms: Date.now() - t0 });
 });

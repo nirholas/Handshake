@@ -592,6 +592,11 @@ export const limits = {
 	// so it gets a dedicated, tighter-than-trading bucket: enough to iterate on a
 	// strategy a few times, bounded so it can't be turned into a free LLM relay.
 	sniperCompileIp: (ip) => getLimiter('sniper:compile:ip', { limit: 20, window: '10 m' }).limit(ip),
+	// Tweet drafting (api/x/draft.js) fans one request out to up to three LLM
+	// completions on platform-paid keys, so it gets its own bucket rather than
+	// draining `authIp`, which gates the actual publish. 20 per 10 min is many
+	// more rerolls than composing a tweet needs and still caps the fan-out.
+	xDraftIp: (ip) => getLimiter('x:draft:ip', { limit: 20, window: '10 m' }).limit(ip),
 	// Strategy backtest (api/sniper/backtest.js) is a read-only replay over captured
 	// history; cached by strategy hash, so this only gates cache-miss origin work.
 	sniperBacktestIp: (ip) => getLimiter('sniper:backtest:ip', { limit: 40, window: '5 m' }).limit(ip),

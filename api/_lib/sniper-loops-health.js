@@ -19,6 +19,15 @@
  * Every autonomous loop the fleet's learning depends on. `table`/`column` name
  * the freshest-row probe (the cron builds `select max(column) from table`
  * with an optional network filter); `maxAgeMs` is the staleness verdict line.
+ *
+ * A loop only belongs here when its writer is UNCONDITIONAL, i.e. a healthy run
+ * always advances the probed column. That is why oracle-realized-labels
+ * (oracle_realized_outcomes) is deliberately absent: it derives one row per mint
+ * the fleet actually closed a REAL position on, so a paper-only or simply idle
+ * fleet leaves the table empty and a probe here would page forever about a loop
+ * that is working correctly. Its liveness is already implied by the loops that
+ * feed it (llm-judging, oracle-scoring) plus oracle-calibration below, which
+ * upserts all five conviction bands on every pass regardless of sample count.
  */
 export const LOOPS = [
 	{
@@ -68,6 +77,14 @@ export const LOOPS = [
 		networkColumn: 'network',
 		maxAgeMs: 30 * 60_000, // cron every 2 min
 		why: 'The conviction score gates entries and the oracle_crossing trigger polls it; a stale table blinds both.',
+	},
+	{
+		name: 'oracle-calibration',
+		table: 'oracle_calibration',
+		column: 'updated_at',
+		networkColumn: 'network',
+		maxAgeMs: 13 * 3600_000, // cron every 6h, so this is two consecutive misses
+		why: 'Bridge 3: is an 80-conviction coin actually winning 80% of the time? A stale table means the optimizer\'s Rule O is tuning entry thresholds against a correction factor nobody is re-measuring.',
 	},
 ];
 

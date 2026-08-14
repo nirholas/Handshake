@@ -176,6 +176,14 @@ export async function listStaleAgents(limit = 40) {
 		`;
 		return rows.map((r) => r.id);
 	} catch (err) {
+		// A DB outage must NOT read as "nobody needs scoring": swallowing it made
+		// the recompute cron answer {ok:true, scored:0} and heartbeat healthy for
+		// as long as the database was down, so the one signal that the durable
+		// scores had stopped refreshing was invisible. Re-throw it and let the
+		// caller's wrapCron classify it as db_unavailable. Every other failure
+		// (a missing column mid-migration, a malformed row) still degrades to an
+		// empty batch, which the next tick retries.
+		if (isDbUnavailableError(err)) throw err;
 		console.warn('[reputation-store] listStaleAgents failed:', err?.message || err);
 		return [];
 	}

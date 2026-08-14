@@ -25,6 +25,15 @@ import { requireCron } from '../_lib/cron-auth.js';
 
 const CATALOG_URL = 'https://storage.googleapis.com/three-ws-garments/garments/catalog.json';
 const SPEC_URI = 'https://three.ws/specs/garment-manifest-v1';
+// This sweep makes one request per catalog entry (a reachability HEAD) plus a
+// full GLB download for each entry in the rotating re-hash subset, so an
+// unbounded stall on any single object would hold the whole audit open to Cloud
+// Run's 900s request timeout, well past Cloud Scheduler's 320s attempt deadline.
+// A HEAD against GCS is a metadata round trip; a GLB download moves real bytes,
+// so it gets the longer ceiling.
+const HEAD_TIMEOUT_MS = 15_000;
+const CATALOG_TIMEOUT_MS = 20_000;
+const DOWNLOAD_TIMEOUT_MS = 60_000;
 const SLOTS = new Set([
 	'top', 'bottom', 'footwear', 'outerwear', 'hair', 'headwear', 'glasses', 'accessory',
 ]);
@@ -54,14 +63,20 @@ function structuralErrors(m) {
 }
 
 async function head(url) {
-	const res = await fetch(url, { method: 'HEAD' }).catch(() => null);
+	const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(HEAD_TIMEOUT_MS) }).catch(() => null);
 	return res?.ok ? null : `HEAD ${url} -> ${res ? res.status : 'unreachable'}`;
 }
 
 async function sha256Of(url) {
-	const res = await fetch(url).catch(() => null);
+	const res = await fetch(url, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) }).catch(() => null);
 	if (!res?.ok) return null;
-	const buf = await res.arrayBuffer();
+	// The timeout covers the body stream too, so a download that stalls partway
+	// rejects here rather than at the fetch. Fall back to the same null this
+	// function already returns for an unreachable object: "not hashed this run",
+	// which the caller skips. A slow object must not be reported as sha256 drift,
+	// and must not fail the audit for the entries that did verify.
+	const buf = await res.arrayBuffer().catch(() => null);
+	if (!buf) return null;
 	const digest = await crypto.subtle.digest('SHA-256', buf);
 	return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
@@ -70,7 +85,7 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
 
-	const catRes = await fetch(CATALOG_URL).catch(() => null);
+	const catRes = await fetch(CATALOG_URL, { signal: AbortSignal.timeout(CATALOG_TIMEOUT_MS) }).catch(() => null);
 	if (!catRes?.ok) {
 		reportServerError(new Error(`garment catalog unreachable (${catRes?.status ?? 'network'})`), {
 			code: 'garment_catalog_unreachable',

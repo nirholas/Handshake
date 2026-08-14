@@ -21,6 +21,14 @@ const TELEGRAM_PACE_MS = 3500;
 const LOCK_KEY = 'commit_feed_push_lock';
 const LOCK_TTL_S = 240;
 const STATE_KEY = 'commit_feed_push_telegram';
+// Every outbound call is bounded, and deliberately well under LOCK_TTL_S. The
+// lock is what stops two ticks posting the same commit twice, but it only holds
+// for its TTL: a request that hangs longer than that outlives its own lock, and
+// the next tick (this cron runs every 5 minutes, i.e. 300s > 240s) acquires it
+// and re-posts commits the stalled tick is still working through. Bounding the
+// requests is what keeps the lock's guarantee true.
+const GITHUB_TIMEOUT_MS = 20_000;
+const TELEGRAM_TIMEOUT_MS = 20_000;
 
 async function ensureTable() {
 	await sql`
@@ -67,7 +75,10 @@ async function fetchRecentCommits() {
 	const headers = { accept: 'application/vnd.github+json', 'user-agent': 'three.ws-commit-feed' };
 	const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
 	if (token) headers.authorization = `Bearer ${token}`;
-	const res = await fetch(`https://api.github.com/repos/${REPO}/commits?sha=main&per_page=30`, { headers });
+	const res = await fetch(`https://api.github.com/repos/${REPO}/commits?sha=main&per_page=30`, {
+		headers,
+		signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS),
+	});
 	if (!res.ok) throw new Error(`GitHub commits fetch failed (${res.status})`);
 	return res.json();
 }
@@ -171,6 +182,7 @@ async function sendTelegram(botToken, chatId, text, previewUrl) {
 			// sits in the text), rendered below the message like the changelog feed.
 			link_preview_options: { is_disabled: false, url: previewUrl, show_above_text: false },
 		}),
+		signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
 	});
 	const body = await res.json().catch(() => ({}));
 	if (!res.ok || !body.ok) {

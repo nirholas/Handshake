@@ -395,64 +395,80 @@ async function erc8004CrawlChain(chain) {
 
 	// Adaptive per chain, seeded by the declared override for a restrictive RPC.
 	// See nextChunkSize: a fixed window is why fast chains never caught up.
-	const chunkSize = nextChunkSize({
+	let chunkSize = nextChunkSize({
 		stored: cursor?.chunk_size,
 		configured: chain.blockChunk,
 		behind: latestBlock - fromBlock + 1,
 	});
-	const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
 
-	const range = {
-		fromBlock: '0x' + fromBlock.toString(16),
-		toBlock: '0x' + toBlock.toString(16),
-	};
-
+	let toBlock;
 	let logs;
 	let reputationLogs;
-	try {
-		// Topic OR-set, not the single Registered topic: an agent's row used to
-		// freeze at its registration block because ownership transfers, URI updates
-		// and metadata writes were never requested from the RPC at all. See the
-		// coverage census in api/_lib/erc8004-registry-events.js.
-		logs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
-			{ address: chain.registry, topics: [REGISTRY_TOPICS], ...range },
-		]);
-
-		// The reputation registry lives at its own CREATE2 address on the same
-		// network class; scan the identical block range so an agent's trust signals
-		// (feedback, revocations, responses) reach the index alongside its identity
-		// history. A chain with no reputation deployment yields an empty log list,
-		// not an error.
-		reputationLogs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
-			{ address: reputationRegistryFor(chain.testnet), topics: [REPUTATION_TOPICS], ...range },
-		]);
-	} catch (err) {
-		// A range the provider will not serve is the growth loop finding this
-		// chain's real ceiling, not an outage. Halve the window, leave the cursor
-		// where it is, and let the next tick retry the same blocks smaller. Any
-		// other RPC failure is a genuine error and propagates.
-		if (!RANGE_REJECTED.test(String(err?.message || err))) throw err;
-		const reduced = backoffChunkSize(chunkSize);
-		await sql`
-			INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at, head_block, blocks_behind, chunk_size, last_error)
-			VALUES (${chain.id}, ${Math.max(0, fromBlock - 1)}, now(), ${latestBlock},
-			        ${Math.max(0, latestBlock - fromBlock + 1)}, ${reduced}, ${'range rejected at ' + chunkSize + ' blocks'})
-			ON CONFLICT (chain_id) DO UPDATE SET
-				updated_at    = now(),
-				head_block    = excluded.head_block,
-				blocks_behind = excluded.blocks_behind,
-				chunk_size    = excluded.chunk_size,
-				last_error    = excluded.last_error
-		`;
-		return {
-			inserted: 0,
-			scanned: 0,
-			lastBlock: fromBlock - 1,
-			fromBlock,
-			blocksBehind: Math.max(0, latestBlock - fromBlock + 1),
-			chunkSize: reduced,
-			rangeRejected: true,
+	// A rejected range is the growth loop finding this chain's ceiling, not an
+	// outage, so shrink and retry the SAME blocks now rather than ending the tick
+	// empty. Retrying only on the next tick deadlocks a chain forever: the
+	// rejection stores the halved window, then nextChunkSize sees a backlog wider
+	// than it and doubles straight back to the size that was just refused, so the
+	// cursor never moves. Measured on 2026-08-14: BSC Testnet and Moonbeam sat at
+	// scanned=0 across four consecutive ticks while their backlogs grew.
+	let narrowedFrom = null;
+	for (;;) {
+		toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
+		const range = {
+			fromBlock: '0x' + fromBlock.toString(16),
+			toBlock: '0x' + toBlock.toString(16),
 		};
+		try {
+			// Topic OR-set, not the single Registered topic: an agent's row used to
+			// freeze at its registration block because ownership transfers, URI updates
+			// and metadata writes were never requested from the RPC at all. See the
+			// coverage census in api/_lib/erc8004-registry-events.js.
+			logs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
+				{ address: chain.registry, topics: [REGISTRY_TOPICS], ...range },
+			]);
+
+			// The reputation registry lives at its own CREATE2 address on the same
+			// network class; scan the identical block range so an agent's trust signals
+			// (feedback, revocations, responses) reach the index alongside its identity
+			// history. A chain with no reputation deployment yields an empty log list,
+			// not an error.
+			reputationLogs = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_getLogs', [
+				{ address: reputationRegistryFor(chain.testnet), topics: [REPUTATION_TOPICS], ...range },
+			]);
+			break;
+		} catch (err) {
+			// Any RPC failure that is not the provider refusing the range is a genuine
+			// error and propagates to the per-chain handler above.
+			if (!RANGE_REJECTED.test(String(err?.message || err))) throw err;
+			const reduced = backoffChunkSize(chunkSize);
+			if (reduced >= chunkSize) {
+				// Already at the floor: the provider will not serve even the smallest
+				// window this tick. Record it and leave the cursor untouched so the next
+				// tick retries the same blocks against the failover RPC.
+				await sql`
+					INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at, head_block, blocks_behind, chunk_size, last_error)
+					VALUES (${chain.id}, ${Math.max(0, fromBlock - 1)}, now(), ${latestBlock},
+					        ${Math.max(0, latestBlock - fromBlock + 1)}, ${chunkSize}, ${'range rejected at ' + chunkSize + ' blocks (floor)'})
+					ON CONFLICT (chain_id) DO UPDATE SET
+						updated_at    = now(),
+						head_block    = excluded.head_block,
+						blocks_behind = excluded.blocks_behind,
+						chunk_size    = excluded.chunk_size,
+						last_error    = excluded.last_error
+				`;
+				return {
+					inserted: 0,
+					scanned: 0,
+					lastBlock: fromBlock - 1,
+					fromBlock,
+					blocksBehind: Math.max(0, latestBlock - fromBlock + 1),
+					chunkSize,
+					rangeRejected: true,
+				};
+			}
+			narrowedFrom = narrowedFrom ?? chunkSize;
+			chunkSize = reduced;
+		}
 	}
 
 	// Fetch block timestamps for any blocks that produced events.
@@ -629,6 +645,10 @@ async function erc8004CrawlChain(chain) {
 		byClass,
 		headBlock: latestBlock,
 		blocksBehind,
+		// Present only when the tick overshot the provider's ceiling and recovered
+		// by shrinking in place, so the report distinguishes "settled at its real
+		// window" from "asked for too much and still delivered".
+		...(narrowedFrom ? { narrowedFrom } : {}),
 		chunkSize,
 	};
 }
@@ -854,8 +874,31 @@ const IDX_RPC_TIMEOUT_MS = 10_000;
 // The next tick advances the cursor and picks up the buffered blocks once they
 // are safely confirmed.
 const IDX_HEAD_CONFIRMATIONS = 5;
-// Hard time budget per cron invocation — leave 8 s headroom before Vercel's 30 s limit.
+// Hard time budget per cron invocation, leaving 8 s headroom before the 30 s
+// serverless limit. It covers the WHOLE tick, so it is divided across the chains
+// still to be indexed rather than consumed by whichever one runs first (see
+// idxChainDeadline).
 const IDX_TIME_BUDGET_MS = 22_000;
+// Floor on one chain's slice of that budget. Ethereum mainnet is both first in
+// DELEGATION_MANAGER_DEPLOYMENTS and the slowest (its nodes cap eth_getLogs at 25
+// blocks), so with a single shared deadline it spent the entire budget and every
+// later chain returned zero batches on every tick. A chain that indexes nothing
+// also never writes an indexer_state cursor, so it re-derived its start block from
+// the head each tick and never made progress at all: Base delegation revocations
+// went permanently unindexed. Each chain now gets an equal share of whatever is
+// left, never less than this.
+const IDX_MIN_CHAIN_SLICE_MS = 2_500;
+// One cron period, matching this job's `*/5` schedule in vercel.json. Used only
+// to rotate which chain is indexed first, so the offset advances by exactly one
+// per tick and every chain leads once per full rotation.
+const IDX_ROTATION_PERIOD_MS = 5 * 60_000;
+
+// Wall-clock deadline for the chain about to be indexed: an even split of the
+// budget that remains across the chains that remain.
+function idxChainDeadline(started, chainsRemaining) {
+	const left = Math.max(0, IDX_TIME_BUDGET_MS - (Date.now() - started));
+	return Date.now() + Math.max(IDX_MIN_CHAIN_SLICE_MS, Math.floor(left / Math.max(1, chainsRemaining)));
+}
 
 // Approximate blocks per day, used only to seed the cursor on first run.
 const BLOCKS_PER_DAY = {
@@ -975,14 +1018,31 @@ async function handleIndexDelegations(req, res) {
 	if (!requireCron(req, res)) return;
 
 	const started = Date.now();
-	const report = { chains: [], expiredSwept: 0, errors: [] };
+	const report = { chains: [], skippedChains: [], expiredSwept: 0, errors: [] };
 
 	// Index each chain independently — one chain's RPC failure must not abort others.
-	for (const [chainIdStr, contract] of Object.entries(DELEGATION_MANAGER_DEPLOYMENTS)) {
+	//
+	// The lead position is rotated per tick. Every chain is guaranteed at least one
+	// batch once it is started (a chain that indexes nothing never writes a cursor,
+	// so it would re-derive its start block from the head forever and never make
+	// progress), which means a slow chain can push the tail of the list past the
+	// budget. Rotating puts a different chain at the front each tick, so the tail
+	// is never the same chain twice and the budget stays a real ceiling.
+	const deployments = Object.entries(DELEGATION_MANAGER_DEPLOYMENTS);
+	const offset = Math.floor(started / IDX_ROTATION_PERIOD_MS) % deployments.length;
+	const ordered = deployments.map((_, i) => deployments[(i + offset) % deployments.length]);
+
+	for (const [i, [chainIdStr, contract]] of ordered.entries()) {
 		const chainId = Number(chainIdStr);
+		// Budget spent: leave the rest for the next tick, which will lead with a
+		// chain further along the rotation.
+		if (i > 0 && Date.now() - started > IDX_TIME_BUDGET_MS) {
+			report.skippedChains.push(chainId);
+			continue;
+		}
 		const t0 = Date.now();
 		try {
-			const r = await idxIndexChain(chainId, contract, started);
+			const r = await idxIndexChain(chainId, contract, idxChainDeadline(started, ordered.length - i));
 			const summary = { chainId, ...r, elapsedMs: Date.now() - t0 };
 			report.chains.push(summary);
 			console.log(JSON.stringify({ stage: 'index-delegations', ...summary }));
@@ -1020,7 +1080,7 @@ async function handleIndexDelegations(req, res) {
 	return json(res, 200, report);
 }
 
-async function idxIndexChain(chainId, contract, cronStart = Date.now()) {
+async function idxIndexChain(chainId, contract, deadline = Date.now() + IDX_TIME_BUDGET_MS) {
 	const urls = idxRpcUrls(chainId);
 	if (!urls.length) throw new Error(`no RPC URL configured for chain ${chainId}`);
 
@@ -1041,27 +1101,34 @@ async function idxIndexChain(chainId, contract, cronStart = Date.now()) {
 		: Math.max(0, latestBlock - (BLOCKS_PER_DAY[chainId] ?? 7200));
 
 	let fromBlock = initialFrom;
-	let toBlock = latestBlock; // updated each iteration; reflects final processed range
+	// Seeded one block BEFORE the start so a chain that runs no batch at all
+	// reports the empty range it actually covered. Seeding it to latestBlock made
+	// a starved chain's summary read as a full successful scan.
+	let toBlock = initialFrom - 1; // updated each iteration; reflects final processed range
+	let batches = 0;
 	let revokedCount = 0;
 	let redeemedCount = 0;
 	let logErrorCount = 0;
 	let earlyExit = false;
 
 	while (fromBlock <= latestBlock) {
-		// Hard time budget: save cursor and break before the function times out.
-		if (Date.now() - cronStart > IDX_TIME_BUDGET_MS) {
+		// Time budget: save cursor and break before the function times out. Checked
+		// at the top of the loop, so a chain always gets at least one batch even
+		// when the earlier chains overran.
+		if (batches > 0 && Date.now() > deadline) {
 			console.warn(
 				JSON.stringify({
 					stage: 'index-delegations',
 					chainId,
 					warning: 'time-budget-exceeded',
-					elapsedMs: Date.now() - cronStart,
+					overrunMs: Date.now() - deadline,
 					stoppedAtBlock: fromBlock,
 				}),
 			);
 			earlyExit = true;
 			break;
 		}
+		batches += 1;
 
 		toBlock = Math.min(fromBlock + BATCH - 1, latestBlock);
 
@@ -1215,6 +1282,7 @@ async function idxIndexChain(chainId, contract, cronStart = Date.now()) {
 	return {
 		fromBlock: initialFrom,
 		toBlock,
+		batches,
 		revokedCount,
 		redeemedCount,
 		logErrorCount,
@@ -3228,8 +3296,15 @@ async function handleRunSubscriptions(req, res) {
 			});
 			return json(res, 200, { ok: true, skipped: true, reason: 'table_not_ready' });
 		}
+		// Rethrow rather than answering 500 here, so the shared cron wrapper applies
+		// the same degrade every other cron gets: a transient Neon connection
+		// failure becomes a clean `db_unavailable` skip, while a real statement
+		// fault (syntax, constraint, missing column) still surfaces as a 500.
+		// Returning the 500 directly hid the outage class from that classifier, and
+		// because economy-tick fires this engine every minute, a Neon blip read as a
+		// per-minute 500 stream and a permanently failed engine on the heartbeat.
 		subLogError('subscription_cron.select_failed', { runId, message: err.message });
-		return error(res, 500, 'internal_error', 'failed to load subscriptions');
+		throw err;
 	}
 
 	subLog('subscription_cron.selected', { runId, count: rows.length });

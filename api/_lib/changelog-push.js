@@ -35,6 +35,10 @@ const X_PACE_MS = 10000;
 const X_DAILY_CAP = 15; // free tier caps user writes at ~17/24h, stay under
 const LOCK_KEY = 'changelog_push_lock';
 const LOCK_TTL_S = 240;
+// Bounded, and well under LOCK_TTL_S on purpose: a send that hangs longer than
+// the lock it is holding lets the next tick acquire that lock and re-post the
+// same entry, which is exactly the double-post the lock exists to prevent.
+const TELEGRAM_TIMEOUT_MS = 20_000;
 
 const ANCHOR_TEXT = [
 	'everything we ship at three.ws lands in this thread. one reply per release, straight from the changelog.',
@@ -151,6 +155,7 @@ async function sendTelegram(botToken, chatId, text) {
 			parse_mode: 'HTML',
 			link_preview_options: { is_disabled: false, prefer_small_media: true },
 		}),
+		signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
 	});
 	const body = await res.json().catch(() => ({}));
 	if (!res.ok || !body.ok) {

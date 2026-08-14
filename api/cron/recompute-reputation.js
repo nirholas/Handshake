@@ -16,6 +16,7 @@
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { listStaleAgents, recomputeAgents } from '../_lib/trust/reputation-store.js';
+import { isDbUnavailableError } from '../_lib/db.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 // How many agents to recompute per tick. Each is a handful of indexed DB reads
@@ -41,7 +42,12 @@ export default wrapCron(async (req, res) => {
 		console.log(`[recompute-reputation] scored ${scored}/${ids.length} (failed ${failed}, remaining ${remaining}${timedOut ? ', hit time budget' : ''}) in ${Date.now() - started}ms`);
 		return json(res, 200, { ok: true, scored, failed, remaining, timed_out: timedOut, batch: ids.length, elapsed_ms: Date.now() - started });
 	} catch (err) {
-		// Never throw: a failed run leaves the prior stored scores intact.
+		// A database outage is the platform-wide case wrapCron already owns: let it
+		// through so the tick heartbeats unhealthy and answers with the same
+		// {ok:false, reason:'db_unavailable'} shape every other cron does. Anything
+		// else is contained here, because a failed run leaves the prior stored
+		// scores intact and the next tick retries the same stalest agents.
+		if (isDbUnavailableError(err)) throw err;
 		console.error('[recompute-reputation] failed:', err?.message || err);
 		return json(res, 200, { ok: false, error: err?.message || String(err) });
 	}

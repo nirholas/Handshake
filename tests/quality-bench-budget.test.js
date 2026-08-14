@@ -16,6 +16,11 @@
  *      read as a quality regression.
  *   4. The per-view render/judge loop stops at the deadline too, instead of
  *      running on past a response nobody is listening to.
+ *   5. Every outbound request carries its own ceiling. `deadlineAt` is only ever
+ *      consulted BETWEEN steps, so one request that hangs sails past the budget
+ *      no matter how carefully the loop counts, which is the 900s overrun above.
+ *      A stalled poll must not be mistaken for a failed generation though: the
+ *      wait continues to the deadline instead of killing a healthy job.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -76,6 +81,51 @@ describe('pollForge deadlineAt', () => {
 		await expect(pollForge(BASE, 'j1', { intervalMs: 10, deadlineAt: Date.now() + 5000 })).resolves.toMatchObject({
 			status: 'done',
 		});
+	});
+});
+
+describe('pollForge per-request ceiling', () => {
+	it('bounds every status read so one hung request cannot outlive the budget', async () => {
+		const signals = [];
+		globalThis.fetch = vi.fn(async (url, init) => {
+			if ((init?.method || 'GET') === 'POST') return { ok: true, json: async () => ({ job_id: 'j1' }) };
+			signals.push(init?.signal);
+			return { ok: true, json: async () => ({ status: 'done' }) };
+		});
+		await pollForge(BASE, 'j1', { intervalMs: 10, deadlineAt: Date.now() + 5000 });
+		expect(signals).toHaveLength(1);
+		// Without this the deadline is advisory: the loop only re-checks it once a
+		// request comes back, so a request that never does is never checked at all.
+		expect(signals[0]).toBeInstanceOf(AbortSignal);
+	});
+
+	it('keeps waiting when one status read stalls instead of failing a healthy job', async () => {
+		let polls = 0;
+		globalThis.fetch = vi.fn(async (url, init) => {
+			if ((init?.method || 'GET') === 'POST') return { ok: true, json: async () => ({ job_id: 'j1' }) };
+			polls += 1;
+			// First read times out the way AbortSignal.timeout aborts a stalled
+			// request; the generation behind it is untouched and finishes next tick.
+			if (polls === 1) throw Object.assign(new Error('The operation was aborted'), { name: 'TimeoutError' });
+			return { ok: true, json: async () => ({ status: 'done' }) };
+		});
+		await expect(pollForge(BASE, 'j1', { intervalMs: 10, deadlineAt: Date.now() + 5000 })).resolves.toMatchObject({
+			status: 'done',
+		});
+		expect(polls).toBe(2);
+	});
+
+	it('still gives up at the deadline when every status read stalls', async () => {
+		globalThis.fetch = vi.fn(async (url, init) => {
+			if ((init?.method || 'GET') === 'POST') return { ok: true, json: async () => ({ job_id: 'j1' }) };
+			throw Object.assign(new Error('The operation was aborted'), { name: 'TimeoutError' });
+		});
+		const started = Date.now();
+		await expect(
+			pollForge(BASE, 'j1', { timeoutMs: 10 * 60 * 1000, intervalMs: 10, deadlineAt: Date.now() + 60 }),
+		).rejects.toMatchObject({ code: 'budget_exhausted' });
+		// Retrying a stalled read must not become a way to loop past the budget.
+		expect(Date.now() - started).toBeLessThan(5000);
 	});
 });
 
