@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Buying a skill from your phone no longer needs SOL in your wallet",
+			"summary": "The QR code in the skill payment modal now hands your wallet a transaction we build for you, instead of asking the wallet to compose the transfer itself. Three things change for the buyer: three.ws pays the Solana network fee, so a wallet holding only USDC can complete the purchase; a creator who has never received this token before no longer causes the payment to fail, because the missing token account is created in the same transaction; and the whole payment still settles under one signature. Wallets that do not support this newer Solana Pay flow are one click away from the classic direct-transfer QR, which stays available under the code.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Platform counters stop reporting zero when the numbers are simply unavailable",
 			"summary": "The public stats behind the home page and the monitor board (agents, avatars, widgets, views, countries, chains) used to answer with a row of zeroes whenever the database could not be reached, and that fabricated all-zero snapshot was then cached for five minutes at the edge, so the platform looked empty long after it had recovered. It now says the figures are unavailable instead, caches that for fifteen seconds, and the monitor board keeps the last real numbers on screen rather than flashing zeroes. The chain counter is also a real count again: it reads the mainnets that actually carry an indexed agent plus Solana, instead of a hardcoded six that had drifted from reality.",
 			"tags": [
