@@ -55,6 +55,14 @@
 			<description>The bounty board at /bounties mirrors the public pump.fun GO board. When you opened a bounty link that had been deleted or mistyped, the page reported it the same way it reports pump.fun being down, so there was no way to tell a dead link from an outage. A bounty that genuinely is not there now answers as not found, and a real upstream problem keeps its own separate answer. A second, quieter case got fixed with it: when the submissions list for a bounty failed to load, the page showed the bounty with zero submissions and said nothing, which looks identical to a bounty nobody has entered. That failure is now recorded, so a pump.fun outage shows up as an outage rather than as a board that suddenly looks unpopular.</description>
 		</item>
 		<item>
+			<title>A paid-call share link now previews on Slack, Telegram and LinkedIn</title>
+			<link>https://three.ws/pay</link>
+			<guid isPermaLink="false">2026-08-14:A paid-call share link now previews on Slack, Telegram and LinkedIn</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every settled x402 call has a permalink whose social preview image is drawn on demand. Slack, Telegram and LinkedIn ask an image URL for its type and size before they fetch it, and this one answered &quot;method not allowed&quot; to that probe, so the card silently never appeared on those platforms. It answers them now. Three more fixes to the same card: a receipt is captioned with the network it actually settled on rather than always reading mainnet; a link shared in the seconds before its receipt finishes saving, or during a cache outage, is retried a minute later instead of being pinned to the generic card for an hour; and a damaged record shows a plain &quot;unknown&quot; rather than a &quot;NaNd ago&quot; timestamp or an invented amount.</description>
+		</item>
+		<item>
 			<title>Add funds now opens Coinbase on the buy step, not on a transfer you cannot make</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Add funds now opens Coinbase on the buy step, not on a transfer you cannot make</guid>
@@ -101,6 +109,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The QR code in the skill payment modal now hands your wallet a transaction we build for you, instead of asking the wallet to compose the transfer itself. Three things change for the buyer: three.ws pays the Solana network fee, so a wallet holding only USDC can complete the purchase; a creator who has never received this token before no longer causes the payment to fail, because the missing token account is created in the same transaction; and the whole payment still settles under one signature. Wallets that do not support this newer Solana Pay flow are one click away from the classic direct-transfer QR, which stays available under the code.</description>
+		</item>
+		<item>
+			<title>Buying an avatar cosmetic unlocks it for the account that paid, and the identity endpoint stops answering write requests</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Buying an avatar cosmetic unlocks it for the account that paid, and the identity endpoint stops answering write requests</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes to paid endpoints in the avatar shop, the club and the identity lane. In the shop, a wallet that has already bought a cosmetic can re-confirm the unlock for free by signing in, instead of paying again. That free re-confirm was keyed on the cosmetic rather than on the account receiving it, so one purchase could be signed onto an unlimited number of other accounts. Re-confirming now only works for the wallet that paid or for an account that already owns the item; unlocking the item for a new account asks for payment, as it always should have. Second, the identity endpoint at /.well-known/did.json answered PUT and DELETE with the identity document, which reads as though a write had been accepted; those verbs now return a plain 405, and the paid health check that resolves the document no longer reports it as published when the resolver could not be reached at all. Third, the club's paid membership read has always been able to return the door and floor revenue for a period, but its published input schema only listed the membership mode, so callers had no way to discover it. Both modes and the period options are now documented in the payment challenge.</description>
 		</item>
 		<item>
 			<title>Buying USDC or SOL from Add funds again opens a checkout with your wallet already filled in</title>
@@ -167,6 +183,14 @@
 			<description>When the database had a short connectivity blip, the Oracle read endpoints answered with an empty result and a 200 OK, which reads as fact rather than as an outage. The live conviction feed showed a market with nothing in it, the hot-sectors panel showed no sectors, an agent's public track record showed &quot;never traded&quot; (the very evidence copy-traders judge a leader on), and the follow endpoint told a subscriber they were not following an agent they were in fact following. Worst of all, unfollowing an agent answered &quot;done&quot; while the subscription survived, so the alerts kept arriving with no way to stop them. Some of those answers were then cached for up to five minutes, outliving the blip that caused them. All of these now return a proper &quot;temporarily unavailable, retry shortly&quot; response that nothing caches, so a page can tell you it cannot reach the data instead of quietly showing you the wrong answer.</description>
 		</item>
 		<item>
+			<title>Paid 3D downloads work from a browser again, and the marketplace report stops ignoring every Solana price</title>
+			<link>https://three.ws/docs/x402-endpoints</link>
+			<guid isPermaLink="false">2026-08-14:Paid 3D downloads work from a browser again, and the marketplace report stops ignoring every Solana price</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Buying a 3D asset or an animation clip from a web page was impossible: those two endpoints answered the browser's permission check with a payment demand and none of the cross-origin headers a wallet needs, so the page could never even read what it was being asked to pay. Both now answer that check the same way every other paid endpoint does, on the challenge, on the errors, and on a free listing. The paid marketplace report had a second, quieter problem: it recognised prices set in USDC on Base but not the identical prices set in USDC on Solana, so every Solana-priced agent was counted as unpriced and left out of the average, lowest and highest figures buyers were paying for. Solana prices now count. The auth health check no longer charges for a call it refuses, its request reader now has the same size limit as its neighbours, and the avatar optimization batch can finally be repriced at deploy time like every other endpoint.</description>
+		</item>
+		<item>
 			<title>Paying to resolve a name that does not exist no longer costs anything</title>
 			<link>https://three.ws/docs/x402-endpoints</link>
 			<guid isPermaLink="false">2026-08-14:Paying to resolve a name that does not exist no longer costs anything</guid>
@@ -189,6 +213,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The plugin grid listed every built-in plugin twice (two Calculators, two Weathers, and so on) because the platform's seed rows were inserted a second time without the duplicate check ever catching them. There are now seven built-ins again, one of each, and the database refuses a duplicate outright. Three plugin API fixes ship with it: a plugin published as private was readable in full by anyone who knew its link, and its install counter could be driven by anyone; recording an install now reports the real new total instead of always answering &quot;ok&quot;, and counts one install per person per plugin rather than one per click; and asking for a page of plugins with a malformed cursor now returns a plain validation error rather than a server error.</description>
+		</item>
+		<item>
+			<title>Recurring agent payments keep their place when the database has a brief wobble</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Recurring agent payments keep their place when the database has a brief wobble</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The scheduled job that charges recurring agent subscriptions treated every database problem the same way. If it could not read the list of subscriptions that were due, it answered with a hard error, and because the job is driven once a minute, a short database hiccup turned into a steady stream of failures and left the subscription engine looking permanently broken on the platform status readout. Every other scheduled job already tells the difference between a passing connection problem, which is worth quietly waiting out, and a genuine fault in the query itself, which is worth reporting loudly. This one now does the same: a brief connection wobble is recorded as a skipped run and the next minute resumes exactly where it left off, while a real fault still surfaces in full. No charge is created, repeated, or missed because of the change, and subscriptions that came due during the wobble are collected as soon as the connection returns.</description>
 		</item>
 		<item>
 			<title>Recurring payments now have a home, a pause button, and a receipt for every charge</title>
@@ -231,6 +263,14 @@
 			<description>The English description Google and every social preview show for the agent directory was updated a while back to say the directory spans Solana and every supported EVM chain. The 84 translated versions were never updated with it, so a reader in Spanish, Japanese, Arabic or any other language got the older, vaguer line that named no chain at all. All 84 now carry the current wording, with Solana and three.ws left in their real spelling rather than bent to fit each language's grammar. Retired copy was cleared out at the same time: eight strings that no page shows anymore had been sitting in every one of the 84 catalogs, which is 672 dead entries the site was shipping to readers for no reason.</description>
 		</item>
 		<item>
+			<title>The commit and changelog feeds can no longer repeat a post they already sent</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:The commit and changelog feeds can no longer repeat a post they already sent</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The jobs that deliver commits and changelog entries to the holders' Telegram channel take a lock so two overlapping runs cannot announce the same thing twice, and that lock lasts four minutes. But the calls they make to GitHub and Telegram had no time limit of their own, so a single stalled call could outlive the lock it was holding, let the next run pick the lock up, and post the same commits again. Every outbound call in those jobs is now bounded well inside the lock's lifetime, so the no-duplicates guarantee holds even when an upstream service hangs. The same missing limit is fixed across four other scheduled jobs: the wardrobe catalog audit, the garment job sweep, and the weekly quality benchmark, whose own run budget was previously advisory because it was only ever checked between requests and never during one. A stalled status check no longer fails a generation that is still healthy, and a slow download is no longer reported as a corrupted garment.</description>
+		</item>
+		<item>
 			<title>The contracts that hold agent earnings, reputation stakes and skill licenses are now audit-ready</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:The contracts that hold agent earnings, reputation stakes and skill licenses are now audit-ready</guid>
@@ -245,6 +285,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The news reader recorded every URL it was handed into the durable corpus the 3D agents ground their crypto answers on, including ones no extraction attempt could read. That left headline-only rows with no article behind them, and because the reader is a public endpoint whose caller supplies the link, the headline, and the source name, a single request could plant a permanent entry with any headline someone chose. The reader now refuses anything that is not an ordinary web link, records only stories that yielded real article text, and the knowledge API filters the empty rows already on file out of every answer.</description>
+		</item>
+		<item>
+			<title>The free fact-check lane is callable from a browser again, and two paid endpoints answer to the price you set</title>
+			<link>https://three.ws/docs/x402-endpoints</link>
+			<guid isPermaLink="false">2026-08-14:The free fact-check lane is callable from a browser again, and two paid endpoints answer to the price you set</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A site calling the fact checker from a browser got a confusing failure: the preflight check said the call was allowed, then the browser threw away the answer. The free daily lane was not sending the cross-origin headers the paid lane sends, so a perfectly good verdict never reached the page. Both lanes now answer identically, whether the check succeeds or the claim is rejected. Separately, the fact checker and the paid LLM proxy were the last two paid endpoints whose price was fixed in code: every other one can be repriced at deploy time, and now these two can too, with no code change. The IBM Granite health feed also stops reporting itself healthy when its own database read fails, so a dashboard cannot show green through an outage. Exploit-history and gas-oracle outages are now written to the server log rather than disappearing silently, which is the difference between an alert and a mystery.</description>
 		</item>
 		<item>
 			<title>The free object library can no longer be emptied by one bad upload</title>

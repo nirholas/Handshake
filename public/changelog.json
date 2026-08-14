@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T05:40:47.514Z",
+	"generated_at": "2026-08-14T05:46:41.636Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -71,6 +71,16 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "A paid-call share link now previews on Slack, Telegram and LinkedIn",
+			"summary": "Every settled x402 call has a permalink whose social preview image is drawn on demand. Slack, Telegram and LinkedIn ask an image URL for its type and size before they fetch it, and this one answered \"method not allowed\" to that probe, so the card silently never appeared on those platforms. It answers them now. Three more fixes to the same card: a receipt is captioned with the network it actually settled on rather than always reading mainnet; a link shared in the seconds before its receipt finishes saving, or during a cache outage, is retried a minute later instead of being pinned to the generic card for an hour; and a damaged record shows a plain \"unknown\" rather than a \"NaNd ago\" timestamp or an invented amount.",
+			"link": "/pay",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "Add funds now opens Coinbase on the buy step, not on a transfer you cannot make",
 			"summary": "The Add funds window hands you a Coinbase checkout with your three.ws wallet already filled in as the destination. That checkout was not told which step to open on, so Coinbase could land you on \"transfer from your Coinbase balance\", which is no help at all if you reached Add funds precisely because you hold nothing yet. It now always opens on the buy step for the asset you picked (USDC or SOL, both settling on Solana). The suggested dollar amount is also rounded to real dollars and cents before it reaches Coinbase, so an amount worked out from a shortfall can no longer show up as something like $25.777777 on the checkout screen or in the window itself.",
 			"link": null,
@@ -132,6 +142,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Buying an avatar cosmetic unlocks it for the account that paid, and the identity endpoint stops answering write requests",
+			"summary": "Three fixes to paid endpoints in the avatar shop, the club and the identity lane. In the shop, a wallet that has already bought a cosmetic can re-confirm the unlock for free by signing in, instead of paying again. That free re-confirm was keyed on the cosmetic rather than on the account receiving it, so one purchase could be signed onto an unlimited number of other accounts. Re-confirming now only works for the wallet that paid or for an account that already owns the item; unlocking the item for a new account asks for payment, as it always should have. Second, the identity endpoint at /.well-known/did.json answered PUT and DELETE with the identity document, which reads as though a write had been accepted; those verbs now return a plain 405, and the paid health check that resolves the document no longer reports it as published when the resolver could not be reached at all. Third, the club's paid membership read has always been able to return the door and floor revenue for a period, but its published input schema only listed the membership mode, so callers had no way to discover it. Both modes and the period options are now documented in the payment challenge.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -225,6 +246,16 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "Paid 3D downloads work from a browser again, and the marketplace report stops ignoring every Solana price",
+			"summary": "Buying a 3D asset or an animation clip from a web page was impossible: those two endpoints answered the browser's permission check with a payment demand and none of the cross-origin headers a wallet needs, so the page could never even read what it was being asked to pay. Both now answer that check the same way every other paid endpoint does, on the challenge, on the errors, and on a free listing. The paid marketplace report had a second, quieter problem: it recognised prices set in USDC on Base but not the identical prices set in USDC on Solana, so every Solana-priced agent was counted as unpriced and left out of the average, lowest and highest figures buyers were paying for. Solana prices now count. The auth health check no longer charges for a call it refuses, its request reader now has the same size limit as its neighbours, and the avatar optimization batch can finally be repriced at deploy time like every other endpoint.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "Paying to resolve a name that does not exist no longer costs anything",
 			"summary": "The paid name-resolution call on /api/x402/pay-by-name sells one thing: the on-chain address behind a @username, a .sol name, or a raw wallet. When the name resolved to nothing it still took the $0.001 toll and handed back an empty answer. It now returns a plain 404 and leaves the payment unspent, so a buyer only ever pays for an address they actually received. Two smaller corrections shipped alongside: the pump launch feed's headline fields (newest mint, name and symbol) kept describing the newest launch when the list is ranked by liquidity instead of by age, rather than whichever coin happened to sit at the top; and internal and subscription callers can once again reach the Permit2 gas-sponsoring demo on deployments that have no card-facilitator credentials, since those callers never sign a payment in the first place.",
 			"link": "/docs/x402-endpoints",
@@ -251,6 +282,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Recurring agent payments keep their place when the database has a brief wobble",
+			"summary": "The scheduled job that charges recurring agent subscriptions treated every database problem the same way. If it could not read the list of subscriptions that were due, it answered with a hard error, and because the job is driven once a minute, a short database hiccup turned into a steady stream of failures and left the subscription engine looking permanently broken on the platform status readout. Every other scheduled job already tells the difference between a passing connection problem, which is worth quietly waiting out, and a genuine fault in the query itself, which is worth reporting loudly. This one now does the same: a brief connection wobble is recorded as a skipped run and the next minute resumes exactly where it left off, while a real fault still surfaces in full. No charge is created, repeated, or missed because of the change, and subscriptions that came due during the wobble are collected as soon as the connection returns.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -310,6 +352,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The commit and changelog feeds can no longer repeat a post they already sent",
+			"summary": "The jobs that deliver commits and changelog entries to the holders' Telegram channel take a lock so two overlapping runs cannot announce the same thing twice, and that lock lasts four minutes. But the calls they make to GitHub and Telegram had no time limit of their own, so a single stalled call could outlive the lock it was holding, let the next run pick the lock up, and post the same commits again. Every outbound call in those jobs is now bounded well inside the lock's lifetime, so the no-duplicates guarantee holds even when an upstream service hangs. The same missing limit is fixed across four other scheduled jobs: the wardrobe catalog audit, the garment job sweep, and the weekly quality benchmark, whose own run budget was previously advisory because it was only ever checked between requests and never during one. A stalled status check no longer fails a generation that is still healthy, and a slow download is no longer reported as a corrupted garment.",
+			"link": "/changelog",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The contracts that hold agent earnings, reputation stakes and skill licenses are now audit-ready",
 			"summary": "Before an outside firm can review the contracts behind agent royalties, reputation staking and wallet delegation, someone has to write down what those contracts promise and then prove it holds. That pack now exists and is public. Every value-bearing contract has numbered invariants, each backed by a test proving the property holds and a second test proving that an attacker trying to break it is rejected, alongside a threat model naming what is worth stealing, who could try, and what stops them. The Solidity contracts sit at 100% test coverage across 242 tests. The two Solana programs, which had no automated tests at all, now have 32 running against their real compiled on-chain bytecode rather than a stand-in, with the real token programs loaded. Two standard analyzers were run across everything, and every finding is either fixed or answered in writing. One of those fixes closes a real gap: a cross-chain permission request that was declined rather than failed outright would have credited a seller and charged a buyer for access that was never going to be granted.",
 			"link": null,
@@ -328,6 +381,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The free fact-check lane is callable from a browser again, and two paid endpoints answer to the price you set",
+			"summary": "A site calling the fact checker from a browser got a confusing failure: the preflight check said the call was allowed, then the browser threw away the answer. The free daily lane was not sending the cross-origin headers the paid lane sends, so a perfectly good verdict never reached the page. Both lanes now answer identically, whether the check succeeds or the claim is rejected. Separately, the fact checker and the paid LLM proxy were the last two paid endpoints whose price was fixed in code: every other one can be repriced at deploy time, and now these two can too, with no code change. The IBM Granite health feed also stops reporting itself healthy when its own database read fails, so a dashboard cannot show green through an outage. Exploit-history and gas-oracle outages are now written to the server log rather than disappearing silently, which is the difference between an alert and a mystery.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
