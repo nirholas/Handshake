@@ -1,4 +1,4 @@
-// POST /api/notifications/:id/read — mark a single notification as read.
+// POST /api/notifications/:id/read: mark a single notification as read.
 
 import { sql } from '../../_lib/db.js';
 import { getRequestUser } from '../../_lib/auth.js';

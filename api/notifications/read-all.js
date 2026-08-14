@@ -1,4 +1,4 @@
-// POST /api/notifications/read-all — mark all unread notifications as read.
+// POST /api/notifications/read-all: mark all unread notifications as read.
 
 import { sql } from '../_lib/db.js';
 import { getRequestUser } from '../_lib/auth.js';

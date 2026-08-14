@@ -1,4 +1,4 @@
-// DELETE /api/notifications/:id — permanently remove one of the caller's
+// DELETE /api/notifications/:id: permanently remove one of the caller's
 // notifications from the inbox.
 //
 // The bell inbox dismiss action and the notifications MCP `delete_notification`

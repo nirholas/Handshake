@@ -1,4 +1,4 @@
-// POST /api/notifications/track — record a re-engagement funnel event.
+// POST /api/notifications/track: record a re-engagement funnel event.
 //
 //   { notification_id, channel: 'push'|'in_app', event: 'opened'|'returned' }
 //
@@ -10,7 +10,7 @@
 // Only `sent` is written server-side (by api/_lib/notify.js); the open/return
 // signals can only come from the client, so this endpoint owns them. It's an
 // idempotent analytics beacon (deduped by a partial unique index), so it auths
-// on the session but is CSRF-exempt — there is no state a forged call could
+// on the session but is CSRF-exempt: there is no state a forged call could
 // corrupt, only a funnel row for the caller's own notification.
 
 import { z } from 'zod';
