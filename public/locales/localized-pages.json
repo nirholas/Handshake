@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 354,
+	"count": 355,
 	"paths": [
 		"/",
 		"/3d",
@@ -77,6 +77,7 @@
 		"/dashboard",
 		"/defi",
 		"/demos",
+		"/demos/agents",
 		"/deployments",
 		"/derivatives",
 		"/dex-volumes",
