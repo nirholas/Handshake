@@ -1927,10 +1927,25 @@ body.market-page > header {
 	align-items: center;
 }
 
-.related-side-title a {
+/* "View more" expands the list in place; it navigates nowhere, so it is a button. */
+.related-side-title button {
 	font-size: 12px;
 	color: var(--ink-dim);
 	text-decoration: none;
+	appearance: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	font-family: inherit;
+	cursor: pointer;
+}
+.related-side-title button:hover {
+	color: var(--ink);
+}
+.related-side-title button:focus-visible {
+	outline: 2px solid var(--accent, currentColor);
+	outline-offset: 2px;
+	border-radius: 2px;
 }
 
 .related-card {
