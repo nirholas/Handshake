@@ -351,6 +351,16 @@ const ERC8004_MIN_BLOCK_CHUNK = 100;
 const RANGE_REJECTED = /block range|range is too large|too wide|too many blocks|query returned more than|exceed maximum block range|limited to|response size|logs matched/i;
 
 /**
+ * Is this RPC failure the provider refusing the width of the requested range?
+ * Only those are worth retrying smaller; everything else is a real fault.
+ * @param {unknown} message
+ * @returns {boolean}
+ */
+export function isRangeRejection(message) {
+	return RANGE_REJECTED.test(String(message ?? ''));
+}
+
+/**
  * The block window to request for a chain this tick.
  *
  * A fixed window is the reason five chains could never catch up: it is a bet
@@ -445,7 +455,7 @@ async function erc8004CrawlChain(chain) {
 		} catch (err) {
 			// Any RPC failure that is not the provider refusing the range is a genuine
 			// error and propagates to the per-chain handler above.
-			if (!RANGE_REJECTED.test(String(err?.message || err))) throw err;
+			if (!isRangeRejection(err?.message || err)) throw err;
 			const reduced = backoffChunkSize(chunkSize);
 			if (reduced >= chunkSize) {
 				// Already at the floor: the provider will not serve even the smallest
@@ -4035,7 +4045,10 @@ async function handleConfirmPendingPurchases(req, res) {
 async function handleCleanupCsrfTokens(req, res) {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
-	const result = await sql`DELETE FROM csrf_tokens WHERE expires_at < now() RETURNING token`;
+	// RETURNING 1, not RETURNING token: the row count is all this reports, and
+	// shipping every expired token value back over the wire puts live-until-a-
+	// moment-ago CSRF secrets in the response path for no gain.
+	const result = await sql`DELETE FROM csrf_tokens WHERE expires_at < now() RETURNING 1`;
 	return json(res, 200, { deleted: result.length });
 }
 

@@ -125,4 +125,33 @@ describe('db.js with an unconfigured DATABASE_URL', () => {
 	it('classifies a bare `fetch failed` TypeError (pre-wrap transport error)', () => {
 		expect(isDbUnavailableError(new TypeError('fetch failed'))).toBe(true);
 	});
+
+	it('classifies the WebSocket Pool’s ErrorEvent, which carries no message at all', () => {
+		// The ws-based Pool (scripts that share code with crons, e.g.
+		// scripts/sniper-evolve.mjs) rejects with a DOM ErrorEvent, not an Error,
+		// when its socket never opens. Its name and message are both empty and
+		// String() is "[object ErrorEvent]", so every message-based branch reads it
+		// as a code bug. Proven against a real Postgres: api/cron/sniper-evolve
+		// answered `{"ok":false,"error":""}` with a GREEN heartbeat, the exact
+		// dead-loop-behind-a-green-check shape the fleet watchdog exists to catch.
+		// ErrorEvent is not a Node global, so the driver builds the event from its
+		// own bundled class. Reconstruct the observed shape rather than reaching
+		// for a global that does not exist in the runtime this ships on.
+		class WsErrorEvent {
+			constructor(cause) {
+				this.error = cause;
+				this.type = 'error';
+				this.stack = 'Error\n    at ws/index.js';
+			}
+			get message() { return ''; }
+		}
+		const event = new WsErrorEvent(new TypeError());
+		expect(event.message).toBe('');
+		expect(event.name).toBeUndefined();
+		expect(isDbUnavailableError(event)).toBe(true);
+
+		// A plain Error still has to go through the message branches, so a genuine
+		// SQL fault cannot slip into the transient bucket via this door.
+		expect(isDbUnavailableError(new Error('column "nope" does not exist'))).toBe(false);
+	});
 });

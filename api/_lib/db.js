@@ -186,9 +186,14 @@ export function isDbUnavailableError(err) {
 	// whose String() is "[object ErrorEvent]". Every message-based branch below
 	// therefore reads it as a code bug and 500s it. It is the opposite: a socket
 	// that never opened is the purest form of "the request never reached
-	// Postgres". Matched structurally, since there is no text to match on.
-	if (typeof ErrorEvent !== 'undefined' && err instanceof ErrorEvent) return true;
-	if (err.type === 'error' && 'error' in err && !(err instanceof Error)) return true;
+	// Postgres".
+	//
+	// Matched structurally, on the two properties an ErrorEvent always carries,
+	// because there is no text to match on AND `instanceof ErrorEvent` cannot
+	// work here: ErrorEvent is not a Node global (checked on node 24), so the
+	// driver builds the event from its own bundled class. A plain Error is
+	// excluded so this door stays shut to genuine SQL faults.
+	if (!(err instanceof Error) && err.type === 'error' && 'error' in err) return true;
 	// esbuild minifies class names (e.g. NeonDbError → Pt in the bundle), so
 	// err.constructor.name is unreliable in production. Use err.name instead —
 	// NeonDbError explicitly sets `this.name = 'NeonDbError'` via a class field,

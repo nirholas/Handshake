@@ -33,6 +33,13 @@ const DESCRIPTION =
 	'Current target: changelog_json — the /changelog.json feed holders and RSS consumers ' +
 	'depend on. Returns { valid, version, entry_count, schema_errors }.';
 
+// Dispatch table. The advertised enum, the 400 message and the runtime branch
+// all read from these keys, so adding a target is one entry, not three places to
+// keep in step. checkChangelogJson is a hoisted function declaration further
+// down, so referencing it here is safe.
+const CHECKERS = { changelog_json: checkChangelogJson };
+const SUPPORTED_APIS = Object.keys(CHECKERS);
+
 const INPUT_SCHEMA = {
 	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
@@ -40,7 +47,7 @@ const INPUT_SCHEMA = {
 	properties: {
 		api: {
 			type: 'string',
-			enum: ['changelog_json'],
+			enum: SUPPORTED_APIS,
 			description: 'Which public JSON API to fetch and validate.',
 		},
 	},
@@ -202,11 +209,6 @@ async function checkChangelogJson(origin, fetched_at) {
 	const { valid, version, entry_count, schema_errors } = validateChangelogJson(data);
 	return { ok: true, api: 'changelog_json', valid, version, entry_count, schema_errors, fetched_at };
 }
-
-// Dispatch table: the enum in INPUT_SCHEMA, the 400 message and the runtime
-// branch all read from these keys, so adding a target is one entry, not four.
-const CHECKERS = { changelog_json: checkChangelogJson };
-const SUPPORTED_APIS = Object.keys(CHECKERS);
 
 export default paidEndpoint({
 	route: ROUTE,

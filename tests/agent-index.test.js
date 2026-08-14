@@ -19,7 +19,7 @@ import {
 } from '../api/_lib/solana-agent-events.js';
 import { normalizeEvent, toDate, agentRef, EVENT_CLASSES } from '../api/_lib/onchain-events.js';
 import { sweepCycleMin } from '../api/_lib/ops/index-lag.js';
-import { nextChunkSize, backoffChunkSize } from '../api/cron/[name].js';
+import { nextChunkSize, backoffChunkSize, isRangeRejection } from '../api/cron/[name].js';
 import { splitCapabilities } from '../api/explore-item.js';
 import { decodeReputationLog } from '../api/_lib/erc8004-reputation-events.js';
 
@@ -340,6 +340,42 @@ describe('backoffChunkSize', () => {
 	it('never falls below a window worth requesting', () => {
 		expect(backoffChunkSize(100)).toBe(100);
 		expect(backoffChunkSize(1)).toBe(100);
+	});
+
+	it('reaches a fixed point at the floor so the in-tick retry terminates', () => {
+		// erc8004CrawlChain retries the same blocks at backoffChunkSize until the
+		// value stops shrinking. If halving never converged, that loop would spin.
+		let size = 8000;
+		for (let i = 0; i < 20; i++) {
+			const next = backoffChunkSize(size);
+			if (next >= size) break;
+			size = next;
+		}
+		expect(size).toBe(100);
+		expect(backoffChunkSize(size)).toBe(size);
+	});
+});
+
+describe('isRangeRejection', () => {
+	it('recognises how each provider words a range it will not serve', () => {
+		// Verbatim messages observed from the configured lanes on 2026-08-14.
+		expect(isRangeRejection('block range is too wide (maximum 1024)')).toBe(true);
+		expect(isRangeRejection('Log response size exceeded')).toBe(true);
+		expect(isRangeRejection('query returned more than 10000 results')).toBe(true);
+		expect(isRangeRejection('eth_getLogs is limited to a 10000 block range')).toBe(true);
+	});
+
+	it('does NOT treat a plan or rate limit as a range the crawl can shrink into', () => {
+		// bnbchain's data-seed nodes answer every eth_getLogs with this, at any
+		// width. Reading it as a range ceiling shrank BSC Testnet to the 100-block
+		// floor and froze its cursor while the backlog grew every tick.
+		expect(isRangeRejection('limit exceeded')).toBe(false);
+		expect(isRangeRejection('cu limit exceeded; Method "eth_getLogs" is not available')).toBe(false);
+	});
+
+	it('treats a missing or empty message as a real fault, not a range problem', () => {
+		expect(isRangeRejection(null)).toBe(false);
+		expect(isRangeRejection('')).toBe(false);
 	});
 });
 

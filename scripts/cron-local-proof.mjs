@@ -126,6 +126,57 @@ function coerce(value, oid) {
 	return value;
 }
 
+// Run one parameterized query and shape the reply exactly as Neon's endpoint
+// does. `client` is either the pool (single query) or a checked-out client
+// pinned inside a transaction.
+async function runOne(client, { query, params }) {
+	const r = await client.query({
+		text: query,
+		values: params || [],
+		rowMode: 'array',
+		types: { getTypeParser: () => (v) => v },
+	});
+	return {
+		fields: r.fields.map((f) => ({ name: f.name, dataTypeID: f.dataTypeID })),
+		rows: r.rows.map((row) => row.map((v, i) => coerce(v, r.fields[i].dataTypeID))),
+		rowCount: r.rowCount,
+		command: r.command,
+	};
+}
+
+// sql.transaction() posts { queries: [...] } instead of a single { query },
+// answers with { results: [...] }, and carries its isolation level, read-only
+// and deferrable settings in Neon-Batch-* headers. A shim that understood only
+// the single-query shape handed `text: undefined` to pg, which threw "A query
+// must have either text or a name" - surfacing as a 500 from any handler that
+// writes atomically (custody-attest was the one that caught it) and reading
+// like a bug in the handler rather than in this bridge.
+async function runBatch(pool, queries, headers) {
+	const client = await pool.connect();
+	try {
+		const isolation = headers['neon-batch-isolation-level'];
+		const readOnly = headers['neon-batch-read-only'] === 'true';
+		const deferrable = headers['neon-batch-deferrable'] === 'true';
+		let begin = 'BEGIN';
+		if (isolation) begin += ` ISOLATION LEVEL ${isolation.replace(/[^A-Za-z ]/g, '')}`;
+		begin += readOnly ? ' READ ONLY' : ' READ WRITE';
+		// DEFERRABLE is only legal on a serializable read-only transaction.
+		if (deferrable && readOnly) begin += ' DEFERRABLE';
+		await client.query(begin);
+		try {
+			const results = [];
+			for (const q of queries) results.push(await runOne(client, q));
+			await client.query('COMMIT');
+			return results;
+		} catch (e) {
+			await client.query('ROLLBACK').catch(() => {});
+			throw e;
+		}
+	} finally {
+		client.release();
+	}
+}
+
 async function startShim(pool) {
 	const port = await freePort(54800);
 	const server = http.createServer(async (req, res) => {
@@ -133,21 +184,12 @@ async function startShim(pool) {
 		let body = '';
 		for await (const c of req) body += c;
 		try {
-			const { query, params } = JSON.parse(body || '{}');
-			const r = await pool.query({
-				text: query,
-				values: params || [],
-				rowMode: 'array',
-				types: { getTypeParser: () => (v) => v },
-			});
-			const rows = r.rows.map((row) => row.map((v, i) => coerce(v, r.fields[i].dataTypeID)));
+			const parsed = JSON.parse(body || '{}');
+			const payload = Array.isArray(parsed.queries)
+				? { results: await runBatch(pool, parsed.queries, req.headers) }
+				: await runOne(pool, parsed);
 			res.writeHead(200, { 'content-type': 'application/json' });
-			res.end(JSON.stringify({
-				fields: r.fields.map((f) => ({ name: f.name, dataTypeID: f.dataTypeID })),
-				rows,
-				rowCount: r.rowCount,
-				command: r.command,
-			}));
+			res.end(JSON.stringify(payload));
 		} catch (e) {
 			res.writeHead(500, { 'content-type': 'application/json' });
 			res.end(JSON.stringify({ message: String(e?.message || e), code: e?.code, constraint: e?.constraint }));
