@@ -100,13 +100,41 @@ async function login() {
 	return jar;
 }
 
-async function submitReconstruction(jar, subject, index) {
+// One synthesised subject: a headshot render of a distinct avatar from the
+// platform's public library, uploaded as the portrait a reconstruction is built
+// from. Returns both the durable URL the pipeline was given and the same bytes,
+// so the scorer compares against exactly what was submitted.
+async function portraitFor(sourceAvatar) {
+	const { renderAvatarScene, SCENE_PRESETS } = await import('../api/_lib/avatar-render.js');
+	const { png } = await renderAvatarScene({
+		glbUrl: `${BASE_URL}/api/avatars/${sourceAvatar.id}/model.glb`,
+		width: PORTRAIT_SIZE,
+		height: PORTRAIT_SIZE,
+		background: PORTRAIT_BACKGROUND,
+		cameraOrbit: { theta: 0, phi: 86 },
+		scenePreset: SCENE_PRESETS.headshot,
+	});
+	return { png, dataUri: `data:image/png;base64,${png.toString('base64')}` };
+}
+
+async function sourceAvatars(count) {
+	// Over-fetch: an avatar whose headshot has no detectable face cannot be a
+	// subject, and dropping it is better than reconstructing from a portrait the
+	// scorer will not be able to read either.
+	const res = await fetch(`${BASE_URL}/api/avatars/public?limit=${Math.min(50, count * 3)}`);
+	if (!res.ok) throw new Error(`public avatar list failed: HTTP ${res.status}`);
+	const { avatars } = await res.json();
+	if (!Array.isArray(avatars) || !avatars.length) throw new Error('no public avatars to build subjects from');
+	return avatars;
+}
+
+async function submitReconstruction(jar, portrait, index) {
 	const res = await fetch(`${BASE_URL}/api/avatars/reconstruct`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', cookie: jar },
 		body: JSON.stringify({
 			name: `Likeness eval subject ${index + 1}`,
-			prompt: subject,
+			photos: [portrait.dataUri],
 			visibility: 'private',
 		}),
 	});
@@ -115,6 +143,19 @@ async function submitReconstruction(jar, subject, index) {
 		throw new Error(`reconstruct submit ${res.status}: ${(data.message || data.error || '').slice(0, 200)}`);
 	}
 	return data;
+}
+
+// The status endpoint deliberately returns only ids and the provider's
+// temporary result URL, so the durable GLB comes from the avatar row it
+// materialized.
+async function durableGlbUrl(jar, avatarId) {
+	const res = await fetch(`${BASE_URL}/api/avatars/${encodeURIComponent(avatarId)}`, {
+		headers: { cookie: jar },
+	});
+	if (!res.ok) throw new Error(`avatar read ${res.status}`);
+	const body = await res.json();
+	const avatar = body.avatar || body;
+	return avatar.glb_url || avatar.url || avatar.download_url || null;
 }
 
 async function pollReconstruction(jar, jobId, { timeoutMs = 10 * 60 * 1000, intervalMs = 6000 } = {}) {
@@ -132,53 +173,38 @@ async function pollReconstruction(jar, jobId, { timeoutMs = 10 * 60 * 1000, inte
 	throw new Error(`reconstruction timed out after ${timeoutMs}ms`);
 }
 
-// The reference image the pipeline actually reconstructed from. The status
-// endpoint reports it for prompt-sourced jobs; without it there is no input
-// capture and the subject cannot be scored, which is a reported outcome rather
-// than a substituted one.
-function captureFrom(status) {
-	const meta = status?.avatar?.source_meta || status?.source_meta || {};
-	const params = status?.params || {};
-	const candidates = [
-		params.referenceImageUrl,
-		meta.referenceImageUrl,
-		meta.reference_image_url,
-		status?.referenceImageUrl,
-		...(Array.isArray(params.images) ? params.images : []),
-	];
-	return candidates.filter((v) => typeof v === 'string' && v);
-}
-
-function glbFrom(status) {
-	return (
-		status?.avatar?.glb_url ||
-		status?.avatar?.url ||
-		status?.result_glb_url ||
-		status?.glbUrl ||
-		null
-	);
-}
-
 async function runLive(count) {
 	const jar = await login();
-	const subjects = LIVE_SUBJECTS.slice(0, count);
-	log(`▶ live mode: ${subjects.length} reconstructions through ${BASE_URL}\n`);
+	const pool = await sourceAvatars(count);
+	log(`▶ live mode: ${count} reconstruction(s) through ${BASE_URL}\n`);
 
 	const built = [];
-	for (const [i, subject] of subjects.entries()) {
+	let poolIndex = 0;
+	for (let i = 0; i < count && poolIndex < pool.length; i += 1) {
+		const source = pool[poolIndex];
+		poolIndex += 1;
 		try {
-			const submitted = await submitReconstruction(jar, subject, i);
-			log(`  [${i + 1}/${subjects.length}] submitted ${submitted.jobId} (${submitted.provider})`);
+			const portrait = await portraitFor(source);
+			const submitted = await submitReconstruction(jar, portrait, i);
+			log(`  [${i + 1}/${count}] ${source.slug}: submitted ${submitted.jobId} (${submitted.provider})`);
 			const status = await pollReconstruction(jar, submitted.jobId);
-			const glbUrl = glbFrom(status);
-			const captures = captureFrom(status);
-			if (!glbUrl) throw new Error('finished job carried no GLB url');
-			if (!captures.length) throw new Error('finished job carried no reference image to score against');
-			built.push({ index: i, subject, jobId: submitted.jobId, glbUrl, captures, avatarId: status?.avatar?.id ?? null });
-			log(`  [${i + 1}/${subjects.length}] done, ${captures.length} capture(s)`);
+			if (!status.resultAvatarId) throw new Error('finished job materialized no avatar');
+			const glbUrl = await durableGlbUrl(jar, status.resultAvatarId);
+			if (!glbUrl) throw new Error('finished avatar carried no GLB url');
+			built.push({
+				index: i,
+				subject: source.slug,
+				jobId: submitted.jobId,
+				avatarId: status.resultAvatarId,
+				glbUrl,
+				// The portrait bytes themselves, not a URL: this is exactly what the
+				// pipeline was handed, and it never has to be fetched back.
+				captures: [portrait.png],
+			});
+			log(`  [${i + 1}/${count}] ${source.slug}: done`);
 		} catch (err) {
-			log(`  [${i + 1}/${subjects.length}] FAILED: ${err.message}`);
-			built.push({ index: i, subject, error: String(err.message) });
+			log(`  [${i + 1}/${count}] ${source.slug}: FAILED ${err.message}`);
+			built.push({ index: i, subject: source.slug, error: String(err.message) });
 		}
 	}
 	return built.filter((b) => b.glbUrl);
@@ -211,6 +237,17 @@ async function crossControl(scored) {
 	return sims;
 }
 
+async function fetchCaptureBytes(capture) {
+	const str = String(capture);
+	if (str.startsWith('data:')) {
+		const comma = str.indexOf(',');
+		return comma < 0 ? null : Buffer.from(str.slice(comma + 1), 'base64');
+	}
+	const res = await fetch(str);
+	if (!res.ok) return null;
+	return Buffer.from(await res.arrayBuffer());
+}
+
 // Re-derive the head-on embedding and the capture embeddings for the control.
 // scoreLikeness deliberately does not return embeddings (they are biometric and
 // must never reach a stored report), so the control computes its own inside
@@ -230,9 +267,11 @@ async function embeddingsFor(subject) {
 		const rendered = await embedFace(png);
 		const captures = [];
 		for (const capture of subject.captures) {
-			const res = await fetch(capture);
-			if (!res.ok) continue;
-			const embedded = await embedFace(Buffer.from(await res.arrayBuffer()));
+			// Backfill hands over URLs (what the job row stored); live mode hands over
+			// the portrait bytes it just submitted. Both are valid captures.
+			const bytes = Buffer.isBuffer(capture) ? capture : await fetchCaptureBytes(capture);
+			if (!bytes) continue;
+			const embedded = await embedFace(bytes);
 			if (embedded) captures.push(embedded.embedding);
 		}
 		return { headOnEmbedding: rendered?.embedding ?? null, captureEmbeddings: captures };
@@ -268,7 +307,7 @@ async function main() {
 	}
 
 	const subjects = liveArg
-		? await runLive(Math.max(1, Math.min(LIVE_SUBJECTS.length, Number(liveArg) || 10)))
+		? await runLive(Math.max(1, Math.min(25, Number(liveArg) || 10)))
 		: await runBackfill(Math.max(1, Math.min(100, Number(backfillArg) || 25)));
 
 	if (!subjects.length) {
@@ -281,6 +320,10 @@ async function main() {
 	for (const subject of subjects) {
 		const result = await scoreLikeness({ glbUrl: subject.glbUrl, captures: subject.captures });
 		const control = await embeddingsFor(subject);
+		// Only backfill subjects are filed. A live subject is a benchmark run, not
+		// a user's generation, and writing it into the same table would move the
+		// distribution the roadmap is judged on with traffic nobody asked for.
+		// Live mode reports "not-stored" for exactly that reason.
 		let stored = false;
 		if (subject.creationId && likenessStoreEnabled()) {
 			stored = await recordLikenessScore({
