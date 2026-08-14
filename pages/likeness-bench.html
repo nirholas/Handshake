@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Likeness Bench · three.ws</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+		.lk-wrap { max-width: 1200px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 5rem; }
+		.lk-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem; }
+		.lk-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -0.025em; margin: 0; }
+		.lk-sub { color: rgba(255,255,255,0.45); font-size: 13.5px; margin: 0 0 1.5rem; max-width: 68ch; line-height: 1.6; }
+
+		.lk-controls { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap; align-items: center; }
+		.lk-controls label { font-size: 12px; color: rgba(255,255,255,0.45); }
+		.lk-controls select { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+		.lk-controls select:hover { border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.08); }
+		.lk-controls select:focus-visible { outline: 2px solid rgba(124,92,255,0.7); outline-offset: 2px; }
+
+		.lk-empty { padding: 3rem; text-align: center; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); line-height: 1.7; }
+		.lk-empty code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+
+		.lk-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; }
+
+		.lk-gate { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 2.5rem; }
+		.lk-cell { padding: 1rem 1.15rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); }
+		.lk-cell-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; }
+		.lk-cell-value { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+		.lk-cell-note { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 0.35rem; }
+		.good { color: #2fbf71; }
+		.warn { color: #f0a93b; }
+		.bad { color: var(--color-danger, #f87171); }
+
+		.lk-hist { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2.5rem; }
+		.lk-bar-row { display: grid; grid-template-columns: 76px 1fr 56px; gap: 0.85rem; align-items: center; font-size: 12.5px; }
+		.lk-bar-label { color: rgba(255,255,255,0.55); font-variant-numeric: tabular-nums; }
+		.lk-bar-track { height: 22px; border-radius: 6px; background: rgba(255,255,255,0.04); overflow: hidden; }
+		.lk-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(124,92,255,0.85), rgba(124,92,255,0.45)); transition: width .35s cubic-bezier(.4,0,.2,1); }
+		.lk-bar-row.gate .lk-bar-fill { background: linear-gradient(90deg, rgba(47,191,113,0.9), rgba(47,191,113,0.45)); }
+		.lk-bar-count { text-align: right; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.7); }
+
+		.lk-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2.5rem; }
+		.lk-chip { font-size: 12px; padding: 5px 11px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); color: rgba(255,255,255,0.65); }
+		.lk-chip b { color: #e2e8f0; font-variant-numeric: tabular-nums; }
+
+		.lk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+		.lk-table th, .lk-table td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+		.lk-table th { color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.06em; }
+		.lk-table tbody tr { transition: background .12s ease; }
+		.lk-table tbody tr:hover { background: rgba(255,255,255,0.035); }
+		.lk-table td.num { font-variant-numeric: tabular-nums; }
+		.lk-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); margin-bottom: 2.5rem; }
+		.lk-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(255,255,255,0.45); font-size: 11.5px; }
+
+		.lk-scorer { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.8; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 1.25rem; }
+		.lk-scorer b { color: rgba(255,255,255,0.65); font-weight: 600; }
+	</style>
+</head>
+<body>
+	<div class="lk-wrap">
+		<div class="lk-header">
+			<h1 class="lk-title">Likeness Bench</h1>
+		</div>
+		<p class="lk-sub">
+			The Phase 1 verification metric, measured rather than asserted. Every scored reconstruction is rendered at three yaws and compared to the photos it was built from with an open-source face-recognition embedding. 4.0 out of 5 is the roadmap gate. Internal tooling, not a public surface.
+		</p>
+
+		<div class="lk-controls">
+			<label for="lk-window">Window</label>
+			<select id="lk-window">
+				<option value="7">Last 7 days</option>
+				<option value="30" selected>Last 30 days</option>
+				<option value="90">Last 90 days</option>
+				<option value="365">Last year</option>
+			</select>
+		</div>
+
+		<div id="lk-content">
+			<div class="lk-empty">Loading likeness scores…</div>
+		</div>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module">
+		const el = document.getElementById('lk-content');
+		const windowSelect = document.getElementById('lk-window');
+
+		const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+		const fmt = (n, d = 2) => (typeof n === 'number' && Number.isFinite(n) ? n.toFixed(d) : '—');
+		const pct = (n) => (typeof n === 'number' && Number.isFinite(n) ? `${(n * 100).toFixed(0)}%` : '—');
+
+		function scoreClass(score) {
+			if (typeof score !== 'number') return '';
+			if (score >= 4) return 'good';
+			if (score >= 3) return 'warn';
+			return 'bad';
+		}
+
+		function renderHistogram(histogram) {
+			const max = Math.max(1, ...histogram.map((b) => b.count));
+			return histogram.map((b) => `
+				<div class="lk-bar-row${b.min >= 4 ? ' gate' : ''}">
+					<div class="lk-bar-label">${esc(b.label)}</div>
+					<div class="lk-bar-track"><div class="lk-bar-fill" style="width:${(b.count / max) * 100}%"></div></div>
+					<div class="lk-bar-count">${b.count}</div>
+				</div>`).join('');
+		}
+
+		function renderRows(recent) {
+			if (!recent.length) {
+				return '<tr><td colspan="8" style="color:rgba(255,255,255,0.4);padding:1.5rem;text-align:center">No individual scores in this scorer version yet.</td></tr>';
+			}
+			return recent.map((r) => `
+				<tr>
+					<td class="lk-id">${esc(String(r.creationId).slice(0, 8))}</td>
+					<td>${esc(r.status)}</td>
+					<td class="num ${scoreClass(r.likenessScore)}"><b>${fmt(r.likenessScore)}</b></td>
+					<td class="num">${fmt(r.identityCosine, 3)}</td>
+					<td class="num">${fmt(r.turnFalloff, 3)}</td>
+					<td class="num">${r.capturesEmbedded ?? '—'} / ${r.capturesTotal ?? '—'}</td>
+					<td class="num">${r.viewsScored ?? '—'}</td>
+					<td>${r.scoredAt ? esc(new Date(r.scoredAt).toISOString().slice(0, 16).replace('T', ' ')) : '—'}</td>
+				</tr>`).join('');
+		}
+
+		function renderEmpty() {
+			el.innerHTML = `<div class="lk-empty">
+				No reconstructions have been scored yet.<br /><br />
+				The weekly sweep runs at <code>/api/cron/likeness-eval</code>. To score on demand:<br /><br />
+				<code>node --env-file=.env scripts/likeness-eval.mjs --backfill</code>
+			</div>`;
+		}
+
+		function render(data) {
+			const d = data.distribution;
+			if (!d || !d.scored) return renderEmpty();
+
+			const statusChips = d.statuses.map((s) =>
+				`<span class="lk-chip">${esc(s.status)} <b>${s.count}</b></span>`).join('');
+
+			el.innerHTML = `
+				<div class="lk-section-title">Roadmap gate (last ${d.windowDays} days)</div>
+				<div class="lk-gate">
+					<div class="lk-cell">
+						<div class="lk-cell-label">At or above 4/5</div>
+						<div class="lk-cell-value ${d.gateRate >= 0.5 ? 'good' : 'bad'}">${pct(d.gateRate)}</div>
+						<div class="lk-cell-note">${d.atOrAboveGate} of ${d.scored} scored</div>
+					</div>
+					<div class="lk-cell">
+						<div class="lk-cell-label">Mean likeness</div>
+						<div class="lk-cell-value ${scoreClass(d.meanScore)}">${fmt(d.meanScore)}</div>
+						<div class="lk-cell-note">median ${fmt(d.medianScore)}</div>
+					</div>
+					<div class="lk-cell">
+						<div class="lk-cell-label">Range</div>
+						<div class="lk-cell-value">${fmt(d.minScore)} – ${fmt(d.maxScore)}</div>
+						<div class="lk-cell-note">mean cosine ${fmt(d.meanCosine, 3)}</div>
+					</div>
+					<div class="lk-cell">
+						<div class="lk-cell-label">Recognised as same person</div>
+						<div class="lk-cell-value">${d.sameIdentity} / ${d.scored}</div>
+						<div class="lk-cell-note">cosine ≥ ${fmt(data.scorer.sameIdentityCosine, 3)}</div>
+					</div>
+					<div class="lk-cell">
+						<div class="lk-cell-label">Turn falloff</div>
+						<div class="lk-cell-value ${d.meanTurnFalloff > 0.25 ? 'warn' : ''}">${fmt(d.meanTurnFalloff, 3)}</div>
+						<div class="lk-cell-note">identity lost head-on → profile</div>
+					</div>
+					<div class="lk-cell">
+						<div class="lk-cell-label">Cost per score</div>
+						<div class="lk-cell-value">${d.meanScoreMs ? `${(d.meanScoreMs / 1000).toFixed(1)}s` : '—'}</div>
+						<div class="lk-cell-note">3 renders + embeddings</div>
+					</div>
+				</div>
+
+				<div class="lk-section-title">Distribution</div>
+				<div class="lk-hist">${renderHistogram(d.histogram)}</div>
+
+				<div class="lk-section-title">Outcomes</div>
+				<div class="lk-chips">${statusChips || '<span class="lk-chip">none</span>'}</div>
+
+				<div class="lk-section-title">Recent scores</div>
+				<div class="lk-table-wrap">
+					<table class="lk-table">
+						<thead><tr>
+							<th>Creation</th><th>Status</th><th>Score</th><th>Cosine</th>
+							<th>Falloff</th><th>Captures</th><th>Views</th><th>Scored</th>
+						</tr></thead>
+						<tbody>${renderRows(data.recent || [])}</tbody>
+					</table>
+				</div>
+
+				<div class="lk-scorer">
+					Scorer <b>${esc(data.scorer.version)}</b> ·
+					detect <b>${esc(data.scorer.detectModel)}</b> (${esc(data.scorer.detectLicense)}) ·
+					embed <b>${esc(data.scorer.embedModel)}</b> (${esc(data.scorer.embedLicense)}) ·
+					views ${data.scorer.views.map((v) => `${esc(v.label)} ${v.theta}°`).join(', ')}.
+					Scores are only comparable within one scorer version.
+				</div>
+			`;
+		}
+
+		async function load() {
+			el.innerHTML = '<div class="lk-empty">Loading likeness scores…</div>';
+			try {
+				const res = await fetch(`/api/likeness-bench?days=${encodeURIComponent(windowSelect.value)}&limit=50`, {
+					credentials: 'include',
+				});
+				if (res.status === 401) {
+					el.innerHTML = `<div class="lk-empty">
+						These scores are internal.<br /><br />
+						Sign in as a platform admin, or call the API with <code>x-ops-secret</code>.
+					</div>`;
+					return;
+				}
+				if (res.status === 503) {
+					el.innerHTML = '<div class="lk-empty">Likeness scores need a configured database on this deployment.</div>';
+					return;
+				}
+				if (!res.ok) throw new Error(`status ${res.status}`);
+				render(await res.json());
+			} catch (err) {
+				el.innerHTML = `<div class="lk-empty">Could not load likeness data: ${esc(err.message || err)}</div>`;
+			}
+		}
+
+		windowSelect.addEventListener('change', load);
+		load();
+	</script>
+</body>
+</html>

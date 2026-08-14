@@ -15,7 +15,7 @@
 		"api/cron/treasury-topup.js": {
 			"maxDuration": 120
 		},
-		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench,api/cron/fact-check-benchmark}.js": {
+		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark}.js": {
 			"maxDuration": 300
 		},
 		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
@@ -1639,6 +1639,10 @@
 		{
 			"src": "/quality-bench/?",
 			"dest": "/quality-bench.html"
+		},
+		{
+			"src": "/likeness-bench/?",
+			"dest": "/likeness-bench.html"
 		},
 		{
 			"src": "/examples/?",
@@ -6000,6 +6004,10 @@
 		{
 			"path": "/api/cron/quality-bench",
 			"schedule": "23 3 * * 1"
+		},
+		{
+			"path": "/api/cron/likeness-eval",
+			"schedule": "47 3 * * 1"
 		},
 		{
 			"path": "/api/cron/garment-catalog-audit",
