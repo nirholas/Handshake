@@ -54,7 +54,12 @@ const {
 	cosineToScore5,
 	scoreLikeness,
 } = await import('../api/_lib/likeness-score.js');
-const { capturesFromParams, recentLikenessScores } = await import('../api/_lib/likeness-store.js');
+const {
+	BENCHMARK_STATUS,
+	capturesFromParams,
+	recentLikenessScores,
+	unscoredReconstructions,
+} = await import('../api/_lib/likeness-store.js');
 
 // A unit vector at a chosen angle from the reference, so a test can request an
 // exact cosine instead of hoping a random pair lands near one.
@@ -269,6 +274,31 @@ describe('capturesFromParams', () => {
 		expect(capturesFromParams(null)).toEqual([]);
 		expect(capturesFromParams('not json')).toEqual([]);
 		expect(capturesFromParams({ images: [null, 42, ''] })).toEqual([]);
+	});
+});
+
+describe('benchmark subjects stay out of the gate maths', () => {
+	it('files under a status the distribution aggregates exclude', async () => {
+		// The distribution's aggregates and histogram filter `status = 'ok'`, so
+		// this one constant is the whole mechanism keeping a --live run from
+		// counting itself toward the roadmap gate. If it ever equals 'ok', a
+		// benchmark subject becomes a user's avatar as far as the metric knows.
+		expect(BENCHMARK_STATUS).not.toBe('ok');
+	});
+
+	it('still removes the subject from the sweep queue', async () => {
+		// The queue's `left join ... is null` keys on the row existing at all, not
+		// on its status, so a filed benchmark row is never re-picked and scored a
+		// second time as a real generation.
+		sqlRows.mockResolvedValueOnce([]);
+		const queued = await unscoredReconstructions({ limit: 5 });
+		expect(queued).toEqual([]);
+		const [strings] = sqlRows.mock.calls[0];
+		const query = strings.join('?');
+		expect(query).toContain('left join avatar_likeness_scores');
+		expect(query).toContain('s.creation_id is null');
+		// Deliberately NOT filtered by status: any row of any status excludes it.
+		expect(query).not.toMatch(/s\.status\s*=/);
 	});
 });
 

@@ -52,6 +52,8 @@ import {
 	scoreLikeness,
 } from '../api/_lib/likeness-score.js';
 import {
+	BENCHMARK_STATUS,
+	creationIdForJob,
 	likenessStoreEnabled,
 	recordLikenessScore,
 	unscoredReconstructions,
@@ -320,18 +322,28 @@ async function main() {
 	for (const subject of subjects) {
 		const result = await scoreLikeness({ glbUrl: subject.glbUrl, captures: subject.captures });
 		const control = await embeddingsFor(subject);
-		// Only backfill subjects are filed. A live subject is a benchmark run, not
-		// a user's generation, and writing it into the same table would move the
-		// distribution the roadmap is judged on with traffic nobody asked for.
-		// Live mode reports "not-stored" for exactly that reason.
+		// A live subject IS a real generation record, because live mode submits a
+		// real reconstruction. Leaving it unfiled does not keep it out of the
+		// numbers, it just defers it: the next sweep finds an unscored creation
+		// and counts it toward the gate rate like any user's avatar. So it is
+		// filed deliberately, under BENCHMARK_STATUS, which the distribution's
+		// `status = 'ok'` filter excludes from the gate maths while the outcome
+		// breakdown still shows it. Backfill subjects keep their real status.
 		let stored = false;
-		if (subject.creationId && likenessStoreEnabled()) {
-			stored = await recordLikenessScore({
-				creationId: subject.creationId,
-				avatarId: subject.avatarId,
-				jobId: subject.jobId,
-				result,
-			});
+		let filedAs = null;
+		if (likenessStoreEnabled()) {
+			const target = subject.creationId
+				? { creationId: subject.creationId, avatarId: subject.avatarId }
+				: await creationIdForJob(subject.jobId);
+			if (target?.creationId) {
+				filedAs = liveArg ? BENCHMARK_STATUS : result.status;
+				stored = await recordLikenessScore({
+					creationId: target.creationId,
+					avatarId: target.avatarId ?? subject.avatarId,
+					jobId: subject.jobId,
+					result: liveArg ? { ...result, status: BENCHMARK_STATUS } : result,
+				});
+			}
 		}
 		scored.push({ ...subject, result, ...control, stored });
 		const views = result.views
@@ -340,7 +352,7 @@ async function main() {
 		log(
 			`  [${subject.index + 1}] ${result.status.padEnd(18)} ` +
 				`score=${fmt(result.likenessScore, 2)}  cos=${fmt(result.identityCosine)}  ` +
-				`falloff=${fmt(result.turnFalloff)}  ${stored ? 'stored' : 'not-stored'}\n` +
+				`falloff=${fmt(result.turnFalloff)}  ${stored ? `filed:${filedAs}` : 'not-filed'}\n` +
 				`      ${views}`,
 		);
 	}

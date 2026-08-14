@@ -146,9 +146,16 @@ of a distinct avatar from the public library, submits that portrait as the
 reconstruction photo, polls the job to completion, and scores the finished
 avatar against the exact bytes it was built from. The subjects are therefore
 **synthesised**, never real people's photos, for the same reason the
-reconstruction worker synthesises its reference set. Live results are printed
-but deliberately **not** filed: a benchmark run is not a user's generation, and
-storing it would move the distribution the roadmap is judged on.
+reconstruction worker synthesises its reference set.
+
+A live subject *is* a real generation record, because live mode submits a real
+reconstruction. Not filing it would not keep it out of the numbers, only defer
+them: the next sweep would find an unscored creation and count it toward the
+gate rate like any user's avatar. So it is filed deliberately, under the status
+`benchmark`, which the distribution's `status = 'ok'` filter excludes from every
+aggregate while the outcome breakdown and the recent table still show it. The
+work queue keys on a row existing at all rather than on its status, so the
+subject is never re-picked either. Backfill subjects keep their real status.
 
 Both modes print a **cross-subject control**: every avatar is also scored
 against every *other* subject's captures. A likeness number is unfalsifiable
@@ -193,11 +200,13 @@ This is the baseline Phase 1 has to move. It is quoted here so the next run has
 something to be compared against, and it is only comparable within
 `threews.likeness.sface.v1`.
 
-The board will read one subject higher than this table. Verifying `--live`
-submitted a real reconstruction, which registered a generation record like any
-other, and the next backfill scored it at 2.32. The table above is deliberately
-left as the snapshot it was, rather than being rewritten every time the
-population grows.
+The board reads one subject higher than this table, and that discrepancy is what
+produced the `benchmark` status described above. Verifying `--live` submitted a
+real reconstruction, which registered a generation record like any other, and
+the next backfill scored it at 2.32 as if a user had made it. Live subjects are
+now filed as `benchmark` so they cannot reach the gate rate; the one that landed
+before the fix is left where it is rather than quietly edited out of a published
+baseline. The table above stays the dated snapshot it was.
 
 ## Reading the results
 

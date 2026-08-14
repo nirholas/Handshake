@@ -88,6 +88,42 @@ function safeParse(text) {
 	}
 }
 
+// The status a benchmark subject is filed under.
+//
+// A live `scripts/likeness-eval.mjs --live` run submits REAL reconstructions
+// through the real pipeline, so each one registers a real generation record and
+// would otherwise be picked up by the next sweep and counted toward the gate
+// rate the roadmap is judged on. That is benchmark traffic scoring itself, and
+// a metric that quietly includes its own test harness is not measuring the
+// product any more.
+//
+// Filing the score under this status rather than 'ok' solves both halves at
+// once and needs no new column: the distribution's aggregates and histogram
+// already filter `status = 'ok'`, so a benchmark row can never move the gate
+// rate, while the outcome breakdown and the recent table carry no status filter,
+// so the row stays visible and honest rather than hidden. The work-queue join
+// excludes any creation that already has a row of any status, so the subject is
+// also never re-picked.
+export const BENCHMARK_STATUS = 'benchmark';
+
+// Which generation record a reconstruct job produced. Live mode holds a job id
+// and needs the creation id to file against; nothing else walks that direction.
+export async function creationIdForJob(jobId) {
+	if (!likenessStoreEnabled() || !jobId) return null;
+	try {
+		const rows = await sql`
+			select id, avatar_id from forge_creations
+			where replicate_job_id = ${jobId} and path = 'reconstruct'
+			limit 1
+		`;
+		return rows[0] ? { creationId: rows[0].id, avatarId: rows[0].avatar_id } : null;
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[likeness] creation lookup skipped (db unavailable):', err?.message);
+		else console.error('[likeness] creation lookup failed:', err?.message);
+		return null;
+	}
+}
+
 // Upsert one score. Re-scoring the same creation with a newer instrument
 // overwrites in place and bumps scored_at, matching how sim_readiness_grades
 // treats a re-grade: one current measurement per subject, never a growing pile
