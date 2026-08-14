@@ -294,6 +294,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['money-map', 'internal: revenue-share and treasury routing'],
 	['native-launchpad', 'owner-gated: names a crypto project other than $THREE'],
 	['nvidia-apps-catalog-listing', 'internal: paste-ready listing copy and portal steps for the NVIDIA Inception catalog'],
+	['nvidia-apps-catalog-request', 'internal: outbound email asking NVIDIA to publish the catalog listing'],
 	['okx-marketplace', 'owner-gated: names a crypto project other than $THREE'],
 	['pay-skills-listing', 'internal: listing metadata, not prose'],
 	['play-boot-performance', 'internal: performance runbook for the /play boot path'],

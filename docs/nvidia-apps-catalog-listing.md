@@ -6,6 +6,39 @@ Related docs: [nvidia-inception.md](./nvidia-inception.md) (membership overview)
 
 ---
 
+## Status: product record filed, public listing not live (2026-08-14)
+
+The portal shows the product row (`three.ws | Shipping | GPU Accelerated`), but a search for `three.ws` on the public catalog returns 0 results. That is expected, not a bug: **the portal record and the public catalog are two different systems.**
+
+- **Portal > Profile > Products** makes the company benefits-eligible and feeds NVIDIA's internal recommendation engine. The portal's own wording is "we **may** feature it in the personalized recommendations we share with our customers."
+- **The public catalog** ([marketplace.nvidia.com/en-us/enterprise/applications](https://marketplace.nvidia.com/en-us/enterprise/applications/), filtered view for startups at [nvidia.com/en-gb/accelerated-applications/inception](https://www.nvidia.com/en-gb/accelerated-applications/inception/)) is curated and published by NVIDIA. Submissions are reviewed on a rolling basis and approval is subject to availability and fit. Nothing in the portal auto-publishes.
+
+So there are exactly two things to do: make the record obviously worth featuring, then ask for the listing.
+
+### 1. Correct the portal record (the record understates the stack)
+
+As filed, the record lists only CUDA libraries as used, and parks every NVIDIA platform product under "Considering." That reads as a CUDA consumer, not a digital-human app, and it is wrong against the shipping code. Move these to **Technologies Used**:
+
+| Technology | Evidence it is shipping |
+|---|---|
+| **Riva** (ASR + TTS) | [api/_lib/asr-nvidia.js](../api/_lib/asr-nvidia.js), [api/_lib/tts-nvidia.js](../api/_lib/tts-nvidia.js), Riva gRPC over NVCF |
+| **Audio2Face** (A2F-3D) | [api/_lib/a2f-nvidia.js](../api/_lib/a2f-nvidia.js) against `grpc.nvcf.nvidia.com`, browser playback in [src/voice/a2f-player.js](../src/voice/a2f-player.js), live demo at [/demos/audio2face](https://three.ws/demos/audio2face) |
+| **NIM microservices (hosted APIs)** | `integrate.api.nvidia.com`: Nemotron Super/Nano, Nemotron Nano VL, NV-EmbedQA-E5-v5, NemoGuard 8B |
+
+Keep in **Technologies Used** and add if the form offers them: CUDA Toolkit, cuDNN, cuBLAS, CUDA Python, **NVIDIA Kaolin**, **nvdiffrast**, **L4 GPUs**, **RTX PRO 6000 Blackwell (sm_120)**.
+
+Remove and leave unchecked:
+
+- **DeepVariant NIM** is genomics variant calling. It has nothing to do with this product and it weakens category fit. Uncheck it.
+- **TensorRT** and **Triton Inference Server** stay under "Considering": the GPU workers are PyTorch + CUDA today. Do not claim them.
+- **Omniverse Kit** stays under "Considering" (OpenUSD interop is roadmap, not shipping).
+
+### 2. Ask for the catalog listing
+
+The portal has no "publish to catalog" button, so the request goes to the program team. Send the email in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) to `inceptionprogram@nvidia.com` after the record corrections above are saved, and note the send date there.
+
+---
+
 ## Core fields
 
 **App name:** three.ws
