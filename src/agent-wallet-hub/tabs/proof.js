@@ -54,7 +54,6 @@ registerWalletTab({
 				ctx,
 				verify: verifyInclusionProof,
 				shareBase: '/proof',
-				origin: location.origin,
 			});
 		}
 

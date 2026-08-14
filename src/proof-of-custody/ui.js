@@ -30,10 +30,9 @@ function fmtTime(iso) {
  * @param {object} args.proof   the `data` object from the inclusion-proof endpoint
  * @param {(proof:object)=>Promise<object>} args.verify  the independent verifier
  * @param {string} [args.shareBase='/proof']
- * @param {string} [args.origin]
  * @param {object} [args.ctx]   optional hub ctx (toast, copyToClipboard)
  */
-export function renderProofUI(panel, { proof, verify, shareBase = '/proof', origin = '', ctx = {} }) {
+export function renderProofUI(panel, { proof, verify, shareBase = '/proof', ctx = {} }) {
 	injectProofStyle();
 	if (!proof || proof.included === false) {
 		panel.innerHTML = notYetState(proof);
@@ -135,21 +134,24 @@ export function renderProofUI(panel, { proof, verify, shareBase = '/proof', orig
 	function renderShare() {
 		const wrap = panel.querySelector('[data-share]');
 		if (!wrap) return;
-		// The public, re-verifiable artifact is the platform integrity page — anyone
-		// can confirm the latest root on-chain there without auth. Per-wallet leaves
-		// stay owner-gated, so the shared badge points at /integrity, not the private
-		// per-wallet proof.
-		const publicUrl = `${origin}/integrity`;
+		// The public, re-verifiable artifact is the anchor transaction itself: anyone
+		// can open it on a block explorer and read the committed root without an
+		// account, and it stays valid regardless of which of our own pages are
+		// routed. Per-wallet leaves stay owner-gated, so the shared badge points at
+		// the on-chain transaction, never at the private per-wallet proof. This block
+		// only renders once verification passed, so `anchor.explorer` is always set.
+		const publicUrl = anchor.explorer;
+		if (!publicUrl) return;
 		const ownUrl = `${esc(shareBase)}?agent=${encodeURIComponent(proof.leaf.agentId)}`;
 		const embed = `<a href="${publicUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font:600 12px system-ui;color:#4ade80;text-decoration:none;padding:5px 11px;border:1px solid #4ade8055;border-radius:999px;background:#4ade801a">✓ Custody verified on-chain · three.ws</a>`;
 		wrap.hidden = false;
 		wrap.className = 'awh-proof-card';
 		wrap.innerHTML = `
 			<h2>Show it off</h2>
-			<p class="awh-proof-lead">Your custody is provable. The badge links to the public integrity page, where anyone can re-verify the platform's on-chain root in their own browser.</p>
+			<p class="awh-proof-lead">Your custody is provable. The badge links to the anchor transaction on Solana, where anyone can read the committed root for themselves.</p>
 			<div class="awh-proof-actions">
 				<span class="awh-proof-badge">Custody verified on-chain</span>
-				<button class="awh-proof-btn ghost" type="button" data-copy-link>Copy integrity link</button>
+				<button class="awh-proof-btn ghost" type="button" data-copy-link>Copy anchor link</button>
 				<button class="awh-proof-btn ghost" type="button" data-copy-embed>Copy badge embed</button>
 				<a class="awh-proof-btn ghost" href="${ownUrl}" target="_blank" rel="noopener">Open my verifier ↗</a>
 			</div>
@@ -157,7 +159,7 @@ export function renderProofUI(panel, { proof, verify, shareBase = '/proof', orig
 				<textarea class="awh-proof-embed" readonly rows="2" aria-label="Badge embed HTML">${esc(embed)}</textarea>
 			</div>
 		`;
-		wrap.querySelector('[data-copy-link]')?.addEventListener('click', () => copy(publicUrl, 'Integrity link copied'));
+		wrap.querySelector('[data-copy-link]')?.addEventListener('click', () => copy(publicUrl, 'Anchor link copied'));
 		wrap.querySelector('[data-copy-embed]')?.addEventListener('click', () => copy(embed, 'Badge embed copied'));
 	}
 

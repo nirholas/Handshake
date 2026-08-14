@@ -46,9 +46,9 @@ Every six hours, an attestation epoch runs:
 3. The leaves build a Merkle tree; the epoch and leaves are persisted.
 4. The root is anchored on Solana as a signed SPL-Memo transaction, when an attester key is configured and funded (see **Honest limits** below).
 
-Two public surfaces:
+Two public surfaces, one of which is currently API-only:
 
-- **[/integrity](https://three.ws/integrity)** is the aggregate view, no sign-in: latest epoch, Merkle root, the anchor transaction (once an epoch is anchored), wallet count, total SOL, recent epochs. API: `GET /api/custody/integrity`, `GET /api/custody/anchor?epoch=latest`.
+- **The aggregate view** is `GET /api/custody/integrity` and `GET /api/custody/anchor?epoch=latest`: latest epoch, Merkle root, the anchor transaction (once an epoch is anchored), wallet count, total SOL, recent epochs. No sign-in. The `/integrity` page that rendered this is **switched off** while anchoring is unavailable, because a page headlined "custody you can verify" is misleading when no epoch has an on-chain anchor to verify against (see **Honest limits** below). The endpoints stay public and unchanged, so nothing that reads them breaks; re-routing the page is the last step of restoring anchoring, not a separate project.
 - **[/proof](https://three.ws/proof)** is your wallet's inclusion proof (owner-only, since it reveals a per-wallet balance). The page fetches your proof and then **re-verifies it in your browser** with an independent verifier: it recomputes your leaf hash from the public fields, walks the Merkle path, and checks the result against the epoch's published root. The prover and verifier share one hashing module, so they cannot silently drift. Where the epoch is anchored, that same root is what the on-chain memo commits to.
 
 Epochs also run a reconciliation pass: any balance drop since the previous epoch must be explained by authorized withdraw/spend events (plus fee tolerance), or it's flagged. "No unexplained outflows" is a checked property, not a slogan.

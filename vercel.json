@@ -5504,14 +5504,6 @@
 			"dest": "/profile.html"
 		},
 		{
-			"src": "/integrity",
-			"dest": "/integrity.html"
-		},
-		{
-			"src": "/integrity/",
-			"dest": "/integrity.html"
-		},
-		{
 			"src": "/proof",
 			"dest": "/proof.html"
 		},
