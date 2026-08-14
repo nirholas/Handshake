@@ -15,6 +15,26 @@ means open in dev and denied in production. Read-only; it moves no funds and
 never fires alerts (balance reads go through the ring monitor with alerting
 disabled; the scheduled monitor owns paging).
 
+Per-IP ceiling: the `authedReadIp` bucket (300 requests / 5 min), shared with
+`/api/ops/health` and `/api/ops/money-health`. It is deliberately not the strict
+`authIp` credential bucket, so polling a board cannot 429 an operator's login
+from the same address. Over the ceiling the response is `429 rate_limited` with
+a `retry-after` header.
+
+## The response envelope
+
+```json
+{ "ok": true, "degraded": [], "generated_at": "…", "inbound": {…}, "ring_settle": {…}, "sponsor": {…} }
+```
+
+The three panels are read independently, so one failing never blanks the others
+(an RPC outage is exactly when the settle panels matter most). `ok` reports
+whether the BOARD rendered, never whether payments are healthy: that verdict is
+per panel. A panel that threw is replaced by `{ "error": "…" }`, named in
+`degraded`, and the status code is `207 Multi-Status` instead of `200`, the same
+convention `/api/ops/health` uses. Alert on `degraded` being non-empty: a board
+that cannot see is not a board that is fine.
+
 ## The three panels
 
 ### `inbound` (from `x402_audit_log`)

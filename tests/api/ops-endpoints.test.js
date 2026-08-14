@@ -14,6 +14,12 @@
 //     authorizeOps with its neighbours now.
 //  3. money-health's activity probe swallowed every error, so a wrong column
 //     name rendered as "no activity" forever. Only a missing table is silence.
+//  4. payment-outcomes answered a literal ok:true even when all three panels
+//     threw, so a blind board reported success. It names the failed panels in
+//     `degraded` and answers 207 now.
+//  5. all three boards spent the strict `authIp` credential budget, so polling
+//     a dashboard could 429 the operator's login from the same IP. They use the
+//     `authedReadIp` polled-read bucket.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -22,8 +28,11 @@ vi.mock('../../api/_lib/ops-auth.js', () => ({
 	authorizeOps: vi.fn(async () => (authOk ? { ok: true, actor: 'ops-secret' } : { ok: false, actor: '' })),
 }));
 
+let rateLimitOk = true;
 vi.mock('../../api/_lib/rate-limit.js', () => ({
-	limits: { authIp: vi.fn(async () => ({ success: true })) },
+	limits: {
+		authedReadIp: vi.fn(async () => ({ success: rateLimitOk, limit: 300, remaining: 0, reset: Date.now() + 1000 })),
+	},
 	clientIp: () => '127.0.0.1',
 }));
 
@@ -74,6 +83,7 @@ const MIN = 60 * 1000;
 
 beforeEach(() => {
 	authOk = true;
+	rateLimitOk = true;
 	sqlImpl = async () => [];
 	settleHealthImpl = async () => ({ name: 'x402_settle', status: 'ok' });
 	ringWalletsImpl = async () => ({ wallets: [], sponsorRunway: null });
@@ -194,15 +204,44 @@ describe('GET /api/ops/payment-outcomes', () => {
 		expect(body.error).toBe('unauthorized');
 	});
 
-	it('keeps the surviving panels when one panel fails', async () => {
+	it('keeps the surviving panels when one panel fails, and says which is blind', async () => {
 		// An RPC outage is exactly when the settle panels matter most, so a dead
-		// sponsor read must not blank the inbound ledger.
+		// sponsor read must not blank the inbound ledger. It must also not be
+		// reported as a healthy board: the failure is named and the status is 207.
 		ringWalletsImpl = async () => { throw new Error('rpc unreachable'); };
 		sqlImpl = async () => [{ event_type: 'payment_settled', h1: 1, h3: 2, h24: 9 }];
 		const { res, body } = await call(paymentOutcomesHandler, '/api/ops/payment-outcomes');
-		expect(res.statusCode).toBe(200);
+		expect(res.statusCode).toBe(207);
+		expect(body.ok).toBe(false);
+		expect(body.degraded).toEqual(['sponsor']);
 		expect(body.sponsor.error).toBe('rpc unreachable');
 		expect(body.inbound.windows['24h'].settled).toBe(9);
 		expect(body.ring_settle.status).toBe('ok');
 	});
+
+	it('reports ok with an empty degraded list when every panel renders', async () => {
+		const { res, body } = await call(paymentOutcomesHandler, '/api/ops/payment-outcomes');
+		expect(res.statusCode).toBe(200);
+		expect(body.ok).toBe(true);
+		expect(body.degraded).toEqual([]);
+	});
+});
+
+describe('the ops boards share the polled-read bucket, not the credential bucket', () => {
+	// A dashboard poll used to spend the same 50/10m `authIp` budget that gates
+	// logins from that IP, so watching the board could 429 the operator's sign-in.
+	const boards = [
+		['health', () => health.default],
+		['money-health', () => moneyHealthHandler],
+		['payment-outcomes', () => paymentOutcomesHandler],
+	];
+
+	for (const [name, handler] of boards) {
+		it(`answers 429 on /api/ops/${name} when the read bucket is exhausted`, async () => {
+			rateLimitOk = false;
+			const { res, body } = await call(handler(), `/api/ops/${name}`);
+			expect(res.statusCode).toBe(429);
+			expect(body.error).toBe('rate_limited');
+		});
+	}
 });

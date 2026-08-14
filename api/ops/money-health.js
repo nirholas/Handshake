@@ -14,7 +14,8 @@
 // of those; and ADMIN_TOKEN is set nowhere (no getter on the env facade, no
 // Cloud Run var), so that second door was dead code guarding nothing.
 
-import { cors, json, method, wrap, error } from '../_lib/http.js';
+import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
 
@@ -52,6 +53,13 @@ export async function lastActivity(table, ts) {
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
+
+	// Same ceiling as the sibling boards: a session lookup runs before the gate can
+	// answer, and the board itself is six aggregate queries. `authedReadIp` keeps a
+	// polled dashboard out of the strict `authIp` credential budget.
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
 	const auth = await authorizeOps(req);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'ops secret or admin session required');
 
