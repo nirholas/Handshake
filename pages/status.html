@@ -141,7 +141,12 @@
 			}
 			.st-kpi-label {
 				font: var(--text-sm) var(--font-body);
-				color: var(--ink-dim);
+				/* --ink-dim clears 4.5:1 against the page background but only
+				   reaches 4.32:1 against the lighter surface this band sits on,
+				   so the label pulls a step toward --ink. Expressed as a mix of
+				   the two tokens rather than a literal, it stays correct in the
+				   light theme, where the same shift means darker. */
+				color: color-mix(in srgb, var(--ink-dim) 80%, var(--ink));
 				margin-top: 0.3rem;
 			}
 			.st-summary.st-skel .st-kpi-val,
@@ -741,7 +746,9 @@
 						: `<span style="font-family: var(--font-mono, monospace)">${esc(v.commitShort)}</span>`;
 					const rev = v.runtime && v.runtime.revision ? ` · revision ${esc(v.runtime.revision)}` : '';
 					const built = v.builtAt ? ` · built ${new Date(v.builtAt).toLocaleString()}` : '';
-					el.innerHTML = `Live build: ${shaLink} <span style="opacity:.7">v${esc(v.version)}</span>${rev}${built}`;
+					// The whole line already renders in muted ink; dimming the
+					// version a further 30% dropped it to 3.24:1, under AA.
+					el.innerHTML = `Live build: ${shaLink} v${esc(v.version)}${rev}${built}`;
 					el.hidden = false;
 				} catch {
 					/* version endpoint unreachable — leave the build line hidden */
