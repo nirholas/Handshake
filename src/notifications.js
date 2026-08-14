@@ -136,6 +136,10 @@ export function notifLabel(n) {
 			return p.actor ? `${p.actor} reviewed your agent${p.rating ? ` (${p.rating}★)` : ''}` : `Your agent received a new review`;
 		case 'reply':
 			return `New reply on your agent`;
+		case 'comment':
+			return p.preview
+				? `${p.actor || 'Someone'} commented on your model: “${String(p.preview).slice(0, 80)}”`
+				: `${p.actor || 'Someone'} commented on your model`;
 		case 'irl_interaction':
 			if (p.kind === 'pay') {
 				const amt = irlPayLabel(p.amount, p.currency_mint);
