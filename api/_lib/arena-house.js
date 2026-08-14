@@ -169,6 +169,11 @@ export async function ensureHouseArenas({ network = 'mainnet', now = Date.now() 
  * (an armed sniper strategy) or a demonstrated one (a real position opened in
  * the recent past). Both arms require a resolvable Solana wallet, because an
  * entry without one can never produce a verifiable row.
+ *
+ * Public agents only (`is_public is not false`, the same filter the public trader
+ * leaderboard uses). That is what makes the "auto-entry publishes nothing new"
+ * promise above true: an owner who kept an agent private never finds its name,
+ * wallet and P&L on a public board because a cron entered it overnight.
  */
 export async function eligibleAgents({ network = 'mainnet', lookbackDays = 14 } = {}) {
 	const rows = await sql`
@@ -198,7 +203,7 @@ export async function eligibleAgents({ network = 'mainnet', lookbackDays = 14 } 
 		       ) as wallet
 		from candidates c
 		join agent_identities a on a.id = c.agent_id
-		where a.deleted_at is null
+		where a.deleted_at is null and a.is_public is not false
 	`;
 	return rows.filter((r) => r.wallet);
 }

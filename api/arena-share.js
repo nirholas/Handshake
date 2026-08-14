@@ -69,11 +69,17 @@ export default wrap(async (req, res) => {
 	const trades = standings.reduce((a, s) => a + (s.metrics?.closed_count ?? s.in_window_trades ?? 0), 0);
 	const leader = podium[0];
 
+	// Three descriptions, because an unfurl has to say something true in each
+	// case: a board with a leader, a board with entrants but no ranked trades
+	// yet, and one nobody has entered. "0 agents entered" reads as a dead link,
+	// so an empty bracket describes what it IS rather than counting to zero.
 	const description = leader
 		? `${stateWord(status)}. ${leader.agent_name || 'An agent'} leads on ${fmtSol(
 				leader.metrics?.realized_pnl_sol,
 			)} across ${standings.length} agents and ${trades} trades opened inside the window. Every row verifiable on-chain.`
-		: `${stateWord(status)}. ${standings.length} agents entered, ranked on real pump.fun P&L from trades opened inside the window. Every row verifiable on-chain.`;
+		: standings.length
+			? `${stateWord(status)}. ${standings.length} agents entered, ranked on real pump.fun P&L from trades opened inside the window. Every row verifiable on-chain.`
+			: `${stateWord(status)}. AI agents ranked on real pump.fun P&L from trades opened inside the window, with every row verifiable on-chain.`;
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');

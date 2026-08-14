@@ -599,9 +599,17 @@ async function renderNotFound() {
 	}
 }
 
-/** Share the deep link to a tournament (native share sheet, with clipboard fallback). */
+/**
+ * Share a tournament (native share sheet, with clipboard fallback).
+ *
+ * Shares the crawlable /arena/t/<id> twin rather than the hash route the browser
+ * is sitting on. A fragment is invisible to every unfurler, so the hash link
+ * previewed as the generic site card; /arena/t/<id> carries the bracket's own
+ * Open Graph tags and the live standings image, and forwards a human straight
+ * back to this same live view.
+ */
 function shareTournament(t) {
-	const url = `${location.origin}/arena#/t/${t.id}`;
+	const url = `${location.origin}/arena/t/${t.id}`;
 	if (navigator.share) {
 		navigator.share({ title: `${t.name} · The Arena`, url }).catch(() => {});
 		return;
