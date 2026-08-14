@@ -156,12 +156,34 @@ npm run smoke:prod
 >
 > ```bash
 > npm run clean:worktrees -- --apply   # reclaim old deploy trees before staging a new one
+> npm run prep:worktree                # plan only: shows what it would stage or build
+> npm run prep:worktree -- --apply     # stage /workspaces/.deploy-wt, artifacts and env included
+> ```
+>
+> `prep:worktree` is the supported way to stage a deploy tree: it is the sequence
+> below plus the checks a hand-run misses. Use `--path <dir>` to stage your own
+> tree when a concurrent agent holds the default, and `--force` to replace an
+> existing tree (refused when that tree holds uncommitted work). It BUILDS a
+> nested artifact that is absent from the source tree instead of dying on the
+> `cp -al`, which is what a machine that has never deployed hits first. It copies
+> both env files rather than hardlinking them, and it rejects a `--path` on
+> another filesystem up front, because `cp -al` cannot hardlink across a device
+> boundary and leaves the tree half-staged when it tries. The equivalent by hand,
+> for reference:
+>
+> ```bash
 > git worktree add --detach /workspaces/.deploy-wt HEAD
 > cp -al /workspaces/three.ws/node_modules                /workspaces/.deploy-wt/node_modules
 > cp -al /workspaces/three.ws/chat/node_modules           /workspaces/.deploy-wt/chat/node_modules
 > cp -al /workspaces/three.ws/character-studio/build      /workspaces/.deploy-wt/character-studio/build
 > cp    /workspaces/three.ws/.env                         /workspaces/.deploy-wt/.env
+> cp    /workspaces/three.ws/.env.local                   /workspaces/.deploy-wt/.env.local
 > ```
+>
+> Both env files, not just `.env`. `DATABASE_URL` lives in `.env.local`, and it
+> is what the deploy's migration gate reads; a worktree without it fails
+> `db:check` with `DATABASE_URL is not set` and tempts whoever is deploying to
+> skip the gate entirely.
 >
 > **Remove the worktree once the deploy lands** (`git worktree remove --force
 > /workspaces/.deploy-wt`). Nobody did for three days in early August 2026 and
@@ -223,7 +245,7 @@ automatically — the flow is:
 ```bash
 npm run db:status    # dry run: list applied/pending against DATABASE_URL
 npm run db:migrate   # apply pending migrations (do this BEFORE deploy:gcp)
-npm run db:check     # what deploy:gcp runs: exits 4 if anything is pending
+npm run db:check     # what deploy:gcp and deploy:gcp:submit run: exits 4 if anything is pending
 ```
 
 - `DATABASE_URL` comes from `.env.local` and must point at the production Neon
@@ -232,6 +254,17 @@ npm run db:check     # what deploy:gcp runs: exits 4 if anything is pending
   the sha256 drift and refuses (exit 3). Roll forward with a new file.
 - Apply migrations before deploying the code that needs them: migrations are
   additive, so old code + new schema is safe; new code + old schema is not.
+  When that order is inverted the symptom appears far from the cause: on
+  2026-08-14 `/api/healthz` reported the EVM agent index `unknown` with
+  `column "blocks_behind" does not exist`, because the code that reads and
+  writes those columns shipped while
+  `20260813210000_erc8004_crawl_head_tracking.sql` was still pending. Submit
+  through `npm run deploy:gcp:submit` (or `deploy:gcp`), never a bare
+  `gcloud builds submit`, so `db:check` gets its say.
+- `db:migrate` stops at the first migration that fails and reports every
+  migration still queued behind it (exit 5). Those are unapplied: the schema is
+  behind the code by exactly that list until the failing file is fixed with a
+  NEW migration and the run drains the rest.
 
 - Lockfile unchanged → layer cache skips the workspace `npm ci`: **~3–5 min**.
 - Lockfile changed → full install: **~12 min**.
