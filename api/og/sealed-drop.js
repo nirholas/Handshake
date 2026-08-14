@@ -1,7 +1,7 @@
 /**
  * GET /api/og/sealed-drop?id=<dropId>
  *
- * Dynamic Open Graph share card for a sealed wallet drop — the image that
+ * Dynamic Open Graph share card for a sealed wallet drop: the image that
  * previews wherever a /drop/:id link is posted (X, Telegram, Discord, iMessage,
  * Farcaster). Mirrors api/og/three-token-badge.js: a 1200×630 SVG returned with
  * image/svg+xml + a CDN cache header, no satori/canvas deps in the bundle.
@@ -10,7 +10,7 @@
  * projection: the (vanity) address, the funded amount + asset, the theme, who
  * it's from, and the sealed/E2E badge. It NEVER renders the sealed envelope, the
  * claim token, or any secret. A missing/unknown id still renders a valid,
- * branded card (a generic "sealed gift") rather than 5xx — crawlers must always
+ * branded card (a generic "sealed gift") rather than 5xx, because crawlers must always
  * get an image.
  */
 
@@ -51,7 +51,10 @@ function assetLabel(asset) {
 }
 
 function buildCard({ status, amount, asset, address, theme, senderLabel, vanity }) {
-	const t = THEME_STYLE[theme] || THEME_STYLE.default;
+	// Own-property lookup only: a stored record carrying a theme like "constructor"
+	// would otherwise resolve to an inherited Object member and paint the card with
+	// undefined colors and glyphs.
+	const t = Object.hasOwn(THEME_STYLE, String(theme)) ? THEME_STYLE[theme] : THEME_STYLE.default;
 	const claimed = status === 'claimed';
 	const reclaimed = status === 'reclaimed';
 	const statusLabel = claimed ? 'CLAIMED' : reclaimed ? 'RECLAIMED' : 'SEALED · UNCLAIMED';
@@ -63,7 +66,7 @@ function buildCard({ status, amount, asset, address, theme, senderLabel, vanity 
 		? `vanity ${vanity.prefix ? vanity.prefix + '…' : ''}${vanity.suffix ? '…' + vanity.suffix : ''}`
 		: 'end-to-end encrypted';
 
-	return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="${x(t.label)} — a sealed wallet drop on three.ws">
+	return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="${x(t.label)}, a sealed wallet drop on three.ws">
 	<defs>
 		<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
 			<stop offset="0" stop-color="#0a0a0f"/><stop offset="1" stop-color="#05050a"/>

@@ -1,7 +1,7 @@
 /**
  * GET /api/og/agent?id=<agentId>
  *
- * Dynamic OG image — the agent's wallet as a screenshot-worthy TRADING CARD.
+ * Dynamic OG image: the agent's wallet as a screenshot-worthy TRADING CARD.
  * SVG 1200×630, rendered entirely from REAL data so a shared agent link unfurls
  * with a card that matches the on-page one (src/shared/wallet-card.js):
  *
@@ -11,10 +11,10 @@
  *   - holdings count, realized P&L (when positive), lifetime tips
  *   - reputation tier badge (new…elite) + $THREE-holder mark
  *   - a "rarity finish" (Common…Mythic) that scales with the agent's REAL wealth
- *     and reputation tier — matte for a dormant new wallet, holo for a luminous one
+ *     and reputation tier (matte for a dormant new wallet, holo for a luminous one)
  *
  * Every enrichment is best-effort and individually timeout-guarded: a slow or
- * failed chain/reputation read degrades that one field (a "—" balance, no badge),
+ * failed chain/reputation read degrades that one field (a "-" balance, no badge),
  * never a broken unfurl. Private avatars never render a card (visibility re-checked
  * server-side). Public/unlisted only. Cached sensibly.
  */
@@ -27,7 +27,7 @@ import { isUuid } from '../_lib/validate.js';
 import { getBalances, walletUsdTotal } from '../_lib/balances.js';
 import { getAgentReputation } from '../_lib/trust/wallet-reputation.js';
 import { loadAgentAchievements } from '../_lib/agent-achievements-data.js';
-import { tierForUsd, NETWORTH_TIERS, THREE_MINT } from '../../src/shared/wallet-networth.js';
+import { tierForUsd, THREE_MINT } from '../../src/shared/wallet-networth.js';
 
 const CACHE = 'public, max-age=180, s-maxage=900, stale-while-revalidate=120';
 
@@ -199,7 +199,7 @@ export default wrap(async (req, res) => {
 	}
 
 	if (!row) return fallback(res);
-	// Respect visibility — a private agent must never render a public card.
+	// Respect visibility: a private agent must never render a public card.
 	if (row.visibility === 'private') return fallback(res);
 
 	const solAddress = typeof row.meta?.solana_address === 'string' ? row.meta.solana_address : null;
@@ -250,7 +250,7 @@ export function renderCard({
 	const tokens = balances?.tokens || [];
 	const tokenCount = tokens.length;
 	const hasThree = tokens.some((t) => t.mint === THREE_MINT && (t.amount || 0) > 0);
-	const usdLabel = balances ? (fmtUsd(usd) ?? '$0') : '—';
+	const usdLabel = balances ? (fmtUsd(usd) ?? '$0') : '-';
 
 	const wealthTier = tierForUsd(usd);
 	const repRank = rep?.tier ? (REP_RANK[rep.tier] ?? 0) : 0;
@@ -272,7 +272,7 @@ export function renderCard({
 
 	// Build the right-column stat chips from real, public-safe aggregates.
 	const stats = [];
-	stats.push({ label: 'HOLDINGS', val: tokenCount === 0 ? '—' : String(tokenCount), accent: false });
+	stats.push({ label: 'HOLDINGS', val: tokenCount === 0 ? '-' : String(tokenCount), accent: false });
 	if (pnl.sol > 0) stats.push({ label: 'REALIZED P&L', val: `+${pnl.sol.toFixed(pnl.sol < 1 ? 3 : 2)} ◎`, accent: true });
 	else if (tipsCount > 0) stats.push({ label: 'TIPS', val: String(tipsCount), accent: false });
 	else stats.push({ label: 'WEALTH TIER', val: wealthTier.label, accent: false });
@@ -291,8 +291,8 @@ export function renderCard({
 	}).join('\n');
 
 	// Badge row (top achievement + reputation tier + $THREE mark), under the name.
-	// The achievement leads — a graduated/elite agent advertises that success on
-	// every shared link. "+N" notes how many more badges it has earned.
+	// The achievement leads, because a graduated or elite agent advertises that
+	// success on every shared link. "+N" notes how many more badges it has earned.
 	const badges = [];
 	const topAch = headlineAchievement(achievements?.earned);
 	if (topAch) {
@@ -398,4 +398,6 @@ function fallback(res) {
 }
 
 // Exposed for unit tests: renders the card from fixed rows and enrichments.
-export const __testInternals = { renderCard, fmtUsd, headlineAchievement, gradientForName, trunc };
+export const __testInternals = {
+	renderCard, fmtUsd, headlineAchievement, gradientForName, trunc, imageMime, thumbnailUrl,
+};

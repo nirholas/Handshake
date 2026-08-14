@@ -11,7 +11,7 @@
 // paths that need no network (validation, visibility, fallback) are driven end to
 // end against the real default export.
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import sealedDropHandler, { __testInternals as sealedInternals } from '../api/og/sealed-drop.js';
 import agentHandler, { renderCard as renderAgentCard, __testInternals as agentInternals } from '../api/og/agent.js';
@@ -135,6 +135,23 @@ describe('og/sealed-drop', () => {
 		expect(svg).toContain('&lt;script&gt;');
 	});
 
+	// A stored theme is validated at creation (api/vanity/drops.js), but the card
+	// must not paint "undefined" if a record ever carries an inherited key.
+	it('falls back to the default theme for a non-theme key', () => {
+		const svg = sealedInternals.buildCard({
+			status: 'funded',
+			amount: 5,
+			asset: 'SOL',
+			address: 'THREEsynthetic1111111111111111111111111111',
+			theme: 'constructor',
+			senderLabel: null,
+			vanity: null,
+		});
+		expectValidCard(svg);
+		expect(svg).toContain('A sealed gift');
+		expect(svg).not.toContain('undefined');
+	});
+
 	it('shortens a full base58 address and leaves a short one alone', () => {
 		const { shortAddr } = sealedInternals;
 		expect(shortAddr('THREEsynthetic1111111111111111111111111111')).toBe('THREEsyn…111111');
@@ -254,6 +271,9 @@ describe('og/agent', () => {
 		expect(svg).toContain('Wallet provisioning');
 		expect(svg).toContain('COMMON');
 		expect(svg).not.toContain('$THREE');
+		// An unreadable balance and an empty wallet read as blank, not as a fake $0.
+		expect(svg).toContain('>-</text>');
+		expect(svg).not.toContain('>$0<');
 	});
 
 	it('escapes a hostile agent name', () => {
@@ -282,6 +302,62 @@ describe('og/agent', () => {
 			{ id: 'starter', title: 'Starter', tier: 'bronze' },
 		]).id).toBe('whale');
 		expect(headlineAchievement([])).toBeNull();
+	});
+
+	// The avatar the card inlines comes off the CDN, so both halves of that read are
+	// boundaries: where the bytes are fetched from, and what the remote server says
+	// they are. Neither may throw, and neither may reach the SVG unvalidated.
+	describe('avatar thumbnail resolution', () => {
+		const { thumbnailUrl, imageMime } = agentInternals;
+		const KEY = 'u/42/thumbs/nova card.png';
+		let savedDomain;
+
+		beforeEach(() => { savedDomain = process.env.S3_PUBLIC_DOMAIN; });
+		afterEach(() => {
+			if (savedDomain === undefined) delete process.env.S3_PUBLIC_DOMAIN;
+			else process.env.S3_PUBLIC_DOMAIN = savedDomain;
+		});
+
+		it('resolves a bucket key through the CDN domain and passes an absolute one through', () => {
+			process.env.S3_PUBLIC_DOMAIN = 'https://cdn.three.ws';
+			expect(thumbnailUrl({ visibility: 'public', thumbnail_key: KEY }))
+				.toBe('https://cdn.three.ws/u/42/thumbs/nova%20card.png');
+			expect(thumbnailUrl({ visibility: 'unlisted', thumbnail_key: 'https://img.example/a b.png' }))
+				.toBe('https://img.example/a b.png');
+		});
+
+		it('renders no avatar for a private or thumbnail-less agent', () => {
+			process.env.S3_PUBLIC_DOMAIN = 'https://cdn.three.ws';
+			expect(thumbnailUrl({ visibility: 'private', thumbnail_key: KEY })).toBeNull();
+			expect(thumbnailUrl({ visibility: 'public', thumbnail_key: null })).toBeNull();
+			expect(thumbnailUrl(null)).toBeNull();
+		});
+
+		// Failure path: the bucket domain is unset. env.S3_PUBLIC_DOMAIN throws on a
+		// missing var, and that must cost the portrait, never the whole card.
+		it('degrades to the gradient portrait when the bucket domain is unconfigured', () => {
+			delete process.env.S3_PUBLIC_DOMAIN;
+			expect(() => thumbnailUrl({ visibility: 'public', thumbnail_key: KEY })).not.toThrow();
+			expect(thumbnailUrl({ visibility: 'public', thumbnail_key: KEY })).toBeNull();
+		});
+
+		it('pins a hostile remote content-type to a known image type', () => {
+			expect(imageMime('image/webp')).toBe('image/webp');
+			expect(imageMime('image/png; charset=binary')).toBe('image/png');
+			expect(imageMime('IMAGE/JPEG')).toBe('image/jpeg');
+			expect(imageMime('image/svg+xml"/><script>alert(1)</script>')).toBe('image/jpeg');
+			expect(imageMime(null)).toBe('image/jpeg');
+		});
+
+		it('never lets a content-type escape the image href', () => {
+			const svg = renderAgentCard({
+				id: ID,
+				row: ROW,
+				avatarData: { ct: imageMime('image/png"/><script>alert(1)</script>'), b64: 'AAAA' },
+			});
+			expectValidCard(svg);
+			expect(svg).toContain('href="data:image/jpeg;base64,AAAA"');
+		});
 	});
 
 	it('formats net worth the way the on-page wallet card does', () => {
