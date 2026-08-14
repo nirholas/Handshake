@@ -376,10 +376,11 @@ curl -sL -D - -o small.glb "$REMY" | grep -i 'x-three-ws'
 
 ```
 x-three-ws-source-bytes: 20566060
-x-three-ws-output-bytes: 1737840
+x-three-ws-output-bytes: 1479972
+x-three-ws-optimize: none
 ```
 
-20.6 MB down to 1.7 MB, a 92% cut, mostly from capping textures at 512px and dropping non-ARKit morph targets. `textureSize` accepts `128`, `256`, `512`, `1024`, `2048`; `lod=1` or `lod=2` adds progressively more aggressive welding; `morphs=arkit52` drops every morph target outside the standard set. `src` must be on a three.ws-controlled origin (the app origin or the CDN host), otherwise it is `400 untrusted_source`. Full parameter list in the [Media & Render API reference](/docs/media-api.md).
+20.6 MB down to 1.5 MB, better than a 90% cut, mostly from capping textures at 512px and dropping non-ARKit morph targets. Read the two byte headers rather than the numbers printed here: the exact output size moves as the pipeline improves. `x-three-ws-optimize` names the mesh-compression scheme that survived (`draco`, `meshopt`, `none`, or `source` when the pipeline could not beat the original and handed the source bytes back untouched); `none` here means the saving came from textures and morphs alone. `textureSize` accepts `128`, `256`, `512`, `1024`, `2048`; `lod=1` or `lod=2` adds progressively more aggressive welding; `morphs=arkit52` drops every morph target outside the standard set. `src` must be on a three.ws-controlled origin (the app origin or the CDN host), otherwise it is `400 untrusted_source`. Full parameter list in the [Media & Render API reference](/docs/media-api.md).
 
 Best part: the optimizer's own URL is a public https URL, so you can hand it straight to the renderer and never store an intermediate file.
 

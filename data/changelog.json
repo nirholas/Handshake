@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "Eight more docs pages audited, and the embed snippet that would have failed on paste is fixed",
+      "summary": "A line-by-line sweep of the walk leaderboard, Atlas, repository guards, wallet sign-in, spending envelope, avatar image render, character library embed, and skill trial pages, with every command in them run against the live API. The embed tutorial pinned a Subresource Integrity hash that no longer matched the script it names, so a reader who pasted it got a blank box and a browser console error instead of a character; it now carries the hash the site itself publishes. The skill trial page printed a start-trial response the endpoint never returns, and now shows the real one plus the two refusals a seller has to handle. The walk leaderboard page listed the walk documentation set with two pages missing. The Atlas page said the slash key always opens search, when a page that claims that key keeps it. The spending envelope page quoted a free-call note with the wrong wording and now matches the API, and the render tutorial's optimizer figures were stale, so it now tells you to read the byte headers instead of the printed numbers.",
+      "tags": [
+        "docs",
+        "fix"
+      ],
+      "link": "/docs/tutorials/character-library-to-embed"
+    },
+    {
+      "date": "2026-08-14",
       "title": "The privacy policy's data table no longer pushes the page sideways on a phone",
       "summary": "The privacy policy lists what three.ws collects in a three-column table: the category, an example, and why we hold it. On a narrow phone screen that table was wider than the screen, and because it sat in the normal flow of the page it dragged the entire document sideways with it, so every paragraph and heading in the policy scrolled left and right too. The table now scrolls on its own inside a box the width of the screen, and the rest of the page stays put. The box is reachable with the keyboard and announced to screen readers, so the table can be read across without a mouse. Checked at phone, tablet, and desktop widths.",
       "tags": [

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T21:10:59.178Z",
+	"generated_at": "2026-08-14T21:58:07.469Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -397,6 +397,17 @@
 			"title": "Eight docs pages checked line by line, and four stale claims corrected",
 			"summary": "A sweep of the viability, press kit, partners, agent identities, OKX marketplace, avatar engines, stage, and world lines pages, with every command in them actually run and every link followed. Four things were wrong and are now right. The partners page pointed the NVIDIA row at a docs path when the card on the live page goes to /nvidia. The agent identity docs claimed a job handle expires after about thirty days, which nothing in the code enforces; the page now states what is true, that the signed handle carries no expiry and the job record stays readable. The marketplace page showed a create call replying with a queued status and a generation stage, neither of which the endpoint has ever returned, so an agent coding against the sample would have waited on a state that never arrives; the page and the endpoint's own published example now show the running status and generate stage the code emits. The same page read as though our marketplace listing were live when it is still in review, and now says so plainly. The world lines anti-cheat table was also missing one of the per-IP limits it lists.",
 			"link": "/docs/partners",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Eight more docs pages audited, and the embed snippet that would have failed on paste is fixed",
+			"summary": "A line-by-line sweep of the walk leaderboard, Atlas, repository guards, wallet sign-in, spending envelope, avatar image render, character library embed, and skill trial pages, with every command in them run against the live API. The embed tutorial pinned a Subresource Integrity hash that no longer matched the script it names, so a reader who pasted it got a blank box and a browser console error instead of a character; it now carries the hash the site itself publishes. The skill trial page printed a start-trial response the endpoint never returns, and now shows the real one plus the two refusals a seller has to handle. The walk leaderboard page listed the walk documentation set with two pages missing. The Atlas page said the slash key always opens search, when a page that claims that key keeps it. The spending envelope page quoted a free-call note with the wrong wording and now matches the API, and the render tutorial's optimizer figures were stale, so it now tells you to read the byte headers instead of the printed numbers.",
+			"link": "/docs/tutorials/character-library-to-embed",
 			"tags": [
 				"docs",
 				"fix"

@@ -258,7 +258,7 @@ curl -s $BASE/api/pay/execute \
 {
   "ok": true,
   "paid": false,
-  "note": "Endpoint served response without a 402 - no payment needed.",
+  "note": "Endpoint served response without a 402. No payment needed.",
   "status": 200,
   "result": { "ok": true, "method": "GET", "headers": { "...": "..." }, "body": null, "ts": "..." }
 }
