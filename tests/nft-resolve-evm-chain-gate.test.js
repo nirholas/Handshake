@@ -1,4 +1,4 @@
-// /api/nft/resolve — the EVM chain gate and the Alchemy NFT URL it builds.
+// /api/nft/resolve: the EVM chain gate and the Alchemy NFT URL it builds.
 //
 // The handler used to carry its own hand-copied Alchemy host map. Two things
 // went wrong with the copy and neither was visible from the outside:
