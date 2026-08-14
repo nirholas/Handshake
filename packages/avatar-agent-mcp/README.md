@@ -101,7 +101,7 @@ Every tool ships [MCP tool annotations](https://modelcontextprotocol.io/specific
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `inspect_glb`   | Mesh / material / texture / animation / skin breakdown, bounding box, vertex and triangle counts. `@gltf-transform/core`.                                              |
 | `validate_glb`  | Runs Khronos's official `gltf-validator`; returns errors, warnings, infos, hints with JSON pointers.                                                                   |
-| `optimize_glb`  | Dedup → prune → weld → optional Draco. Returns the optimized bytes inline with before/after sizes.                                                                     |
+| `optimize_glb`  | Dedup → prune → weld → optional Draco. Returns the optimized bytes inline with before/after sizes. Draco- and meshopt-compressed inputs are decoded on read, so a compressed avatar works like any other.                                                                     |
 | `thumbnail_glb` | Renders any GLB to a PNG via three.ws's hosted three-light rig + auto-framing camera. Returns base64 PNG inline.                                                       |
 | `viewer_url`    | Builds a `three.ws/viewer?...` URL + paste-ready iframe for any GLB or avatar session (background, auto-rotate, camera preset or explicit orbit, AR mode, dimensions). |
 
