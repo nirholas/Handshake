@@ -44,16 +44,18 @@ Every six hours, an attestation epoch runs:
 1. Every custodial wallet's **live mainnet balance** is read.
 2. Each wallet becomes a leaf: agent, address, balance, and the current head of its custody event trail, hashed together.
 3. The leaves build a Merkle tree; the epoch and leaves are persisted.
-4. The root is anchored on Solana as a signed SPL-Memo transaction.
+4. The root is anchored on Solana as a signed SPL-Memo transaction, when an attester key is configured and funded (see **Honest limits** below).
 
 Two public surfaces:
 
-- **[/integrity](https://three.ws/integrity)** — the aggregate view, no sign-in: latest epoch, Merkle root, the anchor transaction, wallet count, total SOL, recent epochs. API: `GET /api/custody/integrity`, `GET /api/custody/anchor?epoch=latest`.
-- **[/proof](https://three.ws/proof)** — your wallet's inclusion proof (owner-only, since it reveals a per-wallet balance). The page fetches your proof and then **re-verifies it in your browser** with an independent verifier: it recomputes your leaf hash from the public fields, walks the Merkle path, and checks the root against the anchor. The prover and verifier share one hashing module, so they cannot silently drift.
+- **[/integrity](https://three.ws/integrity)** is the aggregate view, no sign-in: latest epoch, Merkle root, the anchor transaction (once an epoch is anchored), wallet count, total SOL, recent epochs. API: `GET /api/custody/integrity`, `GET /api/custody/anchor?epoch=latest`.
+- **[/proof](https://three.ws/proof)** is your wallet's inclusion proof (owner-only, since it reveals a per-wallet balance). The page fetches your proof and then **re-verifies it in your browser** with an independent verifier: it recomputes your leaf hash from the public fields, walks the Merkle path, and checks the result against the epoch's published root. The prover and verifier share one hashing module, so they cannot silently drift. Where the epoch is anchored, that same root is what the on-chain memo commits to.
 
 Epochs also run a reconciliation pass: any balance drop since the previous epoch must be explained by authorized withdraw/spend events (plus fee tolerance), or it's flagged. "No unexplained outflows" is a checked property, not a slogan.
 
-**Honest limits.** The anchor transaction's network is deployment-configurable and may be Solana devnet rather than mainnet — the anchor reference returned by the API states its network; check it before treating an anchor as mainnet-final. Anchoring is best-effort: if the attester key is unavailable, the epoch's root still exists and is served, with its anchor status marked pending. Balance reads are mainnet regardless.
+**Honest limits.** Anchoring is best-effort and is the one step in this pipeline that can fail on its own. Steps 1 to 3 (balance snapshot, leaf hashing, Merkle tree, persistence) always run; step 4 needs a configured, funded attester key, and when it does not have one the epoch is still recorded and served with `anchor_status` set to `anchor_failed` rather than `anchored`, and a null `anchor_sig`. A root in that state is a real, reproducible commitment you can verify your inclusion against, but it is not yet timestamped on a public chain, so it does not prove the platform published it before you asked.
+
+Check the epoch you are relying on rather than assuming: `GET /api/custody/integrity` reports `epochs_total` against `epochs_anchored`, and `GET /api/custody/anchor?epoch=latest` returns that epoch's `anchor_status`, `anchor_sig`, and `anchor_network`. The anchor network is deployment-configurable and may be Solana devnet rather than mainnet, so read `anchor_network` before treating any anchor as mainnet-final. Balance reads are mainnet regardless of where the anchor lands.
 
 ## Social recovery & inheritance
 
@@ -71,7 +73,7 @@ A funded agent shouldn't die with a lost password — or with its owner. The mod
 
 **Inheritance (dead-man's switch):** the owner enables it with an inactivity threshold (7–365 days) and a grace window. "Alive" is inferred from sessions, custody events, usage, or an explicit check-in. When inactivity crosses the line, an inheritance request opens to the beneficiary; it needs guardian confirmation (or the beneficiary's own, if no guardians are set) *and* the grace window; a daily sweep arms, reminds (about a week ahead), and completes; any owner check-in cancels the whole thing.
 
-**The guardian console — [/guardian](https://three.ws/guardian)** — is the inbox for the *other* side: agents where you are the guardian or beneficiary, the active request's story, approval counts, countdowns, and the approve / decline / confirm actions. (Not to be confused with the Guardian *content-safety* model — `@three-ws/guardian` — which is an unrelated AI-moderation surface.)
+**The guardian console, [/guardian](https://three.ws/guardian)**, is the inbox for the *other* side: agents where you are the guardian or beneficiary, the active request's story, approval counts, countdowns, and the approve / decline / confirm actions. (Not to be confused with the Guardian *content-safety* model, `@three-ws/guardian`, which is an unrelated AI-moderation surface.)
 
 Every step of recovery and inheritance writes to the custody trail and the audit log, and notifies everyone involved.
 
