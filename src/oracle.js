@@ -794,10 +794,50 @@ const TAKE_PILLAR = {
 };
 const TAKE_LABEL = { pedigree: 'Who', structure: 'How', narrative: 'What', momentum: 'Move' };
 
-// Oracle's take — a deterministic one-line synthesis grounded in the same pillars
-// the card already shows. Leads with the tier, names the strongest pillar, and is
-// honest about the weakest when conviction isn't high. No LLM, no latency, no spin.
+/**
+ * One clause of evidence: what the engine saw, and how that bucket has
+ * historically performed against the base rate. `subject` and `lift` are served
+ * with the verdict; the split is the fallback for a cached row scored before
+ * they were, so an old card degrades to the observation without its lift rather
+ * than to nothing.
+ */
+function reasonClause(r) {
+	const subject = String(r.subject || String(r.text || '').split(':')[0] || '').trim();
+	if (!subject) return '';
+	const lift = Number(r.lift);
+	if (!Number.isFinite(lift) || (lift > 0.85 && lift < 1.15)) return esc(subject);
+	return `${esc(subject)} <i>${lift}x base</i>`;
+}
+
+// Oracle's take: this coin's own strongest evidence, in one line.
+//
+// The engine writes a distinct, quantified reason for every coin it scores, and
+// the card had no access to any of it, so it synthesized a sentence from the
+// argmax pillar instead. Momentum is the argmax on ~90% of the live feed, which
+// meant the entire top of the feed printed the same sentence: 200 cards, one
+// take, zero information. The reasons now ship with the feed, so the card can
+// quote the read instead of a template. The pillar template survives only as
+// the fallback for a row cached before the feed carried reasons.
 function oracleTake(it) {
+	const tier = it.tier || 'watch';
+	const lead = TAKE_TIER[tier] || 'One to watch';
+	const flags = it.badges || [];
+	const clauses = (Array.isArray(it.reasons) ? it.reasons : [])
+		.map(reasonClause)
+		.filter(Boolean)
+		.slice(0, 2);
+
+	let body = clauses.length ? clauses.join(', ') : pillarTake(it, tier);
+	if (!body) return '';
+	if (flags.includes('pedigree-flag')) body += '. Creator has a rug history';
+	else if (flags.includes('structure-flag')) body += '. Structure throws a flag';
+
+	const cat = it.category && it.category !== 'unknown' ? ` Riding a ${esc(it.category)} narrative.` : '';
+	return `<div class="coin-take"><span class="ct-q">“</span><span><b>${lead}</b>: ${body}.${cat}</span></div>`;
+}
+
+/** Pre-reasons fallback: synthesize from the pillars the card already shows. */
+function pillarTake(it, tier) {
 	const p = it.pillars || {};
 	const entries = ['pedigree', 'structure', 'narrative', 'momentum']
 		.map((k) => ({ k, v: Number(p[k]) }))
@@ -805,24 +845,13 @@ function oracleTake(it) {
 	if (!entries.length) return '';
 	const strong = entries.reduce((a, b) => (b.v > a.v ? b : a));
 	const weak = entries.reduce((a, b) => (b.v < a.v ? b : a));
-	const tier = it.tier || 'watch';
-	const lead = TAKE_TIER[tier] || 'One to watch';
-
-	let body;
 	if (tier === 'prime' || tier === 'strong') {
-		body = `${TAKE_PILLAR[strong.k].hi}`;
+		let body = TAKE_PILLAR[strong.k].hi;
 		if (it.smart_wallet_count >= 3 && strong.k !== 'pedigree') body += `, with ${it.smart_wallet_count} smart-money wallets in`;
-		if ((it.badges || []).includes('structure-flag')) body += ` — but watch the structure flag`;
-		if ((it.badges || []).includes('pedigree-flag')) body += ` — but the creator has a rug history`;
-	} else if (tier === 'lean') {
-		body = `${TAKE_PILLAR[strong.k].hi}, but ${TAKE_PILLAR[weak.k].lo}`;
-	} else {
-		body = weak.v < 40 ? `${TAKE_PILLAR[weak.k].lo}` : `nothing here stands out yet`;
-		if ((it.badges || []).includes('pedigree-flag')) body = `the creator wallet has a rug history`;
-		else if ((it.badges || []).includes('structure-flag')) body = `the launch structure throws a flag`;
+		return body;
 	}
-	const cat = it.category && it.category !== 'unknown' ? ` Riding a ${esc(it.category)} narrative.` : '';
-	return `<div class="coin-take"><span class="ct-q">“</span><span><b>${lead}</b> — ${body}.${cat}</span></div>`;
+	if (tier === 'lean') return `${TAKE_PILLAR[strong.k].hi}, but ${TAKE_PILLAR[weak.k].lo}`;
+	return weak.v < 40 ? TAKE_PILLAR[weak.k].lo : 'nothing here stands out yet';
 }
 
 function coinCard(it, watched = new Set()) {
@@ -877,6 +906,7 @@ function coinCard(it, watched = new Set()) {
 			${it.category ? `<span class="chip cat">${esc(it.category)}</span>` : ''}
 			${it.smart_wallet_count ? `<span class="chip sm"><b>${it.smart_wallet_count}</b> smart in</span>` : ''}
 			${badges}
+			${oddsChip(it)}
 			${it.coin_first_seen_at ? `<span class="chip" title="Launch age — first seen on pump.fun">age <b>${ago(it.coin_first_seen_at)}</b></span>` : ''}
 			<span class="chip" title="When Oracle last scored this launch">scored ${ago(it.scored_at)} ago</span>
 		</div>`;
