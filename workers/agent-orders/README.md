@@ -83,9 +83,14 @@ npm run worker:orders          # ORDERS_MODE=simulate (real quotes, no broadcast
 npm run worker:orders:live     # ORDERS_MODE=live (real fills)
 ```
 
-Both scripts load the repo-root `.env` if it exists (`node --env-file-if-exists`),
-so a local run needs no extra flags. The container sets its env from Cloud Run
-instead and ships no `.env`. On boot the worker prints one JSON line per event
+Both scripts load the repo-root `.env` **and** `.env.local` if they exist
+(`node --env-file-if-exists`, applied in that order so `.env.local` wins), so a
+local run needs no extra flags. Loading both matters: in this worktree `.env`
+holds only the QA audit login and the worker's own credentials
+(`DATABASE_URL`, `JWT_SECRET`, `WALLET_ENCRYPTION_KEY`, `SOLANA_RPC_URL`) live in
+`.env.local`. Reading `.env` alone makes the worker die at boot on
+`missing required env var: DATABASE_URL`. The container sets its env from Cloud
+Run instead and ships neither file. On boot the worker prints one JSON line per event
 (`boot`, `housekeeping`, `fill`, …) and writes a `bot_heartbeat` row under the
 worker name `agent-orders`, which is the fastest liveness check:
 
@@ -139,13 +144,16 @@ node --env-file-if-exists=.env -e "import('./workers/agent-orders/market.js').th
 
 And a short `npm run worker:orders` run writes the heartbeat row and answers the
 liveness endpoint (`PORT=8791 npm run worker:orders`, then
-`curl localhost:8791`). Both were last exercised on 2026-08-11: quote resolved in
-~4 s through the RPC failover chain, sweeps ran at 318 ms each.
+`curl localhost:8791`). Both were last exercised on 2026-08-14: the quote came
+back as a real graduated-AMM price in ~12 s through the RPC failover chain, and a
+30 s boot ran 5 sweeps (427 ms each), answered `/` with
+`{"ok":true,"worker":"agent-orders",…}`, wrote `bot_heartbeat`, and drained
+cleanly on SIGTERM.
 
 ## Deploy
 
 **Status: built and wired, not yet running in production** (re-checked
-2026-08-11: no `agent-orders` service, no job, and no image in the `workers`
+2026-08-14: no `agent-orders` service, no job, and no image in the `workers`
 Artifact Registry repo). No order fires on its own until someone runs the command
 below. Orders created
 through the API sit in `active` until then, which is the honest failure mode
@@ -168,7 +176,9 @@ must pass it or the image tag comes out empty. The four secrets the config mount
 (`agent-orders-database-url`, `agent-orders-jwt-secret`,
 `agent-orders-wallet-encryption-key`, `agent-orders-solana-rpc-url`) already exist
 and are readable by the `three-ws@` runtime service account; all four were
-re-checked on 2026-08-11 and hash identical to what `three-ws-api` runs with. Do **not** repoint them at
+re-checked on 2026-08-14 (each carries the `roles/secretmanager.secretAccessor`
+binding, and each payload hashes identical to the value `three-ws-api` runs
+with). Do **not** repoint them at
 the project's generic `JWT_SECRET` / `WALLET_ENCRYPTION_KEY` secrets: those hold
 older values and would break custodial key recovery on every live fill.
 
@@ -191,14 +201,29 @@ gcloud builds submit . \
 ```
 
 Same Dockerfile, same repo-root context, no push and no deploy. Last green
-2026-08-11 (build `c5f6ba8a`, 4m30s, all 14 layers).
+2026-08-14 (build `28d998f3`, 4m43s, all 14 layers, 95.7 MiB uploaded).
 
 The equivalent local build is `docker build -f workers/agent-orders/Dockerfile
 -t agent-orders .`, but expect it to fail on a dev container: the image installs
-the whole root workspace (3078 packages) and then compiles `agent-payments-sdk`,
+the whole root workspace (3000+ packages) and then compiles `agent-payments-sdk`,
 which is more memory than a Codespace has, and the local context is not filtered
 by `.gcloudignore` so it also walks a multi-GB `dist/`. Cloud Build is the
 supported path.
+
+A green build proves less than it looks like it does, because two ways of
+breaking this image only show up when the container boots. Re-check both if you
+add an import to any file under `workers/agent-orders/`:
+
+- **Every module the worker reaches must be inside the Dockerfile's `COPY` set**
+  (`agent-payments-sdk/`, `api/`, `src/`, `workers/agent-orders/`, and the single
+  file `workers/agent-sniper/amm-exit.js`). Reaching outside it builds fine and
+  then dies at `ERR_MODULE_NOT_FOUND` on the first sweep.
+- **Every bare import must be a prod dependency.** The image runs
+  `npm prune --omit=dev`, so an import that resolves to a devDependency
+  disappears from the shipped layer.
+
+Both held on 2026-08-14: 59 modules reached, all inside the `COPY` set, and all
+17 distinct bare specifiers resolve to prod dependencies or the workspace SDK.
 
 One thing about the build log is worth knowing before you read it as a failure:
 the repo-root `package-lock.json` is out of sync with `package.json`, so the
