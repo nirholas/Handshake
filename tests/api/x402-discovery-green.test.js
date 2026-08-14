@@ -99,11 +99,10 @@ function checkResource(r) {
 	return { label: label(r), errors, warnings };
 }
 
-// Rendered in a CHILD node process, loading api/wk.js natively — exactly how
+// Rendered in a CHILD node process, loading api/wk.js natively, exactly how
 // production (server/index.mjs) loads it. Importing it in-process here would
-// pull its multi-thousand-module graph through vitest's transform pipeline:
-// ~55s in isolation and past the 120s hook budget under full-suite contention,
-// so the file flaked on load, never on content. The native import is ~6s.
+// pull its multi-thousand-module graph through vitest's transform pipeline and
+// the file would fail on load rather than on content.
 const RENDER_ENV = {
 	APP_ORIGIN: 'https://three.ws',
 	X402_PAY_TO_BASE: '0x0000000000000000000000000000000000000001',
@@ -151,10 +150,20 @@ function renderDiscovery() {
 
 describe('x402 discovery catalog is fully green', () => {
 	let report;
+	// The hook needs its own budget because the global 120s ceiling does not cover
+	// what this render actually costs, and the file failed on that ceiling every
+	// run, loaded or idle. Measured on this box with nothing else running: ~54s for
+	// the child's cold native import of api/wk.js, then 18-26s to render. The
+	// render walks live upstreams (CoinGecko, DeFiLlama) to enumerate the datapoint
+	// families, and each of those fetches is bounded at 15s
+	// (api/_lib/market-data/datapoints.js), so six families put the render's worst
+	// case near 90s. Budget = that worst case plus the cold import plus room for
+	// five sibling forks competing for the box. None of the four assertions below
+	// says anything about speed.
 	beforeAll(async () => {
 		const doc = await renderDiscovery();
 		report = (doc.resources || []).map(checkResource);
-	});
+	}, 420_000);
 
 	it('catalogs a non-trivial number of resources', () => {
 		expect(report.length).toBeGreaterThan(20);
