@@ -270,14 +270,17 @@ export async function failJob(jobId, { publicKey, error: errMsg }) {
 
 function bumpNodeCounter(publicKey, column) {
 	// Best-effort: the Redis result is authoritative; the counter is a rollup.
-	// The `.catch()` alone was not enough to make it so. Building the query
-	// THROWS synchronously when DATABASE_URL is absent (getSqlSafe raises
-	// before any promise exists), so the throw escaped past the catch and out
-	// of the un-awaited call into failJob's caller, 500-ing a result submission
-	// over a counter nobody reads on that path. Guard the construction too.
+	// The single `.catch()` this used to carry did not make it best-effort. The
+	// column name was interpolated with `sql(column)`, and each of those
+	// fragment calls produces its OWN promise, which rejects on a host with no
+	// DATABASE_URL and was attached to nothing. Two unhandled rejections
+	// escaped per completed job. Naming both columns statically removes the
+	// fragment promises entirely (and the dynamic identifier with them), so the
+	// one remaining promise is the one the catch covers.
 	try {
-		Promise.resolve(
-			sql`update inference_nodes set ${sql(column)} = ${sql(column)} + 1, last_seen_at = now() where public_key = ${publicKey}`,
-		).catch(() => {});
+		const query = column === 'jobs_failed'
+			? sql`update inference_nodes set jobs_failed = jobs_failed + 1, last_seen_at = now() where public_key = ${publicKey}`
+			: sql`update inference_nodes set jobs_completed = jobs_completed + 1, last_seen_at = now() where public_key = ${publicKey}`;
+		Promise.resolve(query).catch(() => {});
 	} catch { /* no database configured: the rollup is optional, the result is not */ }
 }
