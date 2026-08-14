@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T20:26:48.282Z",
+	"generated_at": "2026-08-14T20:45:59.062Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -144,6 +144,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "A generation that quietly switched engines no longer counts as a failure",
+			"summary": "When a 3D generation lane loses your job, the platform resubmits it to another lane and you still get your model. Until now the abandoned attempt was recorded as a plain failure, with nothing tying it to the run that actually succeeded, so the platform's own health readout treated its recovery machinery as an outage: over the past week, 13 of the 14 lost jobs were rescued within seconds and all 14 still counted against generation health. Each recovered attempt is now linked to the run that replaced it, so the status page and our failure reports show what you experienced instead of what the machinery did.",
+			"link": "/status",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "A paid-call share link now previews on Slack, Telegram and LinkedIn",
 			"summary": "Every settled x402 call has a permalink whose social preview image is drawn on demand. Slack, Telegram and LinkedIn ask an image URL for its type and size before they fetch it, and this one answered \"method not allowed\" to that probe, so the card silently never appeared on those platforms. It answers them now. Three more fixes to the same card: a receipt is captioned with the network it actually settled on rather than always reading mainnet; a link shared in the seconds before its receipt finishes saving, or during a cache outage, is retried a minute later instead of being pinned to the generic card for an hour; and a damaged record shows a plain \"unknown\" rather than a \"NaNd ago\" timestamp or an invented amount.",
 			"link": "/pay",
@@ -224,6 +235,18 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Anyone can run an inference node: the operator client now ships CPU and GPU images, and proves itself end to end",
+			"summary": "The open inference network is the part of the roadmap where the compute stops being ours. The node operator client is how you join it: your machine generates a Solana keypair, registers itself with the platform, claims inference jobs, runs them locally with a real open model, and returns every answer with a signature that binds it to your key. There is no shared password anywhere in that flow, so nothing can be leaked and reused to impersonate your node, and the platform re-derives each signature from its own record of the job before it accepts the work. This release makes the graphics-card story honest. The old image claimed it would use an NVIDIA card automatically when one was present, and it never could: the runtime it shipped had no GPU support compiled in at all. There are now two real images, one for CPU and one for NVIDIA cards, and the client tells you which device actually ran each job. Ask for the GPU on a machine that cannot reach one and it stops immediately with the reason, instead of quietly earning at CPU speed for a month. Three faults in the job pipeline were also fixed: results submitted by a node hit a server error every time, registered nodes read back as unregistered, and every finished job leaked two silent background errors. A single command (npm run e2e) now registers a node, sends it a job, runs the model, and verifies the signed answer against the real platform code, and it fails loudly if any step regresses.",
+			"link": "/docs/inference-node-operator",
+			"tags": [
+				"feature",
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -329,7 +352,7 @@
 			"date": "2026-08-14",
 			"type": "update",
 			"title": "Cookbook posters came back, and a docs link you copy now reopens the page you were reading",
-			"summary": "Eight developer pages were read against the code they describe and exercised in a real browser: the MCP 3D tool and CI asset gate recipes, and the payment sessions, developer platform, media API, agent-forged gallery, generation watch, and KOL tracker guides. Two things were broken for readers. Every cookbook recipe that shows a poster image was rendering without it: the figure system accepted three kinds of illustration and silently deleted the fourth, which is the kind the recipe posters use, with nothing in the page or the console to say a picture had gone missing. All of them render again. Separately, the previous/next buttons and the sidebar at the bottom of a documentation page produced a link that only worked while you stayed on the page: copy it, share it, or reload it, and you landed back on the page you started from instead of the one the link named. Those links now open the page they promise, correct the address bar to that page's own permanent link, and rename the browser tab to match, while in-page section links still jump to the section as before. The pages themselves were corrected where they had drifted from the code: the gallery's sample receipt quoted an old price for the tier it describes, the media API's two library samples reported counts no live response would return, and the KOL tracker described all four of its endpoints as sharing one dispatcher when the trade feed is served by its own file. Every command and code sample printed on the eight pages was run, and every link on them resolves.",
+			"summary": "Eight developer pages were read against the code they describe and exercised in a real browser: the MCP 3D tool and CI asset gate recipes, and the payment sessions, developer platform, media API, agent-forged gallery, generation watch, and KOL tracker guides. Two things were broken for readers. Every cookbook recipe that shows a poster image was rendering without it: the figure system accepted three kinds of illustration and silently deleted the fourth, which is the kind the recipe posters use, with nothing in the page or the console to say a picture had gone missing. All of them render again. Separately, the previous and next buttons and the sidebar on a documentation page produced a link that only worked while you stayed on the page: copy it, share it, or reload it, and you landed back on the page you started from instead of the one the link named. Those links now open the page they promise, correct the address bar to that page's own permanent link, and rename the browser tab to match, while in-page section links still jump to the section as before. The pages themselves were corrected where they had drifted from the code: the gallery's sample receipt quoted an old price for the tier it describes, the media API's two library samples reported counts no live response would return, and the KOL tracker described all four of its endpoints as sharing one dispatcher when the trade feed is served by its own file. Every command and code sample printed on the eight pages was run, and every link on them resolves.",
 			"link": null,
 			"tags": [
 				"fix",
@@ -377,6 +400,17 @@
 			"tags": [
 				"docs",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "Eleven links that led nowhere now land where they promise",
+			"summary": "The audit that guards every page against dead ends had a hole in it: the rule that serves the not-found page matched every address on the site, so the audit read every link as reachable and reported a clean bill of health it could not vouch for. With that fixed, eleven links turned out to lead to pages that were never built. Sign in to save on the choreography and gesture pages pointed at an address that does not exist, so the one thing those pages ask you to do could not be done. The extension terms page linked its own terms of service to a missing address, twice. The motion studio offered to show you how to capture an avatar from a selfie and led nowhere, as did the pricing page's link to your account, the memory tutorial's link to your library, and two entries in the dashboard trading menu. Pressing Message on a friend in the 3D world walked you into a blank page instead of the conversation, and now opens the thread with that person. Three outbound links to other projects' documentation had rotted and now point at the pages that replaced them. The audit itself was rebuilt to be trustworthy: it no longer calls a live site dead because the site answers a robot differently than a browser, and it no longer treats the blog and docs it ships, or the app manifest it generates, as missing files.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -431,6 +465,16 @@
 			"link": null,
 			"tags": [
 				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "One cookbook recipe stopped introducing itself as a generic page in search results and shared links",
+			"summary": "All five cookbook recipes are drawn by one shared page template, and the server fills in each recipe's own title, description, and social card as the page is served. One recipe was skipping that step. The template carried a leftover marker naming a specific recipe as its own address, and the server reads that marker as this page already knows who it is, so it left that one page alone: text to 3D from the command line went out with the placeholder title every recipe shares and a one-line description that said nothing about it. Search results, and the preview card in any chat where the link was pasted, showed the placeholder instead of the recipe. The template now names the cookbook index rather than any single recipe, matching how the tutorial and walkthrough templates have always been set up, so all five recipes present themselves properly. A test now walks the real page templates and fails if any of them ever claims one of its own recipes again, which is what let this sit unnoticed.",
+			"link": "/cookbook/text-to-3d-cli",
+			"tags": [
 				"fix"
 			]
 		},
@@ -571,6 +615,16 @@
 				"sdk",
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The 3D viewer no longer starts up blank when its box has not been measured yet",
+			"summary": "Every page that shows a 3D avatar builds its viewer the moment the page's script runs. On pages where the area holding the avatar has not been given its size yet, because the layout lands a frame later or the panel starts hidden, that meant the viewer was built at zero pixels wide and zero pixels tall. Graphics drivers reject an image with no width or height, so the viewer came up against a surface the driver had refused to create: the browser console filled with rejected-texture and incomplete-surface errors, and on the mocap studio the avatar stage was the one that hit it. The viewer now starts at a minimum size and resizes itself to the real box on the first frame that has one, which it was already set up to do for every later resize. Nothing changes for a page whose avatar area is measured up front, which is most of them.",
+			"link": "/mocap-studio",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -774,6 +828,17 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "The legal pages now say what is in them, and call the terms by their real name",
+			"summary": "The six pages under three.ws/legal (the index, privacy policy, terms of service, end-user license agreement, risk disclosure, and content policy) were audited in a real browser at phone and desktop widths. Every page loads, every link on them resolves, and the layout holds at 320 pixels wide. Three things were wrong. The terms of service was filed under the name Terms of Use in the site's page index, so a search result or a shared link showed one name while the document itself showed another; it is now Terms of Service everywhere. The privacy policy, the terms, and the EULA each carried a search-result description that only restated their title, so a search engine or a chat preview told you nothing about what was inside; each now describes what the document actually covers. And several of the policies linked to each other by their raw file names rather than their real addresses, which split the same document across two web addresses; they now all use the address shown in the browser bar. The content policy was also missing its publication date in the page index, which is what the changelog and sitemap read.",
+			"link": "/legal",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "The limits you set on an agent's spending can no longer be skipped",
 			"summary": "An agent that pays other agents on its own is governed by the policy you set on its wallet: a ceiling per payment, a rolling 24-hour ceiling, a separate ceiling per payee so one peer cannot quietly absorb the whole day's budget, and a kill switch that halts every kind of autonomous spending the moment you flip it. Those rules were enforced wherever the platform asked for them, but the enforcement itself had a soft spot: code that asked the guard to check a payment without first loading the agent's settings was handed an empty policy, meaning no ceilings and no kill switch, and nothing anywhere said so. The guard now reads the agent's real policy itself in that case, and refuses outright to price a payment for an agent that no longer exists. Every ceiling and the kill switch are now proven, not asserted: one command spins up a real database and a real server, then shows each limit turning away an over-limit payment, eight simultaneous payments competing for the last dollar of headroom with exactly one getting through, a frozen agent halted before the other agent is even contacted while your own withdrawals stay open, and every settled payment coming back as a receipt with the payee, the amount and the transaction signature on your agent's ledger.",
 			"link": "/docs/a2a-payments",
@@ -913,6 +978,17 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The security headers every three.ws page serves are now checked against the live site, not just the config",
+			"summary": "Every page three.ws serves carries a set of browser security rules: which scripts are allowed to run, that the connection must stay encrypted, that browsers must not second-guess a file's type, how much of the current address is passed on when you follow a link, and who is allowed to put a three.ws page inside a frame. Those rules are written in one config file, but until now nothing checked that the site actually answered with them. The sweep that loads real pages in a real browser now also compares each response against that config, and it can be pointed at the live site to check the whole catalogue in about a minute. Running it against production found no gap: all 25 of the most script-heavy pages, and the rest of the catalogue with them, serve exactly the rules the config declares. Two fixes came out of building it. Files that are not web pages, like robots.txt and the machine-readable service descriptions, were being reported as wrong when they were correct. And a page whose file changed while the server was running could be sent with the script rules of the previous version, which would have blocked its own scripts and shown a blank page; the server now notices the change and recomputes them.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
 			]
 		},
 		{

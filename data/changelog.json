@@ -3,6 +3,45 @@
   "entries": [
     {
       "date": "2026-08-14",
+      "title": "Eleven links that led nowhere now land where they promise",
+      "summary": "The audit that guards every page against dead ends had a hole in it: the rule that serves the not-found page matched every address on the site, so the audit read every link as reachable and reported a clean bill of health it could not vouch for. With that fixed, eleven links turned out to lead to pages that were never built. Sign in to save on the choreography and gesture pages pointed at an address that does not exist, so the one thing those pages ask you to do could not be done. The extension terms page linked its own terms of service to a missing address, twice. The motion studio offered to show you how to capture an avatar from a selfie and led nowhere, as did the pricing page's link to your account, the memory tutorial's link to your library, and two entries in the dashboard trading menu. Pressing Message on a friend in the 3D world walked you into a blank page instead of the conversation, and now opens the thread with that person. Three outbound links to other projects' documentation had rotted and now point at the pages that replaced them. The audit itself was rebuilt to be trustworthy: it no longer calls a live site dead because the site answers a robot differently than a browser, and it no longer treats the blog and docs it ships, or the app manifest it generates, as missing files.",
+      "tags": [
+        "fix",
+        "improvement"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "A generation that quietly switched engines no longer counts as a failure",
+      "summary": "When a 3D generation lane loses your job, the platform resubmits it to another lane and you still get your model. Until now the abandoned attempt was recorded as a plain failure, with nothing tying it to the run that actually succeeded, so the platform's own health readout treated its recovery machinery as an outage: over the past week, 13 of the 14 lost jobs were rescued within seconds and all 14 still counted against generation health. Each recovered attempt is now linked to the run that replaced it, so the status page and our failure reports show what you experienced instead of what the machinery did.",
+      "tags": [
+        "improvement",
+        "infra"
+      ],
+      "link": "/status"
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Cookbook posters came back, and a docs link you copy now reopens the page you were reading",
+      "summary": "Eight developer pages were read against the code they describe and exercised in a real browser: the MCP 3D tool and CI asset gate recipes, and the payment sessions, developer platform, media API, agent-forged gallery, generation watch, and KOL tracker guides. Two things were broken for readers. Every cookbook recipe that shows a poster image was rendering without it: the figure system accepted three kinds of illustration and silently deleted the fourth, which is the kind the recipe posters use, with nothing in the page or the console to say a picture had gone missing. All of them render again. Separately, the previous and next buttons and the sidebar on a documentation page produced a link that only worked while you stayed on the page: copy it, share it, or reload it, and you landed back on the page you started from instead of the one the link named. Those links now open the page they promise, correct the address bar to that page's own permanent link, and rename the browser tab to match, while in-page section links still jump to the section as before. The pages themselves were corrected where they had drifted from the code: the gallery's sample receipt quoted an old price for the tier it describes, the media API's two library samples reported counts no live response would return, and the KOL tracker described all four of its endpoints as sharing one dispatcher when the trade feed is served by its own file. Every command and code sample printed on the eight pages was run, and every link on them resolves.",
+      "tags": [
+        "fix",
+        "docs"
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "title": "Anyone can run an inference node: the operator client now ships CPU and GPU images, and proves itself end to end",
+      "summary": "The open inference network is the part of the roadmap where the compute stops being ours. The node operator client is how you join it: your machine generates a Solana keypair, registers itself with the platform, claims inference jobs, runs them locally with a real open model, and returns every answer with a signature that binds it to your key. There is no shared password anywhere in that flow, so nothing can be leaked and reused to impersonate your node, and the platform re-derives each signature from its own record of the job before it accepts the work. This release makes the graphics-card story honest. The old image claimed it would use an NVIDIA card automatically when one was present, and it never could: the runtime it shipped had no GPU support compiled in at all. There are now two real images, one for CPU and one for NVIDIA cards, and the client tells you which device actually ran each job. Ask for the GPU on a machine that cannot reach one and it stops immediately with the reason, instead of quietly earning at CPU speed for a month. Three faults in the job pipeline were also fixed: results submitted by a node hit a server error every time, registered nodes read back as unregistered, and every finished job leaked two silent background errors. A single command (npm run e2e) now registers a node, sends it a job, runs the model, and verifies the signed answer against the real platform code, and it fails loudly if any step regresses.",
+      "tags": [
+        "feature",
+        "fix",
+        "infra"
+      ],
+      "link": "/docs/inference-node-operator"
+    },
+    {
+      "date": "2026-08-14",
       "title": "The legal pages now say what is in them, and call the terms by their real name",
       "summary": "The six pages under three.ws/legal (the index, privacy policy, terms of service, end-user license agreement, risk disclosure, and content policy) were audited in a real browser at phone and desktop widths. Every page loads, every link on them resolves, and the layout holds at 320 pixels wide. Three things were wrong. The terms of service was filed under the name Terms of Use in the site's page index, so a search result or a shared link showed one name while the document itself showed another; it is now Terms of Service everywhere. The privacy policy, the terms, and the EULA each carried a search-result description that only restated their title, so a search engine or a chat preview told you nothing about what was inside; each now describes what the document actually covers. And several of the policies linked to each other by their raw file names rather than their real addresses, which split the same document across two web addresses; they now all use the address shown in the browser bar. The content policy was also missing its publication date in the page index, which is what the changelog and sitemap read.",
       "tags": [
@@ -47,15 +86,6 @@
         "infra"
       ],
       "link": "/forge"
-    },
-    {
-      "date": "2026-08-14",
-      "title": "Cookbook posters came back, and a docs link you copy now reopens the page you were reading",
-      "summary": "Eight developer pages were read against the code they describe and exercised in a real browser: the MCP 3D tool and CI asset gate recipes, and the payment sessions, developer platform, media API, agent-forged gallery, generation watch, and KOL tracker guides. Two things were broken for readers. Every cookbook recipe that shows a poster image was rendering without it: the figure system accepted three kinds of illustration and silently deleted the fourth, which is the kind the recipe posters use, with nothing in the page or the console to say a picture had gone missing. All of them render again. Separately, the previous/next buttons and the sidebar at the bottom of a documentation page produced a link that only worked while you stayed on the page: copy it, share it, or reload it, and you landed back on the page you started from instead of the one the link named. Those links now open the page they promise, correct the address bar to that page's own permanent link, and rename the browser tab to match, while in-page section links still jump to the section as before. The pages themselves were corrected where they had drifted from the code: the gallery's sample receipt quoted an old price for the tier it describes, the media API's two library samples reported counts no live response would return, and the KOL tracker described all four of its endpoints as sharing one dispatcher when the trade feed is served by its own file. Every command and code sample printed on the eight pages was run, and every link on them resolves.",
-      "tags": [
-        "fix",
-        "docs"
-      ]
     },
     {
       "date": "2026-08-14",
