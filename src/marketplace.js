@@ -1004,9 +1004,9 @@ function renderHero() {
 						<span class="market-hero-placeholder-name">${escapeHtml(a.name || 'Avatar')}</span>
 					</div>
 					<model-viewer
-						src="${escapeHtml(a.glbUrl)}"
+						${i === state.heroIndex ? 'src' : 'data-src'}="${escapeHtml(a.glbUrl)}"
 						alt="${escapeHtml(a.name || 'Avatar')}"
-						auto-rotate
+						${i === state.heroIndex ? 'auto-rotate' : ''}
 						autoplay
 						rotation-per-second="20deg"
 						camera-controls
@@ -1150,7 +1150,9 @@ function startHeroAutoplay() {
 		state.heroIndex = (state.heroIndex + 1) % state.featured.length;
 		// Cheap update — just toggle active classes + meta, don't re-render model-viewers.
 		document.querySelectorAll('.market-hero-slide').forEach((el) => {
-			el.classList.toggle('active', Number(el.dataset.slot) === state.heroIndex);
+			const isActive = Number(el.dataset.slot) === state.heroIndex;
+			el.classList.toggle('active', isActive);
+			if (isActive) promoteHeroSlide(el);
 		});
 		document.querySelectorAll('.market-hero-dot').forEach((el) => {
 			const isActive = Number(el.dataset.dot) === state.heroIndex;
@@ -1160,6 +1162,26 @@ function startHeroAutoplay() {
 		});
 		updateHeroMeta();
 	}, 6500);
+}
+
+// Start the mesh download for a slide the moment it becomes the visible one.
+//
+// Every hero slide occupies the same box and is hidden with opacity, not
+// display, so all of them intersect the viewport at once and model-viewer's own
+// loading="lazy" never held any of them back: opening /marketplace fetched and
+// rendered the whole featured carousel (every GLB, every WebGL context) before
+// the visitor saw the first slide. Only the active slide ships a `src` now; the
+// rest carry `data-src` and are promoted here, the same contract the grid cards
+// use in observeCardModelViewers(). Rotation follows the same rule so an
+// off-slide viewer never runs a raf loop.
+function promoteHeroSlide(slide) {
+	const mv = slide.querySelector('model-viewer');
+	if (!mv) return;
+	if (mv.dataset.src && !mv.getAttribute('src')) {
+		mv.setAttribute('src', mv.dataset.src);
+		delete mv.dataset.src;
+	}
+	mv.setAttribute('auto-rotate', '');
 }
 
 function stopHeroAutoplay() {
