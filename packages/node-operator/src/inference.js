@@ -115,7 +115,7 @@ export async function loadModel(model, { cacheDir, device = 'auto', dtype, log =
  *
  * @param {object} job the claimed job: { id, model, input }
  * @param {object} [opts] { cacheDir, device, dtype, now } - now is injectable for tests
- * @returns {Promise<{output: object, startedAt: number, finishedAt: number, device: string}>}
+ * @returns {Promise<{output: object, startedAt: number, finishedAt: number, device: string, dtype: string}>}
  */
 export async function runJob(job, { cacheDir, device = 'auto', dtype, log = console, now = () => Date.now() } = {}) {
 	const prompt = typeof job.input === 'string' ? job.input : job.input?.text;
