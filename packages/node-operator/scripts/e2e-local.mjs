@@ -105,7 +105,9 @@ async function main() {
 			capability: 'text-embedding',
 			pollIntervalMs: 250,
 			cacheDir: join(PKG, 'models'),
-			log,
+			// createJobLoop wants a console-like object (it calls .log and .warn),
+			// not a bare log function.
+			log: { log, warn: log, error: log },
 		});
 		const runP = loop.run();
 		// Wait until the job completes (poll stats) or time out.

@@ -97,6 +97,26 @@ export async function verifyResultReceipt({ jobId, model, prompt, output, starte
 	return verifyNodeSignature(receipt.publicKey, payload, receipt.signature);
 }
 
+/**
+ * Read a JSON record back out of Redis.
+ *
+ * The Upstash REST client deserializes on the way out: a value stored as a
+ * JSON string comes back already parsed as an object. Calling JSON.parse on
+ * that object stringifies it to "[object Object]" first and throws, which
+ * took out getNode's Redis fallback, claimJob and getJob (every read path in
+ * the queue). Accept either shape so the record survives whichever form the
+ * client hands back.
+ */
+function parseRecord(raw) {
+	if (raw === null || raw === undefined) return null;
+	if (typeof raw === 'object') return raw;
+	try {
+		return JSON.parse(raw);
+	} catch {
+		return null;
+	}
+}
+
 // ── Durable node registry (Postgres) ─────────────────────────────────────────
 
 let _ensured = null;
@@ -155,8 +175,7 @@ export async function getNode(publicKey) {
 	} catch { /* fall through to Redis */ }
 	const r = getRedis();
 	if (!r) return null;
-	const raw = await r.get(`${NODE_PREFIX}${publicKey}`);
-	return raw ? JSON.parse(raw) : null;
+	return parseRecord(await r.get(`${NODE_PREFIX}${publicKey}`));
 }
 
 // ── Job queue ────────────────────────────────────────────────────────────────
@@ -194,9 +213,8 @@ export async function claimJob({ capability, publicKey }) {
 	if (!r) return null;
 	const id = await r.rpop(`${QUEUE_PREFIX}${capability}`);
 	if (!id) return null;
-	const raw = await r.get(`${JOB_PREFIX}${id}`);
-	if (!raw) return null; // expired between push and pop
-	const job = JSON.parse(raw);
+	const job = parseRecord(await r.get(`${JOB_PREFIX}${id}`));
+	if (!job) return null; // expired between push and pop
 	if (job.status !== 'queued') return null;
 	job.status = 'running';
 	job.claimedBy = publicKey;
@@ -209,8 +227,7 @@ export async function claimJob({ capability, publicKey }) {
 export async function getJob(jobId) {
 	const r = getRedis();
 	if (!r) return null;
-	const raw = await r.get(`${JOB_PREFIX}${jobId}`);
-	return raw ? JSON.parse(raw) : null;
+	return parseRecord(await r.get(`${JOB_PREFIX}${jobId}`));
 }
 
 /**
