@@ -2479,6 +2479,14 @@
 			"dest": "/demos/$1.html"
 		},
 		{
+			"src": "/demos/agents",
+			"dest": "/demos/agents/index.html"
+		},
+		{
+			"src": "/demos/agents/",
+			"dest": "/demos/agents/index.html"
+		},
+		{
 			"src": "/demos/([^/.]+)",
 			"dest": "/demos/$1.html"
 		},
