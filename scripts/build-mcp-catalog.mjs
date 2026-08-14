@@ -83,7 +83,11 @@ const HOSTED_SERVERS = [
 		title: 'x402 Bazaar',
 		endpoint: '/api/mcp-bazaar',
 		transport: 'remote',
-		auth: 'none',
+		// Shares the main server's OAuth/x402 gate (see api/mcp-bazaar.js): only
+		// getting_started answers unauthenticated. A live search_services call
+		// with no bearer token and no X-PAYMENT returns 402, so 'none' told
+		// readers the opposite of what the endpoint does.
+		auth: 'oauth-or-x402',
 	},
 	{
 		match: (f) => f.startsWith('api/_mcpibm/'),
