@@ -295,6 +295,22 @@ describe('paid dispatch — verify → engine → settle', () => {
 		expect(res.headers['x-payment-response']).toBe(res.headers['payment-response']);
 	});
 
+	// The paid 200 is the ONLY response that carries a settlement receipt, and a
+	// browser-side x402 client can read a response header only if it is in the
+	// expose list. The success path used to overwrite cors()'s list with just
+	// the two v2 names, so it set x-payment-response and then hid it from every
+	// cross-origin reader.
+	it('the paid 200 exposes both receipt header names to cross-origin readers', async () => {
+		const res = makeRes();
+		await handler(paidReq('text-to-3d', VALID_INPUT['text-to-3d']), res);
+		expect(res.statusCode).toBe(200);
+		const exposed = String(res.headers['access-control-expose-headers'])
+			.split(',')
+			.map((h) => h.trim().toLowerCase());
+		expect(exposed).toContain('payment-response');
+		expect(exposed).toContain('x-payment-response');
+	});
+
 	it('text-to-3d-pro survives a downed art director (fail-soft) and submits the original prompt', async () => {
 		const res = makeRes();
 		await handler(paidReq('text-to-3d-pro', VALID_INPUT['text-to-3d-pro']), res);
