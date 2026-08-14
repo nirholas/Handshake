@@ -242,7 +242,17 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://testnet.bscscan.com',
-		rpcUrls: ['https://data-seed-prebsc-1-s1.bnbchain.org:8545', 'https://data-seed-prebsc-2-s1.bnbchain.org:8545'],
+		// PublicNode leads because the bnbchain data-seed nodes answer
+		// eth_blockNumber fine but refuse EVERY eth_getLogs with `-32005 limit
+		// exceeded`, down to a single-block range. That is a plan limit on the
+		// method, not a range the crawl can shrink into, so with only data-seed
+		// lanes configured this chain could never index a single log. Verified
+		// 2026-08-14: publicnode serves 2,000-block getLogs here.
+		rpcUrls: [
+			'https://bsc-testnet-rpc.publicnode.com',
+			'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+			'https://data-seed-prebsc-2-s1.bnbchain.org:8545',
+		],
 	},
 	{
 		id: 84532,

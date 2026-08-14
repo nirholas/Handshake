@@ -342,7 +342,13 @@ const ERC8004_MAX_BLOCK_CHUNK = 8_000;
 const ERC8004_MIN_BLOCK_CHUNK = 100;
 // Range rejections name the range rather than a stable error code, and every
 // provider words it differently.
-const RANGE_REJECTED = /block range|range is too large|too many blocks|limit exceeded|query returned more than|exceed maximum block range|response size|logs matched/i;
+//
+// A bare "limit exceeded" is deliberately NOT here. It is the wording of the
+// JSON-RPC -32005 rate/compute limit (bnbchain data-seed, zan.top), which no
+// smaller range fixes: matching it made the crawl read a plan limit as a range
+// ceiling and shrink to the floor forever instead of surfacing the real fault.
+// Every entry below names a range or a result volume, which shrinking does fix.
+const RANGE_REJECTED = /block range|range is too large|too wide|too many blocks|query returned more than|exceed maximum block range|limited to|response size|logs matched/i;
 
 /**
  * The block window to request for a chain this tick.
