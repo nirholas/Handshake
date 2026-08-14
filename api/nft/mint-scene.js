@@ -5,6 +5,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { mplCore, createV1 } from '@metaplex-foundation/mpl-core';
 import { solanaConnection } from '../_lib/solana/connection.js';
+import { pinToIPFS, ipfsPinningConfigured } from '../_lib/ipfs-pin.js';
 import {
 	generateSigner,
 	publicKey as umiPublicKey,
@@ -12,24 +13,27 @@ import {
 	createNoopSigner,
 } from '@metaplex-foundation/umi';
 
-async function uploadToNftStorage(token, bytes, contentType) {
-	const resp = await fetch('https://api.nft.storage/upload', {
-		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${token}`,
-			'Content-Type': contentType,
-		},
-		body: bytes,
-	});
-	if (!resp.ok) {
-		const txt = await resp.text();
-		throw Object.assign(new Error(`NFT.Storage upload failed (${resp.status}): ${txt}`), {
-			status: 502,
-			code: 'upstream_error',
+// Pin through the platform's shared IPFS transport rather than a second,
+// hand-rolled uploader. The old path posted to NFT.Storage on NFT_STORAGE_TOKEN,
+// a variable set in no environment (not .env, not .env.local, not the Cloud Run
+// service), so every scene mint answered 503 not_configured before it read a
+// byte of the body. api/_lib/ipfs-pin.js is the same Pinata/web3.storage chain
+// the pump launch lane and the pinning API already run on, and Pinata IS
+// configured in production, so this is what makes the endpoint work at all.
+//
+// A pinned uri is the public gateway URL, not an ipfs:// pointer: wallets,
+// marketplaces, and our own chat NFT viewer all fetch it directly, and the
+// viewer hands the model URL straight to GLTFLoader, which cannot resolve
+// ipfs://.
+async function pinAsset(bytes, filename) {
+	const pinned = await pinToIPFS(bytes, filename);
+	if (!pinned) {
+		throw Object.assign(new Error('no IPFS pinning provider configured'), {
+			status: 503,
+			code: 'not_configured',
 		});
 	}
-	const data = await resp.json();
-	return `ipfs://${data.value.cid}`;
+	return pinned.uri;
 }
 
 // Strict base64: the scene GLB and its thumbnail arrive base64-encoded, and
@@ -49,14 +53,14 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const storageToken = env.NFT_STORAGE_TOKEN;
-	if (!storageToken) return error(res, 503, 'not_configured', 'NFT_STORAGE_TOKEN not configured');
+	if (!ipfsPinningConfigured())
+		return error(res, 503, 'not_configured', 'no IPFS pinning provider configured (set PINATA_JWT)');
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	// The uploads below run on the platform's NFT.Storage token, never let an
-	// anonymous caller push arbitrary blobs to IPFS on our account.
+	// The pins below run on the platform's own pinning account, never let an
+	// anonymous caller push arbitrary blobs to IPFS on it.
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) {
@@ -97,14 +101,16 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'invalid ownerPubkey');
 	}
 
+	const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'scene';
+
 	let glbUri, thumbUri;
 	try {
 		[glbUri, thumbUri] = await Promise.all([
-			uploadToNftStorage(storageToken, glbBytes, 'model/gltf-binary'),
-			uploadToNftStorage(storageToken, thumbBytes, 'image/png'),
+			pinAsset(glbBytes, `${slug}.glb`),
+			pinAsset(thumbBytes, `${slug}.png`),
 		]);
 	} catch (e) {
-		console.error('[nft/mint-scene] asset upload failed', e?.message);
+		console.error('[nft/mint-scene] asset pin failed', e?.message);
 		return respondError(res, e.status || 502, e.code || 'upstream_error', e);
 	}
 
@@ -124,13 +130,9 @@ export default wrap(async (req, res) => {
 
 	let metadataUri;
 	try {
-		metadataUri = await uploadToNftStorage(
-			storageToken,
-			Buffer.from(JSON.stringify(metadata)),
-			'application/json',
-		);
+		metadataUri = await pinAsset(Buffer.from(JSON.stringify(metadata)), `${slug}.json`);
 	} catch (e) {
-		console.error('[nft/mint-scene] metadata upload failed', e?.message);
+		console.error('[nft/mint-scene] metadata pin failed', e?.message);
 		return respondError(res, e.status || 502, e.code || 'upstream_error', e);
 	}
 

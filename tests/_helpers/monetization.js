@@ -32,9 +32,12 @@ export function createTestUser() {
 	return { session: { id: userId } };
 }
 
+// `body` is JSON-encoded for you. Pass a string instead to send exact bytes,
+// which is the only way to express a literal JSON.stringify cannot produce
+// (`1e400`, which parses back as Infinity, is the one that matters here).
 export function makeReq({ method = 'GET', url = '/', headers = {}, body = null, query = null } = {}) {
 	const base = body
-		? Readable.from([Buffer.from(JSON.stringify(body))])
+		? Readable.from([Buffer.from(typeof body === 'string' ? body : JSON.stringify(body))])
 		: Readable.from([]);
 	base.method = method;
 	base.url = url;
