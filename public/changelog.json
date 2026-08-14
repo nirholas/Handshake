@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T05:46:41.636Z",
+	"generated_at": "2026-08-14T05:54:23.149Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -201,6 +201,16 @@
 		{
 			"date": "2026-08-14",
 			"type": "update",
+			"title": "Creator subscriptions renew again instead of failing every billing run in silence",
+			"summary": "No subscription on the platform has ever renewed. When a period came up for renewal, the billing code read two fields off the subscription record, the chain to bill on and the coin to bill in, that had never been created in the database. The charge failed instantly with a database error, and because the renewal job catches each subscriber separately it kept reporting a healthy run: subscribers processed, none charged. Signing up hit the same wall from the other side, creating the subscription and then erroring out. Both fields now exist, default to Solana as the home chain, and are filled in from the checkout that started the subscription, so a renewal reaches the subscriber as a payment request they can approve. A second fault behind it is fixed too: the renewal request was being attached to the creator's account instead of their agent, which could never have been paid. A plan with no agent attached now says so plainly rather than failing as an unexplained error, and the underlying database reason is written to the logs instead of being thrown away.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
 			"title": "Crypto news stops leading with gold prices and Indian equities",
 			"summary": "The filter that decides whether a story from a broad outlet belongs in a crypto feed matched its keyword list as raw text, so \"defi\" fired inside the ordinary word \"defied\" and three Economic Times headlines about Indian share prices led /markets/news and the top of the daily digest. The ticker detector had the same flaw: it read the English word \"near\" as NEAR Protocol, \"optimism\" as OP, and \"maker\" as MKR, which pinned live price widgets to unrelated stories and pushed NEAR to third place in the archive trending strip on the strength of phrases like \"near-term profit booking\". Both now match whole words, and those three projects count only when the story actually names them. Separately, the FXStreet feed we pull was the publisher site-wide one (gold, EUR/JPY, central banks) rather than its crypto desk, so \"India Gold price today\" arrived pre-approved; it now points at the crypto feed.",
 			"link": "/markets/news",
@@ -381,6 +391,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The crypto news archive keeps its place when its storage credentials briefly drop",
+			"summary": "Every hour a scheduled job copies the latest crypto news into the permanent archive behind the markets pages, so that a story stays readable at its own link long after it has rotated out of the live feed. Before writing anything, the job asks Google Cloud for the credentials it needs. That request can come back empty for a moment, usually because the credential service itself is briefly unreachable rather than because anything is actually misconfigured, and the job treated that as a crash: it returned an unexplained internal error and raised an alert, which read as though the archive were broken. It now recognises a missing credential for what it is, records the hour as a skipped run with the reason stated plainly, and picks up again on the next pass. Nothing is lost when that happens, because each article is filed under a fingerprint of its own link, so the next successful run archives exactly the stories the skipped one would have and never files a duplicate. A genuine storage failure is still reported loudly.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

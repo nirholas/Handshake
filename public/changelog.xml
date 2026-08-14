@@ -151,6 +151,14 @@
 			<description>Several buttons across the site were links pointing at nothing, so clicking them moved the page to the top and nothing else happened. On a coin or category page whose market data failed to load, &quot;Reload the page&quot; was one of them: the one control offered for recovery had no handler at all, so a reader who hit a data outage had no way out of it. It now re-runs the real request in place, skeletons and all, so a recovered feed repaints without a full page load. The &quot;+ Link wallet&quot; button on your account page was the same kind of dead end, pointing back at the section it already sat in; it now opens your Solana wallet, signs the ownership message, and links the wallet to your account, including moving a wallet that is currently linked somewhere else once your signature has proved it is yours. Clear filter on derivatives, Show all on stablecoins, Retry on search and on the world generator, skip for now in the dashboard checklist, Create one in the agent registry, and View more in Related Agents were all links pretending to be buttons; they are real buttons now, which means they answer the space bar, sit in the tab order where you expect, and show a visible focus ring. Picking a coin in the compare search is announced properly to a screen reader as you arrow through the list.</description>
 		</item>
 		<item>
+			<title>Creator subscriptions renew again instead of failing every billing run in silence</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:Creator subscriptions renew again instead of failing every billing run in silence</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>No subscription on the platform has ever renewed. When a period came up for renewal, the billing code read two fields off the subscription record, the chain to bill on and the coin to bill in, that had never been created in the database. The charge failed instantly with a database error, and because the renewal job catches each subscriber separately it kept reporting a healthy run: subscribers processed, none charged. Signing up hit the same wall from the other side, creating the subscription and then erroring out. Both fields now exist, default to Solana as the home chain, and are filled in from the checkout that started the subscription, so a renewal reaches the subscriber as a payment request they can approve. A second fault behind it is fixed too: the renewal request was being attached to the creator's account instead of their agent, which could never have been paid. A plan with no agent attached now says so plainly rather than failing as an unexplained error, and the underlying database reason is written to the logs instead of being thrown away.</description>
+		</item>
+		<item>
 			<title>Crypto news stops leading with gold prices and Indian equities</title>
 			<link>https://three.ws/markets/news</link>
 			<guid isPermaLink="false">2026-08-14:Crypto news stops leading with gold prices and Indian equities</guid>
@@ -285,6 +293,14 @@
 			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The news reader recorded every URL it was handed into the durable corpus the 3D agents ground their crypto answers on, including ones no extraction attempt could read. That left headline-only rows with no article behind them, and because the reader is a public endpoint whose caller supplies the link, the headline, and the source name, a single request could plant a permanent entry with any headline someone chose. The reader now refuses anything that is not an ordinary web link, records only stories that yielded real article text, and the knowledge API filters the empty rows already on file out of every answer.</description>
+		</item>
+		<item>
+			<title>The crypto news archive keeps its place when its storage credentials briefly drop</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-14:The crypto news archive keeps its place when its storage credentials briefly drop</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every hour a scheduled job copies the latest crypto news into the permanent archive behind the markets pages, so that a story stays readable at its own link long after it has rotated out of the live feed. Before writing anything, the job asks Google Cloud for the credentials it needs. That request can come back empty for a moment, usually because the credential service itself is briefly unreachable rather than because anything is actually misconfigured, and the job treated that as a crash: it returned an unexplained internal error and raised an alert, which read as though the archive were broken. It now recognises a missing credential for what it is, records the hour as a skipped run with the reason stated plainly, and picks up again on the next pass. Nothing is lost when that happens, because each article is filed under a fingerprint of its own link, so the next successful run archives exactly the stories the skipped one would have and never files a duplicate. A genuine storage failure is still reported loudly.</description>
 		</item>
 		<item>
 			<title>The free fact-check lane is callable from a browser again, and two paid endpoints answer to the price you set</title>

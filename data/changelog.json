@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-08-14",
+			"title": "Token-to-3D calls return the real coin again, and receipts show the amount you actually paid",
+			"summary": "Paying to turn a Solana token into a 3D mesh handed back an untitled, untextured cube for most of today's coins, $THREE included. The server only knew how to read a token's name, symbol and artwork from the older of the two places Solana stores it, and every launch since the Token-2022 change keeps that information inside the coin's own account instead. Those coins now come back with their real name, symbol and logo baked onto the mesh. The same read now refuses an address that is not a coin at all, rather than charging for a blank cube, and the batch call's published example uses a coin that actually works if you copy it. Separately, the receipts page could not scale amounts paid on X Layer or in $THREE, so a one-tenth-of-a-cent payment could read as a raw 1000; both now display correctly.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/x402-endpoints"
+		},
+		{
+			"date": "2026-08-14",
+			"title": "Creator subscriptions renew again instead of failing every billing run in silence",
+			"summary": "No subscription on the platform has ever renewed. When a period came up for renewal, the billing code read two fields off the subscription record, the chain to bill on and the coin to bill in, that had never been created in the database. The charge failed instantly with a database error, and because the renewal job catches each subscriber separately it kept reporting a healthy run: subscribers processed, none charged. Signing up hit the same wall from the other side, creating the subscription and then erroring out. Both fields now exist, default to Solana as the home chain, and are filled in from the checkout that started the subscription, so a renewal reaches the subscriber as a payment request they can approve. A second fault behind it is fixed too: the renewal request was being attached to the creator's account instead of their agent, which could never have been paid. A plan with no agent attached now says so plainly rather than failing as an unexplained error, and the underlying database reason is written to the logs instead of being thrown away.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-14",
 			"title": "Paid 3D downloads work from a browser again, and the marketplace report stops ignoring every Solana price",
 			"summary": "Buying a 3D asset or an animation clip from a web page was impossible: those two endpoints answered the browser's permission check with a payment demand and none of the cross-origin headers a wallet needs, so the page could never even read what it was being asked to pay. Both now answer that check the same way every other paid endpoint does, on the challenge, on the errors, and on a free listing. The paid marketplace report had a second, quieter problem: it recognised prices set in USDC on Base but not the identical prices set in USDC on Solana, so every Solana-priced agent was counted as unpriced and left out of the average, lowest and highest figures buyers were paying for. Solana prices now count. The auth health check no longer charges for a call it refuses, its request reader now has the same size limit as its neighbours, and the avatar optimization batch can finally be repriced at deploy time like every other endpoint.",
 			"tags": [
@@ -21591,6 +21608,15 @@
 			"date": "2026-08-14",
 			"title": "Recurring agent payments keep their place when the database has a brief wobble",
 			"summary": "The scheduled job that charges recurring agent subscriptions treated every database problem the same way. If it could not read the list of subscriptions that were due, it answered with a hard error, and because the job is driven once a minute, a short database hiccup turned into a steady stream of failures and left the subscription engine looking permanently broken on the platform status readout. Every other scheduled job already tells the difference between a passing connection problem, which is worth quietly waiting out, and a genuine fault in the query itself, which is worth reporting loudly. This one now does the same: a brief connection wobble is recorded as a skipped run and the next minute resumes exactly where it left off, while a real fault still surfaces in full. No charge is created, repeated, or missed because of the change, and subscriptions that came due during the wobble are collected as soon as the connection returns.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"title": "The crypto news archive keeps its place when its storage credentials briefly drop",
+			"summary": "Every hour a scheduled job copies the latest crypto news into the permanent archive behind the markets pages, so that a story stays readable at its own link long after it has rotated out of the live feed. Before writing anything, the job asks Google Cloud for the credentials it needs. That request can come back empty for a moment, usually because the credential service itself is briefly unreachable rather than because anything is actually misconfigured, and the job treated that as a crash: it returned an unexplained internal error and raised an alert, which read as though the archive were broken. It now recognises a missing credential for what it is, records the hour as a skipped run with the reason stated plainly, and picks up again on the next pass. Nothing is lost when that happens, because each article is filed under a fingerprint of its own link, so the next successful run archives exactly the stories the skipped one would have and never files a duplicate. A genuine storage failure is still reported loudly.",
 			"tags": [
 				"fix",
 				"infra"
