@@ -220,7 +220,14 @@ export default wrap(async (req, res) => {
 						summary: 'MCP tool call',
 						description:
 							'JSON-RPC 2.0 request to the MCP server. Supports tools for 3D avatar management, model validation, inspection, and optimization.',
-						security: [{ bearerAuth: [] }, { apiKeyAuth: [] }],
+						// Pay-first, credentials optional — the same shape the aggregator's
+						// paid lanes use above. A bare probe answers 402 with a full x402
+						// challenge, so a caller settles in USDC and needs no key, token,
+						// or account; a bearer token or API key is accepted but never
+						// required. Listing only the two credential schemes (no leading
+						// `{}`) reads to OpenAPI tooling as "auth is mandatory, pick one",
+						// which sends agents off to obtain a token they do not need.
+						security: [{}, { bearerAuth: [] }, { apiKeyAuth: [] }],
 						requestBody: {
 							required: true,
 							content: {
@@ -673,6 +680,51 @@ export default wrap(async (req, res) => {
 					},
 				},
 				'/api/x402/forge': {
+					// Free discovery lane. The handler answers GET with the price
+					// catalog and input schema and never generates or charges, so an
+					// agent can read the tiers before committing USDC. Documenting only
+					// `post` hid that from every spec reader and made the free lane look
+					// like an undocumented side effect.
+					get: {
+						operationId: 'x402_forge_pricing',
+						security: [],
+						summary: 'Forge pricing and input schema (free, no payment)',
+						description:
+							'Free price/usage discovery for the Forge generation lane. Returns the per-tier USDC pricing, the accepted request body schema, and the free poll endpoint. No payment, no credentials, and no generation — POST the same path to actually generate.',
+						responses: {
+							200: {
+								description: 'Price catalog and input schema',
+								content: {
+									'application/json': {
+										schema: {
+											type: 'object',
+											required: ['route', 'method', 'input_schema', 'pricing_usdc'],
+											properties: {
+												route: { type: 'string' },
+												description: { type: 'string' },
+												method: { type: 'string', description: 'The verb that performs generation: POST.' },
+												input_schema: { type: 'object', description: 'JSON Schema for the POST request body.' },
+												poll: { type: 'string', description: 'Free endpoint for polling a job to completion.' },
+												pricing_usdc: {
+													type: 'array',
+													description: 'One entry per quality tier.',
+													items: {
+														type: 'object',
+														required: ['tier', 'price_usdc'],
+														properties: {
+															tier: { type: 'string', enum: ['draft', 'standard', 'high'] },
+															price_usdc: { type: 'string' },
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							400: { description: 'A ?job= query landed here; poll on GET /api/forge?job=<id> instead' },
+						},
+					},
 					post: {
 						operationId: 'x402_forge_generate',
 						security: PAYMENT_ONLY_SECURITY,
