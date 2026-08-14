@@ -256,6 +256,20 @@ function probe(url, timeoutMs = 2000) {
 	});
 }
 
+// Is the origin under test still answering? Asked only after a scenario was
+// surrendered as infra, to tell "one starved browser" apart from "the server
+// this run reused is gone", which is a real risk in a worktree several agents
+// share. Uses fetch so it works for an https BASE_URL too.
+async function baseAlive(base, timeoutMs = 5000) {
+	try {
+		const res = await fetch(base + '/', { signal: AbortSignal.timeout(timeoutMs) });
+		res.body?.cancel?.();
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 function freePort() {
 	return new Promise((resolve, reject) => {
 		const srv = createServer();
@@ -365,8 +379,14 @@ async function runScenario(base, sc) {
 		// box's interfaces churn (other agents' docker containers add and remove
 		// veths), and Chromium reacts by aborting every in-flight request, even to
 		// localhost. Product code cannot cause it, and a page it hit is half-loaded,
-		// so nothing observed afterwards means anything.
-		if (/Page crashed|Target (page|closed)|browser has been closed|Target crashed|ERR_NETWORK_CHANGED/i.test(m)) {
+		// so nothing observed afterwards means anything. A refused or reset
+		// connection on the DOCUMENT navigation is the same class again: this
+		// worktree is shared by concurrent agents, and one of them restarting or
+		// killing the dev server this run reused takes the origin away mid-sweep.
+		// No scenario ever routes the document (see notDocument), so product code
+		// cannot produce it, and reporting it per scenario turned one dead server
+		// into sixteen fabricated "/play is down" findings.
+		if (/Page crashed|Target (page|closed)|browser has been closed|Target crashed|ERR_NETWORK_CHANGED|ERR_CONNECTION_(REFUSED|RESET)|ERR_EMPTY_RESPONSE/i.test(m)) {
 			return { infra: m, findings: [], consoleIssues: [], pageErrors: [] };
 		}
 		findings.push(`navigation failed: ${m}`);
@@ -468,6 +488,7 @@ async function main() {
 	const server = await startServer();
 	const failed = [];
 	const notRun = [];
+	let serverGone = false;
 
 	try {
 		for (const sc of scenarios) {
@@ -486,6 +507,18 @@ async function main() {
 			if (res.infra) {
 				notRun.push({ sc, why: res.infra.split('\n')[0] });
 				console.log(`      ${C.y('!')} ${C.y('NOT RUN')} ${C.d('two harness infra failures in a row (starved browser or network churn)')}`);
+				// Distinguish one starved browser from a vanished origin. Grinding the
+				// rest of the sweep against a dev server another agent just killed
+				// costs minutes and buries the real cause under a wall of identical
+				// lines, so stop here and name it.
+				if (!(await baseAlive(server.base))) {
+					serverGone = true;
+					for (const rest of scenarios.slice(scenarios.indexOf(sc) + 1)) {
+						notRun.push({ sc: rest, why: 'origin under test stopped answering' });
+					}
+					console.log(`\n  ${C.r('✗')} ${server.base} stopped answering, abandoning the sweep.`);
+					break;
+				}
 				continue;
 			}
 			const { findings, consoleIssues, pageErrors, o } = res;
@@ -514,8 +547,15 @@ async function main() {
 	// audit that says "all clear" while a third of it never executed is worse than
 	// one that says nothing.
 	if (notRun.length) {
-		console.log(C.y(`  ${notRun.length} of ${scenarios.length} scenario(s) NOT RUN (harness infra: starved browser or network churn):`));
-		for (const { sc, why } of notRun) console.log(`      ${C.y('!')} ${sc.id}: ${why}`);
+		const why = serverGone
+			? `the origin under test (${server.base}) went away mid-sweep`
+			: 'harness infra: starved browser or network churn';
+		console.log(C.y(`  ${notRun.length} of ${scenarios.length} scenario(s) NOT RUN (${why}):`));
+		for (const { sc, why: reason } of notRun) console.log(`      ${C.y('!')} ${sc.id}: ${reason}`);
+		if (serverGone) {
+			console.log(C.d('\n      Restart it and rerun. On a worktree several agents share, pin your own:'));
+			console.log(C.d('      npx vite --port 3119 --strictPort   then   BASE_URL=http://127.0.0.1:3119 npm run audit:play-failures'));
+		}
 		console.log('');
 	}
 	if (!failed.length) {
