@@ -29,7 +29,7 @@
 //   node scripts/create-gcp-scheduler.mjs --env-file <prod.env>           # sync config, leave run state alone
 //   node scripts/create-gcp-scheduler.mjs --env-file <prod.env> --pause   # sync + pause EVERY job (stop the fleet)
 //   node scripts/create-gcp-scheduler.mjs --env-file <prod.env> --resume  # sync + resume EVERY job (recover from --pause)
-//   gcloud scheduler jobs resume cron-api-cron-uptime-check --location us-central1  # one job
+//   gcloud scheduler jobs resume cron--api-cron-uptime-check --location us-central1  # one job
 //
 // Auth: each job sends `Authorization: Bearer $CRON_SECRET`, exactly what the
 // api/cron/* handlers already validate. The secret is read from --env-file or
@@ -54,7 +54,8 @@ const ATTEMPT_DEADLINE = '320s';
 
 /**
  * Scheduler job id for a cron path: `/api/cron/economy-tick` →
- * `cron-api-cron-economy-tick`. Job ids allow [a-zA-Z0-9_-], max 500 chars.
+ * `cron--api-cron-economy-tick`. The path's leading slash becomes a hyphen of its
+ * own, hence the double hyphen. Job ids allow [a-zA-Z0-9_-], max 500 chars.
  *
  * `scripts/check-cron-drift.mjs` imports this rather than re-deriving it: two
  * copies that drift by one character make every live job read as MISSING and

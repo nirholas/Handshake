@@ -37,13 +37,17 @@ describe('runStateAction', () => {
 });
 
 describe('jobId', () => {
+	// The leading slash of the path becomes a hyphen of its own, so a live job id
+	// carries a DOUBLE hyphen after the prefix. Every hand-typed `gcloud scheduler
+	// jobs pause|run|describe` command that spells it with one hyphen fails with
+	// NOT_FOUND, which is why the exact string is pinned here.
 	it('matches the ids Cloud Scheduler already holds', () => {
-		expect(jobId('/api/cron/economy-tick')).toBe('cron-api-cron-economy-tick');
-		expect(jobId('/api/llm/health')).toBe('cron-api-llm-health');
+		expect(jobId('/api/cron/economy-tick')).toBe('cron--api-cron-economy-tick');
+		expect(jobId('/api/llm/health')).toBe('cron--api-llm-health');
 	});
 
 	it('collapses every run of non-alphanumerics to a single hyphen', () => {
-		expect(jobId('/api/cron/a__b.c')).toBe('cron-api-cron-a-b-c');
+		expect(jobId('/api/cron/a__b.c')).toBe('cron--api-cron-a-b-c');
 	});
 
 	it('produces one unique, id-legal job per declared cron', () => {
