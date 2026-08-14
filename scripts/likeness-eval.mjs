@@ -401,9 +401,17 @@ function cosineFor(score5) {
 	return SFACE_SAME_IDENTITY_COSINE + ((score5 - 3) / 2) * (1 - SFACE_SAME_IDENTITY_COSINE);
 }
 
-main().catch((err) => {
-	console.error(`✗ ${err?.message || err}`);
-	process.exitCode = 1;
-});
+// Exit explicitly rather than letting the event loop drain. onnxruntime-web's
+// WASM runtime keeps a handle open for the life of the process, so a run that
+// has printed its whole report and finished writing --out still sits there
+// forever: measured at 34 minutes of idle wall-clock after the last line, with
+// the CPU clock frozen. Every await above has resolved by here, the report file
+// included, so there is nothing left to flush.
+main()
+	.then(() => process.exit(process.exitCode ?? 0))
+	.catch((err) => {
+		console.error(`✗ ${err?.message || err}`);
+		process.exit(1);
+	});
 
 export { cosineFor, cosineToScore5 };
