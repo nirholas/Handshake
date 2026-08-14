@@ -94,10 +94,18 @@ curl -X POST 'https://three.ws/api/marketplace/start-trial' \
 ```
 
 ```json
-{ "data": { "trial_remaining": 3, "reference": null, "already_trialing": false } }
+{
+  "data": {
+    "trial_remaining": 3,
+    "reference": "0f3c…64 hex chars…9ab1",
+    "purchase_id": "6b1f9d02-8a4e-4c17-9a3f-2d5e7c04b81a"
+  }
+}
 ```
 
-Exactly one trial exists per `(user, agent, skill)`. Call it twice and the second call returns `already_trialing: true` with the current count rather than granting a fresh three, so a buyer cannot farm infinite free runs by re-clicking. If they already bought the skill you get `409 already_owned`.
+A fresh grant answers `201` and carries the Solana Pay `reference` reserved for the eventual purchase, plus the `skill_purchases` row id.
+
+Exactly one trial exists per `(user, agent, skill)`. Call it twice while the trial is still active and the second call answers `200` with a different body, `{ "trial_remaining": <current>, "reference": null, "already_trialing": true }`, rather than granting a fresh three, so a buyer cannot farm infinite free runs by re-clicking. Two more refusals to handle: `409 already_owned` if they already bought the skill, and `409 trial_used` if their trial was granted and already spent, which is what stops a buyer resetting an exhausted meter.
 
 ---
 
