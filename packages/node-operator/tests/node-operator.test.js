@@ -6,6 +6,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { createRequire } from 'node:module';
+import { deviceCandidates, defaultDtype, hasNvidiaDriver, DEVICES } from '../src/inference.js';
+import { createRedisShim } from './redis-shim.js';
 import {
 	base58Encode,
 	base58Decode,
@@ -141,6 +144,110 @@ describe('config', () => {
 
 	it('rejects a too-small poll interval', () => {
 		expect(() => loadConfig({ env: { POLL_INTERVAL_MS: '100' }, cwd: '/nonexistent-dir-that-has-no-config' })).toThrow(/POLL_INTERVAL_MS/);
+	});
+
+	it('defaults DEVICE to auto and accepts every documented device', () => {
+		const cwd = '/nonexistent-dir-that-has-no-config';
+		expect(loadConfig({ env: {}, cwd }).device).toBe('auto');
+		for (const device of DEVICES) {
+			expect(loadConfig({ env: { DEVICE: device.toUpperCase() }, cwd }).device).toBe(device);
+		}
+	});
+
+	it('rejects an unknown DEVICE at boot rather than mid-job', () => {
+		expect(() => loadConfig({ env: { DEVICE: 'tpu' }, cwd: '/nonexistent-dir-that-has-no-config' }))
+			.toThrow(/DEVICE must be one of/);
+	});
+});
+
+describe('device selection', () => {
+	it('honors an explicit device with no fallback', () => {
+		// An operator who asked for CUDA must get a hard failure on a host that
+		// cannot do CUDA, not a silent month of CPU-speed earnings.
+		expect(deviceCandidates('cuda', { platform: 'linux', arch: 'x64', gpu: false })).toEqual(['cuda']);
+		expect(deviceCandidates('cpu', { platform: 'linux', arch: 'x64', gpu: true })).toEqual(['cpu']);
+	});
+
+	it('auto reaches for the GPU only when a driver is attached', () => {
+		expect(deviceCandidates('auto', { platform: 'linux', arch: 'x64', gpu: true })).toEqual(['cuda', 'cpu']);
+		// Without the probe this would try CUDA first and pull the 90MB fp32
+		// graph on every CPU-only host before failing over.
+		expect(deviceCandidates('auto', { platform: 'linux', arch: 'x64', gpu: false })).toEqual(['cpu']);
+	});
+
+	it('auto picks the platform-native accelerator elsewhere', () => {
+		expect(deviceCandidates('auto', { platform: 'darwin', arch: 'arm64' })).toEqual(['coreml', 'cpu']);
+		expect(deviceCandidates('auto', { platform: 'win32', arch: 'x64' })).toEqual(['dml', 'cpu']);
+		expect(deviceCandidates('auto', { platform: 'linux', arch: 'arm64' })).toEqual(['cpu']);
+	});
+
+	it('detects the NVIDIA driver from the device nodes the container toolkit mounts', () => {
+		const seen = [];
+		const exists = (p) => { seen.push(p); return p === '/dev/nvidia0'; };
+		expect(hasNvidiaDriver({ platform: 'linux', arch: 'x64', exists })).toBe(true);
+		expect(seen).toContain('/dev/nvidiactl');
+		expect(hasNvidiaDriver({ platform: 'linux', arch: 'x64', exists: () => false })).toBe(false);
+		// CUDA on the bundled runtime is linux/x64 only; never probe elsewhere.
+		expect(hasNvidiaDriver({ platform: 'darwin', arch: 'arm64', exists: () => true })).toBe(false);
+	});
+
+	it('matches weight precision to the device', () => {
+		expect(defaultDtype('cpu')).toBe('q8');
+		expect(defaultDtype('cuda')).toBe('fp32');
+	});
+});
+
+describe('redis shim (the e2e harness itself)', () => {
+	const require = createRequire(import.meta.url);
+
+	/**
+	 * The shim is test infrastructure, but two of its bugs cost a full debugging
+	 * session each and both were invisible from the outside: the real Upstash
+	 * client auto-pipelines (so every command arrived as POST /pipeline and came
+	 * back "unknown command 'pipeline'"), and it base64-DECODES every string it
+	 * receives (so a plain-text "job1" decoded to mojibake and the queue drained
+	 * into nothing). Testing through the real client is the only way to catch
+	 * either, so that is what this does.
+	 */
+	it('serves the real Upstash client over its auto-pipelined, base64 wire format', async () => {
+		const shim = createRedisShim();
+		const url = await shim.listen();
+		try {
+			const { Redis } = require('@upstash/redis');
+			const client = new Redis({ url, token: 'shim' });
+
+			await client.set('ijob:j1', JSON.stringify({ id: 'j1', status: 'queued' }), { ex: 60 });
+			await client.rpush('iqueue:text-embedding', 'job1');
+
+			// "job1" is itself valid base64, which is exactly what made the
+			// encoding bug look like data corruption rather than a protocol bug.
+			expect(await client.rpop('iqueue:text-embedding')).toBe('job1');
+			expect(await client.rpop('iqueue:text-embedding')).toBeNull();
+
+			const stored = await client.get('ijob:j1');
+			const job = typeof stored === 'string' ? JSON.parse(stored) : stored;
+			expect(job).toEqual({ id: 'j1', status: 'queued' });
+
+			expect(await client.del('ijob:j1')).toBe(1);
+			expect(await client.get('ijob:j1')).toBeNull();
+		} finally {
+			await shim.close();
+		}
+	});
+
+	it('expires keys so a stale job cannot be claimed forever', async () => {
+		const shim = createRedisShim();
+		const url = await shim.listen();
+		try {
+			const { Redis } = require('@upstash/redis');
+			const client = new Redis({ url, token: 'shim' });
+			await client.set('ijob:gone', 'x', { ex: 60 });
+			expect(shim._peek('ijob:gone').expiresAt).toBeGreaterThan(Date.now());
+			shim._peek('ijob:gone').expiresAt = Date.now() - 1;
+			expect(await client.get('ijob:gone')).toBeNull();
+		} finally {
+			await shim.close();
+		}
 	});
 });
 
