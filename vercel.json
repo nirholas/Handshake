@@ -3021,6 +3021,10 @@
 			"dest": "/api/walk/control/[action]?action=$1"
 		},
 		{
+			"src": "/api/tournaments/([^/]+)/([^/]+)",
+			"dest": "/api/tournaments/[id]/[action]?id=$1&action=$2"
+		},
+		{
 			"src": "/api/onboarding/avaturn-session",
 			"dest": "/api/onboarding/[action]?action=avaturn-session"
 		},
@@ -3841,14 +3845,6 @@
 		{
 			"src": "/api/avatars/([^/]+)",
 			"dest": "/api/avatars/[id]"
-		},
-		{
-			"src": "/api/tournaments/([^/]+)/([^/]+)",
-			"dest": "/api/tournaments/[id]/[action]?id=$1&action=$2"
-		},
-		{
-			"src": "/api/tournaments/([^/]+)/([^/]+)",
-			"dest": "/api/tournaments/[id]/[action]?id=$1&action=$2"
 		},
 		{
 			"src": "/api/a/(\\d+)/(\\d+)/og",
