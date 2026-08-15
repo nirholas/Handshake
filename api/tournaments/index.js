@@ -1,5 +1,5 @@
 /**
- * Social Trading Arena — tournament collection endpoint.
+ * Social Trading Arena: tournament collection endpoint.
  *
  *   GET  /api/tournaments?network=mainnet&phase=live   → list (public)
  *   POST /api/tournaments                              → create (auth required)
@@ -143,7 +143,7 @@ export default wrap(async (req, res) => {
 		);
 	}
 
-	// POST — create
+	// POST: create
 	const rl = await limits.mcpIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 

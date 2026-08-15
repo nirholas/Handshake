@@ -182,9 +182,15 @@ export async function getEntry(tournamentId, agentId) {
 }
 
 /**
- * Join a tournament. Idempotent on (tournament_id, agent_id): a re-join returns the
- * existing row untouched (the original baseline snapshot stands). Stores the
+ * Join a tournament. Idempotent on (tournament_id, agent_id): a re-join keeps the
+ * original baseline snapshot and joined_at (scoring is scoped by the tournament
+ * window, not by entry time, so the first entry is the honest record). Stores the
  * join-time wallet + all-time metrics snapshot so window scoping is auditable.
+ *
+ * An entry that was WITHDRAWN is flipped back to active, because the alternative is
+ * worse than a rejection: the insert conflicts, the handler answers `joined: true`
+ * off the stale row, the UI congratulates the user, and the agent sits out the whole
+ * tournament. A disqualified entry is never revived this way.
  */
 export async function joinTournament({ tournamentId, agentId, wallet, snapshot }) {
 	await ensureTournamentTables();
@@ -195,6 +201,13 @@ export async function joinTournament({ tournamentId, agentId, wallet, snapshot }
 		returning *
 	`;
 	if (row) return { entry: row, created: true };
+	const [rejoined] = await sql`
+		update tournament_entries
+		set status = 'active', wallet = coalesce(${wallet ?? null}, wallet), updated_at = now()
+		where tournament_id = ${tournamentId} and agent_id = ${agentId} and status = 'withdrawn'
+		returning *
+	`;
+	if (rejoined) return { entry: rejoined, created: false };
 	const existing = await getEntry(tournamentId, agentId);
 	return { entry: existing, created: false };
 }

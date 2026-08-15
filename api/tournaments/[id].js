@@ -1,5 +1,5 @@
 /**
- * Social Trading Arena — single-tournament endpoint + sub-routes.
+ * Social Trading Arena: single-tournament endpoint + sub-routes.
  *
  *   GET  /api/tournaments/:id            → state + live standings + prize + attestation
  *   GET  /api/tournaments/:id/stream     → SSE live rank changes
@@ -158,7 +158,7 @@ async function handleJoin(req, res, id) {
 	if (!tournament) return error(res, 404, 'not_found', 'tournament not found');
 	const status = derivedStatus(tournament, Date.now());
 	if (['ended', 'closed', 'settled', 'cancelled'].includes(status)) {
-		return error(res, 409, 'closed', 'this tournament has ended — entries are closed');
+		return error(res, 409, 'closed', 'this tournament has ended, entries are closed');
 	}
 
 	// Ownership check.
@@ -193,7 +193,10 @@ async function handleJoin(req, res, id) {
 	}
 
 	const { entry, created } = await joinTournament({ tournamentId: id, agentId, wallet, snapshot });
-	if (!entry) return error(res, 500, 'join_failed', 'could not record the entry — try again');
+	if (!entry) return error(res, 500, 'join_failed', 'could not record the entry, try again');
+	if (entry.status === 'disqualified') {
+		return error(res, 409, 'disqualified', 'that agent was disqualified from this tournament and cannot re-enter');
+	}
 
 	return json(
 		res,
