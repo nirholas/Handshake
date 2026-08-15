@@ -3,6 +3,62 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "The pump.fun trade history works again, notification settings show every category, and a bad agent id stops reading as a server crash",
+      "summary": "Three fixes across the public MCP packages and the API behind them. Asking for a token's recent buys and sells (get_token_trades on the free pump.fun MCP server) had stopped working entirely: the platform reads several transactions in one batched call, and the free Solana providers we route through cap those batches at one call each, so they rejected the whole request and the tool returned a raw provider error instead of trades. The platform now recognises that refusal, re-sends the reads one at a time to the same provider, and remembers the cap so later calls skip the wasted attempt; every batched on-chain read benefits, including wallet and agent activity history. Separately, the notifications MCP server told agents there were six notification categories when there are seven, so an agent could never change how it hears about a finished 3D generation; all seven are now listed, along with the security notices that always reach your bell inbox. And the agent provenance log answered a non-uuid agent id with an internal error and a support reference; it now says plainly that the id must be a uuid.",
+      "tags": [
+        "fix",
+        "sdk"
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "title": "Avatars can move their lips again: the Audio2Face lane is back",
+      "summary": "Every call that turns speech into facial animation had been failing with an upstream not-found error, so a talking avatar spoke with a frozen face and the one-shot say() path returned nothing usable. The hosted model id the lane pointed at had stopped resolving for our NVIDIA account. It now points at the hosted Audio2Face NIM that is actually live, verified end to end: a synthesized clip drives a 30 fps ARKit blendshape track whose jaw genuinely opens and closes with the words. The discovery helper that finds these model ids was missing the name NVIDIA publishes them under, which is why the outage looked like a configuration mystery; it now finds them.",
+      "tags": [
+        "fix"
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "title": "Voice and vision SDKs ship runnable examples, and the x402 seller SDK reads its Solana sponsor from the environment",
+      "summary": "@three-ws/voice and @three-ws/vision-mcp now include example scripts you can run as-is against the live free lanes: the voice one speaks a sentence, animates a face from those exact bytes, and transcribes it back; the vision one probes the lane, writes alt text for an image, and reads the text off it. @three-ws/x402-server used to demand the Solana sponsor account as a code option even though its own error message told you to set X402_FEE_PAYER_SOLANA, so a correctly configured deployment still got missing_fee_payer; it now reads that environment variable when the option is omitted. The VS Code x402 extension's endpoint scaffolder was generating Base-only endpoints and now generates Solana-first ones, matching every paid route on the platform, and it ships with a test suite covering which payment requirement it selects.",
+      "tags": [
+        "sdk",
+        "fix"
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "title": "The embed tutorials now name the attribute that actually hides the built-in chat",
+      "summary": "Several tutorials told you to set avatar-chat=\"off\" to hide an agent's built-in chat input. It does not do that: it moves the avatar out of the chat column and lays the chat out as a plain bottom bar, leaving the input on screen. The multi-agent walkthrough leaned on it to keep its behind-the-scenes stage-director messages hidden, so anyone following it verbatim saw those messages leak into the visible chat. The affected tutorials now use chat=\"off\", the real bare-avatar switch, and note that the brain still boots behind it so say(), ask(), and the event stream keep working. The same accuracy pass corrected the walking-avatar leaderboard example, which read fields the API never returns and so always rendered an empty top-walkers list, and the JavaScript API event table, which named the wrong key for the skill a tool-call event reports.",
+      "tags": [
+        "fix",
+        "docs"
+      ],
+      "link": "/tutorials/web-component-end-to-end"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "The vanity SDK now uses the payment wallet you hand it, and the in-chat 3D avatar keeps its tuned lighting",
+      "summary": "Three fixes in the developer packages. The @three-ws/vanity SDK documented a fetch option on its paid address-grinding lane but silently ignored it, so a developer who passed a payment-enabled fetch got a payment-required error back instead of the keypair they paid for; that option now works, as do a custom API host and key. The avatar MCP server's in-chat 3D viewer had been hand-tuned with softer shadows, brighter exposure and a neutral environment light, but the script that rebuilds it before every release still produced the old flat version, so the next release would have quietly undone the tuning; the script now produces the tuned viewer, and the same settings apply to the fallback view for chat apps that cannot run the interactive one. The tool SDK's quick-start example pointed at an API that does not exist and skipped the wrapper an MCP server needs to return anything at all, so following it produced a tool that answered with nothing; it now runs end to end against a real free three.ws endpoint.",
+      "tags": [
+        "fix",
+        "sdk",
+        "docs"
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "title": "Seeding an agent from GitHub is locked to your own click, and a mistyped pick no longer costs you six hours",
+      "summary": "Three fixes to the GitHub memory lane, the one that reads the profile, repositories, and READMEs you tick and distills them into what your agent knows about your work. First: writing or deleting those memories now requires the one-time token the site attaches to your own actions, so another site cannot make your browser re-seed or wipe an agent behind your back. Every neighbouring memory action already worked this way; this one did not. Second: seeding is allowed once every six hours per agent, and that window used to be spent by attempts that never read anything, so ticking nothing and pressing Seed, or picking a repository that had been renamed since the list loaded, locked you out for six hours over a correctable mistake. The window is now taken only once your selection checks out, immediately before anything is actually read. Third: when every model provider is busy at once, the seed used to fail with a bare internal error and a support reference; it now says plainly that nothing was read, that your existing memories are untouched, and roughly how long until you can try again.",
+      "tags": [
+        "security",
+        "fix"
+      ],
+      "link": "/docs/github-memory-seeding"
+    },
+    {
+      "date": "2026-08-15",
       "title": "Three docs pages stop pointing readers at a dead page, a missing section, and a snippet that does nothing",
       "summary": "The Vanity page told you to grind a long address yourself in the browser at /vanity, but that path has never existed and answers 404; the in-browser grinder lives at /vanity-wallet, and both links on the page now go there. In Troubleshooting, the fix for a Quick Look model that opens and instantly closes linked to a model-optimization section that is not on the AR page, so the link dropped you at the top with nothing to read; it now opens the section that actually covers it. The same page told you to add a responsive attribute to size an inline embed, with a snippet that set the width in CSS. Neither half worked: responsive sizing is already on by default, and the element reads the width attribute rather than the computed style, so the documented snippet never produced the 3:4 ratio it promised. The instructions now show the form that does work, and name the two things that switch it off.",
       "tags": [
