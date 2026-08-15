@@ -67,13 +67,18 @@ async function resolveEns(name) {
 	}
 }
 
-// Owner of `<bare>.sol`, read from the name-registry account. Returns null when
-// the domain has never been registered (the PDA has no account).
-async function snsOwner(connection, bare) {
-	const { getDomainKeySync, NameRegistryState } = await import('@bonfida/spl-name-service');
-	const { pubkey } = getDomainKeySync(bare);
-	const { registry } = await NameRegistryState.retrieve(connection, pubkey);
-	return registry?.owner instanceof PublicKey ? registry.owner : null;
+// The address `<bare>.sol` points at. `resolve` is the SNS-IP-5 resolver: it
+// honours SOL records and NFT-tokenized ownership rather than blindly returning
+// the registry's `owner` field, which is what a caller asking "where do I send
+// to this name" actually wants. Throws when the domain was never registered.
+//
+// Deliberately NOT NameRegistryState.retrieve: that helper also runs the
+// tokenized-owner lookup, which costs a getProgramAccounts scan and takes tens
+// of seconds on a throttled public RPC for a field this lane never reads.
+async function snsResolve(connection, bare) {
+	const { resolve } = await import('@bonfida/spl-name-service');
+	const owner = await resolve(connection, bare);
+	return owner instanceof PublicKey ? owner : null;
 }
 
 async function snsFavoriteDomain(connection, owner) {
@@ -95,11 +100,13 @@ async function resolveSns(name) {
 	if (!/^[a-z0-9-]{1,63}$/.test(bare)) return null;
 
 	const connection = getConnection();
-	const owner = await withTimeout(snsOwner(connection, bare), NAME_RESOLVE_TIMEOUT_MS, 'sns').catch((e) => {
-		// An unregistered domain is a clean "no", not an upstream failure: the
-		// library throws the same way for both, so only a real transport error
-		// should surface as one.
-		if (/account.*not.*(found|exist)|Invalid name account/i.test(e?.message || '')) return null;
+	const owner = await withTimeout(snsResolve(connection, bare), NAME_RESOLVE_TIMEOUT_MS, 'sns').catch((e) => {
+		// An unregistered domain is a clean "no", not an upstream failure. Only a
+		// real transport error should surface as one, so the not-registered
+		// signatures the resolver raises are folded into a null here.
+		if (/domain.*(does not exist|not found)|account.*not.*(found|exist)|Invalid name account/i.test(e?.message || '')) {
+			return null;
+		}
 		throw e;
 	});
 	if (!owner) return null;
