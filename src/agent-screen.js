@@ -166,7 +166,7 @@ if (!agentId) {
 
 async function renderSetup() {
 	document.title = 'Deploy to the wall · Agent Screen · three.ws';
-	agentNameEl.textContent = 'Deploy to wall';
+	setAgentNameText('Deploy to wall');
 	liveBadgeEl.style.display = 'none';
 	controlsEl.style.display = 'none';
 
@@ -1030,7 +1030,7 @@ async function boot(id) {
 			const agent = j.agent || j;
 			agentRecord = agent;
 			agentName = agent.name || 'Agent';
-			agentNameEl.textContent = agentName;
+			setAgentNameText(agentName);
 			setPageHeading(agentName);
 			document.title = `${agentName} · Agent Screen · three.ws`;
 			webcamName.textContent = agentName;
@@ -1903,7 +1903,7 @@ async function boot(id) {
 
 	const client = createAgentScreenClient(id, {
 		onOpen({ agentName: n }) {
-			if (n) { agentNameEl.textContent = n; agentName = n; webcamName.textContent = n; setPageHeading(n); }
+			if (n) { setAgentNameText(n); agentName = n; webcamName.textContent = n; setPageHeading(n); }
 			badgeTextEl.textContent = 'Connecting…';
 		},
 		onFrame(frame) {
