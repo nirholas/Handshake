@@ -81,6 +81,28 @@ es.addEventListener('graduation', (e) => console.log('graduated', JSON.parse(e.d
 // The stream self-closes about every 90s; reconnect on 'close'.
 ```
 
+Pass `?mint=<MINT>` (up to 20, comma separated) to receive that token's `trade`
+events instead of the global firehose. A mint that is not a base58 Solana
+address is rejected with a `400 invalid_mint` before the stream opens.
+
+Per-token trades come from PumpPortal's `subscribeTokenTrade`, which it gates
+behind an API key funded with at least 0.02 SOL (`PUMPPORTAL_API_KEY`). When
+that subscription is refused the socket stays open but no trade can ever
+arrive, so the server forwards the refusal as a `notice` event. Listen for it
+and show a degraded state rather than an idle-looking live tape:
+
+```javascript
+const trades = new EventSource('https://three.ws/api/pump/trades-stream?mint=<MINT>');
+trades.addEventListener('trade', (e) => console.log('trade', JSON.parse(e.data)));
+trades.addEventListener('notice', (e) => {
+	// { code: 'upstream_subscription_refused', message, detail, kind, mints }
+	console.warn('live trades unavailable', JSON.parse(e.data));
+});
+```
+
+Settled trades for graduated coins are unaffected: they come from
+`/api/pump/dex-trades`, which needs no PumpPortal credential.
+
 ## States and limits
 
 - **Auth.** The page runs read-only signed out. Trading, `/api/sniper/history`, and the holdings and trade endpoints require a session or bearer token plus ownership of the agent. Signed out, the ticket links to `/login?next=%2Fterminal`.

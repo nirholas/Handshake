@@ -122,7 +122,10 @@ async function walletCard(res, wallet) {
 		WHERE network = ${NETWORK} AND wallet = ${wallet}
 		LIMIT 1
 	`;
-	if (!rep) return json(res, 404, { error: 'not_found', message: 'no track record for this wallet yet' });
+	// Through the shared error() helper so this 404 carries the same
+	// { error, error_description } shape as every other error on this route.
+	// A client reading error_description got undefined here.
+	if (!rep) return error(res, 404, 'not_found', 'no track record for this wallet yet');
 
 	// Recent coins this wallet bought, with their outcome (graduated?) and metadata.
 	const recent = await sql`

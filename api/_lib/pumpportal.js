@@ -27,6 +27,20 @@ const REFUSAL_LOG_INTERVAL_MS = 5 * 60_000;
 let _lastRefusalLogAt = 0;
 
 /**
+ * True when a parsed frame is a subscription refusal rather than data or a
+ * routine ack. Callers that serve a live stream use this to tell their own
+ * clients the feed is degraded, instead of holding a socket open that will
+ * never deliver an event.
+ *
+ * @param {object} msg parsed frame
+ * @returns {boolean}
+ */
+export function isPumpPortalRefusal(msg) {
+	const text = typeof msg?.message === 'string' ? msg.message : null;
+	return text != null && REFUSAL_RE.test(text);
+}
+
+/**
  * Handle a parsed PumpPortal frame if it is an ack/notice (`{ message }`).
  * Returns true when the frame was an ack (caller should skip it), false when
  * it is a data frame. Subscription refusals are logged through `warn` at most
@@ -39,7 +53,7 @@ let _lastRefusalLogAt = 0;
 export function handlePumpPortalAck(msg, warn = console.warn) {
 	const text = typeof msg?.message === 'string' ? msg.message : null;
 	if (text == null) return false;
-	if (REFUSAL_RE.test(text)) {
+	if (isPumpPortalRefusal(msg)) {
 		const now = Date.now();
 		if (now - _lastRefusalLogAt > REFUSAL_LOG_INTERVAL_MS) {
 			_lastRefusalLogAt = now;

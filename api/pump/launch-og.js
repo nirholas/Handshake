@@ -313,8 +313,11 @@ export default wrap(async (req, res) => {
 	let data;
 	try {
 		data = await buildCardData(mint);
-	} catch {
-		// Hard DB failure — serve a branded fallback card rather than 500.
+	} catch (err) {
+		// Hard DB failure: serve a branded fallback card rather than 500. Log it,
+		// because swallowing it silently made a real outage indistinguishable from
+		// a coin we simply have no data on: both render the same blank card.
+		console.warn('[launch-og] card data failed for %s: %s', mint, err?.message || err);
 		data = { name: '', symbol: '', logoBase64: null, qualityScore: null, category: '', isThreeWsLaunch: false, intel: null, outcome: null, liveMcap: null };
 	}
 

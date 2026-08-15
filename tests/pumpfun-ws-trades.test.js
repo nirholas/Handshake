@@ -5,6 +5,7 @@
 //   - buy/sell messages emit normalized { kind:'trade' } events
 //   - a tracked mint's migration still surfaces as a graduation
 //   - no trade subscription is sent without mints
+//   - an upstream subscription refusal reaches the caller via onNotice
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -73,6 +74,40 @@ describe('connectPumpFunFeed — trades', () => {
 		const ws = FakeWS.instances[0];
 		ws.emit('open');
 		expect(ws.sent.find((m) => m.method === 'subscribeTokenTrade')).toBeUndefined();
+		stop();
+	});
+
+	it('reports an upstream subscription refusal through onNotice', async () => {
+		const notices = [];
+		const stop = connectPumpFunFeed({
+			kind: 'trades', mints: ['MINT1'], onEvent: () => {}, onNotice: (n) => notices.push(n),
+		});
+		const ws = FakeWS.instances[0];
+		ws.emit('open');
+		const refusal = "'subscribeTokenTrade' and 'subscribeAccountTrade' methods are only available when connecting with an API key funded with at least 0.02 SOL.";
+		ws.emit('message', JSON.stringify({ message: refusal }));
+		await flush();
+		expect(notices).toHaveLength(1);
+		expect(notices[0].code).toBe('upstream_subscription_refused');
+		expect(notices[0].message).toBe(refusal);
+		expect(notices[0].detail).toContain('PUMPPORTAL_API_KEY');
+		// A standing condition, not a per-message event: repeats stay silent.
+		ws.emit('message', JSON.stringify({ message: refusal }));
+		await flush();
+		expect(notices).toHaveLength(1);
+		stop();
+	});
+
+	it('does not raise a notice for a routine ack', async () => {
+		const notices = [];
+		const stop = connectPumpFunFeed({
+			kind: 'trades', mints: ['MINT1'], onEvent: () => {}, onNotice: (n) => notices.push(n),
+		});
+		const ws = FakeWS.instances[0];
+		ws.emit('open');
+		ws.emit('message', JSON.stringify({ message: 'Successfully subscribed to token trades.' }));
+		await flush();
+		expect(notices).toHaveLength(0);
 		stop();
 	});
 

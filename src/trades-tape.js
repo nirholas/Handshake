@@ -88,10 +88,16 @@ export function mountTradeTape(host, opts = {}) {
 	let destroyed = false;
 	let sse = null;
 	let ageTimer = null;
+	// Set when the server tells us the upstream refused the live trade
+	// subscription. The seeded dex rows stay valid, so we keep them and only
+	// correct the claim that the tape is streaming.
+	let streamDegraded = false;
 
 	function render() {
 		if (!rows.length) {
-			rowsEl.innerHTML = '<div class="tp-msg">No recent trades on this venue.</div>';
+			rowsEl.innerHTML = streamDegraded
+				? '<div class="tp-msg">Live trades are unavailable for this coin right now. Showing settled trades only.</div>'
+				: '<div class="tp-msg">No recent trades on this venue.</div>';
 			return;
 		}
 		rowsEl.innerHTML = rows.map(rowHtml).join('');
@@ -132,9 +138,22 @@ export function mountTradeTape(host, opts = {}) {
 					if (destroyed || !d || d.mint !== mint) return;
 					if (add(d, { prepend: true })) render();
 				},
+				// The socket is up but the upstream refused the trade subscription,
+				// so no trade will ever arrive on it. Say so instead of showing a
+				// lit "live" lamp above a tape that can only ever stay still.
+				notice: () => {
+					if (destroyed) return;
+					streamDegraded = true;
+					liveEl.dataset.state = 'off';
+					liveEl.title = 'Live trade stream unavailable (settled trades only)';
+					render();
+				},
 				close: () => {},
 			},
-			onState: (state) => { liveEl.dataset.state = state === 'live' ? 'on' : 'off'; },
+			onState: (state) => {
+				if (streamDegraded) return;
+				liveEl.dataset.state = state === 'live' ? 'on' : 'off';
+			},
 		});
 		sse.start();
 	}

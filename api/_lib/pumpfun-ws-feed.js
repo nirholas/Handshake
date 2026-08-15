@@ -5,7 +5,7 @@
 
 import WebSocket from 'ws';
 import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
-import { pumpPortalWsUrl, handlePumpPortalAck } from './pumpportal.js';
+import { pumpPortalWsUrl, handlePumpPortalAck, isPumpPortalRefusal } from './pumpportal.js';
 
 const RECONNECT_DELAY_MS = 2_000;
 const MAX_RECONNECTS = 5;
@@ -86,9 +86,14 @@ async function fetchMeta(uri) {
  *   classes to subscribe to. `trades` requires `mints` (PumpPortal's
  *   subscribeTokenTrade is per-mint; there is no firehose for all trades).
  * @param {string[]} [opts.mints=[]] — token mints to stream buy/sell trades for.
+ * @param {(notice: { code: string, message: string, detail: string }) => void} [opts.onNotice]
+ *   called at most once per connection when the upstream refuses a
+ *   subscription (PumpPortal gates per-token trades behind a funded API key).
+ *   Live surfaces use it to tell their own viewers the stream is degraded
+ *   rather than holding open a socket that will never deliver an event.
  * @returns {Function} stop
  */
-export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }) {
+export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [], onNotice }) {
 	let active = true;
 	let ws = null;
 	let reconnects = 0;
@@ -97,6 +102,21 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }
 	const tradeMints = Array.isArray(mints) ? mints.filter(Boolean) : [];
 	const wantsTrades = (kind === 'all' || kind === 'trades') && tradeMints.length > 0;
 	const wantsMints = kind === 'all' || kind === 'mint';
+
+	// One notice per connection: a refusal is a standing condition of the upstream
+	// credential, so repeating it on every reconnect would spam the consumer's own
+	// clients with a fact they already have.
+	let _noticed = false;
+	function notifyRefused(text) {
+		if (_noticed || typeof onNotice !== 'function') return;
+		_noticed = true;
+		const detail = process.env.PUMPPORTAL_API_KEY
+			? 'PUMPPORTAL_API_KEY is set but the upstream refused it (check the key and its SOL balance).'
+			: 'PUMPPORTAL_API_KEY is not configured on this deployment.';
+		try {
+			onNotice({ code: 'upstream_subscription_refused', message: text, detail });
+		} catch { /* a consumer's notice handler must never break the feed */ }
+	}
 
 	// Per-connection mint dedupe, shared between the WS and the REST fallback so a
 	// launch surfaced by one source is never re-emitted by the other.
@@ -200,6 +220,7 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }
 			if (!active) return;
 			let msg;
 			try { msg = JSON.parse(raw.toString()); } catch { return; }
+			if (isPumpPortalRefusal(msg)) notifyRefused(msg.message);
 			if (handlePumpPortalAck(msg, (line) => console.warn('[pumpportal-ws]', line))) return;
 
 			if (msg.txType === 'create' && wantsMints) {
