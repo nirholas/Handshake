@@ -1,24 +1,26 @@
 /**
- * Trading Brain — assisted candidate scan (P4)
- * ============================================
+ * Trading Brain, assisted candidate scan (P4)
+ * ===========================================
  *
  *   POST /api/trading/scan  { agent_id, config }
- *     → live launches that match the rule's entry conditions RIGHT NOW, each with
+ *     -> live launches that match the rule's entry conditions RIGHT NOW, each with
  *       a real on-chain quote (expected tokens out, price impact) and a real
- *       rug/honeypot firewall verdict. NEVER executes — this is the assisted
+ *       rug/honeypot firewall verdict. NEVER executes. This is the assisted
  *       mode's "what would my agent buy?" preview. The owner confirms a candidate
  *       with the existing discretionary trade endpoint, which re-runs every guard.
  *
  * Read-only over real data: the same launch feed (recentPumpLaunches), the same
  * entry gate (matchesEntry), the same quote function (quoteTrade), and the same
- * firewall (assessTradeSafety) the autonomous runner uses — so what the owner
+ * firewall (assessTradeSafety) the autonomous runner uses, so what the owner
  * sees here is exactly what the engine would act on. No synthetic candidates, no
  * fabricated fills, no fake P&L.
  *
- * Owner-scoped + rate-limited. CSRF-exempt because it moves no funds and never
- * touches the custodial key (like the trade endpoint's preview path).
+ * Owner-scoped + rate-limited (per-IP and per-owner, because every match costs
+ * an on-chain quote and a firewall simulation). CSRF-exempt because it moves no
+ * funds and never touches the custodial key (like the trade endpoint's preview
+ * path).
  *
- * Coin rule: coin-agnostic plumbing — it scans whatever real launches the live
+ * Coin rule: coin-agnostic plumbing. It scans whatever real launches the live
  * pump.fun feed returns against the owner's runtime filters. It hardcodes,
  * markets, and recommends no specific mint. $THREE remains the only coin three.ws
  * promotes.
@@ -41,6 +43,10 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 // so an owner's scan stays fast and never hammers the node.
 const MAX_PRICED = 6;
 const MAX_LAUNCHES = 60;
+// Entry-gate failure codes that only the creator stats can decide. A launch
+// rejected for any OTHER reason (age, market cap, liquidity, socials) is already
+// out, so paying for its creator lookup would be a wasted round-trip.
+const CREATOR_GATE_FAILURE = /^(creator_launches|creator_graduated_below):/;
 
 async function resolveUser(req) {
 	const session = await getSessionUser(req);
@@ -59,6 +65,8 @@ export default wrap(async (req, res) => {
 
 	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
+	const ownerRl = await limits.tradingScan(user.id);
+	if (!ownerRl.success) return rateLimited(res, ownerRl, 'too many scans; wait a moment before scanning again');
 
 	let body;
 	try {
@@ -85,8 +93,11 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { data: { network, scanned: 0, matched: 0, candidates: [], note: 'Live launch scanning is available on mainnet only.' } });
 	}
 
-	const payerAddr = agent.meta?.solana_address || null;
-	const payer = payerAddr ? new PublicKey(payerAddr) : null;
+	// meta.solana_address is owner-writable through PATCH /api/agents/:id, so it is
+	// not guaranteed to parse. Hand the firewall the raw string: it resolves the
+	// key itself and downgrades an unparsable one to a skipped round-trip probe,
+	// where decoding it here would throw and turn a preview into a 500.
+	const payer = agent.meta?.solana_address || null;
 	const conn = solanaConnection(network);
 	const nowMs = Date.now();
 	const amountSol = config.sizing.amount_sol;

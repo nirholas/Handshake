@@ -1030,6 +1030,13 @@ export const limits = {
 	// avatarPatch's: editing avatar metadata must not exhaust the link budget.
 	avatarLink: (userId) => getLimiter('avatar:link', { limit: 30, window: '1 h' }).limit(userId),
 	prefsWrite: (userId) => getLimiter('prefs:write', { limit: 30, window: '1 h' }).limit(userId),
+	// Walk snapshot upserts (api/walk/session.js). Sized from the client's real
+	// cadence rather than the generic prefs budget: src/walk-session.js saves on a
+	// 30s heartbeat (120/h) plus debounced writes on interactive changes, so a
+	// 30/h ceiling silenced cross-device sync ~15 minutes into a walk. Keyed by
+	// userId so one office NAT can't collapse every walker into one bucket.
+	walkSessionWrite: (userId) =>
+		getLimiter('walk:session:write', { limit: 240, window: '1 h' }).limit(userId),
 	// Claiming a reputation-unlocked cosmetic onto an agent (api/agents/:id/unlocks).
 	// A low-frequency owner action; this just bounds abusive retries.
 	unlockClaim: (userId) => getLimiter('unlock:claim', { limit: 40, window: '1 h' }).limit(userId),
@@ -1396,6 +1403,12 @@ export const limits = {
 	// open dashboards). Reads move no funds — the send/withdraw/trade paths keep their
 	// own distributed `critical` buckets.
 	walletRead: (userId) => getLimiter('wallet:read', { limit: 60, window: '1 m', local: true }).limit(userId),
+	// Assisted candidate scan (api/trading/scan.js). One call can cost six live
+	// on-chain quotes plus six firewall simulations, so the generic authed-read
+	// IP bucket (300 per 5 min) is far too loose to sit alone in front of it.
+	// Owner-scoped ceiling: the UI button is single-flight and the brain caches
+	// its context scan for 60s, so a real owner never approaches this.
+	tradingScan: (userId) => getLimiter('trading:scan', { limit: 30, window: '5 m', local: true }).limit(userId),
 	// Public cross-origin wallet embed card (GET /api/agents/wallet-embed). Served
 	// CORS:* so a stranger's blog can mount the wallet chip — keyed per IP and
 	// generous (a page with several embeds hydrates them all on load) but bounded
