@@ -208,17 +208,24 @@ export default wrap(async (req, res) => {
 		me = toRow(w, rankByKey.get(meKey));
 		me.onPage = rows.some((r) => r.key === meKey);
 	} else if (meKey) {
-		// Walker has an identity but no qualifying metrics in this window yet.
+		// Walker has an identity but no qualifying metrics in this window yet. Same
+		// row shape as a ranked entry (the page renders both through one template),
+		// just with a null rank and zeroed figures.
+		const prof = walker.userId ? profiles.get(walker.userId) : null;
 		me = {
 			rank: null,
 			key: meKey,
 			userId: walker.userId,
 			anonId: walker.userId ? null : walker.anonId,
-			handle: walker.userId
-				? profiles.get(walker.userId)?.username
-					? `@${profiles.get(walker.userId).username}`
-					: profiles.get(walker.userId)?.display_name || 'you'
+			username: prof?.username || null,
+			handle: prof
+				? prof.username
+					? `@${prof.username}`
+					: prof.display_name || 'you'
 				: anonHandle(walker.anonId),
+			profileUrl: prof?.username ? `/u/${prof.username}` : null,
+			avatarId: prof?.avatar_id || null,
+			avatar: thumbnailUrl(prof?.thumbnail_key),
 			value: 0,
 			deltaFromYesterday: 0,
 			onPage: false,

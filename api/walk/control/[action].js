@@ -121,17 +121,28 @@ const envSchema = z
 	})
 	.strict();
 
-// Live state reported by the walk client when it polls. All optional — a client
-// that hasn't located the avatar yet polls without it.
-const pollStateSchema = z
-	.object({
-		x: z.number().finite().optional().nullable(),
-		z: z.number().finite().optional().nullable(),
-		facing: z.number().finite().optional().nullable(),
-		motion: z.enum(['idle', 'walk', 'run']).optional().nullable(),
-		env: z.string().trim().max(64).optional().nullable(),
-	})
-	.strict();
+// Live state reported by the walk client when it polls. Every field is validated
+// on its own and a field that fails is simply dropped: an all-or-nothing parse
+// meant one unexpected value (a motion name a newer client reports, a NaN from a
+// half-initialised frame) silently discarded the position in the same poll, and
+// /state then served a stale avatar with no error anywhere to explain it.
+const pollFieldSchemas = {
+	x: z.number().finite(),
+	z: z.number().finite(),
+	facing: z.number().finite(),
+	motion: z.enum(['idle', 'walk', 'run']),
+	env: z.string().trim().min(1).max(64),
+};
+
+function parsePollState(raw) {
+	const state = {};
+	for (const [key, schema] of Object.entries(pollFieldSchemas)) {
+		if (raw[key] === undefined) continue;
+		const parsed = schema.safeParse(raw[key]);
+		if (parsed.success) state[key] = parsed.data;
+	}
+	return state;
+}
 
 // ── auth helpers ─────────────────────────────────────────────────────────────
 
@@ -309,10 +320,9 @@ async function handleCreate(req, res) {
 }
 
 async function handleMove(req, res, url) {
-	const raw = await readJson(req);
-	const body = parse(moveSchema, raw);
 	const session = await requireSession(req, res, url);
 	if (!session) return;
+	const body = parse(moveSchema, await readJson(req));
 	if (body.sessionId !== session.id) {
 		return error(res, 403, 'session_mismatch', 'control token does not authorize this session');
 	}
@@ -329,10 +339,9 @@ async function handleMove(req, res, url) {
 }
 
 async function handleGesture(req, res, url) {
-	const raw = await readJson(req);
-	const body = parse(gestureSchema, raw);
 	const session = await requireSession(req, res, url);
 	if (!session) return;
+	const body = parse(gestureSchema, await readJson(req));
 	if (body.sessionId !== session.id) {
 		return error(res, 403, 'session_mismatch', 'control token does not authorize this session');
 	}
@@ -346,10 +355,9 @@ async function handleGesture(req, res, url) {
 }
 
 async function handleSay(req, res, url) {
-	const raw = await readJson(req);
-	const body = parse(saySchema, raw);
 	const session = await requireSession(req, res, url);
 	if (!session) return;
+	const body = parse(saySchema, await readJson(req));
 	if (body.sessionId !== session.id) {
 		return error(res, 403, 'session_mismatch', 'control token does not authorize this session');
 	}
@@ -357,10 +365,9 @@ async function handleSay(req, res, url) {
 }
 
 async function handleEnv(req, res, url) {
-	const raw = await readJson(req);
-	const body = parse(envSchema, raw);
 	const session = await requireSession(req, res, url);
 	if (!session) return;
+	const body = parse(envSchema, await readJson(req));
 	if (body.sessionId !== session.id) {
 		return error(res, 403, 'session_mismatch', 'control token does not authorize this session');
 	}
@@ -389,8 +396,7 @@ async function handlePoll(req, res, url) {
 		motion: url.searchParams.get('motion') || undefined,
 		env: url.searchParams.get('cenv') || undefined,
 	};
-	const stateParsed = pollStateSchema.safeParse(stateRaw);
-	const state = stateParsed.success ? stateParsed.data : {};
+	const state = parsePollState(stateRaw);
 
 	// Claim every undelivered command for this session in fifo order, stamping
 	// delivered_at in the same statement so they are never handed out twice.

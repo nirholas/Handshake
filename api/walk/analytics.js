@@ -164,7 +164,7 @@ export default wrap(async (req, res) => {
 		from walk_events
 		where avatar_id = ${avatarId}
 		  and created_at >= ${`${from}T00:00:00Z`}
-		  and created_at < ${`${to}T23:59:59.999Z`}
+		  and created_at < ${`${to}T00:00:00Z`}::timestamptz + interval '1 day'
 		group by event_name
 		order by count desc
 	`;

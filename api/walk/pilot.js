@@ -206,7 +206,10 @@ export default wrap(async (req, res) => {
 	try {
 		const bearer = extractBearer(req);
 		const user = bearer ? await authenticateBearer(bearer) : await getSessionUser(req);
-		userId = user?.id || user?.sub || null;
+		// authenticateBearer returns { userId }, getSessionUser returns { id } —
+		// read both, or an API-key caller plans anonymously and their LLM spend is
+		// neither attributed nor held to their daily cap.
+		userId = user?.userId || user?.id || user?.sub || null;
 	} catch {
 		userId = null;
 	}
