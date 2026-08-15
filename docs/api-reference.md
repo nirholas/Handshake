@@ -5460,6 +5460,148 @@ curl -s -b cookies.txt 'https://three.ws/api/users/referrals?funnel_days=7' | jq
 
 ---
 
+## Transaction API: build and explain
+
+Three endpoints the in-app wallet and the chat wallet tools
+([chat/src/tools.js](../chat/src/tools.js)) use to prepare a transaction for the
+user's wallet to sign, and to read one back in plain English. **The server never
+signs and never broadcasts**: it returns unsigned bytes, and the wallet owns the
+approval.
+
+### Build a Solana transfer
+
+```
+POST /api/tx/solana/build-transfer
+```
+
+Session cookie required (`401 unauthorized` without one). Builds an unsigned legacy
+transaction moving SOL or any SPL token from `sender` to `recipient`.
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `sender` | string | required | Base58 wallet address. Also the fee payer. |
+| `recipient` | string | required | Base58 wallet address. |
+| `amount` | number | required | UI amount (SOL, or whole tokens), > 0 and at most 1e12. Converted to base units with fixed-point string math, so no float drift. |
+| `token` | string | `SOL` | `SOL` for a native transfer, otherwise the SPL mint address. |
+| `memo` | string | none | Attached as an SPL Memo instruction. Max 512 bytes. |
+| `network` | string | `mainnet` | `mainnet` or `devnet`. |
+
+The mint's owning program is read from the chain, so **Token-2022 mints work**,
+including `$THREE` and every other pump.fun-era launch. The transfer instruction is
+`TransferChecked`, which Token-2022 mints carrying a transfer-fee extension require.
+The recipient's associated token account is created in the same transaction when it
+does not exist yet, paid for by the sender.
+
+```json
+{
+  "transaction": "AQAAAAAA...",
+  "network": "mainnet",
+  "blockhash": "7yfLFPfbbzAk52tx5BxfsDcfrneAoJfwEihVJtnkM9ph",
+  "lastValidBlockHeight": 417508552
+}
+```
+
+Deserialize `transaction` (base64), have the wallet sign it, then broadcast and
+confirm against `blockhash` / `lastValidBlockHeight`.
+
+Caller faults answer 4xx before anything is built, so a user is never asked to
+approve a transaction that can only fail:
+
+| Code | Status | When |
+|---|---|---|
+| `validation_error` | 400 | A field is missing or malformed (a non-base58 address, a non-positive amount, an oversized memo, an unknown network). `issues[]` names the field. |
+| `invalid_mint` | 400 | `token` is not on-chain, or is not an SPL mint. |
+| `invalid_owner` | 400 | `sender` or `recipient` is a program-derived address, which has no associated token account and no key to sign with. |
+| `insufficient_balance` | 400 | The sender holds less of the token than requested. |
+| `invalid_amount` | 400 | The amount rounds to zero at the mint's precision, or exceeds the lamport ceiling. |
+| `upstream_error` | 502 | Solana RPC would not answer. |
+
+```bash
+curl -s -X POST https://three.ws/api/tx/solana/build-transfer \
+  -H 'content-type: application/json' -b cookies.txt \
+  -d '{"sender":"<wallet>","recipient":"<wallet>","amount":0.1,"memo":"gm"}' | jq -r .blockhash
+```
+
+### Build a Solana swap
+
+```
+POST /api/tx/solana/build-swap
+```
+
+Session cookie required. Quotes and builds an unsigned Jupiter swap through the
+shared lite-api client ([api/_lib/token/jupiter.js](../api/_lib/token/jupiter.js)).
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `sender` | string | required | Base58 wallet address; the swap's `userPublicKey`. |
+| `inputMint` | string | required | Base58 mint to spend. Must differ from `outputMint`. |
+| `outputMint` | string | required | Base58 mint to receive. |
+| `amount` | number | required | UI amount of `inputMint`, > 0. Scaled by that mint's decimals. |
+| `slippageBps` | integer | `50` | 1 to 5000. |
+| `network` | string | `mainnet` | `mainnet` only. |
+
+```json
+{
+  "transaction": "AQAAAAAA...",
+  "network": "mainnet",
+  "inputAmount": 0.01,
+  "outputAmount": 123.456789,
+  "outputMint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+  "priceImpactPct": "0.12"
+}
+```
+
+`transaction` is a base64 `VersionedTransaction`. `no_route` (422) means Jupiter
+found no route for the pair and size, `swap_failed` (422) that it quoted but could
+not build, `invalid_route` (400) that both mints are the same, and `upstream_error`
+(502) that Jupiter was unreachable.
+
+### Explain a transaction
+
+```
+POST /api/tx/explain
+```
+
+No auth; IP rate-limited. Reads a confirmed transaction on Solana or Ethereum
+mainnet and returns its transfers plus, when an LLM lane is configured, a one
+paragraph plain-English `summary`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `chain` | string | `solana` or `evm`. |
+| `sig` | string | Solana: a base58 signature that decodes to exactly 64 bytes. EVM: a `0x`-prefixed 32-byte tx hash. |
+
+Solana reads go to the Helius enhanced-transaction API and fall back to
+`getParsedTransaction` over the rotating RPC chain, reconstructing transfers from
+balance deltas. EVM reads walk a failover chain of Alchemy, any configured RPC, then
+keyless public nodes, and decode ERC-20 `Transfer` logs.
+
+```json
+{
+  "tokenTransfers": [],
+  "nativeTransfers": [{ "account": "<pubkey>", "amount": -5000 }],
+  "description": "",
+  "type": "",
+  "feePayer": "<pubkey>",
+  "source": "rpc-fallback",
+  "summary": "The account paid a 5,000 lamport fee ..."
+}
+```
+
+A finished explanation is cached for 24 hours per `chain:sig`, so re-explaining the
+same transaction costs nothing upstream. A malformed `chain` or `sig` is
+`400 bad_request` and never reaches a billed upstream; an unknown transaction is
+`404 not_found`; an RPC outage is `502 upstream_error`; exhausting the shared
+enhanced-API cost ceiling is `429`.
+
+```bash
+curl -s -X POST https://three.ws/api/tx/explain \
+  -H 'content-type: application/json' \
+  -d '{"chain":"solana","sig":"<base58 signature>"}' | jq -r .summary
+```
+
+---
+
 ## Solana Actions API (Blinks)
 
 three.ws publishes a Solana Action so "Claim Your 3D Avatar" unfurls as a Blink
