@@ -12,6 +12,13 @@
  * one this ABI describes.
  */
 
+// The canonical deployments run the ERC-8004 reference implementation, which is a
+// SUBSET of contracts/src/IdentityRegistry.sol. Verified by eth_call on
+// 2026-08-15: name/symbol/ownerOf/balanceOf/tokenURI/register/setAgentURI/
+// setMetadata/setAgentWallet answer on both Base and Base Sepolia;
+// getMetadata/getAgentWallet/supportsInterface answer on Base Sepolia only; and
+// the spend-delegation trio below, plus ERC-721 Enumerable, revert everywhere.
+// Those fragments are for an instance you deploy from contracts/src yourself.
 export const IDENTITY_REGISTRY_ABI = [
 	// --- Registration ---
 	'function register() external returns (uint256 agentId)',
@@ -57,7 +64,13 @@ export const IDENTITY_REGISTRY_ABI = [
 	'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
 ];
 
-// Mirrors contracts/src/ReputationRegistry.sol exactly (the deployed bytecode):
+// Mirrors contracts/src/ReputationRegistry.sol exactly. That source is deployed
+// NOWHERE: an eth_call sweep on 2026-08-15 showed the canonical
+// REGISTRY_DEPLOYMENTS[*].reputationRegistry addresses (Base 8453, Base Sepolia
+// 84532) running the ERC-8004 reference implementation, whose interface is
+// readFeedback/getClients and which reverts on every selector below. Use this ABI
+// against your own deploy of contracts/src, not against the canonical addresses.
+// Shape notes:
 //   submitFeedback(uint256, int8 score, string uri)        — score is signed, [-100,100]
 //   getReputation(uint256) → (int256 avgX100, uint256 count) — pre-averaged ×100; divide for display
 //   FeedbackSubmitted(agentId, from, int8 score, string uri) — `from`, not `submitter`
