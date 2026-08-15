@@ -60,10 +60,13 @@ function summarizePaytable(segments) {
 	}
 	// Cash prizes read as the headline outcomes, so surface them first, richest first.
 	// Item prizes then sort by quantity so the table climbs rather than jumping around.
+	// `item` is null for any wedge that awards no item, and the comparator has to hold
+	// for a future wedge kind that has none (a blank, an XP grant), so it orders on the
+	// coalesced string rather than dereferencing a field this same function nulls.
 	return [...rows.values()].sort((a, b) => {
 		if (a.kind !== b.kind) return a.kind === 'gold' ? -1 : 1;
 		if (a.kind === 'gold') return b.gold - a.gold;
-		if (a.item !== b.item) return a.item.localeCompare(b.item);
+		if (a.item !== b.item) return String(a.item || '').localeCompare(String(b.item || ''));
 		return a.qty - b.qty;
 	});
 }

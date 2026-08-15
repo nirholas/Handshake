@@ -25,7 +25,7 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { getBalances } from '../_lib/balances.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
-import { verifyNonce, signPlayPass, PLAY_GATE_MINT, PLAY_GATE_MIN } from '../_lib/play-pass.js';
+import { verifyNonce, signPlayPass, PASS_TTL_S, PLAY_GATE_MINT, PLAY_GATE_MIN } from '../_lib/play-pass.js';
 
 const bs58 = bs58mod.default || bs58mod;
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -126,8 +126,13 @@ export default wrap(async (req, res) => {
 	//    to acquire the token; clear of it → a signed pass the game server trusts.
 	if (balance >= minBalance) {
 		const playPass = signPlayPass({ wallet: address, mint: PLAY_GATE_MINT, balance });
+		// Read the lifetime off the signer rather than restating it: the browser
+		// schedules its silent renewal from this `expiresAt`, so a second copy of
+		// the number here would drift the client's idea of freshness away from the
+		// pass the game server actually honours.
+		const expiresAt = new Date(Date.now() + PASS_TTL_S * 1000).toISOString();
 		return json(res, 200, {
-			data: { ok: true, wallet: address, balance, mint: PLAY_GATE_MINT, symbol, decimals, playPass, expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() },
+			data: { ok: true, wallet: address, balance, mint: PLAY_GATE_MINT, symbol, decimals, playPass, expiresAt },
 		});
 	}
 	// Acquire URL: for the native SOL mint, a DEX swap (SOL→SOL) is nonsensical —

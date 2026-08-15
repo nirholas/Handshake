@@ -20,7 +20,7 @@ import { z } from 'zod';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { getBalances } from '../_lib/balances.js';
-import { verifyPlayPass, signPlayPass, PLAY_GATE_MINT, PLAY_GATE_MIN } from '../_lib/play-pass.js';
+import { verifyPlayPass, signPlayPass, PASS_TTL_S, PLAY_GATE_MINT, PLAY_GATE_MIN } from '../_lib/play-pass.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -75,8 +75,12 @@ export default wrap(async (req, res) => {
 	//    fresh pass; one that dropped below gets an honest, actionable refusal.
 	if (balance >= minBalance) {
 		const playPass = signPlayPass({ wallet: address, mint: PLAY_GATE_MINT, balance });
+		// Same lifetime the signer sealed into the pass. The renewal loop reschedules
+		// itself off this value, so restating the number here is how a shortened TTL
+		// would turn into silent mid-session kicks.
+		const expiresAt = new Date(Date.now() + PASS_TTL_S * 1000).toISOString();
 		return json(res, 200, {
-			data: { ok: true, wallet: address, balance, mint: PLAY_GATE_MINT, symbol, decimals, playPass, expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() },
+			data: { ok: true, wallet: address, balance, mint: PLAY_GATE_MINT, symbol, decimals, playPass, expiresAt },
 		});
 	}
 

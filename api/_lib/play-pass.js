@@ -42,7 +42,14 @@ const NONCE_TTL_S = 5 * 60;
 // Lifetime of a minted pass — long enough to finish loading into the world after
 // the check, short enough that a wallet that offloads its tokens can't ride an
 // old pass for long. The game server re-checks balance on a cadence too.
-const PASS_TTL_S = 10 * 60;
+//
+// Exported because /verify and /refresh put this lifetime ON THE WIRE as
+// `expiresAt`, and the browser schedules its silent renewal off that value
+// (src/game/play-auth.js loadStoredPass/refreshPlayPass). A second copy of the
+// number in those handlers would mean shortening the TTL here quietly leaves
+// every client holding a pass it believes is fresh and the game server has
+// already rejected, so both read it from here.
+export const PASS_TTL_S = 10 * 60;
 
 const DEV_SECRET = 'three-ws-holder-pass-dev-secret';
 

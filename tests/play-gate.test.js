@@ -4,7 +4,7 @@
 //   GET  /api/play/nonce  — gate config + fresh nonce
 //   POST /api/play/verify — ed25519 sig check, balance gate, pass issuance
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { Readable } from 'node:stream';
 import { ed25519 } from '@noble/curves/ed25519.js';
 import bs58mod from 'bs58';
@@ -189,11 +189,39 @@ describe('POST /api/play/verify', () => {
 	});
 
 	it('returns 400 gate_disabled when no mint is configured', async () => {
-		// This test must run in a separate Node process to get a fresh module
-		// environment — env is read at module load time. We simulate via a worker.
-		// Instead, directly test the error path is present in source (the unit test
-		// for this lives in play-pass.test.js for the isolated-process case).
-		expect(true).toBe(true); // documented: covered by play-pass.test.js + _gd.mjs
+		// PLAY_GATE_MINT is read once, at module load. Mutating the env var on the
+		// already-imported module would prove nothing, so drop the module graph and
+		// re-import both endpoints with the gate unpinned.
+		vi.resetModules();
+		const savedMint = process.env.PLAY_GATE_MINT;
+		const savedThree = process.env.THREE_MINT;
+		delete process.env.PLAY_GATE_MINT;
+		delete process.env.THREE_MINT;
+		try {
+			const gatelessVerify = (await import('../api/play/verify.js')).default;
+			const res = mockRes();
+			await gatelessVerify(mockReq({
+				method: 'POST',
+				body: { address: 'a'.repeat(40), signature: 'b'.repeat(80), nonce: 'c'.repeat(40) },
+			}), res);
+			expect(res.statusCode).toBe(400);
+			expect(res.json.error).toBe('gate_disabled');
+
+			// And the nonce endpoint tells the client to skip sign-in entirely rather
+			// than sending it into a verify that can only refuse it.
+			const gatelessNonce = (await import('../api/play/nonce.js')).default;
+			const nr = mockRes();
+			await gatelessNonce(mockReq({ method: 'GET' }), nr);
+			expect(nr.statusCode).toBe(200);
+			expect(nr.json.data.required).toBe(false);
+			expect(nr.json.data.mint).toBe('');
+		} finally {
+			if (savedMint === undefined) delete process.env.PLAY_GATE_MINT;
+			else process.env.PLAY_GATE_MINT = savedMint;
+			if (savedThree === undefined) delete process.env.THREE_MINT;
+			else process.env.THREE_MINT = savedThree;
+			vi.resetModules();
+		}
 	});
 
 	it('rejects missing required fields', async () => {
