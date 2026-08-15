@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "A market intelligence outage no longer tells you your own API key was rejected",
+			"summary": "The two market intelligence reads in the unified API, recent narrative intel and momentum-ranked projects, pass a key we hold to the upstream provider; a caller needs no key at all. When that provider stopped accepting our key, both reads answered \"unauthorized\" with the provider's own wording, so an agent reading the response concluded its own credentials were bad and retried with different ones forever, when nothing on the caller's side was wrong. Both reads now say plainly that the service is temporarily unavailable because this deployment's upstream key was rejected, which is a status clients already know to retry rather than re-authenticate against. The older market intelligence endpoints always classified this correctly; the classification now lives in one place, so the two doors cannot drift apart again, and the error tables in the API reference list every code either one can return.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "The tokenized-stock board sorts the way you asked, with the busiest names first",
 			"summary": "The Robinhood Chain stock board (and the API behind it) accepts a sort column and a direction. Both ran backwards: asking for the highest 24h volume returned the quietest tokens, the ones with no market at all led every column, and passing dir=asc handed back descending results. Numeric columns now read highest-first by default, dir=asc genuinely flips them, and a token with no price or no NAV feed sorts to the end in either direction instead of crowding the top. The response now also echoes the sort and direction that actually ran, so an unknown sort value comes back as the default it fell to rather than as the value you sent; the memecoin screener echoes its sort the same honest way.",
 			"tags": [
