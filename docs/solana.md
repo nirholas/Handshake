@@ -68,7 +68,7 @@ Failing over is only half the contract. The other half is *how long* a lane stay
 | Plain rate limit (429, no quota wording) | 10 min | Transient burst throttling; the lane recovers on its own. |
 | Bad or expired key (401, 403) | 30 min | An endpoint-wide credential problem. |
 | Dead or misrouted URL (404, 410) | 30 min | Persistent misconfiguration, not a blip. |
-| One refused *call shape* (403 + `Request blocked`) | 30 s | The lane is healthy; only this request is unwelcome. |
+| One refused *call shape* (403 + `Request blocked`) | none for the lane | The lane is healthy; only this request is unwelcome, so the *method* is demoted on that endpoint (`markMethodDemotion`) and every other call shape keeps flowing. A caller that reaches `markEndpointCooldown` directly still gets the cheapest window, 30 s. |
 | Provider 5xx | 2 min | Server-side wobble. |
 | Fetch threw (DNS, connection) | 30 s | Network blip. |
 
@@ -81,7 +81,7 @@ The second-to-last row is the subtle one, and it cost us a primary. Each provide
              "message": "Request blocked. Details: blocked parameter: params.1.programId" } }
 ```
 
-Read as a credential failure that benched the node for 30 minutes, and since token and USDC balance readers make that exact call constantly, a healthy primary evicted itself on its own routine traffic and the rotation cascaded onto whatever came next. So a 403 whose body names a blocked call shape now fails over for that one request and leaves the lane in service. A 403 that does *not* say so is still treated as a bad key and benched for the full 30 minutes. Both directions are covered by `tests/solana-rpc-priority-and-breaker.test.js`.
+Read as a credential failure that benched the node for 30 minutes, and since token and USDC balance readers make that exact call constantly, a healthy primary evicted itself on its own routine traffic and the rotation cascaded onto whatever came next. So a 403 whose body names a blocked call shape now fails over for that one request and demotes only that method on that endpoint, leaving the lane serving everything else with no cooldown at all. A 403 that does *not* say so is still treated as a bad key and benched for the full 30 minutes. Both directions are covered by `tests/solana-rpc-priority-and-breaker.test.js`.
 
 The same distinction applies one layer up, to HTTP 200 responses carrying a JSON-RPC error. A provider refusing a call shape (PublicNode's `excluded from account secondary indexes`, Tatum's `available for paid plans only`) must rotate to the next lane, while a genuinely deterministic error (`invalid params`) must *not*, because every lane would fail it identically and rotating just multiplies one failure by the length of the chain.
 

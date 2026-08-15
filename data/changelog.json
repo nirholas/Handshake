@@ -3,6 +3,26 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "The agent economy volume dashboard stops sending you to profiles that are not there",
+      "summary": "Top earners and top spenders on the agent-to-agent volume page linked every ranked agent to a profile, including agents whose identity had been deleted. Those rows sent you to an empty profile shell for an agent that no longer exists. Both leaderboards now name a departed agent without linking it, the same rule the settled-hire feed below them already followed, and a row whose stored avatar has been pruned falls back to its initials tile instead of a broken-image icon. The page also cleared its accessibility floor: the small print under each stat, the footnote, and the retry button were all below the WCAG AA contrast minimum in dark mode, and in light mode the cyan links and the green live badge were effectively unreadable. Links inside the empty-state sentences now carry a standing underline, so they are not marked by colour alone.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/agent-economy-volume"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list",
+      "summary": "Two tutorials had drifted away from the code they document, and following either one exactly produced a bad outcome rather than a confusing one. The gesture tutorial's API example padded its request body with an empty clip array, and told readers that field was required; it has not been required for a while, and an empty array is a real value, so anyone who copied that snippet to change one gesture slot silently erased every custom clip on their agent. The endpoint's actual rule is now stated: every field is optional, present replaces it, absent leaves it alone. That page also listed four gestures on the /walk quick keys that are not on them, so pressing 1 through 8 never produced what it described; the eight keys are now named in order, with the wheel and the code call given for the four that have no key. The guard tutorial's registry entry left out the proof block, which the registry auditor has since made mandatory, so a reader who followed every step to the end hit a failure the page never mentioned. It now includes a working proof, shows the exact error you get without one, and adds a step for the command that runs it, which is the difference between a guard that is wired up and a guard anyone has shown still catches anything. Its summary line also described a completely different guard from the one it builds.",
+      "tags": [
+        "docs",
+        "fix"
+      ],
+      "link": "/docs/tutorials/write-a-guard"
+    },
+    {
+      "date": "2026-08-15",
       "title": "Arming an Oracle agent for live trading no longer rounds your trade size up",
       "summary": "The arm page clamps the risk knobs on the server so a bad number can never reach the trading loop, and those clamps have a floor: the smallest trade the loop will place is 0.001 SOL. That floor was being applied in the wrong direction. Ask to arm a live agent with a per-trade size of zero, and instead of being told no, you were armed for real spending at 0.001 SOL a trade with a half-SOL daily ceiling you never asked for. The check meant to catch this looked at the number after the clamp had already raised it, so it could never fire. Arming live now refuses any per-trade size below the floor, and any daily cap smaller than a single trade, and tells you which number to fix; nothing is armed until you do. Clamping a too-large number back down to the ceiling is unchanged, and simulate runs keep the same forgiving behaviour as before. The arm page also shows the reason a save was rejected instead of one generic line, so an ownership problem no longer reads the same as a bad trade size, and a failed Telegram test now prints what Telegram actually said.",
       "tags": [

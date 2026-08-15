@@ -201,9 +201,9 @@ Every registered agent card requires a `model.sha256` field. The `<three-d-agent
 
 ### Validator compromise (V4)
 
-Validator keys are dedicated signing keys, not personal wallets. If a validator key is compromised, the registry owner calls `removeValidator(address)`. Indexers treat attestations from that validator as expired from the removal block onward.
+Validator keys are dedicated signing keys, not personal wallets. The deployed `ValidationRegistry` has **no validator allowlist** (`removeValidator(address)` exists only on `contracts/src/ValidationRegistry.sol`, which is deployed nowhere), so revocation is not an on-chain call: any address can answer a request addressed to it. Containment for a compromised validator key is therefore to rotate it (`scripts/erc8004/provision-validator-key.mjs` reprovisions `VALIDATOR_PRIVATE_KEY` on the API service) and to have indexers and resolvers filter by validator address, treating attestations signed by the retired key as expired from the rotation block onward.
 
-The registry owner is currently the deployer EOA. Migration to a 3-of-5 Safe on Base is planned before public registration opens — allow-list changes will require multisig approval.
+That places the whole burden on key custody: see the platform-validator note in [contracts/DEPLOYMENTS.md](../contracts/DEPLOYMENTS.md) and [docs/erc8004/validation-attestation.md](./erc8004/validation-attestation.md) for the operating rules.
 
 ### Reputation gaming (V5)
 
