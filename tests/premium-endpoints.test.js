@@ -24,7 +24,7 @@ const QUOTE_ID = '2af3ee5e-8b10-40d5-bbf2-f375197dc39f';
 const TX_SIG = '5Zx1uWnPZ8kkVYQ9mLXJx3nQ8Yb2c1D4eF5gH6jK7mN8pQ9rS1tU2vW3xY4zA5bC6dE7fG8hJ9kL1mN2pQ3r';
 
 const db = vi.hoisted(() => ({ handlers: [], calls: [] }));
-const keyLane = vi.hoisted(() => ({ order: [], mintFails: false }));
+const keyLane = vi.hoisted(() => ({ order: [], mintFails: false, underLimit: true }));
 
 vi.mock('../api/_lib/db.js', () => ({
 	sql: async (strings, ...values) => {
@@ -44,6 +44,7 @@ vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: vi.fn(async () => true) }))
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: {
 		premiumSubscribeIp: vi.fn(async () => ({ success: true, reset: Date.now() + 60_000 })),
+		premiumKeysUser: vi.fn(async () => ({ success: keyLane.underLimit, reset: Date.now() + 3_600_000 })),
 	},
 	clientIp: () => '127.0.0.1',
 }));
@@ -95,6 +96,7 @@ beforeEach(() => {
 	db.calls = [];
 	keyLane.order = [];
 	keyLane.mintFails = false;
+	keyLane.underLimit = true;
 	vi.clearAllMocks();
 });
 
@@ -149,6 +151,14 @@ describe('POST /api/premium/keys: rotate ordering', () => {
 		expect(r._s).toBe(500);
 		expect(keyLane.order).toEqual(['mint']);
 		expect(db.calls.some((c) => /update premium_passes/.test(c.text))).toBe(false);
+	});
+
+	it('meters rotations per account, so a session cannot mint keys in a loop', async () => {
+		keyLane.underLimit = false;
+		const r = await call(keysHandler, '/api/premium/keys', { action: 'rotate', id: KEY_ID });
+		expect(r._s).toBe(429);
+		expect(r.json().error).toBe('rate_limited');
+		expect(keyLane.order).toEqual([]);
 	});
 
 	it('rejects a key that belongs to another account', async () => {

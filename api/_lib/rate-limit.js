@@ -533,6 +533,14 @@ export const limits = {
 	// minutes per IP is an active conversation, not a drain.
 	agentRunIp: (ip) =>
 		getLimiter('agent:run:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
+	// Public headless-chromium renderers (/api/render/glb, /api/render/avatar-clip).
+	// One call boots or borrows a chromium page, pulls up to 10 MB of GLB, and
+	// holds a CPU for seconds, so this is a real cost ceiling and NOT local: a
+	// per-instance counter multiplies by however many Cloud Run instances are up,
+	// which is exactly the bypass that made a 60/10m cap meaningless under
+	// autoscale. Both renderers share one bucket because they share the browser.
+	renderIp: (ip) =>
+		getLimiter('render:ip', { limit: 60, window: '10 m' }).limit(ip),
 	// Auth buckets gate credential guessing / account-creation spam. They are
 	// sensitive (critical) but use degradeToMemory: on a Redis outage they fall
 	// back to the per-instance memory limiter rather than failing closed. Failing
@@ -1598,6 +1606,14 @@ export const limits = {
 		getLimiter('premium:subscribe:ip', { limit: 30, window: '10 m' }).limit(ip),
 	premiumStatusIp: (ip) =>
 		getLimiter('premium:status:ip', { limit: 120, window: '1 m', local: true }).limit(ip),
+	// Key management (api/premium/keys). Metered per account, not per IP: it is
+	// session-gated, so the principal is the user. A rotate mints a real
+	// x402_subscriptions row every call, which is the one premium action an
+	// already-authenticated caller can repeat to grow a table without paying
+	// anything; nobody legitimately rotates a key more than a handful of times
+	// a day.
+	premiumKeysUser: (userId) =>
+		getLimiter('premium:keys:user', { limit: 20, window: '1 h' }).limit(userId),
 	// Fact Checker (api/x402/fact-check) free daily lane. Same "free tier is the
 	// funnel, x402 is the metered overage" shape as the AI speech routes above —
 	// each free check runs the REAL search+LLM chain (never a degraded fake), so

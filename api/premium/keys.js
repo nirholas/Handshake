@@ -12,8 +12,9 @@
 // rotate returns the fresh plaintext exactly once and re-links the pass row
 // so status/mine keep reporting the live key.
 
-import { cors, json, error, wrap, method, readJson } from '../_lib/http.js';
+import { cors, json, error, wrap, method, readJson, rateLimited } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
+import { limits } from '../_lib/rate-limit.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { createSubscription, revokeSubscription } from '../_lib/x402/api-keys.js';
@@ -30,6 +31,11 @@ export default wrap(async (req, res) => {
 	}
 	if (!user) return json(res, 401, { error: 'unauthenticated' });
 	if (!(await requireCsrf(req, res, user.id))) return;
+
+	// Per-account, after auth: rotate mints a fresh x402_subscriptions row on
+	// every call, so the bucket meters the principal doing the minting.
+	const rl = await limits.premiumKeysUser(user.id);
+	if (!rl.success) return rateLimited(res, rl, 'too many key operations; try again later');
 
 	const body = await readJson(req).catch(() => null);
 	const action = String(body?.action || '');

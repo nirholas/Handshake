@@ -1,15 +1,23 @@
 // GET /api/premium/mine: the signed-in user's premium passes and keys.
 //
 // Session-cookie authed (the billing dashboard's data source). Returns passes
-// purchased while signed in (user_id-linked) plus, when the account has a
-// wallet_address that is a Solana key, passes bought by that wallet directly.
+// purchased while signed in (user_id-linked) plus passes bought directly by any
+// Solana wallet this account has proven it owns.
+//
+// "Proven it owns" is the whole point of resolving the wallets through
+// linkedSolanaWallets(): a Solana address only reaches `user_wallets` by way of
+// a verified SIWS signature, and `users.wallet_address` only by a verified SIWE
+// one. Reading the legacy column alone (what this handler used to do) missed
+// every Solana wallet on the platform, because the SIWS lane writes
+// `user_wallets` and never touches `wallet_address`, and the SIWE lane writes a
+// lowercased EVM address that can never be a Solana key. The effect was a
+// billing page that showed nothing to exactly the buyers who paid wallet-only.
 
 import { cors, json, wrap, method } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { listPlans, premiumPlan, PREMIUM_RESOURCES } from '../_lib/premium.js';
-
-const SOLANA_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+import { linkedSolanaWallets } from '../_lib/credit-deposit.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -23,12 +31,12 @@ export default wrap(async (req, res) => {
 	}
 	if (!user) return json(res, 401, { error: 'unauthenticated' });
 
-	const wallet = SOLANA_RE.test(user.wallet_address || '') ? user.wallet_address : null;
+	const wallets = [...(await linkedSolanaWallets(user))];
 	const passes = await sql`
 		select id, wallet, plan, asset, amount_atomics, usd_price, tx_signature,
 		       api_subscription_id, started_at, expires_at, created_at
 		from premium_passes
-		where user_id = ${user.id} ${wallet ? sql`or wallet = ${wallet}` : sql``}
+		where user_id = ${user.id} ${wallets.length ? sql`or wallet = any(${wallets})` : sql``}
 		order by created_at desc
 		limit 50
 	`;

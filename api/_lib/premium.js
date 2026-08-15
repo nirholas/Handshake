@@ -75,7 +75,7 @@ const TIERS = [
 		defaultUsd: 99,
 		defaultRate: 600,
 		commercial: true,
-		blurb: 'Commercial use for products, dashboards, and research desks — 5× the throughput.',
+		blurb: 'Commercial use for products, dashboards, and research desks, at 5x the throughput.',
 	},
 	{
 		id: 'enterprise',
@@ -136,7 +136,14 @@ export const PREMIUM_RESOURCES = ['https://three.ws/api/news/archive'];
 const QUOTE_TTL_MS = 10 * 60_000;
 const SOL_DECIMALS = 9;
 
-function assetConfig(asset) {
+/**
+ * Mint + decimals for one accepted asset (mint is null for native SOL).
+ * Exported so the pricing surface reports the same decimals the atomic amounts
+ * were computed with. A hardcoded 6 there would silently misrender every
+ * $THREE price the day THREE_TOKEN_DECIMALS is anything else.
+ * Throws a 400 bad_asset for anything unaccepted.
+ */
+export function assetConfig(asset) {
 	if (asset === 'USDC') {
 		return { mint: env.X402_ASSET_MINT_SOLANA, decimals: USDC_DECIMALS };
 	}

@@ -96,9 +96,16 @@ at [/dashboard/billing](/dashboard/billing).
 
 The dashboards ride two raw endpoints you can also call directly:
 `POST /api/premium/keys` with `{ action: "rotate" | "revoke", id }`
-(session + CSRF; rotate returns the fresh plaintext exactly once) and
+(session + CSRF; rotate returns the fresh plaintext exactly once, and the
+route is metered at 20 key operations per account per hour) and
 `GET /api/premium/mine` (session-authenticated; your passes and keys,
-including passes bought directly by your linked Solana wallet).
+including passes bought directly by any Solana wallet linked to your account).
+
+"Linked" means a wallet you have signed in with: connecting a Solana wallet
+once (SIWS) attaches it to the account, and every pass that wallet ever bought,
+including ones bought before you had an account, shows up on the billing page
+from then on. Nothing links by typing an address, so nobody else's purchases
+can be claimed.
 
 ## Rules and edge cases
 

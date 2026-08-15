@@ -8,8 +8,7 @@
 // parity and can never fail, so there is always at least one payable rail.
 
 import { cors, json, method, wrap } from '../_lib/http.js';
-import { listPlans, priceAsset, PREMIUM_RESOURCES } from '../_lib/premium.js';
-import { env } from '../_lib/env.js';
+import { listPlans, priceAsset, assetConfig, PREMIUM_RESOURCES } from '../_lib/premium.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -21,17 +20,18 @@ export default wrap(async (req, res) => {
 				['THREE', 'SOL', 'USDC'].map(async (asset) => {
 					try {
 						const p = await priceAsset(asset, plan);
+						// Mint and decimals come from the same table the atomic
+						// amount was computed against, so the two can never drift.
+						// SOL is native and carries no mint.
+						const { mint, decimals } = assetConfig(asset);
 						return {
 							asset,
 							available: true,
 							usd: p.usd,
 							amount_atomics: p.atomics.toString(),
-							decimals: asset === 'SOL' ? 9 : 6,
-							...(asset === 'THREE'
-								? { mint: env.THREE_TOKEN_MINT, discount: plan.threeDiscount }
-								: asset === 'USDC'
-									? { mint: env.X402_ASSET_MINT_SOLANA }
-									: {}),
+							decimals,
+							...(mint ? { mint } : {}),
+							...(asset === 'THREE' ? { discount: plan.threeDiscount } : {}),
 						};
 					} catch (e) {
 						return { asset, available: false, reason: e.message };
