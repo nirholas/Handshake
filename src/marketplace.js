@@ -784,11 +784,19 @@ function renderTheme() {
 //
 // Each viewer ships `data-src` rather than `src`, the same contract the grid
 // cards and the hero carousel already use: observeCardModelViewers() promotes
-// it on first intersect and adds `auto-rotate` there, so a strip nobody has
-// scrolled to never downloads a GLB, never stands up a WebGL context, and never
-// runs a raf loop. Shipping `src` here left this the last eager model-viewer
-// surface on the page, and model-viewer was the single most expensive script on
-// it: 7,924ms of evaluation in a Lighthouse desktop trace of /marketplace.
+// it on first intersect and adds `auto-rotate` there, and removes `auto-rotate`
+// again when the strip leaves, so an offscreen viewer holds no GLB, no WebGL
+// context and no raf loop. This was the last eager model-viewer surface on a
+// page where model-viewer is the single most expensive script in the trace
+// (7,924ms of evaluation on desktop; the strip is one contributor among the
+// grid and hero, not the whole figure).
+//
+// Be honest about when this pays. Measured in a browser at 1350x940 the strip
+// sits at y=137, so it is above the fold and the observer promotes all six
+// viewers immediately: on a desktop first load this is a no-op. What it buys is
+// the cases the old markup got wrong unconditionally, a narrow viewport that
+// pushes the strip down, a filtered view that moves it, and the raf loop that
+// used to keep running after the visitor scrolled past.
 function renderThemePicks() {
 	const row = $('market-theme-picks');
 	if (!row) return;
