@@ -60,6 +60,9 @@ contract MockPermissionHub is IPermissionHub {
     bool public rejectOnCreate;
     bool public rejectOnDelete;
 
+    /// @dev Revert reason for the `prepare*` overrides. See the note above them.
+    string internal constant PREPARE_UNSUPPORTED = "MockPermissionHub: vault does not use the prepare path";
+
     struct PendingCreate {
         address caller; // becomes the minted policy's owner on success, mirrors real `_doCreate`
         bytes callbackData;
@@ -122,13 +125,23 @@ contract MockPermissionHub is IPermissionHub {
         return true;
     }
 
+    /*----------------- prepare* : deliberately rejected -----------------*/
+    //
+    // The real PermissionHub exposes a `prepare*` family used by callers that
+    // relay their own cross-chain packages. `GreenfieldVault` never takes that
+    // path: it calls `createPolicy` / `deletePolicy` directly and pays the relay
+    // fee itself. These four overrides exist because `IPermissionHub` declares
+    // them, and they revert so that a future vault change routing through the
+    // prepare path fails loudly in the suite instead of silently passing against
+    // a mock that guessed at semantics it was never given.
+
     function prepareCreatePolicy(address, bytes calldata)
         external
         payable
         override
         returns (uint8, bytes memory, uint256, uint256, address)
     {
-        revert("not implemented");
+        revert(PREPARE_UNSUPPORTED);
     }
 
     function prepareCreatePolicy(address, bytes calldata, ExtraData memory)
@@ -137,7 +150,7 @@ contract MockPermissionHub is IPermissionHub {
         override
         returns (uint8, bytes memory, uint256, uint256, address)
     {
-        revert("not implemented");
+        revert(PREPARE_UNSUPPORTED);
     }
 
     function prepareDeletePolicy(address, uint256)
@@ -146,7 +159,7 @@ contract MockPermissionHub is IPermissionHub {
         override
         returns (uint8, bytes memory, uint256, uint256, address)
     {
-        revert("not implemented");
+        revert(PREPARE_UNSUPPORTED);
     }
 
     function prepareDeletePolicy(address, uint256, ExtraData memory)
@@ -155,7 +168,7 @@ contract MockPermissionHub is IPermissionHub {
         override
         returns (uint8, bytes memory, uint256, uint256, address)
     {
-        revert("not implemented");
+        revert(PREPARE_UNSUPPORTED);
     }
 
     /*----------------- internal -----------------*/

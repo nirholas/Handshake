@@ -375,6 +375,14 @@
 			<description>The @three-ws/alibaba-cloud-mcp package, which lets an agent use Qwen chat, embeddings, and model discovery on your own Alibaba Cloud key, could not start at all. Two faults, both on the first line of use: the check for whether the file was launched directly crashed before the server ever opened, and the three tools were registered with a schema format the MCP library rejects. Both are fixed, so the server now boots, advertises its tools, and answers a client. The payment-sessions MCP package had a documentation fault with the same cost: its quick start told you to set your session variable to the whole cookie including the name, which the server then wrapped in the cookie name again, so every session-management call came back unauthorized. It now says to use the cookie value, and ships its two runnable examples inside the published package instead of only in the repository. Five packages (payment sessions, Agora, alerts, the assistant widget, and Alibaba Cloud) gained a Programmatic use section showing the exact code to import their tools into a host of your own, and the sniper package's HTTP table now lists every endpoint it actually serves, including the paid close-position route it had left out.</description>
 		</item>
 		<item>
+			<title>The contracts README now describes the contracts that are actually there</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:The contracts README now describes the contracts that are actually there</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Anyone opening the on-chain contracts directory was reading a page written when it held three ERC-8004 registries. It now holds ten contracts and programs, including the two that custody real USDC on BNB Smart Chain, Base and Arbitrum, and the two Solana programs. The README listed none of them, claimed 25 tests where there are 242, and printed the canonical ERC-8004 identity addresses with mainnet and testnet swapped, so a developer copying them would have pointed at the wrong chain's registry. It also told you to edit a shared entry that seven testnets read from, which would have silently repointed all of them. All of that is corrected, the Solana build and test commands are documented, and the sample registration snippet now shows the values the function really returns.</description>
+		</item>
+		<item>
 			<title>The Duplicate button on your widgets works again</title>
 			<link>https://three.ws/dashboard/widgets</link>
 			<guid isPermaLink="false">2026-08-15:The Duplicate button on your widgets works again</guid>
@@ -501,6 +509,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>An audit of eight documentation pages ran every command they print and checked every claim against the code behind it, then corrected what had drifted. The biggest one was in the trading tutorial: the command it gave you for verifying a fleet's fills on-chain asked for a field the leaderboard does not publish, so it returned an empty explorer link for every agent and the verification step could not be completed at all. It now uses the fields that exist, linking both legs of each trade straight to Solscan, and it skips agents whose wallet has not been provisioned yet instead of building a URL that goes nowhere. The MCP tool safety page undercounted the tools that share a name across two servers, which matters because that collision is exactly why a trust policy has to key on the namespaced id; it now lists all nine and prints a command that re-derives the list so it cannot go stale again. The MCP tool catalog itself had drifted from its source and was serving outdated descriptions for three tools, on a page whose whole promise is that it is generated from source and cannot drift; it has been regenerated. The package extraction guide had every version in its roster out of date along with its build and test columns, and still described a publisher field as missing that was set some time ago. The 10 SOL trading experiment page stated a risk rule in absolute terms that contradicted the setup script it tells you to run, which read as a bug in one of the two; the rule now carries the scope the code actually applies.</description>
+		</item>
+		<item>
+			<title>The trading control room now tells you when the agents cannot afford to trade</title>
+			<link>https://three.ws/trading</link>
+			<guid isPermaLink="false">2026-08-15:The trading control room now tells you when the agents cannot afford to trade</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The /trading page showed a green &quot;Trading live&quot; badge whenever the worker was up and the launch feed was connected. Both of those can be true while the agents' wallets are too empty to place a single buy, which is exactly what was happening: four of twelve armed wallets were below the minimum entry size and the page said everything was fine. It now reads the fleet verdict the trading worker already publishes, so an underfunded fleet says &quot;Live, wallets underfunded&quot; and one that cannot trade at all says &quot;Out of SOL&quot;, each naming the real cause instead of blaming the feed. A new Wallets funded vital shows how many armed wallets can actually place their configured size, how much SOL would refill the rest, and whether the funding wallet can do it automatically or a person has to step in. An agent with no return to report now reads &quot;ROI unavailable&quot; rather than a stray dot.</description>
 		</item>
 		<item>
 			<title>The trusted-agent leaderboard now ranks every candidate, not an arbitrary sample of them</title>

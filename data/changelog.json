@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "The trading control room now tells you when the agents cannot afford to trade",
+			"summary": "The /trading page showed a green \"Trading live\" badge whenever the worker was up and the launch feed was connected. Both of those can be true while the agents' wallets are too empty to place a single buy, which is exactly what was happening: four of twelve armed wallets were below the minimum entry size and the page said everything was fine. It now reads the fleet verdict the trading worker already publishes, so an underfunded fleet says \"Live, wallets underfunded\" and one that cannot trade at all says \"Out of SOL\", each naming the real cause instead of blaming the feed. A new Wallets funded vital shows how many armed wallets can actually place their configured size, how much SOL would refill the rest, and whether the funding wallet can do it automatically or a person has to step in. An agent with no return to report now reads \"ROI unavailable\" rather than a stray dot.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/trading"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The contracts README now describes the contracts that are actually there",
+			"summary": "Anyone opening the on-chain contracts directory was reading a page written when it held three ERC-8004 registries. It now holds ten contracts and programs, including the two that custody real USDC on BNB Smart Chain, Base and Arbitrum, and the two Solana programs. The README listed none of them, claimed 25 tests where there are 242, and printed the canonical ERC-8004 identity addresses with mainnet and testnet swapped, so a developer copying them would have pointed at the wrong chain's registry. It also told you to edit a shared entry that seven testnets read from, which would have silently repointed all of them. All of that is corrected, the Solana build and test commands are documented, and the sample registration snippet now shows the values the function really returns.",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Pages stop loading a 3D robot you have not scrolled to yet",
 			"summary": "The small animated robot in the site footer was starting up the moment a page opened, at the bottom of a page nobody had scrolled to. On plain pages that meant downloading a whole second 3D engine (253 KB) before anything else, and on the Forge it was the single busiest thing on the page: nearly 20 seconds of browser work, more than the Forge itself. It now waits until you are about a screen away from the footer, so it still greets you on the way down but no longer competes with the page you actually opened. It also stops taking a 3D slot away from the avatars on the page, which on a busy grid could leave a real avatar unable to render. Separately, the Forge's example prompt chips no longer shove the page down as they shuffle to a fresh set on load.",
 			"tags": [
