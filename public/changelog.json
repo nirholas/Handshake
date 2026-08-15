@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T15:04:09.742Z",
+	"generated_at": "2026-08-15T15:11:10.865Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/pay/simulator",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A market intelligence outage no longer tells you your own API key was rejected",
+			"summary": "The two market intelligence reads in the unified API, recent narrative intel and momentum-ranked projects, pass a key we hold to the upstream provider; a caller needs no key at all. When that provider stopped accepting our key, both reads answered \"unauthorized\" with the provider's own wording, so an agent reading the response concluded its own credentials were bad and retried with different ones forever, when nothing on the caller's side was wrong. Both reads now say plainly that the service is temporarily unavailable because this deployment's upstream key was rejected, which is a status clients already know to retry rather than re-authenticate against. The older market intelligence endpoints always classified this correctly; the classification now lives in one place, so the two doors cannot drift apart again, and the error tables in the API reference list every code either one can return.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"fix",
+				"docs"
 			]
 		},
 		{
@@ -95,9 +106,30 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "Asking for a voice that does not exist now tells you so, instead of quietly speaking in a different one",
+			"summary": "The voice API accepts a provider and a voice id from the voice catalog. If the id was not one that provider actually has, nothing said so: the request was answered with audio rendered in that lane's default voice, and on the metered lanes it was billed, so a single typo in a voice id came back as a stranger's voice at full price with a success status. A well-formed id for a voice that had been removed took the opposite route and failed as a server error, which reads as our fault and tells a client to retry something that will never work. Both now return a plain rejection that names the id you sent and the catalog address to pick a real one from, and that check runs before anything is charged. Leaving the voice id out still gets you the lane default on purpose. Asking the catalog for a provider that does not exist used to return an empty list that was indistinguishable from a provider being down; it now says which providers exist. ElevenLabs voices, whose catalog grows every time you clone or add one, are still decided by ElevenLabs, but an id it rejects is reported as your request being wrong rather than ours, with any charge refunded first. Voice cloning also now asks who you are before reporting anything about how this server is configured.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "Avatars can move their lips again: the Audio2Face lane is back",
 			"summary": "Every call that turns speech into facial animation had been failing with an upstream not-found error, so a talking avatar spoke with a frozen face and the one-shot say() path returned nothing usable. The hosted model id the lane pointed at had stopped resolving for our NVIDIA account. It now points at the hosted Audio2Face NIM that is actually live, verified end to end: a synthesized clip drives a 30 fps ARKit blendshape track whose jaw genuinely opens and closes with the words. The discovery helper that finds these model ids was missing the name NVIDIA publishes them under, which is why the outage looked like a configuration mystery; it now finds them.",
 			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Claim Your Wallet stopped telling real traders they had no track record",
+			"summary": "Pasting a wallet into Claim Your Wallet could answer \"not indexed yet\" to a wallet with thousands of indexed pump.fun trades. The page only accepted a wallet the reputation scorer had already graded, and that scorer runs on a rollup that lags the trade indexer by design, so a wallet the platform had watched trade for days was still turned away. Any wallet with a real on-chain record now renders its full ledger and window aggregates immediately, with the reputation panel honestly reading unproven until the grade lands. Three more fixes shipped with it. Win and loss counts now cover closed positions only, so a trader still holding sixty fresh bags no longer reads as sixty losses, and a new realized profit-and-loss figure sits beside the existing net figure that charges an open bag's entry as if it were written off. Asking for devnet returned the wallet's mainnet trades; both halves of the read are now scoped to the network you asked for. And if the database is unreachable, the page now says the record is temporarily unavailable and offers a retry, instead of publishing an empty scorecard that the CDN would then serve to everyone for the next few minutes.",
+			"link": "/claim-wallet",
 			"tags": [
 				"fix"
 			]
@@ -121,6 +153,16 @@
 			"link": "/tutorials/connect-ai-brain",
 			"tags": [
 				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Looking up an on-chain agent by its CAIP reference works again",
+			"summary": "The public resolver that turns an ERC-8004 agent reference into its owner, token URI and verified agent card could not be reached at all. An agent reference ends in a slash before its token id, and the documentation told callers to percent-encode the whole reference, which turns that slash into %2F. The API refuses any address segment holding an encoded separator, because that is the same trick used to escape a path and reach files that were never meant to be served, so every correctly-formed lookup was turned away as an unknown address before it ever reached the resolver. The verification badge you can embed on your own site built its request in exactly that shape, so it never showed a result either. The resolver now accepts the reference with its slash as a normal part of the address, the badge asks for it that way, and the documentation shows the form that works. The protection against encoded separators is untouched. New tests resolve the address through the same routing the live site uses, so this cannot quietly break again.",
+			"link": "/docs/api-reference",
+			"tags": [
 				"fix"
 			]
 		},
@@ -354,6 +396,16 @@
 			"link": "/docs/mcp-safety",
 			"tags": [
 				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The Tutor’s running tab and end-of-session invoice now show what you actually paid",
+			"summary": "The Tutor charges one cent per answer and keeps an itemized tab you can reload later and close for a signed invoice. That ledger only ever knew how to store itself in a key-value service this deployment does not run, so nothing was ever written down: reopening the page never restored your history, and ending a session always produced an invoice reading \"no questions\" and a total of zero, however many answers you had paid for. The tab is now stored in the platform’s own database, so it survives a reload, a new browser tab, and any server restart, and the invoice lists every answer with its charge and a verification hash over the line items. Closing a session twice returns the identical invoice instead of a freshly stamped one, closing a session id that was never used no longer makes that id unusable for its real owner, and if the ledger itself is ever unreachable the page says so rather than quietly reporting that you owe nothing. Asking a question still succeeds even if the ledger write fails, because a bookkeeping outage should never cost you the answer you paid for.",
+			"link": "/tutor",
+			"tags": [
 				"fix"
 			]
 		},
