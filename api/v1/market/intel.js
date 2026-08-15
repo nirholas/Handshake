@@ -6,7 +6,7 @@
 // (or many) can't drain the shared key.
 
 import { defineEndpoint, fail } from '../../_lib/gateway.js';
-import { getIntel, aixbtEnabled } from '../../_lib/aixbt.js';
+import { getIntel, aixbtEnabled, mapAixbtFailure } from '../../_lib/aixbt.js';
 import { limits } from '../../_lib/rate-limit.js';
 
 export default defineEndpoint({
@@ -25,11 +25,23 @@ export default defineEndpoint({
 		const g = await limits.aixbtGlobal();
 		if (!g.success) fail(429, 'rate_limited', 'market intelligence is busy — retry shortly');
 
-		const { intel, pagination } = await getIntel({
-			limit: query.limit,
-			category: query.category,
-			chain: query.chain,
-		});
-		return { intel, pagination, source: 'aixbt' };
+		let result;
+		try {
+			result = await getIntel({
+				limit: query.limit,
+				category: query.category,
+				chain: query.chain,
+			});
+		} catch (err) {
+			// Shared classifier (api/_lib/aixbt.js), the same one /api/aixbt/*
+			// answers through: an upstream credential rejection becomes a 503
+			// deployment fault instead of a 401 that reads as "your key is bad" on
+			// a door that takes no client credential. An unclassified fault is
+			// rethrown so wrap() sanitizes it.
+			const mapped = mapAixbtFailure(err);
+			if (!mapped) throw err;
+			fail(mapped.status, mapped.code, mapped.message);
+		}
+		return { intel: result.intel, pagination: result.pagination, source: 'aixbt' };
 	},
 });

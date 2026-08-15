@@ -5,7 +5,7 @@
 // gateway's per-principal budget so the shared upstream key stays protected.
 
 import { defineEndpoint, fail } from '../../_lib/gateway.js';
-import { getProjects, aixbtEnabled } from '../../_lib/aixbt.js';
+import { getProjects, aixbtEnabled, mapAixbtFailure } from '../../_lib/aixbt.js';
 import { limits } from '../../_lib/rate-limit.js';
 
 export default defineEndpoint({
@@ -21,12 +21,21 @@ export default defineEndpoint({
 		const g = await limits.aixbtGlobal();
 		if (!g.success) fail(429, 'rate_limited', 'market intelligence is busy — retry shortly');
 
-		const { projects, pagination } = await getProjects({
-			limit: query.limit,
-			page: query.page,
-			names: query.names,
-			chain: query.chain,
-		});
-		return { projects, pagination, source: 'aixbt' };
+		let result;
+		try {
+			result = await getProjects({
+				limit: query.limit,
+				page: query.page,
+				names: query.names,
+				chain: query.chain,
+			});
+		} catch (err) {
+			// See api/v1/market/intel.js — one shared classifier so this door and
+			// /api/aixbt/* can never disagree about whose fault a failure is.
+			const mapped = mapAixbtFailure(err);
+			if (!mapped) throw err;
+			fail(mapped.status, mapped.code, mapped.message);
+		}
+		return { projects: result.projects, pagination: result.pagination, source: 'aixbt' };
 	},
 });
