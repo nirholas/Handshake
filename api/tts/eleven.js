@@ -253,7 +253,20 @@ export default wrap(async (req, res) => {
 		const msg = await elResp.text().catch(() => '');
 		console.error('[tts/eleven] ElevenLabs error', elResp.status, msg);
 		await refundMetering();
-		return error(res, 502, 'upstream_error', `ElevenLabs returned ${elResp.status}`);
+		// A 400/404 from the text-to-speech endpoint is the caller's voiceId: the
+		// model id and the key are resolved server-side, so the voice is the only
+		// caller-controlled part of the request left. Answering 502 blamed the
+		// platform for a typo the caller can fix, and hid it from the client's own
+		// error handling. The charge is already refunded above either way.
+		const callerFault = elResp.status === 400 || elResp.status === 404;
+		return error(
+			res,
+			callerFault ? 400 : 502,
+			callerFault ? 'validation_error' : 'upstream_error',
+			callerFault
+				? `ElevenLabs does not have voice "${voiceId}" on this account`
+				: `ElevenLabs returned ${elResp.status}`,
+		);
 	}
 
 	// Stream the clip to the client for low TTFB while teeing the chunks into a

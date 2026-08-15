@@ -474,9 +474,17 @@ export async function synthesizeVoice(opts) {
 			}
 			if (!resp.ok) {
 				const detail = await resp.text().catch(() => '');
+				// 400/404 here is the caller's voiceId, not our lane: the model is
+				// validated above and the key is checked separately, so the only
+				// caller-controlled input left is the voice. Reporting it as
+				// invalid_argument lets the handler answer 4xx instead of blaming
+				// itself with a 502.
 				throw tagged(
 					`ElevenLabs returned ${resp.status}: ${detail.slice(0, 300)}`,
-					resp.status === 429 ? 'rate_limited' : resp.status === 401 ? 'invalid_key' : 'provider_error',
+					resp.status === 429 ? 'rate_limited'
+					: resp.status === 401 ? 'invalid_key'
+					: resp.status === 400 || resp.status === 404 ? 'invalid_argument'
+					: 'provider_error',
 				);
 			}
 			return {
