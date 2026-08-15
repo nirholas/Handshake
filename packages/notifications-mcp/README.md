@@ -189,7 +189,7 @@ Read the resolved delivery matrix — for each category, which channels deliver 
 }
 ```
 
-The six categories are `sales`, `purchases`, `social`, `irl`, `alerts`, `account`; the four channels are `in_app`, `push`, `email`, `telegram`. `prefs.categories` is the effective matrix with the user's sparse overrides already merged onto platform defaults.
+The seven categories are `sales`, `purchases`, `social`, `irl`, `alerts`, `creations`, `account`; the four channels are `in_app`, `push`, `email`, `telegram`. `prefs.categories` is the effective matrix with the user's sparse overrides already merged onto platform defaults. A category may also carry `lockedChannels`: `account` locks `in_app` on, so security and withdrawal notices always reach the bell inbox.
 
 ### `set_preferences`
 
@@ -197,7 +197,7 @@ Patch the delivery matrix. Wraps `PUT /api/notifications/preferences`. Provide a
 
 | Arg | Type | Required | Notes |
 |---|---|---|---|
-| `categories` | `object` | at least one | Outer keys: `sales`, `purchases`, `social`, `irl`, `alerts`, `account`. Inner keys: `in_app`, `push`, `email`, `telegram` → boolean. |
+| `categories` | `object` | at least one | Outer keys: `sales`, `purchases`, `social`, `irl`, `alerts`, `creations`, `account`. Inner keys: `in_app`, `push`, `email`, `telegram` → boolean. `account`'s `in_app` is locked on and a `false` for it is ignored. |
 | `telegram_chat_id` | `string` | at least one | Numeric Telegram chat id to deliver the `telegram` channel to, or `""` to unlink. ≤ 24 chars. |
 
 ```jsonc
@@ -297,7 +297,7 @@ Reads are always safe to retry. The writes are idempotent by design (`mark_read`
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, all rights reserved. See [LICENSE](./LICENSE).
 
 ---
 

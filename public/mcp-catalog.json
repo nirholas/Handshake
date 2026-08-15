@@ -7312,7 +7312,7 @@
 					"agent_id": {
 						"type": "string",
 						"minLength": 1,
-						"description": "The agent identity id to record the action under. Your token must own it."
+						"description": "The agent identity uuid to record the action under. Your token must own it."
 					},
 					"type": {
 						"type": "string",
@@ -7371,7 +7371,7 @@
 					"agent_id": {
 						"type": "string",
 						"minLength": 1,
-						"description": "The agent identity id whose provenance trail to read. Your token must own it."
+						"description": "The agent identity uuid whose provenance trail to read. Your token must own it."
 					},
 					"limit": {
 						"type": "integer",
@@ -7421,7 +7421,7 @@
 					"agent_id": {
 						"type": "string",
 						"minLength": 1,
-						"description": "The agent identity id that owns the action. Your token must own this agent."
+						"description": "The agent identity uuid that owns the action. Your token must own this agent."
 					},
 					"id": {
 						"type": "string",

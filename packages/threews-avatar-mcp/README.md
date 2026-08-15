@@ -76,7 +76,11 @@ npx -y @modelcontextprotocol/inspector npx -y @three-ws/avatar-mcp
 
 Once connected, ask your client in plain language:
 
-> Render the avatar for @nirholas in the chat, dark background, auto-rotating.
+> Render avatar bf58f7fc-64b3-4a92-8c27-dd472fc04b58 in the chat, dark background, auto-rotating.
+
+(That UUID is a real public avatar. Any avatar's id is the last path segment of
+its three.ws URL, and `GET https://three.ws/api/avatars/public` lists more. A
+`@handle` works too, for any three.ws user who has published a public avatar.)
 
 `render_avatar` returns three things so it looks great in every client:
 
@@ -86,7 +90,7 @@ Once connected, ask your client in plain language:
 
 ## Tools
 
-All three tools are free, read-only, and annotated (`readOnlyHint`, `idempotentHint`, `openWorldHint`) so hosts can run them without confirmation prompts. There is no x402 charge. Identify an avatar by **`id`** (UUID), **`handle`** (`nirholas` or `@nirholas`), or a raw **`model`** GLB URL.
+All three tools are free, read-only, and annotated (`readOnlyHint`, `idempotentHint`, `openWorldHint`) so hosts can run them without confirmation prompts. There is no x402 charge. Identify an avatar by **`id`** (UUID), **`handle`** (a three.ws username, with or without the `@`, that has a public avatar), or a raw **`model`** GLB URL.
 
 | Tool                | Selectors                 | What it does                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -102,13 +106,26 @@ All three tools are free, read-only, and annotated (`readOnlyHint`, `idempotentH
 
 ```jsonc
 // render_avatar — live, rotatable avatar in chat
-{ "handle": "nirholas", "background": "dark", "auto_rotate": true }
+{ "id": "bf58f7fc-64b3-4a92-8c27-dd472fc04b58", "background": "dark", "auto_rotate": true }
 
 // avatar_embed_code — paste into any website
-{ "id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f", "height": 560 }
+{ "id": "bf58f7fc-64b3-4a92-8c27-dd472fc04b58", "height": 560 }
 
-// get_avatar — metadata
-{ "handle": "@nirholas" }
+// get_avatar: metadata, by @handle instead of id
+{ "handle": "@your-handle" }
+```
+
+`get_avatar` on that id returns, live:
+
+```json
+{
+	"id": "bf58f7fc-64b3-4a92-8c27-dd472fc04b58",
+	"name": "Jade",
+	"slug": "jade-fe1a51",
+	"model_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/u/299bdfa7-d848-4865-bdb1-0db23fc3b431/jade-fe1a51.glb",
+	"thumbnail": null,
+	"visibility": "public"
+}
 ```
 
 Every tool also advertises an `outputSchema` describing its `structuredContent`, so typed clients can consume results without re-parsing the text blocks.

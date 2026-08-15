@@ -33,14 +33,19 @@ console.log(`\naccepts[] (${challenge.accepts.length} payment rails):\n`);
 
 for (const accept of challenge.accepts) {
 	const decimals = Number(accept.extra?.decimals ?? 6);
-	const usd = Number(accept.amount) / 10 ** decimals;
+	const token = accept.extra?.name ?? 'unknown';
+	const units = Number(accept.amount) / 10 ** decimals;
+	// Only a dollar-pegged stablecoin's atomic units convert straight to USD; a
+	// non-stable accept (e.g. $THREE) is priced in its own token, so printing a
+	// "$" in front of it would be a lie about what the call costs.
+	const priced = /^usd/i.test(token) ? `$${units}` : `${units} ${token}`;
 	const method =
 		accept.extra?.assetTransferMethod ||
 		(String(accept.network).startsWith('eip155:') ? 'eip3009 (default)' : 'native to network');
 	console.log(`  scheme:  ${accept.scheme}`);
 	console.log(`  network: ${accept.network}`);
-	console.log(`  asset:   ${accept.asset} (${accept.extra?.name ?? 'unknown'})`);
-	console.log(`  amount:  ${accept.amount} atomic units = $${usd} (${decimals} decimals)`);
+	console.log(`  asset:   ${accept.asset} (${token})`);
+	console.log(`  amount:  ${accept.amount} atomic units = ${priced} (${decimals} decimals)`);
 	console.log(`  payTo:   ${accept.payTo}`);
 	console.log(`  method:  ${method}`);
 	console.log('');

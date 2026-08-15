@@ -75,11 +75,11 @@ THREE_WS_TOKEN=sk_live_… npx -y @modelcontextprotocol/inspector npx @three-ws/
 
 ### Input parameters
 
-**`list_agent_actions`** — `agent_id` (required), `limit` (1–200, default 50), `cursor` (numeric, from a previous `next_cursor`).
+**`list_agent_actions`**: `agent_id` (required, the agent identity's uuid), `limit` (1 to 200, default 50), `cursor` (numeric, from a previous `next_cursor`).
 
-**`query_action`** — `agent_id` (required), `id` (required, numeric action id).
+**`query_action`**: `agent_id` (required, the agent identity's uuid), `id` (required, numeric action id).
 
-**`append_agent_action`** — `agent_id` (required), `type` (required, ≤64 chars), `payload` (object, optional), `source_skill` (optional), `signer_key` (optional 0x EVM key, overrides `THREE_WS_SIGNER_KEY` for this call).
+**`append_agent_action`**: `agent_id` (required, the agent identity's uuid), `type` (required, ≤64 chars), `payload` (object, optional), `source_skill` (optional), `signer_key` (optional 0x EVM key, overrides `THREE_WS_SIGNER_KEY` for this call).
 
 ## How signing & verification work
 
@@ -97,12 +97,12 @@ This is the same primitive three.ws uses server-side for its Portable & Verifiab
 
 ```jsonc
 // append_agent_action
-> { "agent_id": "agent_42", "type": "launch", "payload": { "mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "name": "$THREE" }, "source_skill": "pump-launch" }
+> { "agent_id": "6a7d0f2c-1b3e-4a55-9c88-2d41b0f7e913", "type": "launch", "payload": { "mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "name": "$THREE" }, "source_skill": "pump-launch" }
 {
   "ok": true,
   "action": {
     "id": "10482",
-    "agent_id": "agent_42",
+    "agent_id": "6a7d0f2c-1b3e-4a55-9c88-2d41b0f7e913",
     "type": "launch",
     "payload": { "mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "name": "$THREE" },
     "source_skill": "pump-launch",
@@ -116,7 +116,7 @@ This is the same primitive three.ws uses server-side for its Portable & Verifiab
 
 ```jsonc
 // query_action  →  verify it independently
-> { "agent_id": "agent_42", "id": "10482" }
+> { "agent_id": "6a7d0f2c-1b3e-4a55-9c88-2d41b0f7e913", "id": "10482" }
 {
   "ok": true,
   "action": { "id": "10482", "type": "launch", "signature": "0x…", "signer_address": "0xAbC…", /* … */ },
@@ -144,7 +144,7 @@ This is the same primitive three.ws uses server-side for its Portable & Verifiab
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, all rights reserved. See [LICENSE](./LICENSE).
 
 ---
 

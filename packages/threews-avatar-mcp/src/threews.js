@@ -209,9 +209,11 @@ export function modelViewerHtml({ model_url, name = 'Avatar', background = 'tran
   alt="${escapeHtml(name)}"
   camera-controls
   ${autoRotate ? 'auto-rotate' : ''}
-  shadow-intensity="1"
-  exposure="1"
+  shadow-intensity="1.0"
+  shadow-softness="0.9"
+  exposure="1.5"
   tone-mapping="aces"
+  environment-image="neutral"
   camera-orbit="${escapeHtml(cameraOrbit)}"
   ar ar-modes="webxr scene-viewer quick-look"
 ></model-viewer>

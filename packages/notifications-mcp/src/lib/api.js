@@ -1,4 +1,4 @@
-// Real HTTP access to the three.ws autopilot API. No mocks, no fixtures — every
+// Real HTTP access to the three.ws notifications API. No mocks, no fixtures: every
 // call is a live, authenticated request to THREE_WS_BASE. The agent's Bearer
 // credential is attached here (single HTTP client, single auth path); errors are
 // normalized into one shape so tool handlers can surface a clean message +
@@ -6,14 +6,14 @@
 
 import { THREE_WS_BASE, HTTP_TIMEOUT_MS, USER_AGENT, THREE_WS_API_KEY } from '../config.js';
 
-// Thrown before any request when the server has no credential. Every autopilot
-// route is owner-only, so a missing key is a config error, not an upstream 401.
+// Thrown before any request when the server has no credential. Every notification
+// route is account-scoped, so a missing key is a config error, not an upstream 401.
 export class MissingCredentialError extends Error {
 	constructor() {
 		super(
 			'No three.ws credential configured. Set THREE_WS_API_KEY to a three.ws API key ' +
-				'(sk_live_… / sk_test_…) or OAuth access token for the agent owner — every autopilot ' +
-				'endpoint is owner-scoped and rejects unauthenticated requests.',
+				'(sk_live_… / sk_test_…) or OAuth access token for the account owner. Every notification ' +
+				'endpoint is account-scoped and rejects unauthenticated requests.',
 		);
 		this.code = 'missing_credential';
 		this.status = 401;
@@ -21,11 +21,11 @@ export class MissingCredentialError extends Error {
 }
 
 /**
- * Call a three.ws autopilot endpoint and return its parsed JSON body. The
+ * Call a three.ws notifications endpoint and return its parsed JSON body. The
  * Authorization: Bearer header is added here from THREE_WS_API_KEY. Bearer auth
  * is exempt from CSRF server-side, so writes work without a CSRF token.
  *
- * @param {string} path  Endpoint path beginning with `/` (e.g. `/api/autopilot/config`).
+ * @param {string} path  Endpoint path beginning with `/` (e.g. `/api/notifications`).
  * @param {{ method?: string, query?: Record<string, unknown>, body?: unknown }} [opts]
  * @returns {Promise<any>} Parsed JSON response.
  * @throws {MissingCredentialError} when no credential is configured.

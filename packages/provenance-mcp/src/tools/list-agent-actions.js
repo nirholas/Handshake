@@ -21,7 +21,7 @@ export const def = {
 		agent_id: z
 			.string()
 			.min(1)
-			.describe('The agent identity id whose provenance trail to read. Your token must own it.'),
+			.describe('The agent identity uuid whose provenance trail to read. Your token must own it.'),
 		limit: z
 			.number()
 			.int()

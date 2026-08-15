@@ -57,16 +57,16 @@ import { normalizePermissions } from './permissions.js';
  * ```js
  * import { defineTool, z } from '@three-ws/tool-sdk';
  *
- * export const priceTool = defineTool({
- *   id: 'my-org-price-feed',
- *   title: 'My Price Feed',
- *   description: 'Fetches token prices from My API.',
+ * export const quoteTool = defineTool({
+ *   id: 'three-ws-vanity-quote',
+ *   title: 'Vanity Quote',
+ *   description: 'Prices how hard a Solana vanity address pattern is to grind.',
  *   version: '1.0.0',
- *   permissions: { network: ['api.example.com'] },
+ *   permissions: { network: ['three.ws'] },
  *   apis: [{
- *     name: 'getPrice',
- *     description: 'Get the current USD price for a token symbol.',
- *     parameters: z.object({ symbol: z.string().describe('Token ticker, e.g. "ETH"') }),
+ *     name: 'getQuote',
+ *     description: 'Quote the difficulty and suggested USDC bounty for a Base58 prefix.',
+ *     parameters: z.object({ prefix: z.string().describe('Base58 prefix, e.g. "THREE"') }),
  *   }],
  * });
  * ```

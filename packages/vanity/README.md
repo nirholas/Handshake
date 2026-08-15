@@ -38,11 +38,11 @@
 
 Vanity grinding is embarrassingly parallel keypair generation: make an Ed25519
 keypair, Base58-encode the public key, check the prefix/suffix, repeat until a
-hit. Keygen dominates the loop, and a single Node thread sustains roughly a
-thousand keypairs per second on a typical cloud vCPU. A 4-char prefix expects
-~11M attempts, which is hours at that rate, so the difficulty model matters as
-much as the hot loop: you need to know what a pattern costs before you start,
-not after.
+hit. Keygen dominates the loop, and a single Node thread sustains a couple of
+thousand keypairs per second (1,730/s measured on an idle cloud container). A
+4-char prefix expects ~11M attempts, which is hours at that rate, so the
+difficulty model matters as much as the hot loop: you need to know what a
+pattern costs before you start, not after.
 
 `@three-ws/vanity` is that, done once:
 
@@ -100,7 +100,9 @@ A fuller run — suffix, case-insensitive, live progress + ETA, cancellable:
 import { grind, expectedAttempts } from '@three-ws/vanity';
 
 const controller = new AbortController();
-console.log('expected attempts:', expectedAttempts({ prefix: 'ag', suffix: 'nt' }));
+// Quote the SAME options you are about to grind: ignoreCase changes the answer
+// (here it divides the case-sensitive 11,316,496 by 16).
+console.log('expected attempts:', expectedAttempts({ prefix: 'ag', suffix: 'nt', ignoreCase: true }));
 
 const result = await grind({
   prefix: 'ag',
@@ -245,10 +247,10 @@ once, then the same batched hot loop runs on either.
   the event loop, so an `AbortSignal` lands within one batch and `onProgress`
   fires on a ~250ms wall-clock cadence.
 - **Single-threaded by design.** The local path runs on the calling thread;
-  `GrindResult.workers` is always `1`, and one thread sustains on the order of
-  a thousand keypairs per second (measured on a 2-core cloud container; a
-  desktop CPU does better). For long patterns, run several `grind()` calls in
-  your own worker threads or processes if you need parallelism. The hosted x402 endpoint caps patterns at 3 chars because it
+  `GrindResult.workers` is always `1`, and one thread sustains roughly
+  1,000-4,000 keypairs per second depending on how busy the host is (1,730/s
+  measured idle). For long patterns, run several `grind()` calls in your own
+  worker threads or processes if you need parallelism. The hosted x402 endpoint caps patterns at 3 chars because it
   grinds under a server-side wall-clock budget.
 
 ## Security

@@ -28,7 +28,7 @@ export const def = {
 		agent_id: z
 			.string()
 			.min(1)
-			.describe('The agent identity id to record the action under. Your token must own it.'),
+			.describe('The agent identity uuid to record the action under. Your token must own it.'),
 		type: z
 			.string()
 			.min(1)

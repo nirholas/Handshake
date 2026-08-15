@@ -87,14 +87,14 @@ All five tools are read-only: they transform input (synthesize/recognize/animate
 
 ```jsonc
 // text_to_speech
-> { "text": "Hello — I'm your three.ws agent.", "voice": "nova" }
+> { "text": "Hello, I'm your three.ws agent.", "voice": "nova" }
 {
   "ok": true,
-  "voice": "Magpie-Nova",
+  "voice": "Magpie-Multilingual.EN-US.Aria",
   "model": "magpie-tts-multilingual",
   "format": "wav",
   "mime": "audio/wav",
-  "sizeBytes": 84210,
+  "sizeBytes": 274476,
   "audio": "data:audio/wav;base64,UklGR…"
 }
 ```

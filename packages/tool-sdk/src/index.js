@@ -10,28 +10,28 @@
  * ```js
  * import { defineTool, defineExecutor, toMcpTools, z } from '@three-ws/tool-sdk';
  *
- * export const priceTool = defineTool({
- *   id: 'my-org-price-feed',
- *   title: 'My Price Feed',
- *   description: 'Fetches live token prices.',
+ * export const quoteTool = defineTool({
+ *   id: 'three-ws-vanity-quote',
+ *   title: 'Vanity Quote',
+ *   description: 'Prices how hard a Solana vanity address pattern is to grind.',
  *   version: '1.0.0',
- *   permissions: { network: ['api.example.com'], rateLimit: { calls: 30, perSeconds: 60 } },
+ *   permissions: { network: ['three.ws'], rateLimit: { calls: 30, perSeconds: 60 } },
  *   apis: [{
- *     name: 'getPrice',
- *     description: 'Get the current USD price for a token symbol.',
- *     parameters: z.object({ symbol: z.string() }),
+ *     name: 'getQuote',
+ *     description: 'Quote the difficulty and suggested USDC bounty for a Base58 prefix.',
+ *     parameters: z.object({ prefix: z.string() }),
  *   }],
  * });
  *
- * export const priceExecutor = defineExecutor(priceTool, {
- *   async getPrice({ symbol }) {
- *     const res = await fetch(`https://api.example.com/v1/price/${symbol}`);
+ * export const quoteExecutor = defineExecutor(quoteTool, {
+ *   async getQuote({ prefix }) {
+ *     const res = await fetch(`https://three.ws/api/vanity/bounties?view=quote&prefix=${prefix}`);
  *     const data = await res.json();
- *     return { symbol, price: data.price };
+ *     return { prefix, tier: data.difficulty.tierLabel };
  *   },
  * });
  *
- * export const mcpTools = toMcpTools(priceTool, priceExecutor);
+ * export const mcpTools = toMcpTools(quoteTool, quoteExecutor);
  * ```
  *
  * See `README.md` in this package for the full API reference, permission

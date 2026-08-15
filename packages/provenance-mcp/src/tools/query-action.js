@@ -21,7 +21,7 @@ export const def = {
 		agent_id: z
 			.string()
 			.min(1)
-			.describe('The agent identity id that owns the action. Your token must own this agent.'),
+			.describe('The agent identity uuid that owns the action. Your token must own this agent.'),
 		id: z
 			.string()
 			.regex(/^\d+$/)

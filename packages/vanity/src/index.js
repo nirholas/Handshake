@@ -427,7 +427,7 @@ const CLIENT_OPTION_KEYS = ['fetch', 'baseUrl', 'apiKey'];
  * (`fetch`, `baseUrl`, `apiKey`), in which case a client bound to those is
  * built for this call. Pass an x402-wrapped `fetch` to settle the 402.
  *
- * @param {GrindViaApiOptions} params
+ * @param {GrindViaApiStandaloneOptions} params
  * @returns {Promise<ApiResult>}
  */
 export function grindViaApi(params = {}) {

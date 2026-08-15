@@ -45,17 +45,17 @@ import { createRateLimiter } from './permissions.js';
  * @example
  * ```js
  * import { defineExecutor } from '@three-ws/tool-sdk';
- * import { priceTool } from './index.js';
+ * import { quoteTool } from './index.js';
  *
- * export const executor = defineExecutor(priceTool, {
- *   async getPrice({ symbol }) {
- *     const res = await fetch(`https://api.example.com/v1/price/${symbol}`);
+ * export const executor = defineExecutor(quoteTool, {
+ *   async getQuote({ prefix }) {
+ *     const res = await fetch(`https://three.ws/api/vanity/bounties?view=quote&prefix=${prefix}`);
  *     const data = await res.json();
- *     return { symbol, price: data.price }; // wrapped into { success: true, content, state }
+ *     return { prefix, tier: data.difficulty.tierLabel }; // wrapped into { success: true, content, state }
  *   },
  * });
  *
- * const result = await executor.invoke('getPrice', { symbol: 'ETH' });
+ * const result = await executor.invoke('getQuote', { prefix: 'THREE' });
  * ```
  */
 export function defineExecutor(tool, implementation) {
