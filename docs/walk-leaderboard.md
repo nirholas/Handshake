@@ -41,7 +41,11 @@ Every row carries `deltaFromYesterday`: the same metric earned **today** minus t
 | This Week | `weekly` (default) | The current UTC date and the previous 6 days, so a rolling 7 days rather than a calendar week. |
 | All Time | `all-time` | No lower bound. |
 
-The page defaults to **This Week / Distance**. Switching either control refetches from offset 0. Both control groups are ARIA tablists with left and right arrow-key navigation, and the board sets `aria-busy` while loading.
+The page defaults to **This Week / Distance**. Switching either control refetches from offset 0. Both control groups are ARIA radiogroups (one filter, one selection) with roving tabindex: arrow keys and Home/End move within a group, and the board sets `aria-busy` on the table while a request is open.
+
+Only the newest request may paint. Each load aborts the one before it and carries a generation number, so switching period and metric in quick succession always lands on the filter you last clicked, never on a stale page of rows, a column header naming the previous metric, or a skeleton that never resolves. Superseded requests show as cancelled in the network panel; that is the mechanism working, not a failure.
+
+A summary line above the board reports the qualifying walker count, the active metric and window, and the time of the last refresh. Because the board promises live updates, it re-fetches the first page every 45 s while the tab is visible, and once more on return from a hidden tab, both silently: a refresh that fails leaves the last good board in place instead of replacing it with an error. The refresh is skipped once you have paged past the first 50 rows, so **Show more** results are never yanked out from under you.
 
 Ranking rules:
 
@@ -57,6 +61,17 @@ Ranking rules:
 - **Your own row** is resolved from a session cookie, a bearer token, or the `anonId` query parameter, and returned as `me` even when it falls outside the requested page. `me.onPage` tells the client whether it is already visible above. A walker with an identity but no qualifying metrics in the window comes back as `me` with `rank: null`, `value: 0`, and `unranked: true`, which the page renders as a dash rather than hiding you.
 
 The page reads `localStorage['twx_walk_anon']` to pass `anonId`. It only reads, never creates, that key: the walk runtime is what mints it. So the pinned row appears for anonymous walkers who have actually walked, and simply does not appear for a first-time visitor.
+
+### Every state on the board
+
+| State | What renders | Why it is shaped that way |
+| --- | --- | --- |
+| Loading | Eight shimmering skeleton rows under the live column headers, with `aria-busy="true"` on the table. Paging swaps the **Show more** label for a loading label and disables the button. | The header stays put so the board does not jump when rows land. |
+| Populated | Ranked rows, the summary line, and your own pinned row when you have one. | |
+| Empty | The table is hidden entirely and a state card takes the card over, with copy written for the metric you asked for and a second action back to All Time whenever you are on a narrower window. | An all-headers, no-rows table is noise, and the reason a board is empty differs per metric: distance and time ask you to walk, sites explains that only walks away from three.ws count and points at the walk companion. A quiet day is not a dead end. |
+| Error | The same card shape with the failure reason and a **Retry** button that re-runs the request in place. | The board is public and unauthenticated, so a retry genuinely is the fix for nearly every failure here. |
+
+Row semantics are a real ARIA table: `table` on the grid, `columnheader` on the header cells, `row` and `cell` on each entry. The top three render a medal glyph in place of the number and carry their rank as screen-reader text, so a medal never reaches assistive tech as an empty cell, and the delta column pairs its `+`/`-` glyph with a spoken "up 120 m since yesterday". A polite live region announces the shape of each successful load (how many rows, of how many walkers, by which metric and window) instead of firing on all fifty rows individually.
 
 ---
 
