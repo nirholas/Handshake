@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laboratorio</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laboratorio",
-		"the_react_wrapper_around_the_sdk_imports": "O wrapper de React para o SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> e <code>useAvatar</code> directamente desde <code>/avatar-sdk/src/react.jsx</code>. React cárgase desde un CDN mediante un mapa de importación, polo que esta páxina funciona sen un paso de bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "O wrapper de React para o SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> e <code>useAvatar</code> directamente desde <code>/avatar-sdk/src/react.js</code>. React cárgase desde un CDN mediante un mapa de importación, polo que esta páxina funciona sen un paso de bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Épico",
 		"it_pays_the_quoted_price_and_receives": "Paga o prezo cotizado e recibe a clave <b>unha vez</b>. Impórtaa inmediatamente.",
 		"legendary": "Lendario",
-		"long_brandable_solana_addresses_4_5_characte": "Enderezos Solana longos e de marca — prefixos de 4-5+ caracteres que o 'grinder' en tempo real non pode alcanzar — 'grindados' con antelación en CPU por lotes e vendidos desde stock. Compra un e a clave privada entrégase <strong>unha vez</strong> a través do <a href=\"/vanity/gallery\">x402</a>, e despois a súa copia almacenada destrúese. Necesitas un 'grind' novo de ≤3 caracteres? Usa o <a href=\"/vanity-wallet\">'grinder' en tempo real</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Enderezos Solana longos e de marca — prefixos de 4-5+ caracteres que o 'grinder' en tempo real non pode alcanzar — 'grindados' con antelación en CPU por lotes e vendidos desde stock. Compra un e a clave privada entrégase <strong>unha vez</strong> a través do <a href=\"/x402\">x402</a>, e despois a súa copia almacenada destrúese. Necesitas un 'grind' novo de ≤3 caracteres? Usa o <a href=\"/vanity-wallet\">'grinder' en tempo real</a>.",
 		"meta_description": "Compra un enderezo vanity Solana longo e de marca entregado instantaneamente desde stock — prefixos de 4-5+ caracteres que o 'grinder' en tempo real non pode alcanzar, 'grindados' con antelación en CPU por lotes e vendidos a través de x402. O prezo escala coa rareza.",
 		"meta_og_description": "Enderezos vanity Solana longos e de marca, pre-xerados e vendidos de stock. Entregados unha única vez, cifrados en repouso, con prezo segundo a rareza.",
 		"meta_og_title": "Inventario Vanity Premium · three.ws",

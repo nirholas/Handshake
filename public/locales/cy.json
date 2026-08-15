@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; labordy</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws labordy",
-		"the_react_wrapper_around_the_sdk_imports": "Yr amlen React o amgylch yr SDK. Mae'n mewnforio <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, a <code>useAvatar</code> yn uniongyrchol o <code>/avatar-sdk/src/react.jsx</code>. Mae React yn cael ei lwytho o CDN trwy fap mewnforio felly mae'r dudalen hon yn gweithio heb gam bwndlo.",
+		"the_react_wrapper_around_the_sdk_imports": "Yr amlen React o amgylch yr SDK. Mae'n mewnforio <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, a <code>useAvatar</code> yn uniongyrchol o <code>/avatar-sdk/src/react.js</code>. Mae React yn cael ei lwytho o CDN trwy fap mewnforio felly mae'r dudalen hon yn gweithio heb gam bwndlo.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epig",
 		"it_pays_the_quoted_price_and_receives": "Mae'n talu'r pris a ddyfynnir ac yn derbyn yr allwedd <b>unwaith</b>. Mewnforiwch hi ar unwaith.",
 		"legendary": "Chwedlonol",
-		"long_brandable_solana_addresses_4_5_characte": "Cyfeiriadau Solana hir, brandiadwy — rhagddodiaid 4–5+ cymeriad na all y malwr byw eu cyrraedd — wedi'u malu ymlaen llaw ar CPU batsh a'u gwerthu o stoc. Prynwch un a chaiff yr allwedd breifat ei chyflwyno <strong>unwaith</strong> dros y rheilffordd <a href=\"/vanity/gallery\">x402</a>, yna caiff ei chopi storio ei ddinistrio. Angen malu ffres ≤3-cymeriad yn lle hynny? Defnyddiwch y <a href=\"/vanity-wallet\">malwr byw</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Cyfeiriadau Solana hir, brandiadwy — rhagddodiaid 4–5+ cymeriad na all y malwr byw eu cyrraedd — wedi'u malu ymlaen llaw ar CPU batsh a'u gwerthu o stoc. Prynwch un a chaiff yr allwedd breifat ei chyflwyno <strong>unwaith</strong> dros y rheilffordd <a href=\"/x402\">x402</a>, yna caiff ei chopi storio ei ddinistrio. Angen malu ffres ≤3-cymeriad yn lle hynny? Defnyddiwch y <a href=\"/vanity-wallet\">malwr byw</a>.",
 		"meta_description": "Prynwch gyfeiriad vanity Solana hir, brandiadwy wedi'i gyflwyno ar unwaith o stoc — rhagddodiaid 4–5+ cymeriad na all y malwr byw eu cyrraedd, wedi'u malu ymlaen llaw ar CPU batsh a'u gwerthu trwy x402. Mae pris yn graddio gyda brinrwydd.",
 		"meta_og_description": "Cyfeiriadau vanity Solana hir, brandiadwy, wedi'u malu ymlaen llaw a'u gwerthu o stoc. Wedi'u danfon unwaith, wedi'u hamgryptio wrth orffwys, wedi'u prisio yn ôl eu prinder.",
 		"meta_og_title": "Rhestr Eiddo Vanity Premiwm · three.ws",

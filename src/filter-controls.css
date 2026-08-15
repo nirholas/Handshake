@@ -1,7 +1,9 @@
 /*
- * /screener — token screener. Reuses cv-table, cv-search, cv-pill and the
- * hm-seg segmented control from coin-pages.css; this file styles only the
- * filter control row (selects, reset, result count) that is unique here.
+ * Shared filter-control row: the labelled selects, reset button and result
+ * count that sit above a data table. Used by /screener and /yields, both of
+ * which also load coin-pages.css for cv-table, cv-search, cv-pill and the
+ * hm-seg segmented control. Any page adding a scr-controls row must link this
+ * file, or the row falls back to unstyled inline markup.
  */
 
 .scr-controls {

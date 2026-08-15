@@ -16,6 +16,14 @@ const BILLING_COPY = {
 	credits: { label: 'Credits', title: 'Metered to your prepaid credit balance, per 1k characters.' },
 };
 
+// Recovery affordances for the empty and error states. An error state that only
+// describes the failure leaves the visitor with the reload button as their only
+// move; these put the fix inside the message.
+const CLEAR_FILTERS_BUTTON =
+	'<button class="vl-btn vl-btn-ghost vl-btn-sm" type="button" data-act="clear-filters">Clear filters</button>';
+const RETRY_BUTTON =
+	'<button class="vl-btn vl-btn-primary vl-btn-sm" type="button" data-act="retry">Try again</button>';
+
 // One <audio> for the whole browser: starting a preview always stops the one
 // already playing, so a fast clicker never stacks overlapping voices.
 const previewAudio = new Audio();
@@ -27,6 +35,24 @@ function esc(s) {
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;');
+}
+
+/**
+ * One readable line out of an upstream failure. A lane's 403 body arrives as
+ * multi-line JSON quoting project numbers and quota rules; dropped into a status
+ * line it reads as a crash. Collapse it and cap it: the server already sends the
+ * actionable sentence, this is the guard for everything else.
+ */
+export function statusLine(message, max = 180) {
+	const flat = String(message || '').replace(/\s+/g, ' ').trim();
+	if (!flat) return 'Unknown error';
+	return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
+}
+
+/** The message a TTS endpoint meant for a human, whatever shape it answered in. */
+export async function laneErrorMessage(response) {
+	const body = await response.json().catch(() => ({}));
+	return statusLine(body.error_description || body.message || `HTTP ${response.status}`);
 }
 
 function debounce(fn, ms) {
@@ -122,6 +148,29 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 		els.pills.setAttribute('aria-label', `${total} voices across ${providers.length} providers`);
 	}
 
+	// Three different nothings share this grid, and only one of them is the
+	// visitor's fault: a filter that matched nothing, a lane that cannot serve,
+	// and a deployment with no lane at all. Each gets its own answer, and the one
+	// the visitor can fix gets the button that fixes it.
+	function emptyTitle(provider, filtering) {
+		if (provider && !provider.available) return `${provider.label} is unavailable`;
+		if (filtering) return 'No voices match';
+		return 'No voice lane is available';
+	}
+
+	function emptyBody(provider, filtering) {
+		if (provider && !provider.available) {
+			return provider.reason || 'This lane is not configured on this server.';
+		}
+		if (filtering) {
+			const total = allVoices.filter((v) => !v.shared).length;
+			return total
+				? `Clear the search or pick a different provider: ${total} voices are loaded.`
+				: 'Clear the search or pick a different provider.';
+		}
+		return 'This deployment has no voice provider configured. The free Microsoft Edge and NVIDIA lanes need no key, so this is a server configuration gap, not something you can fix here.';
+	}
+
 	function renderCards(reset = true) {
 		if (reset) shown = 0;
 		const next = filtered.slice(0, shown + PAGE);
@@ -129,14 +178,12 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 
 		if (!next.length) {
 			const p = providerById(activeProvider);
+			const filtering = Boolean(els.search.value.trim() || els.language.value);
 			els.grid.innerHTML =
 				`<div class="vl-empty">` +
-				`<div class="vl-empty-title">${p && !p.available ? esc(p.label) + ' is unavailable' : 'No voices match'}</div>` +
-				esc(
-					p && !p.available
-						? p.reason || 'This lane is not configured on this server.'
-						: 'Clear the search or pick a different provider. The free Edge lane alone has around 500 voices.',
-				) +
+				`<div class="vl-empty-title">${esc(emptyTitle(p, filtering))}</div>` +
+				esc(emptyBody(p, filtering)) +
+				(filtering ? `<div class="vl-empty-actions">${CLEAR_FILTERS_BUTTON}</div>` : '') +
 				`</div>`;
 			els.more.hidden = true;
 			return;
@@ -255,13 +302,23 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 
 	// ── Loading ───────────────────────────────────────────────────────────────
 
-	async function loadCatalog() {
+	/**
+	 * Read the catalog and render it. `silent` re-reads in place: no skeletons,
+	 * no status churn, and the line the visitor is currently reading (usually the
+	 * reason a lane just failed) is restored afterwards.
+	 */
+	async function loadCatalog({ silent = false } = {}) {
 		const token = ++reqToken;
-		setStatus('Loading voices…');
-		els.grid.innerHTML = Array.from({ length: 6 })
-			.map(() => '<div class="vb-card vb-skeleton" aria-hidden="true"></div>')
-			.join('');
-		els.more.hidden = true;
+		const keptStatus = silent
+			? { text: els.status.textContent, tone: els.status.dataset.tone }
+			: null;
+		if (!silent) {
+			setStatus('Loading voices…');
+			els.grid.innerHTML = Array.from({ length: 6 })
+				.map(() => '<div class="vb-card vb-skeleton" aria-hidden="true"></div>')
+				.join('');
+			els.more.hidden = true;
+		}
 
 		let data;
 		try {
@@ -275,7 +332,8 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 			if (token !== reqToken) return;
 			els.grid.innerHTML =
 				'<div class="vl-empty"><div class="vl-empty-title">Could not load the voice catalog</div>' +
-				`${esc(err.message)}. Check your connection and retry.</div>`;
+				`${esc(statusLine(err.message))}. Check your connection, then try again.` +
+				`<div class="vl-empty-actions">${RETRY_BUTTON}</div></div>`;
 			setStatus('Catalog unavailable', 'err');
 			return;
 		}
@@ -298,9 +356,16 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 		];
 		allVoices = data.voices;
 
+		// A silent re-read follows a lane going down, so the pill the visitor was
+		// browsing may no longer exist. Fall back to the mixed view rather than
+		// leaving an active filter nothing can satisfy.
+		if (activeProvider !== 'all' && !providers.some((p) => p.id === activeProvider && p.available)) {
+			activeProvider = 'all';
+		}
 		renderPills();
 		populateLanguages();
 		applyFilter();
+		if (keptStatus?.text) setStatus(keptStatus.text, keptStatus.tone || 'info');
 		onCatalog?.(providers);
 	}
 
@@ -345,17 +410,15 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 				credentials: 'include',
 				headers: withElevenKey({}),
 			});
-			if (!r.ok) {
-				const body = await r.json().catch(() => ({}));
-				throw new Error(body.error_description || body.message || `HTTP ${r.status}`);
-			}
+			if (!r.ok) throw new Error(await laneErrorMessage(r));
 			data = await r.json();
 		} catch (err) {
 			if (token !== reqToken) return;
-			setStatus(`Library unavailable: ${err.message}`, 'err');
+			setStatus(`Library unavailable: ${statusLine(err.message)}`, 'err');
 			els.grid.innerHTML =
 				'<div class="vl-empty"><div class="vl-empty-title">The ElevenLabs library needs a key</div>' +
-				'Save your own ElevenLabs API key below, or sign in on a deployment where the platform key is set.</div>';
+				'Save your own ElevenLabs API key below, or sign in on a deployment where the platform key is set.' +
+				`<div class="vl-empty-actions">${RETRY_BUTTON}</div></div>`;
 			els.more.hidden = true;
 			return;
 		}
@@ -392,6 +455,7 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 		const original = btn.textContent;
 		btn.disabled = true;
 		btn.textContent = 'Loading…';
+		let laneDown = false;
 		try {
 			const r = await fetch('/api/tts/synthesize', {
 				method: 'POST',
@@ -400,8 +464,9 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 				body: JSON.stringify({ provider: v.provider, voiceId: v.id, text: PREVIEW_LINE }),
 			});
 			if (!r.ok) {
-				const body = await r.json().catch(() => ({}));
-				throw new Error(body.error_description || body.message || `HTTP ${r.status}`);
+				// 503 is the lane saying it cannot serve at all, not this clip failing.
+				laneDown = r.status === 503;
+				throw new Error(await laneErrorMessage(r));
 			}
 			if (token !== previewToken) return;
 			const blob = await r.blob();
@@ -415,6 +480,11 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 		} finally {
 			btn.disabled = false;
 			btn.textContent = original;
+			// The lane just told us it cannot serve anything. Re-read the catalog so
+			// the grid stops offering voices nobody can render, rather than leaving
+			// the visitor to discover the outage one card at a time. Silent, so the
+			// explanation they are reading survives the refresh.
+			if (laneDown) loadCatalog({ silent: true });
 		}
 	}
 
@@ -432,7 +502,7 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 				body: JSON.stringify({ publicUserId: v.publicUserId, voiceId: v.id, name: v.name }),
 			});
 			const body = await r.json().catch(() => ({}));
-			if (!r.ok) throw new Error(body.error_description || body.message || `HTTP ${r.status}`);
+			if (!r.ok) throw new Error(statusLine(body.error_description || body.message || `HTTP ${r.status}`));
 			setStatus(`"${v.name}" added to your ElevenLabs voices.`, 'ok');
 			btn.textContent = 'Added';
 			onSelect?.({ ...v, id: body.voiceId, provider: 'elevenlabs', shared: false });
@@ -451,6 +521,21 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 			c.classList.toggle('selected', c.dataset.key === key);
 		});
 		onSelect?.(v);
+	}
+
+	/** Drop the search and language filters, from the empty state's own button. */
+	function clearFilters() {
+		els.search.value = '';
+		els.language.value = '';
+		if (activeProvider === 'elevenlabs-library') loadLibraryPage({ reset: true });
+		else applyFilter();
+		els.search.focus();
+	}
+
+	/** Re-run whichever load failed, from the error state's own button. */
+	function retry() {
+		if (activeProvider === 'elevenlabs-library') loadLibraryPage({ reset: true });
+		else loadCatalog();
 	}
 
 	// ── Wiring ────────────────────────────────────────────────────────────────
@@ -483,6 +568,8 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 			if (act === 'preview') preview(key, actionBtn);
 			else if (act === 'add') addSharedVoice(key, actionBtn);
 			else if (act === 'use') select(key);
+			else if (act === 'clear-filters') clearFilters();
+			else if (act === 'retry') retry();
 			return;
 		}
 		const card = e.target.closest('.vb-card');

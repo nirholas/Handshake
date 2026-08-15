@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; shaybaar</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws shaybaar",
-		"the_react_wrapper_around_the_sdk_imports": "React wrapper-ka ku wareegsan SDK-ga. Wuxuu si toos ah uga soo dejinayaa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, iyo <code>useAvatar</code> <code>/avatar-sdk/src/react.jsx</code>. React waxaa laga soo shubaa CDN iyadoo la isticmaalayo khariidad soo dejin ah si boggan uu u shaqeeyo iyada oo aan loo baahnayn tallaabo bundler ah.",
+		"the_react_wrapper_around_the_sdk_imports": "React wrapper-ka ku wareegsan SDK-ga. Wuxuu si toos ah uga soo dejinayaa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, iyo <code>useAvatar</code> <code>/avatar-sdk/src/react.js</code>. React waxaa laga soo shubaa CDN iyadoo la isticmaalayo khariidad soo dejin ah si boggan uu u shaqeeyo iyada oo aan loo baahnayn tallaabo bundler ah.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Heer sare",
 		"it_pays_the_quoted_price_and_receives": "Waxay bixisaa qiimaha la sheegay waxayna helaysaa furaha <b>hal mar</b>. Isla markiiba soo deji.",
 		"legendary": "Halyeey",
-		"long_brandable_solana_addresses_4_5_characte": "Cinwaano Solana dhaadheer, oo la summayn karo — horgalayaal 4–5+ xaraf ah oo aanu gaadhi karin mashiinka soo saara ee tooska ah — hore loogu soo saaray CPU-yo badan oo laga iibiyo kaydka. Mid iibso waxaana furaha gaarka ah laguugu soo gudbinayaa <strong>hal mar</strong> iyada oo la marayo jidka <a href=\"/vanity/gallery\">x402</a>, ka dibna nuqulkiisa kaydsan waa la burburinayaa. Ma u baahan tahay mid cusub oo ≤3-xaraf ah oo la soo saaray? Isticmaal <a href=\"/vanity-wallet\">mashiinka soo saara ee tooska ah</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Cinwaano Solana dhaadheer, oo la summayn karo — horgalayaal 4–5+ xaraf ah oo aanu gaadhi karin mashiinka soo saara ee tooska ah — hore loogu soo saaray CPU-yo badan oo laga iibiyo kaydka. Mid iibso waxaana furaha gaarka ah laguugu soo gudbinayaa <strong>hal mar</strong> iyada oo la marayo jidka <a href=\"/x402\">x402</a>, ka dibna nuqulkiisa kaydsan waa la burburinayaa. Ma u baahan tahay mid cusub oo ≤3-xaraf ah oo la soo saaray? Isticmaal <a href=\"/vanity-wallet\">mashiinka soo saara ee tooska ah</a>.",
 		"meta_description": "Iibso cinwaan Solana qurxoon oo dheer, oo la summayn karo oo isla markiiba laga keeno kaydka — horgalayaal 4–5+ xaraf ah oo aanu gaadhi karin mashiinka soo saara ee tooska ah, hore loogu soo saaray CPU-yo badan oo lagu iibiyo x402. Qiimuhu wuxuu ku xidhan yahay naadirnimada.",
 		"meta_og_description": "Cinwaano Solana vanity ah oo dhaadheer, sumcad leh, horay loo diyaariyey oo laga iibiyo kaydka. Mar keliya la bixiyo, si qarsoodi ah loo kaydiyey, qiimahooduna ku xiran yahay naadirnimadooda.",
 		"meta_og_title": "Kaydka Cinwaannada Vanity-ga Sare · three.ws",

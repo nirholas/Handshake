@@ -43,6 +43,67 @@ function freePort() {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
+ * Attempt a raw WebSocket upgrade carrying `origin` and report what the
+ * transport's verifyClient decided. A rejected handshake never opens, it comes
+ * back as an HTTP response, so the status code is the answer either way.
+ * Resolves 101 when the upgrade was accepted.
+ */
+async function upgradeStatus(origin, targetPort = port) {
+	const { WebSocket } = await import('ws');
+	return new Promise((resolve, reject) => {
+		const sock = new WebSocket(`ws://127.0.0.1:${targetPort}`, {
+			headers: origin === null ? {} : { origin },
+		});
+		const done = (v) => { try { sock.close(); } catch { /* already closed */ } resolve(v); };
+		sock.on('open', () => done(101));
+		sock.on('unexpected-response', (_req, res) => { res.resume(); done(res.statusCode); });
+		sock.on('error', (err) => {
+			// An accepted upgrade that the Colyseus protocol then closes still proves
+			// verifyClient said yes; only a refused handshake surfaces a status here.
+			if (/Unexpected server response: (\d+)/.test(err?.message || '')) {
+				return resolve(Number(RegExp.$1));
+			}
+			reject(err);
+		});
+		setTimeout(() => reject(new Error(`upgrade to ${origin} never settled`)), 10_000).unref?.();
+	});
+}
+
+/**
+ * Boot the entry point with an arbitrary env overlay and resolve once it either
+ * reports it is listening or exits. Used for the production-posture checks,
+ * which are about what the process does at boot, not about serving traffic.
+ */
+function bootWith(env, targetPort) {
+	return new Promise((resolve, reject) => {
+		const proc = spawn(process.execPath, ['multiplayer/src/index.js'], {
+			cwd: root,
+			env: {
+				...process.env,
+				PORT: String(targetPort),
+				HOST: '127.0.0.1',
+				UPSTASH_REDIS_REST_URL: '',
+				UPSTASH_REDIS_REST_TOKEN: '',
+				REDIS_URI: '',
+				REDIS_URL: '',
+				...env,
+			},
+			stdio: ['ignore', 'pipe', 'pipe'],
+		});
+		let out = '';
+		const settle = (exitCode) => resolve({ proc, out, exitCode });
+		proc.stdout.on('data', (b) => {
+			out += b;
+			if (/listening on ws:/.test(out)) settle(null);
+		});
+		proc.stderr.on('data', (b) => { out += b; });
+		proc.on('exit', (code) => settle(code));
+		proc.on('error', reject);
+		setTimeout(() => reject(new Error(`boot never settled: ${out.slice(-400)}`)), 30_000).unref?.();
+	});
+}
+
+/**
  * Sign an /internal/notify webhook exactly the way the three.ws API does
  * (api/_lib/presence-store.js → notifyMultiplayer). Keeping the signing here
  * rather than importing the verifier proves the two halves agree over the wire.
@@ -183,5 +244,77 @@ describe('multiplayer entry point', () => {
 			body: JSON.stringify({ text: 'the event starts now' }),
 		});
 		expect(res.status).toBe(401);
+	});
+});
+
+// The origin allow-list is the browser-facing filter documented in
+// multiplayer/README.md: the listed origins plus any *.three.ws or *.vercel.app
+// host upgrade, everything else is refused before the handshake completes. It is
+// only a CSRF-style filter (each room's onAuth is the real access boundary), but
+// it is the one part of the transport config a reader is told they can rely on.
+describe('WebSocket origin allow-list', () => {
+	it('upgrades an explicitly allowed origin', async () => {
+		expect(await upgradeStatus('http://localhost:3000')).toBe(101);
+	});
+
+	it('upgrades any three.ws or Vercel preview subdomain without an entry per URL', async () => {
+		expect(await upgradeStatus('https://staging.three.ws')).toBe(101);
+		expect(await upgradeStatus('https://three-ws-abc123-team.vercel.app')).toBe(101);
+	});
+
+	it('upgrades any loopback port in dev, so a Vite that landed past 3003 still connects', async () => {
+		// `npm run dev:walk-all` takes the first free port from 3000 up, so a second
+		// checkout on the same box gets 3004+ and used to be refused by the fixed
+		// default list. Production is unaffected: this branch is dev-only.
+		expect(await upgradeStatus('http://localhost:3005')).toBe(101);
+		expect(await upgradeStatus('http://127.0.0.1:4173')).toBe(101);
+	});
+
+	it('refuses an origin outside the allow-list', async () => {
+		expect(await upgradeStatus('https://evil.example.com')).toBe(403);
+		// A suffix that merely CONTAINS an allowed host must not pass: the check is
+		// on the parsed hostname, not on the raw origin string.
+		expect(await upgradeStatus('https://three.ws.evil.example.com')).toBe(403);
+	});
+});
+
+// What the process does when NODE_ENV says production. Both behaviours here are
+// safety defaults that only ever run on the live service, so nothing else
+// exercises them; a regression would ship a forgeable holder gate or an open
+// admin monitor.
+describe('production posture', () => {
+	it('refuses to boot in production without a real HOLDER_PASS_SECRET', async () => {
+		const p = await freePort();
+		const { out, exitCode } = await bootWith({ NODE_ENV: 'production', HOLDER_PASS_SECRET: '' }, p);
+		expect(exitCode).toBe(1);
+		expect(out).toMatch(/HOLDER_PASS_SECRET is required in production/);
+	});
+
+	it('leaves the admin monitor unmounted in production until credentials are set', async () => {
+		const p = await freePort();
+		const { proc, out } = await bootWith({
+			NODE_ENV: 'production',
+			HOLDER_PASS_SECRET: SECRET,
+			MULTIPLAYER_SHARED_SECRET: SECRET,
+			MONITOR_USER: '',
+			MONITOR_PASS: '',
+		}, p);
+		try {
+			expect(out).toMatch(/monitor disabled/);
+			const res = await fetch(`http://127.0.0.1:${p}/colyseus`);
+			expect(res.status).toBe(404);
+			// Liveness still works, the process is healthy, just not exposing state.
+			expect((await fetch(`http://127.0.0.1:${p}/health`)).status).toBe(200);
+			// An origin-less upgrade is a production-only refusal: a browser always
+			// sends Origin, so the omission is a bypass attempt there.
+			expect(await upgradeStatus(null, p)).toBe(403);
+			// The dev-only loopback and codespace widenings must not follow the
+			// process into production; only the explicit list survives there.
+			expect(await upgradeStatus('http://localhost:3005', p)).toBe(403);
+			expect(await upgradeStatus('https://three.ws', p)).toBe(101);
+		} finally {
+			proc.kill('SIGKILL');
+			await new Promise((r) => proc.once('exit', r));
+		}
 	});
 });

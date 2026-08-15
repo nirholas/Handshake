@@ -75,9 +75,20 @@ export function translate(key, vars, { catalog = state.catalog, fallback = state
 
 // Apply a catalog to a DOM subtree. Exported with an injectable root so tests
 // can pass a jsdom document fragment.
+// An element whose content is live data rather than copy sets
+// `data-i18n-owned="1"` the moment its script writes a real value into it. The
+// annotation still ships in the HTML so the pre-render placeholder is
+// translated, but from the first render onwards the script owns the element:
+// without this, the catalog pass (which lands after an async /api/locale fetch)
+// reverts a freshly-rendered balance or status back to "Loading".
+function scriptOwns(el) {
+	return el.getAttribute('data-i18n-owned') === '1';
+}
+
 export function applyCatalog(root, t) {
 	if (!root) return;
 	root.querySelectorAll?.('[data-i18n]').forEach((el) => {
+		if (scriptOwns(el)) return;
 		const key = el.getAttribute('data-i18n');
 		const v = t(key);
 		// A total miss (both catalogs) echoes the key back. The element already
@@ -95,6 +106,7 @@ export function applyCatalog(root, t) {
 		el.textContent = v;
 	});
 	root.querySelectorAll?.('[data-i18n-html]').forEach((el) => {
+		if (scriptOwns(el)) return;
 		const key = el.getAttribute('data-i18n-html');
 		const v = t(key);
 		if (v == null || v === key) return;
@@ -107,6 +119,7 @@ export function applyCatalog(root, t) {
 		el.innerHTML = v;
 	});
 	root.querySelectorAll?.('[data-i18n-attr]').forEach((el) => {
+		if (scriptOwns(el)) return;
 		for (const pair of el.getAttribute('data-i18n-attr').split(';')) {
 			const [attr, key] = pair.split(':').map((s) => s && s.trim());
 			if (!attr || !key) continue;

@@ -463,6 +463,14 @@
 			<description>Settings has a panel meant to show how much AI inference your agents have used this month. It always said &quot;No usage yet&quot;, no matter how much you had used, because the endpoint behind it never sent the figures the panel was written to read. It does now: calls this month, tokens consumed, what those calls cost, and a per-model table showing which models did the work, busiest first. The same response also had two storage limits going out as text rather than numbers, which is the kind of difference that turns a size comparison into nonsense; both are numbers now. An API key with the profile scope can read all of it, so you can pull your own usage from a script, and the developer guide shows the exact shape.</description>
 		</item>
 		<item>
+			<title>The multiplayer worlds server connects on any local port, and its README documents what it actually reads</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:The multiplayer worlds server connects on any local port, and its README documents what it actually reads</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two fixes to the server that runs every live world (/play, /walk, /agora, /irl, /play/war, the Living Stages, /ar/studio). Running two copies of the site on one machine used to break the worlds: the second copy gets the next free web port, and the server only accepted connections from the first four, so the world silently refused to join. Outside production it now accepts any connection coming from the same machine, while the live server keeps its exact origin list unchanged. Its README also described six settings when the server reads more than thirty, and listed two web endpoints when it serves seven, so anyone running or deploying it was working from a map that no longer matched the ground; the settings, the endpoints, and how the admin monitor is protected are now written down as they really behave, and the origin rules, the refusal to boot production without a real signing secret, and the closed admin monitor are covered by tests.</description>
+		</item>
+		<item>
 			<title>The persona builder stops reporting a model outage as if you had been signed out</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-15:The persona builder stops reporting a model outage as if you had been signed out</guid>
@@ -567,6 +575,14 @@
 			<description>Three fixes in the developer packages. The @three-ws/vanity SDK documented a fetch option on its paid address-grinding lane but silently ignored it, so a developer who passed a payment-enabled fetch got a payment-required error back instead of the keypair they paid for; that option now works, as do a custom API host and key. The avatar MCP server's in-chat 3D viewer had been hand-tuned with softer shadows, brighter exposure and a neutral environment light, but the script that rebuilds it before every release still produced the old flat version, so the next release would have quietly undone the tuning; the script now produces the tuned viewer, and the same settings apply to the fallback view for chat apps that cannot run the interactive one. The tool SDK's quick-start example pointed at an API that does not exist and skipped the wrapper an MCP server needs to return anything at all, so following it produced a tool that answered with nothing; it now runs end to end against a real free three.ws endpoint.</description>
 		</item>
 		<item>
+			<title>The vault's session controls moved out of browser pop-ups and its model panel became a real modal</title>
+			<link>https://three.ws/vault</link>
+			<guid isPermaLink="false">2026-08-15:The vault's session controls moved out of browser pop-ups and its model panel became a real modal</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The vault page (/vault) gives every visitor a session key that acts as their buyer identity: it is what pays for a model and what decrypts it in the browser afterwards. Everything you could do with that key used to happen through the browser's own grey pop-up boxes, which offered no way to see the address, no way to copy it, and no way to start over with a fresh one. The session strip now does all of it on the page: copy the address to fund it from anywhere, open an inline amount field to top it up from your wallet with the amount checked before the wallet is even asked, and rotate to a new key behind a two-step confirmation that first spells out what a new key costs you. The panel that opens when you pick a model is now a proper dialog: it says it is checking your purchase status instead of flashing a Buy button it might have to take back, keyboard focus stays inside it, Escape closes it, and closing puts you back on the model you were reading. When listings fail to load, the page now offers a way to try again instead of only stating the failure, and both empty states point at what to do next.</description>
+		</item>
+		<item>
 			<title>The Walk page shows the real top walkers again instead of claiming nobody has walked</title>
 			<link>https://three.ws/walk</link>
 			<guid isPermaLink="false">2026-08-15:The Walk page shows the real top walkers again instead of claiming nobody has walked</guid>
@@ -589,6 +605,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>An audit of eight developer tutorials found two whose main code sample looked right and silently failed. The custom-skill weather handler split the weather API's reply on a plus sign, but the temperature field arrives with a leading plus of its own, so every field after the condition landed one slot off and the temperature always came back empty; it also mapped the fahrenheit option to a format code that means feels-like rather than Fahrenheit, so the celsius and fahrenheit paths returned the same units. Both are fixed and the sample was run against the live API in both unit modes. The gesture tutorial's AI lane read an emotion-breakdown field the Granite analysis tool has never returned, so the strength check never passed and the agent never played a single animation; it now reads the score and risk flags the tool actually returns, and grades the gesture across four bands instead of a binary. Separately, twelve tutorial hero buttons pointed at anchors on the docs hub that stopped existing when the hub split into per-topic pages, and now open the real pages; a placeholder URL in the Pump.fun tutorial was being parsed as HTML, which broke a link and injected stray elements into the page; and the self-host guide was corrected throughout, including storage variable names that no longer matched the code, a database step that left most tables uncreated, an audit-logging example importing a function that does not exist, a Cloudflare worker setup for a proxy the platform does not run, and a license claim that described the repository as open source when it is not.</description>
+		</item>
+		<item>
+			<title>Viability now shows skeletons while it reads and says what broke when a read fails</title>
+			<link>https://three.ws/viability</link>
+			<guid isPermaLink="false">2026-08-15:Viability now shows skeletons while it reads and says what broke when a read fails</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Viability page (/viability) reports the two real money loops behind three.ws: $THREE marketplace GMV and take-rate, and guarded agent coin trades with realized P&amp;L. Until now, a slow read left the page as a bare headline with nothing underneath, and a failed read quietly deleted both panels while the page still claimed it had just updated. Both panels now hold their shape with skeletons while the live read is in flight, so the numbers land without the page jumping. If a read fails, that panel says so in plain language, names the reason (offline, rate limited, the status the API returned, or a deploy still rolling out), and offers a Retry that re-runs only that panel, leaving a healthy one untouched. The freshness stamp is honest too: it reports a read in flight, a failed read, or how long ago the figures on screen were actually good. Section titles are now real headings, and the network toggle announces itself correctly to screen readers.</description>
 		</item>
 		<item>
 			<title>Voice and vision SDKs ship runnable examples, and the x402 seller SDK reads its Solana sponsor from the environment</title>

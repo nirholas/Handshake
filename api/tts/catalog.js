@@ -16,7 +16,9 @@
  * NVIDIA); the metered lanes (OpenAI, ElevenLabs) need a session, and
  * ElevenLabs additionally needs either the platform key or an `x-eleven-key`
  * BYOK header. A lane that cannot serve is reported in `providers` as false
- * rather than omitted, so the UI can explain *why* it is empty.
+ * rather than omitted, so the UI can explain *why* it is empty. A lane whose
+ * last real synthesis was refused upstream (expired key, billing hold) is
+ * withheld the same way, from the breaker in api/_lib/tts-lane-health.js.
  *
  * Response: {
  *   providers: [{ id, label, tagline, billing, usdPer1k, byok, clone,
@@ -38,6 +40,7 @@ import {
 	providerDefaultVoice,
 	listProviderVoices,
 } from '../_lib/voice-providers.js';
+import { laneOutages, laneOutageCopy } from '../_lib/tts-lane-health.js';
 
 const DEFAULT_LIMIT = 400;
 const MAX_LIMIT = 2000;
@@ -72,17 +75,27 @@ export default wrap(async (req, res) => {
 	const { apiKey: elevenKey, byok } = resolveElevenKey(req);
 
 	const availability = providerAvailability({ elevenUserKey: byok });
+	// Configuration presence says a lane *could* serve; only a real call knows
+	// whether it does. /api/tts/synthesize records what it learns, and a lane
+	// that just refused credentials is withheld here rather than advertised with
+	// voices nobody can render. A user's own ElevenLabs key is unaffected by the
+	// platform key's outage.
+	const outages = await laneOutages(PROVIDER_IDS);
 
 	// A lane is listed even when it cannot serve, with the reason attached, so
 	// the picker can show "sign in" or "add a key" instead of a silent gap.
 	const providers = VOICE_PROVIDERS.map((p) => {
 		let available = availability[p.id];
 		let reason = null;
+		const outage = p.id === 'elevenlabs' && byok ? null : outages.get(p.id);
 		if (!available) {
 			reason = p.id === 'elevenlabs' ? 'Add your own ElevenLabs key below' : 'Not configured on this server';
 		} else if (!p.anonymous && !signedIn) {
 			available = false;
 			reason = 'Sign in to use this lane';
+		} else if (outage === 'auth') {
+			available = false;
+			reason = `Temporarily unavailable: ${laneOutageCopy(outage)}`;
 		}
 		return {
 			...p,

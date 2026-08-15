@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — हुक",
 		"lab": "<a href=\"/demos\">&larr; ल्याब</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ल्याब",
-		"the_react_wrapper_around_the_sdk_imports": "SDK वरिपरिको React र्‍यापर। यसले <code>/avatar-sdk/src/react.jsx</code> बाट सिधै <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, र <code>useAvatar</code> लाई इम्पोर्ट गर्छ। React लाई इम्पोर्ट म्याप मार्फत CDN बाट लोड गरिन्छ, त्यसैले यो पृष्ठ बन्डलर चरण बिना काम गर्छ।",
+		"the_react_wrapper_around_the_sdk_imports": "SDK वरिपरिको React र्‍यापर। यसले <code>/avatar-sdk/src/react.js</code> बाट सिधै <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, र <code>useAvatar</code> लाई इम्पोर्ट गर्छ। React लाई इम्पोर्ट म्याप मार्फत CDN बाट लोड गरिन्छ, त्यसैले यो पृष्ठ बन्डलर चरण बिना काम गर्छ।",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "महाकाव्य",
 		"it_pays_the_quoted_price_and_receives": "यसले उद्धृत मूल्य तिर्छ र कुञ्जी <b>एक पटक</b> प्राप्त गर्दछ। यसलाई तुरुन्तै आयात गर्नुहोस्।",
 		"legendary": "पौराणिक",
-		"long_brandable_solana_addresses_4_5_characte": "लामो, ब्रान्ड योग्य Solana ठेगानाहरू — ४-५+ वर्णका उपसर्गहरू जुन प्रत्यक्ष ग्राइन्डरले पुग्न सक्दैन — ब्याच CPU मा समय अगावै ग्राइन्ड गरिएका र स्टकबाट बेचेका। एउटा किन्नुहोस् र निजी कुञ्जी <a href=\"/vanity/gallery\">x402</a> रेल मार्फत <strong>एक पटक</strong> डेलिभर गरिन्छ, त्यसपछि यसको भण्डारण गरिएको प्रतिलिपि नष्ट हुन्छ। यसको सट्टा नयाँ ≤३-वर्णको ग्राइन्ड चाहिन्छ? <a href=\"/vanity-wallet\">प्रत्यक्ष ग्राइन्डर</a> प्रयोग गर्नुहोस्।",
+		"long_brandable_solana_addresses_4_5_characte": "लामो, ब्रान्ड योग्य Solana ठेगानाहरू — ४-५+ वर्णका उपसर्गहरू जुन प्रत्यक्ष ग्राइन्डरले पुग्न सक्दैन — ब्याच CPU मा समय अगावै ग्राइन्ड गरिएका र स्टकबाट बेचेका। एउटा किन्नुहोस् र निजी कुञ्जी <a href=\"/x402\">x402</a> रेल मार्फत <strong>एक पटक</strong> डेलिभर गरिन्छ, त्यसपछि यसको भण्डारण गरिएको प्रतिलिपि नष्ट हुन्छ। यसको सट्टा नयाँ ≤३-वर्णको ग्राइन्ड चाहिन्छ? <a href=\"/vanity-wallet\">प्रत्यक्ष ग्राइन्डर</a> प्रयोग गर्नुहोस्।",
 		"meta_description": "स्टकबाट तुरुन्तै डेलिभर गरिने लामो, ब्रान्ड योग्य Solana भ्यानिटी ठेगाना किन्नुहोस् — ४-५+ वर्णका उपसर्गहरू जुन प्रत्यक्ष ग्राइन्डरले पुग्न सक्दैन, ब्याच CPU मा समय अगावै ग्राइन्ड गरिएका र x402 मार्फत बेचेका। मूल्य दुर्लभता अनुसार बढ्छ।",
 		"meta_og_description": "लामो, ब्रान्ड गर्न मिल्ने Solana भ्यानिटी ठेगानाहरू, पहिले नै तयार पारिएको र स्टकबाट बेचिएको। एक पटक डेलिभर गरिने, आराममा इन्क्रिप्टेड, दुर्लभता अनुसार मूल्य निर्धारण।",
 		"meta_og_title": "प्रिमियम भ्यानिटी इन्भेन्टरी · three.ws",

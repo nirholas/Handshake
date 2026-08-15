@@ -3,14 +3,14 @@ import vhtml from 'vhtml';
 /** @jsx vhtml */
 
 function fmtBytes(n) {
-	if (n == null) return '—';
+	if (n == null) return 'n/a';
 	if (n < 1024) return `${n} B`;
 	if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
 	return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
 function fmtNumber(n) {
-	if (n == null) return '—';
+	if (n == null) return 'n/a';
 	return Number(n).toLocaleString();
 }
 
@@ -32,7 +32,8 @@ export function InspectReport({ inspect, suggestions, reportJSON }) {
 	return (
 		<div class="report">
 			<div class="report-head">
-				<h1>Performance inspector</h1>
+				{/* h2, not h1: this report renders inside a page that already owns one. */}
+				<h2>Performance inspector</h2>
 				{reportJSON && (
 					<a class="report-download" href={reportJSON} download="gltf-inspect-report.json">
 						Download JSON
@@ -44,7 +45,7 @@ export function InspectReport({ inspect, suggestions, reportJSON }) {
 				<a href="https://gltf-transform.dev" target="_blank" rel="noreferrer">
 					glTF-Transform
 				</a>
-				. Surfaces what the Khronos validator does not — texture weights, draw-call shape,
+				. Surfaces what the Khronos validator does not: texture weights, draw-call shape,
 				and compression opportunities.
 			</p>
 
@@ -147,7 +148,7 @@ export function InspectReport({ inspect, suggestions, reportJSON }) {
 									<tr>
 										<td>{t.name || <em>unnamed</em>}</td>
 										<td>
-											<code>{t.mimeType || '—'}</code>
+											<code>{t.mimeType || 'n/a'}</code>
 										</td>
 										<td>
 											{t.width}×{t.height}

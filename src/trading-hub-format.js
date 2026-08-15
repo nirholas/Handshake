@@ -8,13 +8,31 @@
 const PLACEHOLDER = '·';
 
 /**
+ * Is this a value we can honestly render as a number?
+ *
+ * The trap it closes: Number(null) and Number('') are both 0, so a bare
+ * Number.isFinite() check accepts a missing datapoint and renders it as a real
+ * zero. Nullish is rejected before coercion, never after.
+ *
+ * @param {unknown} n
+ * @returns {boolean}
+ */
+export function isNumeric(n) {
+	// Objects coerce too eagerly to trust: Number([]) is 0 and Number(['7']) is 7,
+	// so an accidental array of one would print as a real reading.
+	if (typeof n !== 'number' && typeof n !== 'string') return false;
+	if (n === '') return false;
+	return Number.isFinite(Number(n));
+}
+
+/**
  * Format lamport-derived SOL for display.
  * @param {number|string|null|undefined} n
  * @param {{signed?: boolean}} [opts] signed prefixes a positive value with "+"
  * @returns {string}
  */
 export function formatSol(n, { signed = true } = {}) {
-	if (n == null || !Number.isFinite(Number(n))) return PLACEHOLDER;
+	if (!isNumeric(n)) return PLACEHOLDER;
 	const v = Number(n);
 	// Small balances need more places or every row reads "0.000 SOL".
 	const places = Math.abs(v) < 0.01 && v !== 0 ? 4 : 3;
@@ -28,7 +46,7 @@ export function formatSol(n, { signed = true } = {}) {
  * @returns {string}
  */
 export function formatPct(n, { signed = true } = {}) {
-	if (n == null || !Number.isFinite(Number(n))) return PLACEHOLDER;
+	if (!isNumeric(n)) return PLACEHOLDER;
 	const v = Number(n);
 	return `${signed && v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 }
@@ -69,17 +87,87 @@ export function formatUptime(iso, now = Date.now()) {
 }
 
 /**
+ * Interpret the `solvency` block of a /api/sniper/status payload.
+ *
+ * Liveness is not solvency. Between 2026-07-29 and 2026-08-08 the fleet booked
+ * over a thousand failed entries and closed nothing while every liveness check
+ * stayed green: the process was up, the feed was connected, and the wallets
+ * were too poor to place a single buy. The worker publishes the per-wallet
+ * verdict for exactly that reason (api/_lib/sniper-solvency.js), so this page
+ * renders it as a first-class vital rather than a footnote.
+ *
+ * @param {object|null|undefined} solvency the `solvency` object from /api/sniper/status
+ * @returns {{tone: string, label: string, sub: string, detail: string}}
+ */
+export function describeSolvency(solvency) {
+	const s = solvency && typeof solvency === 'object' ? solvency : null;
+	const agents = Number(s?.agents);
+	if (!s || !Number.isFinite(agents) || agents === 0) {
+		return {
+			tone: 'muted',
+			label: PLACEHOLDER,
+			sub: 'No wallet balances measured yet',
+			detail: 'The worker has not reported armed wallet balances yet, so nothing is claimed here.',
+		};
+	}
+
+	const tradeable = Number(s.tradeable ?? 0);
+	const starved = Number(s.starved ?? 0);
+	const shrunk = Number(s.shrunk ?? 0);
+	const deficit = Number(s.deficitSol);
+	const fix =
+		s.masterCanCover === true
+			? ' The funding wallet can refill them automatically.'
+			: s.masterCanCover === false
+				? ' The funding wallet cannot cover that, so a person has to move SOL in.'
+				: '';
+	const need = Number.isFinite(deficit) && deficit > 0 ? ` Refilling them needs ${deficit.toFixed(3)} SOL.${fix}` : '';
+
+	if (s.state === 'starved') {
+		return {
+			tone: 'down',
+			label: `0 of ${agents} can trade`,
+			sub: 'No wallet can afford an entry',
+			detail: `Every armed wallet is below the minimum entry size, so the fleet takes no trades no matter what the feed shows.${need}`,
+		};
+	}
+	if (s.state === 'degraded') {
+		return {
+			tone: 'warn',
+			label: `${tradeable} of ${agents} can trade`,
+			sub: `${starved} starved, ${shrunk} sized down`,
+			detail: `Some armed wallets cannot place their configured size. A starved wallet is skipped entirely; a shrunk one still trades, just smaller.${need}`,
+		};
+	}
+	return {
+		tone: 'live',
+		label: `${agents} of ${agents} can trade`,
+		sub: 'Every armed wallet is funded',
+		detail: 'Every armed wallet holds enough SOL to place its configured position size.',
+	};
+}
+
+/**
  * Interpret a /api/sniper/status payload into display state.
  *
- * The distinction that matters: a worker can be beating steadily while its
- * launch feed has gone quiet, which looks identical to "healthy" on a naive
- * check and means the fleet is seeing nothing. Feed health is therefore
- * reported separately from process health, and a silent feed is called out
- * rather than folded into a single green light.
+ * Two distinctions matter, and both are failures that look identical to
+ * "healthy" on a naive check:
+ *
+ *   · a worker can beat steadily while its launch feed has gone quiet, in which
+ *     case it sees nothing, so feed health is reported separately; and
+ *   · a worker can be up, connected and armed while no wallet can afford an
+ *     entry, so solvency outranks the feed checks.
+ *
+ * The endpoint already resolves that precedence into `state`
+ * ('down' | 'starved' | 'degraded' | 'live', see deriveSniperState in
+ * api/_lib/sniper-solvency.js), so this trusts that verdict rather than
+ * re-deriving a second opinion that could disagree with the source. Older
+ * payloads without `state` fall back to the mode-and-feed reading.
  *
  * @param {object|null|undefined} status
  * @returns {{tone: string, label: string, detail: string, feedTone: string,
- *            feedLabel: string, feedDetail: string, uptimeLabel: string}}
+ *            feedLabel: string, feedDetail: string, uptimeLabel: string,
+ *            solvency: {tone: string, label: string, sub: string, detail: string}}}
  */
 export function describeFleet(status, now = Date.now()) {
 	const s = status || {};
@@ -87,6 +175,7 @@ export function describeFleet(status, now = Date.now()) {
 	const killed = s.globalKill === true;
 	const feedLive = s.feedLive === true;
 	const feedSilent = s.feedSilent === true;
+	const solvency = describeSolvency(s.solvency);
 
 	let feedTone = 'muted';
 	let feedLabel = 'Unknown';
@@ -108,17 +197,43 @@ export function describeFleet(status, now = Date.now()) {
 		feedDetail = 'The worker is not receiving launches.';
 	}
 
+	const armed = `${s.strategies ?? 0} strategies armed, ${s.openPositions ?? 0} open.`;
 	let tone = 'unknown';
 	let label = 'Fleet status unknown';
 	let detail = 'The status endpoint returned no recognizable state.';
+
 	if (killed) {
+		// The owner's own switch outranks every measurement: nothing else the
+		// worker reports changes the fact that no entry will be taken.
 		tone = 'down';
 		label = 'Fleet halted';
 		detail = 'The global kill switch is on. No new entries will be taken.';
+	} else if (s.state === 'down') {
+		tone = 'down';
+		label = 'Worker offline';
+		detail = 'The worker has stopped reporting. No entries and no exits are being taken.';
+	} else if (s.state === 'starved') {
+		tone = 'down';
+		label = 'Out of SOL';
+		detail = `The fleet is running but no wallet can afford an entry. ${solvency.detail}`;
+	} else if (s.state === 'degraded') {
+		// 'degraded' has two very different causes and the page is useless if it
+		// blames the wrong one, so name the one that actually fired.
+		const solvencyCause = s.solvency?.state === 'degraded';
+		tone = 'warn';
+		label = solvencyCause && feedTone === 'live' ? 'Live, wallets underfunded' : 'Live, feed degraded';
+		detail = `${armed} ${solvencyCause ? solvency.detail : feedDetail}`;
+	} else if (s.state === 'live') {
+		tone = 'live';
+		label = mode === 'simulate' ? 'Simulating' : 'Trading live';
+		detail =
+			mode === 'simulate'
+				? `Real quotes, no broadcast. ${s.strategies ?? 0} strategies armed.`
+				: `${armed} ${feedDetail}`;
 	} else if (mode === 'live') {
 		tone = feedTone === 'live' ? 'live' : 'warn';
 		label = feedTone === 'live' ? 'Trading live' : 'Live, feed degraded';
-		detail = `${s.strategies ?? 0} strategies armed, ${s.openPositions ?? 0} open. ${feedDetail}`;
+		detail = `${armed} ${feedDetail}`;
 	} else if (mode === 'simulate') {
 		tone = 'muted';
 		label = 'Simulating';
@@ -133,6 +248,7 @@ export function describeFleet(status, now = Date.now()) {
 		feedLabel,
 		feedDetail,
 		uptimeLabel: formatUptime(s.bootAt, now),
+		solvency,
 	};
 }
 

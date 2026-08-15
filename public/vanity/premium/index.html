@@ -17,27 +17,53 @@
 	<meta name="twitter:card" content="summary_large_image">
 	<style>
 		* { box-sizing: border-box; }
+		/* Every colour on this page reads from a token so the light theme is a
+		   token swap, not a second stylesheet. Hardcoding a dark value in a rule
+		   below makes it invisible on the light card background. */
 		:root {
 			--fg: #f0f0f0; --muted: #888; --dim: #666; --border: rgba(255,255,255,0.08);
 			--bg: #000; --card-bg: #0e0e10;
+			--addr: rgba(240,240,240,.55); --addr-hi: #fff; --meta-strong: #bbb;
+			--field-bg: #161616; --field-border: rgba(255,255,255,.12); --field-border-active: rgba(255,255,255,.32);
+			--btn-bg: #fff; --btn-fg: #000;
+			--link: #ffd54f; --link-underline: rgba(255,213,79,.4);
+			--custody-fg: #e8d8b0; --custody-strong: #ffcf6b; --custody-bg: rgba(255,176,32,.06); --custody-border: rgba(255,176,32,.28);
+			--state-head: #ccc; --focus: rgba(139,92,246,.9); --shimmer: rgba(255,255,255,.05);
+			--dialog-bg: #0c0c0e; --code-bg: #161616;
 			--font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 			--radius: 12px;
 			--common:#94a3b8; --uncommon:#4ade80; --rare:#38bdf8; --epic:#a855f7; --legendary:#ffb020; --mythic:#ff5db1;
 		}
-		body { font: 15px/1.5 'Inter', system-ui, -apple-system, sans-serif; background:#000; color:var(--fg); margin:0; min-height:100vh; display:flex; flex-direction:column; }
+		[data-theme="light"] {
+			--fg: #111; --muted: #565656; --dim: #6b7280; --border: rgba(0,0,0,0.10);
+			--bg: #fff; --card-bg: #fafafa;
+			--addr: rgba(17,17,17,.62); --addr-hi: #000; --meta-strong: #333;
+			--field-bg: #fff; --field-border: rgba(0,0,0,.18); --field-border-active: rgba(0,0,0,.45);
+			--btn-bg: #111; --btn-fg: #fff;
+			--link: #8a5300; --link-underline: rgba(138,83,0,.4);
+			--custody-fg: #6b4a00; --custody-strong: #8a5b00; --custody-bg: rgba(255,176,32,.14); --custody-border: rgba(180,120,0,.35);
+			--state-head: #333; --focus: rgba(109,40,217,.9); --shimmer: rgba(0,0,0,.05);
+			--dialog-bg: #fff; --code-bg: #f1f1f1;
+		}
+		body { font: 15px/1.5 'Inter', system-ui, -apple-system, sans-serif; background:var(--bg); color:var(--fg); margin:0; min-height:100vh; display:flex; flex-direction:column; }
 		main { flex:1; max-width:1100px; width:100%; margin:0 auto; padding:2.2rem 1rem 4rem; }
 		a { color:inherit; }
 		.hero { margin-bottom:1.4rem; }
 		h1 { font-size:2rem; margin:0 0 .4rem; font-family:var(--font-display); letter-spacing:-0.02em; line-height:1.05; }
 		.lede { color:var(--muted); margin:0; max-width:66ch; }
-		.lede a { color:#ffd54f; text-decoration:none; border-bottom:1px solid rgba(255,213,79,.4); }
-		.lede a:hover { border-bottom-color:#ffd54f; }
+		.lede a { color:var(--link); text-decoration:none; border-bottom:1px solid var(--link-underline); }
+		.lede a:hover { border-bottom-color:var(--link); }
 
-		/* custody notice — required, prominent */
-		.custody { display:flex; gap:.7rem; align-items:flex-start; margin:1.3rem 0 0; padding:.9rem 1.1rem; border:1px solid rgba(255,176,32,.28); background:rgba(255,176,32,.06); border-radius:var(--radius); }
+		/* sibling vanity surfaces, so the shelf is not a dead end */
+		.related { display:flex; flex-wrap:wrap; gap:.45rem; margin:.9rem 0 0; }
+		.related a { font-size:.76rem; font-weight:600; text-decoration:none; color:var(--muted); border:1px solid var(--border); border-radius:999px; padding:.32rem .75rem; transition:color .15s, border-color .15s, transform .12s; }
+		.related a:hover { color:var(--fg); border-color:var(--field-border-active); transform:translateY(-1px); }
+
+		/* custody notice: required, prominent */
+		.custody { display:flex; gap:.7rem; align-items:flex-start; margin:1.3rem 0 0; padding:.9rem 1.1rem; border:1px solid var(--custody-border); background:var(--custody-bg); border-radius:var(--radius); }
 		.custody .ic { font-size:1.1rem; line-height:1.3; }
-		.custody p { margin:0; font-size:.82rem; color:#e8d8b0; }
-		.custody b { color:#ffcf6b; }
+		.custody p { margin:0; font-size:.82rem; color:var(--custody-fg); }
+		.custody b { color:var(--custody-strong); }
 
 		/* stat strip */
 		.statstrip { display:flex; gap:.6rem; flex-wrap:wrap; margin:1.4rem 0 0; }
@@ -47,10 +73,16 @@
 
 		/* controls */
 		.controls { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; margin:1.8rem 0 1.1rem; }
-		.controls select, .controls input[type=text] { font:inherit; font-size:.85rem; background:#161616; color:var(--fg); border:1px solid rgba(255,255,255,.12); border-radius:8px; padding:.5rem .7rem; }
+		.controls select, .controls input[type=text] { font:inherit; font-size:.85rem; background:var(--field-bg); color:var(--fg); border:1px solid var(--field-border); border-radius:8px; padding:.5rem .7rem; }
 		.controls input[type=text] { flex:1; min-width:140px; }
-		.controls select:focus, .controls input:focus { outline:none; border-color:rgba(255,255,255,.32); }
+		.controls select:hover, .controls input[type=text]:hover { border-color:var(--field-border-active); }
 		.controls label { font-size:.72rem; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; }
+		.controls .clear { font:inherit; font-size:.78rem; font-weight:600; color:var(--muted); background:none; border:1px solid var(--border); border-radius:8px; padding:.45rem .8rem; cursor:pointer; transition:color .15s, border-color .15s; }
+		.controls .clear:hover { color:var(--fg); border-color:var(--field-border-active); }
+		.controls .clear[hidden] { display:none; }
+
+		/* One focus rule for the whole page: keyboard users always get a ring. */
+		:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:4px; }
 
 		/* grid */
 		.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:.9rem; }
@@ -58,41 +90,60 @@
 		.gcard:hover { transform:translateY(-2px); border-color:rgba(255,255,255,.16); }
 		.gcard::before { content:''; position:absolute; inset:0 auto 0 0; width:4px; background:var(--accent,#888); }
 		.gcard .badge { display:inline-flex; align-items:center; gap:.35rem; font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:.25rem .6rem; border-radius:999px; color:#000; }
-		.gcard .addr { font-family:ui-monospace,monospace; font-size:.92rem; margin:.7rem 0 .2rem; word-break:break-all; line-height:1.35; color:rgba(240,240,240,.55); }
-		.gcard .addr .hi { color:#fff; font-weight:700; }
+		.gcard .addr { font-family:ui-monospace,monospace; font-size:.92rem; margin:.7rem 0 .2rem; word-break:break-all; line-height:1.35; color:var(--addr); }
+		.gcard .addr .hi { color:var(--addr-hi); font-weight:700; }
 		.gcard .meta { display:flex; gap:1.2rem; margin-top:.7rem; font-size:.74rem; color:var(--dim); }
-		.gcard .meta b { color:#bbb; font-weight:700; display:block; font-size:.95rem; font-family:var(--font-display); }
-		.gcard .price { font-family:var(--font-display); font-size:1.5rem; font-weight:900; }
+		.gcard .meta b { color:var(--meta-strong); font-weight:700; display:block; font-size:.95rem; font-family:var(--font-display); }
+		.gcard .price { font-family:var(--font-display); font-size:1.5rem; font-weight:900; color:var(--fg); }
 		.gcard .acts { display:flex; gap:.5rem; margin-top:.95rem; }
 		.gcard .acts a, .gcard .acts button { font:inherit; font-size:.76rem; font-weight:600; text-decoration:none; color:var(--muted); background:none; border:1px solid var(--border); border-radius:7px; padding:.4rem .65rem; cursor:pointer; transition:color .15s, border-color .15s, transform .12s; }
-		.gcard .acts .buy { color:#000; background:#fff; border-color:#fff; font-weight:700; }
-		.gcard .acts a:hover, .gcard .acts button:hover { transform:translateY(-1px); }
-		.gcard .acts a:focus-visible, .gcard .acts button:focus-visible { outline:2px solid rgba(139,92,246,.7); outline-offset:2px; }
+		.gcard .acts a:hover, .gcard .acts button:hover { transform:translateY(-1px); color:var(--fg); border-color:var(--field-border-active); }
+		.gcard .acts .buy { color:var(--btn-fg); background:var(--btn-bg); border-color:var(--btn-bg); font-weight:700; }
+		.gcard .acts .buy:hover { color:var(--btn-fg); border-color:var(--btn-bg); }
 		@keyframes fadein { to { opacity:1; } }
+
+		/* pager: the shelf is bigger than one page, and says so */
+		.pager { display:flex; gap:.8rem; align-items:center; justify-content:center; flex-wrap:wrap; margin:1.4rem 0 0; }
+		.pager[hidden] { display:none; }
+		.pager .shown { font-size:.78rem; color:var(--dim); }
+		.pager button { font:inherit; font-size:.82rem; font-weight:700; color:var(--btn-fg); background:var(--btn-bg); border:1px solid var(--btn-bg); border-radius:8px; padding:.55rem 1.2rem; cursor:pointer; transition:transform .12s, opacity .15s; }
+		.pager button:hover:not(:disabled) { transform:translateY(-1px); }
+		.pager button:disabled { opacity:.55; cursor:progress; }
+		.pager .pager-error { font-size:.78rem; color:var(--custody-strong); }
 
 		/* states */
 		.state { border:1px dashed var(--border); border-radius:var(--radius); padding:2.6rem 1.4rem; text-align:center; color:var(--muted); }
-		.state h3 { margin:0 0 .5rem; font-family:var(--font-display); color:#ccc; }
-		.state a.cta { display:inline-block; margin-top:.9rem; color:#000; background:#fff; text-decoration:none; font-weight:700; border-radius:8px; padding:.55rem 1.1rem; }
+		.state h3 { margin:0 0 .5rem; font-family:var(--font-display); color:var(--state-head); }
+		.state p { margin:0; max-width:52ch; margin-inline:auto; }
+		.state .ctas { display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap; margin-top:1rem; }
+		/* Matches the anchor AND the button form: the retry control is a <button>,
+		   and an `a.cta` selector left it rendering as raw browser chrome. */
+		.state .cta { display:inline-block; font:inherit; color:var(--btn-fg); background:var(--btn-bg); border:1px solid var(--btn-bg); text-decoration:none; font-weight:700; border-radius:8px; padding:.55rem 1.1rem; cursor:pointer; transition:transform .12s; }
+		.state .cta:hover { transform:translateY(-1px); }
+		.state .cta.ghost { color:var(--muted); background:none; border-color:var(--border); }
+		.state .cta.ghost:hover { color:var(--fg); border-color:var(--field-border-active); }
 		.skel { border:1px solid var(--border); border-radius:var(--radius); background:var(--card-bg); height:190px; position:relative; overflow:hidden; }
-		.skel::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent); transform:translateX(-100%); animation:shimmer 1.3s infinite; }
+		.skel::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,var(--shimmer),transparent); transform:translateX(-100%); animation:shimmer 1.3s infinite; }
 		@keyframes shimmer { to { transform:translateX(100%); } }
+		@media (prefers-reduced-motion: reduce) {
+			.skel::after { animation:none; }
+			.gcard { animation:none; opacity:1; }
+			.gcard:hover, .pager button:hover, .state .cta:hover, .related a:hover { transform:none; }
+		}
 
 		/* buy dialog */
-		dialog.buy { border:1px solid var(--border); border-radius:14px; background:#0c0c0e; color:var(--fg); max-width:520px; width:92%; padding:0; }
+		dialog.buy { border:1px solid var(--border); border-radius:14px; background:var(--dialog-bg); color:var(--fg); max-width:520px; width:92%; padding:0; }
 		dialog.buy::backdrop { background:rgba(0,0,0,.6); backdrop-filter:blur(3px); }
 		dialog.buy .inner { padding:1.5rem 1.6rem; }
 		dialog.buy h3 { margin:0 0 .3rem; font-family:var(--font-display); }
-		dialog.buy .addr { font-family:ui-monospace,monospace; font-size:.86rem; word-break:break-all; color:#cbd5e1; margin:.5rem 0 1rem; }
+		dialog.buy .addr { font-family:ui-monospace,monospace; font-size:.86rem; word-break:break-all; color:var(--muted); margin:.5rem 0 1rem; }
 		dialog.buy ol { margin:.4rem 0 1rem; padding-left:1.2rem; font-size:.85rem; color:var(--muted); }
-		dialog.buy code { background:#161616; border:1px solid var(--border); border-radius:6px; padding:.12rem .35rem; font-size:.8rem; word-break:break-all; }
-		dialog.buy .row { display:flex; gap:.6rem; margin-top:.4rem; }
+		dialog.buy code { background:var(--code-bg); border:1px solid var(--border); border-radius:6px; padding:.12rem .35rem; font-size:.8rem; word-break:break-all; color:var(--fg); }
+		dialog.buy .row { display:flex; gap:.6rem; margin-top:.4rem; flex-wrap:wrap; }
 		dialog.buy .row button, dialog.buy .row a { font:inherit; font-weight:700; border-radius:8px; padding:.55rem 1rem; cursor:pointer; text-decoration:none; text-align:center; }
-		dialog.buy .copy { background:#fff; color:#000; border:none; }
+		dialog.buy .copy { background:var(--btn-bg); color:var(--btn-fg); border:1px solid var(--btn-bg); }
 		dialog.buy .close { background:transparent; color:var(--muted); border:1px solid var(--border); }
-
-		[data-theme="light"] body { background:#fff; color:#111; }
-		[data-theme="light"] .gcard, [data-theme="light"] .stat, [data-theme="light"] dialog.buy { background:#fafafa; }
+		dialog.buy .close:hover { color:var(--fg); border-color:var(--field-border-active); }
 	</style>
 
 	<link rel="canonical" href="https://three.ws/vanity/premium">
@@ -115,7 +166,14 @@
 	<main id="main">
 		<div class="hero">
 			<h1 data-i18n="vanity_premium_index.premium_vanity_inventory">Premium Vanity Inventory</h1>
-			<p class="lede" data-i18n-html="vanity_premium_index.long_brandable_solana_addresses_4_5_characte">Long, brandable Solana addresses — 4–5+ character prefixes the live grinder can't reach — ground ahead of time on batch CPU and sold from stock. Buy one and the private key is delivered <strong>once</strong> over the <a href="/vanity/gallery">x402</a> rail, then its stored copy is destroyed. Need a fresh ≤3-char grind instead? Use the <a href="/vanity-wallet">live grinder</a>.</p>
+			<p class="lede" data-i18n-html="vanity_premium_index.long_brandable_solana_addresses_4_5_characte">Long, brandable Solana addresses: 4-5+ character prefixes the live grinder can't reach, ground ahead of time on batch CPU and sold from stock. Buy one and the private key is delivered <strong>once</strong> over the <a href="/x402">x402</a> rail, then its stored copy is destroyed. Need a fresh ≤3-char grind instead? Use the <a href="/vanity-wallet">live grinder</a>.</p>
+			<nav class="related" aria-label="Related vanity address surfaces">
+				<a href="/vanity/gallery" data-i18n="vanity_premium_index.rel_gallery">Vanity gallery</a>
+				<a href="/vanity/verify" data-i18n="vanity_premium_index.rel_verify">Verify an address</a>
+				<a href="/vanity/bounties" data-i18n="vanity_premium_index.rel_bounties">Grind bounties</a>
+				<a href="/vanity-wallet" data-i18n="vanity_premium_index.rel_grinder">Live grinder</a>
+				<a href="/x402" data-i18n="vanity_premium_index.rel_x402">How x402 pays work</a>
+			</nav>
 		</div>
 
 		<div class="custody" role="note">
@@ -124,10 +182,10 @@
 		</div>
 
 		<div class="statstrip" id="stats" hidden>
-			<div class="stat"><div class="k">Available</div><div class="v" id="s-available">—</div></div>
-			<div class="stat"><div class="k">Price range</div><div class="v" id="s-price">—</div></div>
-			<div class="stat"><div class="k">Rarity tiers</div><div class="v" id="s-tiers">—</div></div>
-			<div class="stat"><div class="k">Sold</div><div class="v" id="s-sold">—</div></div>
+			<div class="stat"><div class="k" data-i18n="vanity_premium_index.stat_available">Available</div><div class="v" id="s-available">0</div></div>
+			<div class="stat"><div class="k" data-i18n="vanity_premium_index.stat_price_range">Price range</div><div class="v" id="s-price">0</div></div>
+			<div class="stat"><div class="k" data-i18n="vanity_premium_index.stat_rarity_tiers">Rarity tiers</div><div class="v" id="s-tiers">0</div></div>
+			<div class="stat"><div class="k" data-i18n="vanity_premium_index.stat_sold">Sold</div><div class="v" id="s-sold">0</div></div>
 		</div>
 
 		<div class="controls">
@@ -148,12 +206,17 @@
 				<option value="price" data-i18n="vanity_premium_index.price">Price ↑</option>
 				<option value="new" data-i18n="vanity_premium_index.newest">Newest</option>
 			</select>
+			<button type="button" class="clear" id="clear" hidden data-i18n="vanity_premium_index.clear_filters">Clear filters</button>
 		</div>
 
 		<div id="list" aria-live="polite"></div>
+		<div class="pager" id="pager" hidden>
+			<span class="shown" id="pager-shown"></span>
+			<button type="button" id="more" data-i18n="vanity_premium_index.load_more">Load more</button>
+		</div>
 	</main>
 
-	<footer class="h-footer-horizon"><div class="h-footer-inner" style="text-align:center;padding:2rem 1rem;color:#555;font-size:.8rem">three.ws — premium vanity inventory · keys encrypted at rest · delivered once</div></footer>
+	<footer class="h-footer-horizon"><div class="h-footer-inner" style="text-align:center;padding:2rem 1rem;color:var(--dim);font-size:.8rem">three.ws · premium vanity inventory · keys encrypted at rest · delivered once</div></footer>
 
 	<dialog class="buy" id="buy">
 		<div class="inner">
@@ -177,17 +240,34 @@
 
 	<script type="module">
 		const API = '/api/x402/vanity-premium';
+		const PAGE_SIZE = 60;
 		const listEl = document.getElementById('list');
+		const pagerEl = document.getElementById('pager');
+		const shownEl = document.getElementById('pager-shown');
+		const moreEl = document.getElementById('more');
+		const clearEl = document.getElementById('clear');
 		const qEl = document.getElementById('q');
 		const tierEl = document.getElementById('tier');
 		const sortEl = document.getElementById('sort');
 		const TIER_COLOR = { common:'#94a3b8', uncommon:'#4ade80', rare:'#38bdf8', epic:'#a855f7', legendary:'#ffb020', mythic:'#ff5db1' };
 		let debounce;
+		// Bumped on every new query. A slow response for an abandoned filter must
+		// not paint over the results of the filter the visitor is actually looking at.
+		let requestToken = 0;
+		let rendered = 0;
+		// null means the endpoint did not report a filtered total; the pager then
+		// offers another page whenever the last one came back full.
+		let matching = null;
+		let lastPageFull = false;
+		let grid = null;
+
+		function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+		function filtered() { return Boolean(qEl.value.trim() || tierEl.value); }
 
 		function skeletons() {
 			listEl.innerHTML = '<div class="grid">' + Array.from({length:6}).map(()=>'<div class="skel"></div>').join('') + '</div>';
+			pagerEl.hidden = true;
 		}
-		function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 		function highlightAddr(addr, prefix, suffix) {
 			let out = esc(addr);
@@ -210,7 +290,7 @@
 					<div><span class="price">$${it.priceUsd}</span></div>
 				</div>
 				<div class="acts">
-					<button class="buy" data-buy>Buy — $${it.priceUsd}</button>
+					<button class="buy" type="button" data-buy>Buy for $${it.priceUsd}</button>
 					<a href="https://solscan.io/account/${encodeURIComponent(it.address)}" target="_blank" rel="noopener">Explorer</a>
 				</div>`;
 			el.querySelector('[data-buy]').addEventListener('click', ()=>openBuy(it));
@@ -219,59 +299,167 @@
 
 		function openBuy(it) {
 			const url = new URL(it.buyUrl || (location.origin + API + '?address=' + encodeURIComponent(it.address)), location.origin);
+			const copyEl = document.getElementById('buy-copy');
+			const copyLabel = copyEl.dataset.label || copyEl.textContent;
+			copyEl.dataset.label = copyLabel;
+			copyEl.textContent = copyLabel;
 			document.getElementById('buy-addr').textContent = it.address;
 			document.getElementById('buy-url').textContent = url.href;
 			document.getElementById('buy-explorer').href = 'https://solscan.io/account/' + it.address;
 			const dlg = document.getElementById('buy');
-			document.getElementById('buy-copy').onclick = async () => {
-				try { await navigator.clipboard.writeText(url.href); document.getElementById('buy-copy').textContent = 'Copied ✓'; setTimeout(()=>document.getElementById('buy-copy').textContent='Copy buy URL',1500); } catch {}
+			copyEl.onclick = async () => {
+				try {
+					await navigator.clipboard.writeText(url.href);
+					copyEl.textContent = 'Copied';
+				} catch {
+					// Clipboard access can be denied (insecure origin, permission policy).
+					// Select the URL so the visitor can copy it by hand instead of
+					// clicking a button that silently does nothing.
+					const range = document.createRange();
+					range.selectNodeContents(document.getElementById('buy-url'));
+					const sel = window.getSelection();
+					sel.removeAllRanges();
+					sel.addRange(range);
+					copyEl.textContent = 'Press Ctrl+C to copy';
+				}
+				setTimeout(() => { copyEl.textContent = copyLabel; }, 2000);
 			};
-			document.getElementById('buy-close').onclick = () => dlg.close();
 			dlg.showModal();
 		}
 
-		async function load() {
-			skeletons();
+		function renderStats(stats) {
+			const s = stats || {};
+			document.getElementById('stats').hidden = false;
+			document.getElementById('s-available').textContent = s.available ?? 0;
+			document.getElementById('s-price').textContent = s.available ? `$${s.minPrice} to $${s.maxPrice}` : 'none';
+			document.getElementById('s-tiers').textContent = s.tiers ?? 0;
+			document.getElementById('s-sold').textContent = s.sold ?? 0;
+		}
+
+		function renderEmpty() {
+			pagerEl.hidden = true;
+			const head = filtered() ? 'No matches' : 'Inventory is being ground';
+			const body = filtered()
+				? 'No available address matches this filter. Clear it to see everything in stock.'
+				: 'New premium addresses are ground on batch CPU and land here as they finish. Check back shortly, or grind a fresh one now.';
+			const ctas = filtered()
+				? '<button class="cta" type="button" data-action="clear">Clear filters</button><a class="cta ghost" href="/vanity-wallet">Grind one live</a>'
+				: '<a class="cta" href="/vanity-wallet">Grind one live</a>';
+			listEl.innerHTML = `<div class="state"><h3>${head}</h3><p>${body}</p><div class="ctas">${ctas}</div></div>`;
+		}
+
+		function renderError(message) {
+			pagerEl.hidden = true;
+			listEl.innerHTML = `<div class="state"><h3>Couldn't load inventory</h3><p>${esc(message)}. The store may be warming up.</p><div class="ctas"><button class="cta" type="button" data-action="retry">Try again</button><a class="cta ghost" href="/vanity-wallet">Grind one live</a></div></div>`;
+		}
+
+		function renderPager() {
+			if (!rendered) { pagerEl.hidden = true; return; }
+			pagerEl.hidden = false;
+			shownEl.textContent = matching == null
+				? `Showing ${rendered} available`
+				: `Showing ${rendered} of ${matching} available`;
+			moreEl.hidden = matching == null ? !lastPageFull : rendered >= matching;
+			moreEl.disabled = false;
+			moreEl.textContent = 'Load more';
+			const stale = pagerEl.querySelector('.pager-error');
+			if (stale) stale.remove();
+		}
+
+		async function fetchPage(offset) {
 			const params = new URLSearchParams();
 			if (qEl.value.trim()) params.set('prefix', qEl.value.trim());
 			if (tierEl.value) params.set('tier', tierEl.value);
 			params.set('sort', sortEl.value);
-			params.set('limit', '100');
-			let data;
-			try {
-				const res = await fetch(API + '?' + params.toString(), { headers: { accept:'application/json' } });
-				if (!res.ok) throw new Error('HTTP ' + res.status);
-				data = await res.json();
-			} catch (err) {
-				listEl.innerHTML = `<div class="state"><h3>Couldn't load inventory</h3><p>${esc(err.message)}. The store may be warming up: try again.</p><button class="cta" type="button" data-action="reload">Retry</button></div>`;
-				return;
-			}
-			if (data.custodyNotice) document.getElementById('custody-copy').innerHTML = '<b>Custody:</b> ' + esc(data.custodyNotice);
-			const s = data.stats || {};
-			document.getElementById('stats').hidden = false;
-			document.getElementById('s-available').textContent = s.available ?? 0;
-			document.getElementById('s-price').textContent = (s.available ? `$${s.minPrice}–$${s.maxPrice}` : '—');
-			document.getElementById('s-tiers').textContent = s.tiers ?? 0;
-			document.getElementById('s-sold').textContent = s.sold ?? 0;
-
-			const items = data.items || [];
-			if (!items.length) {
-				listEl.innerHTML = `<div class="state"><h3>${qEl.value||tierEl.value?'No matches':'Inventory is being ground'}</h3><p>${qEl.value||tierEl.value?'No available addresses match this filter — clear it to see everything in stock.':'New premium addresses are ground on batch CPU and land here as they finish. Check back shortly, or grind a fresh one now.'}</p><a class="cta" href="/vanity-wallet">Grind one live →</a></div>`;
-				return;
-			}
-			const grid = document.createElement('div');
-			grid.className = 'grid';
-			items.forEach((it, i) => { const c = card(it); c.style.animationDelay = (i*22) + 'ms'; grid.appendChild(c); });
-			listEl.innerHTML = '';
-			listEl.appendChild(grid);
+			params.set('limit', String(PAGE_SIZE));
+			params.set('offset', String(offset));
+			const res = await fetch(API + '?' + params.toString(), { headers: { accept:'application/json' } });
+			if (!res.ok) throw new Error('HTTP ' + res.status);
+			return res.json();
 		}
 
-		// The error state renders its retry button from a string, so it is
+		function appendItems(items) {
+			if (!grid) {
+				grid = document.createElement('div');
+				grid.className = 'grid';
+				listEl.innerHTML = '';
+				listEl.appendChild(grid);
+			}
+			items.forEach((it, i) => { const c = card(it); c.style.animationDelay = (i*22) + 'ms'; grid.appendChild(c); });
+			rendered += items.length;
+			lastPageFull = items.length >= PAGE_SIZE;
+		}
+
+		async function load() {
+			const token = ++requestToken;
+			clearEl.hidden = !filtered();
+			skeletons();
+			grid = null;
+			rendered = 0;
+			let data;
+			try {
+				data = await fetchPage(0);
+			} catch (err) {
+				if (token !== requestToken) return;
+				renderError(err.message);
+				return;
+			}
+			if (token !== requestToken) return;
+			if (data.custodyNotice) document.getElementById('custody-copy').innerHTML = '<b>Custody:</b> ' + esc(data.custodyNotice);
+			renderStats(data.stats);
+			matching = Number.isFinite(Number(data.matching)) ? Number(data.matching) : null;
+			const items = data.items || [];
+			if (!items.length) { renderEmpty(); return; }
+			appendItems(items);
+			renderPager();
+		}
+
+		async function loadMore() {
+			const token = requestToken;
+			moreEl.disabled = true;
+			moreEl.textContent = 'Loading';
+			let data;
+			try {
+				data = await fetchPage(rendered);
+			} catch (err) {
+				if (token !== requestToken) return;
+				moreEl.disabled = false;
+				moreEl.textContent = 'Load more';
+				if (!pagerEl.querySelector('.pager-error')) {
+					const note = document.createElement('span');
+					note.className = 'pager-error';
+					note.textContent = `Couldn't load the next page (${err.message}).`;
+					pagerEl.appendChild(note);
+				}
+				return;
+			}
+			if (token !== requestToken) return;
+			if (Number.isFinite(Number(data.matching))) matching = Number(data.matching);
+			appendItems(data.items || []);
+			renderPager();
+		}
+
+		function clearFilters() {
+			qEl.value = '';
+			tierEl.value = '';
+			load();
+			qEl.focus();
+		}
+
+		// The empty and error states render their controls from a string, so they are
 		// delegated rather than bound with an inline onclick the CSP would block.
 		document.addEventListener('click', (event) => {
-			if (event.target.closest('[data-action="reload"]')) location.reload();
+			if (event.target.closest('[data-action="retry"]')) load();
+			else if (event.target.closest('[data-action="clear"]')) clearFilters();
 		});
 
+		// Clicking the backdrop (anywhere outside the dialog's own content) closes it.
+		const buyDlg = document.getElementById('buy');
+		buyDlg.addEventListener('click', (event) => { if (event.target === buyDlg) buyDlg.close(); });
+		document.getElementById('buy-close').addEventListener('click', () => buyDlg.close());
+
+		moreEl.addEventListener('click', loadMore);
+		clearEl.addEventListener('click', clearFilters);
 		qEl.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(load, 280); });
 		tierEl.addEventListener('change', load);
 		sortEl.addEventListener('change', load);

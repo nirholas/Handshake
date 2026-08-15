@@ -89,6 +89,71 @@
 	padding: 2px 6px;
 	border-radius: 5px;
 }
+.vlt-session-facts {
+	display: contents;
+}
+.vlt-session-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+}
+.vlt-session-actions .vlt-btn {
+	margin-left: 0;
+}
+
+/* ── Fund panel ───────────────────────────────────────────────────────── */
+.vlt-fund {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 12px 16px;
+	padding: 16px 20px;
+	margin: 10px 0 0;
+	border: 1px solid var(--stroke-strong, rgba(255, 255, 255, 0.14));
+	border-radius: var(--radius-card, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+.vlt-fund[hidden] {
+	display: none;
+}
+.vlt-fund .vlt-field {
+	flex: 1 1 200px;
+	min-width: 0;
+}
+.vlt-fund-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.vlt-fund-actions .vlt-btn {
+	margin-left: 0;
+}
+.vlt-fund-note {
+	margin: 10px 2px 0;
+	font-size: 12.5px;
+	line-height: 1.5;
+	color: var(--ink-dim, #888);
+	overflow-wrap: anywhere;
+}
+.vlt-fund-note:empty {
+	display: none;
+}
+.vlt-fund-note[data-tone='error'] {
+	color: #ff8a8a;
+}
+.vlt-fund-note[data-tone='success'] {
+	color: #6ee7a8;
+}
+.vlt-fund-note code {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	padding: 2px 6px;
+	border-radius: 5px;
+	color: var(--ink, #e8e8e8);
+}
+
 .vlt-net-badge {
 	display: inline-flex;
 	align-items: center;
@@ -368,6 +433,11 @@ a.vlt-btn {
 	.vlt-spinner {
 		animation: none;
 	}
+	.vlt-drawer,
+	.vlt-drawer[data-open='true'],
+	.vlt-drawer-backdrop {
+		transition: none;
+	}
 }
 @keyframes vlt-shimmer {
 	0% {
@@ -408,6 +478,16 @@ a.vlt-btn {
 	font-size: 13px;
 	max-width: 44ch;
 }
+.vlt-state-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+	margin-top: 4px;
+}
+.vlt-state-actions .vlt-btn {
+	margin-left: 0;
+}
 
 /* ── Detail drawer ────────────────────────────────────────────────────── */
 .vlt-drawer-backdrop {
@@ -436,11 +516,22 @@ a.vlt-btn {
 	display: flex;
 	flex-direction: column;
 	transform: translateX(100%);
-	transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+	/* Hidden (not merely offscreen) while closed: an aria-hidden panel whose
+	   close button is still tabbable traps keyboard users in dead space. */
+	visibility: hidden;
+	pointer-events: none;
+	transition:
+		transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+		visibility 0s linear 0.24s;
 	overflow-y: auto;
 }
 .vlt-drawer[data-open='true'] {
 	transform: translateX(0);
+	visibility: visible;
+	pointer-events: auto;
+	transition:
+		transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+		visibility 0s linear 0s;
 }
 .vlt-drawer-head {
 	display: flex;
@@ -448,6 +539,15 @@ a.vlt-btn {
 	justify-content: space-between;
 	padding: 18px 20px;
 	border-bottom: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+}
+.vlt-drawer-title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.35;
+	color: var(--ink, #e8e8e8);
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 .vlt-drawer-close {
 	width: 32px;

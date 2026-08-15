@@ -82,6 +82,12 @@
 		button.small { font-size:.78rem; padding:.4rem .7rem; }
 		button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid rgba(139,92,246,.7); outline-offset:2px; }
 
+		/* deep-linked bounty (#<id>) pinned above the board */
+		.linked { margin-bottom:1.1rem; }
+		.linked .linkedhead { display:flex; align-items:center; justify-content:space-between; gap:.6rem; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); margin-bottom:.5rem; }
+		.linked .bcard { border-color:rgba(255,213,79,.45); box-shadow:0 0 0 1px rgba(255,213,79,.12); }
+		.priority { display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; margin:0 0 1rem; padding:.6rem .8rem; border:1px solid rgba(255,213,79,.4); background:rgba(255,213,79,.07); border-radius:8px; font-size:.82rem; color:#fcd34d; }
+		.priority .hi { color:var(--accent); }
 		.empty { text-align:center; padding:3.5rem 1rem; border:1px dashed var(--border); border-radius:var(--radius); color:var(--muted); }
 		.empty .glyph { font-size:2.4rem; margin-bottom:.6rem; opacity:.5; }
 		.empty h3 { font-family:var(--font-display); margin:.2rem 0 .5rem; color:#ccc; }
@@ -159,7 +165,7 @@
 			<div class="statstrip" id="statstrip" aria-live="polite"></div>
 		</div>
 
-		<div class="tabs" role="tablist" aria-label="Grind-bounty market views">
+		<div class="tabs" id="tablist" role="tablist" aria-label="Grind-bounty market views">
 			<button class="tab" role="tab" id="tab-board" aria-selected="true" aria-controls="panel-board" data-i18n="vanity_bounties_index.bounty_board">Bounty board</button>
 			<button class="tab" role="tab" id="tab-post" aria-selected="false" aria-controls="panel-post" data-i18n="vanity_bounties_index.post_a_bounty">Post a bounty</button>
 			<button class="tab" role="tab" id="tab-earn" aria-selected="false" aria-controls="panel-earn" data-i18n="vanity_bounties_index.grind_earn">Grind &amp; earn</button>
@@ -183,6 +189,7 @@
 				</select>
 				<button class="ghost small" id="refresh-board" title="Refresh" data-i18n="vanity_bounties_index.refresh" data-i18n-attr="title:vanity_bounties_index.refresh_title">Refresh</button>
 			</div>
+			<div id="linked-bounty" class="linked" hidden></div>
 			<div class="grid" id="board-grid" aria-live="polite"></div>
 			<div style="text-align:center;margin-top:1.4rem;display:none" id="loadmore-row">
 				<button class="ghost" id="loadmore-btn" data-i18n="vanity_bounties_index.load_more">Load more</button>
@@ -234,7 +241,7 @@
 				<input class="t mono" id="post-refund" placeholder="Your Solana address" autocomplete="off" spellcheck="false">
 
 				<!-- X25519 recipient key -->
-				<label class="fl" data-i18n="vanity_bounties_index.your_sealed_delivery_key_x25519">Your sealed-delivery key (X25519)</label>
+				<label class="fl" for="post-recipient" data-i18n="vanity_bounties_index.your_sealed_delivery_key_x25519">Your sealed-delivery key (X25519)</label>
 				<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
 					<button class="ghost small" id="gen-key" type="button" data-i18n="vanity_bounties_index.generate_a_new_key">Generate a new key</button>
 					<span class="note" style="margin:0" data-i18n="vanity_bounties_index.or_paste_an_existing_public_key_below">or paste an existing public key below</span>
@@ -263,6 +270,8 @@
 			<div class="card">
 				<h2 data-i18n="vanity_bounties_index.grind_earn_2">Grind &amp; earn</h2>
 				<p class="note" data-i18n-html="vanity_bounties_index.run_your_browser_s_cores_against_open">Run your browser's cores against open bounties and claim the reward when you find a match. We seal the key to the requester before submitting, so <strong>you never hold their secret</strong> — you just earn the bounty. Honest about CPU: this pegs your cores while running.</p>
+
+				<div id="earn-priority" class="priority" hidden></div>
 
 				<label class="fl" for="earn-payout" data-i18n-html="vanity_bounties_index.your_payout_address_solana_where_the_bounty">Your payout address (Solana) <span style="text-transform:none;color:#555">— where the bounty is sent</span></label>
 				<input class="t mono" id="earn-payout" placeholder="Your Solana USDC address" autocomplete="off" spellcheck="false">

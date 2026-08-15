@@ -14,11 +14,24 @@ const $ = (id) => document.getElementById(id);
 
 // Matches the /protocol/:slug route; falls back to the ?slug= query for direct
 // links and dev proxies that don't rewrite the path.
+// Some DeFiLlama slugs contain characters encodeURIComponent percent-escapes
+// (`synthetix-v1+v2` arrives as `synthetix-v1%2Bv2`), so decode the path segment
+// before matching it against the slug charset.
+const SLUG_RE = /^[a-z0-9.!()+-]{1,80}$/i;
+
 function slugFromLocation() {
-	const m = location.pathname.match(/^\/protocol\/([a-z0-9.-]{1,80})$/i);
-	if (m) return m[1].toLowerCase();
+	const m = location.pathname.match(/^\/protocol\/([^/]{1,240})$/);
+	if (m) {
+		let seg = m[1];
+		try {
+			seg = decodeURIComponent(seg);
+		} catch {
+			return null;
+		}
+		if (SLUG_RE.test(seg)) return seg.toLowerCase();
+	}
 	const q = new URLSearchParams(location.search).get('slug');
-	return q && /^[a-z0-9.-]{1,80}$/i.test(q) ? q.toLowerCase() : null;
+	return q && SLUG_RE.test(q) ? q.toLowerCase() : null;
 }
 
 async function getJson(url) {
@@ -558,7 +571,7 @@ function renderError() {
 function updateMeta(d, slug) {
 	const title = `${d.name} — DeFi Protocol · three.ws`;
 	document.title = title;
-	const url = `https://three.ws/protocol/${slug}`;
+	const url = `https://three.ws/protocol/${encodeURIComponent(slug)}`;
 	const set = (sel, attr, val) => document.querySelector(sel)?.setAttribute(attr, val);
 	const tvl = d.tvl_current != null ? ` — ${formatUsd(d.tvl_current)} TVL` : '';
 	const cat = d.category ? `${d.category} protocol` : 'DeFi protocol';

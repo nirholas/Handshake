@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "SDK'yı saran React sarmalayıcısı. <code>/avatar-sdk/src/react.jsx</code> adresinden doğrudan <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> ve <code>useAvatar</code> öğelerini içe aktarır. React, bir import map aracılığıyla CDN'den yüklenir, böylece bu sayfa bir bundler adımına gerek kalmadan çalışır.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK'yı saran React sarmalayıcısı. <code>/avatar-sdk/src/react.js</code> adresinden doğrudan <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> ve <code>useAvatar</code> öğelerini içe aktarır. React, bir import map aracılığıyla CDN'den yüklenir, böylece bu sayfa bir bundler adımına gerek kalmadan çalışır.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epik",
 		"it_pays_the_quoted_price_and_receives": "Belirtilen fiyatı öder ve anahtarı <b>bir kez</b> alır. Hemen içe aktarın.",
 		"legendary": "Efsanevi",
-		"long_brandable_solana_addresses_4_5_characte": "Uzun, markalanabilir Solana adresler — canlı öğütücünün ulaşamayacağı 4-5+ karakterli ön ekler — toplu CPU'da önceden hazırlanmış ve stoktan satılır. Bir tane satın alın ve özel anahtar <a href=\"/vanity/gallery\">x402</a> yoluyla <strong>bir kez</strong> teslim edilir, ardından depolanan kopyası yok edilir. Bunun yerine yeni bir ≤3 karakterli öğütme mi gerekiyor? <a href=\"/vanity-wallet\">Canlı öğütücüyü</a> kullanın.",
+		"long_brandable_solana_addresses_4_5_characte": "Uzun, markalanabilir Solana adresler — canlı öğütücünün ulaşamayacağı 4-5+ karakterli ön ekler — toplu CPU'da önceden hazırlanmış ve stoktan satılır. Bir tane satın alın ve özel anahtar <a href=\"/x402\">x402</a> yoluyla <strong>bir kez</strong> teslim edilir, ardından depolanan kopyası yok edilir. Bunun yerine yeni bir ≤3 karakterli öğütme mi gerekiyor? <a href=\"/vanity-wallet\">Canlı öğütücüyü</a> kullanın.",
 		"meta_description": "Canlı öğütücünün ulaşamayacağı 4-5+ karakterli ön eklere sahip, toplu CPU'da önceden hazırlanmış ve x402 aracılığıyla satılan, uzun, markalanabilir bir Solana vanity adresini stoktan anında satın alın. Fiyat nadirlikle orantılıdır.",
 		"meta_og_description": "Uzun, markalanabilir Solana vanity adresleri, önceden hazırlanmış ve stoktan satılır. Bir kez teslim edilir, beklemede şifrelenir, nadirliğe göre fiyatlandırılır.",
 		"meta_og_title": "Premium Vanity Envanteri · three.ws",

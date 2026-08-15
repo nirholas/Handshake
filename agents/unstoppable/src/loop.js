@@ -20,12 +20,19 @@ export async function tick() {
 	const tickId = crypto.randomUUID();
 
 	// ── 1. Sense ─────────────────────────────────────────────────────────────
-	const treasury = await getTreasury();
-
-	if (treasury.mode === 'halted') {
-		console.log(`[loop] tick ${tickId} skipped — halted`);
+	// Re-derive the mode from the CURRENT balance before honouring it. Settling
+	// only at the end of a tick made `halted` a one-way trapdoor: a halted agent
+	// skipped the tick, so the recalc that could clear the flag never ran, and it
+	// stayed halted however much revenue arrived afterwards. Production sat in
+	// exactly that state, halted with $8.93 against a $0.10 floor, until this ran
+	// first. Halting is a financial condition, not a latch.
+	const assessed = await recalcRunway();
+	if (assessed.mode === 'halted') {
+		console.log(`[loop] tick ${tickId} skipped — halted (balance at or below the hard floor)`);
 		return { tickId, skipped: true, reason: 'halted' };
 	}
+
+	const treasury = await getTreasury();
 
 	const [earnings24h, costs24h, recentActivity] = await Promise.all([
 		getEarnings24h(),
@@ -80,10 +87,12 @@ export async function tick() {
 
 	// ── 3. Act ───────────────────────────────────────────────────────────────
 	let reflectionCreated = false;
+	let reflectAttempted = false;
 
 	for (const action of (plannedActions || [])) {
 		try {
 			if (action.type === 'reflect') {
+				reflectAttempted = true;
 				const result = await maybeReflect();
 				reflectionCreated = result.created;
 				await logActivity({
@@ -136,6 +145,28 @@ export async function tick() {
 			}
 		} catch (err) {
 			console.error(`[loop] action ${action.type} failed:`, err.message);
+		}
+	}
+
+	// The daily reflection is a promise this agent makes publicly (the
+	// /unstoppable dashboard renders it), so it cannot depend on the planner
+	// choosing to ask for it. Left to the LLM's discretion it simply never got
+	// planned and the agent went months without writing one. maybeReflect() is
+	// idempotent — after the first tick of a day it is one existence check.
+	if (!reflectAttempted) {
+		try {
+			const result = await maybeReflect();
+			reflectionCreated = result.created;
+			if (reflectionCreated) {
+				await logActivity({
+					tickId,
+					action_type: 'reflect',
+					description: 'Daily reflection written.',
+					cost_atomics: 0,
+				});
+			}
+		} catch (err) {
+			console.error('[loop] daily reflection failed:', err.message);
 		}
 	}
 

@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — āķis",
 		"lab": "<a href=\"/demos\">&larr; laboratorija</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laboratorija",
-		"the_react_wrapper_around_the_sdk_imports": "React aploks ap SDK. Importē <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> un <code>useAvatar</code> tieši no <code>/avatar-sdk/src/react.jsx</code>. React tiek ielādēts no CDN, izmantojot importa karti, tāpēc šī lapa darbojas bez bundler soļa.",
+		"the_react_wrapper_around_the_sdk_imports": "React aploks ap SDK. Importē <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> un <code>useAvatar</code> tieši no <code>/avatar-sdk/src/react.js</code>. React tiek ielādēts no CDN, izmantojot importa karti, tāpēc šī lapa darbojas bez bundler soļa.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Episkās",
 		"it_pays_the_quoted_price_and_receives": "Tiek samaksāta norādītā cena un atslēga saņemta <b>vienreiz</b>. Importējiet to nekavējoties.",
 		"legendary": "Leģendārās",
-		"long_brandable_solana_addresses_4_5_characte": "Garās, zīmolojamās Solana adreses — 4–5+ rakstzīmju prefiksi, ko tiešraides slīpētājs nevar sasniegt — iepriekš noslīpētas uz partijas CPU un pārdotas no noliktavas. Iegādājieties vienu, un privātā atslēga tiek piegādāta <strong>vienreiz</strong> pa <a href=\"/vanity/gallery\">x402</a> kanālu, pēc tam tās saglabātā kopija tiek iznīcināta. Nepieciešams jauns ≤3 rakstzīmju slīpējums? Izmantojiet <a href=\"/vanity-wallet\">tiešraides slīpētāju</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Garās, zīmolojamās Solana adreses — 4–5+ rakstzīmju prefiksi, ko tiešraides slīpētājs nevar sasniegt — iepriekš noslīpētas uz partijas CPU un pārdotas no noliktavas. Iegādājieties vienu, un privātā atslēga tiek piegādāta <strong>vienreiz</strong> pa <a href=\"/x402\">x402</a> kanālu, pēc tam tās saglabātā kopija tiek iznīcināta. Nepieciešams jauns ≤3 rakstzīmju slīpējums? Izmantojiet <a href=\"/vanity-wallet\">tiešraides slīpētāju</a>.",
 		"meta_description": "Iegādājieties garu, zīmolojamu Solana vanity adresi, kas tiek piegādāta nekavējoties no noliktavas — 4–5+ rakstzīmju prefiksi, ko tiešraides slīpētājs nevar sasniegt, iepriekš noslīpēti uz partijas CPU un pārdoti caur x402. Cena mainās atkarībā no retuma.",
 		"meta_og_description": "Garas, zīmolojamas Solana pielāgotās adreses, iepriekš ģenerētas un pieejamas no noliktavas. Vienreizēja piegāde, šifrētas glabāšanā, cena atkarīga no retuma.",
 		"meta_og_title": "Premium pielāgoto adrešu krājumi · three.ws",

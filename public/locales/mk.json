@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — хук",
 		"lab": "<a href=\"/demos\">&larr; лаб</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws лаб",
-		"the_react_wrapper_around_the_sdk_imports": "React обвивката околу SDK-то. Увезува <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, и <code>useAvatar</code> директно од <code>/avatar-sdk/src/react.jsx</code>. React се вчитува од CDN преку мапа за увоз, така што оваа страница работи без чекор на бандлирање.",
+		"the_react_wrapper_around_the_sdk_imports": "React обвивката околу SDK-то. Увезува <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, и <code>useAvatar</code> директно од <code>/avatar-sdk/src/react.js</code>. React се вчитува од CDN преку мапа за увоз, така што оваа страница работи без чекор на бандлирање.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Епски",
 		"it_pays_the_quoted_price_and_receives": "Се плаќа понудената цена и клучот се добива <b>еднаш</b>. Увезете го веднаш.",
 		"legendary": "Легендарни",
-		"long_brandable_solana_addresses_4_5_characte": "Долги, брендирани Solana адреси — префикси од 4–5+ знаци што мелницата во живо не може да ги достигне — ископани однапред на сериски процесор и продадени од залиха. Купете една и приватниот клуч се испорачува <strong>еднаш</strong> преку <a href=\"/vanity/gallery\">x402</a> каналот, потоа неговата зачувана копија се уништува. Ви треба ново ископување со ≤3 знаци наместо тоа? Користете ја <a href=\"/vanity-wallet\">мелницата во живо</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Долги, брендирани Solana адреси — префикси од 4–5+ знаци што мелницата во живо не може да ги достигне — ископани однапред на сериски процесор и продадени од залиха. Купете една и приватниот клуч се испорачува <strong>еднаш</strong> преку <a href=\"/x402\">x402</a> каналот, потоа неговата зачувана копија се уништува. Ви треба ново ископување со ≤3 знаци наместо тоа? Користете ја <a href=\"/vanity-wallet\">мелницата во живо</a>.",
 		"meta_description": "Купете долга, брендирана Solana vanity адреса испорачана веднаш од залиха — префикси од 4–5+ знаци што мелницата во живо не може да ги достигне, ископани однапред на сериски процесор и продадени преку x402. Цената се скалира со реткоста.",
 		"meta_og_description": "Долги, брендирани Solana vanity адреси, претходно генерирани и продадени од залиха. Испорачани еднаш, енкриптирани во мирување, цени по реткост.",
 		"meta_og_title": "Премиум Vanity Инвентар · three.ws",

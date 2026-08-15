@@ -64,7 +64,12 @@ const cardObserver = new IntersectionObserver(
 	{ threshold: 0.06 },
 );
 
-(async function init() {
+// The filter bar is built from the loaded set, so a retry has to replace the
+// previous one instead of stacking a second bar above the grid.
+let filterBar = null;
+
+async function load() {
+	GRID_EL.setAttribute('aria-busy', 'true');
 	showSkeleton(3);
 
 	let showcase;
@@ -73,25 +78,37 @@ const cardObserver = new IntersectionObserver(
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		showcase = await res.json();
 	} catch (err) {
+		filterBar?.remove();
+		filterBar = null;
 		GRID_EL.innerHTML = '';
-		GRID_EL.appendChild(errorEl('Could not load showcase config.', err.message));
+		GRID_EL.appendChild(errorEl(err.message));
 		GRID_EL.removeAttribute('aria-busy');
 		return;
 	}
 
-	const widgets = showcase.widgets || [];
+	const widgets = Array.isArray(showcase.widgets) ? showcase.widgets : [];
+
+	updateHeroCount(widgets.length);
+	GRID_EL.innerHTML = '';
+
+	if (!widgets.length) {
+		filterBar?.remove();
+		filterBar = null;
+		GRID_EL.appendChild(emptyEl());
+		GRID_EL.removeAttribute('aria-busy');
+		return;
+	}
 
 	renderFilters(widgets);
-	updateHeroCount(widgets.length);
-
-	GRID_EL.innerHTML = '';
 	for (const w of widgets) {
 		const card = renderShowcase(w);
 		GRID_EL.appendChild(card);
 		cardObserver.observe(card);
 	}
 	GRID_EL.removeAttribute('aria-busy');
-})();
+}
+
+load();
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
@@ -137,8 +154,12 @@ function renderFilters(widgets) {
 	bar.addEventListener('click', (e) => {
 		const btn = e.target.closest('.filter-btn');
 		if (!btn) return;
-		bar.querySelectorAll('.filter-btn').forEach((b) => b.removeAttribute('data-active'));
+		bar.querySelectorAll('.filter-btn').forEach((b) => {
+			b.removeAttribute('data-active');
+			b.setAttribute('aria-pressed', 'false');
+		});
 		btn.setAttribute('data-active', 'true');
+		btn.setAttribute('aria-pressed', 'true');
 		const type = btn.dataset.type || null;
 		let visIdx = 0;
 		document.querySelectorAll('#gallery-grid .showcase:not(.showcase-skeleton)').forEach((card) => {
@@ -151,6 +172,8 @@ function renderFilters(widgets) {
 		GRID_EL.dataset.filtered = type ? 'true' : '';
 	});
 
+	filterBar?.remove();
+	filterBar = bar;
 	GRID_EL.before(bar);
 }
 
@@ -159,6 +182,7 @@ function makeFilterBtn(label, type, active) {
 	btn.type = 'button';
 	btn.className = 'filter-btn';
 	btn.textContent = label;
+	btn.setAttribute('aria-pressed', active ? 'true' : 'false');
 	if (type) {
 		btn.dataset.type = type;
 		const c = TYPE_COLORS[type];
@@ -170,9 +194,27 @@ function makeFilterBtn(label, type, active) {
 
 // ─── Hero count ──────────────────────────────────────────────────────────────
 
+let heroCount = null;
+let heroCountWatched = false;
+
 function updateHeroCount(n) {
+	heroCount = n;
+	writeHeroCount();
+	if (heroCountWatched) return;
+	const badge = document.getElementById('widget-count-badge');
+	if (!badge) return;
+	heroCountWatched = true;
+	// The i18n runtime replaces this badge's innerHTML once the locale catalog
+	// lands (and again on every language switch), which restores the placeholder
+	// number baked into the catalog. Re-write the live count each time.
+	new MutationObserver(writeHeroCount).observe(badge, { childList: true, subtree: true });
+}
+
+function writeHeroCount() {
+	if (heroCount == null) return;
 	const el = document.getElementById('widget-count');
-	if (el) el.textContent = n;
+	// Guard the write: the observer that calls this fires on its own mutations.
+	if (el && el.textContent !== String(heroCount)) el.textContent = String(heroCount);
 }
 
 // ─── Showcase card ───────────────────────────────────────────────────────────
@@ -274,14 +316,17 @@ function renderShowcase(w) {
 	const tabBar = document.createElement('div');
 	tabBar.className = 'frame-tabs';
 	tabBar.setAttribute('role', 'tablist');
-	const previewTab = makeTab('Preview', true);
-	const codeTab = makeTab('Code', false);
+	const previewTab = makeTab('Preview', true, `sc-${w.id}-preview`);
+	const codeTab = makeTab('Code', false, `sc-${w.id}-code`);
 	tabBar.appendChild(previewTab);
 	tabBar.appendChild(codeTab);
 	frameWrap.appendChild(tabBar);
 
 	const frame = document.createElement('div');
 	frame.className = 'showcase-frame';
+	frame.id = `sc-${w.id}-preview`;
+	frame.setAttribute('role', 'tabpanel');
+	frame.setAttribute('aria-labelledby', previewTab.id);
 	frame.style.aspectRatio = `${w.width} / ${w.height}`;
 	frame.style.maxWidth = `${currentWidth()}px`;
 
@@ -337,6 +382,9 @@ function renderShowcase(w) {
 	// the customizer for power users who want it in the preview area too.
 	const codePanel = document.createElement('div');
 	codePanel.className = 'frame-code-panel';
+	codePanel.id = `sc-${w.id}-code`;
+	codePanel.setAttribute('role', 'tabpanel');
+	codePanel.setAttribute('aria-labelledby', codeTab.id);
 	codePanel.hidden = true;
 	const codePanelPre = document.createElement('pre');
 	codePanelPre.className = 'frame-code';
@@ -587,6 +635,11 @@ function renderShowcase(w) {
 	document.addEventListener('click', (e) => {
 		if (!splitBtn.contains(e.target)) closeMenu();
 	});
+	splitBtn.addEventListener('keydown', (e) => {
+		if (e.key !== 'Escape' || menu.hidden) return;
+		closeMenu();
+		formatToggle.focus();
+	});
 
 	copyMain.addEventListener('click', () => copy(currentSnippet(), copyMain, formatLabelShort(state.format)));
 
@@ -648,12 +701,14 @@ function makeKnobRow(label) {
 	return row;
 }
 
-function makeTab(label, active) {
+function makeTab(label, active, controls) {
 	const btn = document.createElement('button');
 	btn.type = 'button';
 	btn.className = 'frame-tab';
+	btn.id = `${controls}-tab`;
 	btn.setAttribute('role', 'tab');
 	btn.setAttribute('aria-selected', String(!!active));
+	btn.setAttribute('aria-controls', controls);
 	if (active) btn.dataset.active = 'true';
 	btn.textContent = label;
 	return btn;
@@ -693,15 +748,51 @@ function escAttr(s) {
 	return escHtml(s);
 }
 
-function errorEl(msg, detail) {
+// Recoverable failure: the showcase manifest did not load. Says what broke,
+// offers a retry that re-runs the same load, and leaves a way forward (the
+// docs) for a visitor whose network keeps refusing.
+function errorEl(detail) {
 	const e = document.createElement('div');
 	e.className = 'error-state';
+	e.setAttribute('role', 'alert');
 	e.innerHTML = `
 		<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink:0">
 			<circle cx="12" cy="12" r="10"/>
 			<line x1="12" y1="8" x2="12" y2="12"/>
 			<circle cx="12" cy="16" r=".5" fill="currentColor"/>
 		</svg>
-		<span>${escHtml(msg)}${detail ? ` — <code>${escHtml(detail)}</code>` : ''}</span>`;
+		<div class="error-state-body">
+			<span>The widget showcase could not load. Check your connection and try again.${
+				detail ? ` <code>${escHtml(detail)}</code>` : ''
+			}</span>
+			<div class="error-state-actions">
+				<button type="button" class="error-retry">Try again</button>
+				<a class="error-state-link" href="/docs/widgets">Read the widget docs</a>
+			</div>
+		</div>`;
+	const retry = e.querySelector('.error-retry');
+	retry.addEventListener('click', () => {
+		retry.disabled = true;
+		retry.textContent = 'Retrying…';
+		load();
+	});
+	return e;
+}
+
+// The manifest loaded but carries no widgets. Never leave the grid blank: tell
+// the visitor what the page would show and hand them the one action that works.
+function emptyEl() {
+	const e = document.createElement('div');
+	e.className = 'empty-state';
+	e.innerHTML = `
+		<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+			<rect x="3" y="3" width="7" height="7" rx="1.5"/>
+			<rect x="14" y="3" width="7" height="7" rx="1.5"/>
+			<rect x="3" y="14" width="7" height="7" rx="1.5"/>
+			<path d="M17.5 14v7M14 17.5h7"/>
+		</svg>
+		<h3>No showcase widgets yet</h3>
+		<p>The gallery is empty right now. Build your own embed in the Studio: pick an avatar, pick a widget type, then paste the snippet into any page.</p>
+		<a class="btn btn-primary" href="/studio">Open the Studio</a>`;
 	return e;
 }

@@ -74,6 +74,27 @@ export class ValidationDashboard {
 		this.els.submitBtn.addEventListener('click', () => this.openModal());
 		this.els.reportFile.addEventListener('change', (e) => this.handleFileSelect(e));
 		this.els.submitReportBtn.addEventListener('click', () => this.submitReport());
+		this.els.agentInput.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') this.loadRecords();
+		});
+		this.els.chainInput.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') this.loadRecords();
+		});
+
+		// Modal: dismissible the two ways every dialog is expected to be, with
+		// focus kept inside it while it is open.
+		this.els.submitModal.addEventListener('mousedown', (e) => {
+			if (e.target === this.els.submitModal) this.closeModal();
+		});
+		document.addEventListener('keydown', (e) => {
+			if (!this.els.submitModal.classList.contains('open')) return;
+			if (e.key === 'Escape') {
+				e.preventDefault();
+				this.closeModal();
+			} else if (e.key === 'Tab') {
+				this._trapFocus(e);
+			}
+		});
 
 		// Record rows are rendered from strings, so their copy affordances declare
 		// what they carry and this delegated listener does the work. Inline onclick
@@ -219,7 +240,7 @@ export class ValidationDashboard {
 					</div>
 					<div class="record-meta-item" style="flex:1">
 						<div class="record-meta-label">Report Hash</div>
-						<div class="record-meta-value">${reportHash ? this.escapeHtml(reportHash.substring(0, 18)) + '…' : '—'}</div>
+						<div class="record-meta-value">${reportHash ? this.escapeHtml(reportHash.substring(0, 18)) + '…' : 'none recorded'}</div>
 					</div>
 				</div>
 				${notes ? `<div class="record-notes">${this.escapeHtml(notes)}</div>` : ''}
@@ -231,7 +252,30 @@ export class ValidationDashboard {
 		`;
 	}
 
+	_focusables() {
+		return Array.from(
+			this.els.submitModal.querySelectorAll(
+				'button:not([disabled]), a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+			),
+		).filter((el) => el.offsetParent !== null);
+	}
+
+	_trapFocus(e) {
+		const items = this._focusables();
+		if (!items.length) return;
+		const first = items[0];
+		const last = items[items.length - 1];
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault();
+			first.focus();
+		}
+	}
+
 	openModal() {
+		this._returnFocusTo = document.activeElement;
 		this.els.submitModal.classList.add('open');
 		this.currentReport = null;
 		this.currentReportHash = null;
@@ -240,10 +284,14 @@ export class ValidationDashboard {
 		this.els.reportFile.value = '';
 		this.els.fileStatus.textContent = '';
 		this.els.submitReportBtn.disabled = true;
+		const first = this._focusables()[0];
+		if (first) first.focus();
 	}
 
 	closeModal() {
 		this.els.submitModal.classList.remove('open');
+		if (this._returnFocusTo && this._returnFocusTo.isConnected) this._returnFocusTo.focus();
+		this._returnFocusTo = null;
 	}
 
 	async handleFileSelect(e) {

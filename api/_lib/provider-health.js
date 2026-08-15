@@ -12,7 +12,7 @@
 // helpers swallow errors and degrade to "no cooldown known", which is exactly
 // the pre-breaker behaviour.
 
-import { cacheGet, cacheSet } from './cache.js';
+import { cacheGet, cacheSet, cacheDel } from './cache.js';
 
 const COOLDOWN_PREFIX = 'llm-cooldown:';
 // Long enough to ride out a typical per-minute rate-limit window, short enough
@@ -46,6 +46,20 @@ export async function markProviderCooldown(provider, seconds = DEFAULT_COOLDOWN_
 		);
 	} catch {
 		// Cache unavailable — degrade silently to no-cooldown.
+	}
+}
+
+/**
+ * Drop `provider`'s cooldown early, for the caller that just watched it serve a
+ * real request. Waiting out the rest of a window a success has already
+ * disproved only keeps a recovered provider off the menu. Never throws.
+ */
+export async function clearProviderCooldown(provider) {
+	if (!provider) return;
+	try {
+		await cacheDel(`${COOLDOWN_PREFIX}${provider}`);
+	} catch {
+		// Cache unavailable — the cooldown expires on its own.
 	}
 }
 

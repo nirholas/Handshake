@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — ਹੁੱਕ",
 		"lab": "<a href=\"/demos\">&larr; ਲੈਬ</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ਲੈਬ",
-		"the_react_wrapper_around_the_sdk_imports": "SDK ਦੇ ਆਲੇ-ਦੁਆਲੇ ਰੀਐਕਟ ਰੈਪਰ। ਇਹ <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, ਅਤੇ <code>useAvatar</code> ਨੂੰ ਸਿੱਧੇ <code>/avatar-sdk/src/react.jsx</code> ਤੋਂ ਆਯਾਤ ਕਰਦਾ ਹੈ। ਰੀਐਕਟ ਇੱਕ ਇੰਪੋਰਟ ਮੈਪ ਰਾਹੀਂ CDN ਤੋਂ ਲੋਡ ਹੁੰਦਾ ਹੈ ਤਾਂ ਜੋ ਇਹ ਪੰਨਾ ਬੰਡਲਰ ਸਟੈਪ ਤੋਂ ਬਿਨਾਂ ਕੰਮ ਕਰੇ।",
+		"the_react_wrapper_around_the_sdk_imports": "SDK ਦੇ ਆਲੇ-ਦੁਆਲੇ ਰੀਐਕਟ ਰੈਪਰ। ਇਹ <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, ਅਤੇ <code>useAvatar</code> ਨੂੰ ਸਿੱਧੇ <code>/avatar-sdk/src/react.js</code> ਤੋਂ ਆਯਾਤ ਕਰਦਾ ਹੈ। ਰੀਐਕਟ ਇੱਕ ਇੰਪੋਰਟ ਮੈਪ ਰਾਹੀਂ CDN ਤੋਂ ਲੋਡ ਹੁੰਦਾ ਹੈ ਤਾਂ ਜੋ ਇਹ ਪੰਨਾ ਬੰਡਲਰ ਸਟੈਪ ਤੋਂ ਬਿਨਾਂ ਕੰਮ ਕਰੇ।",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "ਐਪਿਕ",
 		"it_pays_the_quoted_price_and_receives": "ਇਹ ਦੱਸੀ ਗਈ ਕੀਮਤ ਦਾ ਭੁਗਤਾਨ ਕਰਦਾ ਹੈ ਅਤੇ ਕੁੰਜੀ <b>ਇੱਕ ਵਾਰ</b> ਪ੍ਰਾਪਤ ਕਰਦਾ ਹੈ। ਇਸਨੂੰ ਤੁਰੰਤ ਇੰਪੋਰਟ ਕਰੋ।",
 		"legendary": "ਲੈਜੈਂਡਰੀ",
-		"long_brandable_solana_addresses_4_5_characte": "ਲੰਬੇ, ਬ੍ਰਾਂਡੇਬਲ Solana ਐਡਰੈੱਸ — 4–5+ ਅੱਖਰਾਂ ਦੇ ਪ੍ਰੀਫਿਕਸ ਜੋ ਲਾਈਵ ਗ੍ਰਾਈਂਡਰ ਨਹੀਂ ਪਹੁੰਚ ਸਕਦਾ — ਬੈਚ CPU 'ਤੇ ਸਮੇਂ ਤੋਂ ਪਹਿਲਾਂ ਗ੍ਰਾਈਂਡ ਕੀਤੇ ਗਏ ਅਤੇ ਸਟਾਕ ਵਿੱਚੋਂ ਵੇਚੇ ਗਏ। ਇੱਕ ਖਰੀਦੋ ਅਤੇ ਪ੍ਰਾਈਵੇਟ ਕੁੰਜੀ <a href=\"/vanity/gallery\">x402</a> ਰੇਲ ਰਾਹੀਂ <strong>ਇੱਕ ਵਾਰ</strong> ਡਿਲੀਵਰ ਕੀਤੀ ਜਾਂਦੀ ਹੈ, ਫਿਰ ਇਸਦੀ ਸਟੋਰ ਕੀਤੀ ਕਾਪੀ ਨਸ਼ਟ ਹੋ ਜਾਂਦੀ ਹੈ। ਇਸਦੀ ਬਜਾਏ ਇੱਕ ਤਾਜ਼ਾ ≤3-ਅੱਖਰਾਂ ਵਾਲਾ ਗ੍ਰਾਈਂਡ ਚਾਹੀਦਾ ਹੈ? <a href=\"/vanity-wallet\">ਲਾਈਵ ਗ੍ਰਾਈਂਡਰ</a> ਦੀ ਵਰਤੋਂ ਕਰੋ।",
+		"long_brandable_solana_addresses_4_5_characte": "ਲੰਬੇ, ਬ੍ਰਾਂਡੇਬਲ Solana ਐਡਰੈੱਸ — 4–5+ ਅੱਖਰਾਂ ਦੇ ਪ੍ਰੀਫਿਕਸ ਜੋ ਲਾਈਵ ਗ੍ਰਾਈਂਡਰ ਨਹੀਂ ਪਹੁੰਚ ਸਕਦਾ — ਬੈਚ CPU 'ਤੇ ਸਮੇਂ ਤੋਂ ਪਹਿਲਾਂ ਗ੍ਰਾਈਂਡ ਕੀਤੇ ਗਏ ਅਤੇ ਸਟਾਕ ਵਿੱਚੋਂ ਵੇਚੇ ਗਏ। ਇੱਕ ਖਰੀਦੋ ਅਤੇ ਪ੍ਰਾਈਵੇਟ ਕੁੰਜੀ <a href=\"/x402\">x402</a> ਰੇਲ ਰਾਹੀਂ <strong>ਇੱਕ ਵਾਰ</strong> ਡਿਲੀਵਰ ਕੀਤੀ ਜਾਂਦੀ ਹੈ, ਫਿਰ ਇਸਦੀ ਸਟੋਰ ਕੀਤੀ ਕਾਪੀ ਨਸ਼ਟ ਹੋ ਜਾਂਦੀ ਹੈ। ਇਸਦੀ ਬਜਾਏ ਇੱਕ ਤਾਜ਼ਾ ≤3-ਅੱਖਰਾਂ ਵਾਲਾ ਗ੍ਰਾਈਂਡ ਚਾਹੀਦਾ ਹੈ? <a href=\"/vanity-wallet\">ਲਾਈਵ ਗ੍ਰਾਈਂਡਰ</a> ਦੀ ਵਰਤੋਂ ਕਰੋ।",
 		"meta_description": "ਸਟਾਕ ਵਿੱਚੋਂ ਤੁਰੰਤ ਡਿਲੀਵਰ ਕੀਤਾ ਗਿਆ ਇੱਕ ਲੰਬਾ, ਬ੍ਰਾਂਡੇਬਲ Solana ਵੈਨਿਟੀ ਐਡਰੈੱਸ ਖਰੀਦੋ — 4–5+ ਅੱਖਰਾਂ ਦੇ ਪ੍ਰੀਫਿਕਸ ਜੋ ਲਾਈਵ ਗ੍ਰਾਈਂਡਰ ਨਹੀਂ ਪਹੁੰਚ ਸਕਦਾ, ਬੈਚ CPU 'ਤੇ ਸਮੇਂ ਤੋਂ ਪਹਿਲਾਂ ਗ੍ਰਾਈਂਡ ਕੀਤੇ ਗਏ ਅਤੇ x402 ਰਾਹੀਂ ਵੇਚੇ ਗਏ। ਕੀਮਤ ਦੁਰਲੱਭਤਾ ਦੇ ਨਾਲ ਵਧਦੀ ਹੈ।",
 		"meta_og_description": "ਲੰਬੇ, ਬ੍ਰਾਂਡੇਬਲ Solana ਵੈਨਿਟੀ ਐਡਰੈੱਸ, ਸਮੇਂ ਤੋਂ ਪਹਿਲਾਂ ਗ੍ਰਾਈਂਡ ਕੀਤੇ ਗਏ ਅਤੇ ਸਟਾਕ ਵਿੱਚੋਂ ਵੇਚੇ ਗਏ। ਇੱਕ ਵਾਰ ਡਿਲੀਵਰ ਕੀਤੇ ਗਏ, ਆਰਾਮ ਵਿੱਚ ਐਨਕ੍ਰਿਪਟ ਕੀਤੇ ਗਏ, ਦੁਰਲੱਭਤਾ ਦੁਆਰਾ ਕੀਮਤ ਨਿਰਧਾਰਤ।",
 		"meta_og_title": "ਪ੍ਰੀਮੀਅਮ ਵੈਨਿਟੀ ਇਨਵੈਂਟਰੀ · three.ws",

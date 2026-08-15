@@ -38,12 +38,25 @@ the shared public read limiter. `network` accepts `mainnet` or `devnet`; anythin
 else resolves to `mainnet`. The page's Mainnet / Devnet toggle refetches both
 views and relabels the fine print at the foot of the page.
 
-Each panel is supplementary by design: if its read fails, that panel hides itself
-rather than blocking the page or filling with empty cells. The trading panel also
-hides when a response arrives without the windowed aggregates (a deploy-skew
-guard), so a stale backend cannot render a panel of dashes. The page refreshes
-every 60 seconds while the tab is visible, and an "updated X ago" ticker stamps
-each successful load and re-renders every 15 seconds.
+Each panel owns its own read and its own three-state lifecycle, published as
+`data-state` on the panel's `<section>`:
+
+| State | What the reader sees |
+| --- | --- |
+| `loading` | Skeletons in the exact shape of the final figures, so nothing reflows when the numbers land. The section carries `aria-busy="true"`. |
+| `ready` | The live figures. |
+| `error` | The panel body is replaced by a notice naming what failed, why (offline, rate limited, the HTTP status, or a deploy-skew payload), a **Retry** that re-runs only that panel's read, and a link to [status](https://three.ws/status). |
+
+A failed read never blanks the panel and never leaves a stale number on screen.
+The trading panel also enters `error` when a response arrives without the windowed
+aggregates, which is the deploy-skew case: a backend answering in an older shape,
+reported as such rather than rendered as a grid of placeholders.
+
+The page refreshes every 60 seconds while the tab is visible. The "updated" stamp
+tracks the last read that actually rendered live figures: `reading live data`
+while the first read is in flight, `live read failed` when nothing has landed,
+`last good read Xm ago` when a refresh fails over figures already on screen, and
+`updated Xm ago` otherwise. It re-renders every 15 seconds.
 
 Only already-public activity is eligible. Every query joins to
 `agent_identities` and requires the agent to be non-deleted, `is_public = true`,
@@ -126,14 +139,15 @@ meaningful.
 
 Positions that never close show up as cost with no profit and loss, and that is
 the honest reading the panel is built around: profitability lives in round trips,
-not in volume. Until a position closes, the P&L cell shows a placeholder dash with
+not in volume. Until a position closes, the P&L cell reads "pending" with
 "no closes yet" beneath it and the panel tag reads "no closes, 7d".
 
 When there was any trading in the week, the panel also writes one plain-language
 line under the KPI grid stating the trade count, the SOL deployed into buys, the
 average trade, and either the closed-position result with its win rate or the fact
-that nothing has closed yet. With no trades in the window the line is hidden and
-the traders list explains how to start the loop. A "show trades in feed" link
+that nothing has closed yet. With no trades in the window the line says so for the
+selected network and the traders list explains how to start the loop. A
+"show trades in feed" link
 appears only when there is something to show, pointing at the filtered
 [Money Pulse](https://three.ws/pulse).
 
@@ -152,8 +166,9 @@ appears only when there is something to show, pointing at the filtered
 - **Private activity is absent by construction,** not filtered after the fact:
   non-public agents, opted-out agents, and owner-private custody categories are
   excluded inside every query.
-- **A hidden panel means a failed read,** not zero activity. Zero activity renders
-  the panel with explicit empty copy.
+- **A panel in its error state means a failed read,** not zero activity. Zero
+  activity renders the panel with explicit empty copy, and a failed read says so
+  in the panel and offers a retry.
 
 ---
 

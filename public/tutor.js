@@ -54,11 +54,34 @@ function scrollDown() {
 	});
 }
 
-function setTab(totalAtomics, count) {
-	tabAmount.textContent = usd(totalAtomics);
-	tabCount.textContent = `${count} answer${count === 1 ? '' : 's'}`;
-	endBtn.disabled = count === 0;
+// The running tab is live data. It is rendered from translated templates held on
+// the element's own attributes rather than a data-i18n key, because the i18n pass
+// rewrites the text of every keyed element after this module has already run: a
+// resumed session would show its real total next to a permanent "0 answers".
+let tabTotal = 0;
+let tabAnswers = 0;
+
+function answersLabel(count) {
+	const attr = count === 1 ? 'data-count-one' : 'data-count-other';
+	const template = tabCount.getAttribute(attr) || (count === 1 ? '{n} answer' : '{n} answers');
+	return template.replace('{n}', String(count));
 }
+
+function renderTab() {
+	tabAmount.textContent = usd(tabTotal);
+	tabCount.textContent = answersLabel(tabAnswers);
+	endBtn.disabled = tabAnswers === 0;
+}
+
+function setTab(totalAtomics, count) {
+	tabTotal = Number(totalAtomics) || 0;
+	tabAnswers = Number(count) || 0;
+	renderTab();
+}
+
+// Re-render once the catalog lands, and again on every language switch, so the
+// count is localized without the catalog ever owning the number itself.
+window.addEventListener('i18n:change', renderTab);
 
 // The paywall helper (/x402.js) and this module both load async with no ordering
 // guarantee, so an early ask can race ahead of window.X402.pay being defined.
@@ -115,6 +138,7 @@ function addTutor(result) {
 		const fu = el('div', 'followup');
 		fu.innerHTML = 'Next: ';
 		const b = el('button', null, escapeHtml(result.followUp));
+		b.type = 'button';
 		b.addEventListener('click', () => { qEl.value = result.followUp; qEl.focus(); autosize(); updateCount(); });
 		fu.append(b);
 		bubble.append(fu);
@@ -132,6 +156,23 @@ function addTutor(result) {
 	scrollDown();
 }
 
+// Placeholder for the answer being generated. Returned so the caller can swap it
+// out for the real reply (or drop it) the moment the paid call settles.
+function addPending() {
+	const m = el('div', 'msg tutor pending');
+	m.setAttribute('aria-busy', 'true');
+	m.append(el('div', 'who', 'Tutor'));
+	const bubble = el('div', 'bubble');
+	bubble.append(el('span', 'sk'), el('span', 'sk w80'), el('span', 'sk w60'));
+	m.append(bubble);
+	const meta = el('div', 'meta');
+	meta.append(el('span', null, 'Writing your explanation…'));
+	m.append(meta);
+	thread.append(m);
+	scrollDown();
+	return m;
+}
+
 function addError(text) {
 	clearEmpty();
 	const m = el('div', 'msg error');
@@ -144,6 +185,9 @@ function addHistory(question, costUsd) {
 	clearEmpty();
 	const m = el('div', 'msg user');
 	m.append(el('div', 'who', 'You · earlier'), el('div', 'bubble', escapeHtml(question)));
+	const meta = el('div', 'meta');
+	meta.append(el('span', 'cost', usdFromString(costUsd) + ' · paid'));
+	m.append(meta);
 	thread.append(m);
 }
 
@@ -162,6 +206,7 @@ async function ask(question) {
 	qEl.value = '';
 	autosize();
 	updateCount();
+	const pending = addPending();
 
 	try {
 		if (!x402Ready()) {
@@ -174,6 +219,7 @@ async function ask(question) {
 		}
 		const out = await window.X402.pay({
 			endpoint: TUTOR_ENDPOINT,
+			method: 'POST',
 			body: { sessionId, question: text, level: levelEl.value },
 			merchant: 'three.ws Tutor',
 			action: 'Explain',
@@ -187,13 +233,15 @@ async function ask(question) {
 			sessionId = result.sessionId;
 			localStorage.setItem(STORAGE_KEY, sessionId);
 		}
+		pending.remove();
 		addTutor(result);
 		setTab(result.sessionTotal, result.questionCount);
 	} catch (err) {
+		pending.remove();
 		const msg = String(err?.message || err || 'Something went wrong.');
 		// A user-cancelled wallet prompt is not an error worth alarming over.
 		if (/cancel|reject|denied|closed/i.test(msg)) {
-			addError('Payment cancelled — no charge. Ask again when ready.');
+			addError('Payment cancelled. No charge was made, so ask again whenever you are ready.');
 		} else {
 			addError(msg);
 		}
@@ -224,6 +272,33 @@ async function endSession() {
 	}
 }
 
+// The invoice is a modal dialog, so it has to behave like one for a keyboard
+// user: focus moves into it on open, Escape dismisses it, and focus returns to
+// the control that opened it rather than being stranded behind the scrim.
+let invoiceOpener = null;
+
+function openInvoice() {
+	// endSession() disables "End & invoice" before the invoice renders, and the
+	// browser drops focus to <body> when the focused element is disabled. <body>
+	// is not a restore target, so record it as "nothing to go back to".
+	const active = document.activeElement;
+	invoiceOpener = active && active !== document.body ? active : null;
+	scrim.classList.add('open');
+	$('invoice-close').focus();
+}
+
+function closeInvoice() {
+	if (!scrim.classList.contains('open')) return;
+	scrim.classList.remove('open');
+	// Closing the session disables "End & invoice", and focusing a disabled button
+	// silently drops focus to <body>; fall back to the composer so the keyboard
+	// user lands somewhere useful.
+	const opener = invoiceOpener;
+	const back = opener && opener.isConnected && !opener.disabled ? opener : qEl;
+	invoiceOpener = null;
+	back.focus();
+}
+
 function renderInvoice(inv) {
 	const lines = $('invoice-lines');
 	lines.innerHTML = '';
@@ -242,7 +317,7 @@ function renderInvoice(inv) {
 	}
 	$('invoice-total').textContent = '$' + Number(inv.totalUsd).toFixed(2);
 	$('invoice-attest').textContent = inv.attestation || '';
-	scrim.classList.add('open');
+	openInvoice();
 
 	// A closed session starts fresh next time.
 	const fresh = crypto.randomUUID();
@@ -261,6 +336,7 @@ function addNotice(text, retry) {
 	bubble.append(el('div', null, escapeHtml(text)));
 	if (retry) {
 		const b = el('button', 'notice-retry', 'Try again');
+		b.type = 'button';
 		b.addEventListener('click', () => { m.remove(); retry(); });
 		bubble.append(b);
 	}
@@ -278,7 +354,7 @@ async function resume() {
 		r = await fetch(`${SESSION_ENDPOINT}?sessionId=${encodeURIComponent(sessionId)}`);
 	} catch {
 		addNotice(
-			'Couldn’t reach your previous session — your history may be temporarily unavailable. You can still ask new questions.',
+			'Couldn’t reach your previous session, so your history may be temporarily unavailable. You can still ask new questions.',
 			resume,
 		);
 		return;
@@ -340,8 +416,11 @@ $('suggestions')?.addEventListener('click', (e) => {
 	if (b) ask(b.textContent);
 });
 endBtn.addEventListener('click', endSession);
-$('invoice-close').addEventListener('click', () => scrim.classList.remove('open'));
-scrim.addEventListener('click', (e) => { if (e.target === scrim) scrim.classList.remove('open'); });
+$('invoice-close').addEventListener('click', closeInvoice);
+scrim.addEventListener('click', (e) => { if (e.target === scrim) closeInvoice(); });
+document.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape') closeInvoice();
+});
 
 // ── mobile soft-keyboard: keep the composer above the keyboard ──────────────────
 // When the on-screen keyboard opens, some mobile browsers overlay it on top of the

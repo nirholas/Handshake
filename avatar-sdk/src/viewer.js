@@ -113,6 +113,48 @@ class ThreeWsViewerElement extends HTMLElement {
 		return ['src', 'alt', 'background', 'wallet', 'agent-id', 'api-base', 'ar', 'auto-rotate'];
 	}
 
+	// Property accessors that reflect to the attributes above. Setting an
+	// attribute has always worked; a plain `el.src = url` did not, which is how
+	// React 19 (which prefers a property when the element defines one), Vue's
+	// `.prop` bindings, and any `Object.assign(el, props)` helper drive a custom
+	// element. Each accessor is a thin reflection, so both spellings drive the
+	// same attributeChangedCallback path.
+	get src() { return this.getAttribute('src'); }
+	set src(value) { this._reflect('src', value); }
+
+	get alt() { return this.getAttribute('alt'); }
+	set alt(value) { this._reflect('alt', value); }
+
+	get background() { return this.getAttribute('background'); }
+	set background(value) { this._reflect('background', value); }
+
+	get ar() { return this.hasAttribute('ar'); }
+	set ar(value) { this._reflectBoolean('ar', value); }
+
+	get autoRotate() { return this.hasAttribute('auto-rotate'); }
+	set autoRotate(value) { this._reflectBoolean('auto-rotate', value); }
+
+	_reflect(name, value) {
+		if (value == null || value === '') this.removeAttribute(name);
+		else this.setAttribute(name, String(value));
+	}
+
+	_reflectBoolean(name, value) {
+		if (value) this.setAttribute(name, '');
+		else this.removeAttribute(name);
+	}
+
+	// A framework that assigns a property before the element upgrades leaves an
+	// own property shadowing the accessor forever. Deleting it and re-assigning
+	// hands the value back to the accessor (the standard custom-element upgrade
+	// dance) so a pre-upgrade `el.src = url` still loads the model.
+	_upgradeProperty(name) {
+		if (!Object.prototype.hasOwnProperty.call(this, name)) return;
+		const value = this[name];
+		delete this[name];
+		this[name] = value;
+	}
+
 	constructor() {
 		super();
 		this._shadow = this.attachShadow({ mode: 'open' });
@@ -206,6 +248,7 @@ class ThreeWsViewerElement extends HTMLElement {
 	}
 
 	connectedCallback() {
+		for (const prop of ['src', 'alt', 'background', 'ar', 'autoRotate']) this._upgradeProperty(prop);
 		this._init();
 		this._render = this._render.bind(this);
 		this._raf = requestAnimationFrame(this._render);

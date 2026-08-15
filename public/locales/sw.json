@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; maabara</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws maabara",
-		"the_react_wrapper_around_the_sdk_imports": "Kifungashio cha React kinachozunguka SDK. Huleta <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, na <code>useAvatar</code> moja kwa moja kutoka <code>/avatar-sdk/src/react.jsx</code>. React inapakuliwa kutoka CDN kupitia ramani ya kuleta ili ukurasa huu ufanye kazi bila hatua ya kifungashio cha msimbo.",
+		"the_react_wrapper_around_the_sdk_imports": "Kifungashio cha React kinachozunguka SDK. Huleta <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, na <code>useAvatar</code> moja kwa moja kutoka <code>/avatar-sdk/src/react.js</code>. React inapakuliwa kutoka CDN kupitia ramani ya kuleta ili ukurasa huu ufanye kazi bila hatua ya kifungashio cha msimbo.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epic",
 		"it_pays_the_quoted_price_and_receives": "Inalipa bei iliyotajwa na kupokea ufunguo <b>mara moja</b>. Ilete mara moja.",
 		"legendary": "Legendary",
-		"long_brandable_solana_addresses_4_5_characte": "Anwani ndefu, zinazoweza kutumika kama chapa za Solana — viambishi awali vya herufi 4–5+ ambavyo 'live grinder' haiwezi kufikia — zimetengenezwa mapema kwa kutumia CPU ya kundi na kuuzwa kutoka kwenye hisa. Nunua moja na ufunguo wa faragha huwasilishwa <strong>mara moja</strong> kupitia njia ya <a href=\"/vanity/gallery\">x402</a>, kisha nakala yake iliyohifadhiwa huharibiwa. Unahitaji utengenezaji mpya wa herufi ≤3 badala yake? Tumia <a href=\"/vanity-wallet\">live grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Anwani ndefu, zinazoweza kutumika kama chapa za Solana — viambishi awali vya herufi 4–5+ ambavyo 'live grinder' haiwezi kufikia — zimetengenezwa mapema kwa kutumia CPU ya kundi na kuuzwa kutoka kwenye hisa. Nunua moja na ufunguo wa faragha huwasilishwa <strong>mara moja</strong> kupitia njia ya <a href=\"/x402\">x402</a>, kisha nakala yake iliyohifadhiwa huharibiwa. Unahitaji utengenezaji mpya wa herufi ≤3 badala yake? Tumia <a href=\"/vanity-wallet\">live grinder</a>.",
 		"meta_description": "Nunua anwani ndefu, inayoweza kutumika kama chapa ya Solana maalum inayowasilishwa papo hapo kutoka kwenye hisa — viambishi awali vya herufi 4–5+ ambavyo 'live grinder' haiwezi kufikia, zimetengenezwa mapema kwa kutumia CPU ya kundi na kuuzwa kupitia x402. Bei huongezeka kulingana na uhaba.",
 		"meta_og_description": "Anwani ndefu, zinazoweza kutumika kama chapa za Solana maalum, zimetengenezwa mapema na kuuzwa kutoka kwenye hisa. Zinawasilishwa mara moja, zimesimbwa zikiwa zimetulia, bei kulingana na uhaba.",
 		"meta_og_title": "Orodha ya Anwani Maalum za Premium · three.ws",

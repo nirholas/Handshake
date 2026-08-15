@@ -21,12 +21,15 @@ import { join } from 'node:path';
 import { SURFACES, LEARN } from '../src/trading-hub-data.js';
 import {
 	describeFleet,
+	describeSolvency,
 	formatSol,
 	formatPct,
 	formatAgo,
 	formatUptime,
+	isNumeric,
 	sparkPath,
 } from '../src/trading-hub-format.js';
+import { deriveSniperState } from '../api/_lib/sniper-solvency.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -146,9 +149,131 @@ describe('describeFleet', () => {
 	it('reports uptime in the coarsest honest unit', () => {
 		expect(describeFleet(base, NOW).uptimeLabel).toBe('4d');
 	});
+
+	// The failure this page exists to catch, one level up from the silent feed:
+	// the worker is up, the feed is connected, strategies are armed, and no
+	// wallet can afford an entry. /api/sniper/status resolves that into `state`
+	// and the hub must not publish a greener verdict than its own source.
+	it('never reports a healthier state than the endpoint resolved', () => {
+		for (const state of ['down', 'starved', 'degraded']) {
+			const d = describeFleet({ ...base, state }, NOW);
+			expect(d.tone, state).not.toBe('live');
+			expect(d.label, state).not.toBe('Trading live');
+		}
+	});
+
+	it('calls an out-of-SOL fleet what it is, however healthy the feed looks', () => {
+		const d = describeFleet(
+			{ ...base, state: 'starved', solvency: { state: 'starved', agents: 12, tradeable: 0, starved: 12, deficitSol: 0.4, masterCanCover: false } },
+			NOW,
+		);
+		expect(d.tone).toBe('down');
+		expect(d.label).toBe('Out of SOL');
+		expect(d.detail).toContain('a person has to move SOL in');
+		// The feed is genuinely fine and must keep saying so; the headline is
+		// wrong about the cause if it blames the feed for an empty wallet.
+		expect(d.feedTone).toBe('live');
+	});
+
+	it('blames solvency, not the feed, when solvency is what degraded', () => {
+		const d = describeFleet(
+			{ ...base, state: 'degraded', solvency: { state: 'degraded', agents: 12, tradeable: 8, starved: 4, shrunk: 0, deficitSol: 0.12, masterCanCover: true } },
+			NOW,
+		);
+		expect(d.tone).toBe('warn');
+		expect(d.label).toBe('Live, wallets underfunded');
+		expect(d.solvency.label).toBe('8 of 12 can trade');
+	});
+
+	it('still blames the feed when the feed is what degraded', () => {
+		const d = describeFleet({ ...base, state: 'degraded', feedSilent: true, solvency: { state: 'funded', agents: 12, tradeable: 12 } }, NOW);
+		expect(d.label).toBe('Live, feed degraded');
+	});
+
+	it('reports a stopped worker as offline rather than as live', () => {
+		const d = describeFleet({ ...base, state: 'down' }, NOW);
+		expect(d.tone).toBe('down');
+		expect(d.label).toBe('Worker offline');
+	});
+
+	it('lets the kill switch outrank even a live state', () => {
+		const d = describeFleet({ ...base, state: 'live', globalKill: true }, NOW);
+		expect(d.label).toBe('Fleet halted');
+	});
+
+	it('honours simulate mode when the endpoint calls the worker live', () => {
+		const d = describeFleet({ ...base, state: 'live', mode: 'simulate' }, NOW);
+		expect(d.label).toBe('Simulating');
+		expect(d.detail).toContain('no broadcast');
+	});
+
+	// The hub's verdict is a rendering of the endpoint's, not a second opinion.
+	// Agreeing here is what stops the two drifting apart on the next change.
+	it('agrees with deriveSniperState across the state matrix', () => {
+		const cases = [
+			{ alive: true, feedLive: true, feedSilent: false, solvencyState: 'funded' },
+			{ alive: true, feedLive: true, feedSilent: false, solvencyState: 'degraded' },
+			{ alive: true, feedLive: true, feedSilent: false, solvencyState: 'starved' },
+			{ alive: true, feedLive: true, feedSilent: true, solvencyState: 'funded' },
+			{ alive: false, feedLive: true, feedSilent: false, solvencyState: 'funded' },
+		];
+		for (const c of cases) {
+			const state = deriveSniperState(c);
+			const d = describeFleet(
+				{ ...base, state, feedLive: c.feedLive, feedSilent: c.feedSilent, solvency: { state: c.solvencyState, agents: 12, tradeable: 8, starved: 4, shrunk: 0 } },
+				NOW,
+			);
+			expect(d.tone === 'live', `${state} ${JSON.stringify(c)}`).toBe(state === 'live');
+		}
+	});
+});
+
+describe('describeSolvency', () => {
+	it('claims nothing when no balances were measured', () => {
+		for (const input of [null, undefined, {}, { state: 'unknown', agents: 0 }]) {
+			const d = describeSolvency(input);
+			expect(d.tone).toBe('muted');
+			expect(d.label).toBe('·');
+		}
+	});
+
+	it('counts tradeable wallets rather than armed strategies', () => {
+		const d = describeSolvency({ state: 'degraded', agents: 12, tradeable: 8, starved: 3, shrunk: 1, deficitSol: 0.25, masterCanCover: true });
+		expect(d.tone).toBe('warn');
+		expect(d.label).toBe('8 of 12 can trade');
+		expect(d.sub).toBe('3 starved, 1 sized down');
+		expect(d.detail).toContain('0.250 SOL');
+		expect(d.detail).toContain('refill them automatically');
+	});
+
+	it('says a fully funded fleet is funded', () => {
+		const d = describeSolvency({ state: 'funded', agents: 5, tradeable: 5, starved: 0, shrunk: 0, deficitSol: 0 });
+		expect(d.tone).toBe('live');
+		expect(d.label).toBe('5 of 5 can trade');
+	});
+
+	it('names a human as the fix when the funding wallet cannot cover the gap', () => {
+		const d = describeSolvency({ state: 'starved', agents: 4, tradeable: 0, starved: 4, shrunk: 0, deficitSol: 1.5, masterCanCover: false });
+		expect(d.tone).toBe('down');
+		expect(d.label).toBe('0 of 4 can trade');
+		expect(d.detail).toContain('a person has to move SOL in');
+	});
 });
 
 describe('formatters', () => {
+	// Number(null), Number(undefined via ??) and Number('') coerce to 0 or NaN in
+	// ways that make a bare Number.isFinite() check accept a missing value as a
+	// real zero. Every "do we have a number?" decision on this page goes through
+	// isNumeric so exactly one of them can be wrong.
+	it('rejects nullish before coercing, not after', () => {
+		for (const bad of [null, undefined, '', 'abc', NaN, {}, []]) {
+			expect(isNumeric(bad), String(bad)).toBe(false);
+		}
+		for (const good of [0, -1, 0.0001, '42', 1e-9]) {
+			expect(isNumeric(good), String(good)).toBe(true);
+		}
+	});
+
 	it('never renders a missing number as zero', () => {
 		for (const bad of [null, undefined, 'abc', NaN]) {
 			expect(formatSol(bad)).toBe('·');

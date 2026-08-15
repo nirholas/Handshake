@@ -19,7 +19,13 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
 
-const SLUG_RE = /^[a-z0-9.-]{1,80}$/i;
+// DeFiLlama slugs are not strictly [a-z0-9.-]: 14 of the ~6k protocols it tracks
+// carry parentheses, a plus or a bang (`dinero-(pxeth)`, `synthetix-v1+v2`,
+// `yay!`). Rejecting those characters turned every /yields row for such a
+// protocol into a link that 404s, so the charset matches what upstream actually
+// mints. It stays a strict allowlist: the value is interpolated into an
+// api.llama.fi path.
+const SLUG_RE = /^[a-z0-9.!()+-]{1,80}$/i;
 const TTL_MS = 300_000;
 const MAX_TVL_POINTS = 400;
 const UA = 'three.ws/1.0';

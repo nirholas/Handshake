@@ -1,18 +1,22 @@
 /**
- * Viability panels — the marketplace and trading "honest signal" sections.
+ * Viability panels: the marketplace and trading "honest signal" sections.
  *
  * These render the real, fully-guarded health of the two money loops:
- *   - Marketplace: real $THREE skill purchases — GMV, take-rate, repeat buyers,
- *     trading pairs, top skills and top sellers.
- *   - Trading: real coin trades through agent wallets — flow, cost and the
- *     realized P&L on positions that have actually closed.
+ *   - Marketplace: real $THREE skill purchases (GMV, take-rate, repeat buyers,
+ *     trading pairs, top skills and top sellers).
+ *   - Trading: real coin trades through agent wallets (flow, cost and the
+ *     realized P&L on positions that have actually closed).
  *
- * Both read GET /api/pulse (view=marketplace | view=trading) and degrade quietly:
- * a supplementary panel never blocks the page — on failure it simply hides.
+ * Both read GET /api/pulse (view=marketplace | view=trading). Each panel owns a
+ * three-state lifecycle driven by `data-state` on its <section>: `loading` masks
+ * the figures behind skeletons, `ready` shows them, and `error` swaps the whole
+ * body for an actionable failure notice with a Retry that re-runs just that read.
+ * A failed read never leaves a blank frame and never leaves a stale number on
+ * screen: the page says what broke and offers the way back.
  *
- * Extracted from /pulse so they own the dedicated /viability page, while the
- * Money Pulse stays focused on the live feed. The markup contract (element IDs)
- * is shared, so any host page that ships the same IDs drives these unchanged.
+ * The markup contract is the element IDs plus, per panel, a `.px-panel-live`
+ * wrapper and a `.px-panel-err` block, so any host page that ships the same
+ * markup drives these unchanged.
  */
 
 import { wireWalletChips } from './agent-wallet-chip.js';
@@ -22,17 +26,58 @@ import { esc, fmtUsd, fmtSol, fmtNum, fmtThree, fmtPct, fmtSignedSol, agentCardH
 const log = createLogger('viability');
 const $ = (id) => document.getElementById(id);
 
+// A panel's three states live on the <section>, so CSS owns every visual
+// consequence (skeleton mask, hidden body, revealed error) in one place.
+function setState(panelId, state) {
+	const panel = $(panelId);
+	if (!panel) return;
+	panel.dataset.state = state;
+	panel.setAttribute('aria-busy', String(state === 'loading'));
+}
+
+// One plain-language reason a reader can act on, never a raw stack or status code
+// on its own. Offline is the common case and has its own fix.
+function failureReason(err) {
+	if (err?.reason) return err.reason;
+	if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'Your browser is offline.';
+	const status = err?.status;
+	if (status === 429) return 'The API is rate-limiting this browser. Wait a moment and retry.';
+	if (status >= 500) return `The API answered ${status}, so the figures are unavailable right now.`;
+	if (status) return `The API answered ${status}.`;
+	return 'The request did not reach the API.';
+}
+
+function showError(panelId, errId, whyId, err) {
+	setState(panelId, 'error');
+	const why = $(whyId);
+	if (why) why.textContent = failureReason(err);
+	$(errId)?.removeAttribute('hidden');
+}
+
+async function fetchView(view, network) {
+	const res = await fetch(`/api/pulse?view=${view}&network=${network}`, { headers: { accept: 'application/json' } });
+	if (!res.ok) {
+		const err = new Error(`${view} ${res.status}`);
+		err.status = res.status;
+		throw err;
+	}
+	return (await res.json()).data;
+}
+
+// Resolves true when the panel rendered real figures, false when it showed the
+// error state. The host page uses that to keep its "updated" stamp honest.
 export async function loadMarketplace(network) {
+	setState('px-market', 'loading');
+	$('px-mkt-err')?.setAttribute('hidden', '');
 	try {
-		const res = await fetch(`/api/pulse?view=marketplace&network=${network}`, { headers: { accept: 'application/json' } });
-		if (!res.ok) throw new Error(`marketplace ${res.status}`);
-		const { data } = await res.json();
-		renderMarketplace(data);
+		renderMarketplace(await fetchView('marketplace', network));
+		setState('px-market', 'ready');
+		return true;
 	} catch (e) {
 		log.warn('marketplace failed', e?.message);
-		// Supplementary panel — never block the page; just hide it on failure.
-		$('px-market')?.setAttribute('hidden', '');
+		showError('px-market', 'px-mkt-err', 'px-mkt-err-why', e);
 		$('px-sellers-card')?.setAttribute('hidden', '');
+		return false;
 	}
 }
 
@@ -42,9 +87,8 @@ function renderMarketplace(d) {
 	const w24 = d.window_24h || {};
 	const w7 = d.window_7d || {};
 	const anyActivity = (w7.purchases || 0) > 0 || (w7.trials || 0) > 0 || (w24.purchases || 0) > 0;
-	panel.hidden = false;
 
-	// Fee tag — surfaces the live take-rate, or that it's off (honest either way).
+	// Fee tag: surfaces the live take-rate, or that it's off (honest either way).
 	const feeEl = $('px-mkt-fee');
 	if (feeEl) {
 		feeEl.textContent = d.fee_bps > 0 ? `${d.fee_pct}% take-rate` : 'take-rate off';
@@ -61,14 +105,14 @@ function renderMarketplace(d) {
 	$('px-mkt-pairs').textContent = String(w7.pairs || 0);
 	// Take-rate = fees ACTUALLY charged on-chain (real, persisted per purchase).
 	const take7 = w7.take_rate_three || 0;
-	$('px-mkt-take').textContent = take7 > 0 ? fmtThree(take7) : '—';
+	$('px-mkt-take').textContent = take7 > 0 ? fmtThree(take7) : 'none';
 	$('px-mkt-take-sub').textContent = take7 > 0
 		? '$THREE earned · 7d'
 		: (d.fee_bps > 0 ? 'no fees yet · 7d' : 'fee off');
 
 	renderMarketSpark(d.series_7d);
 
-	// Top skills — what the market is paying for.
+	// Top skills: what the market is paying for.
 	const skillsHost = $('px-mkt-skills');
 	if (d.top_skills?.length) {
 		skillsHost.innerHTML = d.top_skills
@@ -85,7 +129,7 @@ function renderMarketplace(d) {
 			: `<p class="px-lb-empty">No marketplace sales yet. Fund agents and list paid skills to start the loop. <a href="/marketplace">Open marketplace.</a></p>`;
 	}
 
-	// Top sellers rail card — the supply side that's actually clearing.
+	// Top sellers rail card: the supply side that's actually clearing.
 	const sellersCard = $('px-sellers-card');
 	const sellersHost = $('px-sellers');
 	if (sellersCard && sellersHost && d.top_sellers?.length) {
@@ -106,7 +150,7 @@ function renderMarketSpark(series) {
 	if (!host) return;
 	const days = Array.isArray(series) ? series : [];
 	const total = days.reduce((s, d) => s + (d.gmv_three || 0), 0);
-	if (totalEl) totalEl.textContent = total > 0 ? `${fmtThree(total)} $THREE` : '—';
+	if (totalEl) totalEl.textContent = total > 0 ? `${fmtThree(total)} $THREE` : 'none · 7d';
 	if (!days.length) { host.innerHTML = `<p class="px-lb-empty">No activity yet.</p>`; return; }
 	const peak = Math.max(1e-9, ...days.map((d) => d.gmv_three || 0));
 	host.innerHTML = days
@@ -125,15 +169,16 @@ function renderMarketSpark(series) {
 }
 
 export async function loadTrading(network) {
+	setState('px-trading', 'loading');
+	$('px-trade-err')?.setAttribute('hidden', '');
 	try {
-		const res = await fetch(`/api/pulse?view=trading&network=${network}`, { headers: { accept: 'application/json' } });
-		if (!res.ok) throw new Error(`trading ${res.status}`);
-		const { data } = await res.json();
-		renderTrading(data);
+		renderTrading(await fetchView('trading', network));
+		setState('px-trading', 'ready');
+		return true;
 	} catch (e) {
 		log.warn('trading failed', e?.message);
-		// Supplementary panel — never block the page; just hide it on failure.
-		$('px-trading')?.setAttribute('hidden', '');
+		showError('px-trading', 'px-trade-err', 'px-trade-err-why', e);
+		return false;
 	}
 }
 
@@ -141,13 +186,16 @@ function renderTrading(d) {
 	const panel = $('px-trading');
 	if (!panel) return;
 	// Guard against a deploy-skew response (e.g. an older backend answering this view
-	// with the feed shape): without the windowed aggregates there's nothing honest to
-	// show, so hide rather than render a panel full of em-dashes.
-	if (!d || (!d.window_24h && !d.window_7d)) { panel.hidden = true; return; }
+	// with the feed shape): without the windowed aggregates there is nothing honest to
+	// show, so this is a real failure the reader is told about, not a silent blank.
+	if (!d || (!d.window_24h && !d.window_7d)) {
+		const err = new Error('trading payload missing windowed aggregates');
+		err.reason = 'The API answered in an older shape than this page reads, which usually means a deploy is mid-flight. Retry in a minute.';
+		throw err;
+	}
 	const w24 = d.window_24h || {};
 	const w7 = d.window_7d || {};
 	const pnl = d.realized_pnl_7d || {};
-	panel.hidden = false;
 
 	$('px-trade-c24').textContent = fmtNum(w24.trades);
 	$('px-trade-c24-sub').textContent = `${w24.traders || 0} wallet${w24.traders === 1 ? '' : 's'}`;
@@ -158,8 +206,9 @@ function renderTrading(d) {
 	$('px-trade-avg').textContent = fmtSol(w7.avg_trade_sol);
 	$('px-trade-act').textContent = fmtNum(w24.traders);
 
-	// Realized P&L — only meaningful once positions have closed. Until then it's an
-	// honest "—" rather than a fake zero, so a fresh pilot reads as "no closes yet".
+	// Realized P&L is only meaningful once positions have closed. Until then it reads
+	// an honest "pending" rather than a fake zero, so a fresh pilot cannot be mistaken
+	// for a flat week.
 	const pnlEl = $('px-trade-pnl');
 	const pnlSub = $('px-trade-pnl-sub');
 	const pnlTag = $('px-trade-pnl-tag');
@@ -171,50 +220,39 @@ function renderTrading(d) {
 		pnlTag.textContent = `${pnl.closed_positions} closed · 7d`;
 		pnlTag.classList.remove('px-market-tag--off');
 	} else {
-		pnlEl.textContent = '—';
+		pnlEl.textContent = 'pending';
 		pnlEl.classList.remove('px-pnl--up', 'px-pnl--down');
 		pnlSub.textContent = 'no closes yet';
 		pnlTag.textContent = 'no closes · 7d';
 		pnlTag.classList.add('px-market-tag--off');
 	}
 
-	// One honest, plain-language readout of the week — what ran, what it cost, and
+	// One honest, plain-language readout of the week: what ran, what it cost, and
 	// whether anything has closed yet. Sells carry no SOL out, so cost is over buys.
-	// The element is created once, just after the KPI grid, if the markup omits it.
-	let insight = $('px-trade-insight');
-	if (!insight) {
-		const kpis = panel.querySelector('.px-market-kpis');
-		if (kpis) {
-			insight = document.createElement('p');
-			insight.id = 'px-trade-insight';
-			insight.className = 'px-trade-insight';
-			insight.hidden = true;
-			kpis.insertAdjacentElement('afterend', insight);
-		}
-	}
+	const insight = $('px-trade-insight');
 	if (insight) {
 		if ((w7.trades || 0) > 0) {
 			let line = `Agents ran ${fmtNum(w7.trades)} trade${w7.trades === 1 ? '' : 's'} this week, deploying ${fmtSol(w7.deployed_sol)} into buys (${fmtSol(w7.avg_trade_sol)} avg).`;
 			line += pnl.closed_positions > 0
-				? ` ${pnl.closed_positions} position${pnl.closed_positions === 1 ? '' : 's'} closed for ${fmtSignedSol(pnl.net_sol)} realized — ${fmtPct(pnl.win_rate)} win rate.`
+				? ` ${pnl.closed_positions} position${pnl.closed_positions === 1 ? '' : 's'} closed for ${fmtSignedSol(pnl.net_sol)} realized, a ${fmtPct(pnl.win_rate)} win rate.`
 				: ` No positions have closed yet, so realized P&L is still pending.`;
 			insight.textContent = line;
 			insight.hidden = false;
 		} else {
-			insight.hidden = true;
+			insight.textContent = 'No agent trades cleared in the last 7 days on this network.';
+			insight.hidden = false;
 		}
 	}
 
-	// Reveal the in-panel "show trades in feed" action only when there's something to
-	// show. It carries data-filter="trades" so the shared counter wiring drives it —
-	// matching the headline Trades counter exactly (both count category='trade' and
-	// reveal the trades+snipes feed slice, the platform-wide "Trades" convention).
+	// Reveal the in-panel "show trades in feed" action only when there is something to
+	// show. It links to /pulse?type=trades, the same slice the headline Trades counter
+	// reveals (both count category='trade' and include snipes, the platform convention).
 	const filterBtn = $('px-trade-filter');
 	if (filterBtn) filterBtn.hidden = !((w24.trades || 0) > 0 || (w7.trades || 0) > 0);
 
 	renderTradeSpark(d.series_7d);
 
-	// Top traders — the wallets actually putting capital to work.
+	// Top traders: the wallets actually putting capital to work.
 	const host = $('px-trade-traders');
 	if (d.top_traders?.length) {
 		host.innerHTML = d.top_traders
@@ -235,8 +273,8 @@ function renderTradeSpark(series) {
 	const total = days.reduce((s, d) => s + (d.trades || 0), 0);
 	if (totalEl) totalEl.textContent = `${fmtNum(total)} trade${total === 1 ? '' : 's'}`;
 	// Fold the live total into the chart's accessible name so a screen reader hears
-	// the number, not just "Daily trade count" — the bars themselves are decorative.
-	host.setAttribute('aria-label', `Daily trades, last 7 days — ${total} total`);
+	// the number, not just "Daily trade count". The bars themselves are decorative.
+	host.setAttribute('aria-label', `Daily trades, last 7 days: ${total} total`);
 	if (!days.length) { host.innerHTML = `<p class="px-lb-empty">No activity yet.</p>`; return; }
 	const peak = Math.max(1, ...days.map((d) => d.trades || 0));
 	host.innerHTML = days

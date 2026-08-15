@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — хук",
 		"lab": "<a href=\"/demos\">&larr; лаборатория</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws лаборатория",
-		"the_react_wrapper_around_the_sdk_imports": "SDK'нын айланасындагы React орогучу. <code>/avatar-sdk/src/react.jsx</code> дарегинен <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> жана <code>useAvatar</code> түз импорттойт. React CDN'ден импорт картасы аркылуу жүктөлөт, ошондуктан бул баракча топтомдоочу кадамсыз иштейт.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK'нын айланасындагы React орогучу. <code>/avatar-sdk/src/react.js</code> дарегинен <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> жана <code>useAvatar</code> түз импорттойт. React CDN'ден импорт картасы аркылуу жүктөлөт, ошондуктан бул баракча топтомдоочу кадамсыз иштейт.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Эпикалык",
 		"it_pays_the_quoted_price_and_receives": "Ал көрсөтүлгөн бааны төлөп, ачкычты <b>бир жолу</b> алат. Аны дароо импорттоңуз.",
 		"legendary": "Легендарлуу",
-		"long_brandable_solana_addresses_4_5_characte": "Узун, брендге ылайыктуу Solana даректер — жандуу иштеткич жете албаган 4–5+ символдук префикстер — алдын ала пакеттик CPU'да иштетилип, кампадан сатылат. Бирөөнү сатып алсаңыз, жеке ачкыч <a href=\"/vanity/gallery\">x402</a> каналы аркылуу <strong>бир жолу</strong> жеткирилет, андан кийин анын сакталган көчүрмөсү жок кылынат. Анын ордуна жаңы, ≤3 символдук иштетүү керекпи? <a href=\"/vanity-wallet\">Жандуу иштеткичти</a> колдонуңуз.",
+		"long_brandable_solana_addresses_4_5_characte": "Узун, брендге ылайыктуу Solana даректер — жандуу иштеткич жете албаган 4–5+ символдук префикстер — алдын ала пакеттик CPU'да иштетилип, кампадан сатылат. Бирөөнү сатып алсаңыз, жеке ачкыч <a href=\"/x402\">x402</a> каналы аркылуу <strong>бир жолу</strong> жеткирилет, андан кийин анын сакталган көчүрмөсү жок кылынат. Анын ордуна жаңы, ≤3 символдук иштетүү керекпи? <a href=\"/vanity-wallet\">Жандуу иштеткичти</a> колдонуңуз.",
 		"meta_description": "Узун, брендге ылайыктуу Solana vanity дарегин кампадан дароо сатып алыңыз — жандуу иштеткич жете албаган 4–5+ символдук префикстер, алдын ала пакеттик CPU'да иштетилип, x402 аркылуу сатылат. Баасы сейректигине жараша өзгөрөт.",
 		"meta_og_description": "Узун, бренддүү Solana vanity даректер, алдын ала даярдалып, кампадан сатылат. Бир жолу жеткирилет, сактаганда шифрленген, сейрек кездешүүсүнө жараша бааланган.",
 		"meta_og_title": "Премиум Vanity Инвентары · three.ws",

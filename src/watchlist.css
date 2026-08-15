@@ -118,6 +118,9 @@ body {
 }
 .wl-add-input::placeholder { color: var(--ink-dim); font-family: var(--font-base); }
 .wl-add-input:focus { outline: none; border-color: var(--accent, #7c6aff); }
+/* Match the toolbar search field: the border tint alone is a weak keyboard
+   affordance, so restore the platform ring the `outline: none` above removes. */
+.wl-add-input:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 1px; }
 .wl-add-btn { flex-shrink: 0; }
 .wl-add-msg {
 	font-size: var(--text-xs);
@@ -260,6 +263,11 @@ body {
 	transition: background 0.14s, border-color 0.14s, transform 0.14s;
 }
 .wl-ob-link:hover { background: rgba(0,0,0,0.75); border-color: rgba(255,255,255,0.22); transform: scale(1.05); }
+.wl-ob-link:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; }
+/* Not-yet-scored: readable, clearly distinct from a real conviction read. */
+.wl-ob-link--unscored { border-style: dashed; }
+.wl-ob-link--unscored .wl-ob-score,
+.wl-ob-link--unscored .wl-ob-tier { color: var(--ink-dim); }
 .wl-ob-score {
 	font-family: var(--font-mono, ui-monospace, monospace);
 	font-size: 17px;
@@ -386,6 +394,16 @@ body {
 	color: rgba(0,0,0,0.7);
 	mix-blend-mode: luminosity;
 }
+/* Watched but not yet scored: hatched and muted so it never reads as a tier. */
+.wl-tierseg--unscored {
+	background: repeating-linear-gradient(
+		45deg,
+		var(--surface-3) 0 4px,
+		transparent 4px 8px
+	);
+	border: 1px dashed var(--stroke-strong);
+}
+.wl-tierseg--unscored .wl-tierseg-n { color: var(--ink-dim); mix-blend-mode: normal; }
 
 @media (max-width: 760px) {
 	.wl-summary { grid-template-columns: repeat(2, 1fr); gap: var(--space-sm) var(--space-md); padding: var(--space-md); }

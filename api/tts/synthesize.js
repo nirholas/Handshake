@@ -46,6 +46,12 @@ import {
 	usdForSynthesis,
 	creditActionFor,
 } from '../_lib/voice-providers.js';
+import {
+	laneOutages,
+	laneOutageCopy,
+	noteLaneFailure,
+	noteLaneHealthy,
+} from '../_lib/tts-lane-health.js';
 
 export const maxDuration = 60;
 
@@ -67,6 +73,33 @@ const STATUS_BY_CODE = {
 	// caller error.
 	answered_instead_of_spoke: 502,
 };
+
+/**
+ * One sentence a picker can render verbatim. Upstream failures arrive as raw
+ * vendor prose (a 403 body quoting project numbers, a stack of per-rung
+ * attempts); pasting that into the UI tells a visitor nothing they can act on,
+ * so each code gets a plain answer and, where one exists, a way forward.
+ */
+function userFacingLaneError(provider, err) {
+	switch (err?.code) {
+		case 'invalid_key':
+		case 'not_configured':
+			return (
+				`${provider.label} is temporarily unavailable: the provider rejected this ` +
+				"deployment's credentials. Microsoft Edge and NVIDIA Magpie are free and unaffected."
+			);
+		case 'rate_limited':
+			return `${provider.label} is rate limiting right now. Wait a moment or pick another lane.`;
+		case 'provider_unreachable':
+			return `${provider.label} could not be reached. Try again, or pick another lane.`;
+		case 'content_blocked':
+			return `${provider.label} refused this text. Rephrase it and try again.`;
+		case 'answered_instead_of_spoke':
+			return `${provider.label} answered the text instead of speaking it. Simplify the direction and try again.`;
+		default:
+			return `${provider.label} synthesis failed. Try again, or pick another lane.`;
+	}
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -120,6 +153,28 @@ export default wrap(async (req, res) => {
 				? 'ElevenLabs is not configured on this server. Send your own key in the x-eleven-key header.'
 				: `${provider.label} is not configured on this server`,
 		);
+	}
+
+	// A lane can be configured and still be refusing every call (an expired key,
+	// a billing hold upstream). The breaker remembers what the last real call
+	// learned, so a lane that just refused credentials answers here in
+	// milliseconds with the reason instead of burning a round trip per visitor.
+	// A user's own ElevenLabs key is a separate credential and is never gated by
+	// the platform key's outage. A 'health' cooldown (throttle, blip) still lets
+	// an explicit request through, so a recovered lane proves itself immediately.
+	const laneScopedToPlatform = !(byok && providerId === 'elevenlabs');
+	if (laneScopedToPlatform) {
+		const outage = (await laneOutages([providerId])).get(providerId);
+		if (outage === 'auth') {
+			return error(
+				res,
+				503,
+				'lane_unavailable',
+				`${provider.label} is temporarily unavailable: ${laneOutageCopy(outage)}. ` +
+					'Microsoft Edge and NVIDIA Magpie are free and unaffected.',
+				{ provider: providerId, retry_with: ['edge', 'nvidia'] },
+			);
+		}
 	}
 
 	const voiceId = String(body.voiceId || '').trim();
@@ -255,13 +310,19 @@ export default wrap(async (req, res) => {
 	} catch (err) {
 		console.error('[tts/synthesize] lane failed', providerId, err?.code, err?.message);
 		await refundMetering();
+		if (laneScopedToPlatform) await noteLaneFailure(providerId, err?.code);
 		return error(
 			res,
 			STATUS_BY_CODE[err?.code] || 502,
 			err?.code || 'upstream_error',
-			err?.message || `${provider.label} synthesis failed`,
+			userFacingLaneError(provider, err),
+			// The upstream body is often a multi-line JSON blob naming projects and
+			// quota rules. It belongs in a debugger, not in a status line, so it
+			// rides in its own field and the prose above stays readable.
+			{ provider: providerId, detail: String(err?.message || '').slice(0, 300) },
 		);
 	}
+	if (laneScopedToPlatform) await noteLaneHealthy(providerId);
 
 	if (!out.audio?.length) {
 		await refundMetering();

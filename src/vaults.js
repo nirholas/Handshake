@@ -1,9 +1,9 @@
-// Back-an-Agent Vaults — client.
+// Back-an-Agent Vaults client.
 // Discovery feed → vault detail (live NAV, P&L, positions, backers, audit ledger)
 // → back / redeem / (owner) trade-the-pool, pause, set terms, claim fees.
 // Every number here traces to a real /api/vaults endpoint; nothing is faked.
 
-import { apiFetch } from './api.js';
+import { apiFetch, noteSession } from './api.js';
 import { updateValue, flipReorder } from './ui-juice.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -15,6 +15,7 @@ const state = {
 	tab: 'all',
 	sort: 'perf',
 	feed: [],
+	feedLoaded: false,
 	vault: null, // current detail vault
 	pollTimer: null,
 };
@@ -144,19 +145,39 @@ function backerDist(backers) {
 }
 
 // ── auth + agents ──────────────────────────────────────────────────────────────
+// Resolve the session BEFORE asking for anything owner-scoped. /api/auth/me
+// answers 200 with { user: null } when signed out; /api/agents answers 401, which
+// the browser prints as a red console error on every anonymous visit to this
+// public page. Ask the endpoint that has an answer for both kinds of visitor,
+// teach api.js what it learned (so no mutation wastes a CSRF pre-flight), and
+// only reach for the owner's agents once we know there is an owner.
 async function loadMe() {
 	try {
-		const res = await apiFetch('/api/agents', { allowAnonymous: true });
-		if (res.status === 401) { state.me = false; state.agents = []; return; }
-		if (!res.ok) { state.me = false; return; }
-		const j = await res.json();
-		state.me = true;
-		state.agents = (j.agents || []).filter(Boolean);
+		const res = await fetch('/api/auth/me', { credentials: 'include' });
+		const j = res.ok ? await res.json().catch(() => null) : null;
+		state.me = !!j?.user;
+		noteSession(state.me);
 	} catch {
 		state.me = false;
 	}
+	state.agents = [];
+	if (state.me) {
+		try {
+			const res = await apiFetch('/api/agents', { allowAnonymous: true });
+			if (res.ok) {
+				const j = await res.json();
+				state.agents = (j.agents || []).filter(Boolean);
+			}
+		} catch {
+			state.agents = [];
+		}
+	}
 	$$('[data-auth="in"]').forEach((el) => { el.hidden = !state.me; });
 	$$('[data-auth="out"]').forEach((el) => { el.hidden = !!state.me; });
+	// The empty state is the one render that reads `state.me`, and the feed may
+	// have painted before this resolved. Repaint it so a signed-in visitor is
+	// offered "Open a vault", not the signed-out path.
+	if (state.feedLoaded && !state.feed.length) renderFeed();
 }
 
 // ── discovery feed ──────────────────────────────────────────────────────────────
@@ -170,6 +191,7 @@ async function loadFeed() {
 		if (!res.ok) throw new Error(await readErr(res, 'could not load vaults'));
 		const j = await res.json();
 		state.feed = j.data?.items || [];
+		state.feedLoaded = true;
 		renderFeed();
 	} catch (e) {
 		grid.innerHTML = `<div class="vx-empty"><p class="vx-empty-t">Couldn't load vaults</p><p class="vx-empty-d">${esc(e.message)}</p><button class="vx-btn" id="vx-retry" type="button">Retry</button></div>`;
@@ -305,7 +327,9 @@ function avatar(src, cls) {
 function cardHtml(v, maxNav, rank) {
 	const roi = v.roi_bps || 0;
 	const sc = signClass(roi);
-	const navLine = v.last_nav_atomics ? usdCompact(v.last_nav_atomics) : '—';
+	// A vault with no NAV snapshot has taken no deposits yet, so $0 is the honest
+	// reading, and it keeps the "$X backed" meta line below grammatical.
+	const navLine = usdCompact(v.last_nav_atomics);
 	const ringTone = v.status === 'paused' ? 'is-paused' : v.status === 'open' ? 'is-open' : '';
 	const statusChip = v.status === 'paused' ? '<span class="vx-chip vx-chip--warn">Paused</span>' : '';
 	const rankBadge = rank >= 0 ? `<span class="vx-card-rank rank-${rank}">${rank + 1}</span>` : '';
@@ -366,31 +390,62 @@ function mineCardHtml(v) {
 }
 
 // ── vault detail ─────────────────────────────────────────────────────────────
-async function openDetail(id) {
+// `push` is false when the URL already reflects the view we are entering: a
+// popstate (the browser moved us) or a first paint on /vaults?v=…. Pushing there
+// appended a fresh entry on every Back press, so the visitor could never leave
+// the page once they had opened a vault.
+async function openDetail(id, { push = true } = {}) {
 	stopPoll();
 	$('#vx-feed-view').hidden = true;
 	const dv = $('#vx-detail-view');
 	dv.hidden = false;
 	$('#vx-detail').innerHTML = '<div class="vx-detail-skel">Loading vault…</div>';
 	window.scrollTo({ top: 0, behavior: 'smooth' });
-	history.pushState({ v: id }, '', `/vaults?v=${id}`);
+	if (push) history.pushState({ v: id }, '', `/vaults?v=${id}`);
 	await refreshDetail(id);
 	state.pollTimer = setInterval(() => refreshDetail(id, true), 12_000);
 }
 
+// Every detail failure ends somewhere the visitor can act: a reason and a retry,
+// never a spinner that never resolves.
+function showDetailError(id, title, message) {
+	$('#vx-detail').innerHTML = `<div class="vx-empty">
+		<p class="vx-empty-t">${esc(title)}</p>
+		<p class="vx-empty-d">${esc(message)}</p>
+		<div class="vx-empty-actions">
+			<button class="vx-btn vx-btn--primary" id="vx-detail-retry" type="button">Try again</button>
+			<button class="vx-btn" id="vx-detail-back" type="button">All vaults</button>
+		</div>
+	</div>`;
+	$('#vx-detail-retry')?.addEventListener('click', () => refreshDetail(id));
+	$('#vx-detail-back')?.addEventListener('click', backToFeed);
+}
+
 async function refreshDetail(id, quiet = false) {
+	let v;
+	let ledger;
 	try {
 		const [vres, lres] = await Promise.all([
 			apiFetch(`/api/vaults/${id}`, { allowAnonymous: true }),
 			apiFetch(`/api/vaults/ledger?vault_id=${id}&limit=40`, { allowAnonymous: true }),
 		]);
 		if (!vres.ok) throw new Error(await readErr(vres, 'vault not found'));
-		const v = (await vres.json()).data;
-		const ledger = lres.ok ? ((await lres.json()).data?.items || []) : [];
-		state.vault = v;
+		v = (await vres.json()).data;
+		ledger = lres.ok ? ((await lres.json()).data?.items || []) : [];
+	} catch (e) {
+		// A poll that fails transiently must not blow away a good render, so a quiet
+		// refresh keeps what is on screen and waits for the next tick.
+		if (!quiet) showDetailError(id, "Couldn't load this vault", e.message);
+		return;
+	}
+	state.vault = v;
+	// Render failures are a different fault from load failures and must not be
+	// reported as "couldn't load", which sends the visitor chasing their network.
+	try {
 		renderDetail(v, ledger);
 	} catch (e) {
-		if (!quiet) $('#vx-detail').innerHTML = `<div class="vx-empty"><p class="vx-empty-t">Couldn't load this vault</p><p class="vx-empty-d">${esc(e.message)}</p></div>`;
+		stopPoll();
+		showDetailError(id, "This vault couldn't be displayed", e.message);
 	}
 }
 
@@ -445,8 +500,11 @@ function renderDetail(v, ledger) {
 			<button class="vx-btn vx-btn--ghost vx-btn--block" id="vx-redeem-btn" type="button">Redeem</button>
 		</div>` : '';
 
-	const positionsRows = v.positions.length
-		? v.positions.filter((p) => p.amount_raw !== '0').map((p) => `<tr><td class="vx-mono">${shortMint(p.mint)}</td><td>${Number(p.amount_raw).toLocaleString()}</td><td>${p.mark_atomics != null ? usd(p.mark_atomics) : '<span class="vx-muted">repricing…</span>'}</td></tr>`).join('')
+	// Filter BEFORE the empty check: a vault whose rows are all dust-zero has no
+	// open positions, and the table must say so rather than render bare headers.
+	const openPositions = v.positions.filter((p) => p.amount_raw !== '0');
+	const positionsRows = openPositions.length
+		? openPositions.map((p) => `<tr><td class="vx-mono">${shortMint(p.mint)}</td><td>${Number(p.amount_raw).toLocaleString()}</td><td>${p.mark_atomics != null ? usd(p.mark_atomics) : '<span class="vx-muted">repricing…</span>'}</td></tr>`).join('')
 		: '<tr><td colspan="3" class="vx-muted">All capital is in USDC, no open positions.</td></tr>';
 
 	const ownerBlock = v.is_owner ? ownerPanel(v) : '';
@@ -603,10 +661,53 @@ async function claimFees(v) {
 }
 
 // ── back (deposit) + redeem modals ──────────────────────────────────────────────
+const FOCUSABLE = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])';
+let modalOpener = null;
+
+function focusablesIn(root) {
+	return $$(FOCUSABLE, root).filter((el) => el.offsetParent !== null);
+}
+
+// A dialog that never takes focus leaves a keyboard user stranded behind the
+// backdrop, and one that never gives it back drops them at the top of the page.
 function modal(id, show) {
 	const m = $(id);
+	if (!m) return;
+	const wasOpen = !m.hidden;
+	if (show === wasOpen) return;
 	m.hidden = !show;
 	document.body.classList.toggle('vx-modal-open', show);
+	if (show) {
+		modalOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		const target = focusablesIn(m).find((el) => !el.hasAttribute('data-close')) || focusablesIn(m)[0];
+		target?.focus();
+		return;
+	}
+	modalOpener?.focus();
+	modalOpener = null;
+}
+
+function openModal() {
+	return $$('.vx-modal').find((m) => !m.hidden) || null;
+}
+
+function closeModals() {
+	modal('#vx-open-modal', false);
+	modal('#vx-back-modal', false);
+}
+
+// Keep Tab inside the open dialog: aria-modal is a promise to assistive tech,
+// not an enforcement, so the cycle has to be real.
+function trapTab(e) {
+	if (e.key !== 'Tab') return;
+	const m = openModal();
+	if (!m) return;
+	const f = focusablesIn(m);
+	if (!f.length) return;
+	const first = f[0];
+	const last = f[f.length - 1];
+	if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+	else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 }
 
 function backModal(v) {
@@ -615,7 +716,7 @@ function backModal(v) {
 	const t = v.terms;
 	const body = $('#vx-back-modal-body');
 	if (!fundable.length) {
-		body.innerHTML = `<h2 class="vx-modal-title">Fund a wallet first</h2><p class="vx-modal-sub">Backing draws USDC from one of your agents' wallets. None of your agents has a funded Solana wallet yet.</p><a class="vx-btn vx-btn--primary vx-btn--block" href="/dashboard">Set up a wallet</a>`;
+		body.innerHTML = `<h2 id="vx-back-title" class="vx-modal-title">Fund a wallet first</h2><p class="vx-modal-sub">Backing draws USDC from one of your agents' wallets. None of your agents has a funded Solana wallet yet.</p><a class="vx-btn vx-btn--primary vx-btn--block" href="/dashboard">Set up a wallet</a>`;
 		modal('#vx-back-modal', true);
 		return;
 	}
@@ -651,7 +752,11 @@ function backModal(v) {
 			const res = await apiFetch('/api/vaults/deposit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ vaultId: v.id, backerAgentId, usdc: amt }) });
 			const j = await res.json();
 			if (!res.ok) throw new Error(j.error_description || 'deposit failed');
-			toast(`Deposited ${usd(j.data.shares_minted ? amt * ATOMICS : 0)}, ${shares(j.data.shares_minted)} shares`, 'ok');
+			// Round to whole atomics: `10.005 * 1_000_000` lands on 10004999.999999998
+			// in binary floating point and BigInt() throws on that. The throw landed in
+			// the catch below, so a deposit that had already settled on-chain was
+			// reported back to the backer as a failure.
+			toast(`Deposited ${usd(Math.round(amt * ATOMICS))} for ${shares(j.data.shares_minted)} shares`, 'ok');
 			modal('#vx-back-modal', false);
 			await refreshDetail(v.id);
 		} catch (e) { errEl.textContent = e.message; errEl.hidden = false; }
@@ -700,14 +805,20 @@ function redeemModal(v) {
 function openVaultModal() {
 	if (!state.me) { window.location.href = '/login?next=' + encodeURIComponent('/vaults'); return; }
 	const sel = $('#vx-open-agent');
+	const submit = $('#vx-open-submit');
+	const hint = $('#vx-open-agent-hint');
 	if (!state.agents.length) {
-		$('#vx-open-agent-hint').textContent = 'You have no agents yet, create one and build a track record first.';
-		sel.innerHTML = '<option>No agents</option>';
+		// No agents means nothing to open a vault behind. Say so and hand the visitor
+		// the next step instead of letting them submit a form that can only 400.
+		hint.innerHTML = 'You have no agents yet. <a class="vx-link" href="/create">Create one</a> and build a track record first.';
+		sel.innerHTML = '<option value="">No agents yet</option>';
 		sel.disabled = true;
+		submit.disabled = true;
 	} else {
 		sel.disabled = false;
+		submit.disabled = false;
 		sel.innerHTML = state.agents.map((a) => `<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');
-		$('#vx-open-agent-hint').textContent = 'Only an agent with a verified on-chain track record can open a vault.';
+		hint.textContent = 'Only an agent with a verified on-chain track record can open a vault.';
 	}
 	modal('#vx-open-modal', true);
 }
@@ -739,18 +850,19 @@ async function submitOpen(ev) {
 function setTab(tab) {
 	state.tab = tab;
 	state.feed = [];
+	state.feedLoaded = false;
 	$$('.vx-tab').forEach((b) => { const on = b.dataset.tab === tab; b.classList.toggle('is-active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
 	const sortEl = $('.vx-sort');
 	if (sortEl) sortEl.style.display = tab === 'mine' ? 'none' : '';
 	loadFeed();
 }
 
-function backToFeed() {
+function backToFeed({ push = true } = {}) {
 	stopPoll();
 	$('#vx-detail-view').hidden = true;
 	$('#vx-feed-view').hidden = false;
 	state.vault = null;
-	history.pushState({}, '', '/vaults');
+	if (push) history.pushState({}, '', '/vaults');
 }
 
 function stopPoll() { if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; } }
@@ -761,20 +873,24 @@ function wireGlobal() {
 	$('#vx-back')?.addEventListener('click', backToFeed);
 	$('#vx-open-form')?.addEventListener('submit', submitOpen);
 	$$('.vx-tab').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
-	$$('.vx-modal [data-close]').forEach((el) => el.addEventListener('click', () => { modal('#vx-open-modal', false); modal('#vx-back-modal', false); }));
-	document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { modal('#vx-open-modal', false); modal('#vx-back-modal', false); } });
+	$$('.vx-modal [data-close]').forEach((el) => el.addEventListener('click', closeModals));
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') closeModals();
+		else trapTab(e);
+	});
 	window.addEventListener('popstate', () => {
 		const id = new URL(location.href).searchParams.get('v');
-		if (id) openDetail(id); else backToFeed();
+		if (id) openDetail(id, { push: false }); else backToFeed({ push: false });
 	});
 }
 
 async function init() {
 	wireGlobal();
-	await loadMe();
+	// The public read does not need a session, so it goes out WITH the session
+	// probe rather than behind it. Serialising the two put a full round trip
+	// between first paint and the first vault on screen.
 	const id = new URL(location.href).searchParams.get('v');
-	if (id) openDetail(id);
-	else loadFeed();
+	await Promise.all([loadMe(), id ? openDetail(id, { push: false }) : loadFeed()]);
 }
 
 document.addEventListener('DOMContentLoaded', init);

@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "۴. useAvatar(id) — هوک",
 		"lab": "<a href=\"/demos\">&larr; آزمایشگاه</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws آزمایشگاه",
-		"the_react_wrapper_around_the_sdk_imports": "رپر ری‌اکت برای SDK. <code>Avatar</code>، <code>AgentAvatar</code>، <code>AvatarCreator</code> و <code>useAvatar</code> را مستقیماً از <code>/avatar-sdk/src/react.jsx</code> وارد می‌کند. ری‌اکت از طریق یک نقشه واردات (import map) از CDN بارگذاری می‌شود، بنابراین این صفحه بدون نیاز به مرحله باندلر کار می‌کند.",
+		"the_react_wrapper_around_the_sdk_imports": "رپر ری‌اکت برای SDK. <code>Avatar</code>، <code>AgentAvatar</code>، <code>AvatarCreator</code> و <code>useAvatar</code> را مستقیماً از <code>/avatar-sdk/src/react.js</code> وارد می‌کند. ری‌اکت از طریق یک نقشه واردات (import map) از CDN بارگذاری می‌شود، بنابراین این صفحه بدون نیاز به مرحله باندلر کار می‌کند.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "حماسی",
 		"it_pays_the_quoted_price_and_receives": "قیمت اعلام‌شده را پرداخت می‌کند و کلید را <b>یک بار</b> دریافت می‌کند. بلافاصله آن را وارد کنید.",
 		"legendary": "افسانه‌ای",
-		"long_brandable_solana_addresses_4_5_characte": "آدرس‌های Solana طولانی و قابل برندسازی — پیشوندهای ۴-۵+ کاراکتری که گریندر زنده نمی‌تواند به آن‌ها دست یابد — از قبل با پردازش دسته‌ای CPU تولید و از موجودی به فروش می‌رسند. یکی بخرید و کلید خصوصی <strong>یک بار</strong> از طریق ریل <a href=\"/vanity/gallery\">x402</a> تحویل داده می‌شود، سپس کپی ذخیره‌شده آن از بین می‌رود. به جای آن، به یک تولید جدید با ≤۳ کاراکتر نیاز دارید؟ از <a href=\"/vanity-wallet\">گریندر زنده</a> استفاده کنید.",
+		"long_brandable_solana_addresses_4_5_characte": "آدرس‌های Solana طولانی و قابل برندسازی — پیشوندهای ۴-۵+ کاراکتری که گریندر زنده نمی‌تواند به آن‌ها دست یابد — از قبل با پردازش دسته‌ای CPU تولید و از موجودی به فروش می‌رسند. یکی بخرید و کلید خصوصی <strong>یک بار</strong> از طریق ریل <a href=\"/x402\">x402</a> تحویل داده می‌شود، سپس کپی ذخیره‌شده آن از بین می‌رود. به جای آن، به یک تولید جدید با ≤۳ کاراکتر نیاز دارید؟ از <a href=\"/vanity-wallet\">گریندر زنده</a> استفاده کنید.",
 		"meta_description": "یک آدرس ونیتی Solana طولانی و قابل برندسازی را فوراً از موجودی خریداری کنید — پیشوندهای ۴-۵+ کاراکتری که گریندر زنده نمی‌تواند به آن‌ها دست یابد، از قبل با پردازش دسته‌ای CPU تولید و از طریق x402 فروخته می‌شوند. قیمت با کمیابی متناسب است.",
 		"meta_og_description": "آدرس‌های ونیتی Solana طولانی و قابل برندسازی، از قبل تولید شده و از موجودی فروخته می‌شوند. یک بار تحویل داده می‌شوند، در حالت سکون رمزگذاری شده‌اند، و قیمت آن‌ها بر اساس کمیابی است.",
 		"meta_og_title": "موجودی ونیتی پریمیوم · three.ws",

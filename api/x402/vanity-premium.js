@@ -52,6 +52,7 @@ import {
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import {
 	listAvailable,
+	countAvailable,
 	getPublicItem,
 	inventoryStats,
 	reserveForPurchase,
@@ -94,15 +95,17 @@ async function handleListing(req, res) {
 	const prefix = typeof q.prefix === 'string' ? q.prefix.trim() : undefined;
 	const tier = typeof q.tier === 'string' ? q.tier.trim() : undefined;
 	const sort = ['rarity', 'price', 'new'].includes(q.sort) ? q.sort : 'rarity';
-	const limit = q.limit != null ? Number(q.limit) : 60;
-	const offset = q.offset != null ? Number(q.offset) : 0;
+	const limit = Math.min(Math.max(1, Number(q.limit) || 60), 200);
+	const offset = Math.max(0, Number(q.offset) || 0);
 
 	let items = [];
 	let stats = { available: 0, sold: 0, total: 0, minPrice: 0, maxPrice: 0, tiers: 0 };
+	let matching = 0;
 	try {
-		[items, stats] = await Promise.all([
+		[items, stats, matching] = await Promise.all([
 			listAvailable({ prefix, tier, sort, limit, offset }),
 			inventoryStats(),
+			countAvailable({ prefix, tier }),
 		]);
 	} catch (err) {
 		if (isDbUnavailableError(err)) {
@@ -120,6 +123,13 @@ async function handleListing(req, res) {
 			stats,
 			priceRange: { minUsd: stats.minPrice, maxUsd: stats.maxPrice },
 			count: items.length,
+			// Paging over the full shelf: `matching` counts every available row this
+			// filter selects, so a client knows when it is looking at a partial page
+			// instead of assuming `count` is the whole inventory.
+			matching,
+			limit,
+			offset,
+			hasMore: offset + items.length < matching,
 			items: items.map((it) => ({
 				...it,
 				buyUrl: `${PUBLIC_ORIGIN}${ROUTE}?address=${encodeURIComponent(it.address)}`,

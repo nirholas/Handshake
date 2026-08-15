@@ -47,21 +47,54 @@ function currentFix() {
 }
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
+// Roving-tabindex tablist per the WAI-ARIA tabs pattern: exactly one tab sits in the
+// page tab order, arrows/Home/End move between them, and the selection is mirrored
+// into the URL hash so a tab is linkable and the back button walks the tabs.
 let activeTab = 'near';
 const TABS = ['near', 'explore', 'collectibles', 'create'];
-function selectTab(name) {
+const tabList = document.querySelector('.tabs');
+
+function selectTab(name, { updateHash = true, focusTab = false } = {}) {
 	activeTab = name;
 	TABS.forEach((t) => {
-		$(`tab-${t}`).setAttribute('aria-selected', String(t === name));
-		$(`panel-${t}`).classList.toggle('active', t === name);
+		const tab = $(`tab-${t}`);
+		const on = t === name;
+		tab.setAttribute('aria-selected', String(on));
+		tab.tabIndex = on ? 0 : -1;
+		$(`panel-${t}`).classList.toggle('active', on);
 	});
+	if (focusTab) $(`tab-${name}`).focus();
+	if (updateHash && (location.hash || '').replace('#', '') !== name) {
+		history.pushState(null, '', `#${name}`);
+	}
 	if (name === 'near') { startLocation(); renderNear(); }
 	if (name === 'explore') renderExplore();
 	if (name === 'collectibles') renderCollectibles();
 	if (name === 'create') renderCreate();
 }
+
+function syncTabFromHash() {
+	const raw = (location.hash || '').replace('#', '');
+	// Backing out to the entry the visitor arrived on (no hash) has to land on the
+	// default tab, not leave whichever tab they had walked to still selected.
+	const name = TABS.includes(raw) ? raw : 'near';
+	if (name !== activeTab) selectTab(name, { updateHash: false });
+}
+
 TABS.forEach((t) => $(`tab-${t}`).addEventListener('click', () => selectTab(t)));
-$('tabs')?.addEventListener?.('keydown', () => {});
+tabList.addEventListener('keydown', (e) => {
+	const i = TABS.indexOf(activeTab);
+	let next = null;
+	if (e.key === 'ArrowRight') next = TABS[(i + 1) % TABS.length];
+	else if (e.key === 'ArrowLeft') next = TABS[(i - 1 + TABS.length) % TABS.length];
+	else if (e.key === 'Home') next = TABS[0];
+	else if (e.key === 'End') next = TABS[TABS.length - 1];
+	if (!next) return;
+	e.preventDefault();
+	selectTab(next, { focusTab: true });
+});
+window.addEventListener('popstate', syncTabFromHash);
+window.addEventListener('hashchange', syncTabFromHash);
 
 // ── HTML helpers ─────────────────────────────────────────────────────────────
 function esc(s) {
@@ -189,7 +222,8 @@ async function renderExplore() {
 		<p style="color:var(--text-2);margin:0 0 14px;font-size:14px">${regions.length} ${regions.length === 1 ? 'region has' : 'regions have'} active quests. Regions are ~5&nbsp;km — coarse on purpose, so browsing never reveals a quest’s exact spot.</p>
 		<div style="display:flex;flex-direction:column;gap:10px" id="region-list">
 			${regions.map((r) => `
-				<div class="region-row" data-region="${esc(r.region_cell)}" role="button" tabindex="0">
+				<div class="region-row" data-region="${esc(r.region_cell)}" role="button" tabindex="0"
+						aria-expanded="false" aria-controls="region-detail">
 					<div>
 						<div style="font-weight:600">${r.quests} ${r.quests === 1 ? 'quest' : 'quests'}</div>
 						<div class="rc">region ${esc(r.region_cell)} · ${r.completions || 0} completions</div>
@@ -207,17 +241,36 @@ async function renderExplore() {
 
 async function openRegion(region) {
 	const host = $('region-detail');
+	document.querySelectorAll('.region-row').forEach((row) => {
+		const on = row.dataset.region === region;
+		row.setAttribute('aria-expanded', String(on));
+		row.classList.toggle('open', on);
+	});
 	host.innerHTML = skeletons(2);
+	const heading = `<h3 style="margin:6px 0 12px;font-size:16px">Quests in region <span class="mono">${esc(region)}</span></h3>`;
 	let data;
 	try {
 		data = await api.browseRegion(region);
 	} catch (err) {
-		host.innerHTML = `<p style="color:var(--danger)">${esc(err.message || 'Could not load region.')}</p>`;
+		host.innerHTML = heading + stateBlock({
+			ico: '⚠️', title: 'Couldn’t load this region',
+			body: esc(err.message || 'Network error.'),
+			action: '<button class="btn primary" id="region-retry">Retry</button>',
+		});
+		$('region-retry')?.addEventListener('click', () => openRegion(region));
 		return;
 	}
 	const quests = data.quests || [];
-	host.innerHTML = `
-		<h3 style="margin:6px 0 12px;font-size:16px">Quests in region <span class="mono">${esc(region)}</span></h3>
+	// A region roll-up is a snapshot: its quests can expire or fill between the list
+	// being built and this click, so "the region emptied out" is a real state, not a bug.
+	if (!quests.length) {
+		host.innerHTML = heading + stateBlock({
+			ico: '🕓', title: 'Nothing active here right now',
+			body: 'Every quest in this region has expired or filled up since the list was built. Try another region, or place one here from the <strong>Create</strong> tab.',
+		});
+		return;
+	}
+	host.innerHTML = heading + `
 		<div class="grid">
 			${quests.map((q) => `
 				<article class="card">
@@ -251,6 +304,18 @@ async function renderCollectibles() {
 	});
 }
 
+// A proof is permanent, so its card has to stay readable even when a field is absent:
+// `new Date(null)` is the 1970 epoch, which would print a date the holder never earned.
+function earnedLabel(v) {
+	const d = new Date(v ?? NaN);
+	return Number.isNaN(d.getTime()) ? 'Date unknown' : d.toLocaleDateString();
+}
+function signerLabel(key) {
+	const s = String(key || '');
+	if (!s) return 'the agent';
+	return s.length > 8 ? `${s.slice(0, 8)}…` : s;
+}
+
 function collectibleCard(c) {
 	return `
 		<article class="card collectible">
@@ -259,9 +324,9 @@ function collectibleCard(c) {
 			<p style="color:var(--text-2);font-size:13px;margin:0 0 4px">${esc(c.world_line_title || 'World Line')}</p>
 			<div class="meta">
 				${c.difficulty ? diffChip(c.difficulty) : ''}
-				<span class="chip">${esc(new Date(c.earned_at).toLocaleDateString())}</span>
+				<span class="chip">${esc(earnedLabel(c.earned_at))}</span>
 			</div>
-			<p class="mono">signed by ${esc((c.signer_pubkey || '').slice(0, 8))}… · area ${esc(c.coarse_cell)}</p>
+			<p class="mono">signed by ${esc(signerLabel(c.signer_pubkey))} · area ${esc(c.coarse_cell || 'unknown')}</p>
 			<div class="cta-row">
 				<button class="btn full" id="verify-${c.proof_id}">Verify signature</button>
 			</div>
@@ -453,10 +518,22 @@ function dashCard(w, completions) {
 }
 
 // ── Ceremony modal ───────────────────────────────────────────────────────────
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function modalFocusables() {
+	return [...$('ceremony-modal').querySelectorAll(FOCUSABLE)].filter((el) => el.getClientRects().length > 0);
+}
+
 let _ceremony = null;
+let _ceremonyOpener = null;
 async function openCeremony(quest) {
 	const fix = currentFix();
-	if (!fix) { selectTab('near'); return; }
+	// The fix can be revoked between the card rendering and this tap (permission pulled
+	// mid-session). Fall back to the location states rather than silently doing nothing.
+	if (!fix) {
+		fixState.status = fixState.status === 'watching' ? 'idle' : fixState.status;
+		renderNear();
+		return;
+	}
 	// Pull the full quest detail (reveals the AR answer only because we’re co-located).
 	let detail = quest;
 	try {
@@ -466,6 +543,7 @@ async function openCeremony(quest) {
 
 	const host = $('ceremony-host');
 	host.innerHTML = '';
+	_ceremonyOpener = document.activeElement;
 	_ceremony = new WorldLineCeremony({
 		worldLine: detail,
 		client: api,
@@ -475,16 +553,34 @@ async function openCeremony(quest) {
 		onGranted: () => { closeCeremony(); renderNear(); },
 	}).mount(host);
 	$('ceremony-modal').classList.add('open');
+	// aria-modal only describes the dialog; the focus has to actually move into it and
+	// stay there, or a keyboard user tabs straight back out into the page behind.
+	(modalFocusables()[0] || $('ceremony-close')).focus();
 }
 function closeCeremony() {
 	$('ceremony-modal').classList.remove('open');
 	if (_ceremony) { _ceremony.destroy(); _ceremony = null; }
+	// The opener is gone whenever the grant re-rendered the list; the tab is the
+	// nearest stable landmark to hand the keyboard back to.
+	const back = _ceremonyOpener?.isConnected ? _ceremonyOpener : $(`tab-${activeTab}`);
+	_ceremonyOpener = null;
+	back?.focus();
 }
 $('ceremony-close').addEventListener('click', closeCeremony);
 $('ceremony-modal').addEventListener('click', (e) => { if (e.target === $('ceremony-modal')) closeCeremony(); });
+$('ceremony-modal').addEventListener('keydown', (e) => {
+	if (e.key !== 'Tab') return;
+	const items = modalFocusables();
+	if (!items.length) return;
+	const first = items[0];
+	const last = items[items.length - 1];
+	if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+	else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('ceremony-modal').classList.contains('open')) closeCeremony(); });
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
-// Deep link support: /world-lines#explore etc.
+// Deep link support: /world-lines#explore etc. The boot selection never writes a
+// history entry, so a plain visit leaves the URL clean and the first Back leaves.
 const hashTab = (location.hash || '').replace('#', '');
-selectTab(TABS.includes(hashTab) ? hashTab : 'near');
+selectTab(TABS.includes(hashTab) ? hashTab : 'near', { updateHash: false });

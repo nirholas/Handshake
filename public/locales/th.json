@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — ฮุก",
 		"lab": "<a href=\"/demos\">&larr; แล็บ</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws แล็บ",
-		"the_react_wrapper_around_the_sdk_imports": "ตัวห่อ React สำหรับ SDK นำเข้า <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> และ <code>useAvatar</code> โดยตรงจาก <code>/avatar-sdk/src/react.jsx</code> React ถูกโหลดจาก CDN ผ่าน import map ทำให้หน้านี้ทำงานได้โดยไม่ต้องผ่านขั้นตอน bundler",
+		"the_react_wrapper_around_the_sdk_imports": "ตัวห่อ React สำหรับ SDK นำเข้า <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> และ <code>useAvatar</code> โดยตรงจาก <code>/avatar-sdk/src/react.js</code> React ถูกโหลดจาก CDN ผ่าน import map ทำให้หน้านี้ทำงานได้โดยไม่ต้องผ่านขั้นตอน bundler",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "มหากาพย์",
 		"it_pays_the_quoted_price_and_receives": "ชำระราคาที่เสนอและรับคีย์ <b>ครั้งเดียว</b> นำเข้าทันที",
 		"legendary": "ตำนาน",
-		"long_brandable_solana_addresses_4_5_characte": "ที่อยู่ Solana ที่ยาวและสร้างแบรนด์ได้ — คำนำหน้า 4–5+ ตัวอักษรที่เครื่องมือสร้างสดเข้าไม่ถึง — สร้างล่วงหน้าด้วย CPU แบบแบตช์และขายจากสต็อก ซื้อหนึ่งรายการและคีย์ส่วนตัวจะถูกส่ง <strong>ครั้งเดียว</strong> ผ่านช่องทาง <a href=\"/vanity/gallery\">x402</a> จากนั้นสำเนาที่จัดเก็บไว้จะถูกทำลาย ต้องการสร้างใหม่แบบ ≤3 ตัวอักษรแทนหรือไม่? ใช้ <a href=\"/vanity-wallet\">เครื่องมือสร้างสด</a>",
+		"long_brandable_solana_addresses_4_5_characte": "ที่อยู่ Solana ที่ยาวและสร้างแบรนด์ได้ — คำนำหน้า 4–5+ ตัวอักษรที่เครื่องมือสร้างสดเข้าไม่ถึง — สร้างล่วงหน้าด้วย CPU แบบแบตช์และขายจากสต็อก ซื้อหนึ่งรายการและคีย์ส่วนตัวจะถูกส่ง <strong>ครั้งเดียว</strong> ผ่านช่องทาง <a href=\"/x402\">x402</a> จากนั้นสำเนาที่จัดเก็บไว้จะถูกทำลาย ต้องการสร้างใหม่แบบ ≤3 ตัวอักษรแทนหรือไม่? ใช้ <a href=\"/vanity-wallet\">เครื่องมือสร้างสด</a>",
 		"meta_description": "ซื้อที่อยู่ Solana vanity ที่ยาวและสร้างแบรนด์ได้ จัดส่งทันทีจากสต็อก — คำนำหน้า 4–5+ ตัวอักษรที่เครื่องมือสร้างสดเข้าไม่ถึง สร้างล่วงหน้าด้วย CPU แบบแบตช์และขายผ่าน x402 ราคาขึ้นอยู่กับความหายาก",
 		"meta_og_description": "ที่อยู่ Solana vanity ที่ยาวและสร้างแบรนด์ได้ สร้างล่วงหน้าและขายจากสต็อก จัดส่งครั้งเดียว เข้ารหัสเมื่อไม่ได้ใช้งาน กำหนดราคาตามความหายาก",
 		"meta_og_title": "สินค้าคงคลัง Vanity ระดับพรีเมียม · three.ws",

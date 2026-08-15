@@ -2265,7 +2265,15 @@ async function discoverChallenge(opts) {
 		body: opts.body ? (typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body)) : undefined,
 	};
 	if (init.body && !headers['content-type']) headers['content-type'] = 'application/json';
-	const res = await fetch(opts.endpoint, init);
+	let res;
+	try {
+		res = await fetch(opts.endpoint, init);
+	} catch (err) {
+		// fetch() rejects with a bare "Failed to fetch" for an offline client, a
+		// blocked request, or a CORS refusal. Say what the buyer can act on rather
+		// than surfacing the browser's own wording as the checkout's error.
+		throw new Error(`Could not reach the service to confirm its price (${err?.message || 'network error'}). Check your connection and try again.`);
+	}
 
 	// MCP 2025-06-18 endpoints return 401 with the full x402 challenge in the
 	// `payment-required` header (base64-JSON). Accept that alongside standard 402.
@@ -2301,9 +2309,20 @@ async function discoverChallenge(opts) {
 
 // ───────────────────────────────────────────────────────── public api ───────
 
+// A caller that supplies a request body but no method means POST: fetch() throws
+// a TypeError ("Request with GET/HEAD method cannot have body") the moment a body
+// is paired with the GET default, which kills the flow at the discovery step
+// before the endpoint is ever contacted. The data-attribute binding below already
+// infers the method this way; pay() has to agree, because a programmatic caller
+// passing { endpoint, body } is the most natural way to reach a paid POST route.
+function normalizeOpts(opts) {
+	if (opts.method) return opts;
+	return { ...opts, method: opts.body ? 'POST' : 'GET' };
+}
+
 export async function pay(opts) {
 	if (!opts?.endpoint) throw new Error('X402.pay: endpoint is required');
-	const modal = new CheckoutModal(opts);
+	const modal = new CheckoutModal(normalizeOpts(opts));
 	const result = modal.mount();
 	// kick off the discovery on next tick so the modal animates in first.
 	queueMicrotask(() => modal.start());

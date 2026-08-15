@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — хук",
 		"lab": "<a href=\"/demos\">&larr; зертхана</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws зертхана",
-		"the_react_wrapper_around_the_sdk_imports": "SDK-ді орайтын React қаптамасы. <code>/avatar-sdk/src/react.jsx</code> файлынан <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> және <code>useAvatar</code> тікелей импорттайды. React CDN-ден импорт картасы арқылы жүктеледі, сондықтан бұл бет бандлер қадамынсыз жұмыс істейді.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK-ді орайтын React қаптамасы. <code>/avatar-sdk/src/react.js</code> файлынан <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> және <code>useAvatar</code> тікелей импорттайды. React CDN-ден импорт картасы арқылы жүктеледі, сондықтан бұл бет бандлер қадамынсыз жұмыс істейді.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Эпикалық",
 		"it_pays_the_quoted_price_and_receives": "Ол көрсетілген бағаны төлейді және кілтті <b>бір рет</b> алады. Оны дереу импорттаңыз.",
 		"legendary": "Аңызға айналған",
-		"long_brandable_solana_addresses_4_5_characte": "Ұзын, брендке лайықты Solana мекенжайлар — тікелей өңдеуші жете алмайтын 4–5+ таңбалы префикстер — алдын ала пакеттік процессорда өңделіп, қоймадан сатылады. Біреуін сатып алыңыз, сонда жеке кілт <a href=\"/vanity/gallery\">x402</a> арқылы <strong>бір рет</strong> жеткізіледі, содан кейін оның сақталған көшірмесі жойылады. Оның орнына жаңа ≤3 таңбалы өңдеу қажет пе? <a href=\"/vanity-wallet\">Тікелей өңдеушіні</a> пайдаланыңыз.",
+		"long_brandable_solana_addresses_4_5_characte": "Ұзын, брендке лайықты Solana мекенжайлар — тікелей өңдеуші жете алмайтын 4–5+ таңбалы префикстер — алдын ала пакеттік процессорда өңделіп, қоймадан сатылады. Біреуін сатып алыңыз, сонда жеке кілт <a href=\"/x402\">x402</a> арқылы <strong>бір рет</strong> жеткізіледі, содан кейін оның сақталған көшірмесі жойылады. Оның орнына жаңа ≤3 таңбалы өңдеу қажет пе? <a href=\"/vanity-wallet\">Тікелей өңдеушіні</a> пайдаланыңыз.",
 		"meta_description": "Қоймадан бірден жеткізілетін ұзын, брендке лайықты Solana vanity мекенжайын сатып алыңыз — тікелей өңдеуші жете алмайтын 4–5+ таңбалы префикстер, алдын ала пакеттік процессорда өңделіп, x402 арқылы сатылады. Баға сирек кездесуіне қарай өзгереді.",
 		"meta_og_description": "Ұзын, брендтік Solana vanity адрестері, алдын ала дайындалған және қоймадан сатылатын. Бір рет жеткізіледі, тыныштықта шифрланған, сирек кездесуіне қарай бағаланады.",
 		"meta_og_title": "Премиум Vanity Инвентар · three.ws",

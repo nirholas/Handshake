@@ -27,11 +27,16 @@
 
 .yl-stats {
 	margin-bottom: 1.5rem;
+	/* Three headline stats, so override the shared grid's 2-then-4 track counts
+	   at every width. minmax(0, 1fr) rather than 1fr: "$126.64B" has a wider
+	   min-content than a 320px viewport can give a shared track, and a bare 1fr
+	   lets that min-content blow the track out and push the middle card past the
+	   viewport edge, where it is clipped with no way to scroll to it. */
+	grid-template-columns: minmax(0, 1fr);
 }
-@media (min-width: 768px) {
-	/* Three headline stats read best across three columns, not four. */
+@media (min-width: 640px) {
 	.yl-stats {
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 }
 .yl-stat-skel {
@@ -39,6 +44,13 @@
 	width: 5.5rem;
 	height: 1.5rem;
 	vertical-align: middle;
+}
+/* Whole-dataset stats when the upstream feed is down: the skeletons must stop,
+   or the cards read as permanently loading. */
+.yl-stat-out {
+	color: var(--cv-text-3);
+	font-size: 1rem;
+	font-weight: 500;
 }
 
 /* ── Filter controls ───────────────────────────────────────────────────── */
@@ -266,6 +278,16 @@
 .yl-drawer {
 	padding: 1rem 1.25rem 1.25rem;
 	animation: ylDrawerIn 0.22s ease;
+	box-sizing: border-box;
+	/* The drawer lives in a cell of a 720px-min-width table inside a horizontally
+	   scrolling wrapper, so on a phone the chart would otherwise be parked off to
+	   the right of the visible window. Pin it to the scroll container's left edge
+	   and cap it at the viewport so the chart is readable without sideways
+	   scrolling; on wide screens min() resolves to the full cell and nothing
+	   changes. */
+	position: sticky;
+	left: 0;
+	width: min(100%, calc(100vw - 2 * var(--cv-content-padding)));
 }
 @keyframes ylDrawerIn {
 	from {

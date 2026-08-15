@@ -198,11 +198,15 @@ export default wrap(async (req, res) => {
 		return error(res, 502, 'send_failed', e?.message || 'transaction rejected by network');
 	}
 
+	// Fire-and-forget: recordEvent returns nothing and swallows its own failures.
+	// The .catch() that used to hang off it threw a TypeError on this line, AFTER
+	// the transfer was already on chain, so a successful send answered 500 and the
+	// page invited the user to send the same funds a second time.
 	recordEvent({
 		userId: session.id,
 		event: 'master_wallet_send',
 		meta: { asset, destination: dest.base58, human_amount: humanAmount, usd_value: usdValue, signature },
-	}).catch(() => {});
+	});
 
 	return json(res, 200, {
 		signature,

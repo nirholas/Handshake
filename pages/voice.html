@@ -222,6 +222,24 @@
 			.vl-btn:not(:disabled):hover { transform: translateY(-1px); }
 			.vl-btn:not(:disabled):active { transform: translateY(0); }
 
+			/* Keyboard users get the same "you are here" signal a mouse user gets
+			   from :hover. The site reset clears the UA ring, so every control on
+			   this page states its own. */
+			.vl-btn:focus-visible,
+			.vl-pg-sample:focus-visible,
+			.vl-script-next:focus-visible,
+			.vl-voice-card [data-play]:focus-visible,
+			.vl-review-field input:focus-visible,
+			.vl-pg-field select:focus-visible,
+			.vl-pg-field input:focus-visible,
+			.vl-pg-textarea:focus-visible,
+			.vl-byok-row input:focus-visible,
+			.vb-filters input:focus-visible,
+			.vb-filters select:focus-visible {
+				outline: 2px solid #ffffff;
+				outline-offset: 2px;
+			}
+
 			.vl-btn-record {
 				background: #e8e8e8;
 				color: #0a0a0a;
@@ -562,6 +580,12 @@
 				font-weight: 600;
 				color: #888888;
 				margin-bottom: 4px;
+			}
+			.vl-empty-actions {
+				margin-top: 14px;
+				display: flex;
+				gap: 8px;
+				justify-content: center;
 			}
 
 			/* ── Playground ─────────────────────────────── */
@@ -1048,6 +1072,7 @@
 								<input type="range" id="pgSpeed" min="0.5" max="2" step="0.05" value="1" aria-describedby="pgSpeedVal" />
 							</div>
 						</div>
+						<label class="sr-only" for="pgText">Text to speak</label>
 						<textarea class="vl-pg-textarea" id="pgText" placeholder="Type something to hear it spoken..." maxlength="500">Hello, I'm a three.ws agent. Nice to meet you.</textarea>
 						<div class="vl-pg-samples" id="pgSamples">
 							<button class="vl-pg-sample" data-text="Welcome to three.ws, the home of agentic 3D characters." data-i18n="voice.welcome">Welcome</button>
@@ -1088,7 +1113,7 @@
 						<div class="vl-byok-row">
 							<input type="password" id="byokKey" placeholder="sk_..." autocomplete="off" spellcheck="false" aria-label="ElevenLabs API key" />
 							<button class="vl-btn vl-btn-primary" id="byokSave" type="button">Save key</button>
-							<button class="vl-btn" id="byokClear" type="button" hidden>Remove</button>
+							<button class="vl-btn vl-btn-ghost" id="byokClear" type="button" hidden>Remove</button>
 						</div>
 						<span class="vl-pg-hint" id="byokStatus" role="status" style="font-size:12px;color:#666666;"></span>
 					</div>

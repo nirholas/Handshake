@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — хук",
 		"lab": "<a href=\"/demos\">&larr; лаборатория</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws лаборатория",
-		"the_react_wrapper_around_the_sdk_imports": "React обвивката около SDK. Импортира <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> и <code>useAvatar</code> директно от <code>/avatar-sdk/src/react.jsx</code>. React се зарежда от CDN чрез import map, така че тази страница работи без стъпка на бъндлиране.",
+		"the_react_wrapper_around_the_sdk_imports": "React обвивката около SDK. Импортира <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> и <code>useAvatar</code> директно от <code>/avatar-sdk/src/react.js</code>. React се зарежда от CDN чрез import map, така че тази страница работи без стъпка на бъндлиране.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Епичен",
 		"it_pays_the_quoted_price_and_receives": "Плаща обявената цена и получава ключа <b>еднократно</b>. Внесете го незабавно.",
 		"legendary": "Легендарен",
-		"long_brandable_solana_addresses_4_5_characte": "Дълги, брандируеми Solana адреси — с префикси от 4–5+ символа, които живият грайндър не може да достигне — генерирани предварително на партиден процесор и продавани от наличност. Купете един и частният ключ се доставя <strong>еднократно</strong> през <a href=\"/vanity/gallery\">x402</a> канала, след което съхраненото му копие се унищожава. Нуждаете се от свежо генериране с ≤3 символа? Използвайте <a href=\"/vanity-wallet\">живия грайндър</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Дълги, брандируеми Solana адреси — с префикси от 4–5+ символа, които живият грайндър не може да достигне — генерирани предварително на партиден процесор и продавани от наличност. Купете един и частният ключ се доставя <strong>еднократно</strong> през <a href=\"/x402\">x402</a> канала, след което съхраненото му копие се унищожава. Нуждаете се от свежо генериране с ≤3 символа? Използвайте <a href=\"/vanity-wallet\">живия грайндър</a>.",
 		"meta_description": "Купете дълъг, брандируем Solana vanity адрес, доставен незабавно от наличност — с префикси от 4–5+ символа, които живият грайндър не може да достигне, генерирани предварително на партиден процесор и продавани чрез x402. Цената се определя от рядкостта.",
 		"meta_og_description": "Дълги, брандируеми Solana vanity адреси, генерирани предварително и продавани от наличност. Доставят се еднократно, криптирани в покой, цената се определя от рядкостта.",
 		"meta_og_title": "Премиум инвентар за Vanity адреси · three.ws",

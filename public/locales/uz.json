@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "SDK atrofidagi React oʻrami. <code>/avatar-sdk/src/react.jsx</code> dan <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> va <code>useAvatar</code> ni toʻgʻridan-toʻgʻri import qiladi. React import xaritasi orqali CDN dan yuklanadi, shuning uchun bu sahifa bundler bosqichisiz ishlaydi.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK atrofidagi React oʻrami. <code>/avatar-sdk/src/react.js</code> dan <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> va <code>useAvatar</code> ni toʻgʻridan-toʻgʻri import qiladi. React import xaritasi orqali CDN dan yuklanadi, shuning uchun bu sahifa bundler bosqichisiz ishlaydi.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epik",
 		"it_pays_the_quoted_price_and_receives": "U ko'rsatilgan narxni to'laydi va kalitni <b>bir marta</b> oladi. Uni darhol import qiling.",
 		"legendary": "Afsonaviy",
-		"long_brandable_solana_addresses_4_5_characte": "Uzun, brendlash mumkin bo'lgan Solana manzillar — jonli maydalagich erisha olmaydigan 4–5+ belgili prefikslar — oldindan partiyaviy CPUda maydalangan va zaxiradan sotiladi. Birini sotib oling va shaxsiy kalit <a href=\"/vanity/gallery\">x402</a> orqali <strong>bir marta</strong> yetkazib beriladi, so'ngra uning saqlangan nusxasi yo'q qilinadi. Buning o'rniga yangi ≤3 belgili maydalash kerakmi? <a href=\"/vanity-wallet\">Jonli maydalagichdan</a> foydalaning.",
+		"long_brandable_solana_addresses_4_5_characte": "Uzun, brendlash mumkin bo'lgan Solana manzillar — jonli maydalagich erisha olmaydigan 4–5+ belgili prefikslar — oldindan partiyaviy CPUda maydalangan va zaxiradan sotiladi. Birini sotib oling va shaxsiy kalit <a href=\"/x402\">x402</a> orqali <strong>bir marta</strong> yetkazib beriladi, so'ngra uning saqlangan nusxasi yo'q qilinadi. Buning o'rniga yangi ≤3 belgili maydalash kerakmi? <a href=\"/vanity-wallet\">Jonli maydalagichdan</a> foydalaning.",
 		"meta_description": "Zaxiradan darhol yetkazib beriladigan uzun, brendlash mumkin bo'lgan Solana vanity manzilini sotib oling — jonli maydalagich erisha olmaydigan 4–5+ belgili prefikslar, oldindan partiyaviy CPUda maydalangan va x402 orqali sotiladi. Narx noyoblikka qarab o'zgaradi.",
 		"meta_og_description": "Uzun, brendlash mumkin boʻlgan Solana vanity manzillar, oldindan tayyorlangan va zaxiradan sotiladi. Bir marta yetkazib beriladi, saqlashda shifrlangan, noyobligiga qarab narxlanadi.",
 		"meta_og_title": "Premium Vanity Inventar · three.ws",

@@ -91,7 +91,14 @@ The package exposes focused subpath exports so you only ship what you use.
 | `@three-ws/avatar/viewer` | Registers `<three-ws-viewer>` (lightweight GLB preview element). |
 | `@three-ws/avatar/creator` | `AvatarCreator` class + `saveBlob()` upload helper. |
 | `@three-ws/avatar/react` | `<Avatar>`, `<AgentAvatar>`, `<AvatarCreator>`, `useAvatar()`. |
+| `@three-ws/avatar/element` | Alias of the root entry, for code that imports the element explicitly. |
+| `@three-ws/avatar/runtime/choreography.js` | Routine format + `RoutinePlayer`, `encodeRoutine`, `decodeRoutine`, `PRESET_ROUTINES`. Dependency-free. |
+| `@three-ws/avatar/runtime/animation-slots.js` | Canonical animation `SLOTS`, `DEFAULT_ANIMATION_MAP`, `resolveHint()`, `resolveSlot()`. Dependency-free. |
 | `@three-ws/avatar/style.css` | No-op stylesheet stub (the element injects its own styles). |
+
+The two `runtime/*` entries carry no Three.js and no DOM, so an app driving its
+own renderer can reuse the gesture vocabulary and the routine sequencer without
+loading a second WebGL context.
 
 ### `<three-ws-viewer>`
 
@@ -142,8 +149,29 @@ Both are transparent — no attribute needed, and desktop behavior is unchanged.
 
 The full runtime element. Set `avatar-id` to resolve a server-hosted avatar, or
 `src`/`body` for a direct GLB. Other attributes: `ios-src` (USDZ for iOS AR Quick Look)
-and `kiosk` (hide the debug GUI). Instance methods include `playGesture(name, opts?)`
-and `setMorph(name, weight)`.
+and `kiosk` (hide the debug GUI). The element is configured through attributes,
+so use `setAttribute()` (or plain HTML) rather than assigning properties.
+
+Instance methods, grouped by what they drive:
+
+| Method | Does |
+|---|---|
+| `say(text, opts?)` / `ask(text, opts?)` | Send a message through the brain and speak the reply. `ask` resolves when the reply is done. |
+| `speak(text, opts?)` | Play a talking animation sized to `text`, without calling the brain. |
+| `clearConversation()` | Drop the in-memory conversation history. |
+| `playClip(name, { fade_ms?, userInitiated? })` | Play a clip with embed defaults (honors the clip's loop flag and `prefers-reduced-motion`). |
+| `play(name, opts?)` / `wave(opts?)` / `playEmote(name, intensity?)` | Raw clip playback, the wave animation, and the emote chain (`cheer`, `flinch`, `celebrate`). |
+| `lookAt(target)` | Aim the avatar's gaze. |
+| `expressEmotion(trigger, weight?)` | One emotion stimulus: `celebration`, `concern`, `curiosity`, `empathy`, `patience`. |
+| `setMood(valence, arousal, opts?)` | Sustained mood driving resting expression and posture. |
+| `playRoutine(nameOrRoutine, opts?)` / `stopRoutine()` / `getRoutines()` | Named, replayable clip sequences. |
+| `notify(message, { priority?, duration? })` | Slide into frame, speak, retreat. Queued. |
+| `installSkill(uri)` / `uninstallSkill(name)` | Manage skills at runtime. |
+| `setMode(mode)` / `setPosition(pos, offset?)` / `setSize(w, h)` | Layout controls. |
+| `enableAvatarChat()` / `disableAvatarChat()` / `enableAvatarWalk()` / `disableAvatarWalk()` | Toggle the inline chat layout and the walk animation. |
+| `pause()` / `resume()` / `destroy()` | Runtime lifecycle. |
+
+Read-only accessors: `skills`, `memory`, `manifest`, `runtime`.
 
 **Conversation (`brain`)** — with no `brain` attribute the avatar is a silent 3D
 decoration. Set one to give it a voice:
@@ -156,8 +184,8 @@ decoration. Set one to give it a voice:
 
 Pair `brain` with `instructions` (a system prompt string) and `memory` (`local`
 by default) to give the agent a persona and durable facts — see the
-[Personal AI site tutorial](../docs/tutorials/personal-ai-site.md) for a full
-worked example.
+[Personal AI site tutorial](https://three.ws/tutorials/personal-ai-site) for a
+full worked example.
 
 ## Open the avatar creator
 
@@ -240,6 +268,7 @@ record. Computes a SHA-256 checksum client-side.
 | `description` | `string` | Optional. |
 | `tags` | `string[]` | Optional. |
 | `visibility` | `'public' \| 'unlisted' \| 'private'` | Defaults to `public`. |
+| `source` | `string` | Provenance label recorded on the avatar. Defaults to `sdk`. |
 
 ## Examples
 
@@ -268,7 +297,7 @@ A runnable, build-free demo page (CDN load, `ensureAgent3D()`, one live avatar) 
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: proprietary, all rights reserved. See [LICENSE](./LICENSE).
 
 ---
 

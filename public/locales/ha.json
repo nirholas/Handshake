@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "Mai rufe React a kusa da SDK. Yana shigo da <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, da <code>useAvatar</code> kai tsaye daga <code>/avatar-sdk/src/react.jsx</code>. An ɗora React daga CDN ta hanyar taswirar shigo da kaya don haka wannan shafin yana aiki ba tare da matakin mai haɗawa ba.",
+		"the_react_wrapper_around_the_sdk_imports": "Mai rufe React a kusa da SDK. Yana shigo da <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, da <code>useAvatar</code> kai tsaye daga <code>/avatar-sdk/src/react.js</code>. An ɗora React daga CDN ta hanyar taswirar shigo da kaya don haka wannan shafin yana aiki ba tare da matakin mai haɗawa ba.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epic",
 		"it_pays_the_quoted_price_and_receives": "Yana biyan farashin da aka faɗa kuma yana karɓar maɓallin <b>sau ɗaya</b>. Shigo da shi nan da nan.",
 		"legendary": "Legendary",
-		"long_brandable_solana_addresses_4_5_characte": "Dogayen adiresoshin Solana masu iya zama alama — prefixes na haruffa 4–5+ waɗanda grinder kai tsaye ba zai iya kaiwa ba — an yi su tun da wuri a kan batch CPU kuma an sayar da su daga jari. Sayi ɗaya kuma ana isar da maɓallin sirri <strong>sau ɗaya</strong> ta hanyar <a href=\"/vanity/gallery\">x402</a> rail, sannan a lalata kwafin da aka adana. Kana buƙatar sabon grind na haruffa ≤3 maimakon? Yi amfani da <a href=\"/vanity-wallet\">grinder kai tsaye</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Dogayen adiresoshin Solana masu iya zama alama — prefixes na haruffa 4–5+ waɗanda grinder kai tsaye ba zai iya kaiwa ba — an yi su tun da wuri a kan batch CPU kuma an sayar da su daga jari. Sayi ɗaya kuma ana isar da maɓallin sirri <strong>sau ɗaya</strong> ta hanyar <a href=\"/x402\">x402</a> rail, sannan a lalata kwafin da aka adana. Kana buƙatar sabon grind na haruffa ≤3 maimakon? Yi amfani da <a href=\"/vanity-wallet\">grinder kai tsaye</a>.",
 		"meta_description": "Sayi dogon adireshin Solana vanity mai iya zama alama wanda aka isar nan da nan daga jari — prefixes na haruffa 4–5+ waɗanda grinder kai tsaye ba zai iya kaiwa ba, an yi su tun da wuri a kan batch CPU kuma an sayar da su ta hanyar x402. Farashi yana haɓaka da rarity.",
 		"meta_og_description": "Dogayen, masu saukin tunawa Solana adireshin vanity, an shirya su tun da wuri kuma ana sayar da su daga hannun jari. Ana isar da su sau ɗaya, an ɓoye su yayin ajiya, kuma farashinsu ya dogara ne da yadda suke da wuya.",
 		"meta_og_title": "Kayayyakin Vanity na Musamman · three.ws",

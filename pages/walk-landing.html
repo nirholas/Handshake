@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title data-i18n="walk_landing.meta_title">Walk — your avatar walks anywhere on the web · three.ws</title>
+		<title data-i18n="walk_landing.meta_title">Walk: your avatar walks anywhere on the web · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta name="author" content="nirholas" />
 		<meta
@@ -16,7 +16,7 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/walk" />
-		<meta property="og:title" content="Walk — your avatar walks anywhere on the web · three.ws"  data-i18n-attr="content:walk_landing.meta_og_title"/>
+		<meta property="og:title" content="Walk: your avatar walks anywhere on the web · three.ws"  data-i18n-attr="content:walk_landing.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Drive your 3D avatar with WASD or a joystick, embed it on any site with one tag, and let it walk across real web pages. No app install."
@@ -29,7 +29,7 @@
 
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Walk — your avatar walks anywhere on the web · three.ws"  data-i18n-attr="content:walk_landing.meta_twitter_title"/>
+		<meta name="twitter:title" content="Walk: your avatar walks anywhere on the web · three.ws"  data-i18n-attr="content:walk_landing.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Drive your 3D avatar with WASD or a joystick, embed it on any site with one tag, and let it walk across real web pages."
@@ -70,7 +70,7 @@
 
 		<style>
 			/* ────────────────────────────────────────────────────────────────
-			   Walk landing — page-scoped styles. Token vars only; no hardcoded
+			   Walk landing page-scoped styles. Token vars only; no hardcoded
 			   colour / radius / type / spacing literals. Mirrors the marketing
 			   rhythm of /features (eyebrow → display headline → sub → CTAs).
 			   ──────────────────────────────────────────────────────────────── */
@@ -554,6 +554,9 @@
 				animation: wl-shimmer 1.4s linear infinite;
 				height: 5.4rem;
 			}
+			/* Quote cards are taller than board rows; keep the placeholder the
+			   same height so the section does not jump when the fetch lands. */
+			.wl-skeleton--quote { height: 11rem; }
 			@keyframes wl-shimmer { to { background-position: -200% 0; } }
 			.wl-state {
 				grid-column: 1 / -1;
@@ -667,7 +670,7 @@
 					<p class="wl-hero-sub" data-i18n="walk_landing.drive_a_fully_rigged_3d_avatar_with">
 						Drive a fully-rigged 3D avatar with WASD or a touch joystick. Drop it on any
 						site with a single tag, or install the extension and let it stroll across real
-						pages — reading them aloud as it goes. No app install. It just runs in the browser.
+						pages, reading them aloud as it goes. No app install. It just runs in the browser.
 					</p>
 					<div class="wl-cta-row">
 						<a class="btn btn--primary btn--lg" href="/walk/app" data-i18n-html="walk_landing.try_it_now">
@@ -703,7 +706,7 @@
 					<div class="wl-frame-stage">
 						<iframe
 							src="/walk-embed?env=void&autoplay=true&controls=none&orbit=false"
-							title="Live demo — a 3D avatar walking in the void environment"
+							title="Live demo: a 3D avatar walking in the void environment"
 							allow="accelerometer; gyroscope"
 						></iframe>
 						<span class="wl-frame-hint" data-i18n="walk_landing.live_walking_now">Live · walking now</span>
@@ -715,7 +718,7 @@
 			<section class="wl-section" aria-labelledby="wl-demos-title">
 				<div class="wl-section-head wl-reveal">
 					<h2 class="wl-section-title" id="wl-demos-title" data-i18n="walk_landing.choose_your_world">Choose your world.</h2>
-					<p class="wl-section-sub" data-i18n="walk_landing.six_built_in_environments_no_hdris_to">Six built-in environments, no HDRIs to download. Grab the joystick or use WASD — these are live, not videos.</p>
+					<p class="wl-section-sub" data-i18n="walk_landing.six_built_in_environments_no_hdris_to">Six built-in environments, no HDRIs to download. Grab the joystick or use WASD. These are live, not videos.</p>
 				</div>
 				<div class="wl-demos">
 					<article class="wl-demo wl-reveal">
@@ -723,7 +726,7 @@
 							<div class="wl-frame-stage">
 								<iframe
 									data-src="/walk-embed?env=beach&controls=joystick&autoplay=true"
-									title="Interactive demo — walk the avatar on a sunlit beach"
+									title="Interactive demo: walk the avatar on a sunlit beach"
 									loading="lazy"
 									allow="accelerometer; gyroscope"
 								></iframe>
@@ -739,7 +742,7 @@
 							<div class="wl-frame-stage">
 								<iframe
 									data-src="/walk-embed?env=night&controls=joystick&autoplay=true"
-									title="Interactive demo — walk the avatar through a night scene"
+									title="Interactive demo: walk the avatar through a night scene"
 									loading="lazy"
 									allow="accelerometer; gyroscope"
 								></iframe>
@@ -755,7 +758,7 @@
 							<div class="wl-frame-stage">
 								<iframe
 									data-src="/walk-embed?env=grid&controls=joystick&autoplay=true"
-									title="Interactive demo — walk the avatar on a holographic grid"
+									title="Interactive demo: walk the avatar on a holographic grid"
 									loading="lazy"
 									allow="accelerometer; gyroscope"
 								></iframe>
@@ -780,35 +783,35 @@
 						<div class="wl-frame-stage">
 							<iframe
 								data-src="/walk-embed?env=studio&autoplay=true&controls=none&orbit=false"
-								title="Step preview — a generated avatar idling in the studio"
+								title="Step preview: a generated avatar idling in the studio"
 								loading="lazy"
 							></iframe>
 						</div>
 						<div class="wl-step-body">
 							<span class="wl-step-num">1</span>
 							<h3 class="wl-step-title" data-i18n="walk_landing.create_your_avatar">Create your avatar</h3>
-							<p class="wl-step-desc" data-i18n="walk_landing.generate_one_from_a_selfie_or_a">Generate one from a selfie or a text prompt in Forge — or use any humanoid GLB. It comes back fully rigged and animation-ready.</p>
+							<p class="wl-step-desc" data-i18n="walk_landing.generate_one_from_a_selfie_or_a">Generate one from a selfie or a text prompt in Forge, or use any humanoid GLB. It comes back fully rigged and animation-ready.</p>
 						</div>
 					</li>
 					<li class="wl-step wl-reveal">
 						<div class="wl-frame-stage">
 							<iframe
 								data-src="/walk-embed?env=sunset&autoplay=true&controls=none&orbit=false"
-								title="Step preview — an avatar walking at sunset"
+								title="Step preview: an avatar walking at sunset"
 								loading="lazy"
 							></iframe>
 						</div>
 						<div class="wl-step-body">
 							<span class="wl-step-num">2</span>
 							<h3 class="wl-step-title" data-i18n="walk_landing.walk_on_three_ws">Walk on three.ws</h3>
-							<p class="wl-step-desc" data-i18n="walk_landing.open_the_walk_app_and_drive_your">Open the Walk app and drive your avatar with WASD or a touch joystick. Drag to orbit the camera, sprint to run — real locomotion, not a turntable.</p>
+							<p class="wl-step-desc" data-i18n="walk_landing.open_the_walk_app_and_drive_your">Open the Walk app and drive your avatar with WASD or a touch joystick. Drag to orbit the camera, sprint to run. Real locomotion, not a turntable.</p>
 						</div>
 					</li>
 					<li class="wl-step wl-reveal">
 						<div class="wl-frame-stage">
 							<iframe
 								data-src="/walk-embed?env=void&autoplay=true&controls=none&orbit=false"
-								title="Step preview — an avatar walking, ready to embed"
+								title="Step preview: an avatar walking, ready to embed"
 								loading="lazy"
 							></iframe>
 						</div>
@@ -832,11 +835,11 @@
 						<ul class="wl-ext-list">
 							<li>
 								<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-								Your avatar walks over any page you visit — articles, docs, social feeds.
+								Your avatar walks over any page you visit: articles, docs, social feeds.
 							</li>
 							<li>
 								<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-								It reads pages aloud as it strolls — a living browsing companion.
+								It reads pages aloud as it strolls, a living browsing companion.
 							</li>
 							<li>
 								<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -898,7 +901,7 @@
 							<span class="wl-code-label" data-i18n="walk_landing.your_site_html">your-site.html</span>
 							<button class="wl-copy-btn" id="wl-copy" type="button" aria-label="Copy embed snippet to clipboard" data-i18n="walk_landing.copy" data-i18n-attr="aria-label:walk_landing.copy_embed_snippet_to_clipbo_arialabel">Copy</button>
 						</div>
-<pre id="wl-snippet"><code><span class="wl-tok-com">&lt;!-- three.ws Walk — drop in anywhere --&gt;</span>
+<pre id="wl-snippet"><code><span class="wl-tok-com">&lt;!-- three.ws Walk: drop in anywhere --&gt;</span>
 <span class="wl-tok-tag">&lt;iframe</span>
   <span class="wl-tok-attr">src</span>=<span class="wl-tok-val">"https://three.ws/walk-embed?env=void&amp;autoplay=true"</span>
   <span class="wl-tok-attr">width</span>=<span class="wl-tok-val">"360"</span> <span class="wl-tok-attr">height</span>=<span class="wl-tok-val">"480"</span>
@@ -916,7 +919,7 @@
 							<div class="wl-frame-stage">
 								<iframe
 									data-src="/walk-embed?env=void&autoplay=true&controls=joystick"
-									title="Live preview of the embed snippet — an interactive walking avatar"
+									title="Live preview of the embed snippet: an interactive walking avatar"
 									loading="lazy"
 									allow="accelerometer; gyroscope"
 								></iframe>
@@ -948,13 +951,17 @@
 					<h2 class="wl-section-title" id="wl-social-title" data-i18n="walk_landing.from_the_team">From the team</h2>
 					<p class="wl-section-sub" data-i18n="walk_landing.what_three_ws_is_shipping_with_walk">What three.ws is shipping with Walk.</p>
 				</div>
-				<div class="wl-social wl-reveal" id="wl-social" aria-live="polite"></div>
+				<div class="wl-social wl-reveal" id="wl-social" aria-live="polite" aria-busy="true">
+					<div class="wl-skeleton wl-skeleton--quote"></div>
+					<div class="wl-skeleton wl-skeleton--quote"></div>
+					<div class="wl-skeleton wl-skeleton--quote"></div>
+				</div>
 			</section>
 
 			<!-- ── 8. FOOTER CTA ── -->
 			<section class="wl-final wl-reveal" aria-labelledby="wl-final-title">
 				<h2 id="wl-final-title" data-i18n="walk_landing.start_walking_now">Start walking now.</h2>
-				<p data-i18n="walk_landing.free_to_try_bring_any_avatar_and">Free to try — bring any avatar and a browser.</p>
+				<p data-i18n="walk_landing.free_to_try_bring_any_avatar_and">Free to try. Bring any avatar and a browser.</p>
 				<div class="wl-cta-row">
 					<a class="btn btn--primary btn--lg" href="/walk/app" data-i18n-html="walk_landing.start_walking">
 						Start walking <span class="btn-arrow" aria-hidden="true">→</span>
@@ -974,7 +981,7 @@
 			const copyBtn = document.getElementById('wl-copy');
 			if (copyBtn) {
 				const SNIPPET =
-					'<!-- three.ws Walk — drop in anywhere -->\n' +
+					'<!-- three.ws Walk: drop in anywhere -->\n' +
 					'<iframe\n' +
 					'  src="https://three.ws/walk-embed?env=void&autoplay=true"\n' +
 					'  width="360" height="480"\n' +
@@ -984,7 +991,7 @@
 					try {
 						await navigator.clipboard.writeText(SNIPPET);
 					} catch {
-						// Clipboard API unavailable (insecure context / denied) —
+						// Clipboard API unavailable (insecure context or denied):
 						// fall back to a selection-based copy so the button still works.
 						const ta = document.createElement('textarea');
 						ta.value = SNIPPET;
@@ -1009,7 +1016,7 @@
 			// ── Demo iframes: boot only when they approach the viewport ──
 			// Each embed opens its own three.js WebGL context and downloads an
 			// avatar GLB. Booting all eight at once exhausted the browser's WebGL
-			// context limit and phone memory — textures failed to decode and the
+			// context limit and phone memory: textures failed to decode and the
 			// page's load event stalled ~23s on mobile. `loading="lazy"` is only a
 			// browser heuristic and fired them all anyway, so the src is withheld
 			// until the frame really is near the viewport. The hero iframe keeps a
@@ -1057,8 +1064,12 @@
 			}
 
 			// ── Leaderboard (real fetch, graceful states) ────────────────
+			// Wire contract, from api/walk/leaderboard.js:
+			//   { rows: [{ rank, handle, username, profileUrl, avatar, value }] }
+			// `value` is the metric in metres; `handle` is already display-ready
+			// (a @username, a display name, or a generated anon handle).
 			const board = document.getElementById('wl-board');
-			const MEDALS = ['1', '2', '3'];
+			const TOP_N = 3;
 
 			function escapeHtml(s) {
 				return String(s).replace(/[&<>"']/g, (c) => ({
@@ -1068,7 +1079,7 @@
 
 			function formatDistance(meters) {
 				const m = Number(meters);
-				if (!Number.isFinite(m) || m <= 0) return '—';
+				if (!Number.isFinite(m) || m <= 0) return '0 m';
 				if (m >= 1000) return (m / 1000).toFixed(m >= 10000 ? 0 : 1) + ' km';
 				return Math.round(m) + ' m';
 			}
@@ -1082,22 +1093,21 @@
 						'<div><a class="btn btn--primary" href="/walk/app">Start walking →</a></div></div>';
 					return;
 				}
-				board.innerHTML = rows.slice(0, 3).map((r, i) => {
-					const name = escapeHtml(r.name || r.handle || r.wallet_short || ('Walker #' + (i + 1)));
-					const dist = escapeHtml(formatDistance(r.distance ?? r.value ?? r.meters));
-					const img = r.image_url || r.avatar || r.image;
-					const av = img
-						? '<img class="wl-rank-av" src="' + escapeHtml(img) + '" alt="" loading="lazy" />'
+				board.innerHTML = rows.slice(0, TOP_N).map((r, i) => {
+					const place = i + 1;
+					const name = escapeHtml(r.handle || (r.username ? '@' + r.username : 'Walker #' + place));
+					const dist = escapeHtml(formatDistance(r.value));
+					const av = r.avatar
+						? '<img class="wl-rank-av" src="' + escapeHtml(r.avatar) + '" alt="" loading="lazy" />'
 						: '<span class="wl-rank-av" aria-hidden="true"></span>';
-					const href = r.url || r.profile_url || r.walk_url;
 					const inner =
-						'<span class="wl-rank-medal" aria-hidden="true">' + MEDALS[i] + '</span>' +
+						'<span class="wl-rank-medal" aria-hidden="true">' + place + '</span>' +
 						av +
 						'<span class="wl-rank-meta"><span class="wl-rank-name">' + name + '</span>' +
 						'<span class="wl-rank-dist">' + dist + ' walked</span></span>';
-					return href
-						? '<a class="wl-rank wl-rank--' + (i + 1) + '" href="' + escapeHtml(href) + '">' + inner + '</a>'
-						: '<div class="wl-rank wl-rank--' + (i + 1) + '">' + inner + '</div>';
+					return r.profileUrl
+						? '<a class="wl-rank wl-rank--' + place + '" href="' + escapeHtml(r.profileUrl) + '">' + inner + '</a>'
+						: '<div class="wl-rank wl-rank--' + place + '">' + inner + '</div>';
 				}).join('');
 			}
 
@@ -1115,17 +1125,13 @@
 				board.setAttribute('aria-busy', 'true');
 				board.innerHTML = '<div class="wl-skeleton"></div><div class="wl-skeleton"></div><div class="wl-skeleton"></div>';
 				try {
-					const res = await fetch('/api/walk/leaderboard?period=all-time&metric=distance', {
-						headers: { accept: 'application/json' },
-					});
+					const res = await fetch(
+						'/api/walk/leaderboard?period=all-time&metric=distance&limit=' + TOP_N,
+						{ headers: { accept: 'application/json' } },
+					);
 					if (!res.ok) throw new Error('HTTP ' + res.status);
 					const data = await res.json();
-					// Accept a few reasonable shapes the parallel endpoint may ship:
-					// { leaders: [...] } | { walkers: [...] } | { entries: [...] } | [...]
-					const rows = Array.isArray(data)
-						? data
-						: data.leaders || data.walkers || data.entries || data.results || data.data || [];
-					renderBoard(Array.isArray(rows) ? rows : []);
+					renderBoard(Array.isArray(data.rows) ? data.rows : []);
 				} catch {
 					renderBoardError();
 				}
@@ -1135,6 +1141,7 @@
 			// ── Social proof (curated, platform-owned only) ──────────────
 			const social = document.getElementById('wl-social');
 			function renderSocialEmpty() {
+				social.setAttribute('aria-busy', 'false');
 				social.innerHTML =
 					'<div class="wl-state"><strong>Nothing here yet.</strong>' +
 					'Share your walk and tag <a href="https://x.com/trythreews" rel="noopener" style="color:var(--color-text-bright)">@trythreews</a>.</div>';
@@ -1155,6 +1162,7 @@
 				try {
 					const items = await fetchSocial();
 					if (!Array.isArray(items) || !items.length) { renderSocialEmpty(); return; }
+					social.setAttribute('aria-busy', 'false');
 					social.innerHTML = items.slice(0, 6).map((it) => {
 						const quote = escapeHtml(it.quote || '');
 						const author = escapeHtml(it.author || '');

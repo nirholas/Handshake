@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "Ìpilẹ̀ React tó yí SDK ká. Ó kó <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, àti <code>useAvatar</code> wọlé tààrà láti <code>/avatar-sdk/src/react.jsx</code>. A gbé React wọlé láti CDN nípasẹ̀ àtúmọ̀ ìkópa (import map) kí ojúewé yìí lè ṣiṣẹ́ láìsí àtòpọ̀.",
+		"the_react_wrapper_around_the_sdk_imports": "Ìpilẹ̀ React tó yí SDK ká. Ó kó <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, àti <code>useAvatar</code> wọlé tààrà láti <code>/avatar-sdk/src/react.js</code>. A gbé React wọlé láti CDN nípasẹ̀ àtúmọ̀ ìkópa (import map) kí ojúewé yìí lè ṣiṣẹ́ láìsí àtòpọ̀.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Àgbàyanu",
 		"it_pays_the_quoted_price_and_receives": "Ó san owó tí a sọ àti pé ó gba kọ́kọ́rọ́ náà <b>lẹ́ẹ̀kan ṣoṣo</b>. Wọlé sí i lẹ́sẹ̀kẹsẹ̀.",
 		"legendary": "Àròsọ",
-		"long_brandable_solana_addresses_4_5_characte": "Àwọn àdírẹ́sì Solana gígùn, tí ó ṣeé fi dára lọ́ṣọ̀ọ́ — àwọn ìbẹ̀rẹ̀ ọ̀rọ̀ lẹ́tà 4–5+ tí ẹ̀rọ gbígbìn láàyè kò lè dé ọ̀dọ̀ rẹ̀ — tí a ti gbìn sílẹ̀ tẹ́lẹ̀ lórí CPU ìṣùpọ̀ tí a sì tà láti inú ìkójọpọ̀. Rà ọ̀kan, a ó sì fi kọ́kọ́rọ́ ìkọ̀kọ̀ náà ránṣẹ́ <strong>lẹ́ẹ̀kan ṣoṣo</strong> lórí ọ̀nà <a href=\"/vanity/gallery\">x402</a>, lẹ́yìn náà a ó pa àwòkọ tí a ti tọ́jú rẹ̀ run. Ṣé o fẹ́ gbìn èyí tuntun tí ó kéré sí lẹ́tà 3 dípò? Lo <a href=\"/vanity-wallet\">ẹ̀rọ gbígbìn láàyè</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Àwọn àdírẹ́sì Solana gígùn, tí ó ṣeé fi dára lọ́ṣọ̀ọ́ — àwọn ìbẹ̀rẹ̀ ọ̀rọ̀ lẹ́tà 4–5+ tí ẹ̀rọ gbígbìn láàyè kò lè dé ọ̀dọ̀ rẹ̀ — tí a ti gbìn sílẹ̀ tẹ́lẹ̀ lórí CPU ìṣùpọ̀ tí a sì tà láti inú ìkójọpọ̀. Rà ọ̀kan, a ó sì fi kọ́kọ́rọ́ ìkọ̀kọ̀ náà ránṣẹ́ <strong>lẹ́ẹ̀kan ṣoṣo</strong> lórí ọ̀nà <a href=\"/x402\">x402</a>, lẹ́yìn náà a ó pa àwòkọ tí a ti tọ́jú rẹ̀ run. Ṣé o fẹ́ gbìn èyí tuntun tí ó kéré sí lẹ́tà 3 dípò? Lo <a href=\"/vanity-wallet\">ẹ̀rọ gbígbìn láàyè</a>.",
 		"meta_description": "Rà àdírẹ́sì ìfẹ́ Solana gígùn, tí ó ṣeé fi dára lọ́ṣọ̀ọ́ tí a fi ránṣẹ́ lẹ́sẹ̀kẹsẹ̀ láti inú ìkójọpọ̀ — àwọn ìbẹ̀rẹ̀ ọ̀rọ̀ lẹ́tà 4–5+ tí ẹ̀rọ gbígbìn láàyè kò lè dé ọ̀dọ̀ rẹ̀, tí a ti gbìn sílẹ̀ tẹ́lẹ̀ lórí CPU ìṣùpọ̀ tí a sì tà nípasẹ̀ x402. Owó rẹ̀ ń pọ̀ sí i pẹ̀lú ìṣọ̀wọ́n.",
 		"meta_og_description": "Àwọn àdírẹ́sì Solana tí ó gùn, tí ó sì ṣeé fi ṣe àmì, tí a ti pèsè sílẹ̀ tẹ́lẹ̀ tí a sì tà láti ibi ìpamọ́. A máa fi ránṣẹ́ lẹ́ẹ̀kan ṣoṣo, a máa fi kódì pamọ́ nígbà tí kò bá sí ní lílò, a sì máa fi owó rẹ̀ lélẹ̀ nípa bí ó ṣe ṣọ̀wọ́n tó.",
 		"meta_og_title": "Àkójọ Àwọn Àdírẹ́sì Àmì Tó Ga Jù Lọ · three.ws",

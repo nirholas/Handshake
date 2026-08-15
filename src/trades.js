@@ -84,12 +84,12 @@ function writeUrl() {
 
 // ── controls ────────────────────────────────────────────────────────────────────
 function wireControls() {
+	syncTabs();
 	$$('#ttTabs [data-tab]').forEach((b) => {
-		b.classList.toggle('on', b.dataset.tab === state.tab);
 		b.addEventListener('click', () => {
 			if (state.tab === b.dataset.tab) return;
 			state.tab = b.dataset.tab;
-			$$('#ttTabs [data-tab]').forEach((x) => x.classList.toggle('on', x === b));
+			syncTabs();
 			writeUrl();
 			loadFeed(true);
 		});
@@ -155,7 +155,12 @@ function seedFromRows(mint) {
 	return r ? { symbol: r.symbol, name: r.name, image_uri: r.image_uri } : null;
 }
 function highlightRow(mint) {
-	$$('#ttFeed [data-mint]').forEach((el) => el.classList.toggle('on', el.dataset.mint === mint));
+	$$('#ttFeed [data-mint]').forEach((el) => {
+		const on = el.dataset.mint === mint;
+		el.classList.toggle('on', on);
+		if (on) el.setAttribute('aria-current', 'true');
+		else el.removeAttribute('aria-current');
+	});
 }
 
 // ── live pulse ──────────────────────────────────────────────────────────────────
@@ -180,18 +185,24 @@ async function loadPulse() {
 // ── feed ─────────────────────────────────────────────────────────────────────────
 async function loadFeed(reset) {
 	const feed = $('#ttFeed');
-	if (reset) feed.innerHTML = skeletonRows(7);
+	if (reset) { feed.innerHTML = skeletonRows(7); feed.setAttribute('aria-busy', 'true'); }
 	try {
 		const rows = state.tab === 'exits' ? await fetchExits() : await fetchLaunches();
 		state.rows = rows;
 		renderFeed(rows);
 	} catch {
+		// A refresh that fails leaves the rows already on screen alone: replacing a
+		// good list with an error is a worse answer than a slightly stale one.
 		if (reset) {
-			const pinned = state.tab === 'launches'
-				? rowHtml({ kind: 'launch', mint: THREE_MINT, symbol: 'THREE', name: 'three.ws · platform coin', image_uri: '', agent_name: 'The only coin', oracle_tier: null }, { pinned: true })
-				: '';
-			feed.innerHTML = pinned + feedState('Could not load other launches.', 'Retry', () => loadFeed(true));
+			feed.innerHTML = pinnedRowHtml() + feedState(
+				state.tab === 'exits'
+					? 'Could not load the agent exit feed.'
+					: 'Could not load the launch feed.',
+				'Retry', () => loadFeed(true),
+			);
 		}
+	} finally {
+		if (reset) feed.setAttribute('aria-busy', 'false');
 	}
 }
 
@@ -262,31 +273,85 @@ function rowHtml(r, { pinned = false } = {}) {
 	</button>`;
 }
 
+// $THREE is always pinned at the top of the launches view (and never duplicated).
+function pinnedRowHtml() {
+	if (state.tab !== 'launches') return '';
+	return rowHtml(
+		{ kind: 'launch', mint: THREE_MINT, symbol: 'THREE', name: 'three.ws · platform coin', image_uri: '', agent_name: 'The only coin', oracle_tier: null },
+		{ pinned: true },
+	);
+}
+
 function renderFeed(rows) {
 	const feed = $('#ttFeed');
-	// $THREE is always pinned at the top of the launches view (and never duplicated).
-	const pinned = state.tab === 'launches'
-		? rowHtml({ kind: 'launch', mint: THREE_MINT, symbol: 'THREE', name: 'three.ws · platform coin', image_uri: '', agent_name: 'The only coin', oracle_tier: null }, { pinned: true })
-		: '';
+	const pinned = pinnedRowHtml();
 	const body = rows.filter((r) => !(state.tab === 'launches' && r.mint === THREE_MINT))
 		.map((r) => rowHtml(r)).join('');
-	if (!rows.length && !pinned) {
-		feed.innerHTML = feedState(
-			state.tab === 'exits' ? 'No profitable agent exits in this window yet.' : 'No launches on this network yet.',
-			'', null,
-		);
+	// An empty list still says so, even under the pinned coin: switching to devnet
+	// and seeing one lonely row is otherwise indistinguishable from a broken feed.
+	if (!body) {
+		feed.innerHTML = pinned + emptyState(pinned ? 'inline' : 'full');
 		return;
 	}
 	feed.innerHTML = pinned + body;
 	highlightRow(state.selected);
 }
 
+function emptyState(size) {
+	const devnet = state.network === 'devnet';
+	if (state.tab === 'exits') {
+		return feedState(
+			devnet
+				? 'No agent exits recorded on devnet yet. Switch to mainnet for the live exit feed.'
+				: 'No agent exit cleared the +10% bar in the last 7 days. Live exits land here the moment an agent closes a winning position.',
+			'Browse launches', () => switchTab('launches'), size,
+		);
+	}
+	return feedState(
+		devnet
+			? 'No devnet launches yet. Switch the network to mainnet for the live pump.fun feed.'
+			: 'No launches indexed on this network yet.',
+		devnet ? 'Switch to mainnet' : '', devnet ? () => switchNetwork('mainnet') : null, size,
+	);
+}
+
+// The feed is the tabs' panel: keep the pressed tab, the panel's label and the
+// visual "on" state in lockstep so assistive tech reads the view the eye sees.
+function syncTabs() {
+	const active = $$('#ttTabs [data-tab]').find((x) => x.dataset.tab === state.tab);
+	$$('#ttTabs [data-tab]').forEach((x) => {
+		const on = x === active;
+		x.classList.toggle('on', on);
+		x.setAttribute('aria-selected', String(on));
+	});
+	if (active?.id) $('#ttFeed')?.setAttribute('aria-labelledby', active.id);
+}
+
+function switchTab(tab) {
+	if (state.tab === tab) return;
+	state.tab = tab;
+	syncTabs();
+	writeUrl();
+	loadFeed(true);
+}
+
+function switchNetwork(network) {
+	if (state.network === network) return;
+	state.network = network;
+	localStorage.setItem(NETWORK_KEY, network);
+	const net = $('#ttNetwork');
+	if (net) net.value = network;
+	writeUrl();
+	loadFeed(true);
+}
+
 // ── feed states ───────────────────────────────────────────────────────────────
 function skeletonRows(n) {
 	return Array.from({ length: n }, () => '<div class="tt-row tt-row--skel"><span class="tt-row-ini sk"></span><span class="tt-row-main"><span class="sk sk-l"></span><span class="sk sk-s"></span></span></div>').join('');
 }
-function feedState(msg, action, fn) {
+function feedState(msg, action, fn, size = 'full') {
 	const id = action ? `tt-fs-${Math.random().toString(36).slice(2, 8)}` : '';
 	if (action && fn) setTimeout(() => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); }, 0);
-	return `<div class="tt-feed-state"><p>${escapeHtml(msg)}</p>${action ? `<button id="${id}" class="tt-mini-btn">${escapeHtml(action)}</button>` : ''}</div>`;
+	const cls = size === 'inline' ? 'tt-feed-state tt-feed-state--inline' : 'tt-feed-state';
+	return `<div class="${cls}"><p>${escapeHtml(msg)}</p>${action ? `<button type="button" id="${id}" class="tt-mini-btn">${escapeHtml(action)}</button>` : ''}</div>`;
 }

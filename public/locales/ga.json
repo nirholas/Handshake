@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; saotharlann</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws saotharlann",
-		"the_react_wrapper_around_the_sdk_imports": "An fillteán React timpeall an SDK. Iompórtálann sé <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, agus <code>useAvatar</code> go díreach ó <code>/avatar-sdk/src/react.jsx</code>. Luchtaítear React ó CDN trí léarscáil iompórtála ionas go n-oibríonn an leathanach seo gan céim bundleála.",
+		"the_react_wrapper_around_the_sdk_imports": "An fillteán React timpeall an SDK. Iompórtálann sé <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, agus <code>useAvatar</code> go díreach ó <code>/avatar-sdk/src/react.js</code>. Luchtaítear React ó CDN trí léarscáil iompórtála ionas go n-oibríonn an leathanach seo gan céim bundleála.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Eipiciúil",
 		"it_pays_the_quoted_price_and_receives": "Íocann sé an praghas luaite agus faigheann sé an eochair <b>uair amháin</b>. Iompórtáil é láithreach.",
 		"legendary": "Finscéalach",
-		"long_brandable_solana_addresses_4_5_characte": "Seoltaí Solana fada, inbhrandáilte — réimíreanna 4-5+ carachtar nach féidir leis an meilteoir beo a bhaint amach — meilte roimh ré ar LAP bhaisc agus díolta as stoc. Ceannaigh ceann amháin agus seachadtar an eochair phríobháideach <strong>uair amháin</strong> thar an iarnród <a href=\"/vanity/gallery\">x402</a>, ansin scriostar a chóip stóráilte. An bhfuil meilt úr ≤3-char ag teastáil ina ionad sin? Úsáid an <a href=\"/vanity-wallet\">meilteoir beo</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Seoltaí Solana fada, inbhrandáilte — réimíreanna 4-5+ carachtar nach féidir leis an meilteoir beo a bhaint amach — meilte roimh ré ar LAP bhaisc agus díolta as stoc. Ceannaigh ceann amháin agus seachadtar an eochair phríobháideach <strong>uair amháin</strong> thar an iarnród <a href=\"/x402\">x402</a>, ansin scriostar a chóip stóráilte. An bhfuil meilt úr ≤3-char ag teastáil ina ionad sin? Úsáid an <a href=\"/vanity-wallet\">meilteoir beo</a>.",
 		"meta_description": "Ceannaigh seoladh vanity Solana fada, inbhrandáilte a sheachadtar láithreach as stoc — réimíreanna 4-5+ carachtar nach féidir leis an meilteoir beo a bhaint amach, meilte roimh ré ar LAP bhaisc agus díolta trí x402. Méadaíonn an praghas de réir annamhachta.",
 		"meta_og_description": "Seoltaí vanity Solana fada, inbhraite, meilte roimh ré agus díolta as stoc. Seachadta uair amháin, criptithe ag an gcuid eile, praghas bunaithe ar annamhacht.",
 		"meta_og_title": "Fardal Vanity Préimhe · three.ws",

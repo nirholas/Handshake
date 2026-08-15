@@ -4,11 +4,11 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title data-i18n="viewer.meta_title">3D Viewer · three.ws</title>
-<meta name="description" content="View and download an interactive 3D model (GLB) generated with three.ws."  data-i18n-attr="content:viewer.meta_description"/>
+<title data-i18n="viewer.meta_title">glTF / GLB Viewer · three.ws</title>
+<meta name="description" content="Preview any public glTF or GLB model right in the browser, then pose it, restyle it, build a scene, place it in AR, embed it on your site, or download it."  data-i18n-attr="content:viewer.meta_description"/>
 <meta name="robots" content="noindex" />
-<meta property="og:title" content="3D Viewer · three.ws"  data-i18n-attr="content:viewer.meta_og_title"/>
-<meta property="og:description" content="An interactive 3D model, generated with three.ws."  data-i18n-attr="content:viewer.meta_og_description"/>
+<meta property="og:title" content="glTF / GLB Viewer · three.ws"  data-i18n-attr="content:viewer.meta_og_title"/>
+<meta property="og:description" content="Preview any public glTF or GLB model right in the browser, then take it further: pose, restyle, scene, AR, embed."  data-i18n-attr="content:viewer.meta_og_description"/>
 <meta property="og:type" content="website" />
 <!-- Meshopt decoder must register before <model-viewer> starts loading (Forge GLBs are meshopt-compressed). Classic script → runs during parse, before the model-viewer module. -->
 <script src="/model-viewer-meshopt.js"></script>
@@ -44,7 +44,8 @@
   .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: #e8eaf0; font-weight: 700; letter-spacing: .01em; }
   .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
   .brand:hover { color: #fff; }
-  .title { flex: 1 1 auto; min-width: 0; font-size: 13.5px; color: #aeb6c4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The model name is the page's h1: styled as a quiet header line, not a display heading. */
+  .title { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 13.5px; font-weight: 500; color: #aeb6c4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .stage { position: relative; flex: 1 1 auto; min-height: 0; }
   model-viewer {
     width: 100%; height: 100%;
@@ -62,7 +63,7 @@
   .spinner { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.14); border-top-color: var(--accent); animation: spin .9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
-  .h { font-size: 15px; font-weight: 600; }
+  .h { margin: 0; font-size: 15px; font-weight: 600; }
   .muted { color: #9aa3b2; font-size: 13px; line-height: 1.5; max-width: 40ch; }
   .muted a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .muted a:hover { color: #dbe9ff; }
@@ -171,8 +172,10 @@
 <div class="wrap">
   <header class="bar">
     <a class="brand" href="https://three.ws" data-i18n-html="viewer.three_ws"><span class="dot" aria-hidden="true"></span>three.ws</a>
-    <span id="title" class="title"></span>
-    <a id="badge" class="badge hidden" target="_blank" rel="noopener noreferrer" aria-label="Provenance verification" data-i18n-attr="aria-label:viewer.provenance_verification_arialabel"></a>
+    <h1 id="title" class="title" data-i18n="viewer.gltf_glb_viewer">glTF / GLB viewer</h1>
+    <!-- No aria-label: when the badge links out, its accessible name has to be the
+         status a sighted visitor reads ("Verified · three.ws"), not a generic one. -->
+    <a id="badge" class="badge hidden" target="_blank" rel="noopener noreferrer"></a>
   </header>
 
   <div class="stage">
@@ -184,18 +187,18 @@
 
     <div id="loading" class="overlay">
       <div class="spinner" aria-hidden="true"></div>
-      <div class="h">Loading model<span id="load-pct"></span></div>
-      <div class="muted">Fetching and rendering the GLB. Large or high-detail models take a few seconds.</div>
+      <h2 class="h"><span data-i18n="viewer.loading_model">Loading model</span><span id="load-pct"></span></h2>
+      <div class="muted" data-i18n="viewer.fetching_and_rendering_the_glb">Fetching and rendering the GLB. Large or high-detail models take a few seconds.</div>
     </div>
 
     <div id="empty" class="overlay hidden">
-      <div class="h">No model to show</div>
-      <div class="muted">This viewer opens a 3D model from a <code>?src=</code> link. Generate one for free at <a href="https://three.ws/forge" data-i18n="viewer.three_ws_forge">three.ws/forge</a>.</div>
+      <h2 class="h" data-i18n="viewer.no_model_to_show">No model to show</h2>
+      <div class="muted" data-i18n-html="viewer.this_viewer_opens_a_3d_model">This viewer opens a 3D model from a <code>?src=</code> link. Generate one for free at <a href="https://three.ws/forge">three.ws/forge</a>.</div>
       <a class="btn primary" href="https://three.ws/forge" data-i18n="viewer.create_a_3d_model">Create a 3D model</a>
     </div>
 
     <div id="error" class="overlay hidden">
-      <div class="h">Couldn't display this model</div>
+      <h2 class="h" data-i18n="viewer.couldnt_display_this_model">Couldn't display this model</h2>
       <div id="errmsg" class="muted">The 3D model failed to load. You can still download the GLB file below.</div>
     </div>
   </div>
@@ -280,10 +283,45 @@
   // Only ever load an https GLB — never data:/http:/blob: from an untrusted link.
   function isHttps(u) { try { return new URL(u).protocol === 'https:'; } catch (e) { return false; } }
 
-  if (!src) { mv.classList.add('hidden'); foot.classList.add('hidden'); show(empty); return; }
-  if (!isHttps(src)) { fail('That model link is not a valid https URL.'); foot.classList.remove('hidden'); return; }
+  // The document title is "<model name> · <page title>". The page-title half is
+  // translated copy, and the i18n runtime rewrites <title> from its catalog on
+  // every pass (boot, injected content, locale switch), which would drop the
+  // model name. Claim the element with data-i18n-owned so no pass touches it,
+  // then compose the title here from the same catalog value the runtime uses.
+  var titleTag = document.getElementsByTagName('title')[0];
+  var baseDocTitle = (titleTag && titleTag.textContent) || 'glTF / GLB Viewer · three.ws';
+  if (titleTag) titleTag.setAttribute('data-i18n-owned', '1');
+  function localizedBase() {
+    var api = window.threewsI18n;
+    if (!api || typeof api.t !== 'function') return baseDocTitle;
+    var v = api.t('viewer.meta_title');
+    // A miss echoes the key back; keep the English source text in that case.
+    return v && v !== 'viewer.meta_title' ? v : baseDocTitle;
+  }
+  function syncDocTitle() {
+    var base = localizedBase();
+    document.title = title ? title + ' · ' + base : base;
+  }
+  window.addEventListener('i18n:change', syncDocTitle);
 
-  if (title) { titleEl.textContent = title; document.title = title + ' · 3D Viewer · three.ws'; }
+  if (title) {
+    titleEl.textContent = title;
+    // The h1 now holds live data (the model name), so the catalog pass must not
+    // put the generic page heading back over it.
+    titleEl.setAttribute('data-i18n-owned', '1');
+    mv.setAttribute('alt', title);
+    syncDocTitle();
+  }
+
+  if (!src) { mv.classList.add('hidden'); foot.classList.add('hidden'); show(empty); return; }
+  if (!isHttps(src)) {
+    // Nothing to download either: never leave a dead Download button behind.
+    downloadEl.classList.add('hidden');
+    fail('That model link is not a valid https URL. Open a viewer link whose ?src= points at an https .glb file.');
+    foot.classList.remove('hidden');
+    return;
+  }
+
   downloadEl.href = src;
   foot.classList.remove('hidden');
   show(loading);
@@ -428,7 +466,12 @@
   // Coin launch: snapshot the rendered model into a token image, hand it to
   // /launch via sessionStorage (a data URL never fits in a query string).
   var coinCard = document.getElementById('act-coin');
-  var coinDesc = document.getElementById('coin-d');
+  // Look the description lines up on demand, never once at boot: the i18n runtime
+  // rewrites each card's innerHTML when it applies a catalog, which replaces these
+  // nodes. A reference captured now would be detached, and every status message
+  // this page writes would land on an element the user cannot see.
+  function cardDesc(id) { return document.getElementById(id); }
+  function setCardDesc(id, text) { var el = cardDesc(id); if (el) el.textContent = text; }
   function captureTokenImage() {
     return new Promise(function (resolve, reject) {
       var raw;
@@ -453,7 +496,7 @@
   coinCard.addEventListener('click', function () {
     if (coinCard.disabled) return;
     coinCard.disabled = true;
-    coinDesc.textContent = 'Rendering the token image…';
+    setCardDesc('coin-d', 'Rendering the token image…');
     var name = (title || 'My 3D creation').slice(0, 32);
     var desc = (title ? title + '. ' : '') + 'Forged in 3D on three.ws.';
     var q = '/launch?name=' + enc(name) + '&description=' + enc(desc.slice(0, 500));
@@ -467,17 +510,16 @@
 
   // Embed: copy a paste-anywhere iframe of this exact viewer.
   var embedCard = document.getElementById('act-embed');
-  var embedDesc = document.getElementById('embed-d');
-  var embedDefault = embedDesc.textContent;
   function escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
   embedCard.addEventListener('click', function () {
+    var embedDefault = cardDesc('embed-d').textContent;
     var pageUrl = location.origin + '/viewer?src=' + enc(src) + tOpt;
     var snippet = '<iframe src="' + escAttr(pageUrl) + '" width="640" height="480" '
       + 'style="border:0;border-radius:12px;background:#0b0c10" loading="lazy" '
       + 'allow="xr-spatial-tracking; fullscreen" title="' + escAttr(title || '3D model') + ' · three.ws 3D viewer"></iframe>';
     function done(ok) {
-      embedDesc.textContent = ok ? 'Copied. Paste it into any HTML page.' : 'Copy failed: select and copy the address bar URL instead.';
-      setTimeout(function () { embedDesc.textContent = embedDefault; }, 2600);
+      setCardDesc('embed-d', ok ? 'Copied. Paste it into any HTML page.' : 'Copy failed: select and copy the address bar URL instead.');
+      setTimeout(function () { setCardDesc('embed-d', embedDefault); }, 2600);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(snippet).then(function () { done(true); }, function () { done(false); });

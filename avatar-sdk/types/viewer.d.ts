@@ -21,6 +21,8 @@ declare global {
  *  - `alt` — accessibility label and caption text. Defaults to
  *    `"3D model viewer"` when unset so the canvas is never unlabeled.
  *  - `background` — CSS color string, or `'transparent'`. Default transparent.
+ *  - `auto-rotate` - opt-in boolean. Slowly spins the model when idle.
+ *    Ignored under `prefers-reduced-motion: reduce`.
  *  - `ar` — opt-in boolean. Renders a "View in AR" button that opens the
  *    platform's device-aware AR launcher (`three.ws/api/ar`) in a new tab:
  *    Android → Google Scene Viewer, iOS → Apple Quick Look, desktop → the
@@ -44,10 +46,16 @@ declare global {
  *    AR button is activated.
  */
 export class ThreeWsViewerElement extends HTMLElement {
-	src?: string;
-	alt?: string;
-	background?: string;
-	ar?: boolean;
+	/** GLB URL. Reflects the `src` attribute. */
+	src: string | null;
+	/** Accessibility label and caption. Reflects the `alt` attribute. */
+	alt: string | null;
+	/** CSS color or 'transparent'. Reflects the `background` attribute. */
+	background: string | null;
+	/** Show the "View in AR" button. Reflects the `ar` attribute. */
+	ar: boolean;
+	/** Spin the model when idle. Reflects the `auto-rotate` attribute. */
+	autoRotate: boolean;
 }
 
 export default ThreeWsViewerElement;

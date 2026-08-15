@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — خطاف",
 		"lab": "<a href=\"/demos\">&larr; المختبر</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws المختبر",
-		"the_react_wrapper_around_the_sdk_imports": "غلاف React حول حزمة تطوير البرمجيات (SDK). يستورد <code>Avatar</code>، <code>AgentAvatar</code>، <code>AvatarCreator</code>، و <code>useAvatar</code> مباشرة من <code>/avatar-sdk/src/react.jsx</code>. يتم تحميل React من شبكة توصيل المحتوى (CDN) عبر خريطة استيراد لتعمل هذه الصفحة بدون خطوة تجميع.",
+		"the_react_wrapper_around_the_sdk_imports": "غلاف React حول حزمة تطوير البرمجيات (SDK). يستورد <code>Avatar</code>، <code>AgentAvatar</code>، <code>AvatarCreator</code>، و <code>useAvatar</code> مباشرة من <code>/avatar-sdk/src/react.js</code>. يتم تحميل React من شبكة توصيل المحتوى (CDN) عبر خريطة استيراد لتعمل هذه الصفحة بدون خطوة تجميع.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "أسطوري",
 		"it_pays_the_quoted_price_and_receives": "يدفع السعر المعلن ويستلم المفتاح <b>مرة واحدة</b>. استورده فورًا.",
 		"legendary": "أسطوري",
-		"long_brandable_solana_addresses_4_5_characte": "عناوين Solana طويلة وقابلة للعلامة التجارية — بادئات مكونة من 4-5+ أحرف لا يمكن للمطحنة الحية الوصول إليها — تم تجهيزها مسبقًا على معالجات مركزية (CPU) دفعة واحدة وبيعها من المخزون. اشترِ واحدًا وسيتم تسليم المفتاح الخاص <strong>مرة واحدة</strong> عبر مسار <a href=\"/vanity/gallery\">x402</a>، ثم يتم تدمير نسخته المخزنة. هل تحتاج إلى إنشاء جديد بـ 3 أحرف أو أقل بدلاً من ذلك؟ استخدم <a href=\"/vanity-wallet\">المطحنة الحية</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "عناوين Solana طويلة وقابلة للعلامة التجارية — بادئات مكونة من 4-5+ أحرف لا يمكن للمطحنة الحية الوصول إليها — تم تجهيزها مسبقًا على معالجات مركزية (CPU) دفعة واحدة وبيعها من المخزون. اشترِ واحدًا وسيتم تسليم المفتاح الخاص <strong>مرة واحدة</strong> عبر مسار <a href=\"/x402\">x402</a>، ثم يتم تدمير نسخته المخزنة. هل تحتاج إلى إنشاء جديد بـ 3 أحرف أو أقل بدلاً من ذلك؟ استخدم <a href=\"/vanity-wallet\">المطحنة الحية</a>.",
 		"meta_description": "اشترِ عنوان Solana مميزًا وطويلًا وقابلًا للعلامة التجارية، يتم تسليمه فورًا من المخزون — بادئات مكونة من 4-5+ أحرف لا يمكن للمطحنة الحية الوصول إليها، تم تجهيزها مسبقًا على معالجات مركزية (CPU) دفعة واحدة وبيعها عبر x402. يتناسب السعر مع الندرة.",
 		"meta_og_description": "عناوين Solana مميزة وطويلة وقابلة للعلامة التجارية، تم تجهيزها مسبقًا وبيعها من المخزون. تُسلم مرة واحدة، مشفرة في وضع السكون، ويُحدد سعرها حسب الندرة.",
 		"meta_og_title": "مخزون العناوين المميزة الفاخرة · three.ws",

@@ -130,7 +130,7 @@ body {
 	border-radius: var(--radius-lg, 14px); padding: var(--space-md, 16px); margin-bottom: var(--space-xl, 32px); }
 .px-market-h { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-md, 14px); }
 .px-market-htxt { display: flex; align-items: center; gap: 10px; }
-.px-market-title { font-family: var(--font-display, sans-serif); font-size: var(--text-lg, 1.05rem); font-weight: 600; color: var(--ink-bright, #fff); }
+.px-market-title { margin: 0; font-family: var(--font-display, sans-serif); font-size: var(--text-lg, 1.05rem); font-weight: 600; color: var(--ink-bright, #fff); }
 .px-market-tag { font-family: var(--font-mono, monospace); font-size: var(--text-2xs, .64rem); font-weight: 600; letter-spacing: .03em;
 	color: var(--ink-bright, #fff); background: var(--surface-3, rgba(255,255,255,.08)); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14));
 	border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
@@ -213,7 +213,7 @@ body {
 .px-rail { position: sticky; top: 80px; display: flex; flex-direction: column; gap: var(--space-lg, 20px); }
 .px-card { background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.07)); border-radius: var(--radius-lg, 14px); padding: var(--space-md, 16px); }
 .px-card--hl { background: var(--surface-2, rgba(255,255,255,.05)); border-color: var(--stroke-strong, rgba(255,255,255,.14)); }
-.px-card-h { display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm, .8rem); font-weight: 600; color: var(--ink-bright, #fff); margin-bottom: var(--space-sm, 12px); }
+.px-card-h { display: flex; align-items: center; justify-content: space-between; font-size: var(--text-sm, .8rem); font-weight: 600; color: var(--ink-bright, #fff); margin: 0 0 var(--space-sm, 12px); }
 .px-card-h small { font-weight: 400; color: var(--ink-faint, #666); font-size: var(--text-2xs, .66rem); }
 
 .px-lb-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radius-md, 9px); text-decoration: none; color: inherit; transition: background .14s ease; }
@@ -242,6 +242,51 @@ body {
 .px-shell .mp-livedot::before { background: var(--ink-bright, #fff); animation-name: px-ping; }
 .px-shell .mp-livedot[data-state="paused"]::before { background: var(--ink-faint, #555); }
 .px-shell .mp-empty-sub a { color: var(--ink-bright, #fff); }
+
+/* ── Panel lifecycle: loading / ready / error ──────────────────────────────
+   A viability panel is never a blank frame. While its live read is in flight the
+   figures are masked by skeletons that hold the exact final layout, so nothing
+   reflows when the numbers land. If the read fails the body is replaced by an
+   actionable notice rather than a stale or invented number. */
+.px-panel-err { display: none; }
+[data-state="error"] .px-panel-err { display: block; }
+[data-state="error"] .px-panel-live { display: none; }
+[data-state="error"] .px-market-tag { display: none; }
+.px-panel-err-t { margin: 0 0 6px; font-family: var(--font-display, sans-serif); font-size: var(--text-sm, .85rem); font-weight: 600; color: var(--ink-bright, #fff); }
+.px-panel-err-d { margin: 0 0 5px; max-width: 62ch; font-size: var(--text-2xs, .7rem); line-height: 1.5; color: var(--ink-dim, #888); }
+.px-panel-err-d code { font-family: var(--font-mono, monospace); font-size: .95em; color: var(--ink, #e8e8e8); background: var(--surface-2, rgba(255,255,255,.05)); border-radius: 4px; padding: 1px 5px; }
+.px-panel-err-why { margin: 0 0 var(--space-md, 14px); max-width: 62ch; font-size: var(--text-2xs, .7rem); line-height: 1.5; color: var(--ink, #d0d0d0); }
+.px-panel-err-act { display: flex; flex-wrap: wrap; gap: 8px; }
+.px-panel-err-act .px-market-action { margin-left: 0; text-decoration: none; }
+.px-panel-err-act .px-market-action[disabled] { opacity: .5; cursor: progress; }
+
+/* Skeletons: same box, same rhythm, no text. Masking the value elements (rather
+   than swapping in placeholder markup) keeps the ready state a single repaint. */
+@keyframes px-skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+[data-state="loading"] .px-kpi dd::after,
+[data-state="loading"] .px-market-tag::after,
+[data-state="loading"] .px-spark-total::after,
+[data-state="loading"] .px-spark-bars::after,
+[data-state="loading"] .px-market-skills > div::after {
+	content: ""; display: block; border-radius: 6px;
+	background: linear-gradient(90deg, var(--surface-2, rgba(255,255,255,.05)) 25%, var(--surface-3, rgba(255,255,255,.11)) 50%, var(--surface-2, rgba(255,255,255,.05)) 75%);
+	background-size: 200% 100%; animation: px-skel 1.4s linear infinite;
+}
+[data-state="loading"] .px-kpi dd::after { width: 70%; height: 1.15em; }
+[data-state="loading"] .px-market-tag { border-color: transparent; background: transparent; padding: 0; }
+[data-state="loading"] .px-market-tag::after { width: 86px; height: 1.1em; }
+[data-state="loading"] .px-spark-total::after { width: 74px; height: .95em; }
+[data-state="loading"] .px-spark-bars { display: block; }
+[data-state="loading"] .px-spark-bars::after { width: 100%; height: 100%; }
+[data-state="loading"] .px-market-skills > div::after { width: 100%; height: 92px; }
+[data-state="loading"] .px-trade-insight { display: none; }
+@media (prefers-reduced-motion: reduce) {
+	[data-state="loading"] .px-kpi dd::after,
+	[data-state="loading"] .px-market-tag::after,
+	[data-state="loading"] .px-spark-total::after,
+	[data-state="loading"] .px-spark-bars::after,
+	[data-state="loading"] .px-market-skills > div::after { animation: none; }
+}
 
 @media (max-width: 880px) {
 	.px-grid { grid-template-columns: 1fr; }

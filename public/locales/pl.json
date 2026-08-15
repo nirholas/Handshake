@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · lab three.ws",
-		"the_react_wrapper_around_the_sdk_imports": "Wrapper React dla SDK. Importuje <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> oraz <code>useAvatar</code> bezpośrednio z <code>/avatar-sdk/src/react.jsx</code>. React jest ładowany z CDN za pomocą mapy importów, dzięki czemu strona działa bez etapu bundlera.",
+		"the_react_wrapper_around_the_sdk_imports": "Wrapper React dla SDK. Importuje <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> oraz <code>useAvatar</code> bezpośrednio z <code>/avatar-sdk/src/react.js</code>. React jest ładowany z CDN za pomocą mapy importów, dzięki czemu strona działa bez etapu bundlera.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epicki",
 		"it_pays_the_quoted_price_and_receives": "Płaci podaną cenę i otrzymuje klucz <b>jednorazowo</b>. Zaimportuj go natychmiast.",
 		"legendary": "Legendarny",
-		"long_brandable_solana_addresses_4_5_characte": "Długie, markowe adresy Solana — prefiksy 4–5+ znaków, których nie osiągnie live grinder — wygenerowane z wyprzedzeniem na CPU w trybie wsadowym i sprzedawane z magazynu. Kup jeden, a klucz prywatny zostanie dostarczony <strong>jednorazowo</strong> za pośrednictwem <a href=\"/vanity/gallery\">x402</a>, następnie jego przechowywana kopia jest niszczona. Potrzebujesz świeżego grindu ≤3 znaków? Użyj <a href=\"/vanity-wallet\">live grindera</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Długie, markowe adresy Solana — prefiksy 4–5+ znaków, których nie osiągnie live grinder — wygenerowane z wyprzedzeniem na CPU w trybie wsadowym i sprzedawane z magazynu. Kup jeden, a klucz prywatny zostanie dostarczony <strong>jednorazowo</strong> za pośrednictwem <a href=\"/x402\">x402</a>, następnie jego przechowywana kopia jest niszczona. Potrzebujesz świeżego grindu ≤3 znaków? Użyj <a href=\"/vanity-wallet\">live grindera</a>.",
 		"meta_description": "Kup długi, markowy adres vanity Solana dostarczany natychmiast z magazynu — prefiksy 4–5+ znaków, których nie osiągnie live grinder, wygenerowany z wyprzedzeniem na CPU w trybie wsadowym i sprzedawany przez x402. Cena zależy od rzadkości.",
 		"meta_og_description": "Długie, markowe adresy vanity Solana, wygenerowane z wyprzedzeniem i sprzedawane z magazynu. Dostarczane jednorazowo, szyfrowane w spoczynku, wyceniane według rzadkości.",
 		"meta_og_title": "Inwentarz Premium Vanity · three.ws",

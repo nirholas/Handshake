@@ -14,7 +14,13 @@ const CONSERVATION_THRESHOLD_ATOMICS = 50_000;
 
 // Returns the current treasury state.
 // Falls back to a zeroed object if the row doesn't exist yet.
-export async function getTreasury() {
+//
+// A read fault also degrades to that zeroed object, which is right for the
+// agent loop (a tick that cannot read its balance must not act) but wrong for
+// a reader that renders the number to a human: "$0.00, halted" is what a broke
+// agent looks like, not what a database outage looks like. Pass
+// `{ throwOnError: true }` to get the fault instead of the zeroes.
+export async function getTreasury({ throwOnError = false } = {}) {
 	try {
 		const [row] = await sql`
 			SELECT
@@ -47,6 +53,7 @@ export async function getTreasury() {
 		};
 	} catch (err) {
 		console.error('[treasury] getTreasury failed:', err.message);
+		if (throwOnError) throw err;
 		return {
 			balance_usdc_atomics: 0,
 			lifetime_earned_atomics: 0,

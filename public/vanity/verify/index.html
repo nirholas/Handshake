@@ -5,14 +5,14 @@
 	<meta charset="utf-8">
 	<title data-i18n="vanity_verify_index.meta_title">Verify a vanity receipt · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator could never have kept a copy." data-i18n-attr="content:vanity_verify_index.meta_description">
+	<meta name="description" content="Independently verify a three.ws provably-fair vanity wallet receipt: entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy." data-i18n-attr="content:vanity_verify_index.meta_description">
 	<link rel="icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/footer.css">
 	<link rel="stylesheet" href="/nav.css">
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<script defer src="/footer-newsletter.js"></script>
 	<meta property="og:title" content="Verify a provably-fair vanity wallet · three.ws" data-i18n-attr="content:vanity_verify_index.meta_og_title">
-	<meta property="og:description" content="Prove your three.ws vanity key was generated fresh and never kept — verification runs entirely in your browser." data-i18n-attr="content:vanity_verify_index.meta_og_description">
+	<meta property="og:description" content="Prove your three.ws vanity key was generated fresh and never kept: verification runs entirely in your browser." data-i18n-attr="content:vanity_verify_index.meta_og_description">
 	<meta name="twitter:card" content="summary_large_image">
 	<style>
 		* { box-sizing: border-box; }
@@ -92,6 +92,15 @@
 		.badge { display:inline-flex; align-items:center; gap:.45rem; background:var(--ok-bg); border:1px solid rgba(74,222,128,0.35); color:var(--ok-fg); border-radius:999px; padding:.35rem .85rem; font-size:.78rem; font-weight:600; }
 		a.link { color:#ffd54f; text-decoration:none; border-bottom:1px solid rgba(255,213,79,.4); }
 		a.link:hover { border-bottom-color:#ffd54f; }
+
+		/* Keyboard focus. The inputs suppress the UA outline for a calmer mouse
+		   focus, so give every interactive element an explicit, high-contrast
+		   ring for keyboard users. Declared last so it wins over the :focus rule
+		   above at equal specificity. */
+		a:focus-visible, button:focus-visible, summary:focus-visible,
+		textarea:focus-visible, input[type=text]:focus-visible {
+			outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;
+		}
 	</style>
 
 	<link rel="canonical" href="https://three.ws/vanity/verify">
@@ -107,7 +116,7 @@
 	<meta property="og:image:alt" content="Verify a Vanity Receipt — three.ws">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:title" content="Verify a Vanity Receipt · three.ws" data-i18n-attr="content:vanity_verify_index.meta_twitter_title">
-	<meta name="twitter:description" content="Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy." data-i18n-attr="content:vanity_verify_index.meta_twitter_description">
+	<meta name="twitter:description" content="Independently verify a three.ws provably-fair vanity wallet receipt: entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy." data-i18n-attr="content:vanity_verify_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Verify+a+Vanity+Receipt&amp;d=Independently+verify+a+three.ws+provably-fair+vanity+wallet+receipt%3A+entirely+in+your+browser.+Prove+the+key+was+generated+fresh+under+a+committed+seed+and+the&amp;p=%2Fvanity%2Fverify">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Verify a Vanity Receipt","description":"Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy.","url":"https://three.ws/vanity/verify","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Verify+a+Vanity+Receipt&d=Independently+verify+a+three.ws+provably-fair+vanity+wallet+receipt+%E2%80%94+entirely+in+your+browser.+Prove+the+key+was+generated+fresh+under+a+committed+seed+and+the&p=%2Fvanity%2Fverify"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Vanity","item":"https://three.ws/vanity"},{"@type":"ListItem","position":3,"name":"Verify","item":"https://three.ws/vanity/verify"}]}]}</script>
 	<!-- Resolve the bare specifiers that verifiable-grind.js / sealed-envelope.js import, without a bundler
@@ -195,9 +204,6 @@
 	<footer class="h-footer-horizon"><div class="h-footer-inner" style="text-align:center;padding:2rem 1rem;color:#555;font-size:.8rem">three.ws — provably-fair vanity grinding</div></footer>
 
 	<script type="module">
-		import { verifyVanityReceipt } from '/src/solana/vanity/verifiable-grind.js';
-		import { openSealedText } from '/src/solana/vanity/sealed-envelope.js';
-
 		const $ = (id) => document.getElementById(id);
 		const receiptEl = $('receipt');
 		const x25519El = $('x25519');
@@ -206,6 +212,37 @@
 		const pinLineEl = $('pin-line');
 
 		let pinnedKey = null;
+
+		// The verifier and the envelope opener load on demand instead of as
+		// top-level imports. A static import that fails (module CDN blocked, a
+		// captive portal, offline) aborts this entire script, which would leave
+		// every control on the page bound to nothing and clicking Verify would
+		// do nothing at all. Loading them lazily keeps the UI wired and turns a
+		// module outage into a designed, retryable error.
+		const VERIFIER_OFFLINE =
+			'The in-browser verifier could not load, so nothing was checked. Your network or an extension is likely blocking the cryptography modules. ' +
+			'Press "Verify receipt" to retry, or verify offline with the open-source CLI: node scripts/verify-vanity-receipt.mjs receipt.json';
+		let verifierPromise = null;
+		function loadVerifier() {
+			if (!verifierPromise) {
+				verifierPromise = Promise.all([
+					import('/src/solana/vanity/verifiable-grind.js'),
+					import('/src/solana/vanity/sealed-envelope.js'),
+				])
+					.then(([grind, envelope]) => ({
+						verifyVanityReceipt: grind.verifyVanityReceipt,
+						openSealedText: envelope.openSealedText,
+					}))
+					.catch(() => {
+						verifierPromise = null; // so the next click genuinely retries
+						throw new Error(VERIFIER_OFFLINE);
+					});
+			}
+			return verifierPromise;
+		}
+		// Warm the modules immediately so the first verification is instant, and
+		// tell the reader up front if they will not load at all.
+		loadVerifier().catch((e) => showError(e.message));
 
 		// Pin the live service key from the well-known document so an impostor
 		// receipt (self-signed under a different key) is caught.
@@ -292,15 +329,30 @@
 			renderSkeleton();
 
 			try {
-				// Optionally open the sealed envelope locally to prove custody.
+				const { verifyVanityReceipt, openSealedText } = await loadVerifier();
+
+				// Prove custody when the secret is recoverable. Two delivery
+				// shapes exist: a sealed envelope (needs the buyer's X25519 key,
+				// opened here and only here) and an unsealed receipt, which
+				// carries the seed in the clear and therefore needs no key at all.
 				let openedSecretSeed;
 				const x25519 = x25519El.value.trim();
-				if (x25519 && receipt.sealedSecret) {
-					let bundleText;
-					try { bundleText = await openSealedText(receipt.sealedSecret, x25519); }
-					catch (e) { throw new Error('Could not open the sealed envelope with that X25519 key: ' + e.message); }
-					let bundle; try { bundle = JSON.parse(bundleText); } catch { throw new Error('Sealed payload was not valid JSON.'); }
-					openedSecretSeed = bundle.seed || (Array.isArray(bundle.secretKey) ? Uint8Array.from(bundle.secretKey).slice(0, 32) : undefined);
+				if (receipt.sealedSecret) {
+					if (x25519) {
+						let bundleText;
+						try { bundleText = await openSealedText(receipt.sealedSecret, x25519); }
+						catch (e) {
+							const why = e?.message || 'it did not decrypt this envelope';
+							const to = receipt.sealedRecipient ? ' (sealedRecipient ' + String(receipt.sealedRecipient).slice(0, 8) + '…)' : '';
+							throw new Error('Could not open the sealed envelope with that X25519 key: ' + why + '. Paste the secret half of the key you sent as sealTo' + to + ', in Base58 or hex.');
+						}
+						let bundle; try { bundle = JSON.parse(bundleText); } catch { throw new Error('Sealed payload was not valid JSON.'); }
+						openedSecretSeed = bundle.seed || (Array.isArray(bundle.secretKey) ? Uint8Array.from(bundle.secretKey).slice(0, 32) : undefined);
+					}
+				} else if (x25519) {
+					throw new Error('You supplied an X25519 key, but this receipt carries no sealed envelope (no sealedSecret field) to open. Clear the key to verify the receipt on its own, or paste the receipt exactly as the API returned it.');
+				} else if (receipt.seed || Array.isArray(receipt.secretKey)) {
+					openedSecretSeed = receipt.seed || Uint8Array.from(receipt.secretKey).slice(0, 32);
 				}
 
 				// Pin to the live well-known key when we have it. If we couldn't fetch
@@ -339,12 +391,20 @@
 		(function loadFromHash() {
 			const m = /[#&]receipt=([^&]+)/.exec(location.hash || '');
 			if (!m) return;
+			let json;
 			try {
-				const json = decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/'))));
-				JSON.parse(json); // validate
-				receiptEl.value = json;
-				verify();
-			} catch { /* malformed hash — ignore */ }
+				const bin = atob(m[1].replace(/-/g, '+').replace(/_/g, '/'));
+				json = new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+				JSON.parse(json); // validate before it reaches the textarea
+			} catch {
+				// A truncated or re-encoded share link would otherwise land the
+				// reader on an empty form with no idea why nothing happened.
+				showError('This share link carries a receipt payload this page could not read: it looks truncated or re-encoded in transit. Ask the sender for the link again, or paste the receipt JSON above.');
+				receiptEl.focus();
+				return;
+			}
+			receiptEl.value = json;
+			verify();
 		})();
 	</script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->

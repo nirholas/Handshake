@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — هوک",
 		"lab": "<a href=\"/demos\">&larr; لابراتوار</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws لابراتوار",
-		"the_react_wrapper_around_the_sdk_imports": "د SDK شاوخوا د رییکټ ریپر. په مستقیم ډول <code>/avatar-sdk/src/react.jsx</code> څخه <code>Avatar</code>، <code>AgentAvatar</code>، <code>AvatarCreator</code>، او <code>useAvatar</code> واردوي. رییکټ د CDN څخه د وارداتو نقشې له لارې پورته کیږي نو دا پاڼه د بنډلر مرحلې پرته کار کوي.",
+		"the_react_wrapper_around_the_sdk_imports": "د SDK شاوخوا د رییکټ ریپر. په مستقیم ډول <code>/avatar-sdk/src/react.js</code> څخه <code>Avatar</code>، <code>AgentAvatar</code>، <code>AvatarCreator</code>، او <code>useAvatar</code> واردوي. رییکټ د CDN څخه د وارداتو نقشې له لارې پورته کیږي نو دا پاڼه د بنډلر مرحلې پرته کار کوي.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "ایپیک",
 		"it_pays_the_quoted_price_and_receives": "دا نقل شوی قیمت ورکوي او کیلي <b>یو ځل</b> ترلاسه کوي. سمدستي یې وارد کړئ.",
 		"legendary": "افسانوي",
-		"long_brandable_solana_addresses_4_5_characte": "اوږد، د برانډ وړ Solana ادرسونه — 4-5+ کرکټر مختاړي چې ژوندی ګرینډر ورته نشي رسیدلی — مخکې له وخته په بیچ CPU کې ګرینډ شوي او له سټاک څخه پلورل کیږي. یو یې واخلئ او خصوصي کیلي <strong>یو ځل</strong> د <a href=\"/vanity/gallery\">x402</a> ریل له لارې سپارل کیږي، بیا یې ذخیره شوې کاپي له منځه وړل کیږي. پرځای یې یو تازه ≤3-کرکټر ګرینډ ته اړتیا لرئ؟ <a href=\"/vanity-wallet\">ژوندی ګرینډر</a> وکاروئ.",
+		"long_brandable_solana_addresses_4_5_characte": "اوږد، د برانډ وړ Solana ادرسونه — 4-5+ کرکټر مختاړي چې ژوندی ګرینډر ورته نشي رسیدلی — مخکې له وخته په بیچ CPU کې ګرینډ شوي او له سټاک څخه پلورل کیږي. یو یې واخلئ او خصوصي کیلي <strong>یو ځل</strong> د <a href=\"/x402\">x402</a> ریل له لارې سپارل کیږي، بیا یې ذخیره شوې کاپي له منځه وړل کیږي. پرځای یې یو تازه ≤3-کرکټر ګرینډ ته اړتیا لرئ؟ <a href=\"/vanity-wallet\">ژوندی ګرینډر</a> وکاروئ.",
 		"meta_description": "یو اوږد، د برانډ وړ Solana وینټي ادرس واخلئ چې سمدستي له سټاک څخه سپارل کیږي — 4-5+ کرکټر مختاړي چې ژوندی ګرینډر ورته نشي رسیدلی، مخکې له وخته په بیچ CPU کې ګرینډ شوي او د x402 له لارې پلورل کیږي. قیمت د نادرت سره سم بدلیږي.",
 		"meta_og_description": "اوږدې، د برانډ وړ Solana وینټي ادرسونه، چې مخکې له مخکې چمتو شوي او له سټاک څخه پلورل کیږي. یو ځل سپارل کیږي، په آرام حالت کې کوډ شوي، او د نادریت له مخې قیمت شوي.",
 		"meta_og_title": "پریمیم وینټي موجودي · three.ws",

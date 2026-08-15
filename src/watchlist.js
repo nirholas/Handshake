@@ -20,7 +20,7 @@
 //     on any device, and `?add=` links are imported on load.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { mountCoinStatus, formatMcap } from './pump/coin-status-card.js';
+import { mountCoinStatus, formatMcap, NO_VALUE } from './pump/coin-status-card.js';
 import { updateValue, flipReorder } from './ui-juice.js';
 
 const WATCH_KEY        = 'ld_watchlist'; // shared with src/launch-detail.js
@@ -60,6 +60,7 @@ const convData   = new Map();             // mint → { score, tier, pillars }
 const moverData  = new Map();             // mint → { delta, tierChanged, firstTier }
 let refreshTimer = null;
 let sortRaf      = 0;
+let oracleReachable = true;         // last /api/oracle/batch sweep answered at all
 
 const prefs = readPrefs();
 
@@ -403,35 +404,74 @@ function updateSummary() {
 	const coins = list.map((m) => coinData.get(m)).filter(Boolean);
 	const convs = list.map((m) => convData.get(m)).filter((c) => c && c.score != null);
 
-	const sumMcap = coins.reduce((a, c) => a + (c.mcap || 0), 0);
-	const sumVol  = coins.reduce((a, c) => a + (c.volume24h || 0), 0);
+	// Aggregate only over the coins that actually report each figure. Treating a
+	// missing number as zero fabricates data: the pump feed omits 24h volume for
+	// graduated coins, and summing `|| 0` across four of them rendered a
+	// confident "$0" where the honest answer is "not reported".
+	const sumMcap = sumReported(coins, 'mcap');
+	const sumVol  = sumReported(coins, 'volume24h');
 	const gradCnt = coins.filter((c) => c.graduated).length;
 	const avgConv = convs.length ? Math.round(convs.reduce((a, c) => a + Number(c.score), 0) / convs.length) : null;
 
 	// Count the aggregate tiles from their previously-shown real values, flashing
 	// the direction as watched-coin data refreshes (the #wl-sum-* nodes persist).
-	setNum('wl-sum-mcap', coins.length ? sumMcap : null, formatMcap);
-	setNum('wl-sum-vol',  coins.length ? sumVol  : null, formatMcap);
-	setText('wl-sum-grad', `${gradCnt}/${list.length}`);
+	setNum('wl-sum-mcap', sumMcap, formatMcap);
+	setNum('wl-sum-vol',  sumVol,  formatMcap);
+	setStat('wl-sum-grad', coins.length ? `${gradCnt}/${list.length}` : null);
 	setNum('wl-sum-conv', avgConv, (n) => String(Math.round(n)));
+
+	setTileNote('wl-sum-mcap', sumMcap == null
+		? 'Market caps are still loading for the coins you watch.'
+		: `Combined across ${countReported(coins, 'mcap')} of ${list.length} watched coins.`);
+	setTileNote('wl-sum-vol', sumVol == null
+		? 'The pump.fun feed reports no 24h volume for these coins.'
+		: `Combined across ${countReported(coins, 'volume24h')} of ${list.length} watched coins.`);
+	setTileNote('wl-sum-conv', convs.length
+		? `Average of the ${convs.length} of ${list.length} watched coins the Oracle has scored.`
+		: oracleReachable
+			? 'The Oracle has not scored any watched coin yet.'
+			: 'The Oracle is unreachable right now, so no conviction is available.');
 
 	const convEl = document.getElementById('wl-sum-conv');
 	if (convEl && avgConv != null) convEl.style.color = TIER_COLOR[tierForScore(avgConv)] || '';
 
-	renderTierBar(convs);
+	renderTierBar(convs, list.length);
 }
 
-function setText(id, text) {
+function countReported(coins, key) {
+	return coins.filter((c) => Number.isFinite(c[key])).length;
+}
+
+// Sum a field over the coins that report it; null when nobody does, so the tile
+// falls back to its "no value yet" dash instead of asserting a zero.
+function sumReported(coins, key) {
+	const vals = coins.map((c) => c[key]).filter((v) => Number.isFinite(v));
+	return vals.length ? vals.reduce((a, v) => a + v, 0) : null;
+}
+
+// Explain each aggregate's coverage on hover and to screen readers, so a partial
+// figure never reads as a total.
+function setTileNote(id, note) {
 	const node = document.getElementById(id);
-	if (node) node.textContent = text;
+	if (!node) return;
+	node.title = note;
+	node.setAttribute('aria-description', note);
+}
+
+// A non-numeric summary tile (the graduated ratio); null renders the same
+// "no value yet" dash the numeric tiles use.
+function setStat(id, text) {
+	const node = document.getElementById(id);
+	if (node) node.textContent = text == null ? NO_VALUE : text;
 }
 
 // Count a summary tile from its previously-shown real value to the new one and
-// flash the direction; missing → static dash with the count tracker cleared.
+// flash the direction; missing value renders a static dash with the count
+// tracker cleared.
 function setNum(id, value, format) {
 	const node = document.getElementById(id);
 	if (!node) return;
-	if (value == null || !Number.isFinite(value)) { node.textContent = '—'; delete node.dataset.juiceVal; return; }
+	if (value == null || !Number.isFinite(value)) { node.textContent = NO_VALUE; delete node.dataset.juiceVal; return; }
 	updateValue(node, value, format);
 }
 
@@ -443,17 +483,26 @@ function tierForScore(s) {
 	return 'avoid';
 }
 
-function renderTierBar(convs) {
+// The bar spans every watched coin, not just the scored ones: an unscored
+// remainder gets its own muted segment so the distribution can never imply the
+// Oracle has an opinion on coins it has not rated.
+function renderTierBar(convs, watched = convs.length) {
 	const bar = document.getElementById('wl-sum-tiers');
 	if (!bar) return;
 	if (!convs.length) {
-		bar.replaceChildren(el('span', { class: 'wl-tierbar-empty', text: 'Scoring…' }));
+		const why = !watched
+			? 'Nothing watched yet'
+			: oracleReachable
+				? 'Awaiting Oracle scores'
+				: 'Oracle unreachable';
+		bar.replaceChildren(el('span', { class: 'wl-tierbar-empty', text: why }));
 		bar.removeAttribute('aria-label');
 		return;
 	}
 	const counts = {};
 	for (const c of convs) counts[c.tier] = (counts[c.tier] || 0) + 1;
-	const total = convs.length;
+	const unscored = Math.max(0, watched - convs.length);
+	const total = Math.max(convs.length, watched);
 	const segs = [];
 	const labelParts = [];
 	for (const tier of TIER_ORDER) {
@@ -466,6 +515,14 @@ function renderTierBar(convs) {
 			title: `${cnt} ${TIER_LABEL[tier]}`,
 		}, cnt / total > 0.14 ? [el('span', { class: 'wl-tierseg-n', text: String(cnt) })] : []));
 	}
+	if (unscored) {
+		labelParts.push(`${unscored} not scored yet`);
+		segs.push(el('span', {
+			class: 'wl-tierseg wl-tierseg--unscored',
+			style: `flex:${unscored}`,
+			title: `${unscored} not scored by the Oracle yet`,
+		}, unscored / total > 0.14 ? [el('span', { class: 'wl-tierseg-n', text: String(unscored) })] : []));
+	}
 	bar.replaceChildren(...segs);
 	bar.setAttribute('aria-label', `Tier distribution: ${labelParts.join(', ')}`);
 }
@@ -477,23 +534,45 @@ async function enrichWithOracleConviction(mints) {
 	const chunks = [];
 	for (let i = 0; i < mints.length; i += 20) chunks.push(mints.slice(i, i + 20));
 	const results = {};
+	const answered = new Set(); // mints covered by a chunk request that succeeded
 	try {
 		const responses = await Promise.all(
 			chunks.map((chunk) =>
 				fetch(`/api/oracle/batch?mints=${chunk.map(encodeURIComponent).join(',')}&network=mainnet`)
 					.then((r) => (r.ok ? r.json() : null))
+					.then((json) => (json ? { chunk, json } : null))
 					.catch(() => null),
 			),
 		);
-		for (const resp of responses) if (resp?.results) Object.assign(results, resp.results);
-	} catch { return; }
+		for (const resp of responses) {
+			if (!resp) continue;
+			// Only a chunk that actually answered can tell us a mint is unscored; a
+			// chunk that failed says nothing about its mints, so it stays out of
+			// `answered` and its cards keep their existing badge.
+			for (const mint of resp.chunk) answered.add(mint);
+			if (resp.json.results) Object.assign(results, resp.json.results);
+		}
+		oracleReachable = answered.size > 0;
+	} catch {
+		oracleReachable = false;
+		updateSummary();
+		return;
+	}
 
 	const lastTiers = readLastTiers();
 	const nextTiers = { ...lastTiers };
 
 	for (const mint of mints) {
 		const data = results[mint];
-		if (!data || data.score == null) continue;
+		if (!data || data.score == null) {
+			if (!answered.has(mint)) continue; // the Oracle never answered for this one
+			// The Oracle has no score for this mint yet. Leaving the badge slot empty
+			// reads as "no opinion rendered" rather than "not rated", so say it and
+			// keep the route to the coin's Oracle page open.
+			convData.delete(mint);
+			paintUnscoredBadge(mint);
+			continue;
+		}
 		convData.set(mint, data);
 		paintOracleBadge(mint, data);
 
@@ -510,6 +589,23 @@ async function enrichWithOracleConviction(mints) {
 	saveLastTiers(nextTiers);
 	updateSummary();
 	scheduleSortFilter();
+}
+
+function paintUnscoredBadge(mint) {
+	const card = cardEls.get(mint);
+	const badge = card?.querySelector('.wl-oracle-badge');
+	if (!badge) return;
+	badge.replaceChildren(
+		el('a', {
+			class: 'wl-ob-link wl-ob-link--unscored',
+			href: `/oracle/coin/${encodeURIComponent(mint)}`,
+			title: 'The Oracle has not scored this coin yet. Open its page to run a fresh read.',
+			'aria-label': 'Oracle conviction: not scored yet. Open the coin page to run a read.',
+		}, [
+			el('span', { class: 'wl-ob-score', text: NO_VALUE }),
+			el('span', { class: 'wl-ob-tier', text: 'unrated' }),
+		]),
+	);
 }
 
 function paintOracleBadge(mint, data) {

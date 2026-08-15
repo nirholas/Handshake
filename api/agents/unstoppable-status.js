@@ -4,8 +4,13 @@
 // treasury balance, runway, 24h earnings/costs, recent activity, and latest
 // daily reflection.
 //
-// Revenue from this endpoint funds the agent's own operations — every status
+// Revenue from this endpoint funds the agent's own operations: every status
 // check extends the agent's runway.
+//
+// The free sibling `/api/agents/unstoppable-public` serves the same shape,
+// edge-cached one agent tick behind and trimmed to 8 activity rows, so the
+// /unstoppable dashboard renders real numbers to every visitor. This route
+// stays the real-time, full-depth, treasury-crediting read.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
@@ -42,7 +47,8 @@ const OUTPUT_EXAMPLE = {
 		action_count: 288,
 	},
 	recent_activity: [
-		{ action_type: 'think', description: 'Strategic planning complete.', cost_usdc: '0.000000', created_at: '2026-05-27T12:00:00Z' },
+		{ action_type: 'think', description: 'Strategic planning complete.', cost_usdc: '0.000500', revenue_usdc: '0.000000', created_at: '2026-05-27T12:00:00Z' },
+		{ action_type: 'earn', description: 'Revenue from status_check: $0.010000 USDC', cost_usdc: '0.000000', revenue_usdc: '0.010000', created_at: '2026-05-27T12:04:00Z' },
 	],
 	latest_reflection: { date: '2026-05-27', summary: 'Today was profitable.', strategy_notes: 'Continue status-check monetization.' },
 	agent_info: {

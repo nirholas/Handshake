@@ -66,25 +66,57 @@ async function api(path, opts) {
 
 // ── tabs ─────────────────────────────────────────────────────────────────────
 const TABS = ['board', 'post', 'earn', 'open', 'leaderboard'];
-function selectTab(name) {
+const BOUNTY_ID_RE = /^[0-9a-f]{8,32}$/;
+
+function selectTab(name, opts = {}) {
 	for (const t of TABS) {
 		const btn = $(`tab-${t}`), panel = $(`panel-${t}`);
 		const on = t === name;
 		btn.setAttribute('aria-selected', on ? 'true' : 'false');
+		btn.tabIndex = on ? 0 : -1;
 		panel.classList.toggle('show', on);
 	}
 	if (name === 'board') loadBoard(true);
 	if (name === 'leaderboard') loadLeaderboard();
 	if (name === 'post') loadPostConfig();
+	// A bounty-id hash is a deep link to one card (the API hands out
+	// /vanity/bounties#<id> as boardUrl), so it must survive the tab sync.
+	if (opts.keepHash && BOUNTY_ID_RE.test(location.hash.slice(1))) return;
 	if (location.hash.slice(1) !== name) history.replaceState(null, '', `#${name}`);
 }
 TABS.forEach((t) => $(`tab-${t}`).addEventListener('click', () => selectTab(t)));
+
+// Roving-tabindex keyboard navigation, which role="tablist" promises: arrows move
+// between tabs, Home/End jump to the ends.
+$('tablist').addEventListener('keydown', (e) => {
+	const delta = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+	let next = null;
+	if (delta) next = TABS[(TABS.indexOf(currentTab()) + delta + TABS.length) % TABS.length];
+	else if (e.key === 'Home') next = TABS[0];
+	else if (e.key === 'End') next = TABS[TABS.length - 1];
+	if (!next) return;
+	e.preventDefault();
+	selectTab(next);
+	$(`tab-${next}`).focus();
+});
+function currentTab() {
+	return TABS.find((t) => $(`tab-${t}`).getAttribute('aria-selected') === 'true') || 'board';
+}
+
 // Delegated: the i18n pass rewrites the lede paragraph's innerHTML for
 // localized users, which would orphan a listener bound to the link itself.
 document.addEventListener('click', (e) => {
 	if (!e.target.closest('#lede-earn')) return;
 	e.preventDefault();
 	selectTab('earn');
+});
+
+// A pasted or clicked #<bounty-id> link opens that exact bounty; a #<tab> hash
+// switches tabs. Without this, in-page hash links are inert.
+window.addEventListener('hashchange', () => {
+	const h = location.hash.slice(1);
+	if (TABS.includes(h)) selectTab(h);
+	else if (BOUNTY_ID_RE.test(h)) openBountyLink(h);
 });
 
 // ── stats strip ──────────────────────────────────────────────────────────────
@@ -98,8 +130,9 @@ async function loadStats() {
 			['Filled', String(s.settled ?? 0)],
 			['Paid to grinders', usd(s.paidOutAtomics ?? 0), true],
 		].map(([k, v, sm]) => `<div class="stat"><div class="k">${esc(k)}</div><div class="v${sm ? ' sm' : ''}">${esc(v)}</div></div>`).join('');
-	} catch {
-		strip.innerHTML = `<div class="stat"><div class="k">Market</div><div class="v sm">unavailable</div></div>`;
+	} catch (e) {
+		strip.innerHTML = `<div class="stat" style="flex:1 1 100%"><div class="k">Market stats</div><div class="v sm">${esc(e.message)}</div><button class="ghost small" id="stats-retry" style="margin-top:.5rem">Retry</button></div>`;
+		$('stats-retry')?.addEventListener('click', loadStats);
 	}
 }
 
@@ -161,7 +194,7 @@ async function loadBoard(reset) {
 		boardItems = boardItems.concat(data.bounties || []);
 		boardOffset += (data.bounties || []).length;
 		if (!boardItems.length) {
-			grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="glyph">🎯</div><h3>No ${boardStatus === 'open' ? 'open' : ''} bounties yet</h3><p>Be the first to escrow a bounty for a hard vanity address — a fleet will grind it for you.</p><button class="primary" id="empty-post" style="margin-top:1rem">Post a bounty</button></div>`;
+			grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="glyph">🎯</div><h3>No ${boardStatus === 'open' ? 'open' : ''} bounties yet</h3><p>Be the first to escrow a bounty for a hard vanity address, and a fleet will grind it for you.</p><button class="primary" id="empty-post" style="margin-top:1rem">Post a bounty</button></div>`;
 			$('empty-post')?.addEventListener('click', () => selectTab('post'));
 			$('loadmore-row').style.display = 'none';
 			return;
@@ -181,30 +214,75 @@ function wireCardActions(scope) {
 		btn.addEventListener('click', async () => {
 			const id = btn.dataset.id, act = btn.dataset.act;
 			if (act === 'copy') { await navigator.clipboard?.writeText(id).catch(() => {}); toast('Bounty id copied'); return; }
-			if (act === 'grind') { selectTab('earn'); toast('Switch to Grind & earn — open bounties (incl. this one) are in the queue'); return; }
+			if (act === 'grind') { preferGrind(id); return; }
 			if (act === 'refund') { await triggerRefund(id, btn); return; }
 		});
 	});
 }
 
 async function triggerRefund(id, btn) {
-	const refundAddress = prompt('Refund the escrow to which Solana address?\n(Leave blank to use the address set when the bounty was posted.)') ?? '';
+	const amount = usd(bountyById(id)?.amountAtomics ?? 0);
+	// The server binds the refund to the address recorded when the bounty was
+	// funded and ignores any address supplied here, so do not pretend to ask
+	// for one: state where the money goes and take a plain yes/no.
+	const ok = window.confirm(`Return the ${amount} escrow of expired bounty ${id}?\n\nIt is sent on-chain to the Solana refund address recorded when the bounty was posted. It cannot be redirected anywhere else.`);
+	if (!ok) return;
+	const label = btn.textContent;
 	btn.disabled = true; btn.textContent = 'Refunding…';
 	try {
-		const r = await api('?action=refund', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ bountyId: id, refundAddress: refundAddress.trim() || undefined }) });
-		toast(`Refunded ${usd(r.amountAtomics)} → tx ${r.refundTx.slice(0, 8)}…`);
+		const r = await api('?action=refund', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ bountyId: id }) });
+		toast(`Refunded ${usd(r.amountAtomics)} to ${r.refundAddress.slice(0, 6)}… (tx ${r.refundTx.slice(0, 8)}…)`);
 		loadBoard(true); loadStats();
 	} catch (e) {
 		toast(`Refund failed: ${e.message}`);
-		btn.disabled = false; btn.textContent = 'Refund poster';
+		btn.disabled = false; btn.textContent = label;
 	}
 }
 
+function bountyById(id) { return boardItems.find((b) => b.id === id) || linkedBounty; }
+
 function startTimers() {
 	if (boardTimer) clearInterval(boardTimer);
+	// Nothing counting down means nothing to tick: don't hold a 1 Hz timer open
+	// on a board of settled bounties.
+	if (!document.querySelector('.timer[data-expires]')) return;
 	boardTimer = setInterval(() => {
-		document.querySelectorAll('.timer[data-expires]').forEach((el) => { el.textContent = timeLeft(Number(el.dataset.expires)); });
+		const els = document.querySelectorAll('.timer[data-expires]');
+		if (!els.length) { clearInterval(boardTimer); boardTimer = null; return; }
+		els.forEach((el) => { el.textContent = timeLeft(Number(el.dataset.expires)); });
 	}, 1000);
+}
+
+// ── deep-linked bounty (#<id>) ───────────────────────────────────────────────
+let linkedBounty = null;
+
+async function openBountyLink(id) {
+	selectTab('board', { keepHash: true });
+	if (location.hash.slice(1) !== id) history.replaceState(null, '', `#${id}`);
+	const wrap = $('linked-bounty');
+	wrap.hidden = false;
+	wrap.innerHTML = '<div class="skel" style="height:150px"></div>';
+	try {
+		const { bounty } = await api(`?view=get&id=${encodeURIComponent(id)}`);
+		linkedBounty = bounty;
+		wrap.innerHTML = `<div class="linkedhead"><span>Linked bounty</span><button class="ghost small" id="linked-clear" type="button">Clear</button></div><div class="grid">${bountyCard(bounty)}</div>`;
+		wireCardActions(wrap);
+		startTimers();
+	} catch (e) {
+		linkedBounty = null;
+		wrap.innerHTML = `<div class="empty"><div class="glyph">🔗</div><h3>That bounty link didn't resolve</h3><p>${esc(e.message)}</p><button class="ghost" id="linked-clear" style="margin-top:1rem">Back to the board</button></div>`;
+	}
+	$('linked-clear')?.addEventListener('click', clearBountyLink);
+	wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function clearBountyLink() {
+	linkedBounty = null;
+	const wrap = $('linked-bounty');
+	wrap.hidden = true;
+	wrap.innerHTML = '';
+	history.replaceState(null, '', '#board');
+	$('tab-board').focus();
 }
 
 // ── post a bounty ────────────────────────────────────────────────────────────
@@ -283,11 +361,11 @@ $('gen-key').addEventListener('click', () => {
 	$('saved-chk').checked = false;
 	window.__bountyPriv = kp.secretKey;
 	refreshPostState();
-	toast('Key generated — save the private half!');
+	toast('Key generated. Save the private half!');
 });
 $('copy-priv').addEventListener('click', async () => { await navigator.clipboard?.writeText($('priv-value').textContent).catch(() => {}); toast('Private key copied'); });
 $('download-key').addEventListener('click', () => {
-	const blob = new Blob([JSON.stringify({ scheme: 'x25519', publicKey: $('post-recipient').value, secretKey: $('priv-value').textContent, note: 'three.ws grind-bounty sealed-delivery key — keep the secretKey private; it opens your won wallet.', created: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+	const blob = new Blob([JSON.stringify({ scheme: 'x25519', publicKey: $('post-recipient').value, secretKey: $('priv-value').textContent, note: 'three.ws grind-bounty sealed-delivery key. Keep the secretKey private; it opens your won wallet.', created: new Date().toISOString() }, null, 2)], { type: 'application/json' });
 	const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `three-ws-bounty-key-${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href);
 });
 $('post-recipient').addEventListener('input', () => {
@@ -312,7 +390,7 @@ function postValidity() {
 function refreshPostState() {
 	const v = postValidity();
 	$('post-btn').disabled = !v.ok;
-	$('post-hint').textContent = v.ok ? 'Ready — you’ll pay the bounty as escrow.' : v.hint;
+	$('post-hint').textContent = v.ok ? 'Ready. You’ll pay the bounty as escrow.' : v.hint;
 }
 
 $('post-btn').addEventListener('click', postBounty);
@@ -332,7 +410,10 @@ async function postBounty() {
 	if (label) params.set('label', label);
 	if (refundAddress) params.set('refundAddress', refundAddress);
 
-	if (!window.X402?.pay) { errBox.textContent = 'Payment library failed to load — reload the page.'; errBox.classList.add('show'); return; }
+	if (!window.X402?.pay) { errBox.textContent = 'Payment library failed to load. Reload the page and try again.'; errBox.classList.add('show'); return; }
+	// Keep the localized label: the i18n pass may have rewritten it, so restoring a
+	// hardcoded English string would leave a translated page in English.
+	const postLabel = $('post-btn').textContent;
 	$('post-btn').disabled = true; $('post-btn').innerHTML = '<span class="spin"></span> Opening checkout…';
 	try {
 		const out = await window.X402.pay({
@@ -343,27 +424,45 @@ async function postBounty() {
 		});
 		const res = out?.result;
 		if (!res?.posted) throw new Error(res?.error_description || 'post did not confirm');
-		okBox.innerHTML = `Bounty <span class="mono">${esc(res.bounty.id)}</span> is live! The fleet is grinding <strong>${patternHTML(res.bounty.pattern)}</strong> for ${usd(res.bounty.amountAtomics)}. <br>Keep your X25519 <strong>private key</strong> — it opens the wallet when a worker finds it. <a href="#${esc(res.bounty.id)}" id="goto-board" style="color:var(--accent)">View on the board →</a>`;
+		okBox.innerHTML = `Bounty <span class="mono">${esc(res.bounty.id)}</span> is live! The fleet is grinding <strong>${patternHTML(res.bounty.pattern)}</strong> for ${usd(res.bounty.amountAtomics)}. <br>Keep your X25519 <strong>private key</strong>: it opens the wallet when a worker finds it. <a href="#${esc(res.bounty.id)}" id="goto-board" style="color:var(--accent)">View on the board →</a>`;
 		okBox.classList.add('show');
-		toast('Bounty posted & escrow funded');
-		$('goto-board')?.addEventListener('click', () => selectTab('board'));
+		toast('Bounty posted, escrow funded');
+		$('goto-board')?.addEventListener('click', (ev) => { ev.preventDefault(); openBountyLink(res.bounty.id); });
 		loadStats();
 	} catch (e) {
-		if (e?.code === 'cancelled') { /* user closed modal */ }
-		else { errBox.textContent = `Couldn't post: ${e.message || e}`; errBox.classList.add('show'); }
+		if (e?.code !== 'cancelled') { errBox.textContent = `Couldn't post: ${e.message || e}`; errBox.classList.add('show'); }
 	} finally {
-		$('post-btn').disabled = false; $('post-btn').textContent = 'Fund & post bounty';
+		$('post-btn').disabled = false; $('post-btn').textContent = postLabel;
 		refreshPostState();
 	}
 }
 
 // ── grind & earn (worker pool) ───────────────────────────────────────────────
-let earnAbort = null, earnRunning = false, earnEarned = 0, earnStats = { attempts: 0, rate: 0 };
+let earnAbort = null, earnRunning = false, earnEarned = 0;
+// Set by "Grind this" on a board card: the worker pool grinds this bounty ahead
+// of the rest of the claimable queue instead of always taking the first one.
+let preferredBountyId = null;
 function logWork(html, cls = '') { const log = $('worklog'); const line = document.createElement('div'); if (cls) line.className = cls; line.innerHTML = html; log.prepend(line); while (log.children.length > 60) log.lastChild.remove(); }
 function setOdo(k, v) { $(`o-${k}`).textContent = v; }
 
 $('earn-start').addEventListener('click', startEarning);
 $('earn-stop').addEventListener('click', stopEarning);
+
+function preferGrind(id) {
+	preferredBountyId = id;
+	const b = bountyById(id);
+	const wrap = $('earn-priority');
+	wrap.hidden = false;
+	wrap.innerHTML = `<span>Priority target: <strong class="mono">${esc(id.slice(0, 10))}…</strong>${b ? ` · ${patternHTML(b.pattern)} · ${usd(b.amountAtomics)}` : ''} is ground before the rest of the queue.</span> <button class="ghost small" id="earn-priority-clear" type="button">Clear</button>`;
+	$('earn-priority-clear').addEventListener('click', () => {
+		preferredBountyId = null;
+		wrap.hidden = true; wrap.innerHTML = '';
+		toast('Priority cleared, the queue order is back to normal');
+	});
+	selectTab('earn');
+	if (!earnRunning) $('earn-payout').focus();
+	toast(earnRunning ? 'Priority set: this bounty is next in the pool' : 'Priority set: add your payout address and press Start');
+}
 
 async function startEarning() {
 	const payout = $('earn-payout').value.trim();
@@ -386,8 +485,18 @@ async function earnLoop(payout) {
 	while (earnRunning) {
 		let bounties;
 		try { ({ bounties } = await api('?view=open&limit=20')); } catch (e) { logWork(`<span class="err">Couldn't fetch bounties: ${esc(e.message)}</span>`); await sleep(4000); continue; }
-		const target = bounties.find((b) => b.status === 'open' && b.expiresAt > Date.now());
-		if (!target) { setOdo('status', 'Waiting'); setOdo('target', 'no open bounties'); logWork('<span class="miss">No open bounties — waiting…</span>'); await sleep(5000); continue; }
+		const claimable = bounties.filter((b) => b.status === 'open' && b.expiresAt > Date.now());
+		let target = claimable[0];
+		if (preferredBountyId) {
+			const preferred = claimable.find((b) => b.id === preferredBountyId);
+			if (preferred) target = preferred;
+			else if (claimable.length) {
+				logWork(`<span class="miss">Priority bounty ${esc(preferredBountyId.slice(0, 10))}… is no longer claimable, taking the queue instead.</span>`);
+				preferredBountyId = null;
+				$('earn-priority').hidden = true;
+			}
+		}
+		if (!target) { setOdo('status', 'Waiting'); setOdo('target', 'no open bounties'); logWork('<span class="miss">No open bounties, waiting…</span>'); await sleep(5000); continue; }
 
 		setOdo('status', 'Grinding'); setOdo('target', `${patternText(target.pattern)} · ${usd(target.amountAtomics)}`);
 		logWork(`Grinding <strong>${patternHTML(target.pattern)}</strong> for ${usd(target.amountAtomics)} (id ${esc(target.id.slice(0, 8))}…)`);
@@ -397,7 +506,7 @@ async function earnLoop(payout) {
 			result = await grindVanity({
 				prefix: target.pattern.prefix || '', suffix: target.pattern.suffix || '', ignoreCase: !!target.pattern.ignoreCase,
 				maxWorkers, signal: earnAbort.signal,
-				onProgress: ({ attempts, rate }) => { earnStats = { attempts, rate }; setOdo('attempts', fmtAttempts(attempts)); setOdo('rate', `${fmtAttempts(rate)}/s`); },
+				onProgress: ({ attempts, rate }) => { setOdo('attempts', fmtAttempts(attempts)); setOdo('rate', `${fmtAttempts(rate)}/s`); },
 			});
 		} catch (e) {
 			if (e.name === 'AbortError') return;
@@ -405,10 +514,10 @@ async function earnLoop(payout) {
 		}
 		if (!earnRunning) return;
 
-		// Seal the found secret to the requester BEFORE submitting — the worker
+		// Seal the found secret to the requester BEFORE submitting: the worker
 		// never transmits plaintext, so it cannot keep the wallet.
 		setOdo('status', 'Claiming');
-		logWork(`<span class="win">Found ${esc(result.publicKey.slice(0, 8))}… — sealing to the requester & claiming…</span>`);
+		logWork(`<span class="win">Found ${esc(result.publicKey.slice(0, 8))}… sealing to the requester and claiming…</span>`);
 		let sealed;
 		try {
 			const bundle = JSON.stringify({ format: 'keypair', secretKeyBase58: bs58Encode(result.secretKey), secretKey: Array.from(result.secretKey), publicKey: result.publicKey });
@@ -417,6 +526,7 @@ async function earnLoop(payout) {
 
 		try {
 			const claim = await api('?action=claim', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ bountyId: target.id, address: result.publicKey, sealedSecret: sealed, payoutAddress: payout, workerId: workerId() }) });
+			if (target.id === preferredBountyId) { preferredBountyId = null; $('earn-priority').hidden = true; }
 			if (claim.paid) {
 				earnEarned += claim.amountAtomics;
 				setOdo('earned', usd(earnEarned));
@@ -427,7 +537,7 @@ async function earnLoop(payout) {
 				logWork(`<span class="miss">Won but payout pending: ${esc(claim.reason || 'retry')}</span>`);
 			}
 		} catch (e) {
-			if (e.status === 409) logWork(`<span class="miss">Lost the race — another worker submitted first.</span>`);
+			if (e.status === 409) logWork(`<span class="miss">Lost the race, another worker submitted first.</span>`);
 			else if (e.status === 422) logWork(`<span class="err">Claim rejected: ${esc(e.message)}</span>`);
 			else logWork(`<span class="err">Claim failed: ${esc(e.message)}</span>`);
 		}
@@ -456,25 +566,26 @@ async function openWallet() {
 	errBox.classList.remove('show'); okBox.classList.remove('show');
 	if (!/^[0-9a-f]{8,32}$/.test(id)) { errBox.textContent = 'Enter a valid bounty id.'; errBox.classList.add('show'); return; }
 	if (!priv) { errBox.textContent = 'Enter your X25519 private key.'; errBox.classList.add('show'); return; }
+	const openLabel = $('open-btn').textContent;
 	$('open-btn').disabled = true; $('open-btn').innerHTML = '<span class="spin"></span> Revealing…';
 	try {
 		const r = await api('?action=reveal', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ bountyId: id }) });
 		if (!r.revealed) throw new Error(r.reason || 'not ready');
-		// Decrypt entirely client-side — the private key never leaves the browser.
+		// Decrypt entirely client-side: the private key never leaves the browser.
 		const plaintext = new TextDecoder().decode(await openSealed(r.sealedSecret, priv));
 		const wallet = JSON.parse(plaintext);
 		if (wallet.publicKey && wallet.publicKey !== r.address) throw new Error('decrypted key does not match the won address');
-		okBox.innerHTML = `<strong style="color:var(--good)">Wallet opened.</strong> This is YOUR address <span class="mono">${esc(r.address)}</span> — the worker who found it never saw this key.
-			<div class="keybox" style="border-color:rgba(74,222,128,.35)"><div class="k" style="color:var(--dim);font-size:.7rem;text-transform:uppercase">Secret key (Base58 — import into Phantom/Solflare)</div><code style="color:#86efac">${esc(wallet.secretKeyBase58 || '')}</code>
+		okBox.innerHTML = `<strong style="color:var(--good)">Wallet opened.</strong> This is YOUR address <span class="mono">${esc(r.address)}</span>. The worker who found it never saw this key.
+			<div class="keybox" style="border-color:rgba(74,222,128,.35)"><div class="k" style="color:var(--dim);font-size:.7rem;text-transform:uppercase">Secret key (Base58, import into Phantom/Solflare)</div><code style="color:#86efac">${esc(wallet.secretKeyBase58 || '')}</code>
 			<button class="ghost small" id="open-copy">Copy secret key</button> <a class="ghost small" href="https://solscan.io/account/${esc(r.address)}" target="_blank" rel="noopener">Explorer ↗</a></div>`;
 		okBox.classList.add('show');
 		$('open-copy')?.addEventListener('click', async () => { await navigator.clipboard?.writeText(wallet.secretKeyBase58 || '').catch(() => {}); toast('Secret key copied'); });
 		toast('Wallet decrypted locally');
 	} catch (e) {
-		errBox.textContent = e.message?.includes('decrypt') || e.name === 'OperationError' ? 'Decryption failed — wrong private key for this bounty.' : `Couldn't open: ${e.message}`;
+		errBox.textContent = e.message?.includes('decrypt') || e.name === 'OperationError' ? 'Decryption failed: that private key does not open this bounty.' : `Couldn't open: ${e.message}`;
 		errBox.classList.add('show');
 	} finally {
-		$('open-btn').disabled = false; $('open-btn').textContent = 'Reveal & open';
+		$('open-btn').disabled = false; $('open-btn').textContent = openLabel;
 	}
 }
 
@@ -487,23 +598,25 @@ async function loadLeaderboard() {
 		if (!grinders.length) { el.innerHTML = `<div class="empty"><div class="glyph">🏆</div><h3>No grinders yet</h3><p>Be the first to fill a bounty and top the leaderboard. <button class="primary" id="lb-earn" style="margin-top:1rem">Start grinding</button></p></div>`; $('lb-earn')?.addEventListener('click', () => selectTab('earn')); return; }
 		el.innerHTML = `<div class="card" style="padding:0;overflow:hidden">${grinders.map((g, i) => `<div class="kv" style="padding:.8rem 1.1rem;${i === 0 ? 'background:rgba(255,213,79,.06)' : ''}"><span class="k">#${i + 1} <span class="mono" style="color:#ccc">${esc(g.workerId)}</span></span><span class="v" style="color:var(--good)">${usd(g.earnedAtomics)}</span></div>`).join('')}</div>`;
 	} catch (e) {
-		el.innerHTML = `<div class="empty"><div class="glyph">⚠</div><h3>Couldn't load the leaderboard</h3><p>${esc(e.message)}</p></div>`;
+		el.innerHTML = `<div class="empty"><div class="glyph">⚠</div><h3>Couldn't load the leaderboard</h3><p>${esc(e.message)}</p><button class="ghost" id="lb-retry" style="margin-top:1rem">Retry</button></div>`;
+		$('lb-retry')?.addEventListener('click', loadLeaderboard);
 	}
 }
 
 // ── init ─────────────────────────────────────────────────────────────────────
-async function init() {
+function init() {
 	statusBtns();
 	loadStats();
-	const initial = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'board';
-	// A bounty-id hash (#<24hex>) deep-links the board.
-	if (/^[0-9a-f]{8,32}$/.test(location.hash.slice(1))) { selectTab('board'); } else { selectTab(initial); }
-	if (initial === 'board') loadBoard(true);
+	const hash = location.hash.slice(1);
+	// A bounty-id hash (#<hex>) deep-links one card; selectTab already loads
+	// whichever panel it opens, so never kick off a second board fetch here.
+	if (BOUNTY_ID_RE.test(hash)) openBountyLink(hash);
+	else selectTab(TABS.includes(hash) ? hash : 'board');
 }
 init();
 
 // Stop the worker pool when the page is hidden offscreen to free the cores.
 document.addEventListener('visibilitychange', () => {
-	if (document.hidden && earnRunning) { logWork('<span class="miss">Page hidden — pausing to free your cores.</span>'); stopEarning(); }
+	if (document.hidden && earnRunning) { logWork('<span class="miss">Page hidden, pausing to free your cores.</span>'); stopEarning(); }
 });
 window.addEventListener('beforeunload', () => { try { earnAbort?.abort(); } catch {} });

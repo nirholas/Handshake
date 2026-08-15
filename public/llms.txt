@@ -130,7 +130,7 @@ Create and customize an agent.
 - [Selfie to Avatar](https://three.ws/create/selfie): One selfie. About a minute. A rigged 3D avatar that works everywhere.
 - [Import an avatar URL](https://three.ws/import/rpm): Import any GLB or glTF avatar into three.ws and give it an agent brain.
 - [Claim threews.sol Subdomain](https://three.ws/threews/claim): Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.
-- [Voice Lab](https://three.ws/voice): Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.
+- [Voice Lab](https://three.ws/voice): Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.
 - [Make Dad a 3D Avatar](https://three.ws/dad): Turn one photo of your dad into a recognizable, rigged, animated 3D avatar. It idles, walks, and waves, and you can share a permalink.
 - [CA → x402](https://three.ws/ca2x402): Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel (price, momentum, and a bullish/bearish signal) for $0.01 USDC, discoverable in the x402 bazaar.
 - [Avatar Studio](https://three.ws/avatar-studio): Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.

@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "React apvalkalas, apgaubiantis SDK. Importuoja <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> ir <code>useAvatar</code> tiesiogiai iš <code>/avatar-sdk/src/react.jsx</code>. React įkeliamas iš CDN per importavimo žemėlapį, todėl šis puslapis veikia be paketo kūrimo žingsnio.",
+		"the_react_wrapper_around_the_sdk_imports": "React apvalkalas, apgaubiantis SDK. Importuoja <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> ir <code>useAvatar</code> tiesiogiai iš <code>/avatar-sdk/src/react.js</code>. React įkeliamas iš CDN per importavimo žemėlapį, todėl šis puslapis veikia be paketo kūrimo žingsnio.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epinis",
 		"it_pays_the_quoted_price_and_receives": "Sumokama nurodyta kaina ir raktas gaunamas <b>vieną kartą</b>. Nedelsiant importuokite.",
 		"legendary": "Legendinis",
-		"long_brandable_solana_addresses_4_5_characte": "Ilgi, prekinio ženklo vertės Solana adresai – 4–5+ simbolių prefiksai, kurių gyvasis „grinder“ negali pasiekti – iš anksto sukurti naudojant partijos procesorių ir parduodami iš atsargų. Įsigykite vieną ir privatus raktas bus pristatytas <strong>vieną kartą</strong> per <a href=\"/vanity/gallery\">x402</a> kanalą, o tada jo saugoma kopija bus sunaikinta. Reikia naujo ≤3 simbolių „grind“? Naudokite <a href=\"/vanity-wallet\">gyvąjį „grinder“</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Ilgi, prekinio ženklo vertės Solana adresai – 4–5+ simbolių prefiksai, kurių gyvasis „grinder“ negali pasiekti – iš anksto sukurti naudojant partijos procesorių ir parduodami iš atsargų. Įsigykite vieną ir privatus raktas bus pristatytas <strong>vieną kartą</strong> per <a href=\"/x402\">x402</a> kanalą, o tada jo saugoma kopija bus sunaikinta. Reikia naujo ≤3 simbolių „grind“? Naudokite <a href=\"/vanity-wallet\">gyvąjį „grinder“</a>.",
 		"meta_description": "Įsigykite ilgą, prekinio ženklo vertės Solana „vanity“ adresą, pristatomą akimirksniu iš atsargų – 4–5+ simbolių prefiksai, kurių gyvasis „grinder“ negali pasiekti, iš anksto sukurti naudojant partijos procesorių ir parduodami per x402. Kaina priklauso nuo retumo.",
 		"meta_og_description": "Ilgi, prekės ženklui tinkami Solana vanity adresai, iš anksto sugeneruoti ir parduodami iš atsargų. Pristatoma vieną kartą, užšifruota ramybės būsenoje, kaina nustatoma pagal retumą.",
 		"meta_og_title": "Premium Vanity Adresų Inventorius · three.ws",

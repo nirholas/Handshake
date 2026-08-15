@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — хук",
 		"lab": "<a href=\"/demos\">&larr; лаб</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws лаб",
-		"the_react_wrapper_around_the_sdk_imports": "SDK-г ороосон React-ийн бүрхүүл. <code>/avatar-sdk/src/react.jsx</code>-ээс <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, болон <code>useAvatar</code>-г шууд импортлодог. React нь импорт мап ашиглан CDN-ээс ачаалагддаг тул энэ хуудас нь бандлер алхамгүйгээр ажилладаг.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK-г ороосон React-ийн бүрхүүл. <code>/avatar-sdk/src/react.js</code>-ээс <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, болон <code>useAvatar</code>-г шууд импортлодог. React нь импорт мап ашиглан CDN-ээс ачаалагддаг тул энэ хуудас нь бандлер алхамгүйгээр ажилладаг.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Эпик",
 		"it_pays_the_quoted_price_and_receives": "Энэ нь тогтоосон үнийг төлж, түлхүүрийг <b>нэг удаа</b> хүлээн авна. Үүнийг нэн даруй импортлоно уу.",
 		"legendary": "Домогт",
-		"long_brandable_solana_addresses_4_5_characte": "Урт, брэнд болгох боломжтой Solana хаягууд — шууд боловсруулагчийн хүрч чадахгүй 4-5+ тэмдэгтийн угтварууд — багц CPU дээр урьдчилан боловсруулж, нөөцөөс худалдаалдаг. Нэгийг худалдаж авахад хувийн түлхүүрийг <a href=\"/vanity/gallery\">x402</a> сүлжээгээр <strong>нэг удаа</strong> хүргэж, дараа нь хадгалагдсан хуулбарыг нь устгадаг. Оронд нь шинэ ≤3 тэмдэгтийн боловсруулалт хэрэгтэй юу? <a href=\"/vanity-wallet\">Шууд боловсруулагчийг</a> ашиглана уу.",
+		"long_brandable_solana_addresses_4_5_characte": "Урт, брэнд болгох боломжтой Solana хаягууд — шууд боловсруулагчийн хүрч чадахгүй 4-5+ тэмдэгтийн угтварууд — багц CPU дээр урьдчилан боловсруулж, нөөцөөс худалдаалдаг. Нэгийг худалдаж авахад хувийн түлхүүрийг <a href=\"/x402\">x402</a> сүлжээгээр <strong>нэг удаа</strong> хүргэж, дараа нь хадгалагдсан хуулбарыг нь устгадаг. Оронд нь шинэ ≤3 тэмдэгтийн боловсруулалт хэрэгтэй юу? <a href=\"/vanity-wallet\">Шууд боловсруулагчийг</a> ашиглана уу.",
 		"meta_description": "Урт, брэнд болгох боломжтой Solana vanity хаягийг нөөцөөс шууд хүлээн авч худалдаж аваарай — шууд боловсруулагчийн хүрч чадахгүй 4-5+ тэмдэгтийн угтварууд, багц CPU дээр урьдчилан боловсруулж, x402-ээр дамжуулан худалддаг. Үнэ нь ховор байдлаас хамаарна.",
 		"meta_og_description": "Урт, брэнд болгох боломжтой Solana vanity хаягуудыг урьдчилан бэлтгэж, нөөцөөс худалдаална. Нэг удаа хүргэгдэж, хадгалагдах үедээ шифрлэгдсэн, ховордолоор үнэлэгдсэн.",
 		"meta_og_title": "Дээд зэрэглэлийн Vanity Нөөц · three.ws",

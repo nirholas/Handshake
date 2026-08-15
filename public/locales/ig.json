@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; ụlọ nyocha</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ụlọ nyocha",
-		"the_react_wrapper_around_the_sdk_imports": "Ihe mkpuchi React gburugburu SDK. Na-ebubata <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, na <code>useAvatar</code> ozugbo site na <code>/avatar-sdk/src/react.jsx</code>. A na-ebunye React site na CDN site na map mbubata ka ibe a wee rụọ ọrụ na-enweghị usoro nchịkọta.",
+		"the_react_wrapper_around_the_sdk_imports": "Ihe mkpuchi React gburugburu SDK. Na-ebubata <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, na <code>useAvatar</code> ozugbo site na <code>/avatar-sdk/src/react.js</code>. A na-ebunye React site na CDN site na map mbubata ka ibe a wee rụọ ọrụ na-enweghị usoro nchịkọta.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Dị egwu",
 		"it_pays_the_quoted_price_and_receives": "Ọ na-akwụ ụgwọ e hotara ma nata igodo ahụ <b>otu ugboro</b>. Bubata ya ozugbo.",
 		"legendary": "Akụkọ ifo",
-		"long_brandable_solana_addresses_4_5_characte": "Adreesị Solana dị ogologo, a pụrụ iji mee akara — mkpụrụedemede mbido 4–5+ nke onye na-egwu ala na-enweghị ike iru — e gwupụtara tupu oge eruo na CPU batch ma ree ya site na ngwaahịa. Zụta otu ma a na-ebuga igodo nzuzo ahụ <strong>otu ugboro</strong> site na ụzọ <a href=\"/vanity/gallery\">x402</a>, mgbe ahụ a na-ebibi nnomi echekwara ya. Ị chọrọ igwu ala ọhụrụ ≤3-char kama? Jiri <a href=\"/vanity-wallet\">onye na-egwu ala dị ndụ</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Adreesị Solana dị ogologo, a pụrụ iji mee akara — mkpụrụedemede mbido 4–5+ nke onye na-egwu ala na-enweghị ike iru — e gwupụtara tupu oge eruo na CPU batch ma ree ya site na ngwaahịa. Zụta otu ma a na-ebuga igodo nzuzo ahụ <strong>otu ugboro</strong> site na ụzọ <a href=\"/x402\">x402</a>, mgbe ahụ a na-ebibi nnomi echekwara ya. Ị chọrọ igwu ala ọhụrụ ≤3-char kama? Jiri <a href=\"/vanity-wallet\">onye na-egwu ala dị ndụ</a>.",
 		"meta_description": "Zụta adreesị Solana vanity dị ogologo, a pụrụ iji mee akara, e bugara ozugbo site na ngwaahịa — mkpụrụedemede mbido 4–5+ nke onye na-egwu ala na-enweghị ike iru, e gwupụtara tupu oge eruo na CPU batch ma ree ya site na x402. Ọnụ ahịa na-agbanwe dabere na ịdịghị ahụkebe.",
 		"meta_og_description": "Adreesị Solana vanity dị ogologo, nke a ga-eji mara gị, nke e kwadebere tupu oge eruo ma na-ere ya site na ngwaahịa. Enyefe ya otu ugboro, ezoro ezo mgbe ọ na-anọdụ ala, ọnụ ahịa ya dabere n'ịdị ụkọ ya.",
 		"meta_og_title": "Ngwaahịa Vanity Dị Elu · three.ws",

@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — ຮຸກ",
 		"lab": "<a href=\"/demos\">&larr; ແລັບ</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ແລັບ",
-		"the_react_wrapper_around_the_sdk_imports": "ຕົວຫໍ່ React ອ້ອມ SDK. ນຳເຂົ້າ <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, ແລະ <code>useAvatar</code> ໂດຍກົງຈາກ <code>/avatar-sdk/src/react.jsx</code>. React ຖືກໂຫຼດຈາກ CDN ຜ່ານ import map ເພື່ອໃຫ້ໜ້ານີ້ເຮັດວຽກໄດ້ໂດຍບໍ່ຕ້ອງຜ່ານຂັ້ນຕອນ bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "ຕົວຫໍ່ React ອ້ອມ SDK. ນຳເຂົ້າ <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, ແລະ <code>useAvatar</code> ໂດຍກົງຈາກ <code>/avatar-sdk/src/react.js</code>. React ຖືກໂຫຼດຈາກ CDN ຜ່ານ import map ເພື່ອໃຫ້ໜ້ານີ້ເຮັດວຽກໄດ້ໂດຍບໍ່ຕ້ອງຜ່ານຂັ້ນຕອນ bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "ພິເສດ",
 		"it_pays_the_quoted_price_and_receives": "ມັນຈ່າຍລາຄາທີ່ລະບຸ ແລະ ໄດ້ຮັບລະຫັດ <b>ພຽງຄັ້ງດຽວ</b>. ນຳເຂົ້າທັນທີ.",
 		"legendary": "ຕຳນານ",
-		"long_brandable_solana_addresses_4_5_characte": "ທີ່ຢູ່ Solana ທີ່ຍາວ, ສາມາດສ້າງແບຣນໄດ້ — ຄຳນຳໜ້າ 4–5+ ຕົວອັກສອນທີ່ເຄື່ອງສ້າງແບບສົດບໍ່ສາມາດເຂົ້າເຖິງໄດ້ — ຖືກສ້າງລ່ວງໜ້າດ້ວຍ CPU ແບບ batch ແລະ ຂາຍຈາກສິນຄ້າໃນສະຕັອກ. ຊື້ໜຶ່ງອັນ ແລະ ລະຫັດສ່ວນຕົວຈະຖືກສົ່ງ <strong>ພຽງຄັ້ງດຽວ</strong> ຜ່ານ <a href=\"/vanity/gallery\">x402</a>, ຈາກນັ້ນສຳເນົາທີ່ເກັບໄວ້ຈະຖືກທຳລາຍ. ຕ້ອງການສ້າງອັນໃໝ່ທີ່ມີ ≤3 ຕົວອັກສອນແທນບໍ? ໃຊ້ <a href=\"/vanity-wallet\">ເຄື່ອງສ້າງແບບສົດ</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "ທີ່ຢູ່ Solana ທີ່ຍາວ, ສາມາດສ້າງແບຣນໄດ້ — ຄຳນຳໜ້າ 4–5+ ຕົວອັກສອນທີ່ເຄື່ອງສ້າງແບບສົດບໍ່ສາມາດເຂົ້າເຖິງໄດ້ — ຖືກສ້າງລ່ວງໜ້າດ້ວຍ CPU ແບບ batch ແລະ ຂາຍຈາກສິນຄ້າໃນສະຕັອກ. ຊື້ໜຶ່ງອັນ ແລະ ລະຫັດສ່ວນຕົວຈະຖືກສົ່ງ <strong>ພຽງຄັ້ງດຽວ</strong> ຜ່ານ <a href=\"/x402\">x402</a>, ຈາກນັ້ນສຳເນົາທີ່ເກັບໄວ້ຈະຖືກທຳລາຍ. ຕ້ອງການສ້າງອັນໃໝ່ທີ່ມີ ≤3 ຕົວອັກສອນແທນບໍ? ໃຊ້ <a href=\"/vanity-wallet\">ເຄື່ອງສ້າງແບບສົດ</a>.",
 		"meta_description": "ຊື້ທີ່ຢູ່ vanity Solana ທີ່ຍາວ, ສາມາດສ້າງແບຣນໄດ້ ທີ່ຖືກສົ່ງທັນທີຈາກສິນຄ້າໃນສະຕັອກ — ຄຳນຳໜ້າ 4–5+ ຕົວອັກສອນທີ່ເຄື່ອງສ້າງແບບສົດບໍ່ສາມາດເຂົ້າເຖິງໄດ້, ຖືກສ້າງລ່ວງໜ້າດ້ວຍ CPU ແບບ batch ແລະ ຂາຍຜ່ານ x402. ລາຄາປ່ຽນແປງຕາມຄວາມຫາຍາກ.",
 		"meta_og_description": "ທີ່ຢູ່ Solana vanity ທີ່ຍາວ, ສາມາດສ້າງແບຣນໄດ້, ຖືກສ້າງຂຶ້ນລ່ວງໜ້າ ແລະ ຂາຍຈາກສິນຄ້າໃນສະຕັອກ. ຈັດສົ່ງຄັ້ງດຽວ, ເຂົ້າລະຫັດເມື່ອພັກ, ຕັ້ງລາຄາຕາມຄວາມຫາຍາກ.",
 		"meta_og_title": "ລາຍການທີ່ຢູ່ Vanity ພຣີມຽມ · three.ws",

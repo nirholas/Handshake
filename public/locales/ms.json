@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; makmal</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws makmal",
-		"the_react_wrapper_around_the_sdk_imports": "Pembungkus React di sekeliling SDK. Mengimport <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, dan <code>useAvatar</code> secara langsung dari <code>/avatar-sdk/src/react.jsx</code>. React dimuatkan dari CDN melalui peta import supaya halaman ini berfungsi tanpa langkah pembundel.",
+		"the_react_wrapper_around_the_sdk_imports": "Pembungkus React di sekeliling SDK. Mengimport <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, dan <code>useAvatar</code> secara langsung dari <code>/avatar-sdk/src/react.js</code>. React dimuatkan dari CDN melalui peta import supaya halaman ini berfungsi tanpa langkah pembundel.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epik",
 		"it_pays_the_quoted_price_and_receives": "Ia membayar harga yang disebut dan menerima kunci <b>sekali</b>. Import serta-merta.",
 		"legendary": "Legenda",
-		"long_brandable_solana_addresses_4_5_characte": "Alamat Solana yang panjang, boleh dijenamakan — awalan 4–5+ aksara yang tidak dapat dicapai oleh 'live grinder' — dihasilkan lebih awal secara pukal menggunakan CPU dan dijual dari stok. Beli satu dan kunci peribadi dihantar <strong>sekali</strong> melalui saluran <a href=\"/vanity/gallery\">x402</a>, kemudian salinan yang disimpan dimusnahkan. Perlukan 'grind' ≤3 aksara yang baru? Gunakan <a href=\"/vanity-wallet\">live grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Alamat Solana yang panjang, boleh dijenamakan — awalan 4–5+ aksara yang tidak dapat dicapai oleh 'live grinder' — dihasilkan lebih awal secara pukal menggunakan CPU dan dijual dari stok. Beli satu dan kunci peribadi dihantar <strong>sekali</strong> melalui saluran <a href=\"/x402\">x402</a>, kemudian salinan yang disimpan dimusnahkan. Perlukan 'grind' ≤3 aksara yang baru? Gunakan <a href=\"/vanity-wallet\">live grinder</a>.",
 		"meta_description": "Beli alamat vanity Solana yang panjang, boleh dijenamakan, dihantar serta-merta dari stok — awalan 4–5+ aksara yang tidak dapat dicapai oleh 'live grinder', dihasilkan lebih awal secara pukal menggunakan CPU dan dijual melalui x402. Harga mengikut kelangkaan.",
 		"meta_og_description": "Alamat vanity Solana yang panjang, boleh dijenamakan, dihasilkan lebih awal dan dijual dari stok. Dihantar sekali, disulitkan semasa rehat, harga mengikut kelangkaan.",
 		"meta_og_title": "Inventori Vanity Premium · three.ws",

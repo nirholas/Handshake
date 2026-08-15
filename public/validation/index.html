@@ -133,6 +133,36 @@
 				outline: none;
 				border-color: var(--accent);
 			}
+			/* One visible focus ring for every keyboard-reachable control. The
+			   inputs above trade the UA outline for a border colour, so they get
+			   the ring back here too. */
+			.btn:focus-visible,
+			.tab:focus-visible,
+			.sample-chip:focus-visible,
+			.report-download:focus-visible,
+			.record-actions button:focus-visible,
+			.record-actions a:focus-visible,
+			.result-error-retry:focus-visible,
+			nav a:focus-visible,
+			input:focus-visible,
+			textarea:focus-visible,
+			select:focus-visible,
+			.drop-zone:focus-within {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			/* Visually hidden, still focusable and still announced. */
+			.sr-only {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				white-space: nowrap;
+				border: 0;
+			}
 			textarea {
 				resize: vertical;
 				font-family: ui-monospace, SF Mono, Menlo, monospace;
@@ -184,6 +214,7 @@
 				}
 			}
 			.drop-zone {
+				position: relative;
 				border: 2px dashed var(--border);
 				border-radius: 12px;
 				padding: 26px 18px;
@@ -193,12 +224,23 @@
 				transition: border-color 0.15s, background 0.15s;
 			}
 			.drop-zone:hover,
-			.drop-zone.drag {
+			.drop-zone.drag,
+			.drop-zone:focus-within {
 				border-color: var(--accent);
 				background: rgba(255, 255, 255, 0.05);
 			}
+			/* Hidden from sight, kept in the tab order: display:none would drop the
+			   only file picker on the page out of keyboard reach entirely. */
 			.drop-zone input[type='file'] {
-				display: none;
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: 0;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				border: 0;
+				opacity: 0;
 			}
 			.drop-zone .dz-title {
 				font-weight: 600;
@@ -298,7 +340,8 @@
 				padding: 0;
 				color: var(--text);
 			}
-			.report h1 {
+			.report h1,
+			.report h2 {
 				margin: 0 0 8px;
 				font-size: 20px;
 			}
@@ -531,6 +574,53 @@
 				margin-bottom: 6px;
 			}
 
+			/* ── Failure card (fetch blocked, unreadable file, validator crash) ── */
+			.result-error {
+				padding: 22px;
+				border: 1px solid rgba(255, 92, 92, 0.35);
+				background: rgba(255, 92, 92, 0.06);
+				border-radius: 12px;
+			}
+			.result-error-title {
+				font-size: 15px;
+				font-weight: 600;
+				color: #ffb3b3;
+				margin-bottom: 6px;
+			}
+			.result-error-detail {
+				font-size: 13px;
+				color: var(--text-soft);
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				word-break: break-word;
+				margin-bottom: 14px;
+			}
+			.result-error-hints {
+				margin: 0 0 16px;
+				padding-left: 20px;
+				font-size: 13px;
+				color: var(--muted);
+				line-height: 1.6;
+			}
+			.result-error-actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+			}
+			.result-error-retry {
+				padding: 8px 14px;
+				border-radius: 8px;
+				border: 1px solid var(--border);
+				background: var(--panel2);
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			.result-error-retry:hover {
+				background: #262626;
+			}
+
 			/* ── Records tab (kept compatible with ValidationDashboard) ── */
 			.records-toolbar {
 				display: flex;
@@ -695,11 +785,15 @@
 				place-items: center;
 				opacity: 0;
 				pointer-events: none;
-				transition: opacity 0.15s;
+				/* visibility, not just opacity: an opacity-0 dialog keeps its
+				   controls in the tab order and swallows keyboard focus. */
+				visibility: hidden;
+				transition: opacity 0.15s, visibility 0.15s;
 			}
 			.modal-overlay.open {
 				opacity: 1;
 				pointer-events: auto;
+				visibility: visible;
 			}
 			.modal {
 				background: #0f0f0f;
@@ -866,7 +960,7 @@
 				<a href="https://gltf-transform.dev" target="_blank" rel="noreferrer"
 					>glTF-Transform</a
 				>
-				performance inspector — fully client-side. Optionally sign &amp; pin reports
+				performance inspector, fully client-side. Optionally sign &amp; pin reports
 				on-chain.
 			</p>
 
@@ -897,25 +991,65 @@
 				</div>
 			</div>
 
-			<div class="tabs" role="tablist">
-				<button class="tab active" role="tab" data-tab="validate" aria-selected="true" data-i18n="validation_index.validate">
+			<div class="tabs" role="tablist" aria-label="Validator views">
+				<button
+					class="tab active"
+					type="button"
+					role="tab"
+					id="tab-validate"
+					aria-controls="panel-validate"
+					data-tab="validate"
+					aria-selected="true"
+					data-i18n="validation_index.validate"
+				>
 					Validate
 				</button>
-				<button class="tab" role="tab" data-tab="inspect" aria-selected="false" data-i18n="validation_index.inspect">
+				<button
+					class="tab"
+					type="button"
+					role="tab"
+					id="tab-inspect"
+					aria-controls="panel-inspect"
+					data-tab="inspect"
+					aria-selected="false"
+					tabindex="-1"
+					data-i18n="validation_index.inspect"
+				>
 					Inspect
 				</button>
-				<button class="tab" role="tab" data-tab="records" aria-selected="false" data-i18n="validation_index.records">
+				<button
+					class="tab"
+					type="button"
+					role="tab"
+					id="tab-records"
+					aria-controls="panel-records"
+					data-tab="records"
+					aria-selected="false"
+					tabindex="-1"
+					data-i18n="validation_index.records"
+				>
 					Records
 				</button>
 			</div>
 
 			<!-- ── Validate panel ─────────────────────────────────────────── -->
-			<section class="tab-panel active" data-tab="validate" role="tabpanel">
+			<section
+				class="tab-panel active"
+				data-tab="validate"
+				role="tabpanel"
+				id="panel-validate"
+				aria-labelledby="tab-validate"
+			>
 				<div class="input-row">
 					<label class="drop-zone" id="drop-zone">
-						<input type="file" id="file-input" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
+						<input
+							type="file"
+							id="file-input"
+							accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
+							aria-describedby="dz-sub"
+						/>
 						<div class="dz-title">Drop a .glb or .gltf file</div>
-						<div class="dz-sub">or click to choose · runs entirely in your browser</div>
+						<div class="dz-sub" id="dz-sub">or click to choose · runs entirely in your browser</div>
 					</label>
 					<div class="url-box">
 						<label for="url-input" data-i18n="validation_index.or_fetch_from_a_url">…or fetch from a URL</label>
@@ -932,14 +1066,21 @@
 				</div>
 
 				<div class="samples">
-					<span class="samples-label" data-i18n="validation_index.try_a_sample">Try a sample:</span>
-					<span id="samples"></span>
+					<span class="samples-label" id="samples-label" data-i18n="validation_index.try_a_sample">Try a sample:</span>
+					<span id="samples" role="group" aria-labelledby="samples-label"></span>
 				</div>
 
-				<div id="status" class="status"></div>
+				<div id="status" class="status" role="status" aria-live="polite"></div>
 
 				<div class="action-bar">
-					<button class="btn ghost" id="sign-btn" disabled data-i18n="validation_index.sign_pin_on_chain">
+					<button
+						class="btn ghost"
+						type="button"
+						id="sign-btn"
+						disabled
+						title="Runs after a validation completes"
+						data-i18n="validation_index.sign_pin_on_chain"
+					>
 						Sign &amp; pin on-chain →
 					</button>
 				</div>
@@ -953,72 +1094,91 @@
 			</section>
 
 			<!-- ── Inspect panel ──────────────────────────────────────────── -->
-			<section class="tab-panel" data-tab="inspect" role="tabpanel">
+			<section
+				class="tab-panel"
+				data-tab="inspect"
+				role="tabpanel"
+				id="panel-inspect"
+				aria-labelledby="tab-inspect"
+			>
 				<div id="inspect-output">
 					<div class="empty-result">
 						<div class="empty-result-title">No model loaded</div>
 						<div>
-							Load a model in the <b data-i18n="validation_index.validate_2">Validate</b> tab — both checks run in parallel and
-							results appear here.
+							Load a model in the <b data-i18n="validation_index.validate_2">Validate</b> tab. Both checks run in
+							parallel and results appear here.
 						</div>
 					</div>
 				</div>
 			</section>
 
 			<!-- ── Records panel ──────────────────────────────────────────── -->
-			<section class="tab-panel" data-tab="records" role="tabpanel">
+			<section
+				class="tab-panel"
+				data-tab="records"
+				role="tabpanel"
+				id="panel-records"
+				aria-labelledby="tab-records"
+			>
 				<p class="sub" data-i18n="validation_index.on_chain_proof_that_an_agent_s">
 					On-chain proof that an agent's GLB model has been audited. Each record is signed by
 					a validator's wallet and stored immutably.
 				</p>
 
 				<div class="records-toolbar">
-					<input type="text" id="agent-input" placeholder="Agent ID (e.g., 1)" />
-					<input type="text" id="chain-input" placeholder="Chain ID (e.g., 84532)" />
-					<button class="btn" id="load-btn" data-i18n="validation_index.load_records">Load Records</button>
-					<button class="btn sec" id="submit-btn" data-i18n="validation_index.submit_json_report">Submit JSON Report</button>
+					<label class="sr-only" for="agent-input">Agent ID</label>
+					<input type="text" id="agent-input" inputmode="numeric" placeholder="Agent ID (e.g., 1)" />
+					<label class="sr-only" for="chain-input">Chain ID</label>
+					<input type="text" id="chain-input" inputmode="numeric" placeholder="Chain ID (e.g., 84532)" />
+					<button class="btn" type="button" id="load-btn" data-i18n="validation_index.load_records">Load Records</button>
+					<button class="btn sec" type="button" id="submit-btn" data-i18n="validation_index.submit_json_report">Submit JSON Report</button>
 				</div>
 
-				<div id="error" class="err-box" style="display: none"></div>
-				<div id="info" class="info-box" style="display: none"></div>
+				<div id="error" class="err-box" role="alert" style="display: none"></div>
+				<div id="info" class="info-box" role="status" aria-live="polite" style="display: none"></div>
 				<div id="records" class="records"></div>
 				<div id="empty" class="empty" style="display: none">
 					<div class="empty-title">No validation records found</div>
 					<div class="empty-sub">
 						This agent hasn't been validated yet, or the agent ID / chain ID is incorrect.
 					</div>
-					<button class="btn" id="empty-submit-btn" data-i18n="validation_index.submit_a_validation">Submit a Validation</button>
+					<button class="btn" type="button" id="empty-submit-btn" data-i18n="validation_index.submit_a_validation">Submit a Validation</button>
 				</div>
 			</section>
 		</main>
 
 		<!-- Submit Modal — IDs preserved so ValidationDashboard wiring still works -->
 		<div class="modal-overlay" id="submit-modal">
-			<div class="modal">
-				<h2 data-i18n="validation_index.submit_validation_report">Submit Validation Report</h2>
+			<div class="modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
+				<h2 id="submit-modal-title" data-i18n="validation_index.submit_validation_report">Submit Validation Report</h2>
 				<p class="sub" data-i18n="validation_index.upload_a_json_validation_report_signed_by">
-					Upload a JSON validation report — signed by your wallet and stored on-chain.
+					Upload a JSON validation report, signed by your wallet and stored on-chain.
 				</p>
 
 				<div class="form-group">
-					<label data-i18n="validation_index.report_file_json">Report File (JSON)</label>
+					<label for="report-file" data-i18n="validation_index.report_file_json">Report File (JSON)</label>
 					<div class="file-input-wrapper">
 						<input type="file" id="report-file" accept=".json" />
 						<label for="report-file" class="file-input-label" data-i18n="validation_index.click_to_select_or_drag_a_json">
 							📄 Click to select or drag a JSON report file
 						</label>
 					</div>
-					<div id="file-status" style="font-size: 12px; color: var(--muted); margin-top: 8px"></div>
+					<div
+						id="file-status"
+						role="status"
+						aria-live="polite"
+						style="font-size: 12px; color: var(--muted); margin-top: 8px"
+					></div>
 				</div>
 
 				<div id="preview-section" style="display: none">
 					<div class="section-title">Preview</div>
 					<pre id="preview-json"></pre>
-					<div id="preview-error" style="color: #ffb3b3; font-size: 12px; margin-top: 8px"></div>
+					<div id="preview-error" role="alert" style="color: #ffb3b3; font-size: 12px; margin-top: 8px"></div>
 				</div>
 
 				<div id="hash-section" style="display: none" class="form-group">
-					<label data-i18n="validation_index.report_hash">Report Hash</label>
+					<label for="report-hash" data-i18n="validation_index.report_hash">Report Hash</label>
 					<input
 						type="text"
 						id="report-hash"
@@ -1032,7 +1192,7 @@
 
 				<div class="modal-actions">
 					<button class="btn sec" id="cancel-report-btn" type="button" data-i18n="validation_index.cancel">Cancel</button>
-					<button class="btn" id="submit-report-btn" disabled data-i18n="validation_index.submit_on_chain">Submit on-chain</button>
+					<button class="btn" id="submit-report-btn" type="button" disabled data-i18n="validation_index.submit_on_chain">Submit on-chain</button>
 				</div>
 			</div>
 		</div>

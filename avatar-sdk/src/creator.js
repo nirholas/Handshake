@@ -19,7 +19,7 @@ export class AvatarCreator {
 	/**
 	 * @param {object} opts
 	 * @param {HTMLElement} [opts.container] — DOM node to mount the modal into. Defaults to document.body.
-	 * @param {string} [opts.studioUrl] — origin of the Character Studio iframe. Defaults to studio.three.ws.
+	 * @param {string} [opts.studioUrl] — URL of the Avatar Studio iframe. Defaults to https://three.ws/avatar-studio/.
 	 * @param {string} [opts.avaturnSessionUrl] — if provided, opens Avaturn in edit mode for that session.
 	 * @param {(blob: Blob) => any} [opts.onExport] — called with the GLB Blob when the user exports.
 	 * @param {() => any} [opts.onClose] — called when the user closes without exporting.

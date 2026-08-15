@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "El wrapper de React per a l'SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> i <code>useAvatar</code> directament des de <code>/avatar-sdk/src/react.jsx</code>. React es carrega des d'una CDN mitjançant un mapa d'importació, de manera que aquesta pàgina funciona sense un pas de bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "El wrapper de React per a l'SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> i <code>useAvatar</code> directament des de <code>/avatar-sdk/src/react.js</code>. React es carrega des d'una CDN mitjançant un mapa d'importació, de manera que aquesta pàgina funciona sense un pas de bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Èpica",
 		"it_pays_the_quoted_price_and_receives": "Paga el preu cotitzat i rep la clau <b>una sola vegada</b>. Importa-la immediatament.",
 		"legendary": "Llegendària",
-		"long_brandable_solana_addresses_4_5_characte": "Adreces Solana llargues i amb marca — prefixos de 4-5+ caràcters que el 'grinder' en temps real no pot assolir — generades amb antelació en CPU per lots i venudes d'estoc. Compra'n una i la clau privada s'entrega <strong>una sola vegada</strong> a través del canal <a href=\"/vanity/gallery\">x402</a>, i després la seva còpia emmagatzemada es destrueix. Necessites un 'grind' nou de ≤3 caràcters? Utilitza el <a href=\"/vanity-wallet\">'grinder' en temps real</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Adreces Solana llargues i amb marca — prefixos de 4-5+ caràcters que el 'grinder' en temps real no pot assolir — generades amb antelació en CPU per lots i venudes d'estoc. Compra'n una i la clau privada s'entrega <strong>una sola vegada</strong> a través del canal <a href=\"/x402\">x402</a>, i després la seva còpia emmagatzemada es destrueix. Necessites un 'grind' nou de ≤3 caràcters? Utilitza el <a href=\"/vanity-wallet\">'grinder' en temps real</a>.",
 		"meta_description": "Compra una adreça 'vanity' Solana llarga i amb marca, lliurada instantàniament des d'estoc — prefixos de 4-5+ caràcters que el 'grinder' en temps real no pot assolir, generades amb antelació en CPU per lots i venudes a través de x402. El preu escala amb la raresa.",
 		"meta_og_description": "Adreces vanity Solana llargues i de marca, generades amb antelació i venudes des d'estoc. Lliurades una sola vegada, xifrades en repòs, amb preu segons la raresa.",
 		"meta_og_title": "Inventari Vanity Premium · three.ws",

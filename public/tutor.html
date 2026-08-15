@@ -47,8 +47,20 @@
 			position: sticky; top: 57px; backdrop-filter: blur(8px);
 			background: rgba(11, 13, 20, 0.7); z-index: 9;
 		}
-		.top-title { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; color: var(--text-dim); }
+		/* The page heading lives in the sticky bar so it survives the empty state
+		   being replaced by the thread; the empty state's own heading is an h2. */
+		h1.top-title { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; color: var(--text-dim); margin: 0; }
 		.spacer { flex: 1; }
+
+		/* Keyboard users get the same affordance mouse users get from :hover. */
+		:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.btn:focus-visible, .suggestion:focus-visible,
+		.notice-retry:focus-visible, .followup button:focus-visible { border-color: var(--accent); }
+		/* select#level and textarea#q clear the UA outline, and those id+element
+		   selectors outrank the bare :focus-visible rule above, so they restate it. */
+		select#level:focus-visible, textarea#q:focus-visible {
+			outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent);
+		}
 
 		.tab {
 			display: flex; align-items: center; gap: 10px;
@@ -79,7 +91,7 @@
 		.empty {
 			margin: auto; text-align: center; max-width: 520px; padding: 40px 0;
 		}
-		.empty h1 { font-size: 30px; letter-spacing: -0.02em; margin: 0 0 10px; }
+		.empty h2 { font-size: 30px; letter-spacing: -0.02em; margin: 0 0 10px; font-weight: 600; }
 		.empty p { color: var(--text-dim); line-height: 1.6; margin: 0 0 26px; }
 		.suggestions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 		.suggestion {
@@ -102,6 +114,19 @@
 		.msg.tutor .bubble { background: var(--surface); }
 		.msg.error .bubble { background: #2a1620; border-color: #5a2a3a; color: #ffb4c4; }
 		.msg.notice .bubble { background: #1c1a26; border-color: #3a3550; color: var(--text-dim); }
+		/* Answer-pending skeleton: an LLM explanation takes seconds, so the thread
+		   shows the shape of the reply that is coming instead of an empty gap. */
+		.msg.pending .bubble { background: var(--surface); }
+		.sk { display: block; height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2) 25%, #232330 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: sheen 1.4s ease infinite; }
+		.sk + .sk { margin-top: 10px; }
+		.sk.w80 { width: 80%; }
+		.sk.w60 { width: 60%; }
+		@keyframes sheen { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+		@media (prefers-reduced-motion: reduce) {
+			.sk { animation: none; }
+			.msg { animation: none; }
+		}
+
 		.notice-retry {
 			display: inline-block; margin-top: 10px; background: transparent; color: var(--accent-2);
 			border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font: inherit;
@@ -208,26 +233,35 @@
 	<div id="nav-container"></div>
 	<script src="/nav.js"></script>
 	<header class="top">
-		<span class="top-title" data-i18n="tutor.tutor">Tutor</span>
+		<h1 class="top-title" data-i18n="tutor.tutor">Tutor</h1>
 		<div class="spacer"></div>
 		<div class="tab" title="Running session total">
 			<span class="label" data-i18n="tutor.session">Session</span>
 			<span class="amount" id="tab-amount">$0.00</span>
-			<span class="count" id="tab-count" data-i18n="tutor.0_answers">0 answers</span>
+			<!-- The live answer count is data, not copy: tutor.js owns the text and
+			     reads its singular/plural template from these translated attributes,
+			     so the i18n pass can never overwrite the running count with "0". -->
+			<span
+				class="count"
+				id="tab-count"
+				data-count-one="{n} answer"
+				data-count-other="{n} answers"
+				data-i18n-attr="data-count-one:tutor.count_one;data-count-other:tutor.count_other"
+			>0 answers</span>
 		</div>
-		<button class="btn ghost" id="end-btn" disabled data-i18n="tutor.end_invoice">End &amp; invoice</button>
+		<button class="btn ghost" type="button" id="end-btn" disabled data-i18n="tutor.end_invoice">End &amp; invoice</button>
 	</header>
 
 	<main>
 		<div class="thread" id="thread">
 			<div class="empty" id="empty">
-				<h1 data-i18n="tutor.pay_as_you_learn">Pay-as-you-learn.</h1>
+				<h2 data-i18n="tutor.pay_as_you_learn">Pay-as-you-learn.</h2>
 				<p data-i18n-html="tutor.ask_anything_code_concepts_math_history_each">Ask anything — code, concepts, math, history. Each answer costs <strong>one cent</strong>, settled in USDC over x402 on Base or Solana. No subscription, no signup. You only pay for what you learn.</p>
 				<div class="suggestions" id="suggestions">
-					<button class="suggestion" data-i18n="tutor.explain_how_a_jwt_is_verified_step">Explain how a JWT is verified, step by step.</button>
-					<button class="suggestion" data-i18n="tutor.why_does_my_recursive_function_overflow_the">Why does my recursive function overflow the stack?</button>
-					<button class="suggestion" data-i18n="tutor.what_is_the_difference_between_tcp_and">What is the difference between TCP and UDP?</button>
-					<button class="suggestion" data-i18n="tutor.walk_me_through_how_a_transformer_attention">Walk me through how a transformer attention head works.</button>
+					<button class="suggestion" type="button" data-i18n="tutor.explain_how_a_jwt_is_verified_step">Explain how a JWT is verified, step by step.</button>
+					<button class="suggestion" type="button" data-i18n="tutor.why_does_my_recursive_function_overflow_the">Why does my recursive function overflow the stack?</button>
+					<button class="suggestion" type="button" data-i18n="tutor.what_is_the_difference_between_tcp_and">What is the difference between TCP and UDP?</button>
+					<button class="suggestion" type="button" data-i18n="tutor.walk_me_through_how_a_transformer_attention">Walk me through how a transformer attention head works.</button>
 				</div>
 			</div>
 		</div>
@@ -253,7 +287,7 @@
 
 	<div class="scrim" id="scrim">
 		<div class="invoice" role="dialog" aria-modal="true" aria-label="Session invoice">
-			<header><h3 data-i18n="tutor.session_invoice">Session invoice</h3><div class="spacer" style="flex:1"></div><button class="btn ghost" id="invoice-close" data-i18n="tutor.close">Close</button></header>
+			<header><h3 data-i18n="tutor.session_invoice">Session invoice</h3><div class="spacer" style="flex:1"></div><button class="btn ghost" type="button" id="invoice-close" data-i18n="tutor.close">Close</button></header>
 			<div class="body" id="invoice-lines"></div>
 			<div class="total"><span data-i18n="tutor.total">Total</span><span class="amt" id="invoice-total">$0.00</span></div>
 			<div class="attest" id="invoice-attest"></div>

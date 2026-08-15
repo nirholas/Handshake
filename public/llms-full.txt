@@ -628,7 +628,7 @@ Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal 
 
 URL: https://three.ws/voice
 
-Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.
+Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.
 
 ### Make Dad a 3D Avatar
 

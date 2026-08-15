@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laboratoř</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laboratoř",
-		"the_react_wrapper_around_the_sdk_imports": "React wrapper kolem SDK. Importuje <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> a <code>useAvatar</code> přímo z <code>/avatar-sdk/src/react.jsx</code>. React je načten z CDN pomocí import mapy, takže tato stránka funguje bez kroku bundleru.",
+		"the_react_wrapper_around_the_sdk_imports": "React wrapper kolem SDK. Importuje <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> a <code>useAvatar</code> přímo z <code>/avatar-sdk/src/react.js</code>. React je načten z CDN pomocí import mapy, takže tato stránka funguje bez kroku bundleru.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epické",
 		"it_pays_the_quoted_price_and_receives": "Zaplatí uvedenou cenu a obdrží klíč <b>jednou</b>. Okamžitě jej importujte.",
 		"legendary": "Legendární",
-		"long_brandable_solana_addresses_4_5_characte": "Dlouhé, brandovatelné Solana adresy — s předponami o 4–5+ znacích, na které živý grinder nedosáhne — předem vygenerované na dávkovém CPU a prodávané ze skladu. Kupte si jednu a soukromý klíč je doručen <strong>jednou</strong> přes <a href=\"/vanity/gallery\">x402</a> kanál, poté je jeho uložená kopie zničena. Potřebujete místo toho čerstvý grind s ≤3 znaky? Použijte <a href=\"/vanity-wallet\">živý grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Dlouhé, brandovatelné Solana adresy — s předponami o 4–5+ znacích, na které živý grinder nedosáhne — předem vygenerované na dávkovém CPU a prodávané ze skladu. Kupte si jednu a soukromý klíč je doručen <strong>jednou</strong> přes <a href=\"/x402\">x402</a> kanál, poté je jeho uložená kopie zničena. Potřebujete místo toho čerstvý grind s ≤3 znaky? Použijte <a href=\"/vanity-wallet\">živý grinder</a>.",
 		"meta_description": "Kupte si dlouhou, brandovatelnou Solana vanity adresu doručenou okamžitě ze skladu — s předponami o 4–5+ znacích, na které živý grinder nedosáhne, předem vygenerovanou na dávkovém CPU a prodávanou přes x402. Cena se odvíjí od vzácnosti.",
 		"meta_og_description": "Dlouhé, brandovatelné Solana vanity adresy, předem vygenerované a prodávané ze skladu. Doručeno jednou, šifrováno v klidu, cena dle vzácnosti.",
 		"meta_og_title": "Inventář prémiových vanity adres · three.ws",

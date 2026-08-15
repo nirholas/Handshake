@@ -1245,7 +1245,8 @@ footer:not([class*="h-footer"]) .separator {
 	max-width: 860px;
 }
 
-.report h1 {
+.report h1,
+.report h2 {
 	margin-top: 0;
 }
 

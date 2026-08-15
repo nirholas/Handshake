@@ -76,7 +76,7 @@
 				The React wrapper around the SDK. Imports <code>Avatar</code>,
 				<code>AgentAvatar</code>, <code>AvatarCreator</code>, and
 				<code>useAvatar</code> directly from
-				<code>/avatar-sdk/src/react.jsx</code>. React is loaded from a CDN
+				<code>/avatar-sdk/src/react.js</code>. React is loaded from a CDN
 				via an import map so this page works without a bundler step.
 			</p>
 
@@ -127,7 +127,7 @@ const { avatar, loading, error } = useAvatar(id);</pre>
 				AgentAvatar,
 				AvatarCreator,
 				useAvatar,
-			} from '/avatar-sdk/src/react.jsx';
+			} from '/avatar-sdk/src/react.js';
 
 			const $ = (id) => document.getElementById(id);
 			const stamp = () => new Date().toTimeString().slice(0, 8);

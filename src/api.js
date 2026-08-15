@@ -51,6 +51,24 @@ export function noteSession(hasSession) {
 	_sessionKnown = !!hasSession;
 }
 
+// Resolve the session once per tab for pages that never call noteSession()
+// themselves. Without it an anonymous visitor on a public page (/trending, any
+// surface rendering wallet chips or reputation badges) pays a 401 CSRF
+// pre-flight per hydrating module and reads red errors in the console. This is
+// single-flight and only ever runs ahead of an allowAnonymous mutation-shaped
+// read; /api/auth/me answers 200 with `{ user: null }` when signed out, so it
+// costs one clean GET and replaces every doomed token request.
+let _sessionProbe = null;
+function resolveSession() {
+	if (!_sessionProbe) {
+		_sessionProbe = fetch('/api/auth/me', { credentials: 'include', headers: { accept: 'application/json' } })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d) => { if (d) noteSession(!!d.user); })
+			.catch(() => { /* leave unresolved; the caller falls back to asking for a token */ });
+	}
+	return _sessionProbe;
+}
+
 // Fetch a fresh single-use CSRF token for every mutation. Tokens are burned
 // on first use (api/_lib/csrf.js), so caching is unsafe when concurrent
 // mutations share the module — two callers that read the same cached token
@@ -92,6 +110,9 @@ export async function apiFetch(path, options = {}) {
 	// A known-anonymous caller on an endpoint that accepts anonymous reads has no
 	// session for a token to bind to; skipping the pre-flight keeps a public page
 	// console clean. Anything that is not `allowAnonymous` still asks, always.
+	if (!SAFE_METHODS.has(method) && !hasBearer && allowAnonymous && _sessionKnown === null) {
+		await resolveSession();
+	}
 	const skipCsrf = allowAnonymous && _sessionKnown === false;
 	if (!SAFE_METHODS.has(method) && !hasBearer && !skipCsrf) {
 		const token = await freshCsrfToken();

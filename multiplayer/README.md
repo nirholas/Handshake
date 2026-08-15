@@ -21,29 +21,81 @@ npm install                  # installs this workspace too
 npm run dev:multi            # boots the Colyseus server on :2567
 
 # Or, in another terminal, both servers together:
-npm run dev:walk-all         # Vite (:3000) + Colyseus (:2567)
+npm run dev:walk-all         # Vite (first free port from :3000 up) + Colyseus (:2567)
 ```
 
-The Vite dev pages at `http://localhost:3000/walk` and `http://localhost:3000/play` autodiscover the server at `ws://localhost:2567` (see [`src/walk-net.js`](../src/walk-net.js)), so no environment plumbing is needed.
+The Vite dev pages at `http://localhost:3000/walk` and `http://localhost:3000/play` autodiscover the server at `ws://localhost:2567` (see [`src/walk-net.js`](../src/walk-net.js)), so no environment plumbing is needed. Vite takes the first free port from 3000 upward, so a second checkout on the same machine lands on 3004 or higher; outside production the WS upgrade accepts any loopback origin, so those still connect without touching `ALLOWED_ORIGINS`.
+
+Nothing here needs a credential: with no env at all the process boots memory-only (no durable builds, no presence fan-out, no play gate) and logs exactly which capability each missing var would switch on.
 
 ## Configuration (env)
+
+Everything is optional except `HOLDER_PASS_SECRET` in production, which the process refuses to boot without.
+
+**Process and transport**
 
 | Var | Default | Purpose |
 | --- | --- | --- |
 | `PORT` | `2567` | TCP port to bind |
 | `HOST` | `0.0.0.0` | Interface to bind |
-| `ALLOWED_ORIGINS` | `localhost:3000-3003,three.ws,www.three.ws` | Comma-separated origin allow-list for the WS upgrade. `*.vercel.app` and `*.three.ws` are always allowed so preview deploys connect. |
+| `NODE_ENV` | unset | `production` hardens three things: origin-less WS upgrades are refused, the admin monitor stays unmounted unless credentials are set, and boot fails without `HOLDER_PASS_SECRET` |
+| `ALLOWED_ORIGINS` | `http://localhost:3000-3003,https://three.ws,https://www.three.ws` | Comma-separated origin allow-list for the WS upgrade. `*.vercel.app` and `*.three.ws` are always allowed so preview deploys connect; outside production, loopback and Codespaces/Gitpod hosts are too |
 | `WALK_ROOM_MAX_CLIENTS` | `100` | Per-room client cap for `walk_world` (clamped to 2-500) |
-| `REDIS_URI` | unset | Colyseus room registry + presence Redis; setting it switches on horizontal scaling (see Scaling notes) |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | unset | Durable persistence for builds, player profiles, cosmetics ownership, and the activity feed; memory-only without them |
+| `MONITOR_USER` / `MONITOR_PASS` | unset | Basic-auth credentials for `/colyseus`. Both set mounts the monitor behind auth anywhere; unset leaves it open in dev and unmounted in production |
+
+**State**
+
+| Var | Default | Purpose |
+| --- | --- | --- |
+| `REDIS_URI` (or `REDIS_URL`) | unset | Colyseus room registry + presence Redis; setting it switches on horizontal scaling (see Scaling notes) |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | unset | Durable persistence for builds, player profiles, cosmetics ownership, the activity feed, the live war registry, and the settlement replay guard; memory-only without them. The friends/DM presence hub alone also accepts `KV_REST_API_URL` / `KV_REST_API_TOKEN` as a fallback pair |
+
+**Trust boundaries (shared secrets)**
+
+| Var | Default | Purpose |
+| --- | --- | --- |
+| `HOLDER_PASS_SECRET` | dev secret | HMAC key for the signed play pass and holder gate. **Required in production**: without it both this process and the API signer fall back to a public dev secret, so the gate would be forgeable, and the process exits rather than boot that way |
+| `MULTIPLAYER_SHARED_SECRET` | falls back to `HOLDER_PASS_SECRET` | HMAC key the API signs the `/internal/*` webhooks, presence tickets, guest tokens, and persistence calls with |
+| `WAR_TICKET_SECRET` / `WAR_RESULT_SECRET` | fall back to `HOLDER_PASS_SECRET` | Verify a Coin Wars pairing ticket and sign the result report back to the API |
+| `GAME_TOKEN_SECRET` | falls back to `HOLDER_PASS_SECRET`, then `REALM_TRANSFER_SECRET` | Signs the boutique / wheel payment quotes the client settles on-chain |
+
+**Play gate and on-chain settlement**
+
+| Var | Default | Purpose |
+| --- | --- | --- |
+| `PLAY_GATE_MINT` (or `THREE_MINT`) | unset | Require wallet sign-in plus a token balance to enter `walk_world` / `clash_arena`. Unset leaves the worlds open, and the boot log says which |
+| `PLAY_GATE_MIN` | `1` | Minimum token balance the gate demands |
+| `HOLDER_MIN_USD` | `8` | USD floor a holders-only world displays, used only when the signed pass does not carry one (the client's unsigned option is never trusted) |
+| `GAME_TOKEN_MINT` | the `$THREE` mint | Mint that prices in-world premium purchases |
+| `GAME_TOKEN_DECIMALS` | `6` | Decimals for that mint |
+| `GAME_TOKEN_TREASURY` (or `PAYMENT_RECIPIENT_SOLANA`) | unset | Treasury wallet; without it token-priced listings stay disabled rather than silently taking payment |
+| `GAME_TOKEN_REWARDS` (or `THREE_REWARDS_WALLET`) | falls back to the treasury | Holder-rewards half of a split payment |
+| `GAME_TOKEN_VERIFY_COMMITMENT` | `confirmed` | Set to `finalized` to wait for finality before granting a purchase |
+| `SOLANA_RPC_URL` | public mainnet RPC | RPC the settlement verifier reads |
+| `BIRDEYE_API_KEY` | unset | Price feed for the USD holder floor |
+
+**Upstream reads**
+
+| Var | Default | Purpose |
+| --- | --- | --- |
+| `WORLD_API_BASE` | `https://three.ws` | three.ws API this process calls for persistence, quest notifications, event scores, and the event window |
+| `THREE_WS_API_BASE` / `THREEWS_API_BASE` / `MULTIPLAYER_API_BASE` | `https://three.ws` | Same, for the war report and the Living Stages room |
+| `EVENT_CONFIG_URL` | `${WORLD_API_BASE}/event.json` | Event window + souvenir config the join-time grant reads |
+| `EVENT_CONFIG_TTL_MS` | `120000` | How long that config is cached (floor 1000) |
 
 ## Endpoints
 
 | Route | Purpose |
 | --- | --- |
-| `/health`, `/healthz` | Liveness probe, returns `{ok:true}` |
-| `/colyseus` | Admin monitor UI ([@colyseus/monitor](https://docs.colyseus.io/tools/monitor/)); protect this behind a reverse proxy or basic auth in prod |
-| WS upgrade | Colyseus protocol; clients connect with `new Client('ws://host:2567')` |
+| `GET /health`, `GET /healthz` | Liveness probe, returns `{ok:true,name:"three.ws-multiplayer"}` |
+| `GET /population` | Public live aggregate: `{ok,coin,rooms,players}` across every `walk_world` (cluster-wide when `REDIS_URI` is set). `?coin=<mint>` narrows to one community. A count only, never an identity; the site reads it through `api/play/population.js` |
+| `POST /internal/notify` | Friends/DM delivery from the API. HMAC-signed (`x-mp-signature` + `x-mp-timestamp`); answers `{delivered}` so the API knows whether to fall back to next-login delivery |
+| `POST /internal/stage` | Living Stages tip bridge; the API calls it once a `$THREE` tip settles on-chain so the live `stage_world` reacts within ~1s. Same HMAC scheme (`x-stage-*`) |
+| `POST /internal/announce` | Operator broadcast into every live `walk_world` (optionally one coin's), delivered on the `notice` channel every deployed client already renders. Same HMAC scheme (`x-announce-*`) |
+| `/colyseus` | Admin monitor UI ([@colyseus/monitor](https://docs.colyseus.io/tools/monitor/)). Set `MONITOR_USER` + `MONITOR_PASS` to mount it behind basic auth; in production it is not mounted at all without them |
+| WS upgrade | Colyseus protocol; clients connect with `new Client('ws://host:2567')`. Origin-filtered (see `ALLOWED_ORIGINS`), with each room's `onAuth` as the real access boundary |
+
+The three `/internal/*` routes are signed against the exact body plus a fresh timestamp, so a captured signature cannot be replayed with different content. [`tests/multiplayer-server-boot.test.js`](../tests/multiplayer-server-boot.test.js) boots this entry point for real and holds the whole table down: both probes, the population aggregate, a live `walk_world` join, webhook forgery refusal, the origin allow-list, and the production posture.
 
 ## Anti-cheat
 

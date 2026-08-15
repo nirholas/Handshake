@@ -39,6 +39,9 @@ export class ValidationPage {
 		this.currentReport = null;
 		this.currentInspect = null;
 		this.currentSuggestions = null;
+		// Last input, so a failure can offer a real retry instead of asking the
+		// visitor to re-pick the file or re-paste the URL.
+		this.lastSource = null;
 
 		this._renderSamples();
 		this._bindEvents();
@@ -47,11 +50,15 @@ export class ValidationPage {
 
 	// ── Tabs ────────────────────────────────────────────────────────────────
 
-	switchTab(name) {
+	switchTab(name, { focus = false } = {}) {
 		this.activeTab = name;
 		this.els.tabs.forEach((btn) => {
-			btn.classList.toggle('active', btn.dataset.tab === name);
-			btn.setAttribute('aria-selected', btn.dataset.tab === name ? 'true' : 'false');
+			const selected = btn.dataset.tab === name;
+			btn.classList.toggle('active', selected);
+			btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+			// Roving tabindex: one stop for the whole tablist, arrows move within.
+			btn.tabIndex = selected ? 0 : -1;
+			if (selected && focus) btn.focus();
 		});
 		this.els.panels.forEach((p) => {
 			p.classList.toggle('active', p.dataset.tab === name);
@@ -71,8 +78,16 @@ export class ValidationPage {
 	// ── Input wiring ────────────────────────────────────────────────────────
 
 	_bindEvents() {
-		this.els.tabs.forEach((btn) => {
+		const tabs = Array.from(this.els.tabs);
+		tabs.forEach((btn, i) => {
 			btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
+			btn.addEventListener('keydown', (e) => {
+				const step = { ArrowRight: 1, ArrowLeft: -1, Home: -i, End: tabs.length - 1 - i }[e.key];
+				if (step === undefined) return;
+				e.preventDefault();
+				const next = tabs[(i + step + tabs.length) % tabs.length];
+				this.switchTab(next.dataset.tab, { focus: true });
+			});
 		});
 
 		this.els.fileInput.addEventListener('change', (e) => {
@@ -103,6 +118,14 @@ export class ValidationPage {
 		});
 
 		this.els.signBtn.addEventListener('click', () => this._handOffToDashboard());
+
+		// Retry buttons live inside rendered error cards, so the listener is
+		// delegated onto the panels that own them.
+		[this.els.validateOut, this.els.inspectOut].forEach((panel) => {
+			panel.addEventListener('click', (e) => {
+				if (e.target.closest('[data-retry]')) this.retryLast();
+			});
+		});
 	}
 
 	_renderSamples() {
@@ -120,25 +143,34 @@ export class ValidationPage {
 	// ── Load + run ──────────────────────────────────────────────────────────
 
 	async loadFile(file) {
-		this._setStatus(`Reading ${file.name} (${(file.size / 1024).toFixed(1)} KB)…`);
+		this.lastSource = { kind: 'file', file, name: file.name };
+		this._setStatus(`Reading ${file.name} (${formatBytes(file.size)})…`);
 		try {
 			const buffer = await file.arrayBuffer();
 			await this._run(new Uint8Array(buffer), file.name);
 		} catch (e) {
-			this._setError(`Could not read file: ${e.message}`);
+			this._failBoth(`${file.name} could not be read`, errorText(e), [
+				'The file may have been moved or renamed since you picked it.',
+				'Pick it again, or drag it onto the drop zone.',
+			]);
 		}
 	}
 
 	async loadUrl(url, displayName) {
 		const name = displayName || url.split('/').pop() || 'remote';
+		this.lastSource = { kind: 'url', url, name };
 		this._setStatus(`Fetching ${name}…`);
 		try {
 			const res = await fetch(url);
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			if (!res.ok) throw new Error(`the server answered HTTP ${res.status}`);
 			const buffer = await res.arrayBuffer();
 			await this._run(new Uint8Array(buffer), name);
 		} catch (e) {
-			this._setError(`Could not fetch ${name}: ${e.message}`);
+			this._failBoth(`Could not fetch ${name}`, errorText(e), [
+				'The host must send an Access-Control-Allow-Origin header. Most CDNs and object stores do not by default.',
+				'Check the URL points straight at a .glb or .gltf file, not at a viewer page.',
+				'No CORS on the host? Download the model and drop the file here instead: it never leaves your browser.',
+			]);
 		}
 	}
 
@@ -162,9 +194,15 @@ export class ValidationPage {
 				this._renderValidate(report);
 			})
 			.catch((e) => {
-				this.els.validateOut.innerHTML = `<div class="err">Validator failed: ${escapeHtml(
-					e.message,
-				)}</div>`;
+				this.els.validateOut.innerHTML = errorCard(
+					`${name} is not valid glTF`,
+					errorText(e),
+					[
+						'The Khronos validator could not parse the file at all, so there is no report to show.',
+						'Confirm the download finished and the file is a glTF 2.0 .glb or .gltf.',
+						'A .gltf that references external .bin or texture files must be packed into a .glb first.',
+					],
+				);
 			});
 
 		const inspectPromise = inspectModel(bytes, { fileSize: bytes.byteLength })
@@ -175,17 +213,48 @@ export class ValidationPage {
 				this._renderInspect(inspect, suggestions);
 			})
 			.catch((e) => {
-				this.els.inspectOut.innerHTML = `<div class="err">Inspector failed: ${escapeHtml(
-					e.message,
-				)}</div>`;
+				this.els.inspectOut.innerHTML = errorCard(
+					`Could not inspect ${name}`,
+					errorText(e),
+					[
+						'glTF-Transform reads the same bytes as the validator, so an unreadable file fails both.',
+						'The Validate tab shows what the Khronos suite made of it.',
+					],
+				);
 			});
 
 		await Promise.allSettled([validatePromise, inspectPromise]);
-		this._setStatus(
-			`Loaded ${name} · ${(bytes.byteLength / 1024).toFixed(1)} KB · validated`,
-			true,
-		);
-		if (this.currentReport) this.els.signBtn.disabled = false;
+
+		// Report what actually happened. Claiming "validated" after both lanes
+		// threw is how a broken upload used to read as a clean pass.
+		const size = formatBytes(bytes.byteLength);
+		if (this.currentReport) {
+			const n = this.currentReport.issues;
+			const issues = n.numErrors + n.numWarnings + n.numInfos + n.numHints;
+			this._setStatus(
+				`${name} · ${size} · ${issues === 0 ? 'no issues found' : `${issues} issue${issues === 1 ? '' : 's'} found`}`,
+				true,
+			);
+			this.els.signBtn.disabled = false;
+		} else {
+			this._setStatus(`${name} · ${size} · could not be validated`, false, true);
+		}
+	}
+
+	/** Same failure in both panels: nothing was read, so neither check ran. */
+	_failBoth(title, detail, hints) {
+		this._setStatus(title, false, true);
+		const card = errorCard(title, detail, hints);
+		this.els.validateOut.innerHTML = card;
+		this.els.inspectOut.innerHTML = card;
+		this.els.signBtn.disabled = true;
+	}
+
+	retryLast() {
+		const src = this.lastSource;
+		if (!src) return;
+		if (src.kind === 'url') this.loadUrl(src.url, src.name);
+		else this.loadFile(src.file);
 	}
 
 	_renderValidate(report) {
@@ -204,16 +273,9 @@ export class ValidationPage {
 
 	// ── Status display ──────────────────────────────────────────────────────
 
-	_setStatus(msg, ok = false) {
+	_setStatus(msg, ok = false, failed = false) {
 		this.els.statusEl.textContent = msg;
-		this.els.statusEl.className = `status${ok ? ' ok' : ''}`;
-	}
-
-	_setError(msg) {
-		this.els.statusEl.textContent = msg;
-		this.els.statusEl.className = 'status err';
-		this.els.validateOut.innerHTML = '';
-		this.els.inspectOut.innerHTML = '';
+		this.els.statusEl.className = `status${failed ? ' err' : ok ? ' ok' : ''}`;
 	}
 
 	// ── Bridge to on-chain submit ───────────────────────────────────────────
@@ -240,6 +302,43 @@ export class ValidationPage {
 		this.dashboard.els.hashSection.style.display = 'block';
 		this.dashboard.els.submitReportBtn.disabled = false;
 	}
+}
+
+/**
+ * A designed, actionable failure block. Every path that used to blank a panel
+ * renders one of these instead: what broke, the raw detail, what to try next,
+ * and a retry that reruns the last input.
+ */
+function errorCard(title, detail, hints) {
+	const list = hints.map((h) => `<li>${escapeHtml(h)}</li>`).join('');
+	return `
+		<div class="result-error" role="alert">
+			<div class="result-error-title">${escapeHtml(title)}</div>
+			${detail ? `<div class="result-error-detail">${escapeHtml(detail)}</div>` : ''}
+			<ul class="result-error-hints">${list}</ul>
+			<div class="result-error-actions">
+				<button type="button" class="result-error-retry" data-retry>Try again</button>
+			</div>
+		</div>`;
+}
+
+/**
+ * gltf-validator rejects with a bare string, fetch with a TypeError, and
+ * glTF-Transform with an Error. Reading `.message` off all three printed
+ * "undefined" to the visitor for the most common failure of the three.
+ */
+function errorText(e) {
+	if (!e) return '';
+	if (typeof e === 'string') return e;
+	if (e.message) return String(e.message);
+	return String(e);
+}
+
+function formatBytes(n) {
+	if (!Number.isFinite(n)) return 'unknown size';
+	if (n < 1024) return `${n} B`;
+	if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+	return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
 function buildDownloadHref(payload) {

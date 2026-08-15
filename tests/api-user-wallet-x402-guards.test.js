@@ -33,6 +33,7 @@ const csrfState = { ok: true };
 const sqlState = { queue: [], calls: [] };
 const rpcState = { sigLimit: null, balanceLamports: 5_000_000n, tokenAmount: '2500000', destAtaExists: true };
 const keysState = { calls: [], createThrows: null };
+const solState = { balances: { sol: 0.42, usdc: 12.5 }, price: 150 };
 
 vi.mock('../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => authState.session),
@@ -71,7 +72,14 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 
-vi.mock('../api/_lib/usage.js', () => ({ recordEvent: vi.fn(async () => {}) }));
+// Deliberately synchronous and deliberately returning nothing, because that is
+// what the real api/_lib/usage.js recordEvent does: it queues the write on a
+// microtask and swallows its own failures. An `async () => {}` stand-in here
+// returns a promise the real function never returns, and that difference hid a
+// live 500: three handlers chained `.catch()` onto the call, which threw a
+// TypeError after the wallet row was committed and after the transfer was
+// already on chain. Keep this mock's shape pinned to the real one.
+vi.mock('../api/_lib/usage.js', () => ({ recordEvent: vi.fn(() => undefined) }));
 vi.mock('../api/_lib/cache.js', () => ({
 	cacheGet: vi.fn(async () => null),
 	cacheSet: vi.fn(async () => {}),
@@ -91,17 +99,28 @@ vi.mock('../api/_lib/agent-wallet.js', () => ({
 		address: MASTER_EVM,
 		encrypted_key: 'enc-evm',
 	})),
-	getSolanaAddressBalances: vi.fn(async () => ({
-		native: 0.42,
-		total_usd: 63,
-		tokens: [{ mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', uiAmount: 12.5 }],
-	})),
+	// The real getSolanaAddressBalances returns raw amounts and nothing else:
+	// `{ sol, usdc }`, with nulls when the RPC did not answer. It has never
+	// returned `{ native, total_usd, tokens }`, and a mock that did let
+	// api/user/wallet read three fields that are always undefined, so every
+	// Solana balance on /wallet rendered "unavailable" while this suite stayed
+	// green. Keep this pinned to the real shape.
+	getSolanaAddressBalances: vi.fn(async () => solState.balances),
 }));
 
 vi.mock('../api/_lib/evm/rpc.js', () => ({
 	evmFallbackProvider: vi.fn(async () => ({
 		call: vi.fn(async () => '0x' + (7_000_000).toString(16).padStart(64, '0')),
 	})),
+}));
+
+// solPriceUsd throws when every upstream is down, which is the case the total
+// has to survive without valuing a held SOL balance at nothing.
+vi.mock('../api/_lib/sol-price.js', () => ({
+	solPriceUsd: vi.fn(async () => {
+		if (solState.price == null) throw new Error('SOL price unavailable');
+		return solState.price;
+	}),
 }));
 
 vi.mock('../api/_lib/provider-keys.js', async () => {
@@ -215,6 +234,8 @@ beforeEach(() => {
 	rpcState.balanceLamports = 5_000_000n;
 	rpcState.tokenAmount = '2500000';
 	rpcState.destAtaExists = true;
+	solState.balances = { sol: 0.42, usdc: 12.5 };
+	solState.price = 150;
 });
 
 describe('x402-subscriptions: CSRF on the write path', () => {
@@ -416,16 +437,51 @@ describe('wallet index: create and read', () => {
 		expect(sqlState.calls.some((c) => /INSERT INTO master_wallets/i.test(c.text))).toBe(false);
 	});
 
-	it('reads live balances and totals SOL value with EVM USDC', async () => {
+	function primeWalletRow() {
 		sqlState.queue.push([{ solana_address: MASTER_WALLET, evm_address: MASTER_EVM, created_at: '2026-08-15T00:00:00Z' }]);
+	}
+
+	it('reads live balances and prices SOL into the total alongside both USDC legs', async () => {
+		primeWalletRow();
 		const { status, body } = await call(walletHandler, { method: 'GET', url: '/api/user/wallet' });
 		expect(status).toBe(200);
 		expect(body.wallet.balances).toEqual({
 			sol: 0.42,
 			sol_usdc: 12.5,
 			evm_usdc: 7,
-			total_usd: 70,
+			// 0.42 SOL at $150 = $63, plus 12.5 USDC on Solana and 7 on Base.
+			total_usd: 82.5,
 		});
+	});
+
+	it('reports a genuinely empty wallet as zero, never as unavailable', async () => {
+		solState.balances = { sol: 0, usdc: 0 };
+		primeWalletRow();
+		const { body } = await call(walletHandler, { method: 'GET', url: '/api/user/wallet' });
+		expect(body.wallet.balances).toEqual({ sol: 0, sol_usdc: 0, evm_usdc: 7, total_usd: 7 });
+	});
+
+	it('keeps a zero-SOL total honest when the price feed is down', async () => {
+		solState.balances = { sol: 0, usdc: 4 };
+		solState.price = null;
+		primeWalletRow();
+		const { body } = await call(walletHandler, { method: 'GET', url: '/api/user/wallet' });
+		expect(body.wallet.balances.total_usd).toBe(11);
+	});
+
+	it('voids the total rather than under-reporting held SOL with no price', async () => {
+		solState.price = null;
+		primeWalletRow();
+		const { body } = await call(walletHandler, { method: 'GET', url: '/api/user/wallet' });
+		expect(body.wallet.balances.sol).toBe(0.42);
+		expect(body.wallet.balances.total_usd).toBeNull();
+	});
+
+	it('leaves an unreadable Solana balance out of the total instead of counting it as zero', async () => {
+		solState.balances = { sol: null, usdc: null };
+		primeWalletRow();
+		const { body } = await call(walletHandler, { method: 'GET', url: '/api/user/wallet' });
+		expect(body.wallet.balances).toEqual({ sol: null, sol_usdc: null, evm_usdc: 7, total_usd: 7 });
 	});
 
 	it('answers a null wallet rather than 404 for a user who has none', async () => {

@@ -69,8 +69,8 @@
 		.tt-pulse { display: flex; gap: 16px; flex-wrap: wrap; margin-left: auto; }
 		.tt-pulse-item { display: flex; flex-direction: column; gap: 2px; min-width: 56px; }
 		.tt-pulse-v { font: 700 13px/1 var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
-		.tt-pulse-l { font: 600 9px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
-		.tt-pulse-chg { font: 700 10px/1 var(--mono); }
+		.tt-pulse-l { font: 600 9px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); display: flex; align-items: baseline; gap: 5px; }
+		.tt-pulse-chg { font: 700 9px/1 var(--mono); letter-spacing: 0; }
 		.tt-pulse-chg.up, .up { color: var(--tt-up); } .tt-pulse-chg.down, .down { color: var(--tt-down); }
 
 		/* ── Body split ────────────────────────────────────────────────────────── */
@@ -85,7 +85,8 @@
 			border-radius: 8px; padding: 9px 34px 9px 11px; font: 500 12px/1.2 var(--mono); color: var(--fg);
 			transition: border-color .14s;
 		}
-		.tt-search input:focus { outline: none; border-color: color-mix(in srgb, var(--cyan) 55%, var(--line)); }
+		.tt-search input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+		.tt-search input:focus { border-color: color-mix(in srgb, var(--cyan) 55%, var(--line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 18%, transparent); }
 		.tt-search input.shake { animation: ttshake .35s; border-color: var(--tt-down); }
 		@keyframes ttshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 		.tt-search-go { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--faint); cursor: pointer; padding: 6px; font-size: 13px; }
@@ -98,6 +99,7 @@
 		.tt-rail-net select { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; font: 600 11px/1 var(--mono); color: var(--fg); cursor: pointer; }
 
 		.tt-feed { overflow-y: auto; flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 3px; scrollbar-width: thin; }
+		.tt-feed:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
 
 		/* feed row */
 		.tt-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: 1px solid transparent; border-radius: 9px; padding: 8px 9px; cursor: pointer; transition: background .13s, border-color .13s; }
@@ -126,7 +128,9 @@
 		.tt-row-ini.sk { background: color-mix(in srgb, var(--fg) 7%, transparent); }
 		@keyframes ttpulse { 0%,100%{opacity:1} 50%{opacity:.45} }
 		.tt-feed-state { padding: 40px 16px; text-align: center; color: var(--faint); }
+		.tt-feed-state--inline { padding: 18px 14px 22px; }
 		.tt-feed-state p { font: 400 12.5px/1.6 var(--sans); margin: 0 0 12px; }
+		.tt-feed-state p:last-child { margin-bottom: 0; }
 		.tt-mini-btn { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font: 600 11px/1 var(--mono); color: var(--muted); cursor: pointer; }
 		.tt-mini-btn:hover { border-color: var(--cyan); color: var(--cyan); }
 
@@ -158,6 +162,7 @@
 		.dd-hero-actions { display: flex; flex-direction: column; gap: 7px; }
 		.dd-btn { font: 600 12px/1 var(--mono); padding: 8px 13px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: border-color .14s, color .14s, background .14s; white-space: nowrap; }
 		.dd-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+		.dd-btn:disabled { opacity: .55; cursor: progress; }
 		.dd-btn--oracle { background: rgba(192,132,252,.1); border-color: rgba(192,132,252,.3); color: var(--tt-prime); }
 		.dd-btn--oracle:hover { background: rgba(192,132,252,.18); color: var(--tt-prime); }
 		.dd-btn--primary { background: color-mix(in srgb, var(--cyan) 14%, transparent); border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); color: var(--cyan); }
@@ -169,6 +174,7 @@
 		.dd-stat-v { font: 700 17px/1.2 var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
 		.dd-stat-v.up { color: var(--tt-up); } .dd-stat-v.down { color: var(--tt-down); } .dd-stat-v.dd-muted { color: var(--faint); font-size: 13px; }
 		.dd-stat-l { font: 600 9.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--faint); margin-top: 5px; }
+		.dd-stat--wide { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
 		.dd-grad { color: var(--tt-up); }
 
 		/* grid of cards */
@@ -348,7 +354,7 @@
 				<div class="tt-pulse" aria-label="Network pulse">
 					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseMints">—</span><span class="tt-pulse-l" data-i18n="trades.new_mints">New mints</span></div>
 					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseGrad">—</span><span class="tt-pulse-l" data-i18n="trades.graduations">Graduations</span></div>
-					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseSol">—</span><span class="tt-pulse-chg" id="ttPulseSolChg"></span></div>
+					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseSol">—</span><span class="tt-pulse-l"><span data-i18n="trades.sol_price">SOL</span> <span class="tt-pulse-chg" id="ttPulseSolChg"></span></span></div>
 				</div>
 			</div>
 
@@ -359,9 +365,9 @@
 							<input id="ttSearch" type="text" placeholder="Paste a mint to analyze…" aria-label="Analyze a mint" spellcheck="false" autocomplete="off" />
 							<button type="button" class="tt-search-go" id="ttSearchGo" aria-label="Analyze" data-i18n-attr="aria-label:trades.analyze_arialabel">→</button>
 						</div>
-						<div class="tt-tabs" id="ttTabs" role="tablist">
-							<button data-tab="launches" role="tab" data-i18n="trades.launches">Launches</button>
-							<button data-tab="exits" role="tab" data-i18n="trades.agent_exits">Agent exits</button>
+						<div class="tt-tabs" id="ttTabs" role="tablist" aria-label="Feed view">
+							<button type="button" id="ttTabLaunches" data-tab="launches" role="tab" aria-selected="true" aria-controls="ttFeed" data-i18n="trades.launches">Launches</button>
+							<button type="button" id="ttTabExits" data-tab="exits" role="tab" aria-selected="false" aria-controls="ttFeed" data-i18n="trades.agent_exits">Agent exits</button>
 						</div>
 						<div class="tt-rail-net">
 							<label for="ttNetwork" data-i18n="trades.network">Network</label>
@@ -371,7 +377,7 @@
 							</select>
 						</div>
 					</div>
-					<div class="tt-feed" id="ttFeed" role="list" aria-label="Coins"></div>
+					<div class="tt-feed" id="ttFeed" role="tabpanel" tabindex="0" aria-labelledby="ttTabLaunches" aria-busy="true" aria-live="polite"></div>
 				</aside>
 
 				<main class="tt-detail" id="ttDetail" aria-label="Launch deep-dive"></main>

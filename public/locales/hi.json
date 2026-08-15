@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — हुक",
 		"lab": "<a href=\"/demos\">&larr; लैब</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws लैब",
-		"the_react_wrapper_around_the_sdk_imports": "SDK के चारों ओर रिएक्ट रैपर। <code>/avatar-sdk/src/react.jsx</code> से सीधे <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, और <code>useAvatar</code> इम्पोर्ट करता है। रिएक्ट को एक इम्पोर्ट मैप के माध्यम से CDN से लोड किया जाता है ताकि यह पेज बिना बंडलर स्टेप के काम कर सके।",
+		"the_react_wrapper_around_the_sdk_imports": "SDK के चारों ओर रिएक्ट रैपर। <code>/avatar-sdk/src/react.js</code> से सीधे <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, और <code>useAvatar</code> इम्पोर्ट करता है। रिएक्ट को एक इम्पोर्ट मैप के माध्यम से CDN से लोड किया जाता है ताकि यह पेज बिना बंडलर स्टेप के काम कर सके।",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "एपिक",
 		"it_pays_the_quoted_price_and_receives": "यह उद्धृत मूल्य का भुगतान करता है और कुंजी <b>एक बार</b> प्राप्त करता है। इसे तुरंत इम्पोर्ट करें।",
 		"legendary": "लेजेंडरी",
-		"long_brandable_solana_addresses_4_5_characte": "लंबे, ब्रांड करने योग्य Solana पते — 4-5+ कैरेक्टर वाले प्रीफिक्स, जहाँ लाइव ग्राइंडर नहीं पहुँच सकता — बैच CPU पर पहले से तैयार किए गए और स्टॉक से बेचे गए। एक खरीदें और निजी कुंजी <a href=\"/vanity/gallery\">x402</a> रेल के माध्यम से <strong>एक बार</strong> डिलीवर की जाती है, फिर उसकी संग्रहीत कॉपी नष्ट कर दी जाती है। इसके बजाय एक नया ≤3-कैरेक्टर ग्राइंड चाहिए? <a href=\"/vanity-wallet\">लाइव ग्राइंडर</a> का उपयोग करें।",
+		"long_brandable_solana_addresses_4_5_characte": "लंबे, ब्रांड करने योग्य Solana पते — 4-5+ कैरेक्टर वाले प्रीफिक्स, जहाँ लाइव ग्राइंडर नहीं पहुँच सकता — बैच CPU पर पहले से तैयार किए गए और स्टॉक से बेचे गए। एक खरीदें और निजी कुंजी <a href=\"/x402\">x402</a> रेल के माध्यम से <strong>एक बार</strong> डिलीवर की जाती है, फिर उसकी संग्रहीत कॉपी नष्ट कर दी जाती है। इसके बजाय एक नया ≤3-कैरेक्टर ग्राइंड चाहिए? <a href=\"/vanity-wallet\">लाइव ग्राइंडर</a> का उपयोग करें।",
 		"meta_description": "एक लंबा, ब्रांड करने योग्य Solana वैनिटी एड्रेस खरीदें जो स्टॉक से तुरंत डिलीवर किया जाता है — 4-5+ कैरेक्टर वाले प्रीफिक्स, जहाँ लाइव ग्राइंडर नहीं पहुँच सकता, बैच CPU पर पहले से तैयार किया गया और x402 के माध्यम से बेचा गया। कीमत दुर्लभता के साथ बढ़ती है।",
 		"meta_og_description": "लंबे, ब्रांड करने योग्य Solana वैनिटी एड्रेस, पहले से तैयार किए गए और स्टॉक से बेचे गए। एक बार डिलीवर किए गए, रेस्ट पर एन्क्रिप्टेड, दुर्लभता के अनुसार कीमत।",
 		"meta_og_title": "प्रीमियम वैनिटी इन्वेंटरी · three.ws",

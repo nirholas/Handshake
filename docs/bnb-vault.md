@@ -81,6 +81,31 @@ Greenfield…" for that window rather than faking an instant unlock.
    and renders the plaintext GLB in `<model-viewer>` from a `Blob` URL — the
    decrypted bytes never touch the network again.
 
+### Managing the session key from the page
+
+The strip above the grid is the whole surface for the buyer identity, and
+every control on it is in-page (no browser `alert`/`prompt`):
+
+- **Copy address** puts the session address on the clipboard so it can be
+  funded from a faucet or any other BSC testnet wallet. Where the Clipboard
+  API is unavailable or denied (plain http, permission refused), it falls
+  back to printing the full address for manual selection.
+- **Fund from wallet** expands an inline amount field. The amount is
+  validated before any wallet is touched, so a bad value reads as a bad
+  value even with no injected wallet present. On submit it opens the
+  visitor's wallet for one plain tBNB transfer to the session address, then
+  reports the tx hash, the confirmation, and the refreshed balance in place.
+- **New session key** discards the stored key
+  (`resetVaultSession`). It is destructive (a fresh key cannot unlock
+  anything the old one bought, nor spend the tBNB left in it), so it is a
+  two-step control: the first click arms it and prints that warning, and only
+  a second click within 8 seconds rotates the key.
+
+The detail drawer is a real modal: `role="dialog" aria-modal="true"`, Tab is
+trapped inside it, Escape closes it, and closing returns focus to the card
+that opened it. While closed it is `visibility: hidden`, so its controls are
+not tabbable behind an `aria-hidden` wrapper.
+
 ## 4. Reproducing the proof
 
 The public BSC testnet deploy is blocked on a funded deployer key (same wall

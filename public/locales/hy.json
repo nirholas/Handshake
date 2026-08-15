@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — հուք",
 		"lab": "<a href=\"/demos\">&larr; լաբ</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws լաբ",
-		"the_react_wrapper_around_the_sdk_imports": "SDK-ի React փաթեթավորիչը: Ներմուծում է <code>Avatar</code>-ը, <code>AgentAvatar</code>-ը, <code>AvatarCreator</code>-ը և <code>useAvatar</code>-ը անմիջապես <code>/avatar-sdk/src/react.jsx</code>-ից: React-ը բեռնվում է CDN-ից՝ ներմուծման քարտեզի միջոցով, այնպես որ այս էջն աշխատում է առանց բանդլերի քայլի:",
+		"the_react_wrapper_around_the_sdk_imports": "SDK-ի React փաթեթավորիչը: Ներմուծում է <code>Avatar</code>-ը, <code>AgentAvatar</code>-ը, <code>AvatarCreator</code>-ը և <code>useAvatar</code>-ը անմիջապես <code>/avatar-sdk/src/react.js</code>-ից: React-ը բեռնվում է CDN-ից՝ ներմուծման քարտեզի միջոցով, այնպես որ այս էջն աշխատում է առանց բանդլերի քայլի:",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epic",
 		"it_pays_the_quoted_price_and_receives": "Այն վճարում է նշված գինը և ստանում է բանալին <b>մեկ անգամ</b>։ Անմիջապես ներմուծեք այն։",
 		"legendary": "Legendary",
-		"long_brandable_solana_addresses_4_5_characte": "Երկար, բրենդային Solana հասցեներ — 4-5+ նիշանոց նախածանցներ, որոնց կենդանի գրայնդերը չի կարող հասնել — նախապես ստեղծված բաչ CPU-ի վրա և վաճառվում են պահեստից։ Գնեք մեկը, և անձնական բանալին առաքվում է <strong>մեկ անգամ</strong> <a href=\"/vanity/gallery\">x402</a> ուղու միջոցով, այնուհետև դրա պահված պատճենը ոչնչացվում է։ Փոխարենը պե՞տք է նոր ≤3 նիշանոց գրայնդ։ Օգտագործեք <a href=\"/vanity-wallet\">կենդանի գրայնդերը</a>։",
+		"long_brandable_solana_addresses_4_5_characte": "Երկար, բրենդային Solana հասցեներ — 4-5+ նիշանոց նախածանցներ, որոնց կենդանի գրայնդերը չի կարող հասնել — նախապես ստեղծված բաչ CPU-ի վրա և վաճառվում են պահեստից։ Գնեք մեկը, և անձնական բանալին առաքվում է <strong>մեկ անգամ</strong> <a href=\"/x402\">x402</a> ուղու միջոցով, այնուհետև դրա պահված պատճենը ոչնչացվում է։ Փոխարենը պե՞տք է նոր ≤3 նիշանոց գրայնդ։ Օգտագործեք <a href=\"/vanity-wallet\">կենդանի գրայնդերը</a>։",
 		"meta_description": "Գնեք երկար, բրենդային Solana վանաթի հասցե, որն անմիջապես առաքվում է պահեստից — 4-5+ նիշանոց նախածանցներ, որոնց կենդանի գրայնդերը չի կարող հասնել, նախապես ստեղծված բաչ CPU-ի վրա և վաճառվում է x402-ի միջոցով։ Գինը համաչափ է հազվագյուտությանը։",
 		"meta_og_description": "Երկար, բրենդային Solana վանաթի հասցեներ, նախապես ստեղծված և վաճառվում են պահեստից։ Առաքվում է մեկ անգամ, կոդավորված է հանգիստ վիճակում, գինը որոշվում է հազվագյուտությամբ։",
 		"meta_og_title": "Պրեմիում Վանաթի Գույքագրում · three.ws",

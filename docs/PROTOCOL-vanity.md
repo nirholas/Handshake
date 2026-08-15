@@ -261,9 +261,13 @@ recompute — never trust — each of the following. All must pass.
 6. **signature** — Ed25519-verify the canonical message (§6) against the pinned
    service key, AND the receipt's `servicePublicKey` equals the pinned key
    (reject impostors that self-sign under a different key).
-7. **custody** *(optional)* — if the buyer opened the sealed envelope, the
-   recovered 32-byte seed MUST equal `seed_{winningIndex}` and its Ed25519 public
-   key MUST equal `receipt.address`.
+7. **custody** *(optional)*: whenever the verifier holds the 32-byte secret seed,
+   whether recovered by opening the sealed envelope or read straight from an
+   unsealed receipt's `seed` / `secretKey`, it MUST equal `seed_{winningIndex}`
+   and its Ed25519 public key MUST equal `receipt.address`. The web verifier at
+   [`/vanity/verify`](https://three.ws/vanity/verify) runs this check in both
+   cases: with the buyer's X25519 key for a sealed receipt, and with no key at
+   all for an unsealed one.
 
 A single failing check means the receipt is not trustworthy. The negative test in
 [`tests/vanity-verifiable-grind.test.js`](../tests/vanity-verifiable-grind.test.js)

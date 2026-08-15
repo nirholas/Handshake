@@ -38,20 +38,20 @@
 		</div>
 
 		<div class="tr-controls">
-			<div class="tr-tabs" role="tablist">
-				<button class="tr-tab active" role="tab" aria-selected="true"  data-tab="agents" data-i18n="trending.agents">Agents</button>
-				<button class="tr-tab"        role="tab" aria-selected="false" data-tab="trusted" data-i18n="trending.trusted">Trusted</button>
-				<button class="tr-tab"        role="tab" aria-selected="false" data-tab="coins" data-i18n="trending.coins">Coins</button>
+			<div class="tr-tabs" role="tablist" aria-label="Trending leaderboard">
+				<button class="tr-tab active" role="tab" id="tab-agents"  aria-selected="true"  aria-controls="sec-agents"  tabindex="0"  type="button" data-tab="agents" data-i18n="trending.agents">Agents</button>
+				<button class="tr-tab"        role="tab" id="tab-trusted" aria-selected="false" aria-controls="sec-trusted" tabindex="-1" type="button" data-tab="trusted" data-i18n="trending.trusted">Trusted</button>
+				<button class="tr-tab"        role="tab" id="tab-coins"   aria-selected="false" aria-controls="sec-coins"   tabindex="-1" type="button" data-tab="coins" data-i18n="trending.coins">Coins</button>
 			</div>
 			<div class="tr-windows" id="trWindows" role="group" aria-label="Time window">
-				<button class="tr-win active" data-win="24h" data-i18n="trending.24h">24h</button>
-				<button class="tr-win"        data-win="7d" data-i18n="trending.7d">7d</button>
-				<button class="tr-win"        data-win="all" data-i18n="trending.all_time">All time</button>
+				<button class="tr-win active" type="button" aria-pressed="true"  data-win="24h" data-i18n="trending.24h">24h</button>
+				<button class="tr-win"        type="button" aria-pressed="false" data-win="7d" data-i18n="trending.7d">7d</button>
+				<button class="tr-win"        type="button" aria-pressed="false" data-win="all" data-i18n="trending.all_time">All time</button>
 			</div>
 		</div>
 
 		<div class="tr-content">
-			<section class="tr-section active" id="sec-agents" aria-label="Trending agents">
+			<section class="tr-section active" id="sec-agents" role="tabpanel" tabindex="0" aria-labelledby="tab-agents">
 				<div class="tr-legend">
 					<span data-i18n="trending.agent">Agent</span>
 					<span class="tr-legend-r" data-i18n-html="trending.chats_24h">Chats <span class="tr-legend-window" id="legendWindow">24h</span></span>
@@ -63,7 +63,10 @@
 					<li class="tr-skeleton"></li>
 					<li class="tr-skeleton"></li>
 				</ol>
-				<div class="tr-empty" id="agentEmpty" hidden>No trending agents yet — check back soon.</div>
+				<div class="tr-empty" id="agentEmpty" hidden>
+					<span class="tr-empty-title" data-i18n="trending.no_agent_chats_in_this_window">No agent chats in this window yet.</span>
+					<span class="tr-empty-sub" data-i18n-html="trending.widen_the_window_or_build_an_agent">Widen the window above, or <a href="/create">build an agent</a> and put it on the board.</span>
+				</div>
 				<div class="tr-error" id="agentError" role="alert" hidden>
 					<span class="tr-error-icon" aria-hidden="true">⚠️</span>
 					<span class="tr-error-title" data-i18n="trending.couldn_t_load_trending_agents">Couldn't load trending agents</span>
@@ -72,7 +75,7 @@
 				</div>
 			</section>
 
-			<section class="tr-section" id="sec-trusted" aria-label="Most trusted agents">
+			<section class="tr-section" id="sec-trusted" role="tabpanel" tabindex="0" aria-labelledby="tab-trusted">
 				<div class="tr-legend">
 					<span data-i18n="trending.agent_2">Agent</span>
 					<span class="tr-legend-r" data-i18n="trending.trust_score">Trust score</span>
@@ -84,7 +87,10 @@
 					<li class="tr-skeleton"></li>
 					<li class="tr-skeleton"></li>
 				</ol>
-				<div class="tr-empty" id="trustedEmpty" hidden>No agents have earned a track record yet. Trust is built from real money and time — be the first.</div>
+				<div class="tr-empty" id="trustedEmpty" hidden>
+					<span class="tr-empty-title" data-i18n="trending.no_agents_have_earned_a_track_record">No agents have earned a track record yet.</span>
+					<span class="tr-empty-sub" data-i18n-html="trending.trust_is_built_from_real_money_and_time">Trust is built from real money and time. <a href="/create">Launch an agent</a> and be the first.</span>
+				</div>
 				<div class="tr-error" id="trustedError" role="alert" hidden>
 					<span class="tr-error-icon" aria-hidden="true">⚠️</span>
 					<span class="tr-error-title" data-i18n="trending.couldn_t_load_the_trust_leaderboard">Couldn't load the trust leaderboard</span>
@@ -93,10 +99,10 @@
 				</div>
 			</section>
 
-			<section class="tr-section" id="sec-coins" aria-label="Top conviction coins">
+			<section class="tr-section" id="sec-coins" role="tabpanel" tabindex="0" aria-labelledby="tab-coins">
 				<div class="tr-legend">
 					<span data-i18n="trending.coin">Coin</span>
-					<span class="tr-legend-r" data-i18n="trending.oracle_score">Oracle score</span>
+					<span class="tr-legend-r" data-i18n-html="trending.oracle_score_scored_window">Oracle score <span class="tr-legend-window" id="coinLegendWindow">24h</span></span>
 				</div>
 				<ol class="tr-list" id="coinList" aria-live="polite">
 					<li class="tr-skeleton"></li>
@@ -105,7 +111,10 @@
 					<li class="tr-skeleton"></li>
 					<li class="tr-skeleton"></li>
 				</ol>
-				<div class="tr-empty" id="coinEmpty" hidden>No scored coins in the last 36 hours.</div>
+				<div class="tr-empty" id="coinEmpty" hidden>
+					<span class="tr-empty-title"><span data-i18n="trending.no_coins_scored_in_the">No coins scored in the</span> <span id="coinEmptyWindow">last 24 hours</span>.</span>
+					<span class="tr-empty-sub" data-i18n-html="trending.widen_the_window_or_read_the_oracle">Widen the window above, or read how scoring works in the <a href="/oracle">Oracle</a>.</span>
+				</div>
 				<div class="tr-error" id="coinError" role="alert" hidden>
 					<span class="tr-error-icon" aria-hidden="true">⚠️</span>
 					<span class="tr-error-title" data-i18n="trending.couldn_t_load_conviction_coins">Couldn't load conviction coins</span>
@@ -116,7 +125,7 @@
 		</div>
 
 		<p class="tr-footnote" data-i18n-html="trending.agents_chats_with_real_users_via_embedded">
-			Agents: chats with real users via embedded widgets. Trusted: a real, non-gameable wallet-trust score (0–100) from settled volume, tips from distinct funded wallets, age, payment reliability, fork lineage, and on-chain identity — every input auditable, each row links to its breakdown. Coins: <a href="/oracle">Oracle</a> conviction score (pedigree + structure + narrative + momentum), refreshed every 30 min.
+			Agents: chats with real users via embedded widgets. Trusted: a real, non-gameable wallet-trust score (0 to 100) from settled volume, tips from distinct funded wallets, age, payment reliability, fork lineage, and on-chain identity. Every input is auditable, and each row links to its breakdown. Coins: <a href="/oracle">Oracle</a> conviction score (pedigree + structure + narrative + momentum), rescored every 2 minutes; the window above filters to coins scored inside it.
 		</p>
 	</main>
 
@@ -274,6 +283,15 @@
 			padding: 40px 20px; text-align: center;
 			font-size: 14px; color: #6b7280;
 		}
+		.tr-empty {
+			display: flex; flex-direction: column; align-items: center; gap: 7px;
+			border: 1px dashed rgba(255,255,255,.09); border-radius: 12px;
+			background: rgba(255,255,255,.015);
+		}
+		.tr-empty-title { font-size: 14px; font-weight: 600; color: #d1d5db; }
+		.tr-empty-sub { font-size: 12.5px; color: #6b7280; max-width: 40ch; line-height: 1.55; }
+		.tr-empty-sub a { color: #818cf8; text-decoration: none; border-bottom: 1px solid rgba(129,140,248,.35); }
+		.tr-empty-sub a:hover { color: #a5b4fc; border-bottom-color: rgba(165,180,252,.7); }
 		.tr-error {
 			display: flex; flex-direction: column; align-items: center; gap: 14px;
 			padding: 36px 24px; border: 1px solid rgba(248,113,113,.28);
@@ -303,9 +321,30 @@
 		.tr-footnote a { color: #6366f1; text-decoration: none; }
 		.tr-footnote a:hover { color: #a5b4fc; }
 
+		/* ── focus ── */
+		/* One designed ring for every interactive element on the page, so keyboard
+		   users get the same affordance the UA outline gives, in the page's palette. */
+		.tr-tab:focus-visible, .tr-win:focus-visible, .tr-retry:focus-visible,
+		.tr-row:focus-visible, .tr-empty-sub a:focus-visible, .tr-footnote a:focus-visible,
+		.tr-section:focus-visible {
+			outline: 2px solid #818cf8; outline-offset: 2px; border-radius: 10px;
+		}
+		.tr-section:focus-visible { outline-offset: 4px; }
+
+		/* ── narrow screens ── */
+		/* The shared wallet chip is a nowrap pill sized for a wide row. Inside a
+		   320px row it would push the whole page into a horizontal scroll, so let
+		   it wrap and shrink instead of clipping the Tip action out of reach. */
+		.tr-wallet { min-width: 0; max-width: 100%; }
+		.tr-wallet .twc { max-width: 100%; flex-wrap: wrap; white-space: normal; }
+
 		@media (max-width: 480px) {
 			.tr-controls { flex-direction: column; align-items: flex-start; }
 			.tr-desc { display: none; }
+			.tr-row { gap: 10px; padding: 12px; }
+			.tr-av, .tr-coin-badge { width: 34px; height: 34px; }
+			.tr-metric { font-size: 14px; }
+			.tr-wallet .twc { row-gap: 4px; }
 		}
 	</style>
 
@@ -320,21 +359,62 @@
 		let currentWin = '24h';
 		let cache = {}; // cache[key] = data
 
+		const TABS = ['agents', 'trusted', 'coins'];
+		const WIN_LABEL  = { '24h': '24h', '7d': '7d', 'all': 'all time' };
+		const WIN_PHRASE = { '24h': 'last 24 hours', '7d': 'last 7 days', 'all': 'window we retain' };
+
 		// ── Tab switching ───────────────────────────────────────────────────
-		function syncTab(tab) {
+		function syncTab(tab, { focus = false, push = false } = {}) {
 			currentTab = tab;
-			$$('.tr-tab').forEach(b => { b.classList.toggle('active', b.dataset.tab === tab); b.setAttribute('aria-selected', String(b.dataset.tab === tab)); });
+			$$('.tr-tab').forEach(b => {
+				const on = b.dataset.tab === tab;
+				b.classList.toggle('active', on);
+				b.setAttribute('aria-selected', String(on));
+				// Roving tabindex: the tablist is one tab stop, arrows move within it.
+				b.tabIndex = on ? 0 : -1;
+				if (on && focus) b.focus();
+			});
 			$$('.tr-section').forEach(s => s.classList.toggle('active', s.id === `sec-${tab}`));
-			// Trust is an all-time signal — the time-window control doesn't apply to it.
+			// Trust is an all-time signal, so the time-window control doesn't apply.
 			$('#trWindows').hidden = tab === 'trusted';
+			if (push) writeUrl();
 			if (tab === 'trusted') loadTrusted();
 		}
+
+		// Keep ?tab= in the address bar so any view is shareable and the back
+		// button walks the tabs the visitor actually opened.
+		function writeUrl(replace = false) {
+			const url = new URL(location.href);
+			if (currentTab === 'agents') url.searchParams.delete('tab');
+			else url.searchParams.set('tab', currentTab);
+			const next = url.pathname + url.search + url.hash;
+			if (next === location.pathname + location.search + location.hash) return;
+			history[replace ? 'replaceState' : 'pushState']({ tab: currentTab }, '', next);
+		}
+
 		$$('.tr-tab').forEach(btn => {
 			btn.addEventListener('click', () => {
 				const tab = btn.dataset.tab;
 				if (tab === currentTab) return;
-				syncTab(tab);
+				syncTab(tab, { push: true });
 			});
+		});
+
+		$('.tr-tabs').addEventListener('keydown', (e) => {
+			const i = TABS.indexOf(currentTab);
+			let next = null;
+			if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = TABS[(i + 1) % TABS.length];
+			else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = TABS[(i - 1 + TABS.length) % TABS.length];
+			else if (e.key === 'Home') next = TABS[0];
+			else if (e.key === 'End') next = TABS[TABS.length - 1];
+			if (!next) return;
+			e.preventDefault();
+			syncTab(next, { focus: true, push: true });
+		});
+
+		window.addEventListener('popstate', () => {
+			const t = new URL(location.href).searchParams.get('tab');
+			syncTab(TABS.includes(t) ? t : 'agents');
 		});
 
 		// ── Window switching ────────────────────────────────────────────────
@@ -343,8 +423,14 @@
 				const win = btn.dataset.win;
 				if (win === currentWin) return;
 				currentWin = win;
-				$$('.tr-win').forEach(b => b.classList.toggle('active', b.dataset.win === win));
-				$('#legendWindow').textContent = { '24h': '24h', '7d': '7d', 'all': 'all time' }[win];
+				$$('.tr-win').forEach(b => {
+					const on = b.dataset.win === win;
+					b.classList.toggle('active', on);
+					b.setAttribute('aria-pressed', String(on));
+				});
+				$('#legendWindow').textContent = WIN_LABEL[win];
+				$('#coinLegendWindow').textContent = WIN_LABEL[win];
+				$('#coinEmptyWindow').textContent = WIN_PHRASE[win];
 				loadData();
 			});
 		});
@@ -371,12 +457,15 @@
 		function fmt(n) { return n == null ? '—' : compact.format(Number(n)); }
 
 		// ── Safe link target ────────────────────────────────────────────────
-		// API-supplied URLs can be null/empty/malformed. Accept only same-origin
-		// absolute paths; otherwise fall back to a route built from known fields.
-		function safeHref(raw, fallback) {
+		// API-supplied URLs are absolute (https://three.ws/...), which would bounce a
+		// visitor off whatever host they are on. Prefer the route we can build
+		// ourselves and keep navigation same-origin; only fall back to the server's
+		// URL, and only when it is a path or an http(s) URL we can actually open.
+		function safeHref(internal, raw) {
+			if (internal) return internal;
 			const v = typeof raw === 'string' ? raw.trim() : '';
 			if (v && (v.startsWith('/') || /^https?:\/\//i.test(v))) return v;
-			return fallback || null;
+			return null;
 		}
 
 		// ── Render agents ───────────────────────────────────────────────────
@@ -398,8 +487,8 @@
 				const onchainBadge = a.is_onchain ? '<span class="tr-onchain">◈ on-chain</span>' : '';
 				const rankCls = a.rank <= 3 ? ` tr-rank-${a.rank}` : '';
 				const name = a.name || 'Unnamed agent';
-				const fallback = a.id != null ? `/agents/${encodeURIComponent(a.id)}` : null;
-				const href = safeHref(a.agent_url, fallback);
+				const internal = a.id != null ? `/agent/${encodeURIComponent(a.id)}` : null;
+				const href = safeHref(internal, a.agent_url);
 				const tag = href ? 'a' : 'div';
 				const attrs = href
 					? ` href="${esc(href)}" aria-label="Rank ${a.rank}: ${esc(name)}, ${esc(fmt(count))} chats"`
@@ -443,7 +532,7 @@
 				const rankCls = c.rank <= 3 ? ` tr-rank-${c.rank}` : '';
 				// Primary: our full coin page. Fall back to the server-provided link.
 				const internal = c.mint ? `/oracle/coin/${encodeURIComponent(c.mint)}` : null;
-				const href = internal || safeHref(c.coin_url, null);
+				const href = safeHref(internal, c.coin_url);
 				const tag = href ? 'a' : 'div';
 				const label = `Rank ${c.rank}: $${symFull}, Oracle score ${c.score} of 100`;
 				const attrs = href
@@ -489,8 +578,8 @@
 				const name = a.name || 'Unnamed agent';
 				const tier = String(a.tier || 'emerging');
 				const tierLabel = a.tier_label || tier;
-				const fallback = a.id != null ? `/agent/${encodeURIComponent(a.id)}/wallet#reputation` : null;
-				const href = safeHref(a.breakdown_url, fallback);
+				const internal = a.id != null ? `/agent/${encodeURIComponent(a.id)}/wallet#reputation` : null;
+				const href = safeHref(internal, a.breakdown_url);
 				const tag = href ? 'a' : 'div';
 				const score = Math.round(Number(a.score) || 0);
 				const attrs = href
@@ -573,9 +662,13 @@
 			}
 		}
 
-		// Honor a shareable ?tab= deep link (e.g. /trending?tab=trusted).
+		// Honor a shareable ?tab= deep link (e.g. /trending?tab=trusted) and drop a
+		// value we don't serve, so the address bar always matches what is on screen.
 		const initialTab = new URL(location.href).searchParams.get('tab');
-		if (initialTab === 'trusted' || initialTab === 'coins') syncTab(initialTab);
+		if (initialTab && initialTab !== 'agents') syncTab(TABS.includes(initialTab) ? initialTab : 'agents');
+		writeUrl(true);
+		$('#coinLegendWindow').textContent = WIN_LABEL[currentWin];
+		$('#coinEmptyWindow').textContent = WIN_PHRASE[currentWin];
 
 		loadData();
 	</script>

@@ -82,50 +82,11 @@ global.OffscreenCanvas = class OffscreenCanvas {
   }
 }
 
-// Mock LIBKTX for ktx library
-global.LIBKTX = {
-  KTX2File: class MockKTX2File {
-    constructor() {
-      this.valid = true
-    }
-    getWidth() { return 256 }
-    getHeight() { return 256 }
-    transcode() { return true }
-    getImageData() { return new Uint8Array(256 * 256 * 4) }
-  }
-}
-
-// Mock File API
-global.File = class MockFile {
-  constructor(content, filename, options = {}) {
-    this.content = content
-    this.name = filename
-    this.type = options.type || 'application/octet-stream'
-    this.size = content.length
-  }
-}
-
-// Mock FileReader
-global.FileReader = class MockFileReader {
-  constructor() {
-    this.onload = null
-    this.onerror = null
-  }
-  readAsArrayBuffer(file) {
-    setTimeout(() => {
-      if (this.onload) {
-        this.onload({ target: { result: new ArrayBuffer(file.size) } })
-      }
-    }, 0)
-  }
-  readAsDataURL(file) {
-    setTimeout(() => {
-      if (this.onload) {
-        this.onload({ target: { result: `data:${file.type};base64,` } })
-      }
-    }, 0)
-  }
-}
+// File, Blob and FileReader are deliberately NOT stubbed: jsdom ships real
+// implementations, and a partial FileReader stub (no onloadend, no .result)
+// silently hangs three.js GLTFExporter, which reads its binary output through
+// one. KTX2 compression is likewise left unstubbed; the encoder reports itself
+// unavailable without a WebGL context (see src/library/ktxtools.js).
 
 // Cleanup after each test
 afterEach(() => {

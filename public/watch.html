@@ -7,47 +7,100 @@
 <title>Watching your 3D model · three.ws</title>
 <meta name="description" content="Live progress for a three.ws 3D generation: countdown, concept art, and an automatic hand-off to the interactive viewer the moment the model is ready." />
 <meta name="robots" content="noindex" />
+<meta name="theme-color" content="#0b0c10" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f3f5f9" media="(prefers-color-scheme: light)" />
 <meta property="og:title" content="Watching a 3D model being made · three.ws" />
 <meta property="og:description" content="A 3D model is being generated on three.ws right now. Watch the live countdown and concept art." />
 <meta property="og:type" content="website" />
 <style>
-  :root { color-scheme: dark; --accent: #6ea8fe; }
+  :root {
+    color-scheme: dark;
+    --accent: #6ea8fe;
+    --bg: radial-gradient(130% 130% at 50% 0%, #14161c 0%, #0b0c10 60%, #08090c 100%);
+    --fg: #e8eaf0;
+    --fg-strong: #fff;
+    --fg-dim: #aeb6c4;
+    --fg-muted: #9aa3b2;
+    --hairline: rgba(255,255,255,0.07);
+    --bar-bg: rgba(10,11,14,0.55);
+    --surface: rgba(255,255,255,0.06);
+    --surface-hover: rgba(255,255,255,0.12);
+    --border: rgba(255,255,255,0.14);
+    --border-hover: rgba(255,255,255,0.28);
+    --ring-track: rgba(255,255,255,0.09);
+    --card-border: rgba(255,255,255,0.12);
+    --card-shadow: 0 12px 44px rgba(0,0,0,.45);
+    --accent-soft: rgba(110,168,254,0.16);
+    --accent-soft-hover: rgba(110,168,254,0.26);
+    --accent-border: rgba(110,168,254,0.42);
+    --accent-fg: #dbe9ff;
+    --accent-glow: rgba(110,168,254,.55);
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --accent: #1f6feb;
+    --bg: radial-gradient(130% 130% at 50% 0%, #ffffff 0%, #f4f6fa 60%, #e9edf4 100%);
+    --fg: #151922;
+    --fg-strong: #000;
+    --fg-dim: #4c5566;
+    --fg-muted: #5d6779;
+    --hairline: rgba(12,16,26,0.10);
+    --bar-bg: rgba(255,255,255,0.72);
+    --surface: rgba(12,16,26,0.045);
+    --surface-hover: rgba(12,16,26,0.09);
+    --border: rgba(12,16,26,0.14);
+    --border-hover: rgba(12,16,26,0.28);
+    --ring-track: rgba(12,16,26,0.10);
+    --card-border: rgba(12,16,26,0.12);
+    --card-shadow: 0 12px 40px rgba(20,26,40,.14);
+    --accent-soft: rgba(31,111,235,0.10);
+    --accent-soft-hover: rgba(31,111,235,0.18);
+    --accent-border: rgba(31,111,235,0.38);
+    --accent-fg: #10396f;
+    --accent-glow: rgba(31,111,235,.35);
+  }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body {
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(130% 130% at 50% 0%, #14161c 0%, #0b0c10 60%, #08090c 100%);
-    color: #e8eaf0;
+    background: var(--bg);
+    color: var(--fg);
     overflow: hidden;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
   .wrap { display: flex; flex-direction: column; height: 100dvh; }
   header.bar {
     display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
-    background: rgba(10,11,14,0.55); backdrop-filter: blur(8px);
+    padding: 12px 16px; border-bottom: 1px solid var(--hairline);
+    background: var(--bar-bg); backdrop-filter: blur(8px);
   }
-  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: #e8eaf0; font-weight: 700; letter-spacing: .01em; }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--fg); font-weight: 700; letter-spacing: .01em; border-radius: 6px; }
   .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
-  .brand:hover { color: #fff; }
-  .title { flex: 1 1 auto; min-width: 0; font-size: 13.5px; color: #aeb6c4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .stage { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .brand:hover { color: var(--fg-strong); }
+  .brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  h1.title { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 13.5px; font-weight: 500; color: var(--fg-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  main.stage { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .overlay {
     min-height: 100%; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 28px;
   }
-  .h { font-size: 16px; font-weight: 650; }
-  .muted { color: #9aa3b2; font-size: 13px; line-height: 1.5; max-width: 44ch; }
+  h2.h { margin: 0; font-size: 16px; font-weight: 650; }
+  .muted { color: var(--fg-muted); font-size: 13px; line-height: 1.5; max-width: 44ch; }
+  .muted code { font-size: 12.5px; padding: 1px 5px; border-radius: 5px; background: var(--surface); border: 1px solid var(--border); }
   .muted a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
-  .muted a:hover { color: #dbe9ff; }
+  .muted a:hover { color: var(--accent-fg); }
   .muted a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
   /* Countdown ring */
   .ringbox { position: relative; width: 168px; height: 168px; }
   .ringbox svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .ring-track { fill: none; stroke: rgba(255,255,255,0.09); stroke-width: 7; }
+  .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 7; }
   .ring-arc {
     fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round;
-    filter: drop-shadow(0 0 6px rgba(110,168,254,.55));
+    filter: drop-shadow(0 0 6px var(--accent-glow));
     transition: stroke-dashoffset .6s ease;
   }
   .ring-arc.indeterminate { stroke-dasharray: 110 800; animation: orbit 1.6s linear infinite; transition: none; }
@@ -58,35 +111,36 @@
     align-items: center; justify-content: center; gap: 2px;
   }
   .ring-time { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
-  .ring-sub { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #9aa3b2; }
+  .ring-sub { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--fg-muted); }
 
   .concept {
-    max-width: min(320px, 78vw); border-radius: 14px; border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 12px 44px rgba(0,0,0,.45);
+    max-width: min(320px, 78vw); border-radius: 14px; border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
     opacity: 0; transform: translateY(6px) scale(.98);
     transition: opacity .5s ease, transform .5s ease;
   }
   .concept.shown { opacity: 1; transform: none; }
-  .concept-cap { font-size: 11.5px; color: #9aa3b2; letter-spacing: .04em; text-transform: uppercase; display: none; }
+  .concept-cap { font-size: 11.5px; color: var(--fg-muted); letter-spacing: .04em; text-transform: uppercase; display: none; }
   .concept-cap.shown { display: block; }
 
   footer.bar {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    padding: 11px 16px; border-top: 1px solid rgba(255,255,255,0.07);
-    background: rgba(10,11,14,0.55); backdrop-filter: blur(8px);
+    padding: 11px 16px; border-top: 1px solid var(--hairline);
+    background: var(--bar-bg); backdrop-filter: blur(8px);
   }
   .spacer { flex: 1 1 auto; }
-  a.btn {
+  .actions { display: flex; align-items: center; justify-content: center; gap: 9px; flex-wrap: wrap; }
+  .btn {
     appearance: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
-    font-size: 13px; font-weight: 600; color: #e8eaf0;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    font-family: inherit; font-size: 13px; font-weight: 600; color: var(--fg);
+    background: var(--surface); border: 1px solid var(--border);
     border-radius: 10px; padding: 8px 13px; transition: background .15s, border-color .15s, transform .05s;
   }
-  a.btn.primary { background: rgba(110,168,254,0.16); border-color: rgba(110,168,254,0.42); color: #dbe9ff; }
-  a.btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); }
-  a.btn.primary:hover { background: rgba(110,168,254,0.26); }
-  a.btn:active { transform: translateY(1px); }
-  a.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn.primary { background: var(--accent-soft); border-color: var(--accent-border); color: var(--accent-fg); }
+  .btn:hover { background: var(--surface-hover); border-color: var(--border-hover); }
+  .btn.primary:hover { background: var(--accent-soft-hover); }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .hidden { display: none !important; }
 </style>
 
@@ -109,12 +163,14 @@
 <body>
 <div class="wrap">
   <header class="bar">
-    <a class="brand" href="https://three.ws"><span class="dot" aria-hidden="true"></span>three.ws</a>
-    <span id="title" class="title"></span>
+    <a class="brand" href="/"><span class="dot" aria-hidden="true"></span>three.ws</a>
+    <h1 id="title" class="title">Watching your 3D generation</h1>
   </header>
 
-  <div class="stage">
-    <div id="waiting" class="overlay" aria-live="polite">
+  <main class="stage">
+    <p id="announce" class="sr-only" role="status" aria-live="polite"></p>
+
+    <div id="waiting" class="overlay">
       <div class="ringbox" role="timer" aria-label="Estimated time remaining">
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle class="ring-track" cx="60" cy="60" r="53"></circle>
@@ -125,35 +181,41 @@
           <div id="timesub" class="ring-sub">warming up</div>
         </div>
       </div>
-      <div id="phase" class="h">Starting your 3D generation…</div>
-      <div class="muted">This page updates itself. When the model is ready it opens straight into the interactive 3D viewer with download and place-in-your-room AR links.</div>
-      <img id="concept" class="concept" alt="Concept art the generator painted for this model" decoding="async" />
-      <div id="concept-cap" class="concept-cap">Concept art — now being sculpted into 3D</div>
+      <h2 id="phase" class="h">Starting your 3D generation…</h2>
+      <p class="muted">This page updates itself. When the model is ready it opens straight into the interactive 3D viewer with download and place-in-your-room AR links.</p>
+      <img id="concept" class="concept" alt="Concept art the generator painted for this model" decoding="async" hidden />
+      <p id="concept-cap" class="concept-cap">Concept art, now being sculpted into 3D</p>
+      <noscript>
+        <p class="muted">This page needs JavaScript to follow the generation live. Your model is still being made on our servers either way: reopen this link with JavaScript enabled, or start a new one at <a href="/forge">three.ws/forge</a>.</p>
+      </noscript>
     </div>
 
     <div id="ready" class="overlay hidden">
-      <div class="h">Your model is ready — opening the viewer…</div>
-      <div class="muted">If nothing happens, <a id="ready-link">open it here</a>.</div>
+      <h2 class="h">Your model is ready, opening the viewer…</h2>
+      <p class="muted">If nothing happens, <a id="ready-link" href="/viewer">open it here</a>.</p>
     </div>
 
     <div id="error" class="overlay hidden">
-      <div class="h">This generation hit a snag</div>
-      <div id="errmsg" class="muted">The generator failed upstream. Generating is free, so trying again costs nothing.</div>
-      <a class="btn primary" href="https://three.ws/forge">Forge it again — free</a>
+      <h2 class="h">This generation hit a snag</h2>
+      <p id="errmsg" class="muted">The generator failed upstream. Generating is free, so trying again costs nothing.</p>
+      <div class="actions">
+        <button id="retry" type="button" class="btn primary hidden">Keep watching</button>
+        <a id="forge-again" class="btn primary" href="/forge">Forge it again, free</a>
+      </div>
     </div>
 
     <div id="empty" class="overlay hidden">
-      <div class="h">Nothing to watch here</div>
-      <div class="muted">This page shows a 3D generation in progress from a <code>?job=</code> link. Start one for free at <a href="https://three.ws/forge">three.ws/forge</a> — no account needed.</div>
-      <a class="btn primary" href="https://three.ws/forge">Create a 3D model</a>
+      <h2 class="h">Nothing to watch here</h2>
+      <p class="muted">This page shows a 3D generation in progress from a <code>?job=</code> link. Start one for free at <a href="/forge">three.ws/forge</a>, no account needed.</p>
+      <a class="btn primary" href="/forge">Create a 3D model</a>
     </div>
-  </div>
+  </main>
 
   <footer class="bar">
     <span class="muted">Free text-to-3D by three.ws</span>
     <div class="spacer"></div>
-    <a class="btn" href="https://three.ws/viewer">3D viewer</a>
-    <a class="btn primary" href="https://three.ws/forge">Make your own →</a>
+    <a class="btn" href="/viewer">3D viewer</a>
+    <a class="btn primary" href="/forge">Make your own →</a>
   </footer>
 </div>
 
@@ -175,21 +237,28 @@
   var concept = document.getElementById('concept');
   var conceptCap = document.getElementById('concept-cap');
   var titleEl = document.getElementById('title');
+  var announce = document.getElementById('announce');
+  var retryBtn = document.getElementById('retry');
+  var forgeAgain = document.getElementById('forge-again');
 
-  function show(el) {
+  function show(el, spoken) {
     [waiting, ready, errEl, empty].forEach(function (n) { n.classList.add('hidden'); });
     el.classList.remove('hidden');
+    if (spoken) announce.textContent = spoken;
   }
 
   if (title) { titleEl.textContent = title; document.title = title + ' · three.ws'; }
 
-  // Same handle shape the API enforces — junk links land on the empty state.
-  if (!job || !/^[A-Za-z0-9._-]{8,1024}$/.test(job)) { show(empty); return; }
+  // Same handle shape the API enforces: junk links land on the empty state.
+  if (!job || !/^[A-Za-z0-9._-]{8,1024}$/.test(job)) {
+    show(empty, 'Nothing to watch: this link carries no generation job.');
+    return;
+  }
 
   var CIRC = 2 * Math.PI * 53; // ring circumference for r=53
   var eta = null;             // seconds remaining, as last reported
   var etaSyncedAt = 0;        // performance.now() at last report
-  var etaTotal = null;        // largest estimate seen — the ring's 100% mark
+  var etaTotal = null;        // largest estimate seen: the ring's 100% mark
   var started = Date.now();
 
   function fmt(s) {
@@ -198,8 +267,10 @@
     return m + ':' + String(s % 60).padStart(2, '0');
   }
 
-  // Local 4Hz tick keeps the countdown moving between polls.
-  setInterval(function () {
+  // Local 4Hz tick keeps the countdown moving between polls. It runs only while
+  // the page is actually watching, so a finished or failed tab goes quiet.
+  var ticker = null;
+  function tick() {
     if (eta == null) {
       timeEl.textContent = fmt((Date.now() - started) / 1000);
       timeSub.textContent = 'elapsed';
@@ -214,7 +285,9 @@
       arc.setAttribute('stroke-dasharray', CIRC);
       arc.setAttribute('stroke-dashoffset', String(CIRC * (1 - frac)));
     }
-  }, 250);
+  }
+  function startTicker() { if (!ticker) ticker = setInterval(tick, 250); }
+  function stopTicker() { if (ticker) { clearInterval(ticker); ticker = null; } }
 
   var tierNames = { draft: 'draft quality', standard: 'standard quality', high: 'maximum detail' };
   function applyState(d) {
@@ -224,29 +297,55 @@
       if (!etaTotal || eta > etaTotal) etaTotal = eta;
     }
     if (d.previewImageUrl && /^https:\/\//.test(d.previewImageUrl) && concept.src !== d.previewImageUrl) {
+      concept.onload = function () { concept.hidden = false; requestAnimationFrame(function () { concept.classList.add('shown'); }); conceptCap.classList.add('shown'); };
+      concept.onerror = function () { concept.hidden = true; concept.classList.remove('shown'); conceptCap.classList.remove('shown'); };
       concept.src = d.previewImageUrl;
-      concept.onload = function () { concept.classList.add('shown'); conceptCap.classList.add('shown'); };
     }
     var tier = tierNames[d.tier] || '';
-    phaseEl.textContent = concept.classList.contains('shown')
+    var next = concept.classList.contains('shown')
       ? 'Sculpting the 3D mesh' + (tier ? ' at ' + tier : '') + '…'
       : 'Painting the concept' + (tier ? ' at ' + tier : '') + '…';
+    if (phaseEl.textContent !== next) phaseEl.textContent = next;
+  }
+
+  // Only ever redirect somewhere we own. viewerUrl comes from our own API, but a
+  // progress page that hands control to an arbitrary host is a redirect gadget.
+  function safeTarget(raw) {
+    if (typeof raw !== 'string' || !raw) return null;
+    var u;
+    try { u = new URL(raw, location.href); } catch (e) { return null; }
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+    if (u.origin !== location.origin && u.host !== 'three.ws') return null;
+    return u.href;
   }
 
   var stopped = false;
+  var pollTimer = null;
   function finish(d) {
     stopped = true;
-    var target = d.viewerUrl && /^https:\/\//.test(d.viewerUrl) ? d.viewerUrl : null;
-    if (!target && d.glbUrl) target = 'https://three.ws/viewer?src=' + encodeURIComponent(d.glbUrl) + (title ? '&title=' + encodeURIComponent(title) : '');
-    if (!target) { failWith('The model finished but no viewer link came back. Start a fresh one — it is free.'); return; }
+    stopTicker();
+    var target = safeTarget(d.viewerUrl);
+    if (!target && d.glbUrl) {
+      target = safeTarget('/viewer?src=' + encodeURIComponent(d.glbUrl) + (title ? '&title=' + encodeURIComponent(title) : ''));
+    }
+    if (!target) { failWith('The model finished but no viewer link came back. Start a fresh one, it is free.'); return; }
     document.getElementById('ready-link').href = target;
-    show(ready);
+    show(ready, 'Your model is ready. Opening the 3D viewer.');
     setTimeout(function () { location.replace(target); }, 700);
   }
-  function failWith(msg) {
+
+  // `resumable` marks a failure the user can retry in place (we lost the
+  // network, the job itself is fine). An upstream job failure is terminal and
+  // only offers a fresh generation.
+  function failWith(msg, resumable) {
     stopped = true;
+    stopTicker();
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
     if (msg) errMsg.textContent = msg;
-    show(errEl);
+    retryBtn.classList.toggle('hidden', !resumable);
+    forgeAgain.classList.toggle('primary', !resumable);
+    forgeAgain.textContent = resumable ? 'Start a new one instead' : 'Forge it again, free';
+    show(errEl, 'Generation problem. ' + (msg || errMsg.textContent));
   }
 
   var pollPath = '/api/3d/studio?job=' + encodeURIComponent(job) + (title ? '&title=' + encodeURIComponent(title) : '');
@@ -257,26 +356,59 @@
     return Math.min(10000, Math.max(4000, (e / 5) * 1000));
   }
 
+  // A blip is worth retrying silently; a dead connection is not. After this many
+  // consecutive failures the page says so instead of spinning a fake countdown.
+  var NET_FAIL_LIMIT = 4;
+  var netFails = 0;
+  function schedule(ms) {
+    if (pollTimer) clearTimeout(pollTimer);
+    pollTimer = setTimeout(poll, ms);
+  }
+
   function poll() {
     if (stopped) return;
     fetch(pollPath, { headers: { accept: 'application/json' } })
       .then(function (r) { return r.json().then(function (d) { return { r: r, d: d }; }); })
       .then(function (x) {
+        netFails = 0;
         var d = x.d || {};
-        if (x.r.status === 429) { setTimeout(poll, nextDelay(null, Number(d.retry_after) || 5)); return; }
-        if (x.r.status === 400) { failWith('This progress link is stale or malformed. Start a fresh generation — it is free.'); return; }
+        if (x.r.status === 429) { schedule(nextDelay(null, Number(d.retry_after) || 5)); return; }
+        if (x.r.status === 400) { failWith('This progress link is stale or malformed. Start a fresh generation, it is free.'); return; }
         if (d.status === 'done') { finish(d); return; }
         if (d.status === 'error') { failWith(d.error || null); return; }
         applyState(d);
-        setTimeout(poll, nextDelay(d));
+        schedule(nextDelay(d));
       })
-      .catch(function () { setTimeout(poll, 6000); }); // transient blip — keep watching
+      .catch(function () {
+        netFails += 1;
+        if (netFails >= NET_FAIL_LIMIT) {
+          failWith('We cannot reach three.ws from this tab right now. Your model is still being generated on our servers: reconnect and keep watching, or check your gallery later.', true);
+          return;
+        }
+        schedule(6000);
+      });
   }
+
+  function resume() {
+    if (!stopped) return;
+    stopped = false;
+    netFails = 0;
+    show(waiting, 'Reconnecting to the generation.');
+    startTicker();
+    poll();
+  }
+  retryBtn.addEventListener('click', resume);
+  // Coming back online is the same signal the retry button sends; take it.
+  window.addEventListener('online', function () {
+    if (stopped && !retryBtn.classList.contains('hidden')) resume();
+  });
+
+  startTicker();
   poll();
 
   // Nothing generates for 40+ minutes; stop a zombie tab honestly.
   setTimeout(function () {
-    if (!stopped) failWith('This is taking far longer than it should. The job may have been lost upstream — start a fresh one, it is free.');
+    if (!stopped) failWith('This is taking far longer than it should. The job may have been lost upstream, so start a fresh one: it is free.');
   }, 40 * 60 * 1000);
 })();
 </script>

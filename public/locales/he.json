@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — הוק",
 		"lab": "<a href=\"/demos\">&larr; מעבדה</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws מעבדה",
-		"the_react_wrapper_around_the_sdk_imports": "עטיפת ה-React סביב ה-SDK. מייבאת את <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, ואת <code>useAvatar</code> ישירות מ-<code>/avatar-sdk/src/react.jsx</code>. React נטען מ-CDN באמצעות מפת ייבוא, כך שהדף הזה עובד ללא שלב באנדלר.",
+		"the_react_wrapper_around_the_sdk_imports": "עטיפת ה-React סביב ה-SDK. מייבאת את <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, ואת <code>useAvatar</code> ישירות מ-<code>/avatar-sdk/src/react.js</code>. React נטען מ-CDN באמצעות מפת ייבוא, כך שהדף הזה עובד ללא שלב באנדלר.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "אפי",
 		"it_pays_the_quoted_price_and_receives": "הוא משלם את המחיר הנקוב ומקבל את המפתח <b>פעם אחת</b>. ייבא אותו מיד.",
 		"legendary": "אגדי",
-		"long_brandable_solana_addresses_4_5_characte": "כתובות Solana ארוכות ומיתוגיות — קידומות של 4-5+ תווים שהגורס החי לא יכול להגיע אליהן — נגרסו מראש במעבד אצווה ונמכרות מהמלאי. קנה אחת והמפתח הפרטי נמסר <strong>פעם אחת</strong> דרך מסילת ה-<a href=\"/vanity/gallery\">x402</a>, ואז העותק השמור שלו מושמד. צריך גריסה טרייה של ≤3 תווים במקום? השתמש ב-<a href=\"/vanity-wallet\">גורס החי</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "כתובות Solana ארוכות ומיתוגיות — קידומות של 4-5+ תווים שהגורס החי לא יכול להגיע אליהן — נגרסו מראש במעבד אצווה ונמכרות מהמלאי. קנה אחת והמפתח הפרטי נמסר <strong>פעם אחת</strong> דרך מסילת ה-<a href=\"/x402\">x402</a>, ואז העותק השמור שלו מושמד. צריך גריסה טרייה של ≤3 תווים במקום? השתמש ב-<a href=\"/vanity-wallet\">גורס החי</a>.",
 		"meta_description": "קנה כתובת וניטי Solana ארוכה ומיתוגית, נמסרת מיד מהמלאי — קידומות של 4-5+ תווים שהגורס החי לא יכול להגיע אליהן, נגרסו מראש במעבד אצווה ונמכרות דרך x402. המחיר משתנה לפי נדירות.",
 		"meta_og_description": "כתובות וניטי Solana ארוכות ומיתוגיות, נגרסו מראש ונמכרות מהמלאי. נמסרות פעם אחת, מוצפנות במנוחה, מתומחרות לפי נדירות.",
 		"meta_og_title": "מלאי וניטי פרימיום · three.ws",

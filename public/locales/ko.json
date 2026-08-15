@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — 훅",
 		"lab": "<a href=\"/demos\">&larr; 랩</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws 랩",
-		"the_react_wrapper_around_the_sdk_imports": "SDK를 감싸는 React 래퍼입니다. <code>/avatar-sdk/src/react.jsx</code>에서 <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, <code>useAvatar</code>를 직접 가져옵니다. React는 임포트 맵을 통해 CDN에서 로드되므로 이 페이지는 번들러 단계 없이 작동합니다.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK를 감싸는 React 래퍼입니다. <code>/avatar-sdk/src/react.js</code>에서 <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, <code>useAvatar</code>를 직접 가져옵니다. React는 임포트 맵을 통해 CDN에서 로드되므로 이 페이지는 번들러 단계 없이 작동합니다.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "에픽",
 		"it_pays_the_quoted_price_and_receives": "명시된 가격을 지불하면 키를 <b>한 번</b> 받습니다. 즉시 가져오십시오.",
 		"legendary": "레전더리",
-		"long_brandable_solana_addresses_4_5_characte": "길고 브랜딩 가능한 Solana 주소 — 라이브 그라인더가 도달할 수 없는 4~5자 이상의 접두사 — 배치 CPU로 미리 생성되어 재고로 판매됩니다. 구매하시면 개인 키는 <a href=\"/vanity/gallery\">x402</a> 레일을 통해 <strong>한 번</strong> 전달되며, 저장된 사본은 파기됩니다. 대신 새로운 3자 이하의 그라인드가 필요하신가요? <a href=\"/vanity-wallet\">라이브 그라인더</a>를 사용하세요.",
+		"long_brandable_solana_addresses_4_5_characte": "길고 브랜딩 가능한 Solana 주소 — 라이브 그라인더가 도달할 수 없는 4~5자 이상의 접두사 — 배치 CPU로 미리 생성되어 재고로 판매됩니다. 구매하시면 개인 키는 <a href=\"/x402\">x402</a> 레일을 통해 <strong>한 번</strong> 전달되며, 저장된 사본은 파기됩니다. 대신 새로운 3자 이하의 그라인드가 필요하신가요? <a href=\"/vanity-wallet\">라이브 그라인더</a>를 사용하세요.",
 		"meta_description": "길고 브랜딩 가능한 Solana 베니티 주소를 재고에서 즉시 구매하세요. 라이브 그라인더가 도달할 수 없는 4~5자 이상의 접두사를 가진 주소로, 배치 CPU로 미리 생성되어 x402을 통해 판매됩니다. 가격은 희귀도에 따라 달라집니다.",
 		"meta_og_description": "길고 브랜딩 가능한 Solana 베니티 주소. 미리 생성되어 재고로 판매됩니다. 한 번 전달되며, 저장 시 암호화되고, 희귀도에 따라 가격이 책정됩니다.",
 		"meta_og_title": "프리미엄 베니티 인벤토리 · three.ws",

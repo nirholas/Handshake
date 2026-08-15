@@ -205,11 +205,15 @@ export default wrap(async (req, res) => {
 	try { signature = await conn.sendTransaction(tx, { skipPreflight: false, maxRetries: 2 }); }
 	catch (e) { return error(res, 502, 'send_failed', e?.message || 'transaction failed'); }
 
+	// Fire-and-forget: recordEvent returns nothing and swallows its own failures.
+	// The .catch() that used to hang off it threw a TypeError on this line, AFTER
+	// the top-up was already on chain, so a successful funding answered 500 and the
+	// page told the owner their agent had not been paid.
 	recordEvent({
 		userId: session.id,
 		event: 'master_wallet_fund_agent',
 		meta: { agent_id: agentId, asset, human_amount: humanAmount, signature },
-	}).catch(() => {});
+	});
 
 	return json(res, 200, {
 		signature,

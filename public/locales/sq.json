@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laborator</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laborator",
-		"the_react_wrapper_around_the_sdk_imports": "Wrapper-i i React-it rreth SDK-së. Importon <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, dhe <code>useAvatar</code> direkt nga <code>/avatar-sdk/src/react.jsx</code>. React ngarkohet nga një CDN nëpërmjet një harte importi, kështu që kjo faqe funksionon pa një hap paketimi (bundler).",
+		"the_react_wrapper_around_the_sdk_imports": "Wrapper-i i React-it rreth SDK-së. Importon <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, dhe <code>useAvatar</code> direkt nga <code>/avatar-sdk/src/react.js</code>. React ngarkohet nga një CDN nëpërmjet një harte importi, kështu që kjo faqe funksionon pa një hap paketimi (bundler).",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epike",
 		"it_pays_the_quoted_price_and_receives": "Paguhet çmimi i cituar dhe merret çelësi <b>një herë</b>. Importojeni menjëherë.",
 		"legendary": "Legjendare",
-		"long_brandable_solana_addresses_4_5_characte": "Adresa të gjata, të markueshme Solana — prefikse me 4–5+ karaktere që 'grinder'-i live nuk mund t'i arrijë — të 'grind'-uara paraprakisht në CPU batch dhe të shitura nga stoku. Blini një dhe çelësi privat dorëzohet <strong>një herë</strong> përmes 'rail'-it <a href=\"/vanity/gallery\">x402</a>, pastaj kopja e tij e ruajtur shkatërrohet. Keni nevojë për një 'grind' të freskët ≤3-karakteresh në vend të kësaj? Përdorni <a href=\"/vanity-wallet\">'grinder'-in live</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Adresa të gjata, të markueshme Solana — prefikse me 4–5+ karaktere që 'grinder'-i live nuk mund t'i arrijë — të 'grind'-uara paraprakisht në CPU batch dhe të shitura nga stoku. Blini një dhe çelësi privat dorëzohet <strong>një herë</strong> përmes 'rail'-it <a href=\"/x402\">x402</a>, pastaj kopja e tij e ruajtur shkatërrohet. Keni nevojë për një 'grind' të freskët ≤3-karakteresh në vend të kësaj? Përdorni <a href=\"/vanity-wallet\">'grinder'-in live</a>.",
 		"meta_description": "Blej një adresë vanity të gjatë, të markueshme Solana të dorëzuar menjëherë nga stoku — prefikse me 4–5+ karaktere që 'grinder'-i live nuk mund t'i arrijë, të 'grind'-uara paraprakisht në CPU batch dhe të shitura përmes x402. Çmimi shkallëzohet me rrallësinë.",
 		"meta_og_description": "Adresa vanity të gjata, të markueshme Solana, të përgatitura paraprakisht dhe të shitura nga stoku. Dorëzohen një herë, të koduara në ruajtje, çmimi sipas rrallësisë.",
 		"meta_og_title": "Inventar Vanity Premium · three.ws",

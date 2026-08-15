@@ -124,18 +124,27 @@ function populateFacets() {
 }
 
 function fillSelect(sel, items, current) {
+	// Keep the markup's "All chains" / "All projects" option node rather than
+	// re-emitting it: it carries the data-i18n annotation (and, on a non-English
+	// locale, the already-translated label) that a rewritten innerHTML would drop.
+	const placeholder = sel.querySelector('option[value=""]');
 	const seen = new Set();
-	const opts = ['<option value="">' + (sel.id === 'yl-chain' ? 'All chains' : 'All projects') + '</option>'];
+	const frag = document.createDocumentFragment();
+	if (placeholder) frag.append(placeholder);
 	for (const it of items || []) {
 		seen.add(it.name);
-		opts.push(
-			`<option value="${esc(it.name)}">${esc(it.name)} (${it.pool_count.toLocaleString('en-US')})</option>`,
-		);
+		const opt = document.createElement('option');
+		opt.value = it.name;
+		opt.textContent = `${it.name} (${it.pool_count.toLocaleString('en-US')})`;
+		frag.append(opt);
 	}
 	if (current && !seen.has(current)) {
-		opts.push(`<option value="${esc(current)}">${esc(current)}</option>`);
+		const opt = document.createElement('option');
+		opt.value = current;
+		opt.textContent = current;
+		frag.append(opt);
 	}
-	sel.innerHTML = opts.join('');
+	sel.replaceChildren(frag);
 	sel.value = current || '';
 }
 
@@ -153,22 +162,37 @@ function resetFilters() {
 
 // ── Stats ───────────────────────────────────────────────────────────────────
 
+const STAT_IDS = ['yl-stat-pools', 'yl-stat-tvl', 'yl-stat-apy'];
+
+function setStat(id, text, outage) {
+	const el = $(id);
+	el.textContent = text;
+	el.classList.toggle('yl-stat-out', outage === true);
+}
+
 function renderStats() {
 	const s = state.stats;
 	if (!s) return;
-	$('yl-stat-pools').textContent = s.pool_count != null ? s.pool_count.toLocaleString('en-US') : '—';
-	$('yl-stat-tvl').textContent = formatUsd(s.total_tvl);
-	$('yl-stat-apy').textContent = fmtApy(s.median_apy);
+	const pools = s.pool_count != null ? s.pool_count.toLocaleString('en-US') : 'Unavailable';
+	setStat('yl-stat-pools', pools, s.pool_count == null);
+	setStat('yl-stat-tvl', formatUsd(s.total_tvl), false);
+	setStat('yl-stat-apy', fmtApy(s.median_apy), false);
+}
+
+// The three stat cards open as skeletons. If the feed never answers, they have
+// to say so: a skeleton that never resolves reads as a page still loading.
+function renderStatsOutage() {
+	for (const id of STAT_IDS) setStat(id, 'Unavailable', true);
 }
 
 function updateCount() {
 	const el = $('yl-count');
 	if (!el) return;
-	if (!state.stats && !state.error) {
-		el.textContent = '';
+	if (state.error) {
+		el.textContent = 'Pool data unavailable';
 		return;
 	}
-	if (state.error) {
+	if (!state.stats) {
 		el.textContent = '';
 		return;
 	}
@@ -396,15 +420,35 @@ function renderDrawer(pool) {
 		return;
 	}
 
-	host.innerHTML = renderChartSvg(pool, c.points);
-	wireChartPointer(pool, c.points);
+	const geom = chartGeom(host.clientWidth);
+	host.innerHTML = renderChartSvg(pool, c.points, geom);
+	wireChartPointer(pool, c.points, geom);
 }
 
 // ── Dual-axis SVG chart (APY left, TVL right) ───────────────────────────────
 
-const CW = 760;
-const CH = 220;
-const CP = { top: 18, right: 66, bottom: 26, left: 56 };
+// The viewBox is sized to the drawer's real pixel width so one user unit is one
+// CSS pixel. A fixed 760-unit box scaled into a 288px phone drawer shrank every
+// axis label to a third of its size (9px type rendering at under 3px) and left
+// the plot 72px tall; sizing to the container keeps type at its stated size and
+// lets the axis gutters shrink instead of the content.
+const CH_REGULAR = 220;
+const CH_COMPACT = 200;
+const COMPACT_AT = 520;
+
+function chartGeom(width) {
+	const w = Math.max(280, Math.round(width) || 760);
+	const compact = w < COMPACT_AT;
+	return {
+		w,
+		h: compact ? CH_COMPACT : CH_REGULAR,
+		pad: compact
+			? { top: 14, right: 46, bottom: 22, left: 42 }
+			: { top: 18, right: 66, bottom: 26, left: 56 },
+		steps: compact ? 3 : 4,
+		font: compact ? 8.5 : 9,
+	};
+}
 
 function seriesExtent(points, key) {
 	let min = Infinity;
@@ -419,9 +463,9 @@ function seriesExtent(points, key) {
 	return { min, max, range: max - min || Math.abs(max) || 1 };
 }
 
-function linePath(points, key, ext) {
-	const w = CW - CP.left - CP.right;
-	const h = CH - CP.top - CP.bottom;
+function linePath(points, key, ext, g) {
+	const w = g.w - g.pad.left - g.pad.right;
+	const h = g.h - g.pad.top - g.pad.bottom;
 	const n = points.length;
 	let d = '';
 	let started = false;
@@ -431,32 +475,31 @@ function linePath(points, key, ext) {
 			started = false; // break the line across a gap
 			continue;
 		}
-		const x = CP.left + (i / (n - 1)) * w;
-		const y = CP.top + h - ((v - ext.min) / ext.range) * h;
+		const x = g.pad.left + (i / (n - 1)) * w;
+		const y = g.pad.top + h - ((v - ext.min) / ext.range) * h;
 		d += `${started ? 'L' : 'M'}${x.toFixed(2)},${y.toFixed(2)} `;
 		started = true;
 	}
 	return d.trim();
 }
 
-function renderChartSvg(pool, points) {
+function renderChartSvg(pool, points, g) {
 	const apyExt = seriesExtent(points, 'apy');
 	const tvlExt = seriesExtent(points, 'tvl_usd');
-	const h = CH - CP.top - CP.bottom;
+	const h = g.h - g.pad.top - g.pad.bottom;
 
-	const apyPath = apyExt ? linePath(points, 'apy', apyExt) : '';
-	const tvlPath = tvlExt ? linePath(points, 'tvl_usd', tvlExt) : '';
+	const apyPath = apyExt ? linePath(points, 'apy', apyExt, g) : '';
+	const tvlPath = tvlExt ? linePath(points, 'tvl_usd', tvlExt, g) : '';
 
-	// Left axis labels (APY), right axis labels (TVL); 4 gridlines shared.
-	const steps = 4;
+	// Left axis labels (APY), right axis labels (TVL); gridlines shared.
 	let grid = '';
-	for (let i = 0; i <= steps; i++) {
-		const y = CP.top + h - (i / steps) * h;
-		const apyLabel = apyExt ? fmtApy(apyExt.min + (apyExt.range * i) / steps) : '';
-		const tvlLabel = tvlExt ? formatUsd(tvlExt.min + (tvlExt.range * i) / steps) : '';
-		grid += `<line x1="${CP.left}" y1="${y}" x2="${CW - CP.right}" y2="${y}" stroke="var(--cv-border)" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.5"/>`;
-		grid += `<text x="${CP.left - 6}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--yl-apy-axis)">${esc(apyLabel)}</text>`;
-		grid += `<text x="${CW - CP.right + 6}" y="${y + 3}" font-size="9" fill="var(--yl-tvl-axis)">${esc(tvlLabel)}</text>`;
+	for (let i = 0; i <= g.steps; i++) {
+		const y = g.pad.top + h - (i / g.steps) * h;
+		const apyLabel = apyExt ? fmtApy(apyExt.min + (apyExt.range * i) / g.steps) : '';
+		const tvlLabel = tvlExt ? formatUsd(tvlExt.min + (tvlExt.range * i) / g.steps) : '';
+		grid += `<line x1="${g.pad.left}" y1="${y}" x2="${g.w - g.pad.right}" y2="${y}" stroke="var(--cv-border)" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.5"/>`;
+		grid += `<text x="${g.pad.left - 6}" y="${y + 3}" text-anchor="end" font-size="${g.font}" fill="var(--yl-apy-axis)">${esc(apyLabel)}</text>`;
+		grid += `<text x="${g.w - g.pad.right + 6}" y="${y + 3}" font-size="${g.font}" fill="var(--yl-tvl-axis)">${esc(tvlLabel)}</text>`;
 	}
 
 	const from = points[0]?.t;
@@ -468,16 +511,16 @@ function renderChartSvg(pool, points) {
 				<span class="yl-leg apy"><i></i>APY (left)</span>
 				<span class="yl-leg tvl"><i></i>TVL (right)</span>
 			</div>
-			<span class="yl-chart-range">${esc(fmtDate(from))} – ${esc(fmtDate(to))}</span>
+			<span class="yl-chart-range">${esc(fmtDate(from))} to ${esc(fmtDate(to))}</span>
 		</div>
 		<div class="yl-chart-area">
-			<svg viewBox="0 0 ${CW} ${CH}" role="img" preserveAspectRatio="none"
+			<svg viewBox="0 0 ${g.w} ${g.h}" role="img"
 				aria-label="APY and TVL history for this pool over ${points.length} points">
 				${grid}
 				${tvlPath ? `<path d="${tvlPath}" fill="none" stroke="var(--yl-tvl-axis)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>` : ''}
 				${apyPath ? `<path d="${apyPath}" fill="none" stroke="var(--yl-apy-axis)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
 				<g class="yl-cross" data-cross="${esc(pool)}" hidden>
-					<line class="cl" x1="0" y1="${CP.top}" x2="0" y2="${CH - CP.bottom}" stroke="var(--cv-text-3)" stroke-width="0.5" stroke-dasharray="3 3"/>
+					<line class="cl" x1="0" y1="${g.pad.top}" x2="0" y2="${g.h - g.pad.bottom}" stroke="var(--cv-text-3)" stroke-width="0.5" stroke-dasharray="3 3"/>
 					<circle class="dot-apy" r="4" fill="var(--yl-apy-axis)" stroke="var(--cv-surface)" stroke-width="2" hidden/>
 					<circle class="dot-tvl" r="4" fill="var(--yl-tvl-axis)" stroke="var(--cv-surface)" stroke-width="2" hidden/>
 				</g>
@@ -497,7 +540,7 @@ function fmtDate(t) {
 	return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function wireChartPointer(pool, points) {
+function wireChartPointer(pool, points, g) {
 	const host = $(`drawer-${pool}`);
 	const svg = host?.querySelector('svg');
 	const cross = host?.querySelector('.yl-cross');
@@ -506,8 +549,8 @@ function wireChartPointer(pool, points) {
 
 	const apyExt = seriesExtent(points, 'apy');
 	const tvlExt = seriesExtent(points, 'tvl_usd');
-	const w = CW - CP.left - CP.right;
-	const h = CH - CP.top - CP.bottom;
+	const w = g.w - g.pad.left - g.pad.right;
+	const h = g.h - g.pad.top - g.pad.bottom;
 	const n = points.length;
 	const crossLine = cross.querySelector('.cl');
 	const dotApy = cross.querySelector('.dot-apy');
@@ -515,16 +558,16 @@ function wireChartPointer(pool, points) {
 
 	function show(clientX) {
 		const rect = svg.getBoundingClientRect();
-		const mx = ((clientX - rect.left) / rect.width) * CW;
-		const i = Math.max(0, Math.min(n - 1, Math.round(((mx - CP.left) / w) * (n - 1))));
+		const mx = ((clientX - rect.left) / rect.width) * g.w;
+		const i = Math.max(0, Math.min(n - 1, Math.round(((mx - g.pad.left) / w) * (n - 1))));
 		const pt = points[i];
-		const x = CP.left + (i / (n - 1)) * w;
+		const x = g.pad.left + (i / (n - 1)) * w;
 		cross.removeAttribute('hidden');
 		crossLine.setAttribute('x1', x);
 		crossLine.setAttribute('x2', x);
 
 		if (apyExt && pt.apy != null && Number.isFinite(pt.apy)) {
-			const y = CP.top + h - ((pt.apy - apyExt.min) / apyExt.range) * h;
+			const y = g.pad.top + h - ((pt.apy - apyExt.min) / apyExt.range) * h;
 			dotApy.setAttribute('cx', x);
 			dotApy.setAttribute('cy', y);
 			dotApy.removeAttribute('hidden');
@@ -532,7 +575,7 @@ function wireChartPointer(pool, points) {
 			dotApy.setAttribute('hidden', '');
 		}
 		if (tvlExt && pt.tvl_usd != null && Number.isFinite(pt.tvl_usd)) {
-			const y = CP.top + h - ((pt.tvl_usd - tvlExt.min) / tvlExt.range) * h;
+			const y = g.pad.top + h - ((pt.tvl_usd - tvlExt.min) / tvlExt.range) * h;
 			dotTvl.setAttribute('cx', x);
 			dotTvl.setAttribute('cy', y);
 			dotTvl.removeAttribute('hidden');
@@ -541,7 +584,10 @@ function wireChartPointer(pool, points) {
 		}
 
 		tip.hidden = false;
-		tip.style.left = `${(x / CW) * 100}%`;
+		// The tip is centred on the crosshair, so clamp its anchor away from both
+		// edges or a reading near either end hangs outside the drawer.
+		const half = (tip.offsetWidth / 2 / rect.width) * 100;
+		tip.style.left = `${Math.min(100 - half, Math.max(half, (x / g.w) * 100))}%`;
 		tip.querySelector('.d').textContent = fmtDate(pt.t);
 		tip.querySelectorAll('.a span')[0].textContent = `APY ${fmtApy(pt.apy)}`;
 		tip.querySelectorAll('.a span')[1].textContent = `TVL ${formatUsd(pt.tvl_usd)}`;
@@ -581,6 +627,10 @@ async function load() {
 		state.loading = false;
 		state.error = true;
 		$('yl-updated').textContent = '';
+		// Keep whatever stats a previous successful load produced; only a page
+		// that never had any needs the outage treatment.
+		if (state.stats) renderStats();
+		else renderStatsOutage();
 	}
 	renderTable();
 }
@@ -662,6 +712,17 @@ function wireControls() {
 
 	$('yl-reset').addEventListener('click', resetFilters);
 	$('yl-more').addEventListener('click', loadMore);
+
+	// The chart's viewBox is sized to the drawer at render time, so a width change
+	// (rotation, window resize) has to redraw it or the axes keep the old scale.
+	let resizeTimer = null;
+	window.addEventListener('resize', () => {
+		if (!state.expanded) return;
+		clearTimeout(resizeTimer);
+		resizeTimer = setTimeout(() => {
+			if (state.expanded) renderDrawer(state.expanded);
+		}, 150);
+	});
 
 	// Reflect back/forward navigation into the filters.
 	window.addEventListener('popstate', () => {

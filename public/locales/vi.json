@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; phòng thí nghiệm</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws phòng thí nghiệm",
-		"the_react_wrapper_around_the_sdk_imports": "Trình bao bọc React cho SDK. Nhập <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, và <code>useAvatar</code> trực tiếp từ <code>/avatar-sdk/src/react.jsx</code>. React được tải từ CDN thông qua bản đồ nhập khẩu nên trang này hoạt động mà không cần bước đóng gói.",
+		"the_react_wrapper_around_the_sdk_imports": "Trình bao bọc React cho SDK. Nhập <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, và <code>useAvatar</code> trực tiếp từ <code>/avatar-sdk/src/react.js</code>. React được tải từ CDN thông qua bản đồ nhập khẩu nên trang này hoạt động mà không cần bước đóng gói.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epic",
 		"it_pays_the_quoted_price_and_receives": "Thanh toán mức giá niêm yết và nhận khóa <b>một lần duy nhất</b>. Hãy nhập ngay lập tức.",
 		"legendary": "Huyền thoại",
-		"long_brandable_solana_addresses_4_5_characte": "Các địa chỉ Solana dài, dễ nhận diện — tiền tố 4–5+ ký tự mà công cụ tạo trực tiếp không thể đạt tới — được tạo trước bằng CPU hàng loạt và bán từ kho có sẵn. Mua một địa chỉ và khóa riêng tư sẽ được gửi <strong>một lần duy nhất</strong> qua kênh <a href=\"/vanity/gallery\">x402</a>, sau đó bản sao lưu trữ của nó sẽ bị hủy. Cần tạo địa chỉ mới ≤3 ký tự thay vì vậy? Hãy dùng <a href=\"/vanity-wallet\">công cụ tạo trực tiếp</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Các địa chỉ Solana dài, dễ nhận diện — tiền tố 4–5+ ký tự mà công cụ tạo trực tiếp không thể đạt tới — được tạo trước bằng CPU hàng loạt và bán từ kho có sẵn. Mua một địa chỉ và khóa riêng tư sẽ được gửi <strong>một lần duy nhất</strong> qua kênh <a href=\"/x402\">x402</a>, sau đó bản sao lưu trữ của nó sẽ bị hủy. Cần tạo địa chỉ mới ≤3 ký tự thay vì vậy? Hãy dùng <a href=\"/vanity-wallet\">công cụ tạo trực tiếp</a>.",
 		"meta_description": "Mua địa chỉ vanity Solana dài, dễ nhận diện, được giao ngay lập tức từ kho có sẵn — tiền tố 4–5+ ký tự mà công cụ tạo trực tiếp không thể đạt tới, được tạo trước bằng CPU hàng loạt và bán qua x402. Giá cả tăng theo độ hiếm.",
 		"meta_og_description": "Các địa chỉ vanity Solana dài, dễ nhận diện, được tạo trước và bán từ kho có sẵn. Giao một lần duy nhất, mã hóa khi lưu trữ, giá theo độ hiếm.",
 		"meta_og_title": "Kho địa chỉ Vanity Cao cấp · three.ws",

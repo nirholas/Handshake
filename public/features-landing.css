@@ -204,10 +204,42 @@
 	}
 }
 
+/* The still render and the live viewer occupy the same box so the pane never
+   collapses or jumps between them. The still is the loading state and the
+   third-party-failure fallback; the viewer fades in over it once it is up. */
+.fl-preview-still,
 .fl-hero-preview model-viewer {
+	position: absolute;
+	inset: 0;
 	width: 100%;
 	height: 100%;
 	background: transparent;
+}
+
+.fl-preview-still {
+	object-fit: contain;
+	padding: 4% 4% 8%;
+}
+
+.fl-hero-preview model-viewer {
+	opacity: 0;
+	transition: opacity 0.45s ease;
+	--poster-color: transparent;
+	--progress-bar-color: var(--ink-dim);
+}
+
+.fl-hero-preview[data-state="ready"] model-viewer {
+	opacity: 1;
+}
+
+.fl-hero-preview[data-state="ready"] .fl-preview-still {
+	display: none;
+}
+
+/* A viewer that never came up must not sit on top of the still swallowing
+   drags that will never do anything. */
+.fl-hero-preview[data-state="still"] model-viewer {
+	display: none;
 }
 
 .fl-preview-label {
@@ -217,11 +249,22 @@
 	font-family: var(--font-mono);
 	font-size: var(--text-xs);
 	color: var(--ink-dim);
-	background: rgba(0,0,0,0.7);
+	background: var(--surface-2);
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-pill);
 	padding: 0.2rem 0.6rem;
 	backdrop-filter: blur(8px);
+	max-width: calc(100% - var(--space-sm) * 2);
+}
+
+.fl-preview-state {
+	display: none;
+}
+
+.fl-hero-preview[data-state="loading"] .fl-preview-state[data-when="loading"],
+.fl-hero-preview[data-state="ready"] .fl-preview-state[data-when="ready"],
+.fl-hero-preview[data-state="still"] .fl-preview-state[data-when="still"] {
+	display: inline;
 }
 
 /* ── How it works ──────────────────────────────────────────────────────── */
@@ -435,6 +478,13 @@
 	border-bottom: none;
 }
 
+/* The question is the panel's heading, so it carries an <h3> for the document
+   outline. The heading itself contributes no box of its own. */
+.fl-faq-h {
+	margin: 0;
+	font: inherit;
+}
+
 .fl-faq-q {
 	width: 100%;
 	background: var(--surface-1);
@@ -488,8 +538,28 @@
 	background: var(--surface-1);
 }
 
+.fl-faq-a p {
+	margin: 0;
+}
+
+.fl-faq-link {
+	color: var(--ink);
+}
+
 .fl-faq-a.open {
 	display: block;
+	animation: fl-faq-reveal 0.22s ease both;
+}
+
+@keyframes fl-faq-reveal {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
 }
 
 /* ── Final CTA band ────────────────────────────────────────────────────── */
@@ -588,7 +658,12 @@
 	.fl-btn-primary,
 	.fl-btn-ghost,
 	.fl-faq-chevron,
+	.fl-hero-preview model-viewer,
 	.fl-step {
 		transition: none;
+	}
+
+	.fl-faq-a.open {
+		animation: none;
 	}
 }

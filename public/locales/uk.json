@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — хук",
 		"lab": "<a href=\"/demos\">&larr; лабораторія</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws лабораторія",
-		"the_react_wrapper_around_the_sdk_imports": "React-обгортка для SDK. Імпортує <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> та <code>useAvatar</code> безпосередньо з <code>/avatar-sdk/src/react.jsx</code>. React завантажується з CDN через карту імпорту, тому ця сторінка працює без кроку бандлінгу.",
+		"the_react_wrapper_around_the_sdk_imports": "React-обгортка для SDK. Імпортує <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> та <code>useAvatar</code> безпосередньо з <code>/avatar-sdk/src/react.js</code>. React завантажується з CDN через карту імпорту, тому ця сторінка працює без кроку бандлінгу.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Епічний",
 		"it_pays_the_quoted_price_and_receives": "Він сплачує вказану ціну та отримує ключ <b>один раз</b>. Імпортуйте його негайно.",
 		"legendary": "Легендарний",
-		"long_brandable_solana_addresses_4_5_characte": "Довгі, брендовані Solana адреси — префікси з 4–5+ символів, до яких не дістанеться «живий» грайндер — згенеровані заздалегідь на пакетних CPU та продаються зі складу. Придбайте одну, і приватний ключ буде доставлено <strong>один раз</strong> через <a href=\"/vanity/gallery\">x402</a> канал, після чого його збережена копія знищується. Потрібен свіжий грайнд ≤3 символів? Використовуйте <a href=\"/vanity-wallet\">«живий» грайндер</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Довгі, брендовані Solana адреси — префікси з 4–5+ символів, до яких не дістанеться «живий» грайндер — згенеровані заздалегідь на пакетних CPU та продаються зі складу. Придбайте одну, і приватний ключ буде доставлено <strong>один раз</strong> через <a href=\"/x402\">x402</a> канал, після чого його збережена копія знищується. Потрібен свіжий грайнд ≤3 символів? Використовуйте <a href=\"/vanity-wallet\">«живий» грайндер</a>.",
 		"meta_description": "Придбайте довгу, брендовану Solana vanity-адресу, доставлену миттєво зі складу — префікси з 4–5+ символів, до яких не дістанеться «живий» грайндер, згенеровані заздалегідь на пакетних CPU та продані через x402. Ціна залежить від рідкісності.",
 		"meta_og_description": "Довгі, брендовані Solana vanity-адреси, згенеровані заздалегідь та продані зі складу. Доставляються один раз, зашифровані у стані спокою, ціна залежить від рідкісності.",
 		"meta_og_title": "Преміум-інвентар Vanity-адрес · three.ws",

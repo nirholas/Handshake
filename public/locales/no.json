@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "React-innpakningen rundt SDK-en. Importerer <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, og <code>useAvatar</code> direkte fra <code>/avatar-sdk/src/react.jsx</code>. React lastes fra en CDN via et importkart slik at denne siden fungerer uten et bundler-trinn.",
+		"the_react_wrapper_around_the_sdk_imports": "React-innpakningen rundt SDK-en. Importerer <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, og <code>useAvatar</code> direkte fra <code>/avatar-sdk/src/react.js</code>. React lastes fra en CDN via et importkart slik at denne siden fungerer uten et bundler-trinn.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Episk",
 		"it_pays_the_quoted_price_and_receives": "Den betaler den oppgitte prisen og mottar nøkkelen <b>én gang</b>. Importer den umiddelbart.",
 		"legendary": "Legendarisk",
-		"long_brandable_solana_addresses_4_5_characte": "Lange, merkevarevennlige Solana-adresser — prefikser på 4–5+ tegn som live-grinderen ikke kan nå – forhåndsgenerert på batch-CPU og solgt fra lager. Kjøp en, og den private nøkkelen leveres <strong>én gang</strong> via <a href=\"/vanity/gallery\">x402</a>-kanalen, deretter ødelegges den lagrede kopien. Trenger du en fersk grind på ≤3 tegn i stedet? Bruk <a href=\"/vanity-wallet\">live-grinderen</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Lange, merkevarevennlige Solana-adresser — prefikser på 4–5+ tegn som live-grinderen ikke kan nå – forhåndsgenerert på batch-CPU og solgt fra lager. Kjøp en, og den private nøkkelen leveres <strong>én gang</strong> via <a href=\"/x402\">x402</a>-kanalen, deretter ødelegges den lagrede kopien. Trenger du en fersk grind på ≤3 tegn i stedet? Bruk <a href=\"/vanity-wallet\">live-grinderen</a>.",
 		"meta_description": "Kjøp en lang, merkevarevennlig Solana vanity-adresse levert umiddelbart fra lager — prefikser på 4–5+ tegn som live-grinderen ikke kan nå, forhåndsgenerert på batch-CPU og solgt via x402. Prisen skalerer med sjeldenhet.",
 		"meta_og_description": "Lange, merkevarevennlige Solana vanity-adresser, forhåndsgenerert og solgt fra lager. Leveres én gang, kryptert i hvile, priset etter sjeldenhet.",
 		"meta_og_title": "Premium Vanity-lager · three.ws",

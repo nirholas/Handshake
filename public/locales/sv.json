@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; labb</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws labb",
-		"the_react_wrapper_around_the_sdk_imports": "React-wrappern runt SDK:t. Importerar <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> och <code>useAvatar</code> direkt från <code>/avatar-sdk/src/react.jsx</code>. React laddas från ett CDN via en importkarta så att denna sida fungerar utan ett bundler-steg.",
+		"the_react_wrapper_around_the_sdk_imports": "React-wrappern runt SDK:t. Importerar <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> och <code>useAvatar</code> direkt från <code>/avatar-sdk/src/react.js</code>. React laddas från ett CDN via en importkarta så att denna sida fungerar utan ett bundler-steg.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Episk",
 		"it_pays_the_quoted_price_and_receives": "Den betalar det angivna priset och får nyckeln <b>en gång</b>. Importera den omedelbart.",
 		"legendary": "Legendarisk",
-		"long_brandable_solana_addresses_4_5_characte": "Långa, varumärkesanpassade Solana-adresser — prefix på 4–5+ tecken som den aktiva grindern inte kan nå — förgenererade i förväg med batch-CPU och säljs från lager. Köp en och den privata nyckeln levereras <strong>en gång</strong> via <a href=\"/vanity/gallery\">x402</a>-kanalen, sedan förstörs dess lagrade kopia. Behöver du istället en ny grind på ≤3 tecken? Använd <a href=\"/vanity-wallet\">live-grindern</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Långa, varumärkesanpassade Solana-adresser — prefix på 4–5+ tecken som den aktiva grindern inte kan nå — förgenererade i förväg med batch-CPU och säljs från lager. Köp en och den privata nyckeln levereras <strong>en gång</strong> via <a href=\"/x402\">x402</a>-kanalen, sedan förstörs dess lagrade kopia. Behöver du istället en ny grind på ≤3 tecken? Använd <a href=\"/vanity-wallet\">live-grindern</a>.",
 		"meta_description": "Köp en lång, varumärkesanpassad Solana vanity-adress levererad direkt från lager — prefix på 4–5+ tecken som den aktiva grindern inte kan nå, förgenererade i förväg med batch-CPU och säljs via x402. Priset skalas med sällsynthet.",
 		"meta_og_description": "Långa, varumärkesanpassade Solana vanity-adresser, förgenererade i förväg och säljs från lager. Levereras en gång, krypterade i vila, prissatta efter sällsynthet.",
 		"meta_og_title": "Premium Vanity-lager · three.ws",

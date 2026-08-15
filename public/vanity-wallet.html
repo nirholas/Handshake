@@ -3,9 +3,9 @@
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8">
-	<title data-i18n="vanity_wallet.meta_title">Vanity wallet generator · three.ws</title>
+	<title data-i18n="vanity_wallet.meta_title">Solana vanity wallet generator · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Grind a custom Solana wallet address — by prefix, suffix, or both — for your agent. Runs entirely in your browser; keys never leave your device." data-i18n-attr="content:vanity_wallet.meta_description">
+	<meta name="description" content="Grind a custom Solana address by prefix or suffix, entirely in your browser across your CPU cores. Send it as a sealed gift link only the recipient can open." data-i18n-attr="content:vanity_wallet.meta_description">
 	<link rel="icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/footer.css">
 	<link rel="stylesheet" href="/nav.css">
@@ -57,6 +57,14 @@
 
 		input[type=text] { font: inherit; font-family: ui-monospace, monospace; padding: .55rem .7rem; width: 100%; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; background: #1a1a1a; color: var(--fg); }
 		input[type=text]:focus { outline: none; border-color: rgba(255,255,255,0.3); }
+		/* Removing the UA outline above leaves a keyboard visitor with only a faint
+		   border shift to find the caret by, so put a real ring back for the
+		   keyboard case (and cover every other control the page renders). */
+		input[type=text]:focus-visible, input[type=number]:focus-visible,
+		select:focus-visible, textarea:focus-visible,
+		button:focus-visible, a:focus-visible, input[type=checkbox]:focus-visible, input[type=radio]:focus-visible {
+			outline: 2px solid rgba(255,213,79,0.9); outline-offset: 2px;
+		}
 		input.invalid { border-color: var(--bad-fg); background: rgba(239,68,68,0.06); }
 
 		.preview { font-family: ui-monospace, monospace; font-size: .9rem; padding: .65rem .75rem; background: #1a1a1a; border-radius: 6px; margin-top: .55rem; word-break: break-all; min-height: 2.4em; line-height: 1.4; border: 1px solid var(--border); }
@@ -86,6 +94,7 @@
 		.chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .9rem; }
 		.chip { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; padding: .3rem .75rem; cursor: pointer; font-family: ui-monospace, monospace; font-size: .8rem; color: #bbb; }
 		.chip:hover { background: #242424; border-color: rgba(255,255,255,0.2); }
+		.chip:active { background: #2e2e2e; transform: translateY(1px); }
 		.chip-est { color: #555; margin-left: .35rem; font-family: system-ui, sans-serif; }
 
 		/* ── Compute / core selector ── */
@@ -127,6 +136,7 @@
 		.actions { display: flex; gap: .55rem; margin-top: 1.25rem; align-items: center; flex-wrap: wrap; }
 		.btn { font: inherit; padding: .55rem 1.1rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: #1a1a1a; color: var(--fg); cursor: pointer; }
 		.btn:hover { background: #222; }
+		.btn:active:not(:disabled) { transform: translateY(1px); }
 		.btn.primary { background: #fff; color: #000; border-color: #fff; font-weight: 600; }
 		.btn.primary:hover { background: #e8e8e8; }
 		.btn:disabled { opacity: .35; cursor: not-allowed; }
@@ -164,7 +174,7 @@
 		.section-divider { margin: 2.6rem 0 1.6rem; padding-top: 2rem; border-top: 1px solid var(--border); }
 		.section-divider h2 { font-family: var(--font-display); font-size: 1.25rem; margin: 0 0 .25rem; letter-spacing: -0.01em; }
 		.section-divider p.lede { font-size: .85rem; margin-bottom: 1.1rem; }
-		label.fl { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #666; margin: .9rem 0 .3rem; }
+		.fl { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #666; margin: .9rem 0 .3rem; }
 		input.t, textarea.t, select.t { width: 100%; font: inherit; background: #1a1a1a; color: var(--fg); border: 1px solid rgba(255,255,255,.12); border-radius: 6px; padding: .6rem .8rem; }
 		textarea.t { min-height: 70px; resize: vertical; }
 		.gift-row { display: flex; gap: .7rem; flex-wrap: wrap; }
@@ -214,9 +224,11 @@
 		button.primary, button.ghost, a.primary, a.ghost { appearance: none; font: inherit; font-weight: 700; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; transition: transform .1s, background .15s, border-color .15s; }
 		button.primary, a.primary { background: #fff; color: #000; border: 1px solid #fff; padding: .55rem 1.1rem; }
 		button.primary:hover, a.primary:hover { transform: translateY(-1px); background: #e8e8e8; }
+		button.primary:active:not(:disabled), a.primary:active { transform: translateY(0); background: #dcdcdc; }
 		button.primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 		button.ghost, a.ghost { background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,.12); padding: .5rem .9rem; }
 		button.ghost:hover, a.ghost:hover { border-color: rgba(255,255,255,.3); }
+		button.ghost:active:not(:disabled), a.ghost:active { background: rgba(255,255,255,.06); }
 		button.small, a.small { font-size: .78rem; padding: .4rem .7rem; }
 		button.big, a.big { font-size: 1rem; padding: .8rem 1.4rem; width: 100%; justify-content: center; }
 
@@ -241,16 +253,16 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:title" content="Solana Vanity Wallet · three.ws" data-i18n-attr="content:vanity_wallet.meta_og_title">
-	<meta property="og:description" content="Grind a Solana address with a custom prefix or suffix — entirely in your browser." data-i18n-attr="content:vanity_wallet.meta_og_description">
+	<meta property="og:description" content="Grind a Solana address with a custom prefix or suffix, entirely in your browser. Send it as a sealed gift only the recipient can open." data-i18n-attr="content:vanity_wallet.meta_og_description">
 	<meta property="og:url" content="https://three.ws/vanity-wallet">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Solana+Vanity+Wallet&amp;d=Grind+a+Solana+address+with+a+custom+prefix%3A+entirely+in+your+browser%2C+across+your+CPU+cores.+Also+send+sealed+wallet+gifts%3A+fund+a+fresh+%28optionally&amp;p=%2Fvanity-wallet">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:title" content="Solana Vanity Wallet · three.ws" data-i18n-attr="content:vanity_wallet.meta_twitter_title">
-	<meta name="twitter:description" content="Grind a Solana address with a custom prefix or suffix — entirely in your browser." data-i18n-attr="content:vanity_wallet.meta_twitter_description">
+	<meta name="twitter:description" content="Grind a Solana address with a custom prefix or suffix, entirely in your browser. Send it as a sealed gift only the recipient can open." data-i18n-attr="content:vanity_wallet.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Solana+Vanity+Wallet&amp;d=Grind+a+Solana+address+with+a+custom+prefix%3A+entirely+in+your+browser%2C+across+your+CPU+cores.+Also+send+sealed+wallet+gifts%3A+fund+a+fresh+%28optionally&amp;p=%2Fvanity-wallet">
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Solana Vanity Wallet","description":"Grind a Solana address with a custom prefix or suffix — entirely in your browser.","url":"https://three.ws/vanity-wallet","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Solana Vanity Wallet","description":"Grind a Solana address with a custom prefix or suffix, entirely in your browser. Send it as a sealed gift only the recipient can open.","url":"https://three.ws/vanity-wallet","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
@@ -386,26 +398,28 @@
 					</div>
 				</div>
 
-				<label class="fl" data-i18n="vanity_wallet.vanity_pattern_optional">Vanity pattern (optional)</label>
+				<span class="fl" id="dc-pattern-label" data-i18n="vanity_wallet.vanity_pattern_optional">Vanity pattern (optional)</span>
 				<p class="note" style="font-size:.78rem;color:#666;margin:0 0 .4rem" data-i18n="vanity_wallet.reuses_the_prefix_suffix_above_leave_blank">Reuses the prefix/suffix above — leave blank to skip grinding and fund instantly.</p>
-				<div class="gift-row">
+				<div class="gift-row" role="group" aria-labelledby="dc-pattern-label">
 					<div>
-						<input class="t mono" id="dc-prefix" type="text" maxlength="6" placeholder="Starts with" autocomplete="off" spellcheck="false" />
+						<input class="t mono" id="dc-prefix" type="text" maxlength="6" placeholder="Starts with" aria-label="Gift wallet starts with" autocomplete="off" spellcheck="false" />
 					</div>
 					<div>
-						<input class="t mono" id="dc-suffix" type="text" maxlength="6" placeholder="Ends with" autocomplete="off" spellcheck="false" />
+						<input class="t mono" id="dc-suffix" type="text" maxlength="6" placeholder="Ends with" aria-label="Gift wallet ends with" autocomplete="off" spellcheck="false" />
 					</div>
 				</div>
 
-				<label class="fl" data-i18n="vanity_wallet.key_export_format">Key export format</label>
+				<label class="fl" for="dc-format" data-i18n="vanity_wallet.key_export_format">Key export format</label>
 				<select class="t" id="dc-format">
 					<option value="mnemonic" data-i18n="vanity_wallet.seed_phrase_mnemonic">Seed phrase (mnemonic)</option>
 					<option value="base58" data-i18n="vanity_wallet.secret_key_base58">Secret key (Base58)</option>
 				</select>
 
-				<label class="fl" data-i18n="vanity_wallet.how_should_this_be_sealed">How should this be sealed?</label>
+				<span class="fl" id="dc-seal-label" data-i18n="vanity_wallet.how_should_this_be_sealed">How should this be sealed?</span>
+				<div role="radiogroup" aria-labelledby="dc-seal-label">
 				<label class="chk"><input type="radio" name="dc-seal" value="claim-time" checked /><span data-i18n-html="vanity_wallet.bearer_link_anyone_with_the_full_link"><strong>Bearer link</strong> — anyone with the full link can claim it once. Simplest to share.</span></label>
 				<label class="chk"><input type="radio" name="dc-seal" value="direct" /><span data-i18n-html="vanity_wallet.sealed_to_a_key_only_the_holder"><strong>Sealed to a key</strong> — only the holder of a specific X25519 private key can open it, even with the link.</span></label>
+				</div>
 				<p class="note" id="dc-bearer-note" style="font-size:.78rem;color:#666;margin:.5rem 0 0" data-i18n="vanity_wallet.the_claim_link_itself_carries_the_key">The claim link itself carries the key — send it privately, the same way you'd send cash.</p>
 
 				<div id="dc-direct-wrap" style="display:none">
@@ -457,120 +471,13 @@
 		</div>
 
 		<div class="section-divider" id="drop-mine">
-			<a id="mine"></a>
-			<h2 data-i18n="vanity_wallet.my_sealed_drops">My sealed drops</h2>
+			<h2 id="mine" data-i18n="vanity_wallet.my_sealed_drops">My sealed drops</h2>
 			<p class="lede" data-i18n="vanity_wallet.gifts_you_ve_sent_from_this_browser">Gifts you've sent from this browser — reclaim any that expire unclaimed.</p>
 			<div class="card">
 				<div id="dm-list"></div>
 			</div>
 		</div>
 	</main>
-
-	<footer class="h-footer-horizon">
-		<div class="h-footer-glow-line" aria-hidden="true"></div>
-		<div class="h-footer-floor" aria-hidden="true"></div>
-		<div class="h-footer-haze" aria-hidden="true"></div>
-		<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
-		<div class="h-footer-avatar" aria-hidden="true">
-			<model-viewer
-				src="/animations/robotexpressive.glb"
-				auto-rotate
-				auto-rotate-delay="0"
-				rotation-per-second="20deg"
-				interaction-prompt="none"
-				camera-controls="false"
-				disable-zoom
-				shadow-intensity="0"
-				exposure="0.7"
-				environment-image="neutral"
-				camera-orbit="0deg 80deg 9m"
-				field-of-view="35deg"
-				loading="lazy"
-			></model-viewer>
-		</div>
-		<div class="h-footer-cta">
-			<div class="h-footer-newsletter">
-				<h3 data-i18n="vanity_wallet.stay_in_the_loop">Stay in the loop</h3>
-				<p data-i18n="vanity_wallet.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
-				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
-					<input
-						type="email"
-						class="h-footer-newsletter-input"
-						name="email"
-						placeholder="Enter your email"
-						aria-label="Email address"
-						autocomplete="email"
-						required
-					/>
-					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe" data-i18n-attr="aria-label:vanity_wallet.subscribe_arialabel">
-						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
-					</button>
-				</form>
-								<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
-			</div>
-			<div class="h-footer-resources">
-				<h3 data-i18n="vanity_wallet.resources">Resources</h3>
-				<p data-i18n="vanity_wallet.read_the_docs_join_the_community_and">Read the docs, join the community, and get help.</p>
-				<a class="h-footer-community-btn" href="/docs" target="_blank" rel="noopener">
-					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-					Docs
-				</a>
-			</div>
-		</div>
-			</div>
-			<div class="h-footer-community">
-				<h3 data-i18n="vanity_wallet.join_the_community">Join the community</h3>
-				<p data-i18n="vanity_wallet.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
-				<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
-					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-					Follow on X
-				</a>
-			</div>
-		</div>
-		<div class="h-footer-inner">
-			<div class="h-footer-brand-col">
-				<div class="h-footer-brand">
-					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
-					<span class="wordmark-dot" aria-hidden="true"></span>
-					<span data-i18n="vanity_wallet.three_ws">three.ws</span>
-				</div>
-				<p class="h-footer-tagline" data-i18n="vanity_wallet.give_your_ai_a_body">Give your AI a body.</p>
-				<div class="h-footer-socials">
-					<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X" data-i18n-attr="aria-label:vanity_wallet.three_ws_on_x_arialabel">
-						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-					</a>
-					<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub" data-i18n-attr="aria-label:vanity_wallet.three_ws_on_github_arialabel">
-						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-					</a>
-				</div>
-			</div>
-			<nav class="h-footer-links" aria-label="Footer">
-				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading" data-i18n="vanity_wallet.product">Product</h4>
-					<a href="/create" data-i18n="vanity_wallet.create">Create</a>
-					<a href="/studio" data-i18n="vanity_wallet.studio">Studio</a>
-					<a href="/widgets" data-i18n="vanity_wallet.widgets">Widgets</a>
-					<a href="/discover" data-i18n="vanity_wallet.discover">Discover</a>
-				</div>
-				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading" data-i18n="vanity_wallet.developers">Developers</h4>
-					<a href="/docs" data-i18n="vanity_wallet.docs">Docs</a>
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="vanity_wallet.github">GitHub</a>
-				</div>
-				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading" data-i18n="vanity_wallet.resources_2">Resources</h4>
-					<a href="/dashboard" data-i18n="vanity_wallet.dashboard">Dashboard</a>
-				</div>
-			</nav>
-		</div>
-		<div class="h-footer-bottom">
-			<p class="h-footer-legal" data-i18n="vanity_wallet.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
-			<div class="h-footer-legal-links">
-				<a href="/legal/privacy" data-i18n="vanity_wallet.privacy_policy">Privacy Policy</a>
-				<a href="/legal/tos" data-i18n="vanity_wallet.terms_of_use">Terms of Use</a>
-			</div>
-		</div>
-	</footer>
 
 	<script type="module">
 		import { apiFetch } from '/src/api.js';
@@ -688,6 +595,24 @@
 			return `${pfx ? `<span class="pfx">${esc(pfx)}</span>` : ''}<span class="${restClass}">${esc(mid)}</span>${sfx ? `<span class="sfx">${esc(sfx)}</span>` : ''}`;
 		}
 
+		// #est ships an idle placeholder as translatable copy, but every other
+		// value it shows is computed here. i18n.js applies its catalog once,
+		// asynchronously, after the locale loads, so a computed estimate written
+		// before that pass would be silently replaced by the placeholder. Take
+		// ownership of the node while the text is ours and hand it back (with an
+		// immediate re-translation) when the placeholder returns.
+		const EST_KEY = 'vanity_wallet.type_a_prefix_or_suffix_to_see';
+		function setEst(text, { placeholder = false } = {}) {
+			const el = $('est');
+			el.textContent = text;
+			if (placeholder) {
+				el.setAttribute('data-i18n', EST_KEY);
+				window.threewsI18n?.apply(el);
+			} else {
+				el.removeAttribute('data-i18n');
+			}
+		}
+
 		function update() {
 			const pfx = $('prefix').value, sfx = $('suffix').value;
 			ignoreCase = $('ignore-case').checked;
@@ -711,28 +636,28 @@
 
 			if (!pfx && !sfx) {
 				$('preview').innerHTML = `<span class="rest">${esc(sample())}</span>`;
-				$('est').textContent = 'type a prefix or suffix to see estimated time';
+				setEst('type a prefix or suffix to see estimated time', { placeholder: true });
 				$('tier').innerHTML = '';
 				$('grind').disabled = true;
 				return;
 			}
 			if (!pfxValid || !sfxValid) {
 				$('preview').textContent = 'invalid Base58 — avoid 0, O, I, l';
-				$('est').textContent = '';
+				setEst('');
 				$('tier').innerHTML = '';
 				$('grind').disabled = true;
 				return;
 			}
 			if (over) {
 				$('preview').innerHTML = renderPreview(pfx, sfx);
-				$('est').textContent = '';
+				setEst('');
 				$('tier').innerHTML = '';
 				$('grind').disabled = true;
 				return;
 			}
 
 			$('preview').innerHTML = renderPreview(pfx, sfx);
-			$('est').textContent = `rough estimate: ${fmtTime(estSeconds(pfx, sfx))} on ${cores} cores`;
+			setEst(`rough estimate: ${fmtTime(estSeconds(pfx, sfx))} on ${cores} cores`);
 			const effLen = effectiveLength(expectedAttempts(pfx, sfx, ignoreCase));
 			$('tier').innerHTML = effLen >= 5
 				? '<span class="tier-tag tier-paid">slow — minutes+</span>'
@@ -911,11 +836,22 @@
 			});
 
 			$('copy-pubkey').addEventListener('click', async () => {
+				const btn = $('copy-pubkey');
 				try {
 					await navigator.clipboard.writeText(addr);
-					$('copy-pubkey').textContent = 'Copied!';
-					setTimeout(() => { $('copy-pubkey').textContent = 'Copy public key'; }, 1500);
-				} catch {}
+					btn.textContent = 'Copied!';
+				} catch {
+					// Clipboard access can be denied (permission, insecure context).
+					// Select the address instead of leaving a button that silently
+					// does nothing, so the visitor can still copy it by hand.
+					const range = document.createRange();
+					range.selectNodeContents($('result').querySelector('.addr'));
+					const sel = window.getSelection();
+					sel.removeAllRanges();
+					sel.addRange(range);
+					btn.textContent = 'Selected, press Ctrl+C';
+				}
+				setTimeout(() => { btn.textContent = 'Copy public key'; }, 2000);
 			});
 
 			renderAssignBlock(result, prefix, suffix);
@@ -924,6 +860,7 @@
 		// ── Assign to agent ────────────────────────────────────────────────
 		async function renderAssignBlock(result, prefix, suffix) {
 			const host = document.getElementById('assign-host');
+			const addr = result.publicKey;
 			let agents = [];
 			try {
 				const r = await fetch('/api/agents', { credentials: 'include' });
@@ -932,7 +869,7 @@
 						<div class="assign">
 							<h4>Use this wallet with an agent</h4>
 							<p style="font-size:.8rem;color:#888;margin:0">
-								<a href="/login.html?next=${encodeURIComponent(location.pathname)}" style="color:#ffffff">Sign in</a>
+								<a href="/login?next=${encodeURIComponent(location.pathname)}" style="color:#ffffff">Sign in</a>
 								to assign this wallet to one of your agents — they'll be able to sign transactions with it (e.g. for pump.fun trades).
 							</p>
 						</div>`;
@@ -942,7 +879,18 @@
 				const data = await r.json();
 				agents = data.agents || [];
 			} catch (e) {
-				host.innerHTML = `<div class="assign"><h4>Use this wallet with an agent</h4><p style="font-size:.8rem;color:var(--bad-fg);margin:0">Could not load your agents: ${esc(e.message)}</p></div>`;
+				// The wallet is already ground and downloadable at this point, so the
+				// only thing lost here is the agent list. Say so and offer the retry
+				// rather than dead-ending on a raw fetch message.
+				host.innerHTML = `
+					<div class="assign">
+						<h4>Use this wallet with an agent</h4>
+						<p style="font-size:.8rem;color:var(--bad-fg);margin:0 0 .5rem">
+							Could not load your agents (${esc(e.message)}). Your wallet above is unaffected: download it now, then retry.
+						</p>
+						<div class="actions"><button id="assign-retry" class="btn" type="button">Retry</button></div>
+					</div>`;
+				document.getElementById('assign-retry').addEventListener('click', () => renderAssignBlock(result, prefix, suffix));
 				return;
 			}
 			if (!agents.length) {

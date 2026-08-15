@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; labo</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws labo",
-		"the_react_wrapper_around_the_sdk_imports": "Le wrapper React autour du SDK. Importe <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, et <code>useAvatar</code> directement depuis <code>/avatar-sdk/src/react.jsx</code>. React est chargé depuis un CDN via une carte d'importation, ce qui permet à cette page de fonctionner sans étape de bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "Le wrapper React autour du SDK. Importe <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, et <code>useAvatar</code> directement depuis <code>/avatar-sdk/src/react.js</code>. React est chargé depuis un CDN via une carte d'importation, ce qui permet à cette page de fonctionner sans étape de bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Épique",
 		"it_pays_the_quoted_price_and_receives": "Il paie le prix indiqué et reçoit la clé <b>une seule fois</b>. Importez-la immédiatement.",
 		"legendary": "Légendaire",
-		"long_brandable_solana_addresses_4_5_characte": "Adresses Solana longues et personnalisables — préfixes de 4 à 5+ caractères inaccessibles au « live grinder » — générées à l'avance par lots CPU et vendues sur stock. Achetez-en une et la clé privée est livrée <strong>une seule fois</strong> via le rail <a href=\"/vanity/gallery\">x402</a>, puis sa copie stockée est détruite. Besoin d'une génération fraîche de ≤3 caractères à la place ? Utilisez le <a href=\"/vanity-wallet\">live grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Adresses Solana longues et personnalisables — préfixes de 4 à 5+ caractères inaccessibles au « live grinder » — générées à l'avance par lots CPU et vendues sur stock. Achetez-en une et la clé privée est livrée <strong>une seule fois</strong> via le rail <a href=\"/x402\">x402</a>, puis sa copie stockée est détruite. Besoin d'une génération fraîche de ≤3 caractères à la place ? Utilisez le <a href=\"/vanity-wallet\">live grinder</a>.",
 		"meta_description": "Achetez une adresse vanity Solana longue et personnalisable, livrée instantanément sur stock — préfixes de 4 à 5+ caractères inaccessibles au « live grinder », générés à l'avance par lots CPU et vendus via x402. Le prix varie avec la rareté.",
 		"meta_og_description": "Adresses vanity Solana longues et personnalisables, générées à l'avance et vendues sur stock. Livrées une seule fois, chiffrées au repos, prix selon la rareté.",
 		"meta_og_title": "Inventaire Vanity Premium · three.ws",

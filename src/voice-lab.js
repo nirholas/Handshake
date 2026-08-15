@@ -1,5 +1,5 @@
 import { getElevenKey, setElevenKey, clearElevenKey, withElevenKey, maskElevenKey } from './voice/eleven-key.js';
-import { mountVoiceBrowser } from './voice/voice-browser.js';
+import { mountVoiceBrowser, statusLine } from './voice/voice-browser.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -8,7 +8,7 @@ const $ = (id) => document.getElementById(id);
 const SCRIPTS = [
 	"Welcome to three.ws, the home of agentic 3D characters. I'm recording my voice to create a digital clone that will bring my avatar to life. This voice will power real-time conversations and text-to-speech synthesis across the platform.",
 	"The quick brown fox jumps over the lazy dog. She sells seashells by the seashore. Peter Piper picked a peck of pickled peppers. How much wood would a woodchuck chuck if a woodchuck could chuck wood?",
-	"Technology should serve people, not the other way around. When we build tools that feel intuitive and accessible, everyone benefits. The future of human-computer interaction lies in natural, conversational interfaces — less like commanding a machine, more like talking to a friend.",
+	"Technology should serve people, not the other way around. When we build tools that feel intuitive and accessible, everyone benefits. The future of human-computer interaction lies in natural, conversational interfaces: less like commanding a machine, more like talking to a friend.",
 	"Three dot ws uses WebGL and Three.js to render real-time 3D avatars directly in the browser. Combined with instant voice cloning, speech recognition, and AI-powered conversation, we create fully interactive digital characters that can see, hear, and respond to people naturally.",
 ];
 
@@ -228,7 +228,7 @@ function updateTimer() {
 	}
 
 	if (elapsed >= MAX_RECORD_S) {
-		setStatus('info', `Reached ${MAX_RECORD_S}s limit — stopping automatically.`);
+		setStatus('info', `Reached the ${MAX_RECORD_S}s limit, stopping automatically.`);
 		stopRecording();
 	}
 }
@@ -395,7 +395,7 @@ async function cloneVoice() {
 	}
 
 	if (!res.ok) {
-		const msg = body.error_description || body.error || `HTTP ${res.status}`;
+		const msg = statusLine(body.message || body.error_description || body.error || `HTTP ${res.status}`);
 		setStatus('err', `Clone failed: ${msg}`);
 		setState('review');
 		return;
@@ -508,9 +508,19 @@ function usePlaygroundVoice(voice) {
 	$('playgroundSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-/** Called once the catalog is known, so the model/direction controls can adapt. */
+/** Called whenever the catalog is (re-)read, so the controls track the lanes. */
 function setProviderMeta(providers) {
 	providerMeta = providers;
+	// A lane that has gone down since the pick cannot render the voices parked in
+	// the picker, so they leave with it rather than sitting there as a selection
+	// that can only fail.
+	const live = new Set(providers.filter((p) => p.available).map((p) => p.id));
+	const kept = pickedVoices.filter((v) => live.has(v.provider));
+	if (kept.length !== pickedVoices.length) {
+		pickedVoices = kept;
+		renderPlaygroundVoices();
+		return;
+	}
 	renderModelOptions();
 }
 
@@ -624,9 +634,12 @@ async function speakPlayground() {
 				msg = body.message || body.error_description || body.error || '';
 				if (body.top_up_url) topUp = ` Top up at ${body.top_up_url}.`;
 			} catch {
-				msg = errText.slice(0, 200);
+				msg = errText;
 			}
-			throw new Error((msg || `HTTP ${r.status}`) + topUp);
+			// A lane that answers 503 is down, not busy: re-read the catalog so the
+			// picker drops the voices it can no longer render.
+			if (r.status === 503) voiceBrowser.reload({ silent: true });
+			throw new Error(statusLine(msg || `HTTP ${r.status}`) + topUp);
 		}
 
 		const cacheHit = r.headers.get('x-tts-cache') === 'hit';
@@ -677,7 +690,7 @@ async function playVoiceSample(voiceId) {
 		});
 		if (!r.ok) {
 			const body = await r.json().catch(() => ({}));
-			throw new Error(body.message || body.error_description || `HTTP ${r.status}`);
+			throw new Error(statusLine(body.message || body.error_description || `HTTP ${r.status}`));
 		}
 		const blob = await r.blob();
 		const audio = new Audio(URL.createObjectURL(blob));
@@ -740,14 +753,23 @@ $('pgSpeed').addEventListener('input', () => {
 	$('pgSpeedVal').textContent = `${Number($('pgSpeed').value).toFixed(2)}×`;
 });
 
-// Keyboard shortcut: Space to toggle record/stop when not in an input
+// Keyboard shortcut: Space toggles record/stop, but only when the page itself
+// has focus. Space is also how a keyboard user presses a focused button or
+// checkbox, so claiming it unconditionally silently broke every button on the
+// page for anyone navigating by Tab: preventDefault swallowed the activation
+// and started a recording instead.
+const KEYBOARD_ACTIVATED = 'a, button, input, textarea, select, summary, [contenteditable=""], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
+
+function ownsTheSpaceBar(target) {
+	return target instanceof Element && Boolean(target.closest(KEYBOARD_ACTIVATED));
+}
+
 document.addEventListener('keydown', (e) => {
-	if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-	if (e.code === 'Space') {
-		e.preventDefault();
-		if (state === 'idle') startRecording();
-		else if (state === 'recording') stopRecording();
-	}
+	if (e.code !== 'Space' || e.metaKey || e.ctrlKey || e.altKey) return;
+	if (ownsTheSpaceBar(e.target)) return;
+	e.preventDefault();
+	if (state === 'idle') startRecording();
+	else if (state === 'recording') stopRecording();
 });
 
 // ── BYOK: your own ElevenLabs key ────────────────────────────────────────────

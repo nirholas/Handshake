@@ -10,6 +10,9 @@
 //   useAvatar(id)                 — fetch /api/avatars/:id metadata
 //
 // Peer dep: react >= 18. No other runtime deps.
+// Plain .js on purpose: every component builds its tree with createElement, so
+// there is no JSX syntax to compile. A .jsx extension would only make the
+// entry unloadable in Node and in bundlers that do not transpile node_modules.
 // React 19 server components: the file is marked `'use client'` and every
 // component touches the DOM, so this module is only valid in client trees.
 

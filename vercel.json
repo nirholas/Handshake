@@ -1170,7 +1170,7 @@
 			"dest": "/category.html"
 		},
 		{
-			"src": "/protocol/([a-z0-9.-]{1,80})/?",
+			"src": "/protocol/([A-Za-z0-9.!()+%-]{1,80})/?",
 			"dest": "/protocol.html"
 		},
 		{
@@ -3640,6 +3640,10 @@
 		{
 			"src": "/api/agents/unstoppable-status",
 			"dest": "/api/agents/unstoppable-status"
+		},
+		{
+			"src": "/api/agents/unstoppable-public",
+			"dest": "/api/agents/unstoppable-public"
 		},
 		{
 			"src": "/api/agents/endpoint-shopper-run",

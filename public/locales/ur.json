@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — ہک",
 		"lab": "<a href=\"/demos\">&larr; لیب</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws لیب",
-		"the_react_wrapper_around_the_sdk_imports": "SDK کے گرد ری ایکٹ ریپر۔ یہ <code>/avatar-sdk/src/react.jsx</code> سے براہ راست <code>Avatar</code>، <code>AgentAvatar</code>، <code>AvatarCreator</code>، اور <code>useAvatar</code> کو امپورٹ کرتا ہے۔ ری ایکٹ کو ایک امپورٹ میپ کے ذریعے CDN سے لوڈ کیا جاتا ہے تاکہ یہ صفحہ بنڈلر کے مرحلے کے بغیر کام کرے۔",
+		"the_react_wrapper_around_the_sdk_imports": "SDK کے گرد ری ایکٹ ریپر۔ یہ <code>/avatar-sdk/src/react.js</code> سے براہ راست <code>Avatar</code>، <code>AgentAvatar</code>، <code>AvatarCreator</code>، اور <code>useAvatar</code> کو امپورٹ کرتا ہے۔ ری ایکٹ کو ایک امپورٹ میپ کے ذریعے CDN سے لوڈ کیا جاتا ہے تاکہ یہ صفحہ بنڈلر کے مرحلے کے بغیر کام کرے۔",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "ایپک",
 		"it_pays_the_quoted_price_and_receives": "یہ مقررہ قیمت ادا کرتا ہے اور کی <b>ایک بار</b> وصول کرتا ہے۔ اسے فوراً امپورٹ کریں۔",
 		"legendary": "لیجنڈری",
-		"long_brandable_solana_addresses_4_5_characte": "طویل، برانڈ کے قابل Solana ایڈریسز — 4-5+ کریکٹر کے پریفکس جو لائیو گرائنڈر تک نہیں پہنچ سکتے — بیچ سی پی یو پر پہلے سے تیار کیے گئے اور اسٹاک سے فروخت کیے گئے۔ ایک خریدیں اور پرائیویٹ کی <a href=\"/vanity/gallery\">x402</a> ریل کے ذریعے <strong>ایک بار</strong> ڈیلیور کی جاتی ہے، پھر اس کی محفوظ شدہ کاپی تباہ کر دی جاتی ہے۔ اس کے بجائے ایک تازہ ≤3-کریکٹر گرائنڈ کی ضرورت ہے؟ <a href=\"/vanity-wallet\">لائیو گرائنڈر</a> استعمال کریں۔",
+		"long_brandable_solana_addresses_4_5_characte": "طویل، برانڈ کے قابل Solana ایڈریسز — 4-5+ کریکٹر کے پریفکس جو لائیو گرائنڈر تک نہیں پہنچ سکتے — بیچ سی پی یو پر پہلے سے تیار کیے گئے اور اسٹاک سے فروخت کیے گئے۔ ایک خریدیں اور پرائیویٹ کی <a href=\"/x402\">x402</a> ریل کے ذریعے <strong>ایک بار</strong> ڈیلیور کی جاتی ہے، پھر اس کی محفوظ شدہ کاپی تباہ کر دی جاتی ہے۔ اس کے بجائے ایک تازہ ≤3-کریکٹر گرائنڈ کی ضرورت ہے؟ <a href=\"/vanity-wallet\">لائیو گرائنڈر</a> استعمال کریں۔",
 		"meta_description": "ایک طویل، برانڈ کے قابل Solana وینٹی ایڈریس خریدیں جو اسٹاک سے فوری طور پر ڈیلیور کیا جاتا ہے — 4-5+ کریکٹر کے پریفکس جو لائیو گرائنڈر تک نہیں پہنچ سکتے، بیچ سی پی یو پر پہلے سے تیار کیے گئے اور x402 کے ذریعے فروخت کیے گئے۔ قیمت نایابی کے ساتھ بڑھتی ہے۔",
 		"meta_og_description": "طویل، برانڈ کے قابل Solana وینٹی ایڈریسز، پہلے سے تیار کیے گئے اور اسٹاک سے فروخت کیے گئے۔ ایک بار ڈیلیور کیے گئے، آرام کی حالت میں انکرپٹڈ، نایابی کے لحاظ سے قیمت مقرر۔",
 		"meta_og_title": "پریمیم وینٹی انوینٹری · three.ws",

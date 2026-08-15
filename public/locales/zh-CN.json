@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — 钩子",
 		"lab": "<a href=\"/demos\">&larr; 实验室</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws 实验室",
-		"the_react_wrapper_around_the_sdk_imports": "SDK 的 React 封装。直接从 <code>/avatar-sdk/src/react.jsx</code> 导入 <code>Avatar</code>、<code>AgentAvatar</code>、<code>AvatarCreator</code> 和 <code>useAvatar</code>。React 通过导入映射从 CDN 加载，因此此页面无需打包步骤即可运行。",
+		"the_react_wrapper_around_the_sdk_imports": "SDK 的 React 封装。直接从 <code>/avatar-sdk/src/react.js</code> 导入 <code>Avatar</code>、<code>AgentAvatar</code>、<code>AvatarCreator</code> 和 <code>useAvatar</code>。React 通过导入映射从 CDN 加载，因此此页面无需打包步骤即可运行。",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "史诗",
 		"it_pays_the_quoted_price_and_receives": "支付报价后，<b>一次性</b>接收密钥。请立即导入。",
 		"legendary": "传奇",
-		"long_brandable_solana_addresses_4_5_characte": "可品牌化的长Solana地址——实时生成器无法触及的4-5+字符前缀——通过批量CPU预先生成并现货销售。购买后，私钥将通过<a href=\"/vanity/gallery\">x402</a>通道<strong>一次性</strong>交付，随后其存储副本即被销毁。需要全新的≤3字符生成？请使用<a href=\"/vanity-wallet\">实时生成器</a>。",
+		"long_brandable_solana_addresses_4_5_characte": "可品牌化的长Solana地址——实时生成器无法触及的4-5+字符前缀——通过批量CPU预先生成并现货销售。购买后，私钥将通过<a href=\"/x402\">x402</a>通道<strong>一次性</strong>交付，随后其存储副本即被销毁。需要全新的≤3字符生成？请使用<a href=\"/vanity-wallet\">实时生成器</a>。",
 		"meta_description": "购买可品牌化的长Solana靓号地址，现货即时交付——实时生成器无法触及的4-5+字符前缀，通过批量CPU预先生成并经由x402销售。价格随稀有度浮动。",
 		"meta_og_description": "可品牌化的长Solana靓号地址，预先生成并现货销售。一次性交付，静态加密，按稀有度定价。",
 		"meta_og_title": "高级靓号库存 · three.ws",

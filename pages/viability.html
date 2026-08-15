@@ -8,7 +8,7 @@
 		<title data-i18n="viability.meta_title">Viability · three.ws</title>
 		<meta
 			name="description"
-			content="The honest signal behind three.ws — real marketplace and trading viability. Live $THREE skill GMV, take-rate, repeat buyers and trading pairs, plus real guarded coin-trade flow, cost and realized P&L on closed positions. Real on-chain data only."
+			content="The honest signal behind three.ws: real marketplace and trading viability. Live $THREE skill GMV, take-rate, repeat buyers and trading pairs, plus real guarded coin-trade flow, cost and realized P&L on closed positions. Real on-chain data only."
 		 data-i18n-attr="content:viability.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
@@ -16,7 +16,7 @@
 		<meta property="og:title" content="Viability · three.ws"  data-i18n-attr="content:viability.meta_og_title"/>
 		<meta
 			property="og:description"
-			content="The honest signal behind three.ws — real marketplace GMV and take-rate, plus real guarded coin-trade flow, cost and realized P&L. Real on-chain data only."
+			content="The honest signal behind three.ws: real marketplace GMV and take-rate, plus real guarded coin-trade flow, cost and realized P&L. Real on-chain data only."
 		 data-i18n-attr="content:viability.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Viability&amp;d=The+honest+signal+behind+three.ws%3A+real+marketplace+and+trading+viability.+Live+%24THREE+skill+GMV%2C+take-rate%2C+repeat+buyers+and+trading+pairs%2C+plus+real+guarded&amp;p=%2Fviability" />
 		<meta property="og:image:width" content="1200" />
@@ -26,7 +26,7 @@
 		<meta name="twitter:title" content="Viability · three.ws"  data-i18n-attr="content:viability.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
-			content="The honest signal behind three.ws — real marketplace GMV and take-rate, plus real guarded coin-trade flow, cost and realized P&L."
+			content="The honest signal behind three.ws: real marketplace GMV and take-rate, plus real guarded coin-trade flow, cost and realized P&L."
 		 data-i18n-attr="content:viability.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Viability&amp;d=The+honest+signal+behind+three.ws%3A+real+marketplace+and+trading+viability.+Live+%24THREE+skill+GMV%2C+take-rate%2C+repeat+buyers+and+trading+pairs%2C+plus+real+guarded&amp;p=%2Fviability" />
 		<meta name="theme-color" content="#0a0a0a" />
@@ -40,10 +40,10 @@
 		<link rel="stylesheet" href="/footer.css" />
 		<script defer src="/footer-newsletter.js"></script>
 		<link rel="canonical" href="https://three.ws/viability" />
-		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Viability","description":"The honest signal behind three.ws — real marketplace and trading viability, served from live on-chain data.","url":"https://three.ws/viability","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Viability","description":"The honest signal behind three.ws: real marketplace and trading viability, served from live on-chain data.","url":"https://three.ws/viability","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<meta property="og:locale" content="en_US" />
-		<meta property="og:image:alt" content="Viability — three.ws" />
+		<meta property="og:image:alt" content="Viability, three.ws" />
 	</head>
 	<body>
 		<header><div id="nav-container"></div></header>
@@ -54,86 +54,115 @@
 				<p class="px-kicker" data-i18n-html="viability.the_honest_signal"><span class="px-live-dot" aria-hidden="true"></span> The honest signal</p>
 				<h1 class="px-title" data-i18n-html="viability.viability"><em>Viability</em></h1>
 				<p class="px-sub" data-i18n-html="viability.is_this_real_the_two_money_loops">
-					Is this real? The two money loops behind three.ws — the skill marketplace and agent
-					trading — measured honestly. Real $THREE purchases, real guarded coin trades, real
+					Is this real? The two money loops behind three.ws, the skill marketplace and agent
+					trading, measured honestly. Real $THREE purchases, real guarded coin trades, real
 					realized P&amp;L. No vanity metrics, no synthetic activity.
 					See every beat as it lands on the <a href="/pulse">Money Pulse →</a>
 				</p>
 				<div class="px-hero-row">
-					<div class="px-net" role="tablist" aria-label="Network">
-						<button type="button" class="px-net-btn active" data-network="mainnet" role="tab" aria-selected="true" data-i18n="viability.mainnet">Mainnet</button>
-						<button type="button" class="px-net-btn" data-network="devnet" role="tab" aria-selected="false" data-i18n="viability.devnet">Devnet</button>
+					<div class="px-net" role="group" aria-label="Network">
+						<button type="button" class="px-net-btn active" data-network="mainnet" aria-pressed="true" data-i18n="viability.mainnet">Mainnet</button>
+						<button type="button" class="px-net-btn" data-network="devnet" aria-pressed="false" data-i18n="viability.devnet">Devnet</button>
 					</div>
 					<span class="px-updated" id="px-updated" aria-live="polite"></span>
 				</div>
 			</section>
 
-			<section class="px-market" id="px-market" aria-label="Marketplace viability" hidden>
+			<section class="px-market" id="px-market" aria-labelledby="px-market-title" data-state="loading">
 				<div class="px-market-h">
 					<div class="px-market-htxt">
-						<span class="px-market-title" data-i18n="viability.marketplace_viability">Marketplace viability</span>
-						<span class="px-market-tag" id="px-mkt-fee">—</span>
+						<h2 class="px-market-title" id="px-market-title" data-i18n="viability.marketplace_viability">Marketplace viability</h2>
+						<span class="px-market-tag" id="px-mkt-fee"></span>
 					</div>
-					<span class="px-market-sub" data-i18n="viability.real_three_skill_purchases_value_delivered_t">Real $THREE skill purchases — value delivered, take-rate earned. The honest signal behind the payments counter.</span>
+					<span class="px-market-sub" data-i18n="viability.real_three_skill_purchases_value_delivered_t">Real $THREE skill purchases: value delivered, take-rate earned. The honest signal behind the payments counter.</span>
 				</div>
-				<div class="px-market-kpis">
-					<div class="px-kpi"><dt data-i18n="viability.gmv_24h">GMV · 24h</dt><dd id="px-mkt-gmv24">—</dd><span class="px-kpi-sub" id="px-mkt-gmv24-sub" data-i18n="viability.three">$THREE</span></div>
-					<div class="px-kpi"><dt data-i18n="viability.gmv_7d">GMV · 7d</dt><dd id="px-mkt-gmv7">—</dd><span class="px-kpi-sub" id="px-mkt-gmv7-sub" data-i18n="viability.three_2">$THREE</span></div>
-					<div class="px-kpi"><dt data-i18n="viability.avg_ticket">Avg ticket</dt><dd id="px-mkt-ticket">—</dd><span class="px-kpi-sub" data-i18n="viability.per_purchase_7d">per purchase · 7d</span></div>
-					<div class="px-kpi"><dt data-i18n="viability.repeat_buyers">Repeat buyers</dt><dd id="px-mkt-repeat">—</dd><span class="px-kpi-sub" id="px-mkt-repeat-sub" data-i18n="viability.of_buyers_7d">of buyers · 7d</span></div>
-					<div class="px-kpi"><dt data-i18n="viability.trading_pairs">Trading pairs</dt><dd id="px-mkt-pairs">—</dd><span class="px-kpi-sub" data-i18n="viability.unique_buyer_seller_7d">unique buyer→seller · 7d</span></div>
-					<div class="px-kpi px-kpi--take"><dt data-i18n="viability.take_rate_7d">Take-rate · 7d</dt><dd id="px-mkt-take">—</dd><span class="px-kpi-sub" id="px-mkt-take-sub" data-i18n="viability.platform_fee">platform fee</span></div>
+				<div class="px-panel-err" id="px-mkt-err" role="alert" hidden>
+					<p class="px-panel-err-t" data-i18n="viability.err_market_title">Marketplace figures could not be loaded</p>
+					<p class="px-panel-err-d" data-i18n-html="viability.err_market_body">
+						This panel reads live marketplace records from <code>/api/pulse</code> and that read did not
+						complete. Nothing is shown rather than a stale or invented number.
+					</p>
+					<p class="px-panel-err-why" id="px-mkt-err-why"></p>
+					<div class="px-panel-err-act">
+						<button type="button" class="px-market-action" data-retry="marketplace" data-i18n="viability.err_retry_market">Retry marketplace</button>
+						<a class="px-market-action" href="/status" data-i18n="viability.err_status">Platform status →</a>
+					</div>
 				</div>
-				<div class="px-market-body">
-					<div class="px-market-spark">
-						<div class="px-spark-h">
-							<span class="px-spark-title" data-i18n="viability.gmv_last_7_days">GMV · last 7 days</span>
-							<span class="px-spark-total" id="px-mkt-spark-total">—</span>
+				<div class="px-panel-live">
+					<div class="px-market-kpis">
+						<div class="px-kpi"><dt data-i18n="viability.gmv_24h">GMV · 24h</dt><dd id="px-mkt-gmv24"></dd><span class="px-kpi-sub" id="px-mkt-gmv24-sub" data-i18n="viability.three">$THREE</span></div>
+						<div class="px-kpi"><dt data-i18n="viability.gmv_7d">GMV · 7d</dt><dd id="px-mkt-gmv7"></dd><span class="px-kpi-sub" id="px-mkt-gmv7-sub" data-i18n="viability.three_2">$THREE</span></div>
+						<div class="px-kpi"><dt data-i18n="viability.avg_ticket">Avg ticket</dt><dd id="px-mkt-ticket"></dd><span class="px-kpi-sub" data-i18n="viability.per_purchase_7d">per purchase · 7d</span></div>
+						<div class="px-kpi"><dt data-i18n="viability.repeat_buyers">Repeat buyers</dt><dd id="px-mkt-repeat"></dd><span class="px-kpi-sub" id="px-mkt-repeat-sub" data-i18n="viability.of_buyers_7d">of buyers · 7d</span></div>
+						<div class="px-kpi"><dt data-i18n="viability.trading_pairs">Trading pairs</dt><dd id="px-mkt-pairs"></dd><span class="px-kpi-sub" data-i18n="viability.unique_buyer_seller_7d">unique buyer→seller · 7d</span></div>
+						<div class="px-kpi px-kpi--take"><dt data-i18n="viability.take_rate_7d">Take-rate · 7d</dt><dd id="px-mkt-take"></dd><span class="px-kpi-sub" id="px-mkt-take-sub" data-i18n="viability.platform_fee">platform fee</span></div>
+					</div>
+					<div class="px-market-body">
+						<div class="px-market-spark">
+							<div class="px-spark-h">
+								<span class="px-spark-title" data-i18n="viability.gmv_last_7_days">GMV · last 7 days</span>
+								<span class="px-spark-total" id="px-mkt-spark-total"></span>
+							</div>
+							<div class="px-spark-bars" id="px-mkt-spark" role="img" aria-label="Daily marketplace GMV, last 7 days"></div>
 						</div>
-						<div class="px-spark-bars" id="px-mkt-spark" role="img" aria-label="Daily marketplace GMV, last 7 days"></div>
-					</div>
-					<div class="px-market-skills">
-						<div class="px-card-h"><span data-i18n="viability.top_skills">Top skills</span><small data-i18n="viability.gmv_7d_2">GMV · 7d</small></div>
-						<div id="px-mkt-skills"><p class="px-lb-empty" data-i18n="viability.loading">Loading…</p></div>
+						<div class="px-market-skills">
+							<h3 class="px-card-h"><span data-i18n="viability.top_skills">Top skills</span><small data-i18n="viability.gmv_7d_2">GMV · 7d</small></h3>
+							<div id="px-mkt-skills"></div>
+						</div>
 					</div>
 				</div>
 			</section>
 
-			<section class="px-market px-trading" id="px-trading" aria-label="Trading viability" hidden>
+			<section class="px-market px-trading" id="px-trading" aria-labelledby="px-trading-title" data-state="loading">
 				<div class="px-market-h">
 					<div class="px-market-htxt">
-						<span class="px-market-title" data-i18n="viability.trading_viability">Trading viability</span>
-						<span class="px-market-tag" id="px-trade-pnl-tag">—</span>
+						<h2 class="px-market-title" id="px-trading-title" data-i18n="viability.trading_viability">Trading viability</h2>
+						<span class="px-market-tag" id="px-trade-pnl-tag"></span>
 						<a class="px-market-action" id="px-trade-filter" href="/pulse?type=trades" hidden data-i18n="viability.show_trades_in_feed">Show trades in feed →</a>
 					</div>
-					<span class="px-market-sub" data-i18n="viability.real_fully_guarded_coin_trades_through_agent">Real, fully-guarded coin trades through agent wallets — what's flowing, what it costs, and the realized P&amp;L on positions that have closed. The honest signal behind the Trades counter.</span>
+					<span class="px-market-sub" data-i18n="viability.real_fully_guarded_coin_trades_through_agent">Real, fully-guarded coin trades through agent wallets: what's flowing, what it costs, and the realized P&amp;L on positions that have closed. The honest signal behind the Trades counter.</span>
 				</div>
-				<div class="px-market-kpis">
-					<div class="px-kpi"><dt data-i18n="viability.trades_24h">Trades · 24h</dt><dd id="px-trade-c24">—</dd><span class="px-kpi-sub" id="px-trade-c24-sub" data-i18n="viability.swaps">swaps</span></div>
-					<div class="px-kpi"><dt data-i18n="viability.trades_7d">Trades · 7d</dt><dd id="px-trade-c7">—</dd><span class="px-kpi-sub" id="px-trade-c7-sub" data-i18n="viability.swaps_2">swaps</span></div>
-					<div class="px-kpi"><dt data-i18n="viability.sol_deployed_7d">SOL deployed · 7d</dt><dd id="px-trade-dep7">—</dd><span class="px-kpi-sub" id="px-trade-dep7-sub" data-i18n="viability.into_buys">into buys</span></div>
-					<div class="px-kpi"><dt data-i18n="viability.avg_trade_7d">Avg trade · 7d</dt><dd id="px-trade-avg">—</dd><span class="px-kpi-sub" data-i18n="viability.sol_per_buy">SOL per buy</span></div>
-					<div class="px-kpi"><dt data-i18n="viability.active_traders_24h">Active traders · 24h</dt><dd id="px-trade-act">—</dd><span class="px-kpi-sub" data-i18n="viability.wallets_trading">wallets trading</span></div>
-					<div class="px-kpi px-kpi--pnl"><dt data-i18n="viability.realized_p_l_7d">Realized P&amp;L · 7d</dt><dd id="px-trade-pnl">—</dd><span class="px-kpi-sub" id="px-trade-pnl-sub" data-i18n="viability.closed_positions">closed positions</span></div>
-				</div>
-				<div class="px-market-body">
-					<div class="px-market-spark">
-						<div class="px-spark-h">
-							<span class="px-spark-title" data-i18n="viability.trades_last_7_days">Trades · last 7 days</span>
-							<span class="px-spark-total" id="px-trade-spark-total">—</span>
-						</div>
-						<div class="px-spark-bars" id="px-trade-spark" role="img" aria-label="Daily trade count, last 7 days"></div>
+				<div class="px-panel-err" id="px-trade-err" role="alert" hidden>
+					<p class="px-panel-err-t" data-i18n="viability.err_trading_title">Trading figures could not be loaded</p>
+					<p class="px-panel-err-d" data-i18n-html="viability.err_trading_body">
+						This panel reads live on-chain trade records from <code>/api/pulse</code> and that read did
+						not complete. Nothing is shown rather than a stale or invented number.
+					</p>
+					<p class="px-panel-err-why" id="px-trade-err-why"></p>
+					<div class="px-panel-err-act">
+						<button type="button" class="px-market-action" data-retry="trading" data-i18n="viability.err_retry_trading">Retry trading</button>
+						<a class="px-market-action" href="/status" data-i18n="viability.err_status_2">Platform status →</a>
 					</div>
-					<div class="px-market-skills">
-						<div class="px-card-h"><span data-i18n="viability.top_traders">Top traders</span><small data-i18n="viability.trades_7d_2">trades · 7d</small></div>
-						<div id="px-trade-traders"><p class="px-lb-empty" data-i18n="viability.loading_2">Loading…</p></div>
+				</div>
+				<div class="px-panel-live">
+					<div class="px-market-kpis">
+						<div class="px-kpi"><dt data-i18n="viability.trades_24h">Trades · 24h</dt><dd id="px-trade-c24"></dd><span class="px-kpi-sub" id="px-trade-c24-sub" data-i18n="viability.swaps">swaps</span></div>
+						<div class="px-kpi"><dt data-i18n="viability.trades_7d">Trades · 7d</dt><dd id="px-trade-c7"></dd><span class="px-kpi-sub" id="px-trade-c7-sub" data-i18n="viability.swaps_2">swaps</span></div>
+						<div class="px-kpi"><dt data-i18n="viability.sol_deployed_7d">SOL deployed · 7d</dt><dd id="px-trade-dep7"></dd><span class="px-kpi-sub" id="px-trade-dep7-sub" data-i18n="viability.into_buys">into buys</span></div>
+						<div class="px-kpi"><dt data-i18n="viability.avg_trade_7d">Avg trade · 7d</dt><dd id="px-trade-avg"></dd><span class="px-kpi-sub" data-i18n="viability.sol_per_buy">SOL per buy</span></div>
+						<div class="px-kpi"><dt data-i18n="viability.active_traders_24h">Active traders · 24h</dt><dd id="px-trade-act"></dd><span class="px-kpi-sub" data-i18n="viability.wallets_trading">wallets trading</span></div>
+						<div class="px-kpi px-kpi--pnl"><dt data-i18n="viability.realized_p_l_7d">Realized P&amp;L · 7d</dt><dd id="px-trade-pnl"></dd><span class="px-kpi-sub" id="px-trade-pnl-sub" data-i18n="viability.closed_positions">closed positions</span></div>
+					</div>
+					<p class="px-trade-insight" id="px-trade-insight" hidden></p>
+					<div class="px-market-body">
+						<div class="px-market-spark">
+							<div class="px-spark-h">
+								<span class="px-spark-title" data-i18n="viability.trades_last_7_days">Trades · last 7 days</span>
+								<span class="px-spark-total" id="px-trade-spark-total"></span>
+							</div>
+							<div class="px-spark-bars" id="px-trade-spark" role="img" aria-label="Daily trade count, last 7 days"></div>
+						</div>
+						<div class="px-market-skills">
+							<h3 class="px-card-h"><span data-i18n="viability.top_traders">Top traders</span><small data-i18n="viability.trades_7d_2">trades · 7d</small></h3>
+							<div id="px-trade-traders"></div>
+						</div>
 					</div>
 				</div>
 			</section>
 
-			<section class="px-card" id="px-sellers-card" aria-label="Top sellers" hidden>
-				<div class="px-card-h">Top sellers <small data-i18n="viability.earnings_7d">earnings · 7d</small></div>
-				<div id="px-sellers"><p class="px-lb-empty" data-i18n="viability.loading_3">Loading…</p></div>
+			<section class="px-card" id="px-sellers-card" aria-labelledby="px-sellers-title" hidden>
+				<h2 class="px-card-h" id="px-sellers-title"><span data-i18n="viability.top_sellers">Top sellers</span> <small data-i18n="viability.earnings_7d">earnings · 7d</small></h2>
+				<div id="px-sellers"></div>
 			</section>
 
 			<p class="px-sub px-fineprint" data-i18n-html="viability.network_mainnet_every_figure_is_computed_fro">

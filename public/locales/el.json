@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; εργαστήριο</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws εργαστήριο",
-		"the_react_wrapper_around_the_sdk_imports": "Το React wrapper γύρω από το SDK. Εισάγει τα <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, και <code>useAvatar</code> απευθείας από το <code>/avatar-sdk/src/react.jsx</code>. Το React φορτώνεται από ένα CDN μέσω ενός import map, οπότε αυτή η σελίδα λειτουργεί χωρίς βήμα bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "Το React wrapper γύρω από το SDK. Εισάγει τα <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, και <code>useAvatar</code> απευθείας από το <code>/avatar-sdk/src/react.js</code>. Το React φορτώνεται από ένα CDN μέσω ενός import map, οπότε αυτή η σελίδα λειτουργεί χωρίς βήμα bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Επικό",
 		"it_pays_the_quoted_price_and_receives": "Πληρώνει την αναγραφόμενη τιμή και λαμβάνει το κλειδί <b>μία φορά</b>. Εισαγάγετέ το αμέσως.",
 		"legendary": "Θρυλικό",
-		"long_brandable_solana_addresses_4_5_characte": "Μακροσκελείς, brandable διευθύνσεις Solana — πρόθεμα 4-5+ χαρακτήρων που ο live grinder δεν μπορεί να φτάσει — δημιουργημένες εκ των προτέρων με batch CPU και πωλούνται από το απόθεμα. Αγοράστε μία και το ιδιωτικό κλειδί παραδίδεται <strong>μία φορά</strong> μέσω του <a href=\"/vanity/gallery\">x402</a> rail, και μετά το αποθηκευμένο αντίγραφό του καταστρέφεται. Χρειάζεστε ένα νέο grind ≤3 χαρακτήρων; Χρησιμοποιήστε τον <a href=\"/vanity-wallet\">live grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Μακροσκελείς, brandable διευθύνσεις Solana — πρόθεμα 4-5+ χαρακτήρων που ο live grinder δεν μπορεί να φτάσει — δημιουργημένες εκ των προτέρων με batch CPU και πωλούνται από το απόθεμα. Αγοράστε μία και το ιδιωτικό κλειδί παραδίδεται <strong>μία φορά</strong> μέσω του <a href=\"/x402\">x402</a> rail, και μετά το αποθηκευμένο αντίγραφό του καταστρέφεται. Χρειάζεστε ένα νέο grind ≤3 χαρακτήρων; Χρησιμοποιήστε τον <a href=\"/vanity-wallet\">live grinder</a>.",
 		"meta_description": "Αγοράστε μια μακροσκελή, brandable διεύθυνση vanity Solana που παραδίδεται άμεσα από το απόθεμα — πρόθεμα 4-5+ χαρακτήρων που ο live grinder δεν μπορεί να φτάσει, δημιουργημένη εκ των προτέρων με batch CPU και πωλείται μέσω x402. Η τιμή κλιμακώνεται με τη σπανιότητα.",
 		"meta_og_description": "Μακροσκελείς, brandable διευθύνσεις vanity Solana, δημιουργημένες εκ των προτέρων και πωλούνται από το απόθεμα. Παραδίδονται μία φορά, κρυπτογραφημένες εν ηρεμία, τιμολογούνται ανά σπανιότητα.",
 		"meta_og_title": "Απόθεμα Premium Vanity · three.ws",

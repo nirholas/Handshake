@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — હૂક",
 		"lab": "<a href=\"/demos\">&larr; લેબ</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws લેબ",
-		"the_react_wrapper_around_the_sdk_imports": "SDK ની આસપાસનું રીએક્ટ રેપર. <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, અને <code>useAvatar</code> ને <code>/avatar-sdk/src/react.jsx</code> માંથી સીધા ઇમ્પોર્ટ કરે છે. રીએક્ટ CDN માંથી ઇમ્પોર્ટ મેપ દ્વારા લોડ થાય છે જેથી આ પેજ બંડલર સ્ટેપ વગર કામ કરે છે.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK ની આસપાસનું રીએક્ટ રેપર. <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, અને <code>useAvatar</code> ને <code>/avatar-sdk/src/react.js</code> માંથી સીધા ઇમ્પોર્ટ કરે છે. રીએક્ટ CDN માંથી ઇમ્પોર્ટ મેપ દ્વારા લોડ થાય છે જેથી આ પેજ બંડલર સ્ટેપ વગર કામ કરે છે.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "એપિક",
 		"it_pays_the_quoted_price_and_receives": "તે દર્શાવેલ કિંમત ચૂકવે છે અને કી <b>એકવાર</b> મેળવે છે. તેને તરત જ ઇમ્પોર્ટ કરો.",
 		"legendary": "લેજેન્ડરી",
-		"long_brandable_solana_addresses_4_5_characte": "લાંબા, બ્રાન્ડેબલ Solana એડ્રેસ — 4–5+ અક્ષરના પ્રીફિક્સ જે લાઇવ ગ્રાઇન્ડર પહોંચી શકતું નથી — બેચ CPU પર સમય પહેલા ગ્રાઇન્ડ કરાયેલા અને સ્ટોકમાંથી વેચાયેલા. એક ખરીદો અને પ્રાઇવેટ કી <a href=\"/vanity/gallery\">x402</a> રેલ દ્વારા <strong>એકવાર</strong> ડિલિવર કરવામાં આવે છે, પછી તેની સંગ્રહિત નકલ નષ્ટ થઈ જાય છે. તેના બદલે તાજા ≤3-અક્ષરના ગ્રાઇન્ડની જરૂર છે? <a href=\"/vanity-wallet\">લાઇવ ગ્રાઇન્ડર</a> નો ઉપયોગ કરો.",
+		"long_brandable_solana_addresses_4_5_characte": "લાંબા, બ્રાન્ડેબલ Solana એડ્રેસ — 4–5+ અક્ષરના પ્રીફિક્સ જે લાઇવ ગ્રાઇન્ડર પહોંચી શકતું નથી — બેચ CPU પર સમય પહેલા ગ્રાઇન્ડ કરાયેલા અને સ્ટોકમાંથી વેચાયેલા. એક ખરીદો અને પ્રાઇવેટ કી <a href=\"/x402\">x402</a> રેલ દ્વારા <strong>એકવાર</strong> ડિલિવર કરવામાં આવે છે, પછી તેની સંગ્રહિત નકલ નષ્ટ થઈ જાય છે. તેના બદલે તાજા ≤3-અક્ષરના ગ્રાઇન્ડની જરૂર છે? <a href=\"/vanity-wallet\">લાઇવ ગ્રાઇન્ડર</a> નો ઉપયોગ કરો.",
 		"meta_description": "સ્ટોકમાંથી તરત જ ડિલિવર કરાયેલ લાંબુ, બ્રાન્ડેબલ Solana વેનિટી એડ્રેસ ખરીદો — 4–5+ અક્ષરના પ્રીફિક્સ જે લાઇવ ગ્રાઇન્ડર પહોંચી શકતું નથી, બેચ CPU પર સમય પહેલા ગ્રાઇન્ડ કરાયેલા અને x402 દ્વારા વેચાયેલા. કિંમત દુર્લભતા સાથે વધે છે.",
 		"meta_og_description": "લાંબા, બ્રાન્ડેબલ Solana વેનિટી એડ્રેસ, જે સમય પહેલા જ તૈયાર કરાયેલા છે અને સ્ટોકમાંથી વેચાય છે. એકવાર ડિલિવર થાય છે, સ્ટોરેજમાં એન્ક્રિપ્ટેડ હોય છે, અને દુર્લભતા મુજબ કિંમત નક્કી થાય છે.",
 		"meta_og_title": "પ્રીમિયમ વેનિટી ઇન્વેન્ટરી · three.ws",

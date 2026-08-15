@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — フック",
 		"lab": "<a href=\"/demos\">&larr; ラボ</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ラボ",
-		"the_react_wrapper_around_the_sdk_imports": "SDKのReactラッパー。<code>/avatar-sdk/src/react.jsx</code>から<code>Avatar</code>、<code>AgentAvatar</code>、<code>AvatarCreator</code>、および<code>useAvatar</code>を直接インポートします。Reactはインポートマップを介してCDNからロードされるため、このページはバンドラーなしで動作します。",
+		"the_react_wrapper_around_the_sdk_imports": "SDKのReactラッパー。<code>/avatar-sdk/src/react.js</code>から<code>Avatar</code>、<code>AgentAvatar</code>、<code>AvatarCreator</code>、および<code>useAvatar</code>を直接インポートします。Reactはインポートマップを介してCDNからロードされるため、このページはバンドラーなしで動作します。",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "エピック",
 		"it_pays_the_quoted_price_and_receives": "提示された価格を支払い、鍵を<b>一度だけ</b>受け取ります。直ちにインポートしてください。",
 		"legendary": "レジェンダリー",
-		"long_brandable_solana_addresses_4_5_characte": "長く、ブランド化可能なSolanaアドレス — ライブグラインダーでは到達できない4〜5文字以上のプレフィックス — は、バッチCPUで事前に生成され、在庫から販売されます。購入すると、秘密鍵は<a href=\"/vanity/gallery\">x402</a>レールを介して<strong>一度だけ</strong>配送され、その後、保存されたコピーは破棄されます。代わりに、新しい3文字以下のグラインドが必要ですか？<a href=\"/vanity-wallet\">ライブグラインダー</a>をご利用ください。",
+		"long_brandable_solana_addresses_4_5_characte": "長く、ブランド化可能なSolanaアドレス — ライブグラインダーでは到達できない4〜5文字以上のプレフィックス — は、バッチCPUで事前に生成され、在庫から販売されます。購入すると、秘密鍵は<a href=\"/x402\">x402</a>レールを介して<strong>一度だけ</strong>配送され、その後、保存されたコピーは破棄されます。代わりに、新しい3文字以下のグラインドが必要ですか？<a href=\"/vanity-wallet\">ライブグラインダー</a>をご利用ください。",
 		"meta_description": "長く、ブランド化可能なSolanaバニティアドレスを在庫から即座に購入 — ライブグラインダーでは到達できない4〜5文字以上のプレフィックスは、バッチCPUで事前に生成され、x402を介して販売されます。価格は希少性に応じて変動します。",
 		"meta_og_description": "長く、ブランド化可能なSolanaバニティアドレス。事前に生成され、在庫から販売。一度だけ配送され、保存時に暗号化、希少性に応じて価格設定。",
 		"meta_og_title": "プレミアムバニティ在庫 · three.ws",

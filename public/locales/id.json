@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "Pembungkus React di sekitar SDK. Mengimpor <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, dan <code>useAvatar</code> langsung dari <code>/avatar-sdk/src/react.jsx</code>. React dimuat dari CDN melalui peta impor sehingga halaman ini berfungsi tanpa langkah bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "Pembungkus React di sekitar SDK. Mengimpor <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, dan <code>useAvatar</code> langsung dari <code>/avatar-sdk/src/react.js</code>. React dimuat dari CDN melalui peta impor sehingga halaman ini berfungsi tanpa langkah bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epik",
 		"it_pays_the_quoted_price_and_receives": "Membayar harga yang tertera dan menerima kunci <b>sekali</b>. Segera impor.",
 		"legendary": "Legendaris",
-		"long_brandable_solana_addresses_4_5_characte": "Alamat Solana yang panjang, mudah diingat — awalan 4–5+ karakter yang tidak dapat dijangkau oleh live grinder — digiling lebih awal dengan CPU batch dan dijual dari stok. Beli satu dan kunci pribadi dikirim <strong>sekali</strong> melalui jalur <a href=\"/vanity/gallery\">x402</a>, lalu salinan tersimpannya dihancurkan. Butuh gilingan ≤3 karakter baru? Gunakan <a href=\"/vanity-wallet\">live grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Alamat Solana yang panjang, mudah diingat — awalan 4–5+ karakter yang tidak dapat dijangkau oleh live grinder — digiling lebih awal dengan CPU batch dan dijual dari stok. Beli satu dan kunci pribadi dikirim <strong>sekali</strong> melalui jalur <a href=\"/x402\">x402</a>, lalu salinan tersimpannya dihancurkan. Butuh gilingan ≤3 karakter baru? Gunakan <a href=\"/vanity-wallet\">live grinder</a>.",
 		"meta_description": "Beli alamat vanity Solana yang panjang, mudah diingat, dikirim instan dari stok — awalan 4–5+ karakter yang tidak dapat dijangkau oleh live grinder, digiling lebih awal dengan CPU batch dan dijual via x402. Harga disesuaikan dengan kelangkaan.",
 		"meta_og_description": "Alamat vanity Solana yang panjang, mudah diingat, digiling lebih awal dan dijual dari stok. Dikirim sekali, dienkripsi saat disimpan, harga berdasarkan kelangkaan.",
 		"meta_og_title": "Inventaris Vanity Premium · three.ws",

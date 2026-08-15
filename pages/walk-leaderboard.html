@@ -43,6 +43,8 @@
 			.wlb-title { font: var(--weight-bold) var(--text-2xl)/1.05 var(--font-display); color: var(--color-text-bright); margin: 0 0 var(--space-sm); letter-spacing: -0.02em; }
 			.wlb-sub { font: var(--weight-regular) var(--text-base)/var(--leading-normal) var(--font-body); color: var(--color-text-dim); margin: 0; max-width: 60ch; }
 
+			.wlb-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
 			.wlb-controls { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; justify-content: space-between; margin: var(--space-lg) 0 var(--space-md); }
 			.wlb-seg { display: inline-flex; gap: var(--space-3xs); padding: var(--space-3xs); background: var(--surface-1); border: 1px solid var(--color-border); border-radius: var(--radius-pill); }
 			.wlb-seg-btn {
@@ -54,6 +56,10 @@
 			.wlb-seg-btn:hover { color: var(--color-text); }
 			.wlb-seg-btn.is-active { background: var(--surface-3); color: var(--color-text-bright); }
 			.wlb-seg-btn:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+
+			.wlb-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-xs) var(--space-sm); margin: 0 0 var(--space-sm); font: var(--weight-medium) var(--text-sm)/1.4 var(--font-mono); color: var(--color-text-faint); }
+			.wlb-meta-count { color: var(--color-text-dim); }
+			.wlb-meta:empty { display: none; }
 
 			.wlb-board { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--surface-1); overflow: hidden; }
 			.wlb-head, .wlb-row {
@@ -75,6 +81,8 @@
 			.wlb-avatar-fallback { display: flex; align-items: center; justify-content: center; font: var(--weight-semibold) var(--text-sm)/1 var(--font-body); color: var(--color-text-dim); }
 			.wlb-handle { font: var(--weight-medium) var(--text-md)/1.2 var(--font-body); color: var(--color-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 			a.wlb-handle:hover { color: var(--color-text-bright); text-decoration: underline; }
+			a.wlb-handle:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-sm); }
+			.wlb-you { flex: none; font: var(--weight-semibold) var(--text-2xs)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 3px 7px; }
 			.wlb-value { font: var(--weight-semibold) var(--text-md)/1 var(--font-mono); color: var(--color-text-bright); text-align: right; }
 			.wlb-delta { text-align: right; font: var(--weight-medium) var(--text-sm)/1 var(--font-mono); }
 			.wlb-delta.up { color: var(--color-success); }
@@ -94,8 +102,12 @@
 			.wlb-state { padding: var(--space-2xl) var(--space-md); text-align: center; }
 			.wlb-state-title { font: var(--weight-semibold) var(--text-lg)/1.2 var(--font-display); color: var(--color-text-bright); margin: 0 0 var(--space-xs); }
 			.wlb-state-msg { font: var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-body); color: var(--color-text-dim); margin: 0 auto var(--space-md); max-width: 46ch; }
-			.wlb-state .wlb-cta { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); background: var(--accent); color: #0a0a0a; font: var(--weight-semibold) var(--text-md)/1 var(--font-body); text-decoration: none; transition: opacity var(--duration-fast) var(--ease-standard); }
+			.wlb-state-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); justify-content: center; }
+			.wlb-state .wlb-cta { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); border: 1px solid transparent; background: var(--accent); color: #0a0a0a; font: var(--weight-semibold) var(--text-md)/1 var(--font-body); text-decoration: none; cursor: pointer; transition: opacity var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
 			.wlb-state .wlb-cta:hover { opacity: 0.85; }
+			.wlb-state .wlb-cta.is-ghost { background: var(--surface-2); border-color: var(--color-border); color: var(--color-text); }
+			.wlb-state .wlb-cta.is-ghost:hover { background: var(--surface-3); opacity: 1; }
+			.wlb-state .wlb-cta:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
 
 			.wlb-skel-row { display: grid; grid-template-columns: 56px 1fr 120px 110px; gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); }
 			.wlb-skel { height: 14px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: wlb-shimmer 1.4s ease infinite; }
@@ -127,33 +139,40 @@
 			</section>
 
 			<section class="wlb-controls" aria-label="Leaderboard filters">
-				<div class="wlb-seg" role="tablist" aria-label="Time window" id="wlb-period">
-					<button class="wlb-seg-btn" data-period="daily" role="tab" aria-selected="false" data-i18n="walk_leaderboard.today">Today</button>
-					<button class="wlb-seg-btn is-active" data-period="weekly" role="tab" aria-selected="true" data-i18n="walk_leaderboard.this_week">This Week</button>
-					<button class="wlb-seg-btn" data-period="all-time" role="tab" aria-selected="false" data-i18n="walk_leaderboard.all_time">All Time</button>
+				<div class="wlb-seg" role="radiogroup" aria-label="Time window" id="wlb-period">
+					<button type="button" class="wlb-seg-btn" data-period="daily" role="radio" aria-checked="false" tabindex="-1" data-i18n="walk_leaderboard.today">Today</button>
+					<button type="button" class="wlb-seg-btn is-active" data-period="weekly" role="radio" aria-checked="true" tabindex="0" data-i18n="walk_leaderboard.this_week">This Week</button>
+					<button type="button" class="wlb-seg-btn" data-period="all-time" role="radio" aria-checked="false" tabindex="-1" data-i18n="walk_leaderboard.all_time">All Time</button>
 				</div>
-				<div class="wlb-seg" role="tablist" aria-label="Metric" id="wlb-metric">
-					<button class="wlb-seg-btn is-active" data-metric="distance" role="tab" aria-selected="true" data-i18n="walk_leaderboard.distance">Distance</button>
-					<button class="wlb-seg-btn" data-metric="sites" role="tab" aria-selected="false" data-i18n="walk_leaderboard.sites">Sites</button>
-					<button class="wlb-seg-btn" data-metric="time" role="tab" aria-selected="false" data-i18n="walk_leaderboard.time">Time</button>
+				<div class="wlb-seg" role="radiogroup" aria-label="Metric" id="wlb-metric">
+					<button type="button" class="wlb-seg-btn is-active" data-metric="distance" role="radio" aria-checked="true" tabindex="0" data-i18n="walk_leaderboard.distance">Distance</button>
+					<button type="button" class="wlb-seg-btn" data-metric="sites" role="radio" aria-checked="false" tabindex="-1" data-i18n="walk_leaderboard.sites">Sites</button>
+					<button type="button" class="wlb-seg-btn" data-metric="time" role="radio" aria-checked="false" tabindex="-1" data-i18n="walk_leaderboard.time">Time</button>
 				</div>
 			</section>
 
-			<section class="wlb-board" aria-label="Ranked walkers" aria-busy="true">
-				<div class="wlb-head" role="row" aria-hidden="true">
-					<span>#</span>
-					<span data-i18n="walk_leaderboard.walker">Walker</span>
-					<span class="wlb-col-num" id="wlb-metric-label" data-i18n="walk_leaderboard.distance_2">Distance</span>
-					<span class="wlb-col-num wlb-col-delta" data-i18n="walk_leaderboard.vs_yesterday">vs. yesterday</span>
+			<p class="wlb-meta" id="wlb-meta"></p>
+
+			<section class="wlb-board" aria-label="Ranked walkers">
+				<div class="wlb-table" id="wlb-table" role="table" aria-label="Ranked walkers" aria-busy="true">
+					<div class="wlb-head" role="row">
+						<span role="columnheader"><span aria-hidden="true">#</span><span class="wlb-sr">Rank</span></span>
+						<span role="columnheader" data-i18n="walk_leaderboard.walker">Walker</span>
+						<span class="wlb-col-num" role="columnheader" id="wlb-metric-label" data-i18n="walk_leaderboard.distance_2">Distance</span>
+						<span class="wlb-col-num wlb-col-delta" role="columnheader" data-i18n="walk_leaderboard.vs_yesterday">vs. yesterday</span>
+					</div>
+					<div id="wlb-rows" role="rowgroup"></div>
 				</div>
-				<div id="wlb-rows" aria-live="polite"></div>
+				<div id="wlb-status" class="wlb-status" role="status" hidden></div>
 			</section>
+
+			<p class="wlb-sr" id="wlb-announce" aria-live="polite"></p>
 
 			<button type="button" id="wlb-loadmore" class="wlb-loadmore" hidden data-i18n="walk_leaderboard.show_more">Show more</button>
 
 			<div id="wlb-me-wrap" class="wlb-me" hidden>
-				<div class="wlb-me-tag">Your rank</div>
-				<div id="wlb-me-row"></div>
+				<div class="wlb-me-tag" data-i18n="walk_leaderboard.your_rank">Your rank</div>
+				<div id="wlb-me-row" role="table" aria-label="Your rank"></div>
 			</div>
 		</main>
 
@@ -163,7 +182,10 @@
 
 		<script type="module">
 			const rowsEl = document.getElementById('wlb-rows');
-			const boardEl = rowsEl.closest('.wlb-board');
+			const tableEl = document.getElementById('wlb-table');
+			const statusEl = document.getElementById('wlb-status');
+			const announceEl = document.getElementById('wlb-announce');
+			const metaEl = document.getElementById('wlb-meta');
 			const metricLabelEl = document.getElementById('wlb-metric-label');
 			const loadMoreEl = document.getElementById('wlb-loadmore');
 			const meWrap = document.getElementById('wlb-me-wrap');
@@ -172,8 +194,17 @@
 			const metricSeg = document.getElementById('wlb-metric');
 
 			const METRIC_HEAD = { distance: 'Distance', sites: 'Sites', time: 'Time' };
+			const PERIOD_LABEL = { daily: 'today', weekly: 'this week', 'all-time': 'all time' };
 			const PAGE = 50;
-			let state = { period: 'weekly', metric: 'distance', offset: 0, total: 0, loading: false };
+			// Board refresh cadence. The endpoint caches for 15s at the edge, so a
+			// 45s silent poll keeps the "updates live" promise without hammering it.
+			const REFRESH_MS = 45_000;
+			let state = { period: 'weekly', metric: 'distance', offset: 0, total: 0 };
+			// Only the newest request may paint. Every load aborts the one before it,
+			// so fast filter switching can never leave the board on stale rows, a
+			// mismatched column header, or a skeleton that never resolves.
+			let inflight = null;
+			let generation = 0;
 
 			const esc = (s) => String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -200,22 +231,28 @@
 			}
 
 			function fmtDelta(metric, d) {
-				if (!d) return '<span class="wlb-delta flat">—</span>';
+				if (!d) return '<span class="wlb-delta flat"><span aria-hidden="true">-</span><span class="wlb-sr">no change since yesterday</span></span>';
 				const cls = d > 0 ? 'up' : 'down';
-				const sign = d > 0 ? '+' : '−';
+				const sign = d > 0 ? '+' : '-';
+				const word = d > 0 ? 'up' : 'down';
 				const abs = Math.abs(d);
 				let body;
 				if (metric === 'distance') body = abs >= 1000 ? (abs / 1000).toFixed(1) + ' km' : Math.round(abs) + ' m';
 				else if (metric === 'time') body = abs >= 60 ? Math.round(abs / 60) + ' min' : Math.round(abs) + ' s';
 				else body = String(Math.round(abs));
-				return `<span class="wlb-delta ${cls}">${sign}${body}</span>`;
+				return `<span class="wlb-delta ${cls}"><span aria-hidden="true">${sign}${body}</span><span class="wlb-sr">${word} ${body} since yesterday</span></span>`;
 			}
 
-			function medal(rank) {
-				if (rank === 1) return '<span class="wlb-medal" aria-hidden="true">🥇</span>';
-				if (rank === 2) return '<span class="wlb-medal" aria-hidden="true">🥈</span>';
-				if (rank === 3) return '<span class="wlb-medal" aria-hidden="true">🥉</span>';
-				return '';
+			// Top three read as a medal but must still announce their place, so the
+			// glyph is decorative and the rank rides along as screen-reader text.
+			function rankCell(rank) {
+				const cls = rank && rank <= 3 ? 'wlb-rank is-top' : 'wlb-rank';
+				if (rank == null) {
+					return `<span class="${cls}" role="cell"><span aria-hidden="true">-</span><span class="wlb-sr">not ranked yet</span></span>`;
+				}
+				const glyph = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+				const visible = glyph ? `<span class="wlb-medal" aria-hidden="true">${glyph}</span>` : `<span aria-hidden="true">#${rank}</span>`;
+				return `<span class="${cls}" role="cell">${visible}<span class="wlb-sr">rank ${rank}</span></span>`;
 			}
 
 			function avatarCell(r) {
@@ -227,29 +264,80 @@
 			function rowHtml(r, metric, isMe) {
 				const handle = r.profileUrl
 					? `<a class="wlb-handle" href="${esc(r.profileUrl)}">${esc(r.handle)}</a>`
-					: `<span class="wlb-handle">${esc(r.handle)}${isMe ? ' (you)' : ''}</span>`;
-				const rankCls = r.rank && r.rank <= 3 ? 'wlb-rank is-top' : 'wlb-rank';
-				const rankText = r.rank == null ? '—' : (medal(r.rank) || '#' + r.rank);
+					: `<span class="wlb-handle">${esc(r.handle)}</span>`;
+				const you = isMe ? '<span class="wlb-you">(you)</span>' : '';
 				return `
 					<div class="wlb-row" role="row">
-						<span class="${rankCls}">${rankText}</span>
-						<span class="wlb-walker">${avatarCell(r)} ${handle}</span>
-						<span class="wlb-value">${fmtValue(metric, r.value)}</span>
-						<span class="wlb-col-delta">${fmtDelta(metric, r.deltaFromYesterday)}</span>
+						${rankCell(r.rank)}
+						<span class="wlb-walker" role="cell">${avatarCell(r)} ${handle}${you}</span>
+						<span class="wlb-value" role="cell">${fmtValue(metric, r.value)}</span>
+						<span class="wlb-col-delta" role="cell">${fmtDelta(metric, r.deltaFromYesterday)}</span>
 					</div>`;
 			}
 
 			function skeleton() {
 				let h = '';
 				for (let i = 0; i < 8; i++) {
-					h += `<div class="wlb-skel-row"><span class="wlb-skel" style="width:24px"></span><span style="display:flex;align-items:center;gap:10px"><span class="wlb-skel circle"></span><span class="wlb-skel" style="width:120px"></span></span><span class="wlb-skel" style="width:70px;justify-self:end"></span><span class="wlb-skel wlb-col-delta" style="width:50px;justify-self:end"></span></div>`;
+					h += `<div class="wlb-skel-row" role="presentation"><span class="wlb-skel" style="width:24px"></span><span style="display:flex;align-items:center;gap:10px"><span class="wlb-skel circle"></span><span class="wlb-skel" style="width:120px"></span></span><span class="wlb-skel" style="width:70px;justify-self:end"></span><span class="wlb-skel wlb-col-delta" style="width:50px;justify-self:end"></span></div>`;
 				}
 				rowsEl.innerHTML = h;
+				statusEl.hidden = true;
+				tableEl.hidden = false;
 			}
 
-			function showState(title, msg, cta) {
-				rowsEl.innerHTML = `<div class="wlb-state"><p class="wlb-state-title">${esc(title)}</p><p class="wlb-state-msg">${esc(msg)}</p>${cta ? `<a class="wlb-cta" href="${esc(cta.href)}">${esc(cta.label)}</a>` : ''}</div>`;
+			// Empty and error take over the whole card: an all-headers, no-rows table
+			// is noise, and the state carries the next action instead.
+			function showState(title, msg, actions = []) {
+				tableEl.hidden = true;
+				statusEl.hidden = false;
+				statusEl.replaceChildren();
+				const wrap = document.createElement('div');
+				wrap.className = 'wlb-state';
+				const h = document.createElement('p');
+				h.className = 'wlb-state-title';
+				h.textContent = title;
+				const p = document.createElement('p');
+				p.className = 'wlb-state-msg';
+				p.textContent = msg;
+				wrap.append(h, p);
+				const row = document.createElement('div');
+				row.className = 'wlb-state-actions';
+				for (const action of actions) {
+					if (!action) continue;
+					const el = document.createElement(action.href ? 'a' : 'button');
+					el.className = action.ghost ? 'wlb-cta is-ghost' : 'wlb-cta';
+					el.textContent = action.label;
+					if (action.href) el.href = action.href;
+					else {
+						el.type = 'button';
+						el.addEventListener('click', action.onClick);
+					}
+					row.appendChild(el);
+				}
+				if (row.children.length) wrap.appendChild(row);
+				statusEl.appendChild(wrap);
 			}
+
+			// The three metrics are earned in different places, so the empty board
+			// tells the reader how to earn THIS one rather than a generic nudge. Sites
+			// only accrue where the avatar walks on another page, never on three.ws.
+			const EMPTY_COPY = {
+				distance: {
+					title: 'No walkers ranked yet',
+					msg: 'Be the first on the board. Take your avatar for a walk and every metre it covers lands here.',
+					cta: { href: '/walk', label: 'Start walking' },
+				},
+				time: {
+					title: 'No walking time logged yet',
+					msg: 'Be the first on the board. Time counts from the moment your avatar starts moving.',
+					cta: { href: '/walk', label: 'Start walking' },
+				},
+				sites: {
+					title: 'No sites walked yet',
+					msg: 'Sites count the pages your avatar walks on away from three.ws. Drop the walk companion onto a site and each host it visits shows up here.',
+					cta: { href: '/tutorials/walk-companion', label: 'Add the walk companion' },
+				},
+			};
 
 			function renderMe(me, metric) {
 				if (!me) { meWrap.hidden = true; return; }
@@ -257,83 +345,164 @@
 				meRow.innerHTML = rowHtml(me, metric, true);
 			}
 
-			async function load({ reset = true } = {}) {
-				if (state.loading) return;
-				state.loading = true;
-				if (reset) { state.offset = 0; skeleton(); meWrap.hidden = true; }
-				boardEl.setAttribute('aria-busy', 'true');
+			function renderMeta(total, metric, period, stamp) {
+				const walkers = total === 1 ? '1 walker ranked' : `${total.toLocaleString()} walkers ranked`;
+				const when = stamp.toLocaleTimeString([], { timeStyle: 'short' });
+				const dot = '<span aria-hidden="true">&middot;</span>';
+				metaEl.innerHTML =
+					`<span class="wlb-meta-count">${esc(walkers)}</span>${dot}` +
+					`<span>by ${esc(METRIC_HEAD[metric] || metric)}, ${esc(PERIOD_LABEL[period] || period)}</span>${dot}` +
+					`<span>updated ${esc(when)}</span>`;
+			}
+
+			async function load({ reset = true, silent = false } = {}) {
+				const gen = ++generation;
+				if (inflight) inflight.abort();
+				const ctrl = new AbortController();
+				inflight = ctrl;
+				if (reset && !silent) {
+					state.offset = 0;
+					skeleton();
+					meWrap.hidden = true;
+					loadMoreEl.hidden = true;
+					// Header follows the click immediately so it never labels the
+					// column with the metric the previous request was fetching.
+					metricLabelEl.textContent = METRIC_HEAD[state.metric] || 'Value';
+				} else if (reset) {
+					state.offset = 0;
+				}
+				tableEl.setAttribute('aria-busy', 'true');
 				loadMoreEl.disabled = true;
+				// Swap the label rather than hardcode it back, so a translated button
+				// keeps its locale copy once the paging request settles.
+				if (!reset && !loadMoreEl.dataset.label) {
+					loadMoreEl.dataset.label = loadMoreEl.textContent;
+					loadMoreEl.textContent = 'Loading';
+				}
 				const params = new URLSearchParams({ period: state.period, metric: state.metric, limit: String(PAGE), offset: String(state.offset) });
 				const aid = anonId();
 				if (aid) params.set('anonId', aid);
 				try {
-					const res = await fetch('/api/walk/leaderboard?' + params.toString(), { credentials: 'include' });
+					const res = await fetch('/api/walk/leaderboard?' + params.toString(), { credentials: 'include', signal: ctrl.signal });
 					if (!res.ok) throw new Error('HTTP ' + res.status);
 					const data = await res.json();
+					if (gen !== generation) return;
 					state.total = data.total || 0;
 					const metric = data.metric || state.metric;
 					metricLabelEl.textContent = METRIC_HEAD[metric] || 'Value';
+					renderMeta(state.total, metric, data.period || state.period, new Date());
 
 					if (reset && (!data.rows || !data.rows.length)) {
-						showState(
-							'No walkers ranked yet',
-							'Be the first on the board. Take your avatar for a walk and your distance, sites, and time will show up here.',
-							{ href: '/walk', label: 'Start walking →' },
-						);
+						rowsEl.replaceChildren();
+						loadMoreEl.hidden = true;
+						const copy = EMPTY_COPY[metric] || EMPTY_COPY.distance;
+						const period = data.period || state.period;
+						const actions = [copy.cta];
+						// A window with no walkers is often just a quiet day, so offer the
+						// widest window rather than leaving the reader at a dead end.
+						if (period !== 'all-time') {
+							actions.push({ label: 'View all time', ghost: true, onClick: () => setPeriod('all-time') });
+						}
+						showState(copy.title, copy.msg, actions);
 						renderMe(data.me && data.me.value > 0 ? data.me : null, metric);
+						announceEl.textContent = `${copy.title}. ${copy.msg}`;
 						return;
 					}
 
 					const html = (data.rows || []).map((r) => rowHtml(r, metric, data.me && r.key === data.me.key)).join('');
-					if (reset) rowsEl.innerHTML = html; else rowsEl.insertAdjacentHTML('beforeend', html);
+					if (reset) {
+						rowsEl.innerHTML = html;
+						statusEl.hidden = true;
+						tableEl.hidden = false;
+						state.offset = (data.rows || []).length;
+					} else {
+						rowsEl.insertAdjacentHTML('beforeend', html);
+						state.offset += (data.rows || []).length;
+					}
 
-					state.offset += (data.rows || []).length;
 					loadMoreEl.hidden = !data.hasMore;
 					renderMe(data.me, metric);
+					announceEl.textContent = `Showing ${state.offset} of ${state.total} walkers, ranked by ${METRIC_HEAD[metric] || metric}, ${PERIOD_LABEL[data.period || state.period] || ''}.`;
 				} catch (err) {
-					if (reset) {
-						const wrap = document.createElement('div');
-						wrap.className = 'wlb-state';
-						wrap.innerHTML = `<p class="wlb-state-title">Couldn't load the leaderboard</p><p class="wlb-state-msg">${esc(err.message || 'Something went wrong.')}</p>`;
-						const btn = document.createElement('button');
-						btn.className = 'wlb-cta';
-						btn.type = 'button';
-						btn.textContent = 'Retry';
-						btn.addEventListener('click', () => load({ reset: true }));
-						wrap.appendChild(btn);
-						rowsEl.replaceChildren(wrap);
+					if (err && err.name === 'AbortError') return;
+					if (gen !== generation) return;
+					// A silent refresh that fails leaves the last good board alone; only
+					// a user-driven load swaps in the recovery state.
+					if (reset && !silent) {
+						rowsEl.replaceChildren();
+						loadMoreEl.hidden = true;
+						showState(
+							"Couldn't load the leaderboard",
+							`${(err && err.message) || 'Something went wrong.'} The board is public, so a retry usually clears it.`,
+							[{ label: 'Retry', onClick: () => load({ reset: true }) }],
+						);
+						announceEl.textContent = 'The leaderboard failed to load. Use the retry button to try again.';
 					}
 				} finally {
-					state.loading = false;
-					boardEl.setAttribute('aria-busy', 'false');
-					loadMoreEl.disabled = false;
+					if (gen === generation) {
+						inflight = null;
+						tableEl.setAttribute('aria-busy', 'false');
+						loadMoreEl.disabled = false;
+						if (loadMoreEl.dataset.label) {
+							loadMoreEl.textContent = loadMoreEl.dataset.label;
+							delete loadMoreEl.dataset.label;
+						}
+					}
 				}
 			}
 
 			function bindSeg(seg, key, onChange) {
-				seg.addEventListener('click', (e) => {
-					const btn = e.target.closest('.wlb-seg-btn');
-					if (!btn || btn.classList.contains('is-active')) return;
-					seg.querySelectorAll('.wlb-seg-btn').forEach((b) => { b.classList.remove('is-active'); b.setAttribute('aria-selected', 'false'); });
-					btn.classList.add('is-active');
-					btn.setAttribute('aria-selected', 'true');
+				const select = (btn) => {
+					if (!btn) return;
+					seg.querySelectorAll('.wlb-seg-btn').forEach((b) => {
+						const on = b === btn;
+						b.classList.toggle('is-active', on);
+						b.setAttribute('aria-checked', String(on));
+						// Roving tabindex: one stop per group, arrows move within it.
+						b.tabIndex = on ? 0 : -1;
+					});
+					if (state[key] === btn.dataset[key]) return;
 					state[key] = btn.dataset[key];
 					onChange();
-				});
-				// Keyboard: left/right move between tabs.
+				};
+				seg.addEventListener('click', (e) => select(e.target.closest('.wlb-seg-btn')));
+				// Returned so other surfaces (the empty state's "view all time") can
+				// drive the control instead of faking a click.
+				const selectByValue = (value) => select(seg.querySelector(`[data-${key}="${value}"]`));
 				seg.addEventListener('keydown', (e) => {
-					if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
 					const btns = [...seg.querySelectorAll('.wlb-seg-btn')];
 					const i = btns.findIndex((b) => b.classList.contains('is-active'));
-					const next = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length];
-					next.focus(); next.click();
+					let next = null;
+					if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = btns[(i + 1) % btns.length];
+					else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = btns[(i + btns.length - 1) % btns.length];
+					else if (e.key === 'Home') next = btns[0];
+					else if (e.key === 'End') next = btns[btns.length - 1];
+					if (!next) return;
 					e.preventDefault();
+					next.focus();
+					select(next);
 				});
+				return selectByValue;
 			}
 
-			bindSeg(periodSeg, 'period', () => load({ reset: true }));
+			const setPeriod = bindSeg(periodSeg, 'period', () => load({ reset: true }));
 			bindSeg(metricSeg, 'metric', () => load({ reset: true }));
 			loadMoreEl.addEventListener('click', () => load({ reset: false }));
+
+			// "Updates live" is a promise, so the board keeps itself current: a quiet
+			// re-fetch of the first page while the tab is visible and the reader has
+			// not paged deeper, plus one on the way back from a hidden tab.
+			let lastRefresh = Date.now();
+			function refresh() {
+				if (document.visibilityState !== 'visible') return;
+				if (state.offset > PAGE || inflight) return;
+				lastRefresh = Date.now();
+				load({ reset: true, silent: true });
+			}
+			setInterval(refresh, REFRESH_MS);
+			document.addEventListener('visibilitychange', () => {
+				if (document.visibilityState === 'visible' && Date.now() - lastRefresh >= REFRESH_MS) refresh();
+			});
 
 			load({ reset: true });
 		</script>

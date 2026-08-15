@@ -4,6 +4,7 @@ import CustomButton from "./custom-button"
 
 import { getAtlasSize } from "../library/utils"
 import { getGLBBlobData } from "../library/download-utils"
+import { isEmbedded as isEmbeddedInHost, postAvatarToHost } from "../library/embed-export"
 
 import styles from "./ExportMenu.module.css"
 import { local } from "../library/store"
@@ -60,11 +61,7 @@ export const ExportMenu = ({currentPrice, onPurchaseClick}) => {
       const options = getOptions();
       const blob = await getGLBBlobData(model, options);
       const arrayBuffer = await blob.arrayBuffer();
-      window.parent.postMessage(
-        { source: 'characterstudio', type: 'export', format: 'glb', glb: arrayBuffer },
-        '*',
-        [arrayBuffer],
-      );
+      postAvatarToHost(arrayBuffer);
     } catch (err) {
       console.error('[three.ws Avatar Studio] saveToAccount failed:', err);
     } finally {
@@ -72,7 +69,7 @@ export const ExportMenu = ({currentPrice, onPurchaseClick}) => {
     }
   }
 
-  const isEmbedded = window.self !== window.top;
+  const isEmbedded = isEmbeddedInHost();
 
   return (
     <React.Fragment>

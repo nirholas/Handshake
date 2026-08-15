@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laboratorio</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laboratorio",
-		"the_react_wrapper_around_the_sdk_imports": "El wrapper de React para el SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, y <code>useAvatar</code> directamente desde <code>/avatar-sdk/src/react.jsx</code>. React se carga desde un CDN a través de un mapa de importación para que esta página funcione sin un paso de bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "El wrapper de React para el SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, y <code>useAvatar</code> directamente desde <code>/avatar-sdk/src/react.js</code>. React se carga desde un CDN a través de un mapa de importación para que esta página funcione sin un paso de bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Épico",
 		"it_pays_the_quoted_price_and_receives": "Paga el precio cotizado y recibe la clave <b>una vez</b>. Impórtala de inmediato.",
 		"legendary": "Legendario",
-		"long_brandable_solana_addresses_4_5_characte": "Direcciones Solana largas y personalizables — prefijos de 4-5+ caracteres que el generador en vivo no puede alcanzar — generadas con antelación en CPU por lotes y vendidas de stock. Compra una y la clave privada se entrega <strong>una vez</strong> a través del canal <a href=\"/vanity/gallery\">x402</a>, luego su copia almacenada se destruye. ¿Necesitas una generación nueva de ≤3 caracteres? Usa el <a href=\"/vanity-wallet\">generador en vivo</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Direcciones Solana largas y personalizables — prefijos de 4-5+ caracteres que el generador en vivo no puede alcanzar — generadas con antelación en CPU por lotes y vendidas de stock. Compra una y la clave privada se entrega <strong>una vez</strong> a través del canal <a href=\"/x402\">x402</a>, luego su copia almacenada se destruye. ¿Necesitas una generación nueva de ≤3 caracteres? Usa el <a href=\"/vanity-wallet\">generador en vivo</a>.",
 		"meta_description": "Compra una dirección vanity Solana larga y personalizable, entregada al instante desde stock — prefijos de 4-5+ caracteres que el generador en vivo no puede alcanzar, generadas con antelación en CPU por lotes y vendidas a través de x402. El precio escala con la rareza.",
 		"meta_og_description": "Direcciones vanity Solana largas y personalizables, generadas con antelación y vendidas de stock. Entregadas una vez, cifradas en reposo, con precio según la rareza.",
 		"meta_og_title": "Inventario Vanity Premium · three.ws",

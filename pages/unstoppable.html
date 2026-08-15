@@ -5,7 +5,7 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title data-i18n="unstoppable.meta_title">Unstoppable Agent — three.ws</title>
+	<title data-i18n="unstoppable.meta_title">Unstoppable Agent · Live treasury, runway and reflections · three.ws</title>
 	<meta name="description" content="A self-sustaining AI agent that owns its wallet, pays for tools via x402, earns USDC from a service it runs, and re-invests to survive."  data-i18n-attr="content:unstoppable.meta_description"/>
 	<meta property="og:title" content="Unstoppable Agent — three.ws"  data-i18n-attr="content:unstoppable.meta_og_title"/>
 	<meta property="og:description" content="An AI that earns its own living. Every query to its status API funds its continued existence."  data-i18n-attr="content:unstoppable.meta_og_description"/>
@@ -140,6 +140,14 @@
 			border: 1px solid var(--hairline-strong);
 		}
 
+		/* The page's own name. Sized as an eyebrow rather than a headline: the
+		   treasury balance is the visual hero, but the document still needs a
+		   single real h1 for assistive tech and search. */
+		.hero-title {
+			font-family: var(--font-mono); font-size: 11.5px;
+			font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+			color: var(--text-3); margin: 0 0 18px;
+		}
 		.balance-display {
 			font-family: var(--font-mono);
 			font-size: clamp(40px, 7vw, 84px);
@@ -229,6 +237,11 @@
 		.panel {
 			padding: 32px;
 			border-right: 1px solid var(--hairline);
+			/* A grid item's automatic minimum is its content's min-content width, and
+			   the activity rows are nowrap: without this the column stretches to the
+			   longest log line (1120px at a 320px viewport) and the panel is clipped
+			   by the body's overflow guard instead of laying out. */
+			min-width: 0;
 		}
 		.panel:last-child { border-right: none; }
 		@media (max-width: 900px) {
@@ -342,7 +355,7 @@
 			font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
 			min-width: 68px; justify-content: center;
 		}
-		.action-badge.think   { background: rgba(255,255,255,0.07); color: var(--ink-dim); border: 1px solid rgba(255,255,255,0.10); }
+		.action-badge.think   { background: rgba(255,255,255,0.07); color: var(--text-2); border: 1px solid rgba(255,255,255,0.10); }
 		.action-badge.earn    { background: rgba(34,197,94,0.12);  color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
 		.action-badge.reflect { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
 		.action-badge.idle    { background: rgba(100,100,100,0.1); color: var(--text-3); border: 1px solid var(--hairline-strong); }
@@ -438,10 +451,15 @@
 		}
 		#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-		/* ── EMPTY / LOADING ─────────────────────────────────────── */
+		/* ── EMPTY / LOADING / ERROR ─────────────────────────────── */
 		.empty-state {
 			padding: 40px; text-align: center;
 			font-size: 13.5px; color: var(--text-3);
+			line-height: 1.6;
+		}
+		.empty-state .empty-hint {
+			display: block; margin-top: 6px;
+			font-size: 12.5px; color: var(--text-4);
 		}
 		.skeleton {
 			background: var(--surface-2);
@@ -449,6 +467,46 @@
 			animation: shimmer 1.6s ease-in-out infinite;
 		}
 		@keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+		@media (prefers-reduced-motion: reduce) {
+			.skeleton { animation: none; opacity: 0.55; }
+			.agent-dot { animation: none; }
+		}
+
+		/* Feed-level failure: the snapshot API is unreachable. */
+		.feed-error {
+			padding: 28px 20px; text-align: center;
+		}
+		.feed-error-title {
+			font-size: 14px; color: var(--text-2); font-weight: 550;
+		}
+		.feed-error-body {
+			margin-top: 6px; font-size: 13px; color: var(--text-3); line-height: 1.55;
+		}
+		.feed-error .btn { margin-top: 14px; }
+
+		/* Hero-level failure banner, shown above the fold so a visitor is never
+		   left reading stale numbers that look current. */
+		.hero-error {
+			display: none;
+			margin: 24px auto 0; max-width: 560px;
+			padding: 14px 18px;
+			border: 1px solid rgba(239,68,68,0.35);
+			border-radius: 10px;
+			background: rgba(239,68,68,0.08);
+			font-size: 13.5px; color: var(--text-2); line-height: 1.55;
+		}
+		.hero-error.show { display: block; }
+		.hero-error-actions {
+			display: flex; align-items: center; justify-content: center;
+			gap: 10px; margin-top: 12px; flex-wrap: wrap;
+		}
+		.hero-error .btn { padding: 8px 16px; font-size: 13px; }
+		.data-source {
+			font-family: var(--font-mono); font-size: 11px;
+			letter-spacing: 0.1em; text-transform: uppercase;
+			color: var(--text-4);
+		}
+		.data-source.live { color: var(--green); }
 	</style>
 
 	<link rel="canonical" href="https://three.ws/unstoppable">
@@ -495,25 +553,35 @@
 			<div class="hero-avatar-ring"></div>
 		</div>
 
+		<h1 class="hero-title" data-i18n="unstoppable.unstoppable_agent">Unstoppable Agent</h1>
+
 		<div class="balance-display" id="balanceDisplay" role="status" aria-live="polite" aria-label="Treasury balance">—</div>
 
 		<div class="hero-badges">
-			<span class="badge badge-running" id="statusBadge" aria-live="polite" data-i18n-html="unstoppable.loading">
+			<span class="badge badge-running" id="statusBadge" aria-live="polite">
 				<span class="badge-dot"></span>
 				<span id="statusText">Loading</span>
 			</span>
 			<span class="badge badge-runway" id="runwayBadge" aria-live="polite" data-i18n="unstoppable.runway">Runway: —</span>
 		</div>
 
-		<div class="hero-updated" id="heroUpdated" role="status" aria-live="polite">Fetching live data...</div>
+		<div class="hero-updated" id="heroUpdated" role="status" aria-live="polite">Reading the agent's treasury...</div>
 
-		<div class="payment-notice" id="paymentNotice" role="note" style="display:none">
+		<div class="hero-error" id="heroError" role="alert">
+			<div id="heroErrorText">The agent's status feed is unreachable right now.</div>
+			<div class="hero-error-actions">
+				<button class="btn" id="retryBtn" type="button">Retry now</button>
+				<a class="btn" href="/api/agents/unstoppable-public" target="_blank" rel="noopener">Check the endpoint</a>
+			</div>
+		</div>
+
+		<div class="payment-notice" id="paymentNotice" role="note">
 			<p data-i18n-html="unstoppable.live_data_costs_0_01_per_query">
-				Live data costs <span class="payment-price" id="priceDisplay">$0.01</span> per query.
+				The real-time reading costs <span class="payment-price" id="priceDisplay">$0.01</span> per query over x402.
 				<strong>Every request directly funds this agent's operation.</strong>
 			</p>
 			<p style="margin: 8px 0 0; color: var(--text-4);" data-i18n="unstoppable.showing_last_cached_reading_send_an_x402">
-				Showing last cached reading. Send an x402 payment to see live data.
+				This page shows the free snapshot, refreshed every 5 minutes. Pay to pull the live reading.
 			</p>
 		</div>
 	</div>
@@ -545,9 +613,11 @@
 			</div>
 
 			<div class="donate-block" style="margin-top: 28px;">
-				<div class="donate-label" id="donateLabel">Keep it alive — donate $0.01 USDC to extend the agent's runway and unlock the live view.</div>
-				<button class="btn primary" id="donateBtn" type="button" aria-label="Donate $0.01 USDC to fund the agent" data-i18n="unstoppable.donate_0_01" data-i18n-attr="aria-label:unstoppable.donate_0_01_usdc_to_fund_the_arialabel">
-					Donate $0.01
+				<div class="donate-label" id="donateLabel">You are reading the free snapshot. Paying pulls the agent's real-time treasury, runway, and full activity log, and the payment itself extends its runway.</div>
+				<!-- Not i18n-annotated: the label carries a live price the script writes in,
+				     so a static catalog string would hardcode a price that can change. -->
+				<button class="btn unlock" id="donateBtn" type="button" aria-label="Pay for the live reading and fund the agent">
+					Unlock the live reading
 				</button>
 				<div class="donate-retry" id="donateRetry" role="note">
 					Donation didn't go through. If your USDC balance was too low,
@@ -579,7 +649,10 @@
 					</p>
 				</div>
 				<div class="code-block">
-					<pre><span class="cm-comment"># Query the agent's live status (costs $0.01 USDC)</span>
+					<pre><span class="cm-comment"># The free snapshot this dashboard renders (one tick behind)</span>
+<span class="cm-keyword">curl</span> -s https://three.ws/api/agents/unstoppable-public
+
+<span class="cm-comment"># The live reading, real-time and 20 activity rows (costs $0.01 USDC)</span>
 <span class="cm-keyword">curl</span> -X GET https://three.ws/api/agents/unstoppable-status \
   -H <span class="cm-string">"X-Payment: &lt;your-x402-payment-header&gt;"</span>
 

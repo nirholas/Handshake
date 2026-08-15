@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — හුක්",
 		"lab": "<a href=\"/demos\">&larr; ලැබ්</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ලැබ්",
-		"the_react_wrapper_around_the_sdk_imports": "SDK වටා ඇති React රැපරය. එය <code>/avatar-sdk/src/react.jsx</code> වෙතින් <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, සහ <code>useAvatar</code> සෘජුවම ආයාත කරයි. React CDN එකකින් ආයාත සිතියමක් හරහා පූරණය වන බැවින්, මෙම පිටුව බන්ඩ්ලර් පියවරක් නොමැතිව ක්‍රියා කරයි.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK වටා ඇති React රැපරය. එය <code>/avatar-sdk/src/react.js</code> වෙතින් <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, සහ <code>useAvatar</code> සෘජුවම ආයාත කරයි. React CDN එකකින් ආයාත සිතියමක් හරහා පූරණය වන බැවින්, මෙම පිටුව බන්ඩ්ලර් පියවරක් නොමැතිව ක්‍රියා කරයි.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "එපික්",
 		"it_pays_the_quoted_price_and_receives": "එය උපුටා දක්වන ලද මිල ගෙවා යතුර <b>එක් වරක්</b> ලබා ගනී. එය වහාම ආනයනය කරන්න.",
 		"legendary": "පුරාවෘත්තීය",
-		"long_brandable_solana_addresses_4_5_characte": "දිගු, සන්නාමගත කළ හැකි Solana ලිපින — සජීවී ග්‍රයින්ඩරයට ළඟා විය නොහැකි 4–5+ අක්ෂර පූර්ව පද — කණ්ඩායම් CPU මත කලින් ග්‍රයින්ඩ් කර තොගයෙන් විකුණනු ලැබේ. එකක් මිලදී ගන්න, එවිට පුද්ගලික යතුර <a href=\"/vanity/gallery\">x402</a> මාර්ගයෙන් <strong>එක් වරක්</strong> ලබා දෙනු ඇත, ඉන්පසු එහි ගබඩා කළ පිටපත විනාශ වේ. ඒ වෙනුවට නැවුම් ≤3-අක්ෂර ග්‍රයින්ඩ් එකක් අවශ්‍යද? <a href=\"/vanity-wallet\">සජීවී ග්‍රයින්ඩරය</a> භාවිතා කරන්න.",
+		"long_brandable_solana_addresses_4_5_characte": "දිගු, සන්නාමගත කළ හැකි Solana ලිපින — සජීවී ග්‍රයින්ඩරයට ළඟා විය නොහැකි 4–5+ අක්ෂර පූර්ව පද — කණ්ඩායම් CPU මත කලින් ග්‍රයින්ඩ් කර තොගයෙන් විකුණනු ලැබේ. එකක් මිලදී ගන්න, එවිට පුද්ගලික යතුර <a href=\"/x402\">x402</a> මාර්ගයෙන් <strong>එක් වරක්</strong> ලබා දෙනු ඇත, ඉන්පසු එහි ගබඩා කළ පිටපත විනාශ වේ. ඒ වෙනුවට නැවුම් ≤3-අක්ෂර ග්‍රයින්ඩ් එකක් අවශ්‍යද? <a href=\"/vanity-wallet\">සජීවී ග්‍රයින්ඩරය</a> භාවිතා කරන්න.",
 		"meta_description": "තොගයෙන් ක්ෂණිකව ලබා දෙන දිගු, සන්නාමගත කළ හැකි Solana වැනිටි ලිපිනයක් මිලදී ගන්න — සජීවී ග්‍රයින්ඩරයට ළඟා විය නොහැකි 4–5+ අක්ෂර පූර්ව පද, කණ්ඩායම් CPU මත කලින් ග්‍රයින්ඩ් කර x402 හරහා විකුණනු ලැබේ. මිල දුර්ලභතාවය අනුව වෙනස් වේ.",
 		"meta_og_description": "දිගු, සන්නාමගත කළ හැකි Solana වැනිටි ලිපින, කලින් සකසා තොගයෙන් විකුණනු ලැබේ. එක් වරක් බෙදා හරිනු ලැබේ, ගබඩාවේදී සංකේතනය කර ඇත, දුර්ලභත්වය අනුව මිල නියම කර ඇත.",
 		"meta_og_title": "ප්‍රිමියම් වැනිටි තොගය · three.ws",

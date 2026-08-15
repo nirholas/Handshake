@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laboratorju</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laboratorju",
-		"the_react_wrapper_around_the_sdk_imports": "Il-wrapper ta' React madwar l-SDK. Jimporta <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, u <code>useAvatar</code> direttament minn <code>/avatar-sdk/src/react.jsx</code>. React jitgħabba minn CDN permezz ta' import map għalhekk din il-paġna taħdem mingħajr pass ta' bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "Il-wrapper ta' React madwar l-SDK. Jimporta <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, u <code>useAvatar</code> direttament minn <code>/avatar-sdk/src/react.js</code>. React jitgħabba minn CDN permezz ta' import map għalhekk din il-paġna taħdem mingħajr pass ta' bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epika",
 		"it_pays_the_quoted_price_and_receives": "Iħallas il-prezz ikkwotat u jirċievi ċ-ċavetta <b>darba</b>. Importaha immedjatament.",
 		"legendary": "Leġġendarja",
-		"long_brandable_solana_addresses_4_5_characte": "Indirizzi Solana twal u brandable — prefixes ta' 4–5+ karattri li l-grinder live ma jistax jilħaq — maħduma minn qabel fuq CPU tal-batch u mibjugħa mill-istokk. Ixtri wieħed u ċ-ċavetta privata titwassal <strong>darba</strong> permezz tal-ferrovija <a href=\"/vanity/gallery\">x402</a>, imbagħad il-kopja maħżuna tagħha tinqered. Għandek bżonn grind ġdid ta' ≤3 karattri minflok? Uża l-<a href=\"/vanity-wallet\">grinder live</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Indirizzi Solana twal u brandable — prefixes ta' 4–5+ karattri li l-grinder live ma jistax jilħaq — maħduma minn qabel fuq CPU tal-batch u mibjugħa mill-istokk. Ixtri wieħed u ċ-ċavetta privata titwassal <strong>darba</strong> permezz tal-ferrovija <a href=\"/x402\">x402</a>, imbagħad il-kopja maħżuna tagħha tinqered. Għandek bżonn grind ġdid ta' ≤3 karattri minflok? Uża l-<a href=\"/vanity-wallet\">grinder live</a>.",
 		"meta_description": "Ixtri indirizz vanity Solana twil u brandable, ikkunsinnat istantanjament mill-istokk — prefixes ta' 4–5+ karattri li l-grinder live ma jistax jilħaq, maħduma minn qabel fuq CPU tal-batch u mibjugħa permezz ta' x402. Il-prezz jiżdied mar-rarità.",
 		"meta_og_description": "Indirizzi vanity Solana twal u brandable, ippreparati minn qabel u mibjugħa mill-istokk. Mogħtija darba biss, kriptati waqt il-mistrieħ, ipprezzati skont ir-rarità.",
 		"meta_og_title": "Inventarju Vanity Premium · three.ws",

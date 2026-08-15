@@ -22,6 +22,10 @@ const SLOT_LABELS = {
 };
 const STAGES = ['image', 'mesh', 'compose', 'rig', 'extract', 'validate', 'publish'];
 const POLL_MS = 10_000;
+// A poll can blip (edge restart, offline tab). The job record is durable, so we
+// retry rather than orphan it, but not forever: after this many consecutive
+// failures we hand the form back to the user instead of leaving it disabled.
+const MAX_POLL_FAILURES = 6;
 const JOB_KEY = 'twx_wardrobe_job';
 
 const $ = (role) => document.querySelector(`[data-role="${role}"]`);
@@ -30,6 +34,11 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
 ));
 
 let allGarments = [];
+// Card elements, parallel to allGarments. Filtering toggles these in place
+// rather than re-rendering the grid: a rebuild would drop any <model-viewer>
+// the user opened, restart 59 image loads on every keystroke, and throw
+// keyboard focus back to <body>.
+let cardEls = [];
 let activeSlot = 'all';
 let query = '';
 let highlightId = null;
@@ -51,18 +60,22 @@ async function refresh({ force = false } = {}) {
 		loading.hidden = true;
 		errorBox.hidden = true;
 		renderChips();
-		render();
+		renderGrid();
 	} catch (err) {
 		loading.hidden = true;
 		grid.hidden = true;
 		errorBox.hidden = false;
-		$('error-msg').textContent = `The catalog did not load (${err?.message || err}). It is a public feed, so this is almost always a network blip.`;
+		// The localized sentence stays in the DOM untouched (i18n owns it); the
+		// machine-readable cause goes in its own node so a later locale pass
+		// cannot overwrite the only actionable half of this state.
+		$('error-detail').textContent =
+			`Cause: ${err?.message || err}. The catalog is a public feed, so this is almost always a network blip.`;
 	}
 }
 
 function wireToolbar() {
 	const search = $('search');
-	search.addEventListener('input', () => { query = search.value.trim().toLowerCase(); render(); });
+	search.addEventListener('input', () => { query = search.value.trim().toLowerCase(); applyFilter(); });
 	document.addEventListener('keydown', (e) => {
 		if (e.key === '/' && document.activeElement !== search && !/input|textarea|select/i.test(document.activeElement?.tagName || '')) {
 			e.preventDefault();
@@ -77,75 +90,99 @@ function wireToolbar() {
 	$('clear-search').addEventListener('click', () => {
 		search.value = '';
 		query = '';
-		render();
+		applyFilter();
+		search.focus();
 	});
 }
 
 function renderChips() {
 	const grouped = bySlot(allGarments);
 	const chips = ['all', ...GARMENT_SLOTS.filter((s) => grouped.has(s))];
+	if (!chips.includes(activeSlot)) activeSlot = 'all';
 	$('chips').innerHTML = chips.map((slot) => `
-		<button type="button" class="wd-chip${slot === activeSlot ? ' is-active' : ''}" data-slot="${slot}"
-			aria-pressed="${slot === activeSlot}">
+		<button type="button" class="wd-chip" data-slot="${slot}" aria-pressed="false">
 			${slot === 'all' ? 'Everything' : esc(SLOT_LABELS[slot] || slot)}
 		</button>
 	`).join('');
 	$('chips').querySelectorAll('.wd-chip').forEach((chip) => {
 		chip.addEventListener('click', () => {
 			activeSlot = chip.dataset.slot;
-			renderChips();
-			render();
+			syncChips();
+			applyFilter();
 		});
 	});
+	syncChips();
 }
 
-function visibleGarments() {
-	return allGarments.filter((g) => {
-		if (activeSlot !== 'all' && g.slot !== activeSlot) return false;
-		if (!query) return true;
-		return `${g.name} ${g.slot} ${g.id}`.toLowerCase().includes(query);
+// Reflect the active slot without replacing the buttons, so the chip a keyboard
+// user just pressed Enter on still holds focus afterwards.
+function syncChips() {
+	$('chips').querySelectorAll('.wd-chip').forEach((chip) => {
+		const on = chip.dataset.slot === activeSlot;
+		chip.classList.toggle('is-active', on);
+		chip.setAttribute('aria-pressed', String(on));
 	});
 }
 
-function render() {
+function matchesFilter(g) {
+	if (activeSlot !== 'all' && g.slot !== activeSlot) return false;
+	if (!query) return true;
+	return `${g.name} ${g.slot} ${g.id}`.toLowerCase().includes(query);
+}
+
+function cardHtml(g) {
+	const thumb = g.preview?.thumbnail;
+	const modelUri = g.model?.uri || '';
+	const version = g.version || 1;
+	return `
+	<article class="wd-card${g.id === highlightId ? ' is-new' : ''}" data-id="${esc(g.id)}" data-slot="${esc(g.slot)}">
+		<div class="wd-thumb" data-thumb>
+			${thumb
+				? `<img src="${esc(thumb)}" alt="${esc(g.name)}" loading="lazy" />`
+				: '<span class="wd-thumb-fallback" aria-hidden="true">◆</span>'}
+			<span class="wd-pill">${esc(g.slot)}</span>
+			${modelUri
+				? `<button type="button" class="wd-3d" data-view3d="${esc(modelUri)}"
+					aria-label="View ${esc(g.name)} in 3D" title="View in 3D">3D</button>`
+				: ''}
+		</div>
+		<div class="wd-body">
+			<h3 class="wd-name" title="${esc(g.name)}">${esc(g.name)}</h3>
+			<p class="wd-meta">v${version} · ${esc(g.license || '')}${g.source?.kind === 'generated' ? ' · generated' : ''}</p>
+			<div class="wd-actions">
+				<a class="wd-btn wd-btn--primary" href="/a/me" title="Open one of your avatars in the editor, Wardrobe tab">Dress your avatar</a>
+			</div>
+		</div>
+	</article>`;
+}
+
+// Build every card once per catalog load. Filtering never touches this.
+function renderGrid() {
 	const grid = $('grid');
-	const items = visibleGarments();
-	$('count').textContent = `${items.length} of ${allGarments.length} pieces`;
-	$('empty').hidden = allGarments.length !== 0;
-	$('empty-search').hidden = !(allGarments.length > 0 && items.length === 0);
-	grid.hidden = items.length === 0;
-	if (!items.length) return;
-
-	grid.innerHTML = items.map((g) => {
-		const thumb = g.preview?.thumbnail;
-		const version = g.version || 1;
-		return `
-		<article class="wd-card${g.id === highlightId ? ' is-new' : ''}" data-id="${esc(g.id)}">
-			<div class="wd-thumb" data-thumb>
-				${thumb
-					? `<img src="${esc(thumb)}" alt="${esc(g.name)}" loading="lazy" />`
-					: '<span class="wd-thumb-fallback" aria-hidden="true">◆</span>'}
-				<span class="wd-pill">${esc(g.slot)}</span>
-				<button type="button" class="wd-3d" data-view3d="${esc(g.model?.uri || '')}"
-					aria-label="View ${esc(g.name)} in 3D" title="View in 3D">3D</button>
-			</div>
-			<div class="wd-body">
-				<h3 class="wd-name" title="${esc(g.name)}">${esc(g.name)}</h3>
-				<p class="wd-meta">v${version} · ${esc(g.license || '')}${g.source?.kind === 'generated' ? ' · generated' : ''}</p>
-				<div class="wd-actions">
-					<a class="wd-btn wd-btn--primary" href="/a/me" title="Open one of your avatars in the editor, Wardrobe tab">Dress your avatar</a>
-				</div>
-			</div>
-		</article>`;
-	}).join('');
-
+	grid.innerHTML = allGarments.map(cardHtml).join('');
+	cardEls = [...grid.children];
 	grid.querySelectorAll('[data-view3d]').forEach((btn) => {
 		btn.addEventListener('click', () => swapInViewer(btn));
 	});
+	applyFilter();
 	if (highlightId) {
-		const card = grid.querySelector(`.wd-card[data-id="${CSS.escape(highlightId)}"]`);
-		card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		const i = allGarments.findIndex((g) => g.id === highlightId);
+		if (i >= 0) cardEls[i]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 	}
+}
+
+function applyFilter() {
+	let shown = 0;
+	allGarments.forEach((g, i) => {
+		const visible = matchesFilter(g);
+		if (visible) shown++;
+		const el = cardEls[i];
+		if (el) el.hidden = !visible;
+	});
+	$('count').textContent = `${shown} of ${allGarments.length} pieces`;
+	$('empty').hidden = allGarments.length !== 0;
+	$('empty-search').hidden = !(allGarments.length > 0 && shown === 0);
+	$('grid').hidden = shown === 0;
 }
 
 // Swap a card's static thumbnail for a live <model-viewer> on demand, so the
@@ -191,7 +228,11 @@ function wireGenerator() {
 				const msg = body.message || body.error_description || body.error || `request failed (${r.status})`;
 				throw new Error(msg);
 			}
-			localStorage.setItem(JOB_KEY, JSON.stringify({ job: body.job_id, prompt, slot: slotSel.value }));
+			// Storage is a resume convenience, not a requirement: a sandboxed
+			// webview that refuses it still gets a live poll for this session.
+			try {
+				localStorage.setItem(JOB_KEY, JSON.stringify({ job: body.job_id, prompt, slot: slotSel.value }));
+			} catch { /* storage unavailable */ }
 			pollJob(body.job_id);
 		} catch (err) {
 			setGenBusy(false);
@@ -210,15 +251,23 @@ function resumePendingJob() {
 	pollJob(saved.job);
 }
 
-async function pollJob(jobId) {
+async function pollJob(jobId, failures = 0) {
 	try {
 		const r = await fetch(`/api/garment-forge?job=${encodeURIComponent(jobId)}`);
 		const body = await r.json().catch(() => ({}));
+		// A job the forge no longer knows about is terminal, not a blip. Treating
+		// it as transient used to keep the saved id in storage forever, so the
+		// generator came back disabled on every later visit to this page.
+		if (r.status === 404 || body.error === 'job_not_found') {
+			forgetJob();
+			renderStages(null, false);
+			setGenStatus('err', 'That job is no longer on the forge (finished jobs are cleared after a while). Nothing is pending, so describe a piece and forge it again.');
+			return;
+		}
 		if (!r.ok) throw new Error(body.message || body.error || `poll failed (${r.status})`);
 
 		if (body.status === 'done') {
-			localStorage.removeItem(JOB_KEY);
-			setGenBusy(false);
+			forgetJob();
 			renderStages('publish', true);
 			setGenStatus('ok', 'Published. Your piece is live in the catalog below and wearable in the editor right now.');
 			highlightId = body.garment_id || null;
@@ -226,8 +275,7 @@ async function pollJob(jobId) {
 			return;
 		}
 		if (body.status === 'failed' || body.error) {
-			localStorage.removeItem(JOB_KEY);
-			setGenBusy(false);
+			forgetJob();
 			renderStages(null, false);
 			setGenStatus('err', `Generation failed: ${body.error || 'unknown error'}. Nothing was published; try a simpler description.`);
 			return;
@@ -236,11 +284,26 @@ async function pollJob(jobId) {
 		setGenStatus('spin', `Working: ${body.stage || 'queued'}… about 7 minutes end to end.`);
 		setTimeout(() => pollJob(jobId), POLL_MS);
 	} catch (err) {
-		// Transient poll failure: keep the job, keep polling. The worker's job
-		// state is durable, so a blip never orphans a generation.
+		// Transient poll failure: keep the saved job and keep polling, because the
+		// worker's job state is durable and a blip must never orphan a generation.
+		// After MAX_POLL_FAILURES in a row we stop and hand the form back rather
+		// than leave the user staring at a disabled generator.
+		const next = failures + 1;
+		if (next >= MAX_POLL_FAILURES) {
+			setGenBusy(false);
+			setGenStatus('err', `Lost contact with the forge (${String(err.message || err).slice(0, 80)}). Your job is still saved: reload this page to pick it back up, or forge something new.`);
+			return;
+		}
 		setGenStatus('spin', `Reconnecting (${String(err.message || err).slice(0, 60)})…`);
-		setTimeout(() => pollJob(jobId), POLL_MS * 2);
+		setTimeout(() => pollJob(jobId, next), POLL_MS * 2);
 	}
+}
+
+// Clear the resumable job and unlock the generator. Every terminal path goes
+// through here so the two can never drift apart.
+function forgetJob() {
+	try { localStorage.removeItem(JOB_KEY); } catch { /* storage unavailable */ }
+	setGenBusy(false);
 }
 
 function renderStages(current, allDone) {

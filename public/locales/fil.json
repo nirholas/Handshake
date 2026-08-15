@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "Ang React wrapper sa paligid ng SDK. Nag-i-import ng <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, at <code>useAvatar</code> direkta mula sa <code>/avatar-sdk/src/react.jsx</code>. Ang React ay nilo-load mula sa isang CDN sa pamamagitan ng import map kaya gumagana ang page na ito nang walang bundler step.",
+		"the_react_wrapper_around_the_sdk_imports": "Ang React wrapper sa paligid ng SDK. Nag-i-import ng <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, at <code>useAvatar</code> direkta mula sa <code>/avatar-sdk/src/react.js</code>. Ang React ay nilo-load mula sa isang CDN sa pamamagitan ng import map kaya gumagana ang page na ito nang walang bundler step.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epiko",
 		"it_pays_the_quoted_price_and_receives": "Babayaran ang nakasaad na presyo at matatanggap ang key <b>isang beses</b>. I-import agad.",
 		"legendary": "Maalamat",
-		"long_brandable_solana_addresses_4_5_characte": "Mahaba, brandable na Solana address — 4–5+ character prefix na hindi kayang abutin ng live grinder — ginawa nang maaga sa batch CPU at ibinebenta mula sa stock. Bumili ng isa at ang private key ay ihahatid <strong>isang beses</strong> sa pamamagitan ng <a href=\"/vanity/gallery\">x402</a> rail, pagkatapos ay sisirain ang nakaimbak na kopya nito. Kailangan ng bagong ≤3-char grind? Gamitin ang <a href=\"/vanity-wallet\">live grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Mahaba, brandable na Solana address — 4–5+ character prefix na hindi kayang abutin ng live grinder — ginawa nang maaga sa batch CPU at ibinebenta mula sa stock. Bumili ng isa at ang private key ay ihahatid <strong>isang beses</strong> sa pamamagitan ng <a href=\"/x402\">x402</a> rail, pagkatapos ay sisirain ang nakaimbak na kopya nito. Kailangan ng bagong ≤3-char grind? Gamitin ang <a href=\"/vanity-wallet\">live grinder</a>.",
 		"meta_description": "Bumili ng mahaba, brandable na Solana vanity address na agad ihahatid mula sa stock — 4–5+ character prefix na hindi kayang abutin ng live grinder, ginawa nang maaga sa batch CPU at ibinebenta sa pamamagitan ng x402. Ang presyo ay nagbabago ayon sa rarity.",
 		"meta_og_description": "Mahaba, brandable na Solana vanity address, ginawa nang maaga at ibinebenta mula sa stock. Ihinahatid nang isang beses, naka-encrypt habang nakaimbak, presyo ayon sa rarity.",
 		"meta_og_title": "Imbentaryo ng Premium Vanity · three.ws",

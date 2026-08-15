@@ -62,7 +62,10 @@ async function api(path, opts) {
 
 function toast(msg) {
 	let t = $('drop-toast');
-	if (!t) { t = document.createElement('div'); t.id = 'drop-toast'; t.className = 'drop-toast'; document.body.appendChild(t); }
+	// Both host pages style the toast as `#drop-toast.toast` (the .show class
+	// slides it in), so the element has to carry `toast` or it lands unstyled in
+	// normal flow at the bottom of the document instead of floating.
+	if (!t) { t = document.createElement('div'); t.id = 'drop-toast'; t.className = 'toast'; document.body.appendChild(t); }
 	t.textContent = msg; t.classList.add('show');
 	clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
 }
@@ -101,7 +104,6 @@ function renderOpenedWallet(container, wallet, address) {
 function mountCreate() {
 	const root = $('drop-create');
 	if (!root) return;
-	let config = null;
 	let directKeypair = null; // { publicKey, secretKey } when the composer generates a recipient key
 
 	const els = {
@@ -113,15 +115,39 @@ function mountCreate() {
 		btn: $('dc-submit'), hint: $('dc-hint'), err: $('dc-err'), result: $('dc-result'),
 	};
 
+	// The hint ships a translatable "Loading pricing…" placeholder, but every
+	// value below is computed from the live config. i18n.js applies its catalog
+	// once, asynchronously, after the locale resolves, so whichever of the two
+	// lands second wins: without dropping the annotation the hint can be reset
+	// to "Loading pricing…" forever and the visitor never learns the fee.
+	function setHint(text) {
+		els.hint.removeAttribute('data-i18n');
+		els.hint.textContent = text;
+	}
+	// Keep the composer's bounds honest: the server rejects an expiry outside its
+	// own window and an asset it cannot fund, so mirror both from the live config
+	// instead of trusting the markup's defaults to stay in step with it.
+	function applyConfig(c) {
+		if (c.expiry) {
+			els.expiry.min = String(c.expiry.minHours);
+			els.expiry.max = String(c.expiry.maxHours);
+			if (!els.expiry.value) els.expiry.value = String(c.expiry.defaultHours);
+		}
+		if (Array.isArray(c.assets) && c.assets.length) {
+			for (const opt of els.asset.options) opt.hidden = !c.assets.includes(opt.value);
+			if (!c.assets.includes(els.asset.value)) els.asset.value = c.assets[0];
+		}
+	}
+
 	api('?view=config').then((c) => {
-		config = c;
+		applyConfig(c);
 		if (!c.fundingConfigured) {
-			els.hint.textContent = 'Sealed drops are unavailable in this environment (funding wallet not configured).';
+			setHint('Sealed drops are unavailable in this environment (funding wallet not configured).');
 			els.btn.disabled = true;
 		} else {
-			els.hint.textContent = `You’ll pay a $${c.createFeeUsd} create fee. The gift amount is funded on-chain into a fresh wallet.`;
+			setHint(`You’ll pay a $${c.createFeeUsd} create fee. The gift amount is funded on-chain into a fresh wallet.`);
 		}
-	}).catch(() => { els.hint.textContent = 'Could not load drop config — reload the page.'; });
+	}).catch(() => { setHint('Could not load drop config. Reload the page to try again.'); });
 
 	function syncSeal() {
 		const mode = els.seal();

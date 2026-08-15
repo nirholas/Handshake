@@ -4,19 +4,40 @@ export class KTXTools{
     constructor(){
         this.ktxEncoder = null;
         this.libktx = null;
-        this.init();
+        this.unavailableReason = null;
+        // Kept as a promise so compress() can await the encoder instead of
+        // racing it, and so a missing libktx never becomes an unhandled
+        // rejection at import time.
+        this.ready = this.init();
     }
 
     async init() {
         const canvasWebgl = document.createElement('canvas');
         const gl = canvasWebgl.getContext('webgl'); // WebGL context is needed for KTX operations
-        const ktxEncoder = new KtxDecoder(gl, window.LIBKTX);
-        await ktxEncoder.init(gl, window.LIBKTX);
-        this.ktxEncoder = ktxEncoder;
-        this.libktx = ktxEncoder.libktx;
+        if (!gl) {
+            this.unavailableReason = 'no WebGL context available for the KTX encoder';
+            return false;
+        }
+        if (typeof window.LIBKTX !== 'function') {
+            this.unavailableReason = 'libktx.js did not load (expected the LIBKTX global from /avatar-studio/ktx2/libktx.js)';
+            return false;
+        }
+        try {
+            const ktxEncoder = new KtxDecoder(gl, window.LIBKTX);
+            await ktxEncoder.init(gl, window.LIBKTX);
+            this.ktxEncoder = ktxEncoder;
+            this.libktx = ktxEncoder.libktx;
+            return true;
+        } catch (err) {
+            this.unavailableReason = `libktx failed to initialize: ${err?.message || err}`;
+            return false;
+        }
     }
 
     async compress(raw_data, width, height, comps, options = {}){
+        if (!(await this.ready)) {
+            throw new Error(`KTX2 compression is unavailable: ${this.unavailableReason}. Export again with KTX compression turned off.`);
+        }
         const basisu_options = await new this.libktx.ktxBasisParams();
         const userBasisuOptions = options;
 

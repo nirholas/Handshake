@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — Hook",
 		"lab": "<a href=\"/demos\">&larr; Lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws Lab",
-		"the_react_wrapper_around_the_sdk_imports": "Der React-Wrapper für das SDK. Importiert <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> und <code>useAvatar</code> direkt aus <code>/avatar-sdk/src/react.jsx</code>. React wird über eine Import-Map von einem CDN geladen, sodass diese Seite ohne Bundler-Schritt funktioniert.",
+		"the_react_wrapper_around_the_sdk_imports": "Der React-Wrapper für das SDK. Importiert <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> und <code>useAvatar</code> direkt aus <code>/avatar-sdk/src/react.js</code>. React wird über eine Import-Map von einem CDN geladen, sodass diese Seite ohne Bundler-Schritt funktioniert.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Episch",
 		"it_pays_the_quoted_price_and_receives": "Es zahlt den angebotenen Preis und erhält den Schlüssel <b>einmalig</b>. Importieren Sie ihn sofort.",
 		"legendary": "Legendär",
-		"long_brandable_solana_addresses_4_5_characte": "Lange, einprägsame Solana Adressen – 4–5+ Zeichen lange Präfixe, die der Live-Grinder nicht erreichen kann – vorab auf Batch-CPUs generiert und ab Lager verkauft. Kaufen Sie eine, und der private Schlüssel wird <strong>einmalig</strong> über die <a href=\"/vanity/gallery\">x402</a>-Schiene geliefert, dann wird seine gespeicherte Kopie vernichtet. Benötigen Sie stattdessen einen frischen Grind mit ≤3 Zeichen? Nutzen Sie den <a href=\"/vanity-wallet\">Live-Grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Lange, einprägsame Solana Adressen – 4–5+ Zeichen lange Präfixe, die der Live-Grinder nicht erreichen kann – vorab auf Batch-CPUs generiert und ab Lager verkauft. Kaufen Sie eine, und der private Schlüssel wird <strong>einmalig</strong> über die <a href=\"/x402\">x402</a>-Schiene geliefert, dann wird seine gespeicherte Kopie vernichtet. Benötigen Sie stattdessen einen frischen Grind mit ≤3 Zeichen? Nutzen Sie den <a href=\"/vanity-wallet\">Live-Grinder</a>.",
 		"meta_description": "Kaufen Sie eine lange, einprägsame Solana Vanity-Adresse, sofort ab Lager geliefert – 4–5+ Zeichen lange Präfixe, die der Live-Grinder nicht erreichen kann, vorab auf Batch-CPUs generiert und über x402 verkauft. Der Preis skaliert mit der Seltenheit.",
 		"meta_og_description": "Lange, einprägsame Solana Vanity-Adressen, vorab generiert und ab Lager verkauft. Einmalig geliefert, im Ruhezustand verschlüsselt, Preis nach Seltenheit.",
 		"meta_og_title": "Premium Vanity-Inventar · three.ws",

@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; labor</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws labor",
-		"the_react_wrapper_around_the_sdk_imports": "Az SDK React burkolója. Közvetlenül importálja a <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> és <code>useAvatar</code> elemeket a <code>/avatar-sdk/src/react.jsx</code> fájlból. A React CDN-ről töltődik be egy import térkép segítségével, így ez az oldal bundler lépés nélkül is működik.",
+		"the_react_wrapper_around_the_sdk_imports": "Az SDK React burkolója. Közvetlenül importálja a <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> és <code>useAvatar</code> elemeket a <code>/avatar-sdk/src/react.js</code> fájlból. A React CDN-ről töltődik be egy import térkép segítségével, így ez az oldal bundler lépés nélkül is működik.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epikus",
 		"it_pays_the_quoted_price_and_receives": "Kifizeti az ajánlott árat, és a kulcsot <b>egyszer</b> megkapja. Azonnal importálja.",
 		"legendary": "Legendás",
-		"long_brandable_solana_addresses_4_5_characte": "Hosszú, márkázható Solana címek — 4-5+ karakteres előtagok, amelyeket az élő generátor nem ér el — előre generálva kötegelt CPU-n, raktárról értékesítve. Vásároljon egyet, és a privát kulcsot <strong>egyszer</strong> kézbesítjük a <a href=\"/vanity/gallery\">x402</a> csatornán keresztül, majd a tárolt másolata megsemmisül. Ehelyett friss, ≤3 karakteres generálásra van szüksége? Használja az <a href=\"/vanity-wallet\">élő generátort</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Hosszú, márkázható Solana címek — 4-5+ karakteres előtagok, amelyeket az élő generátor nem ér el — előre generálva kötegelt CPU-n, raktárról értékesítve. Vásároljon egyet, és a privát kulcsot <strong>egyszer</strong> kézbesítjük a <a href=\"/x402\">x402</a> csatornán keresztül, majd a tárolt másolata megsemmisül. Ehelyett friss, ≤3 karakteres generálásra van szüksége? Használja az <a href=\"/vanity-wallet\">élő generátort</a>.",
 		"meta_description": "Vásároljon hosszú, márkázható Solana vanity címet, azonnal raktárról szállítva — 4-5+ karakteres előtagok, amelyeket az élő generátor nem ér el, előre generálva kötegelt CPU-n és x402-en keresztül értékesítve. Az ár a ritkasággal arányosan változik.",
 		"meta_og_description": "Hosszú, márkázható Solana vanity címek, előre generálva és raktárról értékesítve. Egyszer kézbesítve, nyugalmi állapotban titkosítva, ritkaság alapján árazva.",
 		"meta_og_title": "Prémium Vanity Készlet · three.ws",

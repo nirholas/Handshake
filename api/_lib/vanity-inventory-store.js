@@ -111,14 +111,19 @@ export async function upsertInventoryItem(item) {
  * @param {number} [opts.offset]
  * @returns {Promise<object[]>}
  */
+function availableWhere({ prefix, tier } = {}) {
+	let where = sql`status = 'available'`;
+	if (prefix) where = sql`${where} AND lower(prefix) LIKE ${String(prefix).toLowerCase() + '%'}`;
+	if (tier) where = sql`${where} AND rarity_tier = ${String(tier)}`;
+	return where;
+}
+
 export async function listAvailable(opts = {}) {
 	const { prefix, tier, sort = 'rarity', limit = 60, offset = 0 } = opts;
 	const lim = Math.min(Math.max(1, Number(limit) || 60), 200);
 	const off = Math.max(0, Number(offset) || 0);
 
-	let where = sql`status = 'available'`;
-	if (prefix) where = sql`${where} AND lower(prefix) LIKE ${String(prefix).toLowerCase() + '%'}`;
-	if (tier) where = sql`${where} AND rarity_tier = ${String(tier)}`;
+	const where = availableWhere({ prefix, tier });
 
 	let order;
 	if (sort === 'price') order = sql`price_usd ASC, rarity_score DESC`;
@@ -132,6 +137,22 @@ export async function listAvailable(opts = {}) {
 		LIMIT ${lim} OFFSET ${off}
 	`;
 	return rows.map(shapePublic);
+}
+
+/**
+ * How many available rows match the same filter listAvailable() would page over.
+ * The listing needs this to tell a browser "showing 100 of 385" and to know when
+ * a "load more" page exists, instead of silently capping the shelf at one page.
+ *
+ * @param {object} [opts]
+ * @param {string} [opts.prefix]
+ * @param {string} [opts.tier]
+ * @returns {Promise<number>}
+ */
+export async function countAvailable(opts = {}) {
+	const where = availableWhere(opts);
+	const [row] = await sql`SELECT count(*) AS n FROM vanity_inventory WHERE ${where}`;
+	return Number(row?.n || 0);
 }
 
 /** Public detail for one address (metadata only, any status). */

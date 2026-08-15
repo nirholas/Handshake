@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "De React-wrapper rond de SDK. Importeert <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, en <code>useAvatar</code> direct van <code>/avatar-sdk/src/react.jsx</code>. React wordt geladen vanaf een CDN via een import map, zodat deze pagina werkt zonder een bundler-stap.",
+		"the_react_wrapper_around_the_sdk_imports": "De React-wrapper rond de SDK. Importeert <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, en <code>useAvatar</code> direct van <code>/avatar-sdk/src/react.js</code>. React wordt geladen vanaf een CDN via een import map, zodat deze pagina werkt zonder een bundler-stap.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Episch",
 		"it_pays_the_quoted_price_and_receives": "Het betaalt de opgegeven prijs en ontvangt de sleutel <b>eenmalig</b>. Importeer deze direct.",
 		"legendary": "Legendarisch",
-		"long_brandable_solana_addresses_4_5_characte": "Lange, brandbare Solana adressen — voorvoegsels van 4–5+ tekens die de live grinder niet kan bereiken — vooraf gegenereerd op batch-CPU en uit voorraad verkocht. Koop er een en de privésleutel wordt <strong>eenmalig</strong> geleverd via de <a href=\"/vanity/gallery\">x402</a> rail, waarna de opgeslagen kopie wordt vernietigd. Toch liever een verse grind van ≤3 tekens? Gebruik de <a href=\"/vanity-wallet\">live grinder</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Lange, brandbare Solana adressen — voorvoegsels van 4–5+ tekens die de live grinder niet kan bereiken — vooraf gegenereerd op batch-CPU en uit voorraad verkocht. Koop er een en de privésleutel wordt <strong>eenmalig</strong> geleverd via de <a href=\"/x402\">x402</a> rail, waarna de opgeslagen kopie wordt vernietigd. Toch liever een verse grind van ≤3 tekens? Gebruik de <a href=\"/vanity-wallet\">live grinder</a>.",
 		"meta_description": "Koop een lang, brandbaar Solana vanity-adres, direct uit voorraad geleverd — voorvoegsels van 4–5+ tekens die de live grinder niet kan bereiken, vooraf gegenereerd op batch-CPU en verkocht via x402. Prijs schaalt met zeldzaamheid.",
 		"meta_og_description": "Lange, brandbare Solana vanity-adressen, vooraf gegenereerd en uit voorraad verkocht. Eenmalig geleverd, versleuteld in rust, geprijsd op zeldzaamheid.",
 		"meta_og_title": "Premium Vanity Inventaris · three.ws",

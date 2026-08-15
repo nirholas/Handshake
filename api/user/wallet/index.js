@@ -18,9 +18,9 @@ import { requireCsrf } from '../../_lib/csrf.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { generateAgentWallet, generateSolanaAgentWallet, getSolanaAddressBalances } from '../../_lib/agent-wallet.js';
 import { evmFallbackProvider } from '../../_lib/evm/rpc.js';
+import { solPriceUsd } from '../../_lib/sol-price.js';
 import { recordEvent } from '../../_lib/usage.js';
 
-const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const BASE_USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
 // Safety net only, and it must stay shape-identical to the migration named above.
@@ -108,11 +108,15 @@ export default wrap(async (req, res) => {
 			RETURNING solana_address, evm_address, created_at
 		`;
 
+		// recordEvent is fire-and-forget and returns nothing: it queues the write on
+		// a microtask and swallows its own failures. Chaining .catch() onto it threw
+		// a TypeError here AFTER the wallet row was already committed, so every first
+		// provision answered 500 and the page told the user it had failed.
 		recordEvent({
 			userId: session.id,
 			event: 'master_wallet_created',
 			meta: { solana_address: row.solana_address, evm_address: row.evm_address },
-		}).catch(() => {});
+		});
 
 		return json(res, 201, {
 			wallet: {
@@ -137,22 +141,42 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { wallet: null });
 	}
 
-	// Fetch balances in parallel — never block the page on a price failure
-	const [solBalances, evmUsdc] = await Promise.allSettled([
+	// Read every leg in parallel; no single failure may block the others. The SOL
+	// price is a third leg rather than something the balance read carries, because
+	// getSolanaAddressBalances returns raw amounts only: `{ sol, usdc }`. Reading
+	// it as `{ native, tokens, total_usd }` (a shape it has never returned) is what
+	// made every Solana balance on /wallet render "unavailable" for every account.
+	const [solBalances, evmUsdc, solPrice] = await Promise.allSettled([
 		row.solana_address ? getSolanaAddressBalances(row.solana_address, 'mainnet') : null,
 		fetchEvmUsdcBalance(row.evm_address),
+		solPriceUsd(),
 	]);
 
-	const sol = solBalances.status === 'fulfilled' ? solBalances.value : null;
-	const evm_usdc = evmUsdc.status === 'fulfilled' ? evmUsdc.value : null;
+	// A null here means the network did not answer, which is not the same as zero:
+	// the page renders it as "unavailable" and leaves it out of the total.
+	const solRead = solBalances.status === 'fulfilled' ? solBalances.value : null;
+	const solNative = typeof solRead?.sol === 'number' ? solRead.sol : null;
+	const solUsdc = typeof solRead?.usdc === 'number' ? solRead.usdc : null;
+	const evmUsdcNum = evmUsdc.status === 'fulfilled' && typeof evmUsdc.value === 'number' ? evmUsdc.value : null;
+	const price =
+		solPrice.status === 'fulfilled' && Number(solPrice.value) > 0 ? Number(solPrice.value) : null;
 
-	const solNative = sol?.native ?? null;
-	const solUsdc = sol?.tokens?.find((t) => t.mint === USDC_MINT)?.uiAmount ?? null;
-	const solUsd = sol?.total_usd ?? null;
-	const evmUsdcNum = typeof evm_usdc === 'number' ? evm_usdc : null;
-
+	// Total only sums the legs that answered. A held SOL balance with no price is
+	// the one case that voids the total outright: counting it at zero would
+	// under-report real money, and a zero balance needs no price to value.
+	const legs = [];
+	let solValueUnknown = false;
+	if (solNative != null) {
+		if (solNative === 0) legs.push(0);
+		else if (price != null) legs.push(solNative * price);
+		else solValueUnknown = true;
+	}
+	if (solUsdc != null) legs.push(solUsdc);
+	if (evmUsdcNum != null) legs.push(evmUsdcNum);
 	const totalUsd =
-		typeof solUsd === 'number' ? solUsd + (evmUsdcNum ?? 0) : null;
+		solValueUnknown || !legs.length
+			? null
+			: Math.round(legs.reduce((a, b) => a + b, 0) * 100) / 100;
 
 	return json(res, 200, {
 		wallet: {

@@ -841,7 +841,7 @@
 				{
 					"path": "/voice",
 					"title": "Voice Lab",
-					"description": "Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
+					"description": "Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
 					"priority": 0.7,
 					"changefreq": "weekly",
 					"added": "2026-06-05",

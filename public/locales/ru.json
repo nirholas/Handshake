@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — хук",
 		"lab": "<a href=\"/demos\">&larr; лаборатория</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws лаборатория",
-		"the_react_wrapper_around_the_sdk_imports": "Оболочка React для SDK. Импортирует <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> и <code>useAvatar</code> напрямую из <code>/avatar-sdk/src/react.jsx</code>. React загружается из CDN через карту импорта, поэтому эта страница работает без шага сборки.",
+		"the_react_wrapper_around_the_sdk_imports": "Оболочка React для SDK. Импортирует <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> и <code>useAvatar</code> напрямую из <code>/avatar-sdk/src/react.js</code>. React загружается из CDN через карту импорта, поэтому эта страница работает без шага сборки.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Эпический",
 		"it_pays_the_quoted_price_and_receives": "Он оплачивает указанную цену и получает ключ <b>один раз</b>. Импортируйте его немедленно.",
 		"legendary": "Легендарный",
-		"long_brandable_solana_addresses_4_5_characte": "Длинные, брендируемые Solana адреса — префиксы из 4–5+ символов, недоступные для живого генератора — сгенерированные заранее на пакетных CPU и продаваемые со склада. Купите один, и приватный ключ будет доставлен <strong>один раз</strong> через <a href=\"/vanity/gallery\">x402</a> канал, после чего его сохраненная копия будет уничтожена. Нужен новый генератор с ≤3 символами? Используйте <a href=\"/vanity-wallet\">живой генератор</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Длинные, брендируемые Solana адреса — префиксы из 4–5+ символов, недоступные для живого генератора — сгенерированные заранее на пакетных CPU и продаваемые со склада. Купите один, и приватный ключ будет доставлен <strong>один раз</strong> через <a href=\"/x402\">x402</a> канал, после чего его сохраненная копия будет уничтожена. Нужен новый генератор с ≤3 символами? Используйте <a href=\"/vanity-wallet\">живой генератор</a>.",
 		"meta_description": "Купите длинный, брендируемый Solana vanity-адрес, доставляемый мгновенно со склада — префиксы из 4–5+ символов, недоступные для живого генератора, сгенерированные заранее на пакетных CPU и продаваемые через x402. Цена зависит от редкости.",
 		"meta_og_description": "Длинные, брендируемые Solana vanity-адреса, сгенерированные заранее и продаваемые со склада. Доставляются один раз, зашифрованы в состоянии покоя, цена определяется редкостью.",
 		"meta_og_title": "Премиум инвентарь Vanity · three.ws",

@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — ሁክ",
 		"lab": "<a href=\"/demos\">&larr; ላብ</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ላብ",
-		"the_react_wrapper_around_the_sdk_imports": "በኤስዲኬ ዙሪያ ያለው የReact መጠቅለያ። <code>Avatar</code>፣ <code>AgentAvatar</code>፣ <code>AvatarCreator</code> እና <code>useAvatar</code>ን በቀጥታ ከ<code>/avatar-sdk/src/react.jsx</code> ያስመጣል። React ከሲዲኤን (CDN) የሚጫነው በኢምፖርት ካርታ (import map) በኩል ስለሆነ ይህ ገጽ ያለ ባንደለር (bundler) እርምጃ ይሰራል።",
+		"the_react_wrapper_around_the_sdk_imports": "በኤስዲኬ ዙሪያ ያለው የReact መጠቅለያ። <code>Avatar</code>፣ <code>AgentAvatar</code>፣ <code>AvatarCreator</code> እና <code>useAvatar</code>ን በቀጥታ ከ<code>/avatar-sdk/src/react.js</code> ያስመጣል። React ከሲዲኤን (CDN) የሚጫነው በኢምፖርት ካርታ (import map) በኩል ስለሆነ ይህ ገጽ ያለ ባንደለር (bundler) እርምጃ ይሰራል።",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "ድንቅ",
 		"it_pays_the_quoted_price_and_receives": "የተጠቀሰውን ዋጋ ይከፍላል እና ቁልፉን <b>አንድ ጊዜ</b> ይቀበላል። ወዲያውኑ ያስመጡት።",
 		"legendary": "አፈ ታሪክ",
-		"long_brandable_solana_addresses_4_5_characte": "ረጅም፣ ለብራንድ የሚሆኑ የSolana አድራሻዎች — የቀጥታ መፍጫው ሊደርስባቸው የማይችሉ 4–5+ የቁምፊ ቅድመ ቅጥያዎች — በባች ሲፒዩ ላይ አስቀድሞ የተፈጩ እና ከክምችት የሚሸጡ። አንዱን ይግዙ እና የግል ቁልፉ በ<a href=\"/vanity/gallery\">x402</a> መስመር ላይ <strong>አንድ ጊዜ</strong> ይደርሳል፣ ከዚያም የተከማቸ ቅጂው ይወድማል። በምትኩ አዲስ ≤3-ቁምፊ ፍለጋ ይፈልጋሉ? የ<a href=\"/vanity-wallet\">ቀጥታ መፍጫውን</a> ይጠቀሙ።",
+		"long_brandable_solana_addresses_4_5_characte": "ረጅም፣ ለብራንድ የሚሆኑ የSolana አድራሻዎች — የቀጥታ መፍጫው ሊደርስባቸው የማይችሉ 4–5+ የቁምፊ ቅድመ ቅጥያዎች — በባች ሲፒዩ ላይ አስቀድሞ የተፈጩ እና ከክምችት የሚሸጡ። አንዱን ይግዙ እና የግል ቁልፉ በ<a href=\"/x402\">x402</a> መስመር ላይ <strong>አንድ ጊዜ</strong> ይደርሳል፣ ከዚያም የተከማቸ ቅጂው ይወድማል። በምትኩ አዲስ ≤3-ቁምፊ ፍለጋ ይፈልጋሉ? የ<a href=\"/vanity-wallet\">ቀጥታ መፍጫውን</a> ይጠቀሙ።",
 		"meta_description": "ረጅም፣ ለብራንድ የሚሆን የSolana ቫኒቲ አድራሻ ከክምችት ወዲያውኑ የሚደርስ ይግዙ — የቀጥታ መፍጫው ሊደርስባቸው የማይችሉ 4–5+ የቁምፊ ቅድመ ቅጥያዎች፣ በባች ሲፒዩ ላይ አስቀድሞ የተፈጩ እና በx402 የሚሸጡ። ዋጋው ከብርቅዬነት ጋር ይጨምራል።",
 		"meta_og_description": "ረጅም፣ ለብራንድ የሚመች Solana ቫኒቲ አድራሻዎች፣ አስቀድሞ የተዘጋጁ እና ከክምችት የሚሸጡ። አንድ ጊዜ የሚደርሱ፣ ሲቀመጡ የተመሰጠሩ፣ በብርቅዬነታቸው የሚተመኑ።",
 		"meta_og_title": "ፕሪሚየም ቫኒቲ ክምችት · three.ws",

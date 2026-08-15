@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — 'hook'",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "Die React-omhulsel om die SDK. Dit voer <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, en <code>useAvatar</code> direk in vanaf <code>/avatar-sdk/src/react.jsx</code>. React word vanaf 'n CDN gelaai via 'n invoerkaart, sodat hierdie bladsy sonder 'n bundelstap werk.",
+		"the_react_wrapper_around_the_sdk_imports": "Die React-omhulsel om die SDK. Dit voer <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, en <code>useAvatar</code> direk in vanaf <code>/avatar-sdk/src/react.js</code>. React word vanaf 'n CDN gelaai via 'n invoerkaart, sodat hierdie bladsy sonder 'n bundelstap werk.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epies",
 		"it_pays_the_quoted_price_and_receives": "Dit betaal die aangehaalde prys en ontvang die sleutel <b>een keer</b>. Voer dit onmiddellik in.",
 		"legendary": "Legendaries",
-		"long_brandable_solana_addresses_4_5_characte": "Lang, handelsmerkbare Solana adresse — 4–5+ karakter voorvoegsels wat die lewendige 'grinder' nie kan bereik nie — vooruit op 'batch'-SVE 'gegrind' en uit voorraad verkoop. Koop een en die private sleutel word <strong>een keer</strong> oor die <a href=\"/vanity/gallery\">x402</a> spoor gelewer, waarna sy gestoorde kopie vernietig word. Benodig jy eerder 'n vars ≤3-karakter 'grind'? Gebruik die <a href=\"/vanity-wallet\">lewendige 'grinder'</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Lang, handelsmerkbare Solana adresse — 4–5+ karakter voorvoegsels wat die lewendige 'grinder' nie kan bereik nie — vooruit op 'batch'-SVE 'gegrind' en uit voorraad verkoop. Koop een en die private sleutel word <strong>een keer</strong> oor die <a href=\"/x402\">x402</a> spoor gelewer, waarna sy gestoorde kopie vernietig word. Benodig jy eerder 'n vars ≤3-karakter 'grind'? Gebruik die <a href=\"/vanity-wallet\">lewendige 'grinder'</a>.",
 		"meta_description": "Koop 'n lang, handelsmerkbare Solana 'vanity'-adres wat onmiddellik uit voorraad gelewer word — 4–5+ karakter voorvoegsels wat die lewendige 'grinder' nie kan bereik nie, vooruit op 'batch'-SVE 'gegrind' en via x402 verkoop. Prys skaal met skaarsheid.",
 		"meta_og_description": "Lang, handelsmerkbare Solana vanity-adresse, vooraf gemaal en uit voorraad verkoop. Eenmalig gelewer, geënkripteer in rus, geprys volgens rariteit.",
 		"meta_og_title": "Premium Vanity-voorraad · three.ws",

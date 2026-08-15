@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "React umbúðirnar utan um SDK. Flytur inn <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, og <code>useAvatar</code> beint frá <code>/avatar-sdk/src/react.jsx</code>. React er hlaðið inn frá CDN með innflutningskorti svo þessi síða virkar án þess að þurfa bundler skref.",
+		"the_react_wrapper_around_the_sdk_imports": "React umbúðirnar utan um SDK. Flytur inn <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, og <code>useAvatar</code> beint frá <code>/avatar-sdk/src/react.js</code>. React er hlaðið inn frá CDN með innflutningskorti svo þessi síða virkar án þess að þurfa bundler skref.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epískt",
 		"it_pays_the_quoted_price_and_receives": "Það greiðir uppgefið verð og fær lykilinn <b>einu sinni</b>. Flyttu hann inn strax.",
 		"legendary": "Goðsagnakennt",
-		"long_brandable_solana_addresses_4_5_characte": "Löng, vörumerkjanleg Solana vistföng — 4–5+ stafa forskeyti sem lifandi malarinn nær ekki til — maluð fyrirfram á lotu-örgjörva og seld úr lager. Kauptu eitt og einkalykillinn er afhentur <strong>einu sinni</strong> yfir <a href=\"/vanity/gallery\">x402</a> brautina, síðan er geymda afritinu eytt. Þarftu nýja ≤3 stafa malun í staðinn? Notaðu <a href=\"/vanity-wallet\">lifandi malarann</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Löng, vörumerkjanleg Solana vistföng — 4–5+ stafa forskeyti sem lifandi malarinn nær ekki til — maluð fyrirfram á lotu-örgjörva og seld úr lager. Kauptu eitt og einkalykillinn er afhentur <strong>einu sinni</strong> yfir <a href=\"/x402\">x402</a> brautina, síðan er geymda afritinu eytt. Þarftu nýja ≤3 stafa malun í staðinn? Notaðu <a href=\"/vanity-wallet\">lifandi malarann</a>.",
 		"meta_description": "Kauptu langt, vörumerkjanlegt Solana vanity-vistfang afhent strax úr lager — 4–5+ stafa forskeyti sem lifandi malarinn nær ekki til, maluð fyrirfram á lotu-örgjörva og seld í gegnum x402. Verð fer eftir sjaldgæfni.",
 		"meta_og_description": "Langar, vörumerkjanlegar Solana vanity-heimilisföng, forunnin og seld úr birgðum. Afhent einu sinni, dulkóðuð í hvíld, verðlögð eftir sjaldgæfni.",
 		"meta_og_title": "Úrvals Vanity Birgðir · three.ws",

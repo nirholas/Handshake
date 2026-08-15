@@ -249,9 +249,14 @@ export function mountPriceChart({ host, mint }) {
 		}
 		if (destroyed || mySeq !== seq) return;
 
+		// A visible load put the "Loading chart…" overlay up and hid the canvas, so
+		// every exit from here has to resolve it. Gating on `!chart` instead left
+		// the overlay stuck over a blanked chart forever whenever an interval switch
+		// came back short. Quiet background polls never raised it, so they leave the
+		// last good chart alone.
 		const rows = Array.isArray(payload?.data) ? payload.data : null;
 		if (!rows) {
-			if (!chart) showMsg('Price history is unavailable right now.');
+			if (!quiet) showMsg('Price history is unavailable right now.');
 			return;
 		}
 		const bars = rows
@@ -260,7 +265,7 @@ export function mountPriceChart({ host, mint }) {
 			.sort((a, b) => a.time - b.time);
 
 		if (bars.length < 2) {
-			if (!chart) showMsg('No price history yet for this coin.');
+			if (!quiet) showMsg(`No ${interval.label} price history yet for this coin.`);
 			return;
 		}
 

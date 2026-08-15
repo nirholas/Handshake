@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — i-hook",
 		"lab": "<a href=\"/demos\">&larr; ilebhu</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ilebhu",
-		"the_react_wrapper_around_the_sdk_imports": "I-React wrapper ezungeze i-SDK. Ilanda <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, kanye <code>useAvatar</code> ngqo kusuka ku <code>/avatar-sdk/src/react.jsx</code>. I-React ilayishwa kusuka ku-CDN nge-import map ukuze leli khasi lisebenze ngaphandle kwesinyathelo se-bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "I-React wrapper ezungeze i-SDK. Ilanda <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, kanye <code>useAvatar</code> ngqo kusuka ku <code>/avatar-sdk/src/react.js</code>. I-React ilayishwa kusuka ku-CDN nge-import map ukuze leli khasi lisebenze ngaphandle kwesinyathelo se-bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Okumangalisayo",
 		"it_pays_the_quoted_price_and_receives": "Ikhokha intengo ecashunwe futhi ithola ukhiye <b> kanye kuphela</b>. Yingenise ngokushesha.",
 		"legendary": "Okuyinganekwane",
-		"long_brandable_solana_addresses_4_5_characte": "Amakheli e-Solana amade, angakwazi ukwenziwa umkhiqizo — iziqalo zezinhlamvu ezi-4-5+ umgayi obukhoma angeke azifinyelele — agaywe kusenesikhathi ku-CPU yeqoqo futhi athengiswa esitokweni. Thenga elilodwa bese ukhiye oyimfihlo ulethwa <strong> kanye kuphela</strong> ngaphezu kojantshi we-<a href=\"/vanity/gallery\">x402</a>, bese ikhophi yawo egciniwe iyabhujiswa. Udinga okugayiwe okusha okungaphansi kwezinhlamvu ezi-3 esikhundleni salokho? Sebenzisa umgayi obukhoma we-<a href=\"/vanity-wallet\"></a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Amakheli e-Solana amade, angakwazi ukwenziwa umkhiqizo — iziqalo zezinhlamvu ezi-4-5+ umgayi obukhoma angeke azifinyelele — agaywe kusenesikhathi ku-CPU yeqoqo futhi athengiswa esitokweni. Thenga elilodwa bese ukhiye oyimfihlo ulethwa <strong> kanye kuphela</strong> ngaphezu kojantshi we-<a href=\"/x402\">x402</a>, bese ikhophi yawo egciniwe iyabhujiswa. Udinga okugayiwe okusha okungaphansi kwezinhlamvu ezi-3 esikhundleni salokho? Sebenzisa umgayi obukhoma we-<a href=\"/vanity-wallet\"></a>.",
 		"meta_description": "Thenga ikheli le-Solana vanity elide, elingakwazi ukwenziwa umkhiqizo elilethwa ngokushesha esitokweni — iziqalo zezinhlamvu ezi-4-5+ umgayi obukhoma angeke azifinyelele, agaywe kusenesikhathi ku-CPU yeqoqo futhi athengiswa nge-x402. Intengo ikhuphuka ngokungajwayeleki.",
 		"meta_og_description": "Amakheli e-vanity e-Solana amade, anegama elihle, ahlolwe kusenesikhathi futhi athengiswa esitokweni. Alethwa kanye kuphela, abethelwe lapho egcinwe khona, abiza ngokuya ngobungajwayelekile.",
 		"meta_og_title": "Uhlu Lwe-Vanity Olusezingeni Eliphezulu · three.ws",

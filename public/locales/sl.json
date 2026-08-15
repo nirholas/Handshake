@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laboratorij</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laboratorij",
-		"the_react_wrapper_around_the_sdk_imports": "React ovitek okoli SDK-ja. Uvozi <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> in <code>useAvatar</code> neposredno iz <code>/avatar-sdk/src/react.jsx</code>. React se naloži iz CDN-ja preko zemljevida uvozov, tako da ta stran deluje brez koraka združevanja.",
+		"the_react_wrapper_around_the_sdk_imports": "React ovitek okoli SDK-ja. Uvozi <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> in <code>useAvatar</code> neposredno iz <code>/avatar-sdk/src/react.js</code>. React se naloži iz CDN-ja preko zemljevida uvozov, tako da ta stran deluje brez koraka združevanja.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epsko",
 		"it_pays_the_quoted_price_and_receives": "Plača navedeno ceno in prejme ključ <b>enkrat</b>. Takoj ga uvozite.",
 		"legendary": "Legendarno",
-		"long_brandable_solana_addresses_4_5_characte": "Dolgi, blagovni Solana naslovi — predpone z 4–5+ znaki, ki jih 'live grinder' ne more doseči — vnaprej ustvarjeni na serijskem CPU-ju in prodani iz zaloge. Kupite enega in zasebni ključ je dostavljen <strong>enkrat</strong> preko <a href=\"/vanity/gallery\">x402</a> povezave, nato pa je njegova shranjena kopija uničena. Potrebujete namesto tega svež 'grind' z ≤3 znaki? Uporabite <a href=\"/vanity-wallet\">'live grinder'</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Dolgi, blagovni Solana naslovi — predpone z 4–5+ znaki, ki jih 'live grinder' ne more doseči — vnaprej ustvarjeni na serijskem CPU-ju in prodani iz zaloge. Kupite enega in zasebni ključ je dostavljen <strong>enkrat</strong> preko <a href=\"/x402\">x402</a> povezave, nato pa je njegova shranjena kopija uničena. Potrebujete namesto tega svež 'grind' z ≤3 znaki? Uporabite <a href=\"/vanity-wallet\">'live grinder'</a>.",
 		"meta_description": "Kupite dolg, blagovni Solana 'vanity' naslov, dostavljen takoj iz zaloge — predpone z 4–5+ znaki, ki jih 'live grinder' ne more doseči, vnaprej ustvarjeni na serijskem CPU-ju in prodani preko x402. Cena se prilagaja redkosti.",
 		"meta_og_description": "Dolgi, prepoznavni Solana vanity naslovi, vnaprej ustvarjeni in prodani iz zaloge. Dostavljeni enkrat, šifrirani v mirovanju, cena določena glede na redkost.",
 		"meta_og_title": "Premium Vanity Inventar · three.ws",

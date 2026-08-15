@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — koukku",
 		"lab": "<a href=\"/demos\">&larr; labra</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws labra",
-		"the_react_wrapper_around_the_sdk_imports": "SDK:n React-kääre. Tuo <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> ja <code>useAvatar</code> suoraan osoitteesta <code>/avatar-sdk/src/react.jsx</code>. React ladataan CDN:stä tuontikartan kautta, joten tämä sivu toimii ilman bundler-vaihetta.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK:n React-kääre. Tuo <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> ja <code>useAvatar</code> suoraan osoitteesta <code>/avatar-sdk/src/react.js</code>. React ladataan CDN:stä tuontikartan kautta, joten tämä sivu toimii ilman bundler-vaihetta.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Eeppinen",
 		"it_pays_the_quoted_price_and_receives": "Se maksaa ilmoitetun hinnan ja vastaanottaa avaimen <b>kerran</b>. Tuo se välittömästi.",
 		"legendary": "Legendaarinen",
-		"long_brandable_solana_addresses_4_5_characte": "Pitkiä, brändättäviä Solana-osoitteita – 4–5+ merkin etuliitteitä, joihin reaaliaikainen louhija ei yllä – louhittu etukäteen eräajoprosessoinnilla ja myydään varastosta. Osta yksi, ja yksityinen avain toimitetaan <strong>kerran</strong> <a href=\"/vanity/gallery\">x402</a>-väylän kautta, minkä jälkeen sen tallennettu kopio tuhotaan. Tarvitsetko sen sijaan uuden ≤3 merkin louhinnan? Käytä <a href=\"/vanity-wallet\">reaaliaikaista louhijaa</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Pitkiä, brändättäviä Solana-osoitteita – 4–5+ merkin etuliitteitä, joihin reaaliaikainen louhija ei yllä – louhittu etukäteen eräajoprosessoinnilla ja myydään varastosta. Osta yksi, ja yksityinen avain toimitetaan <strong>kerran</strong> <a href=\"/x402\">x402</a>-väylän kautta, minkä jälkeen sen tallennettu kopio tuhotaan. Tarvitsetko sen sijaan uuden ≤3 merkin louhinnan? Käytä <a href=\"/vanity-wallet\">reaaliaikaista louhijaa</a>.",
 		"meta_description": "Osta pitkä, brändättävä Solana-vanity-osoite, joka toimitetaan heti varastosta – 4–5+ merkin etuliitteet, joihin reaaliaikainen louhija ei yllä, louhittu etukäteen eräajoprosessoinnilla ja myydään x402-palvelun kautta. Hinta skaalautuu harvinaisuuden mukaan.",
 		"meta_og_description": "Pitkiä, brändättäviä Solana-vanity-osoitteita, louhittu etukäteen ja myydään varastosta. Toimitetaan kerran, levossa salattuina, hinnoiteltu harvinaisuuden mukaan.",
 		"meta_og_title": "Premium Vanity -varasto · three.ws",

@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "Ikirangurura cya React gikikije SDK. Gitumiza <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, na <code>useAvatar</code> biturutse kuri <code>/avatar-sdk/src/react.jsx</code>. React ikururwa muri CDN binyuze mu ikarita yo gutumiza (import map) kugira ngo uru rupapuro rukore nta gikorwa cya bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "Ikirangurura cya React gikikije SDK. Gitumiza <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, na <code>useAvatar</code> biturutse kuri <code>/avatar-sdk/src/react.js</code>. React ikururwa muri CDN binyuze mu ikarita yo gutumiza (import map) kugira ngo uru rupapuro rukore nta gikorwa cya bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Iidasanzwe",
 		"it_pays_the_quoted_price_and_receives": "Yishyura igiciro cyatanzwe kandi igahabwa urufunguzo <b>rimwe gusa</b>. Rwinjize ako kanya.",
 		"legendary": "Iidasanzwe cyane",
-		"long_brandable_solana_addresses_4_5_characte": "Aderezi za Solana ndende, zishobora gukoreshwa mu bwamamaza — inyuguti z'ibanze 4–5+ umukoresha w'ako kanya adashobora kugeraho — zakorewe mbere y'igihe kuri CPU ikora icyarimwe kandi zigurishwa zivuye mu bubiko. Gura imwe maze urufunguzo rwihariye rutangwe <strong>rimwe gusa</strong> binyuze kuri <a href=\"/vanity/gallery\">x402</a>, hanyuma kopi yarwo yabitswe irimburwe. Ukeneye gukora iyindi nshya ifite ≤3 inyuguti? Koresha <a href=\"/vanity-wallet\">umukoresha w'ako kanya</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Aderezi za Solana ndende, zishobora gukoreshwa mu bwamamaza — inyuguti z'ibanze 4–5+ umukoresha w'ako kanya adashobora kugeraho — zakorewe mbere y'igihe kuri CPU ikora icyarimwe kandi zigurishwa zivuye mu bubiko. Gura imwe maze urufunguzo rwihariye rutangwe <strong>rimwe gusa</strong> binyuze kuri <a href=\"/x402\">x402</a>, hanyuma kopi yarwo yabitswe irimburwe. Ukeneye gukora iyindi nshya ifite ≤3 inyuguti? Koresha <a href=\"/vanity-wallet\">umukoresha w'ako kanya</a>.",
 		"meta_description": "Gura aderezi ya Solana ndende, yashyirwa mu bwamamaza, itangwa ako kanya ivuye mu bubiko — inyuguti z'ibanze 4–5+ umukoresha w'ako kanya adashobora kugeraho, yakorewe mbere y'igihe kuri CPU ikora icyarimwe kandi igurishwa binyuze kuri x402. Igiciro kigendana n'ubudahwema.",
 		"meta_og_description": "Aderesi ndende, zishobora gukoreshwa mu bwoko bwa Solana (vanity addresses), zateguwe mbere y'igihe kandi zigurishwa zihari. Zitangwa rimwe gusa, zifunze zitarakoreshwa, igiciro kigenwa n'uburyo zidasanzwe.",
 		"meta_og_title": "Ububiko bw'Aderesi za Vanity zidasanzwe · three.ws",

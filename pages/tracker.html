@@ -5,7 +5,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<title data-i18n="tracker.meta_title">KOL Tracker · three.ws</title>
-		<meta name="description" content="Track Solana crypto KOLs by real, on-chain P&L — realized profit, win rate, volume, and trade count computed from their own wallet activity, with X follower counts for the handles we've verified." data-i18n-attr="content:tracker.meta_description"/>
+		<meta name="description" content="Track Solana crypto KOLs by real, on-chain P&L: realized profit, win rate, volume, and trade count computed from their own wallet activity, with X follower counts for the handles we've verified." data-i18n-attr="content:tracker.meta_description"/>
 		<link rel="canonical" href="https://three.ws/tracker" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -18,7 +18,7 @@
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/tracker" />
 		<meta property="og:title" content="KOL Tracker · three.ws" data-i18n-attr="content:tracker.meta_og_title"/>
-		<meta property="og:description" content="Solana crypto KOLs ranked by real, on-chain P&L — not self-reported numbers." data-i18n-attr="content:tracker.meta_og_description"/>
+		<meta property="og:description" content="Solana crypto KOLs ranked by real, on-chain P&L, not self-reported numbers." data-i18n-attr="content:tracker.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=KOL+Tracker&amp;d=Solana+crypto+KOLs+ranked+by+realized+P%26L+computed+from+their+own+wallet%27s+on-chain+trade+history%2C+with+win+rate%2C+volume%2C+trade+count%2C+and+X+follower+counts&amp;p=%2Ftracker" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
@@ -29,7 +29,11 @@
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=KOL+Tracker&amp;d=Solana+crypto+KOLs+ranked+by+realized+P%26L+computed+from+their+own+wallet%27s+on-chain+trade+history%2C+with+win+rate%2C+volume%2C+trade+count%2C+and+X+follower+counts&amp;p=%2Ftracker" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<style>
-			.tk-shell { max-width: 1080px; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
+			/* body is a flex column, so this flex item keeps min-width:auto and refuses
+			   to shrink below the board's min-width. html/body clip overflow-x, so
+			   without min-width:0 every column past the second is unreachable on any
+			   viewport narrower than the board. */
+			.tk-shell { max-width: 1080px; min-width: 0; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
 			.tk-hero { padding: var(--space-xl) 0 var(--space-md); }
 			.tk-kicker { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--weight-semibold) var(--text-2xs)/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 var(--space-sm); }
 			.tk-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 60%, transparent); animation: tk-pulse 1.8s ease infinite; }
@@ -43,12 +47,18 @@
 			.tk-seg-btn:hover { color: var(--color-text); }
 			.tk-seg-btn.is-active { background: var(--surface-3); color: var(--color-text-bright); }
 			.tk-seg-btn:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
-			.tk-count { margin-left: auto; font: var(--weight-medium) var(--text-sm)/1 var(--font-mono); color: var(--color-text-faint); }
+			.tk-meta { margin-left: auto; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-sm); }
+			.tk-count { font: var(--weight-medium) var(--text-sm)/1 var(--font-mono); color: var(--color-text-faint); }
+			.tk-updated { font: var(--weight-regular) var(--text-2xs)/1 var(--font-mono); color: var(--color-text-faint); }
 
 			.tk-board-wrap { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--surface-1); overflow-x: auto; }
-			.tk-board { min-width: 720px; }
-			.tk-head, .tk-row { display: grid; grid-template-columns: 44px 1.6fr 1fr 0.9fr 1fr 0.8fr 0.7fr; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
-			.tk-head { background: var(--surface-2); border-bottom: 1px solid var(--color-border); font: var(--weight-semibold) var(--text-2xs)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); position: sticky; top: 0; }
+			/* Column set is data-driven: a column every row leaves empty is dropped
+			   rather than rendered as 50 dashes, so both tracks are re-derived per
+			   load instead of hardcoded here. */
+			.tk-board { --tk-grid: 44px 1.6fr 1fr 0.9fr 1fr 0.8fr 0.7fr; --tk-min: 720px; min-width: var(--tk-min); }
+			.tk-head, .tk-row, .tk-skel-row { grid-template-columns: var(--tk-grid); }
+			.tk-head, .tk-row { display: grid; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
+			.tk-head { background: var(--surface-2); border-bottom: 1px solid var(--color-border); font: var(--weight-semibold) var(--text-2xs)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); }
 			.tk-col-num { text-align: right; }
 			.tk-row { border-bottom: 1px solid var(--color-border); transition: background var(--duration-fast) var(--ease-standard); }
 			.tk-row:last-child { border-bottom: 0; }
@@ -62,19 +72,25 @@
 			.tk-kol-meta { min-width: 0; }
 			.tk-handle { display: block; font: var(--weight-medium) var(--text-md)/1.2 var(--font-body); color: var(--color-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 			a.tk-handle:hover { color: var(--color-text-bright); text-decoration: underline; }
-			.tk-wallet { display: block; font: var(--weight-regular) var(--text-2xs)/1.2 var(--font-mono); color: var(--color-text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.tk-wallet { display: block; font: var(--weight-regular) var(--text-2xs)/1.2 var(--font-mono); color: var(--color-text-faint); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			a.tk-wallet:hover { color: var(--color-text-dim); text-decoration: underline; }
+			.tk-handle:focus-visible, .tk-wallet:focus-visible, .tk-cta:focus-visible, .tk-footer-links a:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-sm); }
 			.tk-value { font: var(--weight-semibold) var(--text-md)/1 var(--font-mono); color: var(--color-text-bright); text-align: right; }
 			.tk-value.tk-up { color: var(--color-success); }
 			.tk-value.tk-down { color: var(--color-danger); }
 			.tk-value.tk-muted { color: var(--color-text-faint); font-weight: var(--weight-regular); }
 			.tk-source { display: inline-block; margin-left: 6px; font: var(--weight-medium) var(--text-2xs)/1 var(--font-mono); color: var(--color-text-faint); vertical-align: middle; }
 
-			.tk-state { padding: var(--space-2xl) var(--space-md); text-align: center; }
+			.tk-state { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--surface-1); padding: var(--space-2xl) var(--space-md); text-align: center; }
 			.tk-state-title { font: var(--weight-semibold) var(--text-lg)/1.2 var(--font-display); color: var(--color-text-bright); margin: 0 0 var(--space-xs); }
 			.tk-state-msg { font: var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-body); color: var(--color-text-dim); margin: 0 auto var(--space-md); max-width: 52ch; }
-			.tk-state .tk-cta { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); background: var(--accent); color: #0a0a0a; font: var(--weight-semibold) var(--text-md)/1 var(--font-body); text-decoration: none; border: 0; cursor: pointer; }
+			.tk-state .tk-cta { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); background: var(--accent); color: #0a0a0a; font: var(--weight-semibold) var(--text-md)/1 var(--font-body); text-decoration: none; border: 0; cursor: pointer; transition: filter var(--duration-fast) var(--ease-standard); }
+			.tk-state .tk-cta:hover { filter: brightness(1.1); }
+			.tk-state .tk-cta:active { filter: brightness(0.94); }
 
-			.tk-skel-row { display: grid; grid-template-columns: 44px 1.6fr 1fr 0.9fr 1fr 0.8fr 0.7fr; gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); min-width: 720px; }
+			.tk-note { font: var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-body); color: var(--color-text-faint); margin: var(--space-sm) 0 0; max-width: 68ch; }
+
+			.tk-skel-row { display: grid; gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); }
 			.tk-skel { height: 14px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: tk-shimmer 1.4s ease infinite; }
 			.tk-skel.circle { width: 32px; height: 32px; border-radius: 50%; }
 			@keyframes tk-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
@@ -102,32 +118,38 @@
 			<section class="tk-hero">
 				<p class="tk-kicker" data-i18n-html="tracker.on_chain_updates_live"><span class="tk-live-dot" aria-hidden="true"></span> On-chain · updates live</p>
 				<h1 id="tk-title" class="tk-title" data-i18n="tracker.kol_tracker">KOL Tracker</h1>
-				<p class="tk-sub" data-i18n="tracker.solana_crypto_kols_ranked_by_realized_p">Solana crypto KOLs ranked by realized P&amp;L computed straight from their own wallet's trade history — not a self-reported number. Follower counts shown only for handles we've verified control the wallet.</p>
+				<p class="tk-sub" data-i18n="tracker.solana_crypto_kols_ranked_by_realized_p">Solana crypto KOLs ranked by realized P&amp;L computed straight from their own wallet's trade history, not a self-reported number. Follower counts shown only for handles we've verified control the wallet.</p>
 			</section>
 
 			<section class="tk-controls" aria-label="Tracker window">
-				<div class="tk-seg" role="tablist" aria-label="Window" id="tk-window">
-					<button class="tk-seg-btn" data-window="24h" role="tab" aria-selected="false" data-i18n="tracker.24h">24H</button>
-					<button class="tk-seg-btn is-active" data-window="7d" role="tab" aria-selected="true" data-i18n="tracker.7d">7D</button>
-					<button class="tk-seg-btn" data-window="30d" role="tab" aria-selected="false" data-i18n="tracker.30d">30D</button>
+				<div class="tk-seg" role="radiogroup" aria-label="P&amp;L window" id="tk-window">
+					<button type="button" class="tk-seg-btn" data-window="24h" role="radio" aria-checked="false" tabindex="-1" data-i18n="tracker.24h">24H</button>
+					<button type="button" class="tk-seg-btn is-active" data-window="7d" role="radio" aria-checked="true" tabindex="0" data-i18n="tracker.7d">7D</button>
+					<button type="button" class="tk-seg-btn" data-window="30d" role="radio" aria-checked="false" tabindex="-1" data-i18n="tracker.30d">30D</button>
 				</div>
-				<span class="tk-count" id="tk-count"></span>
+				<span class="tk-meta">
+					<span class="tk-count" id="tk-count"></span>
+					<span class="tk-updated" id="tk-updated"></span>
+				</span>
 			</section>
 
-			<div class="tk-board-wrap">
-				<section class="tk-board" aria-label="Tracked KOLs" aria-busy="true">
-					<div class="tk-head" role="row" aria-hidden="true">
-						<span>#</span>
-						<span data-i18n="tracker.kol">KOL</span>
-						<span class="tk-col-num" id="tk-pnl-label" data-i18n="tracker.7d_pnl">7D PnL</span>
-						<span class="tk-col-num" data-i18n="tracker.followers">Followers</span>
-						<span class="tk-col-num" id="tk-vol-label" data-i18n="tracker.7d_volume">7D Volume</span>
-						<span class="tk-col-num" data-i18n="tracker.win_rate">Win Rate</span>
-						<span class="tk-col-num" data-i18n="tracker.trades">Trades</span>
+			<div class="tk-board-wrap" id="tk-board-wrap">
+				<div class="tk-board" id="tk-board" role="table" aria-label="Tracked KOLs" aria-busy="true">
+					<div class="tk-head" role="row">
+						<span role="columnheader">#</span>
+						<span role="columnheader" data-i18n="tracker.kol">KOL</span>
+						<span class="tk-col-num" role="columnheader" id="tk-pnl-label" data-i18n="tracker.7d_pnl">7D PnL</span>
+						<span class="tk-col-num" role="columnheader" data-col="followers" data-i18n="tracker.followers">Followers</span>
+						<span class="tk-col-num" role="columnheader" data-col="volume" id="tk-vol-label" data-i18n="tracker.7d_volume">7D Volume</span>
+						<span class="tk-col-num" role="columnheader" data-i18n="tracker.win_rate">Win Rate</span>
+						<span class="tk-col-num" role="columnheader" data-i18n="tracker.trades">Trades</span>
 					</div>
-					<div id="tk-rows" aria-live="polite"></div>
-				</section>
+					<div id="tk-rows" role="rowgroup"></div>
+				</div>
 			</div>
+			<div id="tk-state" hidden></div>
+			<p class="tk-note" id="tk-note" hidden></p>
+			<p class="sr-only" id="tk-status" role="status" aria-live="polite"></p>
 
 			<nav class="tk-footer-links" aria-label="Other leaderboards">
 				<a href="/leaderboard" data-i18n="tracker.trader_leaderboard">Trader Leaderboard →</a>
@@ -142,46 +164,71 @@
 
 		<script type="module">
 			const rowsEl = document.getElementById('tk-rows');
-			const boardEl = rowsEl.closest('.tk-board');
+			const boardEl = document.getElementById('tk-board');
+			const boardWrapEl = document.getElementById('tk-board-wrap');
+			const headEl = boardEl.querySelector('.tk-head');
+			const stateEl = document.getElementById('tk-state');
+			const noteEl = document.getElementById('tk-note');
+			const statusEl = document.getElementById('tk-status');
 			const countEl = document.getElementById('tk-count');
+			const updatedEl = document.getElementById('tk-updated');
 			const windowSeg = document.getElementById('tk-window');
+			const segBtns = [...windowSeg.querySelectorAll('.tk-seg-btn')];
 			const pnlLabel = document.getElementById('tk-pnl-label');
 			const volLabel = document.getElementById('tk-vol-label');
 
 			const WINDOW_LABEL = { '24h': '24H', '7d': '7D', '30d': '30D' };
-			let state = { window: '7d', loading: false };
+			// The board reads a live upstream that moves on its own, and the kicker
+			// promises it updates: refresh on a real interval rather than leaving a
+			// first-paint snapshot on screen for the rest of the session.
+			const REFRESH_MS = 60_000;
+			const NO_VALUE = 'n/a';
+
+			const state = { window: '7d', updatedAt: null };
+			let inflight = null;
+			let refreshTimer = null;
 
 			const esc = (s) => String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
 
+			// Column tracks, keyed so a column with no data in the current window can be
+			// dropped from both the grid and every row instead of rendering a full
+			// column of empty cells.
+			const TRACKS = { rank: '44px', kol: '1.6fr', pnl: '1fr', followers: '0.9fr', volume: '1fr', winRate: '0.8fr', trades: '0.7fr' };
+			const FIXED_MIN_PX = 560;
+			const OPTIONAL_MIN_PX = 80;
+
 			function fmtUsd(v) {
-				if (v == null) return '—';
+				if (v == null) return NO_VALUE;
 				const abs = Math.abs(v);
-				const sign = v < 0 ? '-' : '+';
+				const sign = v > 0 ? '+' : v < 0 ? '-' : '';
 				if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
 				if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(1)}K`;
 				return `${sign}$${abs.toFixed(0)}`;
 			}
 			function fmtVolume(v) {
-				if (v == null) return '—';
+				if (v == null) return NO_VALUE;
 				if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`;
 				if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}K`;
 				return `$${v.toFixed(0)}`;
 			}
 			function fmtFollowers(v) {
-				if (v == null) return '—';
+				if (v == null) return NO_VALUE;
 				if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
 				if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
 				return String(v);
 			}
-			function fmtWinRate(v) { return v == null ? '—' : `${Math.round(v * 100)}%`; }
-			function fmtTrades(v) { return v == null ? '—' : String(v); }
+			function fmtWinRate(v) { return v == null ? NO_VALUE : `${Math.round(v * 100)}%`; }
+			function fmtTrades(v) { return v == null ? NO_VALUE : String(v); }
 			function shortWallet(w) { return w ? `${w.slice(0, 4)}…${w.slice(-4)}` : ''; }
 
-			function medal(rank) {
-				if (rank === 1) return '<span class="tk-medal" aria-hidden="true">🥇</span>';
-				if (rank === 2) return '<span class="tk-medal" aria-hidden="true">🥈</span>';
-				if (rank === 3) return '<span class="tk-medal" aria-hidden="true">🥉</span>';
-				return '';
+			const MEDALS = { 1: '🥇', 2: '🥈', 3: '🥉' };
+
+			function rankCell(rank) {
+				const cls = rank <= 3 ? 'tk-rank is-top' : 'tk-rank';
+				const inner = MEDALS[rank]
+					? `<span class="tk-medal" aria-hidden="true">${MEDALS[rank]}</span><span class="sr-only">Rank ${rank}</span>`
+					: `#${rank}`;
+				return `<span class="${cls}" role="cell">${inner}</span>`;
 			}
 
 			function avatarCell(r) {
@@ -191,89 +238,203 @@
 				return `<span class="tk-avatar tk-avatar-fallback" aria-hidden="true">${ch}</span>`;
 			}
 
-			function pnlCell(r) {
-				if (r.pnlUsd == null) return '<span class="tk-value tk-muted">—</span>';
-				const cls = r.pnlUsd > 0 ? 'tk-up' : r.pnlUsd < 0 ? 'tk-down' : '';
-				const src = r.pnlSource === 'onchain' ? '' : r.pnlSource ? `<span class="tk-source" title="Sourced from ${esc(r.pnlSource)}, not live on-chain trades">(${esc(r.pnlSource)})</span>` : '';
-				return `<span class="tk-value ${cls}">${fmtUsd(r.pnlUsd)}</span>${src}`;
+			// The wallet is rendered exactly once. Without a verified handle or a
+			// curated label it IS the row's name, so it takes the primary line rather
+			// than being repeated underneath it. Either way it links to the public
+			// explorer, so a reader can audit the number the row claims.
+			function identityCell(r) {
+				const solscan = `https://solscan.io/account/${esc(r.wallet)}`;
+				const walletShort = esc(shortWallet(r.wallet));
+				const primaryName = r.xHandle ? `@${r.xHandle}` : r.label;
+				const lines = primaryName
+					? `<a class="tk-handle" href="${r.xHandle ? `https://x.com/${esc(r.xHandle)}` : solscan}" target="_blank" rel="noopener noreferrer nofollow">${esc(primaryName)}</a><a class="tk-wallet" href="${solscan}" target="_blank" rel="noopener noreferrer nofollow">${walletShort}</a>`
+					: `<a class="tk-handle" href="${solscan}" target="_blank" rel="noopener noreferrer nofollow">${walletShort}<span class="sr-only"> on Solscan</span></a>`;
+				return `<span class="tk-kol" role="cell">${avatarCell(r)}<span class="tk-kol-meta">${lines}</span></span>`;
 			}
 
-			function rowHtml(r, rank) {
-				const displayName = r.xHandle ? `@${r.xHandle}` : (r.label || shortWallet(r.wallet));
-				const handleHtml = r.xHandle
-					? `<a class="tk-handle" href="https://x.com/${esc(r.xHandle)}" target="_blank" rel="noopener noreferrer nofollow">${esc(displayName)}</a>`
-					: `<span class="tk-handle">${esc(displayName)}</span>`;
-				const rankCls = rank <= 3 ? 'tk-rank is-top' : 'tk-rank';
-				return `
-					<div class="tk-row" role="row">
-						<span class="${rankCls}">${medal(rank) || '#' + rank}</span>
-						<span class="tk-kol">${avatarCell(r)}<span class="tk-kol-meta">${handleHtml}<span class="tk-wallet">${esc(shortWallet(r.wallet))}</span></span></span>
-						<span class="tk-col-num">${pnlCell(r)}</span>
-						<span class="tk-value tk-col-num">${fmtFollowers(r.followerCount)}</span>
-						<span class="tk-value tk-col-num">${fmtVolume(r.volumeUsd)}</span>
-						<span class="tk-value tk-col-num">${fmtWinRate(r.winRate)}</span>
-						<span class="tk-value tk-col-num">${fmtTrades(r.trades)}</span>
-					</div>`;
+			// A per-row provenance badge only earns its place when the board is mixed.
+			// When every row shares one source, `uniformSource` states it once in the
+			// caption below the board instead of 50 identical parentheticals.
+			function pnlCell(r, uniformSource) {
+				if (r.pnlUsd == null) return `<span class="tk-col-num" role="cell"><span class="tk-value tk-muted">${NO_VALUE}</span></span>`;
+				const cls = r.pnlUsd > 0 ? 'tk-up' : r.pnlUsd < 0 ? 'tk-down' : '';
+				const badge = !uniformSource && r.pnlSource && r.pnlSource !== 'onchain'
+					? `<span class="tk-source" title="Sourced from ${esc(r.pnlSource)}, not from this wallet's own on-chain trades">(${esc(r.pnlSource)})</span>`
+					: '';
+				return `<span class="tk-col-num" role="cell"><span class="tk-value ${cls}">${fmtUsd(r.pnlUsd)}</span>${badge}</span>`;
+			}
+
+			const numCell = (text) => `<span class="tk-value tk-col-num" role="cell">${text}</span>`;
+
+			function rowHtml(r, rank, show, uniformSource) {
+				return `<div class="tk-row" role="row">${rankCell(rank)}${identityCell(r)}${pnlCell(r, uniformSource)}${
+					show.followers ? numCell(fmtFollowers(r.followerCount)) : ''
+				}${show.volume ? numCell(fmtVolume(r.volumeUsd)) : ''}${numCell(fmtWinRate(r.winRate))}${numCell(fmtTrades(r.trades))}</div>`;
+			}
+
+			function applyColumns(show) {
+				const cols = ['rank', 'kol', 'pnl', show.followers && 'followers', show.volume && 'volume', 'winRate', 'trades'].filter(Boolean);
+				boardEl.style.setProperty('--tk-grid', cols.map((c) => TRACKS[c]).join(' '));
+				boardEl.style.setProperty('--tk-min', `${FIXED_MIN_PX + OPTIONAL_MIN_PX * (cols.length - 5)}px`);
+				for (const el of headEl.querySelectorAll('[data-col]')) el.hidden = !show[el.dataset.col];
 			}
 
 			function skeleton() {
-				let h = '';
-				for (let i = 0; i < 10; i++) {
-					h += `<div class="tk-skel-row"><span class="tk-skel" style="width:20px"></span><span style="display:flex;align-items:center;gap:10px"><span class="tk-skel circle"></span><span class="tk-skel" style="width:110px"></span></span><span class="tk-skel" style="width:60px;justify-self:end"></span><span class="tk-skel" style="width:50px;justify-self:end"></span><span class="tk-skel" style="width:60px;justify-self:end"></span><span class="tk-skel" style="width:40px;justify-self:end"></span><span class="tk-skel" style="width:30px;justify-self:end"></span></div>`;
+				const cols = getComputedStyle(boardEl).getPropertyValue('--tk-grid').trim().split(/\s+/).length;
+				const cells = Array.from({ length: Math.max(cols - 2, 1) }, () => '<span class="tk-skel" style="width:56px;justify-self:end"></span>').join('');
+				rowsEl.innerHTML = Array.from({ length: 10 }, () =>
+					`<div class="tk-skel-row"><span class="tk-skel" style="width:20px"></span><span style="display:flex;align-items:center;gap:10px"><span class="tk-skel circle"></span><span class="tk-skel" style="width:110px"></span></span>${cells}</div>`,
+				).join('');
+			}
+
+			function announce(msg) { statusEl.textContent = msg; }
+
+			function setUpdated(at, staleRefresh) {
+				if (!at) { updatedEl.textContent = ''; return; }
+				const time = at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+				updatedEl.textContent = staleRefresh ? `Updated ${time} · refresh failed` : `Updated ${time}`;
+				updatedEl.title = staleRefresh
+					? 'The last background refresh could not reach the tracker API. The rows below are from the time shown.'
+					: `Last refreshed at ${at.toLocaleString()}`;
+			}
+
+			const SOURCE_NOTE = {
+				kolscan: "Every row in this window comes from kolscan's public board of Solana traders, priced into USD from the live SOL feed. Volume and follower columns appear for a wallet once we can compute them ourselves.",
+				imported: 'Every row in this window comes from the admin-curated wallet list rather than a live board.',
+			};
+
+			function setNote(uniformSource) {
+				const copy = !uniformSource || uniformSource === 'onchain'
+					? ''
+					: SOURCE_NOTE[uniformSource] || `Every row in this window is sourced from ${uniformSource}.`;
+				noteEl.textContent = copy;
+				noteEl.hidden = !copy;
+			}
+
+			function showBoard() {
+				stateEl.hidden = true;
+				stateEl.innerHTML = '';
+				boardWrapEl.hidden = false;
+			}
+
+			function showState(html) {
+				boardWrapEl.hidden = true;
+				noteEl.hidden = true;
+				stateEl.innerHTML = html;
+				stateEl.hidden = false;
+			}
+
+			function showEmpty(win) {
+				countEl.textContent = '';
+				setUpdated(state.updatedAt, false);
+				showState(
+					`<div class="tk-state"><p class="tk-state-title">No KOLs ranked for this window</p><p class="tk-state-msg">The live board returned no Solana traders over the last ${esc(WINDOW_LABEL[win])}. Try a wider window, or open the trader leaderboard for the same wallets scored a different way.</p><a class="tk-cta" href="/leaderboard">View the trader leaderboard</a></div>`,
+				);
+				announce(`No KOLs ranked for the ${WINDOW_LABEL[win]} window.`);
+			}
+
+			function showError(message) {
+				countEl.textContent = '';
+				showState(
+					`<div class="tk-state"><p class="tk-state-title">Couldn't load the tracker</p><p class="tk-state-msg">${esc(message)} The board is computed from live on-chain sources, so this is usually a passing upstream failure.</p><button type="button" class="tk-cta" id="tk-retry">Try again</button></div>`,
+				);
+				stateEl.querySelector('#tk-retry').addEventListener('click', () => load());
+				announce(`The tracker failed to load. ${message}`);
+			}
+
+			function render(rows, win) {
+				const show = {
+					followers: rows.some((r) => r.followerCount != null),
+					volume: rows.some((r) => r.volumeUsd != null),
+				};
+				applyColumns(show);
+
+				const sources = new Set(rows.filter((r) => r.pnlUsd != null).map((r) => r.pnlSource || 'unknown'));
+				const uniformSource = sources.size === 1 ? [...sources][0] : null;
+
+				showBoard();
+				rowsEl.innerHTML = rows.map((r, i) => rowHtml(r, i + 1, show, uniformSource)).join('');
+				setNote(uniformSource);
+				countEl.textContent = `${rows.length} ${rows.length === 1 ? 'KOL' : 'KOLs'}`;
+				state.updatedAt = new Date();
+				setUpdated(state.updatedAt, false);
+				announce(`${rows.length} KOLs ranked over the ${WINDOW_LABEL[win]} window.`);
+			}
+
+			async function load({ silent = false } = {}) {
+				inflight?.abort();
+				const ctrl = new AbortController();
+				inflight = ctrl;
+				const win = state.window;
+				pnlLabel.textContent = `${WINDOW_LABEL[win]} PnL`;
+				volLabel.textContent = `${WINDOW_LABEL[win]} Volume`;
+				if (!silent) {
+					showBoard();
+					skeleton();
+					boardEl.setAttribute('aria-busy', 'true');
+					announce(`Loading the ${WINDOW_LABEL[win]} board.`);
 				}
-				rowsEl.innerHTML = h;
-			}
-
-			function showState(copy) {
-				rowsEl.innerHTML = `<div class="tk-state"><p class="tk-state-title">${esc(copy.title)}</p><p class="tk-state-msg">${esc(copy.msg)}</p></div>`;
-			}
-
-			async function load() {
-				if (state.loading) return;
-				state.loading = true;
-				skeleton();
-				boardEl.setAttribute('aria-busy', 'true');
-				const label = WINDOW_LABEL[state.window];
-				pnlLabel.textContent = `${label} PnL`;
-				volLabel.textContent = `${label} Volume`;
 				try {
-					const res = await fetch(`/api/kol/tracker?window=${encodeURIComponent(state.window)}&limit=100`);
-					if (!res.ok) throw new Error('HTTP ' + res.status);
+					const res = await fetch(`/api/kol/tracker?window=${encodeURIComponent(win)}&limit=100`, { signal: ctrl.signal });
+					if (!res.ok) throw new Error(`The tracker API returned HTTP ${res.status}.`);
 					const data = await res.json();
-					const rows = data.rows || [];
-					countEl.textContent = rows.length ? `${rows.length} KOLs` : '';
-					if (!rows.length) {
-						showState({ title: 'No KOLs tracked yet', msg: 'The tracked-wallet list is empty for this window. Check back soon.' });
-						return;
-					}
-					rowsEl.innerHTML = rows.map((r, i) => rowHtml(r, i + 1)).join('');
+					const rows = Array.isArray(data.rows) ? data.rows : [];
+					if (rows.length) render(rows, win);
+					else showEmpty(win);
 				} catch (err) {
-					showState({ title: "Couldn't load the tracker", msg: err.message || 'Something went wrong.' });
+					if (err.name === 'AbortError') return;
+					// A failed background refresh must not throw away a board the reader
+					// is already looking at: keep the rows and date-stamp them honestly.
+					if (silent && rowsEl.querySelector('.tk-row')) setUpdated(state.updatedAt, true);
+					else showError(err.message || 'Something went wrong.');
 				} finally {
-					state.loading = false;
+					if (inflight === ctrl) inflight = null;
 					boardEl.setAttribute('aria-busy', 'false');
 				}
 			}
 
-			windowSeg.addEventListener('click', (e) => {
-				const btn = e.target.closest('.tk-seg-btn');
-				if (!btn || btn.classList.contains('is-active')) return;
-				windowSeg.querySelectorAll('.tk-seg-btn').forEach((b) => { b.classList.remove('is-active'); b.setAttribute('aria-selected', 'false'); });
-				btn.classList.add('is-active');
-				btn.setAttribute('aria-selected', 'true');
+			function selectWindow(btn) {
+				if (!btn || btn.dataset.window === state.window) return;
+				for (const b of segBtns) {
+					const on = b === btn;
+					b.classList.toggle('is-active', on);
+					b.setAttribute('aria-checked', String(on));
+					b.tabIndex = on ? 0 : -1;
+				}
 				state.window = btn.dataset.window;
 				load();
-			});
+			}
+
+			windowSeg.addEventListener('click', (e) => selectWindow(e.target.closest('.tk-seg-btn')));
 			windowSeg.addEventListener('keydown', (e) => {
-				if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-				const btns = [...windowSeg.querySelectorAll('.tk-seg-btn')];
-				const i = btns.findIndex((b) => b.classList.contains('is-active'));
-				const next = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length];
-				next.focus(); next.click();
+				const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+				if (step === undefined && e.key !== 'Home' && e.key !== 'End') return;
 				e.preventDefault();
+				const i = segBtns.findIndex((b) => b.dataset.window === state.window);
+				const next = e.key === 'Home' ? segBtns[0]
+					: e.key === 'End' ? segBtns[segBtns.length - 1]
+					: segBtns[(i + step + segBtns.length) % segBtns.length];
+				next.focus();
+				selectWindow(next);
+			});
+
+			function startRefresh() {
+				stopRefresh();
+				refreshTimer = setInterval(() => load({ silent: true }), REFRESH_MS);
+			}
+			function stopRefresh() {
+				if (refreshTimer) clearInterval(refreshTimer);
+				refreshTimer = null;
+			}
+			// A background tab burns upstream budget for nobody. Stop polling while
+			// hidden, then catch up in one read the moment the reader comes back.
+			document.addEventListener('visibilitychange', () => {
+				if (document.hidden) stopRefresh();
+				else { load({ silent: true }); startRefresh(); }
 			});
 
 			load();
+			startRefresh();
 		</script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

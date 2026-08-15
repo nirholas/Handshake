@@ -3,6 +3,36 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "The widgets gallery stopped clipping its controls on phones and now recovers from a failed load",
+			"summary": "The widgets gallery (/widgets) is where you pick a pre-built chat, voice, or 3D-avatar embed and copy the one line of HTML that drops it into your own page. On a narrow phone screen, each card's preview frame and its Customize panel were wider than the card itself, so the right edge got cut off: the mint field ran past the panel and the Reset button was pushed off-screen entirely, out of reach. Card layout now shrinks to the screen it is on, and the whole page is clean from 320px up. If the showcase list fails to load, the page now says so in plain language and offers a Try again button that reloads it in place, plus a link to the widget docs, instead of leaving a one-line error with no way forward. If the list comes back empty, the gallery explains what it would normally show and points at the Studio rather than showing a blank space. The widget count in the header now reflects the widgets actually loaded in every language, the page has a real top-level heading, the type filters announce which one is active to screen readers, the Preview and Code tabs are wired up as real tabs, and Escape closes the embed-format menu.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/widgets"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Viability now shows skeletons while it reads and says what broke when a read fails",
+			"summary": "The Viability page (/viability) reports the two real money loops behind three.ws: $THREE marketplace GMV and take-rate, and guarded agent coin trades with realized P&L. Until now, a slow read left the page as a bare headline with nothing underneath, and a failed read quietly deleted both panels while the page still claimed it had just updated. Both panels now hold their shape with skeletons while the live read is in flight, so the numbers land without the page jumping. If a read fails, that panel says so in plain language, names the reason (offline, rate limited, the status the API returned, or a deploy still rolling out), and offers a Retry that re-runs only that panel, leaving a healthy one untouched. The freshness stamp is honest too: it reports a read in flight, a failed read, or how long ago the figures on screen were actually good. Section titles are now real headings, and the network toggle announces itself correctly to screen readers.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/viability"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The vault's session controls moved out of browser pop-ups and its model panel became a real modal",
+			"summary": "The vault page (/vault) gives every visitor a session key that acts as their buyer identity: it is what pays for a model and what decrypts it in the browser afterwards. Everything you could do with that key used to happen through the browser's own grey pop-up boxes, which offered no way to see the address, no way to copy it, and no way to start over with a fresh one. The session strip now does all of it on the page: copy the address to fund it from anywhere, open an inline amount field to top it up from your wallet with the amount checked before the wallet is even asked, and rotate to a new key behind a two-step confirmation that first spells out what a new key costs you. The panel that opens when you pick a model is now a proper dialog: it says it is checking your purchase status instead of flashing a Buy button it might have to take back, keyboard focus stays inside it, Escape closes it, and closing puts you back on the model you were reading. When listings fail to load, the page now offers a way to try again instead of only stating the failure, and both empty states point at what to do next.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/vault"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "The multiplayer worlds server connects on any local port, and its README documents what it actually reads",
 			"summary": "Two fixes to the server that runs every live world (/play, /walk, /agora, /irl, /play/war, the Living Stages, /ar/studio). Running two copies of the site on one machine used to break the worlds: the second copy gets the next free web port, and the server only accepted connections from the first four, so the world silently refused to join. Outside production it now accepts any connection coming from the same machine, while the live server keeps its exact origin list unchanged. Its README also described six settings when the server reads more than thirty, and listed two web endpoints when it serves seven, so anyone running or deploying it was working from a map that no longer matched the ground; the settings, the endpoints, and how the admin monitor is protected are now written down as they really behave, and the origin rules, the refusal to boot production without a real signing secret, and the closed admin monitor are covered by tests.",
 			"tags": [

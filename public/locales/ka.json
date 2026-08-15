@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — ჰუკი",
 		"lab": "<a href=\"/demos\">&larr; ლაბი</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ლაბი",
-		"the_react_wrapper_around_the_sdk_imports": "React-ის შეფუთვა SDK-ის გარშემო. იმპორტს ახდენს <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>-ის და <code>useAvatar</code>-ის პირდაპირ <code>/avatar-sdk/src/react.jsx</code>-დან. React იტვირთება CDN-დან იმპორტის რუკის საშუალებით, ამიტომ ეს გვერდი მუშაობს ბანდლერის ნაბიჯის გარეშე.",
+		"the_react_wrapper_around_the_sdk_imports": "React-ის შეფუთვა SDK-ის გარშემო. იმპორტს ახდენს <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>-ის და <code>useAvatar</code>-ის პირდაპირ <code>/avatar-sdk/src/react.js</code>-დან. React იტვირთება CDN-დან იმპორტის რუკის საშუალებით, ამიტომ ეს გვერდი მუშაობს ბანდლერის ნაბიჯის გარეშე.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "ეპიკური",
 		"it_pays_the_quoted_price_and_receives": "ის იხდის მითითებულ ფასს და იღებს გასაღებს <b>ერთხელ</b>. დაუყოვნებლივ შემოიტანეთ.",
 		"legendary": "ლეგენდარული",
-		"long_brandable_solana_addresses_4_5_characte": "გრძელი, ბრენდირებადი Solana მისამართები — 4–5+ სიმბოლოიანი პრეფიქსები, რომლებსაც ცოცხალი გრაინდერი ვერ წვდება — წინასწარ მოპოვებული batch CPU-ზე და გაყიდული მარაგებიდან. შეიძინეთ ერთი და პირადი გასაღები მიწოდებულია <strong>ერთხელ</strong> <a href=\"/vanity/gallery\">x402</a> არხით, შემდეგ მისი შენახული ასლი ნადგურდება. გჭირდებათ ახალი ≤3-სიმბოლოიანი გრაინდი? გამოიყენეთ <a href=\"/vanity-wallet\">ცოცხალი გრაინდერი</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "გრძელი, ბრენდირებადი Solana მისამართები — 4–5+ სიმბოლოიანი პრეფიქსები, რომლებსაც ცოცხალი გრაინდერი ვერ წვდება — წინასწარ მოპოვებული batch CPU-ზე და გაყიდული მარაგებიდან. შეიძინეთ ერთი და პირადი გასაღები მიწოდებულია <strong>ერთხელ</strong> <a href=\"/x402\">x402</a> არხით, შემდეგ მისი შენახული ასლი ნადგურდება. გჭირდებათ ახალი ≤3-სიმბოლოიანი გრაინდი? გამოიყენეთ <a href=\"/vanity-wallet\">ცოცხალი გრაინდერი</a>.",
 		"meta_description": "შეიძინეთ გრძელი, ბრენდირებადი Solana vanity მისამართი, რომელიც მყისიერად მიწოდებულია მარაგებიდან — 4–5+ სიმბოლოიანი პრეფიქსები, რომლებსაც ცოცხალი გრაინდერი ვერ წვდება, წინასწარ მოპოვებული batch CPU-ზე და გაყიდული x402-ის მეშვეობით. ფასი იშვიათობის მიხედვით იზრდება.",
 		"meta_og_description": "გრძელი, ბრენდირებადი Solana vanity მისამართები, წინასწარ გენერირებული და მარაგში არსებული. ერთჯერადად მიწოდებული, დასვენებულ მდგომარეობაში დაშიფრული, იშვიათობის მიხედვით ფასდადებული.",
 		"meta_og_title": "პრემიუმ Vanity ინვენტარი · three.ws",

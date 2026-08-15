@@ -26,6 +26,16 @@ describe('agent-identity CSRF', () => {
 		calls = [];
 		globalThis.fetch = vi.fn(async (path, init = {}) => {
 			calls.push({ path: String(path), init });
+			// apiFetch probes the session before asking for a token, so a caller it
+			// can see is signed out never prints a 401 in a visitor's console. An
+			// owner recording an action IS signed in, so the probe has to say so or
+			// the CSRF pre-flight is skipped and this test measures the wrong path.
+			if (String(path).includes('/api/auth/me')) {
+				return new Response(JSON.stringify({ user: { id: 'usr_test' } }), {
+					status: 200,
+					headers: { 'content-type': 'application/json' },
+				});
+			}
 			if (String(path).includes('/api/csrf-token')) {
 				return new Response(JSON.stringify({ data: { token: CSRF } }), {
 					status: 200,

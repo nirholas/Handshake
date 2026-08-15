@@ -151,10 +151,35 @@ export function mountDetail(host, opts = {}) {
 	// Cohorts are chained on launch-detail: the platform only holds holder-cohort
 	// data for its own launches, so the answer to "is this ours?" decides whether
 	// the fetch happens at all.
-	loadDetail().then(loadCohorts);
-	loadCurve();
-	loadIntel();
-	loadSmart();
+	//
+	// Each lane is named so a failed one can be retried on its own: an outage in
+	// the intel lane must not cost the user the three sections the detail lane
+	// already filled in.
+	const LANES = {
+		curve: { sections: [], run: loadCurve },
+		detail: { sections: ['footprint', 'agent', 'holders'], run: () => loadDetail().then(loadCohorts) },
+		intel: { sections: ['signals', 'bubblemap', 'wallets'], run: loadIntel },
+		smart: { sections: ['smart'], run: loadSmart },
+	};
+
+	host.addEventListener('click', (e) => {
+		const btn = e.target.closest('[data-retry]');
+		if (!btn) return;
+		const lane = LANES[btn.dataset.retry];
+		if (!lane) return;
+		btn.disabled = true;
+		for (const id of lane.sections) {
+			const body = $(`[data-section="${id}"] .dd-card-b`);
+			if (body) body.innerHTML = SKEL;
+		}
+		if (btn.dataset.retry === 'curve') $('[data-host="strip"]').innerHTML = SKEL;
+		lane.run();
+	});
+
+	LANES.detail.run();
+	LANES.curve.run();
+	LANES.intel.run();
+	LANES.smart.run();
 
 	async function loadCurve() {
 		const stripEl = $('[data-host="strip"]');
@@ -175,7 +200,15 @@ export function mountDetail(host, opts = {}) {
 				stat('Status', grad ? '<span class="dd-grad">Graduated ✦</span>' : (progress != null ? `${progress.toFixed(1)}% to grad` : 'On curve')) +
 				stat('SOL', c.price?.solPrice != null ? `$${Number(c.price.solPrice).toFixed(0)}` : '—');
 		} catch {
-			if (!destroyed) stripEl.innerHTML = stat('Market', 'Live price unavailable', 'dd-muted');
+			if (!destroyed) {
+				stripEl.innerHTML = `<div class="dd-stat dd-stat--wide">
+					<div>
+						<div class="dd-stat-v dd-muted">Live price unavailable</div>
+						<div class="dd-stat-l">The bonding-curve read failed</div>
+					</div>
+					${retryBtn('curve')}
+				</div>`;
+			}
 		}
 	}
 
@@ -191,7 +224,7 @@ export function mountDetail(host, opts = {}) {
 			renderAgent(d);
 			return d;
 		} catch {
-			if (!destroyed) markUnavailable(['footprint', 'outcome', 'agent']);
+			if (!destroyed) markFailed(LANES.detail.sections, 'detail');
 			return null;
 		}
 	}
@@ -202,12 +235,12 @@ export function mountDetail(host, opts = {}) {
 			if (!r.ok) throw new Error(String(r.status));
 			const d = await r.json();
 			if (destroyed) return;
-			if (d.found === false || !d.coin) { markUnavailable(['signals', 'bubblemap', 'wallets']); return; }
+			if (d.found === false || !d.coin) { renderIntelNotIndexed(); return; }
 			renderSignals(d.coin);
 			renderBubblemap(d.coin, d.wallets, d.clusters);
 			renderWallets(d.wallets);
 		} catch {
-			if (!destroyed) markUnavailable(['signals', 'bubblemap', 'wallets']);
+			if (!destroyed) markFailed(LANES.intel.sections, 'intel');
 		}
 	}
 
@@ -221,7 +254,7 @@ export function mountDetail(host, opts = {}) {
 			if (d.found === false || !d.coin) { renderSmartNotScored(); return; }
 			renderSmart(d.coin, d.notable);
 		} catch {
-			if (!destroyed) markUnavailable(['smart']);
+			if (!destroyed) markFailed(LANES.smart.sections, 'smart');
 		}
 	}
 
@@ -230,7 +263,9 @@ export function mountDetail(host, opts = {}) {
 	// answer and render the designed no-data state without a doomed round-trip.
 	async function loadCohorts(detailBody) {
 		if (destroyed) return;
-		if (!detailBody) { markUnavailable(['holders']); return; }
+		// A null body means the detail lane itself failed; it has already put its
+		// own retry on this section, so do not overwrite it with a second one.
+		if (!detailBody) return;
 		if (!detailBody.found && !detailBody.agent) { renderHoldersNotTracked(); return; }
 		try {
 			const r = await fetch(`/api/coin/${encodeURIComponent(mint)}/cohorts`, { headers: { accept: 'application/json' } });
@@ -240,7 +275,7 @@ export function mountDetail(host, opts = {}) {
 			if (destroyed) return;
 			renderCohorts(d);
 		} catch {
-			if (!destroyed) markUnavailable(['holders']);
+			if (!destroyed) markFailed(['holders'], 'detail');
 		}
 	}
 
@@ -334,6 +369,22 @@ export function mountDetail(host, opts = {}) {
 		body.innerHTML = `
 			<p class="dd-note dd-note--na">No holder-cohort snapshot exists for this coin. Cohorts are indexed for coins launched on three.ws; the full holder list lives on-chain.</p>
 			<div style="text-align:center"><a href="https://solscan.io/token/${encodeURIComponent(mint)}#holders" target="_blank" rel="noopener" class="dd-btn">View holders on Solscan ↗</a></div>`;
+	}
+
+	// Designed no-data state: three.ws indexes a launch's buyers from its first
+	// seconds on the curve. A coin nobody watched being born (or one that already
+	// graduated) has no snapshot to show, so send the user to the reads that do
+	// exist for it rather than leaving three cards as dead ends.
+	function renderIntelNotIndexed() {
+		fill('signals', `
+			<p class="dd-note dd-note--na">No first-seconds intel snapshot for this coin. three.ws scores organic flow, bundling and sniping from the moment a launch hits the curve; this mint was not on the curve while the indexer was watching.</p>
+			<div style="text-align:center"><a href="/oracle/coin/${encodeURIComponent(mint)}" class="dd-btn dd-btn--oracle">Ask the Oracle for a read →</a></div>`);
+		fill('bubblemap', `
+			<p class="dd-note dd-note--na">No funder graph for this coin. The bubblemap is built from the buyer wallets three.ws indexed at launch, so it stays empty for mints it never observed.</p>
+			<div style="text-align:center"><a href="https://app.bubblemaps.io/sol/token/${encodeURIComponent(mint)}" target="_blank" rel="noopener" class="dd-btn">Open it on Bubblemaps ↗</a></div>`);
+		fill('wallets', `
+			<p class="dd-note dd-note--na">No wallet footprint indexed for this coin. The full transfer history is on-chain.</p>
+			<div style="text-align:center"><a href="https://solscan.io/token/${encodeURIComponent(mint)}#transfers" target="_blank" rel="noopener" class="dd-btn">View transfers on Solscan ↗</a></div>`);
 	}
 
 	// Designed no-data state: the radar has not scored this coin (yet).
@@ -469,10 +520,23 @@ export function mountDetail(host, opts = {}) {
 	}
 
 	// ── degraded-state helpers ─────────────────────────────────────────────────────
-	function markUnavailable(ids) {
+	function fill(id, html) {
+		const body = $(`[data-section="${id}"] .dd-card-b`);
+		if (!body) return;
+		const card = $(`[data-section="${id}"]`);
+		if (card) card.hidden = false;
+		body.innerHTML = html;
+	}
+
+	// A lane that threw is an outage, not an answer about the coin. Say which, and
+	// hand the user the one control that can fix it, instead of the old blanket
+	// "Not available for this coin yet." that quietly blamed the data.
+	function markFailed(ids, lane) {
 		for (const id of ids) {
 			const body = $(`[data-section="${id}"] .dd-card-b`);
-			if (body && body.querySelector('.dd-skel')) body.innerHTML = unavailable();
+			if (!body || !body.querySelector('.dd-skel')) continue;
+			fill(id, `<p class="dd-note dd-note--na">Could not load this section. The request to three.ws failed.</p>
+				<div style="text-align:center">${retryBtn(lane)}</div>`);
 		}
 	}
 
@@ -490,6 +554,10 @@ export function mountDetail(host, opts = {}) {
 
 function unavailable(msg = 'Not available for this coin yet.') {
 	return `<p class="dd-note dd-note--na">${escapeHtml(msg)}</p>`;
+}
+// Delegated by mountDetail's one click listener; `lane` names the loader to rerun.
+function retryBtn(lane) {
+	return `<button type="button" class="dd-btn" data-retry="${escapeHtml(lane)}">↻ Retry</button>`;
 }
 function chartFail(host) {
 	if (host) host.innerHTML = '<div class="dd-note dd-note--na" style="padding:40px 0;text-align:center">Chart unavailable for this coin.</div>';

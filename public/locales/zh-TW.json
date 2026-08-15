@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — 鉤子",
 		"lab": "<a href=\"/demos\">&larr; 實驗室</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws 實驗室",
-		"the_react_wrapper_around_the_sdk_imports": "SDK 的 React 包裝器。直接從 <code>/avatar-sdk/src/react.jsx</code> 導入 <code>Avatar</code>、<code>AgentAvatar</code>、<code>AvatarCreator</code> 和 <code>useAvatar</code>。React 透過導入映射從 CDN 加載，因此此頁面無需打包步驟即可運作。",
+		"the_react_wrapper_around_the_sdk_imports": "SDK 的 React 包裝器。直接從 <code>/avatar-sdk/src/react.js</code> 導入 <code>Avatar</code>、<code>AgentAvatar</code>、<code>AvatarCreator</code> 和 <code>useAvatar</code>。React 透過導入映射從 CDN 加載，因此此頁面無需打包步驟即可運作。",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "史詩級",
 		"it_pays_the_quoted_price_and_receives": "它支付報價，並 <b>一次性</b> 接收金鑰。請立即匯入。",
 		"legendary": "傳奇級",
-		"long_brandable_solana_addresses_4_5_characte": "長而具品牌識別度的 Solana 地址 — 4–5 個以上字元的前綴，即時生成器無法觸及 — 預先透過批次 CPU 生成並現貨銷售。購買後，私鑰會透過 <a href=\"/vanity/gallery\">x402</a> 通道 <strong>一次性</strong> 交付，隨後其儲存副本將被銷毀。需要新的 ≤3 字元生成？請使用 <a href=\"/vanity-wallet\">即時生成器</a>。",
+		"long_brandable_solana_addresses_4_5_characte": "長而具品牌識別度的 Solana 地址 — 4–5 個以上字元的前綴，即時生成器無法觸及 — 預先透過批次 CPU 生成並現貨銷售。購買後，私鑰會透過 <a href=\"/x402\">x402</a> 通道 <strong>一次性</strong> 交付，隨後其儲存副本將被銷毀。需要新的 ≤3 字元生成？請使用 <a href=\"/vanity-wallet\">即時生成器</a>。",
 		"meta_description": "購買長而具品牌識別度的 Solana 虛榮地址，現貨即時交付 — 4–5 個以上字元的前綴，即時生成器無法觸及，預先透過批次 CPU 生成並透過 x402 銷售。價格隨稀有度調整。",
 		"meta_og_description": "長而具品牌識別度的 Solana 虛榮地址，預先生成並現貨銷售。一次性交付，靜態加密，按稀有度定價。",
 		"meta_og_title": "高級虛榮地址庫存 · three.ws",

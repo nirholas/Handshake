@@ -100,9 +100,15 @@ describe('Memory.load — remote', () => {
 			.mockResolvedValueOnce({ ok: true, json: async () => ({ entries: [] }) });
 		const mem = await Memory.load({ mode: 'remote', namespace: 'agent-uuid', fetchFn });
 
-		// Subsequent write goes through apiFetch on the global fetch: first a
-		// single-use CSRF token issue, then the upsert carrying that token.
+		// Subsequent write goes through apiFetch on the global fetch: a session
+		// probe (so a signed-out visitor is never sent to ask for a token it
+		// cannot have), then a single-use CSRF token issue, then the upsert
+		// carrying that token. The probe must answer signed-in here, or apiFetch
+		// correctly skips CSRF and this stops testing the authenticated path.
 		const upsert = vi.fn(async (url) => {
+			if (String(url).startsWith('/api/auth/me')) {
+				return { ok: true, json: async () => ({ user: { id: 'usr-1' } }) };
+			}
 			if (String(url).startsWith('/api/csrf-token')) {
 				return { ok: true, json: async () => ({ data: { token: 'tok-1' } }) };
 			}
@@ -117,14 +123,19 @@ describe('Memory.load — remote', () => {
 			body: 'hit a real DB',
 		});
 
-		// _remoteUpsert is fire-and-forget; flush it (token fetch + upsert are
-		// two chained awaits, so drain the timer queue twice).
+		// _remoteUpsert is fire-and-forget; flush it (session probe, token fetch
+		// and upsert are chained awaits, so drain the timer queue for each hop).
+		await new Promise((r) => setTimeout(r, 0));
 		await new Promise((r) => setTimeout(r, 0));
 		await new Promise((r) => setTimeout(r, 0));
 
-		expect(upsert).toHaveBeenCalledTimes(2);
-		expect(upsert.mock.calls[0][0]).toBe('/api/csrf-token');
-		const [url, init] = upsert.mock.calls[1];
+		// Matched by URL rather than by index: apiFetch caches its session verdict
+		// across calls, so whether the probe runs here depends on what ran before
+		// it, and pinning an index would make this test order-dependent.
+		expect(upsert.mock.calls.some(([u]) => String(u).startsWith('/api/csrf-token'))).toBe(true);
+		const post = upsert.mock.calls.find(([u]) => String(u) === '/api/agent-memory');
+		expect(post, 'expected a POST to /api/agent-memory').toBeTruthy();
+		const [url, init] = post;
 		expect(url).toBe('/api/agent-memory');
 		expect(init.method).toBe('POST');
 		expect(new Headers(init.headers).get('x-csrf-token')).toBe('tok-1');

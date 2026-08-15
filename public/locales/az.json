@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "SDK ətrafındakı React sarğısı. <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> və <code>useAvatar</code>-ı birbaşa <code>/avatar-sdk/src/react.jsx</code>-dan idxal edir. React bir import xəritəsi vasitəsilə CDN-dən yüklənir, beləliklə bu səhifə bundler addımı olmadan işləyir.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK ətrafındakı React sarğısı. <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> və <code>useAvatar</code>-ı birbaşa <code>/avatar-sdk/src/react.js</code>-dan idxal edir. React bir import xəritəsi vasitəsilə CDN-dən yüklənir, beləliklə bu səhifə bundler addımı olmadan işləyir.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epik",
 		"it_pays_the_quoted_price_and_receives": "O, göstərilən qiyməti ödəyir və açarı <b>bir dəfə</b> alır. Dərhal idxal edin.",
 		"legendary": "Əfsanəvi",
-		"long_brandable_solana_addresses_4_5_characte": "Uzun, brendləşə bilən Solana ünvanlar — canlı qazıcının əldə edə bilmədiyi 4–5+ simvollu prefikslər — əvvəlcədən toplu CPU-da yaradılıb və ehtiyatdan satılır. Birini alın və şəxsi açar <a href=\"/vanity/gallery\">x402</a> kanalı üzərindən <strong>bir dəfə</strong> çatdırılır, sonra onun saxlanılan nüsxəsi məhv edilir. Bunun əvəzinə təzə, ≤3 simvollu bir qazma lazımdır? <a href=\"/vanity-wallet\">Canlı qazıcıdan</a> istifadə edin.",
+		"long_brandable_solana_addresses_4_5_characte": "Uzun, brendləşə bilən Solana ünvanlar — canlı qazıcının əldə edə bilmədiyi 4–5+ simvollu prefikslər — əvvəlcədən toplu CPU-da yaradılıb və ehtiyatdan satılır. Birini alın və şəxsi açar <a href=\"/x402\">x402</a> kanalı üzərindən <strong>bir dəfə</strong> çatdırılır, sonra onun saxlanılan nüsxəsi məhv edilir. Bunun əvəzinə təzə, ≤3 simvollu bir qazma lazımdır? <a href=\"/vanity-wallet\">Canlı qazıcıdan</a> istifadə edin.",
 		"meta_description": "Uzun, brendləşə bilən Solana vanity ünvanını ehtiyatdan dərhal çatdırılmaqla alın — canlı qazıcının əldə edə bilmədiyi 4–5+ simvollu prefikslər, əvvəlcədən toplu CPU-da yaradılıb və x402 vasitəsilə satılır. Qiymət nadirliklə mütənasibdir.",
 		"meta_og_description": "Uzun, brendlənə bilən Solana vanity ünvanları, əvvəlcədən hazırlanmış və ehtiyatdan satılır. Bir dəfə çatdırılır, saxlanarkən şifrələnir, nadirliyə görə qiymətləndirilir.",
 		"meta_og_title": "Premium Vanity İnventarı · three.ws",

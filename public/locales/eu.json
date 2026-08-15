@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laborategia</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laborategia",
-		"the_react_wrapper_around_the_sdk_imports": "SDK-aren inguruko React wrapper-a. <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, eta <code>useAvatar</code> zuzenean inportatzen ditu <code>/avatar-sdk/src/react.jsx</code>-tik. React CDN batetik kargatzen da inportazio-mapa baten bidez, beraz, orrialde honek funtzionatzen du bundler urratsik gabe.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK-aren inguruko React wrapper-a. <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, eta <code>useAvatar</code> zuzenean inportatzen ditu <code>/avatar-sdk/src/react.js</code>-tik. React CDN batetik kargatzen da inportazio-mapa baten bidez, beraz, orrialde honek funtzionatzen du bundler urratsik gabe.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epikoa",
 		"it_pays_the_quoted_price_and_receives": "Aipatutako prezioa ordaintzen du eta gakoa <b>behin</b> jasotzen du. Inportatu berehala.",
 		"legendary": "Legendarioa",
-		"long_brandable_solana_addresses_4_5_characte": "Solana helbide luze eta markagarriak — zuzeneko grinderrak iritsi ezin dituen 4–5+ karaktereko aurrizkiak — aldez aurretik sortuak batch CPU bidez eta stocketik salduak. Erosi bat eta gako pribatua <strong>behin</strong> entregatzen da <a href=\"/vanity/gallery\">x402</a> bidez, eta gero gordetako kopia suntsitzen da. Horren ordez, ≤3 karaktereko grind berri bat behar duzu? Erabili <a href=\"/vanity-wallet\">zuzeneko grinderra</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Solana helbide luze eta markagarriak — zuzeneko grinderrak iritsi ezin dituen 4–5+ karaktereko aurrizkiak — aldez aurretik sortuak batch CPU bidez eta stocketik salduak. Erosi bat eta gako pribatua <strong>behin</strong> entregatzen da <a href=\"/x402\">x402</a> bidez, eta gero gordetako kopia suntsitzen da. Horren ordez, ≤3 karaktereko grind berri bat behar duzu? Erabili <a href=\"/vanity-wallet\">zuzeneko grinderra</a>.",
 		"meta_description": "Erosi Solana vanity helbide luze eta markagarri bat, stocketik berehala entregatua — zuzeneko grinderrak iritsi ezin dituen 4–5+ karaktereko aurrizkiak, aldez aurretik sortuak batch CPU bidez eta x402 bidez salduak. Prezioa arrarotasunaren arabera aldatzen da.",
 		"meta_og_description": "Solana vanity helbide luze eta markagarriak, aurretik landuak eta stocketik salduak. Behin entregatua, atsedenaldian enkriptatuta, arrarotasunaren arabera prezioztatuta.",
 		"meta_og_title": "Premium Vanity Inbentarioa · three.ws",

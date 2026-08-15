@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — हुक",
 		"lab": "<a href=\"/demos\">&larr; लॅब</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws लॅब",
-		"the_react_wrapper_around_the_sdk_imports": "SDK भोवतीचे रिएक्ट रॅपर. ते <code>/avatar-sdk/src/react.jsx</code> मधून <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, आणि <code>useAvatar</code> थेट इम्पोर्ट करते. रिएक्ट CDN वरून इम्पोर्ट मॅपद्वारे लोड केले जाते, त्यामुळे हे पान बंडलर स्टेपशिवाय कार्य करते.",
+		"the_react_wrapper_around_the_sdk_imports": "SDK भोवतीचे रिएक्ट रॅपर. ते <code>/avatar-sdk/src/react.js</code> मधून <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, आणि <code>useAvatar</code> थेट इम्पोर्ट करते. रिएक्ट CDN वरून इम्पोर्ट मॅपद्वारे लोड केले जाते, त्यामुळे हे पान बंडलर स्टेपशिवाय कार्य करते.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "एपिक",
 		"it_pays_the_quoted_price_and_receives": "कोट केलेली किंमत भरल्यावर, तुम्हाला की <b>एकदाच</b> मिळेल. ती लगेच इम्पोर्ट करा.",
 		"legendary": "लेजेंडरी",
-		"long_brandable_solana_addresses_4_5_characte": "लांब, ब्रँडेबल Solana ॲड्रेसेस — ४-५+ कॅरेक्टरचे प्रीफिक्स जे लाईव्ह ग्राइंडरला मिळत नाहीत — बॅच CPU वर आधीच तयार केलेले आणि स्टॉक मधून विकले जाणारे. एक खरेदी करा आणि प्रायव्हेट की <a href=\"/vanity/gallery\">x402</a> रेलद्वारे <strong>एकदाच</strong> दिली जाईल, त्यानंतर तिची स्टोअर केलेली कॉपी नष्ट केली जाईल. त्याऐवजी नवीन ≤३-कॅरेक्टर ग्राइंड हवे आहे? <a href=\"/vanity-wallet\">लाईव्ह ग्राइंडर</a> वापरा.",
+		"long_brandable_solana_addresses_4_5_characte": "लांब, ब्रँडेबल Solana ॲड्रेसेस — ४-५+ कॅरेक्टरचे प्रीफिक्स जे लाईव्ह ग्राइंडरला मिळत नाहीत — बॅच CPU वर आधीच तयार केलेले आणि स्टॉक मधून विकले जाणारे. एक खरेदी करा आणि प्रायव्हेट की <a href=\"/x402\">x402</a> रेलद्वारे <strong>एकदाच</strong> दिली जाईल, त्यानंतर तिची स्टोअर केलेली कॉपी नष्ट केली जाईल. त्याऐवजी नवीन ≤३-कॅरेक्टर ग्राइंड हवे आहे? <a href=\"/vanity-wallet\">लाईव्ह ग्राइंडर</a> वापरा.",
 		"meta_description": "लांब, ब्रँडेबल Solana व्हॅनिटी ॲड्रेस स्टॉक मधून त्वरित मिळवा — ४-५+ कॅरेक्टरचे प्रीफिक्स जे लाईव्ह ग्राइंडरला मिळत नाहीत, बॅच CPU वर आधीच तयार केलेले आणि x402 द्वारे विकले जाणारे. किंमत दुर्मिळतेनुसार बदलते.",
 		"meta_og_description": "लांब, ब्रँडेबल Solana व्हॅनिटी ॲड्रेसेस, आधीच तयार केलेले आणि स्टॉक मधून विकले जाणारे. एकदाच डिलिव्हर केले जातात, एनक्रिप्टेड असतात, दुर्मिळतेनुसार किंमत ठरते.",
 		"meta_og_title": "प्रीमियम व्हॅनिटी इन्व्हेंटरी · three.ws",

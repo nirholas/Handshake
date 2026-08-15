@@ -90,6 +90,8 @@ export class WorldLineCeremony {
 		this.nonce = null;
 		this.container = null;
 		this._ar = null;
+		this._introToken = 0;
+		this._previewStop = null;
 	}
 
 	mount(container) {
@@ -101,10 +103,26 @@ export class WorldLineCeremony {
 
 	destroy() {
 		stopAgentVoice();
+		this._stopPreview();
 		if (this._ar) { this._ar.end().catch(() => {}); this._ar = null; }
+		// Invalidates any in-flight AR-support probe so it cannot inject a button into
+		// the container after the modal has closed.
+		this._introToken += 1;
+		this.container = null;
 	}
 
-	_set(html) { if (this.container) this.container.innerHTML = html; }
+	// Every re-render detaches the intro canvas, so the preview's render loop and its
+	// WebGL context are torn down here rather than left spinning against a dead node.
+	_stopPreview() {
+		if (!this._previewStop) return;
+		try { this._previewStop(); } catch { /* already torn down */ }
+		this._previewStop = null;
+	}
+
+	_set(html) {
+		this._stopPreview();
+		if (this.container) this.container.innerHTML = html;
+	}
 
 	async _speak(text) {
 		if (this.muted) return;
@@ -113,7 +131,7 @@ export class WorldLineCeremony {
 
 	_renderIntro() {
 		const w = this.wl;
-		const arBtn = '';
+		this._introToken = (this._introToken || 0) + 1;
 		this._set(`
 			<div class="wl-cer-card">
 				<div class="wl-cer-agent">${this.avatarUrl
@@ -123,19 +141,33 @@ export class WorldLineCeremony {
 				<p class="wl-cer-prompt">${esc(w.prompt || 'Complete the agent’s challenge to earn your proof of presence.')}</p>
 				<div class="wl-cer-actions">
 					<button class="wl-btn wl-btn-primary" data-act="begin">Begin the encounter</button>
-					${arBtn}
 				</div>
 				<p class="wl-cer-foot">You’re here — your device is co-located with the quest.</p>
 			</div>`);
 		this._wireIntro();
+		this._offerAR(this._introToken);
 		if (this.avatarUrl) this._mountAvatarPreview();
+	}
+
+	// immersive-ar support can only be answered asynchronously, so the panel ceremony
+	// renders first and the AR entry is added on top when the device can actually do it.
+	// A device without WebXR never sees a button that would immediately fall back.
+	async _offerAR(token) {
+		if (!(await WorldLineCeremony.arSupported())) return;
+		if (token !== this._introToken || !this.container) return;
+		const actions = this.container.querySelector('.wl-cer-actions');
+		if (!actions || actions.querySelector('[data-act="ar"]')) return;
+		const btn = document.createElement('button');
+		btn.className = 'wl-btn';
+		btn.dataset.act = 'ar';
+		btn.textContent = 'Meet the agent in AR';
+		btn.addEventListener('click', () => this.enterAR().catch(() => this._begin()));
+		actions.appendChild(btn);
 	}
 
 	_wireIntro() {
 		const begin = this.container.querySelector('[data-act="begin"]');
 		if (begin) begin.addEventListener('click', () => this._begin());
-		const ar = this.container.querySelector('[data-act="ar"]');
-		if (ar) ar.addEventListener('click', () => this.enterAR().catch(() => this._begin()));
 	}
 
 	async _begin() {

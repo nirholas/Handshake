@@ -281,9 +281,20 @@ const transport = new WebSocketTransport({
 			if (host.endsWith('.vercel.app') || host.endsWith('.three.ws')) {
 				return next(true);
 			}
-				if (!IS_PROD && (host.endsWith('.app.github.dev') || host.endsWith('.githubpreview.dev') || host.endsWith('.gitpod.io'))) {
+			if (!IS_PROD) {
+				// Dev only. `npm run dev:walk-all` starts Vite on the first free port
+				// from 3000 up, so a second checkout (or another agent on the box)
+				// lands on 3004+ and would be refused by the fixed 3000-3003 default
+				// list. Any loopback origin is by definition a developer's own
+				// machine, so accept the whole of it rather than chasing port numbers.
+				// Production keeps the explicit list: nothing here widens the live gate.
+				if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1') {
 					return next(true);
 				}
+				if (host.endsWith('.app.github.dev') || host.endsWith('.githubpreview.dev') || host.endsWith('.gitpod.io')) {
+					return next(true);
+				}
+			}
 		} catch {}
 		console.warn(`[multiplayer] rejecting origin ${origin}`);
 		return next(false, 403, 'origin not allowed');

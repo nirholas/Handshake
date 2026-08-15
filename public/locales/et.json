@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; labor</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws labor",
-		"the_react_wrapper_around_the_sdk_imports": "Reacti ümbris SDK ümber. Impordib <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> ja <code>useAvatar</code> otse asukohast <code>/avatar-sdk/src/react.jsx</code>. React laaditakse CDN-ist impordikaardi kaudu, nii et see leht töötab ilma bundleri sammuta.",
+		"the_react_wrapper_around_the_sdk_imports": "Reacti ümbris SDK ümber. Impordib <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> ja <code>useAvatar</code> otse asukohast <code>/avatar-sdk/src/react.js</code>. React laaditakse CDN-ist impordikaardi kaudu, nii et see leht töötab ilma bundleri sammuta.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Eepiline",
 		"it_pays_the_quoted_price_and_receives": "See maksab noteeritud hinna ja saab võtme <b>üks kord</b>. Impordi see kohe.",
 		"legendary": "Legendaarne",
-		"long_brandable_solana_addresses_4_5_characte": "Pikad, bränditavad Solana aadressid — 4–5+ tähemärgi pikkused eesliited, milleni reaalajas lihvija ei ulatu — eelnevalt partiitöötlusega CPU-l lihvitud ja laost müüdavad. Osta üks ja privaatvõti edastatakse <strong>üks kord</strong> üle <a href=\"/vanity/gallery\">x402</a> ühenduse, seejärel hävitatakse selle salvestatud koopia. Vajad hoopis värsket ≤3-tähemärgi pikkust lihvimist? Kasuta <a href=\"/vanity-wallet\">reaalajas lihvijat</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Pikad, bränditavad Solana aadressid — 4–5+ tähemärgi pikkused eesliited, milleni reaalajas lihvija ei ulatu — eelnevalt partiitöötlusega CPU-l lihvitud ja laost müüdavad. Osta üks ja privaatvõti edastatakse <strong>üks kord</strong> üle <a href=\"/x402\">x402</a> ühenduse, seejärel hävitatakse selle salvestatud koopia. Vajad hoopis värsket ≤3-tähemärgi pikkust lihvimist? Kasuta <a href=\"/vanity-wallet\">reaalajas lihvijat</a>.",
 		"meta_description": "Osta pikk, bränditav Solana vanity-aadress, mis tarnitakse koheselt laost — 4–5+ tähemärgi pikkused eesliited, milleni reaalajas lihvija ei ulatu, eelnevalt partiitöötlusega CPU-l lihvitud ja müüdud x402 kaudu. Hind sõltub haruldusest.",
 		"meta_og_description": "Pikad, bränditavad Solana vanity-aadressid, mis on eelnevalt genereeritud ja laost müüdud. Tarnitakse üks kord, puhkeolekus krüpteeritud, hinnastatud harulduse järgi.",
 		"meta_og_title": "Premium Vanity Inventar · three.ws",

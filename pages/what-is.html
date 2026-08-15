@@ -65,26 +65,34 @@
 						"mainEntity": [
 							{
 								"@type": "Question",
-								"name": "Do I need to know about crypto to use three.ws?",
+								"name": "Do I need to know anything about crypto?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "No. You can create an avatar, give it an AI brain, embed it on a website, and chat with it entirely for free, without ever touching crypto. Owning your agent on-chain or charging for it are optional layers you can add later."
+									"text": "No. Creating an avatar, giving it an AI brain, embedding it, and chatting with it are all free and crypto-free. Owning your agent on-chain or charging per chat are optional layers you can turn on later if you ever want them."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "What can I actually build with three.ws?",
+								"name": "Is it free to start?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "A 3D AI character with a face, a brain, and a voice — used as a customer-service avatar embedded on a website, a streamer or VTuber avatar that lip-syncs on camera, a 3D mascot and world for a community, or a personal AI assistant you can talk to."
+									"text": "Yes. You can build a 3D agent from a selfie or a text prompt, give it a brain, and embed it without paying anything. You only pay if you opt into premium generation or run paid services."
 								}
 							},
 							{
 								"@type": "Question",
-								"name": "Is everything one platform or separate tools?",
+								"name": "Do I need 3D modelling or coding skills?",
 								"acceptedAnswer": {
 									"@type": "Answer",
-									"text": "One platform. The avatar creator, animation, AI chat, embeddable widget, 3D worlds, optional token and on-chain identity, and paid APIs are all building blocks that connect to the same agent you create."
+									"text": "No. The avatar comes from a photo, a sculpt tool, or a text description, with no Blender and no game engine. Embedding is a copy-paste snippet. Developers who want deeper control get an SDK and API, but neither is required."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "Where can I embed or use my agent?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "Any website, via the embed widget; on a live stream, via the OBS overlay; in a 3D world on three.ws; or anywhere that accepts a standard glTF 2.0 GLB, since that is the format your avatar exports to."
 								}
 							}
 						]
@@ -128,19 +136,41 @@
 							<a href="#use-cases" class="fl-btn-ghost" data-i18n="what_is.see_what_you_can_build">See what you can build</a>
 						</div>
 					</div>
-					<div class="fl-hero-preview" aria-label="Sample 3D avatar preview">
+					<!-- Three layers, one box. The still is a real render of the same GLB
+					     and paints immediately, so the pane is never an empty rectangle:
+					     it is the loading state, and it is also the fallback when the
+					     model-viewer CDN or the GLB never arrives. The label below states
+					     which of the three the visitor is actually looking at. -->
+					<div class="fl-hero-preview" data-state="loading">
+						<img
+							class="fl-preview-still"
+							src="/media/what-is/hero-avatar.webp"
+							alt="Sample rigged 3D avatar, an example of the characters you can create on three.ws"
+							width="339"
+							height="720"
+							decoding="async"
+							fetchpriority="high"
+						/>
 						<model-viewer
 							src="/animations/soldier.glb"
-							alt="Sample rigged 3D avatar — an example of what you can create"
+							alt="Sample rigged 3D avatar playing its idle animation. Drag to orbit the camera."
+							autoplay
+							animation-name="Idle"
 							auto-rotate
-							auto-rotate-delay="500"
+							auto-rotate-delay="1500"
 							rotation-per-second="12deg"
 							camera-controls
+							camera-orbit="180deg 82deg 105%"
+							field-of-view="26deg"
+							interaction-prompt="none"
 							shadow-intensity="0.5"
 							environment-image="neutral"
-							style="background: transparent; width: 100%; height: 100%"
 						></model-viewer>
-						<span class="fl-preview-label" data-i18n="what_is.sample_avatar_drag_to_orbit">Sample avatar · drag to orbit</span>
+						<span class="fl-preview-label">
+							<span class="fl-preview-state" data-when="loading" data-i18n="what_is.loading_the_sample_avatar">Loading the sample avatar</span>
+							<span class="fl-preview-state" data-when="ready" data-i18n="what_is.sample_avatar_drag_to_orbit">Sample avatar · drag to orbit</span>
+							<span class="fl-preview-state" data-when="still" data-i18n="what_is.sample_avatar_still_image_3d_preview_unava">Sample avatar · still image, 3D preview unavailable</span>
+						</span>
 					</div>
 				</div>
 			</section>
@@ -314,100 +344,116 @@
 				<h2 id="wi-faq-h2" data-i18n="what_is.common_questions">Common questions</h2>
 				<div class="fl-faq-list">
 					<div class="fl-faq-item">
-						<button class="fl-faq-q" aria-expanded="false" aria-controls="wi-faq-1">
-							Do I need to know anything about crypto?
-							<svg
-								class="fl-faq-chevron"
-								viewBox="0 0 16 16"
-								fill="none"
-								aria-hidden="true"
-							>
-								<path
-									d="M4 6l4 4 4-4"
-									stroke="currentColor"
-									stroke-width="1.5"
-									stroke-linecap="round"
-								/>
-							</svg>
-						</button>
-						<div class="fl-faq-a" id="wi-faq-1" role="region">
-							No. Creating an avatar, giving it an AI brain, embedding it, and
-							chatting with it are all free and crypto-free. Owning your agent
-							on-chain or charging per chat are optional layers you can turn on later
-							if you ever want them.
+						<h3 class="fl-faq-h">
+							<button class="fl-faq-q" type="button" id="wi-faq-q1" aria-expanded="false" aria-controls="wi-faq-1">
+								<span data-i18n="what_is.do_i_need_to_know_anything_about_crypto">Do I need to know anything about crypto?</span>
+								<svg
+									class="fl-faq-chevron"
+									viewBox="0 0 16 16"
+									fill="none"
+									aria-hidden="true"
+								>
+									<path
+										d="M4 6l4 4 4-4"
+										stroke="currentColor"
+										stroke-width="1.5"
+										stroke-linecap="round"
+									/>
+								</svg>
+							</button>
+						</h3>
+						<div class="fl-faq-a" id="wi-faq-1" role="region" aria-labelledby="wi-faq-q1">
+							<p data-i18n="what_is.no_creating_an_avatar_giving_it_an">
+								No. Creating an avatar, giving it an AI brain, embedding it, and
+								chatting with it are all free and crypto-free. Owning your agent
+								on-chain or charging per chat are optional layers you can turn on
+								later if you ever want them.
+							</p>
 						</div>
 					</div>
 					<div class="fl-faq-item">
-						<button class="fl-faq-q" aria-expanded="false" aria-controls="wi-faq-2">
-							Is it free to start?
-							<svg
-								class="fl-faq-chevron"
-								viewBox="0 0 16 16"
-								fill="none"
-								aria-hidden="true"
-							>
-								<path
-									d="M4 6l4 4 4-4"
-									stroke="currentColor"
-									stroke-width="1.5"
-									stroke-linecap="round"
-								/>
-							</svg>
-						</button>
-						<div class="fl-faq-a" id="wi-faq-2" role="region">
-							Yes. You can build a 3D agent from a selfie or a text prompt, give it a
-							brain, and embed it without paying anything. You only pay if you opt
-							into premium generation or run paid services.
+						<h3 class="fl-faq-h">
+							<button class="fl-faq-q" type="button" id="wi-faq-q2" aria-expanded="false" aria-controls="wi-faq-2">
+								<span data-i18n="what_is.is_it_free_to_start">Is it free to start?</span>
+								<svg
+									class="fl-faq-chevron"
+									viewBox="0 0 16 16"
+									fill="none"
+									aria-hidden="true"
+								>
+									<path
+										d="M4 6l4 4 4-4"
+										stroke="currentColor"
+										stroke-width="1.5"
+										stroke-linecap="round"
+									/>
+								</svg>
+							</button>
+						</h3>
+						<div class="fl-faq-a" id="wi-faq-2" role="region" aria-labelledby="wi-faq-q2">
+							<p data-i18n="what_is.yes_you_can_build_a_3d_agent">
+								Yes. You can build a 3D agent from a selfie or a text prompt, give it
+								a brain, and embed it without paying anything. You only pay if you
+								opt into premium generation or run paid services.
+							</p>
 						</div>
 					</div>
 					<div class="fl-faq-item">
-						<button class="fl-faq-q" aria-expanded="false" aria-controls="wi-faq-3">
-							Do I need 3D modelling or coding skills?
-							<svg
-								class="fl-faq-chevron"
-								viewBox="0 0 16 16"
-								fill="none"
-								aria-hidden="true"
-							>
-								<path
-									d="M4 6l4 4 4-4"
-									stroke="currentColor"
-									stroke-width="1.5"
-									stroke-linecap="round"
-								/>
-							</svg>
-						</button>
-						<div class="fl-faq-a" id="wi-faq-3" role="region">
-							No. The avatar comes from a photo, a sculpt tool, or a text description
-							— no Blender, no game engine. Embedding is a copy-paste snippet.
-							Developers who want deeper control get an
-							<a href="/docs" style="color: var(--ink)" data-i18n="what_is.sdk_and_api">SDK and API</a>, but neither
-							is required.
+						<h3 class="fl-faq-h">
+							<button class="fl-faq-q" type="button" id="wi-faq-q3" aria-expanded="false" aria-controls="wi-faq-3">
+								<span data-i18n="what_is.do_i_need_3d_modelling_or_coding">Do I need 3D modelling or coding skills?</span>
+								<svg
+									class="fl-faq-chevron"
+									viewBox="0 0 16 16"
+									fill="none"
+									aria-hidden="true"
+								>
+									<path
+										d="M4 6l4 4 4-4"
+										stroke="currentColor"
+										stroke-width="1.5"
+										stroke-linecap="round"
+									/>
+								</svg>
+							</button>
+						</h3>
+						<div class="fl-faq-a" id="wi-faq-3" role="region" aria-labelledby="wi-faq-q3">
+							<p data-i18n-html="what_is.no_the_avatar_comes_from_a_photo">
+								No. The avatar comes from a photo, a sculpt tool, or a text
+								description, with no Blender and no game engine. Embedding is a
+								copy-paste snippet. Developers who want deeper control get an
+								<a href="/docs" class="fl-faq-link">SDK and API</a>, but neither is
+								required.
+							</p>
 						</div>
 					</div>
 					<div class="fl-faq-item">
-						<button class="fl-faq-q" aria-expanded="false" aria-controls="wi-faq-4">
-							Where can I embed or use my agent?
-							<svg
-								class="fl-faq-chevron"
-								viewBox="0 0 16 16"
-								fill="none"
-								aria-hidden="true"
-							>
-								<path
-									d="M4 6l4 4 4-4"
-									stroke="currentColor"
-									stroke-width="1.5"
-									stroke-linecap="round"
-								/>
-							</svg>
-						</button>
-						<div class="fl-faq-a" id="wi-faq-4" role="region">
-							Any website, via the
-							<a href="/studio" style="color: var(--ink)" data-i18n="what_is.embed_widget">embed widget</a>; on a live
-							stream, via the OBS overlay; in a 3D world on three.ws; or anywhere that
-							accepts a standard glTF 2.0 GLB, since that's the format your avatar
-							exports to.
+						<h3 class="fl-faq-h">
+							<button class="fl-faq-q" type="button" id="wi-faq-q4" aria-expanded="false" aria-controls="wi-faq-4">
+								<span data-i18n="what_is.where_can_i_embed_or_use_my">Where can I embed or use my agent?</span>
+								<svg
+									class="fl-faq-chevron"
+									viewBox="0 0 16 16"
+									fill="none"
+									aria-hidden="true"
+								>
+									<path
+										d="M4 6l4 4 4-4"
+										stroke="currentColor"
+										stroke-width="1.5"
+										stroke-linecap="round"
+									/>
+								</svg>
+							</button>
+						</h3>
+						<div class="fl-faq-a" id="wi-faq-4" role="region" aria-labelledby="wi-faq-q4">
+							<p data-i18n-html="what_is.any_website_via_the_embed_widget_on">
+								Any website, via the
+								<a href="/studio" class="fl-faq-link">embed widget</a>; on a live
+								stream, via the OBS overlay; in a 3D world on three.ws; or anywhere
+								that accepts a standard glTF 2.0 GLB, since that is the format your
+								avatar exports to.
+							</p>
 						</div>
 					</div>
 				</div>
@@ -438,6 +484,33 @@
 					if (panel) panel.classList.toggle('open', !expanded);
 				});
 			});
+
+			// Hero preview state. model-viewer is a third-party module served from a
+			// CDN, so three things can go wrong independently: the script never
+			// arrives, the custom element upgrades but the GLB fails, or a device
+			// with no WebGL never paints. All three land on `still`, which keeps the
+			// real render on screen and stops the label promising an orbit control
+			// that is not there. `ready` is only set once the model is actually up.
+			(function () {
+				const shell = document.querySelector('.fl-hero-preview');
+				if (!shell) return;
+				const viewer = shell.querySelector('model-viewer');
+				const settle = (state) => {
+					if (shell.dataset.state === 'ready') return;
+					shell.dataset.state = state;
+				};
+
+				viewer.addEventListener('load', () => (shell.dataset.state = 'ready'), { once: true });
+				viewer.addEventListener('error', () => settle('still'), { once: true });
+
+				const cdn = document.querySelector('script[src*="model-viewer"]');
+				if (cdn) cdn.addEventListener('error', () => settle('still'), { once: true });
+
+				// Backstop for the failure modes that fire no event at all: a request
+				// that hangs rather than errors, or a browser that refuses the WebGL
+				// context. Generous enough not to trip a slow phone on the 660 KB GLB.
+				setTimeout(() => settle('still'), 12000);
+			})();
 		</script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>

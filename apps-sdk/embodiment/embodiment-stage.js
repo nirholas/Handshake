@@ -41,7 +41,7 @@ import { AvatarMouthTarget } from '../../src/voice/avatar-morph-target.js';
 import { A2FPlayer } from '../../src/voice/a2f-player.js';
 import { inspectRig, decideRigMode } from '../../src/embodiment/rig-mode.js';
 import { expressionForText, expressionFor } from '../../src/embodiment/emotion.js';
-import { TextVisemeEnvelope, estimateSpeechDuration } from '../../src/embodiment/text-visemes.js';
+import { TextVisemeEnvelope } from '../../src/embodiment/text-visemes.js';
 import { FaceExpression } from '../../src/embodiment/face-expression.js';
 import { mapChainStateToVisuals } from './chain-visuals.js';
 
@@ -72,7 +72,6 @@ export class EmbodimentStage {
 		// Lip-sync timing (text-driven path).
 		this._speakEnv = null;
 		this._speakStart = 0;
-		this._speakDur = 0;
 		this._audio = null;
 		this._a2fActive = false;
 
@@ -380,7 +379,7 @@ export class EmbodimentStage {
 		// Lip-sync source, best-first.
 		this._endSpeech(false);
 		if (turn.visemeTrack && this.a2f.hasCoverage() && turn.audioUrl) {
-			await this._speakWithAudio(turn.audioUrl, turn.visemeTrack);
+			await this._speakWithAudio(turn.audioUrl, turn.visemeTrack, text);
 		} else {
 			this._speakWithText(text);
 		}
@@ -389,24 +388,33 @@ export class EmbodimentStage {
 	_speakWithText(text) {
 		this._speakEnv = new TextVisemeEnvelope(text);
 		this._speakStart = this._clockNow();
-		this._speakDur = this._speakEnv.duration;
 		this._a2fActive = false;
 	}
 
-	async _speakWithAudio(audioUrl, track) {
+	/**
+	 * The audio lane: an Audio2Face track sampled against real TTS playback.
+	 * @param {string} audioUrl
+	 * @param {object} track
+	 * @param {string} text this turn's reply, kept so the fallback lane can still
+	 *   speak it if playback never starts.
+	 */
+	async _speakWithAudio(audioUrl, track, text) {
 		try {
 			const audio = new Audio(audioUrl);
 			audio.crossOrigin = 'anonymous';
 			this._audio = audio;
 			this.a2f.setTrack(track);
 			this._a2fActive = true;
-			this._speakDur = track?.durationSec || estimateSpeechDuration('', {});
 			await audio.play();
 			audio.addEventListener('ended', () => this._endSpeech(), { once: true });
 		} catch {
-			// Autoplay blocked or audio failed — fall back to the text envelope.
+			// Autoplay blocked (the common case inside a chat panel) or the audio
+			// failed to fetch. Fall back to the text envelope on THIS turn's reply
+			// so the mouth still speaks the line instead of staying shut.
+			this._audio = null;
 			this._a2fActive = false;
-			this._speakWithText(audioUrl ? '' : '');
+			this.a2f.reset?.();
+			this._speakWithText(text);
 		}
 	}
 
@@ -461,10 +469,10 @@ export class EmbodimentStage {
 		// Fallback alive-idle: when the rig can't play canonical clips, the body
 		// must still breathe. A slow vertical bob + gentle yaw — never a frozen pose.
 		if (!this._clipsReady && this._model && !REDUCED_MOTION) {
-			const t = now;
-			this._model.position.y = (this._model.position.y || 0); // keep grounded base
-			this.root.rotation.y = Math.sin(t * 0.25) * 0.18;
-			this.root.position.y = Math.sin(t * 1.1) * 0.012;
+			// The model keeps its grounded position; the bob and yaw ride the root
+			// group so the feet never sink through the floor line.
+			this.root.rotation.y = Math.sin(now * 0.25) * 0.18;
+			this.root.position.y = Math.sin(now * 1.1) * 0.012;
 		}
 
 		// Lip-sync.

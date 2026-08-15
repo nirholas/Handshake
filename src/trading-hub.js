@@ -10,7 +10,14 @@
 
 import { escapeHtml as esc } from './shared/coin-format.js';
 import { SURFACES, LEARN } from './trading-hub-data.js';
-import { describeFleet, formatSol, formatPct, formatAgo, sparkPath } from './trading-hub-format.js';
+import {
+	describeFleet,
+	formatSol,
+	formatPct,
+	formatAgo,
+	isNumeric,
+	sparkPath,
+} from './trading-hub-format.js';
 
 const $ = (id) => document.getElementById(id);
 const REFRESH_MS = 30_000;
@@ -101,6 +108,13 @@ function renderVitals(status) {
 			help: 'The live stream of new launches. This is the failure that hides best: the worker can be up, healthy and beating steadily while its feed has gone silent, in which case it sees nothing and takes no trades.',
 		},
 		{
+			label: 'Wallets funded',
+			value: d.solvency.label,
+			sub: d.solvency.sub,
+			tone: d.solvency.tone,
+			help: `${d.solvency.detail} Liveness is not solvency: an armed agent whose wallet cannot cover the minimum entry is skipped by the executor, which looks identical to a quiet market from every check that only watches the process.`,
+		},
+		{
 			label: 'Funded to date',
 			value: formatSol(funding.fundedTotalSol, { signed: false }),
 			sub: `Last top-up ${formatAgo(funding.lastFundAt)}`,
@@ -130,7 +144,7 @@ function renderVitalsError() {
 function renderVitalsLoading() {
 	const el = $('th-vitals');
 	if (!el) return;
-	el.innerHTML = Array.from({ length: 6 })
+	el.innerHTML = Array.from({ length: 7 })
 		.map(() => '<div class="th-vital th-skeleton" aria-hidden="true"></div>')
 		.join('');
 }
@@ -146,6 +160,9 @@ function boardRow(row) {
 	const wins = Number(row.wins ?? 0);
 	const closed = Number(row.closed ?? 0);
 	const winRate = closed > 0 ? formatPct((wins / closed) * 100, { signed: false }) : 'no trades yet';
+	// An agent with a realized profit but no cost basis to divide by has no ROI.
+	// "· ROI" reads like a broken template, so say what is true instead.
+	const roi = isNumeric(row.roi_pct) ? `${formatPct(row.roi_pct)} ROI` : 'ROI unavailable';
 	return `<article class="th-row th-row-${tone}">
 		<div class="th-row-rank" aria-hidden="true">${esc(String(row.rank ?? '·'))}</div>
 		<div class="th-row-main">
@@ -157,7 +174,7 @@ function boardRow(row) {
 		</div>
 		<div class="th-row-pnl">
 			<div class="th-row-pnl-value">${esc(formatSol(pnl))}</div>
-			<div class="th-row-pnl-sub">${esc(formatPct(row.roi_pct))} ROI</div>
+			<div class="th-row-pnl-sub">${esc(roi)}</div>
 		</div>
 	</article>`;
 }

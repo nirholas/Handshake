@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laborator</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laborator",
-		"the_react_wrapper_around_the_sdk_imports": "Wrapper-ul React pentru SDK. Importă <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, și <code>useAvatar</code> direct din <code>/avatar-sdk/src/react.jsx</code>. React este încărcat de pe un CDN printr-o mapă de import, astfel încât această pagină funcționează fără un pas de bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "Wrapper-ul React pentru SDK. Importă <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, și <code>useAvatar</code> direct din <code>/avatar-sdk/src/react.js</code>. React este încărcat de pe un CDN printr-o mapă de import, astfel încât această pagină funcționează fără un pas de bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epic",
 		"it_pays_the_quoted_price_and_receives": "Plătește prețul cotat și primește cheia <b>o singură dată</b>. Import-o imediat.",
 		"legendary": "Legendar",
-		"long_brandable_solana_addresses_4_5_characte": "Adrese Solana lungi, brandabile — prefixe de 4–5+ caractere pe care grinder-ul live nu le poate atinge — generate în avans pe CPU batch și vândute din stoc. Cumpără una și cheia privată este livrată <strong>o singură dată</strong> prin intermediul <a href=\"/vanity/gallery\">x402</a> rail, apoi copia sa stocată este distrusă. Ai nevoie de o generare proaspătă de ≤3 caractere în schimb? Folosește <a href=\"/vanity-wallet\">live grinder-ul</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Adrese Solana lungi, brandabile — prefixe de 4–5+ caractere pe care grinder-ul live nu le poate atinge — generate în avans pe CPU batch și vândute din stoc. Cumpără una și cheia privată este livrată <strong>o singură dată</strong> prin intermediul <a href=\"/x402\">x402</a> rail, apoi copia sa stocată este distrusă. Ai nevoie de o generare proaspătă de ≤3 caractere în schimb? Folosește <a href=\"/vanity-wallet\">live grinder-ul</a>.",
 		"meta_description": "Cumpără o adresă vanity Solana lungă, brandabilă, livrată instantaneu din stoc — prefixe de 4–5+ caractere pe care grinder-ul live nu le poate atinge, generate în avans pe CPU batch și vândute prin x402. Prețul crește odată cu raritatea.",
 		"meta_og_description": "Adrese vanity Solana lungi, brandabile, generate în avans și vândute din stoc. Livrate o singură dată, criptate în repaus, prețuite în funcție de raritate.",
 		"meta_og_title": "Inventar Vanity Premium · three.ws",

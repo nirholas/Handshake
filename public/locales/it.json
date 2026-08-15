@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; laboratorio</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws laboratorio",
-		"the_react_wrapper_around_the_sdk_imports": "Il wrapper React per l'SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> e <code>useAvatar</code> direttamente da <code>/avatar-sdk/src/react.jsx</code>. React viene caricato da una CDN tramite una mappa di importazione, quindi questa pagina funziona senza un passaggio di bundling.",
+		"the_react_wrapper_around_the_sdk_imports": "Il wrapper React per l'SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> e <code>useAvatar</code> direttamente da <code>/avatar-sdk/src/react.js</code>. React viene caricato da una CDN tramite una mappa di importazione, quindi questa pagina funziona senza un passaggio di bundling.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epico",
 		"it_pays_the_quoted_price_and_receives": "Paga il prezzo quotato e riceve la chiave <b>una sola volta</b>. Importala immediatamente.",
 		"legendary": "Leggendario",
-		"long_brandable_solana_addresses_4_5_characte": "Indirizzi Solana lunghi e personalizzabili — prefissi di 4-5+ caratteri che il grinder in tempo reale non può raggiungere — pre-generati in anticipo su CPU in batch e venduti da stock. Acquistane uno e la chiave privata viene consegnata <strong>una sola volta</strong> tramite il canale <a href=\"/vanity/gallery\">x402</a>, dopodiché la sua copia memorizzata viene distrutta. Hai bisogno invece di una nuova generazione di ≤3 caratteri? Usa il <a href=\"/vanity-wallet\">grinder in tempo reale</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Indirizzi Solana lunghi e personalizzabili — prefissi di 4-5+ caratteri che il grinder in tempo reale non può raggiungere — pre-generati in anticipo su CPU in batch e venduti da stock. Acquistane uno e la chiave privata viene consegnata <strong>una sola volta</strong> tramite il canale <a href=\"/x402\">x402</a>, dopodiché la sua copia memorizzata viene distrutta. Hai bisogno invece di una nuova generazione di ≤3 caratteri? Usa il <a href=\"/vanity-wallet\">grinder in tempo reale</a>.",
 		"meta_description": "Acquista un indirizzo vanity Solana lungo e personalizzabile consegnato istantaneamente da stock — prefissi di 4-5+ caratteri che il grinder in tempo reale non può raggiungere, pre-generati in anticipo su CPU in batch e venduti tramite x402. Il prezzo scala con la rarità.",
 		"meta_og_description": "Indirizzi vanity Solana lunghi e personalizzabili, pre-generati in anticipo e venduti da stock. Consegnati una sola volta, crittografati a riposo, prezzati in base alla rarità.",
 		"meta_og_title": "Inventario Vanity Premium · three.ws",

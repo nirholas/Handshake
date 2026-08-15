@@ -13,7 +13,13 @@
  * agents.js, and characters.js.
  *
  * Coin ranking:
- *   always    — oracle_conviction.score desc, filtered to recent scored_at (<24h stale)
+ *   24h / 7d  - oracle_conviction.score desc among coins scored inside the window
+ *   all time  - oracle_conviction.score desc across every coin still retained
+ *
+ * oracle_conviction holds one row per (mint, network), rescored on a cadence, so
+ * `scored_at` is the freshness of a coin's conviction read. The window control on
+ * /trending is therefore a real filter on both rankings, not a decoration: the
+ * coin list used to ignore it entirely and always answer with a fixed 36h floor.
  *
  * Cache: 2 min public CDN (trending doesn't need sub-minute freshness).
  */
@@ -25,6 +31,7 @@ import { thumbnailUrl } from './_lib/r2.js';
 
 const WINDOWS = new Set(['24h', '7d', 'all']);
 const WINDOW_INTERVAL = { '24h': '1 day', '7d': '7 days' };
+const COIN_INTERVAL = { '24h': '24 hours', '7d': '7 days' };
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -155,15 +162,29 @@ export default wrap(async (req, res) => {
 	}
 
 	// ── Coins (Oracle conviction) ───────────────────────────────────────────
-	const coinRows = await sql`
-		select mint, symbol, name, score, tier, momentum, pedigree, structure, narrative,
-		       smart_wallet_count, scored_at
-		from oracle_conviction
-		where scored_at >= now() - interval '36 hours'
-		  and score is not null
-		order by score desc
-		limit ${limit}
-	`.catch(() => []);
+	// Same window the agent ranking uses, applied to each coin's last scoring run.
+	// Scores saturate at 100, so rank ties are broken by the pillars that actually
+	// separate two equally-convicted coins. Without it Postgres is free to return a
+	// different slice of the tie on every request and the board reshuffles on reload.
+	const coinInterval = COIN_INTERVAL[win];
+	const coinRows = await (coinInterval
+		? sql`
+			select mint, symbol, name, score, tier, momentum, pedigree, structure, narrative,
+			       smart_wallet_count, scored_at
+			from oracle_conviction
+			where scored_at >= now() - ${coinInterval}::interval
+			  and score is not null
+			order by score desc, momentum desc, smart_wallet_count desc, scored_at desc, mint
+			limit ${limit}
+		`
+		: sql`
+			select mint, symbol, name, score, tier, momentum, pedigree, structure, narrative,
+			       smart_wallet_count, scored_at
+			from oracle_conviction
+			where score is not null
+			order by score desc, momentum desc, smart_wallet_count desc, scored_at desc, mint
+			limit ${limit}
+		`).catch(() => []);
 
 	const coins = coinRows.map((r, idx) => ({
 		rank:               idx + 1,

@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — ហុក",
 		"lab": "<a href=\"/demos\">&larr; មន្ទីរពិសោធន៍</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws មន្ទីរពិសោធន៍",
-		"the_react_wrapper_around_the_sdk_imports": "កម្មវិធីរុំ React ជុំវិញ SDK។ នាំចូល <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, និង <code>useAvatar</code> ដោយផ្ទាល់ពី <code>/avatar-sdk/src/react.jsx</code>។ React ត្រូវបានផ្ទុកពី CDN តាមរយៈផែនទីនាំចូល ដូច្នេះទំព័រនេះដំណើរការដោយគ្មានជំហាន bundler។",
+		"the_react_wrapper_around_the_sdk_imports": "កម្មវិធីរុំ React ជុំវិញ SDK។ នាំចូល <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code>, និង <code>useAvatar</code> ដោយផ្ទាល់ពី <code>/avatar-sdk/src/react.js</code>។ React ត្រូវបានផ្ទុកពី CDN តាមរយៈផែនទីនាំចូល ដូច្នេះទំព័រនេះដំណើរការដោយគ្មានជំហាន bundler។",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "អស្ចារ្យ",
 		"it_pays_the_quoted_price_and_receives": "វាបង់ថ្លៃដែលបានកំណត់ ហើយទទួលបាន key <b>តែម្តង</b>។ នាំចូលវាភ្លាមៗ។",
 		"legendary": "រឿងព្រេងនិទាន",
-		"long_brandable_solana_addresses_4_5_characte": "អាសយដ្ឋាន Solana ដែលអាចបង្កើតម៉ាកបាន និងវែង — បុព្វបទ 4–5+ តួអក្សរដែល live grinder មិនអាចទៅដល់បាន — បាន grind ជាមុននៅលើ batch CPU និងលក់ចេញពីស្តុក។ ទិញមួយ ហើយ private key ត្រូវបានបញ្ជូន <strong>តែម្តង</strong> តាមរយៈ <a href=\"/vanity/gallery\">x402</a> rail បន្ទាប់មកច្បាប់ចម្លងដែលបានរក្សាទុករបស់វាត្រូវបានបំផ្លាញ។ ត្រូវការ grind ថ្មី ≤3 តួអក្សរវិញមែនទេ? ប្រើ <a href=\"/vanity-wallet\">live grinder</a>។",
+		"long_brandable_solana_addresses_4_5_characte": "អាសយដ្ឋាន Solana ដែលអាចបង្កើតម៉ាកបាន និងវែង — បុព្វបទ 4–5+ តួអក្សរដែល live grinder មិនអាចទៅដល់បាន — បាន grind ជាមុននៅលើ batch CPU និងលក់ចេញពីស្តុក។ ទិញមួយ ហើយ private key ត្រូវបានបញ្ជូន <strong>តែម្តង</strong> តាមរយៈ <a href=\"/x402\">x402</a> rail បន្ទាប់មកច្បាប់ចម្លងដែលបានរក្សាទុករបស់វាត្រូវបានបំផ្លាញ។ ត្រូវការ grind ថ្មី ≤3 តួអក្សរវិញមែនទេ? ប្រើ <a href=\"/vanity-wallet\">live grinder</a>។",
 		"meta_description": "ទិញអាសយដ្ឋាន vanity Solana ដែលអាចបង្កើតម៉ាកបាន និងវែង ដែលត្រូវបានបញ្ជូនភ្លាមៗពីស្តុក — បុព្វបទ 4–5+ តួអក្សរដែល live grinder មិនអាចទៅដល់បាន បាន grind ជាមុននៅលើ batch CPU និងលក់តាមរយៈ x402។ តម្លៃកើនឡើងតាមភាពកម្រ។",
 		"meta_og_description": "អាសយដ្ឋាន Solana vanity ដែលអាចកំណត់ម៉ាកបាន និងវែង ដែលបានរៀបចំទុកជាមុន និងលក់ចេញពីស្តុក។ ផ្ដល់ជូនតែម្ដង អ៊ិនគ្រីបនៅពេលរក្សាទុក កំណត់តម្លៃតាមកម្រិតកម្រ។",
 		"meta_og_title": "ស្តុក Vanity លំដាប់ខ្ពស់ · three.ws",

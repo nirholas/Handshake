@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T17:52:56.533Z",
+	"generated_at": "2026-08-15T19:14:30.709Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1025,7 +1025,7 @@
 				{
 					"path": "/voice",
 					"title": "Voice Lab",
-					"description": "Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
+					"description": "Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
 					"added": "2026-06-05",
 					"auth": null,
 					"indexable": true,

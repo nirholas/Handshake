@@ -50,7 +50,9 @@ Everything runs on real platform pipelines, not canned stand-ins:
   `decideRigMode` and falls back to a gentle alive-idle — never a frozen T-pose.
 - **Lip-sync** is best-first: an Audio2Face ARKit track synced to TTS audio when
   present, else live spectral analysis of playing audio, else a deterministic
-  text-timed mouth envelope. If the rig has no mouth morphs, `AvatarMouthTarget`
+  text-timed mouth envelope. Autoplay refusals are covered too: a host that
+  blocks the audio drops to the text envelope for the same reply, so the mouth
+  still speaks the line. If the rig has no mouth morphs, `AvatarMouthTarget`
   drives the jaw (or head) bone instead, so the face is never frozen.
 - **Emotion** is detected from the reply text (or set explicitly), blended onto the
   face via `FaceExpression` / ARKit morphs **and** expressed through a body
@@ -67,7 +69,8 @@ transition is observable through `opts.onState` so the host can paint a status.
 | | | `.loadPersona({ glbUrl, name?, personaId? }) → Promise<boolean>` |
 | | | `.speak({ text, emotion?, intensity?, gesture?, audioUrl?, visemeTrack? }) → Promise<void>` |
 | | | `.listening()` · `.thinking()` · `.setChainState(identity)` · `.destroy()` |
-| [`overlay.js`](embodiment/overlay.js) | `mountOverlay` | `mountOverlay(container, { onRetry? })` → controller with `.setName(name)` and `.setState(state, detail?)` |
+| [`overlay.js`](embodiment/overlay.js) | `mountOverlay` | `mountOverlay(container, { onRetry? })` → controller |
+| | | `.setName(name)` · `.setState(state, detail?)` · `.setIdentity(visuals\|null)` · `.destroy()` · `.el` |
 | [`chain-visuals.js`](embodiment/chain-visuals.js) | `mapChainStateToVisuals` | `mapChainStateToVisuals(identity)` → `{ aura, cosmetic, muted, nameplate }` |
 | | `AURA_BY_REPUTATION_TIER`, `COSMETIC_BY_HOLDINGS_TIER` | Tier → visual lookup tables |
 | [`face-expression.js`](embodiment/face-expression.js) | `FaceExpression` | Re-export of [`src/embodiment/face-expression.js`](../src/embodiment/face-expression.js) |

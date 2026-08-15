@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; ဓာတ်ခွဲခန်း</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws ဓာတ်ခွဲခန်း",
-		"the_react_wrapper_around_the_sdk_imports": "SDK ကို ဝန်းရံထားသော React wrapper။ <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> နှင့် <code>useAvatar</code> တို့ကို <code>/avatar-sdk/src/react.jsx</code> မှ တိုက်ရိုက် import လုပ်သည်။ React ကို import map မှတစ်ဆင့် CDN မှ load လုပ်ထားသောကြောင့် ဤစာမျက်နှာသည် bundler အဆင့်မပါဘဲ အလုပ်လုပ်သည်။",
+		"the_react_wrapper_around_the_sdk_imports": "SDK ကို ဝန်းရံထားသော React wrapper။ <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> နှင့် <code>useAvatar</code> တို့ကို <code>/avatar-sdk/src/react.js</code> မှ တိုက်ရိုက် import လုပ်သည်။ React ကို import map မှတစ်ဆင့် CDN မှ load လုပ်ထားသောကြောင့် ဤစာမျက်နှာသည် bundler အဆင့်မပါဘဲ အလုပ်လုပ်သည်။",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Epic",
 		"it_pays_the_quoted_price_and_receives": "၎င်းသည် ကိုးကားထားသော စျေးနှုန်းကို ပေးချေပြီး key ကို <b>တစ်ကြိမ်</b> လက်ခံရရှိသည်။ ချက်ချင်း import လုပ်ပါ။",
 		"legendary": "Legendary",
-		"long_brandable_solana_addresses_4_5_characte": "ရှည်လျားပြီး brandable ဖြစ်သော Solana address များ — တိုက်ရိုက် grinder မှ မရောက်နိုင်သော 4–5+ စာလုံး prefix များ — batch CPU ဖြင့် ကြိုတင် grind ထားပြီး stock မှ ရောင်းချသည်။ တစ်ခုဝယ်ယူပါက private key ကို <a href=\"/vanity/gallery\">x402</a> rail မှတစ်ဆင့် <strong>တစ်ကြိမ်</strong> ပေးပို့ပြီးနောက် ၎င်း၏ သိမ်းဆည်းထားသော မိတ္တူကို ဖျက်ဆီးပစ်သည်။ အစား လတ်ဆတ်သော ≤3-char grind လိုအပ်ပါသလား။ <a href=\"/vanity-wallet\">live grinder</a> ကို အသုံးပြုပါ။",
+		"long_brandable_solana_addresses_4_5_characte": "ရှည်လျားပြီး brandable ဖြစ်သော Solana address များ — တိုက်ရိုက် grinder မှ မရောက်နိုင်သော 4–5+ စာလုံး prefix များ — batch CPU ဖြင့် ကြိုတင် grind ထားပြီး stock မှ ရောင်းချသည်။ တစ်ခုဝယ်ယူပါက private key ကို <a href=\"/x402\">x402</a> rail မှတစ်ဆင့် <strong>တစ်ကြိမ်</strong> ပေးပို့ပြီးနောက် ၎င်း၏ သိမ်းဆည်းထားသော မိတ္တူကို ဖျက်ဆီးပစ်သည်။ အစား လတ်ဆတ်သော ≤3-char grind လိုအပ်ပါသလား။ <a href=\"/vanity-wallet\">live grinder</a> ကို အသုံးပြုပါ။",
 		"meta_description": "stock မှ ချက်ချင်း ပေးပို့သော ရှည်လျားပြီး brandable ဖြစ်သော Solana vanity address တစ်ခုကို ဝယ်ယူပါ။ — တိုက်ရိုက် grinder မှ မရောက်နိုင်သော 4–5+ စာလုံး prefix များ၊ batch CPU ဖြင့် ကြိုတင် grind ထားပြီး x402 မှတစ်ဆင့် ရောင်းချသည်။ ရှားပါးမှုအလိုက် စျေးနှုန်းပြောင်းလဲသည်။",
 		"meta_og_description": "ရှည်လျားပြီး အမှတ်တံဆိပ်နှင့်လိုက်ဖက်သော Solana vanity လိပ်စာများကို ကြိုတင်ပြင်ဆင်ထားပြီး စတော့မှ ရောင်းချပါသည်။ တစ်ကြိမ်သာ ပေးပို့ပြီး သိမ်းဆည်းထားစဉ် ကုဒ်ဝှက်ထားကာ ရှားပါးမှုအလိုက် ဈေးနှုန်းသတ်မှတ်ထားပါသည်။",
 		"meta_og_title": "ပရီမီယံ Vanity စာရင်း · three.ws",

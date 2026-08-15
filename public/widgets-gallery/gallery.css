@@ -50,7 +50,7 @@ body.gallery-body {
 	font-weight: 600;
 }
 
-.gallery-hero h2 {
+.gallery-hero h1 {
 	margin: 0;
 	font-family: var(--font-display);
 	font-size: var(--text-2xl);
@@ -300,8 +300,11 @@ body.gallery-body {
 }
 
 @media (max-width: 900px) {
+	/* minmax(0, 1fr), not 1fr: the frame's aspect-ratio + min-height give it an
+	 * automatic minimum width, and a bare 1fr track refuses to shrink past it,
+	 * which pushed the card's content off the right edge on phones. */
 	.showcase {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.showcase:not(.showcase-skeleton):nth-child(even) .showcase-frame,
@@ -320,6 +323,9 @@ body.gallery-body {
 	aspect-ratio: 1 / 1;
 	min-height: 300px;
 	width: 100%;
+	/* min-height + aspect-ratio would otherwise set a 300px automatic minimum
+	 * width and overflow narrow cards; height still honors the min-height. */
+	min-width: 0;
 	margin: 0 auto;
 }
 
@@ -405,6 +411,7 @@ body.gallery-body {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-md);
+	min-width: 0;
 }
 
 .type-tag {
@@ -572,6 +579,111 @@ body.gallery-body {
 	color: rgba(255, 180, 180, 0.8);
 }
 
+.error-state-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-sm);
+	min-width: 0;
+}
+
+.error-state-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-sm);
+	align-items: center;
+}
+
+.error-retry {
+	appearance: none;
+	cursor: pointer;
+	font: inherit;
+	font-size: var(--text-xs);
+	font-weight: 600;
+	padding: 0.45rem 1rem;
+	border-radius: var(--radius-md);
+	border: 1px solid rgba(255, 120, 120, 0.35);
+	background: rgba(255, 80, 80, 0.12);
+	color: #ffe4e4;
+	transition:
+		background 0.18s ease,
+		border-color 0.18s ease,
+		transform 0.18s ease;
+}
+
+.error-retry:hover {
+	background: rgba(255, 80, 80, 0.2);
+	border-color: rgba(255, 140, 140, 0.55);
+}
+
+.error-retry:active {
+	transform: translateY(1px);
+}
+
+.error-retry:focus-visible {
+	outline: 2px solid rgba(255, 180, 180, 0.7);
+	outline-offset: 2px;
+}
+
+.error-retry[disabled] {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.error-state-link {
+	font-size: var(--text-xs);
+	color: rgba(255, 210, 210, 0.85);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	border-radius: 4px;
+}
+
+.error-state-link:hover {
+	color: #fff;
+}
+
+.error-state-link:focus-visible {
+	outline: 2px solid rgba(255, 180, 180, 0.7);
+	outline-offset: 2px;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-sm);
+	text-align: center;
+	padding: var(--space-2xl) var(--space-lg);
+	background: rgba(255, 255, 255, 0.025);
+	border: 1px dashed rgba(255, 255, 255, 0.12);
+	border-radius: var(--radius-lg);
+}
+
+.empty-state svg {
+	color: rgba(229, 229, 229, 0.35);
+}
+
+.empty-state h3 {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-lg);
+	font-weight: 400;
+	color: #fff;
+}
+
+.empty-state p {
+	margin: 0;
+	max-width: 46ch;
+	font-size: var(--text-sm);
+	color: rgba(229, 229, 229, 0.62);
+	line-height: var(--leading-normal);
+}
+
+.empty-state .btn {
+	margin-top: var(--space-xs);
+}
+
 /* ── Bottom CTA ──────────────────────────────────────────────────────────────── */
 
 .gallery-cta {
@@ -623,7 +735,7 @@ body.gallery-body {
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
-	.gallery-hero h2 {
+	.gallery-hero h1 {
 		font-size: var(--text-xl);
 	}
 
@@ -648,6 +760,7 @@ body.gallery-body {
 	flex-direction: column;
 	gap: var(--space-xs);
 	width: 100%;
+	min-width: 0;
 	margin: 0 auto;
 }
 
@@ -752,9 +865,12 @@ body.gallery-body {
 	color: var(--type-color, var(--accent));
 }
 
+/* minmax(0, 1fr): a text input contributes an intrinsic min-content width, and
+ * a bare 1fr track sizes to it, which pushed the mint field and the Reset
+ * button outside the panel's clipped box on phones. */
 .customize-knobs {
 	display: grid;
-	grid-template-columns: 1fr;
+	grid-template-columns: minmax(0, 1fr);
 	gap: 0.5rem;
 	padding: 0.25rem 0.75rem 0.75rem;
 }
@@ -764,6 +880,7 @@ body.gallery-body {
 	align-items: center;
 	gap: 0.5rem;
 	font-size: var(--text-xs);
+	min-width: 0;
 }
 
 .knob-row > label:first-child {
@@ -776,7 +893,7 @@ body.gallery-body {
 
 .knob-row input[type='text'],
 .knob-row select {
-	flex: 1;
+	flex: 1 1 0;
 	background: rgba(255, 255, 255, 0.04);
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	color: #e5e5e5;

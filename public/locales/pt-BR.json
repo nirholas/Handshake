@@ -5112,7 +5112,7 @@
 		"4_useavatar_id_hook": "4. useAvatar(id) — hook",
 		"lab": "<a href=\"/demos\">&larr; lab</a>",
 		"meta_title": "@three-ws/avatar/react · three.ws lab",
-		"the_react_wrapper_around_the_sdk_imports": "O wrapper React para o SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> e <code>useAvatar</code> diretamente de <code>/avatar-sdk/src/react.jsx</code>. O React é carregado de um CDN via um import map, então esta página funciona sem uma etapa de bundler.",
+		"the_react_wrapper_around_the_sdk_imports": "O wrapper React para o SDK. Importa <code>Avatar</code>, <code>AgentAvatar</code>, <code>AvatarCreator</code> e <code>useAvatar</code> diretamente de <code>/avatar-sdk/src/react.js</code>. O React é carregado de um CDN via um import map, então esta página funciona sem uma etapa de bundler.",
 		"three_ws_avatar_react": "@three-ws/avatar/react"
 	},
 	"demos_selfie_fit": {
@@ -19129,7 +19129,7 @@
 		"epic": "Épico",
 		"it_pays_the_quoted_price_and_receives": "Ele paga o preço cotado e recebe a chave <b>uma única vez</b>. Importe-a imediatamente.",
 		"legendary": "Lendário",
-		"long_brandable_solana_addresses_4_5_characte": "Endereços Solana longos e personalizáveis — prefixos de 4–5+ caracteres que o minerador em tempo real não consegue alcançar — minerados antecipadamente em CPU em lote e vendidos do estoque. Compre um e a chave privada é entregue <strong>uma única vez</strong> via <a href=\"/vanity/gallery\">x402</a>, então sua cópia armazenada é destruída. Precisa de uma mineração nova de ≤3 caracteres? Use o <a href=\"/vanity-wallet\">minerador em tempo real</a>.",
+		"long_brandable_solana_addresses_4_5_characte": "Endereços Solana longos e personalizáveis — prefixos de 4–5+ caracteres que o minerador em tempo real não consegue alcançar — minerados antecipadamente em CPU em lote e vendidos do estoque. Compre um e a chave privada é entregue <strong>uma única vez</strong> via <a href=\"/x402\">x402</a>, então sua cópia armazenada é destruída. Precisa de uma mineração nova de ≤3 caracteres? Use o <a href=\"/vanity-wallet\">minerador em tempo real</a>.",
 		"meta_description": "Compre um endereço vanity Solana longo e personalizável, entregue instantaneamente do estoque — prefixos de 4–5+ caracteres que o minerador em tempo real não consegue alcançar, minerados antecipadamente em CPU em lote e vendidos via x402. O preço escala com a raridade.",
 		"meta_og_description": "Endereços vanity Solana longos e personalizáveis, minerados antecipadamente e vendidos do estoque. Entregues uma única vez, criptografados em repouso, precificados pela raridade.",
 		"meta_og_title": "Inventário Premium de Vanity · three.ws",

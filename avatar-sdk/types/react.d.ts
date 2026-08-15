@@ -62,7 +62,7 @@ export interface AvatarCreatorProps {
 	onExport?: (blob: Blob) => void | Promise<void>;
 	/** Called when the user dismisses the modal without exporting. */
 	onClose?: () => void;
-	/** Override the studio iframe origin. Defaults to https://studio.three.ws. */
+	/** Override the studio iframe URL. Defaults to https://three.ws/avatar-studio/. */
 	studioUrl?: string;
 	/** Edit-mode session URL for an existing avatar (resolved server-side). */
 	sessionUrl?: string;
