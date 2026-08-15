@@ -129,7 +129,9 @@ body {
 .px-market { background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14));
 	border-radius: var(--radius-lg, 14px); padding: var(--space-md, 16px); margin-bottom: var(--space-xl, 32px); }
 .px-market-h { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: var(--space-md, 14px); }
-.px-market-htxt { display: flex; align-items: center; gap: 10px; }
+/* Wraps rather than overflowing: at 320px the title, the tag and the in-panel
+   action do not fit on one line, and a nowrap action would push past the frame. */
+.px-market-htxt { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; min-width: 0; max-width: 100%; }
 .px-market-title { margin: 0; font-family: var(--font-display, sans-serif); font-size: var(--text-lg, 1.05rem); font-weight: 600; color: var(--ink-bright, #fff); }
 .px-market-tag { font-family: var(--font-mono, monospace); font-size: var(--text-2xs, .64rem); font-weight: 600; letter-spacing: .03em;
 	color: var(--ink-bright, #fff); background: var(--surface-3, rgba(255,255,255,.08)); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14));
@@ -166,7 +168,7 @@ body {
 /* In-panel "show trades in feed" action — a quiet ghost button in the header row. */
 .px-market-action { appearance: none; font: inherit; font-size: var(--text-2xs, .66rem); font-weight: 600; cursor: pointer;
 	color: var(--ink-dim, #aaa); background: transparent; border: 1px solid var(--stroke, rgba(255,255,255,.10));
-	border-radius: var(--radius-pill, 999px); padding: 4px 11px; white-space: nowrap; margin-left: auto;
+	border-radius: var(--radius-pill, 999px); padding: 4px 11px; white-space: nowrap; margin-left: auto; max-width: 100%;
 	transition: color .14s ease, border-color .14s ease, background .14s ease; }
 .px-market-action:hover { color: var(--ink-bright, #fff); border-color: var(--stroke-strong, rgba(255,255,255,.22)); background: var(--surface-2, rgba(255,255,255,.05)); }
 .px-market-action:active { background: var(--surface-3, rgba(255,255,255,.10)); transform: translateY(0.5px); }
