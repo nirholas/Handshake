@@ -10,7 +10,26 @@ import {
 } from '../_lib/ipfs-pin.js';
 
 const MAX_R2_BYTES = 50 * 1024 * 1024;
-const MAX_DATA_URL_BYTES = 10 * 1024 * 1024;
+
+// The inline lane's real ceiling is the request body, not the decoded payload.
+//
+// `readJson` defaults to a 1,000,000-byte limit, and this handler used to take
+// that default while advertising a 10 MB inline cap. The two never met: a
+// data: URL carries base64, which inflates raw bytes by 4/3, so the default
+// rejected every inline pin above roughly 730 KB with a bare
+// `413 bad_request: payload too large` long before the handler's own size check
+// could run. avatar-studio's mint flow base64s the whole GLB into this endpoint
+// (character-studio/src/library/mint-utils.js), so every realistic avatar hit
+// that wall.
+//
+// So the body limit is stated explicitly, matched to the 8 MB ceiling
+// server/index.mjs already enforces (BODY_LIMIT), and the decoded cap is set to
+// a size that actually fits inside it: 5 MB of payload is 6.67 MB of base64,
+// leaving room for the JSON envelope. Raising the readJson limit costs no extra
+// memory, because the Express body parser has already buffered those same bytes
+// into req.rawBody before this handler is entered.
+const MAX_PIN_BODY_BYTES = 8 * 1024 * 1024;
+const MAX_DATA_URL_BYTES = 5 * 1024 * 1024;
 
 // A CID is base58btc (v0, 46 chars) or base32 (v1, 59+), so the ceiling only has
 // to exclude the pathological. Unbounded, a 5000-character "cid" was accepted:
@@ -77,7 +96,10 @@ async function readCappedBody(resp, maxBytes) {
  * default instead of reaching the provider empty.
  */
 function safeFilename(name, fallback) {
-	const cleaned = String(name || '')
+	// Only a string is a name. The value reaches here straight off the request
+	// body, and coercing an object or array would forward the shape of the
+	// caller's mistake ("objectObject") to the provider as a filename.
+	const cleaned = (typeof name === 'string' ? name : '')
 		.replace(/[^A-Za-z0-9._-]/g, '')
 		.slice(0, 128);
 	return cleaned || fallback;
@@ -197,8 +219,19 @@ export default wrap(async (req, res) => {
 		const rl = await limits.pinUser(userId);
 		if (!rl.success) return rateLimited(res, rl, 'pinning rate exceeded (30/hour)');
 
-		const body = await readJson(req);
-		const { sourceUrl, kind } = body || {};
+		// An oversized body is a size failure, so it answers with this endpoint's
+		// own `payload_too_large` code and a message naming the limit, rather than
+		// the generic `bad_request` an uncoded 413 collapses into in wrap().
+		const body = await readJson(req, MAX_PIN_BODY_BYTES).catch((err) => {
+			if (err?.status !== 413) throw err;
+			throw Object.assign(
+				new Error(
+					`request body exceeds ${MAX_PIN_BODY_BYTES / (1024 * 1024)} MB; upload to storage and pin the URL instead`,
+				),
+				{ status: 413, code: 'payload_too_large' },
+			);
+		});
+		const { sourceUrl, kind, filename: requestedName } = body || {};
 
 		if (!sourceUrl || typeof sourceUrl !== 'string') {
 			return error(res, 400, 'validation_error', 'sourceUrl is required');
@@ -207,18 +240,13 @@ export default wrap(async (req, res) => {
 			return error(res, 400, 'validation_error', 'kind must be "manifest" or "glb"');
 		}
 
-		if (!ipfsPinningConfigured()) {
-			return error(
-				res,
-				503,
-				'pinning_unconfigured',
-				'no pinning provider configured; set PINATA_JWT or WEB3_STORAGE_TOKEN',
-			);
-		}
-
 		const defaultName = kind === 'glb' ? 'avatar.glb' : 'manifest.json';
 		let buf;
-		let filename = defaultName;
+		// Callers already send the file's own name alongside the bytes
+		// (character-studio's saveFileToPinata does), and dropping it filed every
+		// inline pin at the provider under the same two names, making a user's pin
+		// list unreadable. safeFilename is what makes honoring it safe.
+		let filename = safeFilename(requestedName, defaultName);
 
 		if (sourceUrl.startsWith('data:')) {
 			const commaIdx = sourceUrl.indexOf(',');
@@ -229,7 +257,12 @@ export default wrap(async (req, res) => {
 				? Buffer.from(payload, 'base64')
 				: Buffer.from(decodeURIComponent(payload));
 			if (buf.byteLength > MAX_DATA_URL_BYTES) {
-				return error(res, 413, 'payload_too_large', 'data: URL content exceeds 10 MB');
+				return error(
+					res,
+					413,
+					'payload_too_large',
+					`data: URL content exceeds ${MAX_DATA_URL_BYTES / (1024 * 1024)} MB`,
+				);
 			}
 		} else {
 			if (!isOwnedR2Url(sourceUrl)) {
@@ -261,7 +294,24 @@ export default wrap(async (req, res) => {
 			}
 			if (!fetched.ok) return error(res, 502, 'fetch_failed', 'failed to fetch source URL');
 			buf = await readCappedBody(fetched, MAX_R2_BYTES);
-			filename = safeFilename(new URL(sourceUrl).pathname.split('/').pop(), defaultName);
+			// The object's own key names the file when the caller did not.
+			if (!requestedName) {
+				filename = safeFilename(new URL(sourceUrl).pathname.split('/').pop(), defaultName);
+			}
+		}
+
+		// Checked here rather than ahead of the validation above, so a caller who
+		// sent an oversized payload or a source URL we do not own always learns
+		// that from a 4xx. Ordered the other way, a deployment missing its provider
+		// answered every malformed request with the same 503, which reads as "the
+		// service is down" and hides a request the caller could have fixed.
+		if (!ipfsPinningConfigured()) {
+			return error(
+				res,
+				503,
+				'pinning_unconfigured',
+				'no pinning provider configured; set PINATA_JWT or WEB3_STORAGE_TOKEN',
+			);
 		}
 
 		const pinned = await pinToIPFS(buf, filename);
