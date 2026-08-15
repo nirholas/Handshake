@@ -28,26 +28,73 @@
  */
 import { PublicKey, Transaction } from '@solana/web3.js';
 import {
+	getAccount,
 	getAssociatedTokenAddressSync,
 	createAssociatedTokenAccountIdempotentInstruction,
 	createTransferCheckedInstruction,
+	TokenAccountNotFoundError,
+	TokenInvalidAccountOwnerError,
 } from '@solana/spl-token';
 
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
-import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
+import { cors, error, json, method, readBody, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { logEvent, resolvePayoutAddress } from '../_lib/purchase-confirm.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { resolveMarketplacePayer } from '../_lib/solana/gasless-tx.js';
 
-const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const REFERENCE_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/; // base58 Pubkey
 
 // Solana Pay wallets surface `message` on a failed request; the rest of the
 // platform reads the { error, error_description } shape. Send both.
 function payError(res, status, code, message) {
 	return error(res, status, code, message, { message });
+}
+
+// Atomic units are meaningless to a buyer reading a wallet toast, so shortfalls
+// are rendered in whole tokens ("0.35"), trailing zeros trimmed.
+function formatAtomics(atomics, decimals) {
+	const negative = atomics < 0n;
+	const digits = (negative ? -atomics : atomics).toString().padStart(decimals + 1, '0');
+	const whole = digits.slice(0, digits.length - decimals);
+	const fraction = decimals ? digits.slice(digits.length - decimals).replace(/0+$/, '') : '';
+	return `${negative ? '-' : ''}${whole}${fraction ? `.${fraction}` : ''}`;
+}
+
+// The Solana Pay spec has the wallet POST JSON, but the header it arrives with is
+// outside our control: in-app browsers and proxies routinely rewrite or drop
+// `content-type`, and readJson() rejects those outright. The body is the only
+// thing that matters here, so parse the raw bytes and let the account validation
+// below decide, rather than answering a well-formed request with a header
+// complaint the buyer cannot act on.
+async function readAccount(req) {
+	const raw = await readBody(req, 8_192).catch(() => null);
+	if (!raw?.length) return '';
+	try {
+		const parsed = JSON.parse(raw.toString('utf8'));
+		return typeof parsed?.account === 'string' ? parsed.account.trim() : '';
+	} catch {
+		return '';
+	}
+}
+
+// The buyer signs a transferChecked out of their own token account, so a wallet
+// that has never held this mint, or holds less than the price, produces an opaque
+// simulation failure inside the wallet. Ask the chain first and turn that into a
+// message the buyer can act on. Returns the balance in atomic units, or null when
+// the RPC could not answer: an unreachable node must never reject a purchase the
+// chain would have accepted.
+async function readBuyerBalance(connection, buyerAta) {
+	try {
+		const account = await getAccount(connection, buyerAta, 'confirmed');
+		return account.amount;
+	} catch (err) {
+		if (err instanceof TokenAccountNotFoundError || err instanceof TokenInvalidAccountOwnerError) {
+			return 0n;
+		}
+		return null;
+	}
 }
 
 export default wrap(async (req, res) => {
@@ -103,8 +150,7 @@ export default wrap(async (req, res) => {
 		return payError(res, 400, 'unsupported_chain', 'only solana purchases settle through this endpoint');
 	}
 
-	const body = await readJson(req).catch(() => null);
-	const account = typeof body?.account === 'string' ? body.account.trim() : '';
+	const account = await readAccount(req);
 	if (!REFERENCE_RE.test(account)) {
 		return payError(res, 400, 'validation_error', 'account must be a base58 wallet address');
 	}
@@ -136,12 +182,29 @@ export default wrap(async (req, res) => {
 
 	const decimals = Number(purchase.mint_decimals ?? 6);
 	const referenceKey = new PublicKey(reference);
-	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+	// No pinned URL: solanaRpcEndpoints() puts a pinned one AHEAD of the operator's
+	// SOLANA_RPC_URL and every keyed provider, so pinning the public cluster as a
+	// default would make the most-throttled endpoint the primary lane for a
+	// checkout. Passing nothing keeps the platform's ordered failover chain intact.
+	const connection = solanaConnection({ commitment: 'confirmed' });
 	const payer = await resolveMarketplacePayer();
 	const feePayer = payer ? payer.publicKey : buyer;
 
 	const buyerAta = getAssociatedTokenAddressSync(mintKey, buyer);
 	const creatorAta = getAssociatedTokenAddressSync(mintKey, creatorKey);
+
+	const required = creatorAtomics + (feeKey ? feeAtomics : 0n);
+	const buyerBalance = await readBuyerBalance(connection, buyerAta);
+	if (buyerBalance !== null && buyerBalance < required) {
+		const short = formatAtomics(required - buyerBalance, decimals);
+		return payError(
+			res,
+			409,
+			'insufficient_funds',
+			`this wallet is ${short} short of the ${skillLabel} price; top it up and scan again`,
+		);
+	}
+
 	const instructions = [];
 
 	// A creator (or treasury) who has never held this mint has no token account

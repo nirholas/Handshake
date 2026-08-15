@@ -11,7 +11,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Readable } from 'node:stream';
 import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
-import { getAssociatedTokenAddressSync } from '@solana/spl-token';
+import {
+	ACCOUNT_SIZE,
+	AccountLayout,
+	TOKEN_PROGRAM_ID,
+	getAssociatedTokenAddressSync,
+} from '@solana/spl-token';
 
 const PAYER = Keypair.generate();
 const BUYER = Keypair.generate();
@@ -44,9 +49,43 @@ vi.mock('../../api/_lib/purchase-confirm.js', () => ({
 	resolvePayoutAddress: async () => payoutAddress,
 }));
 
+// The buyer's SPL token account, as the chain would return it. `buyerBalance` is
+// the atomic amount it holds; null means the account does not exist, and
+// `rpcAnswers = false` makes the node unreachable so the "cannot answer" path
+// (build the transaction anyway) is exercised.
+let buyerBalance = 5_000_000n;
+let rpcAnswers = true;
+
+function tokenAccountInfo(owner, mint, amount) {
+	const data = Buffer.alloc(ACCOUNT_SIZE);
+	AccountLayout.encode(
+		{
+			mint,
+			owner,
+			amount,
+			delegateOption: 0,
+			delegate: PublicKey.default,
+			delegatedAmount: 0n,
+			state: 1,
+			isNativeOption: 0,
+			isNative: 0n,
+			closeAuthorityOption: 0,
+			closeAuthority: PublicKey.default,
+		},
+		data,
+	);
+	return { data, owner: TOKEN_PROGRAM_ID, lamports: 2_039_280, executable: false, rentEpoch: 0 };
+}
+
 vi.mock('../../api/_lib/solana/connection.js', () => ({
 	solanaConnection: () => ({
 		getLatestBlockhash: async () => ({ blockhash: BLOCKHASH, lastValidBlockHeight: 1 }),
+		getAccountInfo: async (address) => {
+			if (!rpcAnswers) throw new Error('failed to get info about account: fetch failed');
+			const buyerAta = getAssociatedTokenAddressSync(MINT.publicKey, BUYER.publicKey);
+			if (!address.equals(buyerAta) || buyerBalance === null) return null;
+			return tokenAccountInfo(BUYER.publicKey, MINT.publicKey, buyerBalance);
+		},
 	}),
 }));
 
@@ -80,15 +119,18 @@ function basePurchase(overrides = {}) {
 	};
 }
 
-function makeReq({ method = 'GET', query = `?reference=${REFERENCE}`, body = null } = {}) {
+function makeReq({
+	method = 'GET',
+	query = `?reference=${REFERENCE}`,
+	body = null,
+	contentType = 'application/json',
+} = {}) {
 	const buf = Buffer.from(body == null ? '' : JSON.stringify(body), 'utf8');
 	const stream = Readable.from([buf]);
 	stream.method = method;
 	stream.url = `/api/purchase/skill${query}`;
-	stream.headers = {
-		'content-type': 'application/json',
-		'content-length': String(buf.length),
-	};
+	stream.headers = { 'content-length': String(buf.length) };
+	if (contentType) stream.headers['content-type'] = contentType;
 	return stream;
 }
 
@@ -114,6 +156,8 @@ beforeEach(() => {
 	purchaseRow = basePurchase();
 	payoutAddress = SELLER.publicKey.toBase58();
 	payerConfigured = true;
+	buyerBalance = 5_000_000n;
+	rpcAnswers = true;
 	sqlMock.mockClear();
 	logEventMock.mockClear();
 });
@@ -226,6 +270,49 @@ describe('POST /api/purchase/skill', () => {
 		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
 		expect(res.statusCode).toBe(412);
 		expect(body.error).toBe('creator_wallet_missing');
+	});
+
+	it('reads the account from a body an in-app browser sent without a JSON content-type', async () => {
+		const { res, body } = await call({
+			method: 'POST',
+			body: { account: BUYER.publicKey.toBase58() },
+			contentType: 'text/plain;charset=UTF-8',
+		});
+		expect(res.statusCode).toBe(200);
+		expect(body.transaction).toBeTruthy();
+	});
+
+	it('tells a buyer how far short they are instead of handing over a doomed transfer', async () => {
+		buyerBalance = 650_000n; // price is 1.000000
+		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
+		expect(res.statusCode).toBe(409);
+		expect(body.error).toBe('insufficient_funds');
+		expect(body.message).toContain('0.35');
+	});
+
+	it('rejects a wallet that has never held the purchase mint', async () => {
+		buyerBalance = null; // no associated token account at all
+		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
+		expect(res.statusCode).toBe(409);
+		expect(body.error).toBe('insufficient_funds');
+	});
+
+	it('counts the fee leg in what the buyer must hold', async () => {
+		purchaseRow = basePurchase({
+			platform_fee_amount: '100000',
+			platform_fee_wallet: TREASURY.publicKey.toBase58(),
+		});
+		buyerBalance = 999_999n; // covers the 0.9 creator leg but not creator + fee
+		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
+		expect(res.statusCode).toBe(409);
+		expect(body.error).toBe('insufficient_funds');
+	});
+
+	it('builds the transaction anyway when the RPC cannot answer the balance', async () => {
+		rpcAnswers = false;
+		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
+		expect(res.statusCode).toBe(200);
+		expect(body.transaction).toBeTruthy();
 	});
 
 	it('never writes a purchase row of its own', async () => {

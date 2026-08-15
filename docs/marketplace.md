@@ -101,6 +101,13 @@ purchase from an unauthenticated wallet. The seller leg is always the **last**
 instruction and carries the reference, because `validateTransfer` in step 3
 inspects only the last instruction; a fee leg is placed before it.
 
+Before composing anything, the POST reads the buyer's token account for the
+purchase mint. A wallet that has never held the mint, or holds less than the
+price plus fee, gets a `409 insufficient_funds` naming the shortfall
+(`"this wallet is 0.35 short of …"`) instead of a transaction that can only fail
+in-wallet. If the RPC cannot answer, the transaction is built anyway and the
+chain decides, so a throttled node never blocks a payable purchase.
+
 The payment modal shows the sponsored QR first and offers a one-click swap to the
 direct-transfer QR for wallets that do not implement transaction requests.
 
