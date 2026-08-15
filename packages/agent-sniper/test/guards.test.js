@@ -128,16 +128,30 @@ describe('makeQueue', () => {
 	});
 
 	it('caps concurrency and runs queued jobs as slots free', async () => {
+		const TOTAL = 6;
 		let active = 0;
 		let maxActive = 0;
+		let finished = 0;
+		let markDrained;
+		// Wait on the jobs themselves, never on a wall-clock budget: on a loaded
+		// machine a fixed sleep expires before the last wave runs and the queue
+		// reads as still busy, which is a slow CI box, not a bug in makeQueue.
+		const drained = new Promise((r) => { markDrained = r; });
 		const q = makeQueue(2, 10, {});
 		const run = () => new Promise((resolve) => {
 			active++;
 			maxActive = Math.max(maxActive, active);
-			setTimeout(() => { active--; resolve(); }, 5);
+			setTimeout(() => {
+				active--;
+				resolve();
+				if (++finished === TOTAL) markDrained();
+			}, 5);
 		});
-		for (let i = 0; i < 6; i++) q.push(run);
-		await new Promise((r) => setTimeout(r, 60));
+		for (let i = 0; i < TOTAL; i++) q.push(run);
+		await drained;
+		// The queue decrements its own counter in a `.finally()`, so let the
+		// trailing microtasks run before reading inFlight.
+		for (let i = 0; i < 50 && q.inFlight !== 0; i++) await Promise.resolve();
 		expect(maxActive).toBeLessThanOrEqual(2);
 		expect(q.inFlight).toBe(0);
 	});
