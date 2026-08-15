@@ -3,6 +3,25 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "A retried agent spend can no longer hand its transaction to somebody else, and an unsupported chain says so instead of blaming the network",
+      "summary": "When an agent redeems a permission you granted it, it can send a retry key so a request whose answer it never saw is not paid for twice. That key was filed under the permission alone rather than under the agent that used it, and it was read before the check that the caller owns the permission at all, so a different agent replaying the same permission and key was handed the original transaction hash and receipt instead of being turned away. The key is now filed per caller: a retry only ever returns your own result, and anyone else gets the same not-found answer they should always have got. Two more fixes in the same endpoint. A permission recorded on a chain three.ws has no delegation contract on could never settle, but the attempt came back as a network error, which reads as a temporary outage worth retrying rather than the permanent chain mismatch it is; it is now named plainly and refused before it consumes any of the permission's spending allowance. And the relayer kept its own private one-address-per-chain list of blockchain endpoints, separate from the failover chain the rest of the platform uses, so it would have refused to work on the next supported chain even where the shared endpoints reach it fine. It now uses the shared list, with any operator override still taking priority. The permissions guide gained a section on how the retry key behaves and how long it lasts.",
+      "tags": [
+        "security",
+        "fix"
+      ],
+      "link": "/docs/permissions"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "Agent .sol name lookups work again, and the avatar manifest schema now answers at its own address",
+      "summary": "The avatar-agent MCP server resolves .eth and .sol names to wallet addresses. Its .sol side went through a hosted name-lookup service that has since been retired: every request came back as \"not found\", which reads exactly like an unregistered domain, so a working name and a nonexistent one were indistinguishable. Solana names are now read straight from the chain, from the same name-service accounts the three.ws backend already reads, so the lookup depends on nothing but a Solana RPC. Two things were fixed alongside it. The per-lookup time budget was under five seconds, which a cold Ethereum lookup routinely exceeds, so real names were being reported as timeouts; it is now fifteen seconds and adjustable. And a lookup that genuinely fails now says why instead of quietly reporting \"not found\". Separately, the avatar manifest schema names https://three.ws/schema/avatar.v1.json as its own identifier, but nothing was served there, so any validator that followed the identifier got a 404. The schema is now published at that address, with a test that keeps the served copy identical to the one shipped in the package.",
+      "tags": [
+        "fix",
+        "sdk"
+      ]
+    },
+    {
+      "date": "2026-08-15",
       "title": "The trading and MCP docs now match what the code and the live API actually do",
       "summary": "An audit of eight documentation pages ran every command they print and checked every claim against the code behind it, then corrected what had drifted. The biggest one was in the trading tutorial: the command it gave you for verifying a fleet's fills on-chain asked for a field the leaderboard does not publish, so it returned an empty explorer link for every agent and the verification step could not be completed at all. It now uses the fields that exist, linking both legs of each trade straight to Solscan, and it skips agents whose wallet has not been provisioned yet instead of building a URL that goes nowhere. The MCP tool safety page undercounted the tools that share a name across two servers, which matters because that collision is exactly why a trust policy has to key on the namespaced id; it now lists all nine and prints a command that re-derives the list so it cannot go stale again. The MCP tool catalog itself had drifted from its source and was serving outdated descriptions for three tools, on a page whose whole promise is that it is generated from source and cannot drift; it has been regenerated. The package extraction guide had every version in its roster out of date along with its build and test columns, and still described a publisher field as missing that was set some time ago. The 10 SOL trading experiment page stated a risk rule in absolute terms that contradicted the setup script it tells you to run, which read as a bug in one of the two; the rule now carries the scope the code actually applies.",
       "tags": [

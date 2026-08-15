@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T07:47:37.200Z",
+	"generated_at": "2026-08-15T07:54:51.474Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -13,6 +13,17 @@
 			"summary": "Payment sessions let you hand an agent a budget instead of a key, and two parts of that path judged an endpoint by one rule: if it did not ask for payment, the call was free. That is only true when the endpoint actually succeeded. A paid API answering 404, 400, or 500 was being scored as a free call, and the consequences ran in the wrong direction in both places. The dry run at /pay/simulator, whose whole job is to tell you in advance whether a budget and an allowlist will carry a workload, reported a plan as feasible at a cost of nothing when in fact every endpoint in it was erroring: free calls are never priced, never allowlist-checked, and never counted, so a wall of failures looked like a clean run. And an agent spending through a session got back a success envelope saying no payment was needed for an endpoint that had just failed on it. Both now separate the two cases: a real success with no payment challenge is still free and still costs nothing, while an error status is reported as an endpoint failure carrying the status the endpoint actually returned. No session is charged either way. The simulator lists each failing endpoint by name in its problems list and no longer calls the plan feasible.",
 			"link": "/pay/simulator",
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A retried agent spend can no longer hand its transaction to somebody else, and an unsupported chain says so instead of blaming the network",
+			"summary": "When an agent redeems a permission you granted it, it can send a retry key so a request whose answer it never saw is not paid for twice. That key was filed under the permission alone rather than under the agent that used it, and it was read before the check that the caller owns the permission at all, so a different agent replaying the same permission and key was handed the original transaction hash and receipt instead of being turned away. The key is now filed per caller: a retry only ever returns your own result, and anyone else gets the same not-found answer they should always have got. Two more fixes in the same endpoint. A permission recorded on a chain three.ws has no delegation contract on could never settle, but the attempt came back as a network error, which reads as a temporary outage worth retrying rather than the permanent chain mismatch it is; it is now named plainly and refused before it consumes any of the permission's spending allowance. And the relayer kept its own private one-address-per-chain list of blockchain endpoints, separate from the failover chain the rest of the platform uses, so it would have refused to work on the next supported chain even where the shared endpoints reach it fine. It now uses the shared list, with any operator override still taking priority. The permissions guide gained a section on how the retry key behaves and how long it lasts.",
+			"link": "/docs/permissions",
+			"tags": [
+				"security",
 				"fix"
 			]
 		},
@@ -36,6 +47,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Agent .sol name lookups work again, and the avatar manifest schema now answers at its own address",
+			"summary": "The avatar-agent MCP server resolves .eth and .sol names to wallet addresses. Its .sol side went through a hosted name-lookup service that has since been retired: every request came back as \"not found\", which reads exactly like an unregistered domain, so a working name and a nonexistent one were indistinguishable. Solana names are now read straight from the chain, from the same name-service accounts the three.ws backend already reads, so the lookup depends on nothing but a Solana RPC. Two things were fixed alongside it. The per-lookup time budget was under five seconds, which a cold Ethereum lookup routinely exceeds, so real names were being reported as timeouts; it is now fifteen seconds and adjustable. And a lookup that genuinely fails now says why instead of quietly reporting \"not found\". Separately, the avatar manifest schema names https://three.ws/schema/avatar.v1.json as its own identifier, but nothing was served there, so any validator that followed the identifier got a 404. The schema is now published at that address, with a test that keeps the served copy identical to the one shipped in the package.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
 			]
 		},
 		{
