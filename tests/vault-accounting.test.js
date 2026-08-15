@@ -4,6 +4,7 @@ import {
 	sharesRedeemableNow, drawdownBps, isDrawdownBreached, depositExceedsCap,
 	tradeExceedsPerTrade, tradeExceedsDailyBudget, nextPeak, roiBps,
 	usdcToAtomics, atomicsToUsdc, SHARE_PRICE_SCALE,
+	parseAmountInput, clampTermBps, TERM_BOUNDS,
 } from '../api/_lib/vault-accounting.js';
 
 const USDC = 1_000_000n; // 1 USDC in atomics
@@ -284,5 +285,39 @@ describe('end-to-end lifecycle conservation', () => {
 		expect(vaultBalance).toBe(accruedFee);
 		expect(accruedFee).toBe(10n * USDC);
 		expect(vaultBalance).toBeGreaterThanOrEqual(0n);
+	});
+});
+
+describe('parseAmountInput (the HTTP boundary guard)', () => {
+	it('accepts the shapes a real caller sends', () => {
+		expect(parseAmountInput('2500000')).toBe(2_500_000n);
+		expect(parseAmountInput(2_500_000)).toBe(2_500_000n);
+		expect(parseAmountInput(2_500_000n)).toBe(2_500_000n);
+		expect(parseAmountInput('  2500000  ')).toBe(2_500_000n);
+		expect(parseAmountInput('0')).toBe(0n);
+		// A decimal tail truncates down, never up into funds that aren't there.
+		expect(parseAmountInput('2500000.99')).toBe(2_500_000n);
+	});
+
+	it('returns null for anything BigInt() would throw on, so the handler can answer 400', () => {
+		for (const bad of ['abc', '', '   ', '1e6', '0x10', '1,000', '-5', -5, NaN, Infinity, null, undefined, {}, [], true]) {
+			expect(parseAmountInput(bad)).toBeNull();
+		}
+	});
+});
+
+describe('clampTermBps', () => {
+	it('clamps into the term bound and rounds to a whole bps', () => {
+		expect(clampTermBps(9999, TERM_BOUNDS.performanceFeeBps)).toBe(5000);
+		expect(clampTermBps(-1, TERM_BOUNDS.performanceFeeBps)).toBe(0);
+		expect(clampTermBps(1234.6, TERM_BOUNDS.performanceFeeBps)).toBe(1235);
+		expect(clampTermBps(0, TERM_BOUNDS.maxDrawdownBps)).toBe(100);
+		expect(clampTermBps(99_999, TERM_BOUNDS.maxDrawdownBps)).toBe(9000);
+	});
+
+	it('returns null (never NaN) for a value that is not a number', () => {
+		expect(clampTermBps('abc', TERM_BOUNDS.performanceFeeBps)).toBeNull();
+		expect(clampTermBps(NaN, TERM_BOUNDS.maxDrawdownBps)).toBeNull();
+		expect(clampTermBps(Infinity, TERM_BOUNDS.maxDrawdownBps)).toBeNull();
 	});
 });

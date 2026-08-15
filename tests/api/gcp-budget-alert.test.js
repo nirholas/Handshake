@@ -16,6 +16,10 @@ vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => null, drain: async
 vi.mock('../../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'http://localhost:3000' } }));
 
 const { default: handler } = await import('../../api/webhooks/gcp-budget-alert.js');
+// The REAL severity classifier, not the mock: the alert title is the only input
+// that decides whether ops sees a budget crossing as critical or as a warning,
+// so the test has to run the classifier that ships.
+const { severityOf } = await vi.importActual('../../api/_lib/alerts.js');
 
 function pubsubBody(notification) {
 	const data = Buffer.from(JSON.stringify(notification), 'utf8').toString('base64');
@@ -105,6 +109,51 @@ describe('gcp-budget-alert webhook', () => {
 		expect(status).toBe(200);
 		expect(body.alerted).toBe(false);
 		expect(sendOpsAlert).not.toHaveBeenCalled();
+	});
+
+	it('files a 90% crossing as critical, not as routine burn-down noise', async () => {
+		await invoke({
+			token: 'secret',
+			body: pubsubBody({
+				budgetDisplayName: 'gcp-credits program',
+				alertThresholdExceeded: 0.9,
+				costAmount: 90000,
+				budgetAmount: 100000,
+			}),
+		});
+		const [title] = sendOpsAlert.mock.calls[0];
+		// alerts.js severityOf() reads the emoji: 🚨 is what makes this `critical`.
+		// Any other marker files a near-exhausted grant next to routine warnings.
+		expect(severityOf(title)).toBe('critical');
+	});
+
+	it('keeps a 25% crossing at warn severity', async () => {
+		await invoke({
+			token: 'secret',
+			body: pubsubBody({
+				budgetDisplayName: 'gcp-credits program',
+				alertThresholdExceeded: 0.25,
+				costAmount: 25000,
+				budgetAmount: 100000,
+			}),
+		});
+		const [title] = sendOpsAlert.mock.calls[0];
+		expect(severityOf(title)).toBe('warn');
+	});
+
+	it('renders a zero budget without emitting a broken percentage', async () => {
+		const { status } = await invoke({
+			token: 'secret',
+			body: pubsubBody({
+				budgetDisplayName: 'misconfigured budget',
+				alertThresholdExceeded: 0.5,
+				costAmount: 5,
+				budgetAmount: 0,
+			}),
+		});
+		expect(status).toBe(200);
+		const [, detail] = sendOpsAlert.mock.calls[0];
+		expect(detail).toContain('(n/a)');
 	});
 
 	it('acks a verification ping with no decodable data', async () => {

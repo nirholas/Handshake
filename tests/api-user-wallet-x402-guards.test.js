@@ -25,11 +25,12 @@ const AGENT_ID = '11111111-1111-4111-8111-111111111111';
 // Synthetic, deliberately: these cases assert address handling only, so a real
 // third-party account would add a claim we do not mean.
 const MASTER_WALLET = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
+const MASTER_EVM = '0x1111111111111111111111111111111111111111';
 const AGENT_WALLET = 'GDfnEsia2WLAW5t8yx2X5j2mkfA74i5kK8vY6C4nGRQe';
 
 const authState = { session: { id: USER_ID } };
 const csrfState = { ok: true };
-const sqlState = { queue: [] };
+const sqlState = { queue: [], calls: [] };
 const rpcState = { sigLimit: null, balanceLamports: 5_000_000n, tokenAmount: '2500000', destAtaExists: true };
 const keysState = { calls: [], createThrows: null };
 
@@ -38,7 +39,14 @@ vi.mock('../api/_lib/auth.js', () => ({
 }));
 
 vi.mock('../api/_lib/db.js', () => ({
-	sql: vi.fn(async () => (sqlState.queue.length ? sqlState.queue.shift() : [])),
+	// The bootstrap DDL in wallet/index.js runs before the reads a case primes,
+	// so it must not eat a queued result. Everything else answers in order.
+	sql: vi.fn(async (strings, ...values) => {
+		const text = Array.isArray(strings) ? strings.join(' ? ') : String(strings);
+		sqlState.calls.push({ text, values });
+		if (/CREATE TABLE/i.test(text)) return [];
+		return sqlState.queue.length ? sqlState.queue.shift() : [];
+	}),
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 	isStoragePressured: async () => ({ pressured: false }),
@@ -75,7 +83,37 @@ vi.mock('../api/_lib/agent-wallet.js', () => ({
 	recoverSolanaAgentKeypair: vi.fn(async () => {
 		throw new Error('test reached key recovery: no case here may sign');
 	}),
+	generateSolanaAgentWallet: vi.fn(async () => ({
+		address: MASTER_WALLET,
+		encrypted_secret: 'enc-sol',
+	})),
+	generateAgentWallet: vi.fn(async () => ({
+		address: MASTER_EVM,
+		encrypted_key: 'enc-evm',
+	})),
+	getSolanaAddressBalances: vi.fn(async () => ({
+		native: 0.42,
+		total_usd: 63,
+		tokens: [{ mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', uiAmount: 12.5 }],
+	})),
 }));
+
+vi.mock('../api/_lib/evm/rpc.js', () => ({
+	evmFallbackProvider: vi.fn(async () => ({
+		call: vi.fn(async () => '0x' + (7_000_000).toString(16).padStart(64, '0')),
+	})),
+}));
+
+vi.mock('../api/_lib/provider-keys.js', async () => {
+	const actual = await vi.importActual('../api/_lib/provider-keys.js');
+	return {
+		BYOK_PROVIDERS: actual.BYOK_PROVIDERS,
+		// The real one needs JWT_SECRET. What matters at this boundary is that a
+		// value is encrypted before it reaches the column and a null deletes the
+		// entry, not which cipher ran.
+		encryptProviderKey: vi.fn(async (v) => `enc(${v})`),
+	};
+});
 
 const connection = {
 	getBalance: vi.fn(async () => Number(rpcState.balanceLamports)),
@@ -124,6 +162,8 @@ vi.mock('../api/_lib/aws-marketplace-bridge.js', () => ({
 const subscriptionsHandler = (await import('../api/user/x402-subscriptions.js')).default;
 const fundAgentHandler = (await import('../api/user/wallet/fund-agent.js')).default;
 const historyHandler = (await import('../api/user/wallet/history.js')).default;
+const walletHandler = (await import('../api/user/wallet/index.js')).default;
+const providerKeysHandler = (await import('../api/user/provider-keys.js')).default;
 
 function makeReq({ method, url, body = null }) {
 	const raw = body === null ? null : JSON.stringify(body);
@@ -168,6 +208,7 @@ beforeEach(() => {
 	authState.session = { id: USER_ID };
 	csrfState.ok = true;
 	sqlState.queue = [];
+	sqlState.calls = [];
 	keysState.calls = [];
 	keysState.createThrows = null;
 	rpcState.sigLimit = null;
@@ -335,3 +376,127 @@ describe('wallet/history: limit clamping', () => {
 		expect(body.history).toEqual([]);
 	});
 });
+
+// The two suites below cover the success paths a local curl cannot reach:
+// both need JWT_SECRET to derive an encryption key, and this worktree's env
+// carries only the QA login and DATABASE_URL. Creating a real master wallet
+// under a throwaway key would write an undecryptable row into the shared
+// production database, so the coverage lives here instead.
+describe('wallet index: create and read', () => {
+	it('creates a master wallet and reports it as new', async () => {
+		sqlState.queue.push([]); // no existing wallet
+		sqlState.queue.push([{ solana_address: MASTER_WALLET, evm_address: MASTER_EVM, created_at: '2026-08-15T00:00:00Z' }]);
+		const { status, body } = await call(walletHandler, {
+			method: 'POST',
+			url: '/api/user/wallet',
+			body: {},
+		});
+		expect(status).toBe(201);
+		expect(body.wallet.created).toBe(true);
+		expect(body.wallet.solana_address).toBe(MASTER_WALLET);
+		expect(body.wallet.evm_address).toBe(MASTER_EVM);
+	});
+
+	it('is idempotent: a second create returns the existing wallet, not a new one', async () => {
+		sqlState.queue.push([{ solana_address: MASTER_WALLET, evm_address: MASTER_EVM, created_at: '2026-08-15T00:00:00Z' }]);
+		const { status, body } = await call(walletHandler, {
+			method: 'POST',
+			url: '/api/user/wallet',
+			body: {},
+		});
+		expect(status).toBe(200);
+		expect(body.wallet.created).toBe(false);
+		expect(sqlState.calls.some((c) => /INSERT INTO master_wallets/i.test(c.text))).toBe(false);
+	});
+
+	it('refuses a create with no CSRF token', async () => {
+		csrfState.ok = false;
+		const { status } = await call(walletHandler, { method: 'POST', url: '/api/user/wallet', body: {} });
+		expect(status).toBe(403);
+		expect(sqlState.calls.some((c) => /INSERT INTO master_wallets/i.test(c.text))).toBe(false);
+	});
+
+	it('reads live balances and totals SOL value with EVM USDC', async () => {
+		sqlState.queue.push([{ solana_address: MASTER_WALLET, evm_address: MASTER_EVM, created_at: '2026-08-15T00:00:00Z' }]);
+		const { status, body } = await call(walletHandler, { method: 'GET', url: '/api/user/wallet' });
+		expect(status).toBe(200);
+		expect(body.wallet.balances).toEqual({
+			sol: 0.42,
+			sol_usdc: 12.5,
+			evm_usdc: 7,
+			total_usd: 70,
+		});
+	});
+
+	it('answers a null wallet rather than 404 for a user who has none', async () => {
+		sqlState.queue.push([]);
+		const { status, body } = await call(walletHandler, { method: 'GET', url: '/api/user/wallet' });
+		expect(status).toBe(200);
+		expect(body.wallet).toBeNull();
+	});
+});
+
+describe('provider-keys: set, clear, and what never leaves', () => {
+	it('reports which keys are set and never the values', async () => {
+		sqlState.queue.push([{ provider_keys: { openai: 'enc(sk-live)' } }]);
+		const { status, body } = await call(providerKeysHandler, { method: 'GET', url: '/api/user/provider-keys' });
+		expect(status).toBe(200);
+		expect(body.keys.openai).toEqual({ set: true });
+		expect(body.keys.anthropic).toEqual({ set: false });
+		expect(res_body_has_secret(body)).toBe(false);
+	});
+
+	it('encrypts a new value before it reaches the column', async () => {
+		sqlState.queue.push([{ provider_keys: {} }]);
+		const { status, body } = await call(providerKeysHandler, {
+			method: 'PATCH',
+			url: '/api/user/provider-keys',
+			body: { openai: '  sk-plaintext  ' },
+		});
+		expect(status).toBe(200);
+		expect(body.keys.openai).toEqual({ set: true });
+		const update = sqlState.calls.find((c) => /UPDATE users SET provider_keys/i.test(c.text));
+		expect(update.values[0]).toBe(JSON.stringify({ openai: 'enc(sk-plaintext)' }));
+	});
+
+	it('deletes the entry when a provider is set to null', async () => {
+		sqlState.queue.push([{ provider_keys: { openai: 'enc(sk-old)', grok: 'enc(xai-old)' } }]);
+		const { status, body } = await call(providerKeysHandler, {
+			method: 'PATCH',
+			url: '/api/user/provider-keys',
+			body: { openai: null },
+		});
+		expect(status).toBe(200);
+		expect(body.keys.openai).toEqual({ set: false });
+		expect(body.keys.grok).toEqual({ set: true });
+		const update = sqlState.calls.find((c) => /UPDATE users SET provider_keys/i.test(c.text));
+		expect(JSON.parse(update.values[0])).toEqual({ grok: 'enc(xai-old)' });
+	});
+
+	it('rejects a non-string value with a 400 naming the field', async () => {
+		const { status, body } = await call(providerKeysHandler, {
+			method: 'PATCH',
+			url: '/api/user/provider-keys',
+			body: { openai: 123 },
+		});
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+		expect(body.error_description).toContain('openai');
+	});
+
+	it('refuses a write with no CSRF token', async () => {
+		csrfState.ok = false;
+		const { status } = await call(providerKeysHandler, {
+			method: 'PATCH',
+			url: '/api/user/provider-keys',
+			body: { openai: 'sk-plaintext' },
+		});
+		expect(status).toBe(403);
+		expect(sqlState.calls.some((c) => /UPDATE users SET provider_keys/i.test(c.text))).toBe(false);
+	});
+});
+
+// The GET contract is that a stored ciphertext never appears in the response.
+function res_body_has_secret(body) {
+	return JSON.stringify(body).includes('enc(');
+}
