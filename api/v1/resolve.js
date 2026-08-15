@@ -1,4 +1,4 @@
-// GET /api/v1/resolve — free, keyless name resolution across ENS + SNS.
+// GET /api/v1/resolve: free, keyless name resolution across ENS + SNS.
 //
 // Wraps the platform's existing resolvers instead of reimplementing them:
 //   - .eth (ENS)  → `ensResolveAddress` / `ensLookupName` from
@@ -6,13 +6,13 @@
 //     (one eth_call per direction). That module's header records why the
 //     previous ethers `resolveName` walk made this endpoint 503 in production.
 //   - .sol (SNS)  → `resolveSnsName` / `reverseLookupAddress` from
-//     src/solana/sns.js — the exact module api/sns.js and api/sns-subdomain.js
+//     src/solana/sns.js, the exact module api/sns.js and api/sns-subdomain.js
 //     already share. No Bonfida call is reimplemented here.
 //
 // Forward: ?name=<x>.eth | ?name=<x>.sol  → { name, chain, address, source }
 // Reverse: ?address=<addr>[&chain=ethereum|solana] → { address, chain, name, source }
-//   Reverse only runs the direction the underlying resolver already supports —
-//   ethers' lookupAddress for ENS, SNS's getFavoriteDomain for SNS — both of
+//   Reverse only runs the direction the underlying resolver already supports:
+//   ethers' lookupAddress for ENS, SNS's getFavoriteDomain for SNS, both of
 //   which the wrapped modules above already implement, so no half-built
 //   placeholder direction is exposed.
 //
@@ -47,8 +47,8 @@ async function resolveForward(rawName, res) {
 				503,
 				'ens_unavailable',
 				err?.message === 'ens_timeout'
-					? 'ENS resolution timed out — retry shortly'
-					: 'ENS resolution failed — retry shortly',
+					? 'ENS resolution timed out, retry shortly'
+					: 'ENS resolution failed, retry shortly',
 			);
 		}
 		if (!address) fail(404, 'not_found', `${name} did not resolve to an Ethereum address`);
@@ -66,7 +66,7 @@ async function resolveForward(rawName, res) {
 	fail(
 		400,
 		'unsupported_suffix',
-		'name must end in .eth (ENS) or .sol (SNS) — no other suffix is supported',
+		'name must end in .eth (ENS) or .sol (SNS): no other suffix is supported',
 	);
 }
 
@@ -96,8 +96,8 @@ async function resolveReverse(rawAddress, chainHint, res) {
 				503,
 				'ens_unavailable',
 				err?.message === 'ens_reverse_timeout'
-					? 'ENS reverse resolution timed out — retry shortly'
-					: 'ENS reverse resolution failed — retry shortly',
+					? 'ENS reverse resolution timed out, retry shortly'
+					: 'ENS reverse resolution failed, retry shortly',
 			);
 		}
 		if (!name) fail(404, 'not_found', `${rawAddress} has no primary ENS name`);

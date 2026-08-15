@@ -84,6 +84,19 @@ async function resolveMint(connection, mintPk) {
 	return { programId, decimals: info.decimals };
 }
 
+// Derive an associated token account, answering 400 rather than 500 when the
+// owner is off the ed25519 curve. A program-derived address (an AMM vault, an
+// escrow) has no standard ATA and no keypair to sign with, so a caller who pastes
+// one has made an input mistake: name the side that is wrong instead of letting
+// TokenOwnerOffCurveError surface as an opaque internal error.
+function associatedTokenAddress(mint, owner, programId, side) {
+	try {
+		return getAssociatedTokenAddressSync(mint, owner, false, programId, ASSOCIATED_TOKEN_PROGRAM_ID);
+	} catch {
+		throw clientError('invalid_owner', `${side} is a program-derived address and has no associated token account`);
+	}
+}
+
 // ── build-transfer ────────────────────────────────────────────────────────────
 
 const transferSchema = z.object({
@@ -139,8 +152,8 @@ async function handleBuildTransfer(req, res) {
 			return error(res, 400, 'invalid_amount', `amount rounds to zero at ${decimals} decimals`);
 		}
 
-		const senderATA    = getAssociatedTokenAddressSync(mint, senderPubkey, false, programId, ASSOCIATED_TOKEN_PROGRAM_ID);
-		const recipientATA = getAssociatedTokenAddressSync(mint, recipientPubkey, false, programId, ASSOCIATED_TOKEN_PROGRAM_ID);
+		const senderATA    = associatedTokenAddress(mint, senderPubkey, programId, 'sender');
+		const recipientATA = associatedTokenAddress(mint, recipientPubkey, programId, 'recipient');
 
 		// Tell the sender their balance is short BEFORE they approve a transaction
 		// that can only fail on-chain and still cost them the fee.

@@ -1,10 +1,10 @@
 // GET /api/v1/pump/curve?mint=<mint>
 //
-// Free, keyless bonding-curve / graduation status for a pump.fun token —
+// Free, keyless bonding-curve / graduation status for a pump.fun token:
 // registers the free Crypto Data API's bonding-curve reader
 // (api/_lib/pump-bonding.js `getBondingStatus`, already live at
 // GET /api/crypto/bonding) under the versioned, cataloged /api/v1 surface so
-// agents can discover it via GET /api/v1. Same engine, same response shape —
+// agents can discover it via GET /api/v1. Same engine, same response shape:
 // a thin wrapper, not a fork.
 //
 // Answers: % to graduation, SOL in the curve, tokens remaining, market cap, and
@@ -38,11 +38,11 @@ export default defineEndpoint({
 			fail(
 				400,
 				'not_pumpfun_mint',
-				`${mint} is not a pump.fun bonding-curve token — it never launched on pump.fun or isn't indexed. Discover live pump.fun mints at /api/v1/pump/launches or /api/v1/pump/trending.`,
+				`${mint} is not a pump.fun bonding-curve token: it never launched on pump.fun or isn't indexed. Discover live pump.fun mints at /api/v1/pump/launches or /api/v1/pump/trending.`,
 			);
 		}
 		if (result.kind === 'upstream_down') {
-			fail(503, 'upstream_unavailable', 'pump.fun data source is temporarily unreachable — retry shortly');
+			fail(503, 'upstream_unavailable', 'pump.fun data source is temporarily unreachable, retry shortly');
 		}
 
 		const s = result.status;

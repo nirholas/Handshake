@@ -1,14 +1,14 @@
 // GET /api/v1/pump/trending?window=5m|1h|24h&limit=1..25&source=pumpfun|all
 //
-// Free, keyless momentum-ranked "what's hot right now" feed for Solana tokens —
+// Free, keyless momentum-ranked "what's hot right now" feed for Solana tokens:
 // registers the free Crypto Data API's trending engine (api/_lib/crypto-trending.js
 // `composeTrending`, already live at GET /api/crypto/trending) under the
 // versioned, cataloged /api/v1 surface so agents can discover it via GET /api/v1.
 // Same engine, same ranking signal (documented in crypto-trending.js +
-// docs/crypto-api.md) — this is a thin wrapper, not a fork, capped slimmer (25
+// docs/crypto-api.md): this is a thin wrapper, not a fork, capped slimmer (25
 // vs 50) to keep the v1 door fast.
 //
-// Tokens are ranked by a 0–100 momentum score fusing windowed volume, buy
+// Tokens are ranked by a 0-100 momentum score fusing windowed volume, buy
 // pressure, a volume-spike signal, and price change across pump.fun,
 // DexScreener, and (best-effort) GMGN smart money. Never 500s: every source
 // failing yields 200 with an empty ranking + a note.
@@ -27,7 +27,7 @@ export default defineEndpoint({
 	auth: 'public',
 	handler: async ({ req, res, query }) => {
 		// Dedicated-shared budget with the sibling free pump.fun v1 reads and the
-		// /api/crypto/trending door this wraps — fans out to real upstreams on a
+		// /api/crypto/trending door this wraps, fans out to real upstreams on a
 		// cache miss, so this caps a scripted enumeration flood.
 		const rl = await limits.publicIp(clientIp(req));
 		if (!rl.success) return rateLimited(res, rl, 'pump trending is capped at 60 requests/min per IP');
@@ -42,7 +42,7 @@ export default defineEndpoint({
 		// A live, momentum-ranked feed shifts minute to minute but doesn't need
 		// sub-minute freshness; a short CDN cache absorbs bursts of agents polling
 		// the same window. An empty result (all sources down) is cached only
-		// briefly so we retry the live feeds soon — set before returning so the
+		// briefly so we retry the live feeds soon, set before returning so the
 		// gateway's secure-by-default no-store doesn't override it.
 		res.setHeader(
 			'cache-control',

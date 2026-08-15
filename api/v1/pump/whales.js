@@ -1,9 +1,9 @@
 // GET /api/v1/pump/whales?limit=1..25[&mint=<mint>][&minSol=<n>]
 //
-// Free, keyless whale / large-buy detection across pump.fun — the read
+// Free, keyless whale / large-buy detection across pump.fun: the read
 // version of the whale-activity oracle that otherwise sits behind the paid
 // GET /api/x402/pump-agent-audit ("mode":"whale_activity"). Reports FACTS only
-// (which wallets moved how much SOL, and when) — no invented "bullish/bearish
+// (which wallets moved how much SOL, and when), no invented "bullish/bearish
 // signal + confidence": that decorative framing is dropped here on purpose so
 // the agent draws its own conclusion from the same underlying trades the paid
 // oracle scores.
@@ -11,7 +11,7 @@
 // The scan lives in api/_lib/pump-whale-scan.js (`scanTokenWhales` /
 // `scanMarketWhales`), the SAME shared module behind the free
 // GET /api/crypto/whales endpoint and (via the same pump.fun trade shape) the
-// paid oracle — one whale-detection implementation, three doors, never a
+// paid oracle: one whale-detection implementation, three doors, never a
 // fourth copy-paste.
 //
 //   (omit mint) → top whale WALLETS active across pump.fun's top coins right now
@@ -32,7 +32,7 @@ export default defineEndpoint({
 	auth: 'public',
 	handler: async ({ req, res, query }) => {
 		// Dedicated-shared budget with the sibling free pump.fun v1 reads and the
-		// /api/crypto/whales door this shares a scan engine with — a market-scope
+		// /api/crypto/whales door this shares a scan engine with: a market-scope
 		// scan fans out to several coins' trade feeds, so this bounds that cost.
 		const rl = await limits.publicIp(clientIp(req));
 		if (!rl.success) return rateLimited(res, rl, 'pump whales is capped at 60 requests/min per IP');
@@ -68,7 +68,7 @@ export default defineEndpoint({
 		const body = {
 			scope: result.scope,
 			mint: result.mint,
-			// Facts only — the decorative bullish/bearish "signal" the paid oracle
+			// Facts only: the decorative bullish/bearish "signal" the paid oracle
 			// and /api/crypto/whales report is deliberately dropped here.
 			wallets: result.whales,
 			whale_count: result.whaleCount,
@@ -78,7 +78,7 @@ export default defineEndpoint({
 			source: result.source,
 		};
 		if (result.degraded) {
-			body.note = 'pump.fun feed is temporarily unavailable — returning an empty whale set; retry shortly';
+			body.note = 'pump.fun feed is temporarily unavailable, returning an empty whale set; retry shortly';
 		}
 		// The feed was rate-limited and these rows came from the last-known-good
 		// pull. Real trades, a few minutes old: say so rather than imply live.

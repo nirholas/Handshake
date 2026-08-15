@@ -1,4 +1,4 @@
-// GET /api/v1/robinhood/chain — Robinhood Chain (4663) stats.
+// GET /api/v1/robinhood/chain: Robinhood Chain (4663) stats.
 //
 // Free, keyless. Real data: block height + gas (Blockscout), TVL now + 90-day
 // history (DefiLlama /chain/robinhood-chain). Cached upstream (15s stats, 120s
