@@ -11,9 +11,9 @@ Base URL: `https://three.ws`
 > This page documents the **free** 3D endpoints. Higher-quality generation and
 > rigging are paid: **Forge Pro** (quality tiers) at [`/api/x402/forge`](https://three.ws/api/x402/forge)
 > and **Rigged Avatars** (animation-ready skeletons) via `POST /api/forge?action=rig`.
-> The Forge Pro link is a live per-tier price catalog you can open; the rig route
-> is POST-only and quotes its price in the `402` challenge, so there is nothing
-> to browse there.
+> Both of those links are openable catalogs: `/api/x402/forge` lists the per-tier
+> USDC prices, and [`/api/forge?catalog`](https://three.ws/api/forge?catalog) lists
+> the path / tier / backend matrix. The rig action itself is POST-only.
 
 Prefer a browsable landing page? See [three.ws/3d](https://three.ws/3d) — hero,
 live endpoint table, a runnable inspection console, an embedded 3D viewer, and the

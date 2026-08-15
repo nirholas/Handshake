@@ -31,9 +31,11 @@
  *     post-generation @gltf-transform compression pass (api/_lib/glb-compress.js).
  *   • texture_size / target_polycount — poly-aware backends only (Hunyuan3D,
  *     Meshy, Tripo, Rodin, TripoSG); ignored (never 422s) on TRELLIS.
- *   • director: true    — runs the same IBM Granite "art director" prompt
- *     rewrite the free MCP tools use before a text prompt synthesizes its
- *     reference image. Off by default; fails soft to the raw prompt.
+ *   • director: false   — SKIPS the IBM Granite "art director" prompt rewrite
+ *     that otherwise runs before a text prompt synthesizes its reference image
+ *     (the same director the free MCP tools use). On by default, because it
+ *     fails soft to the raw prompt and rides the free-first LLM chain, so it
+ *     can only help. Documented at /docs/3d-api.
  *   • force_regenerate: true — skip the result cache read for this call (the
  *     cache still gets refreshed with the new result).
  * A finished generation's metadata carries `quality` (api/_lib/glb-quality.js
