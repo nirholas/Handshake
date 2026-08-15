@@ -67,6 +67,7 @@ const OPENAI_FORMATS = {
 
 const OPENAI_VOICE_IDS = new Set(TTS_VOICES.map((v) => v.id));
 const NVIDIA_VOICE_IDS = new Set(Object.keys(VOICE_TO_MAGPIE));
+const GEMINI_VOICE_IDS = new Set(GEMINI_VOICES.map((v) => v.id));
 
 const SYNTH_TIMEOUT_MS = 45_000;
 
@@ -267,6 +268,48 @@ export async function listProviderVoices(providerId, { elevenKey = null, byok = 
 		}
 		default:
 			return [];
+	}
+}
+
+/**
+ * Does `voiceId` name a real voice on this lane?
+ *
+ * `synthesizeVoice` quietly swaps an unrecognized id for the lane default, which
+ * is the right behavior for an internal router but the wrong answer to a caller:
+ * a typo comes back as somebody else's voice, billed, with a 200. Handlers call
+ * this at the request boundary so a bad id fails as a 400 before anything is
+ * metered.
+ *
+ * An empty id means "use the lane default" and is always accepted. ElevenLabs is
+ * per-account and grows at runtime (cloning, library adds), so upstream stays the
+ * authority there. A lane whose catalog cannot be fetched fails open: a catalog
+ * outage must never block synthesis that would otherwise have worked.
+ *
+ * @param {string} providerId
+ * @param {string} voiceId
+ * @returns {Promise<boolean>}
+ */
+export async function isKnownVoice(providerId, voiceId) {
+	const id = String(voiceId || '').trim();
+	if (!id) return true;
+	switch (providerId) {
+		case 'edge': {
+			if (!EDGE_VOICE_RE.test(id)) return false;
+			try {
+				const { voices } = await listEdgeVoices();
+				return voices.some((v) => v.id === id);
+			} catch {
+				return true;
+			}
+		}
+		case 'gemini':
+			return GEMINI_VOICE_IDS.has(id);
+		case 'nvidia':
+			return NVIDIA_VOICE_IDS.has(id);
+		case 'openai':
+			return OPENAI_VOICE_IDS.has(id);
+		default:
+			return true;
 	}
 }
 

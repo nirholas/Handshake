@@ -7,7 +7,7 @@
  * actually render.
  *
  * Query:
- *   provider=edge|gemini|nvidia|openai|elevenlabs   restrict to one lane
+ *   provider=edge|gemini|nvidia|openai|elevenlabs   restrict to one lane (400 on an unknown id)
  *   q=<text>                                        substring filter (name, locale, labels)
  *   language=<tag>                                  e.g. "en", "ja"
  *   limit=<n>                                       cap voices returned (default 400, max 2000)
@@ -26,11 +26,13 @@
  * }
  */
 
-import { cors, json, method, wrap } from '../_lib/http.js';
+import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { resolveElevenKey } from '../_lib/elevenlabs.js';
 import {
 	VOICE_PROVIDERS,
+	PROVIDER_IDS,
+	getProvider,
 	providerAvailability,
 	providerModels,
 	providerDefaultVoice,
@@ -45,7 +47,18 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://localhost');
-	const only = url.searchParams.get('provider');
+	const only = (url.searchParams.get('provider') || '').trim();
+	// An unrecognized provider used to answer 200 with an empty catalog, which the
+	// picker can only render as "no voices" with no way to tell a typo from a lane
+	// that is genuinely down. /api/tts/synthesize already rejects the same id.
+	if (only && !getProvider(only)) {
+		return error(
+			res,
+			400,
+			'validation_error',
+			`unknown provider "${only}". Known lanes: ${PROVIDER_IDS.join(', ')}`,
+		);
+	}
 	const q = (url.searchParams.get('q') || '').trim().toLowerCase();
 	const language = (url.searchParams.get('language') || '').trim().toLowerCase();
 	const limit = Math.min(

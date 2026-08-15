@@ -41,6 +41,7 @@ import { resolveElevenKey } from '../_lib/elevenlabs.js';
 import {
 	getProvider,
 	providerAvailability,
+	isKnownVoice,
 	synthesizeVoice,
 	usdForSynthesis,
 	creditActionFor,
@@ -128,6 +129,21 @@ export default wrap(async (req, res) => {
 	const language = typeof body.language === 'string' ? body.language : undefined;
 	const voiceSettings =
 		body.voice_settings && typeof body.voice_settings === 'object' ? body.voice_settings : null;
+
+	// A voiceId the lane does not have is a caller error, and it has to be caught
+	// here: the router would otherwise swap in the lane default and return 200,
+	// so a typo came back as a different voice, charged, with nothing in the
+	// response saying so. Checked before the cache key is minted and before any
+	// metering, so a bad id costs nothing. An omitted voiceId still means "lane
+	// default" and passes.
+	if (!(await isKnownVoice(providerId, voiceId))) {
+		return error(
+			res,
+			400,
+			'validation_error',
+			`"${voiceId}" is not a ${provider.label} voice. Pick one from /api/tts/catalog?provider=${providerId}`,
+		);
+	}
 
 	// ── R2 cache ──────────────────────────────────────────────────────────────
 	// Checked BEFORE metering: a cached clip costs nothing upstream, so it is

@@ -24,7 +24,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
-import { cors, method, wrap, error, json, rateLimited } from '../_lib/http.js';
+import { cors, method, wrap, error, json, rateLimited, readBody } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { chargeCreditsForAction, refundCredits } from '../_lib/credits.js';
 import { createClonedVoice, resolveElevenKey } from '../_lib/elevenlabs.js';
@@ -41,6 +41,13 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
+	// Identity first: this endpoint has no anonymous lane, so a signed-out caller
+	// gets a 401 rather than a reading of what this server has configured.
+	const session = await getSessionUser(req);
+	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
+	const userId = session?.id ?? bearer.userId;
+
 	// A user-supplied x-eleven-key (BYOK) clones onto THAT user's ElevenLabs
 	// account: their quota, their bill, so the platform's daily cap is skipped.
 	const { apiKey, byok } = resolveElevenKey(req);
@@ -51,11 +58,6 @@ export default wrap(async (req, res) => {
 			'not_configured',
 			'ElevenLabs is not configured on this server. Send your own key in the x-eleven-key header to use your account.',
 		);
-
-	const session = await getSessionUser(req);
-	const bearer = session ? null : await authenticateBearer(extractBearer(req));
-	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
-	const userId = session?.id ?? bearer.userId;
 
 	// Platform-key clones consume limited IVC slots on the shared account, so
 	// even paid clones hold to the same 3/day abuse cap the agent-voice clone
@@ -84,12 +86,9 @@ export default wrap(async (req, res) => {
 		raw = await readBody(req, MAX_REQUEST_BYTES);
 	} catch (err) {
 		const status = err.status || 400;
-		return error(
-			res,
-			status,
-			status === 413 ? 'payload_too_large' : 'bad_request',
-			err.message,
-		);
+		const code =
+			status === 413 ? 'payload_too_large' : status === 408 ? 'request_timeout' : 'bad_request';
+		return error(res, status, code, err.message);
 	}
 
 	let parts;
@@ -215,24 +214,6 @@ export default wrap(async (req, res) => {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-function readBody(req, limit) {
-	return new Promise((resolve, reject) => {
-		const chunks = [];
-		let total = 0;
-		req.on('data', (c) => {
-			total += c.length;
-			if (total > limit) {
-				reject(Object.assign(new Error('payload too large'), { status: 413 }));
-				req.destroy();
-				return;
-			}
-			chunks.push(c);
-		});
-		req.on('end', () => resolve(Buffer.concat(chunks)));
-		req.on('error', reject);
-	});
-}
-
 /**
  * Minimal RFC 7578 multipart parser. Sufficient for the single-file + few
  * scalar fields shape this endpoint accepts. Returns an array of
@@ -258,10 +239,9 @@ function parseMultipart(buf, boundary) {
 		const headerStr = buf.slice(pos, headersEnd).toString('utf8');
 		const dataStart = headersEnd + 4;
 
-		const nextBoundary = buf.indexOf(
-			crlf.length ? Buffer.concat([crlf, delim]) : delim,
-			dataStart,
-		);
+		// A part's payload ends at the CRLF immediately before the next boundary;
+		// that CRLF belongs to the delimiter, not to the data.
+		const nextBoundary = buf.indexOf(Buffer.concat([crlf, delim]), dataStart);
 		if (nextBoundary < 0) throw new Error('no closing boundary for part');
 
 		const data = buf.slice(dataStart, nextBoundary);
