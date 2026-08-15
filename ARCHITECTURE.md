@@ -887,9 +887,9 @@ Full 52-blendshape ARKit vocabulary with cross-format mapping. Falls back to jaw
 
 | SDK | Package | Path | Description |
 |-----|---------|------|-------------|
-| `<three-ws-viewer>` web component | `@three-ws/avatar` v0.2.0 | `avatar-sdk/src/viewer.js` | Lightweight GLB viewer: OrbitControls, PMREM, ResizeObserver |
-| `<agent-3d>` web component | `@three-ws/avatar` v0.2.0 | `avatar-sdk/src/agent.js` | Full chat loop, voice, lipsync, emotion morphs (~3.3 MB) |
-| AvatarCreator iframe modal | `@three-ws/avatar` v0.2.0 | `avatar-sdk/src/creator.js` | Opens Avatar Studio or Avaturn iframe, resolves to GLB Blob |
+| `<three-ws-viewer>` web component | `@three-ws/avatar` v0.2.2 | `avatar-sdk/src/viewer.js` | Lightweight GLB viewer: OrbitControls, PMREM, ResizeObserver |
+| `<agent-3d>` web component | `@three-ws/avatar` v0.2.2 | `src/element.js` (the SDK ships it prebuilt; `avatar-sdk/src/agent.js` lazy-loads it) | Full chat loop, voice, lipsync, emotion morphs (~3.3 MB) |
+| AvatarCreator iframe modal | `@three-ws/avatar` v0.2.2 | `avatar-sdk/src/creator.js` | Opens Avatar Studio or Avaturn iframe, resolves to GLB Blob |
 | Walk Companion | `@three-ws/walk` v0.1.0 | `walk-sdk/src/companion.js` | 200×280px fixed-position corner avatar |
 | Walk Playground | `@three-ws/walk` v0.1.0 | `walk-sdk/src/playground.js` | Full-page stroll/platformer |
 | Page Agent | `@three-ws/page-agent` v0.1.0 | `page-agent-sdk/src/page-agent.js` | Drop-in 3D narrator that auto-walks through page content |
@@ -1084,7 +1084,7 @@ All remote servers implement **MCP 2025-06-18 Streamable HTTP transport** (JSON-
 | `@three-ws/agent-payments` | 3.2.0 | `agent-payments-sdk/` | TypeScript | pump.fun agent payments: PumpAgent/PumpAgentOffline, EvmAgent, CrossChainPaymentClient |
 | `@three-ws/agent-protocol-sdk` | 0.2.0 | `agent-protocol-sdk/` | TypeScript | On-chain A2A invocation: `deriveAgentPda()`, `invokeSkill()` (Anchor) |
 | `@three-ws/agent-ui` | 0.2.0 | `agent-ui-sdk/` | JS (ESM) | Three.js GLB overlay: `createAgentUI()`, idle/walk clips, DOM-anchored behaviors |
-| `@three-ws/avatar` | 0.2.0 | `avatar-sdk/` | JS (ESM) | `<three-ws-viewer>` + `<agent-3d>` web components + AvatarCreator iframe |
+| `@three-ws/avatar` | 0.2.2 | `avatar-sdk/` | JS (ESM) | `<three-ws-viewer>` + `<agent-3d>` web components + AvatarCreator iframe |
 | `@three-ws/walk` | 0.1.0 | `walk-sdk/` | JS (ESM) | Walk companion + playground: `loadWalkAvatar()`, AnimationManager |
 | `@three-ws/page-agent` | 0.1.0 | `page-agent-sdk/` | JS (ESM) | Drop-in 3D narrator + SpeechNarrator + AvatarPicker |
 | `@three-ws/tour` | 0.1.0 | `tour-sdk/` | JS (ESM) | Guided tour SDK: TourDirector, GuideAvatar, curriculum, spotlight |
@@ -2691,7 +2691,7 @@ The seeder autonomously mass-produces public, rigged 3D avatars into the `avatar
 | `@three-ws/agent-payments` | 3.2.0 | pump.fun payments SDK (TypeScript) |
 | `@three-ws/agent-protocol-sdk` | 0.2.0 | On-chain A2A invocation (TypeScript) |
 | `@three-ws/agent-ui` | 0.2.0 | Three.js GLB overlay SDK |
-| `@three-ws/avatar` | 0.2.0 | `<three-ws-viewer>` + `<agent-3d>` web components |
+| `@three-ws/avatar` | 0.2.2 | `<three-ws-viewer>` + `<agent-3d>` web components |
 | `@three-ws/walk` | 0.1.0 | Walk companion + playground SDK |
 | `@three-ws/page-agent` | 0.1.0 | Drop-in 3D narrator SDK |
 | `@three-ws/tour` | 0.1.0 | Guided product tour SDK |

@@ -120,8 +120,14 @@ const { avatar, loading, error } = useAvatar(id);</pre>
 		<script src="/nav.js" defer></script>
 
 		<script type="module">
-			import { createRoot } from 'react-dom/client';
-			import { createElement as h, useState, useCallback } from 'react';
+			// Absolute CDN URLs on purpose, matching the import map above exactly.
+			// The dev server rewrites bare specifiers in an inline module script to
+			// its own optimized copy of React while serving /avatar-sdk/src/*.js
+			// untouched, which loads two React instances and throws "Invalid hook
+			// call" locally. Naming the same URL in both places keeps one instance
+			// in dev and in production.
+			import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client?dev&deps=react@18.3.1';
+			import { createElement as h, useState, useCallback } from 'https://esm.sh/react@18.3.1?dev';
 			import {
 				Avatar,
 				AgentAvatar,
