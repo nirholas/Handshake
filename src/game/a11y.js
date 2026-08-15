@@ -130,11 +130,20 @@ export function trapFocus(root, { initialFocus } = {}) {
 	// the panel's async content arrives; -1 keeps it out of the Tab order.
 	if (!root.hasAttribute('tabindex')) root.setAttribute('tabindex', '-1');
 	const target = initialFocus || focusableIn(root)[0] || root;
-	// Defer one frame: panels focus-trap in their constructor, before the card
-	// has been laid out, and focusing a zero-size element is a silent no-op.
-	requestAnimationFrame(() => {
+	const applyFocus = () => {
 		if (root.isConnected) try { target.focus({ preventScroll: true }); } catch { /* detached */ }
-	});
+	};
+	// Twice, on purpose. The next-frame call is what handles the common case:
+	// panels focus-trap in their constructor, before the card has been laid out,
+	// and focusing a zero-size element is a silent no-op. But a frame is not
+	// guaranteed to arrive on demand - /play drives rAF off a WebGL compositor
+	// that stalls under load, and a backgrounded tab stops delivering frames
+	// altogether - and a deferred-only focus leaves `aria-modal` promising a trap
+	// that never closed, with the keyboard still on the page behind the dialog.
+	// Focusing now costs nothing when it no-ops and holds the promise when no
+	// frame ever comes.
+	applyFocus();
+	requestAnimationFrame(applyFocus);
 
 	let released = false;
 	return () => {
