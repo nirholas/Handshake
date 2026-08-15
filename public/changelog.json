@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T21:35:55.185Z",
+	"generated_at": "2026-08-15T21:47:06.871Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -295,6 +295,17 @@
 			"tags": [
 				"docs",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Generation Watch: a dropped connection now says so, and the page reads properly to a screen reader",
+			"summary": "The page that shows a 3D generation in progress had one way to fail badly: if the tab lost contact with three.ws, it kept animating the countdown against a server it could not reach, silently retrying for forty minutes before admitting anything was wrong. It now stops after four failed checks, tells you plainly that the connection dropped and that your model is still being generated on our servers, and offers a \"Keep watching\" button that picks up where it left off. It also resumes on its own the moment the browser comes back online. The phase line used to lag a step behind the picture, announcing \"Painting the concept\" while the concept art was already on screen; it now switches to \"Sculpting the 3D mesh\" as soon as the artwork arrives. The page had no heading at all for a screen reader and read its four-times-a-second timer aloud continuously; it now has a real title heading, announces each state change once, and keeps the countdown quiet. It follows your light or dark theme instead of forcing dark, gives the three.ws link a visible focus ring, and no longer lets the site-wide Cmd+K hint sit on top of its buttons. The hand-off into the 3D viewer is now checked before it is followed, so it can only ever land on three.ws.",
+			"link": "/watch",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -1044,17 +1055,6 @@
 			"title": "Voice Lab: a dead voice provider now leaves the menu instead of failing on your first click",
 			"summary": "Google Gemini has been refusing every request on the platform's account, and Voice Lab had no way to know: it listed all 30 Gemini voices, put them first, and the first Preview a visitor pressed came back with a wall of raw error JSON quoting internal project numbers. Now the first refusal is the last one anybody sees. A provider that turns down the platform's credentials is withheld from the voice list for a few minutes with the reason written on its filter chip, its voices disappear from the grid the moment a preview hits it, and the free Microsoft Edge and NVIDIA lanes are named as the alternative. It restores itself the moment the provider works again, with nothing to switch back on by hand. Failure messages across the page are now single readable sentences rather than vendor dumps. The rest is the same page, checked end to end: the catalog error state offers a working Try again, a search that matches nothing offers Clear filters, a deployment with no provider at all says so instead of claiming no voices match, the Remove button next to your own ElevenLabs key is styled like a button again, every control shows a focus ring when you tab to it, and the text box in the playground has a label. The space bar no longer hijacks the button you are pressing: it starts a recording only when nothing on the page is focused.",
 			"link": "/voice",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
-			"title": "Walk Leaderboard: switching filters no longer strands the board, and an empty board tells you how to get on it",
-			"summary": "Clicking through the leaderboard's filters faster than the board could load left it stuck: a second click while a request was open was dropped outright, so the board could sit on a loading skeleton that never resolved, or show one metric's rows under another metric's column header. Every request now supersedes the one before it, so whatever you clicked last is what you get. An empty board used to say the same thing whichever metric you were on, which was wrong for Sites: sites only count where your avatar walks away from three.ws, so that state now explains it and links to the walk companion, while distance and time point at the walk itself. Any narrow window that comes up empty also offers a jump to All Time rather than leaving you at a dead end, and a failed load offers a retry that says what went wrong. The board now lives up to \"updates live\": it refreshes itself while you are watching, shows how many walkers are ranked and when it last updated, and a refresh that fails quietly keeps the rows you are reading. For screen readers the board is a real table, the top three medals now announce their rank instead of reading as an empty cell, the momentum column speaks its direction, and the two filter groups are proper radio groups with arrow-key and Home/End navigation.",
-			"link": "/walk-leaderboard",
 			"tags": [
 				"fix",
 				"improvement"

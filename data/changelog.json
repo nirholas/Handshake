@@ -3,6 +3,36 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "glTF Validator: a file it cannot read now says why, and the page is usable from the keyboard",
+			"summary": "Drop a model the validator cannot parse and the page used to claim it had been \"validated\", print \"Validator failed: undefined\", and, when a URL fetch was refused, wipe both result panels to an empty screen with no explanation. Every one of those paths now renders a real failure card: what broke, the actual reason, what to try next (CORS on the host, a .gltf that needs packing into a .glb, a download that did not finish), and a Try again button that reruns the same file or URL. The status line no longer reports a success it did not have, and it counts the issues found instead of just saying \"validated\". The file picker was unreachable without a mouse, so keyboard users could only use the URL box; it is now in the tab order with a visible ring on the drop zone. The three tabs move with the arrow keys, the Agent ID and Chain ID fields have labels, the report headings no longer compete with the page title, and the Submit Report dialog closes on Escape or a click outside, keeps focus inside while open, returns it where it was, and no longer sits underneath the site header. A dead link in the report footnote now points at the Khronos extension registry.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/validation"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Walk Leaderboard: switching filters no longer strands the board, and an empty board tells you how to get on it",
+			"summary": "Clicking through the leaderboard's filters faster than the board could load left it stuck: a second click while a request was open was dropped outright, so the board could sit on a loading skeleton that never resolved, or show one metric's rows under another metric's column header. Every request now supersedes the one before it, so whatever you clicked last is what you get. An empty board used to say the same thing whichever metric you were on, which was wrong for Sites: sites only count where your avatar walks away from three.ws, so that state now explains it and links to the walk companion, while distance and time point at the walk itself. Any narrow window that comes up empty also offers a jump to All Time rather than leaving you at a dead end, and a failed load offers a retry that says what went wrong. The board now lives up to \"updates live\": it refreshes itself while you are watching, shows how many walkers are ranked and when it last updated, and a refresh that fails quietly keeps the rows you are reading. For screen readers the board is a real table, the top three medals now announce their rank instead of reading as an empty cell, the momentum column speaks its direction, and the two filter groups are proper radio groups with arrow-key and Home/End navigation.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/walk-leaderboard"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Generation Watch: a dropped connection now says so, and the page reads properly to a screen reader",
+			"summary": "The page that shows a 3D generation in progress had one way to fail badly: if the tab lost contact with three.ws, it kept animating the countdown against a server it could not reach, silently retrying for forty minutes before admitting anything was wrong. It now stops after four failed checks, tells you plainly that the connection dropped and that your model is still being generated on our servers, and offers a \"Keep watching\" button that picks up where it left off. It also resumes on its own the moment the browser comes back online. The phase line used to lag a step behind the picture, announcing \"Painting the concept\" while the concept art was already on screen; it now switches to \"Sculpting the 3D mesh\" as soon as the artwork arrives. The page had no heading at all for a screen reader and read its four-times-a-second timer aloud continuously; it now has a real title heading, announces each state change once, and keeps the countdown quiet. It follows your light or dark theme instead of forcing dark, gives the three.ws link a visible focus ring, and no longer lets the site-wide Cmd+K hint sit on top of its buttons. The hand-off into the 3D viewer is now checked before it is followed, so it can only ever land on three.ws.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/watch"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Your master wallet: creating one no longer reports a failure, and your balances are real numbers again",
 			"summary": "Two faults on the master wallet page are fixed. First, every account that pressed Create my master wallet was told the creation had failed. The wallet was in fact created every time; the page then showed an error, and the same fault sat on the send and fund-an-agent paths, where a transfer that had already settled on Solana was reported as \"The transfer did not go through\", inviting people to send the same money twice. Nothing about the money was ever wrong, only what the page said about it. Second, the SOL and Solana USDC figures, and the total value, read \"unavailable\" for everyone regardless of what the wallet held, because the balance reader and the page were describing balances in two different shapes. They now show live amounts, priced against the SOL rate, and an empty wallet reads a plain 0 instead of \"unavailable\". A balance the network genuinely could not answer for still says \"unavailable\" and is left out of the total rather than counted as zero. Alongside that: failures now explain themselves in plain words with a support reference instead of printing raw operator text, the explainer bubbles fit inside a phone screen, and each one names what it explains for screen-reader users.",
 			"tags": [
