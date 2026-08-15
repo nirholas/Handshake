@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://three.ws/schema/avatar.v1.json",
+  "title": "three.ws on-chain avatar manifest",
+  "description": "Canonical, hash-anchored description of an on-chain avatar. A signed instance of this document is what three.ws agents resolve when they fetch an avatar by id from any chain.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "mesh",
+    "skeleton",
+    "owner",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "description": "Version of this manifest schema. Always 1 for documents validated against avatar.v1.json.",
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "description": "Canonical avatar identifier. Either a CAIP-10 account id (e.g. eip155:1:0xabc...) or a name from a supported name service (.eth, .ws, .sol).",
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^[a-z0-9-]{3,8}:[a-zA-Z0-9_-]{1,32}:[a-zA-Z0-9]{1,64}$"
+        },
+        {
+          "pattern": "^[a-z0-9][a-z0-9-]{0,62}\\.(eth|ws|sol)$"
+        }
+      ]
+    },
+    "name": {
+      "description": "Human-readable avatar name.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "mesh": {
+      "description": "Pointer to the 3D mesh that renders this avatar.",
+      "type": "object",
+      "required": [
+        "uri",
+        "sha256",
+        "format"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "uri": {
+          "description": "Content-addressed or HTTP(S) URI. Prefer ipfs:// or ar:// for immutability.",
+          "type": "string",
+          "format": "uri-reference"
+        },
+        "sha256": {
+          "description": "SHA-256 of the mesh bytes, lowercase hex.",
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "format": {
+          "description": "Mesh container format.",
+          "type": "string",
+          "enum": [
+            "glb",
+            "gltf",
+            "vrm"
+          ]
+        },
+        "kBytes": {
+          "description": "Mesh size in kilobytes (informational).",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "skeleton": {
+      "description": "Skeleton layout the mesh conforms to. Determines which animation libraries can drive it without runtime retargeting.",
+      "type": "string",
+      "enum": [
+        "avaturn",
+        "mixamo",
+        "rpm",
+        "vrm-humanoid",
+        "custom"
+      ]
+    },
+    "animations": {
+      "description": "Optional pointer to an animation manifest (list of clips by name → uri/sha256). If omitted, the avatar relies on whatever default clips the host viewer ships.",
+      "type": "object",
+      "required": [
+        "uri",
+        "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri-reference"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "accessories": {
+      "description": "Equipped accessory items (hats, glasses, etc.). Each entry binds a slot to a content-addressed asset.",
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "required": [
+          "slot",
+          "uri",
+          "sha256"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "slot": {
+            "type": "string",
+            "enum": [
+              "head",
+              "eyes",
+              "ears",
+              "neck",
+              "torso",
+              "back",
+              "hands",
+              "waist",
+              "feet"
+            ]
+          },
+          "uri": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "traits": {
+      "description": "Free-form key/value traits (NFT-style). String/number/boolean values only; no nested objects.",
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "maxProperties": 32
+    },
+    "owner": {
+      "description": "Current on-chain owner. Wallet address scoped by chain id.",
+      "type": "object",
+      "required": [
+        "chain",
+        "address"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "chain": {
+          "description": "CAIP-2 chain id (e.g. eip155:1, solana:mainnet-beta).",
+          "type": "string",
+          "pattern": "^[a-z0-9-]{3,8}:[a-zA-Z0-9_-]{1,32}$"
+        },
+        "address": {
+          "description": "Wallet address. Format depends on chain.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    },
+    "creator": {
+      "description": "Original creator. Omit if same as owner.",
+      "type": "object",
+      "required": [
+        "chain",
+        "address"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "chain": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]{3,8}:[a-zA-Z0-9_-]{1,32}$"
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    },
+    "createdAt": {
+      "description": "ISO 8601 UTC timestamp.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "signature": {
+      "description": "Optional signature over the canonical JSON serialization of this manifest, with the signature field itself removed. Algorithm-specific.",
+      "type": "object",
+      "required": [
+        "algorithm",
+        "value",
+        "signer"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "eip-712",
+            "ed25519",
+            "secp256k1"
+          ]
+        },
+        "value": {
+          "description": "Signature bytes, hex-encoded with leading 0x.",
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]+$"
+        },
+        "signer": {
+          "description": "Wallet address that produced the signature. Should match owner.address unless delegated.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    }
+  }
+}
