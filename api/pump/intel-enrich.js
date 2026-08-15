@@ -73,6 +73,9 @@ export default wrap(async (req, res) => {
 			`;
 			mints = rows.map((r) => r.mint);
 		} catch (err) {
+			// The caller still gets a clean 503, but swallowing the cause left no way
+			// to tell "the intel store is down" from "nothing to enrich" in the logs.
+			console.error('[pump/intel-enrich] backfill query failed:', err?.message || err);
 			return error(res, 503, 'intel_unavailable', 'intel store is temporarily unavailable');
 		}
 		if (!mints.length) {

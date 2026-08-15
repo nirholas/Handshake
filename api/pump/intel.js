@@ -13,6 +13,7 @@
 //   ?view=feed              recent observed coins, newest first (filters: category, minQuality, verdict, q)
 //   ?view=leaderboard       highest-quality recent coins + confirmed winners (graduated/pumped)
 //   ?view=learning          learned per-signal weights + outcome distribution (what the model learned)
+//   ?view=traders           cross-coin wallet reputation: who trades these launches, and how well
 //
 // Public, cacheable briefly. No auth: this is read-only market intelligence.
 // Degrades gracefully (200 with degraded:true) if the engine tables don't exist
@@ -253,25 +254,36 @@ async function getCoin(mint, network) {
 }
 
 // ── recent feed (the live radar) ─────────────────────────────────────────────
+// How deep to look when a filter can only be evaluated after a row is shaped.
+// `verdict` is derived in JS from quality_score + risk_flags, so it can't be a
+// WHERE clause; filtering only the newest `limit` rows made ?verdict=strong
+// &limit=60 answer with a single coin on a busy feed, which reads as "the engine
+// found nothing" rather than "you were shown page one". Scan a wider recent
+// window, then slice to the requested page after the filter.
+const FEED_SCAN_CAP = 600;
+// Escape the LIKE metacharacters so a caller searching for "100%" or "a_b" gets
+// those literal strings back instead of a wildcard match. Postgres' default
+// LIKE escape character is the backslash.
+const likeNeedle = (s) => `%${s.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
+
 async function getFeed({ network, limit, category, minQuality, verdict, q }) {
 	const cap = Math.max(1, Math.min(120, limit || 60));
+	// `q` IS expressible in SQL, so push it down rather than post-filtering: a
+	// search has to reach the whole observed feed, not only its newest page.
+	const needle = q ? likeNeedle(q) : null;
+	const scan = verdict ? Math.min(FEED_SCAN_CAP, cap * 8) : cap;
 	const rows = await coinSql`
 		where network = ${network}
 		  and (${category}::text is null or category = ${category})
 		  and (${minQuality}::int is null or quality_score >= ${minQuality})
+		  and (${needle}::text is null
+		       or name ilike ${needle} or symbol ilike ${needle} or mint ilike ${needle})
 		order by first_seen_at desc
-		limit ${cap}
+		limit ${scan}
 	`;
 	let coins = rows.map(shapeCoin);
 	if (verdict) coins = coins.filter((c) => c.verdict.key === verdict);
-	if (q) {
-		const needle = q.toLowerCase();
-		coins = coins.filter((c) =>
-			(c.name || '').toLowerCase().includes(needle) ||
-			(c.symbol || '').toLowerCase().includes(needle) ||
-			(c.mint || '').toLowerCase().includes(needle));
-	}
-	return { coins };
+	return { coins: coins.slice(0, cap) };
 }
 
 // ── leaderboard: best-quality recent + confirmed winners ─────────────────────
@@ -299,8 +311,10 @@ async function getLeaderboard({ network, limit }) {
 
 // ── traders: classify external wallets across every observed coin ────────────
 // Aggregates the per-coin wallet ledger into a cross-coin reputation per trader,
-// then labels it. win_rate is real: of the coins this wallet bought, the share
-// that graduated or pumped (only counted once ≥3 of its coins are labeled).
+// then labels it. win_rate is real: of this wallet's coins that the engine has
+// actually labeled, the share that graduated or pumped. It is null until at
+// least one of them is labeled, and `labeled` ships alongside it so a caller can
+// see how thin the sample is; the smart_money label needs 3 labeled coins.
 //   smart_money: proven win-rate across enough labeled coins
 //   whale      : large lifetime buy volume
 //   serial     : trades a high number of distinct coins

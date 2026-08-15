@@ -141,7 +141,11 @@ export function normalizeGtTrade(t, mint) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Keyless public tape, same as every sibling pump read (intel, launch-detail,
+	// ghost-copy, helius-stats): any origin may consume it. Without `origins: '*'`
+	// a cross-origin agent got the response with no allow-origin header and the
+	// browser dropped it, for data that needs no account and carries no secret.
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const u = new URL(req.url, 'http://x');

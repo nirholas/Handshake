@@ -225,6 +225,78 @@ describe('GET /api/pump/helius-stats probe reporting', () => {
 	});
 });
 
+describe('GET /api/pump/intel?view=feed filters reach past page one', () => {
+	// A row shaped so deriveVerdict() lands on `key`. quality_score alone decides
+	// it once risk_flags is empty.
+	const coinRow = (i, quality) => ({
+		mint: `M${i}`, network: 'mainnet', symbol: `S${i}`, name: `name ${i}`,
+		quality_score: quality, risk_flags: [], signals: {},
+		first_seen_at: '2026-08-01T00:00:00.000Z',
+	});
+
+	it('scans deeper than the page when verdict (a JS-derived filter) is set', async () => {
+		// 79 "avoid" rows followed by 12 "strong" ones. Scanning only the requested
+		// 10 would answer with zero strong coins while 12 sit just past the cursor,
+		// which reads as "the engine found nothing".
+		const rows = [
+			...Array.from({ length: 79 }, (_, i) => coinRow(i, 10)),
+			...Array.from({ length: 12 }, (_, i) => coinRow(100 + i, 90)),
+		];
+		let sqlParams = null;
+		sqlMock.mockImplementation((_statics, ...params) => {
+			sqlParams = params;
+			return Promise.resolve(rows);
+		});
+		const { res, body } = await callIntel('?view=feed&verdict=strong&limit=10');
+		expect(res.statusCode).toBe(200);
+		// limit is the last bound param: 8x the page when a JS filter is active.
+		expect(sqlParams.at(-1)).toBe(80);
+		// …and the page the caller asked for is still the page they get back.
+		expect(body.coins).toHaveLength(10);
+		expect(body.coins.every((c) => c.verdict.key === 'strong')).toBe(true);
+	});
+
+	it('scans exactly one page when no JS-derived filter is set', async () => {
+		let sqlParams = null;
+		sqlMock.mockImplementation((_statics, ...params) => {
+			sqlParams = params;
+			return Promise.resolve([]);
+		});
+		await callIntel('?view=feed&limit=10');
+		expect(sqlParams.at(-1)).toBe(10);
+	});
+
+	it('pushes the text search into SQL instead of filtering the newest page', async () => {
+		// The JS post-filter searched only the rows already fetched, so a coin that
+		// matched but sat past the cursor was invisible to search.
+		let sqlText = '';
+		let sqlParams = null;
+		sqlMock.mockImplementation((statics, ...params) => {
+			sqlText = statics.join('?');
+			sqlParams = params;
+			return Promise.resolve([coinRow(1, 60)]);
+		});
+		const { body } = await callIntel('?view=feed&q=wolf&limit=25');
+		expect(sqlText).toContain('ilike');
+		expect(sqlParams).toContain('%wolf%');
+		expect(sqlParams.at(-1)).toBe(25); // no over-fetch: ilike is a real WHERE
+		// The row the DB returned is served as-is; nothing re-filters it in JS.
+		expect(body.coins).toHaveLength(1);
+	});
+
+	it('escapes LIKE metacharacters so "100%" and "a_b" stay literal', async () => {
+		let sqlParams = null;
+		sqlMock.mockImplementation((_statics, ...params) => {
+			sqlParams = params;
+			return Promise.resolve([]);
+		});
+		await callIntel('?view=feed&q=100%25');
+		expect(sqlParams).toContain('%100\\%%');
+		await callIntel('?view=feed&q=a_b');
+		expect(sqlParams).toContain('%a\\_b%');
+	});
+});
+
 describe('/api/pump/intel still reads real intel rows', () => {
 	it('shapes a coin row into the documented record, verdict included', async () => {
 		sqlMock.mockImplementation((statics) => {
