@@ -255,6 +255,14 @@
 			<description>Asking the public avatar renderer for a pose returned a T-pose on most models: it matched bone names against a short hand-written list, and any rig that did not use those exact names (including every Mixamo export) was silently left in its bind pose while the response still claimed the pose had been applied. The renderer now uses the same posing engine the pose studio uses, so a preset now lands whatever naming convention the model's skeleton uses, and the camera frames the posed figure rather than the unposed one. The background colour on both public renderers is now checked before it is used, and the per-render budget is counted across the whole fleet instead of per server.</description>
 		</item>
 		<item>
+			<title>Premium Vanity Inventory shows the whole shelf, and is readable in light mode</title>
+			<link>https://three.ws/vanity/premium</link>
+			<guid isPermaLink="false">2026-08-15:Premium Vanity Inventory shows the whole shelf, and is readable in light mode</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The premium vanity shelf listed only the first hundred pre-ground addresses out of the hundreds actually in stock, with nothing on the page saying so: every address past that point was unbuyable because no one could see it. The page now loads sixty at a time, states plainly how many of the total you are looking at, and pages through the rest on demand. In light mode the page was close to unusable, because the addresses themselves, the buy dialog, and the custody notice were all painted in colours meant for the black background; the whole page now switches palette properly. Four smaller fixes shipped with it: the retry button on a failed load rendered as raw browser chrome and threw away your filter, so it is now a real button that simply re-runs the search you had; filtering down to no matches now offers a one-click way to clear the filter instead of just suggesting it; the word x402 in the intro linked to the vanity gallery rather than the x402 page; and keyboard users get a visible focus ring on the search and sort controls, which previously had theirs suppressed.</description>
+		</item>
+		<item>
 			<title>Private avatars no longer show their picture in registry lookups</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-15:Private avatars no longer show their picture in registry lookups</guid>
@@ -325,6 +333,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two things were broken in the transaction builder behind the in-app wallet and the chat wallet tools. Sending any Token-2022 coin, which includes $THREE itself and every pump.fun-era launch, failed with a generic server error: the builder assumed the older token program and never asked the chain which one actually owns the mint. It reads that from the chain now and signs against the right program, so a $THREE transfer builds, and it opens the recipient's token account in the same transaction when they do not have one yet. Swaps had been failing entirely because they still called a Jupiter address that no longer exists anywhere on the internet; they now go through the same Jupiter client the rest of the platform uses, and a real quote comes back. Alongside that, mistakes in what you send are finally answered as mistakes instead of a support reference: a mistyped address, an address that is not a token, a memo that is too long, a signature that is not really a signature, or a balance that is too small each come back naming what is wrong, before your wallet ever asks you to approve something that could only fail. Amounts are also converted with exact decimal math now, so no transfer is off by a rounding error.</description>
+		</item>
+		<item>
+			<title>Solana Vanity Wallet: one footer, a working toast, and the gift fee actually shows up</title>
+			<link>https://three.ws/vanity-wallet</link>
+			<guid isPermaLink="false">2026-08-15:Solana Vanity Wallet: one footer, a working toast, and the gift fee actually shows up</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The sealed-gift composer opened with &quot;Loading pricing…&quot; and, depending on which finished first, could sit on that line forever: the translation pass reapplied the placeholder over the fee the page had already fetched, so nobody learned what a gift costs. The same collision could wipe the grind time estimate. Both now hold their own text. Confirmation toasts (&quot;Claim link copied&quot;, &quot;Funds reclaimed&quot;) were built with one class name and styled under another, so instead of floating over the page they dropped in as unstyled text at the very bottom, out of sight; that applies to the gift claim page too. Assigning a freshly ground wallet to an agent succeeded on the server and then reported &quot;Network error&quot; anyway, because the success message referenced an address it could not see. The page also shipped two footers stacked on top of each other, one of them a stale copy with broken markup and a Docs button wearing the X logo; the duplicate is gone. Rounding it out: the sign-in prompt pointed at a legacy /login.html URL, the gift form fields had no labels for screen readers, the expiry and asset choices now follow what the server actually accepts, keyboard focus is visible on every control (the text fields had their ring suppressed), buttons have press states, a failed agent list offers a retry instead of a raw error, and copying an address still works when the browser denies clipboard access.</description>
 		</item>
 		<item>
 			<title>The 3D API and agent manifest references now match what the endpoints actually return</title>

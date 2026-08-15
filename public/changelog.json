@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T19:26:15.723Z",
+	"generated_at": "2026-08-15T19:33:01.845Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -341,6 +341,17 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "Premium Vanity Inventory shows the whole shelf, and is readable in light mode",
+			"summary": "The premium vanity shelf listed only the first hundred pre-ground addresses out of the hundreds actually in stock, with nothing on the page saying so: every address past that point was unbuyable because no one could see it. The page now loads sixty at a time, states plainly how many of the total you are looking at, and pages through the rest on demand. In light mode the page was close to unusable, because the addresses themselves, the buy dialog, and the custody notice were all painted in colours meant for the black background; the whole page now switches palette properly. Four smaller fixes shipped with it: the retry button on a failed load rendered as raw browser chrome and threw away your filter, so it is now a real button that simply re-runs the search you had; filtering down to no matches now offers a one-click way to clear the filter instead of just suggesting it; the word x402 in the intro linked to the vanity gallery rather than the x402 page; and keyboard users get a visible focus ring on the search and sort controls, which previously had theirs suppressed.",
+			"link": "/vanity/premium",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "Private avatars no longer show their picture in registry lookups",
 			"summary": "The registry lookup that turns an agent id, avatar id, slug, or Solana mint into one record already refused to hand out the 3D model of a private avatar, but it still returned the rendered preview image of that same avatar, so anyone holding the id could see what a private creation looked like. The preview is now gated on exactly the same visibility as the model: a private avatar returns its name and identity and no imagery at all. The embeddable widget read did the same thing with its avatar thumbnail and got the same gate. Separately, every read path that turns a stored thumbnail into a URL now goes through the one resolver that drops the old broken image keys, so agent manifests, token metadata, and launch feeds stop publishing image links that answer 404.",
 			"link": null,
@@ -433,6 +444,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Solana Vanity Wallet: one footer, a working toast, and the gift fee actually shows up",
+			"summary": "The sealed-gift composer opened with \"Loading pricing…\" and, depending on which finished first, could sit on that line forever: the translation pass reapplied the placeholder over the fee the page had already fetched, so nobody learned what a gift costs. The same collision could wipe the grind time estimate. Both now hold their own text. Confirmation toasts (\"Claim link copied\", \"Funds reclaimed\") were built with one class name and styled under another, so instead of floating over the page they dropped in as unstyled text at the very bottom, out of sight; that applies to the gift claim page too. Assigning a freshly ground wallet to an agent succeeded on the server and then reported \"Network error\" anyway, because the success message referenced an address it could not see. The page also shipped two footers stacked on top of each other, one of them a stale copy with broken markup and a Docs button wearing the X logo; the duplicate is gone. Rounding it out: the sign-in prompt pointed at a legacy /login.html URL, the gift form fields had no labels for screen readers, the expiry and asset choices now follow what the server actually accepts, keyboard focus is visible on every control (the text fields had their ring suppressed), buttons have press states, a failed agent list offers a retry instead of a raw error, and copying an address still works when the browser denies clipboard access.",
+			"link": "/vanity-wallet",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
