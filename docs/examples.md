@@ -735,7 +735,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 42 examples: 11 web component demos, 10 end-to-end projects, and 21 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 43 examples: 11 web component demos, 10 end-to-end projects, and 22 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -771,6 +771,7 @@ The repo ships 42 examples: 11 web component demos, 10 end-to-end projects, and 
 | [`tour-sdk/examples`](../tour-sdk/examples) | The guide walks from feature to feature across your real pages. | `npm run dev, then open /tour-sdk/examples/shopify-storefront.html` |
 | [`packages/vanity-mcp/examples`](../packages/vanity-mcp/examples) | Two runnable examples. Both spawn this package's own MCP server over stdio (the same node src/index.js entry point the README documents), speak real MCP JSON-RPC to it, and read the live grind-bounty market. | `node packages/vanity-mcp/examples/list-tools.mjs` |
 | [`packages/vision-mcp/examples`](../packages/vision-mcp/examples) | Two runnable examples. Both spawn this package's own MCP server over stdio (the same node src/index.js entry point the README documents), speak real MCP JSON-RPC to it, and hit the live three.ws vision pipeline. | `node packages/vision-mcp/examples/list-tools.mjs` |
+| [`packages/voice/examples`](../packages/voice/examples) | Run it from the package directory: | `node packages/voice/examples/voice-loop.mjs` |
 | [`packages/x402-fetch/examples`](../packages/x402-fetch/examples) | Two runnable scripts against the live three.ws x402 Market Data API. Node 20+ is the only requirement; the package has zero production dependencies. | `node packages/x402-fetch/examples/discover.mjs` |
 | [`packages/x402-mcp/examples`](../packages/x402-mcp/examples) | Two runnable examples. Both spawn this package's own MCP server over stdio (the same node src/index.js entry point the README documents), speak real MCP JSON-RPC to it, and hit live data. Neither one pays for anything. | `node packages/x402-mcp/examples/inspect-price.mjs` |
 | [`x402-modal-sdk/examples`](../x402-modal-sdk/examples) | A drop-in payment modal for any x402 paid endpoint. | `node x402-modal-sdk/examples/server.mjs` |

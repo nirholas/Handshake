@@ -626,7 +626,14 @@
 				return localize(el);
 			}
 
+			// The poll keeps running behind an empty or upstream-error state, so the
+			// same notice would otherwise be rebuilt every few seconds, stealing focus
+			// from its own Retry button and re-announcing itself to a screen reader.
+			// Re-render only when what it says actually changes.
 			function showNotice(config) {
+				const signature = `${config.tone || 'info'}|${config.title}|${config.body}`;
+				if (room.dataset.notice === signature && room.querySelector('.notice')) return;
+				room.dataset.notice = signature;
 				cards.clear();
 				resetAvatars();
 				room.replaceChildren(notice(config));
@@ -634,6 +641,7 @@
 
 			function showSkeleton() {
 				room.setAttribute('aria-busy', 'true');
+				delete room.dataset.notice;
 				resetAvatars();
 				const frag = document.createDocumentFragment();
 				for (let i = 0; i < 6; i++) {
@@ -746,6 +754,7 @@
 
 					if (room.querySelector('.notice, .skeleton')) {
 						room.replaceChildren();
+						delete room.dataset.notice;
 						cards.clear();
 						resetAvatars();
 					}
