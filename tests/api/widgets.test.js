@@ -108,6 +108,7 @@ const transcriptsHandler = (await import('../../api/widgets/[id]/transcripts.js'
 const knowledgeHandler = (await import('../../api/widgets/[id]/knowledge.js')).default;
 
 const { getAvatar } = await import('../../api/_lib/avatars.js');
+const { requireCsrf } = await import('../../api/_lib/csrf.js');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -164,9 +165,18 @@ function parseJson(res) {
 	return res._body ? JSON.parse(res._body) : null;
 }
 
+// `sql` is invoked both as a tagged template (strings array + values) and
+// positionally (text + params). Flatten either form back to the SQL text so a
+// test can assert on the statement a handler actually issued.
+function sqlText(call) {
+	if (!call) return '';
+	return Array.isArray(call[0]) ? call[0].join(' ') : String(call[0]);
+}
+
 function resetState() {
 	sqlQueue.length = 0;
 	sqlMock.mockClear();
+	requireCsrf.mockClear();
 	authState.session = null;
 	authState.bearer = null;
 	rlState.success = true;
@@ -446,6 +456,56 @@ describe('POST /api/widgets/:id/duplicate', () => {
 		await duplicateHandler(req, res);
 		expect(res.statusCode).toBe(201);
 		expect(parseJson(res).widget.name).toBe('Original (copy)');
+	});
+
+	// Regression: the clone INSERT once omitted the `id` column. widgets.id is
+	// `text not null` with no database default, so every real Duplicate click
+	// died on a not-null violation and returned a bare 500 while the mocked
+	// test above still passed. Assert on the statement, not just the canned row.
+	it('supplies a generated wdgt_ id to the clone INSERT', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([
+			{
+				id: 'wdgt_src',
+				type: 'turntable',
+				name: 'Original',
+				config: { a: 1 },
+				avatar_id: null,
+				is_public: true,
+			},
+		]);
+		sqlQueue.push([{ id: 'wdgt_copy', user_id: 'user-1', type: 'turntable', name: 'Original (copy)' }]);
+
+		const req = mockReq({ method: 'POST', url: '/api/widgets/wdgt_src/duplicate' });
+		await duplicateHandler(req, mockRes());
+
+		const insert = sqlMock.mock.calls.find((call) => /insert into widgets/i.test(sqlText(call)));
+		expect(insert, 'duplicate must issue an INSERT into widgets').toBeDefined();
+		expect(sqlText(insert)).toMatch(/insert into widgets\s*\(\s*id\s*,/i);
+		// First interpolated value is the freshly minted id.
+		expect(insert[1]).toMatch(/^wdgt_[A-Za-z0-9_-]+$/);
+	});
+
+	it('requires a CSRF token for cookie-session callers', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([
+			{ id: 'wdgt_src', type: 'turntable', name: 'Original', config: {}, avatar_id: null, is_public: true },
+		]);
+		sqlQueue.push([{ id: 'wdgt_copy', user_id: 'user-1', type: 'turntable', name: 'Original (copy)' }]);
+
+		const req = mockReq({ method: 'POST', url: '/api/widgets/wdgt_src/duplicate' });
+		await duplicateHandler(req, mockRes());
+
+		expect(requireCsrf).toHaveBeenCalledWith(req, expect.anything(), 'user-1');
+	});
+
+	it('400s on a widget id the frontend never should have sent', async () => {
+		authState.session = { id: 'user-1' };
+		const req = mockReq({ method: 'POST', url: '/api/widgets/undefined/duplicate' });
+		const res = mockRes();
+		await duplicateHandler(req, res);
+		expect(res.statusCode).toBe(400);
+		expect(parseJson(res).error).toBe('invalid_request');
 	});
 });
 
@@ -757,6 +817,28 @@ describe('GET /api/widgets/:id/transcripts', () => {
 		expect(body.thread.id).toBe('wct_a');
 		expect(body.messages).toHaveLength(2);
 		expect(body.messages[1].provider).toBe('anthropic');
+	});
+
+	// getTranscript() returns null for a thread that is not on this widget, and
+	// the handler has to turn that into a clean 404 rather than an empty 200 or
+	// a crash on `data.thread`. This is the one cross-widget leak the transcript
+	// reader could have: the thread lookup is scoped by widget_id, so a guessed
+	// thread id from someone else's widget must read as not-found.
+	it('404s when the thread is not on this widget', async () => {
+		authState.session = { id: 'user-1' };
+		sqlQueue.push([{ id: 'wdgt_x' }]); // ownership ok
+		sqlQueue.push([]); // thread lookup: nothing on this widget
+
+		const req = mockReq({
+			method: 'GET',
+			url: '/api/widgets/wdgt_x/transcripts?id=wdgt_x&thread_id=wct_someone_else',
+		});
+		const res = mockRes();
+		await transcriptsHandler(req, res);
+		expect(res.statusCode).toBe(404);
+		expect(parseJson(res).error).toBe('not_found');
+		// The message query must never run once the thread lookup came back empty.
+		expect(sqlMock.mock.calls.some((c) => /from widget_chat_messages/i.test(sqlText(c)))).toBe(false);
 	});
 });
 
