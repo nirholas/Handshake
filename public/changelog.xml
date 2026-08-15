@@ -807,6 +807,14 @@
 			<description>Two changes to the pay-per-call vanity endpoints and the free receipt verifier. First, security: when a paid call is retried, the server keeps a short-lived copy of the original response so you are never charged twice. On the provably-fair grinder that copy included the receipt's serverSeed, and the seed is enough to recompute the private key, so a retry cache that was only ever meant to hold public metadata was in fact holding key material. The stored copy is now stripped of the secret and the seed on both grinders, sealed deliveries included, and a retry returns the public metadata with a plain note that the key was delivered once. The key you receive in the live response is unchanged. Second, the free receipt verifier can now confirm a settlement transaction over a plain GET link: /api/x402/verify-receipt?hash=&lt;tx&gt;&amp;network=solana, which works from a browser, a curl one-liner, or an uptime probe with no request body. Checking an attestation still uses POST because it needs the whole signed object.</description>
 		</item>
 		<item>
+			<title>The video studio stops loading an avatar it is about to throw away</title>
+			<link>https://three.ws/create/video</link>
+			<guid isPermaLink="false">2026-08-14:The video studio stops loading an avatar it is about to throw away</guid>
+			<pubDate>Fri, 14 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Open /create/video signed out and the page did two things at once: it started downloading the default avatar model, and it checked whether you were signed in so it could send you to the login page. The redirect always won, which killed the model download halfway through and left an error in the browser console for the abandoned file, plus one more for every texture the viewer had started unpacking. Nothing was broken on screen, but a signed-out visitor was made to pull down three quarters of a megabyte of 3D model on their way to a login form, on whatever connection they happened to be on. The page now waits until it knows who you are before it loads anything: signed in, the avatar appears exactly as before, picked from your own avatars with the bundled one as the fallback; signed out, nothing is fetched and the console stays clean.</description>
+		</item>
+		<item>
 			<title>Three paid three.ws services were invisible in the public x402 directory</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-14:Three paid three.ws services were invisible in the public x402 directory</guid>

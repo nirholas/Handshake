@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-14T21:58:07.469Z",
+	"generated_at": "2026-08-15T01:22:33.715Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -1086,6 +1086,17 @@
 			"link": "/docs/x402-dev-tools",
 			"tags": [
 				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-14",
+			"type": "update",
+			"title": "The video studio stops loading an avatar it is about to throw away",
+			"summary": "Open /create/video signed out and the page did two things at once: it started downloading the default avatar model, and it checked whether you were signed in so it could send you to the login page. The redirect always won, which killed the model download halfway through and left an error in the browser console for the abandoned file, plus one more for every texture the viewer had started unpacking. Nothing was broken on screen, but a signed-out visitor was made to pull down three quarters of a megabyte of 3D model on their way to a login form, on whatever connection they happened to be on. The page now waits until it knows who you are before it loads anything: signed in, the avatar appears exactly as before, picked from your own avatars with the bundled one as the fallback; signed out, nothing is fetched and the console stays clean.",
+			"link": "/create/video",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},
