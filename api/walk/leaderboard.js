@@ -154,15 +154,21 @@ export default wrap(async (req, res) => {
 	const profiles = new Map();
 	const idList = [...userIdsNeeded];
 	if (idList.length) {
+		// One lateral pick per user so `avatar_id` and `thumbnail_key` always come
+		// from the SAME avatar. Two independent subqueries handed a row the newest
+		// avatar's id next to a different avatar's picture whenever the newest
+		// avatar had no thumbnail. Prefer the newest avatar that has a thumbnail,
+		// else the newest avatar (image-less).
 		const rows = await sql`
-			select u.id, u.username, u.display_name,
-			       (select thumbnail_key from avatars
-			          where owner_id = u.id and deleted_at is null and thumbnail_key is not null
-			          order by created_at desc limit 1) as thumbnail_key,
-			       (select id from avatars
-			          where owner_id = u.id and deleted_at is null
-			          order by created_at desc limit 1) as avatar_id
+			select u.id, u.username, u.display_name, a.id as avatar_id, a.thumbnail_key
 			from users u
+			left join lateral (
+				select id, thumbnail_key
+				from avatars
+				where owner_id = u.id and deleted_at is null
+				order by (thumbnail_key is null), created_at desc
+				limit 1
+			) a on true
 			where u.id = any(${idList}) and u.deleted_at is null
 		`;
 		for (const r of rows) profiles.set(r.id, r);
