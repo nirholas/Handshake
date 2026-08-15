@@ -4463,7 +4463,7 @@
 		{
 			"name": "chat",
 			"title": "Run a chat completion",
-			"description": "Run a chat completion through the three.ws LLM router and get back the full reply as a single message. Pick `provider` from `list_providers` (default `gpt-oss-120b`, a free open-weight model). `messages` is the conversation so far (roles `user`/`assistant`); add system instructions via `system`. The route streams and auto-falls-back across mirrors/free tiers if the chosen model is briefly down — this tool collapses that into one reply and reports the actual route taken, token usage, and timing. Paid first-party flagships (Claude, GPT-4o, o3, Qwen Plus, DeepSeek) need a three.ws API key (set THREE_WS_API_KEY); the free open-weight tiers (GPT-OSS 120B, NVIDIA NIM models) need none. Read-only: a completion does not change any platform state.",
+			"description": "Run a chat completion through the three.ws LLM router and get back the full reply as a single message. Pick `provider` from `list_providers` (default `gpt-oss-120b`, a free open-weight model). `messages` is the conversation so far (roles `user`/`assistant`); add system instructions via `system`. The route streams and auto-falls-back across mirrors/free tiers if the chosen model is briefly down — this tool collapses that into one reply and reports the actual route taken, token usage, and timing. Paid first-party flagships (Claude, GPT-5, o3, Grok, Qwen Plus, DeepSeek) need a three.ws API key (set THREE_WS_API_KEY); the free open-weight tiers (GPT-OSS 120B, NVIDIA NIM models) need none. Read-only: a completion does not change any platform state.",
 			"server": {
 				"id": "brain-mcp",
 				"title": "@three-ws/brain-mcp",
@@ -4518,7 +4518,7 @@
 					"provider": {
 						"type": "string",
 						"minLength": 1,
-						"description": "Provider/model key from list_providers (e.g. \"claude-sonnet-4-6\", \"gpt-4o\", \"deepseek-r1\"). Defaults to \"gpt-oss-120b\"."
+						"description": "Provider/model key from list_providers (e.g. \"claude-sonnet-5\", \"gpt-5.4\", \"deepseek-r1\"). Defaults to \"gpt-oss-120b\"."
 					},
 					"system": {
 						"type": "string",
@@ -4542,7 +4542,7 @@
 		{
 			"name": "list_providers",
 			"title": "List LLM providers and models",
-			"description": "List every LLM the three.ws router can run a completion through — one entry per provider/model. Each entry has: `key` (the id you pass to `chat`), `label` (human name), `network` (e.g. Anthropic, OpenAI, DashScope, NVIDIA NIM, IBM watsonx.ai), `tier` (flagship | balanced | fast | reasoning), `maxOutput` (max output tokens), `description`, `available` (true when the server currently holds a working key/route for it), and `requiresAuth` (true when it is a paid first-party model that needs a three.ws API key — set THREE_WS_API_KEY; false for the free open-weight tiers). Call this first to pick a `key` for `chat`. The set is live, so availability moves between calls — not idempotent.",
+			"description": "List every LLM the three.ws router can run a completion through — one entry per provider/model. Each entry has: `key` (the id you pass to `chat`), `label` (human name), `network` (e.g. Anthropic, OpenAI, xAI, DashScope, NVIDIA NIM, IBM watsonx.ai), `tier` (flagship | balanced | fast | reasoning | pro | coding), `maxOutput` (max output tokens), `description`, `available` (true when the server currently holds a working key/route for it), and `requiresAuth` (true when it is a paid first-party model that needs a three.ws API key — set THREE_WS_API_KEY; false for the free open-weight tiers). Call this first to pick a `key` for `chat`. The set is live, so availability moves between calls — not idempotent.",
 			"server": {
 				"id": "brain-mcp",
 				"title": "@three-ws/brain-mcp",
@@ -7440,7 +7440,7 @@
 		{
 			"name": "build_world",
 			"title": "Build a complete 3D world from one sentence (no browser needed)",
-			"description": "One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call — it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not.",
+			"description": "One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call; it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not.",
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -7479,7 +7479,7 @@
 		{
 			"name": "compose_scene",
 			"title": "Compose a 3D diorama plan from one sentence",
-			"description": "Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2–8 placed objects — each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference.",
+			"description": "Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2-8 placed objects, each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference.",
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -7518,7 +7518,7 @@
 		{
 			"name": "export_scene",
 			"title": "Export a forged diorama as one GLB scene",
-			"description": "Merge an already-forged diorama (objects with real glbUrl values, e.g. from your own forging after compose_scene, or fetched via get_scene) into ONE glTF 2.0 binary: every object becomes a named, selectable node, plus a real ground disc and mood-tuned lighting. Returns the merged GLB URL and a ready-to-open three.ws Scene Studio link. Objects that never forged are skipped and reported, not treated as a failure — a partial world still exports. Requires the target deployment to have object storage configured (three.ws does).",
+			"description": "Merge an already-forged diorama (objects with real glbUrl values, e.g. from your own forging after compose_scene, or fetched via get_scene) into ONE glTF 2.0 binary: every object becomes a named, selectable node, plus a real ground disc and mood-tuned lighting. Returns the merged GLB URL and a ready-to-open three.ws Scene Studio link. Objects that never forged are skipped and reported rather than treated as a failure; a partial world still exports. Requires the target deployment to have object storage configured (three.ws does).",
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -7543,7 +7543,7 @@
 					"diorama": {
 						"type": "object",
 						"additionalProperties": {},
-						"description": "The diorama object to export — same shape returned by compose_scene/get_scene, with each object you want included carrying status:\"ready\" and a real glbUrl."
+						"description": "The diorama object to export, same shape returned by compose_scene/get_scene, with each object you want included carrying status:\"ready\" and a real glbUrl."
 					}
 				},
 				"required": [
@@ -7594,7 +7594,7 @@
 		{
 			"name": "list_scenes",
 			"title": "List recent or featured dioramas",
-			"description": "Browse the public diorama gallery — the most recent saved worlds, or the featured set. Returns a list of cards (id, title, mood, thumbnail/preview, view count) plus each world's viewer URL. Read-only.",
+			"description": "Browse the public diorama gallery: the most recent saved worlds, or the featured set. Returns a list of cards (id, title, mood, thumbnail/preview, view count) plus each world's viewer URL. Read-only.",
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -7629,7 +7629,7 @@
 						"type": "integer",
 						"minimum": 1,
 						"maximum": 50,
-						"description": "How many to return (1–50, default 24)."
+						"description": "How many to return (1-50, default 24)."
 					}
 				},
 				"additionalProperties": false

@@ -2077,7 +2077,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "6abff79eeaf6"
+			"schemaHash": "0fd23416411d"
 		}
 	],
 	"packages/brain-mcp/src/tools/list-providers.js": [
@@ -2787,7 +2787,7 @@
 			"name": "build_world",
 			"title": "Build a complete 3D world from one sentence (no browser needed)",
 			"descHead": "One sentence → a fully forged, exported 3D world, entirely server-side: ",
-			"descHash": "2ddf7bfcb02d",
+			"descHash": "0216a43f7396",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -2802,7 +2802,7 @@
 			"name": "compose_scene",
 			"title": "Compose a 3D diorama plan from one sentence",
 			"descHead": "Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an ev",
-			"descHash": "d42bccef405d",
+			"descHash": "16e0ce6f8327",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -2817,14 +2817,14 @@
 			"name": "export_scene",
 			"title": "Export a forged diorama as one GLB scene",
 			"descHead": "Merge an already-forged diorama (objects with real glbUrl values, e.g. f",
-			"descHash": "910a519b23de",
+			"descHash": "ddccc838e819",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "ac725edfea3d"
+			"schemaHash": "a0addfff5cc7"
 		}
 	],
 	"packages/scene-mcp/src/tools/get-scene.js": [
@@ -2845,14 +2845,14 @@
 		{
 			"name": "list_scenes",
 			"title": "List recent or featured dioramas",
-			"descHead": "Browse the public diorama gallery — the most recent saved worlds, or the",
-			"descHash": "79e7f4cc0eb6",
+			"descHead": "Browse the public diorama gallery: the most recent saved worlds, or the ",
+			"descHash": "13f98cc2aaa2",
 			"annotations": {
 				"readOnlyHint": true,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "2b69c8fade89"
+			"schemaHash": "ccec143f22b2"
 		}
 	],
 	"packages/signals-mcp/src/tools/get-mirror-leaderboard.js": [
