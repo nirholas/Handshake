@@ -171,6 +171,21 @@
 	},
 	{
 		"pattern": "Avaturn",
+		"file": "docs/configuration.md",
+		"reason": "Source of the configuration reference mirrored to public/docs/configuration.md, which is already exempt for the same env-var section. The vendor name is where a reader signs up for the key."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/deployment.md",
+		"reason": "Source of the deployment guide mirrored to public/docs/deployment.md, which is already exempt for the same integration block."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/tutorials/upload-custom-glb.md",
+		"reason": "Enumerates the humanoid bone-naming conventions src/glb-canonicalize.js name-maps, alongside Mixamo, Unreal, VRM, Daz and MakeHuman. Same scope as the docs/animations.md exemption: naming the rig a GLB was authored against is what tells a reader whether their upload will animate."
+	},
+	{
+		"pattern": "Avaturn",
 		"file": "public/docs/tutorials/getting-started.md",
 		"reason": "Tutorial link to the photo-pipeline integration page \u2014 the vendor name identifies the route."
 	},
