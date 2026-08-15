@@ -180,7 +180,9 @@
 		/* grid of cards */
 		.dd-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--tt-gap); }
 		.dd-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; }
-		.dd-card[data-section="chart"], .dd-card[data-section="bubblemap"], .dd-card[data-section="wallets"], .dd-card[data-section="agent"], .dd-card[data-section="tape"] { grid-column: 1 / -1; }
+		.dd-card[data-section="exit"], .dd-card[data-section="chart"], .dd-card[data-section="bubblemap"], .dd-card[data-section="wallets"], .dd-card[data-section="agent"], .dd-card[data-section="tape"] { grid-column: 1 / -1; }
+		.dd-card[data-section="exit"] { border-color: color-mix(in srgb, var(--cyan) 26%, var(--line)); background: linear-gradient(180deg, color-mix(in srgb, var(--cyan) 5%, var(--panel)), var(--panel)); }
+		.dd-exit-sigs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 		.dd-card-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 16px 0; }
 		.dd-card-h h2 { font: 700 12px/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0; }
 		.dd-card-meta { font: 500 10.5px/1 var(--mono); color: var(--faint); }
@@ -377,7 +379,7 @@
 							</select>
 						</div>
 					</div>
-					<div class="tt-feed" id="ttFeed" role="tabpanel" tabindex="0" aria-labelledby="ttTabLaunches" aria-busy="true" aria-live="polite"></div>
+					<div class="tt-feed" id="ttFeed" role="tabpanel" tabindex="0" aria-labelledby="ttTabLaunches" aria-busy="true"></div>
 				</aside>
 
 				<main class="tt-detail" id="ttDetail" aria-label="Launch deep-dive"></main>

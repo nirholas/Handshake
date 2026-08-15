@@ -380,6 +380,9 @@ function render() {
 	// Drop cached data for mints no longer watched.
 	for (const m of [...coinData.keys()]) if (!list.includes(m)) coinData.delete(m);
 	for (const m of [...convData.keys()]) if (!list.includes(m)) convData.delete(m);
+	// Movers too: a coin unwatched in another tab and re-added later would
+	// otherwise flash its previous 24h delta before the fresh sweep lands.
+	for (const m of [...moverData.keys()]) if (!list.includes(m)) moverData.delete(m);
 
 	if (n === 0) {
 		feedEl.setAttribute('aria-busy', 'false');

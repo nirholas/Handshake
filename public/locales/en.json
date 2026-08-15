@@ -18995,6 +18995,7 @@
 		"meta_twitter_title": "Trade Terminal · three.ws",
 		"network": "Network",
 		"new_mints": "New mints",
+		"sol_price": "SOL",
 		"trade_terminalpump_fun_live": "Trade Terminal<small>pump.fun · live</small>"
 	},
 	"trading": {
@@ -19807,7 +19808,8 @@
 		"today": "Today",
 		"vs_yesterday": "vs. yesterday",
 		"walk_leaderboard": "Walk Leaderboard",
-		"walker": "Walker"
+		"walker": "Walker",
+		"your_rank": "Your rank"
 	},
 	"wallet": {
 		"meta_description": "Your master wallet for all three.ws activity — fund agents, send, receive, and pay for skills.",

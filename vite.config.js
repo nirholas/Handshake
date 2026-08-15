@@ -1792,6 +1792,12 @@ support: resolve(__dirname, 'pages/support.html'),
 					// /ledger and /ledger/:agentId → the Reasoning Ledger surface
 					else if (!filePath && /^\/ledger(\/[^/.]+)?\/?$/.test(path))
 						filePath = resolve(root, 'pages/reasoning-ledger.html');
+					// /trader/:agentId → the trader passport. Mirrors vercel.json's
+					// `/trader/([^/]+)/?`; without it the "Copy trader" CTA that /trades
+					// and the exit feed point at 404s in dev only. `/share` is an API
+					// route in prod, so keep it out of the HTML shell here too.
+					else if (!filePath && /^\/trader\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/trader.html');
 					// `[^/.]+` (no dot) mirrors vercel.json's `/agents/([^/.]+)` so
 					// static assets like /agents/boot.js fall through to public/
 					// instead of being served the agent-detail HTML shell.

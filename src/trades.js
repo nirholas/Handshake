@@ -40,6 +40,10 @@ const state = {
 let detail = null;
 let feedTimer = null;
 let pulseTimer = null;
+// Markup currently painted into the feed, so a poll that changed nothing can be
+// skipped. Kept here rather than on the element: it is tens of KB of HTML and
+// has no business sitting in a DOM attribute.
+let feedHtml = '';
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -150,9 +154,14 @@ function select(mint, seed, { push = true } = {}) {
 }
 
 function threeSeedIf(mint) { return mint === THREE_MINT ? threeSeed() : null; }
+function seedOf(r) {
+	const seed = { symbol: r.symbol, name: r.name, image_uri: r.image_uri };
+	if (r.exit) seed.exit = r.exit;
+	return seed;
+}
 function seedFromRows(mint) {
 	const r = state.rows.find((x) => x.mint === mint);
-	return r ? { symbol: r.symbol, name: r.name, image_uri: r.image_uri } : null;
+	return r ? seedOf(r) : null;
 }
 function highlightRow(mint) {
 	$$('#ttFeed [data-mint]').forEach((el) => {
@@ -185,7 +194,7 @@ async function loadPulse() {
 // ── feed ─────────────────────────────────────────────────────────────────────────
 async function loadFeed(reset) {
 	const feed = $('#ttFeed');
-	if (reset) { feed.innerHTML = skeletonRows(7); feed.setAttribute('aria-busy', 'true'); }
+	if (reset) { feedHtml = ''; feed.innerHTML = skeletonRows(7); feed.setAttribute('aria-busy', 'true'); }
 	try {
 		const rows = state.tab === 'exits' ? await fetchExits() : await fetchLaunches();
 		state.rows = rows;
@@ -194,6 +203,7 @@ async function loadFeed(reset) {
 		// A refresh that fails leaves the rows already on screen alone: replacing a
 		// good list with an error is a worse answer than a slightly stale one.
 		if (reset) {
+			feedHtml = '';
 			feed.innerHTML = pinnedRowHtml() + feedState(
 				state.tab === 'exits'
 					? 'Could not load the agent exit feed.'
@@ -241,13 +251,35 @@ async function fetchExits() {
 		pnl_pct: t.realized_pnl_pct,
 		multiple: t.multiple,
 		ts: t.closed_at || null,
+		// The trade itself, carried into the deep-dive. This is the whole reason
+		// the page exists (realized PnL, hold time, exit multiple, and the path to
+		// copy the trader) and no other endpoint can answer it for a coin an agent
+		// only traded, so it rides along with the row instead of being refetched.
+		exit: {
+			agent_id: t.agent_id || null,
+			agent_name: t.agent_name || '',
+			agent_image: t.agent_image || '',
+			exit_reason: t.exit_reason || null,
+			copier_count: t.copier_count ?? null,
+			entry_sol: t.entry_sol ?? null,
+			exit_sol: t.exit_sol ?? null,
+			realized_pnl_sol: t.realized_pnl_sol ?? null,
+			realized_pnl_pct: t.realized_pnl_pct ?? null,
+			multiple: t.multiple ?? null,
+			hold_seconds: t.hold_seconds ?? null,
+			oracle_tier: t.oracle_tier || null,
+			buy_sig: t.buy_sig || null,
+			sell_sig: t.sell_sig || null,
+			opened_at: t.opened_at || null,
+			closed_at: t.closed_at || null,
+		},
 	}));
 }
 
 const TIER_CLASS = { prime: 'prime', strong: 'strong', lean: 'lean', watch: 'watch', avoid: 'avoid' };
 
 function rowHtml(r, { pinned = false } = {}) {
-	const seed = escapeHtml(JSON.stringify({ symbol: r.symbol, name: r.name, image_uri: r.image_uri }));
+	const seed = escapeHtml(JSON.stringify(seedOf(r)));
 	const initials = escapeHtml(r.symbol.slice(0, 2));
 	const imgHtml = r.image_uri
 		? `<img src="${escapeHtml(r.image_uri)}" alt="" class="tt-row-img" loading="lazy" data-fallback="element" data-fallback-tag="span" data-fallback-class="tt-row-ini" data-fallback-text="${initials}" />`
@@ -290,22 +322,26 @@ function renderFeed(rows) {
 	// An empty list still says so, even under the pinned coin: switching to devnet
 	// and seeing one lonely row is otherwise indistinguishable from a broken feed.
 	if (!body) {
+		feedHtml = '';
 		feed.innerHTML = pinned + emptyState(pinned ? 'inline' : 'full');
 		return;
 	}
-	feed.innerHTML = pinned + body;
+	// The feed re-polls every 30s. Rewriting identical markup would drop hover and
+	// focus, restart the row animations, and fight a scroll already in progress, so
+	// an unchanged list is left exactly as it is.
+	const html = pinned + body;
+	if (feedHtml === html) return;
+	feedHtml = html;
+	feed.innerHTML = html;
 	highlightRow(state.selected);
 }
 
 function emptyState(size) {
 	const devnet = state.network === 'devnet';
 	if (state.tab === 'exits') {
-		return feedState(
-			devnet
-				? 'No agent exits recorded on devnet yet. Switch to mainnet for the live exit feed.'
-				: 'No agent exit cleared the +10% bar in the last 7 days. Live exits land here the moment an agent closes a winning position.',
-			'Browse launches', () => switchTab('launches'), size,
-		);
+		return devnet
+			? feedState('No agent exits recorded on devnet yet. The live exit feed runs on mainnet.', 'Switch to mainnet', () => switchNetwork('mainnet'), size)
+			: feedState('No agent exit cleared the +10% bar in the last 7 days. Winning exits land here the moment an agent closes a position.', 'Browse launches', () => switchTab('launches'), size);
 	}
 	return feedState(
 		devnet

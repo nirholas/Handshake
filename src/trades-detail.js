@@ -31,6 +31,10 @@ import { escapeHtml, compact, shortAddr, relTime, identicon } from './trader-for
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
+// The empty-value glyph the rest of this terminal already renders, spelled by
+// code point so no banned dash character is typed into the source.
+const NA = String.fromCharCode(0x2014);
+
 // ── formatting ──────────────────────────────────────────────────────────────
 const SUBS = '₀₁₂₃₄₅₆₇₈₉';
 function fmtPrice(p) {
@@ -58,6 +62,12 @@ function pct(n, dp = 1) {
 	const v = Number(n);
 	if (!Number.isFinite(v)) return '—';
 	return `${v >= 0 ? '+' : ''}${v.toFixed(dp)}%`;
+}
+const PRICE_SOURCE_LABEL = { jupiter: 'Jupiter', pump: 'pump.fun curve' };
+function priceSource(c) {
+	const src = c.graduatedPrice?.source;
+	if (src) return PRICE_SOURCE_LABEL[src] || escapeHtml(String(src));
+	return c.price ? 'pump.fun curve' : NA;
 }
 function changeClass(n) {
 	const v = Number(n);
@@ -125,8 +135,11 @@ export function mountDetail(host, opts = {}) {
 	const name = seed.name || '';
 	const img = seed.image_uri || seed.image || '';
 	const isThree = mint === THREE_MINT;
+	// Present only when the row came from the agent-exit feed. It is already
+	// resolved data, so it renders with the shell rather than after a fetch.
+	const exit = seed.exit || null;
 
-	host.innerHTML = shell({ mint, network, sym, name, img, isThree });
+	host.innerHTML = shell({ mint, network, sym, name, img, isThree, exit });
 	const $ = (sel) => host.querySelector(sel);
 
 	// ── copy mint ────────────────────────────────────────────────────────────────
@@ -191,14 +204,24 @@ export function mountDetail(host, opts = {}) {
 			const price = c.price?.priceUsd ?? c.graduatedPrice?.priceUsd;
 			const mc = c.price?.marketCapUsd ?? c.graduatedPrice?.marketCapUsd;
 			const chg = c.price?.pricePercentChange24H;
-			const grad = c.graduation?.isGraduated;
+			// A migrated coin can answer `graduated: true` with no graduation block
+			// at all (the curve account is closed, so the progress read has nothing
+			// to report). Reading only the block called this coin "On curve" while
+			// the card right below it said "Graduated".
+			const grad = Boolean(c.graduation?.isGraduated || c.graduated);
 			const progress = c.graduation?.progressBps != null ? c.graduation.progressBps / 100 : null;
+			// The last cell says where the number came from once a coin leaves the
+			// curve: post-migration there is no curve SOL price to quote, and the
+			// header pulse already carries the network SOL price.
+			const solPx = c.price?.solPrice;
 			stripEl.innerHTML =
 				stat('Price', price != null ? fmtPrice(price) : '—') +
 				stat('Market cap', mc != null ? fmtMc(mc) : '—') +
 				stat('24h', chg != null ? pct(chg) : '—', changeClass(chg)) +
 				stat('Status', grad ? '<span class="dd-grad">Graduated ✦</span>' : (progress != null ? `${progress.toFixed(1)}% to grad` : 'On curve')) +
-				stat('SOL', c.price?.solPrice != null ? `$${Number(c.price.solPrice).toFixed(0)}` : '—');
+				(solPx != null
+					? stat('SOL', `$${Number(solPx).toFixed(0)}`)
+					: stat('Price source', priceSource(c), 'dd-muted'));
 		} catch {
 			if (!destroyed) {
 				stripEl.innerHTML = `<div class="dd-stat dd-stat--wide">
@@ -564,7 +587,68 @@ function chartFail(host) {
 }
 const SKEL = '<div class="dd-skel"></div>';
 
-function shell({ mint, network, sym, name, img, isThree }) {
+function fmtDuration(seconds) {
+	const s = Number(seconds);
+	if (!Number.isFinite(s) || s < 0) return NA;
+	if (s < 60) return `${Math.round(s)}s`;
+	if (s < 3600) return `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
+	if (s < 86400) return `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
+	return `${Math.floor(s / 86400)}d ${Math.round((s % 86400) / 3600)}h`;
+}
+
+// The feed's conviction tiers, mapped to the rail's badge classes. `avoid` is
+// deliberately absent: it is not badged anywhere on this page.
+const TIER_CLASS = { prime: 'prime', strong: 'strong', lean: 'lean', watch: 'watch' };
+
+const EXIT_REASON_LABEL = {
+	trailing_stop: 'Trailing stop', take_profit: 'Take profit', stop_loss: 'Stop loss',
+	target_hit: 'Target hit', time_stop: 'Time stop', manual: 'Manual close', rug_guard: 'Rug guard',
+};
+function exitReason(k) { return k ? (EXIT_REASON_LABEL[k] || String(k).replace(/_/g, ' ')) : null; }
+
+function sigLink(sig, label) {
+	if (!sig) return '';
+	return `<a href="https://solscan.io/tx/${encodeURIComponent(sig)}" target="_blank" rel="noopener" class="dd-btn">${label} ↗</a>`;
+}
+
+// The trade this row is about. Everything here arrived with the feed row, so it
+// paints with the shell: no spinner, no second round-trip, and the "copy the
+// trader" path the page promises is on screen the moment the row is clicked.
+function exitCard(e) {
+	const up = Number(e.realized_pnl_pct) >= 0;
+	const av = e.agent_image || (e.agent_id ? identicon(e.agent_id) : '');
+	const reason = exitReason(e.exit_reason);
+	// Map, never interpolate: the tier is API-supplied and would otherwise reach a
+	// class attribute unfiltered.
+	const tierClass = TIER_CLASS[e.oracle_tier];
+	const tier = tierClass ? `<span class="tt-tier ${tierClass}">${escapeHtml(e.oracle_tier)}</span>` : '';
+	const body = `
+		<div class="dd-agent-row">
+			${e.agent_id ? `<img src="${escapeHtml(av)}" alt="" class="dd-agent-av" loading="lazy" decoding="async" data-fallback="invisible" />` : ''}
+			<div class="dd-agent-id">
+				${e.agent_id
+					? `<a href="/agents/${encodeURIComponent(e.agent_id)}" class="dd-agent-name">${escapeHtml(e.agent_name || 'three.ws agent')}</a>`
+					: `<span class="dd-agent-name">${escapeHtml(e.agent_name || 'three.ws agent')}</span>`}
+				<p class="dd-agent-desc">${reason ? `Closed on ${escapeHtml(reason.toLowerCase())}` : 'Position closed'}${e.closed_at ? ` · ${escapeHtml(relTime(e.closed_at))}` : ''}${e.copier_count ? ` · ${compact(e.copier_count)} copying` : ''} ${tier}</p>
+			</div>
+			${e.agent_id ? `<a href="/trader/${encodeURIComponent(e.agent_id)}" class="dd-btn dd-btn--primary">Copy trader →</a>` : ''}
+		</div>
+		<div class="dd-stats dd-stats--4">
+			${stat('Realized PnL', e.realized_pnl_pct != null ? pct(e.realized_pnl_pct, 0) : NA, up ? 'up' : 'down')}
+			${stat('Exit multiple', e.multiple != null ? `${Number(e.multiple).toFixed(2)}×` : NA, up ? 'up' : 'down')}
+			${stat('Hold time', fmtDuration(e.hold_seconds))}
+			${stat('Realized', e.realized_pnl_sol != null ? fmtSol(e.realized_pnl_sol, 4) : NA, changeClass(e.realized_pnl_sol))}
+		</div>
+		<div class="dd-stats dd-stats--3" style="margin-top:8px">
+			${stat('Entry', e.entry_sol != null ? fmtSol(e.entry_sol, 4) : NA)}
+			${stat('Exit', e.exit_sol != null ? fmtSol(e.exit_sol, 4) : NA)}
+			${stat('Opened', e.opened_at ? relTime(e.opened_at) : NA)}
+		</div>
+		${e.buy_sig || e.sell_sig ? `<div class="dd-exit-sigs">${sigLink(e.buy_sig, 'Entry tx')}${sigLink(e.sell_sig, 'Exit tx')}</div>` : ''}`;
+	return section('exit', 'Agent exit', body);
+}
+
+function shell({ mint, network, sym, name, img, isThree, exit }) {
 	const initials = sym.slice(0, 2);
 	const bubblemapExt = `https://app.bubblemaps.io/sol/token/${encodeURIComponent(mint)}`;
 	return `
@@ -599,6 +683,7 @@ function shell({ mint, network, sym, name, img, isThree }) {
 		<div class="dd-strip" data-host="strip">${SKEL}</div>
 
 		<div class="dd-grid">
+			${exit ? exitCard(exit) : ''}
 			${section('chart', 'Price', '<div class="dd-chart" data-host="chart"></div>', { right: '' })}
 			${section('curve', 'Bonding curve', '<div class="dd-curve" data-host="curve"></div>')}
 			${section('signals', 'Coin intelligence', SKEL)}

@@ -140,7 +140,10 @@ body {
 	gap: var(--space-sm);
 }
 .wl-count { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--ink-dim); }
-.wl-hero-ctas { display: flex; gap: var(--space-sm); }
+/* Four CTAs do not fit one 320px line; without the wrap the row runs past the
+   viewport and `body { overflow-x: hidden }` silently clips "Clear all" off the
+   screen with no way to scroll to it. */
+.wl-hero-ctas { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
 
 /* ── Grid + cards ─────────────────────────────────────────────────────────── */
 
