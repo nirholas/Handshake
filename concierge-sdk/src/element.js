@@ -46,7 +46,15 @@ import { Concierge } from './widget.js';
 
 const bool = (el, name) => el.hasAttribute(name);
 
-export class ThreeConciergeElement extends HTMLElement {
+// The class body is evaluated the moment the package entry is imported, and
+// SSR frameworks (Next, Nuxt, SvelteKit, Astro) import it on the server, where
+// `HTMLElement` does not exist. Extending a plain class there keeps the import
+// itself side effect free instead of throwing at module evaluation; the element
+// is only ever attached in a browser, because `registerElement()` no-ops
+// without `customElements`.
+const ElementBase = typeof HTMLElement === 'undefined' ? class {} : HTMLElement;
+
+export class ThreeConciergeElement extends ElementBase {
 	connectedCallback() {
 		if (this._widget) return;
 		this.style.display = 'none';
