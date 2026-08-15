@@ -118,10 +118,28 @@ const ERROR_COPY = {
 	rate_limited: 'Too many requests. Wait a few seconds and try again.',
 	not_found: 'No master wallet yet. Create one first.',
 	network_error: 'You appear to be offline. Nothing was sent.',
+	// The five envelopes api/_lib/http.js produces on its own. Without these the
+	// page printed the raw operator text ("internal error, quote ref 515ac8… to
+	// support") as the entire explanation, which tells a user nothing they can act
+	// on. The reference is still shown, as a reference, by humanError below.
+	internal_error: 'Something broke on our side. Nothing was charged. Try again in a moment.',
+	service_unavailable: 'Our database is briefly unavailable. Nothing was charged. Try again in a moment.',
+	not_configured: 'This part of the wallet is not switched on for this deployment yet.',
+	validation_error: 'Something in that request was not accepted. Check the values and try again.',
+	unauthorized: 'Your session expired. Sign in again to continue.',
+	csrf_missing: 'That request expired before it was sent. Reload the page and try again.',
+	csrf_invalid: 'That request expired before it was sent. Reload the page and try again.',
 };
 
+/**
+ * Plain-language copy for an API failure, with the server's support reference
+ * appended when there is one. A `ref` only ever accompanies a 5xx, and it is the
+ * exact string support will ask for, so it earns its place next to the sentence
+ * rather than in place of it.
+ */
 function humanError(res) {
-	return ERROR_COPY[res?.code] || res?.message || 'Something went wrong.';
+	const copy = ERROR_COPY[res?.code] || res?.message || 'Something went wrong.';
+	return res?.ref ? `${copy} (reference ${res.ref})` : copy;
 }
 
 /**
@@ -131,10 +149,12 @@ function humanError(res) {
  * appear is one that disappears when the JavaScript does.
  */
 let tipSeq = 0;
-function tip(text) {
+function tip(subject, text) {
 	const id = `wlt-tip-${++tipSeq}`;
+	// The label names its subject: three buttons all announcing "Explain this"
+	// give a screen-reader user no way to tell which one they landed on.
 	return `<span class="wlt-tip"
-		><button class="wlt-tip-btn" type="button" aria-describedby="${id}" aria-label="Explain this"
+		><button class="wlt-tip-btn" type="button" aria-describedby="${id}" aria-label="Explain ${esc(subject)}"
 			>?</button
 		><span class="wlt-tip-body" role="tooltip" id="${id}">${esc(text)}</span
 	></span>`;
@@ -223,12 +243,14 @@ function balanceCards(b) {
 			sub: 'Solana + Base',
 			accent: true,
 			tip: 'Both chains added together, priced live. A balance the network did not answer for is left out rather than counted as zero.',
+			tipSubject: 'total value',
 		},
 		{
 			label: 'SOL',
 			value: fmtAmount(b?.sol, 6),
 			sub: 'Solana',
 			tip: 'Solana charges every transaction a fee in SOL, so a wallet holding only USDC cannot send anything. Around 0.01 SOL covers a lot of activity.',
+			tipSubject: 'your SOL balance',
 		},
 		{ label: 'USDC', value: fmtAmount(b?.sol_usdc, 2), sub: 'Solana' },
 		{ label: 'USDC', value: fmtAmount(b?.evm_usdc, 2), sub: 'Base' },
@@ -237,7 +259,7 @@ function balanceCards(b) {
 		.map(
 			(c) => `
 			<div class="wlt-bal${c.accent ? ' wlt-bal--accent' : ''}">
-				<span class="wlt-bal-label">${esc(c.label)}${c.tip ? tip(c.tip) : ''}</span>
+				<span class="wlt-bal-label">${esc(c.label)}${c.tip ? tip(c.tipSubject, c.tip) : ''}</span>
 				<span class="wlt-bal-value">${
 					c.value == null
 						? '<span class="wlt-bal-na" title="This balance could not be read just now">unavailable</span>'
@@ -476,9 +498,13 @@ function readyState() {
 		<header class="wlt-head">
 			<div>
 				<span class="wlt-eyebrow">Master wallet</span>
-				<h1 class="wlt-title">Your wallet${tip(
-					'Your account holds this one. Each agent has its own separate wallet, funded from here, so an agent can only ever spend what you moved into it.',
-				)}</h1>
+				<div class="wlt-title-row">
+					<h1 class="wlt-title">Your wallet</h1>
+					${tip(
+						'how this wallet relates to your agents',
+						'Your account holds this one. Each agent has its own separate wallet, funded from here, so an agent can only ever spend what you moved into it.',
+					)}
+				</div>
 			</div>
 			<div class="wlt-head-actions">
 				<button class="wlt-btn wlt-btn--primary" type="button" data-act="deposit">Add funds</button>

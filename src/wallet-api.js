@@ -10,7 +10,7 @@
  * can render an error state instead of dying on an unhandled rejection:
  *
  *   { ok: true,  status, data }
- *   { ok: false, status, code, message }
+ *   { ok: false, status, code, message, ref }
  *
  * `code` is the machine-readable `error` the API returns (`insufficient_balance`,
  * `invalid_destination`, ...), which the page maps to human copy. Shape mirrors
@@ -53,6 +53,10 @@ async function call(url, { method = 'GET', body = null } = {}) {
 				status: r.status,
 				code: j?.error || 'error',
 				message: j?.error_description || j?.message || `request failed (${r.status})`,
+				// The server's support reference for a 5xx. Kept separate from the
+				// message so the page can show a sentence a person understands and
+				// still hand them the string support will ask for.
+				ref: typeof j?.ref === 'string' ? j.ref : null,
 			};
 		}
 		return { ok: true, status: r.status, data: j };
@@ -62,6 +66,7 @@ async function call(url, { method = 'GET', body = null } = {}) {
 			status: 0,
 			code: 'network_error',
 			message: err?.message || 'network error',
+			ref: null,
 		};
 	}
 }

@@ -77,7 +77,7 @@ curl -sX POST https://three.ws/api/user/wallet \
 
 ## Reading balances
 
-`GET /api/user/wallet` returns the addresses plus live balances. Nothing is cached, and nothing blocks: the Solana read and the Base USDC read run in parallel and a failure of either yields `null` for that field rather than a failed request, so the page still renders.
+`GET /api/user/wallet` returns the addresses plus live balances. Nothing is cached, and nothing blocks: the Solana read, the Base USDC read, and the SOL price lookup run in parallel, and a failure of any one yields `null` for the fields it feeds rather than a failed request, so the page still renders.
 
 ```bash
 curl -s -b cookies.txt https://three.ws/api/user/wallet
@@ -100,7 +100,8 @@ curl -s -b cookies.txt https://three.ws/api/user/wallet
 ```
 
 - `sol` is the native balance, `sol_usdc` the USDC balance on Solana, `evm_usdc` the USDC balance on Base (read with a direct `balanceOf` call through the EVM RPC failover chain).
-- `total_usd` is the priced Solana total plus the Base USDC figure, and is `null` when the price feed is unavailable. Treat a `null` as "unknown", never as zero.
+- **`null` means the network did not answer, `0` means the wallet is empty.** They are different answers and the page renders them differently ("unavailable" versus "0"). Never read a `null` as zero.
+- `total_usd` sums only the legs that answered: the SOL balance priced at the live SOL/USD rate, plus each USDC figure at par. A leg that came back `null` is left out rather than counted as zero. The one case that voids the total outright (`null`) is a **non-zero** SOL balance with no price available, because counting real SOL at zero would under-report the wallet; a zero SOL balance needs no price and still totals cleanly.
 
 ## Sending SOL or an SPL token (this spends real funds)
 

@@ -448,8 +448,12 @@ export async function getSolanaAddressBalances(address, cluster = 'mainnet') {
 		} catch {
 			usdc = 0; // no ATA yet → zero USDC
 		}
-	} catch {
-		// RPC failure — report nulls rather than throw.
+	} catch (err) {
+		// RPC failure: report nulls rather than throw, so a caller that only needed
+		// the address still succeeds. Log it, because a null here is indistinguishable
+		// from a genuinely empty wallet everywhere downstream, and a silent swallow
+		// leaves an operator no way to tell an outage from a zero balance.
+		console.warn('[agent-wallet] solana balance read failed', net, err?.message);
 	}
 	return { sol, usdc };
 }

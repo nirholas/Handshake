@@ -821,6 +821,35 @@ input.wlt-input {
 	translate: -50% 0;
 }
 
+/* On a phone there is no room to centre a 19rem panel over a 1rem button: the
+ * balance-card explainer ran ~54px past the right edge of a 320px viewport, so
+ * a keyboard or touch user opened it and could not read the end of a sentence.
+ * Below 30rem it stops chasing the button and becomes a pinned sheet, which is
+ * the only position guaranteed to fit whichever explainer was opened. */
+@media (max-width: 30rem) {
+	.wlt-tip-body {
+		position: fixed;
+		inset: auto var(--space-sm) var(--space-sm) var(--space-sm);
+		width: auto;
+		max-width: none;
+		translate: 0 4px;
+	}
+	.wlt-tip:hover .wlt-tip-body,
+	.wlt-tip:focus-within .wlt-tip-body {
+		translate: 0 0;
+	}
+}
+
+/* The heading and its explainer sit on one line without the "?" living inside
+ * the <h1>: a tooltip body nested in a heading becomes part of that heading's
+ * accessible name, so a screen reader announced the whole paragraph as the
+ * page title. */
+.wlt-title-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
 .wlt-head-actions {
 	display: flex;
 	align-items: center;
