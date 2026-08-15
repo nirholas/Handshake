@@ -6,8 +6,8 @@
 //                                                # their ids (needs NVIDIA_API_KEY)
 //   node scripts/verify-nvidia-a2f.mjs           # full round-trip check (needs
 //                                                # NVIDIA_API_KEY; NVIDIA_A2F_FUNCTION_ID
-//                                                # optional — defaults to the
-//                                                # published "James" model id)
+//                                                # optional, defaults to
+//                                                # A2F_DEFAULT_FUNCTION_ID)
 //
 // The full check is a self-contained round-trip across the TTS + A2F lanes: it
 // synthesizes a known sentence through Magpie TTS (api/_lib/tts-nvidia.js) to get
@@ -32,7 +32,13 @@ if (!process.env.NVIDIA_API_KEY) {
 }
 
 const NVCF_FUNCTIONS_URL = 'https://api.nvcf.nvidia.com/v2/nvcf/functions';
-const A2F_NAME_HINT = /(audio2face|a2f|audio-2-face|face)/i;
+// NVIDIA publishes the hosted Audio2Face NIM as `ai-a2x-service`, so a hint list
+// without `a2x` matches nothing and the run reports no candidates at all.
+const A2F_NAME_HINT = /(audio2face|a2f|a2x|audio-2-face|face)/i;
+
+// Printed as the fallback when no function name matches, so the message can
+// never drift from the id the lane actually defaults to.
+const { A2F_DEFAULT_FUNCTION_ID } = await import('../api/_lib/a2f-nvidia.js');
 
 async function listFunctions() {
 	const res = await fetch(NVCF_FUNCTIONS_URL, {
@@ -50,7 +56,7 @@ async function listFunctions() {
 		console.log(`  ${f.id}  ${f.status || ''}  ${f.name || ''}${f.versionId ? `  (v ${f.versionId})` : ''}`);
 	}
 	if (!a2f.length) {
-		console.log('  (none matched — the published "James" id 9327c39f-a361-4e02-bd72-e11b4c9b7b5e is the default)');
+		console.log(`  (none matched by name; the default stays ${A2F_DEFAULT_FUNCTION_ID}, NVIDIA's hosted ai-a2x-service)`);
 	} else {
 		console.log('\n[a2f] set NVIDIA_A2F_FUNCTION_ID to one of the ids above to pin a model, then re-run without --list.');
 	}
