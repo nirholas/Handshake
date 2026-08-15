@@ -14,11 +14,18 @@ function sha256OfFile(path) {
 	return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
+// Base58 minus the four ambiguous glyphs (0 O I l), the Solana address alphabet.
+const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
 function inferOwner(ownerSpec) {
-	// Accept CAIP-10 (chain:namespace:address) or shorthand "0x..." (assumed eip155:1).
+	// Accept CAIP-10 (chain:namespace:address), shorthand "0x..." (assumed
+	// eip155:1), or a bare Solana address (assumed solana:mainnet-beta).
 	if (!ownerSpec) return null;
 	if (ownerSpec.startsWith('0x') && ownerSpec.length === 42) {
 		return { chain: 'eip155:1', address: ownerSpec };
+	}
+	if (!ownerSpec.includes(':') && BASE58.test(ownerSpec)) {
+		return { chain: 'solana:mainnet-beta', address: ownerSpec };
 	}
 	const parts = ownerSpec.split(':');
 	if (parts.length === 3) {
@@ -41,7 +48,8 @@ function inferIdFromOwner(name, owner) {
  * `three-ws-avatar init` — scaffold a fresh avatar manifest from flags.
  *
  * Required flags:
- *   --owner <caip10|0xaddr>   Owner identity (eip155:1:0xabc, or shorthand 0x...)
+ *   --owner <caip10|sol|0xaddr>   Owner identity (eip155:1:0xabc, a Solana
+ *                             address, or shorthand 0x...)
  *   --name <string>           Avatar display name
  *   --mesh <path>             Path to GLB/GLTF/VRM file (sha256 computed automatically)
  *
@@ -71,7 +79,7 @@ export async function init({ flags }) {
 	const owner = inferOwner(ownerSpec);
 	if (!owner) {
 		failure(`could not parse --owner ${JSON.stringify(ownerSpec)}`);
-		hint('expected CAIP-10 (eip155:1:0x…) or shorthand 0x…');
+		hint('expected CAIP-10 (eip155:1:0x…), a Solana address, or shorthand 0x…');
 		return 1;
 	}
 

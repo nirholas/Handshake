@@ -146,6 +146,32 @@ test('init with CAIP-10 owner parses chain correctly', async () => {
 	assert.equal(manifest.owner.address, 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
 });
 
+test('init with a bare Solana address defaults to solana:mainnet-beta', async () => {
+	const { code, stdout } = await captured(() =>
+		main([
+			'init',
+			'--owner',
+			'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+			'--name',
+			'sol-agent',
+			'--mesh',
+			meshPath,
+		]),
+	);
+	assert.equal(code, 0);
+	const manifest = JSON.parse(stdout);
+	assert.equal(manifest.owner.chain, 'solana:mainnet-beta');
+	assert.equal(manifest.owner.address, 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump');
+	assert.equal(manifest.id, 'solana:mainnet-beta:FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump');
+});
+
+test('init still rejects an owner that is neither an address nor CAIP-10', async () => {
+	const { code } = await captured(() =>
+		main(['init', '--owner', 'not an address', '--name', 'x', '--mesh', meshPath]),
+	);
+	assert.equal(code, 1);
+});
+
 test('init with ENS name uses it as id', async () => {
 	const { code, stdout } = await captured(() =>
 		main(['init', '--owner', '0x742d35Cc6634C0532925a3b844Bc454e4438f44e', '--name', 'nicholas.eth', '--mesh', meshPath]),

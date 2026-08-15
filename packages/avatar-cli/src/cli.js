@@ -15,7 +15,7 @@ const COMMANDS = {
   automatically. Prints to stdout, or writes a file with ${style.cyan('--out')}.
 
   ${style.bold('required')}
-    --owner <caip10|0x…>   Owner identity (eip155:1:0x…, or shorthand 0x…)
+    --owner <caip10|sol|0x…>   Owner identity (eip155:1:0x…, a Solana address, or shorthand 0x…)
     --name  <string>       Avatar display name
     --mesh  <path>         Path to a .glb / .gltf / .vrm file
 
