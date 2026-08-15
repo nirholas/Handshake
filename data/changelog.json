@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "Grind-Bounty Market: shared bounty links now open the bounty, and \"Grind this\" grinds that one",
+			"summary": "Every bounty the market posts comes back with its own link (three.ws/vanity/bounties#<id>), and the API hands that link out as the bounty's home. Opening one did nothing: the page rewrote the address back to the plain board and left you to hunt for the card, which was not even there if the bounty had already been won or had expired off the open filter. A linked bounty is now fetched by id and pinned above the board, whatever its state, with a Clear button to go back; a link to a bounty that no longer exists says so instead of leaving you staring at the board. The Grind this button on a card was equally misleading: it switched you to the grinder and hoped, while the worker pool always took whichever bounty happened to be first in the queue. It now sets a real priority target that the pool grinds ahead of the queue, shows which bounty is pinned, lets you clear it, and says so plainly if that bounty stops being claimable. Refunding an expired bounty used to ask which address to send the escrow to and then ignore the answer, because the destination is bound to the address recorded when the bounty was funded; it now names the amount and where the money goes and takes a plain yes or no. Four smaller fixes shipped with it: the board no longer fetches itself twice on every page load, the market stats strip and the grinder leaderboard offer a retry when they cannot load instead of a dead end, the tab strip answers arrow keys and Home/End the way its role promises, and the sealed-delivery key field is finally wired to its label for screen readers.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/vanity/bounties"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "World Lines: the AR encounter is finally offered, and the quest tabs answer the keyboard",
 			"summary": "The page has always promised an AR challenge, and the immersive encounter was fully built, but nothing ever put a button in front of it: a phone that can run WebXR was quietly handed the flat panel instead. Devices that support immersive AR now see a \"Meet the agent in AR\" option next to \"Begin the encounter\", and if the headset session refuses to start, the panel ceremony picks up where it left off. The four tabs (Near me, Explore, My proofs, Create) now behave like a real tab strip: arrow keys and Home/End move between them, only the selected tab sits in the tab order, each tab writes its own address so a tab can be linked and the back button walks back through them. Opening a region on the Explore tab used to leave a heading over an empty space when every quest in it had expired or filled up, and a failure there was a single line of red text with no way to retry; both are now proper states. Focus rings are visible again across the page (they were being drawn in near-black on a black background), the opened region is highlighted, the encounter dialog now takes and holds keyboard focus and hands it back where you left it, and a proof whose date is missing says so rather than claiming it was earned in 1970.",
 			"tags": [

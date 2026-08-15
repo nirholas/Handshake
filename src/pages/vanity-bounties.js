@@ -239,7 +239,9 @@ async function triggerRefund(id, btn) {
 	}
 }
 
-function bountyById(id) { return boardItems.find((b) => b.id === id) || linkedBounty; }
+function bountyById(id) {
+	return boardItems.find((b) => b.id === id) || (linkedBounty?.id === id ? linkedBounty : null);
+}
 
 function startTimers() {
 	if (boardTimer) clearInterval(boardTimer);
