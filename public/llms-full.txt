@@ -3699,7 +3699,7 @@ Make your agent say hello the moment it loads, and have its mouth move with the 
 
 URL: https://three.ws/tutorials/share-your-agent
 
-Get a permanent link to your agent, generate a QR for print, and set the Open Graph preview so it looks good in tweets.
+Get a permanent link to your agent, generate a QR for print, and share the URL that unfurls with its real name, description, and card.
 
 ### Tutorial · Turn a selfie into a 3D avatar
 
