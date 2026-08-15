@@ -56,7 +56,7 @@ Either direction alone is **unverified**. A consumer (resolver, badge, indexer) 
 
 ## Resolver behavior
 
-The HTTP resolver at [`/api/v1/agents/:caip`](../api/v1/agents/[caip].js) currently returns the on-chain agent record plus card-level verification:
+The HTTP resolver at [`/api/v1/agents/:caip`](../api/v1/agents/[...caip].js) currently returns the on-chain agent record plus card-level verification:
 
 ```json
 {

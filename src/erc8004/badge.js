@@ -55,7 +55,11 @@ async function fetchCard({ agent, cardUrl, resolver }) {
 		return await r.json();
 	}
 	if (!agent) throw new Error('no agent ref or card-url provided');
-	const url = `${resolver.replace(/\/$/, '')}/api/v1/agents/${encodeURIComponent(agent)}`;
+	// The resolver takes the CAIP ref's "/" as a real path separator, so encode
+	// each segment and rejoin. A whole-ref encodeURIComponent turns it into
+	// "%2F", which the API dispatcher rejects as a smuggled separator (404).
+	const ref = String(agent).split('/').map(encodeURIComponent).join('/');
+	const url = `${resolver.replace(/\/$/, '')}/api/v1/agents/${ref}`;
 	const r = await fetch(url, { mode: 'cors' });
 	if (!r.ok) throw new Error(`resolver HTTP ${r.status}`);
 	const body = await r.json();

@@ -8,7 +8,17 @@
  * The :caip parameter is a CAIP-style ref:
  *   eip155:<chainId>:<registryAddress>/<tokenId>
  *
- * URL-encode it: `eip155%3A8453%3A0x8004A169...%2F1`.
+ * Pass the ref with its `/` as a REAL path separator, which is why this is a
+ * catch-all route:
+ *
+ *   GET /api/v1/agents/eip155:8453:0x8004A169.../1
+ *
+ * Percent-encoding the colons is fine (`eip155%3A8453%3A0x8004A169.../1`) —
+ * the router decodes each segment. Percent-encoding the SLASH is not: the API
+ * dispatcher rejects any segment that decodes to contain "/" or "\", because
+ * that is exactly how "%2f..%2f..%2fvite.config" would smuggle a traversal past
+ * the segment split (server/route-resolve.mjs `apiSegments`). A `%2F` ref
+ * therefore 404s before reaching this file, by design.
  *
  * Response (200):
  *   {
@@ -31,6 +41,24 @@ import { resolveOnChainAgent, resolveURI } from '../../_lib/onchain.js';
 import { fetchSafePublicUrl } from '../../_lib/ssrf-guard.js';
 
 const CAIP_RE = /^eip155:(\d+):(0x[a-fA-F0-9]{40})\/(\d+)$/;
+
+// Rebuild the ref from the catch-all param. Runtimes differ on the shape they
+// hand back (this server joins the decoded segments into a string; Vercel-style
+// catch-alls hand back the array), so accept both, and fall back to the path
+// for any runtime that populates neither.
+function caipFromReq(req) {
+	const fromQuery = req.query?.caip;
+	if (Array.isArray(fromQuery)) return fromQuery.filter(Boolean).join('/');
+	if (typeof fromQuery === 'string' && fromQuery) return fromQuery;
+	const { pathname } = new URL(req.url, 'http://internal');
+	const m = pathname.match(/\/api\/v1\/agents\/(.+)$/);
+	if (!m) return '';
+	try {
+		return m[1].split('/').map(decodeURIComponent).join('/');
+	} catch {
+		return '';
+	}
+}
 const CACHE_HEADERS = {
 	// 5 min fresh, 1 h stale-while-revalidate at the edge.
 	'cache-control': 'public, s-maxage=300, stale-while-revalidate=3600',
@@ -43,7 +71,9 @@ export default wrap(async (req, res) => {
 	const rl = await limits.mcpIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const raw = decodeURIComponent(req.query?.caip || '');
+	// The dispatcher already percent-decoded each path segment; decoding again
+	// here would corrupt any ref carrying a literal "%".
+	const raw = caipFromReq(req);
 	const m = CAIP_RE.exec(raw);
 	if (!m) {
 		return error(res, 400, 'invalid_caip', 'expected eip155:<chainId>:<registry>/<tokenId>');
