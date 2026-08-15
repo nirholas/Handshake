@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T16:35:13.884Z",
+	"generated_at": "2026-08-15T17:01:09.266Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -298,6 +298,17 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "Posed avatar renders finally come out posed",
+			"summary": "Asking the public avatar renderer for a pose returned a T-pose on most models: it matched bone names against a short hand-written list, and any rig that did not use those exact names (including every Mixamo export) was silently left in its bind pose while the response still claimed the pose had been applied. The renderer now uses the same posing engine the pose studio uses, so a preset now lands whatever naming convention the model's skeleton uses, and the camera frames the posed figure rather than the unposed one. The background colour on both public renderers is now checked before it is used, and the per-render budget is counted across the whole fleet instead of per server.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "Private avatars no longer show their picture in registry lookups",
 			"summary": "The registry lookup that turns an agent id, avatar id, slug, or Solana mint into one record already refused to hand out the 3D model of a private avatar, but it still returned the rendered preview image of that same avatar, so anyone holding the id could see what a private creation looked like. The preview is now gated on exactly the same visibility as the model: a private avatar returns its name and identity and no imagery at all. The embeddable widget read did the same thing with its avatar thumbnail and got the same gate. Separately, every read path that turns a stored thumbnail into a URL now goes through the one resolver that drops the old broken image keys, so agent manifests, token metadata, and launch feeds stop publishing image links that answer 404.",
 			"link": null,
@@ -332,6 +343,17 @@
 			"type": "update",
 			"title": "Saving a big build no longer re-downloads the whole world first",
 			"summary": "Every time you saved a world, the service fetched and re-parsed the entire previous version of that world just to check who owns it. On a large build that meant a full extra download and parse on each autosave, for a single ownership field. The check now reads only the small index record, so saves on big worlds are noticeably quicker and the storage layer does half the work. Two error replies also got honest labels: a build that exceeds the size cap now answers \"payload too large\" and a request sent with the wrong content type answers \"unsupported media type\", instead of both arriving as a generic validation error that gave a client nothing to act on.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Scanning a skill purchase QR tells you when your wallet is short",
+			"summary": "Paying for a skill from a phone handed the wallet a transfer even when the wallet held none of the token being asked for, so the buyer signed and watched it fail with whatever cryptic message their wallet chose to print. The checkout now checks the paying wallet first and answers with the exact shortfall, so a wallet that is 0.35 short says so and a wallet that has never held the token says that instead of failing at signing time. The same checkout also stopped pinning the busiest public Solana node ahead of the platform's own faster ones, so building the payment is quicker and survives a throttled node.",
 			"link": null,
 			"tags": [
 				"improvement",

@@ -223,6 +223,14 @@
 			<description>Opening a token from your portfolio asked Ethereum for the price no matter which chain the token was actually on. Almost every agent wallet runs on Base, so the most common holdings came back with no price, no chart and a shortened contract address instead of a ticker, even though the balance was right there in the list. Each token is now priced on its own chain, labelled with its real symbol and decimals, and native gas tokens use the right coin per chain (POL on Polygon, BNB on BNB Chain, AVAX on Avalanche) instead of always quoting ETH. Chains nobody prices, such as testnets, now say so plainly rather than showing another chain's number.</description>
 		</item>
 		<item>
+			<title>Posed avatar renders finally come out posed</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-08-15:Posed avatar renders finally come out posed</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Asking the public avatar renderer for a pose returned a T-pose on most models: it matched bone names against a short hand-written list, and any rig that did not use those exact names (including every Mixamo export) was silently left in its bind pose while the response still claimed the pose had been applied. The renderer now uses the same posing engine the pose studio uses, so a preset now lands whatever naming convention the model's skeleton uses, and the camera frames the posed figure rather than the unposed one. The background colour on both public renderers is now checked before it is used, and the per-render budget is counted across the whole fleet instead of per server.</description>
+		</item>
+		<item>
 			<title>Private avatars no longer show their picture in registry lookups</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-15:Private avatars no longer show their picture in registry lookups</guid>
@@ -253,6 +261,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Every time you saved a world, the service fetched and re-parsed the entire previous version of that world just to check who owns it. On a large build that meant a full extra download and parse on each autosave, for a single ownership field. The check now reads only the small index record, so saves on big worlds are noticeably quicker and the storage layer does half the work. Two error replies also got honest labels: a build that exceeds the size cap now answers &quot;payload too large&quot; and a request sent with the wrong content type answers &quot;unsupported media type&quot;, instead of both arriving as a generic validation error that gave a client nothing to act on.</description>
+		</item>
+		<item>
+			<title>Scanning a skill purchase QR tells you when your wallet is short</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Scanning a skill purchase QR tells you when your wallet is short</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Paying for a skill from a phone handed the wallet a transfer even when the wallet held none of the token being asked for, so the buyer signed and watched it fail with whatever cryptic message their wallet chose to print. The checkout now checks the paying wallet first and answers with the exact shortfall, so a wallet that is 0.35 short says so and a wallet that has never held the token says that instead of failing at signing time. The same checkout also stopped pinning the busiest public Solana node ahead of the platform's own faster ones, so building the payment is quicker and survives a throttled node.</description>
 		</item>
 		<item>
 			<title>Scanning for trade candidates is faster on creator-filtered rules and honest about how much it looked at</title>

@@ -21,46 +21,34 @@
 //
 // Safety:
 //   - Only http(s) URLs accepted (no file://, data://, internal IPs).
+//   - `background` must parse as a CSS color. It is interpolated into the
+//     render page, and that page has container network egress, so markup in
+//     this field would be script execution with an internal-network view.
 //   - GLB HEAD-fetched first to enforce a 10 MB cap before chromium boots.
-//   - In-memory IP rate limit (60 renders / 10 min / IP) to keep chromium
-//     warm-up costs bounded under abuse.
+//   - Distributed IP rate limit (60 renders / 10 min / IP, shared with
+//     /api/render/avatar-clip) to keep chromium costs bounded under abuse.
 
 import { cors, error, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { renderGlbToPng } from '../_lib/render-glb.js';
 import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
-import { clientIp } from '../_lib/rate-limit.js';
+import { clientIp, limits } from '../_lib/rate-limit.js';
+import { safeCssColor } from '../_lib/render-safe.js';
 
 export const maxDuration = 30;
 
 const MAX_DIM = 2048;
 const MIN_DIM = 64;
 const MAX_GLB_BYTES = 10 * 1024 * 1024;
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
-const RATE_LIMIT_MAX = 60;
-
-const rateMap = new Map();
-function rateCheck(ip) {
-	const now = Date.now();
-	const full = { limit: RATE_LIMIT_MAX, remaining: RATE_LIMIT_MAX, reset: now + RATE_LIMIT_WINDOW_MS };
-	if (!ip) return { success: true, ...full };
-	const arr = (rateMap.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-	if (arr.length >= RATE_LIMIT_MAX) {
-		rateMap.set(ip, arr);
-		return { success: false, limit: RATE_LIMIT_MAX, remaining: 0, reset: arr[0] + RATE_LIMIT_WINDOW_MS };
-	}
-	arr.push(now);
-	rateMap.set(ip, arr);
-	return { success: true, limit: RATE_LIMIT_MAX, remaining: RATE_LIMIT_MAX - arr.length, reset: now + RATE_LIMIT_WINDOW_MS };
-}
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	const ip = clientIp(req);
-	const rl = rateCheck(ip);
+	// Shared across both public renderers and distributed (see limits.renderIp):
+	// they share one chromium, so they share one budget.
+	const rl = await limits.renderIp(clientIp(req) || 'anon');
 	if (!rl.success) {
-		return rateLimited(res, rl, `Too many render requests. Limit: ${RATE_LIMIT_MAX} per ${RATE_LIMIT_WINDOW_MS / 60000}m.`);
+		return rateLimited(res, rl, `Too many render requests. Limit: ${rl.limit} per 10m.`);
 	}
 
 	// GET carries the same fields as query params; POST keeps the JSON body.
@@ -96,7 +84,18 @@ export default wrap(async function handler(req, res) {
 
 	const width = Math.max(MIN_DIM, Math.min(MAX_DIM, Number(body.width) || 1024));
 	const height = Math.max(MIN_DIM, Math.min(MAX_DIM, Number(body.height) || 1024));
-	const background = body.background === 'transparent' ? 'transparent' : (typeof body.background === 'string' && body.background ? body.background : '#0a0a0a');
+	// The color is interpolated into the render page, so it is validated here
+	// rather than escaped downstream: a caller who wants a color gets one, and a
+	// caller who wants markup gets a 400 they can act on.
+	let background = '#0a0a0a';
+	if (body.background === 'transparent') {
+		background = 'transparent';
+	} else if (body.background !== undefined && body.background !== null && body.background !== '') {
+		background = safeCssColor(body.background);
+		if (!background) {
+			return error(res, 400, 'bad_request', 'background must be "transparent" or a CSS color (hex, rgb()/rgba(), hsl()/hsla(), or a named color)');
+		}
+	}
 
 	let png;
 	try {

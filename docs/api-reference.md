@@ -1319,7 +1319,37 @@ render URL-addressable for `og:image` unfurls, `<img>` tags, and markdown
 embeds; responses CDN-cache for a day so crawlers hit chromium once per
 model. Dimensions clamp to 64-2048; GLBs over 10 MB are rejected before the
 browser boots; only public http(s) sources are fetched (SSRF-guarded);
-60 renders / 10 min / IP.
+60 renders / 10 min / IP, a budget shared with `/api/render/avatar-clip`.
+
+`background` is `transparent` or a CSS color (`#0a0a0a`, `#fff`,
+`rgb()`/`rgba()`, `hsl()`/`hsla()`, or a named color such as `midnightblue`).
+Anything else is `400 bad_request`: the value is composited into the render
+page, so it is validated rather than escaped.
+
+### Posed avatar renderer: `GET|POST /api/render/avatar-clip`
+
+```
+GET  /api/render/avatar-clip                  → the pose catalog (id, label, group)
+POST /api/render/avatar-clip
+{
+  "glbUrl": "https://...",                    # required, public http(s)
+  "width": 1024, "height": 1024,              # default 1024, clamped 64-2048
+  "background": "transparent",                # or a CSS color, as above
+  "posePresetId": "wave",                     # any id from the GET catalog
+  "cameraOrbit": { "theta": 25, "phi": 75, "radius": null },
+  "expression": { "jawOpen": 0.4 }            # ARKit-52 morph targets
+}
+→ image/png, plus x-render-pose / x-render-pose-label headers
+```
+
+The same renderer with a pose stage in front of it. `posePresetId` is retargeted
+onto the model's own rest pose through the studio's posing stack, so a preset
+lands the same way whatever naming convention the rig's skeleton uses, and a
+model with no recognizable humanoid skeleton renders in its bind pose instead of
+failing. `cameraOrbit.theta`/`phi` are degrees (yaw, and pitch from the top);
+`radius` is meters, or `null` to auto-frame from the bounding box. An unknown
+`posePresetId` is `400 unknown_pose`. Same 10 MB cap, SSRF guard, and render
+budget as `/api/render/glb`.
 
 ### Forge-Off votes — `POST /api/forge-vote`
 

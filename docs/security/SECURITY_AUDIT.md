@@ -380,7 +380,9 @@ read-only assets. **Status: fixed (audited + migrated authenticated handlers).**
 - **L9 — agents/solana-trade.js weaker per-IP limiter** vs twin's `tradePerUser`.
   Gate on `tradePerUser`. **Status: fixed.**
 - **L10 — render/glb.js + render/avatar-clip.js per-process limiter.** Use shared
-  Upstash limiter. **Status: fixed.**
+  Upstash limiter. **Status: fixed (2026-08-15).** Both handlers had kept their own
+  in-file `rateMap`, so the 60/10m ceiling multiplied by however many Cloud Run
+  instances were up. They now share the distributed `limits.renderIp` bucket.
 
 ---
 

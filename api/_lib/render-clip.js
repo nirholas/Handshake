@@ -19,6 +19,8 @@
 // that transitively imports this module, that trace caused 45-min build hangs.
 import { env } from './env.js';
 import { fetchModel } from './fetch-model.js';
+import { scriptJson, safeCssColor } from './render-safe.js';
+import { poseRuntimeModules } from './pose-runtime.js';
 import { PRESETS } from '../../src/pose-presets.js';
 
 // Cap on GLB bytes pulled into the renderer (OOM / render-budget guard).
@@ -57,25 +59,16 @@ function poseById(id) {
 	return found ? { id: found.id, label: found.label, pose: found.pose } : null;
 }
 
-// JSON.stringify is not enough to embed a value inside a <script> block: it
-// leaves "</script" and the JS line terminators U+2028/U+2029 intact, so any
-// caller-supplied string (a background color, a pose label) could close the tag
-// and run its own code inside the render page. That page has network access, so
-// injected script can fetch internal endpoints and paint them into the
-// screenshot we hand back. Escape here, once, so no caller has to remember to.
-export function scriptJson(value) {
-	return JSON.stringify(value === undefined ? null : value)
-		.replace(/</g, '\\u003c')
-		.replace(/>/g, '\\u003e')
-		.replace(/\u2028/g, '\\u2028')
-		.replace(/\u2029/g, '\\u2029');
-}
+// Re-exported so callers that already import the escaper from this module keep
+// working; the implementation is shared with render-glb.js in ./render-safe.js.
+export { scriptJson };
 
 function viewerHtml({ glbBase64, width, height, background, pose, cameraOrbit, expression }) {
-	const bg = background === 'transparent' ? 'null' : scriptJson(background || '#0a0a0a');
+	const bg = background === 'transparent' ? 'null' : scriptJson(safeCssColor(background) || '#0a0a0a');
 	const poseJson = pose ? scriptJson(pose.pose) : 'null';
 	const orbitJson = scriptJson(cameraOrbit || { theta: 0, phi: 80, radius: null });
 	const expressionJson = scriptJson(expression || null);
+	const poseModules = poseRuntimeModules();
 	return `<!doctype html>
 <html><head><meta charset="utf-8" />
 <style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}</style>
@@ -84,7 +77,10 @@ function viewerHtml({ glbBase64, width, height, background, pose, cameraOrbit, e
 <script>window.__GLB_B64=${scriptJson(glbBase64)};</script>
 <script type="importmap">{ "imports": {
 	"three": "https://unpkg.com/three@${THREE_VERSION}/build/three.module.js",
-	"three/addons/": "https://unpkg.com/three@${THREE_VERSION}/examples/jsm/"
+	"three/addons/": "https://unpkg.com/three@${THREE_VERSION}/examples/jsm/",
+	"glb-canonicalize": "${poseModules['glb-canonicalize']}",
+	"pose-mannequin": "${poseModules['pose-mannequin']}",
+	"pose-rig": "${poseModules['pose-rig']}"
 }}</script>
 <script type="module">
 import * as THREE from 'three';
@@ -93,6 +89,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { makeGltfRig, poseFromMannequinPreset } from 'pose-rig';
 
 window.__renderDone = false;
 window.__renderError = null;
@@ -128,42 +125,17 @@ const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(2.5, 3.5
 const fill = new THREE.DirectionalLight(0xdfeaff, 0.5); fill.position.set(-3, 1.2, 2.5); scene.add(fill);
 const rim = new THREE.DirectionalLight(0xecdcff, 0.7); rim.position.set(-0.5, 2.5, -4); scene.add(rim);
 
-const aliases = {
-	shoulderl: ['leftshoulder','shoulder_l','l_shoulder','mixamorig:leftshoulder'],
-	shoulderr: ['rightshoulder','shoulder_r','r_shoulder','mixamorig:rightshoulder'],
-	elbowl: ['leftforearm','leftelbow','elbow_l','mixamorig:leftforearm','mixamorig:leftelbow'],
-	elbowr: ['rightforearm','rightelbow','elbow_r','mixamorig:rightforearm','mixamorig:rightelbow'],
-	wristl: ['lefthand','wrist_l','mixamorig:lefthand'],
-	wristr: ['righthand','wrist_r','mixamorig:righthand'],
-	hipl: ['leftupleg','hip_l','mixamorig:leftupleg'],
-	hipr: ['rightupleg','hip_r','mixamorig:rightupleg'],
-	kneel: ['leftleg','knee_l','mixamorig:leftleg'],
-	kneer: ['rightleg','knee_r','mixamorig:rightleg'],
-	anklel: ['leftfoot','ankle_l','mixamorig:leftfoot'],
-	ankler: ['rightfoot','ankle_r','mixamorig:rightfoot'],
-	head: ['head','mixamorig:head'],
-	neck: ['neck','mixamorig:neck'],
-	spine: ['spine','spine1','mixamorig:spine','mixamorig:spine1'],
-	hips: ['hips','mixamorig:hips'],
-};
-
+// Preset poses are authored in the mannequin convention (src/pose-presets.js);
+// poseFromMannequinPreset converts them to canonical world-frame deltas and
+// GltfRig.applyPose replays those on the avatar's OWN rest pose, the same path
+// the /pose studio uses. A preset therefore lands identically whether the rig
+// binds T-pose or A-pose and whatever naming convention its bones use. Rigs
+// with no recognizable humanoid skeleton stay in bind pose (nothing safe to map).
 function applyPose(root, poseMap) {
 	if (!poseMap) return;
-	const byName = new Map();
-	root.traverse((o) => { if (o.name) byName.set(o.name.toLowerCase(), o); });
-	function findJoint(k) {
-		const key = k.toLowerCase();
-		const direct = byName.get(key);
-		if (direct) return direct;
-		const list = aliases[key] || [];
-		for (const a of list) { const j = byName.get(a); if (j) return j; }
-		return null;
-	}
-	for (const [key, rot] of Object.entries(poseMap)) {
-		const joint = findJoint(key);
-		if (!joint) continue;
-		joint.rotation.set(rot.x || 0, rot.y || 0, rot.z || 0);
-	}
+	const rig = makeGltfRig(root);
+	if (!rig) return;
+	rig.applyPose(poseFromMannequinPreset(poseMap));
 }
 
 function applyExpression(root, expression) {
@@ -178,6 +150,14 @@ function applyExpression(root, expression) {
 }
 
 function frameCamera(root, orbit) {
+	// Frame the POSED skin, not the bind-pose geometry: Box3.setFromObject defers
+	// to SkinnedMesh.computeBoundingBox (CPU skinning), which reads current bone
+	// matrices, so the graph and each skeleton must be updated first or a raised
+	// arm frames as if it were still at the model's side. (Never reset rigs via
+	// THREE.Skeleton.pose(): it rebuilds bind from inverse-bind matrices and
+	// collapses Mixamo rigs.)
+	root.updateMatrixWorld(true);
+	root.traverse((o) => { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });
 	const box = new THREE.Box3().setFromObject(root);
 	const size = new THREE.Vector3(); box.getSize(size);
 	const center = new THREE.Vector3(); box.getCenter(center);

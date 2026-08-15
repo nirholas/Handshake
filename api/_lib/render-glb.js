@@ -14,6 +14,7 @@
 // that transitively imports this module — that trace caused 45-min build hangs.
 import { env } from './env.js';
 import { fetchModel } from './fetch-model.js';
+import { scriptJson, safeCssColor } from './render-safe.js';
 
 // Cap on GLB bytes pulled into the renderer. Anything larger risks OOM /
 // blowing the render budget; callers may tighten this via `maxBytes`.
@@ -133,17 +134,24 @@ function releaseRenderSlot() {
 function viewerHtml({ glbBase64, width, height, background, backdrop }) {
 	// A gradient backdrop renders as page CSS behind a transparent canvas: the
 	// screenshot composites the two, so the scene itself stays background-free.
-	const useGradient = backdrop && backdrop.inner && backdrop.outer;
-	const bg = useGradient || background === 'transparent' ? 'null' : JSON.stringify(background || '#0a0a0a');
+	// `background` reaches here straight from a public handler, and both slots
+	// below are string interpolations into markup: the <style> block would take a
+	// "</style><script>" breakout and the <script> block a "</script>" one, which
+	// would run caller JS inside a page that has container network egress. Colors
+	// are validated (safeCssColor) and script values escaped (scriptJson).
+	const inner = safeCssColor(backdrop?.inner);
+	const outer = safeCssColor(backdrop?.outer);
+	const useGradient = Boolean(inner && outer);
+	const bg = useGradient || background === 'transparent' ? 'null' : scriptJson(safeCssColor(background) || '#0a0a0a');
 	const bodyBg = useGradient
-		? `radial-gradient(ellipse 90% 70% at 50% 38%, ${backdrop.inner}, ${backdrop.outer})`
+		? `radial-gradient(ellipse 90% 70% at 50% 38%, ${inner}, ${outer})`
 		: 'transparent';
 	return `<!doctype html>
 <html><head><meta charset="utf-8" />
 <style>html,body{margin:0;padding:0;background:${bodyBg};overflow:hidden}</style>
 </head><body>
 <canvas id="c" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px"></canvas>
-<script>window.__GLB_B64=${JSON.stringify(glbBase64)};</script>
+<script>window.__GLB_B64=${scriptJson(glbBase64)};</script>
 <script type="importmap">{ "imports": {
 	"three": "https://unpkg.com/three@${THREE_VERSION}/build/three.module.js",
 	"three/addons/": "https://unpkg.com/three@${THREE_VERSION}/examples/jsm/"

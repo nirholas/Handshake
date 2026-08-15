@@ -5,12 +5,13 @@
 // duplicated chromium code anywhere else.
 
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 // puppeteer-core + @sparticuz/chromium-min are loaded lazily inside getBrowser()
 // so Vercel's NFT does not statically trace the chromium binary tree on every
 // route in a function package, that trace was the 45-min build timeout.
 import { env } from './env.js';
 import { publicUrl, putObject, headObject } from './r2.js';
+import { poseRuntimeModules } from './pose-runtime.js';
+import { scriptJson, safeCssColor } from './render-safe.js';
 import { PRESETS } from '../../src/pose-presets.js';
 
 export const MIN_DIM = 64;
@@ -151,7 +152,22 @@ export function resolveRenderParams(input = {}) {
 	const size = clamp(toInt(input.size, DEFAULT_SIZE), MIN_DIM, MAX_DIM);
 	const width = clamp(toInt(input.width, size), MIN_DIM, MAX_DIM);
 	const height = clamp(toInt(input.height, size), MIN_DIM, MAX_DIM);
-	const bg = input.bg || 'transparent';
+	// `bg` is interpolated into the render page's script block, and that page has
+	// container network egress, so an unvalidated string here is caller JS with an
+	// internal-network view. Reject anything that is not a CSS color rather than
+	// silently swapping in a default the caller did not ask for.
+	let bg = 'transparent';
+	if (input.bg && input.bg !== 'transparent') {
+		bg = safeCssColor(input.bg);
+		if (!bg) {
+			return {
+				error: {
+					code: 'invalid_bg',
+					message: 'bg must be "transparent" or a CSS color (hex, rgb()/rgba(), hsl()/hsla(), or a named color)',
+				},
+			};
+		}
+	}
 	const format = FORMAT_TYPES[input.format] ? input.format : 'png';
 	const quality = clamp(toInt(input.quality, 90), 1, 100);
 
@@ -305,47 +321,21 @@ async function getBrowser() {
 	return _browserPromise;
 }
 
-// The pose studio's posing stack (src/pose-rig.js + src/glb-canonicalize.js +
-// src/pose-mannequin.js) is pure three.js ESM, so the headless page runs the
-// EXACT same code the client does: canonical bone-name mapping for every rig
-// convention, and world-delta preset retargeting (poseFromMannequinPreset →
-// GltfRig.applyPose) that lands presets on top of any bind stance. The
-// sources are shipped to the page as data: URL modules in its import map,
-// with pose-rig's relative imports rewritten to the bare specifiers the map
-// defines. Never reintroduce a hand-rolled alias table here, it silently
-// missed every Mixamo rig (GLTFLoader strips ':' from node names) and stomped
-// absolute local Eulers over bind rotations on the rest.
-const SRC_DIR = new URL('../../src/', import.meta.url);
-
-function poseModuleDataUrl(file, rewrites = []) {
-	let code = readFileSync(new URL(file, SRC_DIR), 'utf8');
-	for (const [from, to] of rewrites) code = code.replaceAll(from, to);
-	if (/from\s+['"]\.{1,2}\//.test(code)) {
-		throw new Error(`avatar-render: ${file} still has relative imports after rewrite, update poseRuntimeModules()`);
-	}
-	return 'data:text/javascript;base64,' + Buffer.from(code, 'utf8').toString('base64');
-}
-
-let _poseRuntimeModules = null;
-export function poseRuntimeModules() {
-	if (_poseRuntimeModules) return _poseRuntimeModules;
-	_poseRuntimeModules = {
-		'glb-canonicalize': poseModuleDataUrl('glb-canonicalize.js'),
-		'pose-mannequin': poseModuleDataUrl('pose-mannequin.js'),
-		'pose-rig': poseModuleDataUrl('pose-rig.js', [
-			["from './glb-canonicalize.js'", "from 'glb-canonicalize'"],
-			["from './pose-mannequin.js'", "from 'pose-mannequin'"],
-		]),
-	};
-	return _poseRuntimeModules;
-}
+// The posing stack the render page runs lives in ./pose-runtime.js, shared with
+// api/_lib/render-clip.js so the two chromium renderers can never disagree about
+// which rigs a preset lands on. Re-exported for callers that already import it
+// from here.
+export { poseRuntimeModules };
 
 export function sceneViewerHtml({ glbUrl, width, height, background, pose, cameraOrbit, expression, scenePreset }) {
-	const bg = background === 'transparent' ? 'null' : JSON.stringify(background || '#0a0a0a');
-	const poseJson = pose ? JSON.stringify(pose) : 'null';
-	const orbitJson = JSON.stringify(cameraOrbit || { theta: 0, phi: 80, radius: null });
-	const expressionJson = JSON.stringify(expression || null);
-	const presetJson = JSON.stringify(scenePreset);
+	// Every value below is interpolated into a <script> block. scriptJson (not
+	// JSON.stringify) is what keeps a caller-supplied string from closing the tag
+	// and running its own code in a page with container network egress.
+	const bg = background === 'transparent' ? 'null' : scriptJson(safeCssColor(background) || '#0a0a0a');
+	const poseJson = pose ? scriptJson(pose) : 'null';
+	const orbitJson = scriptJson(cameraOrbit || { theta: 0, phi: 80, radius: null });
+	const expressionJson = scriptJson(expression || null);
+	const presetJson = scriptJson(scenePreset);
 	const poseModules = poseRuntimeModules();
 
 	return `<!doctype html>
@@ -465,7 +455,7 @@ loader.setDRACOLoader(dracoLoader);
 loader.setKTX2Loader(ktx2Loader);
 loader.setMeshoptDecoder(MeshoptDecoder);
 
-loader.load(${JSON.stringify(glbUrl)}, (gltf) => {
+loader.load(${scriptJson(glbUrl)}, (gltf) => {
 	try {
 		const root = gltf.scene;
 		scene.add(root);

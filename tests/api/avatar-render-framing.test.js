@@ -175,4 +175,32 @@ describe('sceneViewerHtml wiring', () => {
 		expect(resolveRenderParams({ pose: 'wave' }).params.posePresetId).toBe('wave');
 		expect(resolveRenderParams({ pose: 'nope' }).error.code).toBe('unknown_pose');
 	});
+
+	// `bg` is interpolated into the render page's script block, and that page can
+	// reach the container's network, so a markup-carrying value is caller JS with
+	// an internal view. It is rejected at the param layer, not escaped later.
+	it('rejects a bg that is not a CSS color, and keeps the ones that are', () => {
+		expect(resolveRenderParams({ bg: '#0a0a0a' }).params.bg).toBe('#0a0a0a');
+		expect(resolveRenderParams({ bg: 'midnightblue' }).params.bg).toBe('midnightblue');
+		expect(resolveRenderParams({ bg: 'rgba(1,2,3,0.5)' }).params.bg).toBe('rgba(1,2,3,0.5)');
+		expect(resolveRenderParams({}).params.bg).toBe('transparent');
+		expect(resolveRenderParams({ bg: 'transparent' }).params.bg).toBe('transparent');
+		expect(resolveRenderParams({ bg: '#000</script><script>x</script>' }).error.code).toBe('invalid_bg');
+		expect(resolveRenderParams({ bg: 'url(https://x/y)' }).error.code).toBe('invalid_bg');
+	});
+
+	it('escapes every page value it interpolates, so no input can close the script tag', () => {
+		const html = sceneViewerHtml({
+			glbUrl: 'https://three.ws/a.glb?x=</script><script>y</script>',
+			width: 64,
+			height: 64,
+			background: '#0a0a0a',
+			pose: null,
+			cameraOrbit: null,
+			expression: null,
+			scenePreset: SCENE_PRESETS['portrait'],
+		});
+		// Exactly the tags the page opens itself, none smuggled in by a caller.
+		expect(html.split('</script>').length - 1).toBe((html.match(/<script[ >]/g) || []).length);
+	});
 });

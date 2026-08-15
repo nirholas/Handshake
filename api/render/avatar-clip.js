@@ -6,7 +6,7 @@
 //     glbUrl: "https://...",                     // required
 //     width: 1024, height: 1024,                 // default 1024, max 2048
 //     background: "#0a0a0a" | "transparent",
-//     posePresetId: "wave" | "tpose" | ...,      // see GET /api/render/poses
+//     posePresetId: "wave" | "tpose" | ...,      // GET this URL for the catalog
 //     cameraOrbit: { theta: 0, phi: 80, radius: null },  // degrees + meters
 //     expression: { jawOpen: 0.4, mouthSmileLeft: 0.6, ... }   // ARKit-52 morphs
 //   }
@@ -15,29 +15,26 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/
 import { renderClip } from '../_lib/render-clip.js';
 import { PRESETS } from '../../src/pose-presets.js';
 import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
-import { clientIp } from '../_lib/rate-limit.js';
+import { clientIp, limits } from '../_lib/rate-limit.js';
+import { safeCssColor } from '../_lib/render-safe.js';
 
 export const maxDuration = 30;
 
 const MAX_DIM = 2048;
 const MIN_DIM = 64;
 const MAX_GLB_BYTES = 10 * 1024 * 1024;
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
-const RATE_LIMIT_MAX = 60;
 
-const rateMap = new Map();
-function rateCheck(ip) {
-	const now = Date.now();
-	if (!ip)
-		return { success: true, limit: RATE_LIMIT_MAX, remaining: RATE_LIMIT_MAX, reset: now + RATE_LIMIT_WINDOW_MS };
-	const arr = (rateMap.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-	if (arr.length >= RATE_LIMIT_MAX) {
-		rateMap.set(ip, arr);
-		return { success: false, limit: RATE_LIMIT_MAX, remaining: 0, reset: arr[0] + RATE_LIMIT_WINDOW_MS };
+// Number() is too permissive for orbit fields: it turns null, '', and [] into a
+// finite 0, so an explicit `radius: null` (the documented auto-frame value) and
+// `phi: null` would read as real angles and silently reframe the shot. Only an
+// actual number or a numeric string counts; everything else falls back.
+function num(v) {
+	if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+	if (typeof v === 'string' && v.trim() !== '') {
+		const n = Number(v);
+		return Number.isFinite(n) ? n : null;
 	}
-	arr.push(now);
-	rateMap.set(ip, arr);
-	return { success: true, limit: RATE_LIMIT_MAX, remaining: RATE_LIMIT_MAX - arr.length, reset: now + RATE_LIMIT_WINDOW_MS };
+	return null;
 }
 
 export default wrap(async function handler(req, res) {
@@ -55,10 +52,11 @@ export default wrap(async function handler(req, res) {
 
 	if (!method(req, res, ['POST'])) return;
 
-	const ip = clientIp(req);
-	const rl = rateCheck(ip);
+	// Shared across both public renderers and distributed (see limits.renderIp):
+	// they share one chromium, so they share one budget.
+	const rl = await limits.renderIp(clientIp(req) || 'anon');
 	if (!rl.success) {
-		return rateLimited(res, rl, `Too many render requests. Limit: ${RATE_LIMIT_MAX} per ${RATE_LIMIT_WINDOW_MS / 60000}m.`);
+		return rateLimited(res, rl, `Too many render requests. Limit: ${rl.limit} per 10m.`);
 	}
 
 	let body;
@@ -81,7 +79,18 @@ export default wrap(async function handler(req, res) {
 
 	const width = Math.max(MIN_DIM, Math.min(MAX_DIM, Number(body.width) || 1024));
 	const height = Math.max(MIN_DIM, Math.min(MAX_DIM, Number(body.height) || 1024));
-	const background = body.background === 'transparent' ? 'transparent' : (typeof body.background === 'string' && body.background ? body.background : '#0a0a0a');
+	// The color is interpolated into the render page, so it is validated here
+	// rather than escaped downstream: a caller who wants a color gets one, and a
+	// caller who wants markup gets a 400 they can act on.
+	let background = '#0a0a0a';
+	if (body.background === 'transparent') {
+		background = 'transparent';
+	} else if (body.background !== undefined && body.background !== null && body.background !== '') {
+		background = safeCssColor(body.background);
+		if (!background) {
+			return error(res, 400, 'bad_request', 'background must be "transparent" or a CSS color (hex, rgb()/rgba(), hsl()/hsla(), or a named color)');
+		}
+	}
 
 	let posePresetId = null;
 	if (body.posePresetId) {
@@ -94,9 +103,11 @@ export default wrap(async function handler(req, res) {
 
 	const cameraOrbit = body.cameraOrbit && typeof body.cameraOrbit === 'object'
 		? {
-			theta: Number(body.cameraOrbit.theta) || 0,
-			phi: Number.isFinite(Number(body.cameraOrbit.phi)) ? Number(body.cameraOrbit.phi) : 80,
-			radius: Number.isFinite(Number(body.cameraOrbit.radius)) ? Number(body.cameraOrbit.radius) : null,
+			theta: num(body.cameraOrbit.theta) ?? 0,
+			phi: num(body.cameraOrbit.phi) ?? 80,
+			// null means "auto-frame from the bounding box", which is what the docs
+			// show and what an omitted radius does. A positive number overrides it.
+			radius: (num(body.cameraOrbit.radius) ?? 0) > 0 ? num(body.cameraOrbit.radius) : null,
 		}
 		: null;
 
