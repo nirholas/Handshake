@@ -16,8 +16,8 @@
 //
 //   node scripts/verify-granite-guardian.mjs
 //   # live phase needs: WATSONX_API_KEY + WATSONX_PROJECT_ID (or WATSONX_SPACE_ID)
-//   # pull them with:  vercel env pull .env.local
-//   # then:            node --env-file=.env.local scripts/verify-granite-guardian.mjs
+//   # put them in .env.local, then:
+//   #   node --env-file=.env.local scripts/verify-granite-guardian.mjs
 //
 // Exits non-zero only if Phase 1 fails.
 
@@ -148,7 +148,7 @@ async function phaseLive() {
 	if (!cfg.configured) {
 		console.log('  ⓘ no watsonx credentials in env — SKIPPING live phase.');
 		console.log('    Phase 1 already proved the contract + parser + ledger.');
-		console.log('    To run live: `vercel env pull .env.local` then');
+		console.log('    To run live: set WATSONX_API_KEY + WATSONX_PROJECT_ID in .env.local, then');
 		console.log('    `node --env-file=.env.local scripts/verify-granite-guardian.mjs`\n');
 		return 'skipped';
 	}
