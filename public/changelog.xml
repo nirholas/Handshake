@@ -15,6 +15,14 @@
 			<description>Payment sessions let you hand an agent a budget instead of a key, and two parts of that path judged an endpoint by one rule: if it did not ask for payment, the call was free. That is only true when the endpoint actually succeeded. A paid API answering 404, 400, or 500 was being scored as a free call, and the consequences ran in the wrong direction in both places. The dry run at /pay/simulator, whose whole job is to tell you in advance whether a budget and an allowlist will carry a workload, reported a plan as feasible at a cost of nothing when in fact every endpoint in it was erroring: free calls are never priced, never allowlist-checked, and never counted, so a wall of failures looked like a clean run. And an agent spending through a session got back a success envelope saying no payment was needed for an endpoint that had just failed on it. Both now separate the two cases: a real success with no payment challenge is still free and still costs nothing, while an error status is reported as an endpoint failure carrying the status the endpoint actually returned. No session is charged either way. The simulator lists each failing endpoint by name in its problems list and no longer calls the plan feasible.</description>
 		</item>
 		<item>
+			<title>A market intelligence outage no longer tells you your own API key was rejected</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-08-15:A market intelligence outage no longer tells you your own API key was rejected</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The two market intelligence reads in the unified API, recent narrative intel and momentum-ranked projects, pass a key we hold to the upstream provider; a caller needs no key at all. When that provider stopped accepting our key, both reads answered &quot;unauthorized&quot; with the provider's own wording, so an agent reading the response concluded its own credentials were bad and retried with different ones forever, when nothing on the caller's side was wrong. Both reads now say plainly that the service is temporarily unavailable because this deployment's upstream key was rejected, which is a status clients already know to retry rather than re-authenticate against. The older market intelligence endpoints always classified this correctly; the classification now lives in one place, so the two doors cannot drift apart again, and the error tables in the API reference list every code either one can return.</description>
+		</item>
+		<item>
 			<title>A profile’s follower count now matches the people the follower list can actually show you</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-15:A profile’s follower count now matches the people the follower list can actually show you</guid>
@@ -149,6 +157,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Several Oracle reads shared a habit: if the database was unreachable for a few seconds, they answered normally with an empty result. The movers panel said nothing was moving, the stats hero said no coin had ever been scored and no agent was armed, a coin's conviction sparkline came back flat, and the machine-readable signal endpoint told autonomous agents there were no plays, which is exactly the cue for an agent to stand down. Every one of those answers was then cached at the edge for a minute or two, so a blip lasting seconds kept showing a dead market long after the database was back. Those endpoints now tell the difference between a connectivity failure and an ordinary query fault: the first is reported honestly as a temporary outage with a retry hint and is never cached, the second still degrades to the empty answer it always did. The social ingest got the sharper end of the same bug: it used to reply that a batch had been accepted while reporting zero mints written, a receipt for a write that never landed. It now fails loudly so the sender retries. Shared conviction cards behave too: one built during an outage is no longer pinned to a coin's link preview for 15 minutes.</description>
+		</item>
+		<item>
+			<title>Paying for a skill by Solana Pay QR now shows a real three.ws merchant card</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-08-15:Paying for a skill by Solana Pay QR now shows a real three.ws merchant card</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a wallet scans a Solana Pay code for a skill purchase, it first asks our server who the merchant is and shows the answer in the sheet you approve before signing. That reply pointed at a logo file that has never existed, so the icon came back as a 404 and the merchant appeared broken at the exact moment you decide whether to pay, under the retired 3D-Agent name rather than three.ws. The probe now returns the live logo and the current name, and answers wallets that ask from a browser, which the Solana Pay spec requires. Confirming a purchase through the off-web webhook also accepts the settlement hash an EVM payment needs, so a card that settled on Base can finish instead of sitting on pending forever, and a confirmation failure now reaches our error tracker rather than disappearing into a generic 500.</description>
 		</item>
 		<item>
 			<title>Pinning an avatar to IPFS works for real avatars, not just tiny ones</title>
@@ -325,6 +341,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Three fixes across the public MCP packages and the API behind them. Asking for a token's recent buys and sells (get_token_trades on the free pump.fun MCP server) had stopped working entirely: the platform reads several transactions in one batched call, and the free Solana providers we route through cap those batches at one call each, so they rejected the whole request and the tool returned a raw provider error instead of trades. The platform now recognises that refusal, re-sends the reads one at a time to the same provider, and remembers the cap so later calls skip the wasted attempt; every batched on-chain read benefits, including wallet and agent activity history. Separately, the notifications MCP server told agents there were six notification categories when there are seven, so an agent could never change how it hears about a finished 3D generation; all seven are now listed, along with the security notices that always reach your bell inbox. And the agent provenance log answered a non-uuid agent id with an internal error and a support reference; it now says plainly that the id must be a uuid.</description>
+		</item>
+		<item>
+			<title>The tokenized-stock board sorts the way you asked, with the busiest names first</title>
+			<link>https://three.ws/markets/robinhood</link>
+			<guid isPermaLink="false">2026-08-15:The tokenized-stock board sorts the way you asked, with the busiest names first</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Robinhood Chain stock board (and the API behind it) accepts a sort column and a direction. Both ran backwards: asking for the highest 24h volume returned the quietest tokens, the ones with no market at all led every column, and passing dir=asc handed back descending results. Numeric columns now read highest-first by default, dir=asc genuinely flips them, and a token with no price or no NAV feed sorts to the end in either direction instead of crowding the top. The response now also echoes the sort and direction that actually ran, so an unknown sort value comes back as the default it fell to rather than as the value you sent; the memecoin screener echoes its sort the same honest way.</description>
 		</item>
 		<item>
 			<title>The trades feed stopped labelling a winning exit with a losing multiple</title>

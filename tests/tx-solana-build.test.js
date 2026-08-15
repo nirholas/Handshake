@@ -174,7 +174,10 @@ function decodeInstructions(base64) {
 	const out = [];
 	for (let n = 0; n < ixCount; n++) {
 		const programIndex = msg[i++];
-		i += readCompactU16(); // account indexes
+		// Read the count first: readCompactU16 advances `i` itself, and `i += f()`
+		// would add to the pre-call value.
+		const accountCount = readCompactU16();
+		i += accountCount;
 		const dataLen = readCompactU16();
 		const data = msg.subarray(i, i + dataLen);
 		i += dataLen;

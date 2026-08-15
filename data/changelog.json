@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "The Duplicate button on your widgets works again",
+			"summary": "Duplicating a widget from the dashboard failed every single time. The clone request never gave the new widget an identifier, and because the database requires one, the copy was rejected before it was written and the page showed only a generic server error with a support reference. A second, correct copy of the same clone logic was already in the codebase and the route simply was not using it; the route now runs that one, so duplicating gives you a real new widget with its own id, its own name ending in (copy), and the original's type, look, avatar and visibility carried over. The duplicate request also now carries the same cross-site request protection every other widget change already had, and it accepts an API key with write access, so you can clone a widget from a script as well as from the dashboard. Two smaller corrections travelled with it. When no chat provider is configured and the platform answers a visitor with its own placeholder line, that message is no longer filed in your transcript as though a model had written it. And chatting with one of the showcase widgets in the public gallery no longer tries to file a transcript against a widget that does not exist, which failed on every message. The developer reference now documents duplicate, stats, chat, transcripts and the knowledge base, all of which were live but undocumented.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/dashboard/widgets"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Paying for a skill by Solana Pay QR now shows a real three.ws merchant card",
+			"summary": "When a wallet scans a Solana Pay code for a skill purchase, it first asks our server who the merchant is and shows the answer in the sheet you approve before signing. That reply pointed at a logo file that has never existed, so the icon came back as a 404 and the merchant appeared broken at the exact moment you decide whether to pay, under the retired 3D-Agent name rather than three.ws. The probe now returns the live logo and the current name, and answers wallets that ask from a browser, which the Solana Pay spec requires. Confirming a purchase through the off-web webhook also accepts the settlement hash an EVM payment needs, so a card that settled on Base can finish instead of sitting on pending forever, and a confirmation failure now reaches our error tracker rather than disappearing into a generic 500.",
+			"tags": [
+				"fix"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "A market intelligence outage no longer tells you your own API key was rejected",
 			"summary": "The two market intelligence reads in the unified API, recent narrative intel and momentum-ranked projects, pass a key we hold to the upstream provider; a caller needs no key at all. When that provider stopped accepting our key, both reads answered \"unauthorized\" with the provider's own wording, so an agent reading the response concluded its own credentials were bad and retried with different ones forever, when nothing on the caller's side was wrong. Both reads now say plainly that the service is temporarily unavailable because this deployment's upstream key was rejected, which is a status clients already know to retry rather than re-authenticate against. The older market intelligence endpoints always classified this correctly; the classification now lives in one place, so the two doors cannot drift apart again, and the error tables in the API reference list every code either one can return.",
 			"tags": [

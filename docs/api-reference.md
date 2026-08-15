@@ -372,6 +372,79 @@ Requires auth. Owner only. Soft-deletes via `deleted_at` timestamp.
 
 ---
 
+### Duplicate widget
+
+```
+POST /api/widgets/:id/duplicate
+```
+
+Requires auth. Owner only; bearer tokens need `avatars:write`. Clones the widget's type, name, config, avatar, and visibility into a new row with a freshly minted `wdgt_` id and ` (copy)` appended to the name (truncated to 120 characters). Cookie-session callers must send `X-CSRF-Token`; bearer callers are exempt.
+
+**Response** (`201`): the new widget object, same shape as create.
+
+---
+
+### Widget stats
+
+```
+GET /api/widgets/:id/stats
+```
+
+Requires auth. Owner only; bearer tokens need `avatars:read`. Returns the analytics envelope behind the dashboard's widget card: lifetime `view_count`, `last_viewed_at`, an 8-day zero-filled `recent_views_7d` sparkline, and the top five `top_referers` / `top_countries`.
+
+Talking-agent widgets additionally get `chat_count`, an 8-day `recent_chats_7d` sparkline of visitor messages, `top_questions` (visitor messages clustered by normalized prefix), `knowledge` (`doc_count` / `chunk_count` / `token_count`), and `sessions_7d` (`thread_count`, `avg_seconds`, `total_messages`). Those five fields are `null` for every other type. Response is cached `private, max-age=30`.
+
+---
+
+### Widget chat
+
+```
+POST /api/widgets/:id/chat
+```
+
+Talking-agent widgets only. Public widgets accept anonymous visitors; a private widget answers `404` to anyone but its owner. Rate limited per (IP, widget) at the owner's `config.visitorRateLimit.msgsPerMinute` (default 8); the owner's own preview is exempt.
+
+**Request body:** `{ message, history?, provider?, model?, visitor_id?, thread_id? }`. `message` is 1 to 4000 characters, `history` is up to 40 `{ role, content }` turns, and `visitor_id` / `thread_id` are opaque client-minted ids (8 to 64 url-safe characters) used to group transcripts. `provider` / `model` are honoured only when the owner left the brain on `auto` or a named provider; an owner who pinned `none` or `custom` cannot be overridden by a visitor.
+
+**Response:** an SSE stream (`text/event-stream`) with an `event: message` frame carrying `{ reply, actions }`, then `event: done`. Upstream trouble sends `event: error` instead. `actions` only ever contains skills the owner enabled (`wave`, `lookAt`, `playClip`, `remember`). Validation failures answer with an ordinary JSON `400` before the stream opens.
+
+Every turn on a real widget is persisted to its transcript with PII redacted; the public gallery's demo fixtures are stateless and keep no transcript. Replies the platform generated itself (no provider configured, or the whole failover chain refused) are stored with no provider or model attribution.
+
+---
+
+### Widget transcripts
+
+```
+GET /api/widgets/:id/transcripts
+GET /api/widgets/:id/transcripts?thread_id=<id>
+GET /api/widgets/:id/transcripts?format=csv
+```
+
+Requires auth. Owner only; bearer tokens need `avatars:read`. The list form returns `{ threads, next_cursor, totals }`, newest thread first, `limit` 1 to 100 (default 25) with keyset pagination through `before=<ISO timestamp>`. Passing `thread_id` returns `{ thread, messages }` for one conversation, or `404` if that thread is not on this widget. `format=csv` downloads up to 5000 messages as an attachment for spreadsheet review.
+
+---
+
+### Widget knowledge base
+
+```
+GET    /api/widgets/:id/knowledge
+GET    /api/widgets/:id/knowledge?test=<query>&top_k=<n>
+POST   /api/widgets/:id/knowledge
+DELETE /api/widgets/:id/knowledge?doc_id=<id>
+```
+
+Requires auth. Owner only; bearer tokens need `avatars:read` for `GET` and `avatars:write` for the rest.
+
+`GET` lists the widget's docs with `status` (`queued`, `processing`, `ready`, `failed`), chunk and token counts. Adding `test=` runs the retrieval debugger: it embeds the probe query and returns the top-K matching chunks with cosine scores, so you can confirm a doc is reachable without spending a chat turn.
+
+`POST` ingests one document (talking-agent widgets only, 25 docs per widget). Body is one of `{ source_type: "url", source_url }`, or `{ source_type: "text" | "markdown" | "pdf", content, title }`. URLs are fetched and stripped to text server-side; PDFs are extracted in the browser and posted as text. Small docs embed inline and come back `ready`; large ones return `queued` and finish on the background worker.
+
+`DELETE` removes one doc and its chunks by `doc_id`.
+
+The knowledge routes need an embedding provider on the server (`NVIDIA_API_KEY` or `OPENAI_API_KEY`); without one they answer `503 embedder_unavailable` rather than guessing.
+
+---
+
 ### Open Graph share card
 
 ```
@@ -2184,9 +2257,8 @@ curl -s 'https://three.ws/api/v1/market/projects?limit=5&chain=solana'
 | `429`  | `rate_limited`   | Either the shared aixbt ceiling or the per-IP gateway budget is spent    |
 | `429`  | `aixbt_rate_limited` | aixbt throttled this deployment's key upstream. Retry shortly.      |
 | `502` / `504` | `aixbt_upstream_error` | aixbt is erroring or unreachable. The upstream status is relayed. |
-| `503`  | `not_configured` | `AIXBT_API_KEY` isn't set on this deployment — never a raw 500           |
+| `503`  | `not_configured` | `AIXBT_API_KEY` isn't set on this deployment, never a raw 500           |
 | `503`  | `aixbt_unauthorized` | aixbt rejected this deployment's key (expired, revoked, or below the plan the read needs). A deployment fault, never the caller's: these routes take no client credential, so they never answer `401`. |
-| `502`  | `aixbt_upstream_error` | aixbt returned an unexpected error — retry shortly                 |
 
 ---
 

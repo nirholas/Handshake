@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T15:28:58.987Z",
+	"generated_at": "2026-08-15T15:48:31.663Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/pay/simulator",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A market intelligence outage no longer tells you your own API key was rejected",
+			"summary": "The two market intelligence reads in the unified API, recent narrative intel and momentum-ranked projects, pass a key we hold to the upstream provider; a caller needs no key at all. When that provider stopped accepting our key, both reads answered \"unauthorized\" with the provider's own wording, so an agent reading the response concluded its own credentials were bad and retried with different ones forever, when nothing on the caller's side was wrong. Both reads now say plainly that the service is temporarily unavailable because this deployment's upstream key was rejected, which is a status clients already know to retry rather than re-authenticate against. The older market intelligence endpoints always classified this correctly; the classification now lives in one place, so the two doors cannot drift apart again, and the error tables in the API reference list every code either one can return.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"fix",
+				"docs"
 			]
 		},
 		{
@@ -196,6 +207,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Paying for a skill by Solana Pay QR now shows a real three.ws merchant card",
+			"summary": "When a wallet scans a Solana Pay code for a skill purchase, it first asks our server who the merchant is and shows the answer in the sheet you approve before signing. That reply pointed at a logo file that has never existed, so the icon came back as a 404 and the merchant appeared broken at the exact moment you decide whether to pay, under the retired 3D-Agent name rather than three.ws. The probe now returns the live logo and the current name, and answers wallets that ask from a browser, which the Solana Pay spec requires. Confirming a purchase through the off-web webhook also accepts the settlement hash an EVM payment needs, so a card that settled on Base can finish instead of sitting on pending forever, and a confirmation failure now reaches our error tracker rather than disappearing into a generic 500.",
+			"link": "/marketplace",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -439,6 +460,16 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The tokenized-stock board sorts the way you asked, with the busiest names first",
+			"summary": "The Robinhood Chain stock board (and the API behind it) accepts a sort column and a direction. Both ran backwards: asking for the highest 24h volume returned the quietest tokens, the ones with no market at all led every column, and passing dir=asc handed back descending results. Numeric columns now read highest-first by default, dir=asc genuinely flips them, and a token with no price or no NAV feed sorts to the end in either direction instead of crowding the top. The response now also echoes the sort and direction that actually ran, so an unknown sort value comes back as the default it fell to rather than as the value you sent; the memecoin screener echoes its sort the same honest way.",
+			"link": "/markets/robinhood",
+			"tags": [
+				"fix"
 			]
 		},
 		{

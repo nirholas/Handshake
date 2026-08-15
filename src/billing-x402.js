@@ -9,6 +9,47 @@ const ENDPOINT = '/api/user/x402-subscriptions';
 
 const el = (id) => document.getElementById(id);
 
+// Single-use CSRF token for a state-changing call. Never cached: the server
+// consumes the token in the same statement that validates it, so a reused one
+// is a guaranteed 403 on the next write. Rotate and revoke both destroy a live
+// credential, so the endpoint requires one.
+async function csrfToken() {
+	try {
+		const r = await fetch('/api/csrf-token', { credentials: 'include' });
+		if (!r.ok) return null;
+		const j = await r.json().catch(() => null);
+		return j?.token || j?.data?.token || null;
+	} catch {
+		return null;
+	}
+}
+
+// The endpoint answers with three different envelopes: a prose `message` on the
+// cases it wants a human to read, an `error_description` on the shared HTTP
+// guards (CSRF, method), and a bare code otherwise. Pick the most specific one
+// present, and name the two states a generic retry line would misdescribe: a
+// stale token is fixed by reloading, a rate limit by waiting.
+function failureText(resp, out, fallback) {
+	if (resp.status === 403) return 'Your session check expired. Reload the page and try again.';
+	if (resp.status === 429) return 'Too many attempts. Wait a minute and try again.';
+	return out.message || out.error_description || fallback;
+}
+
+// One place to build the write, so rotate and revoke can never drift apart on
+// which headers a mutation carries.
+async function postAction(body) {
+	const token = await csrfToken();
+	return fetch(ENDPOINT, {
+		method: 'POST',
+		headers: {
+			'content-type': 'application/json',
+			...(token ? { 'x-csrf-token': token } : {}),
+		},
+		credentials: 'include',
+		body: JSON.stringify(body),
+	});
+}
+
 function show(stateId) {
 	for (const s of document.querySelectorAll('.state')) s.classList.toggle('active', s.id === stateId);
 }
@@ -177,12 +218,7 @@ async function rotate(id, btn) {
 	setBusy(card, true);
 	let resp;
 	try {
-		resp = await fetch(ENDPOINT, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			credentials: 'include',
-			body: JSON.stringify({ action: 'rotate', id }),
-		});
+		resp = await postAction({ action: 'rotate', id });
 	} catch {
 		setBusy(card, false);
 		return toast("Couldn't reach the server", true);
@@ -190,7 +226,7 @@ async function rotate(id, btn) {
 	const out = await resp.json().catch(() => ({}));
 	if (!resp.ok) {
 		setBusy(card, false);
-		return toast(out.message || 'Rotation failed. Please try again.', true);
+		return toast(failureText(resp, out, 'Rotation failed. Please try again.'), true);
 	}
 	const token = out.subscription?.token;
 	toast('Key rotated.');
@@ -212,12 +248,7 @@ async function revoke(id, btn) {
 	setBusy(card, true);
 	let resp;
 	try {
-		resp = await fetch(ENDPOINT, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			credentials: 'include',
-			body: JSON.stringify({ action: 'revoke', id }),
-		});
+		resp = await postAction({ action: 'revoke', id });
 	} catch {
 		setBusy(card, false);
 		return toast("Couldn't reach the server", true);
@@ -225,7 +256,7 @@ async function revoke(id, btn) {
 	const out = await resp.json().catch(() => ({}));
 	if (!resp.ok) {
 		setBusy(card, false);
-		return toast(out.message || 'Revoke failed. Please try again.', true);
+		return toast(failureText(resp, out, 'Revoke failed. Please try again.'), true);
 	}
 	toast('Key revoked.');
 	await load();

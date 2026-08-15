@@ -192,12 +192,17 @@ describe('GET /api/users/:username/creations: pagination', () => {
 		expect(partial.body.next).toBeNull();
 	});
 
-	it('passes the before cursor through to every source', async () => {
+	it('passes the before cursor through to every source, canonicalized', async () => {
 		sqlQueue.push([{ id: USER_ID }]);
+		// The handler parses the cursor and re-serializes it, so what reaches the
+		// stores is always full-precision ISO 8601 regardless of how the caller
+		// wrote it. Asserting the caller's spelling would pass only by accident.
 		const before = '2026-07-12T00:00:00Z';
 		await call('alice', { before });
 		for (const fn of [listCreationsByUser, listDioramasByUser, listRestylesByUser]) {
-			expect(fn).toHaveBeenCalledWith(expect.objectContaining({ before }));
+			expect(fn).toHaveBeenCalledWith(
+				expect.objectContaining({ before: new Date(before).toISOString() }),
+			);
 		}
 	});
 

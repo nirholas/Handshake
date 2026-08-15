@@ -832,6 +832,13 @@ async function loadWidget(id) {
 // random thread so the turn still lands in widget_chat_messages and the
 // creator's "messages today" counter is accurate, even if it can't be grouped.
 async function persistTurn({ widgetId, req, body, userMessage, reply, actions, provider, model }) {
+	// Gallery demo widgets are baked-in fixtures with no row in `widgets`, and
+	// widget_chat_threads.widget_id is a foreign key onto that table. Every
+	// public demo chat therefore hit a constraint violation and logged one
+	// "persist failed" line per message. Nobody owns a fixture, so there is no
+	// transcript or stats surface to write to: skip the write instead.
+	if (isDemoWidgetId(widgetId)) return;
+
 	const visitorId = body.visitor_id || `anon_${crypto.randomBytes(6).toString('base64url')}`;
 	const threadId = body.thread_id || `wct_${crypto.randomBytes(9).toString('base64url')}`;
 

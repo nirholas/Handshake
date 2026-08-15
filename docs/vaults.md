@@ -53,7 +53,9 @@ Terms, all owner-set at open and changeable later:
 | `perBackerCapUsdc` | optional | no cap | Most one backer may contribute, measured against their lifetime deposits. |
 | `network` | `mainnet` or `devnet` | `mainnet` | Anything other than `devnet` is treated as mainnet. |
 
-Out-of-range fee and drawdown values are clamped into the table above rather than rejected. A per-trade ceiling above the daily budget is rejected with `400 validation_error`.
+Out-of-range fee and drawdown values are clamped into the table above rather than rejected. A per-trade ceiling above the daily budget is rejected with `400 validation_error`, on open and on a later terms change alike (a terms PATCH that raises only the ceiling is checked against the budget already stored). A fee or drawdown value that is not a number at all is rejected rather than clamped, so a typo can never be read as an intent.
+
+Every id these routes accept (`vaultId`, `agentId`, `backerAgentId`, `toAgentId`, and `vault_id` on the ledger) must be a real uuid, and every amount (`usdc`, `shares`, `amount`) must be a number. Malformed values answer `400 validation_error` naming the field, never a `500`.
 
 ```bash
 curl -sX POST https://three.ws/api/vaults \
