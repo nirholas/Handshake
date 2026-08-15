@@ -5,8 +5,8 @@
 // is configured (the commitment is kept locally and the on-chain timestamp is
 // deferred, which is fine) and a `failed` row when the memo was actually rejected
 // on-chain. It used to RETURN 'pending' for both, so an attester wallet with no
-// SOL — every send answered "Attempt to debit an account but found no record of a
-// prior credit" — read to its caller exactly like the benign no-key path.
+// SOL, whose every send answered "Attempt to debit an account but found no record
+// of a prior credit", read to its caller exactly like the benign no-key path.
 //
 // Pinned here: the returned status matches the persisted row, so the cron above
 // it can tell a degraded mode from an outage.

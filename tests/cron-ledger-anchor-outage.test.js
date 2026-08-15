@@ -5,12 +5,12 @@
 // /api/ledger/verify/:agentId has an independent on-chain witness. Two distinct
 // things can stop that, and they used to be reported identically:
 //
-//   • no attester key configured — a documented degraded mode. The commitment is
+//   • no attester key configured. A documented degraded mode: the commitment is
 //     still recorded locally, every agent should still get its row, and nobody
 //     should be paged.
 //   • the broadcast itself rejected (an unfunded attester wallet answers every
 //     send with "Attempt to debit an account but found no record of a prior
-//     credit") — a real outage. It fails identically for every agent in the run,
+//     credit"). A real outage: it fails identically for every agent in the run,
 //     so re-simulating the same doomed memo for each remaining agent is pure
 //     waste, and a silent 200 is how it stayed invisible.
 //
@@ -19,9 +19,10 @@
 //      it skipped, and pages ops
 //   2. a missing key stays pending for every agent and pages nobody
 //
-// The matching unit property for anchorLedgerHead itself (a rejected broadcast
-// returns 'failed', not 'pending') lives in ledger-anchor-broadcast-status.test.js;
-// it needs the real module, which this file mocks out.
+// The matching unit property for anchorLedgerHead itself, that a rejected
+// broadcast reports "failed" rather than "pending", is pinned separately in
+// ledger-anchor-broadcast-status.test.js, which needs the real module that this
+// file mocks out.
 import { test, expect, vi, beforeEach } from 'vitest';
 
 const sendOpsAlert = vi.fn(async () => {});
