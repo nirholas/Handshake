@@ -19,8 +19,13 @@
 // compare it against GCP_BUDGET_WEBHOOK_SECRET. Without the secret set, the
 // endpoint refuses (503) rather than accepting unauthenticated pings.
 //
-// Always ACK (200) once authenticated — even on a malformed message — so Pub/Sub
-// doesn't redeliver in a retry storm. Parse/alert failures are logged, not 5xx'd.
+// Always ACK (200) once authenticated for any message we can read but can't act
+// on (verification ping, attributes-only, info message with no threshold), so
+// Pub/Sub doesn't redeliver in a retry storm. Body bytes that are not JSON at all
+// never reach this handler on Cloud Run: server/index.mjs runs express.json()
+// first and answers a parse failure with its own 400, which Pub/Sub treats as a
+// permanent delivery failure rather than retrying. The readJson() guard below
+// keeps the same ACK contract for a direct (non-Express) invocation.
 
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
@@ -50,7 +55,7 @@ function decodeNotification(body) {
 
 function fmtUsd(n) {
 	const v = Number(n);
-	if (!Number.isFinite(v)) return '—';
+	if (!Number.isFinite(v)) return 'n/a';
 	return `$${v.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 }
 
@@ -91,14 +96,18 @@ export default wrap(async (req, res) => {
 	}
 
 	const name = note.budgetDisplayName || 'GCP budget';
-	const pctStr = pct != null ? `${Math.round(pct * 100)}%` : '—';
-	const emoji = threshold >= 0.9 ? '🔴' : threshold >= 0.75 ? '🟠' : '🟡';
+	const pctStr = pct != null ? `${Math.round(pct * 100)}%` : 'n/a';
+	// 🚨 on the 90%+ crossing is load-bearing, not decoration: alerts.js severityOf()
+	// reads it and files the alert as `critical` instead of `warn`, which is what
+	// separates "the grant is about to run dry" from routine burn-down noise on the
+	// ops dashboard.
+	const emoji = threshold >= 0.9 ? '🚨' : threshold >= 0.75 ? '🟠' : '🟡';
 
 	await sendOpsAlert(
-		`${emoji} GCP budget ${Math.round(threshold * 100)}% — ${name}`,
+		`${emoji} GCP budget ${Math.round(threshold * 100)}% crossed on ${name}`,
 		[
 			`Spend ${fmtUsd(cost)} of ${fmtUsd(budget)} (${pctStr}) ${note.currencyCode || 'USD'}`,
-			threshold >= 0.9 ? 'Runaway risk — check `node scripts/gcp/burn-report.mjs`, consider scripts/gcp/emergency-stop.sh.' : 'Burn-down tracking on schedule; review the spend dashboard (/dashboard/spend).',
+			threshold >= 0.9 ? 'Runaway risk: check `node scripts/gcp/burn-report.mjs`, consider scripts/gcp/emergency-stop.sh.' : 'Burn-down tracking on schedule; review the spend dashboard (/dashboard/spend).',
 		].join('\n'),
 		// Dedup per budget + threshold so each crossing pings once/hour, not each
 		// time the budget re-evaluates within the window.
