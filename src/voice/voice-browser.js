@@ -148,6 +148,10 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 				return (
 					`<button class="vb-pill${activeProvider === p.id ? ' active' : ''}${disabled ? ' disabled' : ''}"` +
 					` data-provider="${esc(p.id)}" aria-pressed="${activeProvider === p.id}"` +
+					`${disabled ? ' aria-disabled="true"' : ''}` +
+					// A title alone is announced inconsistently, and the reason is the
+					// only thing that tells a visitor what to do about the lane.
+					`${disabled ? ` aria-label="${esc(p.label)}, unavailable: ${esc(p.reason || 'this lane cannot serve right now')}"` : ''}` +
 					`${disabled ? ` title="${esc(p.reason || 'Unavailable')}"` : ` title="${esc(p.tagline)}"`}>` +
 					`${esc(p.label)}` +
 					`<span class="vb-pill-billing" data-billing="${esc(p.billing)}">${esc(BILLING_COPY[p.billing]?.label || '')}</span>` +
