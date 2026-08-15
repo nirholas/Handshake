@@ -730,7 +730,7 @@ function mergeHoldings(summary) {
 				if (!ex.price && w.native.price) ex.price = w.native.price;
 			} else {
 				map.set(key, {
-					chain: w.chain, id: 'native',
+					chain: w.chain, chain_id: w.chain_id ?? null, id: 'native',
 					symbol: w.native.symbol, name: w.native.name || w.native.symbol,
 					amount: w.native.amount, price: w.native.price || 0,
 					change24h: w.native.change24h, usd: w.native.usd || 0, logo: null,
@@ -748,7 +748,7 @@ function mergeHoldings(summary) {
 				if (!ex.logo && t.logo) ex.logo = t.logo;
 			} else {
 				map.set(key, {
-					chain: w.chain, id: t.mint || t.contract || '',
+					chain: w.chain, chain_id: w.chain_id ?? null, id: t.mint || t.contract || '',
 					symbol: t.symbol, name: t.name || t.symbol,
 					amount: t.amount || 0, price: t.price || 0,
 					change24h: t.change24h, usd: t.usd || 0, logo: t.logo || null,
@@ -904,7 +904,8 @@ async function openAssetDrawer(token) {
 	openDrawer();
 
 	try {
-		const data = await get(`/api/portfolio/asset?chain=${encodeURIComponent(token.chain)}&id=${encodeURIComponent(token.id)}&days=30`);
+		const chainIdQs = token.chain_id ? `&chain_id=${encodeURIComponent(token.chain_id)}` : '';
+		const data = await get(`/api/portfolio/asset?chain=${encodeURIComponent(token.chain)}&id=${encodeURIComponent(token.id)}${chainIdQs}&days=30`);
 		renderDrawerContent(content, data, token);
 	} catch (err) {
 		content.innerHTML = `

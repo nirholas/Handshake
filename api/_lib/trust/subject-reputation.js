@@ -458,13 +458,12 @@ async function readEvmWallet(chainId, address) {
 // Native-asset USD price by chain, keyless, through the shared coin-price
 // failover (CoinGecko → DefiLlama → exchange tickers). Best-effort: a miss just
 // leaves holdings unpriced (dimension unavailable), never an error.
-const CG_NATIVE_ID = {
-	1: 'ethereum', 8453: 'ethereum', 42161: 'ethereum', 10: 'ethereum', 59144: 'ethereum',
-	534352: 'ethereum', 324: 'ethereum', 5000: 'mantle', 56: 'binancecoin', 137: 'matic-network',
-	43114: 'avalanche-2', 100: 'xdai', 250: 'fantom', 42220: 'celo', 1284: 'moonbeam',
-};
+// The chain→coin-id table lives in the EVM chain registry, which the portfolio
+// asset lane reads too; a second copy here drifted the moment one of them
+// gained a chain.
 async function evmNativePriceUsd(chainId) {
-	const cgId = CG_NATIVE_ID[chainId];
+	const { evmNativeCoingeckoId } = await import('../evm/chain-market.js');
+	const cgId = evmNativeCoingeckoId(chainId);
 	if (!cgId) return null;
 	const { fetchCoinPriceUsdOrNull } = await import('../market-fallbacks.js');
 	return await fetchCoinPriceUsdOrNull(cgId);

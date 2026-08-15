@@ -84,7 +84,7 @@ Everything reads live state — balances, feeds, and broadcasts all move between
 
 **`get_portfolio_history`** — `days` (1–365, default 90).
 
-**`get_portfolio_asset`** — `chain` (`solana` | `evm`, required), `id` (`native` or the base58 mint / 0x contract, required), `days` (1–365, default 30).
+**`get_portfolio_asset`**: `chain` (`solana` | `evm`, required), `id` (`native` or the base58 mint / 0x contract, required), `days` (1 to 365, default 30), `chain_id` (optional EVM chain id: 8453 Base, 1 Ethereum, 42161 Arbitrum, 10 Optimism, 137 Polygon, 56 BNB, and the other chains the platform indexes). Leave `chain_id` off and the API prices the contract on whatever chain your wallets hold it on, defaulting to Base; set it when the same address exists on more than one chain.
 
 **`get_trades_feed`** — `network` (`mainnet` | `devnet`, default mainnet), `window` (`1h` | `6h` | `24h` | `7d` | `30d` | `all`, default 24h), `min_pnl_pct` (default 10), `limit` (1–80, default 40), `cursor` (ISO timestamp for pagination), `mint` (filter to one coin).
 

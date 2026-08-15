@@ -1,8 +1,8 @@
 // `get_portfolio_asset` — a single token's combined position across all of your
 // agent wallets, plus live market data and a price chart. Account-scoped. Read-only.
 //
-// Wraps GET /api/portfolio/asset?chain&id&days. Combines your holdings of one
-// asset with CoinGecko market data + a price-history chart for that asset.
+// Wraps GET /api/portfolio/asset?chain&id&days&chain_id. Combines your holdings
+// of one asset with CoinGecko market data + a price-history chart for that asset.
 
 import { z } from 'zod';
 
@@ -31,15 +31,25 @@ export const def = {
 			.max(365)
 			.default(30)
 			.describe('Days of price history for the chart, 1–365 (default 30).'),
+		chain_id: z
+			.number()
+			.int()
+			.positive()
+			.optional()
+			.describe(
+				'Optional EVM chain id (8453 Base, 1 Ethereum, 42161 Arbitrum, …). Pins which chain the contract ' +
+					'is priced on; defaults to the chain of the wallets holding it. Ignored on solana.',
+			),
 	},
 	async handler(args) {
 		const data = await apiRequest('/api/portfolio/asset', {
 			auth: true,
-			query: { chain: args?.chain, id: args?.id, days: args?.days ?? 30 },
+			query: { chain: args?.chain, id: args?.id, days: args?.days ?? 30, chain_id: args?.chain_id },
 		});
 		return {
 			ok: true,
 			chain: data?.chain ?? args?.chain,
+			chain_id: data?.chain_id ?? args?.chain_id ?? null,
 			id: data?.id ?? args?.id,
 			is_native: data?.is_native ?? false,
 			symbol: data?.symbol ?? null,

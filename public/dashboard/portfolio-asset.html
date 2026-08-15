@@ -269,6 +269,9 @@
 			const params = new URLSearchParams(location.search);
 			const chain = params.get('chain') || '';
 			const id = params.get('id') || '';
+			// Which EVM chain the token lives on, forwarded from the holdings list so
+			// the API prices the contract on its own chain rather than guessing.
+			const chainId = params.get('chain_id') || '';
 
 			let csrfToken = null;
 			let chart = null;
@@ -348,7 +351,8 @@
 			}
 
 			async function loadAsset(days) {
-				const u = `${apiUrl}/portfolio/asset?chain=${encodeURIComponent(chain)}&id=${encodeURIComponent(id)}&days=${days || 30}`;
+				const chainIdQs = chainId ? `&chain_id=${encodeURIComponent(chainId)}` : '';
+				const u = `${apiUrl}/portfolio/asset?chain=${encodeURIComponent(chain)}&id=${encodeURIComponent(id)}${chainIdQs}&days=${days || 30}`;
 				const r = await fetch(u, { credentials: 'include' });
 				if (!r.ok) {
 					const e = await r.json().catch(() => ({}));

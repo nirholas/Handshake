@@ -26,6 +26,7 @@ import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 import { fetchCoinPriceUsdOrNull } from '../_lib/market-fallbacks.js';
 import { solPriceUsd, solChange24hPct } from '../_lib/sol-price.js';
 import { fetchFirstOrNull } from '../../src/shared/failover-fetch.js';
+import { evmChainMarket, DEFAULT_EVM_CHAIN_ID } from '../_lib/evm/chain-market.js';
 import { env } from '../_lib/env.js';
 import { z } from 'zod';
 
@@ -455,12 +456,14 @@ async function handleSend(req, res) {
 // wallets: which wallets hold it, total amount, USD value, plus current market
 // data (price, 24h change, market cap) and a price history chart pulled from
 // CoinGecko. Params:
-//   chain   = "solana" | "evm"
-//   id      = "native" | <mint or 0x contract>
-//   days    = optional, defaults to 30
+//   chain    = "solana" | "evm"
+//   id       = "native" | <mint or 0x contract>
+//   days     = optional, defaults to 30
+//   chain_id = optional EVM chain id; defaults to the chain of the wallets that
+//              actually hold the asset, then to the caller's first EVM wallet.
 //
-// Native maps to SOL on Solana and ETH on EVM (mainnet coin IDs are used for
-// the price chart; the holding is read directly from the live balances).
+// Native maps to SOL on Solana and to the chain's gas token on EVM (the coin
+// IDs come from the chain registry; the holding is read from live balances).
 
 // Market metadata + price history for one asset. Both the native-coin and the
 // contract-addressed lookups return the same CoinGecko shape, so only the two
@@ -526,43 +529,63 @@ const EMPTY_MARKET = {
 // within minutes, which left this page with `market: null` and a $0 valuation
 // for holdings the user really has. Fall back to the price lanes the platform
 // already runs, Solana first: the mint cascade (Birdeye, DexScreener,
-// GeckoTerminal, DefiLlama, Raydium), the SOL spot lane, the coingecko-id spot
-// lane for ETH, and DefiLlama's contract oracle for an ERC-20. These carry
-// price and (where available) 24h change, cap and volume; the descriptive
-// fields stay null and the page already degrades on those.
-async function fallbackMarket({ chain, id, isNative }) {
+// GeckoTerminal, DefiLlama, Raydium), the SOL spot lane, the chain's native
+// coin id, and DefiLlama's contract oracle for an ERC-20. These carry price and
+// (where available) 24h change, cap and volume; the descriptive fields stay
+// null and the page already degrades on those.
+//
+// Returns `{ market, symbol, decimals }` so a lane that knows the token's
+// ticker can label a holding CoinGecko could not identify at all.
+async function fallbackMarket({ chain, id, isNative, chainId }) {
 	if (chain === 'solana') {
 		if (isNative) {
 			const [price, change] = await Promise.all([solPriceUsd(), solChange24hPct()]);
-			return price > 0 ? { name: 'Solana', price_usd: price, change_24h_pct: change } : null;
+			return price > 0 ? { market: { name: 'Solana', price_usd: price, change_24h_pct: change } } : null;
 		}
 		const md = await fetchTokenMarketData(id);
 		if (!md?.price_usd) return null;
 		return {
-			price_usd: md.price_usd,
-			change_24h_pct: md.price_change_24h ?? null,
-			market_cap_usd: md.market_cap ?? null,
-			total_volume_usd: md.volume_24h ?? null,
+			market: {
+				price_usd: md.price_usd,
+				change_24h_pct: md.price_change_24h ?? null,
+				market_cap_usd: md.market_cap ?? null,
+				total_volume_usd: md.volume_24h ?? null,
+			},
+			decimals: Number.isInteger(md.decimals) ? md.decimals : null,
 		};
 	}
+
+	// An unlisted or test chain has no price oracle at all. Answering with the
+	// Ethereum lane would price a contract address that does not exist there,
+	// which is how a Base holding used to come back unpriceable.
+	const registry = evmChainMarket(chainId);
+	if (!registry) return null;
+
 	if (isNative) {
-		const price = await fetchCoinPriceUsdOrNull('ethereum');
-		return price > 0 ? { name: 'Ethereum', price_usd: price } : null;
+		const price = await fetchCoinPriceUsdOrNull(registry.nativeCoingeckoId);
+		return price > 0 ? { market: { name: registry.nativeName, price_usd: price }, symbol: registry.nativeSymbol } : null;
 	}
-	const price = await fetchFirstOrNull(
+	const key = `${registry.llamaChain}:${id.toLowerCase()}`;
+	const coin = await fetchFirstOrNull(
 		[
 			{
 				name: 'llama-contract',
-				url: `https://coins.llama.fi/prices/current/ethereum:${id}`,
+				url: `https://coins.llama.fi/prices/current/${key}`,
 				parse: async (r) => {
-					const p = Number((await r.json())?.coins?.[`ethereum:${id}`]?.price);
-					return Number.isFinite(p) && p > 0 ? p : null;
+					const c = (await r.json())?.coins?.[key];
+					const p = Number(c?.price);
+					return Number.isFinite(p) && p > 0 ? { price: p, symbol: c?.symbol, decimals: c?.decimals } : null;
 				},
 			},
 		],
-		{ timeoutMs: 6000, label: `evm-token-price:${id.slice(0, 10)}` },
+		{ timeoutMs: 6000, label: `evm-token-price:${registry.llamaChain}:${id.slice(0, 10)}` },
 	);
-	return price > 0 ? { price_usd: price } : null;
+	if (!coin) return null;
+	return {
+		market: { price_usd: coin.price },
+		symbol: coin.symbol ? String(coin.symbol).toUpperCase() : null,
+		decimals: Number.isInteger(coin.decimals) ? coin.decimals : null,
+	};
 }
 
 async function handleAsset(req, res) {
@@ -579,12 +602,22 @@ async function handleAsset(req, res) {
 	const chain = String(url.searchParams.get('chain') || '').toLowerCase();
 	const idRaw = String(url.searchParams.get('id') || '').trim();
 	const days = parseDays(url, 30);
+	const chainIdRaw = url.searchParams.get('chain_id');
 
 	if (chain !== 'solana' && chain !== 'evm') {
 		return error(res, 400, 'validation_error', 'chain must be solana or evm');
 	}
 	if (!idRaw) return error(res, 400, 'validation_error', 'id required');
 	if (days === null) return error(res, 400, 'validation_error', 'days must be a whole number');
+
+	// The caller may pin the EVM chain; otherwise it is inferred below from the
+	// wallets that hold the asset.
+	let chainId = null;
+	if (chainIdRaw !== null && chainIdRaw.trim() !== '') {
+		const n = Number(chainIdRaw);
+		if (!Number.isInteger(n) || n <= 0) return error(res, 400, 'validation_error', 'chain_id must be a positive whole number');
+		chainId = n;
+	}
 
 	const isNative = idRaw === 'native';
 	const id = isNative ? 'native' : idRaw;
@@ -599,10 +632,13 @@ async function handleAsset(req, res) {
 	const holdings = [];
 	let totalAmount = 0;
 	let totalUsd = 0;
-	let symbol = isNative ? (chain === 'solana' ? 'SOL' : 'ETH') : null;
+	let symbol = isNative && chain === 'solana' ? 'SOL' : null;
 	let logo = null;
 	let decimals = isNative ? (chain === 'solana' ? 9 : 18) : null;
 	let unitPrice = 0;
+	// The chain of the first wallet that actually holds this asset, which beats
+	// any default when the caller did not pin one.
+	let holdingChainId = null;
 
 	for (let i = 0; i < chainWallets.length; i++) {
 		const w = chainWallets[i];
@@ -625,6 +661,7 @@ async function handleAsset(req, res) {
 				totalAmount += a;
 				totalUsd += u;
 				if (!unitPrice && a > 0) unitPrice = u / a;
+				if (holdingChainId === null) holdingChainId = w.chain_id ?? null;
 			}
 		} else {
 			const tokens = bal.tokens || [];
@@ -651,29 +688,56 @@ async function handleAsset(req, res) {
 			totalAmount += a;
 			totalUsd += u;
 			if (!unitPrice && a > 0) unitPrice = u / a;
+			if (holdingChainId === null) holdingChainId = w.chain_id ?? null;
 		}
 	}
 
-	// 2) Pull market data + price history from CoinGecko.
-	//    For native: use coin id ("solana" or "ethereum").
+	// 2) Resolve which EVM chain this asset lives on before asking any upstream.
+	//    A pinned chain_id wins, then the chain of the wallets holding it, then
+	//    the caller's first EVM wallet, then the fleet default. This used to be
+	//    hardcoded to Ethereum, so a Base contract (the chain nearly every agent
+	//    wallet runs on) missed at CoinGecko AND at DefiLlama and the page
+	//    reported a real holding as unpriceable.
+	let registry = null;
+	if (chain === 'evm') {
+		chainId = chainId ?? holdingChainId ?? chainWallets[0]?.chain_id ?? DEFAULT_EVM_CHAIN_ID;
+		registry = evmChainMarket(chainId);
+		if (isNative) symbol = symbol || registry?.nativeSymbol || 'ETH';
+	}
+
+	// 3) Pull market data + price history from CoinGecko.
+	//    For native: use the chain's coin id ("solana", "ethereum", "celo", …).
 	//    For tokens: use /coins/{platform}/contract/{address}.
-	const platform = chain === 'solana' ? 'solana' : 'ethereum';
-	const base = isNative ? `/coins/${platform}` : `/coins/${platform}/contract/${encodeURIComponent(id)}`;
-	let { market, symbol: cgSymbol, logo: cgLogo, points: chartPoints } = await loadMarket({
-		metaPath: isNative
-			? `${base}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`
-			: base,
-		chartPath: `${base}/market_chart?vs_currency=usd&days=${days}`,
-		coingeckoId: isNative ? platform : id,
-		days,
-	});
-	symbol = cgSymbol || symbol;
-	logo = logo || cgLogo;
+	//    A chain no upstream indexes (a testnet) skips the lookup rather than
+	//    asking Ethereum about an address that only exists elsewhere.
+	const platform = chain === 'solana' ? 'solana' : registry?.coingeckoPlatform || null;
+	const nativeCoinId = chain === 'solana' ? 'solana' : registry?.nativeCoingeckoId || null;
+	let market = null;
+	let chartPoints = [];
+	if (platform && (!isNative || nativeCoinId)) {
+		const base = isNative ? `/coins/${nativeCoinId}` : `/coins/${platform}/contract/${encodeURIComponent(id)}`;
+		const loaded = await loadMarket({
+			metaPath: isNative
+				? `${base}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`
+				: base,
+			chartPath: `${base}/market_chart?vs_currency=usd&days=${days}`,
+			coingeckoId: isNative ? nativeCoinId : id,
+			days,
+		});
+		market = loaded.market;
+		chartPoints = loaded.points;
+		symbol = loaded.symbol || symbol;
+		logo = logo || loaded.logo;
+	}
 
 	if (!market?.price_usd) {
 		try {
-			const fb = await fallbackMarket({ chain, id, isNative });
-			if (fb) market = { ...EMPTY_MARKET, ...(market || {}), ...fb };
+			const fb = await fallbackMarket({ chain, id, isNative, chainId });
+			if (fb) {
+				market = { ...EMPTY_MARKET, ...(market || {}), ...fb.market };
+				symbol = symbol || fb.symbol || null;
+				decimals = decimals ?? fb.decimals ?? null;
+			}
 		} catch (e) {
 			console.error('[portfolio/asset] price fallback failed', e?.message);
 		}
@@ -689,6 +753,9 @@ async function handleAsset(req, res) {
 
 	return json(res, 200, {
 		chain,
+		// Which EVM chain the answer is about, so a client can round-trip it back
+		// as `chain_id` and never re-guess. Null on Solana, which has one chain.
+		chain_id: chain === 'evm' ? chainId : null,
 		id,
 		is_native: isNative,
 		// Only a native asset may fall back to the chain's coin symbol. An unknown

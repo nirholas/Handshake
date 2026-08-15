@@ -2665,7 +2665,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "b8b2b70c9e52"
+			"schemaHash": "ccd5ad86fcd2"
 		}
 	],
 	"packages/portfolio-mcp/src/tools/portfolio-history.js": [

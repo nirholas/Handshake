@@ -878,7 +878,7 @@
 						const key = `${w.chain}:native`;
 						let entry = map.get(key);
 						if (!entry) {
-							entry = { key, chain: w.chain, id: 'native', is_native: true, symbol: native.symbol, name: native.name || native.symbol, logo: null, price: native.price || 0, change24h: native.change24h ?? null, amount: 0, usd: 0, wallets: [] };
+							entry = { key, chain: w.chain, chain_id: w.chain_id ?? null, id: 'native', is_native: true, symbol: native.symbol, name: native.name || native.symbol, logo: null, price: native.price || 0, change24h: native.change24h ?? null, amount: 0, usd: 0, wallets: [] };
 							map.set(key, entry);
 						}
 						entry.amount += Number(native.amount || 0);
@@ -891,7 +891,7 @@
 						const key = `${w.chain}:${id.toLowerCase()}`;
 						let entry = map.get(key);
 						if (!entry) {
-							entry = { key, chain: w.chain, id, is_native: false, symbol: t.symbol || id.slice(0, 6), name: t.name || t.symbol || id.slice(0, 8), logo: t.logo || null, price: t.price || 0, change24h: t.change24h ?? null, amount: 0, usd: 0, wallets: [] };
+							entry = { key, chain: w.chain, chain_id: w.chain_id ?? null, id, is_native: false, symbol: t.symbol || id.slice(0, 6), name: t.name || t.symbol || id.slice(0, 8), logo: t.logo || null, price: t.price || 0, change24h: t.change24h ?? null, amount: 0, usd: 0, wallets: [] };
 							map.set(key, entry);
 						}
 						entry.amount += Number(t.amount || 0);
@@ -998,7 +998,8 @@
 						: escapeHtml((r.symbol || '?').slice(0, 3));
 					const chainCls = r.chain === 'solana' ? 'sol' : 'evm';
 					const chainText = r.chain === 'solana' ? 'SOL' : 'EVM';
-					const href = `/dashboard/portfolio/asset?chain=${encodeURIComponent(r.chain)}&id=${encodeURIComponent(r.is_native ? 'native' : r.id)}`;
+					const chainIdQs = r.chain_id ? `&chain_id=${encodeURIComponent(r.chain_id)}` : '';
+					const href = `/dashboard/portfolio/asset?chain=${encodeURIComponent(r.chain)}&id=${encodeURIComponent(r.is_native ? 'native' : r.id)}${chainIdQs}`;
 					return `
 						<a class="h-row" href="${escapeHtml(href)}">
 							<div class="tok-cell">

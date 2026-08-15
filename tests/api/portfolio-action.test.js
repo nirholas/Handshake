@@ -9,6 +9,8 @@
 //   * /asset answered `symbol: "SOL"` for an unknown Solana mint.
 //   * /asset went blank (`market: null`) whenever CoinGecko throttled our
 //     egress IP, instead of falling through to the platform's price lanes.
+//   * every EVM lookup was hardcoded to Ethereum, so a Base contract (the chain
+//     nearly every agent wallet runs on) missed at CoinGecko AND at DefiLlama.
 //
 // The upstreams (DB, RPC, CoinGecko, the price-fallback lanes) are stubbed at
 // their module boundary; everything else in the handler runs for real.
@@ -62,9 +64,10 @@ vi.mock('../../src/solana/sns.js', () => ({
 
 // CoinGecko is the throttled upstream the fallback lanes exist for, so these
 // cases run with it failing unless a test opts in.
-const geckoState = { meta: null, chart: null, fail: true };
+const geckoState = { meta: null, chart: null, fail: true, paths: [] };
 vi.mock('../../api/_lib/coingecko.js', () => ({
 	geckoFetch: vi.fn(async (path) => {
+		geckoState.paths.push(path);
 		if (geckoState.fail) throw Object.assign(new Error('CoinGecko 429'), { status: 429 });
 		return /market_chart/.test(path) ? geckoState.chart : geckoState.meta;
 	}),
@@ -72,6 +75,9 @@ vi.mock('../../api/_lib/coingecko.js', () => ({
 }));
 
 const priceState = { sol: 0, solChange: null, token: null, coin: null };
+// Every URL the contract-price lane requested, so a test can assert WHICH chain
+// was asked rather than only that a price came back.
+const llamaState = { urls: [], byUrl: {} };
 vi.mock('../../api/_lib/sol-price.js', () => ({
 	solPriceUsd: vi.fn(async () => priceState.sol),
 	solChange24hPct: vi.fn(async () => priceState.solChange),
@@ -82,8 +88,19 @@ vi.mock('../../api/_lib/market/token-market.js', () => ({
 vi.mock('../../api/_lib/market-fallbacks.js', () => ({
 	fetchCoinPriceUsdOrNull: vi.fn(async () => priceState.coin),
 }));
+// Runs each source's real `parse` against a canned payload, so a test asserts
+// the exact upstream URL the handler built (the chain prefix is the whole point).
 vi.mock('../../src/shared/failover-fetch.js', () => ({
-	fetchFirstOrNull: vi.fn(async () => priceState.coin),
+	fetchFirstOrNull: vi.fn(async (sources) => {
+		for (const s of sources) {
+			llamaState.urls.push(s.url);
+			const payload = llamaState.byUrl[s.url];
+			if (payload === undefined) continue;
+			const out = await s.parse({ ok: true, status: 200, json: async () => payload });
+			if (out != null) return out;
+		}
+		return null;
+	}),
 }));
 
 // The signing path must never reach a real RPC or a real key.
@@ -149,6 +166,9 @@ beforeEach(() => {
 	geckoState.fail = true;
 	geckoState.meta = null;
 	geckoState.chart = null;
+	geckoState.paths = [];
+	llamaState.urls = [];
+	llamaState.byUrl = {};
 	priceState.sol = 0;
 	priceState.solChange = null;
 	priceState.token = null;
@@ -243,6 +263,80 @@ describe('asset pricing', () => {
 	it('validates chain and id before anything else', async () => {
 		expect((await get('/api/portfolio/asset?chain=bitcoin&id=native', { action: 'asset' })).statusCode).toBe(400);
 		expect((await get('/api/portfolio/asset?chain=solana', { action: 'asset' })).statusCode).toBe(400);
+	});
+
+	it('rejects a malformed chain_id', async () => {
+		const r = await get('/api/portfolio/asset?chain=evm&id=native&chain_id=abc', { action: 'asset' });
+		expect(r.statusCode).toBe(400);
+		expect(body(r).error).toBe('validation_error');
+	});
+});
+
+// The EVM asset lane used to ask Ethereum about every contract, whatever chain
+// the wallet was on. Base is the default for an agent wallet, so the single
+// most common EVM holding on the platform came back unpriced and unlabelled.
+describe('asset EVM chain routing', () => {
+	const EVM_WALLET = '0x' + 'ab'.repeat(20);
+	const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+
+	function withEvmWallet(chainId) {
+		sqlState.agent = { id: AGENT_ID, name: 'A', wallet_address: EVM_WALLET, chain_id: chainId, meta: {} };
+		balanceState.byAddress[EVM_WALLET] = {
+			native: { symbol: 'ETH', amount: 0, usd: 0 },
+			tokens: [{ contract: USDC_BASE, symbol: null, decimals: null, amount: 25, usd: 0 }],
+		};
+	}
+
+	it('prices a Base contract on Base, not on Ethereum', async () => {
+		withEvmWallet(8453);
+		llamaState.byUrl[`https://coins.llama.fi/prices/current/base:${USDC_BASE.toLowerCase()}`] = {
+			coins: { [`base:${USDC_BASE.toLowerCase()}`]: { price: 0.9996, symbol: 'USDC', decimals: 6 } },
+		};
+		const r = await get(`/api/portfolio/asset?chain=evm&id=${USDC_BASE}`, { action: 'asset' });
+		expect(r.statusCode).toBe(200);
+		const b = body(r);
+		expect(b.chain_id).toBe(8453);
+		expect(b.market.price_usd).toBe(0.9996);
+		// Labelled from the price lane rather than the 0x83..2913 stub.
+		expect(b.symbol).toBe('USDC');
+		expect(b.decimals).toBe(6);
+		// 25 USDC revalued at the lane's price, not the balance provider's $0.
+		expect(b.total_usd).toBeCloseTo(24.99, 2);
+		expect(llamaState.urls.some((u) => u.includes('ethereum:'))).toBe(false);
+		expect(geckoState.paths.some((p) => p.startsWith('/coins/base/contract/'))).toBe(true);
+	});
+
+	it('honors a pinned chain_id over the wallet default', async () => {
+		withEvmWallet(8453);
+		const arb = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+		llamaState.byUrl[`https://coins.llama.fi/prices/current/arbitrum:${arb.toLowerCase()}`] = {
+			coins: { [`arbitrum:${arb.toLowerCase()}`]: { price: 1.0001, symbol: 'USDC', decimals: 6 } },
+		};
+		const b = body(await get(`/api/portfolio/asset?chain=evm&id=${arb}&chain_id=42161`, { action: 'asset' }));
+		expect(b.chain_id).toBe(42161);
+		expect(b.market.price_usd).toBe(1.0001);
+		expect(geckoState.paths.some((p) => p.startsWith('/coins/arbitrum-one/contract/'))).toBe(true);
+	});
+
+	it('asks no upstream at all for a chain nobody indexes', async () => {
+		withEvmWallet(84532);
+		const b = body(await get(`/api/portfolio/asset?chain=evm&id=${USDC_BASE}`, { action: 'asset' }));
+		expect(b.chain_id).toBe(84532);
+		expect(b.market).toBeNull();
+		expect(geckoState.paths).toHaveLength(0);
+		expect(llamaState.urls).toHaveLength(0);
+	});
+
+	it('prices EVM native from the chain gas token, not always ETH', async () => {
+		withEvmWallet(137);
+		priceState.coin = 0.42;
+		const b = body(await get('/api/portfolio/asset?chain=evm&id=native', { action: 'asset' }));
+		expect(b.chain_id).toBe(137);
+		expect(b.symbol).toBe('POL');
+		expect(b.market.price_usd).toBe(0.42);
+		// POL's coin id, not the retired `matic-network` and not `ethereum`.
+		expect(geckoState.paths.some((p) => p.startsWith('/coins/polygon-ecosystem-token'))).toBe(true);
+		expect(geckoState.paths.some((p) => p.startsWith('/coins/ethereum'))).toBe(false);
 	});
 });
 

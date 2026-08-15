@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "Portfolio token pages price Base and Arbitrum holdings correctly",
+			"summary": "Opening a token from your portfolio asked Ethereum for the price no matter which chain the token was actually on. Almost every agent wallet runs on Base, so the most common holdings came back with no price, no chart and a shortened contract address instead of a ticker, even though the balance was right there in the list. Each token is now priced on its own chain, labelled with its real symbol and decimals, and native gas tokens use the right coin per chain (POL on Polygon, BNB on BNB Chain, AVAX on Avalanche) instead of always quoting ETH. Chains nobody prices, such as testnets, now say so plainly rather than showing another chain's number.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Scanning a skill purchase QR tells you when your wallet is short",
 			"summary": "Paying for a skill from a phone handed the wallet a transfer even when the wallet held none of the token being asked for, so the buyer signed and watched it fail with whatever cryptic message their wallet chose to print. The checkout now checks the paying wallet first and answers with the exact shortfall, so a wallet that is 0.35 short says so and a wallet that has never held the token says that instead of failing at signing time. The same checkout also stopped pinning the busiest public Solana node ahead of the platform's own faster ones, so building the payment is quicker and survives a throttled node.",
 			"tags": [
