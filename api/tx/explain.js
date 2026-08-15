@@ -1,4 +1,5 @@
 import { Interface } from 'ethers';
+import bs58 from 'bs58';
 import { env } from '../_lib/env.js';
 import { wrap, cors, error, json, readJson, method, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -63,6 +64,20 @@ function parsedTxToExplain(tx) {
 // Cache the finished explanation by chain:sig; a hit serves with zero upstream cost.
 const EXPLAIN_TTL_SECONDS = 24 * 60 * 60; // 24h
 
+// A Solana transaction signature is exactly 64 raw bytes. The base58 alphabet +
+// length check alone is not enough: `'1'.repeat(88)` passes it and decodes to 88
+// zero bytes, which the RPC rejects as a bad argument — so a plainly malformed
+// input was billed as an upstream failure (502) instead of answered as the client
+// fault (400) it is. Decode and measure instead of counting characters.
+function isSolanaSignature(sig) {
+	if (!/^[1-9A-HJ-NP-Za-km-z]{64,96}$/.test(sig)) return false;
+	try {
+		return bs58.decode(sig).length === 64;
+	} catch {
+		return false;
+	}
+}
+
 const ERC20_TRANSFER_TOPIC =
 	'0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const erc20Iface = new Interface([
@@ -92,7 +107,7 @@ export default wrap(async (req, res) => {
 	if (!sig) return error(res, 400, 'bad_request', 'sig required');
 	// Validate the signature shape before forwarding to a keyed upstream so a
 	// malformed value is rejected here, not bounced through Helius/Alchemy.
-	if (chain === 'solana' && !/^[1-9A-HJ-NP-Za-km-z]{64,96}$/.test(sig)) {
+	if (chain === 'solana' && !isSolanaSignature(sig)) {
 		return error(res, 400, 'bad_request', 'sig must be a base58 transaction signature');
 	}
 	if (chain === 'evm' && !/^0x[0-9a-fA-F]{64}$/.test(sig)) {
@@ -223,7 +238,7 @@ export default wrap(async (req, res) => {
 		const receipt = receiptJson?.result;
 		const logs = [];
 		for (const log of receipt?.logs || []) {
-			if (log.topics[0] !== ERC20_TRANSFER_TOPIC) continue;
+			if (log?.topics?.[0] !== ERC20_TRANSFER_TOPIC) continue;
 			try {
 				const parsed = erc20Iface.parseLog({ topics: log.topics, data: log.data });
 				logs.push({
