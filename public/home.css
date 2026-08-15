@@ -344,7 +344,13 @@
 		/* ── CAPABILITY STRIP ──────────────────────────────────── */
 		.capability-strip {
 			position: relative;
-			overflow: hidden;
+			/* clip, not hidden: `overflow: hidden` makes this a scroll container, and
+			   Chrome puts every scroll container in the tab order. That handed
+			   keyboard users a stop inside an aria-hidden decorative marquee, which
+			   screen readers announce as nothing at all. `clip` crops identically
+			   without creating a scroller, so the strip is neither tabbable nor
+			   focusable and needs no tabindex to opt out. */
+			overflow: clip;
 			border-top: 1px solid var(--hairline);
 			border-bottom: 1px solid var(--hairline);
 			background: var(--surface-0);

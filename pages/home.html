@@ -363,12 +363,14 @@
 </section>
 
 <!-- ── CAPABILITY STRIP ───────────────────────────────────────────── -->
-<!-- tabindex="-1" is load-bearing: the strip clips a wider-than-viewport track
-     with overflow:hidden, and Chrome puts every such scroll container in the tab
-     order. That made an aria-hidden decorative marquee keyboard-focusable, so
-     keyboard users landed on a stop screen readers announce as nothing at all
-     (axe aria-hidden-focus). The negative tabindex opts the scroller out. -->
-<div class="capability-strip" id="capability-strip" aria-hidden="true" tabindex="-1">
+<!-- No tabindex here on purpose: the strip is decorative and aria-hidden, so it
+     must be unreachable, and `tabindex="-1"` does not achieve that. It only
+     removes the element from sequential navigation while leaving it
+     programmatically focusable, which axe still reports as aria-hidden-focus.
+     The strip stays out of the tab order because its CSS clips with
+     `overflow: clip` rather than `hidden`, so it never becomes the scroll
+     container Chrome would make focusable. See public/home.css. -->
+<div class="capability-strip" id="capability-strip" aria-hidden="true">
 	<div class="cap-fade cap-fade--l"></div>
 	<div class="cap-track">
 		<div class="cap-inner">
