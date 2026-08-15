@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "The trading and MCP docs now match what the code and the live API actually do",
+      "summary": "An audit of eight documentation pages ran every command they print and checked every claim against the code behind it, then corrected what had drifted. The biggest one was in the trading tutorial: the command it gave you for verifying a fleet's fills on-chain asked for a field the leaderboard does not publish, so it returned an empty explorer link for every agent and the verification step could not be completed at all. It now uses the fields that exist, linking both legs of each trade straight to Solscan, and it skips agents whose wallet has not been provisioned yet instead of building a URL that goes nowhere. The MCP tool safety page undercounted the tools that share a name across two servers, which matters because that collision is exactly why a trust policy has to key on the namespaced id; it now lists all nine and prints a command that re-derives the list so it cannot go stale again. The MCP tool catalog itself had drifted from its source and was serving outdated descriptions for three tools, on a page whose whole promise is that it is generated from source and cannot drift; it has been regenerated. The package extraction guide had every version in its roster out of date along with its build and test columns, and still described a publisher field as missing that was set some time ago. The 10 SOL trading experiment page stated a risk rule in absolute terms that contradicted the setup script it tells you to run, which read as a bug in one of the two; the rule now carries the scope the code actually applies.",
+      "tags": [
+        "docs",
+        "fix"
+      ],
+      "link": "/docs/mcp-safety"
+    },
+    {
+      "date": "2026-08-15",
       "title": "The AgenC task room explains itself now, instead of showing a wall of raw error text",
       "summary": "The task room renders every task a wallet has posted on the AgenC coordination protocol as a 3D agent driven by its live on-chain state. It has been rebuilt around the moments where it used to leave you stuck. An unreadable wallet address, a Solana outage, and a dropped connection all used to print the raw server reply into an otherwise empty page; each now gets its own explanation, a Retry button, and a link to the docs on posting a task, and the room keeps retrying by itself when the fault is upstream and stops when it is something only you can fix. A wallet with no tasks says so and offers to check the other cluster instead of leaving you guessing. While a load is in flight you get skeleton cards rather than the word loading, and a line above the grid tells you how many tasks are showing, on which cluster, and when they were last refreshed. Card status colors now match the states the chain actually reports, so a task in progress or awaiting validation is no longer left uncolored, and each card links to its account on Solana Explorer. On a phone the wallet field no longer runs off the edge of the screen, the title no longer sits under the site logo, both form fields are labelled for screen readers, and every control has a visible focus ring. The room also stops running a 3D viewer for every card at once: avatars load as their cards come into view, up to eight at a time, and are released when you scroll past, which keeps a large board from stalling the browser and stops off-screen cards polling the chain for nothing.",
       "tags": [
@@ -10,6 +20,16 @@
         "fix"
       ],
       "link": "/agenc/room"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "The embed and sharing tutorials now describe the surfaces that actually exist",
+      "summary": "An audit of eight beginner tutorials found several describing features the platform does not have. The avatar-swap tutorial sent readers to Widget Studio for a body swap it cannot do, through a gallery with filters, preview buttons, and a 'Bust cache' save dialog that were never built; it now documents the real one-click swap in the agent editor's Outfit panel, and explains why nothing needs a cache purge. The sharing tutorial claimed rich social previews came from the plain agent URL, which actually serves a generic card, and described a headless renderer, a 24-hour image cache, a 'Refresh preview image' button, and a private-profile toggle that do not exist; it now points at the real share URL that carries the agent's name, description, and card, and explains what genuinely controls discoverability. The AR tutorial's iframe example used an address that returns 404 for an avatar id. The embed quickstart showed an agent ID in the wrong format, overstated the bundle size, and had the effect of the shadow DOM backwards. The docs-world tutorial gained the search palette it never mentioned, and the greeting tutorial now warns that the editor's Greeting field is not what makes an embed talk. Five page descriptions were corrected too, including one promising knobs the tutorial never covered.",
+      "tags": [
+        "docs",
+        "fix"
+      ],
+      "link": "/tutorials/swap-avatar-in-studio"
     },
     {
       "date": "2026-08-15",
