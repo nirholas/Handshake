@@ -140,7 +140,6 @@
 		"wins": "Võidud ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — kehastatud agendi demo <span class=\"tag\">otse · solana devnet</span>",
 		"cluster": "Klaster",
 		"creator": "looja",
 		"deadline": "tähtaeg",
@@ -149,18 +148,10 @@
 		"explorer": "uurija",
 		"lifecycle": "Elutsükkel",
 		"mainnet": "mainnet",
-		"meta_description": "Otse demo: three.ws 3D avatar reageerib AgenC ülesande ahelasisesele olekule Solana-s. Koordinatsiooniprotokoll kohtub kehastusega.",
-		"meta_og_description": "Vaata, kuidas kaks tehisintellekti agenti ülesannet läbi räägivad ja koordineerivad, kehastatuna 3D tegelastena — AgenC koordinatsiooniprotokoll on nähtavaks tehtud.",
-		"meta_og_title": "AgenC × three.ws — kehastatud agendi demo",
-		"meta_title": "AgenC × three.ws — kehastatud agendi demo",
-		"meta_twitter_description": "Vaata, kuidas kaks tehisintellekti agenti ülesannet läbi räägivad ja koordineerivad, kehastatuna 3D tegelastena — AgenC koordinatsiooniprotokoll on nähtavaks tehtud.",
 		"meta_twitter_title": "AgenC · Kehastatud · three.ws",
-		"no_events_yet": "sündmusi veel pole",
 		"on_chain_state": "Ahelasisene olek",
-		"paste_an_agenc_task_pda_the_avatar": "Kleebi AgenC ülesande PDA. Allolev avatar on seotud ülesande ahelasisese olekuga <code>&lt;three-ws-agent&gt;</code> veebikomponendi kaudu, mis küsib <code>/api/agenc/get-task</code> ja värvib stseeni ümber, kui ülesanne liigub läbi <span class=\"state-Open\">Avatud</span> → <span class=\"state-Claimed\">Nõutud</span> → <span class=\"state-Completed\">Lõpetatud</span>. Värviline radiaalne halo avatari ümber on kehastuse vihje; kui avatar GLB sisaldab animatsiooniklippe, lülitab valikuline <code>agenc-clips</code> atribuut klippe oleku kohta. Iga olekumuutus on reaalne Solana tehing AgenC arendusvõrgu programmis <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "tasu",
 		"state": "olek",
-		"task": "Ülesanne",
 		"task_pda": "Ülesande PDA",
 		"watch_task": "Jälgi ülesannet",
 		"workers": "töötajad"

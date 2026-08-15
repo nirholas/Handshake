@@ -140,7 +140,6 @@
 		"wins": "Àwọn ìṣẹ́gun ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — àfihàn aṣojú tí ó ní ara <span class=\"tag\">láàyè · solana devnet</span>",
 		"cluster": "Ìdìpọ̀",
 		"creator": "ẹlẹ́dàá",
 		"deadline": "àkókò ìparí",
@@ -149,18 +148,10 @@
 		"explorer": "aṣàwárí",
 		"lifecycle": "Ìgbésẹ̀",
 		"mainnet": "mainnet",
-		"meta_description": "Àfihàn láàyè: àwòrán 3D three.ws kan ṣe ìdáhùn sí ipò tó wà lórí àwọ̀n iṣẹ́ AgenC kan lórí Solana. Ìlànà ìfọwọ́sowọ́pọ̀ pàdé ìfarahàn.",
-		"meta_og_description": "Wo àwọn aṣojú AI méjì tí wọ́n ṣe ìfọ̀rọ̀wérọ̀ àti ìfọwọ́sowọ́pọ̀ lórí iṣẹ́ kan, tí wọ́n farahàn bíi àwọn èèyàn 3D — ìlànà ìfọwọ́sowọ́pọ̀ AgenC tí ó hàn kedere.",
-		"meta_og_title": "AgenC × three.ws — àfihàn aṣojú tí ó farahàn",
-		"meta_title": "AgenC × three.ws — àfihàn aṣojú tí ó farahàn",
-		"meta_twitter_description": "Wo àwọn aṣojú AI méjì tí wọ́n ṣe ìfọ̀rọ̀wérọ̀ àti ìfọwọ́sowọ́pọ̀ lórí iṣẹ́ kan, tí wọ́n farahàn bíi àwọn èèyàn 3D — ìlànà ìfọwọ́sowọ́pọ̀ AgenC tí ó hàn kedere.",
 		"meta_twitter_title": "AgenC · Tí ó farahàn · three.ws",
-		"no_events_yet": "kò sí ìṣẹ̀lẹ̀ kankan bẹ́ẹ̀",
 		"on_chain_state": "Ipò lórí àwọ̀n",
-		"paste_an_agenc_task_pda_the_avatar": "Límọ́ PDA iṣẹ́ AgenC kan. Àwòrán tó wà ní ìsàlẹ̀ yìí so mọ́ ipò iṣẹ́ náà lórí àwọ̀n nípasẹ̀ èròjà wẹ́ẹ̀bù <code>&lt;three-ws-agent&gt;</code>, èyí tó ń ṣàyẹ̀wò <code>/api/agenc/get-task</code> tí ó sì tún yí àwọ̀ ojú ìran padà bí iṣẹ́ náà ṣe ń lọ láti <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Ìmọ́lẹ̀ yípo tí ó ní àwọ̀ yípo àwòrán náà ni àmì ìfarahàn; bí àwòrán GLB bá ní àwọn fídíò ìṣàfihàn, àtùnmọ̀ <code>agenc-clips</code> tí ó jẹ́ àṣàyàn yóò yí àwọn fídíò padà nípa ipò kọ̀ọ̀kan. Ìyípadà ipò kọ̀ọ̀kan jẹ́ ìṣòwò Solana gidi lórí ètò AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "Èrè",
 		"state": "Ipò",
-		"task": "Iṣẹ́",
 		"task_pda": "PDA Iṣẹ́",
 		"watch_task": "Wo iṣẹ́",
 		"workers": "Àwọn òṣìṣẹ́"

@@ -140,7 +140,6 @@
 		"wins": "အောင်ပွဲများ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — embodied agent demo <span class=\"tag\">တိုက်ရိုက် · solana devnet</span>",
 		"cluster": "ကလပ်စတာ",
 		"creator": "ဖန်တီးသူ",
 		"deadline": "နောက်ဆုံးရက်",
@@ -149,18 +148,10 @@
 		"explorer": "explorer",
 		"lifecycle": "သက်တမ်းစက်ဝန်း",
 		"mainnet": "mainnet",
-		"meta_description": "တိုက်ရိုက် demo: Solana ပေါ်ရှိ AgenC task ၏ on-chain အခြေအနေကို three.ws 3D avatar က တုံ့ပြန်သည်။ ပူးပေါင်းဆောင်ရွက်မှု protocol သည် embodiment နှင့် တွေ့ဆုံသည်။",
-		"meta_og_description": "AI agent နှစ်ခုက task တစ်ခုကို ညှိနှိုင်းပြီး ပူးပေါင်းဆောင်ရွက်သည်ကို 3D ဇာတ်ကောင်များအဖြစ် ပုံဖော်ထားသည်ကို ကြည့်ရှုပါ။ — AgenC ပူးပေါင်းဆောင်ရွက်မှု protocol ကို မြင်သာအောင် ပြုလုပ်ထားခြင်း။",
-		"meta_og_title": "AgenC × three.ws — embodied agent demo",
-		"meta_title": "AgenC × three.ws — embodied agent demo",
-		"meta_twitter_description": "AI agent နှစ်ခုက task တစ်ခုကို ညှိနှိုင်းပြီး ပူးပေါင်းဆောင်ရွက်သည်ကို 3D ဇာတ်ကောင်များအဖြစ် ပုံဖော်ထားသည်ကို ကြည့်ရှုပါ။ — AgenC ပူးပေါင်းဆောင်ရွက်မှု protocol ကို မြင်သာအောင် ပြုလုပ်ထားခြင်း။",
 		"meta_twitter_title": "AgenC · Embodied · three.ws",
-		"no_events_yet": "မည်သည့် event မှ မရှိသေးပါ",
 		"on_chain_state": "On-chain အခြေအနေ",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC task PDA ကို ကူးထည့်ပါ။ အောက်ပါ avatar သည် <code>&lt;three-ws-agent&gt;</code> web component မှတစ်ဆင့် task ၏ on-chain အခြေအနေနှင့် ချိတ်ဆက်ထားသည်။ ၎င်းသည် <code>/api/agenc/get-task</code> ကို စစ်ဆေးပြီး task သည် <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> အဆင့်များသို့ ရွေ့လျားသွားသည်နှင့်အမျှ မြင်ကွင်းကို အရောင်ပြောင်းပေးသည်။ avatar ပတ်လည်ရှိ အရောင်စုံ အဝိုင်းပုံ halo သည် embodiment အချက်ပြဖြစ်သည်။ အကယ်၍ avatar GLB တွင် animation clips များ ပါဝင်ပါက၊ ရွေးချယ်နိုင်သော <code>agenc-clips</code> attribute သည် အခြေအနေအလိုက် clips များကို ပြောင်းလဲပေးသည်။ အခြေအနေပြောင်းလဲမှုတိုင်းသည် AgenC devnet program <code>6UcJzbT…2ab</code> ပေါ်ရှိ အမှန်တကယ် Solana transaction တစ်ခုဖြစ်သည်။ <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ဆုလာဘ်",
 		"state": "အခြေအနေ",
-		"task": "လုပ်ငန်း",
 		"task_pda": "Task PDA",
 		"watch_task": "task ကို ကြည့်ရှုပါ",
 		"workers": "လုပ်သားများ"

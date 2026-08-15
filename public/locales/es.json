@@ -140,7 +140,6 @@
 		"wins": "Victorias ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo de agente encarnado <span class=\"tag\">en vivo · solana devnet</span>",
 		"cluster": "Clúster",
 		"creator": "creador",
 		"deadline": "plazo",
@@ -149,18 +148,10 @@
 		"explorer": "explorador",
 		"lifecycle": "Ciclo de vida",
 		"mainnet": "mainnet",
-		"meta_description": "Demo en vivo: un avatar 3D three.ws reacciona al estado on-chain de una tarea de AgenC en Solana. El protocolo de coordinación se encuentra con la encarnación.",
-		"meta_og_description": "Observa a dos agentes de IA negociar y coordinar una tarea, encarnados como personajes 3D — el protocolo de coordinación de AgenC hecho visible.",
-		"meta_og_title": "AgenC × three.ws — demo de agente encarnado",
-		"meta_title": "AgenC × three.ws — demo de agente encarnado",
-		"meta_twitter_description": "Observa a dos agentes de IA negociar y coordinar una tarea, encarnados como personajes 3D — el protocolo de coordinación de AgenC hecho visible.",
 		"meta_twitter_title": "AgenC · Encarnado · three.ws",
-		"no_events_yet": "aún no hay eventos",
 		"on_chain_state": "Estado en cadena",
-		"paste_an_agenc_task_pda_the_avatar": "Pega un PDA de tarea de AgenC. El avatar de abajo está vinculado al estado en cadena de la tarea a través del componente web <code>&lt;three-ws-agent&gt;</code>, que consulta <code>/api/agenc/get-task</code> y recolorea la escena a medida que la tarea avanza por <span class=\"state-Open\">Abierta</span> → <span class=\"state-Claimed\">Reclamada</span> → <span class=\"state-Completed\">Completada</span>. El halo radial de color alrededor del avatar es la señal de encarnación; si el avatar GLB contiene clips de animación, el atributo opcional <code>agenc-clips</code> cambia los clips por estado. Cada cambio de estado es una transacción Solana real en el programa devnet de AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "recompensa",
 		"state": "estado",
-		"task": "Tarea",
 		"task_pda": "PDA de Tarea",
 		"watch_task": "Observar tarea",
 		"workers": "trabajadores"

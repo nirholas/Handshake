@@ -140,7 +140,6 @@
 		"wins": "ชัยชนะ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — สาธิตเอเจนต์ที่มีตัวตน <span class=\"tag\">สด · solana devnet</span>",
 		"cluster": "คลัสเตอร์",
 		"creator": "ผู้สร้าง",
 		"deadline": "กำหนดเส้นตาย",
@@ -149,18 +148,10 @@
 		"explorer": "สำรวจ",
 		"lifecycle": "วงจรชีวิต",
 		"mainnet": "mainnet",
-		"meta_description": "สาธิตสด: อวตาร 3D three.ws ตอบสนองต่อสถานะบนเชนของงาน AgenC บน Solana โปรโตคอลการประสานงานพบกับการมีตัวตน.",
-		"meta_og_description": "ดูเอเจนต์ AI สองตัวเจรจาและประสานงานงาน โดยแสดงเป็นตัวละคร 3D — โปรโตคอลการประสานงาน AgenC ที่มองเห็นได้",
-		"meta_og_title": "AgenC × three.ws — สาธิตเอเจนต์ที่มีตัวตน",
-		"meta_title": "AgenC × three.ws — สาธิตเอเจนต์ที่มีตัวตน",
-		"meta_twitter_description": "ดูเอเจนต์ AI สองตัวเจรจาและประสานงานงาน โดยแสดงเป็นตัวละคร 3D — โปรโตคอลการประสานงาน AgenC ที่มองเห็นได้",
 		"meta_twitter_title": "AgenC · มีตัวตน · three.ws",
-		"no_events_yet": "ยังไม่มีเหตุการณ์",
 		"on_chain_state": "สถานะบนเชน",
-		"paste_an_agenc_task_pda_the_avatar": "วาง PDA งาน AgenC ตัวอวตารด้านล่างนี้เชื่อมโยงกับสถานะบนเชนของงานผ่านคอมโพเนนต์เว็บ <code>&lt;three-ws-agent&gt;</code> ซึ่งเรียกข้อมูล <code>/api/agenc/get-task</code> และเปลี่ยนสีฉากเมื่อภารกิจเคลื่อนที่ผ่าน <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> ฮาโลสีรอบตัวอวตารคือสัญญาณการมีตัวตน; หากตัวอวตาร GLB มีคลิปอนิเมชัน แอตทริบิวต์ <code>agenc-clips</code> จะเปลี่ยนคลิปตามสถานะ การเปลี่ยนแปลงสถานะแต่ละครั้งคือ Solana การทำธุรกรรมจริงบนโปรแกรม AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "รางวัล",
 		"state": "สถานะ",
-		"task": "งาน",
 		"task_pda": "PDA งาน",
 		"watch_task": "ดูงาน",
 		"workers": "ผู้ทำงาน"

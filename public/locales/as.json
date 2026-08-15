@@ -140,7 +140,6 @@
 		"wins": "জয় ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — মূর্তমান এজেণ্টৰ ডেমো <span class=\"tag\">লাইভ · ছ'লানা ডেভনেট</span>",
 		"cluster": "ক্লাষ্টাৰ",
 		"creator": "সৃষ্টিকৰ্তা",
 		"deadline": "সময়সীমা",
@@ -149,18 +148,10 @@
 		"explorer": "এক্সপ্ল'ৰাৰ",
 		"lifecycle": "জীৱনচক্ৰ",
 		"mainnet": "mainnet",
-		"meta_description": "লাইভ ডেমো: এটা three.ws 3D অৱতাৰে Solana ত থকা এটা AgenC টাস্কৰ অন-চেইন স্থিতিৰ প্ৰতি সঁহাৰি দিয়ে। সমন্বয় প্ৰটোকল আৰু মূৰ্তকৰণৰ সংগম।",
-		"meta_og_description": "দুটা AI এজেণ্টক চাওক যিয়ে এটা টাস্ক আলোচনা আৰু সমন্বয় কৰে, 3D চৰিত্ৰ হিচাপে মূৰ্তকৰণ কৰা হৈছে — AgenC সমন্বয় প্ৰটোকল দৃশ্যমান কৰা হৈছে।",
-		"meta_og_title": "AgenC × three.ws — মূৰ্ত এজেণ্ট ডেমো",
-		"meta_title": "AgenC × three.ws — মূৰ্ত এজেণ্ট ডেমো",
-		"meta_twitter_description": "দুটা AI এজেণ্টক চাওক যিয়ে এটা টাস্ক আলোচনা আৰু সমন্বয় কৰে, 3D চৰিত্ৰ হিচাপে মূৰ্তকৰণ কৰা হৈছে — AgenC সমন্বয় প্ৰটোকল দৃশ্যমান কৰা হৈছে।",
 		"meta_twitter_title": "AgenC · মূৰ্ত · three.ws",
-		"no_events_yet": "এতিয়ালৈকে কোনো ইভেণ্ট নাই",
 		"on_chain_state": "অন-চেইন স্থিতি",
-		"paste_an_agenc_task_pda_the_avatar": "এটা AgenC টাস্ক PDA পেষ্ট কৰক। তলৰ অৱতাৰটো <code>&lt;three-ws-agent&gt;</code> ৱেব কম্পোনেণ্টৰ জৰিয়তে টাস্কৰ অন-চেইন স্থিতিৰ সৈতে বান্ধ খাই আছে, যিয়ে <code>/api/agenc/get-task</code> পোল কৰে আৰু টাস্কটো <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> ৰ মাজেৰে আগবাঢ়ি যোৱাৰ লগে লগে দৃশ্যটো পুনৰ ৰং কৰে। অৱতাৰৰ চাৰিওফালে থকা ৰঙীন ৰেডিয়েল হেলো হৈছে মূৰ্তকৰণৰ সংকেত; যদি অৱতাৰ GLB ত এনিমেচন ক্লিপ থাকে, তেন্তে ঐচ্ছিক <code>agenc-clips</code> এট্ৰিবিউটে প্ৰতিটো স্থিতিৰ বাবে ক্লিপ সলনি কৰে। প্ৰতিটো স্থিতিৰ পৰিৱৰ্তন হৈছে AgenC devnet প্ৰগ্ৰাম <code>6UcJzbT…2ab</code> ত এটা প্ৰকৃত Solana লেনদেন। <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "পুৰস্কাৰ",
 		"state": "স্থিতি",
-		"task": "টাস্ক",
 		"task_pda": "টাস্ক PDA",
 		"watch_task": "টাস্ক চাওক",
 		"workers": "ৱৰ্কাৰসকল"

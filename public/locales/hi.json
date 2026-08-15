@@ -140,7 +140,6 @@
 		"wins": "जीत ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — एम्बोडीड एजेंट डेमो <span class=\"tag\">लाइव · सोलाना डेवनेट</span>",
 		"cluster": "क्लस्टर",
 		"creator": "निर्माता",
 		"deadline": "समय सीमा",
@@ -149,18 +148,10 @@
 		"explorer": "एक्सप्लोरर",
 		"lifecycle": "लाइफसाइकिल",
 		"mainnet": "मेननेट",
-		"meta_description": "लाइव डेमो: एक three.ws 3D अवतार Solana पर एक AgenC कार्य की ऑन-चेन स्थिति पर प्रतिक्रिया करता है। समन्वय प्रोटोकॉल एम्बोडीड से मिलता है।",
-		"meta_og_description": "दो एआई एजेंटों को एक कार्य पर बातचीत करते और समन्वय करते हुए देखें, 3D पात्रों के रूप में साकार — AgenC समन्वय प्रोटोकॉल को दृश्यमान बनाया गया।",
-		"meta_og_title": "AgenC × three.ws — साकार एजेंट डेमो",
-		"meta_title": "AgenC × three.ws — साकार एजेंट डेमो",
-		"meta_twitter_description": "दो एआई एजेंटों को एक कार्य पर बातचीत करते और समन्वय करते हुए देखें, 3D पात्रों के रूप में साकार — AgenC समन्वय प्रोटोकॉल को दृश्यमान बनाया गया।",
 		"meta_twitter_title": "AgenC · साकार · three.ws",
-		"no_events_yet": "अभी तक कोई इवेंट नहीं",
 		"on_chain_state": "ऑन-चेन स्थिति",
-		"paste_an_agenc_task_pda_the_avatar": "एक AgenC टास्क PDA पेस्ट करें। नीचे दिया गया अवतार <code>&lt;three-ws-agent&gt;</code> वेब कंपोनेंट के माध्यम से टास्क की ऑन-चेन स्थिति से जुड़ा है, जो <code>/api/agenc/get-task</code> को पोल करता है और टास्क के <span class=\"state-Open\">ओपन</span> → <span class=\"state-Claimed\">क्लेम्ड</span> → <span class=\"state-Completed\">कंप्लीटेड</span> होने पर दृश्य को फिर से रंगता है। अवतार के चारों ओर रंगीन रेडियल प्रभामंडल साकार होने का संकेत है; यदि अवतार GLB में एनिमेशन क्लिप्स हैं, तो वैकल्पिक <code>agenc-clips</code> विशेषता प्रत्येक स्थिति के अनुसार क्लिप्स को बदलती है। प्रत्येक स्थिति परिवर्तन AgenC डेवनेट प्रोग्राम <code>6UcJzbT…2ab</code> पर एक वास्तविक Solana ट्रांजेक्शन है। <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "इनाम",
 		"state": "स्थिति",
-		"task": "कार्य",
 		"task_pda": "टास्क PDA",
 		"watch_task": "कार्य देखें",
 		"workers": "कार्यकर्ता"

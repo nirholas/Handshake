@@ -140,7 +140,6 @@
 		"wins": "Nyeremények ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — megtestesült ügynök bemutató <span class=\"tag\">élő · solana devnet</span>",
 		"cluster": "Klaszter",
 		"creator": "alkotó",
 		"deadline": "határidő",
@@ -149,18 +148,10 @@
 		"explorer": "felfedező",
 		"lifecycle": "Életciklus",
 		"mainnet": "mainnet",
-		"meta_description": "Élő bemutató: egy three.ws 3D avatar reagál az AgenC feladat on-chain állapotára Solana. Koordinációs protokoll találkozik a megtestesüléssel.",
-		"meta_og_description": "Nézd meg, ahogy két AI ügynök tárgyal és koordinál egy feladatot, 3D karakterekként megtestesülve — az AgenC koordinációs protokoll láthatóvá téve.",
-		"meta_og_title": "AgenC × three.ws — megtestesült ügynök bemutató",
-		"meta_title": "AgenC × three.ws — megtestesült ügynök bemutató",
-		"meta_twitter_description": "Nézd meg, ahogy két AI ügynök tárgyal és koordinál egy feladatot, 3D karakterekként megtestesülve — az AgenC koordinációs protokoll láthatóvá téve.",
 		"meta_twitter_title": "AgenC · Megtestesült · three.ws",
-		"no_events_yet": "még nincsenek események",
 		"on_chain_state": "On-chain állapot",
-		"paste_an_agenc_task_pda_the_avatar": "Illessz be egy AgenC feladat PDA-t. Az alábbi avatar a feladat on-chain állapotához van kötve a <code>&lt;three-ws-agent&gt;</code> webkomponens által, amely lekérdezi a <code>/api/agenc/get-task</code>-t és átszínezi a jelenetet, ahogy a feladat áthalad a <span class=\"state-Open\">Nyitott</span> → <span class=\"state-Claimed\">Igényelt</span> → <span class=\"state-Completed\">Befejezett</span> állapotokon. Az avatar körüli színes sugárzó halo a megtestesülés jelzése; ha az avatar GLB animációs klipeket tartalmaz, az opcionális <code>agenc-clips</code> attribútum állapotonként váltja a klipeket. Minden állapotváltozás egy valós Solana tranzakció az AgenC devnet program <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "jutalom",
 		"state": "állapot",
-		"task": "Feladat",
 		"task_pda": "Feladat PDA",
 		"watch_task": "Feladat megtekintése",
 		"workers": "munkások"

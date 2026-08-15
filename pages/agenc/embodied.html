@@ -71,6 +71,15 @@
 				gap: 20px;
 				align-items: start;
 			}
+			/* A grid item's default `min-width: auto` refuses to shrink below its
+			   content's min-content width, and the embed snippet below is one long
+			   unbreakable `white-space: pre` line. That pinned the single-column
+			   layout at ~546px, so every phone-width visitor got a page that scrolled
+			   sideways and cut off the right edge of the cards. The snippet already
+			   scrolls inside its own box; this lets it. */
+			.grid > * {
+				min-width: 0;
+			}
 			@media (max-width: 820px) {
 				.grid {
 					grid-template-columns: 1fr;
@@ -88,6 +97,13 @@
 				width: 100%;
 				height: 100%;
 				display: block;
+			}
+			/* The viewer's own focusable canvas lives inside a shadow root, so a
+			   keyboard user tabbing into the 3D scene gets no ring from the page's
+			   :focus-visible rule. Draw it on the container instead. */
+			.viewer:focus-within {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
 			}
 			.card {
 				background: var(--card);
@@ -122,8 +138,8 @@
 			}
 			/* AgenC's on-chain TaskState labels verbatim (see api/agenc/[action].js
 			   `taskStateLabel`). Two of them contain a space, so they are matched on a
-			   data attribute: a `class="state-In Progress"` would silently split into
-			   two useless class names and render unstyled. */
+			   data attribute: a `state-In Progress` class name would silently split
+			   into two useless class names and render unstyled. */
 			[data-state='Open'] {
 				color: var(--accent);
 			}
@@ -660,6 +676,14 @@
 					b.className = 'pick';
 					b.dataset.pda = t.taskPda;
 					b.setAttribute('aria-pressed', String(watching?.pda === t.taskPda));
+					// Read out as one sentence rather than as a run-together address and
+					// reward, which is what the visible two-column layout would dictate.
+					b.setAttribute(
+						'aria-label',
+						[`Watch task ${t.taskPda}`, t.rewardLabel, t.lastActivityAt ? `last activity ${ago(t.lastActivityAt)}` : null]
+							.filter(Boolean)
+							.join(', '),
+					);
 					const code = document.createElement('code');
 					code.textContent = shorten(t.taskPda, 10);
 					const when = document.createElement('span');

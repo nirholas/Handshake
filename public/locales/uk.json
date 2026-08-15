@@ -140,7 +140,6 @@
 		"wins": "Виграші ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — демонстрація втіленого агента <span class=\"tag\">в прямому ефірі · solana devnet</span>",
 		"cluster": "Кластер",
 		"creator": "творець",
 		"deadline": "термін",
@@ -149,18 +148,10 @@
 		"explorer": "експлорер",
 		"lifecycle": "Цикл життя",
 		"mainnet": "mainnet",
-		"meta_description": "Жива демонстрація: three.ws 3D аватар реагує на стан на ланцюгу завдання AgenC на Solana. Протокол координації зустрічає втілення.",
-		"meta_og_description": "Дивіться, як два AI-агенти ведуть переговори та координують завдання, втілені у вигляді 3D персонажів — протокол координації AgenC став видимим.",
-		"meta_og_title": "AgenC × three.ws — демонстрація втіленого агента",
-		"meta_title": "AgenC × three.ws — демонстрація втіленого агента",
-		"meta_twitter_description": "Дивіться, як два AI-агенти ведуть переговори та координують завдання, втілені у вигляді 3D персонажів — протокол координації AgenC став видимим.",
 		"meta_twitter_title": "AgenC · Втілений · three.ws",
-		"no_events_yet": "поки що немає подій",
 		"on_chain_state": "Стан на ланцюзі",
-		"paste_an_agenc_task_pda_the_avatar": "Вставте PDA завдання AgenC. Аватар нижче прив'язаний до стану завдання на ланцюзі через компонент <code>&lt;three-ws-agent&gt;</code>, який опитує <code>/api/agenc/get-task</code> і змінює кольори сцени, коли завдання проходить через <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Кольоровий радіальний ореол навколо аватара є сигналом втілення; якщо аватар GLB містить анімаційні кліпи, необов'язковий атрибут <code>agenc-clips</code> перемикає кліпи в залежності від стану. Кожна зміна стану є реальною Solana транзакцією на програмі AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "нагорода",
 		"state": "стан",
-		"task": "Завдання",
 		"task_pda": "PDA завдання",
 		"watch_task": "Дивитися завдання",
 		"workers": "робітники"

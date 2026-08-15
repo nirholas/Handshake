@@ -140,7 +140,6 @@
 		"wins": "Zmage ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo utelešenega agenta <span class=\"tag\">v živo · solana devnet</span>",
 		"cluster": "Grozd",
 		"creator": "ustvarjalec",
 		"deadline": "rok",
@@ -149,18 +148,10 @@
 		"explorer": "raziskovalec",
 		"lifecycle": "Življenjski cikel",
 		"mainnet": "mainnet",
-		"meta_description": "Demo v živo: 3D avatar three.ws se odziva na stanje na verigi naloge AgenC na Solana. Koordinacijski protokol sreča utelešenje.",
-		"meta_og_description": "Opazujte, kako se dva AI agenta pogajata in usklajujeta nalogo, utelešena kot 3D liki — koordinacijski protokol AgenC je postal viden.",
-		"meta_og_title": "AgenC × three.ws — demo utelešenega agenta",
-		"meta_title": "AgenC × three.ws — demo utelešenega agenta",
-		"meta_twitter_description": "Opazujte, kako se dva AI agenta pogajata in usklajujeta nalogo, utelešena kot 3D liki — koordinacijski protokol AgenC je postal viden.",
 		"meta_twitter_title": "AgenC · Utelešeno · three.ws",
-		"no_events_yet": "še ni dogodkov",
 		"on_chain_state": "Stanje na verigi",
-		"paste_an_agenc_task_pda_the_avatar": "Prilepite AgenC nalogo PDA. Spodnji avatar je vezan na stanje naloge na verigi prek spletne komponente <code>&lt;three-ws-agent&gt;</code>, ki poizveduje <code>/api/agenc/get-task</code> in prebarva sceno, ko se naloga premika skozi <span class=\"state-Open\">Odprto</span> → <span class=\"state-Claimed\">Prevzeto</span> → <span class=\"state-Completed\">Dokončano</span>. Barvni radialni halo okoli avatarja je znak utelešenja; če avatar GLB vsebuje animacijske posnetke, izbirni atribut <code>agenc-clips</code> preklaplja posnetke glede na stanje. Vsaka sprememba stanja je prava Solana transakcija na programu AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "nagrada",
 		"state": "stanje",
-		"task": "Naloga",
 		"task_pda": "Naloga PDA",
 		"watch_task": "Spremljaj nalogo",
 		"workers": "delavci"

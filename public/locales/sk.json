@@ -140,7 +140,6 @@
 		"wins": "Výhry ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo embodied agenta <span class=\"tag\">naživo · solana devnet</span>",
 		"cluster": "Klaster",
 		"creator": "tvorca",
 		"deadline": "termín",
@@ -149,18 +148,10 @@
 		"explorer": "prieskumník",
 		"lifecycle": "Životný cyklus",
 		"mainnet": "hlavná sieť",
-		"meta_description": "Živé demo: three.ws 3D avatar reaguje na on-chain stav úlohy AgenC na Solana. Koordinačný protokol sa stretáva s embodied.",
-		"meta_og_description": "Sledujte, ako sa dva AI agenti dohadujú a koordinujú úlohu, zhmotnení ako 3D postavy — protokol koordinácie AgenC sprístupnený.",
-		"meta_og_title": "AgenC × three.ws — demo zhmotneného agenta",
-		"meta_title": "AgenC × three.ws — demo zhmotneného agenta",
-		"meta_twitter_description": "Sledujte, ako sa dva AI agenti dohadujú a koordinujú úlohu, zhmotnení ako 3D postavy — protokol koordinácie AgenC sprístupnený.",
 		"meta_twitter_title": "AgenC · Zhmotnený · three.ws",
-		"no_events_yet": "žiadne udalosti zatiaľ",
 		"on_chain_state": "Stav na blockchaine",
-		"paste_an_agenc_task_pda_the_avatar": "Vložte PDA úlohy AgenC. Avatar nižšie je viazaný na stav úlohy na blockchaine prostredníctvom komponentu <code>&lt;three-ws-agent&gt;</code>, ktorý získava údaje z <code>/api/agenc/get-task</code> a prefarbuje scénu, keď úloha prechádza cez <span class=\"state-Open\">Otvorené</span> → <span class=\"state-Claimed\">Prebraté</span> → <span class=\"state-Completed\">Dokončené</span>. Farebný radikálny halo okolo avatara je signál zhmotnenia; ak avatar GLB obsahuje animačné klipy, voliteľný <code>agenc-clips</code> atribút prepína klipy podľa stavu. Každá zmena stavu je skutočná Solana transakcia na programe AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "odmena",
 		"state": "stav",
-		"task": "Úloha",
 		"task_pda": "PDA úlohy",
 		"watch_task": "Sledujte úlohu",
 		"workers": "pracovníci"

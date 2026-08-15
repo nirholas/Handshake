@@ -140,7 +140,6 @@
 		"wins": "വിജയങ്ങൾ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "ഏജൻസി × three.ws — എൻബോഡീഡ് ഏജന്റ് ഡെമോ <span class=\"tag\">ലൈവ് · സൊലാന ഡെവ്‌നെറ്റ്</span>",
 		"cluster": "ക്ലസ്റ്റർ",
 		"creator": "സ്രഷ്ടാവ്",
 		"deadline": "ഡെഡ്‌ലൈൻ",
@@ -149,18 +148,10 @@
 		"explorer": "എക്സ്പ്ലോറർ",
 		"lifecycle": "പ്രവർത്തനചക്രം",
 		"mainnet": "മെയിൻനെറ്റ്",
-		"meta_description": "തത്സമയ ഡെമോ: ഒരു three.ws 3D അവതാർ, Solana-ലെ ഒരു AgenC ടാസ്കിന്റെ ഓൺ-ചെയിൻ അവസ്ഥയോട് പ്രതികരിക്കുന്നു. കോർഡിനേഷൻ പ്രോട്ടോക്കോൾ ഭൗതിക രൂപം കൈക്കൊള്ളുന്നു.",
-		"meta_og_description": "രണ്ട് AI ഏജന്റുകൾ ഒരു ടാസ്ക് ചർച്ച ചെയ്യുകയും ഏകോപിപ്പിക്കുകയും ചെയ്യുന്നത് കാണുക, അവ 3D കഥാപാത്രങ്ങളായി ഭൗതിക രൂപം കൈക്കൊള്ളുന്നു — AgenC കോർഡിനേഷൻ പ്രോട്ടോക്കോൾ ദൃശ്യമാക്കുന്നു.",
-		"meta_og_title": "AgenC × three.ws — ഭൗതിക രൂപമുള്ള ഏജന്റ് ഡെമോ",
-		"meta_title": "AgenC × three.ws — ഭൗതിക രൂപമുള്ള ഏജന്റ് ഡെമോ",
-		"meta_twitter_description": "രണ്ട് AI ഏജന്റുകൾ ഒരു ടാസ്ക് ചർച്ച ചെയ്യുകയും ഏകോപിപ്പിക്കുകയും ചെയ്യുന്നത് കാണുക, അവ 3D കഥാപാത്രങ്ങളായി ഭൗതിക രൂപം കൈക്കൊള്ളുന്നു — AgenC കോർഡിനേഷൻ പ്രോട്ടോക്കോൾ ദൃശ്യമാക്കുന്നു.",
 		"meta_twitter_title": "AgenC · ഭൗതിക രൂപം · three.ws",
-		"no_events_yet": "ഇതുവരെ ഇവന്റുകളൊന്നും ഇല്ല",
 		"on_chain_state": "ഓൺ-ചെയിൻ അവസ്ഥ",
-		"paste_an_agenc_task_pda_the_avatar": "ഒരു AgenC ടാസ്ക് PDA ഒട്ടിക്കുക. താഴെയുള്ള അവതാർ, <code>&lt;three-ws-agent&gt;</code> വെബ് കോമ്പോണന്റ് വഴി ടാസ്കിന്റെ ഓൺ-ചെയിൻ അവസ്ഥയുമായി ബന്ധിപ്പിച്ചിരിക്കുന്നു. ഇത് <code>/api/agenc/get-task</code> പോൾ ചെയ്യുകയും, ടാസ്ക് <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> എന്നീ ഘട്ടങ്ങളിലൂടെ കടന്നുപോകുമ്പോൾ രംഗത്തിന് നിറം മാറ്റുകയും ചെയ്യുന്നു. അവതാറിന് ചുറ്റുമുള്ള വർണ്ണാഭമായ റേഡിയൽ ഹാലോ ഭൗതിക രൂപത്തിന്റെ സൂചനയാണ്; അവതാർ GLB-ൽ ആനിമേഷൻ ക്ലിപ്പുകൾ അടങ്ങിയിട്ടുണ്ടെങ്കിൽ, ഓപ്ഷണൽ <code>agenc-clips</code> ആട്രിബ്യൂട്ട് ഓരോ അവസ്ഥയ്ക്കും അനുസരിച്ച് ക്ലിപ്പുകൾ മാറ്റുന്നു. ഓരോ അവസ്ഥാ മാറ്റവും AgenC ഡെവ്‌നെറ്റ് പ്രോഗ്രാം <code>6UcJzbT…2ab</code>-ലെ ഒരു യഥാർത്ഥ Solana ഇടപാടാണ്. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "പ്രതിഫലം",
 		"state": "അവസ്ഥ",
-		"task": "ടാസ്ക്",
 		"task_pda": "ടാസ്ക് PDA",
 		"watch_task": "ടാസ്ക് നിരീക്ഷിക്കുക",
 		"workers": "വർക്കർമാർ"

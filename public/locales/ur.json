@@ -140,7 +140,6 @@
 		"wins": "کامیابیاں ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — جسمانی ایجنٹ کا ڈیمو <span class=\"tag\">براہ راست · سولانا ڈیو نیٹ</span>",
 		"cluster": "کلسٹر",
 		"creator": "تخلیق کار",
 		"deadline": "آخری تاریخ",
@@ -149,18 +148,10 @@
 		"explorer": "ایکسپلورر",
 		"lifecycle": "زندگی کا چکر",
 		"mainnet": "مین نیٹ",
-		"meta_description": "براہ راست ڈیمو: ایک three.ws 3D اوتار Solana پر ایک AgenC کام کی آن چین حالت پر رد عمل ظاہر کرتا ہے۔ ہم آہنگی پروٹوکول جسمانی شکل سے ملتا ہے۔",
-		"meta_og_description": "دو AI ایجنٹس کو ایک کام پر بات چیت کرتے اور ہم آہنگی کرتے ہوئے دیکھیں، 3D کرداروں کی شکل میں — AgenC ہم آہنگی پروٹوکول کو واضح کیا گیا ہے۔",
-		"meta_og_title": "AgenC × three.ws — جسمانی ایجنٹ کا مظاہرہ",
-		"meta_title": "AgenC × three.ws — جسمانی ایجنٹ کا مظاہرہ",
-		"meta_twitter_description": "دو AI ایجنٹس کو ایک کام پر بات چیت کرتے اور ہم آہنگی کرتے ہوئے دیکھیں، 3D کرداروں کی شکل میں — AgenC ہم آہنگی پروٹوکول کو واضح کیا گیا ہے۔",
 		"meta_twitter_title": "AgenC · جسمانی · three.ws",
-		"no_events_yet": "ابھی تک کوئی ایونٹس نہیں",
 		"on_chain_state": "آن چین حالت",
-		"paste_an_agenc_task_pda_the_avatar": "ایک AgenC ٹاسک PDA پیسٹ کریں۔ نیچے والا اوتار اس کام کی آن چین حالت سے <code>&lt;three-ws-agent&gt;</code> ویب کمپوننٹ کے ذریعے جڑا ہوا ہے، جو <code>/api/agenc/get-task</code> کو پول کرتا ہے اور جیسے ہی کام <span class=\"state-Open\">کھلا</span> → <span class=\"state-Claimed\">دعویٰ کیا گیا</span> → <span class=\"state-Completed\">مکمل</span> ہوتا ہے، منظر کو دوبارہ رنگ دیتا ہے۔ اوتار کے گرد رنگین شعاعی ہالہ جسمانی اشارہ ہے؛ اگر اوتار GLB میں متحرک کلپس شامل ہیں، تو اختیاری <code>agenc-clips</code> خصوصیت ہر حالت کے مطابق کلپس کو تبدیل کرتی ہے۔ ہر حالت کی تبدیلی ایک حقیقی Solana ٹرانزیکشن ہے جو AgenC ڈیو نیٹ پروگرام <code>6UcJzbT…2ab</code> پر ہوتی ہے۔ <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "انعام",
 		"state": "حالت",
-		"task": "کام",
 		"task_pda": "کام PDA",
 		"watch_task": "کام دیکھیں",
 		"workers": "ورکرز"

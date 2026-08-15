@@ -140,7 +140,6 @@
 		"wins": "विजय ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — सजीव एजंट डेमो <span class=\"tag\">थेट · सोलाना डेवनेट</span>",
 		"cluster": "क्लस्टर",
 		"creator": "निर्माता",
 		"deadline": "अखेरची तारीख",
@@ -149,18 +148,10 @@
 		"explorer": "एक्सप्लोरर",
 		"lifecycle": "आयुष्य चक्र",
 		"mainnet": "मुख्य नेटवर्क",
-		"meta_description": "थेट डेमो: three.ws 3D अवतार Solana वर AgenC कार्याच्या ऑन-चेन स्थितीला प्रतिसाद देतो. समन्वय प्रोटोकॉल सजीवतेला भेटतो.",
-		"meta_og_description": "दोन AI एजंट्सना एक कार्यावर चर्चा करताना आणि समन्वय साधताना पहा, 3D पात्रांमध्ये साकारलेले — AgenC समन्वय प्रोटोकॉल स्पष्ट झाला आहे.",
-		"meta_og_title": "AgenC × three.ws — साकारलेला एजंट डेमो",
-		"meta_title": "AgenC × three.ws — साकारलेला एजंट डेमो",
-		"meta_twitter_description": "दोन AI एजंट्सना एक कार्यावर चर्चा करताना आणि समन्वय साधताना पहा, 3D पात्रांमध्ये साकारलेले — AgenC समन्वय प्रोटोकॉल स्पष्ट झाला आहे.",
 		"meta_twitter_title": "AgenC · साकारलेला · three.ws",
-		"no_events_yet": "अद्याप कोणतीही घटना नाही",
 		"on_chain_state": "ऑन-चेन स्थिती",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC कार्य PDA पेस्ट करा. खालील अवतार कार्याच्या ऑन-चेन स्थितीशी <code>&lt;three-ws-agent&gt;</code> वेब घटकाद्वारे बंधित आहे, जो <code>/api/agenc/get-task</code> चा पोल करतो आणि कार्य <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> मध्ये हलत असताना दृश्याचे रंग बदलतो. अवताराभोवतीचा रंगीत त्रिकोणीय वलय साकारलेले संकेत आहे; जर अवतार GLB अ‍ॅनिमेशन क्लिप्स समाविष्ट करत असेल, तर वैकल्पिक <code>agenc-clips</code> गुणधर्म स्थितीप्रमाणे क्लिप्स बदलतो. प्रत्येक स्थिती बदल हा AgenC devnet प्रोग्रामवरील एक वास्तविक Solana व्यवहार आहे <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "बक्षीस",
 		"state": "स्थिती",
-		"task": "कार्य",
 		"task_pda": "कार्य PDA",
 		"watch_task": "कार्य पहा",
 		"workers": "कामगार"

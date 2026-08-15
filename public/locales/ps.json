@@ -140,7 +140,6 @@
 		"wins": "بریاوې ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — د مجسم شوي ایجنټ ډیمو <span class=\"tag\">ژوندی · سولانا ډیونټ</span>",
 		"cluster": "کلستر",
 		"creator": "جوړونکی",
 		"deadline": "وروستۍ نیټه",
@@ -149,18 +148,10 @@
 		"explorer": "سپړونکی",
 		"lifecycle": "د ژوند دوره",
 		"mainnet": "مینټ",
-		"meta_description": "ژوندی ډیمو: یو three.ws 3D اوتار د Solana پر AgenC دندې د زنځیر پر حالت ته غبرګون ښیې. د همغږۍ پروتوکول له تجسم سره یوځای کیږي.",
-		"meta_og_description": "دوه AI ایجنټان وګورئ چې د یوې دندې په اړه خبرې او همغږي کوي، د 3D کرکټرونو په توګه مجسم شوي — د AgenC همغږۍ پروتوکول ښکاره شوی.",
-		"meta_og_title": "AgenC × three.ws — د مجسم شوي ایجنټ ډیمو",
-		"meta_title": "AgenC × three.ws — د مجسم شوي ایجنټ ډیمو",
-		"meta_twitter_description": "دوه AI ایجنټان وګورئ چې د یوې دندې په اړه خبرې او همغږي کوي، د 3D کرکټرونو په توګه مجسم شوي — د AgenC همغږۍ پروتوکول ښکاره شوی.",
 		"meta_twitter_title": "AgenC · مجسم شوی · three.ws",
-		"no_events_yet": "تر اوسه کومه پیښه نشته",
 		"on_chain_state": "د زنځیر پر حالت",
-		"paste_an_agenc_task_pda_the_avatar": "د AgenC دندې PDA پیسټ کړئ. لاندې اوتار د دندې د زنځیر پر حالت پورې د <code>&lt;three-ws-agent&gt;</code> ویب اجزا له لارې تړلی دی، کوم چې <code>/api/agenc/get-task</code> پلټي او صحنه بیا رنګوي لکه څنګه چې دنده د <span class=\"state-Open\">خلاص</span> → <span class=\"state-Claimed\">ادعا شوی</span> → <span class=\"state-Completed\">بشپړ شوی</span> له لارې حرکت کوي. د اوتار شاوخوا رنګین شعاعي هالو د تجسم نښه ده؛ که اوتار GLB انیمیشن کلپونه ولري، اختیاري <code>agenc-clips</code> ځانګړتیا د هر حالت لپاره کلپونه بدلوي. د هر حالت بدلون د AgenC ډیونټ پروګرام <code>6UcJzbT…2ab</code> پر یو ریښتینی Solana لیږد دی. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "انعام",
 		"state": "حالت",
-		"task": "دنده",
 		"task_pda": "دندې PDA",
 		"watch_task": "دنده وګورئ",
 		"workers": "کارګران"

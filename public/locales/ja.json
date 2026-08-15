@@ -140,7 +140,6 @@
 		"wins": "勝利 ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — 身体化エージェントデモ <span class=\"tag\">ライブ · Solana devnet</span>",
 		"cluster": "クラスター",
 		"creator": "クリエイター",
 		"deadline": "期限",
@@ -149,18 +148,10 @@
 		"explorer": "エクスプローラー",
 		"lifecycle": "ライフサイクル",
 		"mainnet": "mainnet",
-		"meta_description": "ライブデモ：Solana上のAgenCタスクのオンチェーン状態に反応するthree.wsの3Dアバター。協調プロトコルと身体化の出会い。",
-		"meta_og_description": "2体のAIエージェントが3Dキャラクターとして具現化され、タスクを交渉・調整する様子をご覧ください。AgenC協調プロトコルが可視化されます。",
-		"meta_og_title": "AgenC × three.ws — 具現化エージェントデモ",
-		"meta_title": "AgenC × three.ws — 具現化エージェントデモ",
-		"meta_twitter_description": "2体のAIエージェントが3Dキャラクターとして具現化され、タスクを交渉・調整する様子をご覧ください。AgenC協調プロトコルが可視化されます。",
 		"meta_twitter_title": "AgenC · 具現化 · three.ws",
-		"no_events_yet": "イベントなし",
 		"on_chain_state": "オンチェーン状態",
-		"paste_an_agenc_task_pda_the_avatar": "AgenCタスクPDAを貼り付けてください。下のアバターは、<code>&lt;three-ws-agent&gt;</code>ウェブコンポーネントを介してタスクのオンチェーン状態にバインドされています。このコンポーネントは<code>/api/agenc/get-task</code>をポーリングし、タスクが<span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>と進行するにつれてシーンの色を変更します。アバターの周りの色付きの放射状のハローは具現化の合図です。アバターGLBにアニメーションクリップが含まれている場合、オプションの<code>agenc-clips</code>属性は状態ごとにクリップを切り替えます。各状態変更は、AgenC開発ネットプログラム<code>6UcJzbT…2ab</code>上での実際のSolanaトランザクションです。<a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "報酬",
 		"state": "状態",
-		"task": "タスク",
 		"task_pda": "タスクPDA",
 		"watch_task": "タスクを監視",
 		"workers": "ワーカー"

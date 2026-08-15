@@ -140,7 +140,6 @@
 		"wins": "Pergalės ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — įkūnyto agento demonstracija <span class=\"tag\">tiesiogiai · Solana devnet</span>",
 		"cluster": "Klasteris",
 		"creator": "kūrėjas",
 		"deadline": "terminas",
@@ -149,18 +148,10 @@
 		"explorer": "naršyklė",
 		"lifecycle": "Gyvavimo ciklas",
 		"mainnet": "mainnet",
-		"meta_description": "Tiesioginė demonstracija: three.ws 3D avataro reakcija į AgenC užduoties grandinės būseną Solana. Koordinavimo protokolas susitinka su įkūnijimu.",
-		"meta_og_description": "Stebėkite, kaip du AI agentai derasi ir koordinuoja užduotį, įkūnyti kaip 3D personažai – AgenC koordinavimo protokolas tampa matomas.",
-		"meta_og_title": "AgenC × three.ws — įkūnyto agento demonstracija",
-		"meta_title": "AgenC × three.ws — įkūnyto agento demonstracija",
-		"meta_twitter_description": "Stebėkite, kaip du AI agentai derasi ir koordinuoja užduotį, įkūnyti kaip 3D personažai – AgenC koordinavimo protokolas tampa matomas.",
 		"meta_twitter_title": "AgenC · Įkūnytas · three.ws",
-		"no_events_yet": "įvykių dar nėra",
 		"on_chain_state": "Grandinės būsena",
-		"paste_an_agenc_task_pda_the_avatar": "Įklijuokite AgenC užduoties PDA. Žemiau esantis avataro vaizdas yra susietas su užduoties grandinės būsena per <code>&lt;three-ws-agent&gt;</code> žiniatinklio komponentą, kuris apklausia <code>/api/agenc/get-task</code> ir pakeičia scenos spalvas, kai užduotis pereina per <span class=\"state-Open\">Atvira</span> → <span class=\"state-Claimed\">Pasiimta</span> → <span class=\"state-Completed\">Užbaigta</span>. Spalvotas radialinis aureolė aplink avatarą yra įkūnijimo ženklas; jei avatare GLB yra animacijos klipų, pasirenkamas <code>agenc-clips</code> atributas keičia klipus pagal būseną. Kiekvienas būsenos pasikeitimas yra tikra Solana transakcija AgenC devnet programoje <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "atlygis",
 		"state": "būsena",
-		"task": "Užduotis",
 		"task_pda": "Užduoties PDA",
 		"watch_task": "Stebėti užduotį",
 		"workers": "darbuotojai"

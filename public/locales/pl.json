@@ -140,7 +140,6 @@
 		"wins": "Wygrane ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo agenta uosobionego <span class=\"tag\">na żywo · solana devnet</span>",
 		"cluster": "Klaster",
 		"creator": "twórca",
 		"deadline": "termin",
@@ -149,18 +148,10 @@
 		"explorer": "eksplorator",
 		"lifecycle": "Cykl życia",
 		"mainnet": "mainnet",
-		"meta_description": "Demo na żywo: three.ws 3D awatar reaguje na stan on-chain zadania AgenC na Solana. Protokół koordynacji spotyka uosobienie.",
-		"meta_og_description": "Obejrzyj, jak dwa agenty AI negocjują i koordynują zadanie, wcieleni w postacie 3D — protokół koordynacji AgenC na wyciągnięcie ręki.",
-		"meta_og_title": "AgenC × three.ws — demo agenta wcielonego",
-		"meta_title": "AgenC × three.ws — demo agenta wcielonego",
-		"meta_twitter_description": "Obejrzyj, jak dwa agenty AI negocjują i koordynują zadanie, wcieleni w postacie 3D — protokół koordynacji AgenC na wyciągnięcie ręki.",
 		"meta_twitter_title": "AgenC · Wcielony · three.ws",
-		"no_events_yet": "brak wydarzeń",
 		"on_chain_state": "Stan on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Wklej PDA zadania AgenC. Awatar poniżej jest powiązany ze stanem zadania on-chain za pomocą komponentu web <code>&lt;three-ws-agent&gt;</code>, który pobiera dane z <code>/api/agenc/get-task</code> i zmienia kolor sceny, gdy zadanie przechodzi przez <span class=\"state-Open\">Otwarte</span> → <span class=\"state-Claimed\">Zgłoszone</span> → <span class=\"state-Completed\">Zakończone</span>. Kolorowa promieniująca aura wokół awatara to sygnał wcielenia; jeśli awatar GLB zawiera klipy animacji, opcjonalny atrybut <code>agenc-clips</code> zmienia klipy w zależności od stanu. Każda zmiana stanu to rzeczywista Solana transakcja w programie devnet AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "nagroda",
 		"state": "stan",
-		"task": "Zadanie",
 		"task_pda": "PDA zadania",
 		"watch_task": "Obejrzyj zadanie",
 		"workers": "pracownicy"

@@ -140,7 +140,6 @@
 		"wins": "Intsinzi ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo y'umukozi ufite umubiri <span class=\"tag\">live · solana devnet</span>",
 		"cluster": "Cluster",
 		"creator": "urema",
 		"deadline": "itariki ntarengwa",
@@ -149,18 +148,10 @@
 		"explorer": "explorer",
 		"lifecycle": "Icyiciro cy'ubuzima",
 		"mainnet": "mainnet",
-		"meta_description": "Igerageza ry'ako kanya: avatar ya 3D ya three.ws yitwara bitewe n'imiterere y'ibiri kuri blockchain y'akazi ka AgenC kuri Solana. Protocol yo guhuza ibikorwa ihura no kugira ishusho.",
-		"meta_og_description": "Reba abakozi ba AI babiri baganira kandi bagahuza akazi, bafite ishusho y'ibishushanyo mbonera bya 3D — protocol yo guhuza ibikorwa ya AgenC igaragajwe.",
-		"meta_og_title": "AgenC × three.ws — Igerageza ry'umukozi ufite ishusho",
-		"meta_title": "AgenC × three.ws — Igerageza ry'umukozi ufite ishusho",
-		"meta_twitter_description": "Reba abakozi ba AI babiri baganira kandi bagahuza akazi, bafite ishusho y'ibishushanyo mbonera bya 3D — protocol yo guhuza ibikorwa ya AgenC igaragajwe.",
 		"meta_twitter_title": "AgenC · Ifite ishusho · three.ws",
-		"no_events_yet": "Nta bikorwa biraba",
 		"on_chain_state": "Imiterere y'ibiri kuri blockchain",
-		"paste_an_agenc_task_pda_the_avatar": "Shyiramo PDA y'akazi ka AgenC. Avatar iri hepfo ifitanye isano n'imiterere y'akazi iri kuri blockchain binyuze muri component ya web <code>&lt;three-ws-agent&gt;</code>, ikurura amakuru kuri <code>/api/agenc/get-task</code> kandi igahindura amabara y'aho ibera uko akazi kagenda gaca muri <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Uruziga rw'amabara ruzengurutse avatar ni ikimenyetso cyo kugaragara; niba avatar GLB irimo amashusho y'imigendekere, attribute ya <code>agenc-clips</code> ihindura amashusho bitewe n'imiterere. Buri guhinduka kw'imiterere ni transaction nyayo ya Solana kuri porogaramu ya AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "Igihembo",
 		"state": "Imiterere",
-		"task": "Akazi",
 		"task_pda": "PDA y'akazi",
 		"watch_task": "Reba akazi",
 		"workers": "Abakozi"

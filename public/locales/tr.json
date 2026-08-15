@@ -140,7 +140,6 @@
 		"wins": "Kazançlar ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — bedenlenmiş ajan demosu <span class=\"tag\">canlı · solana devnet</span>",
 		"cluster": "Küme",
 		"creator": "yaratıcı",
 		"deadline": "son tarih",
@@ -149,18 +148,10 @@
 		"explorer": "keşif",
 		"lifecycle": "Yaşam döngüsü",
 		"mainnet": "ana ağ",
-		"meta_description": "Canlı demo: bir three.ws 3D avatar, Solana üzerindeki bir AgenC görevinin zincir üzerindeki durumuna tepki veriyor. Koordinasyon protokolü bedenlenme ile buluşuyor.",
-		"meta_og_description": "İki AI ajanının bir görevi müzakere edip koordine ettiğini izleyin, 3D karakterler olarak bedenlenmiş — AgenC koordinasyon protokolü görünür hale geliyor.",
-		"meta_og_title": "AgenC × three.ws — bedenlenmiş ajan demosu",
-		"meta_title": "AgenC × three.ws — bedenlenmiş ajan demosu",
-		"meta_twitter_description": "İki AI ajanının bir görevi müzakere edip koordine ettiğini izleyin, 3D karakterler olarak bedenlenmiş — AgenC koordinasyon protokolü görünür hale geliyor.",
 		"meta_twitter_title": "AgenC · Bedenlenmiş · three.ws",
-		"no_events_yet": "henüz etkinlik yok",
 		"on_chain_state": "Zincir üstü durum",
-		"paste_an_agenc_task_pda_the_avatar": "Bir AgenC görev PDA'sı yapıştırın. Aşağıdaki avatar, <code>&lt;three-ws-agent&gt;</code> web bileşeni aracılığıyla görevin zincir üstü durumu ile bağlıdır, bu bileşen <code>/api/agenc/get-task</code>'i sorgular ve görev <span class=\"state-Open\">Açık</span> → <span class=\"state-Claimed\">Talep Edildi</span> → <span class=\"state-Completed\">Tamamlandı</span> aşamalarında sahneyi yeniden renklendirir. Avatarın etrafındaki renkli dairesel halo, bedenlenme ipucudur; eğer avatar GLB animasyon klipleri içeriyorsa, isteğe bağlı <code>agenc-clips</code> niteliği duruma göre klipleri değiştirir. Her durum değişikliği, AgenC devnet programında gerçek bir Solana işlem <code>6UcJzbT…2ab</code>'dir. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ödül",
 		"state": "durum",
-		"task": "Görev",
 		"task_pda": "Görev PDA'sı",
 		"watch_task": "Görevi izle",
 		"workers": "çalışanlar"

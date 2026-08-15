@@ -140,7 +140,6 @@
 		"wins": "Kemenangan ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo agen terwujud <span class=\"tag\">langsung · solana devnet</span>",
 		"cluster": "Kluster",
 		"creator": "pencipta",
 		"deadline": "batas waktu",
@@ -149,18 +148,10 @@
 		"explorer": "penjelajah",
 		"lifecycle": "Siklus hidup",
 		"mainnet": "mainnet",
-		"meta_description": "Demo langsung: avatar 3D three.ws bereaksi terhadap keadaan on-chain dari tugas AgenC di Solana. Protokol koordinasi bertemu dengan perwujudan.",
-		"meta_og_description": "Saksikan dua agen AI bernegosiasi dan mengoordinasikan tugas, diwujudkan sebagai karakter 3D — protokol koordinasi AgenC yang terlihat.",
-		"meta_og_title": "AgenC × three.ws — demo agen yang diwujudkan",
-		"meta_title": "AgenC × three.ws — demo agen yang diwujudkan",
-		"meta_twitter_description": "Saksikan dua agen AI bernegosiasi dan mengoordinasikan tugas, diwujudkan sebagai karakter 3D — protokol koordinasi AgenC yang terlihat.",
 		"meta_twitter_title": "AgenC · Diwujudkan · three.ws",
-		"no_events_yet": "belum ada acara",
 		"on_chain_state": "Status on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Tempel PDA tugas AgenC. Avatar di bawah terikat pada status on-chain tugas melalui komponen web <code>&lt;three-ws-agent&gt;</code>, yang memanggil <code>/api/agenc/get-task</code> dan mengubah warna adegan saat tugas bergerak melalui <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Halo radial berwarna di sekitar avatar adalah isyarat perwujudan; jika avatar GLB berisi klip animasi, atribut opsional <code>agenc-clips</code> mengganti klip sesuai status. Setiap perubahan status adalah transaksi Solana nyata di program devnet AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "hadiah",
 		"state": "status",
-		"task": "Tugas",
 		"task_pda": "PDA Tugas",
 		"watch_task": "Saksikan tugas",
 		"workers": "pekerja"

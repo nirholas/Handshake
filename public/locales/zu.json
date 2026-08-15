@@ -140,7 +140,6 @@
 		"wins": "Ukunqoba ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — idemo ye-agent ebonakalayo <span class=\"tag\">bukhoma · solana devnet</span>",
 		"cluster": "Iqoqo",
 		"creator": "umdali",
 		"deadline": "umkhawulo wesikhathi",
@@ -149,18 +148,10 @@
 		"explorer": "umhloli",
 		"lifecycle": "Ujikelezo lwempilo",
 		"mainnet": "mainnet",
-		"meta_description": "Idemo ebukhoma: i-avatar ye-3D ye-three.ws esabela esimweni esiku-chain somsebenzi we-AgenC ku-Solana. Iphrothokholi yokuxhumanisa ihlangana nokubonakala.",
-		"meta_og_description": "Buka ama-ejenti amabili e-AI exoxisana futhi exhumanisa umsebenzi, abonakala njengezinhlamvu ze-3D — iphrothokholi yokuxhumanisa ye-AgenC eyenziwe yabonakala.",
-		"meta_og_title": "AgenC × three.ws — idemo ye-ejenti ebonakalayo",
-		"meta_title": "AgenC × three.ws — idemo ye-ejenti ebonakalayo",
-		"meta_twitter_description": "Buka ama-ejenti amabili e-AI exoxisana futhi exhumanisa umsebenzi, abonakala njengezinhlamvu ze-3D — iphrothokholi yokuxhumanisa ye-AgenC eyenziwe yabonakala.",
 		"meta_twitter_title": "AgenC · Ebonakalayo · three.ws",
-		"no_events_yet": "azikho izehlakalo okwamanje",
 		"on_chain_state": "Isimo esiku-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Namathisela i-PDA yomsebenzi we-AgenC. I-avatar engezansi iboshelwe esimweni esiku-chain somsebenzi ngekhompomenti yewebhu <code>&lt;three-ws-agent&gt;</code> ehlela <code>/api/agenc/get-task</code> futhi iphinde ifake imibala endaweni njengoba umsebenzi udlula ku-<span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. I-halo enemibala eyindilinga ezungeze i-avatar iyisibonakaliso sokubonakala; uma i-avatar GLB iqukethe iziqeshana zokugqwayiza, isici esingakhethwa <code>agenc-clips</code> sishintsha iziqeshana ngesimo ngasinye. Konke ukushintsha kwesimo kuyi-transaction yangempela Solana ohlelweni lwe-AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "umvuzo",
 		"state": "isimo",
-		"task": "Umsebenzi",
 		"task_pda": "I-PDA yomsebenzi",
 		"watch_task": "Buka umsebenzi",
 		"workers": "abasebenzi"

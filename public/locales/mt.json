@@ -140,7 +140,6 @@
 		"wins": "Rebħiet ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo ta' aġent inkorporat <span class=\"tag\">ħaj · solana devnet</span>",
 		"cluster": "Cluster",
 		"creator": "kreatur",
 		"deadline": "skadenza",
@@ -149,18 +148,10 @@
 		"explorer": "esploratur",
 		"lifecycle": "Ċiklu tal-ħajja",
 		"mainnet": "mainnet",
-		"meta_description": "Demo ħaj: avatar 3D three.ws jirreaġixxi għall-istat on-chain ta' task ta' AgenC fuq Solana. Protokoll ta' koordinazzjoni jiltaqa' mal-inkorporazzjoni.",
-		"meta_og_description": "Ara żewġ aġenti tal-AI jinnegozjaw u jikkoordinaw task, inkorporati bħala karattri 3D — il-protokoll ta' koordinazzjoni ta' AgenC magħmul viżibbli.",
-		"meta_og_title": "AgenC × three.ws — demo ta' aġent inkorporat",
-		"meta_title": "AgenC × three.ws — demo ta' aġent inkorporat",
-		"meta_twitter_description": "Ara żewġ aġenti tal-AI jinnegozjaw u jikkoordinaw task, inkorporati bħala karattri 3D — il-protokoll ta' koordinazzjoni ta' AgenC magħmul viżibbli.",
 		"meta_twitter_title": "AgenC · Inkorporat · three.ws",
-		"no_events_yet": "għad m'hemmx avvenimenti",
 		"on_chain_state": "Stat on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Pejstja PDA ta' task ta' AgenC. L-avatar t'hawn taħt huwa marbut mal-istat on-chain tat-task permezz tal-komponent web <code>&lt;three-ws-agent&gt;</code>, li jippolla <code>/api/agenc/get-task</code> u jerġa' jikkulurixxi x-xena hekk kif it-task tgħaddi minn <span class=\"state-Open\">Miftuħ</span> → <span class=\"state-Claimed\">Mitlub</span> → <span class=\"state-Completed\">Kompletat</span>. Il-halo radjali kkulurit madwar l-avatar huwa l-indikazzjoni tal-inkorporazzjoni; jekk l-avatar GLB fih clips tal-animazzjoni, l-attribut fakultattiv <code>agenc-clips</code> jaqleb il-clips skont l-istat. Kull bidla fl-istat hija transazzjoni Solana reali fuq il-programm devnet ta' AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "premju",
 		"state": "stat",
-		"task": "Task",
 		"task_pda": "Task PDA",
 		"watch_task": "Ara task",
 		"workers": "ħaddiema"

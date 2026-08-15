@@ -140,7 +140,6 @@
 		"wins": "Mmeri ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — ngosipụta onye nnọchiteanya nwere ahụ <span class=\"tag\">na-agba · solana devnet</span>",
 		"cluster": "Ụyọkọ",
 		"creator": "onye okike",
 		"deadline": "oge ngwụcha",
@@ -149,18 +148,10 @@
 		"explorer": "Ihe nyocha",
 		"lifecycle": "Usoro ndụ",
 		"mainnet": "mainnet",
-		"meta_description": "Ngosipụta dị ndụ: otu avatar 3D nke three.ws na-emeghachi omume na ọnọdụ on-chain nke ọrụ AgenC na Solana. Usoro nhazi na-ezute ịbụ ahụ.",
-		"meta_og_description": "Lelee ka ndị ọrụ AI abụọ na-ekwurịta okwu ma na-ahazi ọrụ, ndị e mere ka ha bụrụ agwa 3D — usoro nhazi AgenC mere ka ọ pụta ìhè.",
-		"meta_og_title": "AgenC × three.ws — ngosipụta onye ọrụ e mere ka ọ bụrụ ahụ",
-		"meta_title": "AgenC × three.ws — ngosipụta onye ọrụ e mere ka ọ bụrụ ahụ",
-		"meta_twitter_description": "Lelee ka ndị ọrụ AI abụọ na-ekwurịta okwu ma na-ahazi ọrụ, ndị e mere ka ha bụrụ agwa 3D — usoro nhazi AgenC mere ka ọ pụta ìhè.",
 		"meta_twitter_title": "AgenC · Nke nwere ahụ · three.ws",
-		"no_events_yet": "Enweghị ihe omume ọ bụla ka",
 		"on_chain_state": "Ọnọdụ dị na chain",
-		"paste_an_agenc_task_pda_the_avatar": "Tapawa AgenC task PDA. Avatar dị n'okpuru jikọtara na ọnọdụ on-chain nke ọrụ ahụ site na web component <code>&lt;three-ws-agent&gt;</code>, nke na-enyocha <code>/api/agenc/get-task</code> ma na-agbanwe agba nke ihe nkiri ahụ ka ọrụ ahụ na-agafe <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Halo radial nwere agba gburugburu avatar bụ ihe ngosi nke ịbụ ahụ; ọ bụrụ na avatar GLB nwere animation clips, àgwà <code>agenc-clips</code> nhọrọ na-agbanwe clips dịka ọnọdụ ọ bụla si dị. Mgbanwe ọnọdụ ọ bụla bụ ezigbo transaction Solana na mmemme AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "Ụgwọ ọrụ",
 		"state": "Ọnọdụ",
-		"task": "Ọrụ",
 		"task_pda": "Task PDA",
 		"watch_task": "Lelee ọrụ",
 		"workers": "Ndị ọrụ"

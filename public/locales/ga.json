@@ -140,7 +140,6 @@
 		"wins": "Buaiteanna ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — taispeántas gníomhaire corpraithe <span class=\"tag\">beo · solana devnet</span>",
 		"cluster": "Braisle",
 		"creator": "cruthaitheoir",
 		"deadline": "spriocdháta",
@@ -149,18 +148,10 @@
 		"explorer": "taisnéalaí",
 		"lifecycle": "Saolré",
 		"mainnet": "mainnet",
-		"meta_description": "Taispeántas beo: freagraíonn avatar 3D three.ws do staid ar-slabhra de thasc AgenC ar Solana. Buaileann prótacal comhordaithe le corpú.",
-		"meta_og_description": "Féach ar dhá ghníomhaire AI ag idirbheartú agus ag comhordú tasc, corpraithe mar charachtair 3D — prótacal comhordaithe AgenC déanta infheicthe.",
-		"meta_og_title": "AgenC × three.ws — taispeántas gníomhaire corpraithe",
-		"meta_title": "AgenC × three.ws — taispeántas gníomhaire corpraithe",
-		"meta_twitter_description": "Féach ar dhá ghníomhaire AI ag idirbheartú agus ag comhordú tasc, corpraithe mar charachtair 3D — prótacal comhordaithe AgenC déanta infheicthe.",
 		"meta_twitter_title": "AgenC · Corpraithe · three.ws",
-		"no_events_yet": "gan aon imeachtaí fós",
 		"on_chain_state": "Staid ar-slabhra",
-		"paste_an_agenc_task_pda_the_avatar": "Greamaigh PDA tasc AgenC. Tá an t-avatar thíos ceangailte le staid ar-slabhra an tasc tríd an gcomhpháirt gréasáin <code>&lt;three-ws-agent&gt;</code>, a dhéanann fiosrú ar <code>/api/agenc/get-task</code> agus a athdhathaíonn an radharc de réir mar a ghluaiseann an tasc trí <span class=\"state-Open\">Oscailte</span> → <span class=\"state-Claimed\">Éilithe</span> → <span class=\"state-Completed\">Críochnaithe</span>. Is é an halo gathach daite timpeall an avatar an comhartha corpraithe; má tá gearrthóga beochana san avatar GLB, athraíonn an tréith roghnach <code>agenc-clips</code> gearrthóga de réir stáit. Is fíor-idirbheart Solana gach athrú stáit ar chlár devnet AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "luach saothair",
 		"state": "staid",
-		"task": "Tasc",
 		"task_pda": "PDA Tasc",
 		"watch_task": "Breathnaigh ar thasc",
 		"workers": "oibrithe"

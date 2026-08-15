@@ -140,7 +140,6 @@
 		"wins": "Uzvaras ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — iemiesota aģenta demonstrācija <span class=\"tag\">tiešraidē · solana devnet</span>",
 		"cluster": "Klasteris",
 		"creator": "radītājs",
 		"deadline": "termiņš",
@@ -149,18 +148,10 @@
 		"explorer": "pārlūks",
 		"lifecycle": "Dzīves cikls",
 		"mainnet": "mainnet",
-		"meta_description": "Tiešraides demonstrācija: three.ws 3D avatārs reaģē uz AgenC uzdevuma stāvokli ķēdē Solana. Koordinācijas protokols satiekas ar iemiesojumu.",
-		"meta_og_description": "Skatieties, kā divi AI aģenti sarunājas un koordinē uzdevumu, iemiesoti kā 3D tēli — AgenC koordinācijas protokols padarīts redzams.",
-		"meta_og_title": "AgenC × three.ws — iemiesota aģenta demonstrācija",
-		"meta_title": "AgenC × three.ws — iemiesota aģenta demonstrācija",
-		"meta_twitter_description": "Skatieties, kā divi AI aģenti sarunājas un koordinē uzdevumu, iemiesoti kā 3D tēli — AgenC koordinācijas protokols padarīts redzams.",
 		"meta_twitter_title": "AgenC · Iemiesots · three.ws",
-		"no_events_yet": "vēl nav notikumu",
 		"on_chain_state": "Stāvoklis ķēdē",
-		"paste_an_agenc_task_pda_the_avatar": "Ielīmējiet AgenC uzdevuma PDA. Zemāk redzamais avatārs ir piesaistīts uzdevuma stāvoklim ķēdē, izmantojot <code>&lt;three-ws-agent&gt;</code> tīmekļa komponentu, kas aptaujā <code>/api/agenc/get-task</code> un pārkrāso ainu, uzdevumam virzoties cauri <span class=\"state-Open\">Atvērts</span> → <span class=\"state-Claimed\">Pieprasīts</span> → <span class=\"state-Completed\">Pabeigts</span>. Krāsainais radiālais oreols ap avatāru ir iemiesojuma signāls; ja avatārs GLB satur animācijas klipus, izvēles atribūts <code>agenc-clips</code> pārslēdz klipus atkarībā no stāvokļa. Katra stāvokļa maiņa ir reāla Solana transakcija AgenC devnet programmā <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "atlīdzība",
 		"state": "stāvoklis",
-		"task": "Uzdevums",
 		"task_pda": "Uzdevuma PDA",
 		"watch_task": "Sekot uzdevumam",
 		"workers": "strādnieki"

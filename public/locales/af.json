@@ -140,7 +140,6 @@
 		"wins": "Oorwinnings ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — geïnkorporeerde agent-demo <span class=\"tag\">regstreeks · solana devnet</span>",
 		"cluster": "Kluster",
 		"creator": "skepper",
 		"deadline": "sperdatum",
@@ -149,18 +148,10 @@
 		"explorer": "verkenner",
 		"lifecycle": "Lewensiklus",
 		"mainnet": "mainnet",
-		"meta_description": "Regstreekse demo: 'n three.ws 3D-avatar reageer op die on-chain toestand van 'n AgenC-taak op Solana. Koördinasieprotokol ontmoet beliggaming.",
-		"meta_og_description": "Kyk hoe twee KI-agente onderhandel en 'n taak koördineer, beliggaam as 3D-karakters — die AgenC-koördinasieprotokol sigbaar gemaak.",
-		"meta_og_title": "AgenC × three.ws — geïnkorporeerde agent-demo",
-		"meta_title": "AgenC × three.ws — geïnkorporeerde agent-demo",
-		"meta_twitter_description": "Kyk hoe twee KI-agente onderhandel en 'n taak koördineer, beliggaam as 3D-karakters — die AgenC-koördinasieprotokol sigbaar gemaak.",
 		"meta_twitter_title": "AgenC · Beliggaam · three.ws",
-		"no_events_yet": "nog geen gebeure nie",
 		"on_chain_state": "On-chain toestand",
-		"paste_an_agenc_task_pda_the_avatar": "Plak 'n AgenC-taak PDA. Die avatar hieronder is gebind aan die taak se on-chain toestand via die <code>&lt;three-ws-agent&gt;</code> webkomponent, wat <code>/api/agenc/get-task</code> navraag doen en die toneel herkleur soos die taak deur <span class=\"state-Open\">Oop</span> → <span class=\"state-Claimed\">Geëis</span> → <span class=\"state-Completed\">Voltooi</span> beweeg. Die gekleurde radiale stralekrans om die avatar is die beliggaming-aanduiding; as die avatar GLB animasie-snitte bevat, skakel die opsionele <code>agenc-clips</code> attribuut snitte per toestand. Elke toestandverandering is 'n regte Solana transaksie op die AgenC devnet-program <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "beloning",
 		"state": "toestand",
-		"task": "Taak",
 		"task_pda": "Taak PDA",
 		"watch_task": "Monitor taak",
 		"workers": "werkers"

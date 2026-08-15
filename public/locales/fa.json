@@ -140,7 +140,6 @@
 		"wins": "پیروزی‌ها ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — دمو ایجنت تجسم‌یافته <span class=\"tag\">زنده · solana devnet</span>",
 		"cluster": "خوشه",
 		"creator": "سازنده",
 		"deadline": "مهلت",
@@ -149,18 +148,10 @@
 		"explorer": "کاوشگر",
 		"lifecycle": "چرخه حیات",
 		"mainnet": "شبکه اصلی",
-		"meta_description": "دموی زنده: یک آواتار 3D three.ws به وضعیت زنجیره‌ای یک وظیفه AgenC در Solana واکنش نشان می‌دهد. پروتکل هماهنگی با تجسم ملاقات می‌کند.",
-		"meta_og_description": "دو عامل هوش مصنوعی را مشاهده کنید که برای هماهنگی یک وظیفه مذاکره می‌کنند و به صورت شخصیت‌های ۳ بعدی تجسم یافته‌اند — پروتکل هماهنگی AgenC به تصویر کشیده شده است.",
-		"meta_og_title": "AgenC × three.ws — دموی عامل تجسم یافته",
-		"meta_title": "AgenC × three.ws — دموی عامل تجسم یافته",
-		"meta_twitter_description": "دو عامل هوش مصنوعی را مشاهده کنید که برای هماهنگی یک وظیفه مذاکره می‌کنند و به صورت شخصیت‌های ۳ بعدی تجسم یافته‌اند — پروتکل هماهنگی AgenC به تصویر کشیده شده است.",
 		"meta_twitter_title": "AgenC · تجسم یافته · three.ws",
-		"no_events_yet": "هنوز رویدادی وجود ندارد",
 		"on_chain_state": "وضعیت زنجیره‌ای",
-		"paste_an_agenc_task_pda_the_avatar": "یک PDA وظیفه AgenC را بچسبانید. آواتار زیر به وضعیت زنجیره‌ای وظیفه از طریق کامپوننت وب <code>&lt;three-ws-agent&gt;</code> متصل است که <code>/api/agenc/get-task</code> را بررسی می‌کند و صحنه را به رنگ‌های مختلف در می‌آورد همان‌طور که وظیفه از <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> عبور می‌کند. هاله رنگی دور آواتار نشانه تجسم است؛ اگر آواتار GLB شامل کلیپ‌های انیمیشن باشد، ویژگی اختیاری <code>agenc-clips</code> کلیپ‌ها را بر اساس وضعیت تغییر می‌دهد. هر تغییر وضعیت یک Solana تراکنش واقعی در برنامه توسعه AgenC <code>6UcJzbT…2ab</code> است. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "پاداش",
 		"state": "وضعیت",
-		"task": "وظیفه",
 		"task_pda": "PDA وظیفه",
 		"watch_task": "وظیفه را مشاهده کنید",
 		"workers": "کارگران"

@@ -140,7 +140,6 @@
 		"wins": "ජයග්‍රහණ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — මූර්තිමත් නියෝජිත නිරූපණය <span class=\"tag\">සජීවී · solana devnet</span>",
 		"cluster": "පොකුර",
 		"creator": "නිර්මාතෘ",
 		"deadline": "නියමිත කාලය",
@@ -149,18 +148,10 @@
 		"explorer": "ගවේෂක",
 		"lifecycle": "ජීවන චක්‍රය",
 		"mainnet": "මේන්නෙට්",
-		"meta_description": "සජීවී නිරූපණය: three.ws ත්‍රිමාණ අවතාරයක් Solana මත ඇති AgenC කාර්යයක ඔන්-චේන් තත්ත්වයට ප්‍රතිචාර දක්වයි. සම්බන්ධීකරණ ප්‍රොටෝකෝලය මූර්තිමත් වේ.",
-		"meta_og_description": "AI නියෝජිතයන් දෙදෙනෙකු කාර්යයක් සාකච්ඡා කර සම්බන්ධීකරණය කරන ආකාරය නරඹන්න, ත්‍රිමාණ චරිත ලෙස මූර්තිමත් වූ — AgenC සම්බන්ධීකරණ ප්‍රොටෝකෝලය දෘශ්‍යමාන වේ.",
-		"meta_og_title": "AgenC × three.ws — මූර්තිමත් නියෝජිත නිරූපණය",
-		"meta_title": "AgenC × three.ws — මූර්තිමත් නියෝජිත නිරූපණය",
-		"meta_twitter_description": "AI නියෝජිතයන් දෙදෙනෙකු කාර්යයක් සාකච්ඡා කර සම්බන්ධීකරණය කරන ආකාරය නරඹන්න, ත්‍රිමාණ චරිත ලෙස මූර්තිමත් වූ — AgenC සම්බන්ධීකරණ ප්‍රොටෝකෝලය දෘශ්‍යමාන වේ.",
 		"meta_twitter_title": "AgenC · මූර්තිමත් · three.ws",
-		"no_events_yet": "තවම සිදුවීම් නොමැත",
 		"on_chain_state": "ඔන්-චේන් තත්ත්වය",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC කාර්ය PDA එකක් අලවන්න. පහත අවතාරය <code>&lt;three-ws-agent&gt;</code> වෙබ් සංරචකය හරහා කාර්යයේ ඔන්-චේන් තත්ත්වයට බැඳී ඇත, එය <code>/api/agenc/get-task</code> වෙතින් දත්ත ලබා ගෙන කාර්යය <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> හරහා ගමන් කරන විට දර්ශනය නැවත වර්ණ ගන්වයි. අවතාරය වටා ඇති වර්ණවත් රේඩියල් ආලෝක වළල්ල මූර්තිමත් කිරීමේ සංඥාවයි; අවතාරය GLB සජීවිකරණ ක්ලිප් අඩංගු නම්, විකල්ප <code>agenc-clips</code> ගුණාංගය එක් එක් තත්ත්වය අනුව ක්ලිප් මාරු කරයි. එක් එක් තත්ත්ව වෙනස්වීම AgenC ඩෙව්නෙට් වැඩසටහන <code>6UcJzbT…2ab</code> මත සැබෑ Solana ගනුදෙනුවකි. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ත්‍යාගය",
 		"state": "තත්ත්වය",
-		"task": "කාර්යය",
 		"task_pda": "කාර්ය PDA",
 		"watch_task": "කාර්යය නරඹන්න",
 		"workers": "සේවකයින්"

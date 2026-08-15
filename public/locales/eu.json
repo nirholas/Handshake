@@ -140,7 +140,6 @@
 		"wins": "Garaipenak ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — agente gorpuztuaren demoa <span class=\"tag\">zuzenean · solana devnet</span>",
 		"cluster": "Klusterra",
 		"creator": "sortzailea",
 		"deadline": "epe-muga",
@@ -149,18 +148,10 @@
 		"explorer": "arakatzailea",
 		"lifecycle": "Bizi-zikloa",
 		"mainnet": "mainnet",
-		"meta_description": "Zuzeneko demoa: three.ws 3D avatar batek AgenC zeregin baten kateko egoerari erreakzionatzen dio Solana-n. Koordinazio protokoloak gorpuztearekin bat egiten du.",
-		"meta_og_description": "Ikusi bi AI agente zeregin bat negoziatzen eta koordinatzen, 3D pertsonaia gisa gorpuztuta — AgenC koordinazio protokoloa ikusgai eginda.",
-		"meta_og_title": "AgenC × three.ws — agente gorpuztuaren demoa",
-		"meta_title": "AgenC × three.ws — agente gorpuztuaren demoa",
-		"meta_twitter_description": "Ikusi bi AI agente zeregin bat negoziatzen eta koordinatzen, 3D pertsonaia gisa gorpuztuta — AgenC koordinazio protokoloa ikusgai eginda.",
 		"meta_twitter_title": "AgenC · Gorpuztua · three.ws",
-		"no_events_yet": "oraindik ez dago gertaerarik",
 		"on_chain_state": "Kateko egoera",
-		"paste_an_agenc_task_pda_the_avatar": "Itsatsi AgenC zeregin PDA bat. Beheko avatarra zereginaren kateko egoerari lotuta dago <code>&lt;three-ws-agent&gt;</code> web osagaiaren bidez, zeinak <code>/api/agenc/get-task</code> kontsultatzen duen eta eszena berriro koloreztatzen duen zeregina <span class=\"state-Open\">Ireki</span> → <span class=\"state-Claimed\">Erreklamatu</span> → <span class=\"state-Completed\">Osatua</span> egoeretatik igarotzen den heinean. Avatarraren inguruko halo erradial koloreztatua gorpuztearen seinalea da; avatarrak GLB animazio-klipak baditu, aukerako <code>agenc-clips</code> atributuak klipak aldatzen ditu egoera bakoitzeko. Egoera-aldaketa bakoitza benetako Solana transakzio bat da AgenC devnet programan <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "saria",
 		"state": "egoera",
-		"task": "Zeregina",
 		"task_pda": "Zeregin PDA",
 		"watch_task": "Ikusi zeregina",
 		"workers": "langileak"

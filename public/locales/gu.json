@@ -140,7 +140,6 @@
 		"wins": "જીત ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "એજન્સી × three.ws — શારીરિક એજન્ટ ડેમો <span class=\"tag\">લાઇવ · સોલાના ડેવનેટ</span>",
 		"cluster": "ક્લસ્ટર",
 		"creator": "નિર્માતા",
 		"deadline": "અંતિમ તારીખ",
@@ -149,18 +148,10 @@
 		"explorer": "એક્સપ્લોરર",
 		"lifecycle": "જીવનચક્ર",
 		"mainnet": "મેઇનનેટ",
-		"meta_description": "લાઇવ ડેમો: એક three.ws 3D અવતાર Solana પર એજન્સી કાર્યની ઓન-ચેઇન સ્થિતિ પર પ્રતિક્રિયા આપે છે. સંકલન પ્રોટોકોલ મૂર્ત સ્વરૂપને મળે છે.",
-		"meta_og_description": "બે AI એજન્ટોને કાર્યની વાટાઘાટો અને સંકલન કરતા જુઓ, 3D પાત્રો તરીકે મૂર્ત સ્વરૂપ પામેલા — એજન્સી સંકલન પ્રોટોકોલ દૃશ્યમાન બન્યો.",
-		"meta_og_title": "એજન્સી × three.ws — શારીરિક એજન્ટ ડેમો",
-		"meta_title": "એજન્સી × three.ws — શારીરિક એજન્ટ ડેમો",
-		"meta_twitter_description": "બે AI એજન્ટોને કાર્યની વાટાઘાટો અને સંકલન કરતા જુઓ, 3D પાત્રો તરીકે મૂર્ત સ્વરૂપ પામેલા — એજન્સી સંકલન પ્રોટોકોલ દૃશ્યમાન બન્યો.",
 		"meta_twitter_title": "એજન્સી · શારીરિક · three.ws",
-		"no_events_yet": "હજુ કોઈ ઘટનાઓ નથી",
 		"on_chain_state": "ઓન-ચેઇન સ્થિતિ",
-		"paste_an_agenc_task_pda_the_avatar": "એજન્સી ટાસ્ક PDA પેસ્ટ કરો. નીચેનો અવતાર <code>&lt;three-ws-agent&gt;</code> વેબ કમ્પોનન્ટ દ્વારા કાર્યની ઓન-ચેઇન સ્થિતિ સાથે જોડાયેલ છે, જે <code>/api/agenc/get-task</code> ને પોલ કરે છે અને કાર્ય <span class=\"state-Open\">ખુલ્લું</span> → <span class=\"state-Claimed\">દાવો કરેલ</span> → <span class=\"state-Completed\">પૂર્ણ</span> માંથી પસાર થાય તેમ દ્રશ્યને ફરીથી રંગે છે. અવતારની આસપાસનો રંગીન રેડિયલ હાલો એ મૂર્ત સ્વરૂપનો સંકેત છે; જો અવતાર GLB એનિમેશન ક્લિપ્સ ધરાવે છે, તો વૈકલ્પિક <code>agenc-clips</code> એટ્રિબ્યુટ દરેક સ્થિતિ દીઠ ક્લિપ્સ બદલે છે. દરેક સ્થિતિ પરિવર્તન એ એજન્સી ડેવનેટ પ્રોગ્રામ <code>6UcJzbT…2ab</code> પર એક વાસ્તવિક Solana ટ્રાન્ઝેક્શન છે. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "પુરસ્કાર",
 		"state": "સ્થિતિ",
-		"task": "કાર્ય",
 		"task_pda": "કાર્ય PDA",
 		"watch_task": "કાર્ય જુઓ",
 		"workers": "કાર્યકરો"

@@ -140,7 +140,6 @@
 		"wins": "Kemenangan ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo ejen terwujud <span class=\"tag\">langsung · solana devnet</span>",
 		"cluster": "Kumpulan",
 		"creator": "pencipta",
 		"deadline": "tarikh akhir",
@@ -149,18 +148,10 @@
 		"explorer": "penjelajah",
 		"lifecycle": "Kitaran hayat",
 		"mainnet": "mainnet",
-		"meta_description": "Demo langsung: avatar 3D three.ws bertindak balas terhadap keadaan on-chain tugas AgenC di Solana. Protokol penyelarasan bertemu dengan pengembbodyan.",
-		"meta_og_description": "Tonton dua agen AI berunding dan menyelaras tugas, diwakili sebagai watak 3D — protokol koordinasi AgenC dipamerkan.",
-		"meta_og_title": "AgenC × three.ws — demo agen yang diwakili",
-		"meta_title": "AgenC × three.ws — demo agen yang diwakili",
-		"meta_twitter_description": "Tonton dua agen AI berunding dan menyelaras tugas, diwakili sebagai watak 3D — protokol koordinasi AgenC dipamerkan.",
 		"meta_twitter_title": "AgenC · Diwakili · three.ws",
-		"no_events_yet": "tiada acara lagi",
 		"on_chain_state": "Keadaan on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Tampal PDA tugas AgenC. Avatar di bawah terikat kepada keadaan on-chain tugas melalui komponen web <code>&lt;three-ws-agent&gt;</code>, yang mengundi <code>/api/agenc/get-task</code> dan mengubah warna scene apabila tugas bergerak melalui <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Halo radial berwarna di sekitar avatar adalah isyarat penggambaran; jika avatar GLB mengandungi klip animasi, atribut pilihan <code>agenc-clips</code> menukar klip mengikut keadaan. Setiap perubahan keadaan adalah transaksi Solana sebenar pada program devnet AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ganjaran",
 		"state": "keadaan",
-		"task": "Tugas",
 		"task_pda": "PDA Tugas",
 		"watch_task": "Tonton tugas",
 		"workers": "pekerja"

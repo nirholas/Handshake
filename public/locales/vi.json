@@ -140,7 +140,6 @@
 		"wins": "Chiến thắng ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo agent hiện thân <span class=\"tag\">trực tiếp · solana devnet</span>",
 		"cluster": "Cụm",
 		"creator": "người sáng tạo",
 		"deadline": "hạn chót",
@@ -149,18 +148,10 @@
 		"explorer": "trình khám phá",
 		"lifecycle": "Vòng đời",
 		"mainnet": "mainnet",
-		"meta_description": "Demo trực tiếp: một three.ws avatar 3D phản ứng với trạng thái trên chuỗi của một nhiệm vụ AgenC trên Solana. Giao thức phối hợp gặp hiện thân.",
-		"meta_og_description": "Xem hai AI agent thương lượng và phối hợp một nhiệm vụ, hiện thân dưới dạng nhân vật 3D — giao thức phối hợp AgenC được thể hiện rõ ràng.",
-		"meta_og_title": "AgenC × three.ws — demo agent hiện thân",
-		"meta_title": "AgenC × three.ws — demo agent hiện thân",
-		"meta_twitter_description": "Xem hai AI agent thương lượng và phối hợp một nhiệm vụ, hiện thân dưới dạng nhân vật 3D — giao thức phối hợp AgenC được thể hiện rõ ràng.",
 		"meta_twitter_title": "AgenC · Hiện thân · three.ws",
-		"no_events_yet": "chưa có sự kiện nào",
 		"on_chain_state": "Trạng thái trên chuỗi",
-		"paste_an_agenc_task_pda_the_avatar": "Dán PDA nhiệm vụ AgenC. Nhân vật bên dưới được liên kết với trạng thái trên chuỗi của nhiệm vụ thông qua thành phần web <code>&lt;three-ws-agent&gt;</code>, thành phần này truy vấn <code>/api/agenc/get-task</code> và thay đổi màu sắc của cảnh khi nhiệm vụ di chuyển qua <span class=\"state-Open\">Mở</span> → <span class=\"state-Claimed\">Đã nhận</span> → <span class=\"state-Completed\">Hoàn thành</span>. Vòng hào quang màu xung quanh nhân vật là tín hiệu hiện thân; nếu nhân vật GLB chứa các clip hoạt hình, thuộc tính tùy chọn <code>agenc-clips</code> sẽ chuyển đổi clip theo từng trạng thái. Mỗi thay đổi trạng thái là một Solana giao dịch thực trên chương trình devnet của AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "phần thưởng",
 		"state": "trạng thái",
-		"task": "Nhiệm vụ",
 		"task_pda": "PDA nhiệm vụ",
 		"watch_task": "Xem nhiệm vụ",
 		"workers": "công nhân"

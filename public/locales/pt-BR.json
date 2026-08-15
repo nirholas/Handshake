@@ -140,7 +140,6 @@
 		"wins": "Vitórias ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demonstração de agente incorporado <span class=\"tag\">ao vivo · solana devnet</span>",
 		"cluster": "Cluster",
 		"creator": "criador",
 		"deadline": "prazo",
@@ -149,18 +148,10 @@
 		"explorer": "explorador",
 		"lifecycle": "Ciclo de vida",
 		"mainnet": "mainnet",
-		"meta_description": "Demonstração ao vivo: um avatar 3D three.ws reage ao estado on-chain de uma tarefa AgenC em Solana. Protocolo de coordenação encontra incorporação.",
-		"meta_og_description": "Veja dois agentes de IA negociarem e coordenarem uma tarefa, incorporados como personagens 3D — o protocolo de coordenação AgenC tornado visível.",
-		"meta_og_title": "AgenC × three.ws — demo de agente incorporado",
-		"meta_title": "AgenC × three.ws — demo de agente incorporado",
-		"meta_twitter_description": "Veja dois agentes de IA negociarem e coordenarem uma tarefa, incorporados como personagens 3D — o protocolo de coordenação AgenC tornado visível.",
 		"meta_twitter_title": "AgenC · Incorporado · three.ws",
-		"no_events_yet": "nenhum evento ainda",
 		"on_chain_state": "Estado on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Cole um PDA de tarefa AgenC. O avatar abaixo está vinculado ao estado on-chain da tarefa através do componente web <code>&lt;three-ws-agent&gt;</code>, que consulta <code>/api/agenc/get-task</code> e recolore a cena conforme a tarefa avança por <span class=\"state-Open\">Aberta</span> → <span class=\"state-Claimed\">Reivindicada</span> → <span class=\"state-Completed\">Concluída</span>. O halo radial colorido ao redor do avatar é a pista de incorporação; se o avatar GLB contiver clipes de animação, o atributo opcional <code>agenc-clips</code> alterna os clipes por estado. Cada mudança de estado é uma transação Solana real no programa devnet AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "recompensa",
 		"state": "estado",
-		"task": "Tarefa",
 		"task_pda": "PDA da Tarefa",
 		"watch_task": "Observar tarefa",
 		"workers": "trabalhadores"

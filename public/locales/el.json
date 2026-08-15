@@ -140,7 +140,6 @@
 		"wins": "Νίκες ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — ζωντανή επίδειξη ενσωματωμένου πράκτορα <span class=\"tag\"> · solana devnet</span>",
 		"cluster": "Συστάδα",
 		"creator": "δημιουργός",
 		"deadline": "προθεσμία",
@@ -149,18 +148,10 @@
 		"explorer": "εξερευνητής",
 		"lifecycle": "Κύκλος ζωής",
 		"mainnet": "mainnet",
-		"meta_description": "Ζωντανή επίδειξη: ένα three.ws 3D avatar αντιδρά στην κατάσταση της αλυσίδας ενός έργου AgenC στο Solana. Πρωτόκολλο συντονισμού συναντά την ενσωμάτωση.",
-		"meta_og_description": "Δες δύο AI agents να διαπραγματεύονται και να συντονίζουν μια εργασία, ενσαρκωμένοι ως 3D χαρακτήρες — το πρωτόκολλο συντονισμού AgenC γίνεται ορατό.",
-		"meta_og_title": "AgenC × three.ws — επίδειξη ενσαρκωμένου agent",
-		"meta_title": "AgenC × three.ws — επίδειξη ενσαρκωμένου agent",
-		"meta_twitter_description": "Δες δύο AI agents να διαπραγματεύονται και να συντονίζουν μια εργασία, ενσαρκωμένοι ως 3D χαρακτήρες — το πρωτόκολλο συντονισμού AgenC γίνεται ορατό.",
 		"meta_twitter_title": "AgenC · Ενσαρκωμένος · three.ws",
-		"no_events_yet": "κανένα γεγονός ακόμα",
 		"on_chain_state": "Κατάσταση on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Επικόλλησε ένα PDA εργασίας AgenC. Ο παρακάτω avatar είναι συνδεδεμένος με την on-chain κατάσταση της εργασίας μέσω του <code>&lt;three-ws-agent&gt;</code> web component, το οποίο αντλεί δεδομένα από <code>/api/agenc/get-task</code> και αλλάζει τα χρώματα της σκηνής καθώς η εργασία προχωρά από <span class=\"state-Open\">Ανοιχτό</span> → <span class=\"state-Claimed\">Δηλωμένο</span> → <span class=\"state-Completed\">Ολοκληρωμένο</span>. Η χρωματιστή ραδιοφωνική αύρα γύρω από τον avatar είναι το σήμα ενσάρκωσης; αν ο avatar GLB περιέχει κλιπ animation, το προαιρετικό <code>agenc-clips</code> χαρακτηριστικό αλλάζει κλιπ ανά κατάσταση. Κάθε αλλαγή κατάστασης είναι μια πραγματική Solana συναλλαγή στο πρόγραμμα devnet του AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ανταμοιβή",
 		"state": "κατάσταση",
-		"task": "Εργασία",
 		"task_pda": "PDA Εργασίας",
 		"watch_task": "Δες εργασία",
 		"workers": "εργαζόμενοι"

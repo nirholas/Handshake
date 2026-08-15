@@ -140,7 +140,6 @@
 		"wins": "მოგებები ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — განსახიერებული აგენტის დემო <span class=\"tag\">ლაივში · solana devnet</span>",
 		"cluster": "კლასტერი",
 		"creator": "შემქმნელი",
 		"deadline": "ბოლო ვადა",
@@ -149,18 +148,10 @@
 		"explorer": "ექსპლორერი",
 		"lifecycle": "სიცოცხლის ციკლი",
 		"mainnet": "mainnet",
-		"meta_description": "ცოცხალი დემო: three.ws 3D ავატარი რეაგირებს AgenC დავალების ონ-ჩეინ მდგომარეობაზე Solana-ზე. კოორდინაციის პროტოკოლი განსახიერებასთან ერთად.",
-		"meta_og_description": "ნახეთ, როგორ აწარმოებს მოლაპარაკებებს და კოორდინირებს დავალებას ორი AI აგენტი, განსახიერებული 3D პერსონაჟების სახით — AgenC კოორდინაციის პროტოკოლი ხილული გახდა.",
-		"meta_og_title": "AgenC × three.ws — განსახიერებული აგენტის დემო",
-		"meta_title": "AgenC × three.ws — განსახიერებული აგენტის დემო",
-		"meta_twitter_description": "ნახეთ, როგორ აწარმოებს მოლაპარაკებებს და კოორდინირებს დავალებას ორი AI აგენტი, განსახიერებული 3D პერსონაჟების სახით — AgenC კოორდინაციის პროტოკოლი ხილული გახდა.",
 		"meta_twitter_title": "AgenC · განსახიერებული · three.ws",
-		"no_events_yet": "ჯერ არ არის მოვლენები",
 		"on_chain_state": "ონ-ჩეინ მდგომარეობა",
-		"paste_an_agenc_task_pda_the_avatar": "ჩასვით AgenC დავალების PDA. ქვემოთ მოცემული ავატარი დაკავშირებულია დავალების ონ-ჩეინ მდგომარეობასთან <code>&lt;three-ws-agent&gt;</code> ვებ კომპონენტის მეშვეობით, რომელიც ამოწმებს <code>/api/agenc/get-task</code>-ს და ცვლის სცენის ფერს, როდესაც დავალება გადის <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> სტატუსებს. ავატარის გარშემო ფერადი რადიალური ჰალო განსახიერების მანიშნებელია; თუ ავატარი GLB შეიცავს ანიმაციის კლიპებს, არჩევითი <code>agenc-clips</code> ატრიბუტი ცვლის კლიპებს თითოეული მდგომარეობის მიხედვით. თითოეული მდგომარეობის ცვლილება არის რეალური Solana ტრანზაქცია AgenC devnet პროგრამაზე <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ჯილდო",
 		"state": "მდგომარეობა",
-		"task": "დავალება",
 		"task_pda": "დავალების PDA",
 		"watch_task": "დავალების ნახვა",
 		"workers": "მუშაკები"

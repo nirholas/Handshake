@@ -140,7 +140,6 @@
 		"wins": "ਜਿੱਤਾਂ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — ਸਰੀਰਕ ਏਜੰਟ ਡੈਮੋ <span class=\"tag\">ਲਾਈਵ · ਸੋਲਾਨਾ ਡੇਵਨੈੱਟ</span>",
 		"cluster": "ਕਲੱਸਟਰ",
 		"creator": "ਸਿਰਜਣਹਾਰ",
 		"deadline": "ਆਖਰੀ ਮਿਤੀ",
@@ -149,18 +148,10 @@
 		"explorer": "ਐਕਸਪਲੋਰਰ",
 		"lifecycle": "ਜੀਵਨ ਚੱਕਰ",
 		"mainnet": "ਮੇਨਨੈੱਟ",
-		"meta_description": "ਲਾਈਵ ਡੈਮੋ: ਇੱਕ three.ws 3D ਅਵਤਾਰ Solana 'ਤੇ ਇੱਕ AgenC ਕਾਰਜ ਦੀ ਆਨ-ਚੇਨ ਸਥਿਤੀ 'ਤੇ ਪ੍ਰਤੀਕਿਰਿਆ ਕਰਦਾ ਹੈ। ਤਾਲਮੇਲ ਪ੍ਰੋਟੋਕੋਲ ਸਰੀਰਕ ਰੂਪ ਨੂੰ ਮਿਲਦਾ ਹੈ।",
-		"meta_og_description": "ਦੇਖੋ ਕਿਵੇਂ ਦੋ AI ਏਜੰਟ ਇੱਕ ਕਾਰਜ ਲਈ ਗੱਲਬਾਤ ਅਤੇ ਤਾਲਮੇਲ ਕਰਦੇ ਹਨ, 3D ਪਾਤਰਾਂ ਵਜੋਂ ਸਰੀਰਕ ਰੂਪ ਵਿੱਚ — AgenC ਤਾਲਮੇਲ ਪ੍ਰੋਟੋਕੋਲ ਨੂੰ ਦ੍ਰਿਸ਼ਮਾਨ ਬਣਾਇਆ ਗਿਆ ਹੈ।",
-		"meta_og_title": "AgenC × three.ws — ਸਰੀਰਕ ਏਜੰਟ ਡੈਮੋ",
-		"meta_title": "AgenC × three.ws — ਸਰੀਰਕ ਏਜੰਟ ਡੈਮੋ",
-		"meta_twitter_description": "ਦੇਖੋ ਕਿਵੇਂ ਦੋ AI ਏਜੰਟ ਇੱਕ ਕਾਰਜ ਲਈ ਗੱਲਬਾਤ ਅਤੇ ਤਾਲਮੇਲ ਕਰਦੇ ਹਨ, 3D ਪਾਤਰਾਂ ਵਜੋਂ ਸਰੀਰਕ ਰੂਪ ਵਿੱਚ — AgenC ਤਾਲਮੇਲ ਪ੍ਰੋਟੋਕੋਲ ਨੂੰ ਦ੍ਰਿਸ਼ਮਾਨ ਬਣਾਇਆ ਗਿਆ ਹੈ।",
 		"meta_twitter_title": "AgenC · ਸਰੀਰਕ · three.ws",
-		"no_events_yet": "ਅਜੇ ਕੋਈ ਘਟਨਾਵਾਂ ਨਹੀਂ",
 		"on_chain_state": "ਆਨ-ਚੇਨ ਸਥਿਤੀ",
-		"paste_an_agenc_task_pda_the_avatar": "ਇੱਕ AgenC ਟਾਸਕ PDA ਪੇਸਟ ਕਰੋ। ਹੇਠਾਂ ਦਿੱਤਾ ਅਵਤਾਰ <code>&lt;three-ws-agent&gt;</code> ਵੈੱਬ ਕੰਪੋਨੈਂਟ ਰਾਹੀਂ ਕਾਰਜ ਦੀ ਆਨ-ਚੇਨ ਸਥਿਤੀ ਨਾਲ ਬੰਨ੍ਹਿਆ ਹੋਇਆ ਹੈ, ਜੋ <code>/api/agenc/get-task</code> ਨੂੰ ਪੋਲ ਕਰਦਾ ਹੈ ਅਤੇ ਕਾਰਜ ਦੇ <span class=\"state-Open\">ਖੁੱਲ੍ਹੇ</span> → <span class=\"state-Claimed\">ਦਾਅਵਾ ਕੀਤੇ</span> → <span class=\"state-Completed\">ਪੂਰੇ ਹੋਏ</span> ਹੋਣ 'ਤੇ ਦ੍ਰਿਸ਼ ਨੂੰ ਮੁੜ ਰੰਗਦਾ ਹੈ। ਅਵਤਾਰ ਦੇ ਆਲੇ-ਦੁਆਲੇ ਰੰਗੀਨ ਰੇਡੀਅਲ ਹਾਲੋ ਸਰੀਰਕ ਰੂਪ ਦਾ ਸੰਕੇਤ ਹੈ; ਜੇਕਰ ਅਵਤਾਰ GLB ਵਿੱਚ ਐਨੀਮੇਸ਼ਨ ਕਲਿੱਪ ਹਨ, ਤਾਂ ਵਿਕਲਪਿਕ <code>agenc-clips</code> ਵਿਸ਼ੇਸ਼ਤਾ ਹਰ ਸਥਿਤੀ ਅਨੁਸਾਰ ਕਲਿੱਪਾਂ ਨੂੰ ਬਦਲਦੀ ਹੈ। ਹਰ ਸਥਿਤੀ ਤਬਦੀਲੀ AgenC ਡੇਵਨੈੱਟ ਪ੍ਰੋਗਰਾਮ <code>6UcJzbT…2ab</code> 'ਤੇ ਇੱਕ ਅਸਲੀ Solana ਟ੍ਰਾਂਜੈਕਸ਼ਨ ਹੈ। <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ਇਨਾਮ",
 		"state": "ਸਥਿਤੀ",
-		"task": "ਕਾਰਜ",
 		"task_pda": "ਕਾਰਜ PDA",
 		"watch_task": "ਕਾਰਜ ਦੇਖੋ",
 		"workers": "ਵਰਕਰ"

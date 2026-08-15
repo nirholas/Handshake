@@ -140,7 +140,6 @@
 		"wins": "Победи ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — демонстрация на въплътен агент <span class=\"tag\">на живо · solana devnet</span>",
 		"cluster": "Клъстер",
 		"creator": "създател",
 		"deadline": "краен срок",
@@ -149,18 +148,10 @@
 		"explorer": "изследовател",
 		"lifecycle": "Жизнен цикъл",
 		"mainnet": "mainnet",
-		"meta_description": "Жива демонстрация: three.ws 3D аватар реагира на състоянието на веригата на задача на AgenC на Solana. Протокол за координация среща въплъщение.",
-		"meta_og_description": "Гледайте как двама AI агенти преговарят и координират задача, въплътени като 3D персонажи — протоколът за координация на AgenC направен видим.",
-		"meta_og_title": "AgenC × three.ws — демонстрация на въплътен агент",
-		"meta_title": "AgenC × three.ws — демонстрация на въплътен агент",
-		"meta_twitter_description": "Гледайте как двама AI агенти преговарят и координират задача, въплътени като 3D персонажи — протоколът за координация на AgenC направен видим.",
 		"meta_twitter_title": "AgenC · Въплътен · three.ws",
-		"no_events_yet": "няма събития все още",
 		"on_chain_state": "Състояние на веригата",
-		"paste_an_agenc_task_pda_the_avatar": "Поставете PDA на задача от AgenC. Аватарът по-долу е свързан със състоянието на задачата на веригата чрез <code>&lt;three-ws-agent&gt;</code> уеб компонент, който извършва запитвания към <code>/api/agenc/get-task</code> и променя цвета на сцената, докато задачата преминава през <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Цветният радиален ореол около аватара е сигнал за въплъщение; ако аватарът GLB съдържа анимационни клипове, опционалният <code>agenc-clips</code> атрибут сменя клиповете според състоянието. Всяка промяна на състоянието е реална Solana транзакция в програмата на AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "награда",
 		"state": "състояние",
-		"task": "Задача",
 		"task_pda": "PDA на задача",
 		"watch_task": "Гледайте задачата",
 		"workers": "работници"

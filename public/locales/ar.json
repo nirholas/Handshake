@@ -140,7 +140,6 @@
 		"wins": "انتصارات ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — عرض توضيحي لوكيل مجسّد <span class=\"tag\">مباشر · شبكة سولانا التجريبية</span>",
 		"cluster": "مجموعة",
 		"creator": "المنشئ",
 		"deadline": "الموعد النهائي",
@@ -149,18 +148,10 @@
 		"explorer": "المستكشف",
 		"lifecycle": "دورة الحياة",
 		"mainnet": "الشبكة الرئيسية",
-		"meta_description": "عرض توضيحي مباشر: يتفاعل رمز ثلاثي الأبعاد three.ws مع حالة مهمة AgenC على السلسلة على Solana. بروتوكول التنسيق يلتقي بالتجسيد.",
-		"meta_og_description": "شاهد وكيلين للذكاء الاصطناعي يتفاوضان وينسقان مهمة، مجسدين كشخصيات ثلاثية الأبعاد — بروتوكول AgenC للتنسيق أصبح مرئيًا.",
-		"meta_og_title": "AgenC × three.ws — عرض توضيحي لوكيل مجسد",
-		"meta_title": "AgenC × three.ws — عرض توضيحي لوكيل مجسد",
-		"meta_twitter_description": "شاهد وكيلين للذكاء الاصطناعي يتفاوضان وينسقان مهمة، مجسدين كشخصيات ثلاثية الأبعاد — بروتوكول AgenC للتنسيق أصبح مرئيًا.",
 		"meta_twitter_title": "AgenC · مجسد · three.ws",
-		"no_events_yet": "لا توجد أحداث بعد",
 		"on_chain_state": "الحالة على السلسلة",
-		"paste_an_agenc_task_pda_the_avatar": "الصق PDA مهمة AgenC. الصورة الرمزية أدناه مرتبطة بحالة المهمة على السلسلة عبر مكون الويب <code>&lt;three-ws-agent&gt;</code>، والذي يستعلم <code>/api/agenc/get-task</code> ويعيد تلوين المشهد مع انتقال المهمة عبر <span class=\"state-Open\">مفتوحة</span> → <span class=\"state-Claimed\">مُطالب بها</span> → <span class=\"state-Completed\">مكتملة</span>. الهالة الشعاعية الملونة حول الصورة الرمزية هي إشارة التجسيد؛ إذا كانت الصورة الرمزية GLB تحتوي على مقاطع رسوم متحركة، فإن السمة الاختيارية <code>agenc-clips</code> تبدل المقاطع حسب الحالة. كل تغيير حالة هو معاملة Solana حقيقية على برنامج شبكة مطوري AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "مكافأة",
 		"state": "الحالة",
-		"task": "مهمة",
 		"task_pda": "PDA المهمة",
 		"watch_task": "راقب المهمة",
 		"workers": "عمال"

@@ -140,7 +140,6 @@
 		"wins": "Câștiguri ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo agent încorporat <span class=\"tag\">live · solana devnet</span>",
 		"cluster": "Cluster",
 		"creator": "creator",
 		"deadline": "termen limită",
@@ -149,18 +148,10 @@
 		"explorer": "explorer",
 		"lifecycle": "Ciclul de viață",
 		"mainnet": "mainnet",
-		"meta_description": "Demo live: un avatar 3D three.ws reacționează la starea on-chain a unei sarcini AgenC pe Solana. Protocolul de coordonare întâlnește încorporarea.",
-		"meta_og_description": "Urmărește doi agenți AI negociind și coordonând o sarcină, întruchipați ca personaje 3D — protocolul de coordonare AgenC făcut vizibil.",
-		"meta_og_title": "AgenC × three.ws — demo agent întruchipat",
-		"meta_title": "AgenC × three.ws — demo agent întruchipat",
-		"meta_twitter_description": "Urmărește doi agenți AI negociind și coordonând o sarcină, întruchipați ca personaje 3D — protocolul de coordonare AgenC făcut vizibil.",
 		"meta_twitter_title": "AgenC · Întruchipat · three.ws",
-		"no_events_yet": "nu sunt evenimente încă",
 		"on_chain_state": "Stare on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Lipește un PDA de sarcină AgenC. Avatarul de mai jos este legat de starea on-chain a sarcinii prin componenta web <code>&lt;three-ws-agent&gt;</code>, care interoghează <code>/api/agenc/get-task</code> și recolorează scena pe măsură ce sarcina trece prin <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Halo-ul radial colorat din jurul avatarului este indiciul de întruchipare; dacă avatarul GLB conține clipuri de animație, atributul opțional <code>agenc-clips</code> schimbă clipurile în funcție de stare. Fiecare schimbare de stare este o adevărată Solana tranzacție pe programul devnet AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "recompensă",
 		"state": "stare",
-		"task": "Sarcină",
 		"task_pda": "PDA Sarcină",
 		"watch_task": "Urmărește sarcina",
 		"workers": "lucrători"

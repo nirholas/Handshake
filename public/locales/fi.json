@@ -140,7 +140,6 @@
 		"wins": "Voitot ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — ruumiillistettu agenttidemonstratio <span class=\"tag\">live · solana devnet</span>",
 		"cluster": "Klusteri",
 		"creator": "luoja",
 		"deadline": "takaraja",
@@ -149,18 +148,10 @@
 		"explorer": "tutkija",
 		"lifecycle": "Elinkaari",
 		"mainnet": "pääverkko",
-		"meta_description": "Live-demo: three.ws 3D-avatare reagoi AgenC-tehtävän on-chain-tilaan Solana:llä. Koordinointiprotokolla kohtaa ruumiillistamisen.",
-		"meta_og_description": "Katso kahta AI-agenttia neuvottelemassa ja koordinoimassa tehtävää, ruumiillistettuna 3D-hahmoina — AgenC-koordinaatioprotokolla näkyvissä.",
-		"meta_og_title": "AgenC × three.ws — ruumiillistetyn agentin demo",
-		"meta_title": "AgenC × three.ws — ruumiillistetyn agentin demo",
-		"meta_twitter_description": "Katso kahta AI-agenttia neuvottelemassa ja koordinoimassa tehtävää, ruumiillistettuna 3D-hahmoina — AgenC-koordinaatioprotokolla näkyvissä.",
 		"meta_twitter_title": "AgenC · Ruumiillistettu · three.ws",
-		"no_events_yet": "ei tapahtumia vielä",
 		"on_chain_state": "On-chain-tila",
-		"paste_an_agenc_task_pda_the_avatar": "Liitä AgenC-tehtävän PDA. Alla oleva hahmo on sidottu tehtävän on-chain-tilaan <code>&lt;three-ws-agent&gt;</code> -verkkokomponentin kautta, joka kysyy <code>/api/agenc/get-task</code> ja värittää kohtauksen uudelleen, kun tehtävä etenee <span class=\"state-Open\">Avoin</span> → <span class=\"state-Claimed\">Vaatimukset täytetty</span> → <span class=\"state-Completed\">Valmis</span>. Väritetty sädehalo hahmon ympärillä on ruumiillistamisen vihje; jos hahmo GLB sisältää animaatioklippejä, valinnainen <code>agenc-clips</code> -attribuutti vaihtaa klippejä tilan mukaan. Jokainen tilan muutos on todellinen Solana transaktio AgenC-devnet-ohjelmassa <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "palkinto",
 		"state": "tila",
-		"task": "Tehtävä",
 		"task_pda": "Tehtävän PDA",
 		"watch_task": "Katso tehtävää",
 		"workers": "työntekijät"

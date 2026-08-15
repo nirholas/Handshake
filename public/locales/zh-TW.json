@@ -140,7 +140,6 @@
 		"wins": "勝利 ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — 具體化代理演示 <span class=\"tag\">實時 · solana devnet</span>",
 		"cluster": "集群",
 		"creator": "創作者",
 		"deadline": "截止日期",
@@ -149,18 +148,10 @@
 		"explorer": "探索者",
 		"lifecycle": "生命週期",
 		"mainnet": "主網",
-		"meta_description": "實時演示：一個three.ws 3D虛擬形象對Solana上AgenC任務的鏈上狀態作出反應。協調協議與具體化相遇。",
-		"meta_og_description": "觀看兩個 AI 代理協商並協調任務，具體化為 3D 角色 — AgenC 協調協議的可視化。",
-		"meta_og_title": "AgenC × three.ws — 具體化代理演示",
-		"meta_title": "AgenC × three.ws — 具體化代理演示",
-		"meta_twitter_description": "觀看兩個 AI 代理協商並協調任務，具體化為 3D 角色 — AgenC 協調協議的可視化。",
 		"meta_twitter_title": "AgenC · 具體化 · three.ws",
-		"no_events_yet": "尚無事件",
 		"on_chain_state": "鏈上狀態",
-		"paste_an_agenc_task_pda_the_avatar": "粘貼一個 AgenC 任務 PDA。下面的化身通過 <code>&lt;three-ws-agent&gt;</code> 網頁組件綁定到任務的鏈上狀態，該組件輪詢 <code>/api/agenc/get-task</code>，並在任務進展中重新著色場景 <span class=\"state-Open\">開放</span> → <span class=\"state-Claimed\">已認領</span> → <span class=\"state-Completed\">已完成</span>。圍繞化身的彩色輻射光環是具體化提示；如果化身 GLB 包含動畫片段，則可選的 <code>agenc-clips</code> 屬性根據狀態切換片段。每次狀態變更都是在 AgenC 開發網絡程序 <code>6UcJzbT…2ab</code> 上的真實 Solana 交易。 <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "獎勵",
 		"state": "狀態",
-		"task": "任務",
 		"task_pda": "任務 PDA",
 		"watch_task": "觀看任務",
 		"workers": "工作者"

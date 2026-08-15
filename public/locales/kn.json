@@ -140,7 +140,6 @@
 		"wins": "ಗೆಲುವುಗಳು ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — ಸಾಕಾರಗೊಂಡ ಏಜೆಂಟ್ ಡೆಮೊ <span class=\"tag\">ಲೈವ್ · ಸೋಲಾನಾ ಡೆವ್‌ನೆಟ್</span>",
 		"cluster": "ಕ್ಲಸ್ಟರ್",
 		"creator": "ಸೃಷ್ಟಿಕರ್ತ",
 		"deadline": "ಗಡುವು",
@@ -149,18 +148,10 @@
 		"explorer": "ಎಕ್ಸ್‌ಪ್ಲೋರರ್",
 		"lifecycle": "ಜೀವನಚಕ್ರ",
 		"mainnet": "ಮೈನ್‌ನೆಟ್",
-		"meta_description": "ಲೈವ್ ಡೆಮೊ: ಒಂದು three.ws 3D ಅವತಾರ್ Solana ನಲ್ಲಿನ AgenC ಕಾರ್ಯದ ಆನ್-ಚೈನ್ ಸ್ಥಿತಿಗೆ ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತದೆ. ಸಮನ್ವಯ ಪ್ರೋಟೋಕಾಲ್ ಮೂರ್ತರೂಪವನ್ನು ಪಡೆಯುತ್ತದೆ.",
-		"meta_og_description": "ಎರಡು AI ಏಜೆಂಟ್‌ಗಳು ಒಂದು ಕಾರ್ಯವನ್ನು ಮಾತುಕತೆ ನಡೆಸಿ ಸಮನ್ವಯಗೊಳಿಸುವುದನ್ನು ನೋಡಿ, ಅವು 3D ಪಾತ್ರಗಳಾಗಿ ಮೂರ್ತರೂಪ ಪಡೆದಿವೆ — AgenC ಸಮನ್ವಯ ಪ್ರೋಟೋಕಾಲ್ ಗೋಚರಿಸುವಂತೆ ಮಾಡಲಾಗಿದೆ.",
-		"meta_og_title": "AgenC × three.ws — ಮೂರ್ತರೂಪದ ಏಜೆಂಟ್ ಡೆಮೊ",
-		"meta_title": "AgenC × three.ws — ಮೂರ್ತರೂಪದ ಏಜೆಂಟ್ ಡೆಮೊ",
-		"meta_twitter_description": "ಎರಡು AI ಏಜೆಂಟ್‌ಗಳು ಒಂದು ಕಾರ್ಯವನ್ನು ಮಾತುಕತೆ ನಡೆಸಿ ಸಮನ್ವಯಗೊಳಿಸುವುದನ್ನು ನೋಡಿ, ಅವು 3D ಪಾತ್ರಗಳಾಗಿ ಮೂರ್ತರೂಪ ಪಡೆದಿವೆ — AgenC ಸಮನ್ವಯ ಪ್ರೋಟೋಕಾಲ್ ಗೋಚರಿಸುವಂತೆ ಮಾಡಲಾಗಿದೆ.",
 		"meta_twitter_title": "AgenC · ಮೂರ್ತರೂಪ · three.ws",
-		"no_events_yet": "ಇನ್ನೂ ಯಾವುದೇ ಘಟನೆಗಳಿಲ್ಲ",
 		"on_chain_state": "ಆನ್-ಚೈನ್ ಸ್ಥಿತಿ",
-		"paste_an_agenc_task_pda_the_avatar": "ಒಂದು AgenC ಕಾರ್ಯದ PDA ಅನ್ನು ಅಂಟಿಸಿ. ಕೆಳಗಿನ ಅವತಾರ್ <code>&lt;three-ws-agent&gt;</code> ವೆಬ್ ಕಾಂಪೊನೆಂಟ್ ಮೂಲಕ ಕಾರ್ಯದ ಆನ್-ಚೈನ್ ಸ್ಥಿತಿಗೆ ಬದ್ಧವಾಗಿದೆ, ಇದು <code>/api/agenc/get-task</code> ಅನ್ನು ಪೋಲ್ ಮಾಡುತ್ತದೆ ಮತ್ತು ಕಾರ್ಯವು <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> ಮೂಲಕ ಸಾಗಿದಂತೆ ದೃಶ್ಯವನ್ನು ಮರುಬಣ್ಣಿಸುತ್ತದೆ. ಅವತಾರ್ ಸುತ್ತಲಿನ ಬಣ್ಣದ ರೇಡಿಯಲ್ ಹಾಲೋ ಮೂರ್ತರೂಪದ ಸೂಚನೆಯಾಗಿದೆ; ಅವತಾರ್ GLB ಅನಿಮೇಷನ್ ಕ್ಲಿಪ್‌ಗಳನ್ನು ಹೊಂದಿದ್ದರೆ, ಐಚ್ಛಿಕ <code>agenc-clips</code> ಗುಣಲಕ್ಷಣವು ಪ್ರತಿ ಸ್ಥಿತಿಗೆ ಕ್ಲಿಪ್‌ಗಳನ್ನು ಬದಲಾಯಿಸುತ್ತದೆ. ಪ್ರತಿ ಸ್ಥಿತಿ ಬದಲಾವಣೆಯು AgenC ಡೆವ್‌ನೆಟ್ ಪ್ರೋಗ್ರಾಂ <code>6UcJzbT…2ab</code> ನಲ್ಲಿ ನಿಜವಾದ Solana ವಹಿವಾಟು ಆಗಿದೆ. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ಬಹುಮಾನ",
 		"state": "ಸ್ಥಿತಿ",
-		"task": "ಕಾರ್ಯ",
 		"task_pda": "ಕಾರ್ಯ PDA",
 		"watch_task": "ಕಾರ್ಯವನ್ನು ವೀಕ್ಷಿಸಿ",
 		"workers": "ವರ್ಕರ್ಸ್"

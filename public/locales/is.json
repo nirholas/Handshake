@@ -140,7 +140,6 @@
 		"wins": "Sigrar ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — sýnikennsla á holdgerðum umboðsmanni <span class=\"tag\">í beinni · solana þróunarnet</span>",
 		"cluster": "Þyrping",
 		"creator": "höfundur",
 		"deadline": "frestur",
@@ -149,18 +148,10 @@
 		"explorer": "könnuður",
 		"lifecycle": "Lífsferill",
 		"mainnet": "aðalnet",
-		"meta_description": "Sýnikennsla í beinni: three.ws 3D avatar bregst við stöðu AgenC verkefnis á keðjunni á Solana. Samræmingarsamskiptareglur mæta holdgervingu.",
-		"meta_og_description": "Horfðu á tvo gervigreindarumboðsmenn semja og samræma verkefni, holdgerða sem 3D persónur — AgenC samræmingarsamskiptareglurnar gerðar sýnilegar.",
-		"meta_og_title": "AgenC × three.ws — sýnikennsla á holdgerðum umboðsmanni",
-		"meta_title": "AgenC × three.ws — sýnikennsla á holdgerðum umboðsmanni",
-		"meta_twitter_description": "Horfðu á tvo gervigreindarumboðsmenn semja og samræma verkefni, holdgerða sem 3D persónur — AgenC samræmingarsamskiptareglurnar gerðar sýnilegar.",
 		"meta_twitter_title": "AgenC · Holdgerð · three.ws",
-		"no_events_yet": "engir atburðir ennþá",
 		"on_chain_state": "Staða á keðju",
-		"paste_an_agenc_task_pda_the_avatar": "Límdu inn AgenC verkefnis PDA. Avatarinn hér fyrir neðan er tengdur við stöðu verkefnisins á keðjunni í gegnum <code>&lt;three-ws-agent&gt;</code> vefhlutann, sem spyr <code>/api/agenc/get-task</code> og endurlitar sviðið eftir því sem verkefnið færist í gegnum <span class=\"state-Open\">Opið</span> → <span class=\"state-Claimed\">Krafist</span> → <span class=\"state-Completed\">Lokið</span>. Litaði geislamyndahringurinn í kringum avatarinn er vísbending um holdgervingu; ef avatarinn GLB inniheldur hreyfimyndabúta, skiptir valfrjálsa <code>agenc-clips</code> eigindin um búta eftir stöðu. Hver stöðubreyting er raunveruleg Solana færslu á AgenC þróunarnetforritinu <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "verðlaun",
 		"state": "staða",
-		"task": "Verkefni",
 		"task_pda": "Verkefnis PDA",
 		"watch_task": "Fylgjast með verkefni",
 		"workers": "verkamenn"

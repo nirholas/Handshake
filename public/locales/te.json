@@ -140,7 +140,6 @@
 		"wins": "విజయాలు ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — శరీరీకృత ఏజెంట్ డెమో <span class=\"tag\">ప్రత్యక్షం · సోలానా డెవ్‌నెట్</span>",
 		"cluster": "క్లస్టర్",
 		"creator": "సృష్టికర్త",
 		"deadline": "గడువు",
@@ -149,18 +148,10 @@
 		"explorer": "ఎక్స్‌ప్లోరర్",
 		"lifecycle": "జీవన చక్రం",
 		"mainnet": "ప్రధాన నెట్",
-		"meta_description": "ప్రత్యక్ష డెమో: three.ws 3D అవతార్ Solanaలో ఒక AgenC పనికి సంబంధించిన ఆన్-చైన్ స్థితికి స్పందిస్తుంది. సమన్వయ ప్రోటోకాల్ శరీరీకరణను కలుస్తుంది.",
-		"meta_og_description": "రెండు AI ఏజెంట్లు ఒక పనిని చర్చించి సమన్వయం చేసేటప్పుడు చూడండి, 3D పాత్రలుగా రూపాంతరం చెందాయి — AgenC సమన్వయ ప్రోటోకాల్ కనిపిస్తుంది.",
-		"meta_og_title": "AgenC × three.ws — రూపాంతరమైన ఏజెంట్ డెమో",
-		"meta_title": "AgenC × three.ws — రూపాంతరమైన ఏజెంట్ డెమో",
-		"meta_twitter_description": "రెండు AI ఏజెంట్లు ఒక పనిని చర్చించి సమన్వయం చేసేటప్పుడు చూడండి, 3D పాత్రలుగా రూపాంతరం చెందాయి — AgenC సమన్వయ ప్రోటోకాల్ కనిపిస్తుంది.",
 		"meta_twitter_title": "AgenC · రూపాంతరమైన · three.ws",
-		"no_events_yet": "ఇప్పటివరకు సంఘటనలు లేవు",
 		"on_chain_state": "ఆన్-చైన్ స్థితి",
-		"paste_an_agenc_task_pda_the_avatar": "ఒక AgenC టాస్క్ PDAని పేస్ట్ చేయండి. కింద ఉన్న అవతార్, టాస్క్ యొక్క ఆన్-చైన్ స్థితికి <code>&lt;three-ws-agent&gt;</code> వెబ్ కాంపోనెంట్ ద్వారా అనుసంధానించబడింది, ఇది <code>/api/agenc/get-task</code>ని పోల్ చేస్తుంది మరియు టాస్క్ <span class=\"state-Open\">ఓపెన్</span> → <span class=\"state-Claimed\">క్లెయిమ్ చేయబడింది</span> → <span class=\"state-Completed\">పూర్తయింది</span> అనే దశల గుండా వెళ్ళే కొద్దీ దృశ్యానికి రంగులు మారుస్తుంది. అవతార్ చుట్టూ ఉన్న రంగుల వృత్తాకార హాలో ఎంబోడిమెంట్ క్యూ; అవతార్ GLB యానిమేషన్ క్లిప్‌లను కలిగి ఉంటే, ఐచ్ఛిక <code>agenc-clips</code> అట్రిబ్యూట్ ప్రతి స్థితికి క్లిప్‌లను మారుస్తుంది. ప్రతి స్థితి మార్పు AgenC డెవ్‌నెట్ ప్రోగ్రామ్ <code>6UcJzbT…2ab</code>లో నిజమైన Solana ట్రాన్సాక్షన్. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "బహుమతి",
 		"state": "స్థితి",
-		"task": "పని",
 		"task_pda": "పని PDA",
 		"watch_task": "పనిని చూడండి",
 		"workers": "కార్యకర్తలు"

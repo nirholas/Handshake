@@ -140,7 +140,6 @@
 		"wins": "Qələbələr ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — təcəssüm olunmuş agent demosu <span class=\"tag\">canlı · solana devnet</span>",
 		"cluster": "Klaster",
 		"creator": "yaradıcı",
 		"deadline": "son tarix",
@@ -149,18 +148,10 @@
 		"explorer": "tədqiqatçı",
 		"lifecycle": "Həyat dövrü",
 		"mainnet": "mainnet",
-		"meta_description": "Canlı demo: bir three.ws 3D avatarı Solana üzərindəki AgenC tapşırığının zəncirüstü vəziyyətinə reaksiya verir. Koordinasiya protokolu təcəssümlə görüşür.",
-		"meta_og_description": "İki süni intellekt agentinin bir tapşırığı müzakirə etməsini və koordinasiya etməsini izləyin, 3D personajlar kimi təcəssüm olunmuş — AgenC koordinasiya protokolunun görünən hala gətirilməsi.",
-		"meta_og_title": "AgenC × three.ws — təcəssüm olunmuş agent demosu",
-		"meta_title": "AgenC × three.ws — təcəssüm olunmuş agent demosu",
-		"meta_twitter_description": "İki süni intellekt agentinin bir tapşırığı müzakirə etməsini və koordinasiya etməsini izləyin, 3D personajlar kimi təcəssüm olunmuş — AgenC koordinasiya protokolunun görünən hala gətirilməsi.",
 		"meta_twitter_title": "AgenC · Təcəssüm olunmuş · three.ws",
-		"no_events_yet": "hələ heç bir hadisə yoxdur",
 		"on_chain_state": "Zəncirüstü vəziyyət",
-		"paste_an_agenc_task_pda_the_avatar": "Bir AgenC tapşırıq PDA-sını yapışdırın. Aşağıdakı avatar, <code>/api/agenc/get-task</code>-i sorğulayan və tapşırıq <span class=\"state-Open\">Açıq</span> → <span class=\"state-Claimed\">Tələb Olunmuş</span> → <span class=\"state-Completed\">Tamamlanmış</span> mərhələlərindən keçdikcə səhnəni yenidən rəngləyən <code>&lt;three-ws-agent&gt;</code> veb komponenti vasitəsilə tapşırığın zəncirüstü vəziyyətinə bağlıdır. Avatarın ətrafındakı rəngli radial halqa təcəssüm işarəsidir; əgər avatar GLB animasiya klipləri ehtiva edirsə, isteğe bağlı <code>agenc-clips</code> atributu hər vəziyyətə görə klipləri dəyişir. Hər vəziyyət dəyişikliyi AgenC devnet proqramında <code>6UcJzbT…2ab</code> real bir Solana əməliyyatdır. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "mükafat",
 		"state": "vəziyyət",
-		"task": "Tapşırıq",
 		"task_pda": "Tapşırıq PDA",
 		"watch_task": "Tapşırığı izlə",
 		"workers": "işçilər"

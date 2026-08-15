@@ -140,7 +140,6 @@
 		"wins": "Հաղթանակներ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — մարմնավորված գործակալի դեմո <span class=\"tag\">կենդանի · Solana devnet</span>",
 		"cluster": "Կլաստեր",
 		"creator": "ստեղծող",
 		"deadline": "վերջնաժամկետ",
@@ -149,18 +148,10 @@
 		"explorer": "Զննիչ",
 		"lifecycle": "Կենսացիկլ",
 		"mainnet": "մեյննեթ",
-		"meta_description": "Կենդանի ցուցադրություն. three.ws 3D ավատարը արձագանքում է AgenC առաջադրանքի շղթայական վիճակին Solana-ում: Համակարգման արձանագրությունը հանդիպում է մարմնավորմանը:",
-		"meta_og_description": "Դիտեք, թե ինչպես են երկու AI գործակալներ բանակցում և համակարգում առաջադրանքը՝ մարմնավորված որպես 3D կերպարներ — AgenC համակարգման արձանագրությունը դարձավ տեսանելի:",
-		"meta_og_title": "AgenC × three.ws — մարմնավորված գործակալի ցուցադրություն",
-		"meta_title": "AgenC × three.ws — մարմնավորված գործակալի ցուցադրություն",
-		"meta_twitter_description": "Դիտեք, թե ինչպես են երկու AI գործակալներ բանակցում և համակարգում առաջադրանքը՝ մարմնավորված որպես 3D կերպարներ — AgenC համակարգման արձանագրությունը դարձավ տեսանելի:",
 		"meta_twitter_title": "AgenC · Մարմնավորված · three.ws",
-		"no_events_yet": "առայժմ իրադարձություններ չկան",
 		"on_chain_state": "Շղթայական վիճակ",
-		"paste_an_agenc_task_pda_the_avatar": "Տեղադրեք AgenC առաջադրանքի PDA: Ստորև ներկայացված ավատարը կապված է առաջադրանքի շղթայական վիճակին <code>&lt;three-ws-agent&gt;</code> վեբ բաղադրիչի միջոցով, որը հարցում է կատարում <code>/api/agenc/get-task</code>-ին և վերագունավորում է տեսարանը, երբ առաջադրանքը անցնում է <span class=\"state-Open\">Բաց</span> → <span class=\"state-Claimed\">Պահանջված</span> → <span class=\"state-Completed\">Ավարտված</span> փուլերով: Ավատարի շուրջ գունավոր շառավղային լուսապսակը մարմնավորման ազդանշանն է. եթե ավատարը GLB պարունակում է անիմացիոն կլիպեր, ապա կամընտիր <code>agenc-clips</code> ատրիբուտը փոխում է կլիպերը ըստ վիճակի: Յուրաքանչյուր վիճակի փոփոխություն իրական Solana գործարք է AgenC devnet ծրագրի <code>6UcJzbT…2ab</code> վրա: <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "պարգև",
 		"state": "վիճակ",
-		"task": "Առաջադրանք",
 		"task_pda": "Առաջադրանքի PDA",
 		"watch_task": "Դիտել առաջադրանքը",
 		"workers": "աշխատողներ"

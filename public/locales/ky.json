@@ -140,7 +140,6 @@
 		"wins": "Жеңиштер ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — материалдашкан агенттин демосу <span class=\"tag\">жандуу · Solana devnet</span>",
 		"cluster": "Кластер",
 		"creator": "жаратуучу",
 		"deadline": "мөөнөт",
@@ -149,18 +148,10 @@
 		"explorer": "эксплорер",
 		"lifecycle": "Жашоо цикли",
 		"mainnet": "mainnet",
-		"meta_description": "Жандуу демо: three.ws 3D аватары Solana дагы AgenC тапшырмасынын чынжырдагы абалына реакция кылат. Координация протоколу материалдашуу менен жолугат.",
-		"meta_og_description": "Эки AI агенттин 3D каармандар катары материалдашып, тапшырманы сүйлөшүп жана координациялап жатканын көрүңүз — AgenC координация протоколу көрүнүктүү болду.",
-		"meta_og_title": "AgenC × three.ws — материалдашкан агенттин демосу",
-		"meta_title": "AgenC × three.ws — материалдашкан агенттин демосу",
-		"meta_twitter_description": "Эки AI агенттин 3D каармандар катары материалдашып, тапшырманы сүйлөшүп жана координациялап жатканын көрүңүз — AgenC координация протоколу көрүнүктүү болду.",
 		"meta_twitter_title": "AgenC · Материалдашкан · three.ws",
-		"no_events_yet": "азырынча окуялар жок",
 		"on_chain_state": "Чынжырдагы абал",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC тапшырмасынын PDA'сын чаптаңыз. Төмөндөгү аватар тапшырманын чынжырдагы абалына <code>&lt;three-ws-agent&gt;</code> веб-компоненти аркылуу байланган, ал <code>/api/agenc/get-task</code> сурамдарын жөнөтүп, тапшырма <span class=\"state-Open\">Ачык</span> → <span class=\"state-Claimed\">Талап кылынган</span> → <span class=\"state-Completed\">Аткарылган</span> абалына өткөндө көрүнүштү кайра боёйт. Аватардын айланасындагы түстүү радиалдык гало материалдашуу белгиси болуп саналат; эгер аватар GLB анимация клиптерин камтыса, кошумча <code>agenc-clips</code> атрибуту ар бир абал үчүн клиптерди алмаштырат. Ар бир абал өзгөрүүсү <code>6UcJzbT…2ab</code> AgenC devnet программасындагы чыныгы Solana транзакция болуп саналат. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "сыйлык",
 		"state": "абал",
-		"task": "Тапшырма",
 		"task_pda": "Тапшырма PDA",
 		"watch_task": "Тапшырманы көрүү",
 		"workers": "жумушчулар"

@@ -140,7 +140,6 @@
 		"wins": "Pobjede ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo utjelovljenog agenta <span class=\"tag\">uživo · solana devnet</span>",
 		"cluster": "Klaster",
 		"creator": "kreator",
 		"deadline": "rok",
@@ -149,18 +148,10 @@
 		"explorer": "istraživač",
 		"lifecycle": "Životni ciklus",
 		"mainnet": "mainnet",
-		"meta_description": "Živi demo: three.ws 3D avatar reagira na stanje na lancu AgenC zadatka na Solana. Protokol koordinacije susreće utjelovljenje.",
-		"meta_og_description": "Pogledajte kako dva AI agenta pregovaraju i koordiniraju zadatak, utjelovljeni kao 3D likovi — AgenC protokol koordinacije postaje vidljiv.",
-		"meta_og_title": "AgenC × three.ws — demo utjelovljenog agenta",
-		"meta_title": "AgenC × three.ws — demo utjelovljenog agenta",
-		"meta_twitter_description": "Pogledajte kako dva AI agenta pregovaraju i koordiniraju zadatak, utjelovljeni kao 3D likovi — AgenC protokol koordinacije postaje vidljiv.",
 		"meta_twitter_title": "AgenC · Utjelovljeni · three.ws",
-		"no_events_yet": "nema događaja još",
 		"on_chain_state": "Stanje na lancu",
-		"paste_an_agenc_task_pda_the_avatar": "Zalijepite AgenC task PDA. Avatar ispod je povezan s on-chain stanjem zadatka putem <code>&lt;three-ws-agent&gt;</code> web komponente, koja poziva <code>/api/agenc/get-task</code> i mijenja boje scene dok zadatak prolazi kroz <span class=\"state-Open\">Otvoreno</span> → <span class=\"state-Claimed\">Zauzeto</span> → <span class=\"state-Completed\">Završeno</span>. Ob kolor radijalna aura oko avatara je znak utjelovljenja; ako avatar GLB sadrži animacijske isječke, opcionalni <code>agenc-clips</code> atribut mijenja isječke po stanju. Svaka promjena stanja je stvarna Solana transakcija na AgenC devnet programu <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "nagrada",
 		"state": "stanje",
-		"task": "Zadatak",
 		"task_pda": "Zadatak PDA",
 		"watch_task": "Pogledajte zadatak",
 		"workers": "radnici"

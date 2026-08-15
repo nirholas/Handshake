@@ -140,7 +140,6 @@
 		"wins": "ជ័យជម្នះ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — ការបង្ហាញភ្នាក់ងារ embodied <span class=\"tag\">ផ្ទាល់ · solana devnet</span>",
 		"cluster": "ចង្កោម",
 		"creator": "អ្នកបង្កើត",
 		"deadline": "កាលកំណត់",
@@ -149,18 +148,10 @@
 		"explorer": "កម្មវិធីរុករក",
 		"lifecycle": "វដ្តជីវិត",
 		"mainnet": "mainnet",
-		"meta_description": "ការបង្ហាញផ្ទាល់: avatar 3D three.ws មួយមានប្រតិកម្មទៅនឹងស្ថានភាព on-chain នៃកិច្ចការ AgenC នៅលើ Solana។ ពិធីការសម្របសម្រួលជួបនឹង embodiment។",
-		"meta_og_description": "មើលភ្នាក់ងារ AI ពីរចរចា និងសម្របសម្រួលកិច្ចការមួយ ដែលត្រូវបាន embodied ជាតួអង្គ 3D — ពិធីការសម្របសម្រួល AgenC ត្រូវបានធ្វើឱ្យមើលឃើញ។",
-		"meta_og_title": "AgenC × three.ws — ការបង្ហាញភ្នាក់ងារ embodied",
-		"meta_title": "AgenC × three.ws — ការបង្ហាញភ្នាក់ងារ embodied",
-		"meta_twitter_description": "មើលភ្នាក់ងារ AI ពីរចរចា និងសម្របសម្រួលកិច្ចការមួយ ដែលត្រូវបាន embodied ជាតួអង្គ 3D — ពិធីការសម្របសម្រួល AgenC ត្រូវបានធ្វើឱ្យមើលឃើញ។",
 		"meta_twitter_title": "AgenC · មានរូបរាង · three.ws",
-		"no_events_yet": "មិនទាន់មានព្រឹត្តិការណ៍នៅឡើយ",
 		"on_chain_state": "ស្ថានភាព On-chain",
-		"paste_an_agenc_task_pda_the_avatar": "បិទភ្ជាប់ AgenC task PDA។ avatar ខាងក្រោមត្រូវបានភ្ជាប់ទៅនឹងស្ថានភាព on-chain នៃកិច្ចការ តាមរយៈ web component <code>&lt;three-ws-agent&gt;</code> ដែល polling <code>/api/agenc/get-task</code> និងប្តូរពណ៌ scene នៅពេលកិច្ចការផ្លាស់ប្តូរពី <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>។ រង្វង់ពន្លឺរាងមូលពណ៌ជុំវិញ avatar គឺជាសញ្ញា embodiment; ប្រសិនបើ avatar GLB មាន animation clips, attribute ស្រេចចិត្ត <code>agenc-clips</code> នឹងប្តូរ clips តាមស្ថានភាពនីមួយៗ។ រាល់ការផ្លាស់ប្តូរស្ថានភាពនីមួយៗ គឺជាប្រតិបត្តិការ Solana ពិតប្រាកដនៅលើកម្មវិធី AgenC devnet <code>6UcJzbT…2ab</code>។ <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "រង្វាន់",
 		"state": "ស្ថានភាព",
-		"task": "កិច្ចការ",
 		"task_pda": "ភារកិច្ច PDA",
 		"watch_task": "មើលកិច្ចការ",
 		"workers": "កម្មករ"

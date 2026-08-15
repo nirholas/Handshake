@@ -140,7 +140,6 @@
 		"wins": "Výhry ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo zhmotněného agenta <span class=\"tag\">živě · solana devnet</span>",
 		"cluster": "Kluster",
 		"creator": "tvůrce",
 		"deadline": "termín",
@@ -149,18 +148,10 @@
 		"explorer": "průzkumník",
 		"lifecycle": "Životní cyklus",
 		"mainnet": "hlavní síť",
-		"meta_description": "Živé demo: three.ws 3D avatar reaguje na on-chain stav úkolu AgenC na Solana. Koordinační protokol se setkává se zhmotněním.",
-		"meta_og_description": "Sledujte, jak dva AI agenti vyjednávají a koordinují úkol, ztvárněni jako 3D postavy — protokol koordinace AgenC zviditelněn.",
-		"meta_og_title": "AgenC × three.ws — demo ztvárněného agenta",
-		"meta_title": "AgenC × three.ws — demo ztvárněného agenta",
-		"meta_twitter_description": "Sledujte, jak dva AI agenti vyjednávají a koordinují úkol, ztvárněni jako 3D postavy — protokol koordinace AgenC zviditelněn.",
 		"meta_twitter_title": "AgenC · Ztvárněný · three.ws",
-		"no_events_yet": "zatím žádné události",
 		"on_chain_state": "Stav na řetězci",
-		"paste_an_agenc_task_pda_the_avatar": "Vložte PDA úkolu AgenC. Avatar níže je spojen se stavem úkolu na řetězci prostřednictvím komponenty <code>&lt;three-ws-agent&gt;</code>, která dotazuje <code>/api/agenc/get-task</code> a mění barvy scény, jak úkol postupuje přes <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Barevná radiální aura kolem avatara je signál ztvárnění; pokud avatar GLB obsahuje animační klipy, volitelný <code>agenc-clips</code> atribut mění klipy podle stavu. Každá změna stavu je skutečná Solana transakce na programu devnet AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "odměna",
 		"state": "stav",
-		"task": "Úkol",
 		"task_pda": "PDA úkolu",
 		"watch_task": "Sledujte úkol",
 		"workers": "pracovníci"

@@ -140,7 +140,6 @@
 		"wins": "जितहरू ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — एम्बोडिड एजेन्ट डेमो <span class=\"tag\">प्रत्यक्ष · सोलाना डेभनेट</span>",
 		"cluster": "क्लस्टर",
 		"creator": "सर्जक",
 		"deadline": "समय सीमा",
@@ -149,18 +148,10 @@
 		"explorer": "एक्सप्लोरर",
 		"lifecycle": "जीवनचक्र",
 		"mainnet": "मेननेट",
-		"meta_description": "प्रत्यक्ष डेमो: एउटा three.ws 3D अवतारले Solana मा रहेको AgenC कार्यको अन-चेन अवस्थामा प्रतिक्रिया दिन्छ। समन्वय प्रोटोकल र एम्बोडिमन्टको संगम।",
-		"meta_og_description": "दुई AI एजेन्टहरूले एउटा कार्यमा वार्तालाप र समन्वय गरेको हेर्नुहोस्, 3D पात्रको रूपमा एम्बोडिड भई — AgenC समन्वय प्रोटोकललाई दृश्यमान बनाइएको छ।",
-		"meta_og_title": "AgenC × three.ws — एम्बोडिड एजेन्ट डेमो",
-		"meta_title": "AgenC × three.ws — एम्बोडिड एजेन्ट डेमो",
-		"meta_twitter_description": "दुई AI एजेन्टहरूले एउटा कार्यमा वार्तालाप र समन्वय गरेको हेर्नुहोस्, 3D पात्रको रूपमा एम्बोडिड भई — AgenC समन्वय प्रोटोकललाई दृश्यमान बनाइएको छ।",
 		"meta_twitter_title": "AgenC · एम्बोडिड · three.ws",
-		"no_events_yet": "अहिलेसम्म कुनै घटना छैन",
 		"on_chain_state": "अन-चेन अवस्था",
-		"paste_an_agenc_task_pda_the_avatar": "एउटा AgenC कार्य PDA टाँस्नुहोस्। तलको अवतार <code>&lt;three-ws-agent&gt;</code> वेब कम्पोनेन्ट मार्फत कार्यको अन-चेन अवस्थासँग बाँधिएको छ, जसले <code>/api/agenc/get-task</code> लाई पोल गर्छ र कार्य <span class=\"state-Open\">खुला</span> → <span class=\"state-Claimed\">दाबी गरिएको</span> → <span class=\"state-Completed\">सम्पन्न</span> हुँदै जाँदा दृश्यको रङ परिवर्तन गर्छ। अवतार वरिपरिको रङ्गीन रेडियल हेलो एम्बोडिमन्ट सङ्केत हो; यदि अवतार GLB मा एनिमेसन क्लिपहरू छन् भने, वैकल्पिक <code>agenc-clips</code> विशेषताले प्रत्येक अवस्था अनुसार क्लिपहरू परिवर्तन गर्छ। प्रत्येक अवस्था परिवर्तन AgenC डेभनेट प्रोग्राम <code>6UcJzbT…2ab</code> मा एउटा वास्तविक Solana लेनदेन हो। <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "पुरस्कार",
 		"state": "अवस्था",
-		"task": "कार्य",
 		"task_pda": "कार्य PDA",
 		"watch_task": "कार्य हेर्नुहोस्",
 		"workers": "कार्यकर्ताहरू"

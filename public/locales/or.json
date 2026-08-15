@@ -140,7 +140,6 @@
 		"wins": "ବିଜୟ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "ଏଜେନ୍ସି × three.ws — ଏମ୍ବଡିଡ୍ ଏଜେଣ୍ଟ ଡେମୋ <span class=\"tag\">ଲାଇଭ୍ · ସୋଲାନା ଡେଭନେଟ୍</span>",
 		"cluster": "କ୍ଲଷ୍ଟର",
 		"creator": "ସୃଷ୍ଟିକର୍ତ୍ତା",
 		"deadline": "ସମୟସୀମା",
@@ -149,18 +148,10 @@
 		"explorer": "ଏକ୍ସପ୍ଲୋରର୍",
 		"lifecycle": "ଜୀବନଚକ୍ର",
 		"mainnet": "ମେନନେଟ୍",
-		"meta_description": "ଲାଇଭ୍ ଡେମୋ: ଏକ three.ws 3D ଅଭାଟାର୍ Solana ଉପରେ ଏକ AgenC ଟାସ୍କର ଅନ୍-ଚେନ୍ ସ୍ଥିତି ପ୍ରତି ପ୍ରତିକ୍ରିୟା କରେ। ସମନ୍ୱୟ ପ୍ରୋଟୋକଲ୍ ମୂର୍ତ୍ତିମାନ ହୁଏ।",
-		"meta_og_description": "ଦୁଇଟି AI ଏଜେଣ୍ଟ୍ ଏକ କାର୍ଯ୍ୟକୁ ଆଲୋଚନା କରି ସମନ୍ୱୟ କରୁଥିବା ଦେଖନ୍ତୁ, ଯାହା 3D ଚରିତ୍ର ଭାବରେ ମୂର୍ତ୍ତିମାନ ହୋଇଛି — AgenC ସମନ୍ୱୟ ପ୍ରୋଟୋକଲ୍ ଦୃଶ୍ୟମାନ ହୋଇଛି।",
-		"meta_og_title": "AgenC × three.ws — ମୂର୍ତ୍ତିମାନ ଏଜେଣ୍ଟ୍ ଡେମୋ",
-		"meta_title": "AgenC × three.ws — ମୂର୍ତ୍ତିମାନ ଏଜେଣ୍ଟ୍ ଡେମୋ",
-		"meta_twitter_description": "ଦୁଇଟି AI ଏଜେଣ୍ଟ୍ ଏକ କାର୍ଯ୍ୟକୁ ଆଲୋଚନା କରି ସମନ୍ୱୟ କରୁଥିବା ଦେଖନ୍ତୁ, ଯାହା 3D ଚରିତ୍ର ଭାବରେ ମୂର୍ତ୍ତିମାନ ହୋଇଛି — AgenC ସମନ୍ୱୟ ପ୍ରୋଟୋକଲ୍ ଦୃଶ୍ୟମାନ ହୋଇଛି।",
 		"meta_twitter_title": "AgenC · ମୂର୍ତ୍ତିମାନ · three.ws",
-		"no_events_yet": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଘଟଣା ନାହିଁ",
 		"on_chain_state": "ଅନ୍-ଚେନ୍ ସ୍ଥିତି",
-		"paste_an_agenc_task_pda_the_avatar": "ଏକ AgenC ଟାସ୍କ PDA ପେଷ୍ଟ କରନ୍ତୁ। ନିମ୍ନରେ ଥିବା ଅଭାଟାର୍ଟି <code>&lt;three-ws-agent&gt;</code> ୱେବ୍ କମ୍ପୋନେଣ୍ଟ୍ ମାଧ୍ୟମରେ ଟାସ୍କର ଅନ୍-ଚେନ୍ ସ୍ଥିତି ସହିତ ବନ୍ଧା ହୋଇଛି, ଯାହା <code>/api/agenc/get-task</code> କୁ ପୋଲ୍ କରେ ଏବଂ ଟାସ୍କ <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> ମାଧ୍ୟମରେ ଗତି କଲାବେଳେ ଦୃଶ୍ୟକୁ ପୁନଃ ରଙ୍ଗୀନ କରେ। ଅଭାଟାର୍ ଚାରିପାଖରେ ଥିବା ରଙ୍ଗୀନ ରେଡିଆଲ୍ ହାଲୋ ହେଉଛି ମୂର୍ତ୍ତିମାନ ସୂଚକ; ଯଦି ଅଭାଟାର୍ GLB ରେ ଆନିମେସନ୍ କ୍ଲିପ୍ ଅଛି, ତେବେ ଐଚ୍ଛିକ <code>agenc-clips</code> ଆଟ୍ରିବ୍ୟୁଟ୍ ପ୍ରତି ସ୍ଥିତି ଅନୁଯାୟୀ କ୍ଲିପ୍ ବଦଳାଏ। ପ୍ରତ୍ୟେକ ସ୍ଥିତି ପରିବର୍ତ୍ତନ AgenC ଡେଭନେଟ୍ ପ୍ରୋଗ୍ରାମ୍ <code>6UcJzbT…2ab</code> ଉପରେ ଏକ ପ୍ରକୃତ Solana ଟ୍ରାଞ୍ଜାକସନ୍ ଅଟେ। <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ପୁରସ୍କାର",
 		"state": "ସ୍ଥିତି",
-		"task": "ଟାସ୍କ",
 		"task_pda": "ଟାସ୍କ PDA",
 		"watch_task": "ଟାସ୍କ ଦେଖନ୍ତୁ",
 		"workers": "କର୍ମୀ"

@@ -140,7 +140,6 @@
 		"wins": "胜绩 ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — 具身智能体演示 <span class=\"tag\">实时 · Solana开发网</span>",
 		"cluster": "集群",
 		"creator": "创建者",
 		"deadline": "截止日期",
@@ -149,18 +148,10 @@
 		"explorer": "浏览器",
 		"lifecycle": "生命周期",
 		"mainnet": "主网",
-		"meta_description": "实时演示：一个three.ws 3D虚拟形象根据Solana上AgenC任务的链上状态做出反应。协调协议与具身化相遇。",
-		"meta_og_description": "观看两个AI代理以3D角色的形式协商并协调一项任务 — AgenC协调协议的可视化呈现。",
-		"meta_og_title": "AgenC × three.ws — 具象化代理演示",
-		"meta_title": "AgenC × three.ws — 具象化代理演示",
-		"meta_twitter_description": "观看两个AI代理以3D角色的形式协商并协调一项任务 — AgenC协调协议的可视化呈现。",
 		"meta_twitter_title": "AgenC · 具象化 · three.ws",
-		"no_events_yet": "暂无事件",
 		"on_chain_state": "链上状态",
-		"paste_an_agenc_task_pda_the_avatar": "粘贴一个AgenC任务PDA。下方的头像通过 <code>&lt;three-ws-agent&gt;</code> Web组件绑定到任务的链上状态，该组件轮询 <code>/api/agenc/get-task</code>，并根据任务在 <span class=\"state-Open\">开放</span> → <span class=\"state-Claimed\">认领</span> → <span class=\"state-Completed\">完成</span> 状态间的流转重新着色场景。头像周围的彩色径向光晕是具象化提示；如果头像 GLB 包含动画片段，可选的 <code>agenc-clips</code> 属性会根据状态切换片段。每次状态变更都是AgenC开发网程序 <code>6UcJzbT…2ab</code> 上的一笔真实 Solana 交易。<a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "奖励",
 		"state": "状态",
-		"task": "任务",
 		"task_pda": "任务PDA",
 		"watch_task": "观看任务",
 		"workers": "工作者"

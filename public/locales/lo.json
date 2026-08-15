@@ -140,7 +140,6 @@
 		"wins": "ຜົນຊະນະ ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — ຕົວຢ່າງຕົວແທນທີ່ມີຮູບຮ່າງ <span class=\"tag\">ສົດ · solana devnet</span>",
 		"cluster": "ຄລັສເຕີ",
 		"creator": "ຜູ້ສ້າງ",
 		"deadline": "ກຳນົດເວລາ",
@@ -149,18 +148,10 @@
 		"explorer": "ເອັກສ໌ພລໍເຣີ",
 		"lifecycle": "ວົງຈອນຊີວິດ",
 		"mainnet": "ເມນເນັດ",
-		"meta_description": "ການສາທິດສົດ: ອະວາຕາ 3D three.ws ຕອບສະໜອງຕໍ່ສະຖານະ on-chain ຂອງວຽກ AgenC ຢູ່ Solana. ໂປຣໂຕຄໍການປະສານງານພົບກັບການເປັນຮູບຮ່າງ.",
-		"meta_og_description": "ເບິ່ງສອງຕົວແທນ AI ເຈລະຈາ ແລະ ປະສານງານວຽກ, ທີ່ຖືກສ້າງເປັນຕົວລະຄອນ 3D — ໂປຣໂຕຄໍການປະສານງານຂອງ AgenC ທີ່ຖືກເຮັດໃຫ້ເຫັນໄດ້.",
-		"meta_og_title": "AgenC × three.ws — ການສາທິດຕົວແທນທີ່ມີຮູບຮ່າງ",
-		"meta_title": "AgenC × three.ws — ການສາທິດຕົວແທນທີ່ມີຮູບຮ່າງ",
-		"meta_twitter_description": "ເບິ່ງສອງຕົວແທນ AI ເຈລະຈາ ແລະ ປະສານງານວຽກ, ທີ່ຖືກສ້າງເປັນຕົວລະຄອນ 3D — ໂປຣໂຕຄໍການປະສານງານຂອງ AgenC ທີ່ຖືກເຮັດໃຫ້ເຫັນໄດ້.",
 		"meta_twitter_title": "AgenC · ມີຮູບຮ່າງ · three.ws",
-		"no_events_yet": "ຍັງບໍ່ມີເຫດການເທື່ອ",
 		"on_chain_state": "ສະຖານະ On-chain",
-		"paste_an_agenc_task_pda_the_avatar": "ວາງ AgenC task PDA. ອະວາຕາຂ້າງລຸ່ມນີ້ຖືກຜູກມັດກັບສະຖານະ on-chain ຂອງວຽກຜ່ານ web component <code>&lt;three-ws-agent&gt;</code>, ເຊິ່ງສອບຖາມ <code>/api/agenc/get-task</code> ແລະປ່ຽນສີຂອງສາກເມື່ອວຽກເຄື່ອນຜ່ານ <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. ແສງຮອບອະວາຕາທີ່ມີສີສັນແມ່ນສັນຍານການເປັນຮູບຮ່າງ; ຖ້າອະວາຕາ GLB ມີຄລິບອານິເມຊັນ, ຄຸນສົມບັດທາງເລືອກ <code>agenc-clips</code> ຈະປ່ຽນຄລິບຕາມແຕ່ລະສະຖານະ. ການປ່ຽນແປງສະຖານະແຕ່ລະຄັ້ງແມ່ນທຸລະກໍາ Solana ທີ່ແທ້ຈິງໃນໂປຣແກຣມ AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ລາງວັນ",
 		"state": "ສະຖານະ",
-		"task": "ວຽກ",
 		"task_pda": "ວຽກ PDA",
 		"watch_task": "ເບິ່ງວຽກ",
 		"workers": "ຜູ້ເຮັດວຽກ"

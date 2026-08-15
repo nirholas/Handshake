@@ -140,7 +140,6 @@
 		"wins": "Победи ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — демо на отелотворен агент <span class=\"tag\">во живо · solana devnet</span>",
 		"cluster": "Кластер",
 		"creator": "креатор",
 		"deadline": "рок",
@@ -149,18 +148,10 @@
 		"explorer": "истражувач",
 		"lifecycle": "Животен циклус",
 		"mainnet": "mainnet",
-		"meta_description": "Демо во живо: 3D аватар на three.ws реагира на состојбата на синџирот на AgenC задача на Solana. Протоколот за координација се среќава со отелотворувањето.",
-		"meta_og_description": "Гледајте како два АИ агенти преговараат и координираат задача, отелотворени како 3D ликови — протоколот за координација на AgenC стана видлив.",
-		"meta_og_title": "AgenC × three.ws — демо на отелотворен агент",
-		"meta_title": "AgenC × three.ws — демо на отелотворен агент",
-		"meta_twitter_description": "Гледајте како два АИ агенти преговараат и координираат задача, отелотворени како 3D ликови — протоколот за координација на AgenC стана видлив.",
 		"meta_twitter_title": "AgenC · Отелотворено · three.ws",
-		"no_events_yet": "сè уште нема настани",
 		"on_chain_state": "Состојба на синџирот",
-		"paste_an_agenc_task_pda_the_avatar": "Залепете AgenC задача PDA. Аватарот подолу е поврзан со состојбата на синџирот на задачата преку веб-компонентата <code>&lt;three-ws-agent&gt;</code>, која го испрашува <code>/api/agenc/get-task</code> и ја пребојува сцената додека задачата минува низ <span class=\"state-Open\">Отворена</span> → <span class=\"state-Claimed\">Преземена</span> → <span class=\"state-Completed\">Завршена</span>. Обоениот радијален ореол околу аватарот е знак за отелотворување; ако аватарот GLB содржи анимациски клипови, опционалниот атрибут <code>agenc-clips</code> ги менува клиповите по состојба. Секоја промена на состојбата е вистинска Solana трансакција на AgenC devnet програмата <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "награда",
 		"state": "состојба",
-		"task": "Задача",
 		"task_pda": "Задача PDA",
 		"watch_task": "Набљудувај задача",
 		"workers": "работници"

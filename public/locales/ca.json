@@ -140,7 +140,6 @@
 		"wins": "Victòries ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo d'agent encarnat <span class=\"tag\">en directe · solana devnet</span>",
 		"cluster": "Clúster",
 		"creator": "creador",
 		"deadline": "termini",
@@ -149,18 +148,10 @@
 		"explorer": "explorador",
 		"lifecycle": "Cicle de vida",
 		"mainnet": "mainnet",
-		"meta_description": "Demo en directe: un avatar 3D de three.ws reacciona a l'estat on-chain d'una tasca d'AgenC a Solana. El protocol de coordinació es troba amb l'encarnació.",
-		"meta_og_description": "Observa dos agents d'IA negociar i coordinar una tasca, encarnats com a personatges 3D — el protocol de coordinació d'AgenC fet visible.",
-		"meta_og_title": "AgenC × three.ws — demo d'agent encarnat",
-		"meta_title": "AgenC × three.ws — demo d'agent encarnat",
-		"meta_twitter_description": "Observa dos agents d'IA negociar i coordinar una tasca, encarnats com a personatges 3D — el protocol de coordinació d'AgenC fet visible.",
 		"meta_twitter_title": "AgenC · Encarnat · three.ws",
-		"no_events_yet": "encara no hi ha esdeveniments",
 		"on_chain_state": "Estat on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Enganxa un PDA de tasca d'AgenC. L'avatar de sota està vinculat a l'estat on-chain de la tasca mitjançant el component web <code>&lt;three-ws-agent&gt;</code>, que consulta <code>/api/agenc/get-task</code> i recoloreix l'escena a mesura que la tasca avança per <span class=\"state-Open\">Oberta</span> → <span class=\"state-Claimed\">Reclamada</span> → <span class=\"state-Completed\">Completada</span>. L'halo radial de color al voltant de l'avatar és la pista d'encarnació; si l'avatar GLB conté clips d'animació, l'atribut opcional <code>agenc-clips</code> canvia els clips per estat. Cada canvi d'estat és una transacció Solana real al programa devnet d'AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "recompensa",
 		"state": "estat",
-		"task": "Tasca",
 		"task_pda": "PDA de tasca",
 		"watch_task": "Observar tasca",
 		"workers": "treballadors"

@@ -140,7 +140,6 @@
 		"wins": "Sejre ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — legemliggjort agent demo <span class=\"tag\">live · solana devnet</span>",
 		"cluster": "Klynge",
 		"creator": "skaber",
 		"deadline": "frist",
@@ -149,18 +148,10 @@
 		"explorer": "udforsker",
 		"lifecycle": "Livscyklus",
 		"mainnet": "mainnet",
-		"meta_description": "Live demo: en three.ws 3D avatar reagerer på den on-chain tilstand af en AgenC opgave på Solana. Koordinationsprotokol møder legemliggørelse.",
-		"meta_og_description": "Se to AI-agenter forhandle og koordinere en opgave, legemliggjort som 3D-figurer — AgenC-koordinationsprotokollen gjort synlig.",
-		"meta_og_title": "AgenC × three.ws — legemliggjort agent demo",
-		"meta_title": "AgenC × three.ws — legemliggjort agent demo",
-		"meta_twitter_description": "Se to AI-agenter forhandle og koordinere en opgave, legemliggjort som 3D-figurer — AgenC-koordinationsprotokollen gjort synlig.",
 		"meta_twitter_title": "AgenC · Legemliggjort · three.ws",
-		"no_events_yet": "ingen begivenheder endnu",
 		"on_chain_state": "On-chain tilstand",
-		"paste_an_agenc_task_pda_the_avatar": "Indsæt en AgenC opgave PDA. Avataren nedenfor er bundet til opgavens on-chain tilstand via <code>&lt;three-ws-agent&gt;</code> webkomponenten, som henter <code>/api/agenc/get-task</code> og ændrer farven på scenen, mens opgaven bevæger sig gennem <span class=\"state-Open\">Åben</span> → <span class=\"state-Claimed\">Krav</span> → <span class=\"state-Completed\">Fuldført</span>. Den farvede radiale halo omkring avataren er legemliggørelsesindikatoren; hvis avataren GLB indeholder animationsklip, skifter den valgfrie <code>agenc-clips</code> attribut klip pr. tilstand. Hver tilstandsændring er en reel Solana transaktion på AgenC devnet programmet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "belønning",
 		"state": "tilstand",
-		"task": "Opgave",
 		"task_pda": "Opgave PDA",
 		"watch_task": "Se opgave",
 		"workers": "arbejdere"

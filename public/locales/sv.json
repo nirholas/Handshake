@@ -140,7 +140,6 @@
 		"wins": "Vinster ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — inbodd agentdemo <span class=\"tag\">live · solana devnet</span>",
 		"cluster": "Kluster",
 		"creator": "skapare",
 		"deadline": "deadline",
@@ -149,18 +148,10 @@
 		"explorer": "utforskare",
 		"lifecycle": "Livscykel",
 		"mainnet": "mainnet",
-		"meta_description": "Live demo: en three.ws 3D-avatar reagerar på det on-chain tillståndet av en AgenC-uppgift på Solana. Koordinationsprotokoll möter inbodande.",
-		"meta_og_description": "Se två AI-agenter förhandla och koordinera en uppgift, förkroppsligade som 3D-karaktärer — AgenC-koordinationsprotokollet synliggjort.",
-		"meta_og_title": "AgenC × three.ws — förkroppsligad agentdemo",
-		"meta_title": "AgenC × three.ws — förkroppsligad agentdemo",
-		"meta_twitter_description": "Se två AI-agenter förhandla och koordinera en uppgift, förkroppsligade som 3D-karaktärer — AgenC-koordinationsprotokollet synliggjort.",
 		"meta_twitter_title": "AgenC · Förkroppsligad · three.ws",
-		"no_events_yet": "inga evenemang än",
 		"on_chain_state": "On-chain tillstånd",
-		"paste_an_agenc_task_pda_the_avatar": "Klistra in en AgenC-uppgift PDA. Avataren nedan är kopplad till uppgiftens on-chain tillstånd via <code>&lt;three-ws-agent&gt;</code> webkomponenten, som pollar <code>/api/agenc/get-task</code> och färgar om scenen när uppgiften rör sig genom <span class=\"state-Open\">Öppen</span> → <span class=\"state-Claimed\">Krävd</span> → <span class=\"state-Completed\">Avslutad</span>. Den färgade radiala halon runt avataren är förkroppsligandets ledtråd; om avataren GLB innehåller animationsklipp, växlar den valfria <code>agenc-klipp</code> attributet klipp per tillstånd. Varje tillståndsändring är en verklig Solana transaktion på AgenC devnet-programmet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "belöning",
 		"state": "tillstånd",
-		"task": "Uppgift",
 		"task_pda": "Uppgift PDA",
 		"watch_task": "Titta på uppgift",
 		"workers": "arbetare"

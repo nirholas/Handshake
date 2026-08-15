@@ -140,7 +140,6 @@
 		"wins": "Nasara ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo na wakili mai jiki <span class=\"tag\">kai tsaye · solana devnet</span>",
 		"cluster": "Taro",
 		"creator": "mai ƙirƙira",
 		"deadline": "lokacin ƙarshe",
@@ -149,18 +148,10 @@
 		"explorer": "mai bincike",
 		"lifecycle": "Tsarin rayuwa",
 		"mainnet": "mainnet",
-		"meta_description": "Demo kai tsaye: avatar 3D na three.ws yana amsa ga yanayin kan-sarkar na aikin AgenC akan Solana. Ka'idar haɗin kai ta haɗu da jiki.",
-		"meta_og_description": "Kalli wakilan AI guda biyu suyi shawarwari kuma su haɗa kai kan wani aiki, a matsayin haruffa 3D masu jiki — ka'idar haɗin kai ta AgenC da aka bayyana.",
-		"meta_og_title": "AgenC × three.ws — demo na wakili mai jiki",
-		"meta_title": "AgenC × three.ws — demo na wakili mai jiki",
-		"meta_twitter_description": "Kalli wakilan AI guda biyu suyi shawarwari kuma su haɗa kai kan wani aiki, a matsayin haruffa 3D masu jiki — ka'idar haɗin kai ta AgenC da aka bayyana.",
 		"meta_twitter_title": "AgenC · Mai jiki · three.ws",
-		"no_events_yet": "babu abubuwan da suka faru tukuna",
 		"on_chain_state": "Yanayin kan-sarkar",
-		"paste_an_agenc_task_pda_the_avatar": "Manna PDA na aikin AgenC. Avatar da ke ƙasa yana da alaƙa da yanayin kan-sarkar na aikin ta hanyar kashi na yanar gizo na <code>&lt;three-ws-agent&gt;</code>, wanda ke bincika <code>/api/agenc/get-task</code> kuma yana canza launin wurin yayin da aikin ke tafiya ta <span class=\"state-Open\">Buɗe</span> → <span class=\"state-Claimed\">An Karɓa</span> → <span class=\"state-Completed\">An Kammala</span>. Hasken launi mai zagaye a kusa da avatar shine alamar jiki; idan avatar GLB yana ɗauke da shirye-shiryen motsi, siffar zaɓi na <code>agenc-clips</code> yana canza shirye-shiryen motsi bisa ga kowane yanayi. Kowane canjin yanayi shine ainihin ma'amala Solana akan shirin AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "lada",
 		"state": "yanayi",
-		"task": "Aiki",
 		"task_pda": "PDA na Aiki",
 		"watch_task": "Kalli aiki",
 		"workers": "ma'aikata"

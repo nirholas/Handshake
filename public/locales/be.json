@@ -140,7 +140,6 @@
 		"wins": "Перамогі ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — дэма ўвасобленага агента <span class=\"tag\">ужывую · solana devnet</span>",
 		"cluster": "Кластар",
 		"creator": "стваральнік",
 		"deadline": "тэрмін",
@@ -149,18 +148,10 @@
 		"explorer": "эксплорэр",
 		"lifecycle": "Жыццёвы цыкл",
 		"mainnet": "mainnet",
-		"meta_description": "Жывая дэманстрацыя: 3D аватар three.ws рэагуе на стан у ланцужку задачы AgenC на Solana. Пратакол каардынацыі сустракаецца з увасабленнем.",
-		"meta_og_description": "Паглядзіце, як два ІІ-агенты вядуць перамовы і каардынуюць задачу, увасобленыя ў выглядзе 3D персанажаў — пратакол каардынацыі AgenC, зроблены бачным.",
-		"meta_og_title": "AgenC × three.ws — дэма ўвасобленага агента",
-		"meta_title": "AgenC × three.ws — дэма ўвасобленага агента",
-		"meta_twitter_description": "Паглядзіце, як два ІІ-агенты вядуць перамовы і каардынуюць задачу, увасобленыя ў выглядзе 3D персанажаў — пратакол каардынацыі AgenC, зроблены бачным.",
 		"meta_twitter_title": "AgenC · Увасоблены · three.ws",
-		"no_events_yet": "пакуль няма падзей",
 		"on_chain_state": "Стан у ланцужку",
-		"paste_an_agenc_task_pda_the_avatar": "Устаўце PDA задачы AgenC. Аватар ніжэй прывязаны да стану задачы ў ланцужку праз вэб-кампанент <code>&lt;three-ws-agent&gt;</code>, які апытвае <code>/api/agenc/get-task</code> і перафарбоўвае сцэну па меры праходжання задачы праз <span class=\"state-Open\">Адкрыта</span> → <span class=\"state-Claimed\">Забрана</span> → <span class=\"state-Completed\">Выканана</span>. Каляровы радыяльны арэол вакол аватара з'яўляецца сігналам увасаблення; калі аватар GLB змяшчае анімацыйныя кліпы, неабавязковы атрыбут <code>agenc-clips</code> пераключае кліпы ў залежнасці ад стану. Кожная змена стану — гэта рэальная Solana транзакцыя ў праграме AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "узнагарода",
 		"state": "стан",
-		"task": "Задача",
 		"task_pda": "PDA задачы",
 		"watch_task": "Сачыць за задачай",
 		"workers": "выканаўцы"

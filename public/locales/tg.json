@@ -140,7 +140,6 @@
 		"wins": "Пирӯзиҳо ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — намоиши агенти ҷисмонӣ <span class=\"tag\">мустақим · solana devnet</span>",
 		"cluster": "Кластер",
 		"creator": "эҷодкор",
 		"deadline": "мӯҳлат",
@@ -149,18 +148,10 @@
 		"explorer": "эксплорер",
 		"lifecycle": "Давраи ҳаёт",
 		"mainnet": "mainnet",
-		"meta_description": "Намоиши мустақим: аватари 3D-и three.ws ба ҳолати on-chain-и вазифаи AgenC дар Solana вокуниш нишон медиҳад. Протоколи ҳамоҳангсозӣ таҷассум меёбад.",
-		"meta_og_description": "Ду агенти AI-ро тамошо кунед, ки як вазифаро музокира ва ҳамоҳанг мекунанд, ҳамчун қаҳрамонҳои 3D таҷассум ёфтаанд — протоколи ҳамоҳангсозии AgenC намоён гардидааст.",
-		"meta_og_title": "AgenC × three.ws — намоиши агенти таҷассумёфта",
-		"meta_title": "AgenC × three.ws — намоиши агенти таҷассумёфта",
-		"meta_twitter_description": "Ду агенти AI-ро тамошо кунед, ки як вазифаро музокира ва ҳамоҳанг мекунанд, ҳамчун қаҳрамонҳои 3D таҷассум ёфтаанд — протоколи ҳамоҳангсозии AgenC намоён гардидааст.",
 		"meta_twitter_title": "AgenC · Таҷассумёфта · three.ws",
-		"no_events_yet": "ҳанӯз рӯйдодҳо нест",
 		"on_chain_state": "Ҳолати on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "PDA-и вазифаи AgenC-ро часпонед. Аватари дар поён буда ба ҳолати on-chain-и вазифа тавассути ҷузъи веби <code>&lt;three-ws-agent&gt;</code> пайваст аст, ки <code>/api/agenc/get-task</code>-ро пурсиш мекунад ва саҳнаро аз нав ранг мекунад, вақте ки вазифа аз <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> мегузарад. Ҳалои радиалӣ-рангаи атрофи аватар нишонаи таҷассум аст; агар аватар GLB клипҳои аниматсионӣ дошта бошад, атрибути ихтиёрии <code>agenc-clips</code> клипҳоро мувофиқи ҳолат иваз мекунад. Ҳар як тағйири ҳолат як транзаксияи воқеии Solana дар барномаи devnet-и AgenC <code>6UcJzbT…2ab</code> мебошад. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "мукофот",
 		"state": "ҳолат",
-		"task": "Вазифа",
 		"task_pda": "PDA-и вазифа",
 		"watch_task": "Вазифаро тамошо кунед",
 		"workers": "корбарон"

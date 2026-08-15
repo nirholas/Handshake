@@ -140,7 +140,6 @@
 		"wins": "வெற்றிகள் ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — உடலுறுப்பு ஏஜெண்ட் டெமோ <span class=\"tag\">நேரலை · சொலனா டெவ்நெட்</span>",
 		"cluster": "கிளஸ்டர்",
 		"creator": "உருவாக்குநர்",
 		"deadline": "கடைசி தேதி",
@@ -149,18 +148,10 @@
 		"explorer": "ஆய்வாளர்",
 		"lifecycle": "வாழ்க்கைச்சுழற்சி",
 		"mainnet": "மெய்நெட்",
-		"meta_description": "நேரலை டெமோ: three.ws 3D அவதாரம் Solanaல் AgenC பணியின் ஆன்செயின் நிலைக்கு எதிராக எதிர்வினை செய்கிறது. ஒருங்கிணைப்பு நெறிமுறைகள் உடலுறுப்புடன் சந்திக்கின்றன.",
-		"meta_og_description": "இரு AI முகாமையாளர்கள் ஒரு பணியை பேச்சுவார்த்தை செய்து ஒருங்கிணைக்கிறார்கள், 3D கதாபாத்திரங்களாக உருவாக்கப்பட்டுள்ளன — AgenC ஒருங்கிணைப்பு நெறிமுறையை வெளிப்படுத்துகிறது.",
-		"meta_og_title": "AgenC × three.ws — உருவாக்கப்பட்ட முகாமையாளர்கள் டெமோ",
-		"meta_title": "AgenC × three.ws — உருவாக்கப்பட்ட முகாமையாளர்கள் டெமோ",
-		"meta_twitter_description": "இரு AI முகாமையாளர்கள் ஒரு பணியை பேச்சுவார்த்தை செய்து ஒருங்கிணைக்கிறார்கள், 3D கதாபாத்திரங்களாக உருவாக்கப்பட்டுள்ளன — AgenC ஒருங்கிணைப்பு நெறிமுறையை வெளிப்படுத்துகிறது.",
 		"meta_twitter_title": "AgenC · உருவாக்கப்பட்ட · three.ws",
-		"no_events_yet": "இன்னும் நிகழ்வுகள் இல்லை",
 		"on_chain_state": "On-chain நிலை",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC பணியின் PDA ஐ ஒட்டவும். கீழே உள்ள அவதாரம் பணியின் on-chain நிலைக்கு <code>&lt;three-ws-agent&gt;</code> வலை கூறு மூலம் இணைக்கப்பட்டுள்ளது, இது <code>/api/agenc/get-task</code> ஐ polling செய்து பணியின் நிலை மாறும்போது காட்சியை மறுபிறப்பிக்கிறது <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. அவதாரத்தின் சுற்றிலும் உள்ள நிறமயமான வட்ட Halo உருவாக்கத்தின் சின்னம்; அவதாரத்தில் GLB அனிமேஷன் கிளிப்புகள் உள்ளால், விருப்பமான <code>agenc-clips</code> பண்புக்கூறு நிலைபேறுகளைப் படிக்கிறது. ஒவ்வொரு நிலை மாற்றமும் AgenC devnet திட்டத்தில் ஒரு உண்மையான Solana பரிமாற்றமாகும் <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "விலையளிப்பு",
 		"state": "நிலை",
-		"task": "பணி",
 		"task_pda": "பணி PDA",
 		"watch_task": "பணியைப் பாருங்கள்",
 		"workers": "உழைப்பாளர்கள்"

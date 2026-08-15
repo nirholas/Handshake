@@ -140,7 +140,6 @@
 		"wins": "বিজয় ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — এম্বডিড এজেন্ট ডেমো <span class=\"tag\">লাইভ · সোলানা ডেভনেট</span>",
 		"cluster": "ক্লাস্টার",
 		"creator": "স্রষ্টা",
 		"deadline": "ডেডলাইন",
@@ -149,18 +148,10 @@
 		"explorer": "এক্সপ্লোরার",
 		"lifecycle": "লাইফসাইকেল",
 		"mainnet": "মেইননেট",
-		"meta_description": "লাইভ ডেমো: একটি three.ws 3D অবতার Solana-এ AgenC টাস্কের অন-চেইন অবস্থার প্রতি প্রতিক্রিয়া জানায়। সমন্বয় প্রোটোকল এম্বডমেন্টের সাথে মিলিত হয়।",
-		"meta_og_description": "দুইটি AI এজেন্টকে একটি কাজ নিয়ে আলোচনা করতে এবং সমন্বয় করতে দেখুন, 3D চরিত্র হিসেবে আবদ্ধ — AgenC সমন্বয় প্রোটোকল দৃশ্যমান।",
-		"meta_og_title": "AgenC × three.ws — আবদ্ধ এজেন্ট ডেমো",
-		"meta_title": "AgenC × three.ws — আবদ্ধ এজেন্ট ডেমো",
-		"meta_twitter_description": "দুইটি AI এজেন্টকে একটি কাজ নিয়ে আলোচনা করতে এবং সমন্বয় করতে দেখুন, 3D চরিত্র হিসেবে আবদ্ধ — AgenC সমন্বয় প্রোটোকল দৃশ্যমান।",
 		"meta_twitter_title": "AgenC · আবদ্ধ · three.ws",
-		"no_events_yet": "এখনো কোনো ইভেন্ট নেই",
 		"on_chain_state": "অন-চেইন অবস্থান",
-		"paste_an_agenc_task_pda_the_avatar": "একটি AgenC কাজের PDA পেস্ট করুন। নিচের অবতারটি <code>&lt;three-ws-agent&gt;</code> ওয়েব উপাদানের মাধ্যমে কাজের অন-চেইন অবস্থার সাথে আবদ্ধ, যা <code>/api/agenc/get-task</code> থেকে তথ্য সংগ্রহ করে এবং কাজটি <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span> এর মধ্য দিয়ে চলার সময় দৃশ্যের রঙ পরিবর্তন করে। অবতারটির চারপাশে রঙিন রেডিয়াল হ্যালো হল আবদ্ধতার সংকেত; যদি অবতারটি GLB অ্যানিমেশন ক্লিপ ধারণ করে, তবে ঐচ্ছিক <code>agenc-clips</code> অ্যাট্রিবিউট অবস্থার অনুযায়ী ক্লিপ পরিবর্তন করে। প্রতিটি অবস্থার পরিবর্তন হল AgenC ডেভনেট প্রোগ্রামে একটি বাস্তব Solana লেনদেন <code>6UcJzbT…2ab</code>। <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "পুরস্কার",
 		"state": "অবস্থা",
-		"task": "কাজ",
 		"task_pda": "কাজ PDA",
 		"watch_task": "কাজ দেখুন",
 		"workers": "কর্মী"

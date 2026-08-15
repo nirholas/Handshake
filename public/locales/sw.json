@@ -140,7 +140,6 @@
 		"wins": "Ushindi ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — onyesho la wakala lililojumuishwa <span class=\"tag\">moja kwa moja · solana devnet</span>",
 		"cluster": "Kikundi",
 		"creator": "mwandishi",
 		"deadline": "muda wa mwisho",
@@ -149,18 +148,10 @@
 		"explorer": "mchambuzi",
 		"lifecycle": "Mzunguko wa Maisha",
 		"mainnet": "mainnet",
-		"meta_description": "Onyesho la moja kwa moja: three.ws 3D avatar inajibu hali ya on-chain ya kazi ya AgenC kwenye Solana. Itifaki ya uratibu inakutana na mwili.",
-		"meta_og_description": "Tazama wakala wawili wa AI wakijadiliana na kuratibu kazi, wakiwa kama wahusika wa 3D — itifaki ya uratibu ya AgenC imeonekana.",
-		"meta_og_title": "AgenC × three.ws — onyesho la wakala aliyejumuishwa",
-		"meta_title": "AgenC × three.ws — onyesho la wakala aliyejumuishwa",
-		"meta_twitter_description": "Tazama wakala wawili wa AI wakijadiliana na kuratibu kazi, wakiwa kama wahusika wa 3D — itifaki ya uratibu ya AgenC imeonekana.",
 		"meta_twitter_title": "AgenC · Aliyejumuishwa · three.ws",
-		"no_events_yet": "hakuna matukio bado",
 		"on_chain_state": "Hali ya kwenye mnyororo",
-		"paste_an_agenc_task_pda_the_avatar": "Bandika PDA ya kazi ya AgenC. Avatar hapa chini imefungwa na hali ya kazi kwenye mnyororo kupitia <code>&lt;three-ws-agent&gt;</code> kipengele cha wavuti, ambacho kinachunguza <code>/api/agenc/get-task</code> na kubadilisha rangi ya scene kadri kazi inavyosonga kupitia <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Halo ya rangi inayozunguka avatar ni ishara ya uhusishaji; ikiwa avatar GLB ina klipu za uhuishaji, kipengele cha hiari <code>agenc-clips</code> kinabadilisha klipu kwa kila hali. Kila mabadiliko ya hali ni Solana muamala halisi kwenye programu ya AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "tuzo",
 		"state": "hali",
-		"task": "Kazi",
 		"task_pda": "PDA ya kazi",
 		"watch_task": "Tazama kazi",
 		"workers": "wafanyakazi"

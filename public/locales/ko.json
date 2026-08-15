@@ -140,7 +140,6 @@
 		"wins": "승리 ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — 구현된 에이전트 데모 <span class=\"tag\">실시간 · 솔라나 개발넷</span>",
 		"cluster": "클러스터",
 		"creator": "크리에이터",
 		"deadline": "마감일",
@@ -149,18 +148,10 @@
 		"explorer": "익스플로러",
 		"lifecycle": "라이프사이클",
 		"mainnet": "메인넷",
-		"meta_description": "실시간 데모: Solana의 AgenC 작업 온체인 상태에 three.ws 3D 아바타가 반응합니다. 조정 프로토콜이 구현과 만납니다.",
-		"meta_og_description": "두 AI 에이전트가 3D 캐릭터로 구현되어 작업을 협상하고 조율하는 모습을 지켜보세요 — AgenC 조율 프로토콜이 시각화됩니다.",
-		"meta_og_title": "AgenC × three.ws — 구현된 에이전트 데모",
-		"meta_title": "AgenC × three.ws — 구현된 에이전트 데모",
-		"meta_twitter_description": "두 AI 에이전트가 3D 캐릭터로 구현되어 작업을 협상하고 조율하는 모습을 지켜보세요 — AgenC 조율 프로토콜이 시각화됩니다.",
 		"meta_twitter_title": "AgenC · 구현 · three.ws",
-		"no_events_yet": "아직 이벤트 없음",
 		"on_chain_state": "온체인 상태",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC 작업 PDA를 붙여넣으세요. 아래 아바타는 <code>&lt;three-ws-agent&gt;</code> 웹 컴포넌트를 통해 작업의 온체인 상태에 바인딩됩니다. 이 컴포넌트는 <code>/api/agenc/get-task</code>를 폴링하여 작업이 <span class=\"state-Open\">열림</span> → <span class=\"state-Claimed\">클레임됨</span> → <span class=\"state-Completed\">완료됨</span> 상태로 전환됨에 따라 장면의 색상을 변경합니다. 아바타 주변의 색상 원형 후광은 구현 신호입니다. 아바타 GLB에 애니메이션 클립이 포함된 경우, 선택적 <code>agenc-clips</code> 속성은 상태별로 클립을 전환합니다. 각 상태 변경은 AgenC 개발넷 프로그램 <code>6UcJzbT…2ab</code>에서 실제 Solana 트랜잭션입니다. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "보상",
 		"state": "상태",
-		"task": "작업",
 		"task_pda": "작업 PDA",
 		"watch_task": "작업 보기",
 		"workers": "작업자"

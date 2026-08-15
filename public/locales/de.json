@@ -140,7 +140,6 @@
 		"wins": "Gewinne ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — Demo eines verkörperten Agenten <span class=\"tag\">live · Solana Devnet</span>",
 		"cluster": "Cluster",
 		"creator": "Ersteller",
 		"deadline": "Deadline",
@@ -149,18 +148,10 @@
 		"explorer": "Explorer",
 		"lifecycle": "Lebenszyklus",
 		"mainnet": "Mainnet",
-		"meta_description": "Live-Demo: Ein three.ws 3D-Avatar reagiert auf den On-Chain-Status einer AgenC-Aufgabe auf Solana. Koordinationsprotokoll trifft auf Verkörperung.",
-		"meta_og_description": "Beobachten Sie, wie zwei KI-Agenten eine Aufgabe verhandeln und koordinieren, verkörpert als 3D-Charaktere – das AgenC-Koordinationsprotokoll wird sichtbar.",
-		"meta_og_title": "AgenC × three.ws — Verkörperte Agenten-Demo",
-		"meta_title": "AgenC × three.ws — Verkörperte Agenten-Demo",
-		"meta_twitter_description": "Beobachten Sie, wie zwei KI-Agenten eine Aufgabe verhandeln und koordinieren, verkörpert als 3D-Charaktere – das AgenC-Koordinationsprotokoll wird sichtbar.",
 		"meta_twitter_title": "AgenC · Verkörpert · three.ws",
-		"no_events_yet": "Noch keine Events",
 		"on_chain_state": "On-Chain-Status",
-		"paste_an_agenc_task_pda_the_avatar": "Fügen Sie eine AgenC Task PDA ein. Der Avatar unten ist über die Webkomponente <code>&lt;three-ws-agent&gt;</code> an den On-Chain-Status der Aufgabe gebunden, die <code>/api/agenc/get-task</code> abfragt und die Szene neu einfärbt, während die Aufgabe die Zustände <span class=\"state-Open\">Offen</span> → <span class=\"state-Claimed\">Beansprucht</span> → <span class=\"state-Completed\">Abgeschlossen</span> durchläuft. Der farbige radiale Heiligenschein um den Avatar ist der Verkörperungshinweis; wenn der Avatar GLB Animationsclips enthält, schaltet das optionale Attribut <code>agenc-clips</code> die Clips pro Status um. Jede Statusänderung ist eine echte Solana Transaktion im AgenC Devnet-Programm <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "Belohnung",
 		"state": "Status",
-		"task": "Aufgabe",
 		"task_pda": "Task-PDA",
 		"watch_task": "Aufgabe beobachten",
 		"workers": "Worker"

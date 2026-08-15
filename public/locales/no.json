@@ -140,7 +140,6 @@
 		"wins": "Gevinster ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — inkarnert agentdemo <span class=\"tag\">live · solana devnet</span>",
 		"cluster": "Klynge",
 		"creator": "skaper",
 		"deadline": "frist",
@@ -149,18 +148,10 @@
 		"explorer": "utforsker",
 		"lifecycle": "Livssyklus",
 		"mainnet": "mainnet",
-		"meta_description": "Live demo: en three.ws 3D-avatar reagerer på den on-chain tilstanden til en AgenC oppgave på Solana. Koordineringsprotokoll møter inkarnasjon.",
-		"meta_og_description": "Se to AI-agenter forhandle og koordinere en oppgave, legemliggjort som 3D-karakterer — AgenC-koordinasjonsprotokollen gjort synlig.",
-		"meta_og_title": "AgenC × three.ws — legemliggjort agentdemo",
-		"meta_title": "AgenC × three.ws — legemliggjort agentdemo",
-		"meta_twitter_description": "Se to AI-agenter forhandle og koordinere en oppgave, legemliggjort som 3D-karakterer — AgenC-koordinasjonsprotokollen gjort synlig.",
 		"meta_twitter_title": "AgenC · Legemliggjort · three.ws",
-		"no_events_yet": "ingen hendelser ennå",
 		"on_chain_state": "On-chain tilstand",
-		"paste_an_agenc_task_pda_the_avatar": "Lim inn en AgenC oppgave PDA. Avataren nedenfor er knyttet til oppgavens on-chain tilstand via <code>&lt;three-ws-agent&gt;</code> webkomponenten, som henter <code>/api/agenc/get-task</code> og endrer fargen på scenen etter hvert som oppgaven beveger seg gjennom <span class=\"state-Open\">Åpen</span> → <span class=\"state-Claimed\">Krevd</span> → <span class=\"state-Completed\">Fullført</span>. Den fargede radiale haloen rundt avataren er legemliggjøringssignalet; hvis avataren GLB inneholder animasjonsklipp, bytter den valgfrie <code>agenc-clips</code> attributten klipp per tilstand. Hver tilstandsforandring er en ekte Solana transaksjon på AgenC devnet-programmet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "belønning",
 		"state": "tilstand",
-		"task": "Oppgave",
 		"task_pda": "Oppgave PDA",
 		"watch_task": "Se oppgave",
 		"workers": "arbeidere"

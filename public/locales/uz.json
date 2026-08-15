@@ -140,7 +140,6 @@
 		"wins": "G'alabalar ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — mujassamlangan agent demo <span class=\"tag\">jonli · solana devnet</span>",
 		"cluster": "Klaster",
 		"creator": "yaratuvchi",
 		"deadline": "muddat",
@@ -149,18 +148,10 @@
 		"explorer": "explorer",
 		"lifecycle": "Hayot sikli",
 		"mainnet": "mainnet",
-		"meta_description": "Jonli demo: Solana dagi AgenC vazifasining zanjirdagi holatiga three.ws 3D avatar reaksiyaga kirishadi. Koordinatsiya protokoli mujassamlanish bilan uchrashadi.",
-		"meta_og_description": "Ikki AI agentining vazifani muzokara qilib, muvofiqlashtirishini, 3D qahramonlar sifatida mujassamlangan holda tomosha qiling — AgenC koordinatsiya protokoli koʻrinadigan holga keltirildi.",
-		"meta_og_title": "AgenC × three.ws — mujassamlangan agent demo",
-		"meta_title": "AgenC × three.ws — mujassamlangan agent demo",
-		"meta_twitter_description": "Ikki AI agentining vazifani muzokara qilib, muvofiqlashtirishini, 3D qahramonlar sifatida mujassamlangan holda tomosha qiling — AgenC koordinatsiya protokoli koʻrinadigan holga keltirildi.",
 		"meta_twitter_title": "AgenC · Mujassamlangan · three.ws",
-		"no_events_yet": "hali voqealar yoʻq",
 		"on_chain_state": "Zanjirdagi holat",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC vazifasi PDA-sini joylashtiring. Quyidagi avatar <code>&lt;three-ws-agent&gt;</code> veb-komponenti orqali vazifaning zanjirdagi holatiga bogʻlangan boʻlib, u <code>/api/agenc/get-task</code> soʻrovini yuboradi va vazifa <span class=\"state-Open\">Ochiq</span> → <span class=\"state-Claimed\">Talab qilingan</span> → <span class=\"state-Completed\">Bajarilgan</span> holatlari boʻylab harakatlanar ekan, sahnani qayta ranglaydi. Avatarning atrofidagi rangli radial halo mujassamlanish ishorasidir; agar avatar GLB animatsiya kliplarini oʻz ichiga olsa, ixtiyoriy <code>agenc-clips</code> atributi har bir holat uchun kliplarni almashtiradi. Har bir holat oʻzgarishi AgenC devnet dasturidagi <code>6UcJzbT…2ab</code> haqiqiy Solana tranzaksiyadir. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "mukofot",
 		"state": "holat",
-		"task": "Vazifa",
 		"task_pda": "Vazifa PDA",
 		"watch_task": "Vazifani kuzatish",
 		"workers": "ishchilar"

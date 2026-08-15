@@ -140,7 +140,6 @@
 		"wins": "Победы ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — демо воплощенного агента <span class=\"tag\">live · solana devnet</span>",
 		"cluster": "Кластер",
 		"creator": "создатель",
 		"deadline": "Дедлайн",
@@ -149,18 +148,10 @@
 		"explorer": "Эксплорер",
 		"lifecycle": "Жизненный цикл",
 		"mainnet": "mainnet",
-		"meta_description": "Живая демонстрация: 3D-аватар three.ws реагирует на состояние ончейн-задачи AgenC на Solana. Протокол координации встречается с воплощением.",
-		"meta_og_description": "Посмотрите, как два ИИ-агента договариваются и координируют задачу, воплощенные в 3D-персонажах — протокол координации AgenC, ставший видимым.",
-		"meta_og_title": "AgenC × three.ws — демонстрация воплощенного агента",
-		"meta_title": "AgenC × three.ws — демонстрация воплощенного агента",
-		"meta_twitter_description": "Посмотрите, как два ИИ-агента договариваются и координируют задачу, воплощенные в 3D-персонажах — протокол координации AgenC, ставший видимым.",
 		"meta_twitter_title": "AgenC · Воплощенный · three.ws",
-		"no_events_yet": "событий пока нет",
 		"on_chain_state": "Ончейн-состояние",
-		"paste_an_agenc_task_pda_the_avatar": "Вставьте PDA задачи AgenC. Аватар ниже привязан к ончейн-состоянию задачи через веб-компонент <code>&lt;three-ws-agent&gt;</code>, который опрашивает <code>/api/agenc/get-task</code> и перекрашивает сцену по мере прохождения задачей состояний <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Цветной радиальный ореол вокруг аватара — это индикатор воплощения; если аватар GLB содержит анимационные клипы, необязательный атрибут <code>agenc-clips</code> переключает клипы в зависимости от состояния. Каждое изменение состояния — это реальная Solana транзакция в программе AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "вознаграждение",
 		"state": "состояние",
-		"task": "Задача",
 		"task_pda": "PDA задачи",
 		"watch_task": "Следить за задачей",
 		"workers": "исполнители"

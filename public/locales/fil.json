@@ -140,7 +140,6 @@
 		"wins": "Panalo ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo ng embodied agent <span class=\"tag\">live · solana devnet</span>",
 		"cluster": "Cluster",
 		"creator": "tagalikha",
 		"deadline": "deadline",
@@ -149,18 +148,10 @@
 		"explorer": "explorer",
 		"lifecycle": "Lifecycle",
 		"mainnet": "mainnet",
-		"meta_description": "Live demo: isang three.ws 3D avatar na tumutugon sa on-chain na estado ng isang AgenC task sa Solana. Ang coordination protocol ay nakakatagpo ng embodiment.",
-		"meta_og_description": "Panuorin ang dalawang AI agents na nakikipag-ayos at nagko-coordinate ng isang gawain, na nakabody bilang 3D characters — ang AgenC coordination protocol na naging visible.",
-		"meta_og_title": "AgenC × three.ws — demo ng embodied agent",
-		"meta_title": "AgenC × three.ws — demo ng embodied agent",
-		"meta_twitter_description": "Panuorin ang dalawang AI agents na nakikipag-ayos at nagko-coordinate ng isang gawain, na nakabody bilang 3D characters — ang AgenC coordination protocol na naging visible.",
 		"meta_twitter_title": "AgenC · Embodied · three.ws",
-		"no_events_yet": "walang mga kaganapan pa",
 		"on_chain_state": "On-chain na estado",
-		"paste_an_agenc_task_pda_the_avatar": "I-paste ang AgenC task PDA. Ang avatar sa ibaba ay nakatali sa on-chain na estado ng gawain sa pamamagitan ng <code>&lt;three-ws-agent&gt;</code> web component, na nag-poll sa <code>/api/agenc/get-task</code> at nagbabago ng kulay ng eksena habang ang gawain ay lumilipat mula sa <span class=\"state-Open\">Open</span> → <span class=\"state-Claimed\">Claimed</span> → <span class=\"state-Completed\">Completed</span>. Ang colored radial halo sa paligid ng avatar ay ang embodiment cue; kung ang avatar GLB ay naglalaman ng animation clips, ang opsyonal na <code>agenc-clips</code> attribute ay nagpapalit ng clips bawat estado. Ang bawat pagbabago ng estado ay isang tunay na Solana transaksyon sa AgenC devnet program <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "gantimpala",
 		"state": "estado",
-		"task": "Gawain",
 		"task_pda": "Task PDA",
 		"watch_task": "Panuorin ang gawain",
 		"workers": "mga manggagawa"

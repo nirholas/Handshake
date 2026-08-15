@@ -140,7 +140,6 @@
 		"wins": "Pobede ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo otelotvorenog agenta <span class=\"tag\">uživo · solana devnet</span>",
 		"cluster": "Klaster",
 		"creator": "kreator",
 		"deadline": "rok",
@@ -149,18 +148,10 @@
 		"explorer": "istraživač",
 		"lifecycle": "Životni ciklus",
 		"mainnet": "mainnet",
-		"meta_description": "Demo uživo: three.ws 3D avatar reaguje na stanje AgenC zadatka na lancu na Solana. Protokol koordinacije susreće otelotvorenje.",
-		"meta_og_description": "Gledajte kako dva AI agenta pregovaraju i koordiniraju zadatak, otelotvoreni kao 3D likovi — AgenC protokol koordinacije učinjen vidljivim.",
-		"meta_og_title": "AgenC × three.ws — demo otelotvorenog agenta",
-		"meta_title": "AgenC × three.ws — demo otelotvorenog agenta",
-		"meta_twitter_description": "Gledajte kako dva AI agenta pregovaraju i koordiniraju zadatak, otelotvoreni kao 3D likovi — AgenC protokol koordinacije učinjen vidljivim.",
 		"meta_twitter_title": "AgenC · Otelotvoreno · three.ws",
-		"no_events_yet": "još nema događaja",
 		"on_chain_state": "Stanje na lancu",
-		"paste_an_agenc_task_pda_the_avatar": "Zalepite AgenC task PDA. Avatar ispod je vezan za stanje zadatka na lancu preko <code>&lt;three-ws-agent&gt;</code> veb komponente, koja proverava <code>/api/agenc/get-task</code> i prebojava scenu dok se zadatak kreće kroz <span class=\"state-Open\">Otvoreno</span> → <span class=\"state-Claimed\">Preuzeto</span> → <span class=\"state-Completed\">Završeno</span>. Obojeni radijalni oreol oko avatara je znak otelotvorenja; ako avatar GLB sadrži animacione klipove, opcioni atribut <code>agenc-clips</code> menja klipove po stanju. Svaka promena stanja je stvarna Solana transakcija na AgenC devnet programu <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "nagrada",
 		"state": "stanje",
-		"task": "Zadatak",
 		"task_pda": "Task PDA",
 		"watch_task": "Prati zadatak",
 		"workers": "radnici"

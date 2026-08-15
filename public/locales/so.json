@@ -140,7 +140,6 @@
 		"wins": "Guulo ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — bandhig wakiil jidh leh <span class=\"tag\">si toos ah · solana devnet</span>",
 		"cluster": "Koox",
 		"creator": "abuure",
 		"deadline": "wakhtiga kama dambaysta ah",
@@ -149,18 +148,10 @@
 		"explorer": "sahamiye",
 		"lifecycle": "Wareegga Nolosha",
 		"mainnet": "mainnet",
-		"meta_description": "Demo toos ah: avatar 3D ah oo three.ws ah ayaa ka falceliya xaaladda silsiladda ee hawl AgenC ah oo ku jirta Solana. Borotokoolka isku-dubbaridka ayaa la kulmaya jiritaanka.",
-		"meta_og_description": "Daawo laba wakiil oo AI ah oo ka gorgortamaya oo isku dubbaridaya hawl, oo loo muujiyay sidii jilayaal 3D ah — borotokoolka isku-dubbaridka AgenC oo la arki karo.",
-		"meta_og_title": "AgenC × three.ws — demo wakiil jireed",
-		"meta_title": "AgenC × three.ws — demo wakiil jireed",
-		"meta_twitter_description": "Daawo laba wakiil oo AI ah oo ka gorgortamaya oo isku dubbaridaya hawl, oo loo muujiyay sidii jilayaal 3D ah — borotokoolka isku-dubbaridka AgenC oo la arki karo.",
 		"meta_twitter_title": "AgenC · Jireed · three.ws",
-		"no_events_yet": "wali ma jiraan dhacdooyin",
 		"on_chain_state": "Xaaladda silsiladda",
-		"paste_an_agenc_task_pda_the_avatar": "Ku dhaji PDA hawl AgenC ah. Avatarka hoose wuxuu ku xiran yahay xaaladda silsiladda ee hawsha iyadoo la adeegsanayo qaybta shabakadda <code>&lt;three-ws-agent&gt;</code>, taas oo waydiisa <code>/api/agenc/get-task</code> oo dib u midabaysa goobta marka hawshu ay dhex marto <span class=\"state-Open\">Furan</span> → <span class=\"state-Claimed\">La Sheegtay</span> → <span class=\"state-Completed\">Dhammaatay</span>. Halo-ga wareegsan ee midabaysan ee ku wareegsan avatarka waa tilmaanta jiritaanka; haddii avatarka GLB uu ka kooban yahay clips animation ah, sifada ikhtiyaariga ah ee <code>agenc-clips</code> ayaa beddesha clips-ka xaalad kasta. Isbeddel kasta oo xaaladeed waa macaamil Solana dhab ah oo ku jira barnaamijka AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "abaalmarin",
 		"state": "xaalad",
-		"task": "Hawl",
 		"task_pda": "PDA Hawleed",
 		"watch_task": "Daawo hawsha",
 		"workers": "shaqaale"

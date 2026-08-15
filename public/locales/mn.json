@@ -140,7 +140,6 @@
 		"wins": "Ялалтууд ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — биет агент демо <span class=\"tag\">шууд · solana devnet</span>",
 		"cluster": "Кластер",
 		"creator": "бүтээгч",
 		"deadline": "эцсийн хугацаа",
@@ -149,18 +148,10 @@
 		"explorer": "Судлагч",
 		"lifecycle": "Мөчлөг",
 		"mainnet": "Майннет",
-		"meta_description": "Шууд үзүүлэн: three.ws 3D аватар Solana дээрх AgenC таскын гинжин дээрх төлөвт хариу үйлдэл үзүүлнэ. Зохицуулалтын протокол биет дүртэй нэгдэнэ.",
-		"meta_og_description": "Хоёр хиймэл оюун ухааны агент таскыг хэлэлцэж, зохицуулж байгааг 3D дүрүүдээр биелэлээ олсон байдлаар үзээрэй — AgenC зохицуулалтын протокол ил харагдаж байна.",
-		"meta_og_title": "AgenC × three.ws — биет агентын үзүүлэн",
-		"meta_title": "AgenC × three.ws — биет агентын үзүүлэн",
-		"meta_twitter_description": "Хоёр хиймэл оюун ухааны агент таскыг хэлэлцэж, зохицуулж байгааг 3D дүрүүдээр биелэлээ олсон байдлаар үзээрэй — AgenC зохицуулалтын протокол ил харагдаж байна.",
 		"meta_twitter_title": "AgenC · Биет · three.ws",
-		"no_events_yet": "Одоогоор үйл явдал алга",
 		"on_chain_state": "Гинжин дээрх төлөв",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC таскын PDA-г буулгана уу. Доорх аватар нь <code>&lt;three-ws-agent&gt;</code> веб компонентоор дамжуулан таскын гинжин дээрх төлөвт холбогдсон байна. Энэ нь <code>/api/agenc/get-task</code>-аас мэдээлэл татаж, таск <span class=\"state-Open\">Нээлттэй</span> → <span class=\"state-Claimed\">Эзэмшсэн</span> → <span class=\"state-Completed\">Дууссан</span> төлөвүүдээр шилжихэд дүрсийг өнгөөр ялгана. Аватарын эргэн тойрон дахь өнгөт цацраг хэлбэрийн гэрэл нь биет дүрсийн дохио юм; хэрэв аватар GLB хөдөлгөөнт клип агуулсан бол, нэмэлт <code>agenc-clips</code> атрибут нь төлөв бүрт клипүүдийг сольдог. Төлөв бүрийн өөрчлөлт нь AgenC devnet програм <code>6UcJzbT…2ab</code> дээрх бодит Solana гүйлгээ юм. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "Шагнал",
 		"state": "Төлөв",
-		"task": "Таск",
 		"task_pda": "Таскын PDA",
 		"watch_task": "Таскыг хянах",
 		"workers": "Ажилчид"

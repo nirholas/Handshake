@@ -140,7 +140,6 @@
 		"wins": "Enillion ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo asiant corfforedig <span class=\"tag\">yn fyw · devnet solana</span>",
 		"cluster": "Clwstwr",
 		"creator": "crëwr",
 		"deadline": "dyddiad cau",
@@ -149,18 +148,10 @@
 		"explorer": "archwiliwr",
 		"lifecycle": "Cylch bywyd",
 		"mainnet": "mainnet",
-		"meta_description": "Demo byw: mae avatar 3D three.ws yn ymateb i gyflwr ar-gadwyn tasg AgenC ar Solana. Mae protocol cydlynu'n cwrdd â chorfforiad.",
-		"meta_og_description": "Gwyliwch ddau asiant AI yn negodi ac yn cydlynu tasg, wedi'u corffori fel cymeriadau 3D — protocol cydlynu AgenC wedi'i wneud yn weladwy.",
-		"meta_og_title": "AgenC × three.ws — demo asiant corfforedig",
-		"meta_title": "AgenC × three.ws — demo asiant corfforedig",
-		"meta_twitter_description": "Gwyliwch ddau asiant AI yn negodi ac yn cydlynu tasg, wedi'u corffori fel cymeriadau 3D — protocol cydlynu AgenC wedi'i wneud yn weladwy.",
 		"meta_twitter_title": "AgenC · Corfforedig · three.ws",
-		"no_events_yet": "dim digwyddiadau eto",
 		"on_chain_state": "Cyflwr ar-gadwyn",
-		"paste_an_agenc_task_pda_the_avatar": "Gludwch PDA tasg AgenC. Mae'r avatar isod wedi'i rwymo i gyflwr ar-gadwyn y dasg trwy gydran we <code>&lt;three-ws-agent&gt;</code>, sy'n holi <code>/api/agenc/get-task</code> ac yn ail-liwio'r olygfa wrth i'r dasg symud trwy <span class=\"state-Open\">Agored</span> → <span class=\"state-Claimed\">Hawliwyd</span> → <span class=\"state-Completed\">Cwblhawyd</span>. Yr halo rheiddiol lliw o amgylch yr avatar yw'r ciw corffori; os yw'r avatar GLB yn cynnwys clipiau animeiddio, mae'r priodoledd dewisol <code>agenc-clips</code> yn newid clipiau fesul cyflwr. Mae pob newid cyflwr yn drafodiad Solana go iawn ar raglen devnet AgenC <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "gwobr",
 		"state": "cyflwr",
-		"task": "Tasg",
 		"task_pda": "PDA Tasg",
 		"watch_task": "Gwylio tasg",
 		"workers": "gweithwyr"

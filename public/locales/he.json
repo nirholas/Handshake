@@ -140,7 +140,6 @@
 		"wins": "ניצחונות ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — הדגמת סוכן מגולם <span class=\"tag\">חי · solana devnet</span>",
 		"cluster": "אשכול",
 		"creator": "יוצר",
 		"deadline": "מועד אחרון",
@@ -149,18 +148,10 @@
 		"explorer": "חוקר",
 		"lifecycle": "מחזור חיים",
 		"mainnet": "mainnet",
-		"meta_description": "הדגמה חיה: אוואטר תלת-ממדי של three.ws מגיב למצב על הבלוקצ'יין של משימת AgenC על Solana. פרוטוקול תיאום פוגש מגולמות.",
-		"meta_og_description": "צפו בשני סוכני AI מנהלים משא ומתן ומסנכרנים משימה, מגולמים כדמויות תלת-ממדיות — פרוטוקול הסנכרון AgenC נחשף.",
-		"meta_og_title": "AgenC × three.ws — הדגמת סוכן מגולם",
-		"meta_title": "AgenC × three.ws — הדגמת סוכן מגולם",
-		"meta_twitter_description": "צפו בשני סוכני AI מנהלים משא ומתן ומסנכרנים משימה, מגולמים כדמויות תלת-ממדיות — פרוטוקול הסנכרון AgenC נחשף.",
 		"meta_twitter_title": "AgenC · מגולם · three.ws",
-		"no_events_yet": "אין אירועים עדיין",
 		"on_chain_state": "מצב על הבלוקצ'יין",
-		"paste_an_agenc_task_pda_the_avatar": "הדבק PDA של משימת AgenC. הדמות למטה מחוברת למצב על הבלוקצ'יין של המשימה דרך רכיב ה-web <code>&lt;three-ws-agent&gt;</code>, שמבצע שאילתות ל-<code>/api/agenc/get-task</code> ומצבע את הסצנה כאשר המשימה מתקדמת דרך <span class=\"state-Open\">פתוח</span> → <span class=\"state-Claimed\">נלקח</span> → <span class=\"state-Completed\">הושלם</span>. ההילה הצבעונית סביב הדמות היא רמז לגילום; אם הדמות GLB מכילה קטעי אנימציה, המאפיין האופציונלי <code>agenc-clips</code> מחליף קטעים לפי מצב. כל שינוי מצב הוא Solana עסקה אמיתית בתוכנית AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "פרס",
 		"state": "מצב",
-		"task": "משימה",
 		"task_pda": "PDA של משימה",
 		"watch_task": "צפה במשימה",
 		"workers": "עובדים"

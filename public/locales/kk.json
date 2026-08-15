@@ -140,7 +140,6 @@
 		"wins": "Жеңістер ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — денеленген агент демонстрациясы <span class=\"tag\">тікелей · solana devnet</span>",
 		"cluster": "Кластер",
 		"creator": "жасаушы",
 		"deadline": "мерзім",
@@ -149,18 +148,10 @@
 		"explorer": "шолғыш",
 		"lifecycle": "Өмірлік цикл",
 		"mainnet": "mainnet",
-		"meta_description": "Тікелей демонстрация: three.ws 3D аватары Solana-дегі AgenC тапсырмасының тізбектегі күйіне әрекет етеді. Үйлестіру протоколы денеленумен кездеседі.",
-		"meta_og_description": "Екі AI агентінің тапсырманы келісіп, үйлестіргенін, 3D кейіпкерлер ретінде денеленгенін көріңіз — AgenC үйлестіру протоколының көрінісі.",
-		"meta_og_title": "AgenC × three.ws — денеленген агент демонстрациясы",
-		"meta_title": "AgenC × three.ws — денеленген агент демонстрациясы",
-		"meta_twitter_description": "Екі AI агентінің тапсырманы келісіп, үйлестіргенін, 3D кейіпкерлер ретінде денеленгенін көріңіз — AgenC үйлестіру протоколының көрінісі.",
 		"meta_twitter_title": "AgenC · Денеленген · three.ws",
-		"no_events_yet": "әлі оқиғалар жоқ",
 		"on_chain_state": "Тізбектегі күй",
-		"paste_an_agenc_task_pda_the_avatar": "AgenC тапсырмасының PDA-сын қойыңыз. Төмендегі аватар <code>&lt;three-ws-agent&gt;</code> веб-компоненті арқылы тапсырманың тізбектегі күйіне байланысты, ол <code>/api/agenc/get-task</code> сұрауын жібереді және тапсырма <span class=\"state-Open\">Ашық</span> → <span class=\"state-Claimed\">Талап етілген</span> → <span class=\"state-Completed\">Аяқталған</span> күйлерінен өткенде көріністі қайта бояйды. Аватар айналасындағы түсті радиалды гало — денелену белгісі; егер аватар GLB анимациялық клиптерді қамтыса, міндетті емес <code>agenc-clips</code> атрибуты күйге байланысты клиптерді ауыстырады. Әрбір күй өзгерісі AgenC devnet бағдарламасындағы <code>6UcJzbT…2ab</code> нақты Solana транзакциясы болып табылады. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "сыйақы",
 		"state": "күй",
-		"task": "Тапсырма",
 		"task_pda": "Тапсырма PDA",
 		"watch_task": "Тапсырманы бақылау",
 		"workers": "жұмысшылар"

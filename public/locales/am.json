@@ -140,7 +140,6 @@
 		"wins": "ድሎች ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — የተካተተ ወኪል ማሳያ <span class=\"tag\">በቀጥታ · ሶላና ዴቭኔት</span>",
 		"cluster": "ክላስተር",
 		"creator": "ፈጣሪ",
 		"deadline": "የመጨረሻ ቀን",
@@ -149,18 +148,10 @@
 		"explorer": "አሳሽ",
 		"lifecycle": "የህይወት ዑደት",
 		"mainnet": "ሜይንኔት",
-		"meta_description": "ቀጥታ ማሳያ: አንድ three.ws 3D አቫታር በSolana ላይ ላለ የAgenC ተግባር በሰንሰለት ላይ ላለው ሁኔታ ምላሽ ይሰጣል። የቅንጅት ፕሮቶኮል ከትስስር ጋር ይገናኛል።",
-		"meta_og_description": "ሁለት AI ወኪሎች ተግባር ሲደራደሩ እና ሲያስተባብሩ ይመልከቱ፣ እንደ 3D ገጸ-ባህሪያት ተካተው — የAgenC ቅንጅት ፕሮቶኮል በግልጽ ታይቷል።",
-		"meta_og_title": "AgenC × three.ws — የተካተተ ወኪል ማሳያ",
-		"meta_title": "AgenC × three.ws — የተካተተ ወኪል ማሳያ",
-		"meta_twitter_description": "ሁለት AI ወኪሎች ተግባር ሲደራደሩ እና ሲያስተባብሩ ይመልከቱ፣ እንደ 3D ገጸ-ባህሪያት ተካተው — የAgenC ቅንጅት ፕሮቶኮል በግልጽ ታይቷል።",
 		"meta_twitter_title": "AgenC · የተካተተ · three.ws",
-		"no_events_yet": "እስካሁን ምንም ክስተቶች የሉም",
 		"on_chain_state": "በሰንሰለት ላይ ያለ ሁኔታ",
-		"paste_an_agenc_task_pda_the_avatar": "የAgenC ተግባር PDA ለጥፍ። ከታች ያለው አቫታር በ<code>&lt;three-ws-agent&gt;</code> የድር ኮምፖነንት በኩል ከተግባሩ በሰንሰለት ላይ ካለው ሁኔታ ጋር የተያያዘ ነው፣ ይህም <code>/api/agenc/get-task</code>ን የሚጠይቅ እና ተግባሩ በ<span class=\"state-Open\">ክፍት</span> → <span class=\"state-Claimed\">የተጠየቀ</span> → <span class=\"state-Completed\">የተጠናቀቀ</span> ውስጥ ሲያልፍ ትዕይንቱን እንደገና የሚያቀለም ነው። በአቫታሩ ዙሪያ ያለው ባለቀለም ክብ ሃሎ የትስስር ምልክት ነው፤ አቫታሩ GLB የአኒሜሽን ክሊፖችን ከያዘ፣ አማራጭ የሆነው <code>agenc-clips</code> ባህሪ ክሊፖችን በየሁኔታው ይቀያይራል። እያንዳንዱ የሁኔታ ለውጥ በAgenC ዴቭኔት ፕሮግራም <code>6UcJzbT…2ab</code> ላይ እውነተኛ Solana ግብይት ነው። <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "ሽልማት",
 		"state": "ሁኔታ",
-		"task": "ተግባር",
 		"task_pda": "የተግባር PDA",
 		"watch_task": "ተግባርን ተከታተል",
 		"workers": "ሰራተኞች"

@@ -140,7 +140,6 @@
 		"wins": "Fitore ✓"
 	},
 	"agenc_embodied": {
-		"agenc_three_ws_embodied_agent_demo_live": "AgenC × three.ws — demo e agjentit të mishëruar <span class=\"tag\">drejtpërdrejt · solana devnet</span>",
 		"cluster": "Klaster",
 		"creator": "krijues",
 		"deadline": "afat",
@@ -149,18 +148,10 @@
 		"explorer": "eksplorues",
 		"lifecycle": "Cikli jetësor",
 		"mainnet": "mainnet",
-		"meta_description": "Demo drejtpërdrejt: një avatar 3D three.ws reagon ndaj gjendjes on-chain të një detyre AgenC në Solana. Protokolli i koordinimit takon mishërimin.",
-		"meta_og_description": "Shikoni dy agjentë AI që negociojnë dhe koordinojnë një detyrë, të mishëruar si karaktere 3D — protokolli i koordinimit AgenC bërë i dukshëm.",
-		"meta_og_title": "AgenC × three.ws — demo e agjentit të mishëruar",
-		"meta_title": "AgenC × three.ws — demo e agjentit të mishëruar",
-		"meta_twitter_description": "Shikoni dy agjentë AI që negociojnë dhe koordinojnë një detyrë, të mishëruar si karaktere 3D — protokolli i koordinimit AgenC bërë i dukshëm.",
 		"meta_twitter_title": "AgenC · I mishëruar · three.ws",
-		"no_events_yet": "ende pa ngjarje",
 		"on_chain_state": "Gjendja on-chain",
-		"paste_an_agenc_task_pda_the_avatar": "Ngjisni një PDA të detyrës AgenC. Avatari më poshtë është i lidhur me gjendjen on-chain të detyrës nëpërmjet komponentit web <code>&lt;three-ws-agent&gt;</code>, i cili merr të dhëna nga <code>/api/agenc/get-task</code> dhe rilyen skenën ndërsa detyra kalon nëpër <span class=\"state-Open\">Hapur</span> → <span class=\"state-Claimed\">Kërkuar</span> → <span class=\"state-Completed\">Përfunduar</span>. Haloja radiale me ngjyrë rreth avatarit është sinjali i mishërimit; nëse avatari GLB përmban klipe animacioni, atributi opsional <code>agenc-clips</code> ndërron klipet sipas gjendjes. Çdo ndryshim gjendjeje është një transaksion real Solana në programin AgenC devnet <code>6UcJzbT…2ab</code>. <a href=\"https://agenc.tech\" target=\"_blank\" rel=\"noopener\">agenc.tech</a>",
 		"reward": "shpërblim",
 		"state": "gjendje",
-		"task": "Detyrë",
 		"task_pda": "PDA Detyre",
 		"watch_task": "Shiko detyrën",
 		"workers": "punëtorë"
