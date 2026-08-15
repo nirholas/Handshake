@@ -3843,6 +3843,14 @@
 			"dest": "/api/avatars/[id]"
 		},
 		{
+			"src": "/api/tournaments/([^/]+)/([^/]+)",
+			"dest": "/api/tournaments/[id]/[action]?id=$1&action=$2"
+		},
+		{
+			"src": "/api/tournaments/([^/]+)/([^/]+)",
+			"dest": "/api/tournaments/[id]/[action]?id=$1&action=$2"
+		},
+		{
 			"src": "/api/a/(\\d+)/(\\d+)/og",
 			"dest": "/api/a-og?chain=$1&id=$2"
 		},
