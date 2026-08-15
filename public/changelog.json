@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T15:11:10.865Z",
+	"generated_at": "2026-08-15T15:12:06.775Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,17 +14,6 @@
 			"link": "/pay/simulator",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
-			"title": "A market intelligence outage no longer tells you your own API key was rejected",
-			"summary": "The two market intelligence reads in the unified API, recent narrative intel and momentum-ranked projects, pass a key we hold to the upstream provider; a caller needs no key at all. When that provider stopped accepting our key, both reads answered \"unauthorized\" with the provider's own wording, so an agent reading the response concluded its own credentials were bad and retried with different ones forever, when nothing on the caller's side was wrong. Both reads now say plainly that the service is temporarily unavailable because this deployment's upstream key was rejected, which is a status clients already know to retry rather than re-authenticate against. The older market intelligence endpoints always classified this correctly; the classification now lives in one place, so the two doors cannot drift apart again, and the error tables in the API reference list every code either one can return.",
-			"link": "/docs/api-reference",
-			"tags": [
-				"fix",
-				"docs"
 			]
 		},
 		{
@@ -396,16 +385,6 @@
 			"link": "/docs/mcp-safety",
 			"tags": [
 				"docs",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
-			"title": "The Tutor’s running tab and end-of-session invoice now show what you actually paid",
-			"summary": "The Tutor charges one cent per answer and keeps an itemized tab you can reload later and close for a signed invoice. That ledger only ever knew how to store itself in a key-value service this deployment does not run, so nothing was ever written down: reopening the page never restored your history, and ending a session always produced an invoice reading \"no questions\" and a total of zero, however many answers you had paid for. The tab is now stored in the platform’s own database, so it survives a reload, a new browser tab, and any server restart, and the invoice lists every answer with its charge and a verification hash over the line items. Closing a session twice returns the identical invoice instead of a freshly stamped one, closing a session id that was never used no longer makes that id unusable for its real owner, and if the ledger itself is ever unreachable the page says so rather than quietly reporting that you owe nothing. Asking a question still succeeds even if the ledger write fails, because a bookkeeping outage should never cost you the answer you paid for.",
-			"link": "/tutor",
-			"tags": [
 				"fix"
 			]
 		},
