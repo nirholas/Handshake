@@ -18,7 +18,15 @@
  * projection (`toPublicDrop`) additionally strips the sealed envelope so it is
  * only ever released through the gated claim/reveal path.
  *
+ * ── The create fee lands before the drop does ────────────────────────────────
+ * A drop is born `escrow_pending`: recorded, but in NO index, and refused by the
+ * claim, reveal and reclaim paths. Only `activateDrop` — called once the x402
+ * create fee has really settled — flips it to `funded` and indexes it. A fee that
+ * fails to settle voids the drop (`voidDrop`) after its on-chain funding is swept
+ * back, so nobody can walk away with a wallet the platform funded for free.
+ *
  * ── Atomic single-claim state machine ────────────────────────────────────────
+ *   escrow_pending ─fee settled─▶ funded  (activateDrop; void otherwise)
  *   funded ──claim(token)──▶ claimed     (compare-and-set, idempotent on token)
  *          └─expiry+reclaim─▶ reclaimed   (compare-and-set, sender-only, mutex)
  * A Lua compare-and-set flips status and records the claimer/reclaimer, and
@@ -45,6 +53,14 @@ const K = {
 };
 
 const MAX_SCAN = 500;
+
+// Statuses a drop holds before (or instead of) becoming a real, claimable gift.
+const TRANSIENT_STATUSES = Object.freeze(['escrow_pending', 'void']);
+
+/** True for a drop that has not (or will never) go live. */
+export function isTransientDrop(rec) {
+	return !!rec && TRANSIENT_STATUSES.includes(rec.status);
+}
 
 // Public projection — the sealed envelope + claim-token hash + funding tx detail
 // stay private. The privacy boundary: the envelope is released only by the gated
@@ -74,9 +90,15 @@ function parse(raw) {
 }
 
 /**
- * Create a drop in `funded` status (funding already confirmed on-chain by the
- * caller before this is called). Claims the id atomically (hsetnx) so a
- * collision can't repoint the indexes at an existing record.
+ * Record a drop, claiming the id atomically (hsetnx) so a collision can't repoint
+ * the indexes at an existing record.
+ *
+ * Pass `status: 'escrow_pending'` (what api/vanity/drops.js does) to record it
+ * WITHOUT indexing: the drop is invisible to the sender list and the reclaim
+ * sweep, and the claim/reveal/reclaim paths refuse it, until `activateDrop`
+ * confirms the create fee settled. `funded` indexes immediately, which is only
+ * correct once the fee is collected.
+ *
  * @param {object} rec - fully-formed drop record (see api/vanity/drops.js).
  * @returns {Promise<object>} the stored record.
  */
@@ -88,11 +110,7 @@ export async function createDrop(rec) {
 		if (created === 0 || created === false) {
 			throw Object.assign(new Error('drop id collision'), { status: 409, code: 'duplicate_drop' });
 		}
-		const pipe = redis.multi();
-		pipe.zadd(K.byRecency, { score: record.createdAt, member: record.id });
-		pipe.zadd(K.funded, { score: record.expiresAt, member: record.id });
-		if (record.senderTag) pipe.zadd(K.sender(record.senderTag), { score: record.createdAt, member: record.id });
-		await pipe.exec();
+		if (record.status === 'funded') await indexDrop(redis, record);
 	} else {
 		if (mem.has(record.id)) {
 			throw Object.assign(new Error('drop id collision'), { status: 409, code: 'duplicate_drop' });
@@ -100,6 +118,70 @@ export async function createDrop(rec) {
 		mem.set(record.id, record);
 	}
 	return record;
+}
+
+/** Add a live drop to the recency / reclaim-sweep / sender indexes. */
+async function indexDrop(redis, record) {
+	const pipe = redis.multi();
+	pipe.zadd(K.byRecency, { score: record.createdAt, member: record.id });
+	pipe.zadd(K.funded, { score: record.expiresAt, member: record.id });
+	if (record.senderTag) pipe.zadd(K.sender(record.senderTag), { score: record.createdAt, member: record.id });
+	await pipe.exec();
+}
+
+/**
+ * Flip a pending drop live now that its x402 create fee settled, recording the
+ * settlement tx as the audit trail and indexing it in the same step. Idempotent:
+ * re-activating an already-funded drop is a no-op that still reports 'live'.
+ *
+ * Read-modify-write is safe here (no compare-and-set Lua needed): a pending drop's
+ * id exists only inside the one create request that minted it, so this transition
+ * has exactly one writer. Every LATER transition (claim, reclaim) is contended and
+ * does use an atomic compare-and-set.
+ *
+ * @param {object} p
+ * @param {string} p.id
+ * @param {string} [p.escrowTx] - the x402 settlement transaction.
+ * @returns {Promise<'live'|'ineligible'|'missing'>}
+ */
+export async function activateDrop({ id, escrowTx }) {
+	const rec = await getDropRecord(id);
+	if (!rec) return 'missing';
+	if (rec.status === 'funded') return 'live';
+	if (rec.status !== 'escrow_pending') return 'ineligible';
+	const next = { ...rec, status: 'funded', escrowTx: escrowTx || '', escrowSettledAt: Date.now() };
+	const redis = getRedis();
+	if (redis) {
+		// Status first, then the indexes: a reader that races us either misses the
+		// drop entirely or finds one already marked funded, never a pending record
+		// sitting in the claim/sweep indexes.
+		await redis.hset(K.rec, { [next.id]: JSON.stringify(next) });
+		await indexDrop(redis, next);
+	} else {
+		mem.set(String(id), next);
+	}
+	return 'live';
+}
+
+/**
+ * Void a pending drop whose create fee never settled, so it can never be claimed,
+ * revealed, or swept as a live drop. Idempotent.
+ *
+ * @param {object} p
+ * @param {string} p.id
+ * @param {string} [p.reason] - why the fee never landed (audit trail).
+ * @returns {Promise<'void'|'ineligible'|'missing'>}
+ */
+export async function voidDrop({ id, reason }) {
+	const rec = await getDropRecord(id);
+	if (!rec) return 'missing';
+	if (rec.status === 'void') return 'void';
+	if (rec.status !== 'escrow_pending') return 'ineligible';
+	const next = { ...rec, status: 'void', voidedAt: Date.now(), voidReason: reason || '' };
+	const redis = getRedis();
+	if (redis) await redis.hset(K.rec, { [next.id]: JSON.stringify(next) });
+	else mem.set(String(id), next);
+	return 'void';
 }
 
 /** Full internal record by id (includes sealed envelope + token hash). */
@@ -271,7 +353,7 @@ export async function listBySender(senderTag, limit = 50) {
 		return members.map((_, i) => parse(raw?.[i])).filter(Boolean).map(toPublicDrop);
 	}
 	return [...mem.values()]
-		.filter((r) => r.senderTag === tag)
+		.filter((r) => r.senderTag === tag && !isTransientDrop(r))
 		.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
 		.slice(0, n)
 		.map(toPublicDrop);
@@ -307,13 +389,16 @@ export async function dropStats() {
 		recs = [...mem.values()];
 	}
 	const now = Date.now();
+	// Pending/void drops never became gifts, so they count toward nothing — `total`
+	// included, which is the number of drops the platform actually issued.
+	const real = recs.filter((r) => !isTransientDrop(r));
 	let funded = 0, claimed = 0, reclaimed = 0;
-	for (const r of recs) {
+	for (const r of real) {
 		if (r.status === 'claimed') claimed++;
 		else if (r.status === 'reclaimed') reclaimed++;
 		else if (r.status === 'funded' && (!r.expiresAt || r.expiresAt > now)) funded++;
 	}
-	return { funded, claimed, reclaimed, total: recs.length };
+	return { funded, claimed, reclaimed, total: real.length };
 }
 
 // Test-only: reset the in-memory fallback between specs.
