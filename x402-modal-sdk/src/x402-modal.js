@@ -1403,6 +1403,16 @@ async function discoverChallenge(opts) {
 
 // ───────────────────────────────────────────────────────── public api ───────
 
+// The README documents `method` as "POST when a body is set", and the quickstart
+// at the top of this file passes { endpoint, body } with no method. Without this,
+// that call pairs a body with the GET default and fetch() rejects it outright
+// ("Request with GET/HEAD method cannot have body"), failing at price discovery
+// before the endpoint is ever contacted. readOptsFrom() already infers it this way.
+function normalizeOpts(opts) {
+	if (opts.method) return opts;
+	return { ...opts, method: opts.body ? 'POST' : 'GET' };
+}
+
 /**
  * Open the payment modal for an x402 endpoint and resolve when the call
  * succeeds (after settlement) or reject if the user cancels.
@@ -1411,7 +1421,7 @@ async function discoverChallenge(opts) {
  */
 export async function pay(opts) {
 	if (!opts?.endpoint) throw new Error('X402.pay: endpoint is required');
-	const modal = new CheckoutModal(opts);
+	const modal = new CheckoutModal(normalizeOpts(opts));
 	const result = modal.mount();
 	// Kick off discovery on the next tick so the modal animates in first.
 	queueMicrotask(() => modal.start());
