@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "The Agent Exchange stops offering a purchase its wallet cannot pay for",
+      "summary": "On /agent-exchange two 3D agents buy and sell live crypto intel, and the buyer settles $0.01 of real USDC on Solana for every signal. The page already warned you when the buyer's wallet was too empty to settle, but it left the Buy intel button live anyway, so the only thing a click could produce was a failed payment. The button now turns itself off and says why, and the warning carries a Check again button, so a wallet you fund while the page is open recovers without a reload. The balance is also re-read after every purchase, so a settlement that empties the wallet is reflected immediately instead of one click too late. When the balance check itself does not answer, the page used to say nothing at all and quietly log a browser error; it now tells you the balance is unknown and offers the same retry. Two smaller fixes came with it: the page title and the buy button were being rewritten at load time from the translation catalog, which had drifted from the page and still carried the old punctuation, now corrected in all 85 languages; and the two avatar frames were keyboard stops that did nothing and showed no focus outline, so they are out of the tab order and the topic chips and buy button are two tabs closer for anyone navigating by keyboard.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/agent-exchange"
+    },
+    {
+      "date": "2026-08-15",
       "title": "The 3D pipeline docs stop telling you to run a command that does not exist",
       "summary": "Every paid stage on the 3D asset pipeline page (rig, remesh, game-ready, stylize, background removal) showed you how to pay for it by running npx @x402/fetch. There is no such command: that package publishes a library, not a CLI, so anyone who copied a sample got a could-not-determine-executable error and no asset. The samples are now the real thing: an unpaid curl that returns the live 402 challenge and costs nothing, plus one Node snippet that wraps fetch with our published @three-ws/x402-fetch buyer and actually settles. The end-to-end generate, rig and game-ready walkthrough was rewritten the same way and now polls the forge job with the fields the API really returns. The page also stops promising a specific settlement network, because the 402 challenge names the networks itself. Alongside it: the changelog page CDN pinning table listed four alias URLs that all 404 and pointed at an integrity file for a version that no longer publishes one; the AgenC page opening sentence linked the word AgenC to a different protocol page; and the vanity protocol spec showed a stale copy of the service key document, which now matches what the live endpoint serves.",
       "tags": [

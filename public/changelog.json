@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T06:50:56.937Z",
+	"generated_at": "2026-08-15T06:53:35.614Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -131,6 +131,17 @@
 			"title": "The agent economy volume dashboard stops sending you to profiles that are not there",
 			"summary": "Top earners and top spenders on the agent-to-agent volume page linked every ranked agent to a profile, including agents whose identity had been deleted. Those rows sent you to an empty profile shell for an agent that no longer exists. Both leaderboards now name a departed agent without linking it, the same rule the settled-hire feed below them already followed, and a row whose stored avatar has been pruned falls back to its initials tile instead of a broken-image icon. The page also cleared its accessibility floor: the small print under each stat, the footnote, and the retry button were all below the WCAG AA contrast minimum in dark mode, and in light mode the cyan links and the green live badge were effectively unreadable. Links inside the empty-state sentences now carry a standing underline, so they are not marked by colour alone.",
 			"link": "/agent-economy-volume",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The Agent Exchange stops offering a purchase its wallet cannot pay for",
+			"summary": "On /agent-exchange two 3D agents buy and sell live crypto intel, and the buyer settles $0.01 of real USDC on Solana for every signal. The page already warned you when the buyer's wallet was too empty to settle, but it left the Buy intel button live anyway, so the only thing a click could produce was a failed payment. The button now turns itself off and says why, and the warning carries a Check again button, so a wallet you fund while the page is open recovers without a reload. The balance is also re-read after every purchase, so a settlement that empties the wallet is reflected immediately instead of one click too late. When the balance check itself does not answer, the page used to say nothing at all and quietly log a browser error; it now tells you the balance is unknown and offers the same retry. Two smaller fixes came with it: the page title and the buy button were being rewritten at load time from the translation catalog, which had drifted from the page and still carried the old punctuation, now corrected in all 85 languages; and the two avatar frames were keyboard stops that did nothing and showed no focus outline, so they are out of the tab order and the topic chips and buy button are two tabs closer for anyone navigating by keyboard.",
+			"link": "/agent-exchange",
 			"tags": [
 				"fix",
 				"improvement"
@@ -29893,7 +29904,7 @@
 		{
 			"date": "2026-05-14",
 			"type": "launch",
-			"title": "Tutorial · Connect Anthropic or OpenAI as the brain",
+			"title": "Tutorial · Connect Anthropic, OpenAI, or xAI as the brain",
 			"summary": "Plug your own model provider into the agent loop. Bring your API key, choose your model, control cost and latency.",
 			"link": "/tutorials/connect-ai-brain",
 			"tags": [
