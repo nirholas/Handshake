@@ -283,8 +283,8 @@ const transport = new WebSocketTransport({
 			}
 			if (!IS_PROD) {
 				// Dev only. `npm run dev:walk-all` starts Vite on the first free port
-				// from 3000 up, so a second checkout (or another agent on the box)
-				// lands on 3004+ and would be refused by the fixed 3000-3003 default
+				// from 3000 up, so a second dev server on the same box lands on
+				// 3004+ and would be refused by the fixed 3000-3003 default
 				// list. Any loopback origin is by definition a developer's own
 				// machine, so accept the whole of it rather than chasing port numbers.
 				// Production keeps the explicit list: nothing here widens the live gate.
