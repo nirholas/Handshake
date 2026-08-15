@@ -66,18 +66,30 @@ export default defineEndpoint({
 		// Optional filters/sorting for the board.
 		const q = String(query.q || '').trim().toLowerCase();
 		if (q) rows = rows.filter((r) => r.symbol.toLowerCase().includes(q) || r.name.toLowerCase().includes(q));
-		const sort = String(query.sort || 'symbol');
-		const dir = query.dir === 'asc' ? 1 : -1;
-		const key = { volume: 'volume24hUsd', liquidity: 'liquidityUsd', premium: 'premiumPct', price: 'navPriceUsd', symbol: 'symbol' }[sort] || 'symbol';
+		const SORT_KEYS = { symbol: 'symbol', volume: 'volume24hUsd', liquidity: 'liquidityUsd', premium: 'premiumPct', price: 'navPriceUsd' };
+		const sort = SORT_KEYS[String(query.sort || 'symbol')] ? String(query.sort || 'symbol') : 'symbol';
+		const key = SORT_KEYS[sort];
+		// Numeric columns read highest-first by default (the useful view of a
+		// board); ?dir=asc flips them. Symbol reads A-Z by default. A row with no
+		// value for the column (no DEX pair, no NAV feed) sorts last in BOTH
+		// directions instead of crowding whichever end a sentinel would land on.
+		const asc = query.dir === 'asc';
 		rows.sort((a, b) => {
 			if (key === 'symbol') return a.symbol.localeCompare(b.symbol) * (query.dir === 'desc' ? -1 : 1);
-			return ((b[key] ?? -Infinity) - (a[key] ?? -Infinity)) * dir;
+			const av = a[key];
+			const bv = b[key];
+			if (av == null && bv == null) return a.symbol.localeCompare(b.symbol);
+			if (av == null) return 1;
+			if (bv == null) return -1;
+			return asc ? av - bv : bv - av;
 		});
 
 		res.setHeader('cache-control', CACHE_CONTROL);
 		return {
 			stocks: rows,
 			count: rows.length,
+			sort,
+			dir: key === 'symbol' ? (query.dir === 'desc' ? 'desc' : 'asc') : asc ? 'asc' : 'desc',
 			feedCount: reg.feedCount,
 			disclosure: DISCLOSURE,
 			source: 'chainlink (on-chain) + dexscreener',

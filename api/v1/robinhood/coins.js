@@ -19,6 +19,7 @@ const CATEGORIES = {
 	'stocks-ecosystem': 'robinhood-chain-stocks-ecosystem',
 	ecosystem: 'robinhood-ecosystem',
 };
+const SORTS = ['market_cap', 'volume', 'gainers', 'losers'];
 
 export default defineEndpoint({
 	name: 'v1.robinhood.coins',
@@ -29,7 +30,10 @@ export default defineEndpoint({
 		if (!rl.success) return rateLimited(res, rl, 'Robinhood Chain data is capped at 60 requests/min per IP');
 
 		const catKey = CATEGORIES[String(query.category || 'meme')] ? String(query.category || 'meme') : 'meme';
-		const sort = String(query.sort || 'market_cap');
+		// Both selectors fall back to the default rather than 400ing a screener
+		// read, but the response echoes what was ACTUALLY applied: echoing the
+		// caller's unknown value back told them a sort had run that never did.
+		const sort = SORTS.includes(String(query.sort || '')) ? String(query.sort) : 'market_cap';
 		const order = sort === 'volume' ? 'volume_desc' : 'market_cap_desc';
 		const raw = await coingeckoCategory(CATEGORIES[catKey], { order, perPage: 100 });
 
