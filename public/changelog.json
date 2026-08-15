@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T21:13:40.596Z",
+	"generated_at": "2026-08-15T21:35:55.185Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -314,6 +314,17 @@
 			"title": "Grind-Bounty Market: shared bounty links now open the bounty, and \"Grind this\" grinds that one",
 			"summary": "Every bounty the market posts comes back with its own link (three.ws/vanity/bounties#<id>), and the API hands that link out as the bounty's home. Opening one did nothing: the page rewrote the address back to the plain board and left you to hunt for the card, which was not even there if the bounty had already been won or had expired off the open filter. A linked bounty is now fetched by id and pinned above the board, whatever its state, with a Clear button to go back; a link to a bounty that no longer exists says so instead of leaving you staring at the board. The Grind this button on a card was equally misleading: it switched you to the grinder and hoped, while the worker pool always took whichever bounty happened to be first in the queue. It now sets a real priority target that the pool grinds ahead of the queue, shows which bounty is pinned, lets you clear it, and says so plainly if that bounty stops being claimable. Refunding an expired bounty used to ask which address to send the escrow to and then ignore the answer, because the destination is bound to the address recorded when the bounty was funded; it now names the amount and where the money goes and takes a plain yes or no. Four smaller fixes shipped with it: the board no longer fetches itself twice on every page load, the market stats strip and the grinder leaderboard offer a retry when they cannot load instead of a dead end, the tab strip answers arrow keys and Home/End the way its role promises, and the sealed-delivery key field is finally wired to its label for screen readers.",
 			"link": "/vanity/bounties",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "KOL Tracker: the whole board is readable on a phone, and dead columns are gone",
+			"summary": "On any screen narrower than the board, five of the tracker's seven columns were unreachable: the page could not shrink, and the overflow was clipped rather than scrollable, so P&L, win rate and trade count simply were not there on a phone. The board now fits any viewport and scrolls sideways on its own. Columns with nothing to show are dropped instead of rendering a full column of dashes, so followers and volume appear only once there is data behind them. Each wallet is printed once (it used to appear twice on every row) and links to its Solscan account, so any number on the board can be audited on-chain. Where the P&L for a window comes from is now stated once under the board instead of repeating on all fifty rows, the board refreshes every minute with the time of the last update on screen, and a refresh that fails keeps the rows you are reading rather than blanking them. A failed load now offers a Try again button, an empty window points at the trader leaderboard, and the whole board is navigable and announced properly with a keyboard and a screen reader.",
+			"link": "/tracker",
 			"tags": [
 				"fix",
 				"improvement"
@@ -1041,6 +1052,17 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "Walk Leaderboard: switching filters no longer strands the board, and an empty board tells you how to get on it",
+			"summary": "Clicking through the leaderboard's filters faster than the board could load left it stuck: a second click while a request was open was dropped outright, so the board could sit on a loading skeleton that never resolved, or show one metric's rows under another metric's column header. Every request now supersedes the one before it, so whatever you clicked last is what you get. An empty board used to say the same thing whichever metric you were on, which was wrong for Sites: sites only count where your avatar walks away from three.ws, so that state now explains it and links to the walk companion, while distance and time point at the walk itself. Any narrow window that comes up empty also offers a jump to All Time rather than leaving you at a dead end, and a failed load offers a retry that says what went wrong. The board now lives up to \"updates live\": it refreshes itself while you are watching, shows how many walkers are ranked and when it last updated, and a refresh that fails quietly keeps the rows you are reading. For screen readers the board is a real table, the top three medals now announce their rank instead of reading as an empty cell, the momentum column speaks its direction, and the two filter groups are proper radio groups with arrow-key and Home/End navigation.",
+			"link": "/walk-leaderboard",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "Watchlist: the portfolio summary stops reporting numbers it does not have",
 			"summary": "The watchlist summary bar claimed $0 of 24h volume across every coin you watch. The pump.fun feed simply stops reporting 24h volume once a coin graduates, and the bar was treating each missing figure as a zero and adding them up, so a confident \"$0\" stood where the honest answer is \"not reported\". Every aggregate now counts only the coins that actually report it, shows a dash when none do, and says on hover how many of your watched coins it covers. The Oracle tier bar does the same: coins the Oracle has not scored get their own marked-off slice instead of quietly vanishing from the distribution, and each unscored card now carries an \"unrated\" badge that links to its coin page rather than leaving a blank corner. If the Oracle itself is unreachable, the page says so instead of labelling every coin unrated. Also fixed: at 320px wide the \"Clear all\" button was pushed off the edge of the screen with no way to reach it, the add-a-coin field had no visible keyboard focus ring, and the page description advertised a verdict the page does not show.",
 			"link": "/watchlist",
@@ -1066,6 +1088,17 @@
 			"title": "World Lines: the AR encounter is finally offered, and the quest tabs answer the keyboard",
 			"summary": "The page has always promised an AR challenge, and the immersive encounter was fully built, but nothing ever put a button in front of it: a phone that can run WebXR was quietly handed the flat panel instead. Devices that support immersive AR now see a \"Meet the agent in AR\" option next to \"Begin the encounter\", and if the headset session refuses to start, the panel ceremony picks up where it left off. The four tabs (Near me, Explore, My proofs, Create) now behave like a real tab strip: arrow keys and Home/End move between them, only the selected tab sits in the tab order, each tab writes its own address so a tab can be linked and the back button walks back through them. Opening a region on the Explore tab used to leave a heading over an empty space when every quest in it had expired or filled up, and a failure there was a single line of red text with no way to retry; both are now proper states. Focus rings are visible again across the page (they were being drawn in near-black on a black background), the opened region is highlighted, the encounter dialog now takes and holds keyboard focus and hands it back where you left it, and a proof whose date is missing says so rather than claiming it was earned in 1970.",
 			"link": "/world-lines",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Your master wallet: creating one no longer reports a failure, and your balances are real numbers again",
+			"summary": "Two faults on the master wallet page are fixed. First, every account that pressed Create my master wallet was told the creation had failed. The wallet was in fact created every time; the page then showed an error, and the same fault sat on the send and fund-an-agent paths, where a transfer that had already settled on Solana was reported as \"The transfer did not go through\", inviting people to send the same money twice. Nothing about the money was ever wrong, only what the page said about it. Second, the SOL and Solana USDC figures, and the total value, read \"unavailable\" for everyone regardless of what the wallet held, because the balance reader and the page were describing balances in two different shapes. They now show live amounts, priced against the SOL rate, and an empty wallet reads a plain 0 instead of \"unavailable\". A balance the network genuinely could not answer for still says \"unavailable\" and is left out of the total rather than counted as zero. Alongside that: failures now explain themselves in plain words with a support reference instead of printing raw operator text, the explainer bubbles fit inside a phone screen, and each one names what it explains for screen-reader users.",
+			"link": "/wallet",
 			"tags": [
 				"fix",
 				"improvement"

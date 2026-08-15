@@ -510,8 +510,13 @@
 
   // Embed: copy a paste-anywhere iframe of this exact viewer.
   var embedCard = document.getElementById('act-embed');
+  var embedBusy = false;
   function escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
   embedCard.addEventListener('click', function () {
+    // While the result line is showing, the snippet is already on the clipboard.
+    // Ignoring the click keeps that line from being read back as the default.
+    if (embedBusy) return;
+    embedBusy = true;
     var embedDefault = cardDesc('embed-d').textContent;
     var pageUrl = location.origin + '/viewer?src=' + enc(src) + tOpt;
     var snippet = '<iframe src="' + escAttr(pageUrl) + '" width="640" height="480" '
@@ -519,7 +524,7 @@
       + 'allow="xr-spatial-tracking; fullscreen" title="' + escAttr(title || '3D model') + ' · three.ws 3D viewer"></iframe>';
     function done(ok) {
       setCardDesc('embed-d', ok ? 'Copied. Paste it into any HTML page.' : 'Copy failed: select and copy the address bar URL instead.');
-      setTimeout(function () { setCardDesc('embed-d', embedDefault); }, 2600);
+      setTimeout(function () { setCardDesc('embed-d', embedDefault); embedBusy = false; }, 2600);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(snippet).then(function () { done(true); }, function () { done(false); });
