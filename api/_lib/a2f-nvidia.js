@@ -45,11 +45,19 @@ import a2fDescriptor from './a2f-protos/descriptor.js';
 
 export const NVIDIA_A2F_HOST = 'grpc.nvcf.nvidia.com:443';
 
-// Published NVCF function id for the hosted Audio2Face-3D "James" model, taken
-// verbatim from NVIDIA's official sample client invocation
-// (Audio2Face-3D-Samples/scripts/audio2face_3d_api_client). James carries the
-// full ARKit-52 set plus tongue blendshapes. Override with NVIDIA_A2F_FUNCTION_ID.
-export const A2F_DEFAULT_FUNCTION_ID = '9327c39f-a361-4e02-bd72-e11b4c9b7b5e';
+// NVCF function id for the hosted Audio2Face NIM (`ai-a2x-service`), the
+// published catalog function NVIDIA serves Audio2Face-3D from. It returns the
+// full ARKit-52 set plus tongue blendshapes at 30 fps.
+//
+// The earlier default here was the "James" id from NVIDIA's sample client
+// (9327c39f-a361-4e02-bd72-e11b4c9b7b5e). That id stopped resolving: every call
+// came back `NOT_FOUND: Function '9327c39f…': Not found for account`, so the
+// whole lipsync lane 502'd. Re-verify a replacement the same way this one was
+// picked, then update this constant AND the deployment's env var:
+//   node scripts/verify-nvidia-a2f.mjs --list   # ids visible to NVIDIA_API_KEY
+//   NVIDIA_A2F_FUNCTION_ID=<id> node scripts/verify-nvidia-a2f.mjs
+// Per-deployment override stays NVIDIA_A2F_FUNCTION_ID.
+export const A2F_DEFAULT_FUNCTION_ID = '462f7853-60e8-474a-9728-7b598e58472c';
 
 // A2F-3D's native inference rate and the rate the audio is resampled to before
 // streaming. The model runs 30 inferences per second of audio (→ 30 fps output).
