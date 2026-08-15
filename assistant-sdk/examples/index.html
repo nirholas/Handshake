@@ -2,9 +2,10 @@
 <!--
   Example host page for @three-ws/assistant.
 
-  Build first, then serve this folder:
+  Build first, then serve the package root (this page loads ../dist, so a
+  server rooted at examples/ cannot reach it):
     npm run build   (from assistant-sdk/)
-    npx serve .
+    npx serve .     (from assistant-sdk/, then open /examples/)
 
   This uses the locally built one-tag bundle (../dist/assistant.global.js). In
   production you would use the CDN URL instead:

@@ -107,10 +107,16 @@ The launcher and panel are plain DOM this package injects. The panel holds an `<
 ## Develop
 
 ```bash
+npm install     # esbuild for the build, jsdom for the DOM tests
 npm run build   # esbuild -> dist/assistant.mjs + dist/assistant.global.js
-npm test        # node --test (pure loader logic, no DOM)
-npx serve examples   # after build, open the example host page
+npm test        # node --test: the pure loader logic, plus the mounted widget under jsdom
+npx serve .     # after build, open http://localhost:3000/examples/
 ```
+
+Serve this package root, not `examples/`: the example page loads the build you
+just made from `../dist/`, which a server rooted at `examples/` cannot reach.
+The page talks to the live `three.ws` frame, so chat, voice, and the avatar all
+work from `localhost` with no extra setup.
 
 ## License
 

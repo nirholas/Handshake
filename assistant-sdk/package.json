@@ -54,6 +54,10 @@
 		"prepublishOnly": "node build.mjs",
 		"test": "node --test \"test/*.test.js\""
 	},
+	"devDependencies": {
+		"esbuild": "^0.28.1",
+		"jsdom": "^27.3.0"
+	},
 	"engines": {
 		"node": ">=18"
 	},
