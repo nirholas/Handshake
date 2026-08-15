@@ -44,6 +44,20 @@ export default wrap(async (req, res) => {
 		result = await listVoices(source === 'platform' ? {} : { apiKey });
 	} catch (e) {
 		console.error('[tts/eleven/voices] listVoices failed', e);
+		// ElevenLabs rejecting the key is not a gateway fault. When the key came
+		// from the caller (an x-eleven-key header or one they saved), say so at
+		// 401 so the client can prompt for a new key instead of retrying a 502
+		// that will never clear.
+		if (e.upstreamStatus === 401) {
+			return error(
+				res,
+				source === 'platform' ? 503 : 401,
+				source === 'platform' ? 'not_configured' : 'invalid_key',
+				source === 'platform'
+					? 'ElevenLabs rejected this server key'
+					: 'ElevenLabs rejected your key. Check it at /dashboard/account.',
+			);
+		}
 		return error(
 			res,
 			e.status || 502,

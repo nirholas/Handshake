@@ -95,6 +95,10 @@ async function handleGet(req, res, apiKey) {
 	if (!resp.ok) {
 		const detail = await resp.text().catch(() => '');
 		console.error('[tts/eleven/library] upstream error', resp.status, detail.slice(0, 300));
+		// Match handlePost: a rejected key is the caller's problem to fix, not a
+		// gateway fault they should retry.
+		if (resp.status === 401)
+			return error(res, 401, 'invalid_key', 'ElevenLabs rejected the key on this request');
 		return error(res, 502, 'upstream_error', `ElevenLabs returned ${resp.status}`);
 	}
 
@@ -153,7 +157,9 @@ async function handlePost(req, res, apiKey, userId) {
 		} catch {
 			// Non-JSON body: keep the status-only message.
 		}
-		return error(res, resp.status === 401 ? 401 : 422, 'upstream_error', message);
+		return resp.status === 401
+			? error(res, 401, 'invalid_key', 'ElevenLabs rejected the key on this request')
+			: error(res, 422, 'upstream_error', message);
 	}
 
 	const data = await resp.json().catch(() => ({}));

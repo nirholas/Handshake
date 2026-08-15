@@ -874,7 +874,9 @@ Search the public catalog ElevenLabs users share (`q`, `gender`, `accent`,
 `POST { publicUserId, voiceId, name }` to copy one into the account behind the
 request (yours with `x-eleven-key`, the platform's otherwise). The POST returns
 a normal `voice_id` usable with `/api/tts/synthesize`. Both require auth and an
-ElevenLabs key.
+ElevenLabs key. A key ElevenLabs rejects returns `401 invalid_key` (here and on
+`/api/tts/eleven/voices`), so a client knows to ask for a new key rather than
+retry a `502` that will never clear.
 
 ### Text-to-speech (ElevenLabs, streaming)
 

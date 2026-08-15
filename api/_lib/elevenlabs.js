@@ -127,7 +127,12 @@ export async function listVoices({ force = false, apiKey: keyOverride = null } =
 	}
 	if (!resp.ok) {
 		console.error('[elevenlabs] listVoices error', resp.status);
-		throw upstreamError(`ElevenLabs returned ${resp.status}`, 502);
+		// `status` stays 502 so existing callers are unchanged; `upstreamStatus`
+		// lets a handler that knows whose key it sent tell "their key is wrong"
+		// (401) apart from "ElevenLabs is broken" and answer accordingly.
+		throw upstreamError(`ElevenLabs returned ${resp.status}`, 502, {
+			upstreamStatus: resp.status,
+		});
 	}
 
 	const data = await resp.json();

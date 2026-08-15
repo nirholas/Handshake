@@ -390,6 +390,47 @@ describe('an unknown ElevenLabs voice is the caller\'s error, not the platform\'
 	});
 });
 
+describe('a key ElevenLabs rejects is reported as a key problem, not a gateway fault', () => {
+	it('GET /api/tts/eleven/voices answers 401 invalid_key for a caller-supplied key', async () => {
+		vi.resetModules();
+		stubFetch({ elevenStatus: 401 });
+		signIn();
+		const res = await call('../../api/tts/eleven/voices.js', {
+			method: 'GET',
+			url: '/api/tts/eleven/voices',
+			headers: { 'x-eleven-key': 'xi-a-key-this-account-revoked' },
+		});
+		expect(res.statusCode).toBe(401);
+		expect(res.json().error).toBe('invalid_key');
+	});
+
+	it('GET /api/tts/eleven/voices keeps a genuine upstream fault at 502', async () => {
+		vi.resetModules();
+		stubFetch({ elevenStatus: 500 });
+		signIn();
+		const res = await call('../../api/tts/eleven/voices.js', {
+			method: 'GET',
+			url: '/api/tts/eleven/voices',
+			headers: { 'x-eleven-key': 'xi-a-perfectly-good-key' },
+		});
+		expect(res.statusCode).toBe(502);
+		expect(res.json().error).toBe('upstream_error');
+	});
+
+	it('GET /api/tts/eleven/library answers 401, the same way its own POST already did', async () => {
+		vi.resetModules();
+		stubFetch({ elevenStatus: 401 });
+		signIn();
+		const res = await call('../../api/tts/eleven/library.js', {
+			method: 'GET',
+			url: '/api/tts/eleven/library?q=news',
+			headers: { 'x-eleven-key': 'xi-a-key-this-account-revoked' },
+		});
+		expect(res.statusCode).toBe(401);
+		expect(res.json().error).toBe('invalid_key');
+	});
+});
+
 describe('POST /api/tts/eleven-clone auth ordering', () => {
 	it('answers 401 to a signed-out caller rather than reporting the key state', async () => {
 		process.env.ELEVENLABS_API_KEY = 'xi-platform-key';
