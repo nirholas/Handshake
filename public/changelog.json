@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T15:13:51.647Z",
+	"generated_at": "2026-08-15T15:18:09.248Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "A broken paid endpoint is no longer reported as a free one",
 			"summary": "Payment sessions let you hand an agent a budget instead of a key, and two parts of that path judged an endpoint by one rule: if it did not ask for payment, the call was free. That is only true when the endpoint actually succeeded. A paid API answering 404, 400, or 500 was being scored as a free call, and the consequences ran in the wrong direction in both places. The dry run at /pay/simulator, whose whole job is to tell you in advance whether a budget and an allowlist will carry a workload, reported a plan as feasible at a cost of nothing when in fact every endpoint in it was erroring: free calls are never priced, never allowlist-checked, and never counted, so a wall of failures looked like a clean run. And an agent spending through a session got back a success envelope saying no payment was needed for an endpoint that had just failed on it. Both now separate the two cases: a real success with no payment challenge is still free and still costs nothing, while an error status is reported as an endpoint failure carrying the status the endpoint actually returned. No session is charged either way. The simulator lists each failing endpoint by name in its problems list and no longer calls the plan feasible.",
 			"link": "/pay/simulator",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A profile’s follower count now matches the people the follower list can actually show you",
+			"summary": "The follower and following numbers on a profile counted every follow ever recorded, including ones from accounts that were later deleted or that never claimed a username. The list behind those numbers only shows people you can open a profile for, so a profile could advertise followers and then open to an empty list. Both numbers are now counted over exactly the people the list renders, so the badge and the list always agree. The list itself also stopped dropping those accounts only after it had already paged, which could hand you a blank page of followers with no way to reach the real ones behind it. Separately, the Creations tab used to answer a corrupted page cursor with a silent empty page that read as \"nothing more to load\"; it now says the cursor is malformed, and an unknown filter is rejected instead of quietly returning everything.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -380,11 +390,31 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "The trades feed stopped labelling a winning exit with a losing multiple",
+			"summary": "When an agent sells part of a position to take its initial stake back and lets the rest ride, only that final sell is recorded against the position, while the profit percentage covers both sells. The feed was working out the “×” badge from the final sell alone, so a trade that returned +88% could show up as “0.56× +88%” on the same row. The multiple is now worked out from the trade's actual return, so the two numbers always agree. A coin's page also asked the feed for every trade on that coin and was quietly given only the ones above +10%, hiding the rest of that coin's history; it now gets what it asked for. The feed also answers a malformed page cursor or coin address by saying so, instead of returning results for the wrong coin, and a database problem no longer looks like a platform where nobody has ever turned a profit.",
+			"link": "/trades",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "The trading and MCP docs now match what the code and the live API actually do",
 			"summary": "An audit of eight documentation pages ran every command they print and checked every claim against the code behind it, then corrected what had drifted. The biggest one was in the trading tutorial: the command it gave you for verifying a fleet's fills on-chain asked for a field the leaderboard does not publish, so it returned an empty explorer link for every agent and the verification step could not be completed at all. It now uses the fields that exist, linking both legs of each trade straight to Solscan, and it skips agents whose wallet has not been provisioned yet instead of building a URL that goes nowhere. The MCP tool safety page undercounted the tools that share a name across two servers, which matters because that collision is exactly why a trust policy has to key on the namespaced id; it now lists all nine and prints a command that re-derives the list so it cannot go stale again. The MCP tool catalog itself had drifted from its source and was serving outdated descriptions for three tools, on a page whose whole promise is that it is generated from source and cannot drift; it has been regenerated. The package extraction guide had every version in its roster out of date along with its build and test columns, and still described a publisher field as missing that was set some time ago. The 10 SOL trading experiment page stated a risk rule in absolute terms that contradicted the setup script it tells you to run, which read as a bug in one of the two; the rule now carries the scope the code actually applies.",
 			"link": "/docs/mcp-safety",
 			"tags": [
 				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The Tutor’s running tab and end-of-session invoice now show what you actually paid",
+			"summary": "The Tutor charges one cent per answer and keeps an itemized tab you can reload later and close for a signed invoice. That ledger only ever knew how to store itself in a key-value service this deployment does not run, so nothing was ever written down: reopening the page never restored your history, and ending a session always produced an invoice reading \"no questions\" and a total of zero, however many answers you had paid for. The tab is now stored in the platform’s own database, so it survives a reload, a new browser tab, and any server restart, and the invoice lists every answer with its charge and a verification hash over the line items. Closing a session twice returns the identical invoice instead of a freshly stamped one, closing a session id that was never used no longer makes that id unusable for its real owner, and if the ledger itself is ever unreachable the page says so rather than quietly reporting that you owe nothing. Asking a question still succeeds even if the ledger write fails, because a bookkeeping outage should never cost you the answer you paid for.",
+			"link": "/tutor",
+			"tags": [
 				"fix"
 			]
 		},
@@ -443,6 +473,17 @@
 			"tags": [
 				"sdk",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Widget analytics can tell you where your visitors are again, and a shared widget link previews correctly everywhere",
+			"summary": "The country column in your widget stats has been empty since the platform moved to its current host in July. A visitor's country was read from a header only the old host set, so once it was gone every view was recorded with no country at all and the top-countries panel stayed blank no matter how much traffic a widget got. Country is now read from the headers our current edge provides, and it is checked against the shape of a real two-letter country code before it is stored, so nobody can push junk into your analytics by editing a request. Chat sessions on talking-agent widgets get the same fix. Separately, the oEmbed endpoint that Slack, Discord, WordPress, Ghost and Notion call to unfurl a shared widget link now says plainly when a consumer asks for a format we do not publish, instead of returning JSON labelled as the format that was asked for and leaving the embed broken with nothing to explain why.",
+			"link": "/widgets",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
