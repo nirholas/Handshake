@@ -20,13 +20,13 @@
  * to the board and to `listClaimable`, and every compare-and-set below refuses it.
  * Only `activateBounty` (called after the x402 escrow actually settled on-chain)
  * flips it to `open` and indexes it. A settle that fails is voided instead. That
- * ordering is what stops the platform paying a winner, or refunding a requester -
+ * ordering is what stops the platform paying a winner (or refunding a requester)
  * out of a bounty whose escrow was never collected.
  *
  * ── Atomic single-winner settlement ──────────────────────────────────────────
  * `claimBounty` runs a Lua compare-and-set: it flips status open→settled, records
  * the winner + claim digest, and returns "won" ONLY to the first caller. Every
- * later caller: even with a different valid key: sees `settled` and gets
+ * later caller, even one with a different valid key, sees `settled` and gets
  * "lost" (idempotent: re-submitting the SAME claim digest returns "won" again so
  * a retried settle isn't a double-pay). Expiry refunds are gated by the same
  * compare-and-set on open→refunded, so a bounty can never both pay AND refund.

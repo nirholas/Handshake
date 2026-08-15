@@ -87,6 +87,8 @@ import {
 } from '../../src/solana/vanity/drop-protocol.js';
 import {
 	createDrop,
+	activateDrop,
+	voidDrop,
 	getDrop,
 	getDropRecord,
 	claimDrop,
@@ -94,9 +96,11 @@ import {
 	recordClaimDelivery,
 	listBySender,
 	dropStats,
+	isTransientDrop,
 } from '../_lib/sealed-drop-store.js';
 import {
 	fundingConfigured,
+	fundingWalletAddress,
 	fundDropAddress,
 	readDropBalance,
 	sweepReclaim,
@@ -318,6 +322,15 @@ function parseCreate(body) {
 	};
 }
 
+// Every public path reads drops through here. A pending or voided record is a
+// create that never completed (its fee never settled), so it is not a drop at
+// all: it answers 404 exactly like an id that was never minted, and its sealed
+// envelope stays unreachable.
+async function getLiveDropRecord(id) {
+	const record = await getDropRecord(id);
+	return isTransientDrop(record) ? null : record;
+}
+
 function sanitizeTag(raw) {
 	const s = String(raw || '').trim();
 	if (!s) return null;
@@ -362,6 +375,28 @@ function generateDropWallet({ prefix, suffix, ignoreCase, format, strength }) {
 		secretBundle: { format: 'keypair', secretKeyBase58: bs58.encode(kp.secretKey), secretKey: Array.from(kp.secretKey) },
 		secretKeyBytes: kp.secretKey,
 	};
+}
+
+// Undo a create whose fee failed to settle after the drop wallet was already
+// funded on-chain: sweep the funds back to the wallet that sent them, then void
+// the record so it can never be claimed, revealed, or swept as a live drop.
+// Returns a sentence to append to the caller's error, so the requester learns
+// what happened to the money either way. Never throws: the void is what makes the
+// drop unclaimable, and it must happen even when the sweep does not.
+async function rollbackFunding({ record, secretKey, reason }) {
+	const back = fundingWalletAddress();
+	let note = '';
+	if (back) {
+		try {
+			await sweepReclaim({ record: { ...record, status: 'reclaimed' }, dropSecretKey: secretKey, toAddress: back });
+			note = ' and its funding was returned';
+		} catch (sweepErr) {
+			console.error('[vanity/drops] rollback sweep failed', record.id, sweepErr?.message || sweepErr);
+			note = ` (funding sweep failed: ${sweepErr?.message || 'unknown error'}; drop ${record.id} is voided and its funds are recoverable by the operator)`;
+		}
+	}
+	await voidDrop({ id: record.id, reason }).catch(() => {});
+	return note;
 }
 
 // ── POST: create (x402-paid → grind → seal → fund → persist) ─────────────────
@@ -539,12 +574,15 @@ async function handleCreate(req, res, url) {
 		escrowPayer: verified.payer || null,
 		createdAt: now,
 		expiresAt: now + parsed.expiryHours * 3600_000,
-		status: 'funded',
+		// Persisted as pending: recorded and id-reserved, but in no index and
+		// refused by claim/reveal/reclaim until the create fee actually settles.
+		// Otherwise a settle failure would leave a real, platform-funded wallet that
+		// a direct-mode recipient could still reveal and drain for free.
+		status: 'escrow_pending',
 	};
 
-	let stored;
 	try {
-		stored = await createDrop(record);
+		await createDrop(record);
 	} catch (err) {
 		return error(res, err.status || 500, err.code || 'store_failed', err.message);
 	}
@@ -553,7 +591,20 @@ async function handleCreate(req, res, url) {
 	try {
 		settled = await settlePayment({ verified });
 	} catch (err) {
-		return error(res, err.status || 502, err.code || 'settle_failed', err.message);
+		// The fee never landed, but the drop wallet is already funded on-chain. Undo
+		// that: sweep the funds back to the wallet they came from (we still hold the
+		// freshly-ground key in memory) and void the record.
+		const rollback = await rollbackFunding({ record, secretKey: wallet.secretKeyBytes, reason: `create fee settle failed: ${err.message}` });
+		return error(res, err.status || 502, err.code || 'settle_failed', `${err.message}. No drop was created${rollback}`);
+	}
+
+	// Fee collected: publish the drop (status funded + indexed) in one step.
+	const activation = await activateDrop({ id, escrowTx: settled.transaction }).catch(() => 'error');
+	if (activation !== 'live') {
+		return error(res, 502, 'activation_failed', `your create fee settled (tx ${settled.transaction || 'unknown'}) but the drop could not be published; contact support with drop id ${id}`, {
+			dropId: id,
+			escrowTx: settled.transaction || null,
+		});
 	}
 
 	const claimUrl = `${PUBLIC_ORIGIN}/drop/${id}`;
@@ -607,7 +658,7 @@ async function handleClaim(req, res) {
 	const id = String(body?.id || '').trim();
 	if (!isValidDropId(id)) return error(res, 400, 'validation_error', 'id must be a 24-char hex drop id');
 
-	const record = await getDropRecord(id);
+	const record = await getLiveDropRecord(id);
 	if (!record) return error(res, 404, 'not_found', 'no drop with that id');
 
 	if (record.status !== 'funded') {
@@ -704,7 +755,7 @@ async function handleReveal(req, res) {
 	const id = String(body?.id || '').trim();
 	if (!isValidDropId(id)) return error(res, 400, 'validation_error', 'id must be a 24-char hex drop id');
 
-	const record = await getDropRecord(id);
+	const record = await getLiveDropRecord(id);
 	if (!record) return error(res, 404, 'not_found', 'no drop with that id');
 	if (record.sealMode !== 'direct') {
 		return error(res, 409, 'wrong_mode', 'reveal is for direct-seal drops; bearer drops claim with their claim token');
@@ -745,7 +796,7 @@ async function handleReclaim(req, res) {
 	const id = String(body?.id || '').trim();
 	if (!isValidDropId(id)) return error(res, 400, 'validation_error', 'id must be a 24-char hex drop id');
 
-	const record = await getDropRecord(id);
+	const record = await getLiveDropRecord(id);
 	if (!record) return error(res, 404, 'not_found', 'no drop with that id');
 
 	// Atomic funded→reclaimed CAS, only for EXPIRED drops. Mutually exclusive with
@@ -827,7 +878,7 @@ async function handleGet(req, res, url) {
 	if (view === 'get') {
 		const id = (url.searchParams.get('id') || '').trim();
 		if (!isValidDropId(id)) return error(res, 400, 'validation_error', 'id must be a 24-char hex drop id');
-		const record = await getDropRecord(id);
+		const record = await getLiveDropRecord(id);
 		if (!record) return error(res, 404, 'not_found', 'no drop with that id');
 		// Public view + a claimable flag so the page knows which path to render,
 		// WITHOUT exposing the envelope or token hash.
@@ -844,7 +895,7 @@ async function handleGet(req, res, url) {
 	if (view === 'balance') {
 		const id = (url.searchParams.get('id') || '').trim();
 		if (!isValidDropId(id)) return error(res, 400, 'validation_error', 'id must be a 24-char hex drop id');
-		const record = await getDropRecord(id);
+		const record = await getLiveDropRecord(id);
 		if (!record) return error(res, 404, 'not_found', 'no drop with that id');
 		const { atomics } = await readDropBalance({ address: record.address, asset: record.asset });
 		return json(res, 200, {
@@ -871,7 +922,7 @@ async function handleGet(req, res, url) {
 	if (view === 'qr') {
 		const id = (url.searchParams.get('id') || '').trim();
 		if (!isValidDropId(id)) return error(res, 400, 'validation_error', 'id must be a 24-char hex drop id');
-		const record = await getDropRecord(id);
+		const record = await getLiveDropRecord(id);
 		if (!record) return error(res, 404, 'not_found', 'no drop with that id');
 		// The QR encodes the share URL (no fragment — the fragment claim key never
 		// goes server-side, so the QR shown server-side is the share landing only;

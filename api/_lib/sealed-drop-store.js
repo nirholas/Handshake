@@ -20,8 +20,8 @@
  *
  * ── The create fee lands before the drop does ────────────────────────────────
  * A drop is born `escrow_pending`: recorded, but in NO index, and refused by the
- * claim, reveal and reclaim paths. Only `activateDrop`, called once the x402
- * create fee has really settled: flips it to `funded` and indexes it. A fee that
+ * claim, reveal and reclaim paths. Only `activateDrop` (called once the x402
+ * create fee has really settled) flips it to `funded` and indexes it. A fee that
  * fails to settle voids the drop (`voidDrop`) after its on-chain funding is swept
  * back, so nobody can walk away with a wallet the platform funded for free.
  *
