@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T06:49:46.322Z",
+	"generated_at": "2026-08-15T06:50:56.937Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -36,6 +36,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Avatars can move their lips again: the Audio2Face lane is back",
+			"summary": "Every call that turns speech into facial animation had been failing with an upstream not-found error, so a talking avatar spoke with a frozen face and the one-shot say() path returned nothing usable. The hosted model id the lane pointed at had stopped resolving for our NVIDIA account. It now points at the hosted Audio2Face NIM that is actually live, verified end to end: a synthesized clip drives a 30 fps ARKit blendshape track whose jaw genuinely opens and closes with the words. The discovery helper that finds these model ids was missing the name NVIDIA publishes them under, which is why the outage looked like a configuration mystery; it now finds them.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -96,6 +106,17 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "The 3D pipeline docs stop telling you to run a command that does not exist",
+			"summary": "Every paid stage on the 3D asset pipeline page (rig, remesh, game-ready, stylize, background removal) showed you how to pay for it by running npx @x402/fetch. There is no such command: that package publishes a library, not a CLI, so anyone who copied a sample got a could-not-determine-executable error and no asset. The samples are now the real thing: an unpaid curl that returns the live 402 challenge and costs nothing, plus one Node snippet that wraps fetch with our published @three-ws/x402-fetch buyer and actually settles. The end-to-end generate, rig and game-ready walkthrough was rewritten the same way and now polls the forge job with the fields the API really returns. The page also stops promising a specific settlement network, because the 402 challenge names the networks itself. Alongside it: the changelog page CDN pinning table listed four alias URLs that all 404 and pointed at an integrity file for a version that no longer publishes one; the AgenC page opening sentence linked the word AgenC to a different protocol page; and the vanity protocol spec showed a stale copy of the service key document, which now matches what the live endpoint serves.",
+			"link": "/docs/3d-pipeline",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "The Agent Economy demo works again when you just pick a service, and it fits a phone screen",
 			"summary": "On the Agent Economy page, two 3D agents trade with each other for real SOL: Nova buys a market read, an on-chain insight, or a risk score from Oracle. Picking a service and typing nothing in the optional topic box, which is what almost everyone does, sent the request off in a shape the endpoint refused, so the demo answered with a validation error instead of a trade. It now sends the request correctly, and the endpoint accepts an empty topic besides. On a phone the page was worse than broken: the transaction feed and the status line, the entire output of the demo, were cut off the bottom of the screen with no way to scroll to them, and the floating language button sat on top of the footer links. The centre column now scrolls, the feed keeps a readable height, and the footer stays clickable. Three failure states also stopped lying: a payment that could not go through no longer ends on Transaction complete, a request that never reached the server now says so and offers to try again, and unreadable wallet balances now say they are unavailable and offer a retry instead of spinning forever.",
 			"link": "/agent-economy",
@@ -141,6 +162,17 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "The embed tutorials now name the attribute that actually hides the built-in chat",
+			"summary": "Several tutorials told you to set avatar-chat=\"off\" to hide an agent's built-in chat input. It does not do that: it moves the avatar out of the chat column and lays the chat out as a plain bottom bar, leaving the input on screen. The multi-agent walkthrough leaned on it to keep its behind-the-scenes stage-director messages hidden, so anyone following it verbatim saw those messages leak into the visible chat. The affected tutorials now use chat=\"off\", the real bare-avatar switch, and note that the brain still boots behind it so say(), ask(), and the event stream keep working. The same accuracy pass corrected the walking-avatar leaderboard example, which read fields the API never returns and so always rendered an empty top-walkers list, and the JavaScript API event table, which named the wrong key for the skill a tool-call event reports.",
+			"link": "/tutorials/web-component-end-to-end",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list",
 			"summary": "Two tutorials had drifted away from the code they document, and following either one exactly produced a bad outcome rather than a confusing one. The gesture tutorial's API example padded its request body with an empty clip array, and told readers that field was required; it has not been required for a while, and an empty array is a real value, so anyone who copied that snippet to change one gesture slot silently erased every custom clip on their agent. The endpoint's actual rule is now stated: every field is optional, present replaces it, absent leaves it alone. That page also listed four gestures on the /walk quick keys that are not on them, so pressing 1 through 8 never produced what it described; the eight keys are now named in order, with the wheel and the code call given for the four that have no key. The guard tutorial's registry entry left out the proof block, which the registry auditor has since made mandatory, so a reader who followed every step to the end hit a failure the page never mentioned. It now includes a working proof, shows the exact error you get without one, and adds a step for the command that runs it, which is the difference between a guard that is wired up and a guard anyone has shown still catches anything. Its summary line also described a completely different guard from the one it builds.",
 			"link": "/docs/tutorials/write-a-guard",
@@ -169,6 +201,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The pump.fun trade history works again, notification settings show every category, and a bad agent id stops reading as a server crash",
+			"summary": "Three fixes across the public MCP packages and the API behind them. Asking for a token's recent buys and sells (get_token_trades on the free pump.fun MCP server) had stopped working entirely: the platform reads several transactions in one batched call, and the free Solana providers we route through cap those batches at one call each, so they rejected the whole request and the tool returned a raw provider error instead of trades. The platform now recognises that refusal, re-sends the reads one at a time to the same provider, and remembers the cap so later calls skip the wasted attempt; every batched on-chain read benefits, including wallet and agent activity history. Separately, the notifications MCP server told agents there were six notification categories when there are seven, so an agent could never change how it hears about a finished 3D generation; all seven are now listed, along with the security notices that always reach your bell inbox. And the agent provenance log answered a non-uuid agent id with an internal error and a support reference; it now says plainly that the id must be a uuid.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
 			]
 		},
 		{
@@ -204,6 +247,17 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Voice and vision SDKs ship runnable examples, and the x402 seller SDK reads its Solana sponsor from the environment",
+			"summary": "@three-ws/voice and @three-ws/vision-mcp now include example scripts you can run as-is against the live free lanes: the voice one speaks a sentence, animates a face from those exact bytes, and transcribes it back; the vision one probes the lane, writes alt text for an image, and reads the text off it. @three-ws/x402-server used to demand the Solana sponsor account as a code option even though its own error message told you to set X402_FEE_PAYER_SOLANA, so a correctly configured deployment still got missing_fee_payer; it now reads that environment variable when the option is omitted. The VS Code x402 extension's endpoint scaffolder was generating Base-only endpoints and now generates Solana-first ones, matching every paid route on the platform, and it ships with a test suite covering which payment requirement it selects.",
+			"link": null,
+			"tags": [
+				"sdk",
+				"fix"
 			]
 		},
 		{

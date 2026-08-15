@@ -341,7 +341,9 @@ The standard path is to store your key in the platform dashboard. If you have a 
 The flow:
 
 1. You run an endpoint at, say, `https://your-domain.com/api/llm-key`. It returns a JSON response with a short-lived API key (or a session token usable as one), valid for some window you control.
-2. You set the `key-proxy` attribute on your `<agent-3d>` element or in the agent's dashboard settings:
+2. You point the agent at it. Two places, and they do different things:
+   - The **`key-proxy` attribute** on `<agent-3d>` replaces the platform proxy entirely: the runtime sends its Anthropic-shape request straight to your URL instead of `/api/llm/anthropic`. Your endpoint is then responsible for the upstream call and for streaming Anthropic-shape SSE back.
+   - **`brain.mode: 'key-proxy'`** with a `proxy_url` on the embed policy declares the same intent server-side, which is what closes the platform's own we-pay lane. The policy schema rejects `key-proxy` mode without a `proxy_url`, so the two can't drift apart.
 
 ```html
 <agent-3d
@@ -350,7 +352,7 @@ The flow:
 ></agent-3d>
 ```
 
-3. When the platform needs to make an LLM call for this agent, it calls your endpoint first to get a fresh key, then uses that key for the LLM request.
+3. Every LLM call for this agent goes through your endpoint, so the long-lived key never leaves your infrastructure.
 
 This is genuinely advanced — most teams don't need it. The reasons to reach for it:
 
@@ -364,17 +366,17 @@ For everything else, the dashboard key store is the right answer.
 
 ## Step 10 — A concrete switch: walk through
 
-To make this concrete, here's the actual sequence for moving a production agent from the managed free tier to your own Anthropic key, then upgrading the model from Sonnet to Opus.
+To make this concrete, here's the actual sequence for moving a production agent off the free lane and onto Claude, then upgrading it.
 
 1. **Get your key.** [console.anthropic.com](https://console.anthropic.com) → API Keys → Create Key. Label it "three.ws production".
-2. **Add to platform.** [three.ws/my-agents](https://three.ws/my-agents) → gear icon → API Keys → Anthropic → paste, save.
-3. **Switch the agent's brain provider.** Open your agent. **Brain → Provider → Anthropic.** Verify the dropdown for **Use my key** is selected, not **Use managed credit**.
-4. **Test.** Open any page that embeds the agent. Send a message. Check the Usage tab — input/output tokens should be incrementing against your key, not the managed credit.
-5. **Upgrade the model.** **Brain → Model → Claude Opus 4.7.** Save.
-6. **Test again.** Notice the reply time is slightly slower (~1.5s first token vs ~600ms) and the responses are noticeably more thoughtful on hard questions.
-7. **Set a budget alert.** Account → Billing → Alerts → $20 / day. You'll get an email if Opus pushes your spend up faster than expected.
+2. **Add it to the platform.** [/dashboard/account](https://three.ws/dashboard/account) → **AI Provider Keys** → **Anthropic (Claude)** → paste, save.
+3. **Compare before you commit.** Open [/dashboard/brain](https://three.ws/dashboard/brain), select Sonnet 5 and one alternative, and run the same prompt through both in the playground.
+4. **Pin the model.** `PUT /api/agents/:id/embed-policy` with `brain.model` set to `claude-sonnet-5` (the read-modify-write in Step 8). While you're there, set `monthly_quota` and lock `origins` to your own hosts.
+5. **Test.** Open any page that embeds the agent and send a message. `GET /api/agents/:id/usage` should show `currentMonthCalls` incrementing.
+6. **Upgrade if needed.** Repeat step 4 with `claude-opus-5`. Expect slower first tokens (it thinks by default) and better answers on hard questions. Fable 5 is the rung above that.
+7. **Confirm the ceiling.** Re-read the policy and check `monthly_quota` and `rate_limit_per_min` are the numbers you meant. These are enforced before spend, so they are your real budget control.
 
-Total time: under five minutes. The agent IDs in your existing embeds don't change. Visitors notice the smarter replies but the front-end is identical.
+Total time: under ten minutes. The agent IDs in your existing embeds don't change. Visitors notice the smarter replies but the front-end is identical.
 
 ---
 
@@ -382,16 +384,17 @@ Total time: under five minutes. The agent IDs in your existing embeds don't chan
 
 The brain layer in full:
 
-- LLM calls happen server-side; your key never leaves the platform's backend
-- Keys are stored per-account in My Agents; one key serves all your agents from that provider
-- Sonnet 4.6 is the default; Opus 4.7 and GPT-5.6 Sol are the reasoning-grade upgrades; Haiku and GPT-5.6 Luna are the latency picks
-- Streaming is on by default and matters more than total latency for perceived speed
-- Tool-use quality varies by model — pick Sonnet or larger for skill-heavy agents
-- Usage and cost are visible in the dashboard, with alerts available for spend caps
-- Switching models is a dashboard toggle; the embed snippet never needs to change
+- LLM calls happen server-side through `/api/llm/anthropic`; your key never leaves the backend
+- Keys are stored per-account at [/dashboard/account](https://three.ws/dashboard/account) → AI Provider Keys; one key serves all your agents from that provider
+- The embed default is a free open-weight lane. Sonnet 5 is the recommended paid default; Opus 5 and GPT-5.6 Sol are the reasoning-grade upgrades, Fable 5 the ceiling; Haiku 4.5 and GPT-5.6 Luna are the latency picks
+- Streaming is always on and matters more than total latency for perceived speed
+- A visitor can never escalate you onto a paid model: the proxy clamps any first-party-billed model back to the owner's configured one
+- Tool-use quality varies by model — pick Sonnet 5 or larger for skill-heavy agents
+- `monthly_quota` and `rate_limit_per_min` on the embed policy are the real budget controls, enforced before spend; `GET /api/agents/:id/usage` is the counter to watch
+- Switching models is one field on the embed policy; the embed snippet never needs to change
 - Key proxies are an advanced option for compliance-heavy setups
 
-The brain is the part of the agent you'll iterate on most after the system prompt. Pick a sensible default (Sonnet 4.6), ship, and only upgrade once you've identified a specific quality gap that prompt iteration can't close.
+The brain is the part of the agent you'll iterate on most after the system prompt. Pick a sensible default (Sonnet 5), ship, and only upgrade once you've identified a specific quality gap that prompt iteration can't close.
 
 ## Next steps
 

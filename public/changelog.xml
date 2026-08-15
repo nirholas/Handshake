@@ -31,6 +31,14 @@
 			<description>The arm page clamps the risk knobs on the server so a bad number can never reach the trading loop, and those clamps have a floor: the smallest trade the loop will place is 0.001 SOL. That floor was being applied in the wrong direction. Ask to arm a live agent with a per-trade size of zero, and instead of being told no, you were armed for real spending at 0.001 SOL a trade with a half-SOL daily ceiling you never asked for. The check meant to catch this looked at the number after the clamp had already raised it, so it could never fire. Arming live now refuses any per-trade size below the floor, and any daily cap smaller than a single trade, and tells you which number to fix; nothing is armed until you do. Clamping a too-large number back down to the ceiling is unchanged, and simulate runs keep the same forgiving behaviour as before. The arm page also shows the reason a save was rejected instead of one generic line, so an ownership problem no longer reads the same as a bad trade size, and a failed Telegram test now prints what Telegram actually said.</description>
 		</item>
 		<item>
+			<title>Avatars can move their lips again: the Audio2Face lane is back</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Avatars can move their lips again: the Audio2Face lane is back</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every call that turns speech into facial animation had been failing with an upstream not-found error, so a talking avatar spoke with a frozen face and the one-shot say() path returned nothing usable. The hosted model id the lane pointed at had stopped resolving for our NVIDIA account. It now points at the hosted Audio2Face NIM that is actually live, verified end to end: a synthesized clip drives a 30 fps ARKit blendshape track whose jaw genuinely opens and closes with the words. The discovery helper that finds these model ids was missing the name NVIDIA publishes them under, which is why the outage looked like a configuration mystery; it now finds them.</description>
+		</item>
+		<item>
 			<title>Docs pages stop opening with a wall of raw metadata, and the AWS pages say where the Marketplace listing actually stands</title>
 			<link>https://three.ws/docs/aws-marketplace</link>
 			<guid isPermaLink="false">2026-08-15:Docs pages stop opening with a wall of raw metadata, and the AWS pages say where the Marketplace listing actually stands</guid>
@@ -71,6 +79,14 @@
 			<description>The deployment guide told self-hosters to set Cloud Run environment variables with `gcloud run services update --set-env-vars`. That flag replaces the service environment wholesale, so following the instruction for a single key silently deletes every other variable the service had. The guide now uses `--update-env-vars` and says plainly why. Four more corrections landed in the same sweep across the deployment, configuration and contributing pages: the Avaturn signup link and the GitHub Discussions links were dead (Discussions are not enabled on the repository, so bug reports and design questions both go to Issues); the in-browser avatar builder was documented as needing its own hosted origin in production when the normal build already serves it same-origin at /avatar-studio; and three counts that had drifted from the code (cron jobs, MCP server packages, contract tests) were replaced with pointers to the files that hold the real numbers.</description>
 		</item>
 		<item>
+			<title>The 3D pipeline docs stop telling you to run a command that does not exist</title>
+			<link>https://three.ws/docs/3d-pipeline</link>
+			<guid isPermaLink="false">2026-08-15:The 3D pipeline docs stop telling you to run a command that does not exist</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Every paid stage on the 3D asset pipeline page (rig, remesh, game-ready, stylize, background removal) showed you how to pay for it by running npx @x402/fetch. There is no such command: that package publishes a library, not a CLI, so anyone who copied a sample got a could-not-determine-executable error and no asset. The samples are now the real thing: an unpaid curl that returns the live 402 challenge and costs nothing, plus one Node snippet that wraps fetch with our published @three-ws/x402-fetch buyer and actually settles. The end-to-end generate, rig and game-ready walkthrough was rewritten the same way and now polls the forge job with the fields the API really returns. The page also stops promising a specific settlement network, because the 402 challenge names the networks itself. Alongside it: the changelog page CDN pinning table listed four alias URLs that all 404 and pointed at an integrity file for a version that no longer publishes one; the AgenC page opening sentence linked the word AgenC to a different protocol page; and the vanity protocol spec showed a stale copy of the service key document, which now matches what the live endpoint serves.</description>
+		</item>
+		<item>
 			<title>The Agent Economy demo works again when you just pick a service, and it fits a phone screen</title>
 			<link>https://three.ws/agent-economy</link>
 			<guid isPermaLink="false">2026-08-15:The Agent Economy demo works again when you just pick a service, and it fits a phone screen</guid>
@@ -103,6 +119,14 @@
 			<description>The @three-ws/alibaba-cloud-mcp package, which lets an agent use Qwen chat, embeddings, and model discovery on your own Alibaba Cloud key, could not start at all. Two faults, both on the first line of use: the check for whether the file was launched directly crashed before the server ever opened, and the three tools were registered with a schema format the MCP library rejects. Both are fixed, so the server now boots, advertises its tools, and answers a client. The payment-sessions MCP package had a documentation fault with the same cost: its quick start told you to set your session variable to the whole cookie including the name, which the server then wrapped in the cookie name again, so every session-management call came back unauthorized. It now says to use the cookie value, and ships its two runnable examples inside the published package instead of only in the repository. Five packages (payment sessions, Agora, alerts, the assistant widget, and Alibaba Cloud) gained a Programmatic use section showing the exact code to import their tools into a host of your own, and the sniper package's HTTP table now lists every endpoint it actually serves, including the paid close-position route it had left out.</description>
 		</item>
 		<item>
+			<title>The embed tutorials now name the attribute that actually hides the built-in chat</title>
+			<link>https://three.ws/tutorials/web-component-end-to-end</link>
+			<guid isPermaLink="false">2026-08-15:The embed tutorials now name the attribute that actually hides the built-in chat</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Several tutorials told you to set avatar-chat=&quot;off&quot; to hide an agent's built-in chat input. It does not do that: it moves the avatar out of the chat column and lays the chat out as a plain bottom bar, leaving the input on screen. The multi-agent walkthrough leaned on it to keep its behind-the-scenes stage-director messages hidden, so anyone following it verbatim saw those messages leak into the visible chat. The affected tutorials now use chat=&quot;off&quot;, the real bare-avatar switch, and note that the brain still boots behind it so say(), ask(), and the event stream keep working. The same accuracy pass corrected the walking-avatar leaderboard example, which read fields the API never returns and so always rendered an empty top-walkers list, and the JavaScript API event table, which named the wrong key for the skill a tool-call event reports.</description>
+		</item>
+		<item>
 			<title>The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list</title>
 			<link>https://three.ws/docs/tutorials/write-a-guard</link>
 			<guid isPermaLink="false">2026-08-15:The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list</guid>
@@ -127,6 +151,14 @@
 			<description>Browsing plugins a page at a time could show you the same plugin twice and never show another one at all. The catalogue was sorted by install count and publish date, and the built-in plugins were all published in the same instant with zero installs, so that sort left them tied and the database was free to order the tied rows differently on every request. One plugin therefore landed on two consecutive pages and one fell through the gap. The order is now decided all the way down, so paging through the catalogue returns every plugin exactly once. Searching also takes your text literally: typing a percent sign or an underscore used to act as a database wildcard and match rows it should not. Publishing got stricter at the same time, because a plugin manifest is handed to the model as a tool definition by whoever installs it: a tool name now has to be plain letters, digits, underscores, or hyphens, every tool needs a real description, and a manifest has to fit the same 64KB ceiling that importing one by URL already enforced. And pointing the importer at a repository web page instead of the raw manifest file now says exactly that, rather than showing a raw parser error.</description>
 		</item>
 		<item>
+			<title>The pump.fun trade history works again, notification settings show every category, and a bad agent id stops reading as a server crash</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:The pump.fun trade history works again, notification settings show every category, and a bad agent id stops reading as a server crash</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes across the public MCP packages and the API behind them. Asking for a token's recent buys and sells (get_token_trades on the free pump.fun MCP server) had stopped working entirely: the platform reads several transactions in one batched call, and the free Solana providers we route through cap those batches at one call each, so they rejected the whole request and the tool returned a raw provider error instead of trades. The platform now recognises that refusal, re-sends the reads one at a time to the same provider, and remembers the cap so later calls skip the wasted attempt; every batched on-chain read benefits, including wallet and agent activity history. Separately, the notifications MCP server told agents there were six notification categories when there are seven, so an agent could never change how it hears about a finished 3D generation; all seven are now listed, along with the security notices that always reach your bell inbox. And the agent provenance log answered a non-uuid agent id with an internal error and a support reference; it now says plainly that the id must be a uuid.</description>
+		</item>
+		<item>
 			<title>The vanity receipt verifier stops calling honest receipts fraudulent, and the avatar CLI takes a Solana address</title>
 			<link>https://three.ws/docs/rig-doctor</link>
 			<guid isPermaLink="false">2026-08-15:The vanity receipt verifier stops calling honest receipts fraudulent, and the avatar CLI takes a Solana address</guid>
@@ -149,6 +181,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Vanity page told you to grind a long address yourself in the browser at /vanity, but that path has never existed and answers 404; the in-browser grinder lives at /vanity-wallet, and both links on the page now go there. In Troubleshooting, the fix for a Quick Look model that opens and instantly closes linked to a model-optimization section that is not on the AR page, so the link dropped you at the top with nothing to read; it now opens the section that actually covers it. The same page told you to add a responsive attribute to size an inline embed, with a snippet that set the width in CSS. Neither half worked: responsive sizing is already on by default, and the element reads the width attribute rather than the computed style, so the documented snippet never produced the 3:4 ratio it promised. The instructions now show the form that does work, and name the two things that switch it off.</description>
+		</item>
+		<item>
+			<title>Voice and vision SDKs ship runnable examples, and the x402 seller SDK reads its Solana sponsor from the environment</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Voice and vision SDKs ship runnable examples, and the x402 seller SDK reads its Solana sponsor from the environment</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>@three-ws/voice and @three-ws/vision-mcp now include example scripts you can run as-is against the live free lanes: the voice one speaks a sentence, animates a face from those exact bytes, and transcribes it back; the vision one probes the lane, writes alt text for an image, and reads the text off it. @three-ws/x402-server used to demand the Solana sponsor account as a code option even though its own error message told you to set X402_FEE_PAYER_SOLANA, so a correctly configured deployment still got missing_fee_payer; it now reads that environment variable when the option is omitted. The VS Code x402 extension's endpoint scaffolder was generating Base-only endpoints and now generates Solana-first ones, matching every paid route on the platform, and it ships with a test suite covering which payment requirement it selects.</description>
 		</item>
 		<item>
 			<title>Agent Interaction Lab</title>
