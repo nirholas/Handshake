@@ -94,6 +94,18 @@ export function fundingConfigured() {
 	return !!resolveFundingKeyBase58();
 }
 
+/**
+ * The platform funding wallet's public address, or null when unconfigured. This
+ * is where a drop's funds go back to when a create is rolled back (the fee failed
+ * to settle after the wallet was already funded): the money returns to exactly
+ * the wallet it left.
+ */
+export function fundingWalletAddress() {
+	const key = resolveFundingKeyBase58();
+	if (!key) return null;
+	return Keypair.fromSecretKey(bs58.decode(key)).publicKey.toBase58();
+}
+
 function fundingKeypair() {
 	const key = resolveFundingKeyBase58();
 	if (!key) {
