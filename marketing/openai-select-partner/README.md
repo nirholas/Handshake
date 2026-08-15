@@ -5,8 +5,12 @@ OpenAI Partner Network, plus the rules that govern how the badge may be used.
 
 | File | What it is | Status |
 | --- | --- | --- |
+| [`partnership-and-gpt-briefing.md`](partnership-and-gpt-briefing.md) | Full briefing on the partnership and the live custom GPT: tier facts and dates, the GPT's builder config and QA history, the Actions and MCP contracts, compliance posture, brand rules, live verification, open items | Reference |
 | [`press-release.md`](press-release.md) | Draft press release, written against OpenAI's partner template | **Needs OpenAI approval before publishing** (see below) |
 | [`social-copy.md`](social-copy.md) | Approved-messaging LinkedIn / X copy, ready to post | Ready |
+| [`founder-thread.md`](founder-thread.md) | Founder reply on the announcement thread: one extended long post plus a threaded version, with fact-check notes on what is and is not claimed | Ready |
+| [`founder-quote-post.md`](founder-quote-post.md) | Quote post from the founder's personal account: same ground as the reply, restructured and voiced differently, with a wider fact set so the two posts do not read as duplicates | Ready |
+| [`community-posts.md`](community-posts.md) | Three community-voice posts (builder, holder, creator) in long and short versions, plus posting notes and the claims that stay out | Ready |
 | [`badge-usage.md`](badge-usage.md) | Where the badge assets live and how they may be used | Ready |
 | [`cards/social-card.html`](cards/social-card.html) | Layout source for the two announcement graphics; renders with `npm run build:openai-cards` | Ready |
 | `openai-press-release-template.docx` | OpenAI's original template, unmodified, kept as the source of truth for the draft | Reference |
