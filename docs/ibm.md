@@ -211,7 +211,9 @@ curl -s https://three.ws/api/watsonx/embed \
   -d '{"texts":["a witty Solana trading assistant","a calm meditation guide"]}'
 ```
 
-It returns one vector per input (the response reports the model and its native `dimensions`), plus a `cachedHits` count — a warm process-local LRU and CDN cache-control headers keep repeat embeddings free, and per-IP + global rate limits cap watsonx spend.
+It returns one vector per input (the response reports the model and its native `dimensions`), plus a `cachedHits` count: a warm process-local LRU keeps repeat embeddings free, and per-IP + global rate limits cap watsonx spend. The response itself is sent `cache-control: no-store`, because a POST body varies per request and must never be shared-cached.
+
+A batch is 1 to 96 texts, each truncated to 512 characters. When watsonx is not configured on a deployment (or is failing), the endpoint falls through to the platform's free-first embedding chain (NVIDIA NIM, then Vertex `text-embedding-005`, then OpenAI `text-embedding-3-small`) and reports whichever `model` actually served, so `dimensions` is uniform within a response but can differ between them. A provider that covers only part of a batch counts as a failure and the next provider takes over: the response never carries a null where a vector belongs. With no provider configured at all you get a `503 embed_unconfigured` naming the env vars to set, never invented vectors.
 
 ---
 

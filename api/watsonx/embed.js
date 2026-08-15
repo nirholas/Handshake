@@ -1,4 +1,4 @@
-// POST /api/watsonx/embed — IBM Granite embeddings on watsonx.ai.
+// POST /api/watsonx/embed: IBM Granite embeddings on watsonx.ai.
 //
 // Body: { texts: string[], model?: string }
 // Response: { model, dimensions, count, cachedHits, vectors: number[][] }
@@ -9,15 +9,22 @@
 // lay them out in semantic space (e.g. the watsonx Constellation at
 // /constellation). Inference runs on watsonx.ai with the server's IBM Cloud key.
 //
-// There is no mock path — every vector is a real embedding call. The provider
+// There is no mock path: every vector is a real embedding call. The provider
 // chain degrades gracefully so a watsonx outage never blanks the page:
 //   1. IBM Granite on watsonx.ai (primary, when WATSONX_* is configured)
-//   2. The platform's free-first embedding chain (NVIDIA NIM when keyed,
-//      OpenAI text-embedding-3-small as the paid backstop)
+//   2. The platform's free-first embedding chain (NVIDIA NIM when keyed, then
+//      Vertex text-embedding-005 on the GCP credit pool, then OpenAI
+//      text-embedding-3-small as the paid backstop). See api/_lib/embeddings.js
+//      for the authoritative preference order.
 //   3. 503 `embed_unconfigured` only when NO provider is available, so the
 //      client can show an honest "not configured" state instead of inventing
 //      vectors. Within a single response all vectors come from one provider, so
 //      `dimensions` is uniform regardless of which tier served the request.
+//
+// A provider that answers with a short or empty batch is treated as a failure,
+// not as a partial success: the response never carries a null in place of a
+// vector, because a caller laying these out in semantic space cannot tell a
+// missing embedding from a real one at the origin.
 
 import { createHash } from 'node:crypto';
 import { cors, method, readJson, error, json, wrap, rateLimited } from '../_lib/http.js';
@@ -66,7 +73,7 @@ function validateTexts(input) {
 		throw Object.assign(new Error('texts must be an array'), { status: 400 });
 	}
 	if (input.length === 0 || input.length > MAX_TEXTS) {
-		throw Object.assign(new Error(`texts must hold 1–${MAX_TEXTS} items`), { status: 400 });
+		throw Object.assign(new Error(`texts must hold 1 to ${MAX_TEXTS} items`), { status: 400 });
 	}
 	const out = [];
 	for (const t of input) {
@@ -89,11 +96,11 @@ export default wrap(async function handler(req, res) {
 	const ip = clientIp(req);
 	const perIp = await limits.watsonxEmbedIp(ip);
 	if (!perIp.success) {
-		return rateLimited(res, perIp, 'too many embedding requests — slow down');
+		return rateLimited(res, perIp, 'too many embedding requests, slow down');
 	}
 	const global = await limits.watsonxEmbedGlobal();
 	if (!global.success) {
-		return rateLimited(res, global, 'embedding capacity reached — try again shortly');
+		return rateLimited(res, global, 'embedding capacity reached, try again shortly');
 	}
 
 	let body;
@@ -105,7 +112,10 @@ export default wrap(async function handler(req, res) {
 
 	let texts;
 	try {
-		texts = validateTexts(body.texts);
+		// `body` is whatever parsed: a literal `null` or a bare scalar is valid
+		// JSON, so reach for `.texts` defensively and let validateTexts reject it
+		// with the same 400 as any other malformed payload.
+		texts = validateTexts(body?.texts);
 	} catch (e) {
 		return error(res, e.status || 400, 'bad_request', e.message);
 	}
@@ -113,20 +123,20 @@ export default wrap(async function handler(req, res) {
 	const cfg = watsonxConfig();
 	const fallbackReady = embeddingsConfigured();
 	if (!cfg.configured && !fallbackReady) {
-		// No provider at all. No fabricated vectors — tell the client exactly
+		// No provider at all. No fabricated vectors. Tell the client exactly
 		// what's missing so the UI can render an honest "not configured" state.
 		return error(
 			res,
 			503,
 			'embed_unconfigured',
-			'No embedding provider is configured. Set WATSONX_API_KEY + WATSONX_PROJECT_ID (IBM Granite), NVIDIA_API_KEY (free fallback), or OPENAI_API_KEY (paid fallback) to enable embeddings.',
+			'No embedding provider is configured. Set WATSONX_API_KEY + WATSONX_PROJECT_ID (IBM Granite), NVIDIA_API_KEY (free fallback), GOOGLE_CLOUD_PROJECT (Vertex fallback), or OPENAI_API_KEY (paid fallback) to enable embeddings.',
 		);
 	}
 
-	// Provider chain: Granite (primary) → the platform free-first embedding
-	// chain (NIM, then OpenAI). The first provider that returns a full batch
-	// wins; a watsonx outage transparently falls through so /constellation
-	// keeps rendering.
+	// Provider chain: Granite (primary) then the platform free-first embedding
+	// chain (NIM, Vertex, OpenAI). The first provider that returns a FULL batch
+	// wins; a watsonx outage, or a watsonx response that covers only part of the
+	// batch, transparently falls through so /constellation keeps rendering.
 	let result = null;
 	let lastError = null;
 
@@ -143,14 +153,14 @@ export default wrap(async function handler(req, res) {
 				})),
 			);
 		} catch (e) {
-			// Hold the cause; if OpenAI can cover we still serve a 200.
+			// Hold the cause; if the fallback chain can cover we still serve a 200.
 			lastError = e;
 		}
 	}
 
 	if (!result && fallbackReady) {
 		// These texts are peers laid out against each other (not query-vs-corpus),
-		// so they all embed as 'passage' — one consistent space per response.
+		// so they all embed as 'passage': one consistent space per response.
 		const fallbackTag = defaultIngestEmbedderTag();
 		const fallback = embedderInfo(fallbackTag);
 		try {
@@ -167,7 +177,7 @@ export default wrap(async function handler(req, res) {
 	}
 
 	if (!result) {
-		// Both tiers failed at the network level — surface the real upstream cause.
+		// Both tiers failed at the network level. Surface the real upstream cause.
 		return error(res, 502, 'embed_error', lastError?.message || 'embeddings failed');
 	}
 
@@ -187,8 +197,13 @@ export default wrap(async function handler(req, res) {
  * Embed `texts` with a single provider, reusing the process-local cache for
  * already-seen (model, text) pairs so repeat lookups cost nothing. `fetcher`
  * receives the genuinely-uncached inputs and returns { vectors, dimensions }.
- * Caching is keyed by model, so Granite and OpenAI vectors never mix — every
+ * Caching is keyed by model, so Granite and OpenAI vectors never mix: every
  * returned batch is uniform in dimensionality.
+ *
+ * Throws when the provider covers only part of the batch. That is what makes
+ * the caller's fallback chain correct: a half-answered batch has to look like a
+ * failure, or the next provider is never tried and the client is handed nulls
+ * dressed up as embeddings.
  */
 async function embedBatch(texts, model, fetcher) {
 	const vectors = new Array(texts.length).fill(null);
@@ -208,9 +223,14 @@ async function embedBatch(texts, model, fetcher) {
 	if (missText.length) {
 		const fetched = await fetcher(missText);
 		dimensions = fetched.dimensions || dimensions;
+		const returned = Array.isArray(fetched.vectors) ? fetched.vectors : [];
 		for (let k = 0; k < missIdx.length; k++) {
-			const vec = fetched.vectors[k];
-			if (!vec?.length) continue;
+			const vec = returned[k];
+			if (!vec?.length) {
+				throw new Error(
+					`${model} returned ${returned.filter((v) => v?.length).length} of ${missText.length} embeddings`,
+				);
+			}
 			vectors[missIdx[k]] = vec;
 			cacheSet(cacheKey(model, missText[k]), vec);
 		}
