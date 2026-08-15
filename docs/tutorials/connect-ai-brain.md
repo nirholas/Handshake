@@ -254,12 +254,23 @@ See the [custom skill tutorial](/tutorials/custom-skill) for the full skill-writ
 
 Every chat turn costs tokens. For agents handling real traffic, you need to know where your spend is going.
 
-The dashboard at [three.ws/my-agents](https://three.ws/my-agents) → your agent → **Usage** tab shows:
+**The per-agent read.** `GET /api/agents/:id/usage` (owner-only) returns that agent's brain usage:
 
-- **Total tokens** by day, separated into input and output
-- **Estimated cost** at the rate of your selected model
-- **Per-agent breakdown** if you have multiple agents
-- **Top conversations** by token spend (useful for finding runaway prompt loops)
+```js
+const usage = await (await fetch(`/api/agents/${agentId}/usage`, { credentials: 'include' })).json();
+// → {
+//     agentId,
+//     monthlyQuota,        // from the agent's embed policy; null = unlimited
+//     currentMonthCalls,   // LLM calls this calendar month
+//     dailyBreakdown: [{ day, calls }]   // last 30 days
+//   }
+```
+
+Note what this is and isn't: it counts **calls**, not tokens, and it is the same counter the proxy enforces `monthly_quota` against. It is the number to watch for "is this agent about to hit its cap", not for a dollar figure.
+
+**The account read.** `GET /api/usage/summary` returns your account-level numbers (plan quotas, avatar count and bytes, MCP tool calls in the last 24h, total events in the last 30 days).
+
+**Cost.** The platform prices every call server-side through `api/_lib/llm-pricing.js` and records it, so the spend cap in `checkUserLlmSpendCap` is enforced on real numbers. What there is *not* today is a self-serve token-and-dollar breakdown chart per conversation, nor threshold email alerts. Budget with `monthly_quota` and `rate_limit_per_min` on the embed policy (Step 8) — those are hard, enforced-before-spend limits, which is a stronger control than an after-the-fact alert.
 
 Two specific things to watch:
 
@@ -267,7 +278,7 @@ Two specific things to watch:
 
 **Tool-call expansion.** A tool that returns 5000 tokens of JSON balloons the next-turn input. If you have a skill that returns large data, summarise the response before it goes back to the model rather than passing the raw payload through.
 
-For agents handling 1000+ chats per day, you can set up **usage alerts** under **Account → Billing → Alerts**. Pick a threshold (a daily spend or a token count); the platform emails you when you cross it.
+For agents handling real volume, set `monthly_quota` deliberately rather than leaving the 1000-call default: once an agent crosses it the proxy stops serving paid lanes for the rest of the month, which is a blunt but effective ceiling. Pair it with a tight `origins` allowlist so nobody else's site can spend your quota in the first place.
 
 ---
 
@@ -282,13 +293,42 @@ If you have:
 <agent-3d agent-id="YOUR_AGENT_ID" id="agent"></agent-3d>
 ```
 
-…on a thousand pages, you can switch the brain from Sonnet to Opus to GPT-5.6 Sol entirely from the dashboard. No deploy. No code edit. The next page load picks up the new model.
+…on a thousand pages, you can switch the brain from Sonnet 5 to Opus 5 to GPT-5.6 Sol by changing one field. No deploy. No code edit. The next page load picks up the new model.
+
+That field is `brain.model` on the agent's **embed policy**, read and written at `GET`/`PUT /api/agents/:id/embed-policy`. The `PUT` takes the whole policy document, so read it first, change the one field, and write it back:
+
+```js
+const { policy } = await (await fetch(`/api/agents/${agentId}/embed-policy`, {
+  credentials: 'include',
+})).json();
+
+await fetch(`/api/agents/${agentId}/embed-policy`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include',   // the dashboard's own helper attaches the CSRF token
+  body: JSON.stringify({
+    ...policy,
+    brain: { ...policy.brain, model: 'claude-sonnet-5' },
+  }),
+});
+```
+
+The whole `brain` block is what you tune here:
+
+| Field | Default | What it does |
+|---|---|---|
+| `mode` | `'we-pay'` | `we-pay` uses the platform's credential. `key-proxy` calls your endpoint for a key (Step 9) and requires `proxy_url`. `wallet-gated` and `none` close the lane. |
+| `model` | `'openai/gpt-oss-20b:free'` | The model the agent actually runs, and the ceiling a visitor is clamped to. |
+| `monthly_quota` | `1000` | LLM calls per calendar month before the lane closes. `null` = unlimited. |
+| `rate_limit_per_min` | `10` | Per-minute request cap. |
+
+The `origins` block on the same document is the other half of cost control: with `mode: 'allowlist'` and your own hosts, a request from anywhere else is rejected *before* your model budget is touched. The [/dashboard/api](https://three.ws/dashboard/api) page has an editor for that allowlist.
 
 This makes A/B testing painless. Common patterns:
 
-- **Cost optimisation pass.** Move a low-stakes agent from Sonnet to Haiku, watch the quality and spend for a week, decide whether to keep the change.
-- **Capability spike.** Promote an agent to Opus for a busy week (a launch, a marketing campaign), then dial back down to Sonnet for steady-state.
-- **Provider failover.** If Anthropic has a brief outage, you can switch the agent to GPT-5.6 Terra in the dashboard and keep traffic moving while you wait. Both keys are stored, both providers are reachable from the same agent record.
+- **Cost optimisation pass.** Move a low-stakes agent from Sonnet 5 to Haiku, watch the quality and spend for a week, decide whether to keep the change.
+- **Capability spike.** Promote an agent to Opus 5 for a busy week (a launch, a marketing campaign), then dial back down to Sonnet 5 for steady-state.
+- **Provider failover.** If one vendor has a brief outage, switch `brain.model` to a peer on another provider and keep traffic moving. You don't have to do this for transient errors, though: the proxy already walks a free-lane fallback chain on a quota/billing/rate-limit failure mid-request.
 
 The trick to making this work cleanly is to write your system prompt in a model-agnostic style. Prompts that lean hard on Claude-specific quirks ("respond in XML tags") can produce slightly different output on GPT. The prompt template in the [agent personality](/tutorials/agent-personality) tutorial is intentionally portable across providers — use that style and your switch-day surprises are minimal.
 
