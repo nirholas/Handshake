@@ -43,6 +43,24 @@ function parsePath(req) {
 }
 
 /**
+ * Read a JSON object body, answering the caller when it is not one.
+ *
+ * readJson's second parameter is a byte limit, not the response: passing `res`
+ * there turned every `length > [object]` comparison into false and silently
+ * disabled the 1 MB cap. Returning `null` on a non-object body (rather than
+ * letting the caller return without writing a response) also closes the path
+ * where a request would hang instead of getting an answer.
+ */
+async function readJsonObject(req, res) {
+	const body = await readJson(req);
+	if (!body || typeof body !== 'object') {
+		error(res, 400, 'invalid_body', 'a JSON object body is required');
+		return null;
+	}
+	return body;
+}
+
+/**
  * Read `limit` and `cursor` off the query string, clamped to values the SQL can
  * actually take. Both reach Postgres verbatim otherwise: a negative limit
  * becomes `LIMIT -4` and a non-date cursor becomes a timestamptz cast error, and
@@ -73,7 +91,7 @@ export default wrap(async (req, res) => {
 	// POST /api/pay/session: create
 	if (!id && httpMethod === 'POST') {
 		if (!method(req, res, ['POST'])) return;
-		const body = await readJson(req, res);
+		const body = await readJsonObject(req, res);
 		if (!body) return;
 
 		let result;
@@ -165,7 +183,7 @@ export default wrap(async (req, res) => {
 
 	// PATCH /api/pay/session/:id: update mutable fields on an active session
 	if (httpMethod === 'PATCH') {
-		const body = await readJson(req, res);
+		const body = await readJsonObject(req, res);
 		if (!body) return;
 
 		const updates = {};

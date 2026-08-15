@@ -68,20 +68,26 @@ vi.mock('../api/_lib/usage.js', () => ({ recordEvent: vi.fn() }));
 const providerCalls = [];
 const chainDisabled = { value: false };
 const providerFails = { value: false };
+// Set to simulate the shared RPC layer having no endpoint at all for a chain.
+// The real evmFallbackProvider throws `no RPC endpoint for chain <id>` there.
+const providerBuildFails = { value: false };
 vi.mock('../api/_lib/evm/rpc.js', () => ({
-	evmFallbackProvider: async () => ({
-		async call(tx) {
-			if (providerFails.value) throw new Error('rpc unreachable');
-			providerCalls.push(tx);
-			return AbiCoder.defaultAbiCoder().encode(['bool'], [chainDisabled.value]);
-		},
-		async getNetwork() {
-			return { chainId: 84532n, name: 'base-sepolia' };
-		},
-		async resolveName(n) {
-			return n;
-		},
-	}),
+	evmFallbackProvider: async (chainId) => {
+		if (providerBuildFails.value) throw new Error(`no RPC endpoint for chain ${chainId}`);
+		return {
+			async call(tx) {
+				if (providerFails.value) throw new Error('rpc unreachable');
+				providerCalls.push(tx);
+				return AbiCoder.defaultAbiCoder().encode(['bool'], [chainDisabled.value]);
+			},
+			async getNetwork() {
+				return { chainId: 84532n, name: 'base-sepolia' };
+			},
+			async resolveName(n) {
+				return n;
+			},
+		};
+	},
 }));
 
 // redeem must never reach a real chain from a unit test; the handler's own
@@ -169,9 +175,9 @@ beforeEach(() => {
 	providerCalls.length = 0;
 	chainDisabled.value = false;
 	providerFails.value = false;
+	providerBuildFails.value = false;
 	rlOk.value = true;
 	envStub.PERMISSIONS_RELAYER_ENABLED = true;
-	delete process.env.RPC_URL_137;
 });
 
 describe('permissions dispatcher', () => {
@@ -534,10 +540,11 @@ describe('POST /api/permissions/redeem', () => {
 	// Regression: the reservation is written before the signer is built, so an exit
 	// between the two has to release it. It used to leak, permanently consuming the
 	// delegation's period budget for a request that never touched the chain.
-	it('releases the spend reservation when no RPC is configured for the chain', async () => {
+	it('releases the spend reservation when the chain has no reachable RPC endpoint', async () => {
 		bearer();
+		providerBuildFails.value = true;
 		sqlQueue.push(
-			[delegationRow({ chain_id: 137 })],
+			[delegationRow()],
 			[{ user_id: 'user-1' }],
 			[{ id: 'usage-1', spent_before: '0' }],
 			[],
@@ -545,9 +552,64 @@ describe('POST /api/permissions/redeem', () => {
 		const res = await call({ action: 'redeem', method: 'POST', body: okBody });
 		expect(res.statusCode).toBe(502);
 		expect(parse(res).error).toBe('rpc_error');
+		expect(redeemDelegationMock).not.toHaveBeenCalled();
 		// Last statement must be the release, keyed on the reservation just written.
 		const lastArgs = sqlMock.mock.calls.at(-1);
 		expect(lastArgs[0].join('?')).toContain("status = 'failed'");
 		expect(lastArgs).toContain('usage-1');
+	});
+
+	// A delegation row on a chain with no DelegationManager can never settle.
+	// It used to reach redeemDelegation, have managerAddress() throw, and come
+	// back as a 502 rpc_error, which reads as a provider outage rather than the
+	// chain-support gap it is. The gate also runs before the spend reservation,
+	// so an unsettleable chain never touches the period budget.
+	it('rejects a delegation on a chain with no DelegationManager before reserving spend', async () => {
+		bearer();
+		sqlQueue.push([delegationRow({ chain_id: 137 })], [{ user_id: 'user-1' }]);
+		const res = await call({ action: 'redeem', method: 'POST', body: okBody });
+		expect(res.statusCode).toBe(409);
+		expect(parse(res).error).toBe('chain_not_supported');
+		expect(redeemDelegationMock).not.toHaveBeenCalled();
+		// Only the two lookups ran: no reservation INSERT, so nothing to release.
+		expect(sqlMock).toHaveBeenCalledTimes(2);
+	});
+
+	// The Idempotency-Key lookup runs before the ownership gate, so a cache keyed
+	// on the delegation id alone handed a non-owner the owner's txHash and receipt
+	// if they replayed the same (id, key) pair. The key carries the principal now.
+	it('does not replay one principal\'s idempotent result to another', async () => {
+		const headers = { 'idempotency-key': 'k-1' };
+		redeemDelegationMock.mockResolvedValue({
+			txHash: '0xfeed',
+			receipt: { status: 1, blockNumber: 7, gasUsed: '21000' },
+		});
+
+		bearer({ userId: 'user-1' });
+		sqlQueue.push(
+			[delegationRow()],
+			[{ user_id: 'user-1' }],
+			[{ id: 'usage-1', spent_before: '0' }],
+			[],
+			[],
+		);
+		const first = await call({ action: 'redeem', method: 'POST', body: okBody, headers });
+		expect(first.statusCode).toBe(200);
+		expect(parse(first).txHash).toBe('0xfeed');
+
+		// A different principal replaying the same id + key must be refused by the
+		// ownership gate, not served the cached receipt.
+		bearer({ userId: 'user-2' });
+		sqlQueue.push([delegationRow()], [{ user_id: 'user-1' }]);
+		const replay = await call({ action: 'redeem', method: 'POST', body: okBody, headers });
+		expect(replay.statusCode).toBe(404);
+		expect(parse(replay).error).toBe('delegation_not_found');
+
+		// The original caller still gets its cached result without a second submit.
+		bearer({ userId: 'user-1' });
+		const retry = await call({ action: 'redeem', method: 'POST', body: okBody, headers });
+		expect(retry.statusCode).toBe(200);
+		expect(parse(retry).txHash).toBe('0xfeed');
+		expect(redeemDelegationMock).toHaveBeenCalledTimes(1);
 	});
 });

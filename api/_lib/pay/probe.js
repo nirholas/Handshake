@@ -139,7 +139,18 @@ export async function probePrice(rawUrl, { method = 'GET', body = null, timeoutM
 	}
 
 	if (res.status !== 402) {
-		return { kind: 'free', status: res.status };
+		// Only a SUCCESS without a challenge is free. An endpoint that answers 404,
+		// 400, or 500 is broken, not free, and calling it free was the wrong answer
+		// to the one question the simulator exists to answer: a workload whose every
+		// call errored came back `feasible: true` at a cost of $0, because each dead
+		// endpoint scored as a free call and free calls never enter the replay.
+		if (res.ok) return { kind: 'free', status: res.status };
+		return {
+			kind: 'error',
+			code: 'endpoint_error',
+			message: `Endpoint answered HTTP ${res.status} with no payment challenge`,
+			status: res.status,
+		};
 	}
 
 	const challenge = readChallenge(res);

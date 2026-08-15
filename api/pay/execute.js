@@ -77,7 +77,10 @@ function loadSolanaKeypair() {
 }
 
 // ── Probe a 402 endpoint and select a Solana USDC accept ────────────────────
-async function probe402(rawUrl, { method, body }) {
+// Exported for tests/pay-probe-endpoint-error.test.js: this is where a caller's
+// URL turns into an amount the session is about to be charged, so its refusals
+// are worth pinning independently of the signing path around them.
+export async function probe402(rawUrl, { method, body }) {
 	let res;
 	try {
 		res = await guardedFetch(rawUrl, { method, body });
@@ -93,7 +96,26 @@ async function probe402(rawUrl, { method, body }) {
 	}
 
 	if (res.status !== 402) {
-		return { free: true, status: res.status, result: safeJson(res.text) ?? res.text };
+		// A success without a challenge is genuinely free and is handed straight
+		// back. An error status is not: answering `ok: true, paid: false, "no
+		// payment needed"` for a 500 told the agent its call succeeded for free
+		// when the endpoint had in fact failed. Nothing was signed and no budget
+		// was reserved at this point, so this is a clean 502 about the endpoint.
+		if (res.ok) {
+			return { free: true, status: res.status, result: safeJson(res.text) ?? res.text };
+		}
+		const parsed = safeJson(res.text);
+		throw Object.assign(
+			new Error(`Endpoint answered HTTP ${res.status} with no payment challenge, so there was nothing to pay`),
+			{
+				status: 502,
+				code: 'endpoint_error',
+				detail: {
+					upstream_status: res.status,
+					upstream_body: parsed ?? String(res.text ?? '').slice(0, 500),
+				},
+			},
+		);
 	}
 
 	const challenge = readChallenge(res);
@@ -228,8 +250,13 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const body = await readJson(req, res);
-	if (!body) return;
+	// readJson's second argument is a byte limit, not the response. Passing `res`
+	// there made every size comparison `n > [object]`, i.e. NaN, i.e. false, so
+	// the 1 MB body cap this call was meant to apply never applied at all.
+	const body = await readJson(req);
+	if (!body || typeof body !== 'object') {
+		return error(res, 400, 'invalid_body', 'a JSON object body is required');
+	}
 
 	const sessionToken = body.session_token;
 	if (!sessionToken) return error(res, 400, 'missing_token', 'session_token is required');

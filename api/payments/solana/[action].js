@@ -40,15 +40,25 @@ function usdToAtomicsCeil(usd, assetPriceUsd, decimals) {
 
 // ── checkout ──────────────────────────────────────────────────────────────────
 
+// Devnet is only accepted in non-production environments. Accepting devnet
+// USDC (free from a faucet) in production would let anyone upgrade for free.
+// Checkout and confirm share this one enum on purpose: confirm picks both the
+// RPC it queries and the USDC mint it accepts from its own `network` field, so
+// a mainnet-only checkout paired with a devnet-tolerant confirm still hands out
+// free plans (create a mainnet intent, pay its nonce with faucet USDC on devnet,
+// confirm with network=devnet). The intent row carries no cluster column, so
+// keeping the two schemas literally the same value is what closes that door.
+const networkEnum = z
+	.enum(process.env.NODE_ENV === 'production' ? ['mainnet'] : ['mainnet', 'devnet'])
+	.default('mainnet');
+
 const checkoutSchema = z.object({
 	plan:    z.enum(['pro', 'team', 'enterprise']),
 	// USDC settles 1:1 with the USD price. SOL and $THREE are quoted at the
 	// live market price when the session is created; paying in $THREE takes the
 	// platform-coin discount (threePlanDiscountBps).
 	asset:   z.enum(['USDC', 'SOL', 'THREE']).default('USDC'),
-	// Devnet is only accepted in non-production environments. Accepting devnet
-	// USDC (free from faucet) in production would let anyone upgrade for free.
-	network: z.enum(process.env.NODE_ENV === 'production' ? ['mainnet'] : ['mainnet', 'devnet']).default('mainnet'),
+	network: networkEnum,
 });
 
 async function handleCheckout(req, res) {
@@ -126,7 +136,7 @@ async function handleCheckout(req, res) {
 const confirmSchema = z.object({
 	intent_id:    z.string().uuid(),
 	tx_signature: z.string().min(80).max(100),
-	network:      z.enum(['mainnet', 'devnet']).default('mainnet'),
+	network:      networkEnum,
 });
 
 async function handleConfirm(req, res) {

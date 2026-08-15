@@ -6,13 +6,25 @@
  * This is the agent_payment_intents–based flow (distinct from the
  * skill_purchases Solana Pay reference flow at /api/marketplace/purchase).
  */
+import { z } from 'zod';
+
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
+import { parse } from '../_lib/validate.js';
 import { nanoid } from 'nanoid';
 
 const INTENT_TTL_MINUTES = 15;
+
+// agent_id has to be uuid-shaped before it reaches Postgres: an unvalidated
+// value went straight into a uuid-typed parameter, so "not-a-uuid" (or any
+// non-string JSON value) raised SQLSTATE 22P02 and surfaced as a 500 plus an
+// ops alert, when it is plain caller error and belongs in a 400.
+const bodySchema = z.object({
+	agent_id: z.string().uuid(),
+	skill:    z.string().trim().min(1).max(200),
+});
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -24,13 +36,9 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	let body;
-	try { body = await readJson(req); } catch { return error(res, 400, 'invalid_json', 'request body is not valid JSON'); }
-	const agent_id = body?.agent_id;
-	const skill    = typeof body?.skill === 'string' ? body.skill.trim() : null;
-	if (!agent_id || !skill) {
-		return error(res, 400, 'validation_error', 'agent_id and skill are required');
-	}
+	// readJson answers 415 on a wrong content-type and 400 on unparseable JSON,
+	// and parse() answers 400 with the offending field, all through wrap().
+	const { agent_id, skill } = parse(bodySchema, await readJson(req));
 
 	// Fetch active skill price
 	const [price] = await sql`

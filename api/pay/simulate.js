@@ -367,8 +367,13 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const body = await readJson(req, res);
-	if (!body) return;
+	// The second argument is a byte limit, not the response object: passing `res`
+	// silently disabled the 1 MB cap, since every `length > [object]` compare is
+	// false. Returning without answering on a falsy body would hang the request.
+	const body = await readJson(req);
+	if (!body || typeof body !== 'object') {
+		return bad(res, 'invalid_body', 'a JSON object body is required');
+	}
 
 	let calls;
 	try {

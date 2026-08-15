@@ -60,12 +60,23 @@ async function handleConfirm(req, res) {
 	if (!rl.success) return rateLimited(res, rl);
 	const body = parse(confirmSchema, await readJson(req));
 	const { intent_id, tx_hash } = body;
-	const [intent] = await sql`select * from plan_payment_intents where id = ${intent_id} and user_id = ${user.id} limit 1`;
+	// Scoped to this lane: the Solana lane writes into the same table, and an
+	// unscoped lookup let an EVM confirm read (and expire) a Solana intent, which
+	// then failed downstream as a confusing "chain null not supported".
+	const [intent] = await sql`select * from plan_payment_intents where id = ${intent_id} and user_id = ${user.id} and chain_type = 'evm' limit 1`;
 	if (!intent) return error(res, 404, 'not_found', 'intent not found');
 	if (intent.status === 'confirmed') return error(res, 409, 'already_confirmed', 'payment already confirmed');
-	if (intent.status === 'expired' || new Date(intent.expires_at) < new Date()) {
-		await sql`update plan_payment_intents set status='expired' where id=${intent_id}`;
-		return error(res, 410, 'intent_expired', 'payment session expired — start a new checkout');
+	if (intent.status === 'failed') return error(res, 410, 'intent_expired', 'payment session is no longer usable');
+	// Confirming requires MIN_CONFIRMATIONS blocks of depth below, so a transfer
+	// broadcast near the end of the session cannot possibly be confirmable before
+	// the session lapses. Honor a confirm inside a bounded grace window rather
+	// than stranding funds that are already on-chain: the USDC amount was pinned
+	// at checkout and USDC is 1:1 with the USD price, so the window carries no
+	// price-drift exposure. Mirrors the Solana lane's grace window.
+	const CONFIRM_GRACE_MS = 60 * 60 * 1000;
+	if (new Date(intent.expires_at).getTime() + CONFIRM_GRACE_MS < Date.now()) {
+		await sql`update plan_payment_intents set status='expired' where id=${intent_id} and status='pending'`;
+		return error(res, 410, 'intent_expired', 'payment session expired, start a new checkout');
 	}
 	const chainId = intent.chain_id;
 	const chain = CHAINS[chainId];
@@ -114,16 +125,18 @@ async function handleConfirm(req, res) {
 
 	// All three writes are in a single transaction so a crash between intent-claim
 	// and the subscription/user grant can't leave the user paid but unsubscribed.
-	// The intent UPDATE uses status='pending' (not != 'confirmed') so an already-
-	// expired intent can't slip through a race between the expiry check above and
-	// this write. On a unique-index violation (concurrent confirm with same tx_hash)
-	// the entire transaction rolls back and we return 409.
+	// The intent UPDATE names the two claimable statuses explicitly (never
+	// != 'confirmed') so a concurrent confirm can claim the row exactly once and
+	// a 'failed' intent can never be revived; 'expired' is claimable because the
+	// grace window above already decided this confirm is still in time. On a
+	// unique-index violation (concurrent confirm with same tx_hash) the entire
+	// transaction rolls back and we return 409.
 	const planConfig = PLANS[intent.plan];
 	const activeUntil = new Date(Date.now() + planConfig.duration_days * 86400 * 1000);
 	let claimed;
 	try {
 		[claimed] = await sql.transaction([
-			sql`update plan_payment_intents set status='confirmed', tx_hash=${tx_hash}, confirmed_at=now() where id=${intent_id} and status = 'pending' returning id`,
+			sql`update plan_payment_intents set status='confirmed', tx_hash=${tx_hash}, confirmed_at=now() where id=${intent_id} and status in ('pending', 'expired') returning id`,
 			sql`insert into subscriptions (user_id, plan, chain_type, chain_id, token_address, tx_hash, amount_usd, status, active_until) values (${user.id}, ${intent.plan}, 'evm', ${chainId}, ${usdcAddress}, ${tx_hash}, ${intent.amount_usdc}, 'active', ${activeUntil}) on conflict (user_id) where status='active' do update set plan=excluded.plan, chain_type=excluded.chain_type, chain_id=excluded.chain_id, token_address=excluded.token_address, tx_hash=excluded.tx_hash, amount_usd=excluded.amount_usd, active_until=excluded.active_until, updated_at=now()`,
 			sql`update users set plan=${intent.plan} where id=${user.id}`,
 		]);

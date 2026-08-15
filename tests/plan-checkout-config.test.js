@@ -6,10 +6,25 @@ import {
 	threePlanDiscountBps,
 	INTENT_TTL_MINUTES,
 	QUOTED_INTENT_TTL_MINUTES,
+	EVM_USDC,
+	getEvmRecipient,
+	getSolanaRecipient,
+	toUsdcAtomics,
 } from '../api/payments/_config.js';
+
+const RECIPIENT_VARS = [
+	'PAYMENT_RECIPIENT_SOLANA',
+	'PAYMENT_RECIPIENT_EVM',
+	'PAYMENT_RECIPIENT_EVM_8453',
+];
+const PRIOR = Object.fromEntries(RECIPIENT_VARS.map((k) => [k, process.env[k]]));
 
 afterEach(() => {
 	delete process.env.THREE_PLAN_DISCOUNT_BPS;
+	for (const k of RECIPIENT_VARS) {
+		if (PRIOR[k] === undefined) delete process.env[k];
+		else process.env[k] = PRIOR[k];
+	}
 });
 
 describe('PLAN_ASSETS', () => {
@@ -68,5 +83,45 @@ describe('planPriceUsd', () => {
 describe('intent TTLs', () => {
 	it('gives live-priced quotes a shorter session than USDC', () => {
 		expect(QUOTED_INTENT_TTL_MINUTES).toBeLessThan(INTENT_TTL_MINUTES);
+	});
+});
+
+describe('recipients', () => {
+	// Both getters return null when unset, which is what turns checkout into a
+	// 503 not_configured instead of quoting a payment nobody can collect.
+	it('returns null when nothing is configured', () => {
+		for (const k of RECIPIENT_VARS) delete process.env[k];
+		expect(getSolanaRecipient()).toBeNull();
+		expect(getEvmRecipient(8453)).toBeNull();
+	});
+
+	it('reads the configured Solana treasury', () => {
+		process.env.PAYMENT_RECIPIENT_SOLANA = 'wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU';
+		expect(getSolanaRecipient()).toBe('wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU');
+	});
+
+	it('prefers the per-chain EVM recipient over the shared default', () => {
+		process.env.PAYMENT_RECIPIENT_EVM = '0x1111111111111111111111111111111111111111';
+		process.env.PAYMENT_RECIPIENT_EVM_8453 = '0x2222222222222222222222222222222222222222';
+		expect(getEvmRecipient(8453)).toBe('0x2222222222222222222222222222222222222222');
+		expect(getEvmRecipient(137)).toBe('0x1111111111111111111111111111111111111111');
+	});
+});
+
+describe('USDC atomics', () => {
+	it('scales USD to 6-decimal atomics as a bigint', () => {
+		expect(toUsdcAtomics(49)).toBe(49_000_000n);
+		expect(toUsdcAtomics(0.01)).toBe(10_000n);
+	});
+
+	it('rounds sub-atomic fractions instead of throwing on a non-integer', () => {
+		expect(toUsdcAtomics(1.0000004)).toBe(1_000_000n);
+	});
+
+	it('quotes a chain we accept for every EVM plan payment', () => {
+		for (const [chainId, address] of Object.entries(EVM_USDC)) {
+			expect(Number(chainId)).toBeGreaterThan(0);
+			expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/);
+		}
 	});
 });

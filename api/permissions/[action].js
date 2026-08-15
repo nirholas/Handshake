@@ -677,30 +677,6 @@ function periodStart(period) {
 	return new Date(0);
 }
 
-// Keyless single-endpoint defaults, used only when RPC_URL_<chainId> is unset.
-// dRPC for chain 1 / Sepolia: cloudflare-eth.com is sunset and rpc.sepolia.org is
-// dead, so the old defaults guaranteed a relayer failure on any deploy without an
-// explicit RPC env. dRPC answers keyless from datacenter IPs (probed live).
-const PERMISSIONS_PUBLIC_RPCS = {
-	1: 'https://eth.drpc.org',
-	8453: 'https://mainnet.base.org',
-	84532: 'https://sepolia.base.org',
-	11155111: 'https://sepolia.drpc.org',
-	421614: 'https://sepolia-rollup.arbitrum.io/rpc',
-	11155420: 'https://sepolia.optimism.io',
-};
-
-function getRpcUrl(chainId) {
-	return (
-		process.env[`RPC_URL_${chainId}`] ||
-		// Shared fallback names that might already exist in the project
-		(chainId === 84532 ? process.env.BASE_SEPOLIA_RPC_URL : null) ||
-		(chainId === 11155111 ? process.env.SEPOLIA_RPC_URL : null) ||
-		PERMISSIONS_PUBLIC_RPCS[chainId] ||
-		null
-	);
-}
-
 async function handleRedeem(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -740,9 +716,15 @@ async function handleRedeem(req, res) {
 	}
 	const { id, calls } = body;
 
-	// Idempotency-Key early return
-	if (idempotencyKey) {
-		const cached = idempotencyGet(`${id}:${idempotencyKey}`);
+	// Idempotency-Key early return. The cache key carries the bearer principal
+	// because this lookup runs before the ownership gate below: keyed on the
+	// delegation id alone, a principal who does not own the delegation could
+	// replay someone else's (id, key) pair and be handed their txHash and
+	// receipt. Scoping to the principal makes a retry idempotent only for the
+	// caller who made the original call.
+	const idempotencyScope = idempotencyKey ? `${bearer.userId}:${id}:${idempotencyKey}` : null;
+	if (idempotencyScope) {
+		const cached = idempotencyGet(idempotencyScope);
 		if (cached) return json(res, 200, cached);
 	}
 
@@ -790,6 +772,21 @@ async function handleRedeem(req, res) {
 
 	const scope = row.scope;
 	const chainId = row.chain_id;
+
+	// The relayer redeems through the chain's DelegationManager, so a row on a
+	// chain with no deployment can never settle. Grant, revoke, and verify all
+	// gate on this map; redeem used to reach `redeemDelegation`, have
+	// `managerAddress()` throw, and report it as a 502 rpc_error: a chain
+	// support gap dressed up as a provider outage. Checked here, before the
+	// spend reservation, so there is nothing to release.
+	if (!DELEGATION_MANAGER_DEPLOYMENTS[chainId]) {
+		return error(
+			res,
+			409,
+			'chain_not_supported',
+			`no DelegationManager deployment for chainId ${chainId}`,
+		);
+	}
 
 	// ── Server-side scope checks (cheap, prevent paying gas on doomed tx) ────
 
@@ -906,24 +903,30 @@ async function handleRedeem(req, res) {
 		);
 
 	// ── Build signer ───────────────────────────────────────────────────────
-	const rpcUrl = getRpcUrl(chainId);
-	if (!rpcUrl) {
-		await releaseReservation();
-		return error(
-			res,
-			502,
-			'rpc_error',
-			`no RPC URL configured for chain ${chainId} (set RPC_URL_${chainId})`,
-		);
-	}
-
+	// evmFallbackProvider owns endpoint resolution for every chain: an explicit
+	// RPC_URL_<chainId> override first, then Alchemy, then the curated public
+	// endpoints, with sequential failover across all of them. This handler used
+	// to carry its own hand-copied one-endpoint-per-chain table and 502 on any
+	// chain missing from it, which would have failed the next DelegationManager
+	// deployment on a chain the shared layer can already reach.
 	let signer;
 	try {
-		const provider = await evmFallbackProvider(chainId, { primaryUrl: rpcUrl });
+		const provider = await evmFallbackProvider(chainId);
 		// AGENT_RELAYER_KEY is never logged — only use it to construct the Wallet
 		signer = new Wallet(env.AGENT_RELAYER_KEY, provider);
-	} catch {
+	} catch (err) {
 		await releaseReservation();
+		// `no RPC endpoint for chain N` is a deployment gap, not a code fault:
+		// report it as an upstream failure the operator can fix with RPC_URL_<id>
+		// rather than as a generic internal error.
+		if (/no RPC endpoint/i.test(err?.message || '')) {
+			return error(
+				res,
+				502,
+				'rpc_error',
+				`no RPC endpoint available for chain ${chainId} (set RPC_URL_${chainId})`,
+			);
+		}
 		return error(res, 500, 'internal_error', 'failed to initialise relayer signer');
 	}
 
@@ -971,8 +974,8 @@ async function handleRedeem(req, res) {
 
 	const result = { ok: true, txHash, receipt };
 
-	if (idempotencyKey) {
-		idempotencySet(`${id}:${idempotencyKey}`, result);
+	if (idempotencyScope) {
+		idempotencySet(idempotencyScope, result);
 	}
 
 	return json(res, 200, result);
