@@ -3647,7 +3647,7 @@ curl -X POST https://three.ws/api/pay/execute \
 }
 ```
 
-If the endpoint answers without a `402`, it was free. You get `paid: false` and the session is never touched.
+If the endpoint answers a success without a `402`, it was free. You get `paid: false` and the session is never touched. If it answers an error status without a `402`, nothing was payable and nothing succeeded: you get `502 endpoint_error` with the real `upstream_status` and `upstream_body`, and the session is still never touched.
 
 ### Governance errors
 
@@ -5597,13 +5597,15 @@ path is the canonical one.
 | Parameter | Default | Meaning |
 |---|---|---|
 | `category` | all | Exact category slug, as returned by `/api/plugins/categories` |
-| `q` | none | Case-insensitive substring match on name or description (first 80 chars used) |
+| `q` | none | Case-insensitive substring match on name or description (first 80 chars used). Taken literally: `%` and `_` are escaped, not treated as wildcards. |
 | `sort` | `popular` | `popular` (install count), `new` (newest first), or `az` (name). An unknown value falls back to `popular`. |
 | `limit` | `20` | 1 to 40 |
 | `cursor` | `0` | Opaque offset. Pass back the `next_cursor` from the previous page verbatim. |
 
 `cursor` must be a non-negative integer; anything else is a `400`
-(`validation_error`), never a 500. `next_cursor` is `null` on the last page.
+(`validation_error`), never a 500. `next_cursor` is `null` on the last page. The
+sort is fully ordered (ties break on the plugin id), so paging through the whole
+catalogue returns every plugin exactly once.
 
 ```bash
 curl -s 'https://three.ws/api/plugins/list?sort=az&limit=2' | jq '.data.items[].identifier'
@@ -5695,8 +5697,10 @@ metadata ranges are refused (`400`, `validation_error`). The transfer is capped
 at 64 KB and aborted mid-stream if the host exceeds it (`422`, `fetch_failed`).
 
 **Errors:** `400` (missing / unparseable / non-http `manifest_url`, blocked
-host), `422` (`fetch_failed` for a non-2xx, unparseable, or oversized response;
-`invalid_manifest` when the JSON is not a manifest), `429`.
+host), `422` (`fetch_failed` for a non-2xx or oversized response;
+`invalid_manifest` when the response is not JSON at all, which is what linking a
+repository page instead of the raw file produces, or when the JSON is not a
+manifest), `429`.
 
 ### Publish a plugin
 
@@ -5727,11 +5731,17 @@ reads to you. Responds with the same plugin shape the list returns.
 
 **Manifest rules:** `identifier` is required, alphanumeric plus `.`, `-`, `_`,
 and at most 128 characters; `meta.title` is required; `api` must be a non-empty
-array of at most 100 tools, each with a `name` and a `description`. A violation
-is a `422` (`invalid_manifest`) naming the specific rule.
+array of at most 100 tool objects. Each tool needs a `name` of 1 to 64 letters,
+digits, underscores, or hyphens (the charset every model provider accepts for a
+tool definition, since installers pass these straight through) and a non-empty
+`description` of at most 1024 characters. The whole manifest must serialize to
+64 KB or less, the same ceiling the import fetch enforces, because it is stored
+verbatim and re-served on every read. A violation is a `422`
+(`invalid_manifest`) naming the specific rule.
 
 **Errors:** `401` (no auth), `403` (`csrf_missing` / `csrf_invalid`), `400`
-(malformed body), `422` (`invalid_manifest`), `429`.
+(malformed body), `413` (body over the manifest ceiling), `422`
+(`invalid_manifest`), `429`.
 
 ---
 

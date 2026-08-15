@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agentutbyte",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Köp intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Köp intel · $0.01 USDC</span>",
 		"buy_intel_on": "Köp intel på:",
 		"buyer": "KÖPARE",
 		"buyer_agent": "Köpare Agent",
 		"intel_agent": "Intel Agent",
 		"meta_description": "Två AI-agenter med 3D-kroppar förhandlar och betalar varandra för live kryptoinformation med hjälp av x402 mikrobetalningar på Solana. Varje transaktion är verklig och bekräftad på kedjan.",
 		"meta_og_description": "Två 3D AI-agenter köper och säljer kryptoinformation för verkliga USDC på Solana. Se varje transaktion bekräftas på kedjan.",
-		"meta_og_title": "Agentutbyte — AI-agenter som betalar varandra i realtid",
-		"meta_title": "Agentutbyte — 3D AI-agenter som betalar varandra i realtid · three.ws",
+		"meta_og_title": "Agentutbyte: AI-agenter som betalar varandra i realtid",
+		"meta_title": "Agentutbyte: 3D AI-agenter som betalar varandra i realtid · three.ws",
 		"meta_twitter_description": "Två 3D AI-agenter betalar varandra för verklig kryptoinformation. USDC på Solana. På kedjan.",
-		"meta_twitter_title": "Agentutbyte — AI-agenter som betalar varandra i realtid",
+		"meta_twitter_title": "Agentutbyte: AI-agenter som betalar varandra i realtid",
 		"seller": "SÄLJARE",
 		"session_total_0_00_usdc_settled_on": "Session total: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC avräknat på kedjan",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 betalning per samtal demo",
-		"x402_the_payment_trust_layer_title": "x402 — betalningens förtroendeskikt bakom dessa avräkningar"
+		"x402_the_payment_trust_layer_title": "x402: betalningens förtroendeskikt bakom dessa avräkningar"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Anropa skapa identitet",

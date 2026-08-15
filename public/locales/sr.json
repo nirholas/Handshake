@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Razmena agenata",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kupi informacije — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kupi informacije · $0.01 USDC</span>",
 		"buy_intel_on": "Kupi informacije o:",
 		"buyer": "KUPAC",
 		"buyer_agent": "Agent kupac",
 		"intel_agent": "Agent za informacije",
 		"meta_description": "Dva AI agenta sa 3D telima pregovaraju i plaćaju jedni drugima za kripto informacije uživo koristeći x402 mikroplaćanja na Solana. Svaka transakcija je stvarna i potvrđena na lancu.",
 		"meta_og_description": "Dva 3D AI agenta kupuju i prodaju kripto informacije za pravi USDC na Solana. Gledajte kako se svaka transakcija potvrđuje na lancu.",
-		"meta_og_title": "Razmena agenata — AI agenti plaćaju jedni drugima u realnom vremenu",
-		"meta_title": "Razmena agenata — 3D AI agenti plaćaju jedni drugima u realnom vremenu · three.ws",
+		"meta_og_title": "Razmena agenata: AI agenti plaćaju jedni drugima u realnom vremenu",
+		"meta_title": "Razmena agenata: 3D AI agenti plaćaju jedni drugima u realnom vremenu · three.ws",
 		"meta_twitter_description": "Dva 3D AI agenta plaćaju jedni drugima za stvarne kripto informacije. USDC na Solana. Na lancu.",
-		"meta_twitter_title": "Razmena agenata — AI agenti plaćaju jedni drugima u realnom vremenu",
+		"meta_twitter_title": "Razmena agenata: AI agenti plaćaju jedni drugima u realnom vremenu",
 		"seller": "PRODAVAC",
 		"session_total_0_00_usdc_settled_on": "Ukupno za sesiju: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC poravnato na lancu",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo plaćanja po pozivu",
-		"x402_the_payment_trust_layer_title": "x402 — sloj poverenja za plaćanja iza ovih poravnanja"
+		"x402_the_payment_trust_layer_title": "x402: sloj poverenja za plaćanja iza ovih poravnanja"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Pozovi create_identity",

@@ -80,6 +80,65 @@ const SOL_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 // Bare label, dotted subdomain (`nich.threews`), or either with a `.sol` suffix.
 const SOL_NAME_RE = /^[a-z0-9-]{1,63}(?:\.[a-z0-9-]{1,63})*(?:\.sol)?$/i;
 
+// Bonfida's hosted SNS index. Enumerating every domain a wallet holds is a
+// scan the on-chain program can't answer in one RPC call, so the index is the
+// only practical source for it. Reads are public and unauthenticated.
+const SNS_INDEX_API = 'https://sns-api.bonfida.com';
+// A whale wallet can hold thousands of domains; the caller wants a name list to
+// show, not a dump. Cap it and say so in the payload.
+const OWNER_DOMAINS_CAP = 100;
+
+function withSolSuffix(label) {
+	const name = String(label || '').trim();
+	if (!name) return null;
+	return name.endsWith('.sol') ? name : `${name}.sol`;
+}
+
+async function snsIndexJson(path, timeoutMs) {
+	const res = await fetch(`${SNS_INDEX_API}${path}`, {
+		headers: { accept: 'application/json' },
+		signal: AbortSignal.timeout(timeoutMs),
+	});
+	if (!res.ok) return null;
+	return res.json();
+}
+
+/**
+ * Every `.sol` domain a wallet holds, plus its favorite domain, from the Bonfida
+ * SNS index. Both halves are best-effort: an index outage degrades to an empty
+ * list and a null favorite rather than failing the resolution that asked for it.
+ *
+ * @param {string} owner - base58-encoded wallet public key
+ * @param {{ timeoutMs?: number, limit?: number }} [opts]
+ * @returns {Promise<{ allDomains: string[], favoriteDomain: string|null, truncated: boolean }>}
+ */
+export async function snsOwnerDomains(owner, opts = {}) {
+	const addr = String(owner || '').trim();
+	const empty = { allDomains: [], favoriteDomain: null, truncated: false };
+	if (!SOL_ADDRESS_RE.test(addr)) return empty;
+	const timeoutMs = Number.isFinite(opts.timeoutMs) ? opts.timeoutMs : 6000;
+	const limit = Number.isFinite(opts.limit) ? Math.max(1, opts.limit) : OWNER_DOMAINS_CAP;
+
+	const [domainsBody, favBody] = await Promise.all([
+		snsIndexJson(`/v2/user/domains/${addr}`, timeoutMs).catch(() => null),
+		snsIndexJson(`/v2/user/fav-domains/${addr}`, timeoutMs).catch(() => null),
+	]);
+
+	const rawList = domainsBody?.[addr] ?? domainsBody?.data?.[addr] ?? [];
+	const names = (Array.isArray(rawList) ? rawList : [])
+		.map((d) => withSolSuffix(typeof d === 'string' ? d : d?.domain || d?.name))
+		.filter(Boolean)
+		.sort((a, b) => a.localeCompare(b));
+
+	const favRaw = favBody?.[addr] ?? favBody?.data?.[addr] ?? null;
+
+	return {
+		allDomains: names.slice(0, limit),
+		favoriteDomain: withSolSuffix(favRaw),
+		truncated: names.length > limit,
+	};
+}
+
 /**
  * Resolve a user-supplied Solana recipient string to a base58 address.
  *

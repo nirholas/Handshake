@@ -12,6 +12,9 @@
 //      unknown chain ids never inflate it, and Solana counts as the home chain.
 //   4. The in-process cache serves repeats without re-querying, and concurrent
 //      misses collapse into a single flight.
+//   5. A per-IP flood answers a JSON 429 with Retry-After and never reaches the
+//      database, so a scraper cannot turn the public counters into free load on
+//      the eight aggregate queries behind them.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -31,6 +34,21 @@ vi.mock('../api/_lib/db.js', () => ({
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 	isStoragePressured: async () => ({ pressured: false }),
+}));
+
+// The real limiter is a 240/min per-IP bucket (verified live against a local
+// server). Mocking it keeps the 429 branch deterministic and stops earlier
+// cases in this file from draining a shared window.
+let rateLimit = { success: true };
+const rateLimitKeys = [];
+vi.mock('../api/_lib/rate-limit.js', () => ({
+	limits: {
+		publicIp: async (key) => {
+			rateLimitKeys.push(key);
+			return rateLimit;
+		},
+	},
+	clientIp: (req) => req?.socket?.remoteAddress ?? null,
 }));
 
 const { default: handler, _resetStatsCache, countChains } = await import('../api/platform/stats.js');
@@ -82,6 +100,8 @@ beforeEach(() => {
 	sqlCalls.length = 0;
 	sqlRoutes = ROWS;
 	sqlFailure = null;
+	rateLimit = { success: true };
+	rateLimitKeys.length = 0;
 	_resetStatsCache();
 });
 
@@ -159,6 +179,25 @@ describe('GET /api/platform/stats', () => {
 		expect(res.statusCode).toBe(405);
 		expect(parse(res).error).toBe('method_not_allowed');
 		expect(res.body).not.toMatch(/at .*\.js:/);
+	});
+
+	it('buckets the flood guard by client IP', async () => {
+		await call();
+		expect(rateLimitKeys).toEqual(['203.0.113.7']);
+	});
+
+	it('answers a flood with a JSON 429 and never touches the database', async () => {
+		rateLimit = { success: false, limit: 240, remaining: 0, reset: Date.now() + 44_000 };
+
+		const res = await call();
+
+		expect(res.statusCode).toBe(429);
+		expect(parse(res)).toMatchObject({ error: 'rate_limited' });
+		expect(res.headers['retry-after']).toBeTruthy();
+		expect(res.body).not.toMatch(/at .*\.js:/);
+		// The eight aggregate queries are the whole cost of this endpoint; a
+		// throttled caller must not pay it on the platform's behalf.
+		expect(sqlCalls.length).toBe(0);
 	});
 
 	it('answers a preflight with 204 and the read-only method set', async () => {

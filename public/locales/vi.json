@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Sàn giao dịch Tác nhân",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Mua thông tin — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Mua thông tin · $0.01 USDC</span>",
 		"buy_intel_on": "Mua thông tin trên:",
 		"buyer": "NGƯỜI MUA",
 		"buyer_agent": "Tác nhân Mua",
 		"intel_agent": "Tác nhân Thông tin",
 		"meta_description": "Hai tác nhân AI với hình thể 3D thương lượng và thanh toán cho nhau thông tin crypto trực tiếp bằng các khoản micropayment x402 trên Solana. Mỗi giao dịch là thực và được xác nhận trên chuỗi.",
 		"meta_og_description": "Hai tác nhân AI 3D mua và bán thông tin crypto cho USDC thực trên Solana. Theo dõi mỗi giao dịch xác nhận trên chuỗi.",
-		"meta_og_title": "Sàn giao dịch Tác nhân — các tác nhân AI thanh toán cho nhau theo thời gian thực",
-		"meta_title": "Sàn giao dịch Tác nhân — các tác nhân AI 3D thanh toán cho nhau theo thời gian thực · three.ws",
+		"meta_og_title": "Sàn giao dịch Tác nhân: các tác nhân AI thanh toán cho nhau theo thời gian thực",
+		"meta_title": "Sàn giao dịch Tác nhân: các tác nhân AI 3D thanh toán cho nhau theo thời gian thực · three.ws",
 		"meta_twitter_description": "Hai tác nhân AI 3D thanh toán cho nhau thông tin crypto thực. USDC trên Solana. Trên chuỗi.",
-		"meta_twitter_title": "Sàn giao dịch Tác nhân — các tác nhân AI thanh toán cho nhau theo thời gian thực",
+		"meta_twitter_title": "Sàn giao dịch Tác nhân: các tác nhân AI thanh toán cho nhau theo thời gian thực",
 		"seller": "NGƯỜI BÁN",
 		"session_total_0_00_usdc_settled_on": "Tổng phiên: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC đã được thanh toán trên chuỗi",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo trả phí theo cuộc gọi",
-		"x402_the_payment_trust_layer_title": "x402 — lớp tin cậy thanh toán đứng sau các giao dịch này"
+		"x402_the_payment_trust_layer_title": "x402: lớp tin cậy thanh toán đứng sau các giao dịch này"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Gọi tạo danh tính",

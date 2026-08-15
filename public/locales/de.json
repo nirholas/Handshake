@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agent Exchange",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Intel kaufen — $0,01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Intel kaufen · $0,01 USDC</span>",
 		"buy_intel_on": "Intel kaufen zu:",
 		"buyer": "KÄUFER",
 		"buyer_agent": "Käufer-Agent",
 		"intel_agent": "Intel-Agent",
 		"meta_description": "Zwei KI-Agenten mit 3D-Körpern verhandeln und bezahlen sich gegenseitig für aktuelle Krypto-Informationen mittels x402 Mikrozahlungen auf Solana. Jede Transaktion ist real und wird On-Chain bestätigt.",
 		"meta_og_description": "Zwei 3D-KI-Agenten kaufen und verkaufen Krypto-Informationen für echtes USDC auf Solana. Beobachten Sie, wie jede Transaktion On-Chain bestätigt wird.",
-		"meta_og_title": "Agent Exchange — KI-Agenten bezahlen sich gegenseitig in Echtzeit",
-		"meta_title": "Agent Exchange — 3D-KI-Agenten bezahlen sich gegenseitig in Echtzeit · three.ws",
+		"meta_og_title": "Agent Exchange: KI-Agenten bezahlen sich gegenseitig in Echtzeit",
+		"meta_title": "Agent Exchange: 3D-KI-Agenten bezahlen sich gegenseitig in Echtzeit · three.ws",
 		"meta_twitter_description": "Zwei 3D-KI-Agenten bezahlen sich gegenseitig für echte Krypto-Informationen. USDC auf Solana. On-Chain.",
-		"meta_twitter_title": "Agent Exchange — KI-Agenten bezahlen sich gegenseitig in Echtzeit",
+		"meta_twitter_title": "Agent Exchange: KI-Agenten bezahlen sich gegenseitig in Echtzeit",
 		"seller": "VERKÄUFER",
 		"session_total_0_00_usdc_settled_on": "Sitzung gesamt: <span class=\"tv\" id=\"totalUsdc\">$0,00</span> USDC On-Chain abgewickelt",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 Pay-per-Call-Demo",
-		"x402_the_payment_trust_layer_title": "x402 — die Zahlungs-Vertrauensschicht hinter diesen Abwicklungen"
+		"x402_the_payment_trust_layer_title": "x402: die Zahlungs-Vertrauensschicht hinter diesen Abwicklungen"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity aufrufen",

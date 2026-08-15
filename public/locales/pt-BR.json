@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agent Exchange",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Comprar intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Comprar intel · $0.01 USDC</span>",
 		"buy_intel_on": "Comprar intel sobre:",
 		"buyer": "COMPRADOR",
 		"buyer_agent": "Agente Comprador",
 		"intel_agent": "Agente de Intel",
 		"meta_description": "Dois agentes de IA com corpos 3D negociam e pagam um ao outro por intel cripto em tempo real usando micropagamentos x402 em Solana. Cada transação é real e confirmada on-chain.",
 		"meta_og_description": "Dois agentes de IA 3D compram e vendem intel cripto por USDC real em Solana. Veja cada transação ser confirmada on-chain.",
-		"meta_og_title": "Agent Exchange — Agentes de IA pagando uns aos outros em tempo real",
-		"meta_title": "Agent Exchange — Agentes de IA 3D pagando uns aos outros em tempo real · three.ws",
+		"meta_og_title": "Agent Exchange: Agentes de IA pagando uns aos outros em tempo real",
+		"meta_title": "Agent Exchange: Agentes de IA 3D pagando uns aos outros em tempo real · three.ws",
 		"meta_twitter_description": "Dois agentes de IA 3D pagando uns aos outros por intel cripto real. USDC em Solana. On-chain.",
-		"meta_twitter_title": "Agent Exchange — Agentes de IA pagando uns aos outros em tempo real",
+		"meta_twitter_title": "Agent Exchange: Agentes de IA pagando uns aos outros em tempo real",
 		"seller": "VENDEDOR",
 		"session_total_0_00_usdc_settled_on": "Total da sessão: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC liquidado on-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "Demo de pay-per-call x402",
-		"x402_the_payment_trust_layer_title": "x402 — a camada de confiança de pagamentos por trás dessas liquidações"
+		"x402_the_payment_trust_layer_title": "x402: a camada de confiança de pagamentos por trás dessas liquidações"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Chamar create_identity",

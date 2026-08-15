@@ -233,13 +233,33 @@ curl -s 'https://three.ws/api/permissions/verify?hash=0x00&chainId=84532'
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `POST` | `/api/permissions/grant` | Session cookie | Store a signed delegation + scope |
-| `GET` | `/api/permissions/list` | Session cookie | List delegations (`?agentId=X&status=active`) |
+| `GET` | `/api/permissions/list` | Public by `agentId`, session or bearer by `delegator` | List delegations (`?agentId=X&status=active`) |
 | `POST` | `/api/permissions/revoke` | Session cookie | Mirror on-chain revocation to DB |
 | `POST` | `/api/permissions/redeem` | Agent bearer token | Server-side redemption via relayer |
 | `GET` | `/api/permissions/metadata` | Public (cached) | Public scope view for a given `agentId` |
 | `GET` | `/api/permissions/verify` | Public | Real-time on-chain validity check (`?hash=0x...&chainId=N`) |
 
 The `metadata` endpoint returns `{ ok, spec: "erc-7715/0.1", delegations: [...] }` with `Cache-Control: public` and `Access-Control-Allow-Origin: *` — it is safe to call from embed iframes.
+
+### Retrying a relayer redemption safely
+
+`POST /api/permissions/redeem` accepts an optional `Idempotency-Key` header. Send the same key when you retry a request whose response you never saw (a dropped connection, a client timeout) and the relayer replays the original `{ ok, txHash, receipt }` instead of broadcasting a second transaction:
+
+```sh
+curl -s -X POST https://three.ws/api/permissions/redeem \
+  -H "authorization: Bearer $AGENT_TOKEN" \
+  -H 'content-type: application/json' \
+  -H 'idempotency-key: swap-run-42' \
+  -d '{"id":"<delegation-uuid>","calls":[{"to":"0x1111111111111111111111111111111111111111","value":"0","data":"0xa9059cbb..."}]}'
+```
+
+What the key does and does not cover:
+
+- **Scoped to the calling token's owner.** A replay only returns the cached result to the principal that made the original call. Another principal sending the same delegation id and key gets the normal ownership answer (`delegation_not_found`), never someone else's transaction hash.
+- **Held in memory for 10 minutes**, per server instance. Treat it as a retry window for a request still in flight, not as a durable receipt store. After it lapses, or if the retry lands on a different instance, the request is redeemed again and the spend counts against `scope.maxAmount` a second time.
+- **Only successful redemptions are cached.** A request rejected before submission (scope, expiry, ownership) leaves nothing behind, so fixing the request and retrying with the same key works.
+
+Requests without the header are never deduplicated.
 
 ---
 

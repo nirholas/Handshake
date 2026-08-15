@@ -157,6 +157,95 @@ test('killSwitch() posts { killed } to /mirror/kill', async () => {
 	assert.equal(r.killed, true);
 });
 
+test('sweep() and unmirror() hit the run-now and unfollow endpoints', async () => {
+	const { fetch, calls } = stubFetch([
+		{ body: { data: { synced: [{ leader_agent_id: LEADER, planned_sol: 0.2 }] } } },
+		{ body: { data: { removed: true } } },
+	]);
+	const sx = createStrategies({ fetch });
+
+	const swept = await sx.sweep(AGENT);
+	assert.equal(calls[0].url.pathname, `/api/agents/${AGENT}/mirror/sync`);
+	assert.equal(calls[0].init.method, 'POST');
+	assert.equal(swept.synced.length, 1);
+
+	const removed = await sx.unmirror(AGENT, LEADER);
+	assert.equal(calls[1].url.pathname, `/api/agents/${AGENT}/mirror/unfollow`);
+	assert.equal(JSON.parse(calls[1].init.body).leader_agent_id, LEADER);
+	assert.equal(removed.removed, true);
+});
+
+test('equipped() reads live mirror state and shapes follows + fills', async () => {
+	const { fetch, calls } = stubFetch([
+		{
+			body: {
+				data: {
+					is_owner: true,
+					killed: false,
+					following_count: 1,
+					followers_count: 4,
+					active_followers: 2,
+					following: [{ id: 7, leader_agent_id: LEADER, sizing_mode: 'fixed', fixed_sol: 0.1, enabled: true }],
+					// A leashed SKIP is a designed state, not a failure; it must survive shaping.
+					recent: [
+						{ id: 'f1', side: 'buy', leader_sol: 1, planned_sol: 0.1, status: 'skipped', skip_reason: 'daily_budget', skip_label: 'Daily budget spent' },
+					],
+				},
+			},
+		},
+	]);
+	const sx = createStrategies({ fetch });
+	const state = await sx.equipped(AGENT);
+
+	assert.equal(calls[0].url.pathname, `/api/agents/${AGENT}/mirror`);
+	assert.equal(calls[0].init.method, 'GET');
+	assert.equal(state.isOwner, true);
+	assert.equal(state.killed, false);
+	assert.equal(state.followingCount, 1);
+	assert.equal(state.followersCount, 4);
+	assert.equal(state.activeFollowers, 2);
+	assert.equal(state.following[0].fixedSol, 0.1);
+	assert.equal(state.recent[0].skipReason, 'daily_budget');
+	assert.equal(state.recent[0].skipLabel, 'Daily budget spent');
+});
+
+test('leaderboard() ranks proven strategies and keeps unproven ones honest', async () => {
+	const { fetch, calls } = stubFetch([
+		{
+			body: {
+				data: {
+					count: 2,
+					leaders: [
+						{ id: STRATEGY, name: 'Proven', rank: 1, performance: { proven: true, trades: 12, open: 1, wins: 8, losses: 4, pnl_sol: '1.25', roi_pct: '18.4', win_rate: '66.7' } },
+						{ id: '66666666-6666-4666-8666-666666666666', name: 'Untested', rank: 2, performance: { proven: false, trades: 0, open: 0 } },
+					],
+				},
+			},
+		},
+	]);
+	const sx = createStrategies({ fetch });
+	const board = await sx.leaderboard({ limit: 10 });
+
+	assert.equal(calls[0].url.pathname, '/api/strategies/leaderboard');
+	assert.equal(calls[0].url.searchParams.get('limit'), '10');
+	assert.equal(board.count, 2);
+	assert.equal(board.leaders[0].performance.proven, true);
+	assert.equal(board.leaders[0].performance.pnlSol, 1.25);
+	assert.equal(board.leaders[0].performance.roiPct, 18.4);
+	assert.equal(board.leaders[1].performance.proven, false);
+	assert.equal(board.leaders[1].performance.pnlSol, null);
+});
+
+test('deleteStrategy() soft-deletes and validates the id first', async () => {
+	const { fetch, calls } = stubFetch([{ body: { data: { deleted: true } } }]);
+	const sx = createStrategies({ fetch });
+	const r = await sx.deleteStrategy(STRATEGY);
+	assert.equal(calls[0].url.pathname, `/api/strategies/${STRATEGY}`);
+	assert.equal(calls[0].init.method, 'DELETE');
+	assert.equal(r.deleted, true);
+	await assert.rejects(() => sx.deleteStrategy('not-a-uuid'), (e) => e instanceof StrategyError && e.code === 'invalid_input');
+});
+
 test('createStrategy() validates name and shapes performance', async () => {
 	const { fetch, calls } = stubFetch([
 		{ status: 201, body: { data: { id: STRATEGY, name: 'Fresh-launch momentum', published: false, version: 1, performance: { proven: false, trades: 0, open: 0 } } } },

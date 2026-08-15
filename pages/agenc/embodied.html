@@ -4,16 +4,16 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title data-i18n="agenc_embodied.meta_title">AgenC × three.ws — embodied agent demo</title>
+		<title data-i18n="agenc_embodied.meta_title_v2">AgenC · Embodied: a Solana task with a body</title>
 		<meta
 			name="description"
-			content="Live demo: a three.ws 3D avatar reacts to the on-chain state of an AgenC task on Solana. Coordination protocol meets embodiment."
-		 data-i18n-attr="content:agenc_embodied.meta_description"/>
+			content="Watch a live AgenC coordination task on Solana drive a 3D agent: state, workers, reward, and the on-chain lifecycle timeline, embodied in real time."
+		 data-i18n-attr="content:agenc_embodied.meta_description_v2"/>
 		<meta name="theme-color" content="#060606" />
 		<link rel="icon" href="/favicon.ico" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="AgenC × three.ws — embodied agent demo"  data-i18n-attr="content:agenc_embodied.meta_og_title"/>
+		<meta property="og:title" content="AgenC · Embodied: a Solana task with a body"  data-i18n-attr="content:agenc_embodied.meta_og_title_v2"/>
 		<meta property="og:url" content="https://three.ws/agenc/embodied" />
 
 		<style>
@@ -24,6 +24,7 @@
 				--muted: #8a8499;
 				--accent: #7af0c4;
 				--warn: #f0c47a;
+				--info: #8ab4f8;
 				--err: #f07a7a;
 				--card: #141414;
 				--border: rgba(255, 255, 255, 0.08);
@@ -44,6 +45,11 @@
 			a {
 				color: var(--accent);
 			}
+			:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+				border-radius: 6px;
+			}
 			.wrap {
 				max-width: 1100px;
 				margin: 0 auto;
@@ -57,6 +63,7 @@
 			.sub {
 				color: var(--muted);
 				margin: 0 0 24px;
+				max-width: 78ch;
 			}
 			.grid {
 				display: grid;
@@ -106,24 +113,32 @@
 			}
 			.row .k {
 				color: var(--muted);
+				flex: 0 0 auto;
 			}
 			.row .v {
 				font-variant-numeric: tabular-nums;
 				word-break: break-all;
 				text-align: right;
 			}
-			.state-Open {
+			/* AgenC's on-chain TaskState labels verbatim (see api/agenc/[action].js
+			   `taskStateLabel`). Two of them contain a space, so they are matched on a
+			   data attribute: a `class="state-In Progress"` would silently split into
+			   two useless class names and render unstyled. */
+			[data-state='Open'] {
 				color: var(--accent);
 			}
-			.state-Claimed {
+			[data-state='In Progress'] {
 				color: var(--warn);
 			}
-			.state-Completed {
-				color: #7af0c4;
+			[data-state='Pending Validation'] {
+				color: var(--info);
 			}
-			.state-Cancelled,
-			.state-Expired,
-			.state-Disputed {
+			[data-state='Completed'] {
+				color: var(--accent);
+			}
+			[data-state='Cancelled'],
+			[data-state='Disputed'],
+			[data-state='error'] {
 				color: var(--err);
 			}
 			input[type='text'],
@@ -135,6 +150,13 @@
 				padding: 8px 10px;
 				width: 100%;
 				font: inherit;
+			}
+			input[type='text']:hover,
+			select:hover {
+				border-color: rgba(255, 255, 255, 0.18);
+			}
+			input[aria-invalid='true'] {
+				border-color: var(--err);
 			}
 			.field {
 				margin-bottom: 10px;
@@ -157,9 +179,120 @@
 				font-weight: 600;
 				cursor: pointer;
 				width: 100%;
+				transition: filter 0.15s ease, transform 0.15s ease;
 			}
 			.btn:hover {
-				filter: brightness(1.05);
+				filter: brightness(1.08);
+			}
+			.btn:active {
+				transform: translateY(1px);
+			}
+			.btn[disabled] {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			.picks {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				margin-bottom: 12px;
+			}
+			.pick {
+				display: flex;
+				justify-content: space-between;
+				align-items: baseline;
+				gap: 10px;
+				width: 100%;
+				text-align: left;
+				background: var(--bg-elev);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				color: var(--fg);
+				font: inherit;
+				padding: 8px 10px;
+				cursor: pointer;
+				transition: border-color 0.15s ease, background 0.15s ease;
+			}
+			.pick:hover {
+				border-color: var(--accent);
+				background: #101a17;
+			}
+			.pick[aria-pressed='true'] {
+				border-color: var(--accent);
+			}
+			.pick code {
+				font-family: ui-monospace, Menlo, monospace;
+				font-size: 11.5px;
+			}
+			.pick .when {
+				color: var(--muted);
+				font-size: 11px;
+				white-space: nowrap;
+			}
+			.hint {
+				color: var(--muted);
+				font-size: 11.5px;
+				margin: 0 0 10px;
+			}
+			.errbox {
+				border: 1px solid rgba(240, 122, 122, 0.4);
+				background: rgba(240, 122, 122, 0.08);
+				color: #ffd9d9;
+				border-radius: 8px;
+				padding: 10px 12px;
+				font-size: 12.5px;
+				margin-bottom: 12px;
+			}
+			.errbox strong {
+				display: block;
+				margin-bottom: 2px;
+				color: var(--err);
+			}
+			.errbox button {
+				margin-top: 8px;
+				background: transparent;
+				border: 1px solid var(--err);
+				color: var(--err);
+				border-radius: 6px;
+				padding: 4px 10px;
+				font: inherit;
+				font-size: 12px;
+				cursor: pointer;
+			}
+			.errbox button:hover {
+				background: rgba(240, 122, 122, 0.12);
+			}
+			.inline-err {
+				color: var(--err);
+				font-size: 11.5px;
+				margin: -4px 0 10px;
+			}
+			.skeleton {
+				display: inline-block;
+				height: 10px;
+				width: 68px;
+				border-radius: 4px;
+				background: linear-gradient(90deg, #1b1b1b 25%, #262626 37%, #1b1b1b 63%);
+				background-size: 400% 100%;
+				animation: shimmer 1.3s ease-in-out infinite;
+				vertical-align: middle;
+			}
+			.skeleton.wide {
+				width: 100%;
+				height: 26px;
+			}
+			@keyframes shimmer {
+				0% {
+					background-position: 100% 50%;
+				}
+				100% {
+					background-position: 0 50%;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.skeleton {
+					animation: none;
+				}
 			}
 			.timeline {
 				font-family: ui-monospace, Menlo, monospace;
@@ -199,42 +332,49 @@
 				vertical-align: middle;
 				margin-left: 8px;
 			}
+			.links {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px 16px;
+				font-size: 12.5px;
+			}
 		</style>
-	
+
 	<link rel="canonical" href="https://three.ws/agenc/embodied">
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:description" content="Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible." data-i18n-attr="content:agenc_embodied.meta_og_description">
+	<meta property="og:description" content="Watch two AI agents negotiate and coordinate a task, embodied as 3D characters: the AgenC coordination protocol made visible." data-i18n-attr="content:agenc_embodied.meta_og_description_v2">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=AgenC+%C2%B7+Embodied&amp;d=Watch+two+AI+agents+negotiate+and+coordinate+a+task%2C+embodied+as+3D+characters%3A+the+AgenC+coordination+protocol+made+visible.&amp;p=%2Fagenc%2Fembodied">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:type" content="image/png">
-	<meta property="og:image:alt" content="AgenC · Embodied — three.ws">
+	<meta property="og:image:alt" content="AgenC · Embodied - three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:title" content="AgenC · Embodied · three.ws" data-i18n-attr="content:agenc_embodied.meta_twitter_title">
-	<meta name="twitter:description" content="Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible." data-i18n-attr="content:agenc_embodied.meta_twitter_description">
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=AgenC+%C2%B7+Embodied&amp;d=Watch+two+AI+agents+negotiate+and+coordinate+a+task%2C+embodied+as+3D+characters%3A+the+AgenC+coordination+protocol+made+visible.&amp;p=%2Fagenc%2Fembodied">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"AgenC · Embodied","description":"Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.","url":"https://three.ws/agenc/embodied","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=AgenC+%C2%B7+Embodied&d=Watch+two+AI+agents+negotiate+and+coordinate+a+task%2C+embodied+as+3D+characters+%E2%80%94+the+AgenC+coordination+protocol+made+visible.&p=%2Fagenc%2Fembodied"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Agenc","item":"https://three.ws/agenc"},{"@type":"ListItem","position":3,"name":"Embodied","item":"https://three.ws/agenc/embodied"}]}]}</script>
+	<meta name="twitter:description" content="Watch two AI agents negotiate and coordinate a task, embodied as 3D characters: the AgenC coordination protocol made visible." data-i18n-attr="content:agenc_embodied.meta_twitter_description_v2">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"AgenC · Embodied","description":"Watch two AI agents negotiate and coordinate a task, embodied as 3D characters: the AgenC coordination protocol made visible.","url":"https://three.ws/agenc/embodied","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=AgenC+%C2%B7+Embodied&d=Watch+two+AI+agents+negotiate+and+coordinate+a+task%2C+embodied+as+3D+characters%3A+the+AgenC+coordination+protocol+made+visible.&p=%2Fagenc%2Fembodied"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Agenc","item":"https://three.ws/agenc"},{"@type":"ListItem","position":3,"name":"Embodied","item":"https://three.ws/agenc/embodied"}]}]}</script>
 </head>
 	<body>
 		<div class="wrap">
-			<h1 data-i18n-html="agenc_embodied.agenc_three_ws_embodied_agent_demo_live">
-				AgenC × three.ws — embodied agent demo
-				<span class="tag">live · solana devnet</span>
+			<h1 data-i18n-html="agenc_embodied.h1_v2">
+				AgenC embodied: a Solana task with a body
+				<span class="tag">live · solana</span>
 			</h1>
-			<p class="sub" data-i18n-html="agenc_embodied.paste_an_agenc_task_pda_the_avatar">
-				Paste an AgenC task PDA. The avatar below is bound to the task's on-chain
-				state via the <code>&lt;three-ws-agent&gt;</code> web component, which polls
+			<p class="sub" data-i18n-html="agenc_embodied.lede_v2">
+				Pick a live task below, or paste any AgenC task PDA. The avatar is bound
+				to that task's on-chain state through the
+				<code>&lt;three-ws-agent&gt;</code> web component, which polls
 				<code>/api/agenc/get-task</code> and recolors the scene as the task moves
-				through <span class="state-Open">Open</span> →
-				<span class="state-Claimed">Claimed</span> →
-				<span class="state-Completed">Completed</span>. The colored radial halo
-				around the avatar is the embodiment cue; if the avatar GLB contains
-				animation clips, the optional <code>agenc-clips</code> attribute switches
-				clips per state. Each state change is a real Solana transaction on the
-				AgenC devnet program <code>6UcJzbT…2ab</code>. <a href="https://agenc.tech" target="_blank" rel="noopener">agenc.tech</a>
+				from <span data-state="Open">Open</span> to
+				<span data-state="In Progress">In Progress</span> to
+				<span data-state="Pending Validation">Pending Validation</span> to
+				<span data-state="Completed">Completed</span>. The colored halo around
+				the avatar is the embodiment cue; with the optional
+				<code>agenc-clips</code> attribute, a GLB that carries animation clips
+				switches clip per state. Every transition is a real Solana transaction.
+				<a href="https://agenc.tech" target="_blank" rel="noopener">agenc.tech</a>
 			</p>
 
 			<div class="grid">
@@ -253,17 +393,30 @@
 
 				<div>
 					<div class="card">
-						<h2 data-i18n="agenc_embodied.task">Task</h2>
+						<h2 data-i18n="agenc_embodied.watch_a_task">Watch a task</h2>
+						<p class="hint" data-i18n="agenc_embodied.picks_hint">
+							Tasks three.ws posted, claimed, or settled on-chain through the
+							Agora rail. Newest first.
+						</p>
+						<div class="picks" id="picks" aria-busy="true">
+							<span class="skeleton wide"></span>
+							<span class="skeleton wide"></span>
+						</div>
+
 						<div class="field">
-							<label data-i18n="agenc_embodied.task_pda">Task PDA</label>
+							<label for="taskPda" data-i18n="agenc_embodied.task_pda">Task PDA</label>
 							<input
 								type="text"
 								id="taskPda"
+								spellcheck="false"
+								autocomplete="off"
+								aria-describedby="pdaErr"
 								placeholder="Base58 task account address"
-							/>
+							 data-i18n-attr="placeholder:agenc_embodied.task_pda_placeholder"/>
 						</div>
+						<p class="inline-err" id="pdaErr" role="alert" hidden></p>
 						<div class="field">
-							<label data-i18n="agenc_embodied.cluster">Cluster</label>
+							<label for="cluster" data-i18n="agenc_embodied.cluster">Cluster</label>
 							<select id="cluster">
 								<option value="devnet" selected data-i18n="agenc_embodied.devnet">devnet</option>
 								<option value="mainnet" data-i18n="agenc_embodied.mainnet">mainnet</option>
@@ -274,17 +427,19 @@
 
 					<div class="card">
 						<h2 data-i18n="agenc_embodied.on_chain_state">On-chain state</h2>
-						<div class="row"><span class="k" data-i18n="agenc_embodied.state">state</span><span class="v" id="vState">—</span></div>
-						<div class="row"><span class="k" data-i18n="agenc_embodied.workers">workers</span><span class="v" id="vWorkers">—</span></div>
-						<div class="row"><span class="k" data-i18n="agenc_embodied.reward">reward</span><span class="v" id="vReward">—</span></div>
-						<div class="row"><span class="k" data-i18n="agenc_embodied.creator">creator</span><span class="v" id="vCreator">—</span></div>
-						<div class="row"><span class="k" data-i18n="agenc_embodied.deadline">deadline</span><span class="v" id="vDeadline">—</span></div>
-						<div class="row"><span class="k" data-i18n="agenc_embodied.explorer">explorer</span><span class="v" id="vExplorer">—</span></div>
+						<div class="errbox" id="stateErr" role="alert" hidden></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.state">state</span><span class="v" id="vState">-</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.workers">workers</span><span class="v" id="vWorkers">-</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.reward">reward</span><span class="v" id="vReward">-</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.creator">creator</span><span class="v" id="vCreator">-</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.deadline">deadline</span><span class="v" id="vDeadline">-</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.explorer">explorer</span><span class="v" id="vExplorer">-</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.program">program</span><span class="v" id="vProgram">-</span></div>
 					</div>
 
 					<div class="card">
 						<h2 data-i18n="agenc_embodied.lifecycle">Lifecycle</h2>
-						<div class="timeline" id="timeline"><span class="muted" data-i18n="agenc_embodied.no_events_yet">no events yet</span></div>
+						<div class="timeline" id="timeline"><span class="muted" data-i18n="agenc_embodied.pick_a_task_to_see_events">pick a task to see its on-chain events</span></div>
 					</div>
 
 					<div class="card">
@@ -294,9 +449,18 @@
   src="/avatars/default.glb"
   agenc-task="&lt;TASK_PDA&gt;"
   agenc-cluster="devnet"
-  agenc-clips='{"Claimed":"working","Completed":"cheer"}'
+  agenc-clips='{"In Progress":"working","Completed":"cheer"}'
   show-overlay&gt;
 &lt;/three-ws-agent&gt;</pre>
+					</div>
+
+					<div class="card">
+						<h2 data-i18n="agenc_embodied.keep_exploring">Keep exploring</h2>
+						<div class="links">
+							<a href="/agenc/room" data-i18n="agenc_embodied.link_room">Task Room: a creator's whole board in 3D</a>
+							<a href="/agora" data-i18n="agenc_embodied.link_agora">Agora: the agent economy these tasks come from</a>
+							<a href="/docs/agenc" data-i18n="agenc_embodied.link_docs">AgenC docs: every endpoint on this page</a>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -309,15 +473,26 @@
 			const taskInput = $('taskPda');
 			const clusterSel = $('cluster');
 			const watchBtn = $('watchBtn');
+			const picks = $('picks');
+			const pdaErr = $('pdaErr');
+			const stateErr = $('stateErr');
 			const agent = $('agent');
 
+			const VALUE_IDS = ['vState', 'vWorkers', 'vReward', 'vCreator', 'vDeadline', 'vExplorer', 'vProgram'];
+			// Base58 minus the four ambiguous glyphs; a Solana account address is 32
+			// bytes, which encodes to 32..44 of them.
+			const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
 			if (params.get('task')) taskInput.value = params.get('task');
-			if (params.get('cluster')) clusterSel.value = params.get('cluster');
+			if (params.get('cluster') === 'mainnet' || params.get('cluster') === 'devnet') {
+				clusterSel.value = params.get('cluster');
+			}
 
 			let lastTimelineLen = -1;
+			let watching = null;
 
 			function fmtSol(lamports) {
-				if (!lamports) return '—';
+				if (!lamports) return '0 SOL';
 				const n = Number(lamports);
 				if (Number.isNaN(n)) return String(lamports);
 				return (n / 1_000_000_000).toFixed(4) + ' SOL';
@@ -328,16 +503,101 @@
 				return `https://explorer.solana.com/address/${pda}${c}`;
 			}
 
+			function shorten(s, head = 8) {
+				const v = String(s || '');
+				return v.length > head + 4 ? `${v.slice(0, head)}…${v.slice(-4)}` : v;
+			}
+
+			function ago(iso) {
+				const then = Date.parse(iso);
+				if (Number.isNaN(then)) return '';
+				const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+				if (mins < 60) return `${mins}m ago`;
+				const hours = Math.round(mins / 60);
+				if (hours < 48) return `${hours}h ago`;
+				return `${Math.round(hours / 24)}d ago`;
+			}
+
+			function setValues(html) {
+				for (const id of VALUE_IDS) $(id).innerHTML = html;
+			}
+
+			function showLoading() {
+				stateErr.hidden = true;
+				setValues('<span class="skeleton"></span>');
+				$('timeline').innerHTML = '<span class="skeleton wide"></span>';
+				lastTimelineLen = -1;
+			}
+
+			function showIdle() {
+				stateErr.hidden = true;
+				setValues('-');
+				$('timeline').innerHTML =
+					'<span class="muted">pick a task to see its on-chain events</span>';
+				lastTimelineLen = -1;
+			}
+
+			// One designed error state for every way a watch can fail, each with the
+			// next thing the visitor can actually do. A raw "not_found" told them
+			// nothing: the overwhelmingly common cause is a devnet address read on
+			// mainnet, which is one click to fix.
+			function showError(detail) {
+				const raw = String(detail?.message || 'unknown error');
+				const cluster = detail?.cluster || clusterSel.value;
+				const other = cluster === 'devnet' ? 'mainnet' : 'devnet';
+				let title = 'This task could not be read.';
+				let advice = raw;
+				if (raw === 'not_found') {
+					title = `No AgenC task at that address on ${cluster}.`;
+					advice = `Check the address, or switch the cluster to ${other} and watch again. Live tasks from the Agora rail are listed above.`;
+				} else if (raw.startsWith('bridge 503') || raw.includes('rpc_unavailable')) {
+					title = 'Solana RPC is not answering right now.';
+					advice = 'This clears on its own. Retrying automatically, or retry now.';
+				} else if (raw.startsWith('bridge 429')) {
+					title = 'Too many requests from this address.';
+					advice = 'The per-IP limit resets within a minute. Retrying automatically.';
+				} else if (raw.startsWith('bridge ')) {
+					title = 'The AgenC bridge returned an error.';
+					advice = `${raw}. Retrying automatically; retry now if you would rather not wait.`;
+				} else {
+					advice = `${raw}. Check your connection, then retry.`;
+				}
+				stateErr.innerHTML = '';
+				const strong = document.createElement('strong');
+				strong.textContent = title;
+				const p = document.createElement('span');
+				p.textContent = advice;
+				const retry = document.createElement('button');
+				retry.type = 'button';
+				retry.textContent = 'Retry now';
+				retry.addEventListener('click', () => startWatching(watching?.pda || taskInput.value.trim()));
+				stateErr.append(strong, p, retry);
+				stateErr.hidden = false;
+				setValues('-');
+				$('vState').innerHTML = '<span data-state="error">unavailable</span>';
+			}
+
 			agent.addEventListener('agenc:state', (e) => {
-				const { task, lifecycle, cluster, taskPda } = e.detail;
-				$('vState').innerHTML = `<span class="state-${task.state}">${task.state}</span>`;
+				const { task, lifecycle, cluster, taskPda, programId } = e.detail;
+				stateErr.hidden = true;
+				$('vState').innerHTML = `<span data-state="${task.state}">${task.state}</span>`;
 				$('vWorkers').textContent = `${task.currentWorkers}/${task.maxWorkers}`;
 				$('vReward').textContent = task.rewardMint
-					? `${task.rewardAmount} (mint ${String(task.rewardMint).slice(0, 6)}…)`
+					? `${task.rewardAmount} (mint ${shorten(task.rewardMint, 6)})`
 					: fmtSol(task.rewardAmount);
-				$('vCreator').innerHTML = `<a href="${explorerUrl(task.creator, cluster)}" target="_blank" rel="noopener">${String(task.creator).slice(0, 8)}…</a>`;
-				$('vDeadline').textContent = task.deadline ? new Date(task.deadline * 1000).toLocaleString() : '—';
-				$('vExplorer').innerHTML = `<a href="${explorerUrl(taskPda, cluster)}" target="_blank" rel="noopener">${String(taskPda).slice(0, 8)}…</a>`;
+				$('vCreator').innerHTML = `<a href="${explorerUrl(task.creator, cluster)}" target="_blank" rel="noopener">${shorten(task.creator)}</a>`;
+				$('vDeadline').textContent = task.deadline ? new Date(task.deadline * 1000).toLocaleString() : 'none';
+				$('vExplorer').innerHTML = `<a href="${explorerUrl(taskPda, cluster)}" target="_blank" rel="noopener">${shorten(taskPda)}</a>`;
+				// The program address comes from the read that just succeeded, never
+				// from a constant on this page: the client derives it from the bundled
+				// IDL, so a hardcoded one drifts silently the day the IDL moves.
+				$('vProgram').innerHTML = programId
+					? `<a href="${explorerUrl(programId, cluster)}" target="_blank" rel="noopener">${shorten(programId)}</a>`
+					: '-';
+
+				for (const el of picks.querySelectorAll('.pick')) {
+					el.setAttribute('aria-pressed', String(el.dataset.pda === taskPda));
+				}
 
 				const events = lifecycle?.timeline ?? [];
 				if (events.length !== lastTimelineLen) {
@@ -350,29 +610,41 @@
 						row.innerHTML = `<strong style="color:#ececec">${ev.eventName}</strong> · ${ts}${sig}`;
 						tl.appendChild(row);
 					}
-					if (!events.length) tl.innerHTML = '<span class="muted">no events yet</span>';
+					if (!events.length) tl.innerHTML = '<span class="muted">on-chain, no lifecycle events recorded yet</span>';
 					lastTimelineLen = events.length;
 				}
 			});
 
-			agent.addEventListener('agenc:error', (e) => {
-				$('vState').innerHTML = `<span class="state-Cancelled">error</span>`;
-				$('vWorkers').textContent = '—';
-				$('vReward').textContent = '—';
-				$('vCreator').textContent = '—';
-				$('vDeadline').textContent = e.detail?.message || '—';
-				$('vExplorer').textContent = '—';
-			});
+			agent.addEventListener('agenc:error', (e) => showError(e.detail));
 
-			function startWatching() {
-				const pda = taskInput.value.trim();
+			function startWatching(pdaArg) {
+				const pda = (pdaArg ?? taskInput.value).trim();
 				const cluster = clusterSel.value;
+				taskInput.value = pda;
 				if (!pda) {
+					pdaErr.hidden = true;
+					taskInput.removeAttribute('aria-invalid');
 					agent.removeAttribute('agenc-task');
+					watching = null;
+					showIdle();
 					return;
 				}
+				if (!BASE58.test(pda)) {
+					pdaErr.textContent = 'That is not a Solana address. A task PDA is 32 to 44 base58 characters.';
+					pdaErr.hidden = false;
+					taskInput.setAttribute('aria-invalid', 'true');
+					taskInput.focus();
+					return;
+				}
+				pdaErr.hidden = true;
+				taskInput.removeAttribute('aria-invalid');
 				lastTimelineLen = -1;
+				watching = { pda, cluster };
+				showLoading();
 				agent.setAttribute('agenc-cluster', cluster);
+				// Re-setting the same value would not fire attributeChangedCallback, so
+				// a "Retry now" on an unchanged address has to clear it first.
+				if (agent.getAttribute('agenc-task') === pda) agent.removeAttribute('agenc-task');
 				agent.setAttribute('agenc-task', pda);
 				const url = new URL(location.href);
 				url.searchParams.set('task', pda);
@@ -380,12 +652,82 @@
 				history.replaceState(null, '', url.toString());
 			}
 
-			watchBtn.addEventListener('click', startWatching);
+			function renderPicks(tasks) {
+				picks.innerHTML = '';
+				for (const t of tasks) {
+					const b = document.createElement('button');
+					b.type = 'button';
+					b.className = 'pick';
+					b.dataset.pda = t.taskPda;
+					b.setAttribute('aria-pressed', String(watching?.pda === t.taskPda));
+					const code = document.createElement('code');
+					code.textContent = shorten(t.taskPda, 10);
+					const when = document.createElement('span');
+					when.className = 'when';
+					when.textContent = [t.rewardLabel, ago(t.lastActivityAt)].filter(Boolean).join(' · ');
+					b.append(code, when);
+					b.addEventListener('click', () => startWatching(t.taskPda));
+					picks.appendChild(b);
+				}
+			}
+
+			function picksMessage(text, withRetry) {
+				picks.innerHTML = '';
+				const p = document.createElement('p');
+				p.className = 'hint';
+				p.style.margin = '0';
+				p.textContent = text;
+				picks.appendChild(p);
+				if (withRetry) {
+					const retry = document.createElement('button');
+					retry.type = 'button';
+					retry.className = 'pick';
+					retry.textContent = 'Try again';
+					retry.addEventListener('click', () => loadPicks());
+					picks.appendChild(retry);
+				}
+			}
+
+			// Real task addresses, from the platform's own on-chain journal. Without
+			// this the page opened on an empty input with no way to discover a single
+			// valid address, which made the whole demo unreachable for anyone who had
+			// not already been handed one.
+			async function loadPicks() {
+				const cluster = clusterSel.value;
+				picks.setAttribute('aria-busy', 'true');
+				picks.innerHTML = '<span class="skeleton wide"></span><span class="skeleton wide"></span>';
+				try {
+					const r = await fetch(`/api/agenc/recent-tasks?cluster=${cluster}&limit=5`, {
+						headers: { accept: 'application/json' },
+					});
+					if (!r.ok) throw new Error(`bridge ${r.status}`);
+					const payload = await r.json();
+					if (payload.tasks?.length) renderPicks(payload.tasks);
+					else if (payload.degraded) picksMessage('Live task discovery is unavailable right now. Paste a task PDA below.', true);
+					else picksMessage(`No three.ws tasks recorded on ${cluster} yet. Paste any AgenC task PDA below.`, false);
+				} catch (err) {
+					picksMessage(`Could not load live tasks (${err.message}). Paste a task PDA below.`, true);
+				} finally {
+					picks.setAttribute('aria-busy', 'false');
+				}
+			}
+
+			watchBtn.addEventListener('click', () => startWatching());
 			taskInput.addEventListener('keydown', (e) => {
 				if (e.key === 'Enter') startWatching();
 			});
+			taskInput.addEventListener('input', () => {
+				pdaErr.hidden = true;
+				taskInput.removeAttribute('aria-invalid');
+			});
+			clusterSel.addEventListener('change', () => {
+				loadPicks();
+				if (watching) startWatching(watching.pda);
+			});
 
+			loadPicks();
 			if (taskInput.value) startWatching();
+			else showIdle();
 		</script>
 		<script src="/brand.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->

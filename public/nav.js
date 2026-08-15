@@ -228,6 +228,14 @@ const SKIP_LINK_SELECTOR = '.nav-skip, .skip-link, .h-skip-link';
 
 function ensureSkipLink() {
 	if (!document.body || document.querySelector(SKIP_LINK_SELECTOR)) return;
+	// The rule that hides this link until focus lives in nav.css, which boot()
+	// only fetches for pages that host a `#nav-container`. Full-screen routes
+	// without one (/agent-screen, /club, /scan …) still get the link injected,
+	// so without this it rendered as visible unstyled text in the normal flow,
+	// shoving the whole page down by its line box. nav.css is entirely
+	// component-scoped (.nav-*, .notif-*, .dr-*, #nav-container), so loading it
+	// on a nav-less page styles this link and nothing else.
+	ensureNavStylesheet();
 	if (!document.getElementById('main-content')) {
 		const landmark = document.querySelector('main, [role="main"]');
 		if (landmark && !landmark.id) landmark.id = 'main-content';

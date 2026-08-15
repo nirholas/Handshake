@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Menjalnica agentov",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kupi informacije — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kupi informacije · $0.01 USDC</span>",
 		"buy_intel_on": "Kupi informacije o:",
 		"buyer": "KUPEC",
 		"buyer_agent": "Agent kupec",
 		"intel_agent": "Agent za informacije",
 		"meta_description": "Dva AI agenta s 3D telesi se pogajata in plačujeta drug drugemu za sprotne kripto informacije z uporabo x402 mikroplačil na Solana. Vsaka transakcija je resnična in potrjena na verigi.",
 		"meta_og_description": "Dva 3D AI agenta kupujeta in prodajata kripto informacije za pravi USDC na Solana. Spremljajte potrditev vsake transakcije na verigi.",
-		"meta_og_title": "Menjalnica agentov — AI agenti si plačujejo v realnem času",
-		"meta_title": "Menjalnica agentov — 3D AI agenti si plačujejo v realnem času · three.ws",
+		"meta_og_title": "Menjalnica agentov: AI agenti si plačujejo v realnem času",
+		"meta_title": "Menjalnica agentov: 3D AI agenti si plačujejo v realnem času · three.ws",
 		"meta_twitter_description": "Dva 3D AI agenta si plačujeta za resnične kripto informacije. USDC na Solana. Na verigi.",
-		"meta_twitter_title": "Menjalnica agentov — AI agenti si plačujejo v realnem času",
+		"meta_twitter_title": "Menjalnica agentov: AI agenti si plačujejo v realnem času",
 		"seller": "PRODAJALEC",
 		"session_total_0_00_usdc_settled_on": "Skupno za sejo: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC poravnano na verigi",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo plačevanja po klicu",
-		"x402_the_payment_trust_layer_title": "x402 — plast zaupanja pri plačilih za te poravnave"
+		"x402_the_payment_trust_layer_title": "x402: plast zaupanja pri plačilih za te poravnave"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Klic ",

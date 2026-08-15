@@ -38,10 +38,11 @@
 
 Vanity grinding is embarrassingly parallel keypair generation: make an Ed25519
 keypair, Base58-encode the public key, check the prefix/suffix, repeat until a
-hit. The naïve pure-JS version is unusably slow because JS-implemented Ed25519
-manages a few thousand candidates per second. A 4-char prefix expects ~11M
-attempts. You need native-speed crypto and an honest difficulty model so you
-don't kick off a grind that finishes next century.
+hit. Keygen dominates the loop, and a single Node thread sustains roughly a
+thousand keypairs per second on a typical cloud vCPU. A 4-char prefix expects
+~11M attempts, which is hours at that rate, so the difficulty model matters as
+much as the hot loop: you need to know what a pattern costs before you start,
+not after.
 
 `@three-ws/vanity` is that, done once:
 
@@ -181,11 +182,39 @@ x402-capable `fetch` to settle the 402 automatically.
 | `format` | `'keypair' \| 'mnemonic'` | `mnemonic` returns an importable BIP-39 phrase (≤ 2 chars, ~100× slower). |
 | `strength` | `128 \| 256` | Mnemonic only: 12 or 24 words. |
 | `sealTo` | `string` | Optional X25519 public key — the secret is ECIES-sealed to you and the plaintext is omitted from the response. |
-| `fetch` | `typeof fetch` | An x402-wrapped fetch (see [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch)). |
+| `fetch` | `typeof fetch` | An x402-wrapped fetch (see [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch)). Without one you get a `PaymentRequiredError` carrying the x402 challenge to settle yourself. |
+| `baseUrl` | `string` | API origin. Defaults to `THREE_WS_BASE_URL` or `https://three.ws`. |
+| `apiKey` | `string` | Sent as `Authorization: Bearer …`. Not required for the x402 lane. |
+| `headers` | `Record<string,string>` | Extra request headers. |
+| `signal` | `AbortSignal` | Cancel the request. |
 
 Response fields: `address`, `secretKeyBase58`, `secretKey` (64-int array),
 `attempts`, `durationMs`, `expectedAttempts`, `network`, `explorerUrl`, and —
 for `format=mnemonic` — `mnemonic`, `wordCount`, `derivationPath`.
+
+### `createVanity(options?) → VanityClient`
+
+Bind `fetch` / `baseUrl` / `apiKey` / `headers` once and reuse them across calls,
+instead of repeating them on every `grindViaApi()`. Returns `{ grindViaApi }`
+with identical semantics.
+
+```js
+import { createVanity } from '@three-ws/vanity';
+import { wrapFetchWithPayment } from '@three-ws/x402-fetch';
+
+const vanity = createVanity({ fetch: wrapFetchWithPayment(fetch, payer) });
+const { address } = await vanity.grindViaApi({ prefix: 'ag' });
+```
+
+### Also exported
+
+| Export | What it is |
+|---|---|
+| `base58Encode(bytes)` | Base58 (Solana address) encoder for a `Uint8Array` / number array. Zero deps. |
+| `BASE58_ALPHABET` | The 58-character alphabet (excludes the confusable `0 O I l`). |
+| `MAX_PATTERN_LENGTH` | The per-pattern ceiling `validatePattern` and `grind` enforce (`6`). |
+| `DEFAULT_BASE_URL` | `https://three.ws` — the origin the hosted lane uses unless overridden. |
+| `ThreeWsError` / `PaymentRequiredError` | Typed errors (`code`, `status`, and `accepts` for the x402 challenge). |
 
 ## How it works
 
@@ -216,9 +245,10 @@ once, then the same batched hot loop runs on either.
   the event loop, so an `AbortSignal` lands within one batch and `onProgress`
   fires on a ~250ms wall-clock cadence.
 - **Single-threaded by design.** The local path runs on the calling thread;
-  `GrindResult.workers` is always `1`. For long patterns, run several
-  `grind()` calls in your own worker threads or processes if you need
-  parallelism. The hosted x402 endpoint caps patterns at 3 chars because it
+  `GrindResult.workers` is always `1`, and one thread sustains on the order of
+  a thousand keypairs per second (measured on a 2-core cloud container; a
+  desktop CPU does better). For long patterns, run several `grind()` calls in
+  your own worker threads or processes if you need parallelism. The hosted x402 endpoint caps patterns at 3 chars because it
   grinds under a server-side wall-clock budget.
 
 ## Security
@@ -282,7 +312,7 @@ The paid `grindViaApi()` path surfaces the endpoint's HTTP errors:
 | `code` | HTTP | Meaning | Recovery |
 |---|---|---|---|
 | `validation_error` | 400 | Bad pattern, format, or strength. | Fix the input. |
-| `pattern_too_long` | 400 | Combined pattern > server cap (3, or 2 for mnemonic). | Grind locally with `grind()`. |
+| `pattern_too_long` | 400 | Combined pattern over the mnemonic cap of 2. (A combined pattern over 3 never leaves the process: the SDK rejects it locally as `invalid_input`.) | Grind locally with `grind()`. |
 | `grind_exhausted` | 504 | Time budget elapsed without a hit (rare, <1% at 3 chars). | Retry — you weren't charged. |
 | `rate_limited` | 429 | Pre-payment probe rate limit. | Honour `retry-after`. |
 

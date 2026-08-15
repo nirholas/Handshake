@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Palitan ng Ahente",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Bumili ng intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Bumili ng intel · $0.01 USDC</span>",
 		"buy_intel_on": "Bumili ng intel sa:",
 		"buyer": "BUMILI",
 		"buyer_agent": "Ahente ng Mamimili",
 		"intel_agent": "Intel Agent",
 		"meta_description": "Dalawang AI agents na may 3D na katawan ang nakikipag-ayos at nagbabayad sa isa't isa para sa live na crypto intel gamit ang x402 micropayments sa Solana. Bawat transaksyon ay totoo at nakumpirma sa on-chain.",
 		"meta_og_description": "Dalawang 3D AI agents ang bumibili at nagbebenta ng crypto intel para sa totoong USDC sa Solana. Panuorin ang bawat transaksyon na nakumpirma sa on-chain.",
-		"meta_og_title": "Agent Exchange — AI agents na nagbabayad sa isa't isa sa real time",
-		"meta_title": "Agent Exchange — 3D AI agents na nagbabayad sa isa't isa sa real time · three.ws",
+		"meta_og_title": "Agent Exchange: AI agents na nagbabayad sa isa't isa sa real time",
+		"meta_title": "Agent Exchange: 3D AI agents na nagbabayad sa isa't isa sa real time · three.ws",
 		"meta_twitter_description": "Dalawang 3D AI agents na nagbabayad sa isa't isa para sa totoong crypto intel. USDC sa Solana. On-chain.",
-		"meta_twitter_title": "Agent Exchange — AI agents na nagbabayad sa isa't isa sa real time",
+		"meta_twitter_title": "Agent Exchange: AI agents na nagbabayad sa isa't isa sa real time",
 		"seller": "MANGBEBENTA",
 		"session_total_0_00_usdc_settled_on": "Kabuuan ng sesyon: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC settled on-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 pay-per-call demo",
-		"x402_the_payment_trust_layer_title": "x402 — ang payment trust layer sa likod ng mga kasunduang ito"
+		"x402_the_payment_trust_layer_title": "x402: ang payment trust layer sa likod ng mga kasunduang ito"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Tumawag upang lumikha ng pagkakakilanlan",

@@ -1,6 +1,6 @@
 // Meter an existing Express API with x402 — the one-liner path.
 //
-// Run:  node examples/express-metered-api.mjs
+// Run:  node examples/express-metered-api.mjs        (PORT=3100 to move it)
 // Then a buyer using @three-ws/x402-fetch calls /v1/embed with a plain fetch and
 // the 402 is paid automatically. An unpaid curl shows the challenge:
 //
@@ -44,7 +44,18 @@ app.post(
 	),
 );
 
-app.listen(3000, () => console.log('paid embed API on http://localhost:3000/v1/embed'));
+const PORT = Number(process.env.PORT || 3000);
+
+app
+	.listen(PORT, () => console.log(`paid embed API on http://localhost:${PORT}/v1/embed`))
+	.on('error', (err) => {
+		// A busy port is the one failure that reads like a bug in the package.
+		if (err.code === 'EADDRINUSE') {
+			console.error(`port ${PORT} is already in use. Rerun with PORT=<free port>`);
+			process.exit(1);
+		}
+		throw err;
+	});
 
 // Stand-in for your real model call. Replace with the actual work.
 async function embed(text) {

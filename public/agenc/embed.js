@@ -17,15 +17,21 @@
 //   agenc-poll-ms    — polling interval; clamped [1500, 120000] (default 4000)
 //   agenc-bridge     — base URL of the three.ws AgenC API (default "/api/agenc")
 //   agenc-clips      — JSON map of {state: clipName} for state-driven animation,
-//                       e.g. `{"Claimed":"working","Completed":"cheer"}`. Clips
-//                       must exist in the GLB; missing clips are a no-op.
+//                       e.g. `{"In Progress":"working","Completed":"cheer"}`.
+//                       Keys are AgenC's on-chain TaskState labels verbatim (see
+//                       STATE_COLORS below); clips must exist in the GLB, and a
+//                       missing clip is a no-op.
 //   show-overlay     — when present, render a small state badge in the corner
 //
 // Events (CustomEvent, bubble=true):
-//   agenc:state      — { taskPda, state, task, lifecycle } on every poll where
-//                       the task is found. The page can hook this to drive
-//                       additional UI without reaching into the element.
-//   agenc:error      — { message } on transport / parse failure.
+//   agenc:state      : { taskPda, cluster, state, task, lifecycle, programId }
+//                       on every poll where the task is found. The page can hook
+//                       this to drive additional UI without reaching into the
+//                       element. `programId` is the program the read actually ran
+//                       against, so a host page can name it without hardcoding.
+//   agenc:error      : { message, taskPda, cluster, retryInMs } on a 404, a
+//                       bridge error, or a transport / parse failure. Polling
+//                       continues with backoff; `retryInMs` is when.
 //
 // The element is dependency-free apart from <model-viewer>, which is loaded
 // lazily from the npm CDN on first connect (the same source three.ws uses).
@@ -95,12 +101,19 @@ function ensureModelViewer() {
 	return modelViewerPromise;
 }
 
+// AgenC's on-chain TaskState labels VERBATIM, as `/api/agenc/get-task` reports
+// them (api/agenc/[action].js `taskStateLabel`), plus this element's own three
+// transport states. The map used to key on "Claimed" and "Expired", which the
+// chain has never emitted: a task in the real second state arrives as
+// "In Progress" and matched nothing here, so the halo, the badge color and the
+// agenc-clips switch all sat inert for the exact transition the embed exists to
+// show. Keep this list and taskStateLabel in lockstep.
 const STATE_COLORS = {
 	Open: '#7af0c4',
-	Claimed: '#f0c47a',
+	'In Progress': '#f0c47a',
+	'Pending Validation': '#8ab4f8',
 	Completed: '#7af0c4',
 	Cancelled: '#f07a7a',
-	Expired: '#f07a7a',
 	Disputed: '#f07a7a',
 	loading: '#8a8499',
 	error: '#f07a7a',
@@ -118,6 +131,7 @@ class ThreewsAgentElement extends HTMLElement {
 		this._pollTimer = null;
 		this._requestId = 0;
 		this._lastState = null;
+		this._failures = 0;
 	}
 
 	connectedCallback() {
@@ -186,17 +200,24 @@ class ThreewsAgentElement extends HTMLElement {
 					opacity: 0;
 					transition: opacity 0.3s, background 0.3s;
 				}
-				:host([data-state="Claimed"]) .pulse {
+				:host([data-state="Open"]) .pulse {
+					background: radial-gradient(circle at 50% 70%, #7af0c4 0%, transparent 55%);
+					opacity: 0.18;
+				}
+				:host([data-state="In Progress"]) .pulse {
 					background: radial-gradient(circle at 50% 70%, #f0c47a 0%, transparent 55%);
 					opacity: 0.28;
 					animation: pulse 2.4s ease-in-out infinite;
+				}
+				:host([data-state="Pending Validation"]) .pulse {
+					background: radial-gradient(circle at 50% 70%, #8ab4f8 0%, transparent 55%);
+					opacity: 0.26;
 				}
 				:host([data-state="Completed"]) .pulse {
 					background: radial-gradient(circle at 50% 70%, #7af0c4 0%, transparent 55%);
 					opacity: 0.36;
 				}
 				:host([data-state="Cancelled"]) .pulse,
-				:host([data-state="Expired"]) .pulse,
 				:host([data-state="Disputed"]) .pulse {
 					background: radial-gradient(circle at 50% 70%, #f07a7a 0%, transparent 55%);
 					opacity: 0.24;
@@ -204,6 +225,9 @@ class ThreewsAgentElement extends HTMLElement {
 				@keyframes pulse {
 					0%, 100% { opacity: 0.16; }
 					50% { opacity: 0.36; }
+				}
+				@media (prefers-reduced-motion: reduce) {
+					:host([data-state="In Progress"]) .pulse { animation: none; }
 				}
 				.overlay {
 					position: absolute;
@@ -274,6 +298,7 @@ class ThreewsAgentElement extends HTMLElement {
 	_restart() {
 		clearTimeout(this._pollTimer);
 		this._requestId += 1;
+		this._failures = 0;
 		const taskPda = this.getAttribute('agenc-task');
 		if (!taskPda) {
 			this._setState('idle');
@@ -284,6 +309,22 @@ class ThreewsAgentElement extends HTMLElement {
 		this._poll(taskPda, myReq);
 	}
 
+	// Back off after consecutive failures instead of re-asking at the full poll
+	// rate forever. A mistyped address 404s permanently, and the flat retry made
+	// that one typo a request every 4s for as long as the tab stayed open. Doubles
+	// per failure, capped at a minute; a single success resets it.
+	_retryDelay() {
+		const base = this._pollMs();
+		if (!this._failures) return base;
+		return Math.min(base * 2 ** Math.min(this._failures, 4), 60000);
+	}
+
+	_fail(message) {
+		this._failures += 1;
+		this._setState('error');
+		this._emit('agenc:error', { message, taskPda: this.getAttribute('agenc-task'), cluster: this._cluster(), retryInMs: this._retryDelay() });
+	}
+
 	async _poll(taskPda, requestId) {
 		const cluster = this._cluster();
 		const bridge = this._bridge();
@@ -292,16 +333,15 @@ class ThreewsAgentElement extends HTMLElement {
 			const r = await fetch(url, { headers: { accept: 'application/json' } });
 			if (requestId !== this._requestId) return;
 			if (!r.ok && r.status !== 404) {
-				this._setState('error');
-				this._emit('agenc:error', { message: `bridge ${r.status}` });
+				this._fail(`bridge ${r.status}`);
 				return;
 			}
 			const payload = await r.json();
 			if (!payload.ok || !payload.task) {
-				this._setState('error');
-				this._emit('agenc:error', { message: payload.error || 'not_found' });
+				this._fail(payload.error || 'not_found');
 				return;
 			}
+			this._failures = 0;
 			this._setState(payload.task.state);
 			this._emit('agenc:state', {
 				taskPda,
@@ -309,14 +349,14 @@ class ThreewsAgentElement extends HTMLElement {
 				state: payload.task.state,
 				task: payload.task,
 				lifecycle: payload.lifecycle,
+				programId: payload.programId ?? null,
 			});
 		} catch (err) {
 			if (requestId !== this._requestId) return;
-			this._setState('error');
-			this._emit('agenc:error', { message: err.message || String(err) });
+			this._fail(err.message || String(err));
 		} finally {
 			if (requestId === this._requestId) {
-				this._pollTimer = setTimeout(() => this._poll(taskPda, requestId), this._pollMs());
+				this._pollTimer = setTimeout(() => this._poll(taskPda, requestId), this._retryDelay());
 			}
 		}
 	}

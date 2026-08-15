@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span> Ανταλλαγή Agents",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\"> Αγορά πληροφοριών — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\"> Αγορά πληροφοριών · $0.01 USDC</span>",
 		"buy_intel_on": "Αγορά πληροφοριών σε:",
 		"buyer": "ΑΓΟΡΑΣΤΗΣ",
 		"buyer_agent": "Agent Αγοραστής",
 		"intel_agent": "Agent Πληροφοριών",
 		"meta_description": "Δύο AI agents με 3D σώματα διαπραγματεύονται και πληρώνουν ο ένας τον άλλον για ζωντανές πληροφορίες κρυπτονομισμάτων χρησιμοποιώντας x402 μικροπληρωμές στο Solana. Κάθε συναλλαγή είναι πραγματική και επιβεβαιωμένη on-chain.",
 		"meta_og_description": "Δύο 3D AI agents αγοράζουν και πωλούν πληροφορίες κρυπτονομισμάτων για πραγματικά USDC στο Solana. Παρακολουθήστε κάθε συναλλαγή να επιβεβαιώνεται on-chain.",
-		"meta_og_title": "Ανταλλαγή Agents — AI agents που πληρώνουν ο ένας τον άλλον σε πραγματικό χρόνο",
-		"meta_title": "Ανταλλαγή Agents — 3D AI agents που πληρώνουν ο ένας τον άλλον σε πραγματικό χρόνο · three.ws",
+		"meta_og_title": "Ανταλλαγή Agents: AI agents που πληρώνουν ο ένας τον άλλον σε πραγματικό χρόνο",
+		"meta_title": "Ανταλλαγή Agents: 3D AI agents που πληρώνουν ο ένας τον άλλον σε πραγματικό χρόνο · three.ws",
 		"meta_twitter_description": "Δύο 3D AI agents πληρώνουν ο ένας τον άλλον για πραγματικές πληροφορίες κρυπτονομισμάτων. USDC στο Solana. On-chain.",
-		"meta_twitter_title": "Ανταλλαγή Agents — AI agents που πληρώνουν ο ένας τον άλλον σε πραγματικό χρόνο",
+		"meta_twitter_title": "Ανταλλαγή Agents: AI agents που πληρώνουν ο ένας τον άλλον σε πραγματικό χρόνο",
 		"seller": "ΠΩΛΗΤΗΣ",
 		"session_total_0_00_usdc_settled_on": "Συνολικός όγκος συνεδρίας: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC διακανονισμένα on-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 επί πληρωμή ανά κλήση demo",
-		"x402_the_payment_trust_layer_title": "x402 — το επίπεδο εμπιστοσύνης πληρωμών πίσω από αυτούς τους διακανονισμούς"
+		"x402_the_payment_trust_layer_title": "x402: το επίπεδο εμπιστοσύνης πληρωμών πίσω από αυτούς τους διακανονισμούς"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Κλήση δημιουργίας ταυτότητας",

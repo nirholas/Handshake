@@ -116,6 +116,19 @@ All three tools are read-only — they look at an image, they never store or mut
 }
 ```
 
+## Examples
+
+Runnable, key-free examples live in [`examples/`](./examples):
+
+```bash
+node examples/list-tools.mjs     # every tool with its full input schema
+node examples/read-an-image.mjs  # status + alt text + OCR on a live image
+```
+
+Both spawn this server over stdio and call the real vision pipeline. Every tool
+is read-only, so nothing is stored and nothing is paid. See
+[`examples/README.md`](./examples/README.md) for expected output.
+
 Images may be JPEG, PNG, WebP, or GIF, up to **12 MB**. Base64 inputs are size-checked locally before upload; `imageUrl` must be a public **https** URL (the vision server fetches it, so private/loopback hosts are rejected).
 
 ## Pricing & auth
@@ -142,7 +155,7 @@ The endpoint is rate-limited per IP. To raise your limit to the per-user tier, s
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: Apache-2.0 — see [LICENSE](./LICENSE)
+- License: all rights reserved, see [LICENSE](./LICENSE)
 
 ---
 

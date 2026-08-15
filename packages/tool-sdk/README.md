@@ -52,29 +52,33 @@ for the one caveat that matters before you publish).
 
 ## Quick start — full runnable example
 
+A complete MCP server over a real, free, keyless three.ws endpoint: the
+vanity-address difficulty oracle (`GET /api/vanity/bounties?view=quote`). Save
+it as `quote-server.js` and run it.
+
 ```js
-import { defineTool, defineExecutor, toMcpTools, z } from '@three-ws/tool-sdk';
+import { defineTool, defineExecutor, toMcpTools, guardedFetch, z } from '@three-ws/tool-sdk';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 // 1. Declare identity, API surface, and permissions once.
-const priceTool = defineTool({
-  id: 'my-org-price-feed',
-  title: 'My Price Feed',
-  description: 'Fetches live token prices from My API.',
+const quoteTool = defineTool({
+  id: 'three-ws-vanity-quote',
+  title: 'Vanity Quote',
+  description: 'Prices how hard a Solana vanity address pattern is to grind.',
   version: '1.0.0',
   permissions: {
-    network: ['api.example.com'],                 // guardedFetch may only reach this host
-    rateLimit: { calls: 30, perSeconds: 60 },      // enforced automatically by the executor
+    network: ['three.ws'],                     // guardedFetch may only reach this host
+    rateLimit: { calls: 30, perSeconds: 60 },  // enforced automatically by the executor
     wallet: false,
   },
   apis: [
     {
-      name: 'getPrice',
-      description: 'Get the current USD price for a token symbol.',
-      annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+      name: 'getQuote',
+      description: 'Quote the difficulty and suggested USDC bounty for a Base58 prefix.',
+      annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
       parameters: z.object({
-        symbol: z.string().min(1).describe('Token ticker, e.g. "ETH"'),
+        prefix: z.string().min(1).max(6).describe('Base58 prefix, e.g. "THREE"'),
       }),
     },
   ],
@@ -82,35 +86,56 @@ const priceTool = defineTool({
 
 // 2. Wire an implementation. Return plain data — the executor wraps it into
 //    { success: true, content, state } and catches thrown errors for you.
-const priceExecutor = defineExecutor(priceTool, {
-  async getPrice({ symbol }, ctx) {
-    const fetchGuarded = guardedFetch(priceTool.manifest.permissions);
-    const res = await fetchGuarded(`https://api.example.com/v1/price/${symbol}`);
+const quoteExecutor = defineExecutor(quoteTool, {
+  async getQuote({ prefix }) {
+    const fetchGuarded = guardedFetch(quoteTool.manifest.permissions);
+    const res = await fetchGuarded(`https://three.ws/api/vanity/bounties?view=quote&prefix=${prefix}`);
     const data = await res.json();
-    return { symbol, price: data.price };
+    return { prefix, tier: data.difficulty.tierLabel, expectedAttempts: data.difficulty.expectedAttempts };
   },
 });
 
 // 3. Adapt into MCP tool registrations — one call, one tool per declared API.
-const server = new McpServer({ name: 'price-feed-mcp', version: '1.0.0' }, { capabilities: { tools: {} } });
-for (const def of toMcpTools(priceTool, priceExecutor)) {
+//    `def.handler` returns raw data and THROWS on failure (the shape every
+//    hand-written tool in this repo uses), so the server wraps it into MCP
+//    content blocks exactly the way packages/naming-mcp's buildServer does.
+const server = new McpServer({ name: 'vanity-quote-mcp', version: '1.0.0' }, { capabilities: { tools: {} } });
+for (const def of toMcpTools(quoteTool, quoteExecutor)) {
   server.registerTool(
     def.name,
     { title: def.title, description: def.description, inputSchema: def.inputSchema, annotations: def.annotations },
-    def.handler, // throws on failure, returns content on success — matches every hand-written tool in this repo
+    async (args, extra) => {
+      try {
+        const result = await def.handler(args, extra);
+        const text = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+        return { content: [{ type: 'text', text }] };
+      } catch (err) {
+        const payload = { ok: false, error: err?.code || 'unhandled', message: err?.message || String(err) };
+        return { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }], isError: true };
+      }
+    },
   );
 }
 
 await server.connect(new StdioServerTransport());
 ```
 
-Run it, then call `getPrice` from any MCP client (or `npx -y
-@modelcontextprotocol/inspector node your-server.js`):
+Passing `def.handler` to `registerTool` directly does **not** work: it returns
+raw data, and the MCP SDK expects a `{ content: [...] }` result, so the client
+receives an empty content array. The wrapper above is the boundary that turns
+data into content blocks and thrown errors into `isError` results.
+
+Run it, then call `getQuote` from any MCP client (or `npx -y
+@modelcontextprotocol/inspector node quote-server.js`):
 
 ```jsonc
-> { "symbol": "ETH" }
-{ "symbol": "ETH", "price": 3421.09 }
+> { "prefix": "THREE" }
+{ "prefix": "THREE", "tier": "Mythic", "expectedAttempts": 11308763834 }
 ```
+
+Because `permissions.network` lists only `three.ws`, the same implementation
+pointed at any other host throws `NETWORK_NOT_ALLOWED` before a packet leaves
+the process.
 
 ## API
 

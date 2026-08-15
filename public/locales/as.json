@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>এজেণ্ট এক্সচেঞ্জ",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ইণ্টেল ক্ৰয় কৰক — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ইণ্টেল ক্ৰয় কৰক · $0.01 USDC</span>",
 		"buy_intel_on": "এই বিষয়ত ইণ্টেল ক্ৰয় কৰক:",
 		"buyer": "ক্ৰেতা",
 		"buyer_agent": "ক্ৰেতা এজেণ্ট",
 		"intel_agent": "ইণ্টেল এজেণ্ট",
 		"meta_description": "3D শৰীৰযুক্ত দুটা AI এজেণ্টে লাইভ ক্ৰিপ্টো ইণ্টেলৰ বাবে ইজনে সিজনক আলোচনা কৰে আৰু পৰিশোধ কৰে Solanaত x402 মাইক্ৰ'পেমেণ্ট ব্যৱহাৰ কৰি। প্ৰতিটো লেনদেন বাস্তৱ আৰু অন-চেইনত নিশ্চিত কৰা হয়।",
 		"meta_og_description": "দুটা 3D AI এজেণ্টে ক্ৰিপ্টো ইণ্টেল ক্ৰয় আৰু বিক্ৰী কৰে Solanaত বাস্তৱ USDCৰ বাবে। প্ৰতিটো লেনদেন অন-চেইনত নিশ্চিত হোৱা চাওক।",
-		"meta_og_title": "এজেণ্ট এক্সচেঞ্জ — AI এজেণ্টে বাস্তৱ সময়ত ইজনে সিজনক পৰিশোধ কৰে",
-		"meta_title": "এজেণ্ট এক্সচেঞ্জ — 3D AI এজেণ্টে বাস্তৱ সময়ত ইজনে সিজনক পৰিশোধ কৰে · three.ws",
+		"meta_og_title": "এজেণ্ট এক্সচেঞ্জ: AI এজেণ্টে বাস্তৱ সময়ত ইজনে সিজনক পৰিশোধ কৰে",
+		"meta_title": "এজেণ্ট এক্সচেঞ্জ: 3D AI এজেণ্টে বাস্তৱ সময়ত ইজনে সিজনক পৰিশোধ কৰে · three.ws",
 		"meta_twitter_description": "দুটা 3D AI এজেণ্টে বাস্তৱ ক্ৰিপ্টো ইণ্টেলৰ বাবে ইজনে সিজনক পৰিশোধ কৰে। Solanaত USDC। অন-চেইন।",
-		"meta_twitter_title": "এজেণ্ট এক্সচেঞ্জ — AI এজেণ্টে বাস্তৱ সময়ত ইজনে সিজনক পৰিশোধ কৰে",
+		"meta_twitter_title": "এজেণ্ট এক্সচেঞ্জ: AI এজেণ্টে বাস্তৱ সময়ত ইজনে সিজনক পৰিশোধ কৰে",
 		"seller": "বিক্ৰেতা",
 		"session_total_0_00_usdc_settled_on": "ছেছনৰ মুঠ: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC অন-চেইনত নিষ্পত্তি কৰা হ'ল",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 পে-পাৰ-কল ডেমো",
-		"x402_the_payment_trust_layer_title": "x402 — এই নিষ্পত্তিৰ আঁৰৰ পেমেণ্ট ট্ৰাষ্ট লেয়াৰ"
+		"x402_the_payment_trust_layer_title": "x402: এই নিষ্পত্তিৰ আঁৰৰ পেমেণ্ট ট্ৰাষ্ট লেয়াৰ"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "১ · create_identity কল কৰক",

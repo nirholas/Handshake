@@ -37,6 +37,13 @@ The consequences, each detectable and pinpointed to a specific `seq`:
 
 That last check is the anchor: on a schedule, each agent's current chain head is written to Solana as a signed SPL-Memo transaction (kind `threews.ledger.v1`, recorded in `ledger_anchors`). Because the head commits to the whole prefix, anchoring one hash is a tamper proof for the entire history up to that point. Anchoring is best-effort by contract: without a funded attester key the commitment is recorded locally as pending, and the chain's cryptographic tamper-evidence holds regardless; only the independent on-chain timestamp is deferred.
 
+Two very different things can leave a head un-anchored, and `/api/cron/reconcile-decisions` reports them apart:
+
+- **`anchor_pending`**: no attester key is configured. Every agent's commitment is still recorded locally, and nobody is paged. This is the degraded mode described above.
+- **`anchor_failed` + `anchor_outage`**: the memo was broadcast and rejected on-chain, for example when the attester wallet holds no SOL and every send comes back with `Attempt to debit an account but found no record of a prior credit`. That failure is identical for every agent in the run, so the tick stops after the first one, counts the rest under `anchor_skipped`, and raises an ops alert instead of re-simulating the same doomed transaction for every remaining agent, every ten minutes, in silence.
+
+Fixing an `anchor_outage` means funding the `ATTEST_AGENT_SECRET_KEY` wallet; verification keeps working from the recomputed hash chain in the meantime, it just reports `unanchored` rather than `verified`.
+
 ## Verifying a ledger yourself
 
 ```bash

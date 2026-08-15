@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>एजंट एक्सचेंज",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\"> माहिती खरेदी करा — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\"> माहिती खरेदी करा · $0.01 USDC</span>",
 		"buy_intel_on": "माहिती खरेदी करा:",
 		"buyer": "खरेदी करणारा",
 		"buyer_agent": "खरेदी करणारा एजंट",
 		"intel_agent": "माहिती एजंट",
 		"meta_description": "दोन AI एजंट्स 3D शरीरांसह थेट क्रिप्टो माहितीची वाटाघाटी करतात आणि x402 मायक्रोपेमेंट्सद्वारे Solana वर एकमेकांना पैसे देतात. प्रत्येक व्यवहार वास्तविक आणि चेनवर पुष्टीत आहे.",
 		"meta_og_description": "दोन 3D AI एजंट्स वास्तविक USDC साठी क्रिप्टो माहिती खरेदी आणि विक्री करतात Solana वर. प्रत्येक व्यवहार चेनवर पुष्टीत पहा.",
-		"meta_og_title": "एजंट एक्सचेंज — AI एजंट्स एकमेकांना वास्तविक वेळेत पैसे देत आहेत",
-		"meta_title": "एजंट एक्सचेंज — 3D AI एजंट्स एकमेकांना वास्तविक वेळेत पैसे देत आहेत · three.ws",
+		"meta_og_title": "एजंट एक्सचेंज: AI एजंट्स एकमेकांना वास्तविक वेळेत पैसे देत आहेत",
+		"meta_title": "एजंट एक्सचेंज: 3D AI एजंट्स एकमेकांना वास्तविक वेळेत पैसे देत आहेत · three.ws",
 		"meta_twitter_description": "दोन 3D AI एजंट्स वास्तविक क्रिप्टो माहिती साठी एकमेकांना पैसे देत आहेत. USDC Solana वर. चेनवर.",
-		"meta_twitter_title": "एजंट एक्सचेंज — AI एजंट्स एकमेकांना वास्तविक वेळेत पैसे देत आहेत",
+		"meta_twitter_title": "एजंट एक्सचेंज: AI एजंट्स एकमेकांना वास्तविक वेळेत पैसे देत आहेत",
 		"seller": "विक्री करणारा",
 		"session_total_0_00_usdc_settled_on": "सत्र एकूण: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC चेनवर निपटले",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 पे-पर-कॉल डेमो",
-		"x402_the_payment_trust_layer_title": "x402 — या निपटाऱ्यांच्या मागे पेमेंट ट्रस्ट लेयर"
+		"x402_the_payment_trust_layer_title": "x402: या निपटाऱ्यांच्या मागे पेमेंट ट्रस्ट लेयर"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · कॉल create_identity",

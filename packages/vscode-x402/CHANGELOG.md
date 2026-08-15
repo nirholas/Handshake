@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1
+
+- **Scaffolded endpoints are Solana-first.** `x402: Scaffold a Paid Endpoint`
+  used to emit `networks: ['base']`, so a generated endpoint advertised Base
+  only. It now emits `['solana', 'base']`, matching every hand-written paid
+  route on the platform.
+- Test suite added (`npm test`): requirement selection across both rails, token
+  classification, wallet-key parsing, and the scaffold template (which is now
+  asserted to parse and to pass only options `paidEndpoint()` accepts).
+- The bundle is emitted as `dist/extension.cjs` so the CommonJS extension entry
+  and the ESM sources can coexist without ambiguity.
+
 ## 0.2.0
 
 Solana + $THREE payments.

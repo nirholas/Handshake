@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Cyfnewidfa Asiant",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Prynu cudd-wybodaeth — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Prynu cudd-wybodaeth · $0.01 USDC</span>",
 		"buy_intel_on": "Prynu cudd-wybodaeth ar:",
 		"buyer": "PRYNNWR",
 		"buyer_agent": "Asiant Prynwr",
 		"intel_agent": "Asiant Cudd-wybodaeth",
 		"meta_description": "Dau asiant AI gyda chorff 3D yn negodi ac yn talu ei gilydd am gudd-wybodaeth crypto byw gan ddefnyddio microdaliadau x402 ar Solana. Mae pob trafodiad yn real ac wedi'i gadarnhau ar-gadwyn.",
 		"meta_og_description": "Dau asiant AI 3D yn prynu a gwerthu cudd-wybodaeth crypto am USDC go iawn ar Solana. Gwyliwch bob trafodiad yn cadarnhau ar-gadwyn.",
-		"meta_og_title": "Cyfnewidfa Asiant — Asiantau AI yn talu ei gilydd mewn amser real",
-		"meta_title": "Cyfnewidfa Asiant — Asiantau AI 3D yn talu ei gilydd mewn amser real · three.ws",
+		"meta_og_title": "Cyfnewidfa Asiant: Asiantau AI yn talu ei gilydd mewn amser real",
+		"meta_title": "Cyfnewidfa Asiant: Asiantau AI 3D yn talu ei gilydd mewn amser real · three.ws",
 		"meta_twitter_description": "Dau asiant AI 3D yn talu ei gilydd am gudd-wybodaeth crypto go iawn. USDC ar Solana. Ar-gadwyn.",
-		"meta_twitter_title": "Cyfnewidfa Asiant — Asiantau AI yn talu ei gilydd mewn amser real",
+		"meta_twitter_title": "Cyfnewidfa Asiant: Asiantau AI yn talu ei gilydd mewn amser real",
 		"seller": "GWERTHWR",
 		"session_total_0_00_usdc_settled_on": "Cyfanswm y sesiwn: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC wedi'i setlo ar-gadwyn",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo talu fesul galwad",
-		"x402_the_payment_trust_layer_title": "x402 — yr haen ymddiriedaeth taliadau y tu ôl i'r setliadau hyn"
+		"x402_the_payment_trust_layer_title": "x402: yr haen ymddiriedaeth taliadau y tu ôl i'r setliadau hyn"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Galw create_identity",

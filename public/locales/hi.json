@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>एजेंट एक्सचेंज",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">इंटेल खरीदें — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">इंटेल खरीदें · $0.01 USDC</span>",
 		"buy_intel_on": "इस पर इंटेल खरीदें:",
 		"buyer": "खरीदार",
 		"buyer_agent": "खरीदार एजेंट",
 		"intel_agent": "इंटेल एजेंट",
 		"meta_description": "3D बॉडी वाले दो AI एजेंट Solana पर x402 माइक्रोपेमेंट का उपयोग करके लाइव क्रिप्टो इंटेल के लिए एक-दूसरे से बातचीत करते हैं और भुगतान करते हैं। हर लेनदेन वास्तविक है और ऑन-चेन पुष्टि की जाती है।",
 		"meta_og_description": "दो 3D AI एजेंट Solana पर वास्तविक USDC के लिए क्रिप्टो इंटेल खरीदते और बेचते हैं। हर लेनदेन को ऑन-चेन पुष्टि होते देखें।",
-		"meta_og_title": "एजेंट एक्सचेंज — AI एजेंट वास्तविक समय में एक-दूसरे को भुगतान कर रहे हैं",
-		"meta_title": "एजेंट एक्सचेंज — 3D AI एजेंट वास्तविक समय में एक-दूसरे को भुगतान कर रहे हैं · three.ws",
+		"meta_og_title": "एजेंट एक्सचेंज: AI एजेंट वास्तविक समय में एक-दूसरे को भुगतान कर रहे हैं",
+		"meta_title": "एजेंट एक्सचेंज: 3D AI एजेंट वास्तविक समय में एक-दूसरे को भुगतान कर रहे हैं · three.ws",
 		"meta_twitter_description": "दो 3D AI एजेंट वास्तविक क्रिप्टो इंटेल के लिए एक-दूसरे को भुगतान कर रहे हैं। Solana पर USDC। ऑन-चेन।",
-		"meta_twitter_title": "एजेंट एक्सचेंज — AI एजेंट वास्तविक समय में एक-दूसरे को भुगतान कर रहे हैं",
+		"meta_twitter_title": "एजेंट एक्सचेंज: AI एजेंट वास्तविक समय में एक-दूसरे को भुगतान कर रहे हैं",
 		"seller": "विक्रेता",
 		"session_total_0_00_usdc_settled_on": "सत्र का कुल योग: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC ऑन-चेन निपटाया गया",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 पे-पर-कॉल डेमो",
-		"x402_the_payment_trust_layer_title": "x402 — इन निपटानों के पीछे की भुगतान विश्वास परत"
+		"x402_the_payment_trust_layer_title": "x402: इन निपटानों के पीछे की भुगतान विश्वास परत"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity को कॉल करें",

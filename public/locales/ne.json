@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>एजेन्ट एक्सचेन्ज",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">इन्टेल किन्नुहोस् — $०.०१ USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">इन्टेल किन्नुहोस् · $०.०१ USDC</span>",
 		"buy_intel_on": "यसमा इन्टेल किन्नुहोस्:",
 		"buyer": "क्रेता",
 		"buyer_agent": "क्रेता एजेन्ट",
 		"intel_agent": "इन्टेल एजेन्ट",
 		"meta_description": "दुई 3D शरीर भएका AI एजेन्टहरूले Solana मा x402 माइक्रोपेमेन्ट प्रयोग गरी लाइभ क्रिप्टो इन्टेलका लागि एकअर्कासँग वार्ता गर्छन् र भुक्तानी गर्छन्। हरेक लेनदेन वास्तविक र अन-चेनमा पुष्टि हुन्छ।",
 		"meta_og_description": "दुई 3D AI एजेन्टहरूले वास्तविक USDC को लागि Solana मा क्रिप्टो इन्टेल किन्छन् र बेच्छन्। हरेक लेनदेन अन-चेनमा पुष्टि भएको हेर्नुहोस्।",
-		"meta_og_title": "एजेन्ट एक्सचेन्ज — AI एजेन्टहरूले वास्तविक समयमा एकअर्कालाई भुक्तानी गर्दै",
-		"meta_title": "एजेन्ट एक्सचेन्ज — 3D AI एजेन्टहरूले वास्तविक समयमा एकअर्कालाई भुक्तानी गर्दै · three.ws",
+		"meta_og_title": "एजेन्ट एक्सचेन्ज: AI एजेन्टहरूले वास्तविक समयमा एकअर्कालाई भुक्तानी गर्दै",
+		"meta_title": "एजेन्ट एक्सचेन्ज: 3D AI एजेन्टहरूले वास्तविक समयमा एकअर्कालाई भुक्तानी गर्दै · three.ws",
 		"meta_twitter_description": "दुई 3D AI एजेन्टहरूले वास्तविक क्रिप्टो इन्टेलका लागि एकअर्कालाई भुक्तानी गर्दै। USDC Solana मा। अन-चेन।",
-		"meta_twitter_title": "एजेन्ट एक्सचेन्ज — AI एजेन्टहरूले वास्तविक समयमा एकअर्कालाई भुक्तानी गर्दै",
+		"meta_twitter_title": "एजेन्ट एक्सचेन्ज: AI एजेन्टहरूले वास्तविक समयमा एकअर्कालाई भुक्तानी गर्दै",
 		"seller": "विक्रेता",
 		"session_total_0_00_usdc_settled_on": "सत्र कुल: <span class=\"tv\" id=\"totalUsdc\">$०.००</span> USDC अन-चेनमा सेटल गरियो",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 पे-पर-कल डेमो",
-		"x402_the_payment_trust_layer_title": "x402 — यी सेटलमेन्टहरू पछाडिको भुक्तानी विश्वास तह"
+		"x402_the_payment_trust_layer_title": "x402: यी सेटलमेन्टहरू पछाडिको भुक्तानी विश्वास तह"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "१ · create_identity लाई कल गर्नुहोस्",

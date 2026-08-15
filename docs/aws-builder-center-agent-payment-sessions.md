@@ -79,6 +79,7 @@ create table if not exists payment_sessions (
     max_per_tx_usdc     bigint check (max_per_tx_usdc > 0),
     allowed_hosts       text[] not null default '{}',
     network             text not null default 'solana' check (network in ('solana', 'base')),
+    connector_ref       text,
 
     status              text not null default 'active'
                             check (status in ('active', 'exhausted', 'expired', 'cancelled')),
@@ -96,11 +97,16 @@ Three details in there are load-bearing.
 **Money is `bigint`, never `float`.** USDC has six decimals, so every amount is stored in atomic units and converted at the edges. A rounding error in a budget check is a security bug, not a display bug.
 
 ```js
+// USDC has 6 decimals everywhere we settle (Solana mainnet and Base mainnet).
+export const USDC_DECIMALS = 6;
+const USDC_SCALE = 10 ** USDC_DECIMALS;
+
 export function usdToAtomics(usd) {
-  return BigInt(Math.round(Number(usd) * 1_000_000));
+  return BigInt(Math.round(Number(usd) * USDC_SCALE));
 }
+
 export function atomicsToUsd(atomics) {
-  return Number(atomics) / 1_000_000;
+  return Number(atomics) / USDC_SCALE;
 }
 ```
 
@@ -177,13 +183,22 @@ Now the policy runs, in order, cheapest and most decisive first: status, then ex
 The allowlist check is the one worth showing, because the subdomain rule is where these go wrong:
 
 ```js
-const canonicalAllowlist = allowedHosts.map(normalizeHost).filter(Boolean);
-const allowed = canonicalAllowlist.some(
-  (h) => targetHost === h || targetHost.endsWith(`.${h}`),
-);
+export function canonicalizeAllowlist(allowedHosts) {
+  if (!Array.isArray(allowedHosts)) return [];
+  return allowedHosts.map(normalizeHost).filter(Boolean);
+}
+
+export function hostMatches(targetHost, entry) {
+  if (!targetHost || !entry) return false;
+  return targetHost === entry || targetHost.endsWith(`.${entry}`);
+}
 ```
 
-`targetHost.endsWith('.' + h)` and not `targetHost.endsWith(h)`. Without the dot, an allowlist entry of `example.com` also authorizes `evil-example.com`, and an attacker who can steer your agent to a URL just needs to register the right domain. Hosts are normalized through the URL parser first, so `HTTPS://Example.COM:443/x` and `example.com` compare equal.
+The verdict is then `canonical.some((entry) => hostMatches(targetHost, entry))`.
+
+`targetHost.endsWith('.' + entry)` and not `targetHost.endsWith(entry)`. Without the dot, an allowlist entry of `example.com` also authorizes `evil-example.com`, and an attacker who can steer your agent to a URL just needs to register the right domain. That is exactly why this is a named function with a test behind it rather than an inline `endsWith`. Hosts are normalized through the URL parser first, so `HTTPS://Example.COM:443/x` and `example.com` compare equal.
+
+These predicates live in [`api/_lib/pay/policy.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/policy.js) and are shared with the dry-run simulator, so a simulated verdict and an enforced one can never disagree.
 
 ### Phase 3: the atomic reservation
 
@@ -220,17 +235,24 @@ Row-level locking means the second `UPDATE` re-evaluates its `WHERE` clause agai
 
 ```js
 if (!updated) {
+  // Could be exhausted mid-race; check to give a precise error
   const [fresh] = await sql`
     SELECT budget_usdc, spent_usdc FROM payment_sessions WHERE id = ${session.id}
   `;
   const remaining = fresh ? BigInt(fresh.budget_usdc) - BigInt(fresh.spent_usdc) : 0n;
-  throw new SpendGovernorError(
-    'insufficient_budget',
-    `Insufficient session budget. Need $${atomicsToUsd(amount)}, remaining $${atomicsToUsd(remaining)}`,
-    { need_usd: atomicsToUsd(amount), remaining_usd: atomicsToUsd(remaining) },
+  // The SQL predicate already decided; budgetVerdict only phrases the failure,
+  // using the same wording the simulator shows for a predicted shortfall.
+  throwVerdict(
+    budgetVerdict(amount, remaining) ?? {
+      code: 'insufficient_budget',
+      message: 'Session was not active when the payment was reserved',
+      detail: { need_usd: atomicsToUsd(amount), remaining_usd: atomicsToUsd(remaining) },
+    },
   );
 }
 ```
+
+`throwVerdict` raises a `SpendGovernorError` carrying the machine-readable `code` the API layer maps to a status (`insufficient_budget` becomes a `402`).
 
 No advisory locks, no transaction retry loop, no distributed lock service. One statement whose `WHERE` clause is the invariant. If you take one thing from this article, take this: **write the budget check as a predicate in the `UPDATE`, not as a `SELECT` before it.**
 
@@ -395,14 +417,24 @@ It gets back the result it wanted plus the receipt it did not ask for: amount, n
 A budget is debited from the developer's credit balance the moment the session is created, which means an expiry that just marks a row `expired` quietly keeps their money. A sweep runs every five minutes and refunds the difference:
 
 ```js
-const allExpired = await sql`
-  UPDATE payment_sessions
+const expiredRows = await sql`
+  WITH due AS (
+    SELECT id FROM payment_sessions
+    WHERE status = 'active'
+      AND expires_at < now()
+    ORDER BY expires_at ASC
+    LIMIT ${BATCH_LIMIT}
+    FOR UPDATE SKIP LOCKED
+  )
+  UPDATE payment_sessions s
   SET status = 'expired', updated_at = now()
-  WHERE status = 'active'
-    AND expires_at < now()
-  RETURNING id, user_id, budget_usdc, spent_usdc
+  FROM due
+  WHERE s.id = due.id
+  RETURNING s.id, s.user_id, s.budget_usdc, s.spent_usdc
 `;
 ```
+
+The batch limit lives inside the `UPDATE` rather than in a JS slice of the result, and that is not a detail. An unbounded `UPDATE` flips every due session to `expired` while only the sliced head is ever refunded, and the remainder is then invisible to the next tick, which only looks at `status = 'active'`. Whatever this tick does not claim stays active and is swept next time. `FOR UPDATE SKIP LOCKED` keeps concurrent ticks on disjoint rows.
 
 Then, per row, with an idempotency key derived from the session id so overlapping ticks cannot double-refund:
 
@@ -435,12 +467,12 @@ An autonomous agent with a private key is a liability you cannot bound. An auton
 
 ## Resources
 
-- **Source:** [`api/pay/execute.js`](https://github.com/nirholas/three.ws/blob/main/api/pay/execute.js) is the request path, [`api/_lib/pay/spend-governor.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/spend-governor.js) is the governor, [`api/_lib/pay/payment-session.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/payment-session.js) is the lifecycle
+- **Source:** [`api/pay/execute.js`](https://github.com/nirholas/three.ws/blob/main/api/pay/execute.js) is the request path, [`api/_lib/pay/spend-governor.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/spend-governor.js) is the governor, [`api/_lib/pay/policy.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/policy.js) holds the shared policy predicates, [`api/_lib/pay/payment-session.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/payment-session.js) is the lifecycle, and [`api/cron/payment-session-sweep.js`](https://github.com/nirholas/three.ws/blob/main/api/cron/payment-session-sweep.js) is the expiry-and-refund sweep
 - **MCP server:** [`@three-ws/agentcore-payments-mcp`](https://github.com/nirholas/three.ws/tree/main/packages/agentcore-payments-mcp)
 - **x402:** [x402.org](https://www.x402.org), the HTTP-native pay-per-call standard the payments settle over
 - **Model Context Protocol:** [modelcontextprotocol.io](https://modelcontextprotocol.io)
-- **Our previous Builder Center article:** [How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3](https://builder.aws.com/content/3ESpll50BdSp9eiCEIxcfG9pGUN/how-we-metered-a-saas-product-through-aws-marketplace-with-the-aws-sdk-for-javascript-v3), which covers the other half of this: how the credits that fund a session get billed to an AWS invoice
+- **Our previous Builder Center article:** [How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3](https://builder.aws.com/content/3ESpll50BdSp9eiCEIxcfG9pGUN/how-we-metered-a-saas-product-through-aws-marketplace-with-the-aws-sdk-for-javascript-v3), which covers the other half of this: how an AWS Marketplace subscription resolves into the same access check that grants a session
 
 ---
 
-*three.ws is a verified AWS Partner and an open-source platform for 3D AI agents and on-chain communities, available on AWS Marketplace with AWS billing wired into its metered API. Live at [three.ws](https://three.ws).*
+*three.ws is a verified AWS Partner and an open-source platform for 3D AI agents and on-chain communities, with an AWS Marketplace listing built and awaiting publication. Live at [three.ws](https://three.ws).*

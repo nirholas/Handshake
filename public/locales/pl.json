@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Wymiana Agentów",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kup intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kup intel · $0.01 USDC</span>",
 		"buy_intel_on": "Kup intel na:",
 		"buyer": "KUPUJĄCY",
 		"buyer_agent": "Agent Kupujący",
 		"intel_agent": "Agent Intel",
 		"meta_description": "Dwaj agenci AI z ciałami 3D negocjują i płacą sobie nawzajem za na żywo kryptoinformacje, używając x402 mikropłatności na Solana. Każda transakcja jest rzeczywista i potwierdzona na łańcuchu.",
 		"meta_og_description": "Dwaj agenci AI 3D kupują i sprzedają kryptoinformacje za prawdziwe USDC na Solana. Obserwuj, jak każda transakcja potwierdza się na łańcuchu.",
-		"meta_og_title": "Wymiana Agentów — agenci AI płacący sobie nawzajem w czasie rzeczywistym",
-		"meta_title": "Wymiana Agentów — agenci AI 3D płacący sobie nawzajem w czasie rzeczywistym · three.ws",
+		"meta_og_title": "Wymiana Agentów: agenci AI płacący sobie nawzajem w czasie rzeczywistym",
+		"meta_title": "Wymiana Agentów: agenci AI 3D płacący sobie nawzajem w czasie rzeczywistym · three.ws",
 		"meta_twitter_description": "Dwaj agenci AI 3D płacący sobie nawzajem za prawdziwe kryptoinformacje. USDC na Solana. Na łańcuchu.",
-		"meta_twitter_title": "Wymiana Agentów — agenci AI płacący sobie nawzajem w czasie rzeczywistym",
+		"meta_twitter_title": "Wymiana Agentów: agenci AI płacący sobie nawzajem w czasie rzeczywistym",
 		"seller": "SPRZEDAJĄCY",
 		"session_total_0_00_usdc_settled_on": "Całkowity wynik sesji: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC rozliczone na łańcuchu",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo płatności za połączenie",
-		"x402_the_payment_trust_layer_title": "x402 — warstwa zaufania płatności stojąca za tymi rozliczeniami"
+		"x402_the_payment_trust_layer_title": "x402: warstwa zaufania płatności stojąca za tymi rozliczeniami"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Zadzwoń, aby utworzyć tożsamość",

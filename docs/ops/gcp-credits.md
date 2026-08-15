@@ -1376,13 +1376,18 @@ Live progress after the 2026-07-07 reauth:
   provisions its own publisher on the first real threshold crossing, so the
   end-to-end path does not depend on that manual grant; the synthetic-publish test
   above already proves subscription → webhook.
-- **BigQuery billing export: dataset pre-created.** `billing_export` (location `US`)
-  now exists in `aerial-vehicle-466722-p5` — the owner's remaining step is only to
-  **select it** in Billing → Billing export → BigQuery export (still console-only;
-  no gcloud/API path exists, confirmed this session). Once selected, BigQuery
-  auto-creates `gcp_billing_export_v1_01B467_A61905_9A97D2` and the burn report /
-  dashboard / cron begin reporting. `burn-report.mjs` currently degrades correctly
-  to "billing export table not found" against the empty dataset.
+- **BigQuery billing export: dataset pre-created, export still not selected.**
+  `billing_export` (location `US`) exists in `aerial-vehicle-466722-p5` and the
+  service env now carries `GOOGLE_CLOUD_PROJECT`, `GCP_BILLING_DATASET` and
+  `GCP_BILLING_ACCOUNT_ID`, so the config resolves a table name. The owner's
+  remaining step is only to **select the dataset** in Billing → Billing export →
+  BigQuery export (still console-only; no gcloud/API path exists, re-confirmed
+  2026-08-15). Until that click lands, `gcp_billing_export_v1_01B467_A61905_9A97D2`
+  does not exist and every read of it returns a BigQuery 404. Both readers report
+  that as the not-wired state and name the console step:
+  `scripts/gcp/burn-report.mjs` exits 3 with the enable instruction, and the daily
+  cron answers `{ok:true, configured:false, reason:"export_table_missing"}` and
+  posts the deduped "billing export not wired" notice.
 - **Attribution labels: applied** (`label-resources.sh --apply`): all 9 Cloud Run
   services + both buckets carry `program=gcp-credits` and a lane
   (`forge-gpu` for the model/editing workers, `platform` for agent-sniper /
@@ -1405,14 +1410,16 @@ cron begins posting. Until then, per-lane app-side telemetry lives in the
 Program budget targets for the alerts: Claude-on-Vertex $40-60k, GPU
 fleet $15–25k, Imagen $3–5k, vanity/observability/misc ~$5k.
 
-**Two remaining owner actions to fully activate prompt-07 ops:**
+**Two remaining owner actions to fully activate prompt-07 ops** (env state verified
+on the `three-ws-api` Cloud Run service 2026-08-15, not Vercel):
 1. Billing → Billing export → BigQuery export → select the `billing_export` dataset
-   (already created); then set `GCP_BILLING_DATASET=billing_export`,
-   `GCP_BILLING_ACCOUNT_ID=01B467-A61905-9A97D2`, `GCP_CREDIT_TOTAL_USD=100000`,
-   `GCP_CREDIT_EXPIRY=<date>` in Vercel + `.env`.
-2. Set `TELEGRAM_BOT_TOKEN` + `TELEGRAM_ALERTS_CHAT_ID` in Vercel prod so budget
-   alerts (subscription already delivering) and the daily cron actually ping the ops
-   chat instead of no-op'ing.
+   (already created). `GCP_BILLING_DATASET`, `GCP_BILLING_ACCOUNT_ID` and
+   `GCP_CREDIT_TOTAL_USD` are already set on the service; `GCP_CREDIT_EXPIRY` is
+   not, so the projection reports runway without an expiry comparison until it is.
+2. Set `TELEGRAM_ALERTS_CHAT_ID` on the service so budget alerts and the daily cron
+   ping the private ops chat. `TELEGRAM_BOT_TOKEN` is already set, so alerts
+   currently land in the `ops_alerts` dashboard sink only, which is the module's
+   intended default rather than a fault.
 
 _Spend-observability section last verified against source: 2026-07-07 (later session)._
 

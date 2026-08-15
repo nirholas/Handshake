@@ -19,7 +19,7 @@
 //   /api/oracle/signal       `count: 0` to an autonomous agent, which reads it
 //                            as a verdict and stands down
 //   /api/oracle/social       `ok: true` with `mints_updated: 0` next to a
-//                            populated `updated` array — a receipt for a write
+//                            populated `updated` array: a receipt for a write
 //                            that never landed
 //   /api/oracle/stats        "0 coins scored, 0 armed agents", cached 60s, on
 //                            the oracle landing hero

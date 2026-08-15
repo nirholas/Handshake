@@ -158,7 +158,7 @@
 		},
 		{
 			"name": "gcp-triage",
-			"description": "Monitor three.ws production on Google Cloud Run and fix what the sweep finds. Use when the user asks to check production, diagnose an outage or error, \"what's wrong with three.ws\", read production logs, or run the monitoring loop. Runs the triage monitor (healthz + all-service log sweep + known-signature classification), then applies the fixes each class allows.",
+			"description": "Monitor three.ws production on Google Cloud Run and fix what the sweep finds. Use when the user asks to check production, diagnose an outage or error, \"what's wrong with three.ws\", read production logs, or run the monitoring loop. Broad questions get the deep sweep (healthz + all-service logs + version, TLS, fleet readiness, live pages, crons, DB migrations, wallets), then the fixes each class allows.",
 			"whenToUse": "Production health checks, log diagnosis, error triage, and the recurring monitor-and-fix loop. For a raw log view only, `npm run logs` is enough without this skill.",
 			"category": "ops/production",
 			"origin": "three.ws",

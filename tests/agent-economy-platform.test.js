@@ -45,12 +45,12 @@ describe('platformEconomyStats', () => {
 			],
 			// top providers (one public w/ avatar, one private)
 			[
-				{ agent_id: 'p1', name: 'Oracle', is_public: true, thumb_key: 'thumb/p1.png', avatar_vis: 'public', earned_usd: 800, hires: 200, avg_rating: 4.6 },
-				{ agent_id: 'p2', name: 'Nova', is_public: false, thumb_key: 'thumb/p2.png', avatar_vis: 'private', earned_usd: 300, hires: 90, avg_rating: null },
+				{ agent_id: 'p1', name: 'Oracle', linkable: true, thumb_key: 'thumb/p1.png', avatar_vis: 'public', earned_usd: 800, hires: 200, avg_rating: 4.6 },
+				{ agent_id: 'p2', name: 'Nova', linkable: false, thumb_key: 'thumb/p2.png', avatar_vis: 'private', earned_usd: 300, hires: 90, avg_rating: null },
 			],
 			// top hirers
 			[
-				{ agent_id: 'h1', name: 'Trader', is_public: true, thumb_key: null, avatar_vis: null, spent_usd: 500, hires: 120 },
+				{ agent_id: 'h1', name: 'Trader', linkable: true, thumb_key: null, avatar_vis: null, spent_usd: 500, hires: 120 },
 			],
 			// recent
 			[
@@ -91,6 +91,23 @@ describe('platformEconomyStats', () => {
 		// and public), so a private or deleted agent is named but not linked.
 		expect(r.recent[0].hirer).toEqual({ agent_id: 'h1', name: 'Trader', url: '/agent/h1' });
 		expect(r.recent[0].provider).toEqual({ agent_id: 'p1', name: 'Oracle', url: null });
+	});
+
+	it('never links a leaderboard row whose agent identity is gone', async () => {
+		// A deleted agent leaves no `agent_identities` row, so the LEFT JOIN yields
+		// a NULL name and no `linkable` flag. Linking it anyway sent readers to a
+		// hollow /agent/<id> page, the exact failure the settled-hire feed already
+		// guarded against.
+		queue.push(
+			[{}], // totals
+			[],   // daily
+			[{ agent_id: 'ghost', name: 'Agent', linkable: false, thumb_key: null, avatar_vis: null, earned_usd: 12.5, hires: 1, avg_rating: null }],
+			[{ agent_id: 'ghost', name: 'Agent', linkable: false, thumb_key: null, avatar_vis: null, spent_usd: 3, hires: 1 }],
+			[],   // recent
+		);
+		const r = await platformEconomyStats();
+		expect(r.top_providers[0]).toMatchObject({ agent_id: 'ghost', name: 'Agent', url: null, earned_usd: 12.5 });
+		expect(r.top_hirers[0]).toMatchObject({ agent_id: 'ghost', name: 'Agent', url: null, spent_usd: 3 });
 	});
 
 	it('derives recent USD from atomics when the usd column is null', async () => {

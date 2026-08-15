@@ -12,6 +12,7 @@ import {
 	resolveBillingConfig,
 	billingConfigured,
 	BillingUnavailableError,
+	BillingExportMissingError,
 	usd,
 } from '../api/_lib/gcp-billing.js';
 
@@ -160,6 +161,30 @@ describe('resolveBillingConfig', () => {
 		});
 		expect(cfg.creditTotalUsd).toBe(100_000);
 		expect(cfg.creditExpiry.toISOString().slice(0, 10)).toBe('2027-07-01');
+	});
+});
+
+describe('BillingExportMissingError', () => {
+	// The burn cron branches on this type to tell "one console step short of
+	// wired" apart from a real BigQuery or auth fault. Getting the hierarchy
+	// wrong in either direction is a live bug: too narrow and every existing
+	// `instanceof BillingUnavailableError` catch stops firing, too wide and the
+	// cron pages ops daily about a step no retry can complete.
+	it('is catchable as a BillingUnavailableError', () => {
+		const err = new BillingExportMissingError('Billing export table not found: nope');
+		expect(err).toBeInstanceOf(BillingUnavailableError);
+		expect(err).toBeInstanceOf(Error);
+	});
+
+	it('carries a code distinct from a generic billing outage', () => {
+		expect(new BillingExportMissingError('x').code).toBe('billing_export_missing');
+		expect(new BillingUnavailableError('x').code).toBe('billing_unavailable');
+		expect(new BillingUnavailableError('x')).not.toBeInstanceOf(BillingExportMissingError);
+	});
+
+	it('keeps the underlying cause when one is given', () => {
+		const cause = new Error('404 from BigQuery');
+		expect(new BillingExportMissingError('missing', cause).cause).toBe(cause);
 	});
 });
 

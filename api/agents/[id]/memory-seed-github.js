@@ -11,6 +11,7 @@
 
 import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
+import { requireCsrf } from '../../_lib/csrf.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { llmComplete } from '../../_lib/llm.js';
@@ -115,11 +116,12 @@ async function handleGet(req, res, agentId) {
 
 async function handlePost(req, res, agentId) {
 	const userId = await requireOwnedAgent(req, agentId);
-
-	// The seed budget is consumed only after ownership is proven, so a signed-in
-	// stranger cannot burn another agent's window by guessing its id.
-	const rl = await limits.githubSeed(agentId);
-	if (!rl.success) return rateLimited(res, rl, 'this agent can only be re-seeded every 6 hours');
+	// Session-cookie POSTs rewrite this agent's seeded memories, so a cross-site
+	// form post must not be able to drive one. Bearer callers are exempt inside
+	// requireCsrf. Every sibling memory mutator (memory-seed-x, -farcaster, the
+	// preset memory-seed, agent-memory) gates the same way; this route was the
+	// one that did not.
+	if (!(await requireCsrf(req, res, userId))) return;
 
 	const conn = await githubConnection(userId);
 	if (!conn) {
@@ -151,6 +153,19 @@ async function handlePost(req, res, agentId) {
 		);
 	}
 
+	// The budget is consumed here, once the selection is known good and just
+	// before the parts that actually cost something: the README reads, the LLM
+	// pass, and the rewrite of this agent's memories. Charging it earlier meant a
+	// user who ticked nothing, or whose catalog had gone stale since it loaded,
+	// spent their whole 6-hour window on a 400 and could not correct the mistake
+	// until it expired. Ownership is already proven above, so a signed-in
+	// stranger still cannot burn another agent's window by guessing its id, and
+	// the reads that precede this point are the same ones GET already serves
+	// unbudgeted. Farcaster keeps its signing challenge outside the budget for
+	// the same reason.
+	const rl = await limits.githubSeed(agentId);
+	if (!rl.success) return rateLimited(res, rl, 'this agent can only be re-seeded every 6 hours');
+
 	const readmes = new Map();
 	for (const key of resolved.readmeKeys) {
 		const markdown = await fetchReadme(token, key);
@@ -158,11 +173,33 @@ async function handlePost(req, res, agentId) {
 	}
 
 	const document = buildSeedDocument(resolved, readmes);
-	const { text: raw } = await llmComplete({
-		maxTokens: 1500,
-		system: SEED_SYSTEM_PROMPT,
-		user: `Extract up to ${MAX_FACTS} memory facts from this GitHub material:\n\n${document}`,
-	});
+	// llmComplete walks the whole provider chain before it gives up, so a throw
+	// here means every lane was busy or down at once, not a bug in this route.
+	// Left uncaught it reached the client as a bare "internal error, quote ref …"
+	// and paged ops as an unhandled 5xx on what is a routine upstream throttle.
+	// The budget above is already spent by this point and this abstraction has no
+	// refund, so the reply says plainly when the next attempt is allowed instead
+	// of inviting a retry that would only earn a 429.
+	let raw;
+	try {
+		({ text: raw } = await llmComplete({
+			maxTokens: 1500,
+			system: SEED_SYSTEM_PROMPT,
+			user: `Extract up to ${MAX_FACTS} memory facts from this GitHub material:\n\n${document}`,
+		}));
+	} catch (err) {
+		const retryAt = rl.reset ? new Date(rl.reset).toISOString() : null;
+		const minutes = rl.reset ? Math.max(1, Math.ceil((rl.reset - Date.now()) / 60_000)) : null;
+		return error(
+			res,
+			503,
+			'distill_unavailable',
+			`every model provider is busy right now, so nothing was seeded and your memories are unchanged${
+				minutes ? `. This agent can be seeded again in about ${minutes} minute${minutes === 1 ? '' : 's'}` : '. Try this agent again later'
+			}`,
+			{ retry_at: retryAt, providers_tried: err?.attempts?.map((a) => a.provider) ?? [] },
+		);
+	}
 	const facts = parseFacts(raw);
 	const seededAt = new Date().toISOString();
 	const manifest = selectionManifest(resolved);
@@ -208,7 +245,8 @@ async function handlePost(req, res, agentId) {
 // ── DELETE — revoke this agent's seeded memories ─────────────────────────────
 
 async function handleDelete(req, res, agentId) {
-	await requireOwnedAgent(req, agentId);
+	const userId = await requireOwnedAgent(req, agentId);
+	if (!(await requireCsrf(req, res, userId))) return;
 	const deleted = await sql`
 		DELETE FROM agent_memories
 		WHERE agent_id = ${agentId} AND context->>'source' = 'github_seed'

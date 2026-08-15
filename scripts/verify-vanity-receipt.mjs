@@ -140,12 +140,37 @@ function openSealed(env, secretKey) {
 	return gcm(key, fromB64url(env.nonce), epk).decrypt(fromB64url(env.ciphertext));
 }
 
+const HELP = `Provably-fair vanity receipt verifier (three-vanity/v1).
+
+Recomputes every claim in a three.ws verifiable-grind receipt locally: the
+commitment opens, the seed mix derives the address, the pattern matches, the
+difficulty is honest, and the signature is the pinned three.ws service key.
+Nothing is sent anywhere. Exit 0 = every check passed, 1 = any failed.
+
+Usage:
+  node scripts/verify-vanity-receipt.mjs <receipt.json> [options]
+  cat receipt.json | node scripts/verify-vanity-receipt.mjs --stdin
+
+Options:
+  --stdin                 read the receipt JSON from stdin
+  --service-key <base58>  pin to this service key (default: the receipt's own key;
+                          pass the key from /.well-known/three-vanity.json to
+                          prove the signer is really three.ws)
+  --fetch-key             fetch and pin the live key from the well-known document
+  --x25519-secret <key>   your X25519 private key (Base58/hex) to open the seal
+  --secret-seed <hexkey>  a 32/64-byte Ed25519 secret you already opened
+  --json                  emit the machine-readable audit as JSON
+  -h, --help              show this help
+
+Protocol spec: https://three.ws/docs/PROTOCOL-vanity`;
+
 function parseArgs(args) {
-	const opts = { json: false, stdin: false, fetchKey: false };
+	const opts = { json: false, stdin: false, fetchKey: false, help: false };
 	let path = null;
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i];
-		if (a === '--json') opts.json = true;
+		if (a === '--help' || a === '-h') opts.help = true;
+		else if (a === '--json') opts.json = true;
 		else if (a === '--stdin') opts.stdin = true;
 		else if (a === '--fetch-key') opts.fetchKey = true;
 		else if (a === '--service-key') opts.serviceKey = args[++i];
@@ -224,13 +249,25 @@ function runChecks(receipt, { servicePublicKey, openedSecretSeed }) {
 
 async function main() {
 	const { path, opts } = parseArgs(argv.slice(2));
+	if (opts.help) {
+		console.log(HELP);
+		exit(0);
+	}
 	let raw;
 	if (opts.stdin || (!path && !process.stdin.isTTY)) {
 		raw = await readStdin();
 	} else if (path) {
 		raw = readFileSync(path, 'utf8');
 	} else {
-		console.error('Usage: verify-vanity-receipt.mjs <receipt.json> [--stdin] [--service-key K] [--fetch-key] [--x25519-secret K] [--json]');
+		console.error(HELP);
+		exit(1);
+	}
+
+	// An empty read is "you gave me no receipt", not "your JSON is malformed".
+	// Piping from an empty pipe lands here, and the parser's message for it
+	// sends the reader hunting for a syntax error that does not exist.
+	if (!raw.trim()) {
+		console.error(`${RED}No receipt on stdin.${RESET}\n\n${HELP}`);
 		exit(1);
 	}
 

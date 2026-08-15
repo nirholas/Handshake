@@ -45,7 +45,7 @@ If you have `prefers-reduced-motion` turned on, the page never auto-plays: signi
 
 The **Avatar** setting's third pill (`Your avatar…`) opens the three.ws avatar gallery: your own avatars and every public one. Pick one and it takes the hero's place immediately, keeping the speed and signing hand you already set.
 
-It works because signs are anatomy, not coordinates. A sign says "index fingertip on the chin", and the solver measures your avatar's skeleton to find where its chin is, so the same entry lands correctly on a tall rig, a short one, long fingers or small hands. Nothing about the vocabulary is per-avatar, which is also why the [clips retarget](#how-it-works) instead of being rebuilt.
+It works because signs are anatomy, not coordinates. A sign says "index fingertip on the chin", and the solver measures your avatar's skeleton to find where its chin is, so the same entry lands correctly on a tall rig, a short one, long fingers or small hands. Nothing about the vocabulary is per-avatar, which is also why the [clips retarget](#part-3-how-it-works) instead of being rebuilt.
 
 Once picked, the avatar is remembered on that device and is already on stage on [/asl-alphabet](https://three.ws/asl-alphabet) too. Click its pill again to swap to a different one; the built-in pills switch back without a trip through the gallery.
 
@@ -213,10 +213,13 @@ const clip = buildFingerspellingClip('HELLO', { marks });
 
 ## Install it as a package
 
-The whole engine ships as [`@three-ws/sign-language`](https://www.npmjs.com/package/@three-ws/sign-language) with **zero runtime dependencies**: no three.js, no DOM, no network. It compiles signing in a browser, in Node, or in a worker.
+The whole engine is packaged as `@three-ws/sign-language` with **zero runtime dependencies**: no three.js, no DOM, no network. It compiles signing in a browser, in Node, or in a worker.
+
+The registry publish is still queued, so `npm install @three-ws/sign-language` resolves to nothing today. Until it lands, install the package directory out of a clone of this repository; the import path and every export below are already the published ones:
 
 ```bash
-npm install @three-ws/sign-language
+git clone https://github.com/nirholas/three.ws
+npm install ./three.ws/packages/sign-language
 ```
 
 ```js
@@ -249,9 +252,9 @@ curl -s "https://three.ws/api/sign?text=happy+to+meet+you" | jq '.timeline'
     "letters": [ { "letter": "T", "start": 1.64, "end": 2.14 },
                  { "letter": "O", "start": 2.14, "end": 2.64 } ] },
   { "word": "MEET",  "signed": true,  "gloss": "Two upright index fingers come together.",
-    "start": 2.82, "end": 3.98, "letters": null },
+    "start": 2.82, "end": 3.58, "letters": null },
   { "word": "YOU",   "signed": true,  "gloss": "Index finger points at the person addressed.",
-    "start": 4.16, "end": 5.0,  "letters": null }
+    "start": 3.76, "end": 4.64, "letters": null }
 ]
 ```
 
@@ -493,7 +496,7 @@ None of this replaces a human interpreter. It makes an avatar legible to signers
 1. **Captured signs**: clips from real signers (commissioned, community capture through [Motion Swap](https://three.ws/motion-swap), permissively licensed video) replacing authored entries word by word, through the same dictionary interface.
 2. **Word-level sign recognition**: the current recognizer reads fingerspelling; a 250-sign vocabulary model (MIT architecture retrained on the CC BY 4.0 PopSign corpus) will let common signs be recognized directly.
 3. **Review by Deaf signers**: the vocabulary is authored, not validated. Growing it past a core set should follow review and capture, not more authoring.
-4. **Standalone package**: the engines are platform-free by design and will ship as an npm package plus reference integration.
+4. **Standalone package on npm**: the engine is already packaged and installable from a clone ([Install it as a package](#install-it-as-a-package)); publishing `@three-ws/sign-language` to the public registry is what remains.
 
 ## Related
 

@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Borza agentov",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kúpiť intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kúpiť intel · $0.01 USDC</span>",
 		"buy_intel_on": "Kúpiť intel na:",
 		"buyer": "KUPUJÚCI",
 		"buyer_agent": "Kupujúci agent",
 		"intel_agent": "Intel agent",
 		"meta_description": "Dva AI agenti s 3D telami vyjednávajú a platia si navzájom za živé kryptoinformácie pomocou x402 mikroplatieb na Solana. Každá transakcia je skutočná a potvrdená na blockchaine.",
 		"meta_og_description": "Dva 3D AI agenti kupujú a predávajú kryptoinformácie za reálne USDC na Solana. Sledujte, ako sa každá transakcia potvrdí na blockchaine.",
-		"meta_og_title": "Agent Exchange — AI agenti si navzájom platia v reálnom čase",
-		"meta_title": "Agent Exchange — 3D AI agenti si navzájom platia v reálnom čase · three.ws",
+		"meta_og_title": "Agent Exchange: AI agenti si navzájom platia v reálnom čase",
+		"meta_title": "Agent Exchange: 3D AI agenti si navzájom platia v reálnom čase · three.ws",
 		"meta_twitter_description": "Dva 3D AI agenti si navzájom platia za reálne kryptoinformácie. USDC na Solana. Na blockchaine.",
-		"meta_twitter_title": "Agent Exchange — AI agenti si navzájom platia v reálnom čase",
+		"meta_twitter_title": "Agent Exchange: AI agenti si navzájom platia v reálnom čase",
 		"seller": "PREDAJCA",
 		"session_total_0_00_usdc_settled_on": "Celkový súčet relácie: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC vyrovnané na blockchaine",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo platby za hovor",
-		"x402_the_payment_trust_layer_title": "x402 — vrstva dôvery v platby za týmito vyrovnaniami"
+		"x402_the_payment_trust_layer_title": "x402: vrstva dôvery v platby za týmito vyrovnaniami"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Zavolať create_identity",

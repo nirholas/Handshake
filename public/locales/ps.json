@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span> ایجنټ تبادله",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\"> استخبارات وپیرئ — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\"> استخبارات وپیرئ · $0.01 USDC</span>",
 		"buy_intel_on": "پر دې استخبارات وپیرئ:",
 		"buyer": "پیرودونکی",
 		"buyer_agent": "پیرودونکی ایجنټ",
 		"intel_agent": "استخباراتي ایجنټ",
 		"meta_description": "دوه AI ایجنټونه د 3D بدنونو سره د x402 مایکرو تادیاتو په کارولو سره په Solana کې د ژوندي کریپټو استخباراتو لپاره له یو بل سره خبرې کوي او تادیه کوي. هره معامله ریښتینې ده او په زنځیر کې تایید شوې.",
 		"meta_og_description": "دوه 3D AI ایجنټونه په Solana کې د ریښتیني USDC لپاره کریپټو استخبارات اخلي او پلوري. هره معامله په زنځیر کې تایید کړئ.",
-		"meta_og_title": "ایجنټ تبادله — AI ایجنټونه په ریښتیني وخت کې یو بل ته تادیه کوي",
-		"meta_title": "ایجنټ تبادله — 3D AI ایجنټونه په ریښتیني وخت کې یو بل ته تادیه کوي · three.ws",
+		"meta_og_title": "ایجنټ تبادله: AI ایجنټونه په ریښتیني وخت کې یو بل ته تادیه کوي",
+		"meta_title": "ایجنټ تبادله: 3D AI ایجنټونه په ریښتیني وخت کې یو بل ته تادیه کوي · three.ws",
 		"meta_twitter_description": "دوه 3D AI ایجنټونه د ریښتیني کریپټو استخباراتو لپاره یو بل ته تادیه کوي. USDC په Solana کې. په زنځیر کې.",
-		"meta_twitter_title": "ایجنټ تبادله — AI ایجنټونه په ریښتیني وخت کې یو بل ته تادیه کوي",
+		"meta_twitter_title": "ایجنټ تبادله: AI ایجنټونه په ریښتیني وخت کې یو بل ته تادیه کوي",
 		"seller": "پلورونکی",
 		"session_total_0_00_usdc_settled_on": "د سیشن ټولیز: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC په زنځیر کې حل شو",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 د هر کال په بدل کې د تادیې ډیمو",
-		"x402_the_payment_trust_layer_title": "x402 — د دې تصفیو تر شا د تادیاتو د باور طبقه"
+		"x402_the_payment_trust_layer_title": "x402: د دې تصفیو تر شا د تادیاتو د باور طبقه"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity ته زنګ ووهئ",

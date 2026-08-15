@@ -459,11 +459,15 @@ export async function platformEconomyStats({
 			ORDER BY 1 ASC
 		`;
 
+		// Both leaderboards compute `linkable` in SQL for the same reason the
+		// settled-hire feed below does: a deleted agent leaves no `agent_identities`
+		// row at all, so its `is_public` reads NULL, and treating NULL as "public"
+		// handed every deleted earner a leaderboard link to a hollow /agent/<id>.
 		const providerRows = await sql`
 			SELECT
 				h.provider_agent_id                                        AS agent_id,
 				COALESCE(ai.name, 'Agent')                                 AS name,
-				ai.is_public                                               AS is_public,
+				(ai.id IS NOT NULL AND ai.is_public IS NOT FALSE)          AS linkable,
 				av.thumbnail_key                                           AS thumb_key,
 				av.visibility                                              AS avatar_vis,
 				COALESCE(SUM(h.usd), 0)                                    AS earned_usd,
@@ -475,7 +479,7 @@ export async function platformEconomyStats({
 			WHERE h.status = 'completed'
 			  AND h.provider_agent_id IS NOT NULL
 			  AND h.completed_at > now() - (${win} || ' days')::interval
-			GROUP BY h.provider_agent_id, ai.name, ai.is_public, av.thumbnail_key, av.visibility
+			GROUP BY h.provider_agent_id, ai.id, ai.name, ai.is_public, av.thumbnail_key, av.visibility
 			ORDER BY earned_usd DESC
 			LIMIT ${top}
 		`;
@@ -484,7 +488,7 @@ export async function platformEconomyStats({
 			SELECT
 				h.hirer_agent_id                                           AS agent_id,
 				COALESCE(ai.name, 'Agent')                                 AS name,
-				ai.is_public                                               AS is_public,
+				(ai.id IS NOT NULL AND ai.is_public IS NOT FALSE)          AS linkable,
 				av.thumbnail_key                                           AS thumb_key,
 				av.visibility                                              AS avatar_vis,
 				COALESCE(SUM(h.usd), 0)                                    AS spent_usd,
@@ -494,7 +498,7 @@ export async function platformEconomyStats({
 			LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
 			WHERE h.status = 'completed'
 			  AND h.completed_at > now() - (${win} || ' days')::interval
-			GROUP BY h.hirer_agent_id, ai.name, ai.is_public, av.thumbnail_key, av.visibility
+			GROUP BY h.hirer_agent_id, ai.id, ai.name, ai.is_public, av.thumbnail_key, av.visibility
 			ORDER BY spent_usd DESC
 			LIMIT ${top}
 		`;
@@ -540,7 +544,7 @@ export async function platformEconomyStats({
 			top_providers: providerRows.map((r) => ({
 				agent_id: r.agent_id,
 				name: r.name || 'Agent',
-				url: r.is_public !== false ? `/agent/${r.agent_id}` : null,
+				url: r.linkable && r.agent_id ? `/agent/${r.agent_id}` : null,
 				avatar_thumbnail_url: avatarThumb(r.thumb_key, r.avatar_vis),
 				earned_usd: Number(r.earned_usd || 0),
 				hires: Number(r.hires || 0),
@@ -549,7 +553,7 @@ export async function platformEconomyStats({
 			top_hirers: hirerRows.map((r) => ({
 				agent_id: r.agent_id,
 				name: r.name || 'Agent',
-				url: r.is_public !== false ? `/agent/${r.agent_id}` : null,
+				url: r.linkable && r.agent_id ? `/agent/${r.agent_id}` : null,
 				avatar_thumbnail_url: avatarThumb(r.thumb_key, r.avatar_vis),
 				spent_usd: Number(r.spent_usd || 0),
 				hires: Number(r.hires || 0),

@@ -12,7 +12,7 @@ A **Payment Session** is a budget envelope you fund once from your three.ws cred
 
 ```bash
 # Configure
-export THREE_WS_SESSION="__Host-sid=<your-session-cookie>"
+export THREE_WS_SESSION="<the value of your __Host-sid cookie>"
 export PAYMENT_SESSION_TOKEN="pss_<session-id>_<random>"
 
 # Run
@@ -28,7 +28,7 @@ MCP client config (`~/.cursor/mcp.json`, Claude Desktop, etc.):
       "command": "npx",
       "args": ["-y", "@three-ws/agentcore-payments-mcp"],
       "env": {
-        "THREE_WS_SESSION": "__Host-sid=...",
+        "THREE_WS_SESSION": "<the value of your __Host-sid cookie>",
         "PAYMENT_SESSION_TOKEN": "pss_..."
       }
     }
@@ -40,7 +40,7 @@ MCP client config (`~/.cursor/mcp.json`, Claude Desktop, etc.):
 
 | Variable | Required | Description |
 |---|---|---|
-| `THREE_WS_SESSION` | For session management tools | Browser session cookie (`__Host-sid=...`) for creating/listing/cancelling sessions |
+| `THREE_WS_SESSION` | For session management tools | The **value** of your `__Host-sid` browser cookie (no `__Host-sid=` prefix; the server sends the cookie for you) for creating/listing/cancelling sessions |
 | `PAYMENT_SESSION_TOKEN` | For `pay_with_session` default | Bearer token returned when you created a session; passed as the default when no inline token is provided |
 | `THREE_WS_BASE` | No | Base URL (default: `https://three.ws`) |
 | `THREE_WS_TIMEOUT_MS` | No | Request timeout in ms (default: 30000) |
@@ -143,6 +143,31 @@ create (budget debited from credits)
        ├─ exhausted (budget fully consumed)
        ├─ expired (TTL elapsed — cron refunds remaining budget)
        └─ cancelled (manual — remaining budget refunded immediately)
+```
+
+## Programmatic use
+
+The package entry point exports **`TOOLS`** (every tool definition: `name`, `title`,
+`description`, `inputSchema`, `annotations`, `handler`) and **`buildServer()`**, which returns a
+fully-registered `McpServer` with no transport attached. Importing is side-effect free and needs
+no credential, so you can mount these tools inside a host of your own or inspect the surface
+offline; a credential is only required when a handler actually runs.
+
+```js
+// run with: THREE_WS_SESSION=<your __Host-sid value> node this-file.mjs
+import { TOOLS, buildServer } from '@three-ws/agentcore-payments-mcp';
+
+for (const tool of TOOLS) {
+	const kind = tool.annotations.readOnlyHint ? 'read ' : 'write';
+	console.log(`${kind} ${tool.name}`);
+}
+
+// A tool handler is a plain async function against the live API.
+const list = TOOLS.find((t) => t.name === 'list_payment_sessions');
+console.log(await list.handler({ limit: 3 }));
+
+// Or hand the whole registered server to your own MCP transport.
+buildServer();
 ```
 
 ## Security properties

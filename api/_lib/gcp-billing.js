@@ -54,6 +54,21 @@ export class BillingUnavailableError extends Error {
 	}
 }
 
+// The export exists in config but not in BigQuery: the dataset is there and the
+// table name resolves, yet the billing account was never pointed at it. This is
+// a NOT-WIRED state awaiting a one-time owner console action (Billing → Billing
+// export → BigQuery export), not a runtime fault, and callers must be able to
+// tell the two apart: reported as a failure it pages ops every single day about
+// a step no amount of retrying can complete. Subclasses BillingUnavailableError
+// so every existing `instanceof` catch keeps working unchanged.
+export class BillingExportMissingError extends BillingUnavailableError {
+	constructor(message, cause) {
+		super(message, cause);
+		this.name = 'BillingExportMissingError';
+		this.code = 'billing_export_missing';
+	}
+}
+
 function readEnv(name) {
 	return (typeof process !== 'undefined' && process.env?.[name]) || null;
 }
@@ -76,7 +91,7 @@ export function resolveBillingConfig(env = process.env) {
 	}
 	if (!project || !dataset || !table) {
 		throw new BillingUnavailableError(
-			'BigQuery billing export not configured. Set GOOGLE_CLOUD_PROJECT, GCP_BILLING_DATASET, and GCP_BILLING_TABLE (or GCP_BILLING_ACCOUNT_ID). See docs/gcp-credits.md.',
+			'BigQuery billing export not configured. Set GOOGLE_CLOUD_PROJECT, GCP_BILLING_DATASET, and GCP_BILLING_TABLE (or GCP_BILLING_ACCOUNT_ID). See docs/ops/gcp-credits.md.',
 		);
 	}
 
@@ -149,7 +164,7 @@ export async function queryBilling(query, { project, tokenFn = getGcpAccessToken
 		const msg = data?.error?.message || `BigQuery returned ${res.status}`;
 		// A missing dataset/table is the "not wired yet" case, not a hard fault.
 		if (res.status === 404 || /Not found|does not exist/i.test(msg)) {
-			throw new BillingUnavailableError(`Billing export table not found: ${msg}`);
+			throw new BillingExportMissingError(`Billing export table not found: ${msg}`);
 		}
 		throw new BillingUnavailableError(`BigQuery query failed: ${msg}`);
 	}

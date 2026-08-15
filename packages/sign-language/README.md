@@ -101,6 +101,9 @@ npm test         # node --test: guards the published surface + dependency-freene
 npm run example  # compile "happy to meet you" to example/utterance.clip.json
 ```
 
+Both `npm test` and `npm run example` read `dist/`, so each rebuilds it first
+(`pretest` / `preexample`): a fresh clone runs them with no extra step.
+
 Deep engine coverage lives in the monorepo suite (`tests/sign-rig`, `sign-clip`, `sign-dictionary`, `fingerspelling`, `sign-speech`, `sign-goldens`, `sign-linguistics`).
 
 ## Related

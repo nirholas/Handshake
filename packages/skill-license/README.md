@@ -79,12 +79,25 @@ import { verifyLicense } from '@three-ws/skill-license';
 
 const owns = await verifyLicense({
   holder: 'HoLDeRwa11et1111111111111111111111111111111',
-  agent: 'THREEsynthetic1111111111111111111111111111', // agent skill-collection mint
+  agent: 'THREEsynthetic11111111111111111111111111111', // agent skill-collection mint
   skill: 'web-search',
 });
 
 console.log(owns); // → true | false
 ```
+
+A runnable version of this lives in [example/verify-license.mjs](example/verify-license.mjs).
+It hits the live public read endpoint, so it needs no key, no wallet, and no RPC:
+
+```bash
+node example/verify-license.mjs                        # the synthetic placeholders above
+node example/verify-license.mjs <holder> <agentMint> <skill>
+```
+
+The placeholders are clearly synthetic but decode to real 32-byte base58 keys, so
+the snippet runs as written and answers `false` (nothing licensed at that triple).
+An address that is *not* a valid 32-byte key is rejected with a `validation_error`
+(400) before anything touches the chain.
 
 Need the full record, not just a boolean — purchase date, NFT mint, explorer
 link, revoked state:
@@ -94,7 +107,7 @@ import { getLicense } from '@three-ws/skill-license';
 
 const license = await getLicense({
   holder: 'HoLDeRwa11et1111111111111111111111111111111',
-  agent: 'THREEsynthetic1111111111111111111111111111',
+  agent: 'THREEsynthetic11111111111111111111111111111',
   skill: 'web-search',
 });
 if (license?.owned) {
@@ -189,7 +202,10 @@ Idempotent: a second call returns the existing mint.
 | `apiKey` | `string` | Bearer token for the authenticated three.ws account (overrides the client's `apiKey`). |
 
 To point the client at a different origin, construct one with
-`createSkillLicense({ baseUrl })` instead of passing `baseUrl` per call.
+`createSkillLicense({ baseUrl, fetch, apiKey, headers })` instead of passing
+`baseUrl` per call; it returns `{ verifyLicense, getLicense, mintLicense }` bound
+to that configuration. `DEFAULT_BASE_URL` (`https://three.ws`) is exported too,
+and `THREE_WS_BASE_URL` in the environment overrides it without any code change.
 
 **Returns `MintResult`**: `{ nftMint, signature, collection, network, explorer, skill, agentId, purchaseId, alreadyMinted }`.
 
@@ -241,8 +257,13 @@ The program is **Anchor**, id `EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`
 `verifyLicense` and `getLicense` only read public state, so they never need
 credentials. The shapes they surface, straight from the endpoint:
 
+Every rejection is a typed `ThreeWsError` carrying a stable `code`, the HTTP
+`status`, and the parsed `body`; a 402 arrives as `PaymentRequiredError` with the
+x402 challenge on `.accepts`. Both classes are exported.
+
 | State | Meaning | What you get |
 |---|---|---|
+| `validation_error` (400) | `holder` / `agent` isn't a real 32-byte Solana address, or `skill` is empty/over 100 chars. | Rejects before any chain read. |
 | Program not deployed | The `skill_license` program isn't live on this cluster. | `getLicense` → `{ exists: false, owned: false, deployed: false }`; `verifyLicense` → `false`. |
 | No license | The PDA doesn't exist — never purchased. | `getLicense` → `null`; `verifyLicense` → `false`. |
 | Revoked | Refunded — frozen with `revoked_at` set. | `{ exists: true, revoked: true, owned: false }`. |

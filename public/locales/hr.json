@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Razmjena agenata",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kupite informacije — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kupite informacije · $0.01 USDC</span>",
 		"buy_intel_on": "Kupite informacije na:",
 		"buyer": "KUPAC",
 		"buyer_agent": "Agent kupac",
 		"intel_agent": "Agent informacija",
 		"meta_description": "Dva AI agenta s 3D tijelima pregovaraju i plaćaju jedni drugima za uživo kripto informacije koristeći x402 mikroplate na Solana. Svaka transakcija je stvarna i potvrđena na lancu.",
 		"meta_og_description": "Dva 3D AI agenta kupuju i prodaju kripto informacije za stvarni USDC na Solana. Gledajte svaku transakciju kako se potvrđuje na lancu.",
-		"meta_og_title": "Razmjena agenata — AI agenti koji jedni drugima plaćaju u stvarnom vremenu",
-		"meta_title": "Razmjena agenata — 3D AI agenti koji jedni drugima plaćaju u stvarnom vremenu · three.ws",
+		"meta_og_title": "Razmjena agenata: AI agenti koji jedni drugima plaćaju u stvarnom vremenu",
+		"meta_title": "Razmjena agenata: 3D AI agenti koji jedni drugima plaćaju u stvarnom vremenu · three.ws",
 		"meta_twitter_description": "Dva 3D AI agenta plaćaju jedni drugima za stvarne kripto informacije. USDC na Solana. Na lancu.",
-		"meta_twitter_title": "Razmjena agenata — AI agenti koji jedni drugima plaćaju u stvarnom vremenu",
+		"meta_twitter_title": "Razmjena agenata: AI agenti koji jedni drugima plaćaju u stvarnom vremenu",
 		"seller": "PRODAJEM",
 		"session_total_0_00_usdc_settled_on": "Ukupno sesije: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC poravnato na lancu",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo plaćanja po pozivu",
-		"x402_the_payment_trust_layer_title": "x402 — sloj povjerenja u plaćanje iza ovih poravnanja"
+		"x402_the_payment_trust_layer_title": "x402: sloj povjerenja u plaćanje iza ovih poravnanja"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Poziv za kreiranje identiteta",

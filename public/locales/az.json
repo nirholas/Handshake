@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agent Mübadiləsi",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">İntel al — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">İntel al · $0.01 USDC</span>",
 		"buy_intel_on": "İntel al:",
 		"buyer": "ALICI",
 		"buyer_agent": "Alıcı Agent",
 		"intel_agent": "İntel Agent",
 		"meta_description": "3D bədənə malik iki süni intellekt agenti Solana üzərində x402 mikroödənişlərdən istifadə edərək canlı kripto intel üçün bir-biri ilə danışıqlar aparır və ödəniş edir. Hər əməliyyat realdır və zəncir üzərində təsdiqlənir.",
 		"meta_og_description": "İki 3D süni intellekt agenti Solana üzərində real USDC üçün kripto intel alıb satır. Hər əməliyyatın zəncir üzərində təsdiqlənməsini izləyin.",
-		"meta_og_title": "Agent Mübadiləsi — Real vaxtda bir-birinə ödəniş edən süni intellekt agentləri",
-		"meta_title": "Agent Mübadiləsi — Real vaxtda bir-birinə ödəniş edən 3D süni intellekt agentləri · three.ws",
+		"meta_og_title": "Agent Mübadiləsi: Real vaxtda bir-birinə ödəniş edən süni intellekt agentləri",
+		"meta_title": "Agent Mübadiləsi: Real vaxtda bir-birinə ödəniş edən 3D süni intellekt agentləri · three.ws",
 		"meta_twitter_description": "Real kripto intel üçün bir-birinə ödəniş edən iki 3D süni intellekt agenti. USDC Solana üzərində. Zəncir üzərində.",
-		"meta_twitter_title": "Agent Mübadiləsi — Real vaxtda bir-birinə ödəniş edən süni intellekt agentləri",
+		"meta_twitter_title": "Agent Mübadiləsi: Real vaxtda bir-birinə ödəniş edən süni intellekt agentləri",
 		"seller": "SATICI",
 		"session_total_0_00_usdc_settled_on": "Sessiya cəmi: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC zəncir üzərində həll edildi",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 zəng başına ödəniş demosu",
-		"x402_the_payment_trust_layer_title": "x402 — bu hesablaşmaların arxasında duran ödəniş etibar qatı"
+		"x402_the_payment_trust_layer_title": "x402: bu hesablaşmaların arxasında duran ödəniş etibar qatı"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity çağırın",

@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>ការផ្លាស់ប្តូរភ្នាក់ងារ",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ទិញព័ត៌មាន — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ទិញព័ត៌មាន · $0.01 USDC</span>",
 		"buy_intel_on": "ទិញព័ត៌មានអំពី៖",
 		"buyer": "អ្នកទិញ",
 		"buyer_agent": "ភ្នាក់ងារអ្នកទិញ",
 		"intel_agent": "ភ្នាក់ងារ Intel",
 		"meta_description": "ភ្នាក់ងារ AI ពីរដែលមានរូបរាង 3D ចរចា និងបង់ប្រាក់ឱ្យគ្នាទៅវិញទៅមកសម្រាប់ព័ត៌មាន crypto ផ្ទាល់ដោយប្រើ micropayments x402 នៅលើ Solana។ រាល់ប្រតិបត្តិការគឺពិតប្រាកដ និងត្រូវបានបញ្ជាក់នៅលើខ្សែសង្វាក់។",
 		"meta_og_description": "ភ្នាក់ងារ AI 3D ពីរទិញ និងលក់ព័ត៌មាន crypto សម្រាប់ USDC ពិតប្រាកដនៅលើ Solana។ មើលរាល់ប្រតិបត្តិការបញ្ជាក់នៅលើខ្សែសង្វាក់។",
-		"meta_og_title": "ការផ្លាស់ប្តូរភ្នាក់ងារ — ភ្នាក់ងារ AI បង់ប្រាក់ឱ្យគ្នាទៅវិញទៅមកក្នុងពេលជាក់ស្តែង",
-		"meta_title": "ការផ្លាស់ប្តូរភ្នាក់ងារ — ភ្នាក់ងារ AI 3D បង់ប្រាក់ឱ្យគ្នាទៅវិញទៅមកក្នុងពេលជាក់ស្តែង · three.ws",
+		"meta_og_title": "ការផ្លាស់ប្តូរភ្នាក់ងារ: ភ្នាក់ងារ AI បង់ប្រាក់ឱ្យគ្នាទៅវិញទៅមកក្នុងពេលជាក់ស្តែង",
+		"meta_title": "ការផ្លាស់ប្តូរភ្នាក់ងារ: ភ្នាក់ងារ AI 3D បង់ប្រាក់ឱ្យគ្នាទៅវិញទៅមកក្នុងពេលជាក់ស្តែង · three.ws",
 		"meta_twitter_description": "ភ្នាក់ងារ AI 3D ពីរដែលបង់ប្រាក់ឱ្យគ្នាទៅវិញទៅមកសម្រាប់ព័ត៌មាន crypto ពិតប្រាកដ។ USDC នៅលើ Solana។ នៅលើខ្សែសង្វាក់។",
-		"meta_twitter_title": "ការផ្លាស់ប្តូរភ្នាក់ងារ — ភ្នាក់ងារ AI បង់ប្រាក់ឱ្យគ្នាទៅវិញទៅមកក្នុងពេលជាក់ស្តែង",
+		"meta_twitter_title": "ការផ្លាស់ប្តូរភ្នាក់ងារ: ភ្នាក់ងារ AI បង់ប្រាក់ឱ្យគ្នាទៅវិញទៅមកក្នុងពេលជាក់ស្តែង",
 		"seller": "អ្នកលក់",
 		"session_total_0_00_usdc_settled_on": "សរុបវគ្គ៖ <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC បានទូទាត់នៅលើខ្សែសង្វាក់",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ការបង្ហាញបង់តាមការហៅ",
-		"x402_the_payment_trust_layer_title": "x402 — ស្រទាប់ទំនុកចិត្តនៃការទូទាត់នៅពីក្រោយការទូទាត់ទាំងនេះ"
+		"x402_the_payment_trust_layer_title": "x402: ស្រទាប់ទំនុកចិត្តនៃការទូទាត់នៅពីក្រោយការទូទាត់ទាំងនេះ"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · ហៅ create_identity",

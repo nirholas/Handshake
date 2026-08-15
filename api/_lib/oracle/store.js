@@ -417,7 +417,7 @@ export async function readScoreHistory(mint, network = 'mainnet', hours = 72) {
 	`.catch((err) => {
 		// The sparkline reads an empty series as "this coin has no recorded
 		// conviction movement", which is what the caller sees during a
-		// connectivity failure too — cached for 60s by /api/oracle/history.
+		// connectivity failure too, cached for 60s by /api/oracle/history.
 		// Propagate so wrap() answers 503; a statement fault still degrades.
 		if (isDbUnavailableError(err)) throw err;
 		return [];

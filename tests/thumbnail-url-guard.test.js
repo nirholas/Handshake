@@ -51,7 +51,7 @@ describe('thumbnailUrl() behaviour', () => {
 });
 
 // Walk api/ and assert nobody reintroduces a bare publicUrl() on a thumbnail key.
-// The two legitimate exceptions are called out by name.
+// The three legitimate exceptions are called out by name.
 describe('no read path bypasses thumbnailUrl()', () => {
 	const ALLOWED = new Set([
 		// The helper itself.

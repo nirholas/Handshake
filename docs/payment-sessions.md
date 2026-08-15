@@ -313,8 +313,11 @@ What happens, in order:
 
 1. **Token check.** The token is verified against its stored hash.
 2. **Probe.** The endpoint is fetched (SSRF-guarded, 20 s timeout, redirects
-   not followed). If it responds with anything other than 402, you get the
-   response back with `"paid": false` and the session is not touched.
+   not followed). If it answers with a success and no 402, the call was free:
+   you get the response back with `"paid": false` and the session is not
+   touched. If it answers with an error status and no 402, there was nothing to
+   pay and nothing succeeded, so you get `502 endpoint_error` carrying the real
+   `upstream_status` and `upstream_body`. The session is not touched either way.
 3. **Accept selection.** From the 402 challenge's `accepts[]`, the platform
    picks a Solana USDC accept (the challenge must offer network `solana...`,
    asset USDC, and a `feePayer` in `extra`). Sessions created with
@@ -390,6 +393,7 @@ Free endpoint (no 402 challenge):
 | 402 | `payment_rejected` | The service rejected the payment before settlement. | rolled back |
 | 422 | `no_solana_accept`, `unsupported_asset`, `missing_fee_payer` | The challenge offers no payable Solana USDC option. | untouched |
 | 502 | `endpoint_unreachable`, `invalid_challenge` | Could not reach the endpoint or parse its challenge. | untouched |
+| 502 | `endpoint_error` | The endpoint answered an error status with no payment challenge. Carries `upstream_status` and `upstream_body`. | untouched |
 | 502 | `build_failed` | Building the Solana transaction failed. | rolled back |
 | 502 | `settle_uncertain` | Network failure after signing: chain state unknown. Do not retry immediately; check the session executions and wallet activity first. | kept reserved |
 | 502 | `upstream_error` | The endpoint returned a non-402 error after payment. Check wallet activity before retrying. | kept reserved |

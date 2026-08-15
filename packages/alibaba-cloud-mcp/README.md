@@ -104,6 +104,37 @@ Or add the server to your MCP client config:
 npx -y @modelcontextprotocol/inspector npx @three-ws/alibaba-cloud-mcp
 ```
 
+## Programmatic use
+
+The package entry point (`@three-ws/alibaba-cloud-mcp`) exports **`buildServer()`**: a
+fully-registered `McpServer` with no transport attached, so you can mount the three tools
+inside a host of your own instead of spawning the binary. It reads `DASHSCOPE_API_KEY` when
+called, and registration is otherwise side-effect free. The DashScope client itself is
+importable from `@three-ws/alibaba-cloud-mcp/src/dashscope.js` (`loadConfig`,
+`DashScopeClient`, `DashScopeError`) when you want the REST wrapper without MCP.
+
+```js
+// example.mjs — run with: DASHSCOPE_API_KEY=sk-... node example.mjs
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { buildServer } from '@three-ws/alibaba-cloud-mcp';
+
+const server = buildServer();
+
+// What this server exposes, before connecting anything.
+for (const [name, tool] of Object.entries(server._registeredTools)) {
+  console.log(`${name}: ${tool.title}`);
+}
+
+// Serve it over stdio (what the bin does), or attach any other MCP transport.
+await server.connect(new StdioServerTransport());
+```
+
+```
+qwen_chat: Qwen Chat
+qwen_embed: Qwen Text Embeddings
+qwen_list_models: List DashScope Models
+```
+
 ---
 
 Built by [three.ws](https://three.ws) · [three.ws/blog/three-ws-alibaba-cloud-partnership](https://three.ws/blog/three-ws-alibaba-cloud-partnership)

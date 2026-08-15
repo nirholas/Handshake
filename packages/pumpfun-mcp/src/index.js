@@ -16,7 +16,9 @@
 // Run standalone:    npx @three-ws/pumpfun-mcp
 // Inspect:           npx -y @modelcontextprotocol/inspector npx @three-ws/pumpfun-mcp
 
+import { realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -28,7 +30,14 @@ import { buildNativeRegistry } from './native.js';
 const require = createRequire(import.meta.url);
 const { version: SERVER_VERSION } = require('../package.json');
 
-const BACKEND_URL = process.env.PUMPFUN_MCP_URL || 'https://three.ws/api/pump-fun-mcp';
+// The bundled offline tool surface, re-exported so an embedder can read the
+// advertised tools (and their annotations) without spawning the server.
+export { FALLBACK_TOOLS, TOOL_ANNOTATIONS } from './tools.js';
+
+// Resolved per call, not once at import: the bin reads it at startup either way,
+// and a lazy read lets an embedder (or a test) repoint the bridge after the module
+// is already loaded.
+const backendUrl = () => process.env.PUMPFUN_MCP_URL || 'https://three.ws/api/pump-fun-mcp';
 const SERVER_NAME = 'three.ws-pumpfun-mcp';
 
 // A monotonically increasing JSON-RPC id for backend calls. Local to this
@@ -39,17 +48,18 @@ let rpcId = 0;
 // envelope. Throws on transport-level failure (network, non-2xx, bad JSON) so
 // callers surface a real error rather than a fabricated payload.
 async function callBackend(method, params, timeoutMs = 30_000) {
+	const url = backendUrl();
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), timeoutMs);
 	try {
-		const res = await fetch(BACKEND_URL, {
+		const res = await fetch(url, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', accept: 'application/json' },
 			body: JSON.stringify({ jsonrpc: '2.0', id: ++rpcId, method, params }),
 			signal: controller.signal,
 		});
 		if (!res.ok) {
-			throw new Error(`backend ${BACKEND_URL} → HTTP ${res.status}`);
+			throw new Error(`backend ${url} answered HTTP ${res.status}`);
 		}
 		return await res.json();
 	} finally {
@@ -100,9 +110,17 @@ function withLocalAnnotations(tool) {
 	};
 }
 
-async function main() {
+/**
+ * Build the fully-registered MCP server without connecting a transport. Asks the
+ * backend for its authoritative tool list, so this is a live call; the bundled
+ * FALLBACK_TOOLS cover an unreachable backend. Safe to import (tests, embedding
+ * this bridge in another process).
+ *
+ * @returns {Promise<Server>}
+ */
+export async function buildServer() {
 	const backendTools = await loadTools();
-	const native = buildNativeRegistry(BACKEND_URL, callTool);
+	const native = buildNativeRegistry(backendUrl(), callTool);
 	const tools = [...backendTools.map(withLocalAnnotations), ...native.defs];
 
 	const server = new Server(
@@ -188,14 +206,35 @@ async function main() {
 		return { content: [{ type: 'text', text: JSON.stringify(result ?? null) }] };
 	});
 
+	server.threeWsToolCount = tools.length;
+	return server;
+}
+
+async function main() {
+	const server = await buildServer();
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
 	process.stderr.write(
-		`[pumpfun-mcp] ${SERVER_NAME} v${SERVER_VERSION} ready — ${tools.length} tools via ${BACKEND_URL}\n`,
+		`[pumpfun-mcp] ${SERVER_NAME} v${SERVER_VERSION} ready with ${server.threeWsToolCount} tools via ${backendUrl()}\n`,
 	);
 }
 
-main().catch((err) => {
-	process.stderr.write(`[pumpfun-mcp] fatal: ${err?.stack || err}\n`);
-	process.exit(1);
-});
+// Connect stdio ONLY when this file is the process entry point. Importing the
+// module (tests, embedding) must not grab the transport or the process's stdin
+// and stdout. realpath both sides: npm bin shims are symlinks, so argv[1] may
+// differ from import.meta.url.
+function isProcessEntryPoint() {
+	if (!process.argv[1]) return false;
+	try {
+		return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+	} catch {
+		return false;
+	}
+}
+
+if (isProcessEntryPoint()) {
+	main().catch((err) => {
+		process.stderr.write(`[pumpfun-mcp] fatal: ${err?.stack || err}\n`);
+		process.exit(1);
+	});
+}

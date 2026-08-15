@@ -199,8 +199,19 @@ node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --limit=2000 -
 node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --restyle=200 --limit=200
 ```
 
-Requires `DATABASE_URL` and the `S3_*` credentials, both of which live in
-`.env.local`.
+Requires `DATABASE_URL` plus the `S3_*` credentials (`S3_BUCKET`,
+`S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`, `S3_PUBLIC_DOMAIN`).
+Only `DATABASE_URL` is in `.env.local`; the authoritative copy of the `S3_*` set
+lives on the Cloud Run service, so `--env-file=.env.local` alone exits with
+`S3_BUCKET is unset`. Export them into the shell first:
+
+```bash
+eval "$(gcloud run services describe three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --format=json \
+  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{for(const e of JSON.parse(s).spec.template.spec.containers[0].env||[])if(e.name.startsWith("S3_")&&e.value)console.log(`export ${e.name}=${JSON.stringify(e.value)}`)})')"
+```
+
+Then any of the commands above runs as written.
 
 ## Rendering a thumbnail yourself
 

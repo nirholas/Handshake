@@ -279,11 +279,20 @@ difficulty, impostor signing key, or mismatched opened secret each FAIL.
 ```json
 {
   "protocol": "three-vanity/v1",
-  "serviceKey": { "curve": "ed25519", "publicKeyBase58": "…", "publicKeyHex": "…", "use": "receipt-signing" },
+  "serviceKey": { "curve": "ed25519", "keyId": "…", "publicKeyBase58": "…", "publicKeyHex": "…", "use": "receipt-signing" },
   "schemes": { … },
-  "endpoints": { "grind": "/api/x402/vanity-verifiable", "verifyPage": "/vanity/verify" }
+  "endpoints": {
+    "grind": "https://three.ws/api/x402/vanity",
+    "verifiableGrind": "https://three.ws/api/x402/vanity-verifiable",
+    "certRegistry": "https://three.ws/api/vanity/cert",
+    "verifyPage": "https://three.ws/vanity/verify"
+  }
 }
 ```
+
+Endpoint URLs are absolute, so a verifier that fetched the document has everything
+it needs without knowing the origin. `grind` is the plain vanity endpoint;
+`verifiableGrind` is the one that issues the receipts this protocol specifies.
 
 The SDK pins `THREE_VANITY_SERVICE_KEY`; for production verification, cross-check
 it against the live well-known document (`fetchServiceKey()` / `--fetch-key` /

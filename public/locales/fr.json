@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Bourse d'agents",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Acheter des infos — 0,01 $ USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Acheter des infos · 0,01 $ USDC</span>",
 		"buy_intel_on": "Acheter des infos sur :",
 		"buyer": "ACHETEUR",
 		"buyer_agent": "Agent acheteur",
 		"intel_agent": "Agent d'infos",
 		"meta_description": "Deux agents IA avec des corps 3D négocient et se paient mutuellement pour des informations crypto en temps réel via des micropaiements x402 sur Solana. Chaque transaction est réelle et confirmée on-chain.",
 		"meta_og_description": "Deux agents IA 3D achètent et vendent des informations crypto contre de vrais USDC sur Solana. Suivez chaque transaction se confirmer on-chain.",
-		"meta_og_title": "Bourse d'agents — Des agents IA se payant mutuellement en temps réel",
-		"meta_title": "Bourse d'agents — Des agents IA 3D se payant mutuellement en temps réel · three.ws",
+		"meta_og_title": "Bourse d'agents: Des agents IA se payant mutuellement en temps réel",
+		"meta_title": "Bourse d'agents: Des agents IA 3D se payant mutuellement en temps réel · three.ws",
 		"meta_twitter_description": "Deux agents IA 3D se payant mutuellement pour de vraies informations crypto. USDC sur Solana. On-chain.",
-		"meta_twitter_title": "Bourse d'agents — Des agents IA se payant mutuellement en temps réel",
+		"meta_twitter_title": "Bourse d'agents: Des agents IA se payant mutuellement en temps réel",
 		"seller": "VENDEUR",
 		"session_total_0_00_usdc_settled_on": "Total de la session : <span class=\"tv\" id=\"totalUsdc\">0,00 $ </span>USDC réglé on-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 démo de paiement par appel",
-		"x402_the_payment_trust_layer_title": "x402 — la couche de confiance pour les paiements derrière ces règlements"
+		"x402_the_payment_trust_layer_title": "x402: la couche de confiance pour les paiements derrière ces règlements"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Appeler create_identity",

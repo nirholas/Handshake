@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>ಏಜೆಂಟ್ ಎಕ್ಸ್‌ಚೇಂಜ್",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ಇಂಟೆಲ್ ಖರೀದಿಸಿ — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ಇಂಟೆಲ್ ಖರೀದಿಸಿ · $0.01 USDC</span>",
 		"buy_intel_on": "ಇಂಟೆಲ್ ಖರೀದಿಸಿ:",
 		"buyer": "ಖರೀದಿದಾರ",
 		"buyer_agent": "ಖರೀದಿದಾರ ಏಜೆಂಟ್",
 		"intel_agent": "ಇಂಟೆಲ್ ಏಜೆಂಟ್",
 		"meta_description": "3D ದೇಹಗಳನ್ನು ಹೊಂದಿರುವ ಇಬ್ಬರು AI ಏಜೆಂಟ್‌ಗಳು Solana ನಲ್ಲಿ x402 ಮೈಕ್ರೋಪೇಮೆಂಟ್‌ಗಳನ್ನು ಬಳಸಿ ಲೈವ್ ಕ್ರಿಪ್ಟೋ ಇಂಟೆಲ್‌ಗಾಗಿ ಪರಸ್ಪರ ಮಾತುಕತೆ ನಡೆಸಿ ಪಾವತಿಸುತ್ತವೆ. ಪ್ರತಿ ವಹಿವಾಟು ನೈಜವಾಗಿದೆ ಮತ್ತು ಆನ್-ಚೈನ್‌ನಲ್ಲಿ ದೃಢೀಕರಿಸಲಾಗಿದೆ.",
 		"meta_og_description": "ಇಬ್ಬರು 3D AI ಏಜೆಂಟ್‌ಗಳು Solana ನಲ್ಲಿ ನಿಜವಾದ USDC ಗಾಗಿ ಕ್ರಿಪ್ಟೋ ಇಂಟೆಲ್ ಅನ್ನು ಖರೀದಿಸುತ್ತವೆ ಮತ್ತು ಮಾರಾಟ ಮಾಡುತ್ತವೆ. ಪ್ರತಿ ವಹಿವಾಟು ಆನ್-ಚೈನ್‌ನಲ್ಲಿ ದೃಢೀಕರಿಸುವುದನ್ನು ವೀಕ್ಷಿಸಿ.",
-		"meta_og_title": "ಏಜೆಂಟ್ ಎಕ್ಸ್‌ಚೇಂಜ್ — AI ಏಜೆಂಟ್‌ಗಳು ನೈಜ ಸಮಯದಲ್ಲಿ ಪರಸ್ಪರ ಪಾವತಿಸುತ್ತಿವೆ",
-		"meta_title": "ಏಜೆಂಟ್ ಎಕ್ಸ್‌ಚೇಂಜ್ — 3D AI ಏಜೆಂಟ್‌ಗಳು ನೈಜ ಸಮಯದಲ್ಲಿ ಪರಸ್ಪರ ಪಾವತಿಸುತ್ತಿವೆ · three.ws",
+		"meta_og_title": "ಏಜೆಂಟ್ ಎಕ್ಸ್‌ಚೇಂಜ್: AI ಏಜೆಂಟ್‌ಗಳು ನೈಜ ಸಮಯದಲ್ಲಿ ಪರಸ್ಪರ ಪಾವತಿಸುತ್ತಿವೆ",
+		"meta_title": "ಏಜೆಂಟ್ ಎಕ್ಸ್‌ಚೇಂಜ್: 3D AI ಏಜೆಂಟ್‌ಗಳು ನೈಜ ಸಮಯದಲ್ಲಿ ಪರಸ್ಪರ ಪಾವತಿಸುತ್ತಿವೆ · three.ws",
 		"meta_twitter_description": "ಇಬ್ಬರು 3D AI ಏಜೆಂಟ್‌ಗಳು ನಿಜವಾದ ಕ್ರಿಪ್ಟೋ ಇಂಟೆಲ್‌ಗಾಗಿ ಪರಸ್ಪರ ಪಾವತಿಸುತ್ತಿವೆ. USDC Solana ನಲ್ಲಿ. ಆನ್-ಚೈನ್.",
-		"meta_twitter_title": "ಏಜೆಂಟ್ ಎಕ್ಸ್‌ಚೇಂಜ್ — AI ಏಜೆಂಟ್‌ಗಳು ನೈಜ ಸಮಯದಲ್ಲಿ ಪರಸ್ಪರ ಪಾವತಿಸುತ್ತಿವೆ",
+		"meta_twitter_title": "ಏಜೆಂಟ್ ಎಕ್ಸ್‌ಚೇಂಜ್: AI ಏಜೆಂಟ್‌ಗಳು ನೈಜ ಸಮಯದಲ್ಲಿ ಪರಸ್ಪರ ಪಾವತಿಸುತ್ತಿವೆ",
 		"seller": "ಮಾರಾಟಗಾರ",
 		"session_total_0_00_usdc_settled_on": "ಸೆಷನ್ ಒಟ್ಟು: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC ಆನ್-ಚೈನ್‌ನಲ್ಲಿ ಇತ್ಯರ್ಥವಾಗಿದೆ",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ಪೇ-ಪರ್-ಕಾಲ್ ಡೆಮೊ",
-		"x402_the_payment_trust_layer_title": "x402 — ಈ ಇತ್ಯರ್ಥಗಳ ಹಿಂದಿನ ಪಾವತಿ ವಿಶ್ವಾಸಾರ್ಹ ಪದರ"
+		"x402_the_payment_trust_layer_title": "x402: ಈ ಇತ್ಯರ್ಥಗಳ ಹಿಂದಿನ ಪಾವತಿ ವಿಶ್ವಾಸಾರ್ಹ ಪದರ"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity ಗೆ ಕರೆ ಮಾಡಿ",

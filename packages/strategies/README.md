@@ -166,14 +166,17 @@ so you (or your agent) execute it from your own wallet. Wraps
 | `minOracleScore` | `number?` | — | 0–100 conviction gate. |
 | `perfFeeBps` | `number` | `1000` | Performance fee to the leader (0–3000 bps). |
 
-Reads: `listSubscriptions()`, `copyExecutions({ status })` (your intent inbox —
-`pending` by default), `pauseCopy(id)` / `stopCopy(id)`.
+Reads: `listSubscriptions()` and `copyExecutions({ status, limit })` (your intent
+inbox: the endpoint serves `pending` when no `status` is passed, and `all` returns
+every state). Controls: `pauseCopy(id)` / `stopCopy(id)`, and
+on a single intent, `actCopy(executionId, txSignature)` (you executed it from
+your own wallet) or `dismissCopy(executionId)` (you skipped it).
 
 ### `mirror(agentId, leaderAgentId, input) → Promise<Follow>`
 
 **Custodial** follow: your agent's wallet sizes and lands the leader's trades
-automatically through the leashed runtime. Wraps the agent strategy surface
-(`POST /api/agents/:id/strategies` family).
+automatically through the leashed runtime. Wraps the agent mirror surface
+(`POST /api/agents/:id/mirror` and its `/kill`, `/sync`, `/unfollow` siblings).
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
@@ -187,9 +190,11 @@ automatically through the leashed runtime. Wraps the agent strategy surface
 | `copySells` | `boolean` | `true` | Mirror exits. |
 | `mintAllowlist` / `mintDenylist` | `string[]` | `[]` | Restrict / block specific mints. |
 
-Mirror controls: `killSwitch(agentId, engaged)` (per-owner global halt),
-`sweep(agentId)` ("run now"), and `equipped(agentId)` (live equips + open
-positions + kill state).
+Mirror controls: `killSwitch(agentId, engaged)` (per-owner global halt, `POST
+…/mirror/kill`), `sweep(agentId)` ("run now", `POST …/mirror/sync`),
+`unmirror(agentId, leaderAgentId)` (drop the follow edge, `POST
+…/mirror/unfollow`), and `equipped(agentId)` (`GET …/mirror`: live follows,
+recent fills, follower counts, kill state).
 
 ### Strategy Objects
 
@@ -204,6 +209,7 @@ A reusable, publishable, forkable rule set — ranked by **real** performance.
 | `forkStrategy(id)` | `POST /api/strategies/:id/fork` | Clone the **rules** into your library (no wallet access transferred). |
 | `publishStrategy(id, published)` | `POST /api/strategies/:id/publish` | Toggle marketplace visibility. |
 | `updateStrategy(id, patch)` | `PATCH /api/strategies/:id` | Edit name/description/config (bumps version). |
+| `deleteStrategy(id)` | `DELETE /api/strategies/:id` | Soft-delete it and deactivate its equips (history is kept). |
 
 The `config` is a structured plan — `entry` (trigger, age, market-cap, liquidity,
 creator history), `sizing` (`amount_sol`, `max_slippage_bps`), `exits`

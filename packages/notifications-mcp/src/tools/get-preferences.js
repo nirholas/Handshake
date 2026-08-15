@@ -14,8 +14,9 @@ export const def = {
 	description:
 		"Read the account's notification delivery preferences — the resolved channel matrix the platform " +
 		'uses to decide how each kind of event reaches the owner. Returns `categories` (the catalog of ' +
-		'user-facing groups: sales, purchases, social, irl, alerts, account — each with a label and ' +
-		'description), `channels` (the deliverable channels: in_app, push, email, telegram), `prefs` (the ' +
+		'user-facing groups: sales, purchases, social, irl, alerts, creations, account, each with a label, a ' +
+		'description, and any `lockedChannels` that cannot be switched off), `channels` (the deliverable ' +
+		'channels: in_app, push, email, telegram), `prefs` (the ' +
 		'effective per-category → per-channel on/off matrix with sparse user overrides already merged onto ' +
 		'defaults, plus the linked `telegram_chat_id` if any), and `push` (how many web-push devices are ' +
 		'registered). Read this before calling set_preferences so you patch from the real current state. ' +

@@ -237,7 +237,7 @@ The three.ws avatar builder is an open-source 3D avatar editor (full body custom
 AVATURN_API_KEY=xxxxx
 ```
 
-Sign up at [avaturn.me/developer](https://avaturn.me/developer).
+Sign up through the [Avaturn developer docs](https://docs.avaturn.me/).
 
 #### `AVATURN_API_URL`
 **Optional.** Override for self-hosted or staging photo pipeline deployments. Defaults to `https://api.avaturn.me`.
@@ -417,7 +417,7 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 }
 ```
 
-**Cron jobs** are declared here as the source of truth for the schedule (currently 103 entries); in production they are driven by **Google Cloud Scheduler**, each job hitting its `/api/cron/*` handler on the Cloud Run service:
+**Cron jobs** are declared here as the source of truth for the schedule. Read the `crons` array itself for the current set rather than trusting a count quoted in prose. In production they are driven by **Google Cloud Scheduler**, each job hitting its `/api/cron/*` handler on the Cloud Run service:
 
 ```json
 "crons": [

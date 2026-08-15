@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Skambju ta' Aġenti",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Ixtri intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Ixtri intel · $0.01 USDC</span>",
 		"buy_intel_on": "Ixtri intel fuq:",
 		"buyer": "XERREJ",
 		"buyer_agent": "Aġent Xerrej",
 		"intel_agent": "Aġent Intel",
 		"meta_description": "Żewġ aġenti tal-AI b'korpi 3D jinnegozjaw u jħallsu lil xulxin għal intel kripto live bl-użu ta' mikropagamenti x402 fuq Solana. Kull transazzjoni hija reali u kkonfermata fuq il-katina.",
 		"meta_og_description": "Żewġ aġenti tal-AI 3D jixtru u jbigħu intel kripto għal USDC reali fuq Solana. Ara kull transazzjoni tikkonferma fuq il-katina.",
-		"meta_og_title": "Skambju ta' Aġenti — Aġenti tal-AI jħallsu lil xulxin f'ħin reali",
-		"meta_title": "Skambju ta' Aġenti — Aġenti tal-AI 3D iħallsu lil xulxin f'ħin reali · three.ws",
+		"meta_og_title": "Skambju ta' Aġenti: Aġenti tal-AI jħallsu lil xulxin f'ħin reali",
+		"meta_title": "Skambju ta' Aġenti: Aġenti tal-AI 3D iħallsu lil xulxin f'ħin reali · three.ws",
 		"meta_twitter_description": "Żewġ aġenti tal-AI 3D iħallsu lil xulxin għal intel kripto reali. USDC fuq Solana. Fuq il-katina.",
-		"meta_twitter_title": "Skambju ta' Aġenti — Aġenti tal-AI jħallsu lil xulxin f'ħin reali",
+		"meta_twitter_title": "Skambju ta' Aġenti: Aġenti tal-AI jħallsu lil xulxin f'ħin reali",
 		"seller": "BEJJIEGĦ",
 		"session_total_0_00_usdc_settled_on": "Total tas-sessjoni: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC solvut fuq il-katina",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo ta' ħlas skont is-sejħa",
-		"x402_the_payment_trust_layer_title": "x402 — is-saff ta' fiduċja tal-ħlas wara dawn is-saldu"
+		"x402_the_payment_trust_layer_title": "x402: is-saff ta' fiduċja tal-ħlas wara dawn is-saldu"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Sejjaħ create_identity",

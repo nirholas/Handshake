@@ -175,20 +175,24 @@ The CDN bundle is served from three.ws (Google Cloud Run + CDN). The URL include
 
 The CDN also maintains rolling channel aliases:
 
-| URL pattern | Tracks |
+Every channel is a directory holding the same file name, so only the path segment changes:
+
+| URL | Tracks |
 |---|---|
-| `agent-3d@1.5.1.js` | Exact version (immutable) |
-| `agent-3d@1.5.js` | Latest `1.5.x` patch |
-| `agent-3d@1.js` | Latest `1.x` minor |
-| `agent-3d.js` | Latest stable (any version) |
+| `https://three.ws/agent-3d/1.5.2/agent-3d.js` | Exact version (immutable) |
+| `https://three.ws/agent-3d/1.5/agent-3d.js` | Latest `1.5.x` patch |
+| `https://three.ws/agent-3d/1/agent-3d.js` | Latest `1.x` minor |
+| `https://three.ws/agent-3d/latest/agent-3d.js` | Latest stable (any version) |
 
 **Recommendation:** Pin to a full `MAJOR.MINOR.PATCH` version in production. Upgrade intentionally after reviewing the migration notes for the target version.
 
-Each versioned bundle ships with a `integrity.json` sidecar for [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) verification:
+The immutable exact-version directory ships an `integrity.json` sidecar for [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) verification. The rolling channels deliberately have none, because their contents change:
 
 ```
-https://three.ws/agent-3d/1.5.1/integrity.json
+https://three.ws/agent-3d/1.5.2/integrity.json
 ```
+
+The same SHA-384 hashes are published for every version at once in the CDN version index, `https://three.ws/agent-3d/versions.json`.
 
 ---
 
@@ -299,7 +303,7 @@ For contributors and maintainers. A release follows these steps:
 5. A GitHub Release is created from the tag with the changelog entry as the body.
 6. `npm run build:all` produces the platform bundle and the CDN library build.
 7. `npm run publish:lib` copies the CDN bundle into `dist/agent-3d/{version}/`, generates an `integrity.json` sidecar with SHA-384 hashes, updates the rolling channel aliases (`1.5`, `1`, `latest`), and writes a `versions.json` manifest.
-8. The image is deployed to Google Cloud Run (`npm run build` then `npm run deploy:gcp`), which serves the updated `dist/` directory — including the CDN library build — from the `three-ws-api` service.
+8. The image is deployed to Google Cloud Run with `npm run deploy:gcp:full`, which serves the updated `dist/` directory — including the CDN library build — from the `three-ws-api` service. That one command runs the full `build:gcp` chain and then `deploy:gcp`; a bare `npm run build` is not enough on its own, because the deploy gate checks `dist/` for the UMD library that `build:lib:full` and `publish:lib` put there.
 
 The SDK (`@three-ws/sdk`) is published to npm separately:
 

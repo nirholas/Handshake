@@ -10,7 +10,9 @@ const watch = process.argv.includes('--watch');
 const options = {
 	entryPoints: ['src/extension.js'],
 	bundle: true,
-	outfile: 'dist/extension.js',
+	// .cjs (not .js) because package.json declares "type": "module" for the ESM
+	// sources; the extension host still requires this bundle as CommonJS.
+	outfile: 'dist/extension.cjs',
 	platform: 'node',
 	format: 'cjs',
 	target: 'node18',

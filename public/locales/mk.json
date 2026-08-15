@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Размена на агенти",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купи интел — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купи интел · $0.01 USDC</span>",
 		"buy_intel_on": "Купи интел за:",
 		"buyer": "КУПУВАЧ",
 		"buyer_agent": "Агент купувач",
 		"intel_agent": "Интел агент",
 		"meta_description": "Двајца АИ агенти со 3Д тела преговараат и си плаќаат еден на друг за крипто интел во живо користејќи x402 микроплаќања на Solana. Секоја трансакција е реална и потврдена на блокчејн.",
 		"meta_og_description": "Двајца 3Д АИ агенти купуваат и продаваат крипто интел за вистински USDC на Solana. Гледајте како секоја трансакција се потврдува на блокчејн.",
-		"meta_og_title": "Размена на агенти — АИ агенти си плаќаат еден на друг во реално време",
-		"meta_title": "Размена на агенти — 3Д АИ агенти си плаќаат еден на друг во реално време · three.ws",
+		"meta_og_title": "Размена на агенти: АИ агенти си плаќаат еден на друг во реално време",
+		"meta_title": "Размена на агенти: 3Д АИ агенти си плаќаат еден на друг во реално време · three.ws",
 		"meta_twitter_description": "Двајца 3Д АИ агенти си плаќаат еден на друг за вистински крипто интел. USDC на Solana. На блокчејн.",
-		"meta_twitter_title": "Размена на агенти — АИ агенти си плаќаат еден на друг во реално време",
+		"meta_twitter_title": "Размена на агенти: АИ агенти си плаќаат еден на друг во реално време",
 		"seller": "ПРОДАВАЧ",
 		"session_total_0_00_usdc_settled_on": "Вкупно за сесија: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC порамнето на блокчејн",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 демо со плаќање по повик",
-		"x402_the_payment_trust_layer_title": "x402 — слојот на доверба за плаќање зад овие порамнувања"
+		"x402_the_payment_trust_layer_title": "x402: слојот на доверба за плаќање зад овие порамнувања"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Повикајте create_identity",

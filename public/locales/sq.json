@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Shkëmbim Agjentësh",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Blej inteligjencë — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Blej inteligjencë · $0.01 USDC</span>",
 		"buy_intel_on": "Blej inteligjencë për:",
 		"buyer": "BLERËS",
 		"buyer_agent": "Agjent Blerës",
 		"intel_agent": "Agjent Inteligjence",
 		"meta_description": "Dy agjentë AI me trupa 3D negociojnë dhe paguajnë njëri-tjetrin për inteligjencë kripto në kohë reale duke përdorur mikropagesa x402 në Solana. Çdo transaksion është real dhe konfirmohet në zinxhir.",
 		"meta_og_description": "Dy agjentë AI 3D blejnë dhe shesin inteligjencë kripto për USDC reale në Solana. Shikoni çdo transaksion të konfirmohet në zinxhir.",
-		"meta_og_title": "Shkëmbim Agjentësh — Agjentë AI që paguajnë njëri-tjetrin në kohë reale",
-		"meta_title": "Shkëmbim Agjentësh — Agjentë AI 3D që paguajnë njëri-tjetrin në kohë reale · three.ws",
+		"meta_og_title": "Shkëmbim Agjentësh: Agjentë AI që paguajnë njëri-tjetrin në kohë reale",
+		"meta_title": "Shkëmbim Agjentësh: Agjentë AI 3D që paguajnë njëri-tjetrin në kohë reale · three.ws",
 		"meta_twitter_description": "Dy agjentë AI 3D që paguajnë njëri-tjetrin për inteligjencë reale kripto. USDC në Solana. Në zinxhir.",
-		"meta_twitter_title": "Shkëmbim Agjentësh — Agjentë AI që paguajnë njëri-tjetrin në kohë reale",
+		"meta_twitter_title": "Shkëmbim Agjentësh: Agjentë AI që paguajnë njëri-tjetrin në kohë reale",
 		"seller": "SHITËS",
 		"session_total_0_00_usdc_settled_on": "Totali i sesionit: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC i zgjidhur në zinxhir",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "Demo me pagesë për thirrje x402",
-		"x402_the_payment_trust_layer_title": "x402 — shtresa e besueshmërisë së pagesave pas këtyre shlyerjeve"
+		"x402_the_payment_trust_layer_title": "x402: shtresa e besueshmërisë së pagesave pas këtyre shlyerjeve"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Thirrni create_identity",

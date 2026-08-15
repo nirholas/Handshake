@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>ایجنٹ ایکسچینج",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">انٹیلیجنس خریدیں — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">انٹیلیجنس خریدیں · $0.01 USDC</span>",
 		"buy_intel_on": "انٹیلیجنس خریدیں:",
 		"buyer": "خریدار",
 		"buyer_agent": "خریدار ایجنٹ",
 		"intel_agent": "انٹیلیجنس ایجنٹ",
 		"meta_description": "دو AI ایجنٹس جن کے پاس 3D جسم ہیں، لائیو کرپٹو انٹیلیجنس کے لیے x402 مائیکروپیمنٹس کا استعمال کرتے ہوئے ایک دوسرے سے بات چیت کرتے ہیں اور ادائیگی کرتے ہیں Solana پر۔ ہر ٹرانزیکشن حقیقی اور چین پر تصدیق شدہ ہے۔",
 		"meta_og_description": "دو 3D AI ایجنٹس حقیقی USDC کے لیے کرپٹو انٹیلیجنس خریدتے اور بیچتے ہیں Solana پر۔ ہر ٹرانزیکشن چین پر تصدیق ہوتی ہے۔",
-		"meta_og_title": "ایجنٹ ایکسچینج — AI ایجنٹس ایک دوسرے کو حقیقی وقت میں ادائیگی کر رہے ہیں",
-		"meta_title": "ایجنٹ ایکسچینج — 3D AI ایجنٹس ایک دوسرے کو حقیقی وقت میں ادائیگی کر رہے ہیں · three.ws",
+		"meta_og_title": "ایجنٹ ایکسچینج: AI ایجنٹس ایک دوسرے کو حقیقی وقت میں ادائیگی کر رہے ہیں",
+		"meta_title": "ایجنٹ ایکسچینج: 3D AI ایجنٹس ایک دوسرے کو حقیقی وقت میں ادائیگی کر رہے ہیں · three.ws",
 		"meta_twitter_description": "دو 3D AI ایجنٹس حقیقی کرپٹو انٹیلیجنس کے لیے ایک دوسرے کو ادائیگی کر رہے ہیں۔ USDC پر Solana۔ چین پر۔",
-		"meta_twitter_title": "ایجنٹ ایکسچینج — AI ایجنٹس ایک دوسرے کو حقیقی وقت میں ادائیگی کر رہے ہیں",
+		"meta_twitter_title": "ایجنٹ ایکسچینج: AI ایجنٹس ایک دوسرے کو حقیقی وقت میں ادائیگی کر رہے ہیں",
 		"seller": "بیچنے والا",
 		"session_total_0_00_usdc_settled_on": "سیشن کا کل: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC چین پر تصفیہ شدہ",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ادائیگی فی کال ڈیمو",
-		"x402_the_payment_trust_layer_title": "x402 — ان تصفیوں کے پیچھے ادائیگی کا اعتماد کا لیئر"
+		"x402_the_payment_trust_layer_title": "x402: ان تصفیوں کے پیچھے ادائیگی کا اعتماد کا لیئر"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · شناخت بنائیں کال کریں",

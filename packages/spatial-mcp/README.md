@@ -90,4 +90,4 @@ This package is emit-and-validate only. The framework-free reference renderer li
 
 ## License
 
-CC0-1.0. The spec and this implementation are public domain: reimplement, extend, and ship them anywhere.
+CC0-1.0 ([LICENSE](LICENSE)). The spec and this implementation are public domain: reimplement, extend, and ship them anywhere.

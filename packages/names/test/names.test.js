@@ -28,7 +28,7 @@ const SYNTH_PAYER = 'THREEsynthpayer11111111111111111111111111111';
 
 test('resolve() routes a .sol name to /api/sns and camelCases the envelope', async () => {
 	const { fetch, calls } = stubFetch([
-		{ body: { data: { name: 'bonfida.sol', address: SYNTH_OWNER, network: 'solana', resolved: true, all_domains: ['bonfida.sol', 'naming.sol'], favorite_domain: 'bonfida.sol' } } },
+		{ body: { data: { name: 'bonfida.sol', address: SYNTH_OWNER, network: 'solana', resolved: true } } },
 	]);
 	const client = createNames({ fetch, baseUrl: 'https://three.ws' });
 	const res = await client.resolve('bonfida.sol');
@@ -36,12 +36,28 @@ test('resolve() routes a .sol name to /api/sns and camelCases the envelope', asy
 	assert.equal(calls[0].url.pathname, '/api/sns');
 	assert.equal(calls[0].url.searchParams.get('name'), 'bonfida.sol');
 	assert.equal(calls[0].init.method, 'GET');
+	// The owner's domain list costs two extra SNS-index lookups server-side, so
+	// a plain resolve must not ask for it.
+	assert.equal(calls[0].url.searchParams.has('domains'), false);
 	assert.equal(res.address, SYNTH_OWNER);
 	assert.equal(res.network, 'solana');
 	assert.equal(res.resolved, true);
+	assert.deepEqual(res.allDomains, []);
+	assert.equal(res.favoriteDomain, null);
+	assert.ok(res.raw, 'keeps a raw escape hatch');
+});
+
+test('resolve({ domains: true }) asks for the owner list and maps it', async () => {
+	const { fetch, calls } = stubFetch([
+		{ body: { data: { name: 'bonfida.sol', address: SYNTH_OWNER, network: 'solana', resolved: true, all_domains: ['bonfida.sol', 'naming.sol'], favorite_domain: 'bonfida.sol', domains_truncated: true } } },
+	]);
+	const client = createNames({ fetch });
+	const res = await client.resolve('bonfida.sol', { domains: true });
+
+	assert.equal(calls[0].url.searchParams.get('domains'), '1');
 	assert.deepEqual(res.allDomains, ['bonfida.sol', 'naming.sol']);
 	assert.equal(res.favoriteDomain, 'bonfida.sol');
-	assert.ok(res.raw, 'keeps a raw escape hatch');
+	assert.equal(res.domainsTruncated, true);
 });
 
 test('resolve() routes a .eth name to the ENS endpoint', async () => {
@@ -83,9 +99,23 @@ test('reverseLookup() queries by address and validates base58 first', async () =
 	const client = createNames({ fetch });
 	const res = await client.reverseLookup(SYNTH_OWNER);
 	assert.equal(calls[0].url.searchParams.get('address'), SYNTH_OWNER);
+	assert.equal(calls[0].url.searchParams.has('domains'), false);
 	assert.equal(res.name, 'bonfida.sol');
 
 	await assert.rejects(() => client.reverseLookup('xyz'), /base58 Solana address/);
+});
+
+test('reverseLookup({ domains: true }) lists a wallet that has no favorite yet', async () => {
+	const { fetch, calls } = stubFetch([
+		{ body: { data: { name: null, address: SYNTH_OWNER, network: 'solana', resolved: false, all_domains: ['naming.sol'], favorite_domain: null } } },
+	]);
+	const client = createNames({ fetch });
+	const res = await client.reverseLookup(SYNTH_OWNER, { domains: true });
+
+	assert.equal(calls[0].url.searchParams.get('domains'), '1');
+	assert.equal(res.resolved, false, 'no primary domain is not an error');
+	assert.deepEqual(res.allDomains, ['naming.sol']);
+	assert.equal(res.domainsTruncated, false);
 });
 
 test('checkSubdomain() reads availability and maps full_name → fullName', async () => {

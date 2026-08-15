@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Scambio Agenti",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Acquista intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Acquista intel · $0.01 USDC</span>",
 		"buy_intel_on": "Acquista intel su:",
 		"buyer": "ACQUIRENTE",
 		"buyer_agent": "Agente Acquirente",
 		"intel_agent": "Agente Intel",
 		"meta_description": "Due agenti AI con corpi 3D negoziano e si pagano per intel crypto live usando micropagamenti x402 su Solana. Ogni transazione è reale e confermata on-chain.",
 		"meta_og_description": "Due agenti AI 3D comprano e vendono intel crypto per veri USDC su Solana. Guarda ogni transazione confermata on-chain.",
-		"meta_og_title": "Scambio Agenti — agenti AI che si pagano in tempo reale",
-		"meta_title": "Scambio Agenti — agenti AI 3D che si pagano in tempo reale · three.ws",
+		"meta_og_title": "Scambio Agenti: agenti AI che si pagano in tempo reale",
+		"meta_title": "Scambio Agenti: agenti AI 3D che si pagano in tempo reale · three.ws",
 		"meta_twitter_description": "Due agenti AI 3D che si pagano per veri intel crypto. USDC su Solana. On-chain.",
-		"meta_twitter_title": "Scambio Agenti — agenti AI che si pagano in tempo reale",
+		"meta_twitter_title": "Scambio Agenti: agenti AI che si pagano in tempo reale",
 		"seller": "VENDITORE",
 		"session_total_0_00_usdc_settled_on": "Totale sessione: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC regolato on-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo pay-per-call",
-		"x402_the_payment_trust_layer_title": "x402 — il layer di fiducia nei pagamenti dietro questi regolamenti"
+		"x402_the_payment_trust_layer_title": "x402: il layer di fiducia nei pagamenti dietro questi regolamenti"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Chiama create_identity",

@@ -87,6 +87,8 @@ The server verifies, at **finalized** commitment (reorg-safe):
 3. the treasury actually received ≥ the pinned amount of the right asset — SPL transfers are matched by instruction **and** by pre/post token-balance delta with an explicit mint check; native SOL by the recipient's lamport delta;
 4. one on-chain tx confirms at most one intent (unique index on `tx_hash`).
 
+Both `checkout` and `confirm` take an optional `network` (`mainnet` by default). In production it is the only accepted value, on **both** endpoints: confirm picks the RPC it queries and the USDC mint it accepts from that field, so a mainnet-only checkout paired with a devnet-tolerant confirm would still settle a real plan against faucet USDC. `devnet` is accepted in non-production builds only, and `$THREE` is mainnet-only in every build.
+
 On success, one atomic transaction claims the intent, upserts `subscriptions`, and sets `users.plan`.
 
 `tx_not_found` (422) usually means the tx hasn't finalized yet (~10–30 s) — retry; the built-in pricing UIs poll automatically. A payment sent just before the quote expired is still honored within a 1-hour grace window.
@@ -117,4 +119,4 @@ On success, one atomic transaction claims the intent, upserts `subscriptions`, a
 | `SOLANA_RPC_URL` / `SOLANA_RPC_URL_DEVNET` | RPC endpoints — set a paid RPC in production |
 | `SOLANA_USDC_MINT` | Override the USDC mint (defaults to mainnet USDC) |
 
-Plan prices live in [api/payments/_config.js](../api/payments/_config.js) (`PLANS`) — the single source of truth; both pricing pages and the `plans` action read from it. The EVM (USDC-only) sibling path is [api/payments/evm/[action].js](../api/payments/evm/%5Baction%5D.js).
+Plan prices live in [api/payments/_config.js](../api/payments/_config.js) (`PLANS`), the single source of truth: both pricing pages and the `plans` action read from it. The EVM (USDC-only) sibling path is [api/payments/evm/[action].js](../api/payments/evm/%5Baction%5D.js). It verifies the same way with two chain-specific differences: it waits for 12 confirmations before granting (EVM reorgs, versus Solana's `finalized` commitment), and because an ERC-20 transfer carries no memo it binds the payment to the account by requiring the payer address to be a wallet linked to that user. It honors the same 1-hour post-expiry grace window, which the confirmation wait makes necessary rather than merely kind.

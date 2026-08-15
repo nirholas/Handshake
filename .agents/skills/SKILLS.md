@@ -45,7 +45,7 @@ Categories:
 
 | Skill | Origin | Trigger |
 | --- | --- | --- |
-| [`gcp-triage`](gcp-triage/SKILL.md) | three.ws | Monitor three.ws production on Google Cloud Run and fix what the sweep finds. Use when the user asks to check production, diagnose an outage or error, "what's wrong with three.ws", read production logs, or run the monitoring loop. Runs the triage monitor (healthz + all-service log sweep + known-signature classification), then applies the fixes each class allows. |
+| [`gcp-triage`](gcp-triage/SKILL.md) | three.ws | Monitor three.ws production on Google Cloud Run and fix what the sweep finds. Use when the user asks to check production, diagnose an outage or error, "what's wrong with three.ws", read production logs, or run the monitoring loop. Broad questions get the deep sweep (healthz + all-service logs + version, TLS, fleet readiness, live pages, crons, DB migrations, wallets), then the fixes each class allows. |
 
 ## wallet/payments
 

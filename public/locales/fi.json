@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agentti Vaihto",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Osta tietoa — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Osta tietoa · $0.01 USDC</span>",
 		"buy_intel_on": "Osta tietoa:",
 		"buyer": "OSTAJA",
 		"buyer_agent": "Ostaja Agentti",
 		"intel_agent": "Tieto Agentti",
 		"meta_description": "Kaksi AI-agenttia, joilla on 3D-kehot, neuvottelevat ja maksavat toisilleen live-krypto tietoa käyttäen x402 mikromaksuja Solana. Jokainen transaktio on todellinen ja vahvistettu ketjussa.",
 		"meta_og_description": "Kaksi 3D AI-agenttia ostaa ja myy krypto tietoa oikealla USDC Solana. Katso jokainen transaktio vahvistettuna ketjussa.",
-		"meta_og_title": "Agentti Vaihto — AI-agentit maksavat toisilleen reaaliajassa",
-		"meta_title": "Agentti Vaihto — 3D AI-agentit maksavat toisilleen reaaliajassa · three.ws",
+		"meta_og_title": "Agentti Vaihto: AI-agentit maksavat toisilleen reaaliajassa",
+		"meta_title": "Agentti Vaihto: 3D AI-agentit maksavat toisilleen reaaliajassa · three.ws",
 		"meta_twitter_description": "Kaksi 3D AI-agenttia maksavat toisilleen oikeasta krypto tiedosta. USDC Solana. Ketjussa.",
-		"meta_twitter_title": "Agentti Vaihto — AI-agentit maksavat toisilleen reaaliajassa",
+		"meta_twitter_title": "Agentti Vaihto: AI-agentit maksavat toisilleen reaaliajassa",
 		"seller": "MYYJÄ",
 		"session_total_0_00_usdc_settled_on": "Istunnon yhteensä: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC selvitetty ketjussa",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 maksullinen demo",
-		"x402_the_payment_trust_layer_title": "x402 — maksujen luottamustaso näiden selvitysten takana"
+		"x402_the_payment_trust_layer_title": "x402: maksujen luottamustaso näiden selvitysten takana"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Kutsu luo_identiteetti",

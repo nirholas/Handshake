@@ -207,6 +207,18 @@ describe('POST /api/agent-economy/transact', () => {
 		expect(sendSolMock).not.toHaveBeenCalled();
 	});
 
+	it('treats an explicit null topic as no topic', async () => {
+		// The demo page serialized its empty topic field as null, and a schema that
+		// only allowed string|undefined answered 400 to the page's most common
+		// request: pick a service, type nothing.
+		const res = mkRes();
+		await transact(mkReq({ service: 'risk-score', topic: null }), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(payload(res).topic).toBeNull();
+		expect(sendSolMock).toHaveBeenCalledTimes(1);
+	});
+
 	it('rejects an unknown service and a bad body before any spend', async () => {
 		const unknown = mkRes();
 		await transact(mkReq({ service: 'not-a-service' }), unknown);

@@ -50,21 +50,26 @@ The `<agent-3d>` element accepts several source forms. Priority when multiple at
 <agent-3d body="./product.glb"></agent-3d>
 ```
 
-Programmatically (SDK):
+Programmatically, the same loader the element uses is a named export of the published bundle:
 
 ```js
-import { assertValid } from '@three-ws/avatar-schema';
+import { loadManifest, normalize } from 'https://three.ws/agent-3d/1.5.2/agent-3d.js';
 
-// Fetch the manifest from wherever it lives — your resolver, an IPFS
-// gateway, or a plain HTTPS URL — then validate it against the schema.
-const res = await fetch('https://cdn.acme.com/aria/manifest.json');
-const manifest = await res.json();
+// One call for every source form the element accepts: agent:// (resolved
+// through the ERC-8004 registry on the named chain), ipfs://, ar://, and
+// plain HTTPS.
+const manifest = await loadManifest('https://cdn.acme.com/aria/manifest.json');
 
-// Throws if the document does not match the canonical avatar manifest schema.
-assertValid(manifest);
+console.log(manifest.name, manifest.body.uri);
 ```
 
-`assertValid` throws if the document does not match the canonical avatar manifest schema, and returns normally when it does. Prefer `validate(manifest)` when you want a `{ valid, errors }` result instead of an exception. Resolve any relative paths in the manifest against the URL you fetched it from.
+`loadManifest` returns the manifest already normalized: it stamps `_baseURI` with the URL it fetched from, so relative paths (`instructions.md`, `skills/wave/`, `memory/MEMORY.md`) resolve correctly, and it adapts an ERC-8004 registration JSON into this manifest shape when that is what the URI serves. Call `fetchRelative(manifest, 'instructions.md')` to pull a bundle file. If you already hold the parsed JSON, `normalize(json, { baseURI })` does the shape work alone.
+
+> `@three-ws/avatar-schema` is **not** the validator for this document. It
+> validates the *avatar* manifest (`avatar.v1.json`: `schemaVersion`, `mesh`,
+> `skeleton`, `owner`), which describes a 3D body, not an agent. Running
+> `assertValid` from that package on an agent manifest always throws. See
+> [Agents vs. avatars](agents-vs-avatars.md) for why the two are separate.
 
 ---
 

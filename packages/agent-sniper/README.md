@@ -207,7 +207,7 @@ in-memory transport.
 ## x402 paid HTTP API
 
 `agent-sniper serve` (or `import { serve } from '@three-ws/agent-sniper/api'`)
-mounts the engine over HTTP. Reads are free; the three mutating endpoints are
+mounts the engine over HTTP. Reads are free; the four mutating endpoints are
 gated behind x402 USDC micropayments via `@three-ws/x402-server` — the
 middleware verifies the `X-PAYMENT` header against the facilitator, runs the
 work, settles on-chain, and emits the receipt.
@@ -218,12 +218,15 @@ work, settles on-chain, and emits the receipt.
 | GET  | `/status` | free | Full stats + immutable runtime config. |
 | GET  | `/strategies` | free | The armed strategy set. |
 | GET  | `/positions?agentId=&status=` | free | Positions from the store. |
+| GET  | `/activity` | free | The recent engine screen events (what the console feed renders). |
+| GET  | `/` and `/console` | free | The built-in operator console (see below). |
 | POST | `/strategies` | **$0.01 USDC** | Arm a strategy (SOL → lamports; stop-loss required). |
 | POST | `/snipe` | **$0.05 USDC** | Force a snipe on `{ mint, symbol?, agentId? }`. |
 | POST | `/strategies/:id/disarm` | **$0.005 USDC** | Disable a strategy. |
+| POST | `/positions/:id/close` | **$0.005 USDC** | Schedule an exit; the next sweep sells it. |
 
 Prices are the defaults (USDC atomic units, 6 decimals); override via
-`deps.prices = { arm, snipe, disarm }`.
+`deps.prices = { arm, snipe, disarm, close }`.
 
 Gating turns on when a merchant wallet is configured — `deps.payTo.solana` or the
 `X402_PAY_TO_SOLANA` env (a Base lane is available via `X402_PAY_TO_BASE`). When

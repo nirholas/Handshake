@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>නියෝජිත හුවමාරුව",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">බුද්ධිය මිලදී ගන්න — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">බුද්ධිය මිලදී ගන්න · $0.01 USDC</span>",
 		"buy_intel_on": "බුද්ධිය මිලදී ගන්න:",
 		"buyer": "ගැනුම්කරු",
 		"buyer_agent": "ගැනුම්කරු නියෝජිතයා",
 		"intel_agent": "බුද්ධි නියෝජිතයා",
 		"meta_description": "ත්‍රිමාණ ශරීර සහිත AI නියෝජිතයන් දෙදෙනෙකු Solana මත x402 ක්ෂුද්‍ර ගෙවීම් භාවිතයෙන් සජීවී ක්‍රිප්ටෝ බුද්ධිය සඳහා එකිනෙකා සමඟ සාකච්ඡා කර ගෙවයි. සෑම ගනුදෙනුවක්ම සැබෑ වන අතර දාමයේ තහවුරු වේ.",
 		"meta_og_description": "ත්‍රිමාණ AI නියෝජිතයන් දෙදෙනෙකු Solana මත සැබෑ USDC සඳහා ක්‍රිප්ටෝ බුද්ධිය මිලදී ගෙන විකුණයි. සෑම ගනුදෙනුවක්ම දාමයේ තහවුරු වන ආකාරය බලන්න.",
-		"meta_og_title": "නියෝජිත හුවමාරුව — AI නියෝජිතයන් තත්‍ය කාලීනව එකිනෙකාට ගෙවයි",
-		"meta_title": "නියෝජිත හුවමාරුව — ත්‍රිමාණ AI නියෝජිතයන් තත්‍ය කාලීනව එකිනෙකාට ගෙවයි · three.ws",
+		"meta_og_title": "නියෝජිත හුවමාරුව: AI නියෝජිතයන් තත්‍ය කාලීනව එකිනෙකාට ගෙවයි",
+		"meta_title": "නියෝජිත හුවමාරුව: ත්‍රිමාණ AI නියෝජිතයන් තත්‍ය කාලීනව එකිනෙකාට ගෙවයි · three.ws",
 		"meta_twitter_description": "ත්‍රිමාණ AI නියෝජිතයන් දෙදෙනෙකු සැබෑ ක්‍රිප්ටෝ බුද්ධිය සඳහා එකිනෙකාට ගෙවයි. USDC Solana මත. දාමයේ.",
-		"meta_twitter_title": "නියෝජිත හුවමාරුව — AI නියෝජිතයන් තත්‍ය කාලීනව එකිනෙකාට ගෙවයි",
+		"meta_twitter_title": "නියෝජිත හුවමාරුව: AI නියෝජිතයන් තත්‍ය කාලීනව එකිනෙකාට ගෙවයි",
 		"seller": "විකුණුම්කරු",
 		"session_total_0_00_usdc_settled_on": "සැසිවාරයේ මුළු එකතුව: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC දාමයේ පියවා ඇත",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ඇමතුමකට ගෙවන නිරූපණය",
-		"x402_the_payment_trust_layer_title": "x402 — මෙම බේරුම්කරණයන් පිටුපස ඇති ගෙවීම් විශ්වාසනීය ස්ථරය"
+		"x402_the_payment_trust_layer_title": "x402: මෙම බේරුම්කරණයන් පිටුපස ඇති ගෙවීම් විශ්වාසනීය ස්ථරය"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity අමතන්න",

@@ -116,10 +116,12 @@ export async function resolveMint() {
 export function computeSplit(totalAtomics, burnBps, config) {
 	const total = BigInt(totalAtomics);
 	const bps = Math.max(0, Math.min(10_000, Math.round(burnBps)));
-	let burnAtomics = (total * BigInt(bps)) / 10_000n;
-	let treasuryAtomics = total - burnAtomics;
+	// Floor the TREASURY share, then give the burn leg the remainder: integer
+	// division always drops a fraction of an atomic unit somewhere, and the leg
+	// that must never come up short is the burn.
+	const treasuryAtomics = (total * BigInt(10_000 - bps)) / 10_000n;
+	let burnAtomics = total - treasuryAtomics;
 	const legs = [];
-	// Assign any rounding dust to the burn leg so we never under-burn.
 	if (treasuryAtomics > 0n && config.treasury) {
 		legs.push({ role: 'treasury', address: config.treasury, atomics: treasuryAtomics });
 	} else {

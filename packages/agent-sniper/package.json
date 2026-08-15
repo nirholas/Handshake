@@ -48,8 +48,7 @@
 		"web",
 		"server.json",
 		"README.md",
-		"LICENSE",
-		".env.example"
+		"LICENSE"
 	],
 	"scripts": {
 		"start": "node bin/agent-sniper.js run",

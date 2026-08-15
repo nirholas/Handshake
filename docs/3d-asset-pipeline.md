@@ -140,7 +140,8 @@ Source: [scripts/optimize-glb.mjs](../scripts/optimize-glb.mjs). Lossless geomet
   "tracks": [
     { "name": "Hips.position", "type": "vector",     "times": [...], "values": [...] },
     { "name": "Hips.quaternion", "type": "quaternion", "times": [...], "values": [...] }
-    // …one position + one quaternion track per canonical bone (≈53 tracks)
+    // …one quaternion track per canonical bone, plus the single Hips position
+    // track: 52 + 1 = 53 tracks for a full clip
   ]
 }
 ```
@@ -153,7 +154,7 @@ Track names are **canonical bone names** (`Hips`, `Spine`, `LeftArm`, …) so th
 { "name": "idle", "url": "/animations/clips/idle.json", "label": "Idle", "icon": "🧍", "loop": true }
 ```
 
-**The canonical skeleton** is a 53-bone humanoid set defined in [src/glb-canonicalize.js](../src/glb-canonicalize.js): the torso chain (`Hips → Spine → Spine1 → Spine2 → Neck → Head`), both arms (`Shoulder → Arm → ForeArm → Hand`) with full finger chains, and both legs (`UpLeg → Leg → Foot → ToeBase`). `public/avatars/cz.glb` is the reference rig every clip is retargeted against.
+**The canonical skeleton** is the 52-bone humanoid set exported as `CANONICAL_BONES` from [src/glb-canonicalize.js](../src/glb-canonicalize.js): the torso chain (`Hips → Spine → Spine1 → Spine2 → Neck → Head`), both arms (`Shoulder → Arm → ForeArm → Hand`) with full finger chains, and both legs (`UpLeg → Leg → Foot → ToeBase`). `public/avatars/cz.glb` is the reference rig every clip is retargeted against.
 
 ---
 

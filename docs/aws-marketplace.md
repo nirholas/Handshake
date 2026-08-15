@@ -1,8 +1,12 @@
 # three.ws on AWS Marketplace
 
-three.ws is a verified AWS Partner and listed on AWS Marketplace as an API-based (SaaS) product. The AWS subscription is a **free front door**: subscribing links your AWS account to a three.ws account and issues an x402 access key. Actual usage is then paid per-call in USDC over the x402 / HTTP 402 protocol — the same as every other x402 endpoint. AWS Marketplace itself does not meter or bill usage.
+three.ws is a verified AWS Partner. The AWS Marketplace product is an API-based (SaaS) listing, and the AWS subscription is a **free front door**: subscribing links your AWS account to a three.ws account and issues an x402 access key. Actual usage is then paid per-call in USDC over the x402 / HTTP 402 protocol, the same as every other x402 endpoint. AWS Marketplace itself does not meter or bill usage.
+
+> **Listing status (checked 2026-08-15): not yet public.** Every endpoint described below is built and deployed, but the product has not been created in the AWS Marketplace Management Portal, so there is nothing to subscribe to on the AWS side yet. The Marketplace credentials (`AWS_MP_*`) are correspondingly unset in production, so `POST /api/aws-marketplace/subscription` answers `503 not_configured` today. The remaining steps are AWS-console work and Seller Operations approval, tracked in [aws-marketplace-listing-kit.md](./aws-marketplace-listing-kit.md). Until then, use x402 directly: no AWS subscription is required to call `/api/x402/*`.
 
 ## Subscribing via AWS Marketplace
+
+This is the flow once the listing is public.
 
 1. Find the three.ws listing on [AWS Marketplace](https://aws.amazon.com/marketplace).
 2. Choose **Subscribe** — the AWS Marketplace subscription is free.
@@ -12,7 +16,7 @@ three.ws is a verified AWS Partner and listed on AWS Marketplace as an API-based
 
 ## Billing
 
-The AWS Marketplace subscription is free — there are no AWS pricing dimensions, no contract, and no AWS-side metering. Usage is paid per-call in USDC via x402 (HTTP 402): every call returns a structured 402 challenge, your wallet or facilitator pays in USDC, and the request retries automatically. This is identical to how a non-AWS caller pays, so there is nothing to reconcile on your AWS invoice.
+The AWS Marketplace subscription is free: there are no AWS pricing dimensions, no contract, and no AWS-side metering. Usage is paid per-call in USDC via x402 (HTTP 402): every call returns a structured 402 challenge, your wallet or facilitator pays in USDC, and the request retries automatically. This is identical to how a non-AWS caller pays, so there is nothing to reconcile on your AWS invoice.
 
 ## AWS account
 

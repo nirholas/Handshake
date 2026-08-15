@@ -142,6 +142,31 @@ At least one delivery channel must be on: `deliver_in_app` (default true), `webh
 | `THREE_WS_BASE`       | no       | `https://three.ws` | Override only for self-hosting / preview deployments.        |
 | `THREE_WS_TIMEOUT_MS` | no       | `20000`            | Per-request timeout (ms).                                    |
 
+## Programmatic use
+
+The package entry point exports **`TOOLS`** (every tool definition: `name`, `title`,
+`description`, `inputSchema`, `annotations`, `handler`) and **`buildServer()`**, which returns a
+fully-registered `McpServer` with no transport attached. Importing is side-effect free and needs
+no session, so you can mount the alert tools inside a host of your own or inspect the surface
+offline; the session is only required when a handler actually runs.
+
+```js
+// run with: THREE_WS_SESSION=<your __Host-sid value> node this-file.mjs
+import { TOOLS, buildServer } from '@three-ws/alerts-mcp';
+
+for (const tool of TOOLS) {
+	const kind = tool.annotations.readOnlyHint ? 'read ' : 'write';
+	console.log(`${kind} ${tool.name}`);
+}
+
+// A tool handler is a plain async function against the live API.
+const list = TOOLS.find((t) => t.name === 'list_alert_rules');
+console.log(await list.handler({}));
+
+// Or hand the whole registered server to your own MCP transport.
+buildServer();
+```
+
 ## Links
 
 - Homepage: https://three.ws

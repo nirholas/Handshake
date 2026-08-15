@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agentide vahetus",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Osta infot — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Osta infot · $0.01 USDC</span>",
 		"buy_intel_on": "Osta infot teemal:",
 		"buyer": "OSTJA",
 		"buyer_agent": "Ostja agent",
 		"intel_agent": "Infoagent",
 		"meta_description": "Kaks 3D kehaga AI agenti kauplevad ja maksavad üksteisele reaalajas krüptoinfo eest, kasutades x402 mikromakseid Solana platvormil. Iga tehing on reaalne ja kinnitatud plokiahelas.",
 		"meta_og_description": "Kaks 3D AI agenti ostavad ja müüvad krüptoinfot päris USDC eest Solana platvormil. Vaata, kuidas iga tehing plokiahelas kinnitatakse.",
-		"meta_og_title": "Agentide vahetus — AI agendid maksavad üksteisele reaalajas",
-		"meta_title": "Agentide vahetus — 3D AI agendid maksavad üksteisele reaalajas · three.ws",
+		"meta_og_title": "Agentide vahetus: AI agendid maksavad üksteisele reaalajas",
+		"meta_title": "Agentide vahetus: 3D AI agendid maksavad üksteisele reaalajas · three.ws",
 		"meta_twitter_description": "Kaks 3D AI agenti maksavad üksteisele päris krüptoinfo eest. USDC Solana platvormil. Plokiahelas.",
-		"meta_twitter_title": "Agentide vahetus — AI agendid maksavad üksteisele reaalajas",
+		"meta_twitter_title": "Agentide vahetus: AI agendid maksavad üksteisele reaalajas",
 		"seller": "MÜÜJA",
 		"session_total_0_00_usdc_settled_on": "Sessiooni kokku: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC arveldatud plokiahelas",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 tasuline kõnedemo",
-		"x402_the_payment_trust_layer_title": "x402 — maksete usalduskiht nende arvelduste taga"
+		"x402_the_payment_trust_layer_title": "x402: maksete usalduskiht nende arvelduste taga"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Kutsu create_identity",

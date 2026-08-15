@@ -51,7 +51,10 @@ export function createNames(options = {}) {
 				{ code: 'invalid_input' },
 			);
 		}
-		const res = await request('/api/sns', { query: { name: trimmed }, signal: opts.signal });
+		const res = await request('/api/sns', {
+			query: prune({ name: trimmed, domains: domainsFlag(opts) }),
+			signal: opts.signal,
+		});
 		return shapeSns(res);
 	}
 
@@ -61,7 +64,10 @@ export function createNames(options = {}) {
 		if (!ADDR_RE.test(addr)) {
 			throw new ThreeWsError('reverseLookup() needs a base58 Solana address.', { code: 'invalid_input' });
 		}
-		const res = await request('/api/sns', { query: { address: addr }, signal: opts.signal });
+		const res = await request('/api/sns', {
+			query: prune({ address: addr, domains: domainsFlag(opts) }),
+			signal: opts.signal,
+		});
 		return shapeSns(res);
 	}
 
@@ -247,6 +253,9 @@ function unwrap(res) {
 	return res;
 }
 
+// `allDomains` / `favoriteDomain` are only populated when the call asked for
+// them with `{ domains: true }`; the endpoint omits both otherwise rather than
+// paying for the SNS index lookup on every resolve.
 function shapeSns(res) {
 	const d = unwrap(res) || {};
 	return {
@@ -256,8 +265,15 @@ function shapeSns(res) {
 		resolved: Boolean(d.resolved),
 		allDomains: Array.isArray(d.all_domains) ? d.all_domains : [],
 		favoriteDomain: d.favorite_domain ?? null,
+		domainsTruncated: Boolean(d.domains_truncated),
 		raw: res,
 	};
+}
+
+// The endpoint takes `domains=1`; anything falsy is left off the query entirely
+// so the default resolve stays a single cache-friendly URL.
+function domainsFlag(opts) {
+	return opts && opts.domains ? '1' : undefined;
 }
 
 function shapeEns(res) {
@@ -270,6 +286,7 @@ function shapeEns(res) {
 		resolved: Boolean(address),
 		allDomains: [],
 		favoriteDomain: null,
+		domainsTruncated: false,
 		agents: Array.isArray(d.agents) ? d.agents : [],
 		raw: res,
 	};

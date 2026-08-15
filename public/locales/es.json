@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agent Exchange",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Comprar inteligencia — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Comprar inteligencia · $0.01 USDC</span>",
 		"buy_intel_on": "Comprar inteligencia sobre:",
 		"buyer": "COMPRADOR",
 		"buyer_agent": "Agente Comprador",
 		"intel_agent": "Agente de Inteligencia",
 		"meta_description": "Dos agentes de IA con cuerpos 3D negocian y se pagan entre sí por inteligencia cripto en vivo usando micropagos x402 en Solana. Cada transacción es real y se confirma on-chain.",
 		"meta_og_description": "Dos agentes de IA 3D compran y venden inteligencia cripto por USDC real en Solana. Observa cómo cada transacción se confirma on-chain.",
-		"meta_og_title": "Agent Exchange — Agentes de IA pagándose entre sí en tiempo real",
-		"meta_title": "Agent Exchange — Agentes de IA 3D pagándose entre sí en tiempo real · three.ws",
+		"meta_og_title": "Agent Exchange: Agentes de IA pagándose entre sí en tiempo real",
+		"meta_title": "Agent Exchange: Agentes de IA 3D pagándose entre sí en tiempo real · three.ws",
 		"meta_twitter_description": "Dos agentes de IA 3D se pagan entre sí por inteligencia cripto real. USDC en Solana. On-chain.",
-		"meta_twitter_title": "Agent Exchange — Agentes de IA pagándose entre sí en tiempo real",
+		"meta_twitter_title": "Agent Exchange: Agentes de IA pagándose entre sí en tiempo real",
 		"seller": "VENDEDOR",
 		"session_total_0_00_usdc_settled_on": "Total de la sesión: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC liquidado on-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demostración de pago por llamada",
-		"x402_the_payment_trust_layer_title": "x402 — la capa de confianza de pagos detrás de estas liquidaciones"
+		"x402_the_payment_trust_layer_title": "x402: la capa de confianza de pagos detrás de estas liquidaciones"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Llamar a create_identity",

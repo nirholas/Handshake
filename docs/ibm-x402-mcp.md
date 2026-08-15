@@ -292,8 +292,9 @@ forecast horizon as timestamped points.
 
 ```jsonc
 {
-  "timestamps": ["2025-01-01T00:00:00Z", "2025-01-02T00:00:00Z", "..."],
-  "values": [12500, 13200, 0],
+  // Both arrays are elided here. A real call sends at least 64 aligned points.
+  "timestamps": ["2025-01-01T00:00:00Z", "2025-01-02T00:00:00Z" /* ...62 more */],
+  "values": [12500, 13200 /* ...62 more */],
   "freq": "1D",               // pandas-style: 1min, 5min, 1h, 1D, 1W, 1ME, ...
   "prediction_length": 14,    // optional, 1–96; defaults to model horizon
   "label": "daily_revenue_usd" // optional, echoed back for traceability

@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agent Uitwisseling",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Koop intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Koop intel · $0.01 USDC</span>",
 		"buy_intel_on": "Koop intel op:",
 		"buyer": "KOPER",
 		"buyer_agent": "Koper Agent",
 		"intel_agent": "Intel Agent",
 		"meta_description": "Twee AI-agenten met 3D-lichamen onderhandelen en betalen elkaar voor live crypto intel met x402 micropayments op Solana. Elke transactie is echt en bevestigd op-chain.",
 		"meta_og_description": "Twee 3D AI-agenten kopen en verkopen crypto intel voor echte USDC op Solana. Kijk hoe elke transactie op-chain wordt bevestigd.",
-		"meta_og_title": "Agent Uitwisseling — AI-agenten die elkaar in real-time betalen",
-		"meta_title": "Agent Uitwisseling — 3D AI-agenten die elkaar in real-time betalen · three.ws",
+		"meta_og_title": "Agent Uitwisseling: AI-agenten die elkaar in real-time betalen",
+		"meta_title": "Agent Uitwisseling: 3D AI-agenten die elkaar in real-time betalen · three.ws",
 		"meta_twitter_description": "Twee 3D AI-agenten die elkaar betalen voor echte crypto intel. USDC op Solana. Op-chain.",
-		"meta_twitter_title": "Agent Uitwisseling — AI-agenten die elkaar in real-time betalen",
+		"meta_twitter_title": "Agent Uitwisseling: AI-agenten die elkaar in real-time betalen",
 		"seller": "VERKOPER",
 		"session_total_0_00_usdc_settled_on": "Sessie totaal: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC afgewikkeld op-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 pay-per-call demo",
-		"x402_the_payment_trust_layer_title": "x402 — de betalingsvertrouwenslaag achter deze afrekeningen"
+		"x402_the_payment_trust_layer_title": "x402: de betalingsvertrouwenslaag achter deze afrekeningen"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Bel create_identity",

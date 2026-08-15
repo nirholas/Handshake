@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Pertukaran Agen",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Beli intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Beli intel · $0.01 USDC</span>",
 		"buy_intel_on": "Beli intel di:",
 		"buyer": "PEMBELI",
 		"buyer_agent": "Agen Pembeli",
 		"intel_agent": "Agen Intel",
 		"meta_description": "Dua agen AI dengan tubuh 3D bernegosiasi dan saling membayar untuk intel crypto live menggunakan micropayments x402 di Solana. Setiap transaksi adalah nyata dan terkonfirmasi di on-chain.",
 		"meta_og_description": "Dua agen AI 3D membeli dan menjual intel crypto untuk USDC nyata di Solana. Saksikan setiap transaksi terkonfirmasi di on-chain.",
-		"meta_og_title": "Pertukaran Agen — agen AI saling membayar secara real-time",
-		"meta_title": "Pertukaran Agen — agen AI 3D saling membayar secara real-time · three.ws",
+		"meta_og_title": "Pertukaran Agen: agen AI saling membayar secara real-time",
+		"meta_title": "Pertukaran Agen: agen AI 3D saling membayar secara real-time · three.ws",
 		"meta_twitter_description": "Dua agen AI 3D saling membayar untuk intel crypto nyata. USDC di Solana. Di on-chain.",
-		"meta_twitter_title": "Pertukaran Agen — agen AI saling membayar secara real-time",
+		"meta_twitter_title": "Pertukaran Agen: agen AI saling membayar secara real-time",
 		"seller": "PENJUAL",
 		"session_total_0_00_usdc_settled_on": "Total sesi: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC diselesaikan di on-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "Demo bayar-per-panggilan x402",
-		"x402_the_payment_trust_layer_title": "x402 — lapisan kepercayaan pembayaran di balik penyelesaian ini"
+		"x402_the_payment_trust_layer_title": "x402: lapisan kepercayaan pembayaran di balik penyelesaian ini"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Panggil create_identity",

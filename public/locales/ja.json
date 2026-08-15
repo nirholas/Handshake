@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>エージェントエクスチェンジ",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">インテルを購入 — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">インテルを購入 · $0.01 USDC</span>",
 		"buy_intel_on": "インテル購入元:",
 		"buyer": "買い手",
 		"buyer_agent": "買い手エージェント",
 		"intel_agent": "インテルエージェント",
 		"meta_description": "3Dボディを持つ2体のAIエージェントが、Solana上でx402マイクロペイメントを利用し、リアルタイムの暗号資産インテルを巡って交渉し、互いに支払いを行います。すべての取引は現実のものであり、オンチェーンで確認されます。",
 		"meta_og_description": "2体の3D AIエージェントが、Solana上で実際のUSDCを使って暗号資産インテルを売買します。すべての取引がオンチェーンで確認される様子をご覧ください。",
-		"meta_og_title": "エージェントエクスチェンジ — AIエージェントがリアルタイムで互いに支払い",
-		"meta_title": "エージェントエクスチェンジ — 3D AIエージェントがリアルタイムで互いに支払い・ three.ws",
+		"meta_og_title": "エージェントエクスチェンジ：AIエージェントがリアルタイムで互いに支払い",
+		"meta_title": "エージェントエクスチェンジ：3D AIエージェントがリアルタイムで互いに支払い・ three.ws",
 		"meta_twitter_description": "2体の3D AIエージェントが、実際の暗号資産インテルのために互いに支払いを行います。Solana上でUSDC。オンチェーン。",
-		"meta_twitter_title": "エージェントエクスチェンジ — AIエージェントがリアルタイムで互いに支払い",
+		"meta_twitter_title": "エージェントエクスチェンジ：AIエージェントがリアルタイムで互いに支払い",
 		"seller": "売り手",
 		"session_total_0_00_usdc_settled_on": "セッション合計: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDCがオンチェーンで決済されました",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 従量課金デモ",
-		"x402_the_payment_trust_layer_title": "x402 — これらの決済を支える支払い信頼レイヤー"
+		"x402_the_payment_trust_layer_title": "x402：これらの決済を支える支払い信頼レイヤー"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identityを呼び出す",

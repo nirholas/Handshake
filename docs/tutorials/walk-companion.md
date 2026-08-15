@@ -65,7 +65,7 @@ The embed reads its world and controls from the URL. The verified params:
 
 | Param | Values | Effect |
 |---|---|---|
-| `env` | `studio` `void` `beach` `sunset` `night` `grid` | The environment (default scene if omitted) |
+| `env` | `studio` `void` `beach` `sunset` `night` `grid` | The environment (`studio` if omitted) |
 | `autoplay` | `true` | Start animating immediately |
 | `controls` | `joystick` `keyboard` `none` | How (or whether) the visitor steers |
 | `orbit` | `true` `false` | Allow drag-to-orbit the camera |
@@ -285,26 +285,26 @@ Every stroll logs distance, and the longest ones climb the global board at [/wal
 ```js
 async function loadTopWalkers() {
   const res = await fetch(
-    'https://three.ws/api/walk/leaderboard?period=all-time&metric=distance',
+    'https://three.ws/api/walk/leaderboard?period=all-time&metric=distance&limit=3',
     { headers: { accept: 'application/json' } },
   );
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  // The endpoint may return { leaders } | { walkers } | { entries } | [...]
-  const rows = Array.isArray(data)
-    ? data
-    : data.leaders || data.walkers || data.entries || data.results || data.data || [];
-  return rows.slice(0, 3); // each: { name, distance, image_url?, url? }
+  const { rows = [] } = await res.json();
+  // Each row: { rank, key, username, handle, avatarId, avatar, value, deltaFromYesterday }
+  // `value` is the metric you asked for — meters for metric=distance.
+  return rows;
 }
 ```
 
-Format distances for display the way the live page does — meters under 1km, kilometres above:
+`period` is `daily` / `weekly` (the default) / `all-time`, `metric` is `distance` (the default) / `sites` / `time`, and `limit` is 1 to 100 (default 50). The response also carries `total`, `offset`, and `hasMore` for paging.
+
+Format distances for display the way the live board does — meters under 1 km, kilometres above:
 
 ```js
 function formatDistance(meters) {
   const m = Number(meters);
-  if (!Number.isFinite(m) || m <= 0) return '—';
-  if (m >= 1000) return (m / 1000).toFixed(m >= 10000 ? 0 : 1) + ' km';
+  if (!Number.isFinite(m) || m <= 0) return '0 m';
+  if (m >= 1000) return (m / 1000).toFixed(2) + ' km';
   return Math.round(m) + ' m';
 }
 ```

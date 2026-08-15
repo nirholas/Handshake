@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agentų mainai",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Pirkti informaciją – $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Pirkti informaciją · $0.01 USDC</span>",
 		"buy_intel_on": "Pirkti informaciją apie:",
 		"buyer": "PIRKĖJAS",
 		"buyer_agent": "Agentas pirkėjas",
 		"intel_agent": "Informacijos agentas",
 		"meta_description": "Du dirbtinio intelekto agentai su 3D kūnais derasi ir moka vienas kitam už gyvą kripto informaciją, naudodami x402 mikromokėjimus Solana tinkle. Kiekviena operacija yra tikra ir patvirtinta grandinėje.",
 		"meta_og_description": "Du 3D DI agentai perka ir parduoda kripto informaciją už tikrus USDC Solana tinkle. Stebėkite, kaip kiekviena operacija patvirtinama grandinėje.",
-		"meta_og_title": "Agentų mainai – DI agentai moka vienas kitam realiuoju laiku",
-		"meta_title": "Agentų mainai – 3D DI agentai moka vienas kitam realiuoju laiku · three.ws",
+		"meta_og_title": "Agentų mainai: DI agentai moka vienas kitam realiuoju laiku",
+		"meta_title": "Agentų mainai: 3D DI agentai moka vienas kitam realiuoju laiku · three.ws",
 		"meta_twitter_description": "Du 3D DI agentai moka vienas kitam už tikrą kripto informaciją. USDC Solana tinkle. Grandinėje.",
-		"meta_twitter_title": "Agentų mainai – DI agentai moka vienas kitam realiuoju laiku",
+		"meta_twitter_title": "Agentų mainai: DI agentai moka vienas kitam realiuoju laiku",
 		"seller": "PARDAVĖJAS",
 		"session_total_0_00_usdc_settled_on": "Sesijos suma: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC atsiskaityta grandinėje",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 mokėjimo už iškvietimą demonstracija",
-		"x402_the_payment_trust_layer_title": "x402 — mokėjimų patikimumo sluoksnis, užtikrinantis šiuos atsiskaitymus"
+		"x402_the_payment_trust_layer_title": "x402: mokėjimų patikimumo sluoksnis, užtikrinantis šiuos atsiskaitymus"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Iškviesti create_identity",

@@ -2,7 +2,7 @@
 //
 // Wraps PUT /api/notifications/preferences { categories, telegram_chat_id } →
 //   { ok, prefs }. The body is a sparse override sanitised server-side: only
-// known categories (sales, purchases, social, irl, alerts, account) and channels
+// known categories (sales, purchases, social, irl, alerts, creations, account) and channels
 // (in_app, push, email, telegram) survive; everything else is dropped. Re-sending
 // the same matrix is a no-op — idempotent.
 
@@ -10,7 +10,10 @@ import { z } from 'zod';
 
 import { apiRequest } from '../lib/api.js';
 
-const CATEGORY_KEYS = ['sales', 'purchases', 'social', 'irl', 'alerts', 'account'];
+// Kept in step with CATEGORIES in api/_lib/notify-prefs.js, the server-side
+// source of truth. A key missing here is a category the model is told does not
+// exist and therefore never patches, even though the API would accept it.
+const CATEGORY_KEYS = ['sales', 'purchases', 'social', 'irl', 'alerts', 'creations', 'account'];
 const CHANNEL_KEYS = ['in_app', 'push', 'email', 'telegram'];
 
 export const def = {
@@ -24,7 +27,9 @@ export const def = {
 		'Only the category/channel pairs you pass change; unknown keys are dropped server-side and untouched ' +
 		'pairs keep their current value (which falls back to the platform default). Pass `telegram_chat_id` ' +
 		'(a numeric Telegram chat id, or "" to unlink) to control where the telegram channel delivers. ' +
-		'Provide at least one of `categories` or `telegram_chat_id`. WRITE but idempotent — re-applying the ' +
+		'Provide at least one of `categories` or `telegram_chat_id`. `account` locks its `in_app` channel on: ' +
+		'security and withdrawal notices always reach the bell inbox, so `false` there is ignored. ' +
+		'WRITE but idempotent, re-applying the ' +
 		'same values is a no-op. Returns the full resolved preference matrix after the update. Read it first ' +
 		'with get_preferences.',
 	inputSchema: {

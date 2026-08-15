@@ -16,11 +16,13 @@
   },
   "files": [
     "src",
+    "example",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "example": "node example/verify-license.mjs"
   },
   "keywords": [
     "solana",

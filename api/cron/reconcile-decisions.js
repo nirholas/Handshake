@@ -30,7 +30,7 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
 
-	const report = { reconciled: 0, wins: 0, losses: 0, anchored: 0, anchor_pending: 0, anomalies: 0, errors: 0 };
+	const report = { reconciled: 0, wins: 0, losses: 0, anchored: 0, anchor_pending: 0, anchor_failed: 0, anchor_skipped: 0, anomalies: 0, errors: 0 };
 	const touchedAgents = new Set();
 
 	// 1. Reconcile snipe decisions whose position has settled on-chain.
@@ -92,9 +92,16 @@ export default wrapCron(async (req, res) => {
 		report.heads_error = err.message;
 	}
 
+	// A broadcast rejection is never agent-specific: an unfunded or unusable
+	// attester wallet fails identically for every head in the run. Stop after the
+	// first one instead of re-simulating the same doomed memo for each remaining
+	// agent (twelve wasted RPC round-trips and twelve rewritten rows, every ten
+	// minutes), report what was skipped, and alert once so the outage is visible.
 	let anchoredCount = 0;
+	let anchorOutage = null;
 	for (const h of heads) {
 		if (anchoredCount >= MAX_ANCHOR_AGENTS) break;
+		if (anchorOutage) { report.anchor_skipped++; continue; }
 		try {
 			const anchor = await latestAnchoredAnchor(h.agent_id);
 			if (anchor && Number(anchor.through_seq) >= Number(h.head_seq)) continue; // already committed
@@ -112,10 +119,23 @@ export default wrapCron(async (req, res) => {
 				entryCount: Number(h.cnt),
 			});
 			if (r.status === 'anchored' || r.status === 'deduped') report.anchored++;
-			else report.anchor_pending++;
+			else if (r.status === 'failed') {
+				report.anchor_failed++;
+				anchorOutage = r.detail || 'anchor broadcast rejected';
+			} else report.anchor_pending++;
 		} catch {
 			report.errors++;
 		}
+	}
+
+	if (anchorOutage) {
+		report.anchor_outage = String(anchorOutage).slice(0, 280);
+		sendOpsAlert(
+			'Reasoning ledger: on-chain anchoring is down',
+			`Ledger head anchoring was rejected on-chain and ${report.anchor_skipped} further agent(s) were skipped this run. ` +
+			`Chain hashes stay tamper-evident, but no head is reaching Solana. Reason: ${report.anchor_outage}`,
+			{ signature: 'ledger-anchor-broadcast-failed' },
+		);
 	}
 
 	// 3. Anomaly watch: a verified track record that suddenly collapses is worth

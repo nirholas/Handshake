@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Обмен на агенти",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купи информация — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купи информация · $0.01 USDC</span>",
 		"buy_intel_on": "Купи информация на:",
 		"buyer": "КУПУВАЧ",
 		"buyer_agent": "Агент купувач",
 		"intel_agent": "Агент информация",
 		"meta_description": "Два AI агента с 3D тела преговарят и плащат един на друг за живи крипто данни, използвайки x402 микроплащания на Solana. Всяка транзакция е реална и потвърдена на веригата.",
 		"meta_og_description": "Два 3D AI агента купуват и продават крипто информация за реални USDC на Solana. Гледайте как всяка транзакция се потвърдява на веригата.",
-		"meta_og_title": "Обмен на агенти — AI агенти, плащащи си в реално време",
-		"meta_title": "Обмен на агенти — 3D AI агенти, плащащи си в реално време · three.ws",
+		"meta_og_title": "Обмен на агенти: AI агенти, плащащи си в реално време",
+		"meta_title": "Обмен на агенти: 3D AI агенти, плащащи си в реално време · three.ws",
 		"meta_twitter_description": "Два 3D AI агента, плащащи си за реална крипто информация. USDC на Solana. На веригата.",
-		"meta_twitter_title": "Обмен на агенти — AI агенти, плащащи си в реално време",
+		"meta_twitter_title": "Обмен на агенти: AI агенти, плащащи си в реално време",
 		"seller": "ПРОДАВАЧ",
 		"session_total_0_00_usdc_settled_on": "Обща сума на сесията: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC разплатено на веригата",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 демонстрация на плащане на повикване",
-		"x402_the_payment_trust_layer_title": "x402 — слой на доверие за плащания зад тези разплащания"
+		"x402_the_payment_trust_layer_title": "x402: слой на доверие за плащания зад тези разплащания"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Обаждане за създаване на идентичност",

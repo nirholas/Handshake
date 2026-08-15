@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Агент алмашуу",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Маалымат сатып алуу — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Маалымат сатып алуу · $0.01 USDC</span>",
 		"buy_intel_on": "Маалыматты сатып алуу:",
 		"buyer": "САТЫП АЛУУЧУ",
 		"buyer_agent": "Сатып алуучу агент",
 		"intel_agent": "Маалымат агенти",
 		"meta_description": "3D денеси бар эки AI агент Solana платформасында x402 микротөлөмдөрүн колдонуп, жандуу крипто маалымат үчүн бири-бири менен сүйлөшүп, төлөшөт. Ар бир транзакция реалдуу жана чынжырда тастыкталган.",
 		"meta_og_description": "Эки 3D AI агент Solana платформасында чыныгы USDC үчүн крипто маалыматты сатып жана сатышат. Ар бир транзакциянын чынжырда ырасталганын көрүңүз.",
-		"meta_og_title": "Агент алмашуу — AI агенттери бири-бирине реалдуу убакытта төлөшөт",
-		"meta_title": "Агент алмашуу — 3D AI агенттери бири-бирине реалдуу убакытта төлөшөт · three.ws",
+		"meta_og_title": "Агент алмашуу: AI агенттери бири-бирине реалдуу убакытта төлөшөт",
+		"meta_title": "Агент алмашуу: 3D AI агенттери бири-бирине реалдуу убакытта төлөшөт · three.ws",
 		"meta_twitter_description": "Эки 3D AI агент чыныгы крипто маалымат үчүн бири-бирине төлөшөт. USDC Solana платформасында. Чынжырда.",
-		"meta_twitter_title": "Агент алмашуу — AI агенттери бири-бирине реалдуу убакытта төлөшөт",
+		"meta_twitter_title": "Агент алмашуу: AI агенттери бири-бирине реалдуу убакытта төлөшөт",
 		"seller": "САТУУЧУ",
 		"session_total_0_00_usdc_settled_on": "Сессиянын жалпы суммасы: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC чынжырда жөнгө салынды",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 чалууга акы төлөө демосу",
-		"x402_the_payment_trust_layer_title": "x402 — бул эсептешүүлөрдүн артындагы төлөм ишеним катмары"
+		"x402_the_payment_trust_layer_title": "x402: бул эсептешүүлөрдүн артындагы төлөм ишеним катмары"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity чакыруу",

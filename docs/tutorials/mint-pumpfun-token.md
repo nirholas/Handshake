@@ -232,7 +232,7 @@ A token that nobody knows about does nothing. The launch is not the announcement
 A reasonable sequence on launch day:
 
 1. **Update the agent's public card.** The three.ws agent page already shows the Pump.fun panel after bonding, but check it in an incognito tab to confirm.
-2. **Post the agent URL** (not the bare Pump.fun URL — the agent URL frames it correctly). Example: "Just bonded a token to my agent. mint and chart on the page → https://three.ws/a/<chain>/<agentId>".
+2. **Post the agent URL** (not the bare Pump.fun URL — the agent URL frames it correctly). Example: "Just bonded a token to my agent. mint and chart on the page → `https://three.ws/a/<chain>/<agentId>`".
 3. **Cross-post the Pump.fun link.** Some communities prefer the raw pump.fun page. Both are valid.
 4. **Pin the post.** Make it findable.
 

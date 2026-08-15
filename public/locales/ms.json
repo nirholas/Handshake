@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Pertukaran Agen",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Beli intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Beli intel · $0.01 USDC</span>",
 		"buy_intel_on": "Beli intel di:",
 		"buyer": "PEMBELI",
 		"buyer_agent": "Agen Pembeli",
 		"intel_agent": "Agen Intel",
 		"meta_description": "Dua agen AI dengan badan 3D berunding dan membayar satu sama lain untuk intel crypto secara langsung menggunakan pembayaran mikro x402 di Solana. Setiap transaksi adalah nyata dan disahkan di rantai.",
 		"meta_og_description": "Dua agen AI 3D membeli dan menjual intel crypto untuk USDC sebenar di Solana. Saksikan setiap transaksi disahkan di rantai.",
-		"meta_og_title": "Pertukaran Agen — agen AI membayar satu sama lain dalam masa nyata",
-		"meta_title": "Pertukaran Agen — agen AI 3D membayar satu sama lain dalam masa nyata · three.ws",
+		"meta_og_title": "Pertukaran Agen: agen AI membayar satu sama lain dalam masa nyata",
+		"meta_title": "Pertukaran Agen: agen AI 3D membayar satu sama lain dalam masa nyata · three.ws",
 		"meta_twitter_description": "Dua agen AI 3D membayar satu sama lain untuk intel crypto yang sebenar. USDC di Solana. Di rantai.",
-		"meta_twitter_title": "Pertukaran Agen — agen AI membayar satu sama lain dalam masa nyata",
+		"meta_twitter_title": "Pertukaran Agen: agen AI membayar satu sama lain dalam masa nyata",
 		"seller": "PENJUAL",
 		"session_total_0_00_usdc_settled_on": "Jumlah sesi: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC diselesaikan di rantai",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo bayar-per-panggilan",
-		"x402_the_payment_trust_layer_title": "x402 — lapisan kepercayaan pembayaran di sebalik penyelesaian ini"
+		"x402_the_payment_trust_layer_title": "x402: lapisan kepercayaan pembayaran di sebalik penyelesaian ini"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Panggil create_identity",

@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>การแลกเปลี่ยนเอเจนต์",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ซื้อข้อมูล — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ซื้อข้อมูล · $0.01 USDC</span>",
 		"buy_intel_on": "ซื้อข้อมูลที่:",
 		"buyer": "ผู้ซื้อ",
 		"buyer_agent": "เอเจนต์ผู้ซื้อ",
 		"intel_agent": "เอเจนต์ข้อมูล",
 		"meta_description": "เอเจนต์ AI สองตัวที่มีร่าง 3D เจรจาและจ่ายเงินให้กันสำหรับข้อมูลคริปโตสดโดยใช้ไมโครเพย์เมนต์ x402 บน Solana. ทุกธุรกรรมเป็นจริงและได้รับการยืนยันบน-chain.",
 		"meta_og_description": "เอเจนต์ AI 3D สองตัวซื้อและขายข้อมูลคริปโตสำหรับ USDC จริงบน Solana. ดูทุกธุรกรรมยืนยันบน-chain.",
-		"meta_og_title": "การแลกเปลี่ยนเอเจนต์ — เอเจนต์ AI จ่ายให้กันในเวลาจริง",
-		"meta_title": "การแลกเปลี่ยนเอเจนต์ — เอเจนต์ AI 3D จ่ายให้กันในเวลาจริง · three.ws",
+		"meta_og_title": "การแลกเปลี่ยนเอเจนต์: เอเจนต์ AI จ่ายให้กันในเวลาจริง",
+		"meta_title": "การแลกเปลี่ยนเอเจนต์: เอเจนต์ AI 3D จ่ายให้กันในเวลาจริง · three.ws",
 		"meta_twitter_description": "เอเจนต์ AI 3D สองตัวจ่ายให้กันสำหรับข้อมูลคริปโตจริง USDC บน Solana. บน-chain.",
-		"meta_twitter_title": "การแลกเปลี่ยนเอเจนต์ — เอเจนต์ AI จ่ายให้กันในเวลาจริง",
+		"meta_twitter_title": "การแลกเปลี่ยนเอเจนต์: เอเจนต์ AI จ่ายให้กันในเวลาจริง",
 		"seller": "ผู้ขาย",
 		"session_total_0_00_usdc_settled_on": "ยอดรวมเซสชัน: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC ตั้งถิ่นฐานบน-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 สาธิตจ่ายต่อการโทร",
-		"x402_the_payment_trust_layer_title": "x402 — ชั้นความไว้วางใจในการชำระเงินที่อยู่เบื้องหลังการตั้งถิ่นฐานเหล่านี้"
+		"x402_the_payment_trust_layer_title": "x402: ชั้นความไว้วางใจในการชำระเงินที่อยู่เบื้องหลังการตั้งถิ่นฐานเหล่านี้"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · โทรสร้างเอกลักษณ์",

@@ -80,8 +80,12 @@ const eth = await resolve('vitalik.eth');
 console.log(eth.address); // → 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
 
 const sol = await resolve('bonfida.sol');
-console.log(sol.address);     // → owner base58 wallet
-console.log(sol.allDomains);  // → other .sol domains the owner holds
+console.log(sol.address);  // → owner base58 wallet
+
+// Opt in to the owner's full name list (two extra SNS-index lookups server-side):
+const full = await resolve('bonfida.sol', { domains: true });
+console.log(full.favoriteDomain); // → the owner's primary .sol, if they set one
+console.log(full.allDomains);     // → every .sol they hold (capped at 100)
 ```
 
 Mint a subdomain for an agent and pay it by name:
@@ -90,15 +94,15 @@ Mint a subdomain for an agent and pay it by name:
 import { mintSubdomain, payByName } from '@three-ws/names';
 
 // Registers alice.threews.sol on-chain, transfers it to the agent's wallet.
-const { full_name, signature } = await mintSubdomain({
+const { fullName, signature } = await mintSubdomain({
   agentId: 'agt_7Yq…',
   label: 'alice',           // optional — defaults to the agent's slugified name
   token: process.env.THREEWS_TOKEN,
 });
-console.log(full_name); // → alice.threews.sol
+console.log(fullName); // → alice.threews.sol
 
 // Build an unsigned 5-USDC transfer to that name for a browser wallet to sign.
-const { tx_base64, recipient } = await payByName('alice.threews.sol', '5', {
+const { txBase64, recipient } = await payByName('alice.threews.sol', '5', {
   payerWallet: myWallet.publicKey.toBase58(),
 });
 console.log(recipient.address, recipient.source); // resolved wallet + 'sns'
@@ -112,6 +116,13 @@ Resolve a name to an address. `.eth` goes to ENS, `.sol` to SNS, and a bare
 label (`vitalik`) is tried against the `.sol` registry. Wraps
 `GET /api/sns?name=<name>` for `.sol` and the ENS resolver for `.eth`.
 
+**Options**
+
+| Option | Type | Default | Notes |
+|---|---|---|---|
+| `domains` | `boolean` | `false` | (SNS) also return every `.sol` the owner holds and their favorite domain. Off by default: it adds two SNS-index lookups the address resolution itself does not need. |
+| `signal` | `AbortSignal` | — | Cancel the request. |
+
 **Returns** `ResolveResult`
 
 | Field | Type | Notes |
@@ -120,8 +131,10 @@ label (`vitalik`) is tried against the `.sol` registry. Wraps
 | `address` | `string \| null` | Owner wallet. `null` when `resolved` is `false`. |
 | `network` | `'solana' \| 'ethereum'` | Which registry answered. |
 | `resolved` | `boolean` | `false` is a routine "no such name", **not** an error. |
-| `allDomains` | `string[]` | (SNS) other `.sol` domains the owner holds. |
-| `favoriteDomain` | `string \| null` | (SNS) the owner's primary `.sol`, if set. |
+| `allDomains` | `string[]` | (SNS) every `.sol` the owner holds, capped at 100. Empty unless you passed `domains: true`. |
+| `favoriteDomain` | `string \| null` | (SNS) the owner's primary `.sol`. Null unless you passed `domains: true`. |
+| `domainsTruncated` | `boolean` | `true` when the owner holds more than the 100 names returned. |
+| `raw` | `unknown` | The untouched wire envelope. |
 
 A `.sol` miss returns `200` with `resolved: false` — the reverse-lookup that
 runs on every page load makes "no domain" an expected answer, so it is never a
@@ -131,7 +144,10 @@ runs on every page load makes "no domain" an expected answer, so it is never a
 
 Find the primary `.sol` for a wallet. Wraps `GET /api/sns?address=<base58>`.
 Returns the same envelope with `name` populated (or `null` if the wallet has no
-favorite domain).
+favorite domain). Takes the same `domains` option, which is the difference
+between "unnamed wallet" and "wallet holding domains but no primary": a wallet
+with no favorite still answers `resolved: false`, now with its `allDomains`
+list alongside.
 
 ### `checkSubdomain(label) → Promise<Availability>`
 
@@ -142,7 +158,7 @@ Check whether `<label>.threews.sol` is free. Wraps
 |---|---|---|
 | `label` | `string` | Normalized label. |
 | `parent` | `string` | `threews.sol`. |
-| `full_name` | `string` | `<label>.threews.sol`. |
+| `fullName` | `string` | `<label>.threews.sol`. |
 | `available` | `boolean` | `true` if no on-chain owner. |
 | `owner` | `string \| null` | Current on-chain owner, if any. |
 
@@ -162,7 +178,7 @@ to a wallet — atomically, in one platform-signed transaction. Wraps
 | `space` | `number` | Optional, 1000–10000. Registry bytes reserved. Default `2000`. |
 | `token` | `string` | Bearer token (or rely on a session cookie). |
 
-**Returns** `MintResult`: `{ ok, agent_id, full_name, parent, owner, signature, explorer, url_record, agent_url }`. The new subdomain's URL record points at
+**Returns** `MintResult`: `{ ok, agentId, fullName, parent, owner, signature, explorer, urlRecord, agentUrl }` (the untouched wire body stays on `raw`). The new subdomain's URL record points at
 `https://three.ws/a/<agentId>`, and the agent's `meta.sns_domain` is set so x402
 manifests can show `recipient_name` without an extra round-trip.
 
@@ -196,7 +212,7 @@ agent wallet; **`.sol` domain** (including `foo.threews.sol`) → on-chain owner
 | `message` | `string` | — | Optional memo. |
 | `token` | `string` | — | Bearer token for `send`. |
 
-**Returns (`prep`)** `{ recipient, amount_usdc, tx_base64, blockhash, last_valid_block_height, mint }` — decode `tx_base64` into a `VersionedTransaction`, sign with the payer wallet, and submit. **Returns (`send`)** `{ recipient, payer, amount_usdc, signature, mode }`. `amount_usdc` accepts a string or number, must be `> 0` and `≤ 10000`.
+**Returns (`prep`)** `{ mode: 'prep', recipient, amountUsdc, txBase64, blockhash, lastValidBlockHeight, mint }` — decode `txBase64` into a `VersionedTransaction`, sign with the payer wallet, and submit. **Returns (`send`)** `{ mode: 'send', recipient, payer, amountUsdc, signature }`. The `amountUsdc` argument accepts a string or number, must be `> 0` and `≤ 10000`.
 
 ### `resolvePayee(name) → Promise<Payee>`
 
@@ -217,8 +233,8 @@ string you pass:
         ▼            ▼                          ▼
    ENS resolver  Bonfida SNS              users.username
    (eth RPC,     resolve() + reverse      → default agent
-    failover,    domains + fav-domain        Solana wallet
-    3s timeout)                          (.threews.sol also
+    failover,    (+ index lookup when        Solana wallet
+    3s timeout)   domains: true)         (.threews.sol also
         │            │                    surfaces a DB claim)
         ▼            ▼                          ▼
    0x… address   owner base58            recipient address
@@ -230,8 +246,10 @@ string you pass:
 - **ENS** resolves on Ethereum mainnet through a failover provider, bounded by
   a 3-second timeout. A reverse lookup of the owner's primary name is
   best-effort.
-- **SNS** resolves through Bonfida — owner wallet, the owner's other `.sol`
-  domains, and their favorite domain.
+- **SNS** resolves through Bonfida to the owner wallet. Pass `domains: true` and
+  the resolution also reads the Bonfida SNS index for every `.sol` that owner
+  holds plus their favorite domain, both best-effort: an index outage returns
+  the plain envelope rather than failing the resolve.
 - **Subdomain minting** is a single on-chain transaction: `createSubdomain`
   (parent owner becomes owner) → `createRecordV2Instruction` writes the URL
   record while the platform still owns it (so `<label>.threews.sol` resolves in
@@ -301,10 +319,10 @@ const { data } = await r.json();
 ```js
 import { mintSubdomain, resolvePayee } from '@three-ws/names';
 
-const { full_name } = await mintSubdomain({ agentId, label: 'oracle', token });
+const { fullName } = await mintSubdomain({ agentId, label: 'oracle', token });
 // → oracle.threews.sol, owned by the agent's wallet, URL record → /a/<agentId>
 
-const payee = await resolvePayee(full_name);
+const payee = await resolvePayee(fullName);
 // → { name: 'oracle.threews.sol', address: '…', source: 'sns', claim: … }
 ```
 
@@ -314,10 +332,10 @@ const payee = await resolvePayee(full_name);
 import { payByName } from '@three-ws/names';
 import { VersionedTransaction } from '@solana/web3.js';
 
-const { tx_base64 } = await payByName('alice.threews.sol', '2.5', {
+const { txBase64 } = await payByName('alice.threews.sol', '2.5', {
   payerWallet: wallet.publicKey.toBase58(),
 });
-const tx = VersionedTransaction.deserialize(Buffer.from(tx_base64, 'base64'));
+const tx = VersionedTransaction.deserialize(Buffer.from(txBase64, 'base64'));
 const signed = await wallet.signTransaction(tx);
 const sig = await connection.sendRawTransaction(signed.serialize());
 ```

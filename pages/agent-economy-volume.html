@@ -41,8 +41,12 @@
 				--line: rgba(255,255,255,0.07);
 				--line-2: rgba(255,255,255,0.12);
 				--text: #e7e9ee;
-				--muted: rgba(231,233,238,0.55);
-				--dim: rgba(231,233,238,0.35);
+				/* Both tints are read at 11px to 13px, so they carry the WCAG AA 4.5:1
+				   floor against every surface here (--bg, --bg-2, --card). The old
+				   --dim landed at 2.86:1 on a card, which axe flags as a serious
+				   contrast failure on the stat sub-labels and the footnote. */
+				--muted: rgba(231,233,238,0.66);
+				--dim: rgba(231,233,238,0.52);
 				--green: #4ade80;
 				--amber: #f5a524;
 				--violet: #a78bfa;
@@ -52,7 +56,10 @@
 				--skeleton-sheen: rgba(255,255,255,0.08);
 			}
 			[data-theme="light"]{
-				--bg:#f5f5f5;--bg-2:#fff;--card:#fff;--line:rgba(0,0,0,.07);--line-2:rgba(0,0,0,.12);--text:#111;--muted:rgba(0,0,0,.55);--dim:rgba(0,0,0,.35);--skeleton-base:rgba(0,0,0,.04);--skeleton-sheen:rgba(0,0,0,.08);
+				/* --cyan is a link colour here, and the dark-mode value reads 1.91:1 on
+				   white: unreadable in light mode. The darker sibling clears AA for
+				   text and still passes 3:1 as a focus ring. */
+				--bg:#f5f5f5;--bg-2:#fff;--card:#fff;--line:rgba(0,0,0,.07);--line-2:rgba(0,0,0,.12);--text:#111;--muted:rgba(0,0,0,.68);--dim:rgba(0,0,0,.57);--cyan:#0369a1;--skeleton-base:rgba(0,0,0,.04);--skeleton-sheen:rgba(0,0,0,.08);
 			}
 			*{box-sizing:border-box;margin:0;padding:0;}
 			html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;}
@@ -95,8 +102,11 @@
 			.chart-wrap{background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius);padding:20px;position:relative;}
 			.chart-canvas{width:100%;height:240px;display:block;}
 			.chart-empty{height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:13px;text-align:center;padding:0 12px;}
-			.chart-empty a{color:var(--cyan);border-bottom:1px solid transparent;}
-			.chart-empty a:hover{border-color:var(--cyan);}
+			/* A standing underline, not a hover-only one: inside a sentence of muted
+			   copy the cyan alone is a ~1.9:1 difference from the text around it, so
+			   colour is the only thing marking the link and WCAG 1.4.1 fails. */
+			.chart-empty a{color:var(--cyan);border-bottom:1px solid currentColor;}
+			.chart-empty a:hover{color:var(--text);}
 			.chart-skeleton{height:240px;border-radius:8px;}
 			.chart-tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-100%);background:var(--bg-2);border:1px solid var(--line-2);border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.4;white-space:nowrap;box-shadow:0 8px 22px rgba(0,0,0,.35);transition:opacity .12s ease;z-index:2;}
 			.chart-tip[data-open="1"]{opacity:1;}
@@ -130,8 +140,8 @@
 			.feed-skill{color:var(--muted);}
 			.feed-amt{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;}
 			.feed-time{font-size:11px;color:var(--dim);white-space:nowrap;}
-			.feed-link{font-size:11px;color:var(--cyan);white-space:nowrap;}
-			.feed-link:hover{text-decoration:underline;}
+			.feed-link{font-size:11px;color:var(--cyan);white-space:nowrap;text-decoration:underline;text-underline-offset:2px;}
+			.feed-link:hover{color:var(--text);}
 			/* Skeleton */
 			.skeleton{background:var(--skeleton-base);background-image:linear-gradient(90deg,var(--skeleton-base) 0%,var(--skeleton-sheen) 50%,var(--skeleton-base) 100%);background-size:200% 100%;border-radius:6px;animation:shimmer 1.4s ease-in-out infinite;}
 			@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
@@ -141,13 +151,16 @@
 			.skeleton-headline{display:inline-block;width:190px;max-width:60vw;height:44px;border-radius:10px;vertical-align:middle;}
 			/* Empty / error */
 			.an-empty{color:var(--muted);font-size:13px;padding:18px 0;line-height:1.55;}
-			.an-empty a{color:var(--cyan);border-bottom:1px solid transparent;}
-			.an-empty a:hover{border-color:var(--cyan);}
+			.an-empty a{color:var(--cyan);border-bottom:1px solid currentColor;}
+			.an-empty a:hover{color:var(--text);}
 			.an-error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:16px 20px;color:#ef4444;font-size:13px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
-			.an-error button{appearance:none;background:#ef4444;color:#fff;border:none;border-radius:8px;padding:7px 14px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;}
-			.an-error button:hover{background:#dc2626;}
+			/* #ef4444 under white 12px text is 3.76:1, short of the AA floor for the
+			   one control that recovers this page from a failed load. */
+			.an-error button{appearance:none;background:#dc2626;color:#fff;border:none;border-radius:8px;padding:7px 14px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;}
+			.an-error button:hover{background:#b91c1c;}
 			.an-error button:active{transform:translateY(1px);}
 			.an-error button[disabled]{opacity:.6;cursor:progress;}
+			[data-theme="light"] .an-error{color:#b91c1c;}
 			.foot-note{color:var(--dim);font-size:12px;margin-top:8px;line-height:1.5;}
 			.foot-note a{color:var(--muted);border-bottom:1px solid var(--line-2);}
 			.foot-note a:hover{color:var(--text);border-color:var(--text);}

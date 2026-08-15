@@ -43,7 +43,7 @@ Point a reverse proxy / load balancer at the container, add your domain and TLS,
 
 ## Required environment variables
 
-Copy [`.env.example`](../.env.example) to `.env.local` for local work, and set the same variables on your host. On Cloud Run they live on the service (`gcloud run services update three-ws-api --region us-central1 --set-env-vars …`); on any other host, set them however that platform injects environment. Secret-type variables should be stored as secrets, not plaintext — and never trust a `vercel env pull` as a complete export, since it returns empty for secret-type vars.
+Copy [`.env.example`](../.env.example) to `.env.local` for local work, and set the same variables on your host. On Cloud Run they live on the service (`gcloud run services update three-ws-api --region us-central1 --update-env-vars NAME=value`); on any other host, set them however that platform injects environment. Use `--update-env-vars`, which merges: `--set-env-vars` REPLACES the service's entire environment, so passing one key with it wipes every other variable the service had. Secret-type variables should be stored as secrets, not plaintext. Never trust a `vercel env pull` as a complete export, since it returns empty for secret-type vars.
 
 ```bash
 cp .env.example .env.local
@@ -110,14 +110,15 @@ Without Redis, rate limits run in-memory per serverless instance. This is fine f
 
 ```env
 # Avatar builder — origin where the in-browser avatar builder iframe is hosted.
-# Defaults to http://localhost:5173 in dev. Production deployments should host the
-# character-studio/ workspace (it is a separate Vite/React app) and point this env
-# var at its origin. Same export contract, same humanoid rig, open-source
-# and self-hostable.
-VITE_CHARACTER_STUDIO_URL=https://studio.three.ws
+# LEAVE THIS UNSET for a normal deployment. When unset it resolves SAME-ORIGIN to
+# <your origin>/avatar-studio, where the build already ships the character-studio/
+# bundle (the Vite dev middleware serves character-studio/build there in dev).
+# Set it only to point at a standalone studio dev server while developing
+# character-studio/ itself, e.g. http://localhost:5173.
+# VITE_CHARACTER_STUDIO_URL=http://localhost:5173
 
 # Photo-to-avatar pipeline
-# Get key at https://avaturn.me/developer
+# Get key through the Avaturn developer docs: https://docs.avaturn.me/
 AVATURN_API_KEY=
 AVATURN_API_URL=https://api.avaturn.me
 VITE_AVATURN_EDITOR_URL=https://editor.avaturn.me/
@@ -354,7 +355,7 @@ The embed routes explicitly set `frame-ancestors *` so the embed iframe can be h
 
 ### Background cron jobs
 
-The `crons` array in `vercel.json` declares every scheduled job (100 at time of writing: economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). That array is the authoritative count; read it rather than trusting a number quoted in prose. In production these run as **Google Cloud Scheduler jobs** (one per entry) each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
+The `crons` array in `vercel.json` declares every scheduled job (economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). That array is the authoritative list and count; read it rather than trusting a number quoted in prose. In production these run as **Google Cloud Scheduler jobs** (one per entry) each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
 
 | Cron | Schedule | Purpose |
 |---|---|---|
@@ -408,7 +409,7 @@ cp .env.example .env
 
 # Build and test
 forge build
-forge test -vv   # 25 tests across three contracts
+forge test -vv   # the full Solidity suite under contracts/test/
 
 # Dry run first
 forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org

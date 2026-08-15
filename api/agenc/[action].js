@@ -12,6 +12,11 @@
 //   /api/agenc/get-task?creator=<base58>&taskId=<hex|label>&cluster=devnet
 //       Single task status + (optionally) lifecycle timeline.
 //
+//   /api/agenc/recent-tasks?cluster=devnet[&limit=6]
+//       The newest task PDAs three.ws itself wrote on-chain through the Agora
+//       rail, read from the platform's own journal (no RPC round trip), so a
+//       client with no address in hand has something real to watch.
+//
 //   /api/agenc/get-agent?agentPda=<base58>&cluster=devnet
 //   /api/agenc/get-agent?agentId=<hex|label>&cluster=devnet
 //       Agent registration state.
@@ -23,10 +28,14 @@
 //       Computes the canonical three.ws → AgenC agentId via the identity
 //       bridge and checks whether that PDA is already registered on-chain.
 //
-// Cluster defaults to `mainnet`. Set `?cluster=devnet` for devnet program
-// 6UcJzbTEemBz3aY5wK5qKHGMD7bdRsmR4smND29gB2ab. Reads rotate across the
-// platform's canonical Solana RPC chain (see withAgenC below); `AGENC_RPC_URL`
-// pins a preferred endpoint at the head of that chain.
+// Cluster defaults to `mainnet`; set `?cluster=devnet` for the devnet
+// deployment. Every response carries the `programId` the read actually ran
+// against, because `createAgenCClient` derives it from the bundled IDL rather
+// than from a constant: quoting a program address from anywhere else (docs, UI
+// copy, an older SDK export) is how a page ends up naming a program no read of
+// ours has touched in months. Reads rotate across the platform's canonical
+// Solana RPC chain (see withAgenC below); `AGENC_RPC_URL` pins a preferred
+// endpoint at the head of that chain.
 
 import { PublicKey } from '@solana/web3.js';
 import { createHash } from 'node:crypto';
@@ -104,6 +113,30 @@ export function taskStateLabel(state) {
 		return key ? key[0].toUpperCase() + key.slice(1) : 'Unknown';
 	}
 	return String(state);
+}
+
+// A base58 address a visitor can legitimately paste but that is not an AgenC
+// account of the expected type fails INSIDE the Anchor decoder ("Invalid account
+// discriminator", "Account does not exist"), not by returning null. That error is
+// deterministic, so `rotateRpc` correctly re-throws it on the first endpoint, and
+// the wrapper then answered an opaque 500 for what is really "no such task on
+// this cluster": the single most likely thing a visitor gets wrong, reported as
+// though the platform were broken. Classify it and reuse the handler's own 404.
+function isWrongAccount(err) {
+	return /invalid account discriminator|account does not exist|could not find account|failed to deserialize/i.test(
+		String(err?.message || err),
+	);
+}
+
+// Read an AgenC account, turning "that address holds no such account" into null
+// so callers render the honest 404 instead of a server error.
+async function readAccount(read) {
+	try {
+		return await read();
+	} catch (err) {
+		if (isWrongAccount(err)) return null;
+		throw err;
+	}
 }
 
 function agentStatusLabel(status) {
@@ -265,6 +298,58 @@ async function handleListTasks(req, res) {
 	}));
 }
 
+// Task discovery without an address in hand. `list-tasks` can only answer once
+// the caller already knows a creator wallet, which leaves every first-time
+// visitor of /agenc/embodied staring at an input box with nothing to put in it
+// and no way to find one: the surface renders live on-chain state and offered no
+// path to any. The platform does know real task PDAs, because every task the
+// Agora rail posts, claims, and completes is journalled with the PDA it wrote.
+// So this reads our own ledger (one DB round trip, no getProgramAccounts scan)
+// and hands back the newest PDAs for the requested cluster. It is a pointer
+// list, not a source of truth: whatever the caller then acts on is verified
+// against the chain by `get-task`.
+async function handleRecentTasks(req, res) {
+	const cluster = pickCluster(req);
+	const requested = parseInt(String(req.query?.limit ?? '6'), 10);
+	const limit = Math.min(Math.max(Number.isFinite(requested) ? requested : 6, 1), 25);
+
+	let rows;
+	try {
+		rows = await sql`
+			select a.task_pda,
+			       max(a.created_at) as last_activity_at,
+			       max(a.reward_label) as reward_label,
+			       array_agg(distinct a.kind) as kinds
+			  from agora_activity a
+			  join agora_citizens c on c.id = a.citizen_id
+			 where a.task_pda is not null
+			   and c.agenc_cluster = ${cluster}
+			 group by a.task_pda
+			 order by last_activity_at desc
+			 limit ${limit}`;
+	} catch (err) {
+		// The journal is a convenience index over work the chain already holds, so
+		// a DB blip degrades discovery rather than failing the request: the caller
+		// still has the manual taskPda path, and `degraded` tells it to say so.
+		console.warn('[agenc] recent-tasks journal unavailable:', err?.message);
+		return json(res, 200, { ok: true, cluster, count: 0, degraded: true, tasks: [], fetchedAt: new Date().toISOString() });
+	}
+
+	return json(res, 200, {
+		ok: true,
+		cluster,
+		count: rows.length,
+		degraded: false,
+		tasks: rows.map((r) => ({
+			taskPda: r.task_pda,
+			lastActivityAt: r.last_activity_at instanceof Date ? r.last_activity_at.toISOString() : r.last_activity_at,
+			rewardLabel: r.reward_label ?? null,
+			kinds: Array.isArray(r.kinds) ? r.kinds : [],
+		})),
+		fetchedAt: new Date().toISOString(),
+	});
+}
+
 async function handleGetTask(req, res) {
 	const q = req.query || {};
 	// Resolve the caller's identifiers BEFORE touching the chain: a malformed pubkey
@@ -288,9 +373,9 @@ async function handleGetTask(req, res) {
 	const wantLifecycle = q.lifecycle === '1' || q.lifecycle === 'true';
 	const { client, pda, task, lifecycle } = await withAgenC(pickCluster(req), async (c) => {
 		const taskPda = explicitPda || deriveTaskPda(creator, taskIdSeed, c.programId);
-		const found = await getTask(c.program, taskPda);
+		const found = await readAccount(() => getTask(c.program, taskPda));
 		if (!found || !wantLifecycle) return { client: c, pda: taskPda, task: found, lifecycle: null };
-		const s = await getTaskLifecycleSummary(c.program, taskPda);
+		const s = await readAccount(() => getTaskLifecycleSummary(c.program, taskPda));
 		if (!s) return { client: c, pda: taskPda, task: found, lifecycle: null };
 		return {
 			client: c,
@@ -434,7 +519,7 @@ async function handleGetAgent(req, res) {
 	}
 	const { client, pda, agent } = await withAgenC(pickCluster(req), async (c) => {
 		const agentPda = explicitPda || deriveAgentPda(agentIdSeed, c.programId);
-		return { client: c, pda: agentPda, agent: await getAgent(c.program, agentPda) };
+		return { client: c, pda: agentPda, agent: await readAccount(() => getAgent(c.program, agentPda)) };
 	});
 	if (!agent) {
 		return json(res, 404, {
@@ -491,7 +576,7 @@ async function handleLink(req, res) {
 	const cl = cluster === 'devnet' ? 'devnet' : 'mainnet';
 	const { client, pda, agent } = await withAgenC(cl, async (c) => {
 		const agentPda = deriveAgentPda(canonical.agenCAgentId, c.programId);
-		return { client: c, pda: agentPda, agent: await getAgent(c.program, agentPda) };
+		return { client: c, pda: agentPda, agent: await readAccount(() => getAgent(c.program, agentPda)) };
 	});
 
 	const metadataUri = buildThreewsMetadataUri(
@@ -607,6 +692,7 @@ async function handleX402Services(req, res) {
 
 const HANDLERS = {
 	'list-tasks': { methods: ['GET'], fn: handleListTasks },
+	'recent-tasks': { methods: ['GET'], fn: handleRecentTasks },
 	'get-task': { methods: ['GET'], fn: handleGetTask },
 	'get-agent': { methods: ['GET'], fn: handleGetAgent },
 	'x402-services': { methods: ['GET'], fn: handleX402Services },

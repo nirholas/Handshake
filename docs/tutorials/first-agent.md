@@ -235,11 +235,11 @@ Then add your own input below the element:
   const agent = document.querySelector('agent-3d');
   const input = document.getElementById('msg');
 
-  async function send() {
+  function send() {
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
-    await agent.say(text);
+    agent.say(text);
   }
 
   // Submit on Enter
@@ -259,8 +259,8 @@ Then add your own input below the element:
 
 | Method | What it does |
 |--------|--------------|
-| `agent.say(text)` | Sends a message and returns the reply. The agent also speaks and animates. |
-| `agent.ask(text)` | Same as `say()`, but returns the reply text as a string. |
+| `agent.say(text)` | Sends a message the way the built-in chat input does. Fire-and-forget: the reply renders in the bubble, and the agent speaks and animates, but nothing is returned. |
+| `agent.ask(text)` | Same turn as `say()`, but returns a promise that resolves with the reply text once the response has finished (and rejects if the brain call fails). |
 | `agent.wave()` | Triggers the wave animation directly. |
 | `agent.lookAt(target)` | `'camera'`, `'model'`, or `'user'` — the agent turns to look. |
 | `agent.play(clipName)` | Plays a named animation clip from the GLB. |
@@ -273,7 +273,7 @@ Then add your own input below the element:
 |-------|--------------|----------------|
 | `agent:ready` | Agent fully booted | `{ agent, manifest }` |
 | `brain:message` | Each turn of conversation | `{ role, content }` |
-| `brain:thinking` | LLM call started | — |
+| `brain:thinking` | LLM call started, and again when it ends | `{ thinking }` |
 | `skill:tool-called` | Agent used a tool/skill | `{ tool, args, result }` |
 | `voice:transcript` | STT produced a transcript | `{ text, final }` |
 
@@ -285,10 +285,10 @@ Make Aria say hello as soon as the page loads. Add this after the script block f
 
 ```html
 <script>
-  agent.addEventListener('agent:ready', async () => {
+  agent.addEventListener('agent:ready', () => {
     // Short pause so the avatar settles in before speaking
-    setTimeout(async () => {
-      await agent.say('Hello! I\'m Aria. How can I help you today?');
+    setTimeout(() => {
+      agent.say('Hello! I\'m Aria. How can I help you today?');
     }, 1200);
   });
 </script>
@@ -450,11 +450,11 @@ Here's the complete `index.html` all in one place:
     const agent = document.querySelector('agent-3d');
     const input = document.getElementById('msg');
 
-    async function send() {
+    function send() {
       const text = input.value.trim();
       if (!text) return;
       input.value = '';
-      await agent.say(text);
+      agent.say(text);
     }
 
     input.addEventListener('keydown', e => {

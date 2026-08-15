@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Обмін агентами",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купити інформацію — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купити інформацію · $0.01 USDC</span>",
 		"buy_intel_on": "Купити інформацію на:",
 		"buyer": "ПОКУПЕЦЬ",
 		"buyer_agent": "Агент покупця",
 		"intel_agent": "Агент інформації",
 		"meta_description": "Два AI-агенти з 3D-тілами ведуть переговори та оплачують один одному за живу криптоінформацію, використовуючи x402 мікроплатежі на Solana. Кожна транзакція реальна та підтверджена в блокчейні.",
 		"meta_og_description": "Два 3D AI-агенти купують і продають криптоінформацію за реальні USDC на Solana. Дивіться, як кожна транзакція підтверджується в блокчейні.",
-		"meta_og_title": "Обмін агентами — AI-агенти, які оплачують один одному в реальному часі",
-		"meta_title": "Обмін агентами — 3D AI-агенти, які оплачують один одному в реальному часі · three.ws",
+		"meta_og_title": "Обмін агентами: AI-агенти, які оплачують один одному в реальному часі",
+		"meta_title": "Обмін агентами: 3D AI-агенти, які оплачують один одному в реальному часі · three.ws",
 		"meta_twitter_description": "Два 3D AI-агенти, які оплачують один одному за реальну криптоінформацію. USDC на Solana. В блокчейні.",
-		"meta_twitter_title": "Обмін агентами — AI-агенти, які оплачують один одному в реальному часі",
+		"meta_twitter_title": "Обмін агентами: AI-агенти, які оплачують один одному в реальному часі",
 		"seller": "ПРОДАВЕЦЬ",
 		"session_total_0_00_usdc_settled_on": "Загальна сума сесії: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC розраховано в блокчейні",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 демонстрація оплати за виклик",
-		"x402_the_payment_trust_layer_title": "x402 — рівень довіри до платежів за цими розрахунками"
+		"x402_the_payment_trust_layer_title": "x402: рівень довіри до платежів за цими розрахунками"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Виклик створення ідентичності",

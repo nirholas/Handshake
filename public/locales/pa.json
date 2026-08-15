@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>ਏਜੰਟ ਐਕਸਚੇਂਜ",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ਇੰਟੈਲ ਖਰੀਦੋ — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ਇੰਟੈਲ ਖਰੀਦੋ · $0.01 USDC</span>",
 		"buy_intel_on": "ਇੰਟੈਲ ਖਰੀਦੋ:",
 		"buyer": "ਖਰੀਦਦਾਰ",
 		"buyer_agent": "ਖਰੀਦਦਾਰ ਏਜੰਟ",
 		"intel_agent": "ਇੰਟੈਲ ਏਜੰਟ",
 		"meta_description": "ਦੋ 3D ਸਰੀਰ ਵਾਲੇ AI ਏਜੰਟ Solana 'ਤੇ x402 ਮਾਈਕ੍ਰੋਪੇਮੈਂਟਸ ਦੀ ਵਰਤੋਂ ਕਰਕੇ ਲਾਈਵ ਕ੍ਰਿਪਟੋ ਇੰਟੈਲ ਲਈ ਇੱਕ ਦੂਜੇ ਨਾਲ ਗੱਲਬਾਤ ਕਰਦੇ ਹਨ ਅਤੇ ਭੁਗਤਾਨ ਕਰਦੇ ਹਨ। ਹਰ ਲੈਣ-ਦੇਣ ਅਸਲੀ ਹੈ ਅਤੇ ਆਨ-ਚੇਨ 'ਤੇ ਪੁਸ਼ਟੀ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।",
 		"meta_og_description": "ਦੋ 3D AI ਏਜੰਟ Solana 'ਤੇ ਅਸਲੀ USDC ਲਈ ਕ੍ਰਿਪਟੋ ਇੰਟੈਲ ਖਰੀਦਦੇ ਅਤੇ ਵੇਚਦੇ ਹਨ। ਹਰ ਲੈਣ-ਦੇਣ ਨੂੰ ਆਨ-ਚੇਨ 'ਤੇ ਪੁਸ਼ਟੀ ਹੁੰਦੇ ਦੇਖੋ।",
-		"meta_og_title": "ਏਜੰਟ ਐਕਸਚੇਂਜ — AI ਏਜੰਟ ਰੀਅਲ ਟਾਈਮ ਵਿੱਚ ਇੱਕ ਦੂਜੇ ਨੂੰ ਭੁਗਤਾਨ ਕਰ ਰਹੇ ਹਨ",
-		"meta_title": "ਏਜੰਟ ਐਕਸਚੇਂਜ — 3D AI ਏਜੰਟ ਰੀਅਲ ਟਾਈਮ ਵਿੱਚ ਇੱਕ ਦੂਜੇ ਨੂੰ ਭੁਗਤਾਨ ਕਰ ਰਹੇ ਹਨ · three.ws",
+		"meta_og_title": "ਏਜੰਟ ਐਕਸਚੇਂਜ: AI ਏਜੰਟ ਰੀਅਲ ਟਾਈਮ ਵਿੱਚ ਇੱਕ ਦੂਜੇ ਨੂੰ ਭੁਗਤਾਨ ਕਰ ਰਹੇ ਹਨ",
+		"meta_title": "ਏਜੰਟ ਐਕਸਚੇਂਜ: 3D AI ਏਜੰਟ ਰੀਅਲ ਟਾਈਮ ਵਿੱਚ ਇੱਕ ਦੂਜੇ ਨੂੰ ਭੁਗਤਾਨ ਕਰ ਰਹੇ ਹਨ · three.ws",
 		"meta_twitter_description": "ਦੋ 3D AI ਏਜੰਟ ਅਸਲੀ ਕ੍ਰਿਪਟੋ ਇੰਟੈਲ ਲਈ ਇੱਕ ਦੂਜੇ ਨੂੰ ਭੁਗਤਾਨ ਕਰ ਰਹੇ ਹਨ। USDC Solana 'ਤੇ। ਆਨ-ਚੇਨ।",
-		"meta_twitter_title": "ਏਜੰਟ ਐਕਸਚੇਂਜ — AI ਏਜੰਟ ਰੀਅਲ ਟਾਈਮ ਵਿੱਚ ਇੱਕ ਦੂਜੇ ਨੂੰ ਭੁਗਤਾਨ ਕਰ ਰਹੇ ਹਨ",
+		"meta_twitter_title": "ਏਜੰਟ ਐਕਸਚੇਂਜ: AI ਏਜੰਟ ਰੀਅਲ ਟਾਈਮ ਵਿੱਚ ਇੱਕ ਦੂਜੇ ਨੂੰ ਭੁਗਤਾਨ ਕਰ ਰਹੇ ਹਨ",
 		"seller": "ਵੇਚਣ ਵਾਲਾ",
 		"session_total_0_00_usdc_settled_on": "ਸੈਸ਼ਨ ਕੁੱਲ: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC ਆਨ-ਚੇਨ 'ਤੇ ਨਿਪਟਾਇਆ ਗਿਆ",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ਪ੍ਰਤੀ-ਕਾਲ ਭੁਗਤਾਨ ਡੈਮੋ",
-		"x402_the_payment_trust_layer_title": "x402 — ਇਹਨਾਂ ਨਿਪਟਾਰਿਆਂ ਦੇ ਪਿੱਛੇ ਭੁਗਤਾਨ ਭਰੋਸੇਯੋਗਤਾ ਪਰਤ"
+		"x402_the_payment_trust_layer_title": "x402: ਇਹਨਾਂ ਨਿਪਟਾਰਿਆਂ ਦੇ ਪਿੱਛੇ ਭੁਗਤਾਨ ਭਰੋਸੇਯੋਗਤਾ ਪਰਤ"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity ਨੂੰ ਕਾਲ ਕਰੋ",

@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Գործակալների փոխանակում",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Գնել ինտել — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Գնել ինտել · $0.01 USDC</span>",
 		"buy_intel_on": "Գնել ինտել՝",
 		"buyer": "ԳՆՈՐԴ",
 		"buyer_agent": "Գնորդ գործակալ",
 		"intel_agent": "Ինտել գործակալ",
 		"meta_description": "Երկու AI գործակալներ՝ 3D մարմիններով, բանակցում և վճարում են միմյանց կրիպտո ինտելի համար՝ օգտագործելով x402 միկրովճարումներ Solana-ի վրա։ Յուրաքանչյուր գործարք իրական է և հաստատված է շղթայում։",
 		"meta_og_description": "Երկու 3D AI գործակալներ գնում և վաճառում են կրիպտո ինտել իրական USDC-ով Solana-ի վրա։ Դիտեք յուրաքանչյուր գործարքի հաստատումը շղթայում։",
-		"meta_og_title": "Գործակալների փոխանակում — AI գործակալներ, որոնք իրական ժամանակում վճարում են միմյանց",
-		"meta_title": "Գործակալների փոխանակում — 3D AI գործակալներ, որոնք իրական ժամանակում վճարում են միմյանց · three.ws",
+		"meta_og_title": "Գործակալների փոխանակում: AI գործակալներ, որոնք իրական ժամանակում վճարում են միմյանց",
+		"meta_title": "Գործակալների փոխանակում: 3D AI գործակալներ, որոնք իրական ժամանակում վճարում են միմյանց · three.ws",
 		"meta_twitter_description": "Երկու 3D AI գործակալներ վճարում են միմյանց իրական կրիպտո ինտելի համար։ USDC Solana-ի վրա։ Շղթայում։",
-		"meta_twitter_title": "Գործակալների փոխանակում — AI գործակալներ, որոնք իրական ժամանակում վճարում են միմյանց",
+		"meta_twitter_title": "Գործակալների փոխանակում: AI գործակալներ, որոնք իրական ժամանակում վճարում են միմյանց",
 		"seller": "ՎԱՃԱՌՈՂ",
 		"session_total_0_00_usdc_settled_on": "Նիստի ընդհանուր գումարը՝ <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC հաշվարկված է շղթայում",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 զանգի դիմաց վճարման դեմո",
-		"x402_the_payment_trust_layer_title": "x402 — վճարման վստահության շերտը այս հաշվարկների հետևում"
+		"x402_the_payment_trust_layer_title": "x402: վճարման վստահության շերտը այս հաշվարկների հետևում"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Կանչել create_identity",

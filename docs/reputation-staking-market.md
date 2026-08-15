@@ -181,6 +181,31 @@ The funder needs roughly 0.02 SOL per run and is only ever debited to the
 throwaway staker the run generates. If it is short, the proof says which account
 holds how much and what it needs, rather than failing at a later stage.
 
+### When there is no faucet and no funded keypair either
+
+A local validator needs nothing external at all: `solana-test-validator` bundles
+the same SPL Memo program the attestations and the settlement memo use, and it
+airdrops without limit, so the whole contract runs offline.
+
+```bash
+solana-test-validator --reset --ledger /tmp/rsm-ledger &
+solana-keygen new --no-bip39-passphrase --silent --outfile /tmp/rsm-funder.json
+solana airdrop 20 "$(solana-keygen pubkey /tmp/rsm-funder.json)" --url http://127.0.0.1:8899
+
+SOLANA_RPC_URL_DEVNET="http://127.0.0.1:8899/?cluster=devnet" \
+REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY="$(cat /tmp/rsm-funder.json)" \
+node scripts/reputation-market-proof.mjs
+```
+
+Two details in that command are load-bearing. The `?cluster=devnet` suffix is
+how the RPC layer infers the cluster (`inferNetwork` in
+[`api/_lib/solana/connection.js`](../api/_lib/solana/connection.js)); a bare
+localhost URL reads as mainnet and would queue mainnet endpoints as fallbacks
+behind it. And the funder rung is used rather than the faucet because
+`requestAirdrop` confirms over a WebSocket subscription, which a local validator
+serves on a port the derived URL does not point at; every other stage of the
+proof confirms over HTTP polling and works untouched.
+
 ## HTTP surface
 
 | Endpoint | Method | Purpose |

@@ -183,3 +183,27 @@ test('grindViaApi maps a validation_error to a typed ThreeWsError', async () => 
 test('the default grindViaApi export is wired to a shared client', () => {
 	assert.equal(typeof grindViaApi, 'function');
 });
+
+test('the standalone grindViaApi honours a per-call fetch and baseUrl', async () => {
+	// The paid lane needs an x402-wrapped fetch, so a `fetch` passed straight to
+	// the standalone export must actually be used — falling back to the global
+	// one would send the call out unpaid and 402.
+	const { fetch, calls } = stubFetch([{ body: { address: 'THREEsynthetic1111', network: 'solana' } }]);
+	const res = await grindViaApi({ prefix: 'a', fetch, baseUrl: 'https://preview.three.ws' });
+
+	assert.equal(calls.length, 1, 'the supplied fetch was called');
+	assert.equal(calls[0].url.origin, 'https://preview.three.ws');
+	assert.equal(calls[0].url.pathname, '/api/x402/vanity');
+	assert.equal(calls[0].url.searchParams.get('prefix'), 'a');
+	assert.equal(res.address, 'THREEsynthetic1111');
+});
+
+test('the standalone grindViaApi still validates before touching the supplied fetch', async () => {
+	const { fetch, calls } = stubFetch([]);
+	await assert.rejects(() => grindViaApi({ prefix: 'abcd', fetch }), (e) => {
+		assert.ok(e instanceof ThreeWsError);
+		assert.equal(e.code, 'invalid_input');
+		return true;
+	});
+	assert.equal(calls.length, 0);
+});

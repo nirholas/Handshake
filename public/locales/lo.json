@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>ການແລກປ່ຽນເອເຈັນ",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ຊື້ຂໍ້ມູນ — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ຊື້ຂໍ້ມູນ · $0.01 USDC</span>",
 		"buy_intel_on": "ຊື້ຂໍ້ມູນກ່ຽວກັບ:",
 		"buyer": "ຜູ້ຊື້",
 		"buyer_agent": "ເອເຈັນຜູ້ຊື້",
 		"intel_agent": "ເອເຈັນຂໍ້ມູນ",
 		"meta_description": "ເອເຈັນ AI ສອງຕົວທີ່ມີຮ່າງກາຍ 3D ເຈລະຈາ ແລະ ຈ່າຍເງິນໃຫ້ກັນສຳລັບຂໍ້ມູນ crypto ແບບສົດໆ ໂດຍໃຊ້ micropayments x402 ຢູ່ເທິງ Solana. ທຸກໆທຸລະກຳແມ່ນຈິງ ແລະ ຖືກຢືນຢັນເທິງລະບົບຕ່ອງໂສ້.",
 		"meta_og_description": "ເອເຈັນ AI 3D ສອງຕົວຊື້ຂາຍຂໍ້ມູນ crypto ເພື່ອ USDC ແທ້ຈິງຢູ່ເທິງ Solana. ເບິ່ງທຸກໆທຸລະກຳຢືນຢັນເທິງລະບົບຕ່ອງໂສ້.",
-		"meta_og_title": "ການແລກປ່ຽນເອເຈັນ — ເອເຈັນ AI ຈ່າຍເງິນໃຫ້ກັນແບບສົດໆ",
-		"meta_title": "ການແລກປ່ຽນເອເຈັນ — ເອເຈັນ AI 3D ຈ່າຍເງິນໃຫ້ກັນແບບສົດໆ · three.ws",
+		"meta_og_title": "ການແລກປ່ຽນເອເຈັນ: ເອເຈັນ AI ຈ່າຍເງິນໃຫ້ກັນແບບສົດໆ",
+		"meta_title": "ການແລກປ່ຽນເອເຈັນ: ເອເຈັນ AI 3D ຈ່າຍເງິນໃຫ້ກັນແບບສົດໆ · three.ws",
 		"meta_twitter_description": "ເອເຈັນ AI 3D ສອງຕົວຈ່າຍເງິນໃຫ້ກັນສຳລັບຂໍ້ມູນ crypto ແທ້ຈິງ. USDC ຢູ່ເທິງ Solana. ເທິງລະບົບຕ່ອງໂສ້.",
-		"meta_twitter_title": "ການແລກປ່ຽນເອເຈັນ — ເອເຈັນ AI ຈ່າຍເງິນໃຫ້ກັນແບບສົດໆ",
+		"meta_twitter_title": "ການແລກປ່ຽນເອເຈັນ: ເອເຈັນ AI ຈ່າຍເງິນໃຫ້ກັນແບບສົດໆ",
 		"seller": "ຜູ້ຂາຍ",
 		"session_total_0_00_usdc_settled_on": "ຍອດລວມຂອງເຊສຊັນ: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC ຖືກຊຳລະເທິງລະບົບຕ່ອງໂສ້",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ຕົວຢ່າງສາທິດແບບຈ່າຍຕໍ່ການຮຽກໃຊ້",
-		"x402_the_payment_trust_layer_title": "x402 — ຊັ້ນຄວາມເຊື່ອໝັ້ນການຊໍາລະເງິນທີ່ຢູ່ເບື້ອງຫຼັງການຕົກລົງເຫຼົ່ານີ້"
+		"x402_the_payment_trust_layer_title": "x402: ຊັ້ນຄວາມເຊື່ອໝັ້ນການຊໍາລະເງິນທີ່ຢູ່ເບື້ອງຫຼັງການຕົກລົງເຫຼົ່ານີ້"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · ຮຽກໃຊ້ create_identity",

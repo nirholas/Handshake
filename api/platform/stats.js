@@ -54,7 +54,11 @@ export function countChains(chainRows, solanaRows) {
 
 async function queryStats() {
 	const [agents, views, chats, avatars, countries, widgets, chains, solana] = await Promise.all([
-		// Total published agents with wallets or 3D avatars
+		// Live agent identities: every non-deleted row, published or not. This is
+		// deliberately the same predicate /api/home-stats counts on the same
+		// table, because both figures render on the homepage; adding an
+		// is_published filter on one side alone would print two different agent
+		// counts on the same page.
 		sql`
 			select count(*)::int as n
 			from agent_identities
@@ -82,7 +86,8 @@ async function queryStats() {
 			from widget_views
 			where country is not null and country <> ''
 		`,
-		// Active widgets (published + visible)
+		// Live widgets: non-deleted rows, public or not, matching what
+		// /api/home-stats counts for the same reason as `agents` above.
 		sql`
 			select count(*)::int as n
 			from widgets

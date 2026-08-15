@@ -13,6 +13,8 @@ tags: [aws, marketplace, saas, serverless, api]
 
 # One paywall, two economies: putting AWS Marketplace metering in front of an x402 API
 
+> **Editor's note (2026-08-15).** This is the repo copy of an article published on the AWS Builder Center on 30 May 2026, kept as it was published. One thing has moved since: the AWS Marketplace listing is still awaiting publication, and the pricing decision landed on a **free** listing with no AWS pricing dimensions, so the AWS-metered path described below is built and deployed but not yet billing anyone. Every code sample is still the code that ships. For the current status see [aws-marketplace.md](./aws-marketplace.md).
+
 We run [three.ws](https://three.ws), an open-source platform for 3D AI agents and on-chain communities. Our paid API already had a billing system: **x402**, the HTTP-native pay-per-call protocol where a request to a metered endpoint either carries a subscription key or gets a `402 Payment Required`. That works great for developers who pay in stablecoins.
 
 But a lot of teams don't want to touch crypto to pay an invoice. They want it on their AWS bill — drawn down from credits, counted toward their EDP commitment, one line item under *AWS Marketplace Software*. So we listed three.ws as a **SaaS usage-based product on AWS Marketplace** and wired AWS billing straight into the same access check that already powered x402.

@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>এজেন্ট এক্সচেঞ্জ",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">বুদ্ধিমত্তা কিনুন — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">বুদ্ধিমত্তা কিনুন · $0.01 USDC</span>",
 		"buy_intel_on": "বুদ্ধিমত্তা কিনুন:",
 		"buyer": "ক্রেতা",
 		"buyer_agent": "ক্রেতা এজেন্ট",
 		"intel_agent": "বুদ্ধিমত্তা এজেন্ট",
 		"meta_description": "দুটি AI এজেন্ট 3D শরীর নিয়ে লাইভ ক্রিপ্টো তথ্যের জন্য একে অপরের সাথে আলোচনা করে এবং x402 মাইক্রোপেমেন্ট ব্যবহার করে Solana-এ পরিশোধ করে। প্রতিটি লেনদেন বাস্তব এবং অন-চেইনে নিশ্চিত করা হয়।",
 		"meta_og_description": "দুটি 3D AI এজেন্ট বাস্তব USDC এর জন্য ক্রিপ্টো বুদ্ধিমত্তা কিনছে এবং বিক্রি করছে Solana। প্রতিটি লেনদেন চেইনে নিশ্চিত হচ্ছে।",
-		"meta_og_title": "এজেন্ট এক্সচেঞ্জ — AI এজেন্টরা বাস্তব সময়ে একে অপরকে অর্থ প্রদান করছে",
-		"meta_title": "এজেন্ট এক্সচেঞ্জ — 3D AI এজেন্টরা বাস্তব সময়ে একে অপরকে অর্থ প্রদান করছে · three.ws",
+		"meta_og_title": "এজেন্ট এক্সচেঞ্জ: AI এজেন্টরা বাস্তব সময়ে একে অপরকে অর্থ প্রদান করছে",
+		"meta_title": "এজেন্ট এক্সচেঞ্জ: 3D AI এজেন্টরা বাস্তব সময়ে একে অপরকে অর্থ প্রদান করছে · three.ws",
 		"meta_twitter_description": "দুটি 3D AI এজেন্ট বাস্তব ক্রিপ্টো বুদ্ধিমত্তার জন্য একে অপরকে অর্থ প্রদান করছে। USDC Solana এ। চেইনে।",
-		"meta_twitter_title": "এজেন্ট এক্সচেঞ্জ — AI এজেন্টরা বাস্তব সময়ে একে অপরকে অর্থ প্রদান করছে",
+		"meta_twitter_title": "এজেন্ট এক্সচেঞ্জ: AI এজেন্টরা বাস্তব সময়ে একে অপরকে অর্থ প্রদান করছে",
 		"seller": "বিক্রেতা",
 		"session_total_0_00_usdc_settled_on": "সেশনের মোট: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC চেইনে নিষ্পত্তি",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 পে-প্রতি-কল ডেমো",
-		"x402_the_payment_trust_layer_title": "x402 — এই নিষ্পত্তির পেছনের পেমেন্ট ট্রাস্ট লেয়ার"
+		"x402_the_payment_trust_layer_title": "x402: এই নিষ্পত্তির পেছনের পেমেন্ট ট্রাস্ট লেয়ার"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · পরিচয় তৈরি করার জন্য কল করুন",

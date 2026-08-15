@@ -183,7 +183,7 @@ Click both. The first animates instantly and makes no sound. The second pauses b
 
 The agent has two ways to pick an animation clip. They map to two different mental models.
 
-**`agent.play(name)`** — plays the clip with that name from the loaded rig (an exact match, falling back to a case-insensitive one). If the clip isn't in the model, it returns `false` and nothing plays. Use this when you know what's in the rig — for instance, if you've baked a `WaveLoop` clip yourself.
+**`agent.play(name)`** — plays the clip with that name from the loaded rig: an exact match first, then a case-insensitive one, then a case-insensitive substring match. If the GLB carries no such clip, it looks the name up in the shared animation library instead, and only returns `false` when neither source can supply it. Use this when you know what's in the rig — for instance, if you've baked a `WaveLoop` clip yourself.
 
 **`agent.playEmote(name)`** — the resilient one. Instead of a clip name it takes an intent — `'celebrate'`, `'cheer'`, or `'flinch'` — and walks a fallback chain of clips until one exists in the rig (`celebrate` → `wave`; `cheer` → `celebrate` → `wave`; `flinch` → `defeated` → `concern` → `shake`). If none of them are present, it finishes with a small head-bob, so it's guaranteed to do *something* regardless of the rig.
 
@@ -227,11 +227,11 @@ Here are the events that actually fire, in the order you'll usually see them in 
 | `brain:thinking` | An LLM call has started | `{ thinking: true | false }` |
 | `brain:stream` | A chunk of a streamed response arrived | `{ chunk: string }` |
 | `brain:message` | A complete message landed (user or assistant) | `{ role, content, sentiment? }` |
-| `skill:tool-start` | A tool/skill is about to run | `{ tool }` |
-| `skill:tool-called` | A tool returned | `{ name, args, result }` |
+| `skill:tool-start` | A tool/skill is about to run | `{ tool, args }` |
+| `skill:tool-called` | A tool returned | `{ tool, args, result }` |
 | `voice:speech-start` | The agent began speaking out loud | `{ text }` |
 | `voice:speech-end` | The agent finished speaking | — |
-| `voice:transcript` | Mic input was transcribed | `{ text }` |
+| `voice:transcript` | Mic input was transcribed | `{ text, final }` |
 | `memory:write` | Something was written to memory | `{ scope, key, value }` |
 
 Wire a logger to see them flow:
@@ -264,7 +264,7 @@ Every one of these is a hook for your app. A few common patterns:
 
 - **Show a typing indicator** — switch a CSS class on `brain:thinking` and clear it on `brain:message`.
 - **Mirror chat to your own UI** — listen to `brain:message` and append `e.detail.content` to your message log when `role === 'assistant'`.
-- **Track skill usage** — `skill:tool-called` tells you which skill ran, with what arguments, and what came back. Log it to your analytics.
+- **Track skill usage** — `skill:tool-called` tells you which skill ran (`e.detail.tool`), with what arguments, and what came back. Log it to your analytics.
 - **React to speech state** — disable an input while `voice:speech-start` is active, re-enable on `voice:speech-end`. Stops the user from interrupting the agent mid-sentence.
 
 ---

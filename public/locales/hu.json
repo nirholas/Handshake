@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Ügynök Csere",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Vásárolj intel-t — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Vásárolj intel-t · $0.01 USDC</span>",
 		"buy_intel_on": "Vásárolj intel-t itt:",
 		"buyer": "VÁSÁRLÓ",
 		"buyer_agent": "Vásárló Ügynök",
 		"intel_agent": "Intel Ügynök",
 		"meta_description": "Két AI ügynök 3D testtel tárgyal és fizet egymásnak élő kripto intelért x402 mikrofizetésekkel Solana-n. Minden tranzakció valós és megerősített on-chain.",
 		"meta_og_description": "Két 3D AI ügynök vásárol és ad el kripto intel-t valós USDC-ért Solana-n. Nézd meg, ahogy minden tranzakció megerősítésre kerül on-chain.",
-		"meta_og_title": "Ügynök Csere — AI ügynökök, akik valós időben fizetnek egymásnak",
-		"meta_title": "Ügynök Csere — 3D AI ügynökök, akik valós időben fizetnek egymásnak · three.ws",
+		"meta_og_title": "Ügynök Csere: AI ügynökök, akik valós időben fizetnek egymásnak",
+		"meta_title": "Ügynök Csere: 3D AI ügynökök, akik valós időben fizetnek egymásnak · three.ws",
 		"meta_twitter_description": "Két 3D AI ügynök, akik valós kripto intelért fizetnek egymásnak. USDC Solana-n. On-chain.",
-		"meta_twitter_title": "Ügynök Csere — AI ügynökök, akik valós időben fizetnek egymásnak",
+		"meta_twitter_title": "Ügynök Csere: AI ügynökök, akik valós időben fizetnek egymásnak",
 		"seller": "ELADÓ",
 		"session_total_0_00_usdc_settled_on": "Ülés összesen: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC elszámolva on-chain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 pay-per-call demó",
-		"x402_the_payment_trust_layer_title": "x402 — a kifizetési bizalom réteg ezek mögött az elszámolások mögött"
+		"x402_the_payment_trust_layer_title": "x402: a kifizetési bizalom réteg ezek mögött az elszámolások mögött"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Hívás create_identity",

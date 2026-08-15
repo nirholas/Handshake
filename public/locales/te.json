@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>ఏజెంట్ ఎక్స్చేంజ్",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ఇంటెల్ కొనండి — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ఇంటెల్ కొనండి · $0.01 USDC</span>",
 		"buy_intel_on": "ఇంటెల్ కొనండి:",
 		"buyer": "కొనుగోలుదారు",
 		"buyer_agent": "కొనుగోలుదారు ఏజెంట్",
 		"intel_agent": "ఇంటెల్ ఏజెంట్",
 		"meta_description": "రియల్ క్రిప్టో ఇంటెల్ కోసం 3D శరీరాలతో కూడిన రెండు AI ఏజెంట్లు x402 మైక్రోపేమెంట్స్ ఉపయోగించి Solana పై పరస్పరం చర్చించి చెల్లిస్తారు. ప్రతి లావాదేవీ నిజమైనది మరియు చైన్‌పై నిర్ధారించబడింది.",
 		"meta_og_description": "రెండు 3D AI ఏజెంట్లు వాస్తవ USDC కోసం క్రిప్టో ఇంటెల్ కొనుగోలు మరియు అమ్ముతారు Solana పై. ప్రతి లావాదేవీ చైన్‌పై నిర్ధారించబడినది.",
-		"meta_og_title": "ఏజెంట్ ఎక్స్చేంజ్ — AI ఏజెంట్లు ప్రత్యక్షంగా ఒకరినొకరు చెల్లించడం",
-		"meta_title": "ఏజెంట్ ఎక్స్చేంజ్ — 3D AI ఏజెంట్లు ప్రత్యక్షంగా ఒకరినొకరు చెల్లించడం · three.ws",
+		"meta_og_title": "ఏజెంట్ ఎక్స్చేంజ్: AI ఏజెంట్లు ప్రత్యక్షంగా ఒకరినొకరు చెల్లించడం",
+		"meta_title": "ఏజెంట్ ఎక్స్చేంజ్: 3D AI ఏజెంట్లు ప్రత్యక్షంగా ఒకరినొకరు చెల్లించడం · three.ws",
 		"meta_twitter_description": "రెండు 3D AI ఏజెంట్లు వాస్తవ క్రిప్టో ఇంటెల్ కోసం ఒకరినొకరు చెల్లిస్తున్నారు. USDC Solana పై. చైన్‌పై.",
-		"meta_twitter_title": "ఏజెంట్ ఎక్స్చేంజ్ — AI ఏజెంట్లు ప్రత్యక్షంగా ఒకరినొకరు చెల్లించడం",
+		"meta_twitter_title": "ఏజెంట్ ఎక్స్చేంజ్: AI ఏజెంట్లు ప్రత్యక్షంగా ఒకరినొకరు చెల్లించడం",
 		"seller": "అమ్మకందారు",
 		"session_total_0_00_usdc_settled_on": "సెషన్ మొత్తం: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC చైన్‌పై సెటిల్‌మెంట్",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 పేమెంట్-ప్రతి-కాల్ డెమో",
-		"x402_the_payment_trust_layer_title": "x402 — ఈ సెటిల్‌మెంట్ల వెనుక పేమెంట్ ట్రస్ట్ లేయర్"
+		"x402_the_payment_trust_layer_title": "x402: ఈ సెటిల్‌మెంట్ల వెనుక పేమెంట్ ట్రస్ట్ లేయర్"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · కాల్ create_identity",

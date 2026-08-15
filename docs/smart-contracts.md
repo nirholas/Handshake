@@ -16,6 +16,19 @@ All contracts are Solidity `^0.8.24`, compiled with the optimizer at 200 runs, a
 
 Contracts are deployed at the same address on every supported EVM chain, using CREATE2 deterministic deployment. There are two address sets: mainnet and testnet.
 
+> **The addresses below do not run this repository's source.** All three canonical registries are ERC-1967 proxies in front of the ERC-8004 **reference upgradeable** implementations. `contracts/src/*.sol` in this repo is a superset design that is deployed nowhere, so several members documented in the interface sections further down exist only if you deploy the repo contracts yourself. An `eth_call` sweep on 2026-08-15 against Base (8453) and Base Sepolia (84532) confirmed:
+>
+> | Member | Deployed registry | Repo source |
+> |---|---|---|
+> | `name`, `symbol`, `ownerOf`, `balanceOf`, `tokenURI`, `register`, `setAgentURI`, `setMetadata`, `setAgentWallet` | yes | yes |
+> | `getMetadata`, `getAgentWallet`, `supportsInterface` | Base Sepolia only (the mainnet implementation is older) | yes |
+> | `totalSupply`, `tokenOfOwnerByIndex` (ERC-721 Enumerable) | **no**, reverts | yes |
+> | `isAgent`, `DOMAIN_SEPARATOR` | **no**, reverts | yes |
+> | `deposit`, `withdraw`, `agentBalance`, `setSpendAllowance`, `spend` (ETH escrow) | **no**, reverts | yes |
+> | every `ReputationRegistry` member documented below (`submitFeedback`, `getReputation`, `hasReviewed`, `getFeedbackCount`, `getFeedback`, `getFeedbackRange`, `stakeReputation`, `withdrawStake`) | **no**, reverts; the deployed reputation registry exposes the reference `readFeedback` / `getClients` interface instead | yes |
+>
+> Re-run the sweep before relying on any row: implementations sit behind upgradeable proxies and can change without the address changing. `contracts/DEPLOYMENTS.md` carries the per-chain liveness record.
+
 ### Mainnet
 
 Chains with confirmed bytecode: Ethereum (1), Optimism (10), BSC (56), Gnosis (100), Polygon (137), Mantle (5000), Base (8453), Arbitrum One (42161), Celo (42220), Avalanche (43114), Linea (59144), Scroll (534352).
@@ -57,7 +70,7 @@ Vanity-prefixed CREATE2 deployer used to obtain matching addresses across chains
 | Base (8453) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` |
 | Arbitrum One (42161) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` |
 
-The 8-byte zero prefix (`0x00000000…`) saves calldata gas on every call. Source is `ThreeWSFactory.sol` (solc 0.8.35, optimizer 200 runs, MIT, verified on BscScan).
+The 8-byte zero prefix (`0x00000000…`) saves calldata gas on every call. Source is [`contracts/ThreeWSFactory.sol`](../contracts/ThreeWSFactory.sol) (solc 0.8.35, optimizer 200 runs, MIT, verified on BscScan), with its test at `contracts/test/ThreeWSFactory.t.sol`.
 
 ```solidity
 function deploy(bytes32 salt, bytes initCode) external returns (address);
@@ -71,7 +84,9 @@ event Deployed(address indexed addr, bytes32 indexed salt);
 
 ## IdentityRegistry
 
-`IdentityRegistry` is the canonical on-chain registry for three.ws identities. Each agent is minted as an ERC-721 token; the token URI points to an ERC-8004 registration JSON (typically hosted on IPFS). The contract extends `ERC721Enumerable`, so all standard ERC-721 enumeration methods work.
+`IdentityRegistry` is the canonical on-chain registry for three.ws identities. Each agent is minted as an ERC-721 token; the token URI points to an ERC-8004 registration JSON (typically hosted on IPFS).
+
+This section describes `contracts/src/IdentityRegistry.sol`. It extends `ERC721Enumerable`, so on an instance you deploy yourself all standard ERC-721 enumeration methods work. The canonical deployed addresses run the reference implementation instead and expose no enumeration: see the deployment note above for exactly which members answer and which revert.
 
 ### Registration
 
@@ -180,20 +195,42 @@ SetAgentWallet(uint256 agentId, address newWallet, uint256 nonce, uint256 deadli
 
 Domain: `name = "ERC8004-IdentityRegistry"`, `version = "1"`.
 
+### ETH escrow and spend delegation
+
+Repo source only. An agent can hold ETH inside the registry, attributed per `agentId`, and its owner can authorize a spender (typically a delegated server key) to draw on that balance up to a cap. Bare transfers are rejected (`receive`/`fallback` revert with `DirectTransferRejected`) so ETH is always attributed to one agent rather than pooled.
+
+```solidity
+// Anyone may fund an agent; the balance is spendable only against that agent.
+function deposit(uint256 agentId) external payable
+
+// The NFT owner reclaims unspent deposits.
+function withdraw(uint256 agentId, address payable recipient, uint256 amountWei) external
+
+// The NFT owner caps what a spender may draw.
+function setSpendAllowance(uint256 agentId, address spender, uint256 maxWei) external
+
+// The spender pays out, bounded by both the allowance and the agent's own balance.
+function spend(uint256 agentId, address payable recipient, uint256 amountWei, string calldata memo) external
+
+// Public storage getters
+function agentBalance(uint256 agentId) external view returns (uint256)
+function spendAllowance(uint256 agentId, address spender) external view returns (uint256)
+```
+
+Emits `AgentDeposit`, `AgentWithdrawal`, `SpendAllowanceSet`, and `AgentPayment(agentId, spender, recipient, amountWei, memo)`. Additional errors: `ZeroDeposit`, `InsufficientAgentBalance`, `DirectTransferRejected`, `EthTransferFailed`, `ZeroRecipient`.
+
 ### Helpers
 
 ```solidity
-// Check whether an agentId exists
-function isAgent(uint256 agentId) external view returns (bool)
-
-// EIP-712 domain separator (useful for off-chain signature construction)
-function DOMAIN_SEPARATOR() external view returns (bytes32)
-
-// Standard ERC-721 Enumerable
-function totalSupply() external view returns (uint256)
-function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)
+// Standard ERC-721, present on every deployment
 function balanceOf(address owner) external view returns (uint256)
 function ownerOf(uint256 tokenId) external view returns (address)
+
+// Repo source only — these revert on the canonical deployed addresses
+function isAgent(uint256 agentId) external view returns (bool)
+function DOMAIN_SEPARATOR() external view returns (bytes32)
+function totalSupply() external view returns (uint256)
+function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)
 ```
 
 ### Errors
@@ -222,19 +259,32 @@ const registry = new ethers.Contract(
 const owner = await registry.ownerOf(42);
 const uri   = await registry.tokenURI(42);
 
-// List all agents owned by an address
+// How many agents an address holds
 const balance = await registry.balanceOf('0xYourAddress');
-const ids = [];
-for (let i = 0; i < Number(balance); i++) {
-  ids.push(await registry.tokenOfOwnerByIndex('0xYourAddress', i));
-}
 
-// Check total registered agents
-const total = await registry.totalSupply();
-
-// Check whether a given agentId is registered
-const exists = await registry.isAgent(42);
+// Whether a given agentId is registered. ownerOf reverts for an unminted id,
+// which is the portable existence check: isAgent() and totalSupply() are
+// ERC721Enumerable/repo-source members and revert on the deployed registries.
+const exists = await registry.ownerOf(42).then(() => true, () => false);
 ```
+
+To list the ids an address owns, index the `Transfer` event rather than calling `tokenOfOwnerByIndex`. Public RPCs cap `eth_getLogs` at a 10,000-block range, so page it:
+
+```js
+const latest = await provider.getBlockNumber();
+const STEP = 10_000;
+const ids = new Set();
+for (let to = latest; to > latest - 40_000; to -= STEP) {
+  const events = await registry.queryFilter(
+    registry.filters.Transfer(null, '0xYourAddress'),
+    to - STEP + 1,
+    to,
+  );
+  for (const e of events) ids.add(String(e.args.tokenId));
+}
+```
+
+Widen the window (or use an indexed provider) to cover the registry's full history rather than a recent slice.
 
 ### Registering from ethers.js
 
@@ -277,6 +327,8 @@ await tx2.wait();
 ---
 
 ## ReputationRegistry
+
+**This section describes `contracts/src/ReputationRegistry.sol`, which is deployed nowhere.** The canonical `reputationRegistry` addresses run the ERC-8004 reference implementation, whose interface (`readFeedback`, `getClients`) shares no function with the one below: every call in this section reverts against them. Use it when you deploy the repo contracts yourself, and read the deployment note above before pointing it at a canonical address.
 
 `ReputationRegistry` stores signed feedback about registered agents. Scores are integers in the range `[-100, 100]`: negative scores indicate poor experiences, positive scores indicate good ones. Each `(reviewer, agentId)` pair can only submit once; there is no update path. Agent owners cannot review their own agents. Alongside plain feedback, the contract also exposes an ETH-staked variant (`stakeReputation(uint256 agentId, uint8 score, string comment)` payable, refundable via `withdrawStake(uint256 agentId)`); `submitFeedback` is the path documented here.
 

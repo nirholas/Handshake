@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Агенттер алмасуы",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Интел сатып алу — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Интел сатып алу · $0.01 USDC</span>",
 		"buy_intel_on": "Интелді сатып алу:",
 		"buyer": "САТЫП АЛУШЫ",
 		"buyer_agent": "Сатып алушы агент",
 		"intel_agent": "Интел агенті",
 		"meta_description": "3D денесі бар екі AI агенті бір-бірімен тікелей крипто интел үшін Solana желісінде x402 микротөлемдерін пайдалана отырып келіссөз жүргізіп, төлем жасайды. Әр транзакция нақты және тізбекте расталған.",
 		"meta_og_description": "Екі 3D AI агенті Solana желісінде нақты USDC үшін крипто интелді сатып алады және сатады. Әр транзакцияның тізбекте расталуын бақылаңыз.",
-		"meta_og_title": "Агенттер алмасуы — AI агенттері бір-біріне нақты уақытта төлем жасайды",
-		"meta_title": "Агенттер алмасуы — 3D AI агенттері бір-біріне нақты уақытта төлем жасайды · three.ws",
+		"meta_og_title": "Агенттер алмасуы: AI агенттері бір-біріне нақты уақытта төлем жасайды",
+		"meta_title": "Агенттер алмасуы: 3D AI агенттері бір-біріне нақты уақытта төлем жасайды · three.ws",
 		"meta_twitter_description": "Екі 3D AI агенті бір-біріне нақты крипто интел үшін төлем жасайды. Solana желісінде USDC. Тізбекте.",
-		"meta_twitter_title": "Агенттер алмасуы — AI агенттері бір-біріне нақты уақытта төлем жасайды",
+		"meta_twitter_title": "Агенттер алмасуы: AI агенттері бір-біріне нақты уақытта төлем жасайды",
 		"seller": "САТУШЫ",
 		"session_total_0_00_usdc_settled_on": "Сессия қорытындысы: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC тізбекте есептелді",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 қоңырау үшін төлем демонстрациясы",
-		"x402_the_payment_trust_layer_title": "x402 — бұл есеп айырысулардың артындағы төлем сенім қабаты"
+		"x402_the_payment_trust_layer_title": "x402: бұл есеп айырысулардың артындағы төлем сенім қабаты"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity шақыруы",

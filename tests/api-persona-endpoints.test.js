@@ -225,6 +225,39 @@ describe('POST /api/persona/extract', () => {
 		expect(parse(res).error).toBe('parse_error');
 	});
 
+	// Attribution is not cosmetic: llmComplete only enforces its per-user daily
+	// USD cap when a userId is known, and the spend ledger drops any completion
+	// that arrives without one. The 5/day limiter bounds the call COUNT; this is
+	// what bounds the bill.
+	it('attributes the completion to the caller so the spend is capped and ledgered', async () => {
+		llmCompleteMock.mockResolvedValue({ text: JSON.stringify(GOOD_PERSONA), model: 'm', usage: OK_USAGE });
+		await callExtract({ freeform: 'anything' });
+		expect(llmCompleteMock.mock.calls[0][0].track).toEqual({
+			userId: 'user-1',
+			tool: 'persona-extract',
+		});
+	});
+
+	it('reports a spent LLM spend cap as a budget rather than a retryable outage', async () => {
+		llmCompleteMock.mockRejectedValue(Object.assign(
+			new Error('Daily LLM spend cap of $2.00 reached. Resets in under 24 hours.'),
+			{ status: 429, code: 'daily_spend_cap_exceeded' },
+		));
+		const res = await callExtract({ freeform: 'anything' });
+		expect(res.statusCode).toBe(429);
+		expect(parse(res).error).toBe('daily_spend_cap_exceeded');
+		expect(parse(res).error_description).toMatch(/Resets in under 24 hours/);
+	});
+
+	it('never lets a provider status become the caller status', async () => {
+		// An expired server-side key answers 401. Echoing that reads to a browser
+		// as an expired session on a request whose sign-in was never in doubt.
+		llmCompleteMock.mockRejectedValue(Object.assign(new Error('provider 401'), { status: 401 }));
+		const res = await callExtract({ freeform: 'anything' });
+		expect(res.statusCode).toBe(502);
+		expect(parse(res).error).toBe('upstream_error');
+	});
+
 	it('answers a preflight without running the handler body', async () => {
 		const res = mkRes();
 		await extractHandler(mkReq({ method: 'OPTIONS', headers: { origin: 'http://localhost:3000' } }), res);
@@ -311,6 +344,32 @@ describe('POST /api/persona/preview', () => {
 
 	it('returns 502 rather than an empty bubble when every provider answered empty', async () => {
 		llmCompleteMock.mockResolvedValue({ text: '', model: 'm', usage: { input: 0, output: 0 } });
+		const res = await callPreview({ persona: GOOD_PERSONA, user_message: 'hi' });
+		expect(res.statusCode).toBe(502);
+		expect(parse(res).error).toBe('upstream_error');
+	});
+
+	it('attributes the completion to the caller so the spend is capped and ledgered', async () => {
+		llmCompleteMock.mockResolvedValue({ text: 'ok', model: 'm', usage: OK_USAGE });
+		await callPreview({ persona: GOOD_PERSONA, user_message: 'hi' });
+		expect(llmCompleteMock.mock.calls[0][0].track).toEqual({
+			userId: 'user-1',
+			tool: 'persona-preview',
+		});
+	});
+
+	it('reports a spent LLM spend cap as a budget rather than a retryable outage', async () => {
+		llmCompleteMock.mockRejectedValue(Object.assign(
+			new Error('Daily LLM spend cap of $2.00 reached. Resets in under 24 hours.'),
+			{ status: 429, code: 'daily_spend_cap_exceeded' },
+		));
+		const res = await callPreview({ persona: GOOD_PERSONA, user_message: 'hi' });
+		expect(res.statusCode).toBe(429);
+		expect(parse(res).error).toBe('daily_spend_cap_exceeded');
+	});
+
+	it('never lets a provider status become the caller status', async () => {
+		llmCompleteMock.mockRejectedValue(Object.assign(new Error('provider 401'), { status: 401 }));
 		const res = await callPreview({ persona: GOOD_PERSONA, user_message: 'hi' });
 		expect(res.statusCode).toBe(502);
 		expect(parse(res).error).toBe('upstream_error');

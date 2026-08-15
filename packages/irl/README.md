@@ -84,7 +84,7 @@ const fix = await checkIn();              // reads the browser's GPS, mints a pr
 const agents = await nearby(fix);         // only answers for the area you checked in at
 
 for (const a of agents) {
-  console.log(a.avatar_name, `${a.distance_m}m away`, a.caption);
+  console.log(a.avatarName, `${a.distanceM}m away`, a.caption);
 }
 ```
 
@@ -151,22 +151,27 @@ header.
 |---|---|---|---|
 | `radius` | `number` | `40` | Metres. Clamped server-side to **10–60 m**. |
 
-Each returned `Pin` (allow-list projection — never `user_id` or `device_token`):
+Each returned `Pin` (allow-list projection — never `user_id` or `device_token`).
+The SDK camelCases the wire row and keeps the untouched original on `raw`:
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | `string` | Pin UUID. |
-| `agent_id` | `string \| null` | Linked agent identity, if any. |
+| `agentId` | `string \| null` | Linked agent identity, if any. |
 | `lat` / `lng` | `number` | Coarsened to ~1.1 m (5 dp). |
 | `heading` | `number` | Facing, 0–359°. |
-| `distance_m` | `number` | Great-circle metres from your fix. |
-| `avatar_url` | `string` | GLB to load (relative or first-party https). |
-| `avatar_name` / `caption` | `string \| null` | Public display text. |
-| `x402_endpoint` | `string \| null` | First-party pay target for the agent. |
-| `view_count` | `number` | Deduplicated visitor count. |
-| `avatar_version` | `number` | Bumps on a remote outfit re-skin — diff to swap the GLB. |
-| `room_id`, `rel_east_m`, `rel_north_m`, `origin_*` | — | Room frame for shared-anchor clusters (null on standalone pins). |
-| `is_mine` | `boolean` | True for the caller's own pins. |
+| `distanceM` | `number` | Great-circle metres from your fix. |
+| `avatarUrl` | `string` | GLB to load (relative or first-party https). |
+| `avatarName` / `caption` | `string \| null` | Public display text. |
+| `x402Endpoint` | `string \| null` | First-party pay target for the agent. |
+| `viewCount` | `number` | Deduplicated visitor count. |
+| `avatarVersion` | `number` | Bumps on a remote outfit re-skin — diff to swap the GLB. |
+| `placedAt` | `string \| null` | When the pin was dropped. |
+| `anchorHeightM`, `anchorYawDeg`, `anchorQuat`, `anchorSource` | — | AR replay pose, when the placement carried one. |
+| `gpsAccuracyM`, `altitudeM` | `number \| null` | Fix quality at placement time. |
+| `roomId`, `relEastM`, `relNorthM`, `originLat`, `originLng`, `originYawDeg` | — | Room frame for shared-anchor clusters (null on standalone pins). |
+| `isMine` | `boolean` | True for the caller's own pins. |
+| `raw` | `unknown` | The untouched wire row (`avatar_name`, `distance_m`, …). |
 
 Pins are sorted nearest-first and filtered to those within `radius`.
 
@@ -196,6 +201,11 @@ anonymous).
 List the pins you placed. With a device token, wraps `GET /api/irl/pins/mine`
 (the token rides the `x-irl-device` header, never the URL); for a signed-in
 session, `GET /api/irl/pins?mine=1`.
+
+Your own pins carry the owner-only fields the public feed strips: `expiresAt`
+and `permanent` (`true` for signed-in owners, `false` for anonymous 7-day
+placements) instead of `distanceM` and `isMine`. `placePin()` returns a pin in
+the same shape.
 
 ### `interact(input) → Promise<object>`
 

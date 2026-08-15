@@ -25,7 +25,7 @@ Body:
 | Field | Required | Notes |
 | ----- | -------- | ----- |
 | `name` | yes | Display name, ≤64 chars. |
-| `prompt` | one of | Text description of the body to generate. |
+| `prompt` | one of | Text description of the body to generate, ≤600 chars. |
 | `image_url` | one of | A reference image URL to reconstruct into 3D. Provide **exactly one** of `prompt` / `image_url`. |
 | `personality` | no | Flavor text stored on the persona, ≤600 chars. |
 | `voice` | no | A TTS voice id (see `GET /api/tts/voices`). Defaults to `nova`. |

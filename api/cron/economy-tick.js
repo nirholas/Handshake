@@ -106,6 +106,28 @@ const TARGETS = [
 
 const CALL_TIMEOUT_MS = 60_000;
 
+// Is the fan-out target this process's own deployment, or somebody else's?
+//
+// APP_ORIGIN falls back to https://three.ws whenever PUBLIC_APP_ORIGIN is unset,
+// which is exactly the state of a laptop, a CI box, or an audit session. Booting
+// this handler there and calling it with the production CRON_SECRET aims all
+// thirty-six money engines at production from a machine that is not production.
+// On 2026-08-14T05:16Z one such run put 36 rejected calls into the production log
+// in a single minute, indistinguishable at a glance from a secret rotation. A
+// process with no K_SERVICE (the variable Cloud Run stamps on every revision) has
+// no business driving a remote economy: it reports the skip and moves on. Point
+// PUBLIC_APP_ORIGIN at a local server to exercise the fan-out for real.
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1', '0.0.0.0']);
+
+function targetsRemoteEconomy(origin) {
+	if (process.env.K_SERVICE) return false;
+	try {
+		return !LOOPBACK_HOSTS.has(new URL(origin).hostname);
+	} catch {
+		return true;
+	}
+}
+
 // Fire one engine over HTTP with the cron bearer. A non-2xx, a 404 (the deployed
 // build may lag a newly-added engine), or a timeout is reported per-target and
 // never throws — one dead engine must not stop the others.
@@ -158,6 +180,17 @@ export default wrapCron(async (req, res) => {
 
 	const origin = ORIGIN();
 	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
+
+	if (targetsRemoteEconomy(origin)) {
+		log.warn('economy_tick_skipped_remote_origin', { origin, engines: TARGETS.length });
+		return json(res, 200, {
+			ok: true,
+			skipped: 'not_deployed',
+			origin,
+			engines: TARGETS.length,
+			hint: 'this process is not a Cloud Run revision; set PUBLIC_APP_ORIGIN to a local server to fan out',
+		});
+	}
 
 	const results = await Promise.all(TARGETS.map((t) => fireTarget(origin, secret, t)));
 	const fired = results.filter((r) => r.ok).length;

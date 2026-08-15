@@ -1117,6 +1117,23 @@
 				return Boolean(target);
 			}
 
+			// Does /docs/<slug>.md exist? Used only to disambiguate a hash that named
+			// neither a heading on this page nor a doc the sidebar manifest lists. A
+			// HEAD keeps it to headers; a network failure answers "no", which lands
+			// the reader exactly where the old code left them.
+			const docExistsCache = new Map();
+			function docExists(slug) {
+				if (!docExistsCache.has(slug)) {
+					docExistsCache.set(
+						slug,
+						fetch('/docs/' + slug + '.md', { method: 'HEAD' })
+							.then(res => res.ok)
+							.catch(() => false),
+					);
+				}
+				return docExistsCache.get(slug);
+			}
+
 			function buildSidebar(filter) {
 				const q = (filter || '').toLowerCase();
 				const current = currentPath();
@@ -1185,6 +1202,19 @@
 							.join('')}
 					</div>`;
 				}).join('');
+			}
+
+			// Strip a leading YAML frontmatter block. Several docs are article
+			// drafts that carry one (title, venue, tags, canonical URL), and marked
+			// has no concept of frontmatter: it reads the opening `---` as a
+			// thematic break and the closing `---` as a setext underline, so the
+			// whole YAML block renders as a giant <h2> above the article. Removing
+			// it here fixes the rendered page and the "Copy page" markdown in one
+			// place; the raw .md link still serves the file with its frontmatter
+			// intact, which is what a reader asking for the source wants.
+			const FRONTMATTER = /^﻿?---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/;
+			function stripFrontmatter(md) {
+				return md.replace(FRONTMATTER, '');
 			}
 
 			// marked/hljs arrive via deferred head scripts, so this must not run at
@@ -1387,7 +1417,7 @@
 					const url = '/docs/' + path + '.md';
 					const res = await fetch(url);
 					if (!res.ok) throw new DocLoadError(res.status);
-					const md = await res.text();
+					const md = stripFrontmatter(await res.text());
 
 					// Turn `figure:` directives into inert slots BEFORE parsing. Left as
 					// <img src="figure:…">, the browser fires a request the moment the
@@ -1520,23 +1550,39 @@
 
 				// A cold load of /docs/<page>#<hash> is ambiguous. Usually the hash is
 				// a heading on that page, which is why currentRoute() reads it that
-				// way. But the sidebar and the prev/next pager mint doc-path hashes,
-				// so the URL a reader copies after clicking one (for example
+				// way. But every in-body cross-doc link is rewritten to a doc-path
+				// hash, so the URL a reader copies after clicking one (for example
 				// /docs/payment-sessions#custody) means "open the custody doc". When
 				// the hash matches no heading here but does name a real doc, follow
 				// it, and rewrite the address bar to that doc's own path so the link
 				// is shareable the next time.
-				const routed = anchor && anchor !== path && ALL_PAGES.find(p => p.path === anchor);
-				if (routed && !scrollToAnchor(anchor)) {
-					history.replaceState(null, '', '/docs/' + routed.path);
-					// The served <head> still describes the page in the URL we arrived
-					// on, so the tab would name the wrong doc after this redirect.
-					document.title = 'Docs: ' + routed.label + ' · three.ws';
-					loadedPath = routed.path;
-					await loadPage(routed.path, '');
-					return;
+				//
+				// The sidebar manifest is NOT the test for "a real doc": it lists the
+				// docs worth navigating to, not every doc that exists, and the body of
+				// a doc routinely cites one it omits (financial-controls,
+				// tutorials/pay-for-x402-service, agent-abilities/wallet/21-access).
+				// Judging by the manifest alone stranded the reader on the page they
+				// arrived from, with no error, for exactly those links. So fall back to
+				// asking the server whether the doc is there. That costs one HEAD, and
+				// only on the cold load that would otherwise have gone nowhere.
+				const candidate = anchor && anchor !== path ? anchor : '';
+				if (candidate && !scrollToAnchor(anchor)) {
+					const listed = ALL_PAGES.find(p => p.path === candidate);
+					if (listed || (await docExists(candidate))) {
+						history.replaceState(null, '', '/docs/' + candidate);
+						loadedPath = candidate;
+						await loadPage(candidate, '');
+						// The served <head> still describes the page in the URL we arrived
+						// on, so the tab would name the wrong doc after this redirect.
+						const label =
+							(listed && listed.label) ||
+							(document.querySelector('#docs-content h1') || {}).textContent ||
+							candidate;
+						document.title = 'Docs: ' + label.trim() + ' · three.ws';
+						return;
+					}
 				}
-				if (!routed) scrollToAnchor(anchor);
+				if (!candidate) scrollToAnchor(anchor);
 				buildSidebar(document.getElementById('search-input').value);
 			}
 

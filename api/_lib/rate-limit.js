@@ -1456,9 +1456,15 @@ export const limits = {
 	// Critical (real per-call cost) — fail closed in prod without Redis.
 	voiceClone: (userId) =>
 		getLimiter('voice:clone', { limit: 3, window: '1 d', critical: true }).limit(userId),
-	// Persona extraction: Claude API call — 5 per user per day.
+	// Persona extraction (POST /api/persona/extract): a metered completion on the
+	// shared LLM chain, 5 per user per day. Critical for the same reason its
+	// sibling personaPreviewUser is: a non-critical bucket degrades to a
+	// PER-INSTANCE memory counter, so on a Redis outage the daily budget is
+	// silently multiplied by the live Cloud Run instance count and a free-signup
+	// loop can spend past it. This is the tighter of the two persona budgets, so
+	// it fails closed rather than open.
 	personaExtract: (userId) =>
-		getLimiter('persona:extract', { limit: 5, window: '1 d' }).limit(userId),
+		getLimiter('persona:extract', { limit: 5, window: '1 d', critical: true }).limit(userId),
 	// Onboarding interview (POST /api/persona/interview) in the create-agent
 	// wizard. Same try-first shape as agentSuggest: signed-in callers get room to
 	// re-run the interview while they tune their answers, signed-out callers get a

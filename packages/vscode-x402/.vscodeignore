@@ -6,3 +6,4 @@ build.mjs
 .gitignore
 .eslintrc*
 node_modules/**
+test/**

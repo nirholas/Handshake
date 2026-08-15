@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Schimb de Agenți",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Cumpără intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Cumpără intel · $0.01 USDC</span>",
 		"buy_intel_on": "Cumpără intel pe:",
 		"buyer": "CUMPĂRĂTOR",
 		"buyer_agent": "Agent Cumpărător",
 		"intel_agent": "Agent Intel",
 		"meta_description": "Două agenți AI cu corpuri 3D negociază și se plătesc reciproc pentru intel crypto live folosind micropayments x402 pe Solana. Fiecare tranzacție este reală și confirmată pe blockchain.",
 		"meta_og_description": "Două agenți AI 3D cumpără și vând intel crypto pentru USDC reale pe Solana. Urmărește fiecare tranzacție confirmată pe blockchain.",
-		"meta_og_title": "Schimb de Agenți — agenți AI plătind reciproc în timp real",
-		"meta_title": "Schimb de Agenți — agenți AI 3D plătind reciproc în timp real · three.ws",
+		"meta_og_title": "Schimb de Agenți: agenți AI plătind reciproc în timp real",
+		"meta_title": "Schimb de Agenți: agenți AI 3D plătind reciproc în timp real · three.ws",
 		"meta_twitter_description": "Două agenți AI 3D plătind reciproc pentru intel crypto reale. USDC pe Solana. Pe blockchain.",
-		"meta_twitter_title": "Schimb de Agenți — agenți AI plătind reciproc în timp real",
+		"meta_twitter_title": "Schimb de Agenți: agenți AI plătind reciproc în timp real",
 		"seller": "VÂNZĂTOR",
 		"session_total_0_00_usdc_settled_on": "Total sesiune: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC reglementat pe blockchain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo plată-per-apel",
-		"x402_the_payment_trust_layer_title": "x402 — stratul de încredere pentru plăți din spatele acestor reglementări"
+		"x402_the_payment_trust_layer_title": "x402: stratul de încredere pentru plăți din spatele acestor reglementări"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Apelează create_identity",

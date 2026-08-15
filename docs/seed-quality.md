@@ -45,6 +45,7 @@ forge flow already trusts, then applies catalog-specific bounds on top.
 | Reason | Meaning | Default bound |
 | --- | --- | --- |
 | `not_valid_glb` | The bytes are not a binary glTF 2.0 at all | - |
+| `degenerate_triangles` | Almost no triangle geometry; renders as nothing | `FORGE_QUALITY_MIN_TRIS` = 80 |
 | `vertices_below_floor` | Too coarse to look like anything | `SEED_GATE_MIN_VERTICES` = 1,500 |
 | `vertices_above_ceiling` | Runaway output | `SEED_GATE_MAX_VERTICES` = 1,500,000 |
 | `file_too_small` | Structurally empty | `SEED_GATE_MIN_BYTES` = 20,000 |

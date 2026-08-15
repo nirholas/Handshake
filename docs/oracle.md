@@ -201,6 +201,8 @@ A score you cannot audit is an opinion. Oracle grades itself in public, and the 
 
 During a database outage the endpoint answers `503` rather than an empty record, so "no wins yet" can never be a dressed-up outage.
 
+That rule is the whole Oracle read surface, not one endpoint. `/api/oracle/feed`, `/categories`, `/agent-stats`, `/follow`, `/movers`, `/signal`, `/stats`, `/history`, and the `/social` ingest all separate a connectivity failure from an ordinary SQL fault: the first propagates as `503` with a `Retry-After` and is never cached, the second still degrades to the documented empty answer. The distinction matters because these responses get CDN-cached for 60 to 120 seconds, so a blip lasting seconds used to pin "nothing is moving", "nobody is armed", or "no plays right now" on the product for minutes after the database recovered. `/api/oracle/og` follows the same rule in its own shape: a card built from a failed read still renders (a social scraper needs an image back), but it is served `no-store` so the next scrape re-reads a recovered database instead of caching "Not yet scored" on a Prime coin for 15 minutes. The contract is pinned in `tests/oracle/api-db-outage.test.js`.
+
 **The realized-hit-rate calibration.** The fitted model answers "what fraction of launches like this one spike or graduate". A user reading a card wants "of the coins Oracle already scored at 99, how many actually won". Nothing reconciled those two, so a card reading conviction 99 quoted a training-label probability above 95 percent for a band that realized 26 percent. `scripts/oracle-calibrate.mjs` closes the gap: it measures the realized rug-aware win rate per score band over resolved production coins, smooths it into a monotone ladder with pool-adjacent-violators (isotonic regression), and writes `api/_lib/oracle/conviction-calibration.json`. `hitRateFor()` then serves that realized rate next to every score, and the public tier boundaries sit on the plateaus this fit exposes. Run it bare to fit and report, `--write` to update the shipped JSON. It reads the production database when `DATABASE_URL` is set and otherwise the live `/api/oracle/backtest`, which runs the same aggregation server-side, so neither path invents a number.
 
 **A third question: what the fleet actually banked.** `/api/cron/oracle-calibrate` (Cloud Scheduler) joins conviction to the fleet's *realized PnL* on mints it really traded, buckets by conviction band, and writes `oracle_calibration`. A win here is a positive realized PnL on a real fill, which is neither the trained event nor the site's rug-aware win: exit timing belongs to the fleet, so a gap between this table and `/api/oracle/backtest` is expected rather than a bug. Each band carries a bounded `correction_factor` (observed over claimed, clamped to 0.7-1.3, and pinned at 1.0 until the band has enough real trades). That factor is deliberately **not** written back onto the canonical `oracle_conviction` score: the calibration is measured against that score, so mutating it would feed into its own measurement and oscillate. It is exposed at `GET /api/oracle/calibration` and applied where it belongs, in the sniper optimizer's Rule O, which tunes each arm's entry threshold toward the band that realized wins.
@@ -252,21 +254,28 @@ GET https://three.ws/api/oracle/signal?network=mainnet&min_score=72&limit=5
 GET https://three.ws/api/oracle/signal?mint=<mint>
 ```
 
-Returns the current highest-conviction plays, or one coin's verdict, each with the pillar breakdown, badges, and an explicit recommendation: action (buy, watch, skip), confidence, and a size factor (1.0 for prime, 0.75 for strong, 0 for everything else). Your agent multiplies the size factor by its own per-trade budget and it has a position size. The shape:
+Returns the current highest-conviction plays, or one coin's verdict, each with the pillar breakdown, badges, and an explicit recommendation: action (buy, watch, skip), confidence, and a size factor (1.0 for prime, 0.75 for strong, 0 for everything else). Your agent multiplies the size factor by its own per-trade budget and it has a position size.
+
+The list form answers `{ network, count, top, plays, generated_at }`: `plays` is the ranked array, `top` is `plays[0]` (or `null` when nothing clears `min_score`), and `count` is the array's length. The single-mint form answers `{ network, mint, signal, generated_at }` instead, carrying one verdict under `signal`. Both wrap the same play object:
 
 ```json
 {
   "mint": "…", "symbol": "…",
   "conviction": 88, "tier": "strong", "category": "ai",
+  "smart_wallet_count": 4,
   "pillars": { "pedigree": 82, "structure": 88, "narrative": 80, "momentum": 90 },
+  "badges": ["smart-money"],
   "recommendation": {
     "action": "buy",            // buy | watch | skip
     "confidence": "medium",     // high | medium | low
     "size_factor": 0.75,        // 0 to 1 suggested sizing multiplier
     "note": "strong conviction, favorable across pedigree and structure"
-  }
+  },
+  "scored_at": "2026-08-14T06:42:47.867Z"
 }
 ```
+
+`count: 0` means the oracle sees no play clearing your `min_score` right now, and an agent should stand down. It never means the engine is down: a database outage answers 503 with a `Retry-After` rather than an empty board, so an empty `plays` array is always a real verdict.
 
 Recommendations map from tier: prime to `buy/high/1.0`, strong to `buy/medium/0.75`, lean to `watch`, watch/avoid to `skip`. Reads are cached 3 seconds with stale-while-revalidate, so polling is cheap.
 
@@ -276,8 +285,8 @@ Recommendations map from tier: prime to `buy/high/1.0`, strong to `buy/medium/0.
 const API = 'https://three.ws/api/oracle/signal?network=mainnet&min_score=72&limit=5';
 
 async function tick(budgetSol) {
-  const { signals } = await fetch(API).then(r => r.json());
-  for (const s of signals || []) {
+  const { plays } = await fetch(API).then(r => r.json());
+  for (const s of plays || []) {
     const { action, size_factor } = s.recommendation;
     if (action !== 'buy') continue;
     const size = budgetSol * size_factor;
@@ -308,7 +317,7 @@ GET https://three.ws/api/oracle/trades?mint=<mint>
 - Realized calibration per conviction band at `/api/oracle/calibration`: the fleet's actual win rate from real fills, next to what the band predicted, plus the bounded correction factor the scorer applies.
 - A dynamic 1200x630 OpenGraph conviction card (SVG) for sharing a coin at `/api/oracle/og`.
 
-The write endpoints. Two are auth-scoped to the agent's owner: `GET·POST /api/oracle/watch` reads or arms an agent's watch config with server-side validation clamping every limit, and `POST /api/oracle/test-alert` sends a test alert. Two are public and IP rate-limited instead: `POST·DELETE /api/oracle/follow` subscribes a Telegram chat to an agent's signals (the chat id the caller supplies is the identity, so there is no session to scope to), and `POST /api/oracle/social` ingests tweets to additively boost virality (never downgrades an LLM read).
+The write endpoints. Two are auth-scoped to the agent's owner: `GET·POST /api/oracle/watch` reads or arms an agent's watch config with server-side validation clamping every limit, and `POST /api/oracle/test-alert` sends a test alert. The clamps only ever move a number toward safety: a size above the ceiling is lowered, but arming `mode: "live"` with a `per_trade_sol` under the 0.001 SOL floor, or a `max_daily_sol` smaller than one trade, is a 400 rather than a silent round-up into real spending. Simulate runs keep the forgiving clamps. Two are public and IP rate-limited instead: `POST·DELETE /api/oracle/follow` subscribes a Telegram chat to an agent's signals (the chat id the caller supplies is the identity, so there is no session to scope to), and `POST /api/oracle/social` ingests tweets to additively boost virality (never downgrades an LLM read).
 
 ### Through MCP
 

@@ -1,9 +1,12 @@
 // MCP tool definitions for the Alibaba Cloud DashScope MCP server.
 //
-// Each entry pairs an MCP tool definition (name + JSON-Schema input) with a
-// handler that maps validated arguments onto a DashScopeClient call. Handlers
-// trust their inputs (the schema is the boundary) and let DashScopeError
-// propagate — the server maps those to MCP tool errors with the upstream cause.
+// Each entry pairs an MCP tool definition (name, title, annotations, and a Zod
+// raw shape as the input schema) with a handler that maps validated arguments
+// onto a DashScopeClient call. The SDK validates against the shape before the
+// handler runs, so handlers trust their inputs and let DashScopeError propagate:
+// the server maps those to MCP tool errors carrying the upstream cause.
+
+import { z } from 'zod';
 
 const generativeAnnotations = {
 	readOnlyHint: true,
@@ -23,68 +26,52 @@ function jsonResult(structured, summary) {
 	return { content: [{ type: 'text', text }], structuredContent: structured };
 }
 
-const samplingProps = {
-	max_tokens: {
-		type: 'integer',
-		minimum: 1,
-		maximum: 32768,
-		description: 'Maximum tokens to generate.',
-	},
-	temperature: {
-		type: 'number',
-		minimum: 0,
-		maximum: 2,
-		description: 'Sampling temperature. 0 is greedy/deterministic.',
-	},
-	top_p: {
-		type: 'number',
-		minimum: 0,
-		maximum: 1,
-		description: 'Nucleus sampling probability mass.',
-	},
+const samplingShape = {
+	max_tokens: z
+		.number()
+		.int()
+		.min(1)
+		.max(32768)
+		.optional()
+		.describe('Maximum tokens to generate.'),
+	temperature: z
+		.number()
+		.min(0)
+		.max(2)
+		.optional()
+		.describe('Sampling temperature. 0 is greedy/deterministic.'),
+	top_p: z.number().min(0).max(1).optional().describe('Nucleus sampling probability mass.'),
 };
 
 export function buildTools(client) {
 	return [
 		{
-			definition: {
-				name: 'qwen_chat',
-				title: 'Qwen Chat',
-				annotations: generativeAnnotations,
-				description:
-					'Chat completion with an Alibaba Cloud Qwen model via DashScope. ' +
-					'Pass a list of role/content messages and get the assistant reply plus ' +
-					'token usage. Defaults to qwen-plus; use qwen-max for highest quality, ' +
-					'qwen-turbo for fastest/cheapest, or qwen-long for very large contexts.',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						messages: {
-							type: 'array',
-							minItems: 1,
-							description: 'Conversation so far, oldest first.',
-							items: {
-								type: 'object',
-								properties: {
-									role: {
-										type: 'string',
-										enum: ['system', 'user', 'assistant'],
-									},
-									content: { type: 'string' },
-								},
-								required: ['role', 'content'],
-							},
-						},
-						model: {
-							type: 'string',
-							description:
-								'Override the model id. Options: qwen-max, qwen-plus (default), ' +
-								'qwen-turbo, qwen-long, qwen-max-latest.',
-						},
-						...samplingProps,
-					},
-					required: ['messages'],
-				},
+			name: 'qwen_chat',
+			title: 'Qwen Chat',
+			annotations: generativeAnnotations,
+			description:
+				'Chat completion with an Alibaba Cloud Qwen model via DashScope. ' +
+				'Pass a list of role/content messages and get the assistant reply plus ' +
+				'token usage. Defaults to qwen-plus; use qwen-max for highest quality, ' +
+				'qwen-turbo for fastest/cheapest, or qwen-long for very large contexts.',
+			inputSchema: {
+				messages: z
+					.array(
+						z.object({
+							role: z.enum(['system', 'user', 'assistant']),
+							content: z.string().min(1),
+						}),
+					)
+					.min(1)
+					.describe('Conversation so far, oldest first.'),
+				model: z
+					.string()
+					.optional()
+					.describe(
+						'Override the model id. Options: qwen-max, qwen-plus (default), ' +
+							'qwen-turbo, qwen-long, qwen-max-latest.',
+					),
+				...samplingShape,
 			},
 			handler: async (args) => {
 				const result = await client.chat(args.messages, {
@@ -98,40 +85,33 @@ export function buildTools(client) {
 		},
 
 		{
-			definition: {
-				name: 'qwen_embed',
-				title: 'Qwen Text Embeddings',
-				annotations: deterministicAnnotations,
-				description:
-					'Generate text embeddings using Alibaba Cloud text-embedding models. ' +
-					'Returns a float vector per input string. Useful for semantic search, ' +
-					'clustering, and RAG retrieval. Defaults to text-embedding-v3 (1024-dim).',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						inputs: {
-							oneOf: [
-								{ type: 'string' },
-								{ type: 'array', items: { type: 'string' }, minItems: 1 },
-							],
-							description: 'One string or an array of strings to embed.',
-						},
-						model: {
-							type: 'string',
-							description:
-								'Embedding model id (default: text-embedding-v3). ' +
-								'Alternatives: text-embedding-v2, text-embedding-async-v3.',
-						},
-						dimensions: {
-							type: 'integer',
-							minimum: 64,
-							maximum: 2048,
-							description:
-								'Output vector dimensions. text-embedding-v3 supports 64–2048 (default 1024).',
-						},
-					},
-					required: ['inputs'],
-				},
+			name: 'qwen_embed',
+			title: 'Qwen Text Embeddings',
+			annotations: deterministicAnnotations,
+			description:
+				'Generate text embeddings using Alibaba Cloud text-embedding models. ' +
+				'Returns a float vector per input string. Useful for semantic search, ' +
+				'clustering, and RAG retrieval. Defaults to text-embedding-v3 (1024-dim).',
+			inputSchema: {
+				inputs: z
+					.union([z.string().min(1), z.array(z.string().min(1)).min(1)])
+					.describe('One string or an array of strings to embed.'),
+				model: z
+					.string()
+					.optional()
+					.describe(
+						'Embedding model id (default: text-embedding-v3). ' +
+							'Alternatives: text-embedding-v2, text-embedding-async-v3.',
+					),
+				dimensions: z
+					.number()
+					.int()
+					.min(64)
+					.max(2048)
+					.optional()
+					.describe(
+						'Output vector dimensions. text-embedding-v3 supports 64 to 2048 (default 1024).',
+					),
 			},
 			handler: async (args) => {
 				const inputs = Array.isArray(args.inputs) ? args.inputs : [args.inputs];
@@ -141,24 +121,19 @@ export function buildTools(client) {
 				});
 				return jsonResult(
 					result,
-					`Embedded ${result.inputCount} string(s) with ${result.model} → ${result.dimensions}-dim vectors.`,
+					`Embedded ${result.inputCount} string(s) with ${result.model}: ${result.dimensions}-dim vectors.`,
 				);
 			},
 		},
 
 		{
-			definition: {
-				name: 'qwen_list_models',
-				title: 'List DashScope Models',
-				annotations: deterministicAnnotations,
-				description:
-					'List the models available on this DashScope account. ' +
-					'Returns model ids, owners, and creation timestamps.',
-				inputSchema: {
-					type: 'object',
-					properties: {},
-				},
-			},
+			name: 'qwen_list_models',
+			title: 'List DashScope Models',
+			annotations: deterministicAnnotations,
+			description:
+				'List the models available on this DashScope account. ' +
+				'Returns model ids, owners, and creation timestamps.',
+			inputSchema: {},
 			handler: async () => {
 				const models = await client.listModels();
 				return jsonResult(

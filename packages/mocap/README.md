@@ -79,7 +79,7 @@ const { id, slug } = await saveClip(recording, {
 }, { token: process.env.THREEWS_TOKEN });
 
 const clip = await getClip(id);
-console.log(clip.frame_count, 'frames,', clip.duration, 'seconds');
+console.log(clip.frameCount, 'frames,', clip.duration, 'seconds');
 // → drop clip.frames into FaceMocap.play(clip) on any ARKit avatar
 ```
 
@@ -123,7 +123,7 @@ A `Frame` is `{ t: number, shapes: Record<string, number>, mat?: number[16] | nu
 | `description` | `string` | — | Up to 2000 chars. |
 | `tags` | `string[]` | `[]` | Up to 20 tags, ≤40 chars each. |
 | `visibility` | `'private' \| 'unlisted' \| 'public'` | `'private'` | |
-| `avatar_id` | `uuid` | — | Bind the clip to one of your avatars. Must be owned by you. |
+| `avatarId` | `uuid` | — | Bind the clip to one of your avatars. Must be owned by you. (`avatar_id` is accepted too.) |
 
 Returns the created `Clip` (`201`). `kind` (`face` / `pose` / `hand` / `vmc`) is
 derived from `format` server-side.
@@ -139,7 +139,7 @@ A slug is unique per owner, not globally, so a slug lookup resolves to your own
 clip when you are authenticated and otherwise to the oldest public clip carrying
 it. Pass the `id` when you need to name one exact clip.
 
-### `listClips(auth, opts?) → Promise<{ items, next_cursor }>`
+### `listClips(auth, opts?) → Promise<{ items, nextCursor }>`
 
 List clips **without frames** (metadata only — cheap). Wraps
 `GET /api/mocap/clips`. Cursor-paginated, newest first.
@@ -147,7 +147,7 @@ List clips **without frames** (metadata only — cheap). Wraps
 | Option | Type | Default | Notes |
 |---|---|---|---|
 | `limit` | `number` | `50` | Clamped to `1`–`100`. |
-| `cursor` | `string` | — | `next_cursor` from the previous page. |
+| `cursor` | `string` | — | `nextCursor` from the previous page. |
 | `kind` | `'face' \| 'pose' \| 'hand' \| 'vmc'` | — | Filter by clip kind. |
 | `includePublic` | `boolean` | `false` | Authed: union your clips with the public pool. |
 
@@ -157,7 +157,7 @@ library; add `includePublic: true` to fold in public clips too.
 ### `updateClip(idOrSlug, patch, auth) → Promise<Clip>`
 
 Edit metadata. Wraps `PATCH /api/mocap/clips/:id` (owner only). Patchable:
-`name`, `description`, `tags`, `visibility`, `avatar_id`, and `price`. Set
+`name`, `description`, `tags`, `visibility`, `avatarId`, and `price`. Set
 `price: { amount, currency }` to list the clip for sale, or `price: null` to make
 it free again. Bearer tokens need the `avatars:write` scope.
 
@@ -166,7 +166,8 @@ it free again. Bearer tokens need the `avatars:write` scope.
 Soft-delete a clip you own. Wraps `DELETE /api/mocap/clips/:id`. The row is
 tombstoned (`deleted_at`), not destroyed. Bearer tokens need `avatars:delete`.
 
-**`Clip` shape** (returned by every call; `frames` only on `getClip`):
+**`Clip` shape** (returned by every call; `frames` only on `getClip`). The SDK
+camelCases the wire row and keeps the untouched original on `raw`:
 
 | Field | Type | Notes |
 |---|---|---|
@@ -174,15 +175,16 @@ tombstoned (`deleted_at`), not destroyed. Bearer tokens need `avatars:delete`.
 | `name` / `description` | `string` | Library metadata. |
 | `kind` | `'face' \| 'pose' \| 'hand' \| 'vmc'` | Derived from `format`. |
 | `format` | `string` | Wire-format version string. |
-| `duration_ms` / `duration` | `number` | Milliseconds / seconds. |
-| `frame_count` | `number` | Number of frames. |
+| `durationMs` / `duration` | `number` | Milliseconds / seconds. |
+| `frameCount` | `number` | Number of frames. |
 | `frames` | `Frame[]` | Present only on `getClip`. |
 | `tags` | `string[]` | |
 | `visibility` | `string` | `private` / `unlisted` / `public`. |
-| `avatar_id` | `uuid \| null` | Bound avatar, if any. |
-| `play_count` | `number` | Non-owner fetches. |
+| `avatarId` | `uuid \| null` | Bound avatar, if any. |
+| `playCount` | `number` | Non-owner fetches. |
 | `price` | `{ amount, currency } \| null` | `null` when free. |
 | `owner` | `'self' \| 'other'` | Relative to the caller. |
+| `raw` | `unknown` | The untouched wire row (`duration_ms`, `frame_count`, …). |
 
 ## How it works
 
@@ -284,9 +286,9 @@ import { listClips } from '@three-ws/mocap';
 let cursor;
 const all = [];
 do {
-  const page = await listClips({}, { includePublic: false, limit: 100, cursor });
+  const page = await listClips({}, { includePublic: true, limit: 100, cursor });
   all.push(...page.items);
-  cursor = page.next_cursor;
+  cursor = page.nextCursor;
 } while (cursor);
 ```
 

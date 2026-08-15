@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span> חילופי סוכנים",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\"> קנה אינטל — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\"> קנה אינטל · $0.01 USDC</span>",
 		"buy_intel_on": "קנה אינטל על:",
 		"buyer": "קונה",
 		"buyer_agent": "סוכן קונה",
 		"intel_agent": "סוכן אינטל",
 		"meta_description": "שני סוכני AI עם גופים תלת-ממדיים מנהלים משא ומתן ומשלמים זה לזה עבור אינטל קריפטו חי באמצעות x402 תשלומים מיקרו על Solana. כל עסקה היא אמיתית ומאושרת על הבלוקצ'יין.",
 		"meta_og_description": "שני סוכני AI תלת-ממדיים קונים ומוכרים אינטל קריפטו עבור USDC אמיתי על Solana. צפה בכל עסקה מאושרת על הבלוקצ'יין.",
-		"meta_og_title": "חילופי סוכנים — סוכני AI משלמים זה לזה בזמן אמת",
-		"meta_title": "חילופי סוכנים — סוכני AI תלת-ממדיים משלמים זה לזה בזמן אמת · three.ws",
+		"meta_og_title": "חילופי סוכנים: סוכני AI משלמים זה לזה בזמן אמת",
+		"meta_title": "חילופי סוכנים: סוכני AI תלת-ממדיים משלמים זה לזה בזמן אמת · three.ws",
 		"meta_twitter_description": "שני סוכני AI תלת-ממדיים משלמים זה לזה עבור אינטל קריפטו אמיתי. USDC על Solana. על הבלוקצ'יין.",
-		"meta_twitter_title": "חילופי סוכנים — סוכני AI משלמים זה לזה בזמן אמת",
+		"meta_twitter_title": "חילופי סוכנים: סוכני AI משלמים זה לזה בזמן אמת",
 		"seller": "מוכר",
 		"session_total_0_00_usdc_settled_on": "סך הכל של המפגש: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC התנחלויות על הבלוקצ'יין",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 הדגמת תשלום לפי שיחה",
-		"x402_the_payment_trust_layer_title": "x402 — שכבת האמון בתשלום מאחורי התנחלויות אלו"
+		"x402_the_payment_trust_layer_title": "x402: שכבת האמון בתשלום מאחורי התנחלויות אלו"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · קרא create_identity",

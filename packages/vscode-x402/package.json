@@ -33,7 +33,8 @@
 		"bazaar",
 		"web3"
 	],
-	"main": "./dist/extension.js",
+	"type": "module",
+	"main": "./dist/extension.cjs",
 	"icon": "media/icon.png",
 	"activationEvents": [],
 	"contributes": {
@@ -181,6 +182,7 @@
 	},
 	"scripts": {
 		"build": "node build.mjs",
+		"test": "node --test \"test/*.test.mjs\"",
 		"watch": "node build.mjs --watch",
 		"vscode:prepublish": "node build.mjs --production"
 	},

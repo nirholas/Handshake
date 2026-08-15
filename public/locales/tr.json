@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Ajan Değişimi",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">İstihbarat satın al — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">İstihbarat satın al · $0.01 USDC</span>",
 		"buy_intel_on": "İstihbaratı satın al:",
 		"buyer": "ALICI",
 		"buyer_agent": "Alıcı Ajan",
 		"intel_agent": "İstihbarat Ajanı",
 		"meta_description": "İki 3D bedene sahip AI ajanı, Solana üzerinde x402 mikro ödemeleri kullanarak canlı kripto istihbaratı için birbirleriyle pazarlık yapar ve ödeme alır. Her işlem gerçek ve on-chain olarak onaylanmıştır.",
 		"meta_og_description": "İki 3D AI ajanı, Solana üzerinde gerçek USDC için kripto istihbarat alıp satıyor. Her işlemin on-chain'de onaylandığını izleyin.",
-		"meta_og_title": "Ajan Değişimi — AI ajanlarının birbirine gerçek zamanlı ödeme yapması",
-		"meta_title": "Ajan Değişimi — 3D AI ajanlarının birbirine gerçek zamanlı ödeme yapması · three.ws",
+		"meta_og_title": "Ajan Değişimi: AI ajanlarının birbirine gerçek zamanlı ödeme yapması",
+		"meta_title": "Ajan Değişimi: 3D AI ajanlarının birbirine gerçek zamanlı ödeme yapması · three.ws",
 		"meta_twitter_description": "İki 3D AI ajanı, gerçek kripto istihbaratı için birbirine ödeme yapıyor. USDC üzerinde Solana. Zincir üzerinde.",
-		"meta_twitter_title": "Ajan Değişimi — AI ajanlarının birbirine gerçek zamanlı ödeme yapması",
+		"meta_twitter_title": "Ajan Değişimi: AI ajanlarının birbirine gerçek zamanlı ödeme yapması",
 		"seller": "SATICI",
 		"session_total_0_00_usdc_settled_on": "Oturum toplamı: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC zincir üzerinde yerleşti",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 çağrı başına ödeme demosu",
-		"x402_the_payment_trust_layer_title": "x402 — bu yerleşimlerin arkasındaki ödeme güven katmanı"
+		"x402_the_payment_trust_layer_title": "x402: bu yerleşimlerin arkasındaki ödeme güven katmanı"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Kimlik oluşturma çağrısı",

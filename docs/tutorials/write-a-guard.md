@@ -2,7 +2,7 @@
 
 **Level:** intermediate. You should be comfortable with Node and `git`.
 **Time:** about 20 minutes.
-**You will build:** a real guard that fails the build when an API handler forgets its error boundary, wired into the gate, covered by tests, and registered so it shows up on [/guards](/guards).
+**You will build:** a real guard that fails the build when a server-side `fetch()` has no timeout, wired into the gate, proven against the violation it claims to catch, covered by tests, and registered so it shows up on [/guards](/guards).
 
 This repository has no CI, so a guard is not a nice-to-have that runs somewhere in the cloud. It is the only thing standing between a mistake and production. [Repository guards](/docs/guards) explains the system; this page walks you through adding one.
 
@@ -108,11 +108,31 @@ Add an entry to `data/guards.json`. This is what [/guards](/guards) renders and 
   "protects": "No server-side fetch can hang without a timeout.",
   "why": "A fetch with no timeout turns one slow upstream into stacked requests and 502s on unrelated endpoints. It reads as ordinary code in review.",
   "stages": ["gate"],
-  "needs": "none"
+  "needs": "none",
+  "proof": {
+    "summary": "An API handler calling fetch() with no timeout.",
+    "violation": {
+      "write": {
+        "api/guard-proof-fetch-timeout.js": "export default async function handler(req, res) {\n\tconst r = await fetch('https://example.com/slow');\n\tres.json(await r.json());\n}\n"
+      }
+    },
+    "expect": "api/guard-proof-fetch-timeout.js"
+  }
 }
 ```
 
 Every field is required, and `audit-guards` enforces that, because a guard with no `why` is one nobody dares delete and nobody understands.
+
+`proof` is the field people forget, and it is the one the auditor refuses to let you skip. Leave it out and `npm run audit:guards` fails with:
+
+```
+[audit-guards]   guard `check-fetch-timeouts`: guard "check-fetch-timeouts" has no
+proof block. Every guard must declare the violation it rejects (see docs/guards.md).
+```
+
+It declares the violation your guard must reject, in fixture form rather than code: `summary` says what the violation is in one line, `violation` is the mutation applied to a throwaway copy of the repo, and `expect` is the fragment the guard's own failure output must contain. Step 5 runs it. `violation` also takes `append`, `delete`, `link`, and `json` instead of `write`; a guard that genuinely cannot be proven offline declares `{"kind": "live", "reason": "..."}` and says why, rather than faking a green.
+
+Nothing else needs regenerating by hand: `npm run build:guards` refreshes `public/guards.json` (the file [/guards](/guards) fetches), and it already runs inside `prebuild` on every build.
 
 ---
 
@@ -153,9 +173,30 @@ Anything needing the network or credentials goes in `manual`. A flaky guard on a
 
 ---
 
-## Step 5: test it
+## Step 5: prove it still catches something
 
-A guard with no test rots into a no-op, and you find out when the thing it was supposed to catch ships anyway. Create `tests/check-fetch-timeouts.test.js`:
+`audit:guards` proved the guard is *wired*. It cannot prove the guard still *catches* anything. A checker that has rotted into a no-op (a directory it stopped scanning, a regex that stopped matching, an exclusion list that grew until it excluded everything) exits 0 forever, and exit 0 is indistinguishable from a clean tree. That is the worst failure mode a safety net has: loudest when it works, silent when it dies.
+
+The `proof` block you wrote in Step 3 is what closes that hole. Run it:
+
+```bash
+npm run prove:guards -- --only check-fetch-timeouts
+```
+
+The runner builds a throwaway git worktree overlaid with your working tree and runs your guard twice there. Both halves are required:
+
+1. **Control.** The unmutated sandbox must make the guard exit 0. A clean baseline is what makes the next step attributable. Without it, a non-zero exit could just mean the sandbox is broken.
+2. **Violation.** The `write` fixture lands `api/guard-proof-fetch-timeout.js`, and the guard must now exit non-zero *and* print the `expect` fragment, because a guard that fails for the wrong reason is not a working guard.
+
+The verdicts you can get back are `proven`, `control-failed` (your guard already fails on a clean tree), `not-caught` (the fixture slipped past it, so the guard is a no-op), and `wrong-reason` (it failed, but not on your violation). Only the first one means what you built works. Results land in `public/guard-proofs.json` with a verdict per guard.
+
+It is safe to run while other agents are working in this tree: each run gets its own sandbox keyed to its process id and never writes to the repository except that one results file.
+
+---
+
+## Step 6: test it
+
+A guard with no test rots into a no-op, and you find out when the thing it was supposed to catch ships anyway. A proof covers the violation you thought of; a test file is where you pin the false positives. Create `tests/check-fetch-timeouts.test.js`:
 
 ```js
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -228,7 +269,7 @@ Build the sandbox rather than pointing the test at the real repository. A test t
 
 ---
 
-## Step 6: document it
+## Step 7: document it
 
 Add a row to the relevant table in [`docs/guards.md`](/docs/guards), and add a `data/changelog.json` entry if the guard changes what contributors have to do.
 
@@ -240,9 +281,10 @@ Your guard is done when all of these are true:
 
 - [ ] `scripts/check-<thing>.mjs` exists, exits non-zero with an actionable message, and opens with the incident that motivated it.
 - [ ] An npm script runs it.
-- [ ] `data/guards.json` has an entry with `title`, `protects`, `why`, and `stages`.
+- [ ] `data/guards.json` has an entry with `title`, `protects`, `why`, `stages`, and a `proof`.
 - [ ] It is wired into the chain for every stage it claims.
 - [ ] `npm run audit:guards` passes.
+- [ ] `npm run prove:guards -- --only <id>` returns `proven`, not `not-caught` or `control-failed`.
 - [ ] A test covers the pass case, the fail case, and at least one false positive it must not report.
 - [ ] `npm run gate` still passes.
 
@@ -250,6 +292,6 @@ Your guard is done when all of these are true:
 
 ## Related
 
-- [Repository guards](/docs/guards): every existing guard, its stage, and the design principles.
+- [Repository guards](/docs/guards): every existing guard, its stage, the design principles, and the full `proof` vocabulary.
 - [/guards](/guards): the registry as a browsable page.
 - [Start here](/docs/start-here): what three.ws is, if you landed here first.

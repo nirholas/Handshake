@@ -452,11 +452,13 @@
 		}
 		#fund-alert.visible { display: block; }
 
-		/* The two "Add funds" buttons the page injects at runtime: one in the fund
-		   banner, one in the feed's insufficient-balance row. Both shipped with no
-		   styles at all, so they rendered as default OS buttons on a black panel. */
+		/* The buttons the page injects at runtime: "Add funds" in the fund banner
+		   and in the feed's insufficient-balance row, "Retry" in the wallet-status
+		   notice, "Try again" on a failed request. They shipped with no styles at
+		   all, so they rendered as default OS buttons on a black panel. */
 		.fund-alert-btn,
-		.tx-add-funds-btn {
+		.tx-add-funds-btn,
+		.tx-retry-btn {
 			display: inline-flex;
 			align-items: center;
 			gap: 4px;
@@ -473,9 +475,11 @@
 			transition: background .15s, border-color .15s, transform .1s;
 		}
 		.fund-alert-btn:hover,
-		.tx-add-funds-btn:hover { background: rgba(247,160,53,.22); border-color: rgba(247,160,53,.7); }
+		.tx-add-funds-btn:hover,
+		.tx-retry-btn:hover { background: rgba(247,160,53,.22); border-color: rgba(247,160,53,.7); }
 		.fund-alert-btn:active,
-		.tx-add-funds-btn:active { transform: translateY(1px); }
+		.tx-add-funds-btn:active,
+		.tx-retry-btn:active { transform: translateY(1px); }
 
 		/* Responsive.
 		   Both agents stay on screen on narrow viewports. Hiding the buyer used to
@@ -484,11 +488,20 @@
 		   display:none column measures zero, so the payment flew out of the corner
 		   of the screen instead of between the agents. */
 		@media (max-width: 700px) {
-			#root { grid-template-columns: 1fr 1fr; grid-template-rows: 38vh 1fr auto; }
+			#root { grid-template-columns: 1fr 1fr; grid-template-rows: 38vh minmax(0, 1fr) auto; }
 			#col-buyer  { grid-column: 1; grid-row: 1; }
 			#col-seller { grid-column: 2; grid-row: 1; border-left: 1px solid var(--border); }
 			#center { grid-column: 1 / -1; grid-row: 2; border-left: none; border-right: none; border-top: 1px solid var(--border); }
 			#bottom-bar { grid-row: 3; }
+
+			/* The center column is taller than its row once the catalog, the fund
+			   banner and the topic field stack up, and it used to clip the overflow:
+			   at 320px the transaction feed and the status bar (the entire output of
+			   this page) were cut off with no way to scroll to them. Scroll the
+			   column instead, and keep the feed a readable height inside it. */
+			#center { overflow-y: auto; overscroll-behavior: contain; }
+			#feed { flex: 1 0 auto; min-height: 140px; overflow-y: visible; }
+			#status-bar { position: sticky; bottom: 0; background: var(--bg); }
 
 			/* Half-width columns cannot hold the desktop chrome: let the label wrap
 			   and drop the bubble's desktop min-width so neither is clipped. */
@@ -496,7 +509,16 @@
 			.av-label-name { font-size: 12px; }
 			.av-label-addr { word-break: break-all; }
 			.av-speech { min-width: 0; max-width: calc(100% - 16px); top: 10px; padding: 8px 10px; font-size: 11px; }
-			#bottom-bar { flex-wrap: wrap; gap: 8px; row-gap: 4px; padding: 8px 12px; }
+			/* The floating language switcher is fixed to the bottom-right corner and
+			   sat directly on top of these links. Reserve its height so every footer
+			   link stays clickable. */
+			#bottom-bar { flex-wrap: wrap; gap: 8px; row-gap: 4px; padding: 8px 12px 54px; }
+		}
+
+		/* Phone widths: 38vh of avatars leaves the catalog and feed fighting over
+		   what's left, so give the agents a little less room. */
+		@media (max-width: 480px) {
+			#root { grid-template-rows: 30vh minmax(0, 1fr) auto; }
 		}
 
 		/* Noscript */

@@ -4,10 +4,10 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title data-i18n="agenc_room.meta_title">AgenC task room — three.ws</title>
+		<title data-i18n="agenc_room.meta_title">AgenC task room · three.ws</title>
 		<meta
 			name="description"
-			content="A live 3D room where AgenC tasks become visible agents. Each open task on the AgenC coordination protocol gets a body, animated by its on-chain state."
+			content="A live room where autonomous agents discover open work, bid for it, and settle on-chain: every AgenC task renders as an agent driven by its chain state."
 		 data-i18n-attr="content:agenc_room.meta_description"/>
 		<meta name="theme-color" content="#060606" />
 		<link rel="icon" href="/favicon.ico" />
@@ -20,6 +20,7 @@
 				--muted: #8a8499;
 				--accent: #7af0c4;
 				--warn: #f0c47a;
+				--info: #7ab8f0;
 				--err: #f07a7a;
 				--card: #141414;
 				--border: rgba(255, 255, 255, 0.08);
@@ -39,11 +40,32 @@
 			a {
 				color: var(--accent);
 			}
+			a:hover {
+				text-decoration: underline;
+			}
+			:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+				border-radius: 4px;
+			}
+			.vh {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0 0 0 0);
+				white-space: nowrap;
+				border: 0;
+			}
 			.bar {
 				display: flex;
 				gap: 12px;
 				align-items: center;
-				padding: 14px 20px;
+				/* brand.js pins a 36px home chip at top:14px/left:16px, so the bar
+				   starts clear of it instead of running the h1 underneath. */
+				padding: 14px 20px 14px 64px;
 				border-bottom: 1px solid var(--border);
 				background: rgba(0, 0, 0, 0.4);
 				backdrop-filter: blur(6px);
@@ -58,13 +80,42 @@
 				color: var(--muted);
 				font-size: 12px;
 			}
+			.bar-nav {
+				display: flex;
+				gap: 12px;
+				flex-wrap: wrap;
+				font-size: 12px;
+			}
+			.bar-nav a {
+				color: var(--muted);
+				text-decoration: none;
+				border-bottom: 1px solid transparent;
+				transition: color 0.15s ease, border-color 0.15s ease;
+			}
+			.bar-nav a:hover,
+			.bar-nav a:focus-visible {
+				color: var(--fg);
+				border-bottom-color: var(--accent);
+				text-decoration: none;
+			}
+			.query {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				flex-wrap: wrap;
+				flex: 1 1 260px;
+				min-width: 0;
+				justify-content: flex-end;
+			}
 			.bar input {
 				background: var(--bg-elev);
 				border: 1px solid var(--border);
 				color: var(--fg);
 				border-radius: 6px;
 				padding: 6px 10px;
-				min-width: 320px;
+				flex: 1 1 200px;
+				min-width: 0;
+				max-width: 360px;
 				font: inherit;
 			}
 			.bar select {
@@ -75,7 +126,8 @@
 				padding: 6px 10px;
 				font: inherit;
 			}
-			.bar button {
+			.bar button,
+			.notice button {
 				background: var(--accent);
 				color: #061612;
 				border: 0;
@@ -84,9 +136,27 @@
 				font: inherit;
 				font-weight: 600;
 				cursor: pointer;
+				transition: filter 0.15s ease, transform 0.1s ease;
 			}
-			.bar button:hover {
+			.bar button:hover,
+			.notice button:hover {
 				filter: brightness(1.05);
+			}
+			.bar button:active,
+			.notice button:active {
+				transform: translateY(1px);
+			}
+			@media (max-width: 560px) {
+				.bar {
+					padding-left: 54px;
+				}
+			}
+			.status {
+				margin: 0;
+				padding: 10px 20px 0;
+				color: var(--muted);
+				font-size: 12px;
+				min-height: 18px;
 			}
 			.room {
 				display: grid;
@@ -102,6 +172,13 @@
 				position: relative;
 				display: flex;
 				flex-direction: column;
+				animation: rise 0.28s ease both;
+			}
+			@keyframes rise {
+				from {
+					opacity: 0;
+					transform: translateY(8px);
+				}
 			}
 			.task .body {
 				aspect-ratio: 1 / 1;
@@ -118,10 +195,31 @@
 				padding: 12px 14px;
 				font-size: 12px;
 				color: var(--muted);
+				margin: 0;
 			}
-			.task .meta strong {
+			.task .meta .row {
+				display: flex;
+				gap: 6px;
+				justify-content: space-between;
+				align-items: baseline;
+			}
+			.task .meta .row + .row {
+				margin-top: 3px;
+			}
+			.task .meta .val {
 				color: var(--fg);
+				text-align: right;
+				overflow-wrap: anywhere;
+			}
+			.task .meta .id {
 				font-weight: 500;
+				color: var(--fg);
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			.task .explorer {
+				display: inline-block;
+				margin-top: 8px;
+				font-size: 11.5px;
 			}
 			.task .state-tag {
 				position: absolute;
@@ -136,76 +234,160 @@
 				border-radius: 999px;
 				color: var(--fg);
 			}
+			/* State labels are the on-chain TaskState names the bridge returns
+			   verbatim (api/agenc/[action].js taskStateLabel). */
 			.task[data-state='Open'] .state-tag {
 				color: var(--accent);
 				border-color: var(--accent);
 			}
-			.task[data-state='Claimed'] .state-tag {
+			.task[data-state='In Progress'] .state-tag {
 				color: var(--warn);
 				border-color: var(--warn);
+			}
+			.task[data-state='Pending Validation'] .state-tag {
+				color: var(--info);
+				border-color: var(--info);
 			}
 			.task[data-state='Completed'] .state-tag {
 				color: #7af0c4;
 				border-color: #7af0c4;
 			}
 			.task[data-state='Cancelled'] .state-tag,
-			.task[data-state='Expired'] .state-tag,
 			.task[data-state='Disputed'] .state-tag {
 				color: var(--err);
 				border-color: var(--err);
 			}
-			.empty {
-				padding: 60px 24px;
+			.skeleton {
+				animation: none;
+			}
+			.skeleton .body,
+			.skeleton .line {
+				background: linear-gradient(90deg, #141414, #1f1f1f, #141414);
+				background-size: 200% 100%;
+				animation: shimmer 1.3s linear infinite;
+			}
+			.skeleton .line {
+				height: 9px;
+				border-radius: 4px;
+				margin: 0 0 8px;
+			}
+			.skeleton .line.short {
+				width: 55%;
+			}
+			@keyframes shimmer {
+				to {
+					background-position: -200% 0;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.task,
+				.skeleton .body,
+				.skeleton .line {
+					animation: none;
+				}
+			}
+			.notice {
+				grid-column: 1 / -1;
+				max-width: 560px;
+				margin: 40px auto;
+				padding: 0 8px;
 				color: var(--muted);
 				text-align: center;
+				line-height: 1.6;
 			}
-			.empty code {
+			.notice h2 {
+				margin: 0 0 8px;
+				font-size: 15px;
+				font-weight: 600;
+				color: var(--fg);
+			}
+			.notice.error h2 {
+				color: var(--err);
+			}
+			.notice p {
+				margin: 0 0 14px;
+			}
+			.notice .actions {
+				display: flex;
+				gap: 12px;
+				align-items: center;
+				justify-content: center;
+				flex-wrap: wrap;
+			}
+			.notice code {
 				color: var(--fg);
 				background: var(--bg-elev);
 				padding: 1px 6px;
 				border-radius: 4px;
+				overflow-wrap: anywhere;
 			}
 		</style>
-	
+
 	<link rel="canonical" href="https://three.ws/agenc/room">
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
 	<meta property="og:title" content="AgenC · Task Room · three.ws" data-i18n-attr="content:agenc_room.meta_og_title">
-	<meta property="og:description" content="A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close." data-i18n-attr="content:agenc_room.meta_og_description">
+	<meta property="og:description" content="A live room where autonomous agents discover open work, bid for it, and settle on-chain: the labor market up close." data-i18n-attr="content:agenc_room.meta_og_description">
 	<meta property="og:url" content="https://three.ws/agenc/room">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=AgenC+%C2%B7+Task+Room&amp;d=A+live+room+where+autonomous+agents+discover+open+work%2C+bid+for+it%2C+and+settle+on-chain%3A+the+labor+market+up+close.&amp;p=%2Fagenc%2Froom">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:type" content="image/png">
-	<meta property="og:image:alt" content="AgenC · Task Room — three.ws">
+	<meta property="og:image:alt" content="AgenC · Task Room · three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:title" content="AgenC · Task Room · three.ws" data-i18n-attr="content:agenc_room.meta_twitter_title">
-	<meta name="twitter:description" content="A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close." data-i18n-attr="content:agenc_room.meta_twitter_description">
+	<meta name="twitter:description" content="A live room where autonomous agents discover open work, bid for it, and settle on-chain: the labor market up close." data-i18n-attr="content:agenc_room.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=AgenC+%C2%B7+Task+Room&amp;d=A+live+room+where+autonomous+agents+discover+open+work%2C+bid+for+it%2C+and+settle+on-chain%3A+the+labor+market+up+close.&amp;p=%2Fagenc%2Froom">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"AgenC · Task Room","description":"A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close.","url":"https://three.ws/agenc/room","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=AgenC+%C2%B7+Task+Room&d=A+live+room+where+autonomous+agents+discover+open+work%2C+bid+for+it%2C+and+settle+on-chain+%E2%80%94+the+labor+market+up+close.&p=%2Fagenc%2Froom"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Agenc","item":"https://three.ws/agenc"},{"@type":"ListItem","position":3,"name":"Room","item":"https://three.ws/agenc/room"}]}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"AgenC · Task Room","description":"A live room where autonomous agents discover open work, bid for it, and settle on-chain: the labor market up close.","url":"https://three.ws/agenc/room","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=AgenC+%C2%B7+Task+Room&d=A+live+room+where+autonomous+agents+discover+open+work%2C+bid+for+it%2C+and+settle+on-chain%3A+the+labor+market+up+close.&p=%2Fagenc%2Froom"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Agenc","item":"https://three.ws/agenc"},{"@type":"ListItem","position":3,"name":"Room","item":"https://three.ws/agenc/room"}]}]}</script>
 </head>
 	<body>
-		<div class="bar">
+		<header class="bar">
 			<h1 data-i18n="agenc_room.agenc_task_room">AgenC task room</h1>
 			<span class="muted" data-i18n-html="agenc_room.on_chain_task_feed_agenc_tech">on-chain task feed · <a href="https://agenc.tech" target="_blank" rel="noopener">agenc.tech</a></span>
-			<span style="flex: 1"></span>
-			<input id="creator" type="text" placeholder="creator wallet (base58)" />
-			<select id="cluster">
-				<option value="devnet" selected data-i18n="agenc_room.devnet">devnet</option>
-				<option value="mainnet" data-i18n="agenc_room.mainnet">mainnet</option>
-			</select>
-			<button id="loadBtn" data-i18n="agenc_room.load">Load</button>
-		</div>
+			<nav class="bar-nav" aria-label="Related AgenC pages" data-i18n-attr="aria-label:agenc_room.nav_aria">
+				<a href="/agenc/embodied" data-i18n="agenc_room.nav_embodied">embodied demo</a>
+				<a href="/docs/agenc" data-i18n="agenc_room.nav_docs">docs</a>
+				<a href="/agora" data-i18n="agenc_room.nav_commons">the Commons</a>
+			</nav>
+			<form id="query" class="query">
+				<label class="vh" for="creator" data-i18n="agenc_room.creator_label">Creator wallet, base58</label>
+				<input
+					id="creator"
+					name="creator"
+					type="text"
+					placeholder="creator wallet (base58)"
+					autocomplete="off"
+					autocapitalize="off"
+					spellcheck="false"
+					data-i18n-attr="placeholder:agenc_room.creator_placeholder"
+				/>
+				<label class="vh" for="cluster" data-i18n="agenc_room.cluster_label">Solana cluster</label>
+				<select id="cluster" name="cluster">
+					<option value="devnet" selected data-i18n="agenc_room.devnet">devnet</option>
+					<option value="mainnet" data-i18n="agenc_room.mainnet">mainnet</option>
+				</select>
+				<button id="loadBtn" type="submit" data-i18n="agenc_room.load">Load</button>
+			</form>
+		</header>
 
-		<div id="room" class="room">
-			<div class="empty">
-				Paste a creator wallet to render every task they've posted on AgenC as
-				an embodied avatar. Try a wallet from your <code>agenc-task-roundtrip</code> example.
+		<p id="status" class="status" role="status" aria-live="polite"></p>
+
+		<main id="room" class="room" aria-busy="false">
+			<div class="notice">
+				<h2 data-i18n="agenc_room.idle_title">Watch a creator's tasks come alive</h2>
+				<p data-i18n="agenc_room.idle_body">
+					Paste a creator wallet to render every task it has posted on AgenC as an
+					embodied avatar, each one animated by its live on-chain state.
+				</p>
+				<div class="actions">
+					<a href="/docs/agenc" data-i18n="agenc_room.idle_docs">How to post a task</a>
+					<a href="/agora" data-i18n="agenc_room.idle_commons">See the Commons working</a>
+				</div>
 			</div>
-		</div>
+		</main>
 
 		<script type="module" src="/agenc/embed.js"></script>
 		<script type="module">
@@ -213,9 +395,10 @@
 			const AVATARS = ['/avatars/default.glb', '/avatars/cz.glb'];
 			const $ = (id) => document.getElementById(id);
 			const room = $('room');
+			const statusEl = $('status');
 			const creatorInput = $('creator');
 			const clusterSel = $('cluster');
-			const loadBtn = $('loadBtn');
+			const form = $('query');
 
 			const params = new URLSearchParams(location.search);
 			if (params.get('creator')) creatorInput.value = params.get('creator');
@@ -223,7 +406,16 @@
 
 			let pollTimer = null;
 			let currentRequest = 0;
-			const cards = new Map(); // taskId hex -> { el, state }
+			let active = null; // { creator, cluster } currently being polled
+			const cards = new Map(); // taskId hex -> card element
+
+			// Runtime-built copy is annotated exactly like the static markup, then
+			// handed to the i18n runtime so a non-English visitor gets the same
+			// treatment on states that only exist after a fetch.
+			function localize(node) {
+				window.threewsI18n?.apply?.(node);
+				return node;
+			}
 
 			function avatarFor(taskId) {
 				let h = 0;
@@ -237,31 +429,146 @@
 				return (n / 1_000_000_000).toFixed(4) + ' SOL';
 			}
 
-			function buildCard(task, cluster, taskPda) {
+			function rewardLabel(task) {
+				return task.rewardMint ? String(task.rewardAmount) : fmtSol(task.rewardAmount);
+			}
+
+			function workersLabel(task) {
+				const zk = task.private ? ' · private (zk)' : '';
+				return `${task.currentWorkers}/${task.maxWorkers}${zk}`;
+			}
+
+			function deadlineLabel(task) {
+				if (!task.deadline) return 'none set';
+				return new Date(task.deadline * 1000).toLocaleString();
+			}
+
+			function explorerUrl(pda, cluster) {
+				const q = cluster === 'devnet' ? '?cluster=devnet' : '';
+				return `https://explorer.solana.com/address/${pda}${q}`;
+			}
+
+			function row(parent, label, field, value) {
 				const el = document.createElement('div');
+				el.className = 'row';
+				const k = document.createElement('span');
+				k.textContent = label;
+				const v = document.createElement('span');
+				v.className = 'val';
+				v.dataset.field = field;
+				v.textContent = value;
+				el.append(k, v);
+				parent.appendChild(el);
+				return el;
+			}
+
+			function describe(task) {
+				return `AgenC task ${task.taskId.slice(0, 10)}, state ${task.state}`;
+			}
+
+			// Every card body is a live WebGL viewer that also polls its own task, so a
+			// wallet with a dozen tasks would otherwise run a dozen renderers and a
+			// dozen pollers at once, most of them for cards nobody is looking at. A
+			// browser also only keeps a handful of WebGL contexts alive before it
+			// starts dropping the oldest, silently. So: mount an avatar when its card
+			// nears the viewport, drop it when it leaves, and never exceed the budget.
+			const MAX_LIVE_AVATARS = 8;
+			const nearViewport = new Set(); // .body elements the visitor can nearly see
+			const liveAvatars = new Set(); // .body elements holding a mounted viewer
+
+			function mountAvatar(body) {
+				if (liveAvatars.has(body)) return;
+				liveAvatars.add(body);
+				const agent = document.createElement('three-ws-agent');
+				agent.setAttribute('src', body.dataset.avatar);
+				if (body.dataset.taskPda) agent.setAttribute('agenc-task', body.dataset.taskPda);
+				agent.setAttribute('agenc-cluster', body.dataset.cluster);
+				agent.setAttribute('agenc-bridge', '/api/agenc');
+				agent.setAttribute('agenc-poll-ms', String(POLL_MS));
+				agent.setAttribute('role', 'img');
+				agent.setAttribute('aria-label', body.dataset.label);
+				body.prepend(agent);
+			}
+
+			function unmountAvatar(body) {
+				liveAvatars.delete(body);
+				// Removing the element runs its disconnectedCallback, which stops that
+				// card's own task poll along with the renderer.
+				body.querySelector('three-ws-agent')?.remove();
+			}
+
+			// Wiping the room detaches every card at once, so drop the bookkeeping with
+			// it rather than letting detached bodies hold slots in the budget.
+			function resetAvatars() {
+				for (const body of nearViewport) avatarObserver?.unobserve(body);
+				nearViewport.clear();
+				liveAvatars.clear();
+			}
+
+			function syncAvatars() {
+				for (const body of [...liveAvatars]) {
+					if (!nearViewport.has(body) || !body.isConnected) unmountAvatar(body);
+				}
+				for (const body of nearViewport) {
+					if (liveAvatars.size >= MAX_LIVE_AVATARS) break;
+					mountAvatar(body);
+				}
+			}
+
+			const avatarObserver =
+				'IntersectionObserver' in window
+					? new IntersectionObserver(
+							(entries) => {
+								for (const entry of entries) {
+									if (entry.isIntersecting) nearViewport.add(entry.target);
+									else nearViewport.delete(entry.target);
+								}
+								syncAvatars();
+							},
+							{ rootMargin: '200px' },
+						)
+					: null;
+
+			function buildCard(task, cluster) {
+				const el = document.createElement('article');
 				el.className = 'task';
 				el.dataset.state = task.state;
 				el.dataset.taskId = task.taskId;
-				const reward = task.rewardMint ? `${task.rewardAmount}` : fmtSol(task.rewardAmount);
-				const pda = taskPda || '';
-				el.innerHTML = `
-					<div class="body">
-						<three-ws-agent
-							src="${avatarFor(task.taskId)}"
-							${pda ? `agenc-task="${pda}"` : ''}
-							agenc-cluster="${cluster}"
-							agenc-bridge="/api/agenc"
-							agenc-poll-ms="8000"
-						></three-ws-agent>
-						<div class="state-tag">${task.state}</div>
-					</div>
-					<div class="meta">
-						<div><strong>${task.taskId.slice(0, 10)}…</strong></div>
-						<div>reward · ${reward}</div>
-						<div>workers · ${task.currentWorkers}/${task.maxWorkers}${task.private ? ' · private (zk)' : ''}</div>
-						<div>deadline · ${task.deadline ? new Date(task.deadline * 1000).toLocaleString() : '—'}</div>
-					</div>
-				`;
+
+				const body = document.createElement('div');
+				body.className = 'body';
+				body.dataset.avatar = avatarFor(task.taskId);
+				body.dataset.cluster = cluster;
+				body.dataset.label = describe(task);
+				if (task.taskPda) body.dataset.taskPda = task.taskPda;
+				const tag = document.createElement('div');
+				tag.className = 'state-tag';
+				tag.textContent = task.state;
+				body.append(tag);
+				if (avatarObserver) avatarObserver.observe(body);
+				else mountAvatar(body);
+
+				const meta = document.createElement('div');
+				meta.className = 'meta';
+				const id = document.createElement('div');
+				id.className = 'id';
+				id.textContent = task.taskId.slice(0, 10);
+				id.title = task.taskId;
+				meta.appendChild(id);
+				row(meta, 'reward', 'reward', rewardLabel(task));
+				row(meta, 'workers', 'workers', workersLabel(task));
+				row(meta, 'deadline', 'deadline', deadlineLabel(task));
+				if (task.taskPda) {
+					const link = document.createElement('a');
+					link.className = 'explorer';
+					link.href = explorerUrl(task.taskPda, cluster);
+					link.target = '_blank';
+					link.rel = 'noopener';
+					link.textContent = 'view account on Solana Explorer';
+					meta.appendChild(link);
+				}
+
+				el.append(body, meta);
 				return el;
 			}
 
@@ -269,63 +576,226 @@
 				if (card.dataset.state !== task.state) {
 					card.dataset.state = task.state;
 					card.querySelector('.state-tag').textContent = task.state;
+					const label = describe(task);
+					card.querySelector('.body').dataset.label = label;
+					card.querySelector('three-ws-agent')?.setAttribute('aria-label', label);
 				}
-				const meta = card.querySelector('.meta');
-				const reward = task.rewardMint ? `${task.rewardAmount}` : fmtSol(task.rewardAmount);
-				meta.children[1].textContent = `reward · ${reward}`;
-				meta.children[2].textContent = `workers · ${task.currentWorkers}/${task.maxWorkers}${task.private ? ' · private (zk)' : ''}`;
+				const set = (field, value) => {
+					const el = card.querySelector(`[data-field="${field}"]`);
+					if (el && el.textContent !== value) el.textContent = value;
+				};
+				set('reward', rewardLabel(task));
+				set('workers', workersLabel(task));
+				set('deadline', deadlineLabel(task));
+			}
+
+			// One renderer for every non-populated state, so empty, error and idle all
+			// arrive designed and with something to do next.
+			function notice({ tone, titleKey, title, bodyKey, body, actions = [] }) {
+				const el = document.createElement('div');
+				el.className = tone === 'error' ? 'notice error' : 'notice';
+				if (tone === 'error') el.setAttribute('role', 'alert');
+				const h = document.createElement('h2');
+				if (titleKey) h.dataset.i18n = titleKey;
+				h.textContent = title;
+				const p = document.createElement('p');
+				if (bodyKey) p.dataset.i18n = bodyKey;
+				p.textContent = body;
+				el.append(h, p);
+				if (actions.length) {
+					const bar = document.createElement('div');
+					bar.className = 'actions';
+					for (const a of actions) {
+						if (a.href) {
+							const link = document.createElement('a');
+							link.href = a.href;
+							if (a.key) link.dataset.i18n = a.key;
+							link.textContent = a.label;
+							bar.appendChild(link);
+						} else {
+							const btn = document.createElement('button');
+							btn.type = 'button';
+							if (a.key) btn.dataset.i18n = a.key;
+							btn.textContent = a.label;
+							btn.addEventListener('click', a.onClick);
+							bar.appendChild(btn);
+						}
+					}
+					el.appendChild(bar);
+				}
+				return localize(el);
+			}
+
+			function showNotice(config) {
+				cards.clear();
+				resetAvatars();
+				room.replaceChildren(notice(config));
+			}
+
+			function showSkeleton() {
+				room.setAttribute('aria-busy', 'true');
+				resetAvatars();
+				const frag = document.createDocumentFragment();
+				for (let i = 0; i < 6; i++) {
+					const el = document.createElement('div');
+					el.className = 'task skeleton';
+					el.setAttribute('aria-hidden', 'true');
+					const body = document.createElement('div');
+					body.className = 'body';
+					const meta = document.createElement('div');
+					meta.className = 'meta';
+					for (const cls of ['line', 'line', 'line short']) {
+						const line = document.createElement('div');
+						line.className = cls;
+						meta.appendChild(line);
+					}
+					el.append(body, meta);
+					frag.appendChild(el);
+				}
+				room.replaceChildren(frag);
+			}
+
+			function retryAction() {
+				return { key: 'agenc_room.retry', label: 'Retry', onClick: () => start() };
+			}
+
+			function docsAction() {
+				return { key: 'agenc_room.idle_docs', label: 'How to post a task', href: '/docs/agenc' };
+			}
+
+			// The bridge answers errors as JSON ({error, error_description}); anything
+			// else (a proxy page, an empty body) still has to read as a sentence.
+			async function readError(response) {
+				const text = await response.text().catch(() => '');
+				try {
+					const parsed = JSON.parse(text);
+					return parsed.error_description || parsed.message || parsed.error || text;
+				} catch {
+					return text.trim();
+				}
+			}
+
+			function scheduleNext(requestId, delayMs) {
+				clearTimeout(pollTimer);
+				if (requestId !== currentRequest || !active) return;
+				if (document.hidden) return; // resumed by the visibilitychange handler
+				pollTimer = setTimeout(() => {
+					loadTasks(active.creator, active.cluster, requestId);
+				}, delayMs);
 			}
 
 			async function loadTasks(creator, cluster, requestId) {
+				let retryMs = POLL_MS;
 				try {
 					const r = await fetch(
 						`/api/agenc/list-tasks?creator=${encodeURIComponent(creator)}&cluster=${cluster}`,
 					);
 					if (requestId !== currentRequest) return;
 					if (!r.ok) {
-						const text = await r.text();
-						room.innerHTML = `<div class="empty">error: ${text.slice(0, 200)}</div>`;
+						const detail = await readError(r);
+						room.setAttribute('aria-busy', 'false');
+						// A 4xx is the caller's to fix, so stop the poll and say what to
+						// change. A 5xx (or the bridge's own 503 when every Solana RPC lane
+						// is cooling) clears itself, so keep polling and say so.
+						if (r.status >= 400 && r.status < 500) {
+							active = null;
+							setStatus('');
+							showNotice({
+								tone: 'error',
+								titleKey: 'agenc_room.err_request_title',
+								title: 'That request could not be read',
+								body: detail || `The bridge answered ${r.status}.`,
+								actions: [retryAction(), docsAction()],
+							});
+							return;
+						}
+						const retryAfter = Number(r.headers.get('retry-after'));
+						retryMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 15000;
+						showNotice({
+							tone: 'error',
+							titleKey: 'agenc_room.err_upstream_title',
+							title: 'Solana is not answering right now',
+							body: detail || `The bridge answered ${r.status}.`,
+							actions: [retryAction(), docsAction()],
+						});
+						setStatus(`retrying in ${Math.round(retryMs / 1000)}s`);
 						return;
 					}
 					const payload = await r.json();
+					room.setAttribute('aria-busy', 'false');
 					if (!payload.ok || !payload.tasks?.length) {
-						room.innerHTML = `<div class="empty">no tasks found for <code>${creator.slice(0, 12)}…</code> on ${cluster}.</div>`;
-						cards.clear();
+						showNotice({
+							titleKey: 'agenc_room.empty_title',
+							title: 'No tasks from this wallet yet',
+							body: `${creator.slice(0, 12)} has posted nothing on ${cluster}. Check the other cluster, or post a task and watch it appear here.`,
+							actions: [
+								{
+									key: 'agenc_room.switch_cluster',
+									label: cluster === 'devnet' ? 'Try mainnet' : 'Try devnet',
+									onClick: () => {
+										clusterSel.value = cluster === 'devnet' ? 'mainnet' : 'devnet';
+										start();
+									},
+								},
+								docsAction(),
+							],
+						});
+						setStatus(`0 tasks · ${cluster} · rechecking every ${POLL_MS / 1000}s`);
 						return;
 					}
 
+					if (room.querySelector('.notice, .skeleton')) {
+						room.replaceChildren();
+						cards.clear();
+						resetAvatars();
+					}
 					const seen = new Set();
 					for (const task of payload.tasks) {
 						seen.add(task.taskId);
 						const existing = cards.get(task.taskId);
 						if (existing) {
-							updateCard(existing.el, task);
+							updateCard(existing, task);
 						} else {
-							const el = buildCard(task, cluster, task.taskPda);
+							const el = buildCard(task, cluster);
 							room.appendChild(el);
-							cards.set(task.taskId, { el });
+							cards.set(task.taskId, el);
 						}
 					}
-					// Remove cards that are no longer in the response (rare — cancelled
+					// Remove cards that are no longer in the response (rare: cancelled
 					// tasks usually stay in the list with state=Cancelled).
-					for (const [taskId, entry] of cards) {
+					for (const [taskId, el] of cards) {
 						if (!seen.has(taskId)) {
-							entry.el.remove();
+							const body = el.querySelector('.body');
+							if (body) {
+								avatarObserver?.unobserve(body);
+								nearViewport.delete(body);
+								liveAvatars.delete(body);
+							}
+							el.remove();
 							cards.delete(taskId);
 						}
 					}
-					if (room.querySelector('.empty')) {
-						room.querySelector('.empty').remove();
-					}
+					const stamp = new Date(payload.fetchedAt || Date.now()).toLocaleTimeString();
+					setStatus(`${payload.tasks.length} tasks · ${cluster} · updated ${stamp}`);
 				} catch (err) {
-					if (requestId === currentRequest) {
-						room.innerHTML = `<div class="empty">network error: ${err.message}</div>`;
-					}
+					if (requestId !== currentRequest) return;
+					room.setAttribute('aria-busy', 'false');
+					retryMs = 15000;
+					showNotice({
+						tone: 'error',
+						titleKey: 'agenc_room.err_network_title',
+						title: 'Could not reach the task bridge',
+						body: `${err.message}. The room keeps trying, or retry now.`,
+						actions: [retryAction(), docsAction()],
+					});
+					setStatus('retrying in 15s');
 				} finally {
-					if (requestId === currentRequest) {
-						pollTimer = setTimeout(() => loadTasks(creator, cluster, requestId), POLL_MS);
-					}
+					scheduleNext(requestId, retryMs);
 				}
+			}
+
+			function setStatus(text) {
+				statusEl.textContent = text;
 			}
 
 			function start() {
@@ -333,24 +803,42 @@
 				const cluster = clusterSel.value;
 				clearTimeout(pollTimer);
 				cards.clear();
-				room.innerHTML = '';
 				currentRequest += 1;
 				if (!creator) {
-					room.innerHTML =
-						'<div class="empty">Paste a creator wallet to render its tasks as a 3D scene.</div>';
+					active = null;
+					setStatus('');
+					room.setAttribute('aria-busy', 'false');
+					showNotice({
+						titleKey: 'agenc_room.idle_title',
+						title: "Watch a creator's tasks come alive",
+						body: 'Paste a creator wallet to render every task it has posted on AgenC as an embodied avatar, each one animated by its live on-chain state.',
+						actions: [docsAction(), { key: 'agenc_room.idle_commons', label: 'See the Commons working', href: '/agora' }],
+					});
+					creatorInput.focus();
 					return;
 				}
+				active = { creator, cluster };
 				const url = new URL(location.href);
 				url.searchParams.set('creator', creator);
 				url.searchParams.set('cluster', cluster);
 				history.replaceState(null, '', url.toString());
-				room.innerHTML = '<div class="empty">loading…</div>';
+				setStatus(`loading tasks on ${cluster}…`);
+				showSkeleton();
 				loadTasks(creator, cluster, currentRequest);
 			}
 
-			loadBtn.addEventListener('click', start);
-			creatorInput.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter') start();
+			form.addEventListener('submit', (e) => {
+				e.preventDefault();
+				start();
+			});
+			// A poll running against a hidden tab burns RPC for nobody; pick it back up
+			// the moment the visitor returns.
+			document.addEventListener('visibilitychange', () => {
+				if (document.hidden) {
+					clearTimeout(pollTimer);
+				} else if (active) {
+					loadTasks(active.creator, active.cluster, currentRequest);
+				}
 			});
 			if (creatorInput.value) start();
 		</script>

@@ -98,10 +98,17 @@ function setPayLabel(text) {
 	if (lbl) lbl.textContent = text;
 }
 
+const PAY_LABEL = 'Buy intel · $0.01 USDC';
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let activeTopic    = 'sol';
 let busy           = false;
 let sessionTotal   = 0; // USDC in dollars
+// Wallet gate. null while a live settlement is possible; otherwise the honest
+// button label explaining why it is not, which also disables the pay button.
+// Offering "Buy intel" over a wallet that provably cannot settle is a button
+// that can only fail, so the gate owns the button and doPurchase defers to it.
+let payBlockedLabel = null;
 let agentAReady    = false;
 let agentBReady    = false;
 const queueA       = [];
@@ -291,8 +298,11 @@ function narrate(stageId, extra) {
 function narrateDone(intelObj, paymentObj) {
 	const topic = intelObj?.topic?.toUpperCase() || 'Intel';
 	const amount = paymentObj?.amount ? (Number(paymentObj.amount) / 1e6).toFixed(4) : '0.0100';
-	const txLink = paymentObj?.tx
-		? ` <a href="https://solscan.io/tx/${escHtml(paymentObj.tx)}" target="_blank" rel="noopener">View on Solscan ↗</a>`
+	// Same guard the receipt uses: only a well-formed base58 signature becomes a
+	// Solscan link, so a truncated tx never ships a dead explorer URL.
+	const tx = typeof paymentObj?.tx === 'string' && BASE58_RE.test(paymentObj.tx) ? paymentObj.tx : null;
+	const txLink = tx
+		? ` <a href="https://solscan.io/tx/${encodeURIComponent(tx)}" target="_blank" rel="noopener">View on Solscan ↗</a>`
 		: '';
 	els.narration.innerHTML =
 		`<div class="nr-done">` +
@@ -301,39 +311,99 @@ function narrateDone(intelObj, paymentObj) {
 		`</div>`;
 }
 
+// ── Wallet state ──────────────────────────────────────────────────────────────
+// Icons for the three panel tones. Kept as constants so the renderer below reads
+// as data rather than a wall of inline SVG.
+const ICON_ALERT = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+const ICON_WARN  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+
+// Render (or clear) the wallet panel. `recheck` adds a real button that re-runs
+// the probe, so a wallet funded while the page is open recovers without a
+// reload. `blocks` is the pay-button label to show while this state holds.
+function setWalletState(state) {
+	if (!state) {
+		els.walletState.className = '';
+		els.walletState.innerHTML = '';
+		payBlockedLabel = null;
+		syncPayButton();
+		return;
+	}
+	els.walletState.className = `show ${state.tone}`;
+	els.walletState.innerHTML =
+		`<div class="ws-head">${state.icon}${escHtml(state.title)}</div>` +
+		`<div class="ws-body">${state.body}` +
+		(state.recheck ? `<button type="button" class="ws-recheck" id="wsRecheck">Check again</button>` : '') +
+		`</div>`;
+	if (state.recheck) {
+		const btn = $('wsRecheck');
+		btn?.addEventListener('click', () => {
+			btn.disabled = true;
+			btn.textContent = 'Checking…';
+			checkWallet();
+		});
+	}
+	payBlockedLabel = state.blocks || null;
+	syncPayButton();
+}
+
+// The gate owns disabled + label whenever a purchase is not in flight;
+// doPurchase hands the button back to it in its finally block.
+function syncPayButton() {
+	if (busy) return;
+	els.payBtn.disabled = Boolean(payBlockedLabel);
+	setPayLabel(payBlockedLabel || PAY_LABEL);
+}
+
 async function checkWallet() {
+	let b;
 	try {
 		const r = await fetch('/api/x402-pay?balance=1');
-		if (!r.ok) return;
-		const b = await r.json();
-		if (!b.configured) {
-			els.walletState.className = 'show ws-unconfigured';
-			els.walletState.innerHTML =
-				`<div class="ws-head">` +
-				`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` +
-				`Demo wallet not configured` +
-				`</div>` +
-				`<div class="ws-body">` +
-				`This demo settles real USDC on Solana mainnet. The agent wallet isn't configured right now, so live settlements are paused. ` +
-				`To enable: set <span class="ws-mono">X402_AGENT_SOLANA_SECRET_BASE58</span> and fund the wallet.` +
-				`</div>`;
-			els.payBtn.disabled = true;
-		} else if (typeof b.usdc === 'number' && b.usdc < 0.01) {
-			const addr = b.address ? `${b.address.slice(0, 8)}…${b.address.slice(-4)}` : 'unavailable';
-			els.walletState.className = 'show ws-low';
-			els.walletState.innerHTML =
-				`<div class="ws-head">` +
-				`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>` +
-				`Agent wallet low on USDC` +
-				`</div>` +
-				`<div class="ws-body">` +
-				`The buyer wallet holds ${b.usdc.toFixed(4)} USDC, below the $0.01 minimum for a live settlement. ` +
-				`Fund <span class="ws-mono">${escHtml(addr)}</span> with USDC on Solana mainnet to run the demo.` +
-				`</div>`;
-		}
-	} catch {
-		// Network failures silently ignored so they never block the page.
+		if (!r.ok) throw new Error(`balance probe returned ${r.status}`);
+		b = await r.json();
+	} catch (err) {
+		// A probe failure is not silence: the viewer is told the balance is
+		// unknown and handed a retry, because a page that looks ready over an
+		// unreadable wallet is worse than one that says it cannot tell.
+		setWalletState({
+			tone: 'ws-low',
+			icon: ICON_WARN,
+			title: 'Wallet status unavailable',
+			body:
+				`The balance check for the buyer wallet did not answer (${escHtml(err.message || 'network error')}). ` +
+				`The exchange still runs, but the settlement may fail if the wallet is empty. `,
+			recheck: true,
+		});
+		return;
 	}
+
+	if (!b.configured) {
+		setWalletState({
+			tone: 'ws-unconfigured',
+			icon: ICON_ALERT,
+			title: 'Demo wallet not configured',
+			body:
+				`This demo settles real USDC on Solana mainnet. The agent wallet isn't configured right now, so live settlements are paused. ` +
+				`To enable: set <span class="ws-mono">X402_AGENT_SOLANA_SECRET_BASE58</span> and fund the wallet.`,
+			blocks: 'Wallet not configured',
+		});
+		return;
+	}
+
+	if (typeof b.usdc === 'number' && b.usdc < 0.01) {
+		setWalletState({
+			tone: 'ws-low',
+			icon: ICON_WARN,
+			title: 'Agent wallet low on USDC',
+			body:
+				`The buyer wallet holds ${escHtml(b.usdc.toFixed(4))} USDC, below the $0.01 minimum for a live settlement. ` +
+				`Fund <span class="ws-mono">${escHtml(shortB58(b.address, 8, 4))}</span> with USDC on Solana mainnet to run the demo. `,
+			recheck: true,
+			blocks: 'Wallet needs USDC',
+		});
+		return;
+	}
+
+	setWalletState(null);
 }
 
 // ── Main payment flow ─────────────────────────────────────────────────────────
@@ -496,8 +566,10 @@ async function doPurchase() {
 		clearTimeout(timeoutId);
 		busy = false;
 		els.payBtn.classList.remove('busy');
-		els.payBtn.disabled = false;
-		setPayLabel('Buy intel · $0.01 USDC');
+		// The wallet gate owns the button again, so a settlement that emptied the
+		// wallet cannot leave a live-looking "Buy intel" behind.
+		syncPayButton();
+		checkWallet();
 	}
 }
 

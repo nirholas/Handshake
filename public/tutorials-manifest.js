@@ -260,7 +260,7 @@
 			builds: 'A production-ready embed in your existing stack',
 			time: '30 min',
 			previewModel: '/animations/soldier.glb',
-			ctaPrimary: { label: 'Embed docs', href: '/docs#embedding' },
+			ctaPrimary: { label: 'Embed docs', href: '/docs/embedding' },
 		},
 		{
 			slug: 'personal-ai-site',
@@ -280,7 +280,7 @@
 			builds: 'An agent driven by your app — clicks, scrolls, form submits',
 			time: '25 min',
 			previewModel: '/animations/robotexpressive.glb',
-			ctaPrimary: { label: 'JS API reference', href: '/docs#js-api' },
+			ctaPrimary: { label: 'JS API reference', href: '/docs/js-api' },
 		},
 		{
 			slug: 'web-component-end-to-end',
@@ -290,7 +290,7 @@
 			builds: 'A reusable <agent-3d> tag wired into your component system',
 			time: '30 min',
 			previewModel: '/animations/soldier.glb',
-			ctaPrimary: { label: 'Web component docs', href: '/docs#web-component' },
+			ctaPrimary: { label: 'Web component docs', href: '/docs/web-component' },
 		},
 		{
 			slug: 'build-a-site-concierge',
@@ -310,7 +310,7 @@
 			builds: 'An agent that reacts to the user journey on your site',
 			time: '25 min',
 			previewModel: '/animations/robotexpressive.glb',
-			ctaPrimary: { label: 'JS API reference', href: '/docs#js-api' },
+			ctaPrimary: { label: 'JS API reference', href: '/docs/js-api' },
 		},
 		{
 			slug: 'character-library-to-embed',
@@ -360,7 +360,7 @@
 			builds: 'A distinct, on-brand persona that holds across thousands of chats',
 			time: '40 min',
 			previewModel: '/avatars/cz.glb',
-			ctaPrimary: { label: 'Agent system docs', href: '/docs#agent-system' },
+			ctaPrimary: { label: 'Agent system docs', href: '/docs/agent-system' },
 		},
 		{
 			slug: 'connect-ai-brain',
@@ -462,7 +462,7 @@
 			builds: 'A live weather skill bundled, deployed, and callable by the agent',
 			time: '60 min',
 			previewModel: '/animations/robotexpressive.glb',
-			ctaPrimary: { label: 'Skills docs', href: '/docs#skills' },
+			ctaPrimary: { label: 'Skills docs', href: '/docs/skills' },
 		},
 		{
 			slug: 'sell-a-skill-with-a-trial',
@@ -482,7 +482,7 @@
 			builds: 'A registered agent identity discoverable from any wallet',
 			time: '45 min',
 			previewModel: '/animations/robotexpressive.glb',
-			ctaPrimary: { label: 'ERC-8004 docs', href: '/docs#erc8004' },
+			ctaPrimary: { label: 'ERC-8004 docs', href: '/docs/erc8004' },
 		},
 		{
 			slug: 'mint-pumpfun-token',
@@ -572,7 +572,7 @@
 			builds: 'A fully independent agent stack running on your own servers',
 			time: '90 min',
 			previewModel: '/animations/robotexpressive.glb',
-			ctaPrimary: { label: 'Architecture docs', href: '/docs#architecture' },
+			ctaPrimary: { label: 'Architecture docs', href: '/docs/architecture' },
 		},
 		{
 			slug: 'multi-agent-coordination',
@@ -582,7 +582,7 @@
 			builds: 'A team of agents that collaborate to solve a single task',
 			time: '60 min',
 			previewModel: '/animations/soldier.glb',
-			ctaPrimary: { label: 'Multi-agent docs', href: '/docs#multi-agent' },
+			ctaPrimary: { label: 'Multi-agent docs', href: '/docs/multi-agent' },
 		},
 		{
 			slug: 'mcp-server-for-your-agent',
@@ -592,7 +592,7 @@
 			builds: 'Your agent reachable as a tool from any MCP-aware app',
 			time: '45 min',
 			previewModel: '/animations/robotexpressive.glb',
-			ctaPrimary: { label: 'MCP docs', href: '/docs#mcp' },
+			ctaPrimary: { label: 'MCP docs', href: '/docs/mcp' },
 		},
 		{
 			slug: 'skill-with-database-auth',
@@ -602,7 +602,7 @@
 			builds: 'A production CRM-lookup skill with auth and rate limits',
 			time: '90 min',
 			previewModel: '/avatars/cz.glb',
-			ctaPrimary: { label: 'Skills docs', href: '/docs#skills' },
+			ctaPrimary: { label: 'Skills docs', href: '/docs/skills' },
 		},
 		{
 			slug: 'deploy-to-vercel-custom-domain',
@@ -612,7 +612,7 @@
 			builds: 'A live agent on agent.yourcompany.com with CI and SSL',
 			time: '45 min',
 			previewModel: '/animations/robotexpressive.glb',
-			ctaPrimary: { label: 'Deployment docs', href: '/docs#deployment' },
+			ctaPrimary: { label: 'Deployment docs', href: '/docs/deployment' },
 		},
 		{
 			slug: 'claim-threews-name',
@@ -698,7 +698,7 @@
 			slug: 'write-a-guard',
 			tier: 'advanced',
 			title: 'Write a repository guard',
-			blurb: 'This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when an API handler forgets its error boundary, wire it into the gate, cover it with tests, and register it.',
+			blurb: 'This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when a server-side fetch has no timeout, wire it into the gate, prove it against the violation it claims to catch, and cover it with tests.',
 			builds: 'A real guard running in the gate, listed on /guards',
 			time: '20 min',
 			previewModel: '/animations/robotexpressive.glb',

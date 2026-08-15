@@ -16,7 +16,7 @@ You'll build two working pipelines — one with zero AI (a lexicon sentiment sco
 
 ## Step 1 — The two animation entry points
 
-Every `<agent-3d>` element exposes two public methods for triggering body animation, and — per the [JS API tutorial](/tutorials/js-api-events#step-5--animations-exact-name-vs-hint) — they answer different questions.
+Every `<agent-3d>` element exposes two public methods for triggering body animation, and — per the [JS API tutorial](/tutorials/js-api-events#step-5--animations-exact-clip-vs-emote) — they answer different questions.
 
 **`agent.play(clipName)`** — plays the clip with that *exact* name from the loaded library or GLB. Case-sensitive; if the name isn't found, nothing plays. Use this once you know what's actually in the rig — e.g. `agent.play('rumba')`, `agent.play('thriller')`, `agent.play('celebrate')`. The full catalog (idle, locomotion, dance, gesture, action, sport, reaction, fitness — every clip a real, retargetable library entry, never hardcoded per-rig) is browsable at [/animations](/animations).
 

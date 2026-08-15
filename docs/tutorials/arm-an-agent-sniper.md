@@ -66,14 +66,16 @@ That is 0.05 SOL per trade, at most 0.2 SOL per day, one position at a time. `GE
 
 ## Step 3: Know your exit ladder
 
-Exits are decided by a pure function in strict priority order, so behavior is exactly predictable:
+Exits are decided by a pure function in strict priority order, so behavior is exactly predictable. The first rule that matches wins:
 
 1. **Stop-loss** (`stop_loss_pct`): value falls 30% below entry, sell everything, always checked first.
-2. **Trailing stop** (`trailing_stop_pct`): value falls 25% off its peak since entry, sell.
-3. **Take-profit** (`take_profit_pct`): value reaches entry plus 60%, sell.
-4. **Timeout** (`max_hold_seconds`): the clock wins no matter what the PnL is.
+2. **Signal flip**: only if you armed paid sentiment intel and the position is underwater. A bearish flip closes it rather than waiting for the stop. Off unless you turn it on.
+3. **Trailing stop** (`trailing_stop_pct`): value falls 25% off its peak, sell. **It arms only once the position has actually been green** (the peak has to clear entry). Armed underwater a trail just converts recoverable dips into locked losses, and the hard stop-loss above already caps the downside.
+4. **Take-initials** (`initials_out_multiple`): the laddered mode's first profit event, fired once, described below.
+5. **Take-profit** (`take_profit_pct`): value reaches entry plus 60%, sell. With a ladder armed this applies only after the initials are out, so the ceiling can never pre-empt the ladder.
+6. **Timeout** (`max_hold_seconds`): the clock wins no matter what the PnL is.
 
-There is also a laddered mode (`initials_out_multiple`, `moonbag_min_pct`): recover your initial cost when the position hits a multiple, then let the remaining moon bag ride the trailing stop.
+The laddered mode (`initials_out_multiple`, `moonbag_min_pct`) is rungs 4 and 5 working together: recover your initial cost when the position hits a multiple, then let the remaining moon bag ride the trailing stop up to the take-profit ceiling.
 
 ## Step 4: The lesson from the first live trade: set `take_profit_pct`
 

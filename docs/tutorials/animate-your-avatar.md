@@ -36,7 +36,7 @@ The thing that makes the library work is that **motion and body are stored separ
 - An avatar is a **GLB** — geometry, skeleton, skin, textures.
 - A motion is a **clip JSON** — keyframe tracks only, no geometry. One clip can play on every avatar.
 
-A clip's tracks are named against a **canonical skeleton** — a 53-bone humanoid set (`Hips → Spine → Spine1 → Spine2 → Neck → Head`, both arms `Shoulder → Arm → ForeArm → Hand` with finger chains, both legs `UpLeg → Leg → Foot → ToeBase`). Every clip in [public/animations/clips](../../public/animations/clips) is baked against the reference rig `public/avatars/cz.glb`.
+A clip's tracks are named against a **canonical skeleton** — the 52-bone humanoid set exported as `CANONICAL_BONES` (`Hips → Spine → Spine1 → Spine2 → Neck → Head`, both arms `Shoulder → Arm → ForeArm → Hand` with finger chains, both legs `UpLeg → Leg → Foot → ToeBase`). Every clip in [public/animations/clips](../../public/animations/clips) is baked against the reference rig `public/avatars/cz.glb`.
 
 Your avatar almost certainly names its bones differently — `mixamorig:Hips`, `DEF-spine`, `J_Bip_C_Hips`, `pelvis`, `leftUpperArm`. Two runtime modules bridge that gap:
 
@@ -100,7 +100,7 @@ The status line at the bottom of the stage confirms the retarget, e.g.:
 Playing "Cheering" — 96% retargeted (51/53 bones matched).
 ```
 
-That percentage is the coverage — how many of the clip's tracks found a home on your rig. A couple of dropped bones (often fingers a simpler rig lacks) is normal and fine. If coverage falls below 50%, the clip won't apply and the status explains why (see Troubleshooting).
+That percentage is the coverage — how many of the clip's tracks found a home on your rig. (The counter is tracks, which the status line labels "bones": a full library clip carries 53 of them, one rotation track per canonical bone plus the hips' position track.) A couple of dropped bones (often fingers a simpler rig lacks) is normal and fine. If coverage falls below 50%, the clip won't apply and the status explains why (see Troubleshooting).
 
 Clips marked **once** play a single shot and hold the final frame; **loop** clips cycle until you stop them or pick another.
 
@@ -169,7 +169,7 @@ This is the remix loop: find a motion someone else published, open it in the Stu
 
 Applying clips in the Studio is the **authoring** side. On a *running* agent, the same library drives emotion and gesture automatically through two channels that share one emotional state — the avatar's **Empathy Layer** ([src/agent-avatar.js](../../src/agent-avatar.js)):
 
-**Gesture slots** ([src/runtime/animation-slots.js](../../src/runtime/animation-slots.js)) — a fixed emotional vocabulary the agent plays in conversation: `idle`, `wave`, `nod`, `shake`, `think`, `celebrate`, `concern`, `bow`, `point`, `shrug`, `dance`. Each slot resolves to a concrete library clip at runtime (e.g. `celebrate` → the `celebrate` clip, `think` → `pray`). An agent picks a slot when the moment calls for it; the clip retargets onto that agent's avatar exactly as in the Studio. You can override any slot per agent via `meta.edits.animations` — point `wave` at a different clip, or map a slot to a motion you authored yourself.
+**Gesture slots** ([src/runtime/animation-slots.js](../../src/runtime/animation-slots.js)) — a fixed vocabulary the agent plays in conversation. The conversational slots are `idle`, `wave`, `nod`, `shake`, `think`, `celebrate`, `concern`, `bow`, `point`, `shrug`, `fidget`, `dance`; a second group exists because skills emit the matching hint: `inspect`, `present`, `sign`, `curiosity`, `patience`, `manipulate`, `conjure`. Each slot resolves to a concrete library clip at runtime through `DEFAULT_ANIMATION_MAP` — most map to the clip of the same name (`celebrate` → `celebrate`, `think` → `think`), and a few borrow the closest baked motion where no dedicated clip exists yet (`concern` → `defeated`, `bow` → `sitclap`, `dance` → `rumba`). An agent picks a slot when the moment calls for it; the clip retargets onto that agent's avatar exactly as in the Studio. You can override any slot per agent via `meta.edits.animations` — point `wave` at a different clip, or map a slot to a motion you authored yourself.
 
 **Facial expression** ([src/runtime/arkit52.js](../../src/runtime/arkit52.js)) — driven from the same blend of morph targets as the gesture layer, not a separate track. If your avatar carries ARKit-52 blendshapes (most modern avatar-platform exports do, as do VRoid models), the runtime resolves those morph targets and drives expression and lip-sync directly on the face. A skeletal clip plays the body; the blendshape layer plays the eyes, brows, and mouth on top.
 

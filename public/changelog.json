@@ -1,11 +1,109 @@
 {
-	"generated_at": "2026-08-15T01:22:33.715Z",
+	"generated_at": "2026-08-15T05:46:26.707Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A broken paid endpoint is no longer reported as a free one",
+			"summary": "Payment sessions let you hand an agent a budget instead of a key, and two parts of that path judged an endpoint by one rule: if it did not ask for payment, the call was free. That is only true when the endpoint actually succeeded. A paid API answering 404, 400, or 500 was being scored as a free call, and the consequences ran in the wrong direction in both places. The dry run at /pay/simulator, whose whole job is to tell you in advance whether a budget and an allowlist will carry a workload, reported a plan as feasible at a cost of nothing when in fact every endpoint in it was erroring: free calls are never priced, never allowlist-checked, and never counted, so a wall of failures looked like a clean run. And an agent spending through a session got back a success envelope saying no payment was needed for an endpoint that had just failed on it. Both now separate the two cases: a real success with no payment challenge is still free and still costs nothing, while an error status is reported as an endpoint failure carrying the status the endpoint actually returned. No session is charged either way. The simulator lists each failing endpoint by name in its problems list and no longer calls the plan feasible.",
+			"link": "/pay/simulator",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A silent outage in the agent reasoning ledger now reports itself",
+			"summary": "Every agent decision is committed to a hash chain, and that chain head is written to Solana on a schedule so anyone can check the history was never edited. The wallet that pays for those on-chain writes ran empty, and the scheduled job could not tell that apart from the harmless case where no signing key is set up at all: it answered a healthy 200 every ten minutes while re-sending the same doomed transaction for twelve agents in a row, and not one head reached the chain. A rejected write is now reported as a rejected write, the rest of the run stops instead of repeating a failure that cannot succeed, and it raises an alert so the wallet gets refilled. Verifying a ledger already worked without the on-chain leg and still does: the recomputed hash chain is the tamper proof, the on-chain write is the independent timestamp on top of it. Separately, the once-a-minute economy heartbeat now refuses to drive production from a machine that is not production, so a developer running it locally can no longer fire thirty-six live money engines at the real site.",
+			"link": "/docs/reasoning-ledger",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Docs pages stop opening with a wall of raw metadata, and the AWS pages say where the Marketplace listing actually stands",
+			"summary": "Nine documentation pages are written as article drafts, so each one starts with a small block of publishing metadata: the title, where it is meant to run, its tags. That block is meant for the tooling, not for you, but the docs reader had no idea what it was and rendered it as an enormous heading at the very top of the article, above the actual writing. It is now recognised and hidden, on the page and in the Copy page text, so those articles begin where they should. Reading the same pages closely turned up claims that had drifted: several said three.ws was already live on AWS Marketplace and billing usage to your AWS invoice. The integration is built and deployed, but the listing itself has not been published yet and the pricing decision is a free subscription with no AWS metering, so the AWS pages now say exactly that and point at the page that tracks the status. The MCP article's vanity-address tool was also listed at a metered price of up to fifty cents; it is a flat five cents per grind, which is what the code has always charged.",
+			"link": "/docs/aws-marketplace",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Oracle stops answering \"nothing is happening\" when the database is the thing that is down",
+			"summary": "Several Oracle reads shared a habit: if the database was unreachable for a few seconds, they answered normally with an empty result. The movers panel said nothing was moving, the stats hero said no coin had ever been scored and no agent was armed, a coin's conviction sparkline came back flat, and the machine-readable signal endpoint told autonomous agents there were no plays, which is exactly the cue for an agent to stand down. Every one of those answers was then cached at the edge for a minute or two, so a blip lasting seconds kept showing a dead market long after the database was back. Those endpoints now tell the difference between a connectivity failure and an ordinary query fault: the first is reported honestly as a temporary outage with a retry hint and is never cached, the second still degrades to the empty answer it always did. The social ingest got the sharper end of the same bug: it used to reply that a batch had been accepted while reporting zero mints written, a receipt for a write that never landed. It now fails loudly so the sender retries. Shared conviction cards behave too: one built during an outage is no longer pinned to a coin's link preview for 15 minutes.",
+			"link": "/oracle",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Plan checkout: a paid upgrade can only ever settle on real mainnet, and a late payment is no longer stranded",
+			"summary": "Paying for a plan creates a quote, you send the funds, then the server checks the chain before it upgrades you. Three things in that path were wrong. The checkout side has always refused test-network quotes in production, because test-network dollars are free from a faucet, but the confirm side still let a caller name the test network itself, and it is the confirm side that decides which chain it looks at and which dollar it accepts. Both ends now read the same setting, so a production upgrade can only ever be settled by real funds on mainnet. Second, an Ethereum-side payment has to wait twelve blocks before it counts, which meant funds sent near the end of a session could land on-chain and then be refused for arriving late, with the money already gone; that lane now honors the same one-hour grace window the Solana lane has, so an on-chain payment is always claimable. Third, confirming an Ethereum payment could reach a Solana quote and mark it expired, and asking to buy a skill from a malformed agent id answered a generic server error instead of telling you what was wrong with the request.",
+			"link": "/pricing",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Self-hosting docs no longer hand you a command that wipes your environment",
+			"summary": "The deployment guide told self-hosters to set Cloud Run environment variables with `gcloud run services update --set-env-vars`. That flag replaces the service environment wholesale, so following the instruction for a single key silently deletes every other variable the service had. The guide now uses `--update-env-vars` and says plainly why. Four more corrections landed in the same sweep across the deployment, configuration and contributing pages: the Avaturn signup link and the GitHub Discussions links were dead (Discussions are not enabled on the repository, so bug reports and design questions both go to Issues); the in-browser avatar builder was documented as needing its own hosted origin in production when the normal build already serves it same-origin at /avatar-studio; and three counts that had drifted from the code (cron jobs, MCP server packages, contract tests) were replaced with pointers to the files that hold the real numbers.",
+			"link": "/docs/deployment",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The Agent Economy demo works again when you just pick a service, and it fits a phone screen",
+			"summary": "On the Agent Economy page, two 3D agents trade with each other for real SOL: Nova buys a market read, an on-chain insight, or a risk score from Oracle. Picking a service and typing nothing in the optional topic box, which is what almost everyone does, sent the request off in a shape the endpoint refused, so the demo answered with a validation error instead of a trade. It now sends the request correctly, and the endpoint accepts an empty topic besides. On a phone the page was worse than broken: the transaction feed and the status line, the entire output of the demo, were cut off the bottom of the screen with no way to scroll to them, and the floating language button sat on top of the footer links. The centre column now scrolls, the feed keeps a readable height, and the footer stays clickable. Three failure states also stopped lying: a payment that could not go through no longer ends on Transaction complete, a request that never reached the server now says so and offers to try again, and unreadable wallet balances now say they are unavailable and offer a retry instead of spinning forever.",
+			"link": "/agent-economy",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The persona builder stops reporting a model outage as if you had been signed out",
+			"summary": "The two routes behind the persona builder (the one that turns your interview answers or a sample of your own writing into a structured persona, and the one that replies to you in that persona's voice) used to hand you whatever status code the model provider returned. If a server-side key expired, the provider answered 401 and so did we, which reads to a browser as an expired session on a request where nothing was wrong with your sign-in. Both now report a provider failure as exactly what it is: a server-side fault, with a plain message and no implication that you need to log back in. Separately, when the platform's daily model-spend ceiling is reached, the builder now says so and tells you when it resets, instead of asking you to retry something that could not have succeeded for the rest of the day. Both routes also now record their model usage against your account, so the spend they generate is visible and capped rather than untracked, and the daily extraction budget now holds across every server instance instead of being counted separately on each one.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The plugin marketplace stops hiding a plugin when you page through it",
+			"summary": "Browsing plugins a page at a time could show you the same plugin twice and never show another one at all. The catalogue was sorted by install count and publish date, and the built-in plugins were all published in the same instant with zero installs, so that sort left them tied and the database was free to order the tied rows differently on every request. One plugin therefore landed on two consecutive pages and one fell through the gap. The order is now decided all the way down, so paging through the catalogue returns every plugin exactly once. Searching also takes your text literally: typing a percent sign or an underscore used to act as a database wildcard and match rows it should not. Publishing got stricter at the same time, because a plugin manifest is handed to the model as a tool definition by whoever installs it: a tool name now has to be plain letters, digits, underscores, or hyphens, every tool needs a real description, and a manifest has to fit the same 64KB ceiling that importing one by URL already enforced. And pointing the importer at a repository web page instead of the raw manifest file now says exactly that, rather than showing a raw parser error.",
+			"link": "/marketplace",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-08-14",
 			"type": "launch",
@@ -6092,7 +6190,7 @@
 			"date": "2026-07-30",
 			"type": "launch",
 			"title": "Docs · Write a repository guard",
-			"summary": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.",
+			"summary": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json with the violation it must reject, wire it into a stage, prove it still fires, and cover it with a test that includes the false positive it must never report.",
 			"link": "/docs/tutorials/write-a-guard",
 			"tags": [
 				"launch"
@@ -6312,7 +6410,7 @@
 			"date": "2026-07-30",
 			"type": "launch",
 			"title": "Tutorial · Write a repository guard",
-			"summary": "This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when an API handler forgets its error boundary, wire it into the gate, cover it with tests, and register it.",
+			"summary": "This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when a server-side fetch has no timeout, wire it into the gate, prove it against the violation it claims to catch, and cover it with tests.",
 			"link": "/tutorials/write-a-guard",
 			"tags": [
 				"launch"

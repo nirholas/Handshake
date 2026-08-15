@@ -132,7 +132,7 @@ All three tools ship [MCP tool annotations](https://modelcontextprotocol.io/spec
 
 1. `GET /api/token/config` → mint, decimals, burn address, treasury.
 2. `GET /api/token/price?usd=<n>` → live Jupiter price and the exact $THREE atomics.
-3. Build **one** transaction: an idempotent ATA-create + SPL transfer per leg (burn + treasury), plus a memo tagging the burn on-chain.
+3. Build **one** transaction: an idempotent ATA-create + SPL transfer per leg (burn + treasury), plus a memo tagging the burn on-chain. An amount that will not divide evenly at `burnBps` gives the leftover atomic unit to the **burn** leg, so a burn is never short of its share; with `burnBps: 10000` (or a config with no treasury) there is one leg and everything is destroyed.
 4. Sign with your wallet, send, and confirm. The result reports the on-chain signature and per-leg amounts.
 
 The server pre-checks your $THREE balance and fails fast with a clear error if it can't cover the burn — no opaque on-chain failures. Burns are bounded by `MAX_BURN_USD` (default $100) and gated by `REQUIRE_CONFIRM` (default on).
@@ -147,7 +147,7 @@ The server pre-checks your $THREE balance and fails fast with a clear error if i
 
 | Variable             | Required       | Default                                           |
 | -------------------- | -------------- | ------------------------------------------------- |
-| `SOLANA_SECRET_KEY`  | for burns only | —                                                 |
+| `SOLANA_SECRET_KEY`  | for burns only | none (`FUNDER_SECRET` is accepted as a fallback)   |
 | `SOLANA_RPC_URL`     | no             | `https://api.mainnet-beta.solana.com`             |
 | `THREE_WS_BASE`      | no             | `https://three.ws`                                |
 | `MAX_BURN_USD`       | no             | `100`                                             |

@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Is-weydaarsiga Wakiilka",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Iibso xog — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Iibso xog · $0.01 USDC</span>",
 		"buy_intel_on": "Ka iibso xogta:",
 		"buyer": "IBSADE",
 		"buyer_agent": "Wakiilka Iibsadaha",
 		"intel_agent": "Wakiilka Xogta",
 		"meta_description": "Laba wakiil oo AI ah oo leh jidh 3D ah ayaa gorgortamaya oo isku bixinaya xogta crypto ee tooska ah iyagoo isticmaalaya lacag-bixinno yaryar oo x402 ah oo ku salaysan Solana. Wax kala iibsi kasta waa mid dhab ah oo lagu xaqiijiyay silsiladda.",
 		"meta_og_description": "Laba wakiil oo 3D AI ah ayaa iibsanaya oo iibinaya xogta crypto lacag dhab ah oo USDC ah oo ku salaysan Solana. Daawato wax kala iibsi kasta oo lagu xaqiijinayo silsiladda.",
-		"meta_og_title": "Is-weydaarsiga Wakiilka — Wakiillada AI oo isku bixinaya waqti dhab ah",
-		"meta_title": "Is-weydaarsiga Wakiilka — Wakiillada 3D AI oo isku bixinaya waqti dhab ah · three.ws",
+		"meta_og_title": "Is-weydaarsiga Wakiilka: Wakiillada AI oo isku bixinaya waqti dhab ah",
+		"meta_title": "Is-weydaarsiga Wakiilka: Wakiillada 3D AI oo isku bixinaya waqti dhab ah · three.ws",
 		"meta_twitter_description": "Laba wakiil oo 3D AI ah oo isku bixinaya xogta crypto ee dhabta ah. USDC oo ku salaysan Solana. Silsiladda dhexdeeda.",
-		"meta_twitter_title": "Is-weydaarsiga Wakiilka — Wakiillada AI oo isku bixinaya waqti dhab ah",
+		"meta_twitter_title": "Is-weydaarsiga Wakiilka: Wakiillada AI oo isku bixinaya waqti dhab ah",
 		"seller": "IIBIYE",
 		"session_total_0_00_usdc_settled_on": "Wadarta kalfadhiga: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC lagu xaqiijiyay silsiladda",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo wacis kasta lacag ah",
-		"x402_the_payment_trust_layer_title": "x402 — the payment trust layer behind these settlements"
+		"x402_the_payment_trust_layer_title": "x402: the payment trust layer behind these settlements"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Wac create_identity",

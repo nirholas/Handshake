@@ -19,6 +19,8 @@
  *                     owner_token_account, program_id, network, explorer, record } }
  */
 
+import { PublicKey } from '@solana/web3.js';
+
 import { sql } from '../_lib/db.js';
 import { cors, error, json, method, wrap, rateLimited, serverError } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
@@ -28,7 +30,21 @@ import {
 	verifyOnchainSkillLicense,
 } from '../_lib/skill-license-onchain.js';
 
-const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+/**
+ * A base58 charset test is not enough here: a 42-character string passes it but
+ * decodes to 31 bytes, which `new PublicKey()` rejects deep inside the PDA
+ * derivation. That surfaced as a 502 `rpc_error` ("internal error") for what is
+ * plainly a caller mistake, so check the real thing at the boundary and answer
+ * 400 instead.
+ */
+function isPubkey(value) {
+	try {
+		new PublicKey(value);
+		return true;
+	} catch {
+		return false;
+	}
+}
 
 function explorerForLicense(license, network) {
 	const cluster = network === 'devnet' ? '?cluster=devnet' : '';
@@ -49,7 +65,7 @@ export default wrap(async (req, res) => {
 	const agentId = (url.searchParams.get('agent_id') || '').trim();
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
 
-	if (!BASE58_RE.test(wallet)) {
+	if (!isPubkey(wallet)) {
 		return error(res, 400, 'validation_error', 'wallet must be a Solana address');
 	}
 	if (!skill || skill.length > 100) {
@@ -79,8 +95,13 @@ export default wrap(async (req, res) => {
 		}
 		agentMint = agent.skill_collection_mint;
 	}
-	if (!BASE58_RE.test(agentMint)) {
-		return error(res, 400, 'validation_error', 'agent_mint or agent_id is required');
+	if (!isPubkey(agentMint)) {
+		return error(
+			res,
+			400,
+			'validation_error',
+			'agent_mint (a Solana address) or agent_id is required',
+		);
 	}
 
 	let result;

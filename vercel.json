@@ -443,10 +443,6 @@
 			"dest": "/api/3d/openapi"
 		},
 		{
-			"src": "/docs/3d-api/?",
-			"dest": "/3d.html"
-		},
-		{
 			"src": "/api/features\\.json",
 			"dest": "/api/features"
 		},
@@ -1591,6 +1587,10 @@
 		{
 			"src": "/api/agenc/list-tasks",
 			"dest": "/api/agenc/[action]?action=list-tasks"
+		},
+		{
+			"src": "/api/agenc/recent-tasks",
+			"dest": "/api/agenc/[action]?action=recent-tasks"
 		},
 		{
 			"src": "/api/agenc/get-task",

@@ -177,6 +177,19 @@ describe('GET /api/plugins/list', () => {
 		expect(lastQueryText()).toContain('p.deleted_at IS NULL');
 	});
 
+	it('breaks ORDER BY ties on the id so OFFSET paging cannot repeat or skip a row', async () => {
+		// Every seeded plugin shares one created_at and install_count 0, so without a
+		// unique final key Postgres ordered the ties differently per query: paging at
+		// limit=2 returned one plugin twice and never showed another at all.
+		await call({ path: '/api/plugins/list' });
+		expect(lastQueryText()).toMatch(/p\.created_at DESC,\s*p\.id DESC/);
+	});
+
+	it('escapes LIKE wildcards so a search for "50%" is taken literally', async () => {
+		await call({ path: '/api/plugins/list?q=50%25_x' });
+		expect(sqlMock.mock.calls.at(-1)).toContain('%50\\%\\_x%');
+	});
+
 	it('answers 429 when the browse bucket is spent', async () => {
 		state.rateOk = false;
 		const res = await call({ path: '/api/plugins/list' });
@@ -326,6 +339,45 @@ describe('POST /api/plugins/publish', () => {
 				},
 				'at most 100 tools',
 			],
+			// api[] entries are handed straight to the model provider as tool
+			// definitions by every installer, and both Anthropic and OpenAI reject a name
+			// outside [A-Za-z0-9_-]{1,64}. A manifest that got past this broke chat for
+			// everyone who installed it.
+			[
+				{ identifier: 'ok', meta: { title: 'x' }, api: ['not-an-object'] },
+				'every api entry must be a JSON object',
+			],
+			[
+				{ identifier: 'ok', meta: { title: 'x' }, api: [{ name: { a: 1 }, description: 'd' }] },
+				'needs a name, given as a string',
+			],
+			[
+				{ identifier: 'ok', meta: { title: 'x' }, api: [{ name: 'bad name!', description: 'd' }] },
+				'letters, digits, underscores, or hyphens',
+			],
+			[
+				{ identifier: 'ok', meta: { title: 'x' }, api: [{ name: 'ok_tool', description: '   ' }] },
+				'needs a non-empty description',
+			],
+			[
+				{
+					identifier: 'ok',
+					meta: { title: 'x' },
+					api: [{ name: 'ok_tool', description: 'd'.repeat(1025) }],
+				},
+				'1024 characters or fewer',
+			],
+			// The manifest is stored whole and re-served on every list and detail read,
+			// so publish inherits the same 64KB ceiling the import fetch caps the
+			// transfer at.
+			[
+				{
+					identifier: 'ok',
+					meta: { title: 'x', description: 'y'.repeat(65_600) },
+					api: [{ name: 'ok_tool', description: 'd' }],
+				},
+				'64KB or smaller',
+			],
 		]) {
 			const res = await call({
 				path: '/api/plugins/publish',
@@ -410,6 +462,20 @@ describe('POST /api/plugins/import', () => {
 		expect(res.json().data.manifest._manifest_url).toBe('https://example.com/manifest.json');
 		// Import never writes: the client decides whether to install locally.
 		expect(sqlMock).not.toHaveBeenCalled();
+	});
+
+	it('names the real problem when the URL serves a web page instead of JSON', async () => {
+		// Linking a repository page rather than the raw file is the common way to land
+		// here, and the bare parse message ("Unexpected token '<'") did not say so.
+		state.fetchImpl = async () => new Response('<!doctype html><title>repo</title>', { status: 200 });
+		const res = await call({
+			path: '/api/plugins/import',
+			method: 'POST',
+			body: { manifest_url: 'https://example.com/blob/main/manifest.json' },
+		});
+		expect(res.statusCode).toBe(422);
+		expect(res.json().error).toBe('invalid_manifest');
+		expect(res.json().error_description).toContain('did not return JSON');
 	});
 
 	it('rejects fetched JSON that is not a plugin manifest', async () => {

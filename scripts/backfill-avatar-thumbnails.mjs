@@ -21,7 +21,10 @@
  * A model that fails to render MAX_ATTEMPTS times is retired and stops consuming
  * budget.
  *
- * Usage (needs DATABASE_URL + S3_* — they live in .env.local):
+ * Usage. Needs DATABASE_URL and the S3_* set. Only DATABASE_URL is in
+ * .env.local; the authoritative S3_* copy lives on the Cloud Run service, so
+ * export those into the shell first (docs/avatar-thumbnails.md has the one
+ * liner that reads them off the service).
  *
  *   node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --status
  *   node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --adopt-only
@@ -72,9 +75,15 @@ const ADOPT_ONLY = has('adopt-only');
 const RENDER_ONLY = has('render-only');
 const LOOP = has('loop');
 
+// DATABASE_URL ships in .env.local, but the S3_* set does not: its authoritative
+// copy is the Cloud Run service env. Pointing every miss at --env-file sends the
+// operator back to the file that just failed them, so name the real source.
 for (const required of ['DATABASE_URL', 'S3_BUCKET', 'S3_ACCESS_KEY_ID']) {
 	if (!process.env[required]) {
-		console.error(`[backfill] ${required} is unset — run with: node --env-file=.env.local ${process.argv[1]}`);
+		const where = required.startsWith('S3_')
+			? 'export the S3_* set from the Cloud Run service first (see docs/avatar-thumbnails.md, "Operating the backfill")'
+			: `run with: node --env-file=.env.local ${process.argv[1]}`;
+		console.error(`[backfill] ${required} is unset. ${where}`);
 		process.exit(1);
 	}
 }

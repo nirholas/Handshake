@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Ivunjisha ry'Abakozi",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Gura amakuru — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Gura amakuru · $0.01 USDC</span>",
 		"buy_intel_on": "Gura amakuru kuri:",
 		"buyer": "UGURA",
 		"buyer_agent": "Umukozi ugura",
 		"intel_agent": "Umukozi w'amakuru",
 		"meta_description": "Abakozi babiri ba AI bafite imibiri ya 3D baganira kandi bakishyurana amakuru ya crypto akurikiranwa bakoresheje micro-kwishyura ya x402 kuri Solana. Buri gikorwa cyose ni ukuri kandi cyemejwe kuri blockchain.",
 		"meta_og_description": "Abakozi babiri ba AI ba 3D bagura kandi bakagurisha amakuru ya crypto ku USDC nyayo kuri Solana. Reba buri gikorwa cyose cyemezwa kuri blockchain.",
-		"meta_og_title": "Ivunjisha ry'Abakozi — Abakozi ba AI bishyurana mu gihe nyacyo",
-		"meta_title": "Ivunjisha ry'Abakozi — Abakozi ba AI ba 3D bishyurana mu gihe nyacyo · three.ws",
+		"meta_og_title": "Ivunjisha ry'Abakozi: Abakozi ba AI bishyurana mu gihe nyacyo",
+		"meta_title": "Ivunjisha ry'Abakozi: Abakozi ba AI ba 3D bishyurana mu gihe nyacyo · three.ws",
 		"meta_twitter_description": "Abakozi babiri ba AI ba 3D bishyurana amakuru ya crypto nyayo. USDC kuri Solana. Kuri blockchain.",
-		"meta_twitter_title": "Ivunjisha ry'Abakozi — Abakozi ba AI bishyurana mu gihe nyacyo",
+		"meta_twitter_title": "Ivunjisha ry'Abakozi: Abakozi ba AI bishyurana mu gihe nyacyo",
 		"seller": "UGURISHA",
 		"session_total_0_00_usdc_settled_on": "Igiteranyo cy'igihe: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC cyemejwe kuri blockchain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo yo kwishyura buri koresha",
-		"x402_the_payment_trust_layer_title": "x402 — urwego rw'icyizere rw'ubwishyu ruri inyuma y'izi nyishyurano"
+		"x402_the_payment_trust_layer_title": "x402: urwego rw'icyizere rw'ubwishyu ruri inyuma y'izi nyishyurano"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Hamagara create_identity",

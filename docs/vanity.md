@@ -137,7 +137,7 @@ curl "https://three.ws/api/x402/vanity?prefix=So"
 Longer than 3 chars? A 4–5 char pattern is served if (and only if) it's in
 stock — same endpoint, premium price, `source: "inventory"`. Out of stock gets
 a `404 not_in_stock`; grind it yourself in the browser at
-[`/vanity`](https://three.ws/vanity), or browse what IS available at
+[`/vanity-wallet`](https://three.ws/vanity-wallet), or browse what IS available at
 [premium inventory](#tier-3--premium-inventory).
 
 ### Security model
@@ -227,4 +227,4 @@ challenges and the discovery doc stay in parity.
 - [x402 endpoints overview](x402-endpoints.md)
 - [three-vanity/v1 protocol spec](PROTOCOL-vanity.md)
 - [Pump Launcher](pump-launcher.md) — accepts an optional vanity mint prefix/suffix
-- Web grinder + verifier: [`/vanity`](https://three.ws/vanity), [`/vanity/verify`](https://three.ws/vanity/verify)
+- Web grinder + verifier: [`/vanity-wallet`](https://three.ws/vanity-wallet), [`/vanity/verify`](https://three.ws/vanity/verify)

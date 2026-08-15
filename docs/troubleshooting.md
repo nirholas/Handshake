@@ -282,11 +282,11 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
    <agent-3d style="width: 100%; height: 50vh;" ...></agent-3d>
    ```
 2. Avoid `display: inline` on the container — use `block` or `flex`.
-3. For inline mode with automatic aspect ratio, add the `responsive` attribute:
+3. For inline mode with automatic aspect ratio, set the **`width` attribute** and omit `height`. Responsive sizing is on by default, so there is no `responsive` attribute to add:
    ```html
-   <agent-3d responsive style="width: 100%;" ...></agent-3d>
+   <agent-3d mode="inline" width="320" ...></agent-3d>
    ```
-   This sets `aspect-ratio: 3/4` and lets height follow width.
+   The element then sets `aspect-ratio: 3/4` and height follows width. Two things switch it off: an explicit `height` attribute, and `responsive="false"`. A CSS-only width (`style="width:100%"`) does not engage it, because the element reads the `width` attribute, not the computed style.
 
 ---
 
@@ -574,7 +574,7 @@ The AR button is only shown after the GLB finishes loading. If the model is larg
 
 Almost always a model problem:
 
-1. **File too large.** Quick Look on older devices struggles above ~15 MB. Compress textures and simplify geometry — see [model optimization](/docs/ar#model-size-and-compatibility).
+1. **File too large.** Quick Look on older devices struggles above ~15 MB. Compress textures and simplify geometry — see [model optimization](ar.md#model-optimization-for-ar).
 2. **Draco-compressed GLB.** Quick Look doesn't include a Draco decoder — the file may load partially then fail. Decompress it: `npx @gltf-transform/cli optimize model.glb out.glb --no-draco`.
 3. **CORS missing on the model URL.** Quick Look fetches the file separately from the browser, and CORS failures are silent. Verify `Access-Control-Allow-Origin: *` is present on the response headers for the GLB URL.
 4. **USDZ conversion failed.** Check the browser console for errors *before* Quick Look opens — the in-browser USDZExporter logs any failures. A corrupt or oversize USDZ causes immediate dismissal.

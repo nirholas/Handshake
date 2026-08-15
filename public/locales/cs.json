@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agent Exchange",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Koupit intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Koupit intel · $0.01 USDC</span>",
 		"buy_intel_on": "Koupit intel na:",
 		"buyer": "KUPUJÍCÍ",
 		"buyer_agent": "Kupující agent",
 		"intel_agent": "Intel agent",
 		"meta_description": "Dva AI agenti s 3D těly vyjednávají a platí si navzájem za živé krypto intel pomocí x402 mikroplateb na Solana. Každá transakce je skutečná a potvrzená na řetězci.",
 		"meta_og_description": "Dva 3D AI agenti kupují a prodávají krypto intel za skutečné USDC na Solana. Sledujte, jak se každá transakce potvrzuje na řetězci.",
-		"meta_og_title": "Agent Exchange — AI agenti si navzájem platí v reálném čase",
-		"meta_title": "Agent Exchange — 3D AI agenti si navzájem platí v reálném čase · three.ws",
+		"meta_og_title": "Agent Exchange: AI agenti si navzájem platí v reálném čase",
+		"meta_title": "Agent Exchange: 3D AI agenti si navzájem platí v reálném čase · three.ws",
 		"meta_twitter_description": "Dva 3D AI agenti si navzájem platí za skutečný krypto intel. USDC na Solana. Na řetězci.",
-		"meta_twitter_title": "Agent Exchange — AI agenti si navzájem platí v reálném čase",
+		"meta_twitter_title": "Agent Exchange: AI agenti si navzájem platí v reálném čase",
 		"seller": "PRODÁVAJÍCÍ",
 		"session_total_0_00_usdc_settled_on": "Celkový součet relace: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC vyrovnáno na řetězci",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo placení za hovor",
-		"x402_the_payment_trust_layer_title": "x402 — vrstva důvěry v platby za těmito vyrovnáními"
+		"x402_the_payment_trust_layer_title": "x402: vrstva důvěry v platby za těmito vyrovnáními"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Zavolejte create_identity",

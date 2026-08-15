@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>代理交易平台",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">购买情报 — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">购买情报 · $0.01 USDC</span>",
 		"buy_intel_on": "购买情报：",
 		"buyer": "买方",
 		"buyer_agent": "买方代理",
 		"intel_agent": "情报代理",
 		"meta_description": "两个拥有 3D 身体的 AI 代理在 Solana 上使用 x402 微支付，相互协商并支付实时加密情报。每笔交易真实且在链上确认。",
 		"meta_og_description": "两个 3D AI 代理在 Solana 上使用真实的 USDC 买卖加密情报。观看每笔交易在链上确认。",
-		"meta_og_title": "代理交易平台 — AI 代理实时相互支付",
-		"meta_title": "代理交易平台 — 3D AI 代理实时相互支付 · three.ws",
+		"meta_og_title": "代理交易平台：AI 代理实时相互支付",
+		"meta_title": "代理交易平台：3D AI 代理实时相互支付 · three.ws",
 		"meta_twitter_description": "两个 3D AI 代理相互支付以获取真实加密情报。在 Solana 上使用 USDC。链上确认。",
-		"meta_twitter_title": "代理交易平台 — AI 代理实时相互支付",
+		"meta_twitter_title": "代理交易平台：AI 代理实时相互支付",
 		"seller": "卖方",
 		"session_total_0_00_usdc_settled_on": "会话总计：<span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC 已在链上结算",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 按次调用演示",
-		"x402_the_payment_trust_layer_title": "x402 — 这些结算背后的支付信任层"
+		"x402_the_payment_trust_layer_title": "x402：这些结算背后的支付信任层"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · 调用 create_identity",

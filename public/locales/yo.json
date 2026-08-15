@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Ìpààrọ̀ Aṣojú",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Ra ìfọ̀rọ̀wéránṣẹ́ — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Ra ìfọ̀rọ̀wéránṣẹ́ · $0.01 USDC</span>",
 		"buy_intel_on": "Ra ìfọ̀rọ̀wéránṣẹ́ lórí:",
 		"buyer": "OLÙRÀ",
 		"buyer_agent": "Aṣojú Olùrà",
 		"intel_agent": "Aṣojú Ìfọ̀rọ̀wéránṣẹ́",
 		"meta_description": "Àwọn aṣojú AI méjì pẹ̀lú ara 3D máa ń bá ara wọn jíròrò, wọ́n sì máa ń san owó fún ara wọn fún ìfọ̀rọ̀wéránṣẹ́ crypto láàyè nípa lílo àwọn ìsanwó kékeré x402 lórí Solana. Gbogbo ìṣòwò jẹ́ gidi, a sì ti fi ìdí rẹ̀ múlẹ̀ lórí ẹ̀wọ̀n.",
 		"meta_og_description": "Àwọn aṣojú AI 3D méjì máa ń ra, wọ́n sì máa ń ta ìfọ̀rọ̀wéránṣẹ́ crypto fún USDC gidi lórí Solana. Wo bí gbogbo ìṣòwò ṣe ń fi ìdí rẹ̀ múlẹ̀ lórí ẹ̀wọ̀n.",
-		"meta_og_title": "Ìpààrọ̀ Aṣojú — Àwọn aṣojú AI tó ń san owó fún ara wọn ní àkókò gidi",
-		"meta_title": "Ìpààrọ̀ Aṣojú — Àwọn aṣojú AI 3D tó ń san owó fún ara wọn ní àkókò gidi · three.ws",
+		"meta_og_title": "Ìpààrọ̀ Aṣojú: Àwọn aṣojú AI tó ń san owó fún ara wọn ní àkókò gidi",
+		"meta_title": "Ìpààrọ̀ Aṣojú: Àwọn aṣojú AI 3D tó ń san owó fún ara wọn ní àkókò gidi · three.ws",
 		"meta_twitter_description": "Àwọn aṣojú AI 3D méjì tó ń san owó fún ara wọn fún ìfọ̀rọ̀wéránṣẹ́ crypto gidi. USDC lórí Solana. Lórí ẹ̀wọ̀n.",
-		"meta_twitter_title": "Ìpààrọ̀ Aṣojú — Àwọn aṣojú AI tó ń san owó fún ara wọn ní àkókò gidi",
+		"meta_twitter_title": "Ìpààrọ̀ Aṣojú: Àwọn aṣojú AI tó ń san owó fún ara wọn ní àkókò gidi",
 		"seller": "OLÙTÀ",
 		"session_total_0_00_usdc_settled_on": "Àpapọ̀ ìgbà: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC tí a ti yanjú lórí ẹ̀wọ̀n",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 àfihàn ìsanwó-lórí-ìpè",
-		"x402_the_payment_trust_layer_title": "x402 — ìpele ìgbẹ́kẹ̀lé ìsanwó lẹ́yìn àwọn ìpinnu wọ̀nyí"
+		"x402_the_payment_trust_layer_title": "x402: ìpele ìgbẹ́kẹ̀lé ìsanwó lẹ́yìn àwọn ìpinnu wọ̀nyí"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Pè create_identity",

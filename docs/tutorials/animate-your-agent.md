@@ -91,7 +91,6 @@ curl -X PUT https://three.ws/api/agents/$AGENT_ID/animations \
   -H "authorization: Bearer $THREE_WS_TOKEN" \
   -H 'content-type: application/json' \
   -d '{
-    "animations": [],
     "animationSlots": {
       "dance": "av-offabean-dance",
       "celebrate": "av-cheering",
@@ -103,7 +102,9 @@ curl -X PUT https://three.ws/api/agents/$AGENT_ID/animations \
 
 Anything not listed keeps the platform default, so a map is only as long as the changes you want. `"animationSlots": {}` clears every override. The map is stored on the agent at `meta.edits.animations` and published on its public manifest as `animationSlots`, so an `<agent-3d>` embed of that agent plays its body language too.
 
-Two things the endpoint will reject rather than silently accept: a slot name outside the vocabulary (a typo would create a gesture nothing ever plays) and a clip name that is not a plain name. `animations` is the agent's clip list and is required by that endpoint; send `[]` only if you do not use it, since the field replaces what is there.
+Every field on that endpoint is optional and follows one rule: **present means replace this, absent means leave it alone.** Send `animationSlots` on its own and the agent's clip list, animation graph and choreographies are untouched. Do not pad the body with `"animations": []` to satisfy the schema, because an empty array is a real value and wipes the clip list. The body only has to carry at least one of `animations`, `animationGraph`, `animationSlots` or `choreographies`, or you get a `400`.
+
+Two things the endpoint will reject rather than silently accept: a slot name outside the vocabulary (a typo would create a gesture nothing ever plays) and a clip name that is not a plain alphanumeric name.
 
 Any of the 112 clip names in [`/animations/manifest.json`](https://three.ws/animations/manifest.json) is valid. Browse them with previews at [three.ws/animations](https://three.ws/animations).
 
@@ -154,7 +155,7 @@ The full attribute and method surface is in the [embedding guide](/docs/embeddin
 
 ## 5. Player-driven gestures on /walk
 
-There is a second gesture library for avatars a person is driving rather than an agent: open [three.ws/walk](https://three.ws/walk), move with `WASD`, and press `1`-`8` for a gesture.
+There is a second gesture library for avatars a person is driving rather than an agent: open [three.ws/walk](https://three.ws/walk), move with `WASD`, and press `1`-`8` for a gesture. Those eight keys are `wave`, `dance`, `sit`, `point`, `cheer`, `agree`, `disagree` and `talking`, in that order. The library holds four more (`nod`, `shrug`, `jog`, `celebrate`) with no quick key: hold `G` for the gesture wheel, or call `window.walk.playGesture('shrug')`.
 
 The difference that matters is the layer. `wave`, `point`, `nod` and `shrug` are **upper-body overlays**: the legs keep the walk cycle, so your avatar waves while it walks. `dance`, `sit`, `jog` and `celebrate` are **full-body**, so movement is suppressed until they end. Try waving while walking, then dancing while walking, and the distinction is obvious in one second.
 

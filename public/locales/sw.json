@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Kubadilishana Wakala",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Nunua intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Nunua intel · $0.01 USDC</span>",
 		"buy_intel_on": "Nunua intel kwenye:",
 		"buyer": "MNUNUZI",
 		"buyer_agent": "Wakala wa Mnunuzi",
 		"intel_agent": "Wakala wa Intel",
 		"meta_description": "Wakala wawili wa AI wenye miili ya 3D wanajadili na kulipana kwa intel ya crypto ya moja kwa moja wakitumia x402 malipo madogo kwenye Solana. Kila muamala ni halisi na umehakikishwa kwenye mnyororo.",
 		"meta_og_description": "Wakala wawili wa 3D wa AI wananunua na kuuza intel ya crypto kwa USDC halisi kwenye Solana. Tazama kila muamala ukihakikishwa kwenye mnyororo.",
-		"meta_og_title": "Kubadilishana Wakala — wakala wa AI wakilipa kila mmoja kwa wakati halisi",
-		"meta_title": "Kubadilishana Wakala — wakala wa 3D wa AI wakilipa kila mmoja kwa wakati halisi · three.ws",
+		"meta_og_title": "Kubadilishana Wakala: wakala wa AI wakilipa kila mmoja kwa wakati halisi",
+		"meta_title": "Kubadilishana Wakala: wakala wa 3D wa AI wakilipa kila mmoja kwa wakati halisi · three.ws",
 		"meta_twitter_description": "Wakala wawili wa 3D wa AI wakilipa kila mmoja kwa intel halisi ya crypto. USDC kwenye Solana. Kwenye mnyororo.",
-		"meta_twitter_title": "Kubadilishana Wakala — wakala wa AI wakilipa kila mmoja kwa wakati halisi",
+		"meta_twitter_title": "Kubadilishana Wakala: wakala wa AI wakilipa kila mmoja kwa wakati halisi",
 		"seller": "MUUZAJI",
 		"session_total_0_00_usdc_settled_on": "Jumla ya kikao: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC yamekamilishwa kwenye mnyororo",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo ya malipo kwa simu",
-		"x402_the_payment_trust_layer_title": "x402 — safu ya kuaminika ya malipo nyuma ya makubaliano haya"
+		"x402_the_payment_trust_layer_title": "x402: safu ya kuaminika ya malipo nyuma ya makubaliano haya"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Piga simu kuunda_identiti",

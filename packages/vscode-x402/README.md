@@ -77,10 +77,12 @@ extension offers to set the matching wallet.
 
 ```bash
 npm install
-npm run build        # bundle to dist/extension.js
+npm run build        # bundle to dist/extension.cjs
 npm run watch        # rebuild on change
+npm test             # requirement selection, token rules, scaffold template
 ```
 
 Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host.
 
-Apache-2.0 · part of the [three.ws](https://three.ws) monorepo.
+All rights reserved (see [LICENSE](./LICENSE)) · part of the
+[three.ws](https://three.ws) monorepo.

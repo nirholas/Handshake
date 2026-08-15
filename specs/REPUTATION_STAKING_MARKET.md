@@ -321,4 +321,12 @@ Funding has two rungs, in order: `REPUTATION_MARKET_PROOF_FUNDER_SECRET_KEY` (a
 keypair funded once, out of band) and the public devnet faucet. The faucet
 rate-limits per source IP, so it is the fallback rather than the contract; a run
 from an IP the faucet has cut off is a funding problem, never a statement about
-the market itself.
+the market itself. When neither rung is available, the same proof runs against a
+local `solana-test-validator` with no credentials and no faucet; the docs carry
+that command and the two RPC details it depends on.
+
+The attestations the proof writes in step 2 name the agent account AND are
+co-signed by it. SPL Memo v3 rejects any account handed to it that did not sign,
+while `readActionHistoryFromChain` finds an agent's history through
+`getSignaturesForAddress(agentAsset)`, which only returns transactions that
+account appears in. Both constraints hold at once only when the agent signs.

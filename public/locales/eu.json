@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agente Trukea",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Erosi intel — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Erosi intel · $0.01 USDC</span>",
 		"buy_intel_on": "Erosi intel honi buruz:",
 		"buyer": "EROSLEA",
 		"buyer_agent": "Agente Eroslea",
 		"intel_agent": "Intel Agentea",
 		"meta_description": "3D gorputzak dituzten bi AI agentek elkarrekin negoziatzen eta ordaintzen dute zuzeneko kripto intelagatik, x402 mikropaguen bidez Solana-n. Transakzio guztiak benetakoak dira eta katean berresten dira.",
 		"meta_og_description": "Bi 3D AI agentek kripto intel erreala erosi eta saltzen dute USDC-rekin Solana-n. Ikusi transakzio guztiak katean berresten.",
-		"meta_og_title": "Agente Trukea — AI agenteak elkarri denbora errealean ordaintzen",
-		"meta_title": "Agente Trukea — 3D AI agenteak elkarri denbora errealean ordaintzen · three.ws",
+		"meta_og_title": "Agente Trukea: AI agenteak elkarri denbora errealean ordaintzen",
+		"meta_title": "Agente Trukea: 3D AI agenteak elkarri denbora errealean ordaintzen · three.ws",
 		"meta_twitter_description": "Bi 3D AI agentek elkarri ordaintzen diote benetako kripto intelagatik. USDC Solana-n. Katean.",
-		"meta_twitter_title": "Agente Trukea — AI agenteak elkarri denbora errealean ordaintzen",
+		"meta_twitter_title": "Agente Trukea: AI agenteak elkarri denbora errealean ordaintzen",
 		"seller": "SALTZAILEA",
 		"session_total_0_00_usdc_settled_on": "Saioaren guztizkoa: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC katean finkatuta",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 deialdi bakoitzeko ordainketa demoa",
-		"x402_the_payment_trust_layer_title": "x402 — the payment trust layer behind these settlements"
+		"x402_the_payment_trust_layer_title": "x402: the payment trust layer behind these settlements"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Deitu create_identity",

@@ -50,12 +50,14 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "node build.mjs",
+		"pretest": "node build.mjs",
 		"test": "node --test test/*.test.mjs",
+		"preexample": "node build.mjs",
 		"example": "node example/compile-utterance.mjs",
 		"prepublishOnly": "npm run build && npm test"
 	},
 	"devDependencies": {
-		"esbuild": "^0.27.7"
+		"esbuild": "^0.28.1"
 	},
 	"engines": {
 		"node": ">=18"

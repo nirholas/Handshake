@@ -414,13 +414,29 @@ function defaultClient() {
 	return (sharedClient ||= createVanity());
 }
 
+// Client-level knobs the standalone `grindViaApi()` accepts inline, so a caller
+// who only needs one call does not have to build a client first. The paid lane
+// is unusable without a payment-aware `fetch`, so silently ignoring one passed
+// here would send the call out on the bare global fetch and 402.
+const CLIENT_OPTION_KEYS = ['fetch', 'baseUrl', 'apiKey'];
+
 /**
  * Grind a short pattern over the hosted paid x402 endpoint instead of locally.
+ *
+ * Uses the shared zero-config client unless the call carries client options
+ * (`fetch`, `baseUrl`, `apiKey`), in which case a client bound to those is
+ * built for this call. Pass an x402-wrapped `fetch` to settle the 402.
+ *
  * @param {GrindViaApiOptions} params
  * @returns {Promise<ApiResult>}
  */
-export function grindViaApi(params) {
-	return defaultClient().grindViaApi(params);
+export function grindViaApi(params = {}) {
+	const overrides = {};
+	for (const key of CLIENT_OPTION_KEYS) {
+		if (params[key] !== undefined) overrides[key] = params[key];
+	}
+	const client = Object.keys(overrides).length > 0 ? createVanity(overrides) : defaultClient();
+	return client.grindViaApi(params);
 }
 
 function shapeApiResult(res) {

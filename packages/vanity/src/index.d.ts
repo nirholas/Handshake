@@ -91,10 +91,17 @@ export interface GrindViaApiOptions extends Pattern {
 	strength?: 128 | 256;
 	/** Optional X25519 public key — the secret is ECIES-sealed to you. */
 	sealTo?: string;
-	/** An x402-wrapped fetch is supplied via the client, not here. */
 	headers?: Record<string, string>;
 	signal?: AbortSignal;
 }
+
+/**
+ * Options for the standalone `grindViaApi()`: the per-call params plus the
+ * client knobs (`fetch`, `baseUrl`, `apiKey`). Supplying any of them binds a
+ * client to this call instead of using the shared zero-config one. A client
+ * built with `createVanity()` takes the client knobs at construction time.
+ */
+export interface GrindViaApiStandaloneOptions extends GrindViaApiOptions, VanityClientOptions {}
 
 export interface ApiResult {
 	address: string | null;
@@ -122,4 +129,4 @@ export interface VanityClient {
 }
 
 export declare function createVanity(options?: VanityClientOptions): VanityClient;
-export declare function grindViaApi(params: GrindViaApiOptions): Promise<ApiResult>;
+export declare function grindViaApi(params: GrindViaApiStandaloneOptions): Promise<ApiResult>;

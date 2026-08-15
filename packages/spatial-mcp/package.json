@@ -32,7 +32,8 @@
 	"files": [
 		"src",
 		"fixtures",
-		"README.md"
+		"README.md",
+		"LICENSE"
 	],
 	"scripts": {
 		"test": "vitest run --root ../.. packages/spatial-mcp/tests"

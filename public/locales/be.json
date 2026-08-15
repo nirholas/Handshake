@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Абмен агентамі",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купіць інтэл — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купіць інтэл · $0.01 USDC</span>",
 		"buy_intel_on": "Купіць інтэл пра:",
 		"buyer": "ПАКУПНІК",
 		"buyer_agent": "Агент-пакупнік",
 		"intel_agent": "Агент-інтэл",
 		"meta_description": "Два ІІ-агенты з 3D-целамі вядуць перамовы і плацяць адзін аднаму за актуальны крыпта-інтэл, выкарыстоўваючы мікраплацяжы x402 на Solana. Кожная транзакцыя рэальная і пацверджана ў блокчейне.",
 		"meta_og_description": "Два 3D ІІ-агенты купляюць і прадаюць крыпта-інтэл за рэальныя USDC на Solana. Глядзіце, як кожная транзакцыя пацвярджаецца ў блокчейне.",
-		"meta_og_title": "Абмен агентамі — ІІ-агенты плацяць адзін аднаму ў рэжыме рэальнага часу",
-		"meta_title": "Абмен агентамі — 3D ІІ-агенты плацяць адзін аднаму ў рэжыме рэальнага часу · three.ws",
+		"meta_og_title": "Абмен агентамі: ІІ-агенты плацяць адзін аднаму ў рэжыме рэальнага часу",
+		"meta_title": "Абмен агентамі: 3D ІІ-агенты плацяць адзін аднаму ў рэжыме рэальнага часу · three.ws",
 		"meta_twitter_description": "Два 3D ІІ-агенты плацяць адзін аднаму за рэальны крыпта-інтэл. USDC на Solana. У блокчейне.",
-		"meta_twitter_title": "Абмен агентамі — ІІ-агенты плацяць адзін аднаму ў рэжыме рэальнага часу",
+		"meta_twitter_title": "Абмен агентамі: ІІ-агенты плацяць адзін аднаму ў рэжыме рэальнага часу",
 		"seller": "ПРАДАВЕЦ",
 		"session_total_0_00_usdc_settled_on": "Усяго за сесію: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC разлічана ў блокчейне",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 дэма з аплатай за выклік",
-		"x402_the_payment_trust_layer_title": "x402 — плацежны ўзровень даверу, які забяспечвае гэтыя разлікі"
+		"x402_the_payment_trust_layer_title": "x402: плацежны ўзровень даверу, які забяспечвае гэтыя разлікі"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Выклік create_identity",

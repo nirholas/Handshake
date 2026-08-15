@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/alibaba-cloud-mcp",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "MCP server for Alibaba Cloud DashScope by three.ws — Qwen chat, embeddings, and model discovery using your own Alibaba Cloud API key.",
 	"type": "module",
 	"author": "nirholas",
@@ -55,6 +55,7 @@
 		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.29.0"
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^3.23.8"
 	}
 }

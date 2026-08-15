@@ -47,7 +47,12 @@ function withTimeout(promise, ms) {
  * @param {number} p.throughSeq    seq of the head entry
  * @param {number} p.entryCount    total entries committed
  * @param {number} [p.now]
- * @returns {Promise<{status:'anchored'|'deduped'|'pending', signature:string|null, detail?:string}>}
+ * @returns {Promise<{status:'anchored'|'deduped'|'pending'|'failed', signature:string|null, detail?:string}>}
+ *
+ * `pending` means the commitment was recorded locally because no attester key is
+ * configured (a documented degraded mode). `failed` means the broadcast itself
+ * was rejected, which is a real outage of the on-chain leg: same value in the
+ * `ledger_anchors` row, so the caller can tell the two apart and alert on one.
  */
 export async function anchorLedgerHead({ agentId, network = 'mainnet', headHash, throughSeq, entryCount, now = Date.now() }) {
 	if (!agentId || !headHash) throw new Error('anchorLedgerHead: agentId and headHash required');
@@ -98,7 +103,12 @@ export async function anchorLedgerHead({ agentId, network = 'mainnet', headHash,
 		);
 	} catch (err) {
 		await upsertAnchor({ agentId, network, throughSeq, headHash, entryCount, status: 'failed', detail: `record_failed: ${err.message}`.slice(0, 280), signature: null });
-		return { status: 'pending', signature: null, detail: `record_failed: ${err.message}` };
+		// Report the broadcast failure as `failed`, matching the row just written.
+		// It used to come back as `pending`, which made an unfunded attester wallet
+		// (every send rejected with "found no record of a prior credit") read as the
+		// benign no-key-configured path: the cron logged a healthy 200 for months
+		// while not one head ever reached the chain.
+		return { status: 'failed', signature: null, detail: `record_failed: ${err.message}` };
 	}
 
 	await upsertAnchor({ agentId, network, throughSeq, headHash, entryCount, status: 'anchored', detail: null, signature });

@@ -136,14 +136,76 @@ const { mintDraftAgentIdentity } = await import(path.join(ROOT, 'api/_lib/draft-
 const { authoritySecret, buildAuthorityUmi } = await import(path.join(ROOT, 'api/_lib/onchain-deploy.js'));
 
 // ── 0. Authority balance ─────────────────────────────────────────────────────
+const REQUIRED_LAMPORTS = 12_000_000; // collection + mint + registry enrolment
+
+/**
+ * Land a devnet airdrop for the authority. Any single faucet is throttled per
+ * IP and goes dry under load, so this walks the repo's whole devnet endpoint
+ * chain (operator endpoints, Helius, Alchemy, dRPC, the public cluster) and
+ * retries with backoff, exactly like the sibling tokenize-3d proof. Returns the
+ * balance in lamports after the attempt. Devnet only: the endpoint list is
+ * built for the devnet cluster and nothing here can reach mainnet.
+ */
+async function topUpAuthority(pubkeyBase58) {
+	const { solanaRpcEndpoints } = await import(path.join(ROOT, 'api/_lib/solana/connection.js'));
+	const endpoints = solanaRpcEndpoints('devnet');
+	const rpc = async (url, method, params) => {
+		const r = await fetch(url, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+			signal: AbortSignal.timeout(20_000),
+		});
+		return r.json();
+	};
+	const balanceOf = async () => {
+		for (const url of endpoints) {
+			const b = await rpc(url, 'getBalance', [pubkeyBase58]).catch(() => null);
+			if (typeof b?.result?.value === 'number') return b.result.value;
+		}
+		return 0;
+	};
+
+	for (let attempt = 1; attempt <= 4; attempt++) {
+		for (const url of endpoints) {
+			const host = new URL(url).host;
+			const out = await rpc(url, 'requestAirdrop', [pubkeyBase58, 1_000_000_000]).catch((e) => ({
+				error: { message: e?.message || 'request failed' },
+			}));
+			if (out?.result) {
+				step('airdrop', `${host} → ${out.result}`);
+				// The faucet signature needs a moment to land before the balance moves.
+				for (let i = 0; i < 10; i++) {
+					await new Promise((s) => setTimeout(s, 2_000));
+					const bal = await balanceOf();
+					if (bal >= REQUIRED_LAMPORTS) return bal;
+				}
+			} else {
+				step('airdrop declined', `${host}: ${String(out?.error?.message || 'unknown').slice(0, 80)}`);
+			}
+		}
+		const bal = await balanceOf();
+		if (bal >= REQUIRED_LAMPORTS) return bal;
+		await new Promise((s) => setTimeout(s, 4_000 * attempt));
+	}
+	return balanceOf();
+}
+
 const { umi, authoritySigner } = buildAuthorityUmi('devnet', authoritySecret());
 const authority = authoritySigner.publicKey.toString();
-const balance = Number((await umi.rpc.getBalance(authoritySigner.publicKey)).basisPoints);
+let balance = Number((await umi.rpc.getBalance(authoritySigner.publicKey)).basisPoints);
 step('authority', `${authority} holds ${(balance / 1e9).toFixed(4)} devnet SOL`);
-if (balance < 12_000_000) {
+if (balance < REQUIRED_LAMPORTS) {
+	step('funding', 'authority is short; asking every devnet faucet in the endpoint chain');
+	balance = await topUpAuthority(authority);
+	step('authority', `${authority} now holds ${(balance / 1e9).toFixed(4)} devnet SOL`);
+}
+if (balance < REQUIRED_LAMPORTS) {
 	fail(
 		`authority needs ~0.012 devnet SOL for collection + mint + registry; it has ${(balance / 1e9).toFixed(4)}.\n` +
-			`  Top up ${authority} at https://faucet.solana.com and re-run.`,
+			`  Every devnet faucet in the endpoint chain refused (they are per-IP throttled and go dry under load).\n` +
+			`  Top up ${authority} at https://faucet.solana.com, or set SOLANA_RPC_URL_DEVNET / QUICKNODE_RPC_URL_DEVNET\n` +
+			`  to a provider whose faucet quota is intact, then re-run.`,
 	);
 }
 

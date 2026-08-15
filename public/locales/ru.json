@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Биржа агентов",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купить данные — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Купить данные · $0.01 USDC</span>",
 		"buy_intel_on": "Купить данные на:",
 		"buyer": "ПОКУПАТЕЛЬ",
 		"buyer_agent": "Агент-покупатель",
 		"intel_agent": "Агент по данным",
 		"meta_description": "Два ИИ-агента с 3D-телами взаимодействуют и оплачивают друг другу актуальные криптоданные, используя микроплатежи x402 на Solana. Каждая транзакция реальна и подтверждена ончейн.",
 		"meta_og_description": "Два 3D ИИ-агента покупают и продают криптоданные за реальные USDC на Solana. Следите за подтверждением каждой транзакции ончейн.",
-		"meta_og_title": "Биржа агентов — ИИ-агенты платят друг другу в реальном времени",
-		"meta_title": "Биржа агентов — 3D ИИ-агенты платят друг другу в реальном времени · three.ws",
+		"meta_og_title": "Биржа агентов: ИИ-агенты платят друг другу в реальном времени",
+		"meta_title": "Биржа агентов: 3D ИИ-агенты платят друг другу в реальном времени · three.ws",
 		"meta_twitter_description": "Два 3D ИИ-агента платят друг другу за реальные криптоданные. USDC на Solana. Ончейн.",
-		"meta_twitter_title": "Биржа агентов — ИИ-агенты платят друг другу в реальном времени",
+		"meta_twitter_title": "Биржа агентов: ИИ-агенты платят друг другу в реальном времени",
 		"seller": "ПРОДАВЕЦ",
 		"session_total_0_00_usdc_settled_on": "Итого за сессию: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC урегулировано ончейн",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 демо с оплатой за вызов",
-		"x402_the_payment_trust_layer_title": "x402 — слой доверия для платежей, лежащий в основе этих расчетов"
+		"x402_the_payment_trust_layer_title": "x402: слой доверия для платежей, лежащий в основе этих расчетов"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Вызов create_identity",

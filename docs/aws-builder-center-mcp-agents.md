@@ -44,14 +44,16 @@ The OAuth flow is the textbook one: dynamic client registration (RFC 7591), PKCE
 
 ## Surface two: paid tools that pay for themselves
 
-This is the part I am most proud of. The npm package `@three-ws/mcp-server` exposes a suite of paid tools that take **no subscription and no API key**. Each call settles per-use in USDC over the x402 protocol (the HTTP 402 Payment Required status code, finally put to work). You configure a wallet address, not a key.
+This is the part I am most proud of. The npm package `@three-ws/mcp-server` exposes a suite of paid tools that take **no subscription and no API key**. Each call settles per-use in USDC over the x402 protocol (the HTTP 402 Payment Required status code, finally put to work). You configure a wallet address, not a key. Settlement is USDC on Solana mainnet, `exact` scheme.
+
+Four of the paid tools, to give the shape of the suite (the [package README](https://github.com/nirholas/three.ws/blob/main/mcp-server/README.md) carries the full list and the current prices, which come straight from each tool's source):
 
 | Tool | Price | What it returns |
 |---|---|---|
 | `get_pose_seed` | $0.001 | A deterministic seed and full Euler-rotation pose map for the pose-studio mannequin, plus a preview URL. |
 | `pump_snapshot` | $0.005 | A live token snapshot: USD price (Jupiter), 24h volume and pair (Dexscreener), mint metadata and image, and on-chain top-holder distribution (Solana RPC). |
 | `agent_reputation` | $0.01 | ERC-8004 on-chain reputation for an agent: score, total stake, and the latest reputation events from the canonical registry (default Base). |
-| `vanity_grinder` | up to $0.50 | A Solana keypair whose address starts with a prefix you choose. Settled USDC scales with the work actually done, capped at $0.50. |
+| `vanity_grinder` | $0.05 | A Solana keypair whose address starts with a prefix you choose. A flat `exact` settlement regardless of how many attempts the grind took: `@x402/svm` ships no metered `upto` scheme, so Solana bills one price per successful grind. |
 
 Setup is a wallet, not an account:
 
@@ -62,7 +64,6 @@ Setup is a wallet, not an account:
       "command": "npx",
       "args": ["-y", "@three-ws/mcp-server"],
       "env": {
-        "MCP_EVM_PAYMENT_ADDRESS": "0xYourBaseWallet",
         "MCP_SVM_PAYMENT_ADDRESS": "YourSolanaWallet"
       }
     }
@@ -91,7 +92,7 @@ The npm package is a stdio-to-HTTP bridge. It speaks MCP over stdio to the clien
 
 ## Where AWS comes in
 
-The platform stores its assets on S3-compatible object storage and is available to subscribe through AWS Marketplace, so usage lands on your AWS bill and counts toward existing commitments (the Marketplace metering integration calls AWS in `us-east-1`). three.ws is an AWS Partner (APN Software Path, Technology Partner).
+The platform stores its assets on S3-compatible object storage, and its AWS Marketplace listing is built and awaiting publication, so procurement can go through AWS instead of a new vendor relationship (the Marketplace integration calls AWS in `us-east-1`). The subscription itself is free and issues the API key; the paid tools still settle per call in USDC. three.ws is an AWS Partner (APN Software Path, Technology Partner).
 
 The MCP server itself is intentionally cloud-agnostic: it is an npm bridge to an HTTP API, so it drops into a Bedrock agent, a Strands agent, a Claude Code session, or anything else that speaks MCP, without caring where the agent runs. If you are building agentic systems on AWS and want them to use paid external tools without a human managing keys, this is a working pattern you can copy.
 
@@ -105,4 +106,4 @@ If you wire it into something, or you want to list a paid tool of your own, the 
 
 ---
 
-*three.ws is an open-source platform for 3D AI agents and on-chain communities, an AWS Partner and available on AWS Marketplace. Live at [three.ws](https://three.ws).*
+*three.ws is an open-source platform for 3D AI agents and on-chain communities, an AWS Partner with an AWS Marketplace listing built and awaiting publication. Live at [three.ws](https://three.ws).*

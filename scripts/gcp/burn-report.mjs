@@ -157,10 +157,14 @@ try {
 	process.exit(report.projection.status === 'runaway' ? 2 : 0);
 } catch (err) {
 	if (err instanceof BillingUnavailableError) {
+		// A missing export table is a one-time console step, not a fault: name the
+		// step instead of leaving the reader with a bare BigQuery "not found".
+		const notWired = err.code === 'billing_export_missing';
+		const hint = 'Enable it once (console-only): Billing → Billing export → BigQuery export → Edit settings → select the dataset. See docs/ops/gcp-credits.md.';
 		if (asJson) {
-			console.log(JSON.stringify({ error: 'billing_unavailable', message: err.message }, null, 2));
+			console.log(JSON.stringify({ error: err.code || 'billing_unavailable', message: err.message, ...(notWired ? { hint } : {}) }, null, 2));
 		} else {
-			console.error(`\n  ⚠️  Burn report unavailable\n     ${err.message}\n`);
+			console.error(`\n  ⚠️  Burn report unavailable\n     ${err.message}\n${notWired ? `     ${hint}\n` : ''}`);
 		}
 		process.exit(3);
 	}

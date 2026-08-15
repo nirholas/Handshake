@@ -127,6 +127,29 @@ Paste the `snippet` before `</body>` on any page, or drop the `frame_url` into a
 | --------------- | -------- | ------------------ |
 | `THREE_WS_BASE` | no       | `https://three.ws` |
 
+## Programmatic use
+
+The package entry point exports **`TOOLS`** (every tool definition: `name`, `title`,
+`description`, `inputSchema`, `annotations`, `handler`) and **`buildServer()`**, which returns a
+fully-registered `McpServer` with no transport attached. Both tools are pure and offline, so you
+can call them directly as a widget-builder library with no MCP client involved.
+
+```js
+// run from a checkout: node this-file.mjs
+import { TOOLS, buildServer } from '@three-ws/assistant-mcp';
+
+const build = TOOLS.find((t) => t.name === 'build_assistant_widget');
+const { snippet } = await build.handler({ avatar: '/avatars/michelle.glb', background: 'dusk' });
+console.log(snippet);
+
+// Or hand the whole registered server to your own MCP transport.
+buildServer();
+```
+
+```html
+<script src="https://three.ws/assistant/v1.js" async data-avatar="/avatars/michelle.glb" data-bg="dusk"></script>
+```
+
 ## Links
 
 - Builder: https://three.ws/assistant

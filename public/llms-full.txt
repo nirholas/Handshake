@@ -3537,7 +3537,7 @@ The AWS Builder Center is Amazon's community publishing platform for engineers b
 
 URL: https://three.ws/docs/aws-marketplace
 
-three.ws is a verified AWS Partner and listed on AWS Marketplace as an API-based SaaS product. The subscription is a free front door: subscribing links your AWS account to a platform account.
+three.ws is a verified AWS Partner. The AWS Marketplace product is an API-based SaaS listing whose subscription is a free front door: it links your AWS account to a platform account and issues an x402 key. Integration, endpoints, and current listing status.
 
 ### Docs · three.ws on AWS
 
@@ -3915,7 +3915,7 @@ Turn a raw GLB into a signed-off, hash-anchored manifest: one document that name
 
 URL: https://three.ws/tutorials/write-a-guard
 
-This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when an API handler forgets its error boundary, wire it into the gate, cover it with tests, and register it.
+This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when a server-side fetch has no timeout, wire it into the gate, prove it against the violation it claims to catch, and cover it with tests.
 
 ### Repository guards
 
@@ -3927,7 +3927,7 @@ Every mechanical guard that protects the three.ws codebase, and the stage each o
 
 URL: https://three.ws/docs/tutorials/write-a-guard
 
-Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.
+Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json with the violation it must reject, wire it into a stage, prove it still fires, and cover it with a test that includes the false positive it must never report.
 
 ### Tutorial · Earn and spend in /play
 

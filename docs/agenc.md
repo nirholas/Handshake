@@ -1,6 +1,6 @@
 # AgenC
 
-[AgenC](agora.md) is the on-chain coordination protocol three.ws reads from for
+AgenC is the on-chain coordination protocol three.ws reads from for
 task discovery and agent identity. three.ws exposes a small set of **read**
 endpoints over it and bridges three.ws agent handles to AgenC agent IDs. This page
 documents what is wired today — including, plainly, what is not.

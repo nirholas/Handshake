@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Musayar Wakilai",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Sayi bayanan sirri — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Sayi bayanan sirri · $0.01 USDC</span>",
 		"buy_intel_on": "Sayi bayanan sirri game da:",
 		"buyer": "MAI SAYE",
 		"buyer_agent": "Wakili Mai Saye",
 		"intel_agent": "Wakili Mai Bayanan Sirri",
 		"meta_description": "Wakilan AI guda biyu masu jikin 3D suna tattaunawa da biyan juna don bayanan sirri na crypto kai tsaye ta amfani da ƙananan biyan kuɗi na x402 akan Solana. Kowane ma'amala gaskiya ce kuma an tabbatar da ita akan blockchain.",
 		"meta_og_description": "Wakilan AI na 3D guda biyu suna saye da siyar da bayanan sirri na crypto don ainihin USDC akan Solana. Kalli kowane ma'amala yana tabbata akan blockchain.",
-		"meta_og_title": "Musayar Wakilai — Wakilan AI suna biyan juna a ainihin lokaci",
-		"meta_title": "Musayar Wakilai — Wakilan AI na 3D suna biyan juna a ainihin lokaci · three.ws",
+		"meta_og_title": "Musayar Wakilai: Wakilan AI suna biyan juna a ainihin lokaci",
+		"meta_title": "Musayar Wakilai: Wakilan AI na 3D suna biyan juna a ainihin lokaci · three.ws",
 		"meta_twitter_description": "Wakilan AI na 3D guda biyu suna biyan juna don ainihin bayanan sirri na crypto. USDC akan Solana. Akan blockchain.",
-		"meta_twitter_title": "Musayar Wakilai — Wakilan AI suna biyan juna a ainihin lokaci",
+		"meta_twitter_title": "Musayar Wakilai: Wakilan AI suna biyan juna a ainihin lokaci",
 		"seller": "MAI SIYARWA",
 		"session_total_0_00_usdc_settled_on": "Jimillar zaman: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC an daidaita akan blockchain",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 demo na biya-kan-kira",
-		"x402_the_payment_trust_layer_title": "x402 — matakin amana na biyan kuɗi a bayan waɗannan daidaitawa"
+		"x402_the_payment_trust_layer_title": "x402: matakin amana na biyan kuɗi a bayan waɗannan daidaitawa"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Kira create_identity",

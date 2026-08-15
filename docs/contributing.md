@@ -166,7 +166,7 @@ npm run verify
 
 ## Publishing MCP servers & standalone mirrors
 
-Every MCP server package (any directory with both a `package.json` and a `server.json` — the 32 under `packages/*-mcp`, plus `packages/agent-sniper`, `mcp-server`, and `mcp-bridge`) ships to three destinations. All steps are idempotent and default to a safe dry run.
+Every MCP server package ships to three destinations. The authoritative list is the `SERVERS` array at the top of `scripts/publish-mcp-servers.mjs`: the `packages/*-mcp` directories that carry both a `package.json` and a `server.json`, plus `packages/agent-sniper`, `mcp-server`, and `mcp-bridge`. Read that array rather than a count quoted here. All steps are idempotent and default to a safe dry run.
 
 **1. npm + the official MCP registry** (`registry.modelcontextprotocol.io`):
 
@@ -277,7 +277,7 @@ Skills are the best way to extend three.ws without touching core code. A skill i
 
 4. **Write a `SKILL.md`** documenting what your skill does, what permissions it requires, and how to install it.
 
-5. **Share it.** Post it in [GitHub Discussions](https://github.com/nirholas/three.ws/discussions), or list it on the platform's skill marketplace so agents can install it.
+5. **Share it.** Open a [GitHub issue](https://github.com/nirholas/three.ws/issues/new) announcing it, or list it on the platform's skill marketplace so agents can install it.
 
 ---
 
@@ -313,8 +313,7 @@ Check [existing issues](https://github.com/nirholas/three.ws/issues) before open
 
 ## Getting Help
 
-- **[GitHub Discussions](https://github.com/nirholas/three.ws/discussions)** — design questions, architecture ideas, general "how does X work"
-- **[GitHub Issues](https://github.com/nirholas/three.ws/issues)** — bug reports and concrete feature requests
+- **[GitHub Issues](https://github.com/nirholas/three.ws/issues)**: bug reports, concrete feature requests, design questions, and general "how does X work". Discussions are not enabled on the repository, so issues are the one channel.
 
 Core team response times: typically 2-3 business days on GitHub. If a PR has been open for a week with no review, a polite bump on the PR is welcome.
 

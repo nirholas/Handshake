@@ -91,9 +91,9 @@ The rest of this tutorial uses the custom-element form, because that's the one t
 
 ---
 
-## Step 3 — The full attribute surface
+## Step 3 — The attribute surface
 
-Here's the full list of attributes the element observes, in the categories you'll actually reach for.
+Here are the attributes you'll actually reach for, by category. (`observedAttributes` in [src/element.js](https://github.com/nirholas/three.ws/blob/main/src/element.js) is the exhaustive list; it also carries niche ones like `avatar-id`, `api-base`, `name-plate`, `tracked-mint`, `clip`, `wallet`, and `sign-language`.)
 
 **Identity (one of these is required):**
 
@@ -121,14 +121,15 @@ Here's the full list of attributes the element observes, in the categories you'l
 |---|---|
 | `name` | The agent's display name in the nameplate |
 | `voice` | Set to `livekit` to opt into LiveKit-backed real-time voice |
-| `avatar-chat` | Set to `off` to hide the built-in chat input |
+| `chat` | Set to `off` for a bare avatar with no built-in chat shell (`kiosk` does the same) |
+| `avatar-chat` | Set to `off` to drop the avatar out of the chat column and lay the chat out as a plain bottom bar |
 | `avatar-walk` | Set to `off` to disable the walk-when-talking behaviour |
 | `framing` | Set to `portrait` for a head-and-shoulders camera framing; the default frames the full body |
 | `eager` | Skip the lazy-load wait — boot immediately even when off-screen |
 | `api-key` | Override the brain API key (use sparingly; backends are safer) |
 | `key-proxy` | URL of your own proxy that vends scoped keys |
 
-Every observed attribute can be changed after mount. Step 6 shows what that looks like in practice.
+Every observed attribute can be changed after mount, and Step 6 shows what that looks like in practice. Two of the attributes above are read once at boot rather than observed: `name` and `eager`. Setting either after the element has booted has no effect.
 
 ---
 
@@ -451,24 +452,26 @@ The element has a built-in chat input at the bottom. That's fine for a drop-in w
 
 Two parts to this.
 
-**Hide the built-in UI** with `avatar-chat="off"`:
+**Hide the built-in UI** with `chat="off"` (the same bare-avatar switch `kiosk` flips, but as a value you can bind from a template):
 
 ```html
 <agent-3d
   id="agent"
   agent-id="YOUR_AGENT_ID"
-  avatar-chat="off"
+  chat="off"
   width="100%"
   height="100%"
 ></agent-3d>
 ```
+
+The brain still boots, so `say()`, `ask()`, and the whole event stream keep working — only the chrome is gone.
 
 **Wire your own UI** that calls the element's API:
 
 ```html
 <div class="agent-shell">
   <div class="canvas">
-    <agent-3d id="agent" agent-id="YOUR_AGENT_ID" avatar-chat="off"></agent-3d>
+    <agent-3d id="agent" agent-id="YOUR_AGENT_ID" chat="off"></agent-3d>
   </div>
   <div class="composer">
     <input id="message" placeholder="Ask me anything" />
@@ -582,7 +585,7 @@ You can now treat `<agent-3d>` as a real component in any framework. The big tak
 - Attribute changes are reactive; you can swap agents, modes, and layouts at runtime
 - React works fine once you bind events in `useEffect`; remember dash-case attribute names
 - Vue works fine once you flag the tag as a custom element in the compiler config
-- Use `avatar-chat="off"` to bring your own composer when you want full control
+- Use `chat="off"` to bring your own composer when you want full control
 - Don't reach into the shadow DOM; style the wrapper, not the internals
 
 The web component is the most robust integration point the platform offers. Build your design system around it once and the agent fits anywhere you ship.

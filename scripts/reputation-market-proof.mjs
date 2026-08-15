@@ -134,17 +134,31 @@ async function fundStaker(conn, pubkey, targetLamports) {
 	};
 }
 
-async function attest(conn, signer, agentAsset, payload) {
+// Write one attestation memo naming the agent.
+//
+// Two constraints meet here and only one shape satisfies both:
+//
+//   1. SPL Memo v3 (MemoSq4gq…) verifies EVERY account handed to it and returns
+//      MissingRequiredSignature if any of them did not sign. An account passed
+//      as isSigner:false makes the instruction fail outright.
+//   2. readActionHistoryFromChain discovers an agent's history with
+//      getSignaturesForAddress(agentAsset), which only returns transactions the
+//      agent account actually appears in. Dropping the account to satisfy (1)
+//      would make the attestation unfindable.
+//
+// So the agent account must be present AND must sign. The proof generates the
+// agent identity itself, so it holds that keypair and co-signs with it.
+async function attest(conn, signer, agentKeypair, payload) {
 	const memoIx = new TransactionInstruction({
 		keys: [
 			{ pubkey: signer.publicKey, isSigner: true, isWritable: false },
-			{ pubkey: agentAsset, isSigner: false, isWritable: false },
+			{ pubkey: agentKeypair.publicKey, isSigner: true, isWritable: false },
 		],
 		programId: MEMO_PROGRAM_ID,
 		data: Buffer.from(JSON.stringify(payload), 'utf8'),
 	});
 	const tx = new Transaction().add(memoIx);
-	return sendAndConfirm(conn, tx, [signer], { commitment: 'confirmed', timeoutMs: CONFIRM_TIMEOUT_MS });
+	return sendAndConfirm(conn, tx, [signer, agentKeypair], { commitment: 'confirmed', timeoutMs: CONFIRM_TIMEOUT_MS });
 }
 
 const main = async () => {
@@ -202,7 +216,7 @@ const main = async () => {
 		{ v: 1, kind: 'threews.feedback.v1', agent: agentAsset.toBase58(), score: 5, task_id: `rsm-proof-${runId}` },
 	];
 	for (const payload of attestations) {
-		await attest(conn, staker, agentAsset, payload);
+		await attest(conn, staker, agent, payload);
 	}
 	step('attest', true, `${attestations.length} signed memos on ${agentAsset.toBase58()}`);
 

@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>تبادل عامل",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">خرید اطلاعات — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">خرید اطلاعات · $0.01 USDC</span>",
 		"buy_intel_on": "خرید اطلاعات در:",
 		"buyer": "خریدار",
 		"buyer_agent": "عامل خریدار",
 		"intel_agent": "عامل اطلاعات",
 		"meta_description": "دو عامل هوش مصنوعی با بدن‌های 3D برای اطلاعات زنده کریپتو با استفاده از پرداخت‌های خرد x402 بر روی Solana مذاکره و پرداخت می‌کنند. هر تراکنش واقعی و تأیید شده بر روی زنجیره است.",
 		"meta_og_description": "دو عامل هوش مصنوعی 3D اطلاعات کریپتو را برای USDC واقعی بر روی Solana خرید و فروش می‌کنند. هر تراکنش را بر روی زنجیره تأیید کنید.",
-		"meta_og_title": "تبادل عامل — عوامل هوش مصنوعی که به طور همزمان به یکدیگر پرداخت می‌کنند",
-		"meta_title": "تبادل عامل — عوامل هوش مصنوعی 3D که به طور همزمان به یکدیگر پرداخت می‌کنند · three.ws",
+		"meta_og_title": "تبادل عامل: عوامل هوش مصنوعی که به طور همزمان به یکدیگر پرداخت می‌کنند",
+		"meta_title": "تبادل عامل: عوامل هوش مصنوعی 3D که به طور همزمان به یکدیگر پرداخت می‌کنند · three.ws",
 		"meta_twitter_description": "دو عامل هوش مصنوعی 3D که به یکدیگر برای اطلاعات واقعی کریپتو پرداخت می‌کنند. USDC بر روی Solana. بر روی زنجیره.",
-		"meta_twitter_title": "تبادل عامل — عوامل هوش مصنوعی که به طور همزمان به یکدیگر پرداخت می‌کنند",
+		"meta_twitter_title": "تبادل عامل: عوامل هوش مصنوعی که به طور همزمان به یکدیگر پرداخت می‌کنند",
 		"seller": "فروشنده",
 		"session_total_0_00_usdc_settled_on": "جمع کل جلسه: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC تسویه شده بر روی زنجیره",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 دمو پرداخت به ازای تماس",
-		"x402_the_payment_trust_layer_title": "x402 — لایه اعتماد پرداخت پشت این تسویه‌ها"
+		"x402_the_payment_trust_layer_title": "x402: لایه اعتماد پرداخت پشت این تسویه‌ها"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · تماس برای ایجاد هویت",

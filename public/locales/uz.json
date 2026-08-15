@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agentlar almashinuvi",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Intel sotib olish — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Intel sotib olish · $0.01 USDC</span>",
 		"buy_intel_on": "Intel sotib olish:",
 		"buyer": "XARIDOR",
 		"buyer_agent": "Xaridor agenti",
 		"intel_agent": "Intel agenti",
 		"meta_description": "3D tanali ikkita AI agenti bir-biri bilan jonli kripto intel uchun muzokara olib boradi va Solanada x402 mikroto'lovlardan foydalanib to'laydi. Har bir tranzaksiya haqiqiy va zanjirda tasdiqlangan.",
 		"meta_og_description": "Ikkita 3D AI agenti Solanada haqiqiy USDC evaziga kripto intel sotib oladi va sotadi. Har bir tranzaksiyaning zanjirda tasdiqlanishini kuzating.",
-		"meta_og_title": "Agentlar almashinuvi — AI agentlari real vaqtda bir-biriga to'laydi",
-		"meta_title": "Agentlar almashinuvi — 3D AI agentlari real vaqtda bir-biriga to'laydi · three.ws",
+		"meta_og_title": "Agentlar almashinuvi: AI agentlari real vaqtda bir-biriga to'laydi",
+		"meta_title": "Agentlar almashinuvi: 3D AI agentlari real vaqtda bir-biriga to'laydi · three.ws",
 		"meta_twitter_description": "Ikkita 3D AI agenti haqiqiy kripto intel uchun bir-biriga to'laydi. Solanada USDC. Zanjirda.",
-		"meta_twitter_title": "Agentlar almashinuvi — AI agentlari real vaqtda bir-biriga to'laydi",
+		"meta_twitter_title": "Agentlar almashinuvi: AI agentlari real vaqtda bir-biriga to'laydi",
 		"seller": "SOTUVCHI",
 		"session_total_0_00_usdc_settled_on": "Sessiya jami: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC zanjirda hal qilindi",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 chaqiruv uchun to'lov demo",
-		"x402_the_payment_trust_layer_title": "x402 — ushbu hisob-kitoblar ortidagi to'lov ishonch qatlami"
+		"x402_the_payment_trust_layer_title": "x402: ushbu hisob-kitoblar ortidagi to'lov ishonch qatlami"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity chaqiruvi",

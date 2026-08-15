@@ -308,6 +308,17 @@
 		#walletState.ws-low .ws-head { color:var(--amber); }
 		.ws-body { color:var(--muted); line-height:1.55; }
 		.ws-mono { font-family:var(--mono); font-size:10.5px; }
+		/* Re-probe the balance in place: a wallet funded while the page is open
+		   recovers without a reload, so the state is actionable, not a dead end. */
+		.ws-recheck {
+			display:inline-flex; align-items:center; margin-left:2px; padding:3px 10px;
+			border-radius:8px; border:1px solid var(--border-hi); background:rgba(255,255,255,0.05);
+			color:var(--text); font:12px/1 inherit; font-weight:600; cursor:pointer;
+			transition:background .15s, border-color .15s;
+		}
+		.ws-recheck:hover:not(:disabled) { background:rgba(255,255,255,0.1); border-color:var(--sol-lt); }
+		.ws-recheck:active:not(:disabled) { transform:translateY(1px); }
+		.ws-recheck:disabled { opacity:.55; cursor:default; }
 	</style>
 
 	<meta property="og:site_name" content="three.ws">
@@ -351,12 +362,16 @@
 	<section id="arena" aria-label="Two AI agents">
 		<div class="agents">
 			<!-- Agent A: Seller (left, faces right) -->
+			<!-- tabindex=-1: the avatars are driven entirely by postMessage from this
+			     page and hold nothing to operate, so leaving them in the tab order
+			     added two focus stops that do nothing and show no focus ring. The
+			     agent names and roles are already in the labels below. -->
 			<div class="agent-slot" id="slotA">
-				<iframe id="frameA" title="Intel agent" allow="autoplay" aria-label="Selling agent"></iframe>
+				<iframe id="frameA" title="Intel agent" allow="autoplay" aria-label="Selling agent" tabindex="-1"></iframe>
 			</div>
 			<!-- Agent B: Buyer (right, faces left) -->
 			<div class="agent-slot" id="slotB">
-				<iframe id="frameB" title="Buyer agent" allow="autoplay" aria-label="Buying agent"></iframe>
+				<iframe id="frameB" title="Buyer agent" allow="autoplay" aria-label="Buying agent" tabindex="-1"></iframe>
 			</div>
 		</div>
 

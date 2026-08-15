@@ -16,7 +16,7 @@
  * An author in KOL_ACCOUNTS below gets a 1.5× virality multiplier vs an
  * anonymous account.
  *
- * Rate-limited per IP (limits.oracleSocialIp). Auth: optional — unauthenticated
+ * Rate-limited per IP (limits.oracleSocialIp). Auth: optional. Unauthenticated
  * calls are accepted so XActions → Oracle works without session overhead.
  */
 
@@ -129,7 +129,7 @@ export default wrap(async (req, res) => {
 	// would serialize the whole request behind DB latency. classified_at is bound
 	// per row; the ON CONFLICT branch still uses now() for the update path.
 	// Not guarded: this write IS the request. A swallowed failure used to answer
-	// `ok: true` with `mints_updated: 0` next to a populated `updated` array — a
+	// `ok: true` with `mints_updated: 0` next to a populated `updated` array: a
 	// self-contradicting receipt that told the sender its batch had landed when
 	// nothing was written. wrap() classifies instead (503 on a connectivity
 	// failure, 500 on a statement fault), so the sender knows to retry.

@@ -31,6 +31,13 @@ const FETCH_TIMEOUT_MS = 8000;
 // stored whole and re-served on every detail read.
 const MAX_IDENTIFIER_LENGTH = 128;
 const MAX_TOOLS = 100;
+// Every tool declared here is handed straight to the model provider as a tool
+// definition by the installer (src/plugins/index.js `toClaudeTools`), and both
+// Anthropic and OpenAI reject a name outside this charset. Validating it at the
+// publish boundary keeps a malformed manifest from breaking chat for everyone
+// who installs it from the marketplace.
+const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
+const MAX_TOOL_DESCRIPTION_LENGTH = 1024;
 
 // ── Manifest validation — LobeHub/pai-chat ToolManifest format ───────────────
 // Required: identifier, meta.title, api[]
@@ -49,9 +56,29 @@ function validateManifest(json) {
 		throw new Error('api must be a non-empty array');
 	if (json.api.length > MAX_TOOLS) throw new Error(`api must declare at most ${MAX_TOOLS} tools`);
 	for (const tool of json.api) {
-		if (!tool.name || !tool.description)
-			throw new Error(`Tool "${tool.name || '?'}" missing name or description`);
+		if (!tool || typeof tool !== 'object' || Array.isArray(tool))
+			throw new Error('every api entry must be a JSON object');
+		if (typeof tool.name !== 'string' || !tool.name)
+			throw new Error('every api entry needs a name, given as a string');
+		// The name is echoed back in the message, so it is truncated: the manifest
+		// ceiling still allows a 64KB one, and a rejection is not a reason to hand
+		// the caller their own payload back in full.
+		if (!TOOL_NAME_PATTERN.test(tool.name))
+			throw new Error(
+				`Tool "${tool.name.slice(0, 64)}" name must be 1-64 characters of letters, digits, underscores, or hyphens`,
+			);
+		if (typeof tool.description !== 'string' || !tool.description.trim())
+			throw new Error(`Tool "${tool.name}" needs a non-empty description`);
+		if (tool.description.length > MAX_TOOL_DESCRIPTION_LENGTH)
+			throw new Error(
+				`Tool "${tool.name}" description must be ${MAX_TOOL_DESCRIPTION_LENGTH} characters or fewer`,
+			);
 	}
+	// The manifest is stored whole and re-served on every list and detail read, so
+	// the same ceiling the import fetch enforces applies to a directly published
+	// one. Without it /publish accepted a body up to readJson's generic limit.
+	if (Buffer.byteLength(JSON.stringify(json), 'utf8') > MAX_MANIFEST_BYTES)
+		throw new Error(`manifest must be ${MAX_MANIFEST_BYTES / 1024}KB or smaller`);
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -163,9 +190,17 @@ async function handleList(req, res, url) {
 	const offset = cursor === null ? 0 : Number(cursor);
 	if (!Number.isInteger(offset) || offset < 0)
 		return error(res, 400, 'validation_error', 'cursor must be a non-negative integer');
-	const qLike = q ? `%${q}%` : null;
+	// `%` and `_` are LIKE wildcards, so an unescaped search for "50%" matched
+	// every row and "a_b" matched "axb". Escape them (and the escape character
+	// itself) so the query text is taken literally, which is what the search box
+	// promises.
+	const qLike = q ? `%${q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%` : null;
 	const fetchLimit = limit + 1;
 
+	// p.id closes the ORDER BY. Every seeded plugin shares one created_at and an
+	// install_count of 0, so the sort key was not unique and Postgres was free to
+	// order the ties differently per query: paging the marketplace at limit=2
+	// returned one plugin twice and never showed another at all.
 	const rows = await sql`
 		SELECT p.*, u.display_name AS author_display_name,
 		       ap.amount        AS asset_price_amount,
@@ -183,7 +218,8 @@ async function handleList(req, res, url) {
 		ORDER BY
 			CASE WHEN ${sort} = 'popular' THEN p.install_count END DESC NULLS LAST,
 			CASE WHEN ${sort} = 'az' THEN p.name END ASC NULLS LAST,
-			p.created_at DESC
+			p.created_at DESC,
+			p.id DESC
 		LIMIT ${fetchLimit} OFFSET ${offset}
 	`;
 
@@ -282,7 +318,20 @@ async function handleImport(req, res) {
 			clearTimeout(timer);
 		}
 		if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-		manifest = JSON.parse(await resp.text());
+		const text = await resp.text();
+		try {
+			manifest = JSON.parse(text);
+		} catch {
+			// Linking a repository page instead of the raw file is the common way to
+			// land here, and a bare parse message ("Unexpected token '<'") does not
+			// tell the caller that.
+			return error(
+				res,
+				422,
+				'invalid_manifest',
+				'manifest_url did not return JSON. Link directly to the manifest file, not to a web page.',
+			);
+		}
 	} catch (err) {
 		if (err instanceof SsrfBlockedError)
 			return error(res, 400, 'validation_error', `manifest_url rejected: ${err.message}`);
@@ -332,7 +381,10 @@ async function handlePublish(req, res) {
 	const rl = await limits.pluginPublishUser(auth.userId);
 	if (!rl.success) return rateLimited(res, rl);
 
-	const raw = await readJson(req);
+	// Bounded at the manifest ceiling plus room for the envelope's other fields, so
+	// an oversized publish is refused (413) at the boundary instead of being parsed
+	// into memory first and rejected by validateManifest afterwards.
+	const raw = await readJson(req, MAX_MANIFEST_BYTES + 4096);
 	let body;
 	try {
 		body = publishSchema.parse(raw);

@@ -25,7 +25,7 @@ tools appear with no `THREE_WS_SESSION` or `PAYMENT_SESSION_TOKEN` set.
 Abridged output:
 
 ```
-server:       agentcore-payments-mcp v0.1.2 (stdio)
+server:       agentcore-payments-mcp v0.1.3 (stdio)
 capabilities: tools
 tools:        5
 

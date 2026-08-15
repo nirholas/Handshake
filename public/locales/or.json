@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>ଏଜେଣ୍ଟ ଏକ୍ସଚେଞ୍ଜ୍",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ଇଣ୍ଟେଲ୍ କିଣନ୍ତୁ — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ଇଣ୍ଟେଲ୍ କିଣନ୍ତୁ · $0.01 USDC</span>",
 		"buy_intel_on": "ଏହା ଉପରେ ଇଣ୍ଟେଲ୍ କିଣନ୍ତୁ:",
 		"buyer": "କ୍ରେତା",
 		"buyer_agent": "କ୍ରେତା ଏଜେଣ୍ଟ",
 		"intel_agent": "ଇଣ୍ଟେଲ୍ ଏଜେଣ୍ଟ",
 		"meta_description": "3D ଶରୀର ଥିବା ଦୁଇଟି AI ଏଜେଣ୍ଟ Solana ଉପରେ x402 ମାଇକ୍ରୋପେମେଣ୍ଟ୍ ବ୍ୟବହାର କରି ଲାଇଭ୍ କ୍ରିପ୍ଟୋ ଇଣ୍ଟେଲ୍ ପାଇଁ ପରସ୍ପର ସହିତ ଆଲୋଚନା କରି ଦେୟ ପ୍ରଦାନ କରନ୍ତି। ପ୍ରତ୍ୟେକ କାରବାର ବାସ୍ତବ ଏବଂ ଅନ୍-ଚେନ୍‌ରେ ନିଶ୍ଚିତ ହୋଇଛି।",
 		"meta_og_description": "ଦୁଇଟି 3D AI ଏଜେଣ୍ଟ Solana ଉପରେ ପ୍ରକୃତ USDC ପାଇଁ କ୍ରିପ୍ଟୋ ଇଣ୍ଟେଲ୍ କିଣନ୍ତି ଏବଂ ବିକ୍ରି କରନ୍ତି। ପ୍ରତ୍ୟେକ କାରବାର ଅନ୍-ଚେନ୍‌ରେ ନିଶ୍ଚିତ ହେଉଥିବା ଦେଖନ୍ତୁ।",
-		"meta_og_title": "ଏଜେଣ୍ଟ ଏକ୍ସଚେଞ୍ଜ୍ — AI ଏଜେଣ୍ଟମାନେ ରିଅଲ୍ ଟାଇମ୍‌ରେ ପରସ୍ପରକୁ ଦେୟ ପ୍ରଦାନ କରୁଛନ୍ତି",
-		"meta_title": "ଏଜେଣ୍ଟ ଏକ୍ସଚେଞ୍ଜ୍ — 3D AI ଏଜେଣ୍ଟମାନେ ରିଅଲ୍ ଟାଇମ୍‌ରେ ପରସ୍ପରକୁ ଦେୟ ପ୍ରଦାନ କରୁଛନ୍ତି · three.ws",
+		"meta_og_title": "ଏଜେଣ୍ଟ ଏକ୍ସଚେଞ୍ଜ୍: AI ଏଜେଣ୍ଟମାନେ ରିଅଲ୍ ଟାଇମ୍‌ରେ ପରସ୍ପରକୁ ଦେୟ ପ୍ରଦାନ କରୁଛନ୍ତି",
+		"meta_title": "ଏଜେଣ୍ଟ ଏକ୍ସଚେଞ୍ଜ୍: 3D AI ଏଜେଣ୍ଟମାନେ ରିଅଲ୍ ଟାଇମ୍‌ରେ ପରସ୍ପରକୁ ଦେୟ ପ୍ରଦାନ କରୁଛନ୍ତି · three.ws",
 		"meta_twitter_description": "ଦୁଇଟି 3D AI ଏଜେଣ୍ଟ ପ୍ରକୃତ କ୍ରିପ୍ଟୋ ଇଣ୍ଟେଲ୍ ପାଇଁ ପରସ୍ପରକୁ ଦେୟ ପ୍ରଦାନ କରୁଛନ୍ତି। Solana ଉପରେ USDC। ଅନ୍-ଚେନ୍।",
-		"meta_twitter_title": "ଏଜେଣ୍ଟ ଏକ୍ସଚେଞ୍ଜ୍ — AI ଏଜେଣ୍ଟମାନେ ରିଅଲ୍ ଟାଇମ୍‌ରେ ପରସ୍ପରକୁ ଦେୟ ପ୍ରଦାନ କରୁଛନ୍ତି",
+		"meta_twitter_title": "ଏଜେଣ୍ଟ ଏକ୍ସଚେଞ୍ଜ୍: AI ଏଜେଣ୍ଟମାନେ ରିଅଲ୍ ଟାଇମ୍‌ରେ ପରସ୍ପରକୁ ଦେୟ ପ୍ରଦାନ କରୁଛନ୍ତି",
 		"seller": "ବିକ୍ରେତା",
 		"session_total_0_00_usdc_settled_on": "ସେସନ୍ ମୋଟ: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC ଅନ୍-ଚେନ୍‌ରେ ସମାଧାନ ହୋଇଛି",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ପେ-ପର୍-କଲ୍ ଡେମୋ",
-		"x402_the_payment_trust_layer_title": "x402 — ଏହି ସେଟେଲମେଣ୍ଟ୍ ପଛରେ ଥିବା ପେମେଣ୍ଟ୍ ଟ୍ରଷ୍ଟ୍ ଲେୟର୍"
+		"x402_the_payment_trust_layer_title": "x402: ଏହି ସେଟେଲମେଣ୍ଟ୍ ପଛରେ ଥିବା ପେମେଣ୍ଟ୍ ଟ୍ରଷ୍ଟ୍ ଲେୟର୍"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity କଲ୍ କରନ୍ତୁ",

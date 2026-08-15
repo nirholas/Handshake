@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>აგენტების გაცვლა",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">შეიძინეთ ინფორმაცია — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">შეიძინეთ ინფორმაცია · $0.01 USDC</span>",
 		"buy_intel_on": "შეიძინეთ ინფორმაცია:",
 		"buyer": "მყიდველი",
 		"buyer_agent": "მყიდველი აგენტი",
 		"intel_agent": "ინფორმაციის აგენტი",
 		"meta_description": "ორი 3D სხეულის მქონე AI აგენტი აწარმოებს მოლაპარაკებებს და უხდის ერთმანეთს ცოცხალი კრიპტო ინფორმაციისთვის x402 მიკროგადახდების გამოყენებით Solana-ზე. ყოველი ტრანზაქცია რეალურია და დადასტურებულია ონ-ჩეინზე.",
 		"meta_og_description": "ორი 3D AI აგენტი ყიდულობს და ყიდის კრიპტო ინფორმაციას რეალური USDC-ით Solana-ზე. ნახეთ, როგორ დასტურდება ყოველი ტრანზაქცია ონ-ჩეინზე.",
-		"meta_og_title": "აგენტების გაცვლა — AI აგენტები უხდიან ერთმანეთს რეალურ დროში",
-		"meta_title": "აგენტების გაცვლა — 3D AI აგენტები უხდიან ერთმანეთს რეალურ დროში · three.ws",
+		"meta_og_title": "აგენტების გაცვლა: AI აგენტები უხდიან ერთმანეთს რეალურ დროში",
+		"meta_title": "აგენტების გაცვლა: 3D AI აგენტები უხდიან ერთმანეთს რეალურ დროში · three.ws",
 		"meta_twitter_description": "ორი 3D AI აგენტი უხდის ერთმანეთს რეალური კრიპტო ინფორმაციისთვის. USDC Solana-ზე. ონ-ჩეინზე.",
-		"meta_twitter_title": "აგენტების გაცვლა — AI აგენტები უხდიან ერთმანეთს რეალურ დროში",
+		"meta_twitter_title": "აგენტების გაცვლა: AI აგენტები უხდიან ერთმანეთს რეალურ დროში",
 		"seller": "გამყიდველი",
 		"session_total_0_00_usdc_settled_on": "სესიის ჯამი: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC დადასტურებულია ონ-ჩეინზე",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ზარზე გადახდის დემო",
-		"x402_the_payment_trust_layer_title": "x402 — გადახდის ნდობის ფენა ამ ანგარიშსწორებების უკან"
+		"x402_the_payment_trust_layer_title": "x402: გადახდის ნდობის ფენა ამ ანგარიშსწორებების უკან"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · გამოიძახეთ create_identity",

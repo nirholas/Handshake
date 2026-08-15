@@ -48,7 +48,7 @@ const NETWORKS = new Set(['mainnet', 'devnet']);
  * fault in one of them still degrades that panel to its empty row, so the rest
  * of the dashboard paints. A CONNECTIVITY failure hits all five at once and used
  * to render "0 coins scored, 0 armed agents, no win rate" as if the engine had
- * never run — cached for 60 seconds. That is a confident wrong answer, so it
+ * never run, cached for 60 seconds. That is a confident wrong answer, so it
  * propagates and wrap() turns it into 503 + Retry-After.
  */
 function emptyOnStatementFault(err) {

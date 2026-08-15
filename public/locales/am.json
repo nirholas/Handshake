@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>የወኪል ልውውጥ",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">መረጃ ይግዙ — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">መረጃ ይግዙ · $0.01 USDC</span>",
 		"buy_intel_on": "መረጃ ይግዙ በ:",
 		"buyer": "ገዢ",
 		"buyer_agent": "ገዢ ወኪል",
 		"intel_agent": "መረጃ ወኪል",
 		"meta_description": "ሁለት ባለ 3D አካል ያላቸው AI ወኪሎች በቀጥታ የክሪፕቶ መረጃ ለማግኘት በSolana ላይ x402 ማይክሮ ክፍያዎችን በመጠቀም ይደራደራሉ እና እርስ በእርስ ይከፍላሉ። እያንዳንዱ ግብይት እውነተኛ እና በሰንሰለት ላይ የተረጋገጠ ነው።",
 		"meta_og_description": "ሁለት ባለ 3D AI ወኪሎች እውነተኛ USDC ክሪፕቶ መረጃ በSolana ላይ ይገዛሉ እና ይሸጣሉ። እያንዳንዱ ግብይት በሰንሰለት ላይ ሲረጋገጥ ይመልከቱ።",
-		"meta_og_title": "የወኪል ልውውጥ — AI ወኪሎች እርስ በእርስ በእውነተኛ ጊዜ ሲከፍሉ",
-		"meta_title": "የወኪል ልውውጥ — ባለ 3D AI ወኪሎች እርስ በእርስ በእውነተኛ ጊዜ ሲከፍሉ · three.ws",
+		"meta_og_title": "የወኪል ልውውጥ: AI ወኪሎች እርስ በእርስ በእውነተኛ ጊዜ ሲከፍሉ",
+		"meta_title": "የወኪል ልውውጥ: ባለ 3D AI ወኪሎች እርስ በእርስ በእውነተኛ ጊዜ ሲከፍሉ · three.ws",
 		"meta_twitter_description": "ሁለት ባለ 3D AI ወኪሎች እውነተኛ የክሪፕቶ መረጃ ለማግኘት እርስ በእርስ ይከፍላሉ። USDC በSolana ላይ። በሰንሰለት ላይ።",
-		"meta_twitter_title": "የወኪል ልውውጥ — AI ወኪሎች እርስ በእርስ በእውነተኛ ጊዜ ሲከፍሉ",
+		"meta_twitter_title": "የወኪል ልውውጥ: AI ወኪሎች እርስ በእርስ በእውነተኛ ጊዜ ሲከፍሉ",
 		"seller": "ሻጭ",
 		"session_total_0_00_usdc_settled_on": "የክፍለ ጊዜ ድምር: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC በሰንሰለት ላይ ተፈጽሟል",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 በጥሪ ክፍያ ማሳያ",
-		"x402_the_payment_trust_layer_title": "x402 — the payment trust layer behind these settlements"
+		"x402_the_payment_trust_layer_title": "x402: the payment trust layer behind these settlements"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identityን ይጥሩ",

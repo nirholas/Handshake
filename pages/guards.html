@@ -555,9 +555,12 @@
 		<section class="gd-more">
 			<h2>Adding a guard</h2>
 			<p>
-				A guard that is not wired into an unavoidable path protects nothing. Write the checker, give it an npm
-				script, register it in <code>data/guards.json</code>, and wire it into a stage. Running
-				<code>npm run audit:guards</code> will tell you if the last two steps disagree.
+				A guard that is not wired into an unavoidable path protects nothing, and a guard nobody has proven
+				still catches anything protects nothing either. Write the checker, give it an npm script, register it
+				in <code>data/guards.json</code> with the violation it must reject, and wire it into a stage.
+				<code>npm run audit:guards</code> tells you if the registry and the chains disagree;
+				<code>npm run prove:guards</code> runs each guard against its declared violation and tells you whether
+				it still fires.
 			</p>
 			<div class="gd-links">
 				<a href="/docs/tutorials/write-a-guard">Write a guard</a>

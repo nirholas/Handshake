@@ -180,9 +180,14 @@ const WEATHER_API_BASE = 'https://wttr.in';
 export async function get_weather({ city, units = 'celsius' }, ctx) {
   try {
     // wttr.in is a free weather API, no key needed.
-    // Format string: condition + temperature + wind + precipitation
-    const fmt = units === 'celsius' ? '%C+%t+%w+%p' : '%C+%f+%w+%p';
-    const url = `${WEATHER_API_BASE}/${encodeURIComponent(city)}?format=${encodeURIComponent(fmt)}&lang=en`;
+    // Format string: condition | temperature | wind | precipitation.
+    // Pipe, not '+', because %t renders a signed value ("+27°C") and a
+    // '+' delimiter would split that sign into its own empty field.
+    // Units come from the `m` (metric) / `u` (USCS) flag, not the format
+    // string — %f is "feels like", not Fahrenheit.
+    const fmt = '%C|%t|%w|%p';
+    const unitFlag = units === 'celsius' ? 'm' : 'u';
+    const url = `${WEATHER_API_BASE}/${encodeURIComponent(city)}?format=${encodeURIComponent(fmt)}&lang=en&${unitFlag}`;
 
     const res = await ctx.fetch(url);
     if (!res.ok) {
@@ -190,7 +195,7 @@ export async function get_weather({ city, units = 'celsius' }, ctx) {
     }
 
     const text = (await res.text()).trim();
-    const [condition, temp, wind, precipitation] = text.split('+');
+    const [condition, temp, wind, precipitation] = text.split('|');
 
     return {
       ok: true,
@@ -366,9 +371,9 @@ Add to `tools.json`:
           "days": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 7,
+            "maximum": 3,
             "default": 3,
-            "description": "Number of forecast days"
+            "description": "Number of forecast days (wttr.in returns at most 3)"
           }
         },
         "required": ["city"]

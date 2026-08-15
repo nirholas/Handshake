@@ -119,14 +119,31 @@ const handler = wrap(async (req, res) => {
 			system: SYSTEM_PROMPT,
 			user: userMessage,
 			maxTokens: 800,
+			// Attribution for the spend ledger. Without it this lane's cost is
+			// invisible on the admin dashboard AND llmComplete skips its per-user
+			// daily USD cap, which only engages when a userId is known. The 5/day
+			// limiter above bounds the call COUNT; this bounds the bill.
+			track: { userId, tool: 'persona-extract' },
 		});
 	} catch (err) {
 		if (err instanceof LlmUnavailableError) {
+			// The caller cannot act on which server-side key is missing, and naming
+			// the env vars in a public response advertises our provider inventory.
+			// The operator sees the real cause in this log line.
+			console.error('[persona/extract] no LLM provider configured');
 			return error(res, 503, 'config_missing',
 				'Persona extraction is not available right now. Please try again later.');
 		}
-		console.error('[persona/extract] all providers failed', err?.status, err?.message);
-		return error(res, err?.status || 502, 'upstream_error', 'Persona extraction is briefly unavailable. Please try again.');
+		if (err?.code === 'daily_spend_cap_exceeded') {
+			// A budget ceiling, not an outage: "try again" would be a lie for the
+			// rest of the day, so pass the real reason and reset window through.
+			return error(res, 429, 'daily_spend_cap_exceeded', err.message);
+		}
+		// Flat 502: every provider failure here is server-side, so the upstream's
+		// own status must not become the caller's (an expired key answering 401
+		// would otherwise read to the client as "your session ended").
+		console.error('[persona/extract] all providers failed', err?.status || '', err?.message);
+		return error(res, 502, 'upstream_error', 'Persona extraction is briefly unavailable. Please try again.');
 	}
 
 	// llmComplete prefers returning an empty-but-valid completion over throwing

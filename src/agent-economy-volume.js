@@ -84,11 +84,27 @@ function statCard(val, lbl, sub) {
 	</div>`;
 }
 
+function initialsTile(name) {
+	return `<div class="rank-av-fallback" aria-hidden="true">${escapeHtml(initials(name))}</div>`;
+}
+
 function avatarCell(agent) {
 	if (agent.avatar_thumbnail_url) {
-		return `<img class="rank-av" src="${escapeHtml(agent.avatar_thumbnail_url)}" alt="" loading="lazy" />`;
+		return `<img class="rank-av" src="${escapeHtml(agent.avatar_thumbnail_url)}" alt="" loading="lazy" data-name="${escapeHtml(agent.name || 'Agent')}" />`;
 	}
-	return `<div class="rank-av-fallback" aria-hidden="true">${escapeHtml(initials(agent.name))}</div>`;
+	return initialsTile(agent.name);
+}
+
+// A thumbnail whose stored object has since been pruned still resolves to a URL,
+// so the row would paint the browser's broken-image glyph. Swap it for the same
+// initials tile an agent without a thumbnail gets. `error` does not bubble, so
+// the listener goes on each image rather than on the list.
+function wireAvatarFallbacks(root) {
+	root.querySelectorAll('img.rank-av').forEach((img) => {
+		img.addEventListener('error', () => {
+			img.outerHTML = initialsTile(img.dataset.name);
+		}, { once: true });
+	});
 }
 
 function rankRow(num, agent, sub, primary, secondary) {
@@ -421,6 +437,8 @@ function renderTotals(t) {
 }
 
 function renderLeaderboards(providers, hirers) {
+	const earners = document.getElementById('top-earners');
+	const spenders = document.getElementById('top-spenders');
 	setCount('earners-count', providers.length);
 	document.getElementById('top-earners').innerHTML = providers.length
 		? providers.map((a, i) => rankRow(
@@ -438,6 +456,9 @@ function renderLeaderboards(providers, hirers) {
 			fmtUsd(a.spent_usd), 'spent',
 		)).join('')
 		: '<div class="an-empty">No agent has hired another yet. <a href="/x402">Browse the x402 catalog</a> to see what is hireable.</div>';
+
+	wireAvatarFallbacks(earners);
+	wireAvatarFallbacks(spenders);
 }
 
 function renderFeed(recent) {

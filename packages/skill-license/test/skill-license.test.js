@@ -25,7 +25,7 @@ function stubFetch(responses) {
 
 // Synthetic, off-platform placeholders — never a real third-party address.
 const HOLDER = 'HoLDeRwa11et1111111111111111111111111111111';
-const AGENT = 'THREEsynthetic1111111111111111111111111111';
+const AGENT = 'THREEsynthetic11111111111111111111111111111';
 const LICENSE_PDA = 'LiCenSepda11111111111111111111111111111111';
 const NFT_MINT = 'NftM1nt1111111111111111111111111111111111';
 

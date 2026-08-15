@@ -2,7 +2,7 @@
 title: "three.ws on AWS: giving AI agents a body, a wallet, and an AWS bill"
 venue: AWS Builder Center / APN Partner Spotlight
 account: three.ws (official)
-description: "A look at three.ws, an AWS Technology Partner building browser-native 3D AI agents that you can buy through AWS Marketplace, govern before they act, embed like a video, and let pay for their own work, all on infrastructure that meters to your AWS bill."
+description: "A look at three.ws, an AWS Technology Partner building browser-native 3D AI agents that you will buy through AWS Marketplace, govern before they act, embed like a video, and let pay for their own work."
 tags: [aws, marketplace, agentic-ai, generative-ai, 3d, open-source]
 canonical: https://three.ws/docs/aws-partner-spotlight.md
 ---
@@ -13,7 +13,7 @@ Most enterprise AI agents live inside a chat box. For a lot of work that is exac
 
 [three.ws](https://three.ws) is built on a simple thesis: the next interface for AI is spatial, embeddable, and able to act. The platform gives an AI agent a body. You describe an agent in a sentence, and in a few minutes it becomes a textured, rigged, talking 3D character. You give it a brain, optionally a wallet and an on-chain identity, and you drop it onto any web page with a single line of HTML, as easily as embedding a video. The agent renders right in the browser, holds a conversation, remembers across visits, reacts to the page around it, and when you let it, pays for the data and tools it needs to be useful.
 
-three.ws is an **AWS Technology Partner in the AWS Partner Network** and is **live on AWS Marketplace**, so an enterprise can adopt all of this through procurement it already trusts. This is a look at what the team has built, what they are building next, and why running it with AWS makes embodied agents something a business can actually buy, govern, and put into production.
+three.ws is an **AWS Technology Partner in the AWS Partner Network**, and the AWS Marketplace listing is built and awaiting publication, so an enterprise will be able to adopt all of this through procurement it already trusts. This is a look at what the team has built, what they are building next, and why running it with AWS makes embodied agents something a business can actually buy, govern, and put into production.
 
 ---
 
@@ -51,9 +51,9 @@ The throughline across all of it is a single, ambitious idea: an agent you can s
 
 three.ws runs across several clouds, each carrying the work it is best at, and AWS carries the parts where its strengths matter most: storage and delivery of the 3D assets, a slice of the rendering, the operational visibility a serious platform needs, and, most importantly for an enterprise, procurement.
 
-The platform is listed on **AWS Marketplace** as a usage-based product. That single fact changes how a business can adopt it. Instead of a separate vendor relationship and a new way to pay, an enterprise subscribes through the marketplace it already uses, and consumption shows up as one line item on the AWS bill, drawn from existing credits and counted toward existing commitments. No crypto and no card are required to get started. The finance and security teams see something familiar, and the builders get an agent platform without a procurement detour.
+The platform is being listed on **AWS Marketplace** as an API-based (SaaS) product. That single fact changes how a business can adopt it. Instead of a separate vendor relationship and a new way to pay, an enterprise subscribes through the marketplace it already uses, and the subscription itself is free: it links the AWS account, issues an API key, and hands the builders an agent platform without a procurement detour. The finance and security teams see something familiar. (The listing is complete on our side and waiting on AWS publication; until it goes public, the same API is reachable directly.)
 
-What makes this genuinely novel is what sits underneath. three.ws agents can already pay for tools on their own, by the call, over an open payment rail. The team connected that same rail to AWS Marketplace, so one product now bills two ways through the very same door. A large enterprise pays through AWS and sees a clean line item. An independent developer pays per call with stablecoins and needs no account at all. Both are reaching the identical capability. The choice of how to pay is theirs, and the platform meters whichever world the caller comes from. That is a clean, pay-for-what-you-use model that fits how enterprises actually want to adopt agentic AI: autonomous where it helps, bounded by policy, and auditable end to end.
+What makes this genuinely novel is what sits underneath. three.ws agents can already pay for tools on their own, by the call, over an open payment rail. The team wired AWS Marketplace into the very same access check, so one product serves two economies through one door. An enterprise buyer arrives through AWS procurement. An independent developer pays per call with stablecoins and needs no account at all. Both reach the identical capability, and the platform recognizes whichever world the caller comes from without forking its authorization path. That is a clean, pay-for-what-you-use model that fits how enterprises actually want to adopt agentic AI: autonomous where it helps, bounded by policy, and auditable end to end.
 
 Running on AWS also brings the operational posture an enterprise expects. The team manages its AWS footprint as code, so the environment is reproducible and reviewable rather than hand-assembled. Activity is centralized where an AWS-native operations team already looks, so the people responsible for uptime and security can watch the platform with the tools they already trust. And the whole thing is grouped as a single application in the AWS console, with cost and operational views in one place.
 
@@ -79,11 +79,11 @@ Voice and presence are getting deeper, with real-time spoken conversation, voice
 
 ## In short
 
-three.ws gives an AI agent a body, a memory, a personality, an identity, and the ability to act and pay, then makes it embeddable in a single line of HTML. AWS is what makes it adoptable at enterprise scale: a platform you can buy through AWS Marketplace, govern before it acts, watch with the tools you already run, and bill, by the call, to your AWS account, against the very same capability an independent developer reaches with no account at all.
+three.ws gives an AI agent a body, a memory, a personality, an identity, and the ability to act and pay, then makes it embeddable in a single line of HTML. AWS is what makes it adoptable at enterprise scale: a platform you will buy through AWS Marketplace, govern before it acts, and watch with the tools you already run, reaching the very same capability an independent developer reaches with no account at all.
 
-One product. Two ways to pay. One AWS bill.
+One product. Two ways in. One authorization path.
 
 **Learn more**
 - Platform: [three.ws](https://three.ws)
-- AWS Marketplace and procurement: `three.ws/docs/aws-marketplace.md`
-- How agents reach and pay for tools: `three.ws/docs/x402.md`, `three.ws/docs/mcp.md`
+- AWS Marketplace and procurement: [three.ws/docs/aws-marketplace](./aws-marketplace.md)
+- How agents reach and pay for tools: [three.ws/docs/x402](./x402.md), [three.ws/docs/mcp](./mcp.md)

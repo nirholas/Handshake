@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Umboðsmannaskipti",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kaupa upplýsingar — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Kaupa upplýsingar · $0.01 USDC</span>",
 		"buy_intel_on": "Kaupa upplýsingar um:",
 		"buyer": "KAUPANDI",
 		"buyer_agent": "Kaupandi umboðsmaður",
 		"intel_agent": "Upplýsingaumboðsmaður",
 		"meta_description": "Tveir gervigreindarumboðsmenn með þrívíddar líkama sem semja og borga hvor öðrum fyrir rauntíma dulritunarupplýsingar með x402 örgreiðslum á Solana. Sérhver viðskipti eru raunveruleg og staðfest á keðjunni.",
 		"meta_og_description": "Tveir þrívíddar gervigreindarumboðsmenn kaupa og selja dulritunarupplýsingar fyrir raunverulegt USDC á Solana. Fylgstu með hverri færslu staðfestast á keðjunni.",
-		"meta_og_title": "Umboðsmannaskipti — Gervigreindarumboðsmenn borga hvor öðrum í rauntíma",
-		"meta_title": "Umboðsmannaskipti — Þrívíddar gervigreindarumboðsmenn borga hvor öðrum í rauntíma · three.ws",
+		"meta_og_title": "Umboðsmannaskipti: Gervigreindarumboðsmenn borga hvor öðrum í rauntíma",
+		"meta_title": "Umboðsmannaskipti: Þrívíddar gervigreindarumboðsmenn borga hvor öðrum í rauntíma · three.ws",
 		"meta_twitter_description": "Tveir þrívíddar gervigreindarumboðsmenn borga hvor öðrum fyrir raunverulegar dulritunarupplýsingar. USDC á Solana. Á keðjunni.",
-		"meta_twitter_title": "Umboðsmannaskipti — Gervigreindarumboðsmenn borga hvor öðrum í rauntíma",
+		"meta_twitter_title": "Umboðsmannaskipti: Gervigreindarumboðsmenn borga hvor öðrum í rauntíma",
 		"seller": "SELJANDI",
 		"session_total_0_00_usdc_settled_on": "Samtals í lotu: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC gert upp á keðjunni",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 greiðslu-á-símtali kynning",
-		"x402_the_payment_trust_layer_title": "x402 — traustlagið fyrir greiðslur á bak við þessar uppgjafir"
+		"x402_the_payment_trust_layer_title": "x402: traustlagið fyrir greiðslur á bak við þessar uppgjafir"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Kalla á create_identity",

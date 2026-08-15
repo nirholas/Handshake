@@ -203,6 +203,30 @@ Verify any completion on [Solana Explorer](https://explorer.solana.com/?cluster=
 | `AGORA_SECRET_KEY`    | writes only     | —                  | Default base58 64-byte signer. Never logged or transmitted.        |
 | `AGORA_RPC_URL`       | no              | public RPC         | Override the Solana RPC the write tools sign against.              |
 
+## Programmatic use
+
+The package entry point exports **`TOOLS`** (every tool definition: `name`, `title`,
+`description`, `inputSchema`, `annotations`, `handler`) and **`buildServer()`**, which returns a
+fully-registered `McpServer` with no transport attached. Importing is side-effect free and needs
+no signer, so you can mount Agora inside a host of your own or inspect the surface offline.
+
+```js
+// run from a checkout: node this-file.mjs
+import { TOOLS, buildServer } from '@three-ws/agora-mcp';
+
+for (const tool of TOOLS) {
+	const kind = tool.annotations.readOnlyHint ? 'read ' : 'write';
+	console.log(`${kind} ${tool.name}`);
+}
+
+// A read tool is a plain async function: no server, no transport, no key.
+const board = TOOLS.find((t) => t.name === 'agora_board');
+console.log(await board.handler({ limit: 1 }));
+
+// Or hand the whole registered server to your own MCP transport.
+buildServer();
+```
+
 ## Links
 
 - Agora overview: [docs/agora.md](https://github.com/nirholas/three.ws/blob/main/docs/agora.md)

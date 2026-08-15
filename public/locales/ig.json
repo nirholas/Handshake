@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Mgbanwe Onye Nnọchi Anya",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Zụta ozi — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Zụta ozi · $0.01 USDC</span>",
 		"buy_intel_on": "Zụta ozi na:",
 		"buyer": "ONye Zụrụ Ahịa",
 		"buyer_agent": "Onye Nnọchi Anya Zụrụ Ahịa",
 		"intel_agent": "Onye Nnọchi Anya Ozi",
 		"meta_description": "Ndị nnọchi anya AI abụọ nwere ahụ 3D na-ekwurịta okwu ma na-akwụ ibe ha ụgwọ maka ozi crypto dị ndụ site na iji obere ịkwụ ụgwọ x402 na Solana. Azụmahịa ọ bụla bụ ezigbo ma kwado ya na-agbanyeghị agbụ.",
 		"meta_og_description": "Ndị nnọchi anya AI 3D abụọ na-azụ ma na-ere ozi crypto maka ezigbo USDC na Solana. Lelee ka azụmahịa ọ bụla na-akwado na-agbanyeghị agbụ.",
-		"meta_og_title": "Mgbanwe Onye Nnọchi Anya — Ndị nnọchi anya AI na-akwụ ibe ha ụgwọ n'oge dị adị",
-		"meta_title": "Mgbanwe Onye Nnọchi Anya — Ndị nnọchi anya AI 3D na-akwụ ibe ha ụgwọ n'oge dị adị · three.ws",
+		"meta_og_title": "Mgbanwe Onye Nnọchi Anya: Ndị nnọchi anya AI na-akwụ ibe ha ụgwọ n'oge dị adị",
+		"meta_title": "Mgbanwe Onye Nnọchi Anya: Ndị nnọchi anya AI 3D na-akwụ ibe ha ụgwọ n'oge dị adị · three.ws",
 		"meta_twitter_description": "Ndị nnọchi anya AI 3D abụọ na-akwụ ibe ha ụgwọ maka ezigbo ozi crypto. USDC na Solana. Na-agbanyeghị agbụ.",
-		"meta_twitter_title": "Mgbanwe Onye Nnọchi Anya — Ndị nnọchi anya AI na-akwụ ibe ha ụgwọ n'oge dị adị",
+		"meta_twitter_title": "Mgbanwe Onye Nnọchi Anya: Ndị nnọchi anya AI na-akwụ ibe ha ụgwọ n'oge dị adị",
 		"seller": "ONye Rere Ahịa",
 		"session_total_0_00_usdc_settled_on": "Ngụkọta oge: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC kwụrụ ụgwọ na-agbanyeghị agbụ",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 ngosi akwụ ụgwọ-kwa-oku",
-		"x402_the_payment_trust_layer_title": "x402 — ọkwa ntụkwasị obi ịkwụ ụgwọ nke na-akwado mmezi ndị a"
+		"x402_the_payment_trust_layer_title": "x402: ọkwa ntụkwasị obi ịkwụ ụgwọ nke na-akwado mmezi ndị a"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Kpọọ create_identity",

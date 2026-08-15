@@ -36,6 +36,15 @@ export interface CallOptions {
 	token?: string;
 }
 
+export interface ResolveOptions extends CallOptions {
+	/**
+	 * (SNS) also fetch every `.sol` the owner holds and their favorite domain.
+	 * Off by default: it costs two extra lookups against the SNS index, which a
+	 * plain address resolution does not need.
+	 */
+	domains?: boolean;
+}
+
 export interface ResolveResult {
 	/** The resolved name, e.g. `alice.sol` or `vitalik.eth`. Null on a miss. */
 	name: string | null;
@@ -45,10 +54,12 @@ export interface ResolveResult {
 	network: Network;
 	/** `false` is a routine "no such name", not an error (SNS only). */
 	resolved: boolean;
-	/** (SNS) other `.sol` domains the owner holds. */
+	/** (SNS) every `.sol` the owner holds. Empty unless the call passed `domains: true`. */
 	allDomains: string[];
-	/** (SNS) the owner's primary `.sol`, if set. */
+	/** (SNS) the owner's primary `.sol`. Null unless the call passed `domains: true`. */
 	favoriteDomain: string | null;
+	/** (SNS) true when `allDomains` hit the 100-name cap and more exist. */
+	domainsTruncated: boolean;
 	/** (ENS) agents registered to the resolved address. */
 	agents?: unknown[];
 	raw: unknown;
@@ -170,8 +181,8 @@ export interface PaySendResult {
 export type PayResult = PayPrepResult | PaySendResult;
 
 export interface NamesClient {
-	resolve(name: string, opts?: CallOptions): Promise<ResolveResult>;
-	reverseLookup(address: string, opts?: CallOptions): Promise<ResolveResult>;
+	resolve(name: string, opts?: ResolveOptions): Promise<ResolveResult>;
+	reverseLookup(address: string, opts?: ResolveOptions): Promise<ResolveResult>;
 	checkSubdomain(label: string, opts?: CallOptions): Promise<Availability>;
 	mintSubdomain(input: MintInput): Promise<MintResult>;
 	claimSubdomain(input: ClaimInput): Promise<ClaimResult>;
@@ -181,8 +192,8 @@ export interface NamesClient {
 }
 
 export declare function createNames(options?: NamesClientOptions): NamesClient;
-export declare function resolve(name: string, opts?: CallOptions): Promise<ResolveResult>;
-export declare function reverseLookup(address: string, opts?: CallOptions): Promise<ResolveResult>;
+export declare function resolve(name: string, opts?: ResolveOptions): Promise<ResolveResult>;
+export declare function reverseLookup(address: string, opts?: ResolveOptions): Promise<ResolveResult>;
 export declare function checkSubdomain(label: string, opts?: CallOptions): Promise<Availability>;
 export declare function mintSubdomain(input: MintInput): Promise<MintResult>;
 export declare function claimSubdomain(input: ClaimInput): Promise<ClaimResult>;

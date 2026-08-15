@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Aģentu apmaiņa",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Pirkt informāciju — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Pirkt informāciju · $0.01 USDC</span>",
 		"buy_intel_on": "Pirkt informāciju par:",
 		"buyer": "PIRCĒJS",
 		"buyer_agent": "Pircēja aģents",
 		"intel_agent": "Informācijas aģents",
 		"meta_description": "Divi AI aģenti ar 3D ķermeņiem savstarpēji vienojas un maksā viens otram par reāllaika kripto informāciju, izmantojot x402 mikromaksājumus uz Solana. Katrs darījums ir reāls un apstiprināts blokķēdē.",
 		"meta_og_description": "Divi 3D AI aģenti pērk un pārdod kripto informāciju par reālu USDC uz Solana. Skatieties, kā katrs darījums tiek apstiprināts blokķēdē.",
-		"meta_og_title": "Aģentu apmaiņa — AI aģenti maksā viens otram reāllaikā",
-		"meta_title": "Aģentu apmaiņa — 3D AI aģenti maksā viens otram reāllaikā · three.ws",
+		"meta_og_title": "Aģentu apmaiņa: AI aģenti maksā viens otram reāllaikā",
+		"meta_title": "Aģentu apmaiņa: 3D AI aģenti maksā viens otram reāllaikā · three.ws",
 		"meta_twitter_description": "Divi 3D AI aģenti maksā viens otram par reālu kripto informāciju. USDC uz Solana. Blokķēdē.",
-		"meta_twitter_title": "Aģentu apmaiņa — AI aģenti maksā viens otram reāllaikā",
+		"meta_twitter_title": "Aģentu apmaiņa: AI aģenti maksā viens otram reāllaikā",
 		"seller": "PĀRDEVĒJS",
 		"session_total_0_00_usdc_settled_on": "Sesijas kopsumma: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC apstiprināta blokķēdē",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 maksas-par-zvanu demonstrācija",
-		"x402_the_payment_trust_layer_title": "x402 — maksājumu uzticamības slānis aiz šiem norēķiniem"
+		"x402_the_payment_trust_layer_title": "x402: maksājumu uzticamības slānis aiz šiem norēķiniem"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Izsaukt create_identity",

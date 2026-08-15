@@ -121,6 +121,25 @@ function toast(msg, ms = 2200) {
 	}, ms);
 }
 
+// ── workspace layout constants ──────────────────────────────────────────────
+// These live above the boot dispatch below because that dispatch runs during
+// module evaluation: boot() calls loadLayout() synchronously before any await.
+// While LS_KEY was declared further down the file it was still in its temporal
+// dead zone at that moment, so every read threw a ReferenceError straight into
+// loadLayout's catch and a returning viewer's saved panel arrangement was
+// silently discarded on every load.
+
+// Bumped v1 → v2 to retire the old six-panels-open layout. Returning visitors
+// get the calm two-panel default once, then their re-arrangements persist again.
+const LS_KEY = 'twx_asc_workspace_v2';
+
+// Below this width a floating panel spans the full viewport, so the two that
+// open by default would completely cover the screen feed and the avatar cam:
+// the page's entire reason to exist, hidden behind panels on a phone. Narrow
+// viewports therefore start with a bare stage and reach the panels through the
+// header toggles, which scroll to stay reachable at any width.
+const PANEL_RAIL_MIN_WIDTH = 720;
+
 if (!agentId) {
 	renderSetup();
 } else {
@@ -160,18 +179,35 @@ async function renderSetup() {
 	const detector = { client: null, pollTimer: null, started: false };
 
 	// ── Check auth ─────────────────────────────────────────────────────────
+	// Only a 401 means "signed out". Any other failure (5xx, a proxy hiccup, the
+	// browser offline) used to land in the same bucket and told a signed-in
+	// owner to go sign in, which is both wrong and a dead end. Those get their
+	// own state with a retry instead.
 	let agents = [];
 	let isSignedIn = false;
-	try {
-		const r = await fetch('/api/agents', { credentials: 'include' });
-		if (r.ok) {
-			const j = await r.json();
-			agents = j.agents || j.data || [];
-			isSignedIn = true;
-		} else if (r.status === 401) {
-			isSignedIn = false;
+	let agentsError = '';
+
+	async function loadAgents() {
+		agentsError = '';
+		try {
+			const r = await fetch('/api/agents', { credentials: 'include' });
+			if (r.ok) {
+				const j = await r.json();
+				agents = j.agents || j.data || [];
+				isSignedIn = true;
+				return;
+			}
+			if (r.status === 401) {
+				isSignedIn = false;
+				return;
+			}
+			agentsError = `Couldn't load your agents (server said ${r.status}).`;
+		} catch {
+			agentsError = "Couldn't reach three.ws. Check your connection.";
 		}
-	} catch { /* network error — treat as signed-out */ }
+	}
+
+	await loadAgents();
 
 	// Command builders pull from the shared, unit-tested module so the copied
 	// command and the highlighted display can never drift. Placeholders are only
@@ -208,6 +244,12 @@ async function renderSetup() {
 
 	function agentGridHTML() {
 		const list = filteredAgents();
+		if (agentsError) {
+			return `<div class="ws-agent-empty ws-agent-error" role="alert">
+				<span>${esc(agentsError)}</span>
+				<button class="ws-btn ws-btn-ghost" id="ws-retry-agents" type="button">Retry</button>
+			</div>`;
+		}
 		if (agents.length === 0) {
 			return `<div class="ws-agent-empty">
 				${isSignedIn
@@ -236,7 +278,11 @@ async function renderSetup() {
 	}
 
 	function goLiveHTML() {
-		const watchLink = selectedAgent ? `/agent-screen?agentId=${encodeURIComponent(selectedAgent.id)}` : '#';
+		// Only ever rendered once an agent is picked, but fall back to the agent
+		// list rather than a dead `#` if that ever stops being true.
+		const watchLink = selectedAgent
+			? `/agent-screen?agentId=${encodeURIComponent(selectedAgent.id)}`
+			: '/agents';
 		const privateNote = privateWarning ? `
 			<div class="ws-golive-note">
 				This agent isn't in the public directory yet. Make it public so viewers can find it on the wall —
@@ -288,7 +334,11 @@ async function renderSetup() {
 
 			<div class="ws-progress" aria-hidden="true">${progressHTML()}</div>
 
-			${!isSignedIn ? `
+			${agentsError ? `
+			<div class="ws-not-signed-in" role="alert">
+				<span>⚠</span>
+				<span>${esc(agentsError)} <button class="ws-link-btn" id="ws-retry-agents-top" type="button">Try again</button></span>
+			</div>` : !isSignedIn ? `
 			<div class="ws-not-signed-in">
 				<span>⚠</span>
 				<span>You need to <a href="/login">sign in</a> to generate an API key and select an agent.</span>
@@ -402,6 +452,14 @@ async function renderSetup() {
 		container.querySelector('#ws-gen-key')?.addEventListener('click', generateKey);
 		container.querySelector('#ws-regen-key')?.addEventListener('click', generateKey);
 		container.querySelector('#ws-retry-key')?.addEventListener('click', generateKey);
+		for (const btn of container.querySelectorAll('#ws-retry-agents, #ws-retry-agents-top')) {
+			btn.addEventListener('click', async () => {
+				btn.disabled = true;
+				btn.textContent = 'Retrying…';
+				await loadAgents();
+				render();
+			});
+		}
 		container.querySelector('#ws-copy-key')?.addEventListener('click', () => copyText(apiKey, 'ws-copy-key'));
 		container.querySelector('#ws-copy-cmd')?.addEventListener('click', () => copyText(buildRunCommand(cmdOpts()), 'ws-copy-cmd'));
 		container.querySelectorAll('.ws-cmd-tab').forEach((tab) => {
@@ -540,11 +598,13 @@ async function renderSetup() {
 
 // ── workspace layout persistence ─────────────────────────────────────────────
 
-// Bumped v1 → v2 to retire the old six-panels-open layout. Returning visitors
-// get the calm two-panel default once, then their re-arrangements persist again.
-const LS_KEY = 'twx_asc_workspace_v2';
+function narrowViewport() {
+	return typeof window !== 'undefined' && window.innerWidth > 0
+		&& window.innerWidth < PANEL_RAIL_MIN_WIDTH;
+}
 
 function defaultLayout() {
+	const railFits = !narrowViewport();
 	return {
 		zen: false,
 		zenCam: true,          // keep the avatar cam visible in zen by default
@@ -555,7 +615,7 @@ function defaultLayout() {
 		// toolbar click away. Bumping LS_KEY resets returning visitors to this baseline.
 		panels: {
 			cam:      { hidden: true,  min: false, x: null, y: null, w: 260 },
-			log:      { hidden: false, min: false, x: null, y: null, w: 320, h: 280 },
+			log:      { hidden: !railFits, min: false, x: null, y: null, w: 320, h: 280 },
 			stats:    { hidden: true,  min: false, x: null, y: null, w: 218 },
 			treasury: { hidden: true,  min: false, x: null, y: null, w: 344, h: null },
 			mirror:   { hidden: true,  min: false, x: null, y: null, w: 380, h: null },
@@ -564,7 +624,7 @@ function defaultLayout() {
 			hud:      { hidden: true,  min: false, x: null, y: null, w: 288, h: null },
 			diary:    { hidden: true,  min: false, x: null, y: null, w: 360, h: 332 },
 			hire:     { hidden: true,  min: false, x: null, y: null, w: 340, h: null },
-			reputation: { hidden: false, min: false, x: null, y: null, w: 320, h: 340 },
+			reputation: { hidden: !railFits, min: false, x: null, y: null, w: 320, h: 340 },
 		},
 	};
 }
@@ -663,7 +723,7 @@ async function boot(id) {
 				<!-- Pose Studio Live: call out a pose, the avatar performs it -->
 				<div class="asc-pose" id="asc-pose">
 					<form class="asc-pose-form" id="asc-pose-form" autocomplete="off">
-						<input class="asc-pose-input" id="asc-pose-input" type="text" maxlength="120" spellcheck="false" placeholder="Pose the avatar… try “take a bow”">
+						<input class="asc-pose-input" id="asc-pose-input" type="text" maxlength="120" spellcheck="false" aria-label="Pose the avatar" placeholder="Pose the avatar… try “take a bow”">
 						<button class="asc-pose-go" id="asc-pose-go" type="submit" title="Perform pose">Pose</button>
 					</form>
 					<div class="asc-pose-chips" id="asc-pose-chips"></div>
@@ -846,7 +906,7 @@ async function boot(id) {
 						<ol class="asc-stage-lead-list" id="asc-stage-lead-list"></ol>
 					</div>
 					<form class="asc-stage-ask" id="asc-stage-ask" autocomplete="off">
-						<input class="asc-stage-ask-input" id="asc-stage-ask-input" type="text" maxlength="240" placeholder="Ask the host a question…" spellcheck="false">
+						<input class="asc-stage-ask-input" id="asc-stage-ask-input" type="text" maxlength="240" aria-label="Ask the host a question" placeholder="Ask the host a question…" spellcheck="false">
 						<button class="asc-stage-ask-send" type="submit" title="Ask the host">Ask</button>
 					</form>
 					<div class="asc-stage-ask-status" id="asc-stage-ask-status"></div>
@@ -876,6 +936,7 @@ async function boot(id) {
 					class="asc-task-input"
 					id="asc-task-input"
 					type="text"
+					aria-label="Ask this agent anything"
 					placeholder="Ask this agent anything…"
 					maxlength="1000"
 					spellcheck="false"
@@ -896,6 +957,7 @@ async function boot(id) {
 					class="asc-forge-input"
 					id="asc-forge-input"
 					type="text"
+					aria-label="Describe the avatar to forge"
 					placeholder="Forge an avatar — describe it (e.g. a glossy white robot mascot)"
 					maxlength="1000"
 					spellcheck="false"

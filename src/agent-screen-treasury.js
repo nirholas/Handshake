@@ -361,6 +361,7 @@ export function createTreasuryCockpit({ agentId, bodyEl, toast, network = 'mainn
 			<textarea id="ast-policy" class="ast-textarea" rows="3" spellcheck="false"
 				placeholder="Pay your own compute, keep a 1 SOL buffer, put 10% of tips into $THREE, buy back your coin weekly, sweep over 3 SOL to me on Fridays.">${esc(sourceText)}</textarea>
 			<input id="ast-sweep" class="ast-input" type="text" spellcheck="false" autocomplete="off"
+				aria-label="Sweep destination wallet (optional)"
 				placeholder="Sweep destination wallet (optional)" value="${esc(sweep)}">
 			<div class="ast-preview" id="ast-preview"></div>
 			<div class="ast-actions">

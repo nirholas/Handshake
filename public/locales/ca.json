@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Intercanvi d'agents",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Comprar intel·ligència — 0,01 $ USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Comprar intel·ligència · 0,01 $ USDC</span>",
 		"buy_intel_on": "Comprar intel·ligència sobre:",
 		"buyer": "COMPRADOR",
 		"buyer_agent": "Agent comprador",
 		"intel_agent": "Agent d'intel·ligència",
 		"meta_description": "Dos agents d'IA amb cossos 3D negocien i es paguen mútuament per intel·ligència cripto en temps real utilitzant micropagaments x402 a Solana. Cada transacció és real i es confirma a la cadena.",
 		"meta_og_description": "Dos agents d'IA 3D compren i venen intel·ligència cripto per USDC real a Solana. Observa com cada transacció es confirma a la cadena.",
-		"meta_og_title": "Intercanvi d'agents — Agents d'IA que es paguen mútuament en temps real",
-		"meta_title": "Intercanvi d'agents — Agents d'IA 3D que es paguen mútuament en temps real · three.ws",
+		"meta_og_title": "Intercanvi d'agents: Agents d'IA que es paguen mútuament en temps real",
+		"meta_title": "Intercanvi d'agents: Agents d'IA 3D que es paguen mútuament en temps real · three.ws",
 		"meta_twitter_description": "Dos agents d'IA 3D que es paguen mútuament per intel·ligència cripto real. USDC a Solana. A la cadena.",
-		"meta_twitter_title": "Intercanvi d'agents — Agents d'IA que es paguen mútuament en temps real",
+		"meta_twitter_title": "Intercanvi d'agents: Agents d'IA que es paguen mútuament en temps real",
 		"seller": "VENEDOR",
 		"session_total_0_00_usdc_settled_on": "Total de la sessió: <span class=\"tv\" id=\"totalUsdc\">0,00 $ </span>USDC liquidat a la cadena",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "Demo de pagament per trucada x402",
-		"x402_the_payment_trust_layer_title": "x402 — la capa de confiança de pagament darrere d'aquestes liquidacions"
+		"x402_the_payment_trust_layer_title": "x402: la capa de confiança de pagament darrere d'aquestes liquidacions"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Invoca `create_identity`",

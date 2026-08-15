@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>Agentruil",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Koop inligting — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">Koop inligting · $0.01 USDC</span>",
 		"buy_intel_on": "Koop inligting oor:",
 		"buyer": "KOPER",
 		"buyer_agent": "Koperagent",
 		"intel_agent": "Inligtingagent",
 		"meta_description": "Twee KI-agente met 3D-liggame onderhandel en betaal mekaar vir lewendige kripto-inligting met x402 mikrovergoedings op Solana. Elke transaksie is werklik en op-ketting bevestig.",
 		"meta_og_description": "Twee 3D KI-agente koop en verkoop kripto-inligting vir regte USDC op Solana. Kyk hoe elke transaksie op-ketting bevestig word.",
-		"meta_og_title": "Agentruil — KI-agente betaal mekaar in reële tyd",
-		"meta_title": "Agentruil — 3D KI-agente betaal mekaar in reële tyd · three.ws",
+		"meta_og_title": "Agentruil: KI-agente betaal mekaar in reële tyd",
+		"meta_title": "Agentruil: 3D KI-agente betaal mekaar in reële tyd · three.ws",
 		"meta_twitter_description": "Twee 3D KI-agente betaal mekaar vir regte kripto-inligting. USDC op Solana. Op-ketting.",
-		"meta_twitter_title": "Agentruil — KI-agente betaal mekaar in reële tyd",
+		"meta_twitter_title": "Agentruil: KI-agente betaal mekaar in reële tyd",
 		"seller": "VERKOPER",
 		"session_total_0_00_usdc_settled_on": "Sessietotaal: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC op-ketting vereffen",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 betaal-per-oproep demo",
-		"x402_the_payment_trust_layer_title": "x402 — die betaalvertrouenslaag agter hierdie skikkings"
+		"x402_the_payment_trust_layer_title": "x402: die betaalvertrouenslaag agter hierdie skikkings"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · Roep create_identity aan",

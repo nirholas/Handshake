@@ -80,7 +80,10 @@ const FEE_BUFFER_LAMPORTS = 15_000;
 
 const bodySchema = z.object({
 	service: z.string().min(1).max(64),
-	topic: z.string().max(120).optional(),
+	// Nullable as well as optional: "no topic" reaches this endpoint as an
+	// explicit null from every JSON client that serializes an empty field, and
+	// rejecting that turned the plainest possible request into a 400.
+	topic: z.string().max(120).nullish(),
 });
 
 export default wrap(async (req, res) => {

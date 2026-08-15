@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const resolveMock = vi.fn();
 const getFavoriteDomainMock = vi.fn();
@@ -21,7 +21,9 @@ vi.mock('@solana/web3.js', () => {
 	return { Connection, PublicKey };
 });
 
-const { resolveSnsName, reverseLookupAddress, resolveSolanaRecipient } = await import('../src/solana/sns.js');
+const { resolveSnsName, reverseLookupAddress, resolveSolanaRecipient, snsOwnerDomains } = await import(
+	'../src/solana/sns.js'
+);
 
 describe('resolveSnsName', () => {
 	beforeEach(() => {
@@ -144,5 +146,71 @@ describe('resolveSolanaRecipient', () => {
 		expect(out.address).toBe(VALID_ADDR);
 		expect(out.resolved_from).toBe('nich.threews.sol');
 		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'nich.threews');
+	});
+});
+
+describe('snsOwnerDomains', () => {
+	const OWNER = 'HKKp49zUBeaABFMpBWKCJPoNDLiR4AEEr8FJKuZPn6Nk';
+
+	// The Bonfida index keys both payloads by the owner address and returns bare
+	// labels, so every name needs the .sol suffix put back on.
+	function stubIndex({ domains, favorite, domainsStatus = 200, favoriteStatus = 200 }) {
+		const fetchMock = vi.fn(async (url) => {
+			const path = String(url);
+			if (path.includes('/v2/user/domains/')) {
+				return { ok: domainsStatus === 200, status: domainsStatus, json: async () => ({ [OWNER]: domains }) };
+			}
+			if (path.includes('/v2/user/fav-domains/')) {
+				return { ok: favoriteStatus === 200, status: favoriteStatus, json: async () => ({ [OWNER]: favorite }) };
+			}
+			throw new Error(`unexpected fetch: ${path}`);
+		});
+		vi.stubGlobal('fetch', fetchMock);
+		return fetchMock;
+	}
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('suffixes, sorts, and pairs the list with the favorite', async () => {
+		stubIndex({ domains: ['zeta', 'alpha.sol'], favorite: 'alpha' });
+		const out = await snsOwnerDomains(OWNER);
+		expect(out.allDomains).toEqual(['alpha.sol', 'zeta.sol']);
+		expect(out.favoriteDomain).toBe('alpha.sol');
+		expect(out.truncated).toBe(false);
+	});
+
+	it('caps a whale wallet and reports the truncation', async () => {
+		stubIndex({ domains: Array.from({ length: 250 }, (_, i) => `d${String(i).padStart(3, '0')}`), favorite: null });
+		const out = await snsOwnerDomains(OWNER, { limit: 100 });
+		expect(out.allDomains).toHaveLength(100);
+		expect(out.truncated).toBe(true);
+		expect(out.favoriteDomain).toBeNull();
+	});
+
+	it('never calls the index for a malformed address', async () => {
+		const fetchMock = stubIndex({ domains: ['alpha'], favorite: 'alpha' });
+		const out = await snsOwnerDomains('not-an-address');
+		expect(out).toEqual({ allDomains: [], favoriteDomain: null, truncated: false });
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('degrades to an empty list when the index errors, never throws', async () => {
+		stubIndex({ domains: [], favorite: null, domainsStatus: 503, favoriteStatus: 503 });
+		expect(await snsOwnerDomains(OWNER)).toEqual({ allDomains: [], favoriteDomain: null, truncated: false });
+	});
+
+	it('keeps the half that answered when only one call fails', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (url) => {
+				if (String(url).includes('/v2/user/domains/')) throw new Error('socket hang up');
+				return { ok: true, status: 200, json: async () => ({ [OWNER]: 'alpha' }) };
+			}),
+		);
+		const out = await snsOwnerDomains(OWNER);
+		expect(out.allDomains).toEqual([]);
+		expect(out.favoriteDomain).toBe('alpha.sol');
 	});
 });

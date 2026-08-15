@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>ഏജന്റ് എക്സ്ചേഞ്ച്",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ഇന്റൽ വാങ്ങുക — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ഇന്റൽ വാങ്ങുക · $0.01 USDC</span>",
 		"buy_intel_on": "ഇന്റൽ വാങ്ങുക:",
 		"buyer": "വാങ്ങുന്നയാൾ",
 		"buyer_agent": "വാങ്ങുന്ന ഏജന്റ്",
 		"intel_agent": "ഇന്റൽ ഏജന്റ്",
 		"meta_description": "3D ശരീരങ്ങളുള്ള രണ്ട് AI ഏജന്റുമാർ Solana-ൽ x402 മൈക്രോപേയ്‌മെന്റുകൾ ഉപയോഗിച്ച് തത്സമയ ക്രിപ്‌റ്റോ ഇന്റലിനായി പരസ്പരം ചർച്ച ചെയ്യുകയും പണം നൽകുകയും ചെയ്യുന്നു. എല്ലാ ഇടപാടുകളും യഥാർത്ഥവും ഓൺ-ചെയിനിൽ സ്ഥിരീകരിച്ചതുമാണ്.",
 		"meta_og_description": "രണ്ട് 3D AI ഏജന്റുമാർ Solana-ൽ യഥാർത്ഥ USDC ഉപയോഗിച്ച് ക്രിപ്‌റ്റോ ഇന്റൽ വാങ്ങുകയും വിൽക്കുകയും ചെയ്യുന്നു. ഓരോ ഇടപാടും ഓൺ-ചെയിനിൽ സ്ഥിരീകരിക്കുന്നത് കാണുക.",
-		"meta_og_title": "ഏജന്റ് എക്സ്ചേഞ്ച് — AI ഏജന്റുമാർ തത്സമയം പരസ്പരം പണം നൽകുന്നു",
-		"meta_title": "ഏജന്റ് എക്സ്ചേഞ്ച് — 3D AI ഏജന്റുമാർ തത്സമയം പരസ്പരം പണം നൽകുന്നു · three.ws",
+		"meta_og_title": "ഏജന്റ് എക്സ്ചേഞ്ച്: AI ഏജന്റുമാർ തത്സമയം പരസ്പരം പണം നൽകുന്നു",
+		"meta_title": "ഏജന്റ് എക്സ്ചേഞ്ച്: 3D AI ഏജന്റുമാർ തത്സമയം പരസ്പരം പണം നൽകുന്നു · three.ws",
 		"meta_twitter_description": "രണ്ട് 3D AI ഏജന്റുമാർ യഥാർത്ഥ ക്രിപ്‌റ്റോ ഇന്റലിനായി പരസ്പരം പണം നൽകുന്നു. USDC Solana-ൽ. ഓൺ-ചെയിനിൽ.",
-		"meta_twitter_title": "ഏജന്റ് എക്സ്ചേഞ്ച് — AI ഏജന്റുമാർ തത്സമയം പരസ്പരം പണം നൽകുന്നു",
+		"meta_twitter_title": "ഏജന്റ് എക്സ്ചേഞ്ച്: AI ഏജന്റുമാർ തത്സമയം പരസ്പരം പണം നൽകുന്നു",
 		"seller": "വിൽക്കുന്നയാൾ",
 		"session_total_0_00_usdc_settled_on": "സെഷൻ ആകെ: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC ഓൺ-ചെയിനിൽ തീർപ്പാക്കി",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 പേ-പെർ-കോൾ ഡെമോ",
-		"x402_the_payment_trust_layer_title": "x402 — ഈ തീർപ്പാക്കലുകൾക്ക് പിന്നിലെ പേയ്‌മെന്റ് ട്രസ്റ്റ് ലെയർ"
+		"x402_the_payment_trust_layer_title": "x402: ഈ തീർപ്പാക്കലുകൾക്ക് പിന്നിലെ പേയ്‌മെന്റ് ട്രസ്റ്റ് ലെയർ"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity വിളിക്കുക",

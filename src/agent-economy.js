@@ -85,9 +85,34 @@ function renderFundAlert(status) {
 	});
 }
 
+// The status read failing left both balance chips spinning forever and the
+// addresses on their em-dash placeholder: a permanent loading state with no way
+// out. Say what happened and offer the retry instead.
+function renderStatusUnavailable() {
+	for (const id of ['buyer-bal', 'seller-bal']) {
+		const el = $(id);
+		if (!el) continue;
+		el.className = 'av-label-bal bal-unknown';
+		el.textContent = 'balance unavailable';
+	}
+	const el = $('fund-alert');
+	if (!el) return;
+	el.innerHTML = `<strong>Live wallet balances are unavailable.</strong> They could not be read just now. You can still request a service.
+		<button class="fund-alert-btn" type="button" data-retry-status="1">Retry</button>`;
+	el.classList.add('visible');
+	el.querySelector('[data-retry-status]')?.addEventListener('click', (e) => {
+		e.currentTarget.disabled = true;
+		for (const id of ['buyer-bal', 'seller-bal']) {
+			const chip = $(id);
+			if (chip) { chip.className = 'av-label-bal bal-unknown'; chip.innerHTML = '<span class="bal-spin"></span>'; }
+		}
+		refreshWalletStatus();
+	});
+}
+
 async function refreshWalletStatus() {
 	const status = await fetchWalletStatus();
-	if (!status) return;
+	if (!status) { renderStatusUnavailable(); return; }
 	currentWalletStatus = status;
 	renderBal('buyer-bal', status.agentA);
 	renderBal('seller-bal', status.agentB);
@@ -257,6 +282,25 @@ function renderAddr(elId, addr, explorerUrl) {
 }
 
 // ── Purchase flow ─────────────────────────────────────────────────────────────
+// A request that never reached the server leaves the page with nothing to show,
+// so the failure row carries the retry: the reader should not have to guess that
+// clicking the same catalog row again is the recovery.
+function requestFailed(message, service) {
+	setStatus(message);
+	const row = addFeedItem({
+		icon: '⚠️',
+		type: 'pay',
+		title: 'Request failed',
+		sub: `${escHtml(message)} <button class="tx-retry-btn" type="button">Try again</button>`,
+	});
+	row?.querySelector('.tx-retry-btn')?.addEventListener('click', () => {
+		if (busy) return;
+		purchase(service);
+	});
+	busy = false;
+	setButtons(false);
+}
+
 async function purchase(service) {
 	if (busy) return;
 	busy = true;
@@ -290,15 +334,30 @@ async function purchase(service) {
 		const res = await fetch('/api/agent-economy/transact', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ service, topic }),
+			// Omit `topic` entirely when the field is empty. Sending `topic: null`
+			// failed the endpoint's schema, so the page's most common path (click a
+			// service, type nothing) answered 400 instead of transacting.
+			body: JSON.stringify(topic ? { service, topic } : { service }),
 		});
-		data = await res.json();
-		if (!res.ok) throw new Error(data.error_description || data.error || `HTTP ${res.status}`);
+		// A gateway can answer a 502 with HTML, and res.json() throws on it. Read
+		// the body once and parse defensively so an infrastructure hiccup reads as
+		// "the service is unavailable", not as a bare parser error.
+		const raw = await res.text();
+		try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
+		if (!res.ok || !data) {
+			requestFailed(
+				data?.error_description ||
+					data?.error ||
+					`The agent economy service is unavailable right now (HTTP ${res.status}). Try again in a moment.`,
+				service,
+			);
+			return;
+		}
 	} catch (e) {
-		setStatus(`Error: ${e.message}`);
-		addFeedItem({ icon: '⚠️', type: 'pay', title: 'Request failed', sub: escHtml(e.message) });
-		busy = false;
-		setButtons(false);
+		// The raw fetch rejection ("Failed to fetch") told the reader nothing and
+		// nothing to do about it. Keep the detail in the console.
+		log.warn('[three.ws] agent-economy: transact request failed:', e.message);
+		requestFailed('Could not reach the agent economy service. Check your connection and try again.', service);
 		return;
 	}
 
@@ -416,7 +475,11 @@ async function purchase(service) {
 		});
 	}
 
-	setStatus('Transaction complete · Select another service to continue');
+	// Only a settled payment gets the "complete" line. This used to run
+	// unconditionally, so an unfunded wallet or a spent daily budget ended on
+	// "Transaction complete", wiping the one line that told the reader what had
+	// actually happened and what to do about it.
+	if (!tx?.error) setStatus('Transaction complete · Select another service to continue');
 	busy = false;
 	setButtons(false);
 

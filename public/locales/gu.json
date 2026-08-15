@@ -770,22 +770,22 @@
 	},
 	"agent_exchange": {
 		"agent_exchange": "<span class=\"dot\"></span>એજન્ટ એક્સચેન્જ",
-		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ઇન્ટેલ ખરીદો — $0.01 USDC</span>",
+		"buy_intel_0_01_usdc": "<span class=\"spin\" aria-hidden=\"true\"></span> <span class=\"lbl\">ઇન્ટેલ ખરીદો · $0.01 USDC</span>",
 		"buy_intel_on": "આના પર ઇન્ટેલ ખરીદો:",
 		"buyer": "ખરીદનાર",
 		"buyer_agent": "ખરીદનાર એજન્ટ",
 		"intel_agent": "ઇન્ટેલ એજન્ટ",
 		"meta_description": "3D બોડીવાળા બે AI એજન્ટો Solana પર x402 માઇક્રોપેમેન્ટ્સનો ઉપયોગ કરીને લાઇવ ક્રિપ્ટો ઇન્ટેલ માટે વાટાઘાટ કરે છે અને એકબીજાને ચૂકવણી કરે છે. દરેક ટ્રાન્ઝેક્શન વાસ્તવિક છે અને ઓન-ચેઇન પર પુષ્ટિ થયેલ છે.",
 		"meta_og_description": "બે 3D AI એજન્ટો Solana પર વાસ્તવિક USDC માટે ક્રિપ્ટો ઇન્ટેલ ખરીદે છે અને વેચે છે. દરેક ટ્રાન્ઝેક્શનને ઓન-ચેઇન પર પુષ્ટિ થતી જુઓ.",
-		"meta_og_title": "એજન્ટ એક્સચેન્જ — AI એજન્ટો એકબીજાને રીઅલ ટાઇમમાં ચૂકવણી કરે છે",
-		"meta_title": "એજન્ટ એક્સચેન્જ — 3D AI એજન્ટો એકબીજાને રીઅલ ટાઇમમાં ચૂકવણી કરે છે · three.ws",
+		"meta_og_title": "એજન્ટ એક્સચેન્જ: AI એજન્ટો એકબીજાને રીઅલ ટાઇમમાં ચૂકવણી કરે છે",
+		"meta_title": "એજન્ટ એક્સચેન્જ: 3D AI એજન્ટો એકબીજાને રીઅલ ટાઇમમાં ચૂકવણી કરે છે · three.ws",
 		"meta_twitter_description": "બે 3D AI એજન્ટો વાસ્તવિક ક્રિપ્ટો ઇન્ટેલ માટે એકબીજાને ચૂકવણી કરે છે. Solana પર USDC. ઓન-ચેઇન.",
-		"meta_twitter_title": "એજન્ટ એક્સચેન્જ — AI એજન્ટો એકબીજાને રીઅલ ટાઇમમાં ચૂકવણી કરે છે",
+		"meta_twitter_title": "એજન્ટ એક્સચેન્જ: AI એજન્ટો એકબીજાને રીઅલ ટાઇમમાં ચૂકવણી કરે છે",
 		"seller": "વેચનાર",
 		"session_total_0_00_usdc_settled_on": "સત્ર કુલ: <span class=\"tv\" id=\"totalUsdc\">$0.00</span> USDC ઓન-ચેઇન પર પતાવટ થઈ",
 		"three_ws": "three.ws",
 		"x402_pay_per_call_demo_title": "x402 પે-પર-કોલ ડેમો",
-		"x402_the_payment_trust_layer_title": "x402 — આ પતાવટ પાછળનું પેમેન્ટ ટ્રસ્ટ લેયર"
+		"x402_the_payment_trust_layer_title": "x402: આ પતાવટ પાછળનું પેમેન્ટ ટ્રસ્ટ લેયર"
 	},
 	"agent_identities": {
 		"1_call_create_identity": "1 · create_identity ને કૉલ કરો",

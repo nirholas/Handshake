@@ -6,7 +6,7 @@
 		<title data-i18n="agent_screen.meta_title">Agent Screen · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#0a0a0b" />
-		<meta name="description" content="Watch your agent in real time — see their screen and avatar as they autonomously trade, browse, and act."  data-i18n-attr="content:agent_screen.meta_description"/>
+		<meta name="description" content="Watch your agent work in real time: their live screen on one side, their 3D avatar rendered as a webcam on the other, while they trade, browse, and act."  data-i18n-attr="content:agent_screen.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="canonical" href="https://three.ws/agent-screen" />
 
@@ -178,12 +178,39 @@
 			}
 			body.asc-zen .asc-pnl { display: none; }
 
+			/* The skip link resolves here and the landmark is the flex child that
+			   owns the remaining height; the stage and the setup view swap inside
+			   it, one visible at a time, each still stretching to fill. */
+			.asc-main {
+				flex: 1;
+				min-height: 0;
+				display: flex;
+				flex-direction: column;
+			}
+
 			.asc-header-right {
 				margin-left: auto;
 				display: flex;
 				align-items: center;
 				gap: 0.3rem;
+				/* Eighteen controls do not fit a phone. body is overflow:hidden, so
+				   without this the tail of the bar (fit, screenshot, PiP, fullscreen,
+				   ambient, zen, wall, agent) was simply cut off and unreachable
+				   below ~900px. Shrink-to-fit and scroll the excess instead: every
+				   control stays reachable by swipe, and tabbing to one scrolls it
+				   into view. */
+				min-width: 0;
+				overflow-x: auto;
+				overflow-y: hidden;
+				scrollbar-width: none;
+				-webkit-overflow-scrolling: touch;
+				overscroll-behavior-x: contain;
 			}
+			.asc-header-right::-webkit-scrollbar { width: 0; height: 0; }
+			.asc-header-right > * { flex: none; }
+			/* The name + live badge must yield to the control bar rather than
+			   overrun it: at 320px the badge used to paint on top of the toggles. */
+			.asc-agent-info { flex: 0 1 auto; overflow: hidden; }
 			.asc-ctl-group { display: flex; align-items: center; gap: 0.2rem; }
 			.asc-ctl-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.12); margin: 0 0.25rem; flex: none; }
 
@@ -1295,6 +1322,15 @@
 			.ws-agent-uuid { font-size: 0.7rem; color: rgba(255,255,255,0.3); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 			.ws-agent-empty { color: rgba(255,255,255,0.35); font-size: 0.85rem; padding: 1rem 0; text-align: center; }
 			.ws-agent-empty a { color: #d4d4d8; }
+			/* The agent list failed to load for a reason that is not "signed out":
+			   say so and offer the way out instead of a blank list. */
+			.ws-agent-error {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 0.7rem;
+				color: rgba(255,255,255,0.72);
+			}
 			.ws-key-row { display: flex; gap: 0.65rem; align-items: center; }
 			.ws-key-display {
 				flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
@@ -2289,13 +2325,15 @@
 			</div>
 		</header>
 
-		<div class="asc-stage" id="asc-stage" style="display:none">
-			<!-- populated by agent-screen.js -->
-		</div>
+		<main class="asc-main" id="main-content">
+			<div class="asc-stage" id="asc-stage" style="display:none">
+				<!-- populated by agent-screen.js -->
+			</div>
 
-		<div id="asc-no-agent" class="asc-no-agent" style="display:flex">
-			<div class="ws-spinner"></div>
-		</div>
+			<div id="asc-no-agent" class="asc-no-agent" style="display:flex">
+				<div class="ws-spinner"></div>
+			</div>
+		</main>
 
 		<div class="asc-toast-wrap" id="asc-toast-wrap"></div>
 
