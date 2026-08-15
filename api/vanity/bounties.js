@@ -81,6 +81,8 @@ import {
 } from '../../src/solana/vanity/bounty-protocol.js';
 import {
 	createBounty,
+	activateBounty,
+	voidBounty,
 	getBounty,
 	getBountyRecord,
 	claimBounty,
@@ -89,7 +91,6 @@ import {
 	listClaimable,
 	bountyStats,
 	topGrinders,
-	acquireLease,
 } from '../_lib/vanity-bounty-store.js';
 import { payWinner, refundRequester, payoutConfigured } from '../_lib/vanity-bounty-payout.js';
 import { randomSeed } from '../../src/solana/vanity/verifiable-grind.js';
@@ -422,7 +423,12 @@ async function handleCreate(req, res, url) {
 	}
 
 	// Build + persist the bounty record AFTER verify but BEFORE settle, so a store
-	// failure throws before the requester is charged.
+	// failure throws before the requester is charged. It is persisted as
+	// `escrow_pending`: recorded and id-reserved, but in no index, invisible to the
+	// board and to workers, and refused by both the claim and the refund
+	// compare-and-set. Only a settled escrow promotes it (activateBounty). Without
+	// that gate a settle failure would leave a live bounty backed by nothing, and
+	// the platform would pay its winner — or its expiry refund — out of pocket.
 	const nonce = bytesToHex(randomSeed());
 	const id = deriveBountyId({ recipient: parsed.recipient, pattern: parsed.pattern, amountAtomics: parsed.amountAtomics, nonce });
 	const now = Date.now();
@@ -440,25 +446,43 @@ async function handleCreate(req, res, url) {
 		nonce,
 		createdAt: now,
 		expiresAt: now + parsed.expiryHours * 3600_000,
+		status: 'escrow_pending',
 		// Escrow audit trail — proves the requester funded it. Not exposed publicly.
 		escrowPayer: verified.payer || null,
 	};
 
-	let stored;
 	try {
-		stored = await createBounty(record);
+		await createBounty(record);
 	} catch (err) {
 		return error(res, err.status || 500, err.code || 'store_failed', err.message);
 	}
 
-	// Settle the escrow payment on-chain. If settle fails we still hold the bounty
-	// record but mark escrow unfunded — the requester can retry the same payment
-	// (idempotent). We surface the settle error so they know to retry.
+	// Settle the escrow on-chain. A failure here means we never collected the
+	// money, so the pending bounty is voided rather than left behind: an unfunded
+	// record must never reach a worker or a refund. The requester is told to retry.
 	let settled;
 	try {
 		settled = await settlePayment({ verified });
 	} catch (err) {
-		return error(res, err.status || 502, err.code || 'settle_failed', err.message);
+		await voidBounty({ id, reason: `escrow settle failed: ${err.message}` }).catch(() => {});
+		return error(res, err.status || 502, err.code || 'settle_failed', `${err.message} — no bounty was posted; retry with a fresh payment`);
+	}
+
+	// Escrow collected: promote the bounty to live + indexed in one atomic step.
+	// If the store is unreachable at exactly this moment the money HAS landed, so
+	// we retry once and then hand back the settlement tx: the record stays pending
+	// with its escrow proof, recoverable, never silently dropped.
+	let activation;
+	try {
+		activation = await activateBounty({ id, escrowTx: settled.transaction, escrowNetwork: settled.network });
+	} catch {
+		activation = await activateBounty({ id, escrowTx: settled.transaction, escrowNetwork: settled.network }).catch(() => 'error');
+	}
+	if (activation !== 'live') {
+		return error(res, 502, 'activation_failed', `your escrow settled (tx ${settled.transaction || 'unknown'}) but the bounty could not be published; contact support with bounty id ${id}`, {
+			bountyId: id,
+			escrowTx: settled.transaction || null,
+		});
 	}
 
 	const paymentResponseHeader = encodePaymentResponseHeader(settled);
