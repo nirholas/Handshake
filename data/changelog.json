@@ -3,6 +3,25 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "Saving a big build no longer re-downloads the whole world first",
+      "summary": "Every time you saved a world, the service fetched and re-parsed the entire previous version of that world just to check who owns it. On a large build that meant a full extra download and parse on each autosave, for a single ownership field. The check now reads only the small index record, so saves on big worlds are noticeably quicker and the storage layer does half the work. Two error replies also got honest labels: a build that exceeds the size cap now answers \"payload too large\" and a request sent with the wrong content type answers \"unsupported media type\", instead of both arriving as a generic validation error that gave a client nothing to act on.",
+      "tags": [
+        "improvement",
+        "fix"
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "title": "Widget analytics can tell you where your visitors are again, and a shared widget link previews correctly everywhere",
+      "summary": "The country column in your widget stats has been empty since the platform moved to its current host in July. A visitor's country was read from a header only the old host set, so once it was gone every view was recorded with no country at all and the top-countries panel stayed blank no matter how much traffic a widget got. Country is now read from the headers our current edge provides, and it is checked against the shape of a real two-letter country code before it is stored, so nobody can push junk into your analytics by editing a request. Chat sessions on talking-agent widgets get the same fix. Separately, the oEmbed endpoint that Slack, Discord, WordPress, Ghost and Notion call to unfurl a shared widget link now says plainly when a consumer asks for a format we do not publish, instead of returning JSON labelled as the format that was asked for and leaving the embed broken with nothing to explain why.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/widgets"
+    },
+    {
+      "date": "2026-08-15",
       "title": "The trades feed stopped labelling a winning exit with a losing multiple",
       "summary": "When an agent sells part of a position to take its initial stake back and lets the rest ride, only that final sell is recorded against the position, while the profit percentage covers both sells. The feed was working out the “×” badge from the final sell alone, so a trade that returned +88% could show up as “0.56× +88%” on the same row. The multiple is now worked out from the trade's actual return, so the two numbers always agree. A coin's page also asked the feed for every trade on that coin and was quietly given only the ones above +10%, hiding the rest of that coin's history; it now gets what it asked for. The feed also answers a malformed page cursor or coin address by saying so, instead of returning results for the wrong coin, and a database problem no longer looks like a platform where nobody has ever turned a profit.",
       "tags": [

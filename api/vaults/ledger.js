@@ -18,7 +18,8 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const vaultId = url.searchParams.get('vault_id') || url.searchParams.get('vaultId');
-	if (!vaultId || !isUuid(vaultId)) return error(res, 400, 'validation_error', 'vault_id required');
+	if (!vaultId) return error(res, 400, 'validation_error', 'vault_id required');
+	if (!isUuid(vaultId)) return error(res, 400, 'validation_error', 'vault_id must be a vault id');
 
 	const vault = await getVault(vaultId);
 	if (!vault) return error(res, 404, 'not_found', 'vault not found');
