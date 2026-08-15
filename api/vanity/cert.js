@@ -56,34 +56,28 @@ export default wrap(async (req, res) => {
 		return error(res, 502, 'registry_error', err.message);
 	}
 
-	// An id lookup resolves certId → address → the address's CANONICAL record, so a
-	// duplicate certificate still finds a record: the one that beat it. Answering
-	// "found" alone would let a re-sold duplicate read as the original, which is the
-	// exact question this endpoint exists to settle. `queriedIsCanonical` compares
-	// the certId that was asked about against the canonical record's own certId.
-	const queriedIsCanonical = record && id ? record.certId === id : null;
-
 	return json(
 		res,
 		200,
 		{
 			found: !!record,
 			canonical: record || null,
-			...(id ? { queriedCertId: id, queriedIsCanonical } : {}),
-			note: certNote({ record, byId: !!id, queriedIsCanonical }),
+			note: certNote({ record, byId: !!id }),
 		},
 		{ 'cache-control': 'public, max-age=30' },
 	);
 });
 
-function certNote({ record, byId, queriedIsCanonical }) {
-	if (!record) {
-		return byId
-			? 'No certificate with that certId is registered. The certificate may still verify offline, but its single-issuance freshness cannot be confirmed by the registry.'
-			: 'No certificate is registered for this address. The certificate may still verify offline, but its single-issuance freshness cannot be confirmed by the registry.';
+// The registry only ever indexes an address's FIRST certificate, so an id that
+// resolves to nothing is exactly the duplicate/re-sale case a buyer is checking
+// for. Say that, rather than the address-shaped miss this used to return for
+// every lookup regardless of which key was asked about.
+function certNote({ record, byId }) {
+	if (record) {
+		return 'This is the canonical (first-issued) proof-of-grind certificate for this address. A certificate with a different certId for the same address is a duplicate/re-sale and is not fresh.';
 	}
-	if (byId && !queriedIsCanonical) {
-		return 'The certId you asked about is NOT the canonical certificate for this address. An earlier certificate (returned here) was registered first, so the one you hold is a duplicate/re-sale and is not fresh.';
+	if (byId) {
+		return 'No certificate with that certId is registered as canonical. Either it was never registered, or an earlier certificate already owns this address and the one you hold is a duplicate/re-sale. Look it up by address to see the canonical certificate.';
 	}
-	return 'This is the canonical (first-issued) proof-of-grind certificate for this address. A certificate with a different certId for the same address is a duplicate/re-sale and is not fresh.';
+	return 'No certificate is registered for this address. The certificate may still verify offline, but its single-issuance freshness cannot be confirmed by the registry.';
 }
