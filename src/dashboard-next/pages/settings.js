@@ -543,7 +543,7 @@ function renderLlmUsage(resp, onRetry) {
 			<div class="dn-panel-title">LLM usage</div>
 			<div class="dn-panel-sub" style="margin:2px 0 0">AI inference calls your agents have made this month.</div>
 		</div>
-		${callsMonth == null && !byModel.length
+		${!callsMonth && !byModel.length
 			? emptyStateHTML({ icon: '', title: 'No usage yet', body: 'LLM usage will appear here as your agents chat and reason.', compact: true })
 			: `
 				<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:${byModel.length ? '16px' : '0'}">
