@@ -3,8 +3,8 @@
  *
  * A drop is a pre-funded Solana wallet sealed (ECIES) to a recipient and handed
  * out by link / QR / 3D agent. This store holds the drop record and runs the
- * single, atomic state machine that makes a drop claimable EXACTLY ONCE — by the
- * holder of the claim secret — or reclaimable by the sender after expiry, never
+ * single, atomic state machine that makes a drop claimable EXACTLY ONCE, by the
+ * holder of the claim secret, or reclaimable by the sender after expiry, never
  * both. Mirrors vanity-bounty-store.js: Upstash Redis when configured, an
  * in-process Map fallback otherwise (local/CI works; a Redis outage degrades).
  *
@@ -20,8 +20,8 @@
  *
  * ── The create fee lands before the drop does ────────────────────────────────
  * A drop is born `escrow_pending`: recorded, but in NO index, and refused by the
- * claim, reveal and reclaim paths. Only `activateDrop` — called once the x402
- * create fee has really settled — flips it to `funded` and indexes it. A fee that
+ * claim, reveal and reclaim paths. Only `activateDrop`, called once the x402
+ * create fee has really settled: flips it to `funded` and indexes it. A fee that
  * fails to settle voids the drop (`voidDrop`) after its on-chain funding is swept
  * back, so nobody can walk away with a wallet the platform funded for free.
  *
@@ -62,7 +62,7 @@ export function isTransientDrop(rec) {
 	return !!rec && TRANSIENT_STATUSES.includes(rec.status);
 }
 
-// Public projection — the sealed envelope + claim-token hash + funding tx detail
+// Public projection: the sealed envelope + claim-token hash + funding tx detail
 // stay private. The privacy boundary: the envelope is released only by the gated
 // claim/reveal path, never on a list or status read.
 const PUBLIC_FIELDS = Object.freeze([
@@ -225,7 +225,7 @@ return 1
 /**
  * Atomically claim a drop. The FIRST valid claim (proven possession of the claim
  * token) wins; later ones lose. Idempotent on claimerTag. Does NOT release the
- * envelope itself — the caller reads the record after a `won` and returns the
+ * envelope itself: the caller reads the record after a `won` and returns the
  * sealed envelope, so a release error can be retried without re-racing.
  *
  * @param {object} p
@@ -267,7 +267,7 @@ function claimCode(n) {
 
 // Atomic funded→reclaimed compare-and-set, only for EXPIRED drops. Mutually
 // exclusive with claim: a claimed drop can never be reclaimed and vice versa.
-// Idempotent — re-running on an already-reclaimed drop returns 1. Returns
+// Idempotent: re-running on an already-reclaimed drop returns 1. Returns
 // 1=reclaimable(now reclaimed), 0=not-eligible, -2=missing.
 const RECLAIM_LUA = `
 local raw = redis.call('HGET', KEYS[1], ARGV[1])
@@ -337,7 +337,7 @@ export async function recordClaimDelivery({ id, claimRecipient }) {
 /**
  * List a sender's drops (newest first), public projection. `senderTag` is an
  * opaque, non-PII tag the creator chooses (e.g. a hash of their session) so they
- * can find their drops to reclaim — it is never required and never exposed.
+ * can find their drops to reclaim: it is never required and never exposed.
  * @param {string} senderTag
  * @param {number} [limit=50]
  */
@@ -359,7 +359,7 @@ export async function listBySender(senderTag, limit = 50) {
 		.map(toPublicDrop);
 }
 
-/** Expired, still-funded drops (oldest expiry first) — the reclaim sweep queue. */
+/** Expired, still-funded drops (oldest expiry first), the reclaim sweep queue. */
 export async function listReclaimable(limit = 50) {
 	const now = Date.now();
 	const n = Math.max(1, Math.min(100, Number(limit) || 50));
@@ -389,7 +389,7 @@ export async function dropStats() {
 		recs = [...mem.values()];
 	}
 	const now = Date.now();
-	// Pending/void drops never became gifts, so they count toward nothing — `total`
+	// Pending/void drops never became gifts, so they count toward nothing, `total`
 	// included, which is the number of drops the platform actually issued.
 	const real = recs.filter((r) => !isTransientDrop(r));
 	let funded = 0, claimed = 0, reclaimed = 0;

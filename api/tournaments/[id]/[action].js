@@ -1,5 +1,5 @@
 /**
- * Social Trading Arena — sub-route entry point for /api/tournaments/:id/<action>.
+ * Social Trading Arena: sub-route entry point for /api/tournaments/:id/<action>.
  *
  *   GET  /api/tournaments/:id/stream     → SSE live rank changes
  *   POST /api/tournaments/:id/join       → enter an agent you own

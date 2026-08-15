@@ -8,7 +8,7 @@
  * (so local/CI works and a Redis outage degrades rather than throwing).
  *
  * ── Secret-blind by construction ─────────────────────────────────────────────
- * A stored bounty NEVER holds a private key or seed — only the requester's PUBLIC
+ * A stored bounty NEVER holds a private key or seed, only the requester's PUBLIC
  * X25519 recipient key. A winning claim holds only the SEALED envelope (opaque
  * ciphertext addressed to the requester) plus the public address. The operator
  * therefore cannot open any wallet it brokers; `toPublicBounty()` additionally
@@ -20,13 +20,13 @@
  * to the board and to `listClaimable`, and every compare-and-set below refuses it.
  * Only `activateBounty` (called after the x402 escrow actually settled on-chain)
  * flips it to `open` and indexes it. A settle that fails is voided instead. That
- * ordering is what stops the platform paying a winner — or refunding a requester —
+ * ordering is what stops the platform paying a winner, or refunding a requester -
  * out of a bounty whose escrow was never collected.
  *
  * ── Atomic single-winner settlement ──────────────────────────────────────────
  * `claimBounty` runs a Lua compare-and-set: it flips status open→settled, records
  * the winner + claim digest, and returns "won" ONLY to the first caller. Every
- * later caller — even with a different valid key — sees `settled` and gets
+ * later caller: even with a different valid key: sees `settled` and gets
  * "lost" (idempotent: re-submitting the SAME claim digest returns "won" again so
  * a retried settle isn't a double-pay). Expiry refunds are gated by the same
  * compare-and-set on open→refunded, so a bounty can never both pay AND refund.
@@ -59,7 +59,7 @@ function isTransient(rec) {
 	return !!rec && TRANSIENT_STATUSES.includes(rec.status);
 }
 
-// Public board projection — the sealed envelope + escrow proof stay private.
+// Public board projection: the sealed envelope + escrow proof stay private.
 // SECURITY: this is the privacy boundary for the board. The sealed envelope is
 // only ever returned to the requester through the dedicated reveal path, never here.
 const PUBLIC_FIELDS = Object.freeze([
@@ -82,7 +82,7 @@ export function toPublicBounty(rec) {
 
 /**
  * Record a bounty. The escrow proof (x402 settlement tx + payer) is stored on the
- * record but never exposed publicly — it is the audit trail proving the requester
+ * record but never exposed publicly: it is the audit trail proving the requester
  * actually funded it.
  *
  * Pass `status: 'escrow_pending'` (what api/vanity/bounties.js does) to record the
@@ -123,7 +123,7 @@ export async function createBounty(rec) {
 
 // Atomic escrow_pending→open compare-and-set, run only once the x402 escrow has
 // really settled on-chain. Indexes the bounty in the same call, so it becomes
-// board-visible and claimable at the instant it becomes funded — never before.
+// board-visible and claimable at the instant it becomes funded, never before.
 // Idempotent: re-activating an already-open bounty returns 1.
 // Returns 1=live, 0=wrong-status, -2=missing.
 const ACTIVATE_LUA = `
@@ -331,7 +331,7 @@ export async function recordPayout({ id, payoutTx, workerId, amountAtomics }) {
 
 // Atomic open→refunded compare-and-set, only for EXPIRED bounties. Mutually
 // exclusive with settlement: a settled bounty can never be refunded and vice
-// versa. Idempotent — re-running on an already-refunded bounty returns 1 so a
+// versa. Idempotent: re-running on an already-refunded bounty returns 1 so a
 // retried refund doesn't error. Returns 1=refundable(now refunded), 0=not-eligible.
 const REFUND_LUA = `
 local raw = redis.call('HGET', KEYS[1], ARGV[1])
@@ -419,7 +419,7 @@ export async function queryBounties(q = {}) {
 	}
 
 	// A pending/void record has no escrow behind it, so it never appears on the
-	// board — not even under status=all, which reads the whole recency index.
+	// board: not even under status=all, which reads the whole recency index.
 	let filtered = recs.filter((r) => !isTransient(r));
 	if (status === 'open') filtered = filtered.filter((r) => r.status === 'open' && r.expiresAt > now);
 	else if (status === 'settled') filtered = filtered.filter((r) => r.status === 'settled');
@@ -435,13 +435,13 @@ export async function queryBounties(q = {}) {
 	return { bounties: page, total, hasMore: offset + limit < total };
 }
 
-/** Open bounties only, oldest-expiry-first — the worker fleet's claim queue. */
+/** Open bounties only, oldest-expiry-first: the worker fleet's claim queue. */
 export async function listClaimable(limit = 30) {
 	const now = Date.now();
 	const redis = getRedis();
 	if (redis) {
 		// Score is expiresAt; range from now upward returns only still-live bounties
-		// in expiry order (soonest-to-expire first — fill them before they refund).
+		// in expiry order (soonest-to-expire first: fill them before they refund).
 		const members = await redis.zrange(K.open, now, '+inf', { byScore: true });
 		const slice = members.slice(0, Math.max(1, Math.min(60, limit)));
 		if (!slice.length) return [];
@@ -466,7 +466,7 @@ export async function bountyStats() {
 		recs = [...mem.values()];
 	}
 	const now = Date.now();
-	// Pending/void records never became bounties, so they count toward nothing —
+	// Pending/void records never became bounties, so they count toward nothing -
 	// including `total`, which is the number of bounties the market actually took.
 	const real = recs.filter((r) => !isTransient(r));
 	let open = 0, openEscrow = 0, settled = 0, paidOut = 0;

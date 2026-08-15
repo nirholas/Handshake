@@ -1,4 +1,4 @@
-// Contract tests for GET /api/traders/preview — the public wallet track-record
+// Contract tests for GET /api/traders/preview: the public wallet track-record
 // read behind /claim-wallet.
 //
 // Four defects this endpoint shipped with, each pinned below:
@@ -14,7 +14,7 @@
 //      reputation read filtered on network, the coin read never did.
 //   3. `claimable` required a wallet_reputation row, so a wallet with thousands
 //      of indexed pump.fun trades rendered as "no record found" whenever the
-//      rollup scorer hadn't graded it yet — which is the normal state for a
+//      rollup scorer hadn't graded it yet: which is the normal state for a
 //      wallet the indexer just picked up.
 //   4. Win/loss counted every non-positive pnl, so an untouched open bag was a
 //      realized loss: a sniper holding 60 fresh positions read "0 wins / 60
@@ -151,7 +151,7 @@ describe('the classifier the outage contract branches on', () => {
 	});
 });
 
-describe('GET /api/traders/preview — input validation', () => {
+describe('GET /api/traders/preview: input validation', () => {
 	it('rejects a missing wallet with a 400 JSON error, never a stack trace', async () => {
 		const res = await run('/api/traders/preview');
 		expect(res._json.status).toBe(400);
@@ -168,7 +168,7 @@ describe('GET /api/traders/preview — input validation', () => {
 	});
 });
 
-describe('GET /api/traders/preview — outage honesty', () => {
+describe('GET /api/traders/preview: outage honesty', () => {
 	it('propagates a connectivity failure instead of publishing an empty record', async () => {
 		dbQueue = [CONN_ERROR];
 		await expect(run(`/api/traders/preview?wallet=${WALLET}`)).rejects.toThrow(/connecting to database/);
@@ -192,7 +192,7 @@ describe('GET /api/traders/preview — outage honesty', () => {
 	});
 });
 
-describe('GET /api/traders/preview — network scoping', () => {
+describe('GET /api/traders/preview: network scoping', () => {
 	it('scopes the coin read to the requested network, not just the reputation read', async () => {
 		dbQueue = [[], []];
 		await run(`/api/traders/preview?wallet=${WALLET}&network=devnet`);
@@ -211,7 +211,7 @@ describe('GET /api/traders/preview — network scoping', () => {
 	});
 });
 
-describe('GET /api/traders/preview — claimability', () => {
+describe('GET /api/traders/preview: claimability', () => {
 	it('is claimable on indexed trades alone, before the rollup has graded the wallet', async () => {
 		dbQueue = [[], [coinRow('MintAAAA')]];
 		const res = await run(`/api/traders/preview?wallet=${WALLET}`);
@@ -237,7 +237,7 @@ describe('GET /api/traders/preview — claimability', () => {
 	});
 });
 
-describe('GET /api/traders/preview — realized vs open accounting', () => {
+describe('GET /api/traders/preview: realized vs open accounting', () => {
 	// Three positions, hand-computed:
 	//   WIN   bought 1 SOL, sold 3 SOL, fully exited  → closed, +2 SOL, roi +2
 	//   LOSS  bought 2 SOL, sold 1 SOL, fully exited  → closed, −1 SOL, roi −0.5

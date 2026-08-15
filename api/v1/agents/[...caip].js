@@ -13,7 +13,7 @@
  *
  *   GET /api/v1/agents/eip155:8453:0x8004A169.../1
  *
- * Percent-encoding the colons is fine (`eip155%3A8453%3A0x8004A169.../1`) —
+ * Percent-encoding the colons is fine (`eip155%3A8453%3A0x8004A169.../1`) -
  * the router decodes each segment. Percent-encoding the SLASH is not: the API
  * dispatcher rejects any segment that decodes to contain "/" or "\", because
  * that is exactly how "%2f..%2f..%2fvite.config" would smuggle a traversal past

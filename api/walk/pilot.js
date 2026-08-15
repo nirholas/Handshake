@@ -1,10 +1,10 @@
-// POST /api/walk/pilot — the "brain" for the Walk Avatar's page-piloting mode.
+// POST /api/walk/pilot: the "brain" for the Walk Avatar's page-piloting mode.
 //
 // The Chrome extension's content script captures a compact snapshot of the
 // interactive elements on the page the user is looking at, plus the user's
 // natural-language task and the history of steps taken so far. This endpoint
 // asks an LLM for the SINGLE next action to take, returned as strict JSON, and
-// the content script executes it on the real page — then calls again with the
+// the content script executes it on the real page: then calls again with the
 // updated snapshot. A ReAct-style observe→plan→act loop, with the model on the
 // server (our keys, free-tier fallback) and the hands in the browser.
 //
@@ -94,14 +94,14 @@ Rules:
 - To search, "type" into the search box with "submit": true.
 - NEVER type into password fields or enter credentials, payment card numbers, or secrets. If the task requires signing in or paying, use "ask" to hand control back to the user.
 - Use "ask" when you genuinely need a decision or information only the user has (which of several results, confirmation of a risky/destructive/irreversible step, a value you don't know).
-- Set "done": true with action "finish" and a "summary" when the task is complete, OR when it cannot be completed — explain why in the summary.
+- Set "done": true with action "finish" and a "summary" when the task is complete, OR when it cannot be completed, explain why in the summary.
 - Keep "say" under ~12 words, warm and concise. The avatar is a companion, not a robot.
 - Be decisive and efficient. Avoid repeating an action that already appears in the history with the same result.`;
 
 function buildUserPrompt(b) {
 	const lines = [];
 	lines.push(`TASK: ${b.instruction}`);
-	lines.push(`PAGE: ${b.title || '(untitled)'} — ${b.url || '(unknown url)'}`);
+	lines.push(`PAGE: ${b.title || '(untitled)'}: ${b.url || '(unknown url)'}`);
 	lines.push(`STEP: ${b.step}`);
 	if (b.answer) lines.push(`USER JUST ANSWERED: ${b.answer}`);
 	if (b.history.length) {
@@ -112,7 +112,7 @@ function buildUserPrompt(b) {
 	}
 	lines.push('\nINTERACTIVE ELEMENTS ON THE PAGE:');
 	if (!b.elements.length) {
-		lines.push('(none captured — consider scrolling or waiting)');
+		lines.push('(none captured: consider scrolling or waiting)');
 	} else {
 		for (const e of b.elements) {
 			const bits = [`[${e.ref}] <${e.tag || '?'}`];
@@ -201,12 +201,12 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { origins: '*', methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	// Optional identity — only used for spend attribution + a higher rate bucket.
+	// Optional identity: only used for spend attribution + a higher rate bucket.
 	let userId = null;
 	try {
 		const bearer = extractBearer(req);
 		const user = bearer ? await authenticateBearer(bearer) : await getSessionUser(req);
-		// authenticateBearer returns { userId }, getSessionUser returns { id } —
+		// authenticateBearer returns { userId }, getSessionUser returns { id } -
 		// read both, or an API-key caller plans anonymously and their LLM spend is
 		// neither attributed nor held to their daily cap.
 		userId = user?.userId || user?.id || user?.sub || null;
@@ -253,7 +253,7 @@ export default wrap(async (req, res) => {
 		// Never strand the loop: fall back to handing control to the user.
 		return json(res, 200, {
 			thought: 'planner returned an unparseable response',
-			say: "I'm not sure how to proceed — could you guide me?",
+			say: "I'm not sure how to proceed: could you guide me?",
 			done: false,
 			action: { type: 'ask', question: 'I had trouble reading the page. What should I do next?' },
 			model: completion.model,

@@ -1,10 +1,10 @@
-// /api/vanity/bounties — the x402 grind-bounty market.
+// /api/vanity/bounties: the x402 grind-bounty market.
 //
 // A decentralized, secret-blind, pay-for-results market for HARD vanity Solana
 // addresses. A requester posts a pattern and escrows an x402 USDC bounty; a fleet
 // of independent workers grind in parallel and race to find a matching key. The
 // FIRST worker to submit a verified, sealed, pattern-matching claim is paid the
-// bounty on-chain — but the found secret is sealed to the requester's X25519 key,
+// bounty on-chain, but the found secret is sealed to the requester's X25519 key,
 // so the worker earns the bounty yet never sees the wallet. If a bounty expires
 // unfilled, its escrow is refunded to the requester.
 //
@@ -26,17 +26,17 @@
 //   POST ?action=reveal                   → requester fetches the sealed envelope
 //               for a settled bounty by proving control of the X25519 key (a
 //               signature is not possible over X25519, so this returns the sealed
-//               envelope to anyone — it is useless without the private key — and
+//               envelope to anyone: it is useless without the private key, and
 //               the open happens entirely client-side).
 //
 // Money + key safety (see vanity-bounty-store.js + vanity-bounty-payout.js):
 //   • escrow is funded by a real x402 USDC payment before the bounty goes live;
 //   • a worker is paid ONLY after an atomic open→settled compare-and-set marks the
-//     bounty for that exact claim — never two workers, never a losing/unverified
+//     bounty for that exact claim: never two workers, never a losing/unverified
 //     claim, never plaintext;
 //   • payout + refund are exactly-once (recorded tx short-circuits a re-send) and
 //     mutually exclusive (settle XOR refund);
-//   • the worker path is secret-blind by construction — the only thing it may
+//   • the worker path is secret-blind by construction, the only thing it may
 //     submit is a sealed envelope addressed to the requester (verified server-side
 //     before paying); the operator never holds the plaintext key either.
 
@@ -145,9 +145,9 @@ function buildEscrowRequirements(resourceUrl, priceAtomics) {
 }
 
 const ESCROW_DESCRIPTION =
-	'three.ws Grind-Bounty Market — escrow a USDC bounty for a HARD Solana vanity ' +
+	'three.ws Grind-Bounty Market: escrow a USDC bounty for a HARD Solana vanity ' +
 	'address and a fleet of independent workers grinds it in parallel. The first worker ' +
-	'to submit a verified key matching your pattern is paid automatically — but the found ' +
+	'to submit a verified key matching your pattern is paid automatically, but the found ' +
 	'secret is ECIES-sealed to YOUR X25519 key, so the worker earns the bounty yet never ' +
 	'sees the wallet. Unfilled bounties refund on expiry. Pay-per-post in USDC on Base or ' +
 	'Solana mainnet. Set prefix/suffix/ignoreCase, amount (USDC atomic units), recipient ' +
@@ -168,9 +168,9 @@ const ESCROW_INPUT_SCHEMA = {
 		suffix: { type: 'string', description: 'Base58 suffix the address must end with.' },
 		ignoreCase: { type: 'string', enum: ['0', '1', 'true', 'false'] },
 		amount: { type: 'string', description: 'Bounty in USDC atomic units (6 decimals). Min 50000 ($0.05).' },
-		recipient: { type: 'string', description: 'Your 32-byte X25519 public key (Base58/Base64url/hex) — the found secret is sealed to it.' },
+		recipient: { type: 'string', description: 'Your 32-byte X25519 public key (Base58/Base64url/hex), the found secret is sealed to it.' },
 		refundAddress: { type: 'string', description: 'Solana address refunded if the bounty expires unfilled.' },
-		expiryHours: { type: 'string', description: 'Hours until the bounty expires + refunds. 1–720, default 48.' },
+		expiryHours: { type: 'string', description: 'Hours until the bounty expires + refunds. 1-720, default 48.' },
 		label: { type: 'string', description: 'Optional public label for the board.' },
 	},
 };
@@ -245,7 +245,7 @@ function parseCreate(url) {
 
 // Validate + canonicalize an X25519 key to Base58 (parseX25519Key accepts
 // Base58/Base64url/hex; we re-encode to Base58 so the stored recipient and the
-// claim's envelope.recipient — which sealed-envelope.js also encodes as Base58 —
+// claim's envelope.recipient: which sealed-envelope.js also encodes as Base58 -
 // compare equal regardless of the input encoding the requester used).
 function bs58X25519(key) {
 	const bytes = parseX25519Key(key, 'recipient'); // throws a clean 400 on bad shape
@@ -264,7 +264,7 @@ async function handleGet(req, res, url) {
 
 	const view = (url.searchParams.get('view') || 'board').toLowerCase();
 
-	// quote and config are pure computation — no Redis, no try-catch needed.
+	// quote and config are pure computation: no Redis, no try-catch needed.
 	if (view === 'quote') {
 		const pattern = normalizeBountyPattern({
 			prefix: url.searchParams.get('prefix') || '',
@@ -359,10 +359,10 @@ async function handleCreate(req, res, url) {
 		return error(res, err.status || 400, err.code || 'validation_error', err.message);
 	}
 
-	// Without a payout wallet the platform can neither pay a winner nor refund —
+	// Without a payout wallet the platform can neither pay a winner nor refund -
 	// refuse to take escrow it couldn't return. Fail BEFORE the payment challenge.
 	if (!payoutConfigured()) {
-		return error(res, 503, 'payout_unconfigured', 'the bounty market payout wallet is not configured — posting is temporarily unavailable');
+		return error(res, 503, 'payout_unconfigured', 'the bounty market payout wallet is not configured, posting is temporarily unavailable');
 	}
 
 	const resourceUrl = resolveResourceUrl(req, ROUTE);
@@ -393,7 +393,7 @@ async function handleCreate(req, res, url) {
 	// Only requests carrying a payment proof reach the facilitator /verify round-trip,
 	// so gate exactly here with the shared critical x402-verify limiters (per-IP +
 	// global). Without this, one cheap junk-X-PAYMENT request amplifies into one
-	// outbound facilitator call at our expense — the same protection paidEndpoint()
+	// outbound facilitator call at our expense: the same protection paidEndpoint()
 	// applies, which this hand-rolled handler would otherwise skip.
 	const vIp = await limits.x402VerifyIp(clientIp(req));
 	if (!vIp.success) return rateLimited(res, vIp);
@@ -428,7 +428,7 @@ async function handleCreate(req, res, url) {
 	// board and to workers, and refused by both the claim and the refund
 	// compare-and-set. Only a settled escrow promotes it (activateBounty). Without
 	// that gate a settle failure would leave a live bounty backed by nothing, and
-	// the platform would pay its winner — or its expiry refund — out of pocket.
+	// the platform would pay its winner, or its expiry refund, out of pocket.
 	const nonce = bytesToHex(randomSeed());
 	const id = deriveBountyId({ recipient: parsed.recipient, pattern: parsed.pattern, amountAtomics: parsed.amountAtomics, nonce });
 	const now = Date.now();
@@ -447,7 +447,7 @@ async function handleCreate(req, res, url) {
 		createdAt: now,
 		expiresAt: now + parsed.expiryHours * 3600_000,
 		status: 'escrow_pending',
-		// Escrow audit trail — proves the requester funded it. Not exposed publicly.
+		// Escrow audit trail: proves the requester funded it. Not exposed publicly.
 		escrowPayer: verified.payer || null,
 	};
 
@@ -465,7 +465,7 @@ async function handleCreate(req, res, url) {
 		settled = await settlePayment({ verified });
 	} catch (err) {
 		await voidBounty({ id, reason: `escrow settle failed: ${err.message}` }).catch(() => {});
-		return error(res, err.status || 502, err.code || 'settle_failed', `${err.message} — no bounty was posted; retry with a fresh payment`);
+		return error(res, err.status || 502, err.code || 'settle_failed', `${err.message}, no bounty was posted; retry with a fresh payment`);
 	}
 
 	// Escrow collected: promote the bounty to live + indexed in one atomic step.
@@ -491,7 +491,7 @@ async function handleCreate(req, res, url) {
 		bounty: await getBounty(id),
 		escrow: { funded: true, txHash: settled.transaction || null, payer: settled.payer || verified.payer || null, network: settled.network || null },
 		boardUrl: `${PUBLIC_ORIGIN}/vanity/bounties#${id}`,
-		notice: 'Save your X25519 PRIVATE key — it is the ONLY way to open the sealed wallet when a worker finds it. three.ws never sees it.',
+		notice: 'Save your X25519 PRIVATE key: it is the ONLY way to open the sealed wallet when a worker finds it. three.ws never sees it.',
 	});
 	const contentType = 'application/json; charset=utf-8';
 
@@ -533,14 +533,14 @@ async function handleClaim(req, res) {
 
 	// Reject fast on a closed/expired bounty before doing crypto work.
 	if (record.status !== 'open') {
-		return json(res, 409, { claimed: false, status: record.status, reason: `bounty is ${record.status} — too late`, winnerAddress: record.winnerAddress || null });
+		return json(res, 409, { claimed: false, status: record.status, reason: `bounty is ${record.status}, too late`, winnerAddress: record.winnerAddress || null });
 	}
 	if (record.expiresAt && Date.now() > record.expiresAt) {
 		return json(res, 409, { claimed: false, status: 'expired', reason: 'bounty expired before this claim' });
 	}
 
 	// Secret-blind anti-cheat: verify the address matches the pattern AND the
-	// sealed envelope is addressed to the requester — WITHOUT ever decrypting it.
+	// sealed envelope is addressed to the requester: WITHOUT ever decrypting it.
 	const verification = verifyClaimEnvelope(record, { address, sealedSecret });
 	if (!verification.ok) {
 		const failed = verification.checks.filter((c) => !c.pass).map((c) => c.id);
@@ -574,7 +574,7 @@ async function handleClaim(req, res) {
 	} catch (err) {
 		// The bounty is settled to this worker, but payout failed (RPC hiccup,
 		// unfunded wallet). The worker can re-submit the SAME claim to retry payout
-		// without re-racing — the atomic claim already locked them in as the winner.
+		// without re-racing: the atomic claim already locked them in as the winner.
 		return json(res, 502, {
 			claimed: true,
 			paid: false,
@@ -597,7 +597,7 @@ async function handleClaim(req, res) {
 		alreadyPaid: payout.alreadyPaid,
 		explorerUrl: `https://solscan.io/tx/${payout.payoutTx}`,
 		bounty: fresh,
-		notice: 'You earned the bounty without ever seeing the wallet secret — it is sealed to the requester. The requester opens it with their X25519 private key.',
+		notice: 'You earned the bounty without ever seeing the wallet secret, it is sealed to the requester. The requester opens it with their X25519 private key.',
 	});
 }
 
@@ -620,17 +620,17 @@ async function handleRefund(req, res) {
 	if (!record) return error(res, 404, 'not_found', 'no bounty with that id');
 
 	// Atomic open→refunded compare-and-set, only for EXPIRED bounties. Mutually
-	// exclusive with settlement — a settled bounty can never be refunded.
+	// exclusive with settlement: a settled bounty can never be refunded.
 	const eligibility = await markRefundable(bountyId);
 	if (eligibility === 'missing') return error(res, 404, 'not_found', 'bounty disappeared');
 	if (eligibility === 'ineligible') {
 		const fresh = await getBounty(bountyId);
-		const why = fresh?.status === 'settled' ? 'bounty was already won — no refund' : 'bounty has not expired yet';
+		const why = fresh?.status === 'settled' ? 'bounty was already won, no refund' : 'bounty has not expired yet';
 		return json(res, 409, { refunded: false, status: fresh?.status, reason: why });
 	}
 
 	// Refund destination is BOUND to the address recorded when the bounty was
-	// funded — never a value supplied in this request. Refund is unauthenticated
+	// funded: never a value supplied in this request. Refund is unauthenticated
 	// (it needs only an expired bounty id, and expired ids are listed on the public
 	// board), so honoring a body-supplied `refundAddress` would let anyone redirect
 	// every expired escrow to their own wallet. A bounty funded without a refund
@@ -677,10 +677,10 @@ async function handleReveal(req, res) {
 	const record = await getBountyRecord(bountyId);
 	if (!record) return error(res, 404, 'not_found', 'no bounty with that id');
 	if (record.status !== 'settled' || !record.sealedSecret) {
-		return json(res, 409, { revealed: false, status: record.status, reason: 'bounty is not settled yet — no sealed wallet to reveal' });
+		return json(res, 409, { revealed: false, status: record.status, reason: 'bounty is not settled yet, no sealed wallet to reveal' });
 	}
 
-	// The sealed envelope is useless without the requester's X25519 PRIVATE key —
+	// The sealed envelope is useless without the requester's X25519 PRIVATE key -
 	// it is ECIES ciphertext addressed to `record.recipient`. Returning it to any
 	// caller leaks nothing: only the private-key holder can open it. The open
 	// happens entirely client-side (openSealed), so the operator never sees the key.
@@ -693,7 +693,7 @@ async function handleReveal(req, res) {
 		sealedScheme: SEALED_ENVELOPE_SCHEME,
 		settledAt: record.settledAt,
 		explorerUrl: `https://solscan.io/account/${record.winnerAddress}`,
-		notice: 'Open this envelope client-side with your X25519 private key (openSealed). three.ws cannot — it never held your private key.',
+		notice: 'Open this envelope client-side with your X25519 private key (openSealed). three.ws cannot, it never held your private key.',
 	});
 }
 

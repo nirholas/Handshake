@@ -1,15 +1,15 @@
 // GET  /api/user/x402-subscriptions
 //   Lists the signed-in user's x402 subscription keys (the credential an AWS
 //   Marketplace customer is issued, and any native subscription created on
-//   their behalf). Returns prefixes and usage only — never the secret.
+//   their behalf). Returns prefixes and usage only: never the secret.
 //
 // POST /api/user/x402-subscriptions
 //   body { action: 'rotate' | 'revoke', id: '<subscriptionId>' }
-//     rotate — revoke the old key and mint a fresh one. The new plaintext is
+//     rotate: revoke the old key and mint a fresh one. The new plaintext is
 //              returned ONCE. For AWS-Marketplace-sourced keys this goes
 //              through the billing bridge so the new key stays linked to the
 //              AWS CustomerIdentifier and keeps metering correctly.
-//     revoke — permanently disable a NATIVE key. AWS-sourced keys cannot be
+//     revoke: permanently disable a NATIVE key. AWS-sourced keys cannot be
 //              bare-revoked here (that would cut off access the customer is
 //              paying AWS for); cancellation must originate in AWS Marketplace.
 //              Rotate them instead.
@@ -86,7 +86,7 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { subscriptions: rows.map(shape) });
 	}
 
-	// POST — rotate or revoke. Both permanently change a live API credential on
+	// POST: rotate or revoke. Both permanently change a live API credential on
 	// nothing but the session cookie, so they need the same CSRF proof every
 	// other session-auth writer here demands (provider-keys PATCH, the wallet
 	// routes). Without it a cross-site form POST could revoke a paying
@@ -113,7 +113,7 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'missing_id' });
 	}
 
-	// Ownership check — never act on a subscription the caller doesn't own.
+	// Ownership check: never act on a subscription the caller doesn't own.
 	const [sub] = await sql`
 		SELECT id, name, rate_limit_per_minute, expires_at, revoked_at, meta, created_by
 		FROM x402_subscriptions
@@ -192,7 +192,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// Native rotate — mint the replacement FIRST, then revoke the old key.
+	// Native rotate: mint the replacement FIRST, then revoke the old key.
 	// Revoking first meant any mint failure (createSubscription rejects a row
 	// with no name, for one) left the caller holding nothing: old key dead, new
 	// key never issued, 502 with no way back. In this order a failed mint is

@@ -19,7 +19,7 @@ export const API_META = {
 	base_url: '/api/v1',
 	description:
 		'One API for the three.ws platform: 3D generation, market & narrative intelligence, ' +
-		'sentiment, and on-chain agent capabilities — one key, one rate-limit budget, one usage ledger.',
+		'sentiment, and on-chain agent capabilities: one key, one rate-limit budget, one usage ledger.',
 	auth: {
 		scheme: 'Bearer',
 		description:
@@ -55,10 +55,10 @@ export const CATALOG = [
 		path: '/api/v1/ai/text-to-3d',
 		auth: 'public',
 		summary:
-			'Free text→3D — the only text-to-mesh lane in the agent-payments ecosystem; textured GLB ' +
+			'Free text→3D: the only text-to-mesh lane in the agent-payments ecosystem; textured GLB ' +
 			'from a prompt, no key, no wallet. Draft tier runs on the NVIDIA NIM TRELLIS lane; free ' +
 			'per-IP quota of 10/day, then 429 pointing at the paid /api/x402/forge tiers.',
-		params: { prompt: 'string — describe a single object or character (3–1000 chars, required)' },
+		params: { prompt: 'string: describe a single object or character (3-1000 chars, required)' },
 	},
 	{
 		id: 'v1.ai.image',
@@ -66,12 +66,12 @@ export const CATALOG = [
 		path: '/api/v1/ai/image',
 		auth: 'public',
 		summary:
-			'Text→image for agents over x402 — 5 free images/day per IP, then $0.02 USDC/image, ' +
+			'Text→image for agents over x402: 5 free images/day per IP, then $0.02 USDC/image, ' +
 			'no API key. Runs on NVIDIA NIM / Google Vertex lanes; returns a durable image URL.',
 		params: {
-			prompt: 'string — image description (required, 3–2000 chars)',
-			aspect_ratio: 'string — 1:1 | 16:9 | 9:16 | 4:3 | 3:4 | 3:2 | 2:3 (default 1:1)',
-			seed: 'number — optional deterministic seed (honored on NIM/Replicate lanes)',
+			prompt: 'string: image description (required, 3-2000 chars)',
+			aspect_ratio: 'string: 1:1 | 16:9 | 9:16 | 4:3 | 3:4 | 3:2 | 2:3 (default 1:1)',
+			seed: 'number: optional deterministic seed (honored on NIM/Replicate lanes)',
 		},
 	},
 	{
@@ -80,7 +80,7 @@ export const CATALOG = [
 		path: '/api/v1/sentiment',
 		auth: 'public',
 		summary: 'Classify text sentiment (Positive / Negative / Neutral) with a deterministic score.',
-		params: { text: 'string — the text to score (required)' },
+		params: { text: 'string: the text to score (required)' },
 	},
 	{
 		id: 'v1.market.intel',
@@ -90,9 +90,9 @@ export const CATALOG = [
 		scope: 'agents:read',
 		summary: 'Recent narrative / market intelligence items, momentum-ranked.',
 		params: {
-			limit: 'number 1–50 (default 20)',
-			category: 'string — filter by category (optional)',
-			chain: 'string — filter by chain (optional)',
+			limit: 'number 1-50 (default 20)',
+			category: 'string: filter by category (optional)',
+			chain: 'string: filter by chain (optional)',
 		},
 	},
 	{
@@ -103,10 +103,10 @@ export const CATALOG = [
 		scope: 'agents:read',
 		summary: 'Momentum-ranked crypto projects with narrative scores.',
 		params: {
-			limit: 'number 1–50 (default 20)',
+			limit: 'number 1-50 (default 20)',
 			page: 'number (default 1)',
-			names: 'string — comma-separated project names to filter (optional)',
-			chain: 'string — filter by chain (optional)',
+			names: 'string: comma-separated project names to filter (optional)',
+			chain: 'string: filter by chain (optional)',
 		},
 	},
 	{
@@ -119,7 +119,7 @@ export const CATALOG = [
 			'(eip155:<chainId>:<registry>/<tokenId>).',
 		params: {
 			caip:
-				'path — CAIP agent ref, its "/" passed as a real path separator ' +
+				'path: CAIP agent ref, its "/" passed as a real path separator ' +
 				'(eip155:8453:0x8004A169.../1); encoded colons are fine, an encoded slash is rejected',
 		},
 	},
@@ -129,13 +129,13 @@ export const CATALOG = [
 		path: '/api/v1/ai/tts',
 		auth: 'public',
 		summary:
-			'Text-to-speech (neural Magpie voices) — 10 free calls/day per IP (≤500 chars), ' +
+			'Text-to-speech (neural Magpie voices): 10 free calls/day per IP (≤500 chars), ' +
 			'then $0.005 USDC/call via x402. GET ?voices=1 lists voices. Returns base64 WAV/PCM.',
 		params: {
-			text: 'string — text to synthesize (required, ≤4096 chars; free tier ≤500)',
-			voice: 'string — voice id (optional, default nova)',
-			format: 'string — "wav" | "pcm" (optional, default wav)',
-			language: 'string — BCP-47 tag (optional, default en-US)',
+			text: 'string: text to synthesize (required, ≤4096 chars; free tier ≤500)',
+			voice: 'string: voice id (optional, default nova)',
+			format: 'string: "wav" | "pcm" (optional, default wav)',
+			language: 'string: BCP-47 tag (optional, default en-US)',
 		},
 	},
 	{
@@ -144,13 +144,13 @@ export const CATALOG = [
 		path: '/api/v1/ai/asr',
 		auth: 'public',
 		summary:
-			'Speech-to-text (NVIDIA Riva) — 5 free clips/day per IP (≤60s), then $0.01 USDC/clip ' +
+			'Speech-to-text (NVIDIA Riva): 5 free clips/day per IP (≤60s), then $0.01 USDC/clip ' +
 			'via x402. Accepts base64 JSON or raw audio/* bytes; returns transcript + confidence.',
 		params: {
-			audio: 'string — base64 audio in a JSON body, or raw bytes with an audio/* Content-Type (required)',
-			format: 'string — wav | pcm | flac | ogg (optional)',
-			language: 'string — BCP-47 tag (optional, default en-US)',
-			words: 'string — "1" for word-level timestamps (optional)',
+			audio: 'string: base64 audio in a JSON body, or raw bytes with an audio/* Content-Type (required)',
+			format: 'string: wav | pcm | flac | ogg (optional)',
+			language: 'string: BCP-47 tag (optional, default en-US)',
+			words: 'string: "1" for word-level timestamps (optional)',
 		},
 	},
 	{
@@ -160,10 +160,10 @@ export const CATALOG = [
 		auth: 'public',
 		summary:
 			'Rug-check any Solana token in one free call: authority status, holder concentration, ' +
-			'liquidity depth — on-chain facts, no invented scores. Composes getAccountInfo + ' +
+			'liquidity depth: on-chain facts, no invented scores. Composes getAccountInfo + ' +
 			'getTokenLargestAccounts + DexScreener into a report agents weigh themselves; 20/min per IP.',
 		params: {
-			address: 'string — base58 Solana mint address (required; EVM 0x… returns 400)',
+			address: 'string: base58 Solana mint address (required; EVM 0x… returns 400)',
 		},
 	},
 	{
@@ -172,13 +172,13 @@ export const CATALOG = [
 		path: '/api/v1/resolve',
 		auth: 'public',
 		summary:
-			'Free name resolution — a high-frequency agent primitive. Resolve a .eth name to its ' +
+			'Free name resolution: a high-frequency agent primitive. Resolve a .eth name to its ' +
 			'Ethereum address via ENS, or a .sol name to its Solana owner via SNS; reverse-resolve an ' +
 			'address back to its primary name in either direction. No key, no wallet; 30/min per IP.',
 		params: {
-			name: 'string — a name ending in .eth (ENS) or .sol (SNS) to resolve (required unless address is passed)',
-			address: 'string — 0x… Ethereum or base58 Solana address to reverse-resolve (required unless name is passed)',
-			chain: 'string — "ethereum" | "solana", optional hint validated against address (auto-detected from format when omitted)',
+			name: 'string: a name ending in .eth (ENS) or .sol (SNS) to resolve (required unless address is passed)',
+			address: 'string: 0x… Ethereum or base58 Solana address to reverse-resolve (required unless name is passed)',
+			chain: 'string: "ethereum" | "solana", optional hint validated against address (auto-detected from format when omitted)',
 		},
 	},
 	{
@@ -228,11 +228,11 @@ export const CATALOG = [
 		summary:
 			'The 24/7 Robinhood Chain tokenized-equity board: live Chainlink NAV vs. deepest Uniswap ' +
 			'DEX price, premium/discount, uiMultiplier, 24h volume, and liquidity for every Stock ' +
-			'Token — one on-chain multicall, never 95 RPC calls. Free, keyless; 60/min per IP.',
+			'Token: one on-chain multicall, never 95 RPC calls. Free, keyless; 60/min per IP.',
 		params: {
-			q: 'string — filter by symbol or name substring (optional)',
-			sort: 'string — "symbol" | "volume" | "premium" | "liquidity" (default symbol)',
-			dir: 'string — "asc" | "desc" (default desc, ignored for symbol)',
+			q: 'string: filter by symbol or name substring (optional)',
+			sort: 'string: "symbol" | "volume" | "premium" | "liquidity" (default symbol)',
+			dir: 'string: "asc" | "desc" (default desc, ignored for symbol)',
 		},
 	},
 	{
@@ -243,8 +243,8 @@ export const CATALOG = [
 		summary:
 			'One Robinhood Chain Stock Token in depth: Chainlink NAV + recent round history, every ' +
 			'DEX pair, premium/discount, holders, recent transfers, and contract links. Display-only ' +
-			'— carries the US-persons eligibility disclosure. Free, keyless; 60/min per IP.',
-		params: { symbol: 'string — Stock Token ticker, e.g. "AAPL" (required)' },
+			'- carries the US-persons eligibility disclosure. Free, keyless; 60/min per IP.',
+		params: { symbol: 'string: Stock Token ticker, e.g. "AAPL" (required)' },
 	},
 	{
 		id: 'v1.robinhood.coins',
@@ -255,8 +255,8 @@ export const CATALOG = [
 			'Robinhood Chain memecoin screener (NOXA + The Odyssey launchpads) via CoinGecko ' +
 			'categories: price, market cap, 24h/7d change, 7d sparkline. Free, keyless; 60/min per IP.',
 		params: {
-			category: 'string — "meme" | "stocks-ecosystem" | "ecosystem" (default meme)',
-			sort: 'string — "market_cap" | "volume" | "gainers" | "losers" (default market_cap)',
+			category: 'string: "meme" | "stocks-ecosystem" | "ecosystem" (default meme)',
+			sort: 'string: "market_cap" | "volume" | "gainers" | "losers" (default market_cap)',
 		},
 	},
 	{
@@ -268,7 +268,7 @@ export const CATALOG = [
 			'One Robinhood Chain coin in depth: DexScreener market data (price, mcap, FDV, ' +
 			'liquidity, volume, pools) + Blockscout holders/transfers/contract links. Non-security ' +
 			'token, no eligibility gate. Free, keyless; 60/min per IP.',
-		params: { address: 'string — 0x… token contract address (required)' },
+		params: { address: 'string: 0x… token contract address (required)' },
 	},
 	{
 		id: 'v1.robinhood.launches',
@@ -279,7 +279,7 @@ export const CATALOG = [
 			'Recent Robinhood Chain launchpad activity (NOXA instant + The Odyssey bonding-curve), ' +
 			'read from on-chain logs and enriched with DexScreener market data, newest first. ' +
 			'Free, keyless; 60/min per IP.',
-		params: { limit: 'number 1–60 (default 40)' },
+		params: { limit: 'number 1-60 (default 40)' },
 	},
 	{
 		id: 'v1.pump.search',
@@ -291,8 +291,8 @@ export const CATALOG = [
 			'pump.fun-fallback). Pairs with trending/curve/launches/whales below to round out the free ' +
 			'pump.fun family under /api/v1. No key; 60/min per IP.',
 		params: {
-			q: 'string — token name, symbol, or mint to search for (required)',
-			limit: 'number 1–20 (default 8)',
+			q: 'string: token name, symbol, or mint to search for (required)',
+			limit: 'number 1-20 (default 8)',
 		},
 	},
 	{
@@ -301,14 +301,14 @@ export const CATALOG = [
 		path: '/api/v1/pump/trending',
 		auth: 'public',
 		summary:
-			'Free, momentum-ranked "what\'s hot right now" feed for Solana tokens — fuses windowed volume, ' +
+			'Free, momentum-ranked "what\'s hot right now" feed for Solana tokens, fuses windowed volume, ' +
 			'buy pressure, a volume-spike signal, and price change across pump.fun, DexScreener, and ' +
-			'(best-effort) GMGN smart money into one 0–100 score. Same engine as GET /api/crypto/trending, ' +
+			'(best-effort) GMGN smart money into one 0-100 score. Same engine as GET /api/crypto/trending, ' +
 			'capped slimmer for this door. No key; 60/min per IP.',
 		params: {
-			window: 'string — "5m" | "1h" | "24h" (default "1h") — trade window the score measures',
-			limit: 'number 1–25 (default 20)',
-			source: 'string — "pumpfun" | "all" (default "all") — "pumpfun" restricts to the pump.fun board',
+			window: 'string: "5m" | "1h" | "24h" (default "1h"), trade window the score measures',
+			limit: 'number 1-25 (default 20)',
+			source: 'string: "pumpfun" | "all" (default "all"), "pumpfun" restricts to the pump.fun board',
 		},
 	},
 	{
@@ -317,11 +317,11 @@ export const CATALOG = [
 		path: '/api/v1/pump/curve',
 		auth: 'public',
 		summary:
-			'Free bonding-curve / graduation status for a pump.fun mint — % to graduation, SOL in the ' +
+			'Free bonding-curve / graduation status for a pump.fun mint, % to graduation, SOL in the ' +
 			'curve, tokens remaining, market cap, and whether it has migrated to an AMM (Raydium / ' +
 			'PumpSwap). Same engine as GET /api/crypto/bonding. No key; 60/min per IP.',
 		params: {
-			mint: 'string — base58 Solana pump.fun mint address (required), e.g. FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump ($THREE)',
+			mint: 'string: base58 Solana pump.fun mint address (required), e.g. FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump ($THREE)',
 		},
 	},
 	{
@@ -331,14 +331,14 @@ export const CATALOG = [
 		auth: 'public',
 		summary:
 			'Free, paginated feed of every coin launched THROUGH three.ws (not a generic pump.fun-wide ' +
-			'feed — the platform\'s own launch directory), joined with the launching agent. Same query as ' +
+			'feed: the platform\'s own launch directory), joined with the launching agent. Same query as ' +
 			'the /launches page. No key; 60/min per IP.',
 		params: {
-			limit: 'number 1–100 (default 24)',
+			limit: 'number 1-100 (default 24)',
 			offset: 'number (default 0)',
-			network: 'string — "mainnet" | "devnet" (default "mainnet")',
-			agent_id: 'string — uuid, restrict to one launching agent (optional)',
-			min_tier: 'string — "prime" | "strong" | "lean" | "watch" | "avoid", oracle conviction floor (optional)',
+			network: 'string: "mainnet" | "devnet" (default "mainnet")',
+			agent_id: 'string: uuid, restrict to one launching agent (optional)',
+			min_tier: 'string: "prime" | "strong" | "lean" | "watch" | "avoid", oracle conviction floor (optional)',
 		},
 	},
 	{
@@ -348,14 +348,14 @@ export const CATALOG = [
 		auth: 'public',
 		summary:
 			'Free, paginated feed of every generated 3D asset minted as a Metaplex Core NFT THROUGH ' +
-			'three.ws — the NFT analogue of GET /api/v1/pump/launches. Each entry carries baked ' +
-			'provenance, royalty terms, remix lineage (parent_mint), and — for a remix — the real ' +
+			'three.ws: the NFT analogue of GET /api/v1/pump/launches. Each entry carries baked ' +
+			'provenance, royalty terms, remix lineage (parent_mint), and, for a remix, the real ' +
 			'royalty settlement routed to the source creator. No key; 60/min per IP.',
 		params: {
-			limit: 'number 1–100 (default 24)',
+			limit: 'number 1-100 (default 24)',
 			offset: 'number (default 0)',
-			network: 'string — "mainnet" | "devnet" (default "mainnet")',
-			agent_id: 'string — uuid, restrict to one creating agent (optional)',
+			network: 'string: "mainnet" | "devnet" (default "mainnet")',
+			agent_id: 'string: uuid, restrict to one creating agent (optional)',
 		},
 	},
 	{
@@ -364,14 +364,14 @@ export const CATALOG = [
 		path: '/api/v1/pump/whales',
 		auth: 'public',
 		summary:
-			'Free whale / large-buy detection across pump.fun — facts only (which wallets moved how much ' +
+			'Free whale / large-buy detection across pump.fun, facts only (which wallets moved how much ' +
 			'SOL, and when), no invented bullish/bearish signal. The read version of the whale-activity ' +
 			'oracle behind the paid /api/x402/pump-agent-audit; same scan engine as GET /api/crypto/whales. ' +
 			'No key; 60/min per IP.',
 		params: {
-			mint: 'string — base58 Solana mint; omit for market-wide top whale wallets, or scope to one token (optional)',
-			limit: 'number 1–25 (default 5)',
-			minSol: 'number — single-buy SOL threshold to qualify as a whale (default 5)',
+			mint: 'string: base58 Solana mint; omit for market-wide top whale wallets, or scope to one token (optional)',
+			limit: 'number 1-25 (default 5)',
+			minSol: 'number: single-buy SOL threshold to qualify as a whale (default 5)',
 		},
 	},
 ];

@@ -1,4 +1,4 @@
-// aixbt intelligence client — REST v2 (https://api.aixbt.tech/v2).
+// aixbt intelligence client: REST v2 (https://api.aixbt.tech/v2).
 //
 // This is the three.ws ⇄ aixbt bridge: it lets three.ws agents tap aixbt's
 // narrative / momentum intelligence the same way external builders use the
@@ -11,12 +11,12 @@
 // subscription or a time-boxed x402 key pass (see env.js / .env.example).
 //
 // Endpoints used (per https://docs.aixbt.tech/builders):
-//   GET  /projects         — momentum-ranked projects (filters: names, chain, limit, page)
-//   GET  /projects/{id}    — single project detail
-//   GET  /intel            — recent narrative intel items
-//   GET  /grounding        — hourly structured market context (crypto + tradfi)
-//   POST /agents/indigo    — agent chat (Pro/Holder plans)
-//   GET  /api-keys/info    — current key metadata (tier, scopes, rate limit)
+//   GET  /projects        : momentum-ranked projects (filters: names, chain, limit, page)
+//   GET  /projects/{id}   : single project detail
+//   GET  /intel           : recent narrative intel items
+//   GET  /grounding       : hourly structured market context (crypto + tradfi)
+//   POST /agents/indigo   : agent chat (Pro/Holder plans)
+//   GET  /api-keys/info   : current key metadata (tier, scopes, rate limit)
 //
 // Responses are wrapped by aixbt as { status, data, pagination }. We unwrap to
 // the bare `data` and normalize the fields three.ws renders into stable shapes
@@ -56,7 +56,7 @@ class AixbtError extends Error {
 	}
 }
 
-/** Thrown when no key is configured — callers map this to a 503 + setup hint. */
+/** Thrown when no key is configured: callers map this to a 503 + setup hint. */
 export class AixbtNotConfiguredError extends Error {
 	constructor() {
 		super('aixbt is not configured on this deployment (set AIXBT_API_KEY)');
@@ -74,7 +74,7 @@ export const AIXBT_SETUP_HINT =
  *
  * One classifier, every door: api/aixbt/* renders it through respondAixbtError,
  * and the /api/v1/market/* handlers rethrow it through the gateway's fail().
- * Keeping it here is what stops the two surfaces from drifting again — the v1
+ * Keeping it here is what stops the two surfaces from drifting again, the v1
  * doors used to relay aixbt's raw 401 straight to a caller of a public,
  * credential-free endpoint (live on three.ws until this was fixed), telling
  * them to authenticate against a door they hold no key to, while /api/aixbt/*
@@ -265,7 +265,7 @@ export async function getGrounding() {
 
 /**
  * Agent chat against aixbt's `indigo` agent (Pro/Holder plans only).
- * Not cached — each turn is a distinct conversation.
+ * Not cached: each turn is a distinct conversation.
  * @param {Array<{ role: string, content: string }>} messages
  */
 export async function chatIndigo(messages) {
@@ -277,7 +277,7 @@ export async function chatIndigo(messages) {
 	return { reply, raw: data, source: SOURCE };
 }
 
-/** Current API key metadata — tier, scopes, rate limit. */
+/** Current API key metadata: tier, scopes, rate limit. */
 export async function getKeyInfo() {
 	const { data } = await request('/api-keys/info');
 	return data;

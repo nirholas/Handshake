@@ -1,5 +1,5 @@
 /**
- * Public wallet preview — show an on-chain pump.fun trade record without auth.
+ * Public wallet preview: show an on-chain pump.fun trade record without auth.
  *
  *   GET /api/traders/preview?wallet=<base58>&network=mainnet
  *
@@ -40,14 +40,14 @@ export default wrap(async (req, res) => {
 	// Build a useful summary even if wallet_reputation doesn't have this wallet
 	// yet (it's scored by the smart-money rollup worker, so new wallets lag).
 	// Every per-coin number traces to a real on-chain trade aggregate in
-	// pump_coin_wallets — buy/sell lamports + base amounts + tx counts + the
-	// observed first/last-seen window — so the wallet dashboard renders deep,
+	// pump_coin_wallets: buy/sell lamports + base amounts + tx counts + the
+	// observed first/last-seen window: so the wallet dashboard renders deep,
 	// honest analytics with no synthesized values.
 	const coins = (recent || []).map((r) => {
 		const buySol  = r.buy_lamports  != null ? Number(r.buy_lamports)  / LAMPORTS : null;
 		const sellSol = r.sell_lamports != null ? Number(r.sell_lamports) / LAMPORTS : null;
 		const pnlSol  = buySol != null && sellSol != null ? sellSol - buySol : null;
-		// ROI on deployed capital — the canonical "Xx" a trader reads off GMGN.
+		// ROI on deployed capital: the canonical "Xx" a trader reads off GMGN.
 		const roi     = buySol != null && sellSol != null && buySol > 0 ? (sellSol - buySol) / buySol : null;
 		const buyCount  = r.buy_count  != null ? Number(r.buy_count)  : 0;
 		const sellCount = r.sell_count != null ? Number(r.sell_count) : 0;
@@ -93,7 +93,7 @@ export default wrap(async (req, res) => {
 	const totalBuy  = coins.reduce((a, c) => a + (c.buy_sol  || 0), 0);
 	const totalSell = coins.reduce((a, c) => a + (c.sell_sol || 0), 0);
 
-	// ROI distribution buckets — the GMGN "Distribution (Token N)" panel. Each
+	// ROI distribution buckets: the GMGN "Distribution (Token N)" panel. Each
 	// closed position lands in exactly one bucket by realized return.
 	const closed = coins.filter((c) => c.roi != null && !c.open);
 	// Win/loss is a statement about REALIZED outcomes, so only closed positions
@@ -122,7 +122,7 @@ export default wrap(async (req, res) => {
 	const openCount = coins.filter((c) => c.open).length;
 	const creatorCoins = coins.filter((c) => c.is_creator).length;
 
-	// Category mix — what this wallet actually trades.
+	// Category mix: what this wallet actually trades.
 	const catMap = new Map();
 	for (const c of coins) {
 		const k = c.category || 'unknown';
@@ -149,7 +149,7 @@ export default wrap(async (req, res) => {
 
 	// `known` means the rollup has graded this wallet. `claimable` means there is
 	// a real on-chain record to claim, which is true the moment the indexer has
-	// seen the wallet trade — the rollup lags by design. Gating claimable on
+	// seen the wallet trade: the rollup lags by design. Gating claimable on
 	// known made /claim-wallet answer "no record found" to wallets carrying
 	// thousands of indexed pump.fun trades, purely because the scorer hadn't run.
 	const known = !!profile;

@@ -1,4 +1,4 @@
-// GET /api/v1/market/projects — momentum-ranked crypto projects.
+// GET /api/v1/market/projects: momentum-ranked crypto projects.
 //
 // Unified-API surface over the aixbt bridge (api/_lib/aixbt.js). Like
 // /api/v1/market/intel, this consumes the global aixbt ceiling on top of the
@@ -14,12 +14,12 @@ export default defineEndpoint({
 	auth: 'optional',
 	scope: 'agents:read',
 	handler: async ({ query }) => {
-		// See api/v1/market/intel.js — thrown as the canonical missing-env error
+		// See api/v1/market/intel.js: thrown as the canonical missing-env error
 		// so wrap() names it to the client instead of sanitizing the message away.
 		if (!aixbtEnabled()) throw new Error('Missing required env var: AIXBT_API_KEY');
 
 		const g = await limits.aixbtGlobal();
-		if (!g.success) fail(429, 'rate_limited', 'market intelligence is busy — retry shortly');
+		if (!g.success) fail(429, 'rate_limited', 'market intelligence is busy, retry shortly');
 
 		let result;
 		try {
@@ -30,7 +30,7 @@ export default defineEndpoint({
 				chain: query.chain,
 			});
 		} catch (err) {
-			// See api/v1/market/intel.js — one shared classifier so this door and
+			// See api/v1/market/intel.js: one shared classifier so this door and
 			// /api/aixbt/* can never disagree about whose fault a failure is.
 			const mapped = mapAixbtFailure(err);
 			if (!mapped) throw err;

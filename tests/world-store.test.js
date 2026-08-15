@@ -23,7 +23,7 @@ import { verifyWorldServiceToken } from '../api/_lib/world-service-auth.js';
 
 // In-memory backend mirroring the production CAS contract exactly: an INSERT
 // happens only when no row exists (regardless of ifMatch); an UPDATE commits only
-// when ifMatch is '*' or equals the stored etag — otherwise it reports no commit.
+// when ifMatch is '*' or equals the stored etag: otherwise it reports no commit.
 function makeBackend() {
 	const rows = new Map();
 	const blobs = new Map();
@@ -140,7 +140,7 @@ describe('world-store: round-trip + concurrency', () => {
 	it('rejects a stale write with ConflictError', async () => {
 		const v1 = await store.saveWorld({ worldId: 'w', doc: { n: 1 }, writer: 's' });
 		await store.saveWorld({ worldId: 'w', doc: { n: 2 }, ifMatch: v1.etag, writer: 's' });
-		// v1.etag is now stale — a second writer holding it must lose.
+		// v1.etag is now stale: a second writer holding it must lose.
 		await expect(
 			store.saveWorld({ worldId: 'w', doc: { n: 99 }, ifMatch: v1.etag, writer: 's' }),
 		).rejects.toBeInstanceOf(ConflictError);
@@ -216,7 +216,7 @@ describe('world-store: large-doc R2 offload', () => {
 // The save permission gate (api/world/[action].js) only needs the owner column,
 // so it reads metadata rather than the whole document. These lock in that the
 // cheap read returns the same index values loadWorld does and never touches the
-// blob store — the regression that would silently restore an R2 GET plus a 2 MB
+// blob store: the regression that would silently restore an R2 GET plus a 2 MB
 // JSON.parse on every autosave of a large build.
 describe('world-store: loadWorldMeta', () => {
 	let backend;

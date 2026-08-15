@@ -57,7 +57,7 @@ export default wrap(async (req, res) => {
 
 	// Solana settles by scanning the chain for the reference and ignores this. An
 	// EVM row has no on-chain reference to scan, so without the settlement hash the
-	// confirm can only ever answer 'pending' — the same tx_hash the buyer's
+	// confirm can only ever answer 'pending': the same tx_hash the buyer's
 	// /confirm endpoint takes, accepted here so an EVM purchase routed through the
 	// webhook is not a permanently unconfirmable dead path.
 	const rawTxHash = body?.tx_hash ?? body?.txHash;
