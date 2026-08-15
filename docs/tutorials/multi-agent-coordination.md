@@ -83,12 +83,12 @@ A two-agent layout where both characters are always visible. Riley on the left, 
     <div class="stage">
       <div id="riley-stage" class="active">
         <h3>Riley · Sales</h3>
-        <agent-3d id="riley" agent-id="<RILEY_AGENT_ID>" avatar-chat="off" voice eager
+        <agent-3d id="riley" agent-id="<RILEY_AGENT_ID>" chat="off" voice eager
                   style="width:100%;height:100%"></agent-3d>
       </div>
       <div id="devon-stage">
         <h3>Devon · Engineering</h3>
-        <agent-3d id="devon" agent-id="<DEVON_AGENT_ID>" avatar-chat="off" voice eager
+        <agent-3d id="devon" agent-id="<DEVON_AGENT_ID>" chat="off" voice eager
                   style="width:100%;height:100%"></agent-3d>
       </div>
     </div>
@@ -101,7 +101,7 @@ A two-agent layout where both characters are always visible. Riley on the left, 
 </html>
 ```
 
-One loader `<script>` in the `<head>` registers the `<agent-3d>` element; two tags with `agent-id` attributes point at your saved agents. Three attribute choices matter here: `avatar-chat="off"` hides each agent's built-in chat input (this page has its own shared composer), `voice` enables text-to-speech so the avatars actually speak their replies (and fire the `voice:speech-start`/`voice:speech-end` events we lean on later), and `eager` boots both agents immediately instead of waiting for them to scroll into view. `coordinator.js` is the file we'll write next.
+One loader `<script>` in the `<head>` registers the `<agent-3d>` element; two tags with `agent-id` attributes point at your saved agents. Three attribute choices matter here: `chat="off"` renders each agent as a bare avatar with no built-in chat shell (this page has its own shared composer), `voice` enables text-to-speech so the avatars actually speak their replies (and fire the `voice:speech-start`/`voice:speech-end` events we lean on later), and `eager` boots both agents immediately instead of waiting for them to scroll into view. `coordinator.js` is the file we'll write next.
 
 Replace `<RILEY_AGENT_ID>` and `<DEVON_AGENT_ID>` with the actual agent IDs from your dashboard. They're displayed under each agent in `https://three.ws/dashboard`.
 
@@ -295,7 +295,7 @@ function buildBrief(scratch, target) {
 }
 ```
 
-`targetEl.say(brief)` pushes the brief into the target agent's conversation as an ordinary message — there is no separate system-role channel, which is exactly why `buildBrief` wraps the transcript in an explicit `[Stage director: …]` framing: the model reads the bracketed preamble as direction rather than visitor speech, and responds with its next visitor-facing message. Because both elements run with `avatar-chat="off"`, the brief never renders anywhere the visitor can see; the only transcript on the page is the one your `brain:message` handler builds in the log.
+`targetEl.say(brief)` pushes the brief into the target agent's conversation as an ordinary message. There is no separate system-role channel, which is exactly why `buildBrief` wraps the transcript in an explicit `[Stage director: …]` framing: the model reads the bracketed preamble as direction rather than visitor speech, and responds with its next visitor-facing message. Because both elements run with `chat="off"`, the brief never renders anywhere the visitor can see; the only transcript on the page is the one your `brain:message` handler builds in the log.
 
 ---
 
