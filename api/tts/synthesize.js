@@ -82,6 +82,10 @@ const STATUS_BY_CODE = {
  */
 function userFacingLaneError(provider, err) {
 	switch (err?.code) {
+		// Our own validation prose ("text is required"), already written for a
+		// caller and specific in a way a generic sentence would throw away.
+		case 'invalid_argument':
+			return err.message;
 		case 'invalid_key':
 		case 'not_configured':
 			return (
@@ -163,14 +167,15 @@ export default wrap(async (req, res) => {
 	// the platform key's outage. A 'health' cooldown (throttle, blip) still lets
 	// an explicit request through, so a recovered lane proves itself immediately.
 	const laneScopedToPlatform = !(byok && providerId === 'elevenlabs');
+	let laneOutage = null;
 	if (laneScopedToPlatform) {
-		const outage = (await laneOutages([providerId])).get(providerId);
-		if (outage === 'auth') {
+		laneOutage = (await laneOutages([providerId])).get(providerId) || null;
+		if (laneOutage === 'auth') {
 			return error(
 				res,
 				503,
 				'lane_unavailable',
-				`${provider.label} is temporarily unavailable: ${laneOutageCopy(outage)}. ` +
+				`${provider.label} is temporarily unavailable: ${laneOutageCopy(laneOutage)}. ` +
 					'Microsoft Edge and NVIDIA Magpie are free and unaffected.',
 				{ provider: providerId, retry_with: ['edge', 'nvidia'] },
 			);
@@ -322,7 +327,9 @@ export default wrap(async (req, res) => {
 			{ provider: providerId, detail: String(err?.message || '').slice(0, 300) },
 		);
 	}
-	if (laneScopedToPlatform) await noteLaneHealthy(providerId);
+	// Only a lane that was cooling has anything to clear, so the common path
+	// (a healthy lane serving a clip) pays no cache round trip for the breaker.
+	if (laneOutage) await noteLaneHealthy(providerId);
 
 	if (!out.audio?.length) {
 		await refundMetering();

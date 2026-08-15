@@ -976,6 +976,19 @@ clip is cached in R2 for 30 days on a hash of the full request; cache hits are
 never charged. A short credit balance returns `402 insufficient_credits` with a
 `top_up_url`.
 
+**When a lane is down**
+
+An upstream failure answers with a single sentence a picker can render in
+`error_description`, the vendor's own text in `detail`, and the lane id in
+`provider`. A lane that refuses this deployment's credentials (an expired key, a
+billing hold) is then withheld for a few minutes: `/api/tts/catalog` reports it
+`available: false` with the reason, and a synthesis request aimed at it answers
+`503 lane_unavailable` carrying `retry_with: ["edge", "nvidia"]` instead of
+spending another doomed round trip. The window clears on its own, and a lane
+that serves successfully is restored immediately, so nothing has to be deployed
+or flipped by hand when the upstream problem is fixed. A request carrying your
+own `x-eleven-key` is never gated by the platform key's outage.
+
 ### ElevenLabs Voice Library
 
 ```
