@@ -158,7 +158,7 @@ describe('GET /api/v1/agents/:caip handler', () => {
 		const digest = await crypto.subtle.digest('SHA-256', bytes);
 		const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 		modelBytes = bytes.buffer;
-		chainResult.manifest.model = { uri: 'https://cdn.three.ws/a.glb', sha256: hex };
+		chainResult.manifest.model = { uri: 'https://three.ws/cdn/a.glb', sha256: hex };
 
 		const { body } = await dispatch(makeReq(REF), makeRes());
 		expect(body.verified.modelSha256).toBe(true);
@@ -166,7 +166,7 @@ describe('GET /api/v1/agents/:caip handler', () => {
 
 	it('reports a mismatched model hash as false rather than failing the request', async () => {
 		modelBytes = new TextEncoder().encode('different-bytes').buffer;
-		chainResult.manifest.model = { uri: 'https://cdn.three.ws/a.glb', sha256: 'deadbeef' };
+		chainResult.manifest.model = { uri: 'https://three.ws/cdn/a.glb', sha256: 'deadbeef' };
 
 		const { res, body } = await dispatch(makeReq(REF), makeRes());
 		expect(res.statusCode).toBe(200);
