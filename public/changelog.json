@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T06:53:35.614Z",
+	"generated_at": "2026-08-15T06:57:50.640Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -54,6 +54,17 @@
 			"title": "Docs pages stop opening with a wall of raw metadata, and the AWS pages say where the Marketplace listing actually stands",
 			"summary": "Nine documentation pages are written as article drafts, so each one starts with a small block of publishing metadata: the title, where it is meant to run, its tags. That block is meant for the tooling, not for you, but the docs reader had no idea what it was and rendered it as an enormous heading at the very top of the article, above the actual writing. It is now recognised and hidden, on the page and in the Copy page text, so those articles begin where they should. Reading the same pages closely turned up claims that had drifted: several said three.ws was already live on AWS Marketplace and billing usage to your AWS invoice. The integration is built and deployed, but the listing itself has not been published yet and the pricing decision is a free subscription with no AWS metering, so the AWS pages now say exactly that and point at the page that tracks the status. The MCP article's vanity-address tool was also listed at a metered price of up to fifty cents; it is a flat five cents per grind, which is what the code has always charged.",
 			"link": "/docs/aws-marketplace",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Eight build tutorials now match what the platform actually does",
+			"summary": "An audit of eight tutorials found instructions that could not work. The AI-brain tutorial described a model line-up that had been superseded: it never mentioned the Claude 5 family (Sonnet 5, Opus 5, Fable 5), which are live and selectable, and it recommended Sonnet 4.6 as the default. It also sent you to screens that do not exist, telling you to add API keys under a gear icon in My Agents and to change models, sampling knobs, and streaming under a Brain menu. Provider keys actually live in the AI Provider Keys panel on your account page, the model is a field on the agent's embed policy, and streaming has no off-switch. The promised usage tab with token charts and threshold emails did not exist either; the tutorial now documents the real per-agent usage read and points at the monthly quota and per-minute rate limit, which are the controls actually enforced before your money is spent. It also now explains that a visitor can never escalate your agent onto a paid model. The custom-GLB tutorial was worse for anyone following along: it linked a Studio address that no longer resolves, and four of its commands invoked gltf-transform subcommands that have never existed, so converting an FBX, renaming animation clips, and the full Mixamo walkthrough all failed at the first step. Those are replaced with the converter the platform itself uses and a clip-renaming script that was run against a real avatar to confirm it works. Its Draco flag was wrong, its upload path pointed at the wrong page, and it still warned that an avatar without an idle clip would stand frozen in a T-pose, which stopped being true when animation retargeting became universal. Finally, the page-events tutorial listed the wrong fallback order for emote animations.",
+			"link": "/tutorials/connect-ai-brain",
 			"tags": [
 				"docs",
 				"fix"

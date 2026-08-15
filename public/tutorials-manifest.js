@@ -365,7 +365,7 @@
 		{
 			slug: 'connect-ai-brain',
 			tier: 'middle',
-			title: 'Connect Anthropic or OpenAI as the brain',
+			title: 'Connect Anthropic, OpenAI, or xAI as the brain',
 			blurb: 'Plug your own model provider into the agent loop. Bring your API key, choose your model, control cost and latency.',
 			builds: 'An agent powered by the model you choose, billed to your account',
 			time: '30 min',

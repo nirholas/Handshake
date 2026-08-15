@@ -3779,7 +3779,7 @@ URL: https://three.ws/tutorials/upload-custom-glb
 
 Bring your own model: any glTF 2.0 .glb from Blender, three.ws Studio, or any other source. Get it validated, fixed, and live.
 
-### Tutorial · Connect Anthropic or OpenAI as the brain
+### Tutorial · Connect Anthropic, OpenAI, or xAI as the brain
 
 URL: https://three.ws/tutorials/connect-ai-brain
 

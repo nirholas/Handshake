@@ -4815,7 +4815,7 @@
 				},
 				{
 					"path": "/tutorials/connect-ai-brain",
-					"title": "Tutorial · Connect Anthropic or OpenAI as the brain",
+					"title": "Tutorial · Connect Anthropic, OpenAI, or xAI as the brain",
 					"description": "Plug your own model provider into the agent loop. Bring your API key, choose your model, control cost and latency.",
 					"priority": 0.8,
 					"changefreq": "monthly",
