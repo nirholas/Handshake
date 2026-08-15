@@ -1,4 +1,4 @@
-// Endpoint tests for POST /api/tx/solana/build-transfer and /build-swap — the
+// Endpoint tests for POST /api/tx/solana/build-transfer and /build-swap: the
 // two handlers the chat wallet tools call to assemble an unsigned transaction
 // before a user signs it in their wallet.
 //
