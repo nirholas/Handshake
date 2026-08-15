@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T06:32:35.965Z",
+	"generated_at": "2026-08-15T06:42:28.569Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -25,6 +25,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Arming an Oracle agent for live trading no longer rounds your trade size up",
+			"summary": "The arm page clamps the risk knobs on the server so a bad number can never reach the trading loop, and those clamps have a floor: the smallest trade the loop will place is 0.001 SOL. That floor was being applied in the wrong direction. Ask to arm a live agent with a per-trade size of zero, and instead of being told no, you were armed for real spending at 0.001 SOL a trade with a half-SOL daily ceiling you never asked for. The check meant to catch this looked at the number after the clamp had already raised it, so it could never fire. Arming live now refuses any per-trade size below the floor, and any daily cap smaller than a single trade, and tells you which number to fix; nothing is armed until you do. Clamping a too-large number back down to the ceiling is unchanged, and simulate runs keep the same forgiving behaviour as before. The arm page also shows the reason a save was rejected instead of one generic line, so an ownership problem no longer reads the same as a bad trade size, and a failed Telegram test now prints what Telegram actually said.",
+			"link": "/oracle/arm",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -108,6 +119,29 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "The embodied AgenC demo hands you a live task, and reacts to the state a claimed task is actually in",
+			"summary": "The /agenc/embodied page binds a 3D agent to a real AgenC task on Solana, and until now it opened on an empty input box: it needed a task account address and offered no way anywhere on the page to find one. It now lists real tasks three.ws itself posted, claimed, and settled on-chain, newest first, so the demo works the moment it loads; a new public read, /api/agenc/recent-tasks, serves that list. Two things it showed were also wrong. The scene coloured itself for a state named Claimed, which the chain has never used: a claimed task is In Progress on-chain, so the halo, the badge, and the per-state animation switch all sat inert through the one transition the demo exists to show. And the page named a program address that no read has touched since the protocol's interface moved; it now shows the program each live read actually ran against. Pasting an address that holds something other than a task used to report a server error, as though the platform were broken, rather than saying no such task exists there; that is now a plain not-found, with the page telling you to check the address or switch cluster. The panel has designed loading, empty, and error states throughout, the form fields have real labels, and a task that cannot be read is retried with a backoff instead of being re-requested every four seconds forever.",
+			"link": "/agenc/embodied",
+			"tags": [
+				"fix",
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list",
+			"summary": "Two tutorials had drifted away from the code they document, and following either one exactly produced a bad outcome rather than a confusing one. The gesture tutorial's API example padded its request body with an empty clip array, and told readers that field was required; it has not been required for a while, and an empty array is a real value, so anyone who copied that snippet to change one gesture slot silently erased every custom clip on their agent. The endpoint's actual rule is now stated: every field is optional, present replaces it, absent leaves it alone. That page also listed four gestures on the /walk quick keys that are not on them, so pressing 1 through 8 never produced what it described; the eight keys are now named in order, with the wheel and the code call given for the four that have no key. The guard tutorial's registry entry left out the proof block, which the registry auditor has since made mandatory, so a reader who followed every step to the end hit a failure the page never mentioned. It now includes a working proof, shows the exact error you get without one, and adds a step for the command that runs it, which is the difference between a guard that is wired up and a guard anyone has shown still catches anything. Its summary line also described a completely different guard from the one it builds.",
+			"link": "/docs/tutorials/write-a-guard",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "The persona builder stops reporting a model outage as if you had been signed out",
 			"summary": "The two routes behind the persona builder (the one that turns your interview answers or a sample of your own writing into a structured persona, and the one that replies to you in that persona's voice) used to hand you whatever status code the model provider returned. If a server-side key expired, the provider answered 401 and so did we, which reads to a browser as an expired session on a request where nothing was wrong with your sign-in. Both now report a provider failure as exactly what it is: a server-side fault, with a plain message and no implication that you need to log back in. Separately, when the platform's daily model-spend ceiling is reached, the builder now says so and tells you when it resets, instead of asking you to retry something that could not have succeeded for the rest of the day. Both routes also now record their model usage against your account, so the spend they generate is visible and capped rather than untracked, and the daily extraction budget now holds across every server instance instead of being counted separately on each one.",
 			"link": null,
@@ -125,6 +159,29 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The smart-contract docs stop describing contracts that are not the ones deployed",
+			"summary": "Anyone reading the ERC-8004 contract reference and calling the addresses it lists was working from the wrong interface. Those canonical addresses are upgradeable proxies running the ERC-8004 reference implementation, not the Solidity source in this repository, and the two are not the same contract. Checked with live calls against Base and Base Sepolia: the agent-listing, supply-count and existence-check helpers the page showed all revert, and every function documented for the reputation registry is absent from the registry actually deployed, which exposes a different interface entirely. The page now says which members answer on the deployed addresses and which exist only if you deploy the repository contracts yourself, and its copy-paste examples were rewritten to calls that run. The security page carried the same mistake in its validator section: it told operators to revoke a compromised validator key with a contract call that exists only on the undeployed source, when the deployed registry keeps no validator list at all and containment is key rotation plus filtering by validator address. Alongside those, the sign-language page advertised an npm install for a package the registry has never carried, and its published sign timings and one broken in-page link were corrected; the catalog quality gate page was missing one of the reasons it rejects a model.",
+			"link": "/docs/smart-contracts",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The vanity receipt verifier stops calling honest receipts fraudulent, and the avatar CLI takes a Solana address",
+			"summary": "Two documented commands did not do what their page said. The command-line verifier for a provably-fair vanity address receipt scored the difficulty claim with the retired flat model, the one that treats every Base58 character as equally likely. Every receipt issued since the leading-character correction landed therefore failed its difficulty check and was reported as untrustworthy, even though the in-browser verifier at /vanity/verify passed the same receipt. The verifier now reads the model each receipt names in its own signed difficulty block, exactly as the page and the SDK do, so current receipts verify and older ones keep verifying under the model they were issued under. Separately, the Rig Doctor page showed an avatar-manifest command taking a Solana address as the owner, which the CLI rejected outright: it understood Ethereum addresses and full CAIP-10 identifiers and nothing else. Since Solana is the home chain, a bare Solana address is now accepted and recorded as solana:mainnet-beta. Alongside those, eight tutorial and reference pages were audited against the code they describe: the Vercel self-hosting guide had a stale copy of the config file and pointed at a migrations folder that has moved, the MCP guide listed three placeholder OAuth scopes where the live server publishes twelve real per-capability ones, and the Avatar CLI page pinned a version number that npm has never had.",
+			"link": "/docs/rig-doctor",
+			"tags": [
+				"fix",
+				"docs",
+				"sdk"
 			]
 		},
 		{
