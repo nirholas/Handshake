@@ -1,4 +1,4 @@
-// POST /api/referral/visit — record a referral-link visit (top of the viral funnel).
+// POST /api/referral/visit: record a referral-link visit (top of the viral funnel).
 //
 // A share link carries `?ref=CODE`. public/referral-capture.js parks the code for
 // later signup attribution AND fires a beacon here so we can measure the FULL
@@ -29,7 +29,19 @@ export default wrap(async (req, res) => {
 	const rl = await limits.referralVisitIp(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
-	const body = await readJson(req).catch(() => null);
+	// A body we could not read at all is a different failure from a code we read
+	// and rejected. Collapsing both into `invalid_code` sends an integrator hunting
+	// through their referral code when the real fault is their content-type header
+	// (readJson requires application/json) or an oversized payload.
+	let body;
+	try {
+		body = await readJson(req);
+	} catch (err) {
+		const status = err?.status === 415 || err?.status === 413 ? err.status : 400;
+		const code = { 415: 'unsupported_media_type', 413: 'payload_too_large' }[status] || 'bad_request';
+		return error(res, status, code, err?.message || 'unreadable request body');
+	}
+
 	const code = normalizeReferralCode(body?.code);
 	if (!code) return error(res, 400, 'invalid_code', 'malformed referral code');
 
@@ -38,7 +50,7 @@ export default wrap(async (req, res) => {
 	// UTC day so the dedup window is stable regardless of server timezone.
 	const day = new Date().toISOString().slice(0, 10);
 
-	// Resolve the referrer at write time when the code is live — lets the funnel
+	// Resolve the referrer at write time when the code is live, which lets the funnel
 	// roll up by referrer without re-joining on every read.
 	const [referrer] = await sql`
 		select id from users
