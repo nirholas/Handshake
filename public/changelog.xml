@@ -111,6 +111,14 @@
 			<description>Watching an agent work on a narrow screen was close to impossible. The row of viewer controls along the top (fit, screenshot, picture-in-picture, fullscreen, ambient, zen, and the link back to the agent) ran off the edge of the page with no way to reach them, the agent name and its live badge painted over the buttons underneath, and the two panels that open by default covered the live screen and the avatar cam completely: the whole point of the page, hidden. The control row now scrolls sideways so every control stays reachable at any width, the name keeps its space, and on a phone the page opens on a bare stage with the panels one tap away. Three fixes for anyone using a keyboard or a screen reader landed with it: the page now has a real heading and a main region for the skip link to jump to, the hidden Skip to content link stopped rendering as visible text at the top of the page, and every text field on the page gained a proper label. Finally, if the agent list fails to load for any reason other than being signed out, the page says what went wrong and offers a retry instead of telling a signed-in owner to go sign in.</description>
 		</item>
 		<item>
+			<title>An embedded agent keeps talking when the browser refuses to play its voice</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:An embedded agent keeps talking when the browser refuses to play its voice</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The living agent body that renders inside ChatGPT, Claude, and any site that embeds it speaks each reply with a lip-synced mouth. When a voice track is attached, the body plays the audio and drives the mouth from it. Browsers block that playback routinely: a chat panel the visitor has not clicked in is not allowed to start audio. The body was falling back to an empty line in that case, so it stood there with its mouth shut through the whole reply. It now falls back to the text of the reply it was actually given, so the mouth speaks the line whether or not the audio was allowed to start, and the engine is now covered by tests for the load, speak, emotion, chain-state, and teardown paths.</description>
+		</item>
+		<item>
 			<title>Arming an Oracle agent for live trading no longer rounds your trade size up</title>
 			<link>https://three.ws/oracle/arm</link>
 			<guid isPermaLink="false">2026-08-15:Arming an Oracle agent for live trading no longer rounds your trade size up</guid>
@@ -375,6 +383,14 @@
 			<description>The @three-ws/alibaba-cloud-mcp package, which lets an agent use Qwen chat, embeddings, and model discovery on your own Alibaba Cloud key, could not start at all. Two faults, both on the first line of use: the check for whether the file was launched directly crashed before the server ever opened, and the three tools were registered with a schema format the MCP library rejects. Both are fixed, so the server now boots, advertises its tools, and answers a client. The payment-sessions MCP package had a documentation fault with the same cost: its quick start told you to set your session variable to the whole cookie including the name, which the server then wrapped in the cookie name again, so every session-management call came back unauthorized. It now says to use the cookie value, and ships its two runnable examples inside the published package instead of only in the repository. Five packages (payment sessions, Agora, alerts, the assistant widget, and Alibaba Cloud) gained a Programmatic use section showing the exact code to import their tools into a host of your own, and the sniper package's HTTP table now lists every endpoint it actually serves, including the paid close-position route it had left out.</description>
 		</item>
 		<item>
+			<title>The concierge widget closes on Escape from anywhere on the page, and its SDK now installs on a server</title>
+			<link>https://three.ws/concierge</link>
+			<guid isPermaLink="false">2026-08-15:The concierge widget closes on Escape from anywhere on the page, and its SDK now installs on a server</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes to the embeddable concierge. Escape now closes the chat panel wherever the visitor's cursor last landed: it only worked while focus was still inside the widget, so clicking the page behind the panel left the documented shortcut dead. Sites built with Next, Nuxt, SvelteKit, or Astro can now import the package the normal way, because importing it no longer expects a browser and no longer crashes the server render. And the 3D avatar stage stopped printing a deprecation warning into every host site's console. The package also ships full TypeScript types for shopping mode (catalog, products, policies, and the store events) and declares its own build and test tools, so a standalone install builds and tests without the monorepo.</description>
+		</item>
+		<item>
 			<title>The contracts README now describes the contracts that are actually there</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-15:The contracts README now describes the contracts that are actually there</guid>
@@ -549,6 +565,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Three fixes in the developer packages. The @three-ws/vanity SDK documented a fetch option on its paid address-grinding lane but silently ignored it, so a developer who passed a payment-enabled fetch got a payment-required error back instead of the keypair they paid for; that option now works, as do a custom API host and key. The avatar MCP server's in-chat 3D viewer had been hand-tuned with softer shadows, brighter exposure and a neutral environment light, but the script that rebuilds it before every release still produced the old flat version, so the next release would have quietly undone the tuning; the script now produces the tuned viewer, and the same settings apply to the fallback view for chat apps that cannot run the interactive one. The tool SDK's quick-start example pointed at an API that does not exist and skipped the wrapper an MCP server needs to return anything at all, so following it produced a tool that answered with nothing; it now runs end to end against a real free three.ws endpoint.</description>
+		</item>
+		<item>
+			<title>The Walk page shows the real top walkers again instead of claiming nobody has walked</title>
+			<link>https://three.ws/walk</link>
+			<guid isPermaLink="false">2026-08-15:The Walk page shows the real top walkers again instead of claiming nobody has walked</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Top walkers board on /walk read &quot;No walks logged yet. Be the first to put down some distance&quot; for every visitor, while twenty-nine people had in fact logged distance and the full leaderboard at /walk-leaderboard listed all of them. The page was asking the leaderboard endpoint for the ranking and getting a correct answer back, then looking for it under half a dozen field names the endpoint has never used, finding nothing, and drawing its empty state. It now reads the shape the endpoint actually returns, so the top three walkers appear with their handles, avatars, distances, and a link to each profile, and it asks for only the three rows it draws instead of the first fifty. The social section under it now shows placeholder cards while it loads rather than a blank gap.</description>
 		</item>
 		<item>
 			<title>Three docs pages stop pointing readers at a dead page, a missing section, and a snippet that does nothing</title>
@@ -22428,7 +22452,7 @@
 			<guid isPermaLink="false">2026-06-05:Voice Lab</guid>
 			<pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.</description>
+			<description>Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.</description>
 		</item>
 		<item>
 			<title>Walk: 3D Avatar AR</title>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T19:03:12.893Z",
+	"generated_at": "2026-08-15T19:11:05.234Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -144,6 +144,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "An embedded agent keeps talking when the browser refuses to play its voice",
+			"summary": "The living agent body that renders inside ChatGPT, Claude, and any site that embeds it speaks each reply with a lip-synced mouth. When a voice track is attached, the body plays the audio and drives the mouth from it. Browsers block that playback routinely: a chat panel the visitor has not clicked in is not allowed to start audio. The body was falling back to an empty line in that case, so it stood there with its mouth shut through the whole reply. It now falls back to the text of the reply it was actually given, so the mouth speaks the line whether or not the audio was allowed to start, and the engine is now covered by tests for the load, speak, emotion, chain-state, and teardown paths.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -506,6 +516,17 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "The concierge widget closes on Escape from anywhere on the page, and its SDK now installs on a server",
+			"summary": "Three fixes to the embeddable concierge. Escape now closes the chat panel wherever the visitor's cursor last landed: it only worked while focus was still inside the widget, so clicking the page behind the panel left the documented shortcut dead. Sites built with Next, Nuxt, SvelteKit, or Astro can now import the package the normal way, because importing it no longer expects a browser and no longer crashes the server render. And the 3D avatar stage stopped printing a deprecation warning into every host site's console. The package also ships full TypeScript types for shopping mode (catalog, products, policies, and the store events) and declares its own build and test tools, so a standalone install builds and tests without the monorepo.",
+			"link": "/concierge",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "The contracts README now describes the contracts that are actually there",
 			"summary": "Anyone opening the on-chain contracts directory was reading a page written when it held three ERC-8004 registries. It now holds ten contracts and programs, including the two that custody real USDC on BNB Smart Chain, Base and Arbitrum, and the two Solana programs. The README listed none of them, claimed 25 tests where there are 242, and printed the canonical ERC-8004 identity addresses with mainnet and testnet swapped, so a developer copying them would have pointed at the wrong chain's registry. It also told you to edit a shared entry that seven testnets read from, which would have silently repointed all of them. All of that is corrected, the Solana build and test commands are documented, and the sample registration snippet now shows the values the function really returns.",
 			"link": null,
@@ -738,6 +759,16 @@
 				"fix",
 				"sdk",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The Walk page shows the real top walkers again instead of claiming nobody has walked",
+			"summary": "The Top walkers board on /walk read \"No walks logged yet. Be the first to put down some distance\" for every visitor, while twenty-nine people had in fact logged distance and the full leaderboard at /walk-leaderboard listed all of them. The page was asking the leaderboard endpoint for the ranking and getting a correct answer back, then looking for it under half a dozen field names the endpoint has never used, finding nothing, and drawing its empty state. It now reads the shape the endpoint actually returns, so the top three walkers appear with their handles, avatars, distances, and a link to each profile, and it asks for only the three rows it draws instead of the first fifty. The social section under it now shows placeholder cards while it loads rather than a blank gap.",
+			"link": "/walk",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -29348,7 +29379,7 @@
 			"date": "2026-06-05",
 			"type": "launch",
 			"title": "Voice Lab",
-			"summary": "Browse about 850 voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
+			"summary": "Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
 			"link": "/voice",
 			"tags": [
 				"launch"

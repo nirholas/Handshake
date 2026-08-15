@@ -3,6 +3,43 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "The multiplayer worlds server connects on any local port, and its README documents what it actually reads",
+			"summary": "Two fixes to the server that runs every live world (/play, /walk, /agora, /irl, /play/war, the Living Stages, /ar/studio). Running two copies of the site on one machine used to break the worlds: the second copy gets the next free web port, and the server only accepted connections from the first four, so the world silently refused to join. Outside production it now accepts any connection coming from the same machine, while the live server keeps its exact origin list unchanged. Its README also described six settings when the server reads more than thirty, and listed two web endpoints when it serves seven, so anyone running or deploying it was working from a map that no longer matched the ground; the settings, the endpoints, and how the admin monitor is protected are now written down as they really behave, and the origin rules, the refusal to boot production without a real signing secret, and the closed admin monitor are covered by tests.",
+			"tags": [
+				"fix",
+				"docs",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"title": "An embedded agent keeps talking when the browser refuses to play its voice",
+			"summary": "The living agent body that renders inside ChatGPT, Claude, and any site that embeds it speaks each reply with a lip-synced mouth. When a voice track is attached, the body plays the audio and drives the mouth from it. Browsers block that playback routinely: a chat panel the visitor has not clicked in is not allowed to start audio. The body was falling back to an empty line in that case, so it stood there with its mouth shut through the whole reply. It now falls back to the text of the reply it was actually given, so the mouth speaks the line whether or not the audio was allowed to start, and the engine is now covered by tests for the load, speak, emotion, chain-state, and teardown paths.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The concierge widget closes on Escape from anywhere on the page, and its SDK now installs on a server",
+			"summary": "Three fixes to the embeddable concierge. Escape now closes the chat panel wherever the visitor's cursor last landed: it only worked while focus was still inside the widget, so clicking the page behind the panel left the documented shortcut dead. Sites built with Next, Nuxt, SvelteKit, or Astro can now import the package the normal way, because importing it no longer expects a browser and no longer crashes the server render. And the 3D avatar stage stopped printing a deprecation warning into every host site's console. The package also ships full TypeScript types for shopping mode (catalog, products, policies, and the store events) and declares its own build and test tools, so a standalone install builds and tests without the monorepo.",
+			"tags": [
+				"fix",
+				"sdk"
+			],
+			"link": "/concierge"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The Walk page shows the real top walkers again instead of claiming nobody has walked",
+			"summary": "The Top walkers board on /walk read \"No walks logged yet. Be the first to put down some distance\" for every visitor, while twenty-nine people had in fact logged distance and the full leaderboard at /walk-leaderboard listed all of them. The page was asking the leaderboard endpoint for the ranking and getting a correct answer back, then looking for it under half a dozen field names the endpoint has never used, finding nothing, and drawing its empty state. It now reads the shape the endpoint actually returns, so the top three walkers appear with their handles, avatars, distances, and a link to each profile, and it asks for only the three rows it draws instead of the first fifty. The social section under it now shows placeholder cards while it loads rather than a blank gap.",
+			"tags": [
+				"fix"
+			],
+			"link": "/walk"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "The trading control room now tells you when the agents cannot afford to trade",
 			"summary": "The /trading page showed a green \"Trading live\" badge whenever the worker was up and the launch feed was connected. Both of those can be true while the agents' wallets are too empty to place a single buy, which is exactly what was happening: four of twelve armed wallets were below the minimum entry size and the page said everything was fine. It now reads the fleet verdict the trading worker already publishes, so an underfunded fleet says \"Live, wallets underfunded\" and one that cannot trade at all says \"Out of SOL\", each naming the real cause instead of blaming the feed. A new Wallets funded vital shows how many armed wallets can actually place their configured size, how much SOL would refill the rest, and whether the funding wallet can do it automatically or a person has to step in. An agent with no return to report now reads \"ROI unavailable\" rather than a stray dot.",
 			"tags": [
