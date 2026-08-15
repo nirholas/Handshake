@@ -340,7 +340,7 @@ function cardHtml(v, maxNav, rank) {
 		<div class="vx-card-head">
 			<div class="vx-card-avwrap ${ringTone}">${rankBadge}${avatar(v.agent_image)}</div>
 			<div class="vx-card-id">
-				<span class="vx-card-name">${esc(v.agent_name || 'Agent')}</span>
+				<span class="vx-card-name" title="${esc(v.agent_name || 'Agent')}">${esc(v.agent_name || 'Agent')}</span>
 				${repBadge(v.reputation)}
 			</div>
 			${statusChip}
@@ -375,7 +375,7 @@ function mineCardHtml(v) {
 		<span class="vx-card-accent ${signClass(Number(realized))}" aria-hidden="true"></span>
 		<div class="vx-card-head">
 			<div class="vx-card-avwrap ${ringTone}">${avatar(v.agent_image)}</div>
-			<div class="vx-card-id"><span class="vx-card-name">${esc(v.agent_name || 'Agent')}</span><span class="vx-rep vx-rep--muted">${esc(v.status)}</span></div>
+			<div class="vx-card-id"><span class="vx-card-name" title="${esc(v.agent_name || 'Agent')}">${esc(v.agent_name || 'Agent')}</span><span class="vx-rep vx-rep--muted">${esc(v.status)}</span></div>
 		</div>
 		<div class="vx-card-return ${signClass(Number(realized))}">
 			<span class="vx-card-return-v" style="font-size:var(--text-xl)">${realizedPos ? '+' : '−'}${usdCompact(realizedPos ? realized : -realized)}</span>

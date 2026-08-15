@@ -214,7 +214,13 @@
 	border: 1px solid var(--stroke); border-radius: var(--radius-lg);
 }
 .vx-navhero-l { font: var(--weight-medium) var(--text-2xs) var(--font-body); color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
-.vx-navhero-v { font: var(--weight-bold) var(--text-3xl) / 1 var(--font-mono); color: var(--ink-bright); letter-spacing: -0.025em; }
+.vx-navhero-v {
+	/* The NAV figure is the loudest number on the page, but a fixed display size
+	   made a seven-figure NAV wider than a phone and the excess was clipped, not
+	   scrolled. Scale it with the viewport and floor it at a readable size. */
+	font: var(--weight-bold) clamp(var(--text-xl), 11vw, var(--text-3xl)) / 1 var(--font-mono);
+	color: var(--ink-bright); letter-spacing: -0.025em;
+}
 .vx-navhero-roi { display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; margin-top: var(--space-2xs); padding: 3px 10px; border-radius: var(--radius-pill); font: var(--weight-semibold) var(--text-sm) var(--font-mono); }
 .vx-navhero-roi.is-pos { color: var(--success); background: rgba(74, 222, 128, 0.12); }
 .vx-navhero-roi.is-neg { color: var(--danger); background: rgba(248, 113, 113, 0.12); }
@@ -227,13 +233,23 @@
 .vx-chart-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-xs); }
 .vx-chart-t { font: var(--weight-medium) var(--text-2xs) var(--font-body); color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
 .vx-chart-now { font: var(--weight-semibold) var(--text-sm) var(--font-mono); color: var(--ink-bright); }
-.vx-spark { width: 100%; flex: 1; min-height: 64px; display: block; }
+.vx-spark { width: 100%; max-width: 100%; flex: 1; min-height: 64px; display: block; }
+/* Grid and flex items default to min-width:auto, so the sparkline's intrinsic
+   width and the large NAV figure held the hero open wider than a 320px screen.
+   The overflow was clipped rather than scrolled, hiding the right edge of the
+   share-price panel. */
+.vx-navhero-main, .vx-navhero-chart { min-width: 0; }
 .vx-spark-empty { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 64px; color: var(--ink-faint); font: var(--text-xs) var(--font-mono); text-align: center; }
 
 .vx-d-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-sm); margin-bottom: var(--space-lg); }
-.vx-metric { background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); display: flex; flex-direction: column; gap: var(--space-2xs); }
+.vx-metric { min-width: 0; background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); display: flex; flex-direction: column; gap: var(--space-2xs); }
 .vx-metric-l { font: var(--text-2xs) var(--font-body); color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; }
-.vx-metric-v { font: var(--weight-semibold) var(--text-lg) var(--font-mono); color: var(--ink-bright); }
+.vx-metric-v {
+	/* A long figure must reflow inside its tile rather than be sliced off at the
+	   tile edge, so the value never lies about how much capital is in the vault. */
+	font: var(--weight-semibold) var(--text-lg) var(--font-mono); color: var(--ink-bright);
+	overflow-wrap: anywhere;
+}
 
 .vx-d-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: var(--space-md); align-items: start; }
 .vx-d-main, .vx-d-side { display: flex; flex-direction: column; gap: var(--space-md); }
