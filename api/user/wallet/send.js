@@ -12,8 +12,7 @@ import { solanaConnection } from '../../_lib/agent-pumpfun.js';
 import { validateSolanaAddress, lamportsToUsd } from '../../_lib/agent-trade-guards.js';
 import { recordEvent } from '../../_lib/usage.js';
 import {
-	Keypair, PublicKey, LAMPORTS_PER_SOL, SystemProgram,
-	TransactionMessage, VersionedTransaction,
+	PublicKey, SystemProgram, TransactionMessage, VersionedTransaction,
 } from '@solana/web3.js';
 import {
 	getAssociatedTokenAddressSync, createTransferCheckedInstruction,

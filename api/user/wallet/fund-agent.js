@@ -77,7 +77,17 @@ export default wrap(async (req, res) => {
 	if (!agent) return error(res, 403, 'forbidden', 'agent not found or not yours');
 
 	const agentSolAddr = agent.meta?.solana_address;
-	if (!agentSolAddr) return error(res, 400, 'no_agent_wallet', 'agent has no Solana wallet — provision one first');
+	if (!agentSolAddr) return error(res, 400, 'no_agent_wallet', 'agent has no Solana wallet, provision one first');
+
+	// agent_identities.meta is JSON written by several provisioning paths, so the
+	// address stored there is not guaranteed to be a decodable pubkey. Handing an
+	// unchecked string to `new PublicKey()` threw past every boundary and surfaced
+	// as an opaque 500; validating it names the fault and keeps the destination
+	// check identical to the one send.js applies to a user-supplied address.
+	const agentDest = validateSolanaAddress(agentSolAddr);
+	if (!agentDest.valid || !agentDest.onCurve) {
+		return error(res, 422, 'agent_wallet_invalid', 'this agent\'s stored wallet address is not a valid Solana account; re-provision its wallet');
+	}
 
 	const asset = body.asset === 'SOL' ? 'SOL' : 'USDC';
 	const isMax = body.amount === 'max' || body.amount === 'MAX';
@@ -88,7 +98,7 @@ export default wrap(async (req, res) => {
 
 	const conn = solanaConnection('mainnet');
 	const fromPk = new PublicKey(mw.solana_address);
-	const destPk = new PublicKey(agentSolAddr);
+	const destPk = agentDest.pubkey;
 	const mintPk = new PublicKey(USDC_MINT);
 
 	let balanceLamports;

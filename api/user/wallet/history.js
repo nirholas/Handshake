@@ -40,7 +40,10 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
-	const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10) || 20, 50);
+	// Clamp on BOTH ends. Only the upper bound was enforced, so `?limit=-5`
+	// passed straight through to getSignaturesForAddress, which rejects it and
+	// turned plainly malformed input into a 502 blamed on the RPC.
+	const limit = Math.max(1, Math.min(parseInt(url.searchParams.get('limit') || '20', 10) || 20, 50));
 
 	const address = row.solana_address;
 	const cacheKey = `mw:sigs:${address}:${network}:${limit}`;

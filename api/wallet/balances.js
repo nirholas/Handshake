@@ -5,12 +5,31 @@
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getBalances } from '../_lib/balances.js';
+import { isValidSolanaAddress, isValidEvmAddress } from '../_lib/validate.js';
 import { z } from 'zod';
 
-const bodySchema = z.object({
-	chain: z.enum(['solana', 'evm']),
-	address: z.string().trim().min(1),
-});
+// The address is caller-supplied, so its shape is checked here rather than left
+// to the upstream RPC. Without this, a string that cannot be an address reads as
+// a real empty wallet: Helius/DAS answers "no assets" for base58 garbage and the
+// caller gets a 200 with zero balances instead of being told the input is wrong.
+// It also stops arbitrary-length junk from costing an upstream round trip.
+const bodySchema = z
+	.object({
+		chain: z.enum(['solana', 'evm']),
+		address: z.string().trim().min(1),
+	})
+	.superRefine((body, ctx) => {
+		const ok = body.chain === 'solana' ? isValidSolanaAddress : isValidEvmAddress;
+		if (ok(body.address)) return;
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['address'],
+			message:
+				body.chain === 'solana'
+					? 'must be a base58 Solana address (32-44 chars)'
+					: 'must be a 0x-prefixed 40-character hex address',
+		});
+	});
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
