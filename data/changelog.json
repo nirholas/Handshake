@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "Asking for a voice that does not exist now tells you so, instead of quietly speaking in a different one",
+      "summary": "The voice API accepts a provider and a voice id from the voice catalog. If the id was not one that provider actually has, nothing said so: the request was answered with audio rendered in that lane's default voice, and on the metered lanes it was billed, so a single typo in a voice id came back as a stranger's voice at full price with a success status. A well-formed id for a voice that had been removed took the opposite route and failed as a server error, which reads as our fault and tells a client to retry something that will never work. Both now return a plain rejection that names the id you sent and the catalog address to pick a real one from, and that check runs before anything is charged. Leaving the voice id out still gets you the lane default on purpose. Asking the catalog for a provider that does not exist used to return an empty list that was indistinguishable from a provider being down; it now says which providers exist. ElevenLabs voices, whose catalog grows every time you clone or add one, are still decided by ElevenLabs, but an id it rejects is reported as your request being wrong rather than ours, with any charge refunded first. Voice cloning also now asks who you are before reporting anything about how this server is configured.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/docs/api-reference"
+    },
+    {
+      "date": "2026-08-15",
       "title": "Looking up an on-chain agent by its CAIP reference works again",
       "summary": "The public resolver that turns an ERC-8004 agent reference into its owner, token URI and verified agent card could not be reached at all. An agent reference ends in a slash before its token id, and the documentation told callers to percent-encode the whole reference, which turns that slash into %2F. The API refuses any address segment holding an encoded separator, because that is the same trick used to escape a path and reach files that were never meant to be served, so every correctly-formed lookup was turned away as an unknown address before it ever reached the resolver. The verification badge you can embed on your own site built its request in exactly that shape, so it never showed a result either. The resolver now accepts the reference with its slash as a normal part of the address, the badge asks for it that way, and the documentation shows the form that works. The protection against encoded separators is untouched. New tests resolve the address through the same routing the live site uses, so this cannot quietly break again.",
       "tags": [

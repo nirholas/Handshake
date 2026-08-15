@@ -833,6 +833,8 @@ Text-to-speech via ElevenLabs with R2 caching. Requires auth.
 
 Audio binary. `Content-Type: audio/mpeg`.
 
+A `voiceId` the account behind the request does not have returns `400 validation_error` (the charge, if any, is refunded first); a genuine ElevenLabs fault stays `502 upstream_error`.
+
 Responses are cached in R2 by `sha256(voiceId + text + modelId)` for 30 days — identical requests return cached audio without hitting ElevenLabs.
 
 ---
