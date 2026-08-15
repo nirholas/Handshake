@@ -3,6 +3,56 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "World Lines: the AR encounter is finally offered, and the quest tabs answer the keyboard",
+			"summary": "The page has always promised an AR challenge, and the immersive encounter was fully built, but nothing ever put a button in front of it: a phone that can run WebXR was quietly handed the flat panel instead. Devices that support immersive AR now see a \"Meet the agent in AR\" option next to \"Begin the encounter\", and if the headset session refuses to start, the panel ceremony picks up where it left off. The four tabs (Near me, Explore, My proofs, Create) now behave like a real tab strip: arrow keys and Home/End move between them, only the selected tab sits in the tab order, each tab writes its own address so a tab can be linked and the back button walks back through them. Opening a region on the Explore tab used to leave a heading over an empty space when every quest in it had expired or filled up, and a failure there was a single line of red text with no way to retry; both are now proper states. Focus rings are visible again across the page (they were being drawn in near-black on a black background), the opened region is highlighted, the encounter dialog now takes and holds keyboard focus and hands it back where you left it, and a proof whose date is missing says so rather than claiming it was earned in 1970.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/world-lines"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Grind-Bounty Market: shared bounty links now open the bounty, and \"Grind this\" grinds that one",
+			"summary": "Every bounty the market posts comes back with its own link (three.ws/vanity/bounties#<id>), and the API hands that link out as the bounty's home. Opening one did nothing: the page rewrote the address back to the plain board and left you to hunt for the card, which was not even there if the bounty had already been won or had expired off the open filter. A linked bounty is now fetched by id and pinned above the board, whatever its state, with a Clear button to go back; a link to a bounty that no longer exists says so instead of leaving you staring at the board. The Grind this button on a card was equally misleading: it switched you to the grinder and hoped, while the worker pool always took whichever bounty happened to be first in the queue. It now sets a real priority target that the pool grinds ahead of the queue, shows which bounty is pinned, lets you clear it, and says so plainly if that bounty stops being claimable. Refunding an expired bounty used to ask which address to send the escrow to and then ignore the answer, because the destination is bound to the address recorded when the bounty was funded; it now names the amount and where the money goes and takes a plain yes or no. Four smaller fixes shipped with it: the board no longer fetches itself twice on every page load, the market stats strip and the grinder leaderboard offer a retry when they cannot load instead of a dead end, the tab strip answers arrow keys and Home/End the way its role promises, and the sealed-delivery key field is finally wired to its label for screen readers.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/vanity/bounties"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The Wardrobe's garment forge no longer locks itself after a job expires",
+			"summary": "Forging a garment takes about seven minutes, so the Wardrobe (/wardrobe) remembers your job and picks the progress back up when you return. The catch: once the forge had cleared that finished job, the page treated the resulting \"no such job\" answer as a temporary network blip, so it kept the job saved, kept the prompt box and the Forge it button greyed out, and retried forever. One expired job made the generator permanently unusable on every later visit, with \"Reconnecting\" as the only explanation. An expired job is now recognised as finished business: the page clears it, unlocks the form, and tells you nothing is pending. A genuine outage is still retried, but it now gives the form back after several failed attempts and keeps your job saved so a reload resumes it. Separately, inspecting a piece in 3D and then typing in the search box no longer throws that 3D view away and reload every thumbnail on the page, filtering by slot with the keyboard keeps your place instead of dropping focus, the search and prompt boxes finally show a visible keyboard focus ring, and when the catalog itself fails to load the page now names the actual cause underneath the apology instead of swallowing it.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/wardrobe"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The pay-as-you-learn tutor can take a payment again",
+			"summary": "Every question on the tutor page died at the \"Confirming price\" step with a raw browser error, so no explanation was ever bought and the checkout never even reached the tutor service. The shared payment library was asking the service for its price with a GET request that carried a question body, which browsers refuse outright; it now sends the POST the service expects whenever a request body is present, which also unblocks any other page that pays a POST endpoint. On top of that, a resumed session no longer shows a real running total next to a stuck \"0 answers\" count, resumed questions show what each one cost, a shimmering placeholder now stands in for the answer while it is being written, the invoice closes with the Escape key and returns you to where you were, the page keeps a proper top-level heading once the conversation starts, every control has a visible keyboard focus ring, and a checkout that cannot reach the service now says so in plain language instead of quoting the browser.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/tutor"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The vanity receipt verifier says what went wrong instead of going quiet",
+			"summary": "Verifying a provably-fair vanity receipt runs entirely in your browser, so when the cryptography modules could not load (a blocking extension, a captive network, an offline laptop) the Verify button silently did nothing at all. The page now loads that code on demand and, when it cannot, says so plainly and hands you the offline command line check instead. Receipts delivered without a sealed envelope now get the custody check too, proving the key you hold is the one the receipt describes, with no extra key to paste. A share link whose receipt payload arrived damaged now explains that rather than leaving you with an empty form, opening a sealed envelope with the wrong key now tells you which key it wanted, and every control has a visible keyboard focus ring.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/vanity/verify"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "The widgets gallery stopped clipping its controls on phones and now recovers from a failed load",
 			"summary": "The widgets gallery (/widgets) is where you pick a pre-built chat, voice, or 3D-avatar embed and copy the one line of HTML that drops it into your own page. On a narrow phone screen, each card's preview frame and its Customize panel were wider than the card itself, so the right edge got cut off: the mint field ran past the panel and the Reset button was pushed off-screen entirely, out of reach. Card layout now shrinks to the screen it is on, and the whole page is clean from 320px up. If the showcase list fails to load, the page now says so in plain language and offers a Try again button that reloads it in place, plus a link to the widget docs, instead of leaving a one-line error with no way forward. If the list comes back empty, the gallery explains what it would normally show and points at the Studio rather than showing a blank space. The widget count in the header now reflects the widgets actually loaded in every language, the page has a real top-level heading, the type filters announce which one is active to screen readers, the Preview and Code tabs are wired up as real tabs, and Escape closes the embed-format menu.",
 			"tags": [

@@ -183,6 +183,14 @@
 			<description>An audit of eight tutorials found instructions that could not work. The AI-brain tutorial described a model line-up that had been superseded: it never mentioned the Claude 5 family (Sonnet 5, Opus 5, Fable 5), which are live and selectable, and it recommended Sonnet 4.6 as the default. It also sent you to screens that do not exist, telling you to add API keys under a gear icon in My Agents and to change models, sampling knobs, and streaming under a Brain menu. Provider keys actually live in the AI Provider Keys panel on your account page, the model is a field on the agent's embed policy, and streaming has no off-switch. The promised usage tab with token charts and threshold emails did not exist either; the tutorial now documents the real per-agent usage read and points at the monthly quota and per-minute rate limit, which are the controls actually enforced before your money is spent. It also now explains that a visitor can never escalate your agent onto a paid model. The custom-GLB tutorial was worse for anyone following along: it linked a Studio address that no longer resolves, and four of its commands invoked gltf-transform subcommands that have never existed, so converting an FBX, renaming animation clips, and the full Mixamo walkthrough all failed at the first step. Those are replaced with the converter the platform itself uses and a clip-renaming script that was run against a real avatar to confirm it works. Its Draco flag was wrong, its upload path pointed at the wrong page, and it still warned that an avatar without an idle clip would stand frozen in a T-pose, which stopped being true when animation retargeting became universal. Finally, the page-events tutorial listed the wrong fallback order for emote animations.</description>
 		</item>
 		<item>
+			<title>Grind-Bounty Market: shared bounty links now open the bounty, and &quot;Grind this&quot; grinds that one</title>
+			<link>https://three.ws/vanity/bounties</link>
+			<guid isPermaLink="false">2026-08-15:Grind-Bounty Market: shared bounty links now open the bounty, and &quot;Grind this&quot; grinds that one</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every bounty the market posts comes back with its own link (three.ws/vanity/bounties#&lt;id&gt;), and the API hands that link out as the bounty's home. Opening one did nothing: the page rewrote the address back to the plain board and left you to hunt for the card, which was not even there if the bounty had already been won or had expired off the open filter. A linked bounty is now fetched by id and pinned above the board, whatever its state, with a Clear button to go back; a link to a bounty that no longer exists says so instead of leaving you staring at the board. The Grind this button on a card was equally misleading: it switched you to the grinder and hoped, while the worker pool always took whichever bounty happened to be first in the queue. It now sets a real priority target that the pool grinds ahead of the queue, shows which bounty is pinned, lets you clear it, and says so plainly if that bounty stops being claimable. Refunding an expired bounty used to ask which address to send the escrow to and then ignore the answer, because the destination is bound to the address recorded when the bounty was funded; it now names the amount and where the money goes and takes a plain yes or no. Four smaller fixes shipped with it: the board no longer fetches itself twice on every page load, the market stats strip and the grinder leaderboard offer a retry when they cannot load instead of a dead end, the tab strip answers arrow keys and Home/End the way its role promises, and the sealed-delivery key field is finally wired to its label for screen readers.</description>
+		</item>
+		<item>
 			<title>Looking up an on-chain agent by its CAIP reference works again</title>
 			<link>https://three.ws/docs/api-reference</link>
 			<guid isPermaLink="false">2026-08-15:Looking up an on-chain agent by its CAIP reference works again</guid>
@@ -471,6 +479,14 @@
 			<description>Two fixes to the server that runs every live world (/play, /walk, /agora, /irl, /play/war, the Living Stages, /ar/studio). Running two copies of the site on one machine used to break the worlds: the second copy gets the next free web port, and the server only accepted connections from the first four, so the world silently refused to join. Outside production it now accepts any connection coming from the same machine, while the live server keeps its exact origin list unchanged. Its README also described six settings when the server reads more than thirty, and listed two web endpoints when it serves seven, so anyone running or deploying it was working from a map that no longer matched the ground; the settings, the endpoints, and how the admin monitor is protected are now written down as they really behave, and the origin rules, the refusal to boot production without a real signing secret, and the closed admin monitor are covered by tests.</description>
 		</item>
 		<item>
+			<title>The pay-as-you-learn tutor can take a payment again</title>
+			<link>https://three.ws/tutor</link>
+			<guid isPermaLink="false">2026-08-15:The pay-as-you-learn tutor can take a payment again</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every question on the tutor page died at the &quot;Confirming price&quot; step with a raw browser error, so no explanation was ever bought and the checkout never even reached the tutor service. The shared payment library was asking the service for its price with a GET request that carried a question body, which browsers refuse outright; it now sends the POST the service expects whenever a request body is present, which also unblocks any other page that pays a POST endpoint. On top of that, a resumed session no longer shows a real running total next to a stuck &quot;0 answers&quot; count, resumed questions show what each one cost, a shimmering placeholder now stands in for the answer while it is being written, the invoice closes with the Escape key and returns you to where you were, the page keeps a proper top-level heading once the conversation starts, every control has a visible keyboard focus ring, and a checkout that cannot reach the service now says so in plain language instead of quoting the browser.</description>
+		</item>
+		<item>
 			<title>The persona builder stops reporting a model outage as if you had been signed out</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-15:The persona builder stops reporting a model outage as if you had been signed out</guid>
@@ -559,6 +575,14 @@
 			<description>The Tutor charges one cent per answer and keeps an itemized tab you can reload later and close for a signed invoice. That ledger only ever knew how to store itself in a key-value service this deployment does not run, so nothing was ever written down: reopening the page never restored your history, and ending a session always produced an invoice reading &quot;no questions&quot; and a total of zero, however many answers you had paid for. The tab is now stored in the platform’s own database, so it survives a reload, a new browser tab, and any server restart, and the invoice lists every answer with its charge and a verification hash over the line items. Closing a session twice returns the identical invoice instead of a freshly stamped one, closing a session id that was never used no longer makes that id unusable for its real owner, and if the ledger itself is ever unreachable the page says so rather than quietly reporting that you owe nothing. Asking a question still succeeds even if the ledger write fails, because a bookkeeping outage should never cost you the answer you paid for.</description>
 		</item>
 		<item>
+			<title>The vanity receipt verifier says what went wrong instead of going quiet</title>
+			<link>https://three.ws/vanity/verify</link>
+			<guid isPermaLink="false">2026-08-15:The vanity receipt verifier says what went wrong instead of going quiet</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Verifying a provably-fair vanity receipt runs entirely in your browser, so when the cryptography modules could not load (a blocking extension, a captive network, an offline laptop) the Verify button silently did nothing at all. The page now loads that code on demand and, when it cannot, says so plainly and hands you the offline command line check instead. Receipts delivered without a sealed envelope now get the custody check too, proving the key you hold is the one the receipt describes, with no extra key to paste. A share link whose receipt payload arrived damaged now explains that rather than leaving you with an empty form, opening a sealed envelope with the wrong key now tells you which key it wanted, and every control has a visible keyboard focus ring.</description>
+		</item>
+		<item>
 			<title>The vanity receipt verifier stops calling honest receipts fraudulent, and the avatar CLI takes a Solana address</title>
 			<link>https://three.ws/docs/rig-doctor</link>
 			<guid isPermaLink="false">2026-08-15:The vanity receipt verifier stops calling honest receipts fraudulent, and the avatar CLI takes a Solana address</guid>
@@ -589,6 +613,22 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Top walkers board on /walk read &quot;No walks logged yet. Be the first to put down some distance&quot; for every visitor, while twenty-nine people had in fact logged distance and the full leaderboard at /walk-leaderboard listed all of them. The page was asking the leaderboard endpoint for the ranking and getting a correct answer back, then looking for it under half a dozen field names the endpoint has never used, finding nothing, and drawing its empty state. It now reads the shape the endpoint actually returns, so the top three walkers appear with their handles, avatars, distances, and a link to each profile, and it asks for only the three rows it draws instead of the first fifty. The social section under it now shows placeholder cards while it loads rather than a blank gap.</description>
+		</item>
+		<item>
+			<title>The Wardrobe's garment forge no longer locks itself after a job expires</title>
+			<link>https://three.ws/wardrobe</link>
+			<guid isPermaLink="false">2026-08-15:The Wardrobe's garment forge no longer locks itself after a job expires</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Forging a garment takes about seven minutes, so the Wardrobe (/wardrobe) remembers your job and picks the progress back up when you return. The catch: once the forge had cleared that finished job, the page treated the resulting &quot;no such job&quot; answer as a temporary network blip, so it kept the job saved, kept the prompt box and the Forge it button greyed out, and retried forever. One expired job made the generator permanently unusable on every later visit, with &quot;Reconnecting&quot; as the only explanation. An expired job is now recognised as finished business: the page clears it, unlocks the form, and tells you nothing is pending. A genuine outage is still retried, but it now gives the form back after several failed attempts and keeps your job saved so a reload resumes it. Separately, inspecting a piece in 3D and then typing in the search box no longer throws that 3D view away and reload every thumbnail on the page, filtering by slot with the keyboard keeps your place instead of dropping focus, the search and prompt boxes finally show a visible keyboard focus ring, and when the catalog itself fails to load the page now names the actual cause underneath the apology instead of swallowing it.</description>
+		</item>
+		<item>
+			<title>The widgets gallery stopped clipping its controls on phones and now recovers from a failed load</title>
+			<link>https://three.ws/widgets</link>
+			<guid isPermaLink="false">2026-08-15:The widgets gallery stopped clipping its controls on phones and now recovers from a failed load</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The widgets gallery (/widgets) is where you pick a pre-built chat, voice, or 3D-avatar embed and copy the one line of HTML that drops it into your own page. On a narrow phone screen, each card's preview frame and its Customize panel were wider than the card itself, so the right edge got cut off: the mint field ran past the panel and the Reset button was pushed off-screen entirely, out of reach. Card layout now shrinks to the screen it is on, and the whole page is clean from 320px up. If the showcase list fails to load, the page now says so in plain language and offers a Try again button that reloads it in place, plus a link to the widget docs, instead of leaving a one-line error with no way forward. If the list comes back empty, the gallery explains what it would normally show and points at the Studio rather than showing a blank space. The widget count in the header now reflects the widgets actually loaded in every language, the page has a real top-level heading, the type filters announce which one is active to screen readers, the Preview and Code tabs are wired up as real tabs, and Escape closes the embed-format menu.</description>
 		</item>
 		<item>
 			<title>Three docs pages stop pointing readers at a dead page, a missing section, and a snippet that does nothing</title>
@@ -629,6 +669,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The country column in your widget stats has been empty since the platform moved to its current host in July. A visitor's country was read from a header only the old host set, so once it was gone every view was recorded with no country at all and the top-countries panel stayed blank no matter how much traffic a widget got. Country is now read from the headers our current edge provides, and it is checked against the shape of a real two-letter country code before it is stored, so nobody can push junk into your analytics by editing a request. Chat sessions on talking-agent widgets get the same fix. Separately, the oEmbed endpoint that Slack, Discord, WordPress, Ghost and Notion call to unfurl a shared widget link now says plainly when a consumer asks for a format we do not publish, instead of returning JSON labelled as the format that was asked for and leaving the embed broken with nothing to explain why.</description>
+		</item>
+		<item>
+			<title>World Lines: the AR encounter is finally offered, and the quest tabs answer the keyboard</title>
+			<link>https://three.ws/world-lines</link>
+			<guid isPermaLink="false">2026-08-15:World Lines: the AR encounter is finally offered, and the quest tabs answer the keyboard</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The page has always promised an AR challenge, and the immersive encounter was fully built, but nothing ever put a button in front of it: a phone that can run WebXR was quietly handed the flat panel instead. Devices that support immersive AR now see a &quot;Meet the agent in AR&quot; option next to &quot;Begin the encounter&quot;, and if the headset session refuses to start, the panel ceremony picks up where it left off. The four tabs (Near me, Explore, My proofs, Create) now behave like a real tab strip: arrow keys and Home/End move between them, only the selected tab sits in the tab order, each tab writes its own address so a tab can be linked and the back button walks back through them. Opening a region on the Explore tab used to leave a heading over an empty space when every quest in it had expired or filled up, and a failure there was a single line of red text with no way to retry; both are now proper states. Focus rings are visible again across the page (they were being drawn in near-black on a black background), the opened region is highlighted, the encounter dialog now takes and holds keyboard focus and hands it back where you left it, and a proof whose date is missing says so rather than claiming it was earned in 1970.</description>
 		</item>
 		<item>
 			<title>Your walk keeps syncing across devices, and a remotely driven avatar reports where it really is</title>

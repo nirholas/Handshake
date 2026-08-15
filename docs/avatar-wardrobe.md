@@ -113,6 +113,20 @@ measured against the canonical body before publish, so a generated garment
 can never be a tile the closet then refuses to wear. Offline proof harness:
 `node scripts/verify-garment.mjs <manifest url> [avatar.glb]`.
 
+Seven minutes is longer than most people keep a tab open, so `/wardrobe` saves
+the job id in `localStorage` under `twx_wardrobe_job` and resumes polling on
+the next visit. That resume is deliberately bounded, because a saved id that
+can never resolve would otherwise leave the generator disabled forever:
+
+- a `404` (or `job_not_found`) is **terminal**, not a blip. The saved id is
+  dropped, the form unlocks, and the page says the job is no longer on the
+  forge. Finished jobs are cleared upstream, so this is the normal end state
+  for a resume that arrives too late;
+- any other poll failure is treated as transient and retried on a longer
+  interval, up to six consecutive failures. After that the form unlocks and
+  the page says the job is still saved and a reload will pick it back up. The
+  id survives, so a genuine outage never destroys a running generation.
+
 ## Persistence shape
 
 ```json
