@@ -19,6 +19,8 @@
 import { cors, json, readJson, wrap, method } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
+import { requireCsrf } from '../_lib/csrf.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createSubscription, revokeSubscription } from '../_lib/x402/api-keys.js';
 import {
 	issueSubscriptionForCustomer,
@@ -84,7 +86,17 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { subscriptions: rows.map(shape) });
 	}
 
-	// POST — rotate or revoke
+	// POST — rotate or revoke. Both permanently change a live API credential on
+	// nothing but the session cookie, so they need the same CSRF proof every
+	// other session-auth writer here demands (provider-keys PATCH, the wallet
+	// routes). Without it a cross-site form POST could revoke a paying
+	// customer's key: the attacker never reads the response, but the write
+	// already happened, which is the whole damage.
+	if (!(await requireCsrf(req, res, user.id))) return;
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return json(res, 429, { error: 'rate_limited' });
+
 	let body;
 	try {
 		body = await readJson(req);
@@ -180,8 +192,14 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// Native rotate — revoke old, mint a replacement carrying the same shape.
-	await revokeSubscription(id);
+	// Native rotate — mint the replacement FIRST, then revoke the old key.
+	// Revoking first meant any mint failure (createSubscription rejects a row
+	// with no name, for one) left the caller holding nothing: old key dead, new
+	// key never issued, 502 with no way back. In this order a failed mint is
+	// inert and the caller keeps a working key.
+	// The AWS branch above must stay revoke-first for the opposite reason:
+	// issueSubscriptionForCustomer short-circuits on a still-active link and
+	// would hand back the existing subscription with a null token.
 	let created;
 	try {
 		created = await createSubscription({
@@ -195,6 +213,7 @@ export default wrap(async (req, res) => {
 		console.error('[user/x402-subscriptions] native rotate failed', { id, error: err?.message });
 		return json(res, 502, { error: 'rotate_failed' });
 	}
+	await revokeSubscription(id);
 	return json(res, 200, {
 		ok: true,
 		action: 'rotate',
