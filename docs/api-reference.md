@@ -753,6 +753,120 @@ Your original body is never mutated, and none of this changes the response shape
 
 ---
 
+### Persona extraction
+
+```
+POST /api/persona/extract
+```
+
+Turns a short onboarding interview (or a block of the person's own writing) into a structured persona profile you can save on an agent and reuse as its voice. Requires auth: a session cookie, or a bearer API key carrying `avatars:read` or `avatars:write`. Try it live at [/demos/persona-extract.html](https://three.ws/demos/persona-extract.html).
+
+**Request body**: send exactly one of `answers` or `freeform`.
+
+```json
+{
+	"answers": [
+		{ "question": "How do you like people to talk to you?", "answer": "Short. No preamble. Give me the number and the tradeoff." },
+		{ "question": "What are you into?", "answer": "Solana infra, GPU pipelines, and shipping fast." },
+		{ "question": "What phrases do you hate?", "answer": "Circle back. Synergy." }
+	]
+}
+```
+
+| Field      | Type                                   | Notes                                                                                  |
+| ---------- | -------------------------------------- | -------------------------------------------------------------------------------------- |
+| `answers`  | array of `{question, answer}`           | 1 to 12 entries. Both strings required and non-empty; each is truncated at 1200 chars. |
+| `freeform` | string                                  | Alternative to `answers`: any sample of the person's writing. Truncated at 8000 chars. |
+
+`freeform` wins when both are present. A body with neither is a `400`.
+
+**Response `200`**
+
+```json
+{
+	"persona": {
+		"tone": "Direct and to the point with a focus on key information",
+		"vocabulary": ["number", "tradeoff", "shipping fast", "infra", "pipelines"],
+		"interests": ["Solana", "GPU pipelines", "software development"],
+		"communication_style": "terse",
+		"dont_say": ["Circle back", "Synergy"],
+		"sample_greeting": "What's the key issue and what are the numbers?"
+	},
+	"model": "Meta-Llama-3_3-70B-Instruct",
+	"tokens_used": 516,
+	"tokens_in": 415,
+	"tokens_out": 101,
+	"latency_ms": 3852
+}
+```
+
+`communication_style` is always one of `terse`, `detailed`, `playful`, `analytical`, `warm`. The server clamps the model's output before returning it: at most 10 `vocabulary` entries, 5 `interests`, and 3 `dont_say` entries. `model` names the provider rung that actually served the call, which varies with the failover chain, so do not pin behaviour to it.
+
+**Rate limit:** 5 per user per day. A malformed body is rejected before the limiter runs, so a typo never costs you a call.
+
+---
+
+### Persona preview
+
+```
+POST /api/persona/preview
+```
+
+Replies to one message in the voice of a persona, so a user can audition a profile before saving it. Same auth as extraction. Stateless: pass the persona on every call.
+
+**Request body**
+
+```json
+{
+	"persona": {
+		"tone": "Direct and to the point with a focus on key information",
+		"vocabulary": ["number", "tradeoff", "shipping fast"],
+		"communication_style": "terse",
+		"dont_say": ["Circle back"]
+	},
+	"user_message": "Should we ship the new forge lane today?"
+}
+```
+
+| Field          | Type   | Notes                                                                                                   |
+| -------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| `persona`      | object | Any object; the shape returned by `/api/persona/extract` is what the prompt is written for. Rejected above 8000 chars serialized, because the persona is pinned into the system prompt verbatim and its size is prompt size. |
+| `user_message` | string | Required, non-empty. Truncated at 1500 chars.                                                           |
+
+**Response `200`**
+
+```json
+{
+	"reply": "What are the performance numbers on the GPU pipelines? We need to ship fast, but only if the infra tradeoff is net positive.",
+	"model": "gemini-3.1-flash-lite",
+	"tokens_used": 326,
+	"tokens_in": 300,
+	"tokens_out": 26,
+	"latency_ms": 3016
+}
+```
+
+Replies are capped at 1 to 2 sentences by design; this endpoint is an audition surface, not a chat runtime. For a real conversation use [`POST /api/chat`](#agent-chat) or [`POST /api/brain/chat`](#brain-proxy-multi-provider-llm).
+
+**Rate limit:** 30 per user per hour.
+
+**Errors (both persona routes)**
+
+| Status | `error`                     | Meaning                                                                                  |
+| ------ | --------------------------- | ---------------------------------------------------------------------------------------- |
+| `400`  | `bad_request`               | Malformed or missing fields. `error_description` names the offending one.                |
+| `401`  | `unauthorized`              | No session and no bearer key with an `avatars:*` scope.                                  |
+| `415`  | `bad_request`               | `content-type` was not `application/json`.                                               |
+| `429`  | `rate_limited`              | Per-user budget spent. `retry_after` and the standard `ratelimit-*` headers are set.     |
+| `429`  | `daily_spend_cap_exceeded`  | The account's daily LLM spend ceiling, not the call-count limiter. Resets on its own window. |
+| `502`  | `upstream_error`            | Every provider in the chain failed or returned an empty completion. Retryable.           |
+| `502`  | `parse_error`               | The model answered with something other than a usable persona (extraction only). Retryable. |
+| `503`  | `config_missing`            | The deployment has no LLM provider configured.                                           |
+
+Both routes run the shared multi-provider failover chain, so a single upstream `429`/`5xx` falls through to the next provider instead of reaching you.
+
+---
+
 ## TTS API
 
 ### Voice catalog
@@ -5387,8 +5501,12 @@ Privacy and counting rules, both deliberate:
 - An unknown code still records a visit with no referrer attached, so traffic on
   a dead or mistyped link stays visible instead of vanishing.
 
-A malformed or missing code returns `400 invalid_code`. The endpoint is rate
-limited per IP; over the limit returns `429` with a `retry-after` header.
+A malformed or missing code returns `400 invalid_code`. A body the endpoint
+cannot read at all is reported as its own failure rather than blamed on the
+code: a request without `content-type: application/json` returns
+`415 unsupported_media_type`, an unparseable body returns `400 bad_request`, and
+an oversized one returns `413 payload_too_large`. The endpoint is rate limited
+per IP; over the limit returns `429` with a `retry-after` header.
 
 ---
 
