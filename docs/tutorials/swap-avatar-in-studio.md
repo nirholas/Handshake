@@ -124,7 +124,7 @@ Keep one visually unmistakable body, such as a bright low-poly character, and sw
 
 [Widget Studio](/studio) is the other half of the story. It does not touch your agents; it turns an avatar into a self-contained embeddable widget with its own URL and snippet. It runs as four numbered steps across three columns.
 
-**1. Pick avatar.** Your own avatars appear here, but only the ones whose visibility is public or unlisted (a widget is served to strangers, so a private avatar cannot back one). Set visibility in the [avatar dashboard](/dashboard/avatars). There is also a search box for browsing public avatars, and a demo agent is pre-loaded so you can try the studio before signing in.
+**1. Pick avatar.** All of your avatars are listed, plus a search box for browsing public ones, and a demo avatar is pre-loaded so you can try the studio before signing in. Set the avatar you intend to publish to **public** or **unlisted** in the [avatar dashboard](/dashboard/avatars) first: a widget is served to strangers, so a private avatar's model URL comes back empty and the published widget renders nothing. The studio says as much above the list.
 
 **2. Pick widget type.** Each type is a different layout, not a different avatar:
 
@@ -169,7 +169,7 @@ Note what did *not* happen: no deploy, no cache purge, no customer notified, and
 - The embed snippet never changes, because `<agent-3d agent-id="…">` resolves the current body on every page load
 - Nothing needs purging: the agent record is `no-store`, and each avatar is a distinct long-lived object
 - **Widget Studio** at [/studio](/studio) is a separate surface that builds standalone widgets from an avatar, across ten widget types
-- Avatar visibility (private / unlisted / public) is set in the [avatar dashboard](/dashboard/avatars) and gates whether an avatar can back a widget or a social card
+- Avatar visibility (private / unlisted / public) is set in the [avatar dashboard](/dashboard/avatars) and decides whether the avatar's model and thumbnail are served publicly, which a published widget and a social card both need
 
 The key insight is the snippet's stability. Once embedded, your customers' pages never need to change. You can update the body monthly, weekly, or daily, and visitors always see the current version.
 
