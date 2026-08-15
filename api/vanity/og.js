@@ -13,6 +13,7 @@
 // No secrets are read or rendered — only the public address + rarity math.
 
 import { ImageResponse } from '@vercel/og';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getEntry } from '../_lib/vanity-gallery-store.js';
 import { appraiseAddress, RARITY_TIERS } from '../../src/solana/vanity/rarity.js';
 
@@ -74,7 +75,7 @@ function statPill(label, value, accent) {
 	};
 }
 
-function card({ address, pattern, tier, rarityScore, expectedAttempts, mode, bonuses }) {
+function card({ address, pattern, tier, rarityScore, expectedAttempts, mode }) {
 	const t = tierMeta(tier);
 	const accent = t.accent;
 	const patternLabel = [pattern?.prefix && `${pattern.prefix}…`, pattern?.suffix && `…${pattern.suffix}`].filter(Boolean).join(' ') || 'no fixed pattern';
@@ -163,15 +164,17 @@ export default async function handler(req, res) {
 		return;
 	}
 
+	// Each card is a store read plus a real PNG render, and the CDN only absorbs
+	// repeats of the SAME address, so a walk over made-up addresses would render one
+	// image per request. Cap it per IP. On the cap we fall back to the static share
+	// image rather than a 429 body: a crawler that got a card is what matters, and
+	// no-cache means the next request renders the real one.
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return fallbackCard(res);
+
 	const url = new URL(req.url, `http://${req.headers.host || 'x'}`);
 	const address = (url.searchParams.get('address') || '').trim();
-	if (!BASE58_RE.test(address)) {
-		res.statusCode = 302;
-		res.setHeader('location', 'https://three.ws/og-image.png');
-		res.setHeader('cache-control', 'no-cache');
-		res.end();
-		return;
-	}
+	if (!BASE58_RE.test(address)) return fallbackCard(res);
 
 	try {
 		const data = await loadCardData(address);
@@ -189,9 +192,15 @@ export default async function handler(req, res) {
 		res.end(Buffer.from(ab));
 	} catch (err) {
 		console.error('[vanity/og]', err?.message || err);
-		res.statusCode = 302;
-		res.setHeader('location', 'https://three.ws/og-image.png');
-		res.setHeader('cache-control', 'no-cache');
-		res.end();
+		fallbackCard(res);
 	}
+}
+
+// Every path that cannot render a real card sends the crawler to the static site
+// share image, uncached so the next attempt re-renders.
+function fallbackCard(res) {
+	res.statusCode = 302;
+	res.setHeader('location', 'https://three.ws/og-image.png');
+	res.setHeader('cache-control', 'no-cache');
+	res.end();
 }

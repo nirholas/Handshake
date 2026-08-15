@@ -401,7 +401,7 @@ async function rollbackFunding({ record, secretKey, reason }) {
 
 // ── POST: create (x402-paid → grind → seal → fund → persist) ─────────────────
 
-async function handleCreate(req, res, url) {
+async function handleCreate(req, res) {
 	let body;
 	try {
 		body = await readJson(req);
@@ -953,7 +953,7 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'POST') {
 		const action = (url.searchParams.get('action') || 'create').toLowerCase();
-		if (action === 'create') return handleCreate(req, res, url);
+		if (action === 'create') return handleCreate(req, res);
 		if (action === 'claim') return handleClaim(req, res);
 		if (action === 'reveal') return handleReveal(req, res);
 		if (action === 'reclaim') return handleReclaim(req, res);

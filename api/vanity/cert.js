@@ -34,7 +34,10 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const address = (url.searchParams.get('address') || '').trim();
-	const id = (url.searchParams.get('id') || '').trim();
+	// certIds are lowercase hex by construction (deriveCertId), and the registry
+	// indexes them verbatim, so an uppercase paste has to be folded down here or the
+	// exact-match lookup misses a certificate that is genuinely registered.
+	const id = (url.searchParams.get('id') || '').trim().toLowerCase();
 
 	if (!address && !id) {
 		return error(res, 400, 'missing_param', 'supply ?address=<base58> or ?id=<certId>');
@@ -53,16 +56,34 @@ export default wrap(async (req, res) => {
 		return error(res, 502, 'registry_error', err.message);
 	}
 
+	// An id lookup resolves certId → address → the address's CANONICAL record, so a
+	// duplicate certificate still finds a record: the one that beat it. Answering
+	// "found" alone would let a re-sold duplicate read as the original, which is the
+	// exact question this endpoint exists to settle. `queriedIsCanonical` compares
+	// the certId that was asked about against the canonical record's own certId.
+	const queriedIsCanonical = record && id ? record.certId === id : null;
+
 	return json(
 		res,
 		200,
 		{
 			found: !!record,
 			canonical: record || null,
-			note: record
-				? 'This is the canonical (first-issued) proof-of-grind certificate for this address. A certificate with a different certId for the same address is a duplicate/re-sale and is not fresh.'
-				: 'No certificate is registered for this address. The certificate may still verify offline, but its single-issuance freshness cannot be confirmed by the registry.',
+			...(id ? { queriedCertId: id, queriedIsCanonical } : {}),
+			note: certNote({ record, byId: !!id, queriedIsCanonical }),
 		},
 		{ 'cache-control': 'public, max-age=30' },
 	);
 });
+
+function certNote({ record, byId, queriedIsCanonical }) {
+	if (!record) {
+		return byId
+			? 'No certificate with that certId is registered. The certificate may still verify offline, but its single-issuance freshness cannot be confirmed by the registry.'
+			: 'No certificate is registered for this address. The certificate may still verify offline, but its single-issuance freshness cannot be confirmed by the registry.';
+	}
+	if (byId && !queriedIsCanonical) {
+		return 'The certId you asked about is NOT the canonical certificate for this address. An earlier certificate (returned here) was registered first, so the one you hold is a duplicate/re-sale and is not fresh.';
+	}
+	return 'This is the canonical (first-issued) proof-of-grind certificate for this address. A certificate with a different certId for the same address is a duplicate/re-sale and is not fresh.';
+}
