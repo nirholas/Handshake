@@ -156,7 +156,7 @@ describe('GET /api/walk/control/poll', () => {
 		expect(res.statusCode).toBe(200);
 		const update = sqlCalls.find((c) => /update walk_control_sessions/.test(c.text));
 		expect(update).toBeTruthy();
-		// pos_x, pos_z, facing, motion, current_env, id — motion alone is dropped.
+		// pos_x, pos_z, facing, motion, current_env, id. Motion alone is dropped.
 		expect(update.values.slice(0, 6)).toEqual(['3600 seconds', 7.25, -3.5, 1.1, null, 'beach']);
 	});
 
