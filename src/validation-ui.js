@@ -284,8 +284,14 @@ export class ValidationDashboard {
 		this.els.reportFile.value = '';
 		this.els.fileStatus.textContent = '';
 		this.els.submitReportBtn.disabled = true;
-		const first = this._focusables()[0];
-		if (first) first.focus();
+		// Focus the dialog itself so its title is announced and Escape/Tab land
+		// inside it. The offsetWidth read is not decoration: it flushes the style
+		// change above, and focus() on a still-computed-hidden subtree is a noop.
+		const dialog = this.els.submitModal.querySelector('.modal');
+		if (dialog) {
+			void this.els.submitModal.offsetWidth;
+			dialog.focus();
+		}
 	}
 
 	closeModal() {

@@ -194,12 +194,12 @@
 				border: 0;
 				background: transparent;
 			}
-			/* The joystick demos are drivable from the keyboard, so they keep their
-			   tab stop. An iframe paints no focus ring of its own, and once focus
-			   crosses into its document the element matches none of :focus,
-			   :focus-within or :focus-visible, so the class below is toggled from
-			   script. The offset is negative because .wl-frame clips its overflow,
-			   which would swallow a ring drawn outside the iframe's edge. */
+			/* Each demo frame is a keyboard tab stop. An iframe paints no focus
+			   ring of its own, and once focus crosses into its document the
+			   element matches none of :focus, :focus-within or :focus-visible, so
+			   the class below is toggled from script. The offset is negative
+			   because .wl-frame clips its overflow, which would swallow a ring
+			   drawn outside the iframe's edge. */
 			.wl-frame iframe.is-frame-focused,
 			.wl-ext-mock-frame iframe.is-frame-focused {
 				outline: var(--focus-ring-width) solid var(--focus-ring-color);
@@ -718,7 +718,6 @@
 						<iframe
 							src="/walk-embed?env=void&autoplay=true&controls=none&orbit=false"
 							title="Live demo: a 3D avatar walking in the void environment"
-							tabindex="-1"
 							allow="accelerometer; gyroscope"
 						></iframe>
 						<span class="wl-frame-hint" data-i18n="walk_landing.live_walking_now">Live · walking now</span>
@@ -796,7 +795,6 @@
 							<iframe
 								data-src="/walk-embed?env=studio&autoplay=true&controls=none&orbit=false"
 								title="Step preview: a generated avatar idling in the studio"
-								tabindex="-1"
 								loading="lazy"
 							></iframe>
 						</div>
@@ -811,7 +809,6 @@
 							<iframe
 								data-src="/walk-embed?env=sunset&autoplay=true&controls=none&orbit=false"
 								title="Step preview: an avatar walking at sunset"
-								tabindex="-1"
 								loading="lazy"
 							></iframe>
 						</div>
@@ -826,7 +823,6 @@
 							<iframe
 								data-src="/walk-embed?env=void&autoplay=true&controls=none&orbit=false"
 								title="Step preview: an avatar walking, ready to embed"
-								tabindex="-1"
 								loading="lazy"
 							></iframe>
 						</div>
@@ -893,7 +889,6 @@
 								<iframe
 									data-src="/walk-embed?autoplay=true&controls=none&orbit=false&ground=false"
 									title="A walking avatar overlaid on a web page"
-									tabindex="-1"
 									loading="lazy"
 								></iframe>
 							</div>
@@ -1059,13 +1054,14 @@
 				lazyFrames.forEach((f) => frameIo.observe(f));
 			}
 
-			// ── Keyboard focus ring for the drivable demos ───────────────
-			// Focus crossing into an iframe blurs the top window and leaves the
-			// element matching no focus pseudo-class, so the ring is applied here
-			// instead. Only the joystick demos take focus; the showcase frames
-			// carry tabindex="-1" and are skipped.
-			const focusableFrames = [...document.querySelectorAll('.wl-frame iframe, .wl-ext-mock-frame iframe')]
-				.filter((f) => f.tabIndex > -1);
+			// ── Keyboard focus ring for the demo frames ──────────────────
+			// Every embed is a tab stop, and has to be: each one loads a document
+			// with focusable content, which axe's frame-focusable-content rule
+			// requires stay reachable. But focus crossing into an iframe blurs the
+			// top window and leaves the element matching no focus pseudo-class, so
+			// a keyboard user landed in a demo with nothing on screen saying so.
+			// The ring is applied from here instead.
+			const focusableFrames = [...document.querySelectorAll('.wl-frame iframe, .wl-ext-mock-frame iframe')];
 			const syncFrameFocus = () => {
 				for (const f of focusableFrames) {
 					f.classList.toggle('is-frame-focused', f === document.activeElement);

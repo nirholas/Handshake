@@ -96,6 +96,22 @@ Validation runs automatically after every model load. The result appears in the 
 
 Clicking the bar opens the full **ValidatorReport** panel, which shows the model metadata, a summary banner, and per-severity tables of messages.
 
+### On the /validation page
+
+[`/validation`](/validation) runs both checks in the browser with no upload and no account. Three tabs share one input:
+
+| Tab | What it shows |
+|-----|----------------|
+| **Validate** | The Khronos report: summary banner, model metadata, and per-severity message tables. |
+| **Inspect** | A glTF-Transform pass the spec check does not cover: file and texture weight, triangle and draw-call counts, extensions used, and ranked optimization suggestions. |
+| **Records** | On-chain attestations for an agent, and the form that submits a new one. |
+
+Load a model three ways: drop a `.glb`/`.gltf` on the drop zone, click it to open the file picker (it is in the tab order, so this works from the keyboard), or paste a URL and press **Fetch**. The sample chips load Khronos reference models from jsDelivr. Both checks run in parallel on the same bytes, so opening **Inspect** after a run needs no second load. Every state has a designed result: an unreadable file, a fetch the host refuses (CORS is the usual cause), or a validator crash each render a failure card naming the cause, what to try next, and a **Try again** button that reruns the same input. Nothing leaves the browser on either lane.
+
+Each report offers **Download JSON**. **Sign & pin on-chain** hands the in-memory report straight to the Records submit flow with its keccak256 hash precomputed, skipping the download-and-re-upload round trip.
+
+The tab is reflected in the URL hash (`#validate`, `#inspect`, `#records`), and the Records tab reads `?agent=` and `?chain=` from the query string, so a specific agent's records are linkable.
+
 ### Via the agent
 
 Ask the agent in natural language:
@@ -335,13 +351,14 @@ Check your file in at least two other viewers before registering it:
 
 ## Validation UI components
 
-Three components render validation state in the browser:
+Four components render validation state in the browser:
 
 | Component | File | Purpose |
 |-----------|------|---------|
 | `ValidatorToggle` | `src/components/validator-toggle.jsx` | Compact status bar; shows issue counts and severity class. Clicking opens the full report. |
 | `ValidatorReport` | `src/components/validator-report.jsx` | Full report panel: model metadata, summary banner, per-severity message tables, and a JSON download link. |
 | `ValidatorTable` | `src/components/validator-table.jsx` | Tabular view of messages for one severity level (Code / Message / Pointer columns). |
+| `InspectReport` | `src/components/inspect-report.jsx` | Performance panel for the `/validation` Inspect tab: stat cards, optimization suggestions, extension and texture tables. |
 
 The toggle's CSS class reflects the highest severity: `level-0` (errors), `level-1` (warnings), `level-2` (infos), `level-3` (hints), or no class (clean). Style these classes to match your embedding context.
 

@@ -780,7 +780,10 @@
 				position: fixed;
 				inset: 0;
 				background: rgba(0, 0, 0, 0.6);
-				z-index: 60;
+				/* Above the shared site chrome: nav.css stacks the sticky header at
+				   100 and its popovers up to 10000, so a dialog at 60 let the header
+				   sit on top of its own scrim and stay clickable. */
+				z-index: 10050;
 				display: grid;
 				place-items: center;
 				opacity: 0;
@@ -788,12 +791,15 @@
 				/* visibility, not just opacity: an opacity-0 dialog keeps its
 				   controls in the tab order and swallows keyboard focus. */
 				visibility: hidden;
-				transition: opacity 0.15s, visibility 0.15s;
+				/* visibility flips instantly on open (so the dialog is focusable on the
+				   same tick) and only after the fade on close. */
+				transition: opacity 0.15s, visibility 0s linear 0.15s;
 			}
 			.modal-overlay.open {
 				opacity: 1;
 				pointer-events: auto;
 				visibility: visible;
+				transition: opacity 0.15s, visibility 0s;
 			}
 			.modal {
 				background: #0f0f0f;
@@ -881,7 +887,7 @@
 				border-radius: 99px;
 				font-size: 13px;
 				color: #ddd;
-				z-index: 70;
+				z-index: 10060;
 				box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
 			}
 			.toast.err {
@@ -1149,7 +1155,7 @@
 
 		<!-- Submit Modal — IDs preserved so ValidationDashboard wiring still works -->
 		<div class="modal-overlay" id="submit-modal">
-			<div class="modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
+			<div class="modal" role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="submit-modal-title">
 				<h2 id="submit-modal-title" data-i18n="validation_index.submit_validation_report">Submit Validation Report</h2>
 				<p class="sub" data-i18n="validation_index.upload_a_json_validation_report_signed_by">
 					Upload a JSON validation report, signed by your wallet and stored on-chain.
