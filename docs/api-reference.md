@@ -697,7 +697,7 @@ Gemini, NVIDIA), a session adds the metered ones (OpenAI, ElevenLabs), and an
 
 | Param | Meaning |
 | --- | --- |
-| `provider` | `edge`, `gemini`, `nvidia`, `openai`, `elevenlabs`. Omit for all. |
+| `provider` | `edge`, `gemini`, `nvidia`, `openai`, `elevenlabs`. Omit for all. Anything else is a `400 validation_error` listing the lanes that exist. |
 | `q` | Substring match over name, id, locale, and labels. |
 | `language` | Primary subtag or full locale, e.g. `ja`, `en-GB`. |
 | `limit` | Max voices returned (default 400, max 2000). |
@@ -769,6 +769,14 @@ lanes require a session or bearer token.
 `model` and `direction` apply only where the lane supports them (the catalog's
 `models` and `direction` fields say which). `speed` is clamped to 0.5 to 2.0.
 Max 1,000 characters. ElevenLabs additionally accepts `voice_settings`.
+
+`voiceId` must be one the chosen lane publishes. A `voiceId` the lane does not
+have returns `400 validation_error` naming the id and the catalog URL to pick
+from, before anything is metered; it is never quietly swapped for the lane's
+default voice. Omit `voiceId` entirely to get the lane default on purpose.
+ElevenLabs is the exception: its catalog grows at runtime (cloning, library
+adds), so an id it does not recognize comes back as a `400` carrying the
+upstream verdict rather than being pre-checked here.
 
 **Response**
 
@@ -2172,7 +2180,10 @@ curl -s 'https://three.ws/api/v1/market/projects?limit=5&chain=solana'
 | Status | Code            | Meaning                                                                 |
 | ------ | --------------- | ------------------------------------------------------------------------ |
 | `429`  | `rate_limited`   | Either the shared aixbt ceiling or the per-IP gateway budget is spent    |
+| `429`  | `aixbt_rate_limited` | aixbt throttled this deployment's key upstream. Retry shortly.      |
+| `502` / `504` | `aixbt_upstream_error` | aixbt is erroring or unreachable. The upstream status is relayed. |
 | `503`  | `not_configured` | `AIXBT_API_KEY` isn't set on this deployment — never a raw 500           |
+| `503`  | `aixbt_unauthorized` | aixbt rejected this deployment's key (expired, revoked, or below the plan the read needs). A deployment fault, never the caller's: these routes take no client credential, so they never answer `401`. |
 | `502`  | `aixbt_upstream_error` | aixbt returned an unexpected error — retry shortly                 |
 
 ---

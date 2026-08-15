@@ -83,13 +83,13 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 - **Steps (N):**
   1. Boot warms `GET /api/auth/me`. `?wallet=` param pre-fills + auto-previews.
   2. User pastes a base-58 Solana wallet; client validates with `WALLET_RE`.
-  3. Click **Preview** → `GET /api/traders/preview?wallet=` → renders the Trader Card: label, win rate / early-win / smart-money score / net PnL / dumps stats, and up to 15 recent pump.fun coins.
+  3. Click **Preview** → `GET /api/traders/preview?wallet=` → renders the Trader Card: label, win rate / early-win / smart-money score / net PnL / dumps stats, and up to 60 recent pump.fun coins.
   4. CTA branches by state: claimed (View card + Share) / signed-in-unclaimed (Claim button) / signed-out (Sign-in-to-claim link). Claimed status verified via `GET /api/auth/wallets` (filtered to chain_type=solana).
   5. (claim) User clicks **Claim this wallet** → detect provider → `provider.connect()`. If connected pubkey ≠ previewed wallet, abort with a switch-wallet message.
   6. `POST /api/auth/wallets/nonce-solana` → `provider.signMessage` (gasless, no tx) → base64.
   7. `POST /api/auth/wallets/link-solana` with message+signature. A 409 `address_in_use` prompts a `window.confirm` takeover; on confirm, re-POST with `takeover:true`.
   8. On success, re-read linked wallets (force) and re-render in the claimed state; message "Claimed — your Trader Card is live."
-- **Decision points / branches:** claimable+known vs. not-indexed (`notFoundHtml`); signed-in vs out; wallet-mismatch; takeover confirm; share via Web Share API vs Twitter intent.
+- **Decision points / branches:** claimable-or-known vs. not-indexed (`notFoundHtml`); a wallet the indexer has seen trade is claimable even before the rollup grades it, so only a wallet with neither a reputation row nor a single indexed trade takes the not-indexed branch; signed-in vs out; wallet-mismatch; takeover confirm; share via Web Share API vs Twitter intent.
 - **External calls / dependencies:** `/api/auth/me`, `/api/traders/preview`, `/api/auth/wallets`, `/api/auth/wallets/nonce-solana`, `/api/auth/wallets/link-solana`. Wallet providers: Phantom/Solana/Backpack/Solflare.
 - **Success state:** "Your Trader Card is live" card with View (`/trader/:wallet`) + Share buttons; linked row reflected server-side.
 - **Empty / error states:** invalid-address inline error; "Wallet not yet indexed" not-found state; signature-cancelled message; per-step error toasts on the claim button.

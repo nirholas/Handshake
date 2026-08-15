@@ -22516,6 +22516,15 @@
         "improvement"
       ],
       "link": "/agent-screen"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "Claim Your Wallet stopped telling real traders they had no track record",
+      "summary": "Pasting a wallet into Claim Your Wallet could answer \"not indexed yet\" to a wallet with thousands of indexed pump.fun trades. The page only accepted a wallet the reputation scorer had already graded, and that scorer runs on a rollup that lags the trade indexer by design, so a wallet the platform had watched trade for days was still turned away. Any wallet with a real on-chain record now renders its full ledger and window aggregates immediately, with the reputation panel honestly reading unproven until the grade lands. Three more fixes shipped with it. Win and loss counts now cover closed positions only, so a trader still holding sixty fresh bags no longer reads as sixty losses, and a new realized profit-and-loss figure sits beside the existing net figure that charges an open bag's entry as if it were written off. Asking for devnet returned the wallet's mainnet trades; both halves of the read are now scoped to the network you asked for. And if the database is unreachable, the page now says the record is temporarily unavailable and offers a retry, instead of publishing an empty scorecard that the CDN would then serve to everyone for the next few minutes.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/claim-wallet"
     }
   ]
 }
