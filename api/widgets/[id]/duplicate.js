@@ -1,4 +1,4 @@
-// Route entry for /api/widgets/:id/duplicate — Vercel resolves to this file
+// Route entry for /api/widgets/:id/duplicate: Vercel resolves to this file
 // via the rewrite in vercel.json. Delegates to the action dispatcher so all
 // duplicate logic lives in one place ([action].js → handleDuplicate).
 //

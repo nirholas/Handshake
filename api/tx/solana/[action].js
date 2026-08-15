@@ -31,7 +31,7 @@ const solanaAddress = z
 
 // Amounts arrive as JSON numbers (doubles). Multiplying by 10**decimals loses
 // precision well before the u64 ceiling, so the conversion below goes through
-// fixed-point string math instead — and this bound keeps the value in the range
+// fixed-point string math instead, and this bound keeps the value in the range
 // where toFixed() is exact rather than exponential.
 const MAX_UI_AMOUNT = 1e12;
 const uiAmount = z.number().positive().finite().max(MAX_UI_AMOUNT);
@@ -238,7 +238,7 @@ async function handleBuildSwap(req, res) {
 	// Route through the shared Jupiter client (api/_lib/token/jupiter.js) so this
 	// endpoint can never drift from the rest of the platform's swap lanes on
 	// endpoint or error handling. It previously called quote-api.jup.ag/v6
-	// directly, a host that no longer resolves at all — every swap build failed,
+	// directly, a host that no longer resolves at all, so every swap build failed,
 	// and the bare `fetch failed` was misread downstream as a database outage.
 	let quote;
 	try {

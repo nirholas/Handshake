@@ -11,7 +11,7 @@ import { solanaConnection } from '../_lib/solana/connection.js';
 // returns, so the fallback path is transparent to the LLM summary and the UI.
 // Native transfers come from lamport balance deltas; token transfers from the
 // pre/post SPL token balances in the tx meta. No `description`/`type` (those are
-// Helius value-adds) — the LLM summary fills that role downstream.
+// Helius value-adds): the LLM summary fills that role downstream.
 function parsedTxToExplain(tx) {
 	if (!tx) return null;
 	const meta = tx.meta || {};
@@ -59,14 +59,14 @@ function parsedTxToExplain(tx) {
 }
 
 // A confirmed transaction is immutable, but the Helius enhanced-tx (/v0) and
-// Alchemy RPC calls behind this endpoint — plus the LLM summary — were recomputed
+// Alchemy RPC calls behind this endpoint, plus the LLM summary, were recomputed
 // on every request, so re-explaining the same signature paid all three each time.
 // Cache the finished explanation by chain:sig; a hit serves with zero upstream cost.
 const EXPLAIN_TTL_SECONDS = 24 * 60 * 60; // 24h
 
 // A Solana transaction signature is exactly 64 raw bytes. The base58 alphabet +
 // length check alone is not enough: `'1'.repeat(88)` passes it and decodes to 88
-// zero bytes, which the RPC rejects as a bad argument — so a plainly malformed
+// zero bytes, which the RPC rejects as a bad argument, so a plainly malformed
 // input was billed as an upstream failure (502) instead of answered as the client
 // fault (400) it is. Decode and measure instead of counting characters.
 function isSolanaSignature(sig) {
@@ -118,7 +118,7 @@ export default wrap(async (req, res) => {
 	const cachedExplain = await cacheGet(cacheKey).catch(() => null);
 	if (cachedExplain) return json(res, 200, cachedExplain);
 
-	// Only a cache MISS reaches the billed enhanced-tx upstream — gate that on the
+	// Only a cache MISS reaches the billed enhanced-tx upstream, gate that on the
 	// shared DAS cost ceiling so a bot explaining thousands of distinct signatures
 	// can't run up the Helius bill past a fixed hourly cap.
 	const ceiling = await limits.heliusDasGlobal();
@@ -130,7 +130,7 @@ export default wrap(async (req, res) => {
 		// Primary: Helius enhanced /v0 (rich description + type). On any upstream
 		// failure, fall back to getParsedTransaction over the rotating multi-provider
 		// RPC chain (Helius → Alchemy → Ankr → PublicNode → public) and reconstruct
-		// the transfer shape ourselves — so a Helius outage still explains the tx.
+		// the transfer shape ourselves, so a Helius outage still explains the tx.
 		let enhanced = null;
 		try {
 			const resp = await fetch(
@@ -145,10 +145,10 @@ export default wrap(async (req, res) => {
 				const data = await resp.json();
 				if (Array.isArray(data) && data.length > 0) enhanced = data[0];
 			} else {
-				console.warn('[tx/explain] Helius enhanced %s — falling back to RPC', resp.status);
+				console.warn('[tx/explain] Helius enhanced %s: falling back to RPC', resp.status);
 			}
 		} catch (err) {
-			console.warn('[tx/explain] Helius enhanced unreachable — falling back to RPC:', err?.message);
+			console.warn('[tx/explain] Helius enhanced unreachable, falling back to RPC:', err?.message);
 		}
 
 		if (enhanced) {
@@ -178,14 +178,14 @@ export default wrap(async (req, res) => {
 		}
 	} else {
 		// EVM failover chain: keyed Alchemy first, then an optional configured RPC,
-		// then keyless public nodes — so an Alchemy outage or quota cap still
+		// then keyless public nodes, so an Alchemy outage or quota cap still
 		// resolves the tx. Try each until one responds cleanly.
 		const evmEndpoints = [
 			env.ALCHEMY_API_KEY ? `https://eth-mainnet.g.alchemy.com/v2/${env.ALCHEMY_API_KEY}` : null,
 			env.MAINNET_RPC_URL || null,
 			// Keyless, datacenter-reachable lanes. dRPC/1rpc lead (verified answering
 			// from a serverless IP); publicnode last (403s from Vercel egress).
-			// eth.llamarpc.com removed — its Cloudflare bot-wall 403s server-side POSTs.
+			// eth.llamarpc.com removed: its Cloudflare bot-wall 403s server-side POSTs.
 			'https://eth.drpc.org',
 			'https://1rpc.io/eth',
 			'https://ethereum-rpc.publicnode.com',
@@ -274,7 +274,7 @@ export default wrap(async (req, res) => {
 			});
 			if (text) txData.summary = text;
 		} catch {
-			// summary is optional — silently skip
+			// summary is optional: silently skip
 		}
 	}
 
