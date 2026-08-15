@@ -21,7 +21,7 @@ const VALID = { jsonrpc: '2.0', id: 1, result: { ok: true } };
 // guards: every endpoint cooling from a prior request used to fall back to a raw,
 // unvalidated `fetch(soonest)` whose `[]` / HTML / truncated body went straight to
 // the browser, where web3.js choked with a StructError (or silently mis-read `[]`).
-describe('makeRotatingFetch — never leaks an unvalidated upstream body', () => {
+describe('makeRotatingFetch: never leaks an unvalidated upstream body', () => {
 	let origFetch;
 	beforeEach(() => {
 		origFetch = global.fetch;
@@ -37,7 +37,7 @@ describe('makeRotatingFetch — never leaks an unvalidated upstream body', () =>
 		expect((await out.json()).result).toEqual({ ok: true });
 	});
 
-	it('throws instead of returning `[]` when every endpoint yields garbage — even once all are cooling', async () => {
+	it('throws instead of returning `[]` when every endpoint yields garbage, even once all are cooling', async () => {
 		const eps = ['https://leak-b1.test/', 'https://leak-b2.test/'];
 		global.fetch = vi.fn(async () => resp('[]'));
 		const rf = makeRotatingFetch(eps);
@@ -45,7 +45,7 @@ describe('makeRotatingFetch — never leaks an unvalidated upstream body', () =>
 		await expect(rf(null, { method: 'POST', body: '{}' })).rejects.toThrow();
 		// Second request: both already cooling. The old code did a raw fetch(soonest)
 		// and returned the `[]`; the fixed code validates the all-cooling pass and
-		// still throws — the caller never sees an empty array.
+		// still throws: the caller never sees an empty array.
 		await expect(rf(null, { method: 'POST', body: '{}' })).rejects.toThrow();
 	});
 
@@ -68,13 +68,13 @@ describe('makeRotatingFetch — never leaks an unvalidated upstream body', () =>
 		global.fetch = fetchSpy;
 		const out = await makeRotatingFetch(eps)(null, { method: 'POST', body: '{}' });
 		expect((await out.json()).result).toEqual({ ok: true });
-		// First healthy endpoint answers — no failover round-trips.
+		// First healthy endpoint answers: no failover round-trips.
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
 	});
 
 	// A keyless lane that gates a method behind its paid/registered tier answers 200
-	// with a method-shaped JSON-RPC error. It is provider-specific — the next lane
-	// serves the call — so it must rotate rather than surface. Production symptom:
+	// with a method-shaped JSON-RPC error. It is provider-specific (the next lane
+	// serves the call), so it must rotate rather than surface. Production symptom:
 	// the ring leak scanner's getSignaturesForAddress and the balance reader's
 	// getBalance both hard-failed whenever rotation cascaded onto Tatum.
 	// -16401 is the code Tatum actually returns (verified live against
@@ -181,7 +181,7 @@ describe('provider daily-limit (-32003 / "request limit reached")', () => {
 // web3.js sends getTransactions/getParsedTransactions as ONE JSON-RPC array of N
 // getTransaction calls. PublicNode caps that at 1 per batch and rejects the whole
 // array with HTTP 400 + -32600 "Maximum number of 'getTransaction' calls in a
-// batch request is 1" — a plain 4xx, which shouldRotate deliberately treats as a
+// batch request is 1": a plain 4xx, which shouldRotate deliberately treats as a
 // caller error and surfaces as-is. Left unclassified it hard-failed every batched
 // read on that lane while single calls to the same lane worked: the pump.fun MCP
 // `get_token_trades` tool returned nothing but that 400 (measured 2026-08-15).

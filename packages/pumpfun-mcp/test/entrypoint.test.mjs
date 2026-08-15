@@ -30,7 +30,7 @@ test('importing the entry point never connects a transport', async () => {
 	// loop alive forever. Asserted in a CHILD process: this test file has already
 	// imported the module, and the test runner touches stdin itself, so only a
 	// clean process can answer the question honestly. A regression here does not
-	// fail an assertion, it hangs — hence the timeout.
+	// fail an assertion, it hangs: hence the timeout.
 	const { stdout, stderr } = await run(
 		process.execPath,
 		['-e', `import(${JSON.stringify(ENTRY)}).then(() => { console.log(process.stdin.listenerCount('data')); });`],

@@ -1,5 +1,5 @@
 /**
- * Forge — browser-facing text/image → 3D model generator + auto-rigger.
+ * Forge: browser-facing text/image → 3D model generator + auto-rigger.
  *
  *   POST /api/forge   { prompt, aspect_ratio?, path?, tier?, backend? }  → text→3D
  *   POST /api/forge   { image_urls[], prompt?, path?, tier?, backend? }  → image→3D
@@ -9,13 +9,13 @@
  *   GET  /api/forge?catalog                                              → tier/backend/cost matrix
  *
  * Two request axes select how a mesh is produced (see api/_lib/forge-tiers.js):
- *   • path  — "image" (image-intermediate: text→image→mesh via FLUX + TRELLIS,
+ *   • path : "image" (image-intermediate: text→image→mesh via FLUX + TRELLIS,
  *             the fast default; or Hunyuan3D self-host), "geometry" (geometry-
  *             first: native text→mesh / image→mesh via Meshy or Tripo, no
  *             synthesized intermediate view, higher geometric ceiling), or
  *             "sketch" (a drawing + a prompt naming it → TripoSG-scribble,
  *             self-host; untextured geometry).
- *   • tier  — draft | standard | high — the target polygon budget + texture
+ *   • tier : draft | standard | high: the target polygon budget + texture
  *             richness. The high tier yields a visibly denser mesh.
  * Every job result reports the path + tier + backend that produced it.
  *
@@ -23,23 +23,23 @@
  * (request header `x-forge-provider-key`, or the signed-in user's stored key).
  * Without one, the geometry path returns a designed `needs_key` state.
  *
- * Optional output controls (every field off by default — see
- * api/_lib/forge-options.js — an old request that never sends any of these
+ * Optional output controls (every field off by default, see
+ * api/_lib/forge-options.js: an old request that never sends any of these
  * behaves exactly as before):
- *   • seed              — integer, reproducible generation on lanes that expose one.
- *   • output_format      — "glb" (default) | "glb-draco" | "glb-meshopt": a real
+ *   • seed             : integer, reproducible generation on lanes that expose one.
+ *   • output_format     : "glb" (default) | "glb-draco" | "glb-meshopt": a real
  *     post-generation @gltf-transform compression pass (api/_lib/glb-compress.js).
- *   • texture_size / target_polycount — poly-aware backends only (Hunyuan3D,
+ *   • texture_size / target_polycount: poly-aware backends only (Hunyuan3D,
  *     Meshy, Tripo, Rodin, TripoSG); ignored (never 422s) on TRELLIS.
- *   • director: false   — SKIPS the IBM Granite "art director" prompt rewrite
+ *   • director: false  : SKIPS the IBM Granite "art director" prompt rewrite
  *     that otherwise runs before a text prompt synthesizes its reference image
  *     (the same director the free MCP tools use). On by default, because it
  *     fails soft to the raw prompt and rides the free-first LLM chain, so it
  *     can only help. Documented at /docs/3d-api.
- *   • force_regenerate: true — skip the result cache read for this call (the
+ *   • force_regenerate: true: skip the result cache read for this call (the
  *     cache still gets refreshed with the new result).
  * A finished generation's metadata carries `quality` (api/_lib/glb-quality.js
- * — valid/flag/score/reasons) and, when compression was requested,
+ *: valid/flag/score/reasons) and, when compression was requested,
  * `compression` (mode + before/after byte counts). A flagged degenerate/low
  * result is retried once automatically on the lanes that complete inline
  * within one request (free NVIDIA NIM, HuggingFace Spaces, BYOK-sync).
@@ -49,7 +49,7 @@
  *
  * This is the public, auth-free twin of the 3D Studio MCP server (api/mcp-3d.js).
  * No mock paths: if a selected backend isn't configured the endpoint returns a
- * clean 503/501 and the page renders a designed state — it never fabricates a
+ * clean 503/501 and the page renders a designed state, it never fabricates a
  * model.
  */
 
@@ -147,17 +147,17 @@ import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/for
 
 // Circuit-breaker key + window for the free NVIDIA NIM TRELLIS text→3D lane. The
 // hosted NVCF gateway can degrade so a submit neither completes nor hands back a
-// pollable id before our timeout — a single slow window otherwise makes every
+// pollable id before our timeout: a single slow window otherwise makes every
 // text prompt re-pay that full timeout before failing over to the reconstruct
 // lane. A short cooldown (recorded on a health failure, checked before the lane
 // runs) lets subsequent requests skip a degraded lane and go straight to a
 // working one; it expires on its own so a recovered lane is retried promptly.
-// Best-effort via the shared cache — a miss just means "not cooling".
+// Best-effort via the shared cache: a miss just means "not cooling".
 const NIM_TRELLIS_COOLDOWN_KEY = 'forge-nim-trellis';
 // Sideline the free NIM lane after a failure. The cooldown exists to avoid
 // re-paying the expensive submit-timeout HANG, so a socket timeout / unreachable
 // host (no HTTP status came back) earns the full window. A fast gateway 5xx (a
-// 504/503 the gateway returned promptly — a cold-start/capacity blip the
+// 504/503 the gateway returned promptly: a cold-start/capacity blip the
 // in-provider retry already rode) only earns a short window, so a single transient
 // 504 doesn't sideline the free lane for two minutes and dump every text prompt on
 // the paid lane. See nimCooldownSeconds().
@@ -165,7 +165,7 @@ const NIM_FORGE_COOLDOWN_SECONDS = 120;
 const NIM_FORGE_GATEWAY_COOLDOWN_SECONDS = 30;
 
 // The platform-keyed paid reconstruct lane (Replicate TRELLIS) recorded as down.
-// Set only on an out-of-credit/billing failure — which won't self-heal until ops
+// Set only on an out-of-credit/billing failure: which won't self-heal until ops
 // tops the account up, so the window is long (reason 'auth'). The NIM-cooldown
 // router reads it to avoid skipping the free lane in favour of a dead paid lane.
 const REPLICATE_PAID_COOLDOWN_KEY = 'forge-replicate-paid';
@@ -240,7 +240,7 @@ const VALID_ASPECT = new Set(['1:1', '4:3', '3:4', '16:9', '9:16']);
 const MAX_VIEWS = 6;
 
 // Guard for caller-supplied reference image / source GLB URLs. http(s) only,
-// bounded length — we forward these to the reconstruction/rig provider, so we
+// bounded length: we forward these to the reconstruction/rig provider, so we
 // never accept data: URLs or unbounded strings.
 const HTTP_URL_RE = /^https?:\/\/[^\s]+$/i;
 
@@ -256,7 +256,7 @@ function clientKeyFrom(req) {
 	return hashClient(Array.isArray(raw) ? raw[0] : raw);
 }
 
-// /forge is auth-free and the overwhelming majority of calls are anonymous —
+// /forge is auth-free and the overwhelming majority of calls are anonymous -
 // but when a caller DOES carry a session cookie (the browser /create/studio
 // flow while logged in), attach their user_id to the durable creation so it
 // surfaces on their public portfolio (/u/:username → "Models" tab). Resolved
@@ -284,7 +284,7 @@ function parseTier(body) {
 	return TIER_IDS.includes(t) ? t : DEFAULT_TIER;
 }
 
-// "needs a BYOK key" — a designed, branchable state (mirrors rig_unconfigured)
+// "needs a BYOK key": a designed, branchable state (mirrors rig_unconfigured)
 // rather than a generic error, so the page can prompt for the key inline.
 function needsKey(res, providerName) {
 	const meta = BACKENDS[providerName];
@@ -297,7 +297,7 @@ function needsKey(res, providerName) {
 
 // Normalize the caller's reference image input into an ordered, de-duplicated
 // list of view URLs. Accepts the multi-view `image_urls: string[]` form and the
-// legacy single `image_url: string` (backward compatible — a single string
+// legacy single `image_url: string` (backward compatible, a single string
 // still works exactly as before). Empty/blank/duplicate entries are dropped.
 function parseImageUrls(body) {
 	let raw;
@@ -325,8 +325,8 @@ function unconfigured(res) {
 	});
 }
 
-// Whether a thrown provider error means the upstream itself is unavailable —
-// throttled, over-quota, unreachable, or 5xx — as opposed to a client/config
+// Whether a thrown provider error means the upstream itself is unavailable -
+// throttled, over-quota, unreachable, or 5xx: as opposed to a client/config
 // fault. Both never-dead-end fallbacks (image→3D to the self-hosted Hunyuan3D
 // worker, text→3D to the free NVIDIA NIM lane) degrade on exactly these so a
 // generation rides out a transient upstream outage instead of failing the user.
@@ -342,7 +342,7 @@ function isUpstreamUnavailable(err) {
 
 // A leaked paid-account billing/credit message from the platform's OWN vendor
 // (e.g. Replicate "You have insufficient credit to run this model… purchase
-// credit") is internal infra state — surfacing it to the user is both useless
+// credit") is internal infra state: surfacing it to the user is both useless
 // (they can't fund our account) and a billing-state leak. Detect it so the
 // boundary can answer with an honest, generic "temporarily unavailable" instead.
 // BYOK callers are excluded at the call site: a credit message about THEIR OWN
@@ -356,9 +356,9 @@ function isPaidCreditFailure(err) {
 // ── Realism modules (land concurrently; imported lazily + fail-open) ───────────
 // Two dedicated modules sharpen the realism path without ever becoming a hard
 // dependency of it:
-//   • forge-reference-image.js — seeds text→3D reconstruction with a Vertex-Gemini
+//   • forge-reference-image.js: seeds text→3D reconstruction with a Vertex-Gemini
 //     photoreal reference image (falls back to the standing text→image provider).
-//   • forge-quality-gate.js    — scores a finished generation (vision QA) and
+//   • forge-quality-gate.js   : scores a finished generation (vision QA) and
 //     supplies the retry hint that drives a bounded auto-retry.
 // Both are consumed through the lazy, fail-open shims below: an absent module (not
 // yet deployed) or a down Vertex backend degrades to the standing behaviour, so
@@ -374,8 +374,8 @@ function readForgeEnv(name) {
 
 // Photoreal reconstruction reference. Prefers the dedicated Vertex-Gemini module;
 // falls back to the standing text→image provider (the FLUX/Imagen/NIM chain) when
-// the module is absent or Vertex is unavailable. Returns { imageUrl, model } —
-// exactly textToImage()'s shape — so the call site is a drop-in swap.
+// the module is absent or Vertex is unavailable. Returns { imageUrl, model } -
+// exactly textToImage()'s shape: so the call site is a drop-in swap.
 export async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
 	if (readForgeEnv('FORGE_REFERENCE_IMAGE') !== 'off') {
 		try {
@@ -431,7 +431,7 @@ export function qualityGateAppliesTo(tierId, quality = undefined) {
 	if (s === 'adaptive') return shouldEscalateToVisionQA(quality);
 	return false; // 'high' scope, non-high tier
 }
-// Bounded retry cap — default 1, clamped 0..2 so a quality retry can never turn one
+// Bounded retry cap: default 1, clamped 0..2 so a quality retry can never turn one
 // generation into an unbounded credit/latency sink.
 export function qualityGateMaxRetries() {
 	const raw = readForgeEnv('FORGE_QUALITY_GATE_MAX_RETRIES');
@@ -473,7 +473,7 @@ export async function scoreQualityGate({ glbUrl, prompt, tier, backend, referenc
 	return { pass: true, skipped: true, qa_available: false };
 }
 
-// True only for an explicit failing verdict — a skipped/absent gate never retries.
+// True only for an explicit failing verdict: a skipped/absent gate never retries.
 export function qualityGateFailed(verdict) {
 	return Boolean(verdict) && verdict.skipped !== true && verdict.pass === false;
 }
@@ -559,14 +559,14 @@ async function qualityGateFinalize({ tierId, prompt, path, backend, referenceIma
 //      degrades to when Replicate is unreachable / over-quota (HTTP 429/5xx).
 // Returns true once it has written a 200 response, or false when the lane is
 // itself unavailable (so the caller can fall through to the next lane). Prompt
-// is required — NVCF is text-only; photo submissions never reach here.
+// is required: NVCF is text-only; photo submissions never reach here.
 async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opts = null, cacheKey = null }) {
 	let submitted;
 	try {
 		const nv = await loadNvidiaProvider();
 		submitted = await nv.textTo3d({ prompt, tier, seed: opts?.seed ?? undefined });
 	} catch (err) {
-		// A timed-out / unreachable / throttled / 5xx NIM lane is degraded — cool it
+		// A timed-out / unreachable / throttled / 5xx NIM lane is degraded, cool it
 		// down so the next request skips the submit-timeout gamble and fails over
 		// fast. A 4xx (bad input / key) is not a lane-health fault, so it never cools.
 		if (isUpstreamUnavailable(err)) {
@@ -622,7 +622,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 
 		// One auto-retry on a flagged low-quality/degenerate output (CLAUDE.md: no
 		// silent mediocrity). Only worth attempting when the free NIM lane already
-		// completed synchronously once — a second synchronous completion is the
+		// completed synchronously once: a second synchronous completion is the
 		// common case, so this stays a bounded, in-request retry rather than a
 		// background job. Best-effort: any retry failure just keeps the first result.
 		let retried = false;
@@ -764,14 +764,14 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 }
 
 // Free Hugging Face Spaces image→3D lane (Hunyuan3D / TRELLIS / TripoSR on free
-// GPU Spaces — the same provider the avatar reconstruction pipeline runs). The
+// GPU Spaces: the same provider the avatar reconstruction pipeline runs). The
 // platform photo→3D default is the Replicate TRELLIS lane; when that account is
 // over-quota or unreachable a photo upload would otherwise dead-end, because the
 // free NVIDIA NIM fallback is text-only. This lane gives image mode the same
-// "never dead-end" guarantee text mode already has — gated on HF_TOKEN, so it is
+// "never dead-end" guarantee text mode already has: gated on HF_TOKEN, so it is
 // a transparent no-op on deployments that don't set it. The provider blocks
 // until the GLB is ready (Space queue + inference, within the 300s budget), so
-// this returns status:'done' synchronously like the NVIDIA sync branch — no
+// this returns status:'done' synchronously like the NVIDIA sync branch, no
 // poll handle to route. Returns true once a 200 is written, false when the lane
 // is unavailable so the caller can surface its own error.
 // One-shot guard so the "HuggingFace lane not configured" notice is logged once
@@ -806,7 +806,7 @@ async function runHfImageLane({
 		const mod = await import('./_providers/huggingface.js');
 		provider = mod.createRegenProvider();
 	} catch (err) {
-		// HF_TOKEN absent or the Space chain is empty — the lane isn't available
+		// HF_TOKEN absent or the Space chain is empty: the lane isn't available
 		// on this deployment; fall through so the caller surfaces the real error.
 		// A missing token is a STATIC deployment condition, not a per-request fault:
 		// logging it on every forge call floods the function logs (it was the
@@ -826,9 +826,9 @@ async function runHfImageLane({
 	// The Space call BLOCKS this serverless worker for up to ~280s. Under an influx
 	// that exhausts the Vercel worker pool and stalls /forge for everyone, so we cap
 	// fleet-wide concurrent holds with a self-healing TTL lease. Over the cap the
-	// lane reports "not served" (false) and the caller degrades — to the paid
+	// lane reports "not served" (false) and the caller degrades, to the paid
 	// reconstruct fallback on the free-first path, or a designed "free lane busy"
-	// error on an explicit free pick — instead of piling onto an exhausted pool.
+	// error on an explicit free pick: instead of piling onto an exhausted pool.
 	const slot = await acquireBlockingSlot('hf', {
 		max: SCALE_LIMITS.hfConcurrent,
 		ttlMs: SCALE_LIMITS.hfSlotTtlMs,
@@ -892,7 +892,7 @@ async function runHfImageLane({
 	});
 
 	// One auto-retry on a flagged low-quality/degenerate output. Only attempted
-	// when a concurrency slot is free right now — the HF lane is capacity-capped,
+	// when a concurrency slot is free right now: the HF lane is capacity-capped,
 	// so a busy fleet keeps the first (flagged) result rather than starving
 	// other callers of their turn on the free Spaces.
 	let retried = false;
@@ -1033,18 +1033,18 @@ async function startJob(req, res) {
 	const body = await readJson(req, 8_000).catch(() => null);
 
 	// Two reconstruction modes share this path:
-	//   • image→3D — a caller supplies one or more reference views (image_url or
+	//   • image→3D: a caller supplies one or more reference views (image_url or
 	//     image_urls[]); we reconstruct directly and skip the text-to-image stage.
 	//     With >1 view the provider fuses them (multi-view conditioning). An
 	//     optional prompt may still guide the model where it accepts one.
-	//   • text→3D — no images; we synthesize the reference image from the prompt
+	//   • text→3D: no images; we synthesize the reference image from the prompt
 	//     with FLUX first, then reconstruct.
 	let imageUrls = parseImageUrls(body);
 	const isImageMode = imageUrls.length > 0;
 	const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : '';
 
 	// Optional, additive output controls (seed, output_format/compression,
-	// texture_size, target_polycount) — see _lib/forge-options.js. Every field is
+	// texture_size, target_polycount): see _lib/forge-options.js. Every field is
 	// off by default, so a request that never sends them behaves exactly as
 	// before. An explicitly-present but invalid value is a 400 with an actionable
 	// message; an absent field is never an error.
@@ -1067,7 +1067,7 @@ async function startJob(req, res) {
 	// Subject class (organic / hard-surface / null) steers the High realism tier's
 	// self-host lane order: Hunyuan3D-2.1 leads on people / creatures / detailed
 	// organics, self-host TRELLIS leads on hard-surface / mechanical subjects. Pure
-	// keyword heuristic on the prompt — zero latency, no LLM — and a no-op for every
+	// keyword heuristic on the prompt: zero latency, no LLM, and a no-op for every
 	// tier below High (see freeLaneCandidates). An image submission with no guidance
 	// prompt classifies to null and keeps the default order.
 	const subjectClass = classifyForgeSubject(prompt);
@@ -1083,7 +1083,7 @@ async function startJob(req, res) {
 	// can't stack a second submit-timeout window on the same request.
 	let nimGatewayDegraded = false;
 
-	// Pay-per-use (Token Utility — consumption lever): set to { paymentId, refId,
+	// Pay-per-use (Token Utility: consumption lever): set to { paymentId, refId,
 	// settledAt, redeemed? } once a non-holder's settled $THREE payment is accepted
 	// in lieu of holding. The payment is validated at the gate, claimed atomically
 	// just before dispatch, and released if the generation fails before delivery.
@@ -1100,7 +1100,7 @@ async function startJob(req, res) {
 	// must never hand one payer's job to another).
 	let requestHash = null;
 
-	// The geometry path is BYOK-only — no free model does native text→geometry.
+	// The geometry path is BYOK-only: no free model does native text→geometry.
 	// So when the caller didn't explicitly pick a backend and has no key for the
 	// default geometry engine, transparently serve the free image lane (NVIDIA
 	// NIM on draft, TRELLIS otherwise) instead of a dead "needs key" error. The
@@ -1117,7 +1117,7 @@ async function startJob(req, res) {
 
 	// Health-aware lane selection: when the caller didn't name a backend, consult a
 	// cheap, cached liveness snapshot of the free lanes and skip any our probe (or a
-	// recent submit failure) marks down — so a cold or unreachable self-host worker
+	// recent submit failure) marks down: so a cold or unreachable self-host worker
 	// is routed AROUND before submit, not failed-over after. Only the platform free
 	// lanes (image/sketch) are candidates; geometry is BYOK and unaffected. Pure
 	// best-effort: any snapshot error leaves the env-resolved backendId in place, so
@@ -1145,7 +1145,7 @@ async function startJob(req, res) {
 	// Honest cold-start signal for a chosen self-host lane: true only when the
 	// liveness probe reached the worker but it answered slowly (a scale-to-zero
 	// container spinning up). Reuses the cached snapshot, so the common path pays no
-	// extra probe. Used to widen the ETA + flag `cold_start` in the response — never
+	// extra probe. Used to widen the ETA + flag `cold_start` in the response, never
 	// to fabricate progress; the client's real polling still drives actual status.
 	const coldStartFor = async (id) => {
 		if (!isSelfHostBackend(id) || !coldStartSecondsFor(id)) return false;
@@ -1159,12 +1159,12 @@ async function startJob(req, res) {
 	};
 
 	// Content-addressed result cache (see _lib/forge-cache.js): a text→3D request
-	// on a platform-keyed lane (never BYOK — that spends the caller's own account,
+	// on a platform-keyed lane (never BYOK: that spends the caller's own account,
 	// so it must never be replayed to a stranger) can be served instantly from a
 	// prior identical generation instead of re-running the GPU pipeline. Captured
 	// once, before any lane-failover churn reassigns `backendId` below, so the
 	// same cache key is used to both look up and (on completion) store this
-	// request's result — a failover to a different lane just means a miss, never
+	// request's result: a failover to a different lane just means a miss, never
 	// a wrong hit. `force_regenerate: true` skips the read (a fresh run is still
 	// written back, keeping the cache warm). High tier is paid/gated per caller
 	// and is never cached, matching the module's own privacy boundary.
@@ -1195,13 +1195,13 @@ async function startJob(req, res) {
 		}
 	}
 
-	// $THREE hold-to-access gate (Token Utility v1) — the High tier (200k poly +
+	// $THREE hold-to-access gate (Token Utility v1): the High tier (200k poly +
 	// PBR, textured) is the platform's premium quality tier. It now runs on a
 	// free-for-us engine (HuggingFace Hunyuan3D) like every other tier, so this is
-	// a pure monetization gate — we charge for higher quality, not to recover
+	// a pure monetization gate: we charge for higher quality, not to recover
 	// vendor spend: reserved for holders (Bronze+, $25 hold) or a presented tier
 	// pass, otherwise a hold-or-pay 402. BYOK backends are exempt (the caller pays
-	// their own vendor key — key-gated, not hold-gated). Draft and Standard are
+	// their own vendor key: key-gated, not hold-gated). Draft and Standard are
 	// never gated, and internal cron seed jobs bypass it entirely.
 	// requireFeatureAccess writes the 402 (three_hold_required) itself and returns
 	// { ok:false }; on a holder it writes nothing and lets the job proceed.
@@ -1242,7 +1242,7 @@ async function startJob(req, res) {
 					price_usd: priceUsd,
 					balance_usd: acct.balanceUsd,
 					top_up_url: '/credits',
-					message: `Generating a High model costs $${priceUsd.toFixed(2)} in credits — your balance is $${acct.balanceUsd.toFixed(2)}. Top up to continue.`,
+					message: `Generating a High model costs $${priceUsd.toFixed(2)} in credits, your balance is $${acct.balanceUsd.toFixed(2)}. Top up to continue.`,
 				});
 			}
 			creditsCharge = { user: creditUser, action: 'forge.high', ref: refId || randomUUID() };
@@ -1288,7 +1288,7 @@ async function startJob(req, res) {
 		// above. It stops the influx/abuse failure mode where many callers each stay
 		// under their own cap but collectively drain spend. BYOK lanes spend the
 		// caller's own key, so the platform-budget ceiling must never throttle them.
-		// When it trips the free NVIDIA / HuggingFace lanes stay open — paid capacity
+		// When it trips the free NVIDIA / HuggingFace lanes stay open, paid capacity
 		// degrades, it never dead-ends.
 		if (!isFreeLane && !backendMeta?.byok) {
 			const globalRl = await limits.mcp3dGenerateGlobal();
@@ -1296,7 +1296,7 @@ async function startJob(req, res) {
 				return rateLimited(
 					res,
 					globalRl,
-					'Paid 3D generation is at capacity right now — switch to a free engine (NVIDIA or Hugging Face), or try again shortly.',
+					'Paid 3D generation is at capacity right now: switch to a free engine (NVIDIA or Hugging Face), or try again shortly.',
 				);
 			}
 			// Per-identity daily ceiling: closes the rotating-IP abuse path the per-IP
@@ -1341,7 +1341,7 @@ async function startJob(req, res) {
 
 		// Vision pre-check (Consumer 1 of the shared vision helper): catch a photo
 		// that can't be reconstructed BEFORE it burns a generation slot. Validates
-		// the primary view only. Fail-open — a vision outage returns ok:true and we
+		// the primary view only. Fail-open: a vision outage returns ok:true and we
 		// proceed exactly as before (validateForgeImage owns that contract). The
 		// user can override a verdict they disagree with via `skip_validation:true`
 		// (e.g. a stylized reference our checker is too cautious about).
@@ -1349,7 +1349,7 @@ async function startJob(req, res) {
 		// checker is trained to reject, and exactly what TripoSG-scribble wants.
 		if (body?.skip_validation !== true && path !== 'sketch') {
 			// The forge client key is a hashed client-supplied header, NOT an OAuth
-			// client — it has no row in oauth_clients, so it must never land in the
+			// client: it has no row in oauth_clients, so it must never land in the
 			// FK-constrained usage_events.client_id (that fails the insert and the
 			// whole spend event is silently dropped). Attribute it via meta instead.
 			// Every view is checked in parallel, not just the primary: a bad
@@ -1385,14 +1385,14 @@ async function startJob(req, res) {
 		return json(res, 400, {
 			error: 'invalid_prompt',
 			message:
-				'Describe one subject in 3–1000 characters, or pass image_url / image_urls for image-to-3D.',
+				'Describe one subject in 3-1000 characters, or pass image_url / image_urls for image-to-3D.',
 		});
 	}
 	const aspect = VALID_ASPECT.has(body?.aspect_ratio) ? body.aspect_ratio : '1:1';
 
 	// Sketch→3D is single-view and prompt-conditioned: the drawing is the only
 	// input image, and the prompt names what it depicts (TripoSG-scribble is a
-	// text+scribble model — without the prompt it has nothing to disambiguate
+	// text+scribble model: without the prompt it has nothing to disambiguate
 	// rough strokes against).
 	if (path === 'sketch') {
 		if (!isImageMode) {
@@ -1410,26 +1410,26 @@ async function startJob(req, res) {
 		if (prompt.length < 3) {
 			return json(res, 400, {
 				error: 'invalid_prompt',
-				message: 'Say what the sketch depicts (3–1000 characters) — the sketch model is prompt-conditioned.',
+				message: 'Say what the sketch depicts (3-1000 characters), the sketch model is prompt-conditioned.',
 			});
 		}
 	}
 
 	// path / tier / backendId were resolved above (the rate limiter is lane-aware).
-	// An explicitly selected text-only backend can't serve a photo submission —
+	// An explicitly selected text-only backend can't serve a photo submission -
 	// say so plainly rather than failing upstream with an opaque 422.
 	if (isImageMode && BACKENDS[backendId]?.userImages === false) {
 		return json(res, 422, {
 			error: 'backend_text_only',
 			backend: backendId,
 			message:
-				`${BACKENDS[backendId].label} generates from text prompts only — NVIDIA's hosted preview doesn't accept uploaded photos. ` +
+				`${BACKENDS[backendId].label} generates from text prompts only, NVIDIA's hosted preview doesn't accept uploaded photos. ` +
 				'Drop the backend field to use the default photo engine, or pick TRELLIS, Meshy, or Tripo.',
 		});
 	}
 
 	try {
-		// Pay-per-use: claim the settled $THREE payment now — immediately before any
+		// Pay-per-use: claim the settled $THREE payment now, immediately before any
 		// provider work, so every cheap failure above (rate limit, moderation, bad
 		// input) left the payment reusable. The atomic claim (payment_id PRIMARY KEY)
 		// is the single-use source of truth: a concurrent retry of the same payment
@@ -1485,7 +1485,7 @@ async function startJob(req, res) {
 
 		// ── Sketch path (TripoSG-scribble, self-host) ───────────────────────────
 		// The drawing + prompt go straight to the TripoSG worker's scribble
-		// pipeline. Geometry only — no synthesized intermediate view, no textures;
+		// pipeline. Geometry only: no synthesized intermediate view, no textures;
 		// the result panel's Retexture/Stylize tools pick up from there.
 		if (path === 'sketch') {
 			let gcp;
@@ -1522,7 +1522,7 @@ async function startJob(req, res) {
 							'Sketch-to-3D is not configured on this deployment (GCP_TRIPOSG_URL is not set).',
 					});
 				}
-				// The sketch model is conditioned on the drawing — no other lane can
+				// The sketch model is conditioned on the drawing: no other lane can
 				// serve it, so there is nothing to fail over to. Cool the worker so the
 				// next request skips it while it recovers, and return a designed,
 				// retryable state instead of a raw provider error.
@@ -1542,7 +1542,7 @@ async function startJob(req, res) {
 			}
 
 			// Wrap the GCP job envelope in a forge token so polling routes back to
-			// the GCP provider — same idiom as the Hunyuan3D lane.
+			// the GCP provider: same idiom as the Hunyuan3D lane.
 			const token = encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId });
 			const creationId = await createCreation({
 				clientKey: clientKeyFrom(req),
@@ -1583,12 +1583,12 @@ async function startJob(req, res) {
 		}
 
 		// ── BYOK geometry-style providers (Meshy / Tripo / Rodin / Stability) ────
-		// A native 3D model emits mesh geometry directly — from the prompt
-		// (text→geometry) or a single photo (image→3D) — with no synthesized
+		// A native 3D model emits mesh geometry directly: from the prompt
+		// (text→geometry) or a single photo (image→3D): with no synthesized
 		// intermediate view, so detail isn't capped by one image. These backends
 		// have no platform key; the caller supplies their own. Dispatch is a
 		// registry lookup on the backend's `byok` name (Replicate BYOK is handled
-		// on the image-intermediate path below — it speaks a different interface).
+		// on the image-intermediate path below: it speaks a different interface).
 		const byokProvider = BACKENDS[backendId].byok;
 		const byokFactory = BYOK_PROVIDER_FACTORIES[byokProvider];
 		if (byokFactory) {
@@ -1620,14 +1620,14 @@ async function startJob(req, res) {
 				return json(res, 422, {
 					error: 'backend_image_only',
 					backend: backendId,
-					message: `${BACKENDS[backendId].label} reconstructs from a reference image — attach one, or drop the backend to use a text→3D engine.`,
+					message: `${BACKENDS[backendId].label} reconstructs from a reference image, attach one, or drop the backend to use a text→3D engine.`,
 				});
 			}
 
 			const clientKey = clientKeyFrom(req);
 
 			// Synchronous completion (Stable Fast 3D): the provider already persisted
-			// the GLB to R2 and handed back a durable url — no task to poll. Record a
+			// the GLB to R2 and handed back a durable url: no task to poll. Record a
 			// finished creation and return done so the client skips polling, exactly
 			// like the NVIDIA NIM synchronous path.
 			if (!submitted.taskId && submitted.resultGlbUrl) {
@@ -1723,8 +1723,8 @@ async function startJob(req, res) {
 			// TRELLIS on NIM emits the mesh natively from the prompt (no FLUX
 			// intermediate view) and needs no BYOK key. It serves prompt submissions
 			// on the image path as the free draft default; photo submissions never
-			// resolve here (hosted preview is text-only — see the provider header).
-			// The free NVIDIA NIM lane is a flaky synchronous upstream — NVCF can be
+			// resolve here (hosted preview is text-only: see the provider header).
+			// The free NVIDIA NIM lane is a flaky synchronous upstream, NVCF can be
 			// unreachable, accept the job but drop the request id, or finish with no
 			// artifact, and a missing module/key throws on load. Per the free-first
 			// "AI must never fail" policy none of these may surface as a dead 502: a
@@ -1735,12 +1735,12 @@ async function startJob(req, res) {
 			if (backendId === 'nvidia') {
 				nvidiaTried = true;
 				// Skip the submit-timeout gamble when the lane is in a recent-failure
-				// cooldown — go straight to the reconstruct lane instead of re-hanging.
+				// cooldown: go straight to the reconstruct lane instead of re-hanging.
 				// BUT only when that reconstruct lane is a real destination: it free-firsts
 				// to HuggingFace and then the paid Replicate account, so it's viable when HF
 				// is configured OR the paid account isn't itself recorded out-of-credit. When
 				// both are gone, skipping NIM would route straight into a dead paid lane and
-				// 503 the user — so we ignore the cooldown and give the free lane a real shot.
+				// 503 the user: so we ignore the cooldown and give the free lane a real shot.
 				const cooldowns = await providersInCooldown([
 					NIM_TRELLIS_COOLDOWN_KEY,
 					REPLICATE_PAID_COOLDOWN_KEY,
@@ -1764,11 +1764,11 @@ async function startJob(req, res) {
 			}
 
 			// ── Image-intermediate path (TRELLIS default, or Hunyuan3D self-host) ────
-			// Hunyuan3D runs on its own Cloud Run worker (GCP_HUNYUAN3D_URL) — never
+			// Hunyuan3D runs on its own Cloud Run worker (GCP_HUNYUAN3D_URL), never
 			// the avatar pipeline controller, whose face pipeline fails every
 			// non-face image with "no face detected".
 			// Replicate BYOK runs the same reconstruction models on the caller's own
-			// Replicate account — resolve their token up front (distinct from the
+			// Replicate account: resolve their token up front (distinct from the
 			// platform-keyed TRELLIS default).
 			let byokReplicateKey = null;
 			if (backendId === 'replicate_byok') {
@@ -1787,13 +1787,13 @@ async function startJob(req, res) {
 				} else if (backendId === 'replicate_byok') {
 					provider = createRegenProvider({ apiToken: byokReplicateKey });
 				} else if (backendId === 'huggingface') {
-					// The free HF Spaces lane is driven by runHfImageLane() below — it
+					// The free HF Spaces lane is driven by runHfImageLane() below, it
 					// creates its own provider. We deliberately do NOT build a Replicate
 					// client here: creating one would 503 on a deployment that has no
 					// REPLICATE_API_TOKEN, breaking an explicitly-chosen free engine.
 				} else if (backendId === 'trellis_selfhost') {
 					// Driven by the dedicated self-host TRELLIS lane below, which builds
-					// its own GCP provider. Same reasoning as huggingface — never build a
+					// its own GCP provider. Same reasoning as huggingface, never build a
 					// Replicate client here, or a deployment without REPLICATE_API_TOKEN
 					// would 503 on an explicitly-chosen free self-hosted engine.
 				} else {
@@ -1810,11 +1810,11 @@ async function startJob(req, res) {
 					});
 				}
 				if (backendId === 'replicate_byok') return needsKey(res, backendId);
-				// The default TRELLIS (Replicate) provider couldn't be built — no
+				// The default TRELLIS (Replicate) provider couldn't be built, no
 				// REPLICATE_API_TOKEN. That alone is NOT "unconfigured" when the free
 				// HuggingFace Spaces lane is live: a degraded-from-NVIDIA text prompt, or
 				// a photo→3D request, must still reconstruct on the free lane rather than
-				// dead-ending at a 503. Leave `provider` undefined and fall through — the
+				// dead-ending at a 503. Leave `provider` undefined and fall through, the
 				// free-first HF block below serves it, and the `!provider` guard further
 				// down raises a designed unavailable state only if every free lane is gone
 				// too. Mirrors the self-host TRELLIS failover (provider = undefined) above.
@@ -1856,7 +1856,7 @@ async function startJob(req, res) {
 
 		// Resolve the reference views: supplied directly (image→3D) or a single
 		// view synthesized from the prompt (text→3D). `referenceImageUrl` is the
-		// primary view — the durable preview + the synthesis target.
+		// primary view: the durable preview + the synthesis target.
 		let referenceImageUrl;
 		let textToImageModel;
 		let views;
@@ -1874,10 +1874,10 @@ async function startJob(req, res) {
 			// Granite art-director pass (on by default; pass director:false to skip):
 			// rewrites the raw prompt into a richer, single-subject spec (form,
 			// per-part PBR materials, photoreal-by-default cues, composition
-			// constraints) before it drives the FLUX/Vertex reference image — the
+			// constraints) before it drives the FLUX/Vertex reference image, the
 			// same director the free MCP tools use. Fail-soft: any failure (chat
 			// lane down, timeout) silently keeps the raw prompt, so running it by
-			// default can only ever help, never break, a generation — and it rides
+			// default can only ever help, never break, a generation, and it rides
 			// the free-first LLM chain, so it costs no GCP/vendor spend. This is the
 			// single biggest lever on "does this look like a real photograph"
 			// available before the reference image is even generated.
@@ -1899,7 +1899,7 @@ async function startJob(req, res) {
 					if (directed) promptForReference = directed;
 				}
 			}
-			// Report the rewrite only when it actually changed the brief — an
+			// Report the rewrite only when it actually changed the brief, an
 			// unchanged value means the model saw exactly what the user typed.
 			if (promptForReference && promptForReference !== prompt) directedPrompt = promptForReference;
 			// Seed the reconstruction reference from the dedicated Vertex-Gemini
@@ -1935,8 +1935,8 @@ async function startJob(req, res) {
 		}
 
 		// Explicitly chosen free HuggingFace lane. Unlike the trellis free-first
-		// path below — which degrades to the paid Replicate lane when the free
-		// Spaces are down — an explicit pick of the FREE engine must never silently
+		// path below: which degrades to the paid Replicate lane when the free
+		// Spaces are down: an explicit pick of the FREE engine must never silently
 		// fall through to a paid lane: that would spend credits the user
 		// deliberately opted out of. So we run the free Spaces and, if every one is
 		// busy/down, return a designed error the UI can act on (retry / switch engine).
@@ -1971,7 +1971,7 @@ async function startJob(req, res) {
 					params: {
 						images: views,
 						seed: opts.seed ?? undefined,
-						// Tier-scaled sampler/export budgets — this is where standard/high
+						// Tier-scaled sampler/export budgets: this is where standard/high
 						// actually buy more quality on our own GPU (steps, kept geometry,
 						// texture resolution) instead of only a bigger advertised polycount.
 						quality: selfhostQualityForTier(tier.id),
@@ -2106,8 +2106,8 @@ async function startJob(req, res) {
 		}
 
 		// Free-first: exhaust the free reconstruct lane (HuggingFace Spaces) BEFORE
-		// the paid Replicate default, so a forge call never spends on — or dead-ends
-		// against — the paid account while a free lane can serve it. We already hold
+		// the paid Replicate default, so a forge call never spends on, or dead-ends
+		// against: the paid account while a free lane can serve it. We already hold
 		// the reference views (uploaded, or FLUX-synthesized above), so the free lane
 		// reconstructs from exactly what Replicate would have. Scoped to the default
 		// trellis lane: an explicitly chosen Hunyuan3D / Replicate-BYOK backend is
@@ -2156,7 +2156,7 @@ async function startJob(req, res) {
 		try {
 			// A self-host failover landed here with no paid provider configured (no
 			// REPLICATE_API_TOKEN) and the free HF lane above didn't serve the request
-			// — there is no reconstruct lane left. Raise it as upstream-unavailable so
+			//: there is no reconstruct lane left. Raise it as upstream-unavailable so
 			// the catch below runs the remaining free fallbacks (Hunyuan3D → HF) and,
 			// if those are gone too, surfaces a designed unavailable state.
 			if (!provider) {
@@ -2167,7 +2167,7 @@ async function startJob(req, res) {
 			}
 			// Per-provider submit throttle: shed platform Replicate bursts to the free
 			// lane BEFORE they hit the account quota and turn into fleet-wide 429s. Only
-			// the platform-keyed default lane is capped — BYOK lanes spend the caller's
+			// the platform-keyed default lane is capped: BYOK lanes spend the caller's
 			// own quota. Over-cap is thrown as upstream-unavailable so the existing
 			// fallback chain (self-host Hunyuan3D → free HuggingFace) absorbs it.
 			if (
@@ -2201,7 +2201,7 @@ async function startJob(req, res) {
 			//     referenceImageUrl from textToImage(), so the same reconstruct
 			//     fallbacks apply. Without this branch the outer catch re-checks
 			//     nvidiaTried=true and skips NIM, leaving the user with a 429.
-			// Scoped to the default trellis backend only — an explicitly chosen
+			// Scoped to the default trellis backend only: an explicitly chosen
 			// Hunyuan3D / BYOK backend that fails surfaces its own error. Provenance
 			// always reports the lane that actually ran so any downgrade is visible.
 			const upstreamGone =
@@ -2212,7 +2212,7 @@ async function startJob(req, res) {
 
 			const mode3d = isImageMode ? 'image→3D' : 'text→3D (via synthesized image)';
 
-			// Fallback #1 — self-hosted TRELLIS Cloud Run worker (workers/model-trellis),
+			// Fallback #1: self-hosted TRELLIS Cloud Run worker (workers/model-trellis),
 			// when wired and not cooled. FREE_FALLBACK_FOR_PATH prefers it first among
 			// the free image lanes, so this paid-lane failover walks the same order:
 			// our own GPU (zero vendor cost) before any external free allocation. It
@@ -2254,7 +2254,7 @@ async function startJob(req, res) {
 				}
 			}
 
-			// Fallback #2 — self-hosted Hunyuan3D Cloud Run worker, when wired.
+			// Fallback #2: self-hosted Hunyuan3D Cloud Run worker, when wired.
 			const hunyuanUrl = process.env.GCP_HUNYUAN3D_URL;
 			if (!job && hunyuanUrl && process.env.GCP_RECONSTRUCTION_KEY) {
 				console.warn(
@@ -2262,7 +2262,7 @@ async function startJob(req, res) {
 				);
 				backendId = 'hunyuan3d';
 				provider = createGcpProvider();
-				// Hunyuan3D is poly-aware — supply the tier budget the TRELLIS params omit.
+				// Hunyuan3D is poly-aware: supply the tier budget the TRELLIS params omit.
 				reconstructParams.target_polycount = opts.targetPolycount ?? tier.polycount;
 				reconstructParams.tier = tier.id;
 				reconstructParams.path = path;
@@ -2273,7 +2273,7 @@ async function startJob(req, res) {
 					params: reconstructParams,
 				});
 			} else if (!job) {
-				// Fallback #3 — free Hugging Face Spaces image→3D (gated on HF_TOKEN).
+				// Fallback #3: free Hugging Face Spaces image→3D (gated on HF_TOKEN).
 				// It blocks and writes its own status:'done' response; if it does, the
 				// request is complete. Otherwise fall through to surface the real error.
 				// For text mode, views=[referenceImageUrl] (the FLUX-synthesized image).
@@ -2305,7 +2305,7 @@ async function startJob(req, res) {
 		}
 
 		// How the job was actually conditioned. The provider reports back which
-		// backend handled it and how many views it fused — these can differ from
+		// backend handled it and how many views it fused: these can differ from
 		// what was requested when a single-view model is configured and we fall
 		// back to the primary view. Surfaced so a downgrade is never silent.
 		const viewsRequested = views.length;
@@ -2392,7 +2392,7 @@ async function startJob(req, res) {
 		}
 		if (err?.code === 'insufficient_credits' && BACKENDS[backendId]?.byok) {
 			// BYOK lane: the message names the CALLER'S own provider account, which
-			// they can act on — surface it. The platform's own paid lane falls through
+			// they can act on: surface it. The platform's own paid lane falls through
 			// to the sanitized "temporarily unavailable" state below.
 			return json(res, 402, {
 				error: 'insufficient_credits',
@@ -2401,16 +2401,16 @@ async function startJob(req, res) {
 		}
 		// Last-resort free fallback: when the paid image-intermediate TRELLIS lane
 		// (Replicate) is throttled, over-quota, unreachable, OR out of credit, a text
-		// prompt must never dead-end — degrade to the free NVIDIA NIM lane so the
+		// prompt must never dead-end: degrade to the free NVIDIA NIM lane so the
 		// default "type a prompt → get a model" flow always returns something. The
 		// credit-exhaustion case matters most here: the failure is the paid FLUX
 		// synthesis step (textToImage throws code:'billing'/402, which is NOT
 		// upstream-unavailable), but the NIM TRELLIS lane is native text→mesh and
-		// needs no FLUX intermediate at all — so a dry Replicate account should hand
+		// needs no FLUX intermediate at all: so a dry Replicate account should hand
 		// the prompt to the healthy free lane rather than skip straight to the 503.
 		// Honors the free-first "AI must never fail" policy; provenance reports
 		// backend:nvidia so the downgrade is visible, not silent. Image uploads have
-		// no free reconstruct fallback here (NVCF is text-only — the HF lane already
+		// no free reconstruct fallback here (NVCF is text-only, the HF lane already
 		// absorbed them above), so they fall through to the designed states below.
 		// `nvidiaTried` guards against re-running a lane that already failed this
 		// request (the draft nvidia→trellis→nvidia loop).
@@ -2421,7 +2421,7 @@ async function startJob(req, res) {
 			prompt
 		) {
 			nvidiaTried = true;
-			// Don't degrade to NIM when it's already in a recent-failure cooldown — that
+			// Don't degrade to NIM when it's already in a recent-failure cooldown, that
 			// would just re-pay the submit timeout on a lane we know is down right now.
 			const trellisCooling = (await providersInCooldown([NIM_TRELLIS_COOLDOWN_KEY])).has(
 				NIM_TRELLIS_COOLDOWN_KEY,
@@ -2438,35 +2438,35 @@ async function startJob(req, res) {
 			}
 		}
 
-		// Upstream throttling is a transient 429, not a server fault — return it as
+		// Upstream throttling is a transient 429, not a server fault, return it as
 		// such with a retry hint so the page can show a "busy, try again" state.
 		if (err?.code === 'rate_limited' || err?.providerStatus === 429) {
 			const retryAfter = typeof err?.retryAfter === 'number' ? err.retryAfter : 10;
 			res.setHeader('retry-after', String(retryAfter));
 			// A `queued` throttle is our own rate gate pacing the request to the
-			// upstream limit (not an upstream rejection) — tell the user it's in line so
+			// upstream limit (not an upstream rejection): tell the user it's in line so
 			// a retry reads as "your turn is coming up", not "the system is failing".
 			const queued = Boolean(err?.queued);
 			return json(res, 429, {
 				error: 'rate_limited',
 				queued,
 				message: queued
-					? `Your generation is queued behind a few others — retry in ~${retryAfter}s to pick it up.`
+					? `Your generation is queued behind a few others: retry in ~${retryAfter}s to pick it up.`
 					: 'The 3D generator is busy right now. Try again in a few seconds.',
 				retry_after: retryAfter,
 			});
 		}
 		// Free lanes are exhausted and the only remaining lane was the platform's
 		// PAID vendor account, which is out of credit. The vendor's raw "buy credit"
-		// message is our internal billing state and is useless to the user — answer
+		// message is our internal billing state and is useless to the user, answer
 		// with an honest, generic unavailable state instead of leaking it. (BYOK lanes
 		// kept their actionable account message via the insufficient_credits branch.)
 		if (!BACKENDS[backendId]?.byok && isPaidCreditFailure(err)) {
-			const creditDetail = err?.providerDetail ? ` — vendor: ${err.providerDetail}` : '';
+			const creditDetail = err?.providerDetail ? `: vendor: ${err.providerDetail}` : '';
 			console.warn(
 				`[forge] paid reconstruct lane out of credit and no free lane available: ${err?.message || err}${creditDetail}`,
 			);
-			// Record the paid lane as down (reason 'auth' — a billing fault that won't
+			// Record the paid lane as down (reason 'auth': a billing fault that won't
 			// self-heal until ops tops the account up). The NIM-cooldown router reads this
 			// so the next text prompt keeps the free NIM lane in play instead of skipping
 			// it to route into this now-known-dead paid lane.
@@ -2487,8 +2487,8 @@ async function startJob(req, res) {
 			message: err?.message || 'The generator could not start this job.',
 		});
 	} finally {
-		// A claimed pay-per-use payment that did NOT deliver a model — any non-2xx
-		// exit (validation 4xx, unconfigured 5xx, provider failure) — is released so
+		// A claimed pay-per-use payment that did NOT deliver a model, any non-2xx
+		// exit (validation 4xx, unconfigured 5xx, provider failure), is released so
 		// the settled $THREE payment stays reusable on retry. A successful job (200)
 		// keeps the claim, so one payment can never buy a second generation.
 		if (paidHigh?.redeemed && res.statusCode >= 400) {
@@ -2512,7 +2512,7 @@ async function startJob(req, res) {
 
 // Auto-rig an existing GLB mesh: skeleton + skin weights via the provider's
 // `rerig` mode (VAST-AI UniRig by default). Takes a GLB URL, returns a job id
-// that polls through the same GET ?job=<id> path — provider.status() is
+// that polls through the same GET ?job=<id> path: provider.status() is
 // mode-agnostic, so the rigged GLB surfaces exactly like a reconstruction.
 async function startRigJob(req, res) {
 	const ip = clientIp(req);
@@ -2530,8 +2530,8 @@ async function startRigJob(req, res) {
 		});
 	}
 
-	// Prefer the self-hosted GCP UniRig pipeline when it's configured — it supports
-	// rerig out of the box via its /rig endpoint — and fall back to Replicate when
+	// Prefer the self-hosted GCP UniRig pipeline when it's configured, it supports
+	// rerig out of the box via its /rig endpoint: and fall back to Replicate when
 	// a REPLICATE_RERIG_MODEL is set. Mirrors the gcp-first resolution the MCP
 	// studio path uses, so rigging works whenever ANY rerig-capable lane exists,
 	// not only when the highest-precedence provider happens to be the rigger.
@@ -2560,7 +2560,7 @@ async function startRigJob(req, res) {
 		}
 	}
 
-	// Rigging stays dormant until a rerig lane is configured — surface a clean
+	// Rigging stays dormant until a rerig lane is configured, surface a clean
 	// 501 rather than a generic provider error so callers can branch on it.
 	if (!provider) {
 		return json(res, 501, {
@@ -2621,14 +2621,14 @@ async function startRigJob(req, res) {
 // 404s. Two production consequences (53 of 134 nvidia jobs in one 36h window
 // failed with "NVCF request not found or expired"):
 //   1. Concurrent polls for the same job (overlapping browser timers, a second
-//      tab, a retried request) race — one consumes the result, the other 404s
+//      tab, a retried request) race: one consumes the result, the other 404s
 //      and flips the creation to failed even though the mesh exists.
 //   2. A result that expires out of NVCF's retention window (throttled
 //      background tab, closed laptop) is genuinely gone.
 // Recovery below: single-flight the upstream poll per task id so only one
 // request ever touches NVCF at a time; on a 404, first re-check the store for
-// a completion a racing poll already materialized, then — because the prompt
-// is recorded on the creation row — resubmit the SAME generation once and
+// a completion a racing poll already materialized, then, because the prompt
+// is recorded on the creation row: resubmit the SAME generation once and
 // alias the old task id to the new one so the client's existing poll handle
 // keeps working. The alias lives in the shared cache; the creation row keeps
 // its original replicate_job_id, so findByJob/materializeCreation are untouched.
@@ -2660,7 +2660,7 @@ async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
 	if (result?.code !== 'nvcf_expired') return result;
 
 	// The request id is dead. A racing poll may have already materialized the
-	// creation — that's a success, not a failure.
+	// creation: that's a success, not a failure.
 	const row = await findByJob({ replicateJobId: upstreamId, clientKey });
 	if (row?.status === 'done' && row.glb_url) {
 		return { status: 'done', resultGlbUrl: row.glb_url };
@@ -2668,7 +2668,7 @@ async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
 
 	// Genuinely lost (expired / consumed by an aborted socket). The never-dead-end
 	// rule: regenerate server-side rather than surface a failure the user can only
-	// answer by re-clicking Generate. Once per job — the resub lock outlives the
+	// answer by re-clicking Generate. Once per job: the resub lock outlives the
 	// alias so a second expiry reports the failure honestly.
 	if (!row?.prompt) return result;
 	if (!(await acquireLock(`nvcf:resub:${upstreamId}`, NVCF_ALIAS_TTL_S))) {
@@ -2696,11 +2696,11 @@ async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
 // ── Self-host (GCP worker) poll recovery ─────────────────────────────────────
 // A self-host /tasks/:id or /jobs/:id poll can 404 ("task not found on gcp
 // service") when the durable task record isn't visible to the instance this
-// poll reached — the post-submit cross-instance window (worker at high
+// poll reached: the post-submit cross-instance window (worker at high
 // concurrency, no session affinity) or a completion write racing us. That was
 // the platform's single largest failure class (410 of 425 trellis failures, all
 // path='image'), and the router used to treat the FIRST 404 as terminal. The
-// GCP twin of pollNvidiaStatus: never dead-end on a recoverable signal —
+// GCP twin of pollNvidiaStatus: never dead-end on a recoverable signal -
 // re-check the store, grace a young job, and only surface failure once a missing
 // task is genuinely orphaned, where the poll handler's lane failover takes over.
 async function pollGcpStatus({ gcp, upstreamId, clientKey, createdAt }) {
@@ -2768,9 +2768,9 @@ async function pollJob(req, res, jobId) {
 				tier: meta.tier ?? null,
 				path: meta.path ?? null,
 				// The reference view this job reconstructs from. The submit response
-				// already carries it, but a client that never saw that response —
+				// already carries it, but a client that never saw that response -
 				// a coalesced job, a resumed job after a reload, a poll-time failover
-				// successor — otherwise has no way to learn it. Repeating it here lets
+				// successor: otherwise has no way to learn it. Repeating it here lets
 				// the generation timeline reveal the reference the moment it exists.
 				preview_image_url: meta.preview_image_url ?? null,
 			}
@@ -2822,7 +2822,7 @@ async function pollJob(req, res, jobId) {
 			}
 			result = await pollNvidiaStatus({ nv, upstreamId, clientKey });
 		} else if (provider === 'gcp') {
-			// Serves every self-host lane (Hunyuan3D, TripoSG sketch) — the job
+			// Serves every self-host lane (Hunyuan3D, TripoSG sketch), the job
 			// envelope carries the worker URL it was submitted to.
 			let gcp;
 			try {
@@ -2846,22 +2846,22 @@ async function pollJob(req, res, jobId) {
 			result = await rep.status(liveHandle);
 		}
 	} catch {
-		// A transient poll error shouldn't fail the job — report running so the
+		// A transient poll error shouldn't fail the job: report running so the
 		// client's loop retries.
 		return json(res, 200, { job_id: jobId, status: 'running', ...metaFields });
 	}
 
 	if (result.status === 'done' && result.resultGlbUrl) {
 		// The compression choice a caller requested at submit time (see
-		// _lib/forge-job-options.js) — this poll is a LATER, separate invocation
+		// _lib/forge-job-options.js): this poll is a LATER, separate invocation
 		// with no access to that original request body, so it was bound to the
 		// job handle then and is looked up now. Absent when nothing non-default
-		// was requested, or Redis is unavailable — both fail open to uncompressed.
+		// was requested, or Redis is unavailable: both fail open to uncompressed.
 		const boundOpts = await optionsForJob(jobId);
 		// Copy the mesh into our own storage so the model is permanent (provider
 		// delivery URLs expire) and serve the durable CDN url. Falls back to the
 		// provider url where the store is unavailable. Always scored for quality
-		// (glb-quality.js) — free, deterministic, and the signal every lane's
+		// (glb-quality.js): free, deterministic, and the signal every lane's
 		// completion should carry regardless of which provider produced it.
 		const durable = await materializeCreation({
 			replicateJobId: upstreamId,
@@ -2872,7 +2872,7 @@ async function pollJob(req, res, jobId) {
 			compress: boundOpts?.compression || null,
 		});
 		// Populate the result cache this job was bound to at submit time (text→3D,
-		// non-high-tier, platform-keyed lanes only — see forgeResultCacheKey). A
+		// non-high-tier, platform-keyed lanes only: see forgeResultCacheKey). A
 		// job with no binding (image mode, high tier, BYOK, or no options
 		// requested) is a no-op here.
 		const boundCacheKey = await cacheKeyForJob(jobId);
@@ -2920,7 +2920,7 @@ async function pollJob(req, res, jobId) {
 		await markFailed({ replicateJobId: upstreamId, clientKey, error: result.error });
 
 		// Cool the platform lane that actually failed so health-aware routing
-		// steers new submits away immediately — the poll-time twin of the
+		// steers new submits away immediately: the poll-time twin of the
 		// submit-side cooldown. BYOK lanes are excluded (never auto-selected).
 		const failedBackend = meta?.backend || null;
 		const platformLaneFailed = Boolean(failedBackend && BACKENDS[failedBackend] && !BACKENDS[failedBackend].byok);
@@ -2928,7 +2928,7 @@ async function pollJob(req, res, jobId) {
 
 		// Automatic redispatch (see _lib/forge-failover.js): recover the original
 		// inputs from the creation row and continue the SAME job on the next
-		// configured lane — the client keeps polling this id and sees
+		// configured lane: the client keeps polling this id and sees
 		// status:"running" with a new backend instead of a dead end. Scoped to
 		// platform image-path jobs with a stored reference view; sketch stays on
 		// its purpose-built lane and BYOK vendors are never silently swapped.
@@ -2965,7 +2965,7 @@ async function pollJob(req, res, jobId) {
 						tier: meta.tier,
 						path: meta.path,
 					});
-					// Report "running" ONLY once the successor is durably chaseable —
+					// Report "running" ONLY once the successor is durably chaseable -
 					// otherwise the client would poll a dead handle forever.
 					const bound = await bindJobSuccessor(jobId, {
 						handle: submitted.handle,
@@ -2997,7 +2997,7 @@ async function pollJob(req, res, jobId) {
 			}
 		}
 
-		// Terminal — but never a bare dead end: name the configured lanes that can
+		// Terminal: but never a bare dead end: name the configured lanes that can
 		// still serve a fresh retry of this request, so a client can offer a
 		// one-click engine switch instead of a bare error. Sketch keeps its single
 		// purpose-built lane (reconstruct models do badly on drawings).
@@ -3008,7 +3008,7 @@ async function pollJob(req, res, jobId) {
 		return json(res, 200, {
 			job_id: jobId,
 			status: 'failed',
-			error: sanitizeJobError(result.error) || '3D generation hit a snag — please try again.',
+			error: sanitizeJobError(result.error) || '3D generation hit a snag, please try again.',
 			...metaFields,
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});
@@ -3031,11 +3031,11 @@ export default wrap(async (req, res) => {
 		return startJob(req, res);
 	}
 
-	// ?catalog — the tier + backend + cost/time matrix the composer renders.
+	// ?catalog: the tier + backend + cost/time matrix the composer renders.
 	// Public, no secrets; lets the UI communicate the time/cost trade-off and
 	// which backends are live before the user commits. The payload only changes
 	// on a redeploy (tiers/backends are static; `configured` reflects env
-	// presence), so it is heavily CDN-cacheable — one of the hottest GETs on the
+	// presence), so it is heavily CDN-cacheable: one of the hottest GETs on the
 	// site (every /forge load), now served almost entirely from the edge instead
 	// of recomputing per request. stale-while-revalidate keeps it instant even as
 	// the cache refreshes in the background.
@@ -3045,7 +3045,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// ?health — live-probes every platform backend's upstream (auth + quota
+	// ?health: live-probes every platform backend's upstream (auth + quota
 	// gates, zero vendor spend) so the UI and uptime checks see what a
 	// generation would actually hit, not just which env vars exist. Cached
 	// briefly per instance; rate-limited like status polling.
@@ -3056,7 +3056,7 @@ export default wrap(async (req, res) => {
 		// The probe already memoizes per instance (60s TTL); a short edge cache
 		// collapses an influx of identical health polls into one shared response
 		// every ~30s instead of one origin probe per client. stale-while-revalidate
-		// means a client never waits on a refresh — it sees the live status surface
+		// means a client never waits on a refresh: it sees the live status surface
 		// update within ~30s while the CDN absorbs the load.
 		return json(res, 200, await probeForgeHealth(), {
 			'cache-control': 'public, max-age=15, s-maxage=30, stale-while-revalidate=120',

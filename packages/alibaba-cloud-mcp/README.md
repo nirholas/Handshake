@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/alibaba-cloud-mcp</h1>
 
-<p align="center"><strong>MCP server for Alibaba Cloud DashScope — Qwen chat, embeddings, and model discovery on your own account.</strong></p>
+<p align="center"><strong>MCP server for Alibaba Cloud DashScope, Qwen chat, embeddings, and model discovery on your own account.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/alibaba-cloud-mcp"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/alibaba-cloud-mcp?logo=npm&color=cb3837"></a>
@@ -23,7 +23,7 @@
 
 ---
 
-> A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes Alibaba Cloud's Qwen models — and anything else in your DashScope account — to MCP clients such as Claude Desktop, Claude Code, and Cursor. It talks **directly** to the DashScope OpenAI-compatible REST API with **your own Alibaba Cloud API key**: no intermediary backend, no telemetry, no mock data.
+> A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes Alibaba Cloud's Qwen models, and anything else in your DashScope account, to MCP clients such as Claude Desktop, Claude Code, and Cursor. It talks **directly** to the DashScope OpenAI-compatible REST API with **your own Alibaba Cloud API key**: no intermediary backend, no telemetry, no mock data.
 
 > Community-built and not affiliated with Alibaba Cloud. Registry name: `io.github.nirholas/alibaba-cloud`.
 
@@ -66,7 +66,7 @@ Or add the server to your MCP client config:
 ## Requirements
 
 1. An [Alibaba Cloud account](https://www.alibabacloud.com/)
-2. A [DashScope API key](https://bailian.console.alibabacloud.com/) — navigate to **API Keys** and create one
+2. A [DashScope API key](https://bailian.console.alibabacloud.com/), navigate to **API Keys** and create one
 3. Node.js ≥ 20
 
 ## Tools
@@ -81,9 +81,9 @@ Or add the server to your MCP client config:
 
 | Model ID | Use |
 |---|---|
-| `qwen-max` | Highest quality — complex reasoning, long documents |
+| `qwen-max` | Highest quality: complex reasoning, long documents |
 | `qwen-plus` | Balanced performance (default) |
-| `qwen-turbo` | Fastest and cheapest — simple tasks |
+| `qwen-turbo` | Fastest and cheapest: simple tasks |
 | `qwen-long` | Long context (up to 1M tokens) |
 | `text-embedding-v3` | Embeddings, semantic search, RAG (default) |
 
@@ -91,11 +91,11 @@ Or add the server to your MCP client config:
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `DASHSCOPE_API_KEY` | **yes** | — | Your DashScope API key |
+| `DASHSCOPE_API_KEY` | **yes** | - | Your DashScope API key |
 | `DASHSCOPE_MODEL_ID` | no | `qwen-plus` | Default chat model |
 | `DASHSCOPE_EMBED_MODEL_ID` | no | `text-embedding-v3` | Default embedding model |
 | `DASHSCOPE_BASE_URL` | no | International endpoint | Custom DashScope endpoint |
-| `DASHSCOPE_REGION` | no | — | Set to `cn` for the China endpoint |
+| `DASHSCOPE_REGION` | no | - | Set to `cn` for the China endpoint |
 | `DASHSCOPE_TIMEOUT_MS` | no | `60000` | Request timeout in ms |
 
 ## Inspect
@@ -114,7 +114,7 @@ importable from `@three-ws/alibaba-cloud-mcp/src/dashscope.js` (`loadConfig`,
 `DashScopeClient`, `DashScopeError`) when you want the REST wrapper without MCP.
 
 ```js
-// example.mjs — run with: DASHSCOPE_API_KEY=sk-... node example.mjs
+// example.mjs: run with: DASHSCOPE_API_KEY=sk-... node example.mjs
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { buildServer } from '@three-ws/alibaba-cloud-mcp';
 

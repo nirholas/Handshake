@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/names</h1>
 
-<p align="center"><strong>ENS + SNS resolution, <code>*.threews.sol</code> subdomain minting, and pay-by-name — agent identity in one import.</strong></p>
+<p align="center"><strong>ENS + SNS resolution, <code>*.threews.sol</code> subdomain minting, and pay-by-name, agent identity in one import.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/names"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/names?logo=npm&color=cb3837"></a>
@@ -23,7 +23,7 @@
 
 ---
 
-> `@three-ws/names` is the official client for the three.ws **naming layer** —
+> `@three-ws/names` is the official client for the three.ws **naming layer** -
 > the identity plumbing behind every agent on the platform. It resolves
 > human-readable names to on-chain addresses across **ENS** (Ethereum) and
 > **SNS** (Solana), mints `<label>.threews.sol` subdomains under the
@@ -40,14 +40,14 @@ A wallet address is unusable as an identity. Nobody types
 have to. The naming layer turns identity into a string:
 
 - **Resolve in one call.** `resolve('vitalik.eth')` and `resolve('bonfida.sol')`
-  hit the right registry automatically — ENS via an Ethereum RPC with failover,
-  SNS via Bonfida — and a bare label is tried against both.
+  hit the right registry automatically: ENS via an Ethereum RPC with failover,
+  SNS via Bonfida: and a bare label is tried against both.
 - **Mint a name your agent owns.** `mintSubdomain('alice')` registers
   `alice.threews.sol` on-chain, writes a Brave-resolvable URL record, and
-  transfers ownership to the agent's wallet — all in one signed transaction.
+  transfers ownership to the agent's wallet: all in one signed transaction.
   The platform absorbs the gas; the agent's wallet never signs.
 - **Pay by name.** `payByName('alice.threews.sol', '5')` resolves the recipient
-  and builds (or sends) a USDC transfer — handles, `.sol` domains, and raw
+  and builds (or sends) a USDC transfer: handles, `.sol` domains, and raw
   addresses all route through the same call, with a recipient-poisoning guard.
 
 Hand-rolling this means three different on-chain SDKs (Bonfida SNS, ethers, SPL
@@ -55,7 +55,7 @@ token), RPC failover, label validation, an availability denylist, and a
 preview-then-send flow that survives a name being re-pointed mid-flight. This
 package is that, done once.
 
-This is the SDK twin of the [`ens_sns_resolve` MCP tool](https://three.ws/mcp) —
+This is the SDK twin of the [`ens_sns_resolve` MCP tool](https://three.ws/mcp) -
 the same resolution engine, exposed as plain functions instead of an MCP tool.
 
 ## Install
@@ -66,7 +66,7 @@ npm install @three-ws/names
 
 Zero runtime dependencies. Works in Node 18+ and the browser (uses `fetch`).
 Minting and `mode: 'send'` payments require a signed-in three.ws session or a
-bearer token. The browser `prep` lane needs no auth — it returns an unsigned
+bearer token. The browser `prep` lane needs no auth, it returns an unsigned
 transaction for a wallet to sign.
 
 ## Quick start
@@ -96,7 +96,7 @@ import { mintSubdomain, payByName } from '@three-ws/names';
 // Registers alice.threews.sol on-chain, transfers it to the agent's wallet.
 const { fullName, signature } = await mintSubdomain({
   agentId: 'agt_7Yq…',
-  label: 'alice',           // optional — defaults to the agent's slugified name
+  label: 'alice',           // optional: defaults to the agent's slugified name
   token: process.env.THREEWS_TOKEN,
 });
 console.log(fullName); // → alice.threews.sol
@@ -121,7 +121,7 @@ label (`vitalik`) is tried against the `.sol` registry. Wraps
 | Option | Type | Default | Notes |
 |---|---|---|---|
 | `domains` | `boolean` | `false` | (SNS) also return every `.sol` the owner holds and their favorite domain. Off by default: it adds two SNS-index lookups the address resolution itself does not need. |
-| `signal` | `AbortSignal` | — | Cancel the request. |
+| `signal` | `AbortSignal` | - | Cancel the request. |
 
 **Returns** `ResolveResult`
 
@@ -136,7 +136,7 @@ label (`vitalik`) is tried against the `.sol` registry. Wraps
 | `domainsTruncated` | `boolean` | `true` when the owner holds more than the 100 names returned. |
 | `raw` | `unknown` | The untouched wire envelope. |
 
-A `.sol` miss returns `200` with `resolved: false` — the reverse-lookup that
+A `.sol` miss returns `200` with `resolved: false`, the reverse-lookup that
 runs on every page load makes "no domain" an expected answer, so it is never a
 `404`. Malformed input is a `400`.
 
@@ -165,7 +165,7 @@ Check whether `<label>.threews.sol` is free. Wraps
 ### `mintSubdomain(input) → Promise<MintResult>`
 
 Mint `<label>.threews.sol`, write its Brave URL record, and transfer ownership
-to a wallet — atomically, in one platform-signed transaction. Wraps
+to a wallet: atomically, in one platform-signed transaction. Wraps
 `POST /api/sns-subdomain`. Requires auth.
 
 **Input**
@@ -173,9 +173,9 @@ to a wallet — atomically, in one platform-signed transaction. Wraps
 | Field | Type | Notes |
 |---|---|---|
 | `agentId` | `string` | **Required.** The agent the subdomain attaches to. |
-| `label` | `string` | Optional. Defaults to the agent's slugified name. 1–63 chars `[a-z0-9-]`. |
+| `label` | `string` | Optional. Defaults to the agent's slugified name. 1-63 chars `[a-z0-9-]`. |
 | `ownerAddress` | `string` | Optional base58 wallet to receive ownership. Must be **linked to your account**. Defaults to the agent's own Solana wallet. |
-| `space` | `number` | Optional, 1000–10000. Registry bytes reserved. Default `2000`. |
+| `space` | `number` | Optional, 1000-10000. Registry bytes reserved. Default `2000`. |
 | `token` | `string` | Bearer token (or rely on a session cookie). |
 
 **Returns** `MintResult`: `{ ok, agentId, fullName, parent, owner, signature, explorer, urlRecord, agentUrl }` (the untouched wire body stays on `raw`). The new subdomain's URL record points at
@@ -189,7 +189,7 @@ manifests can show `recipient_name` without an extra round-trip.
 
 Claim `<username>.threews.sol` for the signed-in user, with its URL record set
 to `https://three.ws/u/<username>`. Wraps `POST /api/threews/subdomain`. The
-`label` **must equal your account username** — divergent labels would let users
+`label` **must equal your account username**: divergent labels would let users
 impersonate other handles. Pass `ownerWallet` (linked to your account) or fall
 back to your default agent's Solana wallet. `releaseSubdomain(label)` wraps the
 `DELETE` route to drop the local claim (on-chain ownership is unchanged).
@@ -206,13 +206,13 @@ agent wallet; **`.sol` domain** (including `foo.threews.sol`) → on-chain owner
 | Option | Type | Default | Notes |
 |---|---|---|---|
 | `mode` | `'prep' \| 'send'` | `'prep'` | `prep` returns an unsigned tx; `send` has the agent sign and broadcast. |
-| `payerWallet` | `string` | — | **Required for `prep`.** Base58 fee-payer + source. |
-| `agentId` | `string` | — | **Required for `send`.** The agent that signs (must be yours). |
-| `expectedAddress` | `string` | — | (`send`) the address you previewed. If the name now resolves elsewhere, the call rejects with `recipient_changed` before signing. |
-| `message` | `string` | — | Optional memo. |
-| `token` | `string` | — | Bearer token for `send`. |
+| `payerWallet` | `string` | - | **Required for `prep`.** Base58 fee-payer + source. |
+| `agentId` | `string` | - | **Required for `send`.** The agent that signs (must be yours). |
+| `expectedAddress` | `string` | - | (`send`) the address you previewed. If the name now resolves elsewhere, the call rejects with `recipient_changed` before signing. |
+| `message` | `string` | - | Optional memo. |
+| `token` | `string` | - | Bearer token for `send`. |
 
-**Returns (`prep`)** `{ mode: 'prep', recipient, amountUsdc, txBase64, blockhash, lastValidBlockHeight, mint }` — decode `txBase64` into a `VersionedTransaction`, sign with the payer wallet, and submit. **Returns (`send`)** `{ mode: 'send', recipient, payer, amountUsdc, signature }`. The `amountUsdc` argument accepts a string or number, must be `> 0` and `≤ 10000`.
+**Returns (`prep`)** `{ mode: 'prep', recipient, amountUsdc, txBase64, blockhash, lastValidBlockHeight, mint }`, decode `txBase64` into a `VersionedTransaction`, sign with the payer wallet, and submit. **Returns (`send`)** `{ mode: 'send', recipient, payer, amountUsdc, signature }`. The `amountUsdc` argument accepts a string or number, must be `> 0` and `≤ 10000`.
 
 ### `resolvePayee(name) → Promise<Payee>`
 
@@ -255,7 +255,7 @@ string you pass:
   record while the platform still owns it (so `<label>.threews.sol` resolves in
   Brave) → `transferSubdomain` hands it to the agent's wallet. The platform's
   parent-owner keypair (`THREEWS_SOL_PARENT_SECRET_BASE58`) is the only signer
-  and fee payer — gas is under 0.01 SOL and absorbed, so the agent's wallet
+  and fee payer: gas is under 0.01 SOL and absorbed, so the agent's wallet
   never has to sign.
 - **Pay-by-name** uses the USDC mint (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`,
   6 decimals), creating the recipient's associated token account idempotently.
@@ -264,11 +264,11 @@ string you pass:
 
 ### Environment
 
-`THREEWS_SOL_PARENT_SECRET_BASE58` — the base58-encoded 64-byte ed25519 secret
+`THREEWS_SOL_PARENT_SECRET_BASE58`: the base58-encoded 64-byte ed25519 secret
 for the wallet that owns the parent `.sol` (default `threews.sol`, overridable
 with `THREEWS_SOL_PARENT_DOMAIN`). This is **server-side only**; it gates all
 subdomain minting. When it is absent the mint endpoints answer `503`
-`config_missing` rather than failing mid-transaction — the SDK surfaces that as
+`config_missing` rather than failing mid-transaction, the SDK surfaces that as
 a clean error, never a fake success.
 
 ## Pricing / payment
@@ -276,9 +276,9 @@ a clean error, never a fake success.
 | Action | Cost |
 |---|---|
 | `resolve`, `reverseLookup`, `checkSubdomain`, `resolvePayee` | **Free.** Public, rate-limited per IP. |
-| `mintSubdomain`, `claimSubdomain` | **Free** to the caller — the platform absorbs the sub-0.01-SOL gas. Requires auth. |
+| `mintSubdomain`, `claimSubdomain` | **Free** to the caller, the platform absorbs the sub-0.01-SOL gas. Requires auth. |
 | `payByName` | The transferred USDC amount, plus Solana network fees. |
-| [`ens_sns_resolve` MCP tool](https://three.ws/mcp) | **$0.0005 USDC** over x402 — the metered equivalent of `resolve`. |
+| [`ens_sns_resolve` MCP tool](https://three.ws/mcp) | **$0.0005 USDC** over x402, the metered equivalent of `resolve`. |
 
 `.sol` reads are cached server-side (5 min positive, 60 s negative), and ENS
 resolutions are cached 5 min in-memory, so repeated UX previews don't hammer the
@@ -292,7 +292,7 @@ real faults reject.
 | State | HTTP | Meaning | Recovery |
 |---|---|---|---|
 | `resolved: false` | 200 | Name has no owner. **Not an error.** | Show "unclaimed"; offer to mint. |
-| `validation_error` | 400 | Malformed name, label, or amount. | Fix the input. Labels are 1–63 chars `[a-z0-9-]`. |
+| `validation_error` | 400 | Malformed name, label, or amount. | Fix the input. Labels are 1-63 chars `[a-z0-9-]`. |
 | `unauthorized` | 401 | Mint or `mode: 'send'` without auth. | Sign in or pass a bearer `token`. |
 | `forbidden` | 403 | `ownerAddress` not linked to your account. | Link the wallet, or omit it. |
 | `per_tx_exceeded` | 403 | Send over the agent's per-transaction limit. | Lower the amount or raise the agent's limit. |
@@ -306,7 +306,7 @@ real faults reject.
 
 ## Examples
 
-**Under the hood — resolve `.sol` with raw `fetch`** (what `resolve` wraps):
+**Under the hood: resolve `.sol` with raw `fetch`** (what `resolve` wraps):
 
 ```js
 const r = await fetch('https://three.ws/api/sns?name=bonfida.sol');
@@ -314,7 +314,7 @@ const { data } = await r.json();
 // → { name: 'bonfida.sol', address: '…', network: 'solana', resolved: true }
 ```
 
-**Agent identity, end to end** — give an agent a name, then receive a payment:
+**Agent identity, end to end**: give an agent a name, then receive a payment:
 
 ```js
 import { mintSubdomain, resolvePayee } from '@three-ws/names';
@@ -326,7 +326,7 @@ const payee = await resolvePayee(fullName);
 // → { name: 'oracle.threews.sol', address: '…', source: 'sns', claim: … }
 ```
 
-**Browser pay-by-name** — build, sign in the wallet, submit:
+**Browser pay-by-name**: build, sign in the wallet, submit:
 
 ```js
 import { payByName } from '@three-ws/names';
@@ -340,7 +340,7 @@ const signed = await wallet.signTransaction(tx);
 const sig = await connection.sendRawTransaction(signed.serialize());
 ```
 
-**Agent-signed send** — the agent's custodial wallet pays, with a poisoning guard:
+**Agent-signed send**: the agent's custodial wallet pays, with a poisoning guard:
 
 ```js
 const preview = await resolvePayee('alice.threews.sol');
@@ -354,9 +354,9 @@ const { signature } = await payByName('alice.threews.sol', '5', {
 
 ## Related
 
-- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — auto-pay the `$0.0005` `ens_sns_resolve` MCP tool and other x402 lanes.
-- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) — generate the agent's 3D avatar to pair with its name.
-- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) — render the named agent's avatar in the browser.
+- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch), auto-pay the `$0.0005` `ens_sns_resolve` MCP tool and other x402 lanes.
+- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge), generate the agent's 3D avatar to pair with its name.
+- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar), render the named agent's avatar in the browser.
 
 ---
 

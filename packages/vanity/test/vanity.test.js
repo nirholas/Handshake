@@ -12,7 +12,7 @@ import {
 } from '../src/index.js';
 
 // A scripted fetch double: each call shifts the next queued response and records
-// the request. No network, no real endpoints — we assert on request shaping and
+// the request. No network, no real endpoints: we assert on request shaping and
 // response parsing, which is all the SDK is responsible for.
 function stubFetch(responses) {
 	const calls = [];
@@ -186,7 +186,7 @@ test('the default grindViaApi export is wired to a shared client', () => {
 
 test('the standalone grindViaApi honours a per-call fetch and baseUrl', async () => {
 	// The paid lane needs an x402-wrapped fetch, so a `fetch` passed straight to
-	// the standalone export must actually be used — falling back to the global
+	// the standalone export must actually be used: falling back to the global
 	// one would send the call out unpaid and 402.
 	const { fetch, calls } = stubFetch([{ body: { address: 'THREEsynthetic1111', network: 'solana' } }]);
 	const res = await grindViaApi({ prefix: 'a', fetch, baseUrl: 'https://preview.three.ws' });

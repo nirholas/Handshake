@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/irl</h1>
 
-<p align="center"><strong>Geofenced, real-world presence for agents and avatars — check in at a place, prove you were there, discover who and what is nearby.</strong></p>
+<p align="center"><strong>Geofenced, real-world presence for agents and avatars, check in at a place, prove you were there, discover who and what is nearby.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/irl"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/irl?logo=npm&color=cb3837"></a>
@@ -25,7 +25,7 @@
 
 ---
 
-> `@three-ws/irl` is the official client for **three.ws IRL** — the layer that
+> `@three-ws/irl` is the official client for **three.ws IRL**, the layer that
 > drops 3D agents and avatars at real-world GPS coordinates and lets people
 > *stumble onto them in AR by walking up*. You check in at a spot, mint a
 > short-lived proof-of-presence token from your live fix, and read back only the
@@ -34,7 +34,7 @@
 > nearby feed, the real-world interaction log, **[Money Drops](#money-drops)**
 > (real SOL / USDC / $THREE escrowed at a spot, claimable only by walking up)
 > and **[World Lines](#world-lines)** (agent-signed proof-of-presence AR
-> quests). Presence is the contract — there is no browseable map, no roster, no
+> quests). Presence is the contract: there is no browseable map, no roster, no
 > "query any point on earth." You see what's around you, because you're there.
 > It pairs with [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge)
 > (make the avatar) and [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar)
@@ -49,18 +49,18 @@ hole structurally, and this SDK gives you the whole flow as plain functions:
 
 - **Presence is proven, not claimed.** Before you can read nearby agents you
   mint a fix token from your *real* geolocation. The server only answers for the
-  coarse area that token was minted in — "query anywhere" becomes "query where
+  coarse area that token was minted in: "query anywhere" becomes "query where
   you are." No token banking, no remote scraping.
 - **Tight by default.** The nearby feed is radius-capped at **60 m** (default
-  40 m), returns at most 50 pins, and is IP rate-limited with sweep detection —
+  40 m), returns at most 50 pins, and is IP rate-limited with sweep detection -
   large enough to render an agent as you walk up, small enough that one read only
   ever reveals the handful right where you stand.
-- **Anonymous-friendly.** Place and manage pins from a device token — no login.
+- **Anonymous-friendly.** Place and manage pins from a device token, no login.
   Authenticated owners get permanent pins; anonymous pins lapse after 7 days.
 - **Coordinates are minimized.** The public feed coarsens lat/lng to ~1.1 m,
   never returns owner ids, and never logs the caller's position.
 
-This is the SDK twin of the live [/irl](https://three.ws/irl) surface — the same
+This is the SDK twin of the live [/irl](https://three.ws/irl) surface, the same
 endpoints, exposed as plain functions.
 
 ## Install
@@ -99,7 +99,7 @@ const { pin } = await placePin({
   lng: fix.lng,
   avatarName: 'Scout',
   avatarUrl: 'https://three.ws/avatars/xbot.glb', // any hosted avatar GLB works
-  caption: 'Say hi — I drop $THREE alpha here',
+  caption: 'Say hi: I drop $THREE alpha here',
 });
 
 console.log(pin.id, pin.permanent ? 'permanent' : 'expires in 7 days');
@@ -135,7 +135,7 @@ alongside the fix so `nearby()` can prove the read.
 | `lat` / `lng` | `number` | The fix used to mint the token. |
 | `token` | `string` | HMAC-signed presence token (header `x-irl-fix` on reads). |
 | `expiresIn` | `number` | Token lifetime in seconds: **180** (3 min). Re-`checkIn()` when it lapses. |
-| `cell` | `string` | The precision-7 geohash (~153 m) the fix fell in — the client's "re-mint on cell change" trigger. |
+| `cell` | `string` | The precision-7 geohash (~153 m) the fix fell in, the client's "re-mint on cell change" trigger. |
 
 The token anchor is coarsened to ~110 m server-side, so the token itself never
 carries a fine coordinate. A read is authorized only when its claimed point is
@@ -149,9 +149,9 @@ header.
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
-| `radius` | `number` | `40` | Metres. Clamped server-side to **10–60 m**. |
+| `radius` | `number` | `40` | Metres. Clamped server-side to **10-60 m**. |
 
-Each returned `Pin` (allow-list projection — never `user_id` or `device_token`).
+Each returned `Pin` (allow-list projection: never `user_id` or `device_token`).
 The SDK camelCases the wire row and keeps the untouched original on `raw`:
 
 | Field | Type | Notes |
@@ -159,17 +159,17 @@ The SDK camelCases the wire row and keeps the untouched original on `raw`:
 | `id` | `string` | Pin UUID. |
 | `agentId` | `string \| null` | Linked agent identity, if any. |
 | `lat` / `lng` | `number` | Coarsened to ~1.1 m (5 dp). |
-| `heading` | `number` | Facing, 0–359°. |
+| `heading` | `number` | Facing, 0-359°. |
 | `distanceM` | `number` | Great-circle metres from your fix. |
 | `avatarUrl` | `string` | GLB to load (relative or first-party https). |
 | `avatarName` / `caption` | `string \| null` | Public display text. |
 | `x402Endpoint` | `string \| null` | First-party pay target for the agent. |
 | `viewCount` | `number` | Deduplicated visitor count. |
-| `avatarVersion` | `number` | Bumps on a remote outfit re-skin — diff to swap the GLB. |
+| `avatarVersion` | `number` | Bumps on a remote outfit re-skin, diff to swap the GLB. |
 | `placedAt` | `string \| null` | When the pin was dropped. |
-| `anchorHeightM`, `anchorYawDeg`, `anchorQuat`, `anchorSource` | — | AR replay pose, when the placement carried one. |
+| `anchorHeightM`, `anchorYawDeg`, `anchorQuat`, `anchorSource` | - | AR replay pose, when the placement carried one. |
 | `gpsAccuracyM`, `altitudeM` | `number \| null` | Fix quality at placement time. |
-| `roomId`, `relEastM`, `relNorthM`, `originLat`, `originLng`, `originYawDeg` | — | Room frame for shared-anchor clusters (null on standalone pins). |
+| `roomId`, `relEastM`, `relNorthM`, `originLat`, `originLng`, `originYawDeg` | - | Room frame for shared-anchor clusters (null on standalone pins). |
 | `isMine` | `boolean` | True for the caller's own pins. |
 | `raw` | `unknown` | The untouched wire row (`avatar_name`, `distance_m`, …). |
 
@@ -183,17 +183,17 @@ Drop a 3D agent at a coordinate. Wraps `POST /api/irl/pins`.
 |---|---|---|
 | `lat` / `lng` | `number` | **Required.** Range-checked. |
 | `heading` | `number` | Initial facing in degrees (default 0). |
-| `avatarUrl` | `string` | GLB URL — relative same-origin or https (no private hosts). |
+| `avatarUrl` | `string` | GLB URL: relative same-origin or https (no private hosts). |
 | `avatarName` | `string` | ≤ 40 chars. |
 | `caption` | `string` | ≤ 140 chars. Content-gated; may reference only `$THREE`. |
 | `agentId` | `string` | Link the pin to a registered agent. |
-| `x402Endpoint` | `string` | Pay target — must be a first-party three.ws host. |
+| `x402Endpoint` | `string` | Pay target: must be a first-party three.ws host. |
 | `anchor` | `object` | Optional pose `{ heightM, yawDeg, quat, source }` for AR replay. |
-| `placementKind` | `'precise' \| 'approximate'` | `approximate` blurs the spot by `fuzzRadiusM` (10–500 m). |
+| `placementKind` | `'precise' \| 'approximate'` | `approximate` blurs the spot by `fuzzRadiusM` (10-500 m). |
 
 Pass the device token (anonymous ownership) via the `deviceToken` field or set a
 default with `configure({ deviceToken })`. Returns `201` with the created pin and
-a `permanent` flag (`true` for signed-in owners, `false` — 7-day expiry — for
+a `permanent` flag (`true` for signed-in owners, `false`, 7-day expiry, for
 anonymous).
 
 ### `myPins(options?) → Promise<Pin[]>`
@@ -233,7 +233,7 @@ deviceToken })` sets defaults for the module (base origin defaults to
 
 Real value, escrowed at a real-world spot. A drop holds SOL, USDC, or $THREE in
 a fresh per-drop escrow wallet, funded on-chain by its creator; anyone who
-physically walks up — proven by the same fix token every IRL read enforces —
+physically walks up: proven by the same fix token every IRL read enforces -
 claims a real on-chain release to their own wallet. Unclaimed funds auto-refund
 the creator on expiry. Wraps `/api/irl/drops`.
 
@@ -275,7 +275,7 @@ const { drop, escrowAddress, fundAmount } = await createDrop({
 await fundDrop({ dropId: drop.id, signature: 'your-transfer-signature' });
 
 // 2) Agent bounty (signed-in owner): the agent's custodial wallet funds it
-//    server-side under its spend limits — returned already active.
+//    server-side under its spend limits: returned already active.
 const bounty = await createDrop({
   agentId: 'your-agent-id', kind: 'bounty', asset: 'SOL', amount: 0.1,
   lat: fix.lat, lng: fix.lng, bountyCondition: 'quiz',
@@ -286,9 +286,9 @@ console.log(bounty.funded, bounty.fundingTx);
 
 | Function | Wraps | Notes |
 |---|---|---|
-| `nearbyDrops(presence, { radius? })` | `GET /api/irl/drops?lat=&lng=` | Fix-gated; radius clamped 10–80 m. |
+| `nearbyDrops(presence, { radius? })` | `GET /api/irl/drops?lat=&lng=` | Fix-gated; radius clamped 10-80 m. |
 | `getDrop(id)` | `GET /api/irl/drops/:id` | Location coarsened to ~110 m for non-owners (`coarse: true`). |
-| `myDrops()` | `GET /api/irl/drops?mine=1` | `{ drops, claims }` — your creations + claim receipts. |
+| `myDrops()` | `GET /api/irl/drops?mine=1` | `{ drops, claims }`, your creations + claim receipts. |
 | `createDrop(input)` | `POST /api/irl/drops` | Returns the escrow to fund, or `funded: true` for agent bounties. |
 | `fundDrop({ dropId, signature })` | `POST /:id/fund` | Confirms your transfer on-chain; `{ pending: true }` while confirming. |
 | `claimDrop({ dropId, presence, wallet, answer? })` | `POST /:id/claim` | Presence always verified; releases real funds to `wallet`. |
@@ -304,8 +304,8 @@ re-`checkIn()`), `out_of_range` (the drop's radius, with `distance_m` in
 Agent-placed proof-of-presence AR quests. A World Line anchors a quest to a pin
 you own; to complete it, a person must physically travel there, prove
 co-location, and finish the interaction (tap, quiz, or spoken passphrase). On
-success the **agent's own wallet signs an ed25519 proof-of-presence** —
-independently verifiable by anyone, ownable as a collectible — without a
+success the **agent's own wallet signs an ed25519 proof-of-presence** -
+independently verifiable by anyone, ownable as a collectible, without a
 precise coordinate ever entering the proof. Wraps `/api/irl/world-lines`.
 
 The walk-up completion loop:
@@ -330,14 +330,14 @@ const { proof, collectible } = await completeWorldLine({
 console.log('agent-signed proof:', proof.signature, '→', proof.verifyUrl);
 ```
 
-Place a quest on your pin (signed-in — pass `apiKey` to `createIrl`):
+Place a quest on your pin (signed-in: pass `apiKey` to `createIrl`):
 
 ```js
 import { createIrl } from '@three-ws/irl';
 
 const irl = createIrl({ apiKey: process.env.THREE_WS_SESSION });
 const { worldLine } = await irl.createWorldLine({
-  pinId: 'your-pin-id',                 // the anchor — a pin you own
+  pinId: 'your-pin-id',                 // the anchor, a pin you own
   title: 'Meet the courier',
   prompt: 'Find me by the fountain and answer one question.',
   challenge: { kind: 'quiz', question: 'What coin?', choices: ['$THREE', 'fiat'], answer: 0 },
@@ -359,7 +359,7 @@ const { worldLine } = await irl.createWorldLine({
 | `verifyProof(proofId)` | `GET /world-lines/verify/:id` | Public re-check of the agent signature. |
 
 The proof's canonical signed message carries only the quest id, a ~1.1 km
-coarse cell, the nonce, and a salted hash of the completer — never a
+coarse cell, the nonce, and a salted hash of the completer, never a
 coordinate, never a raw device token. `verifyProof()` re-runs the exact ed25519
 check anyone could do offline against `signerPubkey`.
 
@@ -393,12 +393,12 @@ Presence is the gate on every read. You can never query a point you aren't at:
 - **Proof-of-presence math.** Token TTL **180 s**, anchor coarsened to **~110 m**
   (`ANCHOR_DP = 3`), read tolerance **250 m** from the anchor (~one cell plus
   edge slack, so polling stays seamless across a cell boundary).
-- **No fan-out.** A placement or edit is never broadcast as a roster — it reaches
+- **No fan-out.** A placement or edit is never broadcast as a roster, it reaches
   a viewer only on their next proximity poll, and only once they're physically
   within the radius.
 - **Dev/preview.** Enforcement turns on only when `IRL_FIX_SECRET` (≥ 16 chars)
   is set. Without it, mint + verify still work self-consistently so local testing
-  isn't gated — but the nearby read does not gate on the token.
+  isn't gated: but the nearby read does not gate on the token.
 
 ## Errors & edge cases
 
@@ -407,7 +407,7 @@ Presence is the gate on every read. You can never query a point you aren't at:
 
 | `code` | HTTP | Meaning | Recovery |
 |---|---|---|---|
-| `fix_required` | 401 | Presence token missing/`expired`/`forged`/`out_of_area`. | Call `checkIn()` again — the fix lapsed or you moved. |
+| `fix_required` | 401 | Presence token missing/`expired`/`forged`/`out_of_area`. | Call `checkIn()` again, the fix lapsed or you moved. |
 | `lat_lng_required` | 400 | No coordinates on a read or placement. | Provide `lat`/`lng`. |
 | `invalid_coordinates` | 400 | Out-of-range lat/lng. | Send a real fix. |
 | `area_full` | 429 | The ~150 m cell already holds 40 agents. | Place in another spot. |
@@ -416,16 +416,16 @@ Presence is the gate on every read. You can never query a point you aren't at:
 | `content` | 422 | Caption/name blocked, or names a coin other than `$THREE`. | Reword. |
 | `endpoint` | 422 | `x402Endpoint` host isn't first-party. | Use a three.ws pay target. |
 | `not_found` | 404 | Pin gone (expired / hidden / not yours). | Refresh your list. |
-| `rate_limiter_unavailable` | 429 | The read limiter couldn't decide — it fails **closed**. | Retry shortly. |
+| `rate_limiter_unavailable` | 429 | The read limiter couldn't decide, it fails **closed**. | Retry shortly. |
 
 Every state is designed. A lapsed fix returns `fix_required` (not a blank feed),
 a saturated area returns `area_full` (not a silent drop). Surface them the same
-way in your UI — `fix_required` is the "Getting your location…" state, not an
+way in your UI: `fix_required` is the "Getting your location…" state, not an
 error toast.
 
 ## Examples
 
-**Walk-up discovery loop (browser)** — re-check in when the cell changes:
+**Walk-up discovery loop (browser)**: re-check in when the cell changes:
 
 ```js
 import { checkIn, nearby } from '@three-ws/irl';
@@ -439,7 +439,7 @@ setInterval(async () => {
 }, 10_000);                                  // ~6 reads/min, well under the 60/min ceiling
 ```
 
-**Place a Forge-made avatar where you stand** — full chain:
+**Place a Forge-made avatar where you stand**: full chain:
 
 ```js
 import { forge } from '@three-ws/forge';
@@ -455,7 +455,7 @@ const { pin } = await placePin({
 });
 ```
 
-**Anonymous, no login** — manage pins by device token:
+**Anonymous, no login**: manage pins by device token:
 
 ```js
 import { configure, placePin, myPins, purgePins } from '@three-ws/irl';
@@ -468,9 +468,9 @@ await purgePins(); // wipe every pin from this device
 
 ## Related
 
-- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) — generate the avatar you place.
-- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) — render and animate a discovered pin's GLB.
-- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — pay an agent's `x402_endpoint` in USDC.
+- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge), generate the avatar you place.
+- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar), render and animate a discovered pin's GLB.
+- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch), pay an agent's `x402_endpoint` in USDC.
 
 ---
 

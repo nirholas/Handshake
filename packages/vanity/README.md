@@ -94,7 +94,7 @@ import { Keypair } from '@solana/web3.js';
 const wallet = Keypair.fromSecretKey(secretKey);
 ```
 
-A fuller run — suffix, case-insensitive, live progress + ETA, cancellable:
+A fuller run: suffix, case-insensitive, live progress + ETA, cancellable:
 
 ```js
 import { grind, expectedAttempts } from '@three-ws/vanity';
@@ -138,7 +138,7 @@ wall-clock cadence. Rejects with `AbortError` if `signal` aborts.
 
 At least one of `prefix` / `suffix` is required. Both are validated against the
 Base58 alphabet (`0 O I l` excluded) and a 6-char-per-pattern ceiling before any
-work starts — an invalid pattern rejects immediately with a specific message.
+work starts: an invalid pattern rejects immediately with a specific message.
 
 **Returns** `GrindResult`
 
@@ -160,7 +160,7 @@ work starts — an invalid pattern rejects immediately with a specific message.
 
 ### `expectedAttempts({ prefix?, suffix?, ignoreCase? }) → number`
 
-The mean of the geometric distribution — `58^n` adjusted for case-insensitivity
+The mean of the geometric distribution: `58^n` adjusted for case-insensitivity
 per character. Use it to gate a pattern before grinding (e.g. warn past a
 threshold).
 
@@ -168,9 +168,9 @@ threshold).
 
 Validate a single prefix or suffix against the Base58 alphabet and length ceiling.
 Returns specific, user-facing error strings (e.g. `invalid character 'O'
-(uppercase o) — use other uppercase letters`).
+(uppercase o): use other uppercase letters`).
 
-### `grindViaApi(options) → Promise<ApiResult>` — the paid lane
+### `grindViaApi(options) → Promise<ApiResult>`: the paid lane
 
 For environments that can't grind locally, grind a short pattern over the hosted
 [x402](https://x402.org) endpoint instead of locally. Wraps
@@ -183,7 +183,7 @@ x402-capable `fetch` to settle the 402 automatically.
 | `ignoreCase` | `boolean` | Case-insensitive match. |
 | `format` | `'keypair' \| 'mnemonic'` | `mnemonic` returns an importable BIP-39 phrase (≤ 2 chars, ~100× slower). |
 | `strength` | `128 \| 256` | Mnemonic only: 12 or 24 words. |
-| `sealTo` | `string` | Optional X25519 public key — the secret is ECIES-sealed to you and the plaintext is omitted from the response. |
+| `sealTo` | `string` | Optional X25519 public key: the secret is ECIES-sealed to you and the plaintext is omitted from the response. |
 | `fetch` | `typeof fetch` | An x402-wrapped fetch (see [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch)). Without one you get a `PaymentRequiredError` carrying the x402 challenge to settle yourself. |
 | `baseUrl` | `string` | API origin. Defaults to `THREE_WS_BASE_URL` or `https://three.ws`. |
 | `apiKey` | `string` | Sent as `Authorization: Bearer …`. Not required for the x402 lane. |
@@ -191,8 +191,8 @@ x402-capable `fetch` to settle the 402 automatically.
 | `signal` | `AbortSignal` | Cancel the request. |
 
 Response fields: `address`, `secretKeyBase58`, `secretKey` (64-int array),
-`attempts`, `durationMs`, `expectedAttempts`, `network`, `explorerUrl`, and —
-for `format=mnemonic` — `mnemonic`, `wordCount`, `derivationPath`.
+`attempts`, `durationMs`, `expectedAttempts`, `network`, `explorerUrl`, and -
+for `format=mnemonic`: `mnemonic`, `wordCount`, `derivationPath`.
 
 ### `createVanity(options?) → VanityClient`
 
@@ -215,7 +215,7 @@ const { address } = await vanity.grindViaApi({ prefix: 'ag' });
 | `base58Encode(bytes)` | Base58 (Solana address) encoder for a `Uint8Array` / number array. Zero deps. |
 | `BASE58_ALPHABET` | The 58-character alphabet (excludes the confusable `0 O I l`). |
 | `MAX_PATTERN_LENGTH` | The per-pattern ceiling `validatePattern` and `grind` enforce (`6`). |
-| `DEFAULT_BASE_URL` | `https://three.ws` — the origin the hosted lane uses unless overridden. |
+| `DEFAULT_BASE_URL` | `https://three.ws`: the origin the hosted lane uses unless overridden. |
 | `ThreeWsError` / `PaymentRequiredError` | Typed errors (`code`, `status`, and `accepts` for the x402 challenge). |
 
 ## How it works
@@ -269,7 +269,7 @@ This is the part that matters for a secret-key tool.
   grinds a brand-new keypair per call and returns it once over TLS; it is never
   written to disk and is stripped from the idempotency cache. Because that
   secret transits the network, prefer `sealTo` (ECIES-seal it to your X25519
-  key so the plaintext never appears in the response or any proxy log) — or just
+  key so the plaintext never appears in the response or any proxy log), or just
   grind locally.
 - **MCP responses can be logged.** The `vanity_grinder` MCP tool returns a real,
   spendable secret in plaintext over the MCP channel, which the host (Claude
@@ -279,7 +279,7 @@ This is the part that matters for a secret-key tool.
 
 ## Pricing
 
-The local `grind()` path is free and unlimited — it's your CPU. Pricing only
+The local `grind()` path is free and unlimited: it's your CPU. Pricing only
 applies to the paid `grindViaApi()` HTTP lane, which is difficulty-tiered
 (each Base58 character multiplies expected work by ~58):
 
@@ -287,13 +287,13 @@ applies to the paid `grindViaApi()` HTTP lane, which is difficulty-tiered
 |---|---|---|
 | 1 | **$0.01** | **$0.05** |
 | 2 | **$0.05** | **$0.50** |
-| 3 | **$0.25** | — (capped at 2) |
+| 3 | **$0.25** |: (capped at 2) |
 
 A [provably-fair lane](https://three.ws/vanity/verify) (`GET
-/api/x402/vanity-verifiable`, $0.02–$0.40) grinds under a commit–reveal protocol
+/api/x402/vanity-verifiable`, $0.02-$0.40) grinds under a commit-reveal protocol
 and returns a signed receipt you can verify entirely client-side. Settlement
 runs only **after** a successful grind, so an exhausted budget costs nothing and
-can be retried. Pay per call in USDC on Base or Solana mainnet — no API keys, no
+can be retried. Pay per call in USDC on Base or Solana mainnet, no API keys, no
 accounts. Pair with [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch)
 to automate the 402.
 
@@ -315,7 +315,7 @@ The paid `grindViaApi()` path surfaces the endpoint's HTTP errors:
 |---|---|---|---|
 | `validation_error` | 400 | Bad pattern, format, or strength. | Fix the input. |
 | `pattern_too_long` | 400 | Combined pattern over the mnemonic cap of 2. (A combined pattern over 3 never leaves the process: the SDK rejects it locally as `invalid_input`.) | Grind locally with `grind()`. |
-| `grind_exhausted` | 504 | Time budget elapsed without a hit (rare, <1% at 3 chars). | Retry — you weren't charged. |
+| `grind_exhausted` | 504 | Time budget elapsed without a hit (rare, <1% at 3 chars). | Retry, you weren't charged. |
 | `rate_limited` | 429 | Pre-payment probe rate limit. | Honour `retry-after`. |
 
 Long patterns are designed, not crashed: the server tells you to grind them
@@ -323,7 +323,7 @@ locally with `grind()`, where the only cap is the 6-char-per-pattern ceiling.
 
 ## Examples
 
-**Node — grind, then write a Solana CLI keypair file:**
+**Node: grind, then write a Solana CLI keypair file:**
 
 ```js
 import { grind } from '@three-ws/vanity';
@@ -334,7 +334,7 @@ writeFileSync(`${publicKey}.json`, JSON.stringify(Array.from(secretKey)));
 // → solana config set --keypair ./<address>.json
 ```
 
-**Browser — cancel a long grind from the UI:**
+**Browser: cancel a long grind from the UI:**
 
 ```js
 import { grind } from '@three-ws/vanity';
@@ -347,7 +347,7 @@ document.querySelector('#stop').onclick = () => controller.abort();
 const { publicKey, secretKey } = await job; // rejects with AbortError on stop
 ```
 
-**Agent — the free MCP tool, no toolchain:**
+**Agent: the free MCP tool, no toolchain:**
 
 ```js
 // The same capability ships as the `vanity_grinder` MCP tool on the
@@ -363,9 +363,9 @@ const { address, secretKeyBase58 } = await grindViaApi({
 
 ## Related
 
-- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — auto-pay the 402 on the hosted grinder.
-- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) — text/image → rig-ready 3D GLB, the same SDK pattern.
-- [`@three-ws/pumpfun-mcp`](https://www.npmjs.com/package/@three-ws/pumpfun-mcp) — launch a token to a vanity mint you ground here.
+- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch), auto-pay the 402 on the hosted grinder.
+- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge), text/image → rig-ready 3D GLB, the same SDK pattern.
+- [`@three-ws/pumpfun-mcp`](https://www.npmjs.com/package/@three-ws/pumpfun-mcp), launch a token to a vanity mint you ground here.
 
 ---
 

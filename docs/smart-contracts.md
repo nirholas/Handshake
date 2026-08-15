@@ -4,7 +4,7 @@ Three Solidity contracts make up the ERC-8004 registry system for three.ws ident
 
 | Contract | Source | Purpose |
 |---|---|---|
-| `IdentityRegistry` | `contracts/src/IdentityRegistry.sol` | ERC-721 token registry — register and resolve three.ws identities on-chain |
+| `IdentityRegistry` | `contracts/src/IdentityRegistry.sol` | ERC-721 token registry, register and resolve three.ws identities on-chain |
 | `ReputationRegistry` | `contracts/src/ReputationRegistry.sol` | Submit and aggregate signed feedback scores for agents |
 | `ValidationRegistry` | `contracts/src/ValidationRegistry.sol` | Record immutable attestations of off-chain validation results (glTF schema, behavioral tests, etc.) |
 
@@ -60,7 +60,7 @@ const { identityRegistry, reputationRegistry, validationRegistry } =
   REGISTRY_DEPLOYMENTS[chainId];
 ```
 
-### CREATE2 Factory — ThreeWSFactory
+### CREATE2 Factory: ThreeWSFactory
 
 Vanity-prefixed CREATE2 deployer used to obtain matching addresses across chains.
 
@@ -93,7 +93,7 @@ This section describes `contracts/src/IdentityRegistry.sol`. It extends `ERC721E
 Three overloads of `register()` are available depending on how much you want to set at mint time:
 
 ```solidity
-// Mint with no URI — set it later with setAgentURI
+// Mint with no URI: set it later with setAgentURI
 function register() external returns (uint256 agentId)
 
 // Mint and set the agent URI in one transaction
@@ -106,7 +106,7 @@ function register(
 ) external returns (uint256 agentId)
 ```
 
-`agentURI` should be a URL pointing to the ERC-8004 registration JSON — typically `ipfs://Qm...` or an HTTPS URL. The `MetadataEntry` array lets you attach arbitrary bytes under named keys:
+`agentURI` should be a URL pointing to the ERC-8004 registration JSON, typically `ipfs://Qm...` or an HTTPS URL. The `MetadataEntry` array lets you attach arbitrary bytes under named keys:
 
 ```solidity
 struct MetadataEntry {
@@ -139,7 +139,7 @@ event URIUpdated(uint256 indexed agentId, string newURI, address indexed updated
 
 ### Arbitrary Metadata
 
-Key/value metadata store per agent. Values are raw bytes — ABI-encode complex types before writing.
+Key/value metadata store per agent. Values are raw bytes, ABI-encode complex types before writing.
 
 ```solidity
 // Set a metadata value (owner only)
@@ -226,7 +226,7 @@ Emits `AgentDeposit`, `AgentWithdrawal`, `SpendAllowanceSet`, and `AgentPayment(
 function balanceOf(address owner) external view returns (uint256)
 function ownerOf(uint256 tokenId) external view returns (address)
 
-// Repo source only — these revert on the canonical deployed addresses
+// Repo source only: these revert on the canonical deployed addresses
 function isAgent(uint256 agentId) external view returns (bool)
 function DOMAIN_SEPARATOR() external view returns (bytes32)
 function totalSupply() external view returns (uint256)
@@ -332,7 +332,7 @@ await tx2.wait();
 
 `ReputationRegistry` stores signed feedback about registered agents. Scores are integers in the range `[-100, 100]`: negative scores indicate poor experiences, positive scores indicate good ones. Each `(reviewer, agentId)` pair can only submit once; there is no update path. Agent owners cannot review their own agents. Alongside plain feedback, the contract also exposes an ETH-staked variant (`stakeReputation(uint256 agentId, uint8 score, string comment)` payable, refundable via `withdrawStake(uint256 agentId)`); `submitFeedback` is the path documented here.
 
-The registry holds a reference to `IdentityRegistry` — submitting feedback for an unregistered agentId reverts with `UnknownAgent`.
+The registry holds a reference to `IdentityRegistry`, submitting feedback for an unregistered agentId reverts with `UnknownAgent`.
 
 ### Submitting Feedback
 
@@ -345,10 +345,10 @@ function submitFeedback(
 ```
 
 Reverts with:
-- `ScoreOutOfRange` — if `score < -100 || score > 100`
-- `UnknownAgent` — if `agentId` is not registered in IdentityRegistry
-- `SelfReviewForbidden` — if caller is the agent's NFT owner
-- `AlreadyReviewed` — if caller has already reviewed this agent
+- `ScoreOutOfRange`: if `score < -100 || score > 100`
+- `UnknownAgent`: if `agentId` is not registered in IdentityRegistry
+- `SelfReviewForbidden`: if caller is the agent's NFT owner
+- `AlreadyReviewed`: if caller has already reviewed this agent
 
 Emits:
 
@@ -364,7 +364,7 @@ event FeedbackSubmitted(
 ### Reading Reputation
 
 ```solidity
-// Returns (average * 100, count) — divide avgX100 by 100 to get the real average.
+// Returns (average * 100, count): divide avgX100 by 100 to get the real average.
 // Returns (0, 0) for agents with no reviews.
 function getReputation(uint256 agentId)
     external view
@@ -639,7 +639,7 @@ These are approximate costs at optimizer 200 runs. Actual cost depends on chain 
 | `validationResponse` | ~60k | Updates the request in place |
 | All `view` functions | 0 | Free off-chain reads |
 
-On Base at typical gas prices (~0.001 gwei base fee), an agent registration runs to roughly $0.10–$0.25. The same transaction costs 20–50x more on Ethereum mainnet — use Base or another L2 for cost-sensitive flows.
+On Base at typical gas prices (~0.001 gwei base fee), an agent registration runs to roughly $0.10-$0.25. The same transaction costs 20-50x more on Ethereum mainnet, use Base or another L2 for cost-sensitive flows.
 
 ---
 

@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/mocap</h1>
 
-<p align="center"><strong>Motion capture as an API — turn a webcam or video into face, pose, and hand animation clips you can replay on any avatar.</strong></p>
+<p align="center"><strong>Motion capture as an API, turn a webcam or video into face, pose, and hand animation clips you can replay on any avatar.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/mocap"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/mocap?logo=npm&color=cb3837"></a>
@@ -23,30 +23,30 @@
 
 ---
 
-> `@three-ws/mocap` is the official client for the three.ws **mocap clip** store —
+> `@three-ws/mocap` is the official client for the three.ws **mocap clip** store -
 > the library behind the in-browser mocap studio. Recording happens in the
 > browser: MediaPipe Face Landmarker reads a webcam frame and emits 52 ARKit
 > blendshapes plus a head-pose matrix per frame; the runtime smooths and packs
-> them into a portable clip. This package is the durable half — it saves that
+> them into a portable clip. This package is the durable half, it saves that
 > clip, lists your library, makes clips public or for-sale, and hands any clip
 > back so you can replay it on a different avatar. It wraps the auth'd
 > `/api/mocap/clips` endpoints. It pairs with
 > [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) and
-> [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk) — those *render*
+> [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk), those *render*
 > the avatar, `@three-ws/mocap` *drives its face*.
 
 ## Why
 
-Facial mocap in the browser is solved math, but the boring half — persisting a
+Facial mocap in the browser is solved math, but the boring half, persisting a
 recording, versioning the wire format, sharing it, replaying it on a *different*
-rig — is where projects stall. A blendshape buffer in memory is gone the moment
+rig: is where projects stall. A blendshape buffer in memory is gone the moment
 the tab closes. This package is that half, done once:
 
 - **Capture once, replay anywhere.** A clip is rig-agnostic ARKit blendshapes,
   not baked keyframes, so a face you recorded on one avatar plays on any avatar
   that exposes ARKit morph targets.
 - **Versioned wire format.** Every clip carries a format string
-  (`three.ws.face-mocap.v1`). The runtime asserts on it before replay — a future
+  (`three.ws.face-mocap.v1`). The runtime asserts on it before replay, a future
   v2 clip can't silently load on a v1 player and mangle the animation.
 - **Library, sharing, marketplace.** Clips are private by default; flip one to
   `public`, attach a `$THREE` price, and it's listed. One field, no new plumbing.
@@ -102,28 +102,28 @@ cookie or a bearer token with the right scope; reads of public clips are open.
 Persist a browser recording. Wraps `POST /api/mocap/clips`. The `recording` is
 passed through as the `clip` field; `meta` supplies the library metadata.
 
-**`recording`** — the object the capture runtime returns:
+**`recording`**: the object the capture runtime returns:
 
 | Field | Type | Notes |
 |---|---|---|
 | `format` | `string` | One of the [supported formats](#how-it-works). Asserted server-side. |
-| `duration` | `number` | Seconds, `0`–`3600`. Stored as `duration_ms`. |
+| `duration` | `number` | Seconds, `0`-`3600`. Stored as `duration_ms`. |
 | `frames` | `Frame[]` | `{ t, shapes, mat? }` per frame. Max **18,000** frames, **2 MB** inline. |
 
 A `Frame` is `{ t: number, shapes: Record<string, number>, mat?: number[16] | null }`
-— `t` is seconds from clip start, `shapes` maps ARKit blendshape names to scores,
+- `t` is seconds from clip start, `shapes` maps ARKit blendshape names to scores,
 `mat` is the optional 4×4 head-pose matrix.
 
 **`meta`**
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
-| `name` | `string` | — | **Required.** 1–120 chars. |
+| `name` | `string` | - | **Required.** 1-120 chars. |
 | `slug` | `string` | auto from `name` | `^[a-z0-9][a-z0-9-]{0,79}$`, unique per owner. |
-| `description` | `string` | — | Up to 2000 chars. |
+| `description` | `string` | - | Up to 2000 chars. |
 | `tags` | `string[]` | `[]` | Up to 20 tags, ≤40 chars each. |
 | `visibility` | `'private' \| 'unlisted' \| 'public'` | `'private'` | |
-| `avatarId` | `uuid` | — | Bind the clip to one of your avatars. Must be owned by you. (`avatar_id` is accepted too.) |
+| `avatarId` | `uuid` | - | Bind the clip to one of your avatars. Must be owned by you. (`avatar_id` is accepted too.) |
 
 Returns the created `Clip` (`201`). `kind` (`face` / `pose` / `hand` / `vmc`) is
 derived from `format` server-side.
@@ -141,14 +141,14 @@ it. Pass the `id` when you need to name one exact clip.
 
 ### `listClips(auth, opts?) → Promise<{ items, nextCursor }>`
 
-List clips **without frames** (metadata only — cheap). Wraps
+List clips **without frames** (metadata only: cheap). Wraps
 `GET /api/mocap/clips`. Cursor-paginated, newest first.
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
-| `limit` | `number` | `50` | Clamped to `1`–`100`. |
-| `cursor` | `string` | — | `nextCursor` from the previous page. |
-| `kind` | `'face' \| 'pose' \| 'hand' \| 'vmc'` | — | Filter by clip kind. |
+| `limit` | `number` | `50` | Clamped to `1`-`100`. |
+| `cursor` | `string` | - | `nextCursor` from the previous page. |
+| `kind` | `'face' \| 'pose' \| 'hand' \| 'vmc'` | - | Filter by clip kind. |
 | `includePublic` | `boolean` | `false` | Authed: union your clips with the public pool. |
 
 With no `auth`, you get the public pool only. With `auth`, you get your own
@@ -189,7 +189,7 @@ camelCases the wire row and keeps the untouched original on `raw`:
 ## How it works
 
 Capture is client-side and free; persistence is this API. The clip is the
-contract between them — a portable, versioned blendshape buffer:
+contract between them: a portable, versioned blendshape buffer:
 
 ```
   webcam / video frame
@@ -213,7 +213,7 @@ contract between them — a portable, versioned blendshape buffer:
   FaceMocap.play(clip) on ANY ARKit avatar   ← @three-ws/avatar / @three-ws/walk
 ```
 
-Because a clip is rig-agnostic ARKit blendshapes — not baked bone keyframes —
+Because a clip is rig-agnostic ARKit blendshapes: not baked bone keyframes -
 the same recording replays on any avatar that exposes ARKit morph targets. The
 `format` string carries the version; the runtime refuses a clip whose format it
 doesn't speak rather than mangling the animation.
@@ -249,7 +249,7 @@ SDK surfaces them as a typed `ThreeWsError` carrying the `code`:
 | `db_error` | 500 | List query failed. | Retry. |
 
 Every state is designed: a `private` clip you don't own returns `404`, not its
-contents — non-owners can't even confirm it exists. Mirror that in your UI.
+contents: non-owners can't even confirm it exists. Mirror that in your UI.
 
 ## Examples
 
@@ -294,10 +294,10 @@ do {
 
 ## Related
 
-- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) — render the avatar a mocap clip drives.
-- [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk) — a rigged avatar as a page companion you can face-animate.
-- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) — generate the ARKit avatar to replay clips on.
-- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — settle payments for priced clips.
+- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar), render the avatar a mocap clip drives.
+- [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk), a rigged avatar as a page companion you can face-animate.
+- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge), generate the ARKit avatar to replay clips on.
+- [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch), settle payments for priced clips.
 
 ---
 

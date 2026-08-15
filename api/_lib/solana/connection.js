@@ -5,7 +5,7 @@
 // Connection whose underlying fetch rotates across a priority-ordered endpoint
 // list. Every method on it (getBalance, getLatestBlockhash, sendRawTransaction,
 // confirmTransaction, …) transparently fails over when an endpoint returns
-// 429/5xx/auth errors or the network blips — no call-site change beyond swapping
+// 429/5xx/auth errors or the network blips: no call-site change beyond swapping
 // the constructor. Re-sending an already-signed transaction to a second RPC is
 // safe: Solana dedupes by signature.
 //
@@ -25,7 +25,7 @@
 //
 // To survive a single provider's quota running dry (e.g. a paid Helius plan
 // exhausting its monthly requests), register free-tier keys at several providers
-// and list their URLs in SOLANA_RPC_FALLBACK_URLS — every connection rotates
+// and list their URLs in SOLANA_RPC_FALLBACK_URLS: every connection rotates
 // across the whole set, so the platform keeps serving even mid-outage.
 
 import { Connection } from '@solana/web3.js';
@@ -34,7 +34,7 @@ import { Connection } from '@solana/web3.js';
 // module is shared with the BROWSER bundle (public/agent/index.html →
 // src/agent-skills.js → src/agent-skills-pumpfun.js → src/solana/sns.js →
 // here), and api/_lib/cache.js statically imports node:zlib and node:util. A
-// top-level import therefore broke `npm run build` outright — rollup resolves
+// top-level import therefore broke `npm run build` outright, rollup resolves
 // the Node built-ins to __vite-browser-external and fails on
 // `"promisify" is not exported`. Loading it lazily behind isServer() also fixes
 // the architectural half: the browser holds no Upstash credentials and must
@@ -107,7 +107,7 @@ export function resolveWsEndpoint(primaryHttpUrl, network = 'mainnet') {
 	return deriveWsUrl(primaryHttpUrl);
 }
 
-// True only for a value @solana/web3.js's `new Connection` will accept — a parseable
+// True only for a value @solana/web3.js's `new Connection` will accept, a parseable
 // URL whose protocol is http: or https:. Connection's `assertEndpointUrl` rejects
 // everything else (ws://, a scheme-less host, junk) by throwing
 // "Endpoint URL must start with `http:` or `https:`.", which is exactly the
@@ -128,10 +128,10 @@ export function isHttpUrl(u) {
 // cannot be salvaged. Repairs the malformed shapes seen in production env config
 // before they reach `new Connection` (where they 500 with "Endpoint URL must start
 // with http: or https:"):
-//   • surrounding quotes — a dashboard paste artifact (`SOLANA_RPC_URL="https://…"`)
-//   • a websocket URL (ws/wss) — a valid URL but not an HTTP JSON-RPC endpoint; the
+//   • surrounding quotes: a dashboard paste artifact (`SOLANA_RPC_URL="https://…"`)
+//   • a websocket URL (ws/wss): a valid URL but not an HTTP JSON-RPC endpoint; the
 //     RPC host serves both on the same origin, so we map it to its http(s) form
-//   • a scheme-less host (`mainnet.helius-rpc.com/?api-key=…`) — assume https
+//   • a scheme-less host (`mainnet.helius-rpc.com/?api-key=…`), assume https
 // It also keeps the original Helius host repair: the JSON-RPC host is
 // `mainnet.helius-rpc.com` / `devnet.helius-rpc.com`; a recurring misconfiguration
 // set SOLANA_RPC_URL to `api-mainnet.helius-rpc.com` (conflating it with the
@@ -148,7 +148,7 @@ export function normalizeRpcUrl(raw) {
 	if (!v) return '';
 
 	// Build a parseable candidate, repairing ws/wss and scheme-less inputs. String-
-	// level repairs (not URL.toString()) so a clean input round-trips byte-for-byte —
+	// level repairs (not URL.toString()) so a clean input round-trips byte-for-byte -
 	// no trailing-slash churn versus the hardcoded endpoint constants, which would
 	// otherwise defeat dedupe and list the same node twice.
 	let candidate = v;
@@ -156,7 +156,7 @@ export function normalizeRpcUrl(raw) {
 	else if (/^ws:\/\//i.test(candidate)) candidate = candidate.replace(/^ws:/i, 'http:');
 	else if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(candidate)) {
 		// Scheme-less: assume https only for a host-shaped value (has a dot, or
-		// localhost[:port]). A bare token like "helius" is a typo, not a host — drop
+		// localhost[:port]). A bare token like "helius" is a typo, not a host, drop
 		// it so it never becomes a bogus `https://helius` lane that wastes a failover
 		// round-trip before the real fallback answers.
 		const host = candidate.split(/[/?#]/)[0];
@@ -190,22 +190,22 @@ export function normalizeRpcUrl(raw) {
 // Cooldown durations by failure class. Quota exhaustion (e.g. Helius -32429
 // "max usage reached") means the provider is dead for the billing window, so we
 // park it for hours instead of re-hammering it on every RPC call and every cron
-// tick — that re-hammering was the source of the 429 retry storm in the logs.
+// tick: that re-hammering was the source of the 429 retry storm in the logs.
 // Plain rate-limits, auth rejections, and transient 5xx/network blips cool down
 // for shorter, proportionate windows.
 // Per-attempt fetch bound inside the rotating fetch: one hung provider must cost
 // at most this before the rotation moves to the next lane.
 const ATTEMPT_TIMEOUT_MS = 10_000;
-const QUOTA_COOLDOWN_MS = 6 * 3_600_000; // 6h — daily/monthly quota exhausted
-const RATE_LIMIT_COOLDOWN_MS = 10 * 60_000; // 10m — transient 429
-const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m — bad/expired key on this provider only
-const SERVER_COOLDOWN_MS = 2 * 60_000; // 2m — provider 5xx
-const NETWORK_COOLDOWN_MS = 30_000; // 30s — fetch threw (DNS/connection blip)
+const QUOTA_COOLDOWN_MS = 6 * 3_600_000; // 6h: daily/monthly quota exhausted
+const RATE_LIMIT_COOLDOWN_MS = 10 * 60_000; // 10m, transient 429
+const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m: bad/expired key on this provider only
+const SERVER_COOLDOWN_MS = 2 * 60_000; // 2m: provider 5xx
+const NETWORK_COOLDOWN_MS = 30_000; // 30s: fetch threw (DNS/connection blip)
 // A lane refusing ONE call shape is demoted for that method alone, never for the
 // lane. Short, because a policy block is a provider setting that can change and
-// re-probing costs exactly one request that transparently fails over — unlike a
+// re-probing costs exactly one request that transparently fails over, unlike a
 // quota probe, which burns the very budget it is testing.
-const METHOD_DEMOTION_MS = 15 * 60_000; // 15m — this lane refuses this method
+const METHOD_DEMOTION_MS = 15 * 60_000; // 15m: this lane refuses this method
 const PUBLIC_MAINNET = 'https://api.mainnet-beta.solana.com';
 const PUBLIC_DEVNET = 'https://api.devnet.solana.com';
 
@@ -453,7 +453,7 @@ function cooldownMsFor(status, bodyText) {
 	// the exhausted paid lanes. The endpoint is fine, this one request is not: fail
 	// over for the call, keep the lane.
 	//
-	// The rotating fetch no longer reaches this branch — it recognises the refusal
+	// The rotating fetch no longer reaches this branch: it recognises the refusal
 	// first and demotes the METHOD instead of the lane (see markMethodDemotion), so
 	// the lane keeps serving every other call shape with no cooldown at all. The
 	// branch stays because markEndpointCooldown is exported and must still classify
@@ -461,7 +461,7 @@ function cooldownMsFor(status, bodyText) {
 	if (status === 403 && isCallShapeRefusal(bodyText)) return NETWORK_COOLDOWN_MS;
 	if (status === 401 || status === 403) return AUTH_COOLDOWN_MS;
 	// 404/410: the endpoint URL is dead or misrouted (expired Quicknode/Alchemy
-	// app, wrong path) — a persistent misconfiguration, so park it like an auth
+	// app, wrong path): a persistent misconfiguration, so park it like an auth
 	// failure rather than re-probing every few minutes.
 	if (status === 404 || status === 410) return AUTH_COOLDOWN_MS;
 	if (status >= 500) return SERVER_COOLDOWN_MS;
@@ -477,7 +477,7 @@ export function isEndpointCooling(url) {
 // Per-method lane capability
 // ---------------------------------------------------------------------------
 // The lane cooldown above is the right tool for a provider that cannot serve
-// ANY call — quota spent, key rejected, node down. It is the wrong tool for the
+// ANY call: quota spent, key rejected, node down. It is the wrong tool for the
 // far more common free-lane failure: a provider that serves most of the chain
 // happily and refuses exactly one call shape. PublicNode answers getBalance,
 // getLatestBlockhash and getSignatureStatuses perfectly while refusing
@@ -495,7 +495,7 @@ export function isEndpointCooling(url) {
 // Deliberately process-local, unlike the quota breaker. Re-discovering a method
 // block on a cold instance costs ONE request that transparently fails over.
 // Re-discovering a quota block costs a request against a plan that is already
-// over its cap, which is what keeps a daily cap pinned — that asymmetry is the
+// over its cap, which is what keeps a daily cap pinned, that asymmetry is the
 // whole reason the quota verdict is shared and this one is not.
 const _methodDemotion = new Map(); // `${url}${METHOD_KEY_SEP}${method}` → expiry ms
 
@@ -510,7 +510,7 @@ const methodKey = (url, method) => `${url}${METHOD_KEY_SEP}${method}`;
 /**
  * The JSON-RPC method names carried by a request body, deduped. Handles the
  * single-call and batch forms web3.js emits. Returns [] for an unreadable body,
- * which makes every capability check a no-op — an unparseable request must never
+ * which makes every capability check a no-op: an unparseable request must never
  * silently skip a healthy lane.
  */
 export function rpcMethodsFromBody(body) {
@@ -623,7 +623,7 @@ function dedupe(list) {
 }
 
 // devnet is inferred from the caller's url so we never append a mainnet fallback
-// to a devnet primary (or vice-versa) — crossing clusters would return wrong data.
+// to a devnet primary (or vice-versa): crossing clusters would return wrong data.
 function inferNetwork(url) {
 	return /devnet/i.test(String(url || '')) ? 'devnet' : 'mainnet';
 }
@@ -632,7 +632,7 @@ function inferNetwork(url) {
 // This is the zero-deploy lever for "spread load across as many free tiers as
 // possible": sign up for free-tier keys at several providers (Alchemy, dRPC,
 // Quicknode, Chainstack, Triton…), drop their URLs here, and EVERY Solana
-// connection rotates across them — so no single free quota becomes the bottleneck
+// connection rotates across them: so no single free quota becomes the bottleneck
 // and a provider running dry transparently fails over to the next.
 function extraFallbackUrls() {
 	// SOLANA_RPC_FALLBACKS was the balances-layer-only fallback var before the
@@ -651,7 +651,7 @@ function extraFallbackUrls() {
 // The inverse economics of SOLANA_RPC_FALLBACK_URLS: paid metered endpoints
 // (e.g. the Quicknode credit-funded endpoint) whose quota should be PRESERVED,
 // not load-balanced. They sit after every free/keyless public node, so they are
-// only hit when the entire free chain is down or throttled — the endpoint acts
+// only hit when the entire free chain is down or throttled, the endpoint acts
 // as an insurance rung and its monthly credits stretch as long as possible.
 function lastResortUrls() {
 	return (process.env.SOLANA_RPC_LAST_RESORT_URLS || '')
@@ -660,7 +660,7 @@ function lastResortUrls() {
 		.filter(Boolean);
 }
 
-// The caller's explicit `url` is pinned at priority 1 — but ~35 call sites spell
+// The caller's explicit `url` is pinned at priority 1, but ~35 call sites spell
 // their default as `process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'`,
 // so whenever SOLANA_RPC_URL is unset they would pin the single most-throttled
 // endpoint in the chain AHEAD of Helius and every paid lane, silently inverting
@@ -687,7 +687,7 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 	const key = process.env.HELIUS_API_KEY;
 	const alch = process.env.ALCHEMY_API_KEY;
 	const ankr = process.env.ANKR_API_KEY;
-	// dRPC — free tier requires a key (keyless now returns "chain is not available
+	// dRPC: free tier requires a key (keyless now returns "chain is not available
 	// on freetier"). Added in its authenticated form only when DRPC_API_KEY is set.
 	const drpc = process.env.DRPC_API_KEY;
 	if (network === 'devnet') {
@@ -696,7 +696,7 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		return dedupe([
 			pinnedUrl(url),
 			normalizeRpcUrl(process.env.SOLANA_RPC_URL_DEVNET),
-			// QuickNode — a full dedicated endpoint URL (key embedded in the path), so
+			// QuickNode: a full dedicated endpoint URL (key embedded in the path), so
 			// it takes a URL var rather than an api-key. Premium/reliable, placed high.
 			normalizeRpcUrl(process.env.QUICKNODE_RPC_URL_DEVNET),
 			key && `https://devnet.helius-rpc.com/?api-key=${key}`,
@@ -708,7 +708,7 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 	return dedupe([
 		pinnedUrl(url),
 		normalizeRpcUrl(process.env.SOLANA_RPC_URL),
-		// QuickNode — a full dedicated endpoint URL (key embedded in the path), so it
+		// QuickNode: a full dedicated endpoint URL (key embedded in the path), so it
 		// takes a URL var rather than an api-key. A premium paid lane: placed right
 		// after the operator's explicit SOLANA_RPC_URL and ahead of the shared-key
 		// providers so it absorbs load first. Its WSS is derived by deriveWsUrl
@@ -717,19 +717,19 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		key && `https://mainnet.helius-rpc.com/?api-key=${key}`,
 		alch && `https://solana-mainnet.g.alchemy.com/v2/${alch}`,
 		drpc && `https://lb.drpc.org/ogrpc?network=solana&dkey=${drpc}`,
-		// Ankr sunset keyless access — every keyless rpc.ankr.com/<chain> now 403s
+		// Ankr sunset keyless access: every keyless rpc.ankr.com/<chain> now 403s
 		// ("authenticate with an API key"), so include it only in its authenticated
 		// form when ANKR_API_KEY is set. Mirrors idxRpcUrls() in api/cron/[name].js;
 		// a keyless entry here was a guaranteed 403 + cooldown log every cron tick.
 		ankr && `https://rpc.ankr.com/solana/${ankr}`,
-		// Operator's own free-tier fallbacks (mainnet only — devnet URLs would cross
+		// Operator's own free-tier fallbacks (mainnet only: devnet URLs would cross
 		// clusters and return wrong data). Tried before the public nodes so the
 		// configured providers absorb load first.
 		...extraFallbackUrls(),
 		// The curated keyless free chain (see FREE_KEYLESS_MAINNET above), ending
 		// with the most-throttled public cluster.
 		...FREE_KEYLESS_MAINNET,
-		// Paid metered reserve (mainnet only — devnet URLs would cross clusters).
+		// Paid metered reserve (mainnet only: devnet URLs would cross clusters).
 		// Dead last BY DESIGN: these bill against a monthly quota, so they serve
 		// only when every free lane above is down or throttled at once.
 		...lastResortUrls(),
@@ -739,7 +739,7 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 }
 
 /**
- * The keyed / metered mainnet lanes — every endpoint we PAY for, in the same
+ * The keyed / metered mainnet lanes: every endpoint we PAY for, in the same
  * forms solanaRpcEndpoints() builds them. Free keyless nodes are excluded.
  * Used by the lane-health sensor to answer "are we still on paid capacity, or
  * has the whole premium tier gone dark and left us on free public nodes?"
@@ -771,7 +771,7 @@ function paidMainnetEndpoints() {
  * cooldown and, critically, whether ANY paid lane is still serving.
  *
  * The blind spot this closes: before 2026-07-29 the only RPC sensor watched
- * Helius, and it read per-instance memory — so a fresh instance reported
+ * Helius, and it read per-instance memory: so a fresh instance reported
  * "premium RPC healthy" while the plan was hard-exhausted, and QuickNode's daily
  * cap and Alchemy's monthly cap had no sensor at all. All three were exhausted
  * simultaneously and nothing surfaced it. Because the cooldown map is now
@@ -835,21 +835,21 @@ export function formatCooldown(ms) {
 	return ms < 60_000 ? `${Math.round(ms / 1000)}s` : `${Math.round(ms / 60_000)}m`;
 }
 
-// JSON-RPC error codes that mean "this provider can't serve you right now" — a
+// JSON-RPC error codes that mean "this provider can't serve you right now", a
 // capacity/quota/auth/staleness problem the NEXT provider may not share, so we
 // fail over instead of surfacing it. Crucially this is how an exhausted paid plan
 // answers: HTTP 200 with `{"error":{"code":-32429,"message":"max usage reached"}}`
-// — no rotate-worthy HTTP status, so without this it leaks straight to the caller.
+//: no rotate-worthy HTTP status, so without this it leaks straight to the caller.
 // Method/data errors (-32600 invalid request, -32601 method not found, -32602
 // invalid params, -32002 tx simulation failed) are deterministic across providers
-// and are intentionally excluded — rotating on those would just retry a guaranteed
+// and are intentionally excluded: rotating on those would just retry a guaranteed
 // failure on every lane.
 const PROVIDER_CAPACITY_CODES = new Set([
 	-32429, // Helius / common: max usage / quota reached
 	-32029, // OnFinality / common: too many requests
 	-32052, // Ankr: key not allowed / forbidden
-	-32005, // node is behind by N slots — a fresher node may answer
-	-32004, // block/slot not available yet — another node may have it
+	-32005, // node is behind by N slots: a fresher node may answer
+	-32004, // block/slot not available yet: another node may have it
 	-32003, // QuickNode: daily/request limit reached (capped), the next lane serves
 	429, // Alchemy: monthly capacity exceeded, reported as a JSON-RPC code
 ]);
@@ -870,8 +870,8 @@ const PROVIDER_CAPACITY_CODES = new Set([
 // demotion, never a lane bench: the lane is healthy for every other shape.
 const JSONRPC_INTERNAL_ERROR = -32603;
 
-// A provider that refuses one call shape — by paid-tier gate, by policy, or by
-// switching the method off — answers with a method-shaped JSON-RPC error, and the
+// A provider that refuses one call shape: by paid-tier gate, by policy, or by
+// switching the method off: answers with a method-shaped JSON-RPC error, and the
 // dangerous variant answers HTTP 200 so no status-driven rotation fires. Measured
 // on the live free lanes 2026-07-30:
 //   • PublicNode getProgramAccounts → 200 + {code:-32010, "… excluded from account
@@ -885,7 +885,7 @@ const JSONRPC_INTERNAL_ERROR = -32603;
 //     plans only", a code otherwise indistinguishable from a genuinely absent
 //     method (which IS deterministic and must never rotate)
 // Every one is lane-and-method specific, so the disposition is: fail this request
-// over to the next lane, and demote THIS method on THIS lane — never the lane.
+// over to the next lane, and demote THIS method on THIS lane, never the lane.
 // Unclassified, the 200-status ones surfaced straight to the caller and hard-failed
 // the $THREE holder-gating and token-balance readers (api/_lib/balances.js,
 // api/_lib/coin/holders.js, api/_lib/embed-gate.js, api/scene/gate-check.js)
@@ -912,7 +912,7 @@ function isProviderCapacityError(rpcError) {
 // transparent failover: that error is web3.js choking on a 200 body that is NOT a
 // well-formed JSON-RPC response (empty, HTML interstitial, truncated JSON, or a
 // `{jsonrpc,id}` envelope with neither `result` nor `error`). We detect every one
-// of those shapes here — plus provider-capacity JSON-RPC errors — and route past
+// of those shapes here: plus provider-capacity JSON-RPC errors, and route past
 // the bad node instead of handing the caller something it cannot parse.
 export function classifyRpcBody(body) {
 	const trimmed = (body || '').trim();
@@ -931,7 +931,7 @@ export function classifyRpcBody(body) {
 			bodyText: '',
 		};
 	}
-	// Single response or a JSON-RPC batch array — every element must be a valid envelope.
+	// Single response or a JSON-RPC batch array: every element must be a valid envelope.
 	const items = Array.isArray(parsed) ? parsed : [parsed];
 	if (items.length === 0) {
 		return {
@@ -953,7 +953,7 @@ export function classifyRpcBody(body) {
 		const hasResult = 'result' in item;
 		const hasError = 'error' in item;
 		if (!hasResult && !hasError) {
-			// Neither field present — the exact shape that produces the empty-`received:`
+			// Neither field present: the exact shape that produces the empty-`received:`
 			// StructError. `result: null` is fine (the key is present); this catches a
 			// genuinely truncated/garbage envelope.
 			return {
@@ -998,9 +998,9 @@ export function classifyRpcBody(body) {
 
 // Rotate this endpoint out of service on a 401/403 (bad/expired key on this
 // provider only), 404/408/410 (the endpoint URL itself is dead, misrouted, or
-// timing out — a live JSON-RPC node answers a POST with method-not-found as a
+// timing out: a live JSON-RPC node answers a POST with method-not-found as a
 // 200 + JSON-RPC error body, never an HTTP 404, so a 404 means the configured
-// URL is wrong, not the request), 429 (rate-limited), or 5xx (provider down) —
+// URL is wrong, not the request), 429 (rate-limited), or 5xx (provider down) -
 // all of which the next provider may not share. Other 4xx are real request
 // errors, identical on every provider, so they're returned to the caller as-is.
 export function shouldRotate(status) {
@@ -1090,7 +1090,7 @@ export function throwDisposition({ callerAborted, attemptTimedOut, hasMethods })
 // is fine, and it serves the very same call happily one at a time. A plain 400
 // also does not rotate (see shouldRotate: other 4xx are caller errors identical
 // on every lane), so left unclassified it surfaced raw and hard-failed the
-// caller — which is exactly how the pump.fun MCP `get_token_trades` tool died
+// caller: which is exactly how the pump.fun MCP `get_token_trades` tool died
 // with "400 Bad Request: Maximum number of 'getTransaction' calls in a batch
 // request is 1" on every attempt, while every other tool on the same lane worked.
 //
@@ -1175,19 +1175,19 @@ export function rpcBatchCaps(now = Date.now()) {
 }
 
 // Rotating fetch backing a Connection. It NEVER surfaces a rotate-worthy status
-// (401/403/429/5xx) to @solana/web3.js — it either returns a healthy response or
-// throws — so web3.js's internal 429 backoff loop ("Server responded with 429 …
+// (401/403/429/5xx) to @solana/web3.js: it either returns a healthy response or
+// throws: so web3.js's internal 429 backoff loop ("Server responded with 429 …
 // Retrying after Nms") never fires. Cooldowns live in the process-wide map, so a
 // quota-dead provider is skipped on the very next call (and next cron tick), not
 // re-probed every time.
 //
 // Log severity tracks actionability, not event count. A single provider getting
 // parked while the call transparently lands on the next one is the failover doing
-// its job — the request still succeeds (HTTP 200), so it logs at INFO. Emitting it
+// its job: the request still succeeds (HTTP 200), so it logs at INFO. Emitting it
 // at WARN flooded Vercel's `level:warning` view with non-actionable failover
-// chatter (the source of the recurring "[solana-rpc] … 429 — cooling" warnings).
-// The genuinely actionable condition — every provider in the chain failing within
-// one request, so the caller gets nothing back — is the only WARN.
+// chatter (the source of the recurring "[solana-rpc] … 429, cooling" warnings).
+// The genuinely actionable condition: every provider in the chain failing within
+// one request, so the caller gets nothing back: is the only WARN.
 export function makeRotatingFetch(endpoints) {
 	return async function rotatingFetch(_info, init) {
 		// The call shapes in this request. Empty for an unreadable body, which makes
@@ -1230,7 +1230,7 @@ export function makeRotatingFetch(endpoints) {
 		// the endpoint so the caller rotates on. It NEVER returns an
 		// unvalidated body: a 200 carrying an empty/HTML/truncated payload, a
 		// `{jsonrpc,id}` envelope missing `result`, or a 200 + JSON-RPC capacity
-		// error is treated as a failure — web3.js would otherwise choke on it with a
+		// error is treated as a failure: web3.js would otherwise choke on it with a
 		// `StructError`, and the /api/solana-rpc proxy would forward the garbage (an
 		// empty `[]`) straight to the browser.
 		// The batch this request carries, if it is one. Null for a single call, which
@@ -1241,7 +1241,7 @@ export function makeRotatingFetch(endpoints) {
 		// back into the array the caller is waiting for. Order is preserved (web3.js
 		// matches on id, but a caller reading positionally must not be surprised).
 		// Throws on the first sub-request that fails validation, so the caller rotates
-		// exactly as it would for any other lane failure — never a partial array.
+		// exactly as it would for any other lane failure: never a partial array.
 		const sendUnbatched = async (url, signal) => {
 			const envelopes = new Array(batch.length);
 			let cursor = 0;
@@ -1281,7 +1281,7 @@ export function makeRotatingFetch(endpoints) {
 			// is cheaper to rotate than to unroll against a lane that caps at 1.
 			const splittable = !!batch && batch.length <= MAX_BATCH_SPLIT;
 			try {
-				// This lane already told us it caps batches for these shapes — skip the
+				// This lane already told us it caps batches for these shapes, skip the
 				// probe request that only re-learns it and go straight to singles.
 				if (splittable && isBatchCapped(url, methods)) return { response: await sendUnbatched(url, signal) };
 
@@ -1400,11 +1400,11 @@ export function makeRotatingFetch(endpoints) {
 			// force a wider sweep that would just re-hammer known-bad lanes.
 			if (attempted) break;
 		}
-		// Reached the end with every provider failing in this one request — the caller
+		// Reached the end with every provider failing in this one request, the caller
 		// gets a thrown error (→ a clean 502 from the proxy), never garbage. THIS is
 		// worth a warning: the whole failover chain is down, not just one lane.
 		console.warn(
-			`[solana-rpc] all ${endpoints.length} endpoints failed this request — ${lastErr?.message || 'unknown error'}`,
+			`[solana-rpc] all ${endpoints.length} endpoints failed this request, ${lastErr?.message || 'unknown error'}`,
 		);
 		throw lastErr || new Error('all solana rpc endpoints failed');
 	};

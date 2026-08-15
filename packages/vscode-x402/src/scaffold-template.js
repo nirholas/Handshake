@@ -15,7 +15,7 @@
  */
 export function renderEndpoint({ slug, priceUsd, description }) {
 	const priceAtomics = Math.round(Number(priceUsd) * 1e6);
-	return `// ${slug} — paid x402 endpoint. Buyers pay USDC (Solana or Base); the call runs
+	return `// ${slug}: paid x402 endpoint. Buyers pay USDC (Solana or Base); the call runs
 // only after settlement. Wired to the shared paidEndpoint() x402 dance.
 //
 //   POST /api/x402/${slug}

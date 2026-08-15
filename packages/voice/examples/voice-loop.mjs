@@ -1,9 +1,9 @@
 // The whole voice loop against the live three.ws endpoints, in one run:
 //
-//   speak()     text  → a voiced clip          (NVIDIA Magpie TTS)
-//   lipsync()   that clip → ARKit visemes      (NVIDIA Audio2Face-3D)
-//   transcribe() that clip → text again        (NVIDIA Riva ASR)
-//   say()       text → voice + face in one round trip
+//   speak       turns text into a voiced clip         (NVIDIA Magpie TTS)
+//   lipsync     turns that clip into ARKit visemes    (NVIDIA Audio2Face-3D)
+//   transcribe  turns that clip back into text        (NVIDIA Riva ASR)
+//   say         returns voice + face in one round trip
 //
 // Run:  node examples/voice-loop.mjs
 //       TEXT="say this instead" node examples/voice-loop.mjs

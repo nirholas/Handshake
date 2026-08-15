@@ -1,8 +1,8 @@
 # Use the &lt;agent-3d&gt; web component end-to-end
 
-The iframe snippet is convenient. Paste it, agent on the page. But once your site has a component system — React, Vue, Svelte, a design system — that opaque iframe starts to feel like a stranger in the codebase. You want the agent to be a real component, with props, refs, lifecycle, and a place in your component library.
+The iframe snippet is convenient. Paste it, agent on the page. But once your site has a component system, React, Vue, Svelte, a design system, that opaque iframe starts to feel like a stranger in the codebase. You want the agent to be a real component, with props, refs, lifecycle, and a place in your component library.
 
-That's what `<agent-3d>` is for. It's a standards-based custom element that drops cleanly into any framework, exposes the full JavaScript API (methods, events, live attributes), and supports reactive attribute changes — you can swap the loaded agent at runtime by changing one prop.
+That's what `<agent-3d>` is for. It's a standards-based custom element that drops cleanly into any framework, exposes the full JavaScript API (methods, events, live attributes), and supports reactive attribute changes, you can swap the loaded agent at runtime by changing one prop.
 
 By the end of this tutorial you'll know the spec well enough to pick the right embed style for any project, wire the element into React and Vue with refs and reactivity, slot your own UI alongside the avatar, and react to attribute changes after mount.
 
@@ -14,15 +14,15 @@ By the end of this tutorial you'll know the spec well enough to pick the right e
 - A slotted layout where your chat input lives next to the avatar
 - A short web-components primer if you've never built a custom element
 
-**Prerequisites:** Familiarity with React (hooks, refs) or Vue 3 (Composition API). You don't need prior experience with the Custom Elements spec — Step 1 covers the basics.
+**Prerequisites:** Familiarity with React (hooks, refs) or Vue 3 (Composition API). You don't need prior experience with the Custom Elements spec, Step 1 covers the basics.
 
 ---
 
-## Step 1 — A 60-second web components primer
+## Step 1: A 60-second web components primer
 
 If you already know custom elements, skip to Step 2. Otherwise, here's the part of the spec that matters for using `<agent-3d>`.
 
-A custom element is a tag your browser doesn't ship by default. Someone (us, in this case) registers a JavaScript class against a name, and from that point on the tag works exactly like any built-in element. You can put `<agent-3d>` in HTML, in JSX, in a Vue template — anywhere a `<div>` would go.
+A custom element is a tag your browser doesn't ship by default. Someone (us, in this case) registers a JavaScript class against a name, and from that point on the tag works exactly like any built-in element. You can put `<agent-3d>` in HTML, in JSX, in a Vue template, anywhere a `<div>` would go.
 
 Three things make custom elements powerful:
 
@@ -40,11 +40,11 @@ From that point on, `<agent-3d>` is a real tag in the document. No further setup
 
 ---
 
-## Step 2 — iframe embed vs the custom element
+## Step 2: iframe embed vs the custom element
 
 The platform offers two embed styles for the same agent. The differences are ergonomic.
 
-**iframe form** — sandboxed, self-contained, no script tag on your page:
+**iframe form**: sandboxed, self-contained, no script tag on your page:
 
 ```html
 <iframe
@@ -57,7 +57,7 @@ The platform offers two embed styles for the same agent. The differences are erg
 ></iframe>
 ```
 
-The agent runs entirely inside the iframe. You can't call methods on it or listen to its events from your page — the trade for that isolation is zero integration surface.
+The agent runs entirely inside the iframe. You can't call methods on it or listen to its events from your page, the trade for that isolation is zero integration surface.
 
 This is the right embed when:
 
@@ -65,7 +65,7 @@ This is the right embed when:
 - You want strict sandboxing between the agent and your page
 - You don't need to drive the agent from your own JavaScript
 
-**Custom element form** — explicit, structured, framework-friendly:
+**Custom element form**: explicit, structured, framework-friendly:
 
 ```html
 <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
@@ -79,7 +79,7 @@ This is the right embed when:
 ></agent-3d>
 ```
 
-You separate "load the runtime" from "place the agent". The agent can appear anywhere in your tree, with explicit attributes you can read from a build system, type-check, or template — and you get the full JS API: `say()`, `ask()`, `wave()`, `play()`, and the event stream.
+You separate "load the runtime" from "place the agent". The agent can appear anywhere in your tree, with explicit attributes you can read from a build system, type-check, or template, and you get the full JS API: `say()`, `ask()`, `wave()`, `play()`, and the event stream.
 
 This is the right embed when:
 
@@ -91,7 +91,7 @@ The rest of this tutorial uses the custom-element form, because that's the one t
 
 ---
 
-## Step 3 — The attribute surface
+## Step 3: The attribute surface
 
 Here are the attributes you'll actually reach for, by category. (`observedAttributes` in [src/element.js](https://github.com/nirholas/three.ws/blob/main/src/element.js) is the exhaustive list; it also carries niche ones like `avatar-id`, `api-base`, `name-plate`, `tracked-mint`, `clip`, `wallet`, and `sign-language`.)
 
@@ -101,7 +101,7 @@ Here are the attributes you'll actually reach for, by category. (`observedAttrib
 |---|---|
 | `agent-id` | The platform-hosted agent ID. Resolves the manifest from three.ws. |
 | `manifest` | URL to a JSON manifest file. Use this for self-hosted agents. |
-| `body` | Direct URL to a GLB model. Bypasses the manifest path entirely — useful for quick tests. |
+| `body` | Direct URL to a GLB model. Bypasses the manifest path entirely, useful for quick tests. |
 | `src` | Legacy alias for `manifest`. Prefer `manifest` for new code. |
 
 **Layout:**
@@ -125,7 +125,7 @@ Here are the attributes you'll actually reach for, by category. (`observedAttrib
 | `avatar-chat` | Set to `off` to drop the avatar out of the chat column and lay the chat out as a plain bottom bar |
 | `avatar-walk` | Set to `off` to disable the walk-when-talking behaviour |
 | `framing` | Set to `portrait` for a head-and-shoulders camera framing; the default frames the full body |
-| `eager` | Skip the lazy-load wait — boot immediately even when off-screen |
+| `eager` | Skip the lazy-load wait: boot immediately even when off-screen |
 | `api-key` | Override the brain API key (use sparingly; backends are safer) |
 | `key-proxy` | URL of your own proxy that vends scoped keys |
 
@@ -133,9 +133,9 @@ Every observed attribute can be changed after mount, and Step 6 shows what that 
 
 ---
 
-## Step 4 — A reusable React wrapper
+## Step 4: A reusable React wrapper
 
-React doesn't know about custom elements out of the box. The DOM does — React just passes attributes and children through. That means most things "just work", with two exceptions:
+React doesn't know about custom elements out of the box. The DOM does, React just passes attributes and children through. That means most things "just work", with two exceptions:
 
 1. **Booleans:** React converts `eager={true}` into the string `"true"`, which is *not* the same as the bare `eager` attribute. Use `eager=""` or omit the attribute entirely.
 2. **Events:** React's `onSomething` props only work for events the framework knows about. Custom events need an `addEventListener` in a `useEffect`.
@@ -251,7 +251,7 @@ A few notes on what the wrapper does:
 
 - **Runtime loaded once.** `ensureRuntime()` guards against re-injecting the script on every mount. It checks for an existing tag with `data-agent-3d-runtime` and resolves immediately if found.
 - **Events bound in `useEffect`.** Custom event names map to props (`onReady`, `onMessage`). The cleanup function unbinds them, so the wrapper plays nicely with strict mode and unmount.
-- **No camelCase attribute names.** Custom elements use dash-case (`agent-id`, not `agentId`). React passes attributes through as-is — `agent-id` is fine in JSX.
+- **No camelCase attribute names.** Custom elements use dash-case (`agent-id`, not `agentId`). React passes attributes through as-is, `agent-id` is fine in JSX.
 - **`useRef` is the API handle.** If you need to call `ref.current.say('hi')` from a parent, expose the ref via `forwardRef` or pass an `apiRef` prop in.
 
 For TypeScript, drop this in a `.d.ts`:
@@ -279,7 +279,7 @@ declare namespace JSX {
 
 ---
 
-## Step 5 — A Vue 3 wrapper
+## Step 5: A Vue 3 wrapper
 
 Vue handles custom elements gracefully provided you flag them as such. Add `agent-3d` to the compiler's custom-element list in your build config:
 
@@ -405,7 +405,7 @@ The `defineExpose` block matters: without it, the parent's `agent.value.say(...)
 
 ---
 
-## Step 6 — Reactive attribute changes
+## Step 6: Reactive attribute changes
 
 This is the moment when the custom-element approach really pays off. The element observes its key attributes, so changing one re-runs the relevant boot logic.
 
@@ -432,11 +432,11 @@ The same trick works for `body`, `manifest`, `src`, and the layout attributes (`
 
 There are a few attributes worth treating carefully:
 
-- `eager` — only matters at first mount; toggling it after boot has no effect since boot already happened.
-- `api-key` — changing this mid-session won't re-issue in-flight LLM calls. Treat it as set-once for any given agent instance.
-- `tracked-mint` — changing this swaps the on-chain trade feed the agent is reacting to. Useful for token-aware widgets.
+- `eager`: only matters at first mount; toggling it after boot has no effect since boot already happened.
+- `api-key`: changing this mid-session won't re-issue in-flight LLM calls. Treat it as set-once for any given agent instance.
+- `tracked-mint`: changing this swaps the on-chain trade feed the agent is reacting to. Useful for token-aware widgets.
 
-If you need a *full* fresh re-mount (rare — usually the in-place swap is what you want), key the element on the agent ID:
+If you need a *full* fresh re-mount (rare: usually the in-place swap is what you want), key the element on the agent ID:
 
 ```jsx
 <Agent3D key={activeAgent} agentId={activeAgent} />
@@ -446,9 +446,9 @@ The `key` prop forces React to unmount and remount the wrapper, which fully tear
 
 ---
 
-## Step 7 — Slotting your own UI
+## Step 7: Slotting your own UI
 
-The element has a built-in chat input at the bottom. That's fine for a drop-in widget. For an integrated product page, you usually want your own input — styled to match your design system, sharing the page layout, with custom send buttons.
+The element has a built-in chat input at the bottom. That's fine for a drop-in widget. For an integrated product page, you usually want your own input, styled to match your design system, sharing the page layout, with custom send buttons.
 
 Two parts to this.
 
@@ -464,7 +464,7 @@ Two parts to this.
 ></agent-3d>
 ```
 
-The brain still boots, so `say()`, `ask()`, and the whole event stream keep working — only the chrome is gone.
+The brain still boots, so `say()`, `ask()`, and the whole event stream keep working, only the chrome is gone.
 
 **Wire your own UI** that calls the element's API:
 
@@ -518,14 +518,14 @@ That's the bare minimum. In a real product page you would also add a chat-log el
 
 Two cautions when going custom-UI:
 
-- **Don't try to inject DOM into the agent's shadow root.** The element uses Shadow DOM (`mode: 'open'`) — you *can* technically reach into it, but anything in there is internal and will change between versions. Build your UI *around* the agent, not *inside* it.
+- **Don't try to inject DOM into the agent's shadow root.** The element uses Shadow DOM (`mode: 'open'`), you *can* technically reach into it, but anything in there is internal and will change between versions. Build your UI *around* the agent, not *inside* it.
 - **Style the wrapper, not the internals.** CSS rules on `<agent-3d>` itself (width, height, position) work fine. CSS rules targeting its shadow children won't survive a minor version bump.
 
 ---
 
-## Step 8 — A complete example, top to bottom
+## Step 8: A complete example, top to bottom
 
-Here's a single-file working example you can drop into any Vite or Next.js app. It's the full pattern from Steps 4 and 6 combined — a wrapper, a reactive agent swap, and event handling.
+Here's a single-file working example you can drop into any Vite or Next.js app. It's the full pattern from Steps 4 and 6 combined, a wrapper, a reactive agent swap, and event handling.
 
 ```jsx
 // pages/agents.jsx (Next.js) or src/Agents.jsx (Vite)
@@ -581,7 +581,7 @@ Pick an agent from the dropdown, the active one swaps in place, and the event lo
 
 You can now treat `<agent-3d>` as a real component in any framework. The big takeaways:
 
-- The iframe and custom-element embeds serve different jobs — sandboxed drop-in vs a full-API component; reach for the element whenever your own code needs to drive the agent
+- The iframe and custom-element embeds serve different jobs, sandboxed drop-in vs a full-API component; reach for the element whenever your own code needs to drive the agent
 - Attribute changes are reactive; you can swap agents, modes, and layouts at runtime
 - React works fine once you bind events in `useEffect`; remember dash-case attribute names
 - Vue works fine once you flag the tag as a custom element in the compiler config
@@ -592,6 +592,6 @@ The web component is the most robust integration point the platform offers. Buil
 
 ## Next steps
 
-- [Drive the agent with the JavaScript API](/tutorials/js-api-events) — methods and events covered in depth
-- [Embed a three.ws agent on your website](./embed-on-website.md) — the no-framework paths (Webflow, WordPress, Squarespace) for completeness
-- [Trigger the agent from page events](/tutorials/trigger-from-page-events) — once it's mounted, make it react to the user journey
+- [Drive the agent with the JavaScript API](/tutorials/js-api-events), methods and events covered in depth
+- [Embed a three.ws agent on your website](./embed-on-website.md), the no-framework paths (Webflow, WordPress, Squarespace) for completeness
+- [Trigger the agent from page events](/tutorials/trigger-from-page-events), once it's mounted, make it react to the user journey

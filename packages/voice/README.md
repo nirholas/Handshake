@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/voice</h1>
 
-<p align="center"><strong>Give your avatar a voice — speech in, speech out, and lips that move. ASR, TTS, and Audio2Face lipsync in one import.</strong></p>
+<p align="center"><strong>Give your avatar a voice, speech in, speech out, and lips that move. ASR, TTS, and Audio2Face lipsync in one import.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/voice"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/voice?logo=npm&color=cb3837"></a>
@@ -23,7 +23,7 @@
 
 ---
 
-> `@three-ws/voice` is the official client for the three.ws **voice loop** — the
+> `@three-ws/voice` is the official client for the three.ws **voice loop**, the
 > three endpoints that let an avatar hear, speak, and move its face in sync.
 > `transcribe()` turns spoken audio into text (NVIDIA Riva ASR), `speak()` turns
 > text into a voiced clip (NVIDIA Magpie TTS, ElevenLabs for cloned voices), and
@@ -31,7 +31,7 @@
 > Audio2Face-3D) that drives the avatar's mouth and face. It wraps the live,
 > auth-free `/api/asr`, `/api/tts/speak`, and `/api/a2f` endpoints. The visemes
 > it produces are exactly what [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar)
-> plays back on a loaded GLB — this is the voice half of a talking avatar.
+> plays back on a loaded GLB: this is the voice half of a talking avatar.
 
 ## Why
 
@@ -45,14 +45,14 @@ ordering, and three sets of rate limits.
 `@three-ws/voice` is that loop, done once:
 
 - **One import, the whole loop.** `transcribe(audio)`, `speak(text)`,
-  `lipsync(audio)` — hear, speak, and animate the face from three plain calls.
+  `lipsync(audio)`: hear, speak, and animate the face from three plain calls.
 - **Free first.** All three lanes lead with NVIDIA NIM (Riva, Magpie,
-  Audio2Face-3D) — no key, no wallet, no card on the free path.
+  Audio2Face-3D): no key, no wallet, no card on the free path.
 - **Cross-browser by default.** Server-side Riva recognition replaces the
   Chrome/Edge-only `window.webkitSpeechRecognition`, so voice input works in
   Firefox and inside embeds too.
 - **Lips that match the exact bytes.** `lipsync()` returns time-coded ARKit
-  weights for the precise clip you'll play — drop them straight into
+  weights for the precise clip you'll play: drop them straight into
   [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar).
 
 Every lane is purely additive on the platform: when a provider isn't configured,
@@ -79,7 +79,7 @@ const clip = await speak('Hi, I am your three.ws avatar.', { voice: 'nova' });
 new Audio(clip.url).play(); // clip.url is an object URL for the synthesized audio
 ```
 
-The full loop — hear the user, answer, animate the face:
+The full loop: hear the user, answer, animate the face:
 
 ```js
 import { transcribe, speak, lipsync } from '@three-ws/voice';
@@ -120,15 +120,15 @@ blob's MIME type (or `options.format`).
 | `language` | `string` | `'en-US'` | BCP-47 language code. |
 | `sampleRate` | `number` | `16000` | Required for raw `pcm`; WAV carries its own rate in the header. |
 | `words` | `boolean` | `false` | Return word-level timestamps. |
-| `model` | `string` | — | Override the Riva model name. |
-| `signal` | `AbortSignal` | — | Cancel an in-flight request. |
+| `model` | `string` | - | Override the Riva model name. |
+| `signal` | `AbortSignal` | - | Cancel an in-flight request. |
 
 **Returns** `Transcript`
 
 | Field | Type | Notes |
 |---|---|---|
 | `text` | `string` | The recognized utterance. |
-| `confidence` | `number` | Mean confidence across results (0–1). |
+| `confidence` | `number` | Mean confidence across results (0-1). |
 | `language` | `string` | Detected language code. |
 | `model` | `string` | Model that produced the transcript. |
 | `durationSec` | `number` | Seconds of audio processed. |
@@ -147,9 +147,9 @@ a ready-to-play object `url`.
 | `voice` | `string` | `'nova'` | One of the [voice catalog](#voices) ids. |
 | `format` | `'mp3' \| 'wav' \| 'opus' \| 'aac' \| 'flac' \| 'pcm'` | `'mp3'` | Output container. Magpie emits PCM, so non-`pcm` requests are served as WAV. |
 | `language` | `string` | `'en-US'` | BCP-47 language code. |
-| `speed` | `number` | `1.0` | Clamped to 0.5–2.0 (paid backstop only). |
-| `model` | `string` | — | `tts-1`, `tts-1-hd`, or `gpt-4o-mini-tts` (backstop). |
-| `signal` | `AbortSignal` | — | Cancel an in-flight request. |
+| `speed` | `number` | `1.0` | Clamped to 0.5-2.0 (paid backstop only). |
+| `model` | `string` | - | `tts-1`, `tts-1-hd`, or `gpt-4o-mini-tts` (backstop). |
+| `signal` | `AbortSignal` | - | Cancel an in-flight request. |
 
 **Returns** `Clip`: `{ blob, url, contentType, voice, format, model }`. The
 `x-tts-voice` / `x-tts-model` / `x-tts-format` response headers always describe
@@ -170,7 +170,7 @@ audio and sample the track by the audio element's `currentTime`.
 |---|---|---|
 | `fps` | `number` | Frame cadence (30 fps native). |
 | `blendShapeNames` | `string[]` | ARKit-52 names, the order `frames[i].w` follows. |
-| `frames` | `{ t, w }[]` | `t` = seconds from start, `w` = weights (0–1) in `blendShapeNames` order. |
+| `frames` | `{ t, w }[]` | `t` = seconds from start, `w` = weights (0-1) in `blendShapeNames` order. |
 | `frameCount` | `number` | Number of frames. |
 | `durationSec` | `number` | Clip length in seconds. |
 
@@ -180,11 +180,11 @@ One-shot text → speech → face. Wraps `POST /api/a2f` with `{ text, voice,
 language }`: the server synthesizes with Magpie, animates that exact clip, and
 returns both. `audio` is `{ url, blob, contentType, format, voiceName }`;
 `animation` is the same shape as `FaceTrack`. Use this when latency matters more
-than picking your own TTS — one round trip instead of two.
+than picking your own TTS: one round trip instead of two.
 
 ### `voices() → Promise<VoiceCatalog>`
 
-Fetch the live voice catalog (`GET /api/tts/voices`) — ids, names, descriptions,
+Fetch the live voice catalog (`GET /api/tts/voices`), ids, names, descriptions,
 which synthesis lanes are configured. Render a picker before the user commits.
 
 ### Capability probes: `asrInfo()` / `lipsyncInfo()`
@@ -203,7 +203,7 @@ const face = await lipsyncInfo(); // GET /api/a2f
 ```
 
 `configured: false` means that lane's provider key isn't set on the deployment,
-so the call would raise `not_configured` — render the in-browser fallback
+so the call would raise `not_configured`: render the in-browser fallback
 instead. `raw` carries the untouched endpoint response for anything not shaped
 above.
 
@@ -257,13 +257,13 @@ Three NVIDIA NIM models on one face, closing the loop user → avatar → user:
                                   { fps, blendShapeNames, frames:[{t,w}] }   (lips move)
 ```
 
-- **ASR** — Riva offline `Recognize` over NVCF gRPC. Browsers can't all produce
+- **ASR**: Riva offline `Recognize` over NVCF gRPC. Browsers can't all produce
   the same codec, so the cross-browser default is raw 16-bit PCM (or WAV, whose
   header is parsed to LINEAR_PCM). Needs `NVIDIA_API_KEY` + `NVIDIA_ASR_FUNCTION_ID`.
-- **TTS** — Magpie leads (free, gRPC); OpenAI `/v1/audio/speech` is the paid
+- **TTS**: Magpie leads (free, gRPC); OpenAI `/v1/audio/speech` is the paid
   last-resort backstop. The clip is fully buffered before a byte ships, so a
   Magpie failure fails over cleanly.
-- **Lipsync** — Audio2Face-3D bidirectional streaming. Audio is downmixed to
+- **Lipsync**: Audio2Face-3D bidirectional streaming. Audio is downmixed to
   mono and resampled to 16 kHz, then streamed; the server streams back the
   ordered ARKit names followed by per-frame weights at 30 fps. Works out of the
   box with just `NVIDIA_API_KEY` (a stable published model id; override with
@@ -277,7 +277,7 @@ Oculus), so the same track drives any avatar.
 
 The three NVIDIA NIM lanes are **free** (credit-metered, no payment). The lanes
 are metered to bound abuse: signed-in callers get a per-user budget, anonymous
-callers a tighter per-IP one — exceeding it returns `429`. The OpenAI TTS
+callers a tighter per-IP one: exceeding it returns `429`. The OpenAI TTS
 backstop and ElevenLabs cloned voices are paid provider lanes used only when
 configured; the free Magpie lane covers the default voices end to end.
 
@@ -299,7 +299,7 @@ endpoint's response:
 
 Every state is designed: an unconfigured lane returns `not_configured` (not a
 crash), so the client keeps its existing browser path. A2F's text path
-additionally needs Magpie TTS — without it, `say()` returns `not_configured` and
+additionally needs Magpie TTS: without it, `say()` returns `not_configured` and
 you pass pre-synthesized audio to `lipsync()` instead.
 
 ## Examples
@@ -324,10 +324,10 @@ const el = document.createElement('audio');
 el.src = audio.url;
 el.play();
 // sample `animation.frames` by el.currentTime and apply to the avatar's
-// morph targets — @three-ws/avatar does this mapping for you.
+// morph targets: @three-ws/avatar does this mapping for you.
 ```
 
-**Node — synthesize a narration clip to a file:**
+**Node: synthesize a narration clip to a file:**
 
 ```js
 import { writeFile } from 'node:fs/promises';
@@ -337,7 +337,7 @@ const clip = await speak('The only coin is $THREE.', { voice: 'onyx', format: 'w
 await writeFile('line.wav', Buffer.from(await clip.blob.arrayBuffer()));
 ```
 
-**Agent — caption an audio clip (word-level timestamps):**
+**Agent: caption an audio clip (word-level timestamps):**
 
 ```js
 const { text, words } = await transcribe(clip, { words: true });
@@ -346,9 +346,9 @@ for (const w of words) console.log(`${(w.startMs / 1000).toFixed(2)}s  ${w.word}
 
 ## Related
 
-- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) — render a GLB and play these visemes as real lipsync.
-- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge) — generate and auto-rig the GLB this voice loop speaks through.
-- [`@three-ws/react`](https://www.npmjs.com/package/@three-ws/react) — React bindings for the three.ws avatar runtime.
+- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar), render a GLB and play these visemes as real lipsync.
+- [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge), generate and auto-rig the GLB this voice loop speaks through.
+- [`@three-ws/react`](https://www.npmjs.com/package/@three-ws/react), React bindings for the three.ws avatar runtime.
 
 ---
 

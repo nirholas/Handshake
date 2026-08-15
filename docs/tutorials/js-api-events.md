@@ -1,21 +1,21 @@
 # Drive the agent with the JavaScript API
 
-The script tag is the easy mode. It drops a 3D agent on your page, gives it a chat input, and walks away. That's enough for a contact widget. But once you start treating the agent like a real part of your product — something that reacts to clicks, scroll position, form submits, and checkout success — you need the JavaScript API.
+The script tag is the easy mode. It drops a 3D agent on your page, gives it a chat input, and walks away. That's enough for a contact widget. But once you start treating the agent like a real part of your product, something that reacts to clicks, scroll position, form submits, and checkout success, you need the JavaScript API.
 
-This tutorial covers the full handle-to-event lifecycle. By the end you will know how to grab the agent element, wait for it to be truly ready, fire animations and speech in response to user actions, listen for the events the agent emits back, and chain everything together into a real product moment — a checkout celebration sequence that fires on a successful order.
+This tutorial covers the full handle-to-event lifecycle. By the end you will know how to grab the agent element, wait for it to be truly ready, fire animations and speech in response to user actions, listen for the events the agent emits back, and chain everything together into a real product moment, a checkout celebration sequence that fires on a successful order.
 
 **What you'll build:**
 - A live page where the agent reacts to clicks and form events
 - A "wait until ready" pattern that never tries to drive an unbooted agent
 - A queue that chains `ask`, `play`, and `lookAt` without overlap
 - A listener that reads back every word the agent says
-- A checkout celebration flow — submit a form, the agent cheers, narrates, and goes idle
+- A checkout celebration flow: submit a form, the agent cheers, narrates, and goes idle
 
 **Prerequisites:** Comfort with vanilla DOM APIs (`querySelector`, `addEventListener`), promises, and async/await. You should have completed the [first-agent tutorial](/tutorials/first-agent) or have an agent ID from [three.ws/my-agents](https://three.ws/my-agents).
 
 ---
 
-## Step 1 — Drop the agent on the page
+## Step 1: Drop the agent on the page
 
 Start with the simplest possible embed. Create `index.html` and paste this:
 
@@ -83,13 +83,13 @@ function logLine(text) {
 logLine('Page loaded. Waiting for agent to boot...');
 ```
 
-Serve it locally — `python3 -m http.server 8080` works — and open `http://localhost:8080`. The agent appears. Nothing else does. Good.
+Serve it locally: `python3 -m http.server 8080` works, and open `http://localhost:8080`. The agent appears. Nothing else does. Good.
 
 ---
 
-## Step 2 — Get a handle to the agent
+## Step 2: Get a handle to the agent
 
-The `<agent-3d>` element is a custom element. `document.getElementById('agent')` gives you back an `Agent3DElement` instance with the full API attached — the CDN script's only job is registering that element, so every `<agent-3d>` tag on the page is a live API handle.
+The `<agent-3d>` element is a custom element. `document.getElementById('agent')` gives you back an `Agent3DElement` instance with the full API attached, the CDN script's only job is registering that element, so every `<agent-3d>` tag on the page is a live API handle.
 
 If you didn't put an `id` on the tag (or you're writing code that runs on pages you don't control), grab the first agent on the page instead:
 
@@ -101,7 +101,7 @@ Either lookup returns the same element with the same JavaScript API from this po
 
 ---
 
-## Step 3 — Wait for ready, always
+## Step 3: Wait for ready, always
 
 This is the rule that prevents 90% of the headaches you would otherwise hit. The agent does a lot at boot: fetches the manifest, downloads a GLB body (often several megabytes), warms up the runtime, registers skills, and resolves the brain. None of `.speak()`, `.wave()`, or `.say()` will do anything useful until that finishes.
 
@@ -113,7 +113,7 @@ agent.addEventListener('agent:ready', (e) => {
 });
 ```
 
-`e.detail.manifest` contains the resolved manifest — name, description, body URL, brain config, the lot. If you need anything from it, grab it here.
+`e.detail.manifest` contains the resolved manifest, name, description, body URL, brain config, the lot. If you need anything from it, grab it here.
 
 But what if you have code that runs *after* the page might have already booted? A common case: a button handler that fires whenever the user clicks, where the click could happen before or after boot. You need a promise that resolves when the agent is ready, no matter when you call it.
 
@@ -132,7 +132,7 @@ function whenReady(el) {
 }
 ```
 
-The `_mounted` flag is set by the runtime once boot finishes, so if the agent is already ready the promise resolves immediately. Otherwise it waits for the event. This pattern is in the element's own `_waitForReady` helper — we're just exposing it as a public utility.
+The `_mounted` flag is set by the runtime once boot finishes, so if the agent is already ready the promise resolves immediately. Otherwise it waits for the event. This pattern is in the element's own `_waitForReady` helper, we're just exposing it as a public utility.
 
 Now every action handler starts the same way:
 
@@ -147,15 +147,15 @@ No race conditions, no "I clicked but nothing happened on the first try" bugs.
 
 ---
 
-## Step 4 — The two ways to speak
+## Step 4: The two ways to speak
 
 The agent has two methods that look similar but do different things. Picking the right one matters.
 
-**`agent.speak(text)`** — plays a talking *gesture* sized to the length of the text (roughly 0.3s per word, minimum 1.5s). It is silent: no LLM, no audio, no chat bubble. Use it to add life to a scripted moment where the page itself supplies the words on screen. Cheap, instant, deterministic.
+**`agent.speak(text)`**: plays a talking *gesture* sized to the length of the text (roughly 0.3s per word, minimum 1.5s). It is silent: no LLM, no audio, no chat bubble. Use it to add life to a scripted moment where the page itself supplies the words on screen. Cheap, instant, deterministic.
 
-**`agent.say(text)`** — sends `text` to the brain as a user message. The reply renders in the chat bubble and is spoken aloud when the `voice` attribute is set. This is what the built-in chat input calls. It's fire-and-forget: it returns immediately, and if you call it again while a turn is in flight, the newest message replaces the queued one.
+**`agent.say(text)`**: sends `text` to the brain as a user message. The reply renders in the chat bubble and is spoken aloud when the `voice` attribute is set. This is what the built-in chat input calls. It's fire-and-forget: it returns immediately, and if you call it again while a turn is in flight, the newest message replaces the queued one.
 
-**`agent.ask(text)`** — same brain turn as `say`, but returns a promise that resolves with the reply text once the response (and its speech, if voice is on) has finished. Reach for it whenever you need to await the turn or use the reply.
+**`agent.ask(text)`**: same brain turn as `say`, but returns a promise that resolves with the reply text once the response (and its speech, if voice is on) has finished. Reach for it whenever you need to await the turn or use the reply.
 
 Most page-driven interactions want `say` or `ask`. Use `speak` when all you need is the gesture.
 
@@ -164,13 +164,13 @@ Wire up two buttons:
 ```js
 document.getElementById('btn-greet').addEventListener('click', async () => {
   await whenReady(agent);
-  // Silent talking gesture — pair it with your own on-page caption.
+  // Silent talking gesture: pair it with your own on-page caption.
   agent.speak('Hey there. Glad you stopped by.');
 });
 
 document.getElementById('btn-think').addEventListener('click', async () => {
   await whenReady(agent);
-  // Goes through the LLM — the model decides what to say.
+  // Goes through the LLM: the model decides what to say.
   agent.say('Tell me a one-sentence fun fact.');
 });
 ```
@@ -179,13 +179,13 @@ Click both. The first animates instantly and makes no sound. The second pauses b
 
 ---
 
-## Step 5 — Animations: exact clip vs emote
+## Step 5: Animations: exact clip vs emote
 
 The agent has two ways to pick an animation clip. They map to two different mental models.
 
-**`agent.play(name)`** — plays the clip with that name from the loaded rig: an exact match first, then a case-insensitive one, then a case-insensitive substring match. If the GLB carries no such clip, it looks the name up in the shared animation library instead, and only returns `false` when neither source can supply it. Use this when you know what's in the rig — for instance, if you've baked a `WaveLoop` clip yourself.
+**`agent.play(name)`**: plays the clip with that name from the loaded rig: an exact match first, then a case-insensitive one, then a case-insensitive substring match. If the GLB carries no such clip, it looks the name up in the shared animation library instead, and only returns `false` when neither source can supply it. Use this when you know what's in the rig, for instance, if you've baked a `WaveLoop` clip yourself.
 
-**`agent.playEmote(name)`** — the resilient one. Instead of a clip name it takes an intent — `'celebrate'`, `'cheer'`, or `'flinch'` — and walks a fallback chain of clips until one exists in the rig (`celebrate` → `wave`; `cheer` → `celebrate` → `wave`; `flinch` → `defeated` → `concern` → `shake`). If none of them are present, it finishes with a small head-bob, so it's guaranteed to do *something* regardless of the rig.
+**`agent.playEmote(name)`**: the resilient one. Instead of a clip name it takes an intent, `'celebrate'`, `'cheer'`, or `'flinch'`, and walks a fallback chain of clips until one exists in the rig (`celebrate` → `wave`; `cheer` → `celebrate` → `wave`; `flinch` → `defeated` → `concern` → `shake`). If none of them are present, it finishes with a small head-bob, so it's guaranteed to do *something* regardless of the rig.
 
 For product moments, prefer the emote version:
 
@@ -215,9 +215,9 @@ document.getElementById('btn-clear').addEventListener('click', async () => {
 
 ---
 
-## Step 6 — Listen back: the event lifecycle
+## Step 6: Listen back: the event lifecycle
 
-So far we've been issuing commands. The agent also emits events you can listen for — and they're the foundation of most useful integrations.
+So far we've been issuing commands. The agent also emits events you can listen for, and they're the foundation of most useful integrations.
 
 Here are the events that actually fire, in the order you'll usually see them in one chat turn:
 
@@ -230,7 +230,7 @@ Here are the events that actually fire, in the order you'll usually see them in 
 | `skill:tool-start` | A tool/skill is about to run | `{ tool, args }` |
 | `skill:tool-called` | A tool returned | `{ tool, args, result }` |
 | `voice:speech-start` | The agent began speaking out loud | `{ text }` |
-| `voice:speech-end` | The agent finished speaking | — |
+| `voice:speech-end` | The agent finished speaking | - |
 | `voice:transcript` | Mic input was transcribed | `{ text, final }` |
 | `memory:write` | Something was written to memory | `{ scope, key, value }` |
 
@@ -262,18 +262,18 @@ Click "Think about something" and watch the order. Boot → ready → thinking s
 
 Every one of these is a hook for your app. A few common patterns:
 
-- **Show a typing indicator** — switch a CSS class on `brain:thinking` and clear it on `brain:message`.
-- **Mirror chat to your own UI** — listen to `brain:message` and append `e.detail.content` to your message log when `role === 'assistant'`.
-- **Track skill usage** — `skill:tool-called` tells you which skill ran (`e.detail.tool`), with what arguments, and what came back. Log it to your analytics.
-- **React to speech state** — disable an input while `voice:speech-start` is active, re-enable on `voice:speech-end`. Stops the user from interrupting the agent mid-sentence.
+- **Show a typing indicator**: switch a CSS class on `brain:thinking` and clear it on `brain:message`.
+- **Mirror chat to your own UI**: listen to `brain:message` and append `e.detail.content` to your message log when `role === 'assistant'`.
+- **Track skill usage**: `skill:tool-called` tells you which skill ran (`e.detail.tool`), with what arguments, and what came back. Log it to your analytics.
+- **React to speech state**: disable an input while `voice:speech-start` is active, re-enable on `voice:speech-end`. Stops the user from interrupting the agent mid-sentence.
 
 ---
 
-## Step 7 — Sequencing: do A, then B, then C
+## Step 7: Sequencing: do A, then B, then C
 
 A common pitfall: fire `speak` and `play` back-to-back, and they overlap. The second clip steps on the talking gesture and things look broken.
 
-For LLM turns the clean fix is `ask()` — it resolves only after the reply is complete (including its speech, when `voice` is on), so a plain `await` sequences everything:
+For LLM turns the clean fix is `ask()`: it resolves only after the reply is complete (including its speech, when `voice` is on), so a plain `await` sequences everything:
 
 ```js
 async function intro() {
@@ -286,9 +286,9 @@ async function intro() {
 }
 ```
 
-Each line waits for the previous one to land before the next runs. The result feels deliberate — not a stuttering pile-up.
+Each line waits for the previous one to land before the next runs. The result feels deliberate, not a stuttering pile-up.
 
-For the silent `speak()` gesture there is no completion event — but its duration is deterministic (0.3s per word, minimum 1.5s), so you can mirror it:
+For the silent `speak()` gesture there is no completion event, but its duration is deterministic (0.3s per word, minimum 1.5s), so you can mirror it:
 
 ```js
 function gestureAndWait(el, text) {
@@ -298,7 +298,7 @@ function gestureAndWait(el, text) {
 }
 ```
 
-And if you're reacting to real speech (an LLM reply being voiced), `voice:speech-end` is still the event to wait on — it fires when the spoken sentence is done:
+And if you're reacting to real speech (an LLM reply being voiced), `voice:speech-end` is still the event to wait on, it fires when the spoken sentence is done:
 
 ```js
 function nextSpeechEnd(el) {
@@ -310,7 +310,7 @@ function nextSpeechEnd(el) {
 
 ---
 
-## Step 8 — Error patterns
+## Step 8: Error patterns
 
 The bulk of mistakes fall into three buckets.
 
@@ -328,9 +328,9 @@ function getAgent() {
 }
 ```
 
-Or use a small reactive wrapper if you're inside a framework — see the [Web Component end-to-end tutorial](/tutorials/web-component-end-to-end) for React and Vue patterns.
+Or use a small reactive wrapper if you're inside a framework, see the [Web Component end-to-end tutorial](/tutorials/web-component-end-to-end) for React and Vue patterns.
 
-**LLM errors during a turn.** Network glitch, brain provider rate-limit, no API key. `say()` never rejects — it shows the error in the chat bubble and fires an `agent:error` event. When you need to handle the failure programmatically, use `ask()`, which rejects:
+**LLM errors during a turn.** Network glitch, brain provider rate-limit, no API key. `say()` never rejects, it shows the error in the chat bubble and fires an `agent:error` event. When you need to handle the failure programmatically, use `ask()`, which rejects:
 
 ```js
 try {
@@ -342,11 +342,11 @@ try {
 }
 ```
 
-The fallback `agent.speak(...)` does *not* go through the brain (it's a silent gesture), so it works even when the LLM path is broken — pair it with your own on-page error message for the words.
+The fallback `agent.speak(...)` does *not* go through the brain (it's a silent gesture), so it works even when the LLM path is broken, pair it with your own on-page error message for the words.
 
 ---
 
-## Step 9 — The checkout celebration flow
+## Step 9: The checkout celebration flow
 
 Time to put it all together. You run a Shopify store, a Stripe checkout, or any form-driven flow. When a user submits a successful order, you want the agent to celebrate, narrate, and settle back to idle. The whole sequence should run on the success page.
 
@@ -415,12 +415,12 @@ async function placeOrder({ name, item }) {
 A few things this gets right:
 
 - The form submit is intercepted with `preventDefault` so we control the flow.
-- The real network call is awaited before the celebration runs — no fake confetti on a failed order.
+- The real network call is awaited before the celebration runs, no fake confetti on a failed order.
 - An explicit error branch speaks an apology if the order didn't go through.
 - The celebration sequences animation → speech → animation cleanly, so each beat lands.
 - `whenReady` is called even though we expect the agent to already be booted by submit time. Cheap insurance.
 
-If you also wanted to log the celebration upstream — to your analytics, to a CRM — you'd subscribe to `voice:speech-end` once and fire an event:
+If you also wanted to log the celebration upstream, to your analytics, to a CRM, you'd subscribe to `voice:speech-end` once and fire an event:
 
 ```js
 agent.addEventListener('voice:speech-end', () => {
@@ -454,6 +454,6 @@ The `whenReady`, awaited-`ask()`, and try/catch patterns are small but they remo
 
 ## Next steps
 
-- [Use the &lt;agent-3d&gt; web component end-to-end](/tutorials/web-component-end-to-end) — same API, in React, Vue, and your component system
-- [Trigger the agent from page events](/tutorials/trigger-from-page-events) — scroll, route changes, idle time, onboarding flows
-- [Give your agent a personality](/tutorials/agent-personality) — write a system prompt that holds across thousands of chats
+- [Use the &lt;agent-3d&gt; web component end-to-end](/tutorials/web-component-end-to-end), same API, in React, Vue, and your component system
+- [Trigger the agent from page events](/tutorials/trigger-from-page-events), scroll, route changes, idle time, onboarding flows
+- [Give your agent a personality](/tutorials/agent-personality), write a system prompt that holds across thousands of chats
