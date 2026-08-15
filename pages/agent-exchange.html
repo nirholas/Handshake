@@ -25,8 +25,8 @@
 	<style>
 		/* Hover lives here, not in an onmouseover attribute: the site CSP allows
 		   inline script blocks by hash and never inline handlers. */
-		.ax-x402-link { color: var(--usdc-lt); text-decoration: none; }
-		.ax-x402-link:hover { text-decoration: underline; }
+		.ax-x402-link { color: var(--usdc-lt); text-decoration: underline; }
+		.ax-x402-link:hover { color: var(--text); }
 		:root {
 			color-scheme: dark;
 			--bg:       #080808;
@@ -36,7 +36,12 @@
 			--border-hi:rgba(255,255,255,0.16);
 			--text:     #eceef8;
 			--muted:    #7c85a2;
-			--faint:    #484f64;
+			/* The quietest text tone still has to clear WCAG AA. #484f64 on this
+			   background is 2.45:1, and it carries real copy: the empty-state
+			   explainer, the stage strip, and the receipt field labels. This value
+			   clears 4.5:1 on both the page and the green-tinted receipt panel, and
+			   stays below --muted so the three-step hierarchy survives. */
+			--faint:    #767fa0;
 			--sol:      #9945ff;
 			--sol-lt:   #c284ff;
 			--usdc:     #2775ca;
@@ -124,6 +129,10 @@
 			display:grid; grid-template-columns:1fr 1fr; height:100%; gap:0;
 		}
 		.agent-slot { position:relative; overflow:hidden; }
+		/* An iframe is a tab stop, and these two had no focus indicator at all,
+		   so a keyboard user passing through the arena saw nothing move. The
+		   ring is inset because the frame fills its slot edge to edge. */
+		.agent-slot iframe:focus-visible { outline:2px solid var(--sol-lt); outline-offset:-3px; }
 		.agent-slot iframe {
 			position:absolute; inset:0; width:100%; height:100%;
 			border:0; background:transparent;
@@ -285,7 +294,7 @@
 		}
 		.nr-pre { display:flex; align-items:center; gap:5px; flex-wrap:wrap; font-size:12px; color:var(--faint); }
 		.nr-kicker { font-weight:600; color:var(--muted); white-space:nowrap; }
-		.nr-arrow { opacity:.45; font-size:10px; }
+		.nr-arrow { font-size:10px; color:var(--faint); }
 		.nr-live { display:flex; align-items:center; gap:9px; }
 		.nr-dot {
 			width:7px; height:7px; border-radius:50%; flex:none;
@@ -362,16 +371,12 @@
 	<section id="arena" aria-label="Two AI agents">
 		<div class="agents">
 			<!-- Agent A: Seller (left, faces right) -->
-			<!-- tabindex=-1: the avatars are driven entirely by postMessage from this
-			     page and hold nothing to operate, so leaving them in the tab order
-			     added two focus stops that do nothing and show no focus ring. The
-			     agent names and roles are already in the labels below. -->
 			<div class="agent-slot" id="slotA">
-				<iframe id="frameA" title="Intel agent" allow="autoplay" aria-label="Selling agent" tabindex="-1"></iframe>
+				<iframe id="frameA" title="Intel agent" allow="autoplay" aria-label="Selling agent"></iframe>
 			</div>
 			<!-- Agent B: Buyer (right, faces left) -->
 			<div class="agent-slot" id="slotB">
-				<iframe id="frameB" title="Buyer agent" allow="autoplay" aria-label="Buying agent" tabindex="-1"></iframe>
+				<iframe id="frameB" title="Buyer agent" allow="autoplay" aria-label="Buying agent"></iframe>
 			</div>
 		</div>
 
