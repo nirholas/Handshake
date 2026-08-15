@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T15:18:09.248Z",
+	"generated_at": "2026-08-15T15:28:58.987Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -57,6 +57,28 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A typo in a vault request now tells you which field is wrong instead of returning a server error",
+			"summary": "The vault routes take ids and amounts straight from the caller, and anything that was not a real id or a real number reached the database or the number parser and blew up there: depositing, redeeming, trading, or claiming fees with a mistyped vault id answered a generic \"internal error\" with a support reference, which told you nothing about what to fix. Every one of those now answers a plain 400 naming the field, before anything is looked up and long before any key is touched. Opening a vault with a malformed agent id used to hand back the raw database error code; it now reads as an ordinary validation message. The owner's terms editor gained the same care: a fee or drawdown value that is not a number is refused rather than stored as nothing, a per-trade ceiling raised above the daily budget is refused against the budget you already have set, and a negative spend limit is refused instead of being ignored while the page reports success.",
+			"link": "/vaults",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A vanity bounty or a sealed drop now goes live only after its payment truly clears",
+			"summary": "Posting a grind bounty and creating a sealed wallet drop are both paid with x402, which checks a payment and then settles it as two separate steps. Until now the bounty was published, and the drop wallet funded on-chain, before that second step finished. A payment that passed the check but failed to settle therefore left behind a live bounty a worker could be paid out for, or a funded gift wallet a recipient could still open, with nothing collected for either. Both now stay in a pending state that nobody can claim, refund, or reveal until the payment has actually settled: if it never settles, the bounty is voided and the drop's funding is swept straight back to the platform wallet. Separately, the certificate registry answers a certificate-id lookup with wording written for that lookup instead of the address version, and accepts an id pasted in any letter case, and the rarity share card is now rate limited.",
+			"link": "/vanity/bounties",
+			"tags": [
+				"security",
+				"fix"
 			]
 		},
 		{
@@ -196,6 +218,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Saving a big build no longer re-downloads the whole world first",
+			"summary": "Every time you saved a world, the service fetched and re-parsed the entire previous version of that world just to check who owns it. On a large build that meant a full extra download and parse on each autosave, for a single ownership field. The check now reads only the small index record, so saves on big worlds are noticeably quicker and the storage layer does half the work. Two error replies also got honest labels: a build that exceeds the size cap now answers \"payload too large\" and a request sent with the wrong content type answers \"unsupported media type\", instead of both arriving as a generic validation error that gave a client nothing to act on.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -346,12 +379,33 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "The Granite embeddings endpoint no longer hands back an empty slot where a vector belongs",
+			"summary": "The public embeddings endpoint behind the watsonx Constellation turns your texts into vectors, one per input, and falls back to a second provider whenever IBM watsonx is unavailable. If a provider answered with only part of the batch, that counted as success: the fallback never ran, and the reply carried empty slots in place of the missing vectors while still claiming a full count. Anything plotting those vectors could not tell a missing embedding from a real one sitting at the origin. A partly answered batch is now treated as a failure, so the next provider covers the whole batch and a reply never contains an empty vector; if every provider is down you get a clear error naming the upstream cause instead. The IBM integration guide now also documents the batch limits, the real provider fallback order, and the fact that these responses are never cached.",
+			"link": "/constellation",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list",
 			"summary": "Two tutorials had drifted away from the code they document, and following either one exactly produced a bad outcome rather than a confusing one. The gesture tutorial's API example padded its request body with an empty clip array, and told readers that field was required; it has not been required for a while, and an empty array is a real value, so anyone who copied that snippet to change one gesture slot silently erased every custom clip on their agent. The endpoint's actual rule is now stated: every field is optional, present replaces it, absent leaves it alone. That page also listed four gestures on the /walk quick keys that are not on them, so pressing 1 through 8 never produced what it described; the eight keys are now named in order, with the wheel and the code call given for the four that have no key. The guard tutorial's registry entry left out the proof block, which the registry auditor has since made mandatory, so a reader who followed every step to the end hit a failure the page never mentioned. It now includes a working proof, shows the exact error you get without one, and adds a step for the command that runs it, which is the difference between a guard that is wired up and a guard anyone has shown still catches anything. Its summary line also described a completely different guard from the one it builds.",
 			"link": "/docs/tutorials/write-a-guard",
 			"tags": [
 				"docs",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The LLM usage panel in your dashboard settings finally shows your real numbers",
+			"summary": "Settings has a panel meant to show how much AI inference your agents have used this month. It always said \"No usage yet\", no matter how much you had used, because the endpoint behind it never sent the figures the panel was written to read. It does now: calls this month, tokens consumed, what those calls cost, and a per-model table showing which models did the work, busiest first. The same response also had two storage limits going out as text rather than numbers, which is the kind of difference that turns a size comparison into nonsense; both are numbers now. An API key with the profile scope can read all of it, so you can pull your own usage from a script, and the developer guide shows the exact shape.",
+			"link": "/dashboard/settings",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -484,6 +538,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Your walk keeps syncing across devices, and a remotely driven avatar reports where it really is",
+			"summary": "Four fixes across the walking avatar. Signed-in walkers sync their walk (avatar, environment, camera, position) between devices, and the page saves that snapshot on a half-minute heartbeat, but the endpoint only allowed thirty writes an hour and counted every read against the same budget: about a quarter hour into a walk, syncing quietly stopped, and everyone sharing an office or cafe connection shared one allowance. Writes are now measured per account, sized to how often the page actually saves, and reading your snapshot back costs nothing. When an outside program drives a live walk page through the control API, the page reports its position, heading, motion and scene on every poll; one unexpected value in that report used to discard the whole thing, so the controller's status read could show a stale avatar with nothing to explain it. Each field is now taken on its own merits. A command sent with an invalid control token is refused before its contents are inspected. And the leaderboard now shows an unranked walker with the same handle, profile link and picture as everyone else on the board, always drawn from a single avatar rather than pairing one avatar's name with another's picture.",
+			"link": "/walk",
+			"tags": [
+				"fix"
 			]
 		},
 		{

@@ -169,7 +169,7 @@ export default wrap(async (req, res) => {
 			creator_coins: creatorCoins,
 			wins_in_window:   wins,
 			losses_in_window: losses,
-			win_rate_window: closed.length ? Math.round((closed.filter((c) => c.pnl_sol > 0).length / closed.length) * 1000) / 1000 : null,
+			win_rate_window: closed.length ? Math.round((wins / closed.length) * 1000) / 1000 : null,
 			total_buy_sol:   Math.round(totalBuy  * 1000) / 1000,
 			total_sell_sol:  Math.round(totalSell * 1000) / 1000,
 			total_volume_sol: Math.round((totalBuy + totalSell) * 1000) / 1000,

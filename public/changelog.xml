@@ -47,6 +47,22 @@
 			<description>Every agent decision is committed to a hash chain, and that chain head is written to Solana on a schedule so anyone can check the history was never edited. The wallet that pays for those on-chain writes ran empty, and the scheduled job could not tell that apart from the harmless case where no signing key is set up at all: it answered a healthy 200 every ten minutes while re-sending the same doomed transaction for twelve agents in a row, and not one head reached the chain. A rejected write is now reported as a rejected write, the rest of the run stops instead of repeating a failure that cannot succeed, and it raises an alert so the wallet gets refilled. Verifying a ledger already worked without the on-chain leg and still does: the recomputed hash chain is the tamper proof, the on-chain write is the independent timestamp on top of it. Separately, the once-a-minute economy heartbeat now refuses to drive production from a machine that is not production, so a developer running it locally can no longer fire thirty-six live money engines at the real site.</description>
 		</item>
 		<item>
+			<title>A typo in a vault request now tells you which field is wrong instead of returning a server error</title>
+			<link>https://three.ws/vaults</link>
+			<guid isPermaLink="false">2026-08-15:A typo in a vault request now tells you which field is wrong instead of returning a server error</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The vault routes take ids and amounts straight from the caller, and anything that was not a real id or a real number reached the database or the number parser and blew up there: depositing, redeeming, trading, or claiming fees with a mistyped vault id answered a generic &quot;internal error&quot; with a support reference, which told you nothing about what to fix. Every one of those now answers a plain 400 naming the field, before anything is looked up and long before any key is touched. Opening a vault with a malformed agent id used to hand back the raw database error code; it now reads as an ordinary validation message. The owner's terms editor gained the same care: a fee or drawdown value that is not a number is refused rather than stored as nothing, a per-trade ceiling raised above the daily budget is refused against the budget you already have set, and a negative spend limit is refused instead of being ignored while the page reports success.</description>
+		</item>
+		<item>
+			<title>A vanity bounty or a sealed drop now goes live only after its payment truly clears</title>
+			<link>https://three.ws/vanity/bounties</link>
+			<guid isPermaLink="false">2026-08-15:A vanity bounty or a sealed drop now goes live only after its payment truly clears</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Posting a grind bounty and creating a sealed wallet drop are both paid with x402, which checks a payment and then settles it as two separate steps. Until now the bounty was published, and the drop wallet funded on-chain, before that second step finished. A payment that passed the check but failed to settle therefore left behind a live bounty a worker could be paid out for, or a funded gift wallet a recipient could still open, with nothing collected for either. Both now stay in a pending state that nobody can claim, refund, or reveal until the payment has actually settled: if it never settles, the bounty is voided and the drop's funding is swept straight back to the platform wallet. Separately, the certificate registry answers a certificate-id lookup with wording written for that lookup instead of the address version, and accepts an id pasted in any letter case, and the rarity share card is now rate limited.</description>
+		</item>
+		<item>
 			<title>A vault download rate-limit hit now tells you when to retry, and a browse outage stops reading as an empty listing</title>
 			<link>https://three.ws/vault</link>
 			<guid isPermaLink="false">2026-08-15:A vault download rate-limit hit now tells you when to retry, and a browse outage stops reading as an empty listing</guid>
@@ -149,6 +165,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Paying for a plan creates a quote, you send the funds, then the server checks the chain before it upgrades you. Three things in that path were wrong. The checkout side has always refused test-network quotes in production, because test-network dollars are free from a faucet, but the confirm side still let a caller name the test network itself, and it is the confirm side that decides which chain it looks at and which dollar it accepts. Both ends now read the same setting, so a production upgrade can only ever be settled by real funds on mainnet. Second, an Ethereum-side payment has to wait twelve blocks before it counts, which meant funds sent near the end of a session could land on-chain and then be refused for arriving late, with the money already gone; that lane now honors the same one-hour grace window the Solana lane has, so an on-chain payment is always claimable. Third, confirming an Ethereum payment could reach a Solana quote and mark it expired, and asking to buy a skill from a malformed agent id answered a generic server error instead of telling you what was wrong with the request.</description>
+		</item>
+		<item>
+			<title>Saving a big build no longer re-downloads the whole world first</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Saving a big build no longer re-downloads the whole world first</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every time you saved a world, the service fetched and re-parsed the entire previous version of that world just to check who owns it. On a large build that meant a full extra download and parse on each autosave, for a single ownership field. The check now reads only the small index record, so saves on big worlds are noticeably quicker and the storage layer does half the work. Two error replies also got honest labels: a build that exceeds the size cap now answers &quot;payload too large&quot; and a request sent with the wrong content type answers &quot;unsupported media type&quot;, instead of both arriving as a generic validation error that gave a client nothing to act on.</description>
 		</item>
 		<item>
 			<title>Seeding an agent from GitHub is locked to your own click, and a mistyped pick no longer costs you six hours</title>
@@ -255,12 +279,28 @@
 			<description>The /agenc/embodied page binds a 3D agent to a real AgenC task on Solana, and until now it opened on an empty input box: it needed a task account address and offered no way anywhere on the page to find one. It now lists real tasks three.ws itself posted, claimed, and settled on-chain, newest first, so the demo works the moment it loads; a new public read, /api/agenc/recent-tasks, serves that list. Two things it showed were also wrong. The scene coloured itself for a state named Claimed, which the chain has never used: a claimed task is In Progress on-chain, so the halo, the badge, and the per-state animation switch all sat inert through the one transition the demo exists to show. And the page named a program address that no read has touched since the protocol's interface moved; it now shows the program each live read actually ran against. Pasting an address that holds something other than a task used to report a server error, as though the platform were broken, rather than saying no such task exists there; that is now a plain not-found, with the page telling you to check the address or switch cluster. The panel has designed loading, empty, and error states throughout, the form fields have real labels, the layout no longer scrolls sideways on a phone, and a task that cannot be read is retried with a backoff instead of being re-requested every four seconds forever.</description>
 		</item>
 		<item>
+			<title>The Granite embeddings endpoint no longer hands back an empty slot where a vector belongs</title>
+			<link>https://three.ws/constellation</link>
+			<guid isPermaLink="false">2026-08-15:The Granite embeddings endpoint no longer hands back an empty slot where a vector belongs</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public embeddings endpoint behind the watsonx Constellation turns your texts into vectors, one per input, and falls back to a second provider whenever IBM watsonx is unavailable. If a provider answered with only part of the batch, that counted as success: the fallback never ran, and the reply carried empty slots in place of the missing vectors while still claiming a full count. Anything plotting those vectors could not tell a missing embedding from a real one sitting at the origin. A partly answered batch is now treated as a failure, so the next provider covers the whole batch and a reply never contains an empty vector; if every provider is down you get a clear error naming the upstream cause instead. The IBM integration guide now also documents the batch limits, the real provider fallback order, and the fact that these responses are never cached.</description>
+		</item>
+		<item>
 			<title>The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list</title>
 			<link>https://three.ws/docs/tutorials/write-a-guard</link>
 			<guid isPermaLink="false">2026-08-15:The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list</guid>
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Two tutorials had drifted away from the code they document, and following either one exactly produced a bad outcome rather than a confusing one. The gesture tutorial's API example padded its request body with an empty clip array, and told readers that field was required; it has not been required for a while, and an empty array is a real value, so anyone who copied that snippet to change one gesture slot silently erased every custom clip on their agent. The endpoint's actual rule is now stated: every field is optional, present replaces it, absent leaves it alone. That page also listed four gestures on the /walk quick keys that are not on them, so pressing 1 through 8 never produced what it described; the eight keys are now named in order, with the wheel and the code call given for the four that have no key. The guard tutorial's registry entry left out the proof block, which the registry auditor has since made mandatory, so a reader who followed every step to the end hit a failure the page never mentioned. It now includes a working proof, shows the exact error you get without one, and adds a step for the command that runs it, which is the difference between a guard that is wired up and a guard anyone has shown still catches anything. Its summary line also described a completely different guard from the one it builds.</description>
+		</item>
+		<item>
+			<title>The LLM usage panel in your dashboard settings finally shows your real numbers</title>
+			<link>https://three.ws/dashboard/settings</link>
+			<guid isPermaLink="false">2026-08-15:The LLM usage panel in your dashboard settings finally shows your real numbers</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Settings has a panel meant to show how much AI inference your agents have used this month. It always said &quot;No usage yet&quot;, no matter how much you had used, because the endpoint behind it never sent the figures the panel was written to read. It does now: calls this month, tokens consumed, what those calls cost, and a per-model table showing which models did the work, busiest first. The same response also had two storage limits going out as text rather than numbers, which is the kind of difference that turns a size comparison into nonsense; both are numbers now. An API key with the profile scope can read all of it, so you can pull your own usage from a script, and the developer guide shows the exact shape.</description>
 		</item>
 		<item>
 			<title>The persona builder stops reporting a model outage as if you had been signed out</title>
@@ -357,6 +397,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The country column in your widget stats has been empty since the platform moved to its current host in July. A visitor's country was read from a header only the old host set, so once it was gone every view was recorded with no country at all and the top-countries panel stayed blank no matter how much traffic a widget got. Country is now read from the headers our current edge provides, and it is checked against the shape of a real two-letter country code before it is stored, so nobody can push junk into your analytics by editing a request. Chat sessions on talking-agent widgets get the same fix. Separately, the oEmbed endpoint that Slack, Discord, WordPress, Ghost and Notion call to unfurl a shared widget link now says plainly when a consumer asks for a format we do not publish, instead of returning JSON labelled as the format that was asked for and leaving the embed broken with nothing to explain why.</description>
+		</item>
+		<item>
+			<title>Your walk keeps syncing across devices, and a remotely driven avatar reports where it really is</title>
+			<link>https://three.ws/walk</link>
+			<guid isPermaLink="false">2026-08-15:Your walk keeps syncing across devices, and a remotely driven avatar reports where it really is</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Four fixes across the walking avatar. Signed-in walkers sync their walk (avatar, environment, camera, position) between devices, and the page saves that snapshot on a half-minute heartbeat, but the endpoint only allowed thirty writes an hour and counted every read against the same budget: about a quarter hour into a walk, syncing quietly stopped, and everyone sharing an office or cafe connection shared one allowance. Writes are now measured per account, sized to how often the page actually saves, and reading your snapshot back costs nothing. When an outside program drives a live walk page through the control API, the page reports its position, heading, motion and scene on every poll; one unexpected value in that report used to discard the whole thing, so the controller's status read could show a stale avatar with nothing to explain it. Each field is now taken on its own merits. A command sent with an invalid control token is refused before its contents are inspected. And the leaderboard now shows an unranked walker with the same handle, profile link and picture as everyone else on the board, always drawn from a single avatar rather than pairing one avatar's name with another's picture.</description>
 		</item>
 		<item>
 			<title>Agent Interaction Lab</title>
