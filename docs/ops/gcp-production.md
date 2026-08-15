@@ -653,6 +653,40 @@ proxy + Memorystore + connector. The `upstash-redis-rest-token` secret and the
   identical site and bypasses the LB — useful for isolating LB vs service
   issues.
 
+### Client geo header (analytics country column)
+
+`api/_lib/client-geo.js` resolves a visitor's country from an edge geo header
+and never from the raw IP. On Vercel that header was `x-vercel-ip-country`, set
+by the edge for free. **The GCLB sets no geo header by default**, so after the
+2026-07-07 migration `widget_views.country` and `widget_chat_threads.country`
+went null for every row (verified: 49/49 populated in May, 0/27 in August), and
+the `top_countries` panel on `/api/widgets/:id/stats` renders empty for every
+widget.
+
+The reader now prefers `x-client-geo-location`, then `x-client-region`. Populate
+one on the backend service to restore capture (owner-gated: this is a
+production LB change, not a Cloud Run config update):
+
+```bash
+gcloud compute backend-services update three-ws-backend --global \
+  --project aerial-vehicle-466722-p5 \
+  --custom-request-header='X-Client-Region:{client_region}'
+```
+
+`{client_region}` is the GCLB variable for the ISO 3166-1 alpha-2 code of the
+client. Confirm with `gcloud compute backend-services describe three-ws-backend
+--global --format='value(customRequestHeaders)'`, then check capture:
+
+```sql
+select count(*) filter (where country is not null), count(*)
+from widget_views where created_at > now() - interval '1 day';
+```
+
+Until that header exists the code degrades to null rather than guessing, which
+is the intended behavior. Note the LB does not strip an inbound copy of these
+headers, so a client can forge one; `clientCountry` validates every value down
+to two ASCII letters so the worst case is a visitor mislabeling its own row.
+
 ---
 
 ## Verifying after any change

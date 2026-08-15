@@ -3,6 +3,24 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "Looking up an on-chain agent by its CAIP reference works again",
+      "summary": "The public resolver that turns an ERC-8004 agent reference into its owner, token URI and verified agent card could not be reached at all. An agent reference ends in a slash before its token id, and the documentation told callers to percent-encode the whole reference, which turns that slash into %2F. The API refuses any address segment holding an encoded separator, because that is the same trick used to escape a path and reach files that were never meant to be served, so every correctly-formed lookup was turned away as an unknown address before it ever reached the resolver. The verification badge you can embed on your own site built its request in exactly that shape, so it never showed a result either. The resolver now accepts the reference with its slash as a normal part of the address, the badge asks for it that way, and the documentation shows the form that works. The protection against encoded separators is untouched. New tests resolve the address through the same routing the live site uses, so this cannot quietly break again.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/docs/api-reference"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "A vault download rate-limit hit now tells you when to retry, and a browse outage stops reading as an empty listing",
+      "summary": "Two fixes on the BNB vault endpoints. Downloading a purchased vault file is deliberately rate limited, but when you hit that limit the reply came back without a retry-after time and without the limiter's own reason, so a client had no idea how long to wait, and a limiter outage (which deliberately refuses requests rather than letting them through unchecked) was indistinguishable from you genuinely spending your own quota. Both now come back with the refusal, the same way every other vault endpoint already answered. Separately, when browsing the vault, a listing whose stored file details could not be looked up was always reported as \"listed on-chain, details missing\". That is the honest answer when the storage network really has nothing for it, but the same answer was given when the lookup itself was down, quietly turning an outage into what looks like an incomplete listing. A genuine miss still shows as a listing without details; an outage now says the storage lookup is unavailable. Both endpoints also gained full test coverage, including proof that a download link issued to one buyer cannot fetch another buyer's file.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/vault"
+    },
+    {
+      "date": "2026-08-15",
       "title": "A retried agent spend can no longer hand its transaction to somebody else, and an unsupported chain says so instead of blaming the network",
       "summary": "When an agent redeems a permission you granted it, it can send a retry key so a request whose answer it never saw is not paid for twice. That key was filed under the permission alone rather than under the agent that used it, and it was read before the check that the caller owns the permission at all, so a different agent replaying the same permission and key was handed the original transaction hash and receipt instead of being turned away. The key is now filed per caller: a retry only ever returns your own result, and anyone else gets the same not-found answer they should always have got. Two more fixes in the same endpoint. A permission recorded on a chain three.ws has no delegation contract on could never settle, but the attempt came back as a network error, which reads as a temporary outage worth retrying rather than the permanent chain mismatch it is; it is now named plainly and refused before it consumes any of the permission's spending allowance. And the relayer kept its own private one-address-per-chain list of blockchain endpoints, separate from the failover chain the rest of the platform uses, so it would have refused to work on the next supported chain even where the shared endpoints reach it fine. It now uses the shared list, with any operator override still taking priority. The permissions guide gained a section on how the retry key behaves and how long it lasts.",
       "tags": [

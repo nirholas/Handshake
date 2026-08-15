@@ -268,7 +268,19 @@ const usage = await (await fetch(`/api/agents/${agentId}/usage`, { credentials: 
 
 Note what this is and isn't: it counts **calls**, not tokens, and it is the same counter the proxy enforces `monthly_quota` against. It is the number to watch for "is this agent about to hit its cap", not for a dollar figure.
 
-**The account read.** `GET /api/usage/summary` returns your account-level numbers (plan quotas, avatar count and bytes, MCP tool calls in the last 24h, total events in the last 30 days).
+**The account read.** `GET /api/usage/summary` returns your account-level numbers: plan quotas, avatar count and bytes, MCP tool calls in the last 24h, total events in the last 30 days, plus an `llm` block for the current calendar month:
+
+```js
+const summary = await (await fetch('/api/usage/summary', { credentials: 'include' })).json();
+// summary.llm → {
+//     calls_month,           // LLM calls billed to your account this month
+//     tokens_month,          // input + output tokens across those calls
+//     cost_micro_usd_month,  // server-priced spend, in millionths of a dollar
+//     by_model: [{ model, calls, tokens, cost_micro_usd }]   // busiest models first
+//   }
+```
+
+Session cookies work, and so does an API key with the `profile` scope (`Authorization: Bearer sk_live_...`). This is the account-wide view; use `/api/agents/:id/usage` above when you need one agent's numbers. The dashboard renders it under **Settings → LLM usage**.
 
 **Cost.** The platform prices every call server-side through `api/_lib/llm-pricing.js` and records it, so the spend cap in `checkUserLlmSpendCap` is enforced on real numbers. What there is *not* today is a self-serve token-and-dollar breakdown chart per conversation, nor threshold email alerts. Budget with `monthly_quota` and `rate_limit_per_min` on the embed policy (Step 8), those are hard, enforced-before-spend limits, which is a stronger control than an after-the-fact alert.
 

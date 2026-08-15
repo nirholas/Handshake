@@ -3306,12 +3306,14 @@ breakdown, and a 30-day daily series. Backed by
 GET /api/v1/agents/:caip
 ```
 
-Public, gateway-cached resolver for an ERC-8004 agent. `:caip` is a URL-encoded CAIP-style ref — `eip155:<chainId>:<registryAddress>/<tokenId>` — so consumers (the badge web component, indexers, third-party sites) don't have to do RPC + IPFS + sha256 verification themselves. No auth required.
+Public, gateway-cached resolver for an ERC-8004 agent. `:caip` is a CAIP-style ref (`eip155:<chainId>:<registryAddress>/<tokenId>`), so consumers (the badge web component, indexers, third-party sites) don't have to do RPC + IPFS + sha256 verification themselves. No auth required.
+
+Pass the ref with its `/` as a real path separator. Percent-encoding the colons is fine; percent-encoding the slash is not, because the API dispatcher rejects any path segment that decodes to contain a separator (that is the guard which stops `%2f..%2f..` traversal), so a `%2F` ref 404s before it reaches the resolver.
 
 **Example**
 
 ```
-GET /api/v1/agents/eip155%3A8453%3A0x8004A169...%2F1
+GET /api/v1/agents/eip155:8453:0x8004A169.../1
 ```
 
 **Response:** `{ ref, chainId, agentId, registry, owner, tokenURI, card, verified: { modelSha256, cardSchema }, fetchedAt }` — `card` is the resolved agent card JSON.

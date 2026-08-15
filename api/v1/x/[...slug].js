@@ -166,10 +166,10 @@ export default wrap(async (req, res) => {
 			data: {
 				base_url: '/api/v1/x',
 				billing: {
-					byok: 'send your own upstream key via the provider\'s BYOK header — pass-through, no markup',
-					plan: 'authenticate with a three.ws API key / OAuth token — uses the platform key',
-					free: 'send no credentials on an endpoint marked "free" — a per-IP quota (see each endpoint\'s free.perMin/free.perDay) serves real data with zero setup; X-Free-Tier: 1 + RateLimit-* headers on every response',
-					x402: 'send no credentials — pay per call in USDC (HTTP 402), or quota-exhausted free-tier calls fall through here',
+					byok: 'send your own upstream key via the provider\'s BYOK header: pass-through, no markup',
+					plan: 'authenticate with a three.ws API key / OAuth token: uses the platform key',
+					free: 'send no credentials on an endpoint marked "free": a per-IP quota (see each endpoint\'s free.perMin/free.perDay) serves real data with zero setup; X-Free-Tier: 1 + RateLimit-* headers on every response',
+					x402: 'send no credentials: pay per call in USDC (HTTP 402), or quota-exhausted free-tier calls fall through here',
 				},
 				providers: providerCatalog(),
 			},
@@ -181,7 +181,7 @@ export default wrap(async (req, res) => {
 			res,
 			404,
 			'not_found',
-			'use /api/v1/x/<provider>/<endpoint> — GET /api/v1/x lists every available pair',
+			'use /api/v1/x/<provider>/<endpoint>. GET /api/v1/x lists every available pair',
 		);
 	}
 
@@ -191,7 +191,7 @@ export default wrap(async (req, res) => {
 			res,
 			404,
 			'unknown_endpoint',
-			`no aggregated endpoint "${slug[0]}/${slug[1]}" — GET /api/v1/x lists what's available`,
+			`no aggregated endpoint "${slug[0]}/${slug[1]}". GET /api/v1/x lists what's available`,
 		);
 	}
 	const { provider, endpoint } = ref;

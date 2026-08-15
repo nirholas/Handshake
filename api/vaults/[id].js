@@ -5,7 +5,7 @@
 // The GET is role-aware: anyone can see the public picture (the agent, its verified
 // reputation, live NAV + P&L, terms, backer roster); the signed-in caller also sees
 // their own position; the owner additionally sees accrued fees and the funding
-// roster detail. NAV is re-derived from chain on every read — never a stale cache.
+// roster detail. NAV is re-derived from chain on every read, never a stale cache.
 
 import { cors, json, method, error, readJson, wrap } from '../_lib/http.js';
 import { authWrite, resolveUserId, loadAgent, traderBadge } from '../_lib/vault-auth.js';
@@ -129,7 +129,7 @@ async function handlePatch(req, res, id) {
 	}
 	if (action === 'close') {
 		const next = await setVaultStatus(vault.id, 'closing', { haltReason: 'owner_close' });
-		await recordVaultEvent({ vaultId: vault.id, type: 'close', userId: who.userId, reason: 'owner closing vault — backers may redeem' });
+		await recordVaultEvent({ vaultId: vault.id, type: 'close', userId: who.userId, reason: 'owner closing vault; backers may redeem' });
 		return json(res, 200, { data: { vault: next } }, { 'cache-control': 'no-store' });
 	}
 	if (action === 'terms') {

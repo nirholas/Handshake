@@ -10,17 +10,25 @@
  * Each item carries:
  *   id, mint, symbol, name, image_uri
  *   agent_id, agent_name, agent_image           — trader identity
- *   entry_sol, exit_sol, realized_pnl_sol, realized_pnl_pct
+ *   entry_sol, exit_sol, realized_pnl_sol, realized_pnl_pct, multiple
  *   hold_seconds, exit_reason, buy_sig, sell_sig
  *   oracle_score, oracle_tier, oracle_category  — conviction context if scored
  *   copier_count                                — how many subscriptions fire on this agent
  *   closed_at
  *
+ * `realized_pnl_sol`, `realized_pnl_pct`, and `multiple` are POSITION-level and
+ * cumulative across every sell leg. `entry_sol` and `exit_sol` are the position's
+ * remaining cost basis and its final leg's proceeds: on a position that took
+ * initials first (workers/agent-sniper/executor.js rewrites the basis and books
+ * only the closing leg's proceeds), those two do not reconstruct the return, so
+ * `multiple` is derived from the cumulative pct rather than exit/entry.
+ *
  * Public, IP rate-limited, 30-second CDN cache.
  */
 
-import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
+import { cors, json, method, wrap, rateLimited, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { isoTimestamp } from '../_lib/validate.js';
 import { sql } from '../_lib/db.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
@@ -48,10 +56,30 @@ export default wrap(async (req, res) => {
 	const network = NETWORKS.has(p.get('network')) ? p.get('network') : 'mainnet';
 	const window  = WINDOWS.has(p.get('window'))   ? p.get('window')  : '24h';
 	const limit   = Math.min(80, Math.max(1, Number(p.get('limit')) || 40));
-	const minPnl  = Math.max(0, Number(p.get('min_pnl_pct')) || 10);   // % profit threshold
-	const cursor  = p.get('cursor') || null;                             // ISO timestamp for pagination
+
+	// `Number(x) || 10` silently rewrote an explicit min_pnl_pct=0 to 10, since 0 is
+	// falsy. The oracle coin drawer asks for 0 to show every trade on a coin, so it
+	// only ever saw the winners above 10%. Parse the number first, then default.
+	const pnlRaw  = p.get('min_pnl_pct');
+	const pnlNum  = pnlRaw == null || pnlRaw.trim() === '' ? NaN : Number(pnlRaw);
+	const minPnl  = Number.isFinite(pnlNum) ? Math.max(0, pnlNum) : 10;   // % profit threshold
+
+	// A malformed cursor is a client fault: validate it here rather than letting the
+	// `::timestamptz` cast reject inside the query and surface as an opaque 5xx.
+	const cursorRaw = p.get('cursor');
+	const cursor    = cursorRaw ? isoTimestamp(cursorRaw) : null;        // ISO timestamp for pagination
+	if (cursorRaw && !cursor) {
+		return error(res, 400, 'validation_error', 'cursor must be an ISO 8601 timestamp');
+	}
+
+	// Filter to one coin (oracle drawer). Silently dropping an unparseable mint would
+	// answer a coin-scoped request with the whole platform feed, which reads as
+	// "these are that coin's trades". Say it is invalid instead.
 	const mintRaw = (p.get('mint') || '').trim();
-	const mintFilter = MINT_RE.test(mintRaw) ? mintRaw : null;          // filter to one coin (oracle drawer)
+	if (mintRaw && !MINT_RE.test(mintRaw)) {
+		return error(res, 400, 'validation_error', 'mint must be a valid base58 mint address');
+	}
+	const mintFilter = mintRaw || null;
 
 	const interval = WINDOW_INTERVAL[window] || null;
 
@@ -60,7 +88,7 @@ export default wrap(async (req, res) => {
 		? sql`and pos.closed_at > now() - ${interval}::interval`
 		: sql``;
 
-	const cursorCond = cursor && /^\d{4}-\d{2}-\d{2}T/.test(cursor)
+	const cursorCond = cursor
 		? sql`and pos.closed_at < ${cursor}::timestamptz`
 		: sql``;
 
@@ -107,7 +135,7 @@ export default wrap(async (req, res) => {
 			) as copier_count
 
 		from agent_sniper_positions pos
-		join agent_identities ai on ai.id = pos.agent_id
+		join agent_identities ai on ai.id = pos.agent_id and ai.deleted_at is null
 
 		-- left join oracle conviction so coins that weren't scored still appear
 		left join oracle_conviction oc
@@ -116,21 +144,27 @@ export default wrap(async (req, res) => {
 
 		where pos.network = ${network}
 		  and pos.status  = 'closed'
+		  and pos.closed_at is not null
 		  and pos.realized_pnl_pct >= ${minPnl}
 		  ${windowCond}
 		  ${cursorCond}
 		  ${mintCond}
 
-		order by pos.closed_at desc
+		-- id breaks ties so two exits sharing a closed_at can't reorder between
+		-- pages; closed_at alone left the cursor walking a nondeterministic order.
+		order by pos.closed_at desc, pos.id desc
 		limit ${limit}
-	`.catch(() => []);
+	`;
 
 	const items = rows.map((r) => {
 		const entrySol   = r.entry_quote_lamports != null ? Number(r.entry_quote_lamports) / LAMPORTS : null;
 		const exitSol    = r.exit_quote_lamports  != null ? Number(r.exit_quote_lamports)  / LAMPORTS : null;
 		const pnlSol     = r.realized_pnl_lamports != null ? Number(r.realized_pnl_lamports) / LAMPORTS : null;
 		const pnlPct     = r.realized_pnl_pct != null ? Number(r.realized_pnl_pct) : null;
-		const multiple   = entrySol && exitSol && entrySol > 0 ? exitSol / entrySol : null;
+		// exit/entry describes only the final sell leg once a position took initials,
+		// so it rendered "0.56× +88%" side by side on the feed. The cumulative pct is
+		// the position's whole return, and 1 + pct/100 is that return as a multiple.
+		const multiple   = pnlPct != null && Number.isFinite(pnlPct) ? 1 + pnlPct / 100 : null;
 
 		return {
 			id:              r.id,

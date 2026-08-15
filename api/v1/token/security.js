@@ -195,7 +195,7 @@ export default defineEndpoint({
 		// on-chain facts here (SPL mint/freeze authority, getTokenLargestAccounts) are
 		// Solana concepts with no EVM equivalent in this reader.
 		if (isValidEvmAddress(address)) {
-			fail(400, 'unsupported_chain', 'this endpoint checks Solana tokens only (for now) — pass a base58 Solana mint address, not an EVM 0x… address');
+			fail(400, 'unsupported_chain', 'this endpoint checks Solana tokens only (for now). Pass a base58 Solana mint address, not an EVM 0x address');
 		}
 		if (!isValidSolanaAddress(address)) {
 			fail(400, 'validation_error', '"address" must be a base58 Solana mint address');
@@ -233,8 +233,8 @@ export default defineEndpoint({
 		// Nothing resolved: distinguish "every source failed" (transient — retry)
 		// from "sources answered but this isn't a resolvable token" (client input).
 		if (allFailed) {
-			fail(503, 'sources_unavailable', 'token security sources are unavailable right now — retry shortly');
+			fail(503, 'sources_unavailable', 'token security sources are unavailable right now, retry shortly');
 		}
-		fail(404, 'not_found', 'no on-chain mint or market could be resolved for this address — check the mint');
+		fail(404, 'not_found', 'no on-chain mint or market could be resolved for this address, check the mint');
 	},
 });
