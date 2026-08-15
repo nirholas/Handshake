@@ -19335,7 +19335,7 @@
 		"appraise_an_address": "Appraise an address",
 		"clear": "Clear",
 		"display_label_optional_public": "Display label <span style=\"text-transform:none;color:#555\">(optional, public)</span>",
-		"estimates_the_rarity_tier_and_the_expected": "Estimates the rarity tier and the expected grind cost of the chosen prefix/suffix using the same honest model the grinder advertises. Leave the splits on <strong>auto</strong> to detect a leading word, repeat, or a sensible default. Computed live in your browser — nothing is sent or stored.",
+		"estimates_the_rarity_tier_and_the_grind": "Estimates the rarity tier and the grind cost of the chosen prefix/suffix using the same honest model the grinder advertises. Leave the splits on <strong>auto</strong> to detect a leading word, repeat, or a sensible default. The math runs entirely in your browser and nothing you type is stored; opening a shared card link also asks the public board whether that address is already published.",
 		"gallery": "Gallery",
 		"leaderboard": "Leaderboard",
 		"load_more": "Load more",

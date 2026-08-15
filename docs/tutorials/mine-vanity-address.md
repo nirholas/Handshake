@@ -194,6 +194,7 @@ Two things you can do there without publishing anything:
 
 - **Appraise any address** — paste a Solana address and the gallery scores its rarity (tier, expected attempts, bonuses) using pure math, no persistence. Good for seeing how rare an address you already hold is.
 - **Browse the leaderboard** — addresses ranked by an honest rarity score.
+- **Open a shared card**: every card's Share button links back to `/vanity/gallery#<address>`. Opening that link appraises the address and tells you whether it is actually published on the board, with its verified badge, tier, and label.
 
 To **publish** one of your own (it's opt-in):
 

@@ -57,7 +57,7 @@
 		.tier-pills { display:flex; gap:.4rem; flex-wrap:wrap; }
 		.tier-pill { appearance:none; font:inherit; font-size:.74rem; font-weight:700; padding:.32rem .7rem; border-radius:999px; border:1px solid var(--border); background:#141414; color:var(--muted); cursor:pointer; transition:transform .12s, border-color .15s, color .15s; }
 		.tier-pill:hover { transform:translateY(-1px); }
-		.tier-pill[aria-pressed="true"] { color:#000; }
+		.tier-pill[aria-pressed="true"] { background:var(--c,#fff); border-color:var(--c,#fff); color:#000; }
 		.tier-pill:focus-visible { outline:2px solid rgba(139,92,246,.7); outline-offset:2px; }
 
 		/* gallery grid */
@@ -116,8 +116,10 @@
 		button.primary { font:inherit; font-weight:700; background:#fff; color:#000; border:none; border-radius:8px; padding:.6rem 1.3rem; cursor:pointer; transition:transform .12s, opacity .12s; }
 		button.primary:hover { transform:translateY(-1px); }
 		button.primary:disabled { opacity:.5; cursor:default; transform:none; }
-		button.ghost { font:inherit; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:8px; padding:.6rem 1rem; cursor:pointer; }
-		button.ghost:hover { color:#ccc; border-color:rgba(255,255,255,.25); }
+		.ghost { display:inline-flex; align-items:center; justify-content:center; font:inherit; text-decoration:none; background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:8px; padding:.6rem 1rem; cursor:pointer; transition:color .15s, border-color .15s; }
+		.ghost:hover { color:#ccc; border-color:rgba(255,255,255,.25); }
+		.ghost:focus-visible { outline:2px solid rgba(139,92,246,.7); outline-offset:2px; }
+		.appraise-result .acts { display:flex; gap:.5rem; flex-wrap:wrap; }
 
 		.note { color:var(--dim); font-size:.78rem; line-height:1.55; margin-top:.7rem; }
 		.note strong { color:#999; }
@@ -130,7 +132,22 @@
 		.empty { text-align:center; padding:3.5rem 1rem; border:1px dashed var(--border); border-radius:var(--radius); color:var(--muted); }
 		.empty .glyph { font-size:2.4rem; margin-bottom:.6rem; opacity:.5; }
 		.empty h3 { font-family:var(--font-display); margin:.2rem 0 .5rem; color:#ccc; }
-		.empty a.cta { display:inline-block; margin-top:1rem; background:#fff; color:#000; text-decoration:none; font-weight:700; padding:.55rem 1.1rem; border-radius:8px; }
+		.empty .cta { display:inline-block; margin-top:1rem; background:#fff; color:#000; text-decoration:none; font:inherit; font-weight:700; padding:.55rem 1.1rem; border:none; border-radius:8px; cursor:pointer; transition:transform .12s; }
+		.empty .cta:hover { transform:translateY(-1px); }
+		.empty .cta:focus-visible { outline:2px solid rgba(139,92,246,.7); outline-offset:2px; }
+		.empty .cta.secondary { margin-left:.5rem; background:transparent; color:var(--muted); border:1px solid var(--border); }
+		.empty .cta.secondary:hover { color:#fff; border-color:rgba(255,255,255,.25); }
+		.statretry { font:inherit; font-size:.74rem; font-weight:600; margin-top:.45rem; background:none; color:var(--muted); border:1px solid var(--border); border-radius:7px; padding:.3rem .6rem; cursor:pointer; }
+		.statretry:hover { color:#fff; border-color:rgba(255,255,255,.25); }
+		.statretry:focus-visible { outline:2px solid rgba(139,92,246,.7); outline-offset:2px; }
+		.boardcard { border:1px solid var(--border); border-left:4px solid var(--accent,#888); border-radius:10px; background:rgba(255,255,255,.02); padding:.9rem 1rem; margin-top:1.1rem; }
+		.boardcard .boardhead { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+		.boardcard .badge { display:inline-flex; align-items:center; font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:.25rem .6rem; border-radius:999px; color:#000; }
+		.boardcard .verified { font-size:.7rem; color:#4ade80; font-weight:700; }
+		.boardcard .acts { display:flex; gap:.5rem; flex-wrap:wrap; }
+		.boardcard .acts a { font-size:.74rem; font-weight:600; text-decoration:none; color:var(--muted); border:1px solid var(--border); border-radius:7px; padding:.35rem .6rem; transition:color .15s, border-color .15s; }
+		.boardcard .acts a:hover { color:#fff; border-color:rgba(255,255,255,.25); }
+		.board-slot:empty { display:none; }
 		.skel { border:1px solid var(--border); border-radius:var(--radius); background:var(--card-bg); height:170px; position:relative; overflow:hidden; }
 		.skel::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent); animation:sweep 1.3s infinite; }
 		@keyframes sweep { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
@@ -139,7 +156,7 @@
 		.panel.show { display:block; }
 		.toast { position:fixed; left:50%; bottom:1.5rem; transform:translateX(-50%) translateY(120%); background:#1a1a1a; border:1px solid var(--border); color:#fff; padding:.6rem 1rem; border-radius:8px; font-size:.85rem; transition:transform .3s ease; z-index:50; }
 		.toast.show { transform:translateX(-50%) translateY(0); }
-		@media (max-width:560px){ h1{font-size:1.6rem} .lbrow .score{width:auto} }
+		@media (max-width:560px){ h1{font-size:1.6rem} .lbrow .score{width:auto} .lbrow{gap:.6rem;padding:.75rem .8rem} .lbrow .rank{width:2.2rem;font-size:1.1rem} .big-tier{font-size:2.2rem} }
 		@media (prefers-reduced-motion: reduce){ .gcard,.toast,.skel::after{animation:none!important;transition:none!important} .gcard{opacity:1} }
 	</style>
 
@@ -174,15 +191,15 @@
 			<div class="statstrip" id="statstrip" aria-live="polite"></div>
 		</div>
 
-		<div class="tabs" role="tablist" aria-label="Proof-of-grind views">
-			<button class="tab" role="tab" id="tab-gallery" aria-selected="true" aria-controls="panel-gallery" data-i18n="vanity_gallery_index.gallery">Gallery</button>
-			<button class="tab" role="tab" id="tab-leaderboard" aria-selected="false" aria-controls="panel-leaderboard" data-i18n="vanity_gallery_index.leaderboard">Leaderboard</button>
-			<button class="tab" role="tab" id="tab-appraise" aria-selected="false" aria-controls="panel-appraise" data-i18n="vanity_gallery_index.appraise_an_address">Appraise an address</button>
-			<button class="tab" role="tab" id="tab-publish" aria-selected="false" aria-controls="panel-publish" data-i18n="vanity_gallery_index.publish_a_grind">Publish a grind</button>
+		<div class="tabs" id="tablist" role="tablist" aria-label="Proof-of-grind views">
+			<button class="tab" type="button" role="tab" id="tab-gallery" aria-selected="true" tabindex="0" aria-controls="panel-gallery" data-i18n="vanity_gallery_index.gallery">Gallery</button>
+			<button class="tab" type="button" role="tab" id="tab-leaderboard" aria-selected="false" tabindex="-1" aria-controls="panel-leaderboard" data-i18n="vanity_gallery_index.leaderboard">Leaderboard</button>
+			<button class="tab" type="button" role="tab" id="tab-appraise" aria-selected="false" tabindex="-1" aria-controls="panel-appraise" data-i18n="vanity_gallery_index.appraise_an_address">Appraise an address</button>
+			<button class="tab" type="button" role="tab" id="tab-publish" aria-selected="false" tabindex="-1" aria-controls="panel-publish" data-i18n="vanity_gallery_index.publish_a_grind">Publish a grind</button>
 		</div>
 
 		<!-- GALLERY -->
-		<section class="panel show" id="panel-gallery" role="tabpanel" aria-labelledby="tab-gallery">
+		<section class="panel show" id="panel-gallery" role="tabpanel" tabindex="0" aria-labelledby="tab-gallery">
 			<div class="controls">
 				<div class="tier-pills" id="tier-pills" role="group" aria-label="Filter by tier"></div>
 				<input type="text" id="filter-contains" placeholder="Filter by pattern (e.g. sol)" aria-label="Filter by pattern text" autocomplete="off" spellcheck="false" />
@@ -199,12 +216,12 @@
 		</section>
 
 		<!-- LEADERBOARD -->
-		<section class="panel" id="panel-leaderboard" role="tabpanel" aria-labelledby="tab-leaderboard">
+		<section class="panel" id="panel-leaderboard" role="tabpanel" tabindex="0" aria-labelledby="tab-leaderboard">
 			<div class="lb" id="leaderboard" aria-live="polite"></div>
 		</section>
 
 		<!-- APPRAISE -->
-		<section class="panel" id="panel-appraise" role="tabpanel" aria-labelledby="tab-appraise">
+		<section class="panel" id="panel-appraise" role="tabpanel" tabindex="0" aria-labelledby="tab-appraise">
 			<div class="appraise-card">
 				<div class="appraise-row">
 					<div style="flex:3">
@@ -221,14 +238,14 @@
 					</div>
 					<button class="primary" id="appraise-btn" data-i18n="vanity_gallery_index.appraise">Appraise</button>
 				</div>
-				<p class="note" data-i18n-html="vanity_gallery_index.estimates_the_rarity_tier_and_the_expected">Estimates the rarity tier and the expected grind cost of the chosen prefix/suffix using the same honest model the grinder advertises. Leave the splits on <strong>auto</strong> to detect a leading word, repeat, or a sensible default. Computed live in your browser — nothing is sent or stored.</p>
-				<div class="errbox" id="appraise-err"></div>
+				<p class="note" data-i18n-html="vanity_gallery_index.estimates_the_rarity_tier_and_the_grind">Estimates the rarity tier and the grind cost of the chosen prefix/suffix using the same honest model the grinder advertises. Leave the splits on <strong>auto</strong> to detect a leading word, repeat, or a sensible default. The math runs entirely in your browser and nothing you type is stored; opening a shared card link also asks the public board whether that address is already published.</p>
+				<div class="errbox" id="appraise-err" role="alert"></div>
 				<div class="appraise-result" id="appraise-result"></div>
 			</div>
 		</section>
 
 		<!-- PUBLISH -->
-		<section class="panel" id="panel-publish" role="tabpanel" aria-labelledby="tab-publish">
+		<section class="panel" id="panel-publish" role="tabpanel" tabindex="0" aria-labelledby="tab-publish">
 			<div class="publish-card">
 				<label for="publish-receipt" data-i18n="vanity_gallery_index.your_signed_receipt">Your signed receipt</label>
 				<textarea id="publish-receipt" placeholder='Paste the receipt from /api/x402/vanity-verifiable (the same one /vanity/verify accepts)…' spellcheck="false" autocomplete="off"></textarea>
@@ -245,8 +262,8 @@
 					<button class="primary" id="publish-btn" data-i18n="vanity_gallery_index.verify_publish">Verify &amp; publish</button>
 					<button class="ghost" id="publish-clear" data-i18n="vanity_gallery_index.clear">Clear</button>
 				</div>
-				<div class="errbox" id="publish-err"></div>
-				<div class="okbox" id="publish-ok"></div>
+				<div class="errbox" id="publish-err" role="alert"></div>
+				<div class="okbox" id="publish-ok" role="status"></div>
 			</div>
 		</section>
 	</main>
@@ -256,15 +273,18 @@
 	<footer class="h-footer-horizon"><div class="h-footer-inner" style="text-align:center;padding:2rem 1rem;color:#555;font-size:.8rem">three.ws — proof-of-grind · provably-fair vanity addresses</div></footer>
 
 	<script type="module">
-		import { computeRarity, appraiseAddress, RARITY_TIERS } from '/src/solana/vanity/rarity.js';
+		import { appraiseAddress, RARITY_TIERS } from '/src/solana/vanity/rarity.js';
 
 		const $ = (id) => document.getElementById(id);
 		const API = '/api/vanity/gallery';
 		const TIER_COLOR = Object.fromEntries(RARITY_TIERS.map((t) => [t.id, t.accent]));
 		const TIER_ORDER = ['mythic', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+		const TABS = ['gallery', 'leaderboard', 'appraise', 'publish'];
+		const ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 		function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-		function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
+		function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2600); }
+		function num(v) { return Number.isFinite(Number(v)) ? Number(v) : 0; }
 
 		// Render an address with its prefix/suffix highlighted.
 		function addrHTML(address, pattern) {
@@ -276,7 +296,7 @@
 			return (preHit ? `<span class="hi">${esc(head)}</span>` : '') + esc(mid) + (sufHit ? `<span class="hi">${esc(tail)}</span>` : '');
 		}
 		function fmtAttempts(n) {
-			const v = Number(n) || 0;
+			const v = num(n);
 			if (v >= 1e12) return (v / 1e12).toFixed(1) + 'T';
 			if (v >= 1e9) return (v / 1e9).toFixed(1) + 'B';
 			if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
@@ -287,47 +307,66 @@
 			return [p?.prefix && `${p.prefix}…`, p?.suffix && `…${p.suffix}`].filter(Boolean).join(' ') || 'no fixed pattern';
 		}
 		async function shareCard(address) {
-			const url = `${location.origin}/api/vanity/og?address=${encodeURIComponent(address)}`;
-			const text = `My Solana wallet ${address.slice(0, 6)}…${address.slice(-4)} — ground & verified on three.ws`;
+			const text = `My Solana wallet ${address.slice(0, 6)}…${address.slice(-4)}: ground and verified on three.ws`;
 			const pageUrl = `${location.origin}/vanity/gallery#${encodeURIComponent(address)}`;
 			if (navigator.share) { try { await navigator.share({ title: 'Proof-of-Grind', text, url: pageUrl }); return; } catch {} }
 			const x = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
 			window.open(x, '_blank', 'noopener');
 		}
-		// Cards are rendered from strings, so their buttons declare the address
-		// they share and one delegated listener does the work. Inline onclick
-		// attributes cannot run under the site CSP.
+
+		// Cards and state panels are rendered from strings, so their controls declare
+		// their intent with data attributes and one delegated listener does the work.
+		// Inline onclick attributes cannot run under the site CSP.
+		const ACTIONS = {
+			'retry-stats': () => loadStats(),
+			'retry-gallery': () => resetGallery(),
+			'retry-leaderboard': () => loadLeaderboard(),
+			'clear-filters': () => clearFilters(),
+		};
 		document.addEventListener('click', (event) => {
-			const target = event.target.closest('[data-share-card], [data-action="reload"]');
-			if (!target) return;
-			if (target.dataset.action === 'reload') location.reload();
-			else shareCard(target.dataset.shareCard);
+			const share = event.target.closest('[data-share-card]');
+			if (share) { shareCard(share.dataset.shareCard); return; }
+			const act = event.target.closest('[data-action]');
+			const run = act && ACTIONS[act.dataset.action];
+			if (run) run();
 		});
 
+		function errorStateHTML(title, detail, action) {
+			return `<div class="glyph">⚠</div><h3>${esc(title)}</h3><p>${esc(detail)}</p><button class="cta" type="button" data-action="${action}">Try again</button>`;
+		}
+
 		// ── Stats strip ────────────────────────────────────────────────────────
+		const STAT_SKELETON = Array.from({ length: 3 }, () => '<div class="stat"><div class="skel" style="height:58px"></div></div>').join('');
 		async function loadStats() {
 			const strip = $('statstrip');
-			strip.innerHTML = '<div class="stat"><div class="skel" style="height:60px"></div></div>';
+			strip.innerHTML = STAT_SKELETON;
 			try {
 				const r = await fetch(`${API}?view=stats`);
+				if (!r.ok) throw new Error(`stats ${r.status}`);
 				const s = await r.json();
-				const total = s.total || 0;
+				const total = num(s.total);
 				const segs = TIER_ORDER.map((t) => {
-					const n = s.byTier?.[t] || 0;
+					const n = num(s.byTier?.[t]);
 					return n ? `<span style="flex-grow:${n};background:${TIER_COLOR[t]}" title="${t}: ${n}"></span>` : '';
 				}).join('') || '<span style="flex-grow:1;background:#222"></span>';
 				const rarest = s.rarest;
 				strip.innerHTML =
 					`<div class="stat"><div class="k">Wallets ground</div><div class="v">${total.toLocaleString('en-US')}</div><div class="tierbar">${segs}</div></div>` +
-					`<div class="stat"><div class="k">Rarest tier on board</div><div class="v" style="color:${rarest ? TIER_COLOR[rarest.tier] : '#888'}">${rarest ? esc(rarest.tierLabel) : '—'}</div></div>` +
-					`<div class="stat"><div class="k">Top rarity score</div><div class="v">${rarest ? rarest.rarityScore.toLocaleString('en-US') : '—'}</div></div>`;
+					`<div class="stat"><div class="k">Rarest tier on board</div><div class="v" style="color:${rarest ? TIER_COLOR[rarest.tier] : '#888'}">${rarest ? esc(rarest.tierLabel) : 'None yet'}</div></div>` +
+					`<div class="stat"><div class="k">Top rarity score</div><div class="v">${rarest ? num(rarest.rarityScore).toLocaleString('en-US') : 'None yet'}</div></div>`;
 			} catch {
-				strip.innerHTML = `<div class="stat"><div class="k">Gallery</div><div class="v">Live</div></div>`;
+				strip.innerHTML =
+					`<div class="stat"><div class="k">Board stats</div><div class="v" style="font-size:1.1rem;color:#f87171">Unavailable</div>` +
+					`<button type="button" class="statretry" data-action="retry-stats">Retry</button></div>`;
 			}
 		}
 
 		// ── Gallery ────────────────────────────────────────────────────────────
-		let galleryState = { sort: 'recency', tier: null, contains: '', offset: 0, limit: 24, loading: false, hasMore: false };
+		const galleryState = { sort: 'recency', tier: '', contains: '', offset: 0, limit: 24, hasMore: false };
+		// Every load carries a token. A filter/sort change while a fetch is in flight
+		// bumps it, so the stale response is dropped instead of appending the wrong
+		// page (or leaving the grid empty behind a "still loading" guard).
+		let galleryToken = 0;
 
 		function gcardHTML(e) {
 			const color = TIER_COLOR[e.tier] || '#888';
@@ -340,14 +379,14 @@
 				<div class="addr">${addrHTML(e.address, e.pattern)}</div>
 				${e.label ? `<div class="label">"${esc(e.label)}"</div>` : ''}
 				<div class="meta">
-					<div><b>${e.rarityScore.toLocaleString('en-US')}</b>rarity score</div>
+					<div><b>${num(e.rarityScore).toLocaleString('en-US')}</b>rarity score</div>
 					<div><b>${fmtAttempts(e.expectedAttempts)}</b>expected tries</div>
 					<div><b>${esc(patternLabel(e.pattern))}</b>pattern</div>
 				</div>
 				${bonuses ? `<div class="bonuses">${bonuses}</div>` : ''}
 				<div class="acts">
 					<a href="${esc(e.explorerUrl)}" target="_blank" rel="noopener">Explorer ↗</a>
-					<a href="/vanity/verify" >Verify</a>
+					<a href="#${encodeURIComponent(e.address)}">Appraise</a>
 					<button type="button" data-share-card="${esc(e.address)}">Share</button>
 				</div>
 			</article>`;
@@ -355,84 +394,95 @@
 
 		function renderTierPills() {
 			const wrap = $('tier-pills');
-			wrap.innerHTML = `<button class="tier-pill" data-tier="" aria-pressed="true">All</button>` +
+			wrap.innerHTML = `<button class="tier-pill" type="button" data-tier="" aria-pressed="true" style="--c:#fff">All</button>` +
 				TIER_ORDER.map((t) => {
 					const meta = RARITY_TIERS.find((x) => x.id === t);
-					return `<button class="tier-pill" data-tier="${t}" aria-pressed="false" style="--c:${meta.accent}">${esc(meta.label)}</button>`;
+					return `<button class="tier-pill" type="button" data-tier="${t}" aria-pressed="false" style="--c:${meta.accent}">${esc(meta.label)}</button>`;
 				}).join('');
-			wrap.querySelectorAll('.tier-pill').forEach((btn) => {
-				btn.addEventListener('click', () => {
-					wrap.querySelectorAll('.tier-pill').forEach((b) => {
-						b.setAttribute('aria-pressed', 'false');
-						b.style.background = ''; b.style.borderColor = ''; b.style.color = '';
-					});
-					btn.setAttribute('aria-pressed', 'true');
-					const tier = btn.getAttribute('data-tier');
-					if (tier) { const c = TIER_COLOR[tier]; btn.style.background = c; btn.style.borderColor = c; btn.style.color = '#000'; }
-					else { btn.style.background = '#fff'; btn.style.color = '#000'; }
-					galleryState.tier = tier || null;
-					resetGallery();
-				});
+			wrap.addEventListener('click', (event) => {
+				const btn = event.target.closest('.tier-pill');
+				if (!btn) return;
+				galleryState.tier = btn.getAttribute('data-tier') || '';
+				setPressedPill(galleryState.tier);
+				resetGallery();
 			});
-			// Default "All" styled active.
-			const all = wrap.querySelector('[data-tier=""]');
-			all.style.background = '#fff'; all.style.color = '#000';
+		}
+
+		function setPressedPill(tier) {
+			for (const b of $('tier-pills').querySelectorAll('.tier-pill')) {
+				b.setAttribute('aria-pressed', String((b.getAttribute('data-tier') || '') === tier));
+			}
+		}
+
+		function clearFilters() {
+			galleryState.tier = '';
+			galleryState.contains = '';
+			$('filter-contains').value = '';
+			setPressedPill('');
+			resetGallery();
 		}
 
 		function resetGallery() { galleryState.offset = 0; $('gallery-grid').innerHTML = ''; loadGallery(); }
 
 		async function loadGallery() {
-			if (galleryState.loading) return;
-			galleryState.loading = true;
+			const token = ++galleryToken;
+			const first = galleryState.offset === 0;
 			const grid = $('gallery-grid');
-			if (galleryState.offset === 0) {
-				grid.innerHTML = Array.from({ length: 6 }, () => '<div class="skel"></div>').join('');
-			}
-			$('loadmore-btn').disabled = true;
+			const btn = $('loadmore-btn');
+			if (first) grid.innerHTML = Array.from({ length: 6 }, () => '<div class="skel"></div>').join('');
+			btn.disabled = true;
 			const p = new URLSearchParams({ sort: galleryState.sort, limit: String(galleryState.limit), offset: String(galleryState.offset) });
 			if (galleryState.tier) p.set('tier', galleryState.tier);
 			if (galleryState.contains) p.set('contains', galleryState.contains);
 			try {
 				const r = await fetch(`${API}?${p}`);
-				if (!r.ok) throw new Error('load failed');
+				if (!r.ok) throw new Error(`gallery ${r.status}`);
 				const data = await r.json();
-				if (galleryState.offset === 0) grid.innerHTML = '';
-				if (!data.entries.length && galleryState.offset === 0) {
-					grid.innerHTML = '';
-					grid.insertAdjacentHTML('beforeend', emptyGalleryHTML());
-				} else {
-					grid.insertAdjacentHTML('beforeend', data.entries.map(gcardHTML).join(''));
-				}
-				galleryState.offset += data.entries.length;
-				galleryState.hasMore = data.hasMore;
+				if (token !== galleryToken) return;
+				const entries = Array.isArray(data.entries) ? data.entries : [];
+				if (first) grid.innerHTML = '';
+				grid.insertAdjacentHTML('beforeend', entries.length || !first ? entries.map(gcardHTML).join('') : emptyGalleryHTML());
+				galleryState.offset += entries.length;
+				galleryState.hasMore = !!data.hasMore;
 				$('loadmore-row').style.display = data.hasMore ? 'block' : 'none';
 			} catch {
-				if (galleryState.offset === 0) grid.innerHTML = `<div class="empty"><div class="glyph">⚠</div><h3>Couldn't load the gallery</h3><p>Check your connection and try again.</p><button class="cta" type="button" data-action="reload">Retry</button></div>`;
+				if (token !== galleryToken) return;
+				if (first) {
+					grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${errorStateHTML("Couldn't load the gallery", 'The board could not be reached. Check your connection, then try again.', 'retry-gallery')}</div>`;
+					$('loadmore-row').style.display = 'none';
+				} else {
+					toast('Could not load more entries. Try again.');
+				}
 			} finally {
-				galleryState.loading = false;
-				$('loadmore-btn').disabled = false;
+				if (token === galleryToken) btn.disabled = false;
 			}
 		}
 
 		function emptyGalleryHTML() {
-			const filtered = galleryState.tier || galleryState.contains;
-			if (filtered) return `<div class="empty" style="grid-column:1/-1"><div class="glyph">◇</div><h3>No matches</h3><p>No published wallets fit this filter yet. Try a broader tier or clear the search.</p></div>`;
-			return `<div class="empty" style="grid-column:1/-1"><div class="glyph">✦</div><h3>Be the first on the board</h3><p>No wallets have been published yet. Grind a provably-fair vanity address, then publish its receipt to claim a spot.</p><a class="cta" href="/vanity-wallet">Grind a wallet →</a></div>`;
+			if (galleryState.tier || galleryState.contains) {
+				return `<div class="empty" style="grid-column:1/-1"><div class="glyph">◇</div><h3>No matches</h3><p>No published wallets fit this filter yet. Widen the tier, or clear the filters to see the whole board.</p><button class="cta" type="button" data-action="clear-filters">Clear filters</button></div>`;
+			}
+			return `<div class="empty" style="grid-column:1/-1"><div class="glyph">✦</div><h3>Be the first on the board</h3><p>No wallets have been published yet. Grind a provably-fair vanity address, then publish its receipt to claim a spot.</p><a class="cta" href="/vanity-wallet">Grind a wallet →</a><a class="cta secondary" href="/vanity/bounties">Post a bounty</a></div>`;
 		}
 
 		// ── Leaderboard ────────────────────────────────────────────────────────
 		let lbLoaded = false;
 		async function loadLeaderboard() {
 			const el = $('leaderboard');
+			el.className = 'lb';
 			el.innerHTML = Array.from({ length: 5 }, () => '<div class="lbrow"><div class="skel" style="height:36px;width:100%;border:none"></div></div>').join('');
 			try {
 				const r = await fetch(`${API}?view=leaderboard&limit=25`);
+				if (!r.ok) throw new Error(`leaderboard ${r.status}`);
 				const data = await r.json();
-				if (!data.leaderboard.length) {
-					el.outerHTML = `<div class="empty" id="leaderboard"><div class="glyph">🏆</div><h3>The leaderboard is open</h3><p>The rarest published wallets rank here. Grind one and publish it to take #1.</p><a class="cta" href="/vanity-wallet">Grind a wallet →</a></div>`;
+				const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+				if (!rows.length) {
+					el.className = 'empty';
+					el.innerHTML = `<div class="glyph">🏆</div><h3>The leaderboard is open</h3><p>The rarest published wallets rank here. Grind one and publish it to take #1.</p><a class="cta" href="/vanity-wallet">Grind a wallet →</a>`;
+					lbLoaded = true;
 					return;
 				}
-				el.innerHTML = data.leaderboard.map((e, i) => {
+				el.innerHTML = rows.map((e, i) => {
 					const color = TIER_COLOR[e.tier] || '#888';
 					const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
 					return `<div class="lbrow">
@@ -442,22 +492,24 @@
 							<div class="sub">${esc(patternLabel(e.pattern))} · ${fmtAttempts(e.expectedAttempts)} expected tries${e.label ? ' · "' + esc(e.label) + '"' : ''}</div>
 						</div>
 						<span class="tierlabel" style="background:${color}">${esc(e.tierLabel)}</span>
-						<div class="score">${e.rarityScore.toLocaleString('en-US')}</div>
+						<div class="score">${num(e.rarityScore).toLocaleString('en-US')}</div>
 					</div>`;
 				}).join('');
 				lbLoaded = true;
 			} catch {
-				el.innerHTML = `<div class="empty"><div class="glyph">⚠</div><h3>Couldn't load the leaderboard</h3></div>`;
+				el.className = 'empty';
+				el.innerHTML = errorStateHTML("Couldn't load the leaderboard", 'The ranking could not be reached. Check your connection, then try again.', 'retry-leaderboard');
+				lbLoaded = false;
 			}
 		}
 
 		// ── Appraise ───────────────────────────────────────────────────────────
-		function runAppraisal() {
+		function runAppraisal({ lookup = false } = {}) {
 			const addr = $('appraise-addr').value.trim();
 			const resEl = $('appraise-result'), errEl = $('appraise-err');
 			errEl.classList.remove('show'); resEl.classList.remove('show');
-			if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr)) {
-				errEl.textContent = 'Enter a valid Base58 Solana address (32–44 characters).'; errEl.classList.add('show'); return;
+			if (!ADDRESS_RE.test(addr)) {
+				errEl.textContent = 'Enter a valid Base58 Solana address (32 to 44 characters).'; errEl.classList.add('show'); return;
 			}
 			const pfx = parseInt($('appraise-prefix').value, 10);
 			const sfx = parseInt($('appraise-suffix').value, 10);
@@ -470,15 +522,50 @@
 				`<div class="big-tier" style="color:${color}">${esc(a.tierLabel)}</div>
 				<div class="addr" style="margin-top:.6rem;font-family:ui-monospace,monospace;word-break:break-all;color:rgba(240,240,240,.6)">${addrHTML(addr, { prefix: a.prefix, suffix: a.suffix })}</div>
 				<div class="appraise-stats">
-					<div class="s"><div class="k">Rarity score</div><div class="v">${a.rarityScore.toLocaleString('en-US')}</div></div>
+					<div class="s"><div class="k">Rarity score</div><div class="v">${num(a.rarityScore).toLocaleString('en-US')}</div></div>
 					<div class="s"><div class="k">Detected pattern</div><div class="v">${esc(patternLabel({ prefix: a.prefix, suffix: a.suffix }))}</div></div>
 					<div class="s"><div class="k">Expected work</div><div class="v">${fmtAttempts(a.expectedAttempts)} tries</div></div>
 					<div class="s"><div class="k">Grind cost (≈20M/s)</div><div class="v">${esc(a.grindHuman)}</div></div>
 				</div>
 				${a.bonuses.length ? `<div class="bonuses" style="margin-top:1rem">${a.bonuses.map((b) => `<span class="bonus">${esc(b.label)} +${b.bits} bits</span>`).join('')}</div>` : ''}
+				<div class="board-slot" id="appraise-board"></div>
 				<div class="acts" style="margin-top:1.1rem"><button type="button" class="ghost" data-share-card="${esc(addr)}">Share this card</button>
-				<a class="ghost" style="text-decoration:none" href="/api/vanity/og?address=${encodeURIComponent(addr)}" target="_blank" rel="noopener">View OG card ↗</a></div>`;
+				<a class="ghost" href="/api/vanity/og?address=${encodeURIComponent(addr)}" target="_blank" rel="noopener">View OG card ↗</a></div>`;
 			resEl.classList.add('show');
+			if (lookup) loadBoardStatus(addr);
+		}
+
+		// A shared card link lands here, so tell the visitor whether that address is
+		// actually on the board (the gallery API answers both in one call). Only the
+		// deep-link path asks: an address someone types stays in the browser.
+		async function loadBoardStatus(address) {
+			const slot = $('appraise-board');
+			if (!slot) return;
+			slot.innerHTML = '<div class="note">Checking the public board…</div>';
+			try {
+				const r = await fetch(`${API}?view=appraise&address=${encodeURIComponent(address)}`);
+				if (!r.ok) throw new Error(`board ${r.status}`);
+				const data = await r.json();
+				const e = data.published;
+				if (!slot.isConnected) return;
+				if (!e) {
+					slot.innerHTML = `<div class="note">Not on the board yet. <a href="#tab=publish" style="color:#ffd54f">Publish its receipt</a> to claim a spot.</div>`;
+					return;
+				}
+				const color = TIER_COLOR[e.tier] || '#888';
+				slot.innerHTML = `<div class="boardcard" style="--accent:${color}">
+					<div class="boardhead">
+						<span class="badge" style="background:${color}">${esc(e.tierLabel)}</span>
+						${e.verified ? '<span class="verified">✓ verified on the board</span>' : ''}
+					</div>
+					<div class="note" style="margin-top:.5rem">${e.label ? `Published as "${esc(e.label)}" · ` : ''}rarity score <strong>${num(e.rarityScore).toLocaleString('en-US')}</strong> · pattern <strong>${esc(patternLabel(e.pattern))}</strong></div>
+					<div class="note">The board scores the pattern that was actually ground. The estimate above assumes the longest prefix it can detect in the address, so it reads higher.</div>
+					<div class="acts" style="margin-top:.7rem"><a href="${esc(e.explorerUrl)}" target="_blank" rel="noopener">Explorer ↗</a><a href="#tab=gallery">See the gallery</a></div>
+				</div>`;
+			} catch {
+				if (!slot.isConnected) return;
+				slot.innerHTML = `<div class="note">The board is unreachable right now, so its published status is unknown. The rarity above was computed in your browser and is unaffected.</div>`;
+			}
 		}
 
 		// ── Publish ────────────────────────────────────────────────────────────
@@ -488,19 +575,29 @@
 			let receipt;
 			try { receipt = JSON.parse($('publish-receipt').value.trim()); }
 			catch { errEl.textContent = 'That is not valid JSON. Paste the full receipt object.'; errEl.classList.add('show'); return; }
+			if (!receipt || typeof receipt !== 'object' || Array.isArray(receipt)) {
+				errEl.textContent = 'That JSON is not a receipt object. Paste the whole receipt, braces included.'; errEl.classList.add('show'); return;
+			}
 			// Strip any secret fields client-side before they ever leave the browser.
 			for (const k of ['secretKey', 'secretKeyBase58', 'seed', 'sealedSecret']) delete receipt[k];
 			btn.disabled = true; btn.textContent = 'Verifying…';
 			try {
 				const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ receipt, label: $('publish-label').value.trim() }) });
-				const data = await r.json();
-				if (!r.ok) throw new Error(data.error_description || data.error || 'publish failed');
-				okEl.innerHTML = `Published! Your <strong>${esc(data.entry.tierLabel)}</strong> wallet is on the board. <a href="#${encodeURIComponent(data.entry.address)}" style="color:#4ade80;text-decoration:underline">View it</a> · <button type="button" id="post-share" style="background:none;border:0;padding:0;font:inherit;cursor:pointer;color:#4ade80;text-decoration:underline">Share card</button>`;
+				const data = await r.json().catch(() => ({}));
+				if (r.status === 429) {
+					const wait = Number(data.retry_after) || Number(r.headers.get('retry-after')) || 0;
+					throw new Error(wait
+						? `Too many publishes from this network. Try again in about ${Math.ceil(wait / 60)} minute(s).`
+						: 'Too many publishes from this network. Wait a few minutes and try again.');
+				}
+				if (!r.ok) throw new Error(data.error_description || data.error || `publish failed (HTTP ${r.status})`);
+				okEl.innerHTML = `Published! Your <strong>${esc(data.entry.tierLabel)}</strong> wallet is on the board. <a href="#${encodeURIComponent(data.entry.address)}" style="color:#4ade80;text-decoration:underline">View it</a> · <button type="button" data-share-card="${esc(data.entry.address)}" style="background:none;border:0;padding:0;font:inherit;cursor:pointer;color:#4ade80;text-decoration:underline">Share card</button>`;
 				okEl.classList.add('show');
-				const ps = document.getElementById('post-share'); if (ps) ps.onclick = () => shareCard(data.entry.address);
 				$('publish-receipt').value = ''; $('publish-label').value = '';
+				lbLoaded = false;
 				loadStats();
-				selectTab('gallery'); resetGallery();
+				clearFilters();
+				selectTab('gallery');
 			} catch (e) {
 				errEl.textContent = e.message || String(e); errEl.classList.add('show');
 			} finally {
@@ -509,22 +606,41 @@
 		}
 
 		// ── Tabs ───────────────────────────────────────────────────────────────
-		function selectTab(name) {
-			for (const t of ['gallery', 'leaderboard', 'appraise', 'publish']) {
-				const on = t === name;
-				$(`tab-${t}`).setAttribute('aria-selected', String(on));
+		// `history: 'push'` gives the tabs real back-button behaviour; the hash
+		// handler replays a popped state with 'none' so it never pushes back.
+		function selectTab(name, { history: mode = 'push', focus = false } = {}) {
+			const target = TABS.includes(name) ? name : 'gallery';
+			for (const t of TABS) {
+				const on = t === target;
+				const tab = $(`tab-${t}`);
+				tab.setAttribute('aria-selected', String(on));
+				tab.tabIndex = on ? 0 : -1;
 				$(`panel-${t}`).classList.toggle('show', on);
 			}
-			if (name === 'leaderboard' && !lbLoaded) loadLeaderboard();
-			// Reflect the tab in the URL hash so it's shareable/back-button-able, but
-			// never clobber an address deep-link (#<base58>) the user arrived on.
+			if (focus) $(`tab-${target}`).focus();
+			if (target === 'leaderboard' && !lbLoaded) loadLeaderboard();
+			// Reflect the tab in the URL hash so it is shareable, but never clobber an
+			// address deep-link (#<base58>) the visitor arrived on.
 			const cur = decodeURIComponent((location.hash || '').slice(1));
-			const isAddr = /^[1-9A-HJ-NP-Za-km-z]{30,44}$/.test(cur);
-			if (!isAddr && cur !== `tab=${name}`) history.replaceState(null, '', `#tab=${name}`);
+			if (mode === 'push' && !ADDRESS_RE.test(cur) && cur !== `tab=${target}`) {
+				window.history.pushState(null, '', `#tab=${target}`);
+			}
 		}
 
-		['gallery', 'leaderboard', 'appraise', 'publish'].forEach((t) => {
-			$(`tab-${t}`).addEventListener('click', () => selectTab(t));
+		for (const t of TABS) $(`tab-${t}`).addEventListener('click', () => selectTab(t));
+
+		$('tablist').addEventListener('keydown', (event) => {
+			const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
+			if (step) {
+				event.preventDefault();
+				const cur = Math.max(0, TABS.findIndex((t) => $(`tab-${t}`).getAttribute('aria-selected') === 'true'));
+				selectTab(TABS[(cur + step + TABS.length) % TABS.length], { focus: true });
+				return;
+			}
+			if (event.key === 'Home' || event.key === 'End') {
+				event.preventDefault();
+				selectTab(event.key === 'Home' ? TABS[0] : TABS[TABS.length - 1], { focus: true });
+			}
 		});
 
 		// Controls.
@@ -532,23 +648,27 @@
 		let containsTimer;
 		$('filter-contains').addEventListener('input', (e) => {
 			clearTimeout(containsTimer);
-			containsTimer = setTimeout(() => { galleryState.contains = e.target.value.trim(); resetGallery(); }, 280);
+			const value = e.target.value.trim();
+			containsTimer = setTimeout(() => { galleryState.contains = value; resetGallery(); }, 280);
 		});
-		$('loadmore-btn').addEventListener('click', loadGallery);
-		$('appraise-btn').addEventListener('click', runAppraisal);
-		$('appraise-addr').addEventListener('keydown', (e) => { if (e.key === 'Enter') runAppraisal(); });
+		$('loadmore-btn').addEventListener('click', () => loadGallery());
+		$('appraise-btn').addEventListener('click', () => runAppraisal());
+		for (const id of ['appraise-addr', 'appraise-prefix', 'appraise-suffix']) {
+			$(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') runAppraisal(); });
+		}
 		$('publish-btn').addEventListener('click', publish);
 		$('publish-clear').addEventListener('click', () => { $('publish-receipt').value = ''; $('publish-label').value = ''; $('publish-err').classList.remove('show'); $('publish-ok').classList.remove('show'); });
 
-		// Deep links: #<address> scrolls/highlights, #tab=<name> selects a tab,
-		// ?address= prefills the appraisal.
+		// Deep links: #<address> appraises it and checks the board, #tab=<name>
+		// selects a tab, ?address= prefills the appraisal.
 		function applyHash() {
 			const h = decodeURIComponent((location.hash || '').slice(1));
-			if (h.startsWith('tab=')) { selectTab(h.slice(4)); return; }
-			if (/^[1-9A-HJ-NP-Za-km-z]{30,44}$/.test(h)) {
-				selectTab('appraise');
+			if (!h) { selectTab('gallery', { history: 'none' }); return; }
+			if (h.startsWith('tab=')) { selectTab(h.slice(4), { history: 'none' }); return; }
+			if (ADDRESS_RE.test(h)) {
+				selectTab('appraise', { history: 'none' });
 				$('appraise-addr').value = h;
-				runAppraisal();
+				runAppraisal({ lookup: true });
 			}
 		}
 
@@ -557,7 +677,7 @@
 		loadStats();
 		loadGallery();
 		const qAddr = new URLSearchParams(location.search).get('address');
-		if (qAddr) { selectTab('appraise'); $('appraise-addr').value = qAddr; runAppraisal(); }
+		if (qAddr) { selectTab('appraise', { history: 'none' }); $('appraise-addr').value = qAddr; runAppraisal({ lookup: true }); }
 		else applyHash();
 		window.addEventListener('hashchange', applyHash);
 	</script>
