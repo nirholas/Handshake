@@ -3,6 +3,87 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "Trade Terminal: an agent exit now opens the trade, not just the coin",
+			"summary": "The trade terminal advertises a feed of notable agent exits with realized PnL, hold time, exit multiple and a one-click path to copy the trader, but clicking an exit only ever opened the coin: the trade behind it was nowhere on the page and the copy-trader link did not exist. Selecting an exit now opens an Agent exit card carrying the whole position (realized PnL and SOL, exit multiple, hold time, entry and exit size, why it closed, how many people are copying) with links to the entry and exit transactions on-chain and a Copy trader button that goes to that agent's passport. Several honest-failure fixes came with it. A section that could not be reached used to say the data does not exist for this coin, blaming the coin for an outage; each one now says the request failed and offers a Retry that re-runs only that request. Coins with no intel snapshot, no funder graph or no indexed wallets no longer dead-end on a bare sentence, and point instead at the Oracle, Bubblemaps and Solscan. The price chart could get stuck behind a permanent \"Loading chart\" panel that hid the chart underneath it whenever a switched interval had little history. A migrated coin whose price is quoted off Jupiter is now labelled Graduated in the header strip rather than being reported as still on the bonding curve, and the strip names its price source. The failing feed also told the truth about which feed failed, an empty network says it is empty instead of showing one lonely pinned row, the SOL price in the header pulse finally carries a label, and the feed tabs and the coin search box are now navigable and readable with a keyboard and a screen reader.",
+			"tags": [
+				"feature",
+				"fix",
+				"improvement"
+			],
+			"link": "/trades"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The Unstoppable Agent dashboard shows its numbers again, and the agent itself is unstuck",
+			"summary": "The /unstoppable page promised a live view of an agent that funds itself, but every number on it was a dash unless you paid $0.01 first, so nobody could actually watch anything. It now reads a free public snapshot of the agent's treasury, runway, 24-hour earnings and costs, activity log and daily reflection, refreshed every five minutes, and paying still buys the real-time reading and still funds the agent. Two bugs behind the page were worse: the agent had halted itself months ago and could never restart, because the check that clears a halt only ran on ticks a halted agent skipped, and it was sitting on $8.93 against a ten-cent floor with nothing running. It is live again. Its daily reflection was also optional in practice, left to whatever the planner felt like doing, so none had ever been written; it is now guaranteed. The page also gained a real heading, a designed failure state with a retry instead of a permanent loading shimmer, and a layout fix that stopped the activity log stretching the page off a phone screen.",
+			"tags": [
+				"fix",
+				"improvement",
+				"feature"
+			],
+			"link": "/unstoppable"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Watchlist: the portfolio summary stops reporting numbers it does not have",
+			"summary": "The watchlist summary bar claimed $0 of 24h volume across every coin you watch. The pump.fun feed simply stops reporting 24h volume once a coin graduates, and the bar was treating each missing figure as a zero and adding them up, so a confident \"$0\" stood where the honest answer is \"not reported\". Every aggregate now counts only the coins that actually report it, shows a dash when none do, and says on hover how many of your watched coins it covers. The Oracle tier bar does the same: coins the Oracle has not scored get their own marked-off slice instead of quietly vanishing from the distribution, and each unscored card now carries an \"unrated\" badge that links to its coin page rather than leaving a blank corner. If the Oracle itself is unreachable, the page says so instead of labelling every coin unrated. Also fixed: at 320px wide the \"Clear all\" button was pushed off the edge of the screen with no way to reach it, the add-a-coin field had no visible keyboard focus ring, and the page description advertised a verdict the page does not show.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/watchlist"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Proof-of-Grind Gallery: filters stop stranding the board, and a shared card proves it is on it",
+			"summary": "Switching tier or sort while the gallery was still loading could leave you staring at an empty board until you reloaded: the page refused the new request because the old one had not finished, and then never drew anything. The newest request now always wins, so filters respond immediately no matter how fast you click them. When the board itself could not be reached, the summary strip announced \"Gallery: Live\", which was simply false; it now says the stats are unavailable and offers a Retry, as do the gallery and the leaderboard, and each retry re-runs just that request instead of reloading the whole page (the gallery's old retry button also rendered as raw browser chrome). Publishing a wallet refreshed the gallery but not the leaderboard, so your new entry was missing from the ranking until you reloaded. Sharing a card is now worth something: opening a shared link shows whether that address really is on the board, with its verified badge, tier and label, instead of only a local estimate. Alongside those: filtering down to nothing offers a one-click way to clear the filters, a failed \"Load more\" says so instead of silently doing nothing, the tabs work with the browser back button and with arrow keys, a rate-limited publish explains how long to wait rather than printing \"too many requests\", and a gateway failure during publish no longer surfaces a raw parser error.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/vanity/gallery"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Avatar Studio: the trait builder loads again, with its manifest, icons and frames intact",
+			"summary": "The trait-based Avatar Studio, the point-and-click builder behind the “three.ws Studio” option in the avatar creator, was shipping a blank page: two copies of React at different versions landed in the bundle, and React refuses to start when its renderer does not match. Both are pinned to the same version now. Behind that, the builder asked for its character manifest at a path containing the literal word “undefined”, so even a booting studio had no character classes to offer; it now reads the manifest from its own base path. The texture-compression library it loads at startup was requested at a doubled URL in local development and never arrived, and the trait card frames, rarity boxes and back/next arrows were pointed one directory too deep, so they silently 404ed. Every one of those assets resolves now, and if the compressor genuinely cannot start, an export that needs it says so instead of failing with an internal error. The in-app creator, the avatar SDK and the Avatar OS demo now open the builder at its exact entry point, so they can no longer land on the wrong studio page.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/character-studio"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "DeFi Yields: the filter row is styled again, the phone layout fits, and protocol links stop dead-ending",
+			"summary": "The Yields explorer was shipped with its filter row pointing at a stylesheet the page never loaded, so the chain, project and minimum-TVL controls rendered as raw browser dropdowns crammed into one line with their labels colliding. They are proper labelled fields again at every screen size. On a 320 pixel phone the Total TVL card used to be pushed off the right edge with no way to scroll to it, and opening a pool parked its chart outside the visible area inside a table you had to drag sideways; the three headline stats now stack, and the chart stays pinned in view and is drawn at the drawer's real width, so its axis labels are legible instead of shrunk to a third of their size. Fourteen DeFiLlama protocols carry a bracket, a plus or an exclamation mark in their name, and every yield row for one of them linked to a page that answered 404: those links now resolve. When the upstream feed is down, the three stat cards say so rather than sitting as loading placeholders forever, and the result count says the data is unavailable instead of going blank.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/yields"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Voice Lab: a dead voice provider now leaves the menu instead of failing on your first click",
+			"summary": "Google Gemini has been refusing every request on the platform's account, and Voice Lab had no way to know: it listed all 30 Gemini voices, put them first, and the first Preview a visitor pressed came back with a wall of raw error JSON quoting internal project numbers. Now the first refusal is the last one anybody sees. A provider that turns down the platform's credentials is withheld from the voice list for a few minutes with the reason written on its filter chip, its voices disappear from the grid the moment a preview hits it, and the free Microsoft Edge and NVIDIA lanes are named as the alternative. It restores itself the moment the provider works again, with nothing to switch back on by hand. Failure messages across the page are now single readable sentences rather than vendor dumps. The rest is the same page, checked end to end: the catalog error state offers a working Try again, a search that matches nothing offers Clear filters, a deployment with no provider at all says so instead of claiming no voices match, the Remove button next to your own ElevenLabs key is styled like a button again, every control shows a focus ring when you tab to it, and the text box in the playground has a label. The space bar no longer hijacks the button you are pressing: it starts a recording only when nothing on the page is focused.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/voice"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Trending: the time window now filters the coin board, and every row links inside the site",
+			"summary": "The 24h / 7d / all-time control on Trending only ever changed the agent ranking; the conviction coin list ignored it and always answered with a fixed 36 hour slice. It is a real filter on both boards now, the coin column names the window it is showing, and coins that tie on a perfect score are separated by momentum, smart wallets and freshness instead of coming back in a different order on every reload. Agent and trusted rows used to point at absolute three.ws addresses, which bounced anyone browsing a preview or a mirror off the site, and the fallback link pointed at a path that does not exist; every row is now an in-site link that resolves. The three boards are a proper tab set for keyboard and screen reader users (arrow keys, Home and End move between them, each tab names the panel it opens), the selected tab is kept in the address bar so a view can be shared and the back button walks it, and the time buttons announce which one is pressed. Empty boards now say what to do next instead of stopping at 'nothing here'. On a 320 pixel screen an agent's wallet chip used to push the whole page sideways; it wraps now, with the tip action still reachable. Anonymous visitors also stop seeing two failed requests in the console on any page that loads wallet chips or reputation badges.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/trending"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Avatar SDK: the React entry finally loads, and the viewer answers to properties as well as attributes",
 			"summary": "The React bindings in @three-ws/avatar shipped as a .jsx file even though they contain no JSX, which meant Node refused to import them and browsers refused to run them as a module script: the live React SDK demo had been failing with a MIME type error. That entry is now plain JavaScript, so 'import ... from \"@three-ws/avatar/react\"' works in Node, in Next.js, and straight from a browser import map, and the demo page renders all four bindings again. The lightweight <three-ws-viewer> element now also accepts src, alt, background, ar and autoRotate as properties, not only as attributes, so frameworks that assign properties (React 19, Vue, or any Object.assign helper) drive it correctly, including values set before the element upgrades. The package's documentation was corrected in the same pass: the element method list now matches the methods that actually exist, the Avatar Studio default URL is the real one, the license is stated correctly, and the two dependency-free runtime entry points are documented.",
 			"tags": [
@@ -11,6 +92,26 @@
 				"docs"
 			],
 			"link": "/demos/react-sdk"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "3D viewer: shared model links keep their name, and every button on the page does something",
+			"summary": "Open a shared model link and the browser tab now keeps the model's name instead of resetting to a generic one a moment after the page loads, so a bookmarked or shared viewer link is identifiable again. The model's name is also the page's heading now, which is what screen readers and search engines read first. A link whose address does not point at a real https model file used to show a Download button that did nothing; the page now explains what is wrong with the link and offers the only action that helps. Copying the embed snippet from 'Embed it anywhere' confirms it copied, and launching a coin from the model shows that the token image is rendering, both of which were being written to a part of the page the visitor could not see. The page's own title and description now describe what the viewer actually does: preview any public glTF or GLB model, then pose, restyle, scene, AR, embed or download it.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/viewer"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Back-an-Agent Vaults: a successful deposit no longer reports itself as a failure",
+			"summary": "Depositing an amount with cents in it (anything that is not a whole dollar) settled on-chain and then showed the backer an error, because the confirmation line converted the amount through floating point and threw on the result. That is fixed, and the confirmation now names the shares you received. Opening a vault and pressing the browser's back button used to trap you on the page: every back press rebuilt the same entry instead of leaving. The open positions table said nothing at all when a vault's holdings had all been sold down to zero; it now says the capital is in USDC. A vault that failed to load offers a retry and a way back to the list instead of a dead end, and a display fault is no longer reported as a network problem. Anonymous visitors no longer trigger a failed sign-in check on load, the feed and the sign-in check now run at the same time rather than one after the other, the open-a-vault form no longer offers a submit button when you have no agents to open one behind, and the dialogs take keyboard focus, keep Tab inside them, and hand focus back when they close.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/vaults"
 		},
 		{
 			"date": "2026-08-15",
