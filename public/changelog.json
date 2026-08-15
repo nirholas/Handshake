@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T05:46:26.707Z",
+	"generated_at": "2026-08-15T06:32:35.965Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -80,6 +80,29 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The agent-payment and MCP docs now show the code that actually ships",
+			"summary": "Three developer docs had drifted from the code they document, in ways that cost a reader real time. The Payment Sessions walkthrough, which is the guide for giving an agent a budget instead of a wallet key, quoted five snippets that no longer match the source: the branch that refuses a payment when the budget will not cover it, the host-allowlist check (which has moved into a shared module so the dry-run simulator and the live enforcement can never disagree), the expiry sweep that refunds unspent budget, the dollars-to-atomic-units helper, and a column missing from the table definition. All five now match the shipped code line for line, and the page links the two source files it had not been pointing at. The MCP article listed the Solana vanity grinder at up to $0.50 scaled by the work done; it is a flat $0.05 per successful grind, and its setup example set a wallet variable the package does not read, so anyone copying it would have configured a payout address that was silently ignored. That example now shows only the variable that works, and says plainly that settlement is USDC on Solana mainnet. The IBM Granite forecasting example showed three data points for a tool that requires at least sixty-four, so a copied sample was guaranteed to be rejected; it now says so.",
+			"link": "/docs/aws-builder-center-agent-payment-sessions",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The Alibaba Cloud MCP server starts now, and five MCP packages document how to import them",
+			"summary": "The @three-ws/alibaba-cloud-mcp package, which lets an agent use Qwen chat, embeddings, and model discovery on your own Alibaba Cloud key, could not start at all. Two faults, both on the first line of use: the check for whether the file was launched directly crashed before the server ever opened, and the three tools were registered with a schema format the MCP library rejects. Both are fixed, so the server now boots, advertises its tools, and answers a client. The payment-sessions MCP package had a documentation fault with the same cost: its quick start told you to set your session variable to the whole cookie including the name, which the server then wrapped in the cookie name again, so every session-management call came back unauthorized. It now says to use the cookie value, and ships its two runnable examples inside the published package instead of only in the repository. Five packages (payment sessions, Agora, alerts, the assistant widget, and Alibaba Cloud) gained a Programmatic use section showing the exact code to import their tools into a host of your own, and the sniper package's HTTP table now lists every endpoint it actually serves, including the paid close-position route it had left out.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk",
+				"docs"
 			]
 		},
 		{
@@ -21812,7 +21835,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Turn a selfie into a 3D avatar",
-			"summary": "Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk: then put it on an agent.",
+			"summary": "Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk, then put it on an agent.",
 			"link": "/tutorials/selfie-to-avatar",
 			"tags": [
 				"launch"
@@ -27380,7 +27403,7 @@
 			"date": "2026-06-13",
 			"type": "launch",
 			"title": "Tutorial · View your 3D model in AR",
-			"summary": "See any three.ws model in augmented reality and walk around it in your kitchen: straight from the browser, no app to install. iOS Quick Look and Android WebXR.",
+			"summary": "See any three.ws model in augmented reality and walk around it in your kitchen, straight from the browser with no app to install. iOS Quick Look, Android Scene Viewer, and WebXR.",
 			"link": "/tutorials/view-in-ar",
 			"tags": [
 				"launch"
@@ -29718,7 +29741,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Add a greeting & first speech line",
-			"summary": "Make your agent say hello the moment it loads: and have its mouth move with the words.",
+			"summary": "Make your agent say hello the moment it loads, and have its mouth move with the words.",
 			"link": "/tutorials/greeting-and-first-speech",
 			"tags": [
 				"launch"
@@ -29758,7 +29781,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Customize size, position & background",
-			"summary": "Tune every visible knob: bubble size, corner placement, background, rotation speed: entirely through data-* attributes.",
+			"summary": "Tune every visible knob on the <agent-3d> element: layout mode, corner placement, size, background, camera framing, and the ambient clip.",
 			"link": "/tutorials/customize-appearance",
 			"tags": [
 				"launch"
@@ -29828,7 +29851,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Pick & swap an avatar in Studio",
-			"summary": "Visually browse the avatar gallery, switch bodies with one click, and have the change ripple to every embed without redeploying.",
+			"summary": "Swap an agent's 3D body from the Outfit panel in one click, and have the change reach every embed without touching your snippet.",
 			"link": "/tutorials/swap-avatar-in-studio",
 			"tags": [
 				"launch"
