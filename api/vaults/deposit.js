@@ -11,6 +11,8 @@ import { limits } from '../_lib/rate-limit.js';
 import { authWrite, loadOwnedAgent } from '../_lib/vault-auth.js';
 import { getVault } from '../_lib/vault-store.js';
 import { depositToVault } from '../_lib/vault-transfer.js';
+import { usdcToAtomics } from '../_lib/vault-accounting.js';
+import { isUuid } from '../_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -30,7 +32,9 @@ export default wrap(async (req, res) => {
 	const backerAgentId = String(body.backerAgentId || body.backer_agent_id || '').trim();
 	const usdc = Number(body.usdc);
 	if (!vaultId) return error(res, 400, 'validation_error', 'vaultId required');
+	if (!isUuid(vaultId)) return error(res, 400, 'validation_error', 'vaultId must be a vault id');
 	if (!backerAgentId) return error(res, 400, 'validation_error', 'backerAgentId required (the agent wallet to fund from)');
+	if (!isUuid(backerAgentId)) return error(res, 400, 'validation_error', 'backerAgentId must be an agent id');
 	if (!(usdc > 0)) return error(res, 400, 'validation_error', 'usdc must be a positive number');
 
 	const vault = await getVault(vaultId);
@@ -39,10 +43,9 @@ export default wrap(async (req, res) => {
 	let backerAgent;
 	try { backerAgent = await loadOwnedAgent(backerAgentId, userId); } catch (e) { return error(res, e.status || 400, e.code || 'bad_request', e.message); }
 	if (!backerAgent.meta?.solana_address || !backerAgent.meta?.encrypted_solana_secret) {
-		return error(res, 400, 'wallet_unready', 'that agent has no funded Solana wallet yet — provision and fund it first');
+		return error(res, 400, 'wallet_unready', 'that agent has no funded Solana wallet yet. Provision and fund it first.');
 	}
 
-	const { usdcToAtomics } = await import('../_lib/vault-accounting.js');
 	const result = await depositToVault({
 		vault, backerAgent, userId,
 		usdcAtomics: usdcToAtomics(usdc),

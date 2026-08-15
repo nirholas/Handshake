@@ -13,7 +13,8 @@ import { limits } from '../_lib/rate-limit.js';
 import { authWrite } from '../_lib/vault-auth.js';
 import { getVault } from '../_lib/vault-store.js';
 import { vaultTrade } from '../_lib/vault-trade.js';
-import { usdcToAtomics, toBig } from '../_lib/vault-accounting.js';
+import { usdcToAtomics, parseAmountInput } from '../_lib/vault-accounting.js';
+import { isUuid, isValidSolanaAddress } from '../_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -33,8 +34,10 @@ export default wrap(async (req, res) => {
 	const side = body.side === 'sell' ? 'sell' : body.side === 'buy' ? 'buy' : null;
 	const mint = String(body.mint || '').trim();
 	if (!vaultId) return error(res, 400, 'validation_error', 'vaultId required');
+	if (!isUuid(vaultId)) return error(res, 400, 'validation_error', 'vaultId must be a vault id');
 	if (!side) return error(res, 400, 'validation_error', 'side must be "buy" or "sell"');
 	if (!mint) return error(res, 400, 'validation_error', 'mint required');
+	if (!isValidSolanaAddress(mint)) return error(res, 400, 'validation_error', 'mint must be a Solana mint address');
 
 	const vault = await getVault(vaultId);
 	if (!vault) return error(res, 404, 'not_found', 'vault not found');
@@ -47,8 +50,11 @@ export default wrap(async (req, res) => {
 		const usdc = Number(body.usdc);
 		if (!(usdc > 0)) return error(res, 400, 'validation_error', 'usdc must be a positive number for a buy');
 		usdcInAtomics = usdcToAtomics(usdc);
+	} else if (body.amount === 'max' || body.amount == null) {
+		amountRaw = 'max';
 	} else {
-		amountRaw = body.amount === 'max' || body.amount == null ? 'max' : toBig(body.amount);
+		amountRaw = parseAmountInput(body.amount);
+		if (amountRaw == null) return error(res, 400, 'validation_error', 'amount must be a positive number or "max"');
 	}
 
 	const result = await vaultTrade({

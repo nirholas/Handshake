@@ -10,6 +10,7 @@ import { limits } from '../_lib/rate-limit.js';
 import { authWrite, loadOwnedAgent } from '../_lib/vault-auth.js';
 import { getVault } from '../_lib/vault-store.js';
 import { claimVaultFees } from '../_lib/vault-transfer.js';
+import { isUuid } from '../_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -28,7 +29,9 @@ export default wrap(async (req, res) => {
 	const vaultId = String(body.vaultId || body.vault_id || '').trim();
 	const toAgentId = String(body.toAgentId || body.to_agent_id || '').trim();
 	if (!vaultId) return error(res, 400, 'validation_error', 'vaultId required');
+	if (!isUuid(vaultId)) return error(res, 400, 'validation_error', 'vaultId must be a vault id');
 	if (!toAgentId) return error(res, 400, 'validation_error', 'toAgentId required (the wallet to receive fees)');
+	if (!isUuid(toAgentId)) return error(res, 400, 'validation_error', 'toAgentId must be an agent id');
 
 	const vault = await getVault(vaultId);
 	if (!vault) return error(res, 404, 'not_found', 'vault not found');

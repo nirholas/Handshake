@@ -29,6 +29,25 @@ export const USDC_DECIMALS = 6;
 export const USDC_ATOMICS = 1_000_000n;
 export const BPS = 10_000n;
 
+// The negotiable vault terms and their hard bounds. One definition, shared by the
+// open route and the owner's terms PATCH, so the two can never drift apart on
+// what a legal performance fee or drawdown limit is.
+export const TERM_BOUNDS = {
+	performanceFeeBps: { min: 0, max: 5000, def: 1000 },
+	maxDrawdownBps: { min: 100, max: 9000, def: 2500 },
+};
+
+/**
+ * Clamp a caller-supplied basis-points term into its bound. Returns null when the
+ * value is not a real number, so a PATCH can reject "abc" at the boundary instead
+ * of writing a NaN into an integer column.
+ */
+export function clampTermBps(value, bound) {
+	const n = Math.round(Number(value));
+	if (!Number.isFinite(n)) return null;
+	return Math.max(bound.min, Math.min(bound.max, n));
+}
+
 /** Coerce a value (BigInt | number | numeric-string | null) to BigInt atomics. */
 export function toBig(v) {
 	if (typeof v === 'bigint') return v;
@@ -43,6 +62,26 @@ export function toBig(v) {
 	// decimal tail by truncating it (never round up into funds that aren't there).
 	const dot = s.indexOf('.');
 	return BigInt(dot >= 0 ? s.slice(0, dot) : s);
+}
+
+/**
+ * Boundary parse for a caller-supplied share/token amount. `toBig` is the
+ * INTERNAL coercion and trusts its input (a numeric column, a computed value);
+ * handing it a caller's "abc" throws a SyntaxError that surfaces as a 500. This
+ * is the guard that belongs at the HTTP edge: it returns a non-negative BigInt
+ * for anything genuinely numeric, and null for anything else so the handler can
+ * answer 400 instead.
+ */
+export function parseAmountInput(value) {
+	if (typeof value === 'bigint') return value >= 0n ? value : null;
+	if (typeof value === 'number') {
+		if (!Number.isFinite(value) || value < 0) return null;
+		return BigInt(Math.trunc(value));
+	}
+	if (typeof value !== 'string') return null;
+	const s = value.trim();
+	if (!/^\d+(\.\d+)?$/.test(s)) return null;
+	return toBig(s);
 }
 
 /** Float USDC → 6-decimal atomics (BigInt, floored, never negative). */

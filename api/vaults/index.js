@@ -14,17 +14,11 @@ import { authWrite, loadOwnedAgent, assertReputationVerified, traderBadge } from
 import { resolveUserId } from '../_lib/vault-auth.js';
 import { createVault, listVaults, listBackedVaults, recordVaultEvent } from '../_lib/vault-store.js';
 import { generateVaultWallet } from '../_lib/vault-wallet.js';
-import { usdcToAtomics, sharePriceE6, roiBps, toBig } from '../_lib/vault-accounting.js';
+import { usdcToAtomics, sharePriceE6, roiBps, toBig, TERM_BOUNDS, clampTermBps } from '../_lib/vault-accounting.js';
+import { isUuid } from '../_lib/validate.js';
 
-const TERM_BOUNDS = {
-	performanceFeeBps: { min: 0, max: 5000, def: 1000 },
-	maxDrawdownBps: { min: 100, max: 9000, def: 2500 },
-};
-
-function clampInt(v, { min, max, def }) {
-	const n = Math.round(Number(v));
-	if (!Number.isFinite(n)) return def;
-	return Math.max(min, Math.min(max, n));
+function clampInt(v, bound) {
+	return clampTermBps(v, bound) ?? bound.def;
 }
 
 async function handleList(req, res) {
@@ -94,12 +88,13 @@ async function handleOpen(req, res) {
 
 	const agentId = String(body.agentId || body.agent_id || '').trim();
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be an agent id');
 	const network = body.network === 'devnet' ? 'devnet' : 'mainnet';
 
 	let agent;
 	try { agent = await loadOwnedAgent(agentId, userId); } catch (e) { return error(res, e.status || 400, e.code || 'bad_request', e.message); }
 
-	// Reputation gate — only a verifiably-skilled agent can open a vault.
+	// Reputation gate: only a verifiably-skilled agent can open a vault.
 	try { await assertReputationVerified(agentId, network); } catch (e) { return error(res, e.status || 403, e.code || 'forbidden', e.message, e.detail || {}); }
 
 	// Required risk terms.

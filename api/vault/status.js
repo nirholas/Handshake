@@ -39,7 +39,7 @@ export default wrap(async (req, res) => {
 	const params = new URL(req.url, `http://${req.headers?.host || 'x'}`).searchParams;
 	const network = normalizeNetwork(params.get('network'));
 	if (network === null) {
-		return error(res, 400, 'bad_request', `unknown network "${params.get('network')}" — use "testnet" or "mainnet"`);
+		return error(res, 400, 'bad_request', `unknown network "${params.get('network')}": use "testnet" or "mainnet"`);
 	}
 
 	const objectId = params.get('objectId');
@@ -110,7 +110,7 @@ export default wrap(async (req, res) => {
 				policySettled,
 				saleStatus: sale.status,
 				state,
-				pollHint: state === 'pending-grant' ? 'Greenfield permission grant is still mirroring cross-chain — poll again shortly' : undefined,
+				pollHint: state === 'pending-grant' ? 'Greenfield permission grant is still mirroring cross-chain, poll again shortly' : undefined,
 			},
 			{ 'cache-control': 'no-store' },
 		);

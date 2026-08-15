@@ -55,7 +55,7 @@ export default wrap(async (req, res) => {
 	const params = new URL(req.url, `http://${req.headers?.host || 'x'}`).searchParams;
 	const network = normalizeNetwork(params.get('network'));
 	if (network === null) {
-		return error(res, 400, 'bad_request', `unknown network "${params.get('network')}" — use "testnet" or "mainnet"`);
+		return error(res, 400, 'bad_request', `unknown network "${params.get('network')}": use "testnet" or "mainnet"`);
 	}
 
 	const { address: contractAddress, deployed: contractDeployed } = vaultContractAddress(network, params.get('contractAddress'));
@@ -89,7 +89,15 @@ export default wrap(async (req, res) => {
 		let ref;
 		try {
 			ref = await resolveObjectRef(objectId, { network });
-		} catch {
+		} catch (err) {
+			// A Greenfield miss is a genuine "no manifest for this listing" and belongs
+			// in `unresolved`. Anything else (the object index being down, a programmer
+			// error) is an outage, and reporting it as "this listing has no manifest"
+			// would be a lie about real chain state. Same split the manifest fetch below
+			// makes, and the same 503 the other vault endpoints return for it.
+			if (!(err instanceof GreenfieldError)) {
+				return error(res, 503, 'storage_unavailable', `could not resolve vault object refs: ${err.message}`);
+			}
 			ref = null;
 		}
 		if (!ref) {

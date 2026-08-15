@@ -17,7 +17,7 @@
 // Errors mirror unlock.js's status codes (401 bad/expired token, 403 not
 // purchased, 404 not listed, 410 delisted/unavailable, 503 upstream).
 
-import { cors, method, wrap, error } from '../_lib/http.js';
+import { cors, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { assertBscAddress, isEvmAddress, BnbRpcError } from '../_lib/bnb/chains.js';
 import { vaultContractAddress, vaultClient, readListing, readSaleIdOf, readSale, VaultContractError } from '../_lib/bnb/vault-contract.js';
@@ -43,13 +43,18 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rl = await limits.bnbVaultUnlockIp(clientIp(req)); // same tight budget as unlock — this also spends real bandwidth/SP calls
-	if (!rl.success) return error(res, 429, 'rate_limited', 'too many vault downloads');
+	// Same tight budget as unlock: this also spends real bandwidth and SP calls.
+	// `rateLimited` (not a hand-rolled 429) so the retry-after / RateLimit headers
+	// and the limiter's own `reason` survive. This bucket is `critical: true`, so a
+	// Redis outage fails it closed with `rate_limiter_unavailable`, and a client that
+	// never sees that reason misreads a limiter outage as its own quota being spent.
+	const rl = await limits.bnbVaultUnlockIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl, 'too many vault downloads');
 
 	const params = new URL(req.url, `http://${req.headers?.host || 'x'}`).searchParams;
 	const network = normalizeNetwork(params.get('network'));
 	if (network === null) {
-		return error(res, 400, 'bad_request', `unknown network "${params.get('network')}" — use "testnet" or "mainnet"`);
+		return error(res, 400, 'bad_request', `unknown network "${params.get('network')}": use "testnet" or "mainnet"`);
 	}
 	const objectId = params.get('objectId');
 	if (!isBytes32(objectId)) {
@@ -62,11 +67,11 @@ export default wrap(async (req, res) => {
 
 	const claim = decodeVaultDownloadToken(params.get('token'));
 	if (!claim || claim.objectId !== objectId || claim.buyer !== buyer.toLowerCase() || claim.network !== network) {
-		return error(res, 401, 'bad_token', 'missing, expired, or mismatched download token — unlock again to get a fresh one');
+		return error(res, 401, 'bad_token', 'missing, expired, or mismatched download token; unlock again to get a fresh one');
 	}
 
 	if (!env.GREENFIELD_VAULT_OPERATOR_KEY) {
-		return error(res, 503, 'vault_not_configured', 'GREENFIELD_VAULT_OPERATOR_KEY is not set — the vault storage account is not provisioned yet');
+		return error(res, 503, 'vault_not_configured', 'GREENFIELD_VAULT_OPERATOR_KEY is not set; the vault storage account is not provisioned yet');
 	}
 
 	const { address: contractAddress, deployed: contractDeployed } = vaultContractAddress(network);
@@ -109,7 +114,7 @@ export default wrap(async (req, res) => {
 		throw err;
 	}
 	if (sale.status !== 'Granted') {
-		return error(res, 403, 'grant_pending', 'the Greenfield permission grant has not settled yet — poll GET /api/vault/status');
+		return error(res, 403, 'grant_pending', 'the Greenfield permission grant has not settled yet; poll GET /api/vault/status');
 	}
 
 	let ref;

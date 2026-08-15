@@ -1,16 +1,20 @@
 /**
- * `api/vault/{list,status,unlock}.js` — integration tests (prompt 11).
+ * `api/vault/{list,status,unlock,download,buy-policy-data}.js` integration tests.
  *
- * The signature/auth boundary (`api/_lib/bnb/vault-unlock-auth.js`) and the
- * crypto boundary (`api/_lib/bnb/vault-crypto.js` wrapKey/unwrapKey,
- * `secret-box.js` encryptSecret/decryptSecret) run for REAL — a synthetic
- * viem account signs a real EIP-191 message, the handler recovers the real
- * public key from it, and `wrapKey`/`unwrapKey` round-trip a real content
- * key — mirroring this campaign's "real crypto, mocked chain/storage" test
- * convention (tests/bnb-mpp-server.test.js, tests/bnb-vault-crypto.test.js).
- * Only the on-chain reads (`vault-contract.js`) and Greenfield/off-chain
- * index (`vault-store.js`) are mocked, since those need live infra this
- * sandbox doesn't have egress for.
+ * The signature/auth boundary (`api/_lib/bnb/vault-unlock-auth.js`), the crypto
+ * boundary (`api/_lib/bnb/vault-crypto.js` wrapKey/unwrapKey, `secret-box.js`
+ * encryptSecret/decryptSecret), the download-token HMAC codec
+ * (`vault-download-token.js`) and the protobuf policy encoder
+ * (`vault-policy-data.js`) all run for REAL: a synthetic viem account signs a
+ * real EIP-191 message, the handler recovers the real public key from it,
+ * `wrapKey`/`unwrapKey` round-trip a real content key, and the emitted
+ * `policyData` bytes are decoded back through the real generated codec. That
+ * mirrors this campaign's "real crypto, mocked chain/storage" test convention
+ * (tests/bnb-mpp-server.test.js, tests/bnb-vault-crypto.test.js). Only what
+ * needs live infra this sandbox has no egress for is mocked: the on-chain reads
+ * (`vault-contract.js`), the off-chain index and manifest reads
+ * (`vault-store.js`), the object-metadata read (`greenfield.js` getObjectMeta),
+ * and the authenticated SP fetch (`greenfield-write.js` downloadPrivateObject).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -18,6 +22,10 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 
 process.env.WALLET_ENCRYPTION_KEY ||= 'vitest-ephemeral-wallet-key-000000000000000000';
 process.env.JWT_SECRET ||= 'vitest-ephemeral-jwt-secret-00000000000000';
+// download.js refuses with 503 vault_not_configured when no operator key exists, so
+// the authorization path below can only be exercised with one present. Ephemeral and
+// never used to sign: the Greenfield fetch it would authenticate is mocked out.
+process.env.GREENFIELD_VAULT_OPERATOR_KEY ||= '0x' + '7'.repeat(64);
 
 const OBJECT_ID = '0x' + '11'.repeat(32);
 const OTHER_OBJECT_ID = '0x' + '22'.repeat(32);
@@ -61,12 +69,16 @@ const store = {
 	refs: new Map(), // objectId -> {bucket, glbObject, manifestObject}
 	manifests: new Map(), // manifestObject -> manifest JSON
 	keyRecords: new Map(), // `${bucket}:${glbObject}` -> {contentKeyCiphertext, sellerAddress}
+	refError: null, // when set, resolveObjectRef rejects with it
 };
 vi.mock('../api/_lib/bnb/vault-store.js', async () => {
 	const actual = await vi.importActual('../api/_lib/bnb/vault-store.js');
 	return {
 		...actual,
-		resolveObjectRef: vi.fn(async (objectId) => store.refs.get(objectId) || null),
+		resolveObjectRef: vi.fn(async (objectId) => {
+			if (store.refError) throw store.refError;
+			return store.refs.get(objectId) || null;
+		}),
 		fetchManifest: vi.fn(async (_bucket, manifestObject) => {
 			const m = store.manifests.get(manifestObject);
 			if (!m) throw new (await import('../api/_lib/bnb/greenfield.js')).GreenfieldError('not found', 'not_found');
@@ -76,9 +88,42 @@ vi.mock('../api/_lib/bnb/vault-store.js', async () => {
 	};
 });
 
+// ── greenfield.js: only the object-metadata read buy-policy-data.js needs. The
+// protobuf policy encoder itself runs for REAL against it (same "real crypto /
+// real wire format, mocked network" split the rest of this file uses).
+const greenfield = { meta: null, error: null };
+vi.mock('../api/_lib/bnb/greenfield.js', async () => {
+	const actual = await vi.importActual('../api/_lib/bnb/greenfield.js');
+	return {
+		...actual,
+		getObjectMeta: vi.fn(async () => {
+			if (greenfield.error) throw greenfield.error;
+			return greenfield.meta;
+		}),
+	};
+});
+
+// ── greenfield-write.js: the authenticated SP fetch download.js relays. ──
+const sp = { bytes: null, error: null };
+vi.mock('../api/_lib/bnb/greenfield-write.js', async () => {
+	const actual = await vi.importActual('../api/_lib/bnb/greenfield-write.js');
+	return {
+		...actual,
+		downloadPrivateObject: vi.fn(async () => {
+			if (sp.error) throw sp.error;
+			return { bytes: sp.bytes };
+		}),
+	};
+});
+
 const { default: listHandler } = await import('../api/vault/list.js');
 const { default: statusHandler } = await import('../api/vault/status.js');
 const { default: unlockHandler } = await import('../api/vault/unlock.js');
+const { default: downloadHandler } = await import('../api/vault/download.js');
+const { default: policyDataHandler } = await import('../api/vault/buy-policy-data.js');
+const { encodeVaultDownloadToken } = await import('../api/_lib/bnb/vault-download-token.js');
+const { GreenfieldError } = await import('../api/_lib/bnb/greenfield.js');
+const { GreenfieldWriteError } = await import('../api/_lib/bnb/greenfield-write.js');
 const { buildVaultUnlockMessage } = await import('../api/_lib/bnb/vault-unlock-auth.js');
 const { encryptGlb } = await import('../api/_lib/bnb/vault-crypto.js');
 const { unwrapKey } = await import('../api/_lib/bnb/vault-crypto.js');
@@ -93,6 +138,9 @@ function makeRes() {
 	const r = { statusCode: 200, _h: {}, _b: null };
 	r.setHeader = (k, v) => { r._h[k] = v; };
 	r.getHeader = (k) => r._h[k];
+	// download.js streams its success path through writeHead + end(Buffer) rather
+	// than json(), so the fake has to honor both shapes.
+	r.writeHead = (code, headers) => { r.statusCode = code; Object.assign(r._h, headers || {}); return r; };
 	r.end = (b) => { r._b = b; };
 	Object.defineProperty(r, '_s', { get() { return this.statusCode; } });
 	Object.defineProperty(r, 'json', { value: () => JSON.parse(r._b) });
@@ -121,6 +169,11 @@ beforeEach(() => {
 	store.refs.clear();
 	store.manifests.clear();
 	store.keyRecords.clear();
+	store.refError = null;
+	greenfield.meta = null;
+	greenfield.error = null;
+	sp.bytes = null;
+	sp.error = null;
 });
 afterEach(() => {
 	vi.clearAllMocks();
@@ -180,6 +233,22 @@ describe('GET /api/vault/list', () => {
 		rl.ok = false;
 		const r = await get(listHandler, '/api/vault/list');
 		expect(r._s).toBe(429);
+	});
+
+	it('a Greenfield miss while resolving refs lands in unresolved, not a 5xx', async () => {
+		chain.logs = [{ eventName: 'Listed', blockNumber: 1n, logIndex: 0, args: { objectId: OBJECT_ID, seller: SELLER, price: 1n } }];
+		store.refError = new GreenfieldError('bucket unreachable', 'unavailable');
+		const r = await get(listHandler, '/api/vault/list');
+		expect(r._s).toBe(200);
+		expect(r.json().unresolved).toEqual([OBJECT_ID]);
+	});
+
+	it('an object-index outage → 503, never a listing silently reported as manifest-less', async () => {
+		chain.logs = [{ eventName: 'Listed', blockNumber: 1n, logIndex: 0, args: { objectId: OBJECT_ID, seller: SELLER, price: 1n } }];
+		store.refError = new Error('index db connection refused'); // not a GreenfieldError
+		const r = await get(listHandler, '/api/vault/list');
+		expect(r._s).toBe(503);
+		expect(r.json().error).toBe('storage_unavailable');
 	});
 });
 
@@ -343,5 +412,209 @@ describe('POST /api/vault/unlock', () => {
 
 		// The raw content key is never returned.
 		expect(JSON.stringify(res)).not.toContain(contentKey.toString('hex'));
+	});
+});
+
+describe('GET /api/vault/download', () => {
+	const buyer = '0x2222222222222222222222222222222222222222';
+	const CIPHERTEXT = Buffer.from('vault-ciphertext-bytes-not-plaintext-glb');
+	const REF = { bucket: 'three-ws-vault-testnet', glbObject: 'vaults/d/1.glb.enc', manifestObject: 'vaults/d/1.manifest.json' };
+
+	function token(over = {}) {
+		return encodeVaultDownloadToken({ objectId: OBJECT_ID, buyer, network: 'testnet', ...over });
+	}
+	function url(over = {}) {
+		const p = { objectId: OBJECT_ID, buyer, token: token(), ...over };
+		return `/api/vault/download?${new URLSearchParams(p)}`;
+	}
+	/** Chain + storage state of a settled, granted purchase for `buyer`. */
+	function grantPurchase(status = 'Granted') {
+		chain.listings.set(OBJECT_ID, { seller: SELLER, price: 100n, active: true });
+		chain.saleIdOf.set(`${OBJECT_ID}:${buyer.toLowerCase()}`, 3n);
+		chain.sales.set('3', { objectId: OBJECT_ID, buyer, seller: SELLER, price: 100n, policyId: 7n, status });
+		store.refs.set(OBJECT_ID, REF);
+		sp.bytes = CIPHERTEXT;
+	}
+
+	it('purchased + Granted → 200 streams the raw ciphertext bytes', async () => {
+		grantPurchase();
+		const r = await get(downloadHandler, url());
+		expect(r._s).toBe(200);
+		expect(r._h['content-type']).toBe('application/octet-stream');
+		expect(r._h['content-length']).toBe(String(CIPHERTEXT.length));
+		expect(r._h['cache-control']).toBe('no-store');
+		expect(Buffer.compare(r._b, CIPHERTEXT)).toBe(0);
+	});
+
+	it('no token → 401 bad_token (the bytes gate is never open by default)', async () => {
+		grantPurchase();
+		const r = await get(downloadHandler, '/api/vault/download?objectId=' + OBJECT_ID + '&buyer=' + buyer);
+		expect(r._s).toBe(401);
+		expect(r.json().error).toBe('bad_token');
+	});
+
+	it('a valid token for one buyer cannot fetch the bytes of a different buyer', async () => {
+		grantPurchase();
+		const other = '0x4444444444444444444444444444444444444444';
+		chain.saleIdOf.set(`${OBJECT_ID}:${other.toLowerCase()}`, 3n); // other bought it too
+		const r = await get(downloadHandler, url({ buyer: other })); // token still says `buyer`
+		expect(r._s).toBe(401);
+		expect(r.json().error).toBe('bad_token');
+	});
+
+	it('a token minted for another objectId is rejected', async () => {
+		grantPurchase();
+		const r = await get(downloadHandler, url({ token: token({ objectId: OTHER_OBJECT_ID }) }));
+		expect(r._s).toBe(401);
+	});
+
+	it('a tampered signature is rejected', async () => {
+		grantPurchase();
+		const r = await get(downloadHandler, url({ token: token() + 'x' }));
+		expect(r._s).toBe(401);
+	});
+
+	it('an expired token is rejected even with a settled purchase', async () => {
+		grantPurchase();
+		const stale = token();
+		vi.useFakeTimers();
+		vi.setSystemTime(Date.now() + 16 * 60 * 1000); // TTL is 15 minutes
+		const r = await get(downloadHandler, url({ token: stale }));
+		vi.useRealTimers();
+		expect(r._s).toBe(401);
+		expect(r.json().error).toBe('bad_token');
+	});
+
+	it('valid token but no purchase → 403 purchase_required (the token is not the authorization)', async () => {
+		chain.listings.set(OBJECT_ID, { seller: SELLER, price: 100n, active: true });
+		store.refs.set(OBJECT_ID, REF);
+		sp.bytes = CIPHERTEXT;
+		const r = await get(downloadHandler, url());
+		expect(r._s).toBe(403);
+		expect(r.json().error).toBe('purchase_required');
+	});
+
+	it('valid token but the grant is still Pending → 403 grant_pending', async () => {
+		grantPurchase('Pending');
+		const r = await get(downloadHandler, url());
+		expect(r._s).toBe(403);
+		expect(r.json().error).toBe('grant_pending');
+	});
+
+	it('never listed → 404 not_listed', async () => {
+		const r = await get(downloadHandler, url({ objectId: NEVER_LISTED_ID, token: token({ objectId: NEVER_LISTED_ID }) }));
+		expect(r._s).toBe(404);
+		expect(r.json().error).toBe('not_listed');
+	});
+
+	it('delisted with no purchase → 410 delisted', async () => {
+		chain.listings.set(OBJECT_ID, { seller: SELLER, price: 100n, active: false });
+		const r = await get(downloadHandler, url());
+		expect(r._s).toBe(410);
+		expect(r.json().error).toBe('delisted');
+	});
+
+	it('purchased but refs unresolvable → 410 object_index_missing', async () => {
+		grantPurchase();
+		store.refs.clear();
+		const r = await get(downloadHandler, url());
+		expect(r._s).toBe(410);
+		expect(r.json().error).toBe('object_index_missing');
+	});
+
+	it('the SP losing the object → 410, and a transport failure → 503', async () => {
+		grantPurchase();
+		sp.error = new GreenfieldWriteError('object gone', { code: 'not_found' });
+		expect((await get(downloadHandler, url()))._s).toBe(410);
+		sp.error = new GreenfieldWriteError('sp unreachable', { code: 'unavailable' });
+		expect((await get(downloadHandler, url()))._s).toBe(503);
+	});
+
+	it('contract not deployed → 503, never bytes', async () => {
+		grantPurchase();
+		chain.deployed = false;
+		const r = await get(downloadHandler, url());
+		expect(r._s).toBe(503);
+		expect(r.json().error).toBe('contract_not_deployed');
+	});
+
+	it('bad objectId / buyer / network → 400', async () => {
+		expect((await get(downloadHandler, url({ objectId: 'nope' })))._s).toBe(400);
+		expect((await get(downloadHandler, url({ buyer: 'nope' })))._s).toBe(400);
+		expect((await get(downloadHandler, url({ network: 'ethereum' })))._s).toBe(400);
+	});
+
+	it('rate limited → 429 carrying retry-after, not a bare refusal', async () => {
+		rl.ok = false;
+		const r = await get(downloadHandler, url());
+		expect(r._s).toBe(429);
+		expect(r._h['retry-after']).toBeTruthy();
+		expect(r.json().retry_after).toBeGreaterThan(0);
+	});
+});
+
+describe('GET /api/vault/buy-policy-data', () => {
+	const buyer = '0x5555555555555555555555555555555555555555';
+	const url = (over = {}) => `/api/vault/buy-policy-data?${new URLSearchParams({ objectId: OBJECT_ID, buyer, ...over })}`;
+
+	it('a real Greenfield resource id → real protobuf policy bytes', async () => {
+		store.refs.set(OBJECT_ID, { bucket: 'three-ws-vault-testnet', glbObject: 'vaults/p/1.glb.enc', manifestObject: 'vaults/p/1.manifest.json' });
+		greenfield.meta = { id: '18446744073709551', owner: SELLER };
+		const r = await get(policyDataHandler, url());
+		expect(r._s).toBe(200);
+		const body = r.json();
+		expect(body.resourceId).toBe('18446744073709551');
+		expect(body.policyData).toMatch(/^0x[0-9a-f]+$/);
+		expect(body.buyer.toLowerCase()).toBe(buyer.toLowerCase());
+		// The bytes are a real `greenfield.permission.Policy`: decoding them back
+		// must yield this buyer as principal and this object as the resource.
+		const { createRequire } = await import('node:module');
+		const require = createRequire(import.meta.url);
+		const { Policy } = require('@bnb-chain/greenfield-cosmos-types/greenfield/permission/types.js');
+		const decoded = Policy.decode(Buffer.from(body.policyData.slice(2), 'hex'));
+		expect(decoded.principal.value.toLowerCase()).toBe(buyer.toLowerCase());
+		expect(decoded.resourceId).toBe('18446744073709551');
+		expect(decoded.statements).toHaveLength(1);
+	});
+
+	it('an objectId with no resolvable Greenfield ref → 404 not_listed, never invented bytes', async () => {
+		const r = await get(policyDataHandler, url());
+		expect(r._s).toBe(404);
+		expect(r.json().error).toBe('not_listed');
+	});
+
+	it('an object never mirrored to Greenfield → 404 object_not_found, never a fabricated resourceId', async () => {
+		store.refs.set(OBJECT_ID, { bucket: 'b', glbObject: 'o.glb.enc', manifestObject: 'o.manifest.json' });
+		greenfield.error = new GreenfieldError('head_object 404', 'not_found');
+		const r = await get(policyDataHandler, url());
+		expect(r._s).toBe(404);
+		expect(r.json().error).toBe('object_not_found');
+	});
+
+	it('metadata with a zero resource id → 404, never a policy bound to id 0', async () => {
+		store.refs.set(OBJECT_ID, { bucket: 'b', glbObject: 'o.glb.enc', manifestObject: 'o.manifest.json' });
+		greenfield.meta = { id: '0' };
+		const r = await get(policyDataHandler, url());
+		expect(r._s).toBe(404);
+		expect(r.json().error).toBe('object_not_found');
+	});
+
+	it('Greenfield unreachable → 503, not a 404 that reads as "never uploaded"', async () => {
+		store.refs.set(OBJECT_ID, { bucket: 'b', glbObject: 'o.glb.enc', manifestObject: 'o.manifest.json' });
+		greenfield.error = new GreenfieldError('lcd timeout', 'unavailable');
+		const r = await get(policyDataHandler, url());
+		expect(r._s).toBe(503);
+		expect(r.json().error).toBe('greenfield_unavailable');
+	});
+
+	it('bad objectId / buyer / network → 400', async () => {
+		expect((await get(policyDataHandler, url({ objectId: 'nope' })))._s).toBe(400);
+		expect((await get(policyDataHandler, url({ buyer: 'nope' })))._s).toBe(400);
+		expect((await get(policyDataHandler, url({ network: 'ethereum' })))._s).toBe(400);
+	});
+
+	it('rate limited → 429', async () => {
+		rl.ok = false;
+		expect((await get(policyDataHandler, url()))._s).toBe(429);
 	});
 });

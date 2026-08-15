@@ -16,6 +16,7 @@ import {
 import { computeVaultNav } from '../_lib/vault-wallet.js';
 import {
 	sharePriceE6, roiBps, toBig, usdcToAtomics, settleRedemption,
+	TERM_BOUNDS, clampTermBps,
 } from '../_lib/vault-accounting.js';
 import { isUuid } from '../_lib/validate.js';
 
@@ -133,14 +134,34 @@ async function handlePatch(req, res, id) {
 	}
 	if (action === 'terms') {
 		const patch = {};
-		if (body.performanceFeeBps != null) patch.performanceFeeBps = Math.max(0, Math.min(5000, Math.round(Number(body.performanceFeeBps))));
-		if (body.maxDrawdownBps != null) patch.maxDrawdownBps = Math.max(100, Math.min(9000, Math.round(Number(body.maxDrawdownBps))));
-		if (body.maxPerTradeUsdc != null) { const v = Number(body.maxPerTradeUsdc); if (v > 0) patch.maxPerTradeAtomics = usdcToAtomics(v); }
-		if (body.dailyBudgetUsdc != null) { const v = Number(body.dailyBudgetUsdc); if (v > 0) patch.dailyBudgetAtomics = usdcToAtomics(v); }
+		if (body.performanceFeeBps != null) {
+			const bps = clampTermBps(body.performanceFeeBps, TERM_BOUNDS.performanceFeeBps);
+			if (bps == null) return error(res, 400, 'validation_error', 'performanceFeeBps must be a number');
+			patch.performanceFeeBps = bps;
+		}
+		if (body.maxDrawdownBps != null) {
+			const bps = clampTermBps(body.maxDrawdownBps, TERM_BOUNDS.maxDrawdownBps);
+			if (bps == null) return error(res, 400, 'validation_error', 'maxDrawdownBps must be a number');
+			patch.maxDrawdownBps = bps;
+		}
+		if (body.maxPerTradeUsdc != null) {
+			const v = Number(body.maxPerTradeUsdc);
+			if (!(v > 0)) return error(res, 400, 'validation_error', 'maxPerTradeUsdc must be a positive number');
+			patch.maxPerTradeAtomics = usdcToAtomics(v);
+		}
+		if (body.dailyBudgetUsdc != null) {
+			const v = Number(body.dailyBudgetUsdc);
+			if (!(v > 0)) return error(res, 400, 'validation_error', 'dailyBudgetUsdc must be a positive number');
+			patch.dailyBudgetAtomics = usdcToAtomics(v);
+		}
 		if ('perBackerCapUsdc' in body) {
 			const v = body.perBackerCapUsdc;
+			if (v != null && !Number.isFinite(Number(v))) return error(res, 400, 'validation_error', 'perBackerCapUsdc must be a number or null');
 			patch.perBackerCapAtomics = v == null || Number(v) <= 0 ? null : usdcToAtomics(Number(v));
 		}
+		const effectivePerTrade = patch.maxPerTradeAtomics ?? toBig(vault.max_per_trade_atomics);
+		const effectiveDaily = patch.dailyBudgetAtomics ?? toBig(vault.daily_budget_atomics);
+		if (effectivePerTrade > effectiveDaily) return error(res, 400, 'validation_error', 'per-trade ceiling cannot exceed the daily budget');
 		const next = await updateVaultTerms(vault.id, patch);
 		await recordVaultEvent({ vaultId: vault.id, type: 'terms', userId: who.userId, reason: 'terms updated', meta: { patch: Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v == null ? null : String(v)])) } });
 		return json(res, 200, { data: { vault: next } }, { 'cache-control': 'no-store' });

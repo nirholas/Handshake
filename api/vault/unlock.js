@@ -69,7 +69,7 @@ export default wrap(async (req, res) => {
 
 	const network = normalizeNetwork(body?.network);
 	if (network === null) {
-		return error(res, 400, 'bad_request', `unknown network "${body?.network}" — use "testnet" or "mainnet"`);
+		return error(res, 400, 'bad_request', `unknown network "${body?.network}": use "testnet" or "mainnet"`);
 	}
 	const objectId = body?.objectId;
 	if (!isBytes32(objectId)) {
@@ -147,7 +147,7 @@ export default wrap(async (req, res) => {
 		return json(
 			res,
 			200,
-			{ state: 'pending-grant', objectId, buyer, network, saleId: saleId.toString(), saleStatus: sale.status, pollHint: 'Greenfield permission grant is still mirroring cross-chain — poll again shortly' },
+			{ state: 'pending-grant', objectId, buyer, network, saleId: saleId.toString(), saleStatus: sale.status, pollHint: 'Greenfield permission grant is still mirroring cross-chain, poll again shortly' },
 			{ 'cache-control': 'no-store' },
 		);
 	}

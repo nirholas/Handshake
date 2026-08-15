@@ -47,7 +47,7 @@ export default wrap(async (req, res) => {
 			res,
 			400,
 			'bad_request',
-			`unknown network "${params.get('network')}" — use "testnet" or "mainnet"`,
+			`unknown network "${params.get('network')}": use "testnet" or "mainnet"`,
 		);
 	}
 	const objectId = params.get('objectId');
