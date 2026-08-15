@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "Your master wallet: creating one no longer reports a failure, and your balances are real numbers again",
+			"summary": "Two faults on the master wallet page are fixed. First, every account that pressed Create my master wallet was told the creation had failed. The wallet was in fact created every time; the page then showed an error, and the same fault sat on the send and fund-an-agent paths, where a transfer that had already settled on Solana was reported as \"The transfer did not go through\", inviting people to send the same money twice. Nothing about the money was ever wrong, only what the page said about it. Second, the SOL and Solana USDC figures, and the total value, read \"unavailable\" for everyone regardless of what the wallet held, because the balance reader and the page were describing balances in two different shapes. They now show live amounts, priced against the SOL rate, and an empty wallet reads a plain 0 instead of \"unavailable\". A balance the network genuinely could not answer for still says \"unavailable\" and is left out of the total rather than counted as zero. Alongside that: failures now explain themselves in plain words with a support reference instead of printing raw operator text, the explainer bubbles fit inside a phone screen, and each one names what it explains for screen-reader users.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/wallet"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "KOL Tracker: the whole board is readable on a phone, and dead columns are gone",
+			"summary": "On any screen narrower than the board, five of the tracker's seven columns were unreachable: the page could not shrink, and the overflow was clipped rather than scrollable, so P&L, win rate and trade count simply were not there on a phone. The board now fits any viewport and scrolls sideways on its own. Columns with nothing to show are dropped instead of rendering a full column of dashes, so followers and volume appear only once there is data behind them. Each wallet is printed once (it used to appear twice on every row) and links to its Solscan account, so any number on the board can be audited on-chain. Where the P&L for a window comes from is now stated once under the board instead of repeating on all fifty rows, the board refreshes every minute with the time of the last update on screen, and a refresh that fails keeps the rows you are reading rather than blanking them. A failed load now offers a Try again button, an empty window points at the trader leaderboard, and the whole board is navigable and announced properly with a keyboard and a screen reader.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/tracker"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Trade Terminal: an agent exit now opens the trade, not just the coin",
 			"summary": "The trade terminal advertises a feed of notable agent exits with realized PnL, hold time, exit multiple and a one-click path to copy the trader, but clicking an exit only ever opened the coin: the trade behind it was nowhere on the page and the copy-trader link did not exist. Selecting an exit now opens an Agent exit card carrying the whole position (realized PnL and SOL, exit multiple, hold time, entry and exit size, why it closed, how many people are copying) with links to the entry and exit transactions on-chain and a Copy trader button that goes to that agent's passport. Several honest-failure fixes came with it. A section that could not be reached used to say the data does not exist for this coin, blaming the coin for an outage; each one now says the request failed and offers a Retry that re-runs only that request. Coins with no intel snapshot, no funder graph or no indexed wallets no longer dead-end on a bare sentence, and point instead at the Oracle, Bubblemaps and Solscan. The price chart could get stuck behind a permanent \"Loading chart\" panel that hid the chart underneath it whenever a switched interval had little history. A migrated coin whose price is quoted off Jupiter is now labelled Graduated in the header strip rather than being reported as still on the bonding curve, and the strip names its price source. The failing feed also told the truth about which feed failed, an empty network says it is empty instead of showing one lonely pinned row, the SOL price in the header pulse finally carries a label, and the feed tabs and the coin search box are now navigable and readable with a keyboard and a screen reader.",
 			"tags": [

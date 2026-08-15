@@ -49,10 +49,21 @@ export function statusLine(message, max = 180) {
 	return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
 }
 
-/** The message a TTS endpoint meant for a human, whatever shape it answered in. */
-export async function laneErrorMessage(response) {
+// Error codes that mean the LANE is down, not that this one clip failed. Any of
+// them makes the catalog stale the moment it arrives, because the server has
+// just taken that lane off the menu.
+const LANE_DOWN_CODES = new Set(['lane_unavailable', 'invalid_key', 'not_configured']);
+
+/**
+ * Read a TTS error response into the sentence meant for a human plus whether the
+ * lane itself is gone. Never throws: an unparseable body still yields a line.
+ */
+export async function readLaneError(response) {
 	const body = await response.json().catch(() => ({}));
-	return statusLine(body.error_description || body.message || `HTTP ${response.status}`);
+	return {
+		message: statusLine(body.error_description || body.message || `HTTP ${response.status}`),
+		laneDown: LANE_DOWN_CODES.has(body.error) || response.status === 503,
+	};
 }
 
 function debounce(fn, ms) {
@@ -325,6 +336,10 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 			const r = await fetch('/api/tts/catalog?limit=2000', {
 				credentials: 'include',
 				headers: withElevenKey({}),
+				// The catalog is cacheable for a minute, which is right for a page
+				// load and wrong for a re-read triggered by a lane going down: the
+				// browser would answer that one from the copy still listing the lane.
+				cache: silent ? 'no-store' : 'default',
 			});
 			if (!r.ok) throw new Error(`HTTP ${r.status}`);
 			data = await r.json();
@@ -410,7 +425,7 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 				credentials: 'include',
 				headers: withElevenKey({}),
 			});
-			if (!r.ok) throw new Error(await laneErrorMessage(r));
+			if (!r.ok) throw new Error((await readLaneError(r)).message);
 			data = await r.json();
 		} catch (err) {
 			if (token !== reqToken) return;
@@ -464,9 +479,9 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 				body: JSON.stringify({ provider: v.provider, voiceId: v.id, text: PREVIEW_LINE }),
 			});
 			if (!r.ok) {
-				// 503 is the lane saying it cannot serve at all, not this clip failing.
-				laneDown = r.status === 503;
-				throw new Error(await laneErrorMessage(r));
+				const failure = await readLaneError(r);
+				laneDown = failure.laneDown;
+				throw new Error(failure.message);
 			}
 			if (token !== previewToken) return;
 			const blob = await r.blob();
@@ -480,10 +495,10 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 		} finally {
 			btn.disabled = false;
 			btn.textContent = original;
-			// The lane just told us it cannot serve anything. Re-read the catalog so
-			// the grid stops offering voices nobody can render, rather than leaving
-			// the visitor to discover the outage one card at a time. Silent, so the
-			// explanation they are reading survives the refresh.
+			// The failure was the lane, not the clip: the server has already taken
+			// it off the menu, so re-read the catalog and let its voices go with it
+			// rather than leaving the visitor to discover the outage one card at a
+			// time. Silent, so the explanation they are reading survives.
 			if (laneDown) loadCatalog({ silent: true });
 		}
 	}

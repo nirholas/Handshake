@@ -222,24 +222,6 @@
 			.vl-btn:not(:disabled):hover { transform: translateY(-1px); }
 			.vl-btn:not(:disabled):active { transform: translateY(0); }
 
-			/* Keyboard users get the same "you are here" signal a mouse user gets
-			   from :hover. The site reset clears the UA ring, so every control on
-			   this page states its own. */
-			.vl-btn:focus-visible,
-			.vl-pg-sample:focus-visible,
-			.vl-script-next:focus-visible,
-			.vl-voice-card [data-play]:focus-visible,
-			.vl-review-field input:focus-visible,
-			.vl-pg-field select:focus-visible,
-			.vl-pg-field input:focus-visible,
-			.vl-pg-textarea:focus-visible,
-			.vl-byok-row input:focus-visible,
-			.vb-filters input:focus-visible,
-			.vb-filters select:focus-visible {
-				outline: 2px solid #ffffff;
-				outline-offset: 2px;
-			}
-
 			.vl-btn-record {
 				background: #e8e8e8;
 				color: #0a0a0a;
@@ -898,6 +880,27 @@
 				font-size: 12px;
 				color: #777777;
 				margin-top: 10px;
+			}
+
+			/* ── Focus ──────────────────────────────────── */
+			/* Keyboard users get the same "you are here" signal a mouse user gets
+			   from :hover. Several controls above clear the UA ring to style their
+			   own border, so the ring is restored here, last, where it wins. */
+			.vl-btn:focus-visible,
+			.vl-pg-sample:focus-visible,
+			.vl-script-next:focus-visible,
+			.vl-empty-actions .vl-btn:focus-visible,
+			.vl-voice-card .vl-btn:focus-visible,
+			.vb-card .vl-btn:focus-visible,
+			.vl-review-field input:focus-visible,
+			.vl-pg-field select:focus-visible,
+			.vl-pg-field input:focus-visible,
+			.vl-pg-textarea:focus-visible,
+			.vl-byok-row input:focus-visible,
+			.vb-filters input[type="search"]:focus-visible,
+			.vb-filters select:focus-visible {
+				outline: 2px solid #ffffff;
+				outline-offset: 2px;
 			}
 
 			/* ── Responsive ─────────────────────────────── */

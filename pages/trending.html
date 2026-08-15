@@ -363,6 +363,20 @@
 		const WIN_LABEL  = { '24h': '24h', '7d': '7d', 'all': 'all time' };
 		const WIN_PHRASE = { '24h': 'last 24 hours', '7d': 'last 7 days', 'all': 'window we retain' };
 
+		// The legends and the coin empty state name the selected window. They live
+		// inside translated markup, so re-stamp them after a locale swap and never
+		// assume a node survived it.
+		function setText(sel, value) {
+			const el = $(sel);
+			if (el) el.textContent = value;
+		}
+		function syncWindowLabels() {
+			setText('#legendWindow', WIN_LABEL[currentWin]);
+			setText('#coinLegendWindow', WIN_LABEL[currentWin]);
+			setText('#coinEmptyWindow', WIN_PHRASE[currentWin]);
+		}
+		window.addEventListener('i18n:change', syncWindowLabels);
+
 		// ── Tab switching ───────────────────────────────────────────────────
 		function syncTab(tab, { focus = false, push = false } = {}) {
 			currentTab = tab;
@@ -428,9 +442,7 @@
 					b.classList.toggle('active', on);
 					b.setAttribute('aria-pressed', String(on));
 				});
-				$('#legendWindow').textContent = WIN_LABEL[win];
-				$('#coinLegendWindow').textContent = WIN_LABEL[win];
-				$('#coinEmptyWindow').textContent = WIN_PHRASE[win];
+				syncWindowLabels();
 				loadData();
 			});
 		});
@@ -667,8 +679,7 @@
 		const initialTab = new URL(location.href).searchParams.get('tab');
 		if (initialTab && initialTab !== 'agents') syncTab(TABS.includes(initialTab) ? initialTab : 'agents');
 		writeUrl(true);
-		$('#coinLegendWindow').textContent = WIN_LABEL[currentWin];
-		$('#coinEmptyWindow').textContent = WIN_PHRASE[currentWin];
+		syncWindowLabels();
 
 		loadData();
 	</script>

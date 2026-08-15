@@ -1,5 +1,5 @@
 import { getElevenKey, setElevenKey, clearElevenKey, withElevenKey, maskElevenKey } from './voice/eleven-key.js';
-import { mountVoiceBrowser, statusLine } from './voice/voice-browser.js';
+import { mountVoiceBrowser, statusLine, readLaneError } from './voice/voice-browser.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -626,20 +626,13 @@ async function speakPlayground() {
 		});
 
 		if (!r.ok) {
-			const errText = await r.text().catch(() => '');
-			let msg = '';
-			let topUp = '';
-			try {
-				const body = JSON.parse(errText);
-				msg = body.message || body.error_description || body.error || '';
-				if (body.top_up_url) topUp = ` Top up at ${body.top_up_url}.`;
-			} catch {
-				msg = errText;
-			}
-			// A lane that answers 503 is down, not busy: re-read the catalog so the
-			// picker drops the voices it can no longer render.
-			if (r.status === 503) voiceBrowser.reload({ silent: true });
-			throw new Error(statusLine(msg || `HTTP ${r.status}`) + topUp);
+			const body = await r.clone().json().catch(() => ({}));
+			const { message, laneDown } = await readLaneError(r);
+			// The lane is gone, not busy: re-read the catalog so the picker drops
+			// the voices it can no longer render.
+			if (laneDown) voiceBrowser.reload({ silent: true });
+			const topUp = body.top_up_url ? ` Top up at ${body.top_up_url}.` : '';
+			throw new Error(message + topUp);
 		}
 
 		const cacheHit = r.headers.get('x-tts-cache') === 'hit';

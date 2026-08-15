@@ -29,11 +29,12 @@
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=KOL+Tracker&amp;d=Solana+crypto+KOLs+ranked+by+realized+P%26L+computed+from+their+own+wallet%27s+on-chain+trade+history%2C+with+win+rate%2C+volume%2C+trade+count%2C+and+X+follower+counts&amp;p=%2Ftracker" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<style>
-			/* body is a flex column, so this flex item keeps min-width:auto and refuses
-			   to shrink below the board's min-width. html/body clip overflow-x, so
-			   without min-width:0 every column past the second is unreachable on any
-			   viewport narrower than the board. */
-			.tk-shell { max-width: 1080px; min-width: 0; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
+			/* body is a flex column and `margin: 0 auto` is what centers this shell,
+			   but auto cross-axis margins also cancel the flex stretch, leaving the
+			   shell sized to its widest child (the board). html/body clip overflow-x,
+			   so the excess is not even scrollable: without an explicit width every
+			   column past the second is unreachable below the board's min-width. */
+			.tk-shell { width: 100%; max-width: 1080px; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
 			.tk-hero { padding: var(--space-xl) 0 var(--space-md); }
 			.tk-kicker { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--weight-semibold) var(--text-2xs)/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 var(--space-sm); }
 			.tk-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 60%, transparent); animation: tk-pulse 1.8s ease infinite; }
@@ -388,8 +389,12 @@
 					if (silent && rowsEl.querySelector('.tk-row')) setUpdated(state.updatedAt, true);
 					else showError(err.message || 'Something went wrong.');
 				} finally {
-					if (inflight === ctrl) inflight = null;
-					boardEl.setAttribute('aria-busy', 'false');
+					// A superseded request must not clear the busy flag out from under
+					// the newer request that replaced it.
+					if (inflight === ctrl) {
+						inflight = null;
+						boardEl.setAttribute('aria-busy', 'false');
+					}
 				}
 			}
 
