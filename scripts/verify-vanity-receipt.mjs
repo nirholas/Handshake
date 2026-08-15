@@ -35,6 +35,7 @@ import { hmac } from '@noble/hashes/hmac';
 import { hkdf } from '@noble/hashes/hkdf';
 import { gcm } from '@noble/ciphers/aes.js';
 import { bytesToHex, hexToBytes, concatBytes } from '@noble/hashes/utils';
+import { difficultyModel, DIFFICULTY_MODEL_V1 } from '../src/solana/vanity/validation.js';
 
 const PROTOCOL_VERSION = 'three-vanity/v1';
 const WELL_KNOWN = 'https://three.ws/.well-known/three-vanity.json';
@@ -90,15 +91,16 @@ function addressMatchesPattern(address, { prefix = '', suffix = '', ignoreCase =
 	if (s && !a.endsWith(s)) return false;
 	return true;
 }
-function expectedAttempts(prefix = '', suffix = '', ignoreCase = false) {
-	const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-	let attempts = 1;
-	for (const ch of (prefix || '') + (suffix || '')) {
-		const lower = ch.toLowerCase(), upper = ch.toUpperCase();
-		const two = ignoreCase && lower !== upper && alphabet.includes(lower) && alphabet.includes(upper);
-		attempts *= 58 / (two ? 2 : 1);
-	}
-	return attempts;
+/**
+ * Expected attempts under the model a receipt was ISSUED under, named in its
+ * own signed `difficulty.model`. The leading Base58 character is not uniform,
+ * so `base58-exact/v2` scores it from the real distribution while `v1`
+ * receipts keep verifying against the flat 58^n model they were issued under.
+ * An absent field means v1, matching `verifyVanityReceipt` in the module the
+ * page and SDK share.
+ */
+function expectedAttemptsForModel(model, prefix = '', suffix = '', ignoreCase = false) {
+	return difficultyModel(model || DIFFICULTY_MODEL_V1)(prefix, suffix, ignoreCase);
 }
 const SIGNED_FIELDS = ['protocol', 'receiptType', 'address', 'pattern', 'commitment', 'serverSeed', 'clientSeed', 'requestNonce', 'winningIndex', 'attempts', 'durationMs', 'difficulty', 'sealed', 'sealedScheme', 'sealedRecipient', 'sealedEpk', 'network', 'ts'];
 function projectSignedCore(obj) {
@@ -222,10 +224,12 @@ function runChecks(receipt, { servicePublicKey, openedSecretSeed }) {
 	}
 	{
 		const p = receipt.pattern || {};
-		const expected = Math.round(expectedAttempts(p.prefix || '', p.suffix || '', !!p.ignoreCase));
+		const model = receipt.difficulty?.model || DIFFICULTY_MODEL_V1;
+		const expected = Math.round(expectedAttemptsForModel(model, p.prefix || '', p.suffix || '', !!p.ignoreCase));
 		const ok = Number(receipt.difficulty?.expectedAttempts) === expected;
 		add('difficulty', 'Difficulty matches the honest model', ok,
-			ok ? `expectedAttempts = ${expected}` : `claims ${receipt.difficulty?.expectedAttempts}, model = ${expected}`);
+			ok ? `expectedAttempts = ${expected} under ${model}`
+				: `claims ${receipt.difficulty?.expectedAttempts}, ${model} model = ${expected}`);
 	}
 	{
 		const sigOk = verifySignature(receipt, servicePublicKey);
