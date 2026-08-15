@@ -99,6 +99,7 @@ function setPayLabel(text) {
 }
 
 const PAY_LABEL = 'Buy intel · $0.01 USDC';
+const PAY_LABEL_BUSY = 'Paying…';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let activeTopic    = 'sol';
@@ -346,12 +347,42 @@ function setWalletState(state) {
 	syncPayButton();
 }
 
-// The gate owns disabled + label whenever a purchase is not in flight;
-// doPurchase hands the button back to it in its finally block.
+// Single owner of the pay button's disabled state and label, for every phase:
+// mid-purchase, gated by the wallet, or ready.
 function syncPayButton() {
-	if (busy) return;
+	if (busy) {
+		els.payBtn.disabled = true;
+		setPayLabel(PAY_LABEL_BUSY);
+		return;
+	}
 	els.payBtn.disabled = Boolean(payBlockedLabel);
 	setPayLabel(payBlockedLabel || PAY_LABEL);
+}
+
+function paintSessionTotal(flash) {
+	const ticker = totalUsdc();
+	if (!ticker) return;
+	ticker.textContent = `$${sessionTotal.toFixed(2)}`;
+	if (!flash) return;
+	ticker.classList.add('flash');
+	setTimeout(() => ticker.classList.remove('flash'), 600);
+}
+
+// #payBtn and #txTicker carry data-i18n-html, so the runtime translator replaces
+// their whole innerHTML from the catalog: once shortly after first paint, and
+// again on every language switch. That silently reverts the gate's reason label
+// and the running session total to their static defaults while the button stays
+// disabled, which reads as a dead button with no explanation. Re-assert both
+// whenever the translator rewrites them. Only childList on the two hosts is
+// observed, and both writes land a level deeper, so this cannot re-trigger.
+function watchTranslatedNodes() {
+	const obs = new MutationObserver(() => {
+		syncPayButton();
+		paintSessionTotal(false);
+	});
+	obs.observe(els.payBtn, { childList: true });
+	const ticker = $('txTicker');
+	if (ticker) obs.observe(ticker, { childList: true });
 }
 
 async function checkWallet() {
@@ -411,8 +442,7 @@ async function doPurchase() {
 	if (busy) return;
 	busy = true;
 	els.payBtn.classList.add('busy');
-	els.payBtn.disabled = true;
-	setPayLabel('Paying…');
+	syncPayButton();
 	resetStages();
 
 	// Show "initiating" in the narration region immediately.
@@ -512,12 +542,7 @@ async function doPurchase() {
 		// Update session total.
 		const paidAmount = settled.amount ? Number(settled.amount) / 1e6 : 0.01;
 		sessionTotal += paidAmount;
-		const ticker = totalUsdc();
-		if (ticker) {
-			ticker.textContent = `$${sessionTotal.toFixed(2)}`;
-			ticker.classList.add('flash');
-			setTimeout(() => ticker.classList.remove('flash'), 600);
-		}
+		paintSessionTotal(true);
 
 		renderReceipt(settled, intel);
 
@@ -661,6 +686,7 @@ function init() {
 	renderStages();
 	mountAvatars();
 	showEmptyState();
+	watchTranslatedNodes();
 	checkWallet();
 
 	els.payBtn.addEventListener('click', doPurchase);
