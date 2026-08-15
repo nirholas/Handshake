@@ -60,10 +60,14 @@ export function buildServer() {
 	);
 
 	for (const tool of tools) {
-		server.tool(
-			tool.definition.name,
-			tool.definition.description,
-			tool.definition.inputSchema.properties,
+		server.registerTool(
+			tool.name,
+			{
+				title: tool.title,
+				description: tool.description,
+				inputSchema: tool.inputSchema,
+				annotations: tool.annotations,
+			},
 			async (args) => {
 				try {
 					return await tool.handler(args);
@@ -106,8 +110,21 @@ async function main() {
 	);
 }
 
-const isMain =
-	process.argv[1] &&
-	realpathSync(process.argv[1]) === realpathSync(pathToFileURL(import.meta.url).pathname);
+// Connect stdio ONLY when this file is the process entry point. Importing the
+// module (tests, embedding) must not grab the transport. realpath argv[1]: npm
+// bin shims are symlinks, so the raw argv path may differ from import.meta.url.
+function isProcessEntryPoint() {
+	if (!process.argv[1]) return false;
+	try {
+		return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+	} catch {
+		return false;
+	}
+}
 
-if (isMain) main();
+if (isProcessEntryPoint()) {
+	main().catch((err) => {
+		process.stderr.write(`[alibaba-cloud-mcp] fatal: ${err?.stack || err}\n`);
+		process.exit(1);
+	});
+}
