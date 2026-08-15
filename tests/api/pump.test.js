@@ -539,6 +539,27 @@ describe('GET /api/pump/by-agent', () => {
 		const { res } = await invoke(handler, { method: 'GET', url: '/api/pump/by-agent' });
 		expect(res.statusCode).toBe(400);
 	});
+
+	it('scopes last_burn_at to confirmed runs, not every attempt', async () => {
+		// A bare max(created_at) reported the last time the buyback cron ran at
+		// all. An agent with thousands of `skipped` rows and zero burns then
+		// answered {runs: 0, total_burned: '0', last_burn_at: <minutes ago>},
+		// and the dashboard rendered a burn that never happened.
+		sqlState.queue = [
+			[{ id: 'mint-1', mint: mintB58, network: 'mainnet', name: 'Foo', symbol: 'FOO', buyback_bps: 500, agent_authority: walletB58 }],
+			[{ confirmed_payments: 0, unique_payers: 0, total_atomics: '0', last_payment_at: null }],
+			[{ runs: 0, total_burned: '0', last_burn_at: null }],
+		];
+		const handler = pumpAction('by-agent');
+		const { res } = await invoke(handler, {
+			method: 'GET',
+			url: '/api/pump/by-agent?agent_id=00000000-0000-0000-0000-000000000001',
+		});
+		expect(res.statusCode).toBe(200);
+		const burnQuery = sqlState.calls.find((c) => /pump_buyback_runs/.test(String(c.query)) && /last_burn_at/.test(String(c.query)));
+		expect(burnQuery).toBeTruthy();
+		expect(String(burnQuery.query)).toMatch(/max\(created_at\)\s*filter\s*\(where status='confirmed'\)/);
+	});
 });
 
 describe('POST /api/pump/withdraw-confirm', () => {
@@ -752,4 +773,36 @@ describe('cookie-CSRF gate on pump mutations (2026-07-23 audit)', () => {
 		// Past the gate; may fail later on input validation, never on the CSRF gate.
 		expect(res.statusCode).not.toBe(403);
 	});
+
+	// The invoice pair authenticated with a bare getSessionUser(), so it took the
+	// cookie without ever asking for same-site intent: a cross-site POST could
+	// write pending invoice rows under the victim's identity, or drive an invoice
+	// to 'failed'. Both now share resolveAuth() with the rest of the dispatcher.
+	for (const action of ['accept-payment-prep', 'accept-payment-confirm']) {
+		it(`rejects a cross-site cookie-authed POST to ${action}`, async () => {
+			authState.session = { id: 'user-1' };
+			const handler = pumpAction(action);
+			const { res, json } = await invoke(handler, {
+				method: 'POST', url: `/api/pump/${action}`,
+				headers: { origin: 'https://evil.example' },
+				body: {},
+			});
+			expect(res.statusCode).toBe(403);
+			expect(json.error).toBe('forbidden');
+			expect(
+				sqlState.calls.every((c) => !/\b(insert|update|delete)\b/i.test(String(c.query))),
+			).toBe(true);
+		});
+
+		it(`still admits a bearer-authed POST to ${action}`, async () => {
+			authState.bearer = { userId: 'user-1' };
+			const handler = pumpAction(action);
+			const { res } = await invoke(handler, {
+				method: 'POST', url: `/api/pump/${action}`,
+				headers: { origin: 'https://evil.example' },
+				body: {},
+			});
+			expect(res.statusCode).not.toBe(403);
+		});
+	}
 });

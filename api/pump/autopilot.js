@@ -14,16 +14,30 @@
  */
 
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import {
+	getSessionUser,
+	authenticateBearer,
+	extractBearer,
+	isSameSiteOrigin,
+} from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { z } from 'zod';
 
-async function resolveUserId(req) {
+/**
+ * Resolve the caller to { userId, viaCookie }, or null when unauthenticated.
+ *
+ * `viaCookie` drives the CSRF gate below. A POST here rewrites the policy that
+ * gates the buyback and payout crons, so a cross-site form riding the session
+ * cookie could pause an owner's buyback or flip it to full-swap without them
+ * ever seeing it. Bearer callers are exempt: the token itself is the proof of
+ * intent. Same rule the pump dispatcher applies to its cookie-borne writes.
+ */
+async function resolveCaller(req) {
 	const session = await getSessionUser(req);
-	if (session) return session.id;
+	if (session) return { userId: session.id, viaCookie: true };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return bearer.userId;
+	if (bearer) return { userId: bearer.userId, viaCookie: false };
 	return null;
 }
 
@@ -56,14 +70,17 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	const userId = await resolveUserId(req);
-	if (!userId) return error(res, 401, 'unauthorized', 'sign in to manage autopilot');
+	const caller = await resolveCaller(req);
+	if (!caller) return error(res, 401, 'unauthorized', 'sign in to manage autopilot');
+	if (req.method === 'POST' && caller.viaCookie && !isSameSiteOrigin(req)) {
+		return error(res, 403, 'forbidden', 'cross-site request blocked');
+	}
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	if (req.method === 'POST') return upsertPolicy(req, res, userId);
-	return listCoins(req, res, userId);
+	if (req.method === 'POST') return upsertPolicy(req, res, caller.userId);
+	return listCoins(req, res, caller.userId);
 });
 
 // ── GET — coins + policy + activity ──────────────────────────────────────────
