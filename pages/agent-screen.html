@@ -208,9 +208,20 @@
 			}
 			.asc-header-right::-webkit-scrollbar { width: 0; height: 0; }
 			.asc-header-right > * { flex: none; }
-			/* The name + live badge must yield to the control bar rather than
-			   overrun it: at 320px the badge used to paint on top of the toggles. */
-			.asc-agent-info { flex: 0 1 auto; overflow: hidden; }
+			/* Which agent you are watching is the one thing the header must never
+			   lose, so the identity block keeps its width and the (scrolling)
+			   control bar absorbs every pixel of shrink. Before this the badge
+			   painted straight over the toggles at 320px. */
+			.asc-agent-info { flex: 0 0 auto; overflow: hidden; }
+
+			@media (max-width: 640px) {
+				/* On a phone the badge's word is the first thing to go: the dot
+				   already carries the state, and dropping it buys the control bar
+				   enough width to be worth swiping. */
+				.asc-live-badge #asc-badge-text { display: none; }
+				.asc-live-badge { padding: 0.3rem; }
+				.asc-agent-name { max-width: 42vw; }
+			}
 			.asc-ctl-group { display: flex; align-items: center; gap: 0.2rem; }
 			.asc-ctl-sep { width: 1px; height: 20px; background: rgba(255,255,255,0.12); margin: 0 0.25rem; flex: none; }
 

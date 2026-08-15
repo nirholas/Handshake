@@ -676,8 +676,20 @@ async function boot(id) {
 		}, 250);
 	}
 
+	// Keeps the (screen-reader-only) page heading in step with whichever name
+	// resolves first: the agent record fetch, or the stream's own hello frame.
+	function setPageHeading(name) {
+		const el = document.getElementById('asc-page-heading');
+		if (el) el.textContent = `Agent screen: ${name}`;
+	}
+
 	// Build the stage DOM: full-bleed screen + floating panels + task bar.
+	// The watch view is chrome all the way down (the header name is a small
+	// breadcrumb, not a title), so it carried no h1 at all. This is the page
+	// heading for assistive tech; the setup view has its own visible one, and
+	// the two never render together because the stage stays empty until boot.
 	stageEl.innerHTML = `
+		<h1 class="sr-only" id="asc-page-heading">Agent screen</h1>
 		<div class="asc-screen-stage">
 			<canvas id="asc-screen-canvas"></canvas>
 			<!-- Newsroom Anchor lower-third (slides up on a bulletin) -->
@@ -1008,6 +1020,7 @@ async function boot(id) {
 			agentRecord = agent;
 			agentName = agent.name || 'Agent';
 			agentNameEl.textContent = agentName;
+			setPageHeading(agentName);
 			document.title = `${agentName} · Agent Screen · three.ws`;
 			webcamName.textContent = agentName;
 			backEl.href = `/agents/${id}`;
@@ -1879,7 +1892,7 @@ async function boot(id) {
 
 	const client = createAgentScreenClient(id, {
 		onOpen({ agentName: n }) {
-			if (n) { agentNameEl.textContent = n; agentName = n; webcamName.textContent = n; }
+			if (n) { agentNameEl.textContent = n; agentName = n; webcamName.textContent = n; setPageHeading(n); }
 			badgeTextEl.textContent = 'Connecting…';
 		},
 		onFrame(frame) {
