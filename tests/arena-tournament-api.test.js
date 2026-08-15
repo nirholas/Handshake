@@ -25,7 +25,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
 
-import { resolveApi } from '../server/route-resolve.mjs';
+import { loadRouteTable, resolveApi, resolvePhase1 } from '../server/route-resolve.mjs';
 import { threeToAtomics } from '../api/tournaments/index.js';
 
 const db = vi.hoisted(() => ({ queries: [], conflict: true }));
@@ -72,6 +72,19 @@ describe('Arena tournament routes reach a handler', () => {
 	it('passes the id and action through as route params', () => {
 		const hit = resolveApi(API_ROOT, ['tournaments', ID, 'join'], {});
 		expect(hit.params).toEqual({ id: ID, action: 'join' });
+	});
+
+	it('carries the id and action as query values through the vercel.json rewrite', () => {
+		// The rewrite replaces the PATH with the literal /api/tournaments/[id]/[action],
+		// so the handler must read both from the params. Anything that goes back to
+		// parsing them off the pathname answers 400 for every request behind Vercel.
+		const { phase1Routes } = loadRouteTable(join(REPO, 'vercel.json'));
+		const path = `/api/tournaments/${ID}/join`;
+		const hit = resolvePhase1(phase1Routes, { method: 'POST', headers: {}, url: path }, new URL(`http://x${path}`));
+
+		expect(hit.path).toBe('/api/tournaments/[id]/[action]');
+		expect(hit.extraQuery).toEqual({ id: ID, action: 'join' });
+		expect(resolve(hit.path)).toBe('api/tournaments/[id]/[action].js');
 	});
 });
 

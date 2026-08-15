@@ -43,10 +43,21 @@ async function resolveUser(req) {
 	return null;
 }
 
+/**
+ * The id and the action, from the route params rather than the path.
+ *
+ * Both runtimes hand them over as query values: the filesystem resolver merges
+ * `[id]`/`[action]` params into req.query, and the vercel.json rewrite carries them
+ * as `?id=..&action=..` while rewriting the PATH to the literal
+ * /api/tournaments/[id]/[action]. Reading the path first would therefore see the
+ * placeholder `[id]` behind the rewrite and answer 400 for every valid request.
+ */
 function parseRoute(req) {
 	const url = new URL(req.url, `http://${req.headers.host || 'x'}`);
 	const parts = url.pathname.split('/').filter(Boolean); // ['api','tournaments',id,sub]
-	return { id: parts[2] || '', sub: parts[3] || null, url };
+	const id = String(req.query?.id ?? parts[2] ?? '');
+	const sub = req.query?.action ?? parts[3] ?? null;
+	return { id, sub: sub ? String(sub) : null, url };
 }
 
 export default wrap(async (req, res) => {

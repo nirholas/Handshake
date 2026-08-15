@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T15:48:31.663Z",
+	"generated_at": "2026-08-15T15:52:49.645Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -139,7 +139,7 @@
 			"date": "2026-08-15",
 			"type": "update",
 			"title": "Asking for a voice that does not exist now tells you so, instead of quietly speaking in a different one",
-			"summary": "The voice API accepts a provider and a voice id from the voice catalog. If the id was not one that provider actually has, nothing said so: the request was answered with audio rendered in that lane's default voice, and on the metered lanes it was billed, so a single typo in a voice id came back as a stranger's voice at full price with a success status. A well-formed id for a voice that had been removed took the opposite route and failed as a server error, which reads as our fault and tells a client to retry something that will never work. Both now return a plain rejection that names the id you sent and the catalog address to pick a real one from, and that check runs before anything is charged. Leaving the voice id out still gets you the lane default on purpose. Asking the catalog for a provider that does not exist used to return an empty list that was indistinguishable from a provider being down; it now says which providers exist. ElevenLabs voices, whose catalog grows every time you clone or add one, are still decided by ElevenLabs, but an id it rejects is reported as your request being wrong rather than ours, with any charge refunded first. Voice cloning also now asks who you are before reporting anything about how this server is configured.",
+			"summary": "The voice API accepts a provider and a voice id from the voice catalog. If the id was not one that provider actually has, nothing said so: the request was answered with audio rendered in that lane's default voice, and on the metered lanes it was billed, so a single typo in a voice id came back as a stranger's voice at full price with a success status. A well-formed id for a voice that had been removed took the opposite route and failed as a server error, which reads as our fault and tells a client to retry something that will never work. Both now return a plain rejection that names the id you sent and the catalog address to pick a real one from, and that check runs before anything is charged. Leaving the voice id out still gets you the lane default on purpose. Asking the catalog for a provider that does not exist used to return an empty list that was indistinguishable from a provider being down; it now says which providers exist. ElevenLabs voices, whose catalog grows every time you clone or add one, are still decided by ElevenLabs, but an id it rejects is reported as your request being wrong rather than ours, with any charge refunded first. Voice cloning also now asks who you are before reporting anything about how this server is configured. In the same pass, a key ElevenLabs turns down when you list your voices or browse the public voice library now comes back as your key being rejected, so the page can ask you for a new one, instead of a gateway error that invites a retry which can never succeed.",
 			"link": "/docs/api-reference",
 			"tags": [
 				"fix",
@@ -244,12 +244,34 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "Rotating or revoking an x402 API key now requires a proof the request came from you",
+			"summary": "The billing page's rotate and revoke buttons destroy a live API credential, but the endpoint behind them accepted any request that carried your session cookie. A page on another site could have posted to it and killed a working key without you ever seeing the response. Both actions now require a single-use token the page fetches for each write, and the page tells you plainly when a token has gone stale or you have tried too often. Rotating also mints the replacement key before retiring the old one, so a failure part way through can no longer leave you with no key at all.",
+			"link": "/billing/keys",
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "Saving a big build no longer re-downloads the whole world first",
 			"summary": "Every time you saved a world, the service fetched and re-parsed the entire previous version of that world just to check who owns it. On a large build that meant a full extra download and parse on each autosave, for a single ownership field. The check now reads only the small index record, so saves on big worlds are noticeably quicker and the storage layer does half the work. Two error replies also got honest labels: a build that exceeds the size cap now answers \"payload too large\" and a request sent with the wrong content type answers \"unsupported media type\", instead of both arriving as a generic validation error that gave a client nothing to act on.",
 			"link": null,
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Scanning for trade candidates is faster on creator-filtered rules and honest about how much it looked at",
+			"summary": "The Trading Brain's \"Scan for matches\" preview shows the live launches your rule would buy right now, each with a real quote and a real safety verdict, and it never trades on its own. Three fixes. A rule that filters on the creator's track record has to look that record up over the network, and the scan was buying that lookup for every launch in the feed page, including ones it had already rejected for being too old or too small; it now pays for a creator lookup only when the rest of the rule already likes the coin, which is the difference between a scan that returns and one that crawls. The result said it had scanned the whole feed page even though it stops as soon as it has priced six matches, so the count overstated the work behind the answer; it now reports what it actually examined alongside the size of the page it read from. And an agent's Solana address is a field you can edit, so a value that is not a real address turned the preview into a server error rather than a scan; the safety check now resolves that address itself and the scan completes. The scan also gained its own per-owner limit, because every match it prices costs a live on-chain quote and a safety simulation. Separately, when the Trading Brain refuses something, the panel now shows the reason the server sent instead of a generic \"Scan failed\", so a rate limit, a kill switch, or an unreachable launch feed each read as themselves.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -271,6 +293,16 @@
 			"link": "/docs/deployment",
 			"tags": [
 				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Sending $THREE from the wallet works, and swaps stopped failing outright",
+			"summary": "Two things were broken in the transaction builder behind the in-app wallet and the chat wallet tools. Sending any Token-2022 coin, which includes $THREE itself and every pump.fun-era launch, failed with a generic server error: the builder assumed the older token program and never asked the chain which one actually owns the mint. It reads that from the chain now and signs against the right program, so a $THREE transfer builds, and it opens the recipient's token account in the same transaction when they do not have one yet. Swaps had been failing entirely because they still called a Jupiter address that no longer exists anywhere on the internet; they now go through the same Jupiter client the rest of the platform uses, and a real quote comes back. Alongside that, mistakes in what you send are finally answered as mistakes instead of a support reference: a mistyped address, an address that is not a token, a memo that is too long, a signature that is not really a signature, or a balance that is too small each come back naming what is wrong, before your wallet ever asks you to approve something that could only fail. Amounts are also converted with exact decimal math now, so no transfer is off by a rounding error.",
+			"link": null,
+			"tags": [
 				"fix"
 			]
 		},
@@ -360,6 +392,17 @@
 			"tags": [
 				"fix",
 				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The Duplicate button on your widgets works again",
+			"summary": "Duplicating a widget from the dashboard failed every single time. The clone request never gave the new widget an identifier, and because the database requires one, the copy was rejected before it was written and the page showed only a generic server error with a support reference. A second, correct copy of the same clone logic was already in the codebase and the route simply was not using it; the route now runs that one, so duplicating gives you a real new widget with its own id, its own name ending in (copy), and the original's type, look, avatar and visibility carried over. The duplicate request also now carries the same cross-site request protection every other widget change already had, and it accepts an API key with write access, so you can clone a widget from a script as well as from the dashboard. Two smaller corrections travelled with it. When no chat provider is configured and the platform answers a visitor with its own placeholder line, that message is no longer filed in your transcript as though a model had written it. And chatting with one of the showcase widgets in the public gallery no longer tries to file a transcript against a widget that does not exist, which failed on every message. The developer reference now documents duplicate, stats, chat, transcripts and the knowledge base, all of which were live but undocumented.",
+			"link": "/dashboard/widgets",
+			"tags": [
+				"fix",
 				"docs"
 			]
 		},

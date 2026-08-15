@@ -27,6 +27,9 @@
 		"api/tournaments/[id].js": {
 			"maxDuration": 120
 		},
+		"api/tournaments/[id]/[action].js": {
+			"maxDuration": 120
+		},
 		"{api/agents/networth,api/avatars/from-forge,api/pay/execute,api/pay/simulate,api/cron/launcher-claimer,api/seed/synthesize,api/cron/x402-ring-tick}.js": {
 			"maxDuration": 60
 		},
