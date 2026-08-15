@@ -399,15 +399,25 @@ function parseWindowMs(w) {
 const PG_PRUNE_INTERVAL_MS = 600_000;
 let pgPrunedAt = 0;
 
-// Drop windows that no live limiter can still be counting. `maxMemoryWindowMs`
-// tracks the widest window any limiter in this process uses (24h for the daily
-// payout/withdrawal caps), so 2× that is a conservative floor. Fire-and-forget:
-// a failed prune is a no-op that retries on the next interval, never an error
-// on the caller's request path.
+// The widest window any bucket in `limits` declares (the daily caps: '1 d' /
+// '24 h'). The prune floor below must be derived from this and NOT from
+// `maxMemoryWindowMs`: that counter only rises when a limiter is CONSTRUCTED in
+// the current process, so an instance whose first pg-backed bucket was, say,
+// '5 m' prunes with a 10-minute floor and deletes every OTHER instance's live
+// daily row. The table is shared, so one such instance silently resets the
+// 5/day and 3/day spend caps for everybody (observed live: six calls against a
+// 5/day bucket all succeeded, because a sibling process had wiped the row
+// mid-window). Raise this if a wider window is ever added.
+const PG_WIDEST_WINDOW_MS = 86_400_000;
+
+// Drop windows that no live limiter can still be counting: 2x the widest window
+// any bucket uses, so a row is only deleted once its window is long dead on
+// every instance. Fire-and-forget: a failed prune is a no-op that retries on the
+// next interval, never an error on the caller's request path.
 function prunePgCounters(now) {
 	if (now - pgPrunedAt < PG_PRUNE_INTERVAL_MS) return;
 	pgPrunedAt = now;
-	const cutoff = now - 2 * maxMemoryWindowMs;
+	const cutoff = now - 2 * Math.max(PG_WIDEST_WINDOW_MS, maxMemoryWindowMs);
 	sql`DELETE FROM rate_limit_counters WHERE window_start < ${cutoff}`.catch(() => {});
 }
 
@@ -1487,7 +1497,8 @@ export const limits = {
 	personaInterview: (ip) => getLimiter('persona:interview', { limit: 30, window: '1 h' }).limit(ip),
 	personaInterviewAnon: (ip) =>
 		getLimiter('persona:interview:anon', { limit: 8, window: '1 h' }).limit(ip),
-	// Persona preview: Claude API call on the server key. Looser than extract (it's
+	// Persona preview: a metered completion on the shared LLM chain (api/_lib/llm.js),
+	// same as extract, not a fixed Claude-only lane. Looser than extract (it's
 	// interactive) but still per-user critical so a free-signup loop can't run up an
 	// unbounded LLM bill. Anonymous shouldn't reach it (auth required), so per-user.
 	personaPreviewUser: (userId) =>

@@ -25,11 +25,12 @@ const QUOTA_ERROR = 'ERR max requests limit exceeded. Limit: 500000, Usage: 5000
 // semantics: one atomic increment returning the post-increment count.
 function makeSqlStub() {
 	const rows = new Map();
-	const calls = { inserts: 0, deletes: 0 };
+	const calls = { inserts: 0, deletes: 0, deleteCutoffs: [] };
 	const sql = (strings, ...values) => {
 		const text = strings.join('?');
 		if (/DELETE FROM rate_limit_counters/i.test(text)) {
 			calls.deletes++;
+			calls.deleteCutoffs.push(values[0]);
 			return Promise.resolve([]);
 		}
 		if (/INSERT INTO rate_limit_counters/i.test(text)) {
@@ -138,6 +139,24 @@ describe('durable Postgres fallback (no Redis configured)', () => {
 		// voiceClone: 3/day, also critical — same id, different bucket.
 		const voice = await limits.voiceClone('same-id');
 		expect(voice.success).toBe(true);
+	});
+
+	it('prunes on the widest window any bucket can use, not the widest this process built', async () => {
+		// rate_limit_counters is shared by every instance, and the prune is a
+		// blind DELETE. It used to size its retention floor from the widest window
+		// a limiter had been CONSTRUCTED with in the current process, which starts
+		// at one minute. An instance whose first durable bucket was short-windowed
+		// therefore deleted every other instance's live daily row, silently
+		// resetting the 5/day and 3/day spend caps for everyone.
+		const stub = makeSqlStub();
+		const { limits } = await loadRateLimit({ redis: null, sqlStub: stub });
+
+		// inscribeIp: critical (so it lands on Postgres) with a 10-minute window.
+		const before = Date.now();
+		await limits.inscribeIp('203.0.113.9');
+
+		expect(stub.calls.deletes).toBe(1);
+		expect(before - stub.calls.deleteCutoffs[0]).toBeGreaterThanOrEqual(2 * 86_400_000);
 	});
 
 	it('cheap non-critical buckets never touch Postgres', async () => {
