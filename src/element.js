@@ -1519,15 +1519,11 @@ class Agent3DElement extends HTMLElement {
 		this._booting = true;
 		try {
 			this._loadingEl.hidden = false;
-			this.dispatchEvent(
-				new CustomEvent('agent:load-progress', { detail: { phase: 'manifest', pct: 0.1 } }),
-			);
+			this._emit('agent:load-progress', { phase: 'manifest', pct: 0.1 });
 
 			const manifest = await this._resolveManifest();
 			this._manifest = manifest;
-			this.dispatchEvent(
-				new CustomEvent('agent:load-progress', { detail: { phase: 'manifest', pct: 0.3 } }),
-			);
+			this._emit('agent:load-progress', { phase: 'manifest', pct: 0.3 });
 
 			// Hydrate instructions.md if referenced
 			if (
@@ -1587,9 +1583,7 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			// Build Viewer
-			this.dispatchEvent(
-				new CustomEvent('agent:load-progress', { detail: { phase: 'body', pct: 0.45 } }),
-			);
+			this._emit('agent:load-progress', { phase: 'body', pct: 0.45 });
 			// Bare avatars run the viewer in kiosk mode: GUI closed, camera snapped
 			// (no fly-in), and a lower DPR cap — the right profile for a lightweight
 			// decoration avatar. Chat agents get the full interactive viewer.
@@ -1678,9 +1672,7 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			// Memory
-			this.dispatchEvent(
-				new CustomEvent('agent:load-progress', { detail: { phase: 'memory', pct: 0.6 } }),
-			);
+			this._emit('agent:load-progress', { phase: 'memory', pct: 0.6 });
 			const memoryNamespace =
 				manifest.id?.agentId || this.getAttribute('memory-key') || manifest.name || 'anon';
 			this._memory = await Memory.load({
@@ -1699,9 +1691,7 @@ class Agent3DElement extends HTMLElement {
 			}
 
 			// Skills
-			this.dispatchEvent(
-				new CustomEvent('agent:load-progress', { detail: { phase: 'skills', pct: 0.75 } }),
-			);
+			this._emit('agent:load-progress', { phase: 'skills', pct: 0.75 });
 			this._skills = new SkillRegistry({
 				trust: this.getAttribute('skill-trust') || 'owned-only',
 				ownerAddress: manifest.id?.owner,
@@ -1715,20 +1705,14 @@ class Agent3DElement extends HTMLElement {
 					const skill = await this._skills.install(spec, {
 						bundleBase: manifest._baseURI,
 					});
-					this.dispatchEvent(
-						new CustomEvent('skill:loaded', {
-							detail: { name: skill.name, uri: skill.uri },
-						}),
-					);
+					this._emit('skill:loaded', { name: skill.name, uri: skill.uri });
 				} catch (e) {
 					log.warn('[agent-3d] skill load failed', spec, e);
 				}
 			}
 
 			// Runtime
-			this.dispatchEvent(
-				new CustomEvent('agent:load-progress', { detail: { phase: 'brain', pct: 0.9 } }),
-			);
+			this._emit('agent:load-progress', { phase: 'brain', pct: 0.9 });
 			const providerConfig = {
 				apiKey: this.getAttribute('api-key') || undefined,
 				proxyURL: this.getAttribute('key-proxy') || undefined,
@@ -2062,13 +2046,7 @@ class Agent3DElement extends HTMLElement {
 			// END:EMBED_BRIDGES
 			this._loadingEl.hidden = true;
 			if (!this._pillActive) this._posterEl.style.opacity = '0';
-			this.dispatchEvent(
-				new CustomEvent('agent:ready', {
-					detail: { agent: this, manifest },
-					bubbles: true,
-					composed: true,
-				}),
-			);
+			this._emit('agent:ready', { agent: this, manifest }, { bubbles: true, composed: true });
 		} catch (err) {
 			log.error('[agent-3d] boot failed', err);
 			this._loadingEl.hidden = true;
@@ -2078,13 +2056,7 @@ class Agent3DElement extends HTMLElement {
 			// shows the error card, a bare decoration avatar shows its poster (or
 			// stays transparent). Both also emit agent:error below.
 			this._showError(err);
-			this.dispatchEvent(
-				new CustomEvent('agent:error', {
-					detail: { phase: 'boot', error: err },
-					bubbles: true,
-					composed: true,
-				}),
-			);
+			this._emit('agent:error', { phase: 'boot', error: err }, { bubbles: true, composed: true });
 		} finally {
 			this._booting = false;
 		}
@@ -2628,6 +2600,21 @@ class Agent3DElement extends HTMLElement {
 			/[&<>"]/g,
 			(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
 		);
+	}
+
+	// Dispatch an element event using the constructor from THIS element's own
+	// window. `new CustomEvent(...)` reads whichever global is bound at call
+	// time, and _boot is fire-and-forget: an await inside it can settle after the
+	// host's document was replaced (an SPA remount, or a test runner tearing a
+	// DOM down between files), leaving the element in one realm and the global in
+	// another. dispatchEvent then rejects the object as "not of type Event",
+	// which throws out of _boot's own catch and becomes an unhandled rejection:
+	// a handled boot failure reported as a crash. Same-realm construction cannot
+	// mismatch, and an element whose window is gone has nobody left to notify.
+	_emit(type, detail, { bubbles = false, composed = false } = {}) {
+		const view = this.ownerDocument?.defaultView;
+		if (!view) return;
+		this.dispatchEvent(new view.CustomEvent(type, { detail, bubbles, composed }));
 	}
 
 	_showError(err) {
