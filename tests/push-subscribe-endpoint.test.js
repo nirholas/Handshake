@@ -19,6 +19,15 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: { pushSubscribe: (...a) => pushSubscribeLimitMock(...a) },
 }));
 
+// The real SsrfError is kept so the handler's `instanceof` branch is exercised;
+// only the resolver is faked, because a unit test must not hit live DNS.
+const assertPublicHttpsUrlMock = vi.fn();
+vi.mock('../api/_lib/ssrf.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	assertPublicHttpsUrl: (...a) => assertPublicHttpsUrlMock(...a),
+}));
+const { SsrfError } = await import('../api/_lib/ssrf.js');
+
 const { default: handler } = await import('../api/push/subscribe.js');
 
 const USER = '28e98fb2-2a98-4500-b45a-5a9ad7b3f7a8';
@@ -73,6 +82,7 @@ beforeEach(() => {
 	getRequestUserMock.mockReset().mockResolvedValue({ id: USER });
 	requireCsrfMock.mockReset().mockResolvedValue(true);
 	pushSubscribeLimitMock.mockReset().mockResolvedValue({ success: true, limit: 30, remaining: 29, reset: 0 });
+	assertPublicHttpsUrlMock.mockReset().mockResolvedValue(ENDPOINT);
 });
 
 describe('POST /api/push/subscribe', () => {
@@ -124,6 +134,46 @@ describe('POST /api/push/subscribe', () => {
 	});
 });
 
+describe('POST /api/push/subscribe endpoint guard', () => {
+	it('refuses a non-https scheme so a javascript: URL can never be stored', async () => {
+		assertPublicHttpsUrlMock.mockRejectedValue(new SsrfError('scheme not allowed: javascript:', 'scheme_not_allowed'));
+		const res = mkRes();
+		const sub = { ...SUBSCRIPTION, endpoint: 'javascript:alert(1)' };
+		await handler(mkReq({ body: { subscription: sub } }), res);
+
+		expect(res.statusCode).toBe(400);
+		expect(parse(res).error).toBe('validation_error');
+		expect(sqlMock).not.toHaveBeenCalled();
+	});
+
+	it('refuses an endpoint whose host resolves inside our network', async () => {
+		assertPublicHttpsUrlMock.mockRejectedValue(new SsrfError('host resolves to private address: 169.254.169.254', 'private_address'));
+		const res = mkRes();
+		await handler(mkReq({ body: { subscription: SUBSCRIPTION } }), res);
+
+		expect(res.statusCode).toBe(400);
+		expect(sqlMock).not.toHaveBeenCalled();
+	});
+
+	it('answers a resolver outage with a retryable 503 rather than a permanent rejection', async () => {
+		assertPublicHttpsUrlMock.mockRejectedValue(new SsrfError('DNS lookup timed out', 'dns_timeout'));
+		const res = mkRes();
+		await handler(mkReq({ body: { subscription: SUBSCRIPTION } }), res);
+
+		expect(res.statusCode).toBe(503);
+		expect(parse(res).error).toBe('endpoint_unverified');
+		expect(sqlMock).not.toHaveBeenCalled();
+	});
+
+	it('checks the endpoint the caller sent, not a normalized one', async () => {
+		const res = mkRes();
+		await handler(mkReq({ body: { subscription: SUBSCRIPTION } }), res);
+
+		expect(assertPublicHttpsUrlMock).toHaveBeenCalledWith(ENDPOINT);
+		expect(res.statusCode).toBe(201);
+	});
+});
+
 describe('DELETE /api/push/subscribe', () => {
 	it('deletes the endpoint scoped to the signed-in user', async () => {
 		const res = mkRes();
@@ -140,6 +190,18 @@ describe('DELETE /api/push/subscribe', () => {
 	it('accepts the full subscription object in place of a bare endpoint', async () => {
 		const res = mkRes();
 		await handler(mkReq({ method: 'DELETE', body: { subscription: SUBSCRIPTION } }), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(sqlMock.mock.calls[0].slice(1)).toEqual([USER, ENDPOINT]);
+	});
+
+	it('unsubscribes an endpoint that no longer resolves', async () => {
+		// Removing a row is safe, so the registration-time host check must not
+		// gate it: a browser rotating away from a dead push service still needs
+		// its stale row cleared.
+		assertPublicHttpsUrlMock.mockRejectedValue(new SsrfError('DNS lookup failed', 'dns_failed'));
+		const res = mkRes();
+		await handler(mkReq({ method: 'DELETE', body: { endpoint: ENDPOINT } }), res);
 
 		expect(res.statusCode).toBe(200);
 		expect(sqlMock.mock.calls[0].slice(1)).toEqual([USER, ENDPOINT]);

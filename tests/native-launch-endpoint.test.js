@@ -51,7 +51,12 @@ vi.mock('../api/_lib/db.js', () => ({
 		return Promise.resolve([]);
 	},
 }));
-vi.mock('../api/_lib/r2.js', () => ({ publicUrl: (k) => `https://cdn.test/${k}` }));
+vi.mock('../api/_lib/r2.js', () => ({
+	publicUrl: (k) => `https://cdn.test/${k}`,
+	// The launch row resolves avatar thumbnails through thumbnailUrl(), which
+	// drops the legacy origin-pointing keys that publicUrl() would happily emit.
+	thumbnailUrl: (k) => (k ? `https://cdn.test/${k}` : null),
+}));
 vi.mock('../api/_lib/feed.js', () => ({ publishFeedEvent: vi.fn(async () => {}) }));
 vi.mock('../api/_lib/agent-identity.js', () => ({
 	resolveOrCreateAgentForAvatar: vi.fn(async () => ({ id: 'agent-1' })),

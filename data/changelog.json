@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "Push notification sign-up now only accepts a real push service address",
+			"summary": "Turning on browser notifications hands the platform the address your browser wants alerts delivered to, and that address is one the platform later calls from its own servers. It was stored exactly as given, so a crafted sign-up could point it at an internal address instead of a push service and use the delivery job as a way to knock on doors inside our own network. Sign-up now checks the address before storing it: it has to be an ordinary secure web address on a genuinely public host, or it is refused with a clear reason. If the check cannot finish because name lookup is briefly down, the browser is told to try again rather than being turned away for good. Delivery re-checks every stored address at send time too, so anything registered before this landed can never be dialed, and an address that could never be legal is dropped from the list the way an expired one already was.",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Daily usage caps stopped resetting themselves partway through the day",
 			"summary": "When the fast counter store is unavailable, the daily caps that bound expensive actions (persona extraction, voice cloning, withdrawals) fall back to a shared database counter, and a housekeeping job trims counters whose window has passed. That job decided what counted as 'passed' from the shortest-lived counter the server it ran on happened to have loaded, so a server that had only handled short-window traffic deleted everybody's in-progress daily rows. The effect was invisible and generous in the wrong direction: a cap of five per day would let a caller through six, eight, twelve times, because the tally kept getting wiped mid-day. Housekeeping now measures against the longest window any cap can use, so a daily tally survives until its day is genuinely over.",
 			"tags": [

@@ -12,6 +12,26 @@
 // All sends are fire-and-forget — callers never await for correctness.
 
 import { sql } from './db.js';
+import { validatePublicUrl, resolvePublicHost, SsrfError } from './ssrf.js';
+
+// Endpoints are re-validated at send time, not just at registration: rows stored
+// before the registration guard landed are untrusted, and a public host can
+// re-point at an internal address between subscribe and send. A row that can
+// never be a legal target (bad scheme, private address) is pruned like a dead
+// endpoint; a transient resolver failure only skips this send.
+const RETRYABLE_SSRF_CODES = new Set(['dns_timeout', 'dns_failed']);
+
+async function endpointDeliverable(endpoint) {
+	try {
+		const url = validatePublicUrl(endpoint);
+		await resolvePublicHost(url.hostname);
+		return 'ok';
+	} catch (err) {
+		const code = err instanceof SsrfError ? err.code : 'invalid_url';
+		console.error('[web-push] endpoint rejected:', code);
+		return RETRYABLE_SSRF_CODES.has(code) ? 'skip' : 'prune';
+	}
+}
 
 let _configured = null; // null = not yet attempted, false = unavailable, true = ready
 let _webpush = null;
@@ -76,6 +96,13 @@ export async function sendPushToUser(userId, payload) {
 
 	await Promise.all(
 		subs.map(async (s) => {
+			const verdict = await endpointDeliverable(s.endpoint);
+			if (verdict === 'prune') {
+				dead.push(s.id);
+				return;
+			}
+			if (verdict === 'skip') return;
+
 			const subscription = {
 				endpoint: s.endpoint,
 				keys: { p256dh: s.p256dh, auth: s.auth },
