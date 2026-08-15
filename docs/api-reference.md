@@ -5745,6 +5745,117 @@ verbatim and re-served on every read. A violation is a `422`
 
 ---
 
+## IPFS Pinning API
+
+Puts bytes on IPFS and reports whether they are still held there. Both actions
+live in `api/pinning/[action].js`.
+
+The pinning credential is server-held and never reaches the browser, which is
+the whole reason this endpoint exists: the Avatar Studio mint flow
+(`character-studio/src/library/mint-utils.js`) posts an avatar here instead of
+talking to a pinning provider directly. Providers are tried in order, Pinata
+first and web3.storage second, matching `api/_lib/ipfs-pin.js`.
+
+### Pin a file
+
+```
+POST /api/pinning/pin
+```
+
+Authenticated: a session cookie or a bearer token. Rate limited to 30 pins per
+hour per user.
+
+| Field | Required | Meaning |
+|---|---|---|
+| `sourceUrl` | yes | Either a `data:` URL carrying the bytes inline, or an `https://` URL on the platform's own storage domain. Any other host is a `400`. |
+| `kind` | yes | `glb` or `manifest`. Anything else is a `400`. |
+| `filename` | no | The name filed at the provider. Reduced to `A-Za-z0-9._-` and capped at 128 characters; a value that survives none of that, or is not a string, falls back to `avatar.glb` or `manifest.json` by `kind`. Omitted on a storage-URL pin, the object's own key is used. |
+
+Three size ceilings apply, and they are different numbers because they bound
+different things:
+
+| Ceiling | Value | Applies to |
+|---|---|---|
+| Request body | 8 MB | The whole JSON document, enforced by the server for every endpoint |
+| Inline payload | 5 MB | The decoded bytes of a `data:` URL. Base64 inflates raw bytes by 4/3, so 5 MB of payload is about 6.7 MB of body |
+| Storage source | 50 MB | The object fetched from an `https://` source URL |
+
+Anything larger than the inline ceiling should be uploaded to storage first and
+pinned by URL, which is what the 50 MB lane is for.
+
+```bash
+curl -X POST https://three.ws/api/pinning/pin \
+  -H "Authorization: Bearer $THREE_WS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"sourceUrl":"data:application/json;base64,eyJuYW1lIjoiS25pZ2h0In0=","kind":"manifest","filename":"knight.json"}'
+```
+
+```json
+{
+  "ok": true,
+  "cid": "QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+  "gatewayUrl": "https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+  "gatewayUrls": [
+    "https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+    "https://dweb.link/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+    "https://w3s.link/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+    "https://gateway.pinata.cloud/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"
+  ],
+  "provider": "pinata"
+}
+```
+
+`gatewayUrl` is the single canonical read URL; `gatewayUrls` is every gateway
+worth trying. A freshly pinned CID takes minutes to propagate across the public
+network, so the provider's own gateway (last in the list) is the one guaranteed
+to serve it immediately.
+
+**Errors:** `400` (`validation_error`: missing `sourceUrl`, bad `kind`,
+malformed `data:` URL, or a source host the platform does not own), `401`
+(`unauthorized`), `413` (`payload_too_large`, naming the ceiling that was
+crossed), `415` (body was not JSON), `429` (`rate_limited`), `502`
+(`fetch_failed`: the source URL was unreachable or redirected), `503`
+(`pinning_unconfigured`).
+
+A request that is malformed always answers `4xx`, including on a deployment
+with no provider configured: the `503` is reached only once the request itself
+is known to be valid.
+
+### Check whether a CID is still pinned
+
+```
+GET /api/pinning/status?cid=<cid>
+```
+
+Public, unauthenticated, rate limited by IP. `cid` must be 16 to 128
+alphanumeric characters.
+
+```bash
+curl "https://three.ws/api/pinning/status?cid=QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"
+```
+
+```json
+{
+  "cid": "QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+  "pinned": true,
+  "provider": "pinata",
+  "unreachableProviders": [],
+  "gatewayUrls": ["https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"]
+}
+```
+
+`pinned: false` means every provider that answered said it is not holding the
+CID. It never means "we could not tell": a provider that failed to answer is
+named in `unreachableProviders` instead, and if none of them answered the
+response is a `503` (`pinning_check_failed`) rather than a `200`. Treat
+`unreachableProviders` as non-empty before acting on `pinned: false`, because a
+partial answer is still a partial answer.
+
+**Errors:** `400` (`validation_error`: missing or out-of-bounds `cid`), `429`
+(`rate_limited`), `503` (`pinning_unconfigured` or `pinning_check_failed`).
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

@@ -91,6 +91,79 @@ Everything reads live state — usage, invoices, and earnings all move between c
 
 **`get_fee_info`** — none.
 
+## Examples
+
+```jsonc
+// get_billing_summary — plan ceilings and live usage against them
+> {}
+{
+  "ok": true,
+  "plan": "free",
+  "quotas": {
+    "max_avatars": 10,
+    "max_bytes_per_avatar": 26214400,
+    "max_total_bytes": 262144000,
+    "mcp_calls_per_day": 1000
+  },
+  "usage": {
+    "avatar_count": 1,
+    "total_bytes": 1234540,
+    "agent_count": 1,
+    "mcp_calls_24h": 0,
+    "llm_calls_month": 0
+  },
+  "remaining": { "avatars": 9, "total_bytes": 260909460, "mcp_calls_today": 1000 }
+}
+```
+
+```jsonc
+// query_usage — the period statement (defaults to the current UTC month)
+> {}
+{
+  "ok": true,
+  "period_label": "2026-08",
+  "period": { "from": "2026-08-01T00:00:00.000Z", "to": "2026-09-01T00:00:00.000Z" },
+  "line_item_count": 0,
+  "line_items": [],
+  "totals": {
+    "charge_count": 0,
+    "gross_atomics": "0", "fee_atomics": "0", "net_atomics": "0",
+    "gross_usd": "0.00", "fee_usd": "0.00", "net_usd": "0.00",
+    "currency": "USDC"
+  },
+  "reconciliation": { "total": 0, "reconciled": 0, "unreconciled": 0, "all_reconciled": true }
+}
+```
+
+```jsonc
+// export_billing_history — the same statement as a ready-to-save CSV
+> { "preview_rows": 5 }
+{
+  "ok": true,
+  "filename": "three-ws-invoice-2026-08.csv",
+  "content_type": "text/csv; charset=utf-8",
+  "row_count": 1,
+  "preview": [ { "action": "TOTAL", "count": "0", "gross_usd": "0.00", "fee_usd": "0.00" } ],
+  "csv": "action,label,count,units,gross_usd,fee_usd,discount_bps\nTOTAL,,0,,0.00,0.00,\n"
+}
+```
+
+```jsonc
+// get_fee_info — the one read that needs no session
+> {}
+{ "ok": true, "fee_bps": 250, "fee_percent": "2.5" }
+```
+
+A quiet account reads like the statements above: zeroed totals with
+`all_reconciled: true`. That is the healthy empty state, not a failed call. Every
+read without `THREE_WS_SESSION` (except `get_fee_info`) fails loudly instead of
+returning empty data:
+
+```jsonc
+{ "ok": false, "error": "no_session", "status": 401,
+  "message": "/api/billing/summary is account-scoped and needs your three.ws session. …" }
+```
+
 ## What you owe vs. what you earned
 
 Two sides of the same account, two tools:
