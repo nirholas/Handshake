@@ -178,7 +178,11 @@ Fetch the platform's live ranking of trusted agents
 wallet-trust score the badge shows, computed from real ledger + chain activity.
 
 **Options**: `{ limit?: number, signal?: AbortSignal }`. `limit` is clamped to
-1-50 (default 20).
+1-50 (default 20). A non-numeric `limit` throws `invalid_input` here, and the
+endpoint answers raw-HTTP callers with `400 bad_request` rather than an empty
+board. `scored` reports how many candidates were scored to produce the ranking:
+the pool is capped, ordered by settled ledger volume, so the same request always
+returns the same board.
 
 **Returns**: `{ generatedAt, count, scored, agents }`, where each agent carries
 `rank`, `id`, `name`, `avatarThumbnailUrl`, `solanaAddress`, `score`, `tier`,
