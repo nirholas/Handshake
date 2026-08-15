@@ -1,4 +1,4 @@
-// Two guards on the Social Trading Arena's HTTP surface.
+// Three guards on the Social Trading Arena's HTTP surface.
 //
 // 1. ROUTING. Filesystem routing matches a `[param].js` file only on the LAST
 //    path segment, so `api/tournaments/[id].js` answered /api/tournaments/:id
@@ -109,5 +109,36 @@ describe('threeToAtomics', () => {
 		expect(threeToAtomics({ a: 1 }, 6)).toBeNull();
 		expect(threeToAtomics(null, 6)).toBeNull();
 		expect(threeToAtomics(undefined, 6)).toBeNull();
+	});
+});
+
+describe('joinTournament re-entry', () => {
+	beforeEach(() => {
+		db.queries.length = 0;
+		db.conflict = true;
+	});
+
+	it('reactivates an entry the user had withdrawn', async () => {
+		const { entry, created } = await joinTournament({ tournamentId: 't1', agentId: 'a1', wallet: 'W1', snapshot: {} });
+
+		expect(created).toBe(false);
+		expect(entry).toMatchObject({ agent_id: 'a1', status: 'active' });
+		expect(db.queries.some((q) => /update tournament_entries[\s\S]*status = 'active'/i.test(q))).toBe(true);
+	});
+
+	it('only revives a withdrawn entry, never a disqualified one', async () => {
+		await joinTournament({ tournamentId: 't1', agentId: 'a1', wallet: null, snapshot: {} });
+		const update = db.queries.find((q) => /update tournament_entries/i.test(q));
+
+		expect(update).toMatch(/status = 'withdrawn'/);
+		expect(update).not.toMatch(/disqualified/);
+	});
+
+	it('leaves a first-time entry on the insert path', async () => {
+		db.conflict = false;
+		const { created } = await joinTournament({ tournamentId: 't1', agentId: 'a1', wallet: 'W1', snapshot: {} });
+
+		expect(created).toBe(true);
+		expect(db.queries.some((q) => /update tournament_entries/i.test(q))).toBe(false);
 	});
 });
