@@ -3,6 +3,27 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "Arming an Oracle agent for live trading no longer rounds your trade size up",
+      "summary": "The arm page clamps the risk knobs on the server so a bad number can never reach the trading loop, and those clamps have a floor: the smallest trade the loop will place is 0.001 SOL. That floor was being applied in the wrong direction. Ask to arm a live agent with a per-trade size of zero, and instead of being told no, you were armed for real spending at 0.001 SOL a trade with a half-SOL daily ceiling you never asked for. The check meant to catch this looked at the number after the clamp had already raised it, so it could never fire. Arming live now refuses any per-trade size below the floor, and any daily cap smaller than a single trade, and tells you which number to fix; nothing is armed until you do. Clamping a too-large number back down to the ceiling is unchanged, and simulate runs keep the same forgiving behaviour as before. The arm page also shows the reason a save was rejected instead of one generic line, so an ownership problem no longer reads the same as a bad trade size, and a failed Telegram test now prints what Telegram actually said.",
+      "tags": [
+        "fix",
+        "security"
+      ],
+      "link": "/oracle/arm"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "The vanity receipt verifier stops calling honest receipts fraudulent, and the avatar CLI takes a Solana address",
+      "summary": "Two documented commands did not do what their page said. The command-line verifier for a provably-fair vanity address receipt scored the difficulty claim with the retired flat model, the one that treats every Base58 character as equally likely. Every receipt issued since the leading-character correction landed therefore failed its difficulty check and was reported as untrustworthy, even though the in-browser verifier at /vanity/verify passed the same receipt. The verifier now reads the model each receipt names in its own signed difficulty block, exactly as the page and the SDK do, so current receipts verify and older ones keep verifying under the model they were issued under. Separately, the Rig Doctor page showed an avatar-manifest command taking a Solana address as the owner, which the CLI rejected outright: it understood Ethereum addresses and full CAIP-10 identifiers and nothing else. Since Solana is the home chain, a bare Solana address is now accepted and recorded as solana:mainnet-beta. Alongside those, eight tutorial and reference pages were audited against the code they describe: the Vercel self-hosting guide had a stale copy of the config file and pointed at a migrations folder that has moved, the MCP guide listed three placeholder OAuth scopes where the live server publishes twelve real per-capability ones, and the Avatar CLI page pinned a version number that npm has never had.",
+      "tags": [
+        "fix",
+        "docs",
+        "sdk"
+      ],
+      "link": "/docs/rig-doctor"
+    },
+    {
+      "date": "2026-08-15",
       "title": "The agent-payment and MCP docs now show the code that actually ships",
       "summary": "Three developer docs had drifted from the code they document, in ways that cost a reader real time. The Payment Sessions walkthrough, which is the guide for giving an agent a budget instead of a wallet key, quoted five snippets that no longer match the source: the branch that refuses a payment when the budget will not cover it, the host-allowlist check (which has moved into a shared module so the dry-run simulator and the live enforcement can never disagree), the expiry sweep that refunds unspent budget, the dollars-to-atomic-units helper, and a column missing from the table definition. All five now match the shipped code line for line, and the page links the two source files it had not been pointing at. The MCP article listed the Solana vanity grinder at up to $0.50 scaled by the work done; it is a flat $0.05 per successful grind, and its setup example set a wallet variable the package does not read, so anyone copying it would have configured a payout address that was silently ignored. That example now shows only the variable that works, and says plainly that settlement is USDC on Solana mainnet. The IBM Granite forecasting example showed three data points for a tool that requires at least sixty-four, so a copied sample was guaranteed to be rejected; it now says so.",
       "tags": [
