@@ -127,10 +127,23 @@ async function resolveSns(name) {
 	};
 }
 
-export async function resolveName(name) {
+/**
+ * Decide which lane(s) an input belongs to, before any network call is made.
+ * A bare label (no suffix) is an SNS label: `.sol` is the only namespace where
+ * the suffix is optional. Exported so the routing is testable without a chain.
+ *
+ * @param {unknown} name
+ * @returns {{ trimmed: string, isEns: boolean, isSol: boolean }}
+ */
+export function classifyName(name) {
 	const trimmed = String(name || '').trim().toLowerCase();
 	const isEns = ENS_RE.test(trimmed);
 	const isSol = /\.sol$/.test(trimmed) || (!isEns && SOL_RE.test(trimmed));
+	return { trimmed, isEns, isSol };
+}
+
+export async function resolveName(name) {
+	const { trimmed, isEns, isSol } = classifyName(name);
 
 	const tasks = [];
 	if (isEns) tasks.push(['ens', resolveEns(trimmed).catch((e) => ({ error: e?.message || 'ens failed' }))]);

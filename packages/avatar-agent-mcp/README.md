@@ -83,7 +83,7 @@ Once connected, ask your client in plain language:
 
 > Inspect `https://three.ws/avatars/cz.glb` — how many triangles? Then validate it against the Khronos spec and optimize it with Draco.
 
-Runs `inspect_glb` → `validate_glb` → `optimize_glb({ draco: true })`, returning the smaller GLB inline.
+Runs `inspect_glb` → `validate_glb` → `optimize_glb({ draco: true })`, returning the rewritten GLB inline with honest before/after sizes. Note that `cz.glb` already ships `EXT_meshopt_compression` + WebP textures, so re-encoding it with Draco reports a **negative** `savedBytes`: the pipeline never hides that, and an uncompressed source is where the wins actually are.
 
 > Spawn the `cz` avatar, give him shades, mint him a `three`-prefixed Solana wallet, pull a snapshot of $THREE, and have him say "we're so back."
 
@@ -101,7 +101,7 @@ Every tool ships [MCP tool annotations](https://modelcontextprotocol.io/specific
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `inspect_glb`   | Mesh / material / texture / animation / skin breakdown, bounding box, vertex and triangle counts. `@gltf-transform/core`.                                              |
 | `validate_glb`  | Runs Khronos's official `gltf-validator`; returns errors, warnings, infos, hints with JSON pointers.                                                                   |
-| `optimize_glb`  | Dedup → prune → weld → optional Draco. Returns the optimized bytes inline with before/after sizes. Draco- and meshopt-compressed inputs are decoded on read, so a compressed avatar works like any other.                                                                     |
+| `optimize_glb`  | Dedup → prune → weld → optional Draco. Returns the rewritten bytes inline with before/after sizes and a signed `savedBytes` (negative when re-encoding an already-compressed model costs more than it saves). Draco- and meshopt-compressed inputs are decoded on read, so a compressed avatar works like any other.                                                                     |
 | `thumbnail_glb` | Renders any GLB to a PNG via three.ws's hosted three-light rig + auto-framing camera. Returns base64 PNG inline.                                                       |
 | `viewer_url`    | Builds a `three.ws/viewer?...` URL + paste-ready iframe for any GLB or avatar session (background, auto-rotate, camera preset or explicit orbit, AR mode, dimensions). |
 
@@ -143,7 +143,7 @@ Every tool ships [MCP tool annotations](https://modelcontextprotocol.io/specific
 
 | Tool              | What it does                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------------- |
-| `ens_sns_resolve` | Resolves `.eth` (ENS) and `.sol` (Bonfida SNS) names to addresses, with reverse + favorite-domain lookups. |
+| `ens_sns_resolve` | Resolves `.eth` (ENS) and `.sol` (SNS) names to addresses, with reverse + favorite-domain lookups. SNS is read straight from the SPL Name Service accounts on your `SOLANA_RPC_URL`, so it depends on no third-party name service. |
 
 ## How atomic pump.fun works
 
@@ -165,7 +165,7 @@ Per-tool environment variables (all optional — set only what you use):
 | Variable                         | Required for                              | Notes                                                                                                                   |
 | -------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `SOLANA_RPC_URL`                 | All Solana ops                            | Defaults to `https://api.mainnet-beta.solana.com`. Bring your own (Helius / Quicknode / Triton) for production traffic. |
-| `ETH_RPC_URL`                    | `ens_sns_resolve`                         | Optional — falls back to ethers' default public providers. Alias: `MAINNET_RPC_URL`.                                    |
+| `ETH_RPC_URL`                    | `ens_sns_resolve` (`.eth` lane)           | Strongly recommended. Without it ethers falls back to its shared community endpoints, which are throttled hard enough that `.eth` lookups routinely time out. `.sol` needs nothing here. Alias: `MAINNET_RPC_URL`. |
 | `HELIUS_API_KEY`                 | `pump_snapshot` (enhanced)                | Adds exact supply + DAS data.                                                                                           |
 | `NVIDIA_API_KEY`                 | `speak` (free lane)                       | NVIDIA NIM key (`nvapi-…`) — leads the TTS provider chain with Magpie TTS.                                              |
 | `OPENAI_API_KEY`                 | `speak` (paid backstop)                   | Used against `api.openai.com/v1/audio/speech` when the free lane is unavailable.                                        |
@@ -176,6 +176,7 @@ Per-tool environment variables (all optional — set only what you use):
 | `MAX_SOL_PER_TX`                 | execution tools                           | Per-transaction spend cap in SOL. Default `0.5`.                                                                        |
 | `REQUIRE_CONFIRM`                | execution tools                           | Default on: execution calls refuse until re-issued with `confirm: true`. Set `0`/`false` to disable.                    |
 | `RECIPIENT_ALLOWLIST`            | execution tools                           | Optional comma-separated base58 pubkeys. When set, SOL destinations (`wallet_send`, the `pump_collect_fees` drain target) must be in the list. |
+| `NAME_RESOLVE_TIMEOUT_MS`        | `ens_sns_resolve`                         | Budget for one lane of a name lookup. Default `15000`. Raise it when pointing at a slow self-hosted RPC.                |
 | `VIEWER_BASE`                    | `viewer_url`                              | Defaults to `https://three.ws/viewer`. Override to point links at a self-hosted viewer.                                 |
 | `THREE_WS_BASE`                  | hosted rendering / animation catalog      | Defaults to `https://three.ws`. Override only when self-hosting the three.ws backend.                                   |
 

@@ -38,9 +38,12 @@ npm install @three-ws/avatar-schema
 ## Usage
 
 ```js
+import { readFile } from 'node:fs/promises';
 import { validate, assertValid } from '@three-ws/avatar-schema';
 
-const manifest = await (await fetch('https://three.ws/avatars/nicholas.eth.json')).json();
+// A manifest you scaffolded with @three-ws/avatar-cli, or fetched from wherever
+// you host it (IPFS, S3, your own resolver).
+const manifest = JSON.parse(await readFile('./manifest.json', 'utf8'));
 
 const result = validate(manifest);
 if (!result.valid) {
@@ -52,15 +55,26 @@ assertValid(manifest);
 ```
 
 The raw JSON Schema is exported separately so you can bind it to any validator
-(Python `jsonschema`, Go `gojsonschema`, etc.):
+(Python `jsonschema`, Go `gojsonschema`, etc.). It is a `.json` file, so Node's
+ESM loader needs the import attribute:
 
 ```js
-import schema from '@three-ws/avatar-schema/schema';      // ./schema/avatar.v1.json
+import schema from '@three-ws/avatar-schema/schema' with { type: 'json' };
 // or the version-pinned subpath:
-import schemaV1 from '@three-ws/avatar-schema/schema/v1';
+import schemaV1 from '@three-ws/avatar-schema/schema/v1' with { type: 'json' };
 ```
 
-It's also resolvable by absolute URL: <https://three.ws/schema/avatar.v1.json>.
+On Node versions without import attributes, or from CommonJS, use `require`:
+
+```js
+import { createRequire } from 'node:module';
+const schema = createRequire(import.meta.url)('@three-ws/avatar-schema/schema');
+```
+
+The already-parsed object is also a named export of the package root
+(`import { schema } from '@three-ws/avatar-schema'`), which needs neither.
+
+The schema is served at its `$id` too: <https://three.ws/schema/avatar.v1.json>.
 
 ## Manifest fields
 
