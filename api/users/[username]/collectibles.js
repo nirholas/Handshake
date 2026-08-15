@@ -29,6 +29,11 @@ import { readOwnedCosmetics, normalizeAccountId } from '../../_lib/cosmetics-own
 const CACHE_TTL_SECONDS = 10 * 60; // 10m — NFT metadata is effectively static
 const NFT_CAP = 60; // max NFTs surfaced across all wallets
 const MAX_WALLETS_PER_CHAIN = 8; // cap billed upstream calls per request
+// Both NFT providers are third parties on the request path. Up to 16 of these
+// calls fan out in parallel per cache miss, so an unbounded one turns a slow
+// provider into a hung profile tab: bound each call and let the per-call catch
+// degrade it to an empty list.
+const PROVIDER_TIMEOUT_MS = 8000;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
@@ -226,6 +231,7 @@ async function fetchSolanaNfts(wallet) {
 				},
 			},
 		}),
+		signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
 	});
 	if (!resp.ok) throw new Error(`Helius DAS ${resp.status}`);
 	const data = await resp.json();
@@ -270,7 +276,7 @@ async function fetchEvmNfts(wallet, chainId) {
 	};
 	const host = hosts[Number(chainId)] || 'eth-mainnet';
 	const url = `https://${host}.g.alchemy.com/nft/v3/${apiKey}/getNFTsForOwner?owner=${encodeURIComponent(wallet)}&withMetadata=true&pageSize=${NFT_CAP}&excludeFilters[]=SPAM`;
-	const resp = await fetch(url);
+	const resp = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) });
 	if (!resp.ok) throw new Error(`Alchemy ${resp.status}`);
 	const data = await resp.json();
 	const base = explorerForEvm(chainId, '').replace(/\/address\/$/, '');

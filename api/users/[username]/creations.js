@@ -30,6 +30,7 @@ import { listDioramasByUser } from '../../_lib/diorama-store.js';
 import { listRestylesByUser } from '../../_lib/material-restyle-store.js';
 
 const SITE = 'https://three.ws';
+const VALID_TYPES = new Set(['model', 'world', 'restyle']);
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
@@ -54,7 +55,18 @@ export default wrap(async (req, res) => {
 
 	const url = new URL(req.url, 'http://x');
 	const typeFilter = url.searchParams.get('type'); // 'model' | 'world' | 'restyle' | null (all)
-	const before = url.searchParams.get('before') || undefined;
+	if (typeFilter != null && !VALID_TYPES.has(typeFilter)) {
+		return error(res, 400, 'validation_error', 'type must be model|world|restyle');
+	}
+	// The cursor lands in a `created_at < ${before}` predicate, so a non-date
+	// string reaches Postgres as an invalid timestamp literal. The stores swallow
+	// that as an empty list, which reads to the client as "no more creations"
+	// rather than "your cursor is malformed". Validate it here instead.
+	const beforeRaw = url.searchParams.get('before');
+	if (beforeRaw != null && Number.isNaN(Date.parse(beforeRaw))) {
+		return error(res, 400, 'validation_error', 'before must be an ISO 8601 timestamp');
+	}
+	const before = beforeRaw ? new Date(beforeRaw).toISOString() : undefined;
 	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 24, 1), 48);
 	// Over-fetch each source so merging independently-paginated lists still
 	// yields a full page of the true recency-merged feed, not an undercount.

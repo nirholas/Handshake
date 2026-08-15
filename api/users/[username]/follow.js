@@ -17,11 +17,23 @@ import { requireCsrf } from '../../_lib/csrf.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { publishUserEvent } from '../../_lib/feed.js';
 
+// Counted over exactly the set GET /api/users/:username/follows renders: a
+// live account that has claimed a username. Counting the raw edges instead
+// would put a "1 follower" badge above a list that comes back empty, since a
+// deleted or username-less account is not a reachable profile.
 async function counts(userId) {
 	const [row] = await sql`
 		select
-			(select count(*)::int from user_follows where following_id = ${userId}) as followers_count,
-			(select count(*)::int from user_follows where follower_id = ${userId}) as following_count
+			(select count(*)::int
+			   from user_follows f
+			   join users u on u.id = f.follower_id
+			  where f.following_id = ${userId}
+			    and u.username is not null and u.deleted_at is null) as followers_count,
+			(select count(*)::int
+			   from user_follows f
+			   join users u on u.id = f.following_id
+			  where f.follower_id = ${userId}
+			    and u.username is not null and u.deleted_at is null) as following_count
 	`;
 	return {
 		followers_count: row?.followers_count ?? 0,
@@ -53,6 +65,13 @@ export default wrap(async (req, res) => {
 	if (!username || !/^[a-z0-9_-]{3,30}$/.test(username)) {
 		return error(res, 400, 'validation_error', 'invalid username');
 	}
+
+	// Read budget first, before any query: the GET path is public and costs three
+	// statements per call, so it has to be capped like every other public read on
+	// a profile (follows.js, collectibles.js, [username].js all do this). The
+	// stricter write bucket still gates the mutations below.
+	const readRl = await limits.authedReadIp(clientIp(req));
+	if (!readRl.success) return rateLimited(res, readRl);
 
 	const [target] = await sql`
 		select id, username from users

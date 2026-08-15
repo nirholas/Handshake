@@ -420,10 +420,22 @@ export default wrap(async (req, res) => {
 	// Follower/following counts live in their own query so a deploy that lands
 	// before the user_follows migration degrades to zeros rather than 500ing
 	// every public profile (migrate-then-deploy; see api/_lib/bounty-likes.js).
+	// Counted over the same reachable-profile set the follower/following lists
+	// render (api/users/[username]/follows.js): a live account that has claimed
+	// a username. A raw edge count would show a follower total the list cannot
+	// produce a single row for.
 	const [followCounts] = await sql`
 		select
-			(select count(*)::int from user_follows where following_id = ${user.id}) as followers,
-			(select count(*)::int from user_follows where follower_id = ${user.id}) as following
+			(select count(*)::int
+			   from user_follows f
+			   join users u on u.id = f.follower_id
+			  where f.following_id = ${user.id}
+			    and u.username is not null and u.deleted_at is null) as followers,
+			(select count(*)::int
+			   from user_follows f
+			   join users u on u.id = f.following_id
+			  where f.follower_id = ${user.id}
+			    and u.username is not null and u.deleted_at is null) as following
 	`.catch(() => [{ followers: 0, following: 0 }]);
 
 	const stats = {

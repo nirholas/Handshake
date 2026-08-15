@@ -40,6 +40,13 @@ export default wrap(async (req, res) => {
 
 	// followers: rows where following_id = target, list the followers (f.follower_id).
 	// following: rows where follower_id = target, list the followees (f.following_id).
+	//
+	// `u.username is not null` sits in the WHERE clause, not in a post-fetch JS
+	// filter: a profile is only reachable by username, and roughly 4% of accounts
+	// have never claimed one. Dropping those rows after LIMIT/OFFSET would let a
+	// whole page come back empty while has_more said false, stranding the real
+	// rows behind it. Filtering in SQL keeps limit/offset/has_more counting the
+	// same set the client actually renders.
 	const rows = type === 'followers'
 		? await sql`
 			select u.id, u.username, u.display_name, u.avatar_url, u.bio, f.created_at,
@@ -49,7 +56,7 @@ export default wrap(async (req, res) => {
 			       ) as is_following
 			from user_follows f
 			join users u on u.id = f.follower_id and u.deleted_at is null
-			where f.following_id = ${target.id}
+			where f.following_id = ${target.id} and u.username is not null
 			order by f.created_at desc
 			limit ${limit} offset ${offset}
 		`
@@ -61,13 +68,12 @@ export default wrap(async (req, res) => {
 			       ) as is_following
 			from user_follows f
 			join users u on u.id = f.following_id and u.deleted_at is null
-			where f.follower_id = ${target.id}
+			where f.follower_id = ${target.id} and u.username is not null
 			order by f.created_at desc
 			limit ${limit} offset ${offset}
 		`;
 
 	const users = rows
-		.filter((u) => u.username) // a profile is only reachable by username
 		.map((u) => ({
 			username: u.username,
 			display_name: u.display_name || u.username,
