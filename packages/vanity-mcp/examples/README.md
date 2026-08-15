@@ -29,7 +29,7 @@ Runs the MCP `initialize` handshake, then `tools/list`, and formats every tool.
 Expected output (abridged):
 
 ```
-server:       vanity-mcp v0.1.1 (stdio)
+server:       vanity-mcp v0.1.2 (stdio)
 capabilities: tools
 tools:        8
 
