@@ -1,40 +1,15 @@
-import { sql } from '../../_lib/db.js';
-import { getSessionUser } from '../../_lib/auth.js';
-import { cors, error, json, method, wrap, rateLimited } from '../../_lib/http.js';
-import { requireCsrf } from '../../_lib/csrf.js';
-import { limits, clientIp } from '../../_lib/rate-limit.js';
+// Route entry for /api/widgets/:id/duplicate — Vercel resolves to this file
+// via the rewrite in vercel.json. Delegates to the action dispatcher so all
+// duplicate logic lives in one place ([action].js → handleDuplicate).
+//
+// This file used to carry its own copy of the clone query, and that copy
+// omitted the `id` column. widgets.id is `text not null` with no default, so
+// every authenticated Duplicate click died on a not-null violation and the
+// dashboard surfaced a bare 500. Delegating removes the second copy entirely.
 
-export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['POST'])) return;
+import dispatcher from './[action].js';
 
-	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-
-	if (!(await requireCsrf(req, res, user.id))) return;
-
-	const rl = await limits.widgetWrite(clientIp(req));
-	if (!rl.success) return rateLimited(res, rl);
-
-	const url = new URL(req.url, 'http://x');
-	const parts = url.pathname.split('/').filter(Boolean);
-	const id = url.searchParams.get('id') || parts[2];
-
-	const [src] = await sql`
-		SELECT id, user_id, avatar_id, type, name, config, is_public
-		FROM widgets WHERE id = ${id} AND user_id = ${user.id} AND deleted_at IS NULL
-	`;
-	if (!src) return error(res, 404, 'not_found', 'widget not found');
-
-	const [widget] = await sql`
-		INSERT INTO widgets (user_id, avatar_id, type, name, config, is_public)
-		VALUES (
-			${user.id}, ${src.avatar_id}, ${src.type},
-			${src.name + ' (copy)'}, ${JSON.stringify(src.config)}::jsonb, ${src.is_public}
-		)
-		RETURNING id, user_id, avatar_id, type, name, config, is_public,
-		          view_count, created_at, updated_at
-	`;
-
-	return json(res, 201, { widget });
-});
+export default function handler(req, res) {
+	req.query = { ...(req.query || {}), action: 'duplicate' };
+	return dispatcher(req, res);
+}

@@ -98,7 +98,7 @@ export async function testRetrieval({ widgetId, query, topK = 5 }) {
 		throw httpError(
 			503,
 			'embedder_unavailable',
-			'Knowledge test needs an embedding provider on the server — set NVIDIA_API_KEY (free) or OPENAI_API_KEY.',
+			'Knowledge test needs an embedding provider on the server: set NVIDIA_API_KEY (free) or OPENAI_API_KEY.',
 		);
 	}
 	const q = String(query || '').trim();
@@ -185,7 +185,7 @@ export async function ingestKnowledge({ widgetId, userId, input }) {
 		throw httpError(
 			503,
 			'embedder_unavailable',
-			'Knowledge upload needs an embedding provider on the server — set NVIDIA_API_KEY (free) or OPENAI_API_KEY.',
+			'Knowledge upload needs an embedding provider on the server: set NVIDIA_API_KEY (free) or OPENAI_API_KEY.',
 		);
 	}
 
@@ -366,7 +366,7 @@ export async function processQueuedDoc({ docId, widgetId }) {
 		throw httpError(
 			503,
 			'embedder_unavailable',
-			'No embedding provider configured — set NVIDIA_API_KEY (free) or OPENAI_API_KEY.',
+			'No embedding provider configured: set NVIDIA_API_KEY (free) or OPENAI_API_KEY.',
 		);
 	}
 
