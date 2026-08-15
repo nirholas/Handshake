@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/billing-mcp</h1>
 
-<p align="center"><strong>An AI agent's own account economics over MCP — plan quotas, metered usage, invoices, receipts, and earnings. Read-only and account-scoped.</strong></p>
+<p align="center"><strong>An AI agent's own account economics over MCP, plan quotas, metered usage, invoices, receipts, and earnings. Read-only and account-scoped.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/billing-mcp"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/billing-mcp?logo=npm&color=cb3837"></a>
@@ -16,9 +16,9 @@
 
 ---
 
-> A [Model Context Protocol](https://modelcontextprotocol.io) server that lets an AI agent self-serve its **own** account economics over stdio: how much of its plan quota is left, what its metered usage rolled up to this period, the line-item invoice and per-charge receipts behind every charge, and the earnings its agents have made — all without pulling in the human account owner.
+> A [Model Context Protocol](https://modelcontextprotocol.io) server that lets an AI agent self-serve its **own** account economics over stdio: how much of its plan quota is left, what its metered usage rolled up to this period, the line-item invoice and per-charge receipts behind every charge, and the earnings its agents have made, all without pulling in the human account owner.
 
-Every read hits the live three.ws billing API — nothing is mocked. The account-scoped reads run against the account **you own**, resolved from your three.ws session. This server is **read-only**: it surfaces private billing data but never signs, charges, or moves funds.
+Every read hits the live three.ws billing API: nothing is mocked. The account-scoped reads run against the account **you own**, resolved from your three.ws session. This server is **read-only**: it surfaces private billing data but never signs, charges, or moves funds.
 
 ## Install
 
@@ -56,7 +56,7 @@ claude mcp add billing -- npx -y @three-ws/billing-mcp
 }
 ```
 
-`THREE_WS_SESSION` is required for every read except the public fee rate — it's the value of the `__Host-sid` cookie from a signed-in three.ws browser session, and the API uses it to resolve your account and return only your data.
+`THREE_WS_SESSION` is required for every read except the public fee rate, it's the value of the `__Host-sid` cookie from a signed-in three.ws browser session, and the API uses it to resolve your account and return only your data.
 
 Inspect the surface with the MCP Inspector:
 
@@ -69,32 +69,32 @@ npx -y @modelcontextprotocol/inspector npx @three-ws/billing-mcp
 | Tool                       | Type              | What it does                                                                                                                |
 | -------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `get_billing_summary`      | read · session    | Your plan tier, its quota ceilings, and live usage against them (avatars + storage, agents, MCP calls, LLM calls) + headroom. |
-| `query_usage`              | read · session    | Metered usage rolled into an invoice statement for a period — per-action line items, totals, and reconciliation.            |
+| `query_usage`              | read · session    | Metered usage rolled into an invoice statement for a period, per-action line items, totals, and reconciliation.            |
 | `export_billing_history`   | read · session    | The same line items as a ready-to-save CSV payload (with a suggested filename and a parsed preview).                        |
-| `get_receipt`              | read · session    | One itemized receipt — per-charge by `event_id` (with settlement tx + explorer link) or a signed skill-purchase receipt by `purchase_id`. |
-| `get_revenue`              | read · session    | Earnings for the agents you own — gross/fee/net, per-skill and over time, plus creator-subscription income.                 |
+| `get_receipt`              | read · session    | One itemized receipt, per-charge by `event_id` (with settlement tx + explorer link) or a signed skill-purchase receipt by `purchase_id`. |
+| `get_revenue`              | read · session    | Earnings for the agents you own, gross/fee/net, per-skill and over time, plus creator-subscription income.                 |
 | `get_fee_info`             | read · **public** | The current platform fee rate (`fee_bps` + `fee_percent`). Needs no session.                                                |
 
-Everything reads live state — usage, invoices, and earnings all move between calls — so no tool is idempotent, and nothing here mutates anything.
+Everything reads live state: usage, invoices, and earnings all move between calls, so no tool is idempotent, and nothing here mutates anything.
 
 ### Input parameters
 
-**`get_billing_summary`** — none.
+**`get_billing_summary`**: none.
 
-**`query_usage`** — `period` (YYYY-MM, optional), `from` / `to` (ISO-8601, optional; ignored when `period` is set). Defaults to the current UTC calendar month.
+**`query_usage`**: `period` (YYYY-MM, optional), `from` / `to` (ISO-8601, optional; ignored when `period` is set). Defaults to the current UTC calendar month.
 
-**`export_billing_history`** — `period`, `from`, `to` (same as `query_usage`), `preview_rows` (0–100, default 5 — how many parsed rows to echo in `preview`; the full CSV is always returned).
+**`export_billing_history`**: `period`, `from`, `to` (same as `query_usage`), `preview_rows` (0-100, default 5, how many parsed rows to echo in `preview`; the full CSV is always returned).
 
-**`get_receipt`** — exactly one of `event_id` (numeric, per-charge receipt) or `purchase_id` (UUID, signed skill-purchase receipt).
+**`get_receipt`**: exactly one of `event_id` (numeric, per-charge receipt) or `purchase_id` (UUID, signed skill-purchase receipt).
 
-**`get_revenue`** — `agent_id` (UUID, optional — narrow to one agent), `from` / `to` (ISO-8601, default last 30 days), `granularity` (`day` | `week` | `month`, default `day`).
+**`get_revenue`**: `agent_id` (UUID, optional: narrow to one agent), `from` / `to` (ISO-8601, default last 30 days), `granularity` (`day` | `week` | `month`, default `day`).
 
-**`get_fee_info`** — none.
+**`get_fee_info`**: none.
 
 ## Examples
 
 ```jsonc
-// get_billing_summary — plan ceilings and live usage against them
+// get_billing_summary: plan ceilings and live usage against them
 > {}
 {
   "ok": true,
@@ -117,7 +117,7 @@ Everything reads live state — usage, invoices, and earnings all move between c
 ```
 
 ```jsonc
-// query_usage — the period statement (defaults to the current UTC month)
+// query_usage: the period statement (defaults to the current UTC month)
 > {}
 {
   "ok": true,
@@ -136,7 +136,7 @@ Everything reads live state — usage, invoices, and earnings all move between c
 ```
 
 ```jsonc
-// export_billing_history — the same statement as a ready-to-save CSV
+// export_billing_history: the same statement as a ready-to-save CSV
 > { "preview_rows": 5 }
 {
   "ok": true,
@@ -149,7 +149,7 @@ Everything reads live state — usage, invoices, and earnings all move between c
 ```
 
 ```jsonc
-// get_fee_info — the one read that needs no session
+// get_fee_info: the one read that needs no session
 > {}
 { "ok": true, "fee_bps": 250, "fee_percent": "2.5" }
 ```
@@ -168,14 +168,14 @@ returning empty data:
 
 Two sides of the same account, two tools:
 
-- **"What did this cost me?"** → `query_usage` / `export_billing_history` / `get_receipt` — metered charges, the period statement, and the receipt behind any single charge.
-- **"What did my agents make?"** → `get_revenue` — gross/fee/net earnings, per-skill and over time, plus creator-subscription income.
+- **"What did this cost me?"** → `query_usage` / `export_billing_history` / `get_receipt`, metered charges, the period statement, and the receipt behind any single charge.
+- **"What did my agents make?"** → `get_revenue`: gross/fee/net earnings, per-skill and over time, plus creator-subscription income.
 
 `get_billing_summary` sits above both: your plan, its quota ceilings, and how much headroom is left.
 
 ## Money & units
 
-- Charge amounts are in **USDC atomics** (6 decimals) alongside a human `*_usd` string — e.g. `gross_atomics: "150000"` is `gross_usd: "0.15"`.
+- Charge amounts are in **USDC atomics** (6 decimals) alongside a human `*_usd` string, e.g. `gross_atomics: "150000"` is `gross_usd: "0.15"`.
 - `get_revenue` earnings totals are in the **token's atomic units** (`currency_mint` / `chain` identify the token); creator-subscription income is reported separately in **USD** because it settles directly to your wallet, never mixing units with the withdrawable pool.
 - `reconciliation` on the usage and revenue reads tells you whether every metered charge maps to a real on-chain settlement (`all_reconciled`, plus counts).
 
@@ -190,9 +190,9 @@ Two sides of the same account, two tools:
 | ----------------------- | -------------------------------- | -------------------- |
 | `THREE_WS_BASE`         | no                               | `https://three.ws`   |
 | `THREE_WS_TIMEOUT_MS`   | no                               | `20000`              |
-| `THREE_WS_SESSION`      | yes (all reads but `get_fee_info`) | —                  |
+| `THREE_WS_SESSION`      | yes (all reads but `get_fee_info`) | -                  |
 
-`THREE_WS_SESSION` is the value of the `__Host-sid` cookie from a signed-in three.ws browser session. Treat it like a password — it grants read access to your private billing data.
+`THREE_WS_SESSION` is the value of the `__Host-sid` cookie from a signed-in three.ws browser session. Treat it like a password, it grants read access to your private billing data.
 
 ## Links
 
@@ -205,7 +205,7 @@ Two sides of the same account, two tools:
 
 <p align="center">
   <sub>
-    Part of the <a href="https://three.ws">three.ws</a> SDK suite — 3D AI agents, on-chain identity, and agent payments.<br/>
+    Part of the <a href="https://three.ws">three.ws</a> SDK suite, 3D AI agents, on-chain identity, and agent payments.<br/>
     <a href="https://three.ws">Website</a> · <a href="https://three.ws/changelog">Changelog</a> · <a href="https://github.com/nirholas/three.ws">GitHub</a>
   </sub>
 </p>
