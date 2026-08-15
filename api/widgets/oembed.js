@@ -40,6 +40,12 @@ export default wrap(async (req, res) => {
 
 	if (!target) return error(res, 400, 'invalid_request', 'url parameter required');
 
+	// oembed.com: a provider that cannot answer in the requested format must
+	// return 501 rather than quietly serving a different one, or the consumer
+	// parses JSON as XML. Matches api/play-oembed.js.
+	if (format !== 'json' && format !== 'xml')
+		return error(res, 501, 'unsupported_format', 'format must be json or xml');
+
 	const widgetId = extractWidgetId(target);
 	if (!widgetId) return error(res, 404, 'not_found', 'url is not a recognised widget url');
 
@@ -127,8 +133,8 @@ function extractWidgetId(target) {
 	if (pathMatch) return pathMatch[1];
 
 	// Accept legacy /#widget=<id>, the /app#widget=<id> SPA form, and the
-	// current /widget#widget=<id> slim shell — embedders may have copied any
-	// of them. All three resolve to the same widget id.
+	// current /widget#widget=<id> slim shell. Embedders may have copied any of
+	// them, and all three resolve to the same widget id.
 	if (
 		parsed.hash &&
 		(parsed.pathname === '/' || parsed.pathname === '/app' || parsed.pathname === '/widget')

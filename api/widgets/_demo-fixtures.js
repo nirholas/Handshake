@@ -6,7 +6,7 @@
  * all work without seeding a real DB row. Keep ids in sync with
  * /public/widgets-gallery/showcase.json.
  *
- * Avatar files served from /public — no R2 round-trip, no auth.
+ * Avatar files are served from /public: no R2 round-trip, no auth.
  */
 
 const CZ = '/avatars/cz.glb';
@@ -131,19 +131,19 @@ export const DEMO_WIDGETS = {
 					id: 'head',
 					label: 'Head',
 					position: [0, 0.75, 0.1],
-					body: "The agent's head — face mesh, eyes, and the empathy layer that drives six real-time emotion states.",
+					body: "The agent's head: face mesh, eyes, and the empathy layer that drives six real-time emotion states.",
 				},
 				{
 					id: 'chest',
 					label: 'Chest',
 					position: [0.15, 0.2, 0.18],
-					body: 'Torso anchor — bone the camera tracks during conversation and where overlay badges (ERC-8004 passport, reputation) attach.',
+					body: 'Torso anchor: the bone the camera tracks during conversation, and where overlay badges (ERC-8004 passport, reputation) attach.',
 				},
 				{
 					id: 'hand',
 					label: 'Hand',
 					position: [-0.35, -0.15, 0.1],
-					body: "Right hand — drives wave, point, and reach gestures triggered by the agent's skill layer (wave, lookAt, playClip).",
+					body: "Right hand: drives the wave, point, and reach gestures triggered by the agent's skill layer (wave, lookAt, playClip).",
 				},
 			],
 		},
@@ -218,7 +218,7 @@ export const DEMO_WIDGETS = {
 			autoRotate: true,
 			rotationSpeed: 0.4,
 			envPreset: 'neutral',
-			// $three — the platform token and a real pump.fun mint, so the demo
+			// $three, the platform token and a real pump.fun mint, so the demo
 			// shows a live bonding curve. A non-pump mint here has no curve and
 			// makes the widget poll /api/pump/curve into a permanent 404 loop.
 			mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
@@ -262,7 +262,7 @@ export const DEMO_WIDGETS = {
 			autoRotate: false,
 			envPreset: 'neutral',
 			agentTitle: 'AI Rep',
-			greeting: "Hey! I'm your AI rep — ask me anything: the roadmap, the team, the product.",
+			greeting: "Hey! I'm your AI rep. Ask me anything: the roadmap, the team, the product.",
 			brainProvider: 'none',
 			proxyURL: '',
 			chatPosition: 'overlay',

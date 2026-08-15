@@ -1,8 +1,8 @@
 /**
- * Widget CRUD — list + create
+ * Widget CRUD: list + create
  * ---------------------------
- * GET  /api/widgets       — list current user's widgets
- * POST /api/widgets       — create a new widget for current user
+ * GET  /api/widgets       lists the current user's widgets
+ * POST /api/widgets       creates a new widget for the current user
  *
  * Auth: session cookie or bearer (avatars:read for list, avatars:write for create).
  * Widget IDs: 'wdgt_' + 12 url-safe random chars (crypto.randomBytes(9).base64url).

@@ -18,6 +18,7 @@ import { isDemoWidgetId, getDemoWidget } from '../_demo-fixtures.js';
 import { decorate } from '../index.js';
 import { PROVIDER_MODEL_DEFAULTS, DEFAULT_PROVIDER_ORDER, MODEL_CATALOG, PER_CALL_TIMEOUT_MS, modelRejectsSampling, modelThinksByDefault } from '../../_lib/chat-models.js';
 import { redactPii } from '../../_lib/pii.js';
+import { clientCountry } from '../../_lib/client-geo.js';
 import { embeddingsConfigured, scoreRowsBySpace } from '../../_lib/embeddings.js';
 import { rerankConfigured, rerankPassages } from '../../_lib/rerank.js';
 import { watsonxConfig, watsonxToken } from '../../_lib/watsonx.js';
@@ -825,7 +826,7 @@ async function persistTurn({ widgetId, req, body, userMessage, reply, actions, p
 	const threadId = body.thread_id || `wct_${crypto.randomBytes(9).toString('base64url')}`;
 
 	const refererHost = parseRefererHost(req.headers.referer || req.headers.origin);
-	const country = headerValue(req, 'x-vercel-ip-country') || null;
+	const country = clientCountry(req);
 	const uaHash = uaFingerprint(req.headers['user-agent']);
 
 	const userRedacted = redactPii(userMessage);
@@ -942,12 +943,6 @@ function parseRefererHost(referer) {
 	} catch {
 		return null;
 	}
-}
-
-function headerValue(req, name) {
-	const v = req.headers[name];
-	if (Array.isArray(v)) return v[0] || null;
-	return v || null;
 }
 
 function uaFingerprint(ua) {

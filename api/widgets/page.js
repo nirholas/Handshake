@@ -39,7 +39,7 @@ export default wrap(async (req, res) => {
 	const widget = await loadWidget(widgetId);
 	if (!widget) return notFound(res);
 
-	// Agent embed-policy gate — only when widget is tied to an agent identity.
+	// Agent embed-policy gate, only when the widget is tied to an agent identity.
 	if (widget.agent_id) {
 		const agentPolicy = await readEmbedPolicy(widget.agent_id);
 		if (agentPolicy) {
@@ -100,7 +100,7 @@ async function loadWidget(id) {
 		return row || null;
 	} catch (err) {
 		if (/column .* does not exist/i.test(err?.message || '')) {
-			// agent_id column not yet migrated — fall back without it
+			// agent_id column not yet migrated, so fall back to the query without it
 			const [row] = await sql`
 				select id, name, type, avatar_id, is_public
 				from widgets
@@ -141,7 +141,7 @@ function renderHtml({ title, desc, pageUrl, embedUrl, ogUrl, oembedJs, widgetId 
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>${t} — three.ws</title>
+	<title>${t} | three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 	<meta name="description" content="${d}">
 	<meta name="theme-color" content="#0a0a0a">
@@ -221,7 +221,7 @@ function renderPrivateHtml({ pageUrl, ogUrl }) {
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>${title} — three.ws</title>
+	<title>${title} | three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="description" content="${desc}">
 	<meta name="robots" content="noindex, nofollow">

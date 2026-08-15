@@ -80,8 +80,9 @@ async function loadWidget(id) {
 		`;
 		return row || null;
 	} catch (err) {
-		// widgets table may not exist yet (prompt 00 owns the migration).
-		// Treat as not-found so social crawlers still get a usable card.
+		// A crawler must never see a 500 here: an unrenderable og:image poisons
+		// the preview for every share of the link. Treat a missing table as
+		// not-found so the card still renders; anything else is a real fault.
 		if (/relation .* does not exist/i.test(err?.message || '')) return null;
 		throw err;
 	}
@@ -110,7 +111,7 @@ function renderCardSvg({ name, type }) {
 	<rect x="80" y="80" width="180" height="36" rx="18" fill="rgba(139,92,246,0.18)" stroke="rgba(139,92,246,0.6)" stroke-width="1"/>
 	<text x="170" y="104" fill="#c4b5fd" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="16" font-weight="500" letter-spacing="2" text-anchor="middle">${safeType.toUpperCase()}</text>
 	<text x="80" y="320" fill="#e5e5e5" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="76" font-weight="300" letter-spacing="-2">${safeName}</text>
-	<text x="80" y="380" fill="rgba(229,229,229,0.55)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="24" font-weight="400">Embeddable 3D — no code.</text>
+	<text x="80" y="380" fill="rgba(229,229,229,0.55)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="24" font-weight="400">Embeddable 3D, no code.</text>
 	<text x="80" y="570" fill="rgba(229,229,229,0.3)" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="20" font-weight="400" letter-spacing="4">three.ws</text>
 </svg>`;
 }

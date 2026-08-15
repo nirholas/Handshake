@@ -4,15 +4,18 @@
  * POST /api/widgets/:id/view
  *
  * Logs an anonymous load event for analytics. No cookies, no IP, no UID.
- * - country: from Vercel edge headers (x-vercel-ip-country), not derived from raw IP
- * - referer_host: hostname only — no path, no query
+ * - country: ISO 3166-1 alpha-2 from the edge geo header, never derived from
+ *   the raw IP. See api/_lib/client-geo.js for the header priority.
+ * - referer_host: hostname only, no path, no query.
  *
- * Best-effort: if the underlying widget_views table doesn't exist yet
- * (Prompt 06 owns that migration), we 204 silently so widgets can ship before
- * the dashboard does.
+ * Best-effort by design: a widget page load must never fail because analytics
+ * could not be recorded. A foreign-key miss (the id names no live widget, which
+ * is what every demo-fixture view does) and a missing table both 204 silently.
+ * Any other database error still throws, so a real outage stays visible.
  */
 
 import { sql } from '../_lib/db.js';
+import { clientCountry } from '../_lib/client-geo.js';
 import { cors, wrap, error } from '../_lib/http.js';
 
 export default wrap(async (req, res) => {
@@ -23,7 +26,7 @@ export default wrap(async (req, res) => {
 	const widgetId = url.searchParams.get('id');
 	if (!widgetId) return error(res, 400, 'invalid_request', 'id required');
 
-	const country = headerOnce(req, 'x-vercel-ip-country') || null;
+	const country = clientCountry(req);
 	const refererHost = parseRefererHost(req.headers.referer);
 
 	try {
@@ -32,26 +35,14 @@ export default wrap(async (req, res) => {
 			values (${widgetId}, ${country}, ${refererHost}, now())
 		`;
 	} catch (err) {
-		if (err?.code === '23503') {
-			// FK violation: widget_id does not exist — best-effort analytics, swallow silently
-		} else if (/relation .* does not exist/i.test(err?.message || '')) {
-			// Table not yet migrated — swallow silently
-		} else {
-			throw err;
-		}
+		if (!isBestEffortMiss(err)) throw err;
 	}
 	try {
 		await sql`
 			update widgets set view_count = view_count + 1 where id = ${widgetId}
 		`;
 	} catch (err) {
-		if (err?.code === '23503') {
-			// FK violation — swallow silently
-		} else if (/relation .* does not exist/i.test(err?.message || '')) {
-			// Table not yet migrated — swallow silently
-		} else {
-			throw err;
-		}
+		if (!isBestEffortMiss(err)) throw err;
 	}
 
 	res.statusCode = 204;
@@ -59,10 +50,11 @@ export default wrap(async (req, res) => {
 	res.end();
 });
 
-function headerOnce(req, name) {
-	const v = req.headers[name];
-	if (Array.isArray(v)) return v[0] || null;
-	return v || null;
+// A view that names no live widget (23503) or lands before the analytics table
+// exists is a miss we absorb. Anything else is a real fault and propagates.
+function isBestEffortMiss(err) {
+	if (err?.code === '23503') return true;
+	return /relation .* does not exist/i.test(err?.message || '');
 }
 
 function parseRefererHost(referer) {
