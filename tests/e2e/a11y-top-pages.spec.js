@@ -48,7 +48,15 @@ const KNOWN_EXCEPTIONS = new Set([]);
 for (const { path } of auditPages) {
 	test(`a11y floor: ${path}`, async ({ page }) => {
 		if (KNOWN_EXCEPTIONS.has(path)) test.skip();
-		await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+		// 180s, not 60s. playwright.config.js budgets 300s per test precisely
+		// because a cold Vite dev server transforms a page's whole module graph
+		// on first hit and heavy routes legitimately take minutes. Capping the
+		// navigation at 60s inside that 300s budget meant a slow transform was
+		// reported as a failed accessibility floor, so the gate flagged pages
+		// whose markup axe never got to look at. The axe run and its assertion
+		// below are unchanged; this only stops the dev server's speed from
+		// deciding the verdict, and still leaves 120s for the axe pass itself.
+		await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 180_000 });
 		await page.waitForTimeout(500); // let above-the-fold async content settle
 
 		const results = await new AxeBuilder({ page })
