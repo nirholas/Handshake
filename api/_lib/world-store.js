@@ -160,6 +160,25 @@ export function createWorldStore(backend) {
 		};
 	}
 
+	// Load a world's index metadata WITHOUT materializing its document. Callers
+	// that only need the concurrency/ownership columns (the save permission gate)
+	// use this so a 2 MB build does not cost an R2 GET plus a full JSON.parse on
+	// every autosave. Returns null when the world has never been saved.
+	async function loadWorldMeta(worldId) {
+		assertWorldId(worldId);
+		const row = await backend.readRow(worldId);
+		if (!row) return null;
+		return {
+			worldId,
+			schemaVersion: Number(row.schema_version),
+			version: Number(row.doc_version),
+			etag: row.etag,
+			size: row.size_bytes,
+			ownerId: row.owner_id ?? null,
+			updatedAt: row.updated_at,
+		};
+	}
+
 	// Persist a world document. Throws TooLargeError or ConflictError.
 	//   ifMatch — the etag the caller last read (see concurrency notes above).
 	//   writer  — the principal recorded as updated_by (account id or 'service').
@@ -233,7 +252,7 @@ export function createWorldStore(backend) {
 		return true;
 	}
 
-	return { loadWorld, saveWorld, deleteWorld };
+	return { loadWorld, loadWorldMeta, saveWorld, deleteWorld };
 }
 
 // ── default backend: Postgres index + R2 blob ────────────────────────────────
@@ -310,5 +329,6 @@ export const postgresR2Backend = {
 
 const defaultStore = createWorldStore(postgresR2Backend);
 export const loadWorld = defaultStore.loadWorld;
+export const loadWorldMeta = defaultStore.loadWorldMeta;
 export const saveWorld = defaultStore.saveWorld;
 export const deleteWorld = defaultStore.deleteWorld;

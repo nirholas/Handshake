@@ -17,6 +17,7 @@ import {
 	TooLargeError,
 	INLINE_MAX_BYTES,
 	MAX_DOC_BYTES,
+	SCHEMA_VERSION,
 } from '../api/_lib/world-store.js';
 import { verifyWorldServiceToken } from '../api/_lib/world-service-auth.js';
 
@@ -209,6 +210,59 @@ describe('world-store: large-doc R2 offload', () => {
 		// Nothing partially persisted.
 		expect(backend.rows.has('huge')).toBe(false);
 		expect(backend.blobs.size).toBe(0);
+	});
+});
+
+// The save permission gate (api/world/[action].js) only needs the owner column,
+// so it reads metadata rather than the whole document. These lock in that the
+// cheap read returns the same index values loadWorld does and never touches the
+// blob store — the regression that would silently restore an R2 GET plus a 2 MB
+// JSON.parse on every autosave of a large build.
+describe('world-store: loadWorldMeta', () => {
+	let backend;
+	let store;
+	beforeEach(() => {
+		backend = makeBackend();
+		store = createWorldStore(backend);
+	});
+
+	it('returns null for a world that has never been saved', async () => {
+		expect(await store.loadWorldMeta('never-saved')).toBeNull();
+	});
+
+	it('reports the same index values as loadWorld, without the doc', async () => {
+		const saved = await store.saveWorld({ worldId: 'coinA', doc: { theme: 'forest' }, writer: 'alice', owner: 'alice' });
+		const meta = await store.loadWorldMeta('coinA');
+
+		expect(meta).toEqual({
+			worldId: 'coinA',
+			schemaVersion: SCHEMA_VERSION,
+			version: saved.version,
+			etag: saved.etag,
+			size: saved.size,
+			ownerId: 'alice',
+			updatedAt: saved.updatedAt,
+		});
+		expect(meta.doc).toBeUndefined();
+	});
+
+	it('never fetches the offloaded blob for a large world', async () => {
+		await store.saveWorld({ worldId: 'big', doc: { blob: 'x'.repeat(INLINE_MAX_BYTES + 1024) }, writer: 's', owner: 'alice' });
+		let blobReads = 0;
+		const readBlob = backend.readBlob;
+		backend.readBlob = (key) => { blobReads += 1; return readBlob(key); };
+
+		const meta = await store.loadWorldMeta('big');
+		expect(meta.ownerId).toBe('alice');
+		expect(blobReads).toBe(0);
+
+		// The full read still needs it, which is exactly why the gate uses the cheap one.
+		await store.loadWorld('big');
+		expect(blobReads).toBe(1);
+	});
+
+	it('rejects an invalid world id instead of hitting storage', async () => {
+		await expect(store.loadWorldMeta('../etc/passwd')).rejects.toThrow();
 	});
 });
 

@@ -1,4 +1,4 @@
-// api/world/[action] — the generic per-world persistence service (T3).
+// api/world/[action]: the generic per-world persistence service (T3).
 //
 //   GET  /api/world/load?worldId=<id>
 //     Public. Returns the world's current document + concurrency metadata, or
@@ -10,7 +10,7 @@
 //     token (Authorization: Bearer <world-service-token>); a browser session may
 //     write subject to the per-world permission model (world-store.canWriteWorld,
 //     the hook T16 tightens). `ifMatch` carries the etag the caller last read for
-//     optimistic concurrency — a stale etag returns 409.
+//     optimistic concurrency, so a stale etag returns 409.
 //
 // Storage lives in api/_lib/world-store.js (Postgres index + R2 blob offload).
 
@@ -21,6 +21,7 @@ import { resolveAccount } from '../_lib/account-auth.js';
 import { verifyWorldServiceToken } from '../_lib/world-service-auth.js';
 import {
 	loadWorld,
+	loadWorldMeta,
 	saveWorld,
 	canWriteWorld,
 	isValidWorldId,
@@ -29,6 +30,8 @@ import {
 	PermissionError,
 	MAX_DOC_BYTES,
 } from '../_lib/world-store.js';
+
+const BODY_ERROR_CODES = { 413: 'payload_too_large', 415: 'unsupported_media_type' };
 
 function actionOf(req) {
 	return (req.query?.action || new URL(req.url, 'http://x').pathname.split('/').pop() || '').toLowerCase();
@@ -92,7 +95,13 @@ async function handleSave(req, res) {
 	try {
 		body = await readJson(req, MAX_DOC_BYTES + 1024);
 	} catch (err) {
-		return error(res, err.status || 400, 'validation_error', err.message || 'invalid body');
+		// readJson signals an over-cap body as 413 and a non-JSON content-type as
+		// 415. Labelling either one `validation_error` left a client unable to tell
+		// "your build is too big" from "your JSON is malformed", so each status
+		// keeps the house error code its own status already implies.
+		const status = err.status || 400;
+		const code = BODY_ERROR_CODES[status] || 'validation_error';
+		return error(res, status, code, err.message || 'invalid body');
 	}
 
 	const { worldId, doc, ifMatch, owner } = body || {};
@@ -105,10 +114,12 @@ async function handleSave(req, res) {
 	}
 
 	// Permission gate. Service writes are always allowed; user writes depend on the
-	// world's current owner. We need the existing owner to decide, so peek first —
-	// loadWorld returns null for a brand-new world (unowned → first writer allowed).
+	// world's current owner, so peek at the index row first. loadWorldMeta reads
+	// only the index columns (never the body), which keeps a builder's autosave to
+	// one cheap lookup instead of re-downloading and re-parsing the whole prior
+	// document. It returns null for a brand-new world (unowned, first writer allowed).
 	if (!service) {
-		const existing = await loadWorld(worldId);
+		const existing = await loadWorldMeta(worldId);
 		const allowed = canWriteWorld({
 			isService: false,
 			account: account.userId,
