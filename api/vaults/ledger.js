@@ -2,7 +2,7 @@
 //
 // The vault's immutable audit trail: every open, deposit, redeem, trade, fee,
 // drawdown halt, pause/resume and terms change, newest first, with the on-chain
-// signature where one exists. Public — this is the transparency that makes backing
+// signature where one exists. Public: this is the transparency that makes backing
 // rational.
 
 import { cors, json, method, error, wrap } from '../_lib/http.js';

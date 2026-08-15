@@ -76,13 +76,33 @@ function atomicsToThree(atomics, decimals) {
 	return Number(`${a / div}.${(a % div).toString().padStart(decimals, '0')}`);
 }
 
-function threeToAtomics(amount, decimals) {
-	const n = Number(amount);
-	if (!Number.isFinite(n) || n < 0) return null;
-	// Parse via string to avoid float drift on the fractional part.
-	const [whole, frac = ''] = String(n).split('.');
+const DECIMAL_RE = /^\d+(?:\.\d+)?$/;
+// Far above $THREE's 1B supply. It exists to keep the value in plain decimal form,
+// because JS renders anything past 1e21 in exponential notation.
+const MAX_PRIZE_THREE = 1e15;
+
+/**
+ * Decimal $THREE to atomics, or null when the caller sent something that is not a
+ * non-negative decimal amount. The conversion runs on TEXT, never on a float
+ * round-trip: String(1e21) and String(0.0000001) are exponential notation, which
+ * BigInt refuses, so both of those (plausible) request bodies used to escape the
+ * validator and crash the handler with a 500 instead of being answered with a 400.
+ * A numeric string is read as written, so precision beyond a double survives.
+ */
+export function threeToAtomics(amount, decimals) {
+	let text;
+	if (typeof amount === 'number') {
+		if (!Number.isFinite(amount) || amount < 0 || amount > MAX_PRIZE_THREE) return null;
+		text = amount.toFixed(decimals); // plain decimal even for exponential input
+	} else if (typeof amount === 'string') {
+		text = amount.trim();
+	} else {
+		return null;
+	}
+	if (!DECIMAL_RE.test(text) || Number(text) > MAX_PRIZE_THREE) return null;
+	const [whole, frac = ''] = text.split('.');
 	const fracPadded = (frac + '0'.repeat(decimals)).slice(0, decimals);
-	return BigInt(whole || '0') * 10n ** BigInt(decimals) + BigInt(fracPadded || '0');
+	return BigInt(whole) * 10n ** BigInt(decimals) + BigInt(fracPadded || '0');
 }
 
 function validSplits(splits) {
@@ -176,7 +196,14 @@ export default wrap(async (req, res) => {
 	let prize_splits = [];
 	if (bracket === 'prize' && body.prize_pool_three != null) {
 		const atomics = threeToAtomics(body.prize_pool_three, decimals);
-		if (atomics == null) return error(res, 400, 'invalid_prize', 'prize_pool_three must be a non-negative number');
+		if (atomics == null) {
+			return error(
+				res,
+				400,
+				'invalid_prize',
+				`prize_pool_three must be a non-negative decimal amount of $THREE, at most ${MAX_PRIZE_THREE}`,
+			);
+		}
 		prizeAtomics = atomics;
 		if (prizeAtomics > 0n) {
 			prize_splits = Array.isArray(body.prize_splits) && body.prize_splits.length
