@@ -84,6 +84,10 @@ async function mountHud(page) {
 	}, null, { timeout: 30_000 });
 }
 
+// Budget for the polls that wait on /play's own state to settle. See the note at
+// the focus poll below: the 5s default measures the machine, not the product.
+const PANEL_WAIT = { timeout: 60_000 };
+
 test.describe('/play accessibility floor', () => {
 	test('every HUD text pair clears WCAG AA over the worst-case scene', async ({ page }) => {
 		await mountHud(page);
@@ -197,8 +201,15 @@ test.describe('/play accessibility floor', () => {
 		const card = page.locator('.ec-card');
 		await expect(card).toHaveAttribute('role', 'dialog');
 		await expect(card).toHaveAttribute('aria-modal', 'true');
-		// Focus moved into the dialog rather than being left behind it.
-		await expect.poll(() => page.evaluate(() => document.querySelector('.ec-card')?.contains(document.activeElement))).toBe(true);
+		// Focus moved into the dialog rather than being left behind it. The poll
+		// carries its own budget because expect.poll's 5s default is a stopwatch on
+		// /play, not an assertion about the panel: this page boots a WebGL scene and
+		// its focus transitions settle well past 5s when the full suite is competing
+		// for the box. The failure artifact showed the Close button holding focus by
+		// the time the snapshot was taken, i.e. the right end state arriving late.
+		await expect
+			.poll(() => page.evaluate(() => document.querySelector('.ec-card')?.contains(document.activeElement)), PANEL_WAIT)
+			.toBe(true);
 		// The title reaches a screen reader even though the card renders empty.
 		await expect(page.locator('.cc-sr-live[aria-live="polite"]')).toContainText('General Store');
 
@@ -207,7 +218,7 @@ test.describe('/play accessibility floor', () => {
 		expect(await page.evaluate(() => document.querySelector('.ec-card')?.contains(document.activeElement))).toBe(true);
 
 		await page.keyboard.press('Escape');
-		await expect.poll(() => page.evaluate(() => window.__closed)).toBe(true);
+		await expect.poll(() => page.evaluate(() => window.__closed), PANEL_WAIT).toBe(true);
 	});
 
 	test('reduced motion stops the decorative animation on the HUD', async ({ page }) => {
