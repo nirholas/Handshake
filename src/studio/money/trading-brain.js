@@ -42,6 +42,14 @@ const fmtSol = (n) => (n == null ? '—' : Number(n).toLocaleString(undefined, {
 const fmtUsd = (n) => (n == null ? '—' : '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }));
 const fmtPct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${Number(n).toFixed(1)}%`);
 
+// three.ws API errors are flat: { error: "<code>", error_description: "<prose>" }.
+// Read the prose the server actually sent so a rejection tells the owner WHY
+// (rate limit, kill switch, dead feed) instead of a generic house message.
+function apiErrorMessage(payload, fallback) {
+	const d = payload?.error_description;
+	return typeof d === 'string' && d.trim() ? d : fallback;
+}
+
 function relTime(ts) {
 	if (!ts) return '';
 	const d = Date.now() - new Date(ts).getTime();
@@ -193,7 +201,7 @@ class TradingBrain {
 				});
 				if (!res.ok) {
 					const d = await res.json().catch(() => ({}));
-					throw new Error(d?.error?.message || 'Could not save the rule.');
+					throw new Error(apiErrorMessage(d, 'Could not save the rule.'));
 				}
 				strategy = (await res.json()).data;
 				this.strategyId = strategy.id;
@@ -425,7 +433,7 @@ class TradingBrain {
 			});
 			if (!res.ok) {
 				const d = await res.json().catch(() => ({}));
-				throw new Error(d?.error?.message || 'Scan failed.');
+				throw new Error(apiErrorMessage(d, 'Scan failed.'));
 			}
 			const { data } = await res.json();
 			this.state.candidates = data.candidates || [];
@@ -459,8 +467,7 @@ class TradingBrain {
 			});
 			const payload = await res.json().catch(() => ({}));
 			if (!res.ok) {
-				const msg = payload?.error?.message || 'Snipe rejected.';
-				throw Object.assign(new Error(msg), { detail: payload?.error });
+				throw new Error(apiErrorMessage(payload, 'Snipe rejected.'));
 			}
 			const d = payload.data || {};
 			this.studio.emitMarket?.({ type: 'snipe:filled', mint, amount: cand.amount_sol, signature: d.signature });
@@ -494,7 +501,7 @@ class TradingBrain {
 				body: JSON.stringify({ position_id: positionId }),
 			});
 			const payload = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(payload?.error?.message || 'Could not close the position.');
+			if (!res.ok) throw new Error(apiErrorMessage(payload, 'Could not close the position.'));
 			const d = payload.data || {};
 			const pnl = d.pnl_sol;
 			this.studio.emitMarket?.({ type: 'trade:sell', mint: d.mint });
@@ -561,7 +568,7 @@ class TradingBrain {
 			});
 			if (!res.ok) {
 				const d = await res.json().catch(() => ({}));
-				throw new Error(d?.error?.message || 'Backtest failed.');
+				throw new Error(apiErrorMessage(d, 'Backtest failed.'));
 			}
 			const { data } = await res.json();
 			this.state.backtest = data;
