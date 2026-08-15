@@ -57,11 +57,12 @@ three-ws-avatar init \
   --mesh ./michelle.glb \
   --skeleton mixamo \
   --out manifest.json
-# → wrote /…/manifest.json   (validated against @three-ws/avatar-schema before writing)
+# → ok wrote /…/manifest.json   (validated against @three-ws/avatar-schema before writing)
+#   plus a summary line for id, skeleton, and mesh (format · size · sha256)
 
 # 3. Validate it
 three-ws-avatar validate manifest.json
-# → ok: manifest.json
+# → ok manifest.json is valid
 
 # 4. Print embed snippets
 three-ws-avatar preview manifest.json
@@ -106,7 +107,7 @@ you get JSON back, it's spec-compliant by definition.
 ### `validate` — check a manifest
 
 ```bash
-three-ws-avatar validate manifest.json          # → ok: manifest.json
+three-ws-avatar validate manifest.json           # → ok manifest.json is valid
 three-ws-avatar validate manifest.json --json    # → {"valid":true,"path":"manifest.json"}
 ```
 

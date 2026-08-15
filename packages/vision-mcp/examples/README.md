@@ -80,6 +80,7 @@ The image must be a public https URL serving JPEG, PNG, WebP, or GIF (the vision
 server fetches it, so private and loopback hosts are rejected). To read a local
 file instead, base64 it and pass `image` + `imageType` to the same tools.
 
-A free NIM lane can exceed its deadline under load; the example retries an
-`upstream_error` / `timeout` / `network_error` once, then reports the tool's own
-error code rather than a stack trace.
+A busy free NIM lane can exceed its deadline; the example retries an
+`upstream_error` / `timeout` / `network_error` up to three attempts with a short
+backoff (you will see `(upstream_error on attempt 1, retrying)` when that
+happens), then reports the tool's own error code rather than a stack trace.

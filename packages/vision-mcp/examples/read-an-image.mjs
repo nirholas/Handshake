@@ -36,9 +36,12 @@ function childEnv() {
 	return env;
 }
 
-// A free NIM lane occasionally exceeds its deadline under load; the next call
-// lands on a healthy one. Retry those two codes once, and only those.
+// A busy free NIM lane can exceed its deadline; the next call usually lands on a
+// healthy one. Retry those three codes, and only those, with a short backoff.
 const TRANSIENT = new Set(['upstream_error', 'timeout', 'network_error']);
+const MAX_ATTEMPTS = 3;
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Call a tool and parse the JSON payload its single text block carries. */
 async function callTool(client, name, args, attempt = 1) {
@@ -46,9 +49,10 @@ async function callTool(client, name, args, attempt = 1) {
 	const text = res?.content?.find((part) => part.type === 'text')?.text ?? '{}';
 	const payload = JSON.parse(text);
 	if (res.isError || payload.ok === false) {
-		if (attempt === 1 && TRANSIENT.has(payload.error)) {
-			console.log(`  (${payload.error} on the first try, retrying once)`);
-			return callTool(client, name, args, 2);
+		if (attempt < MAX_ATTEMPTS && TRANSIENT.has(payload.error)) {
+			console.log(`  (${payload.error} on attempt ${attempt}, retrying)`);
+			await wait(attempt * 1000);
+			return callTool(client, name, args, attempt + 1);
 		}
 		throw Object.assign(new Error(payload.message || `${name} failed`), { tool: name, payload });
 	}

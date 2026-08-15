@@ -528,5 +528,25 @@
 		"pattern": "Mixamo, Avaturn, VRM/VRoid, Daz/Genes",
 		"file": "docs/announcement-coverage.md",
 		"reason": "Coverage table quoting @three-ws/retarget's own package description verbatim; the rig-name list is the same factual interop reference as the other retargeter mentions above, not product copy naming a competing feature."
+	},
+	{
+		"pattern": "Sign up through the [Avaturn developer docs](https://docs.avaturn.me/).",
+		"file": "docs/configuration.md",
+		"reason": "Setup step for AVATURN_API_KEY, which is already exempt as an environment variable name. The reader has to be told whose developer portal issues that key, so naming the vendor is the instruction, not product copy."
+	},
+	{
+		"pattern": "# Get key through the Avaturn developer docs: https://docs.avaturn.me/",
+		"file": "docs/deployment.md",
+		"reason": "Same AVATURN_API_KEY provisioning step as docs/configuration.md, here as a comment beside the variable in the deployment env list."
+	},
+	{
+		"pattern": "Mixamo, Avaturn, Unreal, VRM/VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender",
+		"file": "docs/tutorials/upload-custom-glb.md",
+		"reason": "Factual list of the third-party rig-name conventions glb-canonicalize.js maps onto the canonical bone set, the same interop listing already exempt in docs/avatar-pipeline.md and CLAUDE.md's 'Avatar animation is universal' note."
+	},
+	{
+		"pattern": "Mixamo (`mixamorigHead`), VRM, Avaturn, Unreal, Daz, MakeHuman, or Blender",
+		"file": "docs/tutorials/upload-custom-glb.md",
+		"reason": "The repair instruction has to name the conventions the canonicalizer recognizes so a reader knows what to rename their bones to; technical identifiers rather than product copy."
 	}
 ]
