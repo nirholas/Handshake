@@ -134,7 +134,7 @@
 			slug: 'share-your-agent',
 			tier: 'easy',
 			title: 'Share your agent (link, QR, social preview)',
-			blurb: 'Get a permanent link to your agent, generate a QR for print, and set the Open Graph preview so it looks good in tweets.',
+			blurb: 'Get a permanent link to your agent, generate a QR for print, and share the URL that unfurls with its real name, description, and card.',
 			builds: 'A shareable agent URL with rich previews on every platform',
 			time: '6 min',
 			previewModel: '/animations/robotexpressive.glb',
