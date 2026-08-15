@@ -18,6 +18,7 @@ import {
 	MARKET_SERVICE_NAME,
 } from '../_lib/market-data/registry.js';
 import { PAID_SERVICES } from '../_lib/service-catalog/services/index.js';
+import { datapointEndpointCount } from '../_lib/market-data/datapoints.js';
 
 // USDC atomics to a display price. The decimal count is derived from the value
 // so a sub-cent endpoint never renders as "$0": a fixed 3-decimal format turned
@@ -108,8 +109,12 @@ export default wrap(async (req, res) => {
 			docs: `${origin}/docs/market-data-api`,
 			discovery: `${origin}/.well-known/x402.json`,
 			datapoints: {
+				// Counted from the same family table /api/x402/d reports
+				// endpoint_count_approx from. It was hardcoded at "480,000+" and drifted
+				// to less than half the real fabric as families were added, so the two
+				// free front doors advertised different sizes for one product.
 				description:
-					'Need one value instead of a payload? Every individual datapoint is its own $0.0005 endpoint — 480,000+ of them.',
+					`Need one value instead of a payload? Every individual datapoint is its own $0.0005 endpoint, ${datapointEndpointCount().toLocaleString('en-US')}+ of them.`,
 				catalog: `${origin}/api/x402/d`,
 			},
 			endpoints: LISTED.map((entry) => describeEndpoint(entry, origin)),

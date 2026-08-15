@@ -11,6 +11,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { sql } from './_lib/db.js';
+import { isUuid } from './_lib/validate.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from './_lib/http.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { limits } from './_lib/rate-limit.js';
@@ -38,6 +39,11 @@ async function handleList(req, res) {
 	const cursor = cursorRaw || null; // bigserial id cursor
 
 	if (!agentId) return error(res, 400, 'validation_error', 'agent_id is required');
+	// agent_identities.id is a uuid column, so a non-uuid agent_id reaches Postgres
+	// as an uncastable literal and comes back as a 500 ("invalid input syntax for
+	// type uuid"). That is a caller mistake, not a server fault: answer it as one.
+	if (!isUuid(agentId))
+		return error(res, 400, 'validation_error', 'agent_id must be a uuid');
 
 	// Verify caller owns this agent
 	const [agentRow] = await sql`
@@ -82,6 +88,8 @@ async function handleAppend(req, res) {
 	const body = await readJson(req, 32_000);
 
 	if (!body.agent_id) return error(res, 400, 'validation_error', 'agent_id required');
+	if (!isUuid(body.agent_id))
+		return error(res, 400, 'validation_error', 'agent_id must be a uuid');
 	if (!body.type) return error(res, 400, 'validation_error', 'type required');
 
 	// Verify ownership
