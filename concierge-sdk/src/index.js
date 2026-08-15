@@ -24,7 +24,8 @@
  * inlines it for script-tag use.
  */
 
-export const VERSION = '0.1.0';
+// Kept in lockstep with package.json "version" by test/index.test.js.
+export const VERSION = '0.1.1';
 
 export { Concierge, drainSentences } from './widget.js';
 export { ThreeConciergeElement, registerElement } from './element.js';

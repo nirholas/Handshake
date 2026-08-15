@@ -376,7 +376,7 @@ export function catalogSummary(catalog) {
 function productLine(p) {
 	const price =
 		p.priceMax > p.priceMin
-			? `${money(p.priceMin, p.currency)}–${money(p.priceMax, p.currency)}`
+			? `${money(p.priceMin, p.currency)}-${money(p.priceMax, p.currency)}`
 			: money(p.priceMin, p.currency);
 	const bits = [`- ${p.title} (${price}${p.available ? '' : ', sold out'}${p.onSale ? ', on sale' : ''})`];
 	if (p.type) bits.push(`type: ${p.type}`);

@@ -72,6 +72,99 @@ export function askConcierge(opts: {
 	onChunk?: (text: string) => void;
 }): Promise<{ text: string; provider?: string; model?: string }>;
 
+// ── Shopping mode (Shopify) ─────────────────────────────────────────────────
+
+export interface ShopProduct {
+	id: number | string;
+	handle: string;
+	title: string;
+	url: string;
+	type: string;
+	vendor: string;
+	tags: string[];
+	priceMin: number;
+	priceMax: number;
+	currency: string;
+	available: boolean;
+	onSale: boolean;
+	image: string;
+	variantId: number | string | null;
+	summary: string;
+}
+
+export interface ShopCollection {
+	title: string;
+	handle: string;
+	url: string;
+}
+
+export interface ShopCatalog {
+	store: string;
+	origin: string;
+	currency: string;
+	products: ShopProduct[];
+	collections: ShopCollection[];
+}
+
+export interface ShopPolicies {
+	shipping?: string;
+	returns?: string;
+	privacy?: string;
+	terms?: string;
+}
+
+export interface ShoppingIntent {
+	maxPrice: number | null;
+	sort: 'price-asc' | 'price-desc' | null;
+	onSale: boolean;
+}
+
+export interface ShoppingPayload {
+	store: string;
+	currency: string;
+	summary: string;
+	collections: string[];
+	policies: string;
+	products: string;
+}
+
+export const MAX_RECOMMENDATIONS: number;
+export function normalizeShopDomain(input: unknown): string;
+export function shopOrigin(domain: unknown): string;
+export function detectShop(win?: unknown): { shop: string; currency: string } | null;
+export function money(amount: number, currency?: string): string;
+export function normalizeProduct(
+	raw: Record<string, unknown>,
+	origin: string,
+	currency?: string,
+): ShopProduct | null;
+export function fetchCatalog(opts?: {
+	shop?: string;
+	fetchImpl?: typeof fetch;
+	signal?: AbortSignal;
+	currency?: string;
+	limit?: number;
+	maxProducts?: number;
+}): Promise<ShopCatalog>;
+export function fetchPolicies(opts?: {
+	shop?: string;
+	fetchImpl?: typeof fetch;
+	signal?: AbortSignal;
+}): Promise<ShopPolicies>;
+export function parseIntent(query: string): ShoppingIntent;
+export function searchProducts(
+	products: ShopProduct[],
+	query: string,
+	k?: number,
+): ShopProduct[];
+export function catalogSummary(catalog: ShopCatalog | null | undefined): string;
+export function buildShoppingPayload(
+	catalog: ShopCatalog | null | undefined,
+	recommended: ShopProduct[],
+	policies?: ShopPolicies,
+	question?: string,
+): ShoppingPayload | null;
+
 export function renderMarkdown(text: string): string;
 export function stripMarkdown(text: string): string;
 export function escapeHtml(text: string): string;
@@ -101,6 +194,10 @@ export interface ConciergeConfig {
 	greeting?: string;
 	suggestions?: string[];
 	knowledge?: string;
+	shop?: string;
+	shopping?: boolean;
+	currency?: string;
+	maxProducts?: number;
 	persona?: string;
 	accent?: string;
 	position?: 'bottom-right' | 'bottom-left';
@@ -113,7 +210,15 @@ export interface ConciergeConfig {
 	lang?: string;
 }
 
-export type ConciergeEvent = 'ready' | 'open' | 'close' | 'message' | 'agentchange' | 'error';
+export type ConciergeEvent =
+	| 'ready'
+	| 'open'
+	| 'close'
+	| 'message'
+	| 'agentchange'
+	| 'catalog'
+	| 'addtocart'
+	| 'error';
 
 export class Concierge {
 	constructor(config?: ConciergeConfig);

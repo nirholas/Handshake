@@ -166,6 +166,7 @@ Point the widget at it with `endpoint` / `data-endpoint`. The reference implemen
 ## Behavior details worth knowing
 
 - **Zero cost while closed.** The WebGL stage, GLB download, and speech engines initialize on first open, not on page load.
+- **Safe to import on a server.** `import '@three-ws/concierge'` evaluates without a DOM, so Next / Nuxt / SvelteKit / Astro can import it at module scope: the element class and the auto-init are both browser-gated, and the widget only mounts once it runs in a page.
 - **Speaks while streaming.** Completed sentences are handed to the speech engine as they arrive; the mouth morphs are driven by a text-to-viseme timeline synced to the utterance.
 - **Degrades deliberately.** No WebGL → the avatar stage hides, chat keeps working. No `SpeechRecognition` → the mic button never renders. TTS missing or muted → captions + lipsync still play. Endpoint down → a friendly error bubble with a working retry.
 - **Persists sensibly.** Conversation per tab session (`sessionStorage`), avatar choice + mute per visitor (`localStorage`).

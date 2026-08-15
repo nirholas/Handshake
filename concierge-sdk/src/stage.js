@@ -15,7 +15,7 @@
 
 import {
 	Scene, PerspectiveCamera, WebGLRenderer, AmbientLight, DirectionalLight,
-	Box3, Vector3, Color, Clock, PMREMGenerator, AnimationMixer, LoopRepeat,
+	Box3, Vector3, Color, Timer, PMREMGenerator, AnimationMixer, LoopRepeat,
 	ACESFilmicToneMapping, SRGBColorSpace, MathUtils,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -86,7 +86,11 @@ export class AvatarStage {
 		rim.position.set(-2, 2, -2);
 		this.scene.add(rim);
 
-		this.clock = new Clock();
+		// Timer, not the deprecated Clock: it warns on construction in current
+		// three, and connecting it to the document clamps the huge delta a
+		// backgrounded tab would otherwise hand the mixer on return.
+		this.timer = new Timer();
+		this.timer.connect(document);
 		this.mixer = null;
 		this.model = null;
 		this.morph = null;
@@ -124,7 +128,7 @@ export class AvatarStage {
 	/** (Re)start the render loop if it is paused and the stage is currently visible. */
 	_kick() {
 		if (this._raf || !this.renderer || !this._visible || !this._onscreen) return;
-		this.clock.getDelta(); // discard the idle gap so motion resumes smoothly
+		this.timer.reset(); // discard the idle gap so motion resumes smoothly
 		this._raf = requestAnimationFrame(this._render);
 	}
 
@@ -266,8 +270,9 @@ export class AvatarStage {
 		// Re-arm only while visible & onscreen; _kick() resumes when that changes.
 		if (!this.renderer || !this._visible || !this._onscreen) { this._raf = 0; return; }
 		this._raf = requestAnimationFrame(this._render);
-		const dt = Math.min(this.clock.getDelta(), 0.05);
-		const t = this.clock.elapsedTime;
+		this.timer.update();
+		const dt = Math.min(this.timer.getDelta(), 0.05);
+		const t = this.timer.getElapsed();
 		const nowMs = t * 1000;
 		this.mixer?.update(dt);
 		this._proceduralIdle(t);
@@ -310,6 +315,7 @@ export class AvatarStage {
 		this._resizeObs?.disconnect();
 		this._inViewObs?.disconnect();
 		document.removeEventListener('visibilitychange', this._onVisibility);
+		this.timer.dispose();
 		this._frameHooks.clear();
 		if (this.model) { this.scene.remove(this.model); this._disposeObject(this.model); }
 		this._envTex?.dispose();

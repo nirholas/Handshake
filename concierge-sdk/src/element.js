@@ -24,7 +24,7 @@
  *   shop           Shopify store domain → shopping mode (catalog + product cards)
  *   shopping       "true"/"false" to force shopping mode on/off (auto on a store)
  *   currency       ISO currency for product prices (default: the store's / USD)
- *   max-products   how many product cards to recommend per answer (1–8, default 4)
+ *   max-products   how many product cards to recommend per answer (1-8, default 4)
  *   persona        one-line tone instruction, e.g. "warm, playful, concise"
  *   accent         CSS color for the whole widget chrome
  *   position       bottom-right | bottom-left

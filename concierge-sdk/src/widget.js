@@ -280,13 +280,18 @@ export class Concierge {
 				this._submit();
 			}
 		});
+		// Escape is bound on the document, not just the widget root: the panel is
+		// an overlay on someone else's page, so focus is often outside it (the
+		// visitor clicked the page behind, or a reset dropped focus to body) and
+		// a root-scoped handler would leave the documented Escape-to-close dead.
+		// Keydowns inside the widget bubble here too, so one listener covers both.
 		this._onKeydown = (e) => {
 			if (e.key === 'Escape' && this.open) {
 				if (!this.$.picker.hidden) this.togglePicker(false);
 				else this.setOpen(false);
 			}
 		};
-		root.addEventListener('keydown', this._onKeydown);
+		document.addEventListener('keydown', this._onKeydown);
 
 		if (this.$.mic) {
 			this._mic = createMic({
@@ -405,7 +410,7 @@ export class Concierge {
 		const site = this.config.siteName || document.querySelector('meta[property="og:site_name"]')?.content || '';
 		if (this.config.shopping) {
 			return site
-				? `Hi! I can help you find the right thing at ${site} — ask away.`
+				? `Hi! I can help you find the right thing at ${site}. Ask away.`
 				: 'Hi! Tell me what you\'re shopping for and I\'ll help you find it.';
 		}
 		return site ? `Hi! Ask me anything about ${site}.` : 'Hi! Ask me anything about this site.';
@@ -676,7 +681,7 @@ export class Concierge {
 		for (const p of products) {
 			const priceLabel =
 				p.priceMax > p.priceMin
-					? `${money(p.priceMin, p.currency)} – ${money(p.priceMax, p.currency)}`
+					? `${money(p.priceMin, p.currency)} - ${money(p.priceMax, p.currency)}`
 					: money(p.priceMin, p.currency);
 			const card = document.createElement('div');
 			card.className = 'tc-product';
@@ -936,6 +941,7 @@ export class Concierge {
 		this._abort?.abort();
 		this._catalogAbort?.abort();
 		this._killTeaser();
+		document.removeEventListener('keydown', this._onKeydown);
 		this._mq?.removeEventListener?.('change', this._onScheme);
 		this._themeObs?.disconnect();
 		this._mic?.dispose();
