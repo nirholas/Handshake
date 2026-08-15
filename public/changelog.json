@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T15:52:49.645Z",
+	"generated_at": "2026-08-15T16:20:54.817Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -25,6 +25,17 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "A Premium Data API pass you bought straight from your wallet now shows up on your billing page",
+			"summary": "You can buy a pass without an account, paying from a Solana wallet on the Data API page. Do that, then sign in with the same wallet later, and billing showed you nothing: the pass was live, the API key worked, but the page insisted you had never bought anything. It was reading a single legacy address field on the account, and signing in with a Solana wallet never fills that field, so the lookup could not match a purchase it was standing right next to. Billing now resolves every Solana wallet you have signed into the account and shows every pass any of them bought, including purchases made before the account existed, with each pass's key, rate limit, and usage. Only wallets you have actually signed in with count, so nobody can claim someone else's purchases by typing an address. Two smaller repairs alongside it: the pricing endpoint now reports each asset's decimal precision from the same source that computes the amount you owe, rather than a fixed number that could one day render a price wrong by a factor of a hundred; and key rotation is now metered per account, because every rotation mints a real key.",
+			"link": "/dashboard/billing",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -164,6 +175,28 @@
 			"link": "/claim-wallet",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Coin Intelligence search and verdict filters now look at the whole feed, not just its newest page",
+			"summary": "The Coin Intelligence radar lets you narrow the live launch feed by verdict (Strong, Watch, Caution, Avoid) and search it by name, symbol, or mint. Both filters were applied only to the page of coins already fetched, so asking for 60 Strong coins returned whichever handful of the newest 60 launches happened to be Strong: one, on a busy day. That reads as \"the engine found nothing\" when the engine had plenty. Search had the same blind spot, and could not see a coin that matched but sat a page or two back. Search is now run by the database across the observed feed, and the verdict filter looks through a much deeper recent window before handing back the page you asked for, so a filtered view returns a full page whenever a full page of matches exists. Searching for a literal percent sign or underscore now matches that character instead of behaving as a wildcard. The live trade tape at /api/pump/dex-trades also became readable from any origin, matching every other public pump.fun read endpoint, so an agent running on its own domain can consume it directly.",
+			"link": "/coin-intel",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "Daily usage caps stopped resetting themselves partway through the day",
+			"summary": "When the fast counter store is unavailable, the daily caps that bound expensive actions (persona extraction, voice cloning, withdrawals) fall back to a shared database counter, and a housekeeping job trims counters whose window has passed. That job decided what counted as 'passed' from the shortest-lived counter the server it ran on happened to have loaded, so a server that had only handled short-window traffic deleted everybody's in-progress daily rows. The effect was invisible and generous in the wrong direction: a cap of five per day would let a caller through six, eight, twelve times, because the tally kept getting wiped mid-day. Housekeeping now measures against the longest window any cap can use, so a daily tally survives until its day is genuinely over.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -486,6 +519,16 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "The persona extraction and preview endpoints are documented in the API reference",
+			"summary": "Both routes have been live and usable for a while (turn a short interview or a sample of someone's writing into a structured voice profile, then audition that profile against a test message), but the only way to learn their request shape was to read the demo page's source. The API reference now covers them properly: every field with its limits, a real request and response for each, the exact meaning of every error status, and the per-user call budgets. The demo at /demos/persona-extract.html remains the fastest way to see them work.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "The plugin marketplace stops hiding a plugin when you page through it",
 			"summary": "Browsing plugins a page at a time could show you the same plugin twice and never show another one at all. The catalogue was sorted by install count and publish date, and the built-in plugins were all published in the same instant with zero installs, so that sort left them tied and the database was free to order the tied rows differently on every request. One plugin therefore landed on two consecutive pages and one fell through the gap. The order is now decided all the way down, so paging through the catalogue returns every plugin exactly once. Searching also takes your text literally: typing a percent sign or an underscore used to act as a database wildcard and match rows it should not. Publishing got stricter at the same time, because a plugin manifest is handed to the model as a tool definition by whoever installs it: a tool name now has to be plain letters, digits, underscores, or hyphens, every tool needs a real description, and a manifest has to fit the same 64KB ceiling that importing one by URL already enforced. And pointing the importer at a repository web page instead of the raw manifest file now says exactly that, rather than showing a raw parser error.",
 			"link": "/marketplace",
@@ -503,6 +546,17 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The referral visit beacon now names the real fault when it cannot read a request",
+			"summary": "Referral share links (?ref=CODE) fire a small beacon that records the visit, so the share to signup funnel is measurable. If a caller sent that beacon without a JSON content-type header, or with a body too large to read, the endpoint answered that the referral code was malformed, which is the one thing that was not wrong: the code had never been read. A bad or missing content-type now returns 415 unsupported_media_type, an unreadable body returns 400 bad_request, and an oversized one returns 413 payload_too_large, so anyone hosting their own landing page for a three.ws referral link fixes the header instead of hunting a code that was fine. The write path also picked up its first test coverage: referrer resolution, unknown-code visits, and the once-per-visitor-per-day dedup are now pinned, so the funnel counts cannot drift unnoticed.",
+			"link": "/dashboard/referrals",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -533,6 +587,16 @@
 			"link": "/docs/mcp-safety",
 			"tags": [
 				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The trusted-agent leaderboard now ranks every candidate, not an arbitrary sample of them",
+			"summary": "The leaderboard scores a capped pool of agents on every request, and that pool was selected in whatever order the database happened to return, from a candidate set roughly twice the cap. Half the agents with a real track record were silently skipped, so a top-scoring agent could be missing from the board entirely and two identical page loads could disagree on the ranking. The pool is now ordered by settled ledger volume before it is capped, so the strongest candidates are always scored and the board is stable between requests. Two related repairs: asking for a leaderboard with a non-numeric size (limit=abc) returned an empty board that looked exactly like 'no agent here is trusted', and now returns a plain error; and a database outage no longer publishes an empty leaderboard as if it were the truth, it reports the outage.",
+			"link": "/trending",
+			"tags": [
 				"fix"
 			]
 		},

@@ -3,6 +3,63 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "Daily usage caps stopped resetting themselves partway through the day",
+			"summary": "When the fast counter store is unavailable, the daily caps that bound expensive actions (persona extraction, voice cloning, withdrawals) fall back to a shared database counter, and a housekeeping job trims counters whose window has passed. That job decided what counted as 'passed' from the shortest-lived counter the server it ran on happened to have loaded, so a server that had only handled short-window traffic deleted everybody's in-progress daily rows. The effect was invisible and generous in the wrong direction: a cap of five per day would let a caller through six, eight, twelve times, because the tally kept getting wiped mid-day. Housekeeping now measures against the longest window any cap can use, so a daily tally survives until its day is genuinely over.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The persona extraction and preview endpoints are documented in the API reference",
+			"summary": "Both routes have been live and usable for a while (turn a short interview or a sample of someone's writing into a structured voice profile, then audition that profile against a test message), but the only way to learn their request shape was to read the demo page's source. The API reference now covers them properly: every field with its limits, a real request and response for each, the exact meaning of every error status, and the per-user call budgets. The demo at /demos/persona-extract.html remains the fastest way to see them work.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The trusted-agent leaderboard now ranks every candidate, not an arbitrary sample of them",
+			"summary": "The leaderboard scores a capped pool of agents on every request, and that pool was selected in whatever order the database happened to return, from a candidate set roughly twice the cap. Half the agents with a real track record were silently skipped, so a top-scoring agent could be missing from the board entirely and two identical page loads could disagree on the ranking. The pool is now ordered by settled ledger volume before it is capped, so the strongest candidates are always scored and the board is stable between requests. Two related repairs: asking for a leaderboard with a non-numeric size (limit=abc) returned an empty board that looked exactly like 'no agent here is trusted', and now returns a plain error; and a database outage no longer publishes an empty leaderboard as if it were the truth, it reports the outage.",
+			"tags": [
+				"fix"
+			],
+			"link": "/trending"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "A Premium Data API pass you bought straight from your wallet now shows up on your billing page",
+			"summary": "You can buy a pass without an account, paying from a Solana wallet on the Data API page. Do that, then sign in with the same wallet later, and billing showed you nothing: the pass was live, the API key worked, but the page insisted you had never bought anything. It was reading a single legacy address field on the account, and signing in with a Solana wallet never fills that field, so the lookup could not match a purchase it was standing right next to. Billing now resolves every Solana wallet you have signed into the account and shows every pass any of them bought, including purchases made before the account existed, with each pass's key, rate limit, and usage. Only wallets you have actually signed in with count, so nobody can claim someone else's purchases by typing an address. Two smaller repairs alongside it: the pricing endpoint now reports each asset's decimal precision from the same source that computes the amount you owe, rather than a fixed number that could one day render a price wrong by a factor of a hundred; and key rotation is now metered per account, because every rotation mints a real key.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/dashboard/billing"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Coin Intelligence search and verdict filters now look at the whole feed, not just its newest page",
+			"summary": "The Coin Intelligence radar lets you narrow the live launch feed by verdict (Strong, Watch, Caution, Avoid) and search it by name, symbol, or mint. Both filters were applied only to the page of coins already fetched, so asking for 60 Strong coins returned whichever handful of the newest 60 launches happened to be Strong: one, on a busy day. That reads as \"the engine found nothing\" when the engine had plenty. Search had the same blind spot, and could not see a coin that matched but sat a page or two back. Search is now run by the database across the observed feed, and the verdict filter looks through a much deeper recent window before handing back the page you asked for, so a filtered view returns a full page whenever a full page of matches exists. Searching for a literal percent sign or underscore now matches that character instead of behaving as a wildcard. The live trade tape at /api/pump/dex-trades also became readable from any origin, matching every other public pump.fun read endpoint, so an agent running on its own domain can consume it directly.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/coin-intel"
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The referral visit beacon now names the real fault when it cannot read a request",
+			"summary": "Referral share links (?ref=CODE) fire a small beacon that records the visit, so the share to signup funnel is measurable. If a caller sent that beacon without a JSON content-type header, or with a body too large to read, the endpoint answered that the referral code was malformed, which is the one thing that was not wrong: the code had never been read. A bad or missing content-type now returns 415 unsupported_media_type, an unreadable body returns 400 bad_request, and an oversized one returns 413 payload_too_large, so anyone hosting their own landing page for a three.ws referral link fixes the header instead of hunting a code that was fine. The write path also picked up its first test coverage: referrer resolution, unknown-code visits, and the once-per-visitor-per-day dedup are now pinned, so the funnel counts cannot drift unnoticed.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/dashboard/referrals"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Scanning for trade candidates is faster on creator-filtered rules and honest about how much it looked at",
 			"summary": "The Trading Brain's \"Scan for matches\" preview shows the live launches your rule would buy right now, each with a real quote and a real safety verdict, and it never trades on its own. Three fixes. A rule that filters on the creator's track record has to look that record up over the network, and the scan was buying that lookup for every launch in the feed page, including ones it had already rejected for being too old or too small; it now pays for a creator lookup only when the rest of the rule already likes the coin, which is the difference between a scan that returns and one that crawls. The result said it had scanned the whole feed page even though it stops as soon as it has priced six matches, so the count overstated the work behind the answer; it now reports what it actually examined alongside the size of the page it read from. And an agent's Solana address is a field you can edit, so a value that is not a real address turned the preview into a server error rather than a scan; the safety check now resolves that address itself and the scan completes. The scan also gained its own per-owner limit, because every match it prices costs a live on-chain quote and a safety simulation. Separately, when the Trading Brain refuses something, the panel now shows the reason the server sent instead of a generic \"Scan failed\", so a rate limit, a kill switch, or an unreachable launch feed each read as themselves.",
 			"tags": [

@@ -23,6 +23,14 @@
 			<description>The two market intelligence reads in the unified API, recent narrative intel and momentum-ranked projects, pass a key we hold to the upstream provider; a caller needs no key at all. When that provider stopped accepting our key, both reads answered &quot;unauthorized&quot; with the provider's own wording, so an agent reading the response concluded its own credentials were bad and retried with different ones forever, when nothing on the caller's side was wrong. Both reads now say plainly that the service is temporarily unavailable because this deployment's upstream key was rejected, which is a status clients already know to retry rather than re-authenticate against. The older market intelligence endpoints always classified this correctly; the classification now lives in one place, so the two doors cannot drift apart again, and the error tables in the API reference list every code either one can return.</description>
 		</item>
 		<item>
+			<title>A Premium Data API pass you bought straight from your wallet now shows up on your billing page</title>
+			<link>https://three.ws/dashboard/billing</link>
+			<guid isPermaLink="false">2026-08-15:A Premium Data API pass you bought straight from your wallet now shows up on your billing page</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>You can buy a pass without an account, paying from a Solana wallet on the Data API page. Do that, then sign in with the same wallet later, and billing showed you nothing: the pass was live, the API key worked, but the page insisted you had never bought anything. It was reading a single legacy address field on the account, and signing in with a Solana wallet never fills that field, so the lookup could not match a purchase it was standing right next to. Billing now resolves every Solana wallet you have signed into the account and shows every pass any of them bought, including purchases made before the account existed, with each pass's key, rate limit, and usage. Only wallets you have actually signed in with count, so nobody can claim someone else's purchases by typing an address. Two smaller repairs alongside it: the pricing endpoint now reports each asset's decimal precision from the same source that computes the amount you owe, rather than a fixed number that could one day render a price wrong by a factor of a hundred; and key rotation is now metered per account, because every rotation mints a real key.</description>
+		</item>
+		<item>
 			<title>A profile’s follower count now matches the people the follower list can actually show you</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-15:A profile’s follower count now matches the people the follower list can actually show you</guid>
@@ -125,6 +133,22 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Pasting a wallet into Claim Your Wallet could answer &quot;not indexed yet&quot; to a wallet with thousands of indexed pump.fun trades. The page only accepted a wallet the reputation scorer had already graded, and that scorer runs on a rollup that lags the trade indexer by design, so a wallet the platform had watched trade for days was still turned away. Any wallet with a real on-chain record now renders its full ledger and window aggregates immediately, with the reputation panel honestly reading unproven until the grade lands. Three more fixes shipped with it. Win and loss counts now cover closed positions only, so a trader still holding sixty fresh bags no longer reads as sixty losses, and a new realized profit-and-loss figure sits beside the existing net figure that charges an open bag's entry as if it were written off. Asking for devnet returned the wallet's mainnet trades; both halves of the read are now scoped to the network you asked for. And if the database is unreachable, the page now says the record is temporarily unavailable and offers a retry, instead of publishing an empty scorecard that the CDN would then serve to everyone for the next few minutes.</description>
+		</item>
+		<item>
+			<title>Coin Intelligence search and verdict filters now look at the whole feed, not just its newest page</title>
+			<link>https://three.ws/coin-intel</link>
+			<guid isPermaLink="false">2026-08-15:Coin Intelligence search and verdict filters now look at the whole feed, not just its newest page</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Coin Intelligence radar lets you narrow the live launch feed by verdict (Strong, Watch, Caution, Avoid) and search it by name, symbol, or mint. Both filters were applied only to the page of coins already fetched, so asking for 60 Strong coins returned whichever handful of the newest 60 launches happened to be Strong: one, on a busy day. That reads as &quot;the engine found nothing&quot; when the engine had plenty. Search had the same blind spot, and could not see a coin that matched but sat a page or two back. Search is now run by the database across the observed feed, and the verdict filter looks through a much deeper recent window before handing back the page you asked for, so a filtered view returns a full page whenever a full page of matches exists. Searching for a literal percent sign or underscore now matches that character instead of behaving as a wildcard. The live trade tape at /api/pump/dex-trades also became readable from any origin, matching every other public pump.fun read endpoint, so an agent running on its own domain can consume it directly.</description>
+		</item>
+		<item>
+			<title>Daily usage caps stopped resetting themselves partway through the day</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Daily usage caps stopped resetting themselves partway through the day</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the fast counter store is unavailable, the daily caps that bound expensive actions (persona extraction, voice cloning, withdrawals) fall back to a shared database counter, and a housekeeping job trims counters whose window has passed. That job decided what counted as 'passed' from the shortest-lived counter the server it ran on happened to have loaded, so a server that had only handled short-window traffic deleted everybody's in-progress daily rows. The effect was invisible and generous in the wrong direction: a cap of five per day would let a caller through six, eight, twelve times, because the tally kept getting wiped mid-day. Housekeeping now measures against the longest window any cap can use, so a daily tally survives until its day is genuinely over.</description>
 		</item>
 		<item>
 			<title>Docs pages stop opening with a wall of raw metadata, and the AWS pages say where the Marketplace listing actually stands</title>
@@ -359,6 +383,14 @@
 			<description>The two routes behind the persona builder (the one that turns your interview answers or a sample of your own writing into a structured persona, and the one that replies to you in that persona's voice) used to hand you whatever status code the model provider returned. If a server-side key expired, the provider answered 401 and so did we, which reads to a browser as an expired session on a request where nothing was wrong with your sign-in. Both now report a provider failure as exactly what it is: a server-side fault, with a plain message and no implication that you need to log back in. Separately, when the platform's daily model-spend ceiling is reached, the builder now says so and tells you when it resets, instead of asking you to retry something that could not have succeeded for the rest of the day. Both routes also now record their model usage against your account, so the spend they generate is visible and capped rather than untracked, and the daily extraction budget now holds across every server instance instead of being counted separately on each one.</description>
 		</item>
 		<item>
+			<title>The persona extraction and preview endpoints are documented in the API reference</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-08-15:The persona extraction and preview endpoints are documented in the API reference</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Both routes have been live and usable for a while (turn a short interview or a sample of someone's writing into a structured voice profile, then audition that profile against a test message), but the only way to learn their request shape was to read the demo page's source. The API reference now covers them properly: every field with its limits, a real request and response for each, the exact meaning of every error status, and the per-user call budgets. The demo at /demos/persona-extract.html remains the fastest way to see them work.</description>
+		</item>
+		<item>
 			<title>The plugin marketplace stops hiding a plugin when you page through it</title>
 			<link>https://three.ws/marketplace</link>
 			<guid isPermaLink="false">2026-08-15:The plugin marketplace stops hiding a plugin when you page through it</guid>
@@ -373,6 +405,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Three fixes across the public MCP packages and the API behind them. Asking for a token's recent buys and sells (get_token_trades on the free pump.fun MCP server) had stopped working entirely: the platform reads several transactions in one batched call, and the free Solana providers we route through cap those batches at one call each, so they rejected the whole request and the tool returned a raw provider error instead of trades. The platform now recognises that refusal, re-sends the reads one at a time to the same provider, and remembers the cap so later calls skip the wasted attempt; every batched on-chain read benefits, including wallet and agent activity history. Separately, the notifications MCP server told agents there were six notification categories when there are seven, so an agent could never change how it hears about a finished 3D generation; all seven are now listed, along with the security notices that always reach your bell inbox. And the agent provenance log answered a non-uuid agent id with an internal error and a support reference; it now says plainly that the id must be a uuid.</description>
+		</item>
+		<item>
+			<title>The referral visit beacon now names the real fault when it cannot read a request</title>
+			<link>https://three.ws/dashboard/referrals</link>
+			<guid isPermaLink="false">2026-08-15:The referral visit beacon now names the real fault when it cannot read a request</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Referral share links (?ref=CODE) fire a small beacon that records the visit, so the share to signup funnel is measurable. If a caller sent that beacon without a JSON content-type header, or with a body too large to read, the endpoint answered that the referral code was malformed, which is the one thing that was not wrong: the code had never been read. A bad or missing content-type now returns 415 unsupported_media_type, an unreadable body returns 400 bad_request, and an oversized one returns 413 payload_too_large, so anyone hosting their own landing page for a three.ws referral link fixes the header instead of hunting a code that was fine. The write path also picked up its first test coverage: referrer resolution, unknown-code visits, and the once-per-visitor-per-day dedup are now pinned, so the funnel counts cannot drift unnoticed.</description>
 		</item>
 		<item>
 			<title>The tokenized-stock board sorts the way you asked, with the busiest names first</title>
@@ -397,6 +437,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>An audit of eight documentation pages ran every command they print and checked every claim against the code behind it, then corrected what had drifted. The biggest one was in the trading tutorial: the command it gave you for verifying a fleet's fills on-chain asked for a field the leaderboard does not publish, so it returned an empty explorer link for every agent and the verification step could not be completed at all. It now uses the fields that exist, linking both legs of each trade straight to Solscan, and it skips agents whose wallet has not been provisioned yet instead of building a URL that goes nowhere. The MCP tool safety page undercounted the tools that share a name across two servers, which matters because that collision is exactly why a trust policy has to key on the namespaced id; it now lists all nine and prints a command that re-derives the list so it cannot go stale again. The MCP tool catalog itself had drifted from its source and was serving outdated descriptions for three tools, on a page whose whole promise is that it is generated from source and cannot drift; it has been regenerated. The package extraction guide had every version in its roster out of date along with its build and test columns, and still described a publisher field as missing that was set some time ago. The 10 SOL trading experiment page stated a risk rule in absolute terms that contradicted the setup script it tells you to run, which read as a bug in one of the two; the rule now carries the scope the code actually applies.</description>
+		</item>
+		<item>
+			<title>The trusted-agent leaderboard now ranks every candidate, not an arbitrary sample of them</title>
+			<link>https://three.ws/trending</link>
+			<guid isPermaLink="false">2026-08-15:The trusted-agent leaderboard now ranks every candidate, not an arbitrary sample of them</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The leaderboard scores a capped pool of agents on every request, and that pool was selected in whatever order the database happened to return, from a candidate set roughly twice the cap. Half the agents with a real track record were silently skipped, so a top-scoring agent could be missing from the board entirely and two identical page loads could disagree on the ranking. The pool is now ordered by settled ledger volume before it is capped, so the strongest candidates are always scored and the board is stable between requests. Two related repairs: asking for a leaderboard with a non-numeric size (limit=abc) returned an empty board that looked exactly like 'no agent here is trusted', and now returns a plain error; and a database outage no longer publishes an empty leaderboard as if it were the truth, it reports the outage.</description>
 		</item>
 		<item>
 			<title>The Tutor’s running tab and end-of-session invoice now show what you actually paid</title>
