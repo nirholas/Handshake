@@ -1074,6 +1074,106 @@ export function throwDisposition({ callerAborted, attemptTimedOut, hasMethods })
 	return 'cool-lane';
 }
 
+// ---------------------------------------------------------------------------
+// Per-lane JSON-RPC batch caps
+// ---------------------------------------------------------------------------
+// web3.js batches: getTransactions/getParsedTransactions send ONE JSON-RPC array
+// carrying N getTransaction calls, and getMultipleAccounts does the same for
+// account reads. Some free lanes cap how many calls of a shape they will serve
+// per batch and reject the whole array. Measured 2026-08-15 on
+// solana-rpc.publicnode.com: HTTP 400 + `{code:-32600,"Maximum number of
+// 'getTransaction' calls in a batch request is 1. To increase limits, get a
+// personal token here: https://www.allnodes.com/publicnode"}`.
+//
+// That answer is neither a lane fault nor a method refusal, and misreading it as
+// either loses data we can trivially fetch: the node is healthy, the credential
+// is fine, and it serves the very same call happily one at a time. A plain 400
+// also does not rotate (see shouldRotate: other 4xx are caller errors identical
+// on every lane), so left unclassified it surfaced raw and hard-failed the
+// caller — which is exactly how the pump.fun MCP `get_token_trades` tool died
+// with "400 Bad Request: Maximum number of 'getTransaction' calls in a batch
+// request is 1" on every attempt, while every other tool on the same lane worked.
+//
+// So the disposition is: re-send this batch to the SAME lane as single requests
+// and merge the envelopes back into the array the caller expects. The (lane,
+// method) pair is remembered for a while so the next batch skips the wasted
+// probe and goes straight to unbatched.
+const BATCH_LIMIT_REFUSAL =
+	/maximum number of .{0,64}(?:calls|requests) in a batch|batch (?:request )?(?:size|limit)[^.]{0,48}(?:exceed|too (?:large|big|many)|is \d+)|too many (?:calls|requests) in (?:a |one )?batch|batch too large/i;
+
+// How many single requests a split is allowed to become. A batch wider than this
+// costs more in round-trips than it is worth against a lane that caps at 1, so
+// the request rotates to a lane that takes the batch whole instead.
+const MAX_BATCH_SPLIT = 64;
+// Concurrent single requests during a split. Enough to keep a chunked read fast,
+// low enough that splitting one batch never looks like a burst to the lane that
+// just told us it wants them one at a time.
+const BATCH_SPLIT_CONCURRENCY = 4;
+const BATCH_CAP_TTL_MS = 30 * 60_000;
+
+/** @type {Map<string, number>} `${url}\0${method}` → expiry ms */
+const _batchCapped = new Map();
+
+/**
+ * True when `text` is a provider refusing a batch because of its OWN per-batch
+ * limit, rather than because the request is malformed. PURE, so the policy is
+ * unit-testable without a node.
+ *
+ * @param {string} text
+ */
+export function isBatchLimitRefusal(text) {
+	return BATCH_LIMIT_REFUSAL.test(String(text || ''));
+}
+
+/**
+ * The elements of a JSON-RPC batch body, or null when `body` is not a batch of
+ * more than one call. Splitting is only ever worth it for a real batch.
+ *
+ * @param {unknown} body
+ * @returns {object[]|null}
+ */
+export function batchElements(body) {
+	if (typeof body !== 'string') return null;
+	if (body.trimStart()[0] !== '[') return null;
+	try {
+		const parsed = JSON.parse(body);
+		if (!Array.isArray(parsed) || parsed.length < 2) return null;
+		return parsed.every((el) => el && typeof el === 'object') ? parsed : null;
+	} catch {
+		return null;
+	}
+}
+
+/** True when this lane is known to cap batches for every shape in `methods`. */
+function isBatchCapped(url, methods) {
+	if (!methods.length) return false;
+	const now = Date.now();
+	return methods.every((m) => {
+		const until = _batchCapped.get(methodKey(url, m)) || 0;
+		if (until && until <= now) {
+			_batchCapped.delete(methodKey(url, m));
+			return false;
+		}
+		return until > now;
+	});
+}
+
+function markBatchCapped(url, methods) {
+	const until = Date.now() + BATCH_CAP_TTL_MS;
+	for (const m of methods) _batchCapped.set(methodKey(url, m), until);
+}
+
+/** Read-only view of the lanes known to cap batches, for the ops/health surface. */
+export function rpcBatchCaps(now = Date.now()) {
+	const out = [];
+	for (const [key, until] of _batchCapped) {
+		if (until <= now) continue;
+		const [url, method] = key.split(METHOD_KEY_SEP);
+		out.push({ host: maskUrl(url), method, expiresInMs: until - now });
+	}
+	return out;
+}
+
 // Rotating fetch backing a Connection. It NEVER surfaces a rotate-worthy status
 // (401/403/429/5xx) to @solana/web3.js — it either returns a healthy response or
 // throws — so web3.js's internal 429 backoff loop ("Server responded with 429 …
@@ -1133,6 +1233,37 @@ export function makeRotatingFetch(endpoints) {
 		// error is treated as a failure — web3.js would otherwise choke on it with a
 		// `StructError`, and the /api/solana-rpc proxy would forward the garbage (an
 		// empty `[]`) straight to the browser.
+		// The batch this request carries, if it is one. Null for a single call, which
+		// makes every batch-cap check below a no-op.
+		const batch = batchElements(typeof init?.body === 'string' ? init.body : '');
+
+		// Re-send `batch` to `url` as single JSON-RPC requests and merge the envelopes
+		// back into the array the caller is waiting for. Order is preserved (web3.js
+		// matches on id, but a caller reading positionally must not be surprised).
+		// Throws on the first sub-request that fails validation, so the caller rotates
+		// exactly as it would for any other lane failure — never a partial array.
+		const sendUnbatched = async (url, signal) => {
+			const envelopes = new Array(batch.length);
+			let cursor = 0;
+			const worker = async () => {
+				for (let i = cursor++; i < batch.length; i = cursor++) {
+					const resp = await fetch(url, { ...init, signal, body: JSON.stringify(batch[i]) });
+					if (!resp.ok) throw new Error(`solana rpc ${resp.status} @ ${maskUrl(url)} (unbatched)`);
+					const text = await resp.text();
+					const bad = classifyRpcBody(text);
+					if (bad) throw new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)} (unbatched)`);
+					envelopes[i] = JSON.parse(text);
+				}
+			};
+			await Promise.all(
+				Array.from({ length: Math.min(BATCH_SPLIT_CONCURRENCY, batch.length) }, worker),
+			);
+			return new Response(JSON.stringify(envelopes), {
+				status: 200,
+				headers: { 'content-type': 'application/json' },
+			});
+		};
+
 		const tryEndpoint = async (url) => {
 			// Bound every attempt so one hanging provider can never absorb the whole
 			// request budget (undici's default timeouts run to minutes): the attempt
@@ -1143,11 +1274,33 @@ export function makeRotatingFetch(endpoints) {
 			// ReferenceError instead of rotating and killed the whole failover chain
 			// (the play-gate 502 of 2026-08-13).
 			const attemptSignal = AbortSignal.timeout(ATTEMPT_TIMEOUT_MS);
+			const signal = init?.signal
+				? AbortSignal.any([init.signal, attemptSignal])
+				: attemptSignal;
+			// A batch splits into at most MAX_BATCH_SPLIT single requests; a wider one
+			// is cheaper to rotate than to unroll against a lane that caps at 1.
+			const splittable = !!batch && batch.length <= MAX_BATCH_SPLIT;
 			try {
-				const resp = await fetch(url, {
-					...init,
-					signal: init?.signal ? AbortSignal.any([init.signal, attemptSignal]) : attemptSignal,
-				});
+				// This lane already told us it caps batches for these shapes — skip the
+				// probe request that only re-learns it and go straight to singles.
+				if (splittable && isBatchCapped(url, methods)) return { response: await sendUnbatched(url, signal) };
+
+				const resp = await fetch(url, { ...init, signal });
+				// A per-batch cap is the lane's own policy, not a caller error and not a
+				// lane fault, so it neither rotates nor cools: unroll and re-send here.
+				if (splittable && !resp.ok) {
+					const bodyText = await resp
+						.clone()
+						.text()
+						.catch(() => '');
+					if (isBatchLimitRefusal(bodyText)) {
+						markBatchCapped(url, methods);
+						console.log(
+							`[solana-rpc] ${maskUrl(url)} caps batches for ${methods.join(',') || 'this shape'}, re-sending ${batch.length} calls unbatched`,
+						);
+						return { response: await sendUnbatched(url, signal) };
+					}
+				}
 				if (shouldRotate(resp.status)) {
 					// Read the body only on the failure path (we never return it) so a
 					// quota signal can pick the long cooldown, and so a 401/403 can be told
@@ -1167,6 +1320,15 @@ export function makeRotatingFetch(endpoints) {
 					return { error: new Error(`solana rpc ${resp.status} @ ${maskUrl(url)}`) };
 				}
 				const okBody = await resp.text();
+				// Same cap, stated politely: some nodes answer a too-wide batch with a
+				// 200 carrying one error envelope instead of an HTTP 400.
+				if (splittable && isBatchLimitRefusal(okBody)) {
+					markBatchCapped(url, methods);
+					console.log(
+						`[solana-rpc] ${maskUrl(url)} caps batches for ${methods.join(',') || 'this shape'}, re-sending ${batch.length} calls unbatched`,
+					);
+					return { response: await sendUnbatched(url, signal) };
+				}
 				const bad = classifyRpcBody(okBody);
 				if (bad) {
 					penalise(url, bad.status, bad.bodyText || '', bad.methodBlock === true, bad.log);

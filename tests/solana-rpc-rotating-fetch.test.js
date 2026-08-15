@@ -3,6 +3,8 @@ import {
 	makeRotatingFetch,
 	classifyRpcBody,
 	markEndpointCooldown,
+	isBatchLimitRefusal,
+	batchElements,
 } from '../api/_lib/solana/connection.js';
 
 // A Response carrying either a raw string body or a JSON-encoded object, the way a
@@ -173,5 +175,129 @@ describe('provider daily-limit (-32003 / "request limit reached")', () => {
 		} finally {
 			global.fetch = origFetch;
 		}
+	});
+});
+
+// web3.js sends getTransactions/getParsedTransactions as ONE JSON-RPC array of N
+// getTransaction calls. PublicNode caps that at 1 per batch and rejects the whole
+// array with HTTP 400 + -32600 "Maximum number of 'getTransaction' calls in a
+// batch request is 1" — a plain 4xx, which shouldRotate deliberately treats as a
+// caller error and surfaces as-is. Left unclassified it hard-failed every batched
+// read on that lane while single calls to the same lane worked: the pump.fun MCP
+// `get_token_trades` tool returned nothing but that 400 (measured 2026-08-15).
+// The lane is healthy, so the fix is to unroll the batch onto the SAME lane.
+describe('per-lane JSON-RPC batch caps', () => {
+	const PUBLICNODE_CAP =
+		"Maximum number of 'getTransaction' calls in a batch request is 1. To increase limits, get a personal token here: https://www.allnodes.com/publicnode";
+
+	const batchBody = (n) =>
+		JSON.stringify(
+			Array.from({ length: n }, (_, i) => ({
+				jsonrpc: '2.0',
+				id: i + 1,
+				method: 'getTransaction',
+				params: [`sig${i}`, { maxSupportedTransactionVersion: 0 }],
+			})),
+		);
+
+	let origFetch;
+	beforeEach(() => {
+		origFetch = global.fetch;
+	});
+	afterEach(() => {
+		global.fetch = origFetch;
+	});
+
+	it('recognises the measured refusal, and not a genuine invalid-params error', () => {
+		expect(isBatchLimitRefusal(PUBLICNODE_CAP)).toBe(true);
+		expect(isBatchLimitRefusal('batch request size exceeds the limit of 10')).toBe(true);
+		expect(isBatchLimitRefusal('Invalid params: unrecognized signature')).toBe(false);
+		expect(isBatchLimitRefusal('')).toBe(false);
+	});
+
+	it('reads batch elements only from a real multi-call batch', () => {
+		expect(batchElements(batchBody(3))).toHaveLength(3);
+		expect(batchElements(batchBody(1))).toBeNull(); // a one-element array is not worth splitting
+		expect(batchElements('{"jsonrpc":"2.0","id":1,"method":"getBalance"}')).toBeNull();
+		expect(batchElements('not json')).toBeNull();
+		expect(batchElements(undefined)).toBeNull();
+	});
+
+	it('re-sends a capped batch as single calls on the same lane, preserving order', async () => {
+		const eps = ['https://batchcap-a.test/'];
+		const seen = [];
+		global.fetch = vi.fn(async (url, init) => {
+			const parsed = JSON.parse(init.body);
+			if (Array.isArray(parsed)) {
+				return resp({ jsonrpc: '2.0', id: null, error: { code: -32600, message: PUBLICNODE_CAP } }, 400);
+			}
+			seen.push(parsed.params[0]);
+			return resp({ jsonrpc: '2.0', id: parsed.id, result: { sig: parsed.params[0] } });
+		});
+
+		const out = await makeRotatingFetch(eps)(null, { method: 'POST', body: batchBody(4) });
+		const merged = await out.json();
+		expect(out.status).toBe(200);
+		expect(merged).toHaveLength(4);
+		expect(merged.map((e) => e.result.sig)).toEqual(['sig0', 'sig1', 'sig2', 'sig3']);
+		expect(merged.map((e) => e.id)).toEqual([1, 2, 3, 4]);
+		expect(seen.sort()).toEqual(['sig0', 'sig1', 'sig2', 'sig3']);
+	});
+
+	it('remembers the cap so the next batch skips the rejected probe request', async () => {
+		const eps = ['https://batchcap-b.test/'];
+		let batchAttempts = 0;
+		global.fetch = vi.fn(async (url, init) => {
+			const parsed = JSON.parse(init.body);
+			if (Array.isArray(parsed)) {
+				batchAttempts++;
+				return resp({ jsonrpc: '2.0', id: null, error: { code: -32600, message: PUBLICNODE_CAP } }, 400);
+			}
+			return resp({ jsonrpc: '2.0', id: parsed.id, result: 'ok' });
+		});
+		const rf = makeRotatingFetch(eps);
+		await rf(null, { method: 'POST', body: batchBody(3) });
+		await rf(null, { method: 'POST', body: batchBody(3) });
+		// Only the FIRST request pays for discovering the cap.
+		expect(batchAttempts).toBe(1);
+	});
+
+	it('splits on a 200-status refusal too, not only an HTTP 400', async () => {
+		const eps = ['https://batchcap-c.test/'];
+		global.fetch = vi.fn(async (url, init) => {
+			const parsed = JSON.parse(init.body);
+			if (Array.isArray(parsed)) {
+				return resp({ jsonrpc: '2.0', id: null, error: { code: -32600, message: PUBLICNODE_CAP } });
+			}
+			return resp({ jsonrpc: '2.0', id: parsed.id, result: 'ok' });
+		});
+		const merged = await (await makeRotatingFetch(eps)(null, { method: 'POST', body: batchBody(2) })).json();
+		expect(merged.map((e) => e.result)).toEqual(['ok', 'ok']);
+	});
+
+	it('rotates to the next lane when an unrolled single call also fails', async () => {
+		const eps = ['https://batchcap-d1.test/', 'https://batchcap-d2.test/'];
+		global.fetch = vi.fn(async (url, init) => {
+			const parsed = JSON.parse(init.body);
+			if (String(url) === eps[0]) {
+				return Array.isArray(parsed)
+					? resp({ jsonrpc: '2.0', id: null, error: { code: -32600, message: PUBLICNODE_CAP } }, 400)
+					: resp('server error', 503);
+			}
+			return resp(Array.isArray(parsed) ? parsed.map((el) => ({ jsonrpc: '2.0', id: el.id, result: 'lane2' })) : VALID);
+		});
+		const merged = await (await makeRotatingFetch(eps)(null, { method: 'POST', body: batchBody(2) })).json();
+		expect(merged.map((e) => e.result)).toEqual(['lane2', 'lane2']);
+	});
+
+	it('leaves a lane that serves the batch whole completely alone', async () => {
+		const eps = ['https://batchcap-e.test/'];
+		const fetchSpy = vi.fn(async (url, init) =>
+			resp(JSON.parse(init.body).map((el) => ({ jsonrpc: '2.0', id: el.id, result: 'whole' }))),
+		);
+		global.fetch = fetchSpy;
+		const merged = await (await makeRotatingFetch(eps)(null, { method: 'POST', body: batchBody(5) })).json();
+		expect(merged).toHaveLength(5);
+		expect(fetchSpy).toHaveBeenCalledTimes(1);
 	});
 });
