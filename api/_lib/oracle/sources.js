@@ -336,19 +336,35 @@ export async function recentMints({ network = 'mainnet', limit = 100, sinceSecon
 	return rows.map((r) => r.mint);
 }
 
+/** How many recent coin appearances the wallet profile loads. */
+export const WALLET_PROFILE_COIN_LIMIT = 60;
+
 /**
  * A wallet's reputation + recent footprint, for the wallet profile endpoint.
+ *
+ * Unlike the conviction-engine readers above, this one does NOT swallow query
+ * faults into an empty result. A wallet profile IS the query result, so an
+ * unreachable database has to read as "we could not answer", never as "this
+ * trader has no record": the caller publishes that answer to a CDN, and a
+ * 30-second Neon blip would otherwise pin a false "wallet not indexed" over a
+ * real trader's track record for the life of the cache entry. Let it throw and
+ * let `wrap()` turn it into a 503 no-store.
+ *
  * @param {string} wallet
  * @param {string} network
  */
 export async function walletProfile(wallet, network = 'mainnet') {
-	const rep = await tryRow(() => sql`
+	const repRows = await sql`
 		select wallet, coins_traded, early_entries, wins, early_wins, duds, dumps,
 		       creator_count, creator_wins, win_rate, early_win_rate, dump_rate,
 		       smart_money_score, label, first_seen_at, last_active_at
 		from wallet_reputation where wallet = ${wallet} and network = ${network} limit 1
-	`);
-	const recent = await tryRows(() => sql`
+	`;
+	// pump_coin_wallets carries no network column, so a coin's network comes from
+	// its intel row. Without this filter a devnet query answered with the wallet's
+	// mainnet trades. The `is null` arm keeps a coin the indexer has observed but
+	// not yet classified, so the default mainnet read never silently drops history.
+	const recent = await sql`
 		select w.mint, w.buy_count, w.sell_count, w.buy_lamports, w.sell_lamports,
 		       w.base_bought, w.base_sold, w.is_creator, w.first_seen_at, w.last_seen_at,
 		       i.symbol, i.name, i.image_uri, i.category, i.quality_score, i.narrative,
@@ -357,10 +373,11 @@ export async function walletProfile(wallet, network = 'mainnet') {
 		left join pump_coin_intel i on i.mint = w.mint
 		left join pump_coin_outcomes o on o.mint = w.mint
 		where w.wallet = ${wallet}
+		  and (i.network is null or i.network = ${network})
 		order by w.last_seen_at desc
-		limit 60
-	`);
-	return { rep, recent };
+		limit ${WALLET_PROFILE_COIN_LIMIT}
+	`;
+	return { rep: repRows?.[0] || null, recent: recent || [] };
 }
 
 /**

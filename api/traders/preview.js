@@ -4,11 +4,14 @@
  *   GET /api/traders/preview?wallet=<base58>&network=mainnet
  *
  * Returns the wallet's brain reputation (win rate, smart-money score, label,
- * trade count) and their 20 most recent pump.fun coin appearances. This powers
- * the /claim-wallet page where a KOL or trader can see their verified track
- * record before signing in to claim it.
+ * trade count) and their most recent pump.fun coin appearances
+ * (WALLET_PROFILE_COIN_LIMIT of them). This powers the /claim-wallet page where
+ * a KOL or trader can see their verified track record before signing in to
+ * claim it.
  *
- * Public, IP rate-limited, 2-minute CDN cache.
+ * Public, IP rate-limited, 2-minute CDN cache. A database fault propagates out
+ * of walletProfile() so wrap() answers 503 no-store: an unreachable brain must
+ * never be published to the CDN as "this wallet has no track record".
  */
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
@@ -89,12 +92,20 @@ export default wrap(async (req, res) => {
 
 	const totalBuy  = coins.reduce((a, c) => a + (c.buy_sol  || 0), 0);
 	const totalSell = coins.reduce((a, c) => a + (c.sell_sol || 0), 0);
-	const wins      = coins.filter((c) => c.pnl_sol != null && c.pnl_sol > 0).length;
-	const losses    = coins.filter((c) => c.pnl_sol != null && c.pnl_sol <= 0).length;
 
 	// ROI distribution buckets — the GMGN "Distribution (Token N)" panel. Each
 	// closed position lands in exactly one bucket by realized return.
 	const closed = coins.filter((c) => c.roi != null && !c.open);
+	// Win/loss is a statement about REALIZED outcomes, so only closed positions
+	// vote. Counting every non-positive pnl called an untouched open bag a loss:
+	// a sniper holding 60 fresh positions read as "0 wins / 60 losses" on the
+	// card while win_rate_window said null, and the client's own aggregate()
+	// (closed-only) disagreed with the server on the same numbers.
+	const wins   = closed.filter((c) => c.pnl_sol > 0).length;
+	const losses = closed.length - wins;
+	// Realized PnL closes the same gap in the money column: net_pnl_sol books an
+	// open bag's buy as a total loss, so it is the floor, not the outcome.
+	const realizedPnl = closed.reduce((a, c) => a + (c.pnl_sol || 0), 0);
 	const dist = { x5: 0, x2: 0, up: 0, down: 0, rug: 0 };
 	for (const c of closed) {
 		if (c.roi >= 5) dist.x5++;
@@ -136,8 +147,13 @@ export default wrap(async (req, res) => {
 		last_active_at:    rep.last_active_at ? new Date(rep.last_active_at).toISOString() : null,
 	} : null;
 
+	// `known` means the rollup has graded this wallet. `claimable` means there is
+	// a real on-chain record to claim, which is true the moment the indexer has
+	// seen the wallet trade — the rollup lags by design. Gating claimable on
+	// known made /claim-wallet answer "no record found" to wallets carrying
+	// thousands of indexed pump.fun trades, purely because the scorer hadn't run.
 	const known = !!profile;
-	const claimable = known && (Number(profile.coins_traded) > 0 || coins.length > 0);
+	const claimable = coins.length > 0 || (known && Number(profile.coins_traded) > 0);
 
 	return json(res, 200, {
 		wallet,
@@ -158,6 +174,7 @@ export default wrap(async (req, res) => {
 			total_sell_sol:  Math.round(totalSell * 1000) / 1000,
 			total_volume_sol: Math.round((totalBuy + totalSell) * 1000) / 1000,
 			net_pnl_sol:     Math.round((totalSell - totalBuy) * 1000) / 1000,
+			realized_pnl_sol: Math.round(realizedPnl * 1000) / 1000,
 			avg_buy_sol:     coins.length ? Math.round((totalBuy  / coins.length) * 1000) / 1000 : 0,
 			avg_sell_sol:    coins.length ? Math.round((totalSell / coins.length) * 1000) / 1000 : 0,
 			total_tx: totalTx,
