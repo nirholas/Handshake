@@ -66,6 +66,49 @@ export class AixbtNotConfiguredError extends Error {
 	}
 }
 
+export const AIXBT_SETUP_HINT =
+	'Set AIXBT_API_KEY (full aixbt.tech subscription or an x402 key pass from https://api.aixbt.tech/x402/v2/api-keys).';
+
+/**
+ * Classify an aixbt failure into the envelope every door should answer with.
+ *
+ * One classifier, every door: api/aixbt/* renders it through respondAixbtError,
+ * and the /api/v1/market/* handlers rethrow it through the gateway's fail().
+ * Keeping it here is what stops the two surfaces from drifting again — the v1
+ * doors used to relay aixbt's raw 401 straight to a caller of a public,
+ * credential-free endpoint (live on three.ws until this was fixed), telling
+ * them to authenticate against a door they hold no key to, while /api/aixbt/*
+ * had already mapped that case to a 503.
+ *
+ * @param {any} err error thrown by this module's request path
+ * @returns {{ status: number, code: string, message: string, setup?: string } | null}
+ *          null for a genuine internal fault, which the caller must sanitize.
+ */
+export function mapAixbtFailure(err) {
+	if (err?.code === 'aixbt_not_configured') {
+		return { status: 503, code: err.code, message: err.message, setup: AIXBT_SETUP_HINT };
+	}
+	const status = Number(err?.status) || 502;
+	// aixbt rejecting OUR server-side key is a deployment fault, never the
+	// caller's. It is the same class of failure as a missing key, so it gets the
+	// same 503 + actionable setup hint. The `aixbt_unauthorized` code is
+	// preserved so existing clients keep their typed branch.
+	if (status === 401 || status === 403) {
+		return {
+			status: 503,
+			code: 'aixbt_unauthorized',
+			message: 'aixbt rejected this deployment key (expired, revoked, or below the plan this read needs)',
+			setup: AIXBT_SETUP_HINT,
+		};
+	}
+	// 4xx and "upstream is the fault" (502/503/504/429) carry their descriptive
+	// code + message; only genuine internal faults get sanitized.
+	if (err?.code && (status < 500 || status === 502 || status === 503 || status === 504)) {
+		return { status, code: err.code, message: err.message || 'aixbt request failed' };
+	}
+	return null;
+}
+
 function buildUrl(path, query) {
 	const url = new URL(`${env.AIXBT_API_BASE}${path}`);
 	for (const [k, v] of Object.entries(query || {})) {
