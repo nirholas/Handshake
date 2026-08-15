@@ -109,6 +109,17 @@ const toastWrap = document.getElementById('asc-toast-wrap');
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
+// The header name ships as `data-i18n="agent_screen.loading"` so it reads
+// "Loading…" in the viewer's language before anything resolves. The i18n
+// runtime re-applies that binding whenever it re-translates the document,
+// which overwrote every real value we wrote here: the setup view's header sat
+// on "Loading…" permanently, and a resolved agent name could be reverted to it
+// mid-session. Dropping the binding as we write retires the placeholder.
+function setAgentNameText(text) {
+	agentNameEl.removeAttribute('data-i18n');
+	agentNameEl.textContent = text;
+}
+
 // ── transient toast ─────────────────────────────────────────────────────────
 function toast(msg, ms = 2200) {
 	const el = document.createElement('div');
