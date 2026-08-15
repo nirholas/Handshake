@@ -187,13 +187,37 @@ than picking your own TTS — one round trip instead of two.
 Fetch the live voice catalog (`GET /api/tts/voices`) — ids, names, descriptions,
 which synthesis lanes are configured. Render a picker before the user commits.
 
-### Capability probes
+### Capability probes: `asrInfo()` / `lipsyncInfo()`
 
 Each lane answers a `GET` probe so a UI can decide whether to use the server lane
 or its in-browser fallback without sniffing the browser:
 
-- `GET /api/asr` → `{ configured, encodings, sampleRate }`
-- `GET /api/a2f` → `{ configured, canSynthesize, model, fps, blendshapeFormat: 'arkit', sampleRate, accepts }`
+```js
+import { asrInfo, lipsyncInfo } from '@three-ws/voice';
+
+const asr = await asrInfo();      // GET /api/asr
+// → { configured, encodings: ['wav','pcm','flac','ogg'], sampleRate, raw }
+
+const face = await lipsyncInfo(); // GET /api/a2f
+// → { configured, canSynthesize, model, fps, blendshapeFormat: 'arkit', sampleRate, accepts, raw }
+```
+
+`configured: false` means that lane's provider key isn't set on the deployment,
+so the call would raise `not_configured` — render the in-browser fallback
+instead. `raw` carries the untouched endpoint response for anything not shaped
+above.
+
+### `createVoice(options?) → client`
+
+Bind every call above to one configuration (a custom `baseUrl`, a bearer token, a
+payment-aware `fetch` for the paid backstops) and reuse it:
+
+```js
+import { createVoice } from '@three-ws/voice';
+
+const voice = createVoice({ baseUrl: 'https://three.ws', apiKey: process.env.THREE_WS_API_KEY });
+const clip = await voice.speak('Bound to one config.');
+```
 
 ## Voices
 
@@ -279,6 +303,13 @@ additionally needs Magpie TTS — without it, `say()` returns `not_configured` a
 you pass pre-synthesized audio to `lipsync()` instead.
 
 ## Examples
+
+A runnable script that exercises the whole loop against the live endpoints lives
+in [`examples/`](./examples):
+
+```bash
+node examples/voice-loop.mjs   # probe → speak → lipsync → transcribe → say
+```
 
 **Browser voice loop → animated avatar.** Record, transcribe, answer, and drive
 the face on a loaded GLB:
