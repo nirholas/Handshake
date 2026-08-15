@@ -290,6 +290,10 @@
   function stopTicker() { if (ticker) { clearInterval(ticker); ticker = null; } }
 
   var tierNames = { draft: 'draft quality', standard: 'standard quality', high: 'maximum detail' };
+  // The pipeline is past the painting step the moment a preview URL exists, which
+  // is a poll earlier than the image finishes decoding. Read the phase off the
+  // URL, not off the fade-in class, or the header contradicts the picture below it.
+  var painted = false;
   function applyState(d) {
     if (Number.isFinite(d.etaSeconds) && d.etaSeconds > 0) {
       eta = d.etaSeconds;
@@ -299,10 +303,11 @@
     if (d.previewImageUrl && /^https:\/\//.test(d.previewImageUrl) && concept.src !== d.previewImageUrl) {
       concept.onload = function () { concept.hidden = false; requestAnimationFrame(function () { concept.classList.add('shown'); }); conceptCap.classList.add('shown'); };
       concept.onerror = function () { concept.hidden = true; concept.classList.remove('shown'); conceptCap.classList.remove('shown'); };
+      painted = true;
       concept.src = d.previewImageUrl;
     }
     var tier = tierNames[d.tier] || '';
-    var next = concept.classList.contains('shown')
+    var next = painted
       ? 'Sculpting the 3D mesh' + (tier ? ' at ' + tier : '') + '…'
       : 'Painting the concept' + (tier ? ' at ' + tier : '') + '…';
     if (phaseEl.textContent !== next) phaseEl.textContent = next;
@@ -411,7 +416,23 @@
     if (!stopped) failWith('This is taking far longer than it should. The job may have been lost upstream, so start a fresh one: it is free.');
   }, 40 * 60 * 1000);
 })();
+
+// This page pins a footer bar to the bottom edge, which is exactly where the
+// site-wide corner widgets (the Cmd+K hint, the language switcher) park
+// themselves. Reserve the bar's height with the shared corner stack so they
+// stack above the CTA row instead of covering it.
+(function () {
+  var bar = document.querySelector('footer.bar');
+  if (!bar) return;
+  function claim() {
+    if (window.twsCornerStack) window.twsCornerStack.reserve('watch-footer', { height: bar.offsetHeight + 12 });
+  }
+  window.addEventListener('tws-corner-stack:ready', claim);
+  window.addEventListener('resize', claim);
+  claim();
+})();
 </script>
+<script src="/corner-stack.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

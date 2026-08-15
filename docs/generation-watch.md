@@ -36,7 +36,7 @@ does) lands on the designed empty state, which points to
 
 ## What the page shows
 
-The page polls `GET /api/3d/studio?job=<id>` and moves through four states:
+The page polls `GET /api/3d/studio?job=<id>` and moves through five states:
 
 - **Waiting.** A countdown ring with the estimated time remaining, updated
   locally at 4 Hz between polls so the timer never freezes. Until the API
@@ -59,12 +59,35 @@ The page polls `GET /api/3d/studio?job=<id>` and moves through four states:
   link (HTTP 400), or a job that produces no viewer link shows an honest error
   with a one-click "Forge it again" path. Generation is free, so retrying
   costs nothing.
+- **Offline.** Four consecutive failed polls (a dropped connection, a captive
+  portal, a tab woken on a dead network) stop the countdown and say so, rather
+  than animating a timer against a server nobody is talking to. This state is
+  resumable, not terminal: it offers a "Keep watching" button that picks the
+  poll loop back up where it left off, and the page resumes on its own as soon
+  as the browser fires `online`. The copy is explicit that the generation is
+  still running server-side, because it is.
 
 Polling is adaptive: the interval scales with the remaining estimate (clamped
 between 4 and 10 seconds), a 429 respects the server's `retry_after`, and a
 network blip just retries after 6 seconds. If nothing has finished after 40
 minutes the page stops itself and says so, rather than spinning forever in a
 forgotten tab.
+
+The redirect target is checked before it is followed: `viewerUrl` is honoured
+only when it resolves to this origin or to `three.ws`, so the hand-off can
+never be pointed off-platform.
+
+## Accessibility and presentation
+
+The page carries one `<h1>` (the generation's title, or "Watching your 3D
+generation" when the link has no `title`), and each state's heading is an
+`<h2>` beneath it. State changes are announced through a single visually
+hidden `role="status"` region rather than by wrapping the countdown in a live
+region, which would otherwise read the 4 Hz timer aloud continuously. It
+follows the site theme in both light and dark, and reserves its footer bar's
+height with the shared corner stack
+([public/corner-stack.js](../public/corner-stack.js)) so the site-wide Cmd+K
+hint and language switcher stack above the CTA row instead of covering it.
 
 ## Relation to background generation
 
