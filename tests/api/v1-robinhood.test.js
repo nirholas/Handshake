@@ -26,17 +26,26 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 
 const AAPL = { symbol: 'AAPL', name: 'Apple • Robinhood Token', address: '0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9', decimals: 18, feed: '0x6B22A786bAa607d76728168703a39Ea9C99f2cD0', uiMultiplierAtGeneration: '1000000000000000000' };
 const NFLX = { symbol: 'NFLX', name: 'Netflix • Robinhood Token', address: '0x3b8262A63d25f0477c4DDE23F83cfe22Cb768C93', decimals: 18, feed: null, uiMultiplierAtGeneration: '1000000000000000000' };
+// A third token with a THINNER market than AAPL and no NAV feed: the board's
+// sort direction is only observable with two priced rows plus one unpriced one.
+const MSFT = { symbol: 'MSFT', name: 'Microsoft • Robinhood Token', address: '0x9a52D5B4Ee9C0c9c8E3dEc1cbB8B3B26bE1a70C1', decimals: 18, feed: null, uiMultiplierAtGeneration: '1000000000000000000' };
+
+const DEX_PAIRS = {
+	[AAPL.address.toLowerCase()]: { dexId: 'uniswap', pairAddress: '0xpair', priceUsd: '311.89', quoteToken: { symbol: 'USDG' }, liquidity: { usd: 17423.19 }, volume: { h24: 6580.92 }, priceChange: { h24: 1.2 } },
+	[MSFT.address.toLowerCase()]: { dexId: 'uniswap', pairAddress: '0xpair2', priceUsd: '402.5', quoteToken: { symbol: 'USDG' }, liquidity: { usd: 2210.4 }, volume: { h24: 118.37 }, priceChange: { h24: -0.4 } },
+};
 
 vi.mock('../../api/_lib/robinhood.js', () => ({
-	stockRegistry: () => ({ tokens: [AAPL, NFLX], feedCount: 34, tokenCount: 95 }),
+	stockRegistry: () => ({ tokens: [AAPL, NFLX, MSFT], feedCount: 34, tokenCount: 95 }),
 	findStock: (symbol) => (String(symbol).toUpperCase() === 'AAPL' ? AAPL : null),
 	chainlinkSnapshot: async () => ({
 		[AAPL.address.toLowerCase()]: { symbol: 'AAPL', priceUsd: 315.5, updatedAt: 1783710274, uiMultiplier: '1000000000000000000', totalSupply: '1000000000000000000000' },
 	}),
 	dexSnapshot: async (addresses) => {
 		const out = {};
-		if (addresses.map((a) => a.toLowerCase()).includes(AAPL.address.toLowerCase())) {
-			out[AAPL.address.toLowerCase()] = { dexId: 'uniswap', pairAddress: '0xpair', priceUsd: '311.89', quoteToken: { symbol: 'USDG' }, liquidity: { usd: 17423.19 }, volume: { h24: 6580.92 }, priceChange: { h24: 1.2 } };
+		for (const addr of addresses) {
+			const pair = DEX_PAIRS[addr.toLowerCase()];
+			if (pair) out[addr.toLowerCase()] = pair;
 		}
 		return out;
 	},
@@ -121,7 +130,7 @@ describe('GET /api/v1/robinhood/stocks', () => {
 	it('returns the board with NAV, DEX price, and premium', async () => {
 		const { res, body } = await dispatch('../../api/v1/robinhood/stocks.js', '/api/v1/robinhood/stocks');
 		expect(res.statusCode).toBe(200);
-		expect(body.data.count).toBe(2);
+		expect(body.data.count).toBe(3);
 		const aapl = body.data.stocks.find((s) => s.symbol === 'AAPL');
 		expect(aapl.navPriceUsd).toBe(315.5);
 		expect(aapl.dexPriceUsd).toBeCloseTo(311.89, 2);
@@ -133,6 +142,39 @@ describe('GET /api/v1/robinhood/stocks', () => {
 		const { body } = await dispatch('../../api/v1/robinhood/stocks.js', '/api/v1/robinhood/stocks?q=nflx');
 		expect(body.data.stocks.length).toBe(1);
 		expect(body.data.stocks[0].symbol).toBe('NFLX');
+	});
+
+	it('sorts a numeric column highest-first by default, with unpriced rows last', async () => {
+		const { body } = await dispatch('../../api/v1/robinhood/stocks.js', '/api/v1/robinhood/stocks?sort=volume');
+		expect(body.data.stocks.map((s) => s.symbol)).toEqual(['AAPL', 'MSFT', 'NFLX']);
+		expect(body.data.sort).toBe('volume');
+		expect(body.data.dir).toBe('desc');
+	});
+
+	it('?dir=asc flips a numeric column, and still keeps unpriced rows last', async () => {
+		const { body } = await dispatch('../../api/v1/robinhood/stocks.js', '/api/v1/robinhood/stocks?sort=volume&dir=asc');
+		expect(body.data.stocks.map((s) => s.symbol)).toEqual(['MSFT', 'AAPL', 'NFLX']);
+		expect(body.data.dir).toBe('asc');
+	});
+
+	it('sorts by liquidity and premium on the same rule', async () => {
+		const byLiquidity = await dispatch('../../api/v1/robinhood/stocks.js', '/api/v1/robinhood/stocks?sort=liquidity');
+		expect(byLiquidity.body.data.stocks.map((s) => s.symbol)).toEqual(['AAPL', 'MSFT', 'NFLX']);
+		// Only AAPL has both a NAV feed and a DEX price, so it is the one row with
+		// a premium at all; the other two carry null and sort behind it.
+		const byPremium = await dispatch('../../api/v1/robinhood/stocks.js', '/api/v1/robinhood/stocks?sort=premium');
+		expect(byPremium.body.data.stocks[0].symbol).toBe('AAPL');
+		expect(byPremium.body.data.stocks.slice(1).every((s) => s.premiumPct === null)).toBe(true);
+	});
+
+	it('falls back to A-Z on an unknown sort, and echoes what it actually applied', async () => {
+		const { body } = await dispatch('../../api/v1/robinhood/stocks.js', '/api/v1/robinhood/stocks?sort=bogus');
+		expect(body.data.stocks.map((s) => s.symbol)).toEqual(['AAPL', 'MSFT', 'NFLX']);
+		expect(body.data.sort).toBe('symbol');
+		expect(body.data.dir).toBe('asc');
+		const reversed = await dispatch('../../api/v1/robinhood/stocks.js', '/api/v1/robinhood/stocks?sort=symbol&dir=desc');
+		expect(reversed.body.data.stocks.map((s) => s.symbol)).toEqual(['NFLX', 'MSFT', 'AAPL']);
+		expect(reversed.body.data.dir).toBe('desc');
 	});
 
 	it('rate-limits at 429', async () => {
@@ -177,6 +219,16 @@ describe('GET /api/v1/robinhood/coins', () => {
 		expect(body.data.category).toBe('meme');
 		expect(body.data.coins[0].symbol).toBe('CASHCAT');
 		expect(body.data.coins[0].marketCapUsd).toBe(176098811);
+		expect(body.data.sort).toBe('market_cap');
+	});
+
+	it('echoes the sort it actually applied, not an unknown one the caller sent', async () => {
+		const unknown = await dispatch('../../api/v1/robinhood/coins.js', '/api/v1/robinhood/coins?sort=bogus&category=bogus');
+		expect(unknown.res.statusCode).toBe(200);
+		expect(unknown.body.data.sort).toBe('market_cap');
+		expect(unknown.body.data.category).toBe('meme');
+		const gainers = await dispatch('../../api/v1/robinhood/coins.js', '/api/v1/robinhood/coins?sort=gainers');
+		expect(gainers.body.data.sort).toBe('gainers');
 	});
 });
 

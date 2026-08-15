@@ -116,8 +116,12 @@ export const CATALOG = [
 		auth: 'public',
 		summary:
 			'Resolve + verify an ERC-8004 / three.ws Card v1 agent by CAIP ref ' +
-			'(eip155:<chainId>:<registry>/<tokenId>, URL-encoded).',
-		params: { caip: 'path — URL-encoded CAIP agent ref (required)' },
+			'(eip155:<chainId>:<registry>/<tokenId>).',
+		params: {
+			caip:
+				'path — CAIP agent ref, its "/" passed as a real path separator ' +
+				'(eip155:8453:0x8004A169.../1); encoded colons are fine, an encoded slash is rejected',
+		},
 	},
 	{
 		id: 'v1.ai.tts',
