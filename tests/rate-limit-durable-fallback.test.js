@@ -152,11 +152,15 @@ describe('durable Postgres fallback (no Redis configured)', () => {
 		const { limits } = await loadRateLimit({ redis: null, sqlStub: stub });
 
 		// inscribeIp: critical (so it lands on Postgres) with a 10-minute window.
-		const before = Date.now();
 		await limits.inscribeIp('203.0.113.9');
+		// The prune reads its own clock partway through that call, so the reference
+		// point has to be taken AFTER it. Measuring from before the call subtracts
+		// the elapsed milliseconds from the window and fails on any machine slow
+		// enough to notice.
+		const after = Date.now();
 
 		expect(stub.calls.deletes).toBe(1);
-		expect(before - stub.calls.deleteCutoffs[0]).toBeGreaterThanOrEqual(2 * 86_400_000);
+		expect(after - stub.calls.deleteCutoffs[0]).toBeGreaterThanOrEqual(2 * 86_400_000);
 	});
 
 	it('cheap non-critical buckets never touch Postgres', async () => {
