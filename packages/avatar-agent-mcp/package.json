@@ -58,6 +58,7 @@
 		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
 	},
 	"dependencies": {
+		"@bonfida/spl-name-service": "^3.0.26",
 		"@gltf-transform/core": "^4.3.0",
 		"@gltf-transform/extensions": "^4.3.0",
 		"@gltf-transform/functions": "^4.3.0",

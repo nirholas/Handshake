@@ -34,6 +34,24 @@ export const SOLANA_RPC_URL = validateRpcUrl(
 	env('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com'),
 );
 export const ETH_RPC_URL = env('ETH_RPC_URL') || env('MAINNET_RPC_URL') || null;
+
+// Budget for one leg of `ens_sns_resolve`. Both lanes are multi-round-trip
+// (ENS: registry → resolver → addr; SNS: two account reads on a derived PDA),
+// and the free public endpoints both lanes fall back to are throttled, so a
+// tight budget reports "timed out" for names that resolve fine. Raise it when
+// you are pointing at a slow self-hosted RPC.
+export const NAME_RESOLVE_TIMEOUT_MS = (() => {
+	const raw = env('NAME_RESOLVE_TIMEOUT_MS');
+	if (raw === undefined) return 15000;
+	const n = Number(raw);
+	if (!Number.isFinite(n) || n <= 0) {
+		throw Object.assign(
+			new Error(`NAME_RESOLVE_TIMEOUT_MS must be a positive number (got "${raw}")`),
+			{ code: 'bad_policy_config' },
+		);
+	}
+	return n;
+})();
 export const HELIUS_API_KEY = env('HELIUS_API_KEY', '');
 export const OPENAI_API_KEY = env('OPENAI_API_KEY', '');
 // NVIDIA NIM key (build.nvidia.com, nvapi-…) — powers the FREE Magpie TTS
