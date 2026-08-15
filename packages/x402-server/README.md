@@ -101,6 +101,10 @@ USDC. The first unpaid `GET`/`POST` returns the challenge; the buyer pays and
 re-sends with `X-PAYMENT`; your handler runs once, settlement lands, and the
 response carries the on-chain receipt.
 
+The Solana lane also needs the facilitator's sponsor account: set
+`X402_FEE_PAYER_SOLANA` in the environment (or pass `feePayer`), or the
+challenge throws `missing_fee_payer`. The EVM lane needs neither.
+
 ### A fuller route — both lanes, a fee, a receipt
 
 ```js
@@ -189,6 +193,7 @@ function — mount it as Express/Connect middleware, a Vercel function, or a Nod
 | `asset` | `'usdc' \| { solana?, base? }` | `'usdc'` | Settlement asset. A string resolves the canonical USDC mint/contract per chain; an object pins explicit addresses. |
 | `payTo` | `{ solana?, base? }` | — (**required**) | Pay-to address per lane. At least one chain is required. |
 | `network` | `('solana' \| 'base')[]` | from `payTo` | Which accepts to advertise. Solana leads when both are present. |
+| `feePayer` | `string` | `X402_FEE_PAYER_SOLANA` | The facilitator's Solana sponsor account, advertised as `extra.feePayer`. **Required for the Solana lane** (option or env), otherwise building the challenge throws `missing_fee_payer`. Ignored on EVM. |
 | `feeBps` | `number` | `0` | Platform fee in basis points, **split out of `price`** (≤ `1000` / 10%). `0` = no fee. |
 | `feeTo` | `string` | — | Fee recipient. Required when `feeBps > 0` — no recipient, no fee. |
 | `facilitator` | `string` | platform default | Override the x402 facilitator base URL used for `/verify` + `/settle`. |
@@ -230,6 +235,10 @@ header. Accepts the canonical accept shape:
 { scheme: 'exact', network, asset, payTo, amount, maxTimeoutSeconds,
   extra: { name, decimals, feePayer? } }   // feePayer required on Solana
 ```
+
+The Solana `feePayer` comes from the `feePayer` option, or from
+`X402_FEE_PAYER_SOLANA` in the environment when the option is omitted, so a
+deployment can keep the sponsor account out of its route code.
 
 ### `verifyPayment({ paymentHeader, requirements }) → Promise<Verified>`
 

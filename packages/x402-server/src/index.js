@@ -225,7 +225,20 @@ function buildAccepts({ price, asset, payTo, network, feePayer, maxTimeoutSecond
 	return out;
 }
 
-function buildAccept({ lane, amount, asset, payTo, feePayer, maxTimeoutSeconds, resourceUrl }) {
+/**
+ * Resolve the Solana sponsor account: explicit `feePayer` option, else the
+ * X402_FEE_PAYER_SOLANA env var. Deployments keep the sponsor in the
+ * environment (the platform rails do), so a route that omits the option still
+ * advertises a payable Solana accept instead of throwing missing_fee_payer.
+ */
+export function resolveFeePayer(feePayer) {
+	if (typeof feePayer === 'string' && feePayer.trim()) return feePayer.trim();
+	const env = typeof process !== 'undefined' && process.env ? process.env.X402_FEE_PAYER_SOLANA : null;
+	return typeof env === 'string' && env.trim() ? env.trim() : null;
+}
+
+function buildAccept({ lane, amount, asset, payTo, feePayer: explicitFeePayer, maxTimeoutSeconds, resourceUrl }) {
+	const feePayer = resolveFeePayer(explicitFeePayer);
 	const network = LANE_NETWORK[lane];
 	const assetAddress = resolveAsset(asset, lane);
 	const accept = {

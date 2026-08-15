@@ -71,7 +71,10 @@ export interface BuildChallengeOptions {
 	payTo?: PayTo;
 	/** Which lanes to advertise. Defaults to every lane present in `payTo`. */
 	network?: Lane | Lane[];
-	/** The Solana facilitator sponsor account (required for a Solana accept). */
+	/**
+	 * The Solana facilitator sponsor account (required for a Solana accept).
+	 * Falls back to the X402_FEE_PAYER_SOLANA env var when omitted.
+	 */
 	feePayer?: string;
 	/**
 	 * Advertise $THREE alongside USDC on the Solana lane (a second accept, pushed
@@ -215,3 +218,9 @@ export declare function paid(opts: PaidOptions, handler: Function): (...args: an
  * (rate 0, no recipient, or a sub-atomic fee). `bps` is clamped to [0, 1000].
  */
 export declare function feeSplit(priceAtomics: bigint | number | string, bps: number, recipient: string): FeeSplit | null;
+
+/**
+ * Resolve the Solana sponsor account: the explicit value, else the
+ * X402_FEE_PAYER_SOLANA env var, else null.
+ */
+export declare function resolveFeePayer(feePayer?: string | null): string | null;

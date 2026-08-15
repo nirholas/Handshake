@@ -187,6 +187,34 @@ test('a Solana accept without a feePayer is rejected with missing_fee_payer', ()
 	);
 });
 
+test('the Solana sponsor falls back to X402_FEE_PAYER_SOLANA, and the option wins', () => {
+	const previous = process.env.X402_FEE_PAYER_SOLANA;
+	try {
+		process.env.X402_FEE_PAYER_SOLANA = SYNTH_SOLANA_FEEPAYER;
+		// Same call that throws with no env set: the sponsor now comes from the
+		// environment, which is where a deployment keeps it.
+		const fromEnv = buildChallenge({ price: '1000', payTo: { solana: SYNTH_SOLANA_PAYTO } });
+		assert.equal(fromEnv.accepts[0].extra.feePayer, SYNTH_SOLANA_FEEPAYER);
+
+		const explicit = buildChallenge({
+			price: '1000',
+			payTo: { solana: SYNTH_SOLANA_PAYTO },
+			feePayer: 'THREEsynthetic11111111111111111111Explicit',
+		});
+		assert.equal(explicit.accepts[0].extra.feePayer, 'THREEsynthetic11111111111111111111Explicit');
+
+		// A blank env is not a sponsor.
+		process.env.X402_FEE_PAYER_SOLANA = '   ';
+		assert.throws(
+			() => buildChallenge({ price: '1000', payTo: { solana: SYNTH_SOLANA_PAYTO } }),
+			(e) => e instanceof ThreeWsError && e.code === 'missing_fee_payer',
+		);
+	} finally {
+		if (previous === undefined) delete process.env.X402_FEE_PAYER_SOLANA;
+		else process.env.X402_FEE_PAYER_SOLANA = previous;
+	}
+});
+
 test('buildChallenge() validates price + payTo before building', () => {
 	assert.throws(() => buildChallenge({ payTo: { base: SYNTH_BASE_PAYTO } }), /needs a `price`/);
 	assert.throws(() => buildChallenge({ price: '1.5', payTo: { base: SYNTH_BASE_PAYTO } }), /whole atomic amount/);

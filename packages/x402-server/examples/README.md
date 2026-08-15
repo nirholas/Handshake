@@ -9,6 +9,14 @@ Runnable examples for the seller half of x402. Each is a standalone `.mjs` file.
 | [`raw-primitives.mjs`](raw-primitives.mjs) | Drive `buildChallenge` / `verifyPayment` / `settlePayment` / `feeSplit` directly, no middleware. | `node examples/raw-primitives.mjs` |
 | [`streaming-download.mjs`](streaming-download.mjs) | A paid binary/stream download with `streaming: true` (settle-then-stream). | `node examples/streaming-download.mjs` |
 
+The two server examples listen on a fixed port (3000 and 3001). Set `PORT` to
+move either one when that port is taken:
+
+```bash
+PORT=3100 node examples/express-metered-api.mjs
+PORT=3111 node examples/streaming-download.mjs
+```
+
 ## The two response modes
 
 `paid()` guarantees the buyer never receives the good before settlement. It does
