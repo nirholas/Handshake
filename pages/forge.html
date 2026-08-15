@@ -3578,12 +3578,25 @@
 
 			</form>
 
-			<div class="chips" id="examples" aria-label="Example prompts">
-				<button class="chip" type="button" data-i18n="forge.a_low_poly_red_fox_sitting">a low-poly red fox, sitting</button>
-				<button class="chip" type="button" data-i18n="forge.a_sci_fi_combat_helmet_brushed_metal">a sci-fi combat helmet, brushed metal</button>
-				<button class="chip" type="button" data-i18n="forge.a_potted_monstera_plant">a potted monstera plant</button>
-				<button class="chip" type="button" data-i18n="forge.a_vintage_film_camera">a vintage film camera</button>
-				<button class="chip" type="button" data-i18n="forge.a_glazed_ceramic_teapot">a glazed ceramic teapot</button>
+			<!-- These labels are a space reservation as much as they are copy. On every
+			     JS visit forge-prompt-studio.js replaces them with generated prompts
+			     (capped at 64 characters each), and the row is a flex-wrap container:
+			     when the static labels were half the width of the generated ones the
+			     row gained a line on load and pushed the whole page down, which was
+			     the largest layout shift on /forge. Written at the generator's cap so
+			     the row reserves its worst case at first paint and the rotation can
+			     only ever fit inside it. Keep new examples at 58 to 64 characters.
+			     No data-i18n here on purpose (data-no-i18n keeps i18n-annotate from
+			     adding it back): the generated replacements are English regardless of
+			     locale, so a translated label would only be visible for the instant
+			     before it is overwritten, and rewriting it back on a late catalog
+			     load is what caused the earlier shift on this same row. -->
+			<div class="chips" id="examples" aria-label="Example prompts" data-no-i18n>
+				<button class="chip" type="button">a low-poly red fox sitting upright, matte fur, soft studio light</button>
+				<button class="chip" type="button">a sci-fi combat helmet, brushed titanium, glowing blue visor</button>
+				<button class="chip" type="button">a potted monstera in a hammered copper pot, soft studio light</button>
+				<button class="chip" type="button">a vintage film camera, worn black leather, polished chrome trim</button>
+				<button class="chip" type="button">a glazed ceramic teapot with a bamboo handle, soft studio light</button>
 				<button class="chips-more" type="button" id="chips-more" aria-label="Swap in a fresh set of example prompts" data-i18n="forge.more_ideas" data-i18n-attr="aria-label:forge.swap_in_a_fresh_set_of_examp_arialabel">↻ More ideas</button>
 			</div>
 				</div>
@@ -3630,13 +3643,15 @@
 						Roll &amp; Forge
 					</button>
 					<p class="forge-empty-free" data-i18n="forge.free_no_sign_up_yours_to_download">Free · no sign-up · yours to download</p>
-					<div class="forge-empty-starters" id="empty-starters" role="group" aria-label="Starter prompts: click one to generate">
-						<button class="chip" type="button" data-i18n="forge.a_glazed_ceramic_teapot_2">a glazed ceramic teapot</button>
-						<button class="chip" type="button" data-i18n="forge.a_sci_fi_combat_helmet_brushed_metal_2">a sci-fi combat helmet, brushed metal</button>
-						<button class="chip" type="button" data-i18n="forge.a_low_poly_red_fox_sitting_2">a low-poly red fox, sitting</button>
-						<button class="chip" type="button" data-i18n="forge.a_worn_leather_messenger_bag">a worn leather messenger bag, brass buckles</button>
-						<button class="chip" type="button" data-i18n="forge.a_crystal_dragon_figurine">a crystal dragon figurine, catching the light</button>
-						<button class="chip" type="button" data-i18n="forge.a_chrome_toaster">a chrome toaster, mid-century diner style</button>
+					<div class="forge-empty-starters" id="empty-starters" role="group" aria-label="Starter prompts: click one to generate" data-no-i18n>
+						<!-- Same space-reservation rule as the #examples row above: written at
+						     the generator's 64-character cap, no data-i18n. -->
+						<button class="chip" type="button">a glazed ceramic teapot with a bamboo handle, soft studio light</button>
+						<button class="chip" type="button">a sci-fi combat helmet, brushed titanium, glowing blue visor</button>
+						<button class="chip" type="button">a low-poly red fox sitting upright, matte fur, soft studio light</button>
+						<button class="chip" type="button">a worn leather messenger bag, aged brass buckles, matte finish</button>
+						<button class="chip" type="button">a crystal dragon figurine, faceted glass, catching warm light</button>
+						<button class="chip" type="button">a chrome toaster in mid-century diner style, polished steel</button>
 					</div>
 					<p class="forge-empty-hint" data-i18n="forge.or_click_a_starter_it_generates_immediately">Or click a starter: it generates immediately.</p>
 				</div>

@@ -228,3 +228,68 @@ export function generateDistinctForgePrompts(count, avoid = new Set(), rng = Mat
 	}
 	return out;
 }
+
+/**
+ * A replacement set for a row of example chips that cannot make the row taller.
+ *
+ * The chip rows on /forge are flex-wrap containers, so what moves the page is
+ * the row's TOTAL width, not any single label: a rotation whose labels are
+ * wider overall wraps onto a new line and pushes the rest of the page down. A
+ * per-label cap alone does not prevent that (a 64-character cap over labels
+ * averaging half that reliably added a row), and it measured as the largest
+ * single layout shift on /forge: 0.19 of a 0.256 CLS against production on
+ * 2026-08-15.
+ *
+ * `currentLabels` are the labels being replaced. The returned prompts are
+ * distinct, absent from `avoid`, each no longer than the longest current label,
+ * and no longer in total than the current labels combined, so the row's wrap
+ * geometry can only stay the same or shrink. When the budget is too tight to
+ * fill the row with distinct prompts the shortest candidates are returned
+ * instead, so the row still rotates rather than freezing.
+ */
+export function generateForgeChipSet(
+	currentLabels,
+	avoid = new Set(),
+	rng = Math.random,
+	maxLength = Infinity
+) {
+	const lengths = currentLabels.map((label) => String(label).trim().length);
+	const count = lengths.length;
+	if (!count) return [];
+	const budget = lengths.reduce((a, b) => a + b, 0);
+	const longest = Math.min(Math.max(...lengths), maxLength);
+	// Over-generate so there is a real pool to fit inside the budget. The
+	// combinatorial space is ~10^4, so this stays cheap. A row whose labels are
+	// all shorter than any prompt the generator can emit filters the pool to
+	// nothing; fall back to the caller's own cap there so the row still rotates
+	// rather than freezing on its static copy.
+	let pool = generateDistinctForgePrompts(count * 6, avoid, rng, longest);
+	if (!pool.length) pool = generateDistinctForgePrompts(count * 6, avoid, rng, maxLength);
+	if (!pool.length) return [];
+
+	// Walk the pool in its generated (random) order so the row keeps its
+	// variety, but only accept a prompt while the shortest remaining candidates
+	// could still fill the leftover slots inside the budget. Without that
+	// lookahead a couple of wide early picks strand the tail and the row comes
+	// back short.
+	const shortest = [...pool].sort((a, b) => a.length - b.length);
+	const minLength = shortest[0].length;
+	const picked = [];
+	let used = 0;
+	for (const prompt of pool) {
+		if (picked.length >= count) break;
+		const slotsAfter = count - picked.length - 1;
+		if (used + prompt.length + slotsAfter * minLength > budget) continue;
+		picked.push(prompt);
+		used += prompt.length;
+	}
+	// Budget too tight even for the shortest full row (labels narrower than any
+	// prompt): top up with the shortest candidates. Fewer characters than the
+	// labels they replace can only remove a wrap, never add one, and the caller
+	// pins the row's height across the swap so that cannot shift the page.
+	for (const prompt of shortest) {
+		if (picked.length >= count) break;
+		if (!picked.includes(prompt)) picked.push(prompt);
+	}
+	return picked;
+}

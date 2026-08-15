@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "Pages stop loading a 3D robot you have not scrolled to yet",
+			"summary": "The small animated robot in the site footer was starting up the moment a page opened, at the bottom of a page nobody had scrolled to. On plain pages that meant downloading a whole second 3D engine (253 KB) before anything else, and on the Forge it was the single busiest thing on the page: nearly 20 seconds of browser work, more than the Forge itself. It now waits until you are about a screen away from the footer, so it still greets you on the way down but no longer competes with the page you actually opened. It also stops taking a 3D slot away from the avatars on the page, which on a busy grid could leave a real avatar unable to render. Separately, the Forge's example prompt chips no longer shove the page down as they shuffle to a fresh set on load.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Posed avatar renders finally come out posed",
 			"summary": "Asking the public avatar renderer for a pose returned a T-pose on most models: it matched bone names against a short hand-written list, and any rig that did not use those exact names (including every Mixamo export) was silently left in its bind pose while the response still claimed the pose had been applied. The renderer now uses the same posing engine the pose studio uses, so a preset now lands whatever naming convention the model's skeleton uses, and the camera frames the posed figure rather than the unposed one. The background colour on both public renderers is now checked before it is used, and the per-render budget is counted across the whole fleet instead of per server.",
 			"tags": [

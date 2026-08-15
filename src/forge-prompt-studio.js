@@ -9,7 +9,7 @@
 // genuinely random without ever leaving the model's sweet spot. Nothing here
 // fakes a network call.
 
-import { generateDistinctForgePrompts } from './forge-prompt-gen.js';
+import { generateDistinctForgePrompts, generateForgeChipSet } from './forge-prompt-gen.js';
 
 const MAXLEN = 1000;
 // Example chips stay scannable: only prompts short enough to read at a
@@ -189,19 +189,46 @@ function surprise() {
 
 // Write a generated prompt into a chip and take ownership of its text.
 //
-// The static chip labels in the HTML carry data-i18n keys so a no-JS visitor
-// still gets translated copy. Once we replace that label with a generated
-// prompt, the key no longer describes the node: i18n's applyCatalog walks
-// [data-i18n] whenever a catalog loads or the locale changes and would write
-// the original English string back over the generated one. That silently undid
-// every rotation (the "fresh set every visit" promise below), and because the
-// generated prompts are longer than the static ones the revert re-wrapped the
-// flex row and moved everything under it, which measured as the single largest
-// layout shift on /forge. Dropping the attribute hands the node to its real
-// owner, the same way nav-auth's data-auth-name guard does in src/i18n.js.
+// The example rows in pages/forge.html deliberately carry no data-i18n keys
+// (see the comment there), but a chip injected by another module might. i18n's
+// applyCatalog walks [data-i18n] whenever a catalog loads or the locale
+// changes and would write the original string back over the generated one,
+// silently undoing every rotation and re-wrapping the flex row underneath it.
+// Dropping the attribute hands the node to its real owner, the same way
+// nav-auth's data-auth-name guard does in src/i18n.js.
 function setChipPrompt(chip, text) {
 	chip.textContent = text;
 	chip.removeAttribute('data-i18n');
+}
+
+// The replacement labels for a chip row come from generateForgeChipSet, which
+// fits them inside the row's existing character budget so a rotation can never
+// add a wrapped line. See its comment in forge-prompt-gen.js for why the
+// per-label CHIP_MAXLEN cap was not enough on its own.
+const generateChipSet = (chips, avoid) =>
+	generateForgeChipSet(
+		chips.map((c) => c.textContent),
+		avoid,
+		Math.random,
+		CHIP_MAXLEN
+	);
+
+// Hold the row at the height it already occupies while its labels change, so a
+// set that happens to wrap onto fewer lines cannot shift the page upward
+// either. Released on resize: a resize relayouts the whole page anyway, and a
+// stale pin from a narrower viewport would leave a visible gap.
+function pinRowHeight(container) {
+	if (!container) return;
+	const h = container.getBoundingClientRect().height;
+	if (!h) return;
+	container.style.minHeight = `${h}px`;
+	window.addEventListener(
+		'resize',
+		() => {
+			container.style.minHeight = '';
+		},
+		{ once: true }
+	);
 }
 
 function shuffleChips() {
@@ -211,7 +238,8 @@ function shuffleChips() {
 	const chips = [...els.examples.querySelectorAll('.chip:not(.chip--festive)')];
 	if (!chips.length) return;
 	const current = new Set(chips.map((c) => c.textContent.trim()));
-	const fresh = generateDistinctForgePrompts(chips.length, current, Math.random, CHIP_MAXLEN);
+	pinRowHeight(els.examples);
+	const fresh = generateChipSet(chips, current);
 	chips.forEach((chip, i) => {
 		const next = fresh[i];
 		if (!next) return;
@@ -235,14 +263,23 @@ function shuffleChips() {
 // the empty-stage starters, kept mutually distinct; festive (pinned
 // seasonal) chips are untouched.
 function seedChips() {
-	const chips = [els.examples, els.emptyStarters].flatMap((container) =>
-		container ? [...container.querySelectorAll('.chip:not(.chip--festive)')] : []
-	);
-	if (!chips.length) return;
-	const fresh = generateDistinctForgePrompts(chips.length, undefined, Math.random, CHIP_MAXLEN);
-	chips.forEach((chip, i) => {
-		if (fresh[i]) setChipPrompt(chip, fresh[i]);
-	});
+	// Each row gets its own character budget: the two rows live in different
+	// columns and wrap independently, so pooling their budgets would let one
+	// spend the other's and re-introduce the wrap it was meant to prevent.
+	// `used` carries across both so the two rows stay mutually distinct.
+	const used = new Set();
+	for (const container of [els.examples, els.emptyStarters]) {
+		if (!container) continue;
+		const chips = [...container.querySelectorAll('.chip:not(.chip--festive)')];
+		if (!chips.length) continue;
+		pinRowHeight(container);
+		const fresh = generateChipSet(chips, used);
+		chips.forEach((chip, i) => {
+			if (!fresh[i]) return;
+			used.add(fresh[i]);
+			setChipPrompt(chip, fresh[i]);
+		});
+	}
 }
 
 if (els.prompt) {

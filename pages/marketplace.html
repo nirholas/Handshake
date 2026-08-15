@@ -2341,6 +2341,13 @@
 				overflow: hidden;
 				transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
 				gap: 2px;
+				/* The skeleton card and the loaded card have to be the same box, or
+				   the swap moves the whole page. Measured against production on
+				   2026-08-15 the loaded card was 235px tall and the skeleton 190px,
+				   so the "no layout jump" the skeleton was written for never held.
+				   Pinning the floor here holds it for both, since both are
+				   .mkt-top-card. Mobile has its own value in the 640px query. */
+				min-height: 235px;
 			}
 			.mkt-top-card::before {
 				content: '';
@@ -2464,7 +2471,18 @@
 			}
 			@media (max-width: 640px) {
 				.mkt-top-podium { grid-template-columns: 1fr; gap: 8px; }
-				.mkt-top-card { flex-direction: row; align-items: center; padding: 14px 16px; gap: 12px; }
+				/* Same reservation as the desktop rule above, at the height a loaded
+				   card measures once the podium is a single stacked column (72px on
+				   production, 2026-08-15). A name long enough to wrap still grows it
+				   at the narrowest widths; that residual is noted in
+				   docs/site-performance.md. */
+				.mkt-top-card { flex-direction: row; align-items: center; padding: 14px 16px; gap: 12px; min-height: 72px; }
+				/* One column here, so unlike desktop the placeholder COUNT decides the
+				   podium's height. Three placeholders would reserve three rows for a
+				   feed that currently returns one agent, and over-reserving shifts the
+				   page just as surely as under-reserving. Reserve the row the loaded
+				   podium actually has. */
+				.mkt-top-podium .mkt-skel:nth-child(n + 2) { display: none; }
 				.mkt-top-card::after { background: none; }
 				.mkt-top-av-wrap { margin: 0; width: 42px; height: 42px; }
 				.mkt-top-rank { position: static; }
@@ -3414,14 +3432,53 @@
 					</div>
 				</div>
 
-				<!-- Top Oracle Performers — top 3 agents by oracle win rate -->
-				<section class="mkt-top-section" id="mkt-top-section" hidden aria-label="Top performing agents by oracle win rate">
+				<!-- Top Oracle Performers, the top 3 agents by oracle win rate.
+				     Deliberately NOT `hidden`: loadTopPerformers() in src/marketplace.js
+				     used to reveal it after its skeleton was injected, which meant the
+				     whole 271px section appeared out of nothing and pushed the grid,
+				     the pulse strip and everything under them down. That single reveal
+				     was the largest layout shift on the page (0.178 of a 0.257 desktop
+				     CLS, measured on production 2026-08-15). The section now holds its
+				     box from first paint and the skeleton fills it; the empty and
+				     error paths still hide it, which is the only case that shifts. -->
+				<section class="mkt-top-section" id="mkt-top-section" aria-label="Top performing agents by oracle win rate">
 					<div class="mkt-top-head">
 						<span class="mkt-top-eyebrow" data-i18n="marketplace.oracle_leaders">Oracle leaders</span>
 						<h2 class="mkt-top-title" data-i18n="marketplace.top_performers">Top Performers</h2>
 						<a href="/oracle" class="mkt-top-see-all" data-i18n="marketplace.view_leaderboard">View leaderboard →</a>
 					</div>
-					<div class="mkt-top-podium" id="mkt-top-podium"></div>
+					<!-- The loading state ships in the markup rather than being injected,
+					     so the podium holds its box from the first frame instead of from
+					     whenever the page bundle gets around to running. Each placeholder
+					     is a real .mkt-top-card, so it lays out at exactly the height the
+					     loaded card will, at every breakpoint. loadTopPerformers() in
+					     src/marketplace.js replaces the whole podium in one write. -->
+					<div class="mkt-top-podium" id="mkt-top-podium" aria-busy="true">
+						<div class="mkt-top-card mkt-skel" style="--rank-color:#f59e0b">
+							<span class="mkt-top-rank">#1</span>
+							<div class="mkt-top-av-wrap"></div>
+							<div class="mkt-top-name" style="width:70%;height:12px">&nbsp;</div>
+							<div class="mkt-top-wr" style="width:60%;height:28px;margin-top:8px">&nbsp;</div>
+							<div class="mkt-top-wr-lbl" style="width:50%;height:10px">&nbsp;</div>
+							<div class="mkt-top-meta" style="width:80%;height:10px">&nbsp;</div>
+						</div>
+						<div class="mkt-top-card mkt-skel" style="--rank-color:#94a3b8">
+							<span class="mkt-top-rank">#2</span>
+							<div class="mkt-top-av-wrap"></div>
+							<div class="mkt-top-name" style="width:70%;height:12px">&nbsp;</div>
+							<div class="mkt-top-wr" style="width:60%;height:28px;margin-top:8px">&nbsp;</div>
+							<div class="mkt-top-wr-lbl" style="width:50%;height:10px">&nbsp;</div>
+							<div class="mkt-top-meta" style="width:80%;height:10px">&nbsp;</div>
+						</div>
+						<div class="mkt-top-card mkt-skel" style="--rank-color:#cd7c4f">
+							<span class="mkt-top-rank">#3</span>
+							<div class="mkt-top-av-wrap"></div>
+							<div class="mkt-top-name" style="width:70%;height:12px">&nbsp;</div>
+							<div class="mkt-top-wr" style="width:60%;height:28px;margin-top:8px">&nbsp;</div>
+							<div class="mkt-top-wr-lbl" style="width:50%;height:10px">&nbsp;</div>
+							<div class="mkt-top-meta" style="width:80%;height:10px">&nbsp;</div>
+						</div>
+					</div>
 				</section>
 
 				<aside

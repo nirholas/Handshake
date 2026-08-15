@@ -8849,17 +8849,12 @@ async function loadTopPerformers() {
 	const podium = $('mkt-top-podium');
 	if (!section || !podium) return;
 
-	// Show skeleton cards immediately so there's no layout jump when data arrives.
-	podium.innerHTML = [0, 1, 2].map((i) => `
-		<div class="mkt-top-card mkt-skel" style="--rank-color:${TOP_RANK_COLORS[i]}">
-			<span class="mkt-top-rank">${TOP_RANK_LABELS[i]}</span>
-			<div class="mkt-top-av-wrap"></div>
-			<div class="mkt-top-name" style="width:70%;height:12px">&nbsp;</div>
-			<div class="mkt-top-wr" style="width:60%;height:28px;margin-top:8px">&nbsp;</div>
-			<div class="mkt-top-wr-lbl" style="width:50%;height:10px">&nbsp;</div>
-			<div class="mkt-top-meta" style="width:80%;height:10px">&nbsp;</div>
-		</div>`).join('');
-	section.hidden = false;
+	// The skeleton and the section's visibility both ship in pages/marketplace.html
+	// now. Injecting the skeleton here, and revealing the section behind it, meant
+	// the podium's 271px box did not exist until this module ran, so the whole
+	// section appeared out of nothing and pushed the page down: the largest layout
+	// shift on /marketplace (0.178 of a 0.257 desktop CLS, measured 2026-08-15).
+	// This function only ever replaces the podium's contents or hides the section.
 
 	try {
 		const r = await fetch('/api/oracle/leaderboard?limit=3&min_actions=3', {
@@ -8899,6 +8894,9 @@ async function loadTopPerformers() {
 				</div>
 			</a>`;
 		}).join('');
+		// The podium ships aria-busy="true" around its placeholder cards; the real
+		// ones are here, so stop telling assistive tech the region is still loading.
+		podium.removeAttribute('aria-busy');
 	} catch {
 		section.hidden = true;
 	}

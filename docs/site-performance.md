@@ -29,25 +29,39 @@ Two things to know before reading a report:
 
 - **The score is not the byte count.** Performance is weighted Total Blocking Time 30%, Largest Contentful Paint 25%, Cumulative Layout Shift 25%, First Contentful Paint 10%, Speed Index 10%. A page can ship 4 MB and score well if none of it blocks; a page can ship 900 KB and score badly if all of it runs at once.
 - **Lighthouse 13 removed the audits everyone quotes.** `offscreen-images`, `uses-responsive-images`, `modern-image-formats` and `dom-size` are gone, replaced by the insight family: `image-delivery-insight`, `render-blocking-insight`, `cache-insight`, `legacy-javascript-insight`, `cls-culprits-insight`. A script that reads the old audit names throws on `undefined`.
+- **Keep `--disable-gpu`. Do not "improve" it to software WebGL.** Swapping it for `--use-gl=angle --use-angle=swiftshader` looks more faithful, since the 3D pages then really run their renderers, and it does not survive contact with this site: in the 2026-08-15 sweep that flag set made `/` and `/marketplace` abort with `PAGE_HUNG`, `/play` report `NO_FCP`, and `/marketplace` still fail with `PROTOCOL_TIMEOUT` at a 90s `--max-wait-for-load` on a completely idle machine. The same pages complete in about two minutes each with `--disable-gpu`. Software rasterization of our own WebGL is slower than the throttling Lighthouse is trying to apply, so the run measures the rasterizer rather than the page.
+- **Check `environment.benchmarkIndex` in every report before quoting its score.** A shared build machine swings it wildly: the 2026-08-15 sweep saw 108 on one `/create` run and 2,398 on a `/` run twenty minutes later, and the low reading inflates every CPU-bound metric in that report. A run under roughly 800 is worth repeating on an idle machine rather than recording.
 
-## The 2026-08-14 baseline
+## Where the numbers are
 
-Every page named in this table was measured against `https://three.ws` with Lighthouse 13.4.1 on 2026-08-14. **This is the baseline, not the current state**: the live build at the time was commit `0496089f0`, stamped `2026-08-14T01:24:52Z`, which predates rules 1, 2, 3 and the model-viewer half of rule 4, plus the chip fix in `a789c2f90`. Every one of those is committed and none of them was deployed when these numbers were taken, so treat the table as the problem statement each rule below was written against.
+Two sweeps, same eight pages, same tool (Lighthouse 13.4.1), same flags, three weeks apart in build terms. The first is the problem statement the rules below were written against; the second is what the deployed rules are worth.
 
-| Page | Desktop | Mobile | Desktop TBT | Desktop CLS | Desktop bytes |
-|---|---|---|---|---|---|
-| `/` | 33 | 25 | 19,340ms | 0.009 | 3,715 KiB |
-| `/create` | 38 | 25 | 6,940ms | 0.013 | 1,892 KiB |
-| `/forge` | 32 | 20 | 12,560ms | 0.232 | 4,243 KiB |
-| `/marketplace` | 23 | 17 | 51,400ms | 0.178 | 4,748 KiB |
-| `/play` | 31 | 25 | 5,870ms | 0 | 2,317 KiB |
-| `/docs` | 39 | 35 | 4,490ms | 0.028 | 701 KiB |
-| `/discover` | 54 | 44 | 11,010ms | 0.022 | 10,952 KiB |
-| `/chat` | 28 | 25 | 6,390ms | 0.001 | 4,435 KiB |
+**2026-08-14**, against commit `0496089f0` (stamped `2026-08-14T01:24:52Z`), which predates rules 1, 2, 3 and the model-viewer half of rule 4.
 
-Total blocking time is what holds every one of these scores down, and it is 30% of the weighting on its own. Read the table by that column, not by the score.
+**2026-08-15**, against commit `7505b83ca` (stamped `2026-08-15T07:08:00Z`), which contains all of them.
 
-Two caveats worth knowing when you compare a later run against this one. The runs were taken on a shared build machine with other work in flight, so single-page scores move a few points between runs: `/create` measured 50 in a quieter run earlier the same day and 38 here. And `/marketplace` is heavy enough that Lighthouse itself gave up with `PROTOCOL_TIMEOUT` on the first attempt and needed a 90s `--max-wait-for-load` to complete at all, which is a finding in its own right.
+| Page | Desktop 08-14 | Desktop 08-15 | Mobile 08-14 | Mobile 08-15 | Desktop TBT 08-14 | Desktop TBT 08-15 |
+|---|---|---|---|---|---|---|
+| `/` | 33 | **91** | 25 | 48 | 19,340ms | 134ms |
+| `/create` | 38 | **94** | 25 | 51 | 6,940ms | 0ms |
+| `/forge` | 32 | **75** | 20 | 31 | 12,560ms | 55ms |
+| `/marketplace` | 23 | **58** | 17 | 20 | 51,400ms | 168ms |
+| `/play` | 31 | **83** | 25 | 41 | 5,870ms | 101ms |
+| `/docs` | 39 | **93** | 35 | 47 | 4,490ms | 107ms |
+| `/discover` | 54 | **88** | 44 | 58 | 11,010ms | 266ms |
+| `/chat` | 28 | **60** | 25 | 55 | 6,390ms | 0ms |
+
+Total blocking time was what held every score in the first column down, and it is 30% of the weighting on its own. It is now effectively gone from all eight pages. **Read a Lighthouse report by which metric is losing the points, not by the score**, because the answer changes once you fix something: on the three pages still under 80, blocking time now costs 4.2 points at worst and the loss has moved somewhere else entirely.
+
+| Page still under 80 | Losing | To |
+|---|---|---|
+| `/forge` 75 | 13.3 pts | CLS 0.260, of which 0.190 is one shift on the example-prompt row (rule 6) |
+| `/marketplace` 58 | 19.8 pts + 13.0 pts | LCP 3,649ms, and CLS 0.257 of which 0.178 is one shift on the podium (rule 5) |
+| `/chat` 60 | 21.0 + 9.9 + 9.0 pts | LCP, FCP and Speed Index, all of them one 4,277 KiB chunk (see the open items) |
+
+Full desktop detail for the 2026-08-15 run: CLS `/` 0.002, `/create` 0.014, `/forge` 0.260, `/marketplace` 0.257, `/play` 0.000, `/docs` 0.043, `/discover` 0.044, `/chat` 0.001. Transferred bytes `/` 3,272 KiB, `/create` 1,804 KiB, `/forge` 8,254 KiB, `/marketplace` 3,987 KiB, `/play` 2,265 KiB, `/docs` 706 KiB, `/discover` 4,885 KiB, `/chat` 4,627 KiB.
+
+Both sweeps were taken on a shared build machine, so single-page scores move a few points between runs; see the `benchmarkIndex` note above before quoting one.
 
 ---
 
@@ -118,6 +132,39 @@ Measured honestly, that last one is the smallest of the three: at 1350x940 the s
 
 **A new `<model-viewer>` on a multi-viewer page ships `data-src`, or it is eager.** There is no third option, and the attribute that looks like it should handle this does not.
 
+### The site footer is the lowest thing on every page, so its 3D bot loads last
+
+The rule above was written about sections. The most expensive violation of it was not a section at all: it was the decorative robot in the site footer, and it was costing more than everything the rule had already caught.
+
+[public/footer.js](../public/footer.js) injects `/footer.html` into any page holding `<div id="footer-container">`, which is roughly 175 pages. That markup contains `#footer-bot-canvas`, and the injector booted its renderer immediately, at `DOMContentLoaded`, down one of two branches:
+
+- A page carrying `<meta name="has-three-bundle">` (every Vite-built page) loaded `/footer-bot.js`, which builds a `WebGLRenderer`, claims a context off the shared budget in [src/webgl-budget.js](../src/webgl-budget.js), and loads `robotexpressive.glb`.
+- A plain HTML page (login, register, the dashboard, `/docs`, `/discover`) instead pulled **`model-viewer` from `ajax.googleapis.com`, a second complete 3D engine**, plus the meshopt shim and the same GLB.
+
+Measured against production on 2026-08-15, that decoration was the single largest main-thread consumer on the page it landed on:
+
+| Page | Branch | Cost, eager |
+|---|---|---|
+| `/forge` | `footer-bot.js` | **19,654ms** of bootup, more than the page's own bundle (1,473ms) |
+| `/docs` | `model-viewer` | 839ms of bootup and 253 KiB transferred, on a 701 KiB page |
+| `/create` | `footer-bot.js` | 107 KiB GLB plus a WebGL context, on a page already running Three.js |
+
+`loading="lazy"` on the `<model-viewer>` element did not help, and could not: it defers the *model*, while the 253 KiB module that defines the element had already been fetched and evaluated.
+
+Both branches now sit behind `whenNearViewport()` in the same file, an `IntersectionObserver` on `.h-footer-avatar` at `rootMargin: '600px 0px'`, so the bot loads a screenful before the footer arrives and is rendered by the time it is on screen. Browsers without `IntersectionObserver` load it on the first scroll instead, so it still appears on the way down rather than never.
+
+Verified by loading the real production pages twice in the same browser, the second time with only `/footer.js` swapped for the working-tree file, then scrolling to the footer to confirm the bot still arrives:
+
+| Page | Transferred, before | after | Long tasks, before | after | Footer bot loaded on open | after scrolling |
+|---|---|---|---|---|---|---|
+| `/docs` | 675 KiB | **426 KiB** | 62ms | **17ms** | yes | yes |
+| `/forge` | 7,379 KiB | 7,283 KiB | 426ms | **138ms** | yes | yes |
+| `/create` | 2,215 KiB | **1,528 KiB** | 8,422ms | **2,510ms** | yes | yes |
+
+Deferring it also fixes an ordering bug nobody had filed. The footer bot reserved a WebGL context at `DOMContentLoaded`, ahead of the `<agent-3d>` instances the visitor came to look at; on a page near the browser's context limit the decoration could win and a real avatar lose. Now the content claims contexts first and the footer takes what is left, which is what `reserveWebGLContext()` was always for. The bot's own failure path already degrades to an empty canvas, so losing that race is silent and harmless.
+
+**Anything injected into a shared chrome partial follows this rule too.** A cost paid in the footer is a cost paid on every page on the site, which makes it the most expensive place on the platform to be careless.
+
 **Before you gate something, check where it actually is.** Paste this into DevTools:
 
 ```js
@@ -138,6 +185,22 @@ The box is reserved by CSS rather than by `width`/`height` attributes, because t
 
 **A reserved box is not optional.** If you add a thumbnail whose container has no `aspect-ratio` and no fixed height, add one, or the late image will shift everything under it.
 
+### A skeleton only reserves the box if it is the same size as the thing it replaces
+
+`/marketplace` had a skeleton, a comment saying it existed "so there's no layout jump when data arrives", and the largest layout shift on the page. Both halves of it were wrong, and each is worth recognising on sight.
+
+**A section that JavaScript reveals reserves nothing.** `#mkt-top-section` shipped `hidden`, and `loadTopPerformers()` in [src/marketplace.js](../src/marketplace.js) cleared that only once it ran. `hidden` is `display: none`, so until the page bundle executed, the section occupied zero pixels; then the whole 271px of it appeared and pushed the grid, the pulse strip and everything below them down. That single reveal measured **0.178 of the page's 0.257 desktop CLS**. The skeleton could not help, because the skeleton was inside the thing that did not exist yet.
+
+**A placeholder that is not the size of the real card is a second shift, not a fix.** Measured on production at six viewport widths, the skeleton podium was **190px against a loaded podium of 235px** on desktop, so the swap moved the page again by 45px.
+
+Both are fixed in the markup rather than the module. The section ships visible with its three placeholder cards in [pages/marketplace.html](../pages/marketplace.html), so the box exists in the first frame; `.mkt-top-card` carries a `min-height` (235px, and 72px in the 640px query) that the placeholder and the loaded card both obey, so the swap is a no-op for layout. `loadTopPerformers()` now only replaces the podium's contents, clears the `aria-busy` it ships with, or hides the section when the feed is empty.
+
+Below 640px the podium is a single column, which makes the placeholder *count* decide its height rather than just the card size, so the 640px query hides every placeholder after the first. Three placeholders there would have reserved three rows for a feed that currently returns one agent, and over-reserving shifts the page exactly as surely as under-reserving; that was a regression introduced and caught inside this change, not a pre-existing one.
+
+Two residuals are measured and left, both smaller than what they replace. If the leaderboard starts returning three agents, the mobile column grows from one row to three (a 160px shift, against the 268px the same load costs today). And a name long enough to wrap grows a loaded card past the 72px floor at 390px and narrower, by 14px to 32px. Reserving for a count you do not know yet is not solvable in CSS; reserving for the card you do know is.
+
+**A loading state is a size before it is a shimmer.** Build it out of the same element as the real thing, ship it in the HTML, and check both heights in the browser rather than assuming they match.
+
 ## 6. Whoever writes a node's text owns it, and i18n has to be told
 
 **Invariant: JavaScript that replaces the text of an element carrying `data-i18n` removes the attribute in the same statement.**
@@ -157,7 +220,44 @@ function setChipPrompt(chip, text) {
 
 **Any node whose text becomes dynamic loses its `data-i18n` at the point it becomes dynamic.** Not later, not in a cleanup pass. `src/i18n.js` uses the same guard for `data-auth-name` in the nav.
 
+### That fixed the revert. It did not fix the growth.
+
+The 2026-08-15 sweep ran against a build that already contained the fix above, and `/forge` still measured **CLS 0.256 desktop, 0.263 mobile, with `<div class="chips" id="examples">` still named as the largest single shift at 0.190**. Removing the revert removed one direction of a shift that had two.
+
+The remaining direction was the first one: static labels to seeded labels. The static markup shipped five short examples ("a potted monstera plant") totalling 132 characters, and `seedChips()` replaced them on every JS visit with generated prompts capped at 64 characters each. The generator's own distribution is the whole story: a prompt averages 53.5 characters and cannot go below 29, so the seeded row averaged 268 characters and could reach 320. **The row a visitor sees was always more than twice as wide as the row first paint reserved for it**, and `.chips` is `flex-wrap`, so the difference arrived as extra lines that pushed the composer and everything under it down.
+
+There is no way to generate a row narrow enough to fit the old markup. Only **three distinct prompts in the entire grammar** are 37 characters or shorter, so a per-label cap tight enough to match the static copy would leave the row with duplicates. The reservation has to move to meet the content, not the other way round:
+
+- The labels in [pages/forge.html](../pages/forge.html) are now written at the 64-character cap, so first paint reserves the row's worst case. Both rows carry `data-no-i18n`, which keeps `scripts/i18n-annotate.mjs` from re-adding the attribute the section above exists to remove. The generated replacements are English at every locale, so a translated label was only ever visible for the instant before it was overwritten.
+- `generateForgeChipSet()` in [src/forge-prompt-gen.js](../src/forge-prompt-gen.js) fits a rotation inside the character budget of the labels it replaces, so it can never exceed the reservation. It walks the candidate pool in generated order to keep the row varied, accepting a prompt only while the shortest remaining candidates could still fill the leftover slots.
+- `pinRowHeight()` holds the row at its measured height across the swap, so a rotation that wraps onto *fewer* lines cannot shift the page upward either. The pin is released on the first resize, which relayouts the page anyway.
+
+[tests/forge-prompt-gen.test.js](../tests/forge-prompt-gen.test.js) reads the labels out of `pages/forge.html` rather than copying them, so shortening the shipped copy fails the suite instead of silently restoring the shift.
+
+Verified against the live page's own CSS by replacing the row's contents and measuring its height, six viewport widths, sixty random rotations each. The growth column is what the page shifts by:
+
+| Viewport | Reserved, before | Seeded, before | Growth | Reserved, after | Seeded, after | Growth |
+|---|---|---|---|---|---|---|
+| 1440px | 99px | 202px | **103px** | 202px | 202px | **0px** |
+| 1350px | 99px | 202px | **103px** | 202px | 202px | **0px** |
+| 1024px | 63px | 99px | **36px** | 99px | 99px | **0px** |
+| 768px | 64px | 167px | **103px** | 133px | 133px | **0px** |
+| 390px | 194px | 295px | **101px** | 295px | 295px | **0px** |
+| 320px | 244px | 295px | **51px** | 295px | 295px | **0px** |
+
+**A static placeholder is a space reservation before it is copy.** If JavaScript is going to replace it, size the placeholder like the thing that replaces it, and make the replacement fit.
+
 ---
+
+## Open: three costs the 2026-08-15 sweep measured and did not fix
+
+Each of these is the largest remaining number on the page it belongs to, and each one lands in a surface the sweep that found it had no business rewriting. They are recorded here with the measurement so the next pass starts from a number rather than a hunch.
+
+**`/chat` is one 4,277 KiB JavaScript chunk.** The page makes 23 requests and `chat/assets/index-*.js` is 4,277 KiB of them; nothing renders until it has parsed, which is the entire story of its FCP (3,901ms desktop, 23,105ms mobile) and of an LCP that lands 140ms later. Blocking time is *one millisecond*, so no amount of deferring helps: the work is a single parse of a single chunk. [chat/vite.config.js](../chat/vite.config.js) sets no `manualChunks` and no `inlineDynamicImports`; the app simply imports everything statically from its entry, so Vite has nothing to split on. The fix is dynamic imports at the route and feature boundaries inside `chat/src`, which is a refactor of the sub-app rather than a build-config change.
+
+**`/forge` showcase thumbnails are full-size renders.** Twelve images from `pub-*.r2.dev` account for **6,273 KiB of the page's 8,339 KiB**, averaging 520 KB each. They are the 768x768 PNGs that [api/\_lib/forge-thumbs.js](../api/_lib/forge-thumbs.js) generates (`THUMB_SIZE = 768`), painted into a 200px-tall box. `loading="lazy"` and `decoding="async"` are already set per rule 5, so this is not a scheduling problem, it is a format and size problem: the same renders as WebP at a display-appropriate size are roughly a tenth of the bytes. The fix has to change the generator, re-run the backfill cron over existing rows, and handle the `forge/thumb/<id>.png` key extension that `forgeThumbKeyFor()` and the stored `preview_image_url` values both encode. One outlier in the same trace is a data-freshness artifact rather than a bug: a 2,358 KiB `forge/<clientKey>/<id>.png` is the untouched original for a row the backfill has not reached yet.
+
+**The brand mark is an 85 KB SVG rendered at 22 pixels.** `public/three.svg` and the byte-identical `public/favicon.svg` are 85,257-byte SVGs wrapping two 800x436 PNGs behind `feColorMatrix` filters. They are referenced from 171 files, cost 62 KiB over the wire per page, and no call site in the repo renders the mark above 64 CSS px. Re-encoding the embedded rasters at exactly half resolution (800 to 400, lanczos3, no palette quantization) takes the file to 36,913 bytes and is visually indistinguishable at every size the site uses, with a maximum channel delta of 4 at 22px and 10 at 64px. It is not free above that: at 192px, which some platforms use for an SVG favicon, the delta reaches 105. Fractional downscales are much worse than the exact half (320px wide measured a delta of 78 at 22px), so this is a brand-asset decision with a measured cost attached, not a mechanical resize, and it needs the owner rather than a sweep.
 
 ## Open: directory thumbnails are served with no cache headers at all
 
