@@ -88,9 +88,12 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,PUT,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'PUT'])) return;
 
+	// Coarse per-IP flood guard on both verbs; the per-user write budget below is
+	// what actually bounds snapshot churn, so a read never spends write budget and
+	// walkers behind one NAT never share a ceiling.
 	const ip = clientIp(req);
-	const rl = await limits.prefsWrite(ip);
-	if (!rl.success) return rateLimited(res, rl, 'too many walk-session writes');
+	const ipRl = await limits.publicIp(ip);
+	if (!ipRl.success) return rateLimited(res, ipRl);
 
 	const userId = await resolveUserId(req);
 	if (!userId) {
@@ -115,6 +118,9 @@ export default wrap(async (req, res) => {
 	}
 
 	// PUT — upsert the snapshot (last-write-wins).
+	const writeRl = await limits.walkSessionWrite(userId);
+	if (!writeRl.success) return rateLimited(res, writeRl, 'too many walk-session writes');
+
 	const raw = await readJson(req);
 	const { state } = parse(putSchema, raw);
 
