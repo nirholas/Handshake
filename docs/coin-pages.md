@@ -278,7 +278,8 @@ one-click reset.
 
 Files: [`pages/screener.html`](../pages/screener.html) (shell, controls, SEO),
 [`src/screener.js`](../src/screener.js) (state, filtering, sorting,
-rendering), [`src/screener.css`](../src/screener.css), with shared formatters
+rendering), [`src/filter-controls.css`](../src/filter-controls.css) (the
+labelled filter row, shared with `/yields`), with shared formatters
 from [`src/shared/coin-format.js`](../src/shared/coin-format.js) and the table
 pattern from [`src/coins-index.js`](../src/coins-index.js).
 
@@ -550,7 +551,7 @@ text before they reach the client.
 | Exchange detail             | [`pages/exchange.html`](../pages/exchange.html) + `src/exchange-page.js` + `src/exchange-page.css`, API [`api/coin/exchange.js`](../api/coin/exchange.js) |
 | Converter                   | `pages/converter.html` + `src/converter.js` + `src/converter.css`                                                                        |
 | DeFi / Chains / Stablecoins | `pages/{defi,chains,stablecoins}.html` (+ `src/*.js`, `src/*.css`), APIs in [`api/defi/`](../api/defi)                                   |
-| DeFi Yields                 | [`pages/yields.html`](../pages/yields.html) + `src/yields.js` + `src/yields.css`, API [`api/defi/yields.js`](../api/defi/yields.js)      |
+| DeFi Yields                 | [`pages/yields.html`](../pages/yields.html) + `src/yields.js` + `src/yields.css` + [`src/filter-controls.css`](../src/filter-controls.css), API [`api/defi/yields.js`](../api/defi/yields.js) |
 | Protocol detail             | [`pages/protocol.html`](../pages/protocol.html) + `src/protocol-page.js` + `src/protocol-page.css`, API [`api/defi/protocol.js`](../api/defi/protocol.js) |
 | Chain detail                | [`pages/chain.html`](../pages/chain.html) + `src/chain-page.js` + `src/chain-page.css`, API [`api/defi/chain.js`](../api/defi/chain.js)  |
 | Stablecoin detail           | [`pages/stablecoin.html`](../pages/stablecoin.html) + `src/stablecoin-page.js` + `src/stablecoin-page.css`, API [`api/defi/stablecoin.js`](../api/defi/stablecoin.js) |

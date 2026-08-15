@@ -20235,12 +20235,12 @@
 		"markets": "Markets",
 		"markets_2": "Markets",
 		"median_apy": "Median APY",
-		"meta_description": "Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and open any pool for its full APY and TVL history. Data from DeFiLlama.",
-		"meta_og_description": "Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and chart any pool's APY and TVL history.",
-		"meta_og_title": "DeFi Yields · three.ws",
-		"meta_title": "DeFi Yields · three.ws",
-		"meta_twitter_description": "Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and chart any pool's history.",
-		"meta_twitter_title": "DeFi Yields · three.ws",
+		"meta_description": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol: filter by chain, project, stablecoin exposure and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
+		"meta_og_description": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol: filter by chain, project, stablecoin exposure and minimum TVL, sort by APY or TVL, and chart any pool's APY and TVL history.",
+		"meta_og_title": "DeFi Yields Explorer · three.ws",
+		"meta_title": "DeFi Yields Explorer · three.ws",
+		"meta_twitter_description": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol: filter by chain, project, stablecoin exposure and minimum TVL, sort by APY or TVL, and chart any pool's history.",
+		"meta_twitter_title": "DeFi Yields Explorer · three.ws",
 		"min_tvl": "Min TVL",
 		"pools_tracked": "Pools Tracked",
 		"project": "Project",
@@ -20249,6 +20249,6 @@
 		"stablecoins_only": "Stablecoins only",
 		"total_tvl": "Total TVL",
 		"tvl": "TVL",
-		"yield_data_from_defillama_apy_figures_are": "Yield data from <a href=\"https://defillama.com/yields\" rel=\"noopener noreferrer\" target=\"_blank\">DeFiLlama</a>. APY figures are protocol-reported and vary with pool conditions — not financial advice."
+		"yield_data_from_defillama_apy_figures_are": "Yield data from <a href=\"https://defillama.com/yields\" rel=\"noopener noreferrer\" target=\"_blank\">DeFiLlama</a>. APY figures are protocol-reported and vary with pool conditions. Not financial advice."
 	}
 }

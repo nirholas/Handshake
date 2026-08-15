@@ -258,14 +258,17 @@ function rowHtml(p) {
 	const meta = p.pool_meta ? `<span class="meta">${esc(p.pool_meta)}</span>` : '';
 	const stableTag = p.stablecoin ? '<span class="yl-tag">stable</span>' : '';
 	return `
-		<tr class="yl-row${expanded ? ' is-open' : ''}" data-pool="${esc(p.pool)}" tabindex="0" role="button"
-			aria-expanded="${expanded ? 'true' : 'false'}" aria-label="Toggle history for ${esc(p.symbol)} on ${esc(p.project)}">
+		<tr class="yl-row${expanded ? ' is-open' : ''}" data-pool="${esc(p.pool)}">
 			<td class="left yl-pool">
-				<span class="chev" aria-hidden="true">▸</span>
-				<span class="pool-inner">
-					<span class="sym">${esc(p.symbol)}${stableTag}</span>
-					${meta}
-				</span>
+				<button type="button" class="yl-pool-btn" data-toggle="${esc(p.pool)}"
+					aria-expanded="${expanded ? 'true' : 'false'}" aria-controls="drawer-${esc(p.pool)}"
+					aria-label="Show APY and TVL history for ${esc(p.symbol)} on ${esc(p.project)}">
+					<span class="chev" aria-hidden="true">▸</span>
+					<span class="pool-inner">
+						<span class="sym">${esc(p.symbol)}${stableTag}</span>
+						${meta}
+					</span>
+				</button>
 			</td>
 			<td class="left hide-md yl-project">${p.project ? `<a class="yl-link" href="/protocol/${encodeURIComponent(p.project)}">${esc(p.project)}</a>` : '—'}</td>
 			<td class="left hide-sm yl-chain">${p.chain ? `<a class="yl-link" href="/chain/${encodeURIComponent(p.chain)}">${esc(p.chain)}</a>` : '—'}</td>
@@ -330,20 +333,20 @@ function renderTable() {
 			</table>
 		</div>`;
 
+	// The pool cell holds the real <button>: it is what keyboard and screen-reader
+	// users operate, and it owns aria-expanded/aria-controls. The row-wide click
+	// below is a pointer convenience on top of it, not the control itself, so the
+	// <tr> keeps its table-row semantics.
 	el.querySelectorAll('tr.yl-row').forEach((tr) => {
-		const toggle = () => toggleRow(tr.dataset.pool);
 		tr.addEventListener('click', (e) => {
-			// A click on the project/chain cross-link navigates; it must not
-			// also toggle the pool's history drawer.
-			if (e.target.closest('a.yl-link')) return;
-			toggle();
+			// A click on the project/chain cross-link navigates; it must not also
+			// toggle the drawer. A click on the button is the button's own job.
+			if (e.target.closest('a.yl-link') || e.target.closest('.yl-pool-btn')) return;
+			toggleRow(tr.dataset.pool);
 		});
-		tr.addEventListener('keydown', (e) => {
-			if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('a.yl-link')) {
-				e.preventDefault();
-				toggle();
-			}
-		});
+	});
+	el.querySelectorAll('.yl-pool-btn').forEach((btn) => {
+		btn.addEventListener('click', () => toggleRow(btn.dataset.toggle));
 	});
 
 	// Re-open drawer content if one was expanded before a re-render.
@@ -356,13 +359,16 @@ function renderTable() {
 // ── Row expansion + chart ───────────────────────────────────────────────────
 
 function toggleRow(pool) {
-	if (state.expanded === pool) {
-		state.expanded = null;
-		renderTable();
-		return;
-	}
-	state.expanded = pool;
+	// Toggling re-renders the whole table, which destroys the node the keyboard
+	// was on. Put focus back on the same pool's button afterwards, or a keyboard
+	// user is dumped to the top of the document on every open and close.
+	const refocus = document.activeElement?.classList.contains('yl-pool-btn');
+	const collapse = state.expanded === pool;
+	state.expanded = collapse ? null : pool;
 	renderTable();
+	const btn = $('yl-table').querySelector(`.yl-pool-btn[data-toggle="${cssEsc(pool)}"]`);
+	if (refocus) btn?.focus({ preventScroll: true });
+	if (collapse) return;
 	loadChart(pool);
 	// Bring the freshly-opened drawer into view on small screens.
 	const row = $('yl-table').querySelector(`tr.yl-row[data-pool="${cssEsc(pool)}"]`);

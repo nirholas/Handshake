@@ -1,10 +1,12 @@
 /*
- * /yields — DeFi yield-pool explorer. Reuses cv-container, cv-stats-grid,
- * cv-stat-card, cv-table, cv-search, hm-seg, cv-empty, cv-skel and the
- * scr-controls / scr-field / scr-reset filter chrome from screener.css's
- * siblings. This file styles only what is unique to the yields page: the
- * stablecoin toggle, the wide pool table's pool/APY/chip cells, and the
- * per-row expansion drawer with its dual-axis APY/TVL chart.
+ * /yields: DeFi yield-pool explorer. Reuses cv-container, cv-stats-grid,
+ * cv-stat-card, cv-table, cv-search, hm-seg, cv-empty and cv-skel from
+ * coin-pages.css, and the scr-controls / scr-field / scr-reset filter row from
+ * filter-controls.css. BOTH of those must be linked by pages/yields.html; the
+ * page shipped without the second one and the whole filter row rendered as bare
+ * inline markup. This file styles only what is unique to the yields page: the
+ * stablecoin toggle, the wide pool table's pool/APY/chip cells, and the per-row
+ * expansion drawer with its dual-axis APY/TVL chart.
  *
  * Chart axis colors are theme-aware custom properties so the SVG strokes and
  * the legend swatches always agree.
@@ -141,18 +143,33 @@
 .yl-row td {
 	transition: background 0.12s;
 }
-.yl-row:focus-visible {
-	outline: 2px solid var(--cv-accent);
-	outline-offset: -2px;
-}
 .yl-row.is-open td {
 	background: var(--cv-surface-2);
 }
 
-.yl-pool {
+/* The pool cell's toggle is a real <button> so the row keeps table semantics and
+   keyboard users get native Enter/Space plus aria-expanded. It is painted as
+   plain cell content, not as a control. */
+.yl-pool-btn {
+	appearance: none;
+	background: none;
+	border: 0;
+	margin: 0;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
 	display: flex;
 	align-items: baseline;
 	gap: 0.5rem;
+	width: 100%;
+	min-width: 0;
+}
+.yl-pool-btn:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm);
 }
 .yl-pool .chev {
 	color: var(--cv-text-3);
