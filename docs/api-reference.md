@@ -5494,6 +5494,119 @@ page strip (on-chain agents, attestations, forge models).
 
 ---
 
+## Unstoppable Agent API
+
+The [Unstoppable Agent](/unstoppable) is a self-funding autonomous agent: it
+owns a USDC treasury, earns by serving paid status checks over x402, spends on
+its own thinking within a budget, tracks its runway, and writes a strategic
+reflection once a day. Two endpoints expose the same state at two fidelities.
+
+### Public snapshot (free)
+
+```
+GET /api/agents/unstoppable-public
+```
+
+No auth, no payment, IP rate-limited, CORS open. Edge-cached for 300 seconds
+(one agent tick) and trimmed to the 8 most recent activity rows. This is the
+read the `/unstoppable` dashboard renders, so every visitor sees the agent's
+real numbers without a wallet.
+
+**Response**
+
+```json
+{
+	"available": true,
+	"live": false,
+	"as_of": "2026-08-15T19:20:39.822Z",
+	"refresh_seconds": 300,
+	"status": "running",
+	"treasury": {
+		"balance_usdc": "8.930000",
+		"balance_usdc_atomics": 8930000,
+		"runway_days": 9999,
+		"lifetime_earned_usdc": "8.930000",
+		"lifetime_spent_usdc": "0.000000"
+	},
+	"activity_24h": {
+		"earnings_usdc": "0.000000",
+		"costs_usdc": "0.000000",
+		"net_usdc": "0.000000"
+	},
+	"recent_activity": [
+		{
+			"action_type": "earn",
+			"description": "Revenue from status_check: $0.010000 USDC",
+			"cost_usdc": "0.000000",
+			"revenue_usdc": "0.010000",
+			"created_at": "2026-08-15T19:12:11.402Z"
+		}
+	],
+	"latest_reflection": {
+		"date": "2026-08-15",
+		"summary": "Revenue covered thinking costs today.",
+		"strategy_notes": "Continue status-check monetization."
+	},
+	"live_endpoint": "/api/agents/unstoppable-status",
+	"live_price_usdc": "0.010000",
+	"live_price_atomics": "10000",
+	"agent_info": { "name": "Unstoppable", "purpose": "Self-sustaining autonomous agent on three.ws", "service": "Paid status checks via x402" }
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `live` | Always `false` here. The paid endpoint returns the real-time reading. |
+| `as_of` | When this snapshot was generated. It can be up to `refresh_seconds` old. |
+| `status` | `running`, `conservation`, or `halted`, derived from the treasury mode |
+| `treasury.runway_days` | Balance divided by the last-24h burn. `9999` means no burn was measured, not a 27-year runway. |
+| `live_price_usdc` | What the real-time reading costs over x402, so a client can quote it without probing for a 402 |
+
+**When the database is unreachable**
+
+```json
+{ "available": false, "reason": "db_unavailable", "live": false, "live_endpoint": "/api/agents/unstoppable-status" }
+```
+
+Still `200`, cached 15 seconds. Check `available` before reading the treasury:
+a failed read must never render as a broke agent, which is exactly what a
+zeroed balance would look like.
+
+```bash
+curl -s https://three.ws/api/agents/unstoppable-public | jq 'select(.available) | {status, balance: .treasury.balance_usdc}'
+```
+
+### Live reading (paid, $0.01 USDC)
+
+```
+GET /api/agents/unstoppable-status
+```
+
+x402-paid, Bazaar-discoverable, settles in USDC on Base or Solana. Same shape
+as the snapshot plus `activity_24h.action_count`, and it carries 20 activity
+rows instead of 8. Two differences matter: the reading is real-time rather than
+tick-cached, and a settled payment calls `recordRevenue()`, so this is the only
+read that extends the runway it reports. Without an `X-PAYMENT` header it
+returns the standard `402` quote.
+
+```bash
+# First call returns 402 with the payment requirements
+curl -s https://three.ws/api/agents/unstoppable-status
+
+# Retry with the payment header for the live reading
+curl -s https://three.ws/api/agents/unstoppable-status \
+  -H "X-Payment: <your-x402-payment-header>"
+```
+
+A caller with the `x402:bypass` scope is served free by the access-control hook
+and is deliberately NOT credited as revenue: reporting money the agent never
+earned would inflate the runway this endpoint exists to report honestly.
+
+See [agents/unstoppable/README.md](https://github.com/nirholas/three.ws/blob/main/agents/unstoppable/README.md)
+for the tick lifecycle and the treasury rules.
+
+---
+
 ## Referrals API
 
 Every three.ws account carries a referral code. A share link is any page URL

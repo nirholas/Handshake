@@ -118,10 +118,16 @@ function renderStatus(status, runwayDays) {
 	const statusText = document.getElementById('statusText');
 	const runwayBadge = document.getElementById('runwayBadge');
 
+	// Anything outside the three real modes means we could not read the agent.
+	// It must NOT fall through to the running style: a green pulsing dot over the
+	// word UNREACHABLE tells the visitor the opposite of what happened.
+	const known = status === 'running' || status === 'conservation' || status === 'halted';
+
 	if (dot) {
 		dot.className = 'agent-dot';
 		if (status === 'conservation') dot.classList.add('conservation');
 		if (status === 'halted') dot.classList.add('halted');
+		if (!known) dot.classList.add('unknown');
 	}
 
 	if (badge && statusText) {
@@ -134,6 +140,10 @@ function renderStatus(status, runwayDays) {
 			badge.classList.add('badge-halted');
 			setText(statusText, 'HALTED');
 			badge.setAttribute('aria-label', 'Agent status: halted, treasury at the hard floor');
+		} else if (!known) {
+			badge.classList.add('badge-runway');
+			setText(statusText, 'UNREACHABLE');
+			badge.setAttribute('aria-label', 'Agent status could not be read');
 		} else {
 			badge.classList.add('badge-running');
 			setText(statusText, 'RUNNING');
@@ -302,8 +312,6 @@ function renderError(reason) {
 		if (el) { setText(el, '—'); el.className = 'stat-val'; }
 	}
 	renderStatus('unknown', NaN);
-	const statusText = document.getElementById('statusText');
-	if (statusText) setText(statusText, 'UNREACHABLE');
 
 	const feed = document.getElementById('activityFeed');
 	if (feed) {

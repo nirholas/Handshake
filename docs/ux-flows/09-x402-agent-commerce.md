@@ -165,18 +165,17 @@ choreographed two-agent narrative driven by Server-Sent Events.
 - **Step count:** 4 required (+3 optional).
 
 ### Unstoppable Agent — `/unstoppable`
-- **Source:** `pages/unstoppable.html` + `src/unstoppable-dashboard.js` + `/x402.js`; backend `api/agents/unstoppable-status.js` ($0.01 optional payment per live query).
-- **Entry point:** A live dashboard of an autonomous agent that must earn to survive — balance, runway, status (RUNNING/CONSERVING/HALTED), activity feed, latest reflection.
-- **Prerequisites / gates:** None to view (cached data from `localStorage unstoppable_last_reading`). To unlock **live** data, donate $0.01 USDC via x402; wallet needed only for the donation.
-- **Steps (2 required + 1 recurring optional):**
-  1. Load page → render cached data (or skeletons) → auto-poll `GET /api/agents/unstoppable-status` immediately, then every 60s (exponential backoff to 5 min on transient errors).
-  2. View data: `200` → hero balance + status + runway, 24h earnings/costs, lifetime net, activity feed (THINK/EARN/REFLECT/IDLE/…), latest reflection. `402` → payment notice + cached data + "Unlock live data — $0.01".
-  3. (optional, repeatable) Click **Donate $0.01** → `window.X402.pay({ endpoint: status, method:'GET', action:'Fund the … runway' })` → on success toast + fresh live data; each donation funds one live query and directly funds the agent.
-- **Decision points / branches:** cache present vs not; `200` (unlocked) vs `402` (paywalled); `5xx` → backoff + keep cache; donation low-balance → retry with link to `/pay`; donation cancel → no charge. A caller holding the `x402:bypass` install scope is served the live reading for free and is deliberately NOT recorded as revenue, so the runway the page reports stays honest.
-- **External calls / dependencies:** `/api/agents/unstoppable-status` (free 402 challenge + optional paid query), `/x402.js`, Base/Solana settlement.
-- **Success state:** live hero + stats + non-empty activity feed + reflection + "Updated X ago".
-- **Empty / error states:** initial skeleton "Fetching live data…"; `402` notice with cached data; no-cache `402` → zeroed state ("Pay $0.01 to see live data").
-- **Step count:** 2 required (+1 recurring optional donation).
+- **Source:** `pages/unstoppable.html` + `src/unstoppable-dashboard.js` + `/x402.js`; backends `api/agents/unstoppable-public.js` (free snapshot) and `api/agents/unstoppable-status.js` ($0.01 for the real-time reading).
+- **Entry point:** A live dashboard of an autonomous agent that must earn to survive: balance, runway, status (RUNNING/CONSERVING/HALTED), activity feed, latest reflection.
+- **Prerequisites / gates:** None to view. The page polls the free snapshot, so it is populated with the agent's real numbers for every visitor. A wallet is needed only to pull the real-time reading.
+- **Steps (1 required + 1 recurring optional):**
+  1. Load page → paint the last reading from `localStorage unstoppable_last_reading` if present → poll `GET /api/agents/unstoppable-public` immediately, then every 60s (exponential backoff to 5 min on faults, snapping back to 60s on the next good poll, plus an immediate re-poll when the tab regains focus). Renders hero balance + status + runway, 24h earnings/costs, lifetime net, the activity feed (THINK/EARN/REFLECT/IDLE/…), and the latest reflection, labelled "Free snapshot · <age> · refreshed every 5 min".
+  2. (optional, repeatable) Click **Unlock the live reading** → `window.X402.pay({ endpoint: status, method:'GET', action:'Fund the … runway' })` → on success a toast plus the real-time reading, relabelled "Live reading". Each payment buys one live query and directly credits the agent's treasury.
+- **Decision points / branches:** snapshot `200` → populated; `{ available: false }` → "datastore is not answering" banner; network fault or `5xx` → "status feed is unreachable" banner, with the last known reading shown and labelled as such when cached, and per-panel failure copy plus a Retry button when not; payment low-balance → retry with link to `/pay`; payment cancel → no charge. A caller holding the `x402:bypass` install scope is served the live reading for free and is deliberately NOT recorded as revenue, so the runway the page reports stays honest.
+- **External calls / dependencies:** `/api/agents/unstoppable-public` (free, cached one tick), `/api/agents/unstoppable-status` (paid, real-time, 20 rows), `/x402.js`, Base/Solana settlement.
+- **Success state:** populated hero + stats + non-empty activity feed + reflection + a data-source label saying whether the numbers are the free snapshot, a paid live reading, or the last known cached reading.
+- **Empty / error states:** pre-fetch "Reading the agent's treasury…" with a shimmer on the reflection card; agent with no history → "No activity logged yet" and "No reflection written yet today", both explaining the 5-minute tick; fetch failure → hero alert banner + Retry now + a link to the snapshot endpoint, and every panel states what failed rather than shimmering forever.
+- **Step count:** 1 required (+1 recurring optional payment).
 
 ### Pay-As-You-Learn Tutor — `/tutor`
 - **Source:** `public/tutor.html` + `public/tutor.js` + `/x402.js`; backend `api/x402/tutor.js` ($0.01/question) + `api/tutor/session.js` (free resume).
