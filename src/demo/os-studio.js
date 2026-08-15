@@ -28,15 +28,17 @@ const PUBLIC_STUDIO = 'https://m3-org.github.io/CharacterStudio';
 // Same resolution as getStudioUrl() in src/avatar-creator.js: an explicit
 // VITE_CHARACTER_STUDIO_URL override wins (e.g. a standalone studio dev server
 // on :5173 during character-studio development); otherwise the Avatar Studio is
-// served same-origin under /avatar-studio — by the Vite dev middleware in dev
-// and the copy-avatar-studio build step in prod (see vite.config.js) — so this
-// resolves to a live URL on every deployment instead of a dead localhost.
+// served same-origin from the static character-studio build (Vite dev
+// middleware in dev, the copy-avatar-studio build step in prod, see
+// vite.config.js), addressed by its index file because the bare /avatar-studio
+// path belongs to the native sculpting page. This resolves to a live URL on
+// every deployment instead of a dead localhost.
 function resolveStudioUrl() {
 	try {
 		const override = import.meta.env?.VITE_CHARACTER_STUDIO_URL;
 		if (override) return String(override).trim().replace(/\/$/, '');
 	} catch (_) {}
-	return `${location.origin}/avatar-studio`;
+	return `${location.origin}/avatar-studio/index.html`;
 }
 const STUDIO_URL = resolveStudioUrl();
 

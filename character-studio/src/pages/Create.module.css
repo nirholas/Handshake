@@ -22,7 +22,7 @@
   bottom:290px;
   cursor: pointer;
   background: rgba(5, 11, 14, 1);
-  background-image: url('./ui/refresh.png');
+  background-image: url('/ui/refresh.png');
   background-size:     cover;                     
   background-repeat:   no-repeat;
   z-index: 12;

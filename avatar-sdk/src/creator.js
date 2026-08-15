@@ -12,14 +12,17 @@
 // the `saveBlob()` helper instead, which posts to three.ws's /api/avatars
 // pipeline using a bearer token.
 
-const DEFAULT_STUDIO_URL = 'https://three.ws/avatar-studio/';
+// Explicitly the studio's index file: three.ws routes the bare
+// /avatar-studio path to the native sculpting page, while the trait builder
+// this SDK talks to is the static build served alongside it.
+const DEFAULT_STUDIO_URL = 'https://three.ws/avatar-studio/index.html';
 const DEFAULT_THREE_WS_ORIGIN = 'https://three.ws';
 
 export class AvatarCreator {
 	/**
 	 * @param {object} opts
 	 * @param {HTMLElement} [opts.container] — DOM node to mount the modal into. Defaults to document.body.
-	 * @param {string} [opts.studioUrl] — URL of the Avatar Studio iframe. Defaults to https://three.ws/avatar-studio/.
+	 * @param {string} [opts.studioUrl] URL of the Avatar Studio iframe. Defaults to https://three.ws/avatar-studio/index.html.
 	 * @param {string} [opts.avaturnSessionUrl] — if provided, opens Avaturn in edit mode for that session.
 	 * @param {(blob: Blob) => any} [opts.onExport] — called with the GLB Blob when the user exports.
 	 * @param {() => any} [opts.onClose] — called when the user closes without exporting.

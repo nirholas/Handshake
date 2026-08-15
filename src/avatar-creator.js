@@ -21,17 +21,19 @@ function getStudioUrl() {
 				.replace(/\/$/, '');
 		}
 	} catch (_) {}
-	// Default: the Avatar Studio is served SAME-ORIGIN under /avatar-studio — the
-	// Vite dev middleware serves character-studio/build there in dev, and the
-	// copy-avatar-studio step ships the same build to /avatar-studio in prod
-	// (see vite.config.js). Resolving to the live origin keeps this correct on
-	// every deployment and avoids a dead localhost fallback in production. The
-	// value must stay absolute: it's used as an iframe src and parsed with
-	// `new URL(studioUrl).origin` for postMessage validation.
+	// Default: the trait builder is served SAME-ORIGIN from the static
+	// character-studio build (Vite dev middleware in dev, the
+	// copy-avatar-studio step into dist/avatar-studio in prod, see
+	// vite.config.js). Point at its index file explicitly: the bare
+	// /avatar-studio path is routed to the native sculpting page, which has no
+	// postMessage export contract. Resolving to the live origin keeps this
+	// correct on every deployment and avoids a dead localhost fallback in
+	// production. The value must stay absolute: it's used as an iframe src and
+	// parsed with `new URL(studioUrl).origin` for postMessage validation.
 	if (typeof location !== 'undefined' && location.origin) {
-		return `${location.origin}/avatar-studio`;
+		return `${location.origin}/avatar-studio/index.html`;
 	}
-	return 'https://three.ws/avatar-studio';
+	return 'https://three.ws/avatar-studio/index.html';
 }
 
 export class AvatarCreator {

@@ -12,13 +12,13 @@ Every three.ws agent needs an avatar, and not every user wants to generate one f
 
 - **Embedded (primary):** the agent edit page opens it in a modal iframe via the Avatar Creator wrappers ([../src/avatar-creator.js](../src/avatar-creator.js) in-app, [../avatar-sdk/src/creator.js](../avatar-sdk/src/creator.js) in the published `@three-ws/avatar` SDK). The user clicks **Save Avatar** and the GLB is handed back to the host page.
 - **Standalone demo:** mounted on the Avatar OS demo page at [three.ws/demo/avatar-os](https://three.ws/demo/avatar-os).
-- **In production** the compiled app is served same-origin under the `/avatar-studio/` path prefix. The root build copies [build/](build) into `dist/avatar-studio` via [../scripts/copy-avatar-studio.mjs](../scripts/copy-avatar-studio.mjs); the Vite `base` is pinned to `/avatar-studio/` in [vite.config.js](vite.config.js) so every emitted asset URL matches.
+- **In production** the compiled app is served same-origin under the `/avatar-studio/` path prefix, and its entry point is `https://three.ws/avatar-studio/index.html`. Address that index file, not the bare `/avatar-studio` path: the route table in [../vercel.json](../vercel.json) maps `/avatar-studio` and `/avatar-studio/` to the platform's separate native sculpting page, which does not speak the export contract below. The root build copies [build/](build) into `dist/avatar-studio` via [../scripts/copy-avatar-studio.mjs](../scripts/copy-avatar-studio.mjs); the Vite `base` is pinned to `/avatar-studio/` in [vite.config.js](vite.config.js) so every emitted asset URL matches.
 
 ## Install and run
 
 ```bash
 cd character-studio
-npm install
+npm install        # this directory is an npm workspace: the install runs at the repo root
 npm run dev        # Vite dev server on port 5173 (base path /avatar-studio/)
 ```
 
@@ -29,7 +29,8 @@ Other scripts:
 ```bash
 npm run build      # production build to ./build
 npm run serve      # preview the production build
-npm test           # vitest (unit + integration, see tests/)
+npm run test:run   # vitest once (unit + integration, see tests/)
+npm test           # the same suite in watch mode
 npm run lint       # eslint + prettier
 npm run get-assets # clone the upstream loot-assets trait library into public/
 ```
@@ -42,7 +43,7 @@ Environment variables (see [.env.example](.env.example)):
 
 | Variable | Purpose |
 |---|---|
-| `VITE_ASSET_PATH` | Root the app fetches `manifest.json` and trait assets from. Empty means same-origin, i.e. the files in [public/](public). |
+| `VITE_ASSET_PATH` | Root the app fetches `manifest.json` from. Unset means same-origin under the Vite base, i.e. `/avatar-studio/manifest.json` from [public/](public). |
 | `VITE_OPENSEA_KEY` | OpenSea API key for the NFT trait-ownership checks. |
 | `VITE_HELIUS_KEY` | Helius RPC key for the Solana flows. |
 | `VITE_VALIDATION_SERVER_URL` | Mint validation server for the claim/mint pages. |
@@ -65,14 +66,16 @@ The engine lives in [src/library/](src/library) and has its own module index in 
 This is an application, not an npm library; nothing here is imported by other code. Its one public API is the postMessage contract a host page relies on when the app is embedded in an iframe. When `window.self !== window.top`, the export menu ([src/components/ExportMenu.jsx](src/components/ExportMenu.jsx)) replaces the GLB/VRM download buttons with a single **Save Avatar** button that posts the finished avatar to the parent window:
 
 ```js
-window.parent.postMessage(
-  { source: 'characterstudio', type: 'export', format: 'glb', glb: arrayBuffer },
-  '*',
-  [arrayBuffer],  // transferred, not copied
-);
+import { postAvatarToHost } from './library/embed-export'
+
+postAvatarToHost(arrayBuffer)
+// posts { source: 'characterstudio', type: 'export', format: 'glb', glb: arrayBuffer }
+// to window.parent with the buffer transferred, not copied
 ```
 
-`glb` is the binary glTF as a transferable `ArrayBuffer`. Standalone (top-level window), the same menu offers direct **GLB**, **VRM 0**, and **VRM 1** downloads instead.
+The envelope, the `characterstudio` source name, and the `window.self !== window.top` embed check all live in [src/library/embed-export.js](src/library/embed-export.js), which is the module to import (and the module the tests cover) rather than re-typing the message shape. `glb` is the binary glTF as a transferable `ArrayBuffer`.
+
+Standalone (top-level window), the same menu offers direct **GLB** and **VRM 0** downloads instead. There is no VRM 1 button: the VRM 1 exporter is broken upstream and [src/library/download-utils.js](src/library/download-utils.js) always falls back to the VRM 0 exporter.
 
 ## Example: receive an avatar from the embedded studio
 
@@ -95,7 +98,14 @@ await creator.open();
 
 ## Tests
 
-`npm test` runs the vitest suite in [tests/](tests) (unit tests for the library modules plus integration tests, jsdom environment). The root repo's `npm test` gate does not include this suite; run it here when touching this directory.
+`npm run test:run` runs the vitest suite in [tests/](tests) once (`npm test` is the same suite in watch mode). The root repo's `npm test` gate does not include this suite; run it here when touching this directory.
+
+- [tests/unit/export-contract.test.js](tests/unit/export-contract.test.js) covers the core path: a real three.js rigged mesh through `getGLBBlobData()` into valid binary glTF, and the embed envelope from `embed-export.js`.
+- [tests/unit/utils.test.js](tests/unit/utils.test.js) covers the shipped helpers in `src/library/utils.js`.
+- [tests/unit/i18n.test.js](tests/unit/i18n.test.js) covers translation lookups.
+- [tests/integration/](tests/integration) holds the input-validation and blockchain-input checks.
+
+[tests/setup.js](tests/setup.js) deliberately leaves `Blob`, `File` and `FileReader` to jsdom: three.js `GLTFExporter` reads its binary output through a `FileReader`, so a partial stub hangs every export test.
 
 ## Related surfaces
 

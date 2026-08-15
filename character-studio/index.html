@@ -31,7 +31,11 @@
     <div id="root" style="overflow: hidden">
     </div>
 
-    <script src="/avatar-studio/ktx2/libktx.js"></script>
+    <!-- Relative on purpose. The dev server prefixes the Vite base onto any
+         root-relative src, so a literal /avatar-studio/... here is requested as
+         /avatar-studio/avatar-studio/... and 404s; this resolves next to the
+         served index in both dev and production. -->
+    <script src="./ktx2/libktx.js"></script>
     <script type="module" src="src/Main.jsx"></script>
   </body>
 </html>

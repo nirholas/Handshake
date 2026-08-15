@@ -22,9 +22,11 @@ import Save from "./pages/Save"
 import Wallet from "./pages/Wallet"
 import Studio from "./pages/Studio"
 
-// dynamically import the manifest
-const assetImportPath = import.meta.env.VITE_ASSET_PATH + "/manifest.json"
-//const assetImportPath = "./manifest.json"
+// Dynamically import the manifest. VITE_ASSET_PATH points the app at an
+// external asset host; with it unset the manifest is same-origin, next to the
+// app under its Vite base (/avatar-studio/manifest.json in production).
+const assetRoot = (import.meta.env.VITE_ASSET_PATH || import.meta.env.BASE_URL || "/").replace(/\/$/, "")
+const assetImportPath = assetRoot + "/manifest.json"
 
 const cameraDistanceOther = 6
 const centerCameraTargetOther = new THREE.Vector3(0, 0.8, 0)

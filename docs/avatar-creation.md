@@ -84,7 +84,7 @@ Avatar Studio communicates with the parent app via `postMessage`. The message sh
 
 [avatar-creator.js](../src/avatar-creator.js) listens for this, wraps the `ArrayBuffer` in a `Blob`, and passes it to `saveRemoteGlbToAccount()`.
 
-The avatar builder is served **same-origin** under `/avatar-studio` — the Vite dev middleware serves the character-studio build there in development, and the same build ships to that path in production, so the iframe resolves correctly on every deployment. Set the `VITE_CHARACTER_STUDIO_URL` environment variable to point the iframe at a standalone studio dev server (e.g. `http://localhost:5173`) instead.
+The avatar builder is served **same-origin** from `/avatar-studio/index.html`: the Vite dev middleware serves the character-studio build under that path in development, and the same build ships there in production, so the iframe resolves correctly on every deployment. The index file is named explicitly because the bare `/avatar-studio` path is routed to the native sculpting page. Set the `VITE_CHARACTER_STUDIO_URL` environment variable to point the iframe at a standalone studio dev server (e.g. `http://localhost:5173/avatar-studio/`) instead.
 
 ---
 

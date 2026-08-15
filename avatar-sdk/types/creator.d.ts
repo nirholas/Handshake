@@ -1,7 +1,7 @@
 export interface AvatarCreatorOptions {
 	/** DOM node to mount the modal in. Defaults to document.body. */
 	container?: HTMLElement;
-	/** URL of the Avatar Studio iframe. Defaults to https://three.ws/avatar-studio/. */
+	/** URL of the Avatar Studio iframe. Defaults to https://three.ws/avatar-studio/index.html. */
 	studioUrl?: string;
 	/** Avaturn session URL for edit mode (created via /api/avatars/:id/session). */
 	avaturnSessionUrl?: string;

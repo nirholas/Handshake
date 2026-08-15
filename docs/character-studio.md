@@ -139,9 +139,11 @@ For developers who want to understand the internals or self-host:
 
 The core of the system is `CharacterManager` in `character-studio/src/library/characterManager.js`. It orchestrates trait loading, mesh combining, animation playback, and VRM export. The UI layer communicates with it through React context (`SceneContext`, `ViewContext`).
 
-**Integration with the main app:** The `AvatarCreator` class in `src/avatar-creator.js` opens the builder in an iframe (served same-origin under `/avatar-studio`; the production build is mirrored into `dist/avatar-studio/` by the `copy-avatar-studio` Vite plugin, and the dev server serves `character-studio/build` at the same path) and listens for the `characterstudio` `postMessage` export event. When the user clicks Save Avatar inside the builder, the GLB bytes are passed back to the parent app.
+**Integration with the main app:** The `AvatarCreator` class in `src/avatar-creator.js` opens the builder in an iframe at `/avatar-studio/index.html` and listens for the `characterstudio` `postMessage` export event, which the builder sends from `character-studio/src/library/embed-export.js`. When the user clicks Save Avatar inside the builder, the GLB bytes are passed back to the parent app.
 
-**Build:** `npm run dev` inside `character-studio/` starts the dev server. `npm run build` outputs to `./build/`, which the main repo build copies into `dist/avatar-studio/`. Run `npm run get-assets` first to clone the required loot-assets into the public directory.
+The index file is addressed explicitly because the bare `/avatar-studio` path is routed to the native sculpting page; the trait builder is the static bundle beside it, mirrored into `dist/avatar-studio/` by the `copy-avatar-studio` Vite plugin and served from `character-studio/build` by the dev middleware.
+
+**Build:** `npm run dev` inside `character-studio/` starts the dev server on port 5173 at `/avatar-studio/`. `npm run build` outputs to `./build/`, which the main repo build copies into `dist/avatar-studio/`. `npm run test:run` runs the vitest suite once. In production the trait assets are mirrored same-origin through `GET /api/studio-assets/<path>`; `npm run get-assets` clones the same loot-assets library into the public directory for offline work.
 
 ---
 
