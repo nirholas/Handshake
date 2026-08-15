@@ -28,11 +28,11 @@
 // — lips track the real voice, not a resampled copy.
 //
 // ── Function id ──────────────────────────────────────────────────────────────
-// Unlike Riva ASR (pure config), A2F-3D ships a stable published NVCF function
-// id (the "James" model from NVIDIA's official sample — tongue blendshapes
-// included), so the lane works out of the box with only NVIDIA_API_KEY set. A
-// deployment can pin a different model (Mark/Claire) via NVIDIA_A2F_FUNCTION_ID;
-// discover the live ids for your account with
+// Unlike Riva ASR (pure config), A2F-3D is reached through a published NVCF
+// function id, so the lane works out of the box with only NVIDIA_API_KEY set.
+// A2F_DEFAULT_FUNCTION_ID below carries the current one and the note on how it
+// was verified. A deployment pins a different model via NVIDIA_A2F_FUNCTION_ID;
+// discover the ids your key can see with
 //   node scripts/verify-nvidia-a2f.mjs --list
 //
 // Error codes match the established provider contract (tts-nvidia.js / asr-nvidia.js):
