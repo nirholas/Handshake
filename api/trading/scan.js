@@ -78,7 +78,7 @@ export default wrap(async (req, res) => {
 	const agentId = body?.agent_id;
 	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'a valid agent_id is required');
 
-	// Ownership — scanning is an owner tool; it reflects the owner's private rule.
+	// Ownership: scanning is an owner tool; it reflects the owner's private rule.
 	const [agent] = await sql`
 		SELECT id, user_id, meta FROM agent_identities
 		WHERE id = ${agentId} AND user_id = ${user.id} AND deleted_at IS NULL
@@ -108,21 +108,28 @@ export default wrap(async (req, res) => {
 	try {
 		launches = await recentPumpLaunches({ network, limit: MAX_LAUNCHES });
 	} catch {
-		return error(res, 502, 'feed_unavailable', 'the live launch feed is unreachable right now — try again in a moment');
+		return error(res, 502, 'feed_unavailable', 'the live launch feed is unreachable right now; try again in a moment');
 	}
 
-	// 2. Cheap entry gate (pure, no network). Enrich creator stats only when the
-	//    rule actually gates on them, then re-check — keeps the scan fast.
+	// 2. Cheap entry gate (pure, no network). Creator stats cost a live lookup per
+	//    creator, so buy them only for a launch the rest of the rule already likes:
+	//    one that passes outright (its creator ceiling is still unverified) or that
+	//    failed on a creator gate alone. Anything rejected on age, market cap,
+	//    liquidity or socials is skipped without touching the network.
 	const gatesCreator = config.entry.max_creator_launches != null || config.entry.min_creator_graduated != null;
 	const matched = [];
+	let examined = 0;
 	for (const launch of launches) {
+		examined++;
 		let verdict = matchesEntry(config, launch, nowMs);
-		if (!verdict.pass && !gatesCreator) continue;
-		if (gatesCreator && (launch.creator_launches == null || launch.creator_graduated == null)) {
+		const creatorUnknown = launch.creator_launches == null || launch.creator_graduated == null;
+		const decidableByCreator = verdict.pass || CREATOR_GATE_FAILURE.test(verdict.reasons[0] || '');
+		if (gatesCreator && creatorUnknown && decidableByCreator) {
 			await enrichCreatorStats(launch, 0).catch(() => {});
 			verdict = matchesEntry(config, launch, nowMs);
 		}
-		if (verdict.pass) matched.push({ launch, reasons: verdict.reasons });
+		if (!verdict.pass) continue;
+		matched.push({ launch, reasons: verdict.reasons });
 		if (matched.length >= MAX_PRICED) break;
 	}
 
@@ -142,13 +149,13 @@ export default wrap(async (req, res) => {
 				decimals: q.decimals,
 			};
 			const a = await assessTradeSafety({
-				network, mint: mintPk, side: 'buy', payer,
+				network, mint: mintPk, side: 'buy', payer: payer || undefined,
 				quoteAmount: BigInt(q.inAtomics), priceImpactPct: q.priceImpactPct,
 			}).catch(() => null);
 			if (a) firewall = { verdict: a.verdict, score: a.score, simulated: a.simulated, reasons: a.reasons || [] };
 		} catch (e) {
 			// A coin that can't be quoted (no curve, RPC hiccup) is simply not a
-			// confirmable candidate — surface it as unquotable rather than dropping it.
+			// confirmable candidate, so surface it as unquotable rather than drop it.
 			quote = null;
 			firewall = { verdict: 'warn', score: null, simulated: false, reasons: ['Could not quote this coin right now.'] };
 		}
@@ -179,7 +186,11 @@ export default wrap(async (req, res) => {
 	return json(res, 200, {
 		data: {
 			network,
-			scanned: launches.length,
+			// Launches actually put through the entry gate. The loop stops at
+			// MAX_PRICED matches, so this is usually smaller than the feed page and
+			// reporting the page size instead would overstate the work done.
+			scanned: examined,
+			feed_size: launches.length,
 			matched: candidates.length,
 			candidates,
 			amount_sol: amountSol,
