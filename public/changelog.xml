@@ -15,6 +15,14 @@
 			<description>Payment sessions let you hand an agent a budget instead of a key, and two parts of that path judged an endpoint by one rule: if it did not ask for payment, the call was free. That is only true when the endpoint actually succeeded. A paid API answering 404, 400, or 500 was being scored as a free call, and the consequences ran in the wrong direction in both places. The dry run at /pay/simulator, whose whole job is to tell you in advance whether a budget and an allowlist will carry a workload, reported a plan as feasible at a cost of nothing when in fact every endpoint in it was erroring: free calls are never priced, never allowlist-checked, and never counted, so a wall of failures looked like a clean run. And an agent spending through a session got back a success envelope saying no payment was needed for an endpoint that had just failed on it. Both now separate the two cases: a real success with no payment challenge is still free and still costs nothing, while an error status is reported as an endpoint failure carrying the status the endpoint actually returned. No session is charged either way. The simulator lists each failing endpoint by name in its problems list and no longer calls the plan feasible.</description>
 		</item>
 		<item>
+			<title>A shared link to a docs page now opens that page instead of stranding you</title>
+			<link>https://three.ws/docs/agent-wallets</link>
+			<guid isPermaLink="false">2026-08-15:A shared link to a docs page now opens that page instead of stranding you</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every cross-reference inside a docs page turns into a link like /docs/agent-wallets#financial-controls. Following one worked, but the URL you copied afterwards did not: on a fresh load the viewer only recognised the second half if that doc happened to be listed in the sidebar, and silently left you on the page you arrived from otherwise. Links to Financial controls, the x402 payment tutorial, and the wallet access and proof-of-custody chapters all failed that way. The viewer now asks the server whether the doc exists before giving up, so those links land where they say they will, and the browser tab takes the destination's name. Separately, /docs/3d-api was serving the 3D API landing page rather than the reference doc that the API's own discovery response, the OpenAPI license link, and the docs sidebar all point at; it now serves the reference doc, and the landing page keeps its home at /3d.</description>
+		</item>
+		<item>
 			<title>A silent outage in the agent reasoning ledger now reports itself</title>
 			<link>https://three.ws/docs/reasoning-ledger</link>
 			<guid isPermaLink="false">2026-08-15:A silent outage in the agent reasoning ledger now reports itself</guid>
@@ -95,6 +103,14 @@
 			<description>The deployment guide told self-hosters to set Cloud Run environment variables with `gcloud run services update --set-env-vars`. That flag replaces the service environment wholesale, so following the instruction for a single key silently deletes every other variable the service had. The guide now uses `--update-env-vars` and says plainly why. Four more corrections landed in the same sweep across the deployment, configuration and contributing pages: the Avaturn signup link and the GitHub Discussions links were dead (Discussions are not enabled on the repository, so bug reports and design questions both go to Issues); the in-browser avatar builder was documented as needing its own hosted origin in production when the normal build already serves it same-origin at /avatar-studio; and three counts that had drifted from the code (cron jobs, MCP server packages, contract tests) were replaced with pointers to the files that hold the real numbers.</description>
 		</item>
 		<item>
+			<title>The 3D API and agent manifest references now match what the endpoints actually return</title>
+			<link>https://three.ws/docs/3d-api</link>
+			<guid isPermaLink="false">2026-08-15:The 3D API and agent manifest references now match what the endpoints actually return</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The agent manifest page told you to validate a manifest with assertValid from @three-ws/avatar-schema. That package validates avatar manifests (mesh, skeleton, owner), not agent manifests, so the sample always threw. It now shows loadManifest from the published bundle, running against a live agent, and says plainly which document the avatar schema covers. On the 3D API page, the sample responses showed a model URL shape the service never returns, the inspect example was a stale capture of a model that has since been re-exported, and the Forge Pro tier table claimed draft and standard generations come back with no textures when every tier bakes them (1K, 2K, and 4K plus PBR at high). All three are corrected against live calls, and the page now explains why browser code should load a generated GLB through the first-party CDN path rather than the object store URL directly. The prompt art-director note is confirmed accurate and the code comment that contradicted it was fixed.</description>
+		</item>
+		<item>
 			<title>The 3D pipeline docs stop telling you to run a command that does not exist</title>
 			<link>https://three.ws/docs/3d-pipeline</link>
 			<guid isPermaLink="false">2026-08-15:The 3D pipeline docs stop telling you to run a command that does not exist</guid>
@@ -151,6 +167,14 @@
 			<description>Several tutorials told you to set avatar-chat=&quot;off&quot; to hide an agent's built-in chat input. It does not do that: it moves the avatar out of the chat column and lays the chat out as a plain bottom bar, leaving the input on screen. The multi-agent walkthrough leaned on it to keep its behind-the-scenes stage-director messages hidden, so anyone following it verbatim saw those messages leak into the visible chat. The affected tutorials now use chat=&quot;off&quot;, the real bare-avatar switch, and note that the brain still boots behind it so say(), ask(), and the event stream keep working. The same accuracy pass corrected the walking-avatar leaderboard example, which read fields the API never returns and so always rendered an empty top-walkers list, and the JavaScript API event table, which named the wrong key for the skill a tool-call event reports.</description>
 		</item>
 		<item>
+			<title>The embodied AgenC demo hands you a live task, and reacts to the state a claimed task is actually in</title>
+			<link>https://three.ws/agenc/embodied</link>
+			<guid isPermaLink="false">2026-08-15:The embodied AgenC demo hands you a live task, and reacts to the state a claimed task is actually in</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The /agenc/embodied page binds a 3D agent to a real AgenC task on Solana, and until now it opened on an empty input box: it needed a task account address and offered no way anywhere on the page to find one. It now lists real tasks three.ws itself posted, claimed, and settled on-chain, newest first, so the demo works the moment it loads; a new public read, /api/agenc/recent-tasks, serves that list. Two things it showed were also wrong. The scene coloured itself for a state named Claimed, which the chain has never used: a claimed task is In Progress on-chain, so the halo, the badge, and the per-state animation switch all sat inert through the one transition the demo exists to show. And the page named a program address that no read has touched since the protocol's interface moved; it now shows the program each live read actually ran against. Pasting an address that holds something other than a task used to report a server error, as though the platform were broken, rather than saying no such task exists there; that is now a plain not-found, with the page telling you to check the address or switch cluster. The panel has designed loading, empty, and error states throughout, the form fields have real labels, the layout no longer scrolls sideways on a phone, and a task that cannot be read is retried with a backoff instead of being re-requested every four seconds forever.</description>
+		</item>
+		<item>
 			<title>The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list</title>
 			<link>https://three.ws/docs/tutorials/write-a-guard</link>
 			<guid isPermaLink="false">2026-08-15:The guard and gesture tutorials stop teaching steps that fail, and one that wiped your clip list</guid>
@@ -205,6 +229,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Vanity page told you to grind a long address yourself in the browser at /vanity, but that path has never existed and answers 404; the in-browser grinder lives at /vanity-wallet, and both links on the page now go there. In Troubleshooting, the fix for a Quick Look model that opens and instantly closes linked to a model-optimization section that is not on the AR page, so the link dropped you at the top with nothing to read; it now opens the section that actually covers it. The same page told you to add a responsive attribute to size an inline embed, with a snippet that set the width in CSS. Neither half worked: responsive sizing is already on by default, and the element reads the width attribute rather than the computed style, so the documented snippet never produced the 3:4 ratio it promised. The instructions now show the form that does work, and name the two things that switch it off.</description>
+		</item>
+		<item>
+			<title>Two tutorials stop shipping code samples that quietly do nothing</title>
+			<link>https://three.ws/tutorials/custom-skill</link>
+			<guid isPermaLink="false">2026-08-15:Two tutorials stop shipping code samples that quietly do nothing</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>An audit of eight developer tutorials found two whose main code sample looked right and silently failed. The custom-skill weather handler split the weather API's reply on a plus sign, but the temperature field arrives with a leading plus of its own, so every field after the condition landed one slot off and the temperature always came back empty; it also mapped the fahrenheit option to a format code that means feels-like rather than Fahrenheit, so the celsius and fahrenheit paths returned the same units. Both are fixed and the sample was run against the live API in both unit modes. The gesture tutorial's AI lane read an emotion-breakdown field the Granite analysis tool has never returned, so the strength check never passed and the agent never played a single animation; it now reads the score and risk flags the tool actually returns, and grades the gesture across four bands instead of a binary. Separately, twelve tutorial hero buttons pointed at anchors on the docs hub that stopped existing when the hub split into per-topic pages, and now open the real pages; a placeholder URL in the Pump.fun tutorial was being parsed as HTML, which broke a link and injected stray elements into the page; and the self-host guide was corrected throughout, including storage variable names that no longer matched the code, a database step that left most tables uncreated, an audit-logging example importing a function that does not exist, a Cloudflare worker setup for a proxy the platform does not run, and a license claim that described the repository as open source when it is not.</description>
 		</item>
 		<item>
 			<title>Voice and vision SDKs ship runnable examples, and the x402 seller SDK reads its Solana sponsor from the environment</title>
@@ -22996,7 +23028,7 @@
 			<guid isPermaLink="false">2026-05-14:Tutorial · Share your agent (link, QR, social preview)</guid>
 			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Get a permanent link to your agent, generate a QR for print, and set the Open Graph preview so it looks good in tweets.</description>
+			<description>Get a permanent link to your agent, generate a QR for print, and share the URL that unfurls with its real name, description, and card.</description>
 		</item>
 		<item>
 			<title>Tutorial · Trigger the agent from page events</title>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T07:00:53.794Z",
+	"generated_at": "2026-08-15T07:08:10.421Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6110,7 +6110,7 @@
 				{
 					"path": "/tutorials/share-your-agent",
 					"title": "Tutorial · Share your agent (link, QR, social preview)",
-					"description": "Get a permanent link to your agent, generate a QR for print, and set the Open Graph preview so it looks good in tweets.",
+					"description": "Get a permanent link to your agent, generate a QR for print, and share the URL that unfurls with its real name, description, and card.",
 					"added": "2026-05-14",
 					"auth": null,
 					"indexable": true,

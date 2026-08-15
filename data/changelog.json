@@ -3,6 +3,16 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "Two tutorials stop shipping code samples that quietly do nothing",
+      "summary": "An audit of eight developer tutorials found two whose main code sample looked right and silently failed. The custom-skill weather handler split the weather API's reply on a plus sign, but the temperature field arrives with a leading plus of its own, so every field after the condition landed one slot off and the temperature always came back empty; it also mapped the fahrenheit option to a format code that means feels-like rather than Fahrenheit, so the celsius and fahrenheit paths returned the same units. Both are fixed and the sample was run against the live API in both unit modes. The gesture tutorial's AI lane read an emotion-breakdown field the Granite analysis tool has never returned, so the strength check never passed and the agent never played a single animation; it now reads the score and risk flags the tool actually returns, and grades the gesture across four bands instead of a binary. Separately, twelve tutorial hero buttons pointed at anchors on the docs hub that stopped existing when the hub split into per-topic pages, and now open the real pages; a placeholder URL in the Pump.fun tutorial was being parsed as HTML, which broke a link and injected stray elements into the page; and the self-host guide was corrected throughout, including storage variable names that no longer matched the code, a database step that left most tables uncreated, an audit-logging example importing a function that does not exist, a Cloudflare worker setup for a proxy the platform does not run, and a license claim that described the repository as open source when it is not.",
+      "tags": [
+        "docs",
+        "fix"
+      ],
+      "link": "/tutorials/custom-skill"
+    },
+    {
+      "date": "2026-08-15",
       "title": "A shared link to a docs page now opens that page instead of stranding you",
       "summary": "Every cross-reference inside a docs page turns into a link like /docs/agent-wallets#financial-controls. Following one worked, but the URL you copied afterwards did not: on a fresh load the viewer only recognised the second half if that doc happened to be listed in the sidebar, and silently left you on the page you arrived from otherwise. Links to Financial controls, the x402 payment tutorial, and the wallet access and proof-of-custody chapters all failed that way. The viewer now asks the server whether the doc exists before giving up, so those links land where they say they will, and the browser tab takes the destination's name. Separately, /docs/3d-api was serving the 3D API landing page rather than the reference doc that the API's own discovery response, the OpenAPI license link, and the docs sidebar all point at; it now serves the reference doc, and the landing page keeps its home at /3d.",
       "tags": [
