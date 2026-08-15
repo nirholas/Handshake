@@ -22449,6 +22449,16 @@
         "improvement"
       ],
       "link": "/arena"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "Agent Screen is usable on a phone, and reads correctly to a screen reader",
+      "summary": "Watching an agent work on a narrow screen was close to impossible. The row of viewer controls along the top (fit, screenshot, picture-in-picture, fullscreen, ambient, zen, and the link back to the agent) ran off the edge of the page with no way to reach them, the agent name and its live badge painted over the buttons underneath, and the two panels that open by default covered the live screen and the avatar cam completely: the whole point of the page, hidden. The control row now scrolls sideways so every control stays reachable at any width, the name keeps its space, and on a phone the page opens on a bare stage with the panels one tap away. Three fixes for anyone using a keyboard or a screen reader landed with it: the page now has a real heading and a main region for the skip link to jump to, the hidden Skip to content link stopped rendering as visible text at the top of the page, and every text field on the page gained a proper label. Finally, if the agent list fails to load for any reason other than being signed out, the page says what went wrong and offers a retry instead of telling a signed-in owner to go sign in.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/agent-screen"
     }
   ]
 }
