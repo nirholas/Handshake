@@ -3,6 +3,32 @@
   "entries": [
     {
       "date": "2026-08-15",
+      "title": "The trades feed stopped labelling a winning exit with a losing multiple",
+      "summary": "When an agent sells part of a position to take its initial stake back and lets the rest ride, only that final sell is recorded against the position, while the profit percentage covers both sells. The feed was working out the “×” badge from the final sell alone, so a trade that returned +88% could show up as “0.56× +88%” on the same row. The multiple is now worked out from the trade's actual return, so the two numbers always agree. A coin's page also asked the feed for every trade on that coin and was quietly given only the ones above +10%, hiding the rest of that coin's history; it now gets what it asked for. The feed also answers a malformed page cursor or coin address by saying so, instead of returning results for the wrong coin, and a database problem no longer looks like a platform where nobody has ever turned a profit.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/trades"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "A profile’s follower count now matches the people the follower list can actually show you",
+      "summary": "The follower and following numbers on a profile counted every follow ever recorded, including ones from accounts that were later deleted or that never claimed a username. The list behind those numbers only shows people you can open a profile for, so a profile could advertise followers and then open to an empty list. Both numbers are now counted over exactly the people the list renders, so the badge and the list always agree. The list itself also stopped dropping those accounts only after it had already paged, which could hand you a blank page of followers with no way to reach the real ones behind it. Separately, the Creations tab used to answer a corrupted page cursor with a silent empty page that read as \"nothing more to load\"; it now says the cursor is malformed, and an unknown filter is rejected instead of quietly returning everything.",
+      "tags": [
+        "fix"
+      ]
+    },
+    {
+      "date": "2026-08-15",
+      "title": "The Tutor’s running tab and end-of-session invoice now show what you actually paid",
+      "summary": "The Tutor charges one cent per answer and keeps an itemized tab you can reload later and close for a signed invoice. That ledger only ever knew how to store itself in a key-value service this deployment does not run, so nothing was ever written down: reopening the page never restored your history, and ending a session always produced an invoice reading \"no questions\" and a total of zero, however many answers you had paid for. The tab is now stored in the platform’s own database, so it survives a reload, a new browser tab, and any server restart, and the invoice lists every answer with its charge and a verification hash over the line items. Closing a session twice returns the identical invoice instead of a freshly stamped one, closing a session id that was never used no longer makes that id unusable for its real owner, and if the ledger itself is ever unreachable the page says so rather than quietly reporting that you owe nothing. Asking a question still succeeds even if the ledger write fails, because a bookkeeping outage should never cost you the answer you paid for.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/tutor"
+    },
+    {
+      "date": "2026-08-15",
       "title": "Asking for a voice that does not exist now tells you so, instead of quietly speaking in a different one",
       "summary": "The voice API accepts a provider and a voice id from the voice catalog. If the id was not one that provider actually has, nothing said so: the request was answered with audio rendered in that lane's default voice, and on the metered lanes it was billed, so a single typo in a voice id came back as a stranger's voice at full price with a success status. A well-formed id for a voice that had been removed took the opposite route and failed as a server error, which reads as our fault and tells a client to retry something that will never work. Both now return a plain rejection that names the id you sent and the catalog address to pick a real one from, and that check runs before anything is charged. Leaving the voice id out still gets you the lane default on purpose. Asking the catalog for a provider that does not exist used to return an empty list that was indistinguishable from a provider being down; it now says which providers exist. ElevenLabs voices, whose catalog grows every time you clone or add one, are still decided by ElevenLabs, but an id it rejects is reported as your request being wrong rather than ours, with any charge refunded first. Voice cloning also now asks who you are before reporting anything about how this server is configured.",
       "tags": [

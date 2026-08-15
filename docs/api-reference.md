@@ -3096,6 +3096,8 @@ DELETE /api/users/:username/follow
 
 The social-graph edge for a public profile. GET is viewer-specific (never cached). POST and DELETE are idempotent, require a session + CSRF token, block self-follows (400), and return the same envelope as GET so one round-trip updates both the button and the counts. A genuinely new edge notifies the followed user exactly once.
 
+`followers_count` and `following_count` count only reachable profiles: live accounts that have claimed a username. That is exactly the set `GET /api/users/:username/follows` lists, so the number and the list always agree. The same rule applies to the `stats.followers` / `stats.following` fields on `GET /api/users/:username`.
+
 **Response (all three methods)**
 
 ```json
@@ -3123,7 +3125,7 @@ GET /api/users/:username/follows
 | `limit`   | integer | 1..100                                        |
 | `offset`  | integer | Pagination offset                             |
 
-Each row carries `is_following` (does the signed-in viewer follow that row's user) for follow-back buttons.
+Each row carries `is_following` (does the signed-in viewer follow that row's user) for follow-back buttons. Accounts without a username are excluded in the query, not after paging, so `limit`, `offset`, and `has_more` count the same rows you receive.
 
 ---
 
@@ -3134,7 +3136,17 @@ GET /api/users/:username
 GET /api/users/:username/creations
 ```
 
-Public profile and the cursor-paginated portfolio of forged models and saved worlds attributed to that creator. Powers `/u/:username`.
+Public profile and the cursor-paginated portfolio of forged models, saved worlds, and restyled models attributed to that creator. Powers `/u/:username`.
+
+**Query parameters (`/creations`)**
+
+| Parameter | Type    | Description                                                          |
+| --------- | ------- | -------------------------------------------------------------------- |
+| `type`    | string  | `model`, `world`, or `restyle`. Omit for all three. Anything else 400s |
+| `before`  | string  | ISO 8601 cursor, echoed back as `next`. A non-date value 400s          |
+| `limit`   | integer | 1..48, default 24                                                     |
+
+**Response:** `{ items: [{ id, type, title, prompt, thumbnailUrl, category, viewerUrl, createdAt }], next }`. `next` is the cursor to pass as `before` for the following page, or `null` on the last page.
 
 ---
 
