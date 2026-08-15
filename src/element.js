@@ -2631,6 +2631,11 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_showError(err) {
+		// A boot that rejects after the host left the document (an SPA unmounting
+		// mid-load) has nothing to paint into, and the attempt throws from inside
+		// _boot's catch, turning a handled boot failure into an unhandled rejection.
+		// The agent:error event still fires either way.
+		if (!this.isConnected) return;
 		// Bare/decoration avatars degrade to the supplied poster (or stay
 		// transparent) rather than a chat-style error card — clean decoration,
 		// never a broken canvas. Chat agents get the card.
