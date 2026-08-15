@@ -38,10 +38,23 @@
 
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { sql } from '../_lib/db.js';
+import { sql, isDbUnavailableError } from '../_lib/db.js';
 import { QUOTE_MINT_LIST } from '../_lib/quote-mints.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
+
+/**
+ * Per-query guard for the five independent summaries below. A statement-level
+ * fault in one of them still degrades that panel to its empty row, so the rest
+ * of the dashboard paints. A CONNECTIVITY failure hits all five at once and used
+ * to render "0 coins scored, 0 armed agents, no win rate" as if the engine had
+ * never run — cached for 60 seconds. That is a confident wrong answer, so it
+ * propagates and wrap() turns it into 503 + Retry-After.
+ */
+function emptyOnStatementFault(err) {
+	if (isDbUnavailableError(err)) throw err;
+	return [{}];
+}
 
 /**
  * Public join URL for the Oracle signals channel. Only @handle chat IDs are
@@ -75,7 +88,7 @@ export default wrap(async (req, res) => {
 			from oracle_conviction
 			where network = ${network}
 			  and mint <> all(${QUOTE_MINT_LIST}::text[])
-		`.catch(() => [{}]),
+		`.catch(emptyOnStatementFault),
 
 		// Open oracle_watch_actions (not yet settled).
 		sql`
@@ -83,7 +96,7 @@ export default wrap(async (req, res) => {
 			from oracle_watch_actions
 			where network = ${network}
 			  and outcome = 'open'
-		`.catch(() => [{}]),
+		`.catch(emptyOnStatementFault),
 
 		// Outcome win-rates, both scopes in one pass. "Calls" = lean/strong/prime —
 		// the tiers the oracle actually tells people to act on. Everything else it
@@ -103,7 +116,7 @@ export default wrap(async (req, res) => {
 			where c.network = ${network}
 			  and (o.graduated or o.rugged or o.ath_multiple is not null)
 			  and c.mint <> all(${QUOTE_MINT_LIST}::text[])
-		`.catch(() => [{}]),
+		`.catch(emptyOnStatementFault),
 
 		// Distinct armed agents.
 		sql`
@@ -111,7 +124,7 @@ export default wrap(async (req, res) => {
 			from oracle_agent_watch
 			where network = ${network}
 			  and armed = true
-		`.catch(() => [{}]),
+		`.catch(emptyOnStatementFault),
 
 		// Durable lifetime scored counter. oracle_conviction is retention-pruned
 		// (db-retention firehose family), so its count(*) is a rolling-window
@@ -120,7 +133,7 @@ export default wrap(async (req, res) => {
 			select value as scored_lifetime
 			from oracle_counters
 			where network = ${network} and key = 'scored_lifetime'
-		`.catch(() => [{}]),
+		`.catch(emptyOnStatementFault),
 	]);
 
 	const c  = convRow[0]    || {};

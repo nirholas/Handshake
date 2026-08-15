@@ -441,7 +441,12 @@ async function saveWatch() {
 		loadActions(state.agentId);
 	} else {
 		note.className = 'save-note warn';
-		note.textContent = data?.error?.message || 'Could not save — sign in and make sure you own this agent.';
+		// The API answers `{error: "<code>", error_description: "<sentence>"}`, so
+		// the old `data.error.message` lookup was always undefined and every
+		// failure rendered the same generic line. A caller who was told
+		// "per_trade_sol must be at least 0.001 SOL to arm a live agent" or "you do
+		// not own this agent" now sees exactly that.
+		note.textContent = data?.error_description || data?.error || 'Could not save. Sign in and make sure you own this agent.';
 	}
 }
 
@@ -466,7 +471,10 @@ async function sendTelegramTest() {
 		note.textContent = '✓ Test message delivered. Check Telegram.';
 	} else {
 		note.className = 'tg-note warn';
-		note.textContent = (data?.error || 'Delivery failed.') + (data?.hint ? ' ' + data.hint : '');
+		// A 200 with `ok:false` carries the reason in `error`; a 4xx/503 carries it
+		// in `error_description` and leaves `error` as the machine code, which used
+		// to surface to the user as the bare string "not_configured".
+		note.textContent = (data?.error_description || data?.error || 'Delivery failed.') + (data?.hint ? ' ' + data.hint : '');
 	}
 }
 

@@ -144,8 +144,19 @@ export default async function handleOracleTrades(req, res) {
 		try { res.end(); } catch {}
 	}
 
+	// Returns false when the socket could not be constructed at all. The SSE head
+	// is already on the wire by this point, so an unguarded throw here escaped as
+	// a rejected handler and left the caller holding an open stream that would
+	// never emit a trade, a bye, or an error until the 45 s rotate timer fired.
 	function openWs() {
-		ws = new WebSocket(pumpPortalWsUrl());
+		try {
+			ws = new WebSocket(pumpPortalWsUrl());
+		} catch (e) {
+			console.warn('[oracle/trades] ws open failed:', e?.message);
+			send('bye', { reason: 'ws_unavailable' });
+			cleanup();
+			return false;
+		}
 
 		ws.on('open', () => {
 			ws.send(JSON.stringify({ method: 'subscribeTokenTrade', keys: [mint] }));
@@ -170,9 +181,11 @@ export default async function handleOracleTrades(req, res) {
 			if (active) send('bye', { reason: 'ws_closed' });
 			cleanup();
 		});
+		return true;
 	}
 
-	openWs();
+	// Nothing to keep alive or rotate if the socket never opened.
+	if (!openWs()) return;
 
 	pingTimer = setInterval(() => send('ping', { ts: Date.now() }), PING_INTERVAL_MS);
 	stopTimer = setTimeout(() => {

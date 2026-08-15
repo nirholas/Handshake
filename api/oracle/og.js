@@ -24,6 +24,11 @@ import { isQuoteMint } from '../_lib/quote-mints.js';
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PUMP_FRONTEND_V3 = 'https://frontend-api-v3.pump.fun';
 const CACHE = 'public, max-age=120, s-maxage=900, stale-while-revalidate=60';
+// A card built from a failed read is still a card — an OG scraper needs an image
+// back, not a 500 — but it is not an answer worth keeping for 15 minutes. Serve
+// the degraded render uncached so the next scrape re-reads a recovered database
+// instead of pinning "Not yet scored" on a real prime coin for a quarter hour.
+const CACHE_DEGRADED = 'no-store';
 
 function x(s) {
 	return String(s || '')
@@ -345,15 +350,17 @@ export default wrap(async (req, res) => {
 	}
 
 	let data;
+	let degraded = false;
 	try {
 		data = await buildCardData(mint);
 	} catch {
+		degraded = true;
 		data = { cv: null, outcome: null, name: '', symbol: '', logoBase64: null, category: '', liveMcap: null };
 	}
 
 	const svg = renderCard(mint, data);
 	res.statusCode = 200;
 	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
-	res.setHeader('cache-control', CACHE);
+	res.setHeader('cache-control', degraded ? CACHE_DEGRADED : CACHE);
 	res.end(svg);
 });

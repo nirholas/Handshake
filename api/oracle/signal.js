@@ -12,6 +12,7 @@
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { isDbUnavailableError } from '../_lib/db.js';
 import { readFeed, scoreCoin } from '../_lib/oracle/store.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
@@ -85,7 +86,16 @@ export default wrap(async (req, res) => {
 	const category = CATEGORIES.has(p.get('category')) ? p.get('category') : null;
 	const limit = Math.min(25, Math.max(1, Number(p.get('limit')) || 5));
 
-	const items = await readFeed({ network, limit, minScore, category, sinceSeconds: 6 * 3600 }).catch(() => []);
+	// An autonomous agent reads `count: 0` as "the oracle sees no plays right now"
+	// and stands down. During a DB outage that is a wrong answer dressed as a
+	// verdict, and the single-mint branch above already refuses to fake one, so
+	// the list branch answers the same way: propagate (wrap() → 503 + Retry-After)
+	// on a connectivity failure, degrade to an empty board on a statement fault.
+	const items = await readFeed({ network, limit, minScore, category, sinceSeconds: 6 * 3600 })
+		.catch((err) => {
+			if (isDbUnavailableError(err)) throw err;
+			return [];
+		});
 	const plays = items.map(shape);
 	return json(res, 200, {
 		network,

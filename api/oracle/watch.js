@@ -24,6 +24,10 @@ import { getWatch, upsertWatch, recentActions, actionsSummary } from '../_lib/or
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const TIERS = new Set(['prime', 'strong', 'lean', 'watch']);
+// Smallest per-trade size the loop will ever place. Also the floor the clamp
+// below applies, which is why a live arm has to be checked against the raw
+// request instead of the clamped result (see the live-arm guard).
+const MIN_TRADE_SOL = 0.001;
 const CATEGORIES = new Set(['meme', 'tech', 'ai', 'culture', 'community', 'political', 'news', 'animal', 'celebrity', 'utility', 'unknown']);
 const numish = z.union([z.string(), z.number()]);
 
@@ -102,13 +106,27 @@ export default wrap(async (req, res) => {
 	const minScore = clampInt(cfg.min_score, 0, 100, 80);
 	const minTier = TIERS.has(cfg.min_tier) ? cfg.min_tier : 'strong';
 	const categories = Array.isArray(cfg.categories) ? cfg.categories.filter((c) => CATEGORIES.has(c)).slice(0, 11) : [];
-	const perTrade = clampNum(cfg.per_trade_sol, 0.001, 5, 0.05);
+	const perTrade = clampNum(cfg.per_trade_sol, MIN_TRADE_SOL, 5, 0.05);
 	const maxDaily = clampNum(cfg.max_daily_sol, perTrade, 50, Math.max(0.5, perTrade * 10));
 	const maxOpen = clampInt(cfg.max_open, 1, 50, 5);
 
-	// A live, armed agent with no size makes no sense — guard it.
-	if (cfg.armed && cfg.mode === 'live' && perTrade <= 0) {
-		return error(res, 400, 'validation_error', 'set a per-trade size before arming a live agent');
+	// Arming live commits the agent's own SOL, so a clamp must never round the
+	// caller's number UP into a larger real-money commitment than they asked for.
+	// `perTrade` floors at MIN_TRADE_SOL and `maxDaily` floors at `perTrade`, so
+	// `{armed:true, mode:'live', per_trade_sol:0}` armed a real-spend loop at
+	// 0.001 SOL a trade with a 0.5 SOL daily ceiling. The guard that was meant to
+	// catch this read the already-clamped value (`perTrade <= 0`) and therefore
+	// could never fire. Judge the caller's raw numbers, and only when the request
+	// actually puts funds at risk: a simulate run keeps the forgiving clamps.
+	if (cfg.armed && cfg.mode === 'live') {
+		const rawPerTrade = cfg.per_trade_sol == null ? null : Number(cfg.per_trade_sol);
+		if (rawPerTrade != null && !(rawPerTrade >= MIN_TRADE_SOL)) {
+			return error(res, 400, 'validation_error', `per_trade_sol must be at least ${MIN_TRADE_SOL} SOL to arm a live agent`);
+		}
+		const rawDaily = cfg.max_daily_sol == null ? null : Number(cfg.max_daily_sol);
+		if (rawDaily != null && !(rawDaily >= perTrade)) {
+			return error(res, 400, 'validation_error', 'max_daily_sol must be at least per_trade_sol to arm a live agent');
+		}
 	}
 
 	// Sanitize telegram_chat_id: allow numeric IDs (positive or negative) and

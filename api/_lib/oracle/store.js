@@ -4,7 +4,7 @@
 // the read APIs (lazy-score-on-miss, so the feed is warm even before the worker
 // has swept a brand-new coin).
 
-import { sql } from '../db.js';
+import { sql, isDbUnavailableError } from '../db.js';
 import { assembleIntel, walletProfile, coinOutcome } from './sources.js';
 import { classifyNarrative } from './narrative.js';
 import { convict, hitRateFor, PREDICTED_EVENT } from './conviction.js';
@@ -401,7 +401,11 @@ export async function upsertWatch(agentId, userId, network, cfg) {
 	return row[0];
 }
 
-/** Conviction score history for a coin (newest first, up to 48 points). */
+/**
+ * Conviction score history for a coin, oldest point first, up to 200 points.
+ * The ascending order is load-bearing: /api/oracle/history derives its rising /
+ * falling trend from the first and last elements.
+ */
 export async function readScoreHistory(mint, network = 'mainnet', hours = 72) {
 	const rows = await sql`
 		select score, tier, pedigree, structure, narrative, momentum, scored_at
@@ -410,7 +414,14 @@ export async function readScoreHistory(mint, network = 'mainnet', hours = 72) {
 		  and scored_at > now() - (${hours} || ' hours')::interval
 		order by scored_at asc
 		limit 200
-	`.catch(() => []);
+	`.catch((err) => {
+		// The sparkline reads an empty series as "this coin has no recorded
+		// conviction movement", which is what the caller sees during a
+		// connectivity failure too — cached for 60s by /api/oracle/history.
+		// Propagate so wrap() answers 503; a statement fault still degrades.
+		if (isDbUnavailableError(err)) throw err;
+		return [];
+	});
 	return rows.map((r) => ({
 		score: r.score,
 		tier: r.tier,

@@ -15,6 +15,16 @@
 //   /api/oracle/follow DEL   `{ ok: true }` while the row survived, so the
 //                            caller believed they had opted out and kept
 //                            receiving alerts
+//   /api/oracle/movers       200 "nothing is moving", cached 90s
+//   /api/oracle/signal       `count: 0` to an autonomous agent, which reads it
+//                            as a verdict and stands down
+//   /api/oracle/social       `ok: true` with `mints_updated: 0` next to a
+//                            populated `updated` array — a receipt for a write
+//                            that never landed
+//   /api/oracle/stats        "0 coins scored, 0 armed agents", cached 60s, on
+//                            the oracle landing hero
+//   /api/oracle/history      an empty series, so the sparkline drew a coin with
+//                            no conviction movement
 //
 // Each test below pins both halves of the contract: a connectivity failure
 // propagates (wrap() turns it into the shared 503 + Retry-After), and an
@@ -48,6 +58,7 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 		publicIp: vi.fn(async () => ({ success: true })),
 		mcpIp: vi.fn(async () => ({ success: true })),
 		oracleFollowIp: vi.fn(async () => ({ success: true })),
+		oracleSocialIp: vi.fn(async () => ({ success: true })),
 	},
 	clientIp: () => '1.2.3.4',
 }));
@@ -56,12 +67,22 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 // handlers route on isDbUnavailableError() correctly, so mocking that function
 // would test nothing. `nextDbError` decides what the next tagged-template read
 // rejects with (null = resolve empty).
+// `dbQueue` overrides it per call, in order, for the handlers whose first read
+// must succeed before the read under test fails (oracle/social looks the mints
+// up, then writes them).
 let nextDbError = null;
+let dbQueue = [];
 vi.mock('../../api/_lib/db.js', async () => {
 	const actual = await vi.importActual('../../api/_lib/db.js');
 	return {
 		...actual,
-		sql: () => (nextDbError ? Promise.reject(nextDbError) : Promise.resolve([])),
+		sql: () => {
+			if (dbQueue.length) {
+				const next = dbQueue.shift();
+				return next instanceof Error ? Promise.reject(next) : Promise.resolve(next);
+			}
+			return nextDbError ? Promise.reject(nextDbError) : Promise.resolve([]);
+		},
 	};
 });
 
@@ -79,14 +100,21 @@ const NO_URL_ERROR = new Error('Missing required env var: DATABASE_URL');
 // A deterministic SQL bug. Never a 503: the empty-result degrade is correct here.
 const STATEMENT_ERROR = new Error('column "nope" does not exist');
 
+// The real store module on top of the mocked db.js above, so readScoreHistory's
+// own guard is the thing under test rather than a stub of it. The named
+// overrides after the spread keep the stubbed reads the older cases rely on.
 const storeBehaviour = { readFeed: async () => [] };
-vi.mock('../../api/_lib/oracle/store.js', () => ({
-	readFeed: (...args) => storeBehaviour.readFeed(...args),
-	convictionBacktest: async () => [],
-	scoreCoin: async () => null,
-	recentActions: async () => [],
-	actionsSummary: async () => ({ total: 0, wins: 0, losses: 0, open: 0, win_rate: null }),
-}));
+vi.mock('../../api/_lib/oracle/store.js', async () => {
+	const actual = await vi.importActual('../../api/_lib/oracle/store.js');
+	return {
+		...actual,
+		readFeed: (...args) => storeBehaviour.readFeed(...args),
+		convictionBacktest: async () => [],
+		scoreCoin: async () => null,
+		recentActions: async () => [],
+		actionsSummary: async () => ({ total: 0, wins: 0, losses: 0, open: 0, win_rate: null }),
+	};
+});
 
 vi.mock('../../api/_lib/oracle/sources.js', () => ({ recentMints: async () => [] }));
 
@@ -95,6 +123,11 @@ import feed from '../../api/oracle/feed.js';
 import categories from '../../api/oracle/categories.js';
 import agentStats from '../../api/oracle/agent-stats.js';
 import follow from '../../api/oracle/follow.js';
+import movers from '../../api/oracle/movers.js';
+import signal from '../../api/oracle/signal.js';
+import social from '../../api/oracle/social.js';
+import stats from '../../api/oracle/stats.js';
+import history from '../../api/oracle/history.js';
 
 const AGENT_ID = '5e05f68f-eead-4ef9-b6b4-fc85ea73bbe9';
 
@@ -121,6 +154,7 @@ function fakeReq(url, { method = 'GET', body = null } = {}) {
 
 beforeEach(() => {
 	nextDbError = null;
+	dbQueue = [];
 	storeBehaviour.readFeed = async () => [];
 });
 
@@ -203,5 +237,109 @@ describe('/api/oracle/follow', () => {
 		await follow(fakeReq(`/api/oracle/follow?agent_id=${AGENT_ID}&chat_id=12345`), res);
 		expect(res._json.status).toBe(200);
 		expect(res._json.body.following).toBe(false);
+	});
+});
+
+// The same contract, extended over the rest of the Oracle read surface. Each of
+// these carried the identical blanket `.catch()` and the identical failure mode:
+// a confident, CDN-cached wrong answer during a connectivity blip.
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+describe('GET /api/oracle/movers', () => {
+	it('propagates a connectivity failure instead of CDN-caching a flat market', async () => {
+		nextDbError = CONN_ERROR;
+		await expect(movers(fakeReq('/api/oracle/movers'), fakeRes())).rejects.toThrow(/connecting to database/);
+	});
+
+	it('still degrades a statement fault to an empty board', async () => {
+		nextDbError = STATEMENT_ERROR;
+		const res = fakeRes();
+		await movers(fakeReq('/api/oracle/movers'), res);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.items).toEqual([]);
+		expect(res._json.body.count).toBe(0);
+	});
+});
+
+describe('GET /api/oracle/signal', () => {
+	it('propagates a connectivity failure instead of telling an agent there are no plays', async () => {
+		storeBehaviour.readFeed = async () => { throw CONN_ERROR; };
+		await expect(signal(fakeReq('/api/oracle/signal'), fakeRes())).rejects.toThrow(/connecting to database/);
+	});
+
+	it('still degrades a statement fault to an empty play list', async () => {
+		storeBehaviour.readFeed = async () => { throw STATEMENT_ERROR; };
+		const res = fakeRes();
+		await signal(fakeReq('/api/oracle/signal'), res);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.plays).toEqual([]);
+		expect(res._json.body.top).toBeNull();
+	});
+});
+
+describe('POST /api/oracle/social', () => {
+	const batch = { tweets: [{ text: '$THREE is live', url: 'https://x.com/i/status/1', metrics: { views: 10000, likes: 100, retweets: 20 } }] };
+
+	it('propagates a connectivity failure on the mint lookup instead of discarding the batch', async () => {
+		nextDbError = CONN_ERROR;
+		const req = fakeReq('/api/oracle/social', { method: 'POST', body: batch });
+		await expect(social(req, fakeRes())).rejects.toThrow(/connecting to database/);
+	});
+
+	it('propagates a failed upsert instead of receipting a write that never landed', async () => {
+		dbQueue = [[{ mint: THREE_MINT, symbol: 'THREE' }], CONN_ERROR];
+		const req = fakeReq('/api/oracle/social', { method: 'POST', body: batch });
+		await expect(social(req, fakeRes())).rejects.toThrow(/connecting to database/);
+	});
+
+	it('receipts exactly what it wrote when the upsert lands', async () => {
+		dbQueue = [[{ mint: THREE_MINT, symbol: 'THREE' }], []];
+		const res = fakeRes();
+		await social(fakeReq('/api/oracle/social', { method: 'POST', body: batch }), res);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.mints_updated).toBe(1);
+		expect(res._json.body.updated).toHaveLength(1);
+		expect(res._json.body.updated[0].mint).toBe(THREE_MINT);
+	});
+
+	it('still answers 200 when no known mint matches the mentioned symbols', async () => {
+		const res = fakeRes();
+		await social(fakeReq('/api/oracle/social', { method: 'POST', body: batch }), res);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.mints_updated).toBe(0);
+		expect(res._json.body.symbols_found).toBe(1);
+	});
+});
+
+describe('GET /api/oracle/stats', () => {
+	it('propagates a connectivity failure instead of publishing "nothing was ever scored"', async () => {
+		nextDbError = CONN_ERROR;
+		await expect(stats(fakeReq('/api/oracle/stats'), fakeRes())).rejects.toThrow(/connecting to database/);
+	});
+
+	it('still degrades a statement fault to zeroed counters', async () => {
+		nextDbError = STATEMENT_ERROR;
+		const res = fakeRes();
+		await stats(fakeReq('/api/oracle/stats'), res);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.scored_total).toBe(0);
+		expect(res._json.body.win_rate).toBeNull();
+	});
+});
+
+describe('GET /api/oracle/history', () => {
+	it('propagates a connectivity failure instead of drawing a flat sparkline', async () => {
+		nextDbError = CONN_ERROR;
+		await expect(history(fakeReq(`/api/oracle/history?mint=${THREE_MINT}`), fakeRes()))
+			.rejects.toThrow(/connecting to database/);
+	});
+
+	it('still degrades a statement fault to an empty series with no trend', async () => {
+		nextDbError = STATEMENT_ERROR;
+		const res = fakeRes();
+		await history(fakeReq(`/api/oracle/history?mint=${THREE_MINT}`), res);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.points).toEqual([]);
+		expect(res._json.body.trend).toBeNull();
 	});
 });

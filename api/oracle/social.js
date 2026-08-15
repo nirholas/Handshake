@@ -13,16 +13,16 @@
  * Tweet shape (XActions format):
  *   { id, text, createdAt, url, author:{ username }, metrics:{ views, likes, retweets } }
  *
- * A KOL author (wallet in known-wallets.json, or twitter_username present)
- * gets a 2× virality multiplier vs an anonymous account.
+ * An author in KOL_ACCOUNTS below gets a 1.5× virality multiplier vs an
+ * anonymous account.
  *
- * Rate-limited to 30 req/min per IP. Auth: optional — unauthenticated calls
- * are accepted so XActions → Oracle works without session overhead.
+ * Rate-limited per IP (limits.oracleSocialIp). Auth: optional — unauthenticated
+ * calls are accepted so XActions → Oracle works without session overhead.
  */
 
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { sql, sqlValues } from '../_lib/db.js';
+import { sql, sqlValues, isDbUnavailableError } from '../_lib/db.js';
 
 const NETWORK = 'mainnet';
 
@@ -94,7 +94,15 @@ export default wrap(async (req, res) => {
 		where network = ${network}
 		  and upper(symbol) = any(${symbols})
 		order by first_seen_at desc
-	`.catch(() => []);
+	`.catch((err) => {
+		// An empty lookup answers "no known mints matched the mentioned symbols",
+		// which tells the caller its batch was useless and should not be retried.
+		// During a connectivity failure that discards real social signal for good,
+		// so propagate (wrap() → 503 + Retry-After) and let the sender retry; a
+		// statement fault still degrades to the documented empty answer.
+		if (isDbUnavailableError(err)) throw err;
+		return [];
+	});
 
 	// Dedupe: keep the most recent mint per symbol
 	const mintBySymbol = new Map();
@@ -120,8 +128,13 @@ export default wrap(async (req, res) => {
 	// to 500 tweets can mention dozens of known mints, and N sequential INSERTs
 	// would serialize the whole request behind DB latency. classified_at is bound
 	// per row; the ON CONFLICT branch still uses now() for the update path.
+	// Not guarded: this write IS the request. A swallowed failure used to answer
+	// `ok: true` with `mints_updated: 0` next to a populated `updated` array — a
+	// self-contradicting receipt that told the sender its batch had landed when
+	// nothing was written. wrap() classifies instead (503 on a connectivity
+	// failure, 500 on a statement fault), so the sender knows to retry.
 	const rows = updates.map((u) => [u.mint, u.network, u.virality, 0.4, 'heuristic', new Date()]);
-	const upserted = await sql`
+	await sql`
 		insert into oracle_narrative (mint, network, virality, confidence, source, classified_at)
 		values ${sqlValues(rows)}
 		on conflict (mint, network) do update set
@@ -133,14 +146,13 @@ export default wrap(async (req, res) => {
 				when oracle_narrative.source = 'llm' then oracle_narrative.classified_at
 				else now()
 			end
-	`.catch(() => null);
-	const mints_updated = upserted === null ? 0 : updates.length;
+	`;
 
 	return json(res, 200, {
 		ok: true,
 		tweet_count: tweets.length,
 		symbols_found: symbolMap.size,
-		mints_updated,
+		mints_updated: updates.length,
 		updated: updates.map(u => ({ mint: u.mint, virality: u.virality, tweets: u.tweetCount })),
 	});
 });

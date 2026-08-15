@@ -25,7 +25,7 @@
 
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { sql } from '../_lib/db.js';
+import { sql, isDbUnavailableError } from '../_lib/db.js';
 import { QUOTE_MINT_LIST } from '../_lib/quote-mints.js';
 
 const NETWORKS   = new Set(['mainnet', 'devnet']);
@@ -94,7 +94,15 @@ export default wrap(async (req, res) => {
 			case when ${direction}::text = 'falling' then (d.first_score - c.score) else (c.score - d.first_score) end desc,
 			c.score desc
 		limit ${limit}
-	`.catch(() => []);
+	`.catch((err) => {
+		// This query IS the response. A connectivity failure used to become a
+		// confident "nothing is moving" with a 90-second CDN cache, so a blip
+		// lasting seconds flatlined the movers panel for the next minute and a
+		// half. Rethrow so wrap() answers 503 + Retry-After and nothing caches
+		// the lie; a statement-level fault still degrades to an empty board.
+		if (isDbUnavailableError(err)) throw err;
+		return [];
+	});
 
 	const items = rows.map((r) => ({
 		mint:             r.mint,
