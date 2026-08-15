@@ -186,6 +186,19 @@ brandable addresses ground ahead of time on batch CPU and held encrypted.
 - **Browse** (free, no payment): `GET /api/x402/vanity-premium` with no `address`
   returns the available patterns, rarity tiers, and prices. Browsable in the UI at
   [`/vanity/premium`](https://three.ws/vanity/premium).
+- **Paging the browse response.** Filters: `prefix`, `tier`
+  (`common`/`uncommon`/`rare`/`epic`/`legendary`/`mythic`), `sort`
+  (`rarity` default, `price`, `new`), `limit` (1 to 200, default 60) and
+  `offset`. Alongside `count` (the rows in THIS page) the response carries
+  `matching` (every available row the filter selects), the `limit`/`offset` it
+  actually applied after clamping, and `hasMore`. Page until `hasMore` is
+  `false`; never read `count` as the size of the shelf. `stats` stays
+  unfiltered, so it describes total inventory rather than the current filter.
+
+  ```bash
+  curl -s 'https://three.ws/api/x402/vanity-premium?tier=mythic&limit=60&offset=0' \
+    | jq '{count, matching, hasMore, first: .items[0].address}'
+  ```
 - **Buy**: `GET /api/x402/vanity-premium?address=<base58>` pays via x402. Price
   scales with grind difficulty ($1–$50). The key is delivered **exactly once** and
   its stored ciphertext is **destroyed on delivery** (delete-after-reveal) — three.ws
