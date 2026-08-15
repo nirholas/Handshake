@@ -3,13 +3,34 @@
   "entries": [
     {
       "date": "2026-08-15",
-      "title": "The AgenC task room explains itself now, instead of showing a wall of raw error text",
-      "summary": "The task room renders every task a wallet has posted on the AgenC coordination protocol as a 3D agent driven by its live on-chain state. It has been rebuilt around the moments where it used to leave you stuck. An unreadable wallet address, a Solana outage, and a dropped connection all used to print the raw server reply into an otherwise empty page; each now gets its own explanation, a Retry button, and a link to the docs on posting a task, and the room keeps retrying by itself when the fault is upstream and stops when it is something only you can fix. A wallet with no tasks says so and offers to check the other cluster instead of leaving you guessing. While a load is in flight you get skeleton cards rather than the word loading, and a line above the grid tells you how many tasks are showing, on which cluster, and when they were last refreshed. Card status colors now match the states the chain actually reports, so a task in progress or awaiting validation is no longer left uncolored, and each card links to its account on Solana Explorer. On a phone the wallet field no longer runs off the edge of the screen, the title no longer sits under the site logo, both form fields are labelled for screen readers, and every control has a visible focus ring. The room also stops running a 3D viewer for every card at once: avatars load as their cards come into view, up to eight at a time, and are released when you scroll past, which keeps a large board from stalling the browser and stops off-screen cards polling the chain for nothing.",
+      "title": "A shared link to a docs page now opens that page instead of stranding you",
+      "summary": "Every cross-reference inside a docs page turns into a link like /docs/agent-wallets#financial-controls. Following one worked, but the URL you copied afterwards did not: on a fresh load the viewer only recognised the second half if that doc happened to be listed in the sidebar, and silently left you on the page you arrived from otherwise. Links to Financial controls, the x402 payment tutorial, and the wallet access and proof-of-custody chapters all failed that way. The viewer now asks the server whether the doc exists before giving up, so those links land where they say they will, and the browser tab takes the destination's name. Separately, /docs/3d-api was serving the 3D API landing page rather than the reference doc that the API's own discovery response, the OpenAPI license link, and the docs sidebar all point at; it now serves the reference doc, and the landing page keeps its home at /3d.",
       "tags": [
-        "improvement",
-        "fix"
+        "fix",
+        "docs"
       ],
-      "link": "/agenc/room"
+      "link": "/docs/agent-wallets"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "The 3D API and agent manifest references now match what the endpoints actually return",
+      "summary": "The agent manifest page told you to validate a manifest with assertValid from @three-ws/avatar-schema. That package validates avatar manifests (mesh, skeleton, owner), not agent manifests, so the sample always threw. It now shows loadManifest from the published bundle, running against a live agent, and says plainly which document the avatar schema covers. On the 3D API page, the sample responses showed a model URL shape the service never returns, the inspect example was a stale capture of a model that has since been re-exported, and the Forge Pro tier table claimed draft and standard generations come back with no textures when every tier bakes them (1K, 2K, and 4K plus PBR at high). All three are corrected against live calls, and the page now explains why browser code should load a generated GLB through the first-party CDN path rather than the object store URL directly. The prompt art-director note is confirmed accurate and the code comment that contradicted it was fixed.",
+      "tags": [
+        "fix",
+        "docs"
+      ],
+      "link": "/docs/3d-api"
+    },
+    {
+      "date": "2026-08-15",
+      "title": "The embodied AgenC demo hands you a live task, and reacts to the state a claimed task is actually in",
+      "summary": "The /agenc/embodied page binds a 3D agent to a real AgenC task on Solana, and until now it opened on an empty input box: it needed a task account address and offered no way anywhere on the page to find one. It now lists real tasks three.ws itself posted, claimed, and settled on-chain, newest first, so the demo works the moment it loads; a new public read, /api/agenc/recent-tasks, serves that list. Two things it showed were also wrong. The scene coloured itself for a state named Claimed, which the chain has never used: a claimed task is In Progress on-chain, so the halo, the badge, and the per-state animation switch all sat inert through the one transition the demo exists to show. And the page named a program address that no read has touched since the protocol's interface moved; it now shows the program each live read actually ran against. Pasting an address that holds something other than a task used to report a server error, as though the platform were broken, rather than saying no such task exists there; that is now a plain not-found, with the page telling you to check the address or switch cluster. The panel has designed loading, empty, and error states throughout, the form fields have real labels, the layout no longer scrolls sideways on a phone, and a task that cannot be read is retried with a backoff instead of being re-requested every four seconds forever.",
+      "tags": [
+        "fix",
+        "improvement",
+        "feature"
+      ],
+      "link": "/agenc/embodied"
     },
     {
       "date": "2026-08-15",
