@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T06:48:22.664Z",
+	"generated_at": "2026-08-15T06:49:46.322Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -96,17 +96,6 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
-			"title": "The 3D pipeline docs stop telling you to run a command that does not exist",
-			"summary": "Every paid stage on the 3D asset pipeline page (rig, remesh, game-ready, stylize, background removal) showed you how to pay for it by running npx @x402/fetch. There is no such command: that package publishes a library, not a CLI, so anyone who copied a sample got a could-not-determine-executable error and no asset. The samples are now the real thing: an unpaid curl that returns the live 402 challenge and costs nothing, plus one Node snippet that wraps fetch with our published @three-ws/x402-fetch buyer and actually settles. The end-to-end generate, rig and game-ready walkthrough was rewritten the same way and now polls the forge job with the fields the API really returns. The page also stops promising a specific settlement network, because the 402 challenge names the networks itself. Alongside it: the changelog page CDN pinning table listed four alias URLs that all 404 and pointed at an integrity file for a version that no longer publishes one; the AgenC page opening sentence linked the word AgenC to a different protocol page; and the vanity protocol spec showed a stale copy of the service key document, which now matches what the live endpoint serves.",
-			"link": "/docs/3d-pipeline",
-			"tags": [
-				"docs",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
 			"title": "The Agent Economy demo works again when you just pick a service, and it fits a phone screen",
 			"summary": "On the Agent Economy page, two 3D agents trade with each other for real SOL: Nova buys a market read, an on-chain insight, or a risk score from Oracle. Picking a service and typing nothing in the optional topic box, which is what almost everyone does, sent the request off in a shape the endpoint refused, so the demo answered with a validation error instead of a trade. It now sends the request correctly, and the endpoint accepts an empty topic besides. On a phone the page was worse than broken: the transaction feed and the status line, the entire output of the demo, were cut off the bottom of the screen with no way to scroll to them, and the floating language button sat on top of the footer links. The centre column now scrolls, the feed keeps a readable height, and the footer stays clickable. Three failure states also stopped lying: a payment that could not go through no longer ends on Transaction complete, a request that never reached the server now says so and offers to try again, and unreadable wallet balances now say they are unavailable and offer a retry instead of spinning forever.",
 			"link": "/agent-economy",
@@ -146,17 +135,6 @@
 			"tags": [
 				"fix",
 				"sdk",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
-			"title": "The embed tutorials now name the attribute that actually hides the built-in chat",
-			"summary": "Several tutorials told you to set avatar-chat=\"off\" to hide an agent's built-in chat input. It does not do that: it moves the avatar out of the chat column and lays the chat out as a plain bottom bar, leaving the input on screen. The multi-agent walkthrough leaned on it to keep its behind-the-scenes stage-director messages hidden, so anyone following it verbatim saw those messages leak into the visible chat. The affected tutorials now use chat=\"off\", the real bare-avatar switch, and note that the brain still boots behind it so say(), ask(), and the event stream keep working. The same accuracy pass corrected the walking-avatar leaderboard example, which read fields the API never returns and so always rendered an empty top-walkers list, and the JavaScript API event table, which named the wrong key for the skill a tool-call event reports.",
-			"link": "/tutorials/web-component-end-to-end",
-			"tags": [
-				"fix",
 				"docs"
 			]
 		},
@@ -208,8 +186,20 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
+			"title": "The vanity SDK now uses the payment wallet you hand it, and the in-chat 3D avatar keeps its tuned lighting",
+			"summary": "Three fixes in the developer packages. The @three-ws/vanity SDK documented a fetch option on its paid address-grinding lane but silently ignored it, so a developer who passed a payment-enabled fetch got a payment-required error back instead of the keypair they paid for; that option now works, as do a custom API host and key. The avatar MCP server's in-chat 3D viewer had been hand-tuned with softer shadows, brighter exposure and a neutral environment light, but the script that rebuilds it before every release still produced the old flat version, so the next release would have quietly undone the tuning; the script now produces the tuned viewer, and the same settings apply to the fallback view for chat apps that cannot run the interactive one. The tool SDK's quick-start example pointed at an API that does not exist and skipped the wrapper an MCP server needs to return anything at all, so following it produced a tool that answered with nothing; it now runs end to end against a real free three.ws endpoint.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
 			"title": "Three docs pages stop pointing readers at a dead page, a missing section, and a snippet that does nothing",
-			"summary": "The Vanity page told you to grind a long address yourself \"in the browser at /vanity\", but that path has never existed and returned a 404; the in-browser grinder lives at /vanity-wallet, and both links on the page now go there. In Troubleshooting, the fix for a Quick Look model that opens and instantly closes linked to a model-optimization section that is not on the AR page, so the link landed you at the top with nothing to read; it now opens the section that actually covers it. The same page told you to add a responsive attribute to size an inline embed, with a snippet that set the width in CSS. Neither part worked: responsive sizing is already on by default, and the element reads the width attribute rather than the computed style, so the documented snippet never produced the 3:4 ratio it promised. The instructions now show what does work, and name the two things that switch it off.",
+			"summary": "The Vanity page told you to grind a long address yourself in the browser at /vanity, but that path has never existed and answers 404; the in-browser grinder lives at /vanity-wallet, and both links on the page now go there. In Troubleshooting, the fix for a Quick Look model that opens and instantly closes linked to a model-optimization section that is not on the AR page, so the link dropped you at the top with nothing to read; it now opens the section that actually covers it. The same page told you to add a responsive attribute to size an inline embed, with a snippet that set the width in CSS. Neither half worked: responsive sizing is already on by default, and the element reads the width attribute rather than the computed style, so the documented snippet never produced the 3:4 ratio it promised. The instructions now show the form that does work, and name the two things that switch it off.",
 			"link": "/docs/troubleshooting",
 			"tags": [
 				"fix",
