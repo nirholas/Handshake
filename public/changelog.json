@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-15T06:45:57.352Z",
+	"generated_at": "2026-08-15T06:48:22.664Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,17 +14,6 @@
 			"link": "/pay/simulator",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
-			"title": "A shared link to a docs page now opens that page instead of stranding you",
-			"summary": "Every cross-reference inside a docs page turns into a link like /docs/agent-wallets#financial-controls. Following one worked, but the URL you copied afterwards did not: on a fresh load the viewer only recognised the second half if that doc happened to be listed in the sidebar, and silently left you on the page you arrived from otherwise. Links to Financial controls, the x402 payment tutorial, and the wallet access and proof-of-custody chapters all failed that way. The viewer now asks the server whether the doc exists before giving up, so those links land where they say they will, and the browser tab takes the destination's name. Separately, /docs/3d-api was serving the 3D API landing page rather than the reference doc that the API's own discovery response, the OpenAPI license link, and the docs sidebar all point at; it now serves the reference doc, and the landing page keeps its home at /3d.",
-			"link": "/docs/agent-wallets",
-			"tags": [
-				"fix",
-				"docs"
 			]
 		},
 		{
@@ -107,19 +96,8 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
-			"title": "The 3D API and agent manifest references now match what the endpoints actually return",
-			"summary": "The agent manifest page told you to validate a manifest with assertValid from @three-ws/avatar-schema. That package validates avatar manifests (mesh, skeleton, owner), not agent manifests, so the sample always threw. It now shows loadManifest from the published bundle, running against a live agent, and says plainly which document the avatar schema covers. On the 3D API page, the sample responses showed a model URL shape the service never returns, the inspect example was a stale capture of a model that has since been re-exported, and the Forge Pro tier table claimed draft and standard generations come back with no textures when every tier bakes them (1K, 2K, and 4K plus PBR at high). All three are corrected against live calls, and the page now explains why browser code should load a generated GLB through the first-party CDN path rather than the object store URL directly.",
-			"link": "/docs/3d-api",
-			"tags": [
-				"fix",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
 			"title": "The 3D pipeline docs stop telling you to run a command that does not exist",
-			"summary": "Every paid stage on the 3D asset pipeline page (rig, remesh, game-ready, stylize, background removal) showed you how to pay for it by running `npx @x402/fetch`. There is no such command: that package publishes a library, not a CLI, so anyone who copied a sample got `could not determine executable to run` and no asset. The samples are now the real thing: an unpaid curl that returns the live 402 challenge and costs nothing, plus one Node snippet that wraps fetch with our published @three-ws/x402-fetch buyer and actually settles. The end-to-end generate-rig-gameready walkthrough was rewritten the same way and now polls the forge job with the fields the API really returns. The page also stops promising a specific settlement network, because the 402 challenge names the networks itself. Alongside it: the changelog page's CDN pinning table listed four alias URLs that all 404, and pointed at an integrity file for a version that no longer publishes one; the AgenC page's opening sentence linked the word AgenC to a different protocol's page; and the vanity protocol spec showed a stale copy of the service key document, which now matches what the live endpoint serves.",
+			"summary": "Every paid stage on the 3D asset pipeline page (rig, remesh, game-ready, stylize, background removal) showed you how to pay for it by running npx @x402/fetch. There is no such command: that package publishes a library, not a CLI, so anyone who copied a sample got a could-not-determine-executable error and no asset. The samples are now the real thing: an unpaid curl that returns the live 402 challenge and costs nothing, plus one Node snippet that wraps fetch with our published @three-ws/x402-fetch buyer and actually settles. The end-to-end generate, rig and game-ready walkthrough was rewritten the same way and now polls the forge job with the fields the API really returns. The page also stops promising a specific settlement network, because the 402 challenge names the networks itself. Alongside it: the changelog page CDN pinning table listed four alias URLs that all 404 and pointed at an integrity file for a version that no longer publishes one; the AgenC page opening sentence linked the word AgenC to a different protocol page; and the vanity protocol spec showed a stale copy of the service key document, which now matches what the live endpoint serves.",
 			"link": "/docs/3d-pipeline",
 			"tags": [
 				"docs",
@@ -140,9 +118,9 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
-			"title": "The Agent Exchange stops offering a purchase its wallet cannot pay for",
-			"summary": "On /agent-exchange two 3D agents buy and sell live crypto intel, and the buyer settles $0.01 of real USDC on Solana for every signal. The page already warned you when the buyer's wallet was too empty to settle, but it left the Buy intel button live anyway, so the only thing a click could produce was a failed payment. The button now turns itself off and says why, and the warning carries a Check again button, so a wallet you fund while the page is open recovers without a reload. The balance is also re-read after every purchase, so a settlement that empties the wallet is reflected immediately instead of one click too late. When the balance check itself does not answer, the page used to say nothing at all and quietly log a browser error; it now tells you the balance is unknown and offers the same retry. Two smaller fixes came with it: the page title and the buy button were being rewritten at load time from the translation catalog, which had drifted from the page and still carried the old punctuation, now corrected in all 85 languages; and the two avatar frames were keyboard stops that did nothing and showed no focus outline, so they are out of the tab order and the topic chips and buy button are two tabs closer for anyone navigating by keyboard.",
-			"link": "/agent-exchange",
+			"title": "The agent economy volume dashboard stops sending you to profiles that are not there",
+			"summary": "Top earners and top spenders on the agent-to-agent volume page linked every ranked agent to a profile, including agents whose identity had been deleted. Those rows sent you to an empty profile shell for an agent that no longer exists. Both leaderboards now name a departed agent without linking it, the same rule the settled-hire feed below them already followed, and a row whose stored avatar has been pruned falls back to its initials tile instead of a broken-image icon. The page also cleared its accessibility floor: the small print under each stat, the footnote, and the retry button were all below the WCAG AA contrast minimum in dark mode, and in light mode the cyan links and the green live badge were effectively unreadable. Links inside the empty-state sentences now carry a standing underline, so they are not marked by colour alone.",
+			"link": "/agent-economy-volume",
 			"tags": [
 				"fix",
 				"improvement"
@@ -175,23 +153,11 @@
 			"date": "2026-08-15",
 			"type": "update",
 			"title": "The embed tutorials now name the attribute that actually hides the built-in chat",
-			"summary": "Several tutorials told you to set avatar-chat=\"off\" to hide an agent's built-in chat input. It does not do that: it moves the avatar out of the chat column and lays the chat out as a plain bottom bar, leaving the input on screen. The multi-agent walkthrough leaned on it to keep its behind-the-scenes stage-director messages hidden, so anyone following it verbatim saw those messages leak into the visible chat. Every affected tutorial now uses chat=\"off\", the real bare-avatar switch, and notes that the brain still boots behind it so say(), ask(), and the event stream keep working. The same accuracy pass corrected the walking-avatar leaderboard example, which read fields the API never returns and so always rendered an empty top-walkers list, and the JavaScript API event table, which named the wrong key for the skill a tool-call event reports.",
+			"summary": "Several tutorials told you to set avatar-chat=\"off\" to hide an agent's built-in chat input. It does not do that: it moves the avatar out of the chat column and lays the chat out as a plain bottom bar, leaving the input on screen. The multi-agent walkthrough leaned on it to keep its behind-the-scenes stage-director messages hidden, so anyone following it verbatim saw those messages leak into the visible chat. The affected tutorials now use chat=\"off\", the real bare-avatar switch, and note that the brain still boots behind it so say(), ask(), and the event stream keep working. The same accuracy pass corrected the walking-avatar leaderboard example, which read fields the API never returns and so always rendered an empty top-walkers list, and the JavaScript API event table, which named the wrong key for the skill a tool-call event reports.",
 			"link": "/tutorials/web-component-end-to-end",
 			"tags": [
 				"fix",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
-			"title": "The embodied AgenC demo hands you a live task, and reacts to the state a claimed task is actually in",
-			"summary": "The /agenc/embodied page binds a 3D agent to a real AgenC task on Solana, and until now it opened on an empty input box: it needed a task account address and offered no way anywhere on the page to find one. It now lists real tasks three.ws itself posted, claimed, and settled on-chain, newest first, so the demo works the moment it loads; a new public read, /api/agenc/recent-tasks, serves that list. Two things it showed were also wrong. The scene coloured itself for a state named Claimed, which the chain has never used: a claimed task is In Progress on-chain, so the halo, the badge, and the per-state animation switch all sat inert through the one transition the demo exists to show. And the page named a program address that no read has touched since the protocol's interface moved; it now shows the program each live read actually ran against. Pasting an address that holds something other than a task used to report a server error, as though the platform were broken, rather than saying no such task exists there; that is now a plain not-found, with the page telling you to check the address or switch cluster. The panel has designed loading, empty, and error states throughout, the form fields have real labels, and a task that cannot be read is retried with a backoff instead of being re-requested every four seconds forever.",
-			"link": "/agenc/embodied",
-			"tags": [
-				"fix",
-				"improvement",
-				"feature"
 			]
 		},
 		{
@@ -230,17 +196,6 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
-			"title": "The smart-contract docs stop describing contracts that are not the ones deployed",
-			"summary": "Anyone reading the ERC-8004 contract reference and calling the addresses it lists was working from the wrong interface. Those canonical addresses are upgradeable proxies running the ERC-8004 reference implementation, not the Solidity source in this repository, and the two are not the same contract. Checked with live calls against Base and Base Sepolia: the agent-listing, supply-count and existence-check helpers the page showed all revert, and every function documented for the reputation registry is absent from the registry actually deployed, which exposes a different interface entirely. The page now says which members answer on the deployed addresses and which exist only if you deploy the repository contracts yourself, and its copy-paste examples were rewritten to calls that run. The security page carried the same mistake in its validator section: it told operators to revoke a compromised validator key with a contract call that exists only on the undeployed source, when the deployed registry keeps no validator list at all and containment is key rotation plus filtering by validator address. Alongside those, the sign-language page advertised an npm install for a package the registry has never carried, and its published sign timings and one broken in-page link were corrected; the catalog quality gate page was missing one of the reasons it rejects a model.",
-			"link": "/docs/smart-contracts",
-			"tags": [
-				"docs",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
 			"title": "The vanity receipt verifier stops calling honest receipts fraudulent, and the avatar CLI takes a Solana address",
 			"summary": "Two documented commands did not do what their page said. The command-line verifier for a provably-fair vanity address receipt scored the difficulty claim with the retired flat model, the one that treats every Base58 character as equally likely. Every receipt issued since the leading-character correction landed therefore failed its difficulty check and was reported as untrustworthy, even though the in-browser verifier at /vanity/verify passed the same receipt. The verifier now reads the model each receipt names in its own signed difficulty block, exactly as the page and the SDK do, so current receipts verify and older ones keep verifying under the model they were issued under. Separately, the Rig Doctor page showed an avatar-manifest command taking a Solana address as the owner, which the CLI rejected outright: it understood Ethereum addresses and full CAIP-10 identifiers and nothing else. Since Solana is the home chain, a bare Solana address is now accepted and recorded as solana:mainnet-beta. Alongside those, eight tutorial and reference pages were audited against the code they describe: the Vercel self-hosting guide had a stale copy of the config file and pointed at a migrations folder that has moved, the MCP guide listed three placeholder OAuth scopes where the live server publishes twelve real per-capability ones, and the Avatar CLI page pinned a version number that npm has never had.",
 			"link": "/docs/rig-doctor",
@@ -253,12 +208,11 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
-			"title": "The vanity SDK now uses the payment wallet you hand it, and the in-chat 3D avatar keeps its tuned lighting",
-			"summary": "Three fixes in the developer packages. The @three-ws/vanity SDK documented a fetch option on its paid address-grinding lane but silently ignored it, so a developer who passed a payment-enabled fetch got a payment-required error back instead of the keypair they paid for; that option now works, as do a custom API host and key. The avatar MCP server's in-chat 3D viewer had been hand-tuned with softer shadows, brighter exposure and a neutral environment light, but the script that rebuilds it before every release still produced the old flat version, so the next release would have quietly undone the tuning; the script now produces the tuned viewer, and the same settings apply to the fallback view for chat apps that cannot run the interactive one. The tool SDK's quick-start example pointed at an API that does not exist and skipped the wrapper an MCP server needs to return anything at all, so following it produced a tool that answered with nothing; it now runs end to end against a real free three.ws endpoint.",
-			"link": null,
+			"title": "Three docs pages stop pointing readers at a dead page, a missing section, and a snippet that does nothing",
+			"summary": "The Vanity page told you to grind a long address yourself \"in the browser at /vanity\", but that path has never existed and returned a 404; the in-browser grinder lives at /vanity-wallet, and both links on the page now go there. In Troubleshooting, the fix for a Quick Look model that opens and instantly closes linked to a model-optimization section that is not on the AR page, so the link landed you at the top with nothing to read; it now opens the section that actually covers it. The same page told you to add a responsive attribute to size an inline embed, with a snippet that set the width in CSS. Neither part worked: responsive sizing is already on by default, and the element reads the width attribute rather than the computed style, so the documented snippet never produced the 3:4 ratio it promised. The instructions now show what does work, and name the two things that switch it off.",
+			"link": "/docs/troubleshooting",
 			"tags": [
 				"fix",
-				"sdk",
 				"docs"
 			]
 		},

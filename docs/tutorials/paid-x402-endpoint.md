@@ -61,7 +61,7 @@ Good candidates in 2026, with concrete examples already running in production:
 - **Reputation lookup.** `/api/x402/agent-reputation` — pulls an ERC-8004 agent's review history from on-chain and returns aggregate scores.
 - **Symbol availability.** `/api/x402/symbol-availability` — checks whether a Pump.fun ticker is already used by another agent in the registry.
 
-This tutorial builds **a simplified model-check endpoint**. The full production version is at `/workspaces/three.ws/api/x402/model-check.js` in the three.ws repo — read it for reference. We'll build a leaner version end-to-end that's easier to follow.
+This tutorial builds **a simplified model-check endpoint**. The full production version is at [`api/x402/model-check.js`](https://github.com/nirholas/three.ws/blob/main/api/x402/model-check.js) in the three.ws repo. Read it for reference. We'll build a leaner version end-to-end that's easier to follow.
 
 The work: take a `?url=` query param pointing at a glTF or GLB file, fetch it, count primitives and materials, return JSON. Price: $0.001 USDC per call (1000 micro-USDC).
 

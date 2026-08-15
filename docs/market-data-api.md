@@ -4,7 +4,7 @@ The same live market data behind every three.ws `/markets` page — coin prices,
 
 - **Free index (start here):** [`GET /api/x402/market`](https://three.ws/api/x402/market): lists every paid `market-*` endpoint with its live price, params, and a runnable example, including the `market-heatmap` and `market-mood` siblings below
 - **Discovery:** every endpoint is listed in [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json), so x402scan, agentic.market, and CDP Bazaar crawlers index it automatically
-- **Pricing:** $0.001 USDC per call for every category; the `market-pulse` bundle is $0.005
+- **Pricing:** $0.001 USDC per call for every category endpoint in the table below; the `market-pulse` bundle is $0.005, and the `market-heatmap` / `market-mood` composites are $0.002
 - **Rails:** x402 v2, `exact` scheme — USDC on Solana mainnet or Base mainnet
 
 ## Why pay when the pages are free?
@@ -37,7 +37,7 @@ Full per-endpoint parameter docs are in the free index (`/api/x402/market`) and 
 
 ## The datapoint fabric — 1,000,000+ standalone endpoints
 
-Beyond the 17 category endpoints, **every individual datapoint is its own paid endpoint**: one URL, one value, one micro-payment. The fabric at `/api/x402/d/<family>/<id>/<metric>` makes every (family, id, metric) triple individually addressable — ~17,500 coins × 20 metrics, ~15,500 yield pools × 7, ~6,000 protocols × 6, **per-contract token market + security for any Solana mint or EVM address** (10 + 6 metrics, unbounded), plus chains, stablecoins, exchanges, categories, DEXs, fees/revenue, derivative venues, and the no-id global/gas/fear-greed families. **$0.0005 USDC per datapoint** (override per family with `X402_PRICE_DATAPOINT_<FAMILY>`).
+Beyond the 17 category endpoints, **every individual datapoint is its own paid endpoint**: one URL, one value, one micro-payment. The fabric at `/api/x402/d/<family>/<id>/<metric>` makes every (family, id, metric) triple individually addressable: ~17,000 coins × 20 metrics, ~15,000 yield pools × 7, ~6,000 protocols × 6, **per-contract token market + security for any Solana mint or EVM address** (10 + 6 metrics, unbounded), plus chains, stablecoins, exchanges, categories, DEXs, fees/revenue, derivative venues, and the no-id global/gas/fear-greed families. The free catalog reports the live total as `endpoint_count_approx` (1,126,963 across 15 families at the time of writing); that field is the source of truth, not this paragraph. **$0.0005 USDC per datapoint** (override per family with `X402_PRICE_DATAPOINT_<FAMILY>`).
 
 ```bash
 # Free catalog: families, metrics, prices, live endpoint count

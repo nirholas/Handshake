@@ -8,9 +8,9 @@ This is the heaviest tutorial in the Advanced tier. It's worth doing in full if 
 
 **What you'll build:**
 
-- A local development setup running the full stack (front-end + Vercel functions + Cloudflare workers + database)
+- A local development setup running the full stack (front-end + Vercel functions + database + object storage)
 - A production deployment on Vercel under a custom domain
-- Cloudflare workers proxying Anthropic and OpenAI traffic with your own keys
+- Anthropic and OpenAI served from your own keys, held server-side in your deployment
 - An `agent-3d.js` embed script served from your CDN, so embeds on third-party sites point at *your* infrastructure
 - The full set of environment variables wired correctly across local, preview, and production
 - A hardening pass: CORS, rate limiting, secret hygiene, audit logging
@@ -40,10 +40,12 @@ The platform is intentionally composed of small, independently deployable servic
 
 **Serverless functions (Vercel).** Everything under `api/`. Each `.js` file is a Vercel function. These handle: agent CRUD, MCP server endpoint, x402 paid endpoints, ERC-8004 prep/confirm flows, Pump.fun integration, OAuth callbacks, signed-URL avatar storage, etc. The file path is the route — `api/agents.js` becomes `/api/agents`.
 
-**Cloudflare workers (`workers/`).** Edge proxies in front of model providers. The two important ones are:
+**Workers (`workers/`).** Everything that doesn't fit in a serverless function. Two distinct kinds live here:
 
-- A general LLM proxy that fronts Anthropic and OpenAI: rate-limits per agent, redacts logs, and lets you swap keys without redeploying the platform
-- A Pump.fun MCP worker that maintains live websocket connections to the Pump.fun program (Vercel functions can't hold long-lived sockets cheaply)
+- **The Pump.fun MCP worker** (`workers/pump-fun-mcp/`), the one Cloudflare Worker in the tree. It maintains live websocket connections to the Pump.fun program, which Vercel functions can't hold cheaply.
+- **GPU model workers** (`workers/model-trellis/`, `workers/rig/`, `workers/remesh/`, and about two dozen more), containers that run 3D generation, rigging, and mesh processing. Each deploys from its own `cloudbuild.yaml` and is only needed if you want the Forge feature it backs.
+
+Model-provider traffic does *not* go through a worker: Anthropic and OpenAI are called directly from the serverless functions, with the keys held in the deployment env.
 
 **Database (Postgres).** Stores agents, manifests, accounts, sessions, audit logs, skill access grants, x402 receipts. Schema is checked in.
 
@@ -53,7 +55,7 @@ The platform is intentionally composed of small, independently deployable servic
 
 **Embed bundle (`/agent-3d/<version>/agent-3d.js`, also `/dist-lib/agent-3d.js`).** The `<agent-3d>` custom-element bundle, built by `npm run build:lib` from `src/lib.js` into `dist-lib/` and served from the same deployment. Third-party sites load this script tag and your domain ends up in their `<script src="...">`.
 
-Everything except the database and Cloudflare workers can live on a single Vercel project. The minimum production deployment is: 1 Vercel project, 1 Cloudflare worker, 1 Postgres database, 1 R2 bucket.
+Everything except the database, object storage, and the workers can live on a single Vercel project. The minimum production deployment is: 1 Vercel project, 1 Postgres database, 1 bucket. No worker is required for the core agent loop; add them only for the Pump.fun feed and the Forge.
 
 ---
 
@@ -116,11 +118,13 @@ Copy the connection string. It looks like `postgresql://user:pass@host/db?sslmod
 
 **Supabase.** Works fine; use the "transaction" pooler URL, not the direct URL, to avoid connection limits in serverless.
 
-Once you have a connection string, run the schema:
+Once you have a connection string, put it in your env file as `DATABASE_URL` and bootstrap the database:
 
 ```bash
-psql "$DATABASE_URL" -f api/_lib/schema.sql
+npm run db:bootstrap
 ```
+
+Do not apply `api/_lib/schema.sql` by hand. The core schema is only the first of four steps: `db:bootstrap` runs `api/_lib/schema.sql`, then `specs/schema/indexer_state.sql`, then `specs/schema/agent_delegations.sql`, then every incremental migration in `api/_lib/migrations/`. The order matters because later migrations `ALTER` tables the base files create, and a `psql -f schema.sql` alone leaves you with a database that is missing most tables. Every step is idempotent, so re-running it on a live database is a no-op.
 
 Confirm the tables exist:
 
@@ -128,7 +132,7 @@ Confirm the tables exist:
 psql "$DATABASE_URL" -c "\dt"
 ```
 
-You should see tables like `agents`, `accounts`, `sessions`, `audit_log`, `x402_receipts`, `skill_grants`, etc.
+You should see tables like `users`, `sessions`, `avatars`, `agent_identities`, `usage_events`, `audit_log`, and `x402_receipts`, plus everything the migrations add (`forge_creations`, `agent_custody_events`, and so on).
 
 ---
 
@@ -163,19 +167,18 @@ cp .env.example .env.development
 
 Open `.env.development` and fill in the values. The file is long; here's the irreducible minimum to get local dev running:
 
-```env
-# Front-end
-VITE_API_BASE=http://localhost:3000
+There is deliberately no front-end API-base variable. The embed bundle derives its API origin from the script's own URL at runtime (Step 11), so nothing about the front-end is baked in at build time.
 
+```env
 # Database
 DATABASE_URL=postgresql://...
 
-# Object storage
-R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
-R2_BUCKET=three-ws-fork-assets
-R2_ACCESS_KEY_ID=<from cloudflare>
-R2_SECRET_ACCESS_KEY=<from cloudflare>
-R2_PUBLIC_BASE=https://pub-<id>.r2.dev   # the bucket's public hostname
+# Object storage (S3-compatible; R2 is just one provider that fits)
+S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+S3_BUCKET=three-ws-fork-assets
+S3_ACCESS_KEY_ID=<from cloudflare>
+S3_SECRET_ACCESS_KEY=<from cloudflare>
+S3_PUBLIC_DOMAIN=https://pub-<id>.r2.dev   # the bucket's public hostname
 
 # Model providers (used by the chat function and the worker proxy)
 ANTHROPIC_API_KEY=sk-ant-...
@@ -191,18 +194,15 @@ X402_ASSET_ADDRESS_BASE=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
 X402_MAX_AMOUNT_REQUIRED=1000
 CDP_API_KEY_ID=
 CDP_API_KEY_SECRET=
-X402_CDP_FACILITATOR_URL=https://api.cdp.coinbase.com/platform/v2/x402
+X402_CDP_FACILITATOR_URL=https://api.cdp.coinbase.com/platform/v2/x402/facilitator
 X402_FACILITATOR_URL_BASE=https://facilitator.payai.network
 X402_FACILITATOR_URL_SOLANA=https://facilitator.payai.network
 
-# Session/CSRF secrets — generate fresh with `openssl rand -hex 32`
+# Session secret. Generate fresh with `openssl rand -hex 32`
 SESSION_SECRET=<random hex>
-CSRF_SECRET=<random hex>
-
-# Cloudflare worker URLs (set after Step 7)
-LLM_WORKER_URL=
-PUMPFUN_MCP_WORKER_URL=
 ```
+
+CSRF protection is on by default and derives its token from the session, so there is no separate CSRF secret to set. `CSRF_DISABLED=1` exists as a local-debugging escape hatch; never set it in a deployed environment.
 
 The exhaustive list of env vars is in `.env.example`. Most are optional — you can leave them empty until you need the feature they unlock. For example, you don't need `HELIUS_API_KEY` to run an agent; you only need it if you're enabling the Pump.fun live feed.
 
@@ -224,7 +224,7 @@ In another terminal, sanity-check the API:
 curl http://localhost:3000/api/healthz
 ```
 
-You should see `{"ok": true}` or similar.
+You should get a JSON body starting `{"status":"ok","service":"3d-agent",...}`, with `uptime`, the resolved `version`, and a per-subsystem readiness block (`x402`, mail, and so on). Anything other than `"status":"ok"` names the subsystem that is unhappy.
 
 Now open `http://localhost:3000` in a browser. You should land on the platform's home page. Click into the editor — drag any GLB onto it — confirm the avatar loads. Open DevTools → Console. **There should be no red errors.** If there are, the most common causes:
 
@@ -238,38 +238,27 @@ If the avatar loads and you can send a chat message that gets a real model respo
 
 ## Step 7 — Deploy the Cloudflare workers
 
-The LLM proxy worker lives at `workers/` (alongside the strategy executor). The proxy is responsible for:
+**There is no LLM proxy worker to deploy.** Model traffic is served by the platform's own serverless functions: `api/chat.js` and `api/brain/chat.js` route through `api/_lib/llm.js` and `api/llm/anthropic.js`, reading `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` from the deployment env. Keys stay server-side, rate limiting is enforced by `api/_lib/rate-limit.js` (Step 13), and streaming is handled in the function. Setting those two keys in Step 5 is all the wiring the chat path needs, so this step is optional.
 
-- Holding the production Anthropic/OpenAI keys server-side
-- Rate-limiting per agent (so a runaway agent doesn't bankrupt your provider budget)
-- Streaming responses back to the browser
-- Stripping or appending headers as required
-
-Configure and deploy:
+The one Cloudflare worker in the tree is the Pump.fun MCP worker, which exists because Vercel functions cannot hold long-lived websockets cheaply. Deploy it only if you want the Pump.fun live feed:
 
 ```bash
-cd workers
-cp wrangler.example.toml wrangler.toml
+cd workers/pump-fun-mcp
 ```
 
-Edit `wrangler.toml` and fill in your worker name and the secrets bindings. The example file lists the required vars: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, plus optional Helius keys for the Pump.fun worker.
-
-Set secrets via wrangler (don't put them in `wrangler.toml`):
+Its `wrangler.toml` is committed and already configured; every variable is optional and documented in the comment block at the top of that file and in its `README.md`. Set the ones you want as secrets rather than editing them into the file:
 
 ```bash
-wrangler secret put ANTHROPIC_API_KEY
-wrangler secret put OPENAI_API_KEY
+npx wrangler@4 secret put SOLANA_RPC_URL
 ```
 
 Deploy:
 
 ```bash
-wrangler deploy
+npx wrangler@4 deploy
 ```
 
-You'll get a URL like `https://three-ws-llm.<account>.workers.dev`. Put that into your `.env.development` and (later) your Vercel project as `LLM_WORKER_URL`.
-
-If you're running the Pump.fun feed, repeat for `workers/pump-fun-mcp/`.
+You'll get a URL like `https://pump-fun-mcp.<account>.workers.dev`. The worker is reached directly by the surfaces that use it; there is no worker-URL env var to thread back into the platform.
 
 ---
 
@@ -290,13 +279,7 @@ This builds:
 - The `<agent-3d>` embed bundle into `dist-lib/agent-3d.js` (ES module; `npm run build:lib:full` adds the UMD build)
 - The chat sub-app into `dist/chat/` (via `npm run build:chat`)
 
-Look at `dist/` — there should be an `index.html`, hashed bundles, and the various sub-apps, with the embed bundle in `dist-lib/`. If the build prints warnings about missing env vars (e.g., `VITE_*` vars that the front-end reads at build time), set them before re-running:
-
-```bash
-VITE_API_BASE=https://<your-domain>.vercel.app npm run build
-```
-
-For preview/staging builds the API base can point at the preview deployment; for production, point it at the final domain.
+Look at `dist/`. There should be an `index.html`, hashed bundles, and the various sub-apps, with the embed bundle in `dist-lib/`. Nothing about the API origin is baked in at build time, so the same `dist/` is valid on preview and production alike; the bundle resolves its origin at runtime (Step 11). The handful of `VITE_*` vars that *are* read at build time are third-party client IDs (`VITE_PRIVY_APP_ID`, `VITE_WALLETCONNECT_PROJECT_ID`, `VITE_AVATURN_DEVELOPER_ID`), and each only gates the feature it belongs to. Set the ones whose features you want before re-running the build.
 
 ---
 
@@ -322,8 +305,8 @@ cat .env.production | vercel env import production
 
 A few env vars that have to be set per-environment:
 
-- `VITE_API_BASE` — must be the public URL of *that* environment (preview, production, etc.)
-- `SESSION_SECRET`, `CSRF_SECRET` — use **different secrets per environment**. Don't reuse production secrets in preview.
+- `DATABASE_URL`: point preview at a Neon branch database, never at the production one
+- `SESSION_SECRET`: use a **different secret per environment**. Don't reuse the production secret in preview.
 - `X402_PAY_TO_BASE` — use **different wallets per environment** so you can identify which environment generated which receipt.
 
 Deploy a preview to validate:
@@ -438,7 +421,7 @@ Without Redis, the in-memory fallback works for a single Vercel function instanc
 A few non-negotiables for the env vars you just set:
 
 - **Never commit any of them.** `.env.development`, `.env.preview`, `.env.production` are all gitignored. Confirm with `git check-ignore .env.production`.
-- **Rotate on personnel changes.** If anyone with access leaves the project, rotate `SESSION_SECRET`, `CSRF_SECRET`, the LLM keys, and the wallet private keys.
+- **Rotate on personnel changes.** If anyone with access leaves the project, rotate `SESSION_SECRET`, the LLM keys, and the wallet private keys.
 - **Use separate keys per environment.** Don't share `ANTHROPIC_API_KEY` between local dev and production — it makes log attribution impossible and one buggy local script can torch the production rate-limit window.
 - **Sweep wallet balances.** `X402_PAY_TO_BASE` receives USDC. Sweep to a cold address daily or set up an automated sweep transaction.
 - **CDP keys are sensitive.** Treat them like AWS keys. Coinbase rotates them via the dashboard at any time.
@@ -447,22 +430,25 @@ A few non-negotiables for the env vars you just set:
 
 ## Step 15 — Hardening: audit logging
 
-`api/_lib/audit.js` writes structured records to the `audit_log` table. The platform already writes audit entries for: agent creation, manifest changes, on-chain registrations, x402 payments, skill grants, account-level writes.
+`api/_lib/audit.js` writes structured records to the `audit_log` table (created by `api/_lib/migrations/2026-05-01-audit-log.sql`, which `db:bootstrap` applied in Step 3).
 
-In your fork, you'll add audit entries for your own routes:
+In your fork, you'll add audit entries for your own routes. `logAudit` is fire-and-forget: it never throws and never adds database latency to the response.
 
 ```js
-import { audit } from './_lib/audit.js';
+import { logAudit } from './_lib/audit.js';
 
-await audit({
-  actor: auth.userId,        // or wallet address, or null for unauthenticated
-  action: 'custom.action',
-  target: targetId,
-  meta: { request: summarize(req.body) },
+logAudit({
+  userId: auth.userId,       // null when the actor is unknown or the system
+  action: 'delete_avatar',   // short kebab-case verb
+  resourceId: targetId,
+  meta: { reason },          // small JSON blob; avoid PII
+  req,                       // captures IP + user agent
 });
 ```
 
-Hard rule: every mutation to a user-visible record must produce an audit row. The point isn't compliance for its own sake — it's that when something weird happens (a manifest gets corrupted, a wallet drains, an admin role is granted), the audit trail is the only artifact that survives.
+There is an awaitable twin, `logAuditNow(entry)`, which resolves `true` when the row landed and `false` when it was dropped. Use it only where the row itself is the deliverable and the caller reports that outcome (the legal-acceptance endpoints do); everything else wants `logAudit`.
+
+The policy the platform follows: log sensitive state changes that need an after-the-fact "who did what, when" trail: deletions, revocations, ownership transfers. Reads, idempotent updates, and analytics belong in `usage_events` instead, so the audit trail stays legible. The point isn't compliance for its own sake. It's that when something weird happens (a manifest gets corrupted, a wallet drains, an admin role is granted), the audit trail is the only artifact that survives.
 
 Export the audit log to long-term storage if your compliance demands it. The schema is plain Postgres; `pg_dump` works.
 
@@ -501,7 +487,7 @@ npm run build      # confirm it still builds
 git push origin main
 ```
 
-Vercel auto-redeploys. New schema migrations (if any) land in `api/_lib/migrations/` — re-run them against your database. The repo uses simple forward-only SQL migrations; check the directory's README for the runner script.
+Vercel auto-redeploys. New schema migrations (if any) land in `api/_lib/migrations/` as forward-only SQL. Preview what an upstream merge brought in with `npm run db:status`, then apply it with `npm run db:migrate`. Read the status output first: `db:migrate` applies immediately with no dry run, and it applies *every* pending migration, not just the ones you were expecting.
 
 If you've forked aggressively and diverged, you may want to keep your changes in a long-running `your-company/main` branch and merge from `upstream/main` periodically with a clear strategy (e.g., quarterly cadence, with a dedicated "merge upstream" PR).
 
@@ -515,9 +501,8 @@ Before you point real traffic at your deployment, walk through this list. If any
 - `npm run build` passes locally with production env
 - `/api/healthz` returns 200 on the production URL
 - A test agent can be created, edited, saved, and embedded
-- The LLM proxy worker is deployed and `LLM_WORKER_URL` points to it
-- A test chat message gets a real model response in production
-- Database schema matches `api/_lib/schema.sql` (run `pg_dump --schema-only` and diff)
+- `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are set in production, and a test chat message gets a real model response there
+- `npm run db:status` reports no pending migrations against the production database
 - Upstash rate-limiting is wired (or you have a clear plan for when to add it)
 - `X402_PAY_TO_BASE` is a wallet you control and the private key is held securely (hardware wallet, KMS, or equivalent — *not* in plaintext anywhere)
 - CDP keys are set so x402 settlements route through CDP (otherwise endpoints don't get cataloged in agentic.market)
@@ -536,7 +521,9 @@ A few things you should know going in:
 
 **Some upstream features require platform-only secrets.** The hosted three.ws has access to API keys and wallets that aren't published. If you fork, those features (e.g., the platform-managed agent treasury) won't work as-is — you'll either disable them or wire your own equivalents. The code paths that depend on platform secrets are clearly conditional on env-var presence; if your env var is empty, the feature is hidden in the UI.
 
-**You become responsible for security patches.** Vercel handles its own infrastructure. You handle the application code. Subscribe to GitHub Dependabot alerts on your fork. The repo lists Apache-2.0 as its license — you can ship patches yourself, but you should also feed them upstream if they're not specific to your deployment.
+**Check the license before you deploy anything.** The repo's `LICENSE` is proprietary, not open source: "All rights reserved", with use, copying, modification, and distribution requiring the copyright owner's express written permission. Reading the source is not the same as being licensed to run a fork of it, so get that permission in writing before you stand up a deployment. Everything below assumes you have it.
+
+**You become responsible for security patches.** Vercel handles its own infrastructure. You handle the application code. Subscribe to GitHub Dependabot alerts on your fork, and feed fixes back upstream when they aren't specific to your deployment.
 
 **Cost shapes:**
 
@@ -553,7 +540,7 @@ A self-hosted instance with light traffic runs at $20–50/month all-in. The dom
 
 ## What you learned
 
-- The component breakdown: front-end, Vercel functions, Cloudflare workers, Postgres, R2, CDN
+- The component breakdown: front-end, Vercel functions, workers, Postgres, object storage, CDN
 - How to bring up a development instance with a real database, real model providers, and real wallets
 - How to deploy to production on Vercel with your own domain and CDN
 - How to swap the CDN base so third-party embeds point at your infrastructure

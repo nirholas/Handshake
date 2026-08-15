@@ -45,7 +45,7 @@ Click **⬇ Get the code**. Because a partner template targets a real, already-b
 **2. Drop the tag on the page.** Paste the generated `<script>` tag right before `</body>`, swapping the placeholder URL for the one from step 1:
 
 ```html
-<script src="https://unpkg.com/@three-ws/tour@0.5.0/dist/tour.global.js"
+<script src="https://unpkg.com/@three-ws/tour@0.5.1/dist/tour.global.js"
         data-tour
         data-curriculum="https://cdn.sperax.io/tour/curriculum.json"
         defer></script>

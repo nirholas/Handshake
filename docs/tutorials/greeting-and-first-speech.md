@@ -42,6 +42,8 @@ Two things worth knowing about this snippet:
 
 That's a working greeting. The rest of this tutorial is about doing it well rather than doing it at all.
 
+> **The editor's "Greeting" field is a different thing.** The agent editor has a **Greeting (demo first message)** field, and it is easy to assume filling it in makes your embed talk. It does not. That field is the opening line published in the agent's signed manifest and shown on platform surfaces that demo the agent (its marketplace card, a Widget Studio talking-agent widget, an exported agent JSON). `<agent-3d>` does not read it. On your own page, the greeting is the JavaScript below.
+
 ---
 
 ## Step 2 — When the greeting fires

@@ -3681,19 +3681,19 @@ Drop one script tag into any HTML page. Your agent loads, auto-sizes, and starts
 
 URL: https://three.ws/tutorials/customize-appearance
 
-Tune every visible knob: bubble size, corner placement, background, rotation speed: entirely through data-* attributes.
+Tune every visible knob on the <agent-3d> element: layout mode, corner placement, size, background, camera framing, and the ambient clip.
 
 ### Tutorial · Pick & swap an avatar in Studio
 
 URL: https://three.ws/tutorials/swap-avatar-in-studio
 
-Visually browse the avatar gallery, switch bodies with one click, and have the change ripple to every embed without redeploying.
+Swap an agent's 3D body from the Outfit panel in one click, and have the change reach every embed without touching your snippet.
 
 ### Tutorial · Add a greeting & first speech line
 
 URL: https://three.ws/tutorials/greeting-and-first-speech
 
-Make your agent say hello the moment it loads: and have its mouth move with the words.
+Make your agent say hello the moment it loads, and have its mouth move with the words.
 
 ### Tutorial · Share your agent (link, QR, social preview)
 
@@ -3705,13 +3705,13 @@ Get a permanent link to your agent, generate a QR for print, and set the Open Gr
 
 URL: https://three.ws/tutorials/selfie-to-avatar
 
-Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk: then put it on an agent.
+Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk, then put it on an agent.
 
 ### Tutorial · View your 3D model in AR
 
 URL: https://three.ws/tutorials/view-in-ar
 
-See any three.ws model in augmented reality and walk around it in your kitchen: straight from the browser, no app to install. iOS Quick Look and Android WebXR.
+See any three.ws model in augmented reality and walk around it in your kitchen, straight from the browser with no app to install. iOS Quick Look, Android Scene Viewer, and WebXR.
 
 ### Tutorial · Import an avatar by URL
 

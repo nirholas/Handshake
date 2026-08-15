@@ -103,12 +103,14 @@ If you're using the iframe embed, add `xr-spatial-tracking` to the `allow` attri
 
 ```html
 <iframe
-  src="https://three.ws/embed/avatar/13f259c7-7024-4d68-b1f0-dbbf52c06209"
+  src="https://three.ws/embed/avatar?id=13f259c7-7024-4d68-b1f0-dbbf52c06209"
   allow="microphone; camera; xr-spatial-tracking; fullscreen"
   width="400"
   height="500"
 ></iframe>
 ```
+
+An avatar id goes in the `id` query parameter, as above. The shorter path form, `/embed/avatar/<handle>`, is for a claimed handle (3 to 30 characters), not for a UUID.
 
 Without `xr-spatial-tracking`, the browser blocks `navigator.xr` inside the frame and the AR button won't appear.
 

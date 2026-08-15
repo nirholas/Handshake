@@ -170,11 +170,20 @@ Refetch it rather than pinning a copy. Tools get added; a policy fetched at buil
 time goes stale, and a stale allowlist is how a new mutating tool ends up trusted
 by an old config.
 
-> Six tool names are published by two different servers (`sns_resolve`,
+> Nine tool names are published by two different servers (`sns_resolve`,
 > `find_services`, `pay_and_call`, `list_animations`, `render_avatar`,
-> `kol_leaderboard`). The namespaced `mcp__<server>__<tool>` id is the key, not
+> `kol_leaderboard`, `create_agent_persona`, `get_agent_persona`, `persona_say`).
+> The namespaced `mcp__<server>__<tool>` id is the key, not
 > the bare name. The `<server>` segment is the name **you** gave that server in
 > your own client config; the policy uses the id three.ws publishes for it.
+>
+> That list grows as servers are added, so re-derive it rather than trusting the
+> names above:
+>
+> ```bash
+> curl -s https://three.ws/mcp-catalog.json \
+>   | jq -r '.tools | group_by(.name)[] | select(length > 1) | .[0].name'
+> ```
 
 ---
 

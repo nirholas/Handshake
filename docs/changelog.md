@@ -303,7 +303,7 @@ For contributors and maintainers. A release follows these steps:
 5. A GitHub Release is created from the tag with the changelog entry as the body.
 6. `npm run build:all` produces the platform bundle and the CDN library build.
 7. `npm run publish:lib` copies the CDN bundle into `dist/agent-3d/{version}/`, generates an `integrity.json` sidecar with SHA-384 hashes, updates the rolling channel aliases (`1.5`, `1`, `latest`), and writes a `versions.json` manifest.
-8. The image is deployed to Google Cloud Run with `npm run deploy:gcp:full`, which serves the updated `dist/` directory — including the CDN library build — from the `three-ws-api` service. That one command runs the full `build:gcp` chain and then `deploy:gcp`; a bare `npm run build` is not enough on its own, because the deploy gate checks `dist/` for the UMD library that `build:lib:full` and `publish:lib` put there.
+8. The image is deployed to Google Cloud Run with `npm run deploy:gcp:full`, which serves the updated `dist/` directory (including the CDN library build) from the `three-ws-api` service. That one command runs the full `build:gcp` chain and then `deploy:gcp`; a bare `npm run build` is not enough on its own, because the deploy gate checks `dist/` for the UMD library that `build:lib:full` and `publish:lib` put there.
 
 The SDK (`@three-ws/sdk`) is published to npm separately:
 

@@ -2,11 +2,11 @@
 
 An agent that just idles is furniture. An agent that visibly *reacts* — dances when something spikes, flinches when something drops, celebrates a milestone — reads as alive. three.ws ships a full animation library (idle, wave, dance, celebrate, jump, dozens more — browse them at [/animations](/animations)) and a public JS API to trigger any of it on command. This tutorial shows you how to point that at data you actually have: a live feed, a webhook, or a real AI model classifying arbitrary text.
 
-You'll build two working pipelines — one with zero AI (a lexicon sentiment score, free, no key, triggering a real body animation), one with a real model in the loop (IBM Granite classifying arbitrary documents, feeding a wider set of gestures) — plus the cooldown pattern that keeps an automated agent from spamming animations every tick.
+You'll build two working pipelines. One uses zero AI (a lexicon sentiment score, free, no key, triggering a real body animation), one puts a real model in the loop (IBM Granite reading arbitrary documents, feeding a graded set of gestures). Both use the cooldown pattern that keeps an automated agent from spamming animations every tick.
 
 **What you'll build:**
 - An agent that plays a real body animation (celebrate, dance, flinch) driven by a live sentiment feed, using only `<agent-3d>`'s public JS API
-- A second pipeline where an actual AI model reads arbitrary text — reviews, tickets, chat logs, anything — and picks the matching gesture from a wider library, not just a three-way keyword split
+- A second pipeline where an actual AI model reads arbitrary text (reviews, tickets, chat logs, anything) and picks the matching gesture from a graded score plus its risk flags, not just a keyword match
 - A cooldown/dedupe pattern so a fast-moving data source doesn't retrigger the same animation every poll
 - The two real, documented entry points for animation: `agent.play(clipName)` (exact clip) and `agent.playEmote(name)` (semantic, with a fallback chain)
 
@@ -105,7 +105,9 @@ Save that as `index.html` and open it — no build step, no server, no wallet. S
 
 ## Step 3 — The AI lane: real classification over arbitrary data, richer gestures
 
-A lexicon scorer only works on short, informal text and only gives you positive/negative. For real documents — support tickets, product reviews, meeting transcripts, incident reports — you want a model that returns *structured* emotion: a sentiment score plus a breakdown across joy, anger, fear, sadness, surprise, and disgust, so you can pick a more specific reaction than a binary celebrate/flinch. `ibm_granite_analyze` (part of the [IBM Granite x402 MCP suite](../ibm-x402-mcp.md)) does exactly this for $0.04/call, no IBM account needed — you pay in USDC, it pays IBM.
+A lexicon scorer only works on short, informal text, and it only fires on words it already knows. For real documents (support tickets, product reviews, meeting transcripts, incident reports) you want a model that actually reads the thing and returns *structured* output: a graded sentiment score plus the findings and risk flags behind it, so the reaction tracks the document's real tone instead of its vocabulary. `ibm_granite_analyze` (part of the [IBM Granite x402 MCP suite](../ibm-x402-mcp.md)) does exactly this for $0.04/call, no IBM account needed: you pay in USDC, it pays IBM.
+
+The tool returns a fixed set of keys: `summary`, `entities`, `sentiment` (`{ overall, score }`, score in -1..1), `key_findings`, `risk_flags` (each with a `severity`), and `next_steps`. The two the animation layer cares about are `sentiment.score` and `risk_flags`.
 
 This is a server-side call (it needs a wallet to sign the payment), so it lives behind a small endpoint you host yourself and the browser polls. The `@three-ws/x402-fetch` package does the 402 → sign → retry dance for you — see [pay-for-x402-service](/tutorials/pay-for-x402-service) for the full protocol if you want the mechanics.
 
@@ -117,16 +119,21 @@ import { withX402, privateKeyToWallet } from '@three-ws/x402-fetch';
 const wallet = privateKeyToWallet(process.env.SOLANA_PRIVATE_KEY); // funds the $0.04 calls
 const fetchWithPay = withX402(fetch, wallet);
 
-// Dominant emotion → the richest matching clip. exact-name clips (agent.play)
+// Score band → the richest matching clip. exact-name clips (agent.play)
 // give a bigger, more specific performance than the 3-way emote chain.
-const GESTURE_FOR = {
-  joy: 'celebrate',
-  surprise: 'silly',
-  anger: 'shake',
-  fear: 'defeated',
-  sadness: 'defeated',
-  disgust: 'angry',
-};
+// Bands, not a binary: a mildly positive review gets a wave, a glowing
+// one gets a full celebrate.
+const GESTURE_FOR_SCORE = [
+  { min: 0.6, clip: 'celebrate' },
+  { min: 0.25, clip: 'wave' },
+  { min: -0.25, clip: null }, // middling: leave idle alone
+  { min: -0.6, clip: 'concern' },
+  { min: -1, clip: 'defeated' },
+];
+
+function clipForScore(score) {
+  return GESTURE_FOR_SCORE.find((band) => score >= band.min)?.clip ?? null;
+}
 
 async function gestureFor(document) {
   const res = await fetchWithPay('https://three.ws/api/ibm-mcp', {
@@ -145,13 +152,19 @@ async function gestureFor(document) {
   const { result } = await res.json();
   const analysis = JSON.parse(result.content[0].text);
 
-  const breakdown = analysis.emotion_breakdown || {};
-  const [dominant, strength] = Object.entries(breakdown).sort((a, b) => b[1] - a[1])[0] || ['joy', 0];
+  // A high-severity risk flag outranks the score: an incident report can read
+  // as calm prose and still be the thing you want the agent to react to.
+  const alarming = (analysis.risk_flags || []).some((f) => f.severity === 'high');
+  if (alarming) return { clip: 'concern', strength: 1, summary: analysis.summary };
+
+  const score = analysis.sentiment?.score;
+  if (typeof score !== 'number') return null; // model returned no usable score
 
   // Below this, the signal is too weak to justify interrupting idle.
+  const strength = Math.abs(score);
   if (strength < 0.3) return null;
 
-  return { clip: GESTURE_FOR[dominant] || null, strength, summary: analysis.summary };
+  return { clip: clipForScore(score), strength, summary: analysis.summary };
 }
 ```
 
@@ -207,7 +220,8 @@ function reactIfConfident(clipOrEmoteName, { confident, useExactClip = false } =
 - **`agent.play('someClip')` does nothing.** The name is case-sensitive and must match a clip actually present on the rig — check the exact name at [/animations](/animations) or fall back to `playEmote()`, which degrades gracefully instead of silently failing.
 - **The agent keeps re-celebrating every poll.** You skipped the cooldown gate in Step 4, or your confidence threshold is too low for a noisy feed. Widen `COOLDOWN_MS` or raise the sample-size/strength floor.
 - **AI lane 402 loop / never resolves.** Your `SOLANA_PRIVATE_KEY` wallet has no USDC. Fund it with a few cents — see the [x402 payment flow](/tutorials/pay-for-x402-service).
-- **`analysis.emotion_breakdown` is undefined.** You passed `analysis_type` other than `sentiment` — only that type returns the per-emotion breakdown; the other five types return type-specific fields instead (see [ibm-x402-mcp](../ibm-x402-mcp.md)).
+- **`analysis.sentiment` is undefined.** Granite returned something that wasn't a clean JSON analysis object; the tool falls back to `{ ok: true, raw_response, parse_error }` in that case. Log `analysis.parse_error` and `analysis.raw_response` to see what came back. The `gestureFor()` above already treats a missing score as "no gesture" rather than crashing.
+- **Every document scores middling and nothing ever plays.** `analysis_type: 'sentiment'` tunes the model toward tone; the other five types (`general`, `contract`, `financial`, `technical`, `medical`) return the same keys but reason about different things, so a contract analyzed as `general` often lands near 0. Match the type to your data (see [ibm-x402-mcp](../ibm-x402-mcp.md)).
 
 ---
 
@@ -215,7 +229,7 @@ function reactIfConfident(clipOrEmoteName, { confident, useExactClip = false } =
 
 - `agent.play(clipName)` for an exact clip, `agent.playEmote(name)` for a safer semantic trigger with a fallback chain — both are public methods on every `<agent-3d>` element, no library beyond the CDN script.
 - The free lane (`/api/social/sentiment-pulse`) proves the wiring with zero AI and zero cost.
-- The AI lane (`ibm_granite_analyze` over x402) turns arbitrary documents into a richer emotion breakdown, unlocking more of the animation library than a simple positive/negative split.
+- The AI lane (`ibm_granite_analyze` over x402) turns arbitrary documents into a graded sentiment score plus risk flags, which drives more of the animation library than a lexicon's positive/negative split can reach.
 - Gate every automated trigger behind a cooldown and a confidence floor — [`pumpfun-reactions.js`](../../src/widgets/pumpfun-reactions.js) is the production-grade version of this exact pattern, queueing and prioritizing real trade-feed events across 23 distinct clips.
 
 **Related tutorials:** [The JS API — animations, exact name vs. hint](/tutorials/js-api-events) · [Trigger the agent from page events](/tutorials/trigger-from-page-events) · [Animate your avatar](/tutorials/animate-your-avatar) · [Discover and pay for an x402 service](/tutorials/pay-for-x402-service)

@@ -173,8 +173,12 @@ table was rewritten to match them:
 5. **A capped-upside/uncapped-downside arm loses even when it wins.** The
    graduation-ride arm won 63% of 90 trades and still lost money with TP 20 /
    SL 15 against occasional -99% rugs. Reward must be a multiple of risk
-   everywhere: no arm keeps a TP below 2x its SL, and no arm trades with a null
-   TP (that arm went 0-for-24).
+   everywhere: no arm keeps a TP below 2x its SL, and no *ladderless* arm trades
+   with a null TP (that arm went 0-for-24). A null TP is still correct on a
+   ladder arm, where the ladder takes the stake back at 2x and the trailing stop
+   governs the moon bag, which is why the setup script below leaves
+   `take_profit_pct` null. The failure was an uncapped bag with nothing at all
+   scheduled to take profit, not the absence of a ceiling as such.
 
 The applied changes: six lifetime-negative `new_mint` spray arms disabled (that
 trigger went 4-for-64, -0.17 SOL, worst in the fleet), TP set on all 14 arms

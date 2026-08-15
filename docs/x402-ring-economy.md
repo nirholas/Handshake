@@ -503,8 +503,15 @@ to one alert per class per day.
 # 1. Generate the wallets (no chain, no funding — just keys).
 node scripts/x402-ring-setup.mjs
 
-# 2. Apply the schema.
-psql "$DATABASE_URL" -f api/_lib/migrations/2026-07-01-x402-ring-economy.sql
+# 2. Apply the schema through the migration runner, never raw psql: it stamps
+#    api/_lib/migrations/*.sql into `schema_migrations` by sha256, and the
+#    deploy gate (npm run db:check) reads that ledger. A file applied by hand
+#    stays "pending" forever and blocks the next deploy. Preview first, because
+#    db:migrate applies EVERY pending migration with no dry run of its own.
+npm run db:status     # lists what is pending; writes nothing
+npm run db:migrate    # applies them (the ring lane needs 2026-07-01-x402-ring-economy.sql,
+                      # 2026-07-03-x402-ring-agents.sql, 2026-07-03-x402-ring-leak-scan.sql
+                      # and, for the payer pool below, 2026-07-17-x402-ring-pool.sql)
 
 # 3. Set env on the Cloud Run service, from the printed block
 #    (gcloud run services update three-ws-api --region us-central1 --update-env-vars …):

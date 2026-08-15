@@ -42,13 +42,24 @@ https://three.ws/docs/world#forge
 
 ## 4. Use the index instead of walking
 
-The **☰ Index** chip (top left) lists all fourteen sections. Picking one teleports you to its pavilion and opens its page list. This is also the fully keyboard-accessible path through the world: Tab to the chip, Enter, arrow through the list.
+The **☰ Index** chip (top left) lists all fourteen sections. Picking one teleports you to its pavilion and opens its page list. This is also a fully keyboard-accessible path through the world: Tab to the chip, Enter, arrow through the list.
 
-## 5. Change the camera
+## 5. Search when you already know the page
+
+Walking is the point of this surface, but hunting fourteen pavilions for a page you can already name is not. Press `/` (or Ctrl+K, Cmd+K on a Mac) anywhere in the world and a search palette opens over the scene, ranking every documented page. Typos are tolerated: the palette uses the same fuzzy scorer as the rest of the platform, so `marketpalce` still finds the marketplace page.
+
+Each result offers two actions:
+
+- **Enter** reads the page now, and stands your avatar at its pavilion so closing the reader leaves you where that page lives.
+- **Shift+Enter** has the world walk you there, routing around the other pavilions and opening the page on arrival.
+
+Pages you opened recently are listed first when the box is empty.
+
+## 6. Change the camera
 
 Press C (or the camera chip, top right) to cycle the four platform camera modes: Follow, Cinematic, First Person, Top Down. These are the same modes `/walk` and `/play` use, and your choice is remembered.
 
-## 6. Bring your own avatar
+## 7. Bring your own avatar
 
 By default you walk as the base mannequin. Any rigged humanoid GLB can replace it via the `avatar` query parameter:
 

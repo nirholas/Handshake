@@ -4680,7 +4680,7 @@
 				{
 					"path": "/tutorials/customize-appearance",
 					"title": "Tutorial · Customize size, position & background",
-					"description": "Tune every visible knob: bubble size, corner placement, background, rotation speed: entirely through data-* attributes.",
+					"description": "Tune every visible knob on the <agent-3d> element: layout mode, corner placement, size, background, camera framing, and the ambient clip.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-05-14"
@@ -4688,7 +4688,7 @@
 				{
 					"path": "/tutorials/swap-avatar-in-studio",
 					"title": "Tutorial · Pick & swap an avatar in Studio",
-					"description": "Visually browse the avatar gallery, switch bodies with one click, and have the change ripple to every embed without redeploying.",
+					"description": "Swap an agent's 3D body from the Outfit panel in one click, and have the change reach every embed without touching your snippet.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-05-14"
@@ -4696,7 +4696,7 @@
 				{
 					"path": "/tutorials/greeting-and-first-speech",
 					"title": "Tutorial · Add a greeting & first speech line",
-					"description": "Make your agent say hello the moment it loads: and have its mouth move with the words.",
+					"description": "Make your agent say hello the moment it loads, and have its mouth move with the words.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-05-14"
@@ -4712,7 +4712,7 @@
 				{
 					"path": "/tutorials/selfie-to-avatar",
 					"title": "Tutorial · Turn a selfie into a 3D avatar",
-					"description": "Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk: then put it on an agent.",
+					"description": "Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk, then put it on an agent.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-21"
@@ -4720,7 +4720,7 @@
 				{
 					"path": "/tutorials/view-in-ar",
 					"title": "Tutorial · View your 3D model in AR",
-					"description": "See any three.ws model in augmented reality and walk around it in your kitchen: straight from the browser, no app to install. iOS Quick Look and Android WebXR.",
+					"description": "See any three.ws model in augmented reality and walk around it in your kitchen, straight from the browser with no app to install. iOS Quick Look, Android Scene Viewer, and WebXR.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-13"

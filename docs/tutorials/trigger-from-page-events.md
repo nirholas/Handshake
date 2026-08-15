@@ -185,7 +185,7 @@ async function setupSignupCelebration() {
 setupSignupCelebration();
 ```
 
-`playEmote` falls through a chain of clip names (`celebrate` → `cheer` → `wave`, or `flinch` → `concern`), so the reaction works regardless of what's baked into the loaded GLB.
+`playEmote` falls through a chain of clip names (`celebrate` → `wave`, `cheer` → `celebrate` → `wave`, `flinch` → `defeated` → `concern` → `shake`), so the reaction works regardless of what's baked into the loaded GLB. If no clip in the chain exists, it falls back to a procedural head bob rather than doing nothing, and returns `false` so you can tell a real clip fired from the fallback.
 
 The pattern generalises: any form on your page — newsletter signup, contact form, lead capture, checkout — fits the same shape. Real fetch, branch on result, agent reacts.
 

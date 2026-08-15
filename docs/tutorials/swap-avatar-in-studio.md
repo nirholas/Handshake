@@ -1,251 +1,185 @@
 # Pick & swap an avatar in Studio
 
-Your agent has a mind: a name, a personality, a set of skills, memory, and a wallet. Separately, your agent has a body: a 3D model that visitors see and interact with. The platform keeps these two things distinct on purpose. The mind is the durable identity. The body is a presentation choice that you can change at any time without affecting the rest.
+Your agent has a mind: a name, a personality, a set of skills, memory, and a wallet. Separately, your agent has a body: a 3D model that visitors see and interact with. The platform keeps these two things distinct on purpose. The mind is the durable identity. The body is a presentation choice you can change at any time without affecting the rest.
 
-Widget Studio is where you make that choice. You open it, browse the gallery, preview the candidate bodies on top of your agent's actual brain, and pick the one you want live. The snippet you've already embedded on your customer's site does not change. The next time the page loads, the new body is what visitors see.
-
-This tutorial walks through the full Studio flow, explains what changes server-side versus snippet-side when you swap, and shows you how to maintain a small library of swappable bodies for the same agent.
+This tutorial covers both halves of that. You swap the body in the agent editor's **Outfit** panel, in one click. Then you take the result into **Widget Studio**, which is a different surface with a different job: turning any avatar into an embeddable widget.
 
 **What you'll build:**
-- A working understanding of how Studio fits between editor and embed
-- A swap of your agent's body to a different avatar, live, in under five minutes
+- A swap of your agent's body to a different avatar, live, in under a minute
 - A small personal library of avatars you can rotate between for seasons, campaigns, or audiences
+- A widget built in Studio from the avatar you picked
 - The mental model for separating identity (the agent) from presentation (the avatar)
 
 **Prerequisites:** A saved agent on three.ws. If you've worked through [Embed in 30 seconds](/tutorials/embed-in-30-seconds), you already have one.
 
 ---
 
-## Step 1 — Open Widget Studio
+## Step 1: Know which surface does what
 
-Go to [https://three.ws/studio](https://three.ws/studio). Sign in if you're not already.
+Two surfaces have "studio" energy and they are often confused. They do not overlap:
 
-Studio opens with a split layout. On the left is your agent — already loaded, animating, ready. On the right is the avatar gallery: a grid of 3D bodies the platform hosts, your own uploads, and any community-published avatars you can use freely.
+| Surface | Where | What it changes |
+| --- | --- | --- |
+| **Agent editor, Outfit panel** | `/agent/<id>/edit` | The agent's own body, animation set, and animation states. This is where a swap happens. |
+| **Widget Studio** | [/studio](/studio) | Builds a standalone embeddable widget from an avatar. Does not modify any agent. |
+| **Avatar dashboard** | [/dashboard/avatars](/dashboard/avatars) | Creates, names, deletes avatars, and sets each one's visibility. |
 
-If you have more than one agent in your account, there's an agent selector at the top of the left panel. Pick the one you want to modify; the rest of the page updates to show that agent's current body.
-
-> The studio is genuinely a "studio" rather than a settings page. You can spend ten minutes in here just trying bodies on, the same way you'd browse outfits in a fitting room. Nothing is final until you save.
-
----
-
-## Step 2 — Understand the gallery's structure
-
-The avatar gallery has a few visible sections worth knowing about. They control what shows up when you search and where new avatars come from over time.
-
-### Platform avatars
-
-The default tab. These are bodies the three.ws team curates: a balanced set of styles (realistic, stylised, abstract), gender presentations, ethnicities, and aesthetic moods. They're stored on the platform's CDN, optimised for fast load, and tested for animation compatibility — every animation in the standard library plays correctly on every platform avatar.
-
-You can filter by:
-
-- **Style** — realistic, stylised, low-poly, geometric, abstract
-- **Use case** — support, hero, mascot, narrator, professional
-- **Polygon count** — useful if you're embedding on a low-end-device-heavy site
-
-Click any tile to preview the avatar on your agent — the left panel updates in real time, and your agent's actual greeting and idle animations play on the new body.
-
-### Your uploads
-
-If you've ever uploaded a GLB through the editor or the upload flow, those files appear here under "Your avatars". The platform stores them on its CDN with the right CORS headers so the embed loader can fetch them from anywhere.
-
-If you haven't uploaded anything yet, this section is empty and the studio shows a hint pointing to the upload flow. Custom uploads are covered in their own tutorial — for this one, we stick with platform and community avatars.
-
-### Community avatars
-
-Avatars that other three.ws users have published as freely usable. This section grows over time. Each tile shows the creator's handle and a license note (most community avatars are CC-BY or CC0). Click the creator handle to see their full set.
+If you are trying to change what your embedded agent looks like, you want the first row. Studio is Step 6.
 
 ---
 
-## Step 3 — Preview before committing
+## Step 2: Open the Outfit panel
 
-This is the single most important habit to form when working with Widget Studio: preview every candidate body fully before saving. Click on each candidate and let it run for at least twenty seconds in the preview panel. You'll notice things you'd otherwise miss.
+Open [https://three.ws/my-agents](https://three.ws/my-agents) and click the agent you want to change. On its profile page, click **✏ Edit Agent** (visible to you as the owner). That lands you on `/agent/<id>/edit`.
 
-The preview panel runs your agent's actual configuration on the new body. So you see:
+Scroll to the **Outfit** panel. It has three sections stacked in order:
 
-- How the avatar holds its head while idle
-- How it gestures when speaking
-- How the wave clip looks (try clicking "Wave" in the preview controls)
-- How the talk-mouth animation reads — some stylised characters have very expressive mouth shapes, others almost none
-- Whether the lighting in the scene flatters this particular model
+- **Avatar**: the grid of bodies you can put on this agent. This is the one this tutorial is about.
+- **Animations**: which clips from the three.ws animation library this agent is allowed to play. Changing this needs an explicit **Save selection**.
+- **Animation states**: which clip plays in each behaviour state, so the avatar crossfades sensibly as it speaks, walks, and reacts. Saved with **Save states**.
 
-A few practical checks that pay off:
-
-- **Wave test** — Every avatar should be able to wave. If the wave looks broken (arm goes through the chest, hand stays at the side), the avatar's rig is incomplete; pick a different one.
-- **Talk test** — Type a sentence into the preview chat input. The avatar should move its mouth and gesture lightly. If it doesn't, the talk animation isn't bound; pick a different one.
-- **Idle test** — Watch the avatar for twenty seconds with no input. The idle should feel natural, not robotic. Notice the breathing, the small head turns, the weight shifts.
-
-When something feels right, you'll know — the preview panel feels like a real conversation rather than a mannequin.
+A live 3D preview of the agent sits in the left column, so you are always looking at the current body while you work.
 
 ---
 
-## Step 4 — What happens when you swap
+## Step 3: Read the avatar grid
 
-This is the part most people get wrong on their first try, and the part the studio is most useful for clarifying. Here is what changes — and, just as importantly, what does *not* change — when you save a new body.
+The grid lists the avatars on your account, newest first, up to fifty. Each tile shows the avatar's thumbnail and name. The body currently on this agent carries a **Current** badge, so you never have to guess which one is live.
 
-### Server-side: the agent record updates
+Two things sit alongside the grid:
 
-The platform stores each agent as a record. The record has:
+- A **Create new** tile (the `+`). It opens a menu with the four real ways to get a new body: **three.ws Studio** (the in-browser builder for hair, clothing, and body), **three.ws Selfie** (a photo becomes a photoreal avatar, covered in [Turn a selfie into a 3D avatar](/tutorials/selfie-to-avatar)), **Upload GLB** (bring your own model), and **Browse public gallery** (pick from community avatars).
+- A **Manage in dashboard ›** link to [/dashboard/avatars](/dashboard/avatars), where you rename, delete, and set visibility.
 
-- An agent ID (permanent, never changes)
-- A name
-- A personality / system prompt
-- A skills list
-- A memory configuration
-- A wallet
-- And a pointer to a body — that pointer is a URL of a GLB file
+If you have no avatars yet, the grid says so and points you at the dashboard instead of showing an empty box.
 
-When you save a new body in Studio, the only field that changes in that record is the body URL. Everything else — name, personality, skills, memory, wallet, the ID — stays exactly as it was. The agent is the same entity. It just dresses differently.
+---
 
-### Snippet-side: nothing changes
+## Step 4: Perform the swap
 
-This is the crucial property. Your embed snippet is:
+Click a tile. That is the whole interaction.
+
+There is no confirmation dialog and no separate save button for the avatar: the click sends the change immediately, the status line under the heading reads `Saving…` and then `Saved.`, the **Current** badge moves to the tile you picked, and the 3D preview reloads on the new body. If something goes wrong, the same line shows the error rather than failing silently.
+
+Under the hood that click is one request:
+
+```
+PUT /api/agents/<agent-id>
+Content-Type: application/json
+
+{ "avatar_id": "<the avatar you clicked>" }
+```
+
+The call is owner-scoped, so you can only re-body agents you own.
+
+### What changes, and what does not
+
+The platform stores each agent as a record holding its ID, name, personality, skills, memory configuration, wallet, and a pointer to a body. **A swap changes only the body pointer.** Name, personality, skills, memory, wallet, and the agent ID are untouched. The agent is the same entity, and a returning visitor's conversation history is still there. It just dresses differently.
+
+Your embed snippet does not change either:
 
 ```html
 <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 <agent-3d agent-id="YOUR_AGENT_ID" mode="floating"></agent-3d>
 ```
 
-There is no body URL in this snippet. The `<agent-3d>` element references the agent by its ID, and the embed runtime fetches the current body URL from the platform every time a visitor loads the page. When you swap the body in Studio, the next page load returns the new body. The customer site doesn't need to be re-deployed, the snippet doesn't need to be edited, the cached HTML on Cloudflare doesn't need to be purged.
+There is no body URL in that snippet. The `<agent-3d>` element references the agent by ID and resolves the current body from the platform on every page load. Swap the body and the next page load shows it: no redeploy, no snippet edit, no cache purge on the customer's site.
 
-This is by design and it's worth pausing on, because it changes how you operate at scale. You can:
+This is what makes the pattern useful at scale. You can run a seasonal swap across every site that embeds you in one click, replace a broken GLB at the source and have every embed self-heal on the next load, or move from a placeholder body to final art mid-campaign without coordinating a single deploy.
 
-- Run a seasonal avatar swap across hundreds of customer sites in one click
-- A/B test two different bodies for the same brain across two agent IDs without touching any client code
-- Replace a corrupted GLB at the source and have every embed self-heal on next page load
-- Move from a placeholder avatar to a final-art avatar mid-campaign without coordinating a single deploy
+### Why there is nothing to purge
 
-Once the snippet is in place, the body lives entirely in the platform's control.
+Two caching facts make the swap effectively instant, and it is worth knowing them so you do not go hunting for a cache-busting button that does not exist:
 
-### What about cached GLBs?
+- The agent record is served `Cache-Control: no-store`, so a page load always reads the current body pointer. There is no stale-manifest window.
+- Each avatar is a distinct object at a distinct URL, so a swap points at a different file rather than replacing the bytes behind one. GLBs are served long-lived on purpose (`public, max-age=604800, stale-while-revalidate=2592000`), with `Access-Control-Allow-Origin: *` and `Content-Type: model/gltf-binary`, so the old body stays cached for the visitors still on it and the new body is fetched fresh.
 
-The platform serves GLBs with reasonable cache headers — typically a few hours of freshness, then revalidate. When you save a swap in Studio, visitors who already have the page open keep the old body until they refresh. Visitors who arrive after the swap get the new body within at most an hour or two (and usually immediately, because most CDN edges revalidate on every miss).
-
-If you need an instant swap — say, you're fixing a visibly broken avatar for an important demo — the platform exposes a "Bust cache" button in Studio's save dialog. Use it sparingly; it forces every CDN edge to refetch.
+The only visitors who keep seeing the old body are the ones with the page already open, and only until they refresh.
 
 ---
 
-## Step 5 — Perform a swap
+## Step 5: Build a personal avatar library
 
-Time to do the thing. With the studio open and your agent loaded:
-
-1. **Pick a candidate.** Browse the gallery, click an avatar that matches the mood you want.
-2. **Preview thoroughly.** Use the controls under the preview panel — Wave, Idle, Greet, Talk — and try at least the first three.
-3. **Click Save** in the preview panel's footer. A confirmation dialog appears with two options: **Save** (default cache behaviour, fast and free) or **Save and bust cache** (instant propagation, use only when needed).
-4. **Click Save.** The platform updates the agent record. The dialog closes.
-5. **Open your embedded page in a new tab.** The new body appears.
-
-That's the whole flow. In practice, on a real connection, a swap takes about ten seconds from click to live.
-
----
-
-## Step 6 — Build a personal avatar library
-
-Studio is not just for one-off swaps; it's also where you maintain a small library of bodies you cycle between for different contexts. A few patterns that pay off.
+The Outfit grid is your library, so it pays to keep a few deliberate bodies in it rather than one.
 
 ### Seasonal swaps
 
-Holiday avatars are a small detail that visitors notice. A "winter outfit" body for December and January, a "summer / outdoor" body for the warmer months, a "back to school" body in September. The brain is unchanged — your agent's personality persists across seasons. Only the appearance shifts. Use Studio's preview to make sure the seasonal avatar still feels like the same character (similar build, hair colour, posture); otherwise visitors will feel a discontinuity.
+Holiday avatars are a small detail visitors notice: a winter body for December and January, a summer body for the warmer months. The brain is unchanged, so your agent's personality persists across seasons. Use the live preview to check the seasonal body still reads as the same character (similar build, hair colour, posture), otherwise visitors feel a discontinuity.
 
 ### Campaign avatars
 
-If you run product launches, your agent can wear a launch-themed body for the launch week. Examples: a body holding the new product, a body wearing the launch t-shirt, a body in the launch's colour palette.
+If you run product launches, your agent can wear a launch-themed body for launch week: holding the new product, wearing the launch shirt, or in the launch's colour palette.
 
-### Audience-specific avatars
+### Audience-specific agents
 
-You can run two agents with the same brain and different bodies, embedded on different pages:
+Run two agents with the same personality and different bodies, embedded on different pages: a developer-coded body on your docs and changelog, a polished one on marketing and pricing. Same brain, different perceived audience. Create the second agent from [My Agents](/my-agents), then set its body here.
 
-- `agent_dev_id` — wears a developer-coded body, embedded on your docs and changelog
-- `agent_sales_id` — wears a polished body, embedded on your marketing and pricing pages
+### A test body
 
-Both agents have the same personality, the same memory, the same skills. Only the body — and therefore the perceived audience — differs. The split is set up by duplicating the agent in My Agents at [https://three.ws/my-agents](https://three.ws/my-agents) and then using Studio to pick the right body for each clone.
-
-### Test bodies
-
-It's useful to keep one "test" body in your library — something visually distinct, like a bright-coloured low-poly character — that you swap to when you're verifying a deployment. You can tell at a glance whether the page is showing the test body (deployment worked, cache busted, embed is live) or the production body (it's serving stale).
+Keep one visually unmistakable body, such as a bright low-poly character, and swap to it when you are verifying a deployment. You can tell at a glance whether a page is serving the new build or a stale one.
 
 ---
 
-## Step 7 — How the platform serves avatars
+## Step 6: Take the avatar into Widget Studio
 
-A short technical note for engineers, in case it matters for your stack.
+[Widget Studio](/studio) is the other half of the story. It does not touch your agents; it turns an avatar into a self-contained embeddable widget with its own URL and snippet. It runs as four numbered steps across three columns.
 
-Every platform avatar and every user upload is stored in the three.ws CDN, served from edge nodes globally. The URL format is approximately:
+**1. Pick avatar.** Your own avatars appear here, but only the ones whose visibility is public or unlisted (a widget is served to strangers, so a private avatar cannot back one). Set visibility in the [avatar dashboard](/dashboard/avatars). There is also a search box for browsing public avatars, and a demo agent is pre-loaded so you can try the studio before signing in.
 
-```
-https://three.ws/cdn/avatars/<hash>.glb
-```
+**2. Pick widget type.** Each type is a different layout, not a different avatar:
 
-The hash is a content-addressable digest, which means the same GLB always has the same URL, and uploading a new version generates a new URL. The agent record stores the current URL; Studio updates that pointer when you swap.
+- **Turntable Showcase**: hero banner, auto-rotate, no UI.
+- **Animation Gallery**: click through every clip on a rigged avatar.
+- **Talking Agent**: embodied chat, your agent on your site.
+- **ERC-8004 Passport**: on-chain identity card for any agent.
+- **Hotspot Tour**: annotated 3D scene with clickable points of interest.
+- **Walking Avatar**: a roaming avatar visitors steer with a joystick or the keyboard.
+- **Pump.fun Live Feed**, **Smart Money Feed**, **Live Trades Canvas**, **Bonding Curve**: live market surfaces narrated or visualised by the avatar.
 
-Headers served on every GLB:
+**3. Brand.** Colours, environment, captions, and behaviour, with the middle column previewing every change live. The preview has a desktop / tablet / mobile switcher, and a **Use current view** button that locks whatever camera angle you have dragged to as the widget's default framing.
 
-- `Access-Control-Allow-Origin: *` — so the embed loader can fetch the file from any customer domain
-- `Cache-Control: public, max-age=86400, must-revalidate` — one-day freshness with revalidation
-- `Content-Type: model/gltf-binary` — correct MIME type for GLB
+Then **Generate**. A modal opens with the widget's live URL, a width and height, and two copy-ready snippets: an `<iframe>` and a script tag. **Save draft** keeps work in progress without publishing.
 
-Files are not gzipped (GLBs are already binary-packed and don't benefit) but textures inside the GLB are compressed using KTX2 / Basis when present.
-
-The "Bust cache" save option in Studio sends a purge signal to the edge network, which clears the cached object on every edge node usually within ten seconds.
-
-This matters in two cases:
-
-- You're embedding on a customer site with a strict CSP. Add `https://three.ws` to `connect-src` and you're done.
-- You're embedding on a site behind a corporate proxy that strips `Access-Control-Allow-Origin`. The proxy needs to be configured to let three.ws responses through unmodified.
+The important distinction: a widget built here is pinned to the avatar you chose. Swapping your *agent's* body in Step 4 does not re-point an existing widget. If you want the widget to follow the agent, use the **Talking Agent** type, which is backed by the agent rather than by a bare avatar.
 
 ---
 
-## Step 8 — A worked example
+## Step 7: A worked example
 
-Let's run through a realistic scenario end to end.
+You run an online cooking school called "Hearth", with a single agent named "Chef Olive" embedded on your home page, course catalogue, and pricing page. The current body is a stylised character in chef's whites.
 
-Imagine you're running an online cooking school called "Hearth". You have a single agent named "Chef Olive" — friendly, knowledgeable, helps visitors pick the right course. Your agent is embedded on three pages: the home page, the course catalogue, and the pricing page. The current avatar is a stylised character in chef's whites — clean, professional, on-brand.
+For a spring promotion you want a green-apron variant: same character build, same posture, clearly springtime. Olive's voice, personality, course knowledge, and memory all stay the same.
 
-For your spring promotion, you want to swap the avatar to one wearing a green apron with a fresh-greens basket — same character build, same posture, same hair, but a clearly springtime variant. The agent's voice, personality, course knowledge, and memory of past conversations all stay the same.
+1. Open [My Agents](/my-agents), click Chef Olive, click **✏ Edit Agent**.
+2. Scroll to **Outfit**. The current whites tile carries the **Current** badge.
+3. Click the spring-apron tile. The status line reads `Saved.` and the preview reloads on the new body.
+4. Open your live home page in a private window. Olive is in the spring apron.
 
-Here's the flow:
+Total elapsed time is a few seconds, and no client code was touched. When the promotion ends, click the whites tile again.
 
-1. Open [https://three.ws/studio](https://three.ws/studio). Select Chef Olive in the agent selector.
-2. In the gallery, type "chef" in the search box. A handful of chef-style avatars surface, including the current production one.
-3. Click the spring-apron candidate. The preview panel updates. Chef Olive — same voice, same greeting — appears in the new body.
-4. Run the previews: wave, idle, talk. They all read well.
-5. Click **Save**. Choose normal save (no cache bust — your spring campaign isn't time-critical).
-6. Open the live home page in a private window. Chef Olive appears in the spring apron.
-
-Visitors who land on the page during the next hour see the new body. Past conversation history is unchanged — a returning visitor who chats again finds Olive remembers their previous questions, just dressed differently for the season.
-
-When the promotion ends, you return to Studio, swap back to the original whites, and save. The agent is back in its everyday outfit. No client code touched. No customer notified. No deploy run.
-
----
-
-## Step 9 — When to use Studio versus the full editor
-
-A small clarification, because new users often conflate the two surfaces.
-
-The **editor** at [https://three.ws/create](https://three.ws/create) is where you set the agent's identity: name, personality, skills, memory, wallet, voice. It's a designer surface for the brain.
-
-**Studio** at [https://three.ws/studio](https://three.ws/studio) is where you tune the agent's appearance: the body and the embed presentation. It's a designer surface for the visual layer.
-
-There is some overlap — Studio shows you which body is currently set, and the editor shows you a preview of the agent — but the principle is: brain in editor, body in studio. If you find yourself trying to write a system prompt in Studio or pick a body from the editor, you've taken the long way; switch surfaces and the right controls appear.
+Note what did *not* happen: no deploy, no cache purge, no customer notified, and no loss of conversation history. A returning visitor finds Olive remembers their previous questions, just dressed differently.
 
 ---
 
 ## What you learned
 
-- Widget Studio at [https://three.ws/studio](https://three.ws/studio) is the home for swapping an agent's body
-- The platform separates the agent (mind, identity, wallet, memory) from the avatar (3D body, presentation)
-- A swap updates one field on the server-side agent record and changes nothing about the embed snippet on customer sites
-- Cache propagation is automatic within an hour, or instant with the "Bust cache" option
-- A small personal library of avatars — seasonal, campaign, audience-specific, test — pays off for any agent you run beyond a single use case
-- Avatars are served from the three.ws CDN with the right CORS and cache headers for embed use
+- The body swap lives in the agent editor's **Outfit** panel at `/agent/<id>/edit`, not in Widget Studio
+- Clicking an avatar tile saves immediately: one `PUT /api/agents/<id>` carrying `avatar_id`, with the **Current** badge and the live preview confirming it
+- A swap changes one field. Name, personality, skills, memory, wallet, and the agent ID are untouched
+- The embed snippet never changes, because `<agent-3d agent-id="…">` resolves the current body on every page load
+- Nothing needs purging: the agent record is `no-store`, and each avatar is a distinct long-lived object
+- **Widget Studio** at [/studio](/studio) is a separate surface that builds standalone widgets from an avatar, across ten widget types
+- Avatar visibility (private / unlisted / public) is set in the [avatar dashboard](/dashboard/avatars) and gates whether an avatar can back a widget or a social card
 
-The key insight is the snippet's stability. Once embedded, your customers' pages never need to change. You can update the body monthly, weekly, daily — visitors always see the current version, and the integration on the customer site keeps working without re-deploys.
+The key insight is the snippet's stability. Once embedded, your customers' pages never need to change. You can update the body monthly, weekly, or daily, and visitors always see the current version.
 
 ---
 
 ## Next steps
 
 - [Customize size, position and background](/tutorials/customize-appearance) — once the body is right, tune the embed presentation
-- [Embed in 30 seconds](/tutorials/embed-in-30-seconds) — revisit the one-line embed if you skipped it
+- [Turn a selfie into a 3D avatar](/tutorials/selfie-to-avatar): put a real likeness in the Outfit grid
+- [Embed in 30 seconds](/tutorials/embed-in-30-seconds): revisit the two-tag embed if you skipped it
 - [Add a greeting and first speech line](/tutorials/greeting-and-first-speech) — give every visitor a spoken welcome
 - [Share your agent](/tutorials/share-your-agent) — generate a public URL, QR code, and social previews
 - [Build your first agent](/tutorials/first-agent) — drop down to the manifest and skill level if you want full control

@@ -479,11 +479,20 @@ The shape:
 {
   "resource": "https://three.ws/api/mcp",
   "authorization_servers": ["https://three.ws"],
-  "scopes_supported": ["mcp", "mcp:tools", "mcp:resources"],
   "bearer_methods_supported": ["header"],
-  "resource_documentation": "https://three.ws/docs/mcp"
+  "resource_documentation": "https://three.ws/docs/mcp",
+  "scopes_supported": [
+    "avatars:read", "avatars:write", "avatars:delete",
+    "profile", "offline_access",
+    "memory:read", "memory:write",
+    "agents:read", "agents:write",
+    "wallet:read", "wallet:write",
+    "services:write"
+  ]
 }
 ```
+
+Note the scopes are per-capability, not one blanket `mcp` scope. A client asks for exactly what it needs (`avatars:read` to render, `memory:write` to store a memory), so a token that leaks cannot do more than the tool it was minted for.
 
 To wire this on your own server, add `api/wk-oauth-protected-resource.js`:
 

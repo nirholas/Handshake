@@ -10,7 +10,9 @@ Base URL: `https://three.ws`
 
 > This page documents the **free** 3D endpoints. Higher-quality generation and
 > rigging are paid: **Forge Pro** (quality tiers) at [`/api/x402/forge`](https://three.ws/api/x402/forge)
-> and **Rigged Avatars** (animation-ready skeletons) via [`/api/forge?action=rig`](https://three.ws/api/forge).
+> and **Rigged Avatars** (animation-ready skeletons) via `POST /api/forge?action=rig`
+> (POST only, so there is nothing to open in a browser; the catalog link above
+> quotes both).
 
 Prefer a browsable landing page? See [three.ws/3d](https://three.ws/3d) — hero,
 live endpoint table, a runnable inspection console, an embedded 3D viewer, and the
@@ -126,14 +128,30 @@ model comes straight back:
 ```json
 {
   "status": "done",
-  "glbUrl": "https://three.ws/cdn/forge/anon/a1b2c3d4.glb",
-  "viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa1b2c3d4.glb",
-  "arUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa1b2c3d4.glb&title=a%20small%20ceramic%20robot%20figurine",
+  "glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/40659d6097b0/0a527906-a087-45b7-afd4-8d401495787b.glb",
+  "viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2F40659d6097b0%2F0a527906-a087-45b7-afd4-8d401495787b.glb",
+  "arUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2F40659d6097b0%2F0a527906-a087-45b7-afd4-8d401495787b.glb&title=a%20small%20ceramic%20robot%20figurine",
   "format": "glb",
   "tier": "draft",
   "free": true,
   "upgrade": { "forgePro": "/api/x402/forge", "riggedAvatars": "/api/forge?action=rig", "docs": "/docs/3d-api" }
 }
+```
+
+**Treat `glbUrl` as opaque.** It is a fully-qualified URL on the object store, not
+a path you can build yourself: the host comes from deployment config and the key
+is assigned per generation. Follow the URL you were handed and pass it verbatim
+into `viewerUrl` / `arUrl` style links rather than reconstructing one.
+
+Server-side and CLI downloads (`curl -O`, a worker fetching bytes) can use
+`glbUrl` directly. **Browser code on another origin should not**: the object
+store answers without CORS headers and is rate-limited for bursts. Swap the host
+for the first-party CDN instead, which serves the identical object with
+`Access-Control-Allow-Origin: *` and a long edge cache:
+
+```js
+// https://<object-store>/forge/<hash>/<id>.glb → https://three.ws/cdn/forge/<hash>/<id>.glb
+const browserUrl = 'https://three.ws/cdn/' + new URL(glbUrl).pathname.replace(/^\//, '');
 ```
 
 `arUrl` is the place-in-your-room link (`/api/ar`): opened on a phone it
@@ -179,7 +197,7 @@ GET /api/3d/generate?job=f1.eyJwIjoibnZpZGlh...&title=a%20small%20ceramic%20robo
 { "status": "pending", "job": "f1...", "poll": "/api/3d/generate?job=f1...&title=...", "retryAfter": 3 }
 
 // ready
-{ "status": "done", "job": "f1...", "glbUrl": "https://three.ws/cdn/forge/anon/done.glb",
+{ "status": "done", "job": "f1...", "glbUrl": "https://<object-store>/forge/<hash>/<id>.glb",
   "viewerUrl": "https://three.ws/viewer?src=...", "arUrl": "https://three.ws/api/ar?src=...&title=...",
   "format": "glb", "tier": "draft", "free": true }
 
@@ -212,11 +230,11 @@ curl -s -X POST https://three.ws/api/3d/generate \
 # → { "status": "pending", "job": "f1...", "poll": "/api/3d/generate?job=f1..." }
 #   (or { "status": "done", "glbUrl": "..." } if it finished inline)
 
-# 2. Poll until done, then download the GLB
+# 2. Poll until done, then download the GLB at the glbUrl you were handed
 curl -s 'https://three.ws/api/3d/generate?job=f1...'
-# → { "status": "done", "glbUrl": "https://three.ws/cdn/forge/anon/....glb", ... }
+# → { "status": "done", "glbUrl": "https://<object-store>/forge/<hash>/<id>.glb", ... }
 
-curl -sL -o model.glb 'https://three.ws/cdn/forge/anon/....glb'
+curl -sL -o model.glb '<the glbUrl from step 2>'
 ```
 
 The `glbUrl` is a real, durable GLB — open `viewerUrl` in a browser to inspect it,
@@ -301,11 +319,14 @@ to create, no monthly plan, no key to provision — just one USDC payment per mo
 
 ### Quality tiers
 
-| Tier       | Price (USDC) | Geometry            | Textures        | Best for                          |
-|------------|--------------|---------------------|-----------------|-----------------------------------|
-| `draft`    | **$0.05**    | ~12k tris, low-poly | none            | Blockout, iteration, previews     |
-| `standard` | **$0.15**    | ~30k tris, balanced | none            | The default for most assets       |
-| `high`     | **$0.50**    | ~200k tris, max     | **PBR + HD**    | Hero assets, product/NFT renders  |
+| Tier       | Price (USDC) | Geometry            | Textures            | Best for                          |
+|------------|--------------|---------------------|---------------------|-----------------------------------|
+| `draft`    | **$0.05**    | ~12k tris, low-poly | baked, 1K           | Blockout, iteration, previews     |
+| `standard` | **$0.15**    | ~30k tris, balanced | baked, 2K           | The default for most assets       |
+| `high`     | **$0.50**    | ~200k tris, max     | **PBR + HD**, 4K    | Hero assets, product/NFT renders  |
+
+Every tier ships a textured mesh; the ladder is bake resolution plus, at `high`,
+full PBR material channels rather than a single baked colour map.
 
 Prices are the flat per-call retail price and are the single source of truth in
 [`api/_lib/forge-tiers.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/forge-tiers.js);
@@ -352,7 +373,7 @@ tier at deploy time without touching settlement.
 
    ```bash
    curl -s 'https://three.ws/api/forge?job=f1.eyJ…'
-   # → { "status": "done", "glb_url": "https://three.ws/cdn/forge/…/model.glb", … }
+   # → { "status": "done", "glb_url": "https://<object-store>/forge/<hash>/<id>.glb", … }
    ```
 
    A draft prompt often finishes inside the submit window and comes back inline with
@@ -414,9 +435,8 @@ re-validated per hop.
 {
   "url": "https://three.ws/avatars/cesium-man.glb",
   "valid": true,
-  "sizeBytes": 495956,
   "stats": {
-    "vertices": 3272,
+    "vertices": 3273,
     "triangles": 4672,
     "materials": 1,
     "textures": 1,
@@ -427,9 +447,13 @@ re-validated per hop.
     "scenes": 1,
     "skins": 1,
     "joints": 19,
+    "indexedPrimitives": 1,
+    "nonIndexedPrimitives": 0,
+    "extensionsRequired": [],
     "container": "glb",
-    "generator": "COLLADA2GLTF"
+    "generator": "glTF-Transform v4.4.0"
   },
+  "sizeBytes": 438044,
   "recommendations": [
     {
       "severity": "info",
@@ -437,14 +461,35 @@ re-validated per hop.
       "fix": "No action needed — the model is already well-suited for web delivery."
     }
   ],
-  "validation": { "valid": true, "numErrors": 0, "numWarnings": 0, "numInfos": 0, "numHints": 0 },
-  "ts": "2026-07-07T00:00:00.000Z"
+  "validation": {
+    "valid": true,
+    "validatorVersion": "2.0.0-dev.3.10",
+    "numErrors": 0,
+    "numWarnings": 1,
+    "numInfos": 0,
+    "numHints": 0,
+    "issues": [
+      {
+        "code": "NODE_SKINNED_MESH_NON_ROOT",
+        "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+        "severity": "warning",
+        "pointer": "/nodes/2"
+      }
+    ],
+    "truncated": false
+  },
+  "ts": "2026-08-15T06:37:05.768Z"
 }
 ```
 
+That is the verbatim response for the URL in the curl block below, so you can
+diff your own call against it.
+
 `recommendations` is ordered **most severe first** (`critical` → `warn` →
-`info`); each item is a `{ severity, issue, fix }` triple — the problem and the
-concrete action. `valid` reflects the glTF-Validator's error count.
+`info`); each item is a `{ severity, issue, fix }` triple: the problem and the
+concrete action. `valid` reflects the glTF-Validator's error count, so a model
+can be `valid: true` and still carry warnings, as this one does. `validation.issues`
+carries those individual findings (`truncated` says whether the list was cut).
 
 ### curl
 

@@ -1,15 +1,14 @@
 # Connect Anthropic, OpenAI, or xAI (Grok) as the brain
 
-The agent's body is the avatar. The agent's voice is the TTS. The agent's *brain* is whatever LLM is generating its replies. By default the platform routes through a managed Claude endpoint, which works out of the box but bills against your free tier. The moment you want real production traffic, full control over which model runs, or your own usage observability, you bring your own API key.
+The agent's body is the avatar. The agent's voice is the TTS. The agent's *brain* is whatever LLM is generating its replies. By default an embedded agent runs on a **free open-weight lane** (`openai/gpt-oss-20b:free`, routed through OpenRouter on the platform's key), which works out of the box at no cost to you. The moment you want a frontier model, full control over which one runs, or your own usage observability, you bring your own API key.
 
-This tutorial covers the whole brain layer. Where the LLM call actually happens (and why your key never ends up in HTML), how to attach your Anthropic or OpenAI key in My Agents, choosing between Claude Sonnet 4.6, Claude Opus 4.7, the GPT-5.6 family, and the smaller models, the latency and cost tradeoffs, configuring streaming and system prompts, tool-use support per model, and where to watch your token spend. The embed snippet doesn't change when you switch models — every config is on the agent record.
+This tutorial covers the whole brain layer. Where the LLM call actually happens (and why your key never ends up in HTML), how to attach your Anthropic, OpenAI, or xAI key, choosing between the Claude 5 family, the GPT-5.x family, Grok, and the free lanes, the latency and cost tradeoffs, how streaming and system prompts are configured, tool-use support per model, and where to watch your spend. The embed snippet doesn't change when you switch models — the model lives on the agent's embed policy, not in your HTML.
 
 **What you'll build:**
-- An agent powered by your own Anthropic key, with model selection
-- An agent powered by your own OpenAI key, switchable across the GPT-5.6 family
+- An agent powered by your own Anthropic, OpenAI, or xAI key
 - A working understanding of which model fits which use case (cost, latency, capability)
-- A streaming-enabled brain so replies feel responsive
-- An observability dashboard you can use to monitor spend per agent
+- An embed policy that pins the model, the monthly quota, and the per-minute rate limit
+- A concrete read on what your agents are actually spending
 
 **Prerequisites:** You have an agent at [three.ws/my-agents](https://three.ws/my-agents). You have an API key from Anthropic ([console.anthropic.com](https://console.anthropic.com)), OpenAI ([platform.openai.com](https://platform.openai.com)), or xAI ([console.x.ai](https://console.x.ai)). Familiarity with the concept of system prompts (see [agent personality](/tutorials/agent-personality)).
 
@@ -21,131 +20,133 @@ The single most important architectural detail: **the LLM call is server-side, a
 
 When the agent on the page calls `agent.say('hi')`, the flow is:
 
-1. The browser sends the user's message, the agent ID, and a session token to `three.ws/api/chat`.
-2. The platform looks up the agent's brain configuration (provider, model, system prompt, attached tools).
-3. The platform looks up the agent owner's stored API key for that provider (or falls back to the managed free-tier credit).
-4. The platform makes the LLM call from the server, streams the response back over Server-Sent Events to the browser.
-5. The browser fires `brain:stream` events with chunks and a final `brain:message` event with the complete reply.
+1. The browser posts an Anthropic-shape body (`{ model, system, messages, tools, stream }`) to `three.ws/api/llm/anthropic?agent=<agentId>` (`api/llm/anthropic.js`).
+2. The proxy reads that agent's **embed policy** and checks the referring origin against its allowlist, its per-minute rate limit, and its monthly quota — all before a single upstream token is spent.
+3. It resolves which model actually runs (see the clamp below), looks up the matching upstream credential, and calls the provider from the server.
+4. The response streams back as Anthropic-shape Server-Sent Events, whatever the upstream was — Groq, OpenRouter, NVIDIA, Mistral, xAI, and Vertex are all translated into that one wire format so the browser parser never changes.
+5. The runtime fires `brain:stream` events with chunks and a final `brain:message` event with the complete reply. Both are re-dispatched on the `<agent-3d>` host element, so you listen on the element.
 
-This matters for three reasons:
+This matters for four reasons:
 
-- **Keys stay secret.** Even a "view source" attack on your page reveals nothing. The key lives only in the platform's key store.
-- **Rate-limit shaping happens once, server-side.** The platform manages backoff and retries for you.
-- **The embed snippet doesn't know which model is running.** You can swap from Claude Sonnet 4.6 to GPT-5.6 Sol in My Agents and every page that embeds your agent picks up the change on next load. No code edits anywhere.
+- **Keys stay secret.** Even a "view source" attack on your page reveals nothing. Keys live only on the server.
+- **Rate-limit shaping and quota happen once, server-side**, per agent, from the embed policy.
+- **A visitor cannot escalate you onto a paid model.** The proxy clamps the requested model: a caller may pick freely among the free lanes, but any model billed to a first-party vendor key (every Claude and every Grok id) is forced back to whatever the *owner* configured in `policy.brain.model`. The response echoes the model actually used, so a clamped caller can see what it got.
+- **The embed snippet doesn't know which model is running.** Change `policy.brain.model` and every page that embeds your agent picks up the change on next load. No code edits anywhere.
 
-The corollary: setting `api-key="sk-ant-..."` directly on the `<agent-3d>` tag is supported but discouraged. It exposes your key in DOM. Use it only for local prototypes that never get deployed. Production agents store their key on the platform side.
+There is also a lane-failover chain: if the configured model's upstream returns a quota/billing/rate-limit error mid-request, the proxy retries down a chain of free fallbacks rather than failing the turn, and the response reports the model it landed on.
+
+The corollary: setting `api-key="sk-ant-..."` directly on the `<agent-3d>` tag is supported but discouraged. It exposes your key in the DOM. Use it only for local prototypes that never get deployed. Production agents keep their key server-side.
 
 ---
 
 ## Step 2 — Add your API key in My Agents
 
-The key store is per-account, not per-agent — once you've added a key, every agent you own can use it.
+Keys live at **[/dashboard/account](https://three.ws/dashboard/account)**, in the **AI Provider Keys** panel. The store is per-account, not per-agent — once you've added a key, every agent you own can use it.
 
 For Anthropic:
 
 1. Open [console.anthropic.com](https://console.anthropic.com).
 2. **Settings → API Keys → Create Key.** Give it a label like "three.ws production".
 3. Copy the key (it starts with `sk-ant-`). You won't see it again.
-4. Open [three.ws/my-agents](https://three.ws/my-agents).
-5. Click the gear icon → **API Keys → Anthropic → Add key.**
-6. Paste, save.
+4. Open [/dashboard/account](https://three.ws/dashboard/account) → **AI Provider Keys**.
+5. Paste it into **Anthropic (Claude)** and save.
 
 For OpenAI:
 
 1. Open [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 2. **Create new secret key.** Label it.
-3. Copy (starts with `sk-`).
-4. In three.ws My Agents, **API Keys → OpenAI → Add key.**
-5. Paste, save.
+3. Copy it (starts with `sk-proj-`).
+4. Paste it into **OpenAI (GPT-4)** in the same panel and save.
 
 For xAI (Grok):
 
 1. Open [console.x.ai](https://console.x.ai).
 2. **API Keys → Create API key.** Label it.
-3. Copy (starts with `xai-`).
-4. In three.ws My Agents, **API Keys → Grok (xAI) → Add key.**
-5. Paste, save.
+3. Copy it (starts with `xai-`).
+4. Paste it into **Grok (xAI)** in the same panel and save.
 
-You can store all three keys at once and route different agents to different providers.
+You can store all three at once. The same panel also holds keys for the non-LLM providers the platform can call on your behalf (Meshy, Tripo, Rodin, Stability, Replicate, ElevenLabs).
 
-After saving, the keys are stored encrypted at rest. The dashboard shows the last four characters and a creation timestamp; the full key is never displayed back. If you suspect a leak, rotate the key on the provider side and replace it in the dashboard — the platform invalidates the old one immediately.
+Under the hood this is `GET`/`PATCH /api/user/provider-keys`. The `GET` returns only which providers are set — never a value — and a `PATCH` with `null` for a provider deletes that key. Keys are stored encrypted at rest and are never displayed back. If you suspect a leak, rotate it on the provider side and replace it here.
 
 ---
 
 ## Step 3 — Pick a model
 
-Each agent has a single active brain at a time. You change it in the agent's settings panel under **Brain → Model**.
+Each agent has a single active brain at a time, pinned as `brain.model` on its embed policy (Step 8 covers changing it). To compare models interactively before you commit, the **model grid and multi-model playground at [/dashboard/brain](https://three.ws/dashboard/brain)** streams the same prompt across several models side by side. That page reads its roster from `GET /api/brain/chat`, which reports every model and whether it is currently available, so it is the live source of truth rather than a hardcoded list.
 
-The current production-ready models, with the tradeoffs that actually matter for agent use:
+Prices below are USD per million tokens (input / output) from the platform's own price table (`api/_lib/llm-pricing.js`).
 
 ### Anthropic models
 
-**Claude Sonnet 4.6** (`claude-sonnet-4-6`) — the default for most agents.
+**Claude Sonnet 5** (`claude-sonnet-5`) — the default recommendation.
 
-- **Cost:** Low. Roughly $3 per million input tokens, $15 per million output. For a typical 20-turn chat this is fractions of a cent.
-- **Latency:** First token in ~600ms. Full reply for a 2-sentence answer in 1.2-2 seconds.
-- **Capability:** Excellent at tool use, structured output, and following system prompts. The right default for support, sales, concierge, and personal agents.
+- **Cost:** $3 / $15. For a typical 20-turn chat this is fractions of a cent.
+- **Capability:** Near-Opus quality on coding and agentic work at Sonnet cost. The right default for support, sales, concierge, and personal agents.
 - **Context window:** 200K tokens. Plenty of room for long system prompts and memory.
 
-**Claude Opus 4.7** (`claude-opus-4-7`) — when you need the smartest model.
+**Claude Opus 5** (`claude-opus-5`) — when you need depth.
 
-- **Cost:** ~5x Sonnet. Worth it for high-stakes agents (legal, medical, financial assistants) and complex reasoning chains.
-- **Latency:** First token in ~1.2s. Full reply 2.5-4s for a typical turn.
-- **Capability:** Best-in-class at multi-step reasoning, ambiguous instruction handling, and long-context retrieval. Holds character better under adversarial pressure.
-- **Context window:** 200K tokens. Same headroom as Sonnet — the upgrade is depth of reasoning, not window size.
+- **Cost:** $5 / $25.
+- **Capability:** Deep reasoning, agentic and long-horizon work. **Thinks by default**, which is the tradeoff: better answers on hard questions, more latency and more billed output tokens on easy ones.
+- **Context window:** 200K tokens.
 
-**Claude Haiku 4.5** (`claude-haiku-4-5-20251001`) — when latency matters more than depth.
+**Claude Fable 5** (`claude-fable-5`) — the most capable model on the platform.
 
-- **Cost:** ~1/3 of Sonnet.
-- **Latency:** First token in ~250ms. Full reply in well under a second.
+- **Cost:** $10 / $50.
+- **Capability:** State-of-the-art reasoning, long-horizon agentic work, knowledge work, and vision. Reach for it when a specific quality gap survives prompt iteration on Opus.
+- **Note:** thinking is always on and is not configurable; the proxy strips any non-adaptive `thinking` config rather than letting the upstream reject the call.
+
+**Claude Haiku 4.5** (`claude-haiku-4-5`) — when latency matters more than depth.
+
+- **Cost:** $1 / $5, a third of Sonnet.
 - **Capability:** Good for FAQ-style agents, lookups, and short interactions. Drops noticeably below Sonnet on long context or nuanced tone.
-- **Use it when:** you have an agent that handles many short turns (a wave-and-greet, a status-check agent) and you want it to feel instant.
+- **Use it when:** you have an agent handling many short turns (a wave-and-greet, a status-check agent) and you want it to feel instant.
+
+The previous generation stays selectable and priced identically to its successor tier: **Claude Opus 4.7** (`claude-opus-4-7`, $5 / $25) and **Claude Sonnet 4.6** (`claude-sonnet-4-6`, $3 / $15). There is no reason to start a new agent on them, but existing agents keep working untouched.
+
+> Both Opus 4.7+ and the whole Claude 5 family reject sampling parameters upstream. The proxy strips `temperature` for those models and upgrades a `budget_tokens`-style `thinking` config to the adaptive form, so an embed that ships its SDK's defaults doesn't draw an avoidable 400. You don't have to do anything; just don't expect `temperature` to change a Claude 5 reply.
 
 ### OpenAI models
 
-**GPT-5.6 Terra** (`gpt-5.6-terra`) is the comparable peer to Sonnet 4.6.
+**GPT-5.6 Terra** (`gpt-5.6-terra`) is the balanced peer to Sonnet.
 
-- **Cost:** $2.50 per million input, $15 per million output. The same band as Sonnet.
-- **Latency:** First token in ~700ms.
+- **Cost:** $2.50 / $15. The same band as Sonnet.
 - **Capability:** Strong at multimodal input and general chat. Tool use is reliable. The right OpenAI default for support, sales, and concierge agents.
 - **Context window:** 1M tokens.
 
-**GPT-5.6 Sol** (`gpt-5.6-sol`) is the reasoning-grade OpenAI flagship, comparable to Opus.
+**GPT-5.6 Sol** (`gpt-5.6-sol`) is the reasoning-grade OpenAI flagship.
 
-- **Cost:** Premium ($5 per million input, $30 per million output). Comparable to Opus per token.
-- **Latency:** Higher than Terra; first token in ~1.5s, more if reasoning is engaged.
+- **Cost:** $5 / $30.
 - **Capability:** Frontier reasoning, coding, and agentic work. Excellent at hard tasks, math, and complex tool chains. Overkill for casual chat.
 - **Context window:** 1M tokens.
 
 **GPT-5.6 Luna** (`gpt-5.6-luna`) is the budget pick of the 5.6 family.
 
-- **Cost:** $1 per million input, $6 per million output.
-- **Latency:** Fast.
-- **Capability:** Vision-capable, and roughly comparable to Haiku for short interactions. Less coherent on long conversations.
+- **Cost:** $1 / $6.
+- **Capability:** Vision-capable, roughly comparable to Haiku for short interactions. Less coherent on long conversations.
 - **Context window:** 1M tokens.
 
 **o3** (`o3`) is the reasoning specialist, with `o3-pro` above it.
 
 - **Cost:** Reasoning tokens bill as output, so replies cost more than their visible length suggests.
-- **Latency:** Variable; it thinks before the first token arrives.
 - **Capability:** Deep chain-of-thought for math, logic, and structured planning. Not a general chat pick; reach for it when the agent's job is to reason, not to converse.
 
-The platform also carries the wider OpenAI lineup: GPT-5.5 and GPT-5.5 Pro, the more affordable GPT-5.4 tier (`gpt-5.4`, `gpt-5.4-pro`, `gpt-5.4-mini`, `gpt-5.4-nano`, the cheapest current GPT), and GPT-5.3 Codex (`gpt-5.3-codex`) for code-centric agents. The three 5.6 models above cover almost every agent use case; the rest are there when you want a specific cost or capability point.
+The platform also carries GPT-5.5 and GPT-5.5 Pro, the more affordable GPT-5.4 tier (`gpt-5.4`, `gpt-5.4-pro`, `gpt-5.4-mini`, `gpt-5.4-nano`, the cheapest current GPT), and GPT-5.3 Codex (`gpt-5.3-codex`) for code-centric agents.
 
 Legacy ids keep working: `gpt-4o`, `gpt-4o-mini`, and `o3-mini` are accepted as aliases and resolve to `gpt-5.6-sol`, `gpt-5.6-luna`, and `o3` (the GPT-4o family was deprecated upstream in July 2026), so existing agents upgrade in place with no config change.
 
 ### xAI (Grok) models
 
-**Grok 4.5** (`grok-4.5`) is the xAI flagship.
+**Grok 4.5** (`grok-4.5`) is the xAI flagship: $2 / $6, cheaper than Sonnet per token, with a 500K context window. Frontier reasoning and strong real-time knowledge of X. A good pick for agents that discuss current events or social sentiment.
 
-- **Cost:** $2 per million input, $6 per million output. Cheaper than Sonnet per token.
-- **Latency:** First token in roughly a second.
-- **Capability:** Frontier reasoning with strong real-time knowledge of X. Tool use is reliable. A good pick for agents that discuss current events or social sentiment.
-- **Context window:** 500K tokens.
+**Grok 4.3** (`grok-4.3`) is the long-context option: $1.25 / $2.50, 1M-token window. Reach for it when the agent carries very large system prompts or memory.
 
-**Grok 4.3** (`grok-4.3`) is the long-context option ($1.25 in / $2.50 out, 1M-token window). Reach for it when the agent carries very large system prompts or memory.
+**Grok 4.1 Fast** (`grok-4.1-fast`) is the budget workhorse on paper ($0.20 / $0.50, 2M-token window), but check availability before you pin it: OpenRouter dropped it from its catalog, so it only runs when a first-party `GROK_API_KEY` is configured. `GET /api/brain/chat` reports it as unavailable otherwise.
 
-**Grok 4.1 Fast** (`grok-4.1-fast`) is the budget workhorse ($0.20 in / $0.50 out, 2M-token window). Comparable to Haiku for short interactions and dramatically cheaper.
+### Free lanes (no key, no bill)
+
+The embed default, `openai/gpt-oss-20b:free`, costs nothing and is tool-call capable. Signed-out callers are restricted to these free lanes on purpose, so an unauthenticated script can't drain the server's billed keys. Alongside GPT-OSS the platform carries free NVIDIA NIM models (Nemotron, DeepSeek, Kimi K2, Llama 4 Maverick, MiniMax M2), Groq's sub-second Llama lanes, SambaNova, Mistral's experiment tier, and Z.AI's GLM Flash. They are the fallback rungs the proxy walks when a paid lane errors, and they are perfectly serviceable as a primary brain for a low-stakes agent.
 
 ### Picking a model
 
@@ -153,15 +154,18 @@ A practical rule of thumb:
 
 | Use case | Recommended model |
 |---|---|
-| Support / FAQ agent for a SaaS | Sonnet 4.6 or GPT-5.6 Terra |
-| Personal-website-me agent | Sonnet 4.6 |
-| Onboarding co-pilot, sales bot | Sonnet 4.6 |
-| Museum tour guide, long-form domain agent | Sonnet 4.6, escalate to Opus only if needed |
-| Legal, medical, financial assistant | Opus 4.7 or GPT-5.6 Sol |
+| Kicking the tyres, low-stakes embed | `openai/gpt-oss-20b:free` (the default — no key, no bill) |
+| Support / FAQ agent for a SaaS | Sonnet 5 or GPT-5.6 Terra |
+| Personal-website-me agent | Sonnet 5 |
+| Onboarding co-pilot, sales bot | Sonnet 5 |
+| Museum tour guide, long-form domain agent | Sonnet 5, escalate to Opus 5 only if needed |
+| Legal, medical, financial assistant | Opus 5 or GPT-5.6 Sol |
+| Hardest reasoning, vision-heavy knowledge work | Fable 5 |
 | Status-check, wave-and-greet, micro-interaction | Haiku 4.5 or GPT-5.6 Luna |
-| Multi-step tool chains, code assistance | Opus 4.7 or GPT-5.6 Sol |
+| Multi-step tool chains, code assistance | Opus 5 or GPT-5.6 Sol |
+| Current events, social sentiment | Grok 4.5 |
 
-Start at Sonnet 4.6 for almost everything. Move to Haiku if latency is the bottleneck. Move to Opus or GPT-5.6 Sol only when you have a specific quality issue that the smaller model can't fix with prompt iteration.
+Start at Sonnet 5 for almost everything. Move to Haiku if latency is the bottleneck. Move to Opus 5, Fable 5, or GPT-5.6 Sol only when you have a specific quality issue that the smaller model can't fix with prompt iteration.
 
 ---
 
@@ -169,7 +173,9 @@ Start at Sonnet 4.6 for almost everything. Move to Haiku if latency is the bottl
 
 The system prompt and the model are configured separately. You can swap models without touching the prompt, and vice versa.
 
-In **Brain → System prompt**, paste your full prompt. The same prompt works across all the models above, with one caveat: smaller models (Haiku, GPT-5.6 Luna) follow instructions less precisely, so prompts written for them benefit from being shorter and more explicit. A 600-word prompt that Sonnet handles cleanly may overflow Haiku's instruction-following budget.
+The prompt lives on the agent's persona, which you build in the **Brain Studio** panel of the agent editor. It is an interview, not a text box: you direct a character with trait sliders and sample exchanges, and the studio extracts the system prompt from that. Read the extracted prompt back with `GET /api/agents/:id/persona`.
+
+The same prompt works across all the models above, with one caveat: smaller models (Haiku, GPT-5.6 Luna) follow instructions less precisely, so prompts written for them benefit from being shorter and more explicit. A 600-word prompt that Sonnet handles cleanly may overflow Haiku's instruction-following budget.
 
 If you're targeting Haiku or GPT-5.6 Luna specifically, trim:
 
@@ -179,16 +185,15 @@ If you're targeting Haiku or GPT-5.6 Luna specifically, trim:
 
 For Sonnet, Opus, GPT-5.6 Terra, and GPT-5.6 Sol, the full prompt template from the [agent personality](/tutorials/agent-personality) tutorial works without modification.
 
-A few configuration knobs alongside the prompt:
+**Sampling knobs are set on the client, not in a dashboard.** The runtime's provider takes them when it is constructed, and the `<agent-3d>` element passes them through from the agent manifest's `brain` block:
 
-| Setting | What it does | Recommended |
-|---|---|---|
-| **Temperature** | 0-2 range, controls randomness | 0.7-0.9 for chat agents, 0.3-0.5 for FAQ |
-| **Max tokens** | Hard cap on reply length | 512 for voice agents, 1024 for text-mode |
-| **Top-p** | Nucleus sampling threshold | Leave at default unless you have a specific reason |
-| **Stream** | Whether to stream tokens as they arrive | On — see Step 5 |
+| Setting | Where it lives | Default | Notes |
+|---|---|---|---|
+| `temperature` | `manifest.brain.temperature` | `0.7` | 0.8 is a safe centre for a conversational agent. **Silently stripped for Opus 4.7+ and the whole Claude 5 family**, which reject sampling parameters upstream. |
+| `maxTokens` | `manifest.brain.maxTokens` | `4096` | The proxy defaults a missing value to 4096, and floors thinking-by-default models at 4096 so the visible reply isn't squeezed out by thinking tokens. |
+| `thinking` | `manifest.brain.thinking` | `'auto'` | `'always'` requests extended thinking. Coerced to the adaptive form on models that demand it. |
 
-The temperature setting is the second-most impactful knob after the prompt itself. Too low and the agent becomes mechanical; too high and it goes off-script. 0.8 is a safe centre for any conversational agent.
+There is no top-p knob and no streaming toggle: the client always requests `stream: true` (see Step 5). A long, stable system prompt gets a prompt-cache breakpoint added automatically once it clears the per-model length threshold, which bills repeat turns at roughly a tenth of the input price. You don't opt in.
 
 ---
 
@@ -215,7 +220,7 @@ agent.addEventListener('brain:message', (e) => {
 
 For a custom chat UI, build incremental rendering on `brain:stream` so the user sees text arriving instead of waiting for the whole reply. The built-in chat input already does this — assistant messages fill in word by word.
 
-To turn streaming off (rarely useful, but available if you're piping the output somewhere that can only handle complete messages), set **Brain → Stream → off** in the agent settings. You'll get a single `brain:message` event with the whole reply and no `brain:stream` events.
+There is no streaming off-switch: the runtime always requests `stream: true`. If you need whole messages only, ignore `brain:stream` and read `brain:message`, which fires once with the complete reply — the same end state, with no wiring change.
 
 Streaming impacts perceived latency *much* more than actual end-to-end latency. A reply that takes 2 seconds to fully generate feels nearly instant with streaming on; without streaming, the same 2-second wait feels like the agent is broken.
 
@@ -227,14 +232,19 @@ Tool use (the model invoking a function you've defined — a `searchProducts(que
 
 | Model | Tool use quality |
 |---|---|
-| Claude Opus 4.7 | Excellent. Handles complex multi-tool chains and ambiguous tool selection cleanly. |
-| Claude Sonnet 4.6 | Excellent. Indistinguishable from Opus for most tool flows. The default recommendation. |
+| Claude Fable 5 | Excellent. The strongest option for long, ambiguous tool chains. |
+| Claude Opus 5 | Excellent. Handles complex multi-tool chains and ambiguous tool selection cleanly. |
+| Claude Sonnet 5 | Excellent. Indistinguishable from Opus for most tool flows. The default recommendation. |
 | Claude Haiku 4.5 | Good for single-tool flows. Struggles with chains that require 3+ sequential tool calls. |
 | GPT-5.6 Sol | Excellent, similar to Opus. Strong at parallel tool calls. |
 | GPT-5.6 Terra | Very good. Slightly more prone to mis-formatting tool arguments than Sonnet. |
 | GPT-5.6 Luna | Functional. Avoid for anything with 2+ tools or non-trivial schemas. |
+| Grok 4.5 | Reliable. A fair substitute for Terra when you also want current-events knowledge. |
+| Free lanes (GPT-OSS, NVIDIA NIM, Groq) | Tool-call capable — that is why they are the fallback rungs — but noticeably weaker at picking the right tool. Fine for one or two tools with simple schemas. |
 
-If you're building a skill-heavy agent — one that needs to look up products, check inventory, search documentation, and place orders, all in one conversation — pick Sonnet or GPT-5.6 Terra at minimum. Haiku and Luna are acceptable for single-purpose lookups but get confused on chains.
+If you're building a skill-heavy agent — one that needs to look up products, check inventory, search documentation, and place orders, all in one conversation — pick Sonnet 5 or GPT-5.6 Terra at minimum. Haiku and Luna are acceptable for single-purpose lookups but get confused on chains.
+
+The runtime caps a single turn at 8 tool iterations, so a chain that can't resolve inside 8 round trips returns whatever it has rather than looping forever.
 
 See the [custom skill tutorial](/tutorials/custom-skill) for the full skill-writing workflow.
 

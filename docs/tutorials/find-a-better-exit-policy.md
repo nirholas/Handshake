@@ -50,11 +50,16 @@ curl -s 'https://three.ws/api/sniper/exit-lab?window=all&limit=500' \
 
 ```json
 {
-  "scanned": 239,
-  "replayable": 234,
+  "scanned": 313,
+  "replayable": 306,
   "excluded": ["laddered"]
 }
 ```
+
+Those counts grow every time the fleet closes a position, so yours will be
+larger. The shape is the part that matters: `scanned` is every closed position
+the corpus reached, `replayable` is how many survived the exclusions, and
+`excluded` names why the rest were dropped.
 
 **The first thing to notice is that "net result" and "actually booked" are not
 the same number, and they are not supposed to be.**
@@ -188,8 +193,8 @@ https://three.ws/exit-lab?stopLossPct=15&trailingStopPct=10&takeProfitPct=off&in
 
 That link is the unit of a useful argument about exits. Instead of "I think the
 stop is too wide", you can send a page that shows what a tighter stop would have
-returned over 234 real trades, with the caveats attached and the underlying
-transactions one click away.
+returned over every replayable trade in the corpus, with the caveats attached and
+the underlying transactions one click away.
 
 If you run your own agent, the same parameters are what
 [`/api/sniper/strategy`](../api-reference.md) accepts, so a finding here maps

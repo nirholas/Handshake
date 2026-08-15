@@ -216,7 +216,7 @@ if (report.verdict.level === 'fail') {
 Every sample rig is linkable, which is how the failure states in this document can be checked against a live page rather than taken on faith:
 
 - [A Mixamo rig that fully animates](https://three.ws/rig-doctor?sample=/avatars/michelle.glb)
-- [A halfbody avatar with frozen legs](https://three.ws/rig-doctor?sample=/avatars/realistic-halfbody.glb)
+- [A halfbody avatar with frozen arms and legs](https://three.ws/rig-doctor?sample=/avatars/realistic-halfbody.glb)
 - [A skinned but non-humanoid rig](https://three.ws/rig-doctor?sample=/avatars/fox.glb)
 - [A static mesh with no skeleton](https://three.ws/rig-doctor?sample=/avatars/mannequin.glb)
 

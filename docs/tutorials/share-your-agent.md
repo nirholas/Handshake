@@ -22,18 +22,18 @@ Go to [https://three.ws/my-agents](https://three.ws/my-agents). Sign in if you'r
 You see a grid of every agent you own. Click the agent you want to share. The agent's profile page opens at a URL of this shape:
 
 ```
-https://three.ws/agent/<id>
+https://three.ws/agent/d94d2a50-86fa-4d2e-b87b-580f7517aa4c
 ```
 
-The `<id>` is your agent's permanent identifier. It looks like a hex string or a slugified handle, depending on how the agent was created. Copy the full URL from the browser's address bar — that's the canonical public link.
+The `<id>` is your agent's permanent identifier: a UUID, assigned when the agent is first saved. Copy the full URL from the browser's address bar and it works forever.
 
 A few practical notes:
 
 - **The URL is permanent.** It does not change when you update the agent's body, personality, name, or skills. Embeds, QR codes, business cards, and conference badges you produce today remain valid indefinitely.
-- **The URL is public.** Anyone with the link can open it. There is no login required to talk to a public agent.
-- **The URL is canonical.** Even if the platform's user-facing URL structure ever evolves, the agent ID itself is a stable platform reference. Old links continue to redirect.
+- **The URL is public.** Anyone with the link can open it. There is no login required to talk to an agent.
+- **`/agent/<id>` redirects to `/agents/<id>`.** The profile page's canonical address is the plural form, and the singular one issues a permanent redirect to it. Both are safe to hand out; links printed years ago keep resolving.
 
-If you ever forget the URL, the "Copy share link" button on the agent profile page copies the canonical version to your clipboard.
+There is a **Share** button on the profile page: one floating above the fold on the hero, one in the action row. Either opens a share panel that shows the exact card your link will unfurl as, with **Copy link**, **Share on X**, **Share on Farcaster**, and **Remix in three.ws**. The link it copies is the share URL from Step 3, not the bare profile URL, because that is the one carrying the rich preview.
 
 Every public agent is also in the platform's own directory, which is a plain open endpoint. Press the button and you are looking at the live directory, portrait and all, the way it exists as you read this:
 
@@ -105,57 +105,81 @@ Don't tint both foreground and background; the contrast will drop too low and sc
 
 When you paste your agent URL into iMessage, WhatsApp, Slack, Discord, Telegram, Twitter / X, LinkedIn, Bluesky, Mastodon — every modern chat and social platform fetches the URL, extracts a preview, and shows the recipient a card with a title, description, and image. The right preview can be the difference between a recipient clicking the link and ignoring it.
 
-three.ws sets Open Graph and Twitter Card meta tags automatically on every agent page. You do not need to configure anything for the previews to work — they ship by default.
+three.ws builds those tags automatically. You do not configure anything for the previews to work, but you do need to share the right URL.
+
+### Share the `/share` URL, not the bare profile URL
+
+The agent profile page at `/agent/<id>` is a JavaScript app. Its HTML carries the generic three.ws card, because at the moment a crawler fetches it, the page has not yet loaded which agent it is about. So the platform serves a second, server-rendered address purely for crawlers:
+
+```
+https://three.ws/agent/<id>/share
+```
+
+That page is plain HTML with your agent's real meta baked into the `<head>`, and a redirect that sends a human straight on to `/agent/<id>`. A recipient who taps the link never sees it; the unfurler does. This is the URL the Share button copies, and the one to paste anywhere a preview matters.
 
 ### What the previews contain
 
-When a platform fetches `https://three.ws/agent/<id>`, it sees:
+When a platform fetches `https://three.ws/agent/<id>/share`, it sees:
 
-- **og:title** — Your agent's name. Example: "Iris".
-- **og:description** — Your agent's one-line description from the editor. Example: "Personal AI guide for Lumen customers."
-- **og:image** — A pre-rendered preview image of the agent. This is generated automatically the first time someone shares the URL, then cached on the platform CDN.
-- **og:url** — The canonical public URL of the agent.
-- **og:type** — `website`.
-- **twitter:card** — `summary_large_image`, so the Twitter preview shows the big-image card.
-- **twitter:title**, **twitter:description**, **twitter:image** — Twitter-specific duplicates of the OG fields.
+- **og:title**: `<agent name> · 3D AI Agent · three.ws`, or `<agent name> · 3D AI Agent on <chain> · three.ws` when the agent has been deployed on-chain.
+- **og:description**: Your agent's description (first 120 characters), the chain it is deployed on if any, then `3D AI Agent on three.ws`.
+- **og:image**: Your avatar's rendered thumbnail when the avatar's visibility is public or unlisted. Otherwise a generated SVG card from `/api/og/agent?id=<id>` carrying the agent's name and its chain badge.
+- **og:url**: The `/share` URL itself. **og:type** is `profile`.
+- **twitter:card**: `summary_large_image`, so X renders the big-image card, alongside `twitter:title`, `twitter:description`, and `twitter:image`.
+- A **Farcaster Frame** block, so the same link renders as a frame in Farcaster clients.
+- A **link rel="alternate" oEmbed** pointer at `/api/oembed`, so embedders that speak oEmbed can resolve the agent without scraping.
 
-The preview image is a still render of your agent — same body, same lighting as the live page, framed for the 1200×630 standard OG image aspect. The agent's name is composited onto the corner of the image. The whole thing reads as "this is an agent you can talk to" without the recipient having to open the link first.
+Both image paths target the 1200x630 standard OG aspect.
 
-### How the preview image is generated
+There is also a wallet variant, `/agent/<id>/share?wallet=1`, which swaps the copy and the deep link over to the agent's wallet view and always uses the generated card (the card is what carries the wallet identity). Use it when the thing you are sharing is the agent's wallet rather than the agent.
 
-When an OG-fetcher (iMessage's link-unfurler, Slack's link preview service, Twitter's card scraper) hits your agent's URL for the first time, the platform spins up a headless WebGL renderer, loads the agent's GLB, renders a single high-quality frame against a neutral background, composites the name on top, and saves the result to the CDN. The whole render takes about two seconds.
+### Preview freshness
 
-After that first render, the image is cached on the CDN for ~24 hours. So:
+Nothing is pre-rendered and nothing needs purging. The share page is generated per request from the agent's current row in the database, and the generated card is drawn on demand:
 
-- The first share of a brand-new agent will see a "loading" image for a few seconds (most platforms show their own placeholder during this window)
-- Subsequent shares within ~24 hours are instant — the cached image is served
-- After 24 hours, the next share triggers a re-render. This is useful: if you've swapped the agent's body in Studio, the new body shows up in social previews within a day automatically
+- The share page is cached `max-age=60` in the browser and `s-maxage=600` at the edge, with a one-hour stale-while-revalidate window.
+- The generated SVG card is cached `max-age=180` / `s-maxage=900`, with a two-minute stale-while-revalidate window.
 
-If you need an instant re-render — say, you've changed the agent's body for a launch and want fresh previews — there's a "Refresh preview image" button on the agent profile page that purges the CDN cache and forces a fresh render on the next share.
+So a rename, a description edit, or a body swap shows up in new previews within minutes, with no button to press. The lag you are more likely to hit is on the other side: X, Slack, and Facebook each cache what they scraped, sometimes for days. That is what the debuggers below are for.
 
 ### Verifying the preview before sharing
 
-Don't ship a link without testing the preview first. Run the URL through a debugger:
+Don't ship a link without testing the preview first. There are three levels of check, cheapest first.
 
-- [Twitter Card Validator](https://cards-dev.twitter.com/validator) — Paste the URL, see the preview Twitter will render.
-- [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) — Same for Facebook, Messenger, WhatsApp, and Instagram.
-- [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/) — Same for LinkedIn.
+**The share panel.** Open your agent's profile page and click **Share**. The panel renders the real card image at the top, so you see what the link unfurls as before you send it anywhere.
 
-Run your agent URL through at least Twitter and Facebook before a big share. If a preview looks wrong, the most common causes are:
+**Read the tags yourself.** One command, no third party, no cache in the way:
 
-- The agent's name or description is unset in the editor → set them
-- The preview image hasn't generated yet → wait one minute and retry
-- A platform has cached an old version → use the platform's debugger (each tool above has a "re-scrape" button)
+```bash
+curl -s https://three.ws/agent/YOUR_AGENT_ID/share \
+  | grep -o '<meta[^>]*og:[^>]*>'
+```
+
+You should see your agent's name in `og:title` and a real image URL in `og:image`. If `og:title` says "Agent" and nothing else, the agent's name is unset.
+
+**Platform debuggers**, for when a specific network is showing something stale:
+
+- [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/): Facebook, Messenger, WhatsApp, and Instagram. Has a "Scrape Again" button.
+- [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/): LinkedIn, with the same re-inspect behaviour.
+- [Twitter Card Validator](https://cards-dev.twitter.com/validator): X's card preview. It now requires a logged-in developer account, so the `curl` check above is usually faster.
+
+If a preview looks wrong, the causes in order of likelihood are:
+
+- **You shared `/agent/<id>` instead of `/agent/<id>/share`.** That gets the generic three.ws card. This is by far the most common one.
+- **The agent's name or description is unset** → set them in the editor and re-check.
+- **The avatar is private**, so the card falls back to the generated SVG rather than your avatar's thumbnail → set the avatar's visibility to unlisted or public in the [avatar dashboard](/dashboard/avatars).
+- **A platform cached an old version** → use its debugger's re-scrape button.
 
 ### Customising the preview
 
-Most agents look right with the default preview. If you want to customise:
+The card is assembled from the agent's own record, so you customise it by editing the agent, not by editing a preview setting:
 
-- The **name** is read from the agent's name field in the editor.
-- The **description** is read from the agent's description field in the editor.
-- The **image background** can be set per agent in the editor's Brand panel: a solid colour, a gradient, or a fixed background image upload. The agent body composites in front.
+- The **name** is the agent's name field in the editor. It becomes `og:title`.
+- The **description** is the agent's description field. It becomes `og:description`, truncated to the first 120 characters, so put the point first.
+- The **image** is your avatar's thumbnail when the avatar's visibility is public or unlisted. Swap the agent's body (see [Pick and swap an avatar in Studio](/tutorials/swap-avatar-in-studio)) and the card follows within minutes.
+- The **chain badge** appears by itself once the agent is deployed on-chain, both in the title and on the generated card.
 
-Keep the name short (under 30 characters) and the description specific (under 120 characters). Both render onto the image; long strings overflow and the platform clips them.
+Keep the name short and the description specific and front-loaded. Long strings are clipped, not wrapped.
 
 ---
 
@@ -168,7 +192,7 @@ Each platform has its own conventions. Here is what works on each.
 A line of plain text at the bottom of your email signature is the most under-used share context for personal agents.
 
 ```
-Talk to my AI: https://three.ws/agent/YOUR_AGENT_ID
+Talk to my AI: https://three.ws/agent/YOUR_AGENT_ID/share
 ```
 
 The recipient sees the link and the email client unfurls a preview card if it supports OG (Gmail, Apple Mail, Outlook all do). For agents that represent you personally, this is a way to let every email recipient interact with your AI persona without an explicit invite.
@@ -178,7 +202,7 @@ The recipient sees the link and the email client unfurls a preview card if it su
 A simple post with the URL works, but the engagement is higher if you give context:
 
 ```
-Built a 3D AI agent that knows my work. Ask it anything → https://three.ws/agent/YOUR_AGENT_ID
+Built a 3D AI agent that knows my work. Ask it anything → https://three.ws/agent/YOUR_AGENT_ID/share
 ```
 
 X expands the URL into a large image card. The agent's preview image shows. Don't add a screenshot — let the auto-preview do the work; otherwise the platform sometimes hides the card.
@@ -190,7 +214,7 @@ LinkedIn's link unfurling is conservative. The post performs better if you write
 ```
 I built a personal AI assistant that visitors can talk to instead of reading my "About me" page. It knows my work, my availability, and what I'm building right now.
 
-Try it: https://three.ws/agent/YOUR_AGENT_ID
+Try it: https://three.ws/agent/YOUR_AGENT_ID/share
 ```
 
 LinkedIn shows the preview card below your post. Engagement is highest within the first few hours, so post during your network's morning timezone.
@@ -274,7 +298,7 @@ Your share strategy:
 
 1. **Embed on your portfolio site** — Following [Embed in 30 seconds](/tutorials/embed-in-30-seconds), you've added the one-line embed to the home page of your portfolio. Visitors can talk to Mara without leaving your site.
 
-2. **Public link in your email signature** — At the bottom of every email you send: "Available 24/7 to chat about projects → https://three.ws/agent/mara-uxconsultant". Recipients can talk to Mara even when you're asleep.
+2. **Public link in your email signature.** At the bottom of every email you send: "Available 24/7 to chat about projects → https://three.ws/agent/<MARA_ID>/share". Recipients can talk to Mara even when you're asleep, and the mail client unfurls her card inline.
 
 3. **QR on the back of your business card** — At networking events, instead of "I'll email you next week", you say "Scan my card, ask Mara about my work, and book a call directly through her if it's a fit". The conversation happens on your terms, on her schedule.
 
@@ -298,19 +322,25 @@ A few practical implications:
 - **Tell the agent what it can and cannot say.** A line like "Never share my home address, phone number, or contract rates" in the system prompt is followed reliably by modern LLMs.
 - **Memory is private to your agent's record on the platform.** It's not shared with other agents and not visible to other users. But you, the owner, can see conversation logs in the editor.
 
-If you want a private agent — one that only lives on a specific embed and isn't reachable from a public URL — toggle the "Public profile" switch off in the editor's settings panel. The agent ID still works for embeds; the public profile URL returns a 404. This is the right setting for internal tools, B2B-only embeds, and any agent that should not be discoverable.
+**There is no private-profile switch, and this matters.** Every saved agent has a reachable profile page. What you *can* control is discoverability and assets, which are two separate settings:
+
+- **Marketplace listing.** An agent is unpublished until you publish it, and only published agents appear in the [marketplace](/marketplace) and its category browsing. Unpublishing removes an agent from the directory; it does not close the profile URL.
+- **Avatar visibility.** Your avatar has its own private / unlisted / public setting in the [avatar dashboard](/dashboard/avatars). A private avatar is not served from any public endpoint, which is also why the agent's social card falls back to the generated SVG rather than the avatar's thumbnail.
+
+So plan on the URL being reachable by anyone who has it. For genuinely internal tooling, do not put the knowledge in a hosted agent's system prompt at all.
 
 ---
 
 ## What you learned
 
-- Every agent has a permanent public URL at `https://three.ws/agent/<id>`
+- Every agent has a permanent public URL at `https://three.ws/agent/<id>`, where the id is a UUID
 - The URL is stable across body swaps, system prompt updates, and skill changes
+- Rich previews come from `https://three.ws/agent/<id>/share`, a server-rendered page that carries the agent's real Open Graph, Twitter Card, and Farcaster Frame meta and forwards humans to the profile
+- The Share button on the profile page shows that card and copies the `/share` link for you
+- Nothing is pre-rendered and nothing needs purging: edits appear in new previews within minutes, and the stale copy you see is usually the sharing platform's own cache
 - A QR code generated from any standard service points to that URL for offline share
-- Open Graph and Twitter Card meta tags are set automatically, with a pre-rendered preview image
-- Social preview images are generated on first share, cached 24 hours, and can be force-refreshed
 - The three share formats — embed, link, QR — are complementary; a complete strategy uses all three
-- Public agents are genuinely public; configure the system prompt and skills accordingly, or toggle the public profile off for private use cases
+- Every agent profile is reachable by anyone with the link; discoverability is controlled by marketplace publishing, and asset exposure by avatar visibility
 
 The agent's URL is the durable handle. Embed it, link it, print it. The agent shows up everywhere, identical, maintained from a single source of truth.
 

@@ -58,12 +58,15 @@ import { loadManifest, normalize } from 'https://three.ws/agent-3d/1.5.2/agent-3
 // One call for every source form the element accepts: agent:// (resolved
 // through the ERC-8004 registry on the named chain), ipfs://, ar://, and
 // plain HTTPS.
-const manifest = await loadManifest('https://cdn.acme.com/aria/manifest.json');
+// Any live agent on the platform serves one, so this runs as written:
+const manifest = await loadManifest(
+  'https://three.ws/api/agents/27a0f649-3b59-4552-bb0b-faf616ac448b/manifest',
+);
 
 console.log(manifest.name, manifest.body.uri);
 ```
 
-`loadManifest` returns the manifest already normalized: it stamps `_baseURI` with the URL it fetched from, so relative paths (`instructions.md`, `skills/wave/`, `memory/MEMORY.md`) resolve correctly, and it adapts an ERC-8004 registration JSON into this manifest shape when that is what the URI serves. Call `fetchRelative(manifest, 'instructions.md')` to pull a bundle file. If you already hold the parsed JSON, `normalize(json, { baseURI })` does the shape work alone.
+`loadManifest` returns the manifest already normalized. It records the directory the manifest was fetched from in `_baseURI`, which is what makes the bundle's relative paths (`instructions.md`, `skills/wave/`, `memory/MEMORY.md`) resolvable, and it adapts an ERC-8004 registration JSON into this manifest shape when that is what the URI serves. Call `fetchRelative(manifest, 'instructions.md')` to pull a bundle file against that base. If you already hold the parsed JSON, `normalize(json, { baseURI })` does the shape work alone.
 
 > `@three-ws/avatar-schema` is **not** the validator for this document. It
 > validates the *avatar* manifest (`avatar.v1.json`: `schemaVersion`, `mesh`,

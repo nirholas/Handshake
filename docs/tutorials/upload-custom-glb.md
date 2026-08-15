@@ -7,7 +7,7 @@ This tutorial covers the whole pipeline. Where compatible GLBs come from, what m
 **What you'll build:**
 - A custom, rigged 3D avatar running on your live agent
 - A workflow for validating GLBs before upload so failures happen in your editor, not in production
-- A fix-list for the common failure modes (no idle clip, broken skinning, unsupported materials, oversize files)
+- A fix-list for the common failure modes (a rig that won't canonicalize, mis-named clips, broken skinning, unsupported materials, oversize files)
 - A baked, draco-compressed GLB that loads fast on mobile
 
 **Prerequisites:** Comfort with a file manager and the command line. Some familiarity with Blender helps for the optional baking step but is not required. You should have an existing agent in [three.ws/my-agents](https://three.ws/my-agents) to swap a body into.
@@ -16,21 +16,23 @@ This tutorial covers the whole pipeline. Where compatible GLBs come from, what m
 
 ## Step 1 — Understand what the runtime expects
 
-A GLB is just a binary glTF — a 3D scene packaged in a single file. The runtime accepts any valid glTF 2.0 GLB, but to function as a *conversational agent body* it needs three things on top of the basic geometry:
+A GLB is just a binary glTF — a 3D scene packaged in a single file. The runtime accepts any valid glTF 2.0 GLB. To function as a *conversational agent body*, the one thing that really matters on top of the basic geometry is:
 
-1. **A skeleton (armature) the runtime can read.** The bones should follow a humanoid pattern — head, neck, spine, two arms, two legs. Mixamo and most humanoid avatar pipelines output skeletons that the runtime understands directly.
-2. **An idle animation clip.** Without an idle, the avatar stands in T-pose between turns, which looks like a broken model. Any clip whose name contains "idle" (case-insensitive) works.
-3. **At least one talk-style clip.** Used while the agent is speaking. Names containing "talk", "yes", or "wave" all match the runtime's hint search.
+**A humanoid skeleton (armature) the runtime can name-map.** Bones following a humanoid pattern — head, neck, spine, two arms, two legs. There is no rig allowlist: `src/glb-canonicalize.js` maps the common conventions (Mixamo, Avaturn, Unreal, VRM/VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L` suffixes, simple `shoulderL` rigs) onto one canonical bone set.
 
-That's the *minimum*. A great avatar also has:
+**You do not have to ship animation clips.** Once the skeleton canonicalizes, `src/animation-retarget.js` retargets the platform's pre-baked clip library (idle, walk, and the emotes) onto your rig, legs included. A rig that genuinely can't be skeleton-driven — no skin, a non-humanoid prop — falls back to the default rig rather than freezing. And if only *some* bones name-map, `relaxUndrivenArms()` swings the un-driven arms down to a relaxed rest, so an avatar never reads as a broken bind-pose T-pose.
+
+Baking your own clips in is therefore an *upgrade*, not a requirement. Do it when you want motion the shared library doesn't have — a brand-specific gesture, a costume-driven idle. Clips are matched by a case-insensitive substring search on the clip name, so `idle`, `idle_loop`, and `IdleBreathing` all satisfy an "idle" lookup; `talk`, `yes`, and `wave` all match the talk-style hint.
+
+Beyond the rig, a great avatar has:
 
 - A wave clip (`wave`, `WaveLoop`, etc.) for greetings
 - Emote clips (`celebrate`, `cheer`, `flinch`, `concern`) for product moments
 - Sensible material setup — PBR (`pbrMetallicRoughness`) materials, no unsupported extensions
 - Textures sized for the web — 1024×1024 or 2048×2048 at most, JPEG or WebP rather than PNG where possible
-- Draco compression, bringing the file under ~10 MB
+- Compressed geometry, bringing the file under ~10 MB
 
-If your GLB is missing the bare minimum, you'll see it in T-pose. If it lacks the niceties, it works but feels heavy and pops in slowly on mobile.
+If it lacks the niceties, it works but feels heavy and pops in slowly on mobile.
 
 ---
 
@@ -52,15 +54,15 @@ Workflow:
 
 Mixamo characters work *out of the box* with the runtime. This is the recommended path if you don't already have a model.
 
-### three.ws Studio
+### Avatar Studio
 
-[three.ws Studio](https://studio.three.ws) lets you create a stylised avatar in minutes with full body customisation. The download is a single GLB with a clean skeleton and Mixamo-compatible rig.
+[Avatar Studio](https://three.ws/avatar-studio) lets you create a stylised avatar in minutes with full body customisation (body, hair, face, clothing, accessories). The export is a single GLB with a clean skeleton and Mixamo-compatible rig. It is also reachable at [/create/studio](https://three.ws/create/studio), and the [Forge](https://three.ws/create) opens it in a modal. (Don't confuse it with [/studio](https://three.ws/studio), which is Widget Studio, the embed-snippet builder.)
 
 Workflow:
 
-1. Open [three.ws Studio](https://studio.three.ws).
-2. Customise your avatar and click **Export**.
-3. The GLB has the body and skin but no animations baked in — you'll need to add at least an idle clip. See Step 5 for adding clips with `gltf-transform`.
+1. Open [Avatar Studio](https://three.ws/avatar-studio).
+2. Customise your avatar and click **Save Avatar**.
+3. The GLB has the body and skin but no bespoke animation clips baked in. You don't have to add any: the platform retargets its pre-baked idle/walk/emote library onto any humanoid rig it can canonicalize, so a Studio avatar animates as soon as it is on an agent. Bake your own clips into the file only when you want motion the library doesn't have — Step 4 covers merging clips in.
 
 ### Photo-to-avatar
 
@@ -95,7 +97,7 @@ What to look for in the report:
 |---|---|
 | **Errors** | Any errors mean the file will fail to load. Fix them all before uploading. |
 | **Warnings** | Most are cosmetic. Texture-size warnings ("3.4 MB PNG") and "unused material" warnings are worth fixing for performance, but won't break the agent. |
-| **Animations** | The clip list. Look for at least one clip whose name contains "idle". Click each one to preview. |
+| **Animations** | The clip list. If you baked your own clips in, confirm at least one name contains "idle" so the hint search finds it. A file with no clips is fine: the platform's own library retargets onto the rig. Click each one to preview. |
 | **Skeleton** | Reports whether the rig is humanoid. A "non-humanoid skeleton" message means the runtime won't be able to drive head-look or wave gestures. |
 | **Materials** | Lists each material's type. PBR (`pbrMetallicRoughness`) is the safe one. Any extension flagged with "unsupported" means that material will render as a fallback grey. |
 | **File size** | The full size and a breakdown. Mesh + textures over ~10 MB is too heavy for mobile. |
@@ -122,31 +124,69 @@ npm run optimize:glb -- public/avatars/your-character.glb
 
 > **`optimize:glb` uses WebP, not Draco.** The avatar runtime *does* decode Draco — the viewer and the avatar body loaders wire a `DRACOLoader` pointed at the vendored `/three/draco/` decoder, so a Draco-compressed GLB loads fine (that's Step 5). `optimize:glb` itself deliberately stays within plain glTF 2.0 and leans on WebP textures for its ~90% size win, so its output needs no decoder at all. See [docs/3d-asset-pipeline.md](../3d-asset-pipeline.md) for the full format and pipeline reference.
 
-Outside the repo, [gltf-transform](https://gltf-transform.dev) is a Node-based CLI maintained as part of the glTF ecosystem that also handles the conversion:
+Outside the repo, install the same converter directly. [FBX2glTF](https://github.com/facebookincubator/FBX2glTF) (Meta's converter) ships as a prebuilt binary inside the `fbx2gltf` npm package, and it is exactly what `npm run convert:fbx` wraps:
 
 ```bash
-# One character FBX with one baked-in animation:
-npx @gltf-transform/cli@latest fbx2glb your-character.fbx your-character.glb
+npm i -D fbx2gltf
 ```
 
-If you downloaded several animations separately (idle, talk, wave as standalone FBXs), merge them into a single GLB with named clips:
+The package exports a function, not a CLI shim — there is no `npx fbx2gltf`. Call it from a small script:
+
+```js
+// convert.mjs — node convert.mjs your-character.fbx your-character.glb
+import { createRequire } from 'node:module';
+import { renameSync } from 'node:fs';
+
+const convert = createRequire(import.meta.url)('fbx2gltf');
+const [input, output] = process.argv.slice(2);
+
+// A destination ending in .glb yields binary glTF. Some builds write to a
+// slightly different path and return it, so normalize to what you asked for.
+const written = await convert(input, output, ['--pbr-metallic-roughness']);
+if (written && written !== output) renameSync(written, output);
+console.log(`wrote ${output}`);
+```
+
+PBR metallic-roughness materials, the skeleton, skin weights, animation clips, and textures all survive the conversion. If you would rather drive the binary straight from a shell, it is at `node_modules/fbx2gltf/bin/<Darwin|Linux|Windows_NT>/FBX2glTF`; run it with `--help` to see the flags (note that its `-o` takes a path *without* a suffix, which is why the wrapper above normalizes the result).
+
+> **`gltf-transform` cannot read FBX.** It is a glTF-to-glTF toolkit — every command it exposes takes a `.glb`/`.gltf` in and writes one out, so there is no `fbx2glb`. Use it for the *optimization* steps below, after FBX2glTF has produced a GLB. It also has no `rename` and no `script` subcommand; renaming clips is a Blender or Document-API job (below).
+
+If you downloaded several animations separately (idle, talk, wave as standalone FBXs), convert each with the script above and merge them into a single GLB:
 
 ```bash
-# Convert each FBX into a GLB first
-npx @gltf-transform/cli@latest fbx2glb idle.fbx idle.glb
-npx @gltf-transform/cli@latest fbx2glb talk.fbx talk.glb
-npx @gltf-transform/cli@latest fbx2glb wave.fbx wave.glb
-
-# Merge animations into the character GLB
+# Merge the animation GLBs into the character GLB
 npx @gltf-transform/cli@latest merge your-character.glb idle.glb talk.glb wave.glb out.glb
-
-# Rename animation clips so the runtime's hint search picks them up
-npx @gltf-transform/cli@latest rename --map "mixamo.com=Talk" out.glb out-named.glb
 ```
 
-The `rename` step matters. Mixamo names every clip `mixamo.com` by default, which is useless for the runtime's name-based hint matching. Set deliberate names — `Idle`, `Talk`, `Wave`, `Celebrate` — so `playAnimationByHint('idle')` and friends find the right clip.
+Then rename the clips. Mixamo names every clip `mixamo.com` by default, which is useless for the runtime's name-based hint matching. Set deliberate names — `Idle`, `Talk`, `Wave`, `Celebrate` — so `playAnimationByHint('idle')` and friends find the right clip. Two ways:
 
-A faster workflow if you have several clips: open the merged GLB in Blender, manually rename each animation in the NLA editor, re-export. Either approach works.
+- **Blender (no code):** open the merged GLB, rename each action in the NLA editor, re-export. This is the faster path for a handful of clips.
+- **The glTF Transform Document API (scriptable):** the library is a normal npm package, so write a tiny Node script against it. There is no CLI subcommand for this.
+
+```js
+// rename-clips.mjs — node rename-clips.mjs merged.glb renamed.glb
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer';
+
+const NAMES = ['Idle', 'Talk', 'Wave', 'Cheer'];
+const [input, output] = process.argv.slice(2);
+
+// Registering the extensions is not optional: most three.ws avatars ship
+// EXT_meshopt_compression, and a bare NodeIO throws
+// `Missing required extension, "EXT_meshopt_compression"` on read.
+const io = new NodeIO()
+  .registerExtensions(ALL_EXTENSIONS)
+  .registerDependencies({ 'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder });
+
+const document = await io.read(input);
+document.getRoot().listAnimations().forEach((anim, i) => {
+  if (NAMES[i]) anim.setName(NAMES[i]);
+});
+await io.write(output, document);
+```
+
+Install its three dependencies first: `npm i -D @gltf-transform/core @gltf-transform/extensions meshoptimizer`. Clip order follows merge order, so pass the animation GLBs to `merge` in the order you list them in `NAMES`.
 
 ---
 
@@ -159,10 +199,10 @@ The runtime ships with the Draco decoder baked in, so compressed GLBs load trans
 To compress:
 
 ```bash
-npx @gltf-transform/cli@latest draco --quantization 14 your.glb your-draco.glb
+npx @gltf-transform/cli@latest draco --quantize-position 14 your.glb your-draco.glb
 ```
 
-The `--quantization 14` flag balances size against visual quality. The default (14 for position, 12 for normals) is fine for almost all humanoid avatars. If you're seeing visible warping in the mesh after compression, bump it to 16. Anything above 16 stops shrinking the file usefully.
+Quantization is per-attribute, not one global flag: `--quantize-position` (default 14), `--quantize-normal` (10), `--quantize-texcoord` (12), `--quantize-color` (8), and `--quantize-generic` (12), each accepting 1-16 bits. The defaults are fine for almost all humanoid avatars, so the command above is really just being explicit. If you see visible warping in the mesh after compression, raise `--quantize-position` to 16, which is the ceiling — there is nothing above it.
 
 Compare before/after sizes:
 
@@ -194,16 +234,22 @@ JPEG and WebP are dramatically smaller than PNG for diffuse and ARM maps. PNG is
 
 ## Step 7 — Upload via the dashboard
 
-With a validated, compressed GLB in hand:
+With a validated, compressed GLB in hand, this is two steps: get the file into your avatar library, then point an agent at it.
 
-1. Go to [three.ws/my-agents](https://three.ws/my-agents).
-2. Select the agent you want to give a new body, or click **New agent**.
-3. Open the **Body** tab.
-4. Drag the GLB onto the drop zone, or click **Upload** and pick the file.
-5. The dashboard runs the validator again as part of the upload, then renders a preview in the right pane.
-6. Click **Save body**.
+**Upload the GLB**
 
-The dashboard stores the GLB on the platform CDN with the right CORS headers and `Cache-Control` for fast subsequent loads. No further hosting steps needed.
+1. Go to [three.ws/create](https://three.ws/create).
+2. Pick the **Upload your own GLB** card.
+3. Drop the `.glb` file, or click to choose it. The header is checked before anything uploads, so a mis-renamed file is rejected immediately rather than half-saved.
+4. The avatar lands in your library at [/dashboard/avatars](https://three.ws/dashboard/avatars).
+
+**Attach it to an agent**
+
+1. Open the agent in the editor and go to its **Outfit** panel.
+2. Under **Avatar**, pick the avatar you just uploaded. Upload progress and a **Cancel** control show inline; the selection is saved to the agent as soon as the attach completes.
+3. The same panel is where you pick which clips from the three.ws library the agent uses (**Animations**), which clip plays per behaviour (**Animation states**), and its **Gesture slots**.
+
+The platform stores the GLB on its CDN with the right CORS headers and `Cache-Control` for fast subsequent loads. No further hosting steps needed.
 
 Once the body is saved, every embed of that agent — `<agent-3d agent-id="...">`, script-tag embeds, iframe widgets — picks up the new body on next page load. No code changes anywhere.
 
@@ -213,19 +259,18 @@ Once the body is saved, every embed of that agent — `<agent-3d agent-id="...">
 
 Almost every upload failure falls into one of these categories. The validator catches them, but knowing what each one means cuts your debug time dramatically.
 
-### Failure A: T-pose, no animation playing
+### Failure A: frozen, no animation playing
 
-**Symptom:** Body loads fine, but stands frozen in T-pose.
+**Symptom:** Body loads fine, but stands frozen instead of breathing.
 
-**Cause:** No clip whose name matches the runtime's idle hint. The runtime searches case-insensitively for `idle` in clip names.
+**Cause:** Two different ones, and they need different fixes.
 
-**Fix:** Rename your idle clip to include "idle" — `Idle`, `idle_loop`, `IdleBreathing` all match.
+1. **The skeleton didn't canonicalize.** The retargeting layer couldn't name-map the rig, so the shared clip library has nothing to drive. This is the real failure, and it shows in the validator as a non-humanoid skeleton.
+2. **You baked in clips but named them badly.** If the GLB ships its own clips, the runtime prefers them and searches case-insensitively for `idle` in the names. `mixamo.com` matches nothing.
 
-```bash
-npx @gltf-transform/cli@latest rename --map "mixamo.com=Idle" your.glb out.glb
-```
+**Fix for (1):** rename the bones to a convention `glb-canonicalize.js` knows — Mixamo (`mixamorigHead`), VRM, Avaturn, Unreal, Daz, MakeHuman, or Blender `.L`/`.R` suffixes. Hitting a genuinely new skeleton convention is a gap worth reporting rather than working around.
 
-Or rename in Blender's NLA editor and re-export.
+**Fix for (2):** rename your idle clip to include "idle" — `Idle`, `idle_loop`, `IdleBreathing` all match. Use Blender's NLA editor or the `rename-clips.mjs` script from Step 4; `gltf-transform` has no `rename` command.
 
 ### Failure B: Animation plays but the mesh deforms wrong
 
@@ -273,7 +318,7 @@ npx @gltf-transform/cli@latest optimize \
   your.glb optimized.glb
 ```
 
-The `optimize` command bundles draco, texture resize, image format change, and mesh simplification. For aggressive size reduction it usually drops a 15 MB GLB to 2–3 MB.
+The `optimize` command bundles geometry compression, texture resize, image format change, and mesh simplification. Note its default compression is **meshopt**, not Draco: pass `--compress draco` if you specifically want Draco (or `--compress quantize`, or `false` to skip it). For aggressive size reduction it usually drops a 15 MB GLB to 2–3 MB.
 
 ### Failure E: Validator complains "node has no skin"
 
@@ -296,12 +341,13 @@ Here's the end-to-end. Pick a Mixamo character, ship it as a custom agent body.
 #    - Waving.fbx         (Without Skin)
 #    - Cheering.fbx       (Without Skin)
 
-# 2. Convert each FBX to GLB
+# 2. Convert each FBX to GLB with the convert.mjs wrapper from Step 4
 for f in *.fbx; do
-  npx @gltf-transform/cli@latest fbx2glb "$f" "${f%.fbx}.glb"
+  node convert.mjs "$f" "${f%.fbx}.glb"
 done
 
-# 3. Merge the character GLB with the animation GLBs
+# 3. Merge the character GLB with the animation GLBs.
+# Merge order sets clip order, which the rename step relies on.
 npx @gltf-transform/cli@latest merge \
   "your-character.glb" \
   "Breathing Idle.glb" \
@@ -312,22 +358,8 @@ npx @gltf-transform/cli@latest merge \
 
 # 4. Rename clips so the runtime's hint search picks them up.
 # Mixamo names everything "mixamo.com" by default — fix that.
-# Use a glTF editor (Blender or Gestaltor) to rename, or:
-npx @gltf-transform/cli@latest script renames.js merged.glb renamed.glb
-```
-
-For the rename script (`renames.js`), `gltf-transform` lets you write a small node program against its Document API. The simplest version:
-
-```js
-// renames.js
-const animationNames = ['Idle', 'Talk', 'Wave', 'Cheer'];
-
-module.exports = (document) => {
-  const root = document.getRoot();
-  root.listAnimations().forEach((anim, i) => {
-    if (animationNames[i]) anim.setName(animationNames[i]);
-  });
-};
+# Use a glTF editor (Blender or Gestaltor), or the Step 4 script:
+node rename-clips.mjs merged.glb renamed.glb
 ```
 
 ```bash
@@ -341,7 +373,7 @@ npx @gltf-transform/cli@latest optimize \
 # Drag final.glb onto https://three.ws/validation
 # Confirm: file < 5 MB, animations named correctly, no errors.
 
-# 7. Upload at https://three.ws/my-agents
+# 7. Upload at https://three.ws/create, then attach it in the agent editor's Outfit panel
 ```
 
 Total: 15–25 minutes the first time, 5 minutes once you've done it. The script-based renames step is the only fiddly part; everything else is one-line commands.
@@ -352,7 +384,7 @@ Total: 15–25 minutes the first time, 5 minutes once you've done it. The script
 
 Once uploaded:
 
-1. Open any page that embeds the agent (your homepage, the studio preview, [three.ws/my-agents](https://three.ws/my-agents) → preview).
+1. Open any page that embeds the agent (your homepage, or the live preview in the agent editor's Outfit panel).
 2. Confirm the new body loads — no T-pose, no warped limbs.
 3. Send a chat message — the agent should switch to the talk clip while replying.
 4. In a browser console, fire each clip by name:
@@ -377,7 +409,7 @@ The full custom-GLB pipeline:
 - The runtime needs a humanoid skeleton, an idle clip, and a talk clip; it likes a wave and a celebrate too
 - The validator at [three.ws/validation](https://three.ws/validation) catches every common failure before upload
 - Mixamo's `mixamo.com` clip names need renaming so the hint search finds them
-- `gltf-transform optimize` is the one command that handles draco, resize, and simplify in one pass
+- `gltf-transform optimize` is the one command that handles geometry compression, resize, and simplify in one pass (meshopt by default; `--compress draco` for Draco)
 - The dashboard upload path stores the GLB with correct CORS — no separate hosting work needed
 
 Once the body is on the platform, the embed snippet doesn't change. The same `<agent-3d agent-id="...">` tag picks up the new body automatically.

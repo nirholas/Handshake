@@ -27,10 +27,10 @@ Open [https://three.ws/create](https://three.ws/create) in a new tab. The editor
 If you want to ship something working as fast as possible, skip every panel for now and click **Save** in the top-right of the editor. The platform creates an agent with the default body, the default personality, and a default greeting. Once saved, the URL in your browser's address bar becomes something like:
 
 ```
-https://three.ws/agent/0xabc123…def
+https://three.ws/agent/d94d2a50-86fa-4d2e-b87b-580f7517aa4c
 ```
 
-The string after `/agent/` is your agent ID. Copy it. You will paste it into the `<agent-3d>` tag in the next step.
+The string after `/agent/` is your agent ID: a UUID, assigned once and never reissued. Copy it. You will paste it into the `<agent-3d>` tag in the next step.
 
 ### Path B — Customise first, then save
 
@@ -116,7 +116,7 @@ When the browser hits these lines:
 5. Once the avatar is loaded, the element dispatches a `agent:ready` event you can listen to. The agent then begins its idle animation and waits for interaction.
 
 Notice what is *not* on this list:
-- No iframe. The agent renders directly in your page's DOM, which means it inherits your site's CSS scope intentionally (we'll cover styling shadows in the customisation tutorial).
+- No iframe. `<agent-3d>` is a real element in your page's DOM, so it participates in your layout like any other block. Its internals live in an open shadow root, so your site's stylesheet cannot accidentally break the chat chrome, and the chrome cannot leak styles back into your page. You still theme it deliberately, through inherited CSS custom properties and `::part()` selectors: the customisation tutorial covers both.
 - No second script tag. You don't need to load Three.js separately. You don't need to bundle anything.
 - No build step. The script is plain JavaScript, served minified from a CDN edge.
 
@@ -160,7 +160,7 @@ Open developer tools (F12 or right-click → Inspect → Console). You should se
 
 In the Network tab, filter by `three.ws`. You should see:
 
-- `agent-3d.js` (the bundle, around 1–2 MB gzipped)
+- `agent-3d.js` (the bundle, under 1 MB gzipped)
 - A request to the agents API with your agent ID
 - A request for the avatar GLB
 - A few smaller assets (animations, textures)

@@ -59,11 +59,13 @@ The repo ships a `vercel.json`. Read it once so you know what's working for you.
 {
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist",
-  "public": true,
-  "installCommand": "npm ci --prefer-offline --no-audit --no-fund",
+  "installCommand": "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 PUPPETEER_SKIP_DOWNLOAD=1 npm ci --no-audit --no-fund",
   "env": { "NODE_OPTIONS": "--no-deprecation" },
   "functions": {
-    "api/**/*.js": { "includeFiles": "node_modules/@zauthx402/sdk/dist/**" }
+    "api/**/*.js": {
+      "includeFiles": "{data/pages.json,sdk/src/sas-config.json}",
+      "maxDuration": 30
+    }
   },
   "routes": [
     { "src": "/openapi\\.json", "dest": "/api/openapi-json" },
@@ -73,10 +75,11 @@ The repo ships a `vercel.json`. Read it once so you know what's working for you.
 }
 ```
 
-Three things worth understanding:
+Four things worth understanding:
 
 - **`buildCommand: npm run build:vercel`** runs the production build, including the prebuild step that generates the page index. The local `npm run dev` uses Vite directly; `build:vercel` is the optimized path that ships.
 - **`outputDirectory: dist`** is what Vercel serves as static files. After `npm run build`, `dist/` contains `index.html`, hashed JS bundles, the `cdn/` folder, sub-apps under `dist/chat/`, etc.
+- **`functions`** sets per-route bundling and timeouts. The `api/**/*.js` entry above is the catch-all fallback; the real file layers dozens of more specific globs before it, giving slow routes (forge, streams, crons) a longer `maxDuration` and pulling in the data files each one reads. Add your own entry above the catch-all when a route needs more than 30 seconds.
 - **`routes`** rewrites specific paths to specific function files. The well-known routes (`/.well-known/x402.json` → `/api/wk?name=x402-discovery`) are how the platform exposes machine-readable discovery surfaces at the URLs the spec mandates.
 
 You shouldn't need to edit `vercel.json` for the basic deploy. The repo's defaults are tuned for the platform's actual route set.
@@ -479,7 +482,7 @@ In rough order of likelihood:
 
 **The build breaks because Node version drifts.** Confirm `engines.node` in `package.json` matches what Vercel installs. The repo pins to `24.x`; Vercel respects this. If it ever stops, set `NODE_VERSION=24` in your project's env vars (build-time scope).
 
-**A migration runs out of order.** Your `migrations/` directory is the source of truth — if two engineers add migrations on parallel branches, the lexically-earlier one applies first regardless of merge order. The fix: timestamp filenames (`20260514120000_add_x.sql`), don't number them (`002_add_x.sql`).
+**A migration runs out of order.** Your `api/_lib/migrations/` directory is the source of truth: if two engineers add migrations on parallel branches, the lexically-earlier one applies first regardless of merge order. The fix: timestamp filenames (`20260514120000_add_x.sql`), don't number them (`002_add_x.sql`).
 
 **The CDN bundle gets stale at edges.** Vercel's edge respects `Cache-Control` headers. Make sure your build emits hashed filenames (`agent-3d.<hash>.js`) and your script tag references the canonical URL that always rewrites to the latest hash. The repo handles this; if you customize the build pipeline, don't break the hashing.
 

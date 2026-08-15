@@ -98,8 +98,13 @@ search results after 30 days without a settle**.
   `x-payment-info` + `responses.402` + request/response schemas — all emitted by
   [`api/openapi-json.js`](../api/openapi-json.js)), and (3) probing each paid
   route's live 402 challenge. Validate any time with
-  `npx -y @agentcash/discovery@latest discover https://three.ws` and
-  `… check https://three.ws/<paid-route>`.
+  `npx -y @agentcash/discovery@latest discover https://three.ws`, and a single
+  route with
+  `npx -y @agentcash/discovery@latest check https://three.ws/api/x402/crypto-intel`.
+  `check` reads the OpenAPI spec, so pass a route the spec actually carries (the
+  `/api/v1/x/*` proxy lane, `/api/mcp`, and the paid routes enumerated in
+  `openapi-json.js`); a route outside it answers `L3_NOT_FOUND` even though its
+  live 402 challenge is perfectly valid.
 - **Critical invariant — the `PAYMENT-REQUIRED` header carries the bazaar
   block.** AgentCash's probe reads the 402 challenge from the `PAYMENT-REQUIRED`
   **response header** in preference to the JSON body, and checks

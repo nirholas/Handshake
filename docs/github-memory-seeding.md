@@ -134,7 +134,12 @@ unaffected: no other feature depends on these variables.
 ## API
 
 All three calls are owner-only: the session (or bearer) user must own the
-agent. Browser mutations carry the standard CSRF token.
+agent. The two mutations (POST and DELETE) additionally require the standard
+CSRF token in `x-csrf-token` when the caller authenticates with a session
+cookie: without it they answer `403 csrf_missing` and change nothing. Bearer
+callers are exempt, because a bearer token is not attached automatically by a
+browser the way a cookie is. Mint one from `GET /api/csrf-token`; the shared
+front-end client attaches it for you.
 
 ### `GET /api/agents/:id/memory/seed/github`
 
@@ -207,12 +212,20 @@ with the connection row itself, and then asks GitHub to revoke the OAuth grant
 | Code | HTTP | Meaning |
 |---|---|---|
 | `unauthorized` | 401 | Sign-in required |
+| `csrf_missing` / `csrf_invalid` | 403 | A cookie-authenticated POST or DELETE arrived without a valid `x-csrf-token` |
 | `not_found` | 404 | No such agent, or it is not yours (a malformed id also answers 404, never a 500) |
 | `not_connected` | 412 | Connect GitHub first; the response carries `connect_url` |
 | `invalid_selection` | 400 | A selected key is not in the catalog you were shown; `rejected` names each one |
 | `empty_selection` | 400 | Pick your profile or at least one repository |
 | `distill_error` | 502 | The selected material yielded no usable facts; add a README or another repository |
+| `distill_unavailable` | 503 | Every model provider was busy, so nothing was read into memory and the existing memories are untouched. Carries `retry_at` (when this agent's next seed is allowed) and `providers_tried` |
 | rate limited | 429 | One seed per agent per 6 hours |
+
+Only `distill_error` and `distill_unavailable` are reachable after the seed
+budget has been charged: the budget is taken once the selection is known good,
+immediately before the README reads and the distilling pass. Every other
+refusal above happens before that point and leaves your window intact, so a
+mistyped or stale pick costs you nothing but the retry.
 
 ## Source
 

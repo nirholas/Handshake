@@ -112,8 +112,11 @@ lands in ~8–15s. Make sure the micro-buy wallet holds enough SOL for fees:
 ## Turning it on
 
 ```bash
-# 1. Apply the schema.
-npm run db:migrate -- --apply
+# 1. Apply the schema. db:migrate already hardcodes --apply and has no dry run,
+#    so read db:status first: db:migrate applies EVERY pending migration, not
+#    just this lane's (api/_lib/migrations/20260717233000_three_microbuy.sql).
+npm run db:status
+npm run db:migrate
 
 # 2. Fund a wallet with USDC (+ a little SOL for fees). Reuse the buyback wallet, or
 #    set a dedicated key so the two lanes don't compete for the same USDC:

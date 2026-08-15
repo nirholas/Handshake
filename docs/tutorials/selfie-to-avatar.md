@@ -195,7 +195,8 @@ Because the output is a clean, rigged glTF 2.0 file, it isn't locked to three.ws
 - **Animate it** in the [Animation Studio](/pose) — load it, browse the clip gallery, and retarget motion onto it live. It works because it's rigged.
 - **Download the GLB** from the avatar page to use it in Unity, Unreal, Blender, or any glTF-aware tool.
 - **Embed it** on a website with the web component — see [Embed in 30 seconds](/tutorials/embed-in-30-seconds).
-- **Refine the look** with [Customize your agent's appearance](/tutorials/customize-appearance) — clothing, accessories, and more layer on without re-rigging.
+- **Refine the look** in the avatar editor at `/avatars/<id>/edit`. Clothing and accessories layer on top of the GLB without re-rigging it; [Avatar Creation](../avatar-creation.md) documents how that layering works.
+- **Tune how it looks on your site** with [Customize size, position and background](/tutorials/customize-appearance), which covers the embed's layout, framing, and backdrop.
 
 ---
 
@@ -244,5 +245,5 @@ The result is a standard `.glb` that animates in the [Animation Studio](/pose), 
 - [Turn Photos into a 3D Model](/tutorials/image-to-3d) — reconstruct an *object* (not a person) from a few photos in the Forge.
 - [Animate your avatar](/tutorials/animate-your-avatar) — apply and tune motion on the rigged avatar you just built.
 - [Avatar Creation](../avatar-creation.md) — the full reference: every creation path, rig requirements, and accessories.
-- [Customize your agent's appearance](/tutorials/customize-appearance) — clothing, accessories, and styling on top of your avatar.
+- [Customize size, position and background](/tutorials/customize-appearance): how the finished avatar is framed and placed once it is embedded on a page.
 - [Give your agent a personality](/tutorials/agent-personality) — turn the body into a character.

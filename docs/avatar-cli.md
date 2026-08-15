@@ -20,7 +20,7 @@ three-ws-avatar --version
 ```
 
 ```
-0.2.1
+0.2.0
 ```
 
 Or run it without installing. The package has exactly one binary, so `npx` resolves it directly:
@@ -32,7 +32,7 @@ npx @three-ws/avatar-cli --version
 Pin the version in anything automated so a future release cannot change your build's behavior:
 
 ```bash
-npx @three-ws/avatar-cli@0.2.1 validate manifest.json
+npx @three-ws/avatar-cli@0.2.0 validate manifest.json
 ```
 
 Node 18 or newer. The CLI has one runtime dependency, `@three-ws/avatar-schema`, which carries the JSON Schema it validates against.
@@ -89,7 +89,7 @@ three-ws-avatar init --owner <id> --name <name> --mesh <path> [options]
 
 | Flag | Required | Description |
 |---|---|---|
-| `--owner <caip10\|0x…>` | yes | Owner identity. Full CAIP-10 (`eip155:1:0xabc…`) or a bare `0x…` address, which is assumed to be `eip155:1`. |
+| `--owner <caip10\|sol\|0x…>` | yes | Owner identity. Full CAIP-10 (`eip155:1:0xabc…`), a bare Solana address, which is assumed to be `solana:mainnet-beta`, or a bare `0x…` address, which is assumed to be `eip155:1`. |
 | `--name <string>` | yes | Display name. If it looks like a name service handle (`nick.eth`, `nick.ws`, `nick.sol`) it also becomes the manifest `id`. |
 | `--mesh <path>` | yes | Path to a `.glb`, `.gltf`, or `.vrm` file. Must exist; the extension decides `mesh.format`. |
 | `--skeleton <name>` | no | One of `avaturn`, `mixamo`, `rpm`, `vrm-humanoid`, `custom`. Default `avaturn`. |
