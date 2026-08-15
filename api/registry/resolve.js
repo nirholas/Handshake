@@ -19,7 +19,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
 import { resolveAvatarUrl } from '../_lib/avatars.js';
-import { publicUrl as r2PublicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 
 // Solana base58 pubkey — excludes 0/O/I/l, length 32–44. A UUID contains
@@ -118,7 +118,22 @@ async function build({ name, description, agentId, meta, avatar, ownerFallback }
 		}
 	}
 
-	const imageUrl = avatar?.thumbnail_key ? r2PublicUrl(avatar.thumbnail_key) : null;
+	// The thumbnail is a render of the avatar itself, so it is gated on exactly the
+	// visibility that gates the GLB above: a private avatar yields identity
+	// metadata and no imagery, the same gate api/characters.js, api/trending.js and
+	// api/og/agent.js apply. thumbnailUrl() (never a bare publicUrl) is the one
+	// resolver every read path uses, so a legacy origin-pointing `*_og.png` key is
+	// dropped instead of published as a doomed <img> src; it reads S3_PUBLIC_DOMAIN,
+	// which throws when unset, and an unconfigured var must degrade to no image
+	// rather than 503 the whole identity lookup.
+	let imageUrl = null;
+	if (isPublicAvatar && avatar.thumbnail_key) {
+		try {
+			imageUrl = thumbnailUrl(avatar.thumbnail_key);
+		} catch {
+			imageUrl = null;
+		}
+	}
 
 	let onchain = null;
 	if (coords) {

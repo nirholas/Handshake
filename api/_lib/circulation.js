@@ -32,7 +32,7 @@ import { solanaConnection } from './agent-pumpfun.js';
 import { createSession } from './auth.js';
 import { solUsdPrice } from './avatar-wallet.js';
 import { CHAIN_BY_ID } from './erc8004-chains.js';
-import { publicUrl as r2PublicUrl } from './r2.js';
+import { publicUrl as r2PublicUrl, thumbnailUrl } from './r2.js';
 import { claimSeedUsername, seedDisplayName } from './seed-username.js';
 import { pinToIPFS } from './ipfs-pin.js';
 import { confirmSkillPurchase, resolvePayoutAddress } from './purchase-confirm.js';
@@ -1497,7 +1497,7 @@ async function buildAgentCard(agent, origin) {
 	let glb = null;
 	if (agent.avatarId) {
 		const [av] = await sql`select storage_key, thumbnail_key from avatars where id = ${agent.avatarId} and deleted_at is null limit 1`;
-		if (av?.thumbnail_key) image = r2PublicUrl(av.thumbnail_key);
+		image = thumbnailUrl(av?.thumbnail_key);
 		if (av?.storage_key) glb = r2PublicUrl(av.storage_key);
 	}
 	return {

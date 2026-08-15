@@ -14,7 +14,7 @@ import { recoverAgentKey } from '../../_lib/agent-wallet.js';
 import { readEmbedPolicy, validateEmbedPolicy } from '../../_lib/embed-policy.js';
 import { resolveAvatarUrl } from '../../_lib/avatars.js';
 import { buildAgentRegistrationMetadata } from '../../_lib/three-brand.js';
-import { publicUrl as r2PublicUrl } from '../../_lib/r2.js';
+import { thumbnailUrl } from '../../_lib/r2.js';
 // The one source of truth for the gesture slot vocabulary. Dependency-free, so
 // importing the runtime module here keeps the API and the browser in agreement
 // instead of restating the list.
@@ -514,7 +514,10 @@ export const handleRegistration = wrap(async (req, res, id) => {
 			modelUri = u?.url || '';
 		} catch {}
 	}
-	const image = row.thumbnail_key ? r2PublicUrl(row.thumbnail_key) : '';
+	// This document is what the agent's on-chain URI resolves to, so the image has
+	// to survive forever: thumbnailUrl() drops a legacy origin-pointing `*_og.png`
+	// key rather than publishing a URL that answers 404.
+	const image = thumbnailUrl(row.thumbnail_key) || '';
 
 	const proto = req.headers['x-forwarded-proto'] || 'https';
 	const host = req.headers['x-forwarded-host'] || req.headers.host || 'three.ws';

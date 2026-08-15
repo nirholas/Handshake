@@ -13,7 +13,7 @@
 import { sql } from './db.js';
 import { loadAttesterKeypair } from './attest-event.js';
 import { pinToIPFS, ipfsGatewayUrl, ipfsPinningConfigured, fetchFromGateways, IPFS_READ_GATEWAYS } from './ipfs-pin.js';
-import { publicUrl as r2PublicUrl } from './r2.js';
+import { publicUrl as r2PublicUrl, thumbnailUrl } from './r2.js';
 import {
 	buildAgentManifest,
 	signAgentManifest,
@@ -86,7 +86,9 @@ export async function buildLiveAgentManifest(agentId) {
 		name: row.name,
 		description: row.description,
 		tags: Array.isArray(row.tags) ? row.tags : [],
-		image: row.thumbnail_key ? r2PublicUrl(row.thumbnail_key) : '',
+		// thumbnailUrl() drops a legacy origin-pointing `*_og.png` key, which the
+		// published manifest would otherwise carry as a permanently dead image URL.
+		image: thumbnailUrl(row.thumbnail_key) || '',
 		systemPrompt: row.persona_prompt,
 		toneTags: Array.isArray(row.persona_tone_tags) ? row.persona_tone_tags : [],
 		traits,

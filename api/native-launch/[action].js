@@ -21,7 +21,7 @@ import { Keypair } from '@solana/web3.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
-import { publicUrl as r2PublicUrl } from '../_lib/r2.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { env } from '../_lib/env.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { resolveOrCreateAgentForAvatar } from '../_lib/agent-identity.js';
@@ -401,7 +401,7 @@ async function handleLaunches(req, res) {
 						name: r.agent_name,
 						url: `/agents/${r.agent_id}`,
 						avatar_thumbnail_url:
-							r.avatar_thumbnail_key && avatarPublic ? r2PublicUrl(r.avatar_thumbnail_key) : null,
+							avatarPublic ? thumbnailUrl(r.avatar_thumbnail_key) : null,
 					}
 				: null,
 		};

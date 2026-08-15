@@ -15,7 +15,7 @@
 
 import { sql } from './db.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
-import { publicUrl as r2PublicUrl } from './r2.js';
+import { thumbnailUrl } from './r2.js';
 
 // Tiers ordered by descending conviction: prime > strong > lean > watch > avoid.
 export const TIER_RANK = { prime: 5, strong: 4, lean: 3, watch: 2, avoid: 1 };
@@ -127,9 +127,7 @@ export async function queryAgentLaunches({
 						name: r.agent_name,
 						url: `/agents/${r.agent_id}`,
 						avatar_thumbnail_url:
-							r.avatar_thumbnail_key && avatarPublic
-								? r2PublicUrl(r.avatar_thumbnail_key)
-								: null,
+							avatarPublic ? thumbnailUrl(r.avatar_thumbnail_key) : null,
 						solana_address: r.agent_solana_address || null,
 						solana_vanity_prefix: r.agent_solana_vanity_prefix || null,
 						solana_vanity_suffix: r.agent_solana_vanity_suffix || null,
@@ -178,7 +176,7 @@ export async function searchAgentLaunches({ q, network = 'mainnet', limit = 12 }
 						id: r.agent_id,
 						name: r.agent_name,
 						url: `/agents/${r.agent_id}`,
-						avatar_thumbnail_url: r.avatar_thumbnail_key && avatarPublic ? r2PublicUrl(r.avatar_thumbnail_key) : null,
+						avatar_thumbnail_url: avatarPublic ? thumbnailUrl(r.avatar_thumbnail_key) : null,
 					}
 				: null,
 		};

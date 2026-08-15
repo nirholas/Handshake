@@ -24,7 +24,7 @@ import {
 } from '@metaplex-foundation/umi';
 import { sql } from './db.js';
 import { env } from './env.js';
-import { putObject, publicUrl as r2PublicUrl } from './r2.js';
+import { putObject, publicUrl as r2PublicUrl, thumbnailUrl } from './r2.js';
 import {
 	buildAgentManifest,
 	buildAgentOnchainAttributes,
@@ -282,7 +282,10 @@ export async function deployAgentOnce({ umi, authoritySigner, collectionAddr, co
 	const custody = ownerAddress === authorityAddress;
 
 	// 2. Media + manifest.
-	const image = agent.thumbnail_key ? r2PublicUrl(agent.thumbnail_key) : '';
+	// thumbnailUrl(), not a bare publicUrl: this image is baked into the token's
+	// on-chain metadata, so a legacy origin-pointing `*_og.png` key would mint a
+	// permanently dead image URL. Dropping it leaves the field empty instead.
+	const image = thumbnailUrl(agent.thumbnail_key) || '';
 	const animationUrl = agent.storage_key ? r2PublicUrl(agent.storage_key) : '';
 	const createdAt = new Date().toISOString();
 	const manifest = buildAgentManifest({

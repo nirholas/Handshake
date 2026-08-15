@@ -95,6 +95,14 @@
 			<description>The avatar-agent MCP server resolves .eth and .sol names to wallet addresses. Its .sol side went through a hosted name-lookup service that has since been retired: every request came back as &quot;not found&quot;, which reads exactly like an unregistered domain, so a working name and a nonexistent one were indistinguishable. Solana names are now read straight from the chain, from the same name-service accounts the three.ws backend already reads, so the lookup depends on nothing but a Solana RPC. Two things were fixed alongside it. The per-lookup time budget was under five seconds, which a cold Ethereum lookup routinely exceeds, so real names were being reported as timeouts; it is now fifteen seconds and adjustable. And a lookup that genuinely fails now says why instead of quietly reporting &quot;not found&quot;. Separately, the avatar manifest schema names https://three.ws/schema/avatar.v1.json as its own identifier, but nothing was served there, so any validator that followed the identifier got a 404. The schema is now published at that address, with a test that keeps the served copy identical to the one shipped in the package.</description>
 		</item>
 		<item>
+			<title>Agent coin pages stop reporting a burn that never happened</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Agent coin pages stop reporting a burn that never happened</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An agent coin page showed a &quot;last burn&quot; time taken from the last moment the buyback job ran at all, including every run where it looked and correctly decided there was nothing to burn. A coin with thousands of those skipped runs and no actual burns therefore read as having burned minutes ago while the burn count and burned total beside it both sat at zero. The burn time now counts confirmed burns only, so it stays blank until a real burn lands and always agrees with the count next to it. Separately, the three pump endpoints that manage a coin's autopilot policy and its invoices now require a request to originate from three.ws before it can act on a signed-in browser session, which is the rule the rest of the pump endpoints already followed. Agent keys and workers are unaffected.</description>
+		</item>
+		<item>
 			<title>Agent Screen is usable on a phone, and reads correctly to a screen reader</title>
 			<link>https://three.ws/agent-screen</link>
 			<guid isPermaLink="false">2026-08-15:Agent Screen is usable on a phone, and reads correctly to a screen reader</guid>
@@ -205,6 +213,30 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Paying for a plan creates a quote, you send the funds, then the server checks the chain before it upgrades you. Three things in that path were wrong. The checkout side has always refused test-network quotes in production, because test-network dollars are free from a faucet, but the confirm side still let a caller name the test network itself, and it is the confirm side that decides which chain it looks at and which dollar it accepts. Both ends now read the same setting, so a production upgrade can only ever be settled by real funds on mainnet. Second, an Ethereum-side payment has to wait twelve blocks before it counts, which meant funds sent near the end of a session could land on-chain and then be refused for arriving late, with the money already gone; that lane now honors the same one-hour grace window the Solana lane has, so an on-chain payment is always claimable. Third, confirming an Ethereum payment could reach a Solana quote and mark it expired, and asking to buy a skill from a malformed agent id answered a generic server error instead of telling you what was wrong with the request.</description>
+		</item>
+		<item>
+			<title>Portfolio token pages price Base and Arbitrum holdings correctly</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Portfolio token pages price Base and Arbitrum holdings correctly</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening a token from your portfolio asked Ethereum for the price no matter which chain the token was actually on. Almost every agent wallet runs on Base, so the most common holdings came back with no price, no chart and a shortened contract address instead of a ticker, even though the balance was right there in the list. Each token is now priced on its own chain, labelled with its real symbol and decimals, and native gas tokens use the right coin per chain (POL on Polygon, BNB on BNB Chain, AVAX on Avalanche) instead of always quoting ETH. Chains nobody prices, such as testnets, now say so plainly rather than showing another chain's number.</description>
+		</item>
+		<item>
+			<title>Private avatars no longer show their picture in registry lookups</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Private avatars no longer show their picture in registry lookups</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The registry lookup that turns an agent id, avatar id, slug, or Solana mint into one record already refused to hand out the 3D model of a private avatar, but it still returned the rendered preview image of that same avatar, so anyone holding the id could see what a private creation looked like. The preview is now gated on exactly the same visibility as the model: a private avatar returns its name and identity and no imagery at all. The embeddable widget read did the same thing with its avatar thumbnail and got the same gate. Separately, every read path that turns a stored thumbnail into a URL now goes through the one resolver that drops the old broken image keys, so agent manifests, token metadata, and launch feeds stop publishing image links that answer 404.</description>
+		</item>
+		<item>
+			<title>Push notification sign-up now only accepts a real push service address</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:Push notification sign-up now only accepts a real push service address</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Turning on browser notifications hands the platform the address your browser wants alerts delivered to, and that address is one the platform later calls from its own servers. It was stored exactly as given, so a crafted sign-up could point it at an internal address instead of a push service and use the delivery job as a way to knock on doors inside our own network. Sign-up now checks the address before storing it: it has to be an ordinary secure web address on a genuinely public host, or it is refused with a clear reason. If the check cannot finish because name lookup is briefly down, the browser is told to try again rather than being turned away for good. Delivery re-checks every stored address at send time too, so anything registered before this landed can never be dialed, and an address that could never be legal is dropped from the list the way an expired one already was.</description>
 		</item>
 		<item>
 			<title>Rotating or revoking an x402 API key now requires a proof the request came from you</title>
@@ -365,6 +397,14 @@
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Two tutorials had drifted away from the code they document, and following either one exactly produced a bad outcome rather than a confusing one. The gesture tutorial's API example padded its request body with an empty clip array, and told readers that field was required; it has not been required for a while, and an empty array is a real value, so anyone who copied that snippet to change one gesture slot silently erased every custom clip on their agent. The endpoint's actual rule is now stated: every field is optional, present replaces it, absent leaves it alone. That page also listed four gestures on the /walk quick keys that are not on them, so pressing 1 through 8 never produced what it described; the eight keys are now named in order, with the wheel and the code call given for the four that have no key. The guard tutorial's registry entry left out the proof block, which the registry auditor has since made mandatory, so a reader who followed every step to the end hit a failure the page never mentioned. It now includes a working proof, shows the exact error you get without one, and adds a step for the command that runs it, which is the difference between a guard that is wired up and a guard anyone has shown still catches anything. Its summary line also described a completely different guard from the one it builds.</description>
+		</item>
+		<item>
+			<title>The live trade tape now says when live trades are unavailable</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-15:The live trade tape now says when live trades are unavailable</guid>
+			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The per-coin trade tape streams from PumpPortal, which gates per-token trade subscriptions behind a funded API key. When that subscription was refused, the connection stayed open and simply never delivered a trade, so the tape showed a lit 'live' indicator above rows that could never arrive, and there was no way for a viewer to tell that apart from a genuinely quiet coin. The stream now forwards the refusal to the browser and the tape reports it plainly, keeping the settled trades it already loaded. A malformed coin address on the stream is also rejected up front with a clear error instead of opening a connection that can never match anything.</description>
 		</item>
 		<item>
 			<title>The LLM usage panel in your dashboard settings finally shows your real numbers</title>

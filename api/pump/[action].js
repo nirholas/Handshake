@@ -58,7 +58,7 @@ import { resolveSocialReward } from '../_lib/github-reward.js';
 import { submitProtected } from '../_lib/execution-engine.js';
 import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited, respondError } from '../_lib/http.js';
-import { putObject, publicUrl as r2PublicUrl } from '../_lib/r2.js';
+import { putObject, publicUrl as r2PublicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { env } from '../_lib/env.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { resolveOrCreateAgentForAvatar as resolveLaunchAgentId } from '../_lib/agent-identity.js';
@@ -1008,8 +1008,11 @@ async function handleBuildMetadata(req, res) {
 			select thumbnail_key from avatars
 			where id=${body.avatar_id} and owner_id=${uid} and deleted_at is null limit 1
 		`;
-		if (av?.thumbnail_key) {
-			const thumbUrl = r2PublicUrl(av.thumbnail_key);
+		// thumbnailUrl() returns null for a legacy origin-pointing `*_og.png` key,
+		// whose object does not exist: fetching it would 404 and then the launch
+		// would reference that dead URL from its permanent token metadata.
+		const thumbUrl = thumbnailUrl(av?.thumbnail_key);
+		if (thumbUrl) {
 			// Fetch the stored thumbnail so it too lands on IPFS; if that fails,
 			// fall back to referencing the R2 URL directly (still a valid image).
 			try {
@@ -1998,12 +2001,14 @@ async function handleAcceptPaymentPrep(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	// Allow both session users (browser) and bearer (MCP / agent) callers.
-	const session = await getSessionUser(req);
-	const bearer = session ? null : await authenticateBearer(extractBearer(req));
-	if (!session && !bearer)
-		return error(res, 401, 'unauthorized', 'sign in or supply a bearer token');
-	const userId = session?.id ?? bearer?.userId ?? null;
+	// Session users (browser) and bearer (MCP / agent) callers both allowed.
+	// Routed through resolveAuth() rather than a bare getSessionUser() so the
+	// cookie path has to prove same-site intent: this POST writes a pending
+	// invoice row under the caller's identity, which is exactly the cookie-borne
+	// write the same-site rule exists for. Bearer callers stay exempt.
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in or supply a bearer token');
+	const userId = auth.userId;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -2101,9 +2106,11 @@ async function handleAcceptPaymentConfirm(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const session = await getSessionUser(req);
-	const bearer = session ? null : await authenticateBearer(extractBearer(req));
-	if (!session && !bearer) return error(res, 401, 'unauthorized', 'auth required');
+	// Same same-site rule as accept-payment-prep: this POST settles an invoice
+	// and can flip a payment row to 'failed', so the cookie path must prove
+	// intent. Bearer callers stay exempt.
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'auth required');
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -2611,11 +2618,16 @@ async function handleByAgent(req, res) {
 		from pump_agent_payments where mint_id=${row.id}
 	`;
 
+	// Every column here counts CONFIRMED runs only. `last_burn_at` used to take a
+	// bare max(created_at), so it reported the last time the buyback cron merely
+	// looked: an agent with 12k `skipped` rows and zero burns answered
+	// {runs: 0, total_burned: '0', last_burn_at: <minutes ago>}, and the dashboard
+	// and passport rendered "last burn" for a burn that never happened.
 	const [burnRow] = await sql`
 		select
 			count(*) filter (where status='confirmed')::int                       as runs,
 			coalesce(sum(burn_amount) filter (where status='confirmed'),0)::text  as total_burned,
-			max(created_at)                                                       as last_burn_at
+			max(created_at) filter (where status='confirmed')                     as last_burn_at
 		from pump_buyback_runs where mint_id=${row.id}
 	`;
 

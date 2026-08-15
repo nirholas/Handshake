@@ -3,10 +3,44 @@
 	"entries": [
 		{
 			"date": "2026-08-15",
+			"title": "Portfolio token pages price Base and Arbitrum holdings correctly",
+			"summary": "Opening a token from your portfolio asked Ethereum for the price no matter which chain the token was actually on. Almost every agent wallet runs on Base, so the most common holdings came back with no price, no chart and a shortened contract address instead of a ticker, even though the balance was right there in the list. Each token is now priced on its own chain, labelled with its real symbol and decimals, and native gas tokens use the right coin per chain (POL on Polygon, BNB on BNB Chain, AVAX on Avalanche) instead of always quoting ETH. Chains nobody prices, such as testnets, now say so plainly rather than showing another chain's number.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
 			"title": "Push notification sign-up now only accepts a real push service address",
 			"summary": "Turning on browser notifications hands the platform the address your browser wants alerts delivered to, and that address is one the platform later calls from its own servers. It was stored exactly as given, so a crafted sign-up could point it at an internal address instead of a push service and use the delivery job as a way to knock on doors inside our own network. Sign-up now checks the address before storing it: it has to be an ordinary secure web address on a genuinely public host, or it is refused with a clear reason. If the check cannot finish because name lookup is briefly down, the browser is told to try again rather than being turned away for good. Delivery re-checks every stored address at send time too, so anything registered before this landed can never be dialed, and an address that could never be legal is dropped from the list the way an expired one already was.",
 			"tags": [
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Agent coin pages stop reporting a burn that never happened",
+			"summary": "An agent coin page showed a \"last burn\" time taken from the last moment the buyback job ran at all, including every run where it looked and correctly decided there was nothing to burn. A coin with thousands of those skipped runs and no actual burns therefore read as having burned minutes ago while the burn count and burned total beside it both sat at zero. The burn time now counts confirmed burns only, so it stays blank until a real burn lands and always agrees with the count next to it. Separately, the three pump endpoints that manage a coin's autopilot policy and its invoices now require a request to originate from three.ws before it can act on a signed-in browser session, which is the rule the rest of the pump endpoints already followed. Agent keys and workers are unaffected.",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"title": "Private avatars no longer show their picture in registry lookups",
+			"summary": "The registry lookup that turns an agent id, avatar id, slug, or Solana mint into one record already refused to hand out the 3D model of a private avatar, but it still returned the rendered preview image of that same avatar, so anyone holding the id could see what a private creation looked like. The preview is now gated on exactly the same visibility as the model: a private avatar returns its name and identity and no imagery at all. The embeddable widget read did the same thing with its avatar thumbnail and got the same gate. Separately, every read path that turns a stored thumbnail into a URL now goes through the one resolver that drops the old broken image keys, so agent manifests, token metadata, and launch feeds stop publishing image links that answer 404.",
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"title": "The live trade tape now says when live trades are unavailable",
+			"summary": "The per-coin trade tape streams from PumpPortal, which gates per-token trade subscriptions behind a funded API key. When that subscription was refused, the connection stayed open and simply never delivered a trade, so the tape showed a lit 'live' indicator above rows that could never arrive, and there was no way for a viewer to tell that apart from a genuinely quiet coin. The stream now forwards the refusal to the browser and the tape reports it plainly, keeping the settled trades it already loaded. A malformed coin address on the stream is also rejected up front with a clear error instead of opening a connection that can never match anything.",
+			"tags": [
+				"fix"
 			]
 		},
 		{

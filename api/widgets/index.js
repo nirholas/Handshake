@@ -16,7 +16,7 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { publicUrl } from '../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { WIDGET_TYPES } from '../_lib/widget-types.js';
 
 const createBody = z.object({
@@ -107,15 +107,16 @@ export function decorate(row) {
 		updated_at: row.updated_at,
 	};
 	if (row.avatar_name !== undefined) {
+		// The thumbnail is a render of the avatar, so it carries the avatar's
+		// visibility exactly like the GLB does: a private avatar exposes neither.
+		const avatarPublic =
+			row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted';
 		out.avatar = row.avatar_id
 			? {
 					id: row.avatar_id,
 					name: row.avatar_name,
-					thumbnail_url: safePublicUrl(row.avatar_thumbnail_key),
-					model_url:
-						row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted'
-							? safePublicUrl(row.avatar_storage_key)
-							: null,
+					thumbnail_url: avatarPublic ? safeThumbnailUrl(row.avatar_thumbnail_key) : null,
+					model_url: avatarPublic ? safePublicUrl(row.avatar_storage_key) : null,
 					visibility: row.avatar_visibility,
 				}
 			: null;
@@ -127,6 +128,18 @@ function safePublicUrl(key) {
 	if (!key) return null;
 	try {
 		return publicUrl(key);
+	} catch {
+		return null;
+	}
+}
+
+// thumbnailUrl() additionally drops a legacy origin-pointing `*_og.png` key,
+// which resolves to an object that does not exist. Both helpers swallow the
+// throw from an unconfigured S3_PUBLIC_DOMAIN so a widget read still returns.
+function safeThumbnailUrl(key) {
+	if (!key) return null;
+	try {
+		return thumbnailUrl(key);
 	} catch {
 		return null;
 	}

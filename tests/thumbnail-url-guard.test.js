@@ -63,8 +63,11 @@ describe('no read path bypasses thumbnailUrl()', () => {
 		'api/avatars/_actions.js',
 	]);
 
-	// Matches publicUrl(<anything containing thumb/Thumb>) — the bug shape.
-	const BARE = /publicUrl\(\s*[A-Za-z_$][\w$?.]*(?:thumb|Thumb)[\w$]*\s*\)/;
+	// Matches publicUrl(<anything containing thumb/Thumb>), the bug shape. The
+	// leading `[\w$]*` covers an aliased import (`publicUrl as r2PublicUrl`), which
+	// an anchored `publicUrl\(` misses: api/registry/resolve.js imported it exactly
+	// that way and published a thumbnail key past this guard for months.
+	const BARE = /[\w$]*[Pp]ublicUrl\(\s*[A-Za-z_$][\w$?.]*(?:thumb|Thumb)[\w$]*\s*\)/;
 
 	function walk(dir, out = []) {
 		for (const name of readdirSync(dir)) {
