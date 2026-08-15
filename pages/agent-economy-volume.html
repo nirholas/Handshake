@@ -56,10 +56,11 @@
 				--skeleton-sheen: rgba(255,255,255,0.08);
 			}
 			[data-theme="light"]{
-				/* --cyan is a link colour here, and the dark-mode value reads 1.91:1 on
-				   white: unreadable in light mode. The darker sibling clears AA for
-				   text and still passes 3:1 as a focus ring. */
-				--bg:#f5f5f5;--bg-2:#fff;--card:#fff;--line:rgba(0,0,0,.07);--line-2:rgba(0,0,0,.12);--text:#111;--muted:rgba(0,0,0,.68);--dim:rgba(0,0,0,.57);--cyan:#0369a1;--skeleton-base:rgba(0,0,0,.04);--skeleton-sheen:rgba(0,0,0,.08);
+				/* --cyan is a link colour and --green is badge text, and the dark-mode
+				   values read 1.91:1 and 1.64:1 against a light surface: unreadable.
+				   The darker siblings clear AA for text, and the cyan still passes
+				   3:1 as a focus ring. */
+				--bg:#f5f5f5;--bg-2:#fff;--card:#fff;--line:rgba(0,0,0,.07);--line-2:rgba(0,0,0,.12);--text:#111;--muted:rgba(0,0,0,.68);--dim:rgba(0,0,0,.57);--cyan:#0369a1;--green:#166534;--skeleton-base:rgba(0,0,0,.04);--skeleton-sheen:rgba(0,0,0,.08);
 			}
 			*{box-sizing:border-box;margin:0;padding:0;}
 			html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;}
