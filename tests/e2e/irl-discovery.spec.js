@@ -100,6 +100,14 @@ function trackConsoleErrors(page) {
 		if (m.type() !== 'error') return;
 		const t = m.text();
 		if (/websocket|hmr|wss:|vite|favicon|net::ERR/i.test(t)) return;
+		// "504 (Outdated Optimize Dep)" is the dev server invalidating a prebundled
+		// chunk that was already in flight, which happens whenever a later page in
+		// the run makes Vite discover a new dependency and re-optimize. The browser
+		// refetches and the page loads; only the console line survives. It cannot
+		// occur in production (no dep optimizer there, the bundles are prebuilt),
+		// and the message carries no "vite" token for the filter above to catch.
+		// Matched on that exact marker, so a real 504 from our own API still fails.
+		if (/Outdated Optimize Dep/i.test(t)) return;
 		// A 401 resource line from a signed-out auth/session probe is the browser
 		// echoing an EXPECTED response (dev /api proxies to prod; no session in a
 		// fresh context). Only this spec's own /api/irl/* surface stays fatal.

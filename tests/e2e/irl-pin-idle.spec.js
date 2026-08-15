@@ -76,6 +76,9 @@ function trackConsoleErrors(page) {
 		if (m.type() !== 'error') return;
 		const t = m.text();
 		if (/websocket|hmr|wss:|vite|favicon|net::ERR/i.test(t)) return;
+		// Dev-server dep-optimizer invalidation, not a product error. Same reason
+		// as the matching filter in irl-discovery.spec.js.
+		if (/Outdated Optimize Dep/i.test(t)) return;
 		if (/status of 401/i.test(t) && !/\/api\/irl\//i.test(m.location()?.url || '')) return;
 		errors.push(t);
 	});

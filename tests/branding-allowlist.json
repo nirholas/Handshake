@@ -415,6 +415,11 @@
 		"reason": "Factual list of third-party rig-name conventions glb-canonicalize.js recognizes (Mixamo, Avaturn, Unreal, VRM, Daz, MakeHuman, ...) \u2014 interoperability documentation, not brand promotion."
 	},
 	{
+		"pattern": "Mixamo, Avaturn, Unreal",
+		"file": "docs/api-reference.md",
+		"reason": "Same factual rig-name list as the docs/avatar-pipeline.md entry above, in the /api/render/avatar-clip reference: it tells an API caller which third-party skeletons a posePresetId retargets onto. Interoperability reference a caller needs to predict the response, not brand promotion."
+	},
+	{
 		"pattern": "avaturn_seed",
 		"file": "docs/ops/runtime-flags.md",
 		"reason": "Literal runtime flag key `avaturn_seed` (with its `AVATURN_SEED_ENABLED` env fallback and avaturn-seed-cron.js path) in ops code samples and the flags table \u2014 technical identifiers, not user-facing brand copy."

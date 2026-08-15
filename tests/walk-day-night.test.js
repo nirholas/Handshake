@@ -61,9 +61,21 @@ describe('walk day/night cycle', () => {
 		expect(rig.stageEl.style.background).toContain('radial-gradient');
 	});
 
+	// These two assert an exact sky string, so they force the write. The sky
+	// paint is throttled (walk-day-night.js): update() only repaints once skyMix
+	// has moved more than 0.005 since the last paint, and setEnvironment() seeds
+	// that mark from the REAL clock, because it snaps the rig to the actual time
+	// of day. A test that then jumps to an authored time can land inside that
+	// epsilon of whatever time it really is, so the sky painted during setup
+	// survives the jump and the assertion reads a near-miss blend
+	// (`#050610 ... #1a233c` instead of night). Measured against the 480s world
+	// cycle that is a 3160ms window for midnight and 1760ms for noon: 1.03% of
+	// runs, which is exactly the kind of flake nobody can reproduce on demand.
+	// Forcing pins the time-to-sky mapping these tests are actually about; the
+	// throttle itself stays covered by the dusk sweep and the determinism case.
 	it('renders the authored daytime anchors at noon', () => {
 		rig.cycle.setEnvironment(OUTDOOR);
-		const day = rig.cycle.update(NOON);
+		const day = rig.cycle.update(NOON, true);
 		expect(day).toBeCloseTo(1, 5);
 		expect(rig.sun.intensity).toBeCloseTo(1.7, 5);
 		expect(rig.hemi.intensity).toBeCloseTo(0.75, 5);
@@ -77,7 +89,7 @@ describe('walk day/night cycle', () => {
 
 	it('drops to the cool low-light floor at midnight, never black', () => {
 		rig.cycle.setEnvironment(OUTDOOR);
-		const day = rig.cycle.update(MIDNIGHT);
+		const day = rig.cycle.update(MIDNIGHT, true);
 		expect(day).toBeCloseTo(0, 5);
 		expect(rig.sun.intensity).toBeCloseTo(0.07, 5);
 		expect(rig.hemi.intensity).toBeCloseTo(0.12, 5);
