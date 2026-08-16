@@ -54,7 +54,7 @@ The room performs one beat at a time (a tip storm coalesces into a single in-fli
 
 ### The host's words
 
-The words are not canned and not templated. Each beat is sent to [`/api/stage/host`](../api/stage/host.js), which builds a prompt from the agent's own persona, the live show context the room supplies (beat kind, audience size, tip standings, the fresh tip, the queued question), and the stage's returning regulars, then completes it over the platform LLM chain. Regulars are real: the top five tippers across this stage's prior shows, so a returning face gets greeted by name.
+The words are not canned and not templated. Each beat is sent to [`/api/stage/host`](../api/stage/host.js), which builds a prompt from the agent's own persona, the live show context the room supplies (beat kind, audience size, tip standings, the fresh tip, the queued question), and the stage's returning regulars, then completes it over the platform LLM chain. Regulars are real: the top five tippers across this stage's prior shows, so a returning face gets greeted by name. Only verified tips count toward that memory, the same rule the public leaderboard follows, so a name attached to an unproven settlement is never spoken to the room.
 
 The system prompt constrains the host hard, because every line is spoken aloud and shown as a caption: one or two short sentences, in character, no lists, no stage directions, no emoji, and $THREE is the only coin the host ever names. The completion is collapsed to a single clean line with any leaked speaker label stripped.
 
