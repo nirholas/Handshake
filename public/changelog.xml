@@ -303,12 +303,28 @@
 			<description>Three fixes to public read surfaces. Paging the ERC-8004 agent showcase past the first page could repeat a row forever or quietly skip one, because the cursor rounded the registration timestamp to the millisecond while the index stores microseconds, and an agent whose registry event carried no timestamp at all fell out of every page after the first. Both are fixed, and asking for a fractional number of results now returns a page instead of a server error. The published strategy board's default 'performance' order was ranking only the most recently published slice, so a proven, high-return strategy could sit invisible behind newer unproven ones; it now ranks the whole published pool before trimming to your page. And /sitemap.xml no longer answers a POST or a DELETE with the sitemap.</description>
 		</item>
 		<item>
+			<title>The agent wallet is usable on a phone again, and visitors see a real balance</title>
+			<link>https://three.ws/agent-wallet</link>
+			<guid isPermaLink="false">2026-08-16:The agent wallet is usable on a phone again, and visitors see a real balance</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On a narrow screen the wallet hub was quietly cut off. The column sized itself to the width of its tab strip rather than to the screen, and because the page cannot scroll sideways everything past the fold was simply unreachable: the Refresh button and the right edge of every card were invisible on a phone. The column now fits the screen and the section tabs scroll on their own, so every control is reachable at any width. Two things were also wrong for anyone looking at an agent wallet they do not own. The balance read as a dash even though an agent's balance is public on-chain data, and it now shows the real live figure. The recent-activity card claimed it had failed to load and offered a Retry that could never work, because the transaction feed is private to the wallet's owner; it now says exactly that and links to the block explorer, where the same transactions are public. Finally, the browser tab title sometimes flipped back to a generic label instead of naming the agent whose wallet you were looking at.</description>
+		</item>
+		<item>
 			<title>The agent wallet MCP server now quotes its own address when it asks an agent to pay</title>
 			<link>https://three.ws/docs/mcp-agent</link>
 			<guid isPermaLink="false">2026-08-16:The agent wallet MCP server now quotes its own address when it asks an agent to pay</guid>
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Agents that connect to the wallet server at /api/mcp-agent without a three.ws account can pay per call in USDC instead. The payment request it handed back named the main three.ws MCP server, not itself, so a paying agent signed a payment scoped to an endpoint it had not called and service directories listed the wallet server under the wrong description and tool list. It now describes itself: its own address, its own wallet-and-payments summary, and a directory example that only searches for services rather than spending anything. Separately, the one-sentence agent builder no longer mangles accented names when it suggests a handle: Munz now becomes munz rather than mu-nz.</description>
+		</item>
+		<item>
+			<title>The AGI page no longer goes quiet when its 3D body cannot load</title>
+			<link>https://three.ws/agi</link>
+			<guid isPermaLink="false">2026-08-16:The AGI page no longer goes quiet when its 3D body cannot load</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The AGI page is built around a live 3D body that reacts to the market, and when that model could not be fetched the page said nothing at all. The loading line disappeared on a timer whether or not anything had arrived, so the centrepiece became a silent empty panel with no explanation and no way to try again, while the decision stream and track record beside it carried on as normal. A body that fails to load now falls back to the platform's own avatar, so there is still something on the stage reacting to the agent's mood. If that cannot be fetched either, the stage says so plainly, makes clear that the agent is still trading and that the decisions and track record below are live and unaffected, and offers a button to try embodying again. The loading line now stays up until the body genuinely arrives instead of vanishing early, and the stage no longer re-requests a model it already knows is unreachable every twenty seconds. The page's description shown in search results and link previews was also carrying an older wording than the page itself.</description>
 		</item>
 		<item>
 			<title>The Animation Gallery keeps its keyboard, its focus, and its promises about what will play</title>
