@@ -117,6 +117,8 @@ The strategy row (`agent_sniper_strategies`, armed via `POST /api/sniper/strateg
 | `initials_out_multiple` / `moonbag_min_pct` | The laddered exit: recover cost at N times entry, let the rest ride |
 | `kill_switch` / `enabled` | Two independent off switches |
 
+Every field in that table is settable through `POST /api/sniper/strategy`; an omitted field keeps its stored value, and an explicit `null` clears the ones documented as clearable (`initials_out_multiple` back to the classic single-shot exit, the entry filters back to "no filter"). One column is deliberately not settable there: `auto_fund_enabled`, the consent for the platform's launcher master to top this agent's wallet up, is operator-granted against the row. Sending it in the body returns `400 bad_request` rather than being silently ignored, and `GET /api/sniper/strategy` reports it read-only so a dashboard can still show whether the treasury may refill the wallet.
+
 Exit rules are evaluated in a fixed order (stop-loss, signal-flip, trailing-stop, take-profit, timeout) by a pure, unit-tested function (`workers/agent-sniper/exit-logic.js`), so a backtest and the live worker agree on exactly when a position closes.
 
 ### The `oracle_crossing` trigger

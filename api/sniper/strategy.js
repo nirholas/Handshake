@@ -50,7 +50,11 @@ const optInt = z.union([z.string(), z.number()]).nullable().optional();
 
 const optLamports = z.union([z.string(), z.number()]).nullable().optional();
 
-const STRATEGY_SCHEMA = z.object({
+// Exported so tests can pin the accepted field set: zod strips unknown keys, so
+// a knob missing from this schema is silently dropped from every write while the
+// caller still gets a 200. That is exactly how the laddered-exit fields below
+// spent weeks unsettable through the only API that is supposed to set them.
+export const STRATEGY_SCHEMA = z.object({
 	agent_id: z.string().uuid(),
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 	enabled: z.boolean().optional(),
@@ -116,6 +120,11 @@ const STRATEGY_SCHEMA = z.object({
 	llm_max_confidence: z.union([z.string(), z.number()]).nullable().optional(),
 	llm_strict_model: z.boolean().optional(),
 	moonbag_always: z.boolean().optional(),
+	// Laddered take-initials exit. An explicit null on initials_out_multiple opts
+	// back into the classic single-shot exit; moonbag_min_pct is NOT NULL in the
+	// schema, so it clamps rather than clears.
+	initials_out_multiple: z.union([z.string(), z.number()]).nullable().optional(),
+	moonbag_min_pct: z.union([z.string(), z.number()]).optional(),
 	label: z.string().max(80).nullable().optional(),
 	experiment_group: z.string().max(80).nullable().optional(),
 });
@@ -152,6 +161,13 @@ const numOrNull = (v) => {
 };
 const clampInt = (v, min, max, def) => {
 	const n = Math.floor(Number(v));
+	if (!Number.isFinite(n)) return def;
+	return Math.min(max, Math.max(min, n));
+};
+// Fractional sibling of clampInt, for the knobs that are multiples or percentages
+// rather than counts. Both fall back rather than pass NaN into a numeric column.
+const clampNum = (v, min, max, def) => {
+	const n = Number(v);
 	if (!Number.isFinite(n)) return def;
 	return Math.min(max, Math.max(min, n));
 };
@@ -252,6 +268,11 @@ async function listStrategies(req, res, userId) {
 			alpha_max_mcap_usd: s.alpha_max_mcap_usd != null ? Number(s.alpha_max_mcap_usd) : null,
 			alpha_narrative_keywords: s.alpha_narrative_keywords || null,
 			alpha_min_quality_score: s.alpha_min_quality_score != null ? Number(s.alpha_min_quality_score) : null,
+			// Read-only here (operator-granted, see upsertStrategy), but the dashboard
+			// still has to show whether the treasury is allowed to refill this wallet.
+			auto_fund_enabled: s.auto_fund_enabled ?? false,
+			initials_out_multiple: s.initials_out_multiple != null ? Number(s.initials_out_multiple) : null,
+			moonbag_min_pct: s.moonbag_min_pct != null ? Number(s.moonbag_min_pct) : 15,
 			decision_mode: s.decision_mode || 'rules',
 			llm_model: s.llm_model || null,
 			llm_min_confidence: s.llm_min_confidence != null ? Number(s.llm_min_confidence) : null,
@@ -282,6 +303,14 @@ async function upsertStrategy(req, res, userId) {
 	if (!(await requireCsrf(req, res, userId))) return;
 
 	const body = await readJson(req);
+	// Treasury auto-funding moves SOL from the platform's launcher master into an
+	// agent wallet, so consent for it is granted by an operator against the row
+	// (scripts/seed-sniper-experiments.mjs, scripts/trading-experiment-setup.mjs),
+	// never by the owner of the agent through this endpoint. Say so out loud: a
+	// silently-stripped flag reads as "opted in" to whoever sent it.
+	if (body && typeof body === 'object' && 'auto_fund_enabled' in body) {
+		return error(res, 400, 'bad_request', 'auto_fund_enabled is not settable here: treasury auto-funding is operator-granted');
+	}
 	const parsed = STRATEGY_SCHEMA.safeParse(body);
 	if (!parsed.success) {
 		return error(res, 400, 'bad_request', parsed.error.issues[0]?.message || 'invalid strategy');
@@ -365,17 +394,18 @@ async function upsertStrategy(req, res, userId) {
 		alpha_max_mcap_usd: 'alpha_max_mcap_usd' in p ? (p.alpha_max_mcap_usd == null ? null : Math.max(0, Number(p.alpha_max_mcap_usd))) : (cur.alpha_max_mcap_usd != null ? Number(cur.alpha_max_mcap_usd) : null),
 		alpha_narrative_keywords: 'alpha_narrative_keywords' in p ? (Array.isArray(p.alpha_narrative_keywords) ? p.alpha_narrative_keywords.filter(Boolean).slice(0, 10) : null) : (cur.alpha_narrative_keywords || null),
 		alpha_min_quality_score: 'alpha_min_quality_score' in p ? (p.alpha_min_quality_score == null ? null : Math.min(100, Math.max(0, Math.round(Number(p.alpha_min_quality_score))))) : (cur.alpha_min_quality_score != null ? Number(cur.alpha_min_quality_score) : null),
-		// Explicit, off-by-default consent for the auto-funder to top this agent's
-		// wallet up from the launcher master. Arming a strategy never moves money
-		// on its own — this must be turned on deliberately.
-		auto_fund_enabled: 'auto_fund_enabled' in p ? Boolean(p.auto_fund_enabled) : (cur.auto_fund_enabled ?? false),
+		// Off-by-default consent for the auto-funder to top this agent's wallet up
+		// from the launcher master. Arming a strategy never moves money on its own,
+		// and this endpoint never grants the consent either (rejected above): the
+		// write only carries the stored value through the upsert unchanged.
+		auto_fund_enabled: cur.auto_fund_enabled ?? false,
 		// Laddered take-initials exit (fleet default, owner rule 2026-07-25): at
 		// initials_out_multiple × entry, sell exactly enough to recover the cost
 		// basis and let the rest ride behind the trailing stop. New strategies get
 		// 2× unless the creator sets a value; an explicit null opts back into the
 		// classic single-shot exit. moonbag_min_pct = the floor always kept.
-		initials_out_multiple: 'initials_out_multiple' in p ? (p.initials_out_multiple == null || p.initials_out_multiple === '' ? null : Math.max(1.01, Number(p.initials_out_multiple))) : (cur.initials_out_multiple != null ? Number(cur.initials_out_multiple) : null),
-		moonbag_min_pct: 'moonbag_min_pct' in p ? Math.max(0, Math.min(95, Number(p.moonbag_min_pct))) : (cur.moonbag_min_pct != null ? Number(cur.moonbag_min_pct) : 15),
+		initials_out_multiple: 'initials_out_multiple' in p ? (p.initials_out_multiple == null || p.initials_out_multiple === '' ? null : clampNum(p.initials_out_multiple, 1.01, 1000, 2)) : (cur.initials_out_multiple != null ? Number(cur.initials_out_multiple) : null),
+		moonbag_min_pct: 'moonbag_min_pct' in p && p.moonbag_min_pct !== '' ? clampNum(p.moonbag_min_pct, 0, 95, 15) : (cur.moonbag_min_pct != null ? Number(cur.moonbag_min_pct) : 15),
 		// Experiment identity + decision mode. 'llm' replaces the rule shields with
 		// a per-launch model verdict; safety rails still hold at executeBuy.
 		decision_mode: p.decision_mode ?? cur.decision_mode ?? 'rules',
