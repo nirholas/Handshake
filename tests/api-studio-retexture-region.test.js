@@ -136,7 +136,7 @@ beforeEach(() => {
 	});
 });
 
-describe('POST /api/studio/retexture-region — the success path', () => {
+describe('POST /api/studio/retexture-region: the success path', () => {
 	it('submits the masked region to the texture worker and returns an opaque job token', async () => {
 		const { status, body } = await post({
 			mesh_url: MESH,
