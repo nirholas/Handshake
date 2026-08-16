@@ -1908,7 +1908,7 @@ async function handleThreeVanity(req, res) {
 			protocol: 'three-vanity/v1',
 			protocols: ['three-vanity/v1', 'three-pog/v1'],
 			description:
-				'Provably-fair Solana vanity grinding. Keys are ground under a commit–reveal ' +
+				'Provably-fair Solana vanity grinding. Keys are ground under a commit-reveal ' +
 				'seed-mixing protocol (three-vanity/v1) and/or attested with a proof-of-grind ' +
 				'certificate (three-pog/v1). Both are signed by the attestation key below and ' +
 				'verified entirely client-side — nothing here is trusted, everything is recomputed.',
@@ -1983,7 +1983,10 @@ export default wrap(async (req, res) => {
 		: { methods: 'GET,OPTIONS' };
 	if (cors(req, res, corsOpts)) return;
 	if (!method(req, res, ['GET'])) return;
-	const fn = DISPATCH[name];
-	if (!fn) return error(res, 404, 'not_found', `unknown well-known resource: ${name}`);
+	const fn = Object.hasOwn(DISPATCH, name) ? DISPATCH[name] : null;
+	// Echo at most a label's worth of the caller's input. Unbounded reflection let
+	// a 5 KB ?name= come straight back in the 404 body (and into the access log),
+	// which is free amplification for anyone pointing a scraper at /.well-known.
+	if (!fn) return error(res, 404, 'not_found', `unknown well-known resource: ${String(name ?? 'null').slice(0, 64)}`);
 	return fn(req, res);
 });

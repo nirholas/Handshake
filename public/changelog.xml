@@ -143,6 +143,14 @@
 			<description>An audit of the account endpoints found one real break and two smaller ones. The activity feed on /community and your personal feed ask for the next page of results by passing the last item’s timestamp back; if that value arrived malformed, from a hand-edited link or a stale bookmark, the database rejected it and the entire feed came back as a server error with nothing to act on. It now answers with a plain &quot;that is not a timestamp&quot; so the page can recover and reload from the top. The referral code editor stated its length rule with a typographic dash that read as a minus sign on some devices, and now spells it out. The purchase history endpoint also documented the wrong default view: it always merges your purchases and your sales, which is what the dashboard shows.</description>
 		</item>
 		<item>
+			<title>Seeding an agent from your X account no longer asks for permission to post as you</title>
+			<link>https://three.ws/settings</link>
+			<guid isPermaLink="false">2026-08-16:Seeding an agent from your X account no longer asks for permission to post as you</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Teaching an agent your voice from your public X posts required connecting X first, and that connect asked X for everything the platform can do with an account, including posting and uploading media on your behalf. Reading your posts once and writing as you are two different things to agree to, and only the first one is what seeding needs. The Connect button on the X card in Settings now asks X for read access to your profile and posts and nothing else, and it says so before you click. Posting is its own connect, offered right beside it and labelled as such, and Reconnect keeps whichever of the two you already chose rather than quietly widening it. If a connection cannot read your posts at all, the card now says which permission is missing and offers a reconnect instead of showing you a consent screen for a seed that could not run, and an agent trying to post through a read-only connection is told exactly that instead of failing against X with nothing to act on. Everything else about the lane is unchanged: nothing is read until you consent on a screen that lists what is read and stored, and revoking still deletes every memory the seeding produced.</description>
+		</item>
+		<item>
 			<title>Shared agent links keep their preview card through a chain hiccup</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:Shared agent links keep their preview card through a chain hiccup</guid>
@@ -349,6 +357,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The rollup that turns launch history into wallet reputation was judging 80 coins every five minutes while the intel firehose was recording about 32,000 new mints a day, so it fell roughly 8,000 coins a day behind. That backlog does not wait its turn: the rollup works oldest-first and only reaches back 14 days, which is exactly when retention prunes the record, so the tail of the queue aged out and those buyers never counted toward anyone’s reputation at all. 309,000 coins were sitting unjudged with the oldest already 8.4 days from the cliff. The per-run budget is now 400, which outruns the firehose several times over, drains the backlog within days and then idles. Scores across the smart-money surfaces get their full evidence base back. The operations health board also tracks the retention and reconstruct sweeps, so a stall in either is visible instead of showing up later as a symptom.</description>
+		</item>
+		<item>
+			<title>Web search answers again, and a stray address can no longer tie up the server</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-16:Web search answers again, and a stray address can no longer tie up the server</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three repairs on the public API. Web search had been answering nothing but an error: the question went to Google's grounded search as designed, but the model was given a single budget to both think and reply, spent all of it thinking, and came back empty, which we correctly reported as a failure and wrongly did so on every single query. Thinking now has its own allowance on top of the answer, and when a search does come back empty the log says why instead of leaving the next person to guess. Second, the machine-readable directory at the root of the site, the file other agents read to learn what three.ws sells, would hang forever on a handful of odd names rather than saying no such thing, and a request that never ends holds a server slot until it is cut off. Every unknown name now gets a plain not-found. Third, at checkout, a wallet that hands back a payment the network could never accept is now told so at the moment it happens, instead of the modal saying sending and the error arriving later from the payment processor.</description>
 		</item>
 		<item>
 			<title>3D viewer: shared model links keep their name, and every button on the page does something</title>

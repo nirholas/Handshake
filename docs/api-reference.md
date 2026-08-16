@@ -5180,8 +5180,9 @@ returns `vertexaisearch.cloud.google.com` for every result.
   GCP project configured (local dev without credentials). A designed "not
   available here" state, not an error.
 - `400 missing_query` — `q` was absent or empty.
-- `502` — the upstream grounded call failed (auth, quota, safety block, or
-  timeout). Retryable.
+- `502 upstream_error`: the upstream grounded call failed (auth, quota, safety
+  block, or timeout). Retryable. Body is the standard error shape,
+  `{ "error": "upstream_error", "error_description": "search upstream failed, retry shortly" }`.
 
 Results are edge-cached for 60 seconds (`stale-while-revalidate` 300).
 

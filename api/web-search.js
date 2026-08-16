@@ -53,9 +53,11 @@ export default wrap(async (req, res) => {
 	} catch (err) {
 		// Upstream failure is a real error state, not an empty result — tell the
 		// caller it can retry, and keep the message generic (the raw upstream
-		// detail goes to logs, not to the public).
+		// detail goes to logs, not to the public). Uses the shared error() shape
+		// so a client parsing {error, error_description} does not have to special
+		// case this one handler.
 		console.error('[web-search]', err?.message || err);
-		return json(res, 502, { error: 'search upstream failed, retry shortly' });
+		return error(res, 502, 'upstream_error', 'search upstream failed, retry shortly');
 	}
 
 	return json(

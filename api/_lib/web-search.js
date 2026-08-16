@@ -25,9 +25,12 @@
 //   VERTEX_GEMINI_MODEL          : model id (default: google/gemini-2.5-flash)
 
 import { getGcpAccessToken } from './gcp-auth.js';
-import { vertexGeminiAvailable, vertexGeminiModel } from './vertex-gemini.js';
+import { vertexGeminiAvailable, vertexGeminiModel, vertexGeminiThinkingBudget } from './vertex-gemini.js';
 
 const FETCH_TIMEOUT_MS = 20_000;
+// Visible answer tokens. The reasoning cap is funded separately on top (see the
+// generationConfig below), so this is what the caller actually gets back.
+const ANSWER_TOKENS = 1024;
 
 export function webSearchAvailable() {
 	return vertexGeminiAvailable();
@@ -76,6 +79,7 @@ export async function groundedSearch(query, { maxSources = 8, signal } = {}) {
 	if (!q) throw new Error('web search: empty query');
 
 	const token = await getGcpAccessToken();
+	const think = vertexGeminiThinkingBudget();
 	const res = await fetch(groundedUrl(), {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
@@ -83,7 +87,19 @@ export async function groundedSearch(query, { maxSources = 8, signal } = {}) {
 		body: JSON.stringify({
 			contents: [{ role: 'user', parts: [{ text: q }] }],
 			tools: [{ googleSearch: {} }],
-			generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+			generationConfig: {
+				temperature: 0.2,
+				// Visible-answer budget PLUS the reasoning cap, exactly like the
+				// OpenAI-compat anchor's vertexGeminiBudget(). Gemini 2.5 reasons by
+				// default and bills those tokens against maxOutputTokens without ever
+				// returning them, so a flat 1024 here was spent thinking: the reply
+				// carried no text and no groundingChunks, which this function then
+				// (correctly) reported as an empty grounded response and /api/web-search
+				// surfaced as a 502 on every query. Capping the reasoning and funding
+				// it on top is what makes ANSWER_TOKENS mean tokens the caller receives.
+				maxOutputTokens: ANSWER_TOKENS + think,
+				thinkingConfig: { thinkingBudget: think },
+			},
 		}),
 	});
 	if (!res.ok) {
@@ -103,7 +119,19 @@ export async function groundedSearch(query, { maxSources = 8, signal } = {}) {
 
 	// A response with neither text nor sources is an upstream failure in
 	// disguise (safety block, empty candidate) — surface it as an error so
-	// chains fall through instead of caching an empty "success".
-	if (!answer && !sources.length) throw new Error('web search: empty grounded response');
+	// chains fall through instead of caching an empty "success". Name the cause:
+	// finishReason separates "MAX_TOKENS" (budget spent on reasoning) from
+	// "SAFETY"/"RECITATION" (blocked) from a prompt-level block, and without it
+	// every one of these looked identical from the outside: a bare 502 with
+	// nothing in the log to act on.
+	if (!answer && !sources.length) {
+		const finish = candidate?.finishReason || 'none';
+		const blocked = body?.promptFeedback?.blockReason || 'none';
+		throw new Error(
+			`web search: empty grounded response (finishReason=${finish}, promptBlockReason=${blocked}, candidates=${
+				body?.candidates?.length ?? 0
+			})`,
+		);
+	}
 	return { answer, sources, queries };
 }

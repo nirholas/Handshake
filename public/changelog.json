@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T16:45:09.325Z",
+	"generated_at": "2026-08-16T17:00:52.612Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -184,6 +184,17 @@
 			"link": "/community",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Seeding an agent from your X account no longer asks for permission to post as you",
+			"summary": "Teaching an agent your voice from your public X posts required connecting X first, and that connect asked X for everything the platform can do with an account, including posting and uploading media on your behalf. Reading your posts once and writing as you are two different things to agree to, and only the first one is what seeding needs. The Connect button on the X card in Settings now asks X for read access to your profile and posts and nothing else, and it says so before you click. Posting is its own connect, offered right beside it and labelled as such, and Reconnect keeps whichever of the two you already chose rather than quietly widening it. If a connection cannot read your posts at all, the card now says which permission is missing and offers a reconnect instead of showing you a consent screen for a seed that could not run, and an agent trying to post through a read-only connection is told exactly that instead of failing against X with nothing to act on. Everything else about the lane is unchanged: nothing is read until you consent on a screen that lists what is read and stored, and revoking still deletes every memory the seeding produced.",
+			"link": "/settings",
+			"tags": [
+				"improvement",
+				"security"
 			]
 		},
 		{
@@ -462,6 +473,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Web search answers again, and a stray address can no longer tie up the server",
+			"summary": "Three repairs on the public API. Web search had been answering nothing but an error: the question went to Google's grounded search as designed, but the model was given a single budget to both think and reply, spent all of it thinking, and came back empty, which we correctly reported as a failure and wrongly did so on every single query. Thinking now has its own allowance on top of the answer, and when a search does come back empty the log says why instead of leaving the next person to guess. Second, the machine-readable directory at the root of the site, the file other agents read to learn what three.ws sells, would hang forever on a handful of odd names rather than saying no such thing, and a request that never ends holds a server slot until it is cut off. Every unknown name now gets a plain not-found. Third, at checkout, a wallet that hands back a payment the network could never accept is now told so at the moment it happens, instead of the modal saying sending and the error arriving later from the payment processor.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{

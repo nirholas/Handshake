@@ -1,13 +1,17 @@
 // Records a successful paid checkout call against a SKU.
 //
 // The hosted checkout page (/pay/c/<slug>) calls this after the drop-in
-// modal returns a settled payment. The endpoint is public — anyone can record
-// a call against any SKU — so we authenticate the entry by verifying the
-// X-PAYMENT-RESPONSE blob from the facilitator's /settle response.
+// modal returns a settled payment.
 //
-// In v1 we trust the client-reported payment header (the facilitator already
-// gated settlement; spoofing means lying to yourself about analytics). Future
-// hardening: verify the tx on-chain before recording.
+// Trust model, stated plainly because the numbers this table feeds are a
+// merchant's revenue dashboard: the endpoint is public and the row is NOT
+// authenticated. Anyone can POST a record against any active SKU. What bounds
+// the damage is that the row is analytics-only (it moves no funds, unlocks no
+// resource), the per-IP limiter caps the write rate, and the (sku_id,
+// tx_signature) unique index means one on-chain signature can be counted once.
+// Forging a row therefore means lying to yourself about your own conversion
+// numbers. Verifying the tx on-chain before recording would close the gap; it
+// costs an RPC round-trip on the checkout hot path and is not done today.
 
 import { z } from 'zod';
 import { sql } from './_lib/db.js';

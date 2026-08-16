@@ -406,6 +406,16 @@ async function handleEncode(req, res) {
 		if (check.confirmed === false) {
 			return error(res, 400, 'invalid_payment', check.reason || 'transaction does not meet payment requirements');
 		}
+		// confirmSolanaPayment is deliberately conservative: anything it cannot
+		// decode comes back `inconclusive` so a parsing quirk never rejects a real
+		// payment. One inconclusive reason is not a quirk though: a blob that does
+		// not deserialize into a transaction at all can never settle anywhere, and
+		// wrapping it into an X-PAYMENT header only moves the failure to the
+		// facilitator, where the buyer sees an opaque error after "Sending…"
+		// instead of a clear one at the step that produced the bad signature.
+		if (check.reason === 'undeserializable_transaction') {
+			return error(res, 400, 'invalid_payment', 'signed_tx_base64 is not a decodable Solana transaction');
+		}
 	}
 
 	const payload = {

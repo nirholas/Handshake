@@ -218,16 +218,21 @@ async function handleGet(req, res) {
 	// Public storefront read — no auth. Returns the published layout + its
 	// products so /store/<handle> can render without exposing owner-only fields.
 	if (store) {
+		// Handles are at most 40 chars (storeHandle above). Reject anything longer
+		// before it reaches Postgres and before it is echoed back: a 3 KB ?store=
+		// used to make one round-trip AND come straight back in the 404 body.
+		const handle = String(store).toLowerCase();
+		if (handle.length > 40) return error(res, 404, 'store_not_found', 'no published store with that handle');
 		const [m] = await sql`
 			select owner_user_id, business_name, logo_url, accent_color,
 			       store_handle, store_layout, store_theme,
 			       charity_enabled, charity_name, charity_chain, charity_address, charity_bps,
 			       roundup_enabled, roundup_to_atomics
 			from x402_merchant_settings
-			where store_handle = ${String(store).toLowerCase()} and store_published = true
+			where store_handle = ${handle} and store_published = true
 			limit 1
 		`;
-		if (!m) return error(res, 404, 'store_not_found', `no published store "${store}"`);
+		if (!m) return error(res, 404, 'store_not_found', `no published store "${handle}"`);
 		const products = await sql`
 			select id, slug, merchant_name, action_name, description, logo_url, image_url,
 			       accent_color, price_atomics, price_network, target_method, position
