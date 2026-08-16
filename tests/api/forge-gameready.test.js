@@ -70,6 +70,18 @@ vi.mock('../../api/_lib/rate-limit.js', async (importActual) => {
 	};
 });
 
+// Stub the pay-per-use proof so the paid branch can be driven without a real
+// settled payment. Only reached when a request carries both payment_id and
+// ref_id, so every other test in this file is unaffected.
+const assertForgePurchase = vi.fn(async () => ({ payment: { settledAt: new Date().toISOString() } }));
+const redeemForgePurchase = vi.fn(async () => ({ redeemed: true }));
+const releaseForgePurchase = vi.fn(async () => {});
+vi.mock('../../api/_lib/forge-consumption-payment.js', () => ({
+	assertForgePurchase: (...a) => assertForgePurchase(...a),
+	redeemForgePurchase: (...a) => redeemForgePurchase(...a),
+	releaseForgePurchase: (...a) => releaseForgePurchase(...a),
+}));
+
 // fetch is used by the R2 mirror to pull the finished worker artifact.
 const realFetch = globalThis.fetch;
 beforeEach(() => {
@@ -77,6 +89,9 @@ beforeEach(() => {
 	status.mockClear();
 	putObject.mockClear();
 	publicUrl.mockClear();
+	assertForgePurchase.mockClear();
+	redeemForgePurchase.mockClear();
+	releaseForgePurchase.mockClear();
 	supportsRemesh = true;
 	globalThis.fetch = vi.fn(async () => ({
 		ok: true,
@@ -324,6 +339,56 @@ describe('GET /api/forge-gameready?job=', () => {
 		await handler(makeReq({ method: 'GET', url: '/api/forge-gameready?job=not-base64-envelope' }), res);
 		expect(res.statusCode).toBe(400);
 		expect(JSON.parse(res.body).error).toBe('invalid_job');
+	});
+});
+
+// The paid branch answers the caller with the payment verdict, so what it is
+// allowed to say matters: only assertForgePurchase's own contract errors describe
+// the payment. Anything else reaching that catch is infrastructure, and echoing it
+// both leaks internals and tells the caller their settled payment is bad when the
+// database is merely down.
+describe('POST /api/forge-gameready payment-error boundary', () => {
+	const PAID = { mesh_url: MESH, payment_id: '3f1c8e9a-4d21-4b6e-9f07-2a5c8d13b7e4', ref_id: 'ref-1' };
+
+	it('echoes a genuine payment contract error as a 402 the client can act on', async () => {
+		assertForgePurchase.mockRejectedValueOnce(
+			Object.assign(new Error('This payment has already been used.'), { status: 409, code: 'payment_already_used' }),
+		);
+		const res = makeRes();
+		await handler(makeReq({ body: PAID, pass: null }), res);
+		expect(res.statusCode).toBe(409);
+		const out = JSON.parse(res.body);
+		expect(out.error).toBe('payment_already_used');
+		expect(out.pay_per_use).toEqual({ action: 'forge.gameready', usd: 0.1 });
+	});
+
+	// Regression: a malformed payment_id reached a `where id = $1` lookup against a
+	// uuid column, so the driver's error (code '22P02', message "invalid input
+	// syntax for type uuid: ...") was echoed verbatim as the 402 body, handing an
+	// unauthenticated caller the SQLSTATE and the column type.
+	it('never echoes a database fault as a payment verdict', async () => {
+		assertForgePurchase.mockRejectedValueOnce(
+			Object.assign(new Error('invalid input syntax for type uuid: "deadbeef"'), { code: '22P02' }),
+		);
+		const res = makeRes();
+		await handler(makeReq({ body: PAID, pass: null }), res);
+		expect(res.statusCode).toBe(500);
+		const out = JSON.parse(res.body);
+		expect(out.error).toBe('internal_error');
+		expect(res.body).not.toContain('22P02');
+		expect(res.body).not.toContain('uuid');
+		// A fault is not a payment verdict, so the caller is never told to pay again.
+		expect(out.pay_per_use).toBeUndefined();
+	});
+
+	it('does not claim the payment when validation fails', async () => {
+		assertForgePurchase.mockRejectedValueOnce(
+			Object.assign(new Error('No settled $THREE payment found for this request.'), { status: 402, code: 'payment_invalid' }),
+		);
+		const res = makeRes();
+		await handler(makeReq({ body: PAID, pass: null }), res);
+		expect(res.statusCode).toBe(402);
+		expect(redeemForgePurchase).not.toHaveBeenCalled();
 	});
 });
 
