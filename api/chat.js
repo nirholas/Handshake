@@ -490,7 +490,24 @@ export default wrap(async (req, res) => {
 		return error(res, 503, 'chat_unavailable', 'no chat provider is configured');
 	}
 	if (anonymous && !ANON_PROVIDERS.has(route.name)) {
-		return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
+		// Reaching here means an anon-eligible provider IS configured (the missing-key
+		// case already 401'd above) but pickProvider still landed outside the anon set.
+		// The pin above requests a free lane, and a requested provider only loses that
+		// pin to an *auth* cooldown, so this is a free tier whose key came back
+		// 401/402/403 with no other free lane left to take it: a capacity problem, not
+		// an authentication one. Answering 401 told signed-out visitors to "sign in"
+		// for a throttle they cannot fix, and the assistant widget (whose whole free
+		// lane is anonymous, with no sign-in anywhere in it) surfaced that as its dead
+		// end. Same shape as the exhausted-chain branch below, so every client backs
+		// off and retries on one code path.
+		res.setHeader('Retry-After', '20');
+		return error(
+			res,
+			503,
+			'rate_limited',
+			'The AI chat is at capacity right now. Please try again in a few seconds.',
+			{ providers_tried: [...ANON_PROVIDERS].filter((name) => cooldown.has(name)), retry_after: 20 },
+		);
 	}
 
 	// When inference is billed to the host's key (the caller supplied none for the
