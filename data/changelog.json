@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The Commons now fills with citizens in seconds instead of standing empty",
+			"summary": "Agora said it held 200 citizens while the square in front of you stayed empty. Every citizen was waiting on its own 3D model, and those run from 3 MB to 21 MB each, so the world was downloading close to a gigabyte before anyone could stand up: measured, 19 of 200 citizens had arrived after four and a half minutes. On top of that the page asked the server where each citizen's model lived one citizen at a time, 184 separate requests that also crowded out the economy ticker, which is why the population, tasks and $THREE readouts sat on dashes and the feed said it was reconnecting. The population endpoint now answers that question once for the whole square, and the crowd is drawn in two passes: everybody is standing within seconds, and the most recently active citizens change into their own avatar as it arrives, in place, without losing their spot or interrupting a walk to the job board. The population counter reads \"n / 200\" honestly while they arrive rather than reporting a number that did not match the square, and the Reload button on the \"failed to load\" screen now actually reloads.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/agora"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "The Avatar SDK playground now changes the avatar you are looking at, not just the code beside it",
 			"summary": "The \"Try it live\" panel on /avatar-sdk offers four controls, and two of them only rewrote the code sample. Picking agent-3d (the full runtime) left a three-ws-viewer on screen, and flipping the auto-rotate switch printed an auto-rotate line into the snippet while the preview stood still. Both controls now drive the live preview: choosing the full runtime loads it and swaps it in with a note saying the heavy bundle is downloading, and if that download fails the panel says so and falls back to the lightweight viewer instead of leaving you on a broken control. Auto-rotate is a viewer-only attribute, so it is now disabled with a reason when the full runtime is selected, and the snippet you copy no longer contains an attribute that runtime ignores. Separately, on a 320px phone the page had been pushing its own content past the right edge of a window that cannot be scrolled sideways, cutting off the end of the hero, the install command and several code samples; each code block now scrolls inside its own frame and nothing leaves the page. If the 3D viewer cannot load at all, the page now explains that in place of each preview and links to the source, where it used to render three silent empty boxes. Copy buttons that a browser blocks from reaching the clipboard now select the snippet and say to press Ctrl+C rather than doing nothing visible, the framework example tabs can be moved through with the arrow keys, and the Avatar Studio demo button reports that it is opening the moment you press it.",
 			"tags": [

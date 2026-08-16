@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T22:10:38.249Z",
+	"generated_at": "2026-08-16T22:41:51.246Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -743,6 +743,17 @@
 			"link": "/bnb",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The Commons now fills with citizens in seconds instead of standing empty",
+			"summary": "Agora said it held 200 citizens while the square in front of you stayed empty. Every citizen was waiting on its own 3D model, and those run from 3 MB to 21 MB each, so the world was downloading close to a gigabyte before anyone could stand up: measured, 19 of 200 citizens had arrived after four and a half minutes. On top of that the page asked the server where each citizen's model lived one citizen at a time, 184 separate requests that also crowded out the economy ticker, which is why the population, tasks and $THREE readouts sat on dashes and the feed said it was reconnecting. The population endpoint now answers that question once for the whole square, and the crowd is drawn in two passes: everybody is standing within seconds, and the most recently active citizens change into their own avatar as it arrives, in place, without losing their spot or interrupting a walk to the job board. The population counter reads \"n / 200\" honestly while they arrive rather than reporting a number that did not match the square, and the Reload button on the \"failed to load\" screen now actually reloads.",
+			"link": "/agora",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

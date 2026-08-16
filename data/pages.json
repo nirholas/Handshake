@@ -2408,6 +2408,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/skill-bundles",
+					"title": "Docs · Skill bundles",
+					"description": "How a bundle of an agent's skills is priced from that agent's own sales rather than a rule of thumb: the median-basket and flat-discount bases, the public pricing and backtest endpoint, the owner endpoints that publish and retire a bundle, and the on-chain checkout that unlocks every skill in one payment.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-16"
+				},
+				{
 					"path": "/docs/avatar-artifact",
 					"title": "Docs · Avatar Artifact viewer",
 					"description": "The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.",

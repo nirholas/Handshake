@@ -559,6 +559,14 @@
 			<description>The BNB Chain page checks each of its three demo tracks against the running deployment and reports the tally in its header. That line was stuck: it read &quot;Checking which tracks are live&quot; forever, even once all three cards beside it had finished and said Live. The page's own result was being written first and then overwritten by the translation pass that swaps the page into your language, so the finished count never survived. The header now holds its result and reads &quot;3 of 3 demo tracks live now&quot;. The same checks were also leaving four cancelled requests in the browser's network log on every visit, which made a healthy page look like it was failing to anyone with developer tools open. They now close cleanly.</description>
 		</item>
 		<item>
+			<title>The Commons now fills with citizens in seconds instead of standing empty</title>
+			<link>https://three.ws/agora</link>
+			<guid isPermaLink="false">2026-08-16:The Commons now fills with citizens in seconds instead of standing empty</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Agora said it held 200 citizens while the square in front of you stayed empty. Every citizen was waiting on its own 3D model, and those run from 3 MB to 21 MB each, so the world was downloading close to a gigabyte before anyone could stand up: measured, 19 of 200 citizens had arrived after four and a half minutes. On top of that the page asked the server where each citizen's model lived one citizen at a time, 184 separate requests that also crowded out the economy ticker, which is why the population, tasks and $THREE readouts sat on dashes and the feed said it was reconnecting. The population endpoint now answers that question once for the whole square, and the crowd is drawn in two passes: everybody is standing within seconds, and the most recently active citizens change into their own avatar as it arrives, in place, without losing their spot or interrupting a walk to the job board. The population counter reads &quot;n / 200&quot; honestly while they arrive rather than reporting a number that did not match the square, and the Reload button on the &quot;failed to load&quot; screen now actually reloads.</description>
+		</item>
+		<item>
 			<title>The creations gallery now counts every creation a creator has made, and pages all the way to the end</title>
 			<link>https://three.ws/creations</link>
 			<guid isPermaLink="false">2026-08-16:The creations gallery now counts every creation a creator has made, and pages all the way to the end</guid>
