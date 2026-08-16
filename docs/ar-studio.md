@@ -17,11 +17,12 @@ The page ([`pages/ar-studio.html`](../pages/ar-studio.html)) only imports [`src/
 
 ### Model sources
 
-`addModel({ src, title })` normalizes the URL (https or site-relative only), enforces a 20-model cap, clones the loaded template (using SkeletonUtils for skinned rigs), and drops it on the floor in front of the camera. The "Add models" tray has four tabs:
+`addModel({ src, title })` normalizes the URL (https or site-relative only), enforces a 20-model cap, clones the loaded template (using SkeletonUtils for skinned rigs), and drops it on the floor in front of the camera. The "Add models" tray has five tabs:
 
 - **Recent forges**: read from local storage (`twx_ar_forge_recent`), shared with `/ar` so one forge history opens in two doors.
 - **Yours**: `GET /api/forge-gallery?limit=24` with an `x-forge-client` header (your anonymous browser id).
 - **Community**: `GET /api/forge-gallery?scope=community&limit=24`.
+- **Objects**: `GET /api/objects/library`, the CC0 prop library behind [/objects](https://three.ws/objects). The whole manifest is fetched once, so the tab's search box filters name and category client-side with no further requests, and renders matches 60 at a time.
 - **GLB link**: paste any https `.glb`: a forge result, a viewer share link's `src`, or your own hosting.
 
 A fifth source is the **in-view forge**: the dock form calls `POST /api/forge` with `{ prompt, backend: 'nvidia' }` (the free NVIDIA NIM / TRELLIS lane), polls `GET /api/forge?job=<id>` until the GLB is ready, remembers it, and drops it into the scene. A sixth is deep links: repeatable `?src=` (paired with `?title=`) and `?forge=<prompt>` boot content on open.
@@ -51,7 +52,7 @@ The full arrangement (every model's source and transform) is serialized to JSON,
 ## Walkthrough
 
 1. Open [/ar/studio](https://three.ws/ar/studio). On the empty card, choose Start camera, Browse models, or Forge one.
-2. Add models: open the tray and pick from Recent, Yours, or Community, or paste a GLB link. Or type a prompt in the dock ("a neon bonsai tree") and press Forge to generate one in place.
+2. Add models: open the tray and pick from Recent, Yours, Community, or the CC0 Objects library, or paste a GLB link. Or type a prompt in the dock ("a neon bonsai tree") and press Forge to generate one in place.
 3. Arrange: drag to move, pinch to resize, twist to rotate. On a phone, tap Start camera to see them in your room; on a headset, tap the Immersive button for full AR.
 4. Go multiplayer: create a room and share the code (or the link). Others join and see and place models live.
 5. Share: use the QR button to continue on your phone, or copy the scene URL (it carries the arrangement in `#s=`).
@@ -89,6 +90,12 @@ You can also hand-build a share link: append `?src=<https glb url>&title=<name>`
 - **Rooms offline.** With no multiplayer server configured (production default when unset), the studio stays single-player: "Shared rooms are offline right now, you can still build solo." Departing authors' models remain until the room empties.
 - **Persistence.** Your own placed models are saved to local storage (`twx_ar_studio_scene_v1`); `#s=` links replace the working scene. Photo capture composites the camera and WebGL layers to a PNG.
 - **Forge failures.** `503`/unconfigured shows "The generator is offline"; `429` shows a busy message with a retry hint.
+
+## Running it locally
+
+`npm run dev` serves the page at `http://localhost:3000/ar/studio` and proxies `/api/*` to production. Every model URL in the tray points at the public R2 bucket, which answers `Access-Control-Allow-Origin: https://three.ws` and nothing else, so a raw bucket URL fails CORS from localhost and no model can be placed. The dev server rewrites those URLs to its own `/r2-proxy/*` path for the endpoints that carry them (`/api/avatars/*`, `/api/objects/*`, `/api/forge-gallery`, `/api/forge`), which is what makes the tray work off-production. If you add an endpoint that returns an R2 URL, add its prefix to `R2_URL_PREFIXES` in [`vite.config.js`](../vite.config.js) or that feature will work in production and be dead in dev.
+
+Append `?e2e=1` to expose `window.__arsDebug` (`count()`, `netStatus()`, `netIds()`, `remoteX()`), a read-only hook for driving the page from a browser test. It is absent without the flag.
 
 ## Related
 
