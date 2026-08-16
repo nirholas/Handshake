@@ -81,6 +81,7 @@ const els = {
 	modalPrev: $('modal-prev'),
 	modalNext: $('modal-next'),
 	modalError: $('modal-error'),
+	modalTransport: $('modal-transport'),
 };
 
 // URL params are user-editable, so every one is validated against the values the
@@ -576,6 +577,10 @@ function openModal(index) {
 	els.modalStudio.href = `/pose?anim=${encodeURIComponent(clip.id)}`;
 	els.modalError.hidden = true;
 	els.modalSpinner.hidden = false;
+	// Nothing is playing yet, so the transport would be a row of controls that
+	// do nothing. It comes back the moment the clip is on the stage, and stays
+	// away entirely if the preview fails.
+	els.modalTransport.hidden = true;
 	els.modalPrev.disabled = index <= 0;
 	els.modalNext.disabled = index >= state.filtered.length - 1;
 
@@ -613,6 +618,7 @@ function openModal(index) {
 		})
 		.then(() => {
 			els.modalSpinner.hidden = true;
+			els.modalTransport.hidden = false;
 			live.refit();
 		})
 		.catch(() => {
@@ -801,7 +807,7 @@ document.addEventListener('keydown', (e) => {
 		else if (onSlider) return;
 		else if (e.key === 'ArrowLeft') stepModal(-1);
 		else if (e.key === 'ArrowRight') stepModal(1);
-		else if (e.key === ' ' && tag !== 'BUTTON' && tag !== 'A') {
+		else if (e.key === ' ' && tag !== 'BUTTON' && tag !== 'A' && !els.modalTransport.hidden) {
 			e.preventDefault();
 			els.modalPlay.click();
 		}
