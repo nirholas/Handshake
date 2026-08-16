@@ -800,10 +800,11 @@ function updateRoomButton() {
 	if (!roomBtn) return;
 	const live = !!net && (net.status === 'online' || net.status === 'connecting');
 	roomBtn.classList.toggle('is-active', live);
-	// Two labels rather than one rewritten string: the idle one carries the page's
-	// data-i18n binding (rewriting the button's text would overwrite the
-	// translation with English), and the live one carries the room code, which
-	// stays visible at phone widths where the idle label is hidden.
+	// Two labels rather than one rewritten string. The idle one carries the page's
+	// data-i18n binding, so writing the room code straight onto the button (what
+	// this used to do) replaced the visitor's translated "Share live" with English
+	// the first time the room state changed. Swapping which span is hidden leaves
+	// the translated label untouched.
 	const idleLabel = $('ars-room-label');
 	const codeLabel = $('ars-room-code-label');
 	if (idleLabel) idleLabel.hidden = live;
