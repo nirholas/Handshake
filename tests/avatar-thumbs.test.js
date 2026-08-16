@@ -33,7 +33,12 @@ vi.mock('../api/_lib/db.js', () => ({ sql: (...a) => sqlMock(...a) }));
 const headObjectMock = vi.fn();
 const putObjectMock = vi.fn();
 const presignGetMock = vi.fn(async ({ key }) => `https://signed.example/${key}`);
-vi.mock('../api/_lib/r2.js', () => ({
+// Only the IO is faked. The failure classifiers come from the real modules: they
+// decide whether a failed render costs the avatar one of its three lifetime
+// attempts, and a hand-copied stand-in drifts from production silently, which is
+// exactly how "spawn EFAULT" ended up retiring four blameless avatars for good.
+vi.mock('../api/_lib/r2.js', async (importActual) => ({
+	...(await importActual()),
 	headObject: (...a) => headObjectMock(...a),
 	putObject: (...a) => putObjectMock(...a),
 	presignGet: (...a) => presignGetMock(...a),
@@ -42,13 +47,9 @@ vi.mock('../api/_lib/r2.js', () => ({
 }));
 
 const renderGlbToPngMock = vi.fn();
-// Mirrors the real classifier in render-glb.js — renderBatch depends on it to tell
-// "this model is broken" apart from "chromium died".
-const INFRA_RE =
-	/connection closed|target closed|browser has disconnected|browser was not found|protocol error|session closed|websocket|econnreset|socket hang up|failed to launch/i;
-vi.mock('../api/_lib/render-glb.js', () => ({
+vi.mock('../api/_lib/render-glb.js', async (importActual) => ({
+	...(await importActual()),
 	renderGlbToPng: (...a) => renderGlbToPngMock(...a),
-	isBrowserInfrastructureError: (err) => INFRA_RE.test(String(err?.message || err || '')),
 }));
 
 const { adoptForgePreviews, renderThumbnail, renderBatch, thumbKeyFor, isMissingThumbnail } =

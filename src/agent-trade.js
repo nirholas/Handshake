@@ -285,7 +285,31 @@ function buildStage() {
     el.style.transform = 'translate(-50%, -100%)';
   }
 
+  // Below this width the projected anchors clamp into the same pixels as the
+  // central card, so the overlays leave the scene and stack into the fixed
+  // strip the stylesheet lays out (the same one the no-WebGL fallback uses).
+  const FLAT_OVERLAY_W = 560;
+  let flatOverlays = null;
+
+  function syncOverlayMode() {
+    const flat = innerWidth <= FLAT_OVERLAY_W;
+    if (flat === flatOverlays) return flat;
+    flatOverlays = flat;
+    document.body.classList.toggle('flat-overlays', flat);
+    if (flat) {
+      // Drop the inline positions the projector wrote, or they would win over
+      // the stylesheet's strip layout.
+      for (const el of [els.buyerLabel, els.sellerLabel, els.buyerBubble, els.sellerBubble]) {
+        el.style.left = '';
+        el.style.top = '';
+        el.style.transform = '';
+      }
+    }
+    return flat;
+  }
+
   function updateOverlays() {
+    if (syncOverlayMode()) return;
     placeEl(els.buyerLabel,  labelPos.buyer,  0, -8);
     placeEl(els.sellerLabel, labelPos.seller, 0, -8);
 

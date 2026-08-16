@@ -74,7 +74,8 @@ const PLACEHOLDER_PROMPT_RE = /^(image-to-3d|untitled|test)$/i;
 function categoryName(modelCategory) {
 	const cat = String(modelCategory || '').trim();
 	if (!cat) return '3D Model';
-	return `Forged ${cat.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`;
+	// Underscores are a slug separator; hyphens are part of the word ("sci-fi").
+	return `Forged ${cat.replace(/_+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`;
 }
 
 // Model name from the generation prompt: first clause, title-cased, article

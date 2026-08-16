@@ -30,6 +30,7 @@ const state = {
 	el3d: null, // the embodied <agent-3d>
 	embodied: false,
 	bodyFailover: false, // the agent's own model died; the default body is standing in
+	bodyGaveUp: false, // both bodies failed; the stage explains itself and polls stop remounting
 	lastScore: null, // last reputation value drawn, so the ring only re-sweeps on a real change
 	shell: false, // the stable layout has been built
 	filter: 'trade', // decision stream lens: 'trade' | 'all'
@@ -532,6 +533,7 @@ function renderError() {
 	state.el3d = null;
 	state.embodied = false;
 	state.bodyFailover = false;
+	state.bodyGaveUp = false;
 	document.getElementById('agi-retry')?.addEventListener('click', () => { renderLoading(); boot(); });
 }
 

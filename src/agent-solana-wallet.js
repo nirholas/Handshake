@@ -22,6 +22,20 @@ const ENDPOINT = (id, qs = '') =>
 	`/api/agents/${encodeURIComponent(id)}/solana${qs ? `?${qs}` : ''}`;
 
 /**
+ * GET /api/agents/:id/solana answers in two shapes: the owner read returns
+ * `{ address, sol, … }`, while the public read a visitor gets returns
+ * `{ wallet, balance, … }` for the same wallet. Callers code to the documented
+ * owner shape, so a visitor used to see a dash where a real, publicly-readable
+ * balance existed. Normalize here, once, rather than in every caller.
+ */
+function normalizeWalletRead(data) {
+	if (!data || typeof data !== 'object') return data;
+	const address = data.address ?? data.wallet ?? null;
+	const sol = data.sol ?? data.balance ?? null;
+	return { ...data, address, sol };
+}
+
+/**
  * Fetch current wallet state from the server.
  * @returns {Promise<{ status: 'ok'|'none'|'forbidden'|'error',
  *                     data?: { address: string, lamports: number|null, sol: number|null,
@@ -36,7 +50,11 @@ export async function fetchAgentSolanaWallet(agentId, network = 'mainnet') {
 	const json = await resp.json().catch(() => ({}));
 	if (resp.status === 404) return { status: 'none' };
 	if (!resp.ok) return { status: 'error', error: json?.error?.message || `HTTP ${resp.status}` };
-	return { status: 'ok', data: json.data };
+	const data = normalizeWalletRead(json.data);
+	// The public read answers 200 with a null wallet for an agent whose wallet is
+	// still being prepared; the owner read answers 404. Both mean "no wallet yet".
+	if (!data?.address) return { status: 'none' };
+	return { status: 'ok', data };
 }
 
 /**
