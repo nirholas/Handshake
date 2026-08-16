@@ -26,7 +26,18 @@ import { requireCron } from '../_lib/cron-auth.js';
 const NETWORK = 'mainnet';
 const JUDGE_AFTER_HOURS = 6; // a coin must be this old before "never graduated" = dud
 const MAX_AGE_DAYS = 14; // don't reach back further than this
-const COINS_PER_RUN = 80; // judge+fold at most this many coins per run
+// Judge+fold at most this many coins per run. The budget must OUTRUN the
+// firehose or the ground truth silently rots: coin-intel-observe ingests ~32k
+// mints/day, and at the old 80/run (23k/day across 288 runs) the judge fell
+// ~8k/day behind. Because judgeAndFold walks oldest-first and MAX_AGE_DAYS
+// matches the db-retention window, a growing backlog does not queue: the coins
+// at the tail age past 14 days, get pruned, and their buyers never fold into
+// wallet_reputation at all. Measured 2026-08-16: 309k unjudged, oldest already
+// 8.4 days old and climbing toward that cliff. 400/run (115k/day) drains the
+// backlog in a few days and then idles cheaply, since the candidate query
+// returns only unjudged coins. Cost is row volume, not round trips: every
+// phase here is batched into a fixed number of queries whatever the budget.
+const COINS_PER_RUN = 400;
 const TOP_WALLETS = 60; // per coin, cap wallets folded/scored
 const LIVE_WINDOW_HOURS = 3; // score coins launched within this window
 const LIVE_COINS = 150;
