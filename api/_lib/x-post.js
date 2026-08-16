@@ -5,6 +5,7 @@
 import { sql } from './db.js';
 import { env } from './env.js';
 import { encryptToken, decryptToken } from '../auth/x/[action].js';
+import { X_POST_REQUIRED_SCOPES, missingScopes } from './x-scopes.js';
 
 export const FREE_MONTHLY_QUOTA = 5;
 export const PRO_MONTHLY_QUOTA  = 100;
@@ -172,6 +173,19 @@ export async function publishTweet({ userId, agentId = null, text, threadParts =
 	`;
 	const conn = rows[0];
 	if (!conn) throw new XPostError('not_connected', 'X account not connected', 400);
+
+	// A connection made for memory seeding only carries read scopes. Say so, and
+	// point at the reconnect that fixes it, instead of spending the user's quota
+	// check and cadence guard on a call X will reject as unauthorized.
+	const missingWrite = missingScopes(conn.scopes, X_POST_REQUIRED_SCOPES);
+	if (missingWrite.length) {
+		throw new XPostError(
+			'insufficient_scope',
+			'this X connection is read-only; reconnect X with posting access to publish',
+			400,
+			{ missing_scopes: missingWrite, connect_url: '/api/auth/x/connect?scope=full' },
+		);
+	}
 
 	// Reset monthly counter if month boundary crossed.
 	if (new Date(conn.month_resets_at) <= new Date()) {

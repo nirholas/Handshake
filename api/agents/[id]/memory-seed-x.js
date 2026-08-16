@@ -31,6 +31,7 @@ import {
 	seedFromX,
 } from '../../_lib/x-memory-seed.js';
 import { revokeAgentSeedConsent } from '../../_lib/x-seed-consent.js';
+import { X_SEED_REQUIRED_SCOPES, missingScopes } from '../../_lib/x-scopes.js';
 import { decryptToken, encryptToken } from '../../auth/x/[action].js';
 
 // ── Token refresh ─────────────────────────────────────────────────────────────
@@ -184,12 +185,19 @@ async function handleGet(req, res, agentId) {
 
 	const conn = await loadConnection(user.id);
 	const state = consentState(await loadConsent(agentId), conn);
+	const missing = conn ? missingScopes(conn.scopes, X_SEED_REQUIRED_SCOPES) : [];
 
 	return json(res, 200, {
 		connected: !!conn,
 		configured: !!(env.X_OAUTH_CLIENT_ID && env.X_OAUTH_CLIENT_SECRET),
 		username: conn?.username ?? agent.x_username ?? null,
 		connection_scopes: conn?.scopes ?? null,
+		// What seeding needs from the connection, and what this one is short of,
+		// so the card can offer a reconnect instead of letting the owner consent
+		// to a seed that would fail at the X API.
+		required_scopes: X_SEED_REQUIRED_SCOPES,
+		missing_scopes: missing,
+		scopes_ok: missing.length === 0,
 		seeded_at: agent.x_seeded_at ?? null,
 		fact_count: await countSeededMemories(agentId),
 		scope_version: X_SEED_SCOPE_VERSION,
@@ -210,6 +218,20 @@ async function handlePost(req, res, agentId) {
 
 	const conn = await loadConnection(user.id);
 	if (!conn) return error(res, 400, 'not_connected', 'connect your X account first');
+
+	// A connection narrower than the read the disclosure describes cannot be
+	// seeded from. Refuse here, with the missing scopes named, rather than
+	// recording consent and then failing at the X API with an opaque 502.
+	const missing = missingScopes(conn.scopes, X_SEED_REQUIRED_SCOPES);
+	if (missing.length) {
+		return error(
+			res,
+			400,
+			'insufficient_scope',
+			'this X connection cannot read your profile and posts; reconnect X to seed',
+			{ required_scopes: X_SEED_REQUIRED_SCOPES, missing_scopes: missing },
+		);
+	}
 
 	const body = await readJson(req).catch(() => ({}));
 	const existing = await loadConsent(agentId);

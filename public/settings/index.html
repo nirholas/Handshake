@@ -1155,9 +1155,10 @@
 				const el = document.getElementById('x-connect-status');
 				const msg = document.getElementById('x-msg');
 				try {
-					const connectUrl = _xAgentId
-						? `/api/auth/x/connect?agent_id=${encodeURIComponent(_xAgentId)}`
-						: '/api/auth/x/connect';
+					// Seeding reads; it never posts. This card asks X for the read-only
+					// scope set, so consenting to a memory seed never costs the owner
+					// permission to post as them.
+					const connectUrl = xConnectUrl(_xAgentId, 'read');
 
 					if (!_xAgentId) {
 						el.innerHTML = xCardHeader('Loading…');
@@ -1187,6 +1188,12 @@
 
 			function escHtml(s) {
 				return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+			}
+
+			function xConnectUrl(agentId, scope) {
+				const q = new URLSearchParams({ scope });
+				if (agentId) q.set('agent_id', agentId);
+				return `/api/auth/x/connect?${q.toString()}`;
 			}
 
 			function xCardHeader(meta) {
@@ -1263,7 +1270,11 @@
 
 				if (!data.connected) {
 					el.innerHTML = xCardHeader('Not connected')
-						+ `<div class="actions"><a href="${connectUrl}" class="btn" style="font-size:12px;padding:5px 14px;text-decoration:none">Connect X</a></div>`;
+						+ `<div class="actions" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+								<a href="${connectUrl}" class="btn" style="font-size:12px;padding:5px 14px;text-decoration:none">Connect X (read-only)</a>
+								<span class="muted" style="font-size:11.5px">Asks X only for read access to your profile and posts. It cannot post as you.</span>
+							</div>
+							<p class="muted" style="font-size:11.5px;margin:10px 0 0">Want this agent to post to X as well? <a href="${xConnectUrl(agentId, 'full')}" class="action">Connect with posting access</a>.</p>`;
 					return;
 				}
 
@@ -1271,6 +1282,24 @@
 				const scopes = data.connection_scopes
 					? `<p class="muted" style="font-size:11.5px;margin:10px 0 0">This connection holds the X permissions: ${escHtml(data.connection_scopes)}. Seeding only uses the read permissions listed above.</p>`
 					: '';
+
+				// A connection whose scopes cannot cover the read the disclosure
+				// describes can never produce a seed. Say so before the consent panel,
+				// so nobody agrees to something that would then fail at X.
+				if (data.scopes_ok === false) {
+					el.innerHTML = xCardHeader(`@${escHtml(data.username)} &middot; This connection cannot read your posts`)
+						+ `<p class="muted" style="font-size:12.5px;margin:10px 0 0">Seeding needs the X permissions ${escHtml((data.required_scopes || []).join(', '))}, and this connection is missing ${escHtml((data.missing_scopes || []).join(', '))}. Reconnect to grant them. Nothing is read until you consent afterwards.</p>
+							<div class="actions" style="margin-top:10px"><a href="${connectUrl}" class="btn" style="font-size:12px;padding:5px 14px;text-decoration:none">Reconnect X (read-only)</a></div>${scopes}`;
+					return;
+				}
+
+				// Reconnecting keeps the shape of the grant the owner already made: a
+				// read-only connection stays read-only, rather than being quietly
+				// widened to posting access by a link labelled "Reconnect".
+				const reconnectUrl = xConnectUrl(
+					agentId,
+					String(data.connection_scopes || '').split(/\s+/).includes('tweet.write') ? 'full' : 'read',
+				);
 
 				if (!consent.granted) {
 					const why = consent.reason === 'scope_version_changed'
