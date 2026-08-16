@@ -33,7 +33,7 @@ Claude embeds the artifact and the live 3D character renders inline.
 
 - **GLB size cap: 6 MB** — larger avatars return 413. Slimmer GLBs paste faster and render sooner.
 - **Viewer overhead: ~565 KB** — three.js + GLTFLoader + viewer code, inlined into every response.
-- **Artifact ceiling: ~8.6 MB** — the model is inlined as base64, which costs four bytes per three, so a 6 MB GLB becomes 8 MB of text before the viewer is added. Budget against this total, not against the 6 MB model cap: it is what Claude actually has to load.
+- **Artifact ceiling: ~8.6 MB.** The model is inlined as base64, which costs four bytes per three, so a 6 MB GLB becomes 8 MB of text before the viewer is added. Budget against this total, not against the 6 MB model cap: it is what Claude actually has to load.
 - **Rate limit: 600 req/min per IP** — shared with the widget-read preset.
 
 ## How to test before pasting
