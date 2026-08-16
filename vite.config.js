@@ -2825,6 +2825,16 @@ support: resolve(__dirname, 'pages/support.html'),
 					const rel = req.url.replace(/\?.*$/, '').slice('/avatar-sdk/'.length);
 					const file = resolve(__dirname, 'avatar-sdk', rel);
 					if (!existsSync(file) || statSync(file).isDirectory()) return next();
+					// avatar-sdk/src/* is package SOURCE: it imports bare specifiers
+					// ('three', 'three/addons/*') that only a bundler can resolve. The
+					// production build inlines those through Rollup, but streaming the
+					// raw bytes in dev handed the browser an unresolvable specifier, so
+					// <three-ws-viewer> never registered and every viewer on
+					// /avatar-sdk rendered an empty box. Hand these to Vite's own
+					// transform pipeline (which this middleware would otherwise shadow)
+					// so dev resolves them the same way the deployed bundle does.
+					// avatar-sdk/dist/* is already bundled and stays on the fast path.
+					if (rel.startsWith('src/') && /\.m?js$/.test(rel)) return next();
 					const mime = MIME[extname(file)] ?? 'application/octet-stream';
 					res.setHeader('Content-Type', mime);
 					createReadStream(file).pipe(res);
