@@ -144,7 +144,7 @@
 		/* ── head ── */
 		.tr-head { margin-bottom: 28px; }
 		.tr-h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; color: #f9fafb; letter-spacing: -.02em; }
-		.tr-sub { margin-top: 6px; font-size: 14px; color: #6b7280; }
+		.tr-sub { margin-top: 6px; font-size: 14px; color: #8b93a3; }
 
 		/* ── controls ── */
 		.tr-controls {
@@ -155,7 +155,7 @@
 		.tr-tabs { display: flex; gap: 2px; background: rgba(255,255,255,.05); border-radius: 10px; padding: 3px; }
 		.tr-tab {
 			padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer;
-			font-size: 13px; font-weight: 600; background: transparent; color: #6b7280;
+			font-size: 13px; font-weight: 600; background: transparent; color: #8b93a3;
 			transition: background .15s, color .15s;
 		}
 		.tr-tab.active { background: rgba(99,102,241,.25); color: #a5b4fc; }
@@ -165,7 +165,7 @@
 		.tr-win {
 			padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1);
 			font-size: 12px; font-weight: 600; cursor: pointer;
-			background: transparent; color: #6b7280;
+			background: transparent; color: #8b93a3;
 			transition: border-color .15s, color .15s, background .15s;
 		}
 		.tr-win.active { border-color: rgba(99,102,241,.6); color: #a5b4fc; background: rgba(99,102,241,.1); }
@@ -178,7 +178,7 @@
 		.tr-legend {
 			display: flex; justify-content: space-between;
 			font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-			color: #4b5563; padding: 0 16px 10px;
+			color: #7d8595; padding: 0 16px 10px;
 		}
 
 		/* ── list rows ── */
@@ -196,7 +196,7 @@
 
 		.tr-rank {
 			width: 22px; text-align: center; flex-shrink: 0;
-			font-size: 11px; font-weight: 700; color: #4b5563;
+			font-size: 11px; font-weight: 700; color: #7d8595;
 		}
 		.tr-rank-1 { color: #f59e0b; }
 		.tr-rank-2 { color: #9ca3af; }
@@ -228,13 +228,13 @@
 		}
 		.tr-desc {
 			margin-top: 2px;
-			font-size: 12px; color: #6b7280;
+			font-size: 12px; color: #8b93a3;
 			white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 		}
 
 		.tr-meta { text-align: right; flex-shrink: 0; }
 		.tr-metric { font-size: 15px; font-weight: 700; color: #f3f4f6; }
-		.tr-metric-label { font-size: 10px; color: #6b7280; margin-top: 1px; }
+		.tr-metric-label { font-size: 10px; color: #8b93a3; margin-top: 1px; }
 
 		/* tier pill */
 		.tr-tier {
@@ -246,7 +246,7 @@
 		.tr-tier-strong  { color: #10b981; border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.08); }
 		.tr-tier-lean    { color: #3b82f6; border-color: rgba(59,130,246,.3); background: rgba(59,130,246,.08); }
 		.tr-tier-watch   { color: #8b5cf6; border-color: rgba(139,92,246,.3); background: rgba(139,92,246,.08); }
-		.tr-tier-avoid   { color: #6b7280; border-color: rgba(107,114,128,.2); background: rgba(107,114,128,.05); }
+		.tr-tier-avoid   { color: #8b93a3; border-color: rgba(107,114,128,.2); background: rgba(107,114,128,.05); }
 
 		/* reputation tier pill (matches TIERS accents in wallet-reputation.js) */
 		.tr-rt {
@@ -261,7 +261,7 @@
 		.tr-rt-elite       { color: #fbbf24; border-color: rgba(251,191,36,.34);  background: rgba(251,191,36,.09); }
 
 		.tr-trust-num { color: #f3f4f6; }
-		.tr-trust-slash { color: #6b7280; font-weight: 600; }
+		.tr-trust-slash { color: #8b93a3; font-weight: 600; }
 
 		/* onchain badge */
 		.tr-onchain {
@@ -281,7 +281,7 @@
 
 		.tr-empty, .tr-error {
 			padding: 40px 20px; text-align: center;
-			font-size: 14px; color: #6b7280;
+			font-size: 14px; color: #8b93a3;
 		}
 		.tr-empty {
 			display: flex; flex-direction: column; align-items: center; gap: 7px;
@@ -289,7 +289,7 @@
 			background: rgba(255,255,255,.015);
 		}
 		.tr-empty-title { font-size: 14px; font-weight: 600; color: #d1d5db; }
-		.tr-empty-sub { font-size: 12.5px; color: #6b7280; max-width: 40ch; line-height: 1.55; }
+		.tr-empty-sub { font-size: 12.5px; color: #8b93a3; max-width: 40ch; line-height: 1.55; }
 		.tr-empty-sub a { color: #818cf8; text-decoration: none; border-bottom: 1px solid rgba(129,140,248,.35); }
 		.tr-empty-sub a:hover { color: #a5b4fc; border-bottom-color: rgba(165,180,252,.7); }
 		.tr-error {
@@ -299,7 +299,7 @@
 		}
 		.tr-error-icon { font-size: 26px; opacity: .85; line-height: 1; }
 		.tr-error-title { font-size: 14px; font-weight: 600; color: #e5e7eb; }
-		.tr-error-sub { font-size: 12.5px; color: #6b7280; }
+		.tr-error-sub { font-size: 12.5px; color: #8b93a3; }
 		.tr-retry {
 			display: inline-flex; align-items: center; gap: 7px;
 			padding: 9px 18px; border-radius: 10px; cursor: pointer;
@@ -315,10 +315,12 @@
 
 		.tr-footnote {
 			margin-top: 32px;
-			font-size: 12px; color: #4b5563; line-height: 1.6;
+			font-size: 12px; color: #7d8595; line-height: 1.6;
 			border-top: 1px solid rgba(255,255,255,.06); padding-top: 16px;
 		}
-		.tr-footnote a { color: #6366f1; text-decoration: none; }
+		/* Underlined, not color-only: the link has to be distinguishable from the
+		   muted prose around it without relying on hue (WCAG 1.4.1). */
+		.tr-footnote a { color: #818cf8; text-decoration: underline; text-underline-offset: 2px; }
 		.tr-footnote a:hover { color: #a5b4fc; }
 
 		/* ── focus ── */
@@ -512,7 +514,7 @@
 						<span class="tr-body">
 							<span class="tr-name">${esc(a.name || 'Unnamed agent')}${onchainBadge}</span>
 							${a.description ? `<span class="tr-desc">${esc(a.description)}</span>` : ''}
-							${a.solana_address ? `<span class="tr-wallet" style="margin-top:4px;display:inline-flex">${walletChipHTML(a, { link: false, showPending: false })}</span>` : ''}
+							${a.solana_address ? `<span class="tr-wallet" style="margin-top:4px;display:inline-flex">${walletChipHTML(a, { link: false, showPending: false, tip: false, popover: false })}</span>` : ''}
 						</span>
 						<span class="tr-meta">
 							<span class="tr-metric">${fmt(count)}</span>
@@ -522,9 +524,11 @@
 				</li>`;
 			}).join('');
 
-			// Wire the wallet chips' copy + Tip actions on the public feed. Viewers
-			// don't own these agents, so walletChipHTML defaults to isOwner:false and
-			// renders the ◎ Tip action — this hooks it up.
+			// Hydrate each chip's live balance. The whole row is a link to the agent,
+			// so the chip renders without its Tip button and without the popover
+			// trigger: both are interactive controls, and nested inside an anchor the
+			// browser followed the row instead of running them, which made Tip a
+			// button that lied. Tipping lives on the agent page this row opens.
 			wireWalletChips(list);
 		}
 
@@ -597,7 +601,7 @@
 				const attrs = href
 					? ` href="${esc(href)}" aria-label="Rank ${a.rank}: ${esc(name)}, trust score ${score} of 100, ${esc(tierLabel)}"`
 					: ` role="group" aria-label="Rank ${a.rank}: ${esc(name)}, trust score ${score} of 100, ${esc(tierLabel)}"`;
-				// Wallet chip without its own rep badge here — the meta column is the
+				// Wallet chip without its own rep badge here: the meta column is the
 				// headline trust number on this surface, so the badge would be redundant.
 				return `<li>
 					<${tag} class="tr-row"${attrs}>
@@ -605,7 +609,7 @@
 						<span class="tr-av">${avHtml}</span>
 						<span class="tr-body">
 							<span class="tr-name">${esc(name)} <span class="tr-rt tr-rt-${esc(tier)}">${esc(tierLabel)}</span></span>
-							${a.solana_address ? `<span class="tr-wallet" style="margin-top:4px;display:inline-flex">${walletChipHTML(a, { link: false, showPending: false, reputation: false })}</span>` : ''}
+							${a.solana_address ? `<span class="tr-wallet" style="margin-top:4px;display:inline-flex">${walletChipHTML(a, { link: false, showPending: false, reputation: false, tip: false, popover: false })}</span>` : ''}
 						</span>
 						<span class="tr-meta">
 							<span class="tr-metric"><span class="tr-trust-num">${score}</span><span class="tr-trust-slash">/100</span></span>

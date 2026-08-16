@@ -3,11 +3,15 @@
 /* Pulls exclusively from the design tokens in style.css :root.              */
 
 /* ── Layout shell ─────────────────────────────────────────────────────── */
+/* The page canvas has to come from the same token body uses. A hardcoded #000
+   here kept the background black while [data-theme="light"] flipped --ink to
+   near-black ink, which left the whole page dark-on-dark and unreadable for
+   anyone who picked the light theme. */
 .fl-page {
 	display: flex;
 	flex-direction: column;
 	min-height: 100vh;
-	background: #000;
+	background: var(--bg-0);
 	color: var(--ink);
 }
 
@@ -122,7 +126,9 @@
 	align-items: center;
 	gap: 0.4rem;
 	background: var(--accent);
-	color: #000;
+	/* Light theme remaps --accent to a real blue and --btn-primary-fg to white;
+	   a hardcoded black here dropped the CTA to 4.06:1 on that fill. */
+	color: var(--btn-primary-fg, #0a0a0a);
 	font-family: var(--font-body);
 	font-size: var(--text-sm);
 	font-weight: 700;
@@ -216,9 +222,10 @@
 	background: transparent;
 }
 
+/* Captured at the shell's own 4/3 framing, so on a desktop pane the still and
+   the live render line up and the crossfade holds the avatar in place. */
 .fl-preview-still {
 	object-fit: contain;
-	padding: 4% 4% 8%;
 }
 
 .fl-hero-preview model-viewer {
@@ -240,6 +247,15 @@
    drags that will never do anything. */
 .fl-hero-preview[data-state="still"] model-viewer {
 	display: none;
+}
+
+/* camera-controls puts a tab stop inside model-viewer's shadow root, where it
+   picks up only the UA's near-black 1px outline: invisible on this surface, and
+   unreachable from here because a selector cannot cross the shadow boundary.
+   :focus-within does see that focus, so the ring goes on the pane instead. */
+.fl-hero-preview:focus-within {
+	outline: 2px solid var(--focus-ring-color);
+	outline-offset: 2px;
 }
 
 .fl-preview-label {
