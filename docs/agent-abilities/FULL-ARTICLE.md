@@ -2143,7 +2143,7 @@ Agents launched as pump.fun coins can charge for their services on-chain: build 
 
 ## Sentiment and narrative intel tools
 
-Token sentiment on demand: POST /api/sentiment scores any text (Positive/Negative/Neutral) with a deterministic lexicon scorer; /api/social/sentiment-pulse pulls the real comment thread for any Solana/pump.fun mint and returns an overall score with per-source breakdown and examples (also sold as the paid sentiment_pulse MCP tool); aixbt narrative intel and momentum-ranked project scans are exposed at api/aixbt/* and as aixbt_intel / aixbt_projects MCP tools. All packaged for developers as the @three-ws/intel npm module.
+Token sentiment on demand: POST /api/sentiment scores any text (Positive/Negative/Neutral) with a deterministic lexicon scorer; /api/social/sentiment-pulse pulls the real community commentary (pump.fun callouts) for any Solana/pump.fun mint and returns an overall score with per-source breakdown and examples (also sold as the paid sentiment_pulse MCP tool); aixbt narrative intel and momentum-ranked project scans are exposed at api/aixbt/* and as aixbt_intel / aixbt_projects MCP tools. All packaged for developers as the @three-ws/intel npm module.
 
 **How it works:** Sentiment-pulse fetches recent commentary from pump.fun's frontend-api-v3 comments endpoint (the same source the pump.fun coin page renders) plus caller-supplied snippets, scored by the in-repo lexicon engine (src/social/sentiment.js); aixbt endpoints proxy the aixbt market-intelligence service.
 

@@ -1,14 +1,16 @@
 // `sentiment_pulse` — paid MCP tool that returns a real-time sentiment
-// pulse for a Solana token by pulling recent pump.fun comments and
-// scoring them with the three.ws lexicon scorer. Callers may attach
-// additional texts (e.g. X posts they have collected) to fold into the
-// overall score.
+// pulse for a Solana token by pulling the coin's recent pump.fun callouts
+// (the community commentary the coin page renders) and scoring them with
+// the three.ws lexicon scorer. Callers may attach additional texts (e.g. X
+// posts they have collected) to fold into the overall score.
 //
 // Pricing: $0.003 USDC, settled `exact` in USDC on Solana mainnet.
 //
 // Implementation: calls POST /api/social/sentiment-pulse on the three.ws
-// API surface. No keys are required — the endpoint relies on the public
-// pump.fun frontend-api-v3 replies route.
+// API surface. No keys are required: the endpoint reads the public
+// pump.fun frontend-api-v3 callout route. When that source is down and the
+// caller supplied no texts, the endpoint answers 502 and this tool reports
+// the outage instead of a fabricated neutral reading.
 
 import { z } from 'zod';
 
@@ -18,7 +20,7 @@ import { resilientFetch } from '../lib/resilient-fetch.js';
 
 const TOOL_NAME = 'sentiment_pulse';
 const TOOL_DESCRIPTION =
-	'Sentiment pulse for a Solana token: fetches the most recent pump.fun comments via frontend-api-v3, optionally folds in caller-supplied snippets (e.g. recent X cashtag posts), and scores the combined stream with the three.ws deterministic lexicon. Returns overall + per-source breakdown with examples. Pairs naturally with pump_snapshot. Paid: $0.003 USDC.';
+	'Sentiment pulse for a Solana token: fetches the coin\'s most recent pump.fun callouts (the community commentary the coin page renders) via frontend-api-v3, optionally folds in caller-supplied snippets (e.g. recent X cashtag posts), and scores the combined stream with the three.ws deterministic lexicon. Returns overall + per-source breakdown with examples. Pairs naturally with pump_snapshot. Paid: $0.003 USDC.';
 
 function env(k, def) {
 	const v = process.env[k];
@@ -40,7 +42,7 @@ const inputZodShape = {
 		.max(44)
 		.refine((v) => SOLANA_MINT_RE.test(v), 'token must be a base58 Solana mint pubkey')
 		.describe('Solana SPL or pump.fun mint pubkey (base58).'),
-	limit: z.number().int().min(1).max(200).describe('Max pump.fun comments to score.').optional(),
+	limit: z.number().int().min(1).max(200).describe('Max pump.fun callouts to score.').optional(),
 	extraTexts: z
 		.array(z.string().max(2000))
 		.max(200)
