@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Avatar link previews stop rebuilding themselves, and two feeds answer a bad page link plainly",
+			"summary": "An audit of the chat, media and board endpoints found three real breaks. When you share an avatar link, the preview image is drawn once and then kept, so every later share is instant. A mix-up between the stored image and its address meant every freshly drawn preview was mistaken for an old broken one: the saved copy was thrown away and the picture was redrawn from scratch on every single share. The preview is now kept, as it always should have been, and genuinely broken old records are repaired the next time they are drawn. Separately, the character directory answered a hand-edited or stale \"next page\" link with a server error instead of saying the value was not a timestamp, and the bounty board did the same when the page size in the address was not a number. Both now answer plainly, and the board simply falls back to its normal page size.",
+			"tags": [
+				"fix"
+			],
+			"link": "/characters"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Forge tools refuse a made-up style or file type, and a worker hiccup no longer reads as a broken job",
 			"summary": "Three repairs to the Forge model tools. The stylize filter (voxel, brick, voronoi, lowpoly) checked the requested style against its list in a way that quietly accepted a handful of reserved words, so a request naming one of them was sent to the worker with an unknown filter and no density setting instead of being turned down. The same flaw let the reference-image uploader accept a made-up file type and hand back an upload slot with a nonsense filename. Both now check their list properly, and an unrecognised value falls back to the default or is refused. Separately, while the background remover, mesh optimiser, part splitter and stylizer were checking on a running job, a momentary fault at the worker was reported as a crash on our side, once for every check, which buried the real signal in the alerts. A fault now answers plainly and the page keeps waiting, which is what a passing hiccup deserves.",
 			"tags": [
