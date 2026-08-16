@@ -63,7 +63,7 @@ vi.mock('../../api/_lib/provider-result-url.js', async (importOriginal) => {
 	return { ...actual, fetchProviderGlbBuffer: (...a) => fetchProviderGlbBufferMock(...a) };
 });
 
-const { finalizeReconstructStage, pollRiggingStage } = await import('../../api/_lib/reconstruct-finalize.js');
+const { finalizeReconstructStage, pollRiggingStage, describeDraftMint } = await import('../../api/_lib/reconstruct-finalize.js');
 
 const RIGGED = { isRigged: true, skinCount: 1, skeletonJointCount: 30, nodeCount: 40, meshCount: 1, animationCount: 0, generator: 'test' };
 const UNRIGGED = { isRigged: false, skinCount: 0, skeletonJointCount: 0, nodeCount: 2, meshCount: 1, animationCount: 0, generator: 'test' };
