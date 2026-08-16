@@ -845,6 +845,12 @@ export function getAvailableProviders() {
 			maxOutput: spec.maxOutput,
 			description: spec.description,
 			available,
+			// `available` means the deployment holds a route for the model;
+			// `requiresAuth` means the caller still needs a session to use it
+			// (the anon gate below). A client that cannot tell them apart offers
+			// a signed-out visitor a model that can only answer 401, which is
+			// exactly what the brain page used to do with its default line-up.
+			requiresAuth: !ANON_BRAIN_PROVIDERS.has(key),
 		};
 	});
 }

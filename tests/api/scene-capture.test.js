@@ -212,6 +212,17 @@ describe('/api/scene-capture endpoint', () => {
 		expect(json.error).toBe('unconfigured');
 	});
 
+	it('keeps env-var operator instructions out of the visitor-facing 503 message', async () => {
+		delete process.env.GCP_VIDEO2SCENE_URL;
+		delete process.env.GCP_RECONSTRUCTION_KEY;
+		const { json } = await callEndpoint(mockReq({ body: { video_url: 'https://93.184.216.34/walk.mp4' } }));
+		// /capture renders `message` verbatim in its error overlay, so it has to read
+		// as a status a visitor can act on, not a deployment checklist.
+		expect(json.message).not.toMatch(/GCP_VIDEO2SCENE_URL|GCP_RECONSTRUCTION_KEY|Cloud Run/);
+		expect(json.message).toMatch(/offline/i);
+		expect(json.hint).toMatch(/GCP_VIDEO2SCENE_URL/);
+	});
+
 	it('starts a job and returns a job_id when configured', async () => {
 		globalThis.fetch = vi.fn(async () =>
 			new Response(JSON.stringify({ task_id: 'task-xyz', status: 'queued' }), { status: 202 }),

@@ -137,6 +137,24 @@ export function ageLabel(ms) {
 }
 
 /**
+ * Epoch ms a measurement was actually taken, from the payload's own
+ * `measuredAt`. Ages must be computed against the SERVER's measurement time,
+ * not the moment the browser received the bytes: an HTTP cache can replay a
+ * body seconds after it was measured, and dating it "now" would report stale
+ * data as fresh. Falls back to `now` for a missing/unparseable stamp, and
+ * clamps a server clock that runs ahead of the client so nothing is ever
+ * measured in the future.
+ * @param {string} iso
+ * @param {number} [now]
+ * @returns {number}
+ */
+export function measuredAtMs(iso, now = Date.now()) {
+	const t = Date.parse(iso);
+	if (!Number.isFinite(t)) return now;
+	return Math.min(t, now);
+}
+
+/**
  * Honest speedup ratio between two REAL measured averages ("BNB confirms
  * N.Nx faster than Base right now") — always computed from live numbers on
  * both sides, never a fixed claim. Returns `null` when either input is

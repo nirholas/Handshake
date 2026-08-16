@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The model viewer tells you when a file will not open, and how to recover",
+			"summary": "The viewer at /app had two dead ends. Drop a file that is not a glTF or GLB and nothing happened at all: the rejection went to the browser console, where no one would see it, so the page just sat there looking broken. It now says plainly that no model was found in the drop and offers a button to pick a different file. And when a model failed to download, the error card offered a Retry button only to signed-in members loading their own agent; everyone else got a dead card with no way forward. Retry now works for any load, including a file you dropped yourself. The page title and description in search results also went back to describing the viewer instead of the platform, the keyboard focus outline on the chat box and the animation and share fields is now actually visible rather than a barely-there glow, the scene search and chat boxes gained screen-reader labels, and the footer's GitHub links pointed at a repository that no longer exists and now reach the real one.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/app"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The background agent mint says out loud whether it ran",
+			"summary": "Every avatar that finishes a scan or a prompt is given a draft on-chain identity in the background. That step is deliberately best-effort, so it can never cost you your avatar, but it was also completely silent: whether it minted, was skipped because the deployment holds no minting key, or was switched off entirely, the logs looked identical, which is how a run of avatars can go by without anyone noticing the identity was never created. Each finished avatar now records the outcome of both chains, including the reason a leg was skipped. The documentation for the feature also gained a way to prove the whole path on a machine that cannot reach the public test-network faucet, which is routinely exhausted on shared build machines: run your own node with the real Metaplex programs, and the proof reports which node served it rather than handing back an explorer link that leads nowhere.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/docs/draft-agent-mint"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "The arbitrage board says which price feeds it actually reached",
 			"summary": "The x402 Arbitrage page compares what different providers charge for the same capability, and it builds that comparison from several facilitator catalogs at once. When one of those catalogs was unreachable, its listings simply vanished from every comparison and the page said nothing about it. A scan that had only seen half the market looked exactly like a market with fewer price gaps in it, which is the opposite of what the page is for. Each scan now names the facilitators it reached and how many listings each one contributed, and calls out any that dropped out along with the reason, so a short board is never mistaken for a quiet one. Separately, closing the payment window without paying used to leave the Pay cheapest button dead for four seconds before it would accept another click. Deciding not to pay now hands the button straight back.",
 			"tags": [

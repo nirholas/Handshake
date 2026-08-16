@@ -61,3 +61,20 @@
 		max-width: 8.5rem;
 	}
 }
+
+/* Phone widths: the "Dominance" header is the widest thing in the table, and at
+   320px it is what pushed the percentages off the edge. Drop a step of type and
+   padding so chain, TVL and dominance all land inside the viewport. */
+@media (max-width: 479px) {
+	#chains-table .cv-table {
+		font-size: 0.8125rem;
+	}
+	#chains-table .cv-table th,
+	#chains-table .cv-table td {
+		padding-left: 0.375rem;
+		padding-right: 0.375rem;
+	}
+	#chains-table .cv-table .name-cell .nm {
+		max-width: 6rem;
+	}
+}

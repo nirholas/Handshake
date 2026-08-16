@@ -26,9 +26,10 @@ const NETWORK_COLORS = {
 const UNKNOWN_NETWORK_COLOR = '#8a8a8a';
 
 // Preferred opening line-up, filtered against what the server reports as
-// available. Anything unavailable falls through to the first live model, so the
-// page never boots with a column that cannot answer.
+// usable for THIS visitor. Anything unusable falls through to the first live
+// model, so the page never boots with a column that can only answer 401.
 const DEFAULT_MODEL_KEYS = ['gpt-oss-120b', 'claude-sonnet-5', 'gpt-5.6-luna', 'groq-llama'];
+const ANON_DEFAULT_MODEL_KEYS = ['gpt-oss-120b', 'nvidia-kimi-k2', 'nvidia-nemotron-120b', 'nvidia-llama4-maverick'];
 
 const PMAP = new Map();
 
@@ -48,7 +49,18 @@ function decorateProvider(spec) {
 function providerTitle(p) {
 	const head = [p.label, p.network, p.tier].filter(Boolean).join(' · ');
 	if (!p.available) return `${head} (not configured on this deployment)`;
+	if (isLocked(p)) return `${head} (sign in to use this model)`;
 	return p.description ? `${head}\n${p.description}` : head;
+}
+
+// A model the deployment can reach but this visitor cannot use yet. The server
+// answers 401 for these while signed out, so the page marks them rather than
+// letting a click turn into an error message inside a column.
+function isLocked(p) {
+	return Boolean(p.available && p.requiresAuth && !state.authed);
+}
+function isSelectable(p) {
+	return Boolean(p.available) && !isLocked(p);
 }
 
 // ── Archetype quick-picks ────────────────────────────────────────────────────
@@ -640,22 +652,27 @@ function renderPlayControls() {
 		label.textContent = 'Models';
 		ctrl.innerHTML = `<div class="br-provider-pills">${
 			[...PMAP.values()].map(p => {
-				const cls = ['br-pill', state.active.has(p.key) ? 'on' : ''].filter(Boolean).join(' ');
+				const locked = isLocked(p);
+				const cls = ['br-pill', state.active.has(p.key) ? 'on' : '', locked ? 'locked' : ''].filter(Boolean).join(' ');
+				const badge = !p.available
+					? '<span class="br-pill-na" aria-hidden="true">✕</span>'
+					: locked ? '<span class="br-pill-lock" aria-hidden="true">&#128274;</span>' : '';
 				return `<button type="button" class="${cls}" style="--pc:${p.color}" data-key="${escHtml(p.key)}"
 					aria-pressed="${state.active.has(p.key)}"${p.available ? '' : ' disabled'}
 					title="${escHtml(providerTitle(p))}">
 					<span class="br-pill-dot"></span>
 					<span>${escHtml(p.short)}</span>
-					${p.available ? '' : '<span class="br-pill-na" aria-hidden="true">✕</span>'}
+					${badge}
 				</button>`;
 			}).join('')
 		}</div>`;
 	} else {
 		label.textContent = 'Model';
 		ctrl.innerHTML = `<select class="br-focus-sel" id="brFocusSel" aria-label="Model">${
-			[...PMAP.values()].map(p =>
-				`<option value="${escHtml(p.key)}"${p.key === state.focusKey ? ' selected' : ''}${p.available ? '' : ' disabled'}>${escHtml(p.label)}${p.available ? '' : ' (unavailable)'}</option>`
-			).join('')
+			[...PMAP.values()].map(p => {
+				const suffix = !p.available ? ' (unavailable)' : isLocked(p) ? ' (sign in)' : '';
+				return `<option value="${escHtml(p.key)}"${p.key === state.focusKey ? ' selected' : ''}${p.available ? '' : ' disabled'}>${escHtml(p.label)}${suffix}</option>`;
+			}).join('')
 		}</select>`;
 	}
 	bindPlayControlEvents();
@@ -665,8 +682,8 @@ function renderPlayControls() {
 // serve. Runs on every successful roster load, so a model that goes offline
 // between visits is dropped instead of failing on the next send.
 function reconcileSelection() {
-	const availableKeys = [...PMAP.values()].filter(p => p.available).map(p => p.key);
-	const live = new Set(availableKeys);
+	const usableKeys = [...PMAP.values()].filter(isSelectable).map(p => p.key);
+	const usable = new Set(usableKeys);
 
 	if (!state.selectionRestored) {
 		const saved = load('brain_models_v1');
@@ -675,12 +692,13 @@ function reconcileSelection() {
 		state.selectionRestored = true;
 	}
 
-	for (const key of [...state.active]) if (!live.has(key)) state.active.delete(key);
+	for (const key of [...state.active]) if (!usable.has(key)) state.active.delete(key);
 	if (!state.active.size) {
-		for (const key of DEFAULT_MODEL_KEYS) if (live.has(key)) state.active.add(key);
+		const preferred = state.authed ? DEFAULT_MODEL_KEYS : ANON_DEFAULT_MODEL_KEYS;
+		for (const key of preferred) if (usable.has(key)) state.active.add(key);
 	}
-	if (!state.active.size && availableKeys.length) state.active.add(availableKeys[0]);
-	if (!live.has(state.focusKey)) state.focusKey = [...state.active][0] || availableKeys[0] || '';
+	if (!state.active.size && usableKeys.length) state.active.add(usableKeys[0]);
+	if (!usable.has(state.focusKey)) state.focusKey = [...state.active][0] || usableKeys[0] || '';
 	persistSelection();
 }
 
@@ -1142,6 +1160,11 @@ function bindPlayControlEvents() {
 		document.querySelectorAll('.br-pill').forEach(pill => {
 			pill.addEventListener('click', () => {
 				const key = pill.dataset.key;
+				const spec = PMAP.get(key);
+				if (isLocked(spec)) {
+					showNotice(`${spec.label} needs an account. Sign in to add it.`);
+					return;
+				}
 				if (state.active.has(key)) {
 					if (state.active.size === 1) { showNotice('Keep at least one model selected.'); return; }
 					state.active.delete(key);
