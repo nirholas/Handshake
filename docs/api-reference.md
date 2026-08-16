@@ -531,6 +531,59 @@ Append-only. Actions are never deleted. Optionally include an ERC-191 signature 
 
 ---
 
+### Batch recent activity for many agents
+
+```
+GET  /api/agents/activity?ids=<id>,<id>,...
+POST /api/agents/activity   { "ids": ["<id>", "<id>"] }
+```
+
+Recent activity for a **list** of agents in one round-trip, plus which of them
+currently have a live screen caster pushing frames. Built for grids: a wall of
+agent cards would otherwise need one request (or one SSE stream) per card, and a
+browser only allows a handful of concurrent connections per origin.
+
+Public read, no auth. Up to 60 ids per call; anything that is not a UUID is
+dropped, and unknown ids are simply absent from `activity`. Each agent returns
+its 24 most recent actions, oldest-first, in the same entry shape the `log`
+event of the per-agent SSE stream (`GET /api/agent-screen-stream?agentId=<id>`)
+emits, so one renderer handles both.
+
+**Query / body parameters**
+
+| Parameter | Type     | Description                                                  |
+| --------- | -------- | ------------------------------------------------------------ |
+| `ids`     | string[] | Required. Agent IDs. Comma-separated on GET, an array on POST |
+
+**Response**
+
+```json
+{
+	"activity": {
+		"abc123": [
+			{ "ts": 1786573115539, "activity": "Launched $THREE", "type": "pumpfun.launch" },
+			{ "ts": 1786573802902, "activity": "Defended floor at 0.51 SOL", "type": "mm_defend",
+			  "mm": { "type": "mm_defend", "floorSol": 0.5, "priceSol": 0.51, "sizeSol": 2,
+			          "sideBuy": true, "simulate": false, "signature": null, "mint": null } }
+		]
+	},
+	"casting": ["abc123"]
+}
+```
+
+`casting` lists the subset of the requested ids whose screen frame is still live
+in the frame store. A client typically renders every agent's `activity` straight
+away and opens a real SSE stream only for the ids in `casting`.
+
+**Example**
+
+```bash
+curl -s "https://three.ws/api/agents/activity?ids=$AGENT_A,$AGENT_B" \
+  | jq '{casting, counts: (.activity | map_values(length))}'
+```
+
+---
+
 ## Agent Memory API
 
 ### Fetch agent memory

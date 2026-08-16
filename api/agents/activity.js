@@ -34,37 +34,13 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getRedis } from '../_lib/redis.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
+import { rowToEntry } from '../_lib/agent-activity.js';
 
 const MAX_IDS = 60;
 // Per-agent depth. A wall card's terminal shows ~11 lines at 640x360 and
 // coalesces repeats, so 24 rows is comfortably more than it can draw while
 // keeping the batch payload small enough for a 60-agent page.
 const PER_AGENT = 24;
-
-// Map an agent_actions row to the same { ts, activity, type, mm? } shape the SSE
-// `log` event emits, so a card renders a batch row and a streamed row identically.
-// Kept in step with rowToEntry() in api/agent-screen-stream.js.
-export function rowToEntry(row) {
-	const p = row.payload && typeof row.payload === 'object' ? row.payload : {};
-	const entry = {
-		ts: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
-		activity: p.summary || p.detail || p.title || row.type || 'action',
-		type: row.type || 'action',
-	};
-	if (typeof row.type === 'string' && row.type.startsWith('mm_') && (p.floorSol != null || p.priceSol != null)) {
-		entry.mm = {
-			type: row.type,
-			floorSol: Number(p.floorSol) || 0,
-			priceSol: Number(p.priceSol) || 0,
-			sizeSol: Number(p.sizeSol) || 0,
-			sideBuy: p.sideBuy === true ? true : p.sideBuy === false ? false : null,
-			simulate: !!p.simulate,
-			signature: p.signature || null,
-			mint: p.mint || null,
-		};
-	}
-	return entry;
-}
 
 // Read the caller's id list from either shape. GET keeps the endpoint trivially
 // cacheable/debuggable from a browser; POST keeps a 60-id list off the URL.

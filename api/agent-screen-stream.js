@@ -25,6 +25,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { getRedis } from './_lib/redis.js';
 import { sql } from './_lib/db.js';
 import { reactionsRecentKey, reactionsTotalKey, REACTION_RECENT_CAP } from './_lib/reaction-rules.js';
+import { rowToEntry } from './_lib/agent-activity.js';
 
 export const maxDuration = 300;
 
@@ -33,33 +34,9 @@ const PING_INTERVAL_MS = 15_000;
 const POLL_INTERVAL_MS = 500;
 const ACTIVITY_REFRESH_MS = 8_000; // re-poll DB activity for dark agents
 
-// Map an agent_actions DB row to the SSE log entry shape { ts, activity, type }.
-// agent_actions stores { type, payload } — the holder-readable line lives in
-// payload.summary (falling back to a detail/title or the bare type). When the
-// row is a market-maker action (type mm_*) its structured floor/price context
-// rides along as `mm`, so a reconnect's DB backfill still drives the arena floor
-// line + card badge exactly like the live Redis log does.
-function rowToEntry(row) {
-	const p = row.payload && typeof row.payload === 'object' ? row.payload : {};
-	const entry = {
-		ts: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
-		activity: p.summary || p.detail || p.title || row.type || 'action',
-		type: row.type || 'action',
-	};
-	if (typeof row.type === 'string' && row.type.startsWith('mm_') && (p.floorSol != null || p.priceSol != null)) {
-		entry.mm = {
-			type: row.type,
-			floorSol: Number(p.floorSol) || 0,
-			priceSol: Number(p.priceSol) || 0,
-			sizeSol: Number(p.sizeSol) || 0,
-			sideBuy: p.sideBuy === true ? true : p.sideBuy === false ? false : null,
-			simulate: !!p.simulate,
-			signature: p.signature || null,
-			mint: p.mint || null,
-		};
-	}
-	return entry;
-}
+// rowToEntry (agent_actions row → the `log` entry shape) is shared with the
+// batched wall endpoint so the two can never render the same action differently.
+// See api/_lib/agent-activity.js.
 
 // Decode one record read back out of Redis. The Upstash REST client
 // deserializes JSON responses by default, so a value written as a JSON string

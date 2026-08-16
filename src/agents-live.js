@@ -40,6 +40,7 @@ import { parseForgeFrame } from './shared/forge-frames.js';
 import { createArena } from './agents-live-arena.js';
 import { createShowrunner } from './showrunner.js';
 import { apiFetch, noteSession } from './api.js';
+import { streamPoolSize } from './shared/stream-pool.js';
 
 // Subtle accent for a card showing a live Coin World Tour walkthrough.
 (() => {
@@ -95,6 +96,7 @@ let   _idleRepaint = null;
 const FRAME_STALE_MS = 6000;       // no frame within this window ⇒ fall back to activity
 const WATCH_PING_MS  = 20000;      // re-assert watch intent while a card is on screen
 const WATCH_STATUS_MS = 4000;      // refresh the warming/queued handoff while not yet live
+const STREAM_CONNECT_GRACE_MS = 8000; // stop claiming "Connecting" if a stream never lands
 const STATUS_GRACE_POLLS = 3;      // keep polling this many ticks to cover the intent→status write race
 
 // Cards currently intersecting the viewport. Only these signal watch intent and
@@ -115,18 +117,10 @@ const _nearView = new Set();
 const _streamed = new Set();
 let _streamObserver = null;
 
-// How many SSE listeners the origin can actually carry at once. Over HTTP/1.1 a
-// browser allows 6 sockets per origin and an SSE stream never releases its one,
-// so a pool anywhere near that ceiling starves the page's own fetches (roster,
-// balances, watch intent). Multiplexed transports have no such per-request cost.
-// Read from the real navigation entry rather than guessed: prod is served over
-// h2 behind the load balancer, the vite dev server is http/1.1.
-export function streamPoolSize(nextHopProtocol) {
-	const p = String(nextHopProtocol || '').toLowerCase();
-	if (p === 'h2' || p === 'h3' || p.startsWith('h3-') || p === 'http/2' || p === 'http/3') return 12;
-	return 4;
-}
-
+// How many SSE listeners the origin can actually carry at once (see
+// shared/stream-pool.js). Read from the real navigation entry rather than
+// guessed: prod is served over h2 behind the load balancer, vite dev is
+// http/1.1, and the two budgets are nothing alike.
 function detectPoolSize() {
 	try {
 		const nav = performance.getEntriesByType('navigation')[0];
@@ -626,10 +620,24 @@ function attachStream(state) {
 
 	statusEl.textContent = 'Connecting';
 	state.attaching = true;
+	// A stream that neither opens nor errors (a stalled proxy, a saturated
+	// connection pool) would otherwise leave the badge reading "Connecting"
+	// forever. Give it a bounded grace period, then fall back to the card's real
+	// resting state; the batch layer has already given it genuine content, so
+	// nothing is lost but the false claim. The EventSource stays open in case it
+	// still lands.
+	clearTimeout(state.connectTimer);
+	state.connectTimer = setTimeout(() => {
+		if (!state.attaching) return;
+		state.attaching = false;
+		statusEl.textContent = state.entries?.length ? 'Active' : 'Idle';
+		if (!isLiveNow(state)) paintActivity(state);
+	}, STREAM_CONNECT_GRACE_MS);
 
 	function setLive(live) {
 		state.live = live;
 		state.attaching = false;
+		clearTimeout(state.connectTimer);
 		dot.classList.toggle('idle', !live);
 		if (live) {
 			statusEl.textContent = 'Live';
@@ -902,6 +910,7 @@ function releaseStream(state) {
 	state.es = null;
 	state.attaching = false;
 	state.reconnecting = false;
+	clearTimeout(state.connectTimer);
 	clearTimeout(state.reconnectLabelTimer);
 	stopStatusPolling(state);
 	hideWarming(state);

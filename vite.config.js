@@ -2680,14 +2680,27 @@ support: resolve(__dirname, 'pages/support.html'),
 			},
 		},
 		{
-			// Rewrite R2 public-bucket URLs in proxied /api/avatars/* responses so
-			// the <agent-3d> component (loaded from CDN) always receives /r2-proxy/*
-			// URLs instead of raw r2.dev URLs that fail CORS in Codespaces / localhost.
+			// Rewrite R2 public-bucket URLs in proxied API responses so the browser
+			// always receives /r2-proxy/* URLs instead of raw r2.dev URLs. The bucket
+			// answers with `Access-Control-Allow-Origin: https://three.ws` only, so a
+			// raw URL fails CORS from localhost / Codespaces and every model behind it
+			// silently degrades (the <agent-3d> component falls back to the default
+			// robot; /ar/studio cannot place a single tray model).
+			//
+			// The prefixes below are the API surfaces that hand a model URL to the
+			// browser. Add one when a new endpoint starts returning R2 URLs; leaving
+			// it off means that feature works in production and is dead in dev.
 			name: 'r2-url-rewrite-api',
 			configureServer(server) {
 				const R2_PUBLIC_RE = /https?:\/\/pub-[a-f0-9]+\.r2\.dev\//g;
+				const R2_URL_PREFIXES = [
+					'/api/avatars/',
+					'/api/objects/', // CC0 object library (/objects, the AR Studio "Objects" tray)
+					'/api/forge-gallery', // forge creations feed (/creations, AR Studio "Yours"/"Community")
+					'/api/forge', // forge job polling: the finished glb_url
+				];
 				server.middlewares.use(async (req, res, next) => {
-					if (!req.url?.startsWith('/api/avatars/')) return next();
+					if (!R2_URL_PREFIXES.some((p) => req.url?.startsWith(p))) return next();
 					// Only rewrite GET/HEAD responses — POSTs and mutations must flow
 					// through the normal proxy with their original method and body intact.
 					if (req.method !== 'GET' && req.method !== 'HEAD') return next();
@@ -2704,6 +2717,12 @@ support: resolve(__dirname, 'pages/support.html'),
 									? { authorization: req.headers.authorization }
 									: {}),
 								...(req.headers.range ? { range: req.headers.range } : {}),
+								// The anonymous forge identity that scopes /api/forge-gallery's
+								// "Yours" tab and /api/forge job ownership. Dropping it silently
+								// turns a personal feed into the public one.
+								...(req.headers['x-forge-client']
+									? { 'x-forge-client': req.headers['x-forge-client'] }
+									: {}),
 							},
 						});
 						const type = resp.headers.get('content-type') || 'application/json';
