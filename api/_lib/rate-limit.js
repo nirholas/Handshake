@@ -1075,6 +1075,16 @@ export const limits = {
 	embedGateVerifyIp: (ip) => getLimiter('embed:gate:verify:ip', { limit: 30, window: '5 m' }).limit(ip),
 	embedGateVerifyWallet: (addr) =>
 		getLimiter('embed:gate:verify:wallet', { limit: 10, window: '5 m' }).limit(addr),
+	// Token-gated scene shares (api/scene/gate-check.js). Same anonymous-visitor
+	// shape as the embed gate above, so it gets the same pairing: a per-IP flood
+	// guard plus the per-wallet ceiling that a distributed-IP attacker cannot
+	// rotate around. Its own buckets rather than the embed ones so a busy embed
+	// does not lock a scene visitor out (and vice versa). The IP bucket is looser
+	// than the wallet bucket because one visitor spends two calls (nonce, then
+	// signature) per attempt and may legitimately switch wallets.
+	sceneGateCheckIp: (ip) => getLimiter('scene:gate:check:ip', { limit: 30, window: '5 m' }).limit(ip),
+	sceneGateCheckWallet: (addr) =>
+		getLimiter('scene:gate:check:wallet', { limit: 10, window: '5 m' }).limit(addr),
 	avatarRollback: (userId) =>
 		getLimiter('avatar:rollback', { limit: 10, window: '1 h' }).limit(userId),
 	// Chat inference spends real money on the host's LLM keys, so these are

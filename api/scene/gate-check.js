@@ -1,13 +1,57 @@
+// POST /api/scene/gate-check
+//
+// Two-phase wallet-ownership proof for a token-gated scene share created by
+// api/scene/gate-create.js. The chat client (chat/src/App.svelte) calls it twice:
+//
+// Phase 1 - { gateId, walletAddress } -> { message, chain }
+//   Issues a one-time nonce inside a human-readable message the visitor's wallet
+//   signs. Nothing is granted yet.
+//
+// Phase 2 - { gateId, walletAddress, signature, message } -> { allowed, reason? }
+//   Verifies the signature (ed25519 for Solana, personal_sign for EVM), burns the
+//   nonce, then reads the wallet's REAL on-chain holding for the gate's asset.
+//
+// Fail-closed, and honest about WHY it failed: a denial ({ allowed: false }) means
+// the chain answered and the wallet is short. An RPC outage or a missing provider
+// key is an infrastructure fault, so it returns 5xx with a generic message rather
+// than a denial carrying the upstream error text (which both lies to the visitor
+// and leaks internals to an unauthenticated caller).
+//
+// The nonce is burned BEFORE the chain read, so a failed read costs the visitor a
+// fresh phase 1. That is deliberate: a replayable nonce is worse than a retry.
 import { z } from 'zod';
-import { verifyMessage } from 'ethers';
+import { verifyMessage, Contract, formatUnits, isAddress } from 'ethers';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { randomToken } from '../_lib/crypto.js';
 import { verifySiwsSignature } from '../_lib/siws.js';
 import { parse } from '../_lib/validate.js';
+// getSplTokenBalance rotates the shared Solana lane pool (api/_lib/solana/connection.js)
+// instead of pinning one endpoint; dasSearchAssets targets Helius, the only provider
+// in our stack that implements the DAS methods collection gating needs.
+import { getSplTokenBalance } from '../_lib/embed-gate.js';
+import { dasRpcUrl, dasSearchAssets, isValidSolanaAddress } from '../_lib/nft-gate.js';
+import { evmFallbackProvider } from '../_lib/evm/rpc.js';
 
 const NONCE_TTL_SEC = 10 * 60;
+
+// EVM gates carry a bare contract address with no chain id (see the scene_gates
+// schema), so they resolve on Ethereum mainnet. evmRpcEndpoints(1) puts the
+// public endpoints behind any configured/Alchemy URL, so gating still works on a
+// deployment with no provider key rather than hard-failing on ALCHEMY_API_KEY.
+const EVM_CHAIN_ID = 1;
+
+// DAS pages at 1000 assets. A gate only needs to know whether the wallet reaches
+// min_balance, so paging stops as soon as the threshold is met; the cap bounds the
+// work an unauthenticated caller can trigger with a huge wallet.
+const DAS_PAGE_SIZE = 1000;
+const DAS_MAX_PAGES = 5;
+
+const ERC_BALANCE_ABI = [
+	'function balanceOf(address owner) view returns (uint256)',
+	'function decimals() view returns (uint8)',
+];
 
 const phase1Schema = z.object({
 	gateId: z.string().trim().min(1).max(32),
@@ -24,15 +68,22 @@ const phase2Schema = z.object({
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
+	res.setHeader('cache-control', 'no-store');
 
-	const rl = await limits.authedReadIp(clientIp(req));
+	const rl = await limits.sceneGateCheckIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const raw = await readJson(req);
 
-	if (raw.signature != null) return handlePhase2(res, raw);
+	if (raw && raw.signature != null) return handlePhase2(res, raw);
 	return handlePhase1(res, raw);
 });
+
+/** A wallet the gate's chain can actually verify. Catches a Solana address pasted
+ *  into an EVM gate before it reaches an RPC that would answer with noise. */
+function walletMatchesChain(chain, walletAddress) {
+	return chain === 'solana' ? isValidSolanaAddress(walletAddress) : isAddress(walletAddress);
+}
 
 async function handlePhase1(res, raw) {
 	const body = parse(phase1Schema, raw);
@@ -41,6 +92,9 @@ async function handlePhase1(res, raw) {
 		select id, chain from scene_gates where id = ${body.gateId} limit 1
 	`;
 	if (!gate) return error(res, 404, 'not_found', 'gate not found');
+	if (!walletMatchesChain(gate.chain, body.walletAddress)) {
+		return error(res, 400, 'validation_error', `walletAddress is not a valid ${gate.chain} address`);
+	}
 
 	let nonce = '';
 	while (nonce.length < 16) {
@@ -73,6 +127,15 @@ async function handlePhase2(res, raw) {
 		from scene_gates where id = ${body.gateId} limit 1
 	`;
 	if (!gate) return error(res, 404, 'not_found', 'gate not found');
+	if (!walletMatchesChain(gate.chain, body.walletAddress)) {
+		return error(res, 400, 'validation_error', `walletAddress is not a valid ${gate.chain} address`);
+	}
+
+	// A per-wallet ceiling on top of the per-IP flood guard: IPs are cheap to
+	// rotate, a wallet's signing key is not, so this is the bucket that actually
+	// bounds a determined attacker replaying signature attempts against one gate.
+	const wl = await limits.sceneGateCheckWallet(body.walletAddress);
+	if (!wl.success) return rateLimited(res, wl);
 
 	// Verify signature
 	if (gate.chain === 'solana') {
@@ -117,15 +180,30 @@ async function handlePhase2(res, raw) {
 	`;
 	if (!burned[0]) return error(res, 400, 'nonce_reused', 'nonce already used');
 
+	const minBalance = Number(gate.min_balance);
+
 	// Query chain holdings
 	let balance;
 	try {
-		balance = await queryBalance(gate, body.walletAddress);
+		balance = await queryBalance(gate, body.walletAddress, minBalance);
 	} catch (e) {
-		return json(res, 200, { allowed: false, reason: e.message || 'Balance check failed' });
+		console.warn(`[scene-gate] balance check failed for gate ${gate.id} (${gate.chain}/${gate.kind}):`, e?.message || e);
+		if (e?.status === 503) {
+			return error(
+				res,
+				503,
+				'not_configured',
+				'This gate cannot be verified right now: its chain provider is not configured.',
+			);
+		}
+		return error(
+			res,
+			502,
+			'gate_check_unavailable',
+			'Could not read your on-chain balance right now. Try verifying again in a moment.',
+		);
 	}
 
-	const minBalance = Number(gate.min_balance);
 	if (balance >= minBalance) {
 		return json(res, 200, { allowed: true });
 	}
@@ -135,101 +213,54 @@ async function handlePhase2(res, raw) {
 	});
 }
 
-async function queryBalance(gate, walletAddress) {
-	if (gate.chain === 'solana') return querySolanaBalance(gate, walletAddress);
+async function queryBalance(gate, walletAddress, minBalance) {
+	if (gate.chain === 'solana') return querySolanaBalance(gate, walletAddress, minBalance);
 	return queryEvmBalance(gate, walletAddress);
 }
 
-async function querySolanaBalance(gate, walletAddress) {
-	const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+async function querySolanaBalance(gate, walletAddress, minBalance) {
+	if (gate.kind === 'spl') return getSplTokenBalance(walletAddress, gate.address);
+	return countCollectionAssets(walletAddress, gate.address, minBalance);
+}
 
-	if (gate.kind === 'spl') {
-		const resp = await fetch(rpcUrl, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			signal: AbortSignal.timeout(8000),
-			body: JSON.stringify({
-				jsonrpc: '2.0', id: 1,
-				method: 'getTokenAccountsByOwner',
-				params: [walletAddress, { mint: gate.address }, { encoding: 'jsonParsed' }],
-			}),
-		});
-		if (!resp.ok) throw new Error(`Helius RPC error ${resp.status}`);
-		const data = await resp.json();
-		if (data.error) throw new Error(`Helius: ${data.error.message || JSON.stringify(data.error)}`);
-		const accounts = data.result?.value || [];
-		return accounts.reduce((sum, a) => sum + (a.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0), 0);
+/** How many NFTs of `collectionMint` the wallet holds, counted only as far as
+ *  `minBalance` (the answer past the threshold does not change the decision). */
+async function countCollectionAssets(walletAddress, collectionMint, minBalance) {
+	if (!dasRpcUrl()) {
+		throw Object.assign(new Error('HELIUS_API_KEY not configured'), { status: 503 });
 	}
-
-	// NFT collection via DAS getAssetsByOwner
-	const resp = await fetch(rpcUrl, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		signal: AbortSignal.timeout(8000),
-		body: JSON.stringify({
-			jsonrpc: '2.0', id: 1,
-			method: 'getAssetsByOwner',
-			params: {
-				ownerAddress: walletAddress,
-				page: 1,
-				limit: 1000,
-				displayOptions: { showCollectionMetadata: false },
-			},
-		}),
-	});
-	if (!resp.ok) throw new Error(`Helius DAS error ${resp.status}`);
-	const data = await resp.json();
-	if (data.error) throw new Error(`Helius: ${data.error.message || JSON.stringify(data.error)}`);
-	const assets = data.result?.items || [];
-	return assets.filter((a) =>
-		(a.grouping || []).some((g) => g.group_key === 'collection' && g.group_value === gate.address),
-	).length;
+	const needed = Math.max(1, Math.ceil(minBalance));
+	let held = 0;
+	for (let page = 1; page <= DAS_MAX_PAGES; page++) {
+		const result = await dasSearchAssets({
+			ownerAddress: walletAddress,
+			grouping: ['collection', collectionMint],
+			// Burnt assets are not held, and a burn must not keep a gate open.
+			burnt: false,
+			page,
+			limit: DAS_PAGE_SIZE,
+		});
+		const items = Array.isArray(result.items) ? result.items : [];
+		held += items.length;
+		if (held >= needed || items.length < DAS_PAGE_SIZE) break;
+	}
+	return held;
 }
 
 async function queryEvmBalance(gate, walletAddress) {
-	const alchemyKey = process.env.ALCHEMY_API_KEY;
-	if (!alchemyKey) {
-		const e = new Error('ALCHEMY_API_KEY not configured');
-		e.status = 503;
-		throw e;
+	const provider = await evmFallbackProvider(EVM_CHAIN_ID);
+	const token = new Contract(gate.address, ERC_BALANCE_ABI, provider);
+	const rawBalance = await token.balanceOf(walletAddress);
+
+	// ERC-721 balances are whole tokens; ERC-20 needs the contract's own scale, and
+	// a token that omits decimals() is 18 by convention.
+	if (gate.kind === 'erc721') return Number(rawBalance);
+
+	let decimals = 18;
+	try {
+		decimals = Number(await token.decimals());
+	} catch {
+		decimals = 18;
 	}
-	const rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`;
-
-	// balanceOf(address) — 0x70a08231
-	const callData = '0x70a08231' + walletAddress.replace(/^0x/i, '').padStart(64, '0');
-	const resp = await fetch(rpcUrl, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		signal: AbortSignal.timeout(8000),
-		body: JSON.stringify({
-			jsonrpc: '2.0', id: 1,
-			method: 'eth_call',
-			params: [{ to: gate.address, data: callData }, 'latest'],
-		}),
-	});
-	if (!resp.ok) throw new Error(`Alchemy error ${resp.status}`);
-	const data = await resp.json();
-	if (data.error) throw new Error(`EVM RPC: ${data.error.message || JSON.stringify(data.error)}`);
-
-	const rawBalance = BigInt(data.result || '0x0');
-
-	if (gate.kind === 'erc721') {
-		return Number(rawBalance);
-	}
-
-	// ERC-20: fetch decimals() — 0x313ce567
-	const decResp = await fetch(rpcUrl, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		signal: AbortSignal.timeout(8000),
-		body: JSON.stringify({
-			jsonrpc: '2.0', id: 2,
-			method: 'eth_call',
-			params: [{ to: gate.address, data: '0x313ce567' }, 'latest'],
-		}),
-	});
-	if (!decResp.ok) throw new Error(`Alchemy decimals error ${decResp.status}`);
-	const decData = await decResp.json();
-	const decimals = decData.result && decData.result !== '0x' ? Number(BigInt(decData.result)) : 18;
-	return Number(rawBalance) / Math.pow(10, decimals);
+	return Number(formatUnits(rawBalance, decimals));
 }

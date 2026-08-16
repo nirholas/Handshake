@@ -20,6 +20,29 @@ coins — see `api/robinhood/coin-trades.js` and `api/robinhood/play-worlds.js`,
 which proxy it into the exact contract `src/game/chart-screen.js` (the in-world
 trading terminal) already polls.
 
+### What the two API bridges guarantee their callers
+
+The terminal re-polls `/api/robinhood/coin-trades` every 5 seconds and the
+`/worlds` lobby swallows any non-2xx from `/api/robinhood/play-worlds`, so a
+single bad event in `/recent` must never become a 5xx. Both bridges therefore
+treat this worker as untrusted input:
+
+- An event with a missing or non-object `data` payload is skipped, and the rest
+  of the snapshot still renders.
+- A `timestamp` that is not a positive number is served as `null`, which
+  `chart-screen.js` already reads as "now", instead of an invalid date.
+- A missing `price_usd` / `usd_amount` stays `null` rather than becoming a real
+  `0` print on the chart.
+- A launch whose `mint` is not a `0x`-prefixed 40-hex address is dropped, since
+  its lobby card would seed a world from nothing.
+- An unreachable or non-2xx worker yields an empty list with
+  `configured: false`, never invented trades or worlds.
+
+Caller input is validated separately: `coin-trades` answers `400
+{"error":"invalid_mint"}` for an address that is not an EVM contract address,
+so a client bug cannot read as "this coin has never traded".
+`tests/api/robinhood-play-endpoints.test.js` pins all of the above.
+
 ## Architecture
 
 | File | Role |

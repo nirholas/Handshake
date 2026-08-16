@@ -186,8 +186,7 @@ async function stageDetail(stageId) {
 }
 
 export default wrap(async (req, res) => {
-	cors(req, res, { methods: ['GET', 'POST', 'OPTIONS'] });
-	if (req.method === 'OPTIONS') return res.end();
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 
 	await ensureTables();
 
@@ -219,7 +218,7 @@ async function handleGet(req, res) {
 	// only needs the show state, so an UNCLAIMED plaza is a 200 with stage:null,
 	// the quiet-landmark case is normal, not an error.
 	if (req.query.coin) {
-		const mint = cleanStr(req.query.coin, MAX_MINT);
+		const mint = cleanMint(req.query.coin);
 		if (!mint) return json(res, 400, { error: 'invalid coin mint' });
 		const stageId = plazaStageId(mint);
 		const detail = await stageDetail(stageId);
@@ -331,7 +330,7 @@ async function claimPlaza(req, res, session, body) {
 	const agent = await ownedAgent(body.agentId, session.id);
 	if (!agent) return json(res, 403, { error: 'you do not own this agent' });
 
-	const mint = cleanStr(body.coinMint, MAX_MINT);
+	const mint = cleanMint(body.coinMint);
 	if (!mint) return json(res, 400, { error: 'coinMint is required' });
 	const stageId = plazaStageId(mint);
 
@@ -400,7 +399,8 @@ async function goLive(req, res, session, body) {
 	`;
 	await sql`UPDATE stages SET status = 'live', updated_at = NOW() WHERE id = ${stage.id}`;
 
-	// Tell holders the show is starting, in-app bell + a best-effort Telegram ping.
+	// Put the show on the owner's bell and ping the ops channel, so a live start is
+	// visible without watching the directory.
 	insertNotification(session.id, 'stage_live', {
 		stage_id: stage.id,
 		agent_id: stage.agent_id,
@@ -466,6 +466,15 @@ function shapeShow(s) {
 		total_tips_atomic: Number(s.total_tips_atomic || 0),
 		tip_count: s.tip_count ?? 0,
 	};
+}
+
+// A mint is an identity, never a string to trim into shape: the browser derives
+// the plaza stage id from the mint it is standing in, so truncating an over-long
+// value here would claim (and read) a DIFFERENT stage than the world joins.
+// Reject it instead.
+function cleanMint(v) {
+	const m = cleanStr(v, MAX_MINT + 1);
+	return m.length > MAX_MINT ? '' : m;
 }
 
 function cleanStr(v, max) {

@@ -1,5 +1,5 @@
 /**
- * Living Stages — record a real $THREE tip and make the host react (Moonshot 04).
+ * Living Stages: record a real $THREE tip and make the host react (Moonshot 04).
  *
  * The audience member transfers $THREE (or USDC, where the platform's pay path
  * already allows it) directly to the host agent's wallet on-chain, then POSTs the
@@ -11,7 +11,7 @@
  *      security review, M4) let anyone POST a well-formed but unrelated signature
  *      with a huge amount and buy the top of the leaderboard plus a host
  *      shout-out for free,
- *   2. is IDEMPOTENT per signature — one settlement records exactly one tip row
+ *   2. is IDEMPOTENT per signature: one settlement records exactly one tip row
  *      (a unique index + ON CONFLICT DO NOTHING is the guarantee, so a client
  *      retry returns the existing row, never a double-credit),
  *   3. computes the host/venue accounting split (the full amount already landed
@@ -42,12 +42,11 @@ import { verifySettlement } from '../_lib/settlement-verify.js';
 import { hostPayoutWallets } from '../_lib/stage-wallets.js';
 
 const MAX_MESSAGE = 140;
-// A tip is "loud" when it clears 10k $THREE (6 decimals) — worth a Telegram ping.
+// A tip is "loud" when it clears 10k $THREE (6 decimals), worth a Telegram ping.
 const LOUD_TIP_ATOMIC = 10_000 * 1_000_000;
 
 export default wrap(async (req, res) => {
-	cors(req, res, { methods: ['GET', 'POST', 'OPTIONS'] });
-	if (req.method === 'OPTIONS') return res.end();
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 
 	if (req.method === 'GET') return handleGet(req, res);
 	if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
@@ -67,7 +66,7 @@ export default wrap(async (req, res) => {
 
 	// A cookie-borne (session) request is a CSRF target; an anonymous,
 	// settlement-proven tip has no ambient credential to abuse, so it is allowed
-	// without CSRF (the on-chain signature is the proof) — same posture as the IRL
+	// without CSRF (the on-chain signature is the proof), the same posture as the IRL
 	// anonymous pay path. When signed in, enforce CSRF + attribute the tipper.
 	const session = await getSessionUser(req).catch(() => null);
 	if (session && !(await requireCsrf(req, res, session.id))) return;
@@ -91,7 +90,7 @@ export default wrap(async (req, res) => {
 		SELECT id FROM shows WHERE stage_id = ${stageId} AND ended_at IS NULL
 		ORDER BY started_at DESC LIMIT 1
 	`;
-	if (!show) return json(res, 409, { error: 'no live show — tips open when the host goes live' });
+	if (!show) return json(res, 409, { error: 'no live show, tips open when the host goes live' });
 
 	const label = tipperLabel(session, body.tipperName);
 	const { hostCredit, venueCut, splitBps } = splitTip(valid.amount, stage.tip_split_bps);
@@ -168,7 +167,10 @@ export default wrap(async (req, res) => {
 
 	// Roll the show total (the row is already written, so a failed bump is logged,
 	// never fatal: the per-tip rows remain the source of truth for the leaderboard).
-	sql`
+	// Awaited like promoteTip does it: an unawaited write can be lost when the
+	// container is reclaimed right after the response, which would understate the
+	// running total for the rest of the show.
+	await sql`
 		UPDATE shows SET total_tips_atomic = total_tips_atomic + ${valid.amount}, tip_count = tip_count + 1
 		WHERE id = ${show.id}
 	`.catch((err) => console.warn('[stage/tip] show total bump failed', { showId: show.id, reason: err?.message }));
@@ -226,7 +228,11 @@ async function handleGet(req, res) {
 		WHERE stage_id = ${stageId}
 		ORDER BY (ended_at IS NULL) DESC, started_at DESC LIMIT 1
 	`;
-	if (!show) return json(res, 200, { leaderboard: [], totalTipsAtomic: 0, tipCount: 0 });
+	if (!show) {
+		// no-store like the populated branch: a stage that has not opened its first
+		// show yet must not be edge-cached as empty for the moment it goes live.
+		return json(res, 200, { leaderboard: [], totalTipsAtomic: 0, tipCount: 0 }, { 'cache-control': 'no-store' });
+	}
 	// Verified tips only: a quarantined row must never reach a public total.
 	const rows = await sql`
 		SELECT COALESCE(tipper_label, 'someone') AS label,

@@ -166,6 +166,10 @@ function formatThree(amountAtomic, mint) {
 export function sanitizeLine(s) {
 	if (typeof s !== 'string') return '';
 	let t = s.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim();
+	// The line is shown as live captions, which is platform copy: no em/en dash
+	// reaches a three.ws surface, whoever wrote it. A comma keeps the spoken
+	// pacing the model was reaching for. The plain hyphen above is untouched.
+	t = t.replace(/\s*[\u2013\u2014]\s*/g, ', ');
 	t = t.replace(/^["'“”]+|["'“”]+$/g, '').trim();
 	t = t.replace(/^[A-Za-z .]{0,24}:\s*/, ''); // drop a leaked speaker label
 	return t.slice(0, 400);
