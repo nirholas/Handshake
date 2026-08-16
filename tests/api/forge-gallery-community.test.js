@@ -125,6 +125,35 @@ describe('GET /api/forge-gallery?scope=community', () => {
 		expect(res.getHeader('cache-control')).toMatch(/s-maxage=\d+/);
 	});
 
+	// Regression: the anonymous copy is edge-cached for 60s (+300s stale) under the
+	// bare URL. Without a Vary on the header the body actually depends on, the edge
+	// served that copy to browsers that DID send x-forge-client, so every card came
+	// back voted=false for a voter who had already liked it. Observed live against
+	// three.ws before the fix.
+	it('varies the community feed on x-forge-client so the edge cannot serve the anonymous copy to a voter', async () => {
+		const res = mkRes();
+		await handler(mkReq('/api/forge-gallery?scope=community'), res);
+		expect(String(res.getHeader('vary') || '').toLowerCase()).toContain('x-forge-client');
+	});
+
+	it('varies on x-forge-client for the per-voter read too', async () => {
+		const res = mkRes();
+		await handler(mkReq('/api/forge-gallery?scope=community', { 'x-forge-client': 'browser-9' }), res);
+		expect(String(res.getHeader('vary') || '').toLowerCase()).toContain('x-forge-client');
+	});
+
+	// varyOn merges rather than replaces, so an Origin-varying CORS response keeps
+	// its own field. Dropping it would let a shared cache hand one origin's CORS
+	// headers to another.
+	it('keeps an existing Vary field when adding its own', async () => {
+		const res = mkRes();
+		res.setHeader('vary', 'origin');
+		await handler(mkReq('/api/forge-gallery?scope=community'), res);
+		const vary = String(res.getHeader('vary') || '').toLowerCase();
+		expect(vary).toContain('origin');
+		expect(vary).toContain('x-forge-client');
+	});
+
 	it('answers enabled:false when the deployment has no durable store', async () => {
 		storeEnabledMock.mockReturnValue(false);
 		const res = mkRes();
