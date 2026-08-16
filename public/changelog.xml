@@ -55,6 +55,14 @@
 			<description>An audit of the agent endpoints turned up four things worth fixing. A skill price set through /api/agents/:id/skills/set-price accepted any text as its payment mint and saved it, so a typo produced a listing nobody could actually pay; it now has to be a real base58 address, matching the other door onto the same table. The agent share page and its OG image used to answer a social crawler with a hard error whenever object storage was not configured, instead of falling back to the plain card they already knew how to draw. A mistyped agent id in the diary, skill-price and screen-push endpoints came back as a server error rather than the plain &quot;that is not an agent id&quot; it is. And an agent screen with no live frame store now tells you the agent is offline right away instead of leaving you on &quot;Connecting&quot; for five minutes.</description>
 		</item>
 		<item>
+			<title>Agent Studio shows your real avatar again, and a shared studio link stops opening the wrong agent</title>
+			<link>https://three.ws/agent-studio</link>
+			<guid isPermaLink="false">2026-08-16:Agent Studio shows your real avatar again, and a shared studio link stops opening the wrong agent</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Four repairs to the Agent Studio. The live stage on the left is meant to be your agent's actual body, but the 3D renderer was leaking its internal debug controls into that panel, including a stray rainbow colour strip painted over the avatar. Those controls are hidden now, everywhere the live agent appears. Second, opening a studio link that names someone else's agent used to quietly load your own agent instead and put it in a full editor under the other agent's address, so any edit went to the wrong record; it now loads the agent the link names and, when it is not yours, says so and offers its public profile. Third, on a phone the five section tabs ran off the edge of the screen, leaving Money and Skills unreachable behind a hidden scrollbar; all five now fit. Finally the status pill on the stage moved to the top so it stops sitting on top of your agent's name, and the walking companion no longer doubles up in the corner on a page that already shows your agent life-size.</description>
+		</item>
+		<item>
 			<title>An expired X connection now offers to reconnect instead of sending you to the login page</title>
 			<link>https://three.ws/walk</link>
 			<guid isPermaLink="false">2026-08-16:An expired X connection now offers to reconnect instead of sending you to the login page</guid>

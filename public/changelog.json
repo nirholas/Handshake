@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T17:19:39.061Z",
+	"generated_at": "2026-08-16T17:20:56.851Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -69,6 +69,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Agent Studio shows your real avatar again, and a shared studio link stops opening the wrong agent",
+			"summary": "Four repairs to the Agent Studio. The live stage on the left is meant to be your agent's actual body, but the 3D renderer was leaking its internal debug controls into that panel, including a stray rainbow colour strip painted over the avatar. Those controls are hidden now, everywhere the live agent appears. Second, opening a studio link that names someone else's agent used to quietly load your own agent instead and put it in a full editor under the other agent's address, so any edit went to the wrong record; it now loads the agent the link names and, when it is not yours, says so and offers its public profile. Third, on a phone the five section tabs ran off the edge of the screen, leaving Money and Skills unreachable behind a hidden scrollbar; all five now fit. Finally the status pill on the stage moved to the top so it stops sitting on top of your agent's name, and the walking companion no longer doubles up in the corner on a page that already shows your agent life-size.",
+			"link": "/agent-studio",
+			"tags": [
+				"fix"
 			]
 		},
 		{

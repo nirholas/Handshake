@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Agent Studio shows your real avatar again, and a shared studio link stops opening the wrong agent",
+			"summary": "Four repairs to the Agent Studio. The live stage on the left is meant to be your agent's actual body, but the 3D renderer was leaking its internal debug controls into that panel, including a stray rainbow colour strip painted over the avatar. Those controls are hidden now, everywhere the live agent appears. Second, opening a studio link that names someone else's agent used to quietly load your own agent instead and put it in a full editor under the other agent's address, so any edit went to the wrong record; it now loads the agent the link names and, when it is not yours, says so and offers its public profile. Third, on a phone the five section tabs ran off the edge of the screen, leaving Money and Skills unreachable behind a hidden scrollbar; all five now fit. Finally the status pill on the stage moved to the top so it stops sitting on top of your agent's name, and the walking companion no longer doubles up in the corner on a page that already shows your agent life-size.",
+			"tags": [
+				"fix"
+			],
+			"link": "/agent-studio"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "External Solana agents get their names and artwork back in the directory",
 			"summary": "Every agent the platform indexes from the Metaplex Agent Registry had been sitting in the directory as a bare address since August 6: no name, no picture, no 3D model. The crawler asks a Solana node for each agent's artwork through a method only some nodes support, and it was asking the same node every time, one that does not support it. Worse, the node that does support it answers a refusal in the same shape when it is simply busy, so the crawler could not tell 'I cannot do this' from 'not right now'. It now tries each node in turn, keeps the one that answers, waits and retries a busy one instead of writing it off, and refreshes the agents that are missing artwork rather than the same handful at the top of the list every half hour. If no node will serve the artwork at all, the crawl now says so out loud instead of quietly marking every agent as failed.",
 			"tags": [

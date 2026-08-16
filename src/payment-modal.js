@@ -13,6 +13,7 @@ import { formatUsdcEq, formatSolEq } from './shared/usd-price.js';
 import { buildReceiptHTML, buildReceiptText } from './shared/payment-receipt.js';
 import { showAddFunds } from './shared/add-funds.js';
 import { ensureRiskAck } from './shared/risk-ack.js';
+import { resolveTokenProgramId } from './shared/spl-token-program.js';
 import { apiFetch } from './api.js';
 import { log } from './shared/log.js';
 
@@ -958,12 +959,15 @@ export class PaymentChip {
 					const mintKey = new PublicKey(purch.currency_mint);
 					const referenceKey = new PublicKey(purch.reference);
 
-					const fromAta = getAssociatedTokenAddressSync(mintKey, payerKey);
-					const toAta = getAssociatedTokenAddressSync(mintKey, recipientKey);
+					// Same Token-2022 rule as the modal path above: build against the
+					// program that actually owns the seller's chosen mint.
+					const tokenProgramId = await resolveTokenProgramId(this._connection, mintKey, spl);
+					const fromAta = getAssociatedTokenAddressSync(mintKey, payerKey, false, tokenProgramId);
+					const toAta = getAssociatedTokenAddressSync(mintKey, recipientKey, false, tokenProgramId);
 
 					// Pre-flight balance check before showing the wallet prompt
 					try {
-						const ataInfo = await getAccount(this._connection, fromAta, 'confirmed');
+						const ataInfo = await getAccount(this._connection, fromAta, 'confirmed', tokenProgramId);
 						if (BigInt(ataInfo.amount) < BigInt(purch.amount)) {
 							showChipAddFunds(purch.amount, Number(ataInfo.amount));
 							return;
@@ -972,7 +976,14 @@ export class PaymentChip {
 						// ATA not yet created — proceed; sendTransaction will surface the error
 					}
 
-					const ix = createTransferInstruction(fromAta, toAta, payerKey, BigInt(purch.amount));
+					const ix = createTransferInstruction(
+						fromAta,
+						toAta,
+						payerKey,
+						BigInt(purch.amount),
+						[],
+						tokenProgramId,
+					);
 					ix.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
 
 					const { blockhash, lastValidBlockHeight } = await this._connection.getLatestBlockhash('confirmed');
