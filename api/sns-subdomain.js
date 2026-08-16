@@ -80,7 +80,7 @@ async function handleCheck(req, res) {
 
 async function handleMint(req, res, auth) {
 	if (!hasOwnerKey()) {
-		return error(res, 503, 'config_missing', 'subdomain minting unavailable — platform owner key not configured');
+		return error(res, 503, 'config_missing', 'subdomain minting unavailable: the platform owner key is not configured');
 	}
 
 	const body = await readJson(req).catch(() => ({}));
@@ -97,7 +97,7 @@ async function handleMint(req, res, auth) {
 
 	const agentSol = agent.meta?.solana_address;
 	if (!agentSol) {
-		return error(res, 412, 'agent_missing_wallet', 'agent has no solana wallet — provision one via POST /api/agents/:id/solana');
+		return error(res, 412, 'agent_missing_wallet', 'agent has no solana wallet; provision one via POST /api/agents/:id/solana');
 	}
 
 	let labelInput = typeof body?.label === 'string' && body.label.trim()

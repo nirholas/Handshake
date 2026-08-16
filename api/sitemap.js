@@ -11,6 +11,7 @@
 
 import { sql } from './_lib/db.js';
 import { env } from './_lib/env.js';
+import { method } from './_lib/http.js';
 
 const ORIGIN = env.APP_ORIGIN;
 
@@ -54,6 +55,10 @@ async function newestCreated(table, where = '') {
 }
 
 export default async function handler(req, res) {
+	// A crawler surface is GET (and HEAD) only. Without this, a POST or DELETE
+	// got the sitemap back with a 200, which is a lie about what the route does.
+	if (!method(req, res, ['GET'])) return;
+
 	const [agentsTs, avatarsTs, widgetsTs, usersTs, subdomainsTs] = await Promise.all([
 		newestCreated('agent_identities', 'deleted_at is null and is_public = true'),
 		newestTimestamp('avatars', "visibility = 'public' and deleted_at is null"),

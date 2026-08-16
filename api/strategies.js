@@ -36,6 +36,12 @@ async function resolveAuth(req) {
 
 const LIST_SORTS = new Set(['recent', 'forks', 'equips', 'performance']);
 
+// "performance" is ranked in JS from real closed positions, so the SQL page has to
+// be a candidate POOL rather than the answer: ordering by published_at and taking
+// `limit` would hide a proven, high-ROI strategy behind newer unproven ones and
+// still call the result a performance ranking. Same pool the leaderboard scans.
+const PERFORMANCE_POOL = 200;
+
 // Real live performance for a set of strategies, aggregated from real closed
 // on-chain positions across every equip of each strategy. Returns a map id→stats.
 // A strategy with 0 closed positions is "unproven" (proven:false) — never faked.
@@ -146,7 +152,7 @@ async function handleList(req, res, auth) {
 		${author ? sql`AND owner_id = ${author}` : sql``}
 		${q ? sql`AND (name ILIKE ${'%' + q + '%'} OR description ILIKE ${'%' + q + '%'})` : sql``}
 		ORDER BY ${sort === 'forks' ? sql`forks_count DESC` : sort === 'equips' ? sql`equips_count DESC` : sql`published_at DESC`}
-		LIMIT ${limit}
+		LIMIT ${sort === 'performance' ? PERFORMANCE_POOL : limit}
 	`;
 	const perf = await performanceByStrategy(rows.map((r) => r.id));
 	const names = await ownerNames([...new Set(rows.map((r) => r.owner_id))]);
@@ -154,12 +160,14 @@ async function handleList(req, res, auth) {
 	// "performance" sort ranks proven strategies by ROI, then unproven by recency —
 	// a real, honest order (no synthetic curve can climb it).
 	if (sort === 'performance') {
-		strategies = strategies.sort((a, b) => {
-			const ap = a.performance.proven ? 1 : 0, bp = b.performance.proven ? 1 : 0;
-			if (ap !== bp) return bp - ap;
-			if (ap && bp) return (b.performance.roi_pct ?? -1e9) - (a.performance.roi_pct ?? -1e9);
-			return new Date(b.published_at || 0) - new Date(a.published_at || 0);
-		});
+		strategies = strategies
+			.sort((a, b) => {
+				const ap = a.performance.proven ? 1 : 0, bp = b.performance.proven ? 1 : 0;
+				if (ap !== bp) return bp - ap;
+				if (ap && bp) return (b.performance.roi_pct ?? -1e9) - (a.performance.roi_pct ?? -1e9);
+				return new Date(b.published_at || 0) - new Date(a.published_at || 0);
+			})
+			.slice(0, limit);
 	}
 	return json(res, 200, { data: { scope, sort, strategies } });
 }

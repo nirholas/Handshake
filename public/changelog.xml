@@ -159,6 +159,14 @@
 			<description>The rider pass is a $THREE gate: you qualify either by holding $THREE or by sending 8,000 of it to the rider vault. Only the first half worked. The check answered purely from what a wallet currently holds, so anyone who bought a pass, and therefore no longer held the tokens they had just sent, was told they had no pass. The payments the vault recorded were written to the database and never read by anything. Both sources are now consulted, and a positive answer from either one stands on its own, so a paid pass still verifies while the chain node is unreachable and a holder pass still verifies during a database outage. A single transaction carrying payments from two different wallets used to fail outright and be retried forever by the payment listener, granting neither wallet a pass; every payer in a batch is now credited. The config the rider client loads at startup answered with a page of empty values when the deployment was not set up, which crashed the client with an unexplained error; it now says plainly that the feature is not configured. Repeating the address in the query string returned a server error and now returns a normal validation message.</description>
 		</item>
 		<item>
+			<title>The agent showcase pages all the way through, and the strategy board ranks the whole marketplace</title>
+			<link>https://three.ws/showcase</link>
+			<guid isPermaLink="false">2026-08-16:The agent showcase pages all the way through, and the strategy board ranks the whole marketplace</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes to public read surfaces. Paging the ERC-8004 agent showcase past the first page could repeat a row forever or quietly skip one, because the cursor rounded the registration timestamp to the millisecond while the index stores microseconds, and an agent whose registry event carried no timestamp at all fell out of every page after the first. Both are fixed, and asking for a fractional number of results now returns a page instead of a server error. The published strategy board's default 'performance' order was ranking only the most recently published slice, so a proven, high-return strategy could sit invisible behind newer unproven ones; it now ranks the whole published pool before trimming to your page. And /sitemap.xml no longer answers a POST or a DELETE with the sitemap.</description>
+		</item>
+		<item>
 			<title>The agent wallet MCP server now quotes its own address when it asks an agent to pay</title>
 			<link>https://three.ws/docs/mcp-agent</link>
 			<guid isPermaLink="false">2026-08-16:The agent wallet MCP server now quotes its own address when it asks an agent to pay</guid>

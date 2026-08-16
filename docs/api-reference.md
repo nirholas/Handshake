@@ -3385,15 +3385,17 @@ Public directory of ERC-8004 agents with 3D avatars, for homepage and gallery us
 
 **Query parameters**
 
-| Parameter | Type    | Description                                                        |
-| --------- | ------- | ------------------------------------------------------------------ |
-| `net`     | string  | `mainnet`, `testnet`, or `all` (default: `all`)                    |
-| `sort`    | string  | `newest` or `oldest`                                               |
-| `chain`   | integer | Filter by chain ID                                                 |
-| `limit`   | integer | Max results (default: 20)                                          |
-| `cursor`  | string  | Keyset pagination cursor (`registered_at,chain_id,agent_id` tuple) |
+| Parameter | Type    | Description                                                                       |
+| --------- | ------- | --------------------------------------------------------------------------------- |
+| `net`     | string  | `mainnet`, `testnet`, or `all` (default: `mainnet`)                                 |
+| `sort`    | string  | `newest` or `oldest` (default: `newest`)                                            |
+| `chain`   | integer | Comma-separated chain IDs. Overrides `net`; an unknown ID is a `validation_error`.   |
+| `limit`   | integer | Max results, 1 to 60 (default: 24). A fractional value is floored.                |
+| `cursor`  | string  | Keyset cursor from the previous page's `next_cursor`. Opaque, pass it back verbatim. |
 
-**Response:** Same shape as `/api/explore`. Cursor encodes the full keyset tuple for stable pagination under concurrent inserts.
+**Response:** `{ agents, total, next_cursor }`, each agent shaped as in `/api/explore`. `total` is the count for the current filter, not the page. `next_cursor` is `null` on the last page.
+
+The cursor encodes the full keyset tuple (registration timestamp, chain ID, agent ID) so pagination stays stable while the crawler inserts. Two properties matter if you are reproducing it: the timestamp is carried at Postgres' own microsecond precision (re-rendering it through a millisecond clock repeats or skips the boundary row), and an agent whose registry event carried no timestamp sorts under `-infinity`, at the end of `newest` and the start of `oldest`, rather than dropping out of the walk. A cursor that does not decode is a `400` `validation_error`, never a silent reset to page one.
 
 ---
 
@@ -6882,7 +6884,7 @@ Paginated list endpoints use `limit`/`offset` query parameters unless noted othe
 GET /api/v1/pump/launches?limit=24&offset=24
 ```
 
-`/api/explore` and `/api/showcase` use keyset (cursor-based) pagination for stability: pass the returned `cursor` value as the `cursor` query parameter on the next request. `/api/agent-actions` and `/api/users/me/feed` are cursor-based too (`cursor` / `before` timestamps).
+`/api/explore` and `/api/showcase` use keyset (cursor-based) pagination for stability: pass the value the previous page returned (`cursor` on explore, `next_cursor` on showcase) as the `cursor` query parameter on the next request. `/api/agent-actions` and `/api/users/me/feed` are cursor-based too (`cursor` / `before` timestamps).
 
 ---
 

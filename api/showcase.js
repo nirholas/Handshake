@@ -1,8 +1,14 @@
 // GET /api/showcase — public directory of ERC-8004 agents with 3D avatars.
 //
 // Reads from `erc8004_agents_index` (populated by api/cron/erc8004-crawl.js).
-// Keyset pagination on (registered_at, chain_id, agent_id) — stable under
-// concurrent inserts and backed by the `erc8004_agents_has3d_time` index.
+// Keyset pagination on (sort_ts, chain_id, agent_id), stable under concurrent
+// inserts and backed by the `erc8004_agents_has3d_time` index. `sort_ts` is
+// `registered_at` with NULL folded to -infinity, and the cursor carries it as
+// Postgres text: two details that keep the key TOTAL. A NULL registered_at
+// (a third of the crawled index) would otherwise make the row-comparison NULL
+// and drop that agent from every page after the first, and a cursor rendered
+// through a JS Date would truncate the stored microseconds, which repeats or
+// skips rows on the boundary depending on the sort direction.
 
 import { sql } from './_lib/db.js';
 import { cors, error, json, method, wrap, rateLimited } from './_lib/http.js';
@@ -27,7 +33,7 @@ export default wrap(async (req, res) => {
 	const decoded = cursor ? decodeCursor(cursor) : null;
 	if (cursor && !decoded) return error(res, 400, 'validation_error', 'invalid cursor');
 
-	const cursorAt = decoded?.registeredAt || null;
+	const cursorAt = decoded?.sortTs || null;
 	const cursorChain = decoded?.chainId ?? null;
 	const cursorAgent = decoded?.agentId || null;
 
@@ -36,33 +42,35 @@ export default wrap(async (req, res) => {
 			? await sql`
 				SELECT chain_id, agent_id, owner, registry, agent_uri,
 				       name, description, image, glb_url, services, x402_support,
-				       registered_block, registered_tx, registered_at
+				       registered_block, registered_tx, registered_at,
+				       COALESCE(registered_at, '-infinity'::timestamptz)::text AS sort_ts
 				FROM erc8004_agents_index
 				WHERE active = true
 				  AND has_3d = true
 				  AND chain_id = ANY(${chainIds}::int[])
 				  AND (
 				    ${cursorAt}::timestamptz IS NULL
-				    OR (registered_at, chain_id, agent_id) <
+				    OR (COALESCE(registered_at, '-infinity'::timestamptz), chain_id, agent_id) <
 				       (${cursorAt}::timestamptz, ${cursorChain}::int, ${cursorAgent}::text)
 				  )
-				ORDER BY registered_at DESC NULLS LAST, chain_id DESC, agent_id DESC
+				ORDER BY COALESCE(registered_at, '-infinity'::timestamptz) DESC, chain_id DESC, agent_id DESC
 				LIMIT ${limit + 1}
 			`
 			: await sql`
 				SELECT chain_id, agent_id, owner, registry, agent_uri,
 				       name, description, image, glb_url, services, x402_support,
-				       registered_block, registered_tx, registered_at
+				       registered_block, registered_tx, registered_at,
+				       COALESCE(registered_at, '-infinity'::timestamptz)::text AS sort_ts
 				FROM erc8004_agents_index
 				WHERE active = true
 				  AND has_3d = true
 				  AND chain_id = ANY(${chainIds}::int[])
 				  AND (
 				    ${cursorAt}::timestamptz IS NULL
-				    OR (registered_at, chain_id, agent_id) >
+				    OR (COALESCE(registered_at, '-infinity'::timestamptz), chain_id, agent_id) >
 				       (${cursorAt}::timestamptz, ${cursorChain}::int, ${cursorAgent}::text)
 				  )
-				ORDER BY registered_at ASC NULLS FIRST, chain_id ASC, agent_id ASC
+				ORDER BY COALESCE(registered_at, '-infinity'::timestamptz) ASC, chain_id ASC, agent_id ASC
 				LIMIT ${limit + 1}
 			`;
 
@@ -98,7 +106,9 @@ function parseParams(sp) {
 		return { error: 'sort must be newest | oldest' };
 	}
 
-	let limit = Number(sp.get('limit')) || DEFAULT_LIMIT;
+	// LIMIT is a bigint to Postgres: floor before it gets there, or a fractional
+	// ?limit=1.5 becomes `LIMIT 2.5` and fails the query with 22P02.
+	let limit = Math.floor(Number(sp.get('limit')));
 	if (!Number.isFinite(limit) || limit < 1) limit = DEFAULT_LIMIT;
 	if (limit > MAX_LIMIT) limit = MAX_LIMIT;
 
@@ -154,19 +164,20 @@ function shapeAgent(row) {
 	};
 }
 
+// The cursor carries `sort_ts` verbatim as Postgres rendered it, so it round-trips
+// at full microsecond precision and survives a NULL registered_at (`-infinity`).
 function encodeCursor(row) {
-	const at = row.registered_at ? new Date(row.registered_at).toISOString() : '';
-	const payload = `${at}|${row.chain_id}|${row.agent_id}`;
+	const payload = `${row.sort_ts}|${row.chain_id}|${row.agent_id}`;
 	return Buffer.from(payload, 'utf8').toString('base64url');
 }
 
 function decodeCursor(cursor) {
 	try {
 		const payload = Buffer.from(cursor, 'base64url').toString('utf8');
-		const [registeredAt, chainIdStr, agentId] = payload.split('|');
+		const [sortTs, chainIdStr, agentId] = payload.split('|');
 		const chainId = Number(chainIdStr);
-		if (!registeredAt || !Number.isInteger(chainId) || !agentId) return null;
-		return { registeredAt, chainId, agentId };
+		if (!sortTs || !Number.isInteger(chainId) || !agentId) return null;
+		return { sortTs, chainId, agentId };
 	} catch {
 		return null;
 	}

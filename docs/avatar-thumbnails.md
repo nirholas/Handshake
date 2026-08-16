@@ -45,7 +45,16 @@ import { thumbnailUrl } from './_lib/r2.js';
 thumbnailUrl(null)                                  // → null
 thumbnailUrl('https://three.ws/avatars/x_og.png')   // → null  (legacy, always 404s)
 thumbnailUrl('thumb/abc.png')                       // → https://<cdn>/thumb/abc.png
+thumbnailUrl('thumb/abc.png')                       // → null  (S3_PUBLIC_DOMAIN unset)
 ```
+
+That last case is why the helper is built on `publicUrlOrNull()` rather than bare
+`publicUrl()`: reading `env.S3_PUBLIC_DOMAIN` throws on a deployment without object
+storage, and a single un-renderable key must not take down a whole list response.
+It did: `/api/pulse` answered `502 pulse_failed` and `/api/search` answered
+`503 not_configured` for every caller until both were pointed at the read-path
+helper. Upload paths keep calling `publicUrl()`, where the throw is the correct
+signal that there is nowhere to put the bytes.
 
 Return `null` and let the surface render its designed placeholder. There were 43
 bare `publicUrl(<thumbnail key>)` call sites across 32 files — agent cards, the

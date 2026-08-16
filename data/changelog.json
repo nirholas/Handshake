@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The agent showcase pages all the way through, and the strategy board ranks the whole marketplace",
+			"summary": "Three fixes to public read surfaces. Paging the ERC-8004 agent showcase past the first page could repeat a row forever or quietly skip one, because the cursor rounded the registration timestamp to the millisecond while the index stores microseconds, and an agent whose registry event carried no timestamp at all fell out of every page after the first. Both are fixed, and asking for a fractional number of results now returns a page instead of a server error. The published strategy board's default 'performance' order was ranking only the most recently published slice, so a proven, high-return strategy could sit invisible behind newer unproven ones; it now ranks the whole published pool before trimming to your page. And /sitemap.xml no longer answers a POST or a DELETE with the sitemap.",
+			"tags": [
+				"fix"
+			],
+			"link": "/showcase"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Token sentiment reads real pump.fun commentary again",
 			"summary": "The sentiment pulse for a Solana token was reading a pump.fun route that no longer exists, so it scored an empty set and reported every coin as perfectly neutral with full confidence. It now reads the coin's live callouts, the commentary feed the pump.fun coin page renders, and when that source is unreachable and you supplied no text of your own it says so with an error instead of returning a neutral-looking score. The scorer itself was also matching lexicon terms inside longer words, which read 'partnered' as bearish; it now matches whole words and knows the common variants (scammer, rugged, crashing, bought).",
 			"tags": [
