@@ -189,7 +189,12 @@
 				your three.ws showcase. Your agents, avatars, and skills, all under one name.
 			</p>
 
-			<section class="tw-card">
+			<section class="tw-card" id="tw-account" hidden aria-live="polite">
+				<div class="tw-status muted" id="tw-account-status"></div>
+				<div id="tw-account-actions"></div>
+			</section>
+
+			<section class="tw-card" id="tw-mint-card">
 				<label for="tw-label" data-i18n="threews_claim.subdomain_label">Subdomain label</label>
 				<div class="tw-input-row">
 					<input id="tw-label" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourhandle" maxlength="63" />
@@ -225,10 +230,89 @@
 			const statusEl = document.getElementById('tw-status');
 			const mintBtn = document.getElementById('tw-mint');
 			const resultEl = document.getElementById('tw-result');
+			const mintCard = document.getElementById('tw-mint-card');
+			const acctCard = document.getElementById('tw-account');
+			const acctStatus = document.getElementById('tw-account-status');
+			const acctActions = document.getElementById('tw-account-actions');
 
 			let checkTimer = null;
 			let lastChecked = null;
 			let csrfToken = null;
+
+			function escapeHtml(value) {
+				return String(value).replace(/[&<>"']/g, (c) => ({
+					'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+				})[c]);
+			}
+
+			function showOwnedClaim(claim) {
+				const full = escapeHtml(claim.full);
+				resultEl.innerHTML = `
+					<h3>${full} is yours.</h3>
+					<p class="tw-help" style="margin:.4em 0">
+						Brave users can type <strong>${full}</strong> in the URL bar and land on
+						your showcase. Anyone can pay you by sending to that name via the
+						pay-by-name API.
+					</p>
+					<p style="margin:.4em 0">
+						${claim.showcase_url ? `<a href="${escapeHtml(claim.showcase_url)}">${escapeHtml(claim.showcase_url)}</a><br>` : ''}
+						${claim.explorer ? `<span class="tw-help">tx: <a href="${escapeHtml(claim.explorer)}" target="_blank" rel="noopener">${escapeHtml(claim.signature || 'view on Solscan')}</a></span>` : ''}
+					</p>
+				`;
+				resultEl.classList.add('on');
+			}
+
+			// Ask the API what this account's subdomain situation already is, so a
+			// returning owner is not asked to re-check a name they already minted and
+			// an account with no username learns that before the mint 409s.
+			async function loadAccountState() {
+				let res;
+				try {
+					res = await fetch('/api/threews/me', { credentials: 'same-origin' });
+				} catch {
+					// Offline or blocked: the anonymous availability checker still works.
+					return;
+				}
+				if (res.status === 401) {
+					acctCard.hidden = false;
+					acctStatus.textContent = 'Sign in to mint a subdomain. You can still check availability below.';
+					acctActions.innerHTML = '<a class="tw-btn ghost" href="/login?next=/threews/claim">Sign in</a>';
+					return;
+				}
+				if (!res.ok) return;
+				const payload = await res.json().catch(() => null);
+				const me = payload?.data;
+				if (!me) return;
+
+				acctCard.hidden = false;
+				if (me.status === 'claimed' && me.claim) {
+					acctStatus.textContent = `You already own ${me.claim.full}.`;
+					acctStatus.className = 'tw-status ok';
+					acctActions.innerHTML = me.claim.showcase_url
+						? `<a class="tw-btn ghost" href="${escapeHtml(me.claim.showcase_url)}">View your showcase</a>`
+						: '';
+					mintCard.hidden = true;
+					showOwnedClaim(me.claim);
+					return;
+				}
+				if (me.status === 'needs_username') {
+					acctStatus.textContent = me.blocked_reason || 'Set a username before claiming a subdomain.';
+					acctStatus.className = 'tw-status bad';
+					acctActions.innerHTML = '<a class="tw-btn ghost" href="/settings">Set a username</a>';
+					labelEl.disabled = true;
+					mintBtn.disabled = true;
+					statusEl.textContent = 'A username is required before a label can be minted.';
+					return;
+				}
+				// status === 'available': the label is forced to equal the username, so
+				// prefill it and run the check rather than making them type it.
+				const handle = me.user?.username;
+				if (!handle) return;
+				acctStatus.textContent = `Signed in as @${handle}. Your subdomain label must match your username.`;
+				labelEl.value = handle;
+				labelEl.readOnly = true;
+				check(handle);
+			}
 
 			labelEl.addEventListener('input', () => {
 				const raw = labelEl.value.trim().toLowerCase();
@@ -308,25 +392,20 @@
 					const d = data.data;
 					statusEl.textContent = `${d.full} minted.`;
 					statusEl.className = 'tw-status ok';
-					resultEl.innerHTML = `
-						<h3>${d.full} is yours.</h3>
-						<p class="tw-help" style="margin:.4em 0">
-							Brave users can type <strong>${d.full}</strong> in the URL bar and
-							land on your showcase. Anyone can pay you by sending to that name
-							via the pay-by-name API.
-						</p>
-						<p style="margin:.4em 0">
-							<a href="${d.showcase_url}">${d.showcase_url}</a><br>
-							<span class="tw-help">tx: <a href="https://solscan.io/tx/${encodeURIComponent(d.signature)}" target="_blank" rel="noopener">${d.signature}</a></span>
-						</p>
-					`;
-					resultEl.classList.add('on');
+					showOwnedClaim({
+						full: d.full,
+						showcase_url: d.showcase_url,
+						signature: d.signature,
+						explorer: d.explorer || (d.signature ? `https://solscan.io/tx/${encodeURIComponent(d.signature)}` : null),
+					});
 				} catch (err) {
 					statusEl.textContent = err?.message || 'Mint failed.';
 					statusEl.className = 'tw-status bad';
 					mintBtn.disabled = false;
 				}
 			});
+
+			loadAccountState();
 		</script>
 		<script src="/brand.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->

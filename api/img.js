@@ -35,7 +35,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { fetchModel } from './_lib/fetch-model.js';
 import { safeFetchJson } from './_lib/ssrf.js';
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — generous for token art, bounded for abuse
+const MAX_BYTES = 8 * 1024 * 1024; // 8 MB: generous for token art, bounded for abuse
 // Per-gateway attempt cap. Each candidate fetch (DNS + connect + body) is bounded
 // by this via the SSRF fetcher's own AbortController. Because the candidates are
 // raced CONCURRENTLY (below), the whole resolution finishes in roughly one
@@ -263,7 +263,7 @@ export default wrap(async function handler(req, res) {
 			res,
 			400,
 			'invalid_url',
-			'data: URIs cannot be proxied — pass an http(s) or ipfs URL',
+			'data: URIs cannot be proxied. Pass an http(s) or ipfs URL',
 		);
 	}
 

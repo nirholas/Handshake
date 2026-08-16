@@ -15,6 +15,12 @@
 //   3. The two upstream failure shapes getBalances() raises stay mapped to
 //      their intended statuses (503 not_configured with the missing key named,
 //      502 for a bad upstream) rather than collapsing into a 500.
+//   4. A body that could not be READ keeps readJson()'s own status (415 for a
+//      non-JSON content-type, 413 for an oversize payload) instead of being
+//      reported as a field-validation fault, and a body that was read and
+//      rejected comes back as the platform's validation_error shape: one
+//      readable line plus a field-level `issues` array, not zod's raw
+//      multi-line JSON dump of every issue.
 
 import { Readable } from 'node:stream';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -41,13 +47,13 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 
 const handler = (await import('../api/wallet/balances.js')).default;
 
-function makeReq({ method = 'POST', rawBody = null } = {}) {
+function makeReq({ method = 'POST', rawBody = null, contentType = 'application/json' } = {}) {
 	const req = Readable.from(rawBody == null ? [] : [Buffer.from(rawBody)]);
 	req.method = method;
 	req.url = '/api/wallet/balances';
 	req.headers = {
 		host: 'localhost',
-		...(rawBody == null ? {} : { 'content-type': 'application/json' }),
+		...(rawBody == null ? {} : { 'content-type': contentType }),
 	};
 	return req;
 }
@@ -68,10 +74,17 @@ function makeRes() {
 	};
 }
 
-async function call(body, { method = 'POST' } = {}) {
+async function call(body, { method = 'POST', contentType } = {}) {
 	const rawBody = body === undefined ? null : JSON.stringify(body);
 	const res = makeRes();
-	await handler(makeReq({ method, rawBody }), res);
+	await handler(makeReq({ method, rawBody, contentType }), res);
+	return { status: res.statusCode, body: res.body ? JSON.parse(res.body) : null };
+}
+
+// Bypasses JSON.stringify so a case can put arbitrary bytes on the wire.
+async function callRaw(rawBody, { contentType = 'application/json' } = {}) {
+	const res = makeRes();
+	await handler(makeReq({ rawBody, contentType }), res);
 	return { status: res.statusCode, body: res.body ? JSON.parse(res.body) : null };
 }
 

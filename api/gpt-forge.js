@@ -1242,7 +1242,7 @@ async function startJob(req, res) {
 					price_usd: priceUsd,
 					balance_usd: acct.balanceUsd,
 					top_up_url: '/credits',
-					message: `Generating a High model costs $${priceUsd.toFixed(2)} in credits — your balance is $${acct.balanceUsd.toFixed(2)}. Top up to continue.`,
+					message: `Generating a High model costs $${priceUsd.toFixed(2)} in credits, your balance is $${acct.balanceUsd.toFixed(2)}. Top up to continue.`,
 				});
 			}
 			creditsCharge = { user: creditUser, action: 'forge.high', ref: refId || randomUUID() };
@@ -1296,7 +1296,7 @@ async function startJob(req, res) {
 				return rateLimited(
 					res,
 					globalRl,
-					'Paid 3D generation is at capacity right now — switch to a free engine (NVIDIA or Hugging Face), or try again shortly.',
+					'Paid 3D generation is at capacity right now: switch to a free engine (NVIDIA or Hugging Face), or try again shortly.',
 				);
 			}
 			// Per-identity daily ceiling: closes the rotating-IP abuse path the per-IP
@@ -1385,7 +1385,7 @@ async function startJob(req, res) {
 		return json(res, 400, {
 			error: 'invalid_prompt',
 			message:
-				'Describe one subject in 3–1000 characters, or pass image_url / image_urls for image-to-3D.',
+				'Describe one subject in 3-1000 characters, or pass image_url / image_urls for image-to-3D.',
 		});
 	}
 	const aspect = VALID_ASPECT.has(body?.aspect_ratio) ? body.aspect_ratio : '1:1';
@@ -1410,7 +1410,7 @@ async function startJob(req, res) {
 		if (prompt.length < 3) {
 			return json(res, 400, {
 				error: 'invalid_prompt',
-				message: 'Say what the sketch depicts (3–1000 characters) — the sketch model is prompt-conditioned.',
+				message: 'Say what the sketch depicts (3-1000 characters), the sketch model is prompt-conditioned.',
 			});
 		}
 	}
@@ -1423,7 +1423,7 @@ async function startJob(req, res) {
 			error: 'backend_text_only',
 			backend: backendId,
 			message:
-				`${BACKENDS[backendId].label} generates from text prompts only — NVIDIA's hosted preview doesn't accept uploaded photos. ` +
+				`${BACKENDS[backendId].label} generates from text prompts only, NVIDIA's hosted preview doesn't accept uploaded photos. ` +
 				'Drop the backend field to use the default photo engine, or pick TRELLIS, Meshy, or Tripo.',
 		});
 	}
@@ -1619,7 +1619,7 @@ async function startJob(req, res) {
 				return json(res, 422, {
 					error: 'backend_image_only',
 					backend: backendId,
-					message: `${BACKENDS[backendId].label} reconstructs from a reference image — attach one, or drop the backend to use a text→3D engine.`,
+					message: `${BACKENDS[backendId].label} reconstructs from a reference image, attach one, or drop the backend to use a text→3D engine.`,
 				});
 			}
 
@@ -2431,7 +2431,7 @@ async function startJob(req, res) {
 				error: 'rate_limited',
 				queued,
 				message: queued
-					? `Your generation is queued behind a few others — retry in ~${retryAfter}s to pick it up.`
+					? `Your generation is queued behind a few others: retry in ~${retryAfter}s to pick it up.`
 					: 'The 3D generator is busy right now. Try again in a few seconds.',
 				retry_after: retryAfter,
 			});
@@ -2442,7 +2442,7 @@ async function startJob(req, res) {
 		// with an honest, generic unavailable state instead of leaking it. (BYOK lanes
 		// kept their actionable account message via the insufficient_credits branch.)
 		if (!BACKENDS[backendId]?.byok && isPaidCreditFailure(err)) {
-			const creditDetail = err?.providerDetail ? ` — vendor: ${err.providerDetail}` : '';
+			const creditDetail = err?.providerDetail ? `: vendor: ${err.providerDetail}` : '';
 			console.warn(
 				`[forge] paid reconstruct lane out of credit and no free lane available: ${err?.message || err}${creditDetail}`,
 			);
@@ -2984,7 +2984,7 @@ async function pollJob(req, res, jobId) {
 		return json(res, 200, {
 			job_id: jobId,
 			status: 'failed',
-			error: sanitizeJobError(result.error) || '3D generation hit a snag — please try again.',
+			error: sanitizeJobError(result.error) || '3D generation hit a snag, please try again.',
 			...metaFields,
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});

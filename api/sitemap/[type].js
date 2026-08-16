@@ -1,10 +1,11 @@
-// Sub-sitemap by entity type — agents, avatars, widgets, profiles, core.
+// Sub-sitemap by entity type: agents, avatars, widgets, profiles, core, news.
 //
 // Each request streams up to 45k URLs (capped under the sitemaps.org 50k
-// ceiling). Beyond that we'd shard into agents-1.xml, agents-2.xml, etc.,
-// but the catalog is nowhere near that size yet.
+// ceiling). Beyond that we'd shard into agents-1.xml, agents-2.xml, etc.
+// Only news currently reaches the cap, and it drains newest month first so
+// the truncation always falls on the oldest, least crawled stories.
 //
-// Cached at the edge for 10 min — long enough to absorb crawl bursts,
+// Cached at the edge for 10 min: long enough to absorb crawl bursts,
 // short enough that newly minted agents are discoverable within minutes
 // (and IndexNow gives them an instant push too).
 
@@ -104,7 +105,7 @@ function send(res, body) {
 	res.end(body);
 }
 
-// Core (static) routes are read from data/pages.json — the same source of
+// Core (static) routes are read from data/pages.json, the same source of
 // truth that build-page-index.mjs uses for llms.txt / sitemap.html / the
 // features manifest. One file to edit; this route + the human sitemap + the
 // AI indexes all stay in lockstep.
@@ -130,7 +131,7 @@ async function coreSitemap() {
 	const today = fmtDate(new Date());
 	const [manifest, i18n] = await Promise.all([loadPagesManifest(), loadI18n()]);
 	if (!manifest?.sections) {
-		// Fallback to the home page only — never 500 the crawler.
+		// Fallback to the home page only, so we never 500 the crawler.
 		return [{ loc: `${ORIGIN}/`, lastmod: today, changefreq: 'daily', priority: '1.0' }];
 	}
 	const out = [];
@@ -186,7 +187,7 @@ async function avatarsSitemap() {
 }
 
 async function widgetsSitemap() {
-	// Only widgets surfaced on a public profile/showcase are worth indexing — the
+	// Only widgets surfaced on a public profile/showcase are worth indexing; the
 	// raw embed endpoint isn't human content. Filtering on is_public matches the
 	// front-end's listing behavior.
 	const rows = await sql`
@@ -205,12 +206,24 @@ async function widgetsSitemap() {
 }
 
 async function profilesSitemap() {
-	// Public user profiles + the subdomain showcase pages they map to. We index
-	// /u/<username> — the canonical profile URL — and skip raw user IDs.
+	// Public user profiles. We index /u/<username>, the canonical profile URL
+	// the app itself links to (stored casing, matching every `/u/${username}`
+	// link in src/), and skip raw user IDs.
+	//
+	// service_account rows are excluded. Those are the machine accounts the
+	// avaturn/forge/circulation seed crons mint (see the 2026-07-25 migration
+	// that added the flag) at a rate of roughly one per minute, and on
+	// 2026-08-16 they were 29,600 of the 29,642 profile rows. Submitting 30k
+	// auto-generated `calm144`-style profile wrappers buries the 42 real human
+	// profiles and spends crawl budget on pages whose actual content (the
+	// avatars and agents those accounts own) is already listed in
+	// avatars.xml and agents.xml. Same predicate the metrics queries use.
 	const rows = await sql`
 		select u.username, u.updated_at, u.created_at
 		from users u
-		where u.deleted_at is null and u.username is not null
+		where u.deleted_at is null
+		  and u.username is not null
+		  and u.service_account = false
 		order by coalesce(u.updated_at, u.created_at) desc
 		limit ${MAX_URLS}
 	`;
@@ -224,7 +237,7 @@ async function profilesSitemap() {
 
 // Story pages (/markets/news/<YYYY-MM>/<id>-<slug>) for the newest archive
 // months. The full 660k-article corpus would blow the 50k/URL cap many times
-// over — recent months are where crawl demand is, and older stories are
+// over. Recent months are where crawl demand is, and older stories are
 // reachable through the archive UI and inter-article links. Months come from
 // the same GCS store the archive endpoint serves, so this stays in lockstep
 // with what actually resolves.
@@ -237,7 +250,7 @@ async function newsSitemap() {
 	for (const month of recent) {
 		const records = await loadMonth(month).catch(() => []);
 		for (const a of records) {
-			if (isSuppressed(a)) continue; // withdrawn at the rightsholder's demand — never submit it for crawling
+			if (isSuppressed(a)) continue; // withdrawn at the rightsholder's demand, so never submit it for crawling
 			const loc = storyPath(a);
 			if (!loc) continue; // undated/id-less corpus rows have no story page
 			out.push({
@@ -252,22 +265,28 @@ async function newsSitemap() {
 	return out;
 }
 
-const BUILDERS = {
-	core: coreSitemap,
-	agents: agentsSitemap,
-	avatars: avatarsSitemap,
-	widgets: widgetsSitemap,
-	profiles: profilesSitemap,
-	news: newsSitemap,
-};
+// A Map, not an object literal: `BUILDERS.constructor` on a literal resolves to
+// Object via the prototype chain, so /api/sitemap/constructor (and toString,
+// valueOf, hasOwnProperty) passed the lookup guard, called a non-builder, and
+// answered a scanner with a 500 plus a bogus sitemap_failed error report. A Map
+// only ever returns what was put in it.
+const BUILDERS = new Map([
+	['core', coreSitemap],
+	['agents', agentsSitemap],
+	['avatars', avatarsSitemap],
+	['widgets', widgetsSitemap],
+	['profiles', profilesSitemap],
+	['news', newsSitemap],
+]);
 
 export default async function handler(req, res) {
 	const raw = String(req.query?.type || req.query?.id || '').replace(/\.xml$/i, '');
-	const builder = BUILDERS[raw];
+	const builder = BUILDERS.get(raw);
 	if (!builder) {
 		res.statusCode = 404;
-		res.setHeader('content-type', 'text/plain');
-		res.end('unknown sitemap');
+		res.setHeader('content-type', 'text/plain; charset=utf-8');
+		res.setHeader('cache-control', 'no-store');
+		res.end(`unknown sitemap. known types: ${[...BUILDERS.keys()].join(', ')}\n`);
 		return;
 	}
 	try {
@@ -276,8 +295,8 @@ export default async function handler(req, res) {
 	} catch (err) {
 		const ref = reportServerError(err, { code: 'sitemap_failed', context: { url: redactUrl(req.url), type: raw } });
 		res.statusCode = 500;
-		res.setHeader('content-type', 'text/plain');
+		res.setHeader('content-type', 'text/plain; charset=utf-8');
 		res.setHeader('cache-control', 'no-store');
-		res.end(`sitemap failed — quote ref ${ref} to support`);
+		res.end(`sitemap failed, quote ref ${ref} to support\n`);
 	}
 }

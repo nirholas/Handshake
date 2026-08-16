@@ -5,7 +5,7 @@
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getBalances } from '../_lib/balances.js';
-import { isValidSolanaAddress, isValidEvmAddress } from '../_lib/validate.js';
+import { isValidSolanaAddress, isValidEvmAddress, parse } from '../_lib/validate.js';
 import { z } from 'zod';
 
 // The address is caller-supplied, so its shape is checked here rather than left
@@ -38,13 +38,27 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	let body;
+	// A body we could not read at all is a different failure from a body we read
+	// and rejected, so the two are caught separately. Folding them together sent
+	// an integrator who posted 3 MB, or forgot the JSON content-type, hunting
+	// through their `chain` and `address` fields for a validation fault that was
+	// never there: readJson raises 415 and 413 deliberately, and a single catch
+	// rewrote both into a flat 400 validation_error.
+	let raw;
 	try {
-		const raw = await readJson(req);
-		body = bodySchema.parse(raw);
+		raw = await readJson(req);
 	} catch (e) {
-		return error(res, 400, 'validation_error', e.message);
+		const status = e?.status === 415 || e?.status === 413 ? e.status : 400;
+		const code = { 415: 'unsupported_media_type', 413: 'payload_too_large' }[status] || 'bad_request';
+		return error(res, status, code, e?.message || 'unreadable request body');
 	}
+
+	// The shared parse() raises the platform's validation_error, which wrap()
+	// renders through validationError() as a readable message plus a field-level
+	// `issues` array. Calling schema.parse() directly and echoing e.message put
+	// zod's own multi-line JSON dump of every issue into error_description, which
+	// no client can render and which no other zod handler here emits.
+	const body = parse(bodySchema, raw);
 
 	try {
 		const result = await getBalances({ chain: body.chain, address: body.address });

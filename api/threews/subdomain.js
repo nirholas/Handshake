@@ -7,7 +7,7 @@
 //                                  transfer ownership to `owner_wallet` (or
 //                                  to the caller's default agent wallet).
 //                                  Requires authentication.
-// DELETE                          → release the caller's stored subdomain
+// DELETE ?label=<label>          → release the caller's stored subdomain
 //                                  claim (does NOT release the on-chain
 //                                  subdomain; that's still owned by the
 //                                  recipient wallet).
@@ -133,7 +133,22 @@ async function handleMint(req, res, auth) {
 	`;
 	if (existing) return error(res, 409, 'conflict', `${fullDomain(label)} is already claimed`);
 
-	const onChainOwner = await getSubdomainOwner(label);
+	// The availability check is a hard gate here, not the best-effort lookup the
+	// GET path does: minting over a name someone already owns burns rent and
+	// fails on-chain anyway. An RPC outage therefore has to surface as a
+	// retryable 503 rather than an unhandled throw that reads as a server bug.
+	let onChainOwner;
+	try {
+		onChainOwner = await getSubdomainOwner(label);
+	} catch (err) {
+		console.warn('[threews/subdomain] pre-mint on-chain check failed', err?.message);
+		return error(
+			res,
+			503,
+			'upstream_unavailable',
+			'could not verify the name on Solana right now; retry in a moment',
+		);
+	}
 	if (onChainOwner) {
 		return error(res, 409, 'conflict', `${fullDomain(label)} is already registered on-chain to ${onChainOwner}`);
 	}

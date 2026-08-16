@@ -23,7 +23,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
 import {
 	createSwarm, joinSwarm, contributeToSwarm, exitSwarm, killSwarm,
-	setSwarmPaused, listSwarms, listSwarmsForUser, SwarmError,
+	setSwarmPaused, listSwarms, listSwarmsForUser, parseContributionLamports, SwarmError,
 } from '../_lib/swarms.js';
 
 const isUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
@@ -64,14 +64,12 @@ export default wrap(async (req, res) => {
 	if (!(await requireCsrf(req, res, auth.userId))) return;
 	const rl = await limits.swarmMutate(auth.userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many swarm actions: slow down');
-	const body = await readJson(req).catch(() => ({}));
-	const action = String(body.action || '');
-
-	const lamportsFromBody = () => {
-		if (body.lamports != null) return BigInt(Math.max(0, Math.round(Number(body.lamports))));
-		if (body.sol != null) return BigInt(Math.max(0, Math.round(Number(body.sol) * 1e9)));
-		return 0n;
-	};
+	// Let readJson's own 415 / 400 surface (wrap() renders either from err.status).
+	// Swallowing it here answered a wrong content-type with `unknown action`, which
+	// sends the caller hunting through their action names for a body they never
+	// managed to send.
+	const body = await readJson(req);
+	const action = String(body?.action || '');
 
 	try {
 		switch (action) {
@@ -93,8 +91,7 @@ export default wrap(async (req, res) => {
 			case 'contribute': {
 				if (!isUuid(body.swarm_id)) return error(res, 400, 'bad_swarm', 'swarm_id required');
 				if (!isUuid(body.agent_id)) return error(res, 400, 'bad_agent', 'agent_id required');
-				const lamports = lamportsFromBody();
-				if (lamports <= 0n) return error(res, 400, 'bad_amount', 'sol or lamports required');
+				const lamports = parseContributionLamports(body);
 				const result = await contributeToSwarm({ userId: auth.userId, swarmId: body.swarm_id, agentId: body.agent_id, lamports });
 				return json(res, 200, { data: result });
 			}

@@ -1,13 +1,16 @@
 // POST /api/seed/synthesize
 //
 // Takes the raw connector payloads from the three.ws memory-seeding demo
-// (any subset of github / x / farcaster) and asks Claude Haiku to write a
-// 200-300 word memory seed — a markdown blob describing the user's likely
-// interests, expertise, voice, and recent activity. This is what the
-// agent's vector store would be seeded with on first sign-in.
+// (any subset of github / x / farcaster) and writes a 200-300 word memory
+// seed: a markdown blob describing the user's likely interests, expertise,
+// voice, and recent activity. This is what the agent's vector store would be
+// seeded with on first sign-in.
 //
-// Auth: session OR bearer token. Mirrors the shape of api/avatars/_actions.js
-// handleAutoTag for the Anthropic call.
+// The completion runs through _lib/llm.js, so it inherits the platform's
+// free-providers-first chain and its keyless rungs. No single provider key is
+// required for this endpoint to work.
+//
+// Auth: session OR bearer token.
 
 import { z } from 'zod';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
@@ -31,21 +34,21 @@ const bodySchema = z
 	})
 	.strict();
 
-const SYSTEM_PROMPT = `You are the memory-synthesis component of three.ws — a service that builds long-term context for personal AI agents. Given one or more public-profile snapshots from a user's connected accounts, write a single markdown "memory seed" the agent should ingest as durable context.
+const SYSTEM_PROMPT = `You are the memory-synthesis component of three.ws, a service that builds long-term context for personal AI agents. Given one or more public-profile snapshots from a user's connected accounts, write a single markdown "memory seed" the agent should ingest as durable context.
 
 Constraints:
 - 200-300 words.
 - Markdown, with at most three short sections (Interests, Voice, Recent activity) or a tight prose paragraph if that reads more naturally.
 - Write in third person ("They build…", not "I build…").
 - Ground every claim in the supplied data; mark genuine uncertainty with "likely" or "appears to".
-- Do NOT include URLs, follower counts, or raw metrics — turn them into qualitative signals.
+- Do NOT include URLs, follower counts, or raw metrics; turn them into qualitative signals.
 - Do NOT mention the source platform names; refer to "their public footprint" instead.
-- No preamble, no closing — output only the markdown body of the seed.`;
+- No preamble, no closing. Output only the markdown body of the seed.`;
 
 function summarizeConnector(name, data) {
 	if (!data || typeof data !== 'object') return null;
 	if (data.ok === false) return null;
-	// Compact representation — we strip noisy fields so Haiku focuses on signal.
+	// Compact representation: we strip noisy fields so Haiku focuses on signal.
 	if (name === 'github') {
 		return {
 			handle: data.handle,
@@ -129,8 +132,8 @@ export default wrap(async (req, res) => {
 	let result;
 	try {
 		// Per-provider timeout well under the function's 60s maxDuration so a slow
-		// or hung upstream falls through to the next provider — and the handler
-		// still returns a clean 502/503 below — instead of the function getting
+		// or hung upstream falls through to the next provider (and the handler
+		// still returns a clean 502/503 below) instead of the function getting
 		// killed mid-flight and surfacing a raw 504 to the browser.
 		result = await llmComplete({
 			system: SYSTEM_PROMPT,

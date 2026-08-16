@@ -297,10 +297,17 @@ async function handleEarnings(req, res) {
 		return json(res, 200, { total_atomics: '0', sale_count: 0, mint: null, decimals: null, items: [], next_cursor: null });
 	}
 	const url = new URL(req.url, 'http://x');
+	// `before` is a page cursor echoed back from `next_cursor` (a timestamptz). A
+	// value that is not a timestamp reaches Postgres as a bad cast, so it is
+	// rejected here as the 400 it is rather than surfacing as a 5xx.
+	const before = (url.searchParams.get('before') || '').trim();
+	if (before && !Number.isFinite(Date.parse(before))) {
+		return error(res, 400, 'invalid_cursor', 'before must be an ISO 8601 timestamp from next_cursor');
+	}
 	const page = await creatorEarnings({
 		sellerWallet: user.wallet_address,
 		limit: Math.min(Math.max(Number(url.searchParams.get('limit')) || 50, 1), 200),
-		before: url.searchParams.get('before') || null,
+		before: before || null,
 	});
 	return json(res, 200, page);
 }
@@ -340,6 +347,10 @@ async function handleNameQuote(req, res) {
 // with Solscan links, plus the real reflected-to-holders history. "Don't trust,
 // verify" — every headline number traces to an address anyone can inspect.
 
+// Ten years of ledger. Beyond this a Postgres interval overflows, so a caller
+// asking for "everything" is clamped here instead of being handed a 5xx.
+const MAX_SINCE_DAYS = 3650;
+
 async function handleStats(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -347,13 +358,25 @@ async function handleStats(req, res) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://x');
-	const sinceDays = url.searchParams.get('since_days');
+	// `since_days` windows the aggregates. A non-numeric value used to reach
+	// Postgres as the interval `NaN days` and surface as a 5xx, so it is rejected
+	// here; a real number is clamped into range the same way `earnings` clamps its
+	// limit. An empty value means no window, exactly like omitting the param.
+	const rawSince = (url.searchParams.get('since_days') || '').trim();
+	let sinceDays = null;
+	if (rawSince) {
+		const n = Number(rawSince);
+		if (!Number.isFinite(n)) {
+			return error(res, 400, 'invalid_since_days', 'since_days must be a number of days');
+		}
+		sinceDays = Math.min(Math.max(Math.floor(n), 1), MAX_SINCE_DAYS);
+	}
 	const cfg = publicConfig();
 
 	// Fan out the independent reads concurrently: ledger aggregates, live wallet
 	// balances, and the distribution history. Each degrades independently.
 	const [stats, treasuryAtomics, rewardsAtomics, distributions] = await Promise.all([
-		economyStats({ sinceDays: sinceDays != null ? Number(sinceDays) : null }),
+		economyStats({ sinceDays }),
 		liveWalletAtomics(cfg.treasury),
 		liveWalletAtomics(cfg.rewards_wallet),
 		listRewardsDistributions({ limit: 10 }).catch(() => ({

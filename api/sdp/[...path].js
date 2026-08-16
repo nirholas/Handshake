@@ -61,7 +61,7 @@ function hasRequestBody(req) {
 
 // Markup types are never relayed as-is. A document served as HTML (or SVG, or
 // XML with a stylesheet) from our own origin runs under OUR Content-Security-
-// Policy, which allows inline script from 'self' — so an upstream body that
+// Policy, which allows inline script from 'self', so an upstream body that
 // echoed caller input would be script execution on three.ws. The real SDP
 // surfaces are JSON and text/plain, so downgrading markup costs nothing.
 const MARKUP_CONTENT_TYPE = /text\/html|application\/xhtml|\/xml|\+xml|image\/svg/i;

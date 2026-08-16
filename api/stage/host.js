@@ -1,10 +1,10 @@
 /**
- * Living Stages — the host brain (Moonshot 04).
+ * Living Stages: the host brain (Moonshot 04).
  *
  * The StageRoom's host loop calls this once per beat to get the embodied host's
  * next words. It reasons (latest Claude, via the platform LLM chain) over the
- * live show context the room hands it — the beat kind, the audience size, the tip
- * leaderboard, a fresh tip to shout out, or a queued audience question — plus the
+ * live show context the room hands it (the beat kind, the audience size, the tip
+ * leaderboard, a fresh tip to shout out, or a queued audience question), plus the
  * agent's own persona and its memory of returning regulars, and returns a short,
  * speakable line + an animation cue. The room synthesizes it to spatial voice +
  * lip-sync and broadcasts it as live captions to every client.
@@ -32,8 +32,7 @@ const BEAT_CUES = {
 };
 
 export default wrap(async (req, res) => {
-	cors(req, res, { methods: ['POST', 'OPTIONS'] });
-	if (req.method === 'OPTIONS') return res.end();
+	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
 	let body;
@@ -44,7 +43,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// Gate: only the multiplayer server (which signs with the shared secret) may
-	// drive the host — otherwise this is a free LLM relay.
+	// drive the host. Otherwise this is a free LLM relay.
 	if (!(await verifyStageRequest(req, body))) {
 		return json(res, 401, { error: 'unauthorized' });
 	}
@@ -58,16 +57,20 @@ export default wrap(async (req, res) => {
 	// persona just yields a livelier-but-generic host, never a failure.
 	const [stage] = await sql`
 		SELECT s.agent_id, s.title, s.format, a.name AS agent_name, a.persona_prompt, a.description
-		FROM stages s JOIN agent_identities a ON a.id = s.agent_id
+		FROM stages s JOIN agent_identities a ON a.id = s.agent_id AND a.deleted_at IS NULL
 		WHERE s.id = ${stageId} LIMIT 1
 	`;
 	if (!stage) return json(res, 404, { error: 'stage not found' });
 
 	// Recall regulars: the top tippers across this stage's prior shows, so the host
-	// can greet returning faces by name — the "remembers the regulars" behaviour.
+	// can greet returning faces by name (the "remembers the regulars" behaviour).
+	// Verified tips only, exactly like the public leaderboard: an unverified row is
+	// caller-asserted, so counting it would let anyone put a name of their choosing
+	// into the host prompt and hear it spoken to the room.
 	const regulars = await sql`
 		SELECT tipper_label AS label, SUM(amount_atomic)::numeric AS total, COUNT(*)::int AS visits
-		FROM show_tips WHERE stage_id = ${stageId} AND tipper_label IS NOT NULL
+		FROM show_tips
+		WHERE stage_id = ${stageId} AND tipper_label IS NOT NULL AND verified_at IS NOT NULL
 		GROUP BY tipper_label ORDER BY total DESC LIMIT 5
 	`;
 
@@ -104,15 +107,15 @@ function buildSystemPrompt(stage, regulars) {
 				.join(', ')}.`
 		: '';
 	return [
-		`You are ${stage.agent_name || 'the host'}, an embodied AI performer hosting a LIVE show "${stage.title || 'tonight’s set'}" — format: ${stage.format || 'open mic'} — in a 3D venue on three.ws.`,
+		`You are ${stage.agent_name || 'the host'}, an embodied AI performer hosting a LIVE show "${stage.title || 'tonight’s set'}" (format: ${stage.format || 'open mic'}) in a 3D venue on three.ws.`,
 		persona ? `Your persona: ${persona}` : '',
 		`You speak OUT LOUD to a co-present crowd. Every line you return is spoken aloud and shown as live captions, so:`,
 		`- Keep it to ONE or TWO short, punchy spoken sentences (never a paragraph, never a list, no stage directions, no emoji).`,
 		`- Be lively, warm, quick-witted, and in-character. Read the room. Never sound canned.`,
-		`- The crowd tips you in $THREE. $THREE is the only coin you ever mention — never name any other token.`,
+		`- The crowd tips you in $THREE. $THREE is the only coin you ever mention. Never name any other token.`,
 		`- When someone tips, react with genuine, specific energy and thank them by name.`,
 		regularsLine,
-		`Return ONLY the words you say next — no quotes, no labels.`,
+		`Return ONLY the words you say next. No quotes, no labels.`,
 	]
 		.filter(Boolean)
 		.join('\n');
@@ -131,16 +134,16 @@ function buildBeatPrompt(beat, ctx) {
 			const t = ctx.tip || {};
 			const amt = formatThree(t.amount, t.mint);
 			const msg = t.message ? ` They said: "${t.message}".` : '';
-			return `${crowd} ${t.label || 'Someone'} just tipped you ${amt}!${msg} React on the spot — thank them by name with real energy.`;
+			return `${crowd} ${t.label || 'Someone'} just tipped you ${amt}!${msg} React on the spot: thank them by name with real energy.`;
 		}
 		case 'answer': {
 			const q = ctx.question || {};
 			return `${crowd} ${q.from || 'Someone'} in the crowd asks: "${q.text || ''}". Answer it live, in character, briefly.`;
 		}
 		case 'game':
-			return `${crowd} ${topLine} Run the next quick beat of your ${ctx.format || 'show'} — a one-liner round, a dare, a quick bit. Keep the crowd's energy up.`;
+			return `${crowd} ${topLine} Run the next quick beat of your ${ctx.format || 'show'}: a one-liner round, a dare, a quick bit. Keep the crowd's energy up.`;
 		default:
-			return `${crowd} ${topLine} Riff for a moment — read the room and keep it lively while you wait for the next tip or question.`;
+			return `${crowd} ${topLine} Riff for a moment: read the room and keep it lively while you wait for the next tip or question.`;
 	}
 }
 
@@ -156,9 +159,13 @@ function formatThree(amountAtomic, mint) {
 
 // Collapse the model output to a single clean spoken line: strip surrounding
 // quotes, control chars, and any leaked "Host:" label, bound the length.
-function sanitizeLine(s) {
+// The control-class is the same one cleanLabel/cleanMessage use in stage/tip.js.
+// It must stay a \u escape: written as literal characters the class collapsed to
+// the printable range [space-hyphen], which silently ate every hyphen in the
+// host's spoken line ("on-chain" was going out as "on chain").
+export function sanitizeLine(s) {
 	if (typeof s !== 'string') return '';
-	let t = s.replace(/[ -]+/g, ' ').replace(/\s+/g, ' ').trim();
+	let t = s.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim();
 	t = t.replace(/^["'“”]+|["'“”]+$/g, '').trim();
 	t = t.replace(/^[A-Za-z .]{0,24}:\s*/, ''); // drop a leaked speaker label
 	return t.slice(0, 400);

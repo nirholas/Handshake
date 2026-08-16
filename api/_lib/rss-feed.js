@@ -280,11 +280,11 @@ function renderDescription(item) {
 export function buildRssXml({ items, selfUrl, source = 'curated' }) {
 	const account = ACCOUNTS[source];
 	const channelTitle = account
-		? `three.ws — ${account.display} updates`
-		: 'three.ws — News & Announcements';
+		? `three.ws: ${account.display} updates`
+		: 'three.ws News & Announcements';
 	const channelDescription = account
 		? `Latest announcements from ${account.handle}, the team behind three.ws.`
-		: 'Product launches, integrations, and announcements from three.ws — 3D AI agent avatars on-chain.';
+		: 'Product launches, integrations, and announcements from three.ws, 3D AI agent avatars on-chain.';
 	const lastBuildDate = items[0]?.timestamp || new Date();
 	const itemsXml = items.map((item) => renderItemXml(item)).join('\n');
 	return `<?xml version="1.0" encoding="UTF-8"?>

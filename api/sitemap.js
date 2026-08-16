@@ -58,7 +58,11 @@ export default async function handler(req, res) {
 		newestCreated('agent_identities', 'deleted_at is null and is_public = true'),
 		newestTimestamp('avatars', "visibility = 'public' and deleted_at is null"),
 		newestTimestamp('widgets', 'is_public = true and deleted_at is null'),
-		newestTimestamp('users', 'deleted_at is null and username is not null'),
+		// Must match profilesSitemap()'s predicate in api/sitemap/[type].js. The
+		// seed crons mint a service_account row about once a minute, so without
+		// the flag this reported "profiles.xml changed" on every crawl of a feed
+		// that only lists human profiles.
+		newestTimestamp('users', 'deleted_at is null and username is not null and service_account = false'),
 		newestCreated('user_subdomains'),
 	]);
 

@@ -175,7 +175,7 @@ async function probeX402() {
 	result.warnings = [];
 	if (hasSolanaPayTo && !hasSolanaFeePayer) {
 		result.warnings.push(
-			'solana_fee_payer_missing: X402_PAY_TO_SOLANA is set but X402_FEE_PAYER_SOLANA is not — ' +
+			'solana_fee_payer_missing: X402_PAY_TO_SOLANA is set but X402_FEE_PAYER_SOLANA is not, ' +
 				'Solana accepts are dropped, breaking Solana-only paid endpoints (club-cover, dance-tip).',
 		);
 	}
@@ -202,7 +202,7 @@ async function probeX402() {
 					result.sponsor_cosign = mismatch ? 'mismatch' : 'missing';
 					result.warnings.push(
 						`sponsor_cosign_${result.sponsor_cosign}: the Solana fee-payer pubkey is advertised but its ` +
-							'co-signing secret cannot be loaded — sponsor-mode settlements 502 (club-cover, dance-tip). ' +
+							'co-signing secret cannot be loaded, so sponsor-mode settlements 502 (club-cover, dance-tip). ' +
 							'Set/repair X402_FEE_PAYER_SECRET_BASE58 in the deploy environment.',
 					);
 				}

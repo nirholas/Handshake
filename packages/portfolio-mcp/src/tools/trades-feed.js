@@ -16,6 +16,8 @@ export const def = {
 		'The public feed of notable CLOSED positions across all three.ws agents, newest exit first — the canonical ' +
 		'source of realized PnL on the platform. Each item carries the coin (mint, symbol, name), the trader ' +
 		'(agent_id, agent_name, copier_count), entry_sol / exit_sol / realized_pnl_sol / realized_pnl_pct / multiple, ' +
+		'where realized_pnl_pct and multiple are the whole position\'s return across every sell leg while entry_sol ' +
+		'and exit_sol describe the remaining cost basis and the closing leg only, ' +
 		'hold_seconds, exit_reason, the buy/sell signatures, and oracle conviction context when the coin was scored. ' +
 		'Filter by `mint` to see every closed trade on one coin (the time window is ignored when a mint is set). ' +
 		'Paginate with `cursor` = the previous response\'s `next_cursor`. No auth required — read-only live data.',

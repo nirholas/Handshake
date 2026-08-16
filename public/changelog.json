@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T06:11:43.017Z",
+	"generated_at": "2026-08-16T06:15:48.775Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -697,6 +697,16 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-15",
+			"type": "update",
+			"title": "The Duplicate button on your widgets works again",
+			"summary": "Duplicating a widget from the dashboard failed every single time. The clone request never gave the new widget an identifier, and because the database requires one, the copy was rejected before it was written and the page showed only a generic server error with a support reference. There was a second, correct copy of the same clone logic already in the codebase that the route was not using; the route now runs that one, so duplicating gives you a real new widget with its own id, its own name ending in (copy), and the original's type, look, avatar and visibility carried over. The duplicate request also now carries the same cross-site request protection every other widget change already had, and it accepts an API key with write access, so you can clone a widget from a script as well as from the dashboard. Transcripts got a smaller correction alongside it: when no chat provider is configured and the platform answers with its own placeholder line, that message is no longer filed in your transcript as if a model had written it.",
+			"link": "/dashboard/widgets",
+			"tags": [
+				"fix"
 			]
 		},
 		{

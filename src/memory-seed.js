@@ -264,12 +264,18 @@ export function mountSeedWidget(host, opts = {}) {
 		}
 		const fc = state.connectors.farcaster;
 		if (fc) {
+			// follower_count is null on the keyless hub lane, which serves raw
+			// protocol messages and cannot know it. Fall back to the cast count
+			// instead of printing "null followers".
+			const fcStat = typeof fc.follower_count === 'number'
+				? `<span><b>${fc.follower_count}</b> followers</span>`
+				: `<span><b>${fc.recent_casts?.length || 0}</b> casts</span>`;
 			panels.push(`<div class="msw-panel">
 				<div class="msw-panel-head">
 					${fc.avatar_url ? `<img loading="lazy" decoding="async" class="msw-panel-av" src="${esc(fc.avatar_url)}" alt="" referrerpolicy="no-referrer"/>` : ''}
 					<div><div class="msw-panel-name">${esc(fc.display_name || fc.handle)}</div><div class="msw-panel-sub">@${esc(fc.handle)}</div></div>
 				</div>
-				<div class="msw-panel-stats"><span><b>${fc.follower_count}</b> followers</span></div>
+				<div class="msw-panel-stats">${fcStat}</div>
 			</div>`);
 		}
 

@@ -36,15 +36,28 @@ function shortWallet(addr) {
 const AGENT_DEPLOY_BURN = 1000;
 const REVENUE_SHARE_POOL_PCT = 10;
 
+// Degrade a failed panel query without hiding WHY it failed. A silent
+// `.catch(() => [])` is how the deploy-burn ledger shipped permanently empty:
+// the query named a column agent_identities never had, the fallback turned the
+// error into a plausible zero, and nothing in the logs said otherwise.
+function degrade(label, value) {
+	return (err) => {
+		console.error(`[three-token] ${label} query failed:`, err?.message || err);
+		return value;
+	};
+}
+
 async function fetchPlatformMetrics() {
 	const [agentCount, revenueData, paymentCount] = await Promise.all([
 		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`.catch(
-			() => [{ total: 0 }],
+			degrade('agent_count', [{ total: 0 }]),
 		),
 		sql`SELECT coalesce(sum(gross_amount), 0)::bigint AS total_gross, coalesce(sum(fee_amount), 0)::bigint AS total_fee FROM agent_revenue_events`.catch(
-			() => [{ total_gross: 0, total_fee: 0 }],
+			degrade('revenue_totals', [{ total_gross: 0, total_fee: 0 }]),
 		),
-		sql`SELECT count(*)::int AS total FROM agent_revenue_events`.catch(() => [{ total: 0 }]),
+		sql`SELECT count(*)::int AS total FROM agent_revenue_events`.catch(
+			degrade('payment_count', [{ total: 0 }]),
+		),
 	]);
 	return {
 		total_agents: agentCount[0]?.total ?? 0,
@@ -58,17 +71,19 @@ async function fetchPlatformMetrics() {
 // We surface the most recent deployments as burn events and the lifetime total
 // so the burn figures are derived from real on-chain deployment records rather
 // than hardcoded or conflated with revenue.
+// `name` is the agent's label everywhere in api/ (agent-task.js,
+// autopilot/activity.js); agent_identities has no display column.
 async function fetchBurnEvents() {
 	const [recent, totalRow] = await Promise.all([
 		sql`
-			SELECT id, name, display_name, created_at
+			SELECT id, name, created_at
 			FROM agent_identities
 			WHERE deleted_at IS NULL
 			ORDER BY created_at DESC
 			LIMIT 20
-		`.catch(() => []),
+		`.catch(degrade('burn_events', [])),
 		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`.catch(
-			() => [{ total: 0 }],
+			degrade('burn_total', [{ total: 0 }]),
 		),
 	]);
 	return { recent, totalAgents: totalRow[0]?.total ?? 0 };
@@ -82,13 +97,12 @@ async function fetchRecentActivity() {
 			e.gross_amount,
 			e.fee_amount,
 			e.created_at,
-			a.name AS agent_name,
-			a.display_name AS agent_display_name
+			a.name AS agent_name
 		FROM agent_revenue_events e
 		LEFT JOIN agent_identities a ON a.id = e.agent_id
 		ORDER BY e.created_at DESC
 		LIMIT 30
-	`.catch(() => []);
+	`.catch(degrade('activity_events', []));
 	return rows;
 }
 
@@ -204,7 +218,7 @@ export default wrap(async (req, res) => {
 		return json(res, 200, {
 			burns: recent.map((a) => ({
 				id: a.id,
-				agent_name: a.display_name || a.name || 'Agent',
+				agent_name: a.name || 'Agent',
 				amount: AGENT_DEPLOY_BURN,
 				reason: 'agent_deploy',
 				created_at: a.created_at,
@@ -222,16 +236,19 @@ export default wrap(async (req, res) => {
 				type: e.skill || 'payment',
 				gross_usd: e.gross_amount ? Number(e.gross_amount) / 1_000_000 : null,
 				fee_usd: e.fee_amount ? Number(e.fee_amount) / 1_000_000 : null,
-				agent_name: e.agent_display_name || e.agent_name || 'Agent',
+				agent_name: e.agent_name || 'Agent',
 				created_at: e.created_at,
 			})),
 		});
 	}
 
 	if (action === 'leaderboard') {
-		const url = new URL(req.url, 'http://x');
-		const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 50));
-		const offset = Math.max(0, Number(url.searchParams.get('offset')) || 0);
+		// Non-finite input (?limit=abc, ?offset=1e999) falls back to the default
+		// rather than propagating NaN/Infinity into the slice and the JSON body.
+		const limitRaw = Number(url.searchParams.get('limit'));
+		const limit = Number.isFinite(limitRaw) && limitRaw >= 1 ? Math.min(100, Math.floor(limitRaw)) : 50;
+		const offsetRaw = Number(url.searchParams.get('offset'));
+		const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? Math.floor(offsetRaw) : 0;
 
 		try {
 			// Holder set from the cached snapshot (three-holders-snapshot cron) — the

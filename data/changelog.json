@@ -504,6 +504,15 @@
 		},
 		{
 			"date": "2026-08-15",
+			"title": "The Duplicate button on your widgets works again",
+			"summary": "Duplicating a widget from the dashboard failed every single time. The clone request never gave the new widget an identifier, and because the database requires one, the copy was rejected before it was written and the page showed only a generic server error with a support reference. There was a second, correct copy of the same clone logic already in the codebase that the route was not using; the route now runs that one, so duplicating gives you a real new widget with its own id, its own name ending in (copy), and the original's type, look, avatar and visibility carried over. The duplicate request also now carries the same cross-site request protection every other widget change already had, and it accepts an API key with write access, so you can clone a widget from a script as well as from the dashboard. Transcripts got a smaller correction alongside it: when no chat provider is configured and the platform answers with its own placeholder line, that message is no longer filed in your transcript as if a model had written it.",
+			"tags": [
+				"fix"
+			],
+			"link": "/dashboard/widgets"
+		},
+		{
+			"date": "2026-08-15",
 			"title": "The tokenized-stock board sorts the way you asked, with the busiest names first",
 			"summary": "The Robinhood Chain stock board (and the API behind it) accepts a sort column and a direction. Both ran backwards: asking for the highest 24h volume returned the quietest tokens, the ones with no market at all led every column, and passing dir=asc handed back descending results. Numeric columns now read highest-first by default, dir=asc genuinely flips them, and a token with no price or no NAV feed sorts to the end in either direction instead of crowding the top. The response now also echoes the sort and direction that actually ran, so an unknown sort value comes back as the default it fell to rather than as the value you sent; the memecoin screener echoes its sort the same honest way.",
 			"tags": [

@@ -94,6 +94,34 @@ export class SwarmError extends Error {
 	}
 }
 
+/**
+ * Parse a contribution amount from a request body into lamports. Accepts either
+ * `lamports` (an integer count) or `sol` (a decimal), with `lamports` winning
+ * when both are present.
+ *
+ * Every rejection is a 400 SwarmError, which the handler already renders as a
+ * clean JSON error. That is the whole point: coercing straight to BigInt() the
+ * way this used to means a caller typo (`lamports: "abc"`) or an overflowing
+ * amount (`sol: 1e999`) throws a raw RangeError, which escapes as a 500
+ * internal_error complete with a Sentry capture and an ops alert. Bad input from
+ * a client is not a server fault and must never page anyone.
+ *
+ * @param {{ lamports?: unknown, sol?: unknown }} [body]
+ * @returns {bigint}
+ */
+export function parseContributionLamports(body = {}) {
+	const field = body?.lamports != null ? 'lamports' : body?.sol != null ? 'sol' : null;
+	if (!field) throw new SwarmError(400, 'bad_amount', 'sol or lamports required');
+	const raw = Number(body[field]);
+	if (!Number.isFinite(raw)) throw new SwarmError(400, 'bad_amount', `${field} must be a number`);
+	const value = Math.round(field === 'lamports' ? raw : raw * LAMPORTS_PER_SOL);
+	// Beyond 2^53 a double no longer represents every integer, so the lamport
+	// count a caller sent is not the one we would charge them.
+	if (!Number.isSafeInteger(value)) throw new SwarmError(400, 'bad_amount', `${field} is out of range`);
+	if (value <= 0) throw new SwarmError(400, 'bad_amount', 'sol or lamports required');
+	return BigInt(value);
+}
+
 // ── on-chain treasury balance ─────────────────────────────────────────────────
 
 /** Live treasury SOL balance in lamports (bigint). The single source of truth. */

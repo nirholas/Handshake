@@ -273,20 +273,27 @@
 
 			function renderFarcaster(d) {
 				const casts = (d.recent_casts || []).slice(0, 3);
+				// The keyless hub lane serves raw protocol messages, so it has no
+				// reaction counts. Show engagement only where the lane knows it
+				// rather than rendering an unknown as zero.
 				const items = casts.length
 					? casts.map((c) => `
 						<div class="item">
 							${escapeHtml((c.text || '').slice(0, 220))}
-							<div class="meta">♡ ${c.likes} · ↻ ${c.recasts} · 💬 ${c.replies}</div>
+							${typeof c.engagement === 'number' ? `<div class="meta">engagement ${c.engagement}</div>` : ''}
 						</div>
 					`).join('')
 					: '<div class="item meta">no recent casts available</div>';
+				const followers = typeof d.follower_count === 'number'
+					? `<span><b>${d.follower_count}</b> followers</span>`
+					: '';
 				return `
 					${renderProfileHead(d.avatar_url, d.display_name || d.handle, '@' + d.handle + ' · fid ' + d.fid)}
 					<div class="bio">${escapeHtml(d.bio || '')}</div>
 					<div class="stats">
-						<span><b>${d.follower_count}</b> followers</span>
+						${followers}
 						<span><b>${d.recent_casts?.length || 0}</b> recent casts</span>
+						${d.lane ? `<span>via <b>${escapeHtml(d.lane)}</b></span>` : ''}
 					</div>
 					<div class="items">${items}</div>
 				`;

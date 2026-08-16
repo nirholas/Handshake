@@ -66,7 +66,18 @@ async function hubGet(path) {
 		throw new FarcasterError(`Farcaster hub unreachable: ${err?.message || err}`);
 	}
 	if (resp.status === 404) throw new FarcasterError('Farcaster user not found', { status: 404, code: 'farcaster_user_not_found' });
-	if (!resp.ok) throw new FarcasterError(`Farcaster hub ${resp.status}`);
+	if (!resp.ok) {
+		// A hub answers "no such fname" with 400 + a NotFound detail, not 404.
+		// Without this the caller cannot tell a typo'd handle from an outage.
+		const body = await resp.text().catch(() => '');
+		if (resp.status === 400 && /not\s*found/i.test(body)) {
+			throw new FarcasterError('Farcaster user not found', {
+				status: 404,
+				code: 'farcaster_user_not_found',
+			});
+		}
+		throw new FarcasterError(`Farcaster hub ${resp.status}`);
+	}
 	return resp.json();
 }
 
