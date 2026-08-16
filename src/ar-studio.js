@@ -752,8 +752,12 @@ async function joinRoom(code, { seed = false } = {}) {
 		name: '',
 	});
 	wireNet(net);
-	await net.connect();
-	if (net.status === 'online') {
+	const joining = net;
+	await joining.connect();
+	// A failed connect fires status 'failed' synchronously, and the handler above
+	// calls leaveRoom() which nulls `net`, so read through the local handle and
+	// re-check identity rather than dereferencing a module field that may be gone.
+	if (net === joining && joining.status === 'online') {
 		if (seed) seedRoomWithLocalScene();
 		_roomHeartbeat = setInterval(() => net?.heartbeat(), 15000);
 		try {
@@ -766,8 +770,11 @@ async function joinRoom(code, { seed = false } = {}) {
 }
 
 function createRoom() {
-	// Creating a room shares my current scene as its starting point.
-	joinRoom(generateRoomCode(), { seed: true });
+	// Creating a room shares my current scene as its starting point. Returning the
+	// promise is load-bearing: the caller awaits it before rendering the live panel
+	// and copying the invite link, and dropping it here made both run against a
+	// still-connecting room.
+	return joinRoom(generateRoomCode(), { seed: true });
 }
 
 function leaveRoom({ silent = false } = {}) {
@@ -1835,6 +1842,21 @@ function wireTrayAdds() {
 			closeTray();
 			addModel({ src: btn.dataset.src, title: btn.dataset.title });
 		});
+	});
+	// A poster that 404s or times out would otherwise leave a broken-image glyph
+	// in the grid. Fall back to the same cube mark a poster-less item already
+	// uses, so a flaky thumbnail host never makes the tray look broken.
+	trayBody.querySelectorAll('.ars-item-thumb img').forEach((img) => {
+		img.addEventListener('error', () => {
+			const slot = img.parentElement;
+			if (!slot) return;
+			slot.textContent = '';
+			const cube = document.createElement('span');
+			cube.className = 'ars-item-cube';
+			cube.setAttribute('aria-hidden', 'true');
+			cube.textContent = '◆';
+			slot.appendChild(cube);
+		}, { once: true });
 	});
 }
 
