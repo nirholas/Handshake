@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The Forge community board remembers what you liked",
+			"summary": "The community showcase on /forge, and the same feed on the daily page and the model explorer, kept showing your own likes as un-liked. The board is held at the edge for a minute so it loads instantly for everyone, but the copy being held was the one built for a visitor who is not you, and it was handed to you as well. Your like button then started from the wrong state, and pressing it again fought with what the server already knew. The board now keeps a separate copy for a signed browser, so the hearts you filled in stay filled. Alongside it, a security fix on the Game-Ready export: when the export was paid for with $THREE rather than covered by holding, a badly formed payment reference made the server answer with the raw internals of its own database instead of a plain \"that payment could not be verified\". It now says only what a caller needs, and a database problem is no longer reported as a bad payment, so nobody is told to pay twice for an outage on our side.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "The Solana agent directory is live again, and complete",
 			"summary": "Discover and the deployments view list agents registered on the Metaplex Agent Registry, refreshed by a crawl that runs every half hour. The crawl had been reading nothing since 6 August: it asked one fixed Solana node for the registry, that node started refusing the request outright, and because it never tried any of the other nodes it fell back to, every run reported success while writing nothing. It now works its way down the same list of providers the rest of the platform uses, so one provider turning us away costs a second, not ten days. Fixing that surfaced a second fault underneath it: the registry holds two generations of agent records, and the crawl was reading both with the newer generation's layout, so older records came back as nonsense and the newer pass gave up entirely at the first old record it met. Each generation is now read on its own terms. The directory went from 1,558 stale entries to all 1,571 currently on chain, and new registrations show up within the half hour again. Separately, the treasury top-up that keeps the platform's wallets funded no longer fails outright when a Solana provider answers with something it cannot read: it treats that the same as a provider being busy and retries on the next pass, instead of skipping a funding cycle.",
 			"tags": [

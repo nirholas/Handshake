@@ -239,6 +239,14 @@
 			<description>The gallery ranked creators and paged the feed over only the newest 120 creations, however many the feed actually held. A creator's older work was invisible in their profile count, the top-creator board scored people on a fraction of their output, and scrolling the gallery dead-ended early with items still left to show. It now reads the full feed depth it always meant to, and does it in two database round trips instead of two per item, so the deeper read loads faster than the shallow one did.</description>
 		</item>
 		<item>
+			<title>The Forge community board remembers what you liked</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-16:The Forge community board remembers what you liked</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The community showcase on /forge, and the same feed on the daily page and the model explorer, kept showing your own likes as un-liked. The board is held at the edge for a minute so it loads instantly for everyone, but the copy being held was the one built for a visitor who is not you, and it was handed to you as well. Your like button then started from the wrong state, and pressing it again fought with what the server already knew. The board now keeps a separate copy for a signed browser, so the hearts you filled in stay filled. Alongside it, a security fix on the Game-Ready export: when the export was paid for with $THREE rather than covered by holding, a badly formed payment reference made the server answer with the raw internals of its own database instead of a plain &quot;that payment could not be verified&quot;. It now says only what a caller needs, and a database problem is no longer reported as a bad payment, so nobody is told to pay twice for an outage on our side.</description>
+		</item>
+		<item>
 			<title>The KOL, Loom and marketplace MCP servers now tell you why a call failed, and ship runnable examples</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:The KOL, Loom and marketplace MCP servers now tell you why a call failed, and ship runnable examples</guid>

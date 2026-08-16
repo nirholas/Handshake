@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T16:29:15.282Z",
+	"generated_at": "2026-08-16T16:45:09.325Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -309,6 +309,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The Forge community board remembers what you liked",
+			"summary": "The community showcase on /forge, and the same feed on the daily page and the model explorer, kept showing your own likes as un-liked. The board is held at the edge for a minute so it loads instantly for everyone, but the copy being held was the one built for a visitor who is not you, and it was handed to you as well. Your like button then started from the wrong state, and pressing it again fought with what the server already knew. The board now keeps a separate copy for a signed browser, so the hearts you filled in stay filled. Alongside it, a security fix on the Game-Ready export: when the export was paid for with $THREE rather than covered by holding, a badly formed payment reference made the server answer with the raw internals of its own database instead of a plain \"that payment could not be verified\". It now says only what a caller needs, and a database problem is no longer reported as a bad payment, so nobody is told to pay twice for an outage on our side.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
