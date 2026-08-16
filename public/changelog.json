@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T07:57:38.445Z",
+	"generated_at": "2026-08-16T07:59:12.032Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -355,6 +355,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Wallet reputation stops losing coins it never got around to judging",
+			"summary": "The rollup that turns launch history into wallet reputation was judging 80 coins every five minutes while the intel firehose was recording about 32,000 new mints a day, so it fell roughly 8,000 coins a day behind. That backlog does not wait its turn: the rollup works oldest-first and only reaches back 14 days, which is exactly when retention prunes the record, so the tail of the queue aged out and those buyers never counted toward anyone’s reputation at all. 309,000 coins were sitting unjudged with the oldest already 8.4 days from the cliff. The per-run budget is now 400, which outruns the firehose several times over, drains the backlog within days and then idles. Scores across the smart-money surfaces get their full evidence base back. The operations health board also tracks the retention and reconstruct sweeps, so a stall in either is visible instead of showing up later as a symptom.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

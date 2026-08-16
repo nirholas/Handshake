@@ -191,9 +191,13 @@ export default wrap(async (req, res) => {
 		const user = await getSessionUser(req, res);
 		if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
-		const [platform, market] = await Promise.all([
+		const [platform, market, holderCount] = await Promise.all([
 			fetchPlatformMetrics(),
 			fetchTokenMarketData(THREE_MINT).catch(() => null),
+			// Same snapshot fallback /stats uses: the keyless market sources carry no
+			// holder count, and the two actions must not disagree about how many holders
+			// exist just because the price came from DexScreener on this request.
+			threeHolderCount().catch(() => null),
 		]);
 
 		const totalSupply = market?.supply ?? null;
@@ -205,7 +209,7 @@ export default wrap(async (req, res) => {
 			user_id: user.id,
 			token_price: market?.price_usd ?? null,
 			total_supply: totalSupply,
-			total_holders: market?.holders ?? null,
+			total_holders: market?.holders ?? holderCount ?? null,
 			platform_revenue_usd: totalRevenue,
 			revenue_share_pool_pct: poolPct,
 			revenue_share_pool_usd: revenuePool,
