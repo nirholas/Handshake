@@ -65,11 +65,18 @@ function renderLoading(label = 'Loading agent wallet') {
 /**
  * A designed terminal state: heading, one line of guidance, and up to two real
  * actions. `retry` adds a button that re-runs the page load.
+ *
+ * `tone` decides how assistive tech announces the state. Only a genuine failure
+ * gets role="alert", which interrupts a screen-reader user mid-sentence. The
+ * states that are simply this page's answer for a visitor who is signed out or
+ * has no agents yet are a labelled region, read in turn like any other content.
  */
-function renderMessage({ title, body, actions = [], retry }) {
+function renderMessage({ title, body, actions = [], retry, tone = 'error' }) {
 	root.innerHTML = `
-		<div class="awh-page-msg" role="alert">
-			<h1>${escapeHtml(title)}</h1>
+		<div class="awh-page-msg" ${
+			tone === 'error' ? 'role="alert"' : 'role="region" aria-labelledby="awh-page-msg-h"'
+		}>
+			<h1 id="awh-page-msg-h">${escapeHtml(title)}</h1>
 			<p>${escapeHtml(body)}</p>
 			<div class="awh-page-msg-actions">
 				${actions
@@ -193,6 +200,7 @@ async function loadOwnWallets() {
 				{ href: '/login?next=/agent-wallet', label: 'Sign in', primary: true },
 				{ href: '/register', label: 'Create account' },
 			],
+			tone: 'info',
 		});
 		return;
 	}
@@ -203,6 +211,7 @@ async function loadOwnWallets() {
 			title: 'No agents yet',
 			body: 'Every agent you create gets a self-custodied Solana wallet it can fund, trade, and pay from. Create your first agent to open its wallet.',
 			actions: [{ href: '/create-agent', label: 'Create an agent', primary: true }],
+			tone: 'info',
 		});
 		return;
 	}

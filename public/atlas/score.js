@@ -5,7 +5,7 @@
  * is either right or subtly, invisibly wrong. A palette that puts /docs/x402-buyer
  * above /x402 for the query "x402" is not broken in any way a screenshot shows,
  * it just quietly fails the visitor. So the ranking lives here where
- * tests/atlas-score.test.js can pin the orderings that matter, and public/atlas.js
+ * tests/atlas.test.js can pin the orderings that matter, and public/atlas.js
  * owns only the UI.
  *
  * Two rankers, because the palette answers two different questions:

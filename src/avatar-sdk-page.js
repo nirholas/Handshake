@@ -277,15 +277,25 @@ document.addEventListener('DOMContentLoaded', () => {
 			next.id = 'pg-viewer';
 			next.setAttribute('alt', 'Playground avatar preview');
 			next.style.cssText = 'width:100%;height:100%';
+			// Attributes first, insertion second: both elements boot on connect and
+			// read their source from the attributes already present. Setting `src`
+			// on an <agent-3d> that is already in the document instead starts a
+			// second boot on top of the first one's in-flight load, and the loser
+			// calls back into a viewer the winner already disposed.
+			applyPreviewAttributes(next, tag, avatarSrc, bg, rotate);
 			host.replaceWith(next);
-			host = next;
 			restingNote();
+			return;
 		}
 
-		host.setAttribute('src', avatarSrc);
-		host.setAttribute('background', bg);
-		if (rotate && supportsAutoRotate(tag)) host.setAttribute('auto-rotate', '');
-		else host.removeAttribute('auto-rotate');
+		applyPreviewAttributes(host, tag, avatarSrc, bg, rotate);
+	}
+
+	function applyPreviewAttributes(el, tag, avatarSrc, bg, rotate) {
+		el.setAttribute('src', avatarSrc);
+		el.setAttribute('background', bg);
+		if (rotate && supportsAutoRotate(tag)) el.setAttribute('auto-rotate', '');
+		else el.removeAttribute('auto-rotate');
 	}
 
 	if (pgAvatar && pgBg && pgComponent && pgRotate) {
