@@ -256,9 +256,14 @@ Secret Manager `avatar-reconstruction-key`). Both the `retex` (full) and
   mode `retex_region` → `POST /retexture_region`. The gateway is the thin,
   authenticated, SSRF-guarded front door: it packs the worker task handle into an
   opaque `job` token and re-validates that token targets the configured worker
-  before polling, so a forged token can never steer the server's fetch.
+  before polling, so a forged token can never steer the server's fetch. Submitting
+  spends the `upload` quota; polling spends the shared status-poll quota, so a
+  runaway poll loop cannot hammer the worker.
 
 If `GCP_TEXTURE_URL` (or the key) is unset, both callers fail closed with the
-message above: the lane drops out and nothing is faked. Production env vars for
+message above: the lane drops out and nothing is faked. The gateway answers
+`501 region_retex_unconfigured` on **both** verbs in that case, including a poll
+carrying a job token issued while the lane was up, so an unconfigured deployment
+never reports a legitimate token as malformed. Production env vars for
 `three.ws` live on the `three-ws-api` Cloud Run service (`gcloud run services
 describe three-ws-api --region us-central1`), not in a `.env` file.
