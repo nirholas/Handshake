@@ -312,16 +312,17 @@
       /* Stack the controls: side by side they cannot both stay legible at 320px. */
       #cta { flex-direction: column; gap: 8px; }
       #topicSelect, #startBtn { width: 100%; max-width: none; }
-      #stepLog { bottom: 168px; }
+      #cta { bottom: 54px; }
+      #stepLog { bottom: 152px; }
       .step-chip { padding: 3px 8px; font-size: 0.62rem; }
       /* The bottom of a small screen carries the corner switcher, the stacked
          CTA and the wrapped step log, so a card centred on the viewport lands
          on top of the chips. Centre it on the band that is actually free
          instead: below the header, above the step log. */
       #centralCard {
-        top: calc(50% - 58px); margin-top: 0;
+        top: calc(50% - 6px); margin-top: 0;
         transform: translate(-50%, -50%);
-        max-height: calc(100vh - 335px); padding: 16px;
+        max-height: calc(100vh - 403px); padding: 16px;
       }
       #centralCard.hidden { transform: translate(-50%, -50%) translateY(14px); }
       .bubble { max-width: 160px; font-size: 0.76rem; }
@@ -361,10 +362,14 @@
        the rest of the screen. */
     @media (max-width: 560px) {
       body.no-3d .agent-label,
-      body.flat-overlays .agent-label { top: 70px; max-width: 47vw; gap: 1px; }
+      body.flat-overlays .agent-label { top: 80px; max-width: 47vw; gap: 1px; }
       .al-role { font-size: 0.6rem; letter-spacing: 0.06em; }
+      /* The truncated address is on the card in every state that shows one, so
+         the strip drops it and gives the height back to the card. */
+      body.no-3d .al-addr,
+      body.flat-overlays .al-addr { display: none; }
       body.no-3d .bubble,
-      body.flat-overlays .bubble { top: 142px; max-width: 47vw; padding: 7px 11px; }
+      body.flat-overlays .bubble { top: 138px; max-width: 47vw; padding: 7px 11px; }
     }
   </style>
 
