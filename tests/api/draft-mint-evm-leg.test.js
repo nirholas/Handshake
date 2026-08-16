@@ -40,8 +40,8 @@ vi.mock('../../api/_lib/ipfs-pin.js', () => ({
 }));
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: vi.fn(async () => {}),
-	publicUrl: (key) => `https://cdn.three.ws/${key}`,
-	thumbnailUrl: (key) => (key ? `https://cdn.three.ws/${key}` : null),
+	publicUrl: (key) => `https://three.ws/cdn/${key}`,
+	thumbnailUrl: (key) => (key ? `https://three.ws/cdn/${key}` : null),
 }));
 
 const providerMock = {
