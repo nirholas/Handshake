@@ -17,6 +17,25 @@ const root = document.getElementById('arena');
 const NETWORK = 'mainnet';
 const BASE_TITLE = document.title;
 
+/**
+ * Set the document title for the current view.
+ *
+ * The <title> carries a data-i18n key, and the runtime i18n pass lands after an
+ * async /api/locale fetch, so without claiming ownership it reverts a freshly
+ * routed title ("Daily Arena, Aug 16 · The Arena") back to the generic page title
+ * a second after the view painted. `data-i18n-owned` is the repo-wide opt-out for
+ * exactly this (see src/i18n.js). The list view hands ownership back so the
+ * static title stays translatable.
+ */
+function setTitle(text, { owned = true } = {}) {
+	const el = document.querySelector('title');
+	if (el) {
+		if (owned) el.setAttribute('data-i18n-owned', '1');
+		else el.removeAttribute('data-i18n-owned');
+	}
+	document.title = text;
+}
+
 const backButton = () =>
 	h('button', { class: 'arena-back', type: 'button', onclick: () => (location.hash = '#/') }, '← All tournaments');
 
@@ -48,6 +67,16 @@ const fmtThree = (n) => {
 	if (v >= 1000) return `${(v / 1000).toFixed(1)}K`;
 	return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
 };
+/**
+ * Has this entrant produced a result yet? The scoring engine ranks everyone who
+ * entered, so a competition that nobody has traded in still has a #1. That row is
+ * fine on the full board (it is the honest standing) but it must never be crowned:
+ * a trophy over an agent with zero closed trades is the difference between the
+ * Arena reading as live and reading as staged. The spotlight, the podium and the
+ * "Leading" cell all defer to this.
+ */
+const hasResult = (s) => (s?.metrics?.closed_count ?? s?.in_window_trades ?? 0) > 0;
+
 const initialsOf = (name) =>
 	esc(name)
 		.split(/\s+/)
@@ -170,7 +199,7 @@ let promotedId = null;
 
 async function renderList() {
 	stopStream();
-	document.title = BASE_TITLE;
+	setTitle(BASE_TITLE, { owned: false });
 	root.replaceChildren(
 		h(
 			'section',
@@ -386,7 +415,7 @@ async function paintMainEvent(slot, t) {
 	const foot = document.getElementById('me-foot');
 	if (!board) return;
 
-	const ranked = (data.standings || []).filter((s) => s.rank != null).slice(0, 3);
+	const ranked = (data.standings || []).filter((s) => s.rank != null && hasResult(s)).slice(0, 3);
 	if (!ranked.length) {
 		board.replaceChildren(
 			h(
@@ -550,7 +579,7 @@ async function renderDetail(id) {
 		// dead end into a discovery moment instead of an inert Retry button.
 		if (err.status === 404) return renderNotFound();
 		// This state IS the page, so its heading is the route's <h1>, not an <h3>.
-		document.title = `Tournament unavailable · ${BASE_TITLE}`;
+		setTitle(`Tournament unavailable · ${BASE_TITLE}`);
 		root.replaceChildren(
 			backButton(),
 			h(
@@ -589,7 +618,7 @@ function phaseFromStatus(d) {
  */
 async function renderNotFound() {
 	stopStream();
-	document.title = `Tournament not found · ${BASE_TITLE}`;
+	setTitle(`Tournament not found · ${BASE_TITLE}`);
 	const suggestions = h('div', { id: 'nf-suggest' });
 	root.replaceChildren(
 		backButton(),
@@ -657,8 +686,8 @@ function paintDetail(data) {
 	const t = data.tournament;
 	const phase = phaseFromStatus(data.derived_status);
 	const standings = data.standings || [];
-	const leader = standings.find((s) => s.rank === 1);
-	document.title = `${t.name} · The Arena · three.ws`;
+	const leader = leadingContender(standings);
+	setTitle(`${t.name} · The Arena · three.ws`);
 
 	// Cache the full board so the SSE stream can merge lean live rows into it and so
 	// row-proof toggles can re-render without a refetch.
@@ -757,6 +786,10 @@ function statCountdown(k, iso) {
 }
 
 const isModelUrl = (u) => typeof u === 'string' && /\.(glb|gltf)(\?|#|$)/i.test(u);
+
+/** The best-ranked entrant that has actually closed a trade, or null if none has. */
+const leadingContender = (standings) =>
+	(standings || []).filter((s) => s.rank != null && hasResult(s)).sort((a, b) => a.rank - b.rank)[0] || null;
 
 function leaderVisual(leader) {
 	if (!leader) {
@@ -978,7 +1011,7 @@ function aggregateStrip(standings) {
 	const trades = ranked.reduce((a, s) => a + (s.metrics?.closed_count ?? s.in_window_trades ?? 0), 0);
 	const netPnl = ranked.reduce((a, s) => a + (Number(s.metrics?.realized_pnl_sol) || 0), 0);
 	const verified = ranked.filter((s) => s.metrics?.verified).length;
-	const leader = ranked.find((s) => s.rank === 1);
+	const leader = leadingContender(ranked);
 	const cells = [
 		aggCell('Entrants', String(standings.length)),
 		aggCell('In-window trades', trades.toLocaleString()),
@@ -1046,7 +1079,10 @@ function prizeLadder(data, phase) {
 		);
 	}
 	const splits = data.prize_splits && data.prize_splits.length ? data.prize_splits : [0.6, 0.3, 0.1];
-	const ranked = (data.standings || []).filter((s) => s.rank != null);
+	// Only an ELIGIBLE standing can hold a payout: allocatePrizes() leaves a split
+	// sitting on an ineligible rank unallocated rather than reassigning it, so
+	// naming that agent here would promise money the settlement will never send.
+	const ranked = (data.standings || []).filter((s) => s.rank != null && s.eligible);
 	const medals = ['🥇', '🥈', '🥉'];
 	const rows = splits.map((frac, i) => {
 		const amount = pool * Number(frac);
@@ -1184,7 +1220,7 @@ function applyLiveStandings(id, data) {
 	});
 
 	// Refresh the spotlight leader.
-	const leader = merged.find((s) => s.rank === 1);
+	const leader = leadingContender(merged);
 	const spot = document.getElementById('spotlight');
 	if (spot && leader && spot.dataset.leader !== leader.agent_id) {
 		spot.dataset.leader = leader.agent_id;

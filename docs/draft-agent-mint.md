@@ -167,6 +167,45 @@ MinIO is started with `MINIO_DOMAIN=localhost`; add
 `127.0.0.1 <bucket>.localhost` to `/etc/hosts` and give the bucket a
 public-read policy so the script's read-back check can fetch the object.
 
+### When the faucet says no
+
+The public devnet faucet rate-limits per source IP, so a shared machine (a
+Codespace, a CI runner, an office network) can find it already exhausted by
+someone else, and every airdrop in the endpoint chain comes back 429. The proof
+does not have to stop there: point the whole devnet chain at your own validator
+with the real Metaplex programs cloned off devnet, and it airdrops without
+limit.
+
+```bash
+solana-test-validator --reset --ledger /tmp/dm-ledger \
+  --url https://api.devnet.solana.com \
+  --clone-upgradeable-program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d \
+  --clone-upgradeable-program 1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p &
+
+solana-keygen new --no-bip39-passphrase --silent --outfile /tmp/dm-authority.json
+solana airdrop 20 "$(solana-keygen pubkey /tmp/dm-authority.json)" --url http://127.0.0.1:8899
+```
+
+The two programs are Metaplex Core (the asset) and the Metaplex Agent Registry
+(the identity PDA). Clone both, or the registry enrolment fails and the proof
+covers only half the mint.
+
+One wrinkle: the platform derives a connection's websocket endpoint by swapping
+the scheme on its HTTP URL, same host and same port, which is what every hosted
+RPC provider serves. A test validator instead puts its websocket on
+`rpcPort + 1`, so the derived `ws://127.0.0.1:8899` never connects, transaction
+confirmation falls back to block-height polling, and the mint reports an expired
+blockhash for a transaction that in fact landed. Front the validator with
+anything that serves HTTP and the websocket upgrade on one port, and point
+`SOLANA_RPC_URL_DEVNET` at that port instead.
+
+`SOLANA_RPC_URL_DEVNET` takes priority over every other devnet lane, so the run
+uses your node. The signature it produces is a real signature from a real
+Solana runtime executing the real programs, but it lives on your ledger, not on
+public devnet: it will not resolve on Solscan. The script reports which node
+served the run and, off the public cluster, prints the endpoint instead of an
+explorer link, so the evidence file never overstates what was proven.
+
 ## Failure semantics
 
 | Situation | Result |

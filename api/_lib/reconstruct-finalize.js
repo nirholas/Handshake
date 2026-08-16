@@ -42,6 +42,25 @@ function glbMetaFrom(info) {
 		: { is_rigged: null, glb_inspect_error: 'invalid_glb_header' };
 }
 
+// One log line summarising a draft mint, per leg. `skipped` carries its reason
+// (an unconfigured authority secret is the common one) so an operator reading
+// the reconstruct logs can tell "the mint was never armed" from "the mint ran".
+export function describeDraftMint(mint) {
+	if (!mint) return 'no result';
+	if (mint.status !== 'ok') return `status=${mint.status}`;
+	const leg = (name, r) => {
+		if (!r) return `${name}=off`;
+		const detail =
+			r.status === 'skipped'
+				? `:${r.reason || 'unspecified'}`
+				: r.signature || r.txHash
+					? `:${r.signature || r.txHash}`
+					: '';
+		return `${name}=${r.status}${detail}`;
+	};
+	return `agent=${mint.agentId} ${leg('solana', mint.solana)} ${leg('evm', mint.evm)}`;
+}
+
 // Store a reconstructed GLB into R2 and create the durable avatar row, marking
 // the job done. Shared by every terminal path (rigged-as-is, rigged-after-chain,
 // unrigged fallback) so all three produce an identical avatar shape.
@@ -155,9 +174,16 @@ async function materializeReconstructAvatar({
 	// flag), ERC-8004 on EVM behind DRAFT_AGENT_MINT_EVM_ENABLED. Best-effort,
 	// same contract as the webhook + forge steps above: the avatar is already
 	// delivered, so a mint hiccup must never fail the job.
+	//
+	// The outcome is logged per leg rather than discarded. A leg that reports
+	// 'skipped' is a silent no-op otherwise, which is indistinguishable from the
+	// mint never being attempted: exactly the state a deployment lands in when
+	// no authority secret is configured, and the reason it can go unnoticed
+	// across hundreds of reconstructions.
 	try {
 		const { mintDraftAgentIdentity } = await import('./draft-mint.js');
-		await mintDraftAgentIdentity({ userId, avatarId: avatar.id, jobId });
+		const mint = await mintDraftAgentIdentity({ userId, avatarId: avatar.id, jobId });
+		console.log('[reconstruct] draft agent mint:', describeDraftMint(mint));
 	} catch (err) {
 		console.warn('[reconstruct] draft agent mint skipped:', err?.message);
 	}

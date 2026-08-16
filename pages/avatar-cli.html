@@ -81,7 +81,7 @@
 								<code class="cli-cmd-text" id="install-cmd">npm install -g @three-ws/avatar-cli</code>
 								<button class="cli-copy" data-copy-target="install-cmd" aria-label="Copy install command">
 									<svg class="cli-copy-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-									<span class="cli-copy-label">Copy</span>
+									<span class="cli-copy-label" aria-live="polite">Copy</span>
 								</button>
 							</div>
 							<p class="cli-install-alt">
@@ -124,7 +124,7 @@
 					<!-- Replayed terminal -->
 					<div class="cli-term-shell">
 						<div class="cli-term-glow" aria-hidden="true"></div>
-						<div class="cli-term" role="img" aria-label="Terminal session: init scaffolds a manifest, validate confirms it is schema-valid, preview prints an embed snippet.">
+						<div class="cli-term">
 							<div class="cli-term-bar">
 								<span class="cli-term-dot r"></span>
 								<span class="cli-term-dot y"></span>
@@ -135,7 +135,13 @@
 									Replay
 								</button>
 							</div>
-							<pre class="cli-term-body" id="cli-term-body" tabindex="0"></pre>
+							<pre
+								class="cli-term-body"
+								id="cli-term-body"
+								tabindex="0"
+								role="group"
+								aria-label="Terminal session: init scaffolds a manifest, validate confirms it is schema-valid, preview prints an embed snippet."
+							></pre>
 						</div>
 					</div>
 				</div>
@@ -183,11 +189,10 @@
 								gate rather than a report.
 							</p>
 							<pre class="cli-snip"><code>$ three-ws-avatar validate broken.json
-<span class="e">✖ broken.json is invalid (7 errors)</span>
-  • / must have required property 'mesh'
-  • / must have required property 'skeleton'
-<span class="dim">  …</span>
-  • /id must match a schema in anyOf</code></pre>
+<span class="e">✖</span> broken.json is invalid <span class="dim">(3 errors)</span>
+  <span class="e">•</span> <span class="c">/</span> must have required property 'createdAt'
+  <span class="e">•</span> <span class="c">/mesh</span> must have required property 'sha256'
+  <span class="e">•</span> <span class="c">/skeleton</span> must be equal to one of the allowed values</code></pre>
 						</article>
 
 						<article class="cli-cmd-card">
@@ -243,7 +248,7 @@ $ echo "$sha"
 								<span class="cli-live-code-label">preview output</span>
 								<button class="cli-copy cli-copy-sm" data-copy-target="live-snippet" aria-label="Copy the embed snippet">
 									<svg class="cli-copy-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-									<span class="cli-copy-label">Copy</span>
+									<span class="cli-copy-label" aria-live="polite">Copy</span>
 								</button>
 							</div>
 							<pre class="cli-snip cli-snip-lg"><code id="live-snippet">&lt;script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"&gt;&lt;/script&gt;

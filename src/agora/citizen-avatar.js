@@ -24,7 +24,7 @@ import {
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { gltfLoader } from '../loaders/gltf.js';
 import { AnimationManager } from '../animation-manager.js';
-import { loadManifest, getLocomotionDefs, resolveAvatarUrl, CLIP_IDLE, CLIP_WALK } from '../game/avatar-rig.js';
+import { loadManifest, getLocomotionDefs, resolveAvatarUrl, AVATAR_DEFAULT, CLIP_IDLE, CLIP_WALK } from '../game/avatar-rig.js';
 import { log } from '../shared/log.js';
 
 // Target on-screen height so wildly-scaled GLBs all read as people in the square.
@@ -32,6 +32,21 @@ const AVATAR_HEIGHT = 1.74;
 // Cap simultaneous GLB fetch+parse so a big fleet loads progressively instead of
 // saturating the network and stalling the first frame.
 const MAX_CONCURRENT_LOADS = 4;
+
+// How many citizens may wear their OWN avatar GLB.
+//
+// The square renders the 200 most recently active citizens and a community
+// avatar runs 2.7 MB to 21 MB, so dressing all of them is close to a gigabyte of
+// download. Measured before this cap: the first personal GLB landed 81 seconds
+// in and 19 of 200 citizens were standing after four and a half minutes, with an
+// empty plaza the whole time. Presence comes first now (everyone is placed on the
+// shared default rig, one 748 KB load for the entire crowd) and the most recently
+// active citizens upgrade to their own model as it streams in. Nobody is missing
+// and nobody is invented; only fidelity arrives progressively. Phones and tablets
+// take a smaller share of that budget, matching the per-model download ceiling
+// src/game/avatar-rig.js already applies there.
+const _coarsePointer = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+export const MAX_PERSONAL_AVATARS = _coarsePointer ? 8 : 24;
 const FADE_IN_SEC = 0.55;
 // Citizen locomotion (Task 06 claim-walk). A citizen strolls to the board to
 // claim and on to a work spot; the economy layer drives this via walkTo().

@@ -3,8 +3,9 @@
 // Ranked text search over the merged facilitator catalog. Implemented client
 // side because none of the public facilitators expose a server-side search
 // route: we pull the list, score items against the query terms, and sort.
-// `limit` (default 50) caps the returned rows; `total` reports how many the
-// query matched before that cut.
+// `limit` (default 50) caps the returned rows, `offset` (default 0) skips that
+// many ranked matches so a caller can page past the cap, and `total` reports
+// how many the query matched before either cut.
 
 import { cors, json, error, wrap, serverError } from '../_lib/http.js';
 import {
@@ -40,6 +41,7 @@ async function handler(req, res) {
 	const tag = url.searchParams.get('tag');
 	const maxItems = clampInt(url.searchParams.get('maxItems'), 500, 1, 5000);
 	const limit = clampInt(url.searchParams.get('limit'), 50, 1, 500);
+	const offset = clampInt(url.searchParams.get('offset'), 0, 0, 1_000_000);
 	const facilitatorsCsv = url.searchParams.get('facilitators');
 	const facilitators = facilitatorsCsv
 		? facilitatorsCsv.split(',').map((s) => s.trim()).filter(Boolean)
@@ -65,7 +67,7 @@ async function handler(req, res) {
 	if (tag) resources = filterByTag(resources, tag);
 
 	const total = resources.length;
-	if (resources.length > limit) resources = resources.slice(0, limit);
+	resources = resources.slice(offset, offset + limit);
 
 	res.setHeader('cache-control', 'public, max-age=15, stale-while-revalidate=60');
 	return json(res, 200, {
@@ -73,6 +75,7 @@ async function handler(req, res) {
 		query,
 		count: resources.length,
 		total,
+		offset,
 		resources,
 		sources: result.sources,
 		errors: result.errors,

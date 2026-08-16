@@ -15,6 +15,15 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 let agentFilter = (params.get('agent') && UUID_RE.test(params.get('agent'))) ? params.get('agent') : '';
 let cursor = null;
 let loading = false;
+// Every load() call takes a ticket. Only the newest ticket is allowed to paint,
+// so a filter switch made while an earlier request is still in flight wins
+// instead of being dropped: the previous `if (loading) return` guard let the
+// select and the URL move to the new agent while the ledger kept showing the
+// old one, with no request ever sent for the agent the user actually picked.
+let ticket = 0;
+// Set once the roster arrives so the empty state can point at a real agent's
+// autopilot controls rather than a generic landing page.
+let firstAgentId = '';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
@@ -36,6 +45,7 @@ function renderState(html) {
 
 function populateAgentFilter(agents) {
 	const sel = $('agent-filter');
+	if (agents?.length) firstAgentId = agents[0].id;
 	if (sel.dataset.filled || !agents?.length) return;
 	sel.dataset.filled = '1';
 	for (const a of agents) {

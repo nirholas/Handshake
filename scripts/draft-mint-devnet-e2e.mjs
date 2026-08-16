@@ -191,6 +191,17 @@ async function topUpAuthority(pubkeyBase58) {
 	return balanceOf();
 }
 
+// Which node actually served this run. SOLANA_RPC_URL_DEVNET can point the whole
+// devnet chain at an operator's own node (see "When the faucet says no" in
+// docs/draft-agent-mint.md), and a signature produced there is real but is NOT
+// resolvable on a public explorer. The evidence says which it was rather than
+// printing a solscan link that may lead nowhere.
+const { solanaRpcEndpoints } = await import(path.join(ROOT, 'api/_lib/solana/connection.js'));
+const rpcEndpoint = solanaRpcEndpoints('devnet')[0] || 'https://api.devnet.solana.com';
+const PUBLIC_DEVNET_HOSTS = /(^|\.)(devnet\.solana\.com|devnet\.helius-rpc\.com|solana-devnet\.g\.alchemy\.com|drpc\.org)$/i;
+const onPublicDevnet = PUBLIC_DEVNET_HOSTS.test(new URL(rpcEndpoint).hostname);
+step('rpc', `${rpcEndpoint}${onPublicDevnet ? '' : ' (private node: signatures are real but not on a public explorer)'}`);
+
 const { umi, authoritySigner } = buildAuthorityUmi('devnet', authoritySecret());
 const authority = authoritySigner.publicKey.toString();
 let balance = Number((await umi.rpc.getBalance(authoritySigner.publicKey)).basisPoints);
@@ -337,6 +348,8 @@ const evidence = {
 	generated_at: new Date().toISOString(),
 	network: 'devnet',
 	mainnet_write: false,
+	rpc_endpoint: rpcEndpoint,
+	public_cluster: onPublicDevnet,
 	authority,
 	durable_storage: {
 		bucket: process.env.S3_BUCKET,
@@ -373,5 +386,9 @@ if (!KEEP) {
 console.log(`\n✓ draft agent mint proven on Solana devnet`);
 console.log(`  asset      ${mint.solana.asset}`);
 console.log(`  signature  ${mint.solana.signature}`);
-console.log(`  explorer   ${mint.solana.explorer}`);
+console.log(
+	onPublicDevnet
+		? `  explorer   ${mint.solana.explorer}`
+		: `  rpc        ${rpcEndpoint} (private node, so no public explorer link)`,
+);
 console.log(`  evidence   ${OUT}`);

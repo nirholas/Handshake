@@ -360,7 +360,7 @@ function collectPolicy(card) {
 	};
 }
 
-async function savePolicy(card) {
+async function savePolicy(card, { keepalive = false } = {}) {
 	const body = collectPolicy(card);
 	setSaveState(card, 'saving');
 	try {
@@ -369,6 +369,9 @@ async function savePolicy(card) {
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify(body),
+			// The unload flush needs the request to outlive the document; a plain
+			// fetch is cancelled the moment the page goes away.
+			keepalive,
 		});
 		if (!r.ok) {
 			const d = await r.json().catch(() => ({}));
@@ -409,7 +412,7 @@ function flushPendingSaves() {
 	for (const [key, timer] of _saveTimers) {
 		clearTimeout(timer);
 		const card = $(`.coin-card[data-mint="${CSS.escape(key)}"]`);
-		if (card) savePolicy(card);
+		if (card) savePolicy(card, { keepalive: true });
 	}
 	_saveTimers.clear();
 }

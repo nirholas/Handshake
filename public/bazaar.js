@@ -6,7 +6,6 @@
 // too.
 
 const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
 const els = {
 	form: $('#search-form'),
@@ -19,10 +18,13 @@ const els = {
 	sort: $('#f-sort'),
 	reset: $('#reset-btn'),
 	count: $('#count'),
-	qlabel: $('#qlabel'),
+	qlabel: $('#query-label'),
 	sources: $('#sources'),
 	results: $('#results'),
 	empty: $('#empty'),
+	moreRow: $('#more-row'),
+	moreBtn: $('#more-btn'),
+	moreNote: $('#more-note'),
 	tryLive: $('#try-live'),
 	modal: $('#details-modal'),
 	modalTitle: $('#dm-title'),
@@ -30,11 +32,16 @@ const els = {
 	modalClose: $('#dm-close'),
 };
 
+// One page of results per request; the endpoints cap `limit` well below the
+// live catalog size, so `offset` is how the rest of it is reachable at all.
+const PAGE_SIZE = { list: 200, search: 100 };
+
 const state = {
 	loading: false,
 	lastQuery: '',
 	items: [],
 	peers: new Map(),
+	total: 0,
 };
 
 const STOP_WORDS = new Set([
@@ -144,7 +151,7 @@ function readFilters() {
 	};
 }
 
-function paramsFor(query, f) {
+function paramsFor(query, f, offset) {
 	const p = new URLSearchParams();
 	if (query) p.set('query', query);
 	p.set('type', f.type);

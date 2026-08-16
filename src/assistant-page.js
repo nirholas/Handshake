@@ -78,9 +78,12 @@ function setPreviewState(state) {
 	previewRetryBtn.hidden = state === 'loading' || state === 'ready';
 }
 
-// The widget is only "running" once the frame inside it reports ready. Until
-// then the loader script having parsed proves nothing: a blocked iframe or an
-// avatar that never loads would otherwise be reported as a healthy preview.
+// The widget's iframe is lazy: it does not fetch the frame (or the avatar)
+// until the visitor opens the panel, so a mounted launcher is genuinely
+// "running" and the frame's health can only be judged from the moment it is
+// opened. Opening arms this watchdog; the frame's own `ready` disarms it, and
+// anything else (blocked iframe, avatar that never loads) lands in `degraded`
+// instead of a corner that silently stays empty.
 const FRAME_READY_TIMEOUT_MS = 20000;
 let mountSeq = 0;
 let readySeq = -1;
@@ -95,6 +98,12 @@ window.addEventListener('three-assistant', (event) => {
 	} else if (type === 'error') {
 		clearTimeout(readyTimer);
 		setPreviewState('degraded');
+	} else if (type === 'open' && readySeq !== mountSeq) {
+		const seq = mountSeq;
+		clearTimeout(readyTimer);
+		readyTimer = setTimeout(() => {
+			if (readySeq !== seq) setPreviewState('degraded');
+		}, FRAME_READY_TIMEOUT_MS);
 	}
 });
 
@@ -138,17 +147,14 @@ function applyLive({ delay = 250, force = false } = {}) {
 	applyTimer = setTimeout(async () => {
 		const signature = JSON.stringify(config);
 		if (!force && signature === mountedSignature && window.ThreeAssistant?.instance) return;
-		if (readySeq < 0) setPreviewState('loading');
 		try {
 			await ensureLoader();
 			const wasOpen = Boolean(window.ThreeAssistant?.instance?.isOpen);
-			const seq = ++mountSeq;
+			mountSeq += 1;
+			clearTimeout(readyTimer);
 			window.ThreeAssistant.init({ ...config, open: wasOpen });
 			mountedSignature = signature;
-			clearTimeout(readyTimer);
-			readyTimer = setTimeout(() => {
-				if (readySeq !== seq) setPreviewState('degraded');
-			}, FRAME_READY_TIMEOUT_MS);
+			setPreviewState('ready');
 		} catch {
 			mountedSignature = '';
 			setPreviewState('error');

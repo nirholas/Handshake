@@ -1195,6 +1195,10 @@ body {
 	.br-input-wrap { padding: 10px 12px 12px; }
 }
 @media (max-width: 640px) {
+	/* One column fills the screen and the row snaps between models, rather than
+	   leaving three 300px columns to be hunted for by free scrolling. */
+	.br-compare { scroll-snap-type: x mandatory; }
+	.br-col { min-width: 86vw; scroll-snap-align: start; }
 	.br-topbar { padding: 0 10px; }
 	.br-tab { padding: 12px 12px; font-size: 12.5px; }
 	.br-pc-footer { flex-direction: column; }

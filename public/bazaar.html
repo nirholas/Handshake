@@ -39,6 +39,18 @@
 	a { color: var(--accent-blue); text-decoration: none; }
 	a:hover { color: #93c5fd; }
 
+	/* One keyboard focus ring for every control on the page. The search box and
+	   the sidebar fields used to set `outline: none` against a 1px border tint,
+	   which left a keyboard user with no usable indication of where they were. */
+	a:focus-visible,
+	button:focus-visible,
+	input:focus-visible,
+	select:focus-visible,
+	dialog:focus-visible {
+		outline: 2px solid var(--accent-blue);
+		outline-offset: 2px;
+	}
+
 	.wrap { max-width: 1280px; margin: 0 auto; padding: 0 28px; }
 	@media (max-width: 720px) { .wrap { padding: 0 16px; } }
 
@@ -147,7 +159,6 @@
 		font-size: 15px;
 		padding: 12px 14px;
 		border-radius: 10px;
-		outline: none;
 	}
 	.search-bar input[type=search]:focus { border-color: var(--accent-blue); }
 	.search-bar button {
@@ -207,7 +218,6 @@
 		padding: 8px 10px;
 		border-radius: 8px;
 		font-size: 13.5px;
-		outline: none;
 	}
 	aside.filters select:focus, aside.filters input:focus { border-color: var(--accent-blue); }
 	aside.filters .row { display: flex; gap: 8px; }
@@ -277,7 +287,11 @@
 	.card .icon img { width: 100%; height: 100%; object-fit: cover; }
 	.card .title { font-weight: 600; font-size: 14px; line-height: 1.3; word-break: break-word; }
 	.card .subtitle { color: var(--muted); font-size: 12px; word-break: break-all; }
-	.card .desc { color: var(--muted); font-size: 13px; flex-grow: 1; }
+	/* Facilitator descriptions carry raw URLs and message ids with no spaces in
+	   them. Without a wrap rule one 136-character token set the grid's
+	   min-content width, which pushed the whole page 156px wider than the
+	   viewport at 1440px and clipped the filter sidebar off-screen at 320px. */
+	.card .desc { color: var(--muted); font-size: 13px; flex-grow: 1; overflow-wrap: anywhere; }
 	.card .meta { display: flex; gap: 6px; flex-wrap: wrap; font-size: 11px; }
 	.tag {
 		background: var(--panel-2);
@@ -333,6 +347,30 @@
 	.receipt.ok { border-color: rgba(74,222,128,0.4); color: #d1fae5; }
 	.receipt.err { border-color: rgba(248,113,113,0.4); color: #fecaca; }
 	.receipt a { color: var(--accent-blue); }
+
+	.more-row {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		flex-wrap: wrap;
+		margin-top: 20px;
+	}
+	.more-btn {
+		background: var(--panel);
+		border: 1px solid var(--border-strong);
+		color: var(--text);
+		padding: 10px 22px;
+		font-size: 13px;
+		font-weight: 600;
+		border-radius: 8px;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background 0.15s ease;
+	}
+	.more-btn:hover { border-color: var(--accent-blue); background: var(--panel-2); }
+	.more-btn:active { transform: translateY(1px); }
+	.more-btn:disabled { opacity: 0.55; cursor: progress; }
+	.more-note { font-size: 12px; color: var(--muted-2); font-family: var(--mono); }
 
 	.empty {
 		padding: 60px 20px;
@@ -503,12 +541,20 @@
 			<div class="results-meta">
 				<div>
 					<strong id="count">…</strong>
-					<span data-i18n-html="bazaar.results"> results <span id="qlabel"></span></span>
+					<span data-i18n-html="bazaar.results"> results </span>
+					<!-- Kept outside the translated span above: i18n.js applies that key
+					     with innerHTML, which replaces every child node, so a script-driven
+					     element nested inside it is detached the moment a catalog loads. -->
+					<span id="query-label"></span>
 					<div class="sources" id="sources"></div>
 				</div>
 			</div>
 			<div id="results" class="cards"></div>
 			<div id="empty" class="empty" hidden>No matching services. Try fewer filters or a different query.</div>
+			<div class="more-row" id="more-row" hidden>
+				<button type="button" class="more-btn" id="more-btn">Load more</button>
+				<span class="more-note" id="more-note"></span>
+			</div>
 			<!-- Polite live region: announces "Try it" pay results to screen readers. -->
 			<div id="try-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 		</main>

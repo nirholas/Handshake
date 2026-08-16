@@ -16,7 +16,13 @@
  *   3. VERIFICATION GATES — the same min-closed / min-unique-coins / max-churn gates
  *      the verification badge uses decide PRIZE ELIGIBILITY. Ineligible entrants are
  *      still ranked and shown; they just can't win a prize.
- *   4. CHURN HEURISTIC, NAMED AS SUCH — we flag high-churn/single-coin entries as
+ *   4. A RESULT BEATS NO RESULT: an entrant who closed nothing inside the window has
+ *      produced no result, so it ranks below everyone who did, whatever the scoring
+ *      mode says. Under realized-P&L scoring an idle entrant otherwise scores a clean
+ *      0 and outranks every agent brave enough to take a real loss, which crowns
+ *      no-shows and starves the prize splits (allocatePrizes pays only eligible ranks,
+ *      and an entrant with zero closed trades can never clear min_closed).
+ *   5. CHURN HEURISTIC, NAMED AS SUCH: we flag high-churn/single-coin entries as
  *      wash-suspected. We do NOT claim counterparty wash detection we can't do from
  *      one-sided position data (same honesty rule as trader-stats.js); the on-chain
  *      buy/sell signatures are the real integrity guarantee.
@@ -174,13 +180,17 @@ export function computeStandings(tournament, pairs, { solUsd = null, now = Date.
 	});
 
 	// Withdrawn entries fall out of the ranking entirely; disqualified sink to the
-	// bottom. Everyone else is ranked by the tournament's score, descending, with a
-	// stable realized-PnL → closed-count tiebreak.
+	// bottom, then entrants with no closed trade in the window (rule 4: a result
+	// beats no result). Everyone else is ranked by the tournament's score,
+	// descending, with a stable realized-PnL → closed-count tiebreak.
 	const active = rows.filter((r) => r.entry_status !== 'withdrawn');
 	active.sort((a, b) => {
 		const aDq = a.entry_status === 'disqualified' ? 1 : 0;
 		const bDq = b.entry_status === 'disqualified' ? 1 : 0;
 		if (aDq !== bDq) return aDq - bDq;
+		const aIdle = a.in_window_trades > 0 ? 0 : 1;
+		const bIdle = b.in_window_trades > 0 ? 0 : 1;
+		if (aIdle !== bIdle) return aIdle - bIdle;
 		return (
 			b.score_value - a.score_value ||
 			b.metrics.realized_pnl_sol - a.metrics.realized_pnl_sol ||

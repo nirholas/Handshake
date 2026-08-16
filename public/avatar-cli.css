@@ -490,8 +490,18 @@
 .cli-snip .s { color: var(--success); }
 .cli-snip .n { color: var(--warn); }
 .cli-snip .e { color: var(--danger); }
+.cli-snip .c { color: var(--accent); }
 .cli-snip .ok { color: var(--success); }
 .cli-snip .dim { color: var(--ink-faint); }
+
+/* A snippet wider than its column is a scroll container, which the browser
+   makes keyboard focusable. Give that stop the page's own ring instead of the
+   thin UA default, so a keyboard user can see where they are. */
+.cli-snip:focus-visible,
+.cli-term-body:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--accent);
+	outline-offset: var(--focus-ring-offset, 2px);
+}
 
 /* ── Command cards ────────────────────────────────────────────────────── */
 
@@ -692,6 +702,24 @@
 	font-size: var(--text-sm);
 	color: var(--ink-dim);
 	line-height: var(--leading-normal);
+}
+
+/* The recovery link is the only way out of the failed state, so it has to read
+   as a link and show where the keyboard is. */
+.cli-live-fallback-body a {
+	color: var(--ink-bright);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+	border-radius: var(--radius-sm);
+}
+
+.cli-live-fallback-body a:hover {
+	color: var(--accent);
+}
+
+.cli-live-fallback-body a:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--accent);
+	outline-offset: var(--focus-ring-offset, 2px);
 }
 
 /* ── Manifest ─────────────────────────────────────────────────────────── */

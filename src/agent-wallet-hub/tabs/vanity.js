@@ -486,13 +486,24 @@ registerWalletTab({
 			});
 		}
 
-		async function loadStatus() {
+		// The hub mounts a tab and then calls onShow() on the same activation, so an
+		// unguarded loadStatus() fired the wallet read twice on every first open.
+		// Reuse the in-flight promise instead of issuing a second request.
+		let statusInFlight = null;
+		function loadStatus() {
+			if (statusInFlight) return statusInFlight;
 			state.status = null;
 			render();
-			const res = await call(base);
-			if (destroyed) return;
-			state.status = res.ok ? res.data : { error: res.message };
-			render();
+			statusInFlight = call(base)
+				.then((res) => {
+					if (destroyed) return;
+					state.status = res.ok ? res.data : { error: res.message };
+					render();
+				})
+				.finally(() => {
+					statusInFlight = null;
+				});
+			return statusInFlight;
 		}
 
 		loadStatus();

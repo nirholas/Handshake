@@ -39,6 +39,13 @@ import { isUuid } from '../_lib/validate.js';
 import { redactUrlSecrets as redactSecrets } from '../_lib/scrub-secrets.js';
 import { Bazaar, filterByMaxPrice, filterByNetwork, parseAtomicAmount } from '../_lib/x402/bazaar-client.js';
 import { assembleTaskLive } from '../_lib/agora-task-live.js';
+// The projection stores a citizen's avatar as an `avatars.id`, so the Commons
+// used to resolve every one of them with its own /api/avatars/<id> round trip
+// (measured: 184 requests, ~40s, and they saturated the browser's connection
+// pool badly enough that the economy ticker's own polls timed out). One batch
+// read here hands the client a ready-to-load URL instead.
+import { isBakedFresh } from '../_lib/avatars.js';
+import { publicUrlOrNull } from '../_lib/r2.js';
 // Terminal-kind sets + type helpers are the labour engine's single source of
 // truth (workers/agora-citizens/policy.js) — the board's open lane and the
 // reconcile sweep MUST agree on what "still open" means per task type, so we
@@ -106,15 +113,47 @@ function clampInt(v, def, min, max) {
 	return Math.max(min, Math.min(max, n));
 }
 
+// Batch-resolve the citizens' avatar ids to loadable GLB URLs.
+//
+// `agora_citizens.avatar_url` holds an `avatars.id`, not a URL, so a client that
+// took the column at its name had to make one HTTP call per citizen just to
+// learn where the model lives. Resolve the whole page in a single read.
+//
+// Only public/unlisted avatars resolve: a private one would need a presigned URL
+// per citizen (a 10-minute credential minted 200 at a time for a world anyone can
+// watch), so its citizen renders on the shared default rig instead. Returns a
+// Map<avatarId, url>; ids that resolve to nothing are simply absent.
+async function resolveCitizenAvatarUrls(rows) {
+	const ids = [...new Set(rows.map((r) => r.avatar_url).filter((v) => isUuid(v)))];
+	if (!ids.length) return new Map();
+	const avatars = await sql`
+		select id, storage_key, baked_storage_key, appearance, appearance_hash
+		from avatars
+		where id = any(${ids}::uuid[])
+		  and deleted_at is null
+		  and visibility in ('public', 'unlisted')
+	`;
+	const byId = new Map();
+	for (const a of avatars) {
+		const key = isBakedFresh(a) ? a.baked_storage_key : a.storage_key;
+		const url = publicUrlOrNull(key);
+		if (url) byId.set(String(a.id), url);
+	}
+	return byId;
+}
+
 // Shape a projected citizen row into the world-renderable object the 3D Commons
-// and dashboards consume.
-function shapeCitizen(row) {
+// and dashboards consume. `avatarUrls` is the batch map from
+// resolveCitizenAvatarUrls; without it `avatarUrl` falls back to the raw stored
+// value (an avatar id), which every client still resolves on its own.
+function shapeCitizen(row, avatarUrls) {
+	const storedAvatar = row.avatar_url;
 	return {
 		id: row.id,
 		kind: row.kind,
 		displayName: row.display_name,
-		avatarId: row.avatar_id,
-		avatarUrl: row.avatar_url,
+		avatarId: row.avatar_id ?? (isUuid(storedAvatar) ? storedAvatar : null),
+		avatarUrl: avatarUrls?.get(String(storedAvatar)) ?? storedAvatar,
 		profession: row.profession,
 		professions: decodeProfessions(row.capability_bits),
 		capabilityBits: String(row.capability_bits ?? '0'),
@@ -158,7 +197,8 @@ async function handleCitizens(req, res) {
 		limit ${limit}
 	`;
 
-	const citizens = rows.map(shapeCitizen);
+	const avatarUrls = await resolveCitizenAvatarUrls(rows);
+	const citizens = rows.map((row) => shapeCitizen(row, avatarUrls));
 	return json(res, 200, {
 		ok: true,
 		count: citizens.length,
@@ -433,7 +473,9 @@ async function handlePassport(req, res) {
 
 	if (!row) return error(res, 404, 'not_found', 'no such citizen');
 
-	const citizen = shapeCitizen(row);
+	// One row, so the batch resolver is a single-id lookup here, and the passport's
+	// avatar field means the same thing as the roster's.
+	const citizen = shapeCitizen(row, await resolveCitizenAvatarUrls([row]));
 
 	// Live on-chain reconcile — the passport shows the chain's truth, not a stale
 	// snapshot. Best-effort: an RPC hiccup falls back to the projection snapshot.

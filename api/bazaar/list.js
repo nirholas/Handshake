@@ -1,8 +1,9 @@
 // GET /api/bazaar/list?type=http&network=eip155:*&maxPrice=100000&extension=sign-in-with-x&maxItems=500
 //
 // `maxItems` bounds how much catalog we pull from each facilitator; `limit`
-// (default 200) bounds how many items come back after filtering, and `total`
-// in the response reports how many matched before that cut.
+// (default 200) bounds how many items come back after filtering, `offset`
+// (default 0) skips that many matches so a caller can page past the cap, and
+// `total` in the response reports how many matched before either cut.
 //
 // Proxy over the configured x402 facilitators' /discovery/resources endpoints.
 // We merge across facilitators, dedupe by resource (HTTP) or (resource,toolName)
@@ -44,6 +45,7 @@ async function handler(req, res) {
 	const tag = url.searchParams.get('tag');
 	const maxItems = clampInt(url.searchParams.get('maxItems'), 500, 1, 5000);
 	const limit = clampInt(url.searchParams.get('limit'), 200, 1, 200);
+	const offset = clampInt(url.searchParams.get('offset'), 0, 0, 1_000_000);
 	const sort = url.searchParams.get('sort'); // "price"
 	const facilitatorsCsv = url.searchParams.get('facilitators');
 	const facilitators = facilitatorsCsv
@@ -71,15 +73,18 @@ async function handler(req, res) {
 	if (sort === 'price') items = sortByPriceAsc(items);
 
 	// `limit` used to reach only the facilitator page size, so callers asking
-	// for 20 endpoints got the whole catalog. Cut the response to it.
+	// for 20 endpoints got the whole catalog. Cut the response to it, and let
+	// `offset` walk the rest: the live catalog is several times `limit`, so
+	// without paging a browsing client can only ever see its first page.
 	const total = items.length;
-	if (items.length > limit) items = items.slice(0, limit);
+	items = items.slice(offset, offset + limit);
 
 	res.setHeader('cache-control', 'public, max-age=15, stale-while-revalidate=60');
 	return json(res, 200, {
 		type,
 		count: items.length,
 		total,
+		offset,
 		items,
 		sources: result.sources,
 		errors: result.errors,

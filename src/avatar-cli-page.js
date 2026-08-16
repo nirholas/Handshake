@@ -51,6 +51,15 @@ const escapeHtml = (s) =>
 const prefersReducedMotion = () =>
 	window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
+/**
+ * Keyboard hint for the clipboard fallback. Naming the wrong modifier is worse
+ * than naming none, so this reads the platform rather than assuming a Mac.
+ */
+function copyShortcut() {
+	const platform = navigator.userAgentData?.platform || navigator.platform || '';
+	return /mac|iphone|ipad|ipod/i.test(platform) ? '⌘C' : 'Ctrl+C';
+}
+
 /** Full transcript as static markup, for reduced motion and for replay resets. */
 function renderStatic() {
 	return TRANSCRIPT.map((line) => {
@@ -82,6 +91,9 @@ function playTranscript(el, signal) {
 		});
 
 	return (async () => {
+		// The transcript is real text a screen reader can read, so mark it busy
+		// while it is still being written rather than while it is half a line.
+		el.setAttribute('aria-busy', 'true');
 		el.innerHTML = '';
 		let html = '';
 
@@ -119,6 +131,7 @@ function playTranscript(el, signal) {
 
 		el.innerHTML = `${html}<span class="p">${PROMPT}</span><span class="cli-caret"></span>`;
 		el.scrollTop = el.scrollHeight;
+		el.removeAttribute('aria-busy');
 	})().catch((err) => {
 		if (err?.name !== 'AbortError') throw err;
 	});
@@ -179,7 +192,7 @@ function initCopyButtons() {
 				const sel = window.getSelection();
 				sel?.removeAllRanges();
 				sel?.addRange(range);
-				if (label) label.textContent = 'Press ⌘C';
+				if (label) label.textContent = `Press ${copyShortcut()}`;
 			}
 			setTimeout(() => {
 				delete btn.dataset.copied;

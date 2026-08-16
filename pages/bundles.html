@@ -478,9 +478,13 @@
 				box.innerHTML = '';
 				const note = $('bd-skills-empty');
 				note.classList.remove('bd-note--error');
-				note.innerHTML = priced.length
+				// The picker defaults to the first agent, which may not be the one
+				// carrying prices. Point at it rather than sending an owner off to
+				// re-price skills they have already priced on another agent.
+				const elsewhere = agents.length > 1 ? ' Or switch agents above.' : '';
+				note.innerHTML = (priced.length
 					? '<b>This agent has one priced skill.</b> A bundle needs at least two. <a href="/marketplace">Price another skill</a> and come back.'
-					: '<b>This agent has no priced skills.</b> Set a price on two or more skills first, then bundle them. <a href="/marketplace">Open the marketplace</a>.';
+					: '<b>This agent has no priced skills.</b> Set a price on two or more skills first, then bundle them. <a href="/marketplace">Open the marketplace</a>.') + elsewhere;
 				show(note, true);
 				renderPricing();
 				return;

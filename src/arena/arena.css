@@ -1362,6 +1362,11 @@
 	font-family: var(--font-body);
 	font-size: var(--text-md);
 	padding: 0.55rem 0.65rem;
+	/* width:100% inside a padded sheet only fits if padding+border are inside the
+	   box. Chrome's UA default leaves input/textarea on content-box (select is
+	   already border-box), which pushed them ~23px past the sheet and gave the
+	   create-tournament form a horizontal scrollbar on a 320px phone. */
+	box-sizing: border-box;
 	width: 100%;
 	transition: border-color var(--duration-fast) var(--ease-standard),
 		box-shadow var(--duration-fast) var(--ease-standard);

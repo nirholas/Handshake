@@ -42,3 +42,22 @@
 		transition: none;
 	}
 }
+
+/* Below 640px only three columns survive (the rank and the share bar drop out),
+   so the shared 540px table floor buys nothing but a horizontal scroll that
+   parks the TVL and dominance numbers off-screen. Let the table shrink to the
+   viewport and tighten the cell padding so all three read at 320px without
+   scrolling sideways. */
+@media (max-width: 639px) {
+	#chains-table .cv-table {
+		min-width: 0;
+	}
+	#chains-table .cv-table th,
+	#chains-table .cv-table td {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+	}
+	#chains-table .cv-table .name-cell .nm {
+		max-width: 8.5rem;
+	}
+}
