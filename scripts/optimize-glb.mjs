@@ -18,6 +18,8 @@ import sharp from 'sharp';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { dedup, prune, resample, weld, textureCompress } from '@gltf-transform/functions';
+import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer';
+import draco3d from 'draco3dgltf';
 
 const ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 const args = process.argv.slice(2);
@@ -50,11 +52,33 @@ function fmt(bytes) {
 	return bytes + ' B';
 }
 
-const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+// Most avatars here ship compressed (EXT_meshopt_compression, Draco on a few
+// imports). Registering the extensions alone is not enough: gltf-transform needs the
+// matching codec dependencies, or every compressed file fails to read with
+// "Please install extension dependency". Build the IO once, decoders included.
+async function buildIO() {
+	await Promise.all([MeshoptDecoder.ready, MeshoptEncoder.ready]);
+	return new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({
+		'meshopt.decoder': MeshoptDecoder,
+		'meshopt.encoder': MeshoptEncoder,
+		'draco3d.decoder': await draco3d.createDecoderModule(),
+		'draco3d.encoder': await draco3d.createEncoderModule(),
+	});
+}
+
+const io = await buildIO();
+
+// Output is plain glTF 2.0 by contract (see the header): drop the compression
+// extensions after decoding so writeBinary does not re-encode what we just read.
+const COMPRESSION_EXTENSIONS = new Set(['EXT_meshopt_compression', 'KHR_draco_mesh_compression']);
 
 async function optimizeOne(absPath) {
 	const before = statSync(absPath).size;
 	const doc = await io.read(absPath);
+
+	for (const ext of doc.getRoot().listExtensionsUsed()) {
+		if (COMPRESSION_EXTENSIONS.has(ext.extensionName)) ext.dispose();
+	}
 
 	await doc.transform(
 		dedup(),

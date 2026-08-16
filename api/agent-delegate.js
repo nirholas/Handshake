@@ -1,6 +1,7 @@
 import { authenticateBearer, extractBearer, getSessionUser } from './_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from './_lib/http.js';
 import { limits } from './_lib/rate-limit.js';
+import { isUuid } from './_lib/validate.js';
 import { LlmUnavailableError } from './_lib/llm.js';
 import { runAgentDelegation, AgentNotFoundError } from './_lib/agent-delegate.js';
 
@@ -22,6 +23,11 @@ export default wrap(async (req, res) => {
 	const { toAgentId, message } = body || {};
 	if (!toAgentId || typeof toAgentId !== 'string')
 		return error(res, 400, 'validation_error', 'toAgentId required');
+	// agent_identities.id is a uuid column, so a non-uuid id died inside the
+	// lookup and came back as a generic 502 upstream_error, blaming the LLM for
+	// what is plainly a malformed request.
+	if (!isUuid(toAgentId))
+		return error(res, 400, 'validation_error', 'toAgentId must be a uuid');
 	if (!message || typeof message !== 'string')
 		return error(res, 400, 'validation_error', 'message required');
 	// Each delegation runs a real LLM completion on the platform key — cap the

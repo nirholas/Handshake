@@ -18,8 +18,9 @@
 // and the lowest tier, so a public chat is remembered for continuity without
 // polluting the owner's curated long-term memory.
 
-import { cors, error, method, readJson, rateLimited } from './_lib/http.js';
+import { cors, error, method, readJson, rateLimited, wrap } from './_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
+import { isUuid } from './_lib/validate.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { sql } from './_lib/db.js';
 import { getRedis } from './_lib/redis.js';
@@ -214,7 +215,12 @@ async function echoToScreen(agentId, question, answer) {
 
 // ── Handler ──────────────────────────────────────────────────────────────────
 
-export default async function handleAgentAsk(req, res) {
+// wrap() so an unexpected fault answers the same sanitized JSON envelope every
+// other handler does (and reaches Sentry / ops alerting). Unwrapped, this fell
+// through to the container's last-resort catch, which emits a differently-shaped
+// body and records nothing. It is SSE-safe: wrap only writes an error body when
+// the response has not been committed.
+export default wrap(async function handleAgentAsk(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
@@ -237,6 +243,9 @@ export default async function handleAgentAsk(req, res) {
 		: '';
 
 	if (!agentId) return error(res, 400, 'missing_agent_id', 'agentId is required');
+	// agent_identities.id is a uuid column: an unvalidated id reached the lookup
+	// below as an uncastable literal and answered 500 for a caller typo.
+	if (!isUuid(agentId)) return error(res, 400, 'invalid_agent_id', 'agentId must be a uuid');
 	if (!question) return error(res, 400, 'missing_question', 'question is required');
 
 	// Resolve the asker: a signed-in owner unlocks the agent's full configured
@@ -286,4 +295,4 @@ export default async function handleAgentAsk(req, res) {
 		await saveTurn(agentId, sessionId, question, answer);
 		await echoToScreen(agentId, question, answer);
 	}
-}
+});

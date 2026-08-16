@@ -19,6 +19,7 @@
 import { authenticateBearer, extractBearer, getSessionUser, mintAccessToken } from './_lib/auth.js';
 import { cors, error, json, method, rateLimited, readJson, wrap } from './_lib/http.js';
 import { requireCsrf } from './_lib/csrf.js';
+import { isUuid } from './_lib/validate.js';
 import { limits } from './_lib/rate-limit.js';
 import { sql } from './_lib/db.js';
 import { env } from './_lib/env.js';
@@ -80,6 +81,11 @@ export default wrap(async (req, res) => {
 	const { leadAgentId, goal } = body;
 	if (!leadAgentId || typeof leadAgentId !== 'string') {
 		return error(res, 400, 'validation_error', 'leadAgentId is required');
+	}
+	// agent_identities.id is a uuid column: an unvalidated id reaches the owner
+	// gate below as an uncastable literal and answers 500 instead of 400.
+	if (!isUuid(leadAgentId)) {
+		return error(res, 400, 'validation_error', 'leadAgentId must be a uuid');
 	}
 	if (!goal || typeof goal !== 'string' || !goal.trim()) {
 		return error(res, 400, 'validation_error', 'goal is required');

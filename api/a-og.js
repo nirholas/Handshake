@@ -9,25 +9,48 @@
  */
 
 import { env } from './_lib/env.js';
-import { cors, wrap, error } from './_lib/http.js';
-import { resolveOnChainAgent, shortenAddr } from './_lib/onchain.js';
+import { cors, method, wrap, error } from './_lib/http.js';
+import { resolveOnChainAgent, shortenAddr, isTokenId, SERVER_CHAIN_META } from './_lib/onchain.js';
 
 const CACHE_CARD = 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400';
 const CACHE_REDIR = 'public, max-age=600, s-maxage=3600';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
-	const chainId = Number(url.searchParams.get('chain'));
+	const chainRaw = url.searchParams.get('chain');
+	const chainId = Number(chainRaw);
 	const agentId = url.searchParams.get('id');
 	const format = (url.searchParams.get('format') || '').toLowerCase();
 
-	if (!Number.isFinite(chainId) || !agentId) {
+	// `Number(null)` is 0, so a bare `?id=…` used to sail past a Number.isFinite
+	// check and resolve against chain 0. Require the param, then require it to
+	// name a chain we actually have a registry for.
+	if (!chainRaw || !Number.isInteger(chainId) || !agentId) {
 		return error(res, 400, 'invalid_request', 'chain and id required');
+	}
+	if (!SERVER_CHAIN_META[chainId]) {
+		return error(res, 400, 'unsupported_chain', `chain ${chainId} is not supported`);
+	}
+	// An ERC-721 id is a uint256. Reject anything else here rather than letting
+	// the resolver report it, so the caller gets a specific message.
+	if (!isTokenId(agentId)) {
+		return error(res, 400, 'invalid_request', 'id must be a token id (decimal digits)');
 	}
 
 	const agent = await resolveOnChainAgent({ chainId, agentId });
+
+	// A resolve error at this point is never the caller's fault (bad chain and
+	// bad id both 400'd above): either the RPC read failed, or the manifest host
+	// did. Both are transient, and both used to hard-404 the card, so an agent
+	// that exists on chain lost its social image for as long as the edge cached
+	// that 404, and /api/oembed happily returned a thumbnail_url pointing at it.
+	// Serve the card either way (api/a-page.js degrades identically) and just cut
+	// the cache short so the next crawl re-resolves.
+	const degraded = !!agent.error;
+	const cache = degraded ? 'public, max-age=60' : CACHE_CARD;
 
 	if (format === 'json') {
 		// Anchor on env.APP_ORIGIN. A previous version honored an `origin` query
@@ -37,10 +60,9 @@ export default wrap(async (req, res) => {
 		const origin = env.APP_ORIGIN;
 		const pageUrl = `${origin}/a/${chainId}/${agentId}`;
 		const imageUrl = `${origin}/api/a-og?chain=${chainId}&id=${encodeURIComponent(agentId)}`;
-		const status = agent.error && !agent.name ? 404 : 200;
-		res.statusCode = status;
+		res.statusCode = 200;
 		res.setHeader('content-type', 'application/json; charset=utf-8');
-		res.setHeader('cache-control', status === 200 ? CACHE_CARD : 'public, max-age=60');
+		res.setHeader('cache-control', cache);
 		res.end(
 			JSON.stringify({
 				title: (agent.name || `Agent #${agentId}`) + ' — three.ws',
@@ -79,10 +101,9 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
-	const status = agent.error && !agent.name ? 404 : 200;
-	res.statusCode = status;
+	res.statusCode = 200;
 	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
-	res.setHeader('cache-control', status === 200 ? CACHE_CARD : 'public, max-age=60');
+	res.setHeader('cache-control', cache);
 	res.end(renderCard(agent));
 });
 

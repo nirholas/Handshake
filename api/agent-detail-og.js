@@ -13,12 +13,15 @@
  */
 
 import { sql } from './_lib/db.js';
-import { cors, wrap } from './_lib/http.js';
+import { cors, method, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Crawler-only SSR read. Without this, a POST answered with the 302
+	// passthrough instead of the 405 the advertised Allow set promises.
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('id');

@@ -13,6 +13,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { sql } from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
 import { requireCsrf } from './_lib/csrf.js';
+import { isUuid } from './_lib/validate.js';
 import { decorateMemory, defaultTier, MEMORY_TIERS } from './_lib/memory-store.js';
 import { signMemoryWithAgent } from './_lib/brain-sign.js';
 
@@ -44,10 +45,22 @@ async function handleList(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId') || url.searchParams.get('agent_id');
 	const type = url.searchParams.get('type');
-	const since = Number(url.searchParams.get('since')) || 0;
-	const limit = Math.min(Number(url.searchParams.get('limit')) || 200, 500);
+	// Both are interpolated straight into SQL (`since` through a Date, `limit`
+	// into LIMIT), so clamp them into ranges Postgres and Date accept. Unclamped,
+	// `?since=1e18` threw a RangeError out of toISOString() and `?limit=-1` made
+	// Postgres reject the LIMIT: two client typos that answered 500.
+	const MAX_EPOCH_MS = 8.64e15; // the ECMAScript time-value ceiling
+	const sinceRaw = Number(url.searchParams.get('since'));
+	const since = Number.isFinite(sinceRaw) ? Math.min(Math.max(sinceRaw, 0), MAX_EPOCH_MS) : 0;
+	const limitRaw = Number(url.searchParams.get('limit'));
+	const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(Math.floor(limitRaw), 500) : 200;
 
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
+	// agent_identities.id is a uuid column: a non-uuid agentId reaches Postgres as
+	// an uncastable literal and returns as a 500 ("invalid input syntax for type
+	// uuid"). That is a caller mistake, so answer it as one (same rule as
+	// api/agent-actions.js).
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 
 	// Verify ownership
 	const [agentRow] = await sql`
@@ -98,7 +111,18 @@ async function handleUpsert(req, res) {
 	const entry = body.entry;
 
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
-	if (!entry) return error(res, 400, 'validation_error', 'entry required');
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
+	if (!entry || typeof entry !== 'object' || Array.isArray(entry))
+		return error(res, 400, 'validation_error', 'entry must be an object');
+	// entry.id lands in a uuid primary key. A client-generated non-uuid id used to
+	// fail as a 500 instead of telling the client its id is unusable.
+	if (entry.id != null && !isUuid(entry.id))
+		return error(res, 400, 'validation_error', 'entry.id must be a uuid');
+	const createdAt = toIso(entry.createdAt);
+	const updatedAt = toIso(entry.updatedAt);
+	const expiresAt = toIso(entry.expiresAt);
+	if (createdAt === INVALID_DATE || updatedAt === INVALID_DATE || expiresAt === INVALID_DATE)
+		return error(res, 400, 'validation_error', 'timestamps must be ISO dates or epoch milliseconds');
 
 	// Verify ownership
 	const [agentRow] = await sql`
@@ -110,7 +134,14 @@ async function handleUpsert(req, res) {
 	const validTypes = ['user', 'feedback', 'project', 'reference'];
 	const memType = validTypes.includes(entry.type) ? entry.type : 'project';
 
-	const salience = entry.salience || 0.5;
+	// salience is a numeric column and tags a text[]: a caller sending a string
+	// salience or a non-array tags value made Postgres reject the INSERT. Coerce
+	// both to something the column accepts rather than 500 on a sloppy client.
+	const salienceRaw = Number(entry.salience);
+	const salience = Number.isFinite(salienceRaw) ? Math.min(Math.max(salienceRaw, 0), 1) : 0.5;
+	const tags = Array.isArray(entry.tags)
+		? entry.tags.filter((t) => typeof t === 'string').slice(0, 32)
+		: [];
 	const pinned = entry.pinned === true;
 	const tier = MEMORY_TIERS.includes(entry.tier)
 		? entry.tier
@@ -125,9 +156,8 @@ async function handleUpsert(req, res) {
 	// When an upsert changes the content, the stored vector + extracted entities
 	// are stale — reset both so the lazy read-path pipeline re-embeds and
 	// re-mines the row (this is what makes an edited memory re-index itself).
-	const entryUpdatedAt = entry.updatedAt
-		? new Date(entry.updatedAt).toISOString()
-		: new Date().toISOString();
+	const now = new Date().toISOString();
+	const entryUpdatedAt = updatedAt || now;
 
 	const [row] = entry.id
 		? await sql`
@@ -137,13 +167,13 @@ async function handleUpsert(req, res) {
 				${agentId},
 				${memType},
 				${String(entry.content || '').slice(0, 10000)},
-				${entry.tags || []},
+				${tags},
 				${JSON.stringify(entry.context || {})}::jsonb,
 				${salience},
 				${tier},
 				${pinned},
-				${entry.createdAt ? new Date(entry.createdAt).toISOString() : new Date().toISOString()},
-				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null},
+				${createdAt || now},
+				${expiresAt},
 				${entryUpdatedAt}
 			)
 			ON CONFLICT (id) DO UPDATE SET
@@ -166,12 +196,12 @@ async function handleUpsert(req, res) {
 				${agentId},
 				${memType},
 				${String(entry.content || '').slice(0, 10000)},
-				${entry.tags || []},
+				${tags},
 				${JSON.stringify(entry.context || {})}::jsonb,
 				${salience},
 				${tier},
 				${pinned},
-				${entry.expiresAt ? new Date(entry.expiresAt).toISOString() : null},
+				${expiresAt},
 				${entryUpdatedAt}
 			)
 			RETURNING *
@@ -212,6 +242,9 @@ async function handleDelete(req, res, memoryId) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 	if (!(await requireCsrf(req, res, auth.userId))) return;
+	// agent_memories.id is a uuid column; a non-uuid path segment is a 404, not a
+	// 500 from an uncastable literal.
+	if (!isUuid(memoryId)) return error(res, 404, 'not_found', 'memory not found');
 
 	const [row] = await sql`
 		SELECT m.id, a.user_id
@@ -235,4 +268,23 @@ async function resolveAuth(req) {
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (bearer) return { userId: bearer.userId };
 	return null;
+}
+
+// Sentinel so callers can tell "the client sent a timestamp we cannot parse"
+// (a 400) apart from "the client sent no timestamp" (use the server clock).
+const INVALID_DATE = Symbol('invalid_date');
+
+/**
+ * Normalize a client timestamp to an ISO string for a timestamptz column.
+ * Accepts an ISO string or epoch milliseconds; anything else is rejected rather
+ * than thrown, because `new Date('nope').toISOString()` is a RangeError and a
+ * client typo must never surface as a 500.
+ * @param {unknown} value
+ * @returns {string|null|typeof INVALID_DATE}
+ */
+function toIso(value) {
+	if (value == null || value === '') return null;
+	if (typeof value !== 'string' && typeof value !== 'number') return INVALID_DATE;
+	const d = new Date(value);
+	return Number.isNaN(d.getTime()) ? INVALID_DATE : d.toISOString();
 }

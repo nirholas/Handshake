@@ -145,6 +145,23 @@ function isAbsoluteUrl(key) {
 	return typeof key === 'string' && /^https?:\/\//i.test(key);
 }
 
+// publicUrl() for a READ path that only wants to render a stored object.
+//
+// `env.S3_PUBLIC_DOMAIN` throws when object storage isn't configured on a
+// deployment, which is the right signal for an upload path (there is nowhere to
+// put the bytes) but the wrong one for a feed: a missing thumbnail is a designed
+// empty state, and one un-renderable key should never take down a whole list
+// response. Read paths call this and render their placeholder on null; write
+// paths keep calling publicUrl() so a misconfigured deployment still fails loud.
+export function publicUrlOrNull(key) {
+	if (!key) return null;
+	try {
+		return publicUrl(key);
+	} catch {
+		return null;
+	}
+}
+
 // Reverse of publicUrl(): resolve a public CDN URL back to the bucket key it
 // serves, or null when the URL lives outside our bucket. Lets deletion paths
 // find the stored object behind a URL-bearing column (e.g. a forge creation's
@@ -182,7 +199,7 @@ export function isLegacyOgThumbnailKey(thumbnailKey) {
 // not bare publicUrl(). See docs/avatar-thumbnails.md.
 export function thumbnailUrl(thumbnailKey) {
 	if (!thumbnailKey || isLegacyOgThumbnailKey(thumbnailKey)) return null;
-	return publicUrl(thumbnailKey);
+	return publicUrlOrNull(thumbnailKey);
 }
 
 function encodeR2Key(key) {

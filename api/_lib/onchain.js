@@ -224,6 +224,22 @@ const AR_GATEWAY = 'https://arweave.net/';
 // an in-process Map for local/dev. Either way, TTL is 10 minutes.
 const CACHE_TTL_S = 10 * 60;
 
+// A uint256 ERC-721 token id, as it arrives from a URL path or query param:
+// decimal digits only, no sign, no separators, and within the uint256 ceiling.
+// Handlers call this to answer a malformed id with a 400 before it ever reaches
+// the chain read.
+const MAX_UINT256 = (1n << 256n) - 1n;
+
+/**
+ * @param {string|number|bigint|null|undefined} agentId
+ * @returns {boolean} true when `agentId` is a valid ERC-721 token id
+ */
+export function isTokenId(agentId) {
+	const s = typeof agentId === 'string' ? agentId : String(agentId ?? '');
+	if (!/^\d+$/.test(s)) return false;
+	return BigInt(s) <= MAX_UINT256;
+}
+
 /** @param {string} uri */
 export function resolveURI(uri) {
 	if (!uri) return '';
@@ -264,6 +280,16 @@ export async function resolveOnChainAgent({
 	const meta = SERVER_CHAIN_META[chainId];
 	if (!meta) {
 		return _emptyResult(chainId, agentId, 'unsupported_chain');
+	}
+
+	// An ERC-721 token id is a uint256, and `BigInt(agentId)` below throws a
+	// SyntaxError on anything else. That throw used to escape every caller (the
+	// social-card handlers reach this straight off a query param), turning a
+	// caller typo into an unhandled 500 plus a Sentry event and an ops alert.
+	// Report it the same way an unsupported chain is reported so callers answer
+	// it as the client fault it is.
+	if (!isTokenId(agentId)) {
+		return _emptyResult(chainId, agentId, 'invalid_agent_id');
 	}
 
 	const cacheKey = `onchain-agent:${chainId}:${agentId}:${fetchManifest ? '1' : '0'}`;

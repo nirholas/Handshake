@@ -11,7 +11,7 @@
 
 import { sql } from './_lib/db.js';
 import { env } from './_lib/env.js';
-import { cors, wrap, error } from './_lib/http.js';
+import { cors, method, wrap, error } from './_lib/http.js';
 import { resolveOnChainAgent, SERVER_CHAIN_META } from './_lib/onchain.js';
 import { isUuid } from './_lib/validate.js';
 import {
@@ -28,6 +28,9 @@ const DEFAULT_HEIGHT = 520;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// oEmbed is a read. Without this, a POST/PUT/DELETE ran the whole lookup and
+	// answered 200, contradicting the Allow set the CORS preflight advertises.
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const target = url.searchParams.get('url');
@@ -103,7 +106,11 @@ function extractAgentId(target) {
 	if (!okOrigin) return null;
 
 	const match = parsed.pathname.match(/^\/agent\/([A-Za-z0-9_-]+)\/?$/);
-	return match ? match[1] : null;
+	const id = match ? match[1] : null;
+	// agent_identities.id is a uuid column, so a non-uuid slug reached Postgres as
+	// an uncastable literal and came back as an unhandled 500. Treat it the same
+	// way the Forge branch below already does: not a recognised agent url.
+	return id && isUuid(id) ? id : null;
 }
 
 function extractForgeId(target) {

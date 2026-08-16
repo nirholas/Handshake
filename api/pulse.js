@@ -35,7 +35,7 @@ import { sql, isDbUnavailableError } from './_lib/db.js';
 import { cors, json, method, error, serverError, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { isUuid } from './_lib/validate.js';
-import { publicUrl as r2PublicUrl } from './_lib/r2.js';
+import { publicUrlOrNull as r2PublicUrl } from './_lib/r2.js';
 import { explorerTxUrl, explorerAccountUrl } from './_lib/avatar-wallet.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
 import { marketplaceFeeBps } from './_lib/marketplace-platform-fee.js';

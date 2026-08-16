@@ -10,11 +10,12 @@
  */
 
 import { env } from './_lib/env.js';
-import { cors, wrap } from './_lib/http.js';
-import { resolveOnChainAgent, shortenAddr, SERVER_CHAIN_META } from './_lib/onchain.js';
+import { cors, method, wrap } from './_lib/http.js';
+import { resolveOnChainAgent, shortenAddr, isTokenId, SERVER_CHAIN_META } from './_lib/onchain.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const chainId = Number(url.searchParams.get('chain'));
@@ -25,6 +26,12 @@ export default wrap(async (req, res) => {
 	}
 	if (!SERVER_CHAIN_META[chainId]) {
 		return notFound(res, `Chain ${chainId} is not supported`);
+	}
+	// An ERC-721 id is a uint256. The /a/:chain/:id route only matches digits,
+	// but this handler is reachable directly, and a non-numeric id used to reach
+	// the chain read and blow up as an unhandled 500 instead of the designed 404.
+	if (!isTokenId(agentId)) {
+		return notFound(res, 'That is not a valid agent id');
 	}
 
 	const agent = await resolveOnChainAgent({ chainId, agentId });
