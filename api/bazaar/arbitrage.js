@@ -286,6 +286,14 @@ async function handler(req, res) {
 			...(httpRes.sources || []).map((s) => ({ ...s, type: 'http' })),
 			...(mcpRes.sources || []).map((s) => ({ ...s, type: 'mcp' })),
 		],
+		// A partial outage leaves `sources` carrying ok:false rows and the
+		// opportunity list quietly shorter. Ship the reasons alongside so the
+		// page can name which facilitator dropped out instead of presenting a
+		// degraded view as the whole market.
+		errors: [
+			...(httpRes.errors || []).map((e) => ({ ...e, type: 'http' })),
+			...(mcpRes.errors || []).map((e) => ({ ...e, type: 'mcp' })),
+		],
 	});
 }
 
