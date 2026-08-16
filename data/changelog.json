@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The public profile sitemap now lists people, not the seed crons",
+			"summary": "The sitemap Google and Bing crawl is split into one file per kind of page, and the profiles file was handing search engines every account row with a username. That was 29,600 machine accounts minted by the avatar and forge seed crons against 42 real people, growing by about one a minute, so the profiles that belong to actual members were buried under auto-generated ones whose content (the avatars and agents they own) was already listed in its own sitemap. Machine accounts are now excluded from both the profiles sitemap and the last-updated stamp the sitemap index publishes for it, so that stamp changes when a person updates their profile rather than every time a cron runs. Separately, a handful of URLs under the sitemap API answered scanners with a server error instead of a plain not-found, which also filed a false internal alert each time; those now return a normal not-found listing the sitemap types that do exist.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Trending: muted text on the board is readable, and the Tip button that only navigated is gone",
 			"summary": "Ten pieces of text on the Trending board sat below the WCAG AA contrast floor: the subtitle, the two unselected tabs, the 7d and all-time buttons, the column headers, agent descriptions and the unit labels next to each number. They are all legible now, and the Oracle link in the footnote is underlined instead of being told apart by colour alone. The wallet chip on each row carried a Tip button and a hover card, but the whole row is a link, so the browser followed the row instead of running either one: pressing Tip took you to the agent's wallet page rather than opening a tip. Both controls are gone from the board and tipping stays where it works, on the agent page the row opens, while the chip keeps showing the wallet address and its live balance. An automated accessibility scan now reports zero violations on all three boards and on their loading, empty and error states.",
 			"tags": [
