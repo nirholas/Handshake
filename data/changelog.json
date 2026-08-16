@@ -3,6 +3,62 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Token sentiment reads real pump.fun commentary again",
+			"summary": "The sentiment pulse for a Solana token was reading a pump.fun route that no longer exists, so it scored an empty set and reported every coin as perfectly neutral with full confidence. It now reads the coin's live callouts, the commentary feed the pump.fun coin page renders, and when that source is unreachable and you supplied no text of your own it says so with an error instead of returning a neutral-looking score. The scorer itself was also matching lexicon terms inside longer words, which read 'partnered' as bearish; it now matches whole words and knows the common variants (scammer, rugged, crashing, bought).",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/tutorials/emotion-from-data"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Agent attestations that stopped indexing now recover on their own",
+			"summary": "An agent's on-chain attestation history is indexed by walking Solana signatures newer than the last one we recorded. If that recorded signature aged out of the RPC node's history, the walk failed outright and kept failing: the same dead signature was replayed on every run, so that agent's attestations silently stopped appearing on its profile while the scheduled job still reported success. The crawler now recognises that case, re-scans from the most recent signatures instead, and clears the stale marker, so an agent that fell behind catches up by itself on the next pass.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The creations gallery now counts every creation a creator has made, and pages all the way to the end",
+			"summary": "The gallery ranked creators and paged the feed over only the newest 120 creations, however many the feed actually held. A creator's older work was invisible in their profile count, the top-creator board scored people on a fraction of their output, and scrolling the gallery dead-ended early with items still left to show. It now reads the full feed depth it always meant to, and does it in two database round trips instead of two per item, so the deeper read loads faster than the shallow one did.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/creations"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The KOL, Loom and marketplace MCP servers now tell you why a call failed, and ship runnable examples",
+			"summary": "When a market-data provider was rate-limited, these servers passed back only a bare code like provider_unavailable and threw away the sentence explaining it. They now surface the full reason. The KOL portfolio tool used to answer a provider outage with an empty card that read as a quiet wallet with no trades; it now reports the outage as an outage, so nobody sizes up a trader from a blank. The KOL and Loom packages also gained runnable examples that talk to the live public API, and the naming SDK now answers an unregistered .eth name the same way it answers an unclaimed .sol one, with data instead of an exception.",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The agent wallet MCP server now quotes its own address when it asks an agent to pay",
+			"summary": "Agents that connect to the wallet server at /api/mcp-agent without a three.ws account can pay per call in USDC instead. The payment request it handed back named the main three.ws MCP server, not itself, so a paying agent signed a payment scoped to an endpoint it had not called and service directories listed the wallet server under the wrong description and tool list. It now describes itself: its own address, its own wallet-and-payments summary, and a directory example that only searches for services rather than spending anything. Separately, the one-sentence agent builder no longer mangles accented names when it suggests a handle: Munz now becomes munz rather than mu-nz.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/mcp-agent"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Creator subscription tiers save their edits again, and a mistyped subscription link says so plainly",
+			"summary": "Editing an existing subscription tier from the creator dashboard silently failed: the save never reached the server, so the new name, price or status was lost every time. Saving works now. Alongside it, a mistyped or truncated subscription or tier link used to answer with a generic server failure; it now says the id is not valid, which is what a reader can actually act on. Tier pages are also directly addressable, so a single tier can be linked and read on its own, with unpublished drafts still visible only to the creator who wrote them.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
 			"title": "The $THREE price quote survives an out-of-range dollar amount, and the payment audit log is admin-only for real",
 			"summary": "The public $THREE price endpoint converts a dollar amount into a token amount. Because $THREE trades well under a cent, a dollar figure large enough to overflow what a number can hold turned that conversion into a server error, and every such request also filed a false internal alert. It now answers plainly that the amount is out of range. The token amount it quotes is also computed from the exact price printed beside it, so the two can no longer disagree when the live price refreshes partway through a request. Separately, the settled-payment audit log checked admin wallets with its own copy of the rule, comparing Solana addresses without regard to capitalisation. Solana addresses are case-sensitive, so a lookalike address that differed only in capitalisation would have been accepted; the log now uses the platform-wide admin check, which compares Solana addresses exactly and also recognises an admin who signed in with a linked wallet.",
 			"tags": [

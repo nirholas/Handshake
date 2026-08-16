@@ -30,6 +30,7 @@
 	},
 	"files": [
 		"src",
+		"examples",
 		"server.json",
 		"README.md",
 		"LICENSE"

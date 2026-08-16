@@ -6127,7 +6127,7 @@
 		{
 			"name": "get_wallet_portfolio",
 			"title": "KOL wallet portfolio + P&L",
-			"description": "Pull one KOL trader's live portfolio card from three.ws. Returns current holdings (total USD value, position count, and the single highest-value token the wallet holds) from the Birdeye proxy, plus realized P&L, win rate, trade count and volume over the last 30 days FIFO-computed from that wallet's own on-chain trades. Use this to size up a specific smart trader before copying or analyzing them. For ranking many traders at once use intel-mcp `kol_leaderboard`; this is the per-wallet deep dive. A null P&L field (with `pnl_source: null`) means three.ws has no trade history for that wallet in the window, which is an honest \"unknown\", NOT a flat or losing record: never report it as zero profit. `has_activity:false` means no holdings and no trades. Read-only live data.",
+			"description": "Pull one KOL trader's live portfolio card from three.ws. Returns current holdings (total USD value, position count, and the single highest-value token the wallet holds) from the Birdeye proxy, plus realized P&L, win rate, trade count and volume over the last 30 days FIFO-computed from that wallet's own on-chain trades. Use this to size up a specific smart trader before copying or analyzing them. For ranking many traders at once use intel-mcp `kol_leaderboard`; this is the per-wallet deep dive. A null P&L field (with `pnl_source: null`) means three.ws has no trade history for that wallet in the window, which is an honest \"unknown\", NOT a flat or losing record: never report it as zero profit. `has_activity:false` means no holdings and no trades. If the holdings provider is down or rate-limited the call fails with `upstream_unavailable` rather than answering with an empty card, so an outage is never reported as a quiet wallet. Read-only live data.",
 			"server": {
 				"id": "kol-mcp",
 				"title": "@three-ws/kol-mcp",
@@ -7022,6 +7022,11 @@
 						"maximum": 365,
 						"default": 30,
 						"description": "Days of price history for the chart, 1–365 (default 30)."
+					},
+					"chain_id": {
+						"type": "integer",
+						"exclusiveMinimum": 0,
+						"description": "Optional EVM chain id (8453 Base, 1 Ethereum, 42161 Arbitrum, …). Pins which chain the contract is priced on; defaults to the chain of the wallets holding it. Ignored on solana."
 					}
 				},
 				"required": [
@@ -7107,7 +7112,7 @@
 		{
 			"name": "get_trades_feed",
 			"title": "Public closed-trade PnL feed",
-			"description": "The public feed of notable CLOSED positions across all three.ws agents, newest exit first — the canonical source of realized PnL on the platform. Each item carries the coin (mint, symbol, name), the trader (agent_id, agent_name, copier_count), entry_sol / exit_sol / realized_pnl_sol / realized_pnl_pct / multiple, hold_seconds, exit_reason, the buy/sell signatures, and oracle conviction context when the coin was scored. Filter by `mint` to see every closed trade on one coin (the time window is ignored when a mint is set). Paginate with `cursor` = the previous response's `next_cursor`. No auth required — read-only live data.",
+			"description": "The public feed of notable CLOSED positions across all three.ws agents, newest exit first — the canonical source of realized PnL on the platform. Each item carries the coin (mint, symbol, name), the trader (agent_id, agent_name, copier_count), entry_sol / exit_sol / realized_pnl_sol / realized_pnl_pct / multiple, where realized_pnl_pct and multiple are the whole position's return across every sell leg while entry_sol and exit_sol describe the remaining cost basis and the closing leg only, hold_seconds, exit_reason, the buy/sell signatures, and oracle conviction context when the coin was scored. Filter by `mint` to see every closed trade on one coin (the time window is ignored when a mint is set). Paginate with `cursor` = the previous response's `next_cursor`. No auth required — read-only live data.",
 			"server": {
 				"id": "portfolio-mcp",
 				"title": "@three-ws/portfolio-mcp",
