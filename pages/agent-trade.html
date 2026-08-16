@@ -280,16 +280,21 @@
     .cfg-link:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 3px; }
 
     /* ── Header related-surface links ──────────────────────────────────── */
+    /* Every rule here is scoped through #header on purpose: `#header a` above
+       sets the brand link's size, weight and colour, and an unscoped
+       `.header-links a` loses to it on specificity. Unscoped, these three
+       related-surface links rendered at the brand's 1.05rem in full white,
+       which is what pushed the nav off the right edge of a 320px screen. */
     .header-links { display: flex; gap: 4px; align-items: center; margin-left: 8px; }
-    .header-links a {
-      font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.02em;
+    #header .header-links a {
+      font-family: var(--mono); font-size: 0.68rem; font-weight: 500; letter-spacing: 0.02em;
       color: var(--muted); text-decoration: none; padding: 4px 10px; border-radius: 20px;
       border: 1px solid transparent; white-space: nowrap;
       transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
     }
-    .header-links a:hover { color: var(--text); border-color: rgba(8,189,186,0.4); background: rgba(8,189,186,0.08); }
-    .header-links a:active { transform: scale(0.96); }
-    .header-links a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+    #header .header-links a:hover { color: var(--text); border-color: rgba(8,189,186,0.4); background: rgba(8,189,186,0.08); }
+    #header .header-links a:active { transform: scale(0.96); }
+    #header .header-links a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
     /* The runtime language switcher (/i18n.js mounts it when the deploy ships
        more than one locale) is a ~165px control pinned to the bottom-right
        corner. Below roughly 780px it lands on top of the run button, and at
@@ -302,7 +307,7 @@
     }
     @media (max-width: 560px) {
       .header-links { gap: 2px; margin-left: 4px; }
-      .header-links a { padding: 4px 7px; font-size: 0.6rem; }
+      #header .header-links a { padding: 4px 7px; font-size: 0.6rem; }
       #header { padding: 12px 14px; gap: 8px; }
       /* Stack the controls: side by side they cannot both stay legible at 320px. */
       #cta { flex-direction: column; gap: 8px; }

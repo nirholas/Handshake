@@ -77,6 +77,14 @@ function ensureStyles() {
 .rx-bar.compact .rx-btn{width:28px;height:28px;font-size:14px;}
 .rx-bar.compact .rx-tip{height:28px;padding:0 10px;font-size:11.5px;}
 .rx-bar.compact .rx-count,.rx-bar.compact .rx-hint{font-size:11px;}
+/* The compact bar rides inside a card, so it has to live within the card's
+   width instead of running off both edges. On a 320px viewport the emoji row +
+   tip + hint no longer fit on one line: wrap, and drop the hint (the count and
+   the buttons carry the meaning) rather than clipping a real control. */
+.rx-bar.compact{max-width:100%;min-width:0;flex-wrap:wrap;justify-content:center;row-gap:4px;}
+.rx-bar.compact .rx-emojis{flex-wrap:wrap;justify-content:center;}
+.rx-bar.compact .rx-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+@media (max-width:420px){.rx-bar.compact .rx-hint{display:none;}}
 @keyframes rx-pulse{0%,100%{opacity:.65;}50%{opacity:1;}}
 @media (prefers-reduced-motion:reduce){.rx-btn,.rx-tip,.rx-count .rx-num,.rx-bar.connecting .rx-btn,.rx-bar.connecting .rx-tip{transition:none;animation:none;}}
 `;

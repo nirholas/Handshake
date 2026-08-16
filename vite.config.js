@@ -89,10 +89,19 @@ function discoverDashboardNextInputs() {
 // the raw host:port and both attempts fail ("[vite] failed to connect to
 // websocket"), killing live-reload. Point the HMR client at the forwarded
 // domain over wss/443 when those env vars are present; no-op locally.
+// The forwarded host carries the dev server's OWN port, so read it back off the
+// command line: concurrent agents routinely run `vite --port 3101`, and a
+// hard-coded 3000 pointed their HMR client at a different (or absent) tunnel,
+// which surfaces as a console error on every page rather than as a config bug.
+const DEV_PORT = (() => {
+	const i = process.argv.indexOf('--port');
+	const n = i >= 0 ? Number(process.argv[i + 1]) : Number(process.env.PORT);
+	return Number.isFinite(n) && n > 0 ? n : 3000;
+})();
 const CODESPACE_HMR =
 	process.env.CODESPACE_NAME && process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN
 		? {
-				host: `${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}`,
+				host: `${process.env.CODESPACE_NAME}-${DEV_PORT}.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}`,
 				protocol: 'wss',
 				clientPort: 443,
 			}

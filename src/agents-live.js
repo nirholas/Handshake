@@ -810,7 +810,10 @@ function applyWatchStatus(state, data) {
 	if (isLiveNow(state)) { hideWarming(state); return; }
 	if (data?.state === 'warming') showWarming(state, 'Warming up a live view…');
 	else if (data?.state === 'queued') showWarming(state, `Live view queued · #${data.position || 1} in line`);
-	else hideWarming(state);
+	else { hideWarming(state); return; }
+	// A browser is genuinely coming up for this card, so hold a stream open to
+	// catch its first frame rather than waiting on the next activity batch.
+	ensureStream(state);
 }
 
 async function pollWatchStatus(state) {
@@ -878,9 +881,13 @@ function getObserver() {
 }
 
 // ── pooled stream lifecycle ──────────────────────────────────────────────────
-// A card gets its SSE listener when it nears the viewport and gives it back once
-// it is well past, so the pool always covers what a viewer can see, and a wall
-// of 2,000 agents costs the same handful of connections as a wall of 12.
+// With the batch layer covering activity, a stream is only worth a connection
+// when there is something to PUSH: live caster pixels, spectator reactions, a
+// market-maker beat. So a card earns one when it is genuinely casting, when it
+// holds the spotlight, when the caster pool says a browser is coming up for it,
+// or when a viewer reaches for the card itself (hover or keyboard focus). It
+// hands the connection back once it scrolls out of the band, so a wall of 2,000
+// agents costs the same handful of connections as a wall of 12.
 
 // Move an id to the LRU tail (a Set re-insert after delete reorders it).
 function touchStream(id) {
@@ -942,7 +949,6 @@ function getStreamObserver() {
 			if (!state) continue;
 			if (entry.isIntersecting) {
 				_nearView.add(id);
-				if (!document.hidden) ensureStream(state);
 			} else {
 				_nearView.delete(id);
 				if (id !== _spotAgentId) releaseStream(state);
@@ -1094,9 +1100,15 @@ function mountAgent(agent) {
 	}
 	renderAge(state);
 	paintActivity(state);
+	// Reaching for a card is real intent: go live on it so reactions, frames and
+	// market-maker beats push instead of waiting for the next batch. Bounded by
+	// the pool, and released again when the card leaves the band.
+	const goLive = () => { if (!document.hidden) ensureStream(state); };
+	card.addEventListener('pointerenter', goLive);
+	card.addEventListener('focusin', goLive);
 	// Intent + status polling are intersection-driven (getObserver), so the caster
 	// pool only spins up for cards actually on screen and frees the slot on
-	// scroll-away. The wider band (getStreamObserver) owns the SSE listener itself.
+	// scroll-away. The wider band (getStreamObserver) owns stream release.
 	getObserver().observe(card);
 	getStreamObserver().observe(card);
 }

@@ -33,8 +33,12 @@ const walk = createWalkCompanion({
 	docsUrl: '/avatar-studio',
 	// /concierge mounts its own corner widget (the live Concierge demo); two
 	// companions fighting over the same corner reads as broken, so the walk
-	// mascot sits that page out.
-	excludedRoutes: [...DEFAULT_EXCLUDED_PREFIXES, '/concierge'],
+	// mascot sits that page out. /agent-studio is the same case for the same
+	// reason the SDK's own list carries /avatar-studio and /pose: its left half
+	// is a persistent live stage of THIS user's agent, so the corner mascot is a
+	// second copy of the same body, and its 218px corner reservation pushed the
+	// stack's chips into the middle of the editing panel at 320px.
+	excludedRoutes: [...DEFAULT_EXCLUDED_PREFIXES, '/concierge', '/agent-studio'],
 });
 
 // public/nav.js drives the companion through this global (toggle from the nav

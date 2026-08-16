@@ -59,6 +59,9 @@ vi.mock('../api/_lib/db.js', () => ({
 const putObjectMock = vi.fn(async ({ key }) => ({ key }));
 vi.mock('../api/_lib/r2.js', () => ({
 	putObject: (...args) => putObjectMock(...args),
+	// forgeStoreEnabled() reads the object-storage gate through r2.js, so this
+	// mock has to carry it or every store call throws before it runs.
+	objectStorageConfigured: () => true,
 	publicUrl: (key) => `https://cdn.example.com/${key}`,
 }));
 
