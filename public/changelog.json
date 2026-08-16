@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T07:25:32.439Z",
+	"generated_at": "2026-08-16T07:27:01.036Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -129,6 +129,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The public news feed can no longer be knocked out by a single post",
+			"summary": "Everything that reads three.ws announcements, RSS readers and the HackerNoon importer alike, reads one feed at three.ws/rss/announcements.xml. That format has no partial failure: one illegal character anywhere in it makes the entire feed unreadable, so a single post could have taken every subscriber offline rather than costing one item. Three inputs could do that, and none of them can now. A code sample in an announcement that happened to contain the sequence that ends a raw-content block used to end it early and corrupt every item after it. Control characters the format forbids outright, which no amount of escaping can rescue, were passed straight through; they are now dropped, while emoji and other real characters are kept untouched. And a post whose wording happened to match a marker the feed builder uses internally while turning links into links stopped the feed building at all, returning an error to every reader instead. Separately, the feed takes an optional parameter for reading one of the archived accounts instead of the curated list, and misspelling it used to hand back the curated feed with no hint anything was wrong, so a subscriber could sit on the wrong feed indefinitely. It now says plainly that the source is unknown and lists the ones that exist.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
