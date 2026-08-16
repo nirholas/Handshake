@@ -71,6 +71,14 @@
 			<description>Editing an existing subscription tier from the creator dashboard silently failed: the save never reached the server, so the new name, price or status was lost every time. Saving works now. Alongside it, a mistyped or truncated subscription or tier link used to answer with a generic server failure; it now says the id is not valid, which is what a reader can actually act on. Tier pages are also directly addressable, so a single tier can be linked and read on its own, with unpublished drafts still visible only to the creator who wrote them.</description>
 		</item>
 		<item>
+			<title>Forge tools refuse a made-up style or file type, and a worker hiccup no longer reads as a broken job</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-16:Forge tools refuse a made-up style or file type, and a worker hiccup no longer reads as a broken job</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three repairs to the Forge model tools. The stylize filter (voxel, brick, voronoi, lowpoly) checked the requested style against its list in a way that quietly accepted a handful of reserved words, so a request naming one of them was sent to the worker with an unknown filter and no density setting instead of being turned down. The same flaw let the reference-image uploader accept a made-up file type and hand back an upload slot with a nonsense filename. Both now check their list properly, and an unrecognised value falls back to the default or is refused. Separately, while the background remover, mesh optimiser, part splitter and stylizer were checking on a running job, a momentary fault at the worker was reported as a crash on our side, once for every check, which buried the real signal in the alerts. A fault now answers plainly and the page keeps waiting, which is what a passing hiccup deserves.</description>
+		</item>
+		<item>
 			<title>Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</title>
 			<link>https://three.ws/stage</link>
 			<guid isPermaLink="false">2026-08-16:Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</guid>

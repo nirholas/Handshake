@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Forge tools refuse a made-up style or file type, and a worker hiccup no longer reads as a broken job",
+			"summary": "Three repairs to the Forge model tools. The stylize filter (voxel, brick, voronoi, lowpoly) checked the requested style against its list in a way that quietly accepted a handful of reserved words, so a request naming one of them was sent to the worker with an unknown filter and no density setting instead of being turned down. The same flaw let the reference-image uploader accept a made-up file type and hand back an upload slot with a nonsense filename. Both now check their list properly, and an unrecognised value falls back to the default or is refused. Separately, while the background remover, mesh optimiser, part splitter and stylizer were checking on a running job, a momentary fault at the worker was reported as a crash on our side, once for every check, which buried the real signal in the alerts. A fault now answers plainly and the page keeps waiting, which is what a passing hiccup deserves.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Scrolling the activity feed past a bad cursor no longer breaks the whole feed",
 			"summary": "An audit of the account endpoints found one real break and two smaller ones. The activity feed on /community and your personal feed ask for the next page of results by passing the last item’s timestamp back; if that value arrived malformed, from a hand-edited link or a stale bookmark, the database rejected it and the entire feed came back as a server error with nothing to act on. It now answers with a plain \"that is not a timestamp\" so the page can recover and reload from the top. The referral code editor stated its length rule with a typographic dash that read as a minus sign on some devices, and now spells it out. The purchase history endpoint also documented the wrong default view: it always merges your purchases and your sales, which is what the dashboard shows.",
 			"tags": [
