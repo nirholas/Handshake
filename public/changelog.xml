@@ -175,6 +175,14 @@
 			<description>The public revenue feed, the checkout SKU API and the ring report all took values straight from the URL into the database. A timestamp that was not a timestamp, a checkout id that was not an id, and the query fell over: the caller got an opaque &quot;something went wrong&quot; with a support reference, and our own alerting logged a fault that was only ever a typo. All three now say what was wrong, in words, with the right status code. The ring report also stops treating an unrecognised period as &quot;show me everything&quot;, which quietly answered the wrong question and ran the most expensive query it has. The revenue feed now echoes back the endpoint filter it actually applied rather than the raw text it was sent, and the paid-call lookup only accepts something shaped like a real transaction signature.</description>
 		</item>
 		<item>
+			<title>Paying with $THREE works again: credits top-ups, tips and purchases stopped failing before they were signed</title>
+			<link>https://three.ws/credits</link>
+			<guid isPermaLink="false">2026-08-16:Paying with $THREE works again: credits top-ups, tips and purchases stopped failing before they were signed</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every attempt to top up credits with $THREE died in your wallet with a message about an incorrect program id, before you could approve anything and before any money moved. $THREE is issued under Solana's newer token standard, Token-2022, but the pages building the transfer were addressing the older one. That points the transfer at an account that does not exist, so the network rejected it during the safety check your wallet runs first. The credits page, agent tipping and the in-page purchase flow now read the standard directly from the coin itself and build against whichever one it actually uses, so $THREE and ordinary SPL tokens both go through. Two related touches on the credits page: it now tells you up front if the connected wallet holds no $THREE, or not enough for the amount you typed, instead of letting the wallet fail with something cryptic.</description>
+		</item>
+		<item>
 			<title>Prompt polish keeps its quotes out of your model, and a busy Forge says so plainly</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-08-16:Prompt polish keeps its quotes out of your model, and a busy Forge says so plainly</guid>
