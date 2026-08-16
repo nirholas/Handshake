@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The AWS page stops promising AWS invoicing three.ws does not do, and the GLB optimizer reads compressed avatars again",
+			"summary": "Three corrections found by reading the docs pages against the code they describe. The AWS page told you a three.ws subscription would bill usage onto your AWS invoice, draw down AWS credits, and count toward Enterprise Discount Program commitments. None of that is the plan: the Marketplace subscription is free, and usage is paid per call in USDC over x402, exactly as it is for any other caller, so there is nothing to reconcile on your AWS bill at all. The page now says that, and describes the free subscription, the single key that opens every x402 endpoint, and the absence of any trial clock. Separately, the GLB optimization command documented on the 3D asset pipeline page failed on every compressed avatar, which is most of them, because it loaded the glTF extensions without the matching decoders; it now decodes meshopt and Draco and leaves the output as plain glTF the way its own contract promises. The NVIDIA models page also listed the tool-capable fallback model under the wrong vendor prefix.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/aws"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Wallet reputation stops losing coins it never got around to judging",
+			"summary": "The rollup that turns launch history into wallet reputation was judging 80 coins every five minutes while the intel firehose was recording about 32,000 new mints a day, so it fell roughly 8,000 coins a day behind. That backlog does not wait its turn: the rollup works oldest-first and only reaches back 14 days, which is exactly when retention prunes the record, so the tail of the queue aged out and those buyers never counted toward anyone’s reputation at all. 309,000 coins were sitting unjudged with the oldest already 8.4 days from the cliff. The per-run budget is now 400, which outruns the firehose several times over, drains the backlog within days and then idles. Scores across the smart-money surfaces get their full evidence base back. The operations health board also tracks the retention and reconstruct sweeps, so a stall in either is visible instead of showing up later as a symptom.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-16",
 			"title": "The agent showcase pages all the way through, and the strategy board ranks the whole marketplace",
 			"summary": "Three fixes to public read surfaces. Paging the ERC-8004 agent showcase past the first page could repeat a row forever or quietly skip one, because the cursor rounded the registration timestamp to the millisecond while the index stores microseconds, and an agent whose registry event carried no timestamp at all fell out of every page after the first. Both are fixed, and asking for a fractional number of results now returns a page instead of a server error. The published strategy board's default 'performance' order was ranking only the most recently published slice, so a proven, high-return strategy could sit invisible behind newer unproven ones; it now ranks the whole published pool before trimming to your page. And /sitemap.xml no longer answers a POST or a DELETE with the sitemap.",
 			"tags": [

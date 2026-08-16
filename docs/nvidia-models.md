@@ -107,7 +107,7 @@ This lane powers the platform's built-in AI surfaces — chat, embedded site wid
 | Llama 4 Maverick | `meta/llama-4-maverick-17b-128e-instruct` | balanced | Meta's 128-expert MoE — fast, multimodal-capable |
 | MiniMax M2.7 | `minimaxai/minimax-m2.7` | balanced | General reasoning and chat |
 
-For anonymous (signed-out) callers, only the genuinely free tiers — the OpenRouter open-weight default plus these NVIDIA NIM models — are selectable. Each shows "unavailable" until the key is set, and `meta/llama-3.3-nemotron-super-49b-v1.5` also appears in the routing catalog as a tool-capable fallback model.
+For anonymous (signed-out) callers, only the genuinely free tiers (the OpenRouter open-weight default plus these NVIDIA NIM models) are selectable. Each shows "unavailable" until the key is set, and `nvidia/llama-3.3-nemotron-super-49b-v1.5` also appears in the routing catalog as a tool-capable fallback model.
 
 > **Where the line is:** Nemotron and the `nvidia/…`-prefixed models are NVIDIA's own. The others in this table (DeepSeek, Kimi, Llama 4, MiniMax) are third-party open weights that NVIDIA *hosts and serves free* on NIM — so they ride the same key, but the model itself isn't NVIDIA's. The point of NIM is exactly this: one free key, a whole model garden.
 

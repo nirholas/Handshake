@@ -175,6 +175,14 @@
 			<description>Agents that connect to the wallet server at /api/mcp-agent without a three.ws account can pay per call in USDC instead. The payment request it handed back named the main three.ws MCP server, not itself, so a paying agent signed a payment scoped to an endpoint it had not called and service directories listed the wallet server under the wrong description and tool list. It now describes itself: its own address, its own wallet-and-payments summary, and a directory example that only searches for services rather than spending anything. Separately, the one-sentence agent builder no longer mangles accented names when it suggests a handle: Munz now becomes munz rather than mu-nz.</description>
 		</item>
 		<item>
+			<title>The AWS page stops promising AWS invoicing three.ws does not do, and the GLB optimizer reads compressed avatars again</title>
+			<link>https://three.ws/aws</link>
+			<guid isPermaLink="false">2026-08-16:The AWS page stops promising AWS invoicing three.ws does not do, and the GLB optimizer reads compressed avatars again</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three corrections found by reading the docs pages against the code they describe. The AWS page told you a three.ws subscription would bill usage onto your AWS invoice, draw down AWS credits, and count toward Enterprise Discount Program commitments. None of that is the plan: the Marketplace subscription is free, and usage is paid per call in USDC over x402, exactly as it is for any other caller, so there is nothing to reconcile on your AWS bill at all. The page now says that, and describes the free subscription, the single key that opens every x402 endpoint, and the absence of any trial clock. Separately, the GLB optimization command documented on the 3D asset pipeline page failed on every compressed avatar, which is most of them, because it loaded the glTF extensions without the matching decoders; it now decodes meshopt and Draco and leaves the output as plain glTF the way its own contract promises. The NVIDIA models page also listed the tool-capable fallback model under the wrong vendor prefix.</description>
+		</item>
+		<item>
 			<title>The creations gallery now counts every creation a creator has made, and pages all the way to the end</title>
 			<link>https://three.ws/creations</link>
 			<guid isPermaLink="false">2026-08-16:The creations gallery now counts every creation a creator has made, and pages all the way to the end</guid>
