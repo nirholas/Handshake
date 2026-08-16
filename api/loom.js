@@ -91,8 +91,16 @@ export async function writeCreation(rec) {
 
 // Read the feed newest-first. `before` (ms epoch) pages backwards: only items
 // strictly older than it are returned. Returns up to `limit` records.
+//
+// The ceiling here is LIST_CAP (what storage actually holds), NOT the smaller
+// public MAX_LIMIT: the HTTP handler below already clamps a caller-supplied
+// `limit` to MAX_LIMIT before it gets here, so enforcing it a second time only
+// hit INTERNAL callers. api/creations.js asks for a SCAN_CAP-deep slice to
+// aggregate creator/trending rankings over, and silently got 120 rows instead,
+// which under-reported every creator's creation count and made gallery
+// pagination dead-end well before the feed did.
 export async function readFeed(limit, before) {
-	const cap = Math.max(1, Math.min(MAX_LIMIT, limit | 0 || DEFAULT_LIMIT));
+	const cap = Math.max(1, Math.min(LIST_CAP, limit | 0 || DEFAULT_LIMIT));
 	const hasBefore = Number.isFinite(before);
 
 	const r = getRedis();

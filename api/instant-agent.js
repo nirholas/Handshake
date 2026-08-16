@@ -155,6 +155,9 @@ export function safeHandle(raw, name = '') {
 	const clean = (s) =>
 		String(s || '')
 			.normalize('NFKD')
+			// Drop the combining marks NFKD just split off, so an accented name
+			// slugifies to the letters underneath it ("Munz", not "mu-nz").
+			.replace(/\p{M}+/gu, '')
 			.toLowerCase()
 			.replace(/[^a-z0-9]+/g, '-')
 			.replace(/^-+|-+$/g, '')

@@ -12,8 +12,8 @@
 // on its own and powers shared UI (price display, the pay helper in src).
 
 import { z } from 'zod';
-import { env } from '../_lib/env.js';
 import { getSessionUser } from '../_lib/auth.js';
+import { isAdminUser } from '../_lib/admin.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
@@ -58,13 +58,6 @@ const QUOTE_UNAVAILABLE_DETAIL = {
 	rewards_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
 };
 
-function isAdmin(user) {
-	if (!user) return false;
-	if (user.is_admin) return true;
-	const w = (user.wallet_address || '').toLowerCase();
-	return Boolean(w) && env.ADMIN_ADDRESSES.has(w);
-}
-
 // ── GET /api/token/config ────────────────────────────────────────────────────
 
 async function handleConfig(req, res) {
@@ -85,7 +78,9 @@ async function handlePrice(req, res) {
 	const usdParam = url.searchParams.get('usd');
 	let quote = null;
 	if (usdParam != null) {
-		const q = await quoteTokenForUsd(Number(usdParam));
+		// Quote against the price this response reports, not a second lookup that
+		// could cross the cache boundary and disagree with the `price_usd` beside it.
+		const q = await quoteTokenForUsd(Number(usdParam), { price });
 		quote = { usd: q.usd, token_amount: q.tokenAmount, atomics: q.atomics.toString() };
 	}
 	return json(res, 200, {
@@ -362,7 +357,7 @@ async function handlePayments(req, res) {
 	if (!method(req, res, ['GET'])) return;
 	const user = await getSessionUser(req, res);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-	if (!isAdmin(user)) return error(res, 403, 'forbidden', 'admin access required');
+	if (!(await isAdminUser(user))) return error(res, 403, 'forbidden', 'admin access required');
 
 	const url = new URL(req.url, 'http://x');
 	const page = await listPayments({

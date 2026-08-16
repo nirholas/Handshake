@@ -1,5 +1,5 @@
 /**
- * Per-skill ratings & reviews — paid skills sold on an agent.
+ * Per-skill ratings and reviews for paid skills sold on an agent.
  * ──────────────────────────────────────────────────────────
  *   GET  /api/skills/review?agent_id=<uuid>&skill=<name>&page=<n>&page_size=<n>
  *        → { data: { summary: { rating_avg, rating_count, breakdown }, reviews, page,
@@ -17,8 +17,8 @@
  * One review per (agent_id, skill, reviewer); POST upserts in place.
  *
  * Schema: api/_lib/migrations/20260621180000_skill_reviews.sql.
- * Ownership is verified with the canonical hasSkillAccess() helper — the same
- * gate the paid-skill execution path uses — so a review can only follow real,
+ * Ownership is verified with the canonical hasSkillAccess() helper, the same
+ * gate the paid-skill execution path uses, so a review can only follow real,
  * on-chain-confirmed access.
  */
 
@@ -191,7 +191,7 @@ async function handleUpsert(req, res) {
 		return error(res, 422, 'self_review_forbidden', 'you cannot review your own skill');
 	}
 
-	// Ownership gate: the reviewer must have real access to this paid skill —
+	// Ownership gate: the reviewer must have real access to this paid skill:
 	// a confirmed purchase, time-pass, agent/creator subscription, or active
 	// trial. hasSkillAccess is the canonical gate used by the execution path.
 	const access = await hasSkillAccess(auth.userId, agentId, skill);
@@ -237,7 +237,7 @@ async function handleUpsert(req, res) {
 		});
 	}
 
-	// Anchor the review on Solana — fire-and-forget, never blocks the response.
+	// Anchor the review on Solana. Fire-and-forget, never blocks the response.
 	attestReview({
 		reviewId: row.id,
 		updatedAt: row.updated_at,

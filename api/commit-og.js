@@ -1,4 +1,4 @@
-// api/commit-og.js — social-share landing for a single commit in the
+// api/commit-og.js: social-share landing for a single commit in the
 // auto-posted commit feed (api/_lib/commit-feed-push.js). Its only job is to
 // carry per-commit Open Graph tags so Telegram, X, and iMessage render a
 // branded three.ws poster card for each commit post instead of GitHub's
@@ -56,7 +56,7 @@ export default function handler(req, res) {
 
   const title = esc(headline);
   const descParts = [body, [date, author].filter(Boolean).join(' · ')].filter(Boolean);
-  const description = esc(descParts.join(' — '));
+  const description = esc(descParts.join(' · '));
 
   res.statusCode = 200;
   res.setHeader('content-type', 'text/html; charset=utf-8');

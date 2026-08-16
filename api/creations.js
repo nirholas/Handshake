@@ -1,15 +1,15 @@
-// Creations — the creator-gallery + remix-economy backend.
+// Creations: the creator-gallery + remix-economy backend.
 //
 // This is the discovery/remix surface layered ON TOP OF the existing Loom
 // gallery (api/loom.js): Loom remains the single source of truth for "a creation
 // is a forged GLB + prompt + attribution", and this endpoint enriches that feed
 // with the things a *creator-facing* product needs and Loom deliberately omits:
 //
-//   · gallery metadata        — title, tags, license, type/style, creator binding
-//   · remix lineage           — parent→child edges, ancestry + descendants
-//   · creator aggregates      — per-creator creation count, remixes earned, follows
-//   · discovery ranking       — trending (most-remixed) assets, top creators
-//   · signed-ready provenance — an append-only per-creation trail (origin + remix)
+//   · gallery metadata:        title, tags, license, type/style, creator binding
+//   · remix lineage:           parent to child edges, ancestry + descendants
+//   · creator aggregates:      per-creator creation count, remixes earned, follows
+//   · discovery ranking:       trending (most-remixed) assets, top creators
+//   · signed-ready provenance: an append-only per-creation trail (origin + remix)
 //
 // It never forks Loom: it imports Loom's storage + validators directly so a
 // publish writes one canonical record to the same feed every other surface
@@ -17,15 +17,14 @@
 // HTTP/MCP contract is unchanged.
 //
 // ── Storage (Upstash Redis when configured, in-process maps otherwise) ─────────
-//   cre:meta:<id>            — gallery overlay JSON for a creation
-//   cre:children:<parentId>  — list of child creation ids (remix lineage)
-//   cre:prov:<id>            — append-only provenance entries for a creation
-//   cre:creator:<key>        — creator aggregate record
-//   cre:followers:<key>      — set (list) of follower ids
-//   cre:index                — capped list of all overlaid creation ids (newest-first)
-//   cre:remixfeed            — capped list of recent remix events (for trending window)
+//   cre:meta:<id>            : gallery overlay JSON for a creation
+//   cre:children:<parentId>  : list of child creation ids (remix lineage)
+//   cre:prov:<id>            : append-only provenance entries for a creation
+//   cre:creator:<key>        : creator aggregate record
+//   cre:followers:<key>      : set (list) of follower ids
+//   cre:remixfeed            : capped list of recent remix events (for trending window)
 // In dev / tests without Redis the same operations run against module-level maps
-// so the endpoint is fully functional offline — mirroring api/loom.js exactly.
+// so the endpoint is fully functional offline, mirroring api/loom.js exactly.
 
 import { randomUUID } from 'node:crypto';
 import { cors, json, error, readJson, wrap, method, setRateLimitHeaders } from './_lib/http.js';
@@ -47,10 +46,8 @@ const CHILDREN_KEY = (id) => `cre:children:${id}`;
 const PROV_KEY = (id) => `cre:prov:${id}`;
 const CREATOR_KEY = (key) => `cre:creator:${key}`;
 const FOLLOWERS_KEY = (key) => `cre:followers:${key}`;
-const INDEX_KEY = 'cre:index';
 const REMIX_FEED_KEY = 'cre:remixfeed';
 
-const INDEX_CAP = 4000;
 const REMIX_FEED_CAP = 2000;
 const DEFAULT_LIMIT = 36;
 const MAX_LIMIT = 120;
@@ -66,7 +63,7 @@ const LICENSES = {
 	'remix-cc': { label: 'Remix freely', remixable: true, commercial: true, note: 'Anyone may remix and use commercially.' },
 	'remix-nc': { label: 'Remix · non-commercial', remixable: true, commercial: false, note: 'Remix freely; no commercial use.' },
 	'remix-royalty': { label: 'Remix · royalty', remixable: true, commercial: true, note: 'Remix allowed; royalties route to the original creator on mint.' },
-	'all-rights': { label: 'All rights reserved', remixable: false, commercial: false, note: 'Display only — no remixing.' },
+	'all-rights': { label: 'All rights reserved', remixable: false, commercial: false, note: 'Display only, no remixing.' },
 };
 const DEFAULT_LICENSE = 'remix-cc';
 
@@ -82,7 +79,6 @@ const mem = {
 	prov: new Map(), // id -> entry[]
 	creators: new Map(),
 	followers: new Map(), // key -> Set
-	index: [], // newest-first ids
 	remixFeed: [], // newest-first remix events
 };
 
@@ -109,14 +105,9 @@ async function putMeta(meta) {
 	const r = getRedis();
 	if (!r) {
 		mem.meta.set(meta.id, meta);
-		mem.index.unshift(meta.id);
-		if (mem.index.length > INDEX_CAP) mem.index.length = INDEX_CAP;
 		return meta;
 	}
-	const payload = JSON.stringify(meta);
-	await r.set(META_KEY(meta.id), payload);
-	await r.lpush(INDEX_KEY, meta.id);
-	await r.ltrim(INDEX_KEY, 0, INDEX_CAP - 1);
+	await r.set(META_KEY(meta.id), JSON.stringify(meta));
 	return meta;
 }
 
@@ -125,6 +116,45 @@ async function getChildren(id) {
 	if (!r) return mem.children.get(id) || [];
 	const raw = await r.lrange(CHILDREN_KEY(id), 0, 199);
 	return (raw || []).filter(Boolean);
+}
+
+// Batched overlay reads. Every aggregation surface here (feed, creator,
+// creators, trending) enriches a SCAN_CAP-deep slice of the Loom feed, and
+// per-item getMeta + getChildren would be two Upstash REST round-trips PER
+// creation: 1200 HTTP calls to render one gallery page, the exact shape of the
+// quota blowout api/_lib/redis.js was written to stop. mget collapses the meta
+// reads into one call and a pipeline collapses the lrange reads into another,
+// so the whole slice costs two round-trips regardless of its depth.
+async function getMetaMany(ids) {
+	const out = new Map();
+	const wanted = [...new Set(ids.filter(Boolean))];
+	if (!wanted.length) return out;
+
+	const r = getRedis();
+	if (!r) {
+		for (const id of wanted) out.set(id, mem.meta.get(id) || null);
+		return out;
+	}
+	const raw = await r.mget(...wanted.map(META_KEY));
+	wanted.forEach((id, i) => out.set(id, raw?.[i] ? safeParse(raw[i]) : null));
+	return out;
+}
+
+async function getChildrenMany(ids) {
+	const out = new Map();
+	const wanted = [...new Set(ids.filter(Boolean))];
+	if (!wanted.length) return out;
+
+	const r = getRedis();
+	if (!r) {
+		for (const id of wanted) out.set(id, mem.children.get(id) || []);
+		return out;
+	}
+	const pipe = r.pipeline();
+	for (const id of wanted) pipe.lrange(CHILDREN_KEY(id), 0, 199);
+	const results = await pipe.exec();
+	wanted.forEach((id, i) => out.set(id, (results?.[i] || []).filter(Boolean)));
+	return out;
 }
 
 async function addChild(parentId, childId) {
@@ -271,12 +301,15 @@ function isAgentKey(key) {
 
 // Merge a raw Loom creation with its gallery overlay + lineage counts into the
 // shape the creator gallery renders. Defensive: a creation with no overlay (every
-// pre-existing Loom item) still renders fully — title falls back to the prompt,
+// pre-existing Loom item) still renders fully, so title falls back to the prompt,
 // license to the open default, type/style inferred from tags/prompt.
-async function enrich(creation, { withChildren = false } = {}) {
+// `overlay` lets a caller hand in already-batched meta/children lookups (see
+// enrichAll); without it each call fetches its own, which is right for the
+// single-item paths.
+async function enrich(creation, { withChildren = false, overlay = null } = {}) {
 	if (!creation) return null;
-	const meta = await getMeta(creation.id);
-	const childIds = await getChildren(creation.id);
+	const meta = overlay ? overlay.meta.get(creation.id) || null : await getMeta(creation.id);
+	const childIds = overlay ? overlay.children.get(creation.id) || [] : await getChildren(creation.id);
 	const creatorKey = creatorKeyFor(creation, meta);
 	const inferred = inferFacets(creation, meta);
 	const out = {
@@ -304,6 +337,16 @@ async function enrich(creation, { withChildren = false } = {}) {
 	};
 	if (withChildren) out.childIds = childIds;
 	return out;
+}
+
+// Enrich a whole slice with two overlay round-trips instead of two per item.
+async function enrichAll(creations, opts = {}) {
+	const rows = (creations || []).filter(Boolean);
+	if (!rows.length) return [];
+	const ids = rows.map((c) => c.id);
+	const [meta, children] = await Promise.all([getMetaMany(ids), getChildrenMany(ids)]);
+	const overlay = { meta, children };
+	return (await Promise.all(rows.map((c) => enrich(c, { ...opts, overlay })))).filter(Boolean);
 }
 
 function titleFromPrompt(prompt) {
@@ -362,7 +405,7 @@ async function handleFeed(req, res, url) {
 	// Pull a deep slice of the canonical Loom feed, enrich, filter, then rank.
 	// SCAN_CAP bounds the work; the feed is itself capped at 2000 upstream.
 	const raw = await loomReadFeed(SCAN_CAP, NaN);
-	const enriched = (await Promise.all(raw.map((c) => enrich(c)))).filter(Boolean);
+	const enriched = await enrichAll(raw);
 	let items = enriched.filter((c) => matchesFilters(c, filters));
 
 	if (sort === 'new') items.sort((a, b) => b.createdAt - a.createdAt);
@@ -413,7 +456,8 @@ async function handleItem(req, res, url) {
 		ancestors.push(await enrich(pc));
 		cursorMeta = await getMeta(cursorMeta.parentId);
 	}
-	const children = (await Promise.all((item.childIds || []).slice(0, 24).map((cid) => loomReadOne(cid).then((c) => (c ? enrich(c) : null))))).filter(Boolean);
+	const childRows = await Promise.all((item.childIds || []).slice(0, 24).map((cid) => loomReadOne(cid)));
+	const children = await enrichAll(childRows);
 
 	// Creator card: aggregate + follower count + (for agents) on-chain reputation.
 	const creator = await buildCreatorCard(item.creatorKey, creation);
@@ -450,9 +494,9 @@ async function handleCreator(req, res, url) {
 	const followerId = sanitizeOptionalString(url.searchParams.get('follower'), 80);
 
 	// Gather this creator's creations from the canonical feed (match by agent
-	// binding or author slug) — bounded scan, newest-first.
+	// binding or author slug), a bounded scan, newest-first.
 	const raw = await loomReadFeed(SCAN_CAP, NaN);
-	const all = (await Promise.all(raw.map((c) => enrich(c)))).filter(Boolean);
+	const all = await enrichAll(raw);
 	const creations = all
 		.filter((c) => c.creatorKey === key || slugifyAuthor(c.author) === key)
 		.sort((a, b) => b.createdAt - a.createdAt);
@@ -483,7 +527,7 @@ async function handleCreators(req, res, url) {
 	const sort = ['remixed', 'prolific', 'followed'].includes(url.searchParams.get('sort')) ? url.searchParams.get('sort') : 'remixed';
 
 	const raw = await loomReadFeed(SCAN_CAP, NaN);
-	const all = (await Promise.all(raw.map((c) => enrich(c)))).filter(Boolean);
+	const all = await enrichAll(raw);
 
 	// Aggregate by creator key across the scanned feed.
 	const byKey = new Map();
@@ -529,7 +573,7 @@ async function handleCreators(req, res, url) {
 async function handleTrending(req, res, url) {
 	const limit = Math.min(24, Math.max(1, parseInt(url.searchParams.get('limit') || '8', 10) || 8));
 	const raw = await loomReadFeed(SCAN_CAP, NaN);
-	const all = (await Promise.all(raw.map((c) => enrich(c)))).filter(Boolean);
+	const all = await enrichAll(raw);
 	const now = Date.now();
 	const score = (c) => c.remixCount * 10 + Math.max(0, 5 - (now - c.createdAt) / 86_400_000);
 	const trending = all
@@ -567,7 +611,7 @@ function sanitizeRoyalty(raw) {
 // shows in the shared feed every surface reads), then attaches the gallery
 // overlay (title/tags/license/type/style/creator/lineage) and a provenance entry.
 // When parentId is present this is the persisted tail of a remix.
-async function handlePublish(req, res, body, ip) {
+async function handlePublish(req, res, body) {
 	const prompt = sanitizePrompt(body?.prompt ?? '');
 	if (!prompt) return error(res, 400, 'bad_request', 'prompt is required');
 	if (prompt.length > 1000) return error(res, 400, 'bad_request', 'prompt too long (max 1000)');
@@ -785,7 +829,7 @@ export default wrap(async (req, res) => {
 		setRateLimitHeaders(res, rl);
 		switch (op) {
 			case 'publish':
-				return handlePublish(req, res, body, ip);
+				return handlePublish(req, res, body);
 			case 'remix':
 				return handleRemixLink(req, res, body);
 			case 'follow':

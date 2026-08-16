@@ -66,7 +66,13 @@ async function startJob(req, res) {
 		});
 	}
 
-	const style = STYLE_BOUNDS[body?.style] ? body.style : 'voxel';
+	// Object.hasOwn, not a bare truthy lookup: `STYLE_BOUNDS[k]` is truthy for
+	// every Object.prototype key, so `style: "constructor"` (or "toString",
+	// "valueOf", "__proto__") walked straight past the allowlist and reached the
+	// worker with an unknown filter and a NaN/undefined resolution.
+	const style = typeof body?.style === 'string' && Object.hasOwn(STYLE_BOUNDS, body.style)
+		? body.style
+		: 'voxel';
 	const bounds = STYLE_BOUNDS[style];
 	const outputFormat = VALID_FORMATS.has(body?.output_format) ? body.output_format : 'glb';
 	const requested = Number(body?.resolution);
@@ -118,7 +124,21 @@ async function pollJob(req, res, jobId) {
 		return unconfigured(res);
 	}
 
-	const result = await provider.status(jobId);
+	// Poll is an outbound call to the worker, so it gets the same boundary guard
+	// as submit. Without it an upstream fault escapes to wrap() as a 500, and
+	// because clients poll every couple of seconds one worker outage pages ops
+	// once per poll per client instead of once. A 502 with no `status` field
+	// leaves the client's poll loop retrying, which is what a transient fault
+	// deserves.
+	let result;
+	try {
+		result = await provider.status(jobId);
+	} catch (err) {
+		return json(res, 502, {
+			error: 'stylize_status_failed',
+			message: err?.message || 'Could not read the stylization job.',
+		});
+	}
 	return json(res, 200, {
 		job_id: jobId,
 		status: result.status,

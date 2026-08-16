@@ -15,6 +15,7 @@
 // show the preview.
 import { ImageResponse } from '@vercel/og';
 import { readFileSync } from 'node:fs';
+import { method } from './_lib/http.js';
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -427,6 +428,9 @@ export default async function handler(req, res) {
     res.end();
     return;
   }
+  // A share card is a GET surface. Without this gate any verb (POST, DELETE)
+  // drove a full satori render on a route that never accepts writes.
+  if (!method(req, res, ['GET'])) return;
 
   const url = new URL(req.url, 'http://x');
   const section = sectionFor(url.searchParams.get('s'));

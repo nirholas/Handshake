@@ -61,7 +61,7 @@ export default wrap(async (req, res) => {
 	if (buf.length === 0 || buf.length > MAX_POSTER_BYTES) {
 		return json(res, 400, {
 			error: 'invalid_image',
-			message: `Poster must be 1 byte – ${MAX_POSTER_BYTES} bytes.`,
+			message: `Poster must be between 1 and ${MAX_POSTER_BYTES} bytes.`,
 		});
 	}
 

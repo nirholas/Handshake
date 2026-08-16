@@ -141,14 +141,20 @@ async function handleList(req, res) {
 			FROM marketplace_skills
 			WHERE id = ${cursor} AND is_public = true
 		`;
-		if (cr) {
-			cursorInstallCount = cr.install_count;
-			cursorCreatedAt = cr.created_at;
-			cursorName = cr.name;
+		// A cursor whose pivot row is gone (deleted, or flipped private between
+		// pages) leaves every keyset predicate inert, which used to hand the
+		// caller page 1 again with the SAME next_cursor: "load more" then
+		// re-appended the first page forever. Terminate the sequence instead so
+		// the client stops cleanly and no duplicates land in the grid.
+		if (!cr) {
+			return json(res, 200, { skills: [], next_cursor: null }, { 'cache-control': 'no-store' });
 		}
+		cursorInstallCount = cr.install_count;
+		cursorCreatedAt = cr.created_at;
+		cursorName = cr.name;
 	}
 
-	// Neon's tagged-template `sql` does not compose nested fragments — each
+	// Neon's tagged-template `sql` does not compose nested fragments: each
 	// interpolation becomes a positional `$N` parameter. So we branch the full
 	// query per sort instead of building it from sql`...` fragments.
 	const rows = await runListQuery({

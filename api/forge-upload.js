@@ -70,7 +70,11 @@ export default wrap(async (req, res) => {
 
 	const contentType =
 		typeof body?.content_type === 'string' ? body.content_type.trim().toLowerCase() : '';
-	const ext = CONTENT_TYPE_EXT[contentType];
+	// Object.hasOwn, not a bare truthy lookup: freezing the map does not detach
+	// its prototype, so `content_type: "constructor"` resolved to the Object
+	// function (and "__proto__" to Object.prototype), passed this check, and
+	// presigned an upload whose storage key ended in the stringified builtin.
+	const ext = Object.hasOwn(CONTENT_TYPE_EXT, contentType) ? CONTENT_TYPE_EXT[contentType] : null;
 	if (!ext) {
 		return json(res, 400, {
 			error: 'invalid_content_type',

@@ -93,7 +93,7 @@ export default wrap(async (req, res) => {
 	}
 	if (checkout.expires_at && new Date(checkout.expires_at) < new Date()) {
 		await sql`UPDATE subscription_checkouts SET status = 'expired' WHERE id = ${checkout.id} AND status = 'pending'`;
-		return error(res, 410, 'checkout_expired', 'this checkout expired — start a new subscription');
+		return error(res, 410, 'checkout_expired', 'this checkout expired, start a new subscription');
 	}
 
 	const result = await verifySubscriptionPayment(checkout, transactionSignature || null);

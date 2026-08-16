@@ -32,6 +32,32 @@ import { thumbnailUrl } from './_lib/r2.js';
 const WINDOWS = new Set(['24h', '7d', 'all']);
 const WINDOW_INTERVAL = { '24h': '1 day', '7d': '7 days' };
 const COIN_INTERVAL = { '24h': '24 hours', '7d': '7 days' };
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 20;
+
+/**
+ * A non-numeric `limit` used to reach Postgres as `limit NaN`, which fails both
+ * queries; the degrade-to-empty catch below then rendered that as "nothing is
+ * trending" instead of a bad request. Unparseable now falls back to the default,
+ * matching how an unknown `window` falls back to 24h.
+ */
+export function parseLimit(raw) {
+	const n = Number.parseInt(raw ?? '', 10);
+	if (!Number.isFinite(n)) return DEFAULT_LIMIT;
+	return Math.min(MAX_LIMIT, Math.max(1, n));
+}
+
+/**
+ * Either ranking may degrade to empty rather than 500 the whole board, but a
+ * swallowed failure that logs nothing is indistinguishable from a genuinely quiet
+ * window, which is how the `limit NaN` bug above survived. Always leave a trace.
+ */
+function degradeToEmpty(label) {
+	return (err) => {
+		console.error(`[trending] ${label} ranking failed, serving it empty:`, err?.message || err);
+		return [];
+	};
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -42,7 +68,7 @@ export default wrap(async (req, res) => {
 
 	const p = new URL(req.url, `http://${req.headers.host || 'x'}`).searchParams;
 	const win   = WINDOWS.has(p.get('window')) ? p.get('window') : '24h';
-	const limit = Math.min(20, Math.max(1, Number(p.get('limit') || 10)));
+	const limit = parseLimit(p.get('limit'));
 
 	// ── Agents ─────────────────────────────────────────────────────────────
 	let agentRows;
@@ -70,7 +96,7 @@ export default wrap(async (req, res) => {
 			where t.chat_count > 0
 			order by t.chat_count desc
 			limit ${limit}
-		`.catch(() => []);
+		`.catch(degradeToEmpty('agent'));
 	} else {
 		// Count real LLM usage events in the time window per public agent. The
 		// all-time chat_count is derived via a correlated subquery (no stored col).
@@ -99,7 +125,7 @@ export default wrap(async (req, res) => {
 			         a.thumbnail_key, a.visibility
 			order by window_chats desc
 			limit ${limit}
-		`.catch(() => []);
+		`.catch(degradeToEmpty('agent'));
 	}
 
 	const agents = agentRows.map((r, idx) => {
@@ -184,7 +210,7 @@ export default wrap(async (req, res) => {
 			where score is not null
 			order by score desc, momentum desc, smart_wallet_count desc, scored_at desc, mint
 			limit ${limit}
-		`).catch(() => []);
+		`).catch(degradeToEmpty('coin'));
 
 	const coins = coinRows.map((r, idx) => ({
 		rank:               idx + 1,

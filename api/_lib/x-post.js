@@ -40,7 +40,7 @@ export async function getUserTier(userId) {
 async function refreshIfNeeded(conn) {
 	const expiresAt = conn.expires_at ? new Date(conn.expires_at).getTime() : 0;
 	if (expiresAt - Date.now() > 60_000) return decryptToken(conn.access_token);
-	if (!conn.refresh_token) throw new XPostError('reauth_required', 'refresh_token missing — reconnect X account', 401);
+	if (!conn.refresh_token) throw new XPostError('reauth_required', 'refresh_token missing, reconnect X account', 401);
 
 	const refreshToken = decryptToken(conn.refresh_token);
 	const creds = Buffer.from(`${env.X_OAUTH_CLIENT_ID}:${env.X_OAUTH_CLIENT_SECRET}`).toString('base64');

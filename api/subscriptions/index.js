@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
-import { parse } from '../_lib/validate.js';
+import { parse, isUuid } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { chargeSubscription } from '../_lib/subscription-billing.js';
@@ -29,10 +29,15 @@ export default wrap(async (req, res) => {
 	const pathMatch = url.match(/\/api\/subscriptions\/([^?/]+)/);
 	const segment = pathMatch ? pathMatch[1] : null;
 
-	if (segment === 'mine' && req.method === 'GET') return handleMine(req, res);
-	if (!segment && req.method === 'POST') return handleSubscribe(req, res);
-	if (segment && req.method === 'DELETE') return handleCancel(req, res, segment);
-	if (segment && req.method === 'GET') return handleDetail(req, res, segment);
+	// HEAD must reach whatever GET reaches (RFC 9110 9.3.2); Node strips the body
+	// on the way out. Without this a HEAD probe matched no branch and fell through
+	// to the 405 below.
+	const verb = req.method === 'HEAD' ? 'GET' : req.method;
+
+	if (segment === 'mine' && verb === 'GET') return handleMine(req, res);
+	if (!segment && verb === 'POST') return handleSubscribe(req, res);
+	if (segment && verb === 'DELETE') return handleCancel(req, res, segment);
+	if (segment && verb === 'GET') return handleDetail(req, res, segment);
 
 	return error(res, 405, 'method_not_allowed', 'method not allowed');
 });
@@ -132,6 +137,13 @@ async function handleCancel(req, res, subId) {
 	// CSRF on state-changing session-cookie requests; bearer tokens are exempt.
 	if (!(await requireCsrf(req, res, user.id))) return;
 
+	// The path segment goes straight into a uuid comparison, and Postgres answers
+	// a malformed one with 22P02, which surfaced as a 500 instead of telling the
+	// caller their id was wrong.
+	if (!isUuid(subId)) {
+		return error(res, 400, 'validation_error', 'subscription id must be a valid UUID');
+	}
+
 	const [sub] = await sql`
 		UPDATE creator_subscriptions
 		SET status = 'cancelled', cancelled_at = now()
@@ -147,6 +159,10 @@ async function handleDetail(req, res, subId) {
 	if (!method(req, res, ['GET'])) return;
 	const user = await getSessionUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	if (!isUuid(subId)) {
+		return error(res, 400, 'validation_error', 'subscription id must be a valid UUID');
+	}
 
 	const [sub] = await sql`
 		SELECT

@@ -101,8 +101,37 @@ export function attesterFromTx(tx) {
 		|| null;
 }
 
+// Does this RPC error mean our stored cursor is no longer in the node's ledger?
+//
+// getSignaturesForAddress({ until }) resolves `until` against the node's own
+// history and fails the WHOLE call with "Transaction <sig> not found" once that
+// signature has been pruned. Because we only ever store the newest signature we
+// saw, a pruned cursor is terminal: every later tick presents the same dead
+// signature, gets the same error, and never advances. The asset stops indexing
+// permanently, and the cron still reports 200 because the handler catches per
+// agent, so nothing pages. Detect it and re-scan from the head instead.
+export function isPrunedCursorError(err) {
+	const msg = err?.message || String(err || '');
+	return /Transaction .* not found/i.test(msg) || /failed to get signatures for address/i.test(msg);
+}
+
+// Signatures newer than the cursor, self-healing past a pruned cursor.
+//
+// The retry drops `until` and takes the most recent `limit` signatures instead.
+// That is safe to replay: every row lands through `on conflict (signature) do
+// nothing`, so re-reading a window we already indexed inserts nothing twice.
+export async function signaturesSinceCursor(conn, agentKey, limit, until) {
+	try {
+		return { sigs: await conn.getSignaturesForAddress(agentKey, { limit, until }), cursorReset: false };
+	} catch (err) {
+		if (!until || !isPrunedCursorError(err)) throw err;
+		const sigs = await conn.getSignaturesForAddress(agentKey, { limit });
+		return { sigs, cursorReset: true };
+	}
+}
+
 // Crawl recent signatures for one agent and upsert into solana_attestations.
-// Returns { scanned, inserted, skipped }.
+// Returns { scanned, inserted, skipped, cursorReset }.
 export async function crawlAgentAttestations({ agentAsset, network, ownerWallet, limit = 200 }) {
 	const conn = solanaConnection({ url: RPC[network] || RPC.devnet, commitment: 'confirmed' });
 	const agentKey = new PublicKey(agentAsset);
@@ -114,14 +143,18 @@ export async function crawlAgentAttestations({ agentAsset, network, ownerWallet,
 	`;
 	const until = cursor?.last_signature || undefined;
 
-	const sigs = await conn.getSignaturesForAddress(agentKey, { limit, until });
+	const { sigs, cursorReset } = await signaturesSinceCursor(conn, agentKey, limit, until);
 	if (sigs.length === 0) {
+		// A reset cursor must NOT be written back: re-storing the pruned signature
+		// would re-arm the exact stall this recovery exists to clear.
+		const keep = cursorReset ? null : until || null;
 		await sql`
 			insert into solana_attestations_cursor (agent_asset, network, last_signature, last_indexed_at)
-			values (${agentAsset}, ${network}, ${until || null}, now())
-			on conflict (agent_asset) do update set last_indexed_at = now()
+			values (${agentAsset}, ${network}, ${keep}, now())
+			on conflict (agent_asset) do update
+				set last_signature = excluded.last_signature, last_indexed_at = now()
 		`;
-		return { scanned: 0, inserted: 0, skipped: 0 };
+		return { scanned: 0, inserted: 0, skipped: 0, cursorReset };
 	}
 
 	const txs = await conn.getTransactions(
@@ -182,7 +215,7 @@ export async function crawlAgentAttestations({ agentAsset, network, ownerWallet,
 			set last_signature = excluded.last_signature, last_indexed_at = now()
 	`;
 
-	return { scanned: sigs.length, inserted, skipped };
+	return { scanned: sigs.length, inserted, skipped, cursorReset };
 }
 
 // Verify rules — applied at index time, can be re-run.

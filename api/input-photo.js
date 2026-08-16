@@ -136,7 +136,9 @@ export default wrap(async (req, res) => {
 	};
 
 	// Self-call /api/forge — keeps generation logic in one place.
-	const forgeOrigin = env.APP_ORIGIN || 'http://localhost:3000';
+	// env.APP_ORIGIN always resolves (api/_lib/env.js falls back to the canonical
+	// origin), so this self-call lands on the deployment's own /api/forge.
+	const forgeOrigin = env.APP_ORIGIN;
 	let forgeResp;
 	try {
 		forgeResp = await fetch(`${forgeOrigin}/api/forge`, {
@@ -149,7 +151,7 @@ export default wrap(async (req, res) => {
 			},
 			body: JSON.stringify(forgeBody),
 		});
-	} catch (e) {
+	} catch {
 		return error(res, 502, 'generation_unreachable',
 			'Could not reach the generation service. Please try again.');
 	}

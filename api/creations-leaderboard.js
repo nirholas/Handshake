@@ -1,5 +1,5 @@
 /**
- * Creator marketplace leaderboards (roadmap prompt 09) — the "make discovery
+ * Creator marketplace leaderboards (roadmap prompt 09): the "make discovery
  * feel alive" surface for the /creations gallery.
  *
  *   GET /api/creations-leaderboard
@@ -7,16 +7,16 @@
  *
  * Two REAL, queried rankings, no synthetic scores:
  *   - topRemixedAssets: the most-remixed published forge_creations, platform-
- *     wide — a live count of child derivatives (api/_lib/forge-store.js
+ *     wide, a live count of child derivatives (api/_lib/forge-store.js
  *     listMostRemixed). Same data the /creations gallery's "Trending" sort
  *     reads from api/remix-feed.js?action=trending; this endpoint additionally
  *     bundles the creator leaderboard in one round trip for the gallery page.
  *   - topCreators: agents ranked by how much OTHER creators built on their
- *     minted 3D work — a real count of tokenized_3d_assets rows naming one of
+ *     minted 3D work, a real count of tokenized_3d_assets rows naming one of
  *     theirs as parent_mint, plus the real on-chain USDC royalty earned
  *     (api/_lib/tokenized-launches.js queryTopCreators). This is the only
  *     creator surface with a public, on-chain identity (agent_identities +
- *     its ERC-8004 registration) to link a leaderboard entry to — the
+ *     its ERC-8004 registration) to link a leaderboard entry to: the
  *     forge_creations client_key is intentionally anonymous.
  *
  * Free, public, cached briefly at the edge. $THREE-policy clean: no coin

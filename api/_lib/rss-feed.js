@@ -1,7 +1,7 @@
 // Build an RSS 2.0 feed for HackerNoon's "Auto Import" ingester (also valid
 // for any standard reader). Two sources:
-//   - curated: data/rss/items.json (default — hand-edited, full editorial control)
-//   - archive: data/archives/*.json (scraped X posts — fallback / mirror mode)
+//   - curated: data/rss/items.json (default, hand-edited, full editorial control)
+//   - archive: data/archives/*.json (scraped X posts, fallback / mirror mode)
 
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';

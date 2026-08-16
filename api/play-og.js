@@ -12,6 +12,7 @@
 // we run as a plain Vercel function and bridge the Web Response → Node
 // ServerResponse, the same pattern proven in api/demo/coin/og.js.
 import { ImageResponse } from '@vercel/og';
+import { method } from './_lib/http.js';
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -193,6 +194,10 @@ export default async function handler(req, res) {
     res.end();
     return;
   }
+  // A share card is a GET surface. Without this gate any verb (POST, DELETE)
+  // drove a full satori render, so an unthrottled write-shaped request could
+  // burn image-render CPU on a route that never accepts writes.
+  if (!method(req, res, ['GET'])) return;
 
   const url = new URL(req.url, 'http://x');
   const origin = originOf(req);

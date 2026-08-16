@@ -115,7 +115,21 @@ async function pollJob(req, res, jobId) {
 		return unconfigured(res);
 	}
 
-	const result = await provider.status(jobId);
+	// Poll is an outbound call to the worker, so it gets the same boundary guard
+	// as submit. Without it an upstream fault escapes to wrap() as a 500, and
+	// because clients poll every couple of seconds one worker outage pages ops
+	// once per poll per client instead of once. A 502 with no `status` field
+	// leaves the client's poll loop retrying, which is what a transient fault
+	// deserves.
+	let result;
+	try {
+		result = await provider.status(jobId);
+	} catch (err) {
+		return json(res, 502, {
+			error: 'segment_status_failed',
+			message: err?.message || 'Could not read the segmentation job.',
+		});
+	}
 	return json(res, 200, {
 		job_id: jobId,
 		status: result.status,

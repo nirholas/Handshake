@@ -102,12 +102,32 @@ async function handleGet(req, res, userId) {
 	});
 }
 
+// Every string on this path is caller-supplied and ends up inside an LLM prompt
+// (directClip drives llmComplete), so each one is length-clamped at the
+// boundary. Unclamped, a single anonymous POST could push a megabyte of text
+// through the whole provider chain. The GET path needs none of this: its agent
+// name and trade both come from our own tables.
+const BODY_MAX_BYTES = 8_000;
+
+function clampText(v, max) {
+	if (typeof v !== 'string') return null;
+	const s = v.trim();
+	return s ? s.slice(0, max) : null;
+}
+
 async function handlePost(req, res, userId) {
 	let body;
-	try { body = await readJson(req); } catch { return error(res, 400, 'invalid_json', 'Body must be JSON.'); }
+	try {
+		body = await readJson(req, BODY_MAX_BYTES);
+	} catch (err) {
+		if (err?.status === 413) {
+			return error(res, 413, 'body_too_large', `Body must be under ${BODY_MAX_BYTES} bytes.`);
+		}
+		return error(res, 400, 'invalid_json', 'Body must be JSON.');
+	}
 
 	const trade = body?.trade;
-	if (!trade || typeof trade !== 'object') {
+	if (!trade || typeof trade !== 'object' || Array.isArray(trade)) {
 		return error(res, 400, 'invalid_trade', 'trade object is required (symbol, multiple or realized_pnl_sol, etc.).');
 	}
 	// Accept a raw position row too, normalize either shape.
@@ -116,11 +136,12 @@ async function handlePost(req, res, userId) {
 		: normalizeTrade(trade);
 
 	const surface = SURFACES.has(body?.surface) ? body.surface : 'feed';
+	const copiedByCount = Math.max(0, Math.min(1e9, Math.trunc(Number(body?.copied_by_count)) || 0));
 	const clip = await directClip({
-		agentName: body?.agent_name || 'the agent',
-		avatarStyle: body?.avatar_style || null,
+		agentName: clampText(body?.agent_name, 80) || 'the agent',
+		avatarStyle: clampText(body?.avatar_style, 40),
 		trade: shaped,
-		copiedByCount: Number(body?.copied_by_count) || 0,
+		copiedByCount,
 		surface,
 		userId,
 	});
@@ -129,23 +150,27 @@ async function handlePost(req, res, userId) {
 }
 
 function normalizeTrade(t) {
-	const num = (v) => (v == null || v === '' ? null : Number(v));
+	const num = (v) => {
+		if (v == null || v === '') return null;
+		const n = Number(v);
+		return Number.isFinite(n) ? n : null;
+	};
 	const pnl = num(t.realized_pnl_sol ?? t.realized_pnl_quote);
 	const pct = num(t.pnl_pct);
 	return {
-		mint: t.mint || null,
-		symbol: t.symbol || null,
-		name: t.name || null,
+		mint: clampText(t.mint, 64),
+		symbol: clampText(t.symbol, 32),
+		name: clampText(t.name, 80),
 		multiple: num(t.multiple),
 		pnl_pct: pct,
 		entry_sol: num(t.entry_sol),
 		exit_sol: num(t.exit_sol),
 		realized_pnl_sol: pnl,
 		hold_min: num(t.hold_min),
-		exit_reason: t.exit_reason || null,
+		exit_reason: clampText(t.exit_reason, 40),
 		quote_symbol: 'SOL',
 		is_win: pnl != null ? pnl >= 0 : (pct != null ? pct >= 0 : null),
-		sell_sig: t.sell_sig || null,
+		sell_sig: clampText(t.sell_sig, 100),
 	};
 }
 

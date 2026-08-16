@@ -22,7 +22,7 @@ import {
 	planStatusChange,
 } from './_lib/recurring.js';
 
-// Whitelisted token-out symbols — runtime operator config, never hardcoded
+// Whitelisted token-out symbols, runtime operator config, never hardcoded
 // tickers. DCA_ALLOWED_TOKEN_OUT is a comma-separated symbol list; when unset
 // or empty, strategy creation is rejected until the operator configures it.
 function allowedTokenOutSymbols() {
@@ -34,7 +34,7 @@ function allowedTokenOutSymbols() {
 	);
 }
 
-// Default chain for new strategies — operator config (DCA_CHAIN_ID), never a
+// Default chain for new strategies, operator config (DCA_CHAIN_ID), never a
 // hardcoded network. Required when the request body omits chain_id.
 function defaultChainId() {
 	const parsed = parseInt(process.env.DCA_CHAIN_ID || '', 10);
@@ -335,7 +335,7 @@ export default wrap(async (req, res) => {
 			res,
 			400,
 			'not_configured',
-			'DCA token-out whitelist is not configured — set DCA_ALLOWED_TOKEN_OUT (comma-separated symbols)',
+			'DCA token-out whitelist is not configured. Set DCA_ALLOWED_TOKEN_OUT (comma-separated symbols).',
 		);
 	}
 	if (!allowedTokenOut.has(body.token_out_symbol)) {
@@ -353,7 +353,7 @@ export default wrap(async (req, res) => {
 			res,
 			400,
 			'not_configured',
-			'chain_id is required — pass it in the body or set DCA_CHAIN_ID',
+			'chain_id is required. Pass it in the body or set DCA_CHAIN_ID.',
 		);
 	}
 

@@ -25,7 +25,22 @@ export const def = {
 	async handler(args) {
 		const id = String(args?.id ?? '').trim();
 		if (!id) throw Object.assign(new Error('id is required.'), { code: 'invalid_input', status: 400 });
-		const data = await apiRequest('/api/loom', { query: { c: id } });
+		let data;
+		try {
+			data = await apiRequest('/api/loom', { query: { c: id } });
+		} catch (err) {
+			// The gallery answers an unknown id with a 404, which the HTTP layer
+			// normalizes to the generic `upstream_error`. Re-type it as the
+			// `not_found` this tool documents, so a client can branch on "no such
+			// creation" without string-matching a message.
+			if (err?.status === 404) {
+				throw Object.assign(new Error(`No Loom creation found with id "${id}".`), {
+					code: 'not_found',
+					status: 404,
+				});
+			}
+			throw err;
+		}
 		const creation = decorateCreation(data?.creation);
 		if (!creation) {
 			throw Object.assign(new Error(`No Loom creation found with id "${id}".`), { code: 'not_found', status: 404 });

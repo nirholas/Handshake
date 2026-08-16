@@ -18,6 +18,7 @@
 // hour per variant rather than per crawl.
 
 import { ImageResponse } from '@vercel/og';
+import { method } from './_lib/http.js';
 import { TOKEN_MINT as THREE_MINT } from './_lib/token/config.js';
 import { fetchTokenMarketData } from './_lib/market/token-market.js';
 import { threeHolderBalances } from './_lib/coin/three-holders.js';
@@ -221,12 +222,10 @@ export default async function handler(req, res) {
 		res.end();
 		return;
 	}
-	if (req.method !== 'GET') {
-		res.statusCode = 405;
-		res.setHeader('allow', 'GET, OPTIONS');
-		res.end('method not allowed');
-		return;
-	}
+	// A bare `res.end('method not allowed')` sent an untyped text body that
+	// consumers sniffed as HTML; every other handler here answers a rejected
+	// method with the shared JSON error shape.
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, `http://${req.headers.host || 'x'}`);
 	const wallet = (url.searchParams.get('wallet') || '').trim();

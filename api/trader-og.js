@@ -21,6 +21,8 @@
 import { cors, wrap } from './_lib/http.js';
 import { sql } from './_lib/db.js';
 import { isUuid } from './_lib/validate.js';
+import { fetchOgImage } from './_lib/og-avatar.js';
+import { env } from './_lib/env.js';
 
 const LAMPORTS  = 1e9;
 const CACHE     = 'public, max-age=120, s-maxage=900, stale-while-revalidate=60';
@@ -50,12 +52,13 @@ export default wrap(async (req, res) => {
 	const url         = new URL(req.url, `http://${req.headers.host || 'x'}`);
 	const agentId     = (url.searchParams.get('agent_id') || '').trim();
 	const walletParam = (url.searchParams.get('wallet') || '').trim();
+	const origin      = env.APP_ORIGIN || 'https://three.ws';
 	const wallet      = BASE58_RE.test(walletParam) ? walletParam
 		: (!isUuid(agentId) && BASE58_RE.test(agentId)) ? agentId
 		: '';
 
 	if (!isUuid(agentId) && !wallet) {
-		return fallback(res);
+		return fallback(res, origin);
 	}
 
 	// Unified card shape, filled by whichever identity we were given.
@@ -80,9 +83,9 @@ export default wrap(async (req, res) => {
 				where wallet = ${wallet}
 			`;
 		} catch {
-			return fallback(res);
+			return fallback(res, origin);
 		}
-		if (!rep) return fallback(res);
+		if (!rep) return fallback(res, origin);
 
 		name       = `${wallet.slice(0, 4)}…${wallet.slice(-4)}`;
 		initial    = wallet[0].toUpperCase();
@@ -104,7 +107,7 @@ export default wrap(async (req, res) => {
 				where id = ${agentId} and deleted_at is null
 				limit 1
 			`;
-			if (!agent) return fallback(res);
+			if (!agent) return fallback(res, origin);
 
 			[stats] = await sql`
 				select
@@ -117,7 +120,7 @@ export default wrap(async (req, res) => {
 				where agent_id = ${agentId} and network = 'mainnet'
 			`;
 		} catch {
-			return fallback(res);
+			return fallback(res, origin);
 		}
 
 		name       = trunc(agent.name || 'Agent', 28);
@@ -168,19 +171,9 @@ export default wrap(async (req, res) => {
 	const largeArcTrack = 1;
 	const largeArcFill  = sweepAngle > 180 ? 1 : 0;
 
-	// Fetch avatar if URL available (base64 embed)
-	let avatarData = null;
-	if (avatarUrl && avatarUrl.startsWith('http')) {
-		try {
-			const imgResp = await fetch(avatarUrl, { signal: AbortSignal.timeout(3000) });
-			if (imgResp.ok) {
-				const ct = imgResp.headers.get('content-type') || 'image/jpeg';
-				const ab = await imgResp.arrayBuffer();
-				const b64 = Buffer.from(ab).toString('base64');
-				avatarData = { ct, b64 };
-			}
-		} catch { /* non-fatal */ }
-	}
+	// Inline the portrait so the card is self-contained. A dead, slow, or
+	// oversized host degrades to the monogram below (see _lib/og-avatar.js).
+	const avatarData = await fetchOgImage(avatarUrl);
 
 	const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
 		width="1200" height="630" viewBox="0 0 1200 630">
@@ -246,7 +239,7 @@ export default wrap(async (req, res) => {
 	<!-- separator -->
 	<line x1="24" y1="282" x2="1176" y2="282" stroke="#1f2937" stroke-width="1"/>
 
-	<!-- recent trade placeholder hint -->
+	<!-- the standing claim under every number on this card -->
 	<text x="308" y="316" font-family="Inter,system-ui,sans-serif" font-size="14" fill="#374151">
 		Every number is traceable to its on-chain transaction.
 	</text>
@@ -276,9 +269,9 @@ function metricCard(x0, y0, label, value, color) {
 	</g>`;
 }
 
-function fallback(res) {
+function fallback(res, origin) {
 	res.statusCode = 302;
-	res.setHeader('location', 'https://three.ws/og-image.png');
+	res.setHeader('location', `${origin}/og-image.png`);
 	res.setHeader('cache-control', 'no-cache');
 	res.end();
 }

@@ -27,7 +27,7 @@ export default wrap(async (req, res) => {
 	// before being bridged into /mocap-studio.
 	const liveBodyMocapEnabled = /^(1|true|on)$/i.test((process.env.LIVE_BODY_MOCAP || '').trim());
 
-	// Enterprise SAML SSO — true when an IdP is wired (explicit cert + SSO URL,
+	// Enterprise SAML SSO, true when an IdP is wired (explicit cert + SSO URL,
 	// or a metadata URL to fetch them from). Drives the SSO button on /login.
 	// Cheap env-only check so this hot endpoint doesn't pull in the SAML lib.
 	const samlEnabled = Boolean(
@@ -47,7 +47,7 @@ export default wrap(async (req, res) => {
 		samlLabel: process.env.SAML_BUTTON_LABEL || 'Single sign-on (SSO)',
 		features: {
 			// avatarReconstruct is always true: BYOK providers (Meshy, Tripo) are
-			// always available — the selfie page handles key entry inline when the
+			// always available, and the selfie page handles key entry inline when the
 			// platform backend isn't configured. The reconstruct endpoint returns
 			// { code: 'regen_needs_byok' } rather than 501 in that case.
 			avatarReconstruct: true,

@@ -12,7 +12,9 @@
 //                                  first-time visitor's feed use.
 //   ?limit=…    (1..50, default 30)
 //   ?before=<iso timestamp>     — cursor for the next page (pass the last
-//                                  item's created_at back for infinite scroll)
+//                                  item's created_at back for infinite scroll).
+//                                  A value that is not a parseable timestamp is
+//                                  rejected with 400 validation_error.
 //
 // Every item: { kind, id, created_at, actor{username,display_name,avatar_url},
 //               title, subtitle?, href, image?, external?, isRemix?, isVariant? }
@@ -58,12 +60,21 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const scope = url.searchParams.get('scope') === 'all' ? 'all' : 'following';
 	const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 30));
-	const before = (url.searchParams.get('before') || '').trim() || undefined;
 	const perKind = limit;
 	const followPerKind = Math.max(3, Math.ceil(limit / 4));
 
 	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
+
+	// The cursor is compared against `created_at` inside every kind's query, so a
+	// value Postgres cannot cast to a timestamptz aborts the whole fan-out and
+	// surfaces as a 500 on what is really a malformed request. Validate it here
+	// and hand the queries a normalized ISO string.
+	const beforeParam = (url.searchParams.get('before') || '').trim();
+	if (beforeParam && !Number.isFinite(Date.parse(beforeParam))) {
+		return error(res, 400, 'validation_error', 'before must be an ISO 8601 timestamp');
+	}
+	const before = beforeParam ? new Date(beforeParam).toISOString() : undefined;
 
 	const viewer = await getSessionUser(req).catch(() => null);
 	if (scope === 'following' && !viewer) {
@@ -244,6 +255,7 @@ export default wrap(async (req, res) => {
 			from user_follows f
 			join users uf on uf.id = f.follower_id and uf.deleted_at is null and uf.username is not null
 			join users ut on ut.id = f.following_id and ut.deleted_at is null and ut.username is not null
+			where true
 			  ${before ? sql`and f.created_at < ${before}` : sql``}
 			order by f.created_at desc
 			limit ${followPerKind}

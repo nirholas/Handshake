@@ -40,9 +40,23 @@ export function createNames(options = {}) {
 			throw new ThreeWsError('resolve() needs a non-empty name.', { code: 'invalid_input' });
 		}
 		if (ETH_RE.test(trimmed)) {
-			const res = await request(`/api/agents/ens/${encodeURIComponent(trimmed.toLowerCase())}`, {
-				signal: opts.signal,
-			});
+			const lower = trimmed.toLowerCase();
+			let res;
+			try {
+				res = await request(`/api/agents/ens/${encodeURIComponent(lower)}`, { signal: opts.signal });
+			} catch (err) {
+				// An unregistered `.eth` is a routine answer, not a fault: the ENS
+				// endpoint reports it as a 404 while the `.sol` lane reports the same
+				// miss as `resolved: false` at 200. Normalize here so one `resolve()`
+				// has one contract across both registries, and a caller never has to
+				// try/catch to ask "does this name exist".
+				if (err?.status === 404 && err?.code === 'not_found') {
+					// `raw` stays the untouched wire body, here the 404 envelope, so a
+					// caller can still see exactly what the registry said.
+					return { ...shapeEns({ name: lower }), raw: err.body ?? null };
+				}
+				throw err;
+			}
 			return shapeEns(res);
 		}
 		if (!SOL_NAME_RE.test(trimmed)) {

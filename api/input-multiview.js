@@ -1,7 +1,7 @@
 /**
  * POST /api/input-multiview — multi-image validation + 3D reconstruction.
  *
- * Accepts 2–4 photos of an object from different angles, validates each with
+ * Accepts 2 to 6 photos of an object from different angles, validates each with
  * vision (clear subject? in focus? same object?), then submits them to
  * /api/forge as a multi-view reconstruction job.  The validation step catches
  * mismatched images, blank uploads, and text screenshots before burning a
@@ -16,7 +16,7 @@
  *   POST /api/input-multiview
  *   Content-Type: application/json
  *   {
- *     image_urls:       string[],   // 2–4 public https URLs (required)
+ *     image_urls:       string[],   // 2 to 6 public https URLs (required)
  *     storage_keys?:    string[],   // R2 keys from /api/forge-upload (for transient delete)
  *     prompt?:          string,     // optional guidance text (max 1000 chars)
  *     tier?:            string,     // "draft" | "standard" | "high"
@@ -161,7 +161,9 @@ export default wrap(async (req, res) => {
 		skip_validation: true,
 	};
 
-	const forgeOrigin = env.APP_ORIGIN || 'http://localhost:3000';
+	// env.APP_ORIGIN always resolves (api/_lib/env.js falls back to the canonical
+	// origin), so this self-call lands on the deployment's own /api/forge.
+	const forgeOrigin = env.APP_ORIGIN;
 	let forgeResp;
 	try {
 		forgeResp = await fetch(`${forgeOrigin}/api/forge`, {
@@ -173,7 +175,7 @@ export default wrap(async (req, res) => {
 			},
 			body: JSON.stringify(forgeBody),
 		});
-	} catch (e) {
+	} catch {
 		return error(res, 502, 'generation_unreachable',
 			'Could not reach the generation service. Please try again.');
 	}

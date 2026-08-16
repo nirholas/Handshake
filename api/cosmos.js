@@ -1,19 +1,19 @@
 /**
- * /api/cosmos — text → animated WORLD video on the free NVIDIA Cosmos lane.
+ * /api/cosmos: text to an animated WORLD video on the free NVIDIA Cosmos lane.
  *
  *   POST /api/cosmos  { prompt: string, seed?: number }
- *     → 202 { job_id, status, eta_seconds }            (async — poll for the clip)
+ *     → 202 { job_id, status, eta_seconds }            (async, poll for the clip)
  *     → 200 { status:'done', video_url }               (rare synchronous completion)
  *
  *   GET  /api/cosmos?job=<id>
  *     → { job_id, status, video_url?, error? }
  *
  * Cosmos is NVIDIA's World Foundation Model family. The Text2World predict model
- * renders a short photoreal video of a world from a prompt — we play it as a
+ * renders a short photoreal video of a world from a prompt, and we play it as a
  * living backdrop behind a 3D avatar (see /cosmos). The job runs on NVIDIA's NVCF
  * async gateway: submit returns a request id, we hand it back as job_id, and the
  * GET poll asks NVCF for status and (on completion) persists the MP4 to R2,
- * returning a durable URL. There is no server-side job store — the NVCF request
+ * returning a durable URL. There is no server-side job store: the NVCF request
  * id IS the durable handle, exactly like the TRELLIS text→3D lane.
  *
  * Reuses the platform NVIDIA_API_KEY (free NIM tier). When it is absent the lane
@@ -26,7 +26,7 @@ import { createNvidiaCosmosProvider, nvidiaCosmosConfigured } from './_providers
 
 const JOB_ID_RE = /^[A-Za-z0-9_-]{20,64}$/;
 // Cosmos predict renders ~5 s of 1280×704 @ 24fps video; on the shared free tier
-// that typically lands in 60–120 s. Surfaced to the client so the loading state
+// that typically lands in 60-120 s. Surfaced to the client so the loading state
 // can set honest expectations instead of an open-ended spinner.
 const ETA_SECONDS = 90;
 
@@ -50,7 +50,7 @@ async function startJob(req, res) {
 	if (prompt.length < 3 || prompt.length > 300) {
 		return json(res, 400, {
 			error: 'invalid_prompt',
-			message: 'Describe the world in 3–300 characters (e.g. "a neon Tokyo street in the rain at night").',
+			message: 'Describe the world in 3-300 characters (e.g. "a neon Tokyo street in the rain at night").',
 		});
 	}
 	const seed = Number.isFinite(Number(body?.seed)) ? Math.trunc(Number(body.seed)) : undefined;
@@ -64,7 +64,7 @@ async function startJob(req, res) {
 
 	try {
 		const result = await provider.textToWorld({ prompt, seed });
-		// Synchronous completion (uncommon for video) — hand back the clip directly.
+		// Synchronous completion (uncommon for video), hand back the clip directly.
 		if (result.resultVideoUrl) {
 			return json(res, 200, { status: 'done', video_url: result.resultVideoUrl });
 		}

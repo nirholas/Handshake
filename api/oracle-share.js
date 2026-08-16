@@ -18,7 +18,7 @@
  */
 
 import { sql } from './_lib/db.js';
-import { cors, wrap } from './_lib/http.js';
+import { cors, method, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { terminalLinks } from '../src/shared/trading-terminals.js';
 import { hitRateFor } from './_lib/oracle/conviction.js';
@@ -29,6 +29,9 @@ const PUMP_CURVE_INITIAL_REAL_TOKENS = 793_100_000 * 1e6; // matches api/_lib/or
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// A server-rendered page is a GET surface; a POST used to render the whole
+	// page (DB read + a live pump.fun fetch) exactly like a GET.
+	if (!method(req, res, ['GET'])) return;
 
 	const url    = new URL(req.url, 'http://x');
 	const mint   = (url.searchParams.get('mint') || '').trim();

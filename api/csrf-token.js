@@ -1,4 +1,4 @@
-// GET /api/csrf-token — issue a single-use CSRF token bound to the session user.
+// GET /api/csrf-token: issue a single-use CSRF token bound to the session user.
 import { authenticateBearer, extractBearer, getSessionUser } from './_lib/auth.js';
 import { cors, error, json, method, wrap } from './_lib/http.js';
 import { issueCsrf } from './_lib/csrf.js';

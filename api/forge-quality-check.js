@@ -45,7 +45,9 @@ export default wrap(async function handler(req, res) {
 
 	// Capability probe - lets a UI decide whether to surface a "check quality"
 	// affordance, and reports which lane will serve.
-	if (req.method === 'GET' || req.method === 'HEAD') {
+	// method() above already normalized an incoming HEAD to GET, so this one
+	// check covers both verbs.
+	if (req.method === 'GET') {
 		return json(
 			res,
 			200,

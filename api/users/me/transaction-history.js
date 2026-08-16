@@ -3,9 +3,9 @@
  * Returns the authenticated caller's skill purchase/sale history.
  *
  * Query params:
- *   ?role=buyer  — only purchases where the caller bought (default when role omitted)
+ *   ?role=buyer  : only purchases where the caller bought
  *   ?role=seller — only sales where the caller's agent was the seller
- *   ?role=all    — both, merged and sorted by date desc
+ *   ?role=all    : both, merged and sorted by date desc (the default)
  *   ?limit=50    — number of rows (max 200, default 50)
  *   ?offset=0    — pagination offset
  *
@@ -117,14 +117,10 @@ export default wrap(async (req, res) => {
 		return tb - ta;
 	});
 
-	// Deduplicate (same purchase can appear as both buyer and seller if the user
-	// bought their own agent's skill — extremely rare but handle cleanly)
-	const seen = new Set();
-	const deduped = [];
-	for (const row of all) {
-		const key = `${row.role}:${row.id}`;
-		if (!seen.has(key)) { seen.add(key); deduped.push(row); }
-	}
+	// A user who bought a skill on their own agent legitimately appears once per
+	// leg (one 'buyer' row, one 'seller' row): the two rows report different
+	// money (what they paid vs. what they netted), so both are kept and the
+	// merge above is the whole story.
 
 	const toUnits = (atomics, decimals) => {
 		const n = Number(atomics);
@@ -132,7 +128,7 @@ export default wrap(async (req, res) => {
 		return (n / 10 ** decimals).toFixed(2);
 	};
 
-	const transactions = deduped.slice(0, limit).map((row) => {
+	const transactions = all.slice(0, limit).map((row) => {
 		const decimals = Number(row.mint_decimals ?? 6) || 6;
 		// 'tipped' rows settled for a different amount than the quote — report what
 		// actually moved on-chain, not the original ask. Everything else uses amount.

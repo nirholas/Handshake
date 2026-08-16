@@ -9,6 +9,7 @@ import { settlePayment, encodePaymentResponseHeader } from './_lib/x402-spec.js'
 import { peekCalledTool } from './_lib/mcp-dispatch.js';
 import { isDiscoveryOnlyBatch } from './_lib/mcp-batch-price.js';
 import { PROTOCOL_VERSION, dispatch, isPublicTool } from './_mcpagent/dispatch.js';
+import { AGENT_CHALLENGE } from './_mcpagent/discovery.js';
 import {
 	send401,
 	sendJsonRpcError,
@@ -19,10 +20,18 @@ import {
 } from './_mcp/auth.js';
 import { sendX402Error, reservePaymentProof } from './_mcp/payments.js';
 
+// Every 402/401 challenge this server issues is scoped to its OWN resource.
+// Passing neither resourcePath nor challenge left the Agent wallet advertising
+// https://three.ws/api/mcp and the main server's description to facilitators,
+// and quoted that same wrong resource inside every accepts[] entry, so a paying
+// agent signed a payment scoped to an endpoint it never called.
+const RESOURCE_PATH = '/api/mcp-agent';
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,POST,DELETE,OPTIONS', origins: '*' })) return;
 
-	if (req.method === 'GET' || req.method === 'HEAD') return handleSse(req, res);
+	if (req.method === 'GET' || req.method === 'HEAD')
+		return handleSse(req, res, { resourcePath: RESOURCE_PATH, challenge: AGENT_CHALLENGE });
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
@@ -35,6 +44,8 @@ export default wrap(async (req, res) => {
 	const { toolName } = peekCalledTool(body);
 
 	const result = await authenticateRequest(req, res, {
+		resourcePath: RESOURCE_PATH,
+		challenge: AGENT_CHALLENGE,
 		allowFree:
 			Boolean(toolName && isPublicTool(toolName)) ||
 			(isDiscoveryOnlyBatch(body) && !isMcpProtocolClient(req)),
@@ -64,7 +75,7 @@ export default wrap(async (req, res) => {
 	let releaseProof = async () => {};
 	if (x402Ctx) {
 		const guard = await reservePaymentProof(
-			'/api/mcp-agent',
+			RESOURCE_PATH,
 			// authenticateRequest accepts BOTH payment headers (v1 X-PAYMENT and
 			// the v2 payment-signature dialect); the guard must key on whichever
 			// one carried the proof or a v2 replay slips past it unclaimed.

@@ -25,6 +25,8 @@ export const def = {
 		'A null P&L field (with `pnl_source: null`) means three.ws has no trade history for ' +
 		'that wallet in the window, which is an honest "unknown", NOT a flat or losing record: ' +
 		'never report it as zero profit. `has_activity:false` means no holdings and no trades. ' +
+		'If the holdings provider is down or rate-limited the call fails with `upstream_unavailable` ' +
+		'rather than answering with an empty card, so an outage is never reported as a quiet wallet. ' +
 		'Read-only live data.',
 	inputSchema: {
 		wallet: z
@@ -36,9 +38,22 @@ export const def = {
 		const wallet = String(args?.wallet ?? '').trim();
 		const data = await apiRequest('/api/kol/wallets', { query: { addresses: wallet } });
 		// The proxy returns one row per requested address, and omits an address whose
-		// upstream fetch failed rather than inventing a row for it.
+		// upstream fetch failed rather than inventing a row for it. A wallet with no
+		// holdings still gets a row (zeroed holdings, null P&L), so a MISSING row means
+		// the holdings provider failed, not that the wallet is quiet. Say so: shaping
+		// that gap into an all-null card would render an outage as "no activity", the
+		// exact confusion the omission upstream exists to prevent.
 		const rows = Array.isArray(data?.data) ? data.data : [];
-		const row = rows.find((r) => r?.address === wallet) ?? rows[0] ?? {};
+		const row = rows.find((r) => r?.address === wallet);
+		if (!row) {
+			throw Object.assign(
+				new Error(
+					`three.ws returned no portfolio row for ${wallet}: the holdings provider is ` +
+						'unavailable or rate-limited right now. That is an outage, not an empty wallet. Retry shortly.',
+				),
+				{ code: 'upstream_unavailable', status: 503 },
+			);
+		}
 
 		const holdings = row.holdings ?? 0;
 		const totalTrades = row.totalTrades ?? null;

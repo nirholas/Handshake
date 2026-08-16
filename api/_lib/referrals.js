@@ -162,7 +162,7 @@ export async function getReferralCodeAvailability(userId, desired) {
 export async function setReferralCode(userId, desired) {
   const code = normalizeReferralCode(desired);
   if (!code) {
-    throw new ReferralCodeError('invalid', 400, `Use ${REFERRAL_CODE_MIN_LEN}–${REFERRAL_CODE_MAX_LEN} letters or numbers (no spaces or symbols).`);
+    throw new ReferralCodeError('invalid', 400, `Use ${REFERRAL_CODE_MIN_LEN} to ${REFERRAL_CODE_MAX_LEN} letters or numbers (no spaces or symbols).`);
   }
   if (isReservedReferralCode(code)) {
     throw new ReferralCodeError('reserved', 409, 'That code is reserved. Pick another.');

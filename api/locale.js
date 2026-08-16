@@ -132,7 +132,11 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 	const code = (url.searchParams.get('code') || '').trim();
 	if (!allowedCodes().has(code)) {
-		return error(res, 400, 'unknown_locale', `"${code}" is not a published locale. See /locales/manifest.json.`);
+		// Echo back only enough of the rejected value to identify it. A locale
+		// code is at most a handful of characters, so anything longer is a
+		// probe, and reflecting it whole just turns a 400 into an amplifier.
+		const shown = code.length > 24 ? `${code.slice(0, 24)}...` : code;
+		return error(res, 400, 'unknown_locale', `"${shown}" is not a published locale. See /locales/manifest.json.`);
 	}
 
 	// Normalize before anything else touches it, so every caller asking for the

@@ -15,7 +15,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { Bazaar } from './_lib/x402/bazaar-client.js';
 
-// ── Wallet imports (lazy — only when live mode is active) ────────────────────
+// ── Wallet imports (lazy, only when live mode is active) ─────────────────────
 async function walletDeps() {
 	const mod = await import('./_lib/avatar-wallet.js');
 	return mod;
@@ -58,14 +58,14 @@ async function fetchMarketBriefing() {
 		};
 	} catch {
 		// No invented market data: a GeckoTerminal failure degrades to an explicit
-		// "unavailable" signal handled by the caller — never fabricated numbers.
+		// "unavailable" signal handled by the caller, never fabricated numbers.
 		return null;
 	}
 }
 
 // The service NOVA actually buys from ORACLE: three.ws's own live Solana market
 // briefing, delivered by fetchMarketBriefing() below. This is the real product
-// the demo transacts — not a fabricated listing — so it is always present.
+// the demo transacts (not a fabricated listing), so it is always present.
 const THREEWS_BRIEFING_SERVICE = {
 	name: 'Solana market briefing (live)',
 	resource: 'https://three.ws/api/demo-economy',
@@ -76,7 +76,7 @@ const THREEWS_BRIEFING_SERVICE = {
 // ── Bazaar service discovery ─────────────────────────────────────────────────
 // Returns the real three.ws briefing service (always) plus any live listings
 // pulled from the Coinbase x402 bazaar. If the bazaar is unreachable we say so
-// honestly via bazaarAvailable:false — we never invent competitor listings.
+// honestly via bazaarAvailable:false; we never invent competitor listings.
 async function discoverServices() {
 	try {
 		const bazaar = new Bazaar();
@@ -85,14 +85,14 @@ async function discoverServices() {
 			.map((r) => ({
 				name: r.description?.slice(0, 60) || r.resource?.split('/').pop() || 'Service',
 				resource: r.resource,
-				price: r.formattedPrice || r.price || '—',
+				price: r.formattedPrice || r.price || 'price not listed',
 				network: r.network || 'base',
 			}))
 			.filter((s) => s.resource && s.resource !== THREEWS_BRIEFING_SERVICE.resource)
 			.slice(0, 3);
 		return { services: [THREEWS_BRIEFING_SERVICE, ...listings], bazaarAvailable: true };
 	} catch {
-		// Live bazaar unreachable — degrade to an explicit "unavailable" signal.
+		// Live bazaar unreachable: degrade to an explicit "unavailable" signal.
 		// The demo still transacts the real three.ws briefing service.
 		return { services: [THREEWS_BRIEFING_SERVICE], bazaarAvailable: false };
 	}
@@ -142,7 +142,7 @@ export default wrap(async (req, res) => {
 	res.flushHeaders?.();
 
 	const pace = 900; // ms between narration beats
-	const DEMO_LAMPORTS = 1000; // 0.000001 SOL — ~$0.0002, trivially cheap
+	const DEMO_LAMPORTS = 1000; // 0.000001 SOL, ~$0.0002, trivially cheap
 
 	try {
 		// ── Step 1: Agents ready ─────────────────────────────────────────────
@@ -161,7 +161,7 @@ export default wrap(async (req, res) => {
 			label: 'Browsing x402 bazaar',
 			detail: bazaarAvailable
 				? 'NOVA is discovering available services on the Coinbase x402 network'
-				: 'Live bazaar unavailable — NOVA falls back to the three.ws briefing service',
+				: 'Live bazaar unavailable, so NOVA falls back to the three.ws briefing service',
 			icon: '🔍',
 		});
 		await sleep(pace * 0.7);
@@ -188,7 +188,7 @@ export default wrap(async (req, res) => {
 		});
 		await sleep(pace * 0.5);
 
-		// Attempt real transfer — authenticated callers only. Anonymous callers
+		// Attempt real transfer, authenticated callers only. Anonymous callers
 		// always take the explicit-simulation path (no SOL ever leaves the wallet).
 		let payment = null;
 		let sim = !authed;
@@ -300,7 +300,7 @@ export default wrap(async (req, res) => {
 			id: 'payment_confirmed',
 			label: sim ? 'Simulation complete' : 'On-chain confirmed',
 			detail: sim
-				? 'Simulated payment — no funds moved'
+				? 'Simulated payment, no funds moved'
 				: `${payment.amount_sol} SOL transferred · view on Solscan`,
 			icon: '⛓️',
 		});
@@ -326,13 +326,13 @@ export default wrap(async (req, res) => {
 				icon: '📺',
 			});
 		} else {
-			// Degraded: market data source did not respond — say so explicitly
+			// Degraded: market data source did not respond, so say so explicitly
 			// instead of inventing numbers.
 			sseWrite(res, 'content', { type: 'market_unavailable' });
 			sseWrite(res, 'step', {
 				id: 'done',
 				label: 'Market data unavailable',
-				detail: 'Live market data is unavailable right now — try again shortly',
+				detail: 'Live market data is unavailable right now. Try again shortly.',
 				icon: '📡',
 			});
 		}

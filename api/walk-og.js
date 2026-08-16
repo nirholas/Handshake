@@ -13,6 +13,7 @@
 
 import { getAvatar } from './_lib/avatars.js';
 import { cors, wrap } from './_lib/http.js';
+import { fetchOgImage } from './_lib/og-avatar.js';
 
 const CACHE = 'public, max-age=3600, s-maxage=86400';
 
@@ -27,14 +28,8 @@ export default wrap(async (req, res) => {
 	if (id) {
 		try {
 			const avatar = await getAvatar({ id });
-			if (avatar?.thumbnail_url) {
-				const r = await fetch(avatar.thumbnail_url, { signal: AbortSignal.timeout(6000) });
-				if (r.ok) {
-					const buf = await r.arrayBuffer();
-					const ct  = r.headers.get('content-type') || 'image/jpeg';
-					thumbDataUri = `data:${ct};base64,${Buffer.from(buf).toString('base64')}`;
-				}
-			}
+			const img = await fetchOgImage(avatar?.thumbnail_url, { timeoutMs: 6000 });
+			if (img) thumbDataUri = `data:${img.ct};base64,${img.b64}`;
 		} catch {
 			// degrade gracefully
 		}

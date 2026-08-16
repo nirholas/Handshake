@@ -194,8 +194,20 @@ async function handleUpdate(req, res, id) {
 		? await sql`SELECT id, display_name FROM users WHERE id = ${updated.author_id}`
 		: [null];
 	updated.author_display_name = author?.display_name ?? null;
-	updated.avg_rating = 0;
-	updated.rating_count = 0;
+
+	// Re-read the live aggregate. Hardcoding zeros here reported a freshly
+	// edited skill as unrated, and the marketplace detail view re-renders from
+	// this response, so an author editing a description watched their rating
+	// disappear until the next reload.
+	const [stats] = await sql`
+		SELECT
+			ROUND(COALESCE(AVG(rating), 0)::numeric, 1)::float AS avg_rating,
+			COUNT(rating)::int AS rating_count
+		FROM skill_ratings
+		WHERE skill_id = ${id}
+	`;
+	updated.avg_rating = stats?.avg_rating ?? 0;
+	updated.rating_count = stats?.rating_count ?? 0;
 
 	return json(res, 200, { skill: toSkill(updated) });
 }

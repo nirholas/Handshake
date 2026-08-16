@@ -17,6 +17,8 @@ import { PARENT_LABEL } from './_lib/threews-sns.js';
 
 const CACHE_OK = 'public, max-age=300, s-maxage=3600';
 const CACHE_404 = 'public, max-age=60';
+// A degraded card must never be the one a crawler keeps.
+const CACHE_DEGRADED = 'no-store';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -32,34 +34,50 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const [user] = await sql`
-		SELECT id, username, display_name
-		FROM users
-		WHERE lower(username) = ${raw} AND deleted_at IS NULL
-		LIMIT 1
-	`;
-	if (!user) {
-		return send(res, 404, CACHE_404, {
+	// This URL is what a crawler resolves for <meta og:image>. A thrown error here
+	// would answer an image request with a JSON error body and get the broken
+	// unfurl cached, so a database blip degrades to a real, uncached card of the
+	// handle we already know instead.
+	let user, claimRow, statRow;
+	try {
+		[user] = await sql`
+			SELECT id, username, display_name
+			FROM users
+			WHERE lower(username) = ${raw} AND deleted_at IS NULL
+			LIMIT 1
+		`;
+		if (!user) {
+			return send(res, 404, CACHE_404, {
+				handle: raw,
+				display: 'User not found',
+				subdomain: null,
+				stats: null,
+			});
+		}
+
+		[claimRow] = await sql`
+			SELECT label FROM user_subdomains
+			WHERE user_id = ${user.id} AND parent = ${PARENT_LABEL}
+			LIMIT 1
+		`;
+
+		// Lightweight stat strip, the same numbers the showcase shows.
+		[statRow] = await sql`
+			SELECT
+				(SELECT count(*) FROM avatars         WHERE owner_id = ${user.id} AND visibility = 'public' AND deleted_at IS NULL) AS avatars,
+				(SELECT count(*) FROM agent_identities WHERE user_id = ${user.id} AND is_public = true AND deleted_at IS NULL)        AS agents
+		`;
+	} catch (err) {
+		console.error('[u-og] profile lookup failed, serving the degraded card:', err?.message || err);
+		return send(res, 200, CACHE_DEGRADED, {
 			handle: raw,
-			display: 'User not found',
+			display: raw,
 			subdomain: null,
 			stats: null,
 		});
 	}
 
-	const [claimRow] = await sql`
-		SELECT label FROM user_subdomains
-		WHERE user_id = ${user.id} AND parent = ${PARENT_LABEL}
-		LIMIT 1
-	`;
 	const subdomain = claimRow ? `${claimRow.label}.${PARENT_LABEL}.sol` : null;
-
-	// Lightweight stat strip — same numbers the showcase shows.
-	const [statRow] = await sql`
-		SELECT
-			(SELECT count(*) FROM avatars         WHERE owner_id = ${user.id} AND visibility = 'public' AND deleted_at IS NULL) AS avatars,
-			(SELECT count(*) FROM agent_identities WHERE user_id = ${user.id} AND is_public = true AND deleted_at IS NULL)        AS agents
-	`;
 	const stats = {
 		avatars: Number(statRow?.avatars || 0),
 		agents: Number(statRow?.agents || 0),

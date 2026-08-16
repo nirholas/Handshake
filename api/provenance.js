@@ -14,13 +14,16 @@
  * authenticity for free. Anchoring (the paid write) lives in the MCP tool only.
  */
 
-import { cors, wrap } from './_lib/http.js';
+import { cors, method, wrap } from './_lib/http.js';
 import { toolDefs } from './_mcp3d/tools/provenance.js';
 
 const verifyTool = toolDefs.find((d) => d.name === 'verify_provenance');
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Verification is a read. The CORS preflight already advertises GET only;
+	// enforce it so a POST cannot drive a hash fetch off a body-less request.
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const src = url.searchParams.get('src') || url.searchParams.get('glb_url') || '';

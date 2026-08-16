@@ -11,7 +11,10 @@
  *
  * No connected X account → 409 not_connected with a connect_url the client can
  * route the user to (/api/auth/x/connect). The OAuth scope requested there
- * includes media.write so the upload is authorized.
+ * includes media.write so the upload is authorized. An X token that can no
+ * longer be refreshed (reauth_required) takes the same 409 + connect_url shape:
+ * it is the same recovery, and answering 401 there would collide with this
+ * endpoint's own auth_required and send a signed-in user to /login instead.
  */
 
 import { cors, method, wrap, error, json, readBody } from '../_lib/http.js';
@@ -22,7 +25,7 @@ import { publishTweet, XPostError, MAX_TWEET_LEN } from '../_lib/x-post.js';
 // X media ceilings we enforce up front so an oversized body fails fast with a
 // clear message instead of deep inside the chunked upload.
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB (X still image limit)
-const MAX_VIDEO_BYTES = 64 * 1024 * 1024; // 64 MB — generous for a ≤10s 1080p clip
+const MAX_VIDEO_BYTES = 64 * 1024 * 1024; // 64 MB, generous for a 10s 1080p clip
 const ALLOWED = {
 	'image/png': { kind: 'image', max: MAX_IMAGE_BYTES },
 	'image/jpeg': { kind: 'image', max: MAX_IMAGE_BYTES },
@@ -44,7 +47,7 @@ function captionFor(avatarId, override) {
 	const url = avatarId
 		? `three.ws/walk?avatar=${avatarId}`
 		: 'three.ws/walk';
-	return `I walked my avatar around three.ws — try yours: ${url}`;
+	return `I walked my avatar around three.ws. Try yours: ${url}`;
 }
 
 export default wrap(async (req, res) => {
@@ -99,10 +102,11 @@ export default wrap(async (req, res) => {
 	} catch (err) {
 		if (err instanceof XPostError) {
 			const extra = { ...err.extra };
-			if (err.code === 'not_connected') {
+			const needsConnect = err.code === 'not_connected' || err.code === 'reauth_required';
+			if (needsConnect) {
 				extra.connect_url = '/api/auth/x/connect';
 			}
-			return json(res, err.code === 'not_connected' ? 409 : err.status, {
+			return json(res, needsConnect ? 409 : err.status, {
 				error: err.code,
 				error_description: err.message,
 				...extra,

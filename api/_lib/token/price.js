@@ -103,10 +103,18 @@ export async function getTokenPriceUsd({ fresh = false } = {}) {
 
 /**
  * Quote a USD amount as a token amount at the current live price.
+ *
+ * Pass `price` when the caller already resolved one this request (the
+ * /api/token/price display path does): the quote is then computed against the
+ * exact price the caller reports back, instead of a second lookup that can
+ * land on the other side of the 30s cache boundary and hand the client a
+ * `token_amount` that does not match the `price_usd` printed beside it.
+ *
  * @param {number} usd  positive USD amount to convert
+ * @param {{ price?: { priceUsd: number, source: string, at: string } }} [opts]
  * @returns {Promise<{ usd: number, priceUsd: number, source: string, priceAt: string, tokenAmount: number, atomics: bigint }>}
  */
-export async function quoteTokenForUsd(usd) {
+export async function quoteTokenForUsd(usd, { price } = {}) {
 	const usdNum = Number(usd);
 	if (!Number.isFinite(usdNum) || usdNum <= 0) {
 		throw Object.assign(new Error('usd must be a positive number'), {
@@ -114,12 +122,24 @@ export async function quoteTokenForUsd(usd) {
 			code: 'bad_request',
 		});
 	}
-	const { priceUsd, source, at } = await getTokenPriceUsd();
+	const { priceUsd, source, at } = price ?? (await getTokenPriceUsd());
 	const tokenAmount = usdNum / priceUsd;
 	// Convert to atomics with BigInt to avoid float drift on large token counts:
 	// floor(tokenAmount * 10^decimals). We scale through micro-precision on the
 	// USD/price ratio so a sub-cent price still rounds correctly.
 	const scaled = Math.round(tokenAmount * Number(ATOMICS_PER_TOKEN));
+	// A sub-cent price divides a large USD figure into a token count whose
+	// atomics overflow the float64 range (usd 1e300 at $0.0017 scales past
+	// Number.MAX_VALUE), and `BigInt(Infinity)` is a RangeError, not a typed
+	// failure. Left unguarded that turned a client-supplied `?usd=` into an
+	// unhandled 500 with a Sentry capture and an ops alert per hit. Reject it
+	// here as the amount error it actually is, alongside the too-small guard.
+	if (!Number.isFinite(scaled)) {
+		throw Object.assign(new Error('quoted amount exceeds the representable range'), {
+			status: 422,
+			code: 'amount_too_large',
+		});
+	}
 	const atomics = BigInt(scaled);
 	if (atomics <= 0n) {
 		throw Object.assign(new Error('quoted amount rounds to zero at current price'), {

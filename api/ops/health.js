@@ -156,6 +156,15 @@ export const CRONS = [
 	{ id: 'coin-intel-observe', label: 'Coin intel observe' },
 	{ id: 'unstoppable-tick', label: 'Unstoppable agent tick' },
 	{ id: 'sketchfab-showcase', label: 'Sketchfab showcase' },
+	// Storage and job-recovery crons. Both write heartbeats already, but neither
+	// was surfaced here, so a stall was invisible until it showed up as a symptom
+	// somewhere else: db-retention is the only thing holding the Neon branch under
+	// its size cap (when it stops, every write-heavy cron latches into the
+	// storage-pressure skip), and reconstruct-sweep is what finalizes or reaps a
+	// reconstruct job whose worker callback never arrived (when it stops, avatars
+	// sit in 'rigging' forever).
+	{ id: 'db-retention', label: 'DB retention' },
+	{ id: 'reconstruct-sweep', label: 'Reconstruct sweep' },
 ].map((c) => {
 	const schedule = CRON_SCHEDULES.get(c.driven_by || c.id) || null;
 	return { ...c, schedule, stale_after_ms: deriveStaleAfterMs(schedule) };

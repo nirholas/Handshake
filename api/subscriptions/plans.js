@@ -3,8 +3,10 @@
  *
  * Routes (via vercel.json):
  *   GET    /api/subscriptions/plans?creator_id=  list active plans (public)
+ *   GET    /api/subscriptions/plans/:id          one plan (public if active, owner otherwise)
  *   POST   /api/subscriptions/plans              create plan (auth, max 3)
  *   PATCH  /api/subscriptions/plans/:id          update name/price/perks (auth, owner)
+ *   PUT    /api/subscriptions/plans/:id          alias of PATCH (the dashboard editor sends PUT)
  *   DELETE /api/subscriptions/plans/:id          soft-delete (auth, owner)
  */
 
@@ -36,17 +38,27 @@ const patchSchema = z.object({
 });
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,POST,PATCH,DELETE,OPTIONS', credentials: true })) return;
+	if (cors(req, res, { methods: 'GET,POST,PATCH,PUT,DELETE,OPTIONS', credentials: true })) return;
 
 	// Extract path param: /api/subscriptions/plans/:id
 	const url = req.url || '';
 	const pathMatch = url.match(/\/api\/subscriptions\/plans\/([^?/]+)/);
 	const planId = pathMatch ? pathMatch[1] : null;
 
-	if (req.method === 'GET') return handleList(req, res);
-	if (req.method === 'POST' && !planId) return handleCreate(req, res);
-	if (req.method === 'PATCH' && planId) return handlePatch(req, res, planId);
-	if (req.method === 'DELETE' && planId) return handleDelete(req, res, planId);
+	// HEAD must reach whatever GET reaches (RFC 9110 9.3.2); Node strips the body
+	// on the way out. Without this a HEAD probe matched no branch and fell through
+	// to the 405 below.
+	const verb = req.method === 'HEAD' ? 'GET' : req.method;
+
+	if (verb === 'GET' && planId) return handleGetOne(req, res, planId);
+	if (verb === 'GET') return handleList(req, res);
+	if (verb === 'POST' && !planId) return handleCreate(req, res);
+	// PUT is accepted alongside PATCH: the dashboard plan editor
+	// (src/dashboard-next/pages/monetize.js) saves an edit with PUT, and the body
+	// is a partial update either way. Without this the whole "edit tier" path
+	// answered 405 and the creator's change was silently lost.
+	if ((verb === 'PATCH' || verb === 'PUT') && planId) return handlePatch(req, res, planId);
+	if (verb === 'DELETE' && planId) return handleDelete(req, res, planId);
 
 	return error(res, 405, 'method_not_allowed', 'method not allowed');
 });
@@ -115,6 +127,32 @@ async function handleList(req, res) {
 	return json(res, 200, { plans: rows });
 }
 
+// Single plan by id. Active plans are public (they are what the marketplace
+// renders); a draft is visible only to its creator, matching the visibility rule
+// handleList applies to include_inactive.
+async function handleGetOne(req, res, planId) {
+	if (!isUuid(planId)) {
+		return error(res, 400, 'validation_error', 'plan id must be a valid UUID');
+	}
+
+	const ip = clientIp(req);
+	const rl = await limits.publicIp(ip);
+	if (!rl.success) return rateLimited(res, rl);
+
+	const [plan] = await sql`
+		SELECT id, creator_id, agent_id, name, price_usd, interval, perks, included_skills, active, created_at
+		FROM subscription_plans WHERE id = ${planId}
+	`;
+	if (!plan) return error(res, 404, 'not_found', 'plan not found');
+	if (!plan.active) {
+		const user = await getSessionUser(req);
+		if (!user || user.id !== plan.creator_id) {
+			return error(res, 404, 'not_found', 'plan not found');
+		}
+	}
+	return json(res, 200, { plan });
+}
+
 async function handleCreate(req, res) {
 	if (!method(req, res, ['POST'])) return;
 	const user = await getSessionUser(req);
@@ -159,12 +197,20 @@ async function handleCreate(req, res) {
 }
 
 async function handlePatch(req, res, planId) {
-	if (!method(req, res, ['PATCH'])) return;
+	if (!method(req, res, ['PATCH', 'PUT'])) return;
 	const user = await getSessionUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	// CSRF on state-changing session-cookie requests; bearer tokens are exempt.
 	if (!(await requireCsrf(req, res, user.id))) return;
+
+	// The id goes straight into a uuid comparison below, and Postgres answers a
+	// malformed one with 22P02, which surfaced as a 500 instead of telling the
+	// caller their id was wrong. Reject it here, as handleList already does for
+	// the creator_id/agent_id query params.
+	if (!isUuid(planId)) {
+		return error(res, 400, 'validation_error', 'plan id must be a valid UUID');
+	}
 
 	const body = parse(patchSchema, await readJson(req));
 
@@ -237,6 +283,10 @@ async function handleDelete(req, res, planId) {
 
 	// CSRF on state-changing session-cookie requests; bearer tokens are exempt.
 	if (!(await requireCsrf(req, res, user.id))) return;
+
+	if (!isUuid(planId)) {
+		return error(res, 400, 'validation_error', 'plan id must be a valid UUID');
+	}
 
 	const [plan] = await sql`
 		UPDATE subscription_plans

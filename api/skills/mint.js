@@ -12,7 +12,7 @@
  * proven by the existing confirmation pipeline (api/_lib/purchase-confirm.js),
  * which locates the tx on-chain and asserts the correct amount reached the
  * agent's payout wallet. If the purchase is still pending we run that same
- * confirmation here before minting — so a caller cannot mint without a real,
+ * confirmation here before minting, so a caller cannot mint without a real,
  * correctly-routed payment. The recipient wallet must also be linked to the
  * buyer's account, so nobody can mint a license into a stranger's wallet.
  *
@@ -81,7 +81,7 @@ export default wrap(async (req, res) => {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
-	// Cookie-session mutation — CSRF required (bearer callers exempt inside requireCsrf).
+	// Cookie-session mutation: CSRF required (bearer callers exempt inside requireCsrf).
 	if (auth.viaSession && !(await requireCsrf(req, res, auth.userId))) return;
 
 	const rl = await limits.authIp(clientIp(req));
@@ -91,7 +91,7 @@ export default wrap(async (req, res) => {
 	const skill = body.skill_name || body.skill;
 	const { agent_id: agentId, user_wallet: userWallet, transaction_signature: txSig } = body;
 
-	// The NFT recipient wallet must belong to the caller — never mint a license
+	// The NFT recipient wallet must belong to the caller. Never mint a license
 	// into a wallet the buyer hasn't linked to their account.
 	const [linked] = await sql`
 		SELECT id FROM user_wallets
@@ -128,11 +128,11 @@ export default wrap(async (req, res) => {
 		`;
 	}
 	if (!purchase) {
-		return error(res, 404, 'no_purchase', 'no purchase found for this skill — buy it first');
+		return error(res, 404, 'no_purchase', 'no purchase found for this skill; buy it first');
 	}
 
 	// A caller-supplied signature that contradicts the recorded one is a red
-	// flag — refuse rather than mint against the wrong payment.
+	// flag: refuse rather than mint against the wrong payment.
 	if (txSig && purchase.tx_signature && purchase.tx_signature !== txSig) {
 		return error(
 			res,
@@ -148,7 +148,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// Confirm the payment if it hasn't been confirmed yet. This is the on-chain
-	// verification step — it locates the tx and asserts the correct amount
+	// verification step: it locates the tx and asserts the correct amount
 	// reached the agent's payout wallet before we mint anything.
 	if (purchase.status !== 'confirmed') {
 		let result;
@@ -205,7 +205,7 @@ export default wrap(async (req, res) => {
 		`;
 	} catch (e) {
 		if (e?.code === '23505') {
-			// Another call recorded a mint first — return the canonical one.
+			// Another call recorded a mint first, so return the canonical one.
 			const [row] = await sql`SELECT * FROM skill_purchases WHERE id = ${purchase.id}`;
 			return json(res, 200, { data: mintResponse(row, { alreadyMinted: true }) });
 		}
@@ -213,7 +213,7 @@ export default wrap(async (req, res) => {
 	}
 	if (!recorded) {
 		// Lost the race; the persisted mint wins. Our freshly minted asset is a
-		// harmless orphan — surface the canonical one.
+		// harmless orphan. Surface the canonical one.
 		const [row] = await sql`SELECT * FROM skill_purchases WHERE id = ${purchase.id}`;
 		console.warn('[skills/mint] mint recorded by concurrent call; orphaned asset', {
 			purchase_id: purchase.id,

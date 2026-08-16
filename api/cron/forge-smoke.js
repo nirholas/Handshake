@@ -38,9 +38,21 @@ import { fetchRedisDailyCommands, evaluateRedisBurn, redisBurnAlert } from '../_
 import { requireCron } from '../_lib/cron-auth.js';
 
 const SMOKE_PROMPT = 'a small wooden toy boat with a striped sail';
-const SUBMIT_TIMEOUT_MS = 90_000;
+// One budget covers the submit and the poll together, because the draft lane
+// answers the submit synchronously and a real generation takes minutes: on
+// 2026-08-16 this exact prompt returned a valid 1.6 MB GLB from the nvidia lane
+// in 150 s, while /api/forge?health reported a 24 h average of 84.7 s across
+// lanes. The previous 90 s submit timeout sat UNDER that average, so it aborted
+// healthy generations and paged ops daily with "submit returned HTTP 0: The
+// operation was aborted due to timeout" while the pipeline was demonstrably up
+// (26 of 29 nvidia jobs succeeded in the same window). A single shared budget is
+// what keeps that honest: two separate timeouts stack, and 90 s plus 180 s
+// already exceeded the 320 s attemptDeadline Cloud Scheduler gives this job, so
+// a slow-but-working lane could blow the deadline instead of reporting. 240 s
+// leaves the alerting and the response inside that deadline.
+const GENERATION_BUDGET_MS = 240_000;
 const POLL_INTERVAL_MS = 5_000;
-const POLL_DEADLINE_MS = 180_000;
+const POLL_TIMEOUT_MS = 15_000;
 const LAST_STATUS_KEY = 'forge-smoke:last';
 const LAST_STATUS_TTL_S = 7 * 24 * 60 * 60;
 
@@ -101,6 +113,7 @@ async function verifyGlb(glbUrl) {
 // 0.55 s total, which no real generation can do. The flag skips only the cache
 // READ; a fresh run is still written back, so the cache stays warm for users.
 export async function runGeneration(origin) {
+	const deadline = Date.now() + GENERATION_BUDGET_MS;
 	const submit = await fetchJson(
 		`${origin}/api/forge`,
 		{
@@ -108,7 +121,7 @@ export async function runGeneration(origin) {
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ prompt: SMOKE_PROMPT, tier: 'draft', force_regenerate: true }),
 		},
-		SUBMIT_TIMEOUT_MS,
+		GENERATION_BUDGET_MS,
 	);
 	if (submit.status !== 200) {
 		return {
@@ -124,10 +137,12 @@ export async function runGeneration(origin) {
 	}
 
 	let { status, glb_url: glbUrl, job_id: jobId } = submit.body || {};
-	const deadline = Date.now() + POLL_DEADLINE_MS;
 	while (status !== 'done' && jobId && Date.now() < deadline) {
 		await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-		const poll = await fetchJson(`${origin}/api/forge?job=${encodeURIComponent(jobId)}`);
+		// Never let one poll outlive the shared budget: the loop condition alone
+		// would still allow a final 15 s request to start just under the deadline.
+		const pollTimeout = Math.min(POLL_TIMEOUT_MS, Math.max(1_000, deadline - Date.now()));
+		const poll = await fetchJson(`${origin}/api/forge?job=${encodeURIComponent(jobId)}`, {}, pollTimeout);
 		if (poll.status !== 200) return { ok: false, reason: `poll returned HTTP ${poll.status}` };
 		status = poll.body?.status;
 		glbUrl = poll.body?.glb_url || glbUrl;
@@ -136,7 +151,7 @@ export async function runGeneration(origin) {
 		}
 	}
 	if (status !== 'done' || !glbUrl) {
-		return { ok: false, reason: `job did not finish within ${POLL_DEADLINE_MS / 1000}s (status: ${status})` };
+		return { ok: false, reason: `job did not finish within ${GENERATION_BUDGET_MS / 1000}s (status: ${status})` };
 	}
 
 	const glb = await verifyGlb(glbUrl);

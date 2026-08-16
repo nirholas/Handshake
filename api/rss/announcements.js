@@ -1,4 +1,4 @@
-// GET /rss/announcements.xml — RSS 2.0 feed of three.ws news/announcements.
+// GET /rss/announcements.xml: RSS 2.0 feed of three.ws news/announcements.
 // Default source: data/rss/items.json (curated, hand-edited).
 // Mirror modes: ?source=trythreews | ?source=nichxbt | ?source=archive  (X scrape).
 
@@ -17,9 +17,11 @@ export default async function handler(req, res) {
 
 	// A misspelled source used to fall through to the curated feed, so a reader
 	// subscribed to ?source=trythreewz silently received a different feed and had
-	// no way to notice. Say so instead.
+	// no way to notice. Say so instead, echoing back only enough of what they
+	// sent to recognize the typo.
 	if (!VALID_SOURCES.includes(sourceParam)) {
-		error(res, 400, 'unknown_source', `unknown source "${sourceParam}"; expected one of: ${VALID_SOURCES.join(', ')}`);
+		const echoed = sourceParam.slice(0, 40);
+		error(res, 400, 'unknown_source', `unknown source "${echoed}"; expected one of: ${VALID_SOURCES.join(', ')}`);
 		return;
 	}
 

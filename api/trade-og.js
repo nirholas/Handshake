@@ -23,6 +23,7 @@
 
 import { cors, wrap } from './_lib/http.js';
 import { loadTradeCard } from './_lib/trade-card-store.js';
+import { fetchOgImage } from './_lib/og-avatar.js';
 import { env } from './_lib/env.js';
 
 const CACHE = 'public, max-age=300, s-maxage=86400, stale-while-revalidate=600';
@@ -55,21 +56,12 @@ export default wrap(async (req, res) => {
 	const origin = env.APP_ORIGIN || 'https://three.ws';
 
 	const card = await loadTradeCard(id, { origin });
-	if (!card) return fallback(res);
+	if (!card) return fallback(res, origin);
 
-	// Embed the agent portrait so the card is self-contained. A slow or dead
-	// avatar host degrades to the initial monogram, never to a broken unfurl.
-	let avatar = null;
-	if (card.agentImage && /^https?:\/\//.test(card.agentImage)) {
-		try {
-			const resp = await fetch(card.agentImage, { signal: AbortSignal.timeout(3000) });
-			if (resp.ok) {
-				const ct = resp.headers.get('content-type') || 'image/jpeg';
-				const b64 = Buffer.from(await resp.arrayBuffer()).toString('base64');
-				avatar = { ct, b64 };
-			}
-		} catch { /* non-fatal: monogram fallback below */ }
-	}
+	// Embed the agent portrait so the card is self-contained. A slow, dead, or
+	// oversized avatar host degrades to the initial monogram below, never to a
+	// broken unfurl and never to an unbounded read (see _lib/og-avatar.js).
+	const avatar = await fetchOgImage(card.agentImage);
 
 	const accent = card.accent;
 	const initial = (card.agentName[0] || 'A').toUpperCase();
@@ -175,9 +167,9 @@ function chipRect(x0, y0, w, label, color) {
 }
 
 /** Unknown / open / deleted: fall back to the site card rather than a broken image. */
-function fallback(res) {
+function fallback(res, origin) {
 	res.statusCode = 302;
-	res.setHeader('location', 'https://three.ws/og-image.png');
+	res.setHeader('location', `${origin}/og-image.png`);
 	res.setHeader('cache-control', 'no-cache');
 	res.end();
 }

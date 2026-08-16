@@ -5,15 +5,15 @@
  * an active on-chain `SkillLicense` for a given skill on a given agent? Reads
  * the license PDA directly from the `skill_license` Solana program (see
  * contracts/skill-license/) and reports ownership. This is the *alternative*
- * access check described in the on-chain-licenses design — anyone can call it,
+ * access check described in the on-chain-licenses design. Anyone can call it,
  * no auth required, because it only reads public chain state.
  *
  * Query (one of agent_mint | agent_id required, plus skill + wallet):
- *   wallet      — base58 Solana pubkey of the holder            (required)
- *   skill       — skill name/slug                               (required)
- *   agent_mint  — the agent's on-chain grouping mint (base58)
- *   agent_id    — three.ws agent uuid; resolves to that agent's skill collection mint
- *   network     — 'mainnet' (default) | 'devnet'
+ *   wallet      base58 Solana pubkey of the holder            (required)
+ *   skill       skill name/slug                               (required)
+ *   agent_mint  the agent's on-chain grouping mint (base58)
+ *   agent_id    three.ws agent uuid; resolves to that agent's skill collection mint
+ *   network     'mainnet' (default) | 'devnet'
  *
  * Response: { data: { owned, exists, revoked, deployed, license, nft_mint,
  *                     owner_token_account, program_id, network, explorer, record } }
@@ -90,7 +90,7 @@ export default wrap(async (req, res) => {
 				res,
 				409,
 				'no_collection',
-				'agent has no on-chain skill collection yet — nothing can be licensed on-chain',
+				'agent has no on-chain skill collection yet; nothing can be licensed on-chain',
 			);
 		}
 		agentMint = agent.skill_collection_mint;
