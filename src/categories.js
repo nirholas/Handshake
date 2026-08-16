@@ -108,6 +108,7 @@ const state = {
 	query: '',
 	shown: PAGE_SIZE,
 	status: 'loading', // loading | ready | error
+	errorStatus: 0,
 };
 
 function pctCell(v) {
@@ -170,8 +171,17 @@ function renderPlaceholder(el) {
 		return true;
 	}
 	if (state.status === 'error') {
-		el.innerHTML =
-			'<div class="cv-empty">Category data could not be loaded. The market data provider did not answer. <button type="button" class="cv-linkbtn" data-act="retry">Try again</button>.</div>';
+		// A 429 is our own per-IP budget, not an upstream outage, and telling the
+		// user to retry immediately would only spend the next token they have.
+		const why =
+			state.errorStatus === 429
+				? 'You have requested this feed too many times in a row. Give it a minute, then'
+				: 'The market data provider did not answer.';
+		const how =
+			state.errorStatus === 429
+				? '<button type="button" class="cv-linkbtn" data-act="retry">load it again</button>.'
+				: '<button type="button" class="cv-linkbtn" data-act="retry">Try again</button>.';
+		el.innerHTML = `<div class="cv-empty">Category data could not be loaded. ${why} ${how}</div>`;
 		return true;
 	}
 	if (!state.categories.length) {
@@ -339,10 +349,12 @@ async function loadCategories() {
 		// The endpoint returns market-cap-desc order; that ordinal is the rank.
 		state.categories = (categories || []).map((c, i) => ({ ...c, rank: i + 1 }));
 		state.status = 'ready';
+		state.errorStatus = 0;
 		$('cat-updated').textContent = `Updated ${new Date().toLocaleTimeString('en-US')}`;
-	} catch {
+	} catch (err) {
 		state.categories = [];
 		state.status = 'error';
+		state.errorStatus = err?.status || 0;
 		$('cat-updated').textContent = '';
 	}
 	const search = $('cat-search');

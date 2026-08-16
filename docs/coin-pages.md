@@ -305,7 +305,12 @@ data" rule:
 - **`/categories`** — every crypto sector ranked by market cap with 24h change,
   volume, and the top coins in each. New `/api/coin/categories` (CoinGecko
   `/coins/categories`). Each row opens a [category detail
-  page](#categoryid--category-detail).
+  page](#categoryid--category-detail). CoinGecko reports 750+ categories, so the
+  table opens with the top 50 and pages in 50 more per click, and the search box
+  filters the full set by name or slug before you page. Every column sorts, and
+  the three no-rows outcomes read differently: a failed fetch offers a retry that
+  refetches, an upstream reporting nothing says so, and a search with no match
+  offers to clear itself.
 - **`/exchanges`** — top exchanges by trust score and 24h volume (USD, derived
   from the live BTC price). New `/api/coin/exchanges`. Each row opens an
   [exchange detail page](#exchangeid--exchange-detail).
