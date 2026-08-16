@@ -10,6 +10,8 @@ import {
 	blockIntervals,
 	rollingAverageFromTimestamps,
 	laneState,
+	headlineState,
+	ageLabel,
 	allLanesDown,
 	sparklineBars,
 	speedupRatio,
@@ -57,6 +59,42 @@ describe('laneState', () => {
 	});
 	it('is reconnecting when ok but the sample is unusable (e.g. zero sampled blocks)', () => {
 		expect(laneState({ hasFetchedOnce: true, ok: true, hasSample: false })).toBe('reconnecting');
+	});
+});
+
+describe('headlineState', () => {
+	it('is measuring before the first fetch resolves', () => {
+		expect(headlineState({ hasFetchedOnce: false, ok: false })).toBe('measuring');
+	});
+	it('is live on a fresh good sample', () => {
+		expect(headlineState({ hasFetchedOnce: true, ok: true })).toBe('live');
+	});
+	it('is stale, not live, when a poll fails after an earlier reading', () => {
+		expect(headlineState({ hasFetchedOnce: true, ok: false, hasPrevious: true })).toBe('stale');
+	});
+	it('is unavailable when polls fail and no reading was ever taken', () => {
+		expect(headlineState({ hasFetchedOnce: true, ok: false, hasPrevious: false })).toBe('unavailable');
+	});
+	it('treats an ok response carrying no usable sample as not live', () => {
+		expect(headlineState({ hasFetchedOnce: true, ok: true, hasSample: false, hasPrevious: true })).toBe('stale');
+	});
+});
+
+describe('ageLabel', () => {
+	it('returns an empty label for a missing or negative age', () => {
+		expect(ageLabel(undefined)).toBe('');
+		expect(ageLabel(NaN)).toBe('');
+		expect(ageLabel(-1)).toBe('');
+	});
+	it('keeps seconds resolution where the shared timeAgo would say "just now"', () => {
+		expect(ageLabel(0)).toBe('0s ago');
+		expect(ageLabel(8_400)).toBe('8s ago');
+		expect(ageLabel(59_000)).toBe('59s ago');
+	});
+	it('rolls up to minutes, hours, and days', () => {
+		expect(ageLabel(60_000)).toBe('1m ago');
+		expect(ageLabel(3_600_000)).toBe('1h ago');
+		expect(ageLabel(86_400_000)).toBe('1d ago');
 	});
 });
 

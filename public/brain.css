@@ -695,8 +695,19 @@ body {
 	color: #4a4a4a;
 }
 
-.br-provider-pills { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+/* The roster runs to 30+ models, so the wrapped pill row scrolls inside a
+   capped height instead of pushing the canvas off the screen. */
+.br-provider-pills {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	flex: 1;
+	max-height: 92px;
+	overflow-y: auto;
+	padding-right: 2px;
+}
 .br-pill {
+	font: inherit;
 	display: inline-flex;
 	align-items: center;
 	gap: 5px;
@@ -711,10 +722,11 @@ body {
 	transition: all 0.12s;
 }
 .br-pill.on { border-color: var(--pc); color: var(--pc); }
-.br-pill.unavailable {
+/* Disabled rather than pointer-events:none, so the tooltip explaining WHY the
+   model is out still reaches a keyboard and a hover. */
+.br-pill:disabled {
 	opacity: 0.38;
 	cursor: not-allowed;
-	pointer-events: none;
 }
 .br-pill-na {
 	font-size: 9px;
@@ -1073,9 +1085,108 @@ body {
 }
 @keyframes brSpin { to { transform: rotate(360deg); } }
 
+/* ── Roster loading / failure states ─────────────────────────────────────── */
+.br-play-status {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 12.5px;
+	color: #7b7b7b;
+	flex-wrap: wrap;
+}
+.br-play-status-error { color: #ff8a8a; }
+
+.br-canvas-state {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 32px 24px;
+	text-align: center;
+	color: #7b7b7b;
+}
+.br-canvas-state h3 {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 700;
+	color: #dde0f0;
+}
+.br-canvas-state p {
+	margin: 0;
+	max-width: 46ch;
+	font-size: 13px;
+	line-height: 1.55;
+}
+.br-canvas-state-error h3 { color: #ff8a8a; }
+
+/* ── Sessions drawer trigger (mobile only) ───────────────────────────────── */
+.br-side-toggle {
+	display: none;
+	background: none;
+	border: none;
+	color: #7b7b7b;
+	font-size: 16px;
+	line-height: 1;
+	padding: 10px 8px;
+	margin-right: 2px;
+	cursor: pointer;
+	border-radius: 7px;
+}
+.br-side-toggle:hover { color: #dde0f0; background: #141414; }
+.br-side-backdrop {
+	display: none;
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.6);
+	z-index: 39;
+}
+
+/* ── Focus visibility ────────────────────────────────────────────────────── */
+.br-tab:focus-visible,
+.br-topbar-btn:focus-visible,
+.br-side-toggle:focus-visible,
+.br-side-new:focus-visible,
+.br-sess-name:focus-visible,
+.br-sess-del:focus-visible,
+.br-archetype-chip:focus-visible,
+.br-status-btn:focus-visible,
+.br-mode-btn:focus-visible,
+.br-pill:focus-visible,
+.br-focus-sel:focus-visible,
+.br-col-copy:focus-visible,
+.br-btn:focus-visible,
+.br-send:focus-visible,
+.br-persona-mini-clear:focus-visible,
+.br-persona-banner-dismiss:focus-visible,
+.br-agent-bar-sel:focus-visible,
+.br-agent-bar-manage:focus-visible,
+.br-sys-details summary:focus-visible {
+	outline: 2px solid #5dccff;
+	outline-offset: 2px;
+}
+/* The delete control only fades in on row hover, so keyboard focus has to
+   reveal it too or the ring lands on something invisible. */
+.br-sess-del:focus-visible { opacity: 1; }
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-	.br-side { display: none; }
+	.br-side-toggle { display: block; }
+	/* Off-canvas rather than display:none, because the session list and the New
+	   button live only here, and hiding them stranded every mobile visitor. */
+	.br-side {
+		position: fixed;
+		top: 0;
+		left: 0;
+		bottom: 0;
+		z-index: 40;
+		width: min(280px, 84vw);
+		transform: translateX(-100%);
+		transition: transform 0.22s ease;
+	}
+	.br-side.open { transform: translateX(0); }
+	body.br-side-open .br-side-backdrop { display: block; }
 	.br-persona-inner { padding: 20px 16px 60px; }
 	.br-archetype-grid { grid-template-columns: repeat(2, 1fr); }
 	.br-pc-body { grid-template-columns: 1fr; }
@@ -1089,4 +1200,14 @@ body {
 	.br-pc-footer { flex-direction: column; }
 	.br-pc-save-wrap { margin-left: 0; width: 100%; }
 	.br-agent-select { flex: 1; }
+}
+/* At 360px and under the tabs plus both topbar actions no longer fit, and the
+   actions were clipped off the right edge. Tighten every element in the row
+   instead of hiding one. */
+@media (max-width: 400px) {
+	.br-topbar { padding: 0 6px; }
+	.br-side-toggle { padding: 10px 6px; margin-right: 0; }
+	.br-tab { padding: 12px 8px; font-size: 12px; }
+	.br-topbar-right { gap: 5px; }
+	.br-topbar-btn { padding: 5px 8px; font-size: 11.5px; }
 }

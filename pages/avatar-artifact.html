@@ -19,6 +19,11 @@
 				padding: 0;
 				box-sizing: border-box;
 			}
+			/* three.ws hidden-guard: make the `hidden` attribute authoritative even
+			   against the display rules below; see scripts/lib/hidden-guard.mjs */
+			[hidden] {
+				display: none !important;
+			}
 			:root {
 				--ink: #eaf0ff;
 				--muted: #8b94b8;
@@ -131,6 +136,13 @@
 			}
 			.status:empty {
 				display: none;
+			}
+			/* The artifact's own name, once one is loaded: the h1 stops being a
+			   tagline and starts being the subject's title. */
+			h1.hint[data-i18n-owned='1'] {
+				font-size: 14px;
+				font-weight: 700;
+				color: var(--ink);
 			}
 
 			/* Embed snippet: the manual path when the clipboard is unavailable
@@ -317,7 +329,10 @@
 	<meta property="og:image:alt" content="Avatar Artifact, a live Three.js portrait on three.ws">
 	<meta name="twitter:site" content="@trythreews">
 </head>
-	<body>
+	<body
+		data-canvas-label="Interactive 3D avatar that follows your cursor, touch, or arrow keys"
+		data-i18n-attr="data-canvas-label:avatar_artifact.canvas_label"
+	>
 		<!-- Persistent chrome so the standalone viewer is never a dead-end -->
 		<div class="chrome">
 			<div class="bar top">
@@ -328,8 +343,9 @@
 				<span class="hint" data-i18n="avatar_artifact.move_your_cursor_drag_on_touch_arrow">Move your cursor · drag on touch · arrow keys</span>
 			</div>
 			<div class="bar bottom">
-				<h1 class="hint" data-i18n="avatar_artifact.avatar_artifact_a_live_three_js_portrait">Avatar Artifact: a live Three.js portrait</h1>
+				<h1 class="hint" id="artifact-title" data-i18n="avatar_artifact.avatar_artifact_a_live_three_js_portrait">Avatar Artifact: a live Three.js portrait</h1>
 				<div class="foot-links">
+					<a id="artifact-source" href="/agents" hidden data-i18n="avatar_artifact.open_profile">Open profile</a>
 					<button
 						type="button"
 						id="copy-embed"
@@ -350,20 +366,47 @@
 			</div>
 		</div>
 
-		<!-- Loading state while the Three.js runtime + scene resolve -->
-		<div class="overlay" id="loading">
+		<!-- Loading state while the Three.js runtime + scene resolve. The three
+		     data-note-* strings are the same overlay narrating the artifact lane:
+		     resolving the agent, then fetching its model, then its byte progress. -->
+		<div
+			class="overlay"
+			id="loading"
+			data-note-agent="Looking up the agent…"
+			data-note-model="Fetching the model…"
+			data-note-progress="Fetching the model… {pct}%"
+			data-i18n-attr="data-note-agent:avatar_artifact.note_agent;data-note-model:avatar_artifact.note_model;data-note-progress:avatar_artifact.note_progress"
+		>
 			<div class="spinner" role="status" aria-label="Loading avatar"></div>
-			<p data-i18n="avatar_artifact.summoning_the_avatar">Summoning the avatar…</p>
+			<p id="loading-note" data-i18n="avatar_artifact.summoning_the_avatar">Summoning the avatar…</p>
 		</div>
 
-		<!-- Designed failure state if the 3D runtime can't load -->
-		<div class="overlay" id="error" hidden>
+		<!-- Designed failure states. Every way this viewer can fail gets its own
+		     sentence and its own next move; the data-msg-* copy is selected by
+		     src/avatar-artifact.js and stays translatable here with the rest. -->
+		<div
+			class="overlay"
+			id="error"
+			hidden
+			data-msg-both="Pass either an agent id or a model URL, not both. Drop one from the link and load it again."
+			data-msg-not-found="No agent on three.ws matches that id. The link may be old, or the agent may have been deleted."
+			data-msg-agent-fetch="The agent lookup did not come back. That is usually a network hiccup, so a retry is worth it."
+			data-msg-no-avatar="This agent has not been given an avatar yet, so there is nothing to render. Its profile has the rest of its identity."
+			data-msg-avatar-private="This agent's avatar is private, so it cannot be shown outside three.ws. Its profile is still public."
+			data-msg-model-blocked="That model link is not an https URL on a host this viewer accepts. Models must be served from three.ws or a known asset host."
+			data-msg-model-failed="The model file could not be loaded. It may have moved, or it may use a compression format this viewer does not carry."
+			data-msg-no-webgl="This browser could not start WebGL, so the 3D portrait cannot render here. Try another browser or enable hardware acceleration."
+			data-action-agents="Browse agents"
+			data-action-profile="Open profile"
+			data-i18n-attr="data-msg-both:avatar_artifact.err_both;data-msg-not-found:avatar_artifact.err_not_found;data-msg-agent-fetch:avatar_artifact.err_agent_fetch;data-msg-no-avatar:avatar_artifact.err_no_avatar;data-msg-avatar-private:avatar_artifact.err_avatar_private;data-msg-model-blocked:avatar_artifact.err_model_blocked;data-msg-model-failed:avatar_artifact.err_model_failed;data-msg-no-webgl:avatar_artifact.err_no_webgl;data-action-agents:avatar_artifact.action_agents;data-action-profile:avatar_artifact.open_profile"
+		>
 			<h2 data-i18n="avatar_artifact.couldn_t_load_the_3d_viewer">Couldn’t load the 3D viewer</h2>
 			<p id="error-detail" data-i18n="avatar_artifact.the_graphics_runtime_failed_to_load_this">
 				The graphics runtime failed to load. That usually means a network
 				hiccup, so a reload is worth a try.
 			</p>
 			<div class="foot-links">
+				<a id="error-action" href="/agents" hidden data-i18n="avatar_artifact.action_agents">Browse agents</a>
 				<button type="button" id="artifact-retry" data-i18n="avatar_artifact.retry">Retry</button>
 				<a href="/" data-i18n="avatar_artifact.back_to_three_ws">Back to three.ws</a>
 			</div>
@@ -371,13 +414,28 @@
 
 		<script>
 			// Designed failure state, shared by every boot path: a runtime that
-			// never arrives, a browser without WebGL, and the watchdog below.
-			window.__avatarArtifactFailed = function (detail) {
+			// never arrives, a browser without WebGL, an agent or model that can't
+			// be resolved, and the watchdog below. `action` is the one next move
+			// that fits the failure (the agent's profile, the agent index).
+			window.__avatarArtifactFailed = function (detail, action) {
 				if (window.__avatarArtifactPainted) return;
+				clearTimeout(window.__avatarArtifactWatchdog);
 				document.getElementById('loading')?.setAttribute('hidden', '');
 				if (detail) {
 					const el = document.getElementById('error-detail');
-					if (el) el.textContent = detail;
+					if (el) {
+						el.dataset.i18nOwned = '1';
+						el.textContent = detail;
+					}
+				}
+				const link = document.getElementById('error-action');
+				if (link && action && action.href) {
+					link.href = action.href;
+					if (action.label) {
+						link.dataset.i18nOwned = '1';
+						link.textContent = action.label;
+					}
+					link.removeAttribute('hidden');
 				}
 				document.getElementById('error')?.removeAttribute('hidden');
 			};
@@ -387,14 +445,22 @@
 
 			// Watchdog: covers the case where the module script itself never runs
 			// (asset 404, blocked by an extension), which no in-script catch can
-			// see. Cleared by the first painted frame.
-			window.__avatarArtifactWatchdog = setTimeout(() => {
-				window.__avatarArtifactFailed();
-			}, 12000);
+			// see. Cleared by the first painted frame; re-armed by the heartbeat
+			// so a large model that is genuinely still downloading is not called
+			// dead at twelve seconds.
+			window.__avatarArtifactHeartbeat = function () {
+				clearTimeout(window.__avatarArtifactWatchdog);
+				window.__avatarArtifactWatchdog = setTimeout(() => {
+					window.__avatarArtifactFailed();
+				}, 12000);
+			};
+			window.__avatarArtifactHeartbeat();
 
 			// Embed + share. The snippet is the page's own URL, so the viewer is
 			// shareable from inside itself, which is the point of a standalone
-			// artifact page.
+			// artifact page. Once a specific artifact resolves, the module hands
+			// its query back through __avatarArtifactSetEmbed so the copied iframe
+			// shows the avatar on screen rather than the house portrait.
 			(function embedControls() {
 				const button = document.getElementById('copy-embed');
 				const status = document.getElementById('copy-status');
@@ -402,12 +468,17 @@
 				const field = document.getElementById('embed-code');
 				if (!button || !status || !panel || !field) return;
 
-				const url = new URL('/avatar-artifact', location.href).href;
-				const snippet =
-					'<iframe src="' +
-					url +
-					'" width="100%" height="600" style="border:0" loading="lazy" title="Avatar Artifact"></iframe>';
-				field.value = snippet;
+				let snippet = '';
+				function setEmbed(query) {
+					const url = new URL('/avatar-artifact' + (query || ''), location.href).href;
+					snippet =
+						'<iframe src="' +
+						url +
+						'" width="100%" height="600" style="border:0" loading="lazy" title="Avatar Artifact"></iframe>';
+					field.value = snippet;
+				}
+				window.__avatarArtifactSetEmbed = setEmbed;
+				setEmbed('');
 
 				let clearStatus;
 				function announce(message) {
@@ -434,455 +505,10 @@
 				});
 			})();
 		</script>
-		<script type="module">
-			// Three.js ships with the app rather than a third-party CDN: this page
-			// is meant to be embedded in other sites, where an extra cross-origin
-			// script is a dependency the host never agreed to.
-			let THREE;
-			try {
-				THREE = await import('three');
-			} catch {
-				window.__avatarArtifactFailed();
-			}
-			if (THREE) boot(THREE);
-
-			function boot(THREE) {
-				const W = window.innerWidth,
-					H = window.innerHeight;
-				const scene = new THREE.Scene();
-				const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
-				camera.position.set(0, 1.6, 4.2);
-				camera.lookAt(0, 1.6, 0);
-
-				// Coarse pointer (phones/tablets) -> lighter render: fewer DPR samples
-				// and no shadow pass, so the canvas stays smooth on mobile GPUs.
-				const isCoarse =
-					window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-				const reduceMotion =
-					window.matchMedia &&
-					window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-				let renderer;
-				try {
-					renderer = new THREE.WebGLRenderer({
-						antialias: !isCoarse,
-						alpha: true,
-					});
-				} catch {
-					// No WebGL context available: show the designed error state.
-					window.__avatarArtifactFailed(
-						'This browser could not start WebGL, so the 3D portrait cannot render here. Try another browser or enable hardware acceleration.',
-					);
-					return;
-				}
-				renderer.setSize(W, H);
-				renderer.setPixelRatio(Math.min(devicePixelRatio, isCoarse ? 1.5 : 2));
-				renderer.shadowMap.enabled = !isCoarse;
-				document.body.appendChild(renderer.domElement);
-
-				// Lights. Intensities are in physical units (three r155+ dropped the
-				// legacy PI scaling), so they read high next to the old CDN build.
-				scene.add(new THREE.AmbientLight(0x2a2a5a, 3.8));
-
-				const key = new THREE.DirectionalLight(0x99aaff, 6.9);
-				key.position.set(2, 5, 4);
-				key.castShadow = true;
-				scene.add(key);
-
-				const rim = new THREE.PointLight(0xff4488, 22, 10, 1.4);
-				rim.position.set(-3, 2, -1);
-				scene.add(rim);
-
-				const fill = new THREE.PointLight(0x4488ff, 12, 8, 1.4);
-				fill.position.set(3, 0, 2);
-				scene.add(fill);
-
-				// Materials
-				const skinMat = new THREE.MeshStandardMaterial({
-					color: 0x7ba3d4,
-					roughness: 0.25,
-					metalness: 0.05,
-				});
-				const darkMat = new THREE.MeshStandardMaterial({
-					color: 0x0d1a2e,
-					roughness: 0.2,
-					metalness: 0.6,
-				});
-				const irisMat = new THREE.MeshStandardMaterial({
-					color: 0x55aaff,
-					roughness: 0.05,
-					metalness: 0.3,
-					emissive: 0x1144cc,
-					emissiveIntensity: 0.6,
-				});
-				const suitMat = new THREE.MeshStandardMaterial({
-					color: 0x1a2540,
-					roughness: 0.6,
-					metalness: 0.3,
-				});
-				const glareMat = new THREE.MeshStandardMaterial({
-					color: 0xffffff,
-					roughness: 0,
-					metalness: 0,
-					transparent: true,
-					opacity: 0.55,
-				});
-
-				// Avatar
-				const avatar = new THREE.Group();
-				scene.add(avatar);
-
-				// Torso
-				const torsoMesh = new THREE.Mesh(
-					new THREE.CylinderGeometry(0.38, 0.32, 1.0, 20),
-					suitMat,
-				);
-				torsoMesh.position.y = 0.82;
-				torsoMesh.castShadow = true;
-				avatar.add(torsoMesh);
-
-				// Neck
-				const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.19, 0.28, 16), skinMat);
-				neck.position.y = 1.47;
-				avatar.add(neck);
-
-				// Head group (rotates for gaze tracking)
-				const headGroup = new THREE.Group();
-				headGroup.position.y = 1.94;
-				avatar.add(headGroup);
-
-				const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.52, 40, 40), skinMat);
-				headMesh.scale.set(1, 1.08, 0.96);
-				headMesh.castShadow = true;
-				headGroup.add(headMesh);
-
-				// Eyes
-				function makeEye(x) {
-					const group = new THREE.Group();
-					group.position.set(x, 0.06, 0.44);
-
-					// White
-					const white = new THREE.Mesh(
-						new THREE.SphereGeometry(0.105, 20, 20),
-						new THREE.MeshStandardMaterial({
-							color: 0xddeeff,
-							roughness: 0.3,
-							metalness: 0,
-						}),
-					);
-					group.add(white);
-
-					// Iris
-					const iris = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), irisMat);
-					iris.position.z = 0.055;
-					group.add(iris);
-
-					// Pupil
-					const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 12), darkMat);
-					pupil.position.z = 0.088;
-					group.add(pupil);
-
-					// Glare
-					const glare = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), glareMat);
-					glare.position.set(0.022, 0.025, 0.1);
-					group.add(glare);
-
-					return group;
-				}
-
-				headGroup.add(makeEye(-0.185), makeEye(0.185));
-
-				// Eyelids: a blink is a Y scale on these caps.
-				function makeLid(x) {
-					const lid = new THREE.Mesh(
-						new THREE.SphereGeometry(0.112, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.5),
-						new THREE.MeshStandardMaterial({
-							color: 0x6a95c0,
-							roughness: 0.3,
-							side: THREE.FrontSide,
-						}),
-					);
-					lid.position.set(x, 0.06, 0.43);
-					lid.rotation.x = Math.PI;
-					lid.scale.y = 0.01; // open; blinking animates this to 1
-					return lid;
-				}
-				const leftLid = makeLid(-0.185);
-				const rightLid = makeLid(0.185);
-				headGroup.add(leftLid, rightLid);
-
-				// Eyebrows
-				function makeBrow(x) {
-					const geo = new THREE.BoxGeometry(0.16, 0.03, 0.04);
-					const brow = new THREE.Mesh(
-						geo,
-						new THREE.MeshStandardMaterial({ color: 0x3a6090, roughness: 0.5 }),
-					);
-					brow.position.set(x, 0.215, 0.455);
-					brow.rotation.z = x > 0 ? -0.12 : 0.12;
-					return brow;
-				}
-				headGroup.add(makeBrow(-0.185), makeBrow(0.185));
-
-				// Nose
-				const noseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), skinMat);
-				noseMesh.scale.set(0.7, 0.65, 0.8);
-				noseMesh.position.set(0, -0.07, 0.5);
-				headGroup.add(noseMesh);
-
-				// Mouth
-				const mouthGeo = new THREE.TorusGeometry(0.1, 0.025, 8, 20, Math.PI);
-				const mouth = new THREE.Mesh(
-					mouthGeo,
-					new THREE.MeshStandardMaterial({ color: 0x3a5a80, roughness: 0.5 }),
-				);
-				mouth.position.set(0, -0.2, 0.46);
-				mouth.rotation.z = Math.PI;
-				headGroup.add(mouth);
-
-				// Shoulders / arms
-				function makeArm(x) {
-					const arm = new THREE.Mesh(
-						new THREE.CylinderGeometry(0.11, 0.09, 0.75, 14),
-						suitMat,
-					);
-					arm.position.set(x, 0.85, 0);
-					arm.rotation.z = x > 0 ? -0.35 : 0.35;
-					arm.castShadow = true;
-					return arm;
-				}
-				avatar.add(makeArm(-0.52), makeArm(0.52));
-
-				// Shoulder pads
-				function makePad(x) {
-					const pad = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), suitMat);
-					pad.scale.set(1, 0.7, 1);
-					pad.position.set(x, 1.3, 0);
-					return pad;
-				}
-				avatar.add(makePad(-0.52), makePad(0.52));
-
-				// Chest detail (glowing panel)
-				const panelMat = new THREE.MeshStandardMaterial({
-					color: 0x1155cc,
-					emissive: 0x0033aa,
-					emissiveIntensity: 1.2,
-					roughness: 0.2,
-				});
-				const panel = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.04), panelMat);
-				panel.position.set(0, 0.88, 0.37);
-				avatar.add(panel);
-
-				// Ground plane (subtle)
-				const ground = new THREE.Mesh(
-					new THREE.CircleGeometry(3, 48),
-					new THREE.MeshStandardMaterial({ color: 0x0a0a20, roughness: 0.9, metalness: 0.1 }),
-				);
-				ground.rotation.x = -Math.PI / 2;
-				ground.receiveShadow = true;
-				scene.add(ground);
-
-				// Fog
-				scene.fog = new THREE.FogExp2(0x070714, 0.06);
-
-				// Particles
-				const pCount = 120;
-				const pPos = new Float32Array(pCount * 3);
-				const pVel = new Float32Array(pCount);
-				for (let i = 0; i < pCount; i++) {
-					pPos[i * 3] = (Math.random() - 0.5) * 8;
-					pPos[i * 3 + 1] = Math.random() * 5;
-					pPos[i * 3 + 2] = (Math.random() - 0.5) * 8;
-					pVel[i] = 0.003 + Math.random() * 0.008;
-				}
-				const pGeo = new THREE.BufferGeometry();
-				pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-				const pMat = new THREE.PointsMaterial({
-					color: 0x6699ff,
-					size: 0.04,
-					transparent: true,
-					opacity: 0.55,
-				});
-				const pts = new THREE.Points(pGeo, pMat);
-				scene.add(pts);
-
-				// Input tracking (mouse, touch, keyboard). The avatar's gaze follows
-				// a single normalized look-target so every input modality drives the
-				// same code path.
-				const mouse = { x: 0, y: 0 };
-				let keyTarget = null; // when set, keyboard overrides pointer
-
-				function aim(clientX, clientY) {
-					mouse.x = (clientX / window.innerWidth - 0.5) * 2;
-					mouse.y = (clientY / window.innerHeight - 0.5) * 2;
-				}
-
-				window.addEventListener('mousemove', (e) => {
-					keyTarget = null;
-					aim(e.clientX, e.clientY);
-				});
-
-				// Touch: track a finger drag so the portrait is interactive on phones.
-				window.addEventListener(
-					'touchmove',
-					(e) => {
-						const tch = e.touches && e.touches[0];
-						if (!tch) return;
-						keyTarget = null;
-						aim(tch.clientX, tch.clientY);
-					},
-					{ passive: true },
-				);
-
-				// Keyboard: arrow keys and WASD nudge the gaze, so the viewer is
-				// usable without a pointer. Only the arrows suppress their default
-				// (scrolling); the letters stay available to the browser.
-				const canvasEl = renderer.domElement;
-				canvasEl.tabIndex = 0;
-				canvasEl.setAttribute('role', 'img');
-				canvasEl.setAttribute(
-					'aria-label',
-					'Interactive 3D avatar portrait that follows your cursor, touch, or arrow keys',
-				);
-				const KEY_STEP = 0.25;
-				const KEY_MAP = {
-					arrowleft: [-1, 0],
-					a: [-1, 0],
-					arrowright: [1, 0],
-					d: [1, 0],
-					arrowup: [0, -1],
-					w: [0, -1],
-					arrowdown: [0, 1],
-					s: [0, 1],
-				};
-				window.addEventListener('keydown', (e) => {
-					if (e.metaKey || e.ctrlKey || e.altKey) return;
-					const target = e.target;
-					// Never steal a keystroke aimed at the embed field or a control.
-					if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-					const k = e.key.toLowerCase();
-					const v = KEY_MAP[k];
-					if (!v) return;
-					if (k.startsWith('arrow')) e.preventDefault();
-					if (!keyTarget) keyTarget = { x: mouse.x, y: mouse.y };
-					keyTarget.x = Math.max(-1, Math.min(1, keyTarget.x + v[0] * KEY_STEP));
-					keyTarget.y = Math.max(-1, Math.min(1, keyTarget.y + v[1] * KEY_STEP));
-					mouse.x = keyTarget.x;
-					mouse.y = keyTarget.y;
-				});
-
-				// Animate
-				let t = 0;
-				let blinkTimer = 0;
-				let blinkInterval = 3 + Math.random() * 3;
-				let blinking = false;
-				let blinkT = 0;
-				let firstFramePainted = false;
-
-				const targetHeadRot = { x: 0, y: 0 };
-				const currentHeadRot = { x: 0, y: 0 };
-
-				function frame() {
-					t += 0.016;
-
-					// Breathing
-					const breathe = reduceMotion ? 0 : Math.sin(t * 1.15) * 0.025;
-					torsoMesh.scale.y = 1 + breathe;
-					torsoMesh.position.y = 0.82 + breathe * 0.3;
-
-					// Chest glow pulse
-					panelMat.emissiveIntensity = reduceMotion ? 1.0 : 1.0 + Math.sin(t * 2.3) * 0.3;
-
-					// Head follows the look-target (smoothed)
-					targetHeadRot.y = mouse.x * 0.35;
-					targetHeadRot.x = -mouse.y * 0.2;
-					currentHeadRot.x += (targetHeadRot.x - currentHeadRot.x) * 0.06;
-					currentHeadRot.y += (targetHeadRot.y - currentHeadRot.y) * 0.06;
-					headGroup.rotation.x = currentHeadRot.x;
-					headGroup.rotation.y = currentHeadRot.y;
-
-					// Idle body sway
-					avatar.rotation.y = reduceMotion ? 0 : Math.sin(t * 0.35) * 0.06;
-
-					// Blink
-					if (!reduceMotion) {
-						blinkTimer += 0.016;
-						if (!blinking && blinkTimer > blinkInterval) {
-							blinking = true;
-							blinkT = 0;
-							blinkInterval = 2.5 + Math.random() * 4;
-							blinkTimer = 0;
-						}
-						if (blinking) {
-							blinkT += 0.016;
-							const half = 0.09;
-							const progress =
-								blinkT < half
-									? blinkT / half
-									: blinkT < half * 2
-										? 1 - (blinkT - half) / half
-										: -1;
-							if (progress < 0) {
-								leftLid.scale.y = 0.01;
-								rightLid.scale.y = 0.01;
-								blinking = false;
-							} else {
-								leftLid.scale.y = progress;
-								rightLid.scale.y = progress;
-							}
-						}
-					}
-
-					// Particles drift upward
-					if (!reduceMotion) {
-						const pos = pGeo.attributes.position;
-						for (let i = 0; i < pCount; i++) {
-							pos.array[i * 3 + 1] += pVel[i];
-							if (pos.array[i * 3 + 1] > 5) pos.array[i * 3 + 1] = 0;
-						}
-						pos.needsUpdate = true;
-						pts.rotation.y += 0.0006;
-					}
-
-					renderer.render(scene, camera);
-
-					// Fade out the loading overlay once the first frame is on screen.
-					if (!firstFramePainted) {
-						firstFramePainted = true;
-						window.__avatarArtifactPainted = true;
-						clearTimeout(window.__avatarArtifactWatchdog);
-						// A slow runtime can trip the watchdog and still arrive; the
-						// error state must not outlive a working scene.
-						document.getElementById('error')?.setAttribute('hidden', '');
-						const loading = document.getElementById('loading');
-						if (loading) {
-							loading.classList.add('fade');
-							setTimeout(() => loading.setAttribute('hidden', ''), 450);
-						}
-					}
-				}
-
-				renderer.setAnimationLoop(frame);
-
-				// A hidden tab has nothing to animate: stop the loop so an embedded
-				// viewer never burns a host page's GPU in the background.
-				document.addEventListener('visibilitychange', () => {
-					renderer.setAnimationLoop(document.hidden ? null : frame);
-				});
-
-				// Keep the canvas matched to the viewport (handles orientation changes
-				// and mobile browser-chrome resize, not just desktop window drags).
-				function onResize() {
-					const w = window.innerWidth,
-						h = window.innerHeight;
-					camera.aspect = w / h;
-					camera.updateProjectionMatrix();
-					renderer.setSize(w, h);
-				}
-				window.addEventListener('resize', onResize);
-				window.addEventListener('orientationchange', onResize);
-			}
-		</script>
+		<!-- Scene + artifact loader. Extracted from this page so the viewer is
+		     a real module (src/avatar-artifact.js) the bundler can split, not 450
+		     lines of markup-embedded script. -->
+		<script type="module" src="/src/avatar-artifact.js"></script>
 		<!-- Shared bottom-right corner stack. Without it the widgets that mount
 		     themselves there (the Atlas Ctrl+K chip, the language switcher) each fall
 		     back to their own fixed position and pile onto the same pixel. -->

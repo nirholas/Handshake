@@ -57,10 +57,15 @@ function fail(mode, action) {
 	window.__avatarArtifactFailed(detail || '', action);
 }
 
-/** Replace a translated node's text and drop its key, so i18n can't clobber it. */
+/**
+ * Write live data into a translated node. `data-i18n-owned` is the platform's
+ * hand-off marker (see applyCatalog in src/i18n.js): the catalog pass lands
+ * after an async fetch and would otherwise revert an agent's name back to the
+ * English placeholder.
+ */
 function setOwnText(el, text) {
 	if (!el) return;
-	el.removeAttribute('data-i18n');
+	el.dataset.i18nOwned = '1';
 	el.textContent = text;
 }
 
@@ -464,11 +469,22 @@ function buildArtifactStage(scene, camera, renderer, artifact) {
 	// every one of them fails to parse.
 	loader.setMeshoptDecoder(meshoptDecoder);
 
+	function stop() {
+		fatal = true;
+		renderer.setAnimationLoop(null);
+	}
+
+	// A multi-megabyte GLB on a slow connection legitimately outlives the boot
+	// watchdog, so the download re-arms it on every progress tick. A transfer
+	// that goes quiet for the full window still lands in the error state.
+	window.__avatarArtifactHeartbeat?.();
+
 	loader.load(
 		resolveDevR2Url(artifact.url),
 		(gltf) => {
 			const root = gltf.scene || gltf.scenes?.[0];
 			if (!root) {
+				stop();
 				fail('msgModelFailed');
 				return;
 			}
@@ -503,11 +519,13 @@ function buildArtifactStage(scene, camera, renderer, artifact) {
 			loaded = true;
 		},
 		(progress) => {
+			window.__avatarArtifactHeartbeat?.();
 			if (!progress?.lengthComputable || !els.loading?.dataset.noteProgress) return;
 			const pct = Math.min(99, Math.round((progress.loaded / progress.total) * 100));
 			setLoadingNote(els.loading.dataset.noteProgress.replace('{pct}', String(pct)));
 		},
 		() => {
+			stop();
 			fail(
 				'msgModelFailed',
 				artifact.href ? { href: artifact.href, label: artifact.linkLabel || '' } : null,

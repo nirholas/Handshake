@@ -571,6 +571,31 @@ function pushHistory(role, content) {
 	while (history.length > MAX_HISTORY_TURNS * 2) history.shift();
 }
 
+/**
+ * Turn an /api/chat failure into a line the visitor can act on.
+ *
+ * The route already explains itself (`error_description`, plus `retry_after`
+ * seconds when the free provider chain is saturated), so surface that instead
+ * of a bare status code, and name the escape hatch the widget actually has:
+ * the visitor's own Groq or OpenRouter key, set in the settings panel.
+ */
+async function chatErrorMessage(res) {
+	let description = '';
+	let retryAfter = 0;
+	try {
+		const body = await res.json();
+		description = String(body?.error_description || '').trim();
+		retryAfter = Number(body?.retry_after) || 0;
+	} catch {
+		description = '';
+	}
+	if (res.status === 429 || res.status === 503) {
+		const wait = retryAfter ? `Try again in ${retryAfter}s` : 'Try again in a moment';
+		return `${description || 'The free chat lane is busy right now.'} ${wait}, or add your own Groq or OpenRouter key under Settings.`;
+	}
+	return description || `Chat failed (HTTP ${res.status}).`;
+}
+
 /** Stream a reply from /api/chat (platform free chain). */
 async function chatFree(message, onChunk) {
 	const res = await fetch('/api/chat', {
@@ -578,10 +603,7 @@ async function chatFree(message, onChunk) {
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ message, history: history.slice(0, -1), system_prompt: systemPrompt() }),
 	});
-	if (!res.ok || !res.body) {
-		if (res.status === 429) throw new Error('Too many messages — give it a moment.');
-		throw new Error(`Chat failed (HTTP ${res.status}).`);
-	}
+	if (!res.ok || !res.body) throw new Error(await chatErrorMessage(res));
 	const reader = res.body.getReader();
 	const decoder = new TextDecoder();
 	let buffer = '';
@@ -697,7 +719,10 @@ async function handleChat(message) {
 	} catch (err) {
 		history.pop(); // failed turn doesn't poison the next one
 		setTalking(false);
-		showBubble(err?.message || 'Something went wrong — try again.', { error: true, holdMs: 6000 });
+		// Hold an error as long as it takes to read: the at-capacity line names a
+		// wait and a settings escape hatch, and blinking away at 6s loses both.
+		const text = err?.message || 'Something went wrong, try again.';
+		showBubble(text, { error: true, holdMs: Math.max(6000, estimateSpeechMs(text)) });
 	}
 }
 

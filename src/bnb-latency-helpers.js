@@ -102,6 +102,41 @@ export function sparklineBars(values, { maxBars = 24, floor = 8 } = {}) {
 }
 
 /**
+ * The headline BNB readout's state, which needs one more distinction than a
+ * lane does: a headline number that is no longer live must not keep rendering
+ * as if it were. `stale` is "the last poll failed but we DID measure this
+ * chain earlier" (show the old number, visibly marked old, with its age);
+ * `unavailable` is "polls are failing and we never got a reading at all"
+ * (show nothing rather than invent one). Both replace the frozen full-opacity
+ * number the page used to leave on screen through an outage.
+ * @param {{ hasFetchedOnce: boolean, ok: boolean, hasSample?: boolean, hasPrevious?: boolean }} input
+ * @returns {'measuring'|'live'|'stale'|'unavailable'}
+ */
+export function headlineState({ hasFetchedOnce, ok, hasSample = true, hasPrevious = false }) {
+	if (!hasFetchedOnce) return 'measuring';
+	if (ok && hasSample) return 'live';
+	return hasPrevious ? 'stale' : 'unavailable';
+}
+
+/**
+ * Seconds-resolution age label for a measurement taken `ms` ago ("8s ago").
+ * The shared `timeAgo` collapses everything under a minute to "just now",
+ * which is useless on a page that re-measures every few seconds: an outage
+ * that has run for 45 seconds must not read as fresh. Returns `''` for a
+ * missing or invalid age.
+ * @param {number} ms
+ * @returns {string}
+ */
+export function ageLabel(ms) {
+	if (!Number.isFinite(ms) || ms < 0) return '';
+	const s = Math.floor(ms / 1000);
+	if (s < 60) return `${s}s ago`;
+	if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+	if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+	return `${Math.floor(s / 86400)}d ago`;
+}
+
+/**
  * Honest speedup ratio between two REAL measured averages ("BNB confirms
  * N.Nx faster than Base right now") — always computed from live numbers on
  * both sides, never a fixed claim. Returns `null` when either input is

@@ -59,6 +59,10 @@
 			.pc-head a { color: var(--text, #f6f6f6); }
 
 			.pc-layout { display: grid; grid-template-columns: 1fr 320px; gap: 18px; margin-top: 28px; align-items: start; }
+			/* Grid items default to min-width:auto, so the stage's aspect-ratio plus its
+			   min-height would force a 553px min-content width and scroll the page
+			   sideways on a phone. Let the track win instead. */
+			.pc-layout > * { min-width: 0; }
 
 			/* Stage */
 			.pc-stage {
@@ -85,10 +89,14 @@
 				animation: pc-spin 0.8s linear infinite;
 			}
 			@keyframes pc-spin { to { transform: rotate(360deg); } }
-			.pc-overlay h3 { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: 17px; margin: 0; color: var(--text, #f6f6f6); }
-			.pc-overlay p { font-size: 13px; color: var(--text-3, #8a8a8a); margin: 0; max-width: 380px; line-height: 1.5; }
-			.pc-overlay--drop { pointer-events: auto; cursor: pointer; transition: background 0.15s; }
+			.pc-overlay h3, .pc-overlay-title { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: 17px; font-weight: 700; margin: 0; color: var(--text, #f6f6f6); }
+			.pc-overlay p, .pc-overlay-sub { font-size: 13px; color: var(--text-3, #8a8a8a); margin: 0; max-width: 380px; line-height: 1.5; }
+			.pc-overlay--drop {
+				pointer-events: auto; cursor: pointer; transition: background 0.15s;
+				width: 100%; border: 0; background: transparent; font: inherit; color: inherit;
+			}
 			.pc-overlay--drop:hover, .pc-stage.is-dragover .pc-overlay--drop { background: rgba(255,255,255,0.03); }
+			.pc-overlay--drop:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: -4px; }
 			.pc-glyph {
 				width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center;
 				color: var(--text, #f6f6f6); background: var(--surface-1, #141414); border: 1px solid var(--hairline-strong, #2a2a2a);
@@ -179,6 +187,13 @@
 			.pc-note a { color: var(--text-2, #cfcfcf); }
 
 			@media (max-width: 880px) { .pc-layout { grid-template-columns: 1fr; } }
+			/* Below ~640px the 16:11 stage would be shorter than its min-height, which
+			   is what re-introduces the sideways scroll. Give it a plain viewport-
+			   relative height there so width always follows the column. */
+			@media (max-width: 640px) {
+				.pc-stage { aspect-ratio: auto; height: 62vh; min-height: 300px; }
+				.pc-hud-label { max-width: 44%; }
+			}
 
 			/* Embed mode (?embed=1) — chrome-less full-bleed stage for the MCP /
 			   agent point-cloud artifact iframe. Hide nav, footer, header, panel. */
@@ -218,13 +233,13 @@
 						<div class="pc-host" id="pc-host"></div>
 
 						<!-- Idle / drop -->
-						<div class="pc-overlay pc-overlay--drop" id="pc-idle">
-							<div class="pc-glyph">
-								<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-							</div>
-							<h3 data-i18n="capture.capture_a_scene_to_begin">Capture a scene to begin</h3>
-							<p data-i18n-html="capture.paste_a_video_url_on_the_right">Paste a video URL on the right to reconstruct, drop a <code>.ply</code> here, or try the sample cloud.</p>
-						</div>
+						<button class="pc-overlay pc-overlay--drop" id="pc-idle" type="button" aria-label="Choose a .ply file to render" data-i18n-attr="aria-label:capture.choose_a_ply_file_to_render_arialabel">
+							<span class="pc-glyph">
+								<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+							</span>
+							<span class="pc-overlay-title" data-i18n="capture.capture_a_scene_to_begin">Capture a scene to begin</span>
+							<span class="pc-overlay-sub" data-i18n-html="capture.paste_a_video_url_on_the_right">Paste a video URL on the right to reconstruct, drop a <code>.ply</code> here, or try the sample cloud.</span>
+						</button>
 
 						<!-- Loading -->
 						<div class="pc-overlay" id="pc-loading" hidden>
@@ -279,6 +294,7 @@
 								Capture from video
 							</h2>
 							<div class="pc-field">
+								<label class="pc-label" for="pc-url" data-i18n="capture.video_url">Video URL</label>
 								<input class="pc-input" id="pc-url" type="url" placeholder="https://…/walkthrough.mp4" autocomplete="off" />
 								<button class="pc-btn pc-btn--primary" id="pc-run" type="button">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14 M13 5l7 7-7 7"/></svg>
@@ -288,21 +304,21 @@
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
 									Upload a video
 								</button>
-								<input id="pc-video-file" type="file" accept="video/mp4,video/quicktime,video/webm" hidden />
+								<input id="pc-video-file" type="file" accept="video/mp4,video/quicktime,video/webm" hidden aria-label="Video file to reconstruct" data-i18n-attr="aria-label:capture.video_file_to_reconstruct_arialabel" />
 							</div>
 							<details class="pc-adv">
 								<summary data-i18n="capture.reconstruction_settings">Reconstruction settings</summary>
 								<div class="pc-adv-body">
 									<div class="pc-row">
 										<div class="pc-field">
-											<span class="pc-label" data-i18n="capture.mode">Mode</span>
+											<label class="pc-label" for="pc-mode" data-i18n="capture.mode">Mode</label>
 											<select class="pc-select" id="pc-mode">
 												<option value="streaming" selected data-i18n="capture.streaming">Streaming</option>
 												<option value="windowed" data-i18n="capture.windowed_3k_frames">Windowed (&gt;3k frames)</option>
 											</select>
 										</div>
 										<div class="pc-field">
-											<span class="pc-label" data-i18n="capture.sample_fps">Sample FPS</span>
+											<label class="pc-label" for="pc-fps" data-i18n="capture.sample_fps">Sample FPS</label>
 											<select class="pc-select" id="pc-fps">
 												<option value="4">4</option>
 												<option value="8" selected>8</option>
@@ -311,7 +327,7 @@
 										</div>
 									</div>
 									<div class="pc-field">
-										<span class="pc-label" data-i18n="capture.keyframe_interval">Keyframe interval</span>
+										<label class="pc-label" for="pc-kf" data-i18n="capture.keyframe_interval">Keyframe interval</label>
 										<select class="pc-select" id="pc-kf">
 											<option value="2" data-i18n="capture.2_denser_slower">2 · denser, slower</option>
 											<option value="4" selected data-i18n="capture.4_balanced">4 · balanced</option>
@@ -330,6 +346,7 @@
 								Load a point cloud
 							</h2>
 							<div class="pc-field">
+								<label class="pc-label" for="pc-ply-url" data-i18n="capture.point_cloud_url">Point cloud URL</label>
 								<input class="pc-input" id="pc-ply-url" type="url" placeholder="https://…/scene.ply" autocomplete="off" />
 								<button class="pc-btn" id="pc-load-url" type="button" data-i18n="capture.render_url">Render URL</button>
 							</div>
@@ -338,7 +355,7 @@
 								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12 M7 11l5 4 5-4 M5 21h14"/></svg>
 								Upload a .ply
 							</button>
-							<input id="pc-file" type="file" accept=".ply" hidden />
+							<input id="pc-file" type="file" accept=".ply" hidden aria-label="Point cloud .ply file" data-i18n-attr="aria-label:capture.point_cloud_ply_file_arialabel" />
 							<div class="pc-or">or</div>
 							<button class="pc-sample-btn" id="pc-sample" type="button" data-i18n-html="capture.sample_interior_90k_points"><span class="pc-sample-dot"></span> Sample interior · 90k points</button>
 							<p class="pc-hint" data-i18n="capture.files_stay_on_your_device_decoding_and">Files stay on your device — decoding and rendering run entirely in your browser.</p>

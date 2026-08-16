@@ -640,11 +640,7 @@ function renderPlayControls() {
 		label.textContent = 'Models';
 		ctrl.innerHTML = `<div class="br-provider-pills">${
 			[...PMAP.values()].map(p => {
-				const cls = [
-					'br-pill',
-					state.active.has(p.key) ? 'on' : '',
-					!p.available ? 'unavailable' : '',
-				].filter(Boolean).join(' ');
+				const cls = ['br-pill', state.active.has(p.key) ? 'on' : ''].filter(Boolean).join(' ');
 				return `<button type="button" class="${cls}" style="--pc:${p.color}" data-key="${escHtml(p.key)}"
 					aria-pressed="${state.active.has(p.key)}"${p.available ? '' : ' disabled'}
 					title="${escHtml(providerTitle(p))}">
@@ -1120,9 +1116,24 @@ function deleteSession(id) {
 
 function setPlayMode(m) {
 	state.playMode = m;
-	document.querySelectorAll('.br-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+	document.querySelectorAll('.br-mode-btn').forEach(b => {
+		const on = b.dataset.mode === m;
+		b.classList.toggle('active', on);
+		b.setAttribute('aria-pressed', String(on));
+	});
 	renderPlayControls();
 	renderCanvas();
+}
+
+// Below 900px the sessions rail is off-canvas, so the topbar carries the only
+// route to it. Without this the New-session button and the whole session list
+// were unreachable on a phone.
+function setSideOpen(open) {
+	$('brSide').classList.toggle('open', open);
+	document.body.classList.toggle('br-side-open', open);
+	const toggle = $('brSideToggle');
+	toggle.setAttribute('aria-expanded', String(open));
+	toggle.setAttribute('aria-label', open ? 'Hide sessions' : 'Show sessions');
 }
 
 // ── Bind playground control events ───────────────────────────────────────────
@@ -1156,6 +1167,15 @@ function bindEvents() {
 	// Tab switching
 	document.querySelectorAll('.br-tab').forEach(t => {
 		t.addEventListener('click', () => setTab(t.dataset.tab));
+	});
+
+	// Sessions drawer (mobile)
+	$('brSideToggle').addEventListener('click', () => {
+		setSideOpen(!$('brSide').classList.contains('open'));
+	});
+	$('brSideBackdrop').addEventListener('click', () => setSideOpen(false));
+	document.addEventListener('keydown', e => {
+		if (e.key === 'Escape' && $('brSide').classList.contains('open')) setSideOpen(false);
 	});
 
 	// Describe input — Enter submits (Shift+Enter = newline)
@@ -1220,6 +1240,7 @@ function bindEvents() {
 		persistSessions();
 		renderSidebar();
 		renderCanvas();
+		setSideOpen(false);
 	});
 
 	// Export
@@ -1230,7 +1251,7 @@ function bindEvents() {
 		const del = e.target.closest('[data-del]');
 		if (del) { deleteSession(del.dataset.del); return; }
 		const item = e.target.closest('[data-id]');
-		if (item) loadSession(item.dataset.id);
+		if (item) { loadSession(item.dataset.id); setSideOpen(false); }
 	});
 
 	// Canvas clicks (delegated)

@@ -304,7 +304,7 @@
 
 			<section class="bd-section" aria-labelledby="bd-live-h">
 				<h2 id="bd-live-h">Published bundles</h2>
-				<p>Live on this agent right now. Buyers see these on the agent's marketplace listing; one payment unlocks every skill inside.</p>
+				<p>Live on this agent right now, served publicly at <code>/api/agents/&lt;id&gt;/bundles</code> and bought in one payment that unlocks every skill inside. <a href="/docs/skill-bundles">How checkout works</a>.</p>
 				<div id="bd-list" class="bd-list"></div>
 				<div id="bd-list-empty" class="bd-note bd-hide" style="margin-top:14px"></div>
 			</section>
@@ -776,7 +776,7 @@
 			if (!bundles.length) {
 				list.innerHTML = '';
 				note.classList.remove('bd-note--error');
-				note.innerHTML = '<b>No bundles yet.</b> Pick two skills above, set a price, and publish. Buyers will see it on this agent’s listing.';
+				note.innerHTML = '<b>No bundles yet.</b> Pick two skills above, set a price, and publish. It goes live on this agent immediately.';
 				show(note, true);
 				return;
 			}

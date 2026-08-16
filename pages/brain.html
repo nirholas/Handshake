@@ -43,7 +43,7 @@
 			<aside class="br-side" id="brSide">
 				<div class="br-side-head">
 					<span class="br-side-title" data-i18n="brain.sessions">Sessions</span>
-					<button class="br-side-new" id="brNewChat" title="New session" data-i18n="brain.new" data-i18n-attr="title:brain.new_session_title">+ New</button>
+					<button class="br-side-new" id="brNewChat" type="button" title="New session" data-i18n="brain.new" data-i18n-attr="title:brain.new_session_title">+ New</button>
 				</div>
 				<div class="br-sessions" id="brSessions"></div>
 				<div class="br-side-persona" id="brSidePersona">
@@ -51,18 +51,20 @@
 					<div class="br-persona-mini" id="brPersonaMini">
 						<div class="br-persona-mini-tone" id="brMiniTone"></div>
 						<div class="br-persona-mini-style" id="brMiniStyle"></div>
-						<button class="br-persona-mini-clear" id="brMiniClear" data-i18n="brain.clear_persona">Clear persona</button>
+						<button class="br-persona-mini-clear" id="brMiniClear" type="button" data-i18n="brain.clear_persona">Clear persona</button>
 					</div>
 					<button class="br-btn br-btn-secondary br-btn-sm" id="brBuildPersonaBtn" style="width:100%" data-i18n="brain.build_persona">Build Persona</button>
 				</div>
 			</aside>
+			<div class="br-side-backdrop" id="brSideBackdrop"></div>
 
 			<div class="br-body">
 				<div class="br-topbar">
-					<button class="br-tab active" data-tab="persona" data-i18n-html="brain.persona">Persona<span class="br-tab-badge" id="brPersonaBadge"></span></button>
-					<button class="br-tab" data-tab="playground" data-i18n="brain.playground">Playground</button>
+					<button class="br-side-toggle" id="brSideToggle" type="button" aria-expanded="false" aria-controls="brSide" aria-label="Show sessions">☰</button>
+					<button class="br-tab active" type="button" data-tab="persona" data-i18n-html="brain.persona">Persona<span class="br-tab-badge" id="brPersonaBadge"></span></button>
+					<button class="br-tab" type="button" data-tab="playground" data-i18n="brain.playground">Playground</button>
 					<div class="br-topbar-right">
-						<button class="br-topbar-btn" id="brExport" data-i18n="brain.export">Export</button>
+						<button class="br-topbar-btn" id="brExport" type="button" data-i18n="brain.export">Export</button>
 						<a href="/dashboard/agents" class="br-topbar-btn" data-i18n="brain.my_agents">My Agents</a>
 					</div>
 				</div>
@@ -74,8 +76,8 @@
 
 							<!-- Agent target bar -->
 							<div class="br-agent-bar" id="brAgentBar">
-								<span class="br-agent-bar-label" data-i18n="brain.persona_for">Persona for</span>
-								<select class="br-agent-bar-sel" id="brAgentSelect">
+								<label class="br-agent-bar-label" for="brAgentSelect" data-i18n="brain.persona_for">Persona for</label>
+								<select class="br-agent-bar-sel" id="brAgentSelect" disabled>
 									<option value="" data-i18n="brain.loading_agents">Loading agents…</option>
 								</select>
 								<a href="/dashboard/agents" class="br-agent-bar-manage" data-i18n="brain.manage_agents">Manage agents</a>
@@ -95,6 +97,7 @@
 								<div class="br-describe-divider"><span data-i18n="brain.or_describe_your_agent">or describe your agent</span></div>
 								<div class="br-describe-wrap">
 									<textarea class="br-describe-input" id="brDescribeInput"
+										aria-label="Describe your agent's personality"
 										placeholder="A sharp crypto trader who speaks plainly and hates buzzwords. Direct, a little sardonic, always on-chain."
 										rows="2"></textarea>
 									<div class="br-describe-hint">Press Enter to generate · Shift+Enter for new line</div>
@@ -102,7 +105,7 @@
 							</div>
 
 							<!-- Loading -->
-							<div class="br-loading" id="brLoading">
+							<div class="br-loading" id="brLoading" role="status">
 								<div class="br-loading-spinner"></div>
 								<span data-i18n="brain.synthesizing_persona">Synthesizing persona…</span>
 							</div>
@@ -112,9 +115,9 @@
 								<span class="br-status-icon">✓</span>
 								<span class="br-status-text" id="brStatusText"></span>
 								<div class="br-status-actions">
-									<button class="br-status-btn" id="brTestInPlayground" data-i18n="brain.test_it">Test it</button>
-									<button class="br-status-btn" id="brToggleAdvanced" data-i18n="brain.customize">Customize</button>
-									<button class="br-status-btn br-status-btn-clear" id="brResetPersona" data-i18n="brain.clear">Clear</button>
+									<button class="br-status-btn" id="brTestInPlayground" type="button" data-i18n="brain.test_it">Test it</button>
+									<button class="br-status-btn" id="brToggleAdvanced" type="button" data-i18n="brain.customize">Customize</button>
+									<button class="br-status-btn br-status-btn-clear" id="brResetPersona" type="button" data-i18n="brain.clear">Clear</button>
 								</div>
 							</div>
 
@@ -157,11 +160,11 @@
 								<!-- Inline editor (hidden by default) -->
 								<div class="br-pc-edit-body" id="brPcEditBody" style="display:none">
 									<div class="br-edit-row">
-										<label class="br-edit-label" data-i18n="brain.tone">Tone</label>
+										<label class="br-edit-label" for="brEditTone" data-i18n="brain.tone">Tone</label>
 										<input class="br-edit-input" id="brEditTone" />
 									</div>
 									<div class="br-edit-row">
-										<label class="br-edit-label" data-i18n="brain.style">Style</label>
+										<label class="br-edit-label" for="brEditStyle" data-i18n="brain.style">Style</label>
 										<select class="br-agent-select" id="brEditStyle" style="width:100%">
 											<option value="terse" data-i18n="brain.terse">Terse</option>
 											<option value="detailed" data-i18n="brain.detailed">Detailed</option>
@@ -171,19 +174,19 @@
 										</select>
 									</div>
 									<div class="br-edit-row">
-										<label class="br-edit-label" data-i18n="brain.vocabulary">Vocabulary</label>
+										<label class="br-edit-label" for="brEditVocab" data-i18n="brain.vocabulary">Vocabulary</label>
 										<input class="br-edit-input" id="brEditVocab" placeholder="Comma-separated" />
 									</div>
 									<div class="br-edit-row">
-										<label class="br-edit-label" data-i18n="brain.interests">Interests</label>
+										<label class="br-edit-label" for="brEditInterests" data-i18n="brain.interests">Interests</label>
 										<input class="br-edit-input" id="brEditInterests" placeholder="Comma-separated" />
 									</div>
 									<div class="br-edit-row">
-										<label class="br-edit-label" data-i18n="brain.don_t_say">Don't Say</label>
+										<label class="br-edit-label" for="brEditDont" data-i18n="brain.don_t_say">Don't Say</label>
 										<input class="br-edit-input" id="brEditDont" placeholder="Comma-separated" />
 									</div>
 									<div class="br-edit-row">
-										<label class="br-edit-label" data-i18n="brain.greeting">Greeting</label>
+										<label class="br-edit-label" for="brEditGreet" data-i18n="brain.greeting">Greeting</label>
 										<textarea class="br-edit-textarea" id="brEditGreet" rows="2"></textarea>
 									</div>
 									<div class="br-actions" style="justify-content:flex-start">
@@ -202,9 +205,9 @@
 				<div class="br-panel" id="brPanelPlayground">
 					<div class="br-play">
 						<div class="br-play-bar" id="brPlayBar">
-							<div class="br-mode-toggle">
-								<button class="br-mode-btn active" data-mode="compare" data-i18n="brain.compare">Compare</button>
-								<button class="br-mode-btn" data-mode="chat" data-i18n="brain.chat">Chat</button>
+							<div class="br-mode-toggle" role="group" aria-label="Playground mode">
+								<button class="br-mode-btn active" type="button" data-mode="compare" aria-pressed="true" data-i18n="brain.compare">Compare</button>
+								<button class="br-mode-btn" type="button" data-mode="chat" aria-pressed="false" data-i18n="brain.chat">Chat</button>
 							</div>
 							<span class="br-play-label" id="brPlayLabel" data-i18n="brain.models">Models</span>
 							<div id="brPlayControls"></div>
@@ -212,18 +215,18 @@
 						<div class="br-persona-banner" id="brPersonaBanner">
 							<span class="br-persona-banner-dot"></span>
 							Persona active: <strong id="brBannerTone"></strong>
-							<button class="br-persona-banner-dismiss" id="brBannerDismiss" data-i18n="brain.disable_for_session">Disable for session</button>
+							<button class="br-persona-banner-dismiss" id="brBannerDismiss" type="button" data-i18n="brain.disable_for_session">Disable for session</button>
 						</div>
 						<div class="br-canvas" id="brCanvas"></div>
 						<div class="br-input-wrap">
-							<div class="br-notice" id="brNotice"></div>
+							<div class="br-notice" id="brNotice" role="status"></div>
 							<details class="br-sys-details" id="brSysDetails">
 								<summary data-i18n="brain.system_prompt">System prompt</summary>
-								<textarea class="br-sys-textarea" id="brSystem" placeholder="You are a helpful assistant..." rows="3"></textarea>
+								<textarea class="br-sys-textarea" id="brSystem" aria-label="System prompt" placeholder="You are a helpful assistant..." rows="3"></textarea>
 							</details>
 							<div class="br-input-row">
-								<textarea class="br-prompt" id="brPrompt" placeholder="Send a message..." rows="1"></textarea>
-								<button class="br-send" id="brSend" data-i18n="brain.send">Send</button>
+								<textarea class="br-prompt" id="brPrompt" aria-label="Message" placeholder="Send a message..." rows="1"></textarea>
+								<button class="br-send" id="brSend" type="button" data-i18n="brain.send">Send</button>
 							</div>
 							<div class="br-hint">Ctrl+Enter to send</div>
 						</div>
@@ -232,7 +235,7 @@
 			</div>
 		</div>
 
-		<div class="br-toast" id="brToast"></div>
+		<div class="br-toast" id="brToast" role="status" aria-live="polite"></div>
 
 		<script src="/nav.js" defer></script>
 		<script type="module" src="/src/brain.js"></script>

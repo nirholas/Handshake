@@ -536,6 +536,10 @@
 					"path": "marketplace"
 				},
 				{
+					"label": "Skill bundles",
+					"path": "skill-bundles"
+				},
+				{
 					"label": "Coin launches",
 					"path": "coin-launches"
 				},

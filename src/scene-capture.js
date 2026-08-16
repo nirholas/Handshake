@@ -49,13 +49,21 @@ function showOnly(id) {
 	}
 	if (id !== null) $('#pc-hud').hidden = true;
 }
+// These two headings ship with a translatable placeholder but are rewritten from
+// here on every state change. `data-i18n-owned` hands ownership to this script so
+// the catalog pass (which lands after an async /api/locale fetch) cannot revert a
+// live "Couldn't fetch that point cloud" back to "Something went wrong".
+function own(el, text) {
+	el.textContent = text;
+	el.setAttribute('data-i18n-owned', '1');
+}
 function setLoading(title, sub) {
-	$('#pc-loading-title').textContent = title;
+	own($('#pc-loading-title'), title);
 	if (sub != null) $('#pc-loading-sub').textContent = sub;
 	showOnly('pc-loading');
 }
 function setError(title, sub) {
-	$('#pc-error-title').textContent = title;
+	own($('#pc-error-title'), title);
 	$('#pc-error-sub').textContent = sub || '';
 	showOnly('pc-error');
 }
@@ -82,21 +90,26 @@ function setDownload(url, filename) {
 function fmt(n) { return n.toLocaleString('en-US'); }
 
 // ── render a point cloud from an ArrayBuffer ──────────────────────────────────
-function renderBuffer(buffer, label, downloadName) {
+const INVALID_PLY = 'Expected a binary or ASCII .ply with xyz + rgb vertices.';
+
+function renderBuffer(buffer, label, downloadName, extra) {
 	setLoading('Decoding point cloud…', `${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB`);
 	try {
 		const v = ensureViewer();
 		const { count } = v.loadBuffer(buffer);
-		setLive(`${label} · ${fmt(count)} points`);
+		// A file that is not a PLY decodes to an empty geometry rather than throwing,
+		// which used to read as a successful "0 points" render over a blank stage.
+		if (!count) throw new Error('no vertices in point cloud');
+		setLive([`${label} · ${fmt(count)} points`, extra].filter(Boolean).join(' · '));
 		setDownload(URL.createObjectURL(new Blob([buffer])), downloadName);
 		$('#pc-size').disabled = false;
 	} catch (err) {
 		console.error('[scene-capture] decode failed', err);
-		setError('That isn’t a valid point cloud', 'Expected a binary or ASCII .ply with xyz + rgb vertices.');
+		setError('That isn’t a valid point cloud', INVALID_PLY);
 	}
 }
 
-async function loadFromUrl(url, label) {
+async function loadFromUrl(url, label, extra) {
 	let parsed;
 	try { parsed = new URL(url, location.href); } catch { setError('That doesn’t look like a URL', url); return; }
 	setLoading('Fetching point cloud…', parsed.hostname);
@@ -104,7 +117,7 @@ async function loadFromUrl(url, label) {
 		const res = await fetch(parsed.href);
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const buffer = await res.arrayBuffer();
-		renderBuffer(buffer, label || 'Point cloud', parsed.pathname.split('/').pop() || 'scene.ply');
+		renderBuffer(buffer, label || 'Point cloud', parsed.pathname.split('/').pop() || 'scene.ply', extra);
 	} catch (err) {
 		console.error('[scene-capture] fetch failed', err);
 		setError('Couldn’t fetch that point cloud', `${err.message}. The host may block cross-origin reads (CORS).`);
@@ -141,6 +154,10 @@ function loadSample() {
 }
 
 // ── reconstruction job (real backend) ─────────────────────────────────────────
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_MISSES = 8;      // ~24s of unreadable polls before we say so
+const POLL_DEADLINE_MS = 20 * 60 * 1000;
+
 function stopPolling() {
 	if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
 	if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null; }
@@ -243,31 +260,50 @@ async function startCapture() {
 		processingCopy(Math.round((Date.now() - t0) / 1000), eta);
 	}, 1000);
 
+	// A job that never resolves must not poll forever behind a counter that only
+	// climbs. Give up after a run of unreadable polls or past the wall clock.
+	let misses = 0;
+	const giveUp = (title, sub) => {
+		stopPolling();
+		$('#pc-run').disabled = false;
+		setError(title, sub);
+	};
+
 	const poll = async () => {
+		if (Date.now() - t0 > POLL_DEADLINE_MS) {
+			giveUp('Reconstruction timed out', `The worker did not finish within ${Math.round(POLL_DEADLINE_MS / 60000)} minutes. Try a shorter clip, a lower sample FPS, or a wider keyframe interval.`);
+			return;
+		}
 		let data;
 		try {
 			const res = await fetch(`/api/scene-capture?job=${encodeURIComponent(jobId)}`);
 			data = await res.json().catch(() => ({}));
-		} catch {
-			pollTimer = setTimeout(poll, 3000);
+			if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+			misses = 0;
+		} catch (err) {
+			if (++misses >= MAX_POLL_MISSES) {
+				giveUp('Lost contact with the reconstruction', `${err.message}. The job may still be running; reload and paste the video URL again to restart it.`);
+				return;
+			}
+			pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
 			return;
 		}
 		if (data.status === 'done' && data.result_url) {
 			stopPolling();
 			$('#pc-run').disabled = false;
 			const label = data.frames ? `Captured · ${fmt(data.frames)} frames` : 'Captured scene';
-			await loadFromUrl(data.result_url, label);
+			// The worker caps a job at its frame budget. Say so, rather than let a
+			// partial reconstruction pass for the whole clip.
+			await loadFromUrl(data.result_url, label, data.frames_truncated ? 'clip truncated to the frame budget' : null);
 			return;
 		}
 		if (data.status === 'failed') {
-			stopPolling();
-			$('#pc-run').disabled = false;
-			setError('Reconstruction failed', data.error || 'The worker reported a failure. Try a shorter or steadier clip.');
+			giveUp('Reconstruction failed', data.error || 'The worker reported a failure. Try a shorter or steadier clip.');
 			return;
 		}
-		pollTimer = setTimeout(poll, 3000);
+		pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
 	};
-	pollTimer = setTimeout(poll, 3000);
+	pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
 }
 
 // ── wiring ────────────────────────────────────────────────────────────────────

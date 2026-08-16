@@ -11,12 +11,6 @@
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-/* Rows are informational, not navigable — reset the shared table's pointer
-   cursor so nothing signals a click target that doesn't exist. */
-#chains-table .cv-table tbody tr {
-	cursor: default;
-}
-
 /* Inline dominance bar. Fixed-width track so bars read as a shared scale down
    the column; the fill is scaled to the leading chain in chains.js. */
 .chains-bar-cell {

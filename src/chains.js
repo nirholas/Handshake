@@ -130,12 +130,14 @@ function renderTable() {
 	}
 	if (state.error) {
 		el.innerHTML =
-			'<div class="cv-empty">Chain TVL data is temporarily unavailable. <a href="/chains">Try again</a> shortly.</div>';
+			'<div class="cv-empty">Chain TVL data is temporarily unavailable. The upstream provider did not answer. <button type="button" class="cv-linkbtn" data-act="retry">Try again</button>.</div>';
+		el.querySelector('[data-act="retry"]')?.addEventListener('click', () => load());
 		return;
 	}
 	if (!state.chains.length) {
 		el.innerHTML =
-			'<div class="cv-empty">No chain data to show right now. <a href="/chains">Refresh</a> to retry.</div>';
+			'<div class="cv-empty">No chain TVL is being reported right now. <button type="button" class="cv-linkbtn" data-act="retry">Refresh</button> to check again.</div>';
+		el.querySelector('[data-act="retry"]')?.addEventListener('click', () => load());
 		return;
 	}
 
@@ -149,23 +151,26 @@ function renderTable() {
 		}
 		const active = col.key === state.sortKey;
 		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
-		return `<th scope="col" tabindex="0" data-key="${col.key}" class="${col.left ? 'left' : ''} ${col.hide || ''}"${active ? ` aria-sort="${state.sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
+		const sort = active ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}" class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
 	}).join('');
 
 	const body = sortedChains()
 		.map((c) => {
 			const barPct = Math.max(2, ((c.share_pct || 0) / maxShare) * 100);
-			// Whole row opens the internal /chain/:name detail page; keyboard-accessible.
-			const nav = c.name
-				? ` data-href="/chain/${encodeURIComponent(c.name)}" tabindex="0" role="link" aria-label="Open ${esc(c.name)} chain detail"`
-				: '';
-			return `
-			<tr${nav}>
-				<td class="rank hide-sm cv-mono">${c.__rank}</td>
-				<td class="left name-cell"><span class="inner">
+			// The chain name is a real anchor so the /chain/:name detail page is
+			// crawlable, middle-clickable, and reachable by keyboard as a link. The
+			// row keeps data-href purely as a click convenience, which is why the
+			// <tr> stays a plain table row instead of claiming role="link".
+			const href = c.name ? `/chain/${encodeURIComponent(c.name)}` : '';
+			const inner = `<span class="inner">
 					<span class="nm">${esc(c.name)}</span>
 					${c.token_symbol ? `<span class="sym">${esc(c.token_symbol)}</span>` : ''}
-				</span></td>
+				</span>`;
+			return `
+			<tr${href ? ` data-href="${esc(href)}"` : ''}>
+				<td class="rank hide-sm cv-mono">${c.__rank}</td>
+				<td class="left name-cell">${href ? `<a href="${esc(href)}">${inner}</a>` : inner}</td>
 				<td class="price">${esc(formatUsd(c.tvl))}</td>
 				<td class="pct cv-mono">${(c.share_pct || 0).toFixed(2)}%</td>
 				<td class="left hide-md chains-bar-cell">
@@ -205,15 +210,13 @@ function renderTable() {
 		});
 	});
 
-	// Row → /chain/:name navigation (header clicks sort, never navigate).
+	// Clicking anywhere in the row follows the name cell's link. The anchor
+	// handles its own click (and the whole keyboard path), so bail out on it
+	// rather than navigating twice.
 	el.querySelectorAll('tr[data-href]').forEach((tr) => {
-		const go = () => location.assign(tr.dataset.href);
-		tr.addEventListener('click', go);
-		tr.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				e.preventDefault();
-				go();
-			}
+		tr.addEventListener('click', (e) => {
+			if (e.target.closest('a')) return;
+			location.assign(tr.dataset.href);
 		});
 	});
 }
@@ -221,6 +224,10 @@ function renderTable() {
 // ── Boot ──────────────────────────────────────────────────────────────────
 
 async function load() {
+	// A retry re-enters here from the error state, so reset to loading before
+	// painting or the skeleton would be replaced by the stale error message.
+	state.loading = true;
+	state.error = false;
 	statsSkeleton();
 	renderTable();
 	try {
@@ -231,14 +238,23 @@ async function load() {
 		state.updated_at = data.updated_at || Date.now();
 		state.loading = false;
 		state.error = false;
-		renderStats();
+		// An empty payload has no totals worth showing: a "$0.00" card would read
+		// as a claim that cross-chain TVL is zero rather than as missing data.
+		if (state.chains.length) {
+			renderStats();
+			$('chains-updated').textContent =
+				`Top ${state.chains.length} chains by TVL · Data: DeFiLlama · updated ${new Date(state.updated_at).toLocaleTimeString('en-US')}`;
+		} else {
+			$('chains-stats').innerHTML = '';
+			$('chains-updated').textContent = '';
+		}
 		renderTable();
-		$('chains-updated').textContent =
-			`Top ${state.chains.length} chains by TVL · Data: DeFiLlama · updated ${new Date(state.updated_at).toLocaleTimeString('en-US')}`;
 	} catch {
 		state.loading = false;
 		state.error = true;
+		state.chains = [];
 		$('chains-stats').innerHTML = '';
+		$('chains-updated').textContent = 'Data: DeFiLlama';
 		renderTable();
 	}
 }

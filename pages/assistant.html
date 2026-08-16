@@ -245,6 +245,8 @@
 				color: #fecaca;
 			}
 			.preview-status[data-state='error'] .dot { background: #f87171; }
+			.preview-status[data-state='degraded'] { border-color: rgba(251, 191, 36, 0.4); }
+			.preview-status[data-state='degraded'] .dot { background: #fbbf24; }
 			.preview-status button {
 				margin-left: auto;
 				appearance: none;
@@ -379,7 +381,13 @@
 					<button type="button" class="copy-btn" id="copy-btn" data-i18n="assistant.copy_snippet">Copy snippet</button>
 					<p class="preview-status" id="preview-status" data-state="loading" role="status" aria-live="polite">
 						<span class="dot" aria-hidden="true"></span>
-						<span id="preview-status-text" data-i18n="assistant.starting_the_live_preview">Starting the live preview...</span>
+						<!-- One span per state, toggled by src/assistant-page.js. The copy stays
+						     in the markup (rather than in JS strings) so the i18n catalog pass
+						     translates every state and can never revert a live one. -->
+						<span class="preview-msg" data-preview-state="loading" data-i18n="assistant.starting_the_live_preview">Starting the live preview...</span>
+						<span class="preview-msg" data-preview-state="ready" hidden data-i18n="assistant.live_preview_running_in_the_corner_every">Live preview running in the corner. Every change above re-mounts it.</span>
+						<span class="preview-msg" data-preview-state="degraded" hidden data-i18n="assistant.the_preview_mounted_but_its_3d_avatar">The preview mounted, but its 3D avatar did not load. Your snippet above is still correct.</span>
+						<span class="preview-msg" data-preview-state="error" hidden data-i18n="assistant.the_live_preview_could_not_start_the">The live preview could not start (the widget script did not load). Your snippet above is still correct, and the widget works on your own site.</span>
 						<button type="button" id="preview-retry" hidden data-i18n="assistant.retry">Retry</button>
 					</p>
 					<p class="snippet-note" data-i18n-html="assistant.paste_it_before_on_any_site_chat">

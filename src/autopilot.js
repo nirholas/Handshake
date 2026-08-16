@@ -237,7 +237,7 @@ function activityRow(a, coinsById) {
 			a.status === 'confirmed'
 				? `Burned ${a.amount_atomics ? esc(fmtUsdc(a.amount_atomics)) : 'fees'} of ${sym}`
 				: a.status === 'skipped'
-					? `No buyback for ${sym} — below threshold or empty vault`
+					? `No buyback for ${sym}: below threshold or empty vault`
 					: a.status === 'failed'
 						? `Buyback failed for ${sym}: ${esc((a.error || '').slice(0, 80))}`
 						: `Buyback queued for ${sym}`;
@@ -246,7 +246,7 @@ function activityRow(a, coinsById) {
 			a.status === 'confirmed'
 				? `Distributed ${a.amount_atomics ? esc(fmtUsdc(a.amount_atomics)) : 'fees'} to ${sym} holders`
 				: a.status === 'skipped'
-					? `No distribution for ${sym} — below threshold or empty vault`
+					? `No distribution for ${sym}: below threshold or empty vault`
 					: a.status === 'failed'
 						? `Distribution failed for ${sym}: ${esc((a.error || '').slice(0, 80))}`
 						: `Distribution queued for ${sym}`;
@@ -264,6 +264,16 @@ function activityRow(a, coinsById) {
 	</div>`;
 }
 
+/** Every bare state (empty / signed out / failed) has to leave the activity
+ *  column saying something. Left alone it keeps the boot skeletons shimmering,
+ *  which reads as "still loading" forever. */
+function renderActivityNote(text) {
+	const el = $('#activity');
+	if (!el) return;
+	el.innerHTML = `<div class="quiet">${esc(text)}</div>`;
+	settle(el);
+}
+
 function renderEmpty() {
 	$('#coins').innerHTML = `
 		<div class="empty">
@@ -271,7 +281,8 @@ function renderEmpty() {
 			<p>Launch a coin for one of your agents, then it can run itself here.</p>
 			<a class="btn primary" href="/dashboard">Launch a coin →</a>
 		</div>`;
-	$('#activity').innerHTML = `<div class="empty" style="border:none;padding:24px 0;text-align:left;color:var(--text-4)">Activity will appear once your coins start acting.</div>`;
+	settle($('#coins'));
+	renderActivityNote('Activity will appear once your coins start acting.');
 	$('#narrator').style.display = 'none';
 }
 
@@ -282,18 +293,57 @@ function renderSignedOut() {
 			<p>Connect your three.ws account to control your coins' autonomous buybacks and fee distribution.</p>
 			<a class="btn primary" href="/dashboard">Go to dashboard →</a>
 		</div>`;
-	$('#activity').innerHTML = '';
+	settle($('#coins'));
+	renderActivityNote('Sign in to see what your agents have been doing on-chain.');
 	$('#narrator').style.display = 'none';
+	// Nothing here changes until the visitor signs in, so stop the poll rather
+	// than log a 401 every 20 seconds for as long as the tab stays open.
+	stopPolling();
 }
 
 function renderError(msg) {
-	$('#coins').innerHTML = `<div class="empty"><h3>Couldn't load</h3><p>${esc(msg)}</p><button class="btn" id="retry">Retry</button></div>`;
+	$('#coins').innerHTML = `
+		<div class="empty">
+			<h3>Couldn't load your coins</h3>
+			<p>${esc(msg)}</p>
+			<button class="btn" id="retry" type="button">Retry</button>
+		</div>`;
+	settle($('#coins'));
+	renderActivityNote('Activity is unavailable while the autopilot service is unreachable. It reloads by itself once the connection is back.');
+	$('#narrator').style.display = 'none';
 	$('#retry')?.addEventListener('click', () => load());
 }
 
 // ── Save (debounced per coin) ────────────────────────────────────────────────
 
 const _saveTimers = new Map();
+const _savedTimers = new Map();
+
+/** The card owns the truth about whether its rules reached the database. A
+ *  toast disappears; a rule the owner believes they set but that never landed
+ *  costs them real fees, so the failure stays on the card with a retry. */
+function setSaveState(card, state, msg) {
+	const el = card.querySelector('[data-role="save-state"]');
+	if (!el) return;
+	clearTimeout(_savedTimers.get(card.dataset.mint));
+	if (!state) {
+		el.removeAttribute('data-state');
+		el.textContent = '';
+		return;
+	}
+	el.dataset.state = state;
+	if (state === 'error') {
+		el.innerHTML = `${esc(msg || 'Not saved')} <button class="save-retry" type="button" data-role="save-retry">Retry</button>`;
+		return;
+	}
+	el.textContent = state === 'saving' ? 'Saving' : 'Saved';
+	if (state === 'saved') {
+		_savedTimers.set(
+			card.dataset.mint,
+			setTimeout(() => setSaveState(card, null), 2600),
+		);
+	}
+}
 
 function collectPolicy(card) {
 	const get = (f) => card.querySelector(`[data-field="${f}"]`);
@@ -312,6 +362,7 @@ function collectPolicy(card) {
 
 async function savePolicy(card) {
 	const body = collectPolicy(card);
+	setSaveState(card, 'saving');
 	try {
 		const r = await fetch(API, {
 			method: 'POST',
@@ -323,8 +374,12 @@ async function savePolicy(card) {
 			const d = await r.json().catch(() => ({}));
 			throw new Error(d.error_description || d.error || `save failed (${r.status})`);
 		}
+		setSaveState(card, 'saved');
+		// The coin now has a policy row, so it is no longer running on defaults.
+		card.querySelector('[data-role="default-pill"]')?.remove();
 		toast('Autopilot updated');
 	} catch (e) {
+		setSaveState(card, 'error', e.message || 'Not saved');
 		toast(e.message || 'Save failed', true);
 	}
 }
@@ -333,29 +388,80 @@ function queueSave(card, immediate = false) {
 	const key = card.dataset.mint;
 	clearTimeout(_saveTimers.get(key));
 	if (immediate) {
+		_saveTimers.delete(key);
 		savePolicy(card);
 		return;
 	}
-	_saveTimers.set(key, setTimeout(() => savePolicy(card), 600));
+	_saveTimers.set(
+		key,
+		setTimeout(() => {
+			_saveTimers.delete(key);
+			savePolicy(card);
+		}, 600),
+	);
+}
+
+/** Flush anything still sitting in the debounce before the page goes away.
+ *  A threshold the owner typed and then navigated off would otherwise be lost
+ *  with no sign it never saved. */
+function flushPendingSaves() {
+	if (!_saveTimers.size) return;
+	for (const [key, timer] of _saveTimers) {
+		clearTimeout(timer);
+		const card = $(`.coin-card[data-mint="${CSS.escape(key)}"]`);
+		if (card) savePolicy(card);
+	}
+	_saveTimers.clear();
+}
+
+/** A number field the owner blanked or typed a negative into is coerced to 0 on
+ *  the wire; show that in the field too, instead of saving one value and
+ *  displaying another. */
+function normalizeAmount(input) {
+	const n = Number(input.value);
+	if (input.value.trim() === '' || !Number.isFinite(n) || n < 0) {
+		input.value = '0';
+		return;
+	}
+	const rounded = parseFloat((Math.round(n * 10 ** USDC_DECIMALS) / 10 ** USDC_DECIMALS).toFixed(USDC_DECIMALS));
+	if (String(rounded) !== input.value) input.value = String(rounded);
+}
+
+function applyFieldSideEffects(card, field, el) {
+	if (field === 'enabled') {
+		const on = el.checked;
+		card.classList.toggle('on', on);
+		const pill = card.querySelector('[data-role="status-pill"]');
+		if (pill) {
+			pill.className = `pill ${on ? 'live' : 'paused'}`;
+			pill.innerHTML = `<span class="dot"></span>${on ? 'Autopilot on' : 'Paused'}`;
+		}
+	}
+	if (field === 'buyback_enabled') card.querySelector('[data-rule="buyback"]').classList.toggle('off', !el.checked);
+	if (field === 'distribute_enabled') card.querySelector('[data-rule="distribute"]').classList.toggle('off', !el.checked);
 }
 
 function wireCard(card) {
+	// Checkboxes save on `change` (one deliberate flip, one write). The number
+	// fields listen on `input`: `change` only fires when they lose focus, so a
+	// typed threshold followed by a tab close never reached the server at all.
 	card.addEventListener('change', (e) => {
 		const field = e.target.dataset?.field;
-		if (!field) return;
-		// Reflect master + per-rule enable visually right away.
-		if (field === 'enabled') {
-			const on = e.target.checked;
-			card.classList.toggle('on', on);
-			const pill = card.querySelector('[data-role="status-pill"]');
-			if (pill) {
-				pill.className = `pill ${on ? 'live' : 'paused'}`;
-				pill.innerHTML = `<span class="dot"></span>${on ? 'Autopilot on' : 'Paused'}`;
-			}
-		}
-		if (field === 'buyback_enabled') card.querySelector('[data-rule="buyback"]').classList.toggle('off', !e.target.checked);
-		if (field === 'distribute_enabled') card.querySelector('[data-rule="distribute"]').classList.toggle('off', !e.target.checked);
-		queueSave(card, e.target.type === 'checkbox');
+		if (!field || e.target.type !== 'checkbox') return;
+		applyFieldSideEffects(card, field, e.target);
+		queueSave(card, true);
+	});
+	card.addEventListener('input', (e) => {
+		const field = e.target.dataset?.field;
+		if (!field || e.target.type !== 'number') return;
+		queueSave(card);
+	});
+	card.addEventListener('blur', (e) => {
+		if (e.target.dataset?.field && e.target.type === 'number') normalizeAmount(e.target);
+	}, true);
+	card.addEventListener('click', (e) => {
+		if (!e.target.closest('[data-role="save-retry"]')) return;
+		savePolicy(card);
 	});
 }
 
@@ -363,29 +469,61 @@ function wireCard(card) {
 
 let _coinsById = new Map();
 let _agentImage = null;
+// 'coins' once cards are on the page: the tick then refreshes only the activity
+// feed so it never clobbers a control the owner is editing. In any other state
+// the tick re-runs the full load, so a page that failed to load heals itself
+// the moment the API comes back.
+let _view = 'boot';
+let _pollTimer = null;
+
+function stopPolling() {
+	clearInterval(_pollTimer);
+	_pollTimer = null;
+}
+
+function startPolling() {
+	if (_pollTimer) return;
+	_pollTimer = setInterval(tick, POLL_MS);
+}
+
+function tick() {
+	if (document.hidden) return;
+	if (_view === 'coins') return refreshActivity();
+	return load();
+}
 
 async function load() {
 	let data;
 	try {
 		const r = await fetch(API, { credentials: 'include' });
-		if (r.status === 401) return renderSignedOut();
+		if (r.status === 401) {
+			_view = 'signed-out';
+			return renderSignedOut();
+		}
 		if (!r.ok) {
 			const d = await r.json().catch(() => ({}));
+			_view = 'error';
 			return renderError(d.error_description || d.error || `request failed (${r.status})`);
 		}
 		data = await r.json();
 	} catch {
-		return renderError('Network error — check your connection and retry.');
+		_view = 'error';
+		return renderError('Network error. Check your connection; this page retries on its own.');
 	}
 
 	const coins = data.coins || [];
-	if (!coins.length) return renderEmpty();
+	if (!coins.length) {
+		_view = 'empty';
+		return renderEmpty();
+	}
 
 	_coinsById = new Map(coins.map((c) => [c.id, c]));
 	_agentImage = coins.find((c) => c.image)?.image || null;
 
 	$('#coins').innerHTML = coins.map(coinCard).join('');
 	$('#coins').querySelectorAll('.coin-card').forEach(wireCard);
+	settle($('#coins'));
+	_view = 'coins';
 
 	renderActivity(data.activity || []);
 	narrate(data.activity || [], _coinsById, _agentImage);
@@ -395,27 +533,41 @@ function renderActivity(activity) {
 	const el = $('#activity');
 	if (!el) return;
 	if (!activity.length) {
-		el.innerHTML = `<div class="empty" style="border:none;padding:24px 0;text-align:left;color:var(--text-4)">No autonomous actions yet. Your agent acts as fees accumulate past your thresholds.</div>`;
+		renderActivityNote('No autonomous actions yet. Your agent acts as fees accumulate past your thresholds.');
 		return;
 	}
 	el.innerHTML = activity.map((a) => activityRow(a, _coinsById)).join('');
+	settle(el);
 }
 
-/** Lightweight refresh — only the activity feed + narrator, never clobbers
- *  the control inputs the user may be editing. */
+/** Lightweight refresh: only the activity feed and the narrator, so it never
+ *  clobbers the control inputs the owner may be editing. A failed tick keeps
+ *  the last good render on screen; the next one retries. */
 async function refreshActivity() {
-	if (document.hidden) return;
 	try {
 		const r = await fetch(API, { credentials: 'include' });
+		if (r.status === 401) {
+			// The session expired under the page. Fall back to the full load so
+			// the signed-out state replaces stale controls that can no longer save.
+			_view = 'signed-out';
+			return renderSignedOut();
+		}
 		if (!r.ok) return;
 		const data = await r.json();
 		if (data.coins) _coinsById = new Map(data.coins.map((c) => [c.id, c]));
 		renderActivity(data.activity || []);
 		narrate(data.activity || [], _coinsById, _agentImage);
 	} catch {
-		/* transient — next tick retries */
+		/* transient: the next tick retries */
 	}
 }
 
+// A tab that comes back into view after a long sleep should not wait out a
+// whole poll interval before it is current again.
+document.addEventListener('visibilitychange', () => {
+	if (!document.hidden && _pollTimer) tick();
+});
+window.addEventListener('pagehide', flushPendingSaves);
+
 load();
-setInterval(refreshActivity, POLL_MS);
+startPolling();

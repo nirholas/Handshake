@@ -33,13 +33,17 @@ function clampInt(v, lo, hi, dflt) {
 	return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt;
 }
 
+// The 503 body is read straight into the /capture error overlay, so `message` is
+// written for a visitor. Operator instructions live in `hint`, which the page
+// never renders: telling a first-time user to set two GCP env vars is not an
+// actionable error state.
 function unconfigured(res) {
 	return json(res, 503, {
 		error: 'unconfigured',
-		message:
-			'Scene capture is not configured on this deployment. Set GCP_VIDEO2SCENE_URL ' +
-			'and GCP_RECONSTRUCTION_KEY to the URL and bearer secret of your deployed ' +
-			'workers/model-video2scene Cloud Run service.',
+		message: 'Video reconstruction is offline on this deployment, so a video cannot be turned into a point cloud right now.',
+		hint:
+			'Set GCP_VIDEO2SCENE_URL and GCP_RECONSTRUCTION_KEY to the URL and bearer ' +
+			'secret of your deployed workers/model-video2scene Cloud Run service.',
 	});
 }
 
@@ -121,7 +125,20 @@ async function pollJob(req, res, jobId) {
 		return unconfigured(res);
 	}
 
-	const result = await provider.status(jobId);
+	// The client polls this on a fixed interval; a thrown decode error here would
+	// hand it a 500 it can only keep retrying. Report the failure in the payload.
+	let result;
+	try {
+		result = await provider.status(jobId);
+	} catch (err) {
+		return json(res, 200, {
+			job_id: jobId,
+			status: 'failed',
+			result_url: null,
+			error: err?.message || 'Job status could not be read.',
+		});
+	}
+
 	return json(res, 200, {
 		job_id: jobId,
 		status: result.status,

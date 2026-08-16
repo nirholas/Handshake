@@ -394,7 +394,7 @@ function renderAge(state) {
 // beat reveals character by character off a real frame clock and the high/
 // celebratory ones carry a severity glow. Honors prefers-reduced-motion.
 function paintActivity(state) {
-	const { card, entries, name } = state;
+	const { card, entries } = state;
 	const canvas = card.querySelector('canvas');
 	const ctx = canvas.getContext('2d');
 	const W = canvas.width, H = canvas.height;
@@ -407,18 +407,15 @@ function paintActivity(state) {
 	ctx.fillRect(0, 0, W, H);
 	ctx.shadowBlur = 0;
 
-	// header
+	// Title bar. Its CONTENT is the live/idle badge, which the card overlays on
+	// exactly this strip: the canvas used to draw the agent name and a dot here
+	// too, and the badge sat straight on top of both, so the name was never
+	// readable. The name already leads the card's info row directly below, so the
+	// strip is chrome only and the badge owns it.
 	ctx.fillStyle = 'rgba(255,255,255,0.03)';
 	ctx.fillRect(0, 0, W, 30);
-	ctx.beginPath();
-	ctx.arc(16, 15, 3.5, 0, Math.PI * 2);
-	ctx.fillStyle = 'rgba(120,120,128,0.6)';
-	ctx.fill();
-	ctx.font = '600 11px Inter, system-ui, sans-serif';
-	ctx.fillStyle = 'rgba(255,255,255,0.55)';
 	ctx.textAlign = 'left';
 	ctx.textBaseline = 'middle';
-	ctx.fillText(`${(name || 'Agent').slice(0, 28)} · activity`, 28, 15);
 
 	// Empty → a designed standby card, not a blank void. Three honest variants:
 	// the stream is being opened, the agent has a real history we have not pulled

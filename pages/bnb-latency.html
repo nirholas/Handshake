@@ -174,6 +174,12 @@
 				font-weight: 500;
 				margin-left: 6px;
 			}
+			/* A reading whose chain has gone quiet: dimmed so it can never be
+			   mistaken for the live number, and paired with its age in the
+			   sub-line below. */
+			.bnbl-headline-num.bnbl-stale {
+				opacity: 0.45;
+			}
 			.bnbl-headline-sub {
 				font-size: 13.5px;
 				color: var(--ink-dim, #888);
@@ -228,6 +234,13 @@
 			.bnbl-retry:focus-visible {
 				outline: 2px solid rgba(255, 255, 255, 0.4);
 				outline-offset: 2px;
+			}
+			.bnbl-retry:disabled {
+				opacity: 0.55;
+				cursor: progress;
+			}
+			.bnbl-retry:disabled:hover {
+				background: var(--surface-2, rgba(255, 255, 255, 0.05));
 			}
 
 			/* ── Race grid ────────────────────────────────────────────────── */

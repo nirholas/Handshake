@@ -301,7 +301,12 @@
 			body.overlay-mode #anim-picker { display: none !important; }
 		</style>
 	</head>
-	<body>
+	<!-- No floating language picker: this shell is a chrome-less widget that
+	     always renders inside a host page, and i18n.js's bottom-right fallback
+	     parked a stray "English" pill on top of the avatar in every embed. The
+	     copy still translates from the detected locale and ?lang; the host page
+	     owns the picker. -->
+	<body data-no-lang-switcher>
 		<div id="stage"></div>
 		<div id="name-plate"></div>
 		<div id="state-pill" aria-live="polite">idle</div>
