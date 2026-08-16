@@ -116,7 +116,7 @@ describe('GET /api/avatar/:id/og — cached thumbnail path', () => {
 		// The regression this pins: the endpoint used to re-test `thumbnail_url`
 		// with isLegacyOgThumbnailKey (`^https?://.*_og\.png$`). Every thumbnail it
 		// writes itself is `<key>_og.png`, and thumbnailUrl() turns that into an
-		// absolute bucket URL — so its own cached render matched the poisoned-key
+		// absolute bucket URL, so its own cached render matched the poisoned-key
 		// shape, the row's thumbnail_key was nulled, and chromium re-rendered on
 		// every crawl. A genuinely poisoned key never gets this far: thumbnailUrl()
 		// already resolves it to null (see the render-path test below).
@@ -202,7 +202,7 @@ describe('GET /api/avatar/:id/og — server render path', () => {
 	it('heals a poisoned key: thumbnailUrl gives null, the render write-back replaces it', async () => {
 		// A pre-fix row stores an ABSOLUTE `*_og.png` in thumbnail_key. thumbnailUrl()
 		// resolves that to null, so getAvatar hands the handler thumbnail_url: null
-		// and it takes the render path — which is exactly where the widened guard
+		// and it takes the render path, which is exactly where the widened guard
 		// above overwrites the bad key with a real bucket key.
 		getAvatarMock.mockResolvedValueOnce({
 			id: 'a8',

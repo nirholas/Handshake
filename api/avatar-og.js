@@ -69,7 +69,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// Cached thumbnail — either client-uploaded (customizer save) or a previous
+	// Cached thumbnail, either client-uploaded (customizer save) or a previous
 	// server render. Either way it's a real R2 object; redirect.
 	//
 	// Legacy poisoned keys (absolute, origin-pointing `*_og.png`, written by the
