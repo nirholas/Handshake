@@ -19,7 +19,6 @@ vi.mock('../../api/_lib/render-glb.js', () => ({ renderGlbToPng: renderGlbToPngM
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: putObjectMock,
 	publicUrl: publicUrlMock,
-	isLegacyOgThumbnailKey: (k) => /^https?:\/\/.*_og\.png$/i.test(String(k || '')),
 }));
 
 vi.mock('../../api/_lib/env.js', () => ({
@@ -119,38 +118,33 @@ describe('GET /api/avatar/:id/og — cached thumbnail path', () => {
 		expect(putObjectMock).not.toHaveBeenCalled();
 	});
 
-	it('self-heals a legacy poisoned thumbnail_url instead of 302-ing to a 404', async () => {
-		// Stub the GLB HEAD request so the fall-through render path can run.
-		globalThis.fetch = vi.fn(async () => ({
-			ok: true,
-			headers: { get: (h) => (h.toLowerCase() === 'content-length' ? '1024' : null) },
-		}));
-		const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+	it('302s a server-rendered _og.png thumbnail instead of wiping its own cache', async () => {
+		// The regression this pins: the endpoint used to re-test `thumbnail_url`
+		// with isLegacyOgThumbnailKey (`^https?://.*_og\.png$`). Every thumbnail it
+		// writes itself is `<key>_og.png`, and thumbnailUrl() turns that into an
+		// absolute bucket URL — so its own cached render matched the poisoned-key
+		// shape, the row's thumbnail_key was nulled, and chromium re-rendered on
+		// every crawl. A genuinely poisoned key never gets this far: thumbnailUrl()
+		// already resolves it to null (see the render-path test below).
 		getAvatarMock.mockResolvedValueOnce({
 			id: 'a9',
 			name: 'Michelle',
-			// Absolute, origin-pointing _og.png — the pre-fix poisoned key.
-			thumbnail_url: 'https://three.ws/avatars/michelle_og.png',
-			model_url: 'https://three.ws/avatars/michelle.glb',
-			storage_key: 'https://three.ws/avatars/michelle.glb',
+			thumbnail_url: 'https://cdn.test/u/uid/x/michelle_og.png',
+			model_url: 'https://cdn.test/u/uid/x/michelle.glb',
+			storage_key: 'u/uid/x/michelle.glb',
 			tags: [],
 		});
-		renderGlbToPngMock.mockResolvedValueOnce(PNG);
 
 		const req = mkReq({ url: '/api/avatar/a9/og' });
 		const res = mkRes();
 		await handler(req, res);
 
-		// No 302 to the dead URL — it renders fresh and streams the PNG.
-		expect(res.statusCode).toBe(200);
-		expect(res._body).toEqual(PNG);
-		// The poisoned key was cleared, then the corrected bucket key was written.
-		const clearCall = sqlMock.mock.calls.find(
-			(c) => c[0].join('?').match(/thumbnail_key = null/) && c.includes('a9'),
-		);
-		expect(clearCall).toBeTruthy();
-		expect(putObjectMock).toHaveBeenCalledTimes(1);
-		expect(putObjectMock.mock.calls[0][0].key).toBe('og/avatar/a9.png');
+		expect(res.statusCode).toBe(302);
+		expect(res._h.location).toBe('https://cdn.test/u/uid/x/michelle_og.png');
+		expect(renderGlbToPngMock).not.toHaveBeenCalled();
+		expect(putObjectMock).not.toHaveBeenCalled();
+		// Above all: a crawl is a read. It must not write to the avatars table.
+		expect(sqlMock).not.toHaveBeenCalled();
 	});
 });
 
@@ -200,9 +194,43 @@ describe('GET /api/avatar/:id/og — server render path', () => {
 		// DB write: update statement was issued.
 		expect(sqlMock).toHaveBeenCalledTimes(1);
 		const sqlArgs = sqlMock.mock.calls[0];
-		expect(sqlArgs[0].join('?')).toMatch(/update avatars set thumbnail_key/);
+		const text = sqlArgs[0].join('?');
+		expect(text).toMatch(/update avatars set thumbnail_key/);
 		expect(sqlArgs).toContain('u/uid/bob/123_og.png');
 		expect(sqlArgs).toContain('a3');
+		// The write-back only fills an empty slot (so a concurrent customizer-save
+		// snapshot survives) or replaces a legacy poisoned key, which thumbnailUrl()
+		// refuses to resolve. Without the second arm a poisoned row is unrepairable
+		// and re-renders through chromium on every crawl, forever.
+		expect(text).toMatch(/thumbnail_key is null or thumbnail_key ~\* '\^https\?:\/\/\.\*_og\[\.\]png\$'/);
+	});
+
+	it('heals a poisoned key: thumbnailUrl gives null, the render write-back replaces it', async () => {
+		// A pre-fix row stores an ABSOLUTE `*_og.png` in thumbnail_key. thumbnailUrl()
+		// resolves that to null, so getAvatar hands the handler thumbnail_url: null
+		// and it takes the render path — which is exactly where the widened guard
+		// above overwrites the bad key with a real bucket key.
+		getAvatarMock.mockResolvedValueOnce({
+			id: 'a8',
+			name: 'Michelle',
+			thumbnail_url: null,
+			model_url: 'https://three.ws/avatars/michelle.glb',
+			storage_key: 'https://three.ws/avatars/michelle.glb',
+			tags: [],
+		});
+		renderGlbToPngMock.mockResolvedValueOnce(PNG_MAGIC);
+
+		const req = mkReq({ url: '/api/avatar/a8/og' });
+		const res = mkRes();
+		await handler(req, res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res._body).toEqual(PNG_MAGIC);
+		// An absolute storage_key is not a writable bucket key, so the OG object
+		// lands under the deterministic id-keyed path instead of a sibling.
+		expect(putObjectMock).toHaveBeenCalledTimes(1);
+		expect(putObjectMock.mock.calls[0][0].key).toBe('og/avatar/a8.png');
+		expect(sqlMock.mock.calls[0]).toContain('og/avatar/a8.png');
 	});
 
 	it('falls back to the named card on GLB-too-large precheck', async () => {

@@ -43,14 +43,20 @@ vi.mock('../api/_lib/csrf.js', () => ({
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: {
 		bountySubmit: vi.fn(async () => ({ success: true, limit: 10, remaining: 9, reset: 0 })),
+		bountyCreate: vi.fn(async () => ({ success: true, limit: 5, remaining: 4, reset: 0 })),
 	},
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 
 vi.mock('../api/_lib/bounty-likes.js', () => ({ enrichLikes: vi.fn(async (rows) => rows) }));
 
+// The index handler quotes SOL/USD when a bounty is created. Nothing in these
+// tests posts a bounty, but the import runs at module load.
+vi.mock('../api/_lib/avatar-wallet.js', () => ({ solUsdPrice: vi.fn(async () => 200) }));
+
 import submissions from '../api/bounties/[id]/submissions.js';
 import resolve from '../api/bounties/[id]/resolve.js';
+import index from '../api/bounties.js';
 
 const BID = 'a60e33b7-63b2-496a-bf2c-93b179c619e6';
 const SID = '9ffd34d7-4cb7-4573-9fc7-1dd8d1f18528';
@@ -143,6 +149,61 @@ describe('GET /api/bounties/:id/submissions', () => {
 		const under = mockRes();
 		await submissions(mockReq({ url: `/api/bounties/${BID}/submissions?limit=-5` }), under);
 		expect(interpolations(0)[1]).toBe(1);
+	});
+});
+
+describe('GET /api/bounties', () => {
+	// `parseInt('abc')` is NaN, and NaN passes through Math.min/Math.max
+	// unchanged, so the hand-rolled clamps this endpoint used to carry sent
+	// `LIMIT NaN` to Postgres and answered a caller typo with a 500.
+	function indexReq(query) {
+		return { method: 'GET', url: `/api/bounties${query}`, query: {}, headers: {} };
+	}
+
+	it('falls back to the default page size when limit/offset are unparseable', async () => {
+		queue.push([]);
+		const res = mockRes();
+		await index(indexReq('?limit=abc&offset=abc'), res);
+		expect(res.statusCode).toBe(200);
+		expect(res.json.tab).toBe('trending');
+		expect(interpolations(0)).toEqual([30, 0]);
+	});
+
+	it('clamps limit to the 1..50 window and floors offset at 0', async () => {
+		queue.push([]);
+		const over = mockRes();
+		await index(indexReq('?limit=999&offset=-7'), over);
+		expect(interpolations(0)).toEqual([50, 0]);
+
+		sqlCalls.length = 0;
+		queue.push([]);
+		const under = mockRes();
+		await index(indexReq('?limit=-5'), under);
+		expect(interpolations(0)[0]).toBe(1);
+	});
+
+	it('passes a clamped page size to every tab, including the interleaved feed', async () => {
+		queue.push([], []);
+		const feed = mockRes();
+		await index(indexReq('?tab=feed&limit=abc'), feed);
+		expect(feed.statusCode).toBe(200);
+		// The feed halves the page across bounties and submissions.
+		expect(interpolations(0)).toEqual([15]);
+		expect(interpolations(1)).toEqual([15]);
+
+		sqlCalls.length = 0;
+		queue.push([]);
+		const open = mockRes();
+		await index(indexReq('?tab=open&offset=abc'), open);
+		expect(open.statusCode).toBe(200);
+		expect(interpolations(0)).toEqual([30, 0]);
+	});
+
+	it('405s a method it does not serve', async () => {
+		const res = mockRes();
+		await index({ method: 'DELETE', url: '/api/bounties', query: {}, headers: {} }, res);
+		expect(res.statusCode).toBe(405);
+		expect(sqlCalls).toHaveLength(0);
 	});
 });
 
