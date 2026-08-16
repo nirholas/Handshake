@@ -177,9 +177,10 @@ async function handlePost(req, res, agentId) {
 	// here means every lane was busy or down at once, not a bug in this route.
 	// Left uncaught it reached the client as a bare "internal error, quote ref …"
 	// and paged ops as an unhandled 5xx on what is a routine upstream throttle.
-	// The budget above is already spent by this point and this abstraction has no
-	// refund, so the reply says plainly when the next attempt is allowed instead
-	// of inviting a retry that would only earn a 429.
+	// The budget above is already spent by this point, and the outage is ours,
+	// not the owner's mistake: hand the window back so they can retry as soon as
+	// a provider frees up instead of waiting out six hours for a run that read
+	// nothing and wrote nothing.
 	let raw;
 	try {
 		({ text: raw } = await llmComplete({
@@ -188,28 +189,42 @@ async function handlePost(req, res, agentId) {
 			user: `Extract up to ${MAX_FACTS} memory facts from this GitHub material:\n\n${document}`,
 		}));
 	} catch (err) {
-		const retryAt = rl.reset ? new Date(rl.reset).toISOString() : null;
-		const minutes = rl.reset ? Math.max(1, Math.ceil((rl.reset - Date.now()) / 60_000)) : null;
+		const refunded = await limits.githubSeedRefund(agentId).catch(() => false);
+		const retryAt = refunded || !rl.reset ? null : new Date(rl.reset).toISOString();
+		const minutes = retryAt ? Math.max(1, Math.ceil((rl.reset - Date.now()) / 60_000)) : null;
 		return error(
 			res,
 			503,
 			'distill_unavailable',
 			`every model provider is busy right now, so nothing was seeded and your memories are unchanged${
-				minutes ? `. This agent can be seeded again in about ${minutes} minute${minutes === 1 ? '' : 's'}` : '. Try this agent again later'
+				refunded
+					? '. This attempt did not use up your six-hour window, so you can try again in a few minutes'
+					: minutes
+						? `. This agent can be seeded again in about ${minutes} minute${minutes === 1 ? '' : 's'}`
+						: '. Try this agent again later'
 			}`,
-			{ retry_at: retryAt, providers_tried: err?.attempts?.map((a) => a.provider) ?? [] },
+			{
+				retry_at: retryAt,
+				window_refunded: refunded,
+				providers_tried: err?.attempts?.map((a) => a.provider) ?? [],
+			},
 		);
 	}
 	const facts = parseFacts(raw);
 	const seededAt = new Date().toISOString();
 	const manifest = selectionManifest(resolved);
 
+	// Same reasoning as the provider outage above: the agent's memories are
+	// untouched, and the advice to pick more material is worthless if acting on
+	// it means waiting out a six-hour window.
 	if (facts.length === 0) {
+		const refunded = await limits.githubSeedRefund(agentId).catch(() => false);
 		return error(
 			res,
 			502,
 			'distill_error',
-			'the selected material did not yield any usable facts — try adding a README or another repository',
+			'the selected material did not yield any usable facts, so nothing was stored. Add a README or another repository and seed again',
+			{ window_refunded: refunded },
 		);
 	}
 

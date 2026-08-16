@@ -140,6 +140,21 @@ function failClosedLimiter({ limit, window }) {
  *   commands are what keep the Upstash quota alive (June 2026 outage). Never
  *   combine with `critical`.
  */
+/**
+ * Hand a consumed hit back to its bucket, for the one case that justifies it:
+ * the request was charged, then produced nothing at all because a dependency we
+ * own was unavailable. The caller keeps its window instead of paying for our
+ * outage. Only single-use windows may do this (see the Redis note in
+ * resilientLimiter), and the refund must be unconditional at that point in the
+ * handler: a refund on a path that DID something turns the limiter off.
+ */
+export function refundLimit(name, opts, id) {
+	if (opts.limit !== 1) {
+		throw new Error(`refundLimit: ${name} is not a single-use window (limit ${opts.limit})`);
+	}
+	return getLimiter(name, opts).refund(id);
+}
+
 function getLimiter(name, opts) {
 	const key = `${name}:${opts.limit}:${opts.window}`;
 	if (limiters.has(key)) return limiters.get(key);
@@ -322,6 +337,29 @@ function resilientLimiter(rl, name, opts) {
 					reset: Date.now() + ms,
 					reason: 'rate_limiter_degraded',
 				};
+			}
+		},
+		// Upstash has no "give one token back": resetUsedTokens clears the whole
+		// identifier. That equals a refund only on a single-use window, which is
+		// why getLimiter refuses to expose refund on any other bucket. A refund
+		// that cannot reach Redis is dropped rather than retried: the cost of
+		// losing it is one caller waiting out a window they should not have
+		// spent, and failing the request they are already being apologised to
+		// for would be worse.
+		async refund(id) {
+			try {
+				if (!circuitAllows()) throw new RlCircuitOpenError();
+				await rl.resetUsedTokens(id);
+				circuitRecordSuccess();
+				return true;
+			} catch (err) {
+				if (!err?.circuitOpen) {
+					circuitRecordFailure();
+					if (isRedisQuotaError(err)) warnQuotaOnce();
+					else warnDegradedOnce(name, err);
+				}
+				if (durable) return durable.refund(id);
+				return false;
 			}
 		},
 	};
@@ -508,6 +546,14 @@ function fallbackLimiter(name, opts) {
 			} catch (err) {
 				warnDegradedOnce(`${name}:pg`, err);
 				return lastResort.limit(id);
+			}
+		},
+		async refund(id) {
+			try {
+				return await pg.refund(id);
+			} catch (err) {
+				warnDegradedOnce(`${name}:pg`, err);
+				return lastResort.refund(id);
 			}
 		},
 	};
@@ -1684,6 +1730,11 @@ export const limits = {
 	// per run. 1 seed per agent per 6 hours, matching the X lane.
 	githubSeed: (agentId) =>
 		getLimiter('memory:seed:github', { limit: 1, window: '6 h' }).limit(agentId),
+	// Give the window back when a seed run wrote nothing because every model
+	// provider was busy at once. Without this a platform-side outage costs the
+	// owner six hours on a run that never touched their agent's memories.
+	githubSeedRefund: (agentId) =>
+		refundLimit('memory:seed:github', { limit: 1, window: '6 h' }, agentId),
 	// Consent-first Farcaster memory seeding: reads a hub (or Neynar) and runs one
 	// LLM pass per seed. 1 seed per agent per 6 hours, matching the X and GitHub
 	// lanes. Issuing a signing challenge is deliberately outside this budget so a

@@ -4,8 +4,10 @@
 //   GET  /api/mcp-studio   — not offered (no server-initiated stream) → 405
 //   OPTIONS                 — CORS preflight
 //
-// A free, NON-CRYPTO, payment-free MCP endpoint exposing ONLY five 3D-generation
-// tools. There is no OAuth, no x402, no wallet, no token, and no PaymentRequired
+// A free, NON-CRYPTO, payment-free MCP endpoint exposing ONLY 3D-generation
+// tools (_mcp-studio/tools.js) and the embodiment/persona tools built on top of
+// them (_mcp-studio/persona-tools.js, which carry their own write rate limit).
+// There is no OAuth, no x402, no wallet, no token, and no PaymentRequired
 // anywhere in this server — generation runs operator-funded over /api/forge (the
 // platform's server-side keys cover provider cost). Built for the ChatGPT App
 // Directory, whose policy disqualifies tokens/credits and embedded payments.
