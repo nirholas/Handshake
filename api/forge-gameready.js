@@ -41,6 +41,17 @@ import { priceForAction } from './_lib/pricing/catalog.js';
 
 const GAMEREADY_ACTION = 'forge.gameready';
 
+// The complete set of codes assertForgePurchase raises deliberately to describe a
+// payment (api/_lib/forge-consumption-payment.js). Every one of them is part of
+// this endpoint's documented contract and is safe to hand back; anything else is
+// an internal fault and is rethrown rather than echoed.
+const PAYMENT_ERROR_CODES = new Set([
+	'bad_request',
+	'payment_invalid',
+	'payment_expired',
+	'payment_already_used',
+]);
+
 // The composite job id is a base64url JSON envelope packing one upstream task per
 // requested format, so it is far longer than a raw worker task id.
 const JOB_ID_RE = /^[A-Za-z0-9_-]{24,16000}$/;
@@ -129,6 +140,13 @@ async function startJob(req, res) {
 			const proof = await assertForgePurchase({ action: GAMEREADY_ACTION, paymentId, refId: payRefId });
 			paidExport = { paymentId, refId: payRefId, settledAt: proof.payment.settledAt };
 		} catch (err) {
+			// Only assertForgePurchase's own contract errors describe the payment, and
+			// only those may be echoed. Anything else reaching here is infrastructure
+			// (a database outage, an unexpected driver fault): rethrowing hands it to
+			// wrap(), which logs it under a ref, alerts ops, and answers a sanitized
+			// 5xx. Echoing it instead would both leak internals and lie to the caller,
+			// telling them their settled payment is bad when the database is simply down.
+			if (!PAYMENT_ERROR_CODES.has(err?.code)) throw err;
 			let usd = null;
 			try {
 				usd = Number(priceForAction(GAMEREADY_ACTION).usd) || null;
@@ -136,7 +154,7 @@ async function startJob(req, res) {
 				usd = null;
 			}
 			return json(res, err.status || 402, {
-				error: err.code || 'payment_invalid',
+				error: err.code,
 				feature: GAMEREADY_ACTION,
 				pay_per_use: usd ? { action: GAMEREADY_ACTION, usd } : null,
 				message: err.message || 'That $THREE payment could not be verified.',

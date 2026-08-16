@@ -18,7 +18,7 @@
  * rather than show a broken state.
  */
 
-import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
+import { cors, json, method, wrap, rateLimited, varyOn } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { hashClient, listCreations, listShowcase, countShowcase, forgeStoreEnabled } from './_lib/forge-store.js';
 
@@ -57,6 +57,14 @@ export default wrap(async (req, res) => {
 		]);
 		// Per-voter reads can't be shared across browsers, so only the anonymous
 		// (no client id) read is CDN-cacheable. A voted-state read is private.
+		//
+		// The body changes with x-forge-client, so the edge MUST key on it. Without
+		// this Vary the anonymous copy (cacheable for 60s + 300s stale) was served
+		// to browsers that DID send the header, so every card came back voted=false
+		// for a voter who had already liked it and the like button rendered the
+		// wrong state (confirmed live against three.ws before this fix). varyOn
+		// merges rather than replaces, so cors()'s `vary: origin` survives.
+		varyOn(res, 'x-forge-client');
 		const headers = voterKey
 			? { 'cache-control': 'private, no-store' }
 			: { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' };

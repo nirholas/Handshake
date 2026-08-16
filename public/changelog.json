@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T16:06:49.920Z",
+	"generated_at": "2026-08-16T16:23:14.437Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -15,6 +15,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "A GitHub seed that stores nothing no longer costs you six hours",
+			"summary": "Seeding an agent from your GitHub profile, repositories and READMEs is allowed once every six hours per agent. Two failures used to spend that window without storing a single fact. The first is entirely ours: when every model provider is busy at once, nothing is read and nothing is written, and you were still locked out for six hours over an outage you did not cause. The second is the run that comes back with no usable facts, which tells you to add a README or another repository, advice you could not act on until the window expired. Both now hand the window straight back, so you can try again as soon as a provider frees up or as soon as you have widened your selection, and the reply says which of the two happened. Nothing else changes: your existing memories are untouched by a failed run, the seed still reads only the profile, repositories and READMEs you ticked, and disconnecting GitHub still deletes every fact it wrote across all your agents.",
+			"link": "/docs/github-memory-seeding",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -55,6 +66,26 @@
 			"title": "An expired X connection now offers to reconnect instead of sending you to the login page",
 			"summary": "Posting a Walk screenshot or clip to X goes through your connected X account. When that connection could no longer be renewed, the share endpoint answered with the same code it uses for a signed-out visitor, so the capture panel told an already signed-in user to sign in to three.ws and linked them to the login page, which fixed nothing. That case now comes back as its own answer with the X connect link attached, and the panel offers a Reconnect X button that takes you straight to the flow that repairs it. The share caption also lost a stray dash.",
 			"link": "/walk",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "An unsubscribe now sticks, even if you click an old confirm link",
+			"summary": "Every three.ws newsletter email carries a confirm link and an unsubscribe link that share one token, so a reader who unsubscribed and later opened an older email and clicked confirm was quietly put back on the list. That link no longer signs anyone up: it says you are unsubscribed and leaves it that way, and opting back in starts from the site. Three other fixes ship alongside it. The allocation planner at /meta-allocator no longer serves an empty basket when the model declines to answer, it falls back to the allocator that always produces a real spread across verified leaders. The motion capture uploader told you an upload link lasted ten minutes when it really lasted five, so a large video queued on that promise could fail with nothing explaining why. And an agent whose stablecoin payment is rejected by the x402 Bazaar now gets the Bazaar's own details back instead of a different server's, so its retry is aimed at the right place.",
+			"link": "/changelog",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Avatar link previews stop rebuilding themselves, and two feeds answer a bad page link plainly",
+			"summary": "An audit of the chat, media and board endpoints found three real breaks. When you share an avatar link, the preview image is drawn once and then kept, so every later share is instant. A mix-up between the stored image and its address meant every freshly drawn preview was mistaken for an old broken one: the saved copy was thrown away and the picture was redrawn from scratch on every single share. The preview is now kept, as it always should have been, and genuinely broken old records are repaired the next time they are drawn. Separately, the character directory answered a hand-edited or stale \"next page\" link with a server error instead of saying the value was not a timestamp, and the bounty board did the same when the page size in the address was not a number. Both now answer plainly, and the board simply falls back to its normal page size.",
+			"link": "/characters",
 			"tags": [
 				"fix"
 			]

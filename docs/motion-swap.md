@@ -54,7 +54,8 @@ only), and processing artifacts live under an unguessable job id.
 
 ```
 POST /api/motion-swap   { action: "upload", content_type, size_bytes }
-  → { upload_url, public_url, ... }        # presigned direct-to-storage PUT
+  → { upload_url, public_url, method, headers, expires_in }
+                                           # presigned direct-to-storage PUT
 
 POST /api/motion-swap   { video_url, fps?, max_seconds? }
   → 202 { job_id, status, eta_seconds }
@@ -62,6 +63,11 @@ POST /api/motion-swap   { video_url, fps?, max_seconds? }
 GET  /api/motion-swap?job=<id>
   → { status, clip_url, meta_url, video_url, mask_url, frames, fps }
 ```
+
+`content_type` must be `video/mp4`, `video/quicktime`, or `video/webm`, and
+`size_bytes` must be between 1 byte and 256 MB. Start the PUT within
+`expires_in` seconds of getting the URL: the signature is minted for exactly
+that window, and storage rejects a late upload with a bare 403.
 
 `clip_url` is a three.js `AnimationClip.toJSON()` document you can use
 anywhere the platform accepts a clip. `meta_url` carries `fps`, dimensions,

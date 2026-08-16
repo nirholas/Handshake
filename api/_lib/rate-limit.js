@@ -140,21 +140,6 @@ function failClosedLimiter({ limit, window }) {
  *   commands are what keep the Upstash quota alive (June 2026 outage). Never
  *   combine with `critical`.
  */
-/**
- * Hand a consumed hit back to its bucket, for the one case that justifies it:
- * the request was charged, then produced nothing at all because a dependency we
- * own was unavailable. The caller keeps its window instead of paying for our
- * outage. Only single-use windows may do this (see the Redis note in
- * resilientLimiter), and the refund must be unconditional at that point in the
- * handler: a refund on a path that DID something turns the limiter off.
- */
-export function refundLimit(name, opts, id) {
-	if (opts.limit !== 1) {
-		throw new Error(`refundLimit: ${name} is not a single-use window (limit ${opts.limit})`);
-	}
-	return getLimiter(name, opts).refund(id);
-}
-
 function getLimiter(name, opts) {
 	const key = `${name}:${opts.limit}:${opts.window}`;
 	if (limiters.has(key)) return limiters.get(key);
@@ -179,6 +164,22 @@ function getLimiter(name, opts) {
 	const resilient = resilientLimiter(rl, name, opts);
 	limiters.set(key, resilient);
 	return resilient;
+}
+
+/**
+ * Hand a consumed hit back to its bucket, for the one case that justifies it:
+ * the request was charged, then produced nothing at all because a dependency we
+ * own was unavailable. The caller keeps its window instead of paying for our
+ * outage. Two conditions, both load-bearing: the bucket must be a single-use
+ * window (see the Redis note in resilientLimiter, which is why this refuses any
+ * other ceiling), and the refund must be unconditional at that point in the
+ * handler. A refund on a path that DID something turns the limiter off.
+ */
+export async function refundLimit(name, opts, id) {
+	if (opts.limit !== 1) {
+		throw new Error(`refundLimit: ${name} is not a single-use window (limit ${opts.limit})`);
+	}
+	return getLimiter(name, opts).refund(id);
 }
 
 // One warn per limiter name per cooldown — a Redis outage hits every request,
@@ -341,7 +342,7 @@ function resilientLimiter(rl, name, opts) {
 		},
 		// Upstash has no "give one token back": resetUsedTokens clears the whole
 		// identifier. That equals a refund only on a single-use window, which is
-		// why getLimiter refuses to expose refund on any other bucket. A refund
+		// why refundLimit refuses any other ceiling. A refund
 		// that cannot reach Redis is dropped rather than retried: the cost of
 		// losing it is one caller waiting out a window they should not have
 		// spent, and failing the request they are already being apologised to

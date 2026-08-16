@@ -25,6 +25,7 @@
 
 import { sql } from './db.js';
 import { priceForAction } from './pricing/catalog.js';
+import { isUuid } from './validate.js';
 
 // How long after settlement a payment may be redeemed. Generous — a paid
 // generation is normally redeemed seconds after settling, but a failed dispatch
@@ -80,6 +81,14 @@ async function isRedeemed(paymentId) {
 export async function assertForgePayment({ paymentId, refId, discountBps = 0 }) {
 	if (!paymentId || !refId) {
 		throw payErr('payment_id and ref_id are required', 400, 'bad_request');
+	}
+	// token_payments.id is a uuid column, so a malformed payment_id can never match
+	// a settled payment. Answer that as the contract error it is, BEFORE the query:
+	// otherwise Postgres raises 22P02 and the driver error escapes this module with
+	// the raw SQLSTATE as `code` and the raw cast message as `message`, which the
+	// gate handlers then echo verbatim to an unauthenticated caller.
+	if (!isUuid(paymentId)) {
+		throw payErr('No settled $THREE payment found for this generation.', 402, 'payment_invalid');
 	}
 
 	const payment = await lookupPayment(paymentId);

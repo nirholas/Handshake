@@ -12,7 +12,7 @@
 // module only pulls them in when the crawl cron actually runs.
 
 import { sql } from './db.js';
-import { solanaRpcEndpoints } from './solana/connection.js';
+import { solanaConnection, solanaRpcEndpoints } from './solana/connection.js';
 import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 import {
 	truncate,
@@ -29,6 +29,20 @@ import {
 // scan targets the right program even if the SDK's default ever drifts.
 const MPL_AGENT_IDENTITY_PROGRAM = '1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p';
 
+// The `key` account discriminator, byte 0 of every identity account
+// (Uninitialized 0, AgentIdentityV1 1, AgentIdentityV2 2). Both GPA builders
+// register `key` at offset 0 but neither filters on it, so an unfiltered
+// getDeserialized() hands EVERY account in the program to one version's
+// deserializer. Measured 2026-08-16: the program holds 1503 v2 and 68 v1
+// accounts, and unfiltered the v2 scan threw on the first v1 account it met
+// ("not of the expected type [AgentIdentityV2AccountData]") while the v1 scan
+// silently accepted all 1571 and read v2 bytes through the v1 layout. Pinning
+// each builder to its own key is what makes the two scans disjoint and correct;
+// the filter is a memcmp the node applies, so it also shrinks the response.
+// The SDK does not re-export its Key enum from the package root, so the values
+// are named here against the on-chain contract they encode.
+const IDENTITY_KEY = { v1: 1, v2: 2 };
+
 const FETCH_TIMEOUT_MS = 6_000;
 // On-chain metadata JSON is small by convention; anything larger is not a
 // metadata document. Also the streaming cap the pinned guard enforces.
@@ -39,10 +53,6 @@ const MAX_METADATA_BYTES = 1024 * 1024;
 // a whole program routinely takes tens of seconds and can hang for minutes on a
 // throttled, rate-limited, or 504-ing RPC.
 const SCAN_BUDGET_MS = 90_000;
-
-// Per-HTTP-request cap for the Anchor account scan, so a stalled socket is
-// released instead of held until the whole scan budget burns down.
-const RPC_REQUEST_TIMEOUT_MS = 30_000;
 
 /** Milliseconds left before `deadline`, or `fallbackMs` when the caller set none. */
 export function remainingMs(deadline, fallbackMs = SCAN_BUDGET_MS) {
@@ -84,10 +94,46 @@ export async function withDeadline(promise, ms, label) {
 
 // Pick the best available mainnet RPC. solanaRpcEndpoints prefers Helius (which
 // also answers DAS getAsset on the same URL), falling back to public nodes.
+//
+// This is the URL for the DAS `getAsset` enrichment ONLY, which is a
+// vendor-specific method a generic lane cannot serve anyway, and whose failure is
+// already soft (the structural row is upserted without a name/image). The
+// registry ENUMERATION must never use it: see scanConnection below.
 function mainnetRpc() {
 	const [url] = solanaRpcEndpoints('mainnet');
 	if (!url) throw new Error('no Solana mainnet RPC configured (set SOLANA_RPC_URL or HELIUS_API_KEY)');
 	return url;
+}
+
+// The connection both registry scans enumerate over.
+//
+// Enumeration is getProgramAccounts, and gPA is the method free lanes are most
+// likely to refuse: it is expensive, so providers gate it behind a paid plan, an
+// IP allowlist, or nothing at all. Pinning the single highest-priority URL
+// therefore fails in the one way that leaves no trace: the crawl records a
+// per-stage error string, returns HTTP 200 to Cloud Scheduler, which discards the
+// body, and writes nothing. Measured 2026-08-16 against the live lane chain, one
+// gPA on the identity program per lane:
+//   rpc.magicblock.app        403 "Your IP or provider is blocked from this endpoint"
+//   solana-rpc.publicnode.com no answer in 25s
+//   api.mainnet-beta.solana.com   200, 1571 accounts in 1.1s
+//   solana.leorpc.com         200 + JSON-RPC -32603
+//   public.rpc.solanavibestation.com  200, 1571 accounts in 0.5s
+//   api.tatum.io / gateway.tatum.io   200 + -16401 "available for paid plans only"
+// magicblock is the configured SOLANA_RPC_URL, so it is lane 0, so every tick
+// since it became primary scanned nothing: solana_agents_index had not taken an
+// upsert since 2026-08-06 while the cron reported 200 every 30 minutes.
+//
+// solanaConnection rotates the whole chain on exactly these signals (403 and 5xx
+// rotate, a provider-tier error code fails the lane over, a 10s attempt timeout
+// demotes the shape) so the scan lands on a lane that answers instead of dying on
+// the first that does not. The full 1571-account scan is ~559 KB and answers in
+// about a second, comfortably inside that attempt bound.
+function scanConnection() {
+	// Fail the same way mainnetRpc does when nothing is configured at all, rather
+	// than handing web3.js a bare default and reporting a confusing lane error.
+	mainnetRpc();
+	return solanaConnection({ network: 'mainnet', commitment: 'confirmed' });
 }
 
 async function fetchJsonWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
@@ -186,7 +232,9 @@ export async function crawlMetaplexAgents({ deadline } = {}) {
 		const { createUmi } = await import('@metaplex-foundation/umi-bundle-defaults');
 		const { publicKey } = await import('@metaplex-foundation/umi');
 		const reg = await import('@metaplex-foundation/mpl-agent-registry');
-		umi = createUmi(rpcUrl);
+		// createUmi takes an endpoint string OR a ready web3.js Connection; the
+		// Connection form is what lets the scan inherit the rotating lane chain.
+		umi = createUmi(scanConnection());
 		// The GPA builder reads the identity program id from umi via
 		// context.programs.getPublicKey('mplAgentIdentity', <default>); the SDK's
 		// baked-in default is MPL_AGENT_IDENTITY_PROGRAM, so an unmodified umi scans
@@ -196,18 +244,19 @@ export async function crawlMetaplexAgents({ deadline } = {}) {
 			umi.programs.add({ name: 'mplAgentIdentity', publicKey: publicKey(MPL_AGENT_IDENTITY_PROGRAM), getErrorFromCode: () => null, getErrorFromName: () => null, isOnCluster: () => true });
 		} catch { /* already registered or registry shape differs — default still applies */ }
 		gpaV2 = typeof reg.getAgentIdentityV2GpaBuilder === 'function'
-			? reg.getAgentIdentityV2GpaBuilder(umi)
+			? reg.getAgentIdentityV2GpaBuilder(umi).whereField('key', IDENTITY_KEY.v2)
 			: null;
 		gpaV1 = typeof reg.getAgentIdentityV1GpaBuilder === 'function'
-			? reg.getAgentIdentityV1GpaBuilder(umi)
+			? reg.getAgentIdentityV1GpaBuilder(umi).whereField('key', IDENTITY_KEY.v1)
 			: null;
 	} catch (err) {
 		report.errors.push({ stage: 'init', error: err.message || String(err) });
 		return report;
 	}
 
-	// Enumerate both account versions. getDeserialized() returns every account of
-	// the type owned by the program — the full registry, not just ours.
+	// Enumerate both account versions. Each builder is pinned to its own
+	// discriminator above, so getDeserialized() reads every account of THAT type,
+	// the full registry rather than just ours, and nothing else.
 	const accounts = [];
 	// Split whatever budget is left evenly across the scans still to run, so a
 	// slow v2 cannot silently starve v1 of every remaining millisecond.
@@ -267,22 +316,21 @@ function bytesToBase58(bytes, bs58) {
 
 export async function crawlAgencAgents({ deadline } = {}) {
 	const report = { source: 'agenc', scanned: 0, upserted: 0, enriched: 0, errors: [] };
-	const rpcUrl = mainnetRpc();
 
 	let program, bs58;
 	try {
-		const { Connection, Keypair } = await import('@solana/web3.js');
+		const { Keypair } = await import('@solana/web3.js');
 		const anchor = await import('@coral-xyz/anchor');
 		const { AGENC_COORDINATION_IDL } = await import('@tetsuo-ai/protocol');
 		bs58 = (await import('bs58')).default;
 
-		// A per-request timeout on top of the scan-wide deadline below: without it
-		// a stalled socket is held for the whole budget, and Anchor's account
-		// fetcher offers no timeout of its own.
-		const connection = new Connection(rpcUrl, {
-			commitment: 'confirmed',
-			fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(RPC_REQUEST_TIMEOUT_MS) }),
-		});
+		// Anchor's account fetcher offers no timeout of its own, and this scan is
+		// the same getProgramAccounts that dies on a refusing lane 0 (see
+		// scanConnection). The rotating connection supplies both halves: failover
+		// across the chain, and a 10s per-attempt bound, stricter than the 30s
+		// hand-rolled cap this replaced, so a stalled socket is released rather
+		// than held for the whole scan budget.
+		const connection = scanConnection();
 		// Read-only provider: an ephemeral wallet that never signs. Anchor needs a
 		// payer/publicKey slot to construct the provider; the account namespace we
 		// use (.all()) only reads.

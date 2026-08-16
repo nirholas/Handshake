@@ -139,3 +139,30 @@ describe('GET /api/mcp-policy', () => {
 		expect(res.getHeader('content-type')).toContain('application/json');
 	});
 });
+
+// The preflight this endpoint answers advertises GET, HEAD, OPTIONS. It used to
+// serve any other verb the same cacheable 200 policy body, so a POST looked to
+// a caller (and to a caching intermediary) like a legitimate write that had
+// been accepted.
+describe('/api/mcp-policy: method contract', () => {
+	async function call(httpMethod) {
+		const req = { method: httpMethod, url: '/api/mcp-policy', headers: {} };
+		const res = makeRes();
+		await handler(req, res);
+		return res;
+	}
+
+	it('answers a HEAD probe like a GET', async () => {
+		const res = await call('HEAD');
+		expect(res.statusCode).toBe(200);
+	});
+
+	it('refuses write verbs and says what is allowed', async () => {
+		for (const httpMethod of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+			const res = await call(httpMethod);
+			expect(res.statusCode).toBe(405);
+			expect(String(res.getHeader('allow'))).toContain('GET');
+			expect(JSON.parse(res.body).error).toBe('method_not_allowed');
+		}
+	});
+});
