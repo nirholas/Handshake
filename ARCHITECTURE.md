@@ -693,7 +693,8 @@ Beyond the feature areas above, the `api/` tree exposes many more surfaces. Comp
 | `/api/community/*` | `capabilities`, `holder-pass`, `world-gate`, `worlds`, `ws-ticket`, `messages`, `me`, `auth/`, `wallet/` | Coin-world community layer: holder-pass gating, world entry tickets, chat |
 | `/api/social/*` | `sentiment`, `sentiment-pulse` | Cashtag/social sentiment scoring |
 | `/api/x/*` | `post`, `draft`, `schedule`, `analytics`, `reviews`, `status`, `triggers` | X (Twitter) posting + scheduling + engagement analytics |
-| `/api/share/x`, `/api/frames/walk`, `/api/traders/preview`, `/api/trades/feed` | — | Social share-card + Farcaster-frame + OG preview renderers |
+| `/api/share/x` | `share/x` | Publishes a Walk screenshot or clip to the caller's connected X account (chunked media upload + tweet) |
+| `/api/frames/walk`, `/api/traders/preview`, `/api/trades/feed` | (various) | Farcaster-frame + OG preview renderers |
 
 #### Money, Custody, Credits & Monetization
 

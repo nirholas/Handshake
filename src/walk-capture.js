@@ -17,7 +17,7 @@ import { log } from './shared/log.js';
 const RECORD_MAX_SECONDS = 10;
 const CAPTURE_FPS = 60;
 const VIDEO_BITRATE = 12_000_000; // 12 Mbps — crisp 1080p clips
-const X_TWEET_TEXT = (shareUrl) => `I walked my avatar around three.ws — try yours: ${shareUrl}`;
+const X_TWEET_TEXT = (shareUrl) => `I walked my avatar around three.ws. Try yours: ${shareUrl}`;
 
 // Preferred recorder container/codec, MP4 first so most browsers skip transmux.
 function pickRecorderMime() {
@@ -494,7 +494,7 @@ export function createWalkCapture({
 				// the connect flow instead of the three.ws login page.
 				setModalMessage(msg, 'Your X connection expired. Reconnect to post.', data.connect_url || '/api/auth/x/connect', 'Reconnect X');
 			} else if (data.error === 'rate_limited') {
-				setModalMessage(msg, data.error_description || 'Posting too fast — try again shortly.');
+				setModalMessage(msg, data.error_description || 'Posting too fast, try again shortly.');
 			} else if (data.error === 'quota_exceeded') {
 				setModalMessage(msg, data.error_description || 'Monthly X post limit reached.', data.upgrade_url || '/pricing', 'Upgrade');
 			} else {
