@@ -220,13 +220,13 @@ test('apiRequest surfaces the platform error_description, not just the bare code
 	// half a caller can act on.
 	const body = {
 		error: 'provider_unavailable',
-		error_description: 'KOL trade provider unavailable: helius 429',
+		error_description: 'KOL trade provider unavailable: upstream 429',
 	};
 	await withFetch(async () => jsonResponse(body, 502), () =>
 		assert.rejects(apiRequest('/api/kol/trades'), (err) => {
 			assert.equal(err.code, 'upstream_error');
 			assert.equal(err.status, 502);
-			assert.equal(err.message, 'KOL trade provider unavailable: helius 429');
+			assert.equal(err.message, 'KOL trade provider unavailable: upstream 429');
 			assert.deepEqual(err.body, body);
 			return true;
 		}),
