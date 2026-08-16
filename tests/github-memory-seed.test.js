@@ -438,9 +438,15 @@ describe('settings consent panel wiring', () => {
 		expect(html).toContain("apiJson('/api/agents/me'))?.agent");
 	});
 
-	it('renders an unavailable state instead of a dead Connect button when OAuth is unconfigured', () => {
-		expect(html).toContain('data.configured === false');
-		expect(html).toContain('GitHub connect is unavailable on this deployment');
+	// A deployment with no GitHub OAuth app must never render a Connect button
+	// that lands on a 501. It used to say "unavailable" and stop there; the token
+	// path needs nothing provisioned, so that dead end now offers it instead.
+	it('offers the token path, not a dead Connect button, when OAuth is unconfigured', () => {
+		expect(html).toContain('data.configured !== false');
+		expect(html).toContain('Not connected. Connect with a personal access token.');
+		// The OAuth anchor is rendered only on the configured branch.
+		expect(html).toContain('(oauth ? `<a href="${connectUrl}"');
+		expect(html).toContain('Connect with a token');
 	});
 
 	it('sends only ticked repos, and a README only for a repo that is also ticked', () => {
