@@ -25,3 +25,27 @@
 .cv-table .name-cell .inner {
 	gap: 0.625rem;
 }
+
+/* Search box and the live "showing N of M" readout share one row on desktop and
+   stack on narrow screens, where the search field takes the full width. */
+.cat-filters {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	margin-bottom: 0.875rem;
+	min-height: 1.25rem;
+}
+.cat-count {
+	margin: 0;
+	font-size: 0.8125rem;
+	color: var(--cv-text-3);
+}
+
+@media (max-width: 640px) {
+	.cat-filters .cv-search {
+		max-width: none;
+		flex: 1 1 100%;
+	}
+}

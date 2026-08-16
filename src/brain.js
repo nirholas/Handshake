@@ -1,7 +1,7 @@
 // ── brain.js — Persona builder + multi-model playground ─────────────────────
 
 import { renderMarkdown } from './shared/markdown.js';
-import { apiFetch } from './api.js';
+import { apiFetch, noteSession } from './api.js';
 
 // ── Provider roster ──────────────────────────────────────────────────────────
 // The roster is NOT declared here. GET /api/brain/chat is the only place that
@@ -284,7 +284,7 @@ function renderArchetypes() {
 	const grid = $('brArchetypeGrid');
 	if (!grid) return;
 	grid.innerHTML = ARCHETYPES.map((a, i) => `
-		<button class="br-archetype-chip" data-archetype="${i}" type="button">
+		<button class="br-archetype-chip" data-archetype="${i}" type="button" aria-pressed="false">
 			<span class="br-archetype-chip-label">${escHtml(a.label)}</span>
 			<span class="br-archetype-chip-desc">${escHtml(a.desc)}</span>
 		</button>
@@ -303,6 +303,7 @@ function applyArchetype(index) {
 	updateStatusBar(archetype.label);
 	document.querySelectorAll('.br-archetype-chip').forEach((chip, i) => {
 		chip.classList.toggle('selected', i === index);
+		chip.setAttribute('aria-pressed', String(i === index));
 	});
 	autoSavePersonaToAgent(archetype.label);
 }
@@ -514,70 +515,68 @@ function closeEditMode() {
 }
 
 // ── Persona: Agent list + auto-select ────────────────────────────────────────
+// Resolve the session once per tab. /api/auth/me answers 200 with
+// `{ user: null }` when signed out, so this costs one clean request and buys
+// the owner-only roster read (/api/agents) an answer up front instead of a 401
+// that lands as a red console error on every signed-out visit.
+let _sessionPromise = null;
+function hasSession() {
+	if (!_sessionPromise) {
+		_sessionPromise = fetch('/api/auth/me', { credentials: 'include', headers: { accept: 'application/json' } })
+			.then(r => (r.ok ? r.json() : null))
+			.then(d => !!(d && d.user))
+			.catch(() => false)
+			.then(ok => { noteSession(ok); return ok; });
+	}
+	return _sessionPromise;
+}
+
+function setAgentSelectMessage(text) {
+	const sel = $('brAgentSelect');
+	sel.innerHTML = `<option value="">${escHtml(text)}</option>`;
+	sel.disabled = true;
+}
+
 async function loadAgents() {
+	const sel = $('brAgentSelect');
+	state.authed = await hasSession();
+	if (!state.authed) {
+		setAgentSelectMessage('Sign in to save to an agent');
+		return;
+	}
+
 	try {
-		const res = await fetch('/api/agents', { credentials: 'include' });
-		if (!res.ok) return;
+		const res = await apiFetch('/api/agents', {
+			credentials: 'include',
+			allowAnonymous: true,
+			headers: { accept: 'application/json' },
+		});
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 		state.agents = data.agents || data || [];
 		renderAgentSelect();
 		// Auto-select most recently used agent, or fall back to first
 		const saved = load('brain_active_agent');
-		const sel = $('brAgentSelect');
 		if (saved && state.agents.find(a => a.id === saved)) {
 			sel.value = saved;
 		} else if (state.agents.length > 0) {
 			sel.value = state.agents[0].id;
 		}
-	} catch {}
+	} catch {
+		setAgentSelectMessage('Could not load your agents');
+	}
 }
 
 function renderAgentSelect() {
 	const sel = $('brAgentSelect');
 	if (!state.agents.length) {
-		sel.innerHTML = '<option value="">No agents yet</option>';
+		setAgentSelectMessage('No agents yet');
 		return;
 	}
+	sel.disabled = false;
 	sel.innerHTML = state.agents.map(a =>
 		`<option value="${escHtml(a.id)}">${escHtml(a.name || `Agent ${a.id.slice(0,8)}`)}</option>`
 	).join('');
-}
-
-async function savePersonaToAgent() {
-	const agentId = $('brAgentSelect').value;
-	if (!agentId || !state.persona) return;
-
-	const btn = $('brSaveToAgent');
-	btn.disabled = true;
-	btn.textContent = 'Saving...';
-
-	try {
-		const persona = {
-			system_prompt: buildPersonaSystemPrompt(state.persona),
-			tone: state.persona.tone,
-			traits: [
-				...(state.persona.vocabulary || []),
-				...(state.persona.interests || []),
-			],
-		};
-		const res = await apiFetch(`/api/agents/${agentId}`, {
-			method: 'PUT',
-			credentials: 'include',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ persona }),
-		});
-		if (!res.ok) {
-			const data = await res.json().catch(() => ({}));
-			throw new Error(data.error || `HTTP ${res.status}`);
-		}
-		const agentName = state.agents.find(a => a.id === agentId)?.name || 'agent';
-		toast(`Persona saved to ${agentName}`);
-	} catch (err) {
-		toast(`Save failed: ${err.message}`);
-	} finally {
-		btn.disabled = false;
-		btn.textContent = 'Save to Agent';
-	}
 }
 
 // ── Render: Sidebar sessions ─────────────────────────────────────────────────
@@ -1113,15 +1112,22 @@ function bindPlayControlEvents() {
 		document.querySelectorAll('.br-pill').forEach(pill => {
 			pill.addEventListener('click', () => {
 				const key = pill.dataset.key;
-				if (state.active.has(key)) { if (state.active.size > 1) state.active.delete(key); }
-				else state.active.add(key);
-				pill.classList.toggle('on', state.active.has(key));
+				if (state.active.has(key)) {
+					if (state.active.size === 1) { showNotice('Keep at least one model selected.'); return; }
+					state.active.delete(key);
+				} else {
+					state.active.add(key);
+				}
+				const on = state.active.has(key);
+				pill.classList.toggle('on', on);
+				pill.setAttribute('aria-pressed', String(on));
+				persistSelection();
 				renderCanvas();
 			});
 		});
 	} else {
 		const sel = document.getElementById('brFocusSel');
-		if (sel) sel.addEventListener('change', () => { state.focusKey = sel.value; renderCanvas(); });
+		if (sel) sel.addEventListener('change', () => { state.focusKey = sel.value; persistSelection(); renderCanvas(); });
 	}
 }
 
@@ -1229,6 +1235,13 @@ function bindEvents() {
 		if (copy) copyProvider(copy.dataset.copy);
 	});
 
+	// Roster retry: the button is rendered into both the play bar and the
+	// canvas error state, so one delegated handler covers whichever the user
+	// reaches first.
+	document.addEventListener('click', e => {
+		if (e.target.closest('[data-retry-providers]')) fetchProviderRoster();
+	});
+
 	// Persona banner
 	$('brBannerDismiss').addEventListener('click', () => {
 		state.personaEnabled = false;
@@ -1241,15 +1254,22 @@ loadSessions();
 loadPersona();
 
 renderArchetypes();
-renderPlayControls();
 renderSidebar();
-renderCanvas();
 bindEvents();
-fetchProviderAvailability();
+fetchProviderRoster();
 
 if (state.persona) {
 	renderPersonaCard(state.persona);
 	updateStatusBar(state.persona._label || 'Custom persona');
+	// Reflect a persisted archetype pick in the grid, so a returning visitor
+	// sees which vibe is live instead of an unselected row.
+	const picked = ARCHETYPES.findIndex(a => a.label === state.persona._label);
+	if (picked >= 0) {
+		document.querySelectorAll('.br-archetype-chip').forEach((chip, i) => {
+			chip.classList.toggle('selected', i === picked);
+			chip.setAttribute('aria-pressed', String(i === picked));
+		});
+	}
 }
 updatePersonaMini();
 updatePersonaBanner();

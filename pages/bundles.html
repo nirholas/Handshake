@@ -117,6 +117,9 @@
 		.bd-tile dd { margin: 0; font-size: 1.18rem; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
 		.bd-tile dd[data-tone="up"] { color: var(--bd-evidence); }
 		.bd-tile dd[data-tone="down"] { color: var(--bd-loss); }
+		/* Dimmed while the server is re-backtesting a dragged price, so a stale
+		   number never reads as the answer to the price now on screen. */
+		.bd-tile dd[data-pending] { opacity: 0.45; }
 
 		/* ── buttons ────────────────────────────────────────────────────── */
 		.bd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 9px; border: 1px solid var(--stroke); background: var(--surface-2, rgba(255,255,255,0.05)); color: var(--ink); font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: background 130ms ease, border-color 130ms ease, transform 90ms ease; }
@@ -277,6 +280,7 @@
 							</div>
 						</dl>
 
+						<div id="bd-nohistory" class="bd-note bd-hide" style="margin-top:12px"></div>
 						<div id="bd-unpriced" class="bd-note bd-hide" style="margin-top:12px"></div>
 
 						<label class="bd-field" style="margin-top:16px">
@@ -576,6 +580,18 @@
 
 			$('bd-buyers').textContent = h.multi_skill_buyers;
 			$('bd-paid').textContent = fmt(h.revenue_atomic);
+
+			// Four tiles reading zero is a true answer that looks like a broken panel.
+			// Say what the zeros mean, so a seller with no multi-skill history reads
+			// them as "nothing to backtest yet" rather than "this feature is dead".
+			const nohist = $('bd-nohistory');
+			show(nohist, !h.multi_skill_buyers);
+			if (!h.multi_skill_buyers) {
+				nohist.innerHTML = '<b>No one has bought two or more of these skills yet.</b> ' +
+					'The backtest below has nobody to run against, so every figure is zero. ' +
+					'You can still publish at the suggested price; the numbers fill in as buyers arrive.';
+			}
+
 			updateDerived();
 			renderUnpriced();
 		}
@@ -599,12 +615,17 @@
 			d.textContent = h.multi_skill_buyers ? signed(String(delta)) : '0';
 			d.dataset.tone = delta > 0n ? 'up' : delta < 0n ? 'down' : '';
 
-			// "Better off" needs per-buyer baskets, which the server does not expose
-			// (that would leak individual spend). Report the server's count for the
-			// suggested price and say so, rather than inventing a number per drag.
-			$('bd-better').textContent = Math.abs(price - fromAtomic(pricing.suggested.price)) < 1e-9
-				? pricing.suggested.buyers_better_off
-				: '&#183;';
+			// "Better off" needs per-buyer baskets, which the server never exposes
+			// (that would leak individual spend). At the suggested price the server
+			// already answered; at any other price ask it, debounced, instead of
+			// inventing a number locally or leaving a dot on screen.
+			if (!h.multi_skill_buyers) {
+				$('bd-better').textContent = '0';
+			} else if (Math.abs(price - fromAtomic(pricing.suggested.price)) < 1e-9) {
+				$('bd-better').textContent = pricing.suggested.buyers_better_off;
+			} else {
+				refreshBetterOff(price);
+			}
 
 			const off = sumOfParts > 0 ? ((sumOfParts - price) / sumOfParts) * 100 : 0;
 			const disc = $('bd-discount');
@@ -618,6 +639,36 @@
 			$('bd-publish-note').textContent = !$('bd-name').value.trim()
 				? 'Give the bundle a name to publish it.'
 				: off < 0 ? 'Price it below the sum of the parts first.' : '';
+		}
+
+		// GET ?action=pricing&price=<atomic> backtests one candidate price server
+		// side and returns how many of the real multi-skill buyers came out ahead at
+		// it. Debounced so a slider drag is one request at rest, not one per frame.
+		let betterDebounce;
+		let betterSeq = 0;
+		function refreshBetterOff(price) {
+			const el = $('bd-better');
+			el.dataset.pending = '1';
+			clearTimeout(betterDebounce);
+			const seq = ++betterSeq;
+			const forAgent = agentId;
+			const skills = [...selected].join(',');
+			betterDebounce = setTimeout(async () => {
+				const qs = new URLSearchParams({ action: 'pricing', skills, price: toAtomic(price) });
+				try {
+					const res = await apiFetch('/api/agents/' + encodeURIComponent(forAgent) + '/bundles?' + qs);
+					if (seq !== betterSeq) return;
+					if (!res.ok) return;
+					const body = await res.json().catch(() => null);
+					const asked = body?.data?.asked;
+					if (seq !== betterSeq || !asked) return;
+					el.textContent = asked.buyers_better_off;
+					delete el.dataset.pending;
+				} catch {
+					// The tile keeps its last answer and stays marked pending; the panel
+					// already surfaces connection failures, so this stays quiet.
+				}
+			}, 400);
 		}
 
 		function renderUnpriced() {

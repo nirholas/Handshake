@@ -229,7 +229,7 @@ function renderTable() {
 	el.innerHTML = `
 		<div class="cv-table-wrap">
 			<table class="cv-table">
-				<caption class="cv-sr-only">Crypto categories ranked by market cap, showing ${page.length} of ${matches.length}</caption>
+				<caption class="sr-only">Crypto categories ranked by market cap, showing ${page.length} of ${matches.length}</caption>
 				<thead><tr>${head}</tr></thead>
 				<tbody>${rows}</tbody>
 			</table>

@@ -711,7 +711,10 @@ html.cv-page,
 	opacity: 0.4;
 	font-size: 0.6875rem;
 }
-.cv-table th[aria-sort] .arrow {
+/* A sortable-but-inactive header carries aria-sort="none" so screen readers
+   announce it as sortable; only the column actually sorted gets the bright
+   arrow, so exclude "none" rather than matching the attribute's presence. */
+.cv-table th[aria-sort]:not([aria-sort='none']) .arrow {
 	opacity: 1;
 }
 

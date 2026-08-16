@@ -21,7 +21,7 @@
 		<title data-i18n="categories.meta_title">Crypto Categories · three.ws</title>
 		<meta
 			name="description"
-			content="Every crypto sector ranked by market cap — Layer 1s, DeFi, memes, AI, RWAs and more. See which categories are leading and lagging with live 24h moves and volume."
+			content="Every crypto sector ranked by market cap: Layer 1s, DeFi, memes, AI, RWAs and more. Search 700+ categories, sort by market cap, 24h change or volume, and see which narratives lead the market right now."
 		 data-i18n-attr="content:categories.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
@@ -29,7 +29,7 @@
 		<meta property="og:title" content="Crypto Categories · three.ws"  data-i18n-attr="content:categories.meta_og_title"/>
 		<meta
 			property="og:description"
-			content="Every crypto sector ranked by market cap — Layer 1s, DeFi, memes, AI, RWAs and more, with live 24h moves and volume."
+			content="Every crypto sector ranked by market cap: Layer 1s, DeFi, memes, AI, RWAs and more, with live 24h moves and volume."
 		 data-i18n-attr="content:categories.meta_og_description"/>
 		<meta
 			property="og:image"
@@ -108,6 +108,35 @@
 					<a class="cv-pill" href="/coins" data-i18n="categories.all_coins">All Coins</a>
 					<a class="cv-pill" href="/heatmap" data-i18n="categories.heatmap">Heatmap</a>
 				</div>
+			</div>
+
+			<!-- Filters the ~750 categories the upstream reports. Revealed by
+			     src/categories.js once a populated list has actually loaded. -->
+			<div class="cat-filters">
+				<div class="cv-search" id="cat-search" hidden>
+					<span class="mag" aria-hidden="true">
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<circle cx="11" cy="11" r="8" />
+							<path d="m21 21-4.3-4.3" />
+						</svg>
+					</span>
+					<input
+						id="cat-search-input"
+						type="search"
+						placeholder="Search categories…"
+						autocomplete="off"
+						spellcheck="false"
+						aria-label="Search crypto categories by name"
+					/>
+				</div>
+				<p class="cat-count" id="cat-count" role="status" aria-live="polite"></p>
 			</div>
 
 			<!-- Category table. Hydrated by src/categories.js. -->
