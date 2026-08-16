@@ -144,7 +144,13 @@ async function handleConnect(req, res) {
 	const codeChallenge = await sha256Base64Url(codeVerifier);
 	const state = randomToken(16);
 
-	const signed = await signState({ state, codeVerifier, userId: user.id, agentId });
+	const signed = await signState({
+		state,
+		codeVerifier,
+		userId: user.id,
+		agentId,
+		scopeSet: scopeSet.name,
+	});
 	res.setHeader('set-cookie', stateCookie(signed));
 
 	const authUrl = new URL('https://twitter.com/i/oauth2/authorize');
@@ -185,16 +191,24 @@ async function handleCallback(req, res) {
 	res.setHeader('set-cookie', stateCookie('', { clear: true }));
 	if (!stateData) return error(res, 400, 'invalid_state', 'OAuth state expired or invalid');
 
-	const { codeVerifier, userId, agentId: stateAgentId } = stateData;
-	const successRedirect = stateAgentId
-		? `/agent/${encodeURIComponent(stateAgentId)}/edit?tab=social&x=connected`
-		: `/settings?tab=connected-accounts&x=connected`;
-	const errorRedirect = stateAgentId
-		? `/agent/${encodeURIComponent(stateAgentId)}/edit?tab=social&x=error`
-		: `/settings?tab=connected-accounts&x=error`;
-	const deniedRedirect = stateAgentId
-		? `/agent/${encodeURIComponent(stateAgentId)}/edit?tab=social&x=denied`
-		: `/settings?tab=connected-accounts&x=denied`;
+	const { codeVerifier, userId, agentId: stateAgentId, scopeSet } = stateData;
+	// Return to the surface that started the connect. A read-only connect can only
+	// have come from the memory-seeding card, so it goes back to Settings (with
+	// the agent it targets) rather than to the agent editor's posting tab, which
+	// is about the write access this grant deliberately does not carry.
+	const backTo = (outcome) => {
+		if (scopeSet === 'read') {
+			const q = new URLSearchParams({ tab: 'connected-accounts', x: outcome });
+			if (stateAgentId) q.set('agent_id', stateAgentId);
+			return `/settings?${q.toString()}`;
+		}
+		return stateAgentId
+			? `/agent/${encodeURIComponent(stateAgentId)}/edit?tab=social&x=${outcome}`
+			: `/settings?tab=connected-accounts&x=${outcome}`;
+	};
+	const successRedirect = backTo('connected');
+	const errorRedirect = backTo('error');
+	const deniedRedirect = backTo('denied');
 
 	if (url.searchParams.get('error')) return redirect(res, deniedRedirect);
 	if (!code) return error(res, 400, 'validation_error', 'missing code');
