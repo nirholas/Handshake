@@ -29,20 +29,31 @@ function trunc(addr) {
 	return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
-/**
- * Advance the poll cursor past a row's timestamp.
- *
- * The cursor is an ISO string because that is what the query binds, but Neon
- * hands timestamptz columns back as Date objects. `someDate > someIsoString`
- * coerces BOTH sides to numbers, the string becomes NaN, and the comparison is
- * always false, so the cursor froze at connect time and every 1.5s poll
- * re-emitted the whole backlog it had already sent. Normalising to ISO text
- * makes the comparison lexicographic and correct (both sides are UTC, same
- * width), and keeps the cursor in the exact form the next query needs.
- */
+// The poll cursor is a UTC timestamp string with SIX fractional digits, and
+// every value that enters it is normalised to that width. Two independent
+// reasons, both of which used to re-send the whole backlog on every 1.5s tick:
+//
+//   1. Neon hands timestamptz columns back as Date objects, and
+//      `someDate > someIsoString` coerces both sides to numbers, turning the
+//      string into NaN. The comparison was always false, so the cursor never
+//      moved off its connect-time value.
+//   2. Postgres keeps created_at to the microsecond, but a JS Date holds only
+//      milliseconds. A cursor built by truncating one is strictly EARLIER than
+//      the row it came from, so `created_at > cursor` stays true for that row
+//      forever. This is why the query below asks Postgres for the cursor text
+//      directly rather than deriving it from the parsed Date.
+//
+// Fixed width is what makes a plain lexicographic comparison exact here: every
+// value is `YYYY-MM-DDTHH:MM:SS.ffffffZ`, so string order is time order.
+
+/** A Date as the same fixed-width microsecond string Postgres emits. */
+export function microIso(date) {
+	return date.toISOString().replace(/(\.\d{3})Z$/, '$1000Z');
+}
+
 export function advanceCursor(cursor, value) {
 	if (value == null) return cursor;
-	const at = value instanceof Date ? value.toISOString() : String(value);
+	const at = value instanceof Date ? microIso(value) : String(value);
 	return at > cursor ? at : cursor;
 }
 
@@ -84,14 +95,15 @@ export default async function handleRadarStream(req, res) {
 
 	// Start from "now" so we stream only fresh precursors; the REST endpoint
 	// supplies the backlog the page renders on load.
-	let cursor = new Date().toISOString();
+	let cursor = microIso(new Date());
 
 	const poll = async () => {
 		if (!active) return;
 		try {
 			const rows = await sql`
 				select id, kind, trigger_wallet, new_wallet, mint, confidence,
-				       watch_reason, watch_score, observed_ts, created_at
+				       watch_reason, watch_score, observed_ts, created_at,
+				       to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor_at
 				from radar_events
 				where network = ${network} and created_at > ${cursor}
 				order by created_at asc
@@ -129,7 +141,7 @@ export default async function handleRadarStream(req, res) {
 					at: r.created_at,
 					fired: isOwner ? firedMints.has(r.mint) : undefined,
 				});
-				cursor = advanceCursor(cursor, r.created_at);
+				cursor = advanceCursor(cursor, r.cursor_at);
 			}
 		} catch {
 			send('error', { message: 'poll_failed' });
