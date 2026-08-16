@@ -651,12 +651,17 @@ export class SkillPaymentModal {
 			const mintKey = new PublicKey(purchase.currency_mint);
 			const referenceKey = new PublicKey(purchase.reference);
 
-			const fromAta = getAssociatedTokenAddressSync(mintKey, payerKey);
-			const toAta = getAssociatedTokenAddressSync(mintKey, recipientKey);
+			// The seller picks the currency mint, so it may be Token-2022 (as $THREE is)
+			// rather than classic SPL. Derive the ATAs and build the transfer against the
+			// mint's real owning program; the spl-token default would produce addresses
+			// that do not exist and a transfer the chain rejects at simulation.
+			const tokenProgramId = await resolveTokenProgramId(this._connection, mintKey, spl);
+			const fromAta = getAssociatedTokenAddressSync(mintKey, payerKey, false, tokenProgramId);
+			const toAta = getAssociatedTokenAddressSync(mintKey, recipientKey, false, tokenProgramId);
 
 			// Pre-flight balance check: surface "Add funds" before wallet prompt
 			try {
-				const ataInfo = await getAccount(this._connection, fromAta, 'confirmed');
+				const ataInfo = await getAccount(this._connection, fromAta, 'confirmed', tokenProgramId);
 				const balance = BigInt(ataInfo.amount);
 				const required = BigInt(purchase.amount);
 				if (balance < required) {
@@ -667,7 +672,14 @@ export class SkillPaymentModal {
 				// ATA may not exist yet — let sendTransaction surface the real error
 			}
 
-			const ix = createTransferInstruction(fromAta, toAta, payerKey, BigInt(purchase.amount));
+			const ix = createTransferInstruction(
+				fromAta,
+				toAta,
+				payerKey,
+				BigInt(purchase.amount),
+				[],
+				tokenProgramId,
+			);
 			ix.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
 
 			const { blockhash, lastValidBlockHeight } = await this._connection.getLatestBlockhash('confirmed');

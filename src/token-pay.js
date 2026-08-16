@@ -22,6 +22,7 @@
  */
 
 import { ensureRiskAck } from './shared/risk-ack.js';
+import { resolveTokenProgramId } from './shared/spl-token-program.js';
 
 const MEMO_PROGRAM_ID = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
 
@@ -141,8 +142,6 @@ export async function payWithToken({
 		getAssociatedTokenAddressSync,
 		createTransferInstruction,
 		createAssociatedTokenAccountIdempotentInstruction,
-		TOKEN_PROGRAM_ID,
-		TOKEN_2022_PROGRAM_ID,
 		ASSOCIATED_TOKEN_PROGRAM_ID,
 	} = spl;
 
@@ -153,13 +152,10 @@ export async function payWithToken({
 	const connection = new Connection(rpcEndpoint(), 'confirmed');
 	const mint = new PublicKey(quote.mint);
 
-	// $THREE is a Token-2022 mint, and the mint may differ per network — so the ATA
+	// $THREE is a Token-2022 mint, and the mint may differ per network, so the ATA
 	// derivation and transfers MUST target the mint's actual owning token program,
-	// not the legacy default. Read it from the mint account; fall back to the legacy
-	// program only if the lookup fails (a classic-SPL mint).
-	const mintInfo = await connection.getAccountInfo(mint);
-	const tokenProgramId =
-		mintInfo && mintInfo.owner.equals(TOKEN_2022_PROGRAM_ID) ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
+	// not the legacy default. Read it from the mint account.
+	const tokenProgramId = await resolveTokenProgramId(connection, mint, spl);
 
 	const fromAta = getAssociatedTokenAddressSync(mint, payer, false, tokenProgramId, ASSOCIATED_TOKEN_PROGRAM_ID);
 

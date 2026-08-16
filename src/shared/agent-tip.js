@@ -27,14 +27,17 @@ import {
 	Transaction,
 	LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
+import * as splToken from '@solana/spl-token';
 import {
 	getAssociatedTokenAddress,
 	getAccount,
 	createAssociatedTokenAccountInstruction,
 	createTransferCheckedInstruction,
 	TOKEN_PROGRAM_ID,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
+import { resolveTokenProgramId } from './spl-token-program.js';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -160,24 +163,38 @@ export async function tipAgent({ toAddress, token = 'SOL', amount, mint: splMint
 			}
 			const dec = Number.isInteger(splDecimals) && splDecimals >= 0 && splDecimals <= 18 ? splDecimals : 6;
 			const mint = new PublicKey(String(splMint));
-			const fromAta = await getAssociatedTokenAddress(mint, from);
-			const toAta = await getAssociatedTokenAddress(mint, to);
+			// The caller's mint may be Token-2022 ($THREE is), and the spl-token defaults
+			// are the legacy program, which derives the wrong ATAs and fails simulation
+			// with "incorrect program id for instruction". Read the owning program off
+			// the mint and build every leg against it.
+			const tokenProgramId = await resolveTokenProgramId(connection, mint, splToken);
+			const fromAta = await getAssociatedTokenAddress(mint, from, false, tokenProgramId, ASSOCIATED_TOKEN_PROGRAM_ID);
+			const toAta = await getAssociatedTokenAddress(mint, to, false, tokenProgramId, ASSOCIATED_TOKEN_PROGRAM_ID);
 			try {
-				await getAccount(connection, fromAta);
+				await getAccount(connection, fromAta, undefined, tokenProgramId);
 			} catch {
 				throw new TipError(noBalanceMsg || 'Your wallet holds none of this token to tip with.', 'no_balance');
 			}
 			let recipientHasAta = true;
 			try {
-				await getAccount(connection, toAta);
+				await getAccount(connection, toAta, undefined, tokenProgramId);
 			} catch {
 				recipientHasAta = false;
 			}
 			if (!recipientHasAta) {
-				tx.add(createAssociatedTokenAccountInstruction(from, toAta, to, mint));
+				tx.add(
+					createAssociatedTokenAccountInstruction(
+						from,
+						toAta,
+						to,
+						mint,
+						tokenProgramId,
+						ASSOCIATED_TOKEN_PROGRAM_ID,
+					),
+				);
 			}
 			const raw = BigInt(Math.round(amt * 10 ** dec));
-			tx.add(createTransferCheckedInstruction(fromAta, mint, toAta, from, raw, dec, [], TOKEN_PROGRAM_ID));
+			tx.add(createTransferCheckedInstruction(fromAta, mint, toAta, from, raw, dec, [], tokenProgramId));
 		} else {
 			const lamports = Math.round(amt * LAMPORTS_PER_SOL);
 			tx.add(SystemProgram.transfer({ fromPubkey: from, toPubkey: to, lamports }));

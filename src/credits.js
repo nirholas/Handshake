@@ -9,6 +9,7 @@
 // page paints instantly for the read-only balance view.
 
 import { getAdapter } from './onchain/adapters/index.js';
+import { resolveTokenProgramId } from './shared/spl-token-program.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -266,14 +267,53 @@ async function buildThreeTransfer({ web3, spl, conn, from, to, amount, mintStr, 
 	const owner = new web3.PublicKey(from);
 	const dest = new web3.PublicKey(to);
 	const mint = new web3.PublicKey(mintStr);
-	const srcAta = await spl.getAssociatedTokenAddress(mint, owner);
-	const dstAta = await spl.getAssociatedTokenAddress(mint, dest);
-	const tx = new web3.Transaction();
-	const dstInfo = await conn.getAccountInfo(dstAta);
-	if (!dstInfo) {
-		tx.add(spl.createAssociatedTokenAccountInstruction(owner, dstAta, dest, mint));
+
+	// $THREE is a Token-2022 mint, so every derivation and instruction below must
+	// target the mint's real owning program. The spl-token defaults (legacy
+	// TOKEN_PROGRAM_ID) derive the wrong ATAs and fail simulation with "incorrect
+	// program id for instruction".
+	const tokenProgramId = await resolveTokenProgramId(conn, mint, spl);
+	const ataArgs = [false, tokenProgramId, spl.ASSOCIATED_TOKEN_PROGRAM_ID];
+	const srcAta = await spl.getAssociatedTokenAddress(mint, owner, ...ataArgs);
+	const dstAta = await spl.getAssociatedTokenAddress(mint, dest, ...ataArgs);
+
+	const [srcInfo, dstInfo] = await Promise.all([
+		conn.getAccountInfo(srcAta),
+		conn.getAccountInfo(dstAta),
+	]);
+	if (!srcInfo) throw new Error('This wallet holds no $THREE. Buy some first, then deposit.');
+	const held = BigInt((await conn.getTokenAccountBalance(srcAta)).value.amount);
+	if (held < atomics) {
+		throw new Error(
+			`Not enough $THREE. This wallet holds ${fmtAmount(Number(held) / 10 ** decimals)}.`,
+		);
 	}
-	tx.add(spl.createTransferCheckedInstruction(srcAta, mint, dstAta, owner, atomics, decimals));
+
+	const tx = new web3.Transaction();
+	if (!dstInfo) {
+		tx.add(
+			spl.createAssociatedTokenAccountInstruction(
+				owner,
+				dstAta,
+				dest,
+				mint,
+				tokenProgramId,
+				spl.ASSOCIATED_TOKEN_PROGRAM_ID,
+			),
+		);
+	}
+	tx.add(
+		spl.createTransferCheckedInstruction(
+			srcAta,
+			mint,
+			dstAta,
+			owner,
+			atomics,
+			decimals,
+			[],
+			tokenProgramId,
+		),
+	);
 	return tx;
 }
 
