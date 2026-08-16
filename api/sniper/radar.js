@@ -82,9 +82,9 @@ export default wrap(async (req, res) => {
 	const network = NETWORKS.has(url.searchParams.get('network')) ? url.searchParams.get('network') : 'mainnet';
 	const userId = await resolveUserId(req);
 
-	let status, watchRows, eventRows, counts;
+	let status, watchRows, eventRows, counts, watchedTotal;
 	try {
-		[status, watchRows, eventRows, counts] = await Promise.all([
+		[status, watchRows, eventRows, counts, watchedTotal] = await Promise.all([
 			radarStatus(),
 			sql`
 				select address, reason, source, score, creator_graduated, realized_score, labels,
@@ -110,13 +110,19 @@ export default wrap(async (req, res) => {
 				from radar_events
 				where network = ${network}
 			`.then((r) => r[0] || {}),
+			// How many wallets the radar actually watches. The list above is the top
+			// 100 by score, so reporting its length made the dashboard's "Watched
+			// wallets" KPI read 100 while the worker's own heartbeat, rendered on the
+			// same screen, reported the real (much larger) figure.
+			sql`select count(*)::int as n from radar_watchlist where network = ${network}`
+				.then((r) => Number(r[0]?.n) || 0),
 		]);
 	} catch (err) {
 		return json(res, 200, {
 			ok: false, network, state: 'unknown',
 			error: err?.code || 'db_error',
 			status: { state: 'unknown', reason: 'radar store unreachable' },
-			watchlist: [], events: [], counts: { events_1h: 0, events_24h: 0, armable_24h: 0 },
+			watchlist: [], events: [], counts: { events_1h: 0, events_24h: 0, armable_24h: 0, watched: 0, listed: 0 },
 		}, { 'cache-control': 'public, max-age=5' });
 	}
 
@@ -209,7 +215,8 @@ export default wrap(async (req, res) => {
 			events_1h: Number(counts.events_1h || 0),
 			events_24h: Number(counts.events_24h || 0),
 			armable_24h: Number(counts.armable_24h || 0),
-			watched: watchlist.length,
+			watched: watchedTotal,
+			listed: watchlist.length,
 		},
 		armed,
 	}, { 'cache-control': isOwner ? 'private, no-store' : 'public, max-age=5' });

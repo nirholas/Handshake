@@ -46,8 +46,10 @@ export default wrap(async (req, res) => {
 	const agentId = isUuid(agentIdParam) ? agentIdParam : null;
 
 	// The journal is joined to the caller's own strategies so a user only ever
-	// sees journal rows for agents they own — trading_journal has no user_id of
-	// its own, so ownership is enforced through agent_sniper_strategies.
+	// sees journal rows for agents they own: trading_journal has no user_id of
+	// its own, so ownership is enforced through agent_sniper_strategies. Both
+	// agent_id columns are uuid (migration 20260816070000), so the EXISTS join
+	// is a native uuid comparison and uses trading_journal_agent_ts_idx.
 	let rows = [];
 	try {
 		rows = agentId
@@ -78,7 +80,7 @@ export default wrap(async (req, res) => {
 		id: Number(r.id),
 		ts: r.ts,
 		agent_id: r.agent_id,
-		position_id: r.position_id != null ? Number(r.position_id) : null,
+		position_id: r.position_id ?? null,
 		mint: r.mint,
 		symbol: r.symbol || 'UNKNOWN',
 		event: r.event,

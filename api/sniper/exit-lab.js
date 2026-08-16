@@ -53,6 +53,28 @@ function numOrNull(v) {
 	return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Resolve the corpus query from a URLSearchParams. Exported because the limit is
+ * easy to get wrong in exactly one direction: an ABSENT `limit` reads back as
+ * null, and `Number(null)` is 0, which is finite, so a naive parse clamped the
+ * default request down to a single trade and the console rendered a fleet of one.
+ * An absent or unparseable limit takes DEFAULT_LIMIT; an explicit one is clamped
+ * into [1, MAX_LIMIT].
+ */
+export function corpusQuery(searchParams) {
+	const networkRaw = searchParams.get('network');
+	const windowRaw = searchParams.get('window');
+	const limitRaw = searchParams.get('limit');
+	const limitNum = limitRaw == null || limitRaw === '' ? NaN : Number(limitRaw);
+	return {
+		network: NETWORKS.has(networkRaw) ? networkRaw : 'mainnet',
+		window: WINDOWS.has(windowRaw) ? windowRaw : '90',
+		limit: Number.isFinite(limitNum)
+			? Math.min(MAX_LIMIT, Math.max(1, Math.floor(limitNum)))
+			: DEFAULT_LIMIT,
+	};
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -61,11 +83,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://localhost');
-	const network = NETWORKS.has(url.searchParams.get('network') || '') ? url.searchParams.get('network') : 'mainnet';
-	const windowRaw = url.searchParams.get('window') || '90';
-	const win = WINDOWS.has(windowRaw) ? windowRaw : '90';
-	const limitRaw = Number(url.searchParams.get('limit'));
-	const limit = Number.isFinite(limitRaw) ? Math.min(MAX_LIMIT, Math.max(1, Math.floor(limitRaw))) : DEFAULT_LIMIT;
+	const { network, window: win, limit } = corpusQuery(url.searchParams);
 
 	const start = win === 'all' ? new Date(0) : new Date(Date.now() - Number(win) * 86_400_000);
 

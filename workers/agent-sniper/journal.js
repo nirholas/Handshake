@@ -12,7 +12,12 @@
 import { sql } from '../../api/_lib/db.js';
 import { log } from './log.js';
 
-/** Lazy table create so a fresh env journals whether the migration ran or not. */
+/**
+ * Lazy table create so a fresh env journals whether the migration ran or not.
+ * agent_id and position_id are uuid because that is what every caller passes
+ * (agent_sniper_strategies.agent_id and agent_sniper_positions.id are both
+ * uuid); the original text/bigint shape made every INSERT here fail silently.
+ */
 let _ensured = false;
 async function ensure() {
 	if (_ensured) return;
@@ -20,8 +25,8 @@ async function ensure() {
 		CREATE TABLE IF NOT EXISTS trading_journal (
 			id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 			ts            timestamptz NOT NULL DEFAULT now(),
-			agent_id      text,
-			position_id   bigint,
+			agent_id      uuid,
+			position_id   uuid,
 			network       text,
 			mint          text,
 			symbol        text,

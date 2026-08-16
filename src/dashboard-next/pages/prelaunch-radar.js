@@ -175,6 +175,15 @@ async function refresh(root, quiet = false) {
 	startSse();
 }
 
+// The API returns the top 100 watched wallets by score, not the whole set, so
+// say which of the two this panel is showing rather than letting the shown count
+// contradict the "Watched wallets" KPI beside it.
+function watchlistCaption(data) {
+	const shown = (data.watchlist || []).length;
+	const total = data.counts?.watched ?? shown;
+	return total > shown ? `top ${shown} of ${total}` : `${shown} wallets`;
+}
+
 function render(data) {
 	const st = data.status || { state: 'unknown' };
 	const counts = data.counts || {};
@@ -199,7 +208,7 @@ function render(data) {
 			<div class="rd-panel">
 				<div class="rd-panel-head">
 					<span class="rd-panel-title">Watchlist</span>
-					<span class="rd-src">${(data.watchlist || []).length} wallets</span>
+					<span class="rd-src">${watchlistCaption(data)}</span>
 				</div>
 				<div class="rd-wl" tabindex="0" role="region" aria-label="Watched wallets (scrollable)">${watchlistList(data.watchlist || [])}</div>
 			</div>

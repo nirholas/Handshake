@@ -29,6 +29,23 @@ function trunc(addr) {
 	return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
+/**
+ * Advance the poll cursor past a row's timestamp.
+ *
+ * The cursor is an ISO string because that is what the query binds, but Neon
+ * hands timestamptz columns back as Date objects. `someDate > someIsoString`
+ * coerces BOTH sides to numbers, the string becomes NaN, and the comparison is
+ * always false, so the cursor froze at connect time and every 1.5s poll
+ * re-emitted the whole backlog it had already sent. Normalising to ISO text
+ * makes the comparison lexicographic and correct (both sides are UTC, same
+ * width), and keeps the cursor in the exact form the next query needs.
+ */
+export function advanceCursor(cursor, value) {
+	if (value == null) return cursor;
+	const at = value instanceof Date ? value.toISOString() : String(value);
+	return at > cursor ? at : cursor;
+}
+
 async function resolveUserId(req) {
 	try {
 		const session = await getSessionUser(req);
@@ -112,7 +129,7 @@ export default async function handleRadarStream(req, res) {
 					at: r.created_at,
 					fired: isOwner ? firedMints.has(r.mint) : undefined,
 				});
-				if (r.created_at > cursor) cursor = r.created_at;
+				cursor = advanceCursor(cursor, r.created_at);
 			}
 		} catch {
 			send('error', { message: 'poll_failed' });
