@@ -1572,7 +1572,7 @@ export const env = {
 	// Rider Firebase web-app config, served to the browser by /api/rider/firebase
 	// so the client bundle carries no project literals. These are the public
 	// client-side identifiers Firebase itself publishes in a web app config, NOT
-	// service-account credentials — access is governed by Firebase security rules,
+	// service-account credentials. Access is governed by Firebase security rules,
 	// so the endpoint is deliberately unauthenticated. api/rider/firebase.js
 	// answers 503 not_configured until at least the apiKey and projectId are set.
 	get RIDER_FIREBASE_API_KEY() {

@@ -32,7 +32,7 @@ export default wrap(async (req, res) => {
 			res,
 			503,
 			'not_configured',
-			'rider Firebase is not configured — set RIDER_FIREBASE_API_KEY and RIDER_FIREBASE_PROJECT_ID',
+			'rider Firebase is not configured: set RIDER_FIREBASE_API_KEY and RIDER_FIREBASE_PROJECT_ID',
 		);
 	}
 

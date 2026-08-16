@@ -48,7 +48,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	// A repeated query param (?address=a&address=b) arrives as an array, which
-	// has no .trim() — reading it directly turned a malformed request into a 500.
+	// has no .trim(), so reading it directly turned a malformed request into a 500.
 	const raw = req.query?.address;
 	const address = (Array.isArray(raw) ? raw[0] : raw ?? '').toString().trim();
 	if (!address) return error(res, 400, 'validation_error', 'address required');
@@ -61,7 +61,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// Both lookups run together, and a positive result from either one is already
-	// authoritative — a failed lookup only blocks the answer when it was the one
+	// authoritative: a failed lookup only blocks the answer when it was the one
 	// that had to prove the wallet has NO pass.
 	const [balanceRead, paymentRead] = await Promise.allSettled([
 		heldBalance(owner),

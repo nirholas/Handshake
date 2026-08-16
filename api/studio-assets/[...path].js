@@ -152,7 +152,7 @@ export default wrap(async (req, res) => {
 	if (req.method === 'HEAD') {
 		// Only advertise a length we can stand behind. Upstream answers this
 		// fetch gzipped (undici asks for it), so its content-length is the
-		// COMPRESSED size while a GET here returns the decoded bytes — for a
+		// COMPRESSED size while a GET here returns the decoded bytes. For a
 		// trait manifest that is 2.4 KB claimed against 20 KB delivered. Text
 		// bodies are rewritten on top of that, changing the length again.
 		const len = upstream.headers.get('content-length');
