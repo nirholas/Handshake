@@ -5,15 +5,22 @@ READMEs you pick, distilled and written into the agent's long-term memory, so
 it can speak concretely about what you build instead of guessing.
 
 This lane is built around one constraint. Connecting your GitHub account is
-permission to read it. It is **not** permission to read all of it. The OAuth
+permission to read it. It is **not** permission to read all of it. The
 connection unlocks the consent screen, and the consent screen is a per-item
 catalog: your profile, your pinned repositories, your recent public
 repositories, and a separate README tick per repository. **A seed reads exactly
 the items you ticked and nothing else**, and the server enforces that by
 refusing any selection that names an item the catalog never showed you.
 
+There are two ways to connect and they meet immediately: OAuth, one click,
+available when the deployment has a GitHub OAuth app registered; or a personal
+access token you mint yourself, available always, which is the way in when no
+OAuth app exists and which is refused outright if it carries more access than
+seeding can use. Both write the same encrypted connection record and lead to
+the same consent screen.
+
 - **Surface**: Settings, Connected accounts, GitHub card at [/settings#connected-accounts](https://three.ws/settings#connected-accounts)
-- **API**: `/api/agents/:id/memory/seed/github`
+- **API**: `/api/agents/:id/memory/seed/github`, `/api/auth/github/token`
 - **Related**: [Memory system](./memory.md), [X memory seeding](./x-memory-seeding.md), [Farcaster memory seeding](./farcaster-memory-seeding.md)
 
 ---
@@ -21,8 +28,9 @@ refusing any selection that names an item the catalog never showed you.
 ## How it fits together
 
 ```
- Connect GitHub (OAuth, read:user + public_repo, token stored encrypted)
-        │   the connection alone reads and stores nothing
+ Connect GitHub (OAuth, or a personal access token you paste)
+        │   either way the token is stored encrypted, and the
+        │   connection alone reads and stores nothing
         ▼
  GET /api/agents/:id/memory/seed/github
         │   builds the consent catalog live from GitHub:
@@ -103,11 +111,62 @@ behind a broken replacement.
 
 ---
 
+## Connecting with a personal access token
+
+OAuth needs an operator to register a GitHub OAuth app (see Configuration
+below). Until that exists, `/api/auth/github/connect` can only answer `501`, so
+the Settings card offers the token path instead, and offers it as a secondary
+option even where OAuth works.
+
+You mint the token on GitHub, which is where consent happens exactly as it does
+on the OAuth screen. Tick **`read:user`** and nothing else: seeding reads a
+public profile, public repositories, and their READMEs, none of which needs
+more than that.
+
+```bash
+curl -s https://three.ws/api/auth/github/token --cookie "$JAR" \
+  -H 'content-type: application/json' -H "x-csrf-token: $CSRF" \
+  -d '{"token":"ghp_your_token_here"}'
+```
+
+```json
+{
+  "connected": true,
+  "connect_method": "token",
+  "token_kind": "classic",
+  "username": "you",
+  "connected_at": "2026-08-16T16:53:49.030Z",
+  "scopes": ["read:user"]
+}
+```
+
+**An over-privileged token is refused, not stored.** The endpoint reads the
+token's grants from GitHub's `x-oauth-scopes` response header and checks them
+against an allowlist (`ALLOWED_TOKEN_SCOPES` in
+[api/_lib/github-token.js](../api/_lib/github-token.js)): `read:user`,
+`user:email`, `user:follow`, `user`, `public_repo`, `repo:status`, `read:org`.
+Anything else, `repo` and `delete_repo` and every `admin:` scope included, comes
+back as `400 token_scope_refused` naming the offending scopes, and nothing is
+written. It is an allowlist rather than a denylist so a scope GitHub invents
+later is refused by default. `repo` is excluded deliberately: it reaches private
+repositories, and the catalog is public-only by construction, so it is strictly
+more access than the feature can ever use.
+
+Fine-grained tokens (`github_pat_…`) and GitHub App user tokens omit the scope
+header entirely; their permissions were already narrowed by whoever minted them,
+so they are accepted as they are and reported as `token_kind: "fine_grained"`.
+
+Disconnecting destroys our encrypted copy and deletes every seeded memory, the
+same as OAuth. It cannot revoke the token on GitHub's side, because GitHub
+exposes no way to delete a personal access token using that same token, so the
+response says so plainly (`grant_revoked: false`) and returns
+`revoke_url: "https://github.com/settings/tokens"` for you to finish the job.
+
 ## Configuration
 
-The consent catalog, the seed, and the revoke all run off a user's own OAuth
-token, so a deployment needs a GitHub OAuth app before the Connect button can
-do anything. Register one at
+OAuth is optional. Without it the token path above still works, and the whole
+lane (catalog, seed, revoke) behaves identically. To offer the one-click
+button, register an OAuth app at
 [github.com/settings/developers](https://github.com/settings/developers) with
 the authorization callback URL set to `<your origin>/api/auth/github/callback`
 (production: `https://three.ws/api/auth/github/callback`), then set two
@@ -124,9 +183,11 @@ rotating `JWT_SECRET` invalidates stored tokens (users reconnect) rather than
 decrypting them into garbage.
 
 Until both variables are present, `GET /api/auth/github/status` answers
-`configured: false`, `/api/auth/github/connect` answers `501 not_configured`,
-and the Settings card renders an explicit "unavailable on this deployment"
-state instead of a button that cannot work. Everything else on the lane is
+`configured: false` and `/api/auth/github/connect` answers `501 not_configured`.
+The Settings card then leads with the token form rather than a button that
+cannot work. `status` always reports `token_connect.available: true` alongside
+the `create_url` that pre-selects the right scopes, which is how the card knows
+an unconfigured deployment is not a dead end. Everything else on the lane is
 unaffected: no other feature depends on these variables.
 
 ---
@@ -205,8 +266,10 @@ the count. Idempotent.
 
 Disconnecting GitHub from Settings (`DELETE /api/auth/github/disconnect`)
 performs the same deletion across **all** of your agents in one transaction
-with the connection row itself, and then asks GitHub to revoke the OAuth grant
-(best effort; the local deletion does not wait on GitHub).
+with the connection row itself. For an OAuth connection it then asks GitHub to
+revoke the grant (best effort; the local deletion does not wait on GitHub). For
+a token connection it reports `grant_revoked: false` with a `revoke_url`,
+because no API can delete a personal access token using that token.
 
 ## Errors
 
@@ -216,6 +279,8 @@ with the connection row itself, and then asks GitHub to revoke the OAuth grant
 | `csrf_missing` / `csrf_invalid` | 403 | A cookie-authenticated POST or DELETE arrived without a valid `x-csrf-token` |
 | `not_found` | 404 | No such agent, or it is not yours (a malformed id also answers 404, never a 500) |
 | `not_connected` | 412 | Connect GitHub first; the response carries `connect_url` |
+| `invalid_token` | 400 | GitHub rejected the pasted token (mistyped, truncated, or expired) |
+| `token_scope_refused` | 400 | The pasted token carries scopes outside the allowlist; `refused_scopes` names them |
 | `invalid_selection` | 400 | A selected key is not in the catalog you were shown; `rejected` names each one |
 | `empty_selection` | 400 | Pick your profile or at least one repository |
 | `distill_error` | 502 | The selected material yielded no usable facts; add a README or another repository. Carries `window_refunded` |
@@ -245,7 +310,9 @@ rather than inviting a retry that would only earn a 429.
 | HTTP surface (status, consent catalog, seed, revoke) | [api/agents/[id]/memory-seed-github.js](../api/agents/%5Bid%5D/memory-seed-github.js) |
 | Catalog, selection narrowing, seed document, memory rows (pure, tested) | [api/_lib/github-seed.js](../api/_lib/github-seed.js) |
 | GitHub REST/GraphQL client (profile, repos, pins, README, grant revoke) | [api/_lib/github-api.js](../api/_lib/github-api.js) |
-| HKDF token encryption shared by callback, seeding, and disconnect | [api/_lib/github-token.js](../api/_lib/github-token.js) |
-| OAuth connect, callback, status, disconnect | [api/auth/github/[action].js](../api/auth/github/%5Baction%5D.js) |
+| HKDF token encryption and the personal-access-token scope policy | [api/_lib/github-token.js](../api/_lib/github-token.js) |
+| Connect (OAuth and token), callback, status, disconnect | [api/auth/github/[action].js](../api/auth/github/%5Baction%5D.js) |
 | Consent screen (renders the catalog with per-item checkboxes) | [public/settings/index.html](../public/settings/index.html) |
 | Transform tests | [tests/github-memory-seed.test.js](../tests/github-memory-seed.test.js) |
+| Route tests for the seed endpoint | [tests/github-memory-seed-endpoint.test.js](../tests/github-memory-seed-endpoint.test.js) |
+| Scope policy and token-connect tests | [tests/github-token-connect.test.js](../tests/github-token-connect.test.js) |

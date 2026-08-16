@@ -170,26 +170,35 @@ function attachBody(stage, agent, source) {
 	if (source.agentId) el.setAttribute('agent-id', source.agentId);
 	else el.setAttribute('body', source.body);
 
-	let settled = false;
-	// Reveal only once the model is in; until then the boot line shows.
+	// `agent:ready` is the ONLY trustworthy success signal. The element also emits
+	// stray `load` events while its own sub-resources arrive, and treating those as
+	// success is what used to latch the stage as "loaded" seconds before the real
+	// `agent:error` landed, which then had nothing left to correct.
+	let ready = false;
+	let failed = false;
 	const reveal = () => {
-		if (settled) return;
-		settled = true;
-		clearTimeout(failsafe);
 		el.classList.add('agi-loaded');
 		stage.querySelector('.agi-stage-boot')?.remove();
 		state.embodied = true;
 		if (state.data?.cognition) { applyMood(state.data.cognition); }
 	};
+	const onReady = () => {
+		ready = true;
+		clearTimeout(failsafe);
+		reveal();
+	};
 	// The component suppresses its own error card for non-chat embeds, so a dead
 	// model is otherwise completely silent. Fail over to the default body once,
-	// then explain rather than leaving an empty stage.
+	// then explain rather than leaving an empty stage. This still runs after the
+	// failsafe reveal, so a late error corrects an empty stage instead of being
+	// swallowed by it.
 	const fail = () => {
-		if (settled) return;
-		settled = true;
+		if (ready || failed) return;
+		failed = true;
 		clearTimeout(failsafe);
 		el.remove();
 		state.el3d = null;
+		state.embodied = false;
 		if (!state.bodyFailover && source.agentId) {
 			state.bodyFailover = true;
 			attachBody(stage, agent, { body: DEFAULT_BODY });
@@ -197,13 +206,13 @@ function attachBody(stage, agent, source) {
 		}
 		renderStageFallback(stage, agent);
 	};
-	el.addEventListener('agent:ready', reveal, { once: true });
-	el.addEventListener('load', reveal, { once: true });
+	el.addEventListener('agent:ready', onReady, { once: true });
 	el.addEventListener('agent:error', fail);
-	// Failsafe: if no event at all fires (older bundle), reveal rather than strand
-	// the reader on the boot line. A bundle that does emit agent:error settles the
-	// element first, so this can no longer paper over a genuine failure.
-	const failsafe = setTimeout(reveal, 8000);
+	// Failsafe: if no event ever arrives (an older bundle that emits neither),
+	// reveal rather than strand the reader on the boot line forever. Held well
+	// past a normal cold load: revealing early just swaps the honest boot line
+	// for an empty stage on every slow connection.
+	const failsafe = setTimeout(reveal, 20000);
 	stage.insertBefore(el, stage.querySelector('.agi-stage-floor'));
 	state.el3d = el;
 }

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The AGI page no longer goes quiet when its 3D body cannot load",
+			"summary": "The AGI page is built around a live 3D body that reacts to the market, and when that model could not be fetched the page said nothing at all. The loading line disappeared on a timer whether or not anything had arrived, so the centrepiece became a silent empty panel with no explanation and no way to try again, while the decision stream and track record beside it carried on as normal. A body that fails to load now falls back to the platform's own avatar, so there is still something on the stage reacting to the agent's mood. If that cannot be fetched either, the stage says so plainly, makes clear that the agent is still trading and that the decisions and track record below are live and unaffected, and offers a button to try embodying again. The loading line now stays up until the body genuinely arrives instead of vanishing early, and the stage no longer re-requests a model it already knows is unreachable every twenty seconds. The page's description shown in search results and link previews was also carrying an older wording than the page itself.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/agi"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Live Agents: every card on the wall now shows what its agent is actually doing",
 			"summary": "The Live Agents wall opened a separate live connection for every card on screen, and a browser will not give a page that many. The first handful connected, and the rest, more than forty of the forty-eight on the first page, sat on Connecting and an empty screen for as long as you left the tab open. Scrolling did not help them, because the connections that had been handed out were never given back. The wall now loads the real recent activity for the whole page in a single request, so every card has a genuine terminal of that agent's on-chain and skill actions the moment it appears, however far down the list it sits. Live connections are kept for what actually needs pushing: an agent with a real browser feed running, the one holding the spotlight, and the card you hover or tab to, which goes live under your cursor. A card that never manages to connect now falls back to its real activity instead of claiming to be connecting forever, the standby screen tells you how many actions an agent has recorded rather than flatly saying it has none, and the reaction buttons on a card no longer run off the edge of a phone screen.",
 			"tags": [
