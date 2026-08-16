@@ -20,7 +20,8 @@ yes on a screen that tells you exactly what will be read and stored.
 ## How it fits together
 
 ```
- Connect X (OAuth 2.0 PKCE, read scopes only)
+ Connect X (OAuth 2.0 PKCE, /api/auth/x/connect?scope=read)
+        │   the seeding card asks X for read scopes only: no permission to post
         │   the connection alone changes nothing in memory
         ▼
  GET /api/agents/:id/memory/seed/x
@@ -43,7 +44,14 @@ yes on a screen that tells you exactly what will be read and stored.
  nothing distilled from your account survives
 ```
 
-Three properties fall out of that shape:
+Four properties fall out of that shape:
+
+- **Connecting for seeding never grants permission to post.** The X card's
+  Connect button asks X for `tweet.read users.read offline.access` and nothing
+  else, so an owner who only wants their agent to sound like them is never asked
+  to hand over write access to their timeline. Posting is a separate connect
+  (`?scope=full`), offered next to it and labelled as such, and reconnecting
+  keeps the shape of the grant you already made.
 
 - **A POST without consent is refused before anything is read.** The handler
   answers `403 consent_required` with the disclosure attached, and the
@@ -56,6 +64,27 @@ Three properties fall out of that shape:
 - **Revocation is total.** Every seeded row carries the `x_seed` tag and the
   consent id that produced it. Revoking, or disconnecting X from Settings,
   deletes exactly those rows, including any a superseded grant left behind.
+
+## Connecting: two grants, deliberately separate
+
+| | Seeding | Posting |
+|---|---|---|
+| Connect link | `/api/auth/x/connect?scope=read` | `/api/auth/x/connect?scope=full` |
+| Scopes X is asked for | `tweet.read users.read offline.access` | the read set plus `tweet.write media.write` |
+| Where it is offered | the X card in Settings, Connected accounts | the agent editor's Social tab, the share and walk-capture flows |
+| What it can do | read your profile and recent posts, once, when you consent | publish posts and upload media as you |
+
+A three.ws account holds exactly one X connection (`social_connections` is
+unique on user and provider), so the sets are not additive: a read-only connect
+replaces a posting connection with a read-only one, and the
+posting lane then answers `insufficient_scope` with the reconnect link rather
+than failing at the X API. The scope sets and both guards live in
+[api/_lib/x-scopes.js](../api/_lib/x-scopes.js); an unrecognised `scope=` value
+resolves to the full set, so a typo can never silently narrow what a posting
+surface asks for.
+
+Connections made before scopes were recorded store an empty scope string. Those
+are treated as unknown rather than as empty, so neither guard blocks them.
 
 ## What is read, and what is not
 
@@ -115,6 +144,9 @@ curl -s https://three.ws/api/agents/$AGENT_ID/memory/seed/x --cookie "$JAR"
   "configured": true,
   "username": "you",
   "connection_scopes": "tweet.read users.read offline.access",
+  "required_scopes": ["tweet.read", "users.read"],
+  "missing_scopes": [],
+  "scopes_ok": true,
   "seeded_at": "2026-08-12T16:00:00.000Z",
   "fact_count": 5,
   "scope_version": "2026-08-11.1",
@@ -136,6 +168,13 @@ curl -s https://three.ws/api/agents/$AGENT_ID/memory/seed/x --cookie "$JAR"
 the disclosure moved (the old grant no longer authorizes seeds), and
 `account_changed` when the connection now points at a different X account than
 the one you consented for.
+
+`scopes_ok` is false when the live connection cannot cover the read the
+disclosure describes (you unticked a permission on X's screen, or the account is
+connected for posting only under a scope set that dropped `tweet.read`).
+`missing_scopes` names exactly what it lacks. The card shows a reconnect instead
+of the consent panel in that state, so nobody consents to a seed that could not
+run.
 
 ### `POST /api/agents/:id/memory/seed/x`
 
@@ -185,13 +224,16 @@ distilled posts behind on an agent you forgot about.
 | `unauthorized` | 401 | Sign-in required |
 | `not_found` / `forbidden` | 404 / 403 | No such agent, or it is not yours |
 | `not_connected` | 400 | Connect X first (Settings, Connected accounts) |
+| `insufficient_scope` | 400 | The connection cannot read your profile and posts; the body names the missing scopes. Reconnect with `?scope=read` |
 | `consent_required` | 403 | No live grant; the response carries the disclosure to show |
 | `account_mismatch` | 409 | The consent was granted for a different X account |
 | rate limited | 429 | One seed per agent per 6 hours |
 
 ## Enabling it on a deployment
 
-The lane needs an X app with OAuth 2.0 and read scopes, created at
+The lane needs an X app with OAuth 2.0 and, at minimum, the `tweet.read`,
+`users.read` and `offline.access` scopes enabled (add `tweet.write` and
+`media.write` if the deployment also posts), created at
 https://developer.twitter.com with `https://<your-domain>/api/auth/x/callback`
 registered as the callback. Its two credentials are the only configuration:
 
@@ -235,5 +277,7 @@ Seeded rows in `agent_memories` are found by tag (`tags && '{x_seed}'`) and by
 | Disclosure text, selection, sanitisation, memory rows (pure, tested) | [api/_lib/x-memory-seed.js](../api/_lib/x-memory-seed.js) |
 | Revocation shared by DELETE, disconnect, and account switch | [api/_lib/x-seed-consent.js](../api/_lib/x-seed-consent.js) |
 | OAuth 2.0 PKCE connect and callback | [api/auth/x/[action].js](../api/auth/x/%5Baction%5D.js) |
+| Scope sets, and the read/write guard each lane applies | [api/_lib/x-scopes.js](../api/_lib/x-scopes.js) |
 | Consent screen (renders the server's disclosure verbatim) | [public/settings/index.html](../public/settings/index.html) |
 | Transform tests | [tests/api/x-memory-seed-transform.test.js](../tests/api/x-memory-seed-transform.test.js), [tests/api/agents-memory-seed.test.js](../tests/api/agents-memory-seed.test.js) |
+| Consent gate, scope gate and revocation tests | [tests/api/x-memory-seed-consent.test.js](../tests/api/x-memory-seed-consent.test.js), [tests/api/x-scopes.test.js](../tests/api/x-scopes.test.js) |

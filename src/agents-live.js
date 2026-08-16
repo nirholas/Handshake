@@ -13,12 +13,20 @@
 // at, and tear it down when they leave. That keeps live pixels available for any
 // agent on demand without paying for an idle browser per agent.
 //
-// The SSE listeners are POOLED, not one-per-card. A browser caps concurrent
-// connections per origin (6 on HTTP/1.1; the server's stream limit on HTTP/2),
-// and an SSE stream is long-lived, so opening one per card meant the roster's
-// first handful connected and every card after them sat on "Connecting" forever.
-// Streams are now attached as a card nears the viewport and released once it is
-// well past it, bounded by a pool sized from the origin's real transport.
+// Two layers feed those screens, because they answer different questions:
+//
+//   • Every mounted card gets its real activity from ONE batched request to
+//     /api/agents/activity (whole page, one round-trip), refreshed on a slow
+//     cadence. That is a poll, and a poll does not need a socket.
+//   • Cards near the viewport additionally hold a real SSE listener for live
+//     pixels, reactions and market-maker pushes, bounded by a pool sized from
+//     the origin's actual transport.
+//
+// It used to be one SSE stream per card. A browser caps concurrent connections
+// per origin (6 on HTTP/1.1, a stream budget on HTTP/2) and an SSE stream never
+// releases its slot, so on a 48-card roster the first six connected and the
+// other 42 sat on "Connecting" forever while the page's own fetches queued
+// behind them.
 
 import { parsePnlDelta, formatSol, formatUsd } from './shared/trade-pnl.js';
 import { mountAgentReactions } from './agent-reactions.js';
@@ -944,6 +952,95 @@ function getStreamObserver() {
 	return _streamObserver;
 }
 
+// ── batched activity hydration ───────────────────────────────────────────────
+// The always-available layer under the stream pool: one request returns the real
+// agent_actions tail for every mounted card plus the set that currently has a
+// live caster. This is what makes a card meaningful the moment it mounts, no
+// matter how far down the wall it sits, and it is how a card outside the stream
+// pool keeps a truthful terminal instead of a permanent "Standing by".
+
+const ACTIVITY_BATCH_MAX = 60;      // matches MAX_IDS in api/agents/activity.js
+const ACTIVITY_BATCH_MS = 20_000;   // refresh cadence for non-streamed cards
+let _activityTimer = null;
+let _activityInFlight = false;
+
+// Fold a batch of DB-sourced entries into a card exactly as the SSE `log` event
+// would, so a batch row and a streamed row render identically.
+function applyActivityEntries(state, entries) {
+	if (!Array.isArray(entries) || !entries.length) return;
+	// A streaming card owns its own log; the batch must not overwrite fresher
+	// caster-pushed history with the DB tail.
+	if (state.es && state.entries.length) return;
+	state.entries = entries;
+	const newestTs = entries.reduce((m, en) => Math.max(m, Number(en?.ts) || 0), 0);
+	if (newestTs > state.lastActionAt) state.lastActionAt = newestTs;
+	entries.forEach((entry) => ingestCardPnl(state, entry));
+	for (let i = entries.length - 1; i >= 0; i--) {
+		if (entries[i]?.mm) { updateMmBadge(state, entries[i].mm, false); break; }
+	}
+	const lastForge = [...entries].reverse().map(parseForgeFrame).find(Boolean);
+	if (lastForge && state.action) {
+		state.action.textContent = lastForge.prompt ? `✦ forged: ${lastForge.prompt}` : '✦ forged a new avatar';
+		state.card.classList.add('al-card--forged');
+	}
+	const lastHire = [...entries].reverse().find((e) => e?.meta?.kind === 'a2a_hire');
+	if (lastHire) updateHireFlash(state, lastHire.meta, false);
+	if (!isLiveNow(state)) {
+		paintActivity(state);
+		renderAge(state);
+		const statusEl = state.card.querySelector('[data-status]');
+		if (statusEl && !state.es && statusEl.textContent !== 'Paused') statusEl.textContent = 'Active';
+	}
+}
+
+async function hydrateActivity(ids) {
+	if (!ids.length || _activityInFlight) return;
+	_activityInFlight = true;
+	try {
+		const res = await apiFetch('/api/agents/activity', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ ids }),
+			allowAnonymous: true,
+		});
+		if (!res.ok) return;
+		const { activity, casting } = await res.json();
+		for (const [id, entries] of Object.entries(activity || {})) {
+			const state = _cards.get(id);
+			if (state) applyActivityEntries(state, entries);
+		}
+		// An agent with live pixels earns a stream slot even if it sits outside the
+		// pre-warm band: that is the whole point of a live wall.
+		for (const id of casting || []) {
+			const state = _cards.get(id);
+			if (state && !state.es) ensureStream(state);
+		}
+	} catch { /* the cards keep whatever they last rendered */ }
+	finally { _activityInFlight = false; }
+}
+
+// Hydrate the cards that have no stream of their own. One batch cannot cover an
+// endlessly scrolled wall, so it is spent where it shows: what the viewer can
+// reach right now first, then anything still holding a blank terminal, then the
+// rest of the tail.
+function flushActivity() {
+	if (document.hidden) return;
+	const near = [], blank = [], rest = [];
+	for (const [id, state] of _cards) {
+		if (state.es) continue;
+		if (_nearView.has(id)) near.push(id);
+		else if (!state.entries.length) blank.push(id);
+		else rest.push(id);
+	}
+	const ids = [...near, ...blank, ...rest].slice(0, ACTIVITY_BATCH_MAX);
+	hydrateActivity(ids);
+}
+
+function startActivityHydration() {
+	if (_activityTimer) return;
+	_activityTimer = setInterval(flushActivity, ACTIVITY_BATCH_MS);
+}
+
 // ── lifecycle ──────────────────────────────────────────────────────────────────
 
 function mountAgent(agent) {
@@ -1109,6 +1206,9 @@ async function loadMore() {
 		return;
 	}
 	agents.forEach(mountAgent);
+	// One request gives the whole new page a real terminal straight away, before
+	// the stream pool has reached any of it.
+	flushActivity();
 	updateStats();
 	_arena.schedule();
 	_showrunner?.refreshLive(); // fold the new page into the program
@@ -1640,6 +1740,7 @@ startIdleRepaint();
 startWatchPings();
 startInfiniteScroll();
 startNetworthHydration();
+startActivityHydration();
 _arena.start();
 
 // Boot the director once the first roster page is mounted: show the skeleton

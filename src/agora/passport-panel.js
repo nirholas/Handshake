@@ -12,7 +12,7 @@
 // world stays interactive behind it. Esc closes; focus moves into the panel on
 // open and returns to the trigger on close.
 
-import { professionColor } from './citizen-avatar.js';
+import { professionColor, primaryProfessionKey, citizenProfessionLabel } from './citizen-avatar.js';
 import { fetchPassport } from './api.js';
 import { renderHandshake, parseIdentityProofs, hasDualIdentity } from './handshake.js';
 import { injectTrustSurfaceCss } from './trust-surface.css.js';
@@ -229,9 +229,19 @@ export class PassportPanel {
 		const reputation = onchain?.reputation ?? c.reputation ?? 0;
 		const stake = onchain?.stakeAmount ?? c.stakeLamports;
 		const grade = reputationGrade(reputation);
-		const professions = (c.professions && c.professions.length)
-			? c.professions.map((p) => p.label)
-			: [c.profession || 'Citizen'];
+		// Every capability the citizen may claim, but led by the craft it is known
+		// for. The API returns the decoded bitmap in bit order, which always opens
+		// with Fetcher (the baseline bit every citizen carries), so an Appraiser's
+		// passport used to introduce her as a Fetcher under an Appraiser-coloured
+		// dot. Hoist the primary; the rest keep their bit order.
+		const primaryKey = primaryProfessionKey(c);
+		const decoded = (c.professions && c.professions.length) ? c.professions.slice() : [];
+		const professions = decoded.length
+			? [
+				...decoded.filter((p) => p.key === primaryKey),
+				...decoded.filter((p) => p.key !== primaryKey),
+			].map((p) => p.label)
+			: [citizenProfessionLabel(c)];
 
 		const stats = [
 			{ label: 'Reputation', value: Number(reputation).toLocaleString('en-US'), sub: grade.label },

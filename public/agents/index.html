@@ -160,10 +160,15 @@
 		@media (max-width: 600px) {
 			.controls { gap: 6px; }
 			.hero h1 { font-size: 26px; }
-			/* Site-wide 44px tap-target floor. mobile.css sets it for the fields by
-			   id; these chips and CTAs carry page-local classes it cannot know. */
-			.chip, .btn { min-height: 44px; }
 			.src-chips { gap: 8px; }
+		}
+		/* Site-wide 44px tap-target floor. mobile.css sets it for the fields by id;
+		   these chips and CTAs carry page-local classes it cannot know. Gated on
+		   pointer type rather than width, for the reason mobile.css gives: a 768px
+		   tablet is still touch-only, and a width gate left the source chips at
+		   39px there. inline-flex keeps the label centred in the taller box. */
+		@media (hover: none) and (pointer: coarse) {
+			.chip, .btn { min-height: 44px; display: inline-flex; align-items: center; }
 		}
 		</style>
 		<!-- Site-wide mobile polish: horizontal-scroll guard, iOS focus-zoom

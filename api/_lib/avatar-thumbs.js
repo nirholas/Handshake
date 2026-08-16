@@ -40,6 +40,7 @@ import {
 	publicUrl,
 	isLegacyOgThumbnailKey,
 	isStorageInfrastructureError,
+	STORAGE_ERROR_PATTERN,
 } from './r2.js';
 
 // Square posters — matches api/cron/avatar-thumbnail-render.js so a marketplace
@@ -381,6 +382,9 @@ export async function queueRestyle({ limit = 100 } = {}) {
 // is the undo. The predicate is built from the very patterns the live classifiers
 // use, so widening one automatically widens the repair.
 export async function resetInfrastructureFailures() {
+	// Lazy, for the same reason renderThumbnail defers it: a static import would
+	// pull the chromium dependency tree into every route that touches this module.
+	const { INFRA_ERROR_PATTERN } = await import('./render-glb.js');
 	const pattern = `(${INFRA_ERROR_PATTERN}|${STORAGE_ERROR_PATTERN})`;
 	const rows = await sql`
 		DELETE FROM avatar_thumbnail_backfill

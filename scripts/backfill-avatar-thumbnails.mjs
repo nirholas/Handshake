@@ -38,10 +38,15 @@
  *   --adopt-only        run phase 1 only, never boot chromium
  *   --render-only       skip phase 1
  *   --loop              keep refilling the budget until nothing is left to claim
- *   --reset-infra       un-retire avatars whose only failures were a dead browser
- *                       (an OOM-killed chromium fails every render in the batch
- *                       with "Connection closed."; genuinely broken models record a
- *                       model-attributable error and are never reset)
+ *   --reset-infra       un-retire avatars whose only failures were the
+ *                       environment's fault: a dead browser (an OOM-killed
+ *                       chromium fails every render in the batch with
+ *                       "Connection closed.") or unreachable object storage.
+ *                       Genuinely broken models record a model-attributable
+ *                       error (e.g. "glb fetch failed") and are never reset.
+ *   --repair-only       run --reset-infra / --restyle and stop before touching
+ *                       R2. Needs DATABASE_URL only, so the undo still works
+ *                       while object storage is the thing that is broken.
  *   --restyle=N         re-queue up to N posters baked by an older renderer so
  *                       they re-render with the current camera/backdrop. Only
  *                       server-rendered thumb/<uuid>.png keys are cleared; user
@@ -75,10 +80,18 @@ const ADOPT_ONLY = has('adopt-only');
 const RENDER_ONLY = has('render-only');
 const LOOP = has('loop');
 
+// The ledger repairs are pure Postgres work: they delete rows or clear a column,
+// and never presign, render, or upload. --repair-only runs them and stops, so it
+// needs no S3_* set. That matters because storage being broken is precisely when
+// an operator needs the repair, and sending them to fetch Cloud Run credentials
+// first made the undo unreachable at the only moment it counts.
+const REPAIR_ONLY = has('repair-only');
+const NEEDS_STORAGE = !has('status') && !REPAIR_ONLY;
+
 // DATABASE_URL ships in .env.local, but the S3_* set does not: its authoritative
 // copy is the Cloud Run service env. Pointing every miss at --env-file sends the
 // operator back to the file that just failed them, so name the real source.
-for (const required of ['DATABASE_URL', 'S3_BUCKET', 'S3_ACCESS_KEY_ID']) {
+for (const required of ['DATABASE_URL', ...(NEEDS_STORAGE ? ['S3_BUCKET', 'S3_ACCESS_KEY_ID'] : [])]) {
 	if (!process.env[required]) {
 		const where = required.startsWith('S3_')
 			? 'export the S3_* set from the Cloud Run service first (see docs/avatar-thumbnails.md, "Operating the backfill")'
@@ -123,6 +136,9 @@ async function main() {
 		const { queued } = await queueRestyle({ limit: num('restyle', 0) });
 		console.log(`[backfill] restyle: cleared ${queued} old server-rendered poster(s) for re-render`);
 	}
+
+	// Repairs done; everything past here touches R2.
+	if (REPAIR_ONLY) return;
 
 	// ── Phase 1: free adoption ────────────────────────────────────────────────
 	if (!RENDER_ONLY) {

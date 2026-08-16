@@ -767,8 +767,9 @@ body.app-next-body {
 }
 
 .nxt-anim-search:focus {
-	border-color: rgba(255, 255, 255, 0.22);
+	border-color: rgba(255, 255, 255, 0.45);
 	background: rgba(255, 255, 255, 0.08);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
 }
 
 .nxt-anim-grid {
@@ -1041,9 +1042,12 @@ body.app-next-body.is-dragover::before {
 	transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+/* The input itself carries `outline: none`, so the wrap is the only thing that
+   can show focus. A 6%-alpha ring was effectively invisible on the dark glass:
+   keyboard users had no way to tell the field was focused. */
 .nxt-chat-input-wrap:focus-within {
-	border-color: rgba(255, 255, 255, 0.20);
-	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06), 0 28px 64px rgba(0, 0, 0, 0.55);
+	border-color: rgba(255, 255, 255, 0.45);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28), 0 28px 64px rgba(0, 0, 0, 0.55);
 }
 
 .nxt-chat-input-icon {
@@ -1282,7 +1286,8 @@ body.app-next-body.is-dragover::before {
 
 .nxt-share-copy input:focus,
 .nxt-share-copy textarea:focus {
-	border-color: rgba(255, 255, 255, 0.22);
+	border-color: rgba(255, 255, 255, 0.45);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
 }
 
 .nxt-share-copy button {

@@ -28,7 +28,7 @@ import {
 	CLIP_IDLE, CLIP_WALK,
 } from '../game/avatar-rig.js';
 import { WalkNet } from '../walk-net.js';
-import { buildLabelSprite } from './citizen-avatar.js';
+import { buildLabelSprite, citizenProfessionLabel } from './citizen-avatar.js';
 import { CITY_HALF } from '../city/city-map.js';
 import {
 	JUMP_VEL, GRAVITY,
@@ -530,7 +530,7 @@ export async function mountPlayerMode(ctx) {
 				x: pos.x,
 				z: pos.z,
 				name: c.displayName || 'Citizen',
-				profession: c.professions?.[0]?.label || c.profession || 'Citizen',
+				profession: citizenProfessionLabel(c),
 				busy: !!inst.busy, // live economy state — set when a real claim walks them to work
 			});
 		}
