@@ -189,10 +189,11 @@
 								gate rather than a report.
 							</p>
 							<pre class="cli-snip"><code>$ three-ws-avatar validate broken.json
-<span class="e">✖</span> broken.json is invalid <span class="dim">(3 errors)</span>
-  <span class="e">•</span> <span class="c">/</span> must have required property 'createdAt'
-  <span class="e">•</span> <span class="c">/mesh</span> must have required property 'sha256'
-  <span class="e">•</span> <span class="c">/skeleton</span> must be equal to one of the allowed values</code></pre>
+<span class="e">✖ broken.json is invalid (7 errors)</span>
+  • / must have required property 'mesh'
+  • / must have required property 'skeleton'
+<span class="dim">  …</span>
+  • /id must match a schema in anyOf</code></pre>
 						</article>
 
 						<article class="cli-cmd-card">

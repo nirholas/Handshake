@@ -490,7 +490,6 @@
 .cli-snip .s { color: var(--success); }
 .cli-snip .n { color: var(--warn); }
 .cli-snip .e { color: var(--danger); }
-.cli-snip .c { color: var(--accent); }
 .cli-snip .ok { color: var(--success); }
 .cli-snip .dim { color: var(--ink-faint); }
 
