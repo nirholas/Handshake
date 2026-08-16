@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Válaszd ki a co-pilotodat",
 		"close_arialabel": "Bezárás",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Karakterben alpha · valós pump.fun adatokra alapozva",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Élő bevezetők <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Élő bevezetők",
 		"load": "Betöltés",
 		"meta_description": "Az ügynököd egy valós pump.fun bevezetést olvas karakterben — élő likviditás, birtokos és okos pénz adatok alapján — és hangosan mondja el a véleményét a 3D avatarján keresztül. A tulajdonos cselekedhet rajta a szigorú, szerver által érvényesített költési határokon belül.",
 		"meta_og_description": "Egy 3D ügynök, aki saját alpha-ját narrálja: valós bevezetéseket olvas karakterben, idézi az élő jeleket, amelyeket használt, és csak a költési határain belül cselekszik. Egyetlen versenytársnak sincs olyan személyisége, avatara és tárcája, mint ennek.",

@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "همکار خود را انتخاب کنید",
 		"close_arialabel": "بستن",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> آلفا در شخصیت · مبتنی بر داده‌های واقعی pump.fun",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> راه‌اندازی‌های زنده <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> راه‌اندازی‌های زنده",
 		"load": "بارگذاری",
 		"meta_description": "عامل شما یک راه‌اندازی واقعی pump.fun را در شخصیت می‌خواند — مبتنی بر نقدینگی زنده، دارنده و داده‌های هوشمند — و نظر خود را به‌صورت بلند از طریق آواتار 3D خود بیان می‌کند. مالک می‌تواند بر اساس آن در محدوده‌های هزینه سخت و تحت نظارت سرور عمل کند.",
 		"meta_og_description": "یک عامل 3D که آلفای خود را روایت می‌کند: آن راه‌اندازی‌های واقعی را در شخصیت می‌خواند، سیگنال‌های زنده‌ای که استفاده کرده را ذکر می‌کند و تنها در محدوده‌های هزینه خود عمل می‌کند. هیچ رقیبی شخصیتی، آواتار و کیف پولی مانند این ندارد.",

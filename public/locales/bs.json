@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Odaberite svog kopilota",
 		"close_arialabel": "Zatvori",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Alfa u karakteru · zasnovana na stvarnim pump.fun podacima",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Lansiranja uživo <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Lansiranja uživo",
 		"load": "Učitaj",
 		"meta_description": "Vaš agent čita stvarno pump.fun lansiranje u karakteru — zasnovano na podacima o likvidnosti uživo, vlasnicima i pametnom novcu — i izgovara svoju presudu naglas putem svog 3D avatara. Vlasnik može postupiti po tome unutar strogih, serverski nametnutih ograničenja potrošnje.",
 		"meta_og_description": "3D agent koji pripovijeda svoju alfu: čita stvarna lansiranja u karakteru, navodi žive signale koje je koristio i djeluje samo unutar svojih limita potrošnje. Nijedan konkurent nema personu, avatar i novčanik spojene na ovaj način.",

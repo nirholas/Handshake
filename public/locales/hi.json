@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "अपना को-पायलट चुनें",
 		"close_arialabel": "बंद करें",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> इन-कैरेक्टर अल्फा · वास्तविक pump.fun डेटा पर आधारित",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> लाइव लॉन्च <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> लाइव लॉन्च",
 		"load": "लोड करें",
 		"meta_description": "आपका एजेंट एक वास्तविक pump.fun लॉन्च को इन-कैरेक्टर पढ़ता है — लाइव लिक्विडिटी, होल्डर और स्मार्ट-मनी डेटा पर आधारित — और अपने 3D अवतार के माध्यम से अपना फैसला जोर से बताता है। मालिक कठोर, सर्वर-लागू खर्च सीमाओं के भीतर इस पर कार्रवाई कर सकता है।",
 		"meta_og_description": "एक 3D एजेंट जो अपना अल्फा खुद सुनाता है: यह वास्तविक लॉन्च को इन-कैरेक्टर पढ़ता है, उन लाइव सिग्नलों का हवाला देता है जिनका इसने उपयोग किया, और केवल अपनी खर्च सीमाओं के भीतर कार्य करता है। किसी भी प्रतियोगी के पास इस तरह से व्यक्तित्व, अवतार और वॉलेट एक साथ नहीं हैं।",

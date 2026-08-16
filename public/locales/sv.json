@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Välj din co-pilot",
 		"close_arialabel": "Stäng",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> In-karaktär alpha · förankrad i verkliga pump.fun data",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live lanseringar <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live lanseringar",
 		"load": "Ladda",
 		"meta_description": "Din agent läser en verklig pump.fun lansering i karaktär — förankrad i live likviditet, innehavare och smarta pengar data — och uttalar sitt omdöme högt genom sin 3D-avatar. Ägaren kan agera på det inom hårda, server-verkställda utgiftsgränser.",
 		"meta_og_description": "En 3D-agent som berättar sin egen alpha: den läser verkliga lanseringar i karaktär, citerar de live signaler den använde, och agerar endast inom sina utgiftsgränser. Ingen konkurrent har en persona, avatar och plånbok sammanfogad som detta.",

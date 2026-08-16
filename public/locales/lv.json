@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Izvēlieties savu līdzpilotu",
 		"close_arialabel": "Aizvērt",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Raksturīga alfa · balstīta uz reāliem pump.fun datiem",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Tiešraides palaišanas <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Tiešraides palaišanas",
 		"load": "Ielādēt",
 		"meta_description": "Jūsu aģents nolasa reālu pump.fun palaišanu atbilstoši raksturam — balstoties uz reāllaika likviditātes, turētāju un viedās naudas datiem — un skaļi paziņo savu spriedumu caur savu 3D avatāru. Īpašnieks var rīkoties saskaņā ar to stingru, servera noteiktu tēriņu limitu ietvaros.",
 		"meta_og_description": "3D aģents, kas izklāsta savu alfa: tas lasa reālus palaišanas gadījumus atbilstoši savam tēlam, citē izmantotos tiešraides signālus un rīkojas tikai savu tēriņu limitu ietvaros. Nevienam konkurentam nav tik sapludināta personība, iemiesojums un maks.",

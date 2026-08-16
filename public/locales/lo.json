@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "ເລືອກຜູ້ຊ່ວຍຂອງທ່ານ",
 		"close_arialabel": "ປິດ",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Alpha ຕາມລັກສະນະ · ອີງໃສ່ຂໍ້ມູນ pump.fun ຕົວຈິງ",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> ການເປີດຕົວສົດ <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> ການເປີດຕົວສົດ",
 		"load": "ໂຫຼດ",
 		"meta_description": "ຕົວແທນຂອງທ່ານອ່ານການເປີດຕົວ pump.fun ຕົວຈິງຕາມລັກສະນະ — ອີງໃສ່ຂໍ້ມູນສະພາບຄ່ອງ, ຜູ້ຖື, ແລະເງິນສະຫຼາດແບບສົດໆ — ແລະເວົ້າຄຳຕັດສິນຂອງມັນອອກມາຜ່ານຮູບແທນຕົວ 3D ຂອງມັນ. ເຈົ້າຂອງສາມາດປະຕິບັດຕາມມັນໄດ້ພາຍໃນຂອບເຂດຈຳກັດການໃຊ້ຈ່າຍທີ່ເຄັ່ງຄັດ, ບັງຄັບໂດຍເຊີບເວີ.",
 		"meta_og_description": "ຕົວແທນ 3D ທີ່ເລົ່າເລື່ອງ alpha ຂອງຕົນເອງ: ມັນອ່ານການເປີດຕົວຈິງຕາມລັກສະນະ, ອ້າງອີງສັນຍານສົດທີ່ມັນໃຊ້, ແລະປະຕິບັດພາຍໃນຂອບເຂດຈໍາກັດການໃຊ້ຈ່າຍຂອງມັນເທົ່ານັ້ນ. ບໍ່ມີຄູ່ແຂ່ງໃດມີບຸກຄະລິກ, ອະວາຕາ, ແລະກະເປົາເງິນທີ່ລວມເຂົ້າກັນແບບນີ້.",

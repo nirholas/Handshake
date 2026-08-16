@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Escolha seu co-piloto",
 		"close_arialabel": "Fechar",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Alpha no personagem · baseado em dados pump.fun reais",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Lançamentos ao vivo <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Lançamentos ao vivo",
 		"load": "Carregar",
 		"meta_description": "Seu agente lê um lançamento pump.fun real no personagem — baseado em dados de liquidez, holders e smart-money ao vivo — e expressa seu veredito em voz alta através de seu avatar 3D. O proprietário pode agir com base nisso dentro de limites de gastos rígidos, impostos pelo servidor.",
 		"meta_og_description": "Um agente 3D que narra seu próprio alpha: ele lê lançamentos reais no personagem, cita os sinais ao vivo que usou e age apenas dentro de seus limites de gastos. Nenhum concorrente tem uma persona, avatar e carteira fundidos assim.",

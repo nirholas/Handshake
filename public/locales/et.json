@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Vali oma kaaspiloot",
 		"close_arialabel": "Sulge",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Tegelaskujuline alfa · põhineb reaalsetel pump.fun andmetel",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Reaalajas käivitused <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Reaalajas käivitused",
 		"load": "Laadi",
 		"meta_description": "Sinu agent loeb reaalajas pump.fun käivitust tegelaskujuliselt — põhinedes reaalajas likviidsuse, hoidjate ja nutika raha andmetel — ja väljendab oma otsust valjuhäälselt oma 3D-avatari kaudu. Omanik saab selle põhjal tegutseda rangete, serveri poolt jõustatud kululimiitide piires.",
 		"meta_og_description": "3D agent, mis jutustab oma alfa: see loeb päris käivitusi karakteris, viitab kasutatud reaalajas signaalidele ja tegutseb vaid oma kulupiirangute piires. Ühelgi konkurendil pole selliselt sulandatud isikut, avatari ja rahakotti.",

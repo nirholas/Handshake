@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Chọn đồng hành của bạn",
 		"close_arialabel": "Đóng",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Alpha trong nhân vật · dựa trên dữ liệu pump.fun thực",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Các đợt phát hành trực tiếp <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Các đợt phát hành trực tiếp",
 		"load": "Tải",
 		"meta_description": "Đại lý của bạn đọc một đợt phát hành pump.fun thực trong nhân vật — dựa trên thanh khoản trực tiếp, người nắm giữ và dữ liệu tiền thông minh — và phát biểu phán quyết của nó một cách rõ ràng qua hình đại diện 3D của nó. Chủ sở hữu có thể hành động theo đó trong giới hạn chi tiêu cứng, được thực thi bởi máy chủ.",
 		"meta_og_description": "Một đại lý 3D kể lại alpha của chính nó: nó đọc các đợt phát hành thực trong nhân vật, trích dẫn các tín hiệu trực tiếp mà nó đã sử dụng, và chỉ hành động trong giới hạn chi tiêu của nó. Không có đối thủ nào có một nhân cách, hình đại diện và ví được kết hợp như thế này.",

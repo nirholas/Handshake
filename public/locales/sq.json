@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Zgjidhni bashkë-pilotin tuaj",
 		"close_arialabel": "Mbyll",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Alfa në karakter · e bazuar në të dhëna reale pump.fun",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Lançime të drejtpërdrejta <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Lançime të drejtpërdrejta",
 		"load": "Ngarko",
 		"meta_description": "Agjenti juaj lexon një lançim real pump.fun në karakter — e bazuar në të dhëna të drejtpërdrejta të likuiditetit, mbajtësve dhe parave të zgjuara — dhe shpreh verdiktin e tij me zë të lartë përmes avatarit të tij 3D. Pronari mund të veprojë mbi të brenda kufijve të rreptë të shpenzimeve, të zbatuara nga serveri.",
 		"meta_og_description": "Një agjent 3D që tregon vetë 'alphan' e tij: lexon lançime reale me karakter, citon sinjalet e drejtpërdrejta që përdori dhe vepron vetëm brenda limiteve të shpenzimeve. Asnjë konkurrent nuk ka një personazh, avatar dhe portofol të shkrirë kështu.",

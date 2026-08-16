@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "اختر طيارك المساعد",
 		"close_arialabel": "إغلاق",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> ألفا متقن للشخصية · مبني على بيانات pump.fun حقيقية",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> إطلاقات مباشرة <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> إطلاقات مباشرة",
 		"load": "تحميل",
 		"meta_description": "يقرأ وكيلك إطلاق pump.fun حقيقي متقنًا للشخصية — مبنيًا على بيانات السيولة الحية، وحاملي العملات، والأموال الذكية — وينطق بحكمه بصوت عالٍ عبر صورته الرمزية ثلاثية الأبعاد. يمكن للمالك التصرف بناءً عليه ضمن حدود إنفاق صارمة يفرضها الخادم.",
 		"meta_og_description": "وكيل ثلاثي الأبعاد يروي ألفا الخاص به: يقرأ إطلاقات حقيقية متقنًا للشخصية، ويستشهد بالإشارات الحية التي استخدمها، ويتصرف فقط ضمن حدود إنفاقه. لا يوجد منافس لديه شخصية وصورة رمزية ومحفظة مدمجة بهذا الشكل.",

@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "选择你的副驾驶",
 		"close_arialabel": "关闭",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> 角色化 Alpha · 基于真实 pump.fun 数据",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> 实时发布 <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> 实时发布",
 		"load": "加载",
 		"meta_description": "你的代理以角色身份解读真实的 pump.fun 发布 — 基于实时流动性、持有者和智能资金数据 — 并通过其 3D 化身大声说出其判断。所有者可以在服务器强制执行的严格支出限额内对其采取行动。",
 		"meta_og_description": "一个 3D 代理，讲述自己的 Alpha：它以角色身份解读真实发布，引用其使用的实时信号，并且只在其支出限额内行动。没有竞争对手能将角色、化身和钱包如此融合。",

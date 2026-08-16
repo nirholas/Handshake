@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "خپل کوپایلټ وټاکئ",
 		"close_arialabel": "بندول",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> په کرکټر کې الفا · د ریښتیني pump.fun ډیټا پر بنسټ",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> ژوندي لانچونه <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> ژوندي لانچونه",
 		"load": "بارول",
 		"meta_description": "ستاسو ایجنټ په کرکټر کې یو ریښتینی pump.fun لانچ لولي — چې د ژوندي مایعیت، لرونکي، او سمارټ پیسو ډیټا پر بنسټ دی — او خپله پریکړه یې د خپل 3D اوتار له لارې په لوړ غږ وایي. مالک کولی شي د سختو، سرور لخوا پلي شوي لګښتونو محدودیتونو کې پرې عمل وکړي.",
 		"meta_og_description": "یو 3D ایجنټ چې خپله الفا بیانوي: دا په کرکټر کې ریښتیني لانچونه لولي، هغه ژوندي سیګنالونه ذکر کوي چې کارولي یې دي، او یوازې د خپلو لګښتونو په حدودو کې عمل کوي. هیڅ سیال داسې شخصیت، اوتار، او والټ نه لري چې په دې ډول سره یوځای شوي وي.",

@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Scegli il tuo co-pilota",
 		"close_arialabel": "Chiudi",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> In-carattere alpha · basato su dati reali pump.fun",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Lanci dal vivo <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Lanci dal vivo",
 		"load": "Carica",
 		"meta_description": "Il tuo agente legge un vero lancio pump.fun in carattere — basato su liquidità, dati dei detentori e smart-money in tempo reale — e pronuncia il suo verdetto ad alta voce attraverso il suo avatar 3D. Il proprietario può agire su di esso entro limiti di spesa rigidi, imposti dal server.",
 		"meta_og_description": "Un agente 3D che narra il proprio alpha: legge veri lanci in carattere, cita i segnali live che ha utilizzato e agisce solo entro i suoi limiti di spesa. Nessun concorrente ha una persona, un avatar e un portafoglio fusi in questo modo.",

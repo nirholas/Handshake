@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Kies je co-pilot",
 		"close_arialabel": "Sluiten",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> In-character alpha · gegrond in echte pump.fun gegevens",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live lanceringen <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live lanceringen",
 		"load": "Laden",
 		"meta_description": "Je agent leest een echte pump.fun lancering in karakter — gegrond in live liquiditeit, houder- en smart-moneygegevens — en spreekt zijn oordeel luid uit via zijn 3D-avatar. De eigenaar kan hierop handelen binnen strikte, server-afgedwongen bestedingslimieten.",
 		"meta_og_description": "Een 3D-agent die zijn eigen alpha vertelt: hij leest echte lanceringen in karakter, citeert de live signalen die hij heeft gebruikt, en handelt alleen binnen zijn bestedingslimieten. Geen enkele concurrent heeft een persona, avatar en wallet die zo zijn samengevoegd.",

@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "เลือกโค-ไพลอตของคุณ",
 		"close_arialabel": "ปิด",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> ในตัวละคร alpha · ยึดโยงกับข้อมูล pump.fun ที่แท้จริง",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> การเปิดตัวสด <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> การเปิดตัวสด",
 		"load": "โหลด",
 		"meta_description": "เอเจนต์ของคุณอ่านการเปิดตัวจริง pump.fun ในตัวละคร — ยึดโยงกับข้อมูลสภาพคล่อง ผู้ถือ และเงินอัจฉริยะแบบสด — และพูดคำตัดสินออกมาดัง ๆ ผ่านอวตาร์ 3D ของมัน เจ้าของสามารถดำเนินการตามนั้นภายในขีดจำกัดการใช้จ่ายที่เข้มงวดและบังคับโดยเซิร์ฟเวอร์",
 		"meta_og_description": "เอเจนต์ 3D ที่เล่าเรื่อง alpha ของตัวเอง: มันอ่านการเปิดตัวจริงในตัวละคร อ้างอิงสัญญาณสดที่มันใช้ และดำเนินการเฉพาะภายในขีดจำกัดการใช้จ่ายของมัน ไม่มีคู่แข่งคนไหนมีบุคลิก อวตาร์ และกระเป๋าเงินที่รวมกันแบบนี้",

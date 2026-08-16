@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Виберіть свого співпілота",
 		"close_arialabel": "Закрити",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> У персонажі альфа · грунтується на реальних pump.fun даних",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Прямі запуски <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Прямі запуски",
 		"load": "Завантажити",
 		"meta_description": "Ваш агент читає реальний pump.fun запуск у персонажі — грунтуючись на живій ліквідності, даних про власників та розумні гроші — і озвучує свій вердикт через свій 3D-аватар. Власник може діяти на основі цього в межах жорстких, серверно контролюваних витрат.",
 		"meta_og_description": "3D-агент, який розповідає про свій власний альфа: він читає реальні запуски у персонажі, наводить живі сигнали, які використовував, і діє лише в межах своїх витрат. Жоден конкурент не має персони, аватара та гаманця, злитих так, як це.",

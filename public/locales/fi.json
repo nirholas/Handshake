@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Valitse co-pilotisi",
 		"close_arialabel": "Sulje",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Hahmossa oleva alpha · perustuu todellisiin pump.fun tietoihin",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Livenä lanseeraukset <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Livenä lanseeraukset",
 		"load": "Lataa",
 		"meta_description": "Agenttisi lukee todellisen pump.fun lanseerauksen hahmossa — perustuen live-käteisyyteen, omistajiin ja älyrahoitustietoihin — ja lausuu tuomionsa ääneen 3D-avatarinsa kautta. Omistaja voi toimia sen perusteella tiukkojen, palvelinvalvottujen kulutusrajojen puitteissa.",
 		"meta_og_description": "3D-agentti, joka kertoo omaa alphaansa: se lukee todellisia lanseerauksia hahmossa, mainitsee käyttämänsä live-signaalit ja toimii vain kulutusrajojensa puitteissa. Yhdelläkään kilpailijalla ei ole tällaista persoonaa, avataria ja lompakkoa yhdistettynä.",

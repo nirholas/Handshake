@@ -1008,6 +1008,7 @@
 		"name_a_z": "Name A-Z",
 		"newest_first": "Newest first",
 		"search_agents_label": "Search agents by name or description",
+		"search_placeholder": "Search agents…",
 		"solana": "Solana",
 		"sort_label": "Sort agents"
 	},
@@ -1032,11 +1033,11 @@
 		"watch_agents_work": "Watch agents work"
 	},
 	"agi": {
-		"meta_description": "The first AGI — narrow by design. A single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch it think, trade, and be held to a chain-proven track record in real time.",
-		"meta_og_description": "Artificial general intelligence in a single domain: pump.fun memecoin trading. It reads launches, the wallet graph, and order flow faster than any human — then sizes, enters, and exits on its own. Outside that domain it claims nothing.",
+		"meta_description": "The first AGI, narrow by design. A single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch its embodied 3D body react to the market, read every decision with its stated confidence, and hold it to a chain-proven track record.",
+		"meta_og_description": "Artificial general intelligence in a single domain: pump.fun memecoin trading. It reads launches, the wallet graph, and order flow faster than any human, then sizes, enters, and exits on its own. Outside that domain it claims nothing.",
 		"meta_og_title": "The AGI · three.ws",
 		"meta_title": "The AGI · three.ws",
-		"meta_twitter_description": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing — trading memecoins on pump.fun (Solana) — and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
+		"meta_twitter_description": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing, trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
 		"meta_twitter_title": "The AGI · three.ws"
 	},
 	"agora": {
@@ -1099,7 +1100,7 @@
 		"copy_link": "Copy link",
 		"couldn_t_load_animations": "Couldn't load animations",
 		"couldn_t_load_this_clip_s_preview": "⚠️ Couldn't load this clip's preview.",
-		"every_clip_in_the_three_ws_motion": "Every clip in the three.ws motion library — mocap performances, studio presets, and community-authored animations. Hover any card for a live preview, open the details for playback controls, or send it straight to the Studio.",
+		"every_clip_in_the_three_ws_motion": "Every clip in the three.ws motion library: mocap performances, studio presets, and community-authored animations. Hover any card for a live preview, open the details for playback controls, or send it straight to the Studio.",
 		"featured": "Featured",
 		"load_more": "Load more",
 		"longest_first": "Longest first",
@@ -1124,6 +1125,7 @@
 		"pause_arialabel": "Pause",
 		"prev": "← Prev",
 		"previous_animation_arialabel": "Previous animation",
+		"results_heading": "Animation results",
 		"retry": "Retry",
 		"shortest_first": "Shortest first",
 		"shuffle": "Shuffle",
@@ -1250,10 +1252,10 @@
 		"hero_shot_4_title": "Hero shot (4)",
 		"keyboard_shortcuts": "Keyboard shortcuts",
 		"marketplace": "Marketplace",
-		"meta_description": "The first embodied 3D AI agent. Not a chatbot. A presence — with a body, a place, an identity, and memory.",
+		"meta_description": "Drag and drop a glTF or GLB file to inspect it in the browser: orbit the camera, play animations, switch the backdrop, then share or embed the result.",
 		"meta_og_description": "Agents have always been imagined as present. We made that real.",
 		"meta_og_title": "three.ws — The First Embodied AI Agent",
-		"meta_title": "three.ws — AI-Powered 3D Model Viewer",
+		"meta_title": "3D Model Viewer (glTF/GLB) | three.ws",
 		"meta_twitter_description": "The first three.ws with a body, a place, an identity, and memory.",
 		"meta_twitter_title": "three.ws — Embodied AI",
 		"my_profile": "My profile",

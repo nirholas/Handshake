@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Velg din co-pilot",
 		"close_arialabel": "Lukk",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> I karakter alpha · forankret i ekte pump.fun data",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live lanseringer <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live lanseringer",
 		"load": "Last inn",
 		"meta_description": "Din agent leser en ekte pump.fun lansering i karakter — forankret i live likviditet, innehaver, og smart-penger data — og gir sin dom høyt gjennom sin 3D-avatar. Eieren kan handle på det innenfor harde, server-håndhevede utgiftsgrenser.",
 		"meta_og_description": "En 3D-agent som forteller sin egen alpha: den leser ekte lanseringer i karakter, siterer de live signalene den brukte, og handler kun innenfor sine utgiftsgrenser. Ingen konkurrent har en persona, avatar, og lommebok smeltet sammen slik.",

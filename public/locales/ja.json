@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "コパイロットを選択",
 		"close_arialabel": "閉じる",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> キャラクターに沿ったアルファ · 実際のpump.funデータに基づいています",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> ライブローンチ <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> ライブローンチ",
 		"load": "ロード",
 		"meta_description": "あなたのエージェントは、実際のpump.funローンチをキャラクターに沿って読み込み、ライブの流動性、ホルダー、スマートマネーデータに基づいて、その3Dアバターを通じて判断を声に出して伝えます。オーナーは、厳格なサーバー強制支出制限内でそれに基づいて行動できます。",
 		"meta_og_description": "自身のアルファを語る3Dエージェント：実際のローンチをキャラクターに沿って読み込み、使用したライブシグナルを引用し、自身の支出制限内でのみ行動します。ペルソナ、アバター、ウォレットがこのように融合した競合他社はありません。",

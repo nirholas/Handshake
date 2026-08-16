@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Wybierz swojego co-pilota",
 		"close_arialabel": "Zamknij",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> W postaci alfa · osadzone w rzeczywistych danych pump.fun",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Na żywo uruchomienia <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Na żywo uruchomienia",
 		"load": "Załaduj",
 		"meta_description": "Twój agent odczytuje rzeczywiste uruchomienie pump.fun w postaci — osadzone w danych o płynności, posiadaczach i inteligentnych pieniądzach — i głośno wypowiada swoje werdykt przez swój 3D awatar. Właściciel może działać w ramach sztywnych, serwerowo egzekwowanych limitów wydatków.",
 		"meta_og_description": "3D agent, który narracyjnie przedstawia swoje własne alfa: odczytuje rzeczywiste uruchomienia w postaci, cytuje sygnały na żywo, których użył, i działa tylko w ramach swoich limitów wydatków. Żaden konkurent nie ma tak zintegrowanej osobowości, awatara i portfela.",

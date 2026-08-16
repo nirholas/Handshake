@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Vyberte si svého co-pilota",
 		"close_arialabel": "Zavřít",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> V postavě alpha · zakotvený v reálných pump.fun datech",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Živé spuštění <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Živé spuštění",
 		"load": "Načíst",
 		"meta_description": "Váš agent čte skutečné pump.fun spuštění v postavě — zakotvený v živé likviditě, držitelích a datech chytrých peněz — a nahlas vyjadřuje svůj verdikt prostřednictvím svého 3D avataru. Majitel může jednat na základě toho v rámci pevných, serverem vynucených limitů výdajů.",
 		"meta_og_description": "3D agent, který vypráví svůj vlastní alpha: čte skutečná spuštění v postavě, uvádí živé signály, které použil, a jedná pouze v rámci svých výdajových limitů. Žádný konkurent nemá osobnost, avatar a peněženku spojené takto.",

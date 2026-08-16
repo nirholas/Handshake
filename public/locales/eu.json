@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Aukeratu zure kopilotua",
 		"close_arialabel": "Itxi",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Pertsonaiaren araberako alpha · benetako pump.fun datuetan oinarrituta",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Zuzeneko abiarazteak <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Zuzeneko abiarazteak",
 		"load": "Kargatu",
 		"meta_description": "Zure agenteak benetako pump.fun abiarazte bat irakurtzen du pertsonaian — zuzeneko likidezia, jabe eta diru adimendunaren datuetan oinarrituta — eta bere epaia ozenki adierazten du bere 3D avatarraren bidez. Jabeak horren arabera jokatu dezake zerbitzariak ezarritako gastu-muga zorrotzen barruan.",
 		"meta_og_description": "3D agente bat, bere alfa propioa kontatzen duena: benetako merkaturatzeak pertsonaian irakurtzen ditu, erabili zituen zuzeneko seinaleak aipatzen ditu, eta bere gastu-mugak soilik errespetatuz jarduten du. Lehiakide bakar batek ere ez du horrela fusionatuta pertsonaia, avatarra eta zorroa.",

@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Tria el teu copilot",
 		"close_arialabel": "Tanca",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Alfa en personatge · basat en dades reals de pump.fun",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Llançaments en directe <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Llançaments en directe",
 		"load": "Carrega",
 		"meta_description": "El teu agent llegeix un llançament real de pump.fun en personatge — basat en dades en directe de liquiditat, titulars i diners intel·ligents — i expressa el seu veredicte en veu alta a través del seu avatar 3D. El propietari pot actuar-hi dins de límits de despesa estrictes i aplicats pel servidor.",
 		"meta_og_description": "Un agent 3D que narra la seva pròpia alfa: llegeix llançaments reals amb caràcter, cita els senyals en viu que va utilitzar i actua només dins dels seus límits de despesa. Cap competidor té una persona, un avatar i una cartera fusionats d'aquesta manera.",

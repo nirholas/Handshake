@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Изберете своя ко-пилот",
 		"close_arialabel": "Затвори",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> В персонаж алфа · основан на реални pump.fun данни",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> На живо стартирания <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> На живо стартирания",
 		"load": "Зареди",
 		"meta_description": "Вашият агент чете реално pump.fun стартиране в персонаж — основан на живи ликвидност, притежател и данни за умни пари — и изразява своята присъда на глас чрез своя 3D аватар. Собственикът може да действа на него в рамките на строги, наложени от сървъра лимити за разходи.",
 		"meta_og_description": "3D агент, който разказва своя собствена алфа: чете реални стартирания в персонаж, цитира живите сигнали, които е използвал, и действа само в рамките на своите лимити за разходи. Нито един конкурент няма персонаж, аватар и портфейл, слети по този начин.",

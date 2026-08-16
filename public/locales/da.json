@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Vælg din co-pilot",
 		"close_arialabel": "Luk",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> I karakter alpha · forankret i reelle pump.fun data",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live lanceringer <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live lanceringer",
 		"load": "Indlæs",
 		"meta_description": "Din agent læser en reel pump.fun lancering i karakter — forankret i live likviditet, indehaver- og smart-money data — og taler sin dom højt gennem sin 3D-avatar. Ejeren kan handle på det inden for hårde, server-håndhævede udgiftsgrænser.",
 		"meta_og_description": "En 3D-agent, der fortæller sin egen alpha: den læser reelle lanceringer i karakter, citerer de live signaler, den brugte, og handler kun inden for sine udgiftsgrænser. Ingen konkurrent har en persona, avatar og wallet fusioneret som dette.",

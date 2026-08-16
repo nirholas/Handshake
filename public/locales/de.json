@@ -1015,7 +1015,7 @@
 		"choose_your_co_pilot": "Wählen Sie Ihren Co-Piloten",
 		"close_arialabel": "Schließen",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Alpha mit Charakter · fundiert in echten pump.fun Daten",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live-Launches <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live-Launches",
 		"load": "Laden",
 		"meta_description": "Ihr Agent analysiert einen echten pump.fun Launch mit Charakter — basierend auf Live-Liquiditäts-, Holder- und Smart-Money-Daten — und verkündet sein Urteil lautstark über seinen 3D-Avatar. Der Eigentümer kann daraufhin innerhalb fester, servergestützter Ausgabenlimits handeln.",
 		"meta_og_description": "Ein 3D-Agent, der seine eigene Alpha erzählt: Er analysiert echte Launches mit Charakter, nennt die verwendeten Live-Signale und agiert nur innerhalb seiner Ausgabenlimits. Kein Konkurrent vereint Persona, Avatar und Wallet auf diese Weise.",
