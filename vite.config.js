@@ -2694,16 +2694,30 @@ support: resolve(__dirname, 'pages/support.html'),
 								...(req.headers.authorization
 									? { authorization: req.headers.authorization }
 									: {}),
+								...(req.headers.range ? { range: req.headers.range } : {}),
 							},
 						});
-						const text = await resp.text();
-						const rewritten = text.replace(R2_PUBLIC_RE, '/r2-proxy/');
+						const type = resp.headers.get('content-type') || 'application/json';
 						res.statusCode = resp.status;
-						res.setHeader(
-							'content-type',
-							resp.headers.get('content-type') || 'application/json',
-						);
-						res.end(rewritten);
+						res.setHeader('content-type', type);
+						// Not every /api/avatars/* GET is JSON: `/api/avatars/:id/glb` and
+						// `/thumbnail` return binary (model/gltf-binary, image/*). Reading
+						// those through resp.text() decodes them as UTF-8, so every byte
+						// >= 0x80 becomes U+FFFD and the "GLB" that reaches the browser is
+						// ~60% larger and unparseable ("THREE.GLTFLoader: JSON content not
+						// found"), which silently demoted every studio/profile avatar to the
+						// fallback robot in dev. Only text payloads can carry an r2.dev URL,
+						// so rewrite those and pass anything else through byte-for-byte.
+						if (!/^(application\/(json|.*\+json)|text\/)/i.test(type)) {
+							for (const h of ['content-length', 'accept-ranges', 'content-range', 'etag', 'cache-control']) {
+								const v = resp.headers.get(h);
+								if (v) res.setHeader(h, v);
+							}
+							res.end(Buffer.from(await resp.arrayBuffer()));
+							return;
+						}
+						const text = await resp.text();
+						res.end(text.replace(R2_PUBLIC_RE, '/r2-proxy/'));
 					} catch (err) {
 						next();
 					}

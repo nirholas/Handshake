@@ -2,6 +2,11 @@
 // Env required: X_OAUTH_CLIENT_ID, X_OAUTH_CLIENT_SECRET
 // If unset, /connect returns 501 not_configured.
 //
+// /connect takes an optional ?scope=read|full (default full, see
+// api/_lib/x-scopes.js). The memory-seeding card asks for `read` so an owner who
+// only wants their agent to sound like them never has to grant permission to
+// post as them; the posting surfaces ask for `full`.
+//
 // PKCE state ({code_verifier, user_id, agent_id}) is carried in a short-lived,
 // HMAC-signed httpOnly cookie keyed by the OAuth `state` param. No external
 // store needed; the cookie is sent back on the top-level redirect from x.com
@@ -20,6 +25,7 @@ import { cors, method, wrap, error, redirect, rateLimited } from '../../_lib/htt
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 import { revokeAllSeedConsentsForUser } from '../../_lib/x-seed-consent.js';
+import { resolveScopeSet } from '../../_lib/x-scopes.js';
 
 // ── Signed-cookie PKCE state ─────────────────────────────────────────────────
 
@@ -33,12 +39,13 @@ function b64urlDecode(s) {
 	return Buffer.from(s, 'base64url').toString('utf8');
 }
 
-async function signState({ state, codeVerifier, userId, agentId }) {
+async function signState({ state, codeVerifier, userId, agentId, scopeSet }) {
 	const payload = {
 		s: state,
 		v: codeVerifier,
 		u: userId,
 		a: agentId,
+		k: scopeSet,
 		e: Math.floor(Date.now() / 1000) + STATE_TTL_SEC,
 	};
 	const body = b64urlEncode(JSON.stringify(payload));
@@ -62,7 +69,12 @@ async function verifyState(token, expectedState) {
 	}
 	if (!payload || payload.s !== expectedState) return null;
 	if (typeof payload.e !== 'number' || payload.e < Math.floor(Date.now() / 1000)) return null;
-	return { codeVerifier: payload.v, userId: payload.u, agentId: payload.a };
+	return {
+		codeVerifier: payload.v,
+		userId: payload.u,
+		agentId: payload.a,
+		scopeSet: resolveScopeSet(payload.k).name,
+	};
 }
 
 function readStateCookie(req) {
@@ -126,6 +138,7 @@ async function handleConnect(req, res) {
 
 	const url = new URL(req.url, env.APP_ORIGIN);
 	const agentId = url.searchParams.get('agent_id') || null;
+	const scopeSet = resolveScopeSet(url.searchParams.get('scope'));
 
 	const codeVerifier = randomToken(32); // 43-char base64url
 	const codeChallenge = await sha256Base64Url(codeVerifier);
@@ -138,9 +151,11 @@ async function handleConnect(req, res) {
 	authUrl.searchParams.set('response_type', 'code');
 	authUrl.searchParams.set('client_id', env.X_OAUTH_CLIENT_ID);
 	authUrl.searchParams.set('redirect_uri', `${env.APP_ORIGIN}/api/auth/x/callback`);
-	// media.write lets a connected account upload screenshots / walk clips via the
-	// v2 media-upload endpoint (see api/share/x.js) before attaching them to a tweet.
-	authUrl.searchParams.set('scope', 'tweet.read tweet.write users.read media.write offline.access');
+	// The full set's media.write lets a connected account upload screenshots /
+	// walk clips via the v2 media-upload endpoint (see api/share/x.js) before
+	// attaching them to a tweet. The read set drops every write scope: it is what
+	// memory seeding needs and all it needs.
+	authUrl.searchParams.set('scope', scopeSet.value);
 	authUrl.searchParams.set('state', state);
 	authUrl.searchParams.set('code_challenge', codeChallenge);
 	authUrl.searchParams.set('code_challenge_method', 'S256');
