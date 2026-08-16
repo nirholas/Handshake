@@ -31,6 +31,14 @@
 			<description>Avatar Studio loads its hair, clothing and accessory traits through a three.ws address that mirrors the open-source trait library, so your browser never talks to an outside CDN. The list of where those traits live was being written using the address in the incoming request, and that address can be set by whoever sends the request. Because the mirror is cached at the edge for a day, one crafted request could have left every Avatar Studio visitor loading trait files from a stranger's server for the next 24 hours. That list is now written the same way for everybody, with no part of it taken from the request, so there is nothing left to steer. Three smaller repairs went in alongside it: asking the mirror how big a file is no longer answers with the compressed size (a trait manifest claimed 2 KB and delivered 20 KB), the mirror will not hand back a web page or script even if the upstream library ever served one, and a failure at the library now answers plainly as either not found or mirror is down instead of passing its raw status through as ours.</description>
 		</item>
 		<item>
+			<title>Corrected stale numbers across the avatar and animation docs</title>
+			<link>https://three.ws/docs/animations</link>
+			<guid isPermaLink="false">2026-08-16:Corrected stale numbers across the avatar and animation docs</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>An audit of eight documentation pages against the code they describe turned up four claims that had drifted. The Animations page said the motion-capture library held about 2,000 clips when it actually serves 2,874, so both the intro and the gallery section now quote the real size and point at the count the API itself returns. The selfie-to-avatar page listed the wrong default for the face-morph displacement clamp and credited a single tuning sweep instead of the two that chose it. The avatar-creation walkthrough still told people to pick a body type on the selfie flow, a control that was deliberately removed because it changed nothing, and named the wrong fields on the event the page dispatches. The architecture page now says plainly that the whitelist trust mode is reserved rather than enforced.</description>
+		</item>
+		<item>
 			<title>Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</title>
 			<link>https://three.ws/stage</link>
 			<guid isPermaLink="false">2026-08-16:Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</guid>
@@ -63,6 +71,14 @@
 			<description>The in-world trading terminal inside a Robinhood Chain world polls the chain feed every five seconds, and the Worlds lobby lists those coins from the same feed. A single event that arrived without its payload, or with a timestamp the chain wrote in an unexpected format, took both requests down with a server error: the terminal showed a dead tape, and the lobby's Robinhood Chain tab quietly emptied with nothing on screen to say why. Bad events are now skipped and the rest of the tape still renders, a price that is genuinely missing stays blank rather than printing as a real $0 trade, and a launch with no readable contract address no longer produces a card that leads nowhere. Asking for trades with an address that is not a contract address now gets a clear error back instead of an empty list that read as &quot;this coin has never traded&quot;.</description>
 		</item>
 		<item>
+			<title>Shared agent links keep their preview card through a chain hiccup</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-16:Shared agent links keep their preview card through a chain hiccup</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The preview card for an on-chain agent is rendered on demand from the chain and the agent's manifest. When either read was slow or briefly unavailable, the card answered as if the agent did not exist, and social sites cached that answer for up to an hour, so a link to a real agent unfurled with no image at all. The card is now served either way and only kept for a minute when a read fell short, so the next crawl picks up the real thing. Alongside it, ten agent endpoints (the preview card and page, the oEmbed provider, memory sync, the action log, ask, delegate and team tasks) now answer a mistyped agent id with a clear, specific error instead of a generic server failure.</description>
+		</item>
+		<item>
 			<title>Sharing an agent link posts the agent's picture again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:Sharing an agent link posts the agent's picture again</guid>
@@ -87,12 +103,28 @@
 			<description>Two fixes to the Discover detail pages. Agents crawled from the outside Solana registries opened fine in the browser but shared as a nameless card: every one of them unfurled in Slack, Discord, X and iMessage with a generic three.ws title and the stock image, while the Ethereum-side agents in the same grid previewed properly. Those pages now carry the agent name, description and artwork, whether the link points at the mint or at its registry entry. Separately, a Discover link with a mistyped or truncated id answered with a server error and the page showed a vague &quot;something went wrong&quot;; it now says plainly that the item was not found and shows the Not found state, and an agent whose on-chain id is larger than the site could previously handle resolves instead of coming back empty.</description>
 		</item>
 		<item>
+			<title>The $THREE deploy-burn ledger shows the real burns again</title>
+			<link>https://three.ws/dashboard/three-token</link>
+			<guid isPermaLink="false">2026-08-16:The $THREE deploy-burn ledger shows the real burns again</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The $THREE page counts 1,000 $THREE burned for every agent deployed on three.ws, and the ledger beneath that number is meant to list the recent deploys behind it. The query that fetched them asked for a column the agent table has never had, so it failed on every request and the code beside it turned that failure into an empty list: the lifetime burn total kept climbing past 3.1 million while the ledger sat blank, and the protocol activity feed was blanked the same way. Both now read the column that exists and list real deploys again, a failed panel query is written to the logs instead of quietly becoming a zero, and the holder count on the revenue-share view no longer disagrees with the one on the same page's stats panel.</description>
+		</item>
+		<item>
 			<title>The $THREE economy dashboard no longer errors out on an odd date range</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:The $THREE economy dashboard no longer errors out on an odd date range</guid>
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Asking the public $THREE economy stats endpoint for a window it could not read (a non-numeric range, or one longer than ten years) returned a server error instead of an answer. It now replies with a clear message for a range it cannot parse, caps an oversized one at ten years of history, and treats a blank range as all-time again. The creator earnings ledger does the same for a bad page cursor.</description>
+		</item>
+		<item>
+			<title>The $THREE price quote survives an out-of-range dollar amount, and the payment audit log is admin-only for real</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-16:The $THREE price quote survives an out-of-range dollar amount, and the payment audit log is admin-only for real</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public $THREE price endpoint converts a dollar amount into a token amount. Because $THREE trades well under a cent, a dollar figure large enough to overflow what a number can hold turned that conversion into a server error, and every such request also filed a false internal alert. It now answers plainly that the amount is out of range. The token amount it quotes is also computed from the exact price printed beside it, so the two can no longer disagree when the live price refreshes partway through a request. Separately, the settled-payment audit log checked admin wallets with its own copy of the rule, comparing Solana addresses without regard to capitalisation. Solana addresses are case-sensitive, so a lookalike address that differed only in capitalisation would have been accepted; the log now uses the platform-wide admin check, which compares Solana addresses exactly and also recognises an admin who signed in with a linked wallet.</description>
 		</item>
 		<item>
 			<title>The $THREE rider pass now recognises the wallets that paid for it</title>

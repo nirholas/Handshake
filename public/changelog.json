@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T07:27:01.036Z",
+	"generated_at": "2026-08-16T07:41:13.877Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -35,6 +35,16 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Corrected stale numbers across the avatar and animation docs",
+			"summary": "An audit of eight documentation pages against the code they describe turned up four claims that had drifted. The Animations page said the motion-capture library held about 2,000 clips when it actually serves 2,874, so both the intro and the gallery section now quote the real size and point at the count the API itself returns. The selfie-to-avatar page listed the wrong default for the face-morph displacement clamp and credited a single tuning sweep instead of the two that chose it. The avatar-creation walkthrough still told people to pick a body type on the selfie flow, a control that was deliberately removed because it changed nothing, and named the wrong fields on the event the page dispatches. The architecture page now says plainly that the whitelist trust mode is reserved rather than enforced.",
+			"link": "/docs/animations",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -83,6 +93,17 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "Shared agent links keep their preview card through a chain hiccup",
+			"summary": "The preview card for an on-chain agent is rendered on demand from the chain and the agent's manifest. When either read was slow or briefly unavailable, the card answered as if the agent did not exist, and social sites cached that answer for up to an hour, so a link to a real agent unfurled with no image at all. The card is now served either way and only kept for a minute when a read fell short, so the next crawl picks up the real thing. Alongside it, ten agent endpoints (the preview card and page, the oEmbed provider, memory sync, the action log, ask, delegate and team tasks) now answer a mistyped agent id with a clear, specific error instead of a generic server failure.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "Sharing an agent link posts the agent's picture again",
 			"summary": "Pasting a link to an agent into a chat app, a social post or a group thread is supposed to unfurl into a card with the agent's name, its description and a picture of it. For every agent that actually has an avatar picture, which is nearly all of them, the page that builds that card was crashing instead, so the link unfurled as a bare URL with nothing attached. The card now renders with the agent's own thumbnail, falls back to a freshly rendered portrait when an agent has no thumbnail yet, and an unknown or malformed agent link sends the visitor to the app instead of erroring.",
 			"link": null,
@@ -114,11 +135,32 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "The $THREE deploy-burn ledger shows the real burns again",
+			"summary": "The $THREE page counts 1,000 $THREE burned for every agent deployed on three.ws, and the ledger beneath that number is meant to list the recent deploys behind it. The query that fetched them asked for a column the agent table has never had, so it failed on every request and the code beside it turned that failure into an empty list: the lifetime burn total kept climbing past 3.1 million while the ledger sat blank, and the protocol activity feed was blanked the same way. Both now read the column that exists and list real deploys again, a failed panel query is written to the logs instead of quietly becoming a zero, and the holder count on the revenue-share view no longer disagrees with the one on the same page's stats panel.",
+			"link": "/dashboard/three-token",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "The $THREE economy dashboard no longer errors out on an odd date range",
 			"summary": "Asking the public $THREE economy stats endpoint for a window it could not read (a non-numeric range, or one longer than ten years) returned a server error instead of an answer. It now replies with a clear message for a range it cannot parse, caps an oversized one at ten years of history, and treats a blank range as all-time again. The creator earnings ledger does the same for a bad page cursor.",
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The $THREE price quote survives an out-of-range dollar amount, and the payment audit log is admin-only for real",
+			"summary": "The public $THREE price endpoint converts a dollar amount into a token amount. Because $THREE trades well under a cent, a dollar figure large enough to overflow what a number can hold turned that conversion into a server error, and every such request also filed a false internal alert. It now answers plainly that the amount is out of range. The token amount it quotes is also computed from the exact price printed beside it, so the two can no longer disagree when the live price refreshes partway through a request. Separately, the settled-payment audit log checked admin wallets with its own copy of the rule, comparing Solana addresses without regard to capitalisation. Solana addresses are case-sensitive, so a lookalike address that differed only in capitalisation would have been accepted; the log now uses the platform-wide admin check, which compares Solana addresses exactly and also recognises an admin who signed in with a linked wallet.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
