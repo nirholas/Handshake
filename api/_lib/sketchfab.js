@@ -71,9 +71,14 @@ export function showcaseLink(path) {
 // second pick. Fall back to the category instead of publishing the sentinel.
 const PLACEHOLDER_PROMPT_RE = /^(image-to-3d|untitled|test)$/i;
 
+// `other` is the forge's catch-all bucket, not a description, so "Forged Other"
+// is no better a public name than the sentinel it replaced. Fall through to the
+// neutral generic for it and its siblings.
+const VAGUE_CATEGORY_RE = /^(other|misc|miscellaneous|unknown|general|uncategorized)$/i;
+
 function categoryName(modelCategory) {
 	const cat = String(modelCategory || '').trim();
-	if (!cat) return '3D Model';
+	if (!cat || VAGUE_CATEGORY_RE.test(cat)) return '3D Model';
 	// Underscores are a slug separator; hyphens are part of the word ("sci-fi").
 	return `Forged ${cat.replace(/_+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`;
 }

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T17:07:14.691Z",
+	"generated_at": "2026-08-16T17:12:03.453Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -15,6 +15,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "A dropped page in the agent directory no longer throws away everything you scrolled past",
+			"summary": "The agent index loads in pages of 24, and until now a network hiccup on page five did more damage than the hiccup deserved. The Load more button vanished, and the only recovery on offer restarted the list from the top, discarding the hundred-odd agents already on screen. A failed page now says so on its own terms and offers Resume loading, which picks up exactly where it stopped; Start over is still there if you want it, and the error notice clears itself once the page arrives instead of lingering under the results. Three smaller repairs came with it: loading another page no longer redraws the agents already listed, so the grid stops flickering once a few pages are in; the search box and sort menu now show a proper focus ring for keyboard users instead of a one-pixel border tint; and the source filter chips reach a full-size tap target on tablets, not just on phones.",
+			"link": "/agents",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -120,6 +131,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "External Solana agents get their names and artwork back in the directory",
+			"summary": "Every agent the platform indexes from the Metaplex Agent Registry had been sitting in the directory as a bare address since August 6: no name, no picture, no 3D model. The crawler asks a Solana node for each agent's artwork through a method only some nodes support, and it was asking the same node every time, one that does not support it. Worse, the node that does support it answers a refusal in the same shape when it is simply busy, so the crawler could not tell 'I cannot do this' from 'not right now'. It now tries each node in turn, keeps the one that answers, waits and retries a busy one instead of writing it off, and refreshes the agents that are missing artwork rather than the same handful at the top of the list every half hour. If no node will serve the artwork at all, the crawl now says so out loud instead of quietly marking every agent as failed.",
+			"link": "/agents",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

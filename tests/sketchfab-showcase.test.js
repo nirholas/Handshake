@@ -38,9 +38,13 @@ describe('buildModelName', () => {
 		expect(buildModelName('untitled', 'prop')).toBe('Forged Prop');
 	});
 
-	it('falls back to the generic name when a placeholder prompt has no category', () => {
+	it('falls back to the generic name when a placeholder prompt has no useful category', () => {
 		expect(buildModelName('image-to-3d')).toBe('3D Model');
 		expect(buildModelName('image-to-3d', null)).toBe('3D Model');
+		// The live candidate that exposed this sat in the forge's catch-all bucket;
+		// "Forged Other" would have been no better a public name than the sentinel.
+		expect(buildModelName('image-to-3d', 'other')).toBe('3D Model');
+		expect(buildModelName('image-to-3d', 'Uncategorized')).toBe('3D Model');
 	});
 
 	it('leaves a real prompt that merely contains the placeholder words alone', () => {

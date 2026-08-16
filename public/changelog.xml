@@ -15,6 +15,14 @@
 			<description>Pasting a coin community link into WordPress, Ghost, Discord, Notion or any editor built on embed.ly or iframely now turns it into the live 3D world instead of a plain link. The service that answers those editors existed but nothing on the page told them where to find it, so it was never called. Two problems in that service are fixed at the same time. It used to build the embed from the address in the incoming request rather than from the site address, so a crafted request could hand an editor an embed that framed somebody else site under the three.ws name; the embed is now always built from three.ws itself. And it used to answer for any link at all, returning a generic three.ws world card for a link that was never ours; it now says plainly that the link is not one of ours. It also answers in both of the formats the standard defines, and ignores a coin address that is not a real Solana address instead of putting it in the embed. Separately, the share images for pages and coin worlds, the holder leaderboard card, the free model verification check and the Oracle coin page now accept only read requests, and answer anything else with a clear message rather than doing the work anyway.</description>
 		</item>
 		<item>
+			<title>A dropped page in the agent directory no longer throws away everything you scrolled past</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-08-16:A dropped page in the agent directory no longer throws away everything you scrolled past</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The agent index loads in pages of 24, and until now a network hiccup on page five did more damage than the hiccup deserved. The Load more button vanished, and the only recovery on offer restarted the list from the top, discarding the hundred-odd agents already on screen. A failed page now says so on its own terms and offers Resume loading, which picks up exactly where it stopped; Start over is still there if you want it, and the error notice clears itself once the page arrives instead of lingering under the results. Three smaller repairs came with it: loading another page no longer redraws the agents already listed, so the grid stops flickering once a few pages are in; the search box and sort menu now show a proper focus ring for keyboard users instead of a one-pixel border tint; and the source filter chips reach a full-size tap target on tablets, not just on phones.</description>
+		</item>
+		<item>
 			<title>A GitHub seed that stores nothing no longer costs you six hours</title>
 			<link>https://three.ws/docs/github-memory-seeding</link>
 			<guid isPermaLink="false">2026-08-16:A GitHub seed that stores nothing no longer costs you six hours</guid>
@@ -93,6 +101,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Editing an existing subscription tier from the creator dashboard silently failed: the save never reached the server, so the new name, price or status was lost every time. Saving works now. Alongside it, a mistyped or truncated subscription or tier link used to answer with a generic server failure; it now says the id is not valid, which is what a reader can actually act on. Tier pages are also directly addressable, so a single tier can be linked and read on its own, with unpublished drafts still visible only to the creator who wrote them.</description>
+		</item>
+		<item>
+			<title>External Solana agents get their names and artwork back in the directory</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-08-16:External Solana agents get their names and artwork back in the directory</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every agent the platform indexes from the Metaplex Agent Registry had been sitting in the directory as a bare address since August 6: no name, no picture, no 3D model. The crawler asks a Solana node for each agent's artwork through a method only some nodes support, and it was asking the same node every time, one that does not support it. Worse, the node that does support it answers a refusal in the same shape when it is simply busy, so the crawler could not tell 'I cannot do this' from 'not right now'. It now tries each node in turn, keeps the one that answers, waits and retries a busy one instead of writing it off, and refreshes the agents that are missing artwork rather than the same handful at the top of the list every half hour. If no node will serve the artwork at all, the crawl now says so out loud instead of quietly marking every agent as failed.</description>
 		</item>
 		<item>
 			<title>Forge tools refuse a made-up style or file type, and a worker hiccup no longer reads as a broken job</title>

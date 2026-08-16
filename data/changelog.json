@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "External Solana agents get their names and artwork back in the directory",
+			"summary": "Every agent the platform indexes from the Metaplex Agent Registry had been sitting in the directory as a bare address since August 6: no name, no picture, no 3D model. The crawler asks a Solana node for each agent's artwork through a method only some nodes support, and it was asking the same node every time, one that does not support it. Worse, the node that does support it answers a refusal in the same shape when it is simply busy, so the crawler could not tell 'I cannot do this' from 'not right now'. It now tries each node in turn, keeps the one that answers, waits and retries a busy one instead of writing it off, and refreshes the agents that are missing artwork rather than the same handful at the top of the list every half hour. If no node will serve the artwork at all, the crawl now says so out loud instead of quietly marking every agent as failed.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/agents"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "A dropped page in the agent directory no longer throws away everything you scrolled past",
+			"summary": "The agent index loads in pages of 24, and until now a network hiccup on page five did more damage than the hiccup deserved. The Load more button vanished, and the only recovery on offer restarted the list from the top, discarding the hundred-odd agents already on screen. A failed page now says so on its own terms and offers Resume loading, which picks up exactly where it stopped; Start over is still there if you want it, and the error notice clears itself once the page arrives instead of lingering under the results. Three smaller repairs came with it: loading another page no longer redraws the agents already listed, so the grid stops flickering once a few pages are in; the search box and sort menu now show a proper focus ring for keyboard users instead of a one-pixel border tint; and the source filter chips reach a full-size tap target on tablets, not just on phones.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/agents"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Prompt polish keeps its quotes out of your model, and a busy Forge says so plainly",
 			"summary": "Three fixes across the Forge endpoints. The Enhance button, which rewrites your rough idea into the prompt the generator actually draws from, stopped removing the quotation marks the writing model wraps around its answer: those quotes were being handed straight to the image step as if you had asked for them to be drawn. Both plain and curly quotes are stripped again. Second, when you ask the studio to change a model you already made and the generator is saturated, you now get an honest \"busy, try again in a moment\" with a wait time instead of a vague failure that blamed the wording of your request. Third, the self-hosted generator panel now tells a caller which input was missing rather than reporting the whole feature as unconfigured, and its status light no longer claims nothing is set up when the only problem was the address you typed.",
 			"tags": [
