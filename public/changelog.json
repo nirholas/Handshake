@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T19:53:52.096Z",
+	"generated_at": "2026-08-16T20:17:45.645Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -151,6 +151,17 @@
 			"link": "/gallery",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Coin Autopilot tells you whether your rules actually saved",
+			"summary": "Coin Autopilot is where you set the floors that decide when your coin buys itself back and when it pays creator fees out to holders, so a rule that looks set but never reached the database costs you real money. Two ways that could happen are fixed. A threshold you typed was only sent when the field lost focus, so typing a new floor and then closing the tab or hitting back threw it away silently; it now saves shortly after you stop typing, and anything still in flight is sent as the page closes. And the only confirmation was a toast that vanished after a couple of seconds, which meant a failed write left the switch showing a setting the server had never accepted. Each coin card now reports its own save: Saving, then Saved, or a Not saved marker that names the reason and stays put with a Retry button until the write lands. A coin you have never configured is marked Defaults, so the platform's inherited settings can no longer be mistaken for rules you chose. If the service goes down the page says so in both columns instead of leaving loading placeholders spinning, and it restores itself when the service returns rather than waiting for you to press Retry. Signed out, it stops retrying an endpoint that will keep refusing. Screen reader and keyboard fixes throughout: every switch and floor field is now named, save results are announced, the loading state is cleared when the data arrives, and the number fields have a visible focus ring.",
+			"link": "/autopilot",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

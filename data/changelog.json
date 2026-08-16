@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Coin Autopilot tells you whether your rules actually saved",
+			"summary": "Coin Autopilot is where you set the floors that decide when your coin buys itself back and when it pays creator fees out to holders, so a rule that looks set but never reached the database costs you real money. Two ways that could happen are fixed. A threshold you typed was only sent when the field lost focus, so typing a new floor and then closing the tab or hitting back threw it away silently; it now saves shortly after you stop typing, and anything still in flight is sent as the page closes. And the only confirmation was a toast that vanished after a couple of seconds, which meant a failed write left the switch showing a setting the server had never accepted. Each coin card now reports its own save: Saving, then Saved, or a Not saved marker that names the reason and stays put with a Retry button until the write lands. A coin you have never configured is marked Defaults, so the platform's inherited settings can no longer be mistaken for rules you chose. If the service goes down the page says so in both columns instead of leaving loading placeholders spinning, and it restores itself when the service returns rather than waiting for you to press Retry. Signed out, it stops retrying an endpoint that will keep refusing. Screen reader and keyboard fixes throughout: every switch and floor field is now named, save results are announced, the loading state is cleared when the data arrives, and the number fields have a visible focus ring.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/autopilot"
+		},		{
+			"date": "2026-08-16",
 			"title": "Crypto Categories is searchable, and opens in a fraction of the time",
 			"summary": "The sector leaderboard at /categories renders every category the market data provider reports, and that list has grown past 750. All of them were being drawn into the page at once, roughly 2,250 coin icons in a single paint, and the only way to find a sector was to scroll past every one ranked above it. The table now opens with the top 50 and pages in 50 more at a time, and a search box narrows the whole list by name before you ever need to page. Full category names are shown too, instead of being cut off mid-word on a wide screen with half the row empty. The three things that can go wrong now read differently and each offers a way out: a failed load says the data provider did not answer and gives you a Try again button that refetches, a provider reporting nothing says so plainly, and a search that matches nothing offers to clear itself. Sortable column headers now announce themselves to screen readers, and keyboard focus stays on the column you just sorted instead of being dropped back to the top of the page.",
 			"tags": [

@@ -37,7 +37,7 @@ Auth is a session cookie or a bearer token. Every read and write is rate-limited
 3. Use the master switch on a card to turn Autopilot on or off for that coin. "Autopilot on" means its rules run; "Paused" means the crons skip it.
 4. Set the **Buyback and burn** rule: toggle it on, set a minimum USDC floor, and choose whether fees are swapped into the token before burning or burned directly.
 5. Set the **Distribute to holders** rule: toggle it on and set its minimum USDC floor. Enable "Narrate this coin's actions on the live feed" to have the agent speak its moves.
-6. Every change autosaves (checkboxes immediately, number fields after a short debounce). A toast confirms "Autopilot updated".
+6. Every change autosaves: checkboxes the moment you flip one, number fields a short debounce after you stop typing (you do not have to leave the field, and a value typed right before you navigate away is still sent). The card itself reports the write as `Saving` then `Saved`, and a toast confirms "Autopilot updated". If the write fails, the card keeps a `Not saved` marker with the reason and a **Retry** button until it lands, so a rule you believe you set is never silently missing from the database.
 7. Watch the activity feed and the narrator. As fees accumulate past your thresholds, the crons act, and each buyback or distribution appears with its status and a Solscan link to the on-chain transaction.
 
 ## Examples
@@ -79,12 +79,12 @@ A confirmed buyback narrates as: "Bought back and burned $120 of $YOURCOIN. Supp
 
 - **Ownership scoped.** Every read and write is filtered to coins whose `user_id` is yours. Posting a policy for a mint you do not own returns `404 not_found`.
 - **Floors are the safety valve.** A buyback or distribution only fires once the relevant vault clears the USDC floor you set. Set a floor to zero and it acts whenever the vault is non-empty; raise it to batch actions.
-- **Merge semantics.** Partial POSTs only change the fields present. A missing policy row reports legacy defaults (everything enabled, zero floors, narrate on) with `configured: false`.
+- **Merge semantics.** Partial POSTs only change the fields present. A missing policy row reports legacy defaults (everything enabled, zero floors, narrate on) with `configured: false`. The card marks that coin **Defaults** so an inherited "Autopilot on" is never mistaken for a rule you chose; the badge clears as soon as your first change saves.
 - **Signed out** renders a "Sign in to manage autopilot" state; `GET` returns `401` and the page routes you to the dashboard.
 - **Empty state** appears when you own no coins, pointing you to the launcher rather than showing a blank void.
-- **Error and retry.** A network or server error renders an inline "Couldn't load" card with a Retry button; a transient poll failure keeps the last good render and retries on the next tick.
-- **Live refresh** polls every 20 seconds and only refreshes the activity feed and narrator, never the control inputs you may be editing, so a poll can never overwrite your keystrokes.
-- **Atomics are integers.** Thresholds are clamped to non-negative integer atomic strings server-side; a decimal is truncated, a negative or non-numeric value falls back to zero.
+- **Error and retry.** A network or server error renders an inline "Couldn't load your coins" card with a Retry button, and the activity column says why it is empty instead of leaving loading skeletons on screen. You do not have to press Retry: the poll re-runs the full load while the page is in that state, so it restores itself the moment the API is reachable again.
+- **Live refresh** polls every 20 seconds. Once your cards are on screen it refreshes only the activity feed and narrator, never the control inputs you may be editing, so a poll can never overwrite your keystrokes. A session that expires under the page swaps in the signed-out state rather than leaving controls that can no longer save. Signed out, the poll stops entirely instead of retrying an endpoint that will keep refusing.
+- **Atomics are integers.** Thresholds are clamped to non-negative integer atomic strings server-side; a decimal is truncated, a negative or non-numeric value falls back to zero. The field shows you that clamp when you leave it, so what you see is what was stored.
 - **On-chain actions are the crons', not the page's.** The console never signs a transaction. It only writes policy rows; the buyback and distribute crons are what move funds, on their own schedule, within the vault floors you set.
 
 ## Related
