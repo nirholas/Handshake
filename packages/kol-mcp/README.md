@@ -113,6 +113,21 @@ Both tools read live data: holdings, P&L and trade feeds move between calls, so 
 
 `has_activity: false` on a portfolio (no holdings and no trades) means the proxy has no recorded history for that address yet: an honest "no data", not a failure. A **null** P&L field with `pnl_source: null` is the same kind of honesty at field level: three.ws has no trade history for that wallet in the window, so it reports nothing rather than a zero that would read as a flat record.
 
+An outage is never dressed up as either of those. When the holdings provider is down or rate-limited, three.ws omits the wallet's row rather than inventing one, and `get_wallet_portfolio` fails with **`upstream_unavailable`** instead of answering with an empty card. A quiet wallet and a dark provider are different answers, and an agent copying a trader needs to be able to tell them apart.
+
+## Examples
+
+Runnable examples live in [`examples/`](./examples):
+
+```bash
+node examples/list-tools.mjs     # both tools with their full input schemas
+node examples/wallet-card.mjs    # a trader's portfolio card + trades, live
+```
+
+Both spawn this server over stdio and read the live public KOL API. Every tool
+here is read-only, so nothing can be signed, spent, or published. See
+[`examples/README.md`](./examples/README.md) for expected output.
+
 ## Requirements
 
 - **Node.js >= 20.**

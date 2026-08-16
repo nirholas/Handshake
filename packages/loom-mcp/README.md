@@ -85,7 +85,9 @@ The `glbUrl` must be an **https** URL hosted on one of these domains (enforced b
 
 `three.ws` · `r2.dev` · `cloudflarestorage.com` · `replicate.delivery` · `githubusercontent.com`
 
-Re-submitting the exact same `glbUrl` returns the existing creation instead of duplicating it.
+Re-submitting the exact same `glbUrl` returns the existing creation instead of duplicating it. The dedupe is best-effort by design: it scans only the newest few entries, which is where an accidental re-POST lands. Re-submitting a GLB that has since scrolled down the feed creates a second record.
+
+`get_creation` answers an id that no longer exists with a typed **`not_found`** error rather than an empty creation, so a stale id in a saved reference is unambiguous.
 
 ## Example
 
@@ -120,6 +122,20 @@ Re-submitting the exact same `glbUrl` returns the existing creation instead of d
 ```
 
 Drop a creation's `iframe_snippet` onto any web page, or open its `viewer_url` to orbit the model (with AR on supported devices).
+
+## Examples
+
+Runnable examples live in [`examples/`](./examples):
+
+```bash
+node examples/list-tools.mjs     # all 3 tools with their full input schemas
+node examples/browse-loom.mjs    # a page of the gallery + one creation's embed, live
+```
+
+Both spawn this server over stdio and read the live public gallery. They are
+deliberately read-only: `submit_creation` posts to a world-readable feed, so no
+example writes on your behalf. See [`examples/README.md`](./examples/README.md)
+for expected output.
 
 ## Requirements
 
