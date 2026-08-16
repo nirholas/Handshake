@@ -281,3 +281,4 @@ Seeded rows in `agent_memories` are found by tag (`tags && '{x_seed}'`) and by
 | Consent screen (renders the server's disclosure verbatim) | [public/settings/index.html](../public/settings/index.html) |
 | Transform tests | [tests/api/x-memory-seed-transform.test.js](../tests/api/x-memory-seed-transform.test.js), [tests/api/agents-memory-seed.test.js](../tests/api/agents-memory-seed.test.js) |
 | Consent gate, scope gate and revocation tests | [tests/api/x-memory-seed-consent.test.js](../tests/api/x-memory-seed-consent.test.js), [tests/api/x-scopes.test.js](../tests/api/x-scopes.test.js) |
+| What the connect redirect asks X for | [tests/api/x-connect-scope.test.js](../tests/api/x-connect-scope.test.js) |
