@@ -308,6 +308,25 @@ function applyArchetype(index) {
 	autoSavePersonaToAgent(archetype.label);
 }
 
+// Clearing has to unwind every surface the persona lit up. The sidebar used to
+// run its own shorter version and left the status bar, the persona card and the
+// selected archetype chip behind, all describing a persona that no longer
+// existed.
+function clearPersona() {
+	state.persona = null;
+	persistPersona();
+	$('brPersonaCard').classList.remove('show');
+	$('brStatusBar').classList.remove('show');
+	$('brToggleAdvanced').textContent = 'Customize';
+	document.querySelectorAll('.br-archetype-chip').forEach(chip => {
+		chip.classList.remove('selected');
+		chip.setAttribute('aria-pressed', 'false');
+	});
+	updatePersonaMini();
+	updatePersonaBanner();
+	toast('Persona cleared');
+}
+
 function showAuthGate() {
 	let gate = $('brAuthGate');
 	if (gate) { gate.style.display = ''; return; }
@@ -587,9 +606,9 @@ function renderSidebar() {
 		return;
 	}
 	el.innerHTML = state.sessions.map(s => `
-		<div class="br-sess${s.id === state.currentId ? ' active' : ''}" data-id="${escHtml(s.id)}">
-			<span class="br-sess-name">${escHtml(s.name)}</span>
-			<button class="br-sess-del" data-del="${escHtml(s.id)}" title="Delete">x</button>
+		<div class="br-sess${s.id === state.currentId ? ' active' : ''}">
+			<button type="button" class="br-sess-name" data-id="${escHtml(s.id)}"${s.id === state.currentId ? ' aria-current="true"' : ''}>${escHtml(s.name)}</button>
+			<button type="button" class="br-sess-del" data-del="${escHtml(s.id)}" title="Delete session" aria-label="Delete session ${escHtml(s.name)}">x</button>
 		</div>
 	`).join('');
 }
@@ -1170,16 +1189,7 @@ function bindEvents() {
 		card.classList.toggle('show', !isOpen);
 		$('brToggleAdvanced').textContent = isOpen ? 'Customize' : 'Done';
 	});
-	$('brResetPersona').addEventListener('click', () => {
-		state.persona = null;
-		persistPersona();
-		$('brPersonaCard').classList.remove('show');
-		$('brStatusBar').classList.remove('show');
-		document.querySelectorAll('.br-archetype-chip').forEach(c => c.classList.remove('selected'));
-		updatePersonaMini();
-		updatePersonaBanner();
-		toast('Persona cleared');
-	});
+	$('brResetPersona').addEventListener('click', clearPersona);
 
 	// Agent switcher — persist selection and re-save persona if one is active
 	$('brAgentSelect').addEventListener('change', () => {
@@ -1189,13 +1199,7 @@ function bindEvents() {
 
 	// Sidebar: build persona shortcut
 	$('brBuildPersonaBtn').addEventListener('click', () => setTab('persona'));
-	$('brMiniClear').addEventListener('click', () => {
-		state.persona = null;
-		persistPersona();
-		updatePersonaMini();
-		updatePersonaBanner();
-		toast('Persona cleared');
-	});
+	$('brMiniClear').addEventListener('click', clearPersona);
 
 	// Playground mode toggle
 	document.querySelectorAll('.br-mode-btn').forEach(b => {

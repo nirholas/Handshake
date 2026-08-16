@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T19:29:40.162Z",
+	"generated_at": "2026-08-16T19:33:21.877Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -79,6 +79,17 @@
 			"link": "/agent-studio",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Agora citizens show the craft they actually work, and the square fits a phone",
+			"summary": "Every one of the 200 citizens in the Commons was labelled a Fetcher. The nameplate over each avatar, the citizen list that screen readers and keyboard users navigate by, and the passport header all read the citizen's capability list rather than the craft it is known for. Every citizen carries the fetcher capability, because calling a paid service is the one job anyone in the Commons can take, so that list always begins with Fetcher no matter who you were looking at. Mira the Appraiser and Aria the Sculptor both wore a FETCHER chip, sitting under a coloured ring that was already showing their real craft. Citizens now say what they do: the crowd, the list and the passport agree with each other and with the colour, and a passport leads with the primary craft before the rest of what that citizen is able to claim. On a phone the bottom of the square was a pile-up. The job board, the sign-in bar, the language switcher and the Enter the Commons button all pinned themselves to the same strip of screen, so at 320px wide the button that takes you into the world was completely buried under two other controls and the board's last rows were cut off. Those layers now stack above one another at every screen size, and the stack follows the sign-in bar as it changes height.",
+			"link": "/agora",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -447,6 +458,16 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The BNB Chain page now says how many demos are actually live",
+			"summary": "The BNB Chain page checks each of its three demo tracks against the running deployment and reports the tally in its header. That line was stuck: it read \"Checking which tracks are live\" forever, even once all three cards beside it had finished and said Live. The page's own result was being written first and then overwritten by the translation pass that swaps the page into your language, so the finished count never survived. The header now holds its result and reads \"3 of 3 demo tracks live now\". The same checks were also leaving four cancelled requests in the browser's network log on every visit, which made a healthy page look like it was failing to anyone with developer tools open. They now close cleanly.",
+			"link": "/bnb",
+			"tags": [
+				"fix"
 			]
 		},
 		{

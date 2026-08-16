@@ -17,6 +17,13 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) =>
 	String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
 
+/** Both columns ship with `aria-busy` set so the skeletons announce as loading.
+ *  Every render path has to clear it, or a screen reader is told the region is
+ *  still loading for as long as the tab stays open. */
+function settle(el) {
+	if (el) el.removeAttribute('aria-busy');
+}
+
 function usdcFromAtomics(atomics) {
 	const n = Number(BigInt(atomics || '0')) / 10 ** USDC_DECIMALS;
 	if (!Number.isFinite(n)) return '0';
@@ -96,7 +103,7 @@ function narrate(activity, coinsById, agentImage) {
 	}
 
 	if (!a) {
-		$('#narratorLine').textContent = 'Standing by — no autonomous actions yet.';
+		$('#narratorLine').textContent = 'Standing by. No autonomous actions yet.';
 		$('#narratorLine').className = 'narrator-line';
 		$('#narratorMeta').textContent = 'Your agent will speak here the moment it acts.';
 		return;
@@ -127,6 +134,7 @@ function narrate(activity, coinsById, agentImage) {
 function coinCard(c) {
 	const p = c.policy;
 	const on = p.enabled;
+	const label = c.name || c.symbol || 'this coin';
 	const initials = (c.symbol || c.name || 'A').slice(0, 2).toUpperCase();
 	const img = c.image
 		? `<img loading="lazy" decoding="async" src="${esc(c.image)}" alt="" data-fallback="remove">`
@@ -136,6 +144,16 @@ function coinCard(c) {
 		: c.stats.progress_pct != null
 			? `<span class="pill paused" title="Bonding-curve progress">${Number(c.stats.progress_pct).toFixed(0)}% to grad</span>`
 			: '';
+	// The API reports `configured: false` for a coin with no policy row: it runs
+	// on the platform defaults, which is not the same as rules the owner chose.
+	// Say so, or an inherited "Autopilot on" reads as a deliberate setting.
+	const defaultPill = p.configured
+		? ''
+		: `<span class="pill default" data-role="default-pill" title="No rules saved yet. This coin runs on the platform defaults until you change something here.">Defaults</span>`;
+	// Field ids are per-coin so the visible "Min" label points at the right input
+	// on a page that renders one card per launched coin.
+	const bbId = `bb-min-${esc(c.mint)}`;
+	const dsId = `ds-min-${esc(c.mint)}`;
 
 	return `
 	<div class="coin-card ${on ? 'on' : ''}" data-mint="${esc(c.mint)}" data-network="${esc(c.network)}">
@@ -150,11 +168,13 @@ function coinCard(c) {
 			</div>
 			<div class="coin-status">
 				${gradPill}
+				${defaultPill}
 				<span class="pill ${on ? 'live' : 'paused'}" data-role="status-pill">
 					<span class="dot"></span>${on ? 'Autopilot on' : 'Paused'}
 				</span>
+				<span class="save-state" data-role="save-state" role="status" aria-live="polite"></span>
 				<label class="sw" title="Master autopilot switch">
-					<input type="checkbox" data-field="enabled" ${on ? 'checked' : ''}>
+					<input type="checkbox" data-field="enabled" aria-label="Autopilot for ${esc(label)}" ${on ? 'checked' : ''}>
 					<span class="sw-track"></span>
 				</label>
 			</div>
@@ -171,13 +191,15 @@ function coinCard(c) {
 				<div class="rule ${p.buyback_enabled ? '' : 'off'}" data-rule="buyback">
 					<div class="rule-head">
 						<div><div class="rule-title">Buyback &amp; burn</div></div>
-						<label class="sw"><input type="checkbox" data-field="buyback_enabled" ${p.buyback_enabled ? 'checked' : ''}><span class="sw-track"></span></label>
+						<label class="sw"><input type="checkbox" data-field="buyback_enabled" aria-label="Buyback and burn for ${esc(label)}" ${p.buyback_enabled ? 'checked' : ''}><span class="sw-track"></span></label>
 					</div>
 					<div class="rule-desc">Spend collected creator fees to buy the token back and burn it once the buyback vault clears your floor.</div>
 					<div class="rule-field">
-						<label>Min</label>
+						<label for="${bbId}">Min</label>
 						<div class="amt-wrap">
-							<input type="number" min="0" step="0.01" data-field="buyback_min_usdc" value="${esc(usdcFromAtomics(p.buyback_min_atomics))}">
+							<input type="number" min="0" step="0.01" id="${bbId}" data-field="buyback_min_usdc"
+								aria-label="Minimum buyback vault balance in USDC before ${esc(label)} buys back"
+								value="${esc(usdcFromAtomics(p.buyback_min_atomics))}">
 							<span class="amt-unit">USDC</span>
 						</div>
 					</div>
@@ -187,13 +209,15 @@ function coinCard(c) {
 				<div class="rule ${p.distribute_enabled ? '' : 'off'}" data-rule="distribute">
 					<div class="rule-head">
 						<div><div class="rule-title">Distribute to holders</div></div>
-						<label class="sw"><input type="checkbox" data-field="distribute_enabled" ${p.distribute_enabled ? 'checked' : ''}><span class="sw-track"></span></label>
+						<label class="sw"><input type="checkbox" data-field="distribute_enabled" aria-label="Distribute to holders for ${esc(label)}" ${p.distribute_enabled ? 'checked' : ''}><span class="sw-track"></span></label>
 					</div>
 					<div class="rule-desc">Push accumulated payment-vault fees out to your configured shareholders once the vault clears your floor.</div>
 					<div class="rule-field">
-						<label>Min</label>
+						<label for="${dsId}">Min</label>
 						<div class="amt-wrap">
-							<input type="number" min="0" step="0.01" data-field="distribute_min_usdc" value="${esc(usdcFromAtomics(p.distribute_min_atomics))}">
+							<input type="number" min="0" step="0.01" id="${dsId}" data-field="distribute_min_usdc"
+								aria-label="Minimum payment vault balance in USDC before ${esc(label)} distributes"
+								value="${esc(usdcFromAtomics(p.distribute_min_atomics))}">
 							<span class="amt-unit">USDC</span>
 						</div>
 					</div>

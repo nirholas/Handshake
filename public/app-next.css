@@ -1664,6 +1664,14 @@ body.app-next-body.nxt-chat-merged .nxt-chat-input-wrap {
 	box-shadow: none;
 }
 
+/* …but not the focus ring: the rule above outranks the plain :focus-within
+   selector, so without this the composer loses every focus cue the moment the
+   conversation thread opens. */
+body.app-next-body.nxt-chat-merged .nxt-chat-input-wrap:focus-within {
+	border-color: rgba(255, 255, 255, 0.45);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);
+}
+
 /* ── Mobile ────────────────────────────────────────────────────────────── */
 
 @media (max-width: 720px) {

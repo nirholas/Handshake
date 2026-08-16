@@ -369,7 +369,16 @@ function buildEvidence(agent, { solRep, registry, holdsThree }) {
 		ev.lineage = { label: 'Fork lineage', href: `/avatars/${agent.avatar_id}` };
 	}
 	if (agent.erc8004_agent_id) {
-		ev.identity = { label: 'On-chain identity', href: `/agent/${agent.id}/onchain` };
+		// The registered identity's public page is the discover detail route
+		// (/discover/a/:chainId/:agentId). Without a chain the record predates the
+		// unified deploy, so fall back to the agent profile, which mounts the
+		// on-chain card. There is no /agent/:id/onchain route.
+		ev.identity = {
+			label: 'On-chain identity',
+			href: agent.chain_id
+				? `/discover/a/${agent.chain_id}/${agent.erc8004_agent_id}`
+				: `/agent/${agent.id}`,
+		};
 	}
 	if (registry?.count > 0) {
 		ev.registry = { label: 'On-chain reviews', href: '/reputation' };
@@ -422,7 +431,11 @@ function buildGuidance(result, inputs, agent) {
 			action: 'verify_identity',
 			label: 'Verify your on-chain identity',
 			detail: 'Register an ERC-8004 identity to add provable trust.',
-			href: `/agent/${agent.id}/onchain`,
+			// /deploy is the ERC-8004 registration wizard; ?avatar= prefills it from
+			// this agent's saved avatar so the owner lands on a ready form.
+			href: agent.avatar_id
+				? `/deploy?avatar=${encodeURIComponent(agent.avatar_id)}`
+				: '/deploy',
 		});
 	}
 	if (inputs.distinctTippers < 3) {

@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Agora citizens show the craft they actually work, and the square fits a phone",
+			"summary": "Every one of the 200 citizens in the Commons was labelled a Fetcher. The nameplate over each avatar, the citizen list that screen readers and keyboard users navigate by, and the passport header all read the citizen's capability list rather than the craft it is known for. Every citizen carries the fetcher capability, because calling a paid service is the one job anyone in the Commons can take, so that list always begins with Fetcher no matter who you were looking at. Mira the Appraiser and Aria the Sculptor both wore a FETCHER chip, sitting under a coloured ring that was already showing their real craft. Citizens now say what they do: the crowd, the list and the passport agree with each other and with the colour, and a passport leads with the primary craft before the rest of what that citizen is able to claim. On a phone the bottom of the square was a pile-up. The job board, the sign-in bar, the language switcher and the Enter the Commons button all pinned themselves to the same strip of screen, so at 320px wide the button that takes you into the world was completely buried under two other controls and the board's last rows were cut off. Those layers now stack above one another at every screen size, and the stack follows the sign-in bar as it changes height.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/agora"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The BNB Chain page now says how many demos are actually live",
+			"summary": "The BNB Chain page checks each of its three demo tracks against the running deployment and reports the tally in its header. That line was stuck: it read \"Checking which tracks are live\" forever, even once all three cards beside it had finished and said Live. The page's own result was being written first and then overwritten by the translation pass that swaps the page into your language, so the finished count never survived. The header now holds its result and reads \"3 of 3 demo tracks live now\". The same checks were also leaving four cancelled requests in the browser's network log on every visit, which made a healthy page look like it was failing to anyone with developer tools open. They now close cleanly.",
+			"tags": [
+				"fix"
+			],
+			"link": "/bnb"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "The agent wallet is usable on a phone again, and visitors see a real balance",
 			"summary": "On a narrow screen the wallet hub was quietly cut off. The column sized itself to the width of its tab strip rather than to the screen, and because the page cannot scroll sideways everything past the fold was simply unreachable: the Refresh button and the right edge of every card were invisible on a phone. The column now fits the screen and the section tabs scroll on their own, so every control is reachable at any width. Two things were also wrong for anyone looking at an agent wallet they do not own. The balance read as a dash even though an agent's balance is public on-chain data, and it now shows the real live figure. The recent-activity card claimed it had failed to load and offered a Retry that could never work, because the transaction feed is private to the wallet's owner; it now says exactly that and links to the block explorer, where the same transactions are public. Finally, the browser tab title sometimes flipped back to a generic label instead of naming the agent whose wallet you were looking at.",
 			"tags": [

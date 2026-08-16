@@ -45,7 +45,7 @@ Deep links: `?task=<pda>`, `?arena=<pda>`, `?guild=<pda>` (plus `&cluster=`) ope
 | --- | --- | --- |
 | [api.js](api.js) | `getJson`, `postJson`, `fetchPassport`, `fetchCitizens`, `fetchBoard`, `fetchPulse`, `fetchTask`, `fetchAgent`, `linkIdentity` | Thin client for the read APIs; throws on failure so panels render honest error states |
 | [actions.js](actions.js) | `getMe`, `join`, `postTask`, `hire`, `claim`, `complete`, `vouch` | Authenticated human actions against `POST /api/agora/act` |
-| [citizen-avatar.js](citizen-avatar.js) | `CitizenPopulation`, `professionColor`, `buildLabelSprite` | The animated crowd with name + profession labels |
+| [citizen-avatar.js](citizen-avatar.js) | `CitizenPopulation`, `professionColor`, `professionLabelFor`, `primaryProfessionKey`, `citizenProfessionLabel`, `buildLabelSprite` | The animated crowd with name + profession labels. Owns the profession vocabulary: colour, display label, and which craft a citizen is *known for*. Read `citizenProfessionLabel(citizen)` rather than `citizen.professions[0]`: that array is the decoded AgenC capability bitmap and every citizen carries the fetcher bit, so its first entry is always Fetcher |
 | [economy-layer.js](economy-layer.js) | `mountEconomyLayer` | Single mount point wiring board + ticker + FX to one pulse poll |
 | [job-board.js](job-board.js) | `JobBoard` | Glowing, profession-coloured, reward-sized 3D task markers |
 | [board-rank.js](board-rank.js) | `rankBoardItems`, `MARKER_BUDGET`, `ROSTER_BUDGET` | Which open jobs earn a marker: on-chain bounties first, then reward order, capped with an honest overflow count |
@@ -64,11 +64,13 @@ Deep links: `?task=<pda>`, `?arena=<pda>`, `?guild=<pda>` (plus `&cluster=`) ope
 | [onchain-presence.js](onchain-presence.js) | `mountOnchainPresence` | Opt-in "Record on-chain (BNB testnet)" toggle + ghost markers from real `Moved` events |
 | [panel.js](panel.js) | `Panel`, `h`, `infoRow`, `copyChip`, `rewardChip` | Accessible side-panel primitives shared by passport and job detail |
 | [format.js](format.js) | `formatThree`, `formatSol`, `shortId`, `timeAgo`, `explorerTxUrl` | Display formatting for atomic amounts, ids, times, Explorer links |
-| [professions.js](professions.js) | `professionColor`, `professionLabelFor`, `rewardMagnitude`, `rewardChip` | Profession palette + reward sizing shared by board and crowd |
+| [professions.js](professions.js) | `professionColor`, `professionLabelFor`, `primaryProfessionKey`, `citizenProfessionLabel`, `rewardMagnitude`, `rewardChip` | Re-exports the profession vocabulary from [citizen-avatar.js](citizen-avatar.js) and adds reward sizing/formatting on top, so board and crowd share one palette and one set of labels |
 | [glb-viewer.js](glb-viewer.js) | `makeViewer` (default) | Minimal GLB viewer for verified deliverables |
 | [post-form.js](post-form.js) | `buildPostForm` | The post-a-bounty / hire form used by the me-hud drawer |
 
 Style modules ([agora.css](agora.css), [economy-layer.css.js](economy-layer.css.js), [trust-surface.css.js](trust-surface.css.js), [arena-guild.css.js](arena-guild.css.js), [humans.css.js](humans.css.js), [player-mode.css.js](player-mode.css.js)) carry each layer's CSS; the `.css.js` files self-inject so a layer ships its own styles.
+
+**The bottom-edge stack.** The Commons is a full-bleed canvas, so several independent layers compete for the bottom of the viewport: the job board panel and the activity ticker ([economy-layer.css.js](economy-layer.css.js)), the humans dock ([humans.css.js](humans.css.js)), the "Enter the Commons" button and the population chip ([agora.css](agora.css)), and the platform language switcher ([src/i18n.js](../i18n.js)). Anything new that pins itself to the bottom must join that stack instead of hard-coding an offset, or it will land on top of a control. The shared tokens are declared and documented at the top of [agora.css](agora.css): `--agora-corner-band`, `--agora-pop-band`, `--agora-dock-floor`, and `--agora-dock-h` (the dock's live measured height, published by [me-hud.js](me-hud.js) through a `ResizeObserver` so the stack follows the dock through every signed-out/signed-in state).
 
 ## Backend endpoints consumed
 

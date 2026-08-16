@@ -2,7 +2,7 @@
 // ---------------------------------------------------------------------------
 // Crypto category leaderboard for the /categories page. Proxies CoinGecko
 // /coins/categories?order=market_cap_desc and shapes each row down to the
-// fields the page renders — id, name, market cap, 24h market-cap change, 24h
+// fields the page renders: id, name, market cap, 24h market-cap change, 24h
 // volume, and the top-3 coin icons for the avatar stack. Non-finite numbers
 // collapse to null so the client never renders NaN. Cached 5 min in-memory
 // + CDN, like the sibling coin endpoints.
@@ -26,7 +26,7 @@ function shapeCategory(c) {
 	};
 }
 
-// Exported for the paid Market Data API (api/_lib/market-data/) — the x402
+// Exported for the paid Market Data API (api/_lib/market-data/): the x402
 // market-categories endpoint sells the same sector leaderboard this page renders.
 export async function buildCategories() {
 	const raw = await geckoFetch('/coins/categories?order=market_cap_desc', {
@@ -58,7 +58,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'category data is unavailable right now — retry shortly',
+			'category data is unavailable right now, retry shortly',
 		);
 	}
 });

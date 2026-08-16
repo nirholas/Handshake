@@ -77,7 +77,21 @@ body {
 }
 .br-sess:hover { background: #0e0e0e; color: #b0b0b0; }
 .br-sess.active { background: #151515; color: #dde0f0; border-color: #222222; }
-.br-sess-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.br-sess-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+}
 .br-sess-del {
 	background: none;
 	border: none;

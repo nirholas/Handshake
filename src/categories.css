@@ -1,5 +1,5 @@
 /*
- * /categories — sector leaderboard. Reuses the shared cv-table / cv-stat-card
+ * /categories: sector leaderboard. Reuses the shared cv-table / cv-stat-card
  * system from coin-pages.css; this file adds only the stacked top-3 coin
  * avatars that identify each category in the name cell.
  */

@@ -1385,7 +1385,7 @@
 		"immersive": "✦ Immersive",
 		"join": "Join",
 		"leave_room": "Leave room",
-		"meta_description": "A live multi-model AR studio: place any number of 3D models and avatars in your real space through your camera, pull in your forge creations or any GLB link, and generate new models with a prompt without leaving the camera view.",
+		"meta_description": "A live multi-model AR studio: place any number of 3D models and avatars in your real space through your camera, pull in your forge creations, community models, the CC0 object library, or any GLB link, and generate new models with a prompt without leaving the camera view.",
 		"meta_og_description": "Place any number of 3D models in your real space, and forge new ones by prompt without leaving the camera.",
 		"meta_og_title": "AR Studio · three.ws",
 		"meta_title": "AR Studio · three.ws",
