@@ -63,7 +63,9 @@ Every spend writes a row to the custody event ledger — amount, USD value, dest
 
 ## Where owners manage it
 
-The **Agent Wallet Hub** lives at `/agent/:id/wallet`. Owners see all 23 sections; a visitor to a public agent page sees a read-only view (balance and deposit address only). A network selector switches every read and write between mainnet and devnet.
+The **Agent Wallet Hub** lives at `/agent/:id/wallet`. Owners see all 23 sections; a visitor to a public agent page sees a read-only view: Balance, Deposit, Trust, Trade, and Pulse. Everything a visitor sees is public on-chain data, so the balance a visitor reads is the same live figure the owner reads. The transaction feed is the exception: it is owner-only server-side, so the visitor's Balance tab says so and links to the block explorer instead. A network selector switches every read and write between mainnet and devnet.
+
+`/agent-wallet` is the same hub reached without naming an agent. It resolves the signed-in owner's agents: one agent opens its hub directly, several render a picker, none offers a route to create the first one, and a signed-out visitor is asked to sign in.
 
 Key endpoints:
 
