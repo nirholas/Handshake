@@ -17,6 +17,7 @@ const els = {
 	empty: $('#empty'),
 	count: $('#count'),
 	updated: $('#updated'),
+	sources: $('#sources'),
 	q: $('#q'),
 };
 
@@ -47,8 +48,57 @@ function relativeTime(iso) {
 	return d.toLocaleString();
 }
 
+function hostOf(u) {
+	try { return new URL(u).host; } catch { return String(u || ''); }
+}
+
+// A spread is only as complete as the catalogs behind it. One facilitator
+// dropping out removes its listings from every comparison, which reads as
+// "fewer opportunities today" rather than "this scan is partial". Name the
+// sources, and say plainly when the view is degraded.
+function renderSources(sources, errors) {
+	const byHost = new Map();
+	for (const s of sources || []) {
+		const host = hostOf(s.facilitator);
+		if (!host) continue;
+		const prev = byHost.get(host) || { host, count: 0, ok: true, reasons: [] };
+		prev.count += Number(s.count) || 0;
+		if (!s.ok) prev.ok = false;
+		byHost.set(host, prev);
+	}
+	for (const e of errors || []) {
+		const host = hostOf(e.facilitator);
+		const prev = byHost.get(host);
+		if (!prev) continue;
+		prev.ok = false;
+		if (e.error && !prev.reasons.includes(e.error)) prev.reasons.push(e.error);
+	}
+	const all = [...byHost.values()];
+	if (all.length === 0) {
+		els.sources.replaceChildren();
+		return;
+	}
+	const down = all.filter((s) => !s.ok);
+	const frag = document.createDocumentFragment();
+	if (down.length) {
+		const warn = document.createElement('span');
+		warn.className = 'degraded';
+		warn.textContent = `Partial scan: ${down.length} of ${all.length} facilitators unreachable`;
+		frag.appendChild(warn);
+	}
+	for (const s of all) {
+		const span = document.createElement('span');
+		span.className = `src ${s.ok ? 'ok' : 'down'}`;
+		span.textContent = s.ok ? `${s.host} ${s.count.toLocaleString()}` : `${s.host} unreachable`;
+		if (s.reasons.length) span.title = s.reasons.join('; ');
+		frag.appendChild(span);
+	}
+	els.sources.replaceChildren(frag);
+}
+
 function renderSkeleton() {
 	els.empty.hidden = true;
+	els.sources.replaceChildren();
 	els.grid.setAttribute('aria-busy', 'true');
 	els.updated.textContent = 'loading';
 	const frag = document.createDocumentFragment();
@@ -281,11 +331,17 @@ async function payCheapest(o, btn) {
 			btn.textContent = orig;
 		}
 	} catch (e) {
-		if (e?.code !== 'cancelled') btn.textContent = `Error: ${e?.message || e}`;
-		else btn.textContent = orig;
-	} finally {
-		setTimeout(() => { btn.disabled = false; if (!btn.textContent.startsWith('✓')) btn.textContent = orig; }, 4000);
+		// Closing the modal is a deliberate "not now", not a failure: hand the
+		// button straight back rather than parking it in a progress cursor for
+		// four seconds while the user tries to click it again.
+		if (e?.code === 'cancelled') {
+			btn.disabled = false;
+			btn.textContent = orig;
+			return;
+		}
+		btn.textContent = `Error: ${e?.message || e}`;
 	}
+	setTimeout(() => { btn.disabled = false; if (!btn.textContent.startsWith('✓')) btn.textContent = orig; }, 4000);
 }
 
 let _x402Loaded = null;
@@ -319,6 +375,7 @@ async function load() {
 		if (!r.ok) throw new Error(data?.error_description || data?.error || `HTTP ${r.status}`);
 		state.all = data.opportunities || [];
 		els.updated.textContent = relativeTime(data.updatedAt);
+		renderSources(data.sources, data.errors);
 		renderGrid();
 	} catch (e) {
 		const timedOut = e?.name === 'TimeoutError';
@@ -331,6 +388,7 @@ async function load() {
 			: network ? 'Check your connection and try again.' : escapeHtml(e?.message || String(e));
 		els.grid.replaceChildren();
 		els.grid.setAttribute('aria-busy', 'false');
+		els.sources.replaceChildren();
 		els.count.textContent = '0';
 		els.updated.textContent = 'unavailable';
 		els.empty.hidden = false;
