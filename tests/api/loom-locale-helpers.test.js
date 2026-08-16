@@ -56,7 +56,7 @@ describe('loom validateGlbUrl', () => {
 	it('accepts the hosts a forged GLB can actually live on', () => {
 		for (const url of [
 			'https://three.ws/models/a.glb',
-			'https://cdn.three.ws/models/a.glb',
+			'https://three.ws/cdn/models/a.glb',
 			'https://pub-abc.r2.dev/forge/a.glb',
 			'https://acct.r2.cloudflarestorage.com/a.glb',
 			'https://replicate.delivery/pbxt/a.glb',
