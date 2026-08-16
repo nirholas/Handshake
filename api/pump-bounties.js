@@ -5,7 +5,8 @@
 // cache. Pagination is cursor-based (pass `cursor` = the previous page's
 // `nextCursor`); `status` filters; `limit` caps at 50.
 
-import { cors, json, error, wrap, method } from './_lib/http.js';
+import { cors, json, error, wrap, method, rateLimited } from './_lib/http.js';
+import { limits, clientIp } from './_lib/rate-limit.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
 import { listBounties, PumpGoError } from './_lib/pump-go.js';
 import { clampInt } from './_lib/http-params.js';
@@ -13,6 +14,13 @@ import { clampInt } from './_lib/http-params.js';
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
+
+	// Every (limit, cursor, status) triple is its own cache key, so an unthrottled
+	// caller can walk the parameter space and miss the cache on every request,
+	// turning this proxy into an open amplifier aimed at the upstream. Throttle per
+	// IP first, on the same publicIp bucket the rest of the public read surface uses.
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://localhost');
 	const limit = clampInt(url.searchParams.get('limit'), { max: 50, fallback: 30 });
