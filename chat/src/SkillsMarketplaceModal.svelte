@@ -293,6 +293,20 @@
 
 	// install / uninstall
 
+	// Install/uninstall are cookie-session mutations, so the API requires a
+	// single-use CSRF token (api/_lib/csrf.js). Tokens are consumed per request,
+	// so this always mints a fresh one rather than caching.
+	async function csrfToken() {
+		try {
+			const r = await fetch('/api/csrf-token', { credentials: 'include' });
+			if (!r.ok) return null;
+			const j = await r.json();
+			return j?.data?.token ?? j?.token ?? null;
+		} catch {
+			return null;
+		}
+	}
+
 	async function toggleInstall(skill, e) {
 		e?.stopPropagation();
 		if (!$currentUser) { notify('Sign in to install skills', 'info'); return; }
@@ -327,7 +341,12 @@
 
 		try {
 			const method = wasInstalled ? 'DELETE' : 'POST';
-			const res = await fetch(`/api/skills/${skill.id}/install`, { method, credentials: 'include' });
+			const csrf = await csrfToken();
+			const res = await fetch(`/api/skills/${skill.id}/install`, {
+				method,
+				credentials: 'include',
+				headers: csrf ? { 'x-csrf-token': csrf } : {},
+			});
 			if (!res.ok) throw new Error('Request failed');
 			if (!wasInstalled) {
 				const data = await res.json().catch(() => null);

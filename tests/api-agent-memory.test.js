@@ -105,7 +105,7 @@ describe('agent-memory auth', () => {
 	it('GET without session or bearer returns empty list (200)', async () => {
 		// Public embeds boot this fetch on every page load. Returning an empty
 		// list (instead of 401) keeps the console clean for anonymous viewers.
-		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
@@ -116,7 +116,7 @@ describe('agent-memory auth', () => {
 		const req = mkReq({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { content: 'hi' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { content: 'hi' } },
 		});
 		const res = mkRes();
 		await handler(req, res);
@@ -124,7 +124,7 @@ describe('agent-memory auth', () => {
 	});
 
 	it('DELETE without auth returns 401', async () => {
-		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/mem-1' });
+		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/33333333-3333-4333-8333-333333333333' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(401);
@@ -135,7 +135,7 @@ describe('agent-memory auth', () => {
 		authenticateBearerMock.mockResolvedValue({ userId: 'u1' });
 		queueSql([{ user_id: 'u1' }], []); // ownership check, then list
 
-		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
@@ -174,7 +174,7 @@ describe('agent-memory validation', () => {
 		const req = mkReq({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1' },
+			body: { agentId: '11111111-1111-4111-8111-111111111111' },
 		});
 		const res = mkRes();
 		await handler(req, res);
@@ -184,7 +184,7 @@ describe('agent-memory validation', () => {
 
 	it('GET for nonexistent agent returns empty list (200)', async () => {
 		queueSql([]); // no agent row
-		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=missing' });
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=44444444-4444-4444-8444-444444444444' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
@@ -193,7 +193,7 @@ describe('agent-memory validation', () => {
 
 	it('GET for agent owned by another user returns empty list (200)', async () => {
 		queueSql([{ user_id: 'someone-else' }]);
-		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
@@ -222,7 +222,7 @@ describe('agent-memory list', () => {
 			[
 				{
 					id: 'm1',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'project',
 					content: 'note',
 					tags: ['t'],
@@ -234,7 +234,7 @@ describe('agent-memory list', () => {
 			],
 		);
 
-		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111' });
 		const res = mkRes();
 		await handler(req, res);
 
@@ -243,7 +243,7 @@ describe('agent-memory list', () => {
 		expect(body.entries).toHaveLength(1);
 		expect(body.entries[0]).toMatchObject({
 			id: 'm1',
-			agent_id: 'a1',
+			agent_id: '11111111-1111-4111-8111-111111111111',
 			type: 'project',
 			content: 'note',
 			tags: ['t'],
@@ -256,7 +256,7 @@ describe('agent-memory list', () => {
 
 	it('applies type filter when provided', async () => {
 		queueSql([{ user_id: 'u1' }], []);
-		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1&type=feedback' });
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111&type=feedback' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
@@ -270,7 +270,7 @@ describe('agent-memory list', () => {
 			[
 				{
 					id: 'm2',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'user',
 					content: '',
 					tags: null,
@@ -281,7 +281,7 @@ describe('agent-memory list', () => {
 				},
 			],
 		);
-		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111' });
 		const res = mkRes();
 		await handler(req, res);
 		const body = parseBody(res);
@@ -304,7 +304,7 @@ describe('agent-memory upsert', () => {
 			[
 				{
 					id: 'generated-id',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'project',
 					content: 'hello',
 					tags: [],
@@ -319,7 +319,7 @@ describe('agent-memory upsert', () => {
 		const req = mkReq({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { content: 'hello' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { content: 'hello' } },
 		});
 		const res = mkRes();
 		await handler(req, res);
@@ -333,8 +333,8 @@ describe('agent-memory upsert', () => {
 			[{ user_id: 'u1' }],
 			[
 				{
-					id: 'client-id',
-					agent_id: 'a1',
+					id: '55555555-5555-4555-8555-555555555555',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'user',
 					content: 'c',
 					tags: [],
@@ -350,15 +350,15 @@ describe('agent-memory upsert', () => {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: {
-				agentId: 'a1',
-				entry: { id: 'client-id', type: 'user', content: 'c', salience: 0.9 },
+				agentId: '11111111-1111-4111-8111-111111111111',
+				entry: { id: '55555555-5555-4555-8555-555555555555', type: 'user', content: 'c', salience: 0.9 },
 			},
 		});
 		const res = mkRes();
 		await handler(req, res);
 
 		expect(res.statusCode).toBe(201);
-		expect(parseBody(res).entry.id).toBe('client-id');
+		expect(parseBody(res).entry.id).toBe('55555555-5555-4555-8555-555555555555');
 	});
 
 	it('returns 409 when id collides with another agents memory', async () => {
@@ -368,7 +368,7 @@ describe('agent-memory upsert', () => {
 		const req = mkReq({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { id: 'stolen-id', content: 'x' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { id: '66666666-6666-4666-8666-666666666666', content: 'x' } },
 		});
 		const res = mkRes();
 		await handler(req, res);
@@ -382,7 +382,7 @@ describe('agent-memory upsert', () => {
 		const req = mkReq({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { content: 'x' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { content: 'x' } },
 		});
 		const res = mkRes();
 		await handler(req, res);
@@ -395,7 +395,7 @@ describe('agent-memory upsert', () => {
 			[
 				{
 					id: 'm1',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'project', // server normalized
 					content: 'x',
 					tags: [],
@@ -410,7 +410,7 @@ describe('agent-memory upsert', () => {
 		const req = mkReq({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { type: 'not-a-real-type', content: 'x' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { type: 'not-a-real-type', content: 'x' } },
 		});
 		const res = mkRes();
 		await handler(req, res);
@@ -427,8 +427,8 @@ describe('agent-memory delete', () => {
 	});
 
 	it('deletes a memory owned by the user', async () => {
-		queueSql([{ id: 'mem-1', user_id: 'u1' }], []); // lookup, then delete
-		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/mem-1' });
+		queueSql([{ id: '33333333-3333-4333-8333-333333333333', user_id: 'u1' }], []); // lookup, then delete
+		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/33333333-3333-4333-8333-333333333333' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
@@ -437,15 +437,15 @@ describe('agent-memory delete', () => {
 
 	it('returns 404 for nonexistent memory', async () => {
 		queueSql([]);
-		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/nope' });
+		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/77777777-7777-4777-8777-777777777777' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(404);
 	});
 
 	it('returns 403 when memory belongs to another user', async () => {
-		queueSql([{ id: 'mem-1', user_id: 'other' }]);
-		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/mem-1' });
+		queueSql([{ id: '33333333-3333-4333-8333-333333333333', user_id: 'other' }]);
+		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/33333333-3333-4333-8333-333333333333' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(403);
@@ -479,7 +479,7 @@ describe('agent-memory size + payload limits', () => {
 			return Promise.resolve([
 				{
 					id: 'x',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'project',
 					content: capturedContent,
 					tags: [],
@@ -494,7 +494,7 @@ describe('agent-memory size + payload limits', () => {
 		const req = mkReq({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { content: huge } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { content: huge } },
 		});
 		const res = mkRes();
 		await handler(req, res);
@@ -528,7 +528,7 @@ describe('agent-memory size + payload limits', () => {
 
 	it('caps list limit at 500', async () => {
 		queueSql([{ user_id: 'u1' }], []);
-		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=a1&limit=99999' });
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111&limit=99999' });
 		const res = mkRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
@@ -547,5 +547,130 @@ describe('agent-memory CORS', () => {
 		expect(res.statusCode).toBe(204);
 		expect(res.headers['access-control-allow-methods']).toMatch(/GET/);
 		expect(res.headers['access-control-allow-methods']).toMatch(/DELETE/);
+	});
+});
+
+// ── Malformed input ───────────────────────────────────────────────────────
+//
+// agent_identities.id and agent_memories.id are uuid columns, and `since` /
+// `limit` are interpolated straight into the query. Every case below used to
+// reach Postgres (or `new Date().toISOString()`) with a value it rejects and
+// answer 500 for what is plainly a caller mistake. Where `sqlQueue` is left
+// empty the mock throws on any sql call, so these fail if validation ever stops
+// short-circuiting ahead of the query.
+
+const VALID_AGENT = '11111111-1111-4111-8111-111111111111';
+
+describe('agent-memory rejects malformed input before it reaches Postgres', () => {
+	beforeEach(() => {
+		getSessionUserMock.mockResolvedValue({ id: 'u1' });
+	});
+
+	it('GET with a non-uuid agentId returns 400', async () => {
+		const req = mkReq({ method: 'GET', url: '/api/agent-memory?agentId=not-a-uuid' });
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(400);
+		expect(parseBody(res).error_description).toMatch(/uuid/);
+	});
+
+	it('GET clamps an out-of-range since instead of throwing a RangeError', async () => {
+		queueSql([{ user_id: 'u1' }], []);
+		const req = mkReq({
+			method: 'GET',
+			url: `/api/agent-memory?agentId=${VALID_AGENT}&since=999999999999999999`,
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(200);
+	});
+
+	it('GET falls back to the default for a negative limit', async () => {
+		queueSql([{ user_id: 'u1' }], []);
+		const req = mkReq({ method: 'GET', url: `/api/agent-memory?agentId=${VALID_AGENT}&limit=-1` });
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(200);
+	});
+
+	it('POST with a non-uuid agentId returns 400', async () => {
+		const req = mkReq({
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: { agentId: 'not-a-uuid', entry: { content: 'hi' } },
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(400);
+		expect(parseBody(res).error_description).toMatch(/uuid/);
+	});
+
+	it('POST with a non-object entry returns 400', async () => {
+		const req = mkReq({
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: { agentId: VALID_AGENT, entry: 'oops' },
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(400);
+		expect(parseBody(res).error_description).toMatch(/object/);
+	});
+
+	it('POST with a non-uuid entry.id returns 400', async () => {
+		const req = mkReq({
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: { agentId: VALID_AGENT, entry: { id: 'client-generated', content: 'hi' } },
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(400);
+		expect(parseBody(res).error_description).toMatch(/entry\.id/);
+	});
+
+	it('POST with an unparseable timestamp returns 400', async () => {
+		const req = mkReq({
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: { agentId: VALID_AGENT, entry: { content: 'hi', createdAt: 'not-a-date' } },
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(400);
+		expect(parseBody(res).error_description).toMatch(/timestamps/);
+	});
+
+	it('POST coerces a string salience and non-array tags into column-safe values', async () => {
+		queueSql(
+			[{ user_id: 'u1' }],
+			[
+				{
+					id: '33333333-3333-4333-8333-333333333333',
+					agent_id: VALID_AGENT,
+					content: 'hi',
+					tags: [],
+					salience: 0.5,
+				},
+			],
+		);
+		const req = mkReq({
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: {
+				agentId: VALID_AGENT,
+				entry: { content: 'hi', salience: 'very high', tags: 'not-an-array' },
+			},
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(201);
+	});
+
+	it('DELETE with a non-uuid memory id returns 404', async () => {
+		const req = mkReq({ method: 'DELETE', url: '/api/agent-memory/not-a-uuid' });
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(404);
 	});
 });

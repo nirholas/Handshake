@@ -111,3 +111,22 @@ describe('unrecognised target', () => {
 		expect(body.error_description || body.error).toBeTruthy();
 	});
 });
+
+describe('malformed target', () => {
+	it('does not treat a non-uuid /agent/:id segment as an agent id', async () => {
+		// agent_identities.id is a uuid column: the slug used to reach Postgres as
+		// an uncastable literal and answer 500. The sql mock queue is empty, so a
+		// regression that reintroduces the query fails here rather than 404ing.
+		const { status, body } = await get('https://three.ws/agent/not-a-uuid');
+		expect(status).toBe(404);
+		expect(body.error).toBe('not_found');
+	});
+
+	it('rejects a non-GET method with 405', async () => {
+		const res = makeRes();
+		const req = makeReq('/api/oembed?url=https%3A%2F%2Fthree.ws%2Fnowhere');
+		req.method = 'POST';
+		await handler(req, res);
+		expect(res.statusCode).toBe(405);
+	});
+});

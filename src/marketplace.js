@@ -17,6 +17,7 @@ import {
 	bindMobileSidebar,
 	bindDetailExtras,
 } from './marketplace-detail.js';
+import { consumeCsrfToken } from './api.js';
 import { onchainBadgeHTML } from './shared/onchain-badge.js';
 import { safeUrl } from './safe-url.js';
 import { walletChipHTML, walletChipEl, wireWalletChips } from './shared/agent-wallet-chip.js';
@@ -2762,9 +2763,13 @@ async function toggleSkillInstall(id) {
 	btn.disabled = true;
 	btn.textContent = wasInstalled ? 'Removing…' : 'Installing…';
 	try {
+		// Install/uninstall are cookie-session mutations: the API requires a
+		// single-use CSRF token (api/_lib/csrf.js).
+		const csrf = await consumeCsrfToken().catch(() => null);
 		const r = await fetch(`${API}/skills/${encodeURIComponent(id)}/install`, {
 			method: wasInstalled ? 'DELETE' : 'POST',
 			credentials: 'include',
+			headers: csrf ? { 'x-csrf-token': csrf } : {},
 		});
 		if (r.status === 401) {
 			location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;

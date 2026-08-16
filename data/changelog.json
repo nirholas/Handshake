@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "An expired X connection now offers to reconnect instead of sending you to the login page",
+			"summary": "Posting a Walk screenshot or clip to X goes through your connected X account. When that connection could no longer be renewed, the share endpoint answered with the same code it uses for a signed-out visitor, so the capture panel told an already signed-in user to sign in to three.ws and linked them to the login page, which fixed nothing. That case now comes back as its own answer with the X connect link attached, and the panel offers a Reconnect X button that takes you straight to the flow that repairs it. The share caption also lost a stray dash.",
+			"tags": [
+				"fix"
+			],
+			"link": "/walk"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "The wallet balance API stops calling a rejected upload a validation error",
 			"summary": "Apps and agents that read wallet balances through three.ws get honest answers when a request cannot be read. Posting a body that was too large, or forgetting the JSON content-type header, used to come back as \"your fields are invalid\", sending integrators hunting through a chain and address that were never the problem; those now answer with the right status for what actually went wrong. When the fields genuinely are wrong, the reply is one readable line naming the offending field plus a machine-readable list of issues, instead of the raw multi-line dump the endpoint used to return.",
 			"tags": [

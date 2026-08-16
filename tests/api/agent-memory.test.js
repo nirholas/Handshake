@@ -107,7 +107,7 @@ describe('auth', () => {
 	it('GET without session or bearer returns empty list (200)', async () => {
 		// Public embeds boot this fetch on every page load. Returning an empty
 		// list (instead of 401) keeps the console clean for anonymous viewers.
-		const { status, body } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
+		const { status, body } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111' });
 		expect(status).toBe(200);
 		expect(body.entries).toEqual([]);
 	});
@@ -116,13 +116,13 @@ describe('auth', () => {
 		const { status } = await invoke({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { content: 'x' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { content: 'x' } },
 		});
 		expect(status).toBe(401);
 	});
 
 	it('DELETE without auth returns 401', async () => {
-		const { status } = await invoke({ method: 'DELETE', url: '/api/agent-memory/mem-1' });
+		const { status } = await invoke({ method: 'DELETE', url: '/api/agent-memory/55555555-5555-4555-8555-555555555555' });
 		expect(status).toBe(401);
 	});
 
@@ -133,7 +133,7 @@ describe('auth', () => {
 
 		const { status, body } = await invoke({
 			method: 'GET',
-			url: '/api/agent-memory?agentId=a1',
+			url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111',
 		});
 		expect(status).toBe(200);
 		expect(body.entries).toEqual([]);
@@ -154,7 +154,7 @@ describe('GET /api/agent-memory', () => {
 			[
 				{
 					id: 'm1',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'project',
 					content: 'test note',
 					tags: ['alpha'],
@@ -168,14 +168,14 @@ describe('GET /api/agent-memory', () => {
 
 		const { status, body } = await invoke({
 			method: 'GET',
-			url: '/api/agent-memory?agentId=a1',
+			url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111',
 		});
 
 		expect(status).toBe(200);
 		expect(body.entries).toHaveLength(1);
 		expect(body.entries[0]).toMatchObject({
 			id: 'm1',
-			agent_id: 'a1',
+			agent_id: '11111111-1111-4111-8111-111111111111',
 			type: 'project',
 			content: 'test note',
 			tags: ['alpha'],
@@ -193,7 +193,7 @@ describe('GET /api/agent-memory', () => {
 
 	it('returns empty list (200) when agent does not exist', async () => {
 		queueSql([]); // no ownership row
-		const { status, body } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=nope' });
+		const { status, body } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=22222222-2222-4222-8222-222222222222' });
 		expect(status).toBe(200);
 		expect(body.entries).toEqual([]);
 	});
@@ -202,7 +202,7 @@ describe('GET /api/agent-memory', () => {
 		queueSql([{ user_id: 'other-user' }]);
 		const { status, body } = await invoke({
 			method: 'GET',
-			url: '/api/agent-memory?agentId=a1',
+			url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111',
 		});
 		expect(status).toBe(200);
 		expect(body.entries).toEqual([]);
@@ -214,7 +214,7 @@ describe('GET /api/agent-memory', () => {
 			[
 				{
 					id: 'm2',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'user',
 					content: '',
 					tags: null,
@@ -225,7 +225,7 @@ describe('GET /api/agent-memory', () => {
 				},
 			],
 		);
-		const { body } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=a1' });
+		const { body } = await invoke({ method: 'GET', url: '/api/agent-memory?agentId=11111111-1111-4111-8111-111111111111' });
 		expect(body.entries[0].tags).toEqual([]);
 		expect(body.entries[0].context).toEqual({});
 	});
@@ -245,7 +245,7 @@ describe('POST /api/agent-memory', () => {
 			[
 				{
 					id: 'server-gen-id',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'project',
 					content: 'new memory',
 					tags: [],
@@ -260,7 +260,7 @@ describe('POST /api/agent-memory', () => {
 		const { status, body } = await invoke({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { content: 'new memory' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { content: 'new memory' } },
 		});
 
 		expect(status).toBe(201);
@@ -282,7 +282,7 @@ describe('POST /api/agent-memory', () => {
 		const { status, body } = await invoke({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1' },
+			body: { agentId: '11111111-1111-4111-8111-111111111111' },
 		});
 		expect(status).toBe(400);
 		expect(body.error_description).toMatch(/entry/);
@@ -293,7 +293,7 @@ describe('POST /api/agent-memory', () => {
 		const { status } = await invoke({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { content: 'steal' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { content: 'steal' } },
 		});
 		expect(status).toBe(403);
 	});
@@ -303,8 +303,8 @@ describe('POST /api/agent-memory', () => {
 			[{ user_id: 'u1' }],
 			[
 				{
-					id: 'client-id',
-					agent_id: 'a1',
+					id: '33333333-3333-4333-8333-333333333333',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'user',
 					content: 'updated',
 					tags: [],
@@ -320,13 +320,13 @@ describe('POST /api/agent-memory', () => {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: {
-				agentId: 'a1',
-				entry: { id: 'client-id', type: 'user', content: 'updated', salience: 0.9 },
+				agentId: '11111111-1111-4111-8111-111111111111',
+				entry: { id: '33333333-3333-4333-8333-333333333333', type: 'user', content: 'updated', salience: 0.9 },
 			},
 		});
 
 		expect(status).toBe(201);
-		expect(body.entry.id).toBe('client-id');
+		expect(body.entry.id).toBe('33333333-3333-4333-8333-333333333333');
 		expect(body.entry.salience).toBe(0.9);
 	});
 
@@ -336,7 +336,7 @@ describe('POST /api/agent-memory', () => {
 		const { status, body } = await invoke({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { id: 'stolen-id', content: 'x' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { id: '44444444-4444-4444-8444-444444444444', content: 'x' } },
 		});
 		expect(status).toBe(409);
 		expect(body.error).toBe('id_conflict');
@@ -348,7 +348,7 @@ describe('POST /api/agent-memory', () => {
 			[
 				{
 					id: 'm1',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'project',
 					content: 'x',
 					tags: [],
@@ -363,7 +363,7 @@ describe('POST /api/agent-memory', () => {
 		const { status, body } = await invoke({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { type: 'bogus-type', content: 'x' } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { type: 'bogus-type', content: 'x' } },
 		});
 
 		expect(status).toBe(201);
@@ -387,7 +387,7 @@ describe('POST /api/agent-memory', () => {
 			return Promise.resolve([
 				{
 					id: 'x',
-					agent_id: 'a1',
+					agent_id: '11111111-1111-4111-8111-111111111111',
 					type: 'project',
 					content: capturedContent,
 					tags: [],
@@ -402,7 +402,7 @@ describe('POST /api/agent-memory', () => {
 		const { status } = await invoke({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: { agentId: 'a1', entry: { content: huge } },
+			body: { agentId: '11111111-1111-4111-8111-111111111111', entry: { content: huge } },
 		});
 
 		expect(status).toBe(201);
@@ -422,7 +422,7 @@ describe('DELETE /api/agent-memory/:id', () => {
 		queueSql([{ id: 'mem-1', user_id: 'u1' }], []); // lookup, delete
 		const { status, body } = await invoke({
 			method: 'DELETE',
-			url: '/api/agent-memory/mem-1',
+			url: '/api/agent-memory/55555555-5555-4555-8555-555555555555',
 		});
 		expect(status).toBe(200);
 		expect(body).toEqual({ ok: true });
@@ -430,7 +430,7 @@ describe('DELETE /api/agent-memory/:id', () => {
 
 	it('returns 404 when the memory does not exist', async () => {
 		queueSql([]); // no row found
-		const { status } = await invoke({ method: 'DELETE', url: '/api/agent-memory/ghost' });
+		const { status } = await invoke({ method: 'DELETE', url: '/api/agent-memory/66666666-6666-4666-8666-666666666666' });
 		expect(status).toBe(404);
 	});
 
@@ -438,7 +438,7 @@ describe('DELETE /api/agent-memory/:id', () => {
 		queueSql([{ id: 'mem-1', user_id: 'other' }]);
 		const { status, body } = await invoke({
 			method: 'DELETE',
-			url: '/api/agent-memory/mem-1',
+			url: '/api/agent-memory/55555555-5555-4555-8555-555555555555',
 		});
 		expect(status).toBe(403);
 		expect(body.error).toBe('forbidden');
