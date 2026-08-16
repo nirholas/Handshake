@@ -116,7 +116,11 @@ export default wrap(async (req, res) => {
 				} catch (err) {
 					return sendX402Error(
 						res,
-						{ resourceUrl: x402Ctx.resourceUrl, accepts: x402Ctx.requirements },
+						{
+							resourceUrl: x402Ctx.resourceUrl,
+							accepts: x402Ctx.requirements,
+							challenge: STUDIO_CHALLENGE,
+						},
 						err,
 					);
 				}

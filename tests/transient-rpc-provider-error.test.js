@@ -39,6 +39,33 @@ describe('isTransientRpcError: provider errors are upstream weather', () => {
 		expect(isTransientRpcError('solana rpc provider error -16401')).toBe(true);
 	});
 
+	it('classifies the web3.js response-shape failure that 500ed treasury-topup again', () => {
+		// Production 2026-08-13T10:32:04Z. classifyRpcBody had already passed the
+		// body (it was well-formed JSON-RPC), but web3.js's superstruct check
+		// rejected it: createRpcResult pins `id: string()` and
+		// `jsonrpc: literal('2.0')`, so a lane echoing a numeric id or a
+		// non-string error.message throws here instead of answering. The sweep
+		// rethrew it as a hard 500 and took the engine self-heal down with it.
+		const err = new Error(
+			'failed to get balance of account WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW: ' +
+				'StructError: Expected the value to satisfy a union of `type | type`, but received: [object Object]',
+		);
+		expect(isTransientRpcError(err)).toBe(true);
+	});
+
+	it('classifies the same failure wherever web3.js validates a node answer', () => {
+		// Every superstruct call in web3.js validates something the NODE sent, so
+		// the shape recurs on other reads. Same day, same cause, different caller:
+		//   [sdk-bridge] getBondingCurveState failed: StructError: …
+		for (const m of [
+			'getBondingCurveState failed: StructError: Expected the value to satisfy a union of `type | type`, but received: [object Object]',
+			'StructError: Expected the value to satisfy a union of `type | type`, but received: [object Object]',
+			'Expected the value to satisfy a union of `type | type`, but received: [object Object]',
+		]) {
+			expect(isTransientRpcError(new Error(m))).toBe(true);
+		}
+	});
+
 	it('still classifies the pre-existing transient shapes', () => {
 		for (const m of [
 			'Server responded with 429 Too Many Requests',

@@ -1038,8 +1038,27 @@ export function shouldRotate(status) {
 // failover signal), so it is upstream weather, never a caller defect. Matching
 // the wrapper rather than any single vendor code keeps this true for the next
 // provider that invents one.
+//
+// `StructError` is in the set for the same reason, one layer up. classifyRpcBody
+// above catches the 200 bodies it can recognize as garbage (empty, HTML,
+// unparseable, an envelope with neither result nor error), but it deliberately
+// accepts envelopes that are valid JSON-RPC yet NOT what web3.js will parse:
+// a numeric `id`, a missing `jsonrpc`, or an `error` whose `message` is not a
+// string all satisfy classifyRpcBody and then fail web3.js's superstruct check
+// (createRpcResult pins `id: string()` and `jsonrpc: literal('2.0')`). Loosening
+// classifyRpcBody is not the fix, because the same guard serves the pass-through
+// proxy in api/solana-rpc.js, where those envelopes are perfectly good answers.
+// So the lane-level throw has to be readable here instead. Production
+// 2026-08-13T10:32Z, one treasury-topup tick 500ed on exactly this:
+//   [api] unhandled Error: failed to get balance of account Wwwu...WwW:
+//     StructError: Expected the value to satisfy a union of `type | type`,
+//     but received: [object Object]
+// Every superstruct call in web3.js validates something the NODE sent (RPC
+// responses, subscription notifications, parsed account data), never a caller
+// argument, so a StructError reaching us is always "we could not read the
+// answer", which is the same upstream weather as a 429.
 export function isTransientRpcError(err) {
-	return /\b(429|500|502|503|504)\b|-32429|max usage reached|rate.?limit|quota|exhausted|timed?\s*out|fetch failed|socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|all solana rpc endpoints failed|all rpc endpoints exhausted|solana rpc provider error/i.test(
+	return /\b(429|500|502|503|504)\b|-32429|max usage reached|rate.?limit|quota|exhausted|timed?\s*out|fetch failed|socket hang up|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EAI_AGAIN|all solana rpc endpoints failed|all rpc endpoints exhausted|solana rpc provider error|StructError|Expected the value to satisfy/i.test(
 		String(err && err.message ? err.message : err),
 	);
 }

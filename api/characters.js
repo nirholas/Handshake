@@ -9,7 +9,7 @@
  */
 
 import { sql } from './_lib/db.js';
-import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
+import { cors, error, json, method, wrap, rateLimited } from './_lib/http.js';
 import { clampInt } from './_lib/http-params.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { thumbnailUrl } from './_lib/r2.js';
@@ -27,10 +27,15 @@ export default wrap(async (req, res) => {
 	const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
 	const sort = url.searchParams.get('sort') === 'chats' ? 'chats' : 'new';
 
-	const cursorDate = cursor ? new Date(cursor) : null;
+	// The cursor is echoed back from `next_cursor`, so anything unparseable is a
+	// hand-edited URL. Reject it at the boundary: `new Date('junk').toISOString()`
+	// throws a RangeError, which surfaced as a 500 on a caller mistake.
+	if (cursor && Number.isNaN(Date.parse(cursor))) {
+		return error(res, 400, 'bad_request', 'cursor must be an ISO timestamp');
+	}
 
 	const qLike = q ? '%' + q + '%' : null;
-	const cursorIso = cursorDate ? cursorDate.toISOString() : null;
+	const cursorIso = cursor ? new Date(cursor).toISOString() : null;
 	const sortByChats = sort === 'chats';
 
 	// The CASE-based sort references the derived `chat_count`. Postgres only

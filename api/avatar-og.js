@@ -21,8 +21,8 @@
 
 import { sql } from './_lib/db.js';
 import { getAvatar } from './_lib/avatars.js';
-import { cors, wrap } from './_lib/http.js';
-import { publicUrl, putObject, isLegacyOgThumbnailKey } from './_lib/r2.js';
+import { cors, method, wrap } from './_lib/http.js';
+import { putObject } from './_lib/r2.js';
 import { renderGlbToPng } from './_lib/render-glb.js';
 import { thumbBackdropFor } from './_lib/avatar-thumbs.js';
 
@@ -46,6 +46,10 @@ const _renderLocks = new Map();
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// A crawler only ever GETs (or HEADs, which method() folds into GET). Gate the
+	// rest: the miss path launches chromium and writes to R2, so an unguarded POST
+	// is a free way to make the origin do the most expensive work it has.
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const avatarId = url.searchParams.get('id') || extractIdFromPath(url.pathname);
@@ -65,24 +69,23 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	// Cached thumbnail — either client-uploaded (customizer save) or a
-	// previous server render. Either way it's a real R2 object; redirect.
-	// Exception: a legacy poisoned key (absolute, origin-pointing, written by the
-	// pre-fix ogKeyFor) would 302 to a 404, so clear it and fall through to a
-	// fresh render that writes the corrected bucket key.
+	// Cached thumbnail — either client-uploaded (customizer save) or a previous
+	// server render. Either way it's a real R2 object; redirect.
+	//
+	// Legacy poisoned keys (absolute, origin-pointing `*_og.png`, written by the
+	// pre-fix ogKeyFor) never reach this branch: `thumbnailUrl()` in
+	// api/_lib/r2.js already refuses to resolve them and hands back null. Do NOT
+	// re-run that check against `thumbnail_url` here: it is a bucket URL, so a
+	// perfectly good server-rendered thumbnail (`.../u/uid/x/abc_og.png`) matches
+	// the poisoned-key shape too, and the endpoint ends up wiping its own cache
+	// on every crawl. The healing write for a genuinely poisoned key lives in
+	// renderAndCache's write-back guard instead.
 	if (avatar.thumbnail_url) {
-		if (isLegacyOgThumbnailKey(avatar.thumbnail_url)) {
-			await sql`
-				update avatars set thumbnail_key = null, updated_at = now()
-				where id = ${avatar.id} and deleted_at is null
-			`.catch(() => {});
-		} else {
-			res.statusCode = 302;
-			res.setHeader('location', avatar.thumbnail_url);
-			res.setHeader('cache-control', CACHE_REDIR);
-			res.end();
-			return;
-		}
+		res.statusCode = 302;
+		res.setHeader('location', avatar.thumbnail_url);
+		res.setHeader('cache-control', CACHE_REDIR);
+		res.end();
+		return;
 	}
 
 	// Private avatars have no public model_url, so headless chromium can't
@@ -155,11 +158,15 @@ async function renderAndCache({ avatar }) {
 		});
 		// Single UPDATE — bypasses ownership/visibility checks in
 		// updateAvatar() because this is an internal cache write, not a
-		// user-initiated edit. Guarded by `thumbnail_key is null` so a
-		// concurrent customizer-save snapshot isn't clobbered.
+		// user-initiated edit. Guarded so a concurrent customizer-save snapshot
+		// isn't clobbered: it only writes over an empty slot, or over a legacy
+		// poisoned key (an absolute, origin-pointing `*_og.png` from the pre-fix
+		// ogKeyFor). Without that second arm a poisoned row could never be
+		// repaired, so it would re-render through chromium on every single crawl.
 		await sql`
 			update avatars set thumbnail_key = ${ogKey}, updated_at = now()
-			where id = ${avatar.id} and deleted_at is null and thumbnail_key is null
+			where id = ${avatar.id} and deleted_at is null
+			  and (thumbnail_key is null or thumbnail_key ~* '^https?://.*_og[.]png$')
 		`;
 		return png;
 	})();

@@ -807,7 +807,12 @@ Fields are `null` until the stage that produces them completes; on failure
 | Malformed `?job=` | `400 invalid_job` (missing entirely: `400 missing_job`) |
 | Worker not deployed on this environment | `503 unconfigured` |
 | Worker rejected the job | `502 segment_failed` |
+| Worker unreachable while polling | `502 segment_status_failed` |
 | Rate limit | `429` with `Retry-After` |
+
+A poll that answers `502 segment_status_failed` carries no `status` field, so a
+polling client should keep polling: the worker was briefly unreachable, which is
+not the same as the job dying.
 
 ### curl
 
@@ -855,7 +860,12 @@ auth; rate-limited per IP.
 | Malformed `?job=` | `400 invalid_job` (missing entirely: `400 missing_job`) |
 | Worker not deployed on this environment | `503 unconfigured` |
 | Worker rejected the job | `502 rembg_failed` |
+| Worker unreachable while polling | `502 rembg_status_failed` |
 | Rate limit | `429` with `Retry-After` |
+
+A poll that answers `502 rembg_status_failed` carries no `status` field, so a
+polling client should keep polling: the worker was briefly unreachable, which is
+not the same as the job dying.
 
 ### curl
 

@@ -103,6 +103,14 @@
 			<description>The in-world trading terminal inside a Robinhood Chain world polls the chain feed every five seconds, and the Worlds lobby lists those coins from the same feed. A single event that arrived without its payload, or with a timestamp the chain wrote in an unexpected format, took both requests down with a server error: the terminal showed a dead tape, and the lobby's Robinhood Chain tab quietly emptied with nothing on screen to say why. Bad events are now skipped and the rest of the tape still renders, a price that is genuinely missing stays blank rather than printing as a real $0 trade, and a launch with no readable contract address no longer produces a card that leads nowhere. Asking for trades with an address that is not a contract address now gets a clear error back instead of an empty list that read as &quot;this coin has never traded&quot;.</description>
 		</item>
 		<item>
+			<title>Scrolling the activity feed past a bad cursor no longer breaks the whole feed</title>
+			<link>https://three.ws/community</link>
+			<guid isPermaLink="false">2026-08-16:Scrolling the activity feed past a bad cursor no longer breaks the whole feed</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An audit of the account endpoints found one real break and two smaller ones. The activity feed on /community and your personal feed ask for the next page of results by passing the last item’s timestamp back; if that value arrived malformed, from a hand-edited link or a stale bookmark, the database rejected it and the entire feed came back as a server error with nothing to act on. It now answers with a plain &quot;that is not a timestamp&quot; so the page can recover and reload from the top. The referral code editor stated its length rule with a typographic dash that read as a minus sign on some devices, and now spells it out. The purchase history endpoint also documented the wrong default view: it always merges your purchases and your sales, which is what the dashboard shows.</description>
+		</item>
+		<item>
 			<title>Shared agent links keep their preview card through a chain hiccup</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:Shared agent links keep their preview card through a chain hiccup</guid>

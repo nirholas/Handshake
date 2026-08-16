@@ -3,6 +3,7 @@ import { cors, json, error, readJson, wrap, method, rateLimited } from './_lib/h
 import { getSessionUser } from './_lib/auth.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { limits } from './_lib/rate-limit.js';
+import { parseLimit, parseOffset } from './_lib/http-params.js';
 import { enrichLikes } from './_lib/bounty-likes.js';
 import { solUsdPrice } from './_lib/avatar-wallet.js';
 
@@ -12,8 +13,11 @@ export default wrap(async (req, res) => {
 	if (req.method === 'GET') {
 		const url = new URL(req.url, 'http://localhost');
 		const tab = url.searchParams.get('tab') || 'trending';
-		const limit = Math.min(parseInt(url.searchParams.get('limit') || '30', 10), 50);
-		const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
+		// Shared clamps, not hand-rolled ones: `parseInt('abc')` is NaN, and NaN
+		// survives Math.min/Math.max unchanged, so `?limit=abc` used to reach
+		// Postgres as `LIMIT NaN` and 500. See api/_lib/http-params.js.
+		const limit = parseLimit(url.searchParams, { fallback: 30, max: 50 });
+		const offset = parseOffset(url.searchParams);
 		// Optional: identify the caller so submission cards know what they've liked.
 		const userId = (await getSessionUser(req).catch(() => null))?.id || null;
 

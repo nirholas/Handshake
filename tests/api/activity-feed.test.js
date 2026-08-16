@@ -229,6 +229,18 @@ describe('GET /api/users/me/feed?scope=all', () => {
 		expect(body.next).toBe('2026-07-11T09:00:00Z');
 	});
 
+	it('rejects a cursor that is not a timestamp with a 400, before any query runs', async () => {
+		const { res, body } = await call({ scope: 'all', before: "';--" });
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toBe('validation_error');
+		// The cursor is interpolated into a timestamptz comparison, so an
+		// uncastable value used to abort the whole fan-out as a 500. Nothing may
+		// reach the stores now.
+		expect(listRecentCreations).not.toHaveBeenCalled();
+		expect(listDioramas).not.toHaveBeenCalled();
+		expect(listRecentRestyles).not.toHaveBeenCalled();
+	});
+
 	it('returns a well-formed empty feed when nothing has happened, never 500s', async () => {
 		sqlQueue.push([]); // avatars
 		sqlQueue.push([]); // agents
@@ -257,6 +269,17 @@ describe('GET /api/users/me/feed?scope=following', () => {
 		sqlQueue.push(restyles);
 		sqlQueue.push(follows);
 	}
+
+	it('rejects a malformed cursor with a 400 on the personal feed too', async () => {
+		authState.session = VIEWER;
+		// A sentinel row proves the guard fired ahead of the following_count
+		// query rather than after it: nothing may be consumed off the queue.
+		sqlQueue.push([{ following_count: 3 }]);
+		const { res, body } = await call({ scope: 'following', before: 'not-a-date' });
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toBe('validation_error');
+		expect(sqlQueue.length).toBe(1);
+	});
 
 	it('emits model, world and restyle events from the people the viewer follows', async () => {
 		authState.session = VIEWER;

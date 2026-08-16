@@ -735,7 +735,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 43 examples: 11 web component demos, 10 end-to-end projects, and 22 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 45 examples: 11 web component demos, 10 end-to-end projects, and 24 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -761,6 +761,8 @@ The repo ships 43 examples: 11 web component demos, 10 end-to-end projects, and 
 | [`avatar-sdk/examples`](../avatar-sdk/examples) | A self-contained page, no build step. It loads the SDK's @three-ws/avatar/agent entry from a CDN, awaits ensureAgent3D() to register the <agent-3d> element, and renders the real three.ws default avatar using the documented src and kiosk attributes. | `npm run dev, then open /avatar-sdk/examples/index.html` |
 | [`packages/avatar-schema/examples`](../packages/avatar-schema/examples) | JSON Schema and validator for three.ws on-chain avatar manifests - the canonical, hash-anchored format any cross-chain client can use to resolve an avatar. | Reference files, nothing to execute |
 | [`concierge-sdk/examples`](../concierge-sdk/examples) | Runnable examples for every way to use the concierge. The HTML files load the SDK from ../dist, build it first (npm run build in the package root), then serve this folder (npx serve .) and open each file. | `npm run dev, then open /concierge-sdk/examples/custom-avatar.html` |
+| [`packages/kol-mcp/examples`](../packages/kol-mcp/examples) | Track one smart trader from any AI agent - a tracked KOL wallet's portfolio P&L (realized/unrealized, win rate, top holding) and its trades on a given mint. Read-only over the live public three.ws KOL API. No key, no signer, no payment. | `node packages/kol-mcp/examples/list-tools.mjs` |
+| [`packages/loom-mcp/examples`](../packages/loom-mcp/examples) | Loom - the three.ws community 3D-creation gallery from any AI agent. Browse the public feed of community-forged GLB creations, fetch one with its viewer URL, and submit your own. Public API, no key required. | `node packages/loom-mcp/examples/list-tools.mjs` |
 | [`packages/marketplace-mcp/examples`](../packages/marketplace-mcp/examples) | Two runnable examples. Both spawn this package's own MCP server over stdio (the same node src/index.js entry point the README documents), speak real MCP JSON-RPC to it, and read the live public marketplace. | `node packages/marketplace-mcp/examples/browse-marketplace.mjs` |
 | [`mcp-server/examples`](../mcp-server/examples) | Two zero-dependency walkthroughs of the MCP Streamable HTTP lifecycle against the live three.ws server at https://three.ws/api/mcp (MCP 2025-06-18, JSON-RPC 2.0). | `node mcp-server/examples/client.mjs` |
 | [`page-agent-sdk/examples`](../page-agent-sdk/examples) | Run these from the package root with any static server so the import map can resolve the unbundled source from ../src: | `npm run dev, then open /page-agent-sdk/examples/custom-avatar.html` |

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Scrolling the activity feed past a bad cursor no longer breaks the whole feed",
+			"summary": "An audit of the account endpoints found one real break and two smaller ones. The activity feed on /community and your personal feed ask for the next page of results by passing the last item’s timestamp back; if that value arrived malformed, from a hand-edited link or a stale bookmark, the database rejected it and the entire feed came back as a server error with nothing to act on. It now answers with a plain \"that is not a timestamp\" so the page can recover and reload from the top. The referral code editor stated its length rule with a typographic dash that read as a minus sign on some devices, and now spells it out. The purchase history endpoint also documented the wrong default view: it always merges your purchases and your sales, which is what the dashboard shows.",
+			"tags": [
+				"fix"
+			],
+			"link": "/community"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Agent share cards survive an unconfigured bucket, and a mistyped payment mint is refused instead of listed",
 			"summary": "An audit of the agent endpoints turned up four things worth fixing. A skill price set through /api/agents/:id/skills/set-price accepted any text as its payment mint and saved it, so a typo produced a listing nobody could actually pay; it now has to be a real base58 address, matching the other door onto the same table. The agent share page and its OG image used to answer a social crawler with a hard error whenever object storage was not configured, instead of falling back to the plain card they already knew how to draw. A mistyped agent id in the diary, skill-price and screen-push endpoints came back as a server error rather than the plain \"that is not an agent id\" it is. And an agent screen with no live frame store now tells you the agent is offline right away instead of leaving you on \"Connecting\" for five minutes.",
 			"tags": [
