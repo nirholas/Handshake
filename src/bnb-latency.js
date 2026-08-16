@@ -145,7 +145,9 @@ function renderHeadline(bnbLane) {
 		hasPrevious: Boolean(previous),
 	});
 
-	el.classList.toggle('bnbl-stale', state === 'stale');
+	// Dim anything that is not a live reading, so a placeholder dash or an aged
+	// number can never be mistaken for the current measurement.
+	el.classList.toggle('bnbl-stale', state === 'stale' || state === 'unavailable');
 	if (state === 'live') {
 		el.innerHTML = `${esc(formatBlockTime(bnbLane.avgBlockTimeMs))}<span class="unit">avg block time</span>`;
 		const base = laneStore.base.last;
@@ -283,6 +285,10 @@ async function retry(btn) {
 	btn.disabled = true;
 	btn.textContent = 'Retrying…';
 	try {
+		// Wait out a poll that was already running, then make a genuinely new
+		// attempt. Piggybacking on a request that started before the click
+		// would report that older request's failure as the retry's result.
+		if (inFlight) await inFlight;
 		await poll();
 	} finally {
 		btn.disabled = false;

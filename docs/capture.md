@@ -82,8 +82,9 @@ console.log(job.result_url, job.num_points); // coloured .ply + point count
 
 - **Input** is a public https URL to an mp4, mov, or webm. Private, loopback, and metadata hosts are rejected before the worker sees the URL.
 - **Processing**: a real elapsed timer with stage hints, driven by the poll lifecycle, not a fake bar.
-- **Unconfigured (503)**: when the video2scene worker env is absent, the page falls back to a sample room cloud so the renderer still works end-to-end. No fabricated reconstruction is ever shown.
-- **Error**: an invalid `.ply` reports "that isn't a valid point cloud"; a blocked fetch explains the CORS limit.
+- **Unconfigured (503)**: when the video2scene worker env is absent, the page falls back to a sample room cloud so the renderer still works end-to-end. No fabricated reconstruction is ever shown. The 503 body splits its audience: `message` is what `/capture` renders for a visitor, `hint` carries the env-var instructions for whoever runs the deployment.
+- **Error**: an invalid `.ply` reports "that isn't a valid point cloud" (including a file that decodes to zero vertices, which is what a non-PLY does rather than throwing); a blocked fetch explains the CORS limit; a job that stops answering gives up after eight consecutive unreadable polls or twenty minutes, whichever comes first, and says how to restart it.
+- **Truncated clips**: when the poll returns `frames_truncated: true`, the viewer's HUD label says the clip was cut to the frame budget, so a partial scene is never presented as the whole video.
 - **Point cap** defaults to 1.5M and tops out at 3M; `voxel_size` and `conf_percentile` trade density for cleanliness.
 - **Client-side rendering**: the `.ply` is decoded and displayed in the browser with WebGL; very large clouds are bounded by your device's GPU and memory.
 - Rate limits are per client IP on the shared 3D generation buckets.

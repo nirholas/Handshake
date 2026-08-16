@@ -204,7 +204,11 @@
 				flex-wrap: wrap;
 				align-items: center;
 				gap: 14px;
-				justify-content: space-between;
+				/* Keep Retry beside its message rather than pushed to the right
+				   edge: the shared bottom-right corner stack (public/corner-stack.js)
+				   floats over that column, and at common viewport heights it was
+				   swallowing clicks on the only recovery control this page has. */
+				justify-content: flex-start;
 			}
 			.bnbl-page-error p {
 				margin: 0;
