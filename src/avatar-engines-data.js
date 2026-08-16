@@ -506,7 +506,7 @@ export const ENGINES = Object.freeze([
 		blurb: 'Faces Learned with an Articulated Model and Expressions: the standard parametric head that drives the photoreal-head column.',
 		links: {
 			repo: 'https://github.com/Rubikplayer/flame-fitting',
-			paper: 'https://ps.is.mpg.de/publications/flame-siggraph-asia-2017',
+			paper: 'https://download.is.tue.mpg.de/flame/flame_paper.pdf',
 			demo: 'https://flame.is.tue.mpg.de/',
 		},
 	},

@@ -90,7 +90,8 @@
 		.bd-skill-name { flex: 1 1 auto; min-width: 0; font-weight: 550; overflow-wrap: anywhere; }
 		.bd-skill-meta { flex: none; text-align: right; font-variant-numeric: tabular-nums; }
 		.bd-skill-price { display: block; font-weight: 600; color: var(--ink-bright, var(--ink)); }
-		.bd-skill-sold { display: block; font-size: 0.74rem; color: var(--ink-dim); margin-top: 1px; }
+		.bd-skill-unit { display: block; font-size: 0.74rem; color: var(--ink-dim); margin-top: 1px; }
+		.bd-retry { margin-top: 12px; }
 
 		/* ── price panel ────────────────────────────────────────────────── */
 		.bd-pricebox { border: 1px solid var(--stroke); border-radius: 10px; padding: 14px; margin-bottom: 14px; background: color-mix(in srgb, var(--ink) 3%, transparent); }
@@ -317,7 +318,19 @@
 		// Number.MAX_SAFE_INTEGER on a 9-decimal mint, so scaling goes through
 		// BigInt and only the already-scaled result becomes a Number.
 		let decimals = 6;
-		let symbol = '$THREE';
+		let symbol = '';
+
+		// A price is labelled with the token it is actually in. Only the mint this
+		// platform promotes has a ticker here; every other mint shows a truncated
+		// address rather than a guessed symbol, because labelling a price with the
+		// wrong coin is worse than showing no coin at all.
+		const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+		function mintSymbol(mint) {
+			if (!mint) return 'tokens';
+			if (mint === THREE_MINT) return '$THREE';
+			const s = String(mint);
+			return s.length > 12 ? s.slice(0, 4) + '…' + s.slice(-4) : s;
+		}
 
 		function fromAtomic(atomic) {
 			const neg = String(atomic).startsWith('-');
@@ -350,19 +363,23 @@
 
 		// ── boot ────────────────────────────────────────────────────────
 		async function boot() {
+			// GET /api/agents lists the caller's agents and answers 401 with no session.
+			// Its sibling /api/agents/me answers 200 with a SINGLE agent (auto-creating
+			// one) even for an anonymous visitor, so reading a list off it told every
+			// signed-out visitor they had no agents and hid the sign-in gate below.
 			let res;
 			try {
-				res = await apiFetch('/api/agents/me', { allowAnonymous: true });
+				res = await apiFetch('/api/agents', { allowAnonymous: true });
 			} catch {
-				return gate('Could not reach three.ws. Check your connection and <a href="/bundles">try again</a>.');
+				return gate('<b>Could not reach three.ws.</b> Your connection dropped before your agents loaded.', boot);
 			}
 			if (res.status === 401) {
 				return gate('<b>Sign in to build a bundle.</b> Bundles belong to an agent you own, so this page needs your account. <a href="/login?next=%2Fbundles">Sign in</a> or <a href="/register">create an account</a>.');
 			}
-			if (!res.ok) return gate('Could not load your agents (HTTP ' + res.status + '). <a href="/bundles">Retry</a>.');
+			if (!res.ok) return gate('<b>Could not load your agents</b> (HTTP ' + res.status + ').', boot);
 
 			const body = await res.json().catch(() => null);
-			agents = body?.data?.agents || body?.agents || (Array.isArray(body?.data) ? body.data : []) || [];
+			agents = Array.isArray(body?.agents) ? body.agents : [];
 			if (!agents.length) {
 				return gate('<b>You have no agents yet.</b> A bundle groups the skills of one agent, so make an agent and give it priced skills first. <a href="/create">Create an agent</a>.');
 			}
@@ -377,10 +394,32 @@
 			await selectAgent(agents[0].id);
 		}
 
-		function gate(html) {
-			$('bd-gate').innerHTML = html;
-			show($('bd-gate'), true);
+		// A retry that re-runs the failed call beats a link back to this URL: the
+		// visitor keeps their scroll position and the page never reloads the world
+		// to recover from one dropped request.
+		function gate(html, retry) {
+			const el = $('bd-gate');
+			el.innerHTML = html;
+			el.classList.toggle('bd-note--error', !!retry);
+			if (retry) el.appendChild(retryButton(retry));
+			show(el, true);
 			show($('bd-builder'), false);
+		}
+
+		function retryButton(fn, label = 'Retry') {
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'bd-btn bd-btn--ghost bd-retry';
+			btn.textContent = label;
+			btn.addEventListener('click', () => {
+				btn.disabled = true;
+				btn.textContent = 'Retrying…';
+				Promise.resolve(fn()).finally(() => {
+					btn.disabled = false;
+					btn.textContent = label;
+				});
+			});
+			return btn;
 		}
 
 		const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -399,24 +438,46 @@
 			box.innerHTML = '<div class="bd-sk bd-sk-row"></div><div class="bd-sk bd-sk-row"></div><div class="bd-sk bd-sk-row"></div>';
 			show($('bd-skills-empty'), false);
 
-			let rows = [];
+			// A failed request and an agent with no priced skills are different
+			// answers. Collapsing them into one empty state told a seller to go price
+			// skills they had already priced, so a failure keeps its own state and a
+			// retry that re-runs only this call.
+			let rows = null;
+			let failure = null;
 			try {
 				const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/skills-pricing');
 				if (res.ok) {
 					const b = await res.json().catch(() => null);
-					rows = b?.data?.prices || b?.prices || b?.data || [];
+					rows = b?.prices || b?.data?.prices || [];
+				} else {
+					failure = 'HTTP ' + res.status;
 				}
-			} catch { rows = []; }
+			} catch {
+				failure = 'the request never got a response';
+			}
+
+			if (failure) {
+				box.innerHTML = '';
+				const note = $('bd-skills-empty');
+				note.classList.add('bd-note--error');
+				note.innerHTML = '<b>Could not load this agent’s skills</b> (' + esc(failure) + '). Nothing is missing on your side.';
+				note.appendChild(retryButton(loadSkills));
+				show(note, true);
+				renderPricing();
+				return;
+			}
 
 			priced = (Array.isArray(rows) ? rows : []).filter((r) => r && (r.is_active === undefined || r.is_active) && Number(r.amount) > 0);
 			if (priced.length) decimals = Number(priced[0].mint_decimals ?? 6);
 
 			if (priced.length < 2) {
 				box.innerHTML = '';
-				$('bd-skills-empty').innerHTML = priced.length
+				const note = $('bd-skills-empty');
+				note.classList.remove('bd-note--error');
+				note.innerHTML = priced.length
 					? '<b>This agent has one priced skill.</b> A bundle needs at least two. <a href="/marketplace">Price another skill</a> and come back.'
 					: '<b>This agent has no priced skills.</b> Set a price on two or more skills first, then bundle them. <a href="/marketplace">Open the marketplace</a>.';
-				show($('bd-skills-empty'), true);
+				show(note, true);
 				renderPricing();
 				return;
 			}
@@ -428,6 +489,7 @@
 					'<span class="bd-skill-name">' + skill + '</span>' +
 					'<span class="bd-skill-meta">' +
 						'<span class="bd-skill-price">' + fmt(r.amount) + '</span>' +
+						'<span class="bd-skill-unit">' + esc(mintSymbol(r.currency_mint)) + '</span>' +
 					'</span>' +
 				'</label>';
 			}).join('');
@@ -497,6 +559,9 @@
 			if (!ready) return;
 
 			const h = pricing.history;
+			// Every amount in this panel is denominated in the mint the server priced
+			// against, not in whatever the platform's own coin happens to be.
+			symbol = mintSymbol(pricing.currency_mint);
 			$('bd-sum').textContent = fmt(pricing.sum_of_parts_atomic) + ' ' + symbol;
 			$('bd-unit').textContent = symbol;
 
@@ -631,19 +696,37 @@
 			list.innerHTML = '<div class="bd-sk" style="height:132px"></div><div class="bd-sk" style="height:132px"></div>';
 			show($('bd-list-empty'), false);
 
-			let bundles = [];
+			let bundles = null;
+			let failure = null;
 			try {
 				const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles');
 				if (res.ok) {
 					const b = await res.json().catch(() => null);
 					bundles = b?.data?.bundles || [];
+				} else {
+					failure = 'HTTP ' + res.status;
 				}
-			} catch { bundles = []; }
+			} catch {
+				failure = 'the request never got a response';
+			}
+
+			const note = $('bd-list-empty');
+			// "No bundles yet" is a claim about this agent. Only say it when the
+			// server actually answered; a dropped request gets its own retry instead.
+			if (failure) {
+				list.innerHTML = '';
+				note.classList.add('bd-note--error');
+				note.innerHTML = '<b>Could not load your published bundles</b> (' + esc(failure) + '). Anything already live is unaffected.';
+				note.appendChild(retryButton(loadBundles));
+				show(note, true);
+				return;
+			}
 
 			if (!bundles.length) {
 				list.innerHTML = '';
-				$('bd-list-empty').innerHTML = '<b>No bundles yet.</b> Pick two skills above, set a price, and publish. Buyers will see it on this agent’s listing.';
-				show($('bd-list-empty'), true);
+				note.classList.remove('bd-note--error');
+				note.innerHTML = '<b>No bundles yet.</b> Pick two skills above, set a price, and publish. Buyers will see it on this agent’s listing.';
+				show(note, true);
 				return;
 			}
 
@@ -654,7 +737,7 @@
 					(b.description ? '<p>' + esc(b.description) + '</p>' : '') +
 					'<div class="bd-chips">' + skills.map((s) => '<span class="bd-chip">' + esc(s) + '</span>').join('') + '</div>' +
 					'<div class="bd-bundle-foot">' +
-						'<span class="bd-bundle-price">' + fmt(b.price_amount) + ' ' + symbol + '</span>' +
+						'<span class="bd-bundle-price">' + fmt(b.price_amount) + ' ' + esc(mintSymbol(b.currency_mint)) + '</span>' +
 						'<button type="button" class="bd-btn bd-btn--ghost" data-off="' + esc(b.id) + '">Deactivate</button>' +
 					'</div>' +
 				'</article>';

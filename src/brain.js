@@ -3,37 +3,53 @@
 import { renderMarkdown } from './shared/markdown.js';
 import { apiFetch } from './api.js';
 
-// ── Provider registry ────────────────────────────────────────────────────────
-const PROVIDERS = [
-	{ key: 'gpt-oss-120b',      label: 'GPT-OSS 120B',       short: 'GPT-OSS',     network: 'OpenAI · OpenRouter', color: '#a5b4fc', ctx: '128K', tier: 'Default'  },
-	{ key: 'claude-fable-5',    label: 'Claude Fable 5',     short: 'Fable 5',     network: 'Anthropic',  color: '#caa24f', ctx: '200K', tier: 'Flagship' },
-	{ key: 'claude-mythos-5',   label: 'Claude Mythos 5',    short: 'Mythos 5',    network: 'Anthropic',  color: '#b8923f', ctx: '200K', tier: 'Flagship' },
-	{ key: 'claude-opus-4-7',   label: 'Claude Opus 4.7',    short: 'Opus 4.7',    network: 'Anthropic',  color: '#c8a96e', ctx: '200K', tier: 'Flagship' },
-	{ key: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6',  short: 'Sonnet 4.6',  network: 'Anthropic',  color: '#d4b87a', ctx: '200K', tier: 'Balanced' },
-	{ key: 'claude-haiku-4-5',  label: 'Claude Haiku 4.5',   short: 'Haiku 4.5',   network: 'Anthropic',  color: '#e0c88a', ctx: '200K', tier: 'Fast'     },
-	{ key: 'gpt-5.6-sol',       label: 'GPT-5.6 Sol',        short: 'Sol',         network: 'OpenAI',     color: '#74c0fc', ctx: '1M',   tier: 'Flagship' },
-	{ key: 'gpt-5.6-terra',     label: 'GPT-5.6 Terra',      short: 'Terra',       network: 'OpenAI',     color: '#82c6fc', ctx: '1M',   tier: 'Balanced' },
-	{ key: 'gpt-5.6-luna',      label: 'GPT-5.6 Luna',       short: 'Luna',        network: 'OpenAI',     color: '#90ccfc', ctx: '1M',   tier: 'Fast'     },
-	{ key: 'gpt-5.5',           label: 'GPT-5.5',            short: 'GPT-5.5',     network: 'OpenAI',     color: '#6bb8f7', ctx: '1M',   tier: 'Flagship' },
-	{ key: 'gpt-5.5-pro',       label: 'GPT-5.5 Pro',        short: '5.5 Pro',     network: 'OpenAI',     color: '#5fb0f2', ctx: '1M',   tier: 'Pro'      },
-	{ key: 'gpt-5.4',           label: 'GPT-5.4',            short: 'GPT-5.4',     network: 'OpenAI',     color: '#9cd2fd', ctx: '1M',   tier: 'Balanced' },
-	{ key: 'gpt-5.4-pro',       label: 'GPT-5.4 Pro',        short: '5.4 Pro',     network: 'OpenAI',     color: '#57a8ee', ctx: '1M',   tier: 'Pro'      },
-	{ key: 'gpt-5.4-mini',      label: 'GPT-5.4 mini',       short: '5.4 mini',    network: 'OpenAI',     color: '#a8d8fe', ctx: '400K', tier: 'Fast'     },
-	{ key: 'gpt-5.4-nano',      label: 'GPT-5.4 nano',       short: '5.4 nano',    network: 'OpenAI',     color: '#b4defe', ctx: '400K', tier: 'Fast'     },
-	{ key: 'gpt-5.3-codex',     label: 'GPT-5.3 Codex',      short: 'Codex',       network: 'OpenAI',     color: '#4da0ea', ctx: '400K', tier: 'Coding'   },
-	{ key: 'o3',                label: 'o3',                 short: 'o3',          network: 'OpenAI',     color: '#c0e4ff', ctx: '200K', tier: 'Reasoning' },
-	{ key: 'o3-pro',            label: 'o3-pro',             short: 'o3-pro',      network: 'OpenAI',     color: '#cce9ff', ctx: '200K', tier: 'Reasoning' },
-	{ key: 'o3-mini',            label: 'o3-mini',            short: 'o3-mini',     network: 'OpenAI',     color: '#5cb0f4', ctx: '128K', tier: 'Reasoning' },
-	{ key: 'grok-4.5',          label: 'Grok 4.5',           short: 'Grok 4.5',    network: 'xAI',        color: '#e8e8e8', ctx: '500K', tier: 'Flagship' },
-	{ key: 'grok-4.3',          label: 'Grok 4.3',           short: 'Grok 4.3',    network: 'xAI',        color: '#d0d0d0', ctx: '1M',   tier: 'Balanced' },
-	{ key: 'grok-4.1-fast',     label: 'Grok 4.1 Fast',      short: 'Grok Fast',   network: 'xAI',        color: '#bcbcbc', ctx: '2M',   tier: 'Fast'     },
-	{ key: 'groq-llama',        label: 'Llama 3.3 70B',      short: 'Llama 3.3',   network: 'Groq',       color: '#ff9a3c', ctx: '128K', tier: 'Fast'     },
-	{ key: 'qwen-plus',         label: 'Qwen Plus',           short: 'Qwen+',       network: 'DashScope',  color: '#69db7c', ctx: '131K', tier: 'Balanced' },
-	{ key: 'modelscope-qwen',   label: 'Qwen3-Coder 480B',   short: 'Qwen3-Code',  network: 'ModelScope', color: '#40c057', ctx: '32K',  tier: 'Flagship' },
-	{ key: 'deepseek-r1',       label: 'DeepSeek R1',         short: 'DeepSeek',    network: 'DeepSeek',   color: '#888888', ctx: '64K',  tier: 'Reasoning' },
-	{ key: 'ibm-granite',       label: 'IBM Granite 3.8B',   short: 'Granite',     network: 'IBM watsonx.ai', color: '#0f62fe', ctx: '128K', tier: 'Balanced' },
-];
-const PMAP = new Map(PROVIDERS.map(p => [p.key, p]));
+// ── Provider roster ──────────────────────────────────────────────────────────
+// The roster is NOT declared here. GET /api/brain/chat is the only place that
+// knows which models this deployment can actually reach, and a second hardcoded
+// copy on the client drifts against it in both directions: models the server
+// added never appear in the picker, and keys the server dropped render as
+// selectable entries that 400 at send time. Everything below is presentation
+// applied to whatever that endpoint returns, with a fallback for every field so
+// a model added server-side shows up here without a client change.
+const NETWORK_COLORS = {
+	'OpenAI · OpenRouter': '#a5b4fc',
+	'Anthropic': '#caa24f',
+	'OpenAI': '#74c0fc',
+	'xAI': '#e8e8e8',
+	'Groq': '#ff9a3c',
+	'DashScope': '#69db7c',
+	'ModelScope': '#40c057',
+	'DeepSeek': '#888888',
+	'IBM watsonx.ai': '#0f62fe',
+	'NVIDIA NIM': '#76b900',
+};
+const UNKNOWN_NETWORK_COLOR = '#8a8a8a';
+
+// Preferred opening line-up, filtered against what the server reports as
+// available. Anything unavailable falls through to the first live model, so the
+// page never boots with a column that cannot answer.
+const DEFAULT_MODEL_KEYS = ['gpt-oss-120b', 'claude-sonnet-5', 'gpt-5.6-luna', 'groq-llama'];
+
+const PMAP = new Map();
+
+function decorateProvider(spec) {
+	return {
+		...spec,
+		color: NETWORK_COLORS[spec.network] || UNKNOWN_NETWORK_COLOR,
+		// The network already reads off the colour and the tooltip, so the pill
+		// drops the redundant vendor prefix and keeps the part that identifies
+		// the model. Any label without that prefix passes through untouched.
+		short: String(spec.label || spec.key).replace(/^Claude\s+/, ''),
+		meta: [spec.network, spec.tier, spec.maxOutput ? `${spec.maxOutput} tok out` : '']
+			.filter(Boolean).join(' / '),
+	};
+}
+
+function providerTitle(p) {
+	const head = [p.label, p.network, p.tier].filter(Boolean).join(' · ');
+	if (!p.available) return `${head} (not configured on this deployment)`;
+	return p.description ? `${head}\n${p.description}` : head;
+}
 
 // ── Archetype quick-picks ────────────────────────────────────────────────────
 const ARCHETYPES = [
@@ -152,13 +168,19 @@ const state = {
 	authed: isAuthedHint(),
 
 	playMode: 'compare',
-	focusKey: 'gpt-oss-120b',
-	active: new Set(['gpt-oss-120b', 'groq-llama', 'claude-sonnet-4-6', 'gpt-5.6-luna']),
+	focusKey: '',
+	active: new Set(),
 	sessions: [],
 	currentId: null,
 	streaming: false,
 	agents: [],
-	availableProviders: null, // set after API fetch; null = not yet loaded
+
+	// Roster lifecycle: 'loading' until GET /api/brain/chat answers, then
+	// 'ready' or 'error'. Every model control and the send button read this, so
+	// there is exactly one place that decides whether the page can be driven.
+	providerState: 'loading',
+	providerError: '',
+	selectionRestored: false,
 };
 
 // ── DOM helpers ──────────────────────────────────────────────────────────────
@@ -178,6 +200,7 @@ function persistSessions() { save('brain_sessions_v3', state.sessions); }
 function loadSessions() { state.sessions = load('brain_sessions_v3') || []; }
 function persistPersona() { save('brain_persona_v1', state.persona); }
 function loadPersona() { state.persona = load('brain_persona_v1'); }
+function persistSelection() { save('brain_models_v1', { active: [...state.active], focusKey: state.focusKey }); }
 
 // ── Toast ────────────────────────────────────────────────────────────────────
 let toastTimer;
@@ -573,70 +596,115 @@ function renderSidebar() {
 }
 
 // ── Render: Playground toolbar ───────────────────────────────────────────────
-function isProviderAvailable(key) {
-	if (!state.availableProviders) return true; // optimistic before load
-	const found = state.availableProviders.find(p => p.key === key);
-	return found ? found.available : false;
-}
-
 function renderPlayControls() {
 	const ctrl = $('brPlayControls');
 	const label = $('brPlayLabel');
+
+	if (state.providerState === 'loading') {
+		label.textContent = 'Models';
+		ctrl.innerHTML = `<div class="br-play-status" role="status">
+			<span class="br-spin"></span>
+			<span>Loading models…</span>
+		</div>`;
+		return;
+	}
+
+	if (state.providerState === 'error') {
+		label.textContent = 'Models';
+		ctrl.innerHTML = `<div class="br-play-status br-play-status-error" role="alert">
+			<span>Model list unavailable: ${escHtml(state.providerError)}</span>
+			<button type="button" class="br-btn br-btn-secondary br-btn-sm" data-retry-providers>Retry</button>
+		</div>`;
+		return;
+	}
+
 	if (state.playMode === 'compare') {
 		label.textContent = 'Models';
 		ctrl.innerHTML = `<div class="br-provider-pills">${
-			PROVIDERS.map(p => {
-				const avail = isProviderAvailable(p.key);
+			[...PMAP.values()].map(p => {
 				const cls = [
 					'br-pill',
 					state.active.has(p.key) ? 'on' : '',
-					!avail ? 'unavailable' : '',
+					!p.available ? 'unavailable' : '',
 				].filter(Boolean).join(' ');
-				const title = avail ? '' : ` title="${p.label} — not configured on this deployment"`;
-				return `<label class="${cls}" style="--pc:${p.color}" data-key="${p.key}"${title}>
+				return `<button type="button" class="${cls}" style="--pc:${p.color}" data-key="${escHtml(p.key)}"
+					aria-pressed="${state.active.has(p.key)}"${p.available ? '' : ' disabled'}
+					title="${escHtml(providerTitle(p))}">
 					<span class="br-pill-dot"></span>
-					<span>${p.short}</span>
-					${!avail ? '<span class="br-pill-na" aria-hidden="true">✕</span>' : ''}
-				</label>`;
+					<span>${escHtml(p.short)}</span>
+					${p.available ? '' : '<span class="br-pill-na" aria-hidden="true">✕</span>'}
+				</button>`;
 			}).join('')
 		}</div>`;
 	} else {
 		label.textContent = 'Model';
-		ctrl.innerHTML = `<select class="br-focus-sel" id="brFocusSel">${
-			PROVIDERS.map(p => {
-				const avail = isProviderAvailable(p.key);
-				return `<option value="${p.key}"${p.key === state.focusKey ? ' selected' : ''}${!avail ? ' disabled' : ''}>${p.label}${avail ? '' : ' (unavailable)'}</option>`;
-			}).join('')
+		ctrl.innerHTML = `<select class="br-focus-sel" id="brFocusSel" aria-label="Model">${
+			[...PMAP.values()].map(p =>
+				`<option value="${escHtml(p.key)}"${p.key === state.focusKey ? ' selected' : ''}${p.available ? '' : ' disabled'}>${escHtml(p.label)}${p.available ? '' : ' (unavailable)'}</option>`
+			).join('')
 		}</select>`;
 	}
 	bindPlayControlEvents();
 }
 
-async function fetchProviderAvailability() {
-	try {
-		const r = await fetch('/api/brain/chat', { method: 'GET' });
-		if (!r.ok) return;
-		const data = await r.json();
-		if (Array.isArray(data.providers)) {
-			state.availableProviders = data.providers;
-			for (const key of [...state.active]) {
-				const found = data.providers.find(p => p.key === key);
-				if (found && !found.available) state.active.delete(key);
-			}
-			if (state.active.size === 0) {
-				const first = data.providers.find(p => p.available);
-				if (first) state.active.add(first.key);
-			}
-			const focusAvail = data.providers.find(p => p.key === state.focusKey);
-			if (!focusAvail || !focusAvail.available) {
-				const first = data.providers.find(p => p.available);
-				if (first) state.focusKey = first.key;
-			}
-			renderPlayControls();
-		}
-	} catch {
-		// Non-fatal — providers just show as all-available
+// Restore the saved line-up once, then drop anything this deployment cannot
+// serve. Runs on every successful roster load, so a model that goes offline
+// between visits is dropped instead of failing on the next send.
+function reconcileSelection() {
+	const availableKeys = [...PMAP.values()].filter(p => p.available).map(p => p.key);
+	const live = new Set(availableKeys);
+
+	if (!state.selectionRestored) {
+		const saved = load('brain_models_v1');
+		if (Array.isArray(saved?.active)) state.active = new Set(saved.active);
+		if (typeof saved?.focusKey === 'string') state.focusKey = saved.focusKey;
+		state.selectionRestored = true;
 	}
+
+	for (const key of [...state.active]) if (!live.has(key)) state.active.delete(key);
+	if (!state.active.size) {
+		for (const key of DEFAULT_MODEL_KEYS) if (live.has(key)) state.active.add(key);
+	}
+	if (!state.active.size && availableKeys.length) state.active.add(availableKeys[0]);
+	if (!live.has(state.focusKey)) state.focusKey = [...state.active][0] || availableKeys[0] || '';
+	persistSelection();
+}
+
+async function fetchProviderRoster() {
+	state.providerState = 'loading';
+	state.providerError = '';
+	renderPlayControls();
+	renderCanvas();
+	updateSendAvailability();
+
+	try {
+		const res = await fetch('/api/brain/chat', { headers: { accept: 'application/json' } });
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const data = await res.json();
+		const providers = Array.isArray(data.providers) ? data.providers.filter(p => p?.key) : [];
+		if (!providers.length) throw new Error('no models returned');
+
+		PMAP.clear();
+		for (const spec of providers) PMAP.set(spec.key, decorateProvider(spec));
+		state.providerState = 'ready';
+		reconcileSelection();
+	} catch (err) {
+		state.providerState = 'error';
+		state.providerError = err.message || 'network error';
+	}
+
+	renderPlayControls();
+	renderCanvas();
+	updateSendAvailability();
+}
+
+// One place decides whether a prompt can be sent, so the button never invites a
+// click that can only fail.
+function updateSendAvailability() {
+	const send = $('brSend');
+	const ready = state.providerState === 'ready';
+	send.disabled = !ready || state.streaming;
+	send.title = ready ? '' : 'Waiting for the model list';
 }
 
 // ── Render: Compare canvas ───────────────────────────────────────────────────
@@ -652,8 +720,8 @@ function renderCompareCanvas() {
 				<div class="br-col" data-col="${escHtml(key)}" style="--pc:${p.color}">
 					<div class="br-col-head">
 						<div>
-							<div class="br-col-name">${escHtml(p.short)}</div>
-							<div class="br-col-meta">${escHtml(p.network)} / ${escHtml(p.ctx)} / ${escHtml(p.tier)}</div>
+							<div class="br-col-name" title="${escHtml(providerTitle(p))}">${escHtml(p.short)}</div>
+							<div class="br-col-meta">${escHtml(p.meta)}</div>
 						</div>
 						<div style="display:flex;gap:6px;align-items:center">
 							<div class="br-col-stats" data-stats="${escHtml(key)}"></div>
@@ -725,7 +793,33 @@ function renderChatCanvas() {
 		</div>`;
 }
 
+// Until the roster resolves there is no honest column to draw, so the canvas
+// owns the loading and failure states rather than rendering an empty grid that
+// looks ready and answers nothing.
+function renderRosterState() {
+	const canvas = $('brCanvas');
+	if (state.providerState === 'loading') {
+		canvas.innerHTML = `
+			<div class="br-canvas-state" role="status">
+				<span class="br-spin"></span>
+				<p>Loading the model roster…</p>
+			</div>`;
+		return true;
+	}
+	if (state.providerState === 'error') {
+		canvas.innerHTML = `
+			<div class="br-canvas-state br-canvas-state-error" role="alert">
+				<h3>Model list unavailable</h3>
+				<p>The playground could not reach the model service (${escHtml(state.providerError)}), so no prompt can be sent yet. Your sessions and persona are safe in this browser.</p>
+				<button type="button" class="br-btn br-btn-primary br-btn-sm" data-retry-providers>Try again</button>
+			</div>`;
+		return true;
+	}
+	return false;
+}
+
 function renderCanvas() {
+	if (renderRosterState()) return;
 	if (state.playMode === 'compare') renderCompareCanvas();
 	else renderChatCanvas();
 }
@@ -815,8 +909,14 @@ async function sendMessage() {
 	const promptEl = $('brPrompt');
 	const text = promptEl.value.trim();
 	if (!text || state.streaming) return;
+	if (state.providerState !== 'ready') {
+		showNotice(state.providerState === 'error'
+			? 'The model list failed to load. Retry it before sending.'
+			: 'Still loading the model list. One moment.');
+		return;
+	}
 
-	const activeKeys = state.playMode === 'compare' ? [...state.active] : [state.focusKey];
+	const activeKeys = (state.playMode === 'compare' ? [...state.active] : [state.focusKey]).filter(Boolean);
 	if (!activeKeys.length) { showNotice('Select at least one model.'); return; }
 
 	const system = getEffectiveSystemPrompt();
@@ -838,7 +938,7 @@ async function sendMessage() {
 	renderSidebar();
 
 	state.streaming = true;
-	$('brSend').disabled = true;
+	updateSendAvailability();
 
 	renderCanvas();
 	if (state.playMode === 'compare') activeKeys.forEach(scrollColToBottom);
@@ -934,7 +1034,7 @@ async function sendMessage() {
 	}));
 
 	state.streaming = false;
-	$('brSend').disabled = false;
+	updateSendAvailability();
 }
 
 // ── Export ────────────────────────────────────────────────────────────────────
