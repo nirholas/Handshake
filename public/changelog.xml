@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Trending: muted text on the board is readable, and the Tip button that only navigated is gone</title>
+			<link>https://three.ws/trending</link>
+			<guid isPermaLink="false">2026-08-16:Trending: muted text on the board is readable, and the Tip button that only navigated is gone</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Ten pieces of text on the Trending board sat below the WCAG AA contrast floor: the subtitle, the two unselected tabs, the 7d and all-time buttons, the column headers, agent descriptions and the unit labels next to each number. They are all legible now, and the Oracle link in the footnote is underlined instead of being told apart by colour alone. The wallet chip on each row carried a Tip button and a hover card, but the whole row is a link, so the browser followed the row instead of running either one: pressing Tip took you to the agent's wallet page rather than opening a tip. Both controls are gone from the board and tipping stays where it works, on the agent page the row opens, while the chip keeps showing the wallet address and its live balance. An automated accessibility scan now reports zero violations on all three boards and on their loading, empty and error states.</description>
+		</item>
+		<item>
 			<title>3D viewer: shared model links keep their name, and every button on the page does something</title>
 			<link>https://three.ws/viewer</link>
 			<guid isPermaLink="false">2026-08-15:3D viewer: shared model links keep their name, and every button on the page does something</guid>
@@ -716,7 +724,7 @@
 			<guid isPermaLink="false">2026-08-15:The Walk page shows the real top walkers again instead of claiming nobody has walked</guid>
 			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>The Top walkers board on /walk read &quot;No walks logged yet. Be the first to put down some distance&quot; for every visitor, while twenty-nine people had in fact logged distance and the full leaderboard at /walk-leaderboard listed all of them. The page was asking the leaderboard endpoint for the ranking and getting a correct answer back, then looking for it under half a dozen field names the endpoint has never used, finding nothing, and drawing its empty state. It now reads the shape the endpoint actually returns, so the top three walkers appear with their handles, avatars, distances, and a link to each profile, and it asks for only the three rows it draws instead of the first fifty. The social section under it now shows placeholder cards while it loads rather than a blank gap.</description>
+			<description>The Top walkers board on /walk read &quot;No walks logged yet. Be the first to put down some distance&quot; for every visitor, while twenty-nine people had in fact logged distance and the full leaderboard at /walk-leaderboard listed all of them. The page was asking the leaderboard endpoint for the ranking and getting a correct answer back, then looking for it under half a dozen field names the endpoint has never used, finding nothing, and drawing its empty state. It now reads the shape the endpoint actually returns, so the top three walkers appear with their handles, avatars, distances, and a link to each profile, and it asks for only the three rows it draws instead of the first fifty. The social section under it now shows placeholder cards while it loads rather than a blank gap. Two keyboard fixes travelled with it: tabbing into one of the nine live demo frames now draws a focus ring, where before you landed inside a demo with nothing on screen saying so, and the touch joystick inside every Walk embed carried a screen-reader label that ARIA does not permit on an unlabelled element, so assistive technology could announce it wrongly.</description>
 		</item>
 		<item>
 			<title>The Wardrobe's garment forge no longer locks itself after a job expires</title>
