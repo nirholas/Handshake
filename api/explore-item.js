@@ -11,6 +11,7 @@ import { cors, json, method, wrap, error, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
 import { publicUrl, thumbnailUrl } from './_lib/r2.js';
+import { isErc8004AgentId, isUuid } from './_lib/validate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -28,6 +29,10 @@ export default wrap(async (req, res) => {
 	if (kind === 'onchain') {
 		const chainId = parseInt(url.searchParams.get('chain') || '', 10);
 		if (!Number.isFinite(chainId)) return error(res, 400, 'validation_error', 'chain is required for onchain items');
+		// agent_id is a TEXT column holding a uint256 token id. Match on the raw
+		// digit string: parseInt() would round anything past 2^53 into exponent
+		// notation that matches no row, and turn a non-numeric id into NaN.
+		if (!isErc8004AgentId(id)) return error(res, 404, 'not_found', 'agent not found');
 
 		const rows = await sql`
 			SELECT chain_id, agent_id, owner, name, description, image, glb_url,
@@ -36,7 +41,7 @@ export default wrap(async (req, res) => {
 			FROM erc8004_agents_index
 			WHERE active = true
 			  AND chain_id = ${chainId}
-			  AND agent_id = ${parseInt(id, 10)}
+			  AND agent_id = ${id}
 			LIMIT 1
 		`;
 
@@ -74,6 +79,12 @@ export default wrap(async (req, res) => {
 	}
 
 	if (kind === 'avatar') {
+		// avatars.id is a uuid column: an unvalidated id reaches Postgres as an
+		// invalid-text-representation error (22P02) and surfaced as a 500 on a
+		// public endpoint. A malformed id names no avatar, so answer 404, which is
+		// also the status the detail page renders its "Not found" state for.
+		if (!isUuid(id)) return error(res, 404, 'not_found', 'avatar not found');
+
 		const rows = await sql`
 			SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
 			       a.tags, a.created_at, a.source,

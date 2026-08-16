@@ -3,8 +3,10 @@
  * -----------------------------------------
  * GET /api/discover-detail?kind=onchain&chain=<id>&id=<agentId>
  * GET /api/discover-detail?kind=avatar&id=<avatarId>
+ * GET /api/discover-detail?kind=solana&asset=<asset_or_registry_ref>
  *
- * Wired to /discover/a/:chainId/:agentId and /discover/avatar/:id via vercel.json.
+ * Wired to /discover/a/:chainId/:agentId, /discover/a/sol/:asset and
+ * /discover/avatar/:id via vercel.json.
  *
  * Returns the detail.html shell with Open Graph + Twitter Card meta tags already
  * baked into the <head>, so link unfurlers (Slack, Discord, X, iMessage) get a
@@ -16,6 +18,7 @@ import { sql } from './_lib/db.js';
 import { cors, method, wrap } from './_lib/http.js';
 import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc8004-chains.js';
 import { publicUrl, thumbnailUrl } from './_lib/r2.js';
+import { isErc8004AgentId, isUuid } from './_lib/validate.js';
 import { env } from './_lib/env.js';
 
 export default wrap(async (req, res) => {
@@ -33,14 +36,18 @@ export default wrap(async (req, res) => {
 
 	if (kind === 'onchain') {
 		const chainId = parseInt(url.searchParams.get('chain') || '', 10);
-		if (!Number.isFinite(chainId) || !id) return sendShell(res, origin, null, null, null);
+		// agent_id is TEXT holding a uint256 token id, so the raw digit string is
+		// the only correct comparand: parseInt() rounds anything past 2^53 into
+		// exponent notation and silently matches no row, which reads as "this agent
+		// has no preview" rather than as the bug it is.
+		if (!Number.isFinite(chainId) || !isErc8004AgentId(id)) return sendShell(res, origin, null, null, null);
 
 		const rows = await sql`
 			SELECT chain_id, agent_id, owner, name, description, image, glb_url,
 			       has_3d, x402_support, registered_at, registered_tx,
 			       services, agent_uri
 			FROM erc8004_agents_index
-			WHERE active = true AND chain_id = ${chainId} AND agent_id = ${parseInt(id, 10)}
+			WHERE active = true AND chain_id = ${chainId} AND agent_id = ${id}
 			LIMIT 1
 		`.catch(() => []);
 
@@ -112,9 +119,52 @@ export default wrap(async (req, res) => {
 			};
 			canonicalUrl = `${origin}/discover/a/sol/${asset}`;
 			ogImageUrl = thumb || `${origin}/og-image.png`;
+		} else {
+			// Not one of ours: fall back to the crawled directory of external Solana
+			// agents, the same fallback api/explore-item.js does for the client fetch.
+			// Without it the home chain's entire external directory (Metaplex Agent
+			// Registry + AgenC) unfurls as a nameless generic card in Slack, Discord,
+			// X and iMessage, and ships a generic <title> to crawlers, while the EVM
+			// half of the very same /discover grid previews correctly.
+			const ext = await sql`
+				SELECT source, ref, owner, asset, name, description, image, glb_url,
+				       network, registered_at
+				FROM solana_agents_index
+				WHERE active = true
+				  AND (asset = ${asset} OR ref = ${asset})
+				LIMIT 1
+			`.catch(() => []);
+
+			if (ext.length) {
+				const r = ext[0];
+				const target = r.asset || r.ref;
+				const cluster = r.network === 'devnet' ? '?cluster=devnet' : '';
+				item = {
+					kind: 'solana',
+					asset: target,
+					name: r.name || 'Solana Agent',
+					description: r.description || '',
+					image: r.image || null,
+					has3d: !!r.glb_url,
+					glbUrl: r.glb_url || null,
+					skills: [],
+					owner: r.owner || null,
+					ownerShort: shortAddr(r.owner),
+					createdAt: r.registered_at,
+					network: r.network || 'mainnet',
+					source: r.source,
+					viewerUrl: r.glb_url ? `/app#model=${encodeURIComponent(r.glb_url)}` : null,
+					explorerUrl: target ? `https://solscan.io/token/${target}${cluster}` : null,
+					ownerExplorerUrl: r.owner ? `https://solscan.io/account/${r.owner}${cluster}` : null,
+				};
+				canonicalUrl = `${origin}/discover/a/sol/${asset}`;
+				ogImageUrl = r.image || `${origin}/og-image.png`;
+			}
 		}
 	} else if (kind === 'avatar') {
-		if (!id) return sendShell(res, origin, null, null, null);
+		// avatars.id is a uuid column; a malformed id would otherwise reach Postgres
+		// as a 22P02 that the .catch() below swallows into an unexplained blank shell.
+		if (!isUuid(id)) return sendShell(res, origin, null, null, null);
 
 		const rows = await sql`
 			SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,

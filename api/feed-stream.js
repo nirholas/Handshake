@@ -34,7 +34,6 @@
 // before the hard timeout, and EventSource reconnects automatically.
 
 import { cors, method } from './_lib/http.js';
-import { env } from './_lib/env.js';
 import { getRedis as _getSharedRedis, isRedisAuthError } from './_lib/redis.js';
 
 const FEED_KEY = 'feed:events';

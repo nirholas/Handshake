@@ -7,7 +7,12 @@
  *   q=<text>       — name/description substring
  *   cursor=<iso>   — created_at/registered_at ISO string for pagination
  *   limit=<int>    — page size, default 24, max 60
- *   source=<all|onchain|avatar|solana> — restrict feed to one source. Default 'all'.
+ *   source=<all|onchain|avatar|solana|agents>: restrict feed to one source.
+ *                  Default 'all'. 'agents' is the agent-directory meta-source:
+ *                  every on-chain agent (EVM + Solana, ours and external) and
+ *                  no avatars, which is what /agents renders.
+ *   category=<c[,c]>: avatar model_category filter (avatar, accessory, item,
+ *                  scene, creature, vehicle, other). Unknown values are a 400.
  *   quality=<all|high> — avatar quality filter. 'high' (default) hides
  *                        autonamed/filename-like junk and surfaces named
  *                        community + curated avatars first.

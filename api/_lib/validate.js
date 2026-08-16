@@ -187,6 +187,17 @@ export function isoTimestamp(value) {
 	return Number.isNaN(ms) ? null : new Date(ms).toISOString();
 }
 
+// ERC-8004 agent ids are uint256 token ids and are stored as TEXT, precisely
+// because they can exceed what a JS number holds. A handler that does
+// `parseInt(id, 10)` before the query therefore has two failure modes on a
+// public endpoint: a non-numeric id becomes NaN, and an id past 2^53 becomes a
+// rounded float in exponent notation that can never match the text column. Both
+// are client faults; validate the raw digit string and pass it through as text.
+// 78 digits is the width of 2^256 - 1, so nothing valid is rejected.
+export function isErc8004AgentId(value) {
+	return typeof value === 'string' && /^\d{1,78}$/.test(value);
+}
+
 export function isValidSolanaAddress(address) {
 	return typeof address === 'string' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
 }
