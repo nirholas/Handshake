@@ -1,4 +1,4 @@
-// Rider pass — shared policy for the /api/rider/* surface.
+// Rider pass: shared policy for the /api/rider/* surface.
 //
 // A rider pass is granted two ways, and every reader has to honor both:
 //   1. Holding $THREE in the wallet (a holder pass), read on-chain.
@@ -20,8 +20,8 @@ export const REQUIRED_AMOUNT = 8000;
  * array. A single transaction can carry $THREE from more than one wallet (a batch
  * or aggregator transfer), and a wallet can appear in several transfers of the
  * same transaction, so the qualifying legs are summed per wallet per transaction
- * before the threshold is applied. Anything else in the payload — other mints,
- * other destinations, failed transactions, transfers with no sender — is dropped.
+ * before the threshold is applied. Everything else in the payload (other mints,
+ * other destinations, failed transactions, transfers with no sender) is dropped.
  *
  * @param {unknown} txns Parsed webhook body.
  * @param {object} opts
