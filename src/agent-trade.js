@@ -308,17 +308,27 @@ function buildStage() {
     return flat;
   }
 
+  // A bubble sits directly above its own label. Anchoring it to a world-space
+  // offset instead made the gap shrink with the projection while the bubble grew
+  // with its wrapped text, so at tablet widths the bubble printed over the
+  // agent's name; measuring the label is the only way that always clears.
+  function placeAbove(el, anchorEl) {
+    const a = anchorEl.getBoundingClientRect();
+    const halfW = el.offsetWidth / 2 || 0;
+    const x = Math.min(Math.max(a.left + a.width / 2, halfW + 8), innerWidth - halfW - 8);
+    const y = Math.max(a.top - 8, el.offsetHeight + 8);
+    el.style.left      = `${x}px`;
+    el.style.top       = `${y}px`;
+    el.style.transform = 'translate(-50%, -100%)';
+  }
+
   function updateOverlays() {
     if (syncOverlayMode()) return;
     placeEl(els.buyerLabel,  labelPos.buyer,  0, -8);
     placeEl(els.sellerLabel, labelPos.seller, 0, -8);
 
-    if (!els.buyerBubble.classList.contains('hidden')) {
-      placeEl(els.buyerBubble, labelPos.buyer.clone().add(new THREE.Vector3(0, 0.55, 0)), 0, -4);
-    }
-    if (!els.sellerBubble.classList.contains('hidden')) {
-      placeEl(els.sellerBubble, labelPos.seller.clone().add(new THREE.Vector3(0, 0.55, 0)), 0, -4);
-    }
+    if (!els.buyerBubble.classList.contains('hidden')) placeAbove(els.buyerBubble, els.buyerLabel);
+    if (!els.sellerBubble.classList.contains('hidden')) placeAbove(els.sellerBubble, els.sellerLabel);
   }
 
   addEventListener('resize', () => {
