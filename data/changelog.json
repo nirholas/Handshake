@@ -23389,6 +23389,16 @@
 				"fix",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The sniper trade journal starts recording, and three sniper readouts stop reporting the wrong number",
+			"summary": "The trade journal is the surface that answers why an agent bought and why it sold, and it had never recorded a single line. Two halves of the same mistake: the table expected a plain number where the platform stores an identifier, so every write failed and was silently discarded on purpose (a journal write must never be allowed to break a trade), and the page that reads it asked the database to compare the same two mismatched kinds of value, which failed outright and returned an error rather than an empty journal. Both are fixed and the surface now records and reads for real, across the 323 closed positions the fleet had already traded. Three readouts were also stating numbers that were not true. The Exit Lab corpus, asked without an explicit page size, answered with exactly one trade instead of the full 400, so the replay console looked like a fleet that had traded once; it now returns the whole window. The live pre-launch radar tape re-sent every precursor it had already shown, about forty times a minute, so the feed filled with copies of the same event; each precursor is now sent once. And the radar dashboard reported 100 watched wallets, the size of the table it was showing rather than the number it was watching, while the status line beside it reported the real figure; it now counts the wallets and the table says which slice of them it is showing.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/radar"
 		}
 	]
 }
