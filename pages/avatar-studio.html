@@ -12,7 +12,7 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<meta name="description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories — no selfie required."  data-i18n-attr="content:avatar_studio.meta_description"/>
+		<meta name="description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required."  data-i18n-attr="content:avatar_studio.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/avatar-studio" />
@@ -84,6 +84,7 @@
 			}
 			.as-back:hover { color: var(--text); }
 			.as-bar-title {
+				margin: 0;
 				font-family: var(--font-display);
 				font-size: 14px;
 				font-weight: 600;
@@ -91,6 +92,10 @@
 				color: var(--text);
 				text-align: center;
 				flex: 1;
+				min-width: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
 			}
 			.as-actions { display: flex; gap: 8px; }
 			.as-btn {
@@ -280,9 +285,11 @@
 				color: var(--text); border-color: var(--accent);
 				background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
 			}
+			/* Ink, not #fff: --accent is white in the dark theme, so a hardcoded
+			   white label rendered the badge as a blank pill. */
 			.as-base-new {
 				font-size: 10px; padding: 1px 6px; border-radius: 999px;
-				background: var(--accent); color: #fff; line-height: 1.5;
+				background: var(--accent); color: var(--accent-ink); line-height: 1.5;
 			}
 
 			/* ── Tabs ─────────────────────────────────────────────── */
@@ -308,6 +315,9 @@
 			}
 			.as-tab:hover { color: var(--text-2); }
 			.as-tab.active { color: var(--text); border-color: var(--accent); }
+			.as-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+			/* Shown only in the narrow layout, where the word labels are hidden. */
+			.as-tab-icon { display: none; }
 
 			/* ── Chips ────────────────────────────────────────────── */
 			.as-chips {
@@ -957,14 +967,34 @@
 			}
 			.as-toast-link:hover { text-decoration: underline; }
 
-			/* ── Mobile: icon tabs ─────────────────────────────────── */
+			/* ── Mobile: icon tabs + a top bar that fits 320px ─────── */
 			@media (max-width: 480px) {
 				.as-tab-label { display: none; }
-				.as-tab::before {
+				.as-tab-icon {
+					display: inline-block;
 					font-size: 16px;
 					line-height: 1;
 				}
 				.as-btn-label { display: none; }
+				/* At 320px the full bar (Back label + centred title + five
+				   actions) overflowed the viewport and pushed "Save avatar"
+				   off-screen entirely. Drop the two redundant labels, tighten
+				   the padding, and everything fits with room to spare. The
+				   title stays in the a11y tree as the page's only h1. */
+				.as-bar { padding: 10px 12px; gap: 8px; }
+				.as-back-label { display: none; }
+				.as-bar-title {
+					position: absolute;
+					width: 1px;
+					height: 1px;
+					padding: 0;
+					margin: -1px;
+					overflow: hidden;
+					clip-path: inset(50%);
+					white-space: nowrap;
+				}
+				.as-actions { gap: 6px; }
+				.as-btn { padding: 7px 10px; }
 			}
 
 			/* ── Save overlay ─────────────────────────────────────── */
@@ -1025,11 +1055,11 @@
 </head>
 	<body>
 		<header class="as-bar">
-			<a class="as-back" id="as-back" href="/create">
+			<a class="as-back" id="as-back" href="/create" aria-label="Back to Create">
 				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-				Back
+				<span class="as-back-label">Back</span>
 			</a>
-			<div class="as-bar-title">Avatar Studio</div>
+			<h1 class="as-bar-title">Avatar Studio</h1>
 			<div class="as-actions">
 				<button class="as-btn as-icon-btn" id="as-undo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled data-i18n-attr="aria-label:avatar_studio.undo_arialabel;title:avatar_studio.undo_ctrl_z_title">
 					<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7v6h6"/><path d="M3 13C5.5 7.5 12 5 17 8s6 9 3 13"/></svg>

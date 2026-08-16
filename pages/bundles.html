@@ -98,8 +98,10 @@
 		.bd-priceline { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 		.bd-priceline span { color: var(--ink-dim); font-size: 0.85rem; }
 		.bd-priceline b { font-size: 1.05rem; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
-		.bd-priceinput { display: flex; align-items: center; gap: 10px; }
-		.bd-priceinput input[type="number"] { flex: 1 1 auto; min-width: 0; padding: 11px 12px; border-radius: 9px; border: 1px solid var(--stroke); background: var(--bg-0); color: var(--ink); font-size: 1.05rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+		/* Wraps rather than squeezing: on a 320px screen an unwrapped row left the
+		   price field 31px wide, too narrow to read the number being typed in it. */
+		.bd-priceinput { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+		.bd-priceinput input[type="number"] { flex: 1 1 140px; min-width: 120px; padding: 11px 12px; border-radius: 9px; border: 1px solid var(--stroke); background: var(--bg-0); color: var(--ink); font-size: 1.05rem; font-weight: 650; font-variant-numeric: tabular-nums; }
 		.bd-priceinput input[type="number"]:focus-visible { outline: 2px solid var(--accent, #6d8cff); outline-offset: 1px; border-color: transparent; }
 		.bd-priceinput .bd-unit { flex: none; color: var(--ink-dim); font-size: 0.86rem; }
 		.bd-slider { width: 100%; margin: 12px 0 2px; accent-color: var(--accent, #6d8cff); }
@@ -312,7 +314,7 @@
 	</main>
 
 	<script type="module">
-		import { apiFetch } from '/src/api.js';
+		import { apiFetch, noteSession } from '/src/api.js';
 
 		const $ = (id) => document.getElementById(id);
 		const show = (el, on) => el.classList.toggle('bd-hide', !on);
@@ -366,7 +368,27 @@
 		let pricingSeq = 0;     // guards against an out-of-order response overwriting a newer one
 
 		// ── boot ────────────────────────────────────────────────────────
+		const SIGN_IN_GATE = '<b>Sign in to build a bundle.</b> Bundles belong to an agent you own, so this page needs your account. <a href="/login?next=%2Fbundles">Sign in</a> or <a href="/register">create an account</a>.';
+
 		async function boot() {
+			// Clear any gate a previous attempt left on screen, so a successful retry
+			// does not leave its own error note sitting above the builder it recovered.
+			show($('bd-gate'), false);
+			// Ask who the visitor is before asking what they own. /api/auth/me answers
+			// 200 with `{ user: null }` when signed out, so an anonymous visitor reaches
+			// the sign-in gate without a red 401 in the console, and noteSession() then
+			// spares every later call a CSRF pre-flight that could only 401.
+			try {
+				const who = await apiFetch('/api/auth/me', { allowAnonymous: true });
+				const me = who.ok ? await who.json().catch(() => null) : null;
+				if (me) {
+					noteSession(!!me.user);
+					if (!me.user) return gate(SIGN_IN_GATE);
+				}
+			} catch {
+				return gate('<b>Could not reach three.ws.</b> Your connection dropped before the page could tell who you are.', boot);
+			}
+
 			// GET /api/agents lists the caller's agents and answers 401 with no session.
 			// Its sibling /api/agents/me answers 200 with a SINGLE agent (auto-creating
 			// one) even for an anonymous visitor, so reading a list off it told every
@@ -377,9 +399,7 @@
 			} catch {
 				return gate('<b>Could not reach three.ws.</b> Your connection dropped before your agents loaded.', boot);
 			}
-			if (res.status === 401) {
-				return gate('<b>Sign in to build a bundle.</b> Bundles belong to an agent you own, so this page needs your account. <a href="/login?next=%2Fbundles">Sign in</a> or <a href="/register">create an account</a>.');
-			}
+			if (res.status === 401) return gate(SIGN_IN_GATE);
 			if (!res.ok) return gate('<b>Could not load your agents</b> (HTTP ' + res.status + ').', boot);
 
 			const body = await res.json().catch(() => null);
@@ -392,7 +412,9 @@
 			sel.innerHTML = agents.map((a) => '<option value="' + esc(a.id) + '">' + esc(a.name || a.id) + '</option>').join('');
 			// A single agent needs no picker: one less control, one less decision.
 			show($('bd-agent-field'), agents.length > 1);
-			sel.addEventListener('change', () => selectAgent(sel.value));
+			// Assigned rather than added: boot() runs again after a retry, and a second
+			// listener would fetch this agent's skills and bundles twice per change.
+			sel.onchange = () => selectAgent(sel.value);
 
 			show($('bd-builder'), true);
 			await selectAgent(agents[0].id);
@@ -660,6 +682,9 @@
 		let betterSeq = 0;
 		function refreshBetterOff(price) {
 			const el = $('bd-better');
+			// A price of zero is rejected by the endpoint (below one atomic unit), so
+			// answer it here rather than leaving the tile dimmed on a doomed request.
+			if (!(price > 0)) { el.textContent = '0'; delete el.dataset.pending; return; }
 			el.dataset.pending = '1';
 			clearTimeout(betterDebounce);
 			const seq = ++betterSeq;

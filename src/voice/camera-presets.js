@@ -64,11 +64,28 @@ export function computeFraming({ box, preset = 'full', aspectRatio = 1 } = {}) {
 	// 0.5 = mid-torso, 0.65 = chest, 0.85 = head, 1.0 = top of head.
 	const targetY = box.min.y + height * cfg.targetFrac;
 
-	// Distance back from the subject — scales with avatar height, then backs
-	// off further on narrow viewports so a T-pose silhouette still fits
-	// horizontally. Wider-than-tall viewports never need that extra nudge.
+	// Distance back from the subject. The heuristic term scales with avatar
+	// height and backs off further on narrow viewports so a T-pose silhouette
+	// still fits horizontally; wider-than-tall viewports never need that nudge.
 	const aspectBackoff = Math.max(1, 1 / aspectRatio);
-	const distance = Math.max(cfg.minDistance, height * cfg.distanceMul * aspectBackoff);
+	const heuristic = height * cfg.distanceMul * aspectBackoff;
+
+	// ...but a multiplier alone cannot promise that the preset's subject is
+	// actually inside the frustum: `full` at 35 deg FOV and 1.05x height showed
+	// barely two thirds of a humanoid, so the head and the feet were cropped in
+	// the avatar studio. Solve the projection instead. `coverFrac` is the share
+	// of the avatar's height the preset must keep in frame and `coverWidthFrac`
+	// the share of its width (a full-body shot has to clear the arms; a headshot
+	// only the skull), both padded so the silhouette never kisses the edge.
+	const halfFovY = (cfg.fov * Math.PI) / 360;
+	const pad = 1 + cfg.padding;
+	const fitForHeight = (height * cfg.coverFrac * pad) / 2 / Math.tan(halfFovY);
+	const halfFovX = Math.atan(Math.tan(halfFovY) * aspectRatio);
+	const fitForWidth = (size.x * cfg.coverWidthFrac * pad) / 2 / Math.tan(halfFovX);
+
+	// Measured from the box centre, so half the depth is inside the body: add it
+	// back or a deep subject (a cape, a backpack) eats into the clearance.
+	const distance = Math.max(cfg.minDistance, heuristic, fitForHeight, fitForWidth) + size.z / 2;
 
 	// Camera height: slightly above target so the look-vector slopes very
 	// gently downward. Avoids the up-the-nose angle when the avatar is short.
@@ -83,11 +100,18 @@ export function computeFraming({ box, preset = 'full', aspectRatio = 1 } = {}) {
 
 const PRESET_CONFIG = {
 	full: {
-		targetFrac: 0.55,
+		// Aim at the vertical middle so the whole silhouette is centred: the
+		// framing below keeps head-to-toe in frame, and an off-centre target
+		// would spend that headroom on one end.
+		targetFrac: 0.5,
 		distanceMul: 1.05,
 		minDistance: 0.7,
 		cameraHeightOffsetMul: 0.05,
 		fov: 35,
+		// Head to toe, arms included.
+		coverFrac: 1,
+		coverWidthFrac: 1,
+		padding: 0.1,
 	},
 	half: {
 		// Aim at sternum-height; pull in to ~70% of avatar height.
@@ -97,6 +121,10 @@ const PRESET_CONFIG = {
 		cameraHeightOffsetMul: 0.02,
 		// Slightly tighter FOV reads more "portrait" / "video call".
 		fov: 32,
+		// Upper torso + head: a little under half the body, shoulders wide.
+		coverFrac: 0.44,
+		coverWidthFrac: 0.9,
+		padding: 0.06,
 	},
 	headshot: {
 		// Aim near the face.
@@ -105,6 +133,10 @@ const PRESET_CONFIG = {
 		minDistance: 0.35,
 		cameraHeightOffsetMul: 0.0,
 		fov: 28,
+		// Head + neck only, so the arms are deliberately out of frame.
+		coverFrac: 0.23,
+		coverWidthFrac: 0.45,
+		padding: 0.06,
 	},
 };
 

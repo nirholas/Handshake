@@ -137,7 +137,7 @@ function queueOp(fn) {
 }
 
 const TABS = [
-	{ id: 'color', label: 'Color', kinds: [], color: true },
+	{ id: 'color', label: 'Color', kinds: [], emoji: '🎨', color: true },
 	{ id: 'hat', label: 'Hats', kinds: ['hat'], emoji: '🎩', single: true },
 	{ id: 'glasses', label: 'Glasses', kinds: ['glasses'], emoji: '🕶️', single: true },
 	{ id: 'earrings', label: 'Earrings', kinds: ['earrings'], emoji: '💎', single: false },
@@ -203,7 +203,7 @@ const EYE_OFF =
 
 init().catch((err) => {
 	log.error('[avatar-studio] init', err);
-	renderStageError($('as-shell'), 'Character Studio couldn’t load. Check your connection and try again.');
+	renderStageError($('as-shell'), 'Avatar Studio couldn’t load. Check your connection and try again.');
 });
 
 // Render an actionable error (Retry + Back) into a container, replacing whatever
@@ -636,10 +636,15 @@ function renderTabs() {
 	const el = $('as-tabs');
 	el.innerHTML = TABS.map((t) => {
 		const active = t.id === activeTab;
+		// The icon carries the tab on narrow viewports, where the word label is
+		// hidden. `aria-label` is unconditional so the button keeps its name in
+		// that layout instead of announcing an emoji (or nothing at all).
 		return `
 			<button class="as-tab${active ? ' active' : ''}" data-tab="${t.id}" role="tab"
 			        id="as-tab-${t.id}" aria-selected="${active ? 'true' : 'false'}"
-			        aria-controls="as-panel" tabindex="${active ? '0' : '-1'}">
+			        aria-controls="as-panel" tabindex="${active ? '0' : '-1'}"
+			        aria-label="${esc(t.label)}" title="${esc(t.label)}">
+				<span class="as-tab-icon" aria-hidden="true">${t.emoji}</span>
 				<span class="as-tab-label">${t.label}</span>
 			</button>`;
 	}).join('');
@@ -726,6 +731,7 @@ function renderActivePanel() {
 		<div class="as-search-wrap">
 			<input class="as-search" id="as-search" type="search"
 			       placeholder="Search ${esc(tab.label.toLowerCase())}..."
+			       aria-label="Search ${esc(tab.label.toLowerCase())}"
 			       value="${esc(searchQuery)}" autocomplete="off" />
 		</div>`;
 
@@ -1713,7 +1719,19 @@ async function saveAvatar() {
 			return;
 		}
 
-		setStatus('err', `Save failed: ${err.message || 'Unknown error'}`);
+		// A dropped connection surfaces as the browser's bare "Failed to fetch",
+		// which tells the user nothing they can act on. Name the cause and the
+		// next move instead; every other error already carries a server message
+		// worth showing, so that one only needs the retry nudge appended.
+		const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+		const networkFailure =
+			offline || /failed to fetch|networkerror|load failed|network request failed/i.test(err.message || '');
+		setStatus(
+			'err',
+			networkFailure
+				? 'Save failed: could not reach three.ws. Your look is still here, so check your connection and press Save again.'
+				: `Save failed: ${err.message || 'Unknown error'}. Press Save to try again.`,
+		);
 		saveBtn.disabled = false;
 		resetBtn.disabled = false;
 	}

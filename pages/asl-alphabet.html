@@ -304,7 +304,7 @@
 						<button id="aa-practice-replay" class="aa-btn aa-btn-quiet" type="button" hidden>Show it again</button>
 						<button id="aa-practice-reveal" class="aa-btn aa-btn-quiet" type="button" hidden>Reveal</button>
 					</div>
-					<div class="aa-feedback" id="aa-practice-feedback">Press start and the avatar will spell something.</div>
+					<div class="aa-feedback" id="aa-practice-feedback" role="status" aria-live="polite">Press start and the avatar will spell something.</div>
 					<div class="aa-score">
 						<span>Streak <strong id="aa-streak">0</strong></span>
 						<span>Best <strong id="aa-best">0</strong></span>
@@ -317,8 +317,9 @@
 				anything with no sign of its own. Words that have signs are <em>signed</em>, and you
 				can watch those, get signed AI chat replies, and sign back with your webcam at
 				<a href="/sign-language">/sign-language</a>. The full reference is in
-				<a href="/docs/sign-language">the documentation</a>, and the engine behind both pages is
-				published as <a href="https://www.npmjs.com/package/@three-ws/sign-language">@three-ws/sign-language</a>.
+				<a href="/docs/sign-language">the documentation</a>, and the engine behind both pages ships as the
+				<a href="https://github.com/nirholas/three.ws/tree/main/packages/sign-language">@three-ws/sign-language</a>
+				package, installable from a clone until its registry publish lands.
 			</p>
 		</main>
 

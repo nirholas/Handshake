@@ -25,6 +25,7 @@ const H = vi.hoisted(() => ({
 	completed: [{ n: 0 }],
 	recent: [],
 	topEarners: [],
+	avatars: [],
 	passportRow: undefined, // undefined ⇒ not found
 	activity: [],
 	bazaarItems: [],
@@ -56,6 +57,9 @@ vi.mock('../api/_lib/db.js', () => {
 		else if (q.includes('from agora_citizens where agenc_agent_pda')) rows = H.passportRow === undefined ? [] : [H.passportRow];
 		else if (q.includes('from agora_citizens where agenc_agent_id')) rows = H.passportRow === undefined ? [] : [H.passportRow];
 		else if (q.includes('from agora_citizens')) rows = H.citizens;
+		// The batch avatar resolve behind `avatarUrl` (public/unlisted only); the
+		// visibility filter lives in the SQL, so the fake returns what it selected.
+		else if (q.includes('from avatars')) rows = H.avatars;
 		return Promise.resolve(rows);
 	};
 	return { sql, isDbUnavailableError: () => false, isDbCapacityError: () => false };
@@ -75,6 +79,11 @@ vi.mock('../api/_lib/x402/bazaar-client.js', () => ({
 	},
 	filterByNetwork: (items) => items,
 	filterByMaxPrice: (items) => items,
+}));
+// Object storage is an I/O boundary like the DB: give publicUrl a domain so the
+// citizens batch resolve can build a real URL without S3 config in the test env.
+vi.mock('../api/_lib/r2.js', () => ({
+	publicUrlOrNull: (key) => (key ? `https://cdn.example/${key}` : null),
 }));
 vi.mock('@tetsuo-ai/sdk', () => ({ getAgent: async () => null }));
 
@@ -104,6 +113,7 @@ async function call(action, { method = 'GET', query = {} } = {}) {
 
 beforeEach(() => {
 	H.citizens = [];
+	H.avatars = [];
 	H.openTasks = [];
 	H.pop = [{ total: 0, agents: 0, humans: 0, active_24h: 0 }];
 	H.prof = []; H.status = [];
@@ -169,6 +179,40 @@ describe('citizens', () => {
 		expect(c.earnedThreeAtomic).toBe('250000');
 		expect(c.agenc.registered).toBe(true);
 		expect(c.professions.map((p) => p.key)).toContain('sculptor'); // bit 1 set
+	});
+
+	// agora_citizens.avatar_url holds an avatars.id, not a URL. The Commons used to
+	// take the column at its name and resolve every citizen with its own
+	// /api/avatars/<id> round trip, which cost 184 requests on a full square and
+	// starved the economy poller of connections. The endpoint resolves the page in
+	// one batch read now, so the field means what it says.
+	it('resolves a citizen avatar id into a loadable URL in one batch read', async () => {
+		H.citizens = [
+			{ id: 'c1', display_name: 'Aria', avatar_url: '11111111-1111-4111-8111-111111111111', capability_bits: 0 },
+			{ id: 'c2', display_name: 'Sol', avatar_url: 'https://already/a.glb', capability_bits: 0 },
+			{ id: 'c3', display_name: 'Nyx', avatar_url: null, capability_bits: 0 },
+		];
+		H.avatars = [{ id: '11111111-1111-4111-8111-111111111111', storage_key: 'u/aria/model.glb' }];
+
+		const { body } = await call('citizens');
+		const [aria, sol, nyx] = body.citizens;
+		expect(aria.avatarUrl).toBe('https://cdn.example/u/aria/model.glb');
+		expect(aria.avatarId).toBe('11111111-1111-4111-8111-111111111111');
+		// A URL already in the column is passed through untouched.
+		expect(sol.avatarUrl).toBe('https://already/a.glb');
+		expect(nyx.avatarUrl).toBe(null);
+	});
+
+	// A private avatar would need a presigned credential minted per citizen for a
+	// world anyone can watch, so it stays unresolved and its citizen renders on the
+	// shared default rig rather than blocking or leaking a signed URL.
+	it('leaves an unresolvable avatar id alone rather than inventing a URL', async () => {
+		H.citizens = [{ id: 'c1', display_name: 'Aria', avatar_url: '22222222-2222-4222-8222-222222222222', capability_bits: 0 }];
+		H.avatars = []; // private / deleted: the visibility-filtered read returns nothing
+
+		const { body } = await call('citizens');
+		expect(body.citizens[0].avatarUrl).toBe('22222222-2222-4222-8222-222222222222');
+		expect(body.citizens[0].avatarId).toBe('22222222-2222-4222-8222-222222222222');
 	});
 });
 

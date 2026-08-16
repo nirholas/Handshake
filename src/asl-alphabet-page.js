@@ -304,6 +304,19 @@ async function boot() {
 	};
 	renderScore();
 
+	// The drill speaks in one place, and the start button's label names the phase
+	// the drill is actually in, so the feedback line can point at it by name.
+	const say = (text, state) => {
+		if (!practiceFeedback) return;
+		practiceFeedback.textContent = text;
+		practiceFeedback.dataset.state = state;
+	};
+
+	const setStartLabel = () => {
+		if (!startBtn) return;
+		startBtn.textContent = !practice.answer ? 'Start practising' : practice.active ? 'Skip to the next one' : 'Next one';
+	};
+
 	const currentMode = () => [...modeInputs].find((i) => i.checked)?.value || 'letters';
 
 	const nextRound = async () => {
@@ -313,10 +326,7 @@ async function boot() {
 					? 'The avatar is still loading: the drill starts as soon as it is on stage.'
 					: 'This drill needs the live avatar, which could not load. Reload the page to try again.';
 			setStatus(msg);
-			if (practiceFeedback) {
-				practiceFeedback.textContent = msg;
-				practiceFeedback.dataset.state = 'shown';
-			}
+			say(msg, 'shown');
 			return;
 		}
 		practice.active = true;
@@ -324,10 +334,7 @@ async function boot() {
 			currentMode() === 'words'
 				? PRACTICE_WORDS[Math.floor(Math.random() * PRACTICE_WORDS.length)]
 				: CHARS[Math.floor(Math.random() * CHARS.length)];
-		if (practiceFeedback) {
-			practiceFeedback.textContent = 'Watch, then type what it spelled.';
-			practiceFeedback.dataset.state = 'asking';
-		}
+		say('Watch, then type what it spelled.', 'asking');
 		if (practiceInput) {
 			practiceInput.value = '';
 			practiceInput.disabled = false;
@@ -335,15 +342,30 @@ async function boot() {
 		}
 		if (replayBtn) replayBtn.hidden = false;
 		if (revealBtn) revealBtn.hidden = false;
-		if (startBtn) startBtn.textContent = 'Skip to the next one';
+		setStartLabel();
 		// The whole point is to read it, so the keys must not give it away.
 		await play(practice.answer, { describe: false });
 	};
 
+	// Check is live from first paint, so it answers every press: with no round to
+	// grade it says how to start one, with an empty box it says what to put there.
+	// A press that changes nothing on screen reads as a broken button.
 	const checkAnswer = () => {
-		if (!practice.active) return;
+		if (!practice.active) {
+			say(
+				practice.answer
+					? 'That round is finished. Press "Next one" to keep reading.'
+					: 'Press start and the avatar will spell something to read.',
+				'shown',
+			);
+			return;
+		}
 		const guess = normalizeWord(practiceInput?.value || '').replace(/\s+/g, '');
-		if (!guess) return;
+		if (!guess) {
+			say('Type what you read, then press Check. "Show it again" replays it.', 'asking');
+			practiceInput?.focus();
+			return;
+		}
 		const right = guess === practice.answer;
 		practice.streak = right ? practice.streak + 1 : 0;
 		if (practice.streak > practice.best) {
@@ -351,24 +373,23 @@ async function boot() {
 			saveSignPrefs({ aslBest: practice.best });
 		}
 		renderScore();
-		if (practiceFeedback) {
-			practiceFeedback.textContent = right
+		say(
+			right
 				? `Correct: ${practice.answer}. Next one is coming.`
-				: `That was ${practice.answer}, not ${guess}. Watch it again.`;
-			practiceFeedback.dataset.state = right ? 'right' : 'wrong';
-		}
+				: `That was ${practice.answer}, not ${guess}. Show it again to see the shape, then take the next one.`,
+			right ? 'right' : 'wrong',
+		);
 		practice.active = false;
+		setStartLabel();
 		if (right) setTimeout(nextRound, 1200);
 	};
 
 	startBtn?.addEventListener('click', nextRound);
 	replayBtn?.addEventListener('click', () => play(practice.answer, { describe: false }));
 	revealBtn?.addEventListener('click', () => {
-		if (practiceFeedback) {
-			practiceFeedback.textContent = `It spelled ${practice.answer}.`;
-			practiceFeedback.dataset.state = 'shown';
-		}
+		say(`It spelled ${practice.answer}.`, 'shown');
 		practice.active = false;
+		setStartLabel();
 	});
 	practiceInput?.addEventListener('keydown', (e) => {
 		if (e.key === 'Enter') {
@@ -389,10 +410,7 @@ async function boot() {
 		for (const el of [startBtn, replayBtn, revealBtn, checkBtn, practiceInput, ...modeInputs]) {
 			if (el) el.disabled = !canSign;
 		}
-		if (!canSign && practiceFeedback) {
-			practiceFeedback.textContent = 'This drill needs the live avatar, which could not load. Reload the page to try again.';
-			practiceFeedback.dataset.state = 'shown';
-		}
+		if (!canSign) say('This drill needs the live avatar, which could not load. Reload the page to try again.', 'shown');
 	};
 
 	// ── Settings ─────────────────────────────────────────────────────────────

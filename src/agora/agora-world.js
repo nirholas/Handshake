@@ -65,6 +65,10 @@ function citizenPosition(citizen, i) {
 }
 
 const CITIZENS_URL = '/api/agora/citizens?limit=200';
+// How many citizens are placed per frame while the crowd fills in.
+const PLACE_BATCH = 10;
+// Yield to the browser so the world paints between placement batches.
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
 // The citizens and the buildings are independent fetches, but the population one
 // used to start only after the OSM ladder settled. When Overpass is slow that
@@ -264,15 +268,24 @@ async function main() {
 			// Progressive populate: every citizen stands up on the shared rig, then the
 			// most recently active ones upgrade to their own avatar in the background.
 			// Loads are pooled inside CitizenPopulation so the fleet streams in smoothly.
+			//
+			// Placed in batches with a frame between them. The whole crowd shares one
+			// template, so an unchunked pass resolves all 200 in a single microtask
+			// flush: 200 skeleton clones and 200 label canvases back to back, which
+			// locks the main thread and freezes the world mid-boot. Batching keeps the
+			// render loop breathing and lets the population chip climb honestly.
 			let personalBudget = MAX_PERSONAL_AVATARS;
-			await Promise.all(citizens.map((citizen, i) => {
-				// Claimed synchronously, in list order, before the first await, so the
-				// personal-avatar budget goes to the most recently active citizens that
-				// actually carry one.
-				const personal = Boolean(citizen.avatarUrl) && personalBudget-- > 0;
-				return population.add(citizen, citizenPosition(citizen, i), { personal })
-					.then(renderCount);
-			}));
+			for (let i = 0; i < citizens.length; i += PLACE_BATCH) {
+				const batch = citizens.slice(i, i + PLACE_BATCH);
+				await Promise.all(batch.map((citizen, j) => {
+					// Claimed in list order, so the personal-avatar budget goes to the most
+					// recently active citizens that actually carry one.
+					const personal = Boolean(citizen.avatarUrl) && personalBudget-- > 0;
+					return population.add(citizen, citizenPosition(citizen, i + j), { personal });
+				}));
+				renderCount();
+				await nextFrame();
+			}
 			renderCount();
 		} catch (err) {
 			log.warn('[agora] citizens fetch failed', err?.message);

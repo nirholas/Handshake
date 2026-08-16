@@ -200,6 +200,9 @@ function renderTable() {
 				state.sortDir = key === 'name' ? 'asc' : 'desc';
 			}
 			renderTable();
+			// The header this came from is a fresh node after the re-render, so
+			// keyboard users would otherwise be dropped back to the document.
+			$('chains-table')?.querySelector(`th[data-key="${key}"]`)?.focus();
 		};
 		th.addEventListener('click', activate);
 		th.addEventListener('keydown', (e) => {
