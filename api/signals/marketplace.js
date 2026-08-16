@@ -2,10 +2,10 @@
  * GET /api/signals/marketplace?network=mainnet&sort=edge&limit=60
  *
  * The public signal-feed directory. Every active, public feed is scored by its
- * PROVEN realized edge — hit-rate × realized ROI, confidence-regressed toward the
- * publisher's own verified track-record score until enough signals have closed —
- * and ranked. A thin feed riding one lucky call can never top a deep, consistent
- * one. Open read: no auth, cacheable.
+ * PROVEN realized edge (hit-rate times realized ROI, confidence-regressed toward
+ * the publisher's own verified track-record score until enough signals have
+ * closed) and ranked. A thin feed riding one lucky call can never top a deep,
+ * consistent one. Open read: no auth, cacheable.
  */
 
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';

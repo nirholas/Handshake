@@ -4,9 +4,15 @@
 // memory-seeding demo. Uses twitter-api-v2 in app-only (bearer) mode so
 // we can look up any public profile without OAuth on the visitor side.
 //
-// When TWITTER_BEARER_TOKEN is not configured (typical in local dev) we
-// return { ok: false, reason } with a 200 status so the demo UI can
-// render a graceful "connector not configured" state instead of erroring.
+// Two credential rungs, because X has no keyless public read lane and a
+// deployment that holds one of these should not show a dead connector:
+//   1. TWITTER_BEARER_TOKEN, an app-only bearer minted in the developer
+//      portal. Used directly.
+//   2. X_API_KEY + X_API_SECRET, the OAuth 1.0a consumer pair the changelog
+//      poster already uses. appLogin() exchanges them for the same app-only
+//      bearer at runtime, so no extra credential has to be provisioned.
+// With neither configured we return { ok: false, reason } at 200 so the demo
+// UI renders a "connector not configured" state instead of erroring.
 
 import { TwitterApi } from 'twitter-api-v2';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
@@ -14,7 +20,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 
 const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/;
 
-// Compact English stopword list — pure JS so we don't pull in an NLP dep.
+// Compact English stopword list: pure JS so we don't pull in an NLP dep.
 const STOPWORDS = new Set([
 	'the',
 	'a',
@@ -175,14 +181,18 @@ const STOPWORDS = new Set([
 	'okay',
 ]);
 
-function extractTopTopics(tweets, limit = 8) {
+/**
+ * Rank the words a timeline keeps coming back to. Hashtags and handles survive
+ * tokenisation intact because they are the strongest topic signal X carries.
+ * Exported for tests.
+ */
+export function extractTopTopics(tweets, limit = 8) {
 	const counts = new Map();
 	for (const text of tweets) {
 		if (!text) continue;
 		const tokens = text
 			.toLowerCase()
-			.replace(/https?:\/\/\S+/g, '')
-			.replace(/[@#]?[\w-]+/g, (m) => (m.startsWith('#') || m.startsWith('@') ? m : m))
+			.replace(/https?:\/\/\S+/g, ' ')
 			.replace(/[^a-z0-9#@_\s-]/g, ' ')
 			.split(/\s+/)
 			.filter(Boolean);
@@ -199,6 +209,34 @@ function extractTopTopics(tweets, limit = 8) {
 		.map(([tok, n]) => ({ topic: tok, count: n }));
 }
 
+// The app-only bearer is stable for the life of the app credentials, so the
+// appLogin() exchange happens once per process rather than once per request.
+let _clientPromise = null;
+function appOnlyClient() {
+	if (_clientPromise) return _clientPromise;
+
+	const bearer = process.env.TWITTER_BEARER_TOKEN;
+	if (bearer) {
+		_clientPromise = Promise.resolve(new TwitterApi(bearer).readOnly);
+		return _clientPromise;
+	}
+
+	const appKey = process.env.X_API_KEY;
+	const appSecret = process.env.X_API_SECRET;
+	if (!appKey || !appSecret) return Promise.resolve(null);
+
+	_clientPromise = new TwitterApi({ appKey, appSecret })
+		.appLogin()
+		.then((c) => c.readOnly)
+		.catch((err) => {
+			// Never cache a failed exchange: a transient X outage would otherwise
+			// keep the connector dark for the rest of the process lifetime.
+			_clientPromise = null;
+			throw err;
+		});
+	return _clientPromise;
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -212,17 +250,27 @@ export default wrap(async (req, res) => {
 	if (!HANDLE_RE.test(handle))
 		return error(res, 400, 'invalid_handle', 'X handle has invalid characters');
 
-	const bearer = process.env.TWITTER_BEARER_TOKEN;
-	if (!bearer) {
+	let client;
+	try {
+		client = await appOnlyClient();
+	} catch (err) {
+		console.warn('[seed/x] app-only login failed', err?.message || err);
+		res.setHeader('cache-control', 'no-store');
+		return json(res, 200, {
+			ok: false,
+			reason: 'X upstream error',
+			detail: 'X rejected the configured app credentials.',
+		});
+	}
+	if (!client) {
 		res.setHeader('cache-control', 'no-store');
 		return json(res, 200, {
 			ok: false,
 			reason: 'X connector not configured',
-			detail: 'Set TWITTER_BEARER_TOKEN in the environment to enable this connector.',
+			detail:
+				'Set TWITTER_BEARER_TOKEN, or X_API_KEY and X_API_SECRET, in the environment to enable this connector.',
 		});
 	}
-
-	const client = new TwitterApi(bearer).readOnly;
 
 	let userData;
 	try {

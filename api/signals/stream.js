@@ -4,7 +4,7 @@
  * The PAID live feed of a publisher's emissions, as Server-Sent Events. Reads are
  * gated by entitlement: the caller must either own the publishing agent (the
  * publisher previews their own feed) or own an agent with an ACTIVE, non-killed
- * subscription to it — and that subscription is what settles the x402 USDC, so a
+ * subscription to it, and that subscription is what settles the x402 USDC, so a
  * non-subscriber can never read the live alpha. Unentitled callers get a 402.
  *
  * Like the sniper stream, this DB-polls signal_emissions (Neon serverless HTTP
@@ -18,7 +18,7 @@ import { cors, method, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
-import { normNetwork, NETWORKS } from './_common.js';
+import { normNetwork } from './_common.js';
 
 const MAX_DURATION_MS = 90_000;
 const PING_INTERVAL_MS = 15_000;
@@ -58,7 +58,6 @@ export default async function handleSignalStream(req, res) {
 	const url = new URL(req.url, `http://${req.headers.host || 'x'}`);
 	const slug = url.searchParams.get('slug');
 	if (!slug) return error(res, 400, 'invalid_slug', 'slug required');
-	const network = NETWORKS.has(url.searchParams.get('network')) ? url.searchParams.get('network') : normNetwork(url.searchParams.get('network'));
 
 	// Authenticate.
 	const session = await getSessionUser(req);
@@ -68,6 +67,10 @@ export default async function handleSignalStream(req, res) {
 
 	const [feed] = await sql`select id, network, owner_user_id from signal_feeds where slug = ${slug} limit 1`;
 	if (!feed) return error(res, 404, 'not_found', 'feed not found');
+	// The slug is globally unique, so the ROW decides which cluster the emitted
+	// explorer links point at. Trusting a caller-supplied `?network=` would hand a
+	// mainnet feed's subscribers devnet solscan links that resolve to nothing.
+	const network = normNetwork(feed.network);
 
 	// Entitlement: publisher-owner OR an active, non-killed subscriber.
 	let entitled = feed.owner_user_id === userId;

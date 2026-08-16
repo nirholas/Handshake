@@ -230,18 +230,28 @@ function deriveTitle(text) {
 // Linkify URLs and @handles in a single pass that swaps URLs out for
 // placeholders so the handle pass can't accidentally match @-segments inside
 // the URLs we just wrapped (e.g. https://x.com/Handle).
-function linkify(html) {
+//
+// The placeholder must be a sequence the post itself cannot contain, or a post
+// that merely writes the placeholder's own text restores a URL that was never
+// there (and, past the end of the array, throws and takes the whole feed down
+// with it). Callers hand us XML-escaped text, so a raw `<` is impossible by
+// construction: `<0>` is therefore collision-proof, and the restore pass can
+// trust every index it finds.
+const URL_SLOT = (i) => `<${i}>`;
+const URL_SLOT_RE = /<(\d+)>/g;
+
+function linkify(escapedHtml) {
 	const urls = [];
-	let buf = html.replace(/\bhttps?:\/\/[^\s<]+/g, (url) => {
+	let buf = escapedHtml.replace(/\bhttps?:\/\/[^\s<]+/g, (url) => {
 		const trimmed = url.replace(/[.,!?)]+$/, '');
 		const tail = url.slice(trimmed.length);
 		urls.push({ trimmed, tail });
-		return ` URL${urls.length - 1} `;
+		return URL_SLOT(urls.length - 1);
 	});
 	buf = buf.replace(/(^|[^A-Za-z0-9_])@([A-Za-z0-9_]{1,15})/g, (_m, pre, handle) =>
 		`${pre}<a href="https://x.com/${handle}" rel="noopener">@${handle}</a>`,
 	);
-	return buf.replace(/ URL(\d+) /g, (_m, i) => {
+	return buf.replace(URL_SLOT_RE, (_m, i) => {
 		const { trimmed, tail } = urls[Number(i)];
 		return `<a href="${trimmed}" rel="noopener">${trimmed}</a>${tail}`;
 	});
@@ -329,7 +339,7 @@ function renderItemXml(item) {
 \t\t\t<pubDate>${rfc822(item.timestamp)}</pubDate>
 \t\t\t<dc:creator>${escapeXml(item.author)}</dc:creator>${tagsXml}${sourceXml}${enclosureXml}${mediaXml}
 \t\t\t<description>${escapeXml(item.summary)}</description>
-\t\t\t<content:encoded><![CDATA[${bodyWithAttribution}]]></content:encoded>
+\t\t\t<content:encoded><![CDATA[${cdata(bodyWithAttribution)}]]></content:encoded>
 \t\t</item>`;
 	}
 	const account = ACCOUNTS[item.account] || { handle: '@' + item.account };
@@ -341,6 +351,6 @@ function renderItemXml(item) {
 \t\t\t<pubDate>${rfc822(item.timestamp)}</pubDate>
 \t\t\t<dc:creator>${escapeXml(account.handle)}</dc:creator>
 \t\t\t<description>${escapeXml(renderDescription(item))}</description>
-\t\t\t<content:encoded><![CDATA[${renderBodyHtml(item)}]]></content:encoded>
+\t\t\t<content:encoded><![CDATA[${cdata(renderBodyHtml(item))}]]></content:encoded>
 \t\t</item>`;
 }

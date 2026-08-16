@@ -20,7 +20,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { sql } from '../_lib/db.js';
 import { deliverSubscription } from '../_lib/signal-engine.js';
-import { requireUser, loadOwnedAgent, normNetwork } from './_common.js';
+import { requireUser, loadOwnedAgent, normNetwork, parseRowId } from './_common.js';
 
 function num(v, fallback) { const n = Number(v); return Number.isFinite(n) ? n : fallback; }
 
@@ -90,8 +90,8 @@ export default wrap(async (req, res) => {
 	if (auth.viaSession && !(await requireCsrf(req, res, userId))) return;
 
 	if (req.method === 'DELETE') {
-		const id = new URL(req.url, 'http://x').searchParams.get('id');
-		if (!id) return error(res, 400, 'invalid_id', 'id required');
+		const id = parseRowId(new URL(req.url, 'http://x').searchParams.get('id'));
+		if (!id) return error(res, 400, 'invalid_id', 'numeric subscription id required');
 		const [row] = await sql`
 			update signal_subscriptions set status = 'stopped', updated_at = now()
 			where id = ${id} and owner_user_id = ${userId} returning id
@@ -105,18 +105,20 @@ export default wrap(async (req, res) => {
 
 	// ── Mutations on an existing subscription (status / kill / sync) ────────────
 	if (body.id && !body.feed_id) {
+		const subId = parseRowId(body.id);
+		if (!subId) return error(res, 400, 'invalid_id', 'numeric subscription id required');
 		// Instant kill: the halt path, takes precedence.
 		if (body.killed != null) {
 			const killed = body.killed === true || body.killed === 'true';
 			const [row] = await sql`
 				update signal_subscriptions set killed = ${killed}, status = ${killed ? 'paused' : 'active'}, updated_at = now()
-				where id = ${body.id} and owner_user_id = ${userId} returning *
+				where id = ${subId} and owner_user_id = ${userId} returning *
 			`;
 			if (!row) return error(res, 404, 'not_found', 'subscription not found');
 			return json(res, 200, { subscription: shapeSub(row) });
 		}
 		if (body.action === 'sync') {
-			const [row] = await sql`select * from signal_subscriptions where id = ${body.id} and owner_user_id = ${userId} limit 1`;
+			const [row] = await sql`select * from signal_subscriptions where id = ${subId} and owner_user_id = ${userId} limit 1`;
 			if (!row) return error(res, 404, 'not_found', 'subscription not found');
 			const result = await deliverSubscription(row, { maxEvents: 10 });
 			return json(res, 200, { ok: true, ...result });
@@ -127,10 +129,10 @@ export default wrap(async (req, res) => {
 			const [row] = status === 'active'
 				? await sql`
 					update signal_subscriptions set status = 'active', killed = false, updated_at = now()
-					where id = ${body.id} and owner_user_id = ${userId} returning *`
+					where id = ${subId} and owner_user_id = ${userId} returning *`
 				: await sql`
 					update signal_subscriptions set status = ${status}, updated_at = now()
-					where id = ${body.id} and owner_user_id = ${userId} returning *`;
+					where id = ${subId} and owner_user_id = ${userId} returning *`;
 			if (!row) return error(res, 404, 'not_found', 'subscription not found');
 			return json(res, 200, { subscription: shapeSub(row) });
 		}
@@ -139,10 +141,12 @@ export default wrap(async (req, res) => {
 
 	// ── Create / update a subscription ──────────────────────────────────────────
 	if (!body.feed_id) return error(res, 400, 'invalid_feed', 'feed_id required');
+	const feedId = parseRowId(body.feed_id);
+	if (!feedId) return error(res, 400, 'invalid_feed', 'numeric feed_id required');
 	const owned = await loadOwnedAgent(req, res, userId, body.agent_id);
 	if (owned.error) return;
 
-	const [feed] = await sql`select * from signal_feeds where id = ${body.feed_id} limit 1`;
+	const [feed] = await sql`select * from signal_feeds where id = ${feedId} limit 1`;
 	if (!feed) return error(res, 404, 'feed_not_found', 'feed not found');
 	if (feed.status !== 'active') return error(res, 409, 'feed_inactive', 'this feed is not active');
 	if (feed.publisher_agent_id === body.agent_id) return error(res, 400, 'self_subscribe', 'an agent cannot subscribe to its own feed');
@@ -157,7 +161,7 @@ export default wrap(async (req, res) => {
 	const firewallLevel = body.firewall_level === 'warn' ? 'warn' : 'block';
 	const copyExits = body.copy_exits !== false;
 
-	// New subscriptions start at the current emission head — never charged for or
+	// New subscriptions start at the current emission head: never charged for or
 	// made to mirror a backlog of signals emitted before they subscribed.
 	const [head] = await sql`select coalesce(max(id),0) as head from signal_emissions where feed_id = ${feed.id}`;
 	const startCursor = Number(head?.head || 0);

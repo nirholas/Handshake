@@ -1,9 +1,44 @@
+// GET /api/rider/check?address=<solana wallet>
+//
+// Answers "does this wallet hold a rider pass?" from BOTH sources that can grant
+// one. Either source alone gives the wrong answer: reading only the on-chain
+// balance denies every wallet that bought a pass by sending its $THREE to the
+// vault (api/rider/webhook.js records those in rider_passes), and reading only
+// rider_passes denies every holder who never had to pay.
+
 import { PublicKey } from '@solana/web3.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
+import { sql } from '../_lib/db.js';
+import { env } from '../_lib/env.js';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { REQUIRED_AMOUNT } from '../_lib/rider.js';
 import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
-const RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+
+async function heldBalance(owner) {
+	const connection = solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+	// Filter by MINT, not by token program: $THREE is a Token-2022 mint, so a
+	// classic-program-only query never sees it (every holder read as balance 0).
+	// The mint filter matches the holder's account under whichever program owns
+	// the mint, and returns only that account instead of the whole wallet.
+	const accounts = await connection.getParsedTokenAccountsByOwner(owner, {
+		mint: new PublicKey(THREE_MINT),
+	});
+	return accounts.value.reduce(
+		(sum, a) => sum + Number(a.account.data.parsed.info.tokenAmount.uiAmount ?? 0),
+		0,
+	);
+}
+
+async function recordedPayment(address) {
+	const rows = await sql`
+		select amount_paid, tx_signature, created_at
+		from rider_passes
+		where wallet_address = ${address}
+		limit 1
+	`;
+	return rows[0] ?? null;
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -12,7 +47,10 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const address = req.query?.address?.trim();
+	// A repeated query param (?address=a&address=b) arrives as an array, which
+	// has no .trim() — reading it directly turned a malformed request into a 500.
+	const raw = req.query?.address;
+	const address = (Array.isArray(raw) ? raw[0] : raw ?? '').toString().trim();
 	if (!address) return error(res, 400, 'validation_error', 'address required');
 
 	let owner;
@@ -22,23 +60,41 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'invalid Solana address');
 	}
 
-	const connection = solanaConnection({ url: RPC, commitment: 'confirmed' });
-	// Filter by MINT, not by token program: $THREE is a Token-2022 mint, so a
-	// classic-program-only query never sees it (every holder read as balance 0).
-	// The mint filter matches the holder's account under whichever program owns
-	// the mint, and returns only that account instead of the whole wallet.
-	const accounts = await connection.getParsedTokenAccountsByOwner(owner, {
-		mint: new PublicKey(THREE_MINT),
-	});
+	// Both lookups run together, and a positive result from either one is already
+	// authoritative — a failed lookup only blocks the answer when it was the one
+	// that had to prove the wallet has NO pass.
+	const [balanceRead, paymentRead] = await Promise.allSettled([
+		heldBalance(owner),
+		recordedPayment(address),
+	]);
 
-	const balance = accounts.value.reduce(
-		(sum, a) => sum + Number(a.account.data.parsed.info.tokenAmount.uiAmount ?? 0),
-		0,
-	);
+	const balance = balanceRead.status === 'fulfilled' ? balanceRead.value : null;
+	const payment = paymentRead.status === 'fulfilled' ? paymentRead.value : null;
+	const holderPass = balance != null && balance > 0;
+	const paidPass = payment != null;
+
+	if (!holderPass && balanceRead.status === 'rejected') {
+		if (!paidPass) {
+			// Never echo the rejection message: a web3.js network error embeds the
+			// keyed RPC URL, which would leak HELIUS_API_KEY to the caller.
+			console.error('[rider/check] $THREE balance read failed', balanceRead.reason);
+			return error(res, 502, 'rpc_unavailable', 'could not read the $THREE balance for this wallet');
+		}
+	}
+	if (!paidPass && paymentRead.status === 'rejected') {
+		// Hand a DB outage to wrap(), which already classifies it as a throttled 503
+		// instead of a per-request 5xx alert storm.
+		if (!holderPass) throw paymentRead.reason;
+	}
 
 	return json(res, 200, {
-		has_pass: balance > 0,
+		has_pass: holderPass || paidPass,
+		holder_pass: holderPass,
+		paid_pass: paidPass,
 		balance,
+		amount_paid: payment ? Number(payment.amount_paid) : null,
+		tx_signature: payment?.tx_signature ?? null,
+		required_amount: REQUIRED_AMOUNT,
 		mint: THREE_MINT,
 	});
 });

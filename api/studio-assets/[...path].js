@@ -7,7 +7,9 @@
 // (VRM, FBX, PNG, GLB, KTX2, etc.) stream through unchanged.
 //
 // Cache for 1 day at the edge / 7 days in the browser. The upstream content
-// is immutable per path so long TTLs are safe.
+// is immutable per path so long TTLs are safe. Because these responses ARE
+// edge-cached, nothing in the body may depend on a request header: see
+// rewriteJson.
 
 import { cors, error, wrap } from '../_lib/http.js';
 
@@ -19,6 +21,18 @@ const TEXT_TYPES = new Set([
 	'application/manifest+json',
 	'text/json',
 	'text/plain',
+]);
+
+// Content types that execute in a browsing context. The upstream trait library
+// serves none of them, so anything claiming one is either an upstream error
+// page or a mirror we do not want to hand back under the three.ws origin,
+// where it would run as same-origin script.
+const ACTIVE_TYPES = new Set([
+	'text/html',
+	'application/xhtml+xml',
+	'image/svg+xml',
+	'application/xml',
+	'text/xml',
 ]);
 
 // Whitelist of upstream prefixes we're willing to mirror. Anything else gets
@@ -34,16 +48,38 @@ function joinPath(parts) {
 	return String(parts || '');
 }
 
-// Rewrite any absolute upstream URL inside a JSON manifest to a path under
-// this proxy. Also rewrites the `assetsLocation` field so that downstream
-// asset resolution stays on three.ws origin.
-function rewriteJson(text, origin) {
+// Rewrite any absolute upstream URL inside a JSON manifest to a ROOT-RELATIVE
+// path under this proxy, so downstream asset resolution stays on whatever
+// origin served the studio.
+//
+// This deliberately does not read the request's Host / X-Forwarded-Host to
+// build an absolute URL. Cloud Run does not set X-Forwarded-Host, so a client
+// could send its own; the rewritten manifest would then point `assetsLocation`
+// at an attacker origin, and this response is `public, s-maxage=86400`, so the
+// CDN would serve that poisoned manifest to every studio user for a day. A
+// root-relative prefix is byte-identical for every caller, which makes the
+// response safe to cache and removes the injection entirely. The studio
+// concatenates `assetsLocation` with a leading-slash `traitsDirectory`
+// (CharacterManifestData.getTraitsDirectory), and the resulting doubled slash
+// resolves back through this same handler.
+function rewriteJson(text) {
 	const upstreamPattern = /https?:\/\/m3-org\.github\.io\/loot-assets\//g;
-	return text.replace(upstreamPattern, `${origin}${PROXY_PREFIX}`);
+	return text.replace(upstreamPattern, PROXY_PREFIX);
+}
+
+// Upstream statuses are not ours to echo verbatim: a 3xx that `redirect:follow`
+// left unresolved would carry a body it must not have, and a 5xx would blame
+// three.ws for the mirror being down. Missing stays missing; everything else is
+// a bad gateway.
+function mapUpstreamStatus(status) {
+	if (status === 404 || status === 403 || status === 410) {
+		return { status: 404, code: 'not_found', message: 'asset not found in studio mirror' };
+	}
+	return { status: 502, code: 'upstream_error', message: `mirror returned ${status}` };
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
+	if (cors(req, res, { origins: '*', methods: 'GET,HEAD,OPTIONS', credentials: false })) return;
 	if (req.method !== 'GET' && req.method !== 'HEAD') {
 		return error(res, 405, 'method_not_allowed', `method ${req.method} not allowed`);
 	}
@@ -65,7 +101,17 @@ export default wrap(async (req, res) => {
 	path = path.replace(/^\/+/, '');
 
 	// Anything still percent-encoded after 3 decode passes is hostile noise.
-	if (!path || path.includes('%') || path.includes('..') || !isAllowed(path)) {
+	// `?` and `#` would truncate the upstream URL we build by concatenation,
+	// and a backslash is a path separator to some upstream servers.
+	if (
+		!path ||
+		path.includes('%') ||
+		path.includes('..') ||
+		path.includes('?') ||
+		path.includes('#') ||
+		path.includes('\\') ||
+		!isAllowed(path)
+	) {
 		return error(res, 404, 'not_found', 'asset not in studio mirror whitelist');
 	}
 
@@ -77,12 +123,23 @@ export default wrap(async (req, res) => {
 		return error(res, 502, 'upstream_unreachable', `mirror fetch failed: ${err?.message}`);
 	}
 
+	// `redirect: follow` means the bytes we are about to serve under our own
+	// origin may have come from wherever the mirror pointed us. Only the mirror
+	// itself is trusted to fill this whitelist.
+	if (upstream.url && !upstream.url.startsWith(UPSTREAM_BASE)) {
+		return error(res, 502, 'upstream_error', 'mirror redirected off the asset library');
+	}
+
 	if (!upstream.ok) {
-		return error(res, upstream.status, 'upstream_error', `mirror returned ${upstream.status}`);
+		const mapped = mapUpstreamStatus(upstream.status);
+		return error(res, mapped.status, mapped.code, mapped.message);
 	}
 
 	const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
 	const baseType = contentType.split(';')[0].trim().toLowerCase();
+	if (ACTIVE_TYPES.has(baseType)) {
+		return error(res, 502, 'upstream_error', `mirror returned an unexpected ${baseType} document`);
+	}
 	const isText = TEXT_TYPES.has(baseType);
 
 	res.setHeader('content-type', contentType);
@@ -93,20 +150,23 @@ export default wrap(async (req, res) => {
 	res.setHeader('access-control-allow-origin', '*');
 
 	if (req.method === 'HEAD') {
+		// Only advertise a length we can stand behind. Upstream answers this
+		// fetch gzipped (undici asks for it), so its content-length is the
+		// COMPRESSED size while a GET here returns the decoded bytes — for a
+		// trait manifest that is 2.4 KB claimed against 20 KB delivered. Text
+		// bodies are rewritten on top of that, changing the length again.
 		const len = upstream.headers.get('content-length');
-		if (len) res.setHeader('content-length', len);
+		if (len && !isText && !upstream.headers.get('content-encoding')) {
+			res.setHeader('content-length', len);
+		}
 		res.statusCode = 200;
 		return res.end();
 	}
 
 	if (isText) {
 		const text = await upstream.text();
-		const proto = (req.headers['x-forwarded-proto'] || 'https').toString().split(',')[0].trim();
-		const host = (req.headers['x-forwarded-host'] || req.headers.host || '').toString();
-		const origin = host ? `${proto}://${host}` : '';
-		const rewritten = origin ? rewriteJson(text, origin) : text;
 		res.statusCode = 200;
-		return res.end(rewritten);
+		return res.end(rewriteJson(text));
 	}
 
 	const buf = Buffer.from(await upstream.arrayBuffer());

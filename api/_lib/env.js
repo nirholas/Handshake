@@ -1569,6 +1569,31 @@ export const env = {
 		return opt('RIDER_HELIUS_WEBHOOK_SECRET');
 	},
 
+	// Rider Firebase web-app config, served to the browser by /api/rider/firebase
+	// so the client bundle carries no project literals. These are the public
+	// client-side identifiers Firebase itself publishes in a web app config, NOT
+	// service-account credentials — access is governed by Firebase security rules,
+	// so the endpoint is deliberately unauthenticated. api/rider/firebase.js
+	// answers 503 not_configured until at least the apiKey and projectId are set.
+	get RIDER_FIREBASE_API_KEY() {
+		return opt('RIDER_FIREBASE_API_KEY');
+	},
+	get RIDER_FIREBASE_AUTH_DOMAIN() {
+		return opt('RIDER_FIREBASE_AUTH_DOMAIN');
+	},
+	get RIDER_FIREBASE_DATABASE_URL() {
+		return opt('RIDER_FIREBASE_DATABASE_URL');
+	},
+	get RIDER_FIREBASE_PROJECT_ID() {
+		return opt('RIDER_FIREBASE_PROJECT_ID');
+	},
+	get RIDER_FIREBASE_STORAGE_BUCKET() {
+		return opt('RIDER_FIREBASE_STORAGE_BUCKET');
+	},
+	get RIDER_FIREBASE_MESSAGING_SENDER_ID() {
+		return opt('RIDER_FIREBASE_MESSAGING_SENDER_ID');
+	},
+
 	// Neynar API key — the preferred (indexed) rung of the Farcaster read chain
 	// in api/_lib/farcaster-client.js. Optional: without it the chain falls back
 	// to the keyless public hub below, so Farcaster memory seeding still works.
