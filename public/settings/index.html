@@ -295,6 +295,24 @@
 				outline: 2px solid #6aa9ff; outline-offset: 2px;
 			}
 			.btn[disabled] { opacity: 0.55; cursor: not-allowed; filter: none; }
+			.token-form {
+				margin-top: 10px; padding: 14px 16px;
+				background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+				animation: tokenFormIn 160ms ease-out;
+			}
+			@keyframes tokenFormIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+			@media (prefers-reduced-motion: reduce) { .token-form { animation: none; } }
+			.token-form label {
+				display: block; font-size: 12px; font-weight: 600; color: #aaa;
+				text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+			}
+			.token-form input { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+			.token-form .token-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+			.token-form .token-note { font-size: 12px; color: #888; margin: 10px 0 0; line-height: 1.55; }
+			.token-form code {
+				background: #1c1c1c; border: 1px solid var(--border); border-radius: 4px;
+				padding: 1px 5px; font-size: 11px; color: #ccc;
+			}
 			.agent-seed-area {
 				margin-top: 16px; padding: 14px 16px;
 				background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
@@ -558,6 +576,7 @@
 								<span class="muted" style="font-size:13px" data-i18n="settings_index.loading">Loading…</span>
 							</div>
 						</div>
+						<div id="github-token-form" style="display:none"></div>
 						<span class="inline-msg" id="github-msg" style="display:none;margin-top:10px"></span>
 
 						<div class="social-card" id="x-card" style="margin-top:14px">
@@ -865,7 +884,7 @@
 			async function disconnectGitHub() {
 				const btn = document.getElementById('github-disconnect-btn');
 				const msg = document.getElementById('github-msg');
-				if (!confirm('Disconnect GitHub? Every memory your agents learned from GitHub is deleted, and the access is revoked on GitHub.')) return;
+				if (!confirm('Disconnect GitHub? Every memory your agents learned from GitHub is deleted, and the stored access is destroyed.')) return;
 				if (btn) {
 					btn.disabled = true;
 					btn.textContent = 'Disconnecting…';
@@ -873,9 +892,15 @@
 				try {
 					const data = await apiJson('/api/auth/github/disconnect', { method: 'POST' });
 					const n = data?.memories_deleted ?? 0;
-					showMsg(msg, 'ok', n
+					const deleted = n
 						? `GitHub disconnected. ${n} seeded ${n === 1 ? 'memory' : 'memories'} deleted.`
-						: 'GitHub disconnected.');
+						: 'GitHub disconnected.';
+					// A pasted token is gone from our side but still exists on GitHub
+					// until its owner deletes it, so say that instead of implying we
+					// revoked something we cannot.
+					showMsg(msg, 'ok', data?.connect_method === 'token'
+						? `${deleted} Delete the token on GitHub to finish revoking it.`
+						: deleted);
 				} catch (e) {
 					showMsg(msg, 'err', e.data?.error_description || 'Could not disconnect GitHub.');
 					if (btn) {
@@ -885,6 +910,76 @@
 					return;
 				}
 				loadGitHubStatus();
+			}
+
+			function hideTokenForm() {
+				const host = document.getElementById('github-token-form');
+				if (host) {
+					host.style.display = 'none';
+					host.innerHTML = '';
+				}
+			}
+
+			// The token path. The user mints the token on GitHub with the scopes we
+			// ask for, so consent happens on GitHub's own screen exactly as it does
+			// for OAuth; this form only carries it across.
+			function renderTokenForm(tokenConnect, { open } = {}) {
+				const host = document.getElementById('github-token-form');
+				const toggle = document.getElementById('github-token-toggle');
+				if (!host || !tokenConnect?.available) return;
+
+				const createUrl = tokenConnect.create_url || 'https://github.com/settings/tokens/new';
+				const scopes = (tokenConnect.recommended_scopes || ['read:user']).map((s) => `<code>${escHtml(s)}</code>`).join(' ');
+
+				host.innerHTML = `
+					<div class="token-form">
+						<label for="inp-github-token">GitHub personal access token</label>
+						<input type="password" id="inp-github-token" autocomplete="off" autocapitalize="off" spellcheck="false"
+							placeholder="ghp_…" aria-describedby="github-token-note" />
+						<div class="token-actions">
+							<button class="btn" id="github-token-submit" style="font-size:12px;padding:6px 16px">Connect</button>
+							<a class="btn sec" href="${escHtml(createUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;padding:6px 16px;text-decoration:none">Create one on GitHub</a>
+							<a class="btn sec" href="/docs/github-memory-seeding" style="font-size:12px;padding:6px 16px;text-decoration:none">How this works</a>
+						</div>
+						<p class="token-note" id="github-token-note">Tick only ${scopes} when you create it. The token is encrypted before it is stored, is used only to read the public profile, repositories and READMEs you tick, and is deleted the moment you disconnect. A token carrying more access than that is refused.</p>
+					</div>`;
+				host.style.display = open ? 'block' : 'none';
+				if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+				document.getElementById('github-token-submit')?.addEventListener('click', submitGitHubToken);
+				document.getElementById('inp-github-token')?.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') { e.preventDefault(); submitGitHubToken(); }
+				});
+				if (open) document.getElementById('inp-github-token')?.focus();
+			}
+
+			async function submitGitHubToken() {
+				const input = document.getElementById('inp-github-token');
+				const btn = document.getElementById('github-token-submit');
+				const msg = document.getElementById('github-msg');
+				const token = (input?.value || '').trim();
+				if (!token) {
+					showMsg(msg, 'err', 'Paste your GitHub token first.');
+					input?.focus();
+					return;
+				}
+				btn.disabled = true;
+				btn.textContent = 'Connecting…';
+				try {
+					const data = await apiJson('/api/auth/github/token', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ token }),
+					});
+					// The token never needs to sit in the DOM after a successful post.
+					if (input) input.value = '';
+					showMsg(msg, 'ok', `GitHub connected as @${data.username}.`);
+					loadGitHubStatus();
+				} catch (e) {
+					showMsg(msg, 'err', e.data?.error_description || 'Could not connect that token.');
+					btn.disabled = false;
+					btn.textContent = 'Connect';
+				}
 			}
 
 			async function loadGitHubStatus() {
@@ -899,24 +994,38 @@
 						const seeded = data.seeded_fact_count
 							? ` · ${data.seeded_fact_count} seeded ${data.seeded_fact_count === 1 ? 'memory' : 'memories'}`
 							: '';
-						statusEl.textContent = `@${data.username} · connected ${when}${seeded}`;
+						const via = data.connect_method === 'token' ? ' · via personal access token' : '';
+						statusEl.textContent = `@${data.username} · connected ${when}${via}${seeded}`;
 						actionsEl.innerHTML = '<span class="tag green">Connected</span><button class="btn sec" id="github-disconnect-btn" style="font-size:12px;padding:5px 14px">Disconnect</button>';
 						document.getElementById('github-disconnect-btn')?.addEventListener('click', disconnectGitHub);
+						hideTokenForm();
 						if (seedArea) {
 							seedArea.style.display = 'block';
 							mountSeedPanel();
 						}
-					} else if (data.configured === false) {
-						// No OAuth app on this deployment. Say so plainly rather than
-						// offering a button whose only outcome is a 501 error page.
-						statusEl.textContent = 'GitHub connect is unavailable on this deployment';
-						actionsEl.innerHTML = '<span class="tag">Unavailable</span><a href="/docs/github-memory-seeding" class="btn sec" style="font-size:12px;padding:5px 14px;text-decoration:none">How this works</a>';
-						if (seedArea) seedArea.style.display = 'none';
 					} else {
-						statusEl.textContent = 'Not connected';
+						// Two ways in. OAuth is the one-click path, but it only exists
+						// where an operator registered a GitHub OAuth app; the token path
+						// needs nothing provisioned, so an unconfigured deployment offers
+						// it up front instead of a dead "Unavailable" tag.
+						const oauth = data.configured !== false;
+						statusEl.textContent = oauth
+							? 'Not connected'
+							: 'Not connected. Connect with a personal access token.';
 						const agentId = _urlP.get('agent_id') || '';
 						const connectUrl = `/api/auth/github/connect${agentId ? `?agent_id=${encodeURIComponent(agentId)}` : ''}`;
-						actionsEl.innerHTML = `<a href="${connectUrl}" class="btn" style="font-size:12px;padding:5px 14px;text-decoration:none">Connect GitHub</a>`;
+						actionsEl.innerHTML =
+							(oauth ? `<a href="${connectUrl}" class="btn" style="font-size:12px;padding:5px 14px;text-decoration:none">Connect GitHub</a>` : '')
+							+ `<button class="btn${oauth ? ' sec' : ''}" id="github-token-toggle" style="font-size:12px;padding:5px 14px" aria-expanded="${oauth ? 'false' : 'true'}" aria-controls="github-token-form">${oauth ? 'Use a token' : 'Connect with a token'}</button>`;
+						renderTokenForm(data.token_connect, { open: !oauth });
+						document.getElementById('github-token-toggle')?.addEventListener('click', (e) => {
+							e.preventDefault();
+							const host = document.getElementById('github-token-form');
+							const nowOpen = host.style.display === 'none';
+							host.style.display = nowOpen ? 'block' : 'none';
+							e.currentTarget.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+							if (nowOpen) document.getElementById('inp-github-token')?.focus();
+						});
 						if (seedArea) seedArea.style.display = 'none';
 					}
 				} catch {

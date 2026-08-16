@@ -161,7 +161,7 @@ export class NichAgent {
 				<div class="nich-message agent">${_escapeHTML(greeting)}</div>
 			</div>
 			<div class="nich-controls">
-				<input type="text" class="nich-input" placeholder="Ask the agent…" autocomplete="off" maxlength="4000" />
+				<input type="text" class="nich-input" placeholder="Ask the agent…" autocomplete="off" maxlength="4000" aria-label="Message the agent" />
 				<button class="nich-send" aria-label="Send">
 					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
 				</button>

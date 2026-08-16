@@ -419,6 +419,31 @@
 				.sk-stage { min-height: 240px; }
 			}
 			@media (max-width: 560px) {
+				/* At 320px the five tabs measured 534px against a 298px strip, so
+				   Money and Skills sat off-screen behind a deliberately hidden
+				   scrollbar with nothing to hint they existed. Below 560px drop the
+				   keyboard-shortcut number chips (the 1-5 shortcuts still work, they
+				   are just a desktop affordance) and share the width evenly, so the
+				   row reads as a segmented control with every tab visible.
+				   overflow-x stays as the safety net for longer translated labels. */
+				.studio-tabs {
+					gap: 0;
+					padding-left: var(--space-sm, 0.618rem);
+					padding-right: var(--space-sm, 0.618rem);
+					scroll-snap-type: x proximity;
+				}
+				.studio-tab {
+					flex: 1 1 auto;
+					justify-content: center;
+					gap: 0;
+					padding: 9px 6px;
+					font-size: var(--text-md, 0.8125rem);
+					scroll-snap-align: center;
+				}
+				.studio-tab-num {
+					display: none;
+				}
+
 				/* Side-by-side identity + actions needs ~430px; below that the action
 				   row overflowed the panel and its `overflow: hidden` clipped "Save
 				   draft" and "View agent" off-screen. Stack the actions under the

@@ -12,6 +12,13 @@
 // caster pool can spin a real browser up for agents people are actually looking
 // at, and tear it down when they leave. That keeps live pixels available for any
 // agent on demand without paying for an idle browser per agent.
+//
+// The SSE listeners are POOLED, not one-per-card. A browser caps concurrent
+// connections per origin (6 on HTTP/1.1; the server's stream limit on HTTP/2),
+// and an SSE stream is long-lived, so opening one per card meant the roster's
+// first handful connected and every card after them sat on "Connecting" forever.
+// Streams are now attached as a card nears the viewport and released once it is
+// well past it, bounded by a pool sized from the origin's real transport.
 
 import { parsePnlDelta, formatSol, formatUsd } from './shared/trade-pnl.js';
 import { mountAgentReactions } from './agent-reactions.js';
@@ -24,7 +31,7 @@ import { sanitizeMmEvent, fmtPriceSol } from './shared/mm-render.js';
 import { parseForgeFrame } from './shared/forge-frames.js';
 import { createArena } from './agents-live-arena.js';
 import { createShowrunner } from './showrunner.js';
-import { noteSession } from './api.js';
+import { apiFetch, noteSession } from './api.js';
 
 // Subtle accent for a card showing a live Coin World Tour walkthrough.
 (() => {
@@ -89,6 +96,37 @@ const STATUS_GRACE_POLLS = 3;      // keep polling this many ticks to cover the 
 // window). IntersectionObserver maintains this set.
 const _inView = new Set();
 let _observer = null;
+
+// ── SSE stream pool ──────────────────────────────────────────────────────────
+// A second, wider observer band: cards within STREAM_MARGIN of the viewport are
+// "near view" and eligible for a stream, so a card is already tailing by the time
+// it scrolls into sight. `_streamed` is insertion-ordered and used as an LRU:
+// re-touching an id moves it to the end, and eviction takes from the front.
+const STREAM_MARGIN = '400px 0px';
+const _nearView = new Set();
+const _streamed = new Set();
+let _streamObserver = null;
+
+// How many SSE listeners the origin can actually carry at once. Over HTTP/1.1 a
+// browser allows 6 sockets per origin and an SSE stream never releases its one,
+// so a pool anywhere near that ceiling starves the page's own fetches (roster,
+// balances, watch intent). Multiplexed transports have no such per-request cost.
+// Read from the real navigation entry rather than guessed: prod is served over
+// h2 behind the load balancer, the vite dev server is http/1.1.
+export function streamPoolSize(nextHopProtocol) {
+	const p = String(nextHopProtocol || '').toLowerCase();
+	if (p === 'h2' || p === 'h3' || p.startsWith('h3-') || p === 'http/2' || p === 'http/3') return 12;
+	return 4;
+}
+
+function detectPoolSize() {
+	try {
+		const nav = performance.getEntriesByType('navigation')[0];
+		return streamPoolSize(nav?.nextHopProtocol);
+	} catch { return 4; }
+}
+
+const MAX_STREAMS = detectPoolSize();
 
 // Showrunner Director — programs the wall like a live TV channel: a rotating
 // spotlight stage above the grid + a float-the-active-agents-up grid order.
@@ -236,7 +274,7 @@ function buildCard(agent) {
   </div>
   <div class="al-card-live-badge">
     <div class="al-card-live-dot idle" data-dot></div>
-    <span data-status>Connecting</span>
+    <span data-status>Idle</span>
   </div>
   <div class="al-card-floor" data-mm hidden title="Market-maker floor under defense">
     <span class="al-floor-anchor">⚓</span>
@@ -253,7 +291,7 @@ function buildCard(agent) {
 		: `<div class="al-card-avatar" style="background:rgba(255,255,255,0.06)"></div>`}
   <div class="al-card-meta">
     <div class="al-card-name">${esc(name)}</div>
-    <div class="al-card-action" data-action>Connecting…</div>
+    <div class="al-card-action" data-action>Standing by</div>
     <div class="al-card-submeta">
       <span class="al-card-age" data-age hidden></span>
       <span class="al-card-pnl" data-pnl hidden></span>
@@ -380,20 +418,39 @@ function paintActivity(state) {
 	ctx.textBaseline = 'middle';
 	ctx.fillText(`${(name || 'Agent').slice(0, 28)} · activity`, 28, 15);
 
-	// Empty → a designed standby card, not a blank void.
+	// Empty → a designed standby card, not a blank void. Three honest variants:
+	// the stream is being opened, the agent has a real history we have not pulled
+	// yet (pooled out, or the log is still in flight), or it genuinely never acted.
 	if (!entries || !entries.length) {
+		const acted = state.actionCount > 0;
+		const ago = fmtAgo(state.lastActionAt);
+		let head, l1, l2;
+		if (state.attaching) {
+			head = 'Opening the tail';
+			l1 = acted ? `${state.actionCount.toLocaleString('en-US')} actions recorded` : 'Reading this agent\'s activity';
+			l2 = ago ? `last active ${ago}` : '';
+		} else if (acted) {
+			head = 'Standing by';
+			l1 = `${state.actionCount.toLocaleString('en-US')} actions recorded`;
+			l2 = ago ? `last active ${ago} · scroll here to tail it live` : 'scroll here to tail it live';
+		} else {
+			head = 'Standing by';
+			l1 = 'No actions yet. This agent will narrate';
+			l2 = 'here the moment it acts.';
+		}
 		ctx.font = '500 12px "Courier New", monospace';
 		ctx.fillStyle = 'rgba(255,255,255,0.32)';
-		ctx.fillText('Standing by', 16, 60);
+		ctx.fillText(head, 16, 60);
+		const headW = ctx.measureText(head).width;
 		ctx.font = '400 11px "Courier New", monospace';
 		ctx.fillStyle = 'rgba(255,255,255,0.18)';
-		ctx.fillText('No actions yet — this agent will narrate', 16, 84);
-		ctx.fillText('here the moment it acts.', 16, 102);
+		if (l1) ctx.fillText(l1, 16, 84);
+		if (l2) ctx.fillText(l2, 16, 102);
 		if (!REDUCED_MOTION && Math.sin(t * 4) > 0) {
 			ctx.fillStyle = 'rgba(255,255,255,0.22)';
-			ctx.fillRect(16 + ctx.measureText('Standing by').width + 4, 53, 7, 13);
+			ctx.fillRect(16 + headW + 4, 53, 7, 13);
 		}
-		if (state.action) state.action.textContent = 'Standing by';
+		if (state.action) state.action.textContent = state.attaching ? 'Opening the tail…' : 'Standing by';
 		return;
 	}
 
@@ -559,8 +616,12 @@ function attachStream(state) {
 	const canvas   = card.querySelector('canvas');
 	const ctx      = canvas.getContext('2d');
 
+	statusEl.textContent = 'Connecting';
+	state.attaching = true;
+
 	function setLive(live) {
 		state.live = live;
+		state.attaching = false;
 		dot.classList.toggle('idle', !live);
 		if (live) {
 			statusEl.textContent = 'Live';
@@ -808,6 +869,81 @@ function getObserver() {
 	return _observer;
 }
 
+// ── pooled stream lifecycle ──────────────────────────────────────────────────
+// A card gets its SSE listener when it nears the viewport and gives it back once
+// it is well past, so the pool always covers what a viewer can see, and a wall
+// of 2,000 agents costs the same handful of connections as a wall of 12.
+
+// Move an id to the LRU tail (a Set re-insert after delete reorders it).
+function touchStream(id) {
+	if (_streamed.delete(id)) _streamed.add(id);
+}
+
+// Give a stream back. Keeps the card's loaded entries so scrolling back shows its
+// history instantly, and parks the badge on the honest resting label.
+function releaseStream(state) {
+	if (!_streamed.delete(state.agentId)) return;
+	try { state.es?.close(); } catch { /* already gone */ }
+	state.es = null;
+	state.attaching = false;
+	state.reconnecting = false;
+	clearTimeout(state.reconnectLabelTimer);
+	stopStatusPolling(state);
+	hideWarming(state);
+	state.lastFrameAt = 0;
+	state.live = false;
+	state.reactions?.setConnected(false);
+	const statusEl = state.card.querySelector('[data-status]');
+	if (statusEl) { statusEl.textContent = state.entries?.length ? 'Active' : 'Idle'; statusEl.title = ''; }
+	const dot = state.card.querySelector('[data-dot]');
+	dot?.classList.add('idle');
+	dot?.classList.remove('thin');
+	renderAge(state);
+}
+
+// Free slots by dropping the least-recently-needed streams. Never evicts the
+// spotlit card or anything actually on screen, those are what the viewer is
+// looking at; the ones merely inside the pre-warm band go first.
+function evictStreams() {
+	if (_streamed.size <= MAX_STREAMS) return;
+	for (const pass of [0, 1]) {
+		for (const id of [..._streamed]) {
+			if (_streamed.size <= MAX_STREAMS) return;
+			if (id === _spotAgentId) continue;
+			if (pass === 0 && _inView.has(id)) continue;
+			const s = _cards.get(id);
+			if (s) releaseStream(s); else _streamed.delete(id);
+		}
+	}
+}
+
+function ensureStream(state) {
+	if (state.es) { touchStream(state.agentId); return; }
+	_streamed.add(state.agentId);
+	attachStream(state);
+	paintActivity(state);
+	evictStreams();
+}
+
+function getStreamObserver() {
+	if (_streamObserver) return _streamObserver;
+	_streamObserver = new IntersectionObserver((entries) => {
+		for (const entry of entries) {
+			const id = entry.target.dataset.agentId;
+			const state = _cards.get(id);
+			if (!state) continue;
+			if (entry.isIntersecting) {
+				_nearView.add(id);
+				if (!document.hidden) ensureStream(state);
+			} else {
+				_nearView.delete(id);
+				if (id !== _spotAgentId) releaseStream(state);
+			}
+		}
+	}, { rootMargin: STREAM_MARGIN, threshold: 0 });
+	return _streamObserver;
+}
+
 // ── lifecycle ──────────────────────────────────────────────────────────────────
 
 function mountAgent(agent) {
@@ -825,6 +961,11 @@ function mountAgent(agent) {
 		action: card.querySelector('[data-action]'),
 		age: card.querySelector('[data-age]'),
 		lastActionAt,
+		// The roster already knows how much this agent has actually done. Holding it
+		// on the card lets the pre-stream canvas say something true ("28 actions
+		// recorded") instead of the flat "no actions yet" that used to greet every
+		// card the pool had not reached.
+		actionCount: Number(agent.action_count) || 0,
 		entries: [],
 		lastFrameAt: 0,
 		live: false,
@@ -855,10 +996,12 @@ function mountAgent(agent) {
 		});
 	}
 	renderAge(state);
-	attachStream(state);
-	// Intent + status polling are intersection-driven (getObserver), so the pool
-	// only spins up for cards actually on screen and frees the slot on scroll-away.
+	paintActivity(state);
+	// Intent + status polling are intersection-driven (getObserver), so the caster
+	// pool only spins up for cards actually on screen and frees the slot on
+	// scroll-away. The wider band (getStreamObserver) owns the SSE listener itself.
 	getObserver().observe(card);
+	getStreamObserver().observe(card);
 }
 
 function renderEmpty() {
@@ -998,7 +1141,11 @@ function updateStats() {
 function startFpsTicker() {
 	_fpsInterval = setInterval(() => {
 		let total = 0;
-		for (const [id, s] of _cards) {
+		// Only a streamed card can have frames to count; the rest carry no badge
+		// state worth touching every second.
+		for (const id of _streamed) {
+			const s = _cards.get(id);
+			if (!s) continue;
 			const c = _fpsMap.get(id) || 0;
 			total += c;
 			s.fps = c;
@@ -1024,7 +1171,12 @@ function startFpsTicker() {
 function startIdleRepaint() {
 	_idleRepaint = setInterval(() => {
 		if (document.hidden) return;
+		// Only repaint what a viewer can actually see (plus the spotlit hero). A
+		// canvas redraw per mounted card was burning frames on a wall the visitor
+		// had long scrolled past; an off-screen card keeps its last painted state
+		// and repaints the moment it re-enters the band.
 		for (const s of _cards.values()) {
+			if (!_nearView.has(s.agentId) && s.agentId !== _spotAgentId) continue;
 			if (!isLiveNow(s)) {
 				paintActivity(s);
 				renderAge(s);
@@ -1055,24 +1207,27 @@ function startInfiniteScroll() {
 }
 
 function suspendStreams() {
+	for (const id of [..._streamed]) {
+		const s = _cards.get(id);
+		if (s) releaseStream(s); else _streamed.delete(id);
+	}
 	for (const s of _cards.values()) {
-		try { s.es?.close(); } catch { /* */ }
-		s.es = null;
-		stopStatusPolling(s);
-		clearTimeout(s.reconnectLabelTimer);
-		s.reconnecting = false;
-		hideWarming(s);
 		const statusEl = s.card.querySelector('[data-status]');
 		if (statusEl) { statusEl.textContent = 'Paused'; statusEl.title = ''; }
-		const dot = s.card.querySelector('[data-dot]');
-		dot?.classList.add('idle');
-		dot?.classList.remove('thin');
 	}
 }
 
 function resumeStreams() {
+	// Only the pre-warm band comes back, not every mounted card: a backgrounded tab
+	// must not return by reopening one connection per agent on the wall.
+	for (const id of _nearView) {
+		const s = _cards.get(id);
+		if (s) ensureStream(s);
+	}
 	for (const s of _cards.values()) {
-		if (!s.es) attachStream(s);
+		if (s.es) continue;
+		const statusEl = s.card.querySelector('[data-status]');
+		if (statusEl?.textContent === 'Paused') statusEl.textContent = s.entries?.length ? 'Active' : 'Idle';
 	}
 	// IntersectionObserver doesn't re-fire on tab focus, so re-assert intent and
 	// restart the handoff poll for cards that are still on screen.
@@ -1325,8 +1480,15 @@ function restoreSpotNode() {
 	if (!_spotNode) return;
 	_spotNode.classList.remove('al-card--spotlit');
 	grid.appendChild(_spotNode);
+	const leaving = _spotAgentId;
 	_spotNode = null;
 	_spotAgentId = null;
+	// The outgoing hero loses its pinned slot. If its grid position is off the
+	// pool's band it hands the connection straight back to the next candidate.
+	if (leaving && !_nearView.has(leaving)) {
+		const s = _cards.get(leaving);
+		if (s) releaseStream(s);
+	}
 }
 
 function updateCaption(candidate) {
@@ -1352,8 +1514,11 @@ function promote(state, candidate) {
 	_spotNode = state.card;
 	_spotAgentId = candidate.agentId;
 	// Prioritise a real caster for the spotlit agent (same intent path the grid
-	// cards use), and never leave a frozen frame on the hero.
+	// cards use), and never leave a frozen frame on the hero. The hero holds a
+	// stream slot for as long as it holds the stage, even once its grid position
+	// has scrolled out of the pool's band.
 	_inView.add(candidate.agentId);
+	ensureStream(state);
 	signalWatch(candidate.agentId);
 	if (!isLiveNow(state)) { startStatusPolling(state); paintActivity(state); }
 	updateCaption(candidate);

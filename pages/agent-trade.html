@@ -96,6 +96,19 @@
     .bubble.hidden { opacity: 0; transform: translateY(8px); }
     #buyerBubble  { background: rgba(69,137,255,0.15); border: 1px solid rgba(69,137,255,0.35); }
     #sellerBubble { background: rgba(241,194,27,0.1);  border: 1px solid rgba(241,194,27,0.35); }
+    /* The two long waits (broadcasting the transfer, generating the analysis)
+       happen while the centre of the screen stays clear for the 3D beam, so the
+       bubble itself carries the liveness cue: a real indeterminate bar, not a
+       line of static text that looks identical to a stalled page. */
+    .bubble.pending::after {
+      content: ''; display: block; height: 2px; margin-top: 9px; border-radius: 2px;
+      background: linear-gradient(90deg, transparent 0%, currentColor 45%, currentColor 55%, transparent 100%);
+      background-size: 220% 100%; opacity: 0.75;
+      animation: bubbleProgress 1.25s linear infinite;
+    }
+    #buyerBubble.pending::after  { color: var(--blue); }
+    #sellerBubble.pending::after { color: var(--gold); }
+    @keyframes bubbleProgress { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 
     /* ── Central floating card ─────────────────────────────────────────── */
     #centralCard {
@@ -126,6 +139,25 @@
     .c-link:hover { text-decoration: underline; }
     .c-content { font-size: 0.86rem; line-height: 1.65; color: var(--text); margin-top: 8px; }
     .c-powered { margin-top: 12px; font-size: 0.67rem; color: var(--muted); font-family: var(--mono); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* Pre-flight skeleton: the wallets, price and network are being read from
+       Solana, so the card shows the shape of the answer instead of an empty
+       stage that reads as a broken page. */
+    .c-skel {
+      height: 11px; border-radius: 4px; margin: 7px 0;
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.13) 50%, rgba(255,255,255,0.05) 100%);
+      background-size: 220% 100%;
+      animation: skelSweep 1.4s linear infinite;
+    }
+    .c-skel-price { height: 26px; width: 58%; margin: 12px 0 10px; }
+    .c-skel-row   { width: 82%; }
+    .c-skel-row.short { width: 62%; }
+    @keyframes skelSweep { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .c-skel, .bubble.pending::after { animation: none; }
+      #liveDot { animation: none; }
+    }
 
     /* ── Step log ──────────────────────────────────────────────────────── */
     #stepLog {
@@ -267,7 +299,16 @@
       #topicSelect, #startBtn { width: 100%; max-width: none; }
       #stepLog { bottom: 128px; }
       .step-chip { padding: 3px 8px; font-size: 0.62rem; }
-      #centralCard { max-height: calc(100vh - 280px); padding: 16px; }
+      /* The bottom of a small screen carries the stacked CTA and the wrapped
+         step log (about 177px of it), so a card centred on the viewport lands
+         on top of the chips. Centre it on the band that is actually free
+         instead: below the header, above the step log. */
+      #centralCard {
+        top: calc(50% - 52px); margin-top: 0;
+        transform: translate(-50%, -50%);
+        max-height: calc(100vh - 270px); padding: 16px;
+      }
+      #centralCard.hidden { transform: translate(-50%, -50%) translateY(14px); }
       .bubble { max-width: 160px; font-size: 0.76rem; }
     }
     @media (max-width: 460px) {

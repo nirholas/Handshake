@@ -83,12 +83,20 @@ const els = {
 	modalError: $('modal-error'),
 };
 
+// URL params are user-editable, so every one is validated against the values the
+// UI can actually represent. An unknown ?sort= used to blank the sort <select>,
+// and an unknown ?cat= filtered the whole grid away with no chip to clear it.
+const TYPE_FILTERS = new Set(['', 'loop', 'once']);
+const SORTS = new Set(['featured', 'az', 'za', 'shortest', 'longest', 'shuffle']);
+const CATEGORY_KEYS = new Set(GALLERY_CATEGORIES.map((c) => c.key));
+const oneOf = (allowed, value, fallback) => (allowed.has(value) ? value : fallback);
+
 const params = new URLSearchParams(location.search);
 const state = {
 	query: params.get('q') || '',
-	filter: params.get('filter') || '', // '' | loop | once
-	category: params.get('cat') || '', // '' | GALLERY_CATEGORIES key
-	sort: params.get('sort') || 'featured',
+	filter: oneOf(TYPE_FILTERS, params.get('filter') || '', ''), // '' | loop | once
+	category: oneOf(CATEGORY_KEYS, params.get('cat') || '', ''), // '' | GALLERY_CATEGORIES key
+	sort: oneOf(SORTS, params.get('sort') || 'featured', 'featured'),
 	all: [],
 	filtered: [],
 	shown: 0,
@@ -100,6 +108,7 @@ const live = getLivePreview();
 
 if (state.query) els.search.value = state.query;
 if (els.sort) els.sort.value = state.sort;
+syncTypeFilter();
 
 // ── URL state ──────────────────────────────────────────────────────────────
 
@@ -189,12 +198,12 @@ function normalizeFullLibraryClip(clip) {
 		category: galleryCategoryOf(clip.name, clip.label),
 		duration_ms: clip.duration ? Math.round(clip.duration * 1000) : null,
 		url: clip.url, // absolute CDN url
-		// The library manifest publishes a `thumb` url per clip; older manifests
-		// predate thumbnails, so fall back to the CDN convention (thumbs live
-		// beside clips) and let the card's onerror show the icon placeholder.
-		thumbnail_url:
-			clip.thumb ||
-			(clip.url ? clip.url.replace('/clips/', '/thumbs/').replace(/\.json$/, '.webp') : null),
+		// The library manifest publishes a `thumb` url only for clips that have
+		// one baked. Guessing the CDN convention for the rest (853 of 2,874 today)
+		// requested an object that is never there: every one 404s, and the browser
+		// logs a blocked cross-origin read before the card falls back to its icon.
+		// No thumb in the manifest means no request.
+		thumbnail_url: clip.thumb || null,
 		price: null,
 	};
 }
@@ -223,11 +232,7 @@ async function loadAll() {
 		fetchFullLibrary(),
 	]);
 
-	if (libRes.status === 'rejected' && comRes.status === 'rejected' && fullRes.status === 'rejected') {
-		showState('error');
-		return;
-	}
-
+	const results = [libRes, comRes, fullRes];
 	const library = libRes.status === 'fulfilled' ? libRes.value : [];
 	const community = comRes.status === 'fulfilled' ? comRes.value : [];
 	const full = fullRes.status === 'fulfilled' ? fullRes.value : [];
@@ -236,6 +241,15 @@ async function loadAll() {
 	const curatedNames = new Set(library.map((c) => c.id));
 	state.all = [...community, ...library, ...full.filter((c) => !curatedNames.has(c.id))];
 	state.loaded = true;
+
+	// Nothing to show AND at least one source errored is a failure, not an empty
+	// library: "be the first to publish" would be a lie, and Retry is the action
+	// the user needs. A genuinely empty catalog (every source answered, none had
+	// clips) still falls through to the empty state below.
+	if (state.all.length === 0 && results.some((r) => r.status === 'rejected')) {
+		showState('error');
+		return;
+	}
 
 	renderHeroStats();
 	renderChips();
@@ -249,11 +263,12 @@ async function loadAll() {
 		else {
 			const item = state.all.find((c) => c.id === wanted);
 			if (item) {
-				// Visible under different filters — clear them so the link works.
+				// Visible under different filters, so clear them for the link.
 				state.query = '';
 				state.category = '';
 				state.filter = '';
 				els.search.value = '';
+				syncTypeFilter();
 				renderChips();
 				applyFilters();
 				openModal(state.filtered.findIndex((c) => c.id === wanted));
@@ -303,6 +318,15 @@ function syncChips() {
 	});
 }
 
+// Keep the loop/once segmented control showing what is actually filtering. The
+// chips render from state on every pass; these three buttons are static markup,
+// so a ?filter= deep link (or the clear-filters button) has to press them.
+function syncTypeFilter() {
+	els.typeFilter?.querySelectorAll('[data-filter]').forEach((btn) => {
+		btn.setAttribute('aria-pressed', String((btn.dataset.filter || '') === state.filter));
+	});
+}
+
 // ── Filter + sort + render ───────────────────────────────────────────────────
 
 function applyFilters() {
@@ -339,7 +363,8 @@ function sortFiltered() {
 			arr.sort((a, b) => (b.duration_ms ?? -1) - (a.duration_ms ?? -1));
 			break;
 		case 'shuffle': {
-			// Deterministic per page load, reshuffled when re-selected.
+			// Reshuffled on every filter pass, so changing a chip or the search
+			// while shuffled deals a fresh hand rather than the same order.
 			for (let i = arr.length - 1; i > 0; i--) {
 				const j = Math.floor(Math.random() * (i + 1));
 				[arr[i], arr[j]] = [arr[j], arr[i]];
@@ -428,7 +453,7 @@ function buildCard(clip, index) {
 
 	card.innerHTML = `
 		<div class="ag-card-preview" role="button" tabindex="0"
-			aria-label="${escHtml(clip.name)} — open details">
+			aria-label="${escHtml(clip.name)}: open details">
 			${clip.thumbnail_url
 				? `<img class="ag-card-thumb" src="${escHtml(clip.thumbnail_url)}" alt="" loading="lazy" decoding="async" />`
 				: ''}
@@ -518,9 +543,20 @@ function escHtml(s) {
 
 // ── Detail modal ─────────────────────────────────────────────────────────────
 
+// The element that opened the modal, so closing returns focus where the user
+// left it instead of dropping it on <body> and restarting the tab order.
+let modalOpener = null;
+
 function openModal(index) {
 	const clip = state.filtered[index];
 	if (!clip || !els.modal) return;
+	// Stepping prev/next re-opens the modal; only a cold open owns the opener,
+	// and only a cold open moves focus (stepping with the keyboard has to leave
+	// focus on Next so the next press steps again).
+	const coldOpen = els.modal.hidden;
+	if (coldOpen && document.activeElement instanceof HTMLElement) {
+		modalOpener = document.activeElement;
+	}
 	state.modalIndex = index;
 
 	els.modalTitle.textContent = clip.name;
@@ -551,7 +587,10 @@ function openModal(index) {
 
 	els.modal.hidden = false;
 	document.body.style.overflow = 'hidden';
-	els.modalClose.focus();
+	// Focus the dialog itself, not its close button: a screen reader then reads
+	// the clip title first, and Space stays free for the play/pause shortcut the
+	// on-screen hint advertises.
+	if (coldOpen) els.modal.focus();
 	syncUrl(clip.id);
 
 	let scrubbing = false;
@@ -589,6 +628,34 @@ function closeModal() {
 	live.stop();
 	state.modalIndex = -1;
 	syncUrl();
+	// The opener can be gone (a filter change rebuilt the grid under the modal);
+	// fall back to the search field so focus never lands on <body>.
+	const back = modalOpener?.isConnected ? modalOpener : els.search;
+	modalOpener = null;
+	back?.focus();
+}
+
+const FOCUSABLE =
+	'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// aria-modal="true" promises the rest of the page is inert, so Tab has to wrap
+// inside the dialog instead of walking off into the grid behind it.
+function trapModalFocus(e) {
+	const nodes = [...els.modal.querySelectorAll(FOCUSABLE)].filter(
+		(n) => n.offsetWidth > 0 || n.offsetHeight > 0,
+	);
+	if (!nodes.length) return;
+	const first = nodes[0];
+	const last = nodes[nodes.length - 1];
+	const active = document.activeElement;
+	const outside = !els.modal.contains(active);
+	if (e.shiftKey && (outside || active === first)) {
+		e.preventDefault();
+		last.focus();
+	} else if (!e.shiftKey && (outside || active === last)) {
+		e.preventDefault();
+		first.focus();
+	}
 }
 
 function stepModal(delta) {
@@ -634,7 +701,7 @@ els.modalCopyEmbed?.addEventListener('click', async () => {
 	const clip = state.filtered[state.modalIndex];
 	if (!clip) return;
 	const src = `${location.origin}/embed/avatar?anim=${encodeURIComponent(clip.id)}`;
-	const snippet = `<iframe src="${src}" width="360" height="480" style="border:0;border-radius:12px" allow="autoplay" title="${clip.name} — three.ws"></iframe>`;
+	const snippet = `<iframe src="${src}" width="360" height="480" style="border:0;border-radius:12px" allow="autoplay" title="${clip.name} on three.ws"></iframe>`;
 	await navigator.clipboard.writeText(snippet).catch(() => {});
 	flashButton(els.modalCopyEmbed, 'Copied!');
 });
@@ -684,10 +751,8 @@ els.chips?.addEventListener('click', (e) => {
 els.typeFilter?.addEventListener('click', (e) => {
 	const btn = e.target.closest('[data-filter]');
 	if (!btn) return;
-	state.filter = btn.dataset.filter;
-	els.typeFilter.querySelectorAll('[data-filter]').forEach((b) => {
-		b.setAttribute('aria-pressed', String(b === btn));
-	});
+	state.filter = btn.dataset.filter || '';
+	syncTypeFilter();
 	syncUrl();
 	if (state.loaded) applyFilters();
 });
@@ -703,9 +768,7 @@ els.clearSearch?.addEventListener('click', () => {
 	state.filter = '';
 	state.category = '';
 	els.search.value = '';
-	els.typeFilter?.querySelectorAll('[data-filter]').forEach((b) => {
-		b.setAttribute('aria-pressed', String(b.dataset.filter === ''));
-	});
+	syncTypeFilter();
 	syncChips();
 	syncUrl();
 	if (state.loaded) applyFilters();
@@ -729,10 +792,16 @@ if ('IntersectionObserver' in window && els.sentinel) {
 
 document.addEventListener('keydown', (e) => {
 	if (!els.modal.hidden) {
+		// The scrub and speed sliders own their own arrow and space keys; stealing
+		// them would scrub and step the clip list at the same time.
+		const tag = document.activeElement?.tagName || '';
+		const onSlider = /^(INPUT|SELECT|TEXTAREA)$/.test(tag);
 		if (e.key === 'Escape') closeModal();
+		else if (e.key === 'Tab') trapModalFocus(e);
+		else if (onSlider) return;
 		else if (e.key === 'ArrowLeft') stepModal(-1);
 		else if (e.key === 'ArrowRight') stepModal(1);
-		else if (e.key === ' ' && e.target === document.body) {
+		else if (e.key === ' ' && tag !== 'BUTTON' && tag !== 'A') {
 			e.preventDefault();
 			els.modalPlay.click();
 		}

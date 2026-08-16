@@ -456,7 +456,10 @@ registerWalletTab({
 
 		async function loadActivity() {
 			const net = ctx.getNetwork();
-			if (!state.address) return;
+			// The activity feed is owner-only server-side; a visitor funding someone
+			// else's agent would only earn a 401 in the console. The deposit QR,
+			// address, and live "received" confirmation all work without it.
+			if (!ctx.isOwner || !state.address) return;
 			try {
 				const data = await fetchAgentSolanaActivity(ctx.agentId, net, 8);
 				state.activity = data?.signatures || [];

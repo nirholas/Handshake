@@ -453,6 +453,20 @@ class AgentPresenceElement extends HTMLElement {
 				:host([hidden]) { display: none; }
 				#stage { position: relative; width: 100%; height: 100%; min-height: inherit; }
 				#stage canvas { display: block; width: 100% !important; height: 100% !important; }
+				/* Viewer.addGUI()/addAxesHelper() append the dat.GUI debug panel, its
+				   toggle, the axes gizmo, and the model-info readout straight into the
+				   stage element. Everything that positions or hides them lives in
+				   public/style.css (or in <agent-3d>'s own shadow CSS), and neither
+				   crosses into THIS shadow root, so the markup landed unstyled and in
+				   normal flow, and dat.GUI's inline-positioned colour picker painted a
+				   rainbow hue strip over the avatar on every presence surface. Presence
+				   is a display surface in every mode (it builds the Viewer with
+				   kiosk:true), so the debug chrome is suppressed here rather than
+				   depending on a host stylesheet that may not be loaded. */
+				#stage .gui-wrap,
+				#stage .gui-toggle,
+				#stage .axes,
+				#stage .model-info { display: none !important; }
 				.status {
 					position: absolute; inset: 0; display: none; place-items: center;
 					text-align: center; padding: 16px; pointer-events: none;

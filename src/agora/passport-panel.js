@@ -188,13 +188,13 @@ export class PassportPanel {
 	// ── Renderers ──────────────────────────────────────────────────────────────
 
 	_renderLoading(hint) {
-		const accent = hint ? professionColor(hint.profession || hint.professions?.[0]?.key) : '#9fb4cc';
+		const accent = hint ? professionColor(primaryProfessionKey(hint)) : '#9fb4cc';
 		this._bodyEl.innerHTML = `
 			<div class="agora-pp-hero">
 				<span class="agora-pp-dot" style="background:${accent}"></span>
 				<div>
 					<div class="agora-pp-name">${esc(hint?.displayName || 'Loading…')}</div>
-					<div class="agora-pp-prof">${esc(hint?.professions?.[0]?.label || hint?.profession || 'Citizen')}</div>
+					<div class="agora-pp-prof">${esc(citizenProfessionLabel(hint))}</div>
 				</div>
 			</div>
 			<div class="agora-pp-skel" aria-hidden="true">
@@ -220,7 +220,7 @@ export class PassportPanel {
 	_render(data) {
 		const c = data.citizen || {};
 		const onchain = data.onchain || null;
-		const accent = professionColor(c.profession || c.professions?.[0]?.key);
+		const accent = professionColor(primaryProfessionKey(c));
 		this._cluster = c.agenc?.cluster === 'mainnet' ? 'mainnet' : 'devnet';
 		this._titleEl.textContent = c.displayName || 'Passport';
 

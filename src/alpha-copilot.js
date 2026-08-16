@@ -13,6 +13,7 @@
  */
 
 import { agentAvatarGlb } from './shared/agent-3d.js';
+import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
 import { previewAgentTrade, executeAgentTrade, TradeError } from './agent-solana-wallet.js';
 import { countUp, enterStagger, rippleOnce, reducedMotion } from './ui-juice.js';
 
@@ -94,7 +95,6 @@ function cacheDom() {
 	dom.readEmpty = $('#ac-read-empty');
 	dom.readBody = $('#ac-read-body');
 	dom.launchesList = $('#ac-launches-list');
-	dom.launchesCount = $('#ac-launches-count');
 	dom.refresh = $('#ac-refresh');
 	dom.actDrawer = $('#ac-act-drawer');
 	dom.actBody = $('#ac-act-body');
@@ -211,6 +211,7 @@ async function loadAgent(id) {
 		dom.agentName.textContent = 'Not found';
 		dom.agentRole.textContent = e.message || 'Could not load that agent';
 		state.agent = null;
+		clearStage();
 		return;
 	}
 	state.agent = agent;
@@ -226,8 +227,26 @@ async function loadAgent(id) {
 	loadCandidates();
 }
 
+// A failed load must not leave the PREVIOUS agent standing on stage with its
+// launch cards still rendered: `requestRead` needs `state.agent`, so every one of
+// those "Ask for a read" buttons becomes a silent no-op click. Strip the stage
+// back to its first-paint state so the only thing on screen is the real one.
+function clearStage() {
+	if (state.avatarEl) { try { state.avatarEl.remove(); } catch { /* already detached */ } state.avatarEl = null; }
+	if (dom.avatarPlaceholder) dom.avatarPlaceholder.hidden = false;
+	dom.agentLink.hidden = true;
+	state.candidates = [];
+	markActiveCard(null);
+	resetRead();
+	showLaunchesIdle(IDLE_PICK);
+}
+
 async function mountAvatar(agent) {
-	const glb = agentAvatarGlb(agent);
+	// r2.dev only sends CORS headers for the production origins, so on localhost /
+	// Codespaces the raw GLB fetch is blocked and the stage shows a network error
+	// where the body should be. Every other GLB-mounting surface routes through
+	// this helper; it is a no-op in production.
+	const glb = resolveDevR2Url(agentAvatarGlb(agent));
 	try { await import('./element.js'); } catch { /* element may already be registered */ }
 	// Rebuild the avatar element each load so a new agent shows its own body.
 	if (state.avatarEl) { try { state.avatarEl.remove(); } catch { /* ignore */ } state.avatarEl = null; }
@@ -246,12 +265,18 @@ async function mountAvatar(agent) {
 }
 
 // ── candidate launches ──────────────────────────────────────────────────────
+// Resolved on every write rather than cached: this badge sits next to a
+// `data-i18n-html` heading, and any element the i18n pass rewrites is a NEW node
+// afterwards. A cached ref there goes stale the moment a locale lands, and the
+// counter silently stops updating with no error anywhere.
 function setCount(n) {
+	const el = document.getElementById('ac-launches-count');
+	if (!el) return;
 	if (n > 0) {
-		const from = parseInt(dom.launchesCount.textContent, 10) || 0;
-		dom.launchesCount.hidden = false;
-		countUp(dom.launchesCount, from, n, { format: (v) => String(Math.round(v)) });
-	} else dom.launchesCount.hidden = true;
+		const from = parseInt(el.textContent, 10) || 0;
+		el.hidden = false;
+		countUp(el, from, n, { format: (v) => String(Math.round(v)) });
+	} else el.hidden = true;
 }
 
 // The launches column is the page's call to action, so it must never render as
@@ -368,6 +393,7 @@ function markActiveLaunch(mint) {
 function resetRead() {
 	state.read = null;
 	state.activeMint = null;
+	state.lastSpoken = '';
 	markActiveLaunch(null);
 	dom.readEmpty.hidden = false;
 	dom.readBody.hidden = true;
@@ -499,7 +525,9 @@ function renderAction(data) {
 	if (!host) return;
 	const gate = data.gate || {};
 	if (gate.can_act) {
-		host.innerHTML = `<button type="button" class="ac-btn ac-btn-act" id="ac-act-go">Act — buy ${fmtSol(gate.size_sol)} SOL</button>
+		// fmtSol already prefixes the SOL glyph, so no unit suffix here: appending
+		// one renders the amount with a doubled unit ("◎0.01 SOL").
+		host.innerHTML = `<button type="button" class="ac-btn ac-btn-act" id="ac-act-go">Act: buy ${fmtSol(gate.size_sol)}</button>
 			<p class="ac-action-note">${esc(gate.message || '')}</p>`;
 		$('#ac-act-go')?.addEventListener('click', () => openActDrawer(data));
 	} else {
@@ -586,7 +614,7 @@ function openActDrawer(data) {
 	const sig = data.signals || {};
 	const sym = sig.symbol ? `$${esc(sig.symbol)}` : short(data.mint, 4, 4);
 	dom.actBody.innerHTML = `
-		<p class="ac-act-lead">${esc(state.agent?.name || 'Your agent')} wants to buy <strong>${fmtSol(gate.size_sol)} SOL</strong> of ${sym}.</p>
+		<p class="ac-act-lead">${esc(state.agent?.name || 'Your agent')} wants to buy <strong>${fmtSol(gate.size_sol)}</strong> of ${sym}.</p>
 		<div class="ac-act-quote" id="ac-act-quote">Fetching a fresh live quote…</div>
 		<div class="ac-act-controls">
 			<button type="button" class="ac-btn ac-btn-act" id="ac-act-confirm" disabled>Confirm buy</button>
@@ -605,7 +633,7 @@ function openActDrawer(data) {
 			const expected = q?.expected_out ?? q?.out?.amount ?? q?.outUi;
 			const warn = q?.warning || q?.blocked_reason;
 			quoteHost.innerHTML = `
-				<div class="ac-act-qrow"><span>You pay</span><strong>${fmtSol(gate.size_sol)} SOL</strong></div>
+				<div class="ac-act-qrow"><span>You pay</span><strong>${fmtSol(gate.size_sol)}</strong></div>
 				${expected != null ? `<div class="ac-act-qrow"><span>Expected</span><strong>${Number(expected).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${esc(sig.symbol || 'tokens')}</strong></div>` : ''}
 				<div class="ac-act-qrow"><span>Price impact</span><strong>${fmtPct(impact)}</strong></div>
 				${warn ? `<p class="ac-act-warn">${esc(warn)}</p>` : ''}`;
@@ -629,7 +657,7 @@ function openActDrawer(data) {
 			dom.actBody.innerHTML = `
 				<div class="ac-act-done">
 					<div class="ac-act-done-mark">✓</div>
-					<p>Bought into ${sym} for ${fmtSol(spent)} SOL.</p>
+					<p>Bought into ${sym} for ${fmtSol(spent)}.</p>
 					${sig2 ? `<a class="ac-btn ac-btn-ghost" href="${esc(res.explorer || explorerTxUrl(sig2))}" target="_blank" rel="noopener">View transaction</a>` : ''}
 					${res?.new_balance_sol != null ? `<p class="ac-act-fine">Wallet now ${fmtSol(res.new_balance_sol)}.</p>` : ''}
 					<a class="ac-act-audit" href="/agent/${esc(state.agent.id)}" target="_blank" rel="noopener">See it in the custody trail →</a>

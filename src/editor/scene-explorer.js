@@ -110,9 +110,9 @@ export class SceneExplorer {
 		panel.innerHTML = `
 			<div class="scene-explorer__header">
 				<span class="scene-explorer__title">Scene</span>
-				<button class="scene-explorer__close" title="Close [T]">×</button>
+				<button class="scene-explorer__close" type="button" title="Close [T]" aria-label="Close scene explorer">×</button>
 			</div>
-			<input type="text" class="scene-explorer__search" placeholder="Search nodes…">
+			<input type="text" class="scene-explorer__search" placeholder="Search nodes…" aria-label="Search scene nodes">
 			<div class="scene-explorer__hint">W translate · E rotate · R scale · Esc deselect</div>
 			<div class="scene-explorer__tree"></div>
 			<div class="scene-explorer__inspector"></div>

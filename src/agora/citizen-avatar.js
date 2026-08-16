@@ -60,6 +60,45 @@ export function professionColor(profession) {
 	return PROFESSION_COLORS[String(profession || '').toLowerCase()] || NEUTRAL_ACCENT;
 }
 
+// Display labels for the profession keys the API emits (lowercase). Falls back to
+// a capitalised key so an unmapped/new profession still reads cleanly: open by
+// design, never a hardcoded gate. Lives beside the colour map so a profession's
+// name and its accent can never disagree.
+export const PROFESSION_LABELS = {
+	fetcher: 'Fetcher', sculptor: 'Sculptor', scribe: 'Scribe',
+	cartographer: 'Cartographer', crier: 'Crier', appraiser: 'Appraiser',
+	verifier: 'Verifier', namekeeper: 'Namekeeper',
+};
+export function professionLabelFor(profession) {
+	const key = String(profession || '').toLowerCase();
+	if (PROFESSION_LABELS[key]) return PROFESSION_LABELS[key];
+	if (!key) return 'Citizen';
+	return key.charAt(0).toUpperCase() + key.slice(1);
+}
+
+// The craft a citizen is *known for*, as a profession key.
+//
+// A citizen carries two profession fields and they mean different things:
+// `profession` is the primary craft the world seeds and the job board hires on,
+// while `professions` is the decoded AgenC capability bitmap (everything it is
+// allowed to claim). Every citizen is granted the fetcher bit because an x402
+// service call is the one craft anyone can do (workers/agora-citizens/roster.js),
+// so `professions[0]` is *always* Fetcher and says nothing about who this is.
+// Reading it as the citizen's craft labelled all 200 citizens "FETCHER" while
+// their accent colour showed the real primary. Primary first, bitmap only as the
+// fallback, so name, chip and colour always agree.
+export function primaryProfessionKey(citizen) {
+	return citizen?.profession || citizen?.professions?.[0]?.key || null;
+}
+
+/** The citizen's craft as display text ("Appraiser"), never an empty chip. */
+export function citizenProfessionLabel(citizen) {
+	const key = primaryProfessionKey(citizen);
+	if (key) return professionLabelFor(key);
+	// No primary key: honour a label the API already formatted before giving up.
+	return citizen?.professions?.[0]?.label || 'Citizen';
+}
+
 const _box = new Box3();
 const _v = new Vector3();
 
@@ -317,8 +356,8 @@ export class CitizenPopulation {
 		group.userData.citizenId = citizen.id;
 		this.root.add(group);
 
-		const accent = professionColor(citizen.profession || citizen.professions?.[0]?.key);
-		const label = buildLabelSprite(citizen.displayName || 'Citizen', citizen.professions?.[0]?.label || citizen.profession, accent);
+		const accent = professionColor(primaryProfessionKey(citizen));
+		const label = buildLabelSprite(citizen.displayName || 'Citizen', citizenProfessionLabel(citizen), accent);
 		_box.setFromObject(model, true);
 		const height = Number.isFinite(_box.max.y) ? _box.max.y : AVATAR_HEIGHT;
 		label.position.set(0, height + 0.3, 0);
@@ -481,7 +520,7 @@ export class CitizenPopulation {
 		if (!inst) return;
 		inst.busy = status === 'Busy';
 		if (inst.busy && !inst.busyRing) {
-			const accent = professionColor(inst.citizen.profession || inst.citizen.professions?.[0]?.key);
+			const accent = professionColor(primaryProfessionKey(inst.citizen));
 			inst.busyRing = this._buildBusyRing(accent);
 		}
 	}
@@ -524,7 +563,7 @@ export class CitizenPopulation {
 		if (!inst) { this._ring.visible = false; return; }
 		inst.group.getWorldPosition(_v);
 		this._ring.position.set(_v.x, 0.02, _v.z);
-		const accent = professionColor(inst.citizen.profession || inst.citizen.professions?.[0]?.key);
+		const accent = professionColor(primaryProfessionKey(inst.citizen));
 		this._ring.material.color.set(accent);
 		this._ring.visible = true;
 	}

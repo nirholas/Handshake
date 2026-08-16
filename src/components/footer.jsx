@@ -5,7 +5,13 @@ import vhtml from 'vhtml';
 export function Footer() {
 	return (
 		<footer>
-			<a class="item" target="_blank" href="https://x.com/trythreews" aria-label="Follow on X">
+			<a
+				class="item"
+				target="_blank"
+				rel="noopener noreferrer"
+				href="https://x.com/trythreews"
+				aria-label="Follow on X"
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="16"
@@ -29,7 +35,7 @@ export function Footer() {
 				|
 			</span>
 
-			<a class="item" href="/validation/">
+			<a class="item" href="/validation">
 				validation
 			</a>
 
@@ -37,7 +43,7 @@ export function Footer() {
 				|
 			</span>
 
-			<a class="item" href="/reputation/">
+			<a class="item" href="/reputation">
 				reputation
 			</a>
 
@@ -45,7 +51,12 @@ export function Footer() {
 				|
 			</span>
 
-			<a class="item" target="_blank" href="https://github.com/nirholas/3d-agent/issues/new">
+			<a
+				class="item"
+				target="_blank"
+				rel="noopener noreferrer"
+				href="https://github.com/nirholas/three.ws/issues/new"
+			>
 				help & feedback
 			</a>
 
@@ -56,7 +67,8 @@ export function Footer() {
 			<a
 				class="item"
 				target="_blank"
-				href="https://github.com/nirholas/3d-agent"
+				rel="noopener noreferrer"
+				href="https://github.com/nirholas/three.ws"
 				aria-label="GitHub"
 			>
 				<svg

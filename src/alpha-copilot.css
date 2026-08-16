@@ -266,6 +266,7 @@ body {
 /* ── launches ─────────────────────────────────────────────────────────────── */
 .ac-launches { padding: var(--space-sm); display: flex; flex-direction: column; }
 .ac-launches-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-xs) var(--space-sm) var(--space-sm); }
+.ac-launches-title { display: flex; align-items: center; gap: var(--space-xs); min-width: 0; }
 .ac-launches-head h2 { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--text-md); font-family: var(--font-display); margin: 0; color: var(--ink-bright); }
 .ac-launches-count { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-faint); background: var(--surface-2); border-radius: var(--radius-pill); padding: 1px var(--space-xs); }
 .ac-launches-list { display: flex; flex-direction: column; gap: var(--space-sm); max-height: 660px; overflow-y: auto; padding: var(--space-sm) var(--space-2xs) var(--space-2xs); }

@@ -162,6 +162,27 @@ body {
 	font-family: var(--font-mono); font-size: var(--text-sm); color: var(--ink-dim);
 	letter-spacing: 0.1em;
 }
+/* Shown only when the agent's model AND the default body both fail to load, so
+   the stage explains itself instead of sitting empty. */
+.agi-stage-fallback {
+	position: relative; z-index: 3;
+	flex: 1;
+	display: flex; flex-direction: column; align-items: center; justify-content: center;
+	gap: var(--space-sm);
+	padding: var(--space-lg) var(--space-md) var(--space-2xl);
+	text-align: center;
+}
+.agi-stage-fallback-title {
+	margin: 0;
+	font-family: var(--font-mono); font-size: var(--text-2xs);
+	letter-spacing: 0.12em; text-transform: uppercase;
+	color: var(--ink);
+}
+.agi-stage-fallback-body {
+	margin: 0; max-width: 38ch;
+	font-size: var(--text-sm); line-height: 1.55; color: var(--ink-dim);
+}
+.agi-stage-fallback .agi-btn { margin-top: var(--space-2xs); }
 
 /* ── section grid ─────────────────────────────────────────────────────────── */
 .agi-grid {

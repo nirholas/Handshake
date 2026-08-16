@@ -1858,6 +1858,11 @@ class App {
 		this._currentModelUrl = typeof rootFile === 'string' ? rootFile : null;
 		this._hasLocalGlb = typeof rootFile !== 'string';
 		this._currentLocalFile = typeof rootFile !== 'string' ? rootFile : null;
+		// Replay handle for the error overlay. Anonymous visitors on /app have no
+		// agent to re-fetch, so without this a failed load left a dead-end card with
+		// no way back. Replaying the same arguments is safe for a dropped File too:
+		// view() mints a fresh object URL, so cleanup()'s revoke doesn't strand it.
+		this._retryLastView = () => this.view(rootFile, rootPath, fileMap);
 		this._refreshMakeWidgetButton();
 		this._refreshSaveToAccountButton();
 		this._refreshOpenInComposerButton();
@@ -2140,7 +2145,9 @@ class App {
 				const msg = this._classifyLoadError(err, action?.payload?.error);
 				this._showViewerError(
 					msg,
-					this._editingAgentId ? () => this._retryAgentLoad() : null,
+					this._editingAgentId
+						? () => this._retryAgentLoad()
+						: this._retryLastView || null,
 				);
 				// Notify the host page that the GLB failed — paired with the
 				// `widget:ready` event so script-tag embeds can show their own

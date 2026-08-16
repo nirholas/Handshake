@@ -83,6 +83,11 @@
 		select.ctrl { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
 			padding: 9px 12px; font: 14px/1 inherit; color: var(--ink); outline: none; cursor: pointer; }
 		select.ctrl:focus { border-color: color-mix(in srgb, var(--cyan) 50%, var(--line)); }
+		/* Both controls set outline:none for the mouse-focus look, which left a
+		   keyboard user with a 1px border tint as the only cue. Give them the same
+		   ring the chips and buttons on this page already use. */
+		.search-wrap input:focus-visible,
+		select.ctrl:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 		.count-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
 
 		/* grid */
@@ -201,7 +206,7 @@
 					<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
 					</svg>
-					<input id="ag-search" type="search" placeholder="Search agents…" autocomplete="off" />
+					<input id="ag-search" type="search" placeholder="Search agents…" autocomplete="off" data-i18n-attr="placeholder:agents_index.search_placeholder" />
 				</div>
 				<label class="sr-only" for="ag-sort" data-i18n="agents_index.sort_label">Sort agents</label>
 				<select id="ag-sort" class="ctrl">
@@ -212,7 +217,10 @@
 			</div>
 
 			<div id="ag-grid" class="agents-grid" aria-label="Agents" aria-busy="true"></div>
-			<div id="ag-state" class="state" hidden></div>
+			<!-- The empty and error panels are the only feedback a failed or fruitless
+			     load gives, so announce them: without a live region a screen-reader
+			     user hears the busy state end and nothing after it. -->
+			<div id="ag-state" class="state" role="status" aria-live="polite" hidden></div>
 			<div class="load-more-wrap" id="ag-more-wrap" hidden>
 				<button type="button" id="ag-more" class="btn btn-ghost" data-i18n="agents_index.load_more">Load more</button>
 			</div>
@@ -329,12 +337,20 @@
 			</div>`;
 		}
 
-		function renderList() {
-			let items = state.items;
-			if (state.sort === 'name') {
-				items = [...items].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+		// `appendFrom` is the index the newest page starts at. In the server's own
+		// order that page only has to be appended: rebuilding the whole grid on
+		// every "load more" re-decodes every thumbnail already on screen and makes
+		// the list flash once a few pages are in. Name sort interleaves the new
+		// page into the existing one, so it still rebuilds.
+		function renderList(appendFrom = null) {
+			if (appendFrom !== null && state.sort === 'newest') {
+				grid.insertAdjacentHTML('beforeend', state.items.slice(appendFrom).map(cardHtml).join(''));
+			} else {
+				const items = state.sort === 'name'
+					? [...state.items].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+					: state.items;
+				grid.innerHTML = items.map(cardHtml).join('');
 			}
-			grid.innerHTML = items.map(cardHtml).join('');
 			grid.setAttribute('aria-busy', 'false');
 		}
 
@@ -378,6 +394,19 @@
 				</div>`;
 		}
 
+		// A page that fails mid-list is a different failure from a page that fails
+		// on arrival: the agents already loaded are still good and the cursor still
+		// points at the next page, so this offers a resume rather than the reset
+		// "Try again" does. Retrying from page one after loading four pages threw
+		// away everything the visitor had scrolled through.
+		function moreErrorStateHtml(detail) {
+			return `<b>Couldn't load more agents</b>The next page didn't arrive (${esc(detail)}). The ${state.items.length} already listed are still here.
+				<div class="state-actions">
+					<button type="button" class="btn btn-primary" data-act="retry-more">Resume loading</button>
+					<button type="button" class="btn btn-ghost" data-act="retry">Start over</button>
+				</div>`;
+		}
+
 		function setBusy(on) {
 			moreBtn.disabled = on;
 			moreBtn.setAttribute('aria-busy', on ? 'true' : 'false');
@@ -416,9 +445,10 @@
 				// a future server change can't leak non-agent rows into this view.
 				const items = (data.items || []).filter((it) => it.kind === 'onchain' || it.kind === 'solana');
 
+				const appendFrom = state.items.length;
 				state.items.push(...items);
 				state.cursor = data.nextCursor || null;
-				renderList();
+				renderList(reset ? null : appendFrom);
 
 				const more = !!data.nextCursor;
 				countEl.textContent = state.items.length > 0
@@ -426,17 +456,23 @@
 					: '';
 				moreWrap.hidden = !more;
 
+				// Clearing the panel is part of the success path: a resumed "load
+				// more" used to leave the error it recovered from sitting under the
+				// freshly loaded results.
 				if (!state.items.length) showState(emptyStateHtml());
+				else stateEl.hidden = true;
 			} catch (err) {
 				if (req !== state.req) return;
+				const detail = err?.message || 'network error';
 				if (reset) {
 					grid.innerHTML = '';
 					grid.setAttribute('aria-busy', 'false');
-					showState(errorStateHtml(err?.message || 'network error'));
+					showState(errorStateHtml(detail));
 				} else {
-					// A failed "load more" keeps the results already on screen and
-					// offers the retry inline instead of wiping the page.
-					showState(errorStateHtml(err?.message || 'network error'));
+					// A failed "load more" keeps every page already on screen and keeps
+					// state.cursor, so the panel's resume picks up the interrupted page
+					// instead of restarting the list.
+					showState(moreErrorStateHtml(detail));
 				}
 				moreWrap.hidden = true;
 			} finally {
@@ -457,14 +493,21 @@
 				state.q = '';
 				syncUrl();
 			}
-			load(true);
+			// "retry-more" resumes the interrupted page off the surviving cursor;
+			// every other action starts the list over.
+			load(act !== 'retry-more');
 		});
 
 		let _t;
 		searchEl.addEventListener('input', (e) => {
 			clearTimeout(_t);
 			_t = setTimeout(() => {
-				state.q = e.target.value.trim();
+				const next = e.target.value.trim();
+				// Trailing whitespace and an edit that lands back on the same term
+				// both settle here; refetching the identical query would rebuild the
+				// grid and throw away every page past the first for nothing.
+				if (next === state.q) return;
+				state.q = next;
 				syncUrl();
 				load(true);
 			}, 320);

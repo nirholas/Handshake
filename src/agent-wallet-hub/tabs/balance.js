@@ -86,6 +86,12 @@ registerWalletTab({
 			refreshing: false,
 		};
 
+		// GET /api/agents/:id/solana/activity is owner-only (401 anonymous, 403 for
+		// another owner). A visitor requesting it gets no data, one console error
+		// per load, and a Retry button that can never succeed, so the visitor view
+		// says the feed is private instead of pretending the request failed.
+		const canReadActivity = ctx.isOwner;
+
 		function render() {
 			if (destroyed) return;
 			if (!state.loaded) {
@@ -165,6 +171,12 @@ registerWalletTab({
 		}
 
 		function renderActivity(net) {
+			if (!canReadActivity) {
+				const explorer = state.address
+					? ` Every transaction is still public on the <a class="awh-act-sig" href="${escapeHtml(explorerAddressUrl(state.address, net))}" target="_blank" rel="noopener">block explorer</a>.`
+					: '';
+				return `<div class="awh-empty">This wallet's activity feed is private to its owner.${explorer}</div>`;
+			}
 			if (state.activityError) {
 				return `<div class="awh-empty">Could not load activity. <button class="awh-btn awh-bal-mini" type="button" data-act="retry-activity">Retry</button></div>`;
 			}
@@ -237,7 +249,7 @@ registerWalletTab({
 
 		async function loadActivity() {
 			const net = ctx.getNetwork();
-			if (!state.address) {
+			if (!canReadActivity || !state.address) {
 				state.activity = [];
 				state.activityLoaded = true;
 				state.activityError = null;

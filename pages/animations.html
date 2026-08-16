@@ -481,6 +481,20 @@
 			}
 
 			/* ── Empty / error states ─────────────────────────────────────── */
+			/* Names the results region for assistive tech without a visible heading,
+			   so the outline runs h1 → h2 → card h3 instead of h1 → h3. */
+			.ag-sr-only {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				margin: -1px;
+				padding: 0;
+				overflow: hidden;
+				clip-path: inset(50%);
+				white-space: nowrap;
+				border: 0;
+			}
+
 			.ag-state { text-align: center; padding: 80px 24px; }
 			.ag-state-icon { font-size: 48px; margin-bottom: 16px; }
 			.ag-state h2 { font-size: 20px; font-weight: 600; margin: 0 0 8px; }
@@ -641,7 +655,8 @@
 				border-radius: 4px;
 				font-size: 10.5px;
 				background: var(--ag-surface-2);
-				color: var(--text-3, #71717a);
+				/* Raised for the 4.5:1 axe AA floor, same as the other muted ink here. */
+				color: var(--text-3, #84848e);
 			}
 			.ag-modal-actions {
 				display: flex;
@@ -658,7 +673,8 @@
 			.ag-modal-nav .ag-btn:disabled { opacity: 0.35; cursor: default; }
 			.ag-modal-hint {
 				font-size: 11px;
-				color: var(--text-3, #71717a);
+				/* Raised for the 4.5:1 axe AA floor; #71717a measured 3.9:1 here. */
+				color: var(--text-3, #84848e);
 				text-align: center;
 			}
 			.ag-modal-hint kbd {
@@ -715,7 +731,7 @@
 
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 		<meta property="og:locale" content="en_US">
-		<meta property="og:image:alt" content="Animation Gallery — three.ws">
+		<meta property="og:image:alt" content="Animation Gallery on three.ws">
 	</head>
 	<body class="ag-page">
 		<header>
@@ -732,7 +748,7 @@
 					</div>
 				</div>
 				<h1 data-i18n="animations.animation_gallery">Animation Gallery</h1>
-				<p data-i18n="animations.every_clip_in_the_three_ws_motion">Every clip in the three.ws motion library — mocap performances, studio presets, and community-authored animations. Hover any card for a live preview, open the details for playback controls, or send it straight to the Studio.</p>
+				<p data-i18n="animations.every_clip_in_the_three_ws_motion">Every clip in the three.ws motion library: mocap performances, studio presets, and community-authored animations. Hover any card for a live preview, open the details for playback controls, or send it straight to the Studio.</p>
 				<div class="ag-hero-actions">
 					<a href="/pose" class="ag-btn ag-btn--primary" data-i18n="animations.open_animation_studio">Open Animation Studio</a>
 					<a href="/gallery" class="ag-btn ag-btn--secondary" data-i18n="animations.avatar_gallery">Avatar Gallery</a>
@@ -786,6 +802,7 @@
 					<div class="ag-skeleton"></div>
 					<div class="ag-skeleton"></div>
 				</div>
+				<h2 class="ag-sr-only" data-i18n="animations.results_heading">Animation results</h2>
 				<div data-role="grid" class="ag-grid" hidden></div>
 				<div data-role="empty" class="ag-state" hidden>
 					<div class="ag-state-icon">🎬</div>
@@ -813,7 +830,7 @@
 		</main>
 
 		<!-- Clip detail modal -->
-		<div class="ag-modal" data-role="modal" hidden role="dialog" aria-modal="true" aria-labelledby="ag-modal-title">
+		<div class="ag-modal" data-role="modal" hidden tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="ag-modal-title">
 			<div class="ag-modal-card">
 				<div class="ag-modal-stage-wrap">
 					<div class="ag-modal-stage" data-role="modal-stage"></div>

@@ -29,6 +29,7 @@ const state = {
 	timer: null,
 	el3d: null, // the embodied <agent-3d>
 	embodied: false,
+	bodyFailover: false, // the agent's own model died; the default body is standing in
 	lastScore: null, // last reputation value drawn, so the ring only re-sweeps on a real change
 	shell: false, // the stable layout has been built
 	filter: 'trade', // decision stream lens: 'trade' | 'all'
@@ -103,9 +104,45 @@ function applyMood(cog) {
 	} catch (_) { /* embodiment is enhancement, never a hard dependency */ }
 }
 
-function mountBody(agent) {
-	const stage = document.getElementById('agi-stage');
-	if (!stage || state.el3d) return;
+// The platform's own body, used when an agent has none and as the failover when
+// an agent's own model can't be fetched.
+const DEFAULT_BODY = '/avatars/default.glb';
+
+function bodyLabel(agent) {
+	return agent?.name ? `Live 3D body of ${agent.name}, the trading agent` : 'Live 3D body of the trading agent';
+}
+
+// Replace the stage's contents with an honest account of why the body is absent.
+// Reached only when BOTH the agent's model and the default body fail, so it says
+// what is actually still true: the mind and the record below are unaffected.
+function renderStageFallback(stage, agent) {
+	state.el3d = null;
+	state.embodied = false;
+	stage.querySelector('agent-3d')?.remove();
+	stage.querySelector('.agi-stage-boot')?.remove();
+	stage.querySelector('.agi-stage-fallback')?.remove();
+	const box = document.createElement('div');
+	box.className = 'agi-stage-fallback';
+	box.setAttribute('role', 'status');
+	box.innerHTML = `
+		<p class="agi-stage-fallback-title">Its body didn't load</p>
+		<p class="agi-stage-fallback-body">The 3D avatar couldn't be fetched from here. Everything else on this page is live and unaffected: the agent is still trading, and its decisions and track record below are current.</p>
+		<button type="button" class="agi-btn" data-embody-retry>Try embodying again</button>`;
+	box.querySelector('[data-embody-retry]').addEventListener('click', () => {
+		box.remove();
+		const boot = document.createElement('div');
+		boot.className = 'agi-stage-boot';
+		boot.textContent = 'embodying…';
+		stage.insertBefore(boot, stage.querySelector('.agi-stage-floor'));
+		state.bodyFailover = false;
+		mountBody(agent);
+	});
+	stage.insertBefore(box, stage.querySelector('.agi-stage-floor'));
+}
+
+// Build and attach one <agent-3d>. `source` is either the agent's own id or an
+// explicit model URL, which is what makes the failover possible.
+function attachBody(stage, agent, source) {
 	const el = document.createElement('agent-3d');
 	el.setAttribute('mode', 'inline');
 	el.setAttribute('background', 'transparent');
@@ -119,25 +156,56 @@ function mountBody(agent) {
 	el.setAttribute('responsive', '');
 	el.setAttribute('eager', '');
 	// The body is a graphic: name it for screen readers, since the canvas inside
-	// carries no text of its own.
+	// carries no text of its own. role="img" also makes it a leaf, so it must not
+	// sit in the tab order: it has nothing to activate and no focus indicator.
 	el.setAttribute('role', 'img');
-	el.setAttribute('aria-label', agent?.name ? `Live 3D body of ${agent.name}, the trading agent` : 'Live 3D body of the trading agent');
-	if (agent?.id) el.setAttribute('agent-id', agent.id);
-	else el.setAttribute('body', '/avatars/default.glb');
+	el.setAttribute('tabindex', '-1');
+	el.setAttribute('aria-label', bodyLabel(agent));
+	if (source.agentId) el.setAttribute('agent-id', source.agentId);
+	else el.setAttribute('body', source.body);
+
+	let settled = false;
 	// Reveal only once the model is in; until then the boot line shows.
 	const reveal = () => {
+		if (settled) return;
+		settled = true;
+		clearTimeout(failsafe);
 		el.classList.add('agi-loaded');
-		const boot = stage.querySelector('.agi-stage-boot');
-		if (boot) boot.remove();
+		stage.querySelector('.agi-stage-boot')?.remove();
 		state.embodied = true;
 		if (state.data?.cognition) { applyMood(state.data.cognition); }
 	};
+	// The component suppresses its own error card for non-chat embeds, so a dead
+	// model is otherwise completely silent. Fail over to the default body once,
+	// then explain rather than leaving an empty stage.
+	const fail = () => {
+		if (settled) return;
+		settled = true;
+		clearTimeout(failsafe);
+		el.remove();
+		state.el3d = null;
+		if (!state.bodyFailover && source.agentId) {
+			state.bodyFailover = true;
+			attachBody(stage, agent, { body: DEFAULT_BODY });
+			return;
+		}
+		renderStageFallback(stage, agent);
+	};
 	el.addEventListener('agent:ready', reveal, { once: true });
 	el.addEventListener('load', reveal, { once: true });
-	// Failsafe: if neither event fires (older bundle), reveal after a beat.
-	setTimeout(reveal, 4000);
+	el.addEventListener('agent:error', fail);
+	// Failsafe: if no event at all fires (older bundle), reveal rather than strand
+	// the reader on the boot line. A bundle that does emit agent:error settles the
+	// element first, so this can no longer paper over a genuine failure.
+	const failsafe = setTimeout(reveal, 8000);
 	stage.insertBefore(el, stage.querySelector('.agi-stage-floor'));
 	state.el3d = el;
+}
+
+function mountBody(agent) {
+	const stage = document.getElementById('agi-stage');
+	if (!stage || state.el3d) return;
+	attachBody(stage, agent, agent?.id ? { agentId: agent.id } : { body: DEFAULT_BODY });
 }
 
 // ── hero ──────────────────────────────────────────────────────────────────────
@@ -458,6 +526,7 @@ function renderError() {
 	state.shell = false;
 	state.el3d = null;
 	state.embodied = false;
+	state.bodyFailover = false;
 	document.getElementById('agi-retry')?.addEventListener('click', () => { renderLoading(); boot(); });
 }
 

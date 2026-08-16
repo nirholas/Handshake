@@ -49,6 +49,12 @@ export class AgentIdentity {
 		this._loadPromise = null; // re-entrancy guard
 		this.memory = null;
 
+		// An id the CALLER named explicitly (e.g. /agent-studio?id=…, an agent
+		// profile route). It must survive the localStorage seeding below: loading a
+		// different agent than the one asked for is never right, and in an owner
+		// console it silently points the editor at the wrong record.
+		this._requestedId = agentId || null;
+
 		// Pre-seed agentId from arg or storage so callers can use it synchronously
 		this._agentId = agentId || this._readStoredId();
 
@@ -261,8 +267,15 @@ export class AgentIdentity {
 		this._backendConfirmed = false;
 		this._owned = false;
 
-		// 1. Try localStorage first (instant) — backendSync disabled until confirmed
-		const local = this._readLocal();
+		// 1. Try localStorage first (instant), backendSync disabled until confirmed.
+		// The stored slot holds ONE agent (whichever was loaded last), so when the
+		// caller named a specific id we may only use it if it is that same agent.
+		// Adopting it regardless overwrote `_agentId` with the stored id, so the
+		// backend probe below fetched the stored agent and the requested one was
+		// never loaded: /agent-studio?id=<someone else's agent> silently rendered
+		// the caller's OWN agent in a full editor under the other agent's URL.
+		const stored = this._readLocal();
+		const local = stored && (!this._requestedId || stored.id === this._requestedId) ? stored : null;
 		if (local) {
 			this._record = local;
 			this._agentId = local.id;
@@ -276,7 +289,12 @@ export class AgentIdentity {
 		try {
 			const agentId = this._agentId;
 			const storedConfirmed = this._record?.backendConfirmed;
-			const url = (agentId && storedConfirmed) ? `/api/agents/${agentId}` : '/api/agents/me';
+			// A caller-named id is always probed directly: `/api/agents/:id` is a
+			// public read that also reports `is_owner`, which is what lets an owner
+			// console tell "your agent" from "someone else's".
+			const url = this._requestedId
+				? `/api/agents/${this._requestedId}`
+				: (agentId && storedConfirmed) ? `/api/agents/${agentId}` : '/api/agents/me';
 			const resp = await apiFetch(url, ANON);
 
 			if (resp.ok) {
@@ -292,7 +310,7 @@ export class AgentIdentity {
 					// EXISTS, not that we own it. Owner-only fields (is_owner) tell
 					// us whether the signed-in session may write to its action log.
 					this._owned = agent.is_owner === true;
-					this._persist();
+					this._persistOwnSlot();
 					if (!this.memory) {
 						this.memory = new AgentMemory(this._record.id, { backendSync: true, embedFn: _makeEmbedFn(this._record.id) });
 					} else {
@@ -311,7 +329,7 @@ export class AgentIdentity {
 				this._record = _makeDefault(this._agentId);
 				this._agentId = this._record.id;
 				this._loaded = true;
-				this._persist();
+				this._persistOwnSlot();
 				this.memory = new AgentMemory(this._agentId, { backendSync: false, embedFn: _makeEmbedFn(this._agentId) });
 			}
 		} catch {
@@ -320,7 +338,7 @@ export class AgentIdentity {
 				this._record = _makeDefault(this._agentId);
 				this._agentId = this._record.id;
 				this._loaded = true;
-				this._persist();
+				this._persistOwnSlot();
 				this.memory = new AgentMemory(this._agentId, { backendSync: false, embedFn: _makeEmbedFn(this._agentId) });
 			}
 		}
@@ -347,6 +365,18 @@ export class AgentIdentity {
 		try {
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(this._record));
 		} catch {}
+	}
+
+	/**
+	 * Persist only into this browser's single "current agent" slot, and only when
+	 * the record belongs there. Reading someone else's agent by explicit id (an
+	 * agent profile, a shared /agent-studio?id=… link) must not evict the visitor's
+	 * own identity from that slot: every surface that loads without an id reads it
+	 * back, so a single foreign read would follow them across the whole platform.
+	 */
+	_persistOwnSlot() {
+		if (this._requestedId && !this._owned) return;
+		this._persist();
 	}
 }
 

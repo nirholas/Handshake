@@ -8,24 +8,18 @@
 // sizing/formatting. No second colour map, ever.
 
 import * as THREE from 'three';
-import { professionColor, PROFESSION_COLORS } from './citizen-avatar.js';
+import {
+	professionColor, PROFESSION_COLORS, PROFESSION_LABELS,
+	professionLabelFor, primaryProfessionKey, citizenProfessionLabel,
+} from './citizen-avatar.js';
 
-export { professionColor, PROFESSION_COLORS };
-
-// Display labels for the profession keys the API emits (lowercase). Falls back
-// to a capitalised key so an unmapped/new profession still reads cleanly —
-// open by design, never a hardcoded gate.
-const PROFESSION_LABELS = {
-	fetcher: 'Fetcher', sculptor: 'Sculptor', scribe: 'Scribe',
-	cartographer: 'Cartographer', crier: 'Crier', appraiser: 'Appraiser',
-	verifier: 'Verifier', namekeeper: 'Namekeeper',
+// The profession vocabulary (colour, label, and which craft a citizen is known
+// for) has exactly one home, next to the crowd that renders it. Re-exported here
+// so the economy visuals keep importing from one module. No second map, ever.
+export {
+	professionColor, PROFESSION_COLORS, PROFESSION_LABELS,
+	professionLabelFor, primaryProfessionKey, citizenProfessionLabel,
 };
-export function professionLabelFor(profession) {
-	const key = String(profession || '').toLowerCase();
-	if (PROFESSION_LABELS[key]) return PROFESSION_LABELS[key];
-	if (!key) return 'Citizen';
-	return key.charAt(0).toUpperCase() + key.slice(1);
-}
 
 // The CSS accent for a profession as a Three.js Color (markers, coin arcs, the
 // board glow all live in the 3D scene). Memoised so we don't allocate a Color

@@ -28,6 +28,24 @@ function resolveAgentId() {
 
 const root = document.getElementById('awh-root');
 
+/**
+ * Write a dynamic page title (an agent's name, the picker heading) and hold it.
+ *
+ * The document's <title> carries a data-i18n key, so the i18n runtime's catalog
+ * pass reverts it to the declared "Agent Wallet · three.ws" whenever /api/locale
+ * resolves after this page has already rendered, a race the title lost roughly
+ * one load in three. `data-i18n-owned="1"` is that runtime's documented opt-out
+ * for an element whose content is live data rather than translatable copy.
+ *
+ * States that show the page's declared default never call this: leaving the
+ * title unclaimed is what lets a non-English visitor keep a localized one.
+ */
+const titleEl = document.querySelector('title');
+function setPageTitle(text) {
+	document.title = text;
+	titleEl?.setAttribute('data-i18n-owned', '1');
+}
+
 function escapeHtml(s) {
 	return String(s ?? '').replace(
 		/[&<>"']/g,
@@ -103,7 +121,7 @@ function renderPicker(agents) {
 				<a class="awh-page-btn" href="/create-agent">Create an agent</a>
 			</div>
 		</section>`;
-	document.title = 'Your agent wallets · three.ws';
+	setPageTitle('Your agent wallets · three.ws');
 }
 
 /** Fetch one agent by id. Returns { agent } or { state } for a designed stop. */
@@ -147,7 +165,7 @@ async function fetchOwnAgents() {
 }
 
 function mountHub(agent) {
-	document.title = `${agent.name || 'Agent'} wallet · three.ws`;
+	setPageTitle(`${agent.name || 'Agent'} wallet · three.ws`);
 	mountAgentWalletHub({ mount: root, agent });
 }
 
@@ -164,7 +182,6 @@ async function loadOwnWallets() {
 			body: 'We could not reach the agent service. This is usually temporary, so check your connection and try again.',
 			retry: true,
 		});
-		document.title = 'Agent Wallet · three.ws';
 		return;
 	}
 
@@ -177,7 +194,6 @@ async function loadOwnWallets() {
 				{ href: '/register', label: 'Create account' },
 			],
 		});
-		document.title = 'Agent Wallet · three.ws';
 		return;
 	}
 
@@ -188,7 +204,6 @@ async function loadOwnWallets() {
 			body: 'Every agent you create gets a self-custodied Solana wallet it can fund, trade, and pay from. Create your first agent to open its wallet.',
 			actions: [{ href: '/create-agent', label: 'Create an agent', primary: true }],
 		});
-		document.title = 'Agent Wallet · three.ws';
 		return;
 	}
 
@@ -211,7 +226,6 @@ async function loadNamedWallet(agentId) {
 				{ href: '/agents', label: 'Browse agents' },
 			],
 		});
-		document.title = 'Agent Wallet · three.ws';
 		return;
 	}
 
@@ -226,7 +240,6 @@ async function loadNamedWallet(agentId) {
 			body: 'We could not reach the agent service. This is usually temporary, so check your connection and try again.',
 			retry: true,
 		});
-		document.title = 'Agent Wallet · three.ws';
 		return;
 	}
 
@@ -236,7 +249,7 @@ async function loadNamedWallet(agentId) {
 			body: 'This agent does not exist or has been removed. It may have been deleted by its owner.',
 			actions: [{ href: '/agents', label: 'Browse agents', primary: true }],
 		});
-		document.title = 'Agent not found · three.ws';
+		setPageTitle('Agent not found · three.ws');
 		return;
 	}
 

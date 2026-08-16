@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { fetchOSMData, buildCity, CITY_HALF } from '../city/city-map.js';
 import { createCityScene, bindResize } from '../city/city-scene.js';
 import { CityCamera } from '../city/city-camera.js';
-import { CitizenPopulation } from './citizen-avatar.js';
+import { CitizenPopulation, citizenProfessionLabel } from './citizen-avatar.js';
 import { PassportPanel } from './passport-panel.js';
 import { mountEconomyLayer } from './economy-layer.js';
 import { log } from '../shared/log.js';
@@ -292,8 +292,10 @@ async function main() {
 			btn.type = 'button';
 			btn.className = 'agora-roster-btn';
 			btn.dataset.id = c.id;
-			const prof = c.professions?.[0]?.label || c.profession || 'Citizen';
-			btn.textContent = `Inspect ${c.displayName || 'citizen'} — ${prof}`;
+			// The craft this citizen is known for, resolved exactly the way the 3D
+			// nameplate and the accent colour resolve it, so the screen-reader roster
+			// and the square never describe the same citizen differently.
+			btn.textContent = `Inspect ${c.displayName || 'citizen'}, ${citizenProfessionLabel(c)}`;
 			btn.addEventListener('focus', () => {
 				population.highlight(c.id);
 				const p = population.worldPosition(c.id);

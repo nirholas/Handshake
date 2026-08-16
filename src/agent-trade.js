@@ -438,6 +438,12 @@ function openConfigOverlay() {
   requestAnimationFrame(() => els.cfgClose?.focus());
 }
 
+// The overlay opens by itself on an unconfigured deployment, so the element that
+// "had focus" at that moment is <body>. Restoring to it drops focus out of the
+// document entirely and Tab restarts from the top, so a candidate only counts
+// when it is genuinely focusable.
+const FOCUSABLE = 'a[href], button:not([disabled]), select:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 function closeConfigOverlay() {
   if (els.notConfigured.classList.contains('hidden')) return;
   els.notConfigured.classList.add('hidden');
@@ -450,7 +456,7 @@ function closeConfigOverlay() {
     els.centralCard.querySelector('[data-action="show-walkthrough"]'),
     els.startBtn,
     els.topicSelect,
-  ].filter((el) => el && document.contains(el) && !el.disabled);
+  ].filter((el) => el && document.contains(el) && !el.disabled && el.matches?.(FOCUSABLE));
   candidates[0]?.focus?.();
 }
 
@@ -477,20 +483,25 @@ els.notConfigured.addEventListener('keydown', (e) => {
 els.cfgClose.addEventListener('click', closeConfigOverlay);
 
 // Dismissing the overlay used to strand the walkthrough with no way back. The
-// idle card carries a control that re-opens it.
+// idle card carries a control that re-opens it, and every failure card carries
+// the one control that can clear it.
 els.centralCard.addEventListener('click', (e) => {
-  if (e.target.closest('[data-action="show-walkthrough"]')) openConfigOverlay();
+  if (e.target.closest('[data-action="show-walkthrough"]')) { openConfigOverlay(); return; }
+  if (e.target.closest('[data-action="retry-preflight"]')) { checkConfig(); return; }
+  if (e.target.closest('[data-action="run-again"]')) startDemo();
 });
 
 // ── Bubble helpers ──────────────────────────────────────────────────────────
-function showBubble(side, text) {
+function showBubble(side, text, { pending = false } = {}) {
   const el = side === 'buyer' ? els.buyerBubble : els.sellerBubble;
   el.textContent = text;
+  el.classList.toggle('pending', pending);
   el.classList.remove('hidden');
 }
 function hideBubble(side) {
   const el = side === 'buyer' ? els.buyerBubble : els.sellerBubble;
   el.classList.add('hidden');
+  el.classList.remove('pending');
 }
 
 // ── Central card ────────────────────────────────────────────────────────────
@@ -514,6 +525,32 @@ function showReadyCard(cfg) {
   `);
 }
 
+// Pre-flight in flight. The wallets, price and network come off Solana, which
+// takes as long as the RPC takes, so the card shows the shape of the answer
+// rather than leaving the stage empty and the run button in an unknown state.
+function showCheckingCard() {
+  showCard(`
+    <div class="c-badge c-badge-idle">x402 · oracle-market-analysis</div>
+    <div class="c-label">Checking the demo wallets</div>
+    <div class="c-skel c-skel-price"></div>
+    <div class="c-skel c-skel-row"></div>
+    <div class="c-skel c-skel-row short"></div>
+    <div class="c-content">Reading the buyer and seller balances from Solana before the trade can start.</div>
+  `);
+}
+
+// Any failure that leaves the user with nothing to look at. The action is the
+// point: a red toast fades after eight seconds and then the page reads as a
+// half-finished trade with no explanation.
+function showErrorCard({ badge, label, message, action }) {
+  showCard(`
+    <div class="c-badge c-badge-402">${escHtml(badge)}</div>
+    <div class="c-label">${escHtml(label)}</div>
+    <div class="c-content">${escHtml(message)}</div>
+    <button class="cfg-close" type="button" data-action="${escHtml(action.id)}">${escHtml(action.label)}</button>
+  `);
+}
+
 // Pre-run state when no wallets are configured: says why the button is off and
 // keeps the walkthrough one click away.
 function showUnconfiguredCard() {
@@ -527,6 +564,15 @@ function showUnconfiguredCard() {
 
 // ── Step log ─────────────────────────────────────────────────────────────────
 const STEP_NAMES = ['init', 'request', 'challenged', 'paying', 'confirmed', 'delivering', 'delivered'];
+// The server codes that deserve their own headline on the failure card; anything
+// else falls back to the generic one.
+const ERROR_BADGES = {
+  insufficient_funds: 'Buyer wallet is short',
+  daily_budget_exhausted: 'Daily spend limit reached',
+  analysis_unavailable: 'No analysis model available',
+  analysis_failed: 'Analysis failed after payment',
+  send_failed: 'Payment failed',
+};
 const chips = {};
 
 function buildStepLog() {
@@ -578,6 +624,22 @@ function setRunning(on) {
   els.topicSelect.disabled  = on;
   els.startBtn.textContent  = on ? RUNNING_LABEL : (idleLabel || FALLBACK_LABEL);
   if (!on) stage?.setAutoRotate(true);
+}
+
+// Every way a run can end badly funnels through here, so a stream that simply
+// drops leaves the same honest wreckage as a server-sent `error`: the step that
+// was in flight is marked failed instead of pulsing forever, the stale bubble
+// goes, and the centre of the screen says what happened and how to retry.
+function failRun(message, { badge = 'Trade stopped', label = 'x402 · oracle-market-analysis' } = {}) {
+  clearPendingTimers();
+  STEP_NAMES.forEach((s) => { if (chips[s]?.classList.contains('active')) setChip(s, 'error'); });
+  hideBubble('buyer');
+  hideBubble('seller');
+  stage?.stopBeam();
+  showToast(message);
+  announce(`Demo stopped: ${message}`);
+  setRunning(false);
+  showErrorCard({ badge, label, message, action: { id: 'run-again', label: 'Run it again' } });
 }
 
 // Deferred touches (a chip settling to `done`, a bubble appearing a beat later)
@@ -652,8 +714,11 @@ function handleEvent(ev) {
       setChip('challenged', 'done');
       setChip('paying', 'active');
       hideBubble('seller');
+      // The centre stays clear so the payment beam is the thing you watch; the
+      // bubble carries the pending bar, because a real transfer can take tens of
+      // seconds and static text is indistinguishable from a stalled page.
       hideCard();
-      showBubble('buyer', `Sending ${ev.sol} SOL on-chain…`);
+      showBubble('buyer', `Sending ${ev.sol} SOL on-chain…`, { pending: true });
       stage?.startBeam();
       // Fly camera to watch the beam from a low angle
       stage?.flyCamera(vec3(0, 1.6, 7.2), vec3(0, 0.9, 0), 950);
@@ -692,7 +757,7 @@ function handleEvent(ev) {
       // `delivered` card first and then this timeout wiped it off the screen.
       hideBubble('seller');
       hideCard();
-      after(200, () => showBubble('seller', `Analyzing with ${ev.model}…`));
+      after(200, () => showBubble('seller', `Analyzing with ${ev.model}…`, { pending: true }));
       // Fly back to a wide view
       stage?.flyCamera(vec3(0, 3.0, 9.5), vec3(0, 1.2, 0), 1100);
       break;
@@ -719,19 +784,24 @@ function handleEvent(ev) {
     }
 
     case 'error': {
-      STEP_NAMES.forEach((s) => { if (chips[s]?.classList.contains('active')) setChip(s, 'error'); });
       const msg = ev.message || 'Something went wrong';
-      showToast(msg);
-      announce(`Demo stopped: ${msg}`);
-      setRunning(false);
-      stage?.stopBeam();
       // A deployment with no wallets can never run: say so where the answer is,
-      // rather than leaving a toast the user has to interpret.
+      // rather than leaving a toast the user has to interpret. A "run it again"
+      // button would be a lie here, so this branch keeps the walkthrough card.
       if (ev.code === 'not_configured') {
+        STEP_NAMES.forEach((s) => { if (chips[s]?.classList.contains('active')) setChip(s, 'error'); });
+        hideBubble('buyer');
+        hideBubble('seller');
+        stage?.stopBeam();
+        showToast(msg);
+        announce(`Demo stopped: ${msg}`);
+        setRunning(false);
         els.startBtn.disabled = true;
         showUnconfiguredCard();
         openConfigOverlay();
+        break;
       }
+      failRun(msg, { badge: ERROR_BADGES[ev.code] || 'Trade stopped' });
       break;
     }
   }
@@ -770,12 +840,11 @@ function startDemo() {
     // Only a genuinely broken stream reaches here: a completed run closes the
     // EventSource in onmessage above.
     if (currentEs !== es) return;
-    showToast('The live stream dropped before the trade finished. Check your connection, then run it again.');
-    announce('The live stream dropped before the trade finished.');
-    setRunning(false);
-    stage?.stopBeam();
     es.close();
     currentEs = null;
+    failRun('The live stream dropped before the trade finished. Check your connection, then run it again.', {
+      badge: 'Stream dropped',
+    });
   };
 }
 
@@ -783,6 +852,10 @@ els.startBtn.addEventListener('click', startDemo);
 
 // ── Config pre-flight ─────────────────────────────────────────────────────────
 async function checkConfig() {
+  // Nothing is known yet, so nothing is offered yet: the button stays out of
+  // reach until the answer lands, and the skeleton says the answer is coming.
+  els.startBtn.disabled = true;
+  showCheckingCard();
   try {
     const r = await fetch('/api/agent-trade/demo?check=1');
     if (!r.ok) throw new Error(`pre-flight ${r.status}`);
@@ -796,11 +869,20 @@ async function checkConfig() {
     if (d.buyer?.address)  els.buyerAddr.textContent  = fmt(d.buyer.address);
     if (d.seller?.address) els.sellerAddr.textContent = fmt(d.seller.address);
     if (d.network) els.networkName.textContent = d.network;
+    els.startBtn.disabled = false;
     showReadyCard(d);
   } catch {
     // The pre-flight is unreachable. Leave the button live (the run itself
-    // reports the real failure) but say why the wallets are blank.
+    // reports the real failure) and put the retry where the user is looking,
+    // because the toast is gone eight seconds later.
+    els.startBtn.disabled = false;
     showToast('Could not reach the demo API for a status check. Running the demo will report what failed.');
+    showErrorCard({
+      badge: 'Status check failed',
+      label: 'x402 · oracle-market-analysis',
+      message: 'The demo API did not answer the wallet status check, so the balances above are unknown. Retry the check, or run the demo anyway and it will report what failed.',
+      action: { id: 'retry-preflight', label: 'Retry the status check' },
+    });
   }
 }
 
