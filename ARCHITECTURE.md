@@ -747,7 +747,7 @@ Beyond the feature areas above, the `api/` tree exposes many more surfaces. Comp
 | `/api/webhooks/*` | `replicate`, `solana-pay` | Replicate prediction + Solana Pay webhook receivers |
 | `/api/push/subscribe`, `/api/rss/announcements`, `/api/sitemap/[type]` | — | Web Push registry, RSS 2.0 announcements feed, per-entity sub-sitemaps |
 | `/api/og/*` | `agent`, `sealed-drop`, `three-token-badge` | Dynamic Open Graph image renderers |
-| `/api/seed/*`, `/api/demo/*`, `/api/tx/*`, `/api/sdp/*`, `/api/rider/*` | — | Seed/fixtures, public demo economy, raw-tx helpers, WebRTC SDP relay, "rider" Firebase webhook bridge |
+| `/api/seed/*`, `/api/demo/*`, `/api/tx/*`, `/api/sdp/*`, `/api/rider/*` | — | Seed/fixtures, public demo economy, raw-tx helpers, Solana Developer Platform proxy, "rider" Firebase webhook bridge |
 | `/api/pump-bounties/*` | `[id]`, `stats` | pump.fun GO bounty board + submission stats |
 | `/api/trading/scan`, `/api/three-token/*`, `/api/three/*` | — | Candidate-trade scanner (RPC-budgeted) + $THREE tier/price surfaces |
 
@@ -3220,7 +3220,7 @@ All **150+ directories** under `api/` plus many top-level single-file endpoints.
 | `rider/` | check, firebase, info, webhook | Rider-pass system. |
 | `rss/` | announcements | Announcements RSS. |
 | `scene/` | gate-check, gate-create | Token-gated 3D scene access. |
-| `sdp/` | [...path] | Solana Data Platform proxy. |
+| `sdp/` | [...path] | Solana Developer Platform proxy (admin-gated; the public health and spec surfaces stay open). |
 | `seed/` | farcaster, github, x, synthesize | Persona seeding from socials. |
 | `share/` | x | Share-to-X. |
 | `signals/` | feed, feeds, marketplace, stream, subscribe, _common | Signal marketplace. |
