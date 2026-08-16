@@ -20,7 +20,7 @@
 // The stream runs for up to 280s (Vercel limit 300s — budget for setup/teardown).
 // Clients reconnect automatically via EventSource's built-in retry.
 
-import { cors, method, rateLimited } from './_lib/http.js';
+import { cors, error, method, rateLimited, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getRedis } from './_lib/redis.js';
 import { sql } from './_lib/db.js';
@@ -88,7 +88,11 @@ async function fetchDbActivity(agentId) {
 	return rows.map(rowToEntry).reverse();
 }
 
-export default async function handleAgentScreenStream(req, res) {
+// wrap(): a fault raised before the SSE head is written must land the platform's
+// sanitized envelope with a correlation ref, a Sentry capture and an ops alert.
+// Once the head is out, the loop below owns its own errors and wrap()'s
+// headersSent guard keeps it from writing a second response over the stream.
+export default wrap(async function handleAgentScreenStream(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
@@ -97,21 +101,16 @@ export default async function handleAgentScreenStream(req, res) {
 
 	const url = new URL(req.url, `http://${req.headers.host || 'x'}`);
 	const agentId = (url.searchParams.get('agentId') || '').trim();
-	if (!agentId) {
-		res.writeHead(400, { 'Content-Type': 'application/json' });
-		res.end(JSON.stringify({ error: 'agentId is required' }));
-		return;
-	}
+	// Answer pre-stream faults through the shared error() envelope so an SSE client
+	// reads the same { error, error_description } shape every other endpoint emits,
+	// with the standard no-store + nosniff headers.
+	if (!agentId) return error(res, 400, 'validation_error', 'agentId is required');
 
 	// Resolve agent name for the open event
 	const [agentRow] = await sql`
 		SELECT name FROM agent_identities WHERE id = ${agentId} LIMIT 1
 	`.catch(() => []);
-	if (!agentRow) {
-		res.writeHead(404, { 'Content-Type': 'application/json' });
-		res.end(JSON.stringify({ error: 'agent not found' }));
-		return;
-	}
+	if (!agentRow) return error(res, 404, 'not_found', 'agent not found');
 
 	const r = getRedis();
 
@@ -174,6 +173,14 @@ export default async function handleAgentScreenStream(req, res) {
 	const reactionTotalKey = reactionsTotalKey(agentId);
 	let lastTs = 0;
 	let wasDark = false;
+	// With no frame store configured there is nothing to poll, so the loop below
+	// never reaches its dark branch and the viewer would sit on "Connecting…" for
+	// the whole 280s. Say it once up front instead; the DB activity backfill above
+	// and its refresh below still keep the panel meaningful.
+	if (!r) {
+		wasDark = true;
+		send('dark', {});
+	}
 	// Only replay reactions that arrive AFTER this viewer connects — joining mid
 	// stream shouldn't dump a backlog of bursts. But do send the current windowed
 	// total straight away so the live count is correct the instant the bar mounts.
@@ -263,4 +270,4 @@ export default async function handleAgentScreenStream(req, res) {
 	};
 
 	loop().catch(() => { if (!res.writableEnded) res.end(); });
-}
+});

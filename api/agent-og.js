@@ -39,7 +39,11 @@ export default wrap(async (req, res) => {
 	if (!agent) return sendNotFound(res);
 
 	if (agent.avatar_id) {
-		const avatar = await getAvatar({ id: agent.avatar_id });
+		// getAvatar() derives its urls through env.S3_PUBLIC_DOMAIN, which THROWS when
+		// object storage isn't configured on a deployment. That must degrade to the SVG
+		// card this handler already promises, never to a 503 in a crawler's face: the
+		// same rule api/og/agent.js follows for the identical hazard.
+		const avatar = await getAvatar({ id: agent.avatar_id }).catch(() => null);
 		if (avatar?.thumbnail_url) {
 			res.statusCode = 302;
 			res.setHeader('location', avatar.thumbnail_url);

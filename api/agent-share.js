@@ -62,8 +62,13 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	// Build public thumbnail URL for OG image
-	const CDN_BASE = env.S3_PUBLIC_DOMAIN || `${origin}/cdn`;
+	// Build public thumbnail URL for OG image.
+	// Read the bucket domain off process.env rather than env.S3_PUBLIC_DOMAIN: that
+	// getter THROWS when the var is unset, so the `|| ${origin}/cdn` fallback below
+	// could never run and an unconfigured deployment answered every crawler with a
+	// 503 not_configured instead of a share card. Same rule api/og/agent.js follows:
+	// a missing bucket domain degrades the image, it never 503s a crawler.
+	const CDN_BASE = (process.env.S3_PUBLIC_DOMAIN || '').trim().replace(/\/$/, '') || `${origin}/cdn`;
 	const thumbKey  = row.thumbnail_key;
 	const thumbVis  = row.visibility;
 	const thumbPublic = thumbVis === 'public' || thumbVis === 'unlisted';

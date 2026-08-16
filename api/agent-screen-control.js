@@ -27,7 +27,7 @@
 //   release , bearer lease token; drops the lease immediately
 
 import crypto from 'node:crypto';
-import { cors, error, json, method, rateLimited, readJson } from './_lib/http.js';
+import { cors, error, json, method, rateLimited, readJson, wrap } from './_lib/http.js';
 import { getSessionUser, extractBearer } from './_lib/auth.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
@@ -65,7 +65,10 @@ function timingEqual(a, b) {
 	}
 }
 
-export default async function handleAgentScreenControl(req, res) {
+// wrap(): an unhandled fault here must land the platform's sanitized envelope
+// with a correlation ref, a Sentry capture and an ops alert, not the container's
+// bare "The request failed unexpectedly" catch-all that tells nobody anything.
+export default wrap(async function handleAgentScreenControl(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
@@ -154,4 +157,4 @@ export default async function handleAgentScreenControl(req, res) {
 	await r.expire(queueKey(agentId), QUEUE_TTL_S);
 
 	return json(res, 200, { ok: true, accepted: events.length });
-}
+});

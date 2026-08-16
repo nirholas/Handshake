@@ -9,16 +9,28 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from './_lib/h
 import { requireCsrf } from './_lib/csrf.js';
 import { clientIp, limits } from './_lib/rate-limit.js';
 import { invalidateSkillPriceCache } from './_lib/skill-price-cache.js';
+import { isUuid } from './_lib/validate.js';
 import { z } from 'zod';
+
+// The price a buyer is quoted is paid to this mint, so it has to be a real
+// base58 address. The sibling entry point (api/agent-skill-price.js) has always
+// enforced that; this one accepted any 100-char string and wrote it straight to
+// agent_skill_prices, so a typo became an unpayable listing. Same regex, so both
+// doors onto the same table agree.
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 const setPriceSchema = z.object({
 	skill: z.string().trim().min(1, 'skill required').max(100),
 	amount: z.number().int().min(0, 'amount must be non-negative'),
-	currency_mint: z.string().trim().min(1, 'currency_mint required').max(100),
+	currency_mint: z.string().trim().regex(BASE58_RE, 'invalid mint address'),
 	chain: z.string().trim().min(1, 'chain required').max(20).default('solana'),
 });
 
 export default wrap(async (req, res) => {
+	// CORS is settled once, for every action including the unknown-action 404 and
+	// the OPTIONS preflight, so a browser caller can always read the answer.
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId') || url.pathname.split('/').filter(Boolean)[2];
 	const action = url.searchParams.get('action') || url.pathname.split('/').filter(Boolean)[4];
@@ -29,7 +41,6 @@ export default wrap(async (req, res) => {
 });
 
 async function handleSetPrice(req, res, agentId) {
-	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
 	const auth = await resolveAuth(req);
@@ -41,6 +52,10 @@ async function handleSetPrice(req, res, agentId) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
+	// agent_identities.id is a uuid column: a non-uuid throws 22P02 in Postgres and
+	// surfaces as a 500 (plus a Sentry event and an ops alert) for what is plainly a
+	// client fault. Reject the shape before it reaches the query.
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 
 	const [agent] = await sql`
 		SELECT id, user_id FROM agent_identities

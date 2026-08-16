@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Agent share cards survive an unconfigured bucket, and a mistyped payment mint is refused instead of listed",
+			"summary": "An audit of the agent endpoints turned up four things worth fixing. A skill price set through /api/agents/:id/skills/set-price accepted any text as its payment mint and saved it, so a typo produced a listing nobody could actually pay; it now has to be a real base58 address, matching the other door onto the same table. The agent share page and its OG image used to answer a social crawler with a hard error whenever object storage was not configured, instead of falling back to the plain card they already knew how to draw. A mistyped agent id in the diary, skill-price and screen-push endpoints came back as a server error rather than the plain \"that is not an agent id\" it is. And an agent screen with no live frame store now tells you the agent is offline right away instead of leaving you on \"Connecting\" for five minutes.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
 			"title": "The AWS page stops promising AWS invoicing three.ws does not do, and the GLB optimizer reads compressed avatars again",
 			"summary": "Three corrections found by reading the docs pages against the code they describe. The AWS page told you a three.ws subscription would bill usage onto your AWS invoice, draw down AWS credits, and count toward Enterprise Discount Program commitments. None of that is the plan: the Marketplace subscription is free, and usage is paid per call in USDC over x402, exactly as it is for any other caller, so there is nothing to reconcile on your AWS bill at all. The page now says that, and describes the free subscription, the single key that opens every x402 endpoint, and the absence of any trial clock. Separately, the GLB optimization command documented on the 3D asset pipeline page failed on every compressed avatar, which is most of them, because it loaded the glTF extensions without the matching decoders; it now decodes meshopt and Draco and leaves the output as plain glTF the way its own contract promises. The NVIDIA models page also listed the tool-capable fallback model under the wrong vendor prefix.",
 			"tags": [

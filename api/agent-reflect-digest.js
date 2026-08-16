@@ -26,6 +26,7 @@ import { sql } from './_lib/db.js';
 import { cors, json, method, wrap, error } from './_lib/http.js';
 import { buildGraph } from './_lib/memory-store.js';
 import { llmComplete, llmConfigured, LlmUnavailableError } from './_lib/llm.js';
+import { isUuid } from './_lib/validate.js';
 import { shapeDigestEntities, digestCounts } from '../src/agent-memory-graph.js';
 
 // How far back to look when the caller doesn't pass `since` — a rolling day.
@@ -50,6 +51,10 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId') || url.searchParams.get('agent_id');
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId required');
+	// agent_identities.id is a uuid column: handing Postgres a non-uuid throws
+	// 22P02, which turns a plain client typo into a 500 plus a Sentry event and an
+	// ops alert. Reject the shape here, alongside the missing-id check.
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in to read your agent\'s diary');

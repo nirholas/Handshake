@@ -20,11 +20,12 @@
 // for the activity log panel.
 
 import { timingSafeEqual } from 'node:crypto';
-import { cors, error, json, method, rateLimited, readJson } from './_lib/http.js';
+import { cors, error, json, method, rateLimited, readJson, wrap } from './_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getRedis } from './_lib/redis.js';
 import { sql } from './_lib/db.js';
+import { isUuid } from './_lib/validate.js';
 import { sanitizeFrameMeta } from '../src/shared/forge-frames.js';
 
 // First-party on-demand caster pool (workers/agent-screen-pool) authenticates
@@ -99,7 +100,7 @@ export function shouldLogEntry({ activity, pnl, meta, mm }) {
 	return Boolean(activity || pnl || meta || mm);
 }
 
-export default async function handleAgentScreenPush(req, res) {
+export default wrap(async function handleAgentScreenPush(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
@@ -138,6 +139,12 @@ export default async function handleAgentScreenPush(req, res) {
 	const { agentId, frame } = body || {};
 	if (!agentId || typeof agentId !== 'string') {
 		return error(res, 400, 'missing_agent_id', 'agentId is required');
+	}
+	// agent_identities.id is a uuid column, so a non-uuid throws 22P02 on the
+	// ownership lookup below and a caster typo becomes a 500 instead of the 400 it
+	// is. Reject the shape before it reaches Postgres.
+	if (!isUuid(agentId)) {
+		return error(res, 400, 'invalid_agent_id', 'agentId must be a uuid');
 	}
 	if (!frame || typeof frame !== 'object') {
 		return error(res, 400, 'missing_frame', 'frame object is required');
@@ -200,4 +207,4 @@ export default async function handleAgentScreenPush(req, res) {
 	]);
 
 	return json(res, 200, { ok: true, ts: now });
-}
+});

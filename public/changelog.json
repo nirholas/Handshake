@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T08:06:17.799Z",
+	"generated_at": "2026-08-16T08:12:02.988Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -36,6 +36,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Agent share cards survive an unconfigured bucket, and a mistyped payment mint is refused instead of listed",
+			"summary": "An audit of the agent endpoints turned up four things worth fixing. A skill price set through /api/agents/:id/skills/set-price accepted any text as its payment mint and saved it, so a typo produced a listing nobody could actually pay; it now has to be a real base58 address, matching the other door onto the same table. The agent share page and its OG image used to answer a social crawler with a hard error whenever object storage was not configured, instead of falling back to the plain card they already knew how to draw. A mistyped agent id in the diary, skill-price and screen-push endpoints came back as a server error rather than the plain \"that is not an agent id\" it is. And an agent screen with no live frame store now tells you the agent is offline right away instead of leaving you on \"Connecting\" for five minutes.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

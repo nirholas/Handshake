@@ -10,6 +10,7 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from './_lib/h
 import { requireCsrf } from './_lib/csrf.js';
 import { clientIp, limits } from './_lib/rate-limit.js';
 import { invalidateSkillPriceCache } from './_lib/skill-price-cache.js';
+import { isUuid } from './_lib/validate.js';
 import { z } from 'zod';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -44,6 +45,10 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('agentId');
 	if (!agentId) return error(res, 400, 'validation_error', 'agentId query param required');
+	// agent_identities.id is a uuid column: a non-uuid throws 22P02 in Postgres and
+	// surfaces as a 500 (plus a Sentry event and an ops alert) for what is plainly a
+	// client fault. Reject the shape before it reaches the query.
+	if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 
 	const [agent] = await sql`
 		SELECT id, user_id FROM agent_identities

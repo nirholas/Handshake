@@ -13,7 +13,7 @@
 //   events, sanitized input events in dispatch order (oldest first), drained
 
 import { timingSafeEqual } from 'node:crypto';
-import { cors, error, json, method, readJson } from './_lib/http.js';
+import { cors, error, json, method, readJson, wrap } from './_lib/http.js';
 import { extractBearer } from './_lib/auth.js';
 import { getRedis } from './_lib/redis.js';
 
@@ -31,7 +31,10 @@ function isPoolWorker(bearer) {
 const leaseKey = (id) => `agent:screen:${id}:ctl:lease`;
 const queueKey = (id) => `agent:screen:${id}:ctl:q`;
 
-export default async function handleAgentScreenControlDrain(req, res) {
+// wrap(): an unhandled fault here must land the platform's sanitized envelope
+// with a correlation ref, a Sentry capture and an ops alert, not the container's
+// bare "The request failed unexpectedly" catch-all that tells nobody anything.
+export default wrap(async function handleAgentScreenControlDrain(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
@@ -77,4 +80,4 @@ export default async function handleAgentScreenControlDrain(req, res) {
 	}));
 
 	return json(res, 200, { agents });
-}
+});

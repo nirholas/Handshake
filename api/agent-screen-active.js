@@ -9,7 +9,7 @@
 // scene passes ?env=<envName> to bias placement within that environment's
 // coordinate space.
 
-import { cors, json, method, rateLimited } from './_lib/http.js';
+import { cors, json, method, rateLimited, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getRedis } from './_lib/redis.js';
 import { sql } from './_lib/db.js';
@@ -24,7 +24,10 @@ const DESK_SLOTS = [
 ];
 const MAX_DESKS = 4;
 
-export default async function handleAgentScreenActive(req, res) {
+// wrap(): an unhandled fault here must land the platform's sanitized envelope
+// with a correlation ref, a Sentry capture and an ops alert, not the container's
+// bare "The request failed unexpectedly" catch-all that tells nobody anything.
+export default wrap(async function handleAgentScreenActive(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
@@ -87,4 +90,4 @@ export default async function handleAgentScreenActive(req, res) {
 	});
 
 	return json(res, 200, { desks }, { 'cache-control': 'no-store' });
-}
+});
