@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Solana agents from the outside registries get a real link preview, and a mistyped discover link stops erroring",
+			"summary": "Two fixes to the Discover detail pages. Agents crawled from the outside Solana registries opened fine in the browser but shared as a nameless card: every one of them unfurled in Slack, Discord, X and iMessage with a generic three.ws title and the stock image, while the Ethereum-side agents in the same grid previewed properly. Those pages now carry the agent name, description and artwork, whether the link points at the mint or at its registry entry. Separately, a Discover link with a mistyped or truncated id answered with a server error and the page showed a vague \"something went wrong\"; it now says plainly that the item was not found and shows the Not found state, and an agent whose on-chain id is larger than the site could previously handle resolves instead of coming back empty.",
+			"tags": [
+				"fix"
+			],
+			"link": "/discover"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Memory seeding reads Farcaster with no vendor key, and X now works from the app credentials we already hold",
+			"summary": "The memory-seeding demo asks a GitHub, X or Farcaster handle what it can learn about you in public, then writes a short memory seed your agent can carry. Two of those three connectors were showing a \"connector not configured\" card to everyone, because each insisted on a vendor key nobody had set. Farcaster now reads through the same failover the rest of the platform uses: an indexer when a key exists, and a public Farcaster hub with no key at all otherwise, so it returns real profiles and casts on any deployment. Anything the keyless lane genuinely cannot know, such as follower counts, is now shown as unknown instead of zero. The X connector accepts the app key and secret the platform already stores, exchanging them for a read-only token itself, so it no longer needs a separate token provisioned by hand. A mistyped Farcaster name now comes back as not found rather than as an upstream outage, and all four endpoints are documented in the API reference for the first time.",
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
+			],
+			"link": "/demos/memory-seed"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Avatar Studio trait library: the mirror can no longer be pointed at someone else's server",
 			"summary": "Avatar Studio loads its hair, clothing and accessory traits through a three.ws address that mirrors the open-source trait library, so your browser never talks to an outside CDN. The list of where those traits live was being written using the address in the incoming request, and that address can be set by whoever sends the request. Because the mirror is cached at the edge for a day, one crafted request could have left every Avatar Studio visitor loading trait files from a stranger's server for the next 24 hours. That list is now written the same way for everybody, with no part of it taken from the request, so there is nothing left to steer. Three smaller repairs went in alongside it: asking the mirror how big a file is no longer answers with the compressed size (a trait manifest claimed 2 KB and delivered 20 KB), the mirror will not hand back a web page or script even if the upstream library ever served one, and a failure at the library now answers plainly as either not found or mirror is down instead of passing its raw status through as ours.",
 			"tags": [

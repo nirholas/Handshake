@@ -22,8 +22,7 @@
 
 import { solanaConnection } from './_lib/solana/connection.js';
 import {
-	Connection, PublicKey, Keypair, TransactionMessage, VersionedTransaction,
-	ComputeBudgetProgram,
+	PublicKey, TransactionMessage, VersionedTransaction, ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
 	getAssociatedTokenAddressSync, createTransferCheckedInstruction,
@@ -132,6 +131,9 @@ async function readFeed(limit = 25) {
 }
 
 // Per-tx record so /pay/calls/<tx> can show the full receipt + tool result.
+// A Solana signature is 64 bytes of base58 (86-88 chars); the bound is generous
+// enough for any real signature and tight enough that the Redis key stays bounded.
+export const TX_SIGNATURE_RE = /^[1-9A-HJ-NP-Za-km-z]{32,128}$/;
 const memCalls = new Map();
 const CALL_KEY = (tx) => `x402:pay:call:${tx}`;
 const CALL_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
@@ -879,14 +881,14 @@ function payErrorEnvelope(err) {
 	} else if (code === 'invalid_payment' || code === 'payment_required' || code === 'builder_code_tampered') {
 		error_description = 'The payment was rejected before settlement; no funds were transferred.';
 	}
-	const env = {
+	const envelope = {
 		ok: false,
 		error: err?.message || 'flow_failed',
 		code,
 		mcpError: err?.mcpError || null,
 	};
-	if (error_description) env.error_description = error_description;
-	return env;
+	if (error_description) envelope.error_description = error_description;
+	return envelope;
 }
 
 // Map a flow error to its HTTP status. X402Error carries an explicit `status`
@@ -1099,11 +1101,11 @@ export default wrap(async (req, res) => {
 				if (err.code === 'wallet_misconfigured' || err.code === 'wallet_unconfigured') {
 					return json(res, 200, { configured: false, code: err.code, error: err.message, address: null, sol: 0, usdc: 0 });
 				}
-				// A balance read failure here is a Solana RPC fault — and web3.js
-					// embeds the keyed RPC URL in its error text, so the raw message
-					// must never reach the client. respondError sanitizes the 5xx to a
-					// support ref (and still passes a 4xx client-fault message through).
-					return respondError(res, err.status || 500, err.code || 'balance_unavailable', err);
+				// A balance read failure here is a Solana RPC fault, and web3.js
+				// embeds the keyed RPC URL in its error text, so the raw message
+				// must never reach the client. respondError sanitizes the 5xx to a
+				// support ref (and still passes a 4xx client-fault message through).
+				return respondError(res, err.status || 500, err.code || 'balance_unavailable', err);
 			}
 		}
 		if (u.searchParams.get('feed') === '1') {
@@ -1113,6 +1115,13 @@ export default wrap(async (req, res) => {
 		}
 		const txParam = u.searchParams.get('call');
 		if (txParam) {
+			// The lookup key is a Solana transaction signature. Shape-check it before
+			// it becomes a Redis key: an unbounded caller-controlled suffix turns a
+			// public GET into arbitrary key reads against the Upstash request budget
+			// this feed already had to be rewritten to protect (see readFeed above).
+			if (!TX_SIGNATURE_RE.test(txParam)) {
+				return json(res, 400, { error: 'invalid_call', error_description: 'call must be a base58 transaction signature' });
+			}
 			const record = await readCall(txParam);
 			if (!record) return json(res, 404, { error: 'call_not_found' });
 			return json(res, 200, record);

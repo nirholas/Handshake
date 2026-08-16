@@ -84,6 +84,21 @@ curl -s "https://three.ws/api/x402-revenue?view=feed&limit=5&network=base" | jq 
 CSV columns: `timestamp,endpoint,network,chain,amount_usd,asset,payer,tx_hash,tx_url`
 (`network` is the raw CAIP-2 id, `chain` its readable label).
 
+**Malformed params answer 4xx, not 5xx.** `?since=` and `?cursor=` are bound into
+a `::timestamptz` cast, so an unparseable value is rejected before it reaches the
+query rather than surfacing as an opaque 500:
+
+```bash
+curl -s "https://three.ws/api/x402-revenue?since=notadate"
+# {"error":"invalid_since","error_description":"`since` must be an ISO 8601 timestamp"}
+```
+
+`?endpoint=` is sanitized to a slug (`../../etc/passwd` becomes `etcpasswd`), and
+the response echoes the sanitized value in `data.filter.endpoint`, so the filter
+you read back is always the filter that ran. `?period=` and `?network=` fall back
+to the default instead of erroring: an unrecognised period is `24h`, an
+unrecognised network drops the filter.
+
 ---
 
 ## The settlement flow

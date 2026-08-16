@@ -31,6 +31,14 @@
 			<description>Two repairs to the Living Stages host. The cleanup pass that tidies the host's spoken line was stripping hyphens along with the invisible characters it was meant to remove, so every show heard &quot;on chain&quot; where the host said &quot;on-chain&quot; and &quot;state of the art&quot; for &quot;state-of-the-art&quot;; punctuation now survives and only invisible characters are removed. Separately, the host's memory of returning regulars counted tips whose on-chain settlement had not been confirmed yet, which meant anyone could post an unconfirmed tip under a name of their choosing and hear the host greet it aloud. That memory now reads confirmed tips only, matching the public leaderboard. Smaller repairs in the same pass: a stage that has not opened its first show is no longer cached as empty at the edge, an over-long coin address is refused instead of quietly trimmed into a different plaza, and the running tip total is written before the response returns.</description>
 		</item>
 		<item>
+			<title>Memory seeding reads Farcaster with no vendor key, and X now works from the app credentials we already hold</title>
+			<link>https://three.ws/demos/memory-seed</link>
+			<guid isPermaLink="false">2026-08-16:Memory seeding reads Farcaster with no vendor key, and X now works from the app credentials we already hold</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The memory-seeding demo asks a GitHub, X or Farcaster handle what it can learn about you in public, then writes a short memory seed your agent can carry. Two of those three connectors were showing a &quot;connector not configured&quot; card to everyone, because each insisted on a vendor key nobody had set. Farcaster now reads through the same failover the rest of the platform uses: an indexer when a key exists, and a public Farcaster hub with no key at all otherwise, so it returns real profiles and casts on any deployment. Anything the keyless lane genuinely cannot know, such as follower counts, is now shown as unknown instead of zero. The X connector accepts the app key and secret the platform already stores, exchanging them for a read-only token itself, so it no longer needs a separate token provisioned by hand. A mistyped Farcaster name now comes back as not found rather than as an upstream outage, and all four endpoints are documented in the API reference for the first time.</description>
+		</item>
+		<item>
 			<title>Mistyped filters on the revenue, checkout and ring endpoints answer plainly instead of failing</title>
 			<link>https://three.ws/x402-revenue</link>
 			<guid isPermaLink="false">2026-08-16:Mistyped filters on the revenue, checkout and ring endpoints answer plainly instead of failing</guid>
@@ -61,6 +69,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Three fixes to the skills marketplace. Installing or removing a skill now carries the same one-time security token every other account action does, so a page you happen to have open elsewhere can no longer quietly add skills to your account behind your back. Editing one of your published skills used to answer back with its rating blanked out, which made the detail panel show 'No ratings yet' on a skill people had actually rated until you reloaded; it now reports the real average and count. And when a skill you were paging past gets deleted or made private mid-scroll, 'Load more' stops cleanly instead of looping the first page of results back into the grid over and over.</description>
+		</item>
+		<item>
+			<title>Solana agents from the outside registries get a real link preview, and a mistyped discover link stops erroring</title>
+			<link>https://three.ws/discover</link>
+			<guid isPermaLink="false">2026-08-16:Solana agents from the outside registries get a real link preview, and a mistyped discover link stops erroring</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two fixes to the Discover detail pages. Agents crawled from the outside Solana registries opened fine in the browser but shared as a nameless card: every one of them unfurled in Slack, Discord, X and iMessage with a generic three.ws title and the stock image, while the Ethereum-side agents in the same grid previewed properly. Those pages now carry the agent name, description and artwork, whether the link points at the mint or at its registry entry. Separately, a Discover link with a mistyped or truncated id answered with a server error and the page showed a vague &quot;something went wrong&quot;; it now says plainly that the item was not found and shows the Not found state, and an agent whose on-chain id is larger than the site could previously handle resolves instead of coming back empty.</description>
 		</item>
 		<item>
 			<title>The $THREE economy dashboard no longer errors out on an odd date range</title>

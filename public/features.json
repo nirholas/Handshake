@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T06:58:40.531Z",
+	"generated_at": "2026-08-16T07:08:36.532Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5170,7 +5170,7 @@
 				{
 					"path": "/docs/animations",
 					"title": "Docs · Animations",
-					"description": "The motion clips (idle, wave, dance, and about 2,000 more) that bring three.ws avatars to life: how the registry is organised, how clips load at runtime, how they retarget onto any humanoid rig, and how to preview every one in the browser.",
+					"description": "The motion clips (idle, wave, dance, and about 3,000 more) that bring three.ws avatars to life: how the registry is organised, how clips load at runtime, how they retarget onto any humanoid rig, and how to preview every one in the browser.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

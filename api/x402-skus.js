@@ -57,6 +57,27 @@ const createSchema = z.object({
 
 const updateSchema = createSchema.partial();
 
+// `x402_skus.id` is a uuid column. Binding a non-uuid straight into the query
+// makes Postgres throw 22P02, which surfaced as a 500 (with a support ref) on an
+// obvious caller mistake; check the shape first and answer 400.
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Resolve the required `?id=` for the owner-only routes. Sends the 4xx and
+// returns null when the param is missing or malformed.
+function requireSkuId(req, res) {
+	const raw = req.query?.id;
+	if (!raw) {
+		error(res, 400, 'missing_id', 'query param `id` required');
+		return null;
+	}
+	const id = String(raw);
+	if (!UUID_RE.test(id)) {
+		error(res, 400, 'invalid_id', 'query param `id` must be a SKU uuid');
+		return null;
+	}
+	return id;
+}
+
 // Shape the merchant's giving config into the minimal public payload the checkout
 // modal needs — or null when nothing is active. Round-up routes to the same cause
 // wallet, so both primitives require a charity address to mean anything.
@@ -131,13 +152,17 @@ async function handleGet(req, res) {
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	if (id) {
+		const skuId = String(id);
+		if (!UUID_RE.test(skuId)) {
+			return error(res, 400, 'invalid_id', 'query param `id` must be a SKU uuid');
+		}
 		const [row] = await sql`
 			select id, slug, owner_user_id, target_endpoint, target_method, target_body,
 			       merchant_name, action_name, description, logo_url, image_url, accent_color,
 			       success_url, price_atomics, price_network, position, active,
 			       created_at, updated_at, archived_at
 			from x402_skus
-			where id = ${String(id)} limit 1
+			where id = ${skuId} limit 1
 		`;
 		if (!row) return error(res, 404, 'sku_not_found', 'no such SKU');
 		if (row.owner_user_id !== user.id) return error(res, 403, 'forbidden', 'not owner');
@@ -212,10 +237,10 @@ async function handleUpdate(req, res) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const id = req.query?.id;
-	if (!id) return error(res, 400, 'missing_id', 'query param `id` required');
+	const id = requireSkuId(req, res);
+	if (!id) return;
 
-	const [row] = await sql`select owner_user_id from x402_skus where id = ${String(id)} limit 1`;
+	const [row] = await sql`select owner_user_id from x402_skus where id = ${id} limit 1`;
 	if (!row) return error(res, 404, 'sku_not_found', 'no such SKU');
 	if (row.owner_user_id !== user.id) return error(res, 403, 'forbidden', 'not owner');
 
@@ -239,7 +264,7 @@ async function handleUpdate(req, res) {
 		  position = coalesce(${patch.position ?? null}, position),
 		  active = coalesce(${patch.active ?? null}, active),
 		  updated_at = now()
-		where id = ${String(id)}
+		where id = ${id}
 		returning id, slug, merchant_name, action_name, updated_at
 	`;
 	return json(res, 200, { sku: updated });
@@ -251,13 +276,13 @@ async function handleArchive(req, res) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const id = req.query?.id;
-	if (!id) return error(res, 400, 'missing_id', 'query param `id` required');
+	const id = requireSkuId(req, res);
+	if (!id) return;
 
-	const [row] = await sql`select owner_user_id from x402_skus where id = ${String(id)} limit 1`;
+	const [row] = await sql`select owner_user_id from x402_skus where id = ${id} limit 1`;
 	if (!row) return error(res, 404, 'sku_not_found', 'no such SKU');
 	if (row.owner_user_id !== user.id) return error(res, 403, 'forbidden', 'not owner');
 
-	await sql`update x402_skus set archived_at = now() where id = ${String(id)}`;
+	await sql`update x402_skus set archived_at = now() where id = ${id}`;
 	return json(res, 200, { ok: true });
 }

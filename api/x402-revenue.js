@@ -52,14 +52,38 @@ function shortAddr(a) {
 	return a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
 }
 
-// A route → slug ('/api/x402/token-intel' → 'token-intel'); null if not one of ours.
-function routeForEndpoint(slug) {
-	if (!slug) return null;
-	const clean = String(slug)
+// A caller-supplied `?endpoint=` → the canonical slug we filter on, or null when
+// it sanitizes to nothing. Echoed back in `filter.endpoint` so the response names
+// the filter that was actually applied instead of the raw string that was sent.
+export function endpointSlug(raw) {
+	if (!raw) return null;
+	const clean = String(raw)
 		.trim()
 		.replace(/^\/?(api\/x402\/)?/, '')
 		.replace(/[^a-z0-9-]/gi, '');
+	return clean || null;
+}
+
+// A route → slug ('/api/x402/token-intel' → 'token-intel'); null if not one of ours.
+function routeForEndpoint(slug) {
+	const clean = endpointSlug(slug);
 	return clean ? `/api/x402/${clean}` : null;
+}
+
+// A `?since=` / `?cursor=` value → an ISO timestamp Postgres can cast, or null
+// when the param is absent. An unparseable value used to be bound straight into
+// the ::timestamptz cast, so `?since=notadate` threw 22P02 deep in the query and
+// surfaced as a 500 on what is plainly a caller mistake. Reject it up front.
+export function timestampParam(raw, name) {
+	if (raw == null || raw === '') return null;
+	const ms = Date.parse(raw);
+	if (!Number.isFinite(ms)) {
+		throw Object.assign(new Error(`\`${name}\` must be an ISO 8601 timestamp`), {
+			status: 400,
+			code: `invalid_${name}`,
+		});
+	}
+	return new Date(ms).toISOString();
 }
 
 // A `?network=` value → the raw ledger ids it selects, as a comma-joined string
@@ -217,7 +241,7 @@ async function handleFeed({ since, cursor, limit, endpoint, network }) {
 		count: events.length,
 		next_cursor: events.length === limit ? nextCursor : null,
 		filter: {
-			endpoint: route ? endpoint : null,
+			endpoint: endpointSlug(endpoint),
 			network: resolveNetworkFilter(network)?.family || null,
 		},
 	};
@@ -277,8 +301,8 @@ export default async function handler(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const view = url.searchParams.get('view') || 'feed';
 	const period = url.searchParams.get('period') || '24h';
-	const since = url.searchParams.get('since');
-	const cursor = url.searchParams.get('cursor');
+	const sinceRaw = url.searchParams.get('since');
+	const cursorRaw = url.searchParams.get('cursor');
 	const endpoint = url.searchParams.get('endpoint');
 	const network = url.searchParams.get('network');
 	const limit = Math.min(
@@ -287,6 +311,9 @@ export default async function handler(req, res) {
 	);
 
 	try {
+		const since = timestampParam(sinceRaw, 'since');
+		const cursor = timestampParam(cursorRaw, 'cursor');
+
 		if (view === 'stats') {
 			const cacheKey = `x402rev:stats:${resolvePeriod(period).key}`;
 			let body = await cacheGet(cacheKey);
@@ -318,6 +345,10 @@ export default async function handler(req, res) {
 		res.setHeader('cache-control', 'public, max-age=8');
 		return json(res, 200, { data: body });
 	} catch (err) {
+		// A caller-fault throw (a malformed cursor/since) carries its own 4xx.
+		if (Number.isInteger(err?.status) && err.status >= 400 && err.status < 500) {
+			return error(res, err.status, err.code || 'bad_request', err.message);
+		}
 		if (isDbUnavailableError(err)) {
 			return error(res, 503, 'db_unavailable', 'revenue ledger is temporarily unavailable');
 		}

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T06:58:40.744Z",
+	"generated_at": "2026-08-16T07:08:36.874Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -41,6 +41,18 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "Memory seeding reads Farcaster with no vendor key, and X now works from the app credentials we already hold",
+			"summary": "The memory-seeding demo asks a GitHub, X or Farcaster handle what it can learn about you in public, then writes a short memory seed your agent can carry. Two of those three connectors were showing a \"connector not configured\" card to everyone, because each insisted on a vendor key nobody had set. Farcaster now reads through the same failover the rest of the platform uses: an indexer when a key exists, and a public Farcaster hub with no key at all otherwise, so it returns real profiles and casts on any deployment. Anything the keyless lane genuinely cannot know, such as follower counts, is now shown as unknown instead of zero. The X connector accepts the app key and secret the platform already stores, exchanging them for a read-only token itself, so it no longer needs a separate token provisioned by hand. A mistyped Farcaster name now comes back as not found rather than as an upstream outage, and all four endpoints are documented in the API reference for the first time.",
+			"link": "/demos/memory-seed",
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "Mistyped filters on the revenue, checkout and ring endpoints answer plainly instead of failing",
 			"summary": "The public revenue feed, the checkout SKU API and the ring report all took values straight from the URL into the database. A timestamp that was not a timestamp, a checkout id that was not an id, and the query fell over: the caller got an opaque \"something went wrong\" with a support reference, and our own alerting logged a fault that was only ever a typo. All three now say what was wrong, in words, with the right status code. The ring report also stops treating an unrecognised period as \"show me everything\", which quietly answered the wrong question and ran the most expensive query it has. The revenue feed now echoes back the endpoint filter it actually applied rather than the raw text it was sent, and the paid-call lookup only accepts something shaped like a real transaction signature.",
 			"link": "/x402-revenue",
@@ -77,6 +89,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Solana agents from the outside registries get a real link preview, and a mistyped discover link stops erroring",
+			"summary": "Two fixes to the Discover detail pages. Agents crawled from the outside Solana registries opened fine in the browser but shared as a nameless card: every one of them unfurled in Slack, Discord, X and iMessage with a generic three.ws title and the stock image, while the Ethereum-side agents in the same grid previewed properly. Those pages now carry the agent name, description and artwork, whether the link points at the mint or at its registry entry. Separately, a Discover link with a mistyped or truncated id answered with a server error and the page showed a vague \"something went wrong\"; it now says plainly that the item was not found and shows the Not found state, and an agent whose on-chain id is larger than the site could previously handle resolves instead of coming back empty.",
+			"link": "/discover",
+			"tags": [
+				"fix"
 			]
 		},
 		{

@@ -17,7 +17,7 @@
 // empty. This is internal/dogfooding volume and is labeled as such; it is NOT the
 // public organic-revenue feed (see /api/x402-revenue).
 
-import { cors, json, method, wrap } from './_lib/http.js';
+import { cors, error, json, method, wrap } from './_lib/http.js';
 import { sql, isDbUnavailableError } from './_lib/db.js';
 import { env } from './_lib/env.js';
 import { PublicKey } from '@solana/web3.js';
@@ -28,11 +28,16 @@ import { SELF_FACILITATOR_ENABLED, SPONSOR_SOL_FLOOR_LAMPORTS } from './_lib/x40
 import { validateRingConfig, warnIfRingRoutesExternal } from './_lib/x402/ring-config.js';
 
 const PERIOD_HOURS = { '24h': 24, '7d': 168, '30d': 720 };
+// 'all' is the documented lifetime window; every other key is a windowed report.
+// An unrecognized value is rejected rather than quietly widened to lifetime: a
+// typo (`?period=alll`) silently answering with an unbounded full-ledger scan is
+// both a wrong answer and the most expensive query this endpoint can run.
+export const PERIODS = [...Object.keys(PERIOD_HOURS), 'all'];
 
 // Resolve ?period= to an ISO cutoff (or null for lifetime). Returned as a bound
 // parameter — the Neon tagged template does NOT compose SQL fragments, so the
 // window is a value, not injected SQL.
-function sinceFor(periodKey) {
+export function sinceFor(periodKey) {
 	const hours = PERIOD_HOURS[periodKey];
 	if (!hours) return null;
 	return new Date(Date.now() - hours * 3600 * 1000).toISOString();
@@ -97,6 +102,9 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const periodKey = String(req.query?.period || '24h').toLowerCase();
+	if (!PERIODS.includes(periodKey)) {
+		return error(res, 400, 'invalid_period', `period must be one of: ${PERIODS.join(', ')}`);
+	}
 	const since = sinceFor(periodKey); // ISO string, or null = lifetime
 
 	let settlements = { count: 0, gross_usdc: 0, avg_call_usdc: null };
