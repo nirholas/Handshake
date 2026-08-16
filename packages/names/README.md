@@ -216,9 +216,19 @@ agent wallet; **`.sol` domain** (including `foo.threews.sol`) → on-chain owner
 
 ### `resolvePayee(name) → Promise<Payee>`
 
-Resolve-only, no payment. Wraps `GET /api/x402/pay-by-name?name=<name>`. Returns
-`{ name, address, source, resolved, claim? }` where `source` is one of
-`address`, `sns`, or `username`. A `404` means the name resolved nowhere.
+Resolve-only, no payment. Wraps `GET /api/x402/pay-by-name?name=<name>`. A `404`
+means the name resolved nowhere, and surfaces as a typed `not_found`.
+
+**Returns** `Payee`
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | `string \| null` | The canonical form of the name that matched. |
+| `address` | `string \| null` | The wallet a payment would land in. |
+| `source` | `'address' \| 'sns' \| 'username'` | Which namespace answered. |
+| `resolved` | `string \| null` | The same canonical name as `name`. **Unlike `resolve()`, this is a string, not a boolean**: `'alice.threews.sol'` for an SNS hit, `'@alice'` for a username. There is no `resolved: false` here, a name that resolves nowhere is the `404` above. |
+| `claim` | `object \| null` | The three.ws user behind a `*.threews.sol` claim, when there is one. |
+| `raw` | `unknown` | The untouched wire body. |
 
 ## How it works
 
@@ -292,6 +302,7 @@ real faults reject.
 | State | HTTP | Meaning | Recovery |
 |---|---|---|---|
 | `resolved: false` | 200 | Name has no owner. **Not an error.** | Show "unclaimed"; offer to mint. |
+| `resolved: false` (ENS) | 404 | An unregistered `.eth`. The ENS endpoint reports a miss as a `404`; `resolve()` normalizes it to the same `resolved: false` result the `.sol` lane returns, so one call has one contract. The 404 envelope stays on `raw`. | Same as above. |
 | `validation_error` | 400 | Malformed name, label, or amount. | Fix the input. Labels are 1-63 chars `[a-z0-9-]`. |
 | `unauthorized` | 401 | Mint or `mode: 'send'` without auth. | Sign in or pass a bearer `token`. |
 | `forbidden` | 403 | `ownerAddress` not linked to your account. | Link the wallet, or omit it. |

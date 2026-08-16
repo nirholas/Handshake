@@ -97,6 +97,32 @@ const shared = await listClips({}, { includePublic: true, limit: 100 });
 The SDK is a thin client over `/api/mocap/clips`. Every write needs a session
 cookie or a bearer token with the right scope; reads of public clips are open.
 
+**Writing with a session cookie also needs a CSRF token.** Cookie-authenticated
+writes are double-submit protected: mint a token with `GET /api/csrf-token` and
+echo it in the `X-CSRF-Token` header on every `POST`/`PATCH`/`DELETE`, or the
+call answers `403 csrf_missing`. Tokens are single-use, so mint one per write.
+Bearer tokens are exempt (a bearer is not auto-attached by a browser, so it is
+its own proof of intent), which makes `{ token }` the simpler path outside the
+browser:
+
+```js
+import { createMocap } from '@three-ws/mocap';
+
+// Bearer: nothing else to do.
+const mocap = createMocap({ token: process.env.THREEWS_TOKEN });
+
+// Session cookie: wrap fetch and attach a fresh CSRF token per write.
+const cookieClient = createMocap({
+  headers: { cookie },
+  fetch: async (url, init = {}) => {
+    if ((init.method || 'GET') === 'GET') return fetch(url, init);
+    const res = await fetch('https://three.ws/api/csrf-token', { headers: { cookie } });
+    const { data } = await res.json();
+    return fetch(url, { ...init, headers: { ...init.headers, 'x-csrf-token': data.token } });
+  },
+});
+```
+
 ### `saveClip(recording, meta, auth) → Promise<Clip>`
 
 Persist a browser recording. Wraps `POST /api/mocap/clips`. The `recording` is
@@ -141,8 +167,10 @@ it. Pass the `id` when you need to name one exact clip.
 
 ### `listClips(auth, opts?) → Promise<{ items, nextCursor }>`
 
-List clips **without frames** (metadata only: cheap). Wraps
-`GET /api/mocap/clips`. Cursor-paginated, newest first.
+List clips **without frames** (metadata only: cheap, `frames` is `null` on every
+row). Wraps `GET /api/mocap/clips`. Cursor-paginated, newest first. Returns
+`{ items, nextCursor, raw }`, where `nextCursor` is `null` on the last page and
+`raw` is the untouched wire envelope.
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
@@ -183,7 +211,7 @@ camelCases the wire row and keeps the untouched original on `raw`:
 | `avatarId` | `uuid \| null` | Bound avatar, if any. |
 | `playCount` | `number` | Non-owner fetches. |
 | `price` | `{ amount, currency } \| null` | `null` when free. |
-| `owner` | `'self' \| 'other'` | Relative to the caller. |
+| `owner` | `'self' \| 'other' \| null` | Relative to the caller. Projected by `listClips` only; `null` on a single-clip read or write. |
 | `raw` | `unknown` | The untouched wire row (`duration_ms`, `frame_count`, …). |
 
 ## How it works
@@ -239,6 +267,7 @@ SDK surfaces them as a typed `ThreeWsError` carrying the `code`:
 | `code` | HTTP | Meaning | Recovery |
 |---|---|---|---|
 | `unauthorized` | 401 | Write with no session/token. | Sign in or pass a bearer `token`. |
+| `csrf_missing` / `csrf_invalid` | 403 | Cookie-authenticated write with no (or a spent) `X-CSRF-Token`. | Mint one per write from `GET /api/csrf-token`, or use a bearer token. |
 | `insufficient_scope` | 403 | Token lacks `avatars:write` / `avatars:delete`. | Mint a token with the scope. |
 | `validation_error` | 400 | `meta`/`recording` failed schema. | Fix the field named in `message`. |
 | `unsupported_format` | 400 | `format` isn't a known wire format. | Use a [supported format](#how-it-works). |

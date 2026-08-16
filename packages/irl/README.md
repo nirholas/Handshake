@@ -133,9 +133,11 @@ alongside the fix so `nearby()` can prove the read.
 | Field | Type | Notes |
 |---|---|---|
 | `lat` / `lng` | `number` | The fix used to mint the token. |
+| `accuracy` | `number \| null` | Reported GPS accuracy in metres, when the fix carried one. |
 | `token` | `string` | HMAC-signed presence token (header `x-irl-fix` on reads). |
 | `expiresIn` | `number` | Token lifetime in seconds: **180** (3 min). Re-`checkIn()` when it lapses. |
 | `cell` | `string` | The precision-7 geohash (~153 m) the fix fell in, the client's "re-mint on cell change" trigger. |
+| `raw` | `unknown` | The untouched `POST /api/irl/fix-token` body. |
 
 The token anchor is coarsened to ~110 m server-side, so the token itself never
 carries a fine coordinate. A read is authorized only when its claimed point is
@@ -330,7 +332,11 @@ const { proof, collectible } = await completeWorldLine({
 console.log('agent-signed proof:', proof.signature, '→', proof.verifyUrl);
 ```
 
-Place a quest on your pin (signed-in: pass `apiKey` to `createIrl`):
+Place a quest on your pin (signed-in: pass `apiKey` to `createIrl`, which sends it
+as a bearer token. `createWorldLine` is the one authenticated write here, and a
+bearer is the simplest way to make it: a caller authenticating with a session
+cookie instead must also mint `GET /api/csrf-token` and echo it in the
+`X-CSRF-Token` header, or the write answers `403 csrf_missing`):
 
 ```js
 import { createIrl } from '@three-ws/irl';
