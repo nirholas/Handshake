@@ -226,7 +226,7 @@ Per-chain registry addresses, ABIs, and helpers live in `src/erc8004/`. RPC endp
 ## 9. Security model
 
 - **Client-side processing.** GLB files never leave the browser unless the user explicitly pins them. Drag-and-drop uses the File API and blob URLs — no upload.
-- **Skill sandbox.** Skills are arbitrary JS. The registry has three trust modes: `any` (dev only), `owned-only` (skill author must match agent owner), and `whitelist`. Combined with **ERC-7710 delegation** for wallet-touching capabilities, a skill can only sign or transact with permissions the user has explicitly delegated.
+- **Skill sandbox.** Skills are arbitrary JS. The registry has three trust modes: `any` (dev only), `owned-only` (the default: skill author must match agent owner), and `whitelist` (reserved, the allowlist consultation is still a hook in `src/skills/index.js`). Combined with **ERC-7710 delegation** for wallet-touching capabilities, a skill can only sign or transact with permissions the user has explicitly delegated.
 - **CSP compatibility.** The embed bundle has no inline scripts; host pages can set strict CSP.
 - **Embed policy.** The manifest can declare `embed.origins` as an allowlist or denylist. Enforced client-side by the element and server-side via referrer checks.
 - **SIWE.** Sign-In With Ethereum for backend mutations: signed typed message with server nonce → session cookie. No passwords.

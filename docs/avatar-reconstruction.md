@@ -76,11 +76,14 @@ closes that gap:
    freely, so a Gaussian locality mask fades the field to zero off the face and
    the scalp, ears and neck stay put.
 
-`strength` and `max_displacement_frac` default to **0.6 / 0.45**, chosen by an
-ISE sweep over the 40-face reference set (`python -m eval.tune_morph`), not by
-eye. They cut mean ISE 43% against the original 0.75 / 0.18, whose ~1.9 cm
-displacement ceiling was throttling genuine facial variation rather than
-rejecting outliers. See [avatar-fidelity-program.md](avatar-fidelity-program.md)
+`strength` and `max_displacement_frac` default to **0.6 / 0.55**, chosen by two
+sweeps over the 40-face reference set, not by eye: `python -m eval.tune_morph`
+(mean ISE, is the shape right?) and `python -m eval.robustness` (does a degraded
+photo of the same person still give the same head?). 0.55 sits at the knee of
+that fidelity-vs-robustness curve, cutting mean ISE 46% against the original
+0.75 / 0.18, whose ~1.9 cm displacement ceiling was throttling genuine facial
+variation rather than rejecting outliers; past 0.65 fidelity flatlines while
+instability keeps rising. See [avatar-fidelity-program.md](avatar-fidelity-program.md)
 for why the sweep's own looser optimum was deliberately not shipped.
 
 Because vertex count and order never change, `glb_ops.set_head_geometry` writes

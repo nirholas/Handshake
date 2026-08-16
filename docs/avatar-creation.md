@@ -33,7 +33,7 @@ Good lighting and a plain background give the best results. Photos can be JPEG o
 1. Go to **https://three.ws/create** and pick the selfie path (or open **https://three.ws/create/selfie** directly)
 2. Choose **Camera** (to take live photos in-browser) or **Upload** (to pick files from your device)
 3. Fill the frontal slot; add left/right photos if you have them
-4. Select your preferred **body type** (male / female) and **avatar style** (v1 = Photoreal, v2 = Stylized)
+4. Select your **avatar style** (v1 = Photoreal, v2 = Stylized). There is deliberately no body-type picker: reconstruction fits your face onto one shared template body today, so a masc/femme toggle would change nothing. Body choice returns when reconstruction moves onto the parametric base, tracked in [avatar-fidelity-program.md](avatar-fidelity-program.md) under Track 5
 5. Click **Submit**
 
 The photos are downscaled in the browser and sent to the native avatar reconstruction backend. A build view shows progress while the rigged GLB renders (typically a minute or two); when the job finishes, the avatar is saved to your three.ws account automatically and opens for review.
@@ -46,8 +46,8 @@ If your browser or device doesn't support `getUserMedia`, the Camera option is d
 
 For developers who want to understand what happens under the hood:
 
-1. [selfie-capture.js](../src/selfie-capture.js) manages the two-step UI: method choice (camera vs upload) and the photo slots (frontal required, sides optional). On submit it dispatches a `selfie:submit` CustomEvent with `{ files, bodyType, avatarType }`.
-2. [selfie-pipeline.js](../src/selfie-pipeline.js) handles that event: it runs an on-device photo check and refinement pass ([selfie-refine.js](../src/selfie-refine.js)), downscales each photo to a max of 1024px as JPEG, then POSTs to `/api/avatars/reconstruct` with the photos and body/style preferences.
+1. [selfie-capture.js](../src/selfie-capture.js) manages the two-step UI: method choice (camera vs upload) and the photo slots (frontal required, sides optional). On submit it dispatches a `selfie:submit` CustomEvent with `{ files, avatarType, method }`.
+2. [selfie-pipeline.js](../src/selfie-pipeline.js) handles that event: it runs an on-device photo check and refinement pass ([selfie-refine.js](../src/selfie-refine.js)), downscales each photo to a max of 1024px as JPEG, then POSTs to `/api/avatars/reconstruct` with the photos and the chosen style.
 3. The endpoint returns a `jobId`. The pipeline dispatches `selfie:building` and polls `/api/avatars/regenerate-status?jobId=...` every 3 seconds, dispatching `selfie:progress` ticks the build view renders.
 4. On `{ status: 'done', resultAvatarId }` it dispatches `selfie:done { avatarId }`. The avatar record and its GLB in R2 storage were created server-side, so nothing else needs to be uploaded. Failures dispatch `selfie:build-error` with a message and, when detectable, the photo slot that caused it.
 
