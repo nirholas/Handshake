@@ -322,6 +322,72 @@ describe('POST /api/agents/:id/memory/seed/x consent gate', () => {
 	});
 });
 
+// A connection can be narrower than the read the disclosure describes: the
+// owner unticked a permission on X's screen, or connected through a surface
+// that asks for a different scope set. Consent granted against such a
+// connection would be consent to something that cannot happen, so the gate
+// refuses before the grant is recorded rather than after the X API rejects it.
+describe('POST /api/agents/:id/memory/seed/x connection scope gate', () => {
+	it('refuses a connection that cannot read the profile and posts', async () => {
+		dbState.connection = liveConnection({ scopes: 'tweet.write offline.access' });
+		const res = await call({
+			method: 'POST',
+			body: { consent: { accepted: true, scope_version: X_SEED_SCOPE_VERSION } },
+		});
+
+		expect(res.statusCode).toBe(400);
+		expect(res.json).toMatchObject({ error: 'insufficient_scope' });
+		expect(res.json.missing_scopes).toEqual(['tweet.read', 'users.read']);
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+		expect(xSeed).not.toHaveBeenCalled();
+		expect(dbState.queries.some((c) => /INSERT INTO x_memory_consents/i.test(c.q))).toBe(false);
+	});
+
+	it('lets a connection whose scopes were never recorded through', async () => {
+		// Connections predating scope recording store an empty string. Blocking
+		// them would break seeding for every account connected before that landed.
+		dbState.connection = liveConnection({ scopes: '' });
+		dbState.consent = liveConsent();
+		vi.stubGlobal('fetch', vi.fn(async (url) => {
+			if (String(url).includes('/2/users/me')) {
+				return {
+					ok: true,
+					json: async () => ({
+						data: {
+							id: 'x-account-42',
+							username: 'qauser',
+							name: 'QA User',
+							description: 'Builds agent tooling on Solana',
+							public_metrics: { followers_count: 300, following_count: 120 },
+						},
+					}),
+				};
+			}
+			return { ok: true, json: async () => ({ data: [] }) };
+		}));
+		llmComplete.mockResolvedValue({ text: JSON.stringify(['Builds agent tooling.']) });
+
+		const res = await call({ method: 'POST', body: {} });
+		expect(res.statusCode).toBe(200);
+	});
+
+	it('tells the status endpoint which scopes a narrow connection is short of', async () => {
+		dbState.connection = liveConnection({ scopes: 'users.read offline.access' });
+		const res = await call();
+
+		expect(res.json).toMatchObject({ scopes_ok: false });
+		expect(res.json.missing_scopes).toEqual(['tweet.read']);
+		expect(res.json.required_scopes).toEqual(['tweet.read', 'users.read']);
+	});
+
+	it('reports a read-only connection as able to seed', async () => {
+		dbState.connection = liveConnection({ scopes: 'tweet.read users.read offline.access' });
+		const res = await call();
+		expect(res.json).toMatchObject({ scopes_ok: true });
+		expect(res.json.missing_scopes).toEqual([]);
+	});
+});
+
 describe('POST /api/agents/:id/memory/seed/x seeding', () => {
 	const profilePayload = {
 		data: {

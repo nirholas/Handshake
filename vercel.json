@@ -2936,6 +2936,10 @@
 			"dest": "/api/auth/github/[action]?action=callback"
 		},
 		{
+			"src": "/api/auth/github/token",
+			"dest": "/api/auth/github/[action]?action=token"
+		},
+		{
 			"src": "/api/auth/github/status",
 			"dest": "/api/auth/github/[action]?action=status"
 		},
