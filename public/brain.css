@@ -1015,6 +1015,13 @@ body {
 	margin-bottom: 8px;
 	display: none;
 }
+.br-notice-action {
+	color: #ffd79a;
+	font-weight: 600;
+	text-decoration: underline;
+}
+.br-notice-action:hover { color: #ffffff; }
+.br-notice-action:focus-visible { outline: 2px solid #5dccff; outline-offset: 2px; }
 
 /* ── Markdown rendered content ───────────────────────────────────────────── */
 .md-p { margin: 0 0 0.7em; }
