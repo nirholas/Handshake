@@ -1938,22 +1938,7 @@ function revealCitedMemory() {
   const row = document.getElementById(decodeURIComponent(location.hash.slice(1)));
   if (!row) return;
   row.classList.add('mem-cited');
-
-  // The sections above this one mount asynchronously (avatar preview, mind
-  // palace, analytics) and every one that lands grows the column above the
-  // memory list, pushing the cited row back off screen after a single scroll.
-  // Watch the row itself and re-centre whenever it drifts out of view, then
-  // stand down the moment the reader starts scrolling for themselves. Nothing
-  // polls: if the layout stops moving, the observer simply stops firing.
-  const col = document.querySelector('.content-col');
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) if (!e.isIntersecting) row.scrollIntoView({ block: 'center' });
-  }, { root: col && getComputedStyle(col).overflowY !== 'visible' ? col : null, threshold: 0.5 });
-  for (const evt of ['wheel', 'touchstart', 'keydown']) {
-    window.addEventListener(evt, () => io.disconnect(), { once: true, passive: true });
-  }
   row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  io.observe(row);
 }
 
 async function toggleMemoryVisibility(btn) {
