@@ -35,6 +35,26 @@ export function fetchProfile(token) {
 	return ghJson('/user', token);
 }
 
+/**
+ * Check a token the user pasted and report back what it can do. Returns the
+ * profile it belongs to plus the raw `x-oauth-scopes` header, which is the only
+ * place GitHub states a classic PAT's grants (fine-grained tokens omit it, so
+ * the header comes back null). A token GitHub rejects returns `valid: false`
+ * rather than throwing, because a mistyped paste is a user error to explain, not
+ * an upstream outage to report.
+ */
+export async function verifyToken(token) {
+	const res = await fetch(`${API}/user`, {
+		headers: headers(token),
+		signal: AbortSignal.timeout(TIMEOUT_MS),
+	});
+	if (res.status === 401 || res.status === 403) return { valid: false, status: res.status };
+	if (!res.ok) throw upstream(`GitHub token check failed: ${res.status}`);
+	const profile = await res.json();
+	if (!profile?.login) return { valid: false, status: res.status };
+	return { valid: true, status: res.status, profile, scopeHeader: res.headers.get('x-oauth-scopes') };
+}
+
 /** Public repos the user owns, most recently pushed first. */
 export function fetchRepos(token, perPage = 40) {
 	return ghJson(

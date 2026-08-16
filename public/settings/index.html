@@ -1155,11 +1155,6 @@
 				const el = document.getElementById('x-connect-status');
 				const msg = document.getElementById('x-msg');
 				try {
-					// Seeding reads; it never posts. This card asks X for the read-only
-					// scope set, so consenting to a memory seed never costs the owner
-					// permission to post as them.
-					const connectUrl = xConnectUrl(_xAgentId, 'read');
-
 					if (!_xAgentId) {
 						el.innerHTML = xCardHeader('Loading…');
 						// Seeding always targets one agent. With no ?agent_id= in the
@@ -1167,13 +1162,13 @@
 						// usable from a bare /settings visit.
 						const agentId = (await loadMyAgents())[0]?.id ?? null;
 						if (agentId) {
-							renderXStatus(el, agentId, connectUrl);
+							renderXStatus(el, agentId);
 						} else {
 							el.innerHTML = xCardHeader('Create an agent to seed its memory from X')
 								+ '<div class="actions"><a href="/create" class="btn sec" style="font-size:12px;padding:5px 14px;text-decoration:none">Create an agent</a></div>';
 						}
 					} else {
-						renderXStatus(el, _xAgentId, connectUrl);
+						renderXStatus(el, _xAgentId);
 					}
 				} catch {
 					el.innerHTML = '<p class="muted" style="font-size:14px">Could not load connection status.</p>';
@@ -1250,15 +1245,19 @@
 				return `${data.fact_count} seeded ${data.fact_count === 1 ? 'memory' : 'memories'}, last refreshed ${when}.`;
 			}
 
-			async function renderXStatus(el, agentId, connectUrl) {
+			async function renderXStatus(el, agentId) {
 				const msg = document.getElementById('x-msg');
+				// Seeding reads; it never posts. This card asks X for the read-only
+				// scope set, so consenting to a memory seed never costs the owner
+				// permission to post as them.
+				const connectUrl = xConnectUrl(agentId, 'read');
 				let data;
 				try {
 					data = await apiJson(`/api/agents/${agentId}/memory/seed/x`);
 				} catch (e) {
 					el.innerHTML = xCardHeader('Could not load status')
 						+ `<div class="actions"><button class="btn sec" id="x-retry-btn">Retry</button></div>`;
-					document.getElementById('x-retry-btn')?.addEventListener('click', () => renderXStatus(el, agentId, connectUrl));
+					document.getElementById('x-retry-btn')?.addEventListener('click', () => renderXStatus(el, agentId));
 					return;
 				}
 
@@ -1323,7 +1322,7 @@
 								body: JSON.stringify({ consent: { accepted: true, scope_version: data.scope_version } }),
 							});
 							showMsg(msg, 'ok', `Seeded ${res.seeded} ${res.seeded === 1 ? 'memory' : 'memories'} from ${res.posts_read} posts by @${res.username}. ${res.in_context} stay in the agent's live context.`);
-							renderXStatus(el, agentId, connectUrl);
+							renderXStatus(el, agentId);
 						} catch (e) {
 							showMsg(msg, 'err', e.data?.error_description || 'Seeding failed.');
 							grant.disabled = false;
@@ -1337,7 +1336,7 @@
 					+ `<div class="actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
 							<button class="btn sec" id="x-seed-btn">Re-seed</button>
 							<button class="btn danger" id="x-revoke-btn">Revoke and delete</button>
-							<a href="${connectUrl}" class="action" style="font-size:12.5px">Reconnect</a>
+							<a href="${reconnectUrl}" class="action" style="font-size:12.5px">Reconnect</a>
 						</div>
 						<p class="muted" style="font-size:11.5px;margin:10px 0 0">Consented ${escHtml(new Date(consent.granted_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }))} to disclosure ${escHtml(consent.scope_version)}. Re-seeding replaces the previous batch; revoking deletes every one of them.</p>${scopes}`;
 
@@ -1350,7 +1349,7 @@
 							method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
 						});
 						showMsg(msg, 'ok', `Re-seeded ${res.seeded} ${res.seeded === 1 ? 'memory' : 'memories'} from ${res.posts_read} posts by @${res.username}.`);
-						renderXStatus(el, agentId, connectUrl);
+						renderXStatus(el, agentId);
 					} catch (e) {
 						showMsg(msg, 'err', e.data?.error_description || 'Seeding failed.');
 						btn.disabled = false;
@@ -1366,7 +1365,7 @@
 					try {
 						const res = await apiJson(`/api/agents/${agentId}/memory/seed/x`, { method: 'DELETE' });
 						showMsg(msg, 'ok', `Consent revoked. ${res.deleted} seeded ${res.deleted === 1 ? 'memory' : 'memories'} deleted.`);
-						renderXStatus(el, agentId, connectUrl);
+						renderXStatus(el, agentId);
 					} catch (e) {
 						showMsg(msg, 'err', e.data?.error_description || 'Revoke failed.');
 						btn.disabled = false;

@@ -89,7 +89,7 @@ function alreadyMintedOn(meta, network) {
 	return !!meta?.devnet?.sol_mint_address;
 }
 
-async function solanaDraftMint({ agent, network }) {
+export async function solanaDraftMint({ agent, network }) {
 	if (alreadyMintedOn(agent.meta, network)) {
 		const asset =
 			network === 'mainnet' ? agent.meta.sol_mint_address : agent.meta.devnet.sol_mint_address;
@@ -180,7 +180,7 @@ async function pinDraftCard(card, agentId) {
 	return publicUrl(key);
 }
 
-async function evmDraftMint({ agent, userId, chainId }) {
+export async function evmDraftMint({ agent, userId, chainId }) {
 	const { CHAIN_BY_ID } = await import('./erc8004-chains.js');
 	const chain = CHAIN_BY_ID[chainId];
 	if (!chain) return { status: 'skipped', reason: 'unsupported_chain', chainId };
@@ -308,7 +308,7 @@ async function evmDraftMint({ agent, userId, chainId }) {
 		chainId,
 		chain: chain.name,
 		registry: chain.registry,
-		onchainId,
+		onchainId: onChainId,
 		owner: evmAddress,
 		txHash: receipt.hash,
 		metadataUri,
