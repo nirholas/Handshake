@@ -143,6 +143,14 @@
 			<description>Editing an existing subscription tier from the creator dashboard silently failed: the save never reached the server, so the new name, price or status was lost every time. Saving works now. Alongside it, a mistyped or truncated subscription or tier link used to answer with a generic server failure; it now says the id is not valid, which is what a reader can actually act on. Tier pages are also directly addressable, so a single tier can be linked and read on its own, with unpublished drafts still visible only to the creator who wrote them.</description>
 		</item>
 		<item>
+			<title>Crypto Categories is searchable, and opens in a fraction of the time</title>
+			<link>https://three.ws/categories</link>
+			<guid isPermaLink="false">2026-08-16:Crypto Categories is searchable, and opens in a fraction of the time</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The sector leaderboard at /categories renders every category the market data provider reports, and that list has grown past 750. All of them were being drawn into the page at once, roughly 2,250 coin icons in a single paint, and the only way to find a sector was to scroll past every one ranked above it. The table now opens with the top 50 and pages in 50 more at a time, and a search box narrows the whole list by name before you ever need to page. Full category names are shown too, instead of being cut off mid-word on a wide screen with half the row empty. The three things that can go wrong now read differently and each offers a way out: a failed load says the data provider did not answer and gives you a Try again button that refetches, a provider reporting nothing says so plainly, and a search that matches nothing offers to clear itself. Sortable column headers now announce themselves to screen readers, and keyboard focus stays on the column you just sorted instead of being dropped back to the top of the page.</description>
+		</item>
+		<item>
 			<title>External Solana agents get their names and artwork back in the directory</title>
 			<link>https://three.ws/agents</link>
 			<guid isPermaLink="false">2026-08-16:External Solana agents get their names and artwork back in the directory</guid>

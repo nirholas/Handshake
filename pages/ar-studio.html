@@ -270,9 +270,16 @@
 		   whichever direction still has tabs, in any translation. */
 		.ars-tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
 		.ars-tabs::-webkit-scrollbar { display: none; }
-		.ars-tabs[data-scroll~="end"] { mask-image: linear-gradient(to right, #000 82%, transparent 100%); }
-		.ars-tabs[data-scroll~="start"] { mask-image: linear-gradient(to left, #000 82%, transparent 100%); }
+		.ars-tabs[data-scroll~="end"] {
+			-webkit-mask-image: linear-gradient(to right, #000 82%, transparent 100%);
+			mask-image: linear-gradient(to right, #000 82%, transparent 100%);
+		}
+		.ars-tabs[data-scroll~="start"] {
+			-webkit-mask-image: linear-gradient(to left, #000 82%, transparent 100%);
+			mask-image: linear-gradient(to left, #000 82%, transparent 100%);
+		}
 		.ars-tabs[data-scroll~="start"][data-scroll~="end"] {
+			-webkit-mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%);
 			mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%);
 		}
 		.ars-tab {

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T19:50:05.877Z",
+	"generated_at": "2026-08-16T19:53:52.096Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -182,6 +182,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Crypto Categories is searchable, and opens in a fraction of the time",
+			"summary": "The sector leaderboard at /categories renders every category the market data provider reports, and that list has grown past 750. All of them were being drawn into the page at once, roughly 2,250 coin icons in a single paint, and the only way to find a sector was to scroll past every one ranked above it. The table now opens with the top 50 and pages in 50 more at a time, and a search box narrows the whole list by name before you ever need to page. Full category names are shown too, instead of being cut off mid-word on a wide screen with half the row empty. The three things that can go wrong now read differently and each offers a way out: a failed load says the data provider did not answer and gives you a Try again button that refetches, a provider reporting nothing says so plainly, and a search that matches nothing offers to clear itself. Sortable column headers now announce themselves to screen readers, and keyboard focus stays on the column you just sorted instead of being dropped back to the top of the page.",
+			"link": "/categories",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{

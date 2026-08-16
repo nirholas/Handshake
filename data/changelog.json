@@ -1,16 +1,16 @@
 {
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
-	{
-		"date": "2026-08-16",
-		"title": "Crypto Categories is searchable, and loads in a fraction of the time",
-		"summary": "The sector leaderboard at /categories renders every category the market data provider reports, and that number has grown past 750. All of them were being drawn into the page at once, roughly 2,250 coin icons in a single paint, and the only way to find a sector was to scroll past the ones above it. The table now opens with the top 50 and pages in 50 more at a time, and a search box narrows all 751 by name before you ever need to page. The full category name is shown too, instead of being cut off mid-word on a wide screen. The three things that can go wrong now read differently and each offers a way out: a failed load says the data provider did not answer and gives you a Try again button that refetches, a provider that reports nothing says so, and a search that matches nothing offers to clear itself. Sortable column headers now announce themselves to screen readers, and keyboard focus stays on the column you just sorted instead of being dropped back to the top of the page.",
-		"tags": [
-			"improvement",
-			"fix"
-		],
-		"link": "/categories"
-	},
+		{
+			"date": "2026-08-16",
+			"title": "Crypto Categories is searchable, and opens in a fraction of the time",
+			"summary": "The sector leaderboard at /categories renders every category the market data provider reports, and that list has grown past 750. All of them were being drawn into the page at once, roughly 2,250 coin icons in a single paint, and the only way to find a sector was to scroll past every one ranked above it. The table now opens with the top 50 and pages in 50 more at a time, and a search box narrows the whole list by name before you ever need to page. Full category names are shown too, instead of being cut off mid-word on a wide screen with half the row empty. The three things that can go wrong now read differently and each offers a way out: a failed load says the data provider did not answer and gives you a Try again button that refetches, a provider reporting nothing says so plainly, and a search that matches nothing offers to clear itself. Sortable column headers now announce themselves to screen readers, and keyboard focus stays on the column you just sorted instead of being dropped back to the top of the page.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/categories"
+		},
 		{
 			"date": "2026-08-16",
 			"title": "The FLAME paper link in the Avatar Engines Atlas opens the paper again",
