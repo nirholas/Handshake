@@ -119,6 +119,29 @@
 	.toolbar .count { color: var(--muted); font-size: 13px; margin-left: auto; }
 	.toolbar .count strong { color: var(--text); font-weight: 600; }
 
+	/* Which facilitators answered this scan. A partial outage shrinks the
+	   opportunity list silently, so the degraded sources have to be visible or
+	   the page reads as "the market is quiet" when it is really half-blind. */
+	.sources {
+		font-family: var(--mono);
+		font-size: 11px;
+		color: var(--muted-2);
+		margin: 0 0 16px;
+		display: flex; flex-wrap: wrap; gap: 4px 10px;
+		align-items: center;
+	}
+	.sources:empty { display: none; }
+	.sources .src { white-space: nowrap; }
+	.sources .src.ok { color: var(--muted-2); }
+	.sources .src.down { color: var(--accent-red); }
+	.sources .degraded {
+		color: var(--accent-amber);
+		background: rgba(245,158,11,0.08);
+		border: 1px solid rgba(245,158,11,0.25);
+		border-radius: 999px;
+		padding: 2px 9px;
+	}
+
 	.grid {
 		display: grid;
 		/* min() caps the track floor at the container width, so a 320px viewport
@@ -419,9 +442,11 @@
 			<button type="button" class="chip" data-filter="mcp" aria-pressed="false" data-i18n="arbitrage.mcp">MCP</button>
 		</div>
 		<label class="sr-only" for="q" data-i18n="arbitrage.filter_label">Filter by capability or provider</label>
-		<input type="search" id="q" placeholder="Filter by capability or provider…" />
+		<input type="search" id="q" placeholder="Filter by capability or provider…" data-i18n-attr="placeholder:arbitrage.filter_label" />
 		<div class="count" aria-live="polite"><strong id="count">…</strong> opportunities</div>
 	</div>
+
+	<div class="sources" id="sources" aria-live="polite"></div>
 
 	<div id="grid" class="grid" aria-busy="true"></div>
 	<div id="empty" class="empty" hidden></div>
