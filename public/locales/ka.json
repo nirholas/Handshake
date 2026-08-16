@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "ფასი (ყველაზე დაბალი პირველი)",
 		"reset_filters": "ფილტრების გადატვირთვა",
 		"resource_details": "რესურსის დეტალები",
-		"results": "შედეგები <span id=\"qlabel\"></span>",
+		"results": "შედეგები",
 		"search": "ძიება",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (ნებისმიერი)",

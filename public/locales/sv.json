@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Pris (lägsta först)",
 		"reset_filters": "Återställ filter",
 		"resource_details": "Resursdetaljer",
-		"results": "resultat <span id=\"qlabel\"></span>",
+		"results": "resultat",
 		"search": "Sök",
 		"sign_in_with_x": "logga-in-med-x",
 		"solana_any": "Solana (valfri)",

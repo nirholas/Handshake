@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Prijs (laagste eerst)",
 		"reset_filters": "Filters resetten",
 		"resource_details": "Brondetails",
-		"results": "resultaten <span id=\"qlabel\"></span>",
+		"results": "resultaten",
 		"search": "Zoeken",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (alle)",

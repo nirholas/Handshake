@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Cijena (najniža prva)",
 		"reset_filters": "Poništi filtere",
 		"resource_details": "Detalji resursa",
-		"results": "rezultati <span id=\"qlabel\"></span>",
+		"results": "rezultati",
 		"search": "Pretraži",
 		"sign_in_with_x": "Prijavi se s X",
 		"solana_any": "Solana (bilo koji)",

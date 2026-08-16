@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "قیمت (تر ټولو ټیټ لومړی)",
 		"reset_filters": "فلټرونه بیا تنظیم کړئ",
 		"resource_details": "د سرچینې توضیحات",
-		"results": "پایلې <span id=\"qlabel\"></span>",
+		"results": "پایلې",
 		"search": "لټون",
 		"sign_in_with_x": "د X سره لاسلیک وکړئ",
 		"solana_any": "Solana (هر یو)",

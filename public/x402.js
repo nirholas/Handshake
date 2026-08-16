@@ -1406,7 +1406,11 @@ class CheckoutModal {
 		});
 	}
 
-	renderError(stepId, message) {
+	// `retryable: false` is for failures the same click cannot change, such as a
+	// service that refuses browser requests outright. Offering "Try again" there
+	// reads as "this nearly worked" and sends the buyer round a loop that has no
+	// exit, so the button is left out instead.
+	renderError(stepId, message, { retryable = true } = {}) {
 		this.currentView = 'error';
 		this.bodyEl.innerHTML = `
 			${this.renderSteps(stepId, {
@@ -1417,9 +1421,9 @@ class CheckoutModal {
 				[`${stepId}_meta`]: 'failed',
 			})}
 			<div class="x402-error-box"><strong>${escapeHtml(stepId)}:</strong> ${escapeHtml(message)}</div>
-			<button class="x402-pay-btn" data-retry>Try again</button>
+			${retryable ? '<button class="x402-pay-btn" data-retry>Try again</button>' : ''}
 		`;
-		this.bodyEl.querySelector('[data-retry]').addEventListener('click', () => this.start());
+		this.bodyEl.querySelector('[data-retry]')?.addEventListener('click', () => this.start());
 	}
 
 	// Dedicated, actionable state for the most common payment failure: the wallet
@@ -1562,7 +1566,7 @@ class CheckoutModal {
 			}
 			this.renderConnect();
 		} catch (err) {
-			this.renderError('discover', err.message || String(err));
+			this.renderError('discover', err.message || String(err), { retryable: err?.code !== 'cors_blocked' });
 		}
 	}
 
@@ -2286,7 +2290,10 @@ async function discoverChallenge(opts) {
 		// not allow browser calls sends them to retry a button that can never
 		// work, so separate the two cases by where the endpoint lives.
 		if (isCrossOrigin(opts.endpoint)) {
-			throw new Error(`${new URL(opts.endpoint, location.href).host} does not allow browser requests (its response carries no CORS headers), so its price cannot be confirmed from this page. Call it from a server, an agent, or the x402 CLI instead.`);
+			throw Object.assign(
+				new Error(`${new URL(opts.endpoint, location.href).host} does not allow browser requests (its response carries no CORS headers), so its price cannot be confirmed from this page. Call it from a server, an agent, or the x402 CLI instead.`),
+				{ code: 'cors_blocked' },
+			);
 		}
 		throw new Error(`Could not reach the service to confirm its price (${err?.message || 'network error'}). Check your connection and try again.`);
 	}

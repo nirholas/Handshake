@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "가격 (최저가순)",
 		"reset_filters": "필터 초기화",
 		"resource_details": "리소스 상세 정보",
-		"results": "결과 <span id=\"qlabel\"></span>",
+		"results": "결과",
 		"search": "검색",
 		"sign_in_with_x": "X로 로그인",
 		"solana_any": "Solana (모든)",

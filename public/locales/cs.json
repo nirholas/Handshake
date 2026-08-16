@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Cena (nejnižší jako první)",
 		"reset_filters": "Resetovat filtry",
 		"resource_details": "Podrobnosti zdroje",
-		"results": "výsledky <span id=\"qlabel\"></span>",
+		"results": "výsledky",
 		"search": "Hledat",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (jakékoli)",

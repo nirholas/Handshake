@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Pris (lavest først)",
 		"reset_filters": "Tilbakestill filtre",
 		"resource_details": "Ressursdetaljer",
-		"results": "resultater <span id=\"qlabel\"></span>",
+		"results": "resultater",
 		"search": "Søk",
 		"sign_in_with_x": "logg-inn-med-x",
 		"solana_any": "Solana (alle)",

@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Preu (més baix primer)",
 		"reset_filters": "Reinicia filtres",
 		"resource_details": "Detalls del recurs",
-		"results": "resultats <span id=\"qlabel\"></span>",
+		"results": "resultats",
 		"search": "Cerca",
 		"sign_in_with_x": "inicia-sessió-amb-x",
 		"solana_any": "Solana (qualsevol)",

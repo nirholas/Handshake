@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Cena (najnižja najprej)",
 		"reset_filters": "Ponastavi filtre",
 		"resource_details": "Podrobnosti vira",
-		"results": "rezultati <span id=\"qlabel\"></span>",
+		"results": "rezultati",
 		"search": "Išči",
 		"sign_in_with_x": "prijava-z-x",
 		"solana_any": "Solana (katero koli)",

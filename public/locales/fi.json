@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Hinta (halvin ensin)",
 		"reset_filters": "Nollaa suodattimet",
 		"resource_details": "Resurssin tiedot",
-		"results": "tulokset <span id=\"qlabel\"></span>",
+		"results": "tulokset",
 		"search": "Hae",
 		"sign_in_with_x": "kirjaudu-sisään-x:llä",
 		"solana_any": "Solana (mikä tahansa)",

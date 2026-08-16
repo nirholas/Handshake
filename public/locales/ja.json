@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "価格（安い順）",
 		"reset_filters": "フィルターをリセット",
 		"resource_details": "リソースの詳細",
-		"results": "<span id=\"qlabel\">件の結果 </span>",
+		"results": "件の結果",
 		"search": "検索",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana（任意）",

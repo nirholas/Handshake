@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Hind (madalaim esimesena)",
 		"reset_filters": "Lähtesta filtrid",
 		"resource_details": "Ressursi üksikasjad",
-		"results": "tulemused <span id=\"qlabel\"></span>",
+		"results": "tulemused",
 		"search": "Otsi",
 		"sign_in_with_x": "logi-sisse-x-ga",
 		"solana_any": "Solana (mis tahes)",

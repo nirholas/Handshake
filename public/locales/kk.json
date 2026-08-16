@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Бағасы (ең төменгісі бірінші)",
 		"reset_filters": "Сүзгілерді қалпына келтіру",
 		"resource_details": "Ресурс мәліметтері",
-		"results": "нәтижелер <span id=\"qlabel\"></span>",
+		"results": "нәтижелер",
 		"search": "Іздеу",
 		"sign_in_with_x": "x-пен кіру",
 		"solana_any": "Solana (кез келген)",

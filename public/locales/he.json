@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "מחיר (מהנמוך לגבוה)",
 		"reset_filters": "אפס מסננים",
 		"resource_details": "פרטי משאב",
-		"results": "תוצאות <span id=\"qlabel\"></span>",
+		"results": "תוצאות",
 		"search": "חיפוש",
 		"sign_in_with_x": "התחברות עם X",
 		"solana_any": "Solana (כלשהו)",

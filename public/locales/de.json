@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Preis (niedrigster zuerst)",
 		"reset_filters": "Filter zurücksetzen",
 		"resource_details": "Ressourcendetails",
-		"results": "Ergebnisse <span id=\"qlabel\"></span>",
+		"results": "Ergebnisse",
 		"search": "Suchen",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (beliebig)",

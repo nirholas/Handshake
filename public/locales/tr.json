@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Fiyat (en düşükten en yükseğe)",
 		"reset_filters": "Filtreleri sıfırla",
 		"resource_details": "Kaynak detayları",
-		"results": "sonuçlar <span id=\"qlabel\"></span>",
+		"results": "sonuçlar",
 		"search": "Ara",
 		"sign_in_with_x": "x-ile-giriş-yap",
 		"solana_any": "Solana (herhangi biri)",

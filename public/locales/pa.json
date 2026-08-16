@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "ਕੀਮਤ (ਸਭ ਤੋਂ ਘੱਟ ਪਹਿਲਾਂ)",
 		"reset_filters": "ਫਿਲਟਰ ਰੀਸੈੱਟ ਕਰੋ",
 		"resource_details": "ਸਰੋਤ ਵੇਰਵੇ",
-		"results": "ਨਤੀਜੇ <span id=\"qlabel\"></span>",
+		"results": "ਨਤੀਜੇ",
 		"search": "ਖੋਜੋ",
 		"sign_in_with_x": "x ਨਾਲ ਸਾਈਨ-ਇਨ ਕਰੋ",
 		"solana_any": "Solana (ਕੋਈ ਵੀ)",

@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "စျေးနှုန်း (အနိမ့်ဆုံးမှ အရင်)",
 		"reset_filters": "စစ်ထုတ်မှုများကို ပြန်လည်သတ်မှတ်ပါ",
 		"resource_details": "အရင်းအမြစ်အသေးစိတ်များ",
-		"results": "ရလဒ်များ <span id=\"qlabel\"></span>",
+		"results": "ရလဒ်များ",
 		"search": "ရှာဖွေရန်",
 		"sign_in_with_x": "x ဖြင့် ဝင်ရောက်ပါ",
 		"solana_any": "Solana (မည်သည့်အမျိုးအစားမဆို)",

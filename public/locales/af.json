@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Prys (laagste eerste)",
 		"reset_filters": "Stel filters terug",
 		"resource_details": "Hulpbronbesonderhede",
-		"results": "resultate <span id=\"qlabel\"></span>",
+		"results": "resultate",
 		"search": "Soek",
 		"sign_in_with_x": "meld-aan-met-x",
 		"solana_any": "Solana (enige)",

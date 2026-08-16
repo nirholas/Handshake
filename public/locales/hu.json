@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Ár (legalacsonyabb először)",
 		"reset_filters": "Szűrők visszaállítása",
 		"resource_details": "Erőforrás részletei",
-		"results": "találat <span id=\"qlabel\"></span>",
+		"results": "találat",
 		"search": "Keresés",
 		"sign_in_with_x": "bejelentkezés-x-szel",
 		"solana_any": "Solana (bármely)",

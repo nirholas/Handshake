@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "价格（从低到高）",
 		"reset_filters": "重置筛选器",
 		"resource_details": "资源详情",
-		"results": "<span id=\"qlabel\"></span> 个结果",
+		"results": "个结果",
 		"search": "搜索",
 		"sign_in_with_x": "使用X登录",
 		"solana_any": "Solana（任意）",

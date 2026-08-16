@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "मूल्य (सबसे कम पहले)",
 		"reset_filters": "फ़िल्टर रीसेट करें",
 		"resource_details": "संसाधन विवरण",
-		"results": "परिणाम <span id=\"qlabel\"></span>",
+		"results": "परिणाम",
 		"search": "खोजें",
 		"sign_in_with_x": "x के साथ साइन-इन करें",
 		"solana_any": "Solana (कोई भी)",

@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "വില (ഏറ്റവും കുറഞ്ഞത് ആദ്യം)",
 		"reset_filters": "ഫിൽട്ടറുകൾ പുനഃസജ്ജമാക്കുക",
 		"resource_details": "റിസോഴ്സ് വിശദാംശങ്ങൾ",
-		"results": "ഫലങ്ങൾ <span id=\"qlabel\"></span>",
+		"results": "ഫലങ്ങൾ",
 		"search": "തിരയുക",
 		"sign_in_with_x": "സൈൻ-ഇൻ-വിത്ത്-എക്സ്",
 		"solana_any": "Solana (ഏതെങ്കിലും)",

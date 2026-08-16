@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Цана (спачатку самыя нізкія)",
 		"reset_filters": "Скінуць фільтры",
 		"resource_details": "Дэталі рэсурсу",
-		"results": "вынікі <span id=\"qlabel\"></span>",
+		"results": "вынікі",
 		"search": "Пошук",
 		"sign_in_with_x": "увайсці-з-x",
 		"solana_any": "Solana (любы)",

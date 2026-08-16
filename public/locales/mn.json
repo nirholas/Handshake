@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Үнэ (хамгийн багаас эхлэн)",
 		"reset_filters": "Шүүлтүүрийг дахин тохируулах",
 		"resource_details": "Нөөцийн дэлгэрэнгүй мэдээлэл",
-		"results": "илэрц <span id=\"qlabel\"></span>",
+		"results": "илэрц",
 		"search": "Хайх",
 		"sign_in_with_x": "x-ээр-нэвтрэх",
 		"solana_any": "Solana (ямар ч)",

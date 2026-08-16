@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "මිල (අඩුම මිල සිට)",
 		"reset_filters": "පෙරහන් යළි පිහිටුවන්න",
 		"resource_details": "සම්පත් විස්තර",
-		"results": "ප්‍රතිඵල <span id=\"qlabel\"></span>",
+		"results": "ප්‍රතිඵල",
 		"search": "සොයන්න",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (ඕනෑම)",

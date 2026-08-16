@@ -37,11 +37,16 @@ const els = {
 const PAGE_SIZE = { list: 200, search: 100 };
 
 const state = {
-	loading: false,
 	lastQuery: '',
 	items: [],
 	peers: new Map(),
 	total: 0,
+	// Every request carries a sequence number and the newest one wins. Dropping a
+	// filter change because an earlier request was still in flight left the
+	// sidebar claiming a filter the rendered cards had never been through, and on
+	// a slow connection that state stuck until the user touched a control again.
+	seq: 0,
+	inflight: null,
 };
 
 const STOP_WORDS = new Set([
@@ -173,8 +178,12 @@ function paramsFor(query, f, offset) {
 // `append` keeps the rows already on screen and adds the next page after them,
 // which is what the "Load more" button does; a fresh search replaces them.
 async function load({ append = false } = {}) {
-	if (state.loading) return;
-	state.loading = true;
+	const seq = ++state.seq;
+	// A newer request replaces the one in flight rather than being dropped, so
+	// what is on screen always matches the controls the user last touched.
+	state.inflight?.abort();
+	const controller = new AbortController();
+	state.inflight = controller;
 	const query = els.q.value.trim();
 	state.lastQuery = query;
 	const filters = readFilters();
@@ -184,8 +193,9 @@ async function load({ append = false } = {}) {
 	if (append) renderLoadingMore();
 	else renderLoading(query);
 	try {
-		const r = await fetch(url, { headers: { accept: 'application/json' } });
+		const r = await fetch(url, { headers: { accept: 'application/json' }, signal: controller.signal });
 		const data = await r.json();
+		if (seq !== state.seq) return;
 		if (!r.ok) throw new Error(data?.error_description || data?.error || `HTTP ${r.status}`);
 		const page = data.resources || data.items || [];
 		state.items = append ? state.items.concat(page) : page;
@@ -193,10 +203,13 @@ async function load({ append = false } = {}) {
 		recomputePeers(state.items);
 		renderResults(state.items, query, data.sources || [], data.errors || [], { append, page });
 	} catch (e) {
+		// A superseded request is not a failure the buyer needs to hear about:
+		// the request that replaced it owns the screen now.
+		if (e?.name === 'AbortError' || seq !== state.seq) return;
 		if (append) renderLoadMoreError(e);
 		else renderError(e);
 	} finally {
-		state.loading = false;
+		if (seq === state.seq) state.inflight = null;
 	}
 }
 
@@ -287,6 +300,7 @@ function renderMoreRow(shown, append, pageLength) {
 	// requests; stop offering a button that would fetch nothing again.
 	if (shown >= total || (append && pageLength === 0)) {
 		els.moreRow.hidden = true;
+		els.moreNote.textContent = '';
 		return;
 	}
 	els.moreRow.hidden = false;

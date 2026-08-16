@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "মূল্য (সর্বনিম্ন থেকে)",
 		"reset_filters": "ফিল্টার রিসেট করুন",
 		"resource_details": "রিসোর্সের বিবরণ",
-		"results": "ফলাফল <span id=\"qlabel\"></span>",
+		"results": "ফলাফল",
 		"search": "সার্চ করুন",
 		"sign_in_with_x": "এক্স দিয়ে সাইন-ইন করুন",
 		"solana_any": "Solana (যেকোনো)",

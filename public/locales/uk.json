@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Ціна (від найнижчої)",
 		"reset_filters": "Скинути фільтри",
 		"resource_details": "Деталі ресурсу",
-		"results": "результатів <span id=\"qlabel\"></span>",
+		"results": "результатів",
 		"search": "Пошук",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (будь-яка)",

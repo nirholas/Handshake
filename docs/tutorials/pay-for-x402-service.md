@@ -58,6 +58,13 @@ The sidebar filters map directly to the catalog query:
 
 Type a query (e.g. `weather`, `reputation`, `model`) and the page switches from `/api/bazaar/list` to `/api/bazaar/search`, ranking results against your terms. The footer shows which facilitators answered and which failed, so a single down source never blanks the page.
 
+The live catalog runs to well over a thousand listings and one request returns at most a page of them (200 for a browse, 100 for a search). The result count reads `200 of 1465` so you can tell a page from the whole catalog, and **Load more** fetches the next page with `offset` and appends it. The same `offset` parameter is on both endpoints if you are calling them yourself:
+
+<!-- runnable: 200 walks the catalog a page at a time -->
+```bash
+curl -s "https://three.ws/api/bazaar/list?type=http&limit=50&offset=50"
+```
+
 Each card shows the service name, description, price (minimum USDC across its `accepts`), supported networks, the provider host (links to its [/providers](/providers) profile), and — when several listings do the same job — a **peer hint** comparing prices across them. That last one matters: the same capability is often sold by multiple providers at different prices.
 
 ---
@@ -73,6 +80,8 @@ Find an HTTP service you want and click **Try it** on its card.
 5. The platform settles on-chain and retries the call. The card's receipt area fills in with the result and a link to the on-chain transaction.
 
 What you signed is exactly what the challenge declared — the modal never invents an amount or a recipient. If the seller configured optional charity / round-up giving on a Solana checkout, you'll see a pre-checked, opt-out box that rides the *same* transaction, so you still pay once.
+
+> **Some providers cannot be paid from a browser at all.** The modal confirms the live price by calling the endpoint from the page, and roughly two thirds of the catalog's hosts answer their 402 without any CORS headers, which a browser refuses to let a page read. Those listings say so by name ("<host> does not allow browser requests"), and offer no retry, because retrying cannot change it. Call those endpoints from a server, an agent, or the x402 CLI instead; the price on the card is still the facilitator's live figure.
 
 > **MCP tools** can't be paid through this modal — they need a JSON-RPC `tools/call` envelope the modal doesn't speak. Clicking a `mcp`-type card opens the details panel instead, with the schema you'd wire into an MCP client. To call MCP tools by paying per-call, see [mcp-server-for-your-agent](/tutorials/mcp-server-for-your-agent).
 

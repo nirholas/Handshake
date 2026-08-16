@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "ዋጋ (ዝቅተኛው መጀመሪያ)",
 		"reset_filters": "ማጣሪያዎችን ዳግም አስጀምር",
 		"resource_details": "የሀብት ዝርዝሮች",
-		"results": "ውጤቶች <span id=\"qlabel\"></span>",
+		"results": "ውጤቶች",
 		"search": "ፈልግ",
 		"sign_in_with_x": "በX ግባ",
 		"solana_any": "Solana (ማንኛውም)",

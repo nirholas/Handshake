@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Verð (lægst fyrst)",
 		"reset_filters": "Endurstilla síur",
 		"resource_details": "Upplýsingar um auðlind",
-		"results": "niðurstöður <span id=\"qlabel\"></span>",
+		"results": "niðurstöður",
 		"search": "Leita",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (hvaða sem er)",

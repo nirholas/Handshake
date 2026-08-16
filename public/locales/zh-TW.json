@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "價格（最低優先）",
 		"reset_filters": "重設篩選器",
 		"resource_details": "資源詳情",
-		"results": "結果 <span id=\"qlabel\"></span>",
+		"results": "結果",
 		"search": "搜尋",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana（任何）",

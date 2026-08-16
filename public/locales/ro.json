@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Preț (cel mai mic mai întâi)",
 		"reset_filters": "Resetează filtrele",
 		"resource_details": "Detalii resursă",
-		"results": "rezultate <span id=\"qlabel\"></span>",
+		"results": "rezultate",
 		"search": "Căutare",
 		"sign_in_with_x": "autentificare-cu-x",
 		"solana_any": "Solana (oricare)",

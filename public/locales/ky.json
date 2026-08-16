@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Баасы (эң төмөнкүдөн баштап)",
 		"reset_filters": "Фильтрлерди баштапкы абалга келтирүү",
 		"resource_details": "Ресурстун чоо-жайы",
-		"results": "натыйжалар <span id=\"qlabel\"></span>",
+		"results": "натыйжалар",
 		"search": "Издөө",
 		"sign_in_with_x": "x менен кирүү",
 		"solana_any": "Solana (каалаган)",

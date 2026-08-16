@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "ລາຄາ (ຕໍ່າສຸດກ່ອນ)",
 		"reset_filters": "ຕັ້ງຄ່າຕົວກອງໃໝ່",
 		"resource_details": "ລາຍລະອຽດຊັບພະຍາກອນ",
-		"results": "ຜົນລັບ <span id=\"qlabel\"></span>",
+		"results": "ຜົນລັບ",
 		"search": "ຄົ້ນຫາ",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (ໃດກໍໄດ້)",

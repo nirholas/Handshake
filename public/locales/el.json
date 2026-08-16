@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Τιμή (χαμηλότερη πρώτη)",
 		"reset_filters": "Επαναφορά φίλτρων",
 		"resource_details": "Λεπτομέρειες πόρου",
-		"results": "αποτελέσματα <span id=\"qlabel\"></span>",
+		"results": "αποτελέσματα",
 		"search": "Αναζήτηση",
 		"sign_in_with_x": "sign-in-with-x",
 		"solana_any": "Solana (οποιοδήποτε)",

@@ -1991,7 +1991,7 @@
 		"price_lowest_first": "Giá (thấp nhất trước)",
 		"reset_filters": "Đặt lại bộ lọc",
 		"resource_details": "Chi tiết tài nguyên",
-		"results": "kết quả <span id=\"qlabel\"></span>",
+		"results": "kết quả",
 		"search": "Tìm kiếm",
 		"sign_in_with_x": "đăng nhập bằng x",
 		"solana_any": "Solana (bất kỳ)",
