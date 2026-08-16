@@ -75,7 +75,11 @@
 	font-family: var(--font-body);
 	font-weight: 600;
 	font-size: var(--text-sm);
-	color: var(--accent-ink, #fff);
+	/* --accent-ink is not a token this design system defines, so the old #fff
+	   fallback painted white text on the dark theme's white --accent: the page's
+	   primary action read as a blank slab. --bg-0 inverts with the theme, so the
+	   label stays legible on white (dark) and on blue (light) alike. */
+	color: var(--accent-ink, var(--bg-0));
 	background: var(--accent);
 	border: none;
 	border-radius: var(--radius-md);

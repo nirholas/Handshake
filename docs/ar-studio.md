@@ -3,7 +3,7 @@
 AR Studio turns your camera view into an infinite canvas. Place as many 3D models and avatars as you like into the room around you, drawn from your own forges, the community gallery, a pasted GLB link, or brand-new ones forged from a text prompt without leaving the scene. It scales from full WebXR immersive AR down to camera passthrough down to a desktop 3D preview, and it can go multiplayer: open a shared room and everyone in it builds the same scene live. Share an arrangement with a link, or hand it to your phone with a QR code.
 
 Page: [/ar/studio](https://three.ws/ar/studio)
-API: `POST /api/forge` (in-view text-to-3D) · `GET /api/forge-gallery` (your and community models). Multiplayer runs on a Colyseus room, `studio_world`.
+API: `POST /api/forge` (in-view text-to-3D) · `GET /api/forge-gallery` (your and community models) · `GET /api/objects/library` (the CC0 prop library). Multiplayer runs on a Colyseus room, `studio_world`.
 
 ## Why it exists
 
@@ -25,7 +25,7 @@ The page ([`pages/ar-studio.html`](../pages/ar-studio.html)) only imports [`src/
 - **Objects**: `GET /api/objects/library`, the CC0 prop library behind [/objects](https://three.ws/objects). The whole manifest is fetched once, so the tab's search box filters name and category client-side with no further requests, and renders matches 60 at a time.
 - **GLB link**: paste any https `.glb`: a forge result, a viewer share link's `src`, or your own hosting.
 
-A fifth source is the **in-view forge**: the dock form calls `POST /api/forge` with `{ prompt, backend: 'nvidia' }` (the free NVIDIA NIM / TRELLIS lane), polls `GET /api/forge?job=<id>` until the GLB is ready, remembers it, and drops it into the scene. A sixth is deep links: repeatable `?src=` (paired with `?title=`) and `?forge=<prompt>` boot content on open.
+A sixth source is the **in-view forge**: the dock form calls `POST /api/forge` with `{ prompt, backend: 'nvidia' }` (the free NVIDIA NIM / TRELLIS lane), polls `GET /api/forge?job=<id>` until the GLB is ready, remembers it, and drops it into the scene. A seventh is deep links: repeatable `?src=` (paired with `?title=`) and `?forge=<prompt>` boot content on open.
 
 ### Device-capability ladder
 
@@ -43,7 +43,7 @@ Tap to select (tap empty space to deselect), drag to move a model you own along 
 
 ### Shared live rooms
 
-Rooms run on the same Colyseus server as the other multiplayer surfaces, in a room named `studio_world` ([`multiplayer/src/rooms/StudioRoom.js`](../multiplayer/src/rooms/StudioRoom.js)), filtered by a 6-character room code. "Create a room" seeds the current scene as the starting point; joining via a `?room=CODE` link does not seed. Model transforms travel in a shared logical frame (east/north metres, yaw degrees) so every device maps them onto its own floor. Clients send `model:spawn`, `model:update` (throttled ~12 Hz), and `model:remove`; the server syncs a `StudioState` of models and viewers. Edits are owner-gated (you can only move your own models), models stay when their author leaves, and the server enforces per-room and per-owner caps plus a rate limit. A presence pill shows "N here, M models."
+Rooms run on the same Colyseus server as the other multiplayer surfaces, in a room named `studio_world` ([`multiplayer/src/rooms/StudioRoom.js`](../multiplayer/src/rooms/StudioRoom.js)), filtered by a 6-character room code. The page points at that server with `<meta name="studio-server" content="wss://…">` in [`pages/ar-studio.html`](../pages/ar-studio.html), the same way `/irl` and `/agora` declare theirs; [`src/ar/studio-net.js`](../src/ar/studio-net.js) reads it (falling back to the `irl-server` / `walk-server` tags, then `localhost:2567` in dev). Drop the tag and every room reports "offline" on the live site, because there is no host to infer from `three.ws` itself. The server's WebSocket upgrade is origin-gated, so a room joined from a local dev origin against the production server is refused with a 403 by design. "Create a room" seeds the current scene as the starting point; joining via a `?room=CODE` link does not seed. Model transforms travel in a shared logical frame (east/north metres, yaw degrees) so every device maps them onto its own floor. Clients send `model:spawn`, `model:update` (throttled ~12 Hz), and `model:remove`; the server syncs a `StudioState` of models and viewers. Edits are owner-gated (you can only move your own models), models stay when their author leaves, and the server enforces per-room and per-owner caps plus a rate limit. A presence pill shows "N here, M models."
 
 ### Share via `#s=` hash
 
@@ -87,7 +87,7 @@ You can also hand-build a share link: append `?src=<https glb url>&title=<name>`
 - **Placement caps.** 20 models per local scene; the shared room enforces its own per-room and per-owner caps and a per-client rate limit.
 - **Camera and motion.** Camera denial (`NotAllowedError`) shows "Camera permission is blocked... then try again"; no `getUserMedia` disables the camera button but keeps the 3D preview. Denied motion falls back to drag-look.
 - **XR unsupported.** The Immersive button simply never appears; a failed XR start shows "Camera mode still works." Lost tracking prompts you to move to a brighter, more textured spot.
-- **Rooms offline.** With no multiplayer server configured (production default when unset), the studio stays single-player: "Shared rooms are offline right now, you can still build solo." Departing authors' models remain until the room empties.
+- **Rooms offline.** If the multiplayer server is unreachable or refuses the handshake, the studio drops back to single-player with "Shared rooms are offline right now, you can still build solo." and the room modal stays on its create/join panel. Departing authors' models remain until the room empties.
 - **Persistence.** Your own placed models are saved to local storage (`twx_ar_studio_scene_v1`); `#s=` links replace the working scene. Photo capture composites the camera and WebGL layers to a PNG.
 - **Forge failures.** `503`/unconfigured shows "The generator is offline"; `429` shows a busy message with a retry hint.
 
