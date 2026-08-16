@@ -89,6 +89,19 @@ describe('assertForgePayment', () => {
 		});
 	});
 
+	// Regression: a malformed payment_id used to reach the `where id = $1` lookup
+	// against a uuid column, so Postgres raised 22P02 and the driver error escaped
+	// this module carrying the SQLSTATE as `code` and the raw cast message as
+	// `message`, both of which the High gate in api/forge.js echoes straight to
+	// the caller. It must be a plain payment_invalid, decided before any query.
+	it('rejects a malformed payment_id as payment_invalid without querying the database', async () => {
+		await expect(assertForgePayment({ paymentId: 'deadbeef', refId: REF_ID })).rejects.toMatchObject({
+			status: 402,
+			code: 'payment_invalid',
+		});
+		expect(sql).not.toHaveBeenCalled();
+	});
+
 	it('rejects a non-consumption / non-forge payment (a different action) ', async () => {
 		queueAssert({ payment: paymentRow({ purpose: 'spin' }) });
 		await expect(assertForgePayment({ paymentId: PAY_ID, refId: REF_ID })).rejects.toMatchObject({
