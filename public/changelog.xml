@@ -15,6 +15,14 @@
 			<description>The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.</description>
 		</item>
 		<item>
+			<title>Docs · Skill bundles</title>
+			<link>https://three.ws/docs/skill-bundles</link>
+			<guid isPermaLink="false">2026-08-16:Docs · Skill bundles</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a bundle of an agent's skills is priced from that agent's own sales rather than a rule of thumb: the median-basket and flat-discount bases, the public pricing and backtest endpoint, the owner endpoints that publish and retire a bundle, and the on-chain checkout that unlocks every skill in one payment.</description>
+		</item>
+		<item>
 			<title>A coin world link now unfurls as the live world, and only ever points at three.ws</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-08-16:A coin world link now unfurls as the live world, and only ever points at three.ws</guid>
@@ -71,6 +79,14 @@
 			<description>Four repairs to the Agent Studio. The live stage on the left is meant to be your agent's actual body, but the 3D renderer was leaking its internal debug controls into that panel, including a stray rainbow colour strip painted over the avatar. Those controls are hidden now, everywhere the live agent appears. Second, opening a studio link that names someone else's agent used to quietly load your own agent instead and put it in a full editor under the other agent's address, so any edit went to the wrong record; it now loads the agent the link names and, when it is not yours, says so and offers its public profile. Third, on a phone the five section tabs ran off the edge of the screen, leaving Money and Skills unreachable behind a hidden scrollbar; all five now fit. Finally the status pill on the stage moved to the top so it stops sitting on top of your agent's name, and the walking companion no longer doubles up in the corner on a page that already shows your agent life-size.</description>
 		</item>
 		<item>
+			<title>Agent Wallet's trust panel stops sending you to a page that does not exist</title>
+			<link>https://three.ws/agent-wallet</link>
+			<guid isPermaLink="false">2026-08-16:Agent Wallet's trust panel stops sending you to a page that does not exist</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Trust tab of an agent wallet lists what the wallet's credibility score is built from, and offers the owner concrete ways to raise it. Two of those pointers led nowhere: &quot;Verify your on-chain identity&quot; and, for an already-registered agent, the &quot;On-chain identity&quot; evidence link both pointed at an address the site has never served, so clicking either one landed on a not-found page. They now go somewhere real. The suggestion opens the ERC-8004 registration wizard with the agent's avatar already filled in, and the evidence link opens that identity's public on-chain page. The wallet page also stopped reading its address twice when you open the Vanity tab, and the screen reader announcement was corrected: being signed out, or not owning an agent yet, is the page's normal answer rather than an emergency, so those two screens are now read in turn instead of interrupting whatever was being spoken.</description>
+		</item>
+		<item>
 			<title>Agora citizens show the craft they actually work, and the square fits a phone</title>
 			<link>https://three.ws/agora</link>
 			<guid isPermaLink="false">2026-08-16:Agora citizens show the craft they actually work, and the square fits a phone</guid>
@@ -101,6 +117,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every three.ws newsletter email carries a confirm link and an unsubscribe link that share one token, so a reader who unsubscribed and later opened an older email and clicked confirm was quietly put back on the list. That link no longer signs anyone up: it says you are unsubscribed and leaves it that way, and opting back in starts from the site. Three other fixes ship alongside it. The allocation planner at /meta-allocator no longer serves an empty basket when the model declines to answer, it falls back to the allocator that always produces a real spread across verified leaders. The motion capture uploader told you an upload link lasted ten minutes when it really lasted five, so a large video queued on that promise could fail with nothing explaining why. And an agent whose stablecoin payment is rejected by the x402 Bazaar now gets the Bazaar's own details back instead of a different server's, so its retry is aimed at the right place.</description>
+		</item>
+		<item>
+			<title>AR Studio: &quot;Share live&quot; rooms actually connect now, and the model tray answers the keyboard</title>
+			<link>https://three.ws/ar/studio</link>
+			<guid isPermaLink="false">2026-08-16:AR Studio: &quot;Share live&quot; rooms actually connect now, and the model tray answers the keyboard</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>AR Studio can put several people in one AR scene at once: open a shared room, hand out the six-character code, and everyone places and moves models in the same space. On the live site that never worked. The page was the only realtime surface on three.ws that never named the server it should talk to, so the studio looked for one, found nothing, and told every user &quot;Shared rooms are offline right now&quot; while the server sat there ready to take the connection. It is now pointed at the same realtime service that /irl and /agora use, and two people joining the same code see each other and each other's models immediately. The failure path was hiding a second bug: when a room could not be reached, the studio threw an error partway through cleaning up, which left the room button stuck mid-state. Creating a room also stopped waiting for the connection before it declared success, so the invite link it promises to copy for you never made it to the clipboard. Both are fixed. Separately, the &quot;Add models&quot; tray is now fully keyboard-operable: left and right arrows move between the Recent, Yours, Community, Objects, and GLB link tabs, Home and End jump to the ends, and closing the tray or either dialog hands focus back to the button that opened it instead of dropping you at the top of the page. On a narrow phone the tab strip now fades at whichever edge still has tabs hidden behind it, so Objects and GLB link stop being invisible. A thumbnail that fails to load falls back to the same placeholder mark an image-less model uses, rather than a broken-image icon.</description>
 		</item>
 		<item>
 			<title>AR Studio: the language picker no longer sits on top of the dock controls</title>
@@ -141,6 +165,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>Avatar Studio loads its hair, clothing and accessory traits through a three.ws address that mirrors the open-source trait library, so your browser never talks to an outside CDN. The list of where those traits live was being written using the address in the incoming request, and that address can be set by whoever sends the request. Because the mirror is cached at the edge for a day, one crafted request could have left every Avatar Studio visitor loading trait files from a stranger's server for the next 24 hours. That list is now written the same way for everybody, with no part of it taken from the request, so there is nothing left to steer. Three smaller repairs went in alongside it: asking the mirror how big a file is no longer answers with the compressed size (a trait manifest claimed 2 KB and delivered 20 KB), the mirror will not hand back a web page or script even if the upstream library ever served one, and a failure at the library now answers plainly as either not found or mirror is down instead of passing its raw status through as ours.</description>
+		</item>
+		<item>
+			<title>Avatar Wallet: the send button works again, and a failed reply tells you why</title>
+			<link>https://three.ws/avatar-wallet-chat</link>
+			<guid isPermaLink="false">2026-08-16:Avatar Wallet: the send button works again, and a failed reply tells you why</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The embeddable avatar that holds a Solana wallet had its send button covered by the floating language picker, so pressing it did nothing at any window size. The picker now lives in the page's own top bar, where it can be reached without sitting on top of the composer, and the same stray picker no longer floats over the avatar inside every embed. On a phone the fund-your-wallet notice was pinned to a fixed spot and landed on top of the wallet bar once that bar wrapped onto a second line; the two now flow one under the other at every width. When a reply fails, the page repeats the reason the chat service actually gave, such as being at capacity, instead of a generic apology, and offers a Try again control that re-sends the message without retyping it. On a desktop window the wallet bar, the conversation and the composer now sit in a readable centred column instead of stretching the full width of the screen, and the page carries a proper top-level heading for screen readers.</description>
 		</item>
 		<item>
 			<title>Avatars no longer lose their preview picture forever because a server had a bad minute</title>
@@ -327,6 +359,14 @@
 			<description>Pasting a link to an agent into a chat app, a social post or a group thread is supposed to unfurl into a card with the agent's name, its description and a picture of it. For every agent that actually has an avatar picture, which is nearly all of them, the page that builds that card was crashing instead, so the link unfurled as a bare URL with nothing attached. The card now renders with the agent's own thumbnail, falls back to a freshly rendered portrait when an agent has no thumbnail yet, and an unknown or malformed agent link sends the visitor to the app instead of erroring.</description>
 		</item>
 		<item>
+			<title>Skill Bundles: the page stops telling signed-out visitors they have no agents, and a failed request stops posing as an empty account</title>
+			<link>https://three.ws/bundles</link>
+			<guid isPermaLink="false">2026-08-16:Skill Bundles: the page stops telling signed-out visitors they have no agents, and a failed request stops posing as an empty account</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>/bundles is where you group several of an agent's skills into one purchase and price it from your own sales. It was asking the wrong endpoint for your agents: one that answers with a single agent rather than a list, and answers it even when nobody is signed in. Every visitor, signed in or not, was told &quot;You have no agents yet&quot; and pointed at the create page, and the sign-in prompt the page ships could never appear. It now asks who you are first, then lists what you own, so a signed-out visitor gets the sign-in prompt and an owner gets their agents. Three other things were wrong once you got in. A dropped request while loading your skills or your published bundles was rendered as &quot;this agent has no priced skills&quot; and &quot;no bundles yet&quot;, which is a claim about your account rather than about the network; failures now say so plainly and carry a Retry that re-runs just that call, on the price panel too. Every price was labelled $THREE no matter which token the skill was actually priced in, and each price now carries its real token. And the price field was squeezed to 31 pixels wide on a 320 pixel screen, too narrow to read the number you were typing. The builder also explains the zeros when nobody has yet bought two or more of the selected skills, asks the server for a live &quot;buyers better off&quot; count as you move the price instead of showing a dot, and the page finally has documentation behind the link that has always pointed at it.</description>
+		</item>
+		<item>
 			<title>Skill marketplace: installs are locked to your own clicks, and edits keep their star rating</title>
 			<link>https://three.ws/marketplace</link>
 			<guid isPermaLink="false">2026-08-16:Skill marketplace: installs are locked to your own clicks, and edits keep their star rating</guid>
@@ -477,6 +517,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The /avatar-cli page teaches the four commands of @three-ws/avatar-cli, and the replayed terminal in its hero was marked up as one flat image. A screen reader announced a single caption for it and hid everything inside: the transcript itself, and the Replay button that restarts it. The transcript is now a named region a screen reader can read line by line, Replay is an ordinary button again, and the transcript reports itself as busy while it is still typing rather than being read half-written. Below it, the live viewer proves the embed snippet works, and when the component loader cannot be reached it swaps in a notice with a link to the web component reference. That link is the only way out of the failure, and it neither looked like a link nor showed a focus ring when tabbed to; it now does both. The scrollable code blocks, which the browser makes keyboard focusable, now show the site focus ring instead of a hairline default. And the copy button's clipboard fallback used to tell everyone to press Command C, including on Windows and Linux; it now names the shortcut for the keyboard you are actually on.</description>
+		</item>
+		<item>
+			<title>The Avatar SDK playground now changes the avatar you are looking at, not just the code beside it</title>
+			<link>https://three.ws/avatar-sdk</link>
+			<guid isPermaLink="false">2026-08-16:The Avatar SDK playground now changes the avatar you are looking at, not just the code beside it</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The &quot;Try it live&quot; panel on /avatar-sdk offers four controls, and two of them only rewrote the code sample. Picking agent-3d (the full runtime) left a three-ws-viewer on screen, and flipping the auto-rotate switch printed an auto-rotate line into the snippet while the preview stood still. Both controls now drive the live preview: choosing the full runtime loads it and swaps it in with a note saying the heavy bundle is downloading, and if that download fails the panel says so and falls back to the lightweight viewer instead of leaving you on a broken control. Auto-rotate is a viewer-only attribute, so it is now disabled with a reason when the full runtime is selected, and the snippet you copy no longer contains an attribute that runtime ignores. Separately, on a 320px phone the page had been pushing its own content past the right edge of a window that cannot be scrolled sideways, cutting off the end of the hero, the install command and several code samples; each code block now scrolls inside its own frame and nothing leaves the page. If the 3D viewer cannot load at all, the page now explains that in place of each preview and links to the source, where it used to render three silent empty boxes. Copy buttons that a browser blocks from reaching the clipboard now select the snippet and say to press Ctrl+C rather than doing nothing visible, the framework example tabs can be moved through with the arrow keys, and the Avatar Studio demo button reports that it is opening the moment you press it.</description>
 		</item>
 		<item>
 			<title>The AWS page stops promising AWS invoicing three.ws does not do, and the GLB optimizer reads compressed avatars again</title>
@@ -653,6 +701,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Three repairs on the public API. Web search had been answering nothing but an error: the question went to Google's grounded search as designed, but the model was given a single budget to both think and reply, spent all of it thinking, and came back empty, which we correctly reported as a failure and wrongly did so on every single query. Thinking now has its own allowance on top of the answer, and when a search does come back empty the log says why instead of leaving the next person to guess. Second, the machine-readable directory at the root of the site, the file other agents read to learn what three.ws sells, would hang forever on a handful of odd names rather than saying no such thing, and a request that never ends holds a server slot until it is cut off. Every unknown name now gets a plain not-found. Third, at checkout, a wallet that hands back a payment the network could never accept is now told so at the moment it happens, instead of the modal saying sending and the error arriving later from the payment processor.</description>
+		</item>
+		<item>
+			<title>x402 Bazaar: the whole catalog is reachable, and the page stops blaming your connection for a provider that blocks browsers</title>
+			<link>https://three.ws/bazaar</link>
+			<guid isPermaLink="false">2026-08-16:x402 Bazaar: the whole catalog is reachable, and the page stops blaming your connection for a provider that blocks browsers</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Bazaar advertised a number that was really just the size of one page: it said &quot;200 results&quot; while the facilitators were carrying more than a thousand matching services, and there was no way to reach any of the rest. The count now reads &quot;200 of 1465&quot; and a Load more button walks the catalog a page at a time, on the site and through the list and search endpoints, which both take an offset now. Three other things were quietly wrong. A service description containing one very long unbroken word (a raw URL, an id) stretched the result grid wider than the window, which gave the page a horizontal scrollbar on a desktop and pushed the filter sidebar off the edge of a phone. Changing a filter while results were still loading was silently ignored, so the sidebar could end up describing a filter the cards on screen had never been through; the newest change now always wins. And the search box and every filter field had no visible outline when you tabbed to them, so a keyboard user could not tell where they were. Separately, when a provider refuses browser requests outright, which is most of the catalog, the payment modal used to tell you to check your connection and offer a retry that could never work. It now names the provider and the reason and points you at a server, an agent, or the CLI.</description>
 		</item>
 		<item>
 			<title>You can now teach an agent your GitHub work without waiting on an OAuth app</title>

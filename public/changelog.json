@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T21:10:19.865Z",
+	"generated_at": "2026-08-16T22:10:38.249Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Avatar Artifact viewer",
 			"summary": "The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.",
 			"link": "/docs/avatar-artifact",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "launch",
+			"title": "Docs · Skill bundles",
+			"summary": "How a bundle of an agent's skills is priced from that agent's own sales rather than a rule of thumb: the median-basket and flat-discount bases, the public pricing and backtest endpoint, the owner endpoints that publish and retire a bundle, and the on-chain checkout that unlocks every skill in one payment.",
+			"link": "/docs/skill-bundles",
 			"tags": [
 				"launch"
 			]
@@ -94,6 +104,17 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "Agent Wallet's trust panel stops sending you to a page that does not exist",
+			"summary": "The Trust tab of an agent wallet lists what the wallet's credibility score is built from, and offers the owner concrete ways to raise it. Two of those pointers led nowhere: \"Verify your on-chain identity\" and, for an already-registered agent, the \"On-chain identity\" evidence link both pointed at an address the site has never served, so clicking either one landed on a not-found page. They now go somewhere real. The suggestion opens the ERC-8004 registration wizard with the agent's avatar already filled in, and the evidence link opens that identity's public on-chain page. The wallet page also stopped reading its address twice when you open the Vanity tab, and the screen reader announcement was corrected: being signed out, or not owning an agent yet, is the page's normal answer rather than an emergency, so those two screens are now read in turn instead of interrupting whatever was being spoken.",
+			"link": "/agent-wallet",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "Agora citizens show the craft they actually work, and the square fits a phone",
 			"summary": "Every one of the 200 citizens in the Commons was labelled a Fetcher. The nameplate over each avatar, the citizen list that screen readers and keyboard users navigate by, and the passport header all read the citizen's capability list rather than the craft it is known for. Every citizen carries the fetcher capability, because calling a paid service is the one job anyone in the Commons can take, so that list always begins with Fetcher no matter who you were looking at. Mira the Appraiser and Aria the Sculptor both wore a FETCHER chip, sitting under a coloured ring that was already showing their real craft. Citizens now say what they do: the crowd, the list and the passport agree with each other and with the colour, and a passport leads with the primary craft before the rest of what that citizen is able to claim. On a phone the bottom of the square was a pile-up. The job board, the sign-in bar, the language switcher and the Enter the Commons button all pinned themselves to the same strip of screen, so at 320px wide the button that takes you into the world was completely buried under two other controls and the board's last rows were cut off. Those layers now stack above one another at every screen size, and the stack follows the sign-in bar as it changes height.",
 			"link": "/agora",
@@ -130,6 +151,17 @@
 			"link": "/changelog",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "AR Studio: \"Share live\" rooms actually connect now, and the model tray answers the keyboard",
+			"summary": "AR Studio can put several people in one AR scene at once: open a shared room, hand out the six-character code, and everyone places and moves models in the same space. On the live site that never worked. The page was the only realtime surface on three.ws that never named the server it should talk to, so the studio looked for one, found nothing, and told every user \"Shared rooms are offline right now\" while the server sat there ready to take the connection. It is now pointed at the same realtime service that /irl and /agora use, and two people joining the same code see each other and each other's models immediately. The failure path was hiding a second bug: when a room could not be reached, the studio threw an error partway through cleaning up, which left the room button stuck mid-state. Creating a room also stopped waiting for the connection before it declared success, so the invite link it promises to copy for you never made it to the clipboard. Both are fixed. Separately, the \"Add models\" tray is now fully keyboard-operable: left and right arrows move between the Recent, Yours, Community, Objects, and GLB link tabs, Home and End jump to the ends, and closing the tray or either dialog hands focus back to the button that opened it instead of dropping you at the top of the page. On a narrow phone the tab strip now fades at whichever edge still has tabs hidden behind it, so Objects and GLB link stop being invisible. A thumbnail that fails to load falls back to the same placeholder mark an image-less model uses, rather than a broken-image icon.",
+			"link": "/ar/studio",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -184,6 +216,17 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Avatar Wallet: the send button works again, and a failed reply tells you why",
+			"summary": "The embeddable avatar that holds a Solana wallet had its send button covered by the floating language picker, so pressing it did nothing at any window size. The picker now lives in the page's own top bar, where it can be reached without sitting on top of the composer, and the same stray picker no longer floats over the avatar inside every embed. On a phone the fund-your-wallet notice was pinned to a fixed spot and landed on top of the wallet bar once that bar wrapped onto a second line; the two now flow one under the other at every width. When a reply fails, the page repeats the reason the chat service actually gave, such as being at capacity, instead of a generic apology, and offers a Try again control that re-sends the message without retyping it. On a desktop window the wallet bar, the conversation and the composer now sit in a readable centred column instead of stretching the full width of the screen, and the page carries a proper top-level heading for screen readers.",
+			"link": "/avatar-wallet-chat",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -435,6 +478,18 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "Skill Bundles: the page stops telling signed-out visitors they have no agents, and a failed request stops posing as an empty account",
+			"summary": "/bundles is where you group several of an agent's skills into one purchase and price it from your own sales. It was asking the wrong endpoint for your agents: one that answers with a single agent rather than a list, and answers it even when nobody is signed in. Every visitor, signed in or not, was told \"You have no agents yet\" and pointed at the create page, and the sign-in prompt the page ships could never appear. It now asks who you are first, then lists what you own, so a signed-out visitor gets the sign-in prompt and an owner gets their agents. Three other things were wrong once you got in. A dropped request while loading your skills or your published bundles was rendered as \"this agent has no priced skills\" and \"no bundles yet\", which is a claim about your account rather than about the network; failures now say so plainly and carry a Retry that re-runs just that call, on the price panel too. Every price was labelled $THREE no matter which token the skill was actually priced in, and each price now carries its real token. And the price field was squeezed to 31 pixels wide on a 320 pixel screen, too narrow to read the number you were typing. The builder also explains the zeros when nobody has yet bought two or more of the selected skills, asks the server for a live \"buyers better off\" count as you move the price instead of showing a dot, and the page finally has documentation behind the link that has always pointed at it.",
+			"link": "/bundles",
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "Skill marketplace: installs are locked to your own clicks, and edits keep their star rating",
 			"summary": "Three fixes to the skills marketplace. Installing or removing a skill now carries the same one-time security token every other account action does, so a page you happen to have open elsewhere can no longer quietly add skills to your account behind your back. Editing one of your published skills used to answer back with its rating blanked out, which made the detail panel show 'No ratings yet' on a skill people had actually rated until you reloaded; it now reports the real average and count. And when a skill you were paging past gets deleted or made private mid-scroll, 'Load more' stops cleanly instead of looping the first page of results back into the grid over and over.",
 			"link": "/marketplace",
@@ -631,6 +686,17 @@
 			"title": "The Avatar CLI page terminal is readable by a screen reader, and its recovery link is reachable by keyboard",
 			"summary": "The /avatar-cli page teaches the four commands of @three-ws/avatar-cli, and the replayed terminal in its hero was marked up as one flat image. A screen reader announced a single caption for it and hid everything inside: the transcript itself, and the Replay button that restarts it. The transcript is now a named region a screen reader can read line by line, Replay is an ordinary button again, and the transcript reports itself as busy while it is still typing rather than being read half-written. Below it, the live viewer proves the embed snippet works, and when the component loader cannot be reached it swaps in a notice with a link to the web component reference. That link is the only way out of the failure, and it neither looked like a link nor showed a focus ring when tabbed to; it now does both. The scrollable code blocks, which the browser makes keyboard focusable, now show the site focus ring instead of a hairline default. And the copy button's clipboard fallback used to tell everyone to press Command C, including on Windows and Linux; it now names the shortcut for the keyboard you are actually on.",
 			"link": "/avatar-cli",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The Avatar SDK playground now changes the avatar you are looking at, not just the code beside it",
+			"summary": "The \"Try it live\" panel on /avatar-sdk offers four controls, and two of them only rewrote the code sample. Picking agent-3d (the full runtime) left a three-ws-viewer on screen, and flipping the auto-rotate switch printed an auto-rotate line into the snippet while the preview stood still. Both controls now drive the live preview: choosing the full runtime loads it and swaps it in with a note saying the heavy bundle is downloading, and if that download fails the panel says so and falls back to the lightweight viewer instead of leaving you on a broken control. Auto-rotate is a viewer-only attribute, so it is now disabled with a reason when the full runtime is selected, and the snippet you copy no longer contains an attribute that runtime ignores. Separately, on a 320px phone the page had been pushing its own content past the right edge of a window that cannot be scrolled sideways, cutting off the end of the hero, the install command and several code samples; each code block now scrolls inside its own frame and nothing leaves the page. If the 3D viewer cannot load at all, the page now explains that in place of each preview and links to the source, where it used to render three silent empty boxes. Copy buttons that a browser blocks from reaching the clipboard now select the snippet and say to press Ctrl+C rather than doing nothing visible, the framework example tabs can be moved through with the arrow keys, and the Avatar Studio demo button reports that it is opening the moment you press it.",
+			"link": "/avatar-sdk",
 			"tags": [
 				"fix",
 				"improvement"
@@ -873,6 +939,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "x402 Bazaar: the whole catalog is reachable, and the page stops blaming your connection for a provider that blocks browsers",
+			"summary": "The Bazaar advertised a number that was really just the size of one page: it said \"200 results\" while the facilitators were carrying more than a thousand matching services, and there was no way to reach any of the rest. The count now reads \"200 of 1465\" and a Load more button walks the catalog a page at a time, on the site and through the list and search endpoints, which both take an offset now. Three other things were quietly wrong. A service description containing one very long unbroken word (a raw URL, an id) stretched the result grid wider than the window, which gave the page a horizontal scrollbar on a desktop and pushed the filter sidebar off the edge of a phone. Changing a filter while results were still loading was silently ignored, so the sidebar could end up describing a filter the cards on screen had never been through; the newest change now always wins. And the search box and every filter field had no visible outline when you tabbed to them, so a keyboard user could not tell where they were. Separately, when a provider refuses browser requests outright, which is most of the catalog, the payment modal used to tell you to check your connection and offer a retry that could never work. It now names the provider and the reason and points you at a server, an agent, or the CLI.",
+			"link": "/bazaar",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

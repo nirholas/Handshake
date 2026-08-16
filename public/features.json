@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T21:10:19.687Z",
+	"generated_at": "2026-08-16T22:10:38.040Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2942,6 +2942,16 @@
 					"title": "Docs",
 					"description": "Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/skill-bundles",
+					"title": "Docs · Skill bundles",
+					"description": "How a bundle of an agent's skills is priced from that agent's own sales rather than a rule of thumb: the median-basket and flat-discount bases, the public pricing and backtest endpoint, the owner endpoints that publish and retire a bundle, and the on-chain checkout that unlocks every skill in one payment.",
+					"added": "2026-08-16",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
