@@ -247,14 +247,14 @@
 						</button>
 
 						<!-- Loading -->
-						<div class="pc-overlay" id="pc-loading" hidden>
+						<div class="pc-overlay" id="pc-loading" role="status" aria-live="polite" hidden>
 							<div class="pc-spinner"></div>
 							<h3 id="pc-loading-title" data-i18n="capture.working">Working…</h3>
 							<p id="pc-loading-sub"></p>
 						</div>
 
 						<!-- Error -->
-						<div class="pc-overlay" id="pc-error" hidden>
+						<div class="pc-overlay" id="pc-error" role="alert" hidden>
 							<div class="pc-glyph" style="color:#f0f0f0">
 								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4 M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 							</div>
@@ -267,7 +267,7 @@
 
 						<!-- HUD -->
 						<div class="pc-hud" id="pc-hud" hidden>
-							<div class="pc-hud-label" id="pc-hud-label"></div>
+							<div class="pc-hud-label" id="pc-hud-label" role="status" aria-live="polite"></div>
 							<div class="pc-hud-right">
 								<div class="pc-size-wrap" title="Point size ( [ and ] )">
 									<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="3.5" fill="currentColor"/></svg>

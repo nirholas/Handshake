@@ -716,8 +716,12 @@
 							<span class="value" id="statSize">—</span>
 						</div>
 						<div class="stat">
-							<span class="label" data-i18n="artifact_index.first_paint">First paint</span>
-							<span class="value" id="statTtfp">—</span>
+							<span class="label" data-i18n="artifact_index.fetch">Fetch</span>
+							<span class="value" id="statFetch">…</span>
+						</div>
+						<div class="stat">
+							<span class="label" data-i18n="artifact_index.render">Render</span>
+							<span class="value" id="statRender">…</span>
 						</div>
 						<div class="stat">
 							<span class="label" data-i18n="artifact_index.sandbox">Sandbox</span>
@@ -779,9 +783,11 @@
 				</div>
 				<div class="fact">
 					<h3 data-i18n="artifact_index.size_budget">Size budget</h3>
-					<p data-i18n="artifact_index.glbs_over_6_mb_are_rejected_because">
-						GLBs over 6 MB are rejected, because Claude's artifact panel can hang on huge
-						inlined payloads. The viewer adds a flat 565 KB on top of the model.
+					<p data-i18n="artifact_index.models_over_6_mb_are_rejected_because">
+						Models over 6 MB are rejected, because Claude's artifact panel can hang on huge
+						inlined payloads. Inlining base64-encodes the model, which costs four bytes per
+						three, on top of the flat 565 KB viewer: a 6 MB model lands at roughly 8.6 MB of
+						HTML. That total, not the model, is what the size stat grades.
 					</p>
 				</div>
 			</section>
@@ -805,7 +811,8 @@
 				overlay: $('previewOverlay'),
 				stats: $('stats'),
 				statSize: $('statSize'),
-				statTtfp: $('statTtfp'),
+				statFetch: $('statFetch'),
+				statRender: $('statRender'),
 				statSandbox: $('statSandbox'),
 				snippet: $('claudeSnippet'),
 				toast: $('toast'),
@@ -814,12 +821,32 @@
 				bgHint: $('bgHint'),
 			};
 
-			const state = { url: null, html: null };
+			const state = { url: null, html: null, renderToken: 0 };
 
 			// Public directory feed for the picker. `avatar=1` is load-bearing: an agent
 			// without a publicly readable GLB cannot be rendered as an artifact at all,
 			// so offering it here would hand the visitor a pick that can only 422.
 			const AGENTS_ENDPOINT = '/api/agents/public?sort=popular&limit=12&avatar=1';
+
+			// What the size stat grades against. /api/artifact caps the MODEL at 6 MiB
+			// (MAX_GLB_BYTES) and inlines it as base64, which costs four bytes per three,
+			// on top of the flat 565 KB viewer. So the largest artifact the endpoint can
+			// return is about 8.6 MB, and every byte under that is one it already
+			// approved. Grading those base64 bytes against raw-model numbers is what made
+			// a legal 7 MB artifact read amber and anything from a model over ~5.6 MiB
+			// read red, contradicting the endpoint that had just accepted it.
+			const MAX_MODEL_BYTES = 6 * 1024 * 1024;
+			const VIEWER_BYTES = 565 * 1024;
+			const ARTIFACT_CEILING_BYTES = Math.ceil(MAX_MODEL_BYTES / 3) * 4 + VIEWER_BYTES;
+
+			// An artifact only becomes a problem as it approaches that ceiling, so the
+			// bands are shares of it. Over 100% means the endpoint emitted more than its
+			// own cap allows, which is a server-side change this page should shout about.
+			const SIZE_WARN_RATIO = 0.7;
+
+			// Beyond this the iframe is treated as having failed to come up rather than
+			// leaving the render stat blank forever.
+			const RENDER_TIMEOUT_MS = 30000;
 
 			// Actionable next step per error code from /api/artifact. The endpoint's own
 			// error_description says what went wrong; this says what to do about it.
@@ -919,6 +946,42 @@
 				}
 			}
 
+			// Hand the document to the iframe and time how long the frame takes to
+			// report it loaded: parsed the HTML and ran the inlined three.js + viewer.
+			// That is the honest ceiling on how fast Claude's panel can show anything,
+			// and it is the only render signal the parent can read, because the frame is
+			// a sandboxed opaque origin. The token guards against a second Generate
+			// landing while the first frame is still coming up: only the newest run may
+			// write the stat.
+			function renderIntoFrame(html) {
+				const token = ++state.renderToken;
+				const start = performance.now();
+				els.statRender.textContent = '…';
+				els.statRender.className = 'value';
+				els.statRender.title = 'Time for the sandboxed frame to parse and run the artifact.';
+
+				let settled = false;
+				const settle = (text, cls) => {
+					if (settled || token !== state.renderToken) return;
+					settled = true;
+					clearTimeout(timer);
+					els.frame.removeEventListener('load', onLoad);
+					els.statRender.textContent = text;
+					els.statRender.className = 'value ' + cls;
+				};
+				const onLoad = () => {
+					const ms = performance.now() - start;
+					settle(`${ms.toFixed(0)} ms`, ms > 8000 ? 'bad' : ms > 3000 ? 'warn' : 'ok');
+				};
+				const timer = setTimeout(
+					() => settle(`> ${(RENDER_TIMEOUT_MS / 1000).toFixed(0)} s`, 'bad'),
+					RENDER_TIMEOUT_MS,
+				);
+
+				els.frame.addEventListener('load', onLoad);
+				els.frame.srcdoc = html;
+			}
+
 			async function generate() {
 				const agentId = els.agentInput.value.trim();
 				if (!agentId) {
@@ -937,6 +1000,9 @@
 
 				showLoadingOverlay('Fetching artifact…');
 				setBusy(true);
+				// Retire any frame still coming up from a previous run, so its timing can
+				// never land under the artifact this run is about to fetch.
+				state.renderToken++;
 
 				const t0 = performance.now();
 				let res;
@@ -964,23 +1030,28 @@
 				}
 
 				const html = await res.text();
-				const elapsed = performance.now() - t0;
+				const fetchMs = performance.now() - t0;
 
 				state.html = html;
 				const cspHeader = res.headers.get('content-security-policy') || '';
 				const sandboxOk = /frame-ancestors\s+\*/.test(cspHeader);
 				const sizeBytes = new Blob([html]).size;
+				const ceilingShare = sizeBytes / ARTIFACT_CEILING_BYTES;
 
 				els.statSize.textContent = fmtBytes(sizeBytes);
 				els.statSize.className =
-					'value ' + (sizeBytes > 8 * 1024 * 1024 ? 'bad' : sizeBytes > 5 * 1024 * 1024 ? 'warn' : 'ok');
-				els.statTtfp.textContent = `${elapsed.toFixed(0)} ms`;
-				els.statTtfp.className = 'value ' + (elapsed > 5000 ? 'bad' : elapsed > 2000 ? 'warn' : 'ok');
+					'value ' + (ceilingShare > 1 ? 'bad' : ceilingShare > SIZE_WARN_RATIO ? 'warn' : 'ok');
+				els.statSize.title = `${Math.round(ceilingShare * 100)}% of the ${fmtBytes(
+					ARTIFACT_CEILING_BYTES,
+				)} ceiling a 6 MB model produces once inlined`;
+				els.statFetch.textContent = `${fetchMs.toFixed(0)} ms`;
+				els.statFetch.className = 'value ' + (fetchMs > 5000 ? 'bad' : fetchMs > 2000 ? 'warn' : 'ok');
+				els.statFetch.title = 'Time for /api/artifact to return the whole document.';
 				els.statSandbox.textContent = sandboxOk ? 'compliant' : 'mismatch';
 				els.statSandbox.className = 'value ' + (sandboxOk ? 'ok' : 'bad');
 				els.stats.hidden = false;
 
-				els.frame.srcdoc = html;
+				renderIntoFrame(html);
 				hideOverlay();
 
 				setBusy(false);

@@ -212,7 +212,7 @@ function renderTable() {
 				<td class="rank hide-sm cv-mono">${c.rank ?? '—'}</td>
 				<td class="left name-cell"><a href="${esc(href)}"><span class="inner">
 					${avatarStack(c.top_3_coins)}
-					<span class="nm">${esc(c.name)}</span>
+					<span class="nm" title="${esc(c.name)}">${esc(c.name)}</span>
 				</span></a></td>
 				<td class="dim">${esc(formatUsd(c.market_cap))}</td>
 				${pctCell(c.market_cap_change_24h)}

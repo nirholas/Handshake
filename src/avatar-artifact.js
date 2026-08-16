@@ -19,6 +19,7 @@
  * alongside the rest of the page.
  */
 
+import { log } from './shared/log.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
 
@@ -446,6 +447,7 @@ function buildArtifactStage(scene, camera, renderer, artifact) {
 	scene.add(pivot);
 
 	let mixer = null;
+	let anim = null;
 	let loaded = false;
 	let focusY = 1.0;
 	let baseDist = 3.2;
@@ -510,11 +512,18 @@ function buildArtifactStage(scene, camera, renderer, artifact) {
 			baseDist = Math.max(2.6, radius * 1.55);
 
 			if (gltf.animations?.length) {
+				// The artifact carries its own motion: the author's intent wins.
 				mixer = new THREE.AnimationMixer(root);
 				const clip =
 					gltf.animations.find((c) => /idle|breath|stand/i.test(c.name || '')) ||
 					gltf.animations[0];
 				mixer.clipAction(clip).play();
+			} else {
+				// It does not, which is the normal case for a three.ws avatar: the
+				// clips live in the shared library and are retargeted onto whatever
+				// skeleton this rig uses. Without it every avatar would greet a
+				// visitor in its bind-pose T-pose.
+				breatheLife(root);
 			}
 			loaded = true;
 		},
@@ -533,12 +542,45 @@ function buildArtifactStage(scene, camera, renderer, artifact) {
 		},
 	);
 
+	/**
+	 * Drive a clip-less rig from the shared retargeted library (idle). Any
+	 * humanoid skeleton the canonicalizer recognises plays it; a static prop or
+	 * a non-humanoid rig reports unsupported and simply stands still, which is
+	 * the honest result for a chair. The library is imported here rather than at
+	 * the top of the module so the house portrait never downloads a retargeter.
+	 */
+	async function breatheLife(root) {
+		try {
+			const { AnimationManager } = await import('./animation-manager.js');
+			const manager = new AnimationManager();
+			manager.attach(root, { avatarUrl: artifact.url });
+			if (!manager.supportsCanonicalClips()) return;
+			const res = await fetch('/animations/manifest.json', { cache: 'force-cache' });
+			if (!res.ok) throw new Error(`HTTP ${res.status} loading the animation manifest`);
+			const defs = (await res.json()).filter((d) => d.name === 'idle');
+			if (!defs.length) return;
+			manager.setAnimationDefs(defs);
+			await manager.loadAll();
+			// A rig whose upper arms could not be name-mapped keeps the clip's
+			// torso and legs but frozen bind-pose arms; this swings them down.
+			manager.relaxUndrivenArms();
+			manager.play('idle');
+			anim = manager;
+		} catch (err) {
+			// A missing clip library is a downgrade, never a failure: the model
+			// is on screen and inspectable either way.
+			log.warn('[avatar-artifact] idle clip unavailable:', err?.message);
+		}
+	}
+
 	const clock = new THREE.Clock();
 
 	return {
 		ready: () => loaded,
 		update(t, mouse, zoom, reduceMotion) {
-			if (mixer) mixer.update(clock.getDelta());
+			const delta = clock.getDelta();
+			if (mixer) mixer.update(delta);
+			if (anim) anim.update(delta);
 
 			// Turntable: the shared look-target orbits the camera instead of
 			// turning a head, because an arbitrary GLB has no head to turn.

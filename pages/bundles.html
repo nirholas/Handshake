@@ -533,18 +533,20 @@
 				res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles?' + qs);
 			} catch {
 				if (seq !== pricingSeq) return;
-				return priceError('Could not reach the pricing service. Change a skill to retry.');
+				return priceError('<b>Could not reach the pricing service.</b> Your selection is intact.', true);
 			}
 			if (seq !== pricingSeq) return; // a newer request already answered
 			show($('bd-price-loading'), false);
 
 			if (!res.ok) {
 				const b = await res.json().catch(() => null);
-				return priceError(esc(b?.error_description || b?.message || ('Pricing failed (HTTP ' + res.status + ').')));
+				// 4xx is the server answering (mixed currencies, unpriced skills); 5xx is
+				// the server failing, which is the only one a retry can fix.
+				return priceError(esc(b?.error_description || b?.message || ('Pricing failed (HTTP ' + res.status + ').')), res.status >= 500);
 			}
 			const body = await res.json().catch(() => null);
 			pricing = body?.data || null;
-			if (!pricing) return priceError('The pricing service returned an unreadable response.');
+			if (!pricing) return priceError('The pricing service returned an unreadable response.', true);
 
 			decimals = Number(pricing.mint_decimals ?? decimals);
 			sumOfParts = Number(fromAtomic(pricing.sum_of_parts_atomic));
@@ -553,11 +555,17 @@
 			renderPricing();
 		}
 
-		function priceError(msg) {
+		// `retry` is offered only for failures a retry can fix. A 409 on mixed
+		// currencies or a 404 on unpriced skills is the server answering correctly;
+		// asking again would return the same answer, so the seller gets the reason
+		// and no button that pretends otherwise.
+		function priceError(msg, retry) {
 			show($('bd-price-loading'), false);
 			show($('bd-price-body'), false);
-			$('bd-price-error').innerHTML = msg;
-			show($('bd-price-error'), true);
+			const el = $('bd-price-error');
+			el.innerHTML = msg;
+			if (retry) el.appendChild(retryButton(fetchPricing));
+			show(el, true);
 		}
 
 		function renderPricing() {

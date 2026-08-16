@@ -26,6 +26,15 @@
 	gap: 0.625rem;
 }
 
+/* Coin names are short, so the shared cell caps them at 140px. Category names
+   are sentences ("World Liberty Financial Portfolio"), which that cap ellipsised
+   even on a 1440px screen with half the row empty. Give them the room the layout
+   already has, and keep truncating only where the viewport genuinely runs out. */
+.cv-table .name-cell .nm {
+	max-width: min(28rem, 42vw);
+	white-space: nowrap;
+}
+
 /* Search box and the live "showing N of M" readout share one row on desktop and
    stack on narrow screens, where the search field takes the full width. */
 .cat-filters {

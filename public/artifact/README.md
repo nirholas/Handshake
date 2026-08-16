@@ -33,11 +33,19 @@ Claude embeds the artifact and the live 3D character renders inline.
 
 - **GLB size cap: 6 MB** — larger avatars return 413. Slimmer GLBs paste faster and render sooner.
 - **Viewer overhead: ~565 KB** — three.js + GLTFLoader + viewer code, inlined into every response.
+- **Artifact ceiling: ~8.6 MB** — the model is inlined as base64, which costs four bytes per three, so a 6 MB GLB becomes 8 MB of text before the viewer is added. Budget against this total, not against the 6 MB model cap: it is what Claude actually has to load.
 - **Rate limit: 600 req/min per IP** — shared with the widget-read preset.
 
 ## How to test before pasting
 
 The page at [`/artifact/`](https://three.ws/artifact/) renders the response inside a sandboxed iframe whose CSP mirrors Claude's. If it works there, it works in Claude.
+
+It reports three numbers per build. **Artifact** is the size of the whole document, graded
+against the ~8.6 MB ceiling above rather than the 6 MB model cap. **Fetch** is how long
+`/api/artifact` took to return those bytes. **Render** is how long the sandboxed frame then
+took to parse the document and run the inlined viewer, which is the closest measurable
+stand-in for how quickly Claude's panel can show anything: the frame is an opaque origin, so
+the page cannot read paint timing out of it directly.
 
 You do not need to know an agent ID to try it: the builder lists real public agents that
 carry an embeddable avatar (`GET /api/agents/public?sort=popular&limit=12&avatar=1`), and

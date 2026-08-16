@@ -26,6 +26,10 @@
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<!-- Shared rooms ("Share live") ride the same Colyseus service as /irl and /agora,
+	     in its own studio_world room. Without this tag src/ar/studio-net.js resolves an
+	     empty server URL on three.ws and every room silently reports "offline". -->
+	<meta name="studio-server" content="wss://three-ws-multiplayer-93741856042.us-central1.run.app" />
 	<style>
 		:root {
 			--bg: #000;
@@ -260,8 +264,17 @@
 		@keyframes ars-sheet { from { transform: translateY(24px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
 		.ars-tray-head { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
 		.ars-tray-head h2 { margin: 0; font-size: 15px; flex: 1 1 auto; }
+		/* The strip scrolls at phone widths with the scrollbar hidden, so the only
+		   sign that Objects and GLB link exist is an edge fade. Both edges are
+		   driven by data-scroll (set in src/ar-studio.js) so the cue points at
+		   whichever direction still has tabs, in any translation. */
 		.ars-tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
 		.ars-tabs::-webkit-scrollbar { display: none; }
+		.ars-tabs[data-scroll~="end"] { mask-image: linear-gradient(to right, #000 82%, transparent 100%); }
+		.ars-tabs[data-scroll~="start"] { mask-image: linear-gradient(to left, #000 82%, transparent 100%); }
+		.ars-tabs[data-scroll~="start"][data-scroll~="end"] {
+			mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%);
+		}
 		.ars-tab {
 			appearance: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 650;
 			color: var(--ink-dim); background: rgba(255, 255, 255, 0.05);
@@ -429,14 +442,14 @@
 				<h2 data-i18n="ar_studio.add_models_2">Add models</h2>
 				<button class="ars-icon-btn" id="ars-tray-close" type="button" aria-label="Close" data-i18n-attr="aria-label:ar_studio.close_arialabel">✕</button>
 			</div>
-			<div class="ars-tabs" role="tablist">
-				<button class="ars-tab" type="button" role="tab" data-tab="recent" aria-selected="false" data-i18n="ar_studio.recent_forges">Recent forges</button>
-				<button class="ars-tab" type="button" role="tab" data-tab="yours" aria-selected="false" data-i18n="ar_studio.yours">Yours</button>
-				<button class="ars-tab" type="button" role="tab" data-tab="community" aria-selected="false" data-i18n="ar_studio.community">Community</button>
-				<button class="ars-tab" type="button" role="tab" data-tab="objects" aria-selected="false" data-i18n="ar_studio.objects">Objects</button>
-				<button class="ars-tab" type="button" role="tab" data-tab="link" aria-selected="false" data-i18n="ar_studio.glb_link">GLB link</button>
+			<div class="ars-tabs" role="tablist" aria-label="Model sources">
+				<button class="ars-tab" type="button" role="tab" id="ars-tab-recent" data-tab="recent" aria-selected="false" aria-controls="ars-tray-body" data-i18n="ar_studio.recent_forges">Recent forges</button>
+				<button class="ars-tab" type="button" role="tab" id="ars-tab-yours" data-tab="yours" aria-selected="false" aria-controls="ars-tray-body" data-i18n="ar_studio.yours">Yours</button>
+				<button class="ars-tab" type="button" role="tab" id="ars-tab-community" data-tab="community" aria-selected="false" aria-controls="ars-tray-body" data-i18n="ar_studio.community">Community</button>
+				<button class="ars-tab" type="button" role="tab" id="ars-tab-objects" data-tab="objects" aria-selected="false" aria-controls="ars-tray-body" data-i18n="ar_studio.objects">Objects</button>
+				<button class="ars-tab" type="button" role="tab" id="ars-tab-link" data-tab="link" aria-selected="false" aria-controls="ars-tray-body" data-i18n="ar_studio.glb_link">GLB link</button>
 			</div>
-			<div class="ars-tray-body" id="ars-tray-body"></div>
+			<div class="ars-tray-body" id="ars-tray-body" role="tabpanel" tabindex="0" aria-labelledby="ars-tab-recent"></div>
 		</div>
 	</div>
 

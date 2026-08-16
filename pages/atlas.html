@@ -34,6 +34,14 @@
 				max-width: 1080px;
 				margin: 0 auto;
 				padding: calc(var(--space-md) * 2) var(--space-md) calc(var(--space-md) * 4);
+				/* The no-match state echoes whatever the visitor typed, and route paths
+				   are single unbreakable tokens. Either can be longer than the line
+				   box, and without this a 240-character query gave the whole document
+				   a horizontal scrollbar (1912px wide at a 1440px viewport). `anywhere`
+				   rather than `break-word` because only `anywhere` also shrinks
+				   min-content, which is what keeps <main> and the grid tracks from
+				   being pushed past a 320px viewport by the same string. */
+				overflow-wrap: anywhere;
 			}
 			.at-crumb {
 				font: var(--text-sm) var(--font-body);

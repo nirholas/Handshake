@@ -383,6 +383,14 @@
 			<description>The gallery ranked creators and paged the feed over only the newest 120 creations, however many the feed actually held. A creator's older work was invisible in their profile count, the top-creator board scored people on a fraction of their output, and scrolling the gallery dead-ended early with items still left to show. It now reads the full feed depth it always meant to, and does it in two database round trips instead of two per item, so the deeper read loads faster than the shallow one did.</description>
 		</item>
 		<item>
+			<title>The FLAME paper link in the Avatar Engines Atlas opens the paper again</title>
+			<link>https://three.ws/avatar-engines</link>
+			<guid isPermaLink="false">2026-08-16:The FLAME paper link in the Avatar Engines Atlas opens the paper again</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>FLAME is the parametric head model underneath most of the photoreal-head engines in the atlas at /avatar-engines, so its Paper button is one a builder actually follows. It pointed at a Max Planck publication page that answers every visitor, browsers included, with a 403 Forbidden, so the button led to an error page instead of the paper. It now opens the paper PDF that the FLAME project site itself links to. All 68 outbound links on the page were re-checked afterwards and every one of them resolves.</description>
+		</item>
+		<item>
 			<title>The Forge community board remembers what you liked</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-08-16:The Forge community board remembers what you liked</guid>

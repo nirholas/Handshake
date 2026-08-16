@@ -1634,16 +1634,16 @@
     "coins": "Coins",
     "dashboard": "Dashboard",
     "discover": "Discover",
-    "meta_description": "Put your pump.fun coin on autopilot. Your agent runs buybacks and distributes creator fees to holders on rules you set — and narrates every on-chain move in real time.",
+    "meta_description": "A hands-off token cockpit. Set the rules (buyback floors, distribution floors, and guardrails), and your agent runs buybacks and pays creator fees out to holders on its own, narrating every on-chain move.",
     "meta_og_description": "An autonomous coin agent that runs buybacks and distributes fees on your rules, narrated live by its avatar.",
-    "meta_og_title": "Coin Autopilot — three.ws",
-    "meta_title": "Coin Autopilot — three.ws",
-    "meta_twitter_description": "A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.",
+    "meta_og_title": "Coin Autopilot · three.ws",
+    "meta_title": "Coin Autopilot · three.ws",
+    "meta_twitter_description": "A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously.",
     "meta_twitter_title": "Coin Autopilot · three.ws",
     "put_your_coin_on_autopilot": "Put your coin on autopilot.",
     "three_ws": "<span class=\"brand-mark\"></span>three.ws",
     "walk": "Walk",
-    "your_agent_runs_the_whole_coin_lifecycle": "Your agent runs the whole coin lifecycle on its own: it buys back & burns from creator fees and distributes payments to holders — on the rules you set. Every on-chain move is narrated live by your agent's avatar."
+    "your_agent_runs_the_whole_coin_lifecycle": "Your agent runs the whole coin lifecycle on its own: it buys back & burns from creator fees and distributes payments to holders, on the rules you set. Every on-chain move is narrated live by your agent's avatar."
   },
   "autopilot_activity": {
     "activity": "Activity",

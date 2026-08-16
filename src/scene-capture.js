@@ -38,7 +38,16 @@ function refreshStats() {
 	// idles by design, so a static reading would misrepresent performance.
 	if (s.autoRotate && s.fps) bits.push(`${s.fps} fps`);
 	if (s.colorMode && s.colorMode !== 'rgb') bits.push(COLOR_LABELS[s.colorMode]);
-	$('#pc-hud-label').textContent = bits.join(' · ');
+	setHudLabel(bits.join(' · '));
+}
+
+// The HUD label ellipsises on a narrow stage, so mirror it into title/aria-label:
+// a truncation notice that only fits on a desktop is not a notice.
+function setHudLabel(text) {
+	const el = $('#pc-hud-label');
+	el.textContent = text;
+	el.title = text;
+	el.setAttribute('aria-label', text);
 }
 
 // ── overlay states ────────────────────────────────────────────────────────────
@@ -69,7 +78,7 @@ function setError(title, sub) {
 }
 function setLive(label) {
 	baseLabel = label;
-	$('#pc-hud-label').textContent = label;
+	setHudLabel(label);
 	$('#pc-hud').hidden = false;
 	for (const k of ['pc-idle', 'pc-loading', 'pc-error']) $(`#${k}`).hidden = true;
 	for (const id of ['pc-size', 'pc-color', 'pc-rotate', 'pc-shot', 'pc-recenter']) {

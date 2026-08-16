@@ -849,7 +849,10 @@ function openRoomModal() {
 }
 
 function closeRoomModal() {
-	if (roomModal) roomModal.hidden = true;
+	if (!roomModal) return;
+	const hadFocus = roomModal.contains(document.activeElement);
+	roomModal.hidden = true;
+	if (hadFocus) restoreFocus(roomBtn);
 }
 
 // Unlock the arrival chime inside a real user gesture (the same tap that opens
@@ -1542,6 +1545,13 @@ forgeForm?.addEventListener('submit', (e) => {
 let trayTab = 'recent';
 const trayCache = new Map(); // tab → items
 
+// Closing a dialog must hand the keyboard back to whatever opened it; dropping
+// focus on <body> strands a keyboard user at the top of the document with the
+// scene they were just editing behind them.
+function restoreFocus(el) {
+	if (el && document.contains(el) && !el.hidden) el.focus?.();
+}
+
 function openTray(tab = trayTab) {
 	if (!tray) return;
 	tray.hidden = false;
@@ -1552,8 +1562,17 @@ function openTray(tab = trayTab) {
 
 function closeTray() {
 	if (!tray) return;
+	const wasOpen = !tray.hidden;
 	tray.hidden = true;
 	addBtn?.setAttribute('aria-expanded', 'false');
+	if (wasOpen && tray.contains(document.activeElement)) restoreFocus(addBtn);
+}
+
+function closeQrModal() {
+	if (!qrModal) return;
+	const hadFocus = qrModal.contains(document.activeElement);
+	qrModal.hidden = true;
+	if (hadFocus) restoreFocus(qrBtn);
 }
 
 addBtn?.addEventListener('click', () => (tray?.hidden ? openTray() : closeTray()));
@@ -1565,7 +1584,7 @@ document.addEventListener('keydown', (e) => {
 	if (e.key === 'Escape') {
 		if (tray && !tray.hidden) closeTray();
 		else if (roomModal && !roomModal.hidden) closeRoomModal();
-		else if (qrModal && !qrModal.hidden) qrModal.hidden = true;
+		else if (qrModal && !qrModal.hidden) closeQrModal();
 		else select(null);
 	}
 });
@@ -1626,16 +1645,56 @@ document.addEventListener('keydown', (e) => {
 	}
 });
 
-tray?.querySelectorAll('[data-tab]').forEach((btn) => {
+const trayTabs = [...(tray?.querySelectorAll('[data-tab]') || [])];
+trayTabs.forEach((btn) => {
 	btn.addEventListener('click', () => setTrayTab(btn.dataset.tab));
 });
 
+// A role="tablist" owes the keyboard the arrow-key contract: Left/Right (and
+// Home/End) move between tabs and select as they go, with a roving tabindex so
+// Tab enters the strip once and then leaves it for the panel.
+tray?.querySelector('.ars-tabs')?.addEventListener('keydown', (e) => {
+	const i = trayTabs.indexOf(document.activeElement);
+	if (i === -1) return;
+	const last = trayTabs.length - 1;
+	const next = e.key === 'ArrowRight' ? (i === last ? 0 : i + 1)
+		: e.key === 'ArrowLeft' ? (i === 0 ? last : i - 1)
+		: e.key === 'Home' ? 0
+		: e.key === 'End' ? last
+		: -1;
+	if (next === -1) return;
+	e.preventDefault();
+	setTrayTab(trayTabs[next].dataset.tab);
+	trayTabs[next].focus();
+});
+
+// Mark which way the tab strip can still scroll so the CSS edge fade points at
+// the hidden tabs instead of guessing (see .ars-tabs[data-scroll] in the page).
+const tabStrip = tray?.querySelector('.ars-tabs');
+function updateTabScrollHints() {
+	if (!tabStrip) return;
+	const slack = tabStrip.scrollWidth - tabStrip.clientWidth;
+	const hints = [];
+	if (slack > 2 && tabStrip.scrollLeft > 2) hints.push('start');
+	if (slack > 2 && tabStrip.scrollLeft < slack - 2) hints.push('end');
+	tabStrip.dataset.scroll = hints.join(' ');
+}
+tabStrip?.addEventListener('scroll', updateTabScrollHints, { passive: true });
+window.addEventListener('resize', updateTabScrollHints);
+
 function setTrayTab(tab) {
 	trayTab = tab;
-	tray?.querySelectorAll('[data-tab]').forEach((b) => {
-		b.classList.toggle('is-active', b.dataset.tab === tab);
-		b.setAttribute('aria-selected', String(b.dataset.tab === tab));
+	trayTabs.forEach((b) => {
+		const on = b.dataset.tab === tab;
+		b.classList.toggle('is-active', on);
+		b.setAttribute('aria-selected', String(on));
+		b.tabIndex = on ? 0 : -1;
+		if (on) {
+			trayBody?.setAttribute('aria-labelledby', b.id);
+			b.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+		}
 	});
+	updateTabScrollHints();
 	renderTray();
 }
 
@@ -1999,10 +2058,13 @@ qrBtn?.addEventListener('click', () => {
 		link.textContent = url.length > 64 ? `${url.slice(0, 61)}…` : url;
 	}
 	qrModal.hidden = false;
+	// aria-modal="true" is a promise that focus is inside the dialog; leaving it
+	// on the trigger reads the HUD behind instead of the QR code.
+	$('ars-qr-close')?.focus?.();
 });
-$('ars-qr-close')?.addEventListener('click', () => { qrModal.hidden = true; });
+$('ars-qr-close')?.addEventListener('click', closeQrModal);
 qrModal?.addEventListener('click', (e) => {
-	if (e.target === qrModal) qrModal.hidden = true;
+	if (e.target === qrModal) closeQrModal();
 });
 
 // ── Render loop ───────────────────────────────────────────────────────────────
