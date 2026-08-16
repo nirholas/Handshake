@@ -733,6 +733,11 @@ body {
 	color: #ff4444;
 	margin-left: 2px;
 }
+/* Reachable but gated behind an account: dimmed, still clickable so the click
+   can explain itself and offer the sign-in link. */
+.br-pill.locked { opacity: 0.55; }
+.br-pill.locked .br-pill-dot { opacity: 0.3; }
+.br-pill-lock { font-size: 9px; margin-left: 2px; filter: grayscale(1); }
 .br-pill-dot {
 	width: 7px;
 	height: 7px;

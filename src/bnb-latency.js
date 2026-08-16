@@ -15,6 +15,7 @@ import {
 	laneState,
 	headlineState,
 	ageLabel,
+	measuredAtMs,
 	allLanesDown,
 	sparklineBars,
 	speedupRatio,
@@ -202,13 +203,13 @@ function applyPayload(payload) {
 			store.history.push(lane.avgBlockTimeMs);
 			if (store.history.length > MAX_HISTORY) store.history.shift();
 			store.last = lane;
-			store.lastLiveAt = Date.parse(lane.measuredAt) || Date.now();
+			store.lastLiveAt = measuredAtMs(lane.measuredAt);
 			anyLive = true;
 		}
 		renderLane(lane);
 	}
 	lastLanes = payload.lanes;
-	if (anyLive) lastSuccessAt = Date.now();
+	if (anyLive) lastSuccessAt = measuredAtMs(payload.measuredAt);
 	renderHeadline(payload.lanes.find((l) => l.id === 'bnb'));
 	renderUpdated();
 	// Every lane down is an outage the user can act on (retry), whether it
@@ -243,6 +244,12 @@ async function runPoll() {
 	try {
 		const res = await fetch('/api/bnb/latency', {
 			headers: { accept: 'application/json' },
+			// The endpoint ships stale-while-revalidate for crawlers and shared
+			// caches, which let the browser replay a body up to 15s old while
+			// this page claims a fresh measurement. A poll on a live race has to
+			// go to the network; the endpoint's own 4s cache is what protects
+			// the upstream RPCs from the traffic.
+			cache: 'no-store',
 			signal: AbortSignal.timeout(8000),
 		});
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);

@@ -224,12 +224,22 @@ function toast(msg) {
 	toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-function showNotice(msg) {
+// A notice can carry one action, so "sign in to use this model" is a link the
+// user can follow instead of an instruction they have to go act on themselves.
+function showNotice(msg, action) {
 	const el = $('brNotice');
 	el.textContent = msg;
+	if (action) {
+		el.append(' ');
+		const a = document.createElement('a');
+		a.href = action.href;
+		a.textContent = action.label;
+		a.className = 'br-notice-action';
+		el.append(a);
+	}
 	el.style.display = 'block';
 	clearTimeout(el._t);
-	el._t = setTimeout(() => { el.style.display = 'none'; }, 3500);
+	el._t = setTimeout(() => { el.style.display = 'none'; }, action ? 8000 : 3500);
 }
 
 // ── Markdown renderer ────────────────────────────────────────────────────────
@@ -710,7 +720,14 @@ async function fetchProviderRoster() {
 	updateSendAvailability();
 
 	try {
-		const res = await fetch('/api/brain/chat', { headers: { accept: 'application/json' } });
+		// Both answers are needed before a line-up can be chosen: the roster says
+		// which models exist, the session says which of them this visitor may
+		// actually call. They run together so the bar still fills in one round
+		// trip.
+		const [res] = await Promise.all([
+			fetch('/api/brain/chat', { headers: { accept: 'application/json' } }),
+			hasSession().then(authed => { state.authed = authed; }),
+		]);
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 		const providers = Array.isArray(data.providers) ? data.providers.filter(p => p?.key) : [];
@@ -1162,7 +1179,7 @@ function bindPlayControlEvents() {
 				const key = pill.dataset.key;
 				const spec = PMAP.get(key);
 				if (isLocked(spec)) {
-					showNotice(`${spec.label} needs an account. Sign in to add it.`);
+					showNotice(`${spec.label} needs an account.`, { href: '/login?redirect=/brain', label: 'Sign in' });
 					return;
 				}
 				if (state.active.has(key)) {
@@ -1180,7 +1197,17 @@ function bindPlayControlEvents() {
 		});
 	} else {
 		const sel = document.getElementById('brFocusSel');
-		if (sel) sel.addEventListener('change', () => { state.focusKey = sel.value; persistSelection(); renderCanvas(); });
+		if (sel) sel.addEventListener('change', () => {
+			const spec = PMAP.get(sel.value);
+			if (isLocked(spec)) {
+				showNotice(`${spec.label} needs an account.`, { href: '/login?redirect=/brain', label: 'Sign in' });
+				sel.value = state.focusKey;
+				return;
+			}
+			state.focusKey = sel.value;
+			persistSelection();
+			renderCanvas();
+		});
 	}
 }
 

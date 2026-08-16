@@ -12,6 +12,7 @@ import {
 	laneState,
 	headlineState,
 	ageLabel,
+	measuredAtMs,
 	allLanesDown,
 	sparklineBars,
 	speedupRatio,
@@ -95,6 +96,20 @@ describe('ageLabel', () => {
 		expect(ageLabel(60_000)).toBe('1m ago');
 		expect(ageLabel(3_600_000)).toBe('1h ago');
 		expect(ageLabel(86_400_000)).toBe('1d ago');
+	});
+});
+
+describe('measuredAtMs', () => {
+	const now = Date.parse('2026-07-08T12:00:30.000Z');
+	it('uses the payload measurement time, not the moment bytes arrived', () => {
+		expect(measuredAtMs('2026-07-08T12:00:18.000Z', now)).toBe(Date.parse('2026-07-08T12:00:18.000Z'));
+	});
+	it('falls back to now for a missing or unparseable stamp', () => {
+		expect(measuredAtMs(null, now)).toBe(now);
+		expect(measuredAtMs('not-a-date', now)).toBe(now);
+	});
+	it('clamps a server clock running ahead of the client', () => {
+		expect(measuredAtMs('2026-07-08T12:05:00.000Z', now)).toBe(now);
 	});
 });
 
