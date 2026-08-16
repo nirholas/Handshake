@@ -11,15 +11,11 @@ const sqlMock = vi.fn(async () => []);
 const getAvatarMock = vi.fn();
 const renderGlbToPngMock = vi.fn();
 const putObjectMock = vi.fn(async () => {});
-const publicUrlMock = vi.fn((k) => `https://cdn.test/${k}`);
 
 vi.mock('../../api/_lib/db.js', () => ({ sql: sqlMock, isDbUnavailableError: () => false, isDbCapacityError: () => false }));
 vi.mock('../../api/_lib/avatars.js', () => ({ getAvatar: getAvatarMock }));
 vi.mock('../../api/_lib/render-glb.js', () => ({ renderGlbToPng: renderGlbToPngMock }));
-vi.mock('../../api/_lib/r2.js', () => ({
-	putObject: putObjectMock,
-	publicUrl: publicUrlMock,
-}));
+vi.mock('../../api/_lib/r2.js', () => ({ putObject: putObjectMock }));
 
 vi.mock('../../api/_lib/env.js', () => ({
 	env: { APP_ORIGIN: 'http://localhost:3000' },
@@ -55,8 +51,6 @@ beforeEach(() => {
 	renderGlbToPngMock.mockReset();
 	putObjectMock.mockReset();
 	putObjectMock.mockResolvedValue(undefined);
-	publicUrlMock.mockReset();
-	publicUrlMock.mockImplementation((k) => `https://cdn.test/${k}`);
 	__testInternals._renderLocks.clear();
 });
 

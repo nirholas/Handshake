@@ -168,3 +168,54 @@ describe('POST /api/mcp-bazaar: free discovery for plain clients', () => {
 		expect(res.statusCode).toBe(402);
 	});
 });
+
+// The identity fix above covered the challenge a caller gets BEFORE paying.
+// The re-challenge a caller gets when their payment fails ran through a
+// different helper (sendX402Error) that was never handed BAZAAR_CHALLENGE, so
+// the payer who most needs an accurate envelope, the one about to sign a
+// corrected payment, was the one who got the main server's description back.
+// Reproduced against production on 2026-08-16 before the fix.
+describe('POST /api/mcp-bazaar: the re-challenge after a failed payment', () => {
+	const wrongRecipientPayment = Buffer.from(
+		JSON.stringify({
+			x402Version: 1,
+			scheme: 'exact',
+			network: 'eip155:8453',
+			payload: {
+				signature: `0x${'0'.repeat(130)}`,
+				authorization: {
+					from: `0x${'1'.repeat(40)}`,
+					to: `0x${'2'.repeat(40)}`,
+					value: '1000',
+					validAfter: '0',
+					validBefore: '99999999999',
+					nonce: `0x${'3'.repeat(64)}`,
+				},
+			},
+		}),
+		'utf8',
+	).toString('base64');
+
+	it('names the bazaar, not the main MCP server', async () => {
+		const res = makeRes();
+		await handler(
+			makeReq({ body: searchCall, headers: { 'x-payment': wrongRecipientPayment } }),
+			res,
+		);
+		expect(res.statusCode).toBe(402);
+		const challenge = JSON.parse(res.body);
+		expect(challenge.resource.url).toBe('https://three.ws/api/mcp-bazaar');
+		expect(challenge.resource.serviceName).toBe('three.ws x402 Bazaar MCP');
+		expect(challenge.resource.description).toContain('search_services');
+		expect(challenge.resource.description).not.toContain('3D avatar viewer');
+	});
+
+	it('still reports why the payment was rejected', async () => {
+		const res = makeRes();
+		await handler(
+			makeReq({ body: searchCall, headers: { 'x-payment': wrongRecipientPayment } }),
+			res,
+		);
+		expect(JSON.parse(res.body).error).toMatch(/payTo|recipient/i);
+	});
+});
