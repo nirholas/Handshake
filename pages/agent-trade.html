@@ -330,21 +330,36 @@
       #hright { order: 2; }
     }
 
-    /* ── No-WebGL fallback layout ───────────────────────────────────────── */
-    /* Without a 3D stage nothing projects the labels and bubbles into place, so
-       they are laid out as a plain two-column read of the same trade. */
-    body.no-3d .agent-label {
+    /* ── Flat overlay layout ────────────────────────────────────────────── */
+    /* Two cases share it. Without a 3D stage nothing projects the labels and
+       bubbles into place; and on a narrow viewport the projection clamps them
+       into the same pixels as the central card, so at 320px the payment card
+       was drawn straight over the seller's own speech bubble. Both lay out as a
+       plain two-column read of the same trade instead. */
+    body.no-3d .agent-label,
+    body.flat-overlays .agent-label {
       top: 78px; transform: none; left: auto; right: auto;
     }
-    body.no-3d #buyerLabel  { left: 16px;  align-items: flex-start; text-align: left; }
-    body.no-3d #sellerLabel { right: 16px; align-items: flex-end;   text-align: right; }
-    body.no-3d .bubble { top: 168px; transform: none; left: auto; right: auto; }
-    body.no-3d .bubble.hidden { transform: none; }
-    body.no-3d #buyerBubble  { left: 16px; }
-    body.no-3d #sellerBubble { right: 16px; }
+    body.no-3d #buyerLabel,  body.flat-overlays #buyerLabel  { left: 16px;  align-items: flex-start; text-align: left; }
+    body.no-3d #sellerLabel, body.flat-overlays #sellerLabel { right: 16px; align-items: flex-end;   text-align: right; }
+    body.no-3d .bubble, body.flat-overlays .bubble { top: 168px; transform: none; left: auto; right: auto; }
+    body.no-3d .bubble.hidden, body.flat-overlays .bubble.hidden { transform: none; }
+    body.no-3d #buyerBubble,  body.flat-overlays #buyerBubble  { left: 16px; }
+    body.no-3d #sellerBubble, body.flat-overlays #sellerBubble { right: 16px; }
     body.no-3d .webgl-fallback {
       position: fixed; left: 50%; top: 30%; transform: translate(-50%, -50%);
       width: min(420px, calc(100vw - 32px)); z-index: 1;
+    }
+
+    /* On a phone the strip has to earn its height: the label collapses to two
+       tight lines and the bubble sits right under it, so the central card keeps
+       the rest of the screen. */
+    @media (max-width: 560px) {
+      body.no-3d .agent-label,
+      body.flat-overlays .agent-label { top: 70px; max-width: 47vw; gap: 1px; }
+      .al-role { font-size: 0.6rem; letter-spacing: 0.06em; }
+      body.no-3d .bubble,
+      body.flat-overlays .bubble { top: 142px; max-width: 47vw; padding: 7px 11px; }
     }
   </style>
 
