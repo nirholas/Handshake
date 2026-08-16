@@ -372,7 +372,7 @@ export async function queueRestyle({ limit = 100 } = {}) {
 }
 
 // Repair: forget every ledger row whose failure was the environment's fault
-// rather than the model's — the browser dying, or object storage being
+// rather than the model's: the browser dying, or object storage being
 // unreachable. A row's absence means "never attempted", so the avatar re-enters
 // the candidate set with a clean slate.
 //
