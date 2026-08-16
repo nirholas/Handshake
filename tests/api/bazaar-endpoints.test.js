@@ -209,6 +209,27 @@ describe('GET /api/bazaar/list', () => {
 		expect(payload.total).toBe(7);
 	});
 
+	it('pages past `limit` with `offset` and never repeats a row', async () => {
+		const first = await invoke(listHandler, '/api/bazaar/list?limit=3');
+		const second = await invoke(listHandler, '/api/bazaar/list?limit=3&offset=3');
+		const third = await invoke(listHandler, '/api/bazaar/list?limit=3&offset=6');
+		expect(first.payload.offset).toBe(0);
+		expect(second.payload.offset).toBe(3);
+		expect(second.payload.total).toBe(7);
+		expect(third.payload.count).toBe(1);
+
+		const walked = [...first.payload.items, ...second.payload.items, ...third.payload.items]
+			.map((i) => i.uniqueKey);
+		expect(walked).toHaveLength(7);
+		expect(new Set(walked).size).toBe(7);
+
+		// Past the end is an empty page, not the first page over again.
+		const past = await invoke(listHandler, '/api/bazaar/list?limit=3&offset=99');
+		expect(past.status).toBe(200);
+		expect(past.payload.count).toBe(0);
+		expect(past.payload.total).toBe(7);
+	});
+
 	it('filters by network, tag, and atomic max price', async () => {
 		const byTag = await invoke(listHandler, '/api/bazaar/list?tag=weather');
 		expect(byTag.payload.count).toBe(2);
@@ -267,6 +288,13 @@ describe('GET /api/bazaar/search', () => {
 		const capped = await invoke(searchHandler, '/api/bazaar/search?query=weather&limit=1');
 		expect(capped.payload.count).toBe(1);
 		expect(capped.payload.total).toBe(2);
+
+		// The second ranked match is only reachable through `offset`.
+		const next = await invoke(searchHandler, '/api/bazaar/search?query=weather&limit=1&offset=1');
+		expect(next.payload.offset).toBe(1);
+		expect(next.payload.count).toBe(1);
+		expect(next.payload.total).toBe(2);
+		expect(next.payload.resources[0].uniqueKey).not.toBe(capped.payload.resources[0].uniqueKey);
 	});
 
 	it('returns the whole catalog for an empty query and 400s a decimal price cap', async () => {

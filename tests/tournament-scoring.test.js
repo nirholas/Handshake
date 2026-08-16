@@ -230,6 +230,47 @@ describe('computeStandings', () => {
 		expect(out2.get('alice')).toBe(500_000n);
 	});
 
+	// Idle: entered the bracket and never opened a thing. Realized P&L of exactly 0.
+	const idle = {
+		entry: { agent_id: 'idle', agent_name: 'Idle', status: 'active', wallet: 'WALLETidle' },
+		positions: [],
+	};
+	// Loser: two real in-window trades that both went against it, so it is eligible
+	// for prizes but its realized P&L is negative.
+	const loser = {
+		entry: { agent_id: 'loser', agent_name: 'Loser', status: 'active', wallet: 'WALLETloser' },
+		positions: [
+			pos({ mint: 'COIN_G', pnl: -0.4, opened: '2026-03-01T07:00:00.000Z' }),
+			pos({ mint: 'COIN_H', pnl: -0.2, opened: '2026-03-01T08:00:00.000Z' }),
+		],
+	};
+
+	it('ranks an agent who actually traded above an idle entrant with a clean zero', () => {
+		const { standings } = computeStandings(tournament, [idle, loser], { now: Date.parse(AFTER_END) });
+		const idleRow = standings.find((s) => s.agent_id === 'idle');
+		const loserRow = standings.find((s) => s.agent_id === 'loser');
+		// On raw realized P&L the idle entrant's 0 beats the loser's -0.6, but it
+		// produced no result, so it sorts last.
+		expect(loserRow.score_value).toBeLessThan(idleRow.score_value);
+		expect(loserRow.rank).toBe(1);
+		expect(idleRow.rank).toBe(2);
+		expect(idleRow.in_window_trades).toBe(0);
+	});
+
+	it('hands the prize to the trader, not to the idle entrant sitting on zero', () => {
+		const { standings } = computeStandings(tournament, [idle, loser], { now: Date.parse(AFTER_END) });
+		const out = allocatePrizes(1_000_000n, [{ rank: 1, bps: 10000 }], standings);
+		expect(out.get('loser')).toBe(1_000_000n);
+		expect(out.get('idle')).toBeUndefined();
+	});
+
+	it('keeps idle entrants below traders without disturbing the traders’ own order', () => {
+		const { standings } = computeStandings(tournament, [carol, bob, idle, alice], { now: Date.parse(AFTER_END) });
+		// Bob (+5) then Alice (+3) as before; Carol and Idle both closed nothing.
+		expect(standings.map((s) => s.agent_id).slice(0, 2)).toEqual(['bob', 'alice']);
+		expect(standings.slice(2).map((s) => s.in_window_trades)).toEqual([0, 0]);
+	});
+
 	it('a practice bracket counts paper trades and ranks everyone, prizes nobody', () => {
 		const practice = { ...tournament, bracket: 'practice' };
 		const { standings } = computeStandings(practice, [carol], { now: Date.parse(AFTER_END) });

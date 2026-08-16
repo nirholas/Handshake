@@ -155,6 +155,49 @@ describe('finalizeReconstructStage', () => {
 		const out = await finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'https://x/m.glb' });
 		expect(out).toEqual({ status: 'done', resultAvatarId: 'avatar-1' });
 	});
+
+	it('logs the draft mint outcome instead of discarding it', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		mintDraftAgentIdentityMock.mockResolvedValueOnce({
+			status: 'ok',
+			agentId: 'agent-1',
+			solana: { status: 'skipped', reason: 'authority_unconfigured', network: 'devnet' },
+			evm: null,
+		});
+		const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+		await finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'https://x/m.glb' });
+		const line = log.mock.calls.map((c) => c.join(' ')).find((l) => l.includes('draft agent mint'));
+		expect(line).toContain('solana=skipped:authority_unconfigured');
+		expect(line).toContain('evm=off');
+		log.mockRestore();
+	});
+});
+
+// A leg that quietly reports 'skipped' is the state a deployment with no mint
+// credentials sits in, and it used to be indistinguishable in the logs from the
+// mint never running at all.
+describe('describeDraftMint', () => {
+	it('names the reason a leg was skipped', () => {
+		expect(
+			describeDraftMint({ status: 'ok', agentId: 'a1', solana: { status: 'skipped', reason: 'authority_unconfigured' }, evm: null }),
+		).toBe('agent=a1 solana=skipped:authority_unconfigured evm=off');
+	});
+
+	it('carries the signature of each leg that wrote to a chain', () => {
+		expect(
+			describeDraftMint({
+				status: 'ok',
+				agentId: 'a1',
+				solana: { status: 'minted', signature: 'sig-1' },
+				evm: { status: 'minted', txHash: '0xabc' },
+			}),
+		).toBe('agent=a1 solana=minted:sig-1 evm=minted:0xabc');
+	});
+
+	it('reports a non-ok orchestration without pretending it had legs', () => {
+		expect(describeDraftMint({ status: 'no_agent' })).toBe('status=no_agent');
+		expect(describeDraftMint(null)).toBe('no result');
+	});
 });
 
 describe('pollRiggingStage', () => {
