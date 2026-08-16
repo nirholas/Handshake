@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-16T06:40:46.743Z",
+	"generated_at": "2026-08-16T06:47:56.992Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "A mistyped id on the signal marketplace answers plainly, and the live feed links to the right chain",
+			"summary": "The signal marketplace identifies a feed or a subscription by a number. Anything that was not one (a typo, a stray word, an empty box) went straight to the database, which threw the whole query out, so the caller got an opaque \"something went wrong\" and our alerting recorded a fault that was never a fault. Pausing a feed, killing or resyncing a subscription, and subscribing to a feed each now answer with a plain \"that is not a valid id\" instead. Separately, the paid live signal stream built its Solscan links from whichever network the request named rather than the one the feed actually publishes on, so a subscriber could be handed devnet explorer links for a mainnet call; the feed's own record now decides, and every proof link lands on the chain the trade really happened on.",
+			"link": "/signals",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-08-16",
 			"type": "update",
@@ -20,11 +30,32 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "Robinhood Chain worlds survive a hiccup in the live feed instead of going dark",
+			"summary": "The in-world trading terminal inside a Robinhood Chain world polls the chain feed every five seconds, and the Worlds lobby lists those coins from the same feed. A single event that arrived without its payload, or with a timestamp the chain wrote in an unexpected format, took both requests down with a server error: the terminal showed a dead tape, and the lobby's Robinhood Chain tab quietly emptied with nothing on screen to say why. Bad events are now skipped and the rest of the tape still renders, a price that is genuinely missing stays blank rather than printing as a real $0 trade, and a launch with no readable contract address no longer produces a card that leads nowhere. Asking for trades with an address that is not a contract address now gets a clear error back instead of an empty list that read as \"this coin has never traded\".",
+			"link": "/worlds",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "Sharing an agent link posts the agent's picture again",
 			"summary": "Pasting a link to an agent into a chat app, a social post or a group thread is supposed to unfurl into a card with the agent's name, its description and a picture of it. For every agent that actually has an avatar picture, which is nearly all of them, the page that builds that card was crashing instead, so the link unfurled as a bare URL with nothing attached. The card now renders with the agent's own thumbnail, falls back to a freshly rendered portrait when an agent has no thumbnail yet, and an unknown or malformed agent link sends the visitor to the app instead of erroring.",
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Skill marketplace: installs are locked to your own clicks, and edits keep their star rating",
+			"summary": "Three fixes to the skills marketplace. Installing or removing a skill now carries the same one-time security token every other account action does, so a page you happen to have open elsewhere can no longer quietly add skills to your account behind your back. Editing one of your published skills used to answer back with its rating blanked out, which made the detail panel show 'No ratings yet' on a skill people had actually rated until you reloaded; it now reports the real average and count. And when a skill you were paging past gets deleted or made private mid-scroll, 'Load more' stops cleanly instead of looping the first page of results back into the grid over and over.",
+			"link": "/marketplace",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{

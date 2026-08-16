@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A mistyped id on the signal marketplace answers plainly, and the live feed links to the right chain</title>
+			<link>https://three.ws/signals</link>
+			<guid isPermaLink="false">2026-08-16:A mistyped id on the signal marketplace answers plainly, and the live feed links to the right chain</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The signal marketplace identifies a feed or a subscription by a number. Anything that was not one (a typo, a stray word, an empty box) went straight to the database, which threw the whole query out, so the caller got an opaque &quot;something went wrong&quot; and our alerting recorded a fault that was never a fault. Pausing a feed, killing or resyncing a subscription, and subscribing to a feed each now answer with a plain &quot;that is not a valid id&quot; instead. Separately, the paid live signal stream built its Solscan links from whichever network the request named rather than the one the feed actually publishes on, so a subscriber could be handed devnet explorer links for a mainnet call; the feed's own record now decides, and every proof link lands on the chain the trade really happened on.</description>
+		</item>
+		<item>
 			<title>Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</title>
 			<link>https://three.ws/stage</link>
 			<guid isPermaLink="false">2026-08-16:Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</guid>
@@ -15,12 +23,28 @@
 			<description>Two repairs to the Living Stages host. The cleanup pass that tidies the host's spoken line was stripping hyphens along with the invisible characters it was meant to remove, so every show heard &quot;on chain&quot; where the host said &quot;on-chain&quot; and &quot;state of the art&quot; for &quot;state-of-the-art&quot;; punctuation now survives and only invisible characters are removed. Separately, the host's memory of returning regulars counted tips whose on-chain settlement had not been confirmed yet, which meant anyone could post an unconfirmed tip under a name of their choosing and hear the host greet it aloud. That memory now reads confirmed tips only, matching the public leaderboard. Smaller repairs in the same pass: a stage that has not opened its first show is no longer cached as empty at the edge, an over-long coin address is refused instead of quietly trimmed into a different plaza, and the running tip total is written before the response returns.</description>
 		</item>
 		<item>
+			<title>Robinhood Chain worlds survive a hiccup in the live feed instead of going dark</title>
+			<link>https://three.ws/worlds</link>
+			<guid isPermaLink="false">2026-08-16:Robinhood Chain worlds survive a hiccup in the live feed instead of going dark</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The in-world trading terminal inside a Robinhood Chain world polls the chain feed every five seconds, and the Worlds lobby lists those coins from the same feed. A single event that arrived without its payload, or with a timestamp the chain wrote in an unexpected format, took both requests down with a server error: the terminal showed a dead tape, and the lobby's Robinhood Chain tab quietly emptied with nothing on screen to say why. Bad events are now skipped and the rest of the tape still renders, a price that is genuinely missing stays blank rather than printing as a real $0 trade, and a launch with no readable contract address no longer produces a card that leads nowhere. Asking for trades with an address that is not a contract address now gets a clear error back instead of an empty list that read as &quot;this coin has never traded&quot;.</description>
+		</item>
+		<item>
 			<title>Sharing an agent link posts the agent's picture again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:Sharing an agent link posts the agent's picture again</guid>
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Pasting a link to an agent into a chat app, a social post or a group thread is supposed to unfurl into a card with the agent's name, its description and a picture of it. For every agent that actually has an avatar picture, which is nearly all of them, the page that builds that card was crashing instead, so the link unfurled as a bare URL with nothing attached. The card now renders with the agent's own thumbnail, falls back to a freshly rendered portrait when an agent has no thumbnail yet, and an unknown or malformed agent link sends the visitor to the app instead of erroring.</description>
+		</item>
+		<item>
+			<title>Skill marketplace: installs are locked to your own clicks, and edits keep their star rating</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-08-16:Skill marketplace: installs are locked to your own clicks, and edits keep their star rating</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes to the skills marketplace. Installing or removing a skill now carries the same one-time security token every other account action does, so a page you happen to have open elsewhere can no longer quietly add skills to your account behind your back. Editing one of your published skills used to answer back with its rating blanked out, which made the detail panel show 'No ratings yet' on a skill people had actually rated until you reloaded; it now reports the real average and count. And when a skill you were paging past gets deleted or made private mid-scroll, 'Load more' stops cleanly instead of looping the first page of results back into the grid over and over.</description>
 		</item>
 		<item>
 			<title>The $THREE economy dashboard no longer errors out on an odd date range</title>
