@@ -1,6 +1,6 @@
 # Animations
 
-Animations are the motion clips (idle, wave, dance, and about 2,000 more) that bring three.ws avatars to life. Browse and preview every clip at [three.ws/animations](https://three.ws/animations); this page is the developer reference for how the clip collections are organized, how the runtime loads them, and how agents pick which clip to play.
+Animations are the motion clips (idle, wave, dance, and about 3,000 more) that bring three.ws avatars to life. Browse and preview every clip at [three.ws/animations](https://three.ws/animations); this page is the developer reference for how the clip collections are organized, how the runtime loads them, and how agents pick which clip to play.
 
 > For how FBX, GLB, and clip JSON relate — the formats, the conversions, and the full generate→rig→animate→export chain — see **[docs/3d-asset-pipeline.md](3d-asset-pipeline.md)**. This page is the runtime registry and agent-slot reference.
 
@@ -126,7 +126,7 @@ Its measured companion is `public/animations/signatures.json`: a motion-signatur
 
 ## The /animations gallery
 
-[three.ws/animations](https://three.ws/animations) is the public browse surface over every clip: the curated studio manifest, the full R2-hosted motion-capture library (`GET /api/animations/library`, ~2,000 clips), and community-published clips (`GET /api/animations/clips?visibility=public`).
+[three.ws/animations](https://three.ws/animations) is the public browse surface over every clip: the curated studio manifest, the full R2-hosted motion-capture library (`GET /api/animations/library`, ~2,900 clips; `total` on that response is the live count), and community-published clips (`GET /api/animations/clips?visibility=public`).
 
 - **Poster thumbnails** — every clip has a WebP still of the preview avatar posed mid-motion. Rendered offline by `node scripts/build-animation-thumbnails.mjs` (drives `scripts/thumbnail-harness.html` in headless Chromium through the site's own retarget engine). Curated thumbs are committed at `public/animations/thumbs/<name>.webp`; library thumbs upload to R2 alongside their clips via `npm run mixamo:upload`, which publishes each one as the manifest entry's `thumb` URL. Added a clip? Re-run the thumbnail script, then re-upload.
 - **Categories** — the Mixamo catalog carries no category metadata, so `src/animation-categories.js` derives one per clip from its label (ordered keyword rules; curated clips keep their hand-assigned `animation-presets.js` category). Covered by `tests/animation-categories.test.js`, which also asserts <10% of the real library falls into the "More" catch-all.

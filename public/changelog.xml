@@ -15,12 +15,28 @@
 			<description>The signal marketplace identifies a feed or a subscription by a number. Anything that was not one (a typo, a stray word, an empty box) went straight to the database, which threw the whole query out, so the caller got an opaque &quot;something went wrong&quot; and our alerting recorded a fault that was never a fault. Pausing a feed, killing or resyncing a subscription, and subscribing to a feed each now answer with a plain &quot;that is not a valid id&quot; instead. Separately, the paid live signal stream built its Solscan links from whichever network the request named rather than the one the feed actually publishes on, so a subscriber could be handed devnet explorer links for a mainnet call; the feed's own record now decides, and every proof link lands on the chain the trade really happened on.</description>
 		</item>
 		<item>
+			<title>Avatar Studio trait library: the mirror can no longer be pointed at someone else's server</title>
+			<link>https://three.ws/avatar-studio</link>
+			<guid isPermaLink="false">2026-08-16:Avatar Studio trait library: the mirror can no longer be pointed at someone else's server</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Avatar Studio loads its hair, clothing and accessory traits through a three.ws address that mirrors the open-source trait library, so your browser never talks to an outside CDN. The list of where those traits live was being written using the address in the incoming request, and that address can be set by whoever sends the request. Because the mirror is cached at the edge for a day, one crafted request could have left every Avatar Studio visitor loading trait files from a stranger's server for the next 24 hours. That list is now written the same way for everybody, with no part of it taken from the request, so there is nothing left to steer. Three smaller repairs went in alongside it: asking the mirror how big a file is no longer answers with the compressed size (a trait manifest claimed 2 KB and delivered 20 KB), the mirror will not hand back a web page or script even if the upstream library ever served one, and a failure at the library now answers plainly as either not found or mirror is down instead of passing its raw status through as ours.</description>
+		</item>
+		<item>
 			<title>Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</title>
 			<link>https://three.ws/stage</link>
 			<guid isPermaLink="false">2026-08-16:Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</guid>
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two repairs to the Living Stages host. The cleanup pass that tidies the host's spoken line was stripping hyphens along with the invisible characters it was meant to remove, so every show heard &quot;on chain&quot; where the host said &quot;on-chain&quot; and &quot;state of the art&quot; for &quot;state-of-the-art&quot;; punctuation now survives and only invisible characters are removed. Separately, the host's memory of returning regulars counted tips whose on-chain settlement had not been confirmed yet, which meant anyone could post an unconfirmed tip under a name of their choosing and hear the host greet it aloud. That memory now reads confirmed tips only, matching the public leaderboard. Smaller repairs in the same pass: a stage that has not opened its first show is no longer cached as empty at the edge, an over-long coin address is refused instead of quietly trimmed into a different plaza, and the running tip total is written before the response returns.</description>
+		</item>
+		<item>
+			<title>Mistyped filters on the revenue, checkout and ring endpoints answer plainly instead of failing</title>
+			<link>https://three.ws/x402-revenue</link>
+			<guid isPermaLink="false">2026-08-16:Mistyped filters on the revenue, checkout and ring endpoints answer plainly instead of failing</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public revenue feed, the checkout SKU API and the ring report all took values straight from the URL into the database. A timestamp that was not a timestamp, a checkout id that was not an id, and the query fell over: the caller got an opaque &quot;something went wrong&quot; with a support reference, and our own alerting logged a fault that was only ever a typo. All three now say what was wrong, in words, with the right status code. The ring report also stops treating an unrecognised period as &quot;show me everything&quot;, which quietly answered the wrong question and ran the most expensive query it has. The revenue feed now echoes back the endpoint filter it actually applied rather than the raw text it was sent, and the paid-call lookup only accepts something shaped like a real transaction signature.</description>
 		</item>
 		<item>
 			<title>Robinhood Chain worlds survive a hiccup in the live feed instead of going dark</title>
