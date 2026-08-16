@@ -327,25 +327,74 @@ export class CitizenPopulation {
 
 	/**
 	 * Add one citizen to the world at (x, z) facing roughly toward the plaza
-	 * centre. Returns the instance (or null if its GLB couldn't be loaded). Safe
-	 * to call concurrently for the whole fleet — loads are pooled internally.
+	 * centre. Returns the instance (or null if even the shared rig couldn't be
+	 * loaded). Safe to call concurrently for the whole fleet; loads are pooled
+	 * internally.
+	 *
+	 * The citizen stands up on the shared default rig, which is one small GLB for
+	 * the entire crowd, so the square is populated in seconds. When `personal` is
+	 * set and the citizen carries its own avatar, that model streams in behind the
+	 * scenes and replaces the placeholder in place (see MAX_PERSONAL_AVATARS).
 	 *
 	 * @param {object} citizen   shaped citizen from /api/agora/citizens
 	 * @param {{x:number,z:number}} pos
+	 * @param {{personal?:boolean}} [opts] load this citizen's own avatar GLB too
 	 */
-	async add(citizen, pos) {
+	async add(citizen, pos, { personal = true } = {}) {
 		if (this._disposed || this._byId.has(citizen.id)) return null;
-		const url = await resolveAvatarUrl(citizen.avatarUrl || '');
-		const tpl = await this._template(url);
-		if (this._disposed) return null;
+		const tpl = await this._template(AVATAR_DEFAULT);
+		if (this._disposed || this._byId.has(citizen.id)) return null;
 		if (!tpl?.scene) return null;
 
+		const built = this._buildModel(tpl);
+
+		const group = new Group();
+		group.name = `citizen-${citizen.id}`;
+		group.add(built.model);
+		group.position.set(pos.x, 0, pos.z);
+		// Face the plaza centre with a little jitter so the crowd feels gathered,
+		// not regimented. atan2(x,z) points the +Z-forward avatar toward origin.
+		const baseYaw = Math.atan2(-pos.x, -pos.z);
+		group.rotation.y = baseYaw + (hashJitter(citizen.id) - 0.5) * 0.8;
+		group.userData.citizenId = citizen.id;
+		this.root.add(group);
+
+		const accent = professionColor(primaryProfessionKey(citizen));
+		const label = buildLabelSprite(citizen.displayName || 'Citizen', citizenProfessionLabel(citizen), accent);
+		label.position.set(0, built.height + 0.3, 0);
+		group.add(label);
+
+		const inst = {
+			citizen, group, model: built.model, mixer: null, label,
+			materials: built.materials, fade: null, height: built.height, baseYaw,
+			// Locomotion + economy state (Task 06).
+			idleClip: tpl.clips.get(CLIP_IDLE) || [...tpl.clips.values()][0] || null,
+			walkClip: tpl.clips.get(CLIP_WALK) || null,
+			idleAction: null, walkAction: null,
+			motion: 'idle', walkTarget: null, onArrive: null, heading: group.rotation.y,
+			busy: false, busyRing: null, busyT: 0, celebrateT: null,
+			// The citizen's own avatar, once it has replaced the shared rig. Keeps a
+			// re-run of loadCitizens from re-loading a model already worn.
+			wearing: AVATAR_DEFAULT,
+		};
+		this._startIdle(inst);
+		this._beginFade(inst);
+		this.instances.push(inst);
+		this._byId.set(citizen.id, inst);
+		this._tagPickable(inst);
+
+		if (personal && citizen.avatarUrl) this._wearOwnAvatar(inst, String(citizen.avatarUrl));
+		return inst;
+	}
+
+	// Clone a template into a per-instance model: scaled to human height, feet on
+	// the ground, and with its own materials so one citizen's fade-in never bleeds
+	// across everyone else sharing that GLB (geometry and textures stay shared).
+	_buildModel(tpl) {
 		const model = cloneSkinnedScene(tpl.scene);
 		scaleToHeight(model, AVATAR_HEIGHT);
 		groundFeet(model);
 
-		// Per-instance materials so the fade-in opacity is isolated (the template's
-		// shared materials/geometry/textures are otherwise reused across clones).
 		const materials = [];
 		model.traverse((n) => {
 			if (!n.isMesh || !n.material) return;
@@ -360,58 +409,86 @@ export class CitizenPopulation {
 			materials.push(...cloned);
 		});
 
-		const group = new Group();
-		group.name = `citizen-${citizen.id}`;
-		group.add(model);
-		group.position.set(pos.x, 0, pos.z);
-		// Face the plaza centre with a little jitter so the crowd feels gathered,
-		// not regimented. atan2(x,z) points the +Z-forward avatar toward origin.
-		const baseYaw = Math.atan2(-pos.x, -pos.z);
-		group.rotation.y = baseYaw + (hashJitter(citizen.id) - 0.5) * 0.8;
-		group.userData.citizenId = citizen.id;
-		this.root.add(group);
-
-		const accent = professionColor(primaryProfessionKey(citizen));
-		const label = buildLabelSprite(citizen.displayName || 'Citizen', citizenProfessionLabel(citizen), accent);
 		_box.setFromObject(model, true);
 		const height = Number.isFinite(_box.max.y) ? _box.max.y : AVATAR_HEIGHT;
-		label.position.set(0, height + 0.3, 0);
-		group.add(label);
+		return { model, materials, height };
+	}
 
-		// Idle loop, desynced so the crowd doesn't breathe in lockstep.
-		let mixer = null;
-		let idleAction = null;
-		const idleClip = tpl.clips.get(CLIP_IDLE) || [...tpl.clips.values()][0];
-		const walkClip = tpl.clips.get(CLIP_WALK) || null;
-		if (idleClip && !this.reducedMotion) {
-			mixer = new AnimationMixer(model);
-			idleAction = mixer.clipAction(idleClip);
-			idleAction.time = hashJitter(citizen.id + 'x') * (idleClip.duration || 1);
-			idleAction.play();
-		} else if (idleClip && this.reducedMotion) {
-			// Reduced motion: hold a calm idle pose (frame 0), no looping motion.
-			mixer = new AnimationMixer(model);
-			idleAction = mixer.clipAction(idleClip);
-			idleAction.play();
-			mixer.update(0);
-			idleAction.paused = true;
+	// Pickable meshes carry a back-reference so a raycast hit resolves to the id.
+	_tagPickable(inst) {
+		inst.model.traverse((n) => { if (n.isMesh) n.userData.citizenId = inst.citizen.id; });
+	}
+
+	// Start this citizen's idle loop on its current model, desynced by id so the
+	// crowd doesn't breathe in lockstep. Reduced motion holds a calm authored pose
+	// instead of looping.
+	_startIdle(inst) {
+		if (!inst.idleClip) return;
+		inst.mixer = new AnimationMixer(inst.model);
+		inst.idleAction = inst.mixer.clipAction(inst.idleClip);
+		if (this.reducedMotion) {
+			inst.idleAction.play();
+			inst.mixer.update(0);
+			inst.idleAction.paused = true;
+			return;
 		}
+		inst.idleAction.time = hashJitter(inst.citizen.id + 'x') * (inst.idleClip.duration || 1);
+		inst.idleAction.play();
+	}
 
-		const fade = this.reducedMotion ? null : { t: 0 };
-		for (const m of materials) m.opacity = this.reducedMotion ? 1 : 0;
+	// Fade a freshly built model up from transparent. Reduced motion skips it and
+	// the citizen is simply there.
+	_beginFade(inst) {
+		inst.fade = this.reducedMotion ? null : { t: 0 };
+		for (const m of inst.materials) m.opacity = this.reducedMotion ? 1 : 0;
+	}
 
-		const inst = {
-			citizen, group, model, mixer, label, materials, fade, height, baseYaw,
-			// Locomotion + economy state (Task 06).
-			idleClip, walkClip, idleAction, walkAction: null,
-			motion: 'idle', walkTarget: null, onArrive: null, heading: group.rotation.y,
-			busy: false, busyRing: null, busyT: 0, celebrateT: null,
-		};
-		this.instances.push(inst);
-		this._byId.set(citizen.id, inst);
-		// Pickable meshes carry a back-reference so a raycast hit resolves to the id.
-		model.traverse((n) => { if (n.isMesh) n.userData.citizenId = citizen.id; });
-		return inst;
+	// Load the citizen's own avatar and swap it in when it lands. Fire-and-forget:
+	// a failure leaves the citizen on the shared rig, which is a complete, correct
+	// world, never an error state and never a missing person.
+	async _wearOwnAvatar(inst, rawUrl) {
+		const url = await resolveAvatarUrl(rawUrl);
+		if (!url || url === AVATAR_DEFAULT) return;
+		const tpl = await this._template(url);
+		if (this._disposed || !tpl?.scene) return;
+		// The world may have been rebuilt (or this citizen removed) across the load.
+		if (this._byId.get(inst.citizen.id) !== inst) return;
+		this._swapModel(inst, tpl);
+		inst.wearing = url;
+	}
+
+	// Swap a standing citizen onto a different model without disturbing where it
+	// stands, which way it faces, or what it is doing: the new rig inherits the
+	// current motion, so a citizen mid-walk to the job board keeps walking.
+	_swapModel(inst, tpl) {
+		const built = this._buildModel(tpl);
+		const motion = inst.motion;
+
+		inst.mixer?.stopAllAction();
+		inst.group.remove(inst.model);
+		for (const m of inst.materials) m.dispose?.();
+
+		inst.group.add(built.model);
+		// A celebrate hop lifts the model, not the group; the new one starts level.
+		built.model.position.y = 0;
+		inst.celebrateT = null;
+		inst.model = built.model;
+		inst.materials = built.materials;
+		inst.height = built.height;
+		inst.label.position.set(0, built.height + 0.3, 0);
+
+		inst.idleClip = tpl.clips.get(CLIP_IDLE) || [...tpl.clips.values()][0] || null;
+		inst.walkClip = tpl.clips.get(CLIP_WALK) || null;
+		inst.mixer = null;
+		inst.idleAction = null;
+		inst.walkAction = null;
+		this._startIdle(inst);
+		// Re-assert the motion on the new mixer (_playMotion no-ops on a match).
+		inst.motion = null;
+		this._playMotion(inst, motion);
+
+		this._tagPickable(inst);
+		this._beginFade(inst);
 	}
 
 	/** Advance idle loops + fade-ins + locomotion. Cheap: one mixer.update per citizen. */

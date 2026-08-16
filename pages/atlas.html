@@ -118,7 +118,24 @@
 			.at-search input::placeholder {
 				color: var(--ink-dim);
 			}
+			/* type=search paints its own cancel button in Chromium and Safari, which
+			   sat directly beside .at-clear and gave the row two × controls. Every
+			   other search surface here already suppresses it (gallery, my-agents,
+			   galaxy, pump-bounties); this one had been missed. */
+			.at-search input::-webkit-search-cancel-button {
+				-webkit-appearance: none;
+				appearance: none;
+			}
 			.at-clear {
+				/* 26px square: the glyph is 18px, but a 16x18 hit box failed the
+				   24x24 minimum target size and was a genuinely hard tap at 320px. */
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex: 0 0 auto;
+				width: 26px;
+				height: 26px;
+				border-radius: var(--radius-md);
 				background: none;
 				border: 0;
 				color: var(--ink-dim);
@@ -126,10 +143,19 @@
 				font: inherit;
 				font-size: 18px;
 				line-height: 1;
-				padding: 0 2px;
+				padding: 0;
+				transition:
+					color 0.15s ease,
+					background 0.15s ease;
 			}
 			.at-clear:hover {
 				color: var(--ink);
+				background: var(--surface-2);
+			}
+			.at-clear:focus-visible {
+				color: var(--ink);
+				outline: 2px solid var(--ink);
+				outline-offset: 1px;
 			}
 
 			/* Section rail */
@@ -354,7 +380,8 @@
 				}
 				.at-card,
 				.at-chip,
-				.at-intent {
+				.at-intent,
+				.at-clear {
 					transition: none;
 				}
 			}

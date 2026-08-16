@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T19:33:21.877Z",
+	"generated_at": "2026-08-16T19:44:10.604Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -444,6 +444,17 @@
 			"title": "The Animation Gallery keeps its keyboard, its focus, and its promises about what will play",
 			"summary": "The gallery of nearly 3,000 motion clips had a set of small breakages that added up. Roughly a third of the mocap catalogue has no picture made for it yet, and the page was asking the picture store for one anyway: every one of those requests came back empty, so a third of the cards spent a request to arrive at the same drawing they now show immediately. Opening a clip's details trapped nobody: pressing Tab walked out of the open window and into the page behind it, and closing the window dropped you back at the very top of the page instead of the card you came from. The playback controls were on show while a preview was still loading and stayed on show when it failed, so there were buttons that did nothing. Arrow keys jumped to the next clip even while you were dragging the speed slider, which moved the slider and changed the clip at the same time. Sharing a filtered view was misleading too: a link carrying the loops or one-shot filter applied it but left the buttons showing All, and a link with a filter the page does not recognise emptied the sort menu. All of it is fixed, along with the keyboard hint the window shows: Space really does play and pause now, from the moment the window opens.",
 			"link": "/animations",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The arbitrage board says which price feeds it actually reached",
+			"summary": "The x402 Arbitrage page compares what different providers charge for the same capability, and it builds that comparison from several facilitator catalogs at once. When one of those catalogs was unreachable, its listings simply vanished from every comparison and the page said nothing about it. A scan that had only seen half the market looked exactly like a market with fewer price gaps in it, which is the opposite of what the page is for. Each scan now names the facilitators it reached and how many listings each one contributed, and calls out any that dropped out along with the reason, so a short board is never mistaken for a quiet one. Separately, closing the payment window without paying used to leave the Pay cheapest button dead for four seconds before it would accept another click. Deciding not to pay now hands the button straight back.",
+			"link": "/arbitrage",
 			"tags": [
 				"fix",
 				"improvement"

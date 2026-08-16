@@ -317,7 +317,7 @@ export function heuristicProposals(memories) {
 				out.push({
 					kind: 'create_alert',
 					title: `Alert when $THREE market cap crosses $${n.toLocaleString()}`,
-					rationale: `You noted interest in $THREE around $${n.toLocaleString()} — I'll watch it and ping you when it crosses.`,
+					rationale: `You noted interest in $THREE around $${n.toLocaleString()}. I'll watch it and ping you when it crosses.`,
 					confidence: 0.55,
 					source_memory_ids: [m.id],
 					params: { asset: 'three', condition: 'price_above', threshold_usd: n },
@@ -328,7 +328,7 @@ export function heuristicProposals(memories) {
 			out.push({
 				kind: 'briefing',
 				title: 'Daily $THREE briefing',
-				rationale: `You mentioned wanting a regular catch-up — I'll author a short daily briefing grounded in what I know.`,
+				rationale: `You mentioned wanting a regular catch-up. I'll author a short daily briefing grounded in what I know.`,
 				confidence: 0.5,
 				source_memory_ids: [m.id],
 				params: { summary: 'Daily $THREE briefing', cadence: 'daily', topic: truncate(m.content, 120) },

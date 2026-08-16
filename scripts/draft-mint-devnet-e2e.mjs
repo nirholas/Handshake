@@ -284,7 +284,7 @@ if (!mint.solana || mint.solana.status !== 'minted') {
 	fail(`Solana leg did not mint: ${JSON.stringify(mint.solana)}`);
 }
 step('solana draft mint', `asset ${mint.solana.asset} tx ${mint.solana.signature}`);
-step('explorer', mint.solana.explorer);
+if (onPublicDevnet) step('explorer', mint.solana.explorer);
 if (mint.solana.registry?.identity_pda) {
 	step('agent registry', `identity PDA ${mint.solana.registry.identity_pda}`);
 }
@@ -383,7 +383,9 @@ if (!KEEP) {
 	step('cleanup', 'e2e rows removed (pass DRAFT_MINT_E2E_KEEP=1 to keep them)');
 }
 
-console.log(`\n✓ draft agent mint proven on Solana devnet`);
+console.log(
+	`\n✓ draft agent mint proven on ${onPublicDevnet ? 'Solana devnet' : 'a private Solana devnet node'}`,
+);
 console.log(`  asset      ${mint.solana.asset}`);
 console.log(`  signature  ${mint.solana.signature}`);
 console.log(

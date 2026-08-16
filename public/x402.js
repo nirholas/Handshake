@@ -2254,6 +2254,16 @@ async function postJson(url, body) {
 	return data;
 }
 
+// A same-origin endpoint can never be refused by CORS, so a rejected fetch there
+// really is a connectivity problem. Anything else is a different host answering.
+function isCrossOrigin(endpoint) {
+	try {
+		return new URL(endpoint, location.href).origin !== location.origin;
+	} catch {
+		return false;
+	}
+}
+
 // Probe the merchant endpoint with a benign request to extract the 402 challenge.
 // Accepts HTTP 402 (standard x402) or HTTP 401 with a `payment-required` header
 // (MCP 2025-06-18 spec, which uses 401 for resource-server authorization challenges).
@@ -2270,8 +2280,14 @@ async function discoverChallenge(opts) {
 		res = await fetch(opts.endpoint, init);
 	} catch (err) {
 		// fetch() rejects with a bare "Failed to fetch" for an offline client, a
-		// blocked request, or a CORS refusal. Say what the buyer can act on rather
-		// than surfacing the browser's own wording as the checkout's error.
+		// blocked request, and a CORS refusal alike. Say what the buyer can act on
+		// rather than surfacing the browser's own wording as the checkout's error.
+		// Telling a buyer to check their connection when the service simply does
+		// not allow browser calls sends them to retry a button that can never
+		// work, so separate the two cases by where the endpoint lives.
+		if (isCrossOrigin(opts.endpoint)) {
+			throw new Error(`${new URL(opts.endpoint, location.href).host} does not allow browser requests (its response carries no CORS headers), so its price cannot be confirmed from this page. Call it from a server, an agent, or the x402 CLI instead.`);
+		}
 		throw new Error(`Could not reach the service to confirm its price (${err?.message || 'network error'}). Check your connection and try again.`);
 	}
 

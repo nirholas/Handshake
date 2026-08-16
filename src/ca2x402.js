@@ -118,8 +118,9 @@ function hero() {
 			<h1 id="cx-title">CA <span class="cx-arrow">→</span> x402</h1>
 			<p class="cx-sub">
 				Paste any token contract address. Get a live, payable <strong>x402 endpoint</strong>
-				for its market intel — price, momentum, and a bullish/bearish signal — that any agent
-				can call for <strong>$0.01 USDC</strong>. Discoverable in the bazaar. No keys, no backend.
+				for its market intel (price, multi-timeframe momentum, a risk score, and a
+				bullish/bearish signal) that any agent can call for <strong>$0.01 USDC</strong>.
+				Discoverable in the bazaar. No keys, no backend.
 			</p>
 			<form class="cx-form" id="cx-form" autocomplete="off">
 				<input
@@ -170,13 +171,23 @@ function loadingState() {
 		</section>`;
 }
 
+// Each failure mode gets its own heading and icon: "no market" is a fact about
+// the token, "that isn't an address" is a typo the user can fix in place, and a
+// dead resolver is ours to own. One generic heading for all three told the user
+// nothing about which of the three had happened.
+const ERROR_KINDS = {
+	token_not_found: { icon: '∅', title: 'No market found for that address' },
+	invalid_mint: { icon: '⌁', title: 'That is not a contract address' },
+};
+const ERROR_FALLBACK = { icon: '!', title: 'Could not resolve' };
+
 function errorState() {
 	const e = state.error;
-	const isNotFound = e.code === 'token_not_found';
+	const kind = ERROR_KINDS[e.code] || ERROR_FALLBACK;
 	return `
 		<section class="cx-card cx-error">
-			<div class="cx-error-ic" aria-hidden="true">${isNotFound ? '∅' : '!'}</div>
-			<h2>${isNotFound ? 'No market found for that address' : 'Could not resolve'}</h2>
+			<div class="cx-error-ic" aria-hidden="true">${kind.icon}</div>
+			<h2>${kind.title}</h2>
 			<p>${esc(e.message)}</p>
 			<button class="cx-retry" id="cx-retry" type="button">Try another address</button>
 		</section>`;
@@ -261,7 +272,9 @@ function tokenCard(t) {
 			<div class="cx-stats">
 				${stats.map(([k, v]) => `<div class="cx-stat"><div class="cx-stat-k">${k}</div><div class="cx-stat-v">${v}</div></div>`).join('')}
 			</div>
+			${momentumStrip(t.momentum)}
 			${t.headline ? `<div class="cx-signal"><div class="cx-signal-h">${esc(t.headline)}</div><div class="cx-signal-r">${esc(t.rationale || '')}</div></div>` : ''}
+			${riskPanel(t.risk)}
 			${t.pair_url ? `<a class="cx-dexlink" href="${esc(t.pair_url)}" target="_blank" rel="noopener">View pair on ${esc(t.dex || 'DEX')} ↗</a>` : ''}
 		</section>`;
 }

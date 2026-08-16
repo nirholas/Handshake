@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The arbitrage board says which price feeds it actually reached",
+			"summary": "The x402 Arbitrage page compares what different providers charge for the same capability, and it builds that comparison from several facilitator catalogs at once. When one of those catalogs was unreachable, its listings simply vanished from every comparison and the page said nothing about it. A scan that had only seen half the market looked exactly like a market with fewer price gaps in it, which is the opposite of what the page is for. Each scan now names the facilitators it reached and how many listings each one contributed, and calls out any that dropped out along with the reason, so a short board is never mistaken for a quiet one. Separately, closing the payment window without paying used to leave the Pay cheapest button dead for four seconds before it would accept another click. Deciding not to pay now hands the button straight back.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/arbitrage"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Agora citizens show the craft they actually work, and the square fits a phone",
 			"summary": "Every one of the 200 citizens in the Commons was labelled a Fetcher. The nameplate over each avatar, the citizen list that screen readers and keyboard users navigate by, and the passport header all read the citizen's capability list rather than the craft it is known for. Every citizen carries the fetcher capability, because calling a paid service is the one job anyone in the Commons can take, so that list always begins with Fetcher no matter who you were looking at. Mira the Appraiser and Aria the Sculptor both wore a FETCHER chip, sitting under a coloured ring that was already showing their real craft. Citizens now say what they do: the crowd, the list and the passport agree with each other and with the colour, and a passport leads with the primary craft before the rest of what that citizen is able to claim. On a phone the bottom of the square was a pile-up. The job board, the sign-in bar, the language switcher and the Enter the Commons button all pinned themselves to the same strip of screen, so at 320px wide the button that takes you into the world was completely buried under two other controls and the board's last rows were cut off. Those layers now stack above one another at every screen size, and the stack follows the sign-in bar as it changes height.",
 			"tags": [

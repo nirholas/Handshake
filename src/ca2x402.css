@@ -214,6 +214,93 @@
 .cx-dexlink { display: inline-block; margin-top: var(--space-md); font-size: var(--text-2xs); color: var(--accent); text-decoration: none; }
 .cx-dexlink:hover { text-decoration: underline; }
 
+/* ── momentum strip ───────────────────────────────────────────────────────
+   Price change across 5m / 1h / 6h / 24h. Reading the four together shows
+   whether a move is accelerating or fading, which the 24h stat alone hides. */
+.cx-momentum {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 1px;
+	margin-top: var(--space-md);
+	background: var(--stroke);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	overflow: hidden;
+}
+.cx-mom { background: var(--surface-2); padding: var(--space-sm) var(--space-md); text-align: center; }
+.cx-mom-k {
+	font-family: var(--font-mono); font-size: var(--text-2xs);
+	color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px;
+}
+.cx-mom-v { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 600; color: var(--ink-dim); }
+.cx-mom-v.cx-pos { color: var(--success); }
+.cx-mom-v.cx-neg { color: var(--danger); }
+
+/* ── risk panel ───────────────────────────────────────────────────────────
+   0 = clean, 100 = critical. The gauge arc is driven by --cx-risk (the score)
+   and tinted by the level class, so the headline number reads at a glance. */
+.cx-risk {
+	margin-top: var(--space-lg);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	padding: var(--space-md);
+	background: var(--surface-2);
+	--cx-risk-tone: var(--ink-dim);
+}
+.cx-risk-low { --cx-risk-tone: var(--success); }
+.cx-risk-medium { --cx-risk-tone: var(--warning, #fbbf24); }
+.cx-risk-high,
+.cx-risk-critical { --cx-risk-tone: var(--danger); }
+
+.cx-risk-head { display: flex; align-items: center; gap: var(--space-md); }
+.cx-risk-gauge {
+	flex: none;
+	width: 62px; height: 62px; border-radius: 50%;
+	display: flex; flex-direction: column; align-items: center; justify-content: center;
+	background:
+		conic-gradient(var(--cx-risk-tone) calc(var(--cx-risk) * 1%), var(--stroke) 0);
+	position: relative;
+}
+.cx-risk-gauge::before {
+	content: ''; position: absolute; inset: 5px;
+	border-radius: 50%; background: var(--surface-1);
+}
+.cx-risk-score {
+	position: relative;
+	font-family: var(--font-mono); font-size: var(--text-md, 1rem); font-weight: 700;
+	color: var(--cx-risk-tone); line-height: 1;
+}
+.cx-risk-100 { position: relative; font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-faint); }
+.cx-risk-id { min-width: 0; }
+.cx-risk-label {
+	font-size: var(--text-2xs); color: var(--ink-faint);
+	text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
+}
+.cx-risk-lvl { color: var(--cx-risk-tone); font-weight: 700; }
+.cx-risk-summary { font-size: var(--text-sm); color: var(--ink-bright); line-height: 1.45; }
+
+.cx-risk-factors { list-style: none; margin: var(--space-md) 0 0; padding: 0; display: grid; gap: 1px; background: var(--stroke); border-radius: var(--radius-sm, 6px); overflow: hidden; }
+.cx-rf {
+	display: grid;
+	grid-template-columns: 10px minmax(0, 7rem) minmax(0, 1fr);
+	align-items: baseline; gap: var(--space-sm);
+	background: var(--surface-1); padding: var(--space-sm) var(--space-md);
+	font-size: var(--text-2xs); line-height: 1.5;
+}
+.cx-rf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-faint); align-self: center; }
+.cx-rf-low .cx-rf-dot { background: var(--success); }
+.cx-rf-medium .cx-rf-dot { background: var(--warning, #fbbf24); }
+.cx-rf-high .cx-rf-dot,
+.cx-rf-critical .cx-rf-dot { background: var(--danger); }
+.cx-rf-label { color: var(--ink-bright); font-weight: 600; }
+.cx-rf-detail { color: var(--ink-dim); overflow-wrap: anywhere; }
+
+@media (max-width: 620px) {
+	.cx-momentum { grid-template-columns: repeat(2, 1fr); }
+	.cx-rf { grid-template-columns: 10px minmax(0, 1fr); }
+	.cx-rf-detail { grid-column: 2; }
+}
+
 /* ── service card ─────────────────────────────────────────────────────── */
 .cx-service { border-color: var(--brand-blue-stroke, var(--stroke)); }
 .cx-service-label { font-size: var(--text-2xs); color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }

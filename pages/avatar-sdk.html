@@ -122,7 +122,7 @@
 
 					<div class="sdk-hero-viewer" aria-label="Live 3D avatar demo">
 						<div class="sdk-hero-viewer-glow" aria-hidden="true"></div>
-						<div class="sdk-hero-viewer-frame sdk-hero-viewer">
+						<div class="sdk-hero-viewer-frame">
 							<three-ws-viewer
 								src="/avatars/default.glb"
 								alt="Default three.ws avatar"
@@ -239,8 +239,9 @@
 									</div>
 									<div class="sdk-pg-field sdk-pg-toggle-row">
 										<label data-i18n="avatar_sdk.auto_rotate">Auto-rotate</label>
-										<button class="sdk-pg-toggle" id="pg-rotate" aria-label="Toggle auto-rotate" role="switch" aria-checked="false" data-i18n-attr="aria-label:avatar_sdk.toggle_auto_rotate_arialabel"></button>
+										<button class="sdk-pg-toggle" id="pg-rotate" type="button" aria-label="Toggle auto-rotate" role="switch" aria-checked="false" data-i18n-attr="aria-label:avatar_sdk.toggle_auto_rotate_arialabel"></button>
 									</div>
+									<p class="sdk-pg-note" id="pg-note" role="status" aria-live="polite"></p>
 								</div>
 								<div class="sdk-playground-code">
 									<pre class="sdk-pre" id="pg-code-output"></pre>

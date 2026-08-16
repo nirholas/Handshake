@@ -1902,7 +1902,7 @@ function renderMemories(rows) {
   container.innerHTML = rows.map((m) => {
     const isPublic = m.is_public === true;
     return `
-    <div class="mem-item" data-id="${escapeHtml(m.id)}">
+    <div class="mem-item" id="mem-${escapeHtml(m.id)}" data-id="${escapeHtml(m.id)}">
       <div class="mem-item-body">
         <div class="mem-item-type">${escapeHtml(m.type)}</div>
         <div class="mem-item-content">${escapeHtml(m.content)}</div>
@@ -1926,6 +1926,20 @@ function renderMemories(rows) {
   container.querySelectorAll('[data-vis]').forEach((btn) => {
     btn.addEventListener('click', () => toggleMemoryVisibility(btn));
   });
+  revealCitedMemory();
+}
+
+// Every autopilot receipt cites the memories that motivated it and links here as
+// /agent/<id>/edit?tab=knowledge#mem-<memoryId>. The list renders after the
+// browser has already resolved the fragment, so nothing scrolled and the cited
+// memory was indistinguishable from the rest: bring it into view and mark it.
+function revealCitedMemory() {
+  const id = decodeURIComponent(location.hash.replace(/^#/, ''));
+  if (!id.startsWith('mem-')) return;
+  const row = document.getElementById(id);
+  if (!row) return;
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.add('mem-cited');
 }
 
 async function toggleMemoryVisibility(btn) {

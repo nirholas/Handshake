@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { fetchOSMData, buildCity, CITY_HALF } from '../city/city-map.js';
 import { createCityScene, bindResize } from '../city/city-scene.js';
 import { CityCamera } from '../city/city-camera.js';
-import { CitizenPopulation, citizenProfessionLabel } from './citizen-avatar.js';
+import { CitizenPopulation, citizenProfessionLabel, MAX_PERSONAL_AVATARS } from './citizen-avatar.js';
 import { PassportPanel } from './passport-panel.js';
 import { mountEconomyLayer } from './economy-layer.js';
 import { log } from '../shared/log.js';
@@ -246,26 +246,34 @@ async function main() {
 			if (!citizens.length || data.empty) {
 				revealWorld();
 				showEmptyState();
-				updateCount(0);
+				fleetTotal = 0;
+				fleetCapped = false;
+				renderCount();
 				return;
 			}
 
 			// The board renders the 200 most-recently-active citizens (the query +
 			// render cap). Hitting it means more citizens exist than are shown — say so
 			// honestly rather than silently dropping the tail.
-			const capped = citizens.length >= 200;
+			fleetCapped = citizens.length >= 200;
+			fleetTotal = citizens.length;
 			revealWorld();
-			updateCount(citizens.length, null, capped);
-			buildRoster(citizens, capped);
+			renderCount();
+			buildRoster(citizens, fleetCapped);
 
-			// Progressive populate: each avatar fades in as its GLB resolves. Loads
-			// are pooled inside CitizenPopulation so the fleet streams in smoothly.
-			let placed = 0;
-			await Promise.all(citizens.map(async (citizen, i) => {
-				const inst = await population.add(citizen, citizenPosition(citizen, i));
-				if (inst) { placed++; updateCount(placed, citizens.length, capped); }
+			// Progressive populate: every citizen stands up on the shared rig, then the
+			// most recently active ones upgrade to their own avatar in the background.
+			// Loads are pooled inside CitizenPopulation so the fleet streams in smoothly.
+			let personalBudget = MAX_PERSONAL_AVATARS;
+			await Promise.all(citizens.map((citizen, i) => {
+				// Claimed synchronously, in list order, before the first await, so the
+				// personal-avatar budget goes to the most recently active citizens that
+				// actually carry one.
+				const personal = Boolean(citizen.avatarUrl) && personalBudget-- > 0;
+				return population.add(citizen, citizenPosition(citizen, i), { personal })
+					.then(renderCount);
 			}));
-			updateCount(population.count, null, capped);
+			renderCount();
 		} catch (err) {
 			log.warn('[agora] citizens fetch failed', err?.message);
 			revealWorld();
@@ -341,18 +349,32 @@ async function main() {
 		stateEl.querySelector('#agora-retry')?.addEventListener('click', loadCitizens);
 	}
 
-	function updateCount(n, total, capped = false) {
+	// The fleet the square is currently rendering: how many the registry returned,
+	// and whether that hit the render cap.
+	let fleetTotal = 0;
+	let fleetCapped = false;
+
+	// The HUD population chip, always derived from live state rather than from a
+	// tally a caller happened to be holding. A refresh pass (a human joining, say)
+	// used to report its own local count while the first pass was still placing
+	// citizens, which showed "0+" over a square the roster said held 200.
+	function renderCount() {
 		if (!countEl) return;
-		if (total && total !== n) {
-			countEl.textContent = `${n} / ${total}`;
-		} else if (capped) {
-			// Honest overflow: more citizens exist than the square renders.
-			countEl.textContent = `${n}+`;
-			countEl.title = `Showing the ${n} most recently active citizens`;
-		} else {
-			countEl.textContent = String(n);
-			countEl.removeAttribute('title');
+		const placed = population.count;
+		if (fleetTotal && placed < fleetTotal) {
+			// Arriving: say so, so a half-built square never reads as a finished one.
+			countEl.textContent = `${placed} / ${fleetTotal}`;
+			countEl.title = `${placed} of ${fleetTotal} citizens have arrived in the square`;
+			return;
 		}
+		if (fleetCapped) {
+			// Honest overflow: more citizens exist than the square renders.
+			countEl.textContent = `${placed}+`;
+			countEl.title = `Showing the ${placed} most recently active citizens`;
+			return;
+		}
+		countEl.textContent = String(placed);
+		countEl.removeAttribute('title');
 	}
 
 	function revealWorld() {
@@ -564,8 +586,11 @@ main().catch((err) => {
 				<h2>The Commons failed to load</h2>
 				<p>Something went wrong building the world. Reload to try again.</p>
 				<div class="agora-state-actions">
-					<button class="agora-btn agora-btn-primary" type="button" data-action="reload">Reload</button>
+					<button class="agora-btn agora-btn-primary" type="button" id="agora-fatal-reload">Reload</button>
 				</div>
 			</div>`;
+		// The world is half-built at this point, so retrying in place is not honest:
+		// a real reload is the recovery this state offers, and the button performs it.
+		stateEl.querySelector('#agora-fatal-reload')?.addEventListener('click', () => location.reload());
 	}
 });

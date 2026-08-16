@@ -165,28 +165,36 @@ function paramsFor(query, f, offset) {
 	if (f.extension) p.set('extension', f.extension);
 	if (f.sort) p.set('sort', f.sort);
 	p.set('maxItems', '500');
-	p.set('limit', query ? '100' : '200');
+	p.set('limit', String(query ? PAGE_SIZE.search : PAGE_SIZE.list));
+	if (offset > 0) p.set('offset', String(offset));
 	return p;
 }
 
-async function load() {
+// `append` keeps the rows already on screen and adds the next page after them,
+// which is what the "Load more" button does; a fresh search replaces them.
+async function load({ append = false } = {}) {
 	if (state.loading) return;
 	state.loading = true;
 	const query = els.q.value.trim();
 	state.lastQuery = query;
 	const filters = readFilters();
 	const endpoint = query ? '/api/bazaar/search' : '/api/bazaar/list';
-	const url = `${endpoint}?${paramsFor(query, filters).toString()}`;
-	renderLoading(query);
+	const offset = append ? state.items.length : 0;
+	const url = `${endpoint}?${paramsFor(query, filters, offset).toString()}`;
+	if (append) renderLoadingMore();
+	else renderLoading(query);
 	try {
 		const r = await fetch(url, { headers: { accept: 'application/json' } });
 		const data = await r.json();
 		if (!r.ok) throw new Error(data?.error_description || data?.error || `HTTP ${r.status}`);
-		state.items = data.resources || data.items || [];
+		const page = data.resources || data.items || [];
+		state.items = append ? state.items.concat(page) : page;
+		state.total = Number.isFinite(data.total) ? data.total : state.items.length;
 		recomputePeers(state.items);
-		renderResults(state.items, query, data.sources || [], data.errors || []);
+		renderResults(state.items, query, data.sources || [], data.errors || [], { append, page });
 	} catch (e) {
-		renderError(e);
+		if (append) renderLoadMoreError(e);
+		else renderError(e);
 	} finally {
 		state.loading = false;
 	}
@@ -195,9 +203,16 @@ async function load() {
 function renderLoading(query) {
 	els.results.innerHTML = '';
 	els.empty.hidden = true;
+	els.moreRow.hidden = true;
 	els.count.innerHTML = '<span class="spinner"></span>';
 	els.qlabel.textContent = query ? `for "${query}"` : '';
 	els.sources.textContent = '';
+}
+
+function renderLoadingMore() {
+	els.moreBtn.disabled = true;
+	els.moreBtn.textContent = 'Loading…';
+	els.moreNote.textContent = '';
 }
 
 function renderError(e) {
@@ -207,6 +222,7 @@ function renderError(e) {
 	els.qlabel.textContent = '';
 	els.sources.textContent = '';
 	els.results.innerHTML = '';
+	els.moreRow.hidden = true;
 	// fetch() rejects with a TypeError on offline / DNS / CORS failures — those
 	// never reach `r.ok`, so call them out as a connection problem distinctly
 	// from an HTTP/API error.
@@ -228,12 +244,23 @@ function renderError(e) {
 	});
 }
 
-function renderResults(items, query, sources, errors) {
+// A failed "Load more" must not discard the rows already on screen: keep them,
+// put the button back, and say what went wrong next to it.
+function renderLoadMoreError(e) {
+	els.moreBtn.disabled = false;
+	els.moreBtn.textContent = 'Load more';
+	els.moreNote.textContent = e instanceof TypeError
+		? "Couldn't reach the catalog. Try again."
+		: `Could not load more: ${e?.message || e}`;
+}
+
+function renderResults(items, query, sources, errors, { append = false, page = [] } = {}) {
 	els.count.textContent = String(items.length);
 	els.qlabel.textContent = query ? `for "${query}"` : '';
 	els.sources.innerHTML = sourcesLine(sources, errors);
 	if (items.length === 0) {
 		els.results.innerHTML = '';
+		els.moreRow.hidden = true;
 		els.empty.hidden = false;
 		els.empty.className = 'empty';
 		els.empty.textContent = 'No matching services. Try fewer filters or a different query.';
@@ -241,8 +268,29 @@ function renderResults(items, query, sources, errors) {
 	}
 	els.empty.hidden = true;
 	const frag = document.createDocumentFragment();
-	for (const it of items) frag.appendChild(card(it));
-	els.results.replaceChildren(frag);
+	// Appending re-renders only the new page, so the peer hints on rows already
+	// on screen stay as they were rather than every card being rebuilt.
+	for (const it of (append ? page : items)) frag.appendChild(card(it));
+	if (append) els.results.appendChild(frag);
+	else els.results.replaceChildren(frag);
+	renderMoreRow(items.length, append, page.length);
+}
+
+// The catalog is several times a single page, and reporting the page size as
+// the result count read as "this is everything there is".
+function renderMoreRow(shown, append, pageLength) {
+	const total = Math.max(state.total, shown);
+	els.count.textContent = total > shown ? `${shown} of ${total}` : String(shown);
+	els.moreBtn.disabled = false;
+	els.moreBtn.textContent = 'Load more';
+	// A page that comes back empty means the catalog moved under us between
+	// requests; stop offering a button that would fetch nothing again.
+	if (shown >= total || (append && pageLength === 0)) {
+		els.moreRow.hidden = true;
+		return;
+	}
+	els.moreRow.hidden = false;
+	els.moreNote.textContent = `${total - shown} more`;
 }
 
 function sourcesLine(sources, errors) {
@@ -581,6 +629,7 @@ els.modal.addEventListener('click', (e) => {
 	}
 });
 
+els.moreBtn.addEventListener('click', () => load({ append: true }));
 els.form.addEventListener('submit', (e) => { e.preventDefault(); load(); });
 els.clear.addEventListener('click', () => { els.q.value = ''; load(); });
 els.reset.addEventListener('click', () => {

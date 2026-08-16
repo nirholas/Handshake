@@ -1,4 +1,4 @@
-// /autopilot-activity — the dedicated receipts surface for Memory-grounded
+// /autopilot-activity: the dedicated receipts surface for Memory-grounded
 // Autopilot (Living Agents · Task 08).
 //
 // Lists every autonomous action across the owner's agents (or a single agent via
@@ -63,11 +63,19 @@ function renderTrust(trust) {
 	slot.innerHTML = `<span class="apm-badge ${esc(trust.level)}" title="${esc(trust.blurb)}">${esc(trust.label)} · ${esc(String(trust.stats?.executed ?? 0))} actions</span>`;
 }
 
+// Autopilot is configured on an agent's own edit page, so the empty state links
+// straight into that agent's autopilot controls. A caller with no agents at all
+// is sent to create one first, the only step that actually unblocks them.
+function autopilotHref(id) {
+	return id ? `/agent/${encodeURIComponent(id)}/edit?tab=autopilot` : '/agent/new';
+}
+
 function emptyState() {
 	if (agentFilter) {
-		return `<div class="state"><div class="ico">🧭</div><h2>Nothing from this agent yet</h2><p>This agent has not acted on your behalf so far. Other agents may have: switch the filter back to every agent.</p><button class="btn" id="clear-filter">Show all agents</button></div>`;
+		return `<div class="state"><div class="ico">🧭</div><h2>Nothing from this agent yet</h2><p>This agent has not acted on your behalf so far. Give it a scope to act in, or switch the filter back to every agent.</p><a class="btn" href="${esc(autopilotHref(agentFilter))}">Open its autopilot →</a> <button class="btn" id="clear-filter">Show all agents</button></div>`;
 	}
-	return `<div class="state"><div class="ico">🧭</div><h2>No actions yet</h2><p>When your agent acts on your behalf (sets an alert, writes a briefing, sends $THREE) every move shows up here with the memory that motivated it.</p><a class="btn" href="/dashboard">Set up autopilot →</a></div>`;
+	const cta = firstAgentId ? 'Set up autopilot →' : 'Create your first agent →';
+	return `<div class="state"><div class="ico">🧭</div><h2>No actions yet</h2><p>When your agent acts on your behalf (sets an alert, writes a briefing, sends $THREE) every move shows up here with the memory that motivated it.</p><a class="btn" href="${esc(autopilotHref(firstAgentId))}">${cta}</a></div>`;
 }
 
 function selectAgent(id) {
@@ -82,7 +90,11 @@ function selectAgent(id) {
 }
 
 async function load({ append = false } = {}) {
-	if (loading) return;
+	// Only "load more" is genuinely re-entrant-unsafe (a double tap would append
+	// the same cursor twice). A fresh load supersedes whatever is in flight.
+	if (append && loading) return;
+	const mine = ++ticket;
+	const stale = () => mine !== ticket;
 	loading = true;
 	const ledger = $('ledger');
 	const more = $('loadmore');
@@ -95,11 +107,13 @@ async function load({ append = false } = {}) {
 	if (append) more.textContent = 'Loading…';
 	try {
 		const r = await apiFetch(url(), { credentials: 'include', allowAnonymous: true });
+		if (stale()) return;
 		if (r.status === 401) {
 			renderState(`<div class="state"><div class="ico">🔒</div><h2>Sign in to see your agent's activity</h2><p>Every autonomous action lives here once you're signed in.</p><a class="btn" href="/login?next=${encodeURIComponent(location.pathname + location.search)}">Sign in</a></div>`);
 			return;
 		}
 		const j = await r.json().catch(() => ({}));
+		if (stale()) return;
 		if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
 
 		populateAgentFilter(j.agents);
@@ -121,6 +135,7 @@ async function load({ append = false } = {}) {
 		ledger.removeAttribute('aria-busy');
 		wireUndo(ledger);
 	} catch (err) {
+		if (stale()) return;
 		if (append) {
 			// The already-rendered page stays intact; say what failed and leave the
 			// button armed so another tap retries the same cursor.
@@ -131,9 +146,12 @@ async function load({ append = false } = {}) {
 			$('retry')?.addEventListener('click', () => load());
 		}
 	} finally {
-		loading = false;
-		more.disabled = false;
-		more.textContent = moreLabel;
+		// A superseded call must not clear the busy flags the newer one owns.
+		if (!stale()) {
+			loading = false;
+			more.disabled = false;
+			more.textContent = moreLabel;
+		}
 	}
 }
 
@@ -153,7 +171,7 @@ function wireUndo(scope) {
 				});
 				const j = await r.json().catch(() => ({}));
 				if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
-				showReceiptChip('Undone — your agent will be more cautious.', { icon: '↩' });
+				showReceiptChip('Undone. Your agent will be more cautious.', { icon: '↩' });
 				cursor = null;
 				load();
 			} catch (err) {
@@ -165,8 +183,8 @@ function wireUndo(scope) {
 	});
 }
 
-// When aggregating across agents, the undo needs the receipt's own agent id —
-// it's carried on the receipt row's source links; fall back to the filter.
+// When aggregating across agents, the undo needs the receipt's own agent id.
+// It's carried on the receipt row's source links; fall back to the filter.
 function resolveAgentForUndo(btn) {
 	const row = btn.closest('.apm-receipt');
 	const link = row?.querySelector('a.apm-source[href*="/agent/"]');
