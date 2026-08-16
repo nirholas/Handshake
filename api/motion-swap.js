@@ -105,7 +105,10 @@ async function presignVideo(req, res, body) {
 		public_url: publicUrl(key),
 		method: 'PUT',
 		headers: { 'content-type': contentType },
-		expires_in: 600,
+		// presignUpload signs for 300s. Reporting 600 told the client it had twice
+		// the window it really has, so a queued upload of a large video could
+		// start after the signature expired and fail with a bare 403 from R2.
+		expires_in: 300,
 	});
 }
 

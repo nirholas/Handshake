@@ -369,6 +369,17 @@ function memoryLimiter(name, { limit, window }) {
 			memoryBuckets.set(key, kept);
 			return { success: true, limit, remaining: limit - kept.length, reset: now + ms };
 		},
+		// Hand back the newest hit in this bucket. See `refund` on the exported
+		// limiters for when a caller is allowed to do that.
+		async refund(id) {
+			const key = `${name}\u0000${id}`;
+			const kept = memoryBuckets.get(key);
+			if (!kept?.length) return false;
+			kept.pop();
+			if (kept.length) memoryBuckets.set(key, kept);
+			else memoryBuckets.delete(key);
+			return true;
+		},
 	};
 }
 
@@ -447,6 +458,15 @@ function pgLimiter(name, { limit, window }) {
 				reset,
 				reason: 'rate_limiter_degraded_postgres',
 			};
+		},
+		async refund(id) {
+			const windowStart = Math.floor(Date.now() / ms) * ms;
+			const [row] = await sql`
+				UPDATE rate_limit_counters SET hits = greatest(0, hits - 1)
+				WHERE bucket = ${`${name}\0${id}`} AND window_start = ${windowStart}
+				RETURNING hits
+			`;
+			return Boolean(row);
 		},
 	};
 }

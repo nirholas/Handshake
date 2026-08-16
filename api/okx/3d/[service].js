@@ -461,7 +461,11 @@ async function handleIdentityStudio(req, res) {
 				} catch (err) {
 					return sendX402Error(
 						res,
-						{ resourceUrl: x402Ctx.resourceUrl, accepts: x402Ctx.requirements },
+						{
+							resourceUrl: x402Ctx.resourceUrl,
+							accepts: x402Ctx.requirements,
+							challenge: IDENTITY_CHALLENGE,
+						},
 						err,
 					);
 				}

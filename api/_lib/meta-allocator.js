@@ -246,7 +246,14 @@ async function llmPlan({ budget, profile, universe, currentAllocations, userId }
 		track: userId ? { userId, tool: 'meta-allocator' } : null,
 	});
 	const parsed = extractJson(out?.text);
-	if (!parsed || !Array.isArray(parsed.allocations)) return null;
+	// An empty allocations array is a non-answer, not a plan: the caller asked
+	// how to split a budget across a universe that already passed the profile's
+	// minimum-settled bar, so "allocate to nobody" is the model declining rather
+	// than deciding. Returning null hands the request to the deterministic
+	// allocator, which always produces a real basket from the same universe.
+	// Observed live: a model reply of {"allocations":[],"excluded":[]} shipped a
+	// plan with zero rows and zero exclusions while 8 leaders qualified.
+	if (!parsed || !Array.isArray(parsed.allocations) || parsed.allocations.length === 0) return null;
 	return {
 		allocations: parsed.allocations,
 		excluded: Array.isArray(parsed.excluded) ? parsed.excluded : [],

@@ -2,8 +2,14 @@
 //
 // The confirm link from the signup email lands here. A valid token flips the
 // subscriber to `confirmed`, adds them to the Resend audience, and shows a
-// branded confirmation page. Tokens are single-purpose; an already-confirmed or
-// unknown token shows a neutral page rather than leaking which is which.
+// branded confirmation page. An unknown token shows a neutral "link expired"
+// page, and an already-confirmed one says so without re-mailing anything.
+//
+// A token that belongs to an UNSUBSCRIBED row is refused. The confirm link and
+// the unsubscribe link in an email carry the SAME token and the token is only
+// rotated by a fresh /api/newsletter-subscribe, so without this an old confirm
+// link resurrected an address the reader had deliberately unsubscribed. Opting
+// back in has to start from the site, which mints a new token.
 
 import { sql } from './_lib/db.js';
 import { cors, method, wrap, text, rateLimited } from './_lib/http.js';
@@ -39,6 +45,15 @@ export default wrap(async (req, res) => {
 		return page(res, 404, {
 			heading: 'Link expired',
 			body: 'This confirmation link is no longer valid. You can subscribe again any time.',
+		});
+	}
+
+	if (sub.status === 'unsubscribed') {
+		return page(res, 200, {
+			heading: "You're unsubscribed",
+			body: 'This link belongs to a subscription you already cancelled, so it no longer signs you up. Subscribe again from the site whenever you want the updates back.',
+			ctaHref: `${APP_URL}/changelog`,
+			ctaLabel: 'See the changelog',
 		});
 	}
 

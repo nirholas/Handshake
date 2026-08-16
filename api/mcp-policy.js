@@ -21,7 +21,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { cors, wrap } from './_lib/http.js';
+import { cors, method, wrap } from './_lib/http.js';
 
 // The catalog is baked into the deployed image next to this handler, so it is
 // read once at boot rather than per request.
@@ -134,6 +134,10 @@ function toVsCodeSettings(policy) {
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,OPTIONS', origins: '*' })) return;
+	// The CORS preflight advertises GET,HEAD,OPTIONS; without this gate a POST
+	// or PUT was answered with a cacheable 200 policy body, which contradicts
+	// the advertised contract and lets an intermediary cache a write verb.
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const profileParam = (url.searchParams.get('profile') || DEFAULT_PROFILE).toLowerCase();
