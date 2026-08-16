@@ -127,6 +127,14 @@
 			<description>The public revenue feed, the checkout SKU API and the ring report all took values straight from the URL into the database. A timestamp that was not a timestamp, a checkout id that was not an id, and the query fell over: the caller got an opaque &quot;something went wrong&quot; with a support reference, and our own alerting logged a fault that was only ever a typo. All three now say what was wrong, in words, with the right status code. The ring report also stops treating an unrecognised period as &quot;show me everything&quot;, which quietly answered the wrong question and ran the most expensive query it has. The revenue feed now echoes back the endpoint filter it actually applied rather than the raw text it was sent, and the paid-call lookup only accepts something shaped like a real transaction signature.</description>
 		</item>
 		<item>
+			<title>Prompt polish keeps its quotes out of your model, and a busy Forge says so plainly</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-16:Prompt polish keeps its quotes out of your model, and a busy Forge says so plainly</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes across the Forge endpoints. The Enhance button, which rewrites your rough idea into the prompt the generator actually draws from, stopped removing the quotation marks the writing model wraps around its answer: those quotes were being handed straight to the image step as if you had asked for them to be drawn. Both plain and curly quotes are stripped again. Second, when you ask the studio to change a model you already made and the generator is saturated, you now get an honest &quot;busy, try again in a moment&quot; with a wait time instead of a vague failure that blamed the wording of your request. Third, the self-hosted generator panel now tells a caller which input was missing rather than reporting the whole feature as unconfigured, and its status light no longer claims nothing is set up when the only problem was the address you typed.</description>
+		</item>
+		<item>
 			<title>Robinhood Chain worlds survive a hiccup in the live feed instead of going dark</title>
 			<link>https://three.ws/worlds</link>
 			<guid isPermaLink="false">2026-08-16:Robinhood Chain worlds survive a hiccup in the live feed instead of going dark</guid>

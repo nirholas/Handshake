@@ -170,6 +170,23 @@ const DAS_THROTTLE_RETRIES = 2;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Neon speaks HTTP, so one upsert is one round trip and 1571 of them in series
+// spend the whole tick: measured 110s of a 120s budget, which left the metadata
+// pass 11 accounts before the deadline cut it off. A small fixed pool brings the
+// structural leg back to seconds and hands the rest of the budget to enrichment,
+// without opening enough concurrent statements for the branch to notice.
+const UPSERT_CONCURRENCY = 8;
+
+async function inPool(items, limit, worker) {
+	let next = 0;
+	const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+		for (let i = next++; i < items.length; i = next++) {
+			await worker(items[i], i);
+		}
+	});
+	await Promise.all(runners);
+}
+
 // One getAsset against ONE lane, classified three ways, because the three call
 // for opposite reactions:
 //   • served, the lane answered the method. `asset` is the normalized
@@ -382,8 +399,8 @@ export async function crawlMetaplexAgents({ deadline } = {}) {
 	// exposed this upserted 61 of 1571 because the metadata leg consumed the rest.
 	// Structural first, always to completion; metadata second, with what is left.
 	const pending = [];
-	for (const { acc } of accounts) {
-		if (deadline && Date.now() > deadline) break;
+	await inPool(accounts, UPSERT_CONCURRENCY, async ({ acc }) => {
+		if (deadline && Date.now() > deadline) return;
 		try {
 			const ref = String(acc.publicKey);
 			const asset = acc.asset ? String(acc.asset) : null;
@@ -402,7 +419,7 @@ export async function crawlMetaplexAgents({ deadline } = {}) {
 		} catch (err) {
 			report.errors.push({ stage: 'upsert', error: err.message || String(err) });
 		}
-	}
+	});
 
 	for (const { ref, asset } of pending) {
 		if (deadline && Date.now() > deadline) break;

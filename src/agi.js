@@ -118,6 +118,10 @@ function bodyLabel(agent) {
 function renderStageFallback(stage, agent) {
 	state.el3d = null;
 	state.embodied = false;
+	// Latch, so the 20s poll does not remount a body we already know is dead:
+	// that would rebuild this panel (re-announcing it to screen readers and
+	// stealing focus from its button) and re-request the model every tick.
+	state.bodyGaveUp = true;
 	stage.querySelector('agent-3d')?.remove();
 	stage.querySelector('.agi-stage-boot')?.remove();
 	stage.querySelector('.agi-stage-fallback')?.remove();
@@ -135,6 +139,7 @@ function renderStageFallback(stage, agent) {
 		boot.textContent = 'embodying…';
 		stage.insertBefore(boot, stage.querySelector('.agi-stage-floor'));
 		state.bodyFailover = false;
+		state.bodyGaveUp = false;
 		mountBody(agent);
 	});
 	stage.insertBefore(box, stage.querySelector('.agi-stage-floor'));
@@ -204,7 +209,7 @@ function attachBody(stage, agent, source) {
 
 function mountBody(agent) {
 	const stage = document.getElementById('agi-stage');
-	if (!stage || state.el3d) return;
+	if (!stage || state.el3d || state.bodyGaveUp) return;
 	attachBody(stage, agent, agent?.id ? { agentId: agent.id } : { body: DEFAULT_BODY });
 }
 

@@ -1754,5 +1754,5 @@ if (spotlight && _cards.size) {
 
 document.addEventListener('visibilitychange', () => {
 	if (document.hidden) { suspendStreams(); stopRotation(); }
-	else { resumeStreams(); _showrunner?.refreshLive(); if (spotlight && _cards.size) startRotation(); }
+	else { resumeStreams(); flushActivity(); _showrunner?.refreshLive(); if (spotlight && _cards.size) startRotation(); }
 });

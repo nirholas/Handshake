@@ -108,10 +108,15 @@
 				position: absolute;
 				inset: 0;
 			}
+			/* Top-left, not bottom-left: <agent-presence> paints its own nameplate
+			   centred along the bottom of the stage, and at every width the two
+			   pills overlapped (the HUD alone is ~270px against a 298px stage at
+			   320). The stage top is otherwise empty, so the status pill moves out
+			   of the nameplate's lane instead of the two fighting for it. */
 			.studio-stage-hud {
 				position: absolute;
 				left: 14px;
-				bottom: 14px;
+				top: 14px;
 				display: inline-flex;
 				align-items: center;
 				gap: 7px;

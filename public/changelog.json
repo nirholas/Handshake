@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T17:00:52.612Z",
+	"generated_at": "2026-08-16T17:06:38.924Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -164,6 +164,17 @@
 			"link": "/x402-revenue",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Prompt polish keeps its quotes out of your model, and a busy Forge says so plainly",
+			"summary": "Three fixes across the Forge endpoints. The Enhance button, which rewrites your rough idea into the prompt the generator actually draws from, stopped removing the quotation marks the writing model wraps around its answer: those quotes were being handed straight to the image step as if you had asked for them to be drawn. Both plain and curly quotes are stripped again. Second, when you ask the studio to change a model you already made and the generator is saturated, you now get an honest \"busy, try again in a moment\" with a wait time instead of a vague failure that blamed the wording of your request. Third, the self-hosted generator panel now tells a caller which input was missing rather than reporting the whole feature as unconfigured, and its status light no longer claims nothing is set up when the only problem was the address you typed.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

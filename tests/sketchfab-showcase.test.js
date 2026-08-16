@@ -27,6 +27,28 @@ describe('buildModelName', () => {
 	it('falls back sanely on empty input', () => {
 		expect(buildModelName('')).toBe('3D Model');
 	});
+
+	// The image-to-3D route stores its own name as the prompt. The accepted tier
+	// filters that sentinel out in SQL, but board winners and top-voted models skip
+	// the prompt-quality heuristics on purpose, so the sentinel reached the public
+	// name and the official account was one run away from publishing "Image-To-3d".
+	it('names a placeholder-prompt model from its category, not the placeholder', () => {
+		expect(buildModelName('image-to-3d', 'sci-fi vehicle')).toBe('Forged Sci-Fi Vehicle');
+		expect(buildModelName('Image-To-3D', 'avatar')).toBe('Forged Avatar');
+		expect(buildModelName('untitled', 'prop')).toBe('Forged Prop');
+	});
+
+	it('falls back to the generic name when a placeholder prompt has no category', () => {
+		expect(buildModelName('image-to-3d')).toBe('3D Model');
+		expect(buildModelName('image-to-3d', null)).toBe('3D Model');
+	});
+
+	it('leaves a real prompt that merely contains the placeholder words alone', () => {
+		expect(buildModelName('image-to-3d scanner rig on a tripod')).toBe(
+			'Image-To-3d Scanner Rig On A Tripod',
+		);
+		expect(buildModelName('test tube rack', 'lab')).toBe('Test Tube Rack');
+	});
 });
 
 describe('buildTags', () => {

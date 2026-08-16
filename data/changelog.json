@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "Prompt polish keeps its quotes out of your model, and a busy Forge says so plainly",
+			"summary": "Three fixes across the Forge endpoints. The Enhance button, which rewrites your rough idea into the prompt the generator actually draws from, stopped removing the quotation marks the writing model wraps around its answer: those quotes were being handed straight to the image step as if you had asked for them to be drawn. Both plain and curly quotes are stripped again. Second, when you ask the studio to change a model you already made and the generator is saturated, you now get an honest \"busy, try again in a moment\" with a wait time instead of a vague failure that blamed the wording of your request. Third, the self-hosted generator panel now tells a caller which input was missing rather than reporting the whole feature as unconfigured, and its status light no longer claims nothing is set up when the only problem was the address you typed.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Web search answers again, and a stray address can no longer tie up the server",
 			"summary": "Three repairs on the public API. Web search had been answering nothing but an error: the question went to Google's grounded search as designed, but the model was given a single budget to both think and reply, spent all of it thinking, and came back empty, which we correctly reported as a failure and wrongly did so on every single query. Thinking now has its own allowance on top of the answer, and when a search does come back empty the log says why instead of leaving the next person to guess. Second, the machine-readable directory at the root of the site, the file other agents read to learn what three.ws sells, would hang forever on a handful of odd names rather than saying no such thing, and a request that never ends holds a server slot until it is cut off. Every unknown name now gets a plain not-found. Third, at checkout, a wallet that hands back a payment the network could never accept is now told so at the moment it happens, instead of the modal saying sending and the error arriving later from the payment processor.",
 			"tags": [
