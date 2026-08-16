@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T20:37:12.139Z",
+	"generated_at": "2026-08-16T21:10:19.687Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2942,6 +2942,16 @@
 					"title": "Docs",
 					"description": "Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/avatar-artifact",
+					"title": "Docs · Avatar Artifact viewer",
+					"description": "The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.",
+					"added": "2026-08-16",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
