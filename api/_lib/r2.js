@@ -41,6 +41,40 @@ export const r2 = new Proxy(
 	},
 );
 
+// True only when every var the read/write helpers below dereference is present:
+// the client needs the endpoint plus credentials, putObject/presignGet need the
+// bucket, and publicUrl() needs the public domain. Callers that would otherwise
+// claim a batch of work and fail every item on `Missing required env var: S3_…`
+// gate on this and skip the tick instead (api/cron/avatar-thumbnail-*.js).
+export function objectStorageConfigured() {
+	return Boolean(
+		process.env.S3_ENDPOINT &&
+			process.env.S3_BUCKET &&
+			process.env.S3_PUBLIC_DOMAIN &&
+			process.env.S3_ACCESS_KEY_ID &&
+			process.env.S3_SECRET_ACCESS_KEY,
+	);
+}
+
+// A failure caused by object storage being unconfigured, unreachable, or
+// rejecting our credentials says nothing about the asset being processed: the
+// same GLB succeeds once storage is healthy. Batch runners working off a bounded
+// retry ledger use this to hand the attempt back instead of permanently retiring
+// a blameless row (see renderBatch in avatar-thumbs.js). Deliberately strict, as
+// with isBrowserInfrastructureError: an unlisted error is the asset's fault, so a
+// genuinely broken model still retires instead of being retried forever.
+// Exported as a pattern string so the SQL repair path can ask the same question
+// with `~*` instead of maintaining a second, drifting copy (see
+// resetInfrastructureFailures in avatar-thumbs.js). JS/POSIX-ERE compatible.
+export const STORAGE_ERROR_PATTERN =
+	'missing required env var: s3_|invalidaccesskeyid|signaturedoesnotmatch|nosuchbucket|access denied|econnrefused|enotfound|socket hang up|econnreset';
+
+const STORAGE_ERROR_RE = new RegExp(STORAGE_ERROR_PATTERN, 'i');
+
+export function isStorageInfrastructureError(err) {
+	return STORAGE_ERROR_RE.test(String(err?.message || err || ''));
+}
+
 // Short-lived signed URL for direct browser upload (PUT).
 export async function presignUpload({ key, contentType, checksumSha256 }) {
 	// Do NOT include ContentLength in the command — that adds content-length to

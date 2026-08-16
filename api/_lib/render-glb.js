@@ -96,8 +96,22 @@ async function getBrowser() {
 // on a healthy browser. Batch runners use this to roll a claim back instead of
 // spending one of the model's bounded retries. Keep it strict: anything not
 // listed here is treated as the model's fault.
-const INFRA_ERROR_RE =
-	/connection closed|target closed|browser has disconnected|browser was not found|protocol error|session closed|websocket|econnreset|socket hang up|failed to launch/i;
+//
+// The spawn errnos are here because they were missing: puppeteer wraps most
+// launch faults as "Failed to launch the browser process", but when the kernel
+// refuses the fork outright the raw Node error surfaces instead, and four
+// avatars in the live backfill ledger sat permanently retired at attempts=3
+// with last_error "spawn EFAULT", a container-level fault, charged to the
+// model. ENOMEM/EAGAIN are the same class (fork under memory pressure).
+// Exported as a pattern string, not just a compiled regex, because the repair
+// path (resetInfrastructureFailures in avatar-thumbs.js) has to ask the same
+// question in SQL. It used to carry its own hand-copied alternation, which drifts
+// silently the moment this list grows: exactly what happened to the spawn errnos.
+// The syntax below is the intersection of JS and POSIX ERE, so `~*` accepts it.
+export const INFRA_ERROR_PATTERN =
+	'connection closed|target closed|browser has disconnected|browser was not found|protocol error|session closed|websocket|econnreset|socket hang up|failed to launch|spawn e[a-z]+|enomem|eagain|resource temporarily unavailable';
+
+const INFRA_ERROR_RE = new RegExp(INFRA_ERROR_PATTERN, 'i');
 
 export function isBrowserInfrastructureError(err) {
 	return INFRA_ERROR_RE.test(String(err?.message || err || ''));

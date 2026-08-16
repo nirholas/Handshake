@@ -44,6 +44,7 @@ import {
 	renderBatch,
 	coverage,
 } from '../_lib/avatar-thumbs.js';
+import { objectStorageConfigured } from '../_lib/r2.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 120;
@@ -57,6 +58,14 @@ const CONCURRENCY = Math.max(1, Number(process.env.THUMBNAIL_BACKFILL_CONCURRENC
 export default wrapCron(async (req, res) => {
 	if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
 	if (!requireCron(req, res)) return;
+
+	// Both steps write to R2, adoption verifies the forge preview object exists,
+	// rendering uploads a PNG, so with storage unconfigured there is nothing this
+	// tick can do except claim avatars and burn their bounded retries. Skip, the
+	// way the sibling forge-thumbnail-backfill does on forgeStoreEnabled().
+	if (!objectStorageConfigured()) {
+		return json(res, 200, { ok: false, reason: 'object_storage_unconfigured' });
+	}
 
 	try {
 		await ensureBackfillSchema();

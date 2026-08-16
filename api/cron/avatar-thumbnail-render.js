@@ -23,7 +23,7 @@
 
 import { json, wrapCron } from '../_lib/http.js';
 import { logger } from '../_lib/usage.js';
-import { presignGet, putObject, publicUrl } from '../_lib/r2.js';
+import { presignGet, putObject, publicUrl, objectStorageConfigured } from '../_lib/r2.js';
 import { renderGlbToPng } from '../_lib/render-glb.js';
 import { thumbBackdropFor } from '../_lib/avatar-thumbs.js';
 import {
@@ -73,6 +73,13 @@ async function renderOne(job) {
 export default wrapCron(async (req, res) => {
 	if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
 	if (!requireCron(req, res)) return;
+
+	// renderOne presigns the source key and uploads the PNG, so unconfigured
+	// storage fails every claimed job identically while charging each one a retry
+	// out of its bounded budget. Leave the queue alone until storage is back.
+	if (!objectStorageConfigured()) {
+		return json(res, 200, { ok: false, reason: 'object_storage_unconfigured' });
+	}
 
 	// Schema must exist before we can claim — the loop also ensures it, but the
 	// drainer can win the race on a fresh deploy.

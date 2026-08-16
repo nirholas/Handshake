@@ -117,9 +117,13 @@ function assertSafeBaseUrl(raw) {
 // `/infer` + `/tasks/{id}` API, not the NIM's synchronous `/v1/infer`. Reading
 // it here made health report a configured, unreachable NIM and turned every
 // generation into a 404 against a service that was never a NIM.
+function configuredNimUrl() {
+	return env.NIM_TRELLIS_URL || process.env.NIM_TRELLIS_URL || '';
+}
+
 function resolveBaseUrl(requested) {
 	if (requested) return assertSafeBaseUrl(requested);
-	const configured = env.NIM_TRELLIS_URL || process.env.NIM_TRELLIS_URL;
+	const configured = configuredNimUrl();
 	if (!configured) {
 		throw Object.assign(
 			new Error(
@@ -239,8 +243,13 @@ async function health(req, res) {
 	try {
 		baseUrl = resolveBaseUrl((new URL(req.url, 'http://x').searchParams.get('baseUrl') || '').trim());
 	} catch (err) {
+		// `configured` describes the DEPLOYMENT, not the request. A caller-supplied
+		// baseUrl that fails the SSRF guard is the caller's mistake and says nothing
+		// about whether the operator wired NIM_TRELLIS_URL, so it is answered from
+		// the env directly. Reporting configured:false on a rejected override made
+		// the page's status pill claim nothing was set up on a wired deployment.
 		return json(res, 200, {
-			configured: false,
+			configured: Boolean(configuredNimUrl()),
 			reachable: false,
 			reason: err.message,
 		});
@@ -288,15 +297,25 @@ async function infer(req, res) {
 	const mode = body?.mode === 'text' ? 'text' : 'image';
 	const tier = body?.tier === 'high' ? 'high' : 'draft';
 	const seed = Number.isInteger(body?.seed) ? body.seed : null;
-	const baseUrl = resolveBaseUrl(typeof body?.baseUrl === 'string' ? body.baseUrl.trim() : '');
 	const steps = trellisSteps(tier);
+
+	// Cheap, network-free input checks run BEFORE the NIM is resolved: a caller who
+	// sent no prompt (or no image) deserves the 400 that names their mistake, not
+	// the 503 an unconfigured deployment would otherwise answer first for every
+	// request regardless of what was wrong with it.
+	const rawPrompt = typeof body?.prompt === 'string' ? body.prompt.trim() : '';
+	if (mode === 'text' && rawPrompt.length < 2) {
+		return error(res, 400, 'no_prompt', 'Describe the object in a few words first.');
+	}
+	const rawImage = body?.image || body?.imageUrl;
+	if (mode === 'image' && (typeof rawImage !== 'string' || !rawImage)) {
+		return error(res, 400, 'no_image', 'image is required for image mode.');
+	}
+
+	const baseUrl = resolveBaseUrl(typeof body?.baseUrl === 'string' ? body.baseUrl.trim() : '');
 
 	let payload;
 	if (mode === 'text') {
-		const rawPrompt = typeof body?.prompt === 'string' ? body.prompt.trim() : '';
-		if (rawPrompt.length < 2) {
-			return error(res, 400, 'no_prompt', 'Describe the object in a few words first.');
-		}
 		const prompt = shapePrompt(rawPrompt);
 		payload = {
 			mode: 'text',
@@ -308,7 +327,7 @@ async function infer(req, res) {
 			output_format: 'glb',
 		};
 	} else {
-		const imageDataUri = await toImageDataUri(body?.image || body?.imageUrl);
+		const imageDataUri = await toImageDataUri(rawImage);
 		payload = {
 			mode: 'image',
 			image: imageDataUri,

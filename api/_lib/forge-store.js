@@ -17,7 +17,7 @@ import { createHash } from 'node:crypto';
 import { randomUUID } from 'node:crypto';
 import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
-import { putObject, publicUrl, deleteObject, keyFromPublicUrl } from './r2.js';
+import { putObject, publicUrl, deleteObject, keyFromPublicUrl, objectStorageConfigured } from './r2.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
@@ -40,14 +40,7 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 // storage (durable copies). Detect from the raw env so a partially-configured
 // deployment degrades to the stateless path instead of throwing on first use.
 export function forgeStoreEnabled() {
-	return Boolean(
-		databaseConfigured() &&
-			process.env.S3_ENDPOINT &&
-			process.env.S3_BUCKET &&
-			process.env.S3_PUBLIC_DOMAIN &&
-			process.env.S3_ACCESS_KEY_ID &&
-			process.env.S3_SECRET_ACCESS_KEY,
-	);
+	return Boolean(databaseConfigured() && objectStorageConfigured());
 }
 
 // Hash a caller-supplied anonymous client id. Empty / missing ids collapse to a

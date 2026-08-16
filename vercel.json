@@ -2672,6 +2672,10 @@
 			"dest": "/api/agents/balances"
 		},
 		{
+			"src": "/api/agents/activity",
+			"dest": "/api/agents/activity"
+		},
+		{
 			"src": "/api/agents/wallet-embed",
 			"dest": "/api/agents/wallet-embed"
 		},

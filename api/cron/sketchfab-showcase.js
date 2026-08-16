@@ -180,7 +180,7 @@ async function pushCandidate(candidate) {
 	}
 
 	try {
-		const name = buildModelName(candidate.prompt);
+		const name = buildModelName(candidate.prompt, candidate.model_category);
 		const { uid, url } = await uploadModel({
 			glbUrl: candidate.glb_url,
 			name,
@@ -273,7 +273,7 @@ export default wrapCron(async (req, res) => {
 			candidates: candidates.map((c) => ({
 				id: c.id,
 				source: c.source,
-				name: buildModelName(c.prompt),
+				name: buildModelName(c.prompt, c.model_category),
 				prompt: c.prompt,
 				glb_url: c.glb_url,
 			})),

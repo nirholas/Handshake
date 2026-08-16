@@ -33,7 +33,14 @@
 // the claim ledger, so they are safe to run at the same time.
 
 import { sql } from './db.js';
-import { presignGet, putObject, headObject, publicUrl, isLegacyOgThumbnailKey } from './r2.js';
+import {
+	presignGet,
+	putObject,
+	headObject,
+	publicUrl,
+	isLegacyOgThumbnailKey,
+	isStorageInfrastructureError,
+} from './r2.js';
 
 // Square posters — matches api/cron/avatar-thumbnail-render.js so a marketplace
 // re-render and a backfill render produce interchangeable images.
@@ -273,6 +280,13 @@ export async function renderThumbnail({ id, storage_key: storageKey }) {
 // "Connection closed.", so a naive loop would charge a retry to hundreds of
 // perfectly good models and retire them permanently. Aborted and unstarted claims
 // are rolled back; the runner sees `aborted: true` and stops.
+//
+// Object storage failing counts the same way. The upload and the source presign
+// both read S3 env, so an unconfigured or unreachable bucket makes EVERY claim in
+// the batch fail identically ("Missing required env var: S3_BUCKET") while saying
+// nothing about the models, three such ticks at */5 would permanently retire
+// every remaining avatar in under fifteen minutes. Blame the environment, not the
+// model: roll the attempt back and stop.
 export async function renderBatch({ limit = 5, concurrency = 1, onResult } = {}) {
 	const jobs = await claimAvatars(limit);
 	if (!jobs.length) return { claimed: 0, rendered: 0, failed: 0, aborted: false, results: [] };
@@ -292,7 +306,7 @@ export async function renderBatch({ limit = 5, concurrency = 1, onResult } = {})
 				onResult?.(ok);
 			} catch (err) {
 				const msg = err?.message || 'render_failed';
-				if (isBrowserInfrastructureError(err)) {
+				if (isBrowserInfrastructureError(err) || isStorageInfrastructureError(err)) {
 					// Not this model's fault — hand the attempt back and stop the batch.
 					aborted = msg;
 					await rollbackClaim(job.id);
@@ -356,19 +370,22 @@ export async function queueRestyle({ limit = 100 } = {}) {
 	return { queued: rows.length };
 }
 
-// Repair: forget every ledger row whose failure was the browser dying rather than
-// the model being bad. A row's absence means "never attempted", so the avatar
-// re-enters the candidate set with a clean slate.
+// Repair: forget every ledger row whose failure was the environment's fault
+// rather than the model's — the browser dying, or object storage being
+// unreachable. A row's absence means "never attempted", so the avatar re-enters
+// the candidate set with a clean slate.
 //
-// renderBatch() no longer charges an attempt for an infrastructure failure, but a
-// runner that crashed before that fix — or a future failure mode not yet in
-// isBrowserInfrastructureError() — can still poison the ledger and permanently
-// retire thousands of perfectly renderable avatars. This is the undo.
+// renderBatch() no longer charges an attempt for either class, but a runner that
+// crashed before that fix, or a failure mode added to the classifiers after the
+// damage was done, can still leave rows permanently retired at MAX_ATTEMPTS. This
+// is the undo. The predicate is built from the very patterns the live classifiers
+// use, so widening one automatically widens the repair.
 export async function resetInfrastructureFailures() {
+	const pattern = `(${INFRA_ERROR_PATTERN}|${STORAGE_ERROR_PATTERN})`;
 	const rows = await sql`
 		DELETE FROM avatar_thumbnail_backfill
 		 WHERE last_error IS NULL
-		    OR last_error ~* '(connection closed|target closed|browser has disconnected|browser was not found|protocol error|session closed|websocket|econnreset|socket hang up|failed to launch)'
+		    OR last_error ~* ${pattern}
 		RETURNING avatar_id
 	`;
 	return { reset: rows.length };

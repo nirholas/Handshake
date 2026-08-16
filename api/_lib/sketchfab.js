@@ -62,10 +62,28 @@ export function showcaseLink(path) {
 	return `${origin}${path}${path.includes('?') ? '&' : '?'}${SHOWCASE_UTM}`;
 }
 
+// The image-to-3D path has no user prompt, so it stores the literal route name
+// as the prompt. The showcase's `accepted` tier filters that sentinel out in SQL,
+// but the curated tiers (board winners, top-voted) deliberately skip the
+// prompt-quality heuristics, a model the community actually voted for is never
+// dropped over its title. Left alone, a winning image-to-3D model reaches the
+// official account named "Image-To-3d"; a live dry run had exactly that as the
+// second pick. Fall back to the category instead of publishing the sentinel.
+const PLACEHOLDER_PROMPT_RE = /^(image-to-3d|untitled|test)$/i;
+
+function categoryName(modelCategory) {
+	const cat = String(modelCategory || '').trim();
+	if (!cat) return '3D Model';
+	return `Forged ${cat.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`;
+}
+
 // Model name from the generation prompt: first clause, title-cased, article
-// stripped, clamped to Sketchfab's display limit.
-export function buildModelName(prompt) {
-	const trimmed = String(prompt || '').trim().replace(/^(a|an|the)\s+/i, '');
+// stripped, clamped to Sketchfab's display limit. A prompt that is a placeholder
+// rather than a description names the model from its category instead.
+export function buildModelName(prompt, modelCategory) {
+	const raw = String(prompt || '').trim();
+	if (!raw || PLACEHOLDER_PROMPT_RE.test(raw)) return categoryName(modelCategory);
+	const trimmed = raw.replace(/^(a|an|the)\s+/i, '');
 	const firstClause = trimmed.split(/[,.;:\n]/)[0].trim() || trimmed || '3D Model';
 	const titled = firstClause.replace(/\b\w/g, (c) => c.toUpperCase());
 	if (titled.length <= NAME_MAX) return titled;

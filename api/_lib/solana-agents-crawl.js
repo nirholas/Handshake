@@ -92,13 +92,11 @@ export async function withDeadline(promise, ms, label) {
 	}
 }
 
-// Pick the best available mainnet RPC. solanaRpcEndpoints prefers Helius (which
-// also answers DAS getAsset on the same URL), falling back to public nodes.
-//
-// This is the URL for the DAS `getAsset` enrichment ONLY, which is a
-// vendor-specific method a generic lane cannot serve anyway, and whose failure is
-// already soft (the structural row is upserted without a name/image). The
-// registry ENUMERATION must never use it: see scanConnection below.
+// Assert a mainnet lane chain exists at all, and return its head. Nothing in this
+// module pins a single URL any more: the registry ENUMERATION rotates the whole
+// chain through scanConnection below, and the DAS enrichment rotates it through
+// dasGetAsset. This helper exists so "nothing is configured" fails with that
+// sentence instead of a confusing per-lane error deeper in.
 function mainnetRpc() {
 	const [url] = solanaRpcEndpoints('mainnet');
 	if (!url) throw new Error('no Solana mainnet RPC configured (set SOLANA_RPC_URL or HELIUS_API_KEY)');
@@ -160,9 +158,30 @@ async function fetchJsonWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
 	}
 }
 
-// Pure normalization of a DAS getAsset result into the index fields. Extracted
-// Single Helius/DAS getAsset call. Returns the normalized fields the index needs.
-async function dasGetAsset(rpcUrl, assetId) {
+// Enrichment is incremental on purpose. getAsset is far heavier than the account
+// scan and the free lanes meter it hard (the public cluster serves roughly 15
+// calls before it starts refusing), so a tick refreshes the accounts whose
+// metadata is missing or stale and leaves the rest untouched. The structural
+// upsert still covers every account every tick; only the metadata leg is paced.
+// At a 30-minute cadence the whole registry cycles well inside the window.
+const DAS_FRESH_DAYS = 7;
+const DAS_THROTTLE_BACKOFF_MS = 1_200;
+const DAS_THROTTLE_RETRIES = 2;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// One getAsset against ONE lane, classified three ways, because the three call
+// for opposite reactions:
+//   • served, the lane answered the method. `asset` is the normalized
+//                   record, or null when the registry genuinely has none.
+//   • unsupported, the lane does not implement DAS at all. Drop it for the rest
+//                   of the run; retrying it is pure latency.
+//   • throttled, a rate limit, a 5xx, or a socket fault. Transient: back off
+//                   and retry the SAME lane rather than concluding it is useless.
+// Collapsing these into one boolean is what made the previous shape fail: a lane
+// that does not implement getAsset replies HTTP 200 with a JSON-RPC error, and a
+// lane that does implement it says no the same way once it is rate limited.
+async function dasGetAssetVia(rpcUrl, assetId) {
 	const ctrl = new AbortController();
 	const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
 	try {
@@ -172,14 +191,87 @@ async function dasGetAsset(rpcUrl, assetId) {
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ jsonrpc: '2.0', id: 'das', method: 'getAsset', params: { id: assetId } }),
 		});
-		if (!r.ok) return null;
+		if (r.status === 429 || r.status >= 500) return { outcome: 'throttled', asset: null };
+		if (!r.ok) return { outcome: 'unsupported', asset: null };
 		const body = await r.json();
-		return normalizeDasAsset(body?.result);
+		const err = body?.error;
+		if (err) {
+			const missing = err.code === -32601 || /method (not found|does not exist)|not available/i.test(err.message || '');
+			return { outcome: missing ? 'unsupported' : 'throttled', asset: null };
+		}
+		return { outcome: 'served', asset: normalizeDasAsset(body?.result) };
 	} catch {
-		return null;
+		return { outcome: 'throttled', asset: null };
 	} finally {
 		clearTimeout(t);
 	}
+}
+
+// Per-run DAS lane state. Held by the crawl rather than the module so every tick
+// re-probes: a lane that was down at 12:00 gets another chance at 12:30.
+function newDasLane() {
+	return { url: null, unsupported: new Set(), throttled: 0, exhausted: false };
+}
+
+// Resolve one asset's metadata, rotating the lane chain until something answers.
+//
+// getAsset is a vendor extension, not core JSON-RPC, so only some lanes serve it.
+// Pinning lane 0 failed in exactly the way the enumeration used to, silently:
+// every account recorded 'das fetch failed', the cron returned 200 every 30
+// minutes, and solana_agents_index carried 1571 rows with no name, image, or GLB
+// while nothing looked broken. Measured 2026-08-16, one getAsset per lane against
+// a live registry asset:
+//   solana-rpc.publicnode.com          -32601 Method not found
+//   api.mainnet-beta.solana.com        200 + result, then -32000 after ~15 calls
+//   solana.leorpc.com                  -32601 method does not exist
+//   public.rpc.solanavibestation.com   -32601 Method not found
+//   api.tatum.io / gateway.tatum.io    -32601 Method not found: getAsset
+// A keyed provider (Helius, Alchemy) sits ahead of all of them when configured
+// and answers without the metering, so this walk normally settles on lane 0.
+async function dasGetAsset(lane, assetId) {
+	if (lane.exhausted) return null;
+	const chain = solanaRpcEndpoints('mainnet');
+	const usable = chain.filter((u) => !lane.unsupported.has(u));
+	if (!usable.length) {
+		lane.exhausted = true;
+		return null;
+	}
+	const ordered = lane.url && usable.includes(lane.url)
+		? [lane.url, ...usable.filter((u) => u !== lane.url)]
+		: usable;
+
+	for (const url of ordered) {
+		for (let attempt = 0; attempt <= DAS_THROTTLE_RETRIES; attempt++) {
+			const r = await dasGetAssetVia(url, assetId);
+			if (r.outcome === 'served') {
+				lane.url = url;
+				return r.asset;
+			}
+			if (r.outcome === 'unsupported') {
+				lane.unsupported.add(url);
+				if (lane.url === url) lane.url = null;
+				break;
+			}
+			lane.throttled += 1;
+			if (attempt < DAS_THROTTLE_RETRIES) await sleep(DAS_THROTTLE_BACKOFF_MS * (attempt + 1));
+		}
+	}
+	// Only when EVERY lane rejected the method itself is there nothing to wait
+	// for. A chain that is merely throttled stays armed: the next account retries.
+	if (chain.every((u) => lane.unsupported.has(u))) lane.exhausted = true;
+	return null;
+}
+
+// Refs whose metadata is already fresh, so a tick spends its metered DAS budget
+// on the accounts that still have none instead of re-fetching the same head of
+// the scan every 30 minutes while the tail stays empty forever.
+async function freshlyEnrichedRefs(source) {
+	const rows = await sql`
+		select ref from solana_agents_index
+		where source = ${source}
+		  and last_metadata_at > now() - ${`${DAS_FRESH_DAYS} days`}::interval
+	`;
+	return new Set(rows.map((r) => r.ref));
 }
 
 // Upsert one external Solana agent. registered_at is set to now() only on first
@@ -216,7 +308,9 @@ async function upsertAgent(row) {
 			x402_support = solana_agents_index.x402_support OR excluded.x402_support,
 			active       = excluded.active,
 			last_metadata_at = CASE WHEN ${!!row.enriched} THEN now() ELSE solana_agents_index.last_metadata_at END,
-			metadata_error   = excluded.metadata_error,
+			metadata_error   = CASE WHEN ${!!row.preserveMetadataError}
+			                        THEN solana_agents_index.metadata_error
+			                        ELSE excluded.metadata_error END,
 			last_seen_at = now()
 	`;
 }
@@ -224,8 +318,16 @@ async function upsertAgent(row) {
 // ── Metaplex Agent Registry ────────────────────────────────────────────────
 
 export async function crawlMetaplexAgents({ deadline } = {}) {
-	const report = { source: 'metaplex', scanned: 0, upserted: 0, enriched: 0, errors: [] };
-	const rpcUrl = mainnetRpc();
+	const report = { source: 'metaplex', scanned: 0, upserted: 0, enriched: 0, enrichAttempted: 0, dasLane: null, errors: [] };
+	const dasLane = newDasLane();
+	let fresh = new Set();
+	try {
+		fresh = await freshlyEnrichedRefs('metaplex');
+	} catch (err) {
+		// A freshness read that fails just means every account looks stale: the tick
+		// still enriches, it simply cannot prioritise. Never a reason to skip a scan.
+		report.errors.push({ stage: 'freshness', error: err.message || String(err) });
+	}
 
 	let umi, gpaV1, gpaV2;
 	try {
@@ -273,14 +375,41 @@ export async function crawlMetaplexAgents({ deadline } = {}) {
 	}
 	report.scanned = accounts.length;
 
+	// Two passes, deliberately. The structural upsert is cheap and covers the whole
+	// registry; enrichment is metered and covers as much as the budget allows. Run
+	// them interleaved (the previous shape) and a throttled DAS lane eats the scan
+	// budget, so most accounts never get their row refreshed at all: the run that
+	// exposed this upserted 61 of 1571 because the metadata leg consumed the rest.
+	// Structural first, always to completion; metadata second, with what is left.
+	const pending = [];
 	for (const { acc } of accounts) {
 		if (deadline && Date.now() > deadline) break;
 		try {
 			const ref = String(acc.publicKey);
 			const asset = acc.asset ? String(acc.asset) : null;
-			// Structural upsert first so the row exists even if enrichment fails.
-			let enriched = null;
-			if (asset) enriched = await dasGetAsset(rpcUrl, asset);
+			await upsertAgent({
+				source: 'metaplex',
+				ref,
+				asset,
+				active: true,
+				enriched: false,
+				// This pass has not asked DAS anything, so it must not overwrite the
+				// verdict the metadata pass recorded on an earlier tick.
+				preserveMetadataError: true,
+			});
+			report.upserted += 1;
+			if (asset && !fresh.has(ref)) pending.push({ ref, asset });
+		} catch (err) {
+			report.errors.push({ stage: 'upsert', error: err.message || String(err) });
+		}
+	}
+
+	for (const { ref, asset } of pending) {
+		if (deadline && Date.now() > deadline) break;
+		if (dasLane.exhausted) break;
+		report.enrichAttempted += 1;
+		const enriched = await dasGetAsset(dasLane, asset);
+		try {
 			await upsertAgent({
 				source: 'metaplex',
 				ref,
@@ -293,13 +422,22 @@ export async function crawlMetaplexAgents({ deadline } = {}) {
 				metadata_uri: enriched?.metadata_uri || null,
 				active: true,
 				enriched: !!enriched,
-				metadata_error: asset && !enriched ? 'das fetch failed' : null,
+				metadata_error: enriched
+					? null
+					: (dasLane.exhausted ? 'das unavailable: no rpc lane serves getAsset' : 'das fetch failed'),
 			});
-			report.upserted += 1;
 			if (enriched) report.enriched += 1;
 		} catch (err) {
-			report.errors.push({ stage: 'upsert', error: err.message || String(err) });
+			report.errors.push({ stage: 'enrich', error: err.message || String(err) });
 		}
+	}
+	// Name the lane that served metadata (or say that none did) so the next silent
+	// enrichment outage is visible in the cron's own 200 body instead of only in
+	// a per-row column nobody reads.
+	report.dasLane = dasLane.url;
+	if (dasLane.throttled) report.dasThrottled = dasLane.throttled;
+	if (dasLane.exhausted) {
+		report.errors.push({ stage: 'das', error: 'no mainnet RPC lane serves getAsset; rows upserted without metadata' });
 	}
 	return report;
 }

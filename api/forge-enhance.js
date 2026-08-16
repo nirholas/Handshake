@@ -281,7 +281,7 @@ function cleanPrompt(text) {
 	let t = (text || '').trim();
 	t = t.replace(/^(?:enhanced\s+)?prompt\s*[:\-—]\s*/i, '');
 	t = t.replace(/\s+/g, ' ').trim();
-	if ((t.startsWith('”') && t.endsWith('”')) || (t.startsWith('“') && t.endsWith('”'))) {
+	if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith('“') && t.endsWith('”'))) {
 		t = t.slice(1, -1).trim();
 	}
 	t = t.replace(/[.\s]+$/, '').trim();

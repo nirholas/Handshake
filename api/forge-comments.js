@@ -41,10 +41,12 @@ async function resolveAuth(req) {
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
+	// method() advertises the real `Allow` header on a 405 (and folds HEAD into
+	// GET) rather than answering a bare envelope a client can't act on.
+	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
 	if (req.method === 'GET') return handleList(req, res);
 	if (req.method === 'POST') return handleCreate(req, res);
-	if (req.method === 'DELETE') return handleDelete(req, res);
-	return error(res, 405, 'method_not_allowed', 'GET/POST/DELETE only');
+	return handleDelete(req, res);
 });
 
 // ── list ─────────────────────────────────────────────────────────────────────

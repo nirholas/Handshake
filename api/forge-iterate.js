@@ -47,6 +47,15 @@ function clientIdFrom(req) {
 // Submit + poll against /api/forge, forwarding the caller's x-forge-client so
 // the resulting row is owned by the same browser session that owns the parent
 // model — the piece the anonymous free-studio path deliberately omits.
+//
+// /api/forge holds the connection open while a saturated generator queues the
+// job, so the accept can legitimately take minutes before it answers (a live
+// three.ws submit held for 157s, then returned its own busy 429). A short submit
+// timeout therefore fires on exactly the condition the busy branch below exists
+// to report, which is why this window is generous and why a timeout is answered
+// as busy rather than as a bare gateway timeout.
+const SUBMIT_TIMEOUT_MS = Number(process.env.FORGE_ITERATE_SUBMIT_MS) || 60_000;
+
 async function submitForge(base, payload, clientId) {
 	let res;
 	try {
@@ -57,11 +66,22 @@ async function submitForge(base, payload, clientId) {
 				...(clientId ? { 'x-forge-client': clientId } : {}),
 			},
 			body: JSON.stringify(payload),
-			signal: AbortSignal.timeout(30_000),
+			signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS),
 		});
 	} catch (err) {
 		if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
-			return { error: 'timeout', status: 504, message: 'The 3D generator took too long to accept the job; try again.' };
+			// Report it the way the generator itself would: busy, with a back-off the
+			// caller can act on. Both iterate UIs (src/forge-studio/forge-iterate.js,
+			// src/forge-conversational-refine.js) already render a 429 + retry_after as
+			// "busy, try again in Ns"; the old 504 sent them down the generic
+			// "rephrase your instruction" branch, which blamed a wording the user had
+			// got right.
+			return {
+				error: 'busy',
+				status: 429,
+				message: 'The 3D generator is busy right now; try again shortly.',
+				retryAfter: 20,
+			};
 		}
 		return { error: 'provider_error', status: 502, message: `The 3D generator is unreachable: ${err?.message || err}` };
 	}
