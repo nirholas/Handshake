@@ -1060,7 +1060,7 @@
 		"choose_your_co_pilot": "Choose your co-pilot",
 		"close_arialabel": "Close",
 		"in_character_alpha_grounded_in_real_pump": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> In-character alpha · grounded in real pump.fun data",
-		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live launches <span class=\"ac-launches-count\" id=\"ac-launches-count\" hidden></span>",
+		"live_launches": "<span class=\"ac-live-dot\" aria-hidden=\"true\"></span> Live launches",
 		"load": "Load",
 		"meta_description": "Your agent reads a real pump.fun launch in character — grounded in live liquidity, holder, and smart-money data — and speaks its verdict out loud through its 3D avatar. The owner can act on it within hard, server-enforced spend limits.",
 		"meta_og_description": "A 3D agent that narrates its own alpha: it reads real launches in character, cites the live signals it used, and acts only within its spend limits. No competitor has a persona, avatar, and wallet fused like this.",
