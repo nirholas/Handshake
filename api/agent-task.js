@@ -7,7 +7,7 @@
 // POST body: { agentId: string, task: string, type?: string }
 // GET  resp: { task: { text, type, ts, userId } | null }
 
-import { cors, error, json, method, rateLimited, readJson } from './_lib/http.js';
+import { cors, error, json, method, rateLimited, readJson, wrap } from './_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getRedis } from './_lib/redis.js';
@@ -20,7 +20,10 @@ const MAX_QUEUE = 20;
 const TASK_TTL = 60 * 60 * 6; // 6h — tasks expire if worker never shows up
 const TASK_MAX_LEN = 1000;
 
-export default async function handleAgentTask(req, res) {
+// wrap() gives this route the same boundary every neighbouring handler has: a
+// DB outage degrades to a throttled 503 instead of one logged stack trace and a
+// generic 500 per poll, and a genuine fault gets a correlation ref.
+export default wrap(async function handleAgentTask(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
@@ -121,4 +124,4 @@ export default async function handleAgentTask(req, res) {
 
 		return json(res, 200, { ok: true, queued: Math.min(len, MAX_QUEUE) });
 	}
-}
+});

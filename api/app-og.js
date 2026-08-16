@@ -45,10 +45,15 @@ export default wrap(async (req, res) => {
 	const title = agent.name || 'Agent';
 	const desc = agent.description || 'An embodied AI agent on three.ws — with a body, a place, and an identity.';
 
-	const thumbnailUrl = agent.avatar_thumbnail_key
+	// Named `avatarThumbnail`, not `thumbnailUrl`: a local `const thumbnailUrl`
+	// shadows the imported helper across this whole function body, so the
+	// initializer's own call hit the temporal dead zone and every agent that HAS a
+	// thumbnail (the only case this route exists for) 500'd instead of rendering
+	// its share card.
+	const avatarThumbnail = agent.avatar_thumbnail_key
 		? thumbnailUrl(agent.avatar_thumbnail_key)
 		: null;
-	const ogImage = thumbnailUrl
+	const ogImage = avatarThumbnail
 		|| `${origin}/api/agent/${agentId}/og`;
 
 	const skills = agent.skills || [];

@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve as pathResolve } from 'node:path';
 import { sql } from './_lib/db.js';
-import { error, wrap, rateLimited } from './_lib/http.js';
+import { cors, error, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getObjectBuffer } from './_lib/r2.js';
 import { assertSafePublicUrl } from './_lib/ssrf-guard.js';
@@ -209,6 +209,12 @@ async function loadModelArtifactConfig(modelUrl, opts) {
 }
 
 export default wrap(async (req, res) => {
+	// The response is public read-only HTML that already advertises itself as
+	// embeddable anywhere (frame-ancestors *, x-frame-options ALLOWALL), so an
+	// embedder that fetches it instead of iframing it needs the same open CORS.
+	// Without this a cross-origin preflight got a 405 from the method guard below.
+	if (cors(req, res, { methods: 'GET,HEAD,OPTIONS', origins: '*' })) return;
+
 	if (req.method !== 'GET' && req.method !== 'HEAD') {
 		res.setHeader('allow', 'GET, HEAD');
 		return error(res, 405, 'method_not_allowed', 'method not allowed');

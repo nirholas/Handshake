@@ -22,7 +22,7 @@
  * clean, designed error page — never a crash. Zero payment/coin surface.
  */
 
-import { cors, wrap } from './_lib/http.js';
+import { cors, method, wrap } from './_lib/http.js';
 import { planArLaunch } from './_lib/ar-launch.js';
 import { MODEL_VIEWER_SRC } from './_lib/model-viewer-cdn.js';
 
@@ -110,6 +110,9 @@ btn.addEventListener('click',function(){ if(mv.canActivateAR){ try{mv.activateAR
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// The CORS preflight already advertises GET only; enforce it too, so a POST
+	// gets a 405 with an Allow header instead of being served the launch page.
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const src = url.searchParams.get('src') || '';

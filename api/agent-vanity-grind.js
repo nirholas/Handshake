@@ -13,7 +13,7 @@
 // activity log, or agent_actions. It is returned ONLY in this HTTP response, to
 // the authenticated owner who triggered the grind.
 
-import { cors, error, json, method, readJson } from './_lib/http.js';
+import { cors, error, json, method, readJson, wrap } from './_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getRedis } from './_lib/redis.js';
@@ -43,7 +43,10 @@ function sleep(ms) {
 	return new Promise((r) => setTimeout(r, ms));
 }
 
-export default async function handleAgentVanityGrind(req, res) {
+// wrap() matches every neighbouring handler: a DB outage degrades to a throttled
+// 503 rather than a per-request stack trace, and a genuine fault returns a
+// correlation ref instead of a bare 500.
+export default wrap(async function handleAgentVanityGrind(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
@@ -282,4 +285,4 @@ export default async function handleAgentVanityGrind(req, res) {
 			'privateKey64 and launch.mint_secret_key_b64 are a REAL Solana secret key for this address. ' +
 			'Store it securely now and never share it — it was returned only to you and never published to the live screen.',
 	});
-}
+});

@@ -52,7 +52,7 @@ vi.mock('../api/_lib/ssrf-guard.js', () => ({
 const WORKER = 'https://texture-worker.test';
 const { default: handler } = await import('../api/studio/retexture-region.js');
 
-const MESH = 'https://cdn.three.ws/models/avatar.glb';
+const MESH = 'https://three.ws/cdn/models/avatar.glb';
 const MASK = 'iVBORw0KGgoAAAANSUhEUg==';
 
 function mkReq({ method = 'GET', url = '/api/studio/retexture-region', headers = {}, body = null } = {}) {
@@ -129,7 +129,7 @@ beforeEach(() => {
 			return {
 				ok: true,
 				status: 200,
-				json: async () => ({ status: 'done', result_url: 'https://cdn.three.ws/out/avatar-retex.glb' }),
+				json: async () => ({ status: 'done', result_url: 'https://three.ws/cdn/out/avatar-retex.glb' }),
 			};
 		}
 		throw new Error(`unexpected fetch: ${u}`);
@@ -185,7 +185,7 @@ describe('POST /api/studio/retexture-region — the success path', () => {
 		expect(body).toMatchObject({
 			ok: true,
 			status: 'done',
-			result_url: 'https://cdn.three.ws/out/avatar-retex.glb',
+			result_url: 'https://three.ws/cdn/out/avatar-retex.glb',
 			error: null,
 		});
 		expect(workerCalls[1].url).toBe(`${WORKER}/tasks/task-42`);
