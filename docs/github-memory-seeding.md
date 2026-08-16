@@ -191,7 +191,8 @@ curl -s https://three.ws/api/agents/$AGENT_ID/memory/seed/github --cookie "$JAR"
 ```
 
 Rate-limited to one seed per agent per 6 hours, matching the X and Farcaster
-lanes.
+lanes. A run that stores nothing does not spend the window: see the two
+refunding errors below.
 
 ### `DELETE /api/agents/:id/memory/seed/github`
 
@@ -217,8 +218,8 @@ with the connection row itself, and then asks GitHub to revoke the OAuth grant
 | `not_connected` | 412 | Connect GitHub first; the response carries `connect_url` |
 | `invalid_selection` | 400 | A selected key is not in the catalog you were shown; `rejected` names each one |
 | `empty_selection` | 400 | Pick your profile or at least one repository |
-| `distill_error` | 502 | The selected material yielded no usable facts; add a README or another repository |
-| `distill_unavailable` | 503 | Every model provider was busy, so nothing was read into memory and the existing memories are untouched. Carries `retry_at` (when this agent's next seed is allowed) and `providers_tried` |
+| `distill_error` | 502 | The selected material yielded no usable facts; add a README or another repository. Carries `window_refunded` |
+| `distill_unavailable` | 503 | Every model provider was busy, so nothing was read into memory and the existing memories are untouched. Carries `window_refunded`, `providers_tried`, and `retry_at` (null when the window was refunded) |
 | rate limited | 429 | One seed per agent per 6 hours |
 
 Only `distill_error` and `distill_unavailable` are reachable after the seed
@@ -226,6 +227,16 @@ budget has been charged: the budget is taken once the selection is known good,
 immediately before the README reads and the distilling pass. Every other
 refusal above happens before that point and leaves your window intact, so a
 mistyped or stale pick costs you nothing but the retry.
+
+Both of those two also hand the window back. Neither one read anything into
+memory or changed a single stored fact, and in the provider-outage case the
+failure is the platform's, not yours, so the charge is reversed and the next
+attempt is allowed immediately (`window_refunded: true`). Refunding is only
+safe because this is a single-use window: see `refundLimit` in
+[api/_lib/rate-limit.js](../api/_lib/rate-limit.js), which refuses any bucket
+with a ceiling above one. If the refund itself cannot reach the limiter store,
+the reply says so (`window_refunded: false`) and carries the real `retry_at`
+rather than inviting a retry that would only earn a 429.
 
 ## Source
 

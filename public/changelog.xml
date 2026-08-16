@@ -279,6 +279,14 @@
 			<description>An armed sniper strategy has two knobs that decide how a winner is taken off the table: the multiple of your entry at which it sells enough to recover what you put in, and the minimum slice of the position it always keeps riding afterwards. Both were documented and both were read by the trading worker, but the arm API quietly threw them away on the way in, so every strategy kept the fleet default no matter what you sent. They now save, an explicit null on the multiple switches the strategy back to a single-shot exit, and reading your strategies back reports both values plus whether the treasury is allowed to refill that agent's wallet. Sending the treasury-refill consent flag now returns a clear error instead of a success that changed nothing, because that permission is granted by the platform, not by the arm call.</description>
 		</item>
 		<item>
+			<title>The Solana agent directory is live again, and complete</title>
+			<link>https://three.ws/discover</link>
+			<guid isPermaLink="false">2026-08-16:The Solana agent directory is live again, and complete</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Discover and the deployments view list agents registered on the Metaplex Agent Registry, refreshed by a crawl that runs every half hour. The crawl had been reading nothing since 6 August: it asked one fixed Solana node for the registry, that node started refusing the request outright, and because it never tried any of the other nodes it fell back to, every run reported success while writing nothing. It now works its way down the same list of providers the rest of the platform uses, so one provider turning us away costs a second, not ten days. Fixing that surfaced a second fault underneath it: the registry holds two generations of agent records, and the crawl was reading both with the newer generation's layout, so older records came back as nonsense and the newer pass gave up entirely at the first old record it met. Each generation is now read on its own terms. The directory went from 1,558 stale entries to all 1,571 currently on chain, and new registrations show up within the half hour again. Separately, the treasury top-up that keeps the platform's wallets funded no longer fails outright when a Solana provider answers with something it cannot read: it treats that the same as a provider being busy and retries on the next pass, instead of skipping a funding cycle.</description>
+		</item>
+		<item>
 			<title>The wallet balance API stops calling a rejected upload a validation error</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:The wallet balance API stops calling a rejected upload a validation error</guid>

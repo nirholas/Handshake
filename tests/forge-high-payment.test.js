@@ -28,12 +28,17 @@ import { priceForAction } from '../api/_lib/pricing/catalog.js';
 
 const HIGH_USD = Number(priceForAction('forge.high').usd); // 0.50 from the catalog
 const REF_ID = 'forge-high-abc123';
+// token_payments.id is a `uuid` column (2026-06-01-token-payments.sql), so every
+// real payment id is one. The fixtures use real uuids so the module is exercised
+// against ids of the shape production actually hands it.
+const PAY_ID = '7c4e1b93-2a68-4f0d-8b52-1e93af6c04d7';
+const UNKNOWN_PAY_ID = '05a9d6f2-b731-4c8e-9a14-6d2f83be5710';
 
 // A settled consumption payment row as token_payments returns it (numeric usd
 // comes back as a string from the driver). `confirmed_at` defaults to now.
 function paymentRow(over = {}) {
 	return {
-		id: 'pay-1',
+		id: PAY_ID,
 		purpose: 'consumption',
 		usd: HIGH_USD.toFixed(6),
 		ref_type: 'forge',
@@ -48,7 +53,7 @@ function paymentRow(over = {}) {
 // redemption-existence check.
 function queueAssert({ payment = paymentRow(), redeemed = false } = {}) {
 	queue.push(payment ? [payment] : []); // lookupPayment
-	queue.push(redeemed ? [{ payment_id: 'pay-1' }] : []); // isRedeemed
+	queue.push(redeemed ? [{ payment_id: PAY_ID }] : []); // isRedeemed
 }
 
 beforeEach(() => {
@@ -59,9 +64,9 @@ beforeEach(() => {
 describe('assertForgePayment', () => {
 	it('accepts a settled, ref-bound, correctly-priced, recent, unredeemed payment', async () => {
 		queueAssert();
-		const r = await assertForgePayment({ paymentId: 'pay-1', refId: REF_ID });
+		const r = await assertForgePayment({ paymentId: PAY_ID, refId: REF_ID });
 		expect(r.ok).toBe(true);
-		expect(r.payment).toMatchObject({ id: 'pay-1', usd: HIGH_USD });
+		expect(r.payment).toMatchObject({ id: PAY_ID, usd: HIGH_USD });
 		expect(r.payment.settledAt).toBeTruthy();
 	});
 
@@ -70,7 +75,7 @@ describe('assertForgePayment', () => {
 			status: 400,
 			code: 'bad_request',
 		});
-		await expect(assertForgePayment({ paymentId: 'pay-1', refId: '' })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: PAY_ID, refId: '' })).rejects.toMatchObject({
 			status: 400,
 			code: 'bad_request',
 		});
@@ -78,7 +83,7 @@ describe('assertForgePayment', () => {
 
 	it('rejects an unknown payment as payment_invalid (402)', async () => {
 		queue.push([]); // lookupPayment → none
-		await expect(assertForgePayment({ paymentId: 'nope', refId: REF_ID })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: UNKNOWN_PAY_ID, refId: REF_ID })).rejects.toMatchObject({
 			status: 402,
 			code: 'payment_invalid',
 		});
@@ -86,26 +91,26 @@ describe('assertForgePayment', () => {
 
 	it('rejects a non-consumption / non-forge payment (a different action) ', async () => {
 		queueAssert({ payment: paymentRow({ purpose: 'spin' }) });
-		await expect(assertForgePayment({ paymentId: 'pay-1', refId: REF_ID })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: PAY_ID, refId: REF_ID })).rejects.toMatchObject({
 			code: 'payment_invalid',
 		});
 
 		queueAssert({ payment: paymentRow({ ref_type: 'voice' }) });
-		await expect(assertForgePayment({ paymentId: 'pay-1', refId: REF_ID })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: PAY_ID, refId: REF_ID })).rejects.toMatchObject({
 			code: 'payment_invalid',
 		});
 	});
 
 	it('rejects a payment bound to a different ref_id', async () => {
 		queueAssert({ payment: paymentRow({ ref_id: 'someone-elses-nonce' }) });
-		await expect(assertForgePayment({ paymentId: 'pay-1', refId: REF_ID })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: PAY_ID, refId: REF_ID })).rejects.toMatchObject({
 			code: 'payment_invalid',
 		});
 	});
 
 	it('rejects an underpaid payment (price must cover forge.high)', async () => {
 		queueAssert({ payment: paymentRow({ usd: '0.100000' }) });
-		await expect(assertForgePayment({ paymentId: 'pay-1', refId: REF_ID })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: PAY_ID, refId: REF_ID })).rejects.toMatchObject({
 			code: 'payment_invalid',
 		});
 	});
@@ -113,7 +118,7 @@ describe('assertForgePayment', () => {
 	it('rejects a payment older than the redemption window (payment_expired)', async () => {
 		const old = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 		queueAssert({ payment: paymentRow({ confirmed_at: old, created_at: old }) });
-		await expect(assertForgePayment({ paymentId: 'pay-1', refId: REF_ID })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: PAY_ID, refId: REF_ID })).rejects.toMatchObject({
 			status: 402,
 			code: 'payment_expired',
 		});
@@ -121,7 +126,7 @@ describe('assertForgePayment', () => {
 
 	it('rejects an already-redeemed payment (409 payment_already_used)', async () => {
 		queueAssert({ redeemed: true });
-		await expect(assertForgePayment({ paymentId: 'pay-1', refId: REF_ID })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: PAY_ID, refId: REF_ID })).rejects.toMatchObject({
 			status: 409,
 			code: 'payment_already_used',
 		});
@@ -132,11 +137,11 @@ describe('assertForgePayment', () => {
 		expect(discounted).toBeLessThan(HIGH_USD);
 		// A payment for the discounted amount clears with the discount applied…
 		queueAssert({ payment: paymentRow({ usd: discounted.toFixed(6) }) });
-		const r = await assertForgePayment({ paymentId: 'pay-1', refId: REF_ID, discountBps: 500 });
+		const r = await assertForgePayment({ paymentId: PAY_ID, refId: REF_ID, discountBps: 500 });
 		expect(r.ok).toBe(true);
 		// …but the same discounted payment fails at full price (no discount presented).
 		queueAssert({ payment: paymentRow({ usd: discounted.toFixed(6) }) });
-		await expect(assertForgePayment({ paymentId: 'pay-1', refId: REF_ID })).rejects.toMatchObject({
+		await expect(assertForgePayment({ paymentId: PAY_ID, refId: REF_ID })).rejects.toMatchObject({
 			code: 'payment_invalid',
 		});
 	});
@@ -144,15 +149,15 @@ describe('assertForgePayment', () => {
 
 describe('redeemForgePayment', () => {
 	it('claims a payment when the insert wins (returns a row)', async () => {
-		queue.push([{ payment_id: 'pay-1' }]);
-		const r = await redeemForgePayment({ paymentId: 'pay-1', refId: REF_ID });
+		queue.push([{ payment_id: PAY_ID }]);
+		const r = await redeemForgePayment({ paymentId: PAY_ID, refId: REF_ID });
 		expect(r.redeemed).toBe(true);
 		expect(sql).toHaveBeenCalledOnce();
 	});
 
 	it('does not claim when the row already exists (ON CONFLICT DO NOTHING → no row)', async () => {
 		queue.push([]); // conflict → nothing returned
-		const r = await redeemForgePayment({ paymentId: 'pay-1', refId: REF_ID });
+		const r = await redeemForgePayment({ paymentId: PAY_ID, refId: REF_ID });
 		expect(r.redeemed).toBe(false);
 	});
 });
@@ -160,9 +165,9 @@ describe('redeemForgePayment', () => {
 describe('releaseForgePayment', () => {
 	it('deletes the claim so the payment is reusable on retry', async () => {
 		queue.push([]);
-		await releaseForgePayment({ paymentId: 'pay-1' });
+		await releaseForgePayment({ paymentId: PAY_ID });
 		expect(sql).toHaveBeenCalledOnce();
 		// The interpolated payment id is passed as the query's 2nd arg.
-		expect(sql.mock.calls[0].slice(1).map(String)).toContain('pay-1');
+		expect(sql.mock.calls[0].slice(1).map(String)).toContain(PAY_ID);
 	});
 });

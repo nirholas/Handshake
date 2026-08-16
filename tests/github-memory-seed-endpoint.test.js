@@ -34,8 +34,12 @@ vi.mock('../api/_lib/env.js', () => ({
 }));
 
 const githubSeedLimit = vi.fn();
+const githubSeedRefund = vi.fn();
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { githubSeed: (...a) => githubSeedLimit(...a) },
+	limits: {
+		githubSeed: (...a) => githubSeedLimit(...a),
+		githubSeedRefund: (...a) => githubSeedRefund(...a),
+	},
 	clientIp: () => '127.0.0.1',
 }));
 
@@ -113,6 +117,7 @@ beforeEach(() => {
 	extractBearerMock.mockReset().mockReturnValue(null);
 	requireCsrfMock.mockReset().mockResolvedValue(true);
 	githubSeedLimit.mockReset().mockResolvedValue({ success: true, limit: 1, remaining: 0, reset: Date.now() + 21_600_000 });
+	githubSeedRefund.mockReset().mockResolvedValue(true);
 	llmCompleteMock.mockReset().mockResolvedValue({ text: '["A fact about the owner."]' });
 	fetchProfileMock.mockReset().mockResolvedValue({ login: 'dev', name: 'Dev', public_repos: 2, followers: 3 });
 	fetchPinnedReposMock.mockReset().mockResolvedValue([
@@ -224,18 +229,50 @@ describe('when every model provider is busy', () => {
 		expect(body.error).toBe('distill_unavailable');
 		expect(body.error_description).toMatch(/nothing was seeded/);
 		expect(body.providers_tried).toEqual(['ovh', 'pollinations']);
-		expect(typeof body.retry_at).toBe('string');
 		expect(sqlMock.transaction).not.toHaveBeenCalled();
+		// The outage is ours, so the window goes back: the owner retries when a
+		// provider frees up instead of waiting out six hours for a run that read
+		// nothing and wrote nothing.
+		expect(githubSeedRefund).toHaveBeenCalledWith(AGENT);
+		expect(body.window_refunded).toBe(true);
+		expect(body.retry_at).toBeNull();
+		expect(body.error_description).toMatch(/did not use up your six-hour window/);
 	});
 
-	it('still answers distill_error when the material yields no facts', async () => {
+	it('keeps the retry deadline in the reply when the refund itself fails', async () => {
+		connected();
+		llmCompleteMock.mockRejectedValue(Object.assign(new Error('chain exhausted'), { attempts: [] }));
+		githubSeedRefund.mockRejectedValue(new Error('redis unreachable'));
+		const res = mkRes();
+		await handler(post({ include_profile: true, repos: ['dev/kit'], readmes: [] }), res);
+		expect(res.statusCode).toBe(503);
+		const body = parse(res);
+		expect(body.window_refunded).toBe(false);
+		expect(typeof body.retry_at).toBe('string');
+		expect(body.error_description).toMatch(/can be seeded again in about/);
+	});
+
+	it('still answers distill_error when the material yields no facts, and refunds', async () => {
 		connected();
 		llmCompleteMock.mockResolvedValue({ text: '[]' });
 		const res = mkRes();
 		await handler(post({ include_profile: true, repos: ['dev/kit'], readmes: [] }), res);
 		expect(res.statusCode).toBe(502);
-		expect(parse(res).error).toBe('distill_error');
+		const body = parse(res);
+		expect(body.error).toBe('distill_error');
+		// The advice to pick more material is worthless behind a six-hour wait.
+		expect(githubSeedRefund).toHaveBeenCalledWith(AGENT);
+		expect(body.window_refunded).toBe(true);
 		expect(sqlMock.transaction).not.toHaveBeenCalled();
+	});
+
+	it('does not refund a run that actually wrote memories', async () => {
+		connected();
+		const res = mkRes();
+		await handler(post({ include_profile: true, repos: ['dev/kit'], readmes: [] }), res);
+		expect(res.statusCode).toBe(200);
+		expect(sqlMock.transaction).toHaveBeenCalled();
+		expect(githubSeedRefund).not.toHaveBeenCalled();
 	});
 });
 

@@ -4,12 +4,12 @@
 		{
 			"date": "2026-08-16",
 			"title": "The Solana agent directory is live again, and complete",
-			"summary": "Explore and the deployments view list agents registered on the Metaplex Agent Registry, refreshed by a crawl that runs every half hour. The crawl had been reading nothing since 6 August: it asked one fixed Solana node for the registry, that node started refusing the request outright, and because it never tried any of the other nodes it fell back to, every run reported success while writing nothing. It now works its way down the same list of providers the rest of the platform uses, so one provider turning us away costs a second, not ten days. Fixing that surfaced a second fault underneath it: the registry holds two generations of agent records, and the crawl was reading both with the newer generation's layout, so older records came back as nonsense and the newer pass gave up entirely at the first old record it met. Each generation is now read on its own terms. The directory went from 1,558 stale entries to all 1,571 currently on chain, and new registrations show up within the half hour again. Separately, the treasury top-up that keeps the platform's wallets funded no longer fails outright when a Solana provider answers with something it cannot read: it treats that the same as a provider being busy and retries on the next pass, instead of skipping a funding cycle.",
+			"summary": "Discover and the deployments view list agents registered on the Metaplex Agent Registry, refreshed by a crawl that runs every half hour. The crawl had been reading nothing since 6 August: it asked one fixed Solana node for the registry, that node started refusing the request outright, and because it never tried any of the other nodes it fell back to, every run reported success while writing nothing. It now works its way down the same list of providers the rest of the platform uses, so one provider turning us away costs a second, not ten days. Fixing that surfaced a second fault underneath it: the registry holds two generations of agent records, and the crawl was reading both with the newer generation's layout, so older records came back as nonsense and the newer pass gave up entirely at the first old record it met. Each generation is now read on its own terms. The directory went from 1,558 stale entries to all 1,571 currently on chain, and new registrations show up within the half hour again. Separately, the treasury top-up that keeps the platform's wallets funded no longer fails outright when a Solana provider answers with something it cannot read: it treats that the same as a provider being busy and retries on the next pass, instead of skipping a funding cycle.",
 			"tags": [
 				"fix",
 				"infra"
 			],
-			"link": "/explore"
+			"link": "/discover"
 		},
 		{
 			"date": "2026-08-16",
