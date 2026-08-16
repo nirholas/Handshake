@@ -170,10 +170,18 @@ function cardHtml(track) {
  * Probe a URL and resolve to an HTTP status, or null on network failure/timeout.
  * HEAD by default (pages, docs); POST-only APIs pass OPTIONS via the track's
  * *CheckMethod so the probe never triggers a 405 console error.
+ *
+ * The response body is drained even though only the status matters: an
+ * unconsumed body is still an open stream, and the 4s timeout signal stays
+ * armed after the response lands, so the browser cancels each probe a few
+ * seconds later and logs a net::ERR_ABORTED failed request per card. Reading
+ * the (empty) HEAD/OPTIONS body closes the stream and keeps the network log
+ * clean.
  */
 async function probe(url, probeMethod = 'HEAD') {
 	try {
 		const res = await fetch(url, { method: probeMethod, signal: AbortSignal.timeout(4000) });
+		await res.text();
 		return res.status;
 	} catch {
 		return null;
@@ -216,6 +224,12 @@ function updateProgress(states) {
 	const el = $('bnb-progress');
 	if (!el) return;
 	const liveCount = states.filter((s) => s === 'live').length;
+	// The element ships with data-i18n so its "Checking…" placeholder is
+	// translated at first paint, but from here on this script owns the text.
+	// Without claiming ownership, the i18n catalog pass (which lands after an
+	// async /api/locale fetch) races us and reverts the finished tally back to
+	// "Checking which tracks are live…" for the rest of the page's life.
+	el.setAttribute('data-i18n-owned', '1');
 	el.dataset.anyLive = liveCount > 0 ? 'true' : 'false';
 	el.textContent =
 		liveCount === 0

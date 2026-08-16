@@ -1110,6 +1110,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/worlds/': resolve(root, 'pages/worlds.html'),
 					'/create/studio': resolve(root, 'pages/avatar-studio.html'),
 					'/create/studio/': resolve(root, 'pages/avatar-studio.html'),
+					'/avatar-studio': resolve(root, 'pages/avatar-studio.html'),
+					'/avatar-studio/': resolve(root, 'pages/avatar-studio.html'),
 					'/create-review': resolve(root, 'pages/create-review.html'),
 					'/create-review/': resolve(root, 'pages/create-review.html'),
 					'/import/rpm': resolve(root, 'pages/import-rpm.html'),
@@ -2090,22 +2092,15 @@ support: resolve(__dirname, 'pages/support.html'),
 						req.url = '/src/i18n.js';
 						return next();
 					}
-					// Avatar Studio (rebranded Character Studio fork) — serve the
-					// production build out of character-studio/build/ at /avatar-studio/*
-					// so the demo iframe works in dev. Run `npm run build --prefix
-					// character-studio` first to populate the build dir.
-					if (path === '/avatar-studio' || path === '/avatar-studio/') {
-						const indexPath = resolve(root, 'character-studio/build/index.html');
-						if (existsSync(indexPath)) {
-							res.setHeader('Content-Type', 'text/html; charset=utf-8');
-							return createReadStream(indexPath).pipe(res);
-						}
-						res.statusCode = 503;
-						return res.end(
-							'Avatar Studio build missing — run `npm run build --prefix character-studio`',
-						);
-					}
-					if (path.startsWith('/avatar-studio/')) {
+					// Character Studio fork: serve its production build out of
+					// character-studio/build/ at /avatar-studio/<file> so the SDK demo
+					// iframe (which addresses /avatar-studio/index.html) works in dev.
+					// Run `npm run build --prefix character-studio` first to populate
+					// the build dir. The BARE /avatar-studio and /avatar-studio/ paths
+					// are deliberately NOT handled here: vercel.json routes both to the
+					// platform's own sculpting page (pages/avatar-studio.html), and the
+					// dev route map above mirrors that, so dev and prod agree.
+					if (path.startsWith('/avatar-studio/') && path !== '/avatar-studio/') {
 						const ext = path.split('.').pop().toLowerCase();
 						const mimes = {
 							js: 'application/javascript',
@@ -2136,6 +2131,12 @@ support: resolve(__dirname, 'pages/support.html'),
 						if (existsSync(fileDisk) && statSync(fileDisk).isFile()) {
 							res.setHeader('Content-Type', mimes[ext] || 'application/octet-stream');
 							return createReadStream(fileDisk).pipe(res);
+						}
+						if (rel === 'index.html') {
+							res.statusCode = 503;
+							return res.end(
+								'Character Studio build missing: run `npm run build --prefix character-studio`',
+							);
 						}
 						return next();
 					}

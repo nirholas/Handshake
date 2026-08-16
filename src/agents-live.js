@@ -1012,7 +1012,11 @@ function applyActivityEntries(state, entries) {
 }
 
 async function hydrateActivity(ids) {
-	if (!ids.length || _activityInFlight) return;
+	if (!ids.length) return;
+	// A page mounted while an earlier batch was still in flight must not be
+	// dropped, or its cards wait out the whole refresh cadence with nothing to
+	// show. Ask again as soon as the floor allows; the next batch covers them.
+	if (_activityInFlight) { scheduleActivityFlush(ACTIVITY_MIN_GAP_MS); return; }
 	_activityInFlight = true;
 	_activityLastAt = Date.now();
 	try {
