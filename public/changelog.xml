@@ -15,6 +15,14 @@
 			<description>The signal marketplace identifies a feed or a subscription by a number. Anything that was not one (a typo, a stray word, an empty box) went straight to the database, which threw the whole query out, so the caller got an opaque &quot;something went wrong&quot; and our alerting recorded a fault that was never a fault. Pausing a feed, killing or resyncing a subscription, and subscribing to a feed each now answer with a plain &quot;that is not a valid id&quot; instead. Separately, the paid live signal stream built its Solscan links from whichever network the request named rather than the one the feed actually publishes on, so a subscriber could be handed devnet explorer links for a mainnet call; the feed's own record now decides, and every proof link lands on the chain the trade really happened on.</description>
 		</item>
 		<item>
+			<title>Agent attestations that stopped indexing now recover on their own</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-16:Agent attestations that stopped indexing now recover on their own</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An agent's on-chain attestation history is indexed by walking Solana signatures newer than the last one we recorded. If that recorded signature aged out of the RPC node's history, the walk failed outright and kept failing: the same dead signature was replayed on every run, so that agent's attestations silently stopped appearing on its profile while the scheduled job still reported success. The crawler now recognises that case, re-scans from the most recent signatures instead, and clears the stale marker, so an agent that fell behind catches up by itself on the next pass.</description>
+		</item>
+		<item>
 			<title>An expired X connection now offers to reconnect instead of sending you to the login page</title>
 			<link>https://three.ws/walk</link>
 			<guid isPermaLink="false">2026-08-16:An expired X connection now offers to reconnect instead of sending you to the login page</guid>
@@ -37,6 +45,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>An audit of eight documentation pages against the code they describe turned up four claims that had drifted. The Animations page said the motion-capture library held about 2,000 clips when it actually serves 2,874, so both the intro and the gallery section now quote the real size and point at the count the API itself returns. The selfie-to-avatar page listed the wrong default for the face-morph displacement clamp and credited a single tuning sweep instead of the two that chose it. The avatar-creation walkthrough still told people to pick a body type on the selfie flow, a control that was deliberately removed because it changed nothing, and named the wrong fields on the event the page dispatches. The architecture page now says plainly that the whitelist trust mode is reserved rather than enforced.</description>
+		</item>
+		<item>
+			<title>Creator subscription tiers save their edits again, and a mistyped subscription link says so plainly</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-16:Creator subscription tiers save their edits again, and a mistyped subscription link says so plainly</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Editing an existing subscription tier from the creator dashboard silently failed: the save never reached the server, so the new name, price or status was lost every time. Saving works now. Alongside it, a mistyped or truncated subscription or tier link used to answer with a generic server failure; it now says the id is not valid, which is what a reader can actually act on. Tier pages are also directly addressable, so a single tier can be linked and read on its own, with unpublished drafts still visible only to the creator who wrote them.</description>
 		</item>
 		<item>
 			<title>Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name</title>
@@ -135,6 +151,30 @@
 			<description>The rider pass is a $THREE gate: you qualify either by holding $THREE or by sending 8,000 of it to the rider vault. Only the first half worked. The check answered purely from what a wallet currently holds, so anyone who bought a pass, and therefore no longer held the tokens they had just sent, was told they had no pass. The payments the vault recorded were written to the database and never read by anything. Both sources are now consulted, and a positive answer from either one stands on its own, so a paid pass still verifies while the chain node is unreachable and a holder pass still verifies during a database outage. A single transaction carrying payments from two different wallets used to fail outright and be retried forever by the payment listener, granting neither wallet a pass; every payer in a batch is now credited. The config the rider client loads at startup answered with a page of empty values when the deployment was not set up, which crashed the client with an unexplained error; it now says plainly that the feature is not configured. Repeating the address in the query string returned a server error and now returns a normal validation message.</description>
 		</item>
 		<item>
+			<title>The agent wallet MCP server now quotes its own address when it asks an agent to pay</title>
+			<link>https://three.ws/docs/mcp-agent</link>
+			<guid isPermaLink="false">2026-08-16:The agent wallet MCP server now quotes its own address when it asks an agent to pay</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Agents that connect to the wallet server at /api/mcp-agent without a three.ws account can pay per call in USDC instead. The payment request it handed back named the main three.ws MCP server, not itself, so a paying agent signed a payment scoped to an endpoint it had not called and service directories listed the wallet server under the wrong description and tool list. It now describes itself: its own address, its own wallet-and-payments summary, and a directory example that only searches for services rather than spending anything. Separately, the one-sentence agent builder no longer mangles accented names when it suggests a handle: Munz now becomes munz rather than mu-nz.</description>
+		</item>
+		<item>
+			<title>The creations gallery now counts every creation a creator has made, and pages all the way to the end</title>
+			<link>https://three.ws/creations</link>
+			<guid isPermaLink="false">2026-08-16:The creations gallery now counts every creation a creator has made, and pages all the way to the end</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The gallery ranked creators and paged the feed over only the newest 120 creations, however many the feed actually held. A creator's older work was invisible in their profile count, the top-creator board scored people on a fraction of their output, and scrolling the gallery dead-ended early with items still left to show. It now reads the full feed depth it always meant to, and does it in two database round trips instead of two per item, so the deeper read loads faster than the shallow one did.</description>
+		</item>
+		<item>
+			<title>The KOL, Loom and marketplace MCP servers now tell you why a call failed, and ship runnable examples</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-16:The KOL, Loom and marketplace MCP servers now tell you why a call failed, and ship runnable examples</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a market-data provider was rate-limited, these servers passed back only a bare code like provider_unavailable and threw away the sentence explaining it. They now surface the full reason. The KOL portfolio tool used to answer a provider outage with an empty card that read as a quiet wallet with no trades; it now reports the outage as an outage, so nobody sizes up a trader from a blank. The KOL and Loom packages also gained runnable examples that talk to the live public API, and the naming SDK now answers an unregistered .eth name the same way it answers an unclaimed .sol one, with data instead of an exception.</description>
+		</item>
+		<item>
 			<title>The public news feed can no longer be knocked out by a single post</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:The public news feed can no longer be knocked out by a single post</guid>
@@ -151,6 +191,14 @@
 			<description>The sitemap Google and Bing crawl is split into one file per kind of page, and the profiles file was handing search engines every account row with a username. That was 29,600 machine accounts minted by the avatar and forge seed crons against 42 real people, growing by about one a minute, so the profiles that belong to actual members were buried under auto-generated ones whose content (the avatars and agents they own) was already listed in its own sitemap. Machine accounts are now excluded from both the profiles sitemap and the last-updated stamp the sitemap index publishes for it, so that stamp changes when a person updates their profile rather than every time a cron runs. Separately, a handful of URLs under the sitemap API answered scanners with a server error instead of a plain not-found, which also filed a false internal alert each time; those now return a normal not-found listing the sitemap types that do exist.</description>
 		</item>
 		<item>
+			<title>The sniper trade journal starts recording, and three sniper readouts stop reporting the wrong number</title>
+			<link>https://three.ws/radar</link>
+			<guid isPermaLink="false">2026-08-16:The sniper trade journal starts recording, and three sniper readouts stop reporting the wrong number</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The trade journal is the surface that answers why an agent bought and why it sold, and it had never recorded a single line. Two halves of the same mistake: the table expected a plain number where the platform stores an identifier, so every write failed and was silently discarded on purpose (a journal write must never be allowed to break a trade), and the page that reads it asked the database to compare the same two mismatched kinds of value, which failed outright and returned an error rather than an empty journal. Both are fixed and the surface now records and reads for real, across the 323 closed positions the fleet had already traded. Three readouts were also stating numbers that were not true. The Exit Lab corpus, asked without an explicit page size, answered with exactly one trade instead of the full 400, so the replay console looked like a fleet that had traded once; it now returns the whole window. The live pre-launch radar tape re-sent every precursor it had already shown, about forty times a minute, so the feed filled with copies of the same event; each precursor is now sent once. And the radar dashboard reported 100 watched wallets, the size of the table it was showing rather than the number it was watching, while the status line beside it reported the real figure; it now counts the wallets and the table says which slice of them it is showing.</description>
+		</item>
+		<item>
 			<title>The sniper's laddered-exit settings can finally be saved</title>
 			<link>https://three.ws/dashboard/sniper</link>
 			<guid isPermaLink="false">2026-08-16:The sniper's laddered-exit settings can finally be saved</guid>
@@ -165,6 +213,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Apps and agents that read wallet balances through three.ws get honest answers when a request cannot be read. Posting a body that was too large, or forgetting the JSON content-type header, used to come back as &quot;your fields are invalid&quot;, sending integrators hunting through a chain and address that were never the problem; those now answer with the right status for what actually went wrong. When the fields genuinely are wrong, the reply is one readable line naming the offending field plus a machine-readable list of issues, instead of the raw multi-line dump the endpoint used to return.</description>
+		</item>
+		<item>
+			<title>Token sentiment reads real pump.fun commentary again</title>
+			<link>https://three.ws/tutorials/emotion-from-data</link>
+			<guid isPermaLink="false">2026-08-16:Token sentiment reads real pump.fun commentary again</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The sentiment pulse for a Solana token was reading a pump.fun route that no longer exists, so it scored an empty set and reported every coin as perfectly neutral with full confidence. It now reads the coin's live callouts, the commentary feed the pump.fun coin page renders, and when that source is unreachable and you supplied no text of your own it says so with an error instead of returning a neutral-looking score. The scorer itself was also matching lexicon terms inside longer words, which read 'partnered' as bearish; it now matches whole words and knows the common variants (scammer, rugged, crashing, bought).</description>
 		</item>
 		<item>
 			<title>Token-gated scene shares survive a slow RPC, and a gate that could never open is refused up front</title>

@@ -133,7 +133,7 @@ Public and IP rate-limited, like the leaderboard. The tx signatures are the
 proof, so anyone can check the fleet's homework.
 
 `network` is `mainnet` (default) or `devnet`. `window` is `7`, `30`, `90`
-(default) or `all` days. `limit` caps at 500.
+(default) or `all` days. `limit` defaults to 400 and caps at 500.
 
 ```bash
 curl -s 'https://three.ws/api/sniper/exit-lab?window=all&limit=500' | jq '{replayable, scanned, excluded, first: .trades[0]}'

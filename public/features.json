@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T07:27:00.896Z",
+	"generated_at": "2026-08-16T07:48:38.633Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5240,7 +5240,7 @@
 				{
 					"path": "/docs/avatar-thumbnails",
 					"title": "Docs · Avatar thumbnails",
-					"description": "Where an avatar's preview image comes from, the one rule every code path obeys (never publish a thumbnail URL whose object does not exist), the crons that keep coverage at 100%, and how to run the backfill yourself.",
+					"description": "Where an avatar's preview image comes from, the one rule every code path obeys (never publish a thumbnail URL whose object does not exist), the crons that keep coverage near 100%, and how to run the backfill yourself.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

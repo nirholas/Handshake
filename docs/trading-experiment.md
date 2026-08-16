@@ -316,7 +316,9 @@ much — and tune the next run. That is the whole point of the experiment.
 - No-Mayhem gate: `workers/agent-sniper/mayhem-gate.js`
 - Journal: `workers/agent-sniper/journal.js`, read via `api/sniper/journal.js`
 - Strategy fields: `api/sniper/strategy.js`, migrations
-  `20260703150000_sniper_laddered_exit.sql`, `20260703160000_trading_journal.sql`
+  `20260703150000_sniper_laddered_exit.sql`, `20260703160000_trading_journal.sql`,
+  `20260816070000_trading_journal_uuid_keys.sql` (the retype that made the
+  journal's writes land: `agent_id` and `position_id` are both uuid)
 - Funding UI: `/agent/:id/wallet` deposit tab, `/arm`
 
 ## Related

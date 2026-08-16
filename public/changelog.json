@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T07:41:13.877Z",
+	"generated_at": "2026-08-16T07:48:38.742Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/signals",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Agent attestations that stopped indexing now recover on their own",
+			"summary": "An agent's on-chain attestation history is indexed by walking Solana signatures newer than the last one we recorded. If that recorded signature aged out of the RPC node's history, the walk failed outright and kept failing: the same dead signature was replayed on every run, so that agent's attestations silently stopped appearing on its profile while the scheduled job still reported success. The crawler now recognises that case, re-scans from the most recent signatures instead, and clears the stale marker, so an agent that fell behind catches up by itself on the next pass.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -45,6 +56,17 @@
 			"link": "/docs/animations",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Creator subscription tiers save their edits again, and a mistyped subscription link says so plainly",
+			"summary": "Editing an existing subscription tier from the creator dashboard silently failed: the save never reached the server, so the new name, price or status was lost every time. Saving works now. Alongside it, a mistyped or truncated subscription or tier link used to answer with a generic server failure; it now says the id is not valid, which is what a reader can actually act on. Tier pages are also directly addressable, so a single tier can be linked and read on its own, with unpublished drafts still visible only to the creator who wrote them.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -176,6 +198,38 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "The agent wallet MCP server now quotes its own address when it asks an agent to pay",
+			"summary": "Agents that connect to the wallet server at /api/mcp-agent without a three.ws account can pay per call in USDC instead. The payment request it handed back named the main three.ws MCP server, not itself, so a paying agent signed a payment scoped to an endpoint it had not called and service directories listed the wallet server under the wrong description and tool list. It now describes itself: its own address, its own wallet-and-payments summary, and a directory example that only searches for services rather than spending anything. Separately, the one-sentence agent builder no longer mangles accented names when it suggests a handle: Munz now becomes munz rather than mu-nz.",
+			"link": "/docs/mcp-agent",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The creations gallery now counts every creation a creator has made, and pages all the way to the end",
+			"summary": "The gallery ranked creators and paged the feed over only the newest 120 creations, however many the feed actually held. A creator's older work was invisible in their profile count, the top-creator board scored people on a fraction of their output, and scrolling the gallery dead-ended early with items still left to show. It now reads the full feed depth it always meant to, and does it in two database round trips instead of two per item, so the deeper read loads faster than the shallow one did.",
+			"link": "/creations",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "The KOL, Loom and marketplace MCP servers now tell you why a call failed, and ship runnable examples",
+			"summary": "When a market-data provider was rate-limited, these servers passed back only a bare code like provider_unavailable and threw away the sentence explaining it. They now surface the full reason. The KOL portfolio tool used to answer a provider outage with an empty card that read as a quiet wallet with no trades; it now reports the outage as an outage, so nobody sizes up a trader from a blank. The KOL and Loom packages also gained runnable examples that talk to the live public API, and the naming SDK now answers an unregistered .eth name the same way it answers an unclaimed .sol one, with data instead of an exception.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "The public news feed can no longer be knocked out by a single post",
 			"summary": "Everything that reads three.ws announcements, RSS readers and the HackerNoon importer alike, reads one feed at three.ws/rss/announcements.xml. That format has no partial failure: one illegal character anywhere in it makes the entire feed unreadable, so a single post could have taken every subscriber offline rather than costing one item. Three inputs could do that, and none of them can now. A code sample in an announcement that happened to contain the sequence that ends a raw-content block used to end it early and corrupt every item after it. Control characters the format forbids outright, which no amount of escaping can rescue, were passed straight through; they are now dropped, while emoji and other real characters are kept untouched. And a post whose wording happened to match a marker the feed builder uses internally while turning links into links stopped the feed building at all, returning an error to every reader instead. Separately, the feed takes an optional parameter for reading one of the archived accounts instead of the curated list, and misspelling it used to hand back the curated feed with no hint anything was wrong, so a subscriber could sit on the wrong feed indefinitely. It now says plainly that the source is unknown and lists the ones that exist.",
 			"link": null,
@@ -198,6 +252,17 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "The sniper trade journal starts recording, and three sniper readouts stop reporting the wrong number",
+			"summary": "The trade journal is the surface that answers why an agent bought and why it sold, and it had never recorded a single line. Two halves of the same mistake: the table expected a plain number where the platform stores an identifier, so every write failed and was silently discarded on purpose (a journal write must never be allowed to break a trade), and the page that reads it asked the database to compare the same two mismatched kinds of value, which failed outright and returned an error rather than an empty journal. Both are fixed and the surface now records and reads for real, across the 323 closed positions the fleet had already traded. Three readouts were also stating numbers that were not true. The Exit Lab corpus, asked without an explicit page size, answered with exactly one trade instead of the full 400, so the replay console looked like a fleet that had traded once; it now returns the whole window. The live pre-launch radar tape re-sent every precursor it had already shown, about forty times a minute, so the feed filled with copies of the same event; each precursor is now sent once. And the radar dashboard reported 100 watched wallets, the size of the table it was showing rather than the number it was watching, while the status line beside it reported the real figure; it now counts the wallets and the table says which slice of them it is showing.",
+			"link": "/radar",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "The sniper's laddered-exit settings can finally be saved",
 			"summary": "An armed sniper strategy has two knobs that decide how a winner is taken off the table: the multiple of your entry at which it sells enough to recover what you put in, and the minimum slice of the position it always keeps riding afterwards. Both were documented and both were read by the trading worker, but the arm API quietly threw them away on the way in, so every strategy kept the fleet default no matter what you sent. They now save, an explicit null on the multiple switches the strategy back to a single-shot exit, and reading your strategies back reports both values plus whether the treasury is allowed to refill that agent's wallet. Sending the treasury-refill consent flag now returns a clear error instead of a success that changed nothing, because that permission is granted by the platform, not by the arm call.",
 			"link": "/dashboard/sniper",
@@ -212,6 +277,17 @@
 			"title": "The wallet balance API stops calling a rejected upload a validation error",
 			"summary": "Apps and agents that read wallet balances through three.ws get honest answers when a request cannot be read. Posting a body that was too large, or forgetting the JSON content-type header, used to come back as \"your fields are invalid\", sending integrators hunting through a chain and address that were never the problem; those now answer with the right status for what actually went wrong. When the fields genuinely are wrong, the reply is one readable line naming the offending field plus a machine-readable list of issues, instead of the raw multi-line dump the endpoint used to return.",
 			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Token sentiment reads real pump.fun commentary again",
+			"summary": "The sentiment pulse for a Solana token was reading a pump.fun route that no longer exists, so it scored an empty set and reported every coin as perfectly neutral with full confidence. It now reads the coin's live callouts, the commentary feed the pump.fun coin page renders, and when that source is unreachable and you supplied no text of your own it says so with an error instead of returning a neutral-looking score. The scorer itself was also matching lexicon terms inside longer words, which read 'partnered' as bearish; it now matches whole words and knows the common variants (scammer, rugged, crashing, bought).",
+			"link": "/tutorials/emotion-from-data",
 			"tags": [
 				"fix",
 				"improvement"
