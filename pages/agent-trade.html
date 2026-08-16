@@ -290,6 +290,16 @@
     .header-links a:hover { color: var(--text); border-color: rgba(8,189,186,0.4); background: rgba(8,189,186,0.08); }
     .header-links a:active { transform: scale(0.96); }
     .header-links a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+    /* The runtime language switcher (/i18n.js mounts it when the deploy ships
+       more than one locale) is a ~165px control pinned to the bottom-right
+       corner. Below roughly 780px it lands on top of the run button, and at
+       320px it covered the button outright: the page's primary action could not
+       be clicked at all. The page's own bottom stack lifts clear of that corner
+       rather than fighting it for the pixel. */
+    @media (max-width: 820px) {
+      #cta { bottom: 62px; }
+      #stepLog { bottom: 118px; }
+    }
     @media (max-width: 560px) {
       .header-links { gap: 2px; margin-left: 4px; }
       .header-links a { padding: 4px 7px; font-size: 0.6rem; }
@@ -297,16 +307,16 @@
       /* Stack the controls: side by side they cannot both stay legible at 320px. */
       #cta { flex-direction: column; gap: 8px; }
       #topicSelect, #startBtn { width: 100%; max-width: none; }
-      #stepLog { bottom: 128px; }
+      #stepLog { bottom: 168px; }
       .step-chip { padding: 3px 8px; font-size: 0.62rem; }
-      /* The bottom of a small screen carries the stacked CTA and the wrapped
-         step log (about 177px of it), so a card centred on the viewport lands
+      /* The bottom of a small screen carries the corner switcher, the stacked
+         CTA and the wrapped step log, so a card centred on the viewport lands
          on top of the chips. Centre it on the band that is actually free
          instead: below the header, above the step log. */
       #centralCard {
-        top: calc(50% - 52px); margin-top: 0;
+        top: calc(50% - 58px); margin-top: 0;
         transform: translate(-50%, -50%);
-        max-height: calc(100vh - 270px); padding: 16px;
+        max-height: calc(100vh - 335px); padding: 16px;
       }
       #centralCard.hidden { transform: translate(-50%, -50%) translateY(14px); }
       .bubble { max-width: 160px; font-size: 0.76rem; }
