@@ -1691,7 +1691,17 @@ body.app-next-body.nxt-chat-merged .nxt-chat-input-wrap:focus-within {
 	.nxt-action--primary span { display: inline; }
 	.nxt-chat-dock { bottom: 64px; }
 	.nxt-action-bar--secondary { bottom: 12px; }
-	.nxt-chat-chips { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+	/* `justify-content: center` on a scroll container pushes the overflow past
+	   BOTH edges, and the leading half can never be scrolled back into view. The
+	   flex-start fallback keeps every chip reachable on engines without `safe`. */
+	.nxt-chat-chips {
+		max-width: 100%;
+		overflow-x: auto;
+		flex-wrap: nowrap;
+		padding-bottom: 2px;
+		justify-content: flex-start;
+		justify-content: safe center;
+	}
 	.nxt-chat-chip { white-space: nowrap; flex: none; }
 	.nxt-anim-sheet { bottom: 130px; max-height: 50vh; }
 	.nxt-first-hint { font-size: 11.5px; padding: 6px 6px 6px 12px; max-width: calc(100vw - 24px); }
@@ -1711,6 +1721,16 @@ body.app-next-body.nxt-chat-merged .nxt-chat-input-wrap:focus-within {
 		transform: translateX(-50%);
 		width: min(640px, calc(100vw - 32px));
 	}
+}
+
+/* Below ~380px the wordmark plus the full action cluster no longer fit on one
+   line. The header does not scroll, so the overflow pushed the sign-in link
+   clean off the right edge where it could not be read or tapped. Drop to the
+   mark alone; the link keeps its "three.ws home" label for assistive tech. */
+@media (max-width: 380px) {
+	.nxt-brand-text { display: none; }
+	.nxt-header { padding: 0 12px 0 10px; }
+	.nxt-header-right { gap: 6px; }
 }
 
 /* Hide the production dat.gui by default — controls live inside the viewer

@@ -963,7 +963,25 @@ body {
 	outline: none;
 }
 .br-sys-textarea:focus { border-color: #2a3060; }
-.br-input-row { display: flex; gap: 8px; align-items: flex-end; }
+/* The platform's bottom-right corner widgets (the shared corner stack, the walk
+   companion) take pointer events across their whole box and sit exactly on top
+   of Send, which made the primary action of this page unclickable whenever one
+   was on screen. syncCornerReserve() in src/brain.js measures whatever is
+   actually there and publishes the gutter; nothing is reserved when the corner
+   is empty. */
+.br-input-row {
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
+	padding-right: var(--br-corner-gutter, 0px);
+	transition: padding-right 0.2s ease;
+}
+/* When the widget is wide enough that a gutter would leave no room to type,
+   Send moves to its own line on the left instead, clear of the corner either
+   way. */
+.br-input-row.crowded { padding-right: 0; flex-wrap: wrap; }
+.br-input-row.crowded .br-prompt { flex: 1 1 100%; }
+.br-input-row.crowded .br-send { margin-right: auto; }
 .br-prompt {
 	flex: 1;
 	background: #0c0c0c;

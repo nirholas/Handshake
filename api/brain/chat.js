@@ -1133,7 +1133,8 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 		if (!res.writableEnded) {
 			try {
 				res.write(`event: error\ndata: ${JSON.stringify({
-					message: err?.message || 'upstream error',
+					message: userFacingStreamError(err),
+					reason: conciseReason(err),
 					elapsedMs,
 				})}\n\n`);
 				res.end();
@@ -1249,4 +1250,31 @@ function affordableBudget(err) {
 function conciseReason(err) {
 	const msg = (err?.message || String(err)).replace(/\s+/g, ' ').trim();
 	return msg.length > 160 ? `${msg.slice(0, 157)}…` : msg;
+}
+
+/**
+ * The message a visitor reads inside the model's column once every rung of the
+ * fallback chain has failed. The raw error belongs to the last route tried, so
+ * it surfaces words like "Forbidden" or "fetch failed" that describe a provider
+ * the visitor never chose and cannot act on. Say what happened and what to do
+ * instead; the precise reason still ships alongside as `reason` and is logged.
+ * Exported for tests.
+ */
+export function userFacingStreamError(err) {
+	const status = Number(err?.statusCode ?? err?.status) || 0;
+	const msg = (err?.message || '').toLowerCase();
+
+	if (status === 429 || /rate.?limit|too many requests|quota|resource[ _-]?exhausted/.test(msg)) {
+		return 'Every route for this model is rate limited right now. Try again in a moment, or pick another model.';
+	}
+	if (status === 401 || status === 403 || /forbidden|unauthorized|permission denied|api key/.test(msg)) {
+		return 'This model has no working route on this deployment right now. Pick another model while the route is restored.';
+	}
+	if (status === 404 || /not found|no such model|model.*(deprecated|retired)/.test(msg)) {
+		return 'This model is no longer served upstream. Pick another model.';
+	}
+	if (/timeout|timed out|aborted|deadline/.test(msg)) {
+		return 'This model took too long to answer. Try again, or pick a faster model.';
+	}
+	return 'This model could not answer. Try again, or pick another model.';
 }

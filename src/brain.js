@@ -503,6 +503,10 @@ async function runExtraction(payload) {
 		if (!res.ok) throw new Error(data.error_description || data.error || `HTTP ${res.status}`);
 
 		state.authed = true;
+		// The gate is raised on a 401 and nothing ever took it back down, so a
+		// visitor who signed in and returned kept reading "sign in to build your
+		// persona" above the persona they had just built.
+		hideAuthGate();
 		state.persona = data.persona;
 		persistPersona();
 		renderPersonaCard(state.persona);
@@ -1160,6 +1164,62 @@ function setPlayMode(m) {
 	renderCanvas();
 }
 
+// The site mounts fixed widgets in the bottom-right corner (the shared corner
+// stack, the walk companion). Their boxes take pointer events, and this page
+// puts Send in exactly that spot, so a first-time visitor with the atlas hint
+// or the companion on screen could not click the page's primary action at all.
+// Measure whatever is actually parked there and reserve that much room beside
+// the composer; an empty corner reserves nothing.
+const CORNER_WIDGET_SELECTOR = '#tws-corner-stack, .walk-companion';
+
+function syncCornerReserve() {
+	const row = document.querySelector('.br-input-row');
+	if (!row) return;
+	const rowRect = row.getBoundingClientRect();
+	let gutter = 0;
+
+	for (const el of document.querySelectorAll(CORNER_WIDGET_SELECTOR)) {
+		const r = el.getBoundingClientRect();
+		if (r.width <= 0 || r.height <= 0) continue;
+		// Only a widget that actually overlaps the composer's band matters.
+		if (r.bottom <= rowRect.top || r.top >= rowRect.bottom) continue;
+		gutter = Math.max(gutter, window.innerWidth - r.left + 10);
+	}
+
+	// Past a third of the row the gutter costs more than it buys, so the layout
+	// wraps instead and Send lands on its own line clear of the corner.
+	const crowded = gutter > rowRect.width * 0.34;
+	row.classList.toggle('crowded', crowded);
+	document.documentElement.style.setProperty('--br-corner-gutter', crowded ? '0px' : `${Math.round(gutter)}px`);
+}
+
+// Corner widgets mount late (the atlas hint on first visit, the companion after
+// an idle callback), grow as their content changes, and move with the viewport,
+// so the reserve is re-measured on all three rather than computed once at boot.
+// The observers are deliberately narrow: both widgets are direct children of
+// <body>, so childList alone catches them, and this page rewrites its canvas on
+// every streamed token, which a subtree observer would turn into layout thrash.
+function watchCornerWidgets() {
+	let queued = false;
+	const schedule = () => {
+		if (queued) return;
+		queued = true;
+		requestAnimationFrame(() => { queued = false; syncCornerReserve(); });
+	};
+
+	const sizes = new ResizeObserver(schedule);
+	const trackWidgets = () => {
+		sizes.disconnect();
+		for (const el of document.querySelectorAll(CORNER_WIDGET_SELECTOR)) sizes.observe(el);
+		schedule();
+	};
+
+	trackWidgets();
+	window.addEventListener('resize', schedule);
+	window.addEventListener('tws-corner-stack:ready', trackWidgets);
+	new MutationObserver(trackWidgets).observe(document.body, { childList: true });
+}
+
 // Below 900px the sessions rail is off-canvas, so the topbar carries the only
 // route to it. Without this the New-session button and the whole session list
 // were unreachable on a phone.
@@ -1331,6 +1391,7 @@ loadPersona();
 renderArchetypes();
 renderSidebar();
 bindEvents();
+watchCornerWidgets();
 fetchProviderRoster();
 
 if (state.persona) {
