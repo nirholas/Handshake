@@ -3135,7 +3135,7 @@ three.ws is built around two distinct concepts: agents are AI minds, avatars are
 
 URL: https://three.ws/docs/animations
 
-The motion clips (idle, wave, dance, and about 2,000 more) that bring three.ws avatars to life: how the registry is organised, how clips load at runtime, how they retarget onto any humanoid rig, and how to preview every one in the browser.
+The motion clips (idle, wave, dance, and about 3,000 more) that bring three.ws avatars to life: how the registry is organised, how clips load at runtime, how they retarget onto any humanoid rig, and how to preview every one in the browser.
 
 ### Docs · Choreography
 

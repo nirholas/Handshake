@@ -609,6 +609,201 @@ Requires auth. Deletes a single memory by its platform ID.
 
 ---
 
+## Memory seed connectors API
+
+Public-footprint readers that turn an account handle into the raw material for a
+memory seed, plus the synthesizer that writes the seed itself. This is the lane
+behind [/demos/memory-seed](https://three.ws/demos/memory-seed) and the seed
+widget in `src/memory-seed.js`.
+
+Everything these endpoints read is already public. They are read-only, request
+no OAuth from the visitor, and store nothing; the consent-gated seeding flows
+that do write to an agent live at `/api/agents/:id/memory/seed/*` and are
+documented in [GitHub](./github-memory-seeding.md), [X](./x-memory-seeding.md)
+and [Farcaster](./farcaster-memory-seeding.md) memory seeding.
+
+The three connectors are unauthenticated GETs, rate limited per IP, and cached
+at the edge for 5 minutes. A connector that cannot reach its upstream answers
+`200` with `{ "ok": false, "reason", "detail" }` so a partly-configured
+deployment degrades to a greyed-out card instead of a failed page; a bad handle
+is still a `4xx`.
+
+### GitHub footprint
+
+```
+GET /api/seed/github?handle=<user>
+```
+
+No credentials required. `GITHUB_TOKEN` is used when present, purely for the
+higher rate limit.
+
+```bash
+curl -s 'https://three.ws/api/seed/github?handle=nirholas'
+```
+
+```json
+{
+	"ok": true,
+	"handle": "nirholas",
+	"name": "nich",
+	"bio": "",
+	"followers": 617,
+	"public_repos": 223,
+	"top_repos": [
+		{
+			"name": "fresh-start",
+			"description": "The original repo, restored.",
+			"stars": 6250,
+			"language": null,
+			"html_url": "https://github.com/nirholas/fresh-start"
+		}
+	],
+	"top_readme_excerpt": "# fresh-start"
+}
+```
+
+Errors: `400 invalid_request` (no handle), `400 invalid_handle` (illegal
+characters), `404 not_found` (no such user), `502 upstream_error`.
+
+---
+
+### Farcaster footprint
+
+```
+GET /api/seed/farcaster?handle=<fname-or-fid>
+```
+
+No credentials required. Reads through the platform's shared Farcaster client,
+which prefers Neynar when `NEYNAR_API_KEY` is set and otherwise falls back to a
+public Farcaster hub over HTTP (`FARCASTER_HUB_URL`, default
+`https://hub.pinata.cloud`).
+
+`lane` names the rung that answered. The hub serves raw protocol messages and
+therefore has no reaction counts, so `follower_count`, `following_count` and
+per-cast `engagement` are `null` on that lane rather than `0`. Casts are ranked
+by engagement where the lane knows it and by recency where it does not, with
+replies, link-only posts and duplicates dropped.
+
+```bash
+curl -s 'https://three.ws/api/seed/farcaster?handle=dwr'
+```
+
+```json
+{
+	"ok": true,
+	"lane": "hub",
+	"handle": "dwr",
+	"fid": 3,
+	"display_name": "Dan Romero",
+	"bio": "Working on Farcaster",
+	"follower_count": null,
+	"recent_casts": [
+		{
+			"text": "Best store-bought eggnog available on the west coast",
+			"timestamp": "2025-11-28T01:35:34.000Z",
+			"engagement": null
+		}
+	]
+}
+```
+
+Errors: `400 invalid_request`, `400 invalid_handle`, `404 not_found`. A hub
+answers an unknown fname with `400` and a `NotFound` detail; that is normalised
+to a `404` here so a typo cannot read as an outage.
+
+---
+
+### X footprint
+
+```
+GET /api/seed/x?handle=<user>
+```
+
+X has no keyless public read lane, so this connector needs one of two credential
+sets and reports `ok: false` without either:
+
+1. `TWITTER_BEARER_TOKEN`, an app-only bearer from the developer portal.
+2. `X_API_KEY` + `X_API_SECRET`, the OAuth 1.0a consumer pair. The handler
+   exchanges them for an app-only bearer at runtime via `appLogin()`, so a
+   deployment that already holds the changelog poster's app credentials needs
+   nothing new provisioned.
+
+```bash
+curl -s 'https://three.ws/api/seed/x?handle=jack'
+```
+
+```json
+{
+	"ok": true,
+	"handle": "jack",
+	"name": "jack",
+	"bio": "no state is the best state",
+	"follower_count": 11300858,
+	"tweet_count": 30894,
+	"recent_tweets": [
+		{
+			"text": "joel is awesome",
+			"created_at": "2026-08-10T21:54:11.000Z",
+			"likes": 1458,
+			"retweets": 87,
+			"replies": 115
+		}
+	],
+	"top_topics": [{ "topic": "agents", "count": 4 }]
+}
+```
+
+Errors: `400 invalid_request`, `400 invalid_handle`, `404 not_found`. A rate
+limit or outage on the timeline read keeps the profile payload and returns an
+empty `recent_tweets` rather than failing the request.
+
+---
+
+### Synthesize a memory seed
+
+```
+POST /api/seed/synthesize
+```
+
+Requires auth (session cookie or bearer token). Takes any subset of the three
+connector payloads verbatim and returns a 200-300 word markdown memory seed. The
+completion runs on the platform LLM chain (`api/_lib/llm.js`), which leads with
+free and keyless providers, so no provider key is required.
+
+**Request body**
+
+```json
+{
+	"connectors": {
+		"github": { "ok": true, "handle": "nirholas", "top_repos": [] },
+		"x": { "ok": true, "handle": "jack" },
+		"farcaster": { "ok": true, "handle": "dwr", "fid": 3 }
+	}
+}
+```
+
+Connector payloads carrying `ok: false` are ignored. At least one usable payload
+is required.
+
+**Response**
+
+```json
+{
+	"ok": true,
+	"memory_seed": "### Interests\nThe user is a prolific builder...",
+	"sources_used": ["github", "x", "farcaster"],
+	"tokens_used": 2670,
+	"usage": { "input_tokens": 2300, "output_tokens": 370 },
+	"model": "gemini-3.1-flash-lite"
+}
+```
+
+Errors: `401 unauthorized`, `400 validation_error` (unknown key, or no connector
+supplied), `400 no_signal` (every payload unusable), `429
+daily_spend_cap_exceeded`, `502 upstream_error`, `503 llm_unavailable`.
+
+---
+
 ## Chat / LLM API
 
 ### Agent chat

@@ -186,6 +186,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Farcaster memory seeding](./farcaster-memory-seeding.md): give an agent your Farcaster voice, proved with a wallet the account already verified, and revoke it in one click
 - [X memory seeding](./x-memory-seeding.md): seed an agent from your public X posts behind an explicit, versioned consent you can revoke (revocation deletes what the seed wrote)
 - [GitHub memory seeding](./github-memory-seeding.md): tick the profile, repositories, and READMEs your agent may read, and nothing outside that list is ever fetched or stored (disconnecting deletes every fact it wrote)
+- [Memory seed connectors](./api-reference.md#memory-seed-connectors-api): the public read-only lane behind the seeding demo. Turn a GitHub, X, or Farcaster handle into a footprint payload, then synthesize a memory seed from any subset of them
 - [The catalog quality gate](./seed-quality.md): how a platform-seeded model earns its slot in the public catalog, the two stages it must pass, and why a rejected asset is kept rather than deleted
 - [Likeness evaluation](./likeness-eval.md): the Phase 1 verification metric, measured rather than asserted. Every reconstruction is rendered at three yaws and compared to the photos it was built from with an open-source face-recognition embedding, so "4 out of 5" means one fixed, calibrated thing
 - [Examples gallery](./examples.md): copy-paste-ready code for common use cases
