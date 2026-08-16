@@ -720,7 +720,7 @@ function codeBoxEditing(card) {
 				aria-label="Referral code" aria-describedby="ref-code-hint" />
 			<span class="ref-code-status" data-code-status aria-hidden="true"></span>
 		</div>
-		<div class="ref-code-hint" id="ref-code-hint" data-code-hint>${CODE_MIN}–${CODE_MAX} letters or numbers. This becomes your shareable link.</div>
+		<div class="ref-code-hint" id="ref-code-hint" data-code-hint>${CODE_MIN} to ${CODE_MAX} letters or numbers. This becomes your shareable link.</div>
 		<div class="ref-code-actions">
 			<button class="dn-btn primary" data-action="save-code" type="button" disabled>Save code</button>
 			<button class="dn-btn" data-action="cancel-code" type="button">Cancel</button>
@@ -764,7 +764,7 @@ function wireCodeEditor(host, card) {
 				return;
 			}
 			if (!CODE_RE.test(value)) {
-				setState('', '', `${CODE_MIN}–${CODE_MAX} letters or numbers — no spaces or symbols.`, false);
+				setState('', '', `${CODE_MIN} to ${CODE_MAX} letters or numbers, no spaces or symbols.`, false);
 				return;
 			}
 			setState('checking', SPINNER, 'Checking availability…', false);
@@ -778,7 +778,7 @@ function wireCodeEditor(host, card) {
 					} else if (r.reason === 'taken') {
 						setState('bad', WARN_ICON, 'Already taken. Try a variation.', false);
 					} else {
-						setState('bad', WARN_ICON, `${CODE_MIN}–${CODE_MAX} letters or numbers.`, false);
+						setState('bad', WARN_ICON, `${CODE_MIN} to ${CODE_MAX} letters or numbers.`, false);
 					}
 				})
 				.catch(() => {

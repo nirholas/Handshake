@@ -488,6 +488,11 @@ export function createWalkCapture({
 				setModalMessage(msg, 'Sign in to three.ws to post to X.', data.login_url || '/login', 'Sign in');
 			} else if (data.error === 'not_connected') {
 				setModalMessage(msg, 'Connect your X account to post.', data.connect_url || '/api/auth/x/connect', 'Connect X');
+			} else if (data.error === 'reauth_required') {
+				// The account is still linked but its token can no longer be refreshed.
+				// Same recovery as a missing connection, so route the user back through
+				// the connect flow instead of the three.ws login page.
+				setModalMessage(msg, 'Your X connection expired. Reconnect to post.', data.connect_url || '/api/auth/x/connect', 'Reconnect X');
 			} else if (data.error === 'rate_limited') {
 				setModalMessage(msg, data.error_description || 'Posting too fast — try again shortly.');
 			} else if (data.error === 'quota_exceeded') {

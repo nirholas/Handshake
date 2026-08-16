@@ -1,17 +1,29 @@
 import lexiconData from './lexicon.json' with { type: 'json' };
 
-const POS_TERMS = lexiconData.positive.map((t) => t.toLowerCase());
-const NEG_TERMS = lexiconData.negative.map((t) => t.toLowerCase());
+// Terms match on word boundaries, not as bare substrings. Substring matching
+// read "partnered" as the bearish term "red", "pump" as the bullish "up" (on
+// top of "pump" itself), "path" as "ath" and "download" as "down", so a
+// plainly positive pump.fun callout could score negative. Word boundaries are
+// only applied to the alphanumeric ends of a term, which leaves the emoji
+// entries (🚀, 📉, ⚠️) and hyphenated ones (sell-off) matching as before. The
+// lexicon carries the inflections that matter (mooning, dumping, scammer)
+// explicitly, and each inflection now counts once instead of also firing its
+// shorter stem.
+function termPattern(term) {
+	const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const head = /^[a-z0-9]/.test(term) ? '(?<![a-z0-9])' : '';
+	const tail = /[a-z0-9]$/.test(term) ? '(?![a-z0-9])' : '';
+	return new RegExp(`${head}${escaped}${tail}`, 'g');
+}
+
+const POS_TERMS = lexiconData.positive.map((t) => termPattern(t.toLowerCase()));
+const NEG_TERMS = lexiconData.negative.map((t) => termPattern(t.toLowerCase()));
 
 function countMatches(text, terms) {
 	const lower = text.toLowerCase();
 	let count = 0;
 	for (const term of terms) {
-		let idx = 0;
-		while ((idx = lower.indexOf(term, idx)) !== -1) {
-			count++;
-			idx += term.length;
-		}
+		count += lower.match(term)?.length ?? 0;
 	}
 	return count;
 }

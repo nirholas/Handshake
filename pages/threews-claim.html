@@ -298,7 +298,7 @@
 				if (me.status === 'needs_username') {
 					acctStatus.textContent = me.blocked_reason || 'Set a username before claiming a subdomain.';
 					acctStatus.className = 'tw-status bad';
-					acctActions.innerHTML = '<a class="tw-btn ghost" href="/settings">Set a username</a>';
+					acctActions.innerHTML = '<a class="tw-btn ghost" href="/dashboard/account">Set a username</a>';
 					labelEl.disabled = true;
 					mintBtn.disabled = true;
 					statusEl.textContent = 'A username is required before a label can be minted.';

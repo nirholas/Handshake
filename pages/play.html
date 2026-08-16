@@ -56,6 +56,15 @@
 		<link rel="stylesheet" href="/src/game/coincommunities.css" />
 
 	<link rel="canonical" href="https://three.ws/play">
+	<!--
+		oEmbed discovery. api/play-oembed.js answers for /play, /play?coin=<mint> and
+		/play/<mint>, so a consumer that finds these tags (WordPress, Ghost, Discord,
+		Notion, iframely/embed.ly editors) unfurls a coin world as a live 3D embed
+		rather than a plain link card. Both formats the provider supports are listed;
+		the spec lets the consumer pick either.
+	-->
+	<link rel="alternate" type="application/json+oembed" href="https://three.ws/api/play-oembed?url=https%3A%2F%2Fthree.ws%2Fplay&amp;format=json" title="three.ws Coin Communities">
+	<link rel="alternate" type="text/xml+oembed" href="https://three.ws/api/play-oembed?url=https%3A%2F%2Fthree.ws%2Fplay&amp;format=xml" title="three.ws Coin Communities">
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Play, three.ws">
