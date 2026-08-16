@@ -6568,6 +6568,312 @@ partial answer is still a partial answer.
 
 ---
 
+## Subscriptions API
+
+Recurring creator subscriptions. A creator publishes one or more **plans**
+(tiers); a subscriber joins one either through the x402 renewal-intent path
+(`POST /api/subscriptions`) or the Solana USDC checkout
+(`/api/subscriptions/subscribe` then `/api/subscriptions/verify`).
+
+All ids are UUIDs. A malformed id answers `400 validation_error`, never a `5xx`.
+Session-cookie mutations require an `X-CSRF-Token` header (see
+[Authentication](#authentication)); bearer-token callers are exempt.
+
+### List plans
+
+```
+GET /api/subscriptions/plans?creator_id=<uuid>
+GET /api/subscriptions/plans?agent_id=<uuid>
+```
+
+Public. Exactly one of `creator_id` or `agent_id` is required. Only active plans
+are returned; the plan's own creator may add `include_inactive=1` to also receive
+their drafts.
+
+```json
+{
+  "plans": [
+    {
+      "id": "735977d9-289d-4517-8ac4-68e97c649de8",
+      "creator_id": "f23703c0-9d75-4e60-9a4c-349da5d7a2f2",
+      "agent_id": null,
+      "name": "Supporter",
+      "price_usd": "9.99",
+      "interval": "monthly",
+      "perks": ["priority support"],
+      "included_skills": [],
+      "active": true,
+      "created_at": "2026-08-16T06:16:24.604Z"
+    }
+  ]
+}
+```
+
+**Errors:** `400` (`validation_error`: neither id given, or a non-UUID),
+`429` (`rate_limited`).
+
+---
+
+### Get one plan
+
+```
+GET /api/subscriptions/plans/:id
+```
+
+Public for an active plan. A deactivated plan (draft) is served only to its
+creator; everyone else gets `404`, so a draft's existence never leaks.
+
+**Response:** `{ "plan": { … } }`, same shape as a list entry.
+
+**Errors:** `400` (`validation_error`), `404` (`not_found`), `429`.
+
+---
+
+### Create a plan
+
+```
+POST /api/subscriptions/plans
+```
+
+Requires auth. A creator may hold at most 3 **active** plans; drafts
+(`active: false`) do not consume a slot.
+
+**Request body**
+
+```json
+{
+  "agent_id": "717e68f1-e0c2-41ee-8ff7-6801a83206c9",
+  "name": "Supporter",
+  "price_usd": 9.99,
+  "interval": "monthly",
+  "perks": ["priority support"],
+  "included_skills": [],
+  "active": true
+}
+```
+
+`name` is 2 to 80 characters, `price_usd` is 0.99 to 999, `interval` is
+`weekly` or `monthly` (default `monthly`), `perks` is up to 10 strings,
+`included_skills` up to 50. `agent_id` is optional and must be an agent you own.
+
+**Response** (`201`): `{ "plan": { … } }`
+
+**Errors:** `400` (`validation_error`), `401` (`unauthorized`), `403`
+(`csrf_missing` / `csrf_invalid`, or `forbidden` when `agent_id` is not yours),
+`409` (`conflict`: the 3-active-plan cap), `429`.
+
+---
+
+### Update a plan
+
+```
+PATCH /api/subscriptions/plans/:id
+PUT   /api/subscriptions/plans/:id
+```
+
+Requires auth, creator only. Both verbs behave identically: the body is a
+partial update, and any field left out is untouched. `PUT` is accepted because
+the dashboard plan editor saves with it.
+
+**Request body:** any subset of `name`, `price_usd`, `interval`, `perks`,
+`included_skills`, `active`.
+
+**Response:** `{ "plan": { … } }`
+
+**Errors:** `400` (`validation_error`, including an empty body: "nothing to
+update"), `401`, `403`, `404` (`not_found`: unknown plan, or not yours), `409`
+(reactivating past the 3-active cap).
+
+---
+
+### Deactivate a plan
+
+```
+DELETE /api/subscriptions/plans/:id
+```
+
+Requires auth, creator only. A soft delete: the row stays and `active` flips to
+`false`, so existing subscribers keep their record and the plan can be
+reactivated with `PATCH { "active": true }`.
+
+**Response:** `{ "ok": true }`
+
+**Errors:** `400`, `401`, `403`, `404`.
+
+---
+
+### Subscribe (x402 renewal intent)
+
+```
+POST /api/subscriptions
+```
+
+Requires auth. Creates or reactivates the subscription immediately and then
+raises a payable intent for the first period. Payment is request-based (x402):
+the server never pulls funds, it hands back what the subscriber owes.
+
+**Request body**
+
+```json
+{ "plan_id": "735977d9-289d-4517-8ac4-68e97c649de8", "wallet_address": "<solana pubkey>" }
+```
+
+**Response** (`201`)
+
+```json
+{
+  "subscription": {
+    "id": "7c8e0051-0279-484a-b7d5-a19d821ade61",
+    "plan_id": "735977d9-289d-4517-8ac4-68e97c649de8",
+    "status": "active",
+    "current_period_end": "2026-09-15T06:16:50.257Z",
+    "payment_method": "x402"
+  },
+  "payment": { "pending": true, "paymentId": "…", "payUrl": "https://three.ws/pay/…" }
+}
+```
+
+`payment` reports the first charge attempt and is informational: a plan whose
+creator has no payout wallet answers `{ "success": false, "error":
+"creator_payout_wallet_missing" }` while the subscription itself is still
+created.
+
+**Errors:** `400`, `401`, `403`, `404` (`not_found`: unknown plan), `409`
+(`conflict`: plan deactivated, your own plan, or already subscribed), `429`.
+
+---
+
+### My subscriptions
+
+```
+GET /api/subscriptions/mine
+```
+
+Requires auth. Every subscription the caller holds, newest first, joined with
+the plan name/price/interval and the creator's display name.
+
+```json
+{ "subscriptions": [ { "id": "…", "status": "active", "plan_name": "Supporter", "price_usd": "9.99", "creator_name": "…" } ] }
+```
+
+---
+
+### Subscription detail
+
+```
+GET /api/subscriptions/:id
+```
+
+Requires auth. Readable by the subscriber **or** the plan's creator; anyone else
+gets `404`.
+
+---
+
+### Cancel a subscription
+
+```
+DELETE /api/subscriptions/:id
+```
+
+Requires auth, subscriber only. Sets `status = 'cancelled'` and stamps
+`cancelled_at`; the record is kept so the period already paid for stays
+auditable. Re-subscribing to the same plan reactivates this row.
+
+**Response:** `{ "ok": true, "subscription": { "id": "…", "status": "cancelled" } }`
+
+---
+
+### Solana USDC checkout: quote
+
+```
+POST /api/subscriptions/subscribe
+```
+
+Requires auth. Quotes the exact USDC split for one period, persists a pending
+checkout with a Solana-Pay reference, and returns a base64
+`VersionedTransaction` for the buyer's wallet to sign and broadcast. The
+platform pre-signs as fee payer when a payer keypair is configured, so the
+subscriber needs no SOL.
+
+**Request body**
+
+```json
+{ "tierId": "735977d9-289d-4517-8ac4-68e97c649de8", "buyerPublicKey": "<solana pubkey>" }
+```
+
+**Response** (`200`)
+
+```json
+{
+  "data": {
+    "transaction": "<base64 VersionedTransaction>",
+    "reference": "7qhfZb3yGi93qw3gp7KhbEwbmiXCQYdS5w3iCgG8azYs",
+    "recipient": "<creator payout address>",
+    "amount": "9990000",
+    "creator_amount": "9990000",
+    "currency_mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "mint_decimals": 6,
+    "gasless": false,
+    "label": "Subscribe: Supporter",
+    "message": "Subscribe to 'Supporter' (monthly)",
+    "tier": { "id": "…", "name": "Supporter", "price_usd": 9.99, "interval": "monthly" }
+  }
+}
+```
+
+Amounts are USDC atomic units (6 decimals). When a platform fee applies, a
+`fee` block carries its recipient, amount and bps, and `creator_amount` is the
+remainder. Calling twice inside the 30-minute window reuses the same pending
+checkout rather than minting a second one.
+
+**Errors:** `400` (`validation_error`), `401`, `403`, `404` (`not_found`),
+`409` (`conflict`: tier inactive or your own; `already_subscribed`), `412`
+(`creator_wallet_missing`), `429`.
+
+---
+
+### Solana USDC checkout: verify
+
+```
+POST /api/subscriptions/verify
+```
+
+Requires auth. Validates the broadcast transaction against the **persisted**
+quote (never the client's numbers) and, on success, activates the subscription,
+writes the first-period payment row, and opens the skill-access gate.
+
+**Request body**
+
+```json
+{ "tierId": "735977d9-289d-4517-8ac4-68e97c649de8", "transactionSignature": "<base58 signature>" }
+```
+
+`transactionSignature` is optional: without it the chain is scanned by the
+checkout's reference key.
+
+**Response** (`200`)
+
+```json
+{
+  "data": {
+    "success": true,
+    "status": "active",
+    "subscription": { "id": "…", "current_period_end": "2026-09-15T06:16:50.257Z" },
+    "tx_signature": "…"
+  }
+}
+```
+
+While the transaction is not yet visible on chain the response is
+`200 { "data": { "status": "pending" } }`; poll until it settles. Verifying an
+already-confirmed checkout is idempotent and returns the live subscription.
+
+**Errors:** `400`, `401`, `403`, `404` (`no_pending_checkout`), `409`
+(`checkout_closed`, or `transfer_mismatch` when the on-chain transfer does not
+match the quote), `410` (`checkout_expired`), `429`.
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).
