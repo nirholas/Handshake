@@ -976,8 +976,11 @@ function getStreamObserver() {
 
 const ACTIVITY_BATCH_MAX = 60;      // matches MAX_IDS in api/agents/activity.js
 const ACTIVITY_BATCH_MS = 20_000;   // refresh cadence for non-streamed cards
+const ACTIVITY_MIN_GAP_MS = 2_500;  // floor between batches, so fast scrolling cannot spam
 let _activityTimer = null;
 let _activityInFlight = false;
+let _activityLastAt = 0;
+let _activityPending = null;
 
 // Fold a batch of DB-sourced entries into a card exactly as the SSE `log` event
 // would, so a batch row and a streamed row render identically.
@@ -1011,6 +1014,7 @@ function applyActivityEntries(state, entries) {
 async function hydrateActivity(ids) {
 	if (!ids.length || _activityInFlight) return;
 	_activityInFlight = true;
+	_activityLastAt = Date.now();
 	try {
 		const res = await apiFetch('/api/agents/activity', {
 			method: 'POST',
@@ -1018,7 +1022,10 @@ async function hydrateActivity(ids) {
 			body: JSON.stringify({ ids }),
 			allowAnonymous: true,
 		});
-		if (!res.ok) return;
+		// A throttled or briefly failing batch is not a dead end: the cards keep what
+		// they have and the next tick asks again. Come back sooner than the normal
+		// cadence so a card that has nothing yet is not left blank for 20s.
+		if (!res.ok) { scheduleActivityFlush(ACTIVITY_MIN_GAP_MS * 2); return; }
 		const { activity, casting } = await res.json();
 		for (const [id, entries] of Object.entries(activity || {})) {
 			const state = _cards.get(id);
@@ -1034,8 +1041,18 @@ async function hydrateActivity(ids) {
 			if (_streamed.size >= MAX_STREAMS) break;
 			ensureStream(_cards.get(id));
 		}
-	} catch { /* the cards keep whatever they last rendered */ }
+	} catch { scheduleActivityFlush(ACTIVITY_MIN_GAP_MS * 2); }
 	finally { _activityInFlight = false; }
+}
+
+// Coalesce flush requests. Scrolling three pages in as many seconds fires three
+// loadMore() calls, and one batch per page would burn the endpoint's rate budget
+// for no benefit: the next batch covers every card the earlier ones would have.
+function scheduleActivityFlush(delay) {
+	const wait = Math.max(delay ?? 0, ACTIVITY_MIN_GAP_MS - (Date.now() - _activityLastAt), 0);
+	if (_activityPending) return;
+	if (!wait) { flushActivity(); return; }
+	_activityPending = setTimeout(() => { _activityPending = null; flushActivity(); }, wait);
 }
 
 // Hydrate the cards that have no stream of their own. One batch cannot cover an
@@ -1233,7 +1250,7 @@ async function loadMore() {
 	agents.forEach(mountAgent);
 	// One request gives the whole new page a real terminal straight away, before
 	// the stream pool has reached any of it.
-	flushActivity();
+	scheduleActivityFlush();
 	updateStats();
 	_arena.schedule();
 	_showrunner?.refreshLive(); // fold the new page into the program
@@ -1779,5 +1796,5 @@ if (spotlight && _cards.size) {
 
 document.addEventListener('visibilitychange', () => {
 	if (document.hidden) { suspendStreams(); stopRotation(); }
-	else { resumeStreams(); flushActivity(); _showrunner?.refreshLive(); if (spotlight && _cards.size) startRotation(); }
+	else { resumeStreams(); scheduleActivityFlush(); _showrunner?.refreshLive(); if (spotlight && _cards.size) startRotation(); }
 });

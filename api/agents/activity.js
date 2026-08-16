@@ -82,7 +82,11 @@ export default wrap(async function handleAgentsActivity(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	const rl = await limits.apiIp(clientIp(req));
+	// Same bucket as the sibling batch read (/api/agents/reputation-batch): this is
+	// an agent-discovery read, and it must not draw down the shared `apiIp` budget
+	// that the wall's own watch-intent and watch-status polls live on. One batch
+	// here stands in for a page of streams, so starving it starves every card.
+	const rl = await limits.agentProfileIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	const raw = await readIds(req, res);
