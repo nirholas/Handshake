@@ -30,12 +30,26 @@ const HUMANS_CSS = `
 .agora-h-root *, .agora-h-root *::before { box-sizing: border-box; }
 
 /* ── Dock (bottom-left) ──────────────────────────────────────────────────── */
+/* The dock sits at the bottom-left, but it is not alone there: the population
+   chip is pinned below it and the economy ticker stacks above it. It used to
+   claim a flat 16px bottom like both of them, so all three drew on the same corner
+   and the dock (z-index 60) simply covered the other two. --agora-dock-floor is
+   the shared bottom-up stack the whole world's furniture measures from; see the
+   token block at the top of src/agora/agora.css. */
 #agora-humans-dock {
-	position: fixed; left: 16px; bottom: 16px; z-index: 60;
+	position: fixed; left: 16px; bottom: var(--agora-dock-floor, 67px); z-index: 60;
 	display: flex; align-items: stretch; gap: 8px;
 	max-width: min(92vw, 420px);
 }
-@media (max-width: 640px) { #agora-humans-dock { left: 8px; right: 8px; bottom: 8px; max-width: none; } }
+/* On a phone the dock goes full width, which walks it straight into the global
+   language switcher pinned to the bottom-right corner (src/i18n.js, 16px up and
+   the topmost z-index on the page). At 320px the switcher covered the dock's own
+   "Sign in to join" button. Sit the dock above that corner strip instead; the
+   strip's height is shared with the rest of the world's bottom furniture through
+   --agora-corner-band (src/agora/agora.css). */
+@media (max-width: 640px) {
+	#agora-humans-dock { left: 8px; right: 8px; max-width: none; }
+}
 
 .agora-h-card {
 	display: flex; align-items: center; gap: 10px;

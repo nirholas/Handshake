@@ -800,7 +800,17 @@ function updateRoomButton() {
 	if (!roomBtn) return;
 	const live = !!net && (net.status === 'online' || net.status === 'connecting');
 	roomBtn.classList.toggle('is-active', live);
-	roomBtn.textContent = live ? `👥 ${roomCode || 'Room'}` : '👥 Share live';
+	// Two labels rather than one rewritten string: the idle one carries the page's
+	// data-i18n binding (rewriting the button's text would overwrite the
+	// translation with English), and the live one carries the room code, which
+	// stays visible at phone widths where the idle label is hidden.
+	const idleLabel = $('ars-room-label');
+	const codeLabel = $('ars-room-code-label');
+	if (idleLabel) idleLabel.hidden = live;
+	if (codeLabel) {
+		codeLabel.hidden = !live;
+		codeLabel.textContent = live ? roomCode || 'Room' : '';
+	}
 	// Keep the live modal panel in sync if it's open.
 	if (roomModal && !roomModal.hidden) renderRoomModal();
 }

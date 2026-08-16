@@ -40,6 +40,13 @@
 			--warn: #fca5a5;
 			--radius: 14px;
 			--font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+			/* Design tokens the shared <lang-switcher> reads, mapped onto this page's
+			   HUD palette so the picker matches the pills around it. */
+			--surface-2: rgba(12, 13, 17, 0.78);
+			--border: rgba(255, 255, 255, 0.16);
+			--border-strong: rgba(255, 255, 255, 0.28);
+			--text-2: #ecedf2;
+			--text: #fff;
 		}
 		* { box-sizing: border-box; }
 		/* Class display rules (flex/grid) must never override the hidden attribute —
@@ -72,7 +79,13 @@
 		#ars-hud > * { pointer-events: none; }
 		#ars-hud a, #ars-hud button, #ars-hud input, #ars-hud form,
 		#ars-hud .ars-top, #ars-hud .ars-dock, #ars-hud .ars-selbar,
-		#ars-hud .ars-tray, #ars-hud .ars-modal { pointer-events: auto; }
+		#ars-hud .ars-tray, #ars-hud .ars-modal, #ars-hud lang-switcher { pointer-events: auto; }
+		/* The language picker lives in this page's own top bar. i18n.js floats its
+		   bottom-right FAB only on pages that place no <lang-switcher> of their own,
+		   and that FAB sat directly on top of the dock's right-hand controls, which
+		   left Clear unclickable. Hosting it here keeps language switching reachable
+		   and gives the dock its full width back. */
+		#ars-hud lang-switcher { display: inline-flex; flex: 0 1 auto; min-width: 0; max-width: 132px; }
 
 		/* ── Top bar ── */
 		.ars-top {
@@ -339,9 +352,14 @@
 			.ars-chip, .ars-status, .ars-selbar, .ars-tray-sheet { animation: none; }
 			.ars-spinner { animation-duration: 2.4s; }
 		}
-		@media (max-width: 380px) {
+		@media (max-width: 420px) {
 			.ars-title { display: none; }
 			.ars-sel-name { max-width: 20vw; }
+			/* Phone widths: the top bar carries back + language + room + photo, so
+			   the language picker gives up its width first and the room button drops
+			   its label (the emoji plus its aria-label still name it). */
+			#ars-hud lang-switcher { max-width: 92px; }
+			#ars-room-label { display: none; }
 		}
 	</style>
 
@@ -358,7 +376,8 @@
 			<span class="ars-title" data-i18n="ar_studio.ar_studio">AR Studio</span>
 			<span class="ars-count" id="ars-count" hidden data-i18n="ar_studio.0_models">0 models</span>
 			<span class="ars-spacer"></span>
-			<button class="ars-icon-btn" id="ars-room-btn" type="button" aria-haspopup="dialog" aria-label="Build together in a shared room" data-i18n="ar_studio.share_live" data-i18n-attr="aria-label:ar_studio.build_together_in_a_shared_r_arialabel">👥 Share live</button>
+			<lang-switcher></lang-switcher>
+			<button class="ars-icon-btn" id="ars-room-btn" type="button" aria-haspopup="dialog" aria-label="Build together in a shared room" data-i18n-attr="aria-label:ar_studio.build_together_in_a_shared_r_arialabel"><span aria-hidden="true">👥</span><span id="ars-room-label" data-i18n="ar_studio.share_live">Share live</span><span id="ars-room-code-label" hidden></span></button>
 			<button class="ars-icon-btn" id="ars-photo-btn" type="button" disabled aria-label="Capture a photo of your scene" data-i18n-attr="aria-label:ar_studio.capture_a_photo_of_your_scen_arialabel">📸</button>
 			<button class="ars-icon-btn" id="ars-qr-btn" type="button" hidden aria-label="Send this scene to your phone" data-i18n="ar_studio.phone" data-i18n-attr="aria-label:ar_studio.send_this_scene_to_your_phon_arialabel">Phone ↗</button>
 		</header>

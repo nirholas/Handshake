@@ -105,9 +105,14 @@ export const ECON_LAYER_CSS = `
 .agora-econ-tip-sub { margin-top: 5px; font-size: 11px; color: var(--econ-dim); }
 
 /* ── Ticker (left) ─────────────────────────────────────────────────────────── */
+/* Rides on top of the humans dock in the shared bottom-left stack (the tokens
+   are documented at the top of src/agora/agora.css). Pinned to a flat 16px it
+   sat underneath the dock, which hid the tail of the live activity feed. */
 .agora-econ-ticker {
-	position: absolute; left: 16px; bottom: 16px; width: 320px;
-	max-height: calc(100vh - 120px); display: flex; flex-direction: column; gap: 12px;
+	position: absolute; left: 16px; width: 320px;
+	bottom: calc(var(--agora-dock-floor, 67px) + var(--agora-dock-h, 0px) + 10px);
+	max-height: calc(100vh - 120px - var(--agora-dock-floor, 67px) - var(--agora-dock-h, 0px));
+	display: flex; flex-direction: column; gap: 12px;
 	background: var(--econ-bg); border: 1px solid var(--econ-border);
 	border-radius: 14px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 	padding: 14px; pointer-events: auto; color: var(--econ-text);
@@ -181,16 +186,29 @@ export const ECON_LAYER_CSS = `
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 880px) {
 	.agora-econ-board-panel { width: 230px; top: 58px; right: 10px; max-height: 42vh; }
-	.agora-econ-ticker { width: calc(100vw - 250px); max-width: 320px; left: 10px; bottom: 10px; max-height: 42vh; }
+	.agora-econ-ticker {
+		width: calc(100vw - 250px); max-width: 320px; left: 10px; max-height: 42vh;
+		bottom: calc(var(--agora-dock-floor, 67px) + var(--agora-dock-h, 0px) + 10px);
+	}
 }
+/* Phone layout: both economy panels go full width and stack up from the bottom.
+   They sit above the world's other bottom furniture (the language switcher's
+   corner strip, the humans dock, the "Enter the Commons" button) rather than
+   under it, which is what used to clip the board's last few rows out of reach.
+   --agora-econ-floor is the top of that furniture; both panels measure from it,
+   so the stack stays sound when the dock changes height. */
 @media (max-width: 560px) {
+	.agora-econ-root {
+		--agora-econ-floor: calc(var(--agora-dock-floor, 56px) + var(--agora-dock-h, 0px) + 54px);
+	}
 	.agora-econ-board-panel {
-		top: auto; bottom: 10px; right: 10px; left: 10px; width: auto;
-		max-height: 34vh; flex-direction: column;
+		top: auto; bottom: var(--agora-econ-floor); right: 10px; left: 10px; width: auto;
+		max-height: 26vh; flex-direction: column;
 	}
 	.agora-econ-ticker {
-		left: 10px; right: 10px; bottom: calc(34vh + 18px); width: auto; max-width: none;
-		max-height: 36vh;
+		left: 10px; right: 10px; width: auto; max-width: none;
+		bottom: calc(var(--agora-econ-floor) + 26vh + 10px);
+		max-height: 26vh;
 	}
 	.agora-econ-readout { grid-template-columns: repeat(3, 1fr); }
 }

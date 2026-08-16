@@ -38,6 +38,15 @@
 				max-width: 820px;
 				margin: 0 auto;
 				padding: calc(var(--space-md) * 2) var(--space-md) calc(var(--space-md) * 4);
+				/* style.css makes <body> a flex column, so this <main> is a flex item
+				   and was sized from its content instead of the viewport: the tab
+				   strip's 1554px of tabs stretched it to 792px on a 320px screen.
+				   <html> does not scroll horizontally, so that overflow was silently
+				   clipped and the Refresh button plus the right edge of every card
+				   were unreachable on a phone. An explicit 100% resolves against the
+				   body's content box, pinning the column to the viewport; the tab
+				   strip keeps scrolling on its own overflow-x. */
+				width: 100%;
 			}
 			.awh-crumb {
 				font: var(--text-sm) var(--font-body);

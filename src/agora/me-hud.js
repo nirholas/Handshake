@@ -32,6 +32,28 @@ const state = {
 };
 
 let dock, toasts, panel, root;
+let dockResize = null;
+
+// Publish the dock's live height as --agora-dock-h on :root.
+//
+// On a phone the dock spans the full width at the bottom of the world, and the
+// page's other bottom furniture (the "Enter the Commons" button, the job board
+// panel) has to sit above it or be swallowed by it. The dock's height is not a
+// constant the stylesheets could hardcode: it grows and shrinks with the signed
+// out invite, the signed in citizen card, and whatever job is in flight. So the
+// dock measures itself and the layout is expressed against that number, which
+// keeps the stack correct through every state instead of only the one somebody
+// measured once.
+function publishDockHeight() {
+	if (!dock || typeof ResizeObserver === 'undefined') return;
+	const push = () => {
+		const h = Math.round(dock.getBoundingClientRect().height);
+		document.documentElement.style.setProperty('--agora-dock-h', `${h}px`);
+	};
+	dockResize = new ResizeObserver(push);
+	dockResize.observe(dock);
+	push();
+}
 
 function boot() {
 	if (typeof document === 'undefined') return;
@@ -41,6 +63,7 @@ function boot() {
 	toasts = h('div', { id: 'agora-humans-toasts', 'aria-live': 'polite' });
 	root.append(dock, toasts);
 	document.body.appendChild(root);
+	publishDockHeight();
 
 	panel = new Panel({ id: 'agora-you' }).mount(document.body);
 

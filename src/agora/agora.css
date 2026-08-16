@@ -4,6 +4,39 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* The Commons is a full-bleed canvas with four independent layers competing for
+   the bottom of a phone screen: the job board panel, the humans dock, the "Enter
+   the Commons" button, and the platform's language switcher. They each used to
+   pin themselves to `bottom: ~10px` in their own stylesheet, so on a 320px
+   viewport all four landed on the same 90 pixels and the primary call to action
+   ended up underneath two other controls. These two tokens are the shared
+   vocabulary that stacks them instead:
+
+     --agora-corner-band : the strip the global language switcher owns in the
+                           bottom-right corner (src/i18n.js pins it 16px up).
+     --agora-pop-band    : the strip the population chip owns in the bottom-left
+                           corner. It only applies above 560px, where the chip is
+                           still pinned to the bottom (below that it moves under
+                           the title, see the responsive block at the end).
+     --agora-dock-floor  : where the humans dock's bottom edge sits. Bottom-left
+                           above the population chip on a wide screen; on a phone
+                           the dock spans the full width, so it clears the
+                           language switcher's corner instead.
+     --agora-dock-h      : the humans dock's live measured height, published by
+                           src/agora/me-hud.js as its content changes.
+
+   Everything that sits at the bottom of the world is positioned against these,
+   bottom up, so a state change in one layer moves the others instead of hiding
+   them. */
+:root {
+	--agora-corner-band: 52px;
+	--agora-pop-band: 67px;
+	--agora-dock-floor: var(--agora-pop-band);
+}
+@media (max-width: 640px) {
+	:root { --agora-dock-floor: calc(var(--agora-corner-band) + 4px); }
+}
+
 html, body {
 	width: 100%; height: 100%;
 	overflow: hidden;
@@ -117,8 +150,12 @@ html, body {
 #agora-enter:disabled { opacity: 0.6; cursor: progress; }
 #agora-enter[aria-pressed="true"] { background: rgba(255, 255, 255, 0.08); }
 @media (max-width: 640px) {
-	/* Clear the touch stick + action cluster in play mode. */
-	#agora-enter { bottom: 14px; font-size: 12px; padding: 9px 16px; }
+	/* Clear the touch stick + action cluster in play mode, and ride above the
+	   humans dock so the world's primary invitation is never buried under it. */
+	#agora-enter {
+		bottom: calc(var(--agora-dock-floor, 56px) + var(--agora-dock-h, 0px) + 10px);
+		font-size: 12px; padding: 9px 16px;
+	}
 }
 
 #agora-controls-hint {

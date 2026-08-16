@@ -1830,7 +1830,20 @@ class App {
 			// stop. Falling through to view() would hand `undefined` to
 			// URL.createObjectURL ("Overload resolution failed") and throw an
 			// uncaught TypeError that pages the ops channel.
-			this.onError('No .gltf or .glb asset found.');
+			//
+			// onError alone is console-only, so a user who dropped a .txt or a
+			// texture folder saw nothing happen at all. Retrying the same bad file
+			// is pointless; the recovery is to pick a different one, so re-open the
+			// picker and leave the stage clear rather than flashing a fake load.
+			// Warn, not error: picking the wrong file is ordinary user input, and
+			// the overlay below is now the surface that reports it.
+			this.hideSpinner();
+			log.warn('[3d-agent] no .gltf or .glb asset in selection');
+			this._showViewerError(
+				'No .gltf or .glb file in that drop. Pick a model file to view it.',
+				() => this.inputEl?.click(),
+				{ actionLabel: 'Choose a file', keepOpenUntilLoad: true },
+			);
 			return;
 		}
 
@@ -2239,21 +2252,31 @@ class App {
 		progressEl.hidden = false;
 	}
 
-	_showViewerError(label, onRetry) {
+	/**
+	 * @param {string} label     What went wrong, in the user's terms.
+	 * @param {?Function} onAction  Recovery to run when the button is pressed.
+	 * @param {{ actionLabel?: string, busyLabel?: string }} [opts]
+	 *   Wording for actions that aren't a plain retry of the same load, e.g.
+	 *   re-opening the file picker after an unusable drop.
+	 */
+	_showViewerError(label, onAction, opts = {}) {
+		const actionLabel = opts.actionLabel || 'Retry';
+		const busyLabel = opts.busyLabel || 'Retrying…';
 		const el = this._ensureViewerStatusEl();
 		el.dataset.state = 'error';
 		el.innerHTML = `
 			<div class="viewer-status__card viewer-status__card--error" role="alert">
 				<div class="viewer-status__icon" aria-hidden="true">!</div>
 				<div class="viewer-status__label" data-label>${escHtml(label)}</div>
-				${onRetry ? '<button class="viewer-status__btn" type="button" data-retry>Retry</button>' : ''}
+				${onAction ? `<button class="viewer-status__btn" type="button" data-retry>${escHtml(actionLabel)}</button>` : ''}
 			</div>
 		`;
 		el.hidden = false;
-		if (onRetry) {
+		if (onAction) {
 			el.querySelector('[data-retry]')?.addEventListener('click', () => {
-				this._showViewerLoading('Retrying…');
-				Promise.resolve(onRetry()).catch(() => {});
+				if (opts.keepOpenUntilLoad) this._hideViewerStatus();
+				else this._showViewerLoading(busyLabel);
+				Promise.resolve(onAction()).catch(() => {});
 			});
 		}
 	}

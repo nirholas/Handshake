@@ -388,8 +388,13 @@ function registerLangSwitcher() {
 			const root = this.attachShadow({ mode: 'open' });
 			root.innerHTML = `
 			<style>
-				:host { display: inline-flex; }
-				.wrap { position: relative; display: inline-flex; align-items: center; }
+				/* Shrinkable by default: the widest locale name makes this control
+				   ~170px, which overflows a narrow header (a phone-width AR HUD, a
+				   compact nav). A page that needs it smaller sets a max-width on the
+				   host and the select follows instead of pushing its siblings off
+				   screen. Unconstrained parents render exactly as before. */
+				:host { display: inline-flex; max-width: 100%; min-width: 0; }
+				.wrap { position: relative; display: inline-flex; align-items: center; max-width: 100%; min-width: 0; }
 				svg { position: absolute; left: 8px; width: 14px; height: 14px; opacity: .6; pointer-events: none; }
 				select {
 					appearance: none; -webkit-appearance: none;
@@ -399,6 +404,8 @@ function registerLangSwitcher() {
 					border: 1px solid var(--border, rgba(255,255,255,.12));
 					border-radius: 8px;
 					padding: 7px 26px 7px 28px;
+					max-width: 100%; min-width: 0;
+					text-overflow: ellipsis;
 					cursor: pointer;
 					transition: border-color .15s ease, background .15s ease, color .15s ease;
 				}
