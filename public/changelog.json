@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T07:08:36.874Z",
+	"generated_at": "2026-08-16T07:20:44.194Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -114,6 +114,16 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "The $THREE rider pass now recognises the wallets that paid for it",
+			"summary": "The rider pass is a $THREE gate: you qualify either by holding $THREE or by sending 8,000 of it to the rider vault. Only the first half worked. The check answered purely from what a wallet currently holds, so anyone who bought a pass, and therefore no longer held the tokens they had just sent, was told they had no pass. The payments the vault recorded were written to the database and never read by anything. Both sources are now consulted, and a positive answer from either one stands on its own, so a paid pass still verifies while the chain node is unreachable and a holder pass still verifies during a database outage. A single transaction carrying payments from two different wallets used to fail outright and be retried forever by the payment listener, granting neither wallet a pass; every payer in a batch is now credited. The config the rider client loads at startup answered with a page of empty values when the deployment was not set up, which crashed the client with an unexplained error; it now says plainly that the feature is not configured. Repeating the address in the query string returned a server error and now returns a normal validation message.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "The public profile sitemap now lists people, not the seed crons",
 			"summary": "The sitemap Google and Bing crawl is split into one file per kind of page, and the profiles file was handing search engines every account row with a username. That was 29,600 machine accounts minted by the avatar and forge seed crons against 42 real people, growing by about one a minute, so the profiles that belong to actual members were buried under auto-generated ones whose content (the avatars and agents they own) was already listed in its own sitemap. Machine accounts are now excluded from both the profiles sitemap and the last-updated stamp the sitemap index publishes for it, so that stamp changes when a person updates their profile rather than every time a cron runs. Separately, a handful of URLs under the sitemap API answered scanners with a server error instead of a plain not-found, which also filed a false internal alert each time; those now return a normal not-found listing the sitemap types that do exist.",
 			"link": null,
@@ -136,9 +146,41 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "The wallet balance API stops calling a rejected upload a validation error",
+			"summary": "Apps and agents that read wallet balances through three.ws get honest answers when a request cannot be read. Posting a body that was too large, or forgetting the JSON content-type header, used to come back as \"your fields are invalid\", sending integrators hunting through a chain and address that were never the problem; those now answer with the right status for what actually went wrong. When the fields genuinely are wrong, the reply is one readable line naming the offending field plus a machine-readable list of issues, instead of the raw multi-line dump the endpoint used to return.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "Token-gated scene shares survive a slow RPC, and a gate that could never open is refused up front",
 			"summary": "Three repairs to the holder-only chat scene shares. When the blockchain read behind a gate failed (a provider down, a missing provider key), visitors were told they did not hold enough tokens, which was untrue and also handed the provider's raw error text to anyone who asked; a failed read now says plainly that verification is unavailable and invites a retry, while a genuine shortfall still says exactly how much is missing. The Solana read itself now rotates through the same pool of providers the rest of the platform uses instead of leaning on one endpoint, NFT collection gates use the indexer that can actually answer them, and gates on Ethereum work without a paid provider key. Finally, a gate whose chain and asset type did not match (a Solana scene gated on an Ethereum token) used to be accepted and then locked everyone out forever; that combination, and an address in the wrong format for its chain, are now refused when the share link is created.",
 			"link": "/chat",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Trading swarm streams work from other sites, and a mistyped contribution now says so",
+			"summary": "Two fixes to the trading swarm API. The live dashboard stream at /api/swarms/<id>/stream never answered a browser's cross-origin permission check, so a page outside three.ws could open the connection and then read nothing from it. It now answers that check exactly like the dashboard read next to it, and a HEAD probe of either URL returns immediately instead of holding the connection open for five minutes. Separately, a contribution amount that was not a number (a typo, an overflowing value) came back as a generic server error; it now comes back as a plain bad-amount answer naming the field, and a wrong content type says that rather than reporting an unknown action.",
+			"link": "/swarms",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "Trending stops going blank on a bad limit, and shared cards stop trusting the image host",
+			"summary": "Asking the trending board for a non-numeric number of rows (limit=abc) answered with an empty leaderboard and a 200, as though nothing on the platform were trending at all. The bad value was reaching the database verbatim, failing both the agent and the coin ranking, and a catch-all turned that failure into an empty list with nothing logged anywhere. An unreadable limit now falls back to the default ten, the same way an unrecognised window falls back to 24 hours, and if either ranking ever does fail it now says so in the logs instead of quietly serving an empty board. Separately, the trade, trader and walk preview cards inline a portrait fetched from whatever URL the profile points at, and they read that response whole with no limit; a card now refuses anything that is not an image or that runs past 1.5 MB, and falls back to the monogram it already drew for a dead host. The profile card at /u/<name> also used to answer an image request with a JSON error if the database hiccuped, which is exactly the kind of broken preview a social crawler caches; it now returns a real, uncached card instead.",
+			"link": "/trending",
 			"tags": [
 				"fix",
 				"improvement"

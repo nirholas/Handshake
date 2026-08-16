@@ -130,6 +130,26 @@ describe('deriveTopics', () => {
 		expect(topics).not.toContain('2026');
 		expect(topics).not.toContain('thing');
 	});
+
+	// Filler words clear both the four-character length floor and the
+	// "seen more than once" floor on any real timeline, so before they were
+	// listed a seed reported words like "another" and "every" back to the owner
+	// as the things they post about.
+	it('drops filler words that repeat on every timeline', () => {
+		const posts = [
+			{ text: 'another day another WebGL memory leak, dispose your geometries' },
+			{ text: 'every single time I skip profiling I regret it, every time' },
+			{ text: 'the first rule of shipping: actually ship it, and another thing' },
+			{ text: 'I really think you should know that WebGL profiling matters' },
+			{ text: 'first you profile, then you complain, I think that is the rule' },
+		];
+		const topics = deriveTopics(posts).map((t) => t.topic);
+		for (const filler of ['another', 'every', 'first', 'think', 'know', 'actually']) {
+			expect(topics).not.toContain(filler);
+		}
+		expect(topics).toContain('webgl');
+		expect(topics).toContain('profiling');
+	});
 });
 
 describe('parseFactList', () => {

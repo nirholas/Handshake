@@ -136,6 +136,51 @@ describe('wallet balances: address validation', () => {
 	});
 });
 
+describe('wallet balances: unreadable bodies keep their own status', () => {
+	it('answers a non-JSON content-type with 415, not a field-validation 400', async () => {
+		const { status, body } = await callRaw('chain=solana', { contentType: 'text/plain' });
+		expect(status).toBe(415);
+		expect(body.error).toBe('unsupported_media_type');
+		expect(balancesState.calls).toHaveLength(0);
+	});
+
+	it('answers an oversize body with 413 rather than blaming the caller fields', async () => {
+		const oversize = JSON.stringify({ chain: 'solana', address: WALLET, pad: 'x'.repeat(1_200_000) });
+		const { status, body } = await callRaw(oversize);
+		expect(status).toBe(413);
+		expect(body.error).toBe('payload_too_large');
+		expect(balancesState.calls).toHaveLength(0);
+	});
+
+	it('answers an unparseable body with 400 and no validation issues list', async () => {
+		const { status, body } = await callRaw('{"chain":');
+		expect(status).toBe(400);
+		expect(body.error).toBe('bad_request');
+		expect(body.issues).toBeUndefined();
+		expect(balancesState.calls).toHaveLength(0);
+	});
+});
+
+describe('wallet balances: rejected bodies use the platform validation shape', () => {
+	it('returns one readable line plus a field-level issues array', async () => {
+		const { status, body } = await call({ chain: 'solana', address: 'not-a-real-address' });
+		expect(status).toBe(400);
+		expect(body.error).toBe('validation_error');
+		// One line naming the field, never zod's multi-line JSON dump of the issues.
+		expect(body.error_description).toBe('address: must be a base58 Solana address (32-44 chars)');
+		expect(body.error_description).not.toContain('\n');
+		expect(body.issues).toEqual([
+			{ path: ['address'], code: 'custom', message: 'must be a base58 Solana address (32-44 chars)' },
+		]);
+	});
+
+	it('names the offending field for a bad chain too', async () => {
+		const { body } = await call({ chain: 'bitcoin', address: WALLET });
+		expect(body.error_description).toMatch(/^chain: /);
+		expect(body.issues[0].path).toEqual(['chain']);
+	});
+});
+
 describe('wallet balances: success path', () => {
 	it('returns the reader payload and passes the trimmed address through', async () => {
 		const { status, body } = await call({ chain: 'solana', address: `  ${WALLET}  ` });

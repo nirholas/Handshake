@@ -156,6 +156,28 @@ const STOPWORDS = new Set([
 	'year', 'people', 'thing', 'things', 'way', 'good', 'great', 'best', 'better', 'its',
 	'his', 'her', 'she', 'him', 'our', 'out', 'off', 'all', 'any', 'can', 'one', 'two',
 	'how', 'why', 'via', 'amp', 'rt', 'dont', 'doesnt', 'cant', 'wont', 'ive', 'im',
+	// Quantifiers, ordinals, and connectives. These survive the length and
+	// frequency filters on any account (everyone writes "another" and "every"),
+	// so without them a seed reports filler words back to the owner as the
+	// topics they post about.
+	'another', 'every', 'each', 'other', 'others', 'same', 'both', 'few', 'own',
+	'first', 'last', 'next', 'after', 'before', 'again', 'because', 'since',
+	'while', 'until', 'though', 'although', 'however', 'maybe', 'perhaps',
+	'actually', 'basically', 'literally', 'definitely', 'probably', 'anymore',
+	'something', 'anything', 'nothing', 'everything', 'someone', 'anyone',
+	'everyone', 'nobody', 'whatever', 'whenever', 'wherever',
+	// Auxiliaries and generic speech/cognition verbs: they describe that the
+	// author said something, never what they talk about.
+	'does', 'did', 'done', 'being', 'doing', 'having', 'said', 'says', 'saying',
+	'want', 'wants', 'wanted', 'need', 'needs', 'needed', 'know', 'knows',
+	'knew', 'think', 'thinks', 'thought', 'tell', 'tells', 'told', 'ask',
+	'asks', 'asked', 'feel', 'feels', 'felt', 'seem', 'seems', 'look', 'looks',
+	'looking', 'come', 'comes', 'came', 'take', 'takes', 'took', 'give',
+	'gives', 'gave', 'keep', 'keeps', 'kept', 'let', 'lets', 'put', 'puts',
+	// Contractions the apostrophe strip leaves behind as bare tokens.
+	'thats', 'theres', 'heres', 'youre', 'theyre', 'weve', 'youve', 'theyve',
+	'wasnt', 'isnt', 'arent', 'didnt', 'couldnt', 'wouldnt', 'shouldnt',
+	'havent', 'hasnt', 'gonna', 'wanna', 'gotta', 'yeah', 'okay',
 ]);
 
 /**

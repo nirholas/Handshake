@@ -3,6 +3,32 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "The wallet balance API stops calling a rejected upload a validation error",
+			"summary": "Apps and agents that read wallet balances through three.ws get honest answers when a request cannot be read. Posting a body that was too large, or forgetting the JSON content-type header, used to come back as \"your fields are invalid\", sending integrators hunting through a chain and address that were never the problem; those now answer with the right status for what actually went wrong. When the fields genuinely are wrong, the reply is one readable line naming the offending field plus a machine-readable list of issues, instead of the raw multi-line dump the endpoint used to return.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The $THREE rider pass now recognises the wallets that paid for it",
+			"summary": "The rider pass is a $THREE gate: you qualify either by holding $THREE or by sending 8,000 of it to the rider vault. Only the first half worked. The check answered purely from what a wallet currently holds, so anyone who bought a pass, and therefore no longer held the tokens they had just sent, was told they had no pass. The payments the vault recorded were written to the database and never read by anything. Both sources are now consulted, and a positive answer from either one stands on its own, so a paid pass still verifies while the chain node is unreachable and a holder pass still verifies during a database outage. A single transaction carrying payments from two different wallets used to fail outright and be retried forever by the payment listener, granting neither wallet a pass; every payer in a batch is now credited. The config the rider client loads at startup answered with a page of empty values when the deployment was not set up, which crashed the client with an unexplained error; it now says plainly that the feature is not configured. Repeating the address in the query string returned a server error and now returns a normal validation message.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Trading swarm streams work from other sites, and a mistyped contribution now says so",
+			"summary": "Two fixes to the trading swarm API. The live dashboard stream at /api/swarms/<id>/stream never answered a browser's cross-origin permission check, so a page outside three.ws could open the connection and then read nothing from it. It now answers that check exactly like the dashboard read next to it, and a HEAD probe of either URL returns immediately instead of holding the connection open for five minutes. Separately, a contribution amount that was not a number (a typo, an overflowing value) came back as a generic server error; it now comes back as a plain bad-amount answer naming the field, and a wrong content type says that rather than reporting an unknown action.",
+			"tags": [
+				"fix"
+			],
+			"link": "/swarms"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Solana agents from the outside registries get a real link preview, and a mistyped discover link stops erroring",
 			"summary": "Two fixes to the Discover detail pages. Agents crawled from the outside Solana registries opened fine in the browser but shared as a nameless card: every one of them unfurled in Slack, Discord, X and iMessage with a generic three.ws title and the stock image, while the Ethereum-side agents in the same grid previewed properly. Those pages now carry the agent name, description and artwork, whether the link points at the mint or at its registry entry. Separately, a Discover link with a mistyped or truncated id answered with a server error and the page showed a vague \"something went wrong\"; it now says plainly that the item was not found and shows the Not found state, and an agent whose on-chain id is larger than the site could previously handle resolves instead of coming back empty.",
 			"tags": [
@@ -23299,6 +23325,16 @@
 				"improvement"
 			],
 			"link": "/what-is"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Trending stops going blank on a bad limit, and shared cards stop trusting the image host",
+			"summary": "Asking the trending board for a non-numeric number of rows (limit=abc) answered with an empty leaderboard and a 200, as though nothing on the platform were trending at all. The bad value was reaching the database verbatim, failing both the agent and the coin ranking, and a catch-all turned that failure into an empty list with nothing logged anywhere. An unreadable limit now falls back to the default ten, the same way an unrecognised window falls back to 24 hours, and if either ranking ever does fail it now says so in the logs instead of quietly serving an empty board. Separately, the trade, trader and walk preview cards inline a portrait fetched from whatever URL the profile points at, and they read that response whole with no limit; a card now refuses anything that is not an image or that runs past 1.5 MB, and falls back to the monogram it already drew for a dead host. The profile card at /u/<name> also used to answer an image request with a JSON error if the database hiccuped, which is exactly the kind of broken preview a social crawler caches; it now returns a real, uncached card instead.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/trending"
 		}
 	]
 }
