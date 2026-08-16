@@ -1,16 +1,16 @@
 /**
- * Signal feeds — the publisher's CRUD surface.
+ * Signal feeds: the publisher's CRUD surface.
  *
  *   GET    /api/signals/feeds                     list the caller's feeds
  *   GET    /api/signals/feeds?agent_id=&network=  one agent's feed + publish eligibility
  *   POST   /api/signals/feeds                     create / update a feed (verified gate)
  *   POST   /api/signals/feeds  { id, status }     pause / resume
- *   DELETE /api/signals/feeds?id=                 pause (soft — keeps signal history)
+ *   DELETE /api/signals/feeds?id=                 pause (soft, keeps signal history)
  *
  * Publishing is gated on a REAL, verified on-chain track record: the publisher
  * agent must clear api/_lib/trader-stats.js's `verified` badge (12+ closed trades,
  * 5+ coins, ≤40% churn, positive realized SOL). An unproven wallet gets a 403 with
- * the exact thresholds it still has to meet — sellers can never self-declare edge.
+ * the exact thresholds it still has to meet. Sellers can never self-declare edge.
  */
 
 import { cors, json, error, method, wrap, readJson, rateLimited } from '../_lib/http.js';
@@ -18,7 +18,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { sql } from '../_lib/db.js';
 import { publisherMetrics } from '../_lib/signal-engine.js';
-import { requireUser, loadOwnedAgent, normNetwork, NETWORKS, feedSlug } from './_common.js';
+import { requireUser, loadOwnedAgent, normNetwork, NETWORKS, feedSlug, parseRowId } from './_common.js';
 
 const MAX_USDC = 1000;            // sane per-signal / per-epoch ceiling
 const MIN_EPOCH_SECONDS = 3600;   // 1 hour
@@ -106,8 +106,8 @@ export default wrap(async (req, res) => {
 
 	// ── DELETE (soft pause) ─────────────────────────────────────────────────────
 	if (req.method === 'DELETE') {
-		const id = new URL(req.url, 'http://x').searchParams.get('id');
-		if (!id) return error(res, 400, 'invalid_id', 'id required');
+		const id = parseRowId(new URL(req.url, 'http://x').searchParams.get('id'));
+		if (!id) return error(res, 400, 'invalid_id', 'numeric feed id required');
 		const [row] = await sql`
 			update signal_feeds set status = 'paused', updated_at = now()
 			where id = ${id} and owner_user_id = ${userId} returning id
@@ -122,10 +122,12 @@ export default wrap(async (req, res) => {
 
 	// Pause / resume an existing feed.
 	if (body.id && body.status && !body.agent_id) {
+		const feedId = parseRowId(body.id);
+		if (!feedId) return error(res, 400, 'invalid_id', 'numeric feed id required');
 		const status = body.status === 'active' ? 'active' : 'paused';
 		const [row] = await sql`
 			update signal_feeds set status = ${status}, updated_at = now()
-			where id = ${body.id} and owner_user_id = ${userId} returning *
+			where id = ${feedId} and owner_user_id = ${userId} returning *
 		`;
 		if (!row) return error(res, 404, 'not_found', 'feed not found');
 		return json(res, 200, { feed: shapeFeedRow(row) });
@@ -138,7 +140,7 @@ export default wrap(async (req, res) => {
 	if (owned.error) return;
 
 	const payoutAddress = owned.meta.solana_address;
-	if (!payoutAddress) return error(res, 409, 'wallet_preparing', 'agent wallet is still being provisioned — try again shortly');
+	if (!payoutAddress) return error(res, 409, 'wallet_preparing', 'agent wallet is still being provisioned, try again shortly');
 
 	// THE GATE: only a verified track record may publish.
 	const metrics = await publisherMetrics(body.agent_id, network).catch(() => null);

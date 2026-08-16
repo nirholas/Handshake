@@ -33,6 +33,23 @@ export async function loadOwnedAgent(req, res, userId, agentId) {
 	return { row, meta: { ...(row.meta || {}) } };
 }
 
+/**
+ * Parse a `bigserial` row id (signal_feeds.id, signal_subscriptions.id).
+ * Returns a positive safe integer, or null when the input is not one.
+ *
+ * Handing a non-numeric id straight to Postgres turns a caller typo into an
+ * `invalid input syntax for type bigint` 500 with a Sentry alert behind it,
+ * when the honest answer is a 400. Every endpoint that reads an id off the
+ * query string or a JSON body runs it through here first.
+ */
+export function parseRowId(value) {
+	if (value == null || typeof value === 'boolean' || Array.isArray(value)) return null;
+	const raw = String(value).trim();
+	if (!/^\d+$/.test(raw)) return null;
+	const n = Number(raw);
+	return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
 /** Kebab slug from arbitrary text, bounded. */
 export function slugify(text, max = 40) {
 	return String(text || '')

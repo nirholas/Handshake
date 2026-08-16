@@ -1,18 +1,18 @@
 /**
- * Signal subscriptions — the follower's control surface.
+ * Signal subscriptions: the follower's control surface.
  *
  *   GET    /api/signals/subscribe                       list the caller's subscriptions
  *   POST   /api/signals/subscribe                       create / update a subscription
  *   POST   /api/signals/subscribe { id, status }        pause / resume / stop
  *   POST   /api/signals/subscribe { id, killed:true }   INSTANT kill (no further pay/trade)
  *   POST   /api/signals/subscribe { id, action:'sync' } deliver pending now (owner-triggered)
- *   DELETE /api/signals/subscribe?id=                   stop (soft — keeps delivery history)
+ *   DELETE /api/signals/subscribe?id=                   stop (soft, keeps delivery history)
  *
  * A subscriber agent's own custodial wallet pays the x402 USDC and signs the
  * mirror, so a subscription is owner-authenticated and scoped to an agent the
  * caller owns. `mode:'simulate'` mirrors WITHOUT paying or trading (trust-building);
  * `live` does both within the agent's spend policy. `killed` halts everything the
- * instant it is set — the kill is honoured before any payment or trade fires.
+ * instant it is set: the kill is honoured before any payment or trade fires.
  */
 
 import { cors, json, error, method, wrap, readJson, rateLimited } from '../_lib/http.js';
@@ -105,7 +105,7 @@ export default wrap(async (req, res) => {
 
 	// ── Mutations on an existing subscription (status / kill / sync) ────────────
 	if (body.id && !body.feed_id) {
-		// Instant kill — the halt path, takes precedence.
+		// Instant kill: the halt path, takes precedence.
 		if (body.killed != null) {
 			const killed = body.killed === true || body.killed === 'true';
 			const [row] = await sql`

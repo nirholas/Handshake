@@ -160,8 +160,39 @@ function cleanText(s) {
 		.trim();
 }
 
+// Characters XML 1.0 forbids outright (§2.2): the C0 controls other than tab,
+// LF and CR, the two non-characters at the top of the BMP, and any unpaired
+// surrogate. Escaping cannot rescue them (`&#7;` is just as illegal as a raw
+// bell), so they are dropped. One of these anywhere in a title or body makes
+// the WHOLE feed unparseable for every reader downstream, which is how a
+// single stray byte in one scraped post takes the syndication feed offline.
+const TAB = 0x09;
+const LINE_FEED = 0x0a;
+const CARRIAGE_RETURN = 0x0d;
+const FIRST_PRINTABLE = 0x20;
+const SURROGATE_START = 0xd800;
+const SURROGATE_END = 0xdfff;
+const BMP_NONCHARS = new Set([0xfffe, 0xffff]);
+
+function isValidXmlCodePoint(cp) {
+	if (cp === TAB || cp === LINE_FEED || cp === CARRIAGE_RETURN) return true;
+	if (cp < FIRST_PRINTABLE) return false;
+	// Iterating by code point pairs real astral characters up already, so any
+	// surrogate that reaches here is by definition unpaired.
+	if (cp >= SURROGATE_START && cp <= SURROGATE_END) return false;
+	return !BMP_NONCHARS.has(cp);
+}
+
+function stripInvalidXmlChars(s) {
+	let out = '';
+	for (const ch of String(s)) {
+		if (isValidXmlCodePoint(ch.codePointAt(0))) out += ch;
+	}
+	return out;
+}
+
 function escapeXml(s) {
-	return String(s)
+	return stripInvalidXmlChars(s)
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
@@ -171,6 +202,15 @@ function escapeXml(s) {
 
 function escapeAttr(s) {
 	return escapeXml(s);
+}
+
+// CDATA carries markup verbatim, so the one sequence it cannot contain is its
+// own terminator. Curated items ship hand-authored HTML, and a code sample
+// that happens to close two brackets before a `>` would otherwise end the
+// section early and corrupt every item after it. The canonical fix: close,
+// emit the `]]>` as escaped text in a fresh section, and continue.
+function cdata(s) {
+	return stripInvalidXmlChars(s).split(']]>').join(']]]]><![CDATA[>');
 }
 
 function rfc822(date) {

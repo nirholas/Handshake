@@ -18,6 +18,19 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 
 const FEED_URL = process.env.ROBINHOOD_FEED_URL || 'http://localhost:8788';
 const UPSTREAM_TIMEOUT_MS = 3000;
+const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
+
+// The firehose is a network boundary. An event that lost its `data` payload
+// used to throw a TypeError out of this map and 500 the endpoint, and the
+// lobby swallows a non-ok response (src/worlds-lobby.js), so the whole tab
+// vanished with no error anywhere the user could see. A launch with no usable
+// contract address is dropped for the same reason: its card would seed a world
+// from `undefined` and land the visitor nowhere.
+function launchAddress(ev) {
+	if (!ev || ev.kind !== 'launch' || !ev.data || typeof ev.data !== 'object') return null;
+	const mint = typeof ev.data.mint === 'string' ? ev.data.mint.trim() : '';
+	return EVM_ADDR_RE.test(mint) ? mint : null;
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -45,16 +58,18 @@ export default wrap(async (req, res) => {
 	const body = await upstream.json().catch(() => null);
 	const events = Array.isArray(body?.events) ? body.events : [];
 	const worlds = events
-		.filter((ev) => ev.kind === 'launch')
-		.map((ev) => ({
-			token: ev.data.mint,
+		.map((ev) => ({ ev, token: launchAddress(ev) }))
+		.filter((row) => row.token !== null)
+		.slice(0, limit)
+		.map(({ ev, token }) => ({
+			token,
 			symbol: ev.data.symbol || null,
 			image: null, // no off-chain metadata service on Robinhood Chain yet
 			members: 0,
 			posts: 0,
 			chain: 'robinhood-chain',
-			launchpad: ev.data.launchpad,
-			explorer_url: ev.data.explorer_url,
+			launchpad: ev.data.launchpad ?? null,
+			explorer_url: ev.data.explorer_url ?? null,
 		}));
 
 	return json(res, 200, { data: { worlds }, configured: true }, { 'cache-control': 'public, max-age=15, s-maxage=30' });

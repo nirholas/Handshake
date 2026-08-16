@@ -43,13 +43,41 @@ function joinPath(parts) {
 	return String(parts || '');
 }
 
+// True when the request actually carries a body. Content-Length alone is not
+// enough: an HTTP/2 or streaming client sends its body chunked with no such
+// header, and the Cloud Run server's body-parser may already have consumed it
+// onto req.body. Reading only on Content-Length forwarded those calls upstream
+// with no body at all, so SDP answered with a validation error for a payload
+// the caller did send.
+function hasRequestBody(req) {
+	if (Number(req.headers['content-length'] || 0) > 0) return true;
+	if (req.headers['transfer-encoding']) return true;
+	const parsed = req.body;
+	if (parsed == null) return false;
+	if (typeof parsed === 'string' || Buffer.isBuffer(parsed)) return parsed.length > 0;
+	if (typeof parsed === 'object') return Object.keys(parsed).length > 0;
+	return false;
+}
+
+// Markup types are never relayed as-is. A document served as HTML (or SVG, or
+// XML with a stylesheet) from our own origin runs under OUR Content-Security-
+// Policy, which allows inline script from 'self' — so an upstream body that
+// echoed caller input would be script execution on three.ws. The real SDP
+// surfaces are JSON and text/plain, so downgrading markup costs nothing.
+const MARKUP_CONTENT_TYPE = /text\/html|application\/xhtml|\/xml|\+xml|image\/svg/i;
+
+function relayContentType(contentType) {
+	const ct = contentType || 'text/plain; charset=utf-8';
+	return MARKUP_CONTENT_TYPE.test(ct) ? 'text/plain; charset=utf-8' : ct;
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS', credentials: false })) return;
 	if (!methodGuard(req, res, ALLOWED_METHODS)) return;
 
 	const path = decodeURIComponent(joinPath(req.query?.path)).replace(/^\/+/, '');
 	if (!isSdpAllowedPath(path)) {
-		return error(res, 404, 'not_found', `unknown Solana Developer Platform route: ${path}`);
+		return error(res, 404, 'not_found', `unknown Solana Developer Platform route: ${path.slice(0, 120)}`);
 	}
 
 	const rl = await limits.sdpIp(clientIp(req));
@@ -87,8 +115,7 @@ export default wrap(async (req, res) => {
 	let body;
 	if (req.method !== 'GET' && req.method !== 'HEAD') {
 		// Empty body is valid for some POSTs (e.g. collect/refresh actions).
-		const cl = req.headers['content-length'];
-		if (cl && Number(cl) > 0) body = await readJson(req);
+		if (hasRequestBody(req)) body = await readJson(req);
 	}
 
 	const upstream = await sdpRequest(path, { method: req.method, query, body, headers });
@@ -99,7 +126,7 @@ export default wrap(async (req, res) => {
 	const extra = upstream.traceId ? { 'x-sdp-trace-id': upstream.traceId } : {};
 	if (typeof upstream.body === 'string') {
 		res.statusCode = upstream.status;
-		res.setHeader('content-type', upstream.contentType || 'text/plain; charset=utf-8');
+		res.setHeader('content-type', relayContentType(upstream.contentType));
 		res.setHeader('cache-control', 'no-store');
 		for (const [k, v] of Object.entries(extra)) res.setHeader(k, v);
 		return res.end(upstream.body);

@@ -59,19 +59,28 @@ async function resolveUser(req, scope) {
 	return null;
 }
 
+const UNCONFIGURED_HINT =
+	'Region retexture requires the GCP texture worker. Set GCP_RECONSTRUCTION_KEY and GCP_TEXTURE_URL.';
+
+// The lane needs BOTH the shared worker bearer secret and the texture worker's
+// base URL. Check them together so submit and status give the same 501 with the
+// same code, rather than one 501 from the missing key and a different failure
+// deeper in the provider from the missing URL.
 function getProviderOr501(res) {
+	let provider;
 	try {
-		return createRegenProvider();
+		provider = createRegenProvider();
 	} catch (err) {
-		error(
-			res,
-			501,
-			'region_retex_unconfigured',
-			'Region retexture requires the GCP texture worker. Set GCP_RECONSTRUCTION_KEY and GCP_TEXTURE_URL.',
-			{ reason: err.message },
-		);
+		error(res, 501, 'region_retex_unconfigured', UNCONFIGURED_HINT, { reason: err.message });
 		return null;
 	}
+	if (!provider.supportsMode(MODE)) {
+		error(res, 501, 'region_retex_unconfigured', UNCONFIGURED_HINT, {
+			reason: 'GCP_TEXTURE_URL is not set',
+		});
+		return null;
+	}
+	return provider;
 }
 
 // Re-validate that an opaque job token points at THE worker we configured, not
@@ -145,15 +154,25 @@ async function handleStatus(req, res) {
 	const userId = await resolveUser(req, 'avatars:read');
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
 
+	// Polling is cheap for the client and an outbound worker fetch for us, so it
+	// gets the same ceiling the sibling forge status endpoints use.
+	const rl = await limits.mcp3dStatus(userId);
+	if (!rl.success) return rateLimited(res, rl, 'too many status polls — slow down');
+
 	const url = new URL(req.url, 'http://x');
 	const token = url.searchParams.get('job');
 	if (!token) return error(res, 400, 'invalid_request', 'job token required');
+
+	// Configuration is checked BEFORE the token shape: tokenTargetsOurWorker
+	// compares against GCP_TEXTURE_URL, so on a deployment without the texture
+	// worker every token fails it and a legitimately-issued job would be reported
+	// as "malformed" instead of the honest 501 the submit path already returns.
+	const provider = getProviderOr501(res);
+	if (!provider) return;
+
 	if (!tokenTargetsOurWorker(token)) {
 		return error(res, 400, 'invalid_job', 'job token is malformed or not recognized');
 	}
-
-	const provider = getProviderOr501(res);
-	if (!provider) return;
 
 	let update;
 	try {
