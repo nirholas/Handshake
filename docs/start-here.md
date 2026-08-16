@@ -183,6 +183,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Agent task briefs](./agent-tasks/README.md): self-contained task prompts for AI agents working on the platform
 - [Troubleshooting and FAQ](./troubleshooting.md): fixes organized by symptom
 - [The 3D viewer](./viewer.md): the rendering layer reference (model loading, cameras, animation, lighting)
+- [Avatar Artifact](./avatar-artifact.md): the standalone viewer page, its ?agent= and ?model= parameters, and the iframe you paste anywhere
 - [Farcaster memory seeding](./farcaster-memory-seeding.md): give an agent your Farcaster voice, proved with a wallet the account already verified, and revoke it in one click
 - [X memory seeding](./x-memory-seeding.md): seed an agent from your public X posts behind an explicit, versioned consent you can revoke (revocation deletes what the seed wrote)
 - [GitHub memory seeding](./github-memory-seeding.md): tick the profile, repositories, and READMEs your agent may read, and nothing outside that list is ever fetched or stored (disconnecting deletes every fact it wrote)

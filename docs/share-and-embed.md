@@ -64,6 +64,18 @@ The element renders inline (no iframe boundary), supports keyboard navigation, a
 
 ---
 
+## Just the avatar, nothing else
+
+If all you want on the page is the 3D avatar, without chat, voice, or any widget UI, [Avatar Artifact](./avatar-artifact.md) is a one-line iframe:
+
+```html
+<iframe src="https://three.ws/avatar-artifact?agent=<your-agent-id>" width="100%" height="600" style="border:0" loading="lazy" title="Avatar Artifact"></iframe>
+```
+
+It renders your agent's avatar, follows the visitor's cursor, and links back to the profile. Open the page itself and click **Copy embed** to get the snippet already pointed at your agent.
+
+---
+
 ## Controlling who can embed your agent
 
 By default, your agent can be embedded anywhere. If you want to restrict it to specific domains:

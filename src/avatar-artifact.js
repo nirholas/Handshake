@@ -573,12 +573,17 @@ function buildArtifactStage(scene, camera, renderer, artifact) {
 		}
 	}
 
-	const clock = new THREE.Clock();
+	// Wall-clock delta rather than THREE.Clock, which three deprecated in r180,
+	// and clamped so a backgrounded tab does not resume by fast-forwarding the
+	// idle clip through however many minutes it was hidden.
+	let lastFrameMs = 0;
 
 	return {
 		ready: () => loaded,
 		update(t, mouse, zoom, reduceMotion) {
-			const delta = clock.getDelta();
+			const now = performance.now();
+			const delta = lastFrameMs ? Math.min(0.1, (now - lastFrameMs) / 1000) : 0;
+			lastFrameMs = now;
 			if (mixer) mixer.update(delta);
 			if (anim) anim.update(delta);
 

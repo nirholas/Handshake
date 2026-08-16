@@ -2408,6 +2408,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/avatar-artifact",
+					"title": "Docs · Avatar Artifact viewer",
+					"description": "The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-16"
+				},
+				{
 					"path": "/docs/site-performance",
 					"title": "Docs · Site load performance",
 					"description": "The load-cost rules behind every page that is not /play, each with the Lighthouse measurement that produced it: catalogue grids skip the rows nobody can see, analytics waits for the first idle moment, the CDN bundle ships minified, below-the-fold sections load below the fold, and thumbnails decode off the critical path.",
