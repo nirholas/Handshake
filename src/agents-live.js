@@ -976,6 +976,7 @@ const ACTIVITY_BATCH_MS = 20_000;   // refresh cadence for non-streamed cards
 const ACTIVITY_MIN_GAP_MS = 2_500;  // floor between batches, so fast scrolling cannot spam
 let _activityTimer = null;
 let _activityInFlight = false;
+let _activityUrgentInFlight = false;
 let _activityLastAt = 0;
 let _activityPending = null;
 
@@ -1008,13 +1009,20 @@ function applyActivityEntries(state, entries) {
 	}
 }
 
-async function hydrateActivity(ids) {
+async function hydrateActivity(ids, urgent) {
 	if (!ids.length) return;
-	// A page mounted while an earlier batch was still in flight must not be
-	// dropped, or its cards wait out the whole refresh cadence with nothing to
-	// show. Ask again as soon as the floor allows; the next batch covers them.
-	if (_activityInFlight) { scheduleActivityFlush(ACTIVITY_MIN_GAP_MS); return; }
-	_activityInFlight = true;
+	// One refresh at a time, with one exception: a batch carrying cards that have
+	// NOTHING to show yet does not queue behind a slow refresh of cards that are
+	// already populated. On a slow connection that refresh can be in flight for
+	// tens of seconds, and a page the viewer just scrolled to would sit blank for
+	// all of it. At most one urgent batch runs alongside, so the endpoint still
+	// sees a bounded, orderly caller.
+	if (_activityInFlight && !(urgent && !_activityUrgentInFlight)) {
+		scheduleActivityFlush(ACTIVITY_MIN_GAP_MS);
+		return;
+	}
+	const asUrgent = _activityInFlight;
+	if (asUrgent) _activityUrgentInFlight = true; else _activityInFlight = true;
 	_activityLastAt = Date.now();
 	try {
 		const res = await apiFetch('/api/agents/activity', {
@@ -1043,7 +1051,7 @@ async function hydrateActivity(ids) {
 			ensureStream(_cards.get(id));
 		}
 	} catch { scheduleActivityFlush(ACTIVITY_MIN_GAP_MS * 2); }
-	finally { _activityInFlight = false; }
+	finally { if (asUrgent) _activityUrgentInFlight = false; else _activityInFlight = false; }
 }
 
 // Coalesce flush requests. Scrolling three pages in as many seconds fires three
@@ -1070,7 +1078,9 @@ function flushActivity() {
 		else rest.push(id);
 	}
 	const ids = [...near, ...blank, ...rest].slice(0, ACTIVITY_BATCH_MAX);
-	hydrateActivity(ids);
+	// Cards with no entries at all are the ones a viewer would see as empty, so
+	// this batch is allowed past a slow in-flight refresh.
+	hydrateActivity(ids, blank.length > 0 || near.some((id) => !_cards.get(id)?.entries.length));
 }
 
 function startActivityHydration() {
