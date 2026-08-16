@@ -84,6 +84,38 @@ test('resolve() treats a .sol miss (resolved:false) as data, not an error', asyn
 	assert.equal(res.address, null);
 });
 
+test('resolve() treats an unregistered .eth (a 404) as data, not an error', async () => {
+	// The ENS endpoint reports "no such name" as a 404 while the .sol lane reports
+	// the same miss as resolved:false at 200. One resolve(), one contract: a caller
+	// must never have to try/catch to ask whether a name exists.
+	const { fetch, calls } = stubFetch([
+		{ status: 404, body: { error: 'not_found', error_description: 'nobody.eth does not resolve to an address' } },
+	]);
+	const client = createNames({ fetch });
+	const res = await client.resolve('NOBODY.eth');
+
+	assert.equal(calls[0].url.pathname, '/api/agents/ens/nobody.eth', 'the name is lowercased for the registry');
+	assert.equal(res.resolved, false);
+	assert.equal(res.address, null);
+	assert.equal(res.name, 'nobody.eth');
+	assert.equal(res.network, 'ethereum');
+	assert.deepEqual(res.agents, []);
+	assert.equal(res.raw.error, 'not_found', 'raw stays the untouched wire envelope');
+});
+
+test('resolve() still rejects a real ENS fault (a 503 timeout is not a miss)', async () => {
+	const { fetch } = stubFetch([
+		{ status: 503, body: { error: 'ens_timeout', error_description: 'ENS RPC exceeded 3s' } },
+	]);
+	const client = createNames({ fetch });
+	await assert.rejects(() => client.resolve('slow.eth'), (err) => {
+		assert.ok(err instanceof ThreeWsError);
+		assert.equal(err.code, 'ens_timeout');
+		assert.equal(err.status, 503);
+		return true;
+	});
+});
+
 test('resolve() rejects an empty / malformed name before any network call', async () => {
 	const { fetch, calls } = stubFetch([]);
 	const client = createNames({ fetch });
@@ -203,6 +235,28 @@ test('resolvePayee() resolves-only via GET and shapes the payee', async () => {
 	assert.equal(res.source, 'sns');
 	assert.equal(res.name, 'alice.threews.sol');
 	assert.equal(res.claim.username, 'alice');
+});
+
+test('a payee that resolves nowhere is a typed not_found, and `resolved` is a name not a flag', async () => {
+	const { fetch } = stubFetch([
+		{ body: { data: { address: SYNTH_OWNER, source: 'username', resolved: '@alice' } } },
+		{ status: 404, body: { error: 'not_found', error_description: 'could not resolve "ghost"' } },
+	]);
+	const client = createNames({ fetch });
+
+	// Unlike resolve()'s boolean, a Payee's `resolved` carries the canonical form
+	// of the name that matched: @handle here, a .sol domain for an SNS hit.
+	const hit = await client.resolvePayee('alice');
+	assert.equal(hit.resolved, '@alice');
+	assert.equal(hit.name, hit.resolved);
+	assert.equal(hit.source, 'username');
+
+	await assert.rejects(() => client.resolvePayee('ghost'), (err) => {
+		assert.ok(err instanceof ThreeWsError);
+		assert.equal(err.code, 'not_found');
+		assert.equal(err.status, 404);
+		return true;
+	});
 });
 
 test('payByName() prep builds an unsigned tx and sends payer_wallet', async () => {
