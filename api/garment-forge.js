@@ -15,7 +15,7 @@
  * (see its README for the pipeline: Vertex reference image → GPU mesh fleet →
  * compose on the canonical body → model-rig → strip/validate → publish). A
  * finished job is ALREADY live in the public wardrobe catalog
- * (src/garment-catalog.js) when this endpoint reports done — the closet's next
+ * (src/garment-catalog.js) when this endpoint reports done: the closet's next
  * catalog refresh shows it with no extra step.
  *
  * Uses the same free-lane rate limits as the other generation endpoints; the
@@ -114,7 +114,7 @@ async function pollJob(req, res, cfg, jobId) {
 		});
 	}
 	const job = await upstream.json();
-	// Pass through only the documented public fields — the worker record also
+	// Pass through only the documented public fields: the worker record also
 	// carries internal bookkeeping the client has no use for.
 	return json(res, 200, {
 		job_id: job.job_id,

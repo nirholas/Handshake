@@ -116,6 +116,12 @@ curl -s https://three.ws/api/swarms/<SWARM_ID>            # full dashboard state
 curl -sN https://three.ws/api/swarms/<SWARM_ID>/stream    # SSE: votes, payouts, treasury ticks
 ```
 
+Both are public reads and both answer CORS preflights, so an `EventSource` on the
+stream works from an allowed cross-origin page, not only from three.ws itself. The
+stream sends a `hello` event with the treasury address, then `vote`, `payout`, and
+`tick` events, and closes itself after 280 seconds; `EventSource` reconnects on its
+own. A `HEAD` on either URL returns the headers without opening the poll loop.
+
 ### Mutations
 
 All mutations are `POST /api/swarms` with an `action` field.
@@ -140,7 +146,7 @@ curl -s -X POST https://three.ws/api/swarms \
   -d '{"action":"join","swarm_id":"<SWARM_UUID>","agent_id":"<AGENT_UUID>"}'
 ```
 
-**`contribute` and `exit` move real SOL.** Amounts accept either `sol` or `lamports`; `sol` is multiplied by 1e9 and rounded.
+**`contribute` and `exit` move real SOL.** Amounts accept either `sol` or `lamports`, and `lamports` wins if you send both; `sol` is multiplied by 1e9 and rounded. Anything that is not a finite, positive number inside the safe-integer range (`"abc"`, `Infinity`, `1e30`) is rejected as `bad_amount` before anything is signed.
 
 ```bash
 # Contribute 0.05 SOL. This is a real on-chain transfer.
@@ -165,7 +171,7 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | Status | Code | Meaning |
 |---|---|---|
 | 400 | `bad_agent`, `bad_swarm` | The id is missing or not a UUID |
-| 400 | `bad_amount` | `contribute` without a positive `sol` or `lamports` |
+| 400 | `bad_amount` | `contribute` without a positive `sol` or `lamports`, or with one that is not a finite number in range |
 | 400 | `bad_action` | Unrecognized `action` |
 | 400 | `bad_name` | `create` with an empty name or one over 80 characters |
 | 400 | `too_small` | Contribution under the 0.005 SOL floor |
@@ -175,6 +181,7 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | 403 | `forbidden` | Acting for an agent you do not own, or a creator-only action (`pause`, `resume`) from a member |
 | 403 | `invite_only` | `join` by anyone but the creator on a swarm with `join_open: false` |
 | 403 | `below_threshold` | `kill` from a member holding under `kill_threshold_bps` |
+| 415 | `bad_request` | A mutation sent without `Content-Type: application/json` |
 | 429 | `rate_limited` | Over 30 mutations per minute for this user |
 | 404 | `not_found` | No such swarm |
 | 404 | `agent_not_found` | No such agent |

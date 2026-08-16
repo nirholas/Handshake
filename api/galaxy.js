@@ -1,14 +1,14 @@
 /**
- * Agent Galaxy — a semantic 3D star-map of every published agent on three.ws,
+ * Agent Galaxy: a semantic 3D star-map of every published agent on three.ws,
  * positioned by IBM Granite embeddings (watsonx.ai) and grouped into Granite-named
  * constellations.
  *
- *   GET  /api/galaxy              — the full galaxy snapshot (cached server-side).
- *        ?refresh=1               — force a rebuild (re-embed changed agents,
+ *   GET  /api/galaxy              : the full galaxy snapshot (cached server-side).
+ *        ?refresh=1               : force a rebuild (re-embed changed agents,
  *                                   re-cluster, re-name constellations).
- *        ?limit=<n>               — cap agents (default 600, max 1200; busiest first).
+ *        ?limit=<n>               : cap agents (default 600, max 1200; busiest first).
  *
- *   POST /api/galaxy              — { "query": "trading bots" } semantic search.
+ *   POST /api/galaxy              : { "query": "trading bots" } semantic search.
  *                                   Embeds the query with Granite, ranks published
  *                                   agents by cosine similarity against their stored
  *                                   Granite vectors, returns the top matches.
@@ -34,7 +34,7 @@ import {
 } from './_lib/galaxy.js';
 
 // A served snapshot is reused for this long before a GET rebuilds it. The embedding
-// cache (agent_embeddings) makes rebuilds cheap — only new/edited agents re-embed —
+// cache (agent_embeddings) makes rebuilds cheap (only new/edited agents re-embed),
 // so this mostly throttles the k Granite cluster-naming calls per rebuild.
 const SNAPSHOT_TTL_MS = 6 * 60 * 60 * 1000; // 6h
 
@@ -167,7 +167,7 @@ async function persistSnapshot(payload) {
 			WHERE id NOT IN (SELECT id FROM galaxy_snapshots ORDER BY created_at DESC LIMIT 5)
 		`;
 	} catch (err) {
-		// A persistence failure must not fail the request — the caller still gets a
+		// A persistence failure must not fail the request: the caller still gets a
 		// freshly computed payload; the next GET simply rebuilds instead of caching.
 		console.error('[galaxy] persistSnapshot failed', err);
 	}
@@ -221,7 +221,7 @@ async function handleSearch(req, res, cfg) {
 async function loadPublishedAgents(limit) {
 	// This is the same public feed for every viewer, and its `chat_count`
 	// correlated subquery + `ORDER BY chat_count` forces a COUNT(*) over
-	// usage_events for EVERY published agent on each load — the dominant cost
+	// usage_events for EVERY published agent on each load, the dominant cost
 	// here. Cache the result for 60s so that expensive ranking runs at most once
 	// a minute regardless of traffic.
 	const rows = await cacheWrap(`galaxy:published:${limit}`, 60, async () => await sql`

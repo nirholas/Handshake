@@ -4,7 +4,7 @@
 // summary block compatible with the pump-dashboard's API status panel.
 //
 // Core health is always green (no hard DB dependency). Optional sub-probes
-// (Resend, x402) are cached for 5 minutes and fail gracefully — a DB outage
+// (Resend, x402) are cached for 5 minutes and fail gracefully: a DB outage
 // degrades the `x402` block but never the top-level `status: 'ok'`.
 
 import { cors, json, method, wrap } from './_lib/http.js';
@@ -25,7 +25,7 @@ const HEARTBEAT_FRESH_MS = 6 * 60 * 1000;
 const MONITOR_CACHE_TTL_MS = 8 * 1000;
 // Subsystem health is a live read of in-process breaker state + one DB ping.
 // Cache it briefly so a burst of /healthz hits (dashboards poll it) doesn't fire
-// a DB ping each — but keep the TTL short so a breaker tripping shows up fast.
+// a DB ping each, but keep the TTL short so a breaker tripping shows up fast.
 const SUBSYSTEMS_CACHE_TTL_MS = 5 * 1000;
 let _resendCache = { value: null, expiresAt: 0 };
 let _x402Cache = { value: null, expiresAt: 0 };
@@ -63,13 +63,13 @@ async function probeSubsystems() {
 }
 
 // Real bot/monitor status, sourced from Postgres:
-//   running  — a bot_heartbeat row written by the pumpfun-monitor cron within
+//   running  : a bot_heartbeat row written by the pumpfun-monitor cron within
 //              the freshness window. When no row exists yet (or the DB is
 //              unreachable, e.g. in unit tests) we fall back to the serverless
 //              liveness signal: the function answering IS a liveness proof.
-//   mode     — the worker's reported mode (the cron writes 'cron').
-//   claimsDetected — count of real graduation events the monitor has recorded.
-//   watches.total  — users with at least one alert rule armed (server-side
+//   mode     : the worker's reported mode (the cron writes 'cron').
+//   claimsDetected: count of real graduation events the monitor has recorded.
+//   watches.total  : users with at least one alert rule armed (server-side
 //                    watchers that fire even with no tab open).
 async function probeMonitor() {
 	const now = Date.now();
@@ -93,7 +93,7 @@ async function probeMonitor() {
 		value = {
 			monitor: {
 				// If a heartbeat row exists, trust its freshness. If none exists yet,
-				// the dedicated worker hasn't reported — report the serverless API's
+				// the dedicated worker hasn't reported: report the serverless API's
 				// own liveness rather than a false "stopped".
 				running: beat ? fresh : true,
 				mode: beat?.mode || 'serverless',
@@ -159,7 +159,7 @@ async function probeX402() {
 	const result = {};
 
 	// Check if PAY_TO addresses are configured. A network counts as wired only
-	// when EVERY field its 402 accept needs is present — the same gate
+	// when EVERY field its 402 accept needs is present: the same gate
 	// buildRequirements() applies before advertising it. Solana additionally
 	// requires a fee payer (no default): without it the accept is dropped, so a
 	// Solana-only paid endpoint (e.g. /api/x402/club-cover) fails closed with a
@@ -182,7 +182,7 @@ async function probeX402() {
 
 	// The 402 challenge advertises a Solana fee payer PUBKEY (X402_FEE_PAYER_SOLANA),
 	// but a sponsor-mode settle can only complete if the matching SECRET is loaded
-	// to co-sign — a config where the pubkey is set and the secret is not passes
+	// to co-sign: a config where the pubkey is set and the secret is not passes
 	// every check above yet 502s on every settle (observed: club-cover's last
 	// on-chain settles failed with `sponsor_key_unconfigured`). Probe the co-sign
 	// key so that false-green stops reading as healthy. No key material is exposed:
@@ -229,7 +229,7 @@ async function probeX402() {
 		result.facilitator = 'not_configured';
 	}
 
-	// Provider Hub (zauthx402) x402 telemetry — report whether the SDK
+	// Provider Hub (zauthx402) x402 telemetry: report whether the SDK
 	// initialized so the integration is observable in prod. Booleans only:
 	// no key material is surfaced on this public, unauthenticated endpoint.
 	try {
@@ -249,7 +249,7 @@ async function probeX402() {
 
 	// Self-facilitator verify/settle outcomes (last 24h), grouped by reason
 	// class. A paying buyer whose wallet mutates the prepared transaction gets a
-	// deterministic verify 402 with everything else on this endpoint green —
+	// deterministic verify 402 with everything else on this endpoint green,
 	// without this block that failure mode is invisible outside the raw
 	// facilitator log. Only the reason prefix (before ':') is exposed: suffixes can
 	// carry wallet addresses, the prefix is a fixed validator code.
@@ -295,12 +295,12 @@ async function probeX402() {
 		result.siwx = 'unavailable';
 	}
 
-	// Ring spend status — surface whether the autonomous closed-loop spend path is
+	// Ring spend status: surface whether the autonomous closed-loop spend path is
 	// live as a dashboard field, so a fail-closed guard (or a deliberate pause) is
 	// visible here instead of only as recurring cron error logs. checkRingInvariants
 	// is a pure env read (no I/O); no key material is exposed, only flag names.
 	// `paused` reflects the existing kill switch (X402_AUTONOMOUS_ENABLED=false),
-	// which the loop honors before the guard check — a deliberate pause reads as
+	// which the loop honors before the guard check, so a deliberate pause reads as
 	// paused here, not as a violation.
 	try {
 		const { checkRingInvariants } = await import('./_lib/x402/ring-allowlist.js');
@@ -352,7 +352,7 @@ export default wrap(async (req, res) => {
 		subsystems,
 		// Productized speech package (api/v1/ai/tts, api/v1/ai/asr). Honest env-gate
 		// status so a missing NVIDIA key shows here instead of only surfacing as a
-		// 503 on the endpoint. Sync env reads — no upstream probe, no key material.
+		// 503 on the endpoint. Sync env reads, no upstream probe, no key material.
 		speech: {
 			tts: { configured: nvidiaTtsConfigured(), route: '/api/v1/ai/tts', requires: ['NVIDIA_API_KEY'] },
 			asr: {

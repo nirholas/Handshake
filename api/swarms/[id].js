@@ -1,9 +1,10 @@
-// /api/swarms/:id            — full dashboard state for one swarm
-// /api/swarms/:id/stream     — SSE: live consensus votes, payouts, treasury ticks
+// /api/swarms/:id            full dashboard state for one swarm
+// /api/swarms/:id/stream     SSE: live consensus votes, payouts, treasury ticks
 //
-// Routed here by vercel.json (`/api/swarms/([^/]+)(/.*)? → /api/swarms/[id]`); the
-// handler parses the path to split state vs. stream. GET only — mutations live on
-// POST /api/swarms.
+// Routed here by two vercel.json rules, `/api/swarms/([^/]+)/stream` and
+// `/api/swarms/([^/]+)`, both pointing at `/api/swarms/[id]`. The server keeps the
+// ORIGINAL pathname on req.url behind a dest rewrite, so the handler re-reads the
+// path to split state vs. stream. GET only; mutations live on POST /api/swarms.
 
 import { cors, method, json, error, wrap } from '../_lib/http.js';
 import { resolveAccount } from '../_lib/account-auth.js';
@@ -19,15 +20,20 @@ export default wrap(async (req, res) => {
 	const id = parts[2];
 	const sub = parts[3] || null;
 
-	if (!isUuid(id)) return error(res, 404, 'not_found', 'swarm not found');
-
-	if (sub === 'stream') {
-		if (!method(req, res, ['GET'])) return;
-		return streamSwarm(req, res, id);
-	}
-
+	// CORS before anything can answer, so the stream, the 404 for an unknown id and
+	// the preflight all carry the same headers as the state read. The stream branch
+	// used to skip cors() entirely: it returned a bare 200 text/event-stream with no
+	// access-control-allow-origin, so a cross-origin EventSource could open the
+	// connection and never read a byte of it, and its OPTIONS preflight 405'd.
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	// Capture the verb before method() rewrites HEAD to GET (see below).
+	const isHead = req.method === 'HEAD';
 	if (!method(req, res, ['GET'])) return;
+
+	if (!isUuid(id)) return error(res, 404, 'not_found', 'swarm not found');
+	if (sub !== null && sub !== 'stream') return error(res, 404, 'not_found', 'swarm not found');
+
+	if (sub === 'stream') return streamSwarm(req, res, id, { headOnly: isHead });
 
 	const auth = await resolveAccount(req, res).catch(() => null);
 	const state = await getSwarmState(id, { viewerUserId: auth?.userId || null });
@@ -39,7 +45,7 @@ const HEARTBEAT_MS = 15_000;
 const POLL_MS = 2_500;
 const MAX_DURATION_MS = 280_000; // end before the platform function timeout; client reconnects
 
-async function streamSwarm(req, res, id) {
+async function streamSwarm(req, res, id, { headOnly = false } = {}) {
 	const swarm = await getSwarm(id);
 	if (!swarm) return error(res, 404, 'not_found', 'swarm not found');
 
@@ -47,6 +53,16 @@ async function streamSwarm(req, res, id) {
 	res.setHeader('Cache-Control', 'no-cache, no-transform');
 	res.setHeader('X-Accel-Buffering', 'no');
 	res.setHeader('Connection', 'keep-alive');
+
+	// A HEAD probe gets the headers and nothing else. method() normalizes HEAD to
+	// GET so the dispatch above works, which meant a HEAD opened the full poll loop
+	// and held the connection (and a Cloud Run concurrency slot) for the whole
+	// MAX_DURATION_MS, for a request Node strips the body from anyway. Any uptime
+	// monitor or crawler pointed at this URL pinned a slot for ~5 minutes each.
+	if (headOnly) {
+		res.statusCode = 200;
+		return res.end();
+	}
 
 	const send = (event, data) => {
 		try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch { /* socket closed */ }

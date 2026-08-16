@@ -1,4 +1,4 @@
-// GET /api/glb?src=<url> — same-origin GLB proxy with open CORS.
+// GET /api/glb?src=<url>: same-origin GLB proxy with open CORS.
 //
 // Why: generated models live on the public R2 host, whose CORS policy is an
 // origin allowlist. Anything loading a GLB from the browser on an origin

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { computeConsensus, normalizeSwarmPolicy } from '../api/_lib/swarms.js';
+import { computeConsensus, normalizeSwarmPolicy, parseContributionLamports, SwarmError } from '../api/_lib/swarms.js';
 
 describe('computeConsensus', () => {
 	const members = [
@@ -88,5 +88,62 @@ describe('normalizeSwarmPolicy', () => {
 	it('only accepts the two documented exit policies', () => {
 		expect(normalizeSwarmPolicy({ exit_policy: 'wait_to_close' }).exit_policy).toBe('wait_to_close');
 		expect(normalizeSwarmPolicy({ exit_policy: 'nonsense' }).exit_policy).toBe('settle_at_mark');
+	});
+});
+
+describe('parseContributionLamports', () => {
+	// The amount a POST /api/swarms contribute moves on-chain. Anything this lets
+	// through is signed for, and anything it throws must be a 400 the caller can
+	// read, never a RangeError escaping as a 500.
+	const reject = (body) => {
+		let caught = null;
+		try { parseContributionLamports(body); } catch (e) { caught = e; }
+		expect(caught).toBeInstanceOf(SwarmError);
+		expect(caught.status).toBe(400);
+		expect(caught.code).toBe('bad_amount');
+		return caught;
+	};
+
+	it('reads an explicit lamport count', () => {
+		expect(parseContributionLamports({ lamports: 25_000_000 })).toBe(25_000_000n);
+		expect(parseContributionLamports({ lamports: '25000000' })).toBe(25_000_000n);
+	});
+
+	it('converts SOL to lamports', () => {
+		expect(parseContributionLamports({ sol: 0.025 })).toBe(25_000_000n);
+		expect(parseContributionLamports({ sol: '1.5' })).toBe(1_500_000_000n);
+	});
+
+	it('prefers lamports when a body carries both', () => {
+		expect(parseContributionLamports({ lamports: 7_000_000, sol: 99 })).toBe(7_000_000n);
+	});
+
+	it('rejects a non-numeric amount instead of throwing a RangeError', () => {
+		// BigInt(NaN) throws RangeError, which used to escape wrap() as a 500
+		// internal_error (plus a Sentry capture and an ops alert) on a caller typo.
+		reject({ lamports: 'abc' });
+		reject({ sol: 'abc' });
+		reject({ lamports: {} });
+	});
+
+	it('rejects a non-finite amount', () => {
+		reject({ sol: Infinity });
+		reject({ lamports: -Infinity });
+	});
+
+	it('rejects an amount past the safe-integer range', () => {
+		// 1e30 SOL is 1e39 lamports, and a double can no longer name that exact
+		// integer, so the amount signed for would not be the amount requested.
+		reject({ sol: 1e30 });
+		reject({ lamports: Number.MAX_SAFE_INTEGER + 100 });
+	});
+
+	it('rejects zero, negative, and missing amounts', () => {
+		reject({ lamports: 0 });
+		reject({ sol: 0 });
+		reject({ lamports: -5_000_000 });
+		reject({});
+		reject({ lamports: null, sol: null });
+		reject(undefined);
 	});
 });

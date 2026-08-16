@@ -6,7 +6,7 @@
  * Returns real counts pulled from Neon. Used by the SaaS prologue strip on
  * the home page to render live "trusted by" numbers. No auth, edge-cached for
  * 60s at the CDN. If the DB is unreachable the response is { available: false }
- * and the home page hides the metrics strip — we never serve fabricated numbers.
+ * and the home page hides the metrics strip: we never serve fabricated numbers.
  */
 
 import { sql } from './_lib/db.js';
