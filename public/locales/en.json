@@ -1103,6 +1103,7 @@
 		"every_clip_in_the_three_ws_motion": "Every clip in the three.ws motion library: mocap performances, studio presets, and community-authored animations. Hover any card for a live preview, open the details for playback controls, or send it straight to the Studio.",
 		"featured": "Featured",
 		"load_more": "Load more",
+		"loading_preview_arialabel": "Loading preview",
 		"longest_first": "Longest first",
 		"loops": "Loops",
 		"meta_description": "Browse 2,000+ motion-capture and community animations for three.ws avatars. Live previews, categories, and one-click use in the Animation Studio.",
