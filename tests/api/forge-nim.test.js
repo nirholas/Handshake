@@ -133,6 +133,21 @@ describe('GET /api/forge-nim?action=health', () => {
 		expect(fetchMock.mock.calls[0][0]).toBe('https://nim.example.run.app/v1/health/ready');
 	});
 
+	it('blames the caller, not the deployment, for a bad baseUrl override', async () => {
+		// A rejected override says nothing about whether the operator wired a NIM.
+		// Reporting configured:false made the page's status pill claim nothing was
+		// set up on a deployment that was wired correctly.
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: '/api/forge-nim?action=health&baseUrl=http://10.0.0.1' }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(200);
+		expect(body.configured).toBe(true);
+		expect(body.reachable).toBe(false);
+		expect(body.reason).toMatch(/https/i);
+	});
+
 	it('reports down when the ready check is unreachable', async () => {
 		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
 		globalThis.fetch = vi.fn(async () => {
@@ -225,6 +240,22 @@ describe('POST /api/forge-nim — configuration & SSRF', () => {
 		);
 		expect(res.statusCode).toBe(503);
 		expect(body.error).toBe('nim_unconfigured');
+	});
+
+	it('names the missing input on an unconfigured deployment instead of hiding it behind the 503', async () => {
+		// Cheap, network-free input checks run before the NIM is resolved, so a
+		// caller who sent no prompt is told THAT, rather than being handed the
+		// unconfigured 503 every malformed request used to collect first.
+		const { res: noPrompt, body: promptBody } = await dispatch(
+			makeReq({ body: { mode: 'text', prompt: '' } }),
+			makeRes(),
+		);
+		expect(noPrompt.statusCode).toBe(400);
+		expect(promptBody.error).toBe('no_prompt');
+
+		const { res: noImage, body: imageBody } = await dispatch(makeReq({ body: { mode: 'image' } }), makeRes());
+		expect(noImage.statusCode).toBe(400);
+		expect(imageBody.error).toBe('no_image');
 	});
 
 	it('blocks a private-network baseUrl override (SSRF guard)', async () => {

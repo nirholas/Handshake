@@ -233,6 +233,29 @@ describe('api/forge-iterate — handler', () => {
 		expect(out.retry_after).toBe(5);
 	});
 
+	it('reports a submit that times out as busy with a back-off, not a bare gateway timeout', async () => {
+		// /api/forge holds the connection open while a saturated generator queues the
+		// job (a live three.ws submit held for 157s before answering its own busy
+		// 429), so the submit timeout fires on exactly the busy condition. Answering
+		// 504 sent both iterate UIs down the generic "rephrase your instruction"
+		// branch, blaming a wording the user had got right.
+		fetchMock.mockRejectedValueOnce(Object.assign(new Error('The operation was aborted'), { name: 'TimeoutError' }));
+		const res = mockRes();
+		await handler(mockReq({ body: { glb_url: 'https://three.ws/cdn/a.glb', instruction: 'bigger' } }), res);
+		expect(res.statusCode).toBe(429);
+		const out = parsed(res);
+		expect(out.error).toBe('busy');
+		expect(out.retry_after).toBeGreaterThan(0);
+	});
+
+	it('surfaces an unreachable generator as a 502 rather than a busy signal', async () => {
+		fetchMock.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+		const res = mockRes();
+		await handler(mockReq({ body: { glb_url: 'https://three.ws/cdn/a.glb', instruction: 'bigger' } }), res);
+		expect(res.statusCode).toBe(502);
+		expect(parsed(res).error).toBe('provider_error');
+	});
+
 	it('is rate-limited per forgeIterate', async () => {
 		limits.forgeIterate.mockResolvedValueOnce({ success: false, limit: 60, remaining: 0, reset: Date.now() + 1000 });
 		const res = mockRes();
