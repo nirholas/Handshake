@@ -50,7 +50,7 @@ const SMOKE_PROMPT = 'a small wooden toy boat with a striped sail';
 // already exceeded the 320 s attemptDeadline Cloud Scheduler gives this job, so
 // a slow-but-working lane could blow the deadline instead of reporting. 240 s
 // leaves the alerting and the response inside that deadline.
-const GENERATION_BUDGET_MS = 240_000;
+export const GENERATION_BUDGET_MS = 240_000;
 const POLL_INTERVAL_MS = 5_000;
 const POLL_TIMEOUT_MS = 15_000;
 const LAST_STATUS_KEY = 'forge-smoke:last';

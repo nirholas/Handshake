@@ -23,7 +23,7 @@
 //     checked: a silent outage of the exact cold start this cron prevents.
 
 import { test, expect, afterEach, vi } from 'vitest';
-import { runGeneration } from '../api/cron/forge-smoke.js';
+import { runGeneration, GENERATION_BUDGET_MS } from '../api/cron/forge-smoke.js';
 import { gateFaultOutcome } from '../api/cron/forge-seed-cron.js';
 import { resolveKeepwarmLanes, KEEPWARM_LANES } from '../api/cron/gpu-keepwarm.js';
 
@@ -98,6 +98,18 @@ test('a forge submit that errors is still reported by status, not by exception',
 
 	expect(result.ok).toBe(false);
 	expect(result.reason).toContain('503');
+});
+
+// The generation budget is the thing under test here, not a style preference.
+// It was 90 s for the submit while the lane it probes averaged 84.7 s and a
+// measured run took 150 s, so the smoke aborted working generations and paged
+// ops daily. Cloud Scheduler gives the job a 320 s attemptDeadline, so the
+// budget has to clear real latency from below and the deadline from above.
+test('the generation budget clears real lane latency without blowing the scheduler deadline', () => {
+	const OBSERVED_PRODUCTION_RUN_MS = 150_000;
+	const SCHEDULER_ATTEMPT_DEADLINE_MS = 320_000;
+	expect(GENERATION_BUDGET_MS).toBeGreaterThan(OBSERVED_PRODUCTION_RUN_MS);
+	expect(GENERATION_BUDGET_MS).toBeLessThan(SCHEDULER_ATTEMPT_DEADLINE_MS);
 });
 
 // ── 2. forge-seed-cron gate faults retry, then stop ──────────────────────────
