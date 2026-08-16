@@ -95,6 +95,22 @@
 			<description>Every three.ws newsletter email carries a confirm link and an unsubscribe link that share one token, so a reader who unsubscribed and later opened an older email and clicked confirm was quietly put back on the list. That link no longer signs anyone up: it says you are unsubscribed and leaves it that way, and opting back in starts from the site. Three other fixes ship alongside it. The allocation planner at /meta-allocator no longer serves an empty basket when the model declines to answer, it falls back to the allocator that always produces a real spread across verified leaders. The motion capture uploader told you an upload link lasted ten minutes when it really lasted five, so a large video queued on that promise could fail with nothing explaining why. And an agent whose stablecoin payment is rejected by the x402 Bazaar now gets the Bazaar's own details back instead of a different server's, so its retry is aimed at the right place.</description>
 		</item>
 		<item>
+			<title>AR Studio: the language picker no longer sits on top of the dock controls</title>
+			<link>https://three.ws/ar/studio</link>
+			<guid isPermaLink="false">2026-08-16:AR Studio: the language picker no longer sits on top of the dock controls</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On the AR Studio page the site-wide floating language picker landed in the bottom-right corner, directly over the right-hand end of the control dock, so the Clear button (and the buttons beside it on a phone) could not be tapped at all. The picker now lives in the studio's own top bar, where it is always reachable and leaves the dock its full width. It also shrinks instead of pushing its neighbours off screen on narrow phones, which fixes the same crowding anywhere else it appears in a tight header. The page description now also names every place models can come from: your forges, the community feed, the free CC0 object library, and any GLB link.</description>
+		</item>
+		<item>
+			<title>Autopilot Activity keeps up when you switch agents, and its receipts link to the exact memory</title>
+			<link>https://three.ws/autopilot-activity</link>
+			<guid isPermaLink="false">2026-08-16:Autopilot Activity keeps up when you switch agents, and its receipts link to the exact memory</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Autopilot Activity lists every action your agents took on your behalf, and it has an agent picker for narrowing that list to one of them. Picking a second agent while the first was still loading used to do nothing at all: the picker and the address bar moved to the new agent, but the request for it was never sent and the page kept showing the previous agent's actions, with no sign anything had gone wrong. Whichever agent you picked last now wins, however fast you switch. Two more repairs: each receipt cites the memories that motivated the action, and those links now scroll to the cited memory and highlight it instead of dropping you at the top of a long Knowledge list; and when an agent has no actions yet, the page sends you to that agent's own autopilot controls rather than the dashboard, which is where the setting you need actually lives.</description>
+		</item>
+		<item>
 			<title>Avatar link previews stop rebuilding themselves, and two feeds answer a bad page link plainly</title>
 			<link>https://three.ws/characters</link>
 			<guid isPermaLink="false">2026-08-16:Avatar link previews stop rebuilding themselves, and two feeds answer a bad page link plainly</guid>
@@ -117,6 +133,22 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every public avatar gets a preview picture rendered for it in the background, and an avatar that fails to render three times is given up on permanently. The problem was what counted as a failure. If the machine ran out of memory and could not start the renderer at all, or if the picture store was unreachable, that counted against the avatar, even though nothing was wrong with the avatar itself. Four avatars had already been written off that way for a fault that lasted seconds, and a longer outage would have written off every remaining one inside a quarter of an hour, because the whole batch fails together. A fault in the machinery is now told apart from a genuinely broken model: the avatar keeps its chances and the job simply waits for the machine to be healthy. The two background jobs also stop and do nothing when the picture store is switched off, instead of working through the queue and burning everyone's chances on an error they could not have avoided. The four avatars written off in error have been put back in the queue.</description>
+		</item>
+		<item>
+			<title>Blockchain TVL by Chain is readable on a phone, and every chain in it is now a real link</title>
+			<link>https://three.ws/chains</link>
+			<guid isPermaLink="false">2026-08-16:Blockchain TVL by Chain is readable on a phone, and every chain in it is now a real link</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The chain leaderboard at /chains ranks 100 blockchains by total value locked and shows each one's dominance share of on-chain DeFi. On a phone the table was pinned to a fixed 540px width, so the only column that fit on screen was the chain name: the TVL and dominance figures, the entire point of the page, sat off the right edge behind a sideways scroll with nothing to hint they were there. The table now sizes itself to the screen, and all three columns read in full at 320px. Opening a chain's detail page was hidden in a similar way. Rows navigated on click but showed no clickable cursor, and the destination was not a link at all, so it could not be opened in a new tab, copied, followed from a screen reader's list of links, or seen by a search engine. Each chain name is now a genuine link, the row still follows it when you click anywhere along it, and the sortable column headers announce their sort state to screen readers. When the data provider fails, the page now offers a Try again button that refetches in place instead of a link that reloads everything, and it keeps its DeFiLlama attribution instead of going blank. If the provider reports nothing at all, the page says so rather than presenting a $0.00 total as though cross-chain DeFi had emptied out.</description>
+		</item>
+		<item>
+			<title>CA to x402 now shows the momentum and risk read its own paid endpoint sells</title>
+			<link>https://three.ws/ca2x402</link>
+			<guid isPermaLink="false">2026-08-16:CA to x402 now shows the momentum and risk read its own paid endpoint sells</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Paste a contract address at /ca2x402 and the resolver has always returned four timeframes of price change and a 0-to-100 risk score with the reasoning behind it, the same intel an agent gets when it pays the generated endpoint $0.01 USDC. The page quietly threw both away and rendered only the 24h number, so a buyer could not see what they were about to pay for. Both now render: a momentum strip across 5m, 1h, 6h and 24h that shows whether a move is building or fading, and a risk panel with the score, its level, and the depth, age, float and flow checks that produced it, each marked by severity. Both read at 320px. The primary Resolve button was also painting white text on the white accent, so the page's main action looked like an empty slab; its label is now legible in both themes. And the error card no longer says &quot;Could not resolve&quot; for a mistyped address: a typo, a token with no market, and a resolver outage each say which one happened. Over on /capture, the URL and settings fields get a real focus ring for keyboard users, where an outline reset had left only a faint border tint.</description>
 		</item>
 		<item>
 			<title>Coin Autopilot tells you whether your rules actually saved</title>
@@ -229,6 +261,14 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The in-world trading terminal inside a Robinhood Chain world polls the chain feed every five seconds, and the Worlds lobby lists those coins from the same feed. A single event that arrived without its payload, or with a timestamp the chain wrote in an unexpected format, took both requests down with a server error: the terminal showed a dead tape, and the lobby's Robinhood Chain tab quietly emptied with nothing on screen to say why. Bad events are now skipped and the rest of the tape still renders, a price that is genuinely missing stays blank rather than printing as a real $0 trade, and a launch with no readable contract address no longer produces a card that leads nowhere. Asking for trades with an address that is not a contract address now gets a clear error back instead of an empty list that read as &quot;this coin has never traded&quot;.</description>
+		</item>
+		<item>
+			<title>Scene Capture fits a phone screen, and a file that is not a point cloud now says so</title>
+			<link>https://three.ws/capture</link>
+			<guid isPermaLink="false">2026-08-16:Scene Capture fits a phone screen, and a file that is not a point cloud now says so</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Scene Capture turns a video of a room into an explorable 3D point cloud you can orbit in the browser, and also renders any .ply you already have. On a phone the viewer stage forced the page 553px wide against a 320px screen, so the whole page scrolled sideways and the side panel sat off the edge; the stage now sizes to the screen and the page fits at 320px. Dropping in a file that is not a point cloud used to look like a success: the viewer reported 0 points over an empty black stage and offered the broken file back as a download. It now tells you the file is not a valid .ply and what one should contain. The error and progress headings were also being overwritten a second after they appeared, so every specific message (Could not fetch that point cloud, Reconstructing) reverted to the generic Something went wrong or Working; the real message now stays on screen. A reconstruction whose job stops responding no longer counts up forever: after a run of failed checks, or past twenty minutes, the page says what happened and how to restart. When the worker caps a long clip at its frame budget, the viewer says the clip was truncated instead of presenting a partial scene as the whole thing. And when reconstruction is offline, the message is written for you rather than repeating a server deployment checklist. Accessibility: the drop area is a real button you can reach with the keyboard, every field in the panel is labelled, and progress, errors and the point count are announced to screen readers.</description>
 		</item>
 		<item>
 			<title>Scrolling the activity feed past a bad cursor no longer breaks the whole feed</title>
@@ -365,6 +405,22 @@
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The x402 Arbitrage page compares what different providers charge for the same capability, and it builds that comparison from several facilitator catalogs at once. When one of those catalogs was unreachable, its listings simply vanished from every comparison and the page said nothing about it. A scan that had only seen half the market looked exactly like a market with fewer price gaps in it, which is the opposite of what the page is for. Each scan now names the facilitators it reached and how many listings each one contributed, and calls out any that dropped out along with the reason, so a short board is never mistaken for a quiet one. Separately, closing the payment window without paying used to leave the Pay cheapest button dead for four seconds before it would accept another click. Deciding not to pay now hands the button straight back.</description>
+		</item>
+		<item>
+			<title>The artifact builder now reports what it actually measures, and stops flagging legal artifacts as over budget</title>
+			<link>https://three.ws/artifact</link>
+			<guid isPermaLink="false">2026-08-16:The artifact builder now reports what it actually measures, and stops flagging legal artifacts as over budget</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The /artifact page is the pre-flight for pasting a three.ws agent into a Claude conversation: it builds the self-contained HTML, renders it in a sandbox that mirrors Claude's, and reports what you are about to paste. Two of those numbers were misleading. The stat labelled First paint was really the time the endpoint took to hand over the bytes; nothing had been rendered yet when it was measured. It is now split into Fetch, which is that download, and Render, which times how long the sandboxed frame takes to parse the document and start the viewer. The size gauge was grading the finished artifact against the size limit for the model inside it, but inlining base64-encodes the model and costs four bytes for every three, so a perfectly acceptable 7 MB artifact was painted amber and anything built from a model over about 5.6 MB went red, contradicting the endpoint that had just accepted it. Size is now graded against the roughly 8.6 MB an accepted model can actually produce, and hovering the number tells you how much of that budget you have used. The Size budget note explained the same thing incorrectly and now spells out the base64 cost.</description>
+		</item>
+		<item>
+			<title>The Avatar CLI page now shows real command output, and its terminal is readable by a screen reader</title>
+			<link>https://three.ws/avatar-cli</link>
+			<guid isPermaLink="false">2026-08-16:The Avatar CLI page now shows real command output, and its terminal is readable by a screen reader</guid>
+			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The /avatar-cli page teaches the four commands of @three-ws/avatar-cli, and one of its examples was staged rather than captured: the validate card showed a seven-error failure stitched together from errors no single manifest produces. It now shows a verbatim run against a genuinely broken manifest, with the instance paths (/, /mesh, /skeleton) the CLI really prints, so what you read on the page is what your shell will print back. The replayed terminal in the hero was marked up as one flat image, which meant a screen reader announced a one-line caption and hid both the transcript and the Replay button inside it; the transcript is now a named, readable region and Replay is an ordinary button again. The live viewer's failure notice keeps a link to the web component reference, and that link now looks like a link and shows a focus ring when you tab to it, as do the scrollable code blocks. The copy button's fallback hint used to tell everyone to press Command C; it now names the shortcut for the keyboard you are actually on.</description>
 		</item>
 		<item>
 			<title>The AWS page stops promising AWS invoicing three.ws does not do, and the GLB optimizer reads compressed avatars again</title>

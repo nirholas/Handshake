@@ -1934,12 +1934,26 @@ function renderMemories(rows) {
 // browser has already resolved the fragment, so nothing scrolled and the cited
 // memory was indistinguishable from the rest: bring it into view and mark it.
 function revealCitedMemory() {
-  const id = decodeURIComponent(location.hash.replace(/^#/, ''));
-  if (!id.startsWith('mem-')) return;
-  const row = document.getElementById(id);
+  if (!hasCitedMemoryTarget()) return;
+  const row = document.getElementById(decodeURIComponent(location.hash.slice(1)));
   if (!row) return;
-  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
   row.classList.add('mem-cited');
+
+  // The sections above this one mount asynchronously (avatar preview, mind
+  // palace, analytics) and every one that lands grows the column above the
+  // memory list, pushing the cited row back off screen after a single scroll.
+  // Watch the row itself and re-centre whenever it drifts out of view, then
+  // stand down the moment the reader starts scrolling for themselves. Nothing
+  // polls: if the layout stops moving, the observer simply stops firing.
+  const col = document.querySelector('.content-col');
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (!e.isIntersecting) row.scrollIntoView({ block: 'center' });
+  }, { root: col && getComputedStyle(col).overflowY !== 'visible' ? col : null, threshold: 0.5 });
+  for (const evt of ['wheel', 'touchstart', 'keydown']) {
+    window.addEventListener(evt, () => io.disconnect(), { once: true, passive: true });
+  }
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  io.observe(row);
 }
 
 async function toggleMemoryVisibility(btn) {
@@ -3297,8 +3311,17 @@ function ensureAutopilotTab() {
   mountAutopilotMind(host, { agentId });
 }
 
+// True when the URL fragment names a specific memory (an autopilot receipt's
+// provenance link). That target is more precise than the ?tab= section, so it
+// owns the scroll and the section scroll stands down: two smooth scrolls racing
+// each other landed the reader wherever the slower one finished.
+function hasCitedMemoryTarget() {
+  return /^#mem-/.test(location.hash);
+}
+
 // Scroll to a named section in the unified layout (used by OAuth callback redirects via ?tab=…)
 function scrollToSection(tabId) {
+  if (hasCitedMemoryTarget()) return;
   const sectionMap = {
     persona: 'section-identity',
     outfit: 'section-identity',

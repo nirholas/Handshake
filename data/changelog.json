@@ -3,6 +3,66 @@
 	"entries": [
 		{
 			"date": "2026-08-16",
+			"title": "AR Studio: the language picker no longer sits on top of the dock controls",
+			"summary": "On the AR Studio page the site-wide floating language picker landed in the bottom-right corner, directly over the right-hand end of the control dock, so the Clear button (and the buttons beside it on a phone) could not be tapped at all. The picker now lives in the studio's own top bar, where it is always reachable and leaves the dock its full width. It also shrinks instead of pushing its neighbours off screen on narrow phones, which fixes the same crowding anywhere else it appears in a tight header. The page description now also names every place models can come from: your forges, the community feed, the free CC0 object library, and any GLB link.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/ar/studio"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The artifact builder now reports what it actually measures, and stops flagging legal artifacts as over budget",
+			"summary": "The /artifact page is the pre-flight for pasting a three.ws agent into a Claude conversation: it builds the self-contained HTML, renders it in a sandbox that mirrors Claude's, and reports what you are about to paste. Two of those numbers were misleading. The stat labelled First paint was really the time the endpoint took to hand over the bytes; nothing had been rendered yet when it was measured. It is now split into Fetch, which is that download, and Render, which times how long the sandboxed frame takes to parse the document and start the viewer. The size gauge was grading the finished artifact against the size limit for the model inside it, but inlining base64-encodes the model and costs four bytes for every three, so a perfectly acceptable 7 MB artifact was painted amber and anything built from a model over about 5.6 MB went red, contradicting the endpoint that had just accepted it. Size is now graded against the roughly 8.6 MB an accepted model can actually produce, and hovering the number tells you how much of that budget you have used. The Size budget note explained the same thing incorrectly and now spells out the base64 cost.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/artifact"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "The Avatar CLI page now shows real command output, and its terminal is readable by a screen reader",
+			"summary": "The /avatar-cli page teaches the four commands of @three-ws/avatar-cli, and one of its examples was staged rather than captured: the validate card showed a seven-error failure stitched together from errors no single manifest produces. It now shows a verbatim run against a genuinely broken manifest, with the instance paths (/, /mesh, /skeleton) the CLI really prints, so what you read on the page is what your shell will print back. The replayed terminal in the hero was marked up as one flat image, which meant a screen reader announced a one-line caption and hid both the transcript and the Replay button inside it; the transcript is now a named, readable region and Replay is an ordinary button again. The live viewer's failure notice keeps a link to the web component reference, and that link now looks like a link and shows a focus ring when you tab to it, as do the scrollable code blocks. The copy button's fallback hint used to tell everyone to press Command C; it now names the shortcut for the keyboard you are actually on.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/avatar-cli"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Scene Capture fits a phone screen, and a file that is not a point cloud now says so",
+			"summary": "Scene Capture turns a video of a room into an explorable 3D point cloud you can orbit in the browser, and also renders any .ply you already have. On a phone the viewer stage forced the page 553px wide against a 320px screen, so the whole page scrolled sideways and the side panel sat off the edge; the stage now sizes to the screen and the page fits at 320px. Dropping in a file that is not a point cloud used to look like a success: the viewer reported 0 points over an empty black stage and offered the broken file back as a download. It now tells you the file is not a valid .ply and what one should contain. The error and progress headings were also being overwritten a second after they appeared, so every specific message (Could not fetch that point cloud, Reconstructing) reverted to the generic Something went wrong or Working; the real message now stays on screen. A reconstruction whose job stops responding no longer counts up forever: after a run of failed checks, or past twenty minutes, the page says what happened and how to restart. When the worker caps a long clip at its frame budget, the viewer says the clip was truncated instead of presenting a partial scene as the whole thing. And when reconstruction is offline, the message is written for you rather than repeating a server deployment checklist. Accessibility: the drop area is a real button you can reach with the keyboard, every field in the panel is labelled, and progress, errors and the point count are announced to screen readers.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/capture"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "CA to x402 now shows the momentum and risk read its own paid endpoint sells",
+			"summary": "Paste a contract address at /ca2x402 and the resolver has always returned four timeframes of price change and a 0-to-100 risk score with the reasoning behind it, the same intel an agent gets when it pays the generated endpoint $0.01 USDC. The page quietly threw both away and rendered only the 24h number, so a buyer could not see what they were about to pay for. Both now render: a momentum strip across 5m, 1h, 6h and 24h that shows whether a move is building or fading, and a risk panel with the score, its level, and the depth, age, float and flow checks that produced it, each marked by severity. Both read at 320px. The primary Resolve button was also painting white text on the white accent, so the page's main action looked like an empty slab; its label is now legible in both themes. And the error card no longer says \"Could not resolve\" for a mistyped address: a typo, a token with no market, and a resolver outage each say which one happened. Over on /capture, the URL and settings fields get a real focus ring for keyboard users, where an outline reset had left only a faint border tint.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/ca2x402"
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Blockchain TVL by Chain is readable on a phone, and every chain in it is now a real link",
+			"summary": "The chain leaderboard at /chains ranks 100 blockchains by total value locked and shows each one's dominance share of on-chain DeFi. On a phone the table was pinned to a fixed 540px width, so the only column that fit on screen was the chain name: the TVL and dominance figures, the entire point of the page, sat off the right edge behind a sideways scroll with nothing to hint they were there. The table now sizes itself to the screen, and all three columns read in full at 320px. Opening a chain's detail page was hidden in a similar way. Rows navigated on click but showed no clickable cursor, and the destination was not a link at all, so it could not be opened in a new tab, copied, followed from a screen reader's list of links, or seen by a search engine. Each chain name is now a genuine link, the row still follows it when you click anywhere along it, and the sortable column headers announce their sort state to screen readers. When the data provider fails, the page now offers a Try again button that refetches in place instead of a link that reloads everything, and it keeps its DeFiLlama attribution instead of going blank. If the provider reports nothing at all, the page says so rather than presenting a $0.00 total as though cross-chain DeFi had emptied out.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/chains"
+		},
+		{
+			"date": "2026-08-16",
 			"title": "Coin Autopilot tells you whether your rules actually saved",
 			"summary": "Coin Autopilot is where you set the floors that decide when your coin buys itself back and when it pays creator fees out to holders, so a rule that looks set but never reached the database costs you real money. Two ways that could happen are fixed. A threshold you typed was only sent when the field lost focus, so typing a new floor and then closing the tab or hitting back threw it away silently; it now saves shortly after you stop typing, and anything still in flight is sent as the page closes. And the only confirmation was a toast that vanished after a couple of seconds, which meant a failed write left the switch showing a setting the server had never accepted. Each coin card now reports its own save: Saving, then Saved, or a Not saved marker that names the reason and stays put with a Retry button until the write lands. A coin you have never configured is marked Defaults, so the platform's inherited settings can no longer be mistaken for rules you chose. If the service goes down the page says so in both columns instead of leaving loading placeholders spinning, and it restores itself when the service returns rather than waiting for you to press Retry. Signed out, it stops retrying an endpoint that will keep refusing. Screen reader and keyboard fixes throughout: every switch and floor field is now named, save results are announced, the loading state is cleared when the data arrives, and the number fields have a visible focus ring.",
 			"tags": [
@@ -10,7 +70,18 @@
 				"improvement"
 			],
 			"link": "/autopilot"
-		},		{
+		},
+		{
+			"date": "2026-08-16",
+			"title": "Autopilot Activity keeps up when you switch agents, and its receipts link to the exact memory",
+			"summary": "Autopilot Activity lists every action your agents took on your behalf, and it has an agent picker for narrowing that list to one of them. Picking a second agent while the first was still loading used to do nothing at all: the picker and the address bar moved to the new agent, but the request for it was never sent and the page kept showing the previous agent's actions, with no sign anything had gone wrong. Whichever agent you picked last now wins, however fast you switch. Two more repairs: each receipt cites the memories that motivated the action, and those links now scroll to the cited memory and highlight it instead of dropping you at the top of a long Knowledge list; and when an agent has no actions yet, the page sends you to that agent's own autopilot controls rather than the dashboard, which is where the setting you need actually lives.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/autopilot-activity"
+		},
+		{
 			"date": "2026-08-16",
 			"title": "Crypto Categories is searchable, and opens in a fraction of the time",
 			"summary": "The sector leaderboard at /categories renders every category the market data provider reports, and that list has grown past 750. All of them were being drawn into the page at once, roughly 2,250 coin icons in a single paint, and the only way to find a sector was to scroll past every one ranked above it. The table now opens with the top 50 and pages in 50 more at a time, and a search box narrows the whole list by name before you ever need to page. Full category names are shown too, instead of being cut off mid-word on a wide screen with half the row empty. The three things that can go wrong now read differently and each offers a way out: a failed load says the data provider did not answer and gives you a Try again button that refetches, a provider reporting nothing says so plainly, and a search that matches nothing offers to clear itself. Sortable column headers now announce themselves to screen readers, and keyboard focus stays on the column you just sorted instead of being dropped back to the top of the page.",
