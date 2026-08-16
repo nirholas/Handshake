@@ -777,6 +777,14 @@
 				border-color: #171717;
 			}
 			.vb-pill.disabled:hover { transform: none; }
+			/* The billing badge is the loudest thing on a pill, so a coloured one on
+			   an unavailable lane reads as "ready to use". Grey it instead: the
+			   difference between a live lane and a dead one stays obvious without
+			   fading either of them out of legibility. */
+			.vb-pill.disabled .vb-pill-billing {
+				background: rgba(255,255,255,0.06);
+				color: #8a8a8a;
+			}
 			.vb-pill-billing {
 				font-size: 10px;
 				font-weight: 600;
