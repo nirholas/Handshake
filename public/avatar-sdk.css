@@ -789,7 +789,6 @@ pre.sdk-pre .t-op  { color: #a1a1a1; }
    why a control is unavailable for the selected component, what failed. */
 .sdk-pg-note {
 	margin: 0;
-	padding: 10px 20px 0;
 	font-size: 12px;
 	line-height: 1.5;
 	color: var(--ink-dim);
