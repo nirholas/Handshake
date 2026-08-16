@@ -59,7 +59,14 @@ export async function apiRequest(path, { method = 'GET', query, body } = {}) {
 	}
 
 	if (!res.ok) {
-		const message = data?.message || data?.error || `three.ws ${path} returned HTTP ${res.status}`;
+		// three.ws answers a failure as { error: <code>, error_description: <sentence> }
+		// (api/_lib/http.js `error`). The description is the half a human can act on,
+		// so it leads; without it an agent only ever sees the bare code.
+		const message =
+			data?.error_description ||
+			data?.message ||
+			data?.error ||
+			`three.ws ${path} returned HTTP ${res.status}`;
 		throw Object.assign(new Error(message), { code: 'upstream_error', status: res.status, body: data });
 	}
 	return data;
