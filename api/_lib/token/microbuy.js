@@ -39,6 +39,7 @@ import { getRedis } from '../redis.js';
 import { sql } from '../db.js';
 import { SOLANA_USDC_MINT } from '../../payments/_config.js';
 import { TOKEN_MINT, TOKEN_DECIMALS, treasuryWallet, treasuryWalletOrNull } from './config.js';
+import { tokenProgramIdForMint } from './token-program.js';
 import { jupiterQuote, jupiterSwapTx } from './jupiter.js';
 import {
 	envUsd,
@@ -276,8 +277,11 @@ const threeTokens = (a) => atomicsToTokens(a, TOKEN_DECIMALS);
 
 /** SPL balance of `owner` for `mint`, in atomics. Missing ATA → 0n (never throws). */
 async function splBalanceAtomics(connection, ownerPk, mintPk) {
-	const ata = getAssociatedTokenAddressSync(mintPk, ownerPk, true);
 	try {
+		// $THREE is Token-2022; the spl-token default program derives an ATA that does
+		// not exist, which reads back as a zero balance on a wallet that holds tokens.
+		const programId = await tokenProgramIdForMint(connection, mintPk);
+		const ata = getAssociatedTokenAddressSync(mintPk, ownerPk, true, programId);
 		const bal = await connection.getTokenAccountBalance(ata);
 		return BigInt(bal.value.amount);
 	} catch {
@@ -468,11 +472,12 @@ export async function sweepMicrobuyThree(signer) {
 	if (held <= 0n) return null;
 
 	const treasuryPk = new PublicKey(treasury);
-	const fromAta = getAssociatedTokenAddressSync(mintPk, payer, true);
-	const toAta = getAssociatedTokenAddressSync(mintPk, treasuryPk, true);
+	const programId = await tokenProgramIdForMint(connection, mintPk);
+	const fromAta = getAssociatedTokenAddressSync(mintPk, payer, true, programId);
+	const toAta = getAssociatedTokenAddressSync(mintPk, treasuryPk, true, programId);
 	const ixs = [
-		createAssociatedTokenAccountIdempotentInstruction(payer, toAta, treasuryPk, mintPk),
-		createTransferInstruction(fromAta, toAta, payer, held),
+		createAssociatedTokenAccountIdempotentInstruction(payer, toAta, treasuryPk, mintPk, programId),
+		createTransferInstruction(fromAta, toAta, payer, held, [], programId),
 		new TransactionInstruction({
 			keys: [],
 			programId: new PublicKey(MEMO_PROGRAM_ID),

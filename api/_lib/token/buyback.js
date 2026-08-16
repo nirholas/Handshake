@@ -30,6 +30,7 @@ import { submitProtected } from '../execution-engine.js';
 import { SOLANA_USDC_MINT } from '../../payments/_config.js';
 import { TOKEN_MINT, TOKEN_DECIMALS } from './config.js';
 import { treasuryWallet, treasuryWalletOrNull } from './config.js';
+import { tokenProgramIdForMint } from './token-program.js';
 import { jupiterQuote as jupQuote, jupiterSwapTx as jupSwapTx } from './jupiter.js';
 import {
 	computeSpend,
@@ -102,8 +103,11 @@ const threeTokens = (atomics) => atomicsToTokens(atomics, TOKEN_DECIMALS);
 
 /** SPL balance of `owner` for `mint`, in atomics. Missing ATA → 0n (never throws). */
 async function splBalanceAtomics(connection, ownerPk, mintPk) {
-	const ata = getAssociatedTokenAddressSync(mintPk, ownerPk, true);
 	try {
+		// $THREE is Token-2022, so the spl-token default program would derive an ATA
+		// that does not exist and report a zero balance for a wallet holding tokens.
+		const programId = await tokenProgramIdForMint(connection, mintPk);
+		const ata = getAssociatedTokenAddressSync(mintPk, ownerPk, true, programId);
 		const bal = await connection.getTokenAccountBalance(ata);
 		return BigInt(bal.value.amount);
 	} catch {
@@ -210,12 +214,13 @@ export async function executeBuyback(signer, plan) {
 	let sweepSig = null;
 	if (treasury !== payer.toBase58() && boughtAtomics > 0n) {
 		const treasuryPk = new PublicKey(treasury);
-		const fromAta = getAssociatedTokenAddressSync(mintPk, payer, true);
-		const toAta = getAssociatedTokenAddressSync(mintPk, treasuryPk, true);
+		const programId = await tokenProgramIdForMint(connection, mintPk);
+		const fromAta = getAssociatedTokenAddressSync(mintPk, payer, true, programId);
+		const toAta = getAssociatedTokenAddressSync(mintPk, treasuryPk, true, programId);
 		const tag = `three.ws buyback → treasury $${usd(plan.spendUsdcAtomics).toFixed(2)}`.slice(0, 180);
 		const sweepIxs = [
-			createAssociatedTokenAccountIdempotentInstruction(payer, toAta, treasuryPk, mintPk),
-			createTransferInstruction(fromAta, toAta, payer, boughtAtomics),
+			createAssociatedTokenAccountIdempotentInstruction(payer, toAta, treasuryPk, mintPk, programId),
+			createTransferInstruction(fromAta, toAta, payer, boughtAtomics, [], programId),
 			new TransactionInstruction({ keys: [], programId: new PublicKey(MEMO_PROGRAM_ID), data: Buffer.from(tag, 'utf8') }),
 		];
 		try {
@@ -257,11 +262,12 @@ export async function sweepStrandedThree(signer) {
 	if (stranded <= 0n) return null;
 
 	const treasuryPk = new PublicKey(treasury);
-	const fromAta = getAssociatedTokenAddressSync(mintPk, payer, true);
-	const toAta = getAssociatedTokenAddressSync(mintPk, treasuryPk, true);
+	const programId = await tokenProgramIdForMint(connection, mintPk);
+	const fromAta = getAssociatedTokenAddressSync(mintPk, payer, true, programId);
+	const toAta = getAssociatedTokenAddressSync(mintPk, treasuryPk, true, programId);
 	const strandedIxs = [
-		createAssociatedTokenAccountIdempotentInstruction(payer, toAta, treasuryPk, mintPk),
-		createTransferInstruction(fromAta, toAta, payer, stranded),
+		createAssociatedTokenAccountIdempotentInstruction(payer, toAta, treasuryPk, mintPk, programId),
+		createTransferInstruction(fromAta, toAta, payer, stranded, [], programId),
 		new TransactionInstruction({ keys: [], programId: new PublicKey(MEMO_PROGRAM_ID), data: Buffer.from('three.ws buyback → treasury (recover)', 'utf8') }),
 	];
 	// Protected send: priority fee + CU estimate, rebroadcast with blockhash

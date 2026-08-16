@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-16T17:28:16.748Z",
+	"generated_at": "2026-08-16T17:51:35.071Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -198,6 +198,17 @@
 		{
 			"date": "2026-08-16",
 			"type": "update",
+			"title": "Live Agents: every card on the wall now shows what its agent is actually doing",
+			"summary": "The Live Agents wall opened a separate live connection for every card on screen, and a browser will not give a page that many. The first handful connected, and the rest, more than forty of the forty-eight on the first page, sat on Connecting and an empty screen for as long as you left the tab open. Scrolling did not help them, because the connections that had been handed out were never given back. The wall now loads the real recent activity for the whole page in a single request, so every card has a genuine terminal of that agent's on-chain and skill actions the moment it appears, however far down the list it sits. Live connections are kept for what actually needs pushing: an agent with a real browser feed running, the one holding the spotlight, and the card you hover or tab to, which goes live under your cursor. A card that never manages to connect now falls back to its real activity instead of claiming to be connecting forever, the standby screen tells you how many actions an agent has recorded rather than flatly saying it has none, and the reaction buttons on a card no longer run off the edge of a phone screen.",
+			"link": "/agents-live",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
 			"title": "Live stage hosts stop swallowing hyphens, and only confirmed tippers get greeted by name",
 			"summary": "Two repairs to the Living Stages host. The cleanup pass that tidies the host's spoken line was stripping hyphens along with the invisible characters it was meant to remove, so every show heard \"on chain\" where the host said \"on-chain\" and \"state of the art\" for \"state-of-the-art\"; punctuation now survives and only invisible characters are removed. Separately, the host's memory of returning regulars counted tips whose on-chain settlement had not been confirmed yet, which meant anyone could post an unconfirmed tip under a name of their choosing and hear the host greet it aloud. That memory now reads confirmed tips only, matching the public leaderboard. Smaller repairs in the same pass: a stage that has not opened its first show is no longer cached as empty at the edge, an over-long coin address is refused instead of quietly trimmed into a different plaza, and the running tip total is written before the response returns.",
 			"link": "/stage",
@@ -232,7 +243,7 @@
 			"date": "2026-08-16",
 			"type": "update",
 			"title": "Paying with $THREE works again: credits top-ups, tips and purchases stopped failing before they were signed",
-			"summary": "Every attempt to top up credits with $THREE died in your wallet with a message about an incorrect program id, before you could approve anything and before any money moved. $THREE is issued under Solana's newer token standard, Token-2022, but the pages building the transfer were addressing the older one. That points the transfer at an account that does not exist, so the network rejected it during the safety check your wallet runs first. The credits page, agent tipping and the in-page purchase flow now read the standard directly from the coin itself and build against whichever one it actually uses, so $THREE and ordinary SPL tokens both go through. Two related touches on the credits page: it now tells you up front if the connected wallet holds no $THREE, or not enough for the amount you typed, instead of letting the wallet fail with something cryptic.",
+			"summary": "Every attempt to top up credits with $THREE died in your wallet with a message about an incorrect program id, before you could approve anything and before any money moved. $THREE is issued under Solana's newer token standard, Token-2022, but the pages building the transfer were addressing the older one. That points the transfer at an account that does not exist, so the network rejected it during the safety check your wallet runs first. The credits page, agent tipping and the in-page purchase flow now read the standard directly from the coin itself and build against whichever one it actually uses, so $THREE and ordinary SPL tokens both go through. Two related touches on the credits page: it now tells you up front if the connected wallet holds no $THREE, or not enough for the amount you typed, instead of letting the wallet fail with something cryptic. The same mix-up was quietly hobbling the treasury side: the buyback and micro-buy lanes read their own $THREE balance from the wrong place, always saw zero, and so never moved what they had bought into the treasury. They now read and move it correctly.",
 			"link": "/credits",
 			"tags": [
 				"fix"
@@ -589,6 +600,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-16",
+			"type": "update",
+			"title": "You can now teach an agent your GitHub work without waiting on an OAuth app",
+			"summary": "Seeding an agent from GitHub, the flow where you tick your profile, repositories and READMEs and the agent learns to talk about what you build, needed a GitHub sign-in button that this site never had switched on. The Connected accounts card said so honestly, and that was the end of it: an Unavailable tag and nothing you could do. There is now a second way in that needs nothing set up on our side. You create a read-only token on GitHub yourself, tick read:user and nothing more, paste it into Settings, and the same consent list, the same seeding and the same one-click deletion all work exactly as before. Consent still happens on GitHub's own screen, where you choose what the token may do, and we check what you chose: a token carrying access the feature cannot use, anything reaching your private repositories or able to delete them, is refused on the spot and never stored, with the offending permission named so you know which box to untick. The token is encrypted before it is saved and destroyed when you disconnect. One honest difference from the sign-in route: disconnecting deletes our copy and every memory it produced, but GitHub gives no way for a token to delete itself, so the confirmation now tells you to remove it on GitHub too and links you straight there.",
+			"link": "/settings",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
