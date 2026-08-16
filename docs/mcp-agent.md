@@ -39,6 +39,17 @@ may be requested by any client (including dynamically-registered ones), and are
 approved by name on the consent screen. Ask for them in the `scope` parameter of
 the authorization request; re-authorize an existing connection to add one.
 
+## Calling it without an account (x402)
+
+A client with no OAuth token can still reach the priced tools by paying per
+call. The 402 challenge this endpoint issues is scoped to itself: `resource.url`
+and every `accepts[].resource` read `https://three.ws/api/mcp-agent`, under the
+service name `three.ws Agent MCP`. Facilitators (CDP Bazaar, agentic.market,
+x402scan) index it from that same envelope, whose `extensions.bazaar` example is
+the read-only `find_services` call, so a crawler probing the documented shape can
+never move a caller's funds. `initialize`, `tools/list`, `ping`, and
+`getting_started` stay free for plain clients and crawlers.
+
 ## How payment works
 
 `pay_and_call` reuses the audited SDK payment path — it does **not** hand-roll
