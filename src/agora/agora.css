@@ -9,8 +9,8 @@
    the Commons" button, and the platform's language switcher. They each used to
    pin themselves to `bottom: ~10px` in their own stylesheet, so on a 320px
    viewport all four landed on the same 90 pixels and the primary call to action
-   ended up underneath two other controls. These two tokens are the shared
-   vocabulary that stacks them instead:
+   ended up underneath two other controls. These tokens are the shared vocabulary
+   that stacks them instead:
 
      --agora-corner-band : the strip the global language switcher owns in the
                            bottom-right corner (src/i18n.js pins it 16px up).

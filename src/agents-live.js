@@ -1025,10 +1025,14 @@ async function hydrateActivity(ids) {
 			if (state) applyActivityEntries(state, entries);
 		}
 		// An agent with live pixels earns a stream slot even if it sits outside the
-		// pre-warm band: that is the whole point of a live wall.
-		for (const id of casting || []) {
-			const state = _cards.get(id);
-			if (state && !state.es) ensureStream(state);
+		// pre-warm band: that is the whole point of a live wall. Fill only the free
+		// slots, nearest the viewport first, so a burst of casters cannot thrash the
+		// pool by each attaching and immediately evicting the last.
+		const live = (casting || []).filter((id) => _cards.get(id) && !_cards.get(id).es);
+		live.sort((a, b) => Number(_nearView.has(b)) - Number(_nearView.has(a)));
+		for (const id of live) {
+			if (_streamed.size >= MAX_STREAMS) break;
+			ensureStream(_cards.get(id));
 		}
 	} catch { /* the cards keep whatever they last rendered */ }
 	finally { _activityInFlight = false; }

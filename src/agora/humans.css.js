@@ -44,9 +44,9 @@ const HUMANS_CSS = `
 /* On a phone the dock goes full width, which walks it straight into the global
    language switcher pinned to the bottom-right corner (src/i18n.js, 16px up and
    the topmost z-index on the page). At 320px the switcher covered the dock's own
-   "Sign in to join" button. Sit the dock above that corner strip instead; the
-   strip's height is shared with the rest of the world's bottom furniture through
-   --agora-corner-band (src/agora/agora.css). */
+   "Sign in to join" button. --agora-dock-floor (src/agora/agora.css) drops to
+   clear that corner strip at this breakpoint, so the dock only has to go full
+   width here; its bottom edge is already handled by the rule above. */
 @media (max-width: 640px) {
 	#agora-humans-dock { left: 8px; right: 8px; max-width: none; }
 }

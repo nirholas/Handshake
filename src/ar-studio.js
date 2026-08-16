@@ -809,7 +809,7 @@ function updateRoomButton() {
 	if (idleLabel) idleLabel.hidden = live;
 	if (codeLabel) {
 		codeLabel.hidden = !live;
-		codeLabel.textContent = live ? roomCode || 'Room' : '';
+		codeLabel.textContent = live ? `👥 ${roomCode || 'Room'}` : '';
 	}
 	// Keep the live modal panel in sync if it's open.
 	if (roomModal && !roomModal.hidden) renderRoomModal();
