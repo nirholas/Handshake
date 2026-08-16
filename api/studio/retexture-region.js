@@ -157,7 +157,7 @@ async function handleStatus(req, res) {
 	// Polling is cheap for the client and an outbound worker fetch for us, so it
 	// gets the same ceiling the sibling forge status endpoints use.
 	const rl = await limits.mcp3dStatus(userId);
-	if (!rl.success) return rateLimited(res, rl, 'too many status polls — slow down');
+	if (!rl.success) return rateLimited(res, rl, 'too many status polls, slow down');
 
 	const url = new URL(req.url, 'http://x');
 	const token = url.searchParams.get('job');
