@@ -404,6 +404,29 @@ describe('quoteTokenForUsd', () => {
 	it('rejects NaN', async () => {
 		await expect(quoteTokenForUsd(NaN)).rejects.toMatchObject({ code: 'bad_request' });
 	});
+
+	// GET /api/token/price?usd= feeds this straight from the query string. At a
+	// sub-cent price a large-but-finite USD figure scales past Number.MAX_VALUE,
+	// and BigInt(Infinity) is a RangeError: unguarded it surfaced as an
+	// unauthenticated 500 with a Sentry capture and an ops alert per hit.
+	it('rejects a USD amount whose atomics overflow the float range', async () => {
+		fetchResponses.push({ body: { [TOKEN_MINT]: { usdPrice: 0.0017 } } });
+		await expect(quoteTokenForUsd(1e300)).rejects.toMatchObject({
+			code: 'amount_too_large',
+			status: 422,
+		});
+	});
+
+	it('quotes against a caller-supplied price without a second lookup', async () => {
+		// No fetch response is queued: a live lookup here would throw "Unexpected fetch".
+		const q = await quoteTokenForUsd(2, {
+			price: { priceUsd: 0.002, source: 'caller', at: '2026-08-16T00:00:00.000Z' },
+		});
+		expect(q.priceUsd).toBe(0.002);
+		expect(q.source).toBe('caller');
+		expect(q.priceAt).toBe('2026-08-16T00:00:00.000Z');
+		expect(q.atomics).toBe(1_000_000_000n);
+	});
 });
 
 describe('atomicsToTokens', () => {
