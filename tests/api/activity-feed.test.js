@@ -218,8 +218,11 @@ describe('GET /api/users/me/feed?scope=all', () => {
 		const before = '2026-07-12T00:00:00Z';
 		const { body } = await call({ scope: 'all', limit: '2', before });
 
+		// The handler canonicalizes the cursor (new Date(before).toISOString())
+		// before fanning it out, so every source sees the normalized form.
+		const normalizedBefore = new Date(before).toISOString();
 		for (const fn of [listRecentCreations, listDioramas, listRecentRestyles]) {
-			expect(fn).toHaveBeenCalledWith(expect.objectContaining({ before }));
+			expect(fn).toHaveBeenCalledWith(expect.objectContaining({ before: normalizedBefore }));
 		}
 		// A full page hands back the oldest item's timestamp as the next cursor.
 		expect(body.items.map((it) => it.kind)).toEqual(['model', 'restyle']);

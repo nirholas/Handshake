@@ -73,8 +73,10 @@ export default wrap(async (req, res) => {
 					}
 				: null,
 			claim_url: status === 'available' ? `${env.APP_ORIGIN}/threews/claim` : null,
+			// Rendered verbatim by the claim page, so this one reads as a sentence
+			// rather than following the lowercase house style of `error_description`.
 			blocked_reason:
-				status === 'needs_username' ? 'set a username on your account before claiming a subdomain' : null,
+				status === 'needs_username' ? 'Set a username on your account before claiming a subdomain.' : null,
 		},
 	});
 });
