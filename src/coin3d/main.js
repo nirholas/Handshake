@@ -74,10 +74,14 @@ const isPlausibleMint = (s) => BASE58_RE.test(String(s || '').trim());
 
 // ── MCP client (JSON-RPC over the public read-only endpoint) ─────────────────
 let rpcId = 0;
-async function mcpCall(name, args = {}) {
+// Every call is bounded. An RPC provider that accepts the socket and then
+// stalls used to hang the whole page on the loading spinner forever, because
+// nothing downstream could time it out.
+async function mcpCall(name, args = {}, timeoutMs = 15_000) {
 	const res = await fetch(MCP_ENDPOINT, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
+		signal: AbortSignal.timeout(timeoutMs),
 		body: JSON.stringify({
 			jsonrpc: '2.0',
 			id: ++rpcId,

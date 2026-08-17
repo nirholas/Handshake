@@ -24,6 +24,20 @@
 	--cv-max-width: 1280px;
 	--cv-content-padding: 1rem;
 }
+
+/* Reachable by assistive tech, invisible on screen: table captions and header
+   labels that a sighted reader gets from the layout itself. */
+.cv-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
 @media (min-width: 768px) {
 	:root {
 		--cv-content-padding: 1.5rem;
@@ -468,6 +482,16 @@ html.cv-page,
 	color: var(--cv-text-3);
 	gap: 0.5rem;
 	font-size: 0.875rem;
+}
+/* A failure state carries a sentence and its recovery control, so it stacks. */
+.cv-chart-state.col {
+	flex-direction: column;
+	text-align: center;
+	padding: 0 1rem;
+}
+.cv-chart-state.col p {
+	margin: 0;
+	max-width: 32rem;
 }
 .cv-spinner {
 	width: 1rem;
@@ -1523,6 +1547,102 @@ html.cv-page,
 .cmp-chip button:hover {
 	color: var(--cv-red);
 }
+.cmp-chip button:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 1px;
+	color: var(--cv-text);
+}
+/* A chip whose coin never resolved says so on the chip itself, so the gap in
+   the chart and table is never unexplained. */
+.cmp-chip .note {
+	font-size: 0.6875rem;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--cv-text-3);
+}
+.cmp-chip[data-state='missing'],
+.cmp-chip[data-state='failed'] {
+	border-color: color-mix(in srgb, var(--cv-red) 45%, transparent) !important;
+}
+.cmp-chip[data-state='missing'] .note,
+.cmp-chip[data-state='failed'] .note {
+	color: var(--cv-red);
+}
+.cmp-chip[data-state='loading'] .note {
+	color: var(--cv-text-3);
+}
+
+/* Copy-link: the URL is the shareable artifact, so the page needs a control
+   that hands it over without a right-click. */
+.cmp-share {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	appearance: none;
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	color: var(--cv-text-2);
+	font: inherit;
+	font-size: 0.8125rem;
+	padding: 0.5rem 0.75rem;
+	cursor: pointer;
+	transition:
+		border-color 0.15s,
+		color 0.15s,
+		background 0.15s;
+}
+.cmp-share:hover:not(:disabled) {
+	color: var(--cv-text);
+	border-color: var(--cv-text-3);
+}
+.cmp-share:active:not(:disabled) {
+	transform: translateY(1px);
+}
+.cmp-share:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+.cmp-share:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+#cmp-search input:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+.cmp-hint {
+	margin: -0.75rem 0 1.25rem;
+	font-size: 0.8125rem;
+	color: var(--cv-text-3);
+}
+.cmp-hint:empty {
+	display: none;
+}
+
+/* Coins the API could not resolve: named, with the action that clears them. */
+.cmp-issues {
+	border: 1px solid color-mix(in srgb, var(--cv-red) 35%, var(--cv-border));
+	background: color-mix(in srgb, var(--cv-red) 7%, transparent);
+	border-radius: var(--cv-radius-lg);
+	padding: 0.875rem 1rem;
+	margin-bottom: 1rem;
+	font-size: 0.875rem;
+	color: var(--cv-text-2);
+}
+.cmp-issues p {
+	margin: 0 0 0.25rem;
+}
+.cmp-issues strong {
+	color: var(--cv-text);
+	font-weight: 600;
+}
+.cmp-issues .acts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	margin-top: 0.5rem;
+}
 .cmp-table-wrap {
 	overflow-x: auto;
 	border: 1px solid var(--cv-border);
@@ -1589,6 +1709,18 @@ html.cv-page,
 	width: 12px;
 	height: 3px;
 	border-radius: 2px;
+}
+.cmp-legend .li.na {
+	color: var(--cv-text-3);
+}
+.cmp-legend .li.na .dot {
+	opacity: 0.4;
+}
+.cmp-legend .tag {
+	font-size: 0.6875rem;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--cv-text-3);
 }
 
 /* ── Liquidations pulse strip (/coins) ─────────────────────────────────────

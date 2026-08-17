@@ -182,19 +182,36 @@
 				position: fixed;
 				inset: 0;
 				display: grid;
-				place-items: center;
+				justify-items: center;
+				align-items: center;
+				/* Safe centering + a scroll track: the landing card is taller than a
+				   short mobile viewport, and `body` never scrolls, so without these
+				   its footer links would be clipped and unreachable. */
+				align-content: safe center;
+				overflow-y: auto;
+				overscroll-behavior: contain;
 				padding: 24px;
 				background: radial-gradient(120% 120% at 50% 0%, var(--bg-1) 0%, var(--bg-0) 70%);
 				z-index: 5;
+				scrollbar-width: thin;
+				scrollbar-color: rgba(120, 140, 220, 0.4) transparent;
+			}
+			#status::-webkit-scrollbar {
+				width: 6px;
+			}
+			#status::-webkit-scrollbar-thumb {
+				background: rgba(120, 140, 220, 0.32);
+				border-radius: 3px;
 			}
 			.status-card {
 				text-align: center;
 				max-width: 380px;
 				animation: rise 0.4s ease both;
 			}
-			.status-card h2 {
+			.status-card h1 {
 				margin: 14px 0 8px;
 				font-size: 19px;
+				line-height: 1.25;
 			}
 			.status-card p {
 				color: var(--muted);
@@ -224,7 +241,7 @@
 				outline: 2px solid #fff;
 				outline-offset: 3px;
 			}
-			#status[data-kind='error'] .status-card h2 {
+			#status[data-kind='error'] .status-card h1 {
 				color: #ff8f8f;
 			}
 			.spinner {
@@ -296,6 +313,17 @@
 			@keyframes c3dPulse {
 				0%, 100% { opacity: 0.4; }
 				50% { opacity: 0.8; }
+			}
+			/* Pending stat value: the holder scan is the slowest source, so its
+			   cell shows a pulsing bar instead of a placeholder dash it might
+			   never replace. */
+			.c3d-dd-sk {
+				display: inline-block;
+				width: 46px;
+				height: 12px;
+				border-radius: 4px;
+				background: rgba(255, 255, 255, 0.09);
+				animation: c3dPulse 1.4s ease-in-out infinite;
 			}
 			/* Watch button */
 			.c3d-watch-btn {
@@ -541,7 +569,7 @@
 				width: 100%;
 				animation: rise 0.45s ease both;
 			}
-			.c3d-landing h2 {
+			.c3d-landing h1 {
 				font-size: 26px;
 				margin: 16px 0 8px;
 				letter-spacing: -0.01em;
@@ -715,7 +743,7 @@
 				.c3d-recent {
 					grid-template-columns: repeat(3, 1fr);
 				}
-				.c3d-landing h2 {
+				.c3d-landing h1 {
 					font-size: 22px;
 				}
 			}

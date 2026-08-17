@@ -41,10 +41,15 @@
 		body { background: var(--bg); color: var(--text); font: 15px/1.55 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
 		#c-scene { position: fixed; inset: 0; display: block; }
 		canvas { display: block; }
+		/* The canvas is the primary control: it takes keyboard focus so arrow keys
+		   can walk the stars and Enter can open one. Make that focus visible. */
+		#c-scene:focus-visible { outline: 2px solid var(--brand-blue-light); outline-offset: -3px; }
+		.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 		.c-hud { position: fixed; top: 22px; left: 22px; max-width: min(420px, 76vw); z-index: 5; pointer-events: none; }
 		.c-badge { display: inline-flex; align-items: center; gap: 8px; pointer-events: auto; text-decoration: none; background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px 6px 10px; font-size: 12px; color: var(--muted); margin-bottom: 16px; transition: border-color .15s, color .15s; }
 		.c-badge:hover { border-color: rgba(120,169,255,.5); color: var(--text); }
+		.c-badge:focus-visible, .c-links a:focus-visible, .c-close:focus-visible, .c-retry:focus-visible, .c-status a:focus-visible, .c-notice a:focus-visible { outline: 2px solid var(--brand-blue-light); outline-offset: 2px; }
 		.c-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand-blue); box-shadow: 0 0 10px var(--brand-blue); }
 		.c-badge strong { color: var(--text); font-weight: 600; }
 		.c-hud h1 { font-size: clamp(22px, 3.4vw, 30px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
@@ -58,7 +63,11 @@
 		.c-status code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--brand-blue-light); }
 
 		.c-hint { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 5; color: var(--muted); font-size: 12.5px; background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px; white-space: nowrap; transition: opacity .4s; }
-		@media (max-width: 640px) { .c-hint { font-size: 11px; padding: 6px 12px; } }
+		/* Narrow viewports: the hint wraps instead of overflowing the screen, and
+		   sits above the language switcher rather than underneath it. */
+		@media (max-width: 720px) {
+			.c-hint { font-size: 11px; padding: 6px 14px; bottom: 74px; white-space: normal; text-align: center; max-width: calc(100vw - 28px); border-radius: 14px; line-height: 1.45; }
+		}
 
 		.c-tooltip { position: fixed; z-index: 6; pointer-events: none; background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 9px; padding: 6px 10px; font-size: 12.5px; opacity: 0; transition: opacity .12s; transform: translate(-50%, -130%); white-space: nowrap; }
 		.c-tooltip .sym { color: var(--brand-blue-light); font-weight: 700; }
@@ -101,6 +110,9 @@
 		@keyframes spin { to { transform: rotate(360deg); } }
 		.c-overlay .msg { color: var(--muted); font-size: 14px; max-width: 380px; }
 		.c-overlay .msg strong { color: var(--text); }
+		.c-retry { background: var(--brand-blue); border: 1px solid var(--brand-blue-2); color: #fff; font: inherit; font-size: 13.5px; font-weight: 600; border-radius: 10px; padding: 9px 20px; cursor: pointer; transition: background .15s, transform .1s; }
+		.c-retry:hover { background: var(--brand-blue-2); }
+		.c-retry:active { transform: translateY(1px); }
 	</style>
 
 	<meta property="og:site_name" content="three.ws">
@@ -112,19 +124,20 @@
 	<meta name="twitter:site" content="@trythreews">
 </head>
 <body>
-	<canvas id="c-scene"></canvas>
+	<canvas id="c-scene" tabindex="0" aria-label="Token galaxy. Use the arrow keys to move between stars and press Enter to open the selected token's analysis."></canvas>
+	<p class="sr-only" id="c-a11y-live" role="status" aria-live="polite"></p>
 
 	<div class="c-hud">
 		<a class="c-badge" href="/galaxy" data-i18n-html="constellation.three_ws_ibm_watsonx"><span class="dot"></span><strong>three.ws</strong> × IBM watsonx</a>
 		<h1 data-i18n-html="constellation.watsonx_constellation">watsonx <span class="g">Constellation</span></h1>
 		<p data-i18n="constellation.live_solana_tokens_positioned_in_3d_by">Live Solana tokens, positioned in 3D by IBM&nbsp;Granite embeddings on watsonx.ai. Nearby stars are semantically alike.</p>
-		<div class="c-status" id="c-status"><span class="s-dot"></span><span id="c-status-text" data-i18n="constellation.starting">Starting…</span></div>
+		<div class="c-status" id="c-status" role="status" aria-live="polite"><span class="s-dot"></span><span id="c-status-text" data-i18n="constellation.starting">Starting…</span></div>
 	</div>
 
-	<div class="c-hint" id="c-hint">drag to orbit · scroll to zoom · click a star for a live Granite analysis</div>
+	<div class="c-hint" id="c-hint">drag to orbit · scroll to zoom · click a star (or arrow keys + Enter) for a live Granite analysis</div>
 	<div class="c-tooltip" id="c-tooltip"><span class="sym" id="c-tip-sym"></span> <span class="nm" id="c-tip-nm"></span></div>
 
-	<aside class="c-panel" id="c-panel" aria-hidden="true">
+	<aside class="c-panel" id="c-panel" aria-hidden="true" aria-label="Token detail" inert>
 		<div class="c-panel-head">
 			<div class="c-panel-top">
 				<img class="c-panel-logo" id="c-panel-logo" alt="" />
@@ -142,7 +155,7 @@
 			<div class="c-links" id="c-panel-links"></div>
 		</div>
 		<div class="c-analysis-wrap">
-			<div class="c-analysis-head"><span class="dot"></span>Analysis by <strong data-i18n="constellation.ibm_granite">IBM Granite</strong>&nbsp;on watsonx.ai</div>
+			<div class="c-analysis-head"><span class="dot"></span><span id="c-analysis-by">Analysis by <strong data-i18n="constellation.ibm_granite">IBM Granite</strong>&nbsp;on watsonx.ai</span></div>
 			<div class="c-analysis" id="c-analysis"></div>
 			<div class="c-meta" id="c-analysis-meta"></div>
 			<p class="c-disclaim" data-i18n="constellation.generated_by_an_ai_model_from_public">Generated by an AI model from public token metadata. Informational only — not financial advice. Tokens shown are live pump.fun / Solana trending data and are not endorsements.</p>

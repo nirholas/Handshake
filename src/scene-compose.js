@@ -1605,6 +1605,13 @@ async function saveOutfit() {
 		toast(`Save outfit keeps up to ${MAX_SAVED_ATTACHMENTS} attached items; use Export GLB for more`);
 		return;
 	}
+	// A dropped local file lives at a blob: URL that dies with this tab, so
+	// persisting one would save an outfit that is broken the moment it reloads.
+	const local = attached.filter((a) => /^blob:/i.test(a.url));
+	if (local.length) {
+		toast(`"${local[0].name}" is a local file. Upload it via /forge, or use Export GLB to keep this scene.`, 5000);
+		return;
+	}
 	if (!avatarRecordId) { toast('Use Export GLB to save this scene'); return; }
 	showLoading('Saving outfit…');
 	try {

@@ -58,6 +58,19 @@ import { env } from '../_lib/env.js';
 const DEFAULT_COSMOS_INVOKE_URL = 'https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-7b';
 const NVCF_STATUS_URL = 'https://api.nvcf.nvidia.com/v2/nvcf/pexec/status';
 
+// NVIDIA retires hosted preview functions without retiring the gateway PATH: the
+// route keeps answering (401 unauthenticated), but an authenticated submit comes
+// back with `Function '<uuid>': Not found for account '<id>'`. That is what the
+// live account hit on cosmos-predict1-7b, and one dead function should not take
+// the whole lane down, so the submit walks the published cosmos-predict routes in
+// order and only reports the lane unavailable when every rung is gone. Pinning
+// NVIDIA_COSMOS_INVOKE_URL opts out: an explicit pin is used alone, because the
+// operator who set it means that model (or a self-hosted NIM), not a sibling.
+const COSMOS_ROUTE_CANDIDATES = [
+	DEFAULT_COSMOS_INVOKE_URL,
+	'https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-5b',
+];
+
 // Cosmos predict renders a fixed ~5 s 1280×704 @ 24fps clip; the prompt is the
 // only knob that meaningfully changes the output, so we keep the body minimal.
 // A long prompt is clamped so the request is honest about what conditions it.
@@ -101,6 +114,20 @@ function invokeUrl() {
 	return env.NVIDIA_COSMOS_INVOKE_URL || DEFAULT_COSMOS_INVOKE_URL;
 }
 
+// Ordered submit targets: an explicit pin alone, otherwise the published route
+// chain above.
+function invokeCandidates() {
+	return env.NVIDIA_COSMOS_INVOKE_URL ? [env.NVIDIA_COSMOS_INVOKE_URL] : [...COSMOS_ROUTE_CANDIDATES];
+}
+
+// Does this upstream answer mean "the model behind this route is gone for this
+// account" (as opposed to a transient or credential failure)? The gateway says it
+// with a 404 or with a `Not found for account` detail on another status.
+function isRouteRetired(status, detail) {
+	if (status === 404) return true;
+	return typeof detail === 'string' && /not found for account/i.test(detail);
+}
+
 // Map an upstream HTTP status onto the normalized error callers route on.
 function providerError(status, message, retryAfter) {
 	let code = 'provider_error';
@@ -114,6 +141,12 @@ function providerError(status, message, retryAfter) {
 	} else if (status === 429) {
 		code = 'rate_limited';
 		mapped = 429;
+	} else if (isRouteRetired(status, message)) {
+		// The model is gone for this account, not broken: the caller should report
+		// the lane offline (503) and degrade, never ask the user to retry a route
+		// that will keep answering the same way.
+		code = 'lane_unavailable';
+		mapped = 503;
 	}
 	const err = Object.assign(new Error(message || `NVIDIA Cosmos returned ${status}`), {
 		code,
@@ -260,12 +293,12 @@ export function createNvidiaCosmosProvider() {
 
 	// POST the invoke. Returns { done:true, videoBase64 } on synchronous 200, or
 	// { done:false, reqId } when NVCF accepted it for async processing.
-	async function postInvoke(body) {
+	async function postInvoke(body, url = invokeUrl()) {
 		let lastErr = null;
 		for (let attempt = 1; attempt <= MAX_INVOKE_ATTEMPTS; attempt++) {
 			let res;
 			try {
-				res = await fetch(invokeUrl(), {
+				res = await fetch(url, {
 					method: 'POST',
 					headers: invokeHeaders,
 					body: JSON.stringify(body),
@@ -343,7 +376,23 @@ export function createNvidiaCosmosProvider() {
 		// Native text→world video. Returns a poll handle, or a ready R2 MP4 URL when
 		// NVCF completed within the submit request (rare for video).
 		async textToWorld({ prompt, seed } = {}) {
-			const parsed = await postInvoke(buildWorldBody({ prompt, seed }));
+			const body = buildWorldBody({ prompt, seed });
+			const candidates = invokeCandidates();
+			let retiredErr = null;
+			let parsed = null;
+			for (const url of candidates) {
+				try {
+					parsed = await postInvoke(body, url);
+					break;
+				} catch (err) {
+					// Only a retired route is worth stepping past; a key, quota, or
+					// gateway failure means the next rung would fail the same way.
+					if (err?.code !== 'lane_unavailable') throw err;
+					console.warn('[nvidia-cosmos] route retired, trying the next rung — %s', url);
+					retiredErr = err;
+				}
+			}
+			if (!parsed) throw retiredErr;
 			if (parsed.done) {
 				const resultVideoUrl = await persistVideo(parsed.videoBase64);
 				return { taskId: null, resultVideoUrl };
