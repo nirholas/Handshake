@@ -172,6 +172,22 @@
 	}
 }
 
+/* Below ~360px the asset button leaves too little room beside the number, and a
+   converted amount the reader cannot finish is a broken result. Stack it so the
+   figure gets the full row width. */
+@media (max-width: 22.5rem) {
+	.cvt-row {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.5rem;
+	}
+	.cvt-amount,
+	.cvt-result {
+		width: 100%;
+		flex: 0 0 auto;
+	}
+}
+
 /* Inline validation for the amount field. */
 .cvt-hint {
 	margin: 0.5rem 0 0;
@@ -422,6 +438,11 @@
 .cvt-picker {
 	position: fixed;
 	z-index: 60;
+	display: flex;
+	flex-direction: column;
+	/* Set per-open by positionPicker() from the space left under (or over) the
+	   anchor, so the list scrolls inside the popover instead of off-screen. */
+	max-height: var(--cvt-pick-max, 26rem);
 	width: min(22rem, calc(100vw - 2rem));
 	background: var(--cv-surface);
 	border: 1px solid var(--cv-border);
@@ -448,6 +469,7 @@
 
 .cvt-pick-search {
 	position: relative;
+	flex: 0 0 auto;
 	padding: 0.625rem;
 	border-bottom: 1px solid var(--cv-border);
 }
@@ -485,7 +507,8 @@
 }
 
 .cvt-pick-list {
-	max-height: 20rem;
+	flex: 1 1 auto;
+	min-height: 0;
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 	padding: 0.375rem;

@@ -490,3 +490,6 @@ packages/node-operator/models/
 
 # Dev-server logs from `npm run dev` on an alternate port (.vite<port>.log).
 .vite*.log
+
+# Scratch capture of an `npm test` run (.npmtest-<label>.log).
+.npmtest-*.log

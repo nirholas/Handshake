@@ -10,7 +10,17 @@
 //
 // The library is small (a hundred or so entries) so the whole manifest is
 // fetched once and filtered/sorted client-side: no pagination round-trips,
-// instant search.
+// instant search. The search, sort, card copy and deep links are pure functions
+// of the manifest and live in shared/character-library-view.js, under test in
+// tests/character-library-view.test.js.
+
+import {
+	cardMeta,
+	characterName,
+	viewerLinks,
+	viewState,
+	visibleCharacters,
+} from './shared/character-library-view.js';
 
 const els = {
 	grid: document.querySelector('[data-role="grid"]'),
@@ -46,10 +56,18 @@ function show(el, on) {
 	if (el) el.hidden = !on;
 }
 
-function formatBytes(n) {
-	if (!n) return '';
-	const mb = n / 1024 / 1024;
-	return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
+// Exactly one of the page's five states is on screen at a time; showing the next
+// one is always "hide the other four".
+const PANELS = {
+	loading: () => els.loading,
+	grid: () => els.grid,
+	empty: () => els.empty,
+	'empty-search': () => els.emptySearch,
+	error: () => els.error,
+};
+
+function showOnly(name) {
+	for (const [key, el] of Object.entries(PANELS)) show(el(), key === name);
 }
 
 // A card's <model-viewer> is deliberately control-free. model-viewer reads
@@ -67,16 +85,29 @@ function formatBytes(n) {
 // native lazy loading and off-thread decoding on the way.
 function renderCard(a) {
 	const glbUrl = a.url || '';
-	const previewUrl = glbUrl ? `/app#model=${encodeURIComponent(glbUrl)}` : '#';
-	const useUrl = glbUrl ? `/studio?model=${encodeURIComponent(glbUrl)}` : '#';
-	const animateUrl = glbUrl ? `/pose?src=${encodeURIComponent(glbUrl)}&title=${encodeURIComponent(a.label || a.name)}` : '#';
+	const links = viewerLinks(a);
 	const thumb = a.thumb || '';
-	const alt = a.label || a.name || 'Character';
+	const alt = characterName(a) || 'Character';
+
+	// A row with no GLB gets a plain, unlinked tile rather than an anchor to "#":
+	// the three viewers all take the model URL, so with none there is nothing for
+	// them to open.
+	const openTag = links
+		? `<a class="ch-card-thumb" href="${escapeAttr(links.preview)}" aria-label="Preview ${escapeAttr(alt)} in 3D">`
+		: '<div class="ch-card-thumb">';
+	const closeTag = links ? '</a>' : '</div>';
+	const actions = links
+		? `<div class="ch-card-actions">
+				<a class="ch-btn ch-btn--primary" href="${escapeAttr(links.use)}" title="Use in Widget Studio">Use</a>
+				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(links.animate)}" title="Animate in the Animation Studio">Animate</a>
+				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(links.preview)}" title="Open in the 3D viewer">Preview</a>
+			</div>`
+		: '';
 
 	const card = document.createElement('article');
 	card.className = 'ch-card';
 	card.innerHTML = `
-		<a class="ch-card-thumb" href="${escapeAttr(previewUrl)}" aria-label="Preview ${escapeAttr(alt)} in 3D">
+		${openTag}
 			<model-viewer
 				src="${escapeAttr(glbUrl)}"
 				alt="${escapeAttr(alt)}"
@@ -92,17 +123,13 @@ function renderCard(a) {
 			>${thumb ? `<img slot="poster" class="ch-card-poster" src="${escapeAttr(thumb)}" alt="" loading="lazy" decoding="async" />` : ''}</model-viewer>
 			<span class="ch-card-pill">Rigged</span>
 			<span class="ch-card-play" aria-hidden="true">▶</span>
-		</a>
+		${closeTag}
 		<div class="ch-card-body">
-			<h3 class="ch-card-name">${escapeHtml(a.label || a.name)}</h3>
+			<h3 class="ch-card-name">${escapeHtml(alt)}</h3>
 			<div class="ch-card-meta">
-				<span title="Skinned mesh, ready to animate">Mixamo · ${escapeHtml(formatBytes(a.bytes))}</span>
+				<span title="Skinned mesh, ready to animate">${escapeHtml(cardMeta(a))}</span>
 			</div>
-			<div class="ch-card-actions">
-				<a class="ch-btn ch-btn--primary" href="${escapeAttr(useUrl)}" title="Use in Widget Studio">Use</a>
-				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(animateUrl)}" title="Animate in the Animation Studio">Animate</a>
-				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(previewUrl)}" title="Open in the 3D viewer">Preview</a>
-			</div>
+			${actions}
 		</div>
 	`;
 	return card;
@@ -168,38 +195,12 @@ function wireReveal() {
 }
 
 function applyView() {
-	const q = state.query.trim().toLowerCase();
-	let list = state.all;
-	if (q) list = list.filter((a) => (a.label || a.name || '').toLowerCase().includes(q));
+	const list = visibleCharacters(state.all, { query: state.query, sort: state.sort });
+	const panel = viewState({ loaded: true, failed: false, total: state.all.length, visible: list.length });
 
-	list = list.slice().sort((a, b) => {
-		const la = (a.label || a.name || '').toLowerCase();
-		const lb = (b.label || b.name || '').toLowerCase();
-		if (state.sort === 'za') return lb.localeCompare(la);
-		if (state.sort === 'largest') return (b.bytes || 0) - (a.bytes || 0);
-		if (state.sort === 'smallest') return (a.bytes || 0) - (b.bytes || 0);
-		return la.localeCompare(lb); // 'az' default
-	});
-
-	// Nothing at all in the library (manifest empty / not uploaded yet).
-	if (state.all.length === 0) {
-		show(els.loading, false);
-		show(els.grid, false);
-		show(els.emptySearch, false);
-		show(els.error, false);
-		show(els.empty, true);
-		if (els.count) els.count.textContent = '';
-		return;
-	}
-
-	// A search that matches nothing.
-	if (list.length === 0) {
-		show(els.loading, false);
-		show(els.grid, false);
-		show(els.empty, false);
-		show(els.error, false);
-		show(els.emptySearch, true);
-		if (els.count) els.count.textContent = '0 characters';
+	if (panel !== 'grid') {
+		showOnly(panel);
+		if (els.count) els.count.textContent = panel === 'empty-search' ? '0 characters' : '';
 		return;
 	}
 
@@ -210,20 +211,12 @@ function applyView() {
 	cancelReveal();
 	els.grid.replaceChildren(frag);
 
-	show(els.loading, false);
-	show(els.empty, false);
-	show(els.emptySearch, false);
-	show(els.error, false);
-	show(els.grid, true);
+	showOnly('grid');
 	if (els.count) els.count.textContent = `${list.length} of ${state.all.length}`;
 }
 
 async function load() {
-	show(els.loading, true);
-	show(els.grid, false);
-	show(els.empty, false);
-	show(els.emptySearch, false);
-	show(els.error, false);
+	showOnly('loading');
 
 	try {
 		const res = await fetch('/api/avatars/library');
@@ -240,11 +233,7 @@ async function load() {
 		}
 		applyView();
 	} catch (err) {
-		show(els.loading, false);
-		show(els.grid, false);
-		show(els.empty, false);
-		show(els.emptySearch, false);
-		show(els.error, true);
+		showOnly('error');
 		if (els.errorMsg) {
 			// The catalog pass lands after /api/locale resolves and would otherwise
 			// revert this concrete reason back to the generic placeholder shipped in

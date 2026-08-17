@@ -639,6 +639,9 @@ function onPickerKey(e) {
 }
 
 const PICKER_GUTTER = 8;
+const PICKER_OFFSET = 6;
+// Below this the popover is too short to browse, so it flips above the anchor.
+const PICKER_MIN_HEIGHT = 220;
 
 function positionPicker(anchor) {
 	// Fixed position (viewport coords) so the offset parent is unambiguous: the
@@ -652,9 +655,25 @@ function positionPicker(anchor) {
 	const width = el.offsetWidth || el.getBoundingClientRect().width;
 	const maxLeft = Math.max(PICKER_GUTTER, window.innerWidth - width - PICKER_GUTTER);
 	const left = Math.min(Math.max(PICKER_GUTTER, rect.right - width), maxLeft);
-	el.style.top = `${rect.bottom + 6}px`;
 	el.style.left = `${left}px`;
 	el.style.right = 'auto';
+
+	// The "to" button sits low in the card, so on a phone there is often no room
+	// under it. Flip above the anchor when that side has more space, and cap the
+	// height either way so the list scrolls inside the popover instead of
+	// running off the bottom of the screen.
+	const below = window.innerHeight - rect.bottom - PICKER_OFFSET - PICKER_GUTTER;
+	const above = rect.top - PICKER_OFFSET - PICKER_GUTTER;
+	const flip = below < PICKER_MIN_HEIGHT && above > below;
+	const available = Math.max(PICKER_MIN_HEIGHT, flip ? above : below);
+	el.style.setProperty('--cvt-pick-max', `${available}px`);
+	if (flip) {
+		el.style.top = 'auto';
+		el.style.bottom = `${window.innerHeight - rect.top + PICKER_OFFSET}px`;
+	} else {
+		el.style.bottom = 'auto';
+		el.style.top = `${rect.bottom + PICKER_OFFSET}px`;
+	}
 }
 
 function openPicker(side, anchor) {
