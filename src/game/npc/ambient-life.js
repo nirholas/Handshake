@@ -31,7 +31,7 @@ const DEFAULT_AVATAR = '/avatars/default.glb';
 const PED_WALK_SPEED = 1.35;     // m/s along the loop, an unhurried stroll
 const DETAILED_PEDS = 6;         // GLB-bodied pedestrians near the centre
 const IMPOSTOR_PEDS = 14;        // cheap instanced crowd in the distance
-const VEHICLES = 5;              // cars/wagons on the ring road
+const VEHICLES = 5;              // cars on the ring road
 const VEHICLE_SPEED = 6.5;       // m/s
 const PED_AVOID_RADIUS = 2.0;    // how close before a ped sidesteps the player
 const CAR_BRAKE_RADIUS = 5.5;    // how close before a car yields to the player
@@ -195,17 +195,19 @@ class Pedestrian {
 	}
 }
 
-// ---- vehicle (grouped, biome-styled) -----------------------------------------
+// ---- vehicle (the Trench Car, on the ring road) -------------------------------
 
-// Build a low-poly vehicle. style 'wagon' for frontier towns, 'car' elsewhere.
-// Shared unit geometry scaled per part keeps a vehicle to a handful of meshes.
+// Build the low-poly stand-in car. Shared unit geometry scaled per part keeps a
+// vehicle to a handful of meshes.
 //
-// Modern towns upgrade the 'car' silhouette to the Trench Car GLB as soon as the
-// shared model lands (see Vehicle._upgradeToModel), the same model the drivable
-// fleet uses, so the traffic a player watches go by is the traffic they can flag
-// down and take the wheel of. This box car is the instant stand-in that holds
-// the road until then, and the permanent body if the model can't be fetched.
-function buildVehicle(style) {
+// Traffic is the Trench Car GLB in EVERY town, frontier ones included (owner
+// directive 2026-08-17: it is the one car in the world). The same model the
+// drivable fleet wears, so the traffic a player watches go by is the traffic they
+// can flag down and take the wheel of. Each vehicle upgrades itself the moment
+// the shared model lands (see Vehicle._upgradeToModel); this box car is the
+// instant stand-in that holds the road until then, and the permanent body if the
+// model can't be fetched.
+function buildVehicle() {
 	const g = new Group();
 	const box = new BoxGeometry(1, 1, 1);
 	const wheelGeo = new CylinderGeometry(0.34, 0.34, 0.22, 12);
@@ -219,30 +221,19 @@ function buildVehicle(style) {
 		g.add(w); wheels.push(w);
 	};
 
-	let brakeLights = null;
-	if (style === 'wagon') {
-		const bodyMat = new MeshStandardMaterial({ color: 0x6e5238, roughness: 1 });
-		const coverMat = new MeshStandardMaterial({ color: 0xd8cdb0, roughness: 1 });
-		const body = new Mesh(box, bodyMat); body.scale.set(1.5, 0.7, 3.0); body.position.y = 0.75; body.castShadow = true; g.add(body);
-		const cover = new Mesh(box, coverMat); cover.scale.set(1.45, 1.0, 2.2); cover.position.set(0, 1.45, -0.1); cover.castShadow = true; g.add(cover);
-		// A simple draft animal up front so a wagon isn't gliding on its own.
-		const horse = new Mesh(box, new MeshStandardMaterial({ color: 0x3a2a1e, roughness: 1 }));
-		horse.scale.set(0.7, 0.9, 1.4); horse.position.set(0, 0.9, 2.4); horse.castShadow = true; g.add(horse);
-		addWheel(-0.85, 1.0); addWheel(0.85, 1.0); addWheel(-0.85, -1.0); addWheel(0.85, -1.0);
-	} else {
-		const bodyMat = new MeshStandardMaterial({ color: 0x2b3340, roughness: 0.5, metalness: 0.3 });
-		const cabinMat = new MeshStandardMaterial({ color: 0x10151c, roughness: 0.3, metalness: 0.2 });
-		const body = new Mesh(box, bodyMat); body.scale.set(1.7, 0.7, 3.6); body.position.y = 0.62; body.castShadow = true; g.add(body);
-		const cabin = new Mesh(box, cabinMat); cabin.scale.set(1.5, 0.7, 1.9); cabin.position.set(0, 1.15, -0.1); cabin.castShadow = true; g.add(cabin);
-		const head = new Mesh(box, new MeshBasicMaterial({ color: 0xfff3cf })); head.scale.set(1.5, 0.16, 0.1); head.position.set(0, 0.62, 1.81); g.add(head);
-		brakeLights = new Mesh(box, new MeshBasicMaterial({ color: 0x551111 })); brakeLights.scale.set(1.5, 0.18, 0.1); brakeLights.position.set(0, 0.62, -1.81); g.add(brakeLights);
-		addWheel(-0.92, 1.15); addWheel(0.92, 1.15); addWheel(-0.92, -1.2); addWheel(0.92, -1.2);
-	}
+	const bodyMat = new MeshStandardMaterial({ color: 0x2b3340, roughness: 0.5, metalness: 0.3 });
+	const cabinMat = new MeshStandardMaterial({ color: 0x10151c, roughness: 0.3, metalness: 0.2 });
+	const body = new Mesh(box, bodyMat); body.scale.set(1.7, 0.7, 3.6); body.position.y = 0.62; body.castShadow = true; g.add(body);
+	const cabin = new Mesh(box, cabinMat); cabin.scale.set(1.5, 0.7, 1.9); cabin.position.set(0, 1.15, -0.1); cabin.castShadow = true; g.add(cabin);
+	const head = new Mesh(box, new MeshBasicMaterial({ color: 0xfff3cf })); head.scale.set(1.5, 0.16, 0.1); head.position.set(0, 0.62, 1.81); g.add(head);
+	const brakeLights = new Mesh(box, new MeshBasicMaterial({ color: 0x551111 })); brakeLights.scale.set(1.5, 0.18, 0.1); brakeLights.position.set(0, 0.62, -1.81); g.add(brakeLights);
+	addWheel(-0.92, 1.15); addWheel(0.92, 1.15); addWheel(-0.92, -1.2); addWheel(0.92, -1.2);
+
 	return { group: g, wheels, brakeLights };
 }
 
 class Vehicle {
-	constructor(scene, nav, { phase, lane, style, dir }) {
+	constructor(scene, nav, { phase, lane, dir }) {
 		this.nav = nav;
 		this.phase = phase;
 		this.lane = lane;
@@ -254,14 +245,14 @@ class Vehicle {
 		this._braking = false;
 
 		this.group = new Group();
-		const built = buildVehicle(style);
+		const built = buildVehicle();
 		this.group.add(built.group);
 		this._standIn = built.group;
 		this.wheels = built.wheels;          // spun by update(), whichever body is on
 		this.brakeLights = built.brakeLights;
 		scene.add(this.group);
 
-		if (style === 'car') this._upgradeToModel();
+		this._upgradeToModel();
 	}
 
 	// Swap the box stand-in for the real car. The model is shared with every other
@@ -337,10 +328,9 @@ export class AmbientLife {
 	// `onInspectPed` (optional) makes the detailed pedestrians selectable: called
 	// with the Pedestrian when a player clicks its nameplate or body. The world
 	// manager wires it to the citizen profile card (see citizens.js).
-	constructor({ scene, nav, biome, onInspectPed }) {
+	constructor({ scene, nav, onInspectPed }) {
 		this.scene = scene;
 		this.nav = nav;
-		this.biome = biome;
 		this.onInspectPed = onInspectPed || null;
 		this.peds = [];
 		this.vehicles = [];
@@ -383,7 +373,6 @@ export class AmbientLife {
 
 	_buildVehicles() {
 		const rand = mulberry32((this.nav.seed ^ 0x85ebca6b) >>> 0);
-		const style = this.biome?.town === 'frontier' ? 'wagon' : 'car';
 		const spacing = this.nav.roadLen / VEHICLES;
 		for (let i = 0; i < VEHICLES; i++) {
 			const dir = i % 2 === 0 ? 1 : -1;
@@ -392,7 +381,6 @@ export class AmbientLife {
 				phase: i * spacing + rand() * spacing * 0.4,
 				lane,
 				dir,
-				style,
 			}));
 		}
 	}

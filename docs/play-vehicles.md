@@ -4,10 +4,13 @@ Every coin world in [`/play`](https://three.ws/play) has cars in it. They are no
 you walk past: the same car that drives by you on the ring road is the car parked at the
 plaza that you can get into and drive across town.
 
-The world's default car is the **Trench Car**, a community model published to the three.ws
+The car is the **Trench Car**, a community model published to the three.ws
 avatar gallery ([avatar `e702d59a-d29f-4f21-af8a-6400dd1a2c6f`](https://three.ws/avatars/e702d59a-d29f-4f21-af8a-6400dd1a2c6f),
-slug `trench-car`). It is what ambient traffic drives, what is parked at the two plaza bays
-and the North Depot, and what an unknown vehicle type falls back to.
+slug `trench-car`), and it is the *only* car in the world: it is what ambient traffic drives
+in every town (frontier ones included), what is parked in all six vehicle bays, and what an
+unknown vehicle type falls back to. There is no fleet of mismatched shapes; four procedural
+box cars (coupe, sedan, pickup, buggy) used to share the road with it and were retired on
+2026-08-17.
 
 ## Driving one
 
@@ -41,14 +44,14 @@ A car is three things that all have to agree, or it looks wrong or drives wrong:
 |---|---|---|
 | Handling spec | [multiplayer/src/vehicles.js](../multiplayer/src/vehicles.js) | Mass, forces, top speed, dimensions, wheel geometry, suspension, seat. Shared by client and server, so "feels fast" and "rejected as cheating" can never drift apart. |
 | Physics chassis | [src/physics/physics-world.js](../src/physics/physics-world.js) | A Rapier raycast vehicle controller built from that spec. |
-| The mesh | [src/game/vehicle-mesh.js](../src/game/vehicle-mesh.js), [src/game/vehicle-model.js](../src/game/vehicle-model.js) | What you look at: either a procedural silhouette or a GLB. |
+| The mesh | [src/game/vehicle-mesh.js](../src/game/vehicle-mesh.js), [src/game/vehicle-model.js](../src/game/vehicle-model.js) | What you look at: the GLB, plus the procedural stand-in silhouette that holds its place while the model downloads. |
 
 The mesh group's origin is the **chassis centre**, `+z` is forward, and the four wheels are
 pivot/spinner pairs the vehicle controller writes suspension, steering and roll into every
 frame. A GLB is authored with its contact patch on the road, so it is dropped into chassis
 space by `vehicleRestHeight()`.
 
-Model-backed cars never block the world on a download. `buildVehicleMesh()` returns its
+A car never blocks the world on a download. `buildVehicleMesh()` returns its
 procedural stand-in immediately and swaps the GLB body and wheels into the *same* group and
 the *same* wheel pivots when the model lands, so a car that upgrades mid-drive keeps its
 physics, its camera and its driver. If the model cannot be fetched at all, the stand-in
@@ -80,6 +83,9 @@ and the metal-roughness map at 1024px, and writes
    sits with its contact patch at `y = 0`, facing `+z`. Stage it into `public/vehicles/`.
 2. Add a type to `VEHICLE_TYPES` with a `model` key, and measure `dims`, `wheel` and
    `suspension` off the mesh. `dims.h` is road-to-roof, not the body's own bounding box.
+   Nothing spawns it until a `VEHICLE_SPAWNS` bay names it, and
+   `tests/vehicles-trench-car.test.js` pins the fleet as Trench-Car-only, so a second car in
+   the world is a deliberate change to that test, not an accident.
 3. Check the clearance rule: the chassis collider's underside sits `1.3 * (h / 2)` below the
    body origin, so `vehicleRestHeight()` has to clear it. Too little and the hull rests on
    the road and its own friction pins the car, whatever the engine force says.

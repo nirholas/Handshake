@@ -86,7 +86,7 @@ export function createAmbientWorld({ agentId, seed, container, cycleMs = DEFAULT
 
 	const env = createWorldEnvironment(scene, renderer, PLAY_RADIUS, { seed: numericSeed });
 	const nav = new NavGraph({ radius: NAV_RADIUS, seed: numericSeed });
-	const ambient = new AmbientLife({ scene, nav, biome: env.biome });
+	const ambient = new AmbientLife({ scene, nav });
 	const cycle = createDayNightCycle(env);
 	const landmark = landmarkFor(env.biome);
 

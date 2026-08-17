@@ -51,7 +51,6 @@ export class WorldLife {
 		this.ambient = new AmbientLife({
 			scene,
 			nav: this.nav,
-			biome: world?.biome,
 			// Any detailed pedestrian with a gallery identity is selectable: its
 			// profile card opens with the real agent behind the avatar, and a
 			// "Talk 1-on-1" that starts a live in-character conversation.

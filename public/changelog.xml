@@ -191,6 +191,14 @@
 			<description>The collection page had a loading state nobody could see: the shimmer placeholders were drawn inside a container the page kept hidden until the data had already arrived, so a slow connection got a blank stretch of nothing instead. The tabs, the placeholders and the counts now appear from the first frame. The counts next to Skills and Subscriptions used to vanish at random, because the page's own translation pass could overwrite the tab label a split second after the number was written into it; the count now lives in its own slot and survives. A skill published by an agent whose name contains a quotation mark or an angle bracket rendered as broken markup rather than as the name, and a publisher who earned a vanity wallet address had it shown as an ordinary one, because the card was reading a field the collection endpoint does not return. Both are fixed, so tipping a creator from your collection now shows the wallet they actually have. Empty states are centred under the tabs instead of squeezed into the first column, both of them now point you at the marketplace, the Retry button on a failed load is a real button rather than a raw grey box, and the whole page is keyboard-navigable: arrow keys move between tabs, Home and End jump to the ends, and every link and button shows a clear focus ring.</description>
 		</item>
 		<item>
+			<title>One car in the world: the Trench Car now drives every road in /play</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-17:One car in the world: the Trench Car now drives every road in /play</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The cars in a coin world no longer come in four unrelated shapes. Alongside the Trench Car, the community model from the avatar gallery, /play was also parking three procedural box cars in its depots: a boxy sedan, a pickup, and an amber roll-caged buggy on oversized wheels that looked nothing like anything else in the town. All three are gone. Every bay in every world, plaza and depot alike, now parks the Trench Car, so the car that drives past you on the ring road is the car you walk up to, press F, and drive away in. Frontier towns are included: their traffic used to be horse-drawn covered wagons, and it is the same car as everywhere else now. The car still appears the instant a world loads, as a plain silhouette on the same wheels, and fills in with the real model the moment it finishes downloading, so nothing waits on the asset and a slow connection never leaves an empty road.</description>
+		</item>
+		<item>
 			<title>Pausing a skill bundle is no longer permanent, and every tooltip fits on a phone</title>
 			<link>https://three.ws/bundles</link>
 			<guid isPermaLink="false">2026-08-17:Pausing a skill bundle is no longer permanent, and every tooltip fits on a phone</guid>

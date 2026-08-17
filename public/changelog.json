@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T13:53:45.524Z",
+	"generated_at": "2026-08-17T14:14:53.946Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -256,6 +256,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "One car in the world: the Trench Car now drives every road in /play",
+			"summary": "The cars in a coin world no longer come in four unrelated shapes. Alongside the Trench Car, the community model from the avatar gallery, /play was also parking three procedural box cars in its depots: a boxy sedan, a pickup, and an amber roll-caged buggy on oversized wheels that looked nothing like anything else in the town. All three are gone. Every bay in every world, plaza and depot alike, now parks the Trench Car, so the car that drives past you on the ring road is the car you walk up to, press F, and drive away in. Frontier towns are included: their traffic used to be horse-drawn covered wagons, and it is the same car as everywhere else now. The car still appears the instant a world loads, as a plain silhouette on the same wheels, and fills in with the real model the moment it finishes downloading, so nothing waits on the asset and a slow connection never leaves an empty road.",
+			"link": "/play",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{

@@ -15,7 +15,7 @@ async function main() {
 	// Any type in the table can be put through this, so a new car's suspension and
 	// clearance are proved against real Rapier before it ships:
 	//   node scripts/verify-w02-physics-core.mjs trench
-	const type = process.argv[2] || 'sedan';
+	const type = process.argv[2] || 'trench';
 	const spec = vehicleSpec(type);
 	if (spec.id !== type && process.argv[2]) fail(`unknown vehicle type "${type}", fell back to ${spec.id}`);
 	console.log(`--- vehicle type under test: ${spec.id} (${spec.label}) ---`);

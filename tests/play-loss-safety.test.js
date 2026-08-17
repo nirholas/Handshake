@@ -143,7 +143,7 @@ describe('the vehicle clamp is derived from real elapsed time', () => {
 	// directly off the prototype.
 	const apply = WalkRoom.prototype._applyVehicleTransform;
 	const car = (over = {}) => ({
-		type: 'coupe', x: 0, y: 0, z: 0, qx: 0, qy: 0, qz: 0, qw: 1, speed: 0,
+		type: 'trench', x: 0, y: 0, z: 0, qx: 0, qy: 0, qz: 0, qw: 1, speed: 0,
 		tsServer: Date.now(), ...over,
 	});
 	const move = (dz, speed = 0) => ({ x: 0, y: 0, z: dz, qx: 0, qy: 0, qz: 0, qw: 1, speed });
@@ -161,14 +161,14 @@ describe('the vehicle clamp is derived from real elapsed time', () => {
 
 	it('accepts a step that real elapsed time genuinely allows', () => {
 		const v = car({ tsServer: Date.now() - 300 }); // 0.3s of travel
-		const reach = vehicleMaxSpeedMps('coupe') * 0.3;
+		const reach = vehicleMaxSpeedMps('trench') * 0.3;
 		expect(apply.call({}, v, move(reach * 0.8), 0)).toBe(true);
 		expect(v.z).toBeCloseTo(reach * 0.8, 3);
 	});
 
 	it('still rejects a self-reported speed above the type ceiling', () => {
 		const v = car({ tsServer: Date.now() - 300 });
-		const overSpeed = vehicleMaxSpeedMps('coupe') * 2;
+		const overSpeed = vehicleMaxSpeedMps('trench') * 2;
 		expect(apply.call({}, v, move(0.5, overSpeed), false)).toBe(false);
 	});
 

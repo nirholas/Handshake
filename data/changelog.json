@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "One car in the world: the Trench Car now drives every road in /play",
+			"summary": "The cars in a coin world no longer come in four unrelated shapes. Alongside the Trench Car, the community model from the avatar gallery, /play was also parking three procedural box cars in its depots: a boxy sedan, a pickup, and an amber roll-caged buggy on oversized wheels that looked nothing like anything else in the town. All three are gone. Every bay in every world, plaza and depot alike, now parks the Trench Car, so the car that drives past you on the ring road is the car you walk up to, press F, and drive away in. Frontier towns are included: their traffic used to be horse-drawn covered wagons, and it is the same car as everywhere else now. The car still appears the instant a world loads, as a plain silhouette on the same wheels, and fills in with the real model the moment it finishes downloading, so nothing waits on the asset and a slow connection never leaves an empty road.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Trading Swarms reads on a phone, says what actually went wrong, and lets you get back to the full directory",
 			"summary": "The swarms page has had an end-to-end pass. When something failed, it used to print the server's internal code at you: a swarm that no longer exists said \"not_found\", and a rejected contribution said \"bad_agent\". It now shows the sentence the API was already sending, so a failed join tells you what to do about it. \"My swarms\" was a one-way door with no way back to the public list; it is now a proper two-state switch next to the network switch, and both live in the address bar, so a filtered view is a link you can share and the back button behaves. Every swarm card is a real link too, so you can middle-click or cmd-click one open in a new tab. On a 320px phone the cards and the dashboard panels used to be cut off at the right edge; they now fit. The join, create, and kill dialogs take keyboard focus when they open, hold Tab inside themselves, and hand focus back to whatever you opened them from, and signing in or creating an agent is now offered as a button rather than named in a toast you cannot act on.",
 			"tags": [

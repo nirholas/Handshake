@@ -119,26 +119,51 @@ test.describe('/play vehicles', () => {
 		expect(errors).toEqual([]);
 	});
 
-	test('procedural types still park on their wheels', async ({ page }) => {
-		// The stand-in silhouettes share the ride-height maths with the model-backed
-		// car, so they are pinned by the same measurement.
-		for (const type of ['coupe', 'sedan', 'pickup', 'buggy']) {
-			const car = await measureCar(page, type);
-			expect(car.upgraded, `${type} has no model`).toBe(false);
-			for (const y of car.wheelWorldY) {
-				expect(y, `${type} wheel height`).toBeCloseTo(car.restHeight - car.restHeight + y, 5);
-			}
-			expect(car.lowestPoint, `${type} ground contact`).toBeGreaterThan(-0.05);
-			expect(car.driverFeetY, `${type} driver feet`).toBeGreaterThan(0);
-		}
+	test('the stand-in parks on its wheels while the model is still downloading', async ({ page }) => {
+		// A player can walk up to a car in the frame it spawns, before the GLB has
+		// landed. The stand-in shares the ride-height maths with the model, so it is
+		// pinned by the same measurement: on the road, not floating or sunk.
+		const car = await page.evaluate(async () => {
+			const THREE = await window.__imp('/node_modules/three/build/three.module.js');
+			const { buildVehicleMesh } = await window.__imp('/src/game/vehicle-mesh.js');
+			const { vehicleSpec, vehicleRestHeight } = await window.__imp('/multiplayer/src/vehicles.js');
+
+			const spec = vehicleSpec('trench');
+			const rest = vehicleRestHeight(spec.id);
+			// Measured WITHOUT awaiting mesh.ready: this is the stand-in, on screen in
+			// the same frame the vehicle state arrived.
+			const mesh = buildVehicleMesh(spec, spec.color);
+			mesh.group.position.y = rest;
+			const scene = new THREE.Scene();
+			scene.add(mesh.group);
+			scene.updateMatrixWorld(true);
+			const box = new THREE.Box3().setFromObject(mesh.group);
+			const out = {
+				restHeight: rest,
+				lowestPoint: box.min.y,
+				wheels: mesh.wheels.length,
+				wheelWorldY: mesh.wheels.map((w) => w.pivot.position.y + rest),
+				driverFeetY: rest + spec.seat.y,
+			};
+			mesh.dispose();
+			return out;
+		});
+
+		expect(car.wheels).toBe(4);
+		// One wheel radius above the road (trench wheel.radius = 0.3), the same
+		// contact patch the model-backed car above is held to.
+		for (const y of car.wheelWorldY) expect(y).toBeCloseTo(0.3, 2);
+		expect(car.lowestPoint).toBeGreaterThan(-0.05);
+		expect(car.driverFeetY).toBeGreaterThan(0);
 	});
 
 	test('ambient traffic drives the same car the fleet does', async ({ page }) => {
-		// The NPC lane is the other half of "the default car": whatever a player can
-		// take the wheel of should be what they watch drive past. AmbientLife builds
-		// its own stand-in first, so this asserts the upgrade actually lands, that
-		// the cars sit on the road (not sunk into it), and that each one spins its
-		// own four wheels.
+		// The NPC lane is the other half of "the one car in the world": whatever a
+		// player can take the wheel of is what they watch drive past, in every town
+		// (frontier included, which used to run horse wagons here). AmbientLife
+		// builds its own stand-in first, so this asserts the upgrade actually lands,
+		// that the cars sit on the road (not sunk into it), and that each one spins
+		// its own four wheels.
 		const traffic = await page.evaluate(async () => {
 			const THREE = await window.__imp('/node_modules/three/build/three.module.js');
 			const { NavGraph } = await window.__imp('/src/game/npc/nav-graph.js');
@@ -146,7 +171,7 @@ test.describe('/play vehicles', () => {
 			const { hasVehicleModel, TRENCH_CAR_URL } = await window.__imp('/src/game/vehicle-model.js');
 
 			const scene = new THREE.Scene();
-			const life = new AmbientLife({ scene, nav: new NavGraph({ seed: 7 }), biome: { town: 'downtown' } });
+			const life = new AmbientLife({ scene, nav: new NavGraph({ seed: 7 }) });
 			// Give the shared model time to land, then run a few frames so the cars
 			// take their places on the ring road.
 			const deadline = Date.now() + 30000;

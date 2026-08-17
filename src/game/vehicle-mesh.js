@@ -1,13 +1,15 @@
 // Vehicle meshes for the drivable fleet.
 //
-// Two kinds of car live here. Procedural silhouettes (coupe / sedan / pickup /
-// buggy) are built from primitives so they load instantly and theme to each
-// vehicle's colour. Model-backed types (the Trench Car, VEHICLE_TYPES.trench)
-// carry a `model` key and drive a real GLB from src/game/vehicle-model.js: the
-// procedural silhouette is built first as an instant stand-in, and the GLB body
-// and wheels are swapped into the SAME group and wheel pivots the moment the
-// download lands. Nothing downstream re-binds, so a car that upgrades mid-drive
-// keeps its physics, its camera and its driver.
+// Every car in the world is the Trench Car (VEHICLE_TYPES.trench), a real GLB
+// loaded by src/game/vehicle-model.js. Because that GLB is a download and a
+// player can walk up to a car before it lands, each vehicle is built with a
+// procedural stand-in silhouette first: a primitive car sized from the type's own
+// dims and tinted its colour, on screen and fully drivable in the same frame the
+// vehicle state arrives. The GLB body and wheels are then swapped into the SAME
+// group and wheel pivots the moment the download lands. Nothing downstream
+// re-binds, so a car that upgrades mid-drive keeps its physics, its camera and
+// its driver, and a car whose model never arrives stays drivable in its stand-in
+// rather than vanishing.
 //
 // The returned group's origin is the chassis CENTRE, aligned with the Rapier
 // rigid body's origin, with +z forward and +y up — so the physics transform maps
@@ -31,11 +33,6 @@ const MODEL_URLS = { 'trench-car': TRENCH_CAR_URL };
 function lighten(hex, amt) {
 	const c = new Color(hex);
 	c.lerp(new Color(0xffffff), amt);
-	return c.getHex();
-}
-function darken(hex, amt) {
-	const c = new Color(hex);
-	c.lerp(new Color(0x000000), amt);
 	return c.getHex();
 }
 
@@ -97,28 +94,10 @@ function buildHeadLights(width, z, y) {
 	return out;
 }
 
-function buildCoupe(spec, color) {
-	const body = new Group();
-	const { l, w } = spec.dims;
-	const main = bodyMat(color);
-	const lower = new Mesh(new BoxGeometry(w, 0.55, l), main);
-	lower.position.y = 0.05; lower.castShadow = true; lower.receiveShadow = true;
-	body.add(lower);
-	// Sleek raked cabin, set back.
-	const cabin = new Mesh(new BoxGeometry(w * 0.82, 0.46, l * 0.42), bodyMat(lighten(color, 0.05)));
-	cabin.position.set(0, 0.5, -0.15); cabin.castShadow = true;
-	body.add(cabin);
-	const glass = new Mesh(new BoxGeometry(w * 0.78, 0.34, l * 0.4), glassMat());
-	glass.position.set(0, 0.52, -0.12);
-	body.add(glass);
-	// A low front splitter for a sporty nose.
-	const splitter = new Mesh(new BoxGeometry(w * 0.96, 0.12, 0.5), bodyMat(darken(color, 0.5)));
-	splitter.position.set(0, -0.18, l / 2 - 0.2);
-	body.add(splitter);
-	return body;
-}
-
-function buildSedan(spec, color) {
+// The stand-in silhouette: a car-shaped hull, cabin and glazing sized from the
+// type's own dims, so it occupies the same road space the GLB will and the swap
+// reads as a detail upgrade rather than a different vehicle appearing.
+function buildStandIn(spec, color) {
 	const body = new Group();
 	const { l, w } = spec.dims;
 	const lower = new Mesh(new BoxGeometry(w, 0.62, l), bodyMat(color));
@@ -132,55 +111,6 @@ function buildSedan(spec, color) {
 	body.add(glass);
 	return body;
 }
-
-function buildPickup(spec, color) {
-	const body = new Group();
-	const { l, w } = spec.dims;
-	const chassis = new Mesh(new BoxGeometry(w, 0.66, l), bodyMat(color));
-	chassis.position.y = 0.1; chassis.castShadow = true; chassis.receiveShadow = true;
-	body.add(chassis);
-	// Forward cab.
-	const cab = new Mesh(new BoxGeometry(w * 0.94, 0.82, l * 0.4), bodyMat(lighten(color, 0.03)));
-	cab.position.set(0, 0.78, l * 0.18); cab.castShadow = true;
-	body.add(cab);
-	const glass = new Mesh(new BoxGeometry(w * 0.9, 0.5, l * 0.36), glassMat());
-	glass.position.set(0, 0.86, l * 0.19);
-	body.add(glass);
-	// Open rear bed: floor + three low walls.
-	const bedMat = bodyMat(darken(color, 0.18));
-	const bedW = w * 0.96, bedL = l * 0.4, wall = 0.32;
-	const floor = new Mesh(new BoxGeometry(bedW, 0.16, bedL), bedMat);
-	floor.position.set(0, 0.5, -l * 0.22); body.add(floor);
-	const back = new Mesh(new BoxGeometry(bedW, wall, 0.12), bedMat);
-	back.position.set(0, 0.64, -l * 0.42); body.add(back);
-	for (const sx of [-1, 1]) {
-		const side = new Mesh(new BoxGeometry(0.12, wall, bedL), bedMat);
-		side.position.set(sx * (bedW / 2 - 0.06), 0.64, -l * 0.22); body.add(side);
-	}
-	return body;
-}
-
-function buildBuggy(spec, color) {
-	const body = new Group();
-	const { l, w } = spec.dims;
-	const tub = new Mesh(new BoxGeometry(w * 0.78, 0.5, l * 0.8), bodyMat(color));
-	tub.position.y = 0.08; tub.castShadow = true; tub.receiveShadow = true;
-	body.add(tub);
-	// Exposed roll cage from thin bars.
-	const cageMat = new MeshStandardMaterial({ color: darken(color, 0.45), roughness: 0.4, metalness: 0.7 });
-	const bar = (sx, z) => {
-		const m = new Mesh(new BoxGeometry(0.1, 0.78, 0.1), cageMat);
-		m.position.set(sx * w * 0.32, 0.5, z); body.add(m);
-	};
-	bar(-1, 0.2); bar(1, 0.2); bar(-1, -0.5); bar(1, -0.5);
-	const roof = new Mesh(new BoxGeometry(w * 0.7, 0.1, 0.84), cageMat);
-	roof.position.set(0, 0.88, -0.15); body.add(roof);
-	const seatback = new Mesh(new BoxGeometry(w * 0.6, 0.42, 0.12), glassMat());
-	seatback.position.set(0, 0.42, -0.42); body.add(seatback);
-	return body;
-}
-
-const BUILDERS = { coupe: buildCoupe, sedan: buildSedan, pickup: buildPickup, buggy: buildBuggy };
 
 // Free every geometry/material an object owns. Only ever called on the
 // procedural parts this module built, GLB parts share their buffers with the
@@ -198,8 +128,8 @@ function disposeOwned(root) {
 /**
  * Build a complete vehicle mesh for a spec + colour.
  *
- * Returns synchronously, a model-backed type hands back its procedural
- * stand-in and upgrades itself in place once the GLB arrives.
+ * Returns synchronously with the procedural stand-in mounted, and upgrades
+ * itself in place once the type's GLB arrives.
  *
  * @returns {{ group: Group, wheels: Array<{pivot: Group, spinner: Group}>,
  *   setBrake: (on: boolean) => void, ready: Promise<boolean>, dispose: Function }}
@@ -214,8 +144,7 @@ export function buildVehicleMesh(spec, color) {
 	const bodyRoot = new Group();
 	group.add(bodyRoot);
 
-	const builder = BUILDERS[spec.id] || buildSedan;
-	bodyRoot.add(builder(spec, tint));
+	bodyRoot.add(buildStandIn(spec, tint));
 
 	// Lights, placed off the body's front/rear faces.
 	const { l, w } = spec.dims;

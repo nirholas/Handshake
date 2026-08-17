@@ -134,6 +134,15 @@ describe('vehicle fleet invariants', () => {
 		expect(vehicleSpec(undefined).id).toBe('trench');
 	});
 
+	it('is the only car in the world', () => {
+		// Owner directive 2026-08-17: the Trench Car is the whole fleet. A second
+		// type creeping back in is exactly how the boxy procedural silhouettes
+		// (an amber roll-caged buggy among them) ended up driving around /play, so
+		// the table itself is pinned, not just the spawn list.
+		expect(Object.keys(VEHICLE_TYPES)).toEqual(['trench']);
+		for (const spawn of VEHICLE_SPAWNS) expect(spawn.type).toBe('trench');
+	});
+
 	it('parks the default car where a new player lands', () => {
 		const plaza = VEHICLE_SPAWNS.filter((s) => s.id.startsWith('veh-plaza-'));
 		expect(plaza.length).toBeGreaterThan(0);
@@ -146,7 +155,7 @@ describe('vehicle fleet invariants', () => {
 		// PhysicsWorld.createVehicle offsets the chassis cuboid by -0.3 * (h/2), so
 		// its underside sits 1.3 * (h/2) below the body origin. If that reaches the
 		// ground the hull's own friction pins the car and no engine force moves it,
-		// the bug the coupe/sedan/pickup suspension comments document.
+		// the bug the trench suspension comment documents.
 		for (const [id, spec] of Object.entries(VEHICLE_TYPES)) {
 			const clearance = vehicleRestHeight(id) - 1.3 * (spec.dims.h / 2);
 			expect(clearance, `${id} chassis clearance`).toBeGreaterThan(0.1);
