@@ -243,11 +243,11 @@
 			<div class="endpoints">
 				<div class="endpoint">
 					<code>POST /api/aws-marketplace/register</code>
-					<div class="desc">Fulfillment URL. Exchanges <code>x-amzn-marketplace-token</code> for a stable customer identifier via ResolveCustomer.</div>
+					<div class="desc">Fulfillment URL. Exchanges <code>x-amzn-marketplace-token</code> via ResolveCustomer for the buyer's <code>LicenseArn</code> and <code>CustomerAWSAccountId</code>, the identifiers AWS issues to new SaaS integrations.</div>
 				</div>
 				<div class="endpoint">
 					<code>POST /api/aws-marketplace/subscription</code>
-					<div class="desc">SNS notification webhook. Verifies AWS signature against the signing cert and processes subscribe / unsubscribe lifecycle events.</div>
+					<div class="desc">Lifecycle webhook. Handles EventBridge agreement and license events relayed through an API destination, and legacy SNS notifications verified against the AWS signing cert.</div>
 				</div>
 				<div class="endpoint">
 					<code>POST /api/aws-marketplace/link</code>

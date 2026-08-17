@@ -12,7 +12,7 @@ Cloud marketplaces are the procurement flow enterprises use to acquire software 
 
 | Cloud | Status | Links |
 |---|---|---|
-| **AWS** Marketplace | Live | three.ws is an AWS Partner. Subscribe via AWS Marketplace to consolidate billing on your AWS account; subscriptions auto-issue an x402 API key via the marketplace entitlement service. See [aws-marketplace.md](./aws-marketplace.md). |
+| **AWS** Marketplace | Integration ready, listing not yet created | three.ws is an AWS Partner and the SaaS integration is built, deployed, and conformant with the Concurrent Agreements requirements AWS made mandatory for new products on 2026-06-01. The product itself has not been created in the AWS Marketplace Management Portal yet, so there is nothing to subscribe to on the AWS side: use [x402](/docs/x402) directly in the meantime, which needs no AWS account. Once the listing is public, subscribing consolidates procurement on your AWS account and auto-issues an x402 API key. See [aws-marketplace.md](./aws-marketplace.md) and the [listing kit](./aws-marketplace-listing-kit.md). |
 | **Alibaba Cloud** International Marketplace | Live | [Product listing](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [Storefront](https://marketplace.alibabacloud.com/store/3247293.html) · [Announcement](/blog/three-ws-on-alibaba-cloud-marketplace.html) · [Marketplace blog feature](https://marketplace.alibabacloud.com/doc/blog/detail/mplace-sgcmfw00036800.html) |
 | **Google Cloud** Marketplace | Open to partnership | three.ws already runs its production stack on Google Cloud Run (`three-ws-api`, us-central1) — a natural fit for Vertex AI and GCP's global CDN. Reach out for co-listing, credits, and joint GTM. |
 | **Microsoft Azure** Marketplace | On roadmap | Targeted alongside the AWS/Alibaba rollout. |
@@ -40,6 +40,18 @@ Ecosystem directories are the discovery surfaces that L1/L2 communities, chain f
 | **BNB Chain · Dappbay** | Live | [dappbay.bnbchain.org/detail/three](https://dappbay.bnbchain.org/detail/three) — categories: *AI Agent Launchpad · AI Data · AI Infra*. Announcement: [three.ws Listed on BNB Chain's Dappbay Directory](/blog/three-ws-on-bnb-chain-dappbay.html). |
 
 Dappbay is BNB Chain's official dApp directory. The listing is about distribution and discovery into BNB Chain's AI dApp audience — three.ws still settles agent payments on Solana, Base, and Polygon via the chain-agnostic [x402 protocol](./x402.md).
+
+---
+
+## AI Platform Directories
+
+The discovery surfaces owned by the AI platforms themselves, where an MCP server can be listed as an installable product rather than a documentation page.
+
+| Directory | Status | Listing details |
+|---|---|---|
+| **OpenAI** Plugin Directory (ChatGPT + Codex) | Open to submission | The universal directory shared by ChatGPT and Codex since 2026-07-09, superseding the former App directory. three.ws already meets the gating requirement: a public OAuth 2.1 MCP server at `https://three.ws/api/mcp` ([mcp.md](./mcp.md)). Full submission kit, prerequisites, and rejection criteria: [openai-listing-channels.md](./openai-listing-channels.md). |
+| **OpenAI** Showcase Gallery | Open to submission | Editorial feature on openai.com for apps, demos, and open-source projects built with OpenAI models, APIs, or Codex. Open web form, no repo gate. See [openai-listing-channels.md](./openai-listing-channels.md). |
+| **OpenAI** Cookbook | Submitted, not merged | [PR #2874](https://github.com/openai/openai-cookbook/pull/2874) (a self-correcting 3D collectible pipeline using text-to-3D, function calling, and vision) has been open since 2026-07-21. Root-cause analysis and the revival steps are in [openai-listing-channels.md](./openai-listing-channels.md). |
 
 ---
 

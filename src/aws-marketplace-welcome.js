@@ -1,7 +1,10 @@
 // AWS Marketplace post-registration welcome page.
 //
 // Receives: ?customer=<id>&trial=<0|1>[&signup=1]
-//   - customer  — stable CustomerIdentifier from ResolveCustomer
+//   - customer  : opaque handle for the marketplace subscription record. AWS
+//                 stopped populating CustomerIdentifier for new SaaS
+//                 integrations, so this is the aws_marketplace_customers row id;
+//                 the API also accepts a legacy CustomerIdentifier.
 //   - trial     — "1" when the subscription is a free trial
 //   - signup    — "1" when the user has no three.ws account yet
 //
@@ -20,6 +23,7 @@ const wantsSignup = p.get('signup') === '1';
 const ERROR_MESSAGES = {
 	token_expired:  'The AWS Marketplace registration link has expired. Please return to AWS Marketplace and subscribe again.',
 	not_configured: 'AWS Marketplace subscriptions are temporarily unavailable on three.ws. Your AWS subscription is unaffected. Please open this link again shortly, or contact support if it persists.',
+	unresolved_customer: 'AWS did not return an identity for this subscription, so we could not set it up. Your AWS subscription is unaffected. Please contact support and we will activate it manually.',
 	link_failed:    'We could not link your AWS subscription to your account. Please try signing in again or contact support.',
 	// Error codes returned by /api/aws-marketplace/link, so a rejected link says
 	// what to do about it instead of "contact support" for every cause.

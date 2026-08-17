@@ -7,12 +7,13 @@ deployed — see [aws-marketplace.md](./aws-marketplace.md). This doc covers the
 listing itself, which has not yet been created (the AMMP "AI agents & tools
 products" page shows "No products to display").
 
-> **BLOCKER, verified 2026-08-02: the integration in this repo cannot serve a new
-> listing as written.** AWS stopped populating `CustomerIdentifier` for new SaaS
-> integrations, and all 51 references across 7 files key on it. Read
-> "Verified against AWS docs" and "Confirmed defects" at the bottom of this file
-> before touching the listing. Do not create the product expecting the backend to
-> work; it will fail the subscribe round-trip.
+> **Backend blockers cleared 2026-08-17.** The four defects that would have failed
+> the subscribe round-trip (identity keyed on the retired `CustomerIdentifier`,
+> the orphan SNS topic pin, hardcoded SHA1 SNS verification, and the missing
+> EventBridge transport) are fixed and covered by tests. The listing is now
+> gated only on AWS-console work and Seller Operations review. The evidence
+> behind each fix is in "Verified against AWS docs" and "Defects and their
+> fixes" at the bottom of this file.
 
 - **Seller account:** three-ws @ 155407237916
 - **Delivery method:** API-based (SaaS fulfillment) — **not** container/Bedrock
@@ -27,11 +28,10 @@ products" page shows "No products to display").
   current EULA ("offered free of charge through AWS Marketplace") and clears AWS review
   fastest (no tax/bank/dimension interview).
 
-> Note: `docs/aws-marketplace.md` and the unused `AWS_MP_METERING_DIMENSION` /
-> `AWS_MP_DEFAULT_RATE_LIMIT_PER_MINUTE` env references describe an earlier
-> AWS-metered-billing plan. That is superseded: billing is x402-per-call, not AWS-metered.
-> Reconcile `docs/aws-marketplace.md` so it stops promising per-call/per-agent-minute AWS
-> billing.
+> `AWS_MP_METERING_DIMENSION` and `AWS_MP_DEFAULT_RATE_LIMIT_PER_MINUTE` remain in
+> the code for a future usage-priced listing. Both are inert while the dimension
+> is unset, which is the correct state for a free listing. [aws-marketplace.md](./aws-marketplace.md)
+> documents them as optional rather than as the billing model.
 
 ---
 
@@ -40,36 +40,52 @@ products" page shows "No products to display").
 This codespace has no AWS credentials, so these must be run on a machine with
 admin creds on account 155407237916.
 
-### 1. Provision the IAM user (the SNS half of the script is dead weight)
+### 1. Provision the IAM user and the EventBridge relay
 
 ```bash
 ./scripts/aws-marketplace-provision.sh
 ```
 
-**The SNS topic this script creates is NOT the topic AMMP wants, and there is no
-field in the SaaS wizard to paste it into.** AWS Marketplace creates and owns the
-notification topics and hands you the ARN *during product creation*, in the form
+It creates, idempotently:
+
+- the IAM user `three-ws-marketplace` plus the four marketplace actions and an
+  access key. `resolveCustomer()` in `api/_lib/aws-marketplace.js` calls
+  `aws-marketplace:ResolveCustomer`; without those keys every subscribe redirect
+  dies at `/aws-marketplace/error?reason=token_expired`.
+- an EventBridge **connection** holding a generated shared secret, an **API
+  destination** pointing at `https://three.ws/api/aws-marketplace/subscription`,
+  an IAM role EventBridge assumes to invoke it, an SQS dead-letter queue, and a
+  **rule** on the default event bus matching `source: aws.agreement-marketplace`.
+
+The relay is required because lifecycle events for a new listing arrive on
+EventBridge, which cannot POST to an external HTTPS endpoint directly. **The
+seller never supplies an SNS topic ARN**, and there is no field in the SaaS
+wizard for one: AWS creates and owns the notification topics and hands them over
+on the product overview page *after* product creation, in the form
 `arn:aws:sns:us-east-1:<aws-owned-account>:aws-mp-subscription-notification-<PRODUCTCODE>`.
-You subscribe to that topic afterwards; you never supply your own. Ignore the
-script's `AWS_MP_SNS_TOPIC_ARN` output. See
-[Amazon SNS notifications for SaaS products](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-notification.html).
+See [Amazon SNS notifications for SaaS products](https://docs.aws.amazon.com/marketplace/latest/userguide/saas-notification.html).
 
-What the script is genuinely needed for is the IAM user: `resolveCustomer()` in
-`api/_lib/aws-marketplace.js` calls `aws-marketplace:ResolveCustomer`, and without
-those keys every subscribe redirect dies at `/aws-marketplace/error?reason=token_expired`.
-
-Take `AWS_MP_ACCESS_KEY_ID`, `AWS_MP_SECRET_ACCESS_KEY`, and `AWS_MP_REGION` and set
-them on the Cloud Run service (production env lives there, not Vercel):
+Take `AWS_MP_ACCESS_KEY_ID`, `AWS_MP_SECRET_ACCESS_KEY`, `AWS_MP_REGION`, and
+`AWS_MP_EVENT_SECRET` and set them on the Cloud Run service (production env lives
+there, not Vercel):
 
 ```bash
 gcloud run services update three-ws-api --region us-central1 \
-  --update-env-vars AWS_MP_ACCESS_KEY_ID=…,AWS_MP_SECRET_ACCESS_KEY=…,AWS_MP_REGION=…
+  --update-env-vars AWS_MP_ACCESS_KEY_ID=…,AWS_MP_SECRET_ACCESS_KEY=…,AWS_MP_REGION=us-east-1,AWS_MP_EVENT_SECRET=…
 ```
 
 (`--update-env-vars` merges. Never use `--set-env-vars` here: it replaces the entire
 env set and would wipe every other production variable.)
 
 `AWS_MP_PRODUCT_CODE` is assigned by AMMP after the product is created — add it last.
+
+### 1b. Apply the schema migration
+
+The Concurrent Agreements re-key ships as
+`api/_lib/migrations/20260817120000_aws_marketplace_concurrent_agreements.sql`.
+Preview with `npm run db:status`, then `npm run db:migrate` (which applies every
+pending migration immediately, with no dry run). `npm run deploy:gcp:submit`
+refuses to submit while it is pending, so this cannot be skipped by accident.
 
 ### 2. EULA: pick Standard Contract and skip this entirely (recommended)
 
@@ -195,44 +211,47 @@ The free AWS subscription only grants the x402 access key.
 | AMMP field | Value |
 |---|---|
 | Fulfillment / SaaS URL (Registration URL) | `https://three.ws/api/aws-marketplace/register` |
-| SNS notification topic ARN | Not a field you fill in. AWS hands you `aws-mp-subscription-notification-<PRODUCTCODE>` after the product is created; subscribe to it then. |
+| SNS notification topic ARN | Not a field you fill in. AWS hands you the notification configuration on the product overview page after the product is created. |
 | EULA | **Standard Contract (SCMP)**: recommended, zero setup. Custom EULA only if the S3 copy returns 200 (see prereq #2). |
 | Post-subscribe redirect | `https://three.ws/aws-marketplace/welcome` (handled by register.js) |
 
-Lifecycle events land on `POST /api/aws-marketplace/subscription` (SNS webhook —
-already deployed; handles subscribe-success, unsubscribe-success, subscribe-fail,
-entitlement-updated, and the SubscriptionConfirmation handshake).
+Lifecycle events land on `POST /api/aws-marketplace/subscription`, which is
+deployed and accepts both transports: EventBridge agreement/license events
+relayed through the API destination (the path a new listing uses), and legacy
+signed SNS notifications with the SubscriptionConfirmation handshake.
 
 ---
 
 ## Step sequence in AMMP
 
-Nothing in steps 2-7 depends on the IAM keys, so if creds are slow to arrive, start
-the wizard anyway and backfill the env vars before the round-trip test in step 9.
+Nothing in steps 3-8 depends on the IAM keys, so if creds are slow to arrive, start
+the wizard anyway and backfill the env vars before the round-trip test in step 10.
 
-1. Run prereq #1; set `AWS_MP_ACCESS_KEY_ID`, `AWS_MP_SECRET_ACCESS_KEY`, and
-   `AWS_MP_REGION` on the Cloud Run service.
-2. AMMP → **AI agents & tools products** → **Create AI agents & tools product**.
-3. Delivery method: **API-based** (SaaS). (Until you finish the wizard the draft may
+1. Run prereq #1; set `AWS_MP_ACCESS_KEY_ID`, `AWS_MP_SECRET_ACCESS_KEY`,
+   `AWS_MP_REGION`, and `AWS_MP_EVENT_SECRET` on the Cloud Run service.
+2. Run prereq #1b (`npm run db:status`, then `npm run db:migrate`) and deploy, so
+   production is serving the re-keyed schema before any buyer can reach it.
+3. AMMP → **AI agents & tools products** → **Create AI agents & tools product**.
+4. Delivery method: **API-based** (SaaS). (Until you finish the wizard the draft may
    appear under **SaaS products**, per AMMP's own note — that's expected.)
-4. Fill product detail fields from the "Listing fields" section above; upload the logo.
-5. Pricing: choose **Free**.
-6. Fulfillment: paste the Registration URL from the table. There is no SNS field here.
-7. EULA: select **Standard Contract**.
-8. Save → AMMP assigns a **Product Code** and gives you the two `aws-mp-*` SNS topic
-   ARNs. Set `AWS_MP_PRODUCT_CODE` on the Cloud Run service. No rebuild is needed:
-   `gcloud run services update three-ws-api --region us-central1 --update-env-vars
-   AWS_MP_PRODUCT_CODE=…` cuts a new revision on its own.
-9. Wire notifications per what the product overview page actually shows. For a new
-   listing expect **EventBridge**, not SNS (see Defect 4 below): create a rule on the
-   default event bus in seller account 155407237916 matching
-   `source: aws.agreement-marketplace`, with an API destination targeting
-   `https://three.ws/api/aws-marketplace/subscription`, and make that handler parse
-   EventBridge event JSON. Only if AWS also issues the legacy
-   `aws-mp-subscription-notification-<PRODUCTCODE>` topic, add an HTTPS subscription
-   to it as a secondary leg. Then run one end-to-end
-   subscribe → redirect → welcome → issue-key test while the product is **limited**.
-10. Once the private round-trip works, **Request changes → Update visibility →
+5. Fill product detail fields from the "Listing fields" section above; upload the logo.
+6. Pricing: choose **Free**.
+7. Fulfillment: paste the Registration URL from the table. There is no SNS field here.
+8. EULA: select **Standard Contract**.
+9. Save → AMMP assigns a **Product Code** and shows the notification configuration
+   on the product overview page. Set `AWS_MP_PRODUCT_CODE` on the Cloud Run service.
+   No rebuild is needed: `gcloud run services update three-ws-api --region
+   us-central1 --update-env-vars AWS_MP_PRODUCT_CODE=…` cuts a new revision on its own.
+10. Confirm the notification wiring against what that page actually shows. The
+    EventBridge rule from prereq #1 already matches every
+    `source: aws.agreement-marketplace` event, so a new listing needs nothing
+    further. Only if AWS also issues the legacy
+    `aws-mp-subscription-notification-<PRODUCTCODE>` topic, set
+    `AWS_MP_SNS_TOPIC_ARN` to **that** ARN and add an HTTPS subscription to
+    `https://three.ws/api/aws-marketplace/subscription` as a secondary leg. Then
+    run one end-to-end subscribe → redirect → welcome → issue-key test from a test
+    AWS account while the product is **limited**.
+11. Once the private round-trip works, **Request changes → Update visibility →
     Public**. This one needs AWS Marketplace Seller Operations approval, so it is the
     step with real calendar time on it. Everything before it is same-day.
 
@@ -241,16 +260,34 @@ the wizard anyway and backfill the env vars before the round-trip test in step 9
 ## What is and isn't done
 
 Done (in repo, deployed):
-- Registration URL, SNS webhook, key issuance, account linking endpoints.
-- `aws_marketplace_customers` schema + x402 bridge.
-- EULA HTML, S3 publish script, SNS/IAM provision script.
+- Registration URL, lifecycle webhook (EventBridge + legacy SNS), key issuance,
+  account linking endpoints.
+- `aws_marketplace_customers` schema, re-keyed onto `LicenseArn` for Concurrent
+  Agreements, plus the x402 bridge.
+- EULA HTML, S3 publish script, IAM + EventBridge provision script.
 - Welcome onboarding page.
+- Test coverage for the event mapping, the relay secret, the ambiguity guard, the
+  metering call shape, and SNS SignatureVersion 1 and 2.
 
 Not done (requires AWS console / seller creds — cannot be done from this repo):
 - Running the provision + EULA-publish scripts (no AWS CLI/creds in codespace).
-- Publishing the S3 EULA (currently 404 — never uploaded).
+- Publishing the S3 EULA (currently 404, never uploaded; unnecessary if you pick
+  the Standard Contract).
 - Creating the product in the AMMP wizard (manual web UI).
 - Obtaining and wiring `AWS_MP_PRODUCT_CODE`.
+- The limited-visibility round-trip test and the public-visibility request.
+
+## Calendar
+
+There is no same-day path to a public AWS Marketplace URL. Plan against this:
+
+| Day | Step | Owner |
+|---|---|---|
+| 1 | Prereqs 1 + 1b, deploy, create the product, save the draft | us |
+| 1 | Product code lands, env var set, revision cuts | us |
+| 1-2 | Limited-visibility round-trip test from a test AWS account | us |
+| 2 | Request public visibility | us |
+| +7-10 business days | Seller Operations review and publish | AWS |
 
 ---
 
@@ -314,36 +351,44 @@ and [saas-eventbridge-integration](https://docs.aws.amazon.com/marketplace/lates
 events are delivered to the seller's **default event bus** in their own AWS account
 with `source: aws.agreement-marketplace`. Targets are AWS resources (Lambda, Step
 Functions, API Gateway). An external HTTPS webhook needs an EventBridge rule plus an
-API destination to relay to it. `api/aws-marketplace/subscription.js` is an SNS HTTPS
-webhook and cannot be an EventBridge target as written.
+API destination to relay to it. That relay is what
+`scripts/aws-marketplace-provision.sh` now creates, and
+`api/aws-marketplace/subscription.js` parses both envelope shapes.
 
 ---
 
-## Confirmed defects (fix before the listing goes anywhere)
+## Defects and their fixes (all four closed 2026-08-17)
 
-**Defect 1 (critical, listing-breaking): the identity model is keyed on a field AWS
-no longer sends.** `resolveCustomer()` in `api/_lib/aws-marketplace.js` reads
-`result.CustomerIdentifier` and discards `LicenseArn` entirely. `register.js` uses it
-as the `ON CONFLICT` key. `subscription.js` returns 400 `missing_customer_identifier`
-without it. 51 references across 7 files: `aws-marketplace.js`,
-`aws-marketplace-bridge.js`, `x402-subscriptions.js`, `issue-key.js`, `register.js`,
-`subscription.js`, `link.js`. On a new listing every subscribe dies at the first
-insert. Fix: return and persist `LicenseArn` + `CustomerAWSAccountId`, key on those,
-keep `customer_identifier` nullable for any legacy row.
+**Defect 1 (critical, listing-breaking): the identity model was keyed on a field AWS
+no longer sends.** `resolveCustomer()` read `result.CustomerIdentifier` and discarded
+`LicenseArn` entirely; `register.js` used it as the `ON CONFLICT` key; `subscription.js`
+returned 400 `missing_customer_identifier` without it. On a new listing every subscribe
+died at the first insert.
 
-**Defect 2 (critical, silent): the SNS topic guard rejects every real notification.**
-`verifySnsMessage()` compares `msg.TopicArn` against `env.AWS_MP_SNS_TOPIC_ARN`. The
-provision script emits the *self-created* topic ARN for that variable. Set it as the
-old docs instructed and every genuine AWS notification fails the check and returns 403,
-with the cause visible only in logs. Fix: set that var to the AWS-issued
-`aws-mp-subscription-notification-<PRODUCTCODE>` ARN, or leave it unset (the guard is
-skipped when empty) until the real ARN is known.
+*Fixed:* `resolveCustomer()` returns `licenseArn` and `customerAWSAccountId` alongside
+the legacy field. `api/_lib/aws-marketplace-store.js` is the single place that knows how
+a buyer is identified, keying on `license_arn` (unique) with `agreement_id` as a
+correlation key and `customer_identifier` kept nullable for a legacy row. Migration
+`20260817120000_aws_marketplace_concurrent_agreements.sql` carries the schema, including
+re-pointing the metering audit table's foreign key off the now-nullable column. The
+browser handle became the row id, so no license ARN reaches a URL.
 
-**Defect 3 (latent): SNS signature verification hardcodes SHA1.**
-`verifySnsMessage()` always does `createVerify('SHA1')` and never reads
-`msg.SignatureVersion`. AWS SNS SignatureVersion 2 signs with SHA256. On a
-SignatureVersion 2 topic every message fails verification and returns 403. Fix: branch
-on `msg.SignatureVersion` (`'2'` implies SHA256, otherwise SHA1).
+**Defect 2 (critical, silent): the SNS topic guard rejected every real notification.**
+The old provision script emitted a *self-created* topic ARN for `AWS_MP_SNS_TOPIC_ARN`.
+Set as the old docs instructed, every genuine AWS notification failed the pin and
+returned 403, visible only in logs.
+
+*Fixed:* the script no longer creates that topic, and both this file and
+[aws-marketplace.md](./aws-marketplace.md) state that the variable takes the AWS-issued
+`aws-mp-subscription-notification-<PRODUCTCODE>` ARN or nothing at all.
+
+**Defect 3 (latent): SNS signature verification hardcoded SHA1.**
+`verifySnsMessage()` always did `createVerify('SHA1')` and never read
+`msg.SignatureVersion`, so every message from a SignatureVersion 2 topic (SHA256)
+failed verification with an error that reads exactly like a forgery.
+
+*Fixed:* the digest follows `msg.SignatureVersion`. Both versions are covered in
+`tests/api/aws-marketplace-sns.test.js`, including a tampered version 2 message.
 
 **Defect 4 (critical, transport-level): the SNS webhook is the wrong transport for a
 new listing.** The [Concurrent Agreements upgrade guide](https://aws.amazon.com/blogs/awsmarketplace/complete-guide-to-upgrading-your-saas-product-to-aws-marketplace-concurrent-agreements/)
@@ -355,9 +400,30 @@ of the seller AWS account** (155407237916), not on an HTTPS URL. Reaching
 resources: an EventBridge rule matching `source: aws.agreement-marketplace` plus an
 API destination (connection + auth) targeting our endpoint, and the endpoint must
 parse EventBridge event JSON, not SNS envelopes. `subscription.js` as written
-(SNS envelope parse, SNS signature verify, SubscribeURL handshake) never fires on a
-new listing. Defects 2 and 3 (topic-ARN guard, SHA1) remain real but only matter for
-the legacy SNS path; the primary fix is the EventBridge leg.
-`scripts/aws-marketplace-provision.sh` should provision the rule + API destination
-instead of the orphan SNS topic. Still verify against the product overview page at
-creation time (`saas-create-product` says the EventBridge configuration appears there).
+(SNS envelope parse, SNS signature verify, SubscribeURL handshake) would never have
+fired on a new listing.
+
+*Fixed:* `subscription.js` detects the envelope shape and routes to the right handler,
+so the same URL serves either transport and a listing migrated between them needs no
+code change. `parseMarketplaceEvent()` maps every documented detail-type onto the
+action the listing takes, stripping the `- Manufacturer` / `- Proposer` role suffix
+(we are both). `scripts/aws-marketplace-provision.sh` provisions the connection, API
+destination, IAM role, dead-letter queue, and rule instead of the orphan SNS topic.
+
+Two things the relay forced, both worth knowing:
+
+- **The relay needs its own authentication.** An API destination delivery is an
+  ordinary HTTPS POST with no AWS signature on it. The connection attaches
+  `x-three-ws-marketplace-secret`, checked in constant time against
+  `AWS_MP_EVENT_SECRET`; an unset secret refuses EventBridge deliveries outright.
+  Without it, anyone who found the URL could revoke a paying buyer's key with a
+  forged `Purchase Agreement Ended`.
+- **An end event can be ambiguous, and guessing is worse than doing nothing.**
+  Agreement events carry no license ARN, and under Concurrent Agreements one AWS
+  account can hold several live agreements for the same product. When resolution
+  falls back to the acceptor's account id and matches more than one row, the handler
+  logs and revokes nothing. Retrying cannot add information, so it answers 200 rather
+  than looping the relay into the dead-letter queue.
+
+Still verify against the product overview page at creation time
+(`saas-create-product` says the EventBridge configuration appears there).

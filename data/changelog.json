@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "The AWS Marketplace integration is rebuilt for the rules AWS now enforces",
+			"summary": "Subscribing to three.ws through AWS Marketplace would have failed on the first click, and nobody would have known why. AWS changed how a buyer is identified: for any product created since June 2026 it no longer sends the customer identifier our integration was built around, sends a license identifier instead, and delivers cancellation notices over a different channel entirely. The whole path is rebuilt on the new model, from the database up: subscriptions are keyed on the license AWS actually issues, lifecycle events arrive over the new channel with their own authentication, and a cancellation that could refer to more than one of a buyer's subscriptions now refuses to guess rather than cutting off access someone is still paying for. Signature checking also follows the algorithm the message declares instead of assuming one, so a genuine notice can no longer be thrown out as a forgery. Listing status is unchanged for now: the product still has to be created and reviewed on the AWS side, which is theirs to schedule, not ours.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/docs/aws-marketplace"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "The listings page now tracks the AI platform directories, starting with OpenAI",
+			"summary": "The listings and distribution page tracked cloud marketplaces, startup programs, and chain dApp directories, but had nothing for the directories the AI platforms run themselves, which is where an MCP server gets listed as something you can install rather than something you can read about. There is now an AI Platform Directories section, and it opens with the three OpenAI surfaces: the plugin directory shared by ChatGPT and Codex, the Showcase Gallery, and the Cookbook, each with its current status stated plainly rather than implied. The three.ws MCP server at three.ws/api/mcp already meets the plugin directory's gating requirement, and the section says so.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/listings"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "The listings page now records our NVIDIA Inception membership",
 			"summary": "Anyone reading the listings and distribution page to see which programs back three.ws was getting an incomplete answer: the startup-programs table named Quicknode and Google Cloud but left NVIDIA Inception out entirely, even though the platform has been a member since July 2026 and every 3D generation lane runs on NVIDIA GPUs. The table now carries the NVIDIA row, saying what the membership is, what runs on the hardware behind it, and, as everywhere else on the site, that a startup program is not a partnership, an investment, or an endorsement.",
 			"tags": [

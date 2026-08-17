@@ -295,6 +295,14 @@
 			<description>The &lt;agent-3d&gt; runtime that sites load from three.ws is a single bundled file, and the production build never rebuilt it. It was copied from whatever the build machine happened to have on disk, which could be days older than the code being deployed, so a fix to the avatar element could ship everywhere else on the site and quietly not reach the SDK. The deploy now rebuilds that bundle from the same commit as the rest of the release, every time. Nothing to change on your side: existing embeds keep working and simply pick up the current runtime.</description>
 		</item>
 		<item>
+			<title>The AWS Marketplace integration is rebuilt for the rules AWS now enforces</title>
+			<link>https://three.ws/docs/aws-marketplace</link>
+			<guid isPermaLink="false">2026-08-17:The AWS Marketplace integration is rebuilt for the rules AWS now enforces</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Subscribing to three.ws through AWS Marketplace would have failed on the first click, and nobody would have known why. AWS changed how a buyer is identified: for any product created since June 2026 it no longer sends the customer identifier our integration was built around, sends a license identifier instead, and delivers cancellation notices over a different channel entirely. The whole path is rebuilt on the new model, from the database up: subscriptions are keyed on the license AWS actually issues, lifecycle events arrive over the new channel with their own authentication, and a cancellation that could refer to more than one of a buyer's subscriptions now refuses to guess rather than cutting off access someone is still paying for. Signature checking also follows the algorithm the message declares instead of assuming one, so a genuine notice can no longer be thrown out as a forgery. Listing status is unchanged for now: the product still has to be created and reviewed on the AWS side, which is theirs to schedule, not ours.</description>
+		</item>
+		<item>
 			<title>The Character Library counts its own characters, and fills the screen while it does</title>
 			<link>https://three.ws/character-library</link>
 			<guid isPermaLink="false">2026-08-17:The Character Library counts its own characters, and fills the screen while it does</guid>
@@ -349,6 +357,14 @@
 			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Anyone reading the listings and distribution page to see which programs back three.ws was getting an incomplete answer: the startup-programs table named Quicknode and Google Cloud but left NVIDIA Inception out entirely, even though the platform has been a member since July 2026 and every 3D generation lane runs on NVIDIA GPUs. The table now carries the NVIDIA row, saying what the membership is, what runs on the hardware behind it, and, as everywhere else on the site, that a startup program is not a partnership, an investment, or an endorsement.</description>
+		</item>
+		<item>
+			<title>The listings page now tracks the AI platform directories, starting with OpenAI</title>
+			<link>https://three.ws/docs/listings</link>
+			<guid isPermaLink="false">2026-08-17:The listings page now tracks the AI platform directories, starting with OpenAI</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The listings and distribution page tracked cloud marketplaces, startup programs, and chain dApp directories, but had nothing for the directories the AI platforms run themselves, which is where an MCP server gets listed as something you can install rather than something you can read about. There is now an AI Platform Directories section, and it opens with the three OpenAI surfaces: the plugin directory shared by ChatGPT and Codex, the Showcase Gallery, and the Cookbook, each with its current status stated plainly rather than implied. The three.ws MCP server at three.ws/api/mcp already meets the plugin directory's gating requirement, and the section says so.</description>
 		</item>
 		<item>
 			<title>The Money Flow Map stops cutting its own table off on a phone, and a refresh no longer blanks the map</title>

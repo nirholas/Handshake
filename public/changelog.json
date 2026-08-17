@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T14:48:00.518Z",
+	"generated_at": "2026-08-17T15:18:34.436Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -405,6 +405,17 @@
 		{
 			"date": "2026-08-17",
 			"type": "update",
+			"title": "The AWS Marketplace integration is rebuilt for the rules AWS now enforces",
+			"summary": "Subscribing to three.ws through AWS Marketplace would have failed on the first click, and nobody would have known why. AWS changed how a buyer is identified: for any product created since June 2026 it no longer sends the customer identifier our integration was built around, sends a license identifier instead, and delivers cancellation notices over a different channel entirely. The whole path is rebuilt on the new model, from the database up: subscriptions are keyed on the license AWS actually issues, lifecycle events arrive over the new channel with their own authentication, and a cancellation that could refer to more than one of a buyer's subscriptions now refuses to guess rather than cutting off access someone is still paying for. Signature checking also follows the algorithm the message declares instead of assuming one, so a genuine notice can no longer be thrown out as a forgery. Listing status is unchanged for now: the product still has to be created and reviewed on the AWS side, which is theirs to schedule, not ours.",
+			"link": "/docs/aws-marketplace",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
 			"title": "The Character Library counts its own characters, and fills the screen while it does",
 			"summary": "The library page had been advertising 106 rigged characters since launch. There are 107 on the shelf today, and there will be more tomorrow, so the number is no longer typed into the headline, the page description or the share card: the page asks the library how many it has and prints the answer under the hero. The grid also stopped wasting a third of a desktop screen. A layout rule left the page shrink-to-fitting to about two thirds of the window, so a wide monitor showed three columns where five fit; it now uses the full width it was designed for. Every character card previously carried a hidden second tab stop that announced the same name as the card itself, which made keyboard browsing twice as long as it needed to be, and thumbnails could not be dragged out of alignment by an accidental swipe anymore because the preview no longer pretends to be an interactive 3D control. The search box has a visible focus ring again instead of a one pixel border shift, and when the library cannot be reached the page now says what actually went wrong rather than reverting to a generic sentence a moment later.",
 			"link": "/character-library",
@@ -477,6 +488,16 @@
 			"tags": [
 				"docs",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "The listings page now tracks the AI platform directories, starting with OpenAI",
+			"summary": "The listings and distribution page tracked cloud marketplaces, startup programs, and chain dApp directories, but had nothing for the directories the AI platforms run themselves, which is where an MCP server gets listed as something you can install rather than something you can read about. There is now an AI Platform Directories section, and it opens with the three OpenAI surfaces: the plugin directory shared by ChatGPT and Codex, the Showcase Gallery, and the Cookbook, each with its current status stated plainly rather than implied. The three.ws MCP server at three.ws/api/mcp already meets the plugin directory's gating requirement, and the section says so.",
+			"link": "/docs/listings",
+			"tags": [
+				"docs"
 			]
 		},
 		{
