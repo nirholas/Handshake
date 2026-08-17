@@ -28,12 +28,43 @@ The posts that drew them share four traits. Keep all four:
    URL is what separates a claim from a credential.
 3. **Short, positive, first-person.** Every replied-to post was under about 200
    characters of human text. Long posts and product opinions got nothing.
-4. **IBM's own hashtags**: `#IBMSkillsBuild`, plus the topic tag. In the scrape,
-   `#ibmskillsbuild` appeared 12 times and `@credly` was mentioned 29 times, both
-   concentrated in the posts IBM engaged with.
 
-What kills the reply: a link to a non-Credly domain, promo language in the main post,
-more than one outbound link, or burying the `@IBM` mention below the fold.
+What kills the reply: promo language in the main post, more than one outbound link, or
+burying the `@IBM` mention below the fold.
+
+### Hashtags do not help, on this evidence
+
+An earlier draft of this doc claimed IBM's own hashtags improved the odds. That was an
+inference, not a measurement, and the data does not support it:
+
+- 32 of 231 non-IBM posts in the timeline (14%) carried any hashtag.
+- Of the 9 distinct posts IBM plausibly replied to, **1 carried hashtags**, and they were
+  `#IBM115` / `#HappyBirthdayIBM`: event tags on a birthday wish, not program tags.
+- Of the 31 Credly-badge posts in the timeline, only 4 used hashtags at all.
+
+So the branded-tag theory has no support here, and it runs against X's own guidance that
+hashtags no longer feed distribution. The `@IBM` mention is a strictly stronger signal
+anyway: it lands the post in IBM's mentions, which a hashtag search does not. **Ship with
+zero hashtags.**
+
+### Link in the post, or link in the reply?
+
+Weak evidence, stated as weak. Bucketing the timeline pool by shape and matching against
+the inferred reply parents:
+
+| Post shape | Pool | Inferred replies | Rate |
+|---|---|---|---|
+| Narrative, no link | 23 | 2 | 9% |
+| Credly boilerplate + link | 29 | 1 | 3% |
+| Narrative + link | 2 | 0 | 0% |
+
+That leans toward no-link, but it rests on 3 badge replies total, and the parent linkage
+is inferred from timestamp order because the scrape does not record reply targets. Treat
+it as "the link does not appear to be required," not as "the link hurts."
+
+The reason to keep the link anyway: it is the one-click proof a community manager needs
+before typing "Great work!". The reason it is safe to drop: the badge certificate image
+carries the verify URL and a QR code, so the proof is visible without any link at all.
 
 ## Recommended: two-part post
 
@@ -41,17 +72,20 @@ The main tweet stays inside the exact shape IBM replies to. The three.ws story g
 the self-reply, where it reaches everyone who opens the post but does not dilute the
 pattern match on the tweet IBM's team sees.
 
-**Tweet 1** (attach the badge image, 231 characters):
+**Tweet 1** (attach the badge certificate image, 187 characters). Human copy leads, link
+sits at the end, no hashtags:
 
 ```
-View my verified achievement from @IBM.
-
-https://www.credly.com/badges/b7ea921a-ce3d-4f4d-bfac-38f95276d361/twitter via @credly
+View my verified achievement from @IBM
 
 Cybersecurity is a skill everyone should hold. Sharpening the security fundamentals behind everything we ship.
 
-#IBMSkillsBuild #Cybersecurity #Developer
+https://www.credly.com/badges/b7ea921a-ce3d-4f4d-bfac-38f95276d361/twitter via @credly
 ```
+
+Set image alt text to `IBM SkillsBuild certificate: Getting Started with Cybersecurity,
+issued June 8 2026`. It is an accessibility requirement and it restates the badge name
+for anyone who cannot load the image.
 
 **Tweet 2** (self-reply, 268 characters):
 
