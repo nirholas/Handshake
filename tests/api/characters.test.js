@@ -4,17 +4,24 @@
 // rate limiter and bucket-URL helper are stubbed at the module boundary. What
 // these pin is the pagination contract: a hand-edited `cursor` must come back
 // as a 4xx, not as a 500 from `new Date('junk').toISOString()` throwing a
-// RangeError deep inside the handler.
+// RangeError deep inside the handler, and a `next_cursor` must carry every
+// column its sort orders by, or "Top" stops paging after one screen.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const rows = [];
 const sqlCalls = [];
 vi.mock('../../api/_lib/db.js', () => {
-	const sql = vi.fn(async (...args) => {
-		sqlCalls.push(args);
-		return rows.splice(0, rows.length);
-	});
+	// Mirror the real wrapper's shape: every sql`` call returns a composable
+	// thenable, and a fragment spliced into a parent query is never awaited, so
+	// it never runs. Resolving lazily keeps `sqlCalls` to the one query the
+	// handler actually executes, whatever fragments it assembled on the way.
+	const sql = vi.fn((...args) => ({
+		then(resolve, reject) {
+			sqlCalls.push(args);
+			return Promise.resolve(rows.splice(0, rows.length)).then(resolve, reject);
+		},
+	}));
 	return { sql, isDbUnavailableError: () => false, isDbCapacityError: () => false };
 });
 
@@ -130,6 +137,49 @@ describe('GET /api/characters', () => {
 
 		expect(res.statusCode).toBe(200);
 		expect(interpolations(0)).toContain('2026-08-16T00:00:00.000Z');
+	});
+
+	// sort=chats orders by (chat_count DESC, created_at DESC), so a cursor that
+	// names only created_at cannot resume it: page 2 kept whatever was older than
+	// the last row and re-ranked THAT by chats, which ended the "Top" feed after
+	// a single screen. The cursor now carries both keys.
+	it('issues a composite cursor under sort=chats', async () => {
+		rows.push(AGENT, { ...AGENT, id: 'b', chat_count: 1, created_at: '2026-08-14T00:00:00.000Z' });
+		const res = mkRes();
+		await handler(mkReq({ query: '?limit=1&sort=chats' }), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.json.next_cursor).toBe('4:2026-08-15T13:37:01.660Z');
+	});
+
+	it('resumes sort=chats from both keys of a composite cursor', async () => {
+		rows.push(AGENT);
+		const res = mkRes();
+		await handler(mkReq({ query: '?sort=chats&cursor=4%3A2026-08-15T13%3A37%3A01.660Z' }), res);
+
+		expect(res.statusCode).toBe(200);
+		const values = interpolations(0);
+		expect(values).toContain(4);
+		expect(values).toContain('2026-08-15T13:37:01.660Z');
+	});
+
+	it('rejects a cursor whose shape does not match the requested sort', async () => {
+		// A bare timestamp is what sort=new issues; under sort=chats it is either a
+		// hand-edited URL or a cursor carried across a sort switch, and resuming
+		// from it would silently skip rows.
+		const res = mkRes();
+		await handler(mkReq({ query: '?sort=chats&cursor=2026-08-15T13:37:01.660Z' }), res);
+
+		expect(res.statusCode).toBe(400);
+		expect(sqlCalls).toHaveLength(0);
+	});
+
+	it('400s a composite cursor with a junk count', async () => {
+		const res = mkRes();
+		await handler(mkReq({ query: '?sort=chats&cursor=abc%3A2026-08-15T13%3A37%3A01.660Z' }), res);
+
+		expect(res.statusCode).toBe(400);
+		expect(sqlCalls).toHaveLength(0);
 	});
 
 	it('coerces junk pagination and caps the page size', async () => {

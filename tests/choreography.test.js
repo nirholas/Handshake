@@ -231,6 +231,21 @@ describe('wire format', () => {
 		const decoded = decodeRoutine(encodeRoutine(routine([{ slot: 'wave' }], { name: 'a|b,c:d' })));
 		expect(decoded.name).toBe('a|b,c:d');
 	});
+
+	it('does not let a name ending in ~loop masquerade as the loop marker', () => {
+		const original = routine([{ slot: 'wave' }], { name: 'Encore~loop' });
+		const encoded = encodeRoutine(original);
+		expect(encoded.startsWith('Encore%7Eloop|')).toBe(true);
+		const decoded = decodeRoutine(encoded);
+		expect(decoded.name).toBe('Encore~loop');
+		expect(decoded.loop).toBe(false);
+	});
+
+	it('still reads the ~loop marker on a routine that loops', () => {
+		const decoded = decodeRoutine(encodeRoutine(routine([{ slot: 'wave' }], { name: 'Encore', loop: true })));
+		expect(decoded.name).toBe('Encore');
+		expect(decoded.loop).toBe(true);
+	});
 });
 
 describe('RoutinePlayer', () => {
