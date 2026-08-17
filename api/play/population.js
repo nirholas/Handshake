@@ -4,6 +4,12 @@
 //   ?coin=<mint>   narrow to one community's worlds (the /event landing page
 //                  passes the $THREE mint so its LIVE panel counts the people
 //                  actually at the event, not the whole platform)
+//   ?by=coin       also return `byCoin`, a mint → player-count map covering every
+//                  live world (the /play lobby paints a live "N inside" count on
+//                  every community card from one poll instead of one request per
+//                  card). Omitted from the response when the multiplayer server
+//                  is older than this parameter, so a caller either gets real
+//                  per-coin numbers or none, never invented ones.
 //
 // The multiplayer server is the only thing that knows: /play presence lives in
 // Colyseus rooms, not in Postgres or Redis, so there is nothing here to query.
@@ -40,9 +46,26 @@ function safeCoin(raw) {
 	return '';
 }
 
-async function readUpstream(base, coin) {
+// Sanitize the upstream breakdown before it is re-published. The keys are mints
+// the upstream read off live room listings, so they are shaped by whatever a
+// client passed as its `coin` join option: re-validate them here with the same
+// rule as the `?coin=` filter, and drop anything that fails or counts nobody.
+function safeByCoin(raw) {
+	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+	const out = {};
+	for (const [mint, count] of Object.entries(raw)) {
+		const key = safeCoin(mint);
+		if (!key) continue;
+		const players = Math.max(0, Math.floor(Number(count) || 0));
+		if (players > 0) out[key] = players;
+	}
+	return out;
+}
+
+async function readUpstream(base, coin, byCoin) {
 	const url = new URL('/population', base);
 	if (coin) url.searchParams.set('coin', coin);
+	if (byCoin) url.searchParams.set('by', 'coin');
 	const ac = new AbortController();
 	const timer = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
 	try {
@@ -53,6 +76,7 @@ async function readUpstream(base, coin) {
 		return {
 			players: Math.max(0, Math.floor(Number(body.players) || 0)),
 			rooms: Math.max(0, Math.floor(Number(body.rooms) || 0)),
+			byCoin: byCoin ? safeByCoin(body.byCoin) : null,
 		};
 	} catch {
 		return null;
@@ -68,14 +92,16 @@ export default wrap(async (req, res) => {
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const coin = safeCoin(new URL(req.url, 'http://localhost').searchParams.get('coin'));
+	const params = new URL(req.url, 'http://localhost').searchParams;
+	const coin = safeCoin(params.get('coin'));
+	const wantByCoin = params.get('by') === 'coin';
 	const base = env.MULTIPLAYER_INTERNAL_URL;
 
 	if (!base) {
 		return json(res, 200, { ok: false, reason: 'unavailable', coin: coin || null });
 	}
 
-	const upstream = await readUpstream(base, coin);
+	const upstream = await readUpstream(base, coin, wantByCoin);
 	if (!upstream) {
 		return json(res, 200, { ok: false, reason: 'unavailable', coin: coin || null });
 	}
@@ -88,5 +114,6 @@ export default wrap(async (req, res) => {
 		coin: coin || null,
 		players: upstream.players,
 		rooms: upstream.rooms,
+		...(upstream.byCoin ? { byCoin: upstream.byCoin } : {}),
 	});
 });

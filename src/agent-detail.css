@@ -1446,6 +1446,27 @@ div.ad-hero-avatar canvas {
 .ad-skill-row:last-child {
 	border-bottom: 0;
 }
+/* Arrived here from a deep link naming one skill (e.g. the Buy CTA on
+   /conversions). Marking the row is what makes the landing legible on an agent
+   selling a dozen skills; the tint fades once it has done its job. */
+.ad-skill-row--focused {
+	background: color-mix(in srgb, var(--ad-cyan) 12%, transparent);
+	box-shadow: inset 2px 0 0 var(--ad-cyan);
+	border-radius: 6px;
+	padding-left: 10px;
+	animation: ad-skill-focus-fade 2.4s ease-out 1.6s forwards;
+}
+@keyframes ad-skill-focus-fade {
+	to {
+		background: transparent;
+		box-shadow: inset 2px 0 0 transparent;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.ad-skill-row--focused {
+		animation: none;
+	}
+}
 .ad-skill-name {
 	font-size: 14px;
 	color: var(--ad-text);

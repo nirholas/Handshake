@@ -1084,7 +1084,7 @@
 		const STAT_LABELS = ['Observed', 'Classified', 'Labeled', 'Graduated'];
 		const renderStats = (values) => {
 			$('#ci-stats').innerHTML = STAT_LABELS
-				.map((l, i) => `<div class="ci-stat"><div class="v">${values[i] ?? ','}</div><div class="l">${l}</div></div>`).join('');
+				.map((l, i) => `<div class="ci-stat"><div class="v">${values[i] ?? '&mdash;'}</div><div class="l">${l}</div></div>`).join('');
 		};
 		async function loadStats() {
 			try {

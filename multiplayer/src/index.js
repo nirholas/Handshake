@@ -181,23 +181,39 @@ app.post('/internal/announce', express.json({ limit: '16kb' }), (req, res) => {
 // narrows to one community's worlds, which is what the /event landing page asks
 // for; without it the total spans every live world.
 //
+// `?by=coin` additionally returns the per-coin breakdown as `byCoin`, a plain
+// mint → player-count map. The /play lobby renders a live "N inside" count on
+// every community card, and asking for it one coin at a time would be one HTTP
+// round trip per card on every poll; the listing is already in hand here, so the
+// breakdown costs nothing beyond the grouping. Still counts only, still no
+// identities: a mint is public information and the value is a headcount.
+//
 // The three.ws API proxies this server-side (api/play/population.js), so no CORS
 // header is emitted: a browser never calls it directly.
 app.get('/population', async (req, res) => {
 	const coin = typeof req.query.coin === 'string' ? req.query.coin.trim().slice(0, 128) : '';
+	const wantByCoin = req.query.by === 'coin';
 	try {
 		const listings = await matchMaker.query({ name: 'walk_world' });
 		let rooms = 0;
 		let players = 0;
+		const byCoin = wantByCoin ? Object.create(null) : null;
 		for (const room of listings || []) {
 			if (coin && room?.coin !== coin) continue;
 			rooms += 1;
-			players += Number(room?.clients) || 0;
+			const here = Number(room?.clients) || 0;
+			players += here;
+			// A coin's General and Holders worlds are separate room instances of the
+			// same mint (filterBy(['coin','tier'])), so both fold into one count: the
+			// card asks "how many people are in this community", not "in which tier".
+			if (byCoin && typeof room?.coin === 'string' && room.coin) {
+				byCoin[room.coin] = (byCoin[room.coin] || 0) + here;
+			}
 		}
 		// 5s of edge/CDN caching: the number moves on a human timescale and this
 		// runs on the same process that serves gameplay traffic.
 		res.set('cache-control', 'public, max-age=5');
-		res.json({ ok: true, coin: coin || null, rooms, players });
+		res.json({ ok: true, coin: coin || null, rooms, players, ...(byCoin ? { byCoin } : {}) });
 	} catch (err) {
 		console.warn('[multiplayer] /population failed:', err?.message || err);
 		res.status(503).json({ ok: false, error: 'unavailable' });
