@@ -3,6 +3,35 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Talking Avatar Video stops handing the renderer a 3D file where a photo belongs, and says up front when the GPU lane is down",
+			"summary": "The /create/video page turns one of your avatars plus an audio clip into a lip-synced video, and it was driven end to end in a real browser: every state, every button, every width. The worst finding was invisible from the page. The reference frame the GPU worker renders from was being taken from whatever the browser had handy, which for an avatar with no thumbnail meant its 3D model file. The worker saved that as the reference photo and then failed on it minutes later, after the wait had already been spent. The page now sends only the avatar, and the server resolves a real image for it: the stored thumbnail, or a fresh portrait render when there is none. Second, the GPU renderer is a separate service, and when it is not running the only signal was a failure after you had already picked a file and uploaded it. The page now asks first and, if the lane is down, says so at the top, keeps Generate switched off, and points at the Avatar Studio and prompt-to-avatar in the meantime. The rest is the ordinary polish an audit turns up: a failed avatar list used to look identical to owning no avatars, so it sent people off to create one they already had, and now it says what broke and offers a retry; having no avatars yet gets a real empty state with a link to make one; the Generate button always explains what it is still waiting for and, once audio is in, how many clips of video that audio is worth; the clip you picked can be played back with its length and size before you spend a generation on it; a render job that goes unreachable now says so after thirty seconds instead of spinning for twenty minutes; and after a spent free trial the button under the error no longer stayed stuck on Upgrade plan for every later error. Avatar thumbnails are real buttons with visible focus rings, the two form fields have proper labels, and the second animated avatar that the site companion used to drop onto this page no longer loads over the one you are working on.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/create/video"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "The Pole Club audio controls no longer fall off the edge of a small phone",
+			"summary": "On a narrow phone the club's top bar ran out of room and simply cut off whatever did not fit, and the page cannot scroll sideways, so the mute button and the 8D audio toggle were gone with no way to reach them. The bar now gives up the parts that are only there to read (the tagline and the price and rail labels, all of which the panel's How it works section repeats) and keeps both controls at full size at every width, down to a 320px screen.",
+			"tags": [
+				"fix"
+			],
+			"link": "/club"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Scene Composer works on a phone, starts you off with real models, and answers the keyboard",
+			"summary": "Scene Composer was unusable on anything narrower than a laptop. Below 900px the scene panel was switched off, which pushed the 3D canvas into a zero-width column, so a tablet visitor got no viewport at all and no way back to the hierarchy, inspector or bone-attach controls; at phone widths the toolbar forced the whole editor wider than the screen and shoved the right-hand panel out of view. The panel is now a drawer behind a toolbar button, the toolbar scrolls instead of stretching the layout, and the canvas keeps real dimensions at 320, 768 and 1440 pixels. The Recent Creations strip also no longer greets a first-time visitor with an empty box: until you have forged something it shows the live community showcase, so there are real models to drop into the scene straight away. The avatar picker was asking the directory a question it does not answer and got back a feed of on-chain agents with no 3D model attached, so most slots were silently dropped and the rest never showed their thumbnails; it now asks for public 3D avatars and renders them. The start panel finally honours what it always promised: paste an avatar ID, not just a URL, and a model that cannot be loaded leaves a written explanation instead of a toast that vanishes before you can read it. Both the creations strip and the avatar picker now offer a Try again that works when a request fails. On the keyboard side: the page has a real heading, the camera-view menu and every creation and avatar tile are proper buttons, the scene rows expose their hide and remove actions on focus, the prompt and avatar fields have labels, dialogs trap focus and hand it back on Escape, and there is a visible focus ring throughout. Removing an object now frees its GPU memory once the step drops out of undo range, undo puts a bone-attached item back on its bone, and saving an outfit refuses a locally dropped file rather than storing a link that breaks on reload.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/compose"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Building an agent no longer throws you out to the login page, and the wizard answers the keyboard",
 			"summary": "The six-step agent builder at /create-agent was audited end to end in a real browser: naming an agent, generating a whole spec from one sentence, choosing a body from the starter library, the skills and personality steps, the voice step, and the review screen, plus the loading, empty and error states at phone, tablet and desktop widths. The worst finding was that the wizard broke its own promise. It is built so anyone can construct an entire agent before making an account, and sign in only at the final step where the agent gets its wallet. But opening the My avatars tab without an account threw the visitor straight out to the login page, mid-build, with no warning and no explanation, because that tab asked for avatars you can only have if you are signed in. It now recognises a visitor who has no account, says so in the tab, and points at the Starter library and Upload tabs, which both work without one, alongside a Sign in button that saves the build first so nothing is lost either way. The step markers across the top of the wizard could only be used with a mouse. They are the only way back to an earlier step from the review screen, so anyone working by keyboard reached the end of the flow with no way to correct anything; they are now real buttons that take focus, show a focus ring, and respond to Enter and Space, with the completed steps marked as such for screen readers. The four tabs on the body step also announced themselves as tabs without ever telling a screen reader which panel each one opens, and left the arrow keys dead; the arrow keys, Home and End now move between them the way tabs are meant to work. Finally, a first-time visitor generating an agent from a description no longer sees a failed request in the browser console.",
 			"tags": [
@@ -24354,16 +24383,6 @@
 				"improvement"
 			],
 			"link": "/coin3d"
-		},
-		{
-			"date": "2026-08-17",
-			"title": "Talking Avatar Video stops handing the renderer a 3D file where a photo belongs, and says up front when the GPU lane is down",
-			"summary": "The /create/video page turns one of your avatars plus an audio clip into a lip-synced video, and it was driven end to end in a real browser: every state, every button, every width. The worst finding was invisible from the page. The reference frame the GPU worker renders from was being taken from whatever the browser had handy, which for an avatar with no thumbnail meant its 3D model file. The worker saved that as the reference photo and then failed on it minutes later, after the wait had already been spent. The page now sends only the avatar, and the server resolves a real image for it: the stored thumbnail, or a fresh portrait render when there is none. Second, the GPU renderer is a separate service, and when it is not running the only signal was a failure after you had already picked a file and uploaded it. The page now asks first and, if the lane is down, says so at the top, keeps Generate switched off, and points at the Avatar Studio and prompt-to-avatar in the meantime. The rest is the ordinary polish an audit turns up: a failed avatar list used to look identical to owning no avatars, so it sent people off to create one they already had, and now it says what broke and offers a retry; having no avatars yet gets a real empty state with a link to make one; the Generate button always explains what it is still waiting for and, once audio is in, how many clips of video that audio is worth; the clip you picked can be played back with its length and size before you spend a generation on it; a render job that goes unreachable now says so after thirty seconds instead of spinning for twenty minutes; and after a spent free trial the button under the error no longer stayed stuck on Upgrade plan for every later error. Avatar thumbnails are real buttons with visible focus rings, the two form fields have proper labels, and the second animated avatar that the site companion used to drop onto this page no longer loads over the one you are working on.",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/create/video"
 		}
 	]
 }
