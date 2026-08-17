@@ -87,12 +87,24 @@ Set image alt text to `IBM SkillsBuild certificate: Getting Started with Cyberse
 issued June 8 2026`. It is an accessibility requirement and it restates the badge name
 for anyone who cannot load the image.
 
-**Tweet 2** (self-reply, 268 characters):
+**Tweet 2** (self-reply, 252 characters). This is where the three.ws link goes: the main
+post already spent its link on Credly, and a reply carries a link without costing the
+parent any reach.
 
 ```
-Why it matters for three.ws: we run agent wallets, on-chain payments and a public API. Every credential the team adds turns into concrete hardening, tighter key handling, better auth, safer defaults for users who never see any of it.
+Why it matters for us: three.ws runs agent wallets, on-chain payments and a public API. Every credential the team adds becomes real hardening. Tighter key handling, better auth, safer defaults for users who never see any of it.
 
-Next up on the SkillsBuild track.
+https://three.ws
+```
+
+Alternate ending if you would rather close on the team than the product, 269 characters:
+
+```
+Security is not a feature you bolt on at the end. three.ws runs agent wallets, on-chain payments and a public API, so the fundamentals in this course are the fundamentals of the product.
+
+More of the team is going through the SkillsBuild track.
+
+https://three.ws
 ```
 
 ## Variant A: single post, three.ws named up front
