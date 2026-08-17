@@ -230,7 +230,11 @@ export function simulateRunway(input = {}) {
 			refusedFloor,
 			refusedGovernor,
 			demanded,
-			admissionRate: demanded > 0 ? admitted / demanded : 1,
+			// Null, not 1, when nothing was attempted. "100% admitted" over zero
+			// attempts is the arithmetic of an empty set dressed up as a health
+			// signal, and it is exactly what let a wallet sitting under its hard
+			// floor render as a healthy rail.
+			admissionRate: demanded > 0 ? admitted / demanded : null,
 			firstRefusalHour,
 			floorBreachHour,
 			startLamports: Math.max(0, int(input.startLamports)),
@@ -240,7 +244,7 @@ export function simulateRunway(input = {}) {
 			settlesPerDay: settledDays,
 			steadySettlesPerDay: steadyStateSettlesPerDay(settledDays),
 			limiter: limiterOf({ refusedFloor, refusedGovernor, admitted, demandPerHour, hours }),
-			verdict: verdictOf({ admitted, refused, refusedFloor }),
+			verdict: verdictOf({ admitted, refused, refusedFloor, demanded }),
 			truncated,
 			hoursSimulated: series.length,
 		},
@@ -265,7 +269,13 @@ function limiterOf({ refusedFloor, refusedGovernor, admitted, demandPerHour, hou
 	return 'none';
 }
 
-function verdictOf({ admitted, refused, refusedFloor }) {
+// A projection with no attempts in it has not proved anything about the rail,
+// so it gets its own verdict rather than inheriting `healthy` by default. An
+// idle rail and a working rail are different states, and conflating them is how
+// a fee wallet under its hard floor came to be reported as healthy: zero demand
+// meant zero refusals, and zero refusals read as success.
+function verdictOf({ admitted, refused, refusedFloor, demanded }) {
+	if (demanded === 0) return 'idle';
 	if (admitted === 0 && refused > 0) return 'starved';
 	if (refusedFloor > 0) return 'starved';
 	if (refused > 0) return 'throttled';

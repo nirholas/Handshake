@@ -155,7 +155,15 @@ async function observeWindow() {
 		// Real arrival rate, so the projection starts from measured demand rather
 		// than a guess. Duplicates are excluded: they are retries of a settle that
 		// already landed, not new demand on the rail.
-		demand_per_hour: Math.round(capacityAttempts / WINDOW_HOURS),
+		//
+		// A rail that took fewer than 12 settles in 24 hours still took traffic, so
+		// the rate is clamped to 1 rather than rounded to 0. Reporting zero demand
+		// for a live-but-quiet rail is not a rounding artefact the caller can
+		// recover from: it reads as "nobody is paying", which is a different
+		// diagnosis entirely.
+		demand_per_hour: capacityAttempts > 0
+			? Math.max(1, Math.round(capacityAttempts / WINDOW_HOURS))
+			: 0,
 		refusals: refusalList,
 	};
 }

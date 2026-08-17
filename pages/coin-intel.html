@@ -231,8 +231,11 @@
 		.ci-drawer .close { position: absolute; top: 16px; right: 16px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--ci-border); background: rgba(255,255,255,0.05); color: var(--ci-text); cursor: pointer; font-size: 16px; line-height: 1; z-index: 2; }
 		.ci-drawer .close:hover { background: rgba(255,255,255,0.12); }
 		.d-head { display: flex; gap: 14px; align-items: center; padding-right: 36px; }
+		/* Without min-width:0 this flex child keeps its content's width, so a long
+		   unbroken coin name slid straight under the close button at narrow widths. */
+		.d-head > div { min-width: 0; }
 		.d-head .avatar { width: 58px; height: 58px; border-radius: 14px; background: #15171f; object-fit: cover; border: 1px solid var(--ci-border); flex-shrink: 0; }
-		.d-head .name { font-family: var(--font-display, sans-serif); font-size: 20px; font-weight: 600; line-height: 1.1; }
+		.d-head .name { font-family: var(--font-display, sans-serif); font-size: 20px; font-weight: 600; line-height: 1.1; overflow-wrap: anywhere; }
 		.d-head .sym { font-family: var(--font-mono, monospace); font-size: 13px; color: var(--ci-neutral); margin-top: 3px; }
 		.d-section { margin-top: 22px; }
 		.d-section > h4 { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ci-faint); margin: 0 0 11px; font-weight: 600; }
