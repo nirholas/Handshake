@@ -75,6 +75,14 @@
 				max-width: 1080px;
 				margin: 0 auto;
 				padding: 0 var(--space-md);
+				/* body is display:flex site-wide, so this main is a flex item and
+				   inherits min-width:auto. Its min-content size is set by the
+				   longest unbreakable line in the install <pre>, which pushed the
+				   whole column to ~609px inside a 320px viewport; mobile.css clips
+				   horizontal overflow, so that content was cut off with no way to
+				   scroll to it. min-width:0 lets the column shrink and hands the
+				   scrolling back to the <pre>, which is built for it. */
+				min-width: 0;
 			}
 			.cl-hero {
 				padding: calc(var(--space-xl) * 2) 0 var(--space-xl);
@@ -307,25 +315,25 @@
 				<h2 id="cl-install" data-i18n="concierge.install_in_under_a_minute">Install in under a minute</h2>
 				<p class="cl-lede" data-i18n="concierge.pick_your_flavor_every_option_ships_the">Pick your flavor. Every option ships the same widget.</p>
 				<div class="cl-tabs" role="tablist" aria-label="Install methods">
-					<button class="cl-tab" role="tab" aria-selected="true" data-panel="cdn" data-i18n="concierge.one_tag">one tag</button>
-					<button class="cl-tab" role="tab" aria-selected="false" data-panel="element" data-i18n="concierge.web_component">web component</button>
-					<button class="cl-tab" role="tab" aria-selected="false" data-panel="npm" data-i18n="concierge.npm">npm</button>
-					<button class="cl-tab" role="tab" aria-selected="false" data-panel="js" data-i18n="concierge.imperative">imperative</button>
+					<button class="cl-tab" type="button" role="tab" id="cl-tab-cdn" aria-controls="cl-panel-cdn" aria-selected="true" tabindex="0" data-panel="cdn" data-i18n="concierge.one_tag">one tag</button>
+					<button class="cl-tab" type="button" role="tab" id="cl-tab-element" aria-controls="cl-panel-element" aria-selected="false" tabindex="-1" data-panel="element" data-i18n="concierge.web_component">web component</button>
+					<button class="cl-tab" type="button" role="tab" id="cl-tab-npm" aria-controls="cl-panel-npm" aria-selected="false" tabindex="-1" data-panel="npm" data-i18n="concierge.npm">npm</button>
+					<button class="cl-tab" type="button" role="tab" id="cl-tab-js" aria-controls="cl-panel-js" aria-selected="false" tabindex="-1" data-panel="js" data-i18n="concierge.imperative">imperative</button>
 				</div>
-				<div class="cl-panel" data-panel="cdn">
+				<div class="cl-panel" id="cl-panel-cdn" role="tabpanel" aria-labelledby="cl-tab-cdn" data-panel="cdn">
 					<div class="cl-code">
-						<button class="cl-copy" type="button" data-copy data-i18n="concierge.copy">copy</button>
-						<pre><code>&lt;script src="https://three.ws/concierge/concierge.global.js"
+						<button class="cl-copy" type="button" data-copy aria-label="Copy the one-tag install snippet" data-i18n="concierge.copy">copy</button>
+						<pre tabindex="0"><code>&lt;script src="https://three.ws/concierge/concierge.global.js"
         data-concierge
         data-site-name="Acme"
         data-accent="#f97316"
         data-suggestions="What is Acme?|What does it cost?"&gt;&lt;/script&gt;</code></pre>
 					</div>
 				</div>
-				<div class="cl-panel" data-panel="element" hidden>
+				<div class="cl-panel" id="cl-panel-element" role="tabpanel" aria-labelledby="cl-tab-element" data-panel="element" hidden>
 					<div class="cl-code">
-						<button class="cl-copy" type="button" data-copy data-i18n="concierge.copy_2">copy</button>
-						<pre><code>import '@three-ws/concierge';
+						<button class="cl-copy" type="button" data-copy aria-label="Copy the web-component install snippet" data-i18n="concierge.copy_2">copy</button>
+						<pre tabindex="0"><code>import '@three-ws/concierge';
 
 &lt;three-concierge
     site-name="Acme"
@@ -335,16 +343,16 @@
 &lt;/three-concierge&gt;</code></pre>
 					</div>
 				</div>
-				<div class="cl-panel" data-panel="npm" hidden>
+				<div class="cl-panel" id="cl-panel-npm" role="tabpanel" aria-labelledby="cl-tab-npm" data-panel="npm" hidden>
 					<div class="cl-code">
-						<button class="cl-copy" type="button" data-copy data-i18n="concierge.copy_3">copy</button>
-						<pre><code>npm install @three-ws/concierge three</code></pre>
+						<button class="cl-copy" type="button" data-copy aria-label="Copy the npm install command" data-i18n="concierge.copy_3">copy</button>
+						<pre tabindex="0"><code>npm install @three-ws/concierge three</code></pre>
 					</div>
 				</div>
-				<div class="cl-panel" data-panel="js" hidden>
+				<div class="cl-panel" id="cl-panel-js" role="tabpanel" aria-labelledby="cl-tab-js" data-panel="js" hidden>
 					<div class="cl-code">
-						<button class="cl-copy" type="button" data-copy data-i18n="concierge.copy_4">copy</button>
-						<pre><code>import { Concierge } from '@three-ws/concierge';
+						<button class="cl-copy" type="button" data-copy aria-label="Copy the imperative API snippet" data-i18n="concierge.copy_4">copy</button>
+						<pre tabindex="0"><code>import { Concierge } from '@three-ws/concierge';
 
 const concierge = new Concierge({
 	siteName: 'Acme',

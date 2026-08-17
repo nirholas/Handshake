@@ -876,6 +876,7 @@ function bonesToRegionMap(bones) {
 function buildBoneSelect(bones, currentBoneName) {
 	const sel = document.createElement('select');
 	sel.className = 'bs';
+	sel.setAttribute('aria-label', 'Bone to attach to');
 	const { regionMap, other } = bonesToRegionMap(bones);
 	for (const [region, bs] of Object.entries(regionMap)) {
 		if (!bs.length) continue;
@@ -1045,8 +1046,40 @@ function detachFromBone(itemId, updateUI = true) {
  * @param {object} [record]     the avatar record this model came from, when any:
  *                              { id, appearance }: what "Save outfit" writes to
  */
+function showAvatarError(msg) {
+	avatarPromptErr.textContent = msg;
+	avatarPromptErr.classList.add('on');
+}
+function clearAvatarError() {
+	avatarPromptErr.textContent = '';
+	avatarPromptErr.classList.remove('on');
+}
+
+/**
+ * Resolve whatever the user typed into a loadable model.
+ *
+ * The field has always promised "GLB URL or avatar ID", but only URLs were ever
+ * honoured: an id went straight to GLTFLoader as a relative path and died on a
+ * parse error. An id now goes through the same /api/avatars/:id lookup the
+ * ?avatar= deep link uses, so both entry points behave identically.
+ *
+ * @param {string} value  a model URL, an avatar id, or an avatar slug
+ * @returns {Promise<{ url: string, name: string, record: object|null }>}
+ */
+async function resolveAvatarInput(value) {
+	if (/^(https?:|blob:|data:|\/)/i.test(value)) return { url: value, name: 'Avatar', record: null };
+	const res = await fetch(`/api/avatars/${encodeURIComponent(value)}`);
+	if (!res.ok) throw new Error(res.status === 404 ? `No avatar found for "${value}"` : `Lookup failed (HTTP ${res.status})`);
+	const data = await res.json().catch(() => ({}));
+	const record = data.avatar || data;
+	const url = record.model_url || record.glbUrl || record.glb_url;
+	if (!url) throw new Error(`Avatar "${value}" has no 3D model attached`);
+	return { url, name: record.name || 'Avatar', record };
+}
+
 async function loadAvatar(url, name = 'Avatar', record = null) {
 	showLoading('Loading avatar…');
+	clearAvatarError();
 	avatarPrompt.classList.add('h');
 	canvasHint.classList.remove('h');
 	try {
@@ -1069,7 +1102,10 @@ async function loadAvatar(url, name = 'Avatar', record = null) {
 	} catch (err) {
 		log.error('avatar load failed:', err);
 		avatarPrompt.classList.remove('h');
-		toast(`Failed to load avatar: ${err.message}`);
+		// Inline and persistent: a toast is gone in 2.5s, long before someone can
+		// read why their model was rejected or fix the URL they pasted.
+		showAvatarError(`Could not load that avatar: ${err.message}. Check the URL is a public .glb, or browse your avatars below.`);
+		avatarUrlInput.focus();
 	} finally {
 		hideLoading();
 	}
@@ -1097,24 +1133,16 @@ async function loadAvatar(url, name = 'Avatar', record = null) {
 	} else if (avatarParam) {
 		showLoading('Fetching avatar…');
 		try {
-			if (avatarParam.startsWith('http')) {
-				await loadAvatar(avatarParam, 'Avatar');
-			} else {
-				const res = await fetch(`/api/avatars/${encodeURIComponent(avatarParam)}`);
-				const data = await res.json().catch(() => ({}));
-				// GET /api/avatars/:id answers { avatar: { …, model_url } }. Reading
-				// a bare `glbUrl` off the envelope found nothing, so every
-				// ?avatar=<id> deep link opened an empty stage instead of the avatar.
-				const record = data.avatar || data;
-				const u = record.model_url || record.glbUrl || record.glb_url;
-				if (u) await loadAvatar(u, record.name || 'Avatar', record);
-				else {
-					toast(`Avatar ${avatarParam} not found`);
-					avatarPrompt.classList.remove('h');
-					hideLoading();
-				}
-			}
-		} catch { hideLoading(); }
+			// GET /api/avatars/:id answers { avatar: { …, model_url } }. Reading a
+			// bare `glbUrl` off the envelope found nothing, so every ?avatar=<id>
+			// deep link opened an empty stage instead of the avatar.
+			const { url, name, record } = await resolveAvatarInput(avatarParam);
+			await loadAvatar(url, name, record);
+		} catch (err) {
+			hideLoading();
+			avatarPrompt.classList.remove('h');
+			showAvatarError(`Could not open avatar "${avatarParam}": ${err.message}`);
+		}
 	} else {
 		hideLoading();
 	}

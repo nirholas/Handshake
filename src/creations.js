@@ -198,6 +198,8 @@ async function loadFeed({ reset = false } = {}) {
 	if (reset && host) {
 		host.setAttribute('aria-busy', 'true');
 		host.innerHTML = skeleton();
+		// The open lineage belongs to a card that this reload may drop.
+		$('cr-lineage-panel')?.classList.add('is-hidden');
 	}
 	setFeedLive('connecting');
 	try {
@@ -210,9 +212,14 @@ async function loadFeed({ reset = false } = {}) {
 		if (!res.ok) throw new Error(data?.message || `feed returned ${res.status}`);
 		if (!data.enabled) {
 			setFeedLive('error');
+			updateCount();
 			if (host) {
 				host.setAttribute('aria-busy', 'false');
-				host.innerHTML = `<div class="cr-error"><div class="cr-empty-title">The remix bazaar is temporarily unavailable</div><p>Check back shortly.</p></div>`;
+				host.innerHTML =
+					`<div class="cr-error"><div class="cr-empty-title">The remix bazaar is temporarily unavailable</div>` +
+					`<p>Nothing is lost — published creations reappear as soon as it is back. ` +
+					`<button type="button" class="cr-retry" id="cr-retry">Retry</button></p></div>`;
+				$('cr-retry')?.addEventListener('click', () => loadFeed({ reset: true }));
 			}
 			return;
 		}
@@ -226,6 +233,7 @@ async function loadFeed({ reset = false } = {}) {
 	} catch (err) {
 		log.warn('feed failed', err?.message);
 		setFeedLive('error');
+		updateCount();
 		if (reset && host) {
 			host.setAttribute('aria-busy', 'false');
 			host.innerHTML =
@@ -265,19 +273,30 @@ function clearFilters() {
 	state.category = '';
 	$('cr-q').value = '';
 	$('cr-category').value = '';
-	setSort('recent');
+	// Reload unconditionally: the empty state that offers this button is
+	// reachable while the sort is already "recent", and an early-returning
+	// setSort would leave the button doing nothing at all.
+	syncSortButtons('recent');
+	state.sort = 'recent';
+	loadFeed({ reset: true });
+	$('cr-q').focus();
 }
 
 // ── controls ────────────────────────────────────────────────────────────────
 
-function setSort(sort) {
-	if (sort === state.sort) return;
-	state.sort = sort;
+function syncSortButtons(sort) {
 	for (const btn of document.querySelectorAll('[data-sort]')) {
 		const on = btn.dataset.sort === sort;
 		btn.classList.toggle('active', on);
 		btn.setAttribute('aria-selected', String(on));
+		btn.tabIndex = on ? 0 : -1;
 	}
+}
+
+function setSort(sort) {
+	if (sort === state.sort) return;
+	state.sort = sort;
+	syncSortButtons(sort);
 	loadFeed({ reset: true });
 }
 
@@ -290,8 +309,19 @@ function debounce(fn, ms) {
 }
 
 function wireControls() {
-	for (const btn of document.querySelectorAll('[data-sort]')) {
+	const sortBtns = [...document.querySelectorAll('[data-sort]')];
+	for (const [i, btn] of sortBtns.entries()) {
 		btn.addEventListener('click', () => setSort(btn.dataset.sort));
+		// A role="tablist" is expected to move between its tabs with the arrow
+		// keys, with only the selected tab in the page's tab order.
+		btn.addEventListener('keydown', (e) => {
+			const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : e.key === 'Home' ? -i : e.key === 'End' ? sortBtns.length - 1 - i : 0;
+			if (!step) return;
+			e.preventDefault();
+			const next = sortBtns[(i + step + sortBtns.length) % sortBtns.length];
+			next.focus();
+			setSort(next.dataset.sort);
+		});
 	}
 	const qInput = $('cr-q');
 	const onSearch = debounce(() => {
@@ -527,8 +557,14 @@ function wirePublishForm() {
 
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
-		const creationId = $('cr-pub-id').value.trim();
-		if (!creationId) return;
+		const idInput = $('cr-pub-id');
+		const creationId = idInput.value.trim();
+		if (!creationId) {
+			statusEl.dataset.kind = 'error';
+			statusEl.textContent = 'Paste the creation id from your Forge result first.';
+			idInput.focus();
+			return;
+		}
 		const wallet = $('cr-pub-wallet').value.trim();
 		const license = licenseSel.value;
 		const royaltyBps = Math.round(Number(royaltyInput.value || 0) * 100);
@@ -562,7 +598,8 @@ function wirePublishForm() {
 					: `Published — remixable at ${p.royaltyPercent}% royalty, but add a wallet above to actually collect it.`
 				: 'Published to the gallery — display only, not remixable.';
 			form.reset();
-			royaltyOut.textContent = '10%';
+			royaltyOut.textContent = `${royaltyInput.value}%`;
+			royaltyRow.hidden = licenseSel.value === 'all-rights';
 			loadFeed({ reset: true });
 			loadLeaderboards();
 		} catch (err) {

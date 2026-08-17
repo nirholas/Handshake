@@ -2511,12 +2511,24 @@ function renderLeaderboardError(kind) {
 
 function renderLeaderboard(rows) {
 	if (!lbRowsEl) return;
-	if (!rows.length) {
-		lbRowsEl.innerHTML = '<div class="club-lb-empty">No tips yet. Be the first to tip a dancer!</div>';
+
+	// club_dancer_wallets is a payout registry, not tonight's lineup: it holds a
+	// row per dancer wallet that has ever been registered, including ones with no
+	// pole on this stage. Ranking a stranger the visitor has no way to tip is
+	// noise, so a row earns its place by dancing here or by having actually been
+	// tipped. An all-zero board is not a board either, that is the empty state,
+	// which the registry's zero rows otherwise made permanently unreachable.
+	const ranked = rows.filter((row) => (
+		POLES.some((p) => p.id === String(row.dancer ?? ''))
+		|| Number(row.total_atomics || 0) > 0
+	));
+	if (!ranked.some((row) => Number(row.total_atomics || 0) > 0)) {
+		lbRowsEl.innerHTML = `<div class="club-lb-empty">${LB_EMPTY_COPY[lbWindow] || LB_EMPTY_COPY.all}</div>`;
 		return;
 	}
+
 	const frag = document.createDocumentFragment();
-	rows.forEach((row, i) => {
+	ranked.forEach((row, i) => {
 		const total = Number(row.total_atomics || 0);
 		const unpaid = Number(row.unpaid_atomics || 0);
 		const div = document.createElement('div');
@@ -2524,8 +2536,12 @@ function renderLeaderboard(rows) {
 		div.style.animationDelay = `${i * 0.06}s`;
 		const dancerId = String(row.dancer || '').replace(/[<>&]/g, '');
 		const dancerIdx = parseInt(dancerId, 10) - 1;
+		// The stage name wins over the registry's display_name for a dancer who is
+		// on a pole right now: the board sits directly under her card, and the two
+		// naming the same pole differently reads as a different dancer entirely.
+		// display_name still carries dancers who have left the lineup.
 		const metaName = DANCER_META[dancerIdx]?.name || null;
-		const name = String(row.display_name || metaName || `Dancer ${dancerId}`).replace(/[<>&]/g, '');
+		const name = String(metaName || row.display_name || `Dancer ${dancerId}`).replace(/[<>&]/g, '');
 
 		// Rank badge: gold/silver/bronze for top 3.
 		let rankClass = '';

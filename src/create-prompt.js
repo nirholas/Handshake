@@ -165,7 +165,7 @@ async function start() {
 			signal: _aborter.signal,
 		});
 		if (res.status === 401) {
-			window.location.assign(`/login?next=${encodeURIComponent('/create/prompt')}`);
+			window.location.assign(loginUrl(prompt));
 			return;
 		}
 		const data = await res.json().catch(() => ({}));
@@ -174,27 +174,41 @@ async function start() {
 		}
 		jobId = data.jobId;
 	} catch (err) {
-		if (_cancelled || err?.name === 'AbortError') return;
+		if (isStale(run) || err?.name === 'AbortError') return;
 		failBuild(err);
 		return;
 	}
 
 	try {
-		const final = await pollUntilDone(jobId);
-		await renderDone(final.resultAvatarId);
+		const final = await pollUntilDone(jobId, run);
+		if (isStale(run)) return;
+		await renderDone(final.resultAvatarId, run);
 	} catch (err) {
-		if (_cancelled || err?.name === 'AbortError') return;
+		if (isStale(run) || err?.name === 'AbortError') return;
 		failBuild(err);
 	}
 }
 
+// Sign-in bounce that keeps the user's words. The composer is the whole point
+// of this page, so sending an anonymous user to /login with a bare return path
+// threw away everything they had typed. Round-trip the prompt through the
+// existing ?prompt= deep link instead, so they land back here with the box
+// still filled. safeNext on the login page accepts a relative path with a
+// query string, so the redirect survives intact.
+function loginUrl(prompt) {
+	const next = prompt ? `/create/prompt?prompt=${encodeURIComponent(prompt)}` : '/create/prompt';
+	return `/login?next=${encodeURIComponent(next)}`;
+}
+
 // Cancel an in-flight build: abort the network, stop the clock, and return to
 // the compose step. The job may still finish server-side (and will appear on the
-// dashboard) — we just stop watching it, so the user is never trapped on a
-// spinner.
+// dashboard); we just stop watching it, so the user is never trapped on a
+// spinner. Gated on the building step rather than on _submitting, because
+// failBuild clears _submitting while leaving the user on that step: with the old
+// guard, Cancel became a dead button in exactly the state where someone is most
+// likely to press it.
 function cancelBuild() {
-	if (!_submitting) return;
-	_cancelled = true;
+	if (document.querySelector('.step.active')?.getAttribute('data-step') !== 'building') return;
 	try { _aborter?.abort(); } catch (_) {}
 	resetToCompose();
 }
@@ -245,15 +259,20 @@ function mapSubmitError(status, data) {
 	return description || `The avatar engine returned ${status}. Try again.`;
 }
 
-async function pollUntilDone(jobId) {
+async function pollUntilDone(jobId, run) {
 	const deadline = Date.now() + POLL_TIMEOUT_MS;
+	const abandon = () => {
+		const e = new Error('abandoned');
+		e.name = 'AbortError';
+		return e;
+	};
 	while (Date.now() < deadline) {
-		if (_cancelled) {
-			const e = new Error('cancelled');
-			e.name = 'AbortError';
-			throw e;
-		}
+		if (isStale(run)) throw abandon();
 		await sleep(POLL_INTERVAL_MS);
+		// Re-check after the sleep: the user may have cancelled (or started a
+		// different build) while this loop was parked, and the signal we captured
+		// before the sleep is no longer the live one.
+		if (isStale(run)) throw abandon();
 		let data;
 		try {
 			const res = await fetch(`${STATUS_ENDPOINT}?jobId=${encodeURIComponent(jobId)}`, {
@@ -261,7 +280,7 @@ async function pollUntilDone(jobId) {
 				signal: _aborter?.signal,
 			});
 			if (res.status === 401) {
-				window.location.assign(`/login?next=${encodeURIComponent('/create/prompt')}`);
+				window.location.assign(loginUrl(promptEl.value.trim()));
 				throw new ApiError('redirecting');
 			}
 			data = await res.json().catch(() => ({}));
@@ -274,6 +293,7 @@ async function pollUntilDone(jobId) {
 			continue;
 		}
 
+		if (isStale(run)) throw abandon();
 		advanceProgress(data.status);
 
 		if (data.status === 'done' && data.resultAvatarId) {

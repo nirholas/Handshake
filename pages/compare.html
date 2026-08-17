@@ -75,7 +75,7 @@
 			</nav>
 			<h1 class="cv-h1" data-i18n="compare.compare_coins">Compare Coins</h1>
 			<p class="cv-sub" data-i18n="compare.put_up_to_four_coins_head_to">
-				Put up to four coins head to head — overlay how they've performed and line up the
+				Put up to four coins head to head: overlay how they've performed and line up the
 				numbers that matter. Add coins with the search box; the URL updates so you can share
 				the matchup.
 			</p>
@@ -98,7 +98,7 @@
 					<input
 						id="cmp-search-input"
 						type="search"
-						placeholder="Add a coin to compare…"
+						placeholder="Add a coin to compare (up to 4)…"
 						autocomplete="off"
 						spellcheck="false"
 						role="combobox"
@@ -108,8 +108,29 @@
 					/>
 					<div id="cmp-search-pop" class="cv-search-pop" role="listbox" hidden></div>
 				</div>
-				<div class="cmp-chips" id="cmp-chips" aria-label="Selected coins"></div>
+				<div class="cmp-chips" id="cmp-chips" role="list" aria-label="Selected coins"></div>
+				<button type="button" class="cmp-share" id="cmp-share" disabled>
+					<svg
+						viewBox="0 0 24 24"
+						width="14"
+						height="14"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" />
+						<path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
+					</svg>
+					Copy link
+				</button>
 			</div>
+			<p class="cmp-hint" id="cmp-limit-hint" hidden>
+				Four coins is the maximum. Remove one to add another.
+			</p>
+			<p class="cmp-hint" id="cmp-status" role="status" aria-live="polite"></p>
 
 			<!-- Overlay performance chart. Hydrated by src/compare.js. -->
 			<section

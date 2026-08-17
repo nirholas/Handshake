@@ -584,11 +584,12 @@ function wireSearch() {
 		input.setAttribute('aria-expanded', 'true');
 	}
 
-	function pick(id) {
-		addCoin(id);
+	async function pick(id) {
 		input.value = '';
 		close();
-		input.focus();
+		const outcome = await addCoin(id);
+		if (outcome === 'full') announce(`Remove a coin first. ${MAX_COINS} is the maximum.`);
+		else if (!$('cmp-search-input').disabled) $('cmp-search-input').focus();
 	}
 
 	input.addEventListener('input', () => {
@@ -596,14 +597,21 @@ function wireSearch() {
 		const q = input.value.trim();
 		if (!q) return close();
 		timer = setTimeout(async () => {
+			lastQuery = q;
 			try {
 				const { coins } = await getJson(`/api/coin/markets?q=${encodeURIComponent(q)}`);
-				lastQuery = q;
 				items = coins.filter((c) => !state.coins.find((s) => s.id === c.id));
 				active = -1;
 				renderPop();
 			} catch {
-				close();
+				// A silent close reads as a dead search box. Say what happened.
+				items = [];
+				active = -1;
+				pop.innerHTML =
+					'<div class="none">Coin search is unavailable right now. Check your connection and type again.</div>';
+				pop.hidden = false;
+				input.setAttribute('aria-expanded', 'true');
+				input.removeAttribute('aria-activedescendant');
 			}
 		}, 250);
 	});
@@ -628,16 +636,53 @@ function wireSearch() {
 	});
 }
 
+// ── Status line + share ───────────────────────────────────────────────────────
+
+let announceTimer = null;
+
+/** One polite live region for outcomes that have no other place to land. */
+function announce(message) {
+	const el = $('cmp-status');
+	if (!el) return;
+	el.textContent = message;
+	clearTimeout(announceTimer);
+	announceTimer = setTimeout(() => {
+		if (el.textContent === message) el.textContent = '';
+	}, 6000);
+}
+
+function wireShare() {
+	const btn = $('cmp-share');
+	if (!btn) return;
+	btn.addEventListener('click', async () => {
+		try {
+			await navigator.clipboard.writeText(location.href);
+			announce('Matchup link copied to the clipboard.');
+		} catch {
+			// Clipboard access can be refused (insecure origin, denied permission).
+			// The URL is already the shareable artifact, so point at it.
+			announce('Copying was blocked by the browser. The matchup link is in the address bar.');
+		}
+	});
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 async function init() {
 	wireSearch();
+	wireShare();
 	renderChips();
 	renderChart();
 	// Default matchup so the page is never an empty void; overridable via ?ids=.
 	const initial = idsFromUrl();
 	const ids = initial.length ? initial : ['bitcoin', 'ethereum', 'solana'];
-	for (const id of ids) await addCoin(id);
+	// Parallel: three sequential round trips left the panel loading far longer
+	// than the slowest single request needed.
+	await Promise.all(ids.map(addCoin));
+	state.booting = false;
+	renderChips();
+	renderTable();
+	renderChart();
 }
 
 init();
