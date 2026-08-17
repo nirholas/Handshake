@@ -90,8 +90,12 @@
 	padding: 1rem 1.125rem;
 	transition: border-color 0.15s;
 }
+/* The amount input is deliberately borderless, so the side card carries its
+   focus indicator. A border shade alone was too faint to read as focus; this
+   matches the ring the picker's search box uses. */
 .cvt-side:focus-within {
-	border-color: var(--cv-border-hover);
+	border-color: var(--cv-accent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-accent) 20%, transparent);
 }
 
 .cvt-label {

@@ -362,17 +362,24 @@ function onPointerMove(e) {
 	}
 }
 
-let downAt = 0; let downXY = [0, 0];
-function onPointerDown(e) { downAt = performance.now(); downXY = [e.clientX, e.clientY]; }
+let downAt = 0; let downXY = [0, 0]; let downNode = null;
+function onPointerDown(e) {
+	downAt = performance.now();
+	downXY = [e.clientX, e.clientY];
+	// Resolve the target at press time as well. The galaxy keeps auto-rotating,
+	// so the star can slide out from under a stationary cursor between the press
+	// and the release; what the visitor aimed at is what they pressed on.
+	updatePointer(e);
+	downNode = pickNode() || hovered;
+}
 function onPointerUp(e) {
 	const moved = Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]);
 	if (moved >= 6 || performance.now() - downAt >= 450) return; // an orbit drag, not a tap
 	updatePointer(e);
-	// The star under the release wins; if the ray and the proximity sweep both
-	// come up empty, fall back to whatever the tooltip was naming, that is the
-	// star the visitor was aiming at, and the scene keeps auto-rotating under the
-	// cursor between the hover and the release.
-	const node = pickNode() || hovered;
+	// The star under the release wins; then the star the tooltip is naming; then
+	// the one that was under the press. Any of the three is the intended target.
+	const node = pickNode() || hovered || downNode;
+	downNode = null;
 	if (node) { keyboardFocused = false; selectNode(node.mesh.userData.index, { fromKeyboard: false }); }
 }
 

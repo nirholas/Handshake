@@ -656,7 +656,7 @@
 			<header class="forge-head">
 				<div>
 					<h1 data-i18n="forge_nim.h1">Self-hosted TRELLIS NIM</h1>
-					<p class="forge-sub" data-i18n="forge_nim.subtitle">
+					<p class="forge-sub" data-i18n-html="forge_nim.subtitle">
 						Drop a photo, POST it once to <code>/v1/infer</code>, and a textured GLB comes back synchronously as
 						base64: rendered live here, downloadable, AR-ready. No async poll, no storage round trip.
 					</p>
@@ -791,7 +791,7 @@
 										<line x1="6" y1="17.5" x2="6.01" y2="17.5" />
 									</svg>
 									<h3 data-i18n="forge_nim.unconfigured_title">Point this at your NIM</h3>
-									<p id="unconfigured-msg" data-i18n="forge_nim.unconfigured_body">
+									<p id="unconfigured-msg" data-i18n-html="forge_nim.unconfigured_body">
 										This page drives a TRELLIS NIM you host yourself, and no endpoint is wired to this
 										deployment. Paste the base URL of your own <code>nvcr.io/nim/microsoft/trellis</code>
 										container to reconstruct right here, or set <code>NIM_TRELLIS_URL</code> on the deployment
@@ -952,8 +952,9 @@
 			function setStatus(s, text) {
 				els.status.dataset.state = s;
 				els.statusText.textContent = text;
-				// The pill is live copy from here on; stop i18n from restoring the boot label.
-				els.statusText.removeAttribute('data-i18n');
+				// The pill reports live state from here on; claim it so a locale switch
+				// cannot restore the boot label over a real verdict.
+				els.statusText.dataset.i18nOwned = '1';
 			}
 
 			// Reflect endpoint availability in the composer and the stage. Only run while
@@ -1112,6 +1113,10 @@
 			function showError(title, msg) {
 				els.errorTitle.textContent = title;
 				els.errorMsg.textContent = msg;
+				// This copy is the specific failure, not translatable boilerplate: claim both
+				// nodes so switching language mid-error cannot replace it with the generic line.
+				els.errorTitle.dataset.i18nOwned = '1';
+				els.errorMsg.dataset.i18nOwned = '1';
 				showState('error');
 				stopTimers();
 			}
@@ -1209,7 +1214,7 @@
 
 			function renderResult(d) {
 				// Decode the synchronous { artifacts:[{ base64 }] } GLB into a Blob and
-				// hand it straight to the viewer — the NIM's wire shape, end to end.
+				// hand it straight to the viewer: the NIM's wire shape, end to end.
 				const bytes = base64ToBytes(d.glb_base64);
 				const blob = new Blob([bytes], { type: 'model/gltf-binary' });
 				if (state.objectUrl) URL.revokeObjectURL(state.objectUrl);
