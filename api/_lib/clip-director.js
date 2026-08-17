@@ -78,25 +78,29 @@ export function tradeFromPosition(pos) {
 
 export async function directClip({ agentName, avatarStyle = null, trade, copiedByCount = 0, surface = 'feed', userId = null } = {}) {
 	const surf = SURFACES.has(surface) ? surface : 'feed';
-	let artifact = null;
-	let source = 'deterministic';
 
 	if (llmConfigured()) {
 		try {
 			const written = await llmClip({ agentName, avatarStyle, trade, copiedByCount, surface: surf, userId });
-			// The model writes the voice, never the facts. An artifact that states a
-			// ticker or a figure the trade does not contain is discarded outright.
-			if (written && isGrounded(written, trade, copiedByCount)) {
-				artifact = written;
-				source = 'llm';
+			if (written) {
+				// The model writes the voice, never the facts. Check the FINALIZED
+				// card, not the raw artifact: finalize clamps the copy, and a clamp
+				// landing mid-number is its own way of shipping a figure the trade
+				// never contained.
+				const candidate = finalize({ artifact: written, source: 'llm', trade, surface: surf });
+				if (isGrounded(candidate, trade, { copiedByCount, agentName })) return candidate;
 			}
 		} catch (err) {
-			if (!(err instanceof LlmUnavailableError)) artifact = null;
+			if (err instanceof LlmUnavailableError) { /* the deterministic director answers */ }
 		}
 	}
-	if (!artifact) artifact = deterministicClip({ agentName, trade, copiedByCount, surface: surf });
 
-	return finalize({ artifact, source, trade, surface: surf });
+	return finalize({
+		artifact: deterministicClip({ agentName, trade, copiedByCount, surface: surf }),
+		source: 'deterministic',
+		trade,
+		surface: surf,
+	});
 }
 
 async function llmClip({ agentName, avatarStyle, trade, copiedByCount, surface, userId }) {
@@ -176,29 +180,43 @@ function groundedNumbers(trade, copiedByCount) {
 	return ok;
 }
 
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
  * Does every ticker and every number in the copy trace to this trade?
- * @param {object} artifact the parsed LLM artifact
+ *
+ * Scope: `$TICKER` mentions and stated figures, which is what the observed
+ * failure got wrong and what a reader checks against the proof link. A bare
+ * capitalised word is not treated as a ticker; matching every capitalised noun
+ * would reject honest copy far more often than it would catch a lie.
+ *
+ * @param {object} artifact the generated card (raw artifact or finalized clip)
  * @param {object} trade the real closed round-trip
- * @param {number} copiedByCount follower count, the one non-trade figure allowed
+ * @param {{copiedByCount?: number, agentName?: string}} ctx the follower count is
+ *   the one figure allowed from outside the trade; the agent's name is passed so
+ *   a trader called "Swarm 2" does not read as an invented number
  * @returns {boolean}
  */
-export function isGrounded(artifact, trade, copiedByCount = 0) {
+export function isGrounded(artifact, trade, { copiedByCount = 0, agentName = '' } = {}) {
 	const copy = [artifact.hook, artifact.feature_stat, artifact.body, artifact.alt_text]
 		.filter((s) => typeof s === 'string').join(' ');
 	if (!copy.trim()) return false;
 
-	const allowedTickers = new Set([tickerOf(trade), String(trade.symbol || '').toUpperCase(), String(trade.name || '').toUpperCase()]
-		.filter(Boolean).map((t) => t.replace(/^\$/, '')));
+	const allowedTickers = new Set([tickerOf(trade), String(trade.symbol || ''), String(trade.name || '')]
+		.filter(Boolean).map((t) => t.replace(/^\$/, '').toUpperCase()));
 	for (const m of copy.matchAll(/\$([A-Za-z][A-Za-z0-9_]*)/g)) {
 		if (!allowedTickers.has(m[1].toUpperCase())) return false;
 	}
 
-	// Tickers are stripped first so a symbol like $W3B does not read as the
-	// number 3, and "SOL" style unit words carry no digits to begin with.
-	const numbers = copy.replace(/\$[A-Za-z][A-Za-z0-9_]*/g, ' ').matchAll(/-?\d+(?:\.\d+)?/g);
+	// Names are stripped before digits are read, so a symbol like $W3B and an
+	// agent named "Swarm 2" contribute no numbers of their own.
+	let bare = copy.replace(/\$[A-Za-z][A-Za-z0-9_]*/g, ' ');
+	for (const name of [agentName, trade.symbol, trade.name].filter(Boolean)) {
+		bare = bare.replace(new RegExp(escapeRe(String(name)), 'gi'), ' ');
+	}
+
 	const allowed = groundedNumbers(trade, copiedByCount);
-	for (const m of numbers) {
+	for (const m of bare.matchAll(/-?\d+(?:\.\d+)?/g)) {
 		if (!allowed.has(normNum(Number(m[0])))) return false;
 	}
 	return true;

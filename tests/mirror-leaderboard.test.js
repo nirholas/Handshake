@@ -136,6 +136,29 @@ describe('rankLeaders', () => {
 		expect(rankLeaders([], { sort: 'pnl', limit: 5 })).toEqual([]);
 	});
 
+	// /clip-director mints a card from a closed round-trip, so an agent with none
+	// is unusable to it. It used to over-fetch by score and filter client side,
+	// which silently emptied the page: the composite score does not correlate
+	// with having settled trades, so the only eligible agent ranked below the
+	// window and every visitor saw "no agents with closed trades yet".
+	it('drops agents below settledMin so a caller that needs a track record gets one', () => {
+		const ranked = rankLeaders(ALL, { settledMin: 1 });
+		expect(ranked.map((l) => l.agent_id)).not.toContain(DISCRETIONARY.id);
+		expect(ranked.every((l) => l.settled > 0)).toBe(true);
+		expect(ranked.map((l) => l.rank)).toEqual([1, 2, 3]);
+	});
+
+	it('filters before the limit, so settledMin cannot be starved by unfiltered rows', () => {
+		const ranked = rankLeaders([DISCRETIONARY, CONSISTENT], { settledMin: 1, limit: 1 });
+		expect(ranked).toHaveLength(1);
+		expect(ranked[0].agent_id).toBe(CONSISTENT.id);
+	});
+
+	it('leaves the board untouched when settledMin is absent or zero', () => {
+		expect(rankLeaders(ALL).map((l) => l.agent_id)).toEqual(rankLeaders(ALL, { settledMin: 0 }).map((l) => l.agent_id));
+		expect(rankLeaders(ALL, { settledMin: 0 })).toHaveLength(4);
+	});
+
 	// agent_sniper_positions.entry_quote_lamports is nullable, so a settled
 	// round-trip can carry a realized P&L with nothing summed into the entry
 	// denominator. Dividing anyway would produce Infinity or NaN, which
