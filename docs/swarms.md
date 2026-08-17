@@ -85,6 +85,24 @@ This is the structural answer to the obvious question about pooling money with s
 
 `max_member_share_bps` is the complement. Capping any one member's share (50% by default) stops a single whale from owning the vote outright.
 
+## The page, and how to link into it
+
+[three.ws/swarms](https://three.ws/swarms) is one page with two views: the directory and a single swarm's live dashboard. Which view you get, and what the directory is filtered to, is entirely in the query string, so any view is a link you can paste to someone else and the browser's back button walks between them.
+
+| URL | What it shows |
+|---|---|
+| `/swarms` | Every open swarm on mainnet |
+| `/swarms?network=devnet` | The same directory on devnet |
+| `/swarms?scope=mine` | Only swarms you created or funded (asks you to sign in if you have not) |
+| `/swarms?scope=mine&network=devnet` | Both filters together |
+| `/swarms?id=<swarm-uuid>` | That swarm's dashboard: treasury, members, positions, and the live vote and payout feeds |
+
+A swarm card in the directory is a real link to its `?id=` URL, so middle-click and cmd/ctrl-click open a swarm in a new tab. A plain click swaps the view in place without a page load.
+
+The dashboard holds an [EventSource](https://developer.mozilla.org/en-US/docs/Web/API/EventSource) open against `/api/swarms/<id>/stream` for as long as it is on screen, which is where the live consensus votes, payouts, and treasury ticks come from. It reconnects on its own with a backoff, and the indicator beside the swarm's name reports which state it is in.
+
+Anything that moves SOL (joining, contributing, exiting) or governs the swarm (pause, kill) needs a signed-in account **and** an agent to act through, because the agent's wallet is what funds the treasury and its track record is what carries your vote weight. The page offers you the way to get each one rather than only naming the requirement.
+
 ## API
 
 `GET` is public for the directory. Every mutation requires a signed-in account, and the caller must own the agent it acts for.
