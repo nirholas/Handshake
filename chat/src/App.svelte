@@ -23,7 +23,7 @@
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
-	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, ttsEnabled, ttsVoiceURI, localAgentId, activeAgent, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, currentUser, notify, localProvidersEnabled, generating as generatingStore } from './stores.js';
+	import { controller, remoteServer, config, params, toolSchema, syncServer, brandConfig, STOCK_BRAND_NAME, ttsEnabled, ttsVoiceURI, localAgentId, activeAgent, talkingHeadAvatarUrl, route, mode, websiteCategory, loadCurrentUser, currentUser, notify, localProvidersEnabled, generating as generatingStore } from './stores.js';
 	import { t } from './i18n.js';
 	import Notifications from './Notifications.svelte';
 	import TxApprovalModal from './TxApprovalModal.svelte';
@@ -962,6 +962,9 @@
 				} else if (err.code === 'rate_limited') {
 					const hint = err.retryAfter ? ` Try again in ${err.retryAfter}s.` : ' Please wait a moment and try again.';
 					convo.messages[i].error = `The built-in model is rate-limited.${hint}`;
+				} else if (err.code === 'network') {
+					convo.messages[i].error =
+						'Could not reach the model. The request never left this device, so nothing was sent. Check your connection, then hover this reply and press the refresh button to try again.';
 				} else if (err.code === 'tools_unsupported') {
 					const tools = err.toolNames?.length ? err.toolNames.join(', ') : 'the enabled tools';
 					convo.messages[i].error = `**${err.modelId}** doesn't support tool use. Disable ${tools} in the Tools panel, or switch to a tool-capable model like \`anthropic/claude-sonnet-4.5\` or \`openai/gpt-5-mini\`.`;
@@ -1503,7 +1506,12 @@
 	$: window.saveConversation = saveConversation;
 
 	$: {
-		document.title = $brandConfig.name;
+		// Only a white-labeled brand renames the tab. On the stock build the title
+		// stays the one index.html declares, so the tab, the share card and the
+		// site's page index all say the same thing about /chat.
+		if ($brandConfig.name && $brandConfig.name !== STOCK_BRAND_NAME) {
+			document.title = $brandConfig.name;
+		}
 		document.documentElement.style.setProperty('--accent', $brandConfig.accent_color);
 	}
 
@@ -2386,6 +2394,9 @@
 		<button
 			data-trigger="knobs"
 			class="flex rounded-full p-2 transition-colors hover:bg-gray-100"
+			aria-label="Model settings"
+			aria-expanded={knobsOpen}
+			title="Model settings"
 			on:click={() => (knobsOpen = !knobsOpen)}
 		>
 			<Icon icon={feSidebar} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
@@ -2608,6 +2619,8 @@
 				<button
 					class="ml-auto flex rounded-full p-3 transition-colors hover:bg-gray-100"
 					use:flash
+					aria-label="Share conversation"
+					title="Share conversation"
 					on:click={shareConversation}
 				>
 					<Icon icon={feShare} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />
@@ -2654,6 +2667,9 @@
 				<button
 					data-trigger="knobs"
 					class="flex rounded-full p-3 transition-colors hover:bg-gray-100"
+					aria-label="Model settings"
+					aria-expanded={knobsOpen}
+					title="Model settings"
 					on:click={() => (knobsOpen = !knobsOpen)}
 				>
 					<Icon icon={feSidebar} strokeWidth={3} class="m-auto h-4 w-4 text-slate-700" />

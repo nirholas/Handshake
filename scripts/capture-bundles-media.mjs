@@ -69,9 +69,14 @@ try {
 		const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
 		const p = await ctx.newPage();
 		await p.goto(`${base}/login?next=%2Fbundles`, { waitUntil: 'networkidle' });
-		await p.fill('input[type="email"], input[name="email"]', EMAIL);
-		await p.fill('input[type="password"], input[name="password"]', PASSWORD);
-		await p.click('button[type="submit"]');
+		// The classic email/password form by id, not by input type. /login also
+		// renders a Privy passwordless widget whose own `input[type="email"]`
+		// comes first in the DOM, so a type-based selector filled that one
+		// instead and every authenticated shot below was silently skipped.
+		await p.waitForSelector('#email', { timeout: 20000 });
+		await p.fill('#email', EMAIL);
+		await p.fill('#password', PASSWORD);
+		await p.click('form button[type="submit"]');
 		await p.waitForURL(/\/bundles/, { timeout: 30000 }).catch(() => {});
 		await p.waitForSelector('#bd-builder:not(.bd-hide), #bd-gate:not(.bd-hide)', { timeout: 20000 });
 

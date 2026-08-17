@@ -3,8 +3,13 @@ import { persisted } from './localstorage.js';
 import { v4 as uuidv4 } from 'uuid';
 import { syncHostedAddress } from './sync.js';
 
+// The name a stock (not white-labeled) deployment reports. `brandConfig.name`
+// exists so an operator can rename the tab; when it still reads this, there is
+// no custom brand and the title the HTML declares is the one that should stand.
+export const STOCK_BRAND_NAME = 'three.ws chat';
+
 export const brandConfig = writable({
-	name: 'three.ws chat',
+	name: STOCK_BRAND_NAME,
 	logo_url: null,
 	accent_color: '#6366f1',
 	tagline: 'Chat with any AI model',

@@ -239,7 +239,11 @@ function decodeStep(text) {
 export function encodeRoutine(routine) {
 	const r = normalizeRoutine(routine);
 	const steps = r.steps.map(encodeStep).join(',');
-	return `${encodeURIComponent(r.name)}${r.loop ? '~loop' : ''}|${steps}`;
+	// `encodeURIComponent` leaves `~` alone, which would let a routine actually
+	// named "Encore~loop" encode to the same text as a looping "Encore" and come
+	// back decoded as the wrong routine. Escape it so the marker is unambiguous.
+	const name = encodeURIComponent(r.name).replace(/~/g, '%7E');
+	return `${name}${r.loop ? '~loop' : ''}|${steps}`;
 }
 
 /**

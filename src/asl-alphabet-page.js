@@ -42,6 +42,16 @@ async function boot() {
 	const stageHost = $('#aa-stage');
 	if (!stageHost) return;
 
+	// A shared link names the letter the visitor came for, so it is read before
+	// anything is built. Seeding the card from it is the difference between a
+	// /asl-alphabet?letter=W link showing W's description immediately and showing
+	// A's description for the whole length of the rig download.
+	const params = new URLSearchParams(location.search);
+	const linkedLetter = (params.get('letter') || '').toUpperCase().slice(0, 1);
+	const rawWord = (params.get('spell') || '').slice(0, 24);
+	const linkedWord = normalizeWord(rawWord) ? rawWord : '';
+	const linkedFirst = normalizeWord(linkedWord).replace(/\s+/g, '').slice(0, 1);
+
 	const prefs = loadSignPrefs();
 	let avatar = resolveRig(prefs);
 	let rate = SPEEDS.some((s) => s.rate === prefs.rate) ? prefs.rate : 1;
@@ -91,11 +101,19 @@ async function boot() {
 		return canSign;
 	};
 
+	// Why the avatar cannot sign right now, phrased for whichever panel is asking.
+	// Both the stage status and the spell panel need it, and a visitor scrolled
+	// down to the spell box never sees a message left on the stage.
+	const stageProblem = () =>
+		stageState === 'loading'
+			? 'The avatar is still loading: the description is ready now, the handshape follows.'
+			: 'The avatar could not load. Reload the page to try again: every letter is still described in words.';
+
 	// ── Playing letters and words ────────────────────────────────────────────
 	const clearHighlights = () => {
 		highlightTimers.forEach((t) => clearTimeout(t));
 		highlightTimers = [];
-		document.querySelectorAll('.aa-key[data-live="true"]').forEach((el) => el.removeAttribute('data-live'));
+		clearHighlightsOnly();
 	};
 
 	/**
@@ -103,18 +121,14 @@ async function boot() {
 	 * Marks come from the clip builder itself, so the highlight is the real
 	 * cadence rather than an animation guessed alongside it.
 	 */
-	const play = async (text, { describe = true } = {}) => {
+	const play = async (text, { describe = true, trail = false } = {}) => {
 		const letters = normalizeWord(text);
 		if (!letters) {
 			setStatus('Letters and numbers only: that is all the manual alphabet can spell.');
 			return null;
 		}
 		if (!stage?.anim || !canSign) {
-			setStatus(
-				stageState === 'loading'
-					? 'The avatar is still loading: the description is ready now, the handshape follows.'
-					: 'The avatar could not load. Reload the page to try again: every letter is still described in words.',
-			);
+			setStatus(stageProblem());
 			return null;
 		}
 		const token = ++playToken;
@@ -137,22 +151,27 @@ async function boot() {
 		// a word hands the avatar back to its idle when the spelling is done.
 		stage.anim.playOnce(name, single ? { settleTo: null } : {});
 
+		// The trail is built from `marks` rather than from the word, so its cells
+		// line up with the clip one-for-one even when a letter repeats.
+		const trailCells = trail ? renderTrail(marks) : [];
+
 		const startedAt = performance.now();
-		for (const mark of marks) {
-			if (mark.letter === ' ') continue;
+		marks.forEach((mark, i) => {
+			if (mark.letter === ' ') return;
 			highlightTimers.push(
 				window.setTimeout(() => {
 					if (token !== playToken) return;
 					clearHighlightsOnly();
 					const key = document.querySelector(`.aa-key[data-char="${mark.letter}"]`);
 					key?.setAttribute('data-live', 'true');
+					trailCells[i]?.setAttribute('data-live', 'true');
 					// The card follows the spelling, but the share link keeps
 					// pointing at the whole word rather than whichever letter
 					// the hand happened to be on when Share was clicked.
 					if (describe) showLetter(mark.letter, { quiet: true, share: false });
 				}, Math.max(0, mark.start * 1000 - (performance.now() - startedAt))),
 			);
-		}
+		});
 		highlightTimers.push(
 			window.setTimeout(() => {
 				if (token === playToken) clearHighlightsOnly();
@@ -163,6 +182,7 @@ async function boot() {
 
 	const clearHighlightsOnly = () => {
 		document.querySelectorAll('.aa-key[data-live="true"]').forEach((el) => el.removeAttribute('data-live'));
+		document.querySelectorAll('.aa-trail-ch[data-live="true"]').forEach((el) => el.removeAttribute('data-live'));
 	};
 
 	// ── The letter detail card ───────────────────────────────────────────────
@@ -223,13 +243,20 @@ async function boot() {
 	buildKeys('#aa-digits', DIGITS);
 	// Populate the card before the rig is fetched: the look-alike note, the
 	// pressed key and the share link are all readable while the GLB downloads.
-	showLetter('A', { quiet: true });
+	// A deep link decides which letter that is, so a link never opens on the
+	// wrong description and corrects itself minutes later on a slow connection.
+	const seeded = [linkedLetter, linkedFirst].find((c) => CHARS.includes(c)) || 'A';
+	showLetter(seeded, { quiet: true });
 
 	// Typing a letter signs it: the fastest possible path from "what is a Q"
 	// to seeing a Q, with no pointer involved.
 	document.addEventListener('keydown', (e) => {
-		const typing = /^(input|textarea)$/i.test(e.target?.tagName || '');
-		if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+		const typing = /^(input|textarea|select)$/i.test(e.target?.tagName || '') || e.target?.isContentEditable;
+		// An open modal (the avatar picker) owns the keyboard. Signing behind it
+		// both swallows the dialog's own key handling and animates a letter the
+		// visitor cannot see.
+		const modal = document.querySelector('[aria-modal="true"], dialog[open]');
+		if (typing || modal || e.metaKey || e.ctrlKey || e.altKey) return;
 		const char = e.key.toUpperCase();
 		if (!CHARS.includes(char)) return;
 		e.preventDefault();
@@ -237,25 +264,56 @@ async function boot() {
 	});
 
 	// ── Spell a word ─────────────────────────────────────────────────────────
+	// The panel answers in its own line rather than only on the stage overlay.
+	// The overlay sits beside the avatar, a viewport above this box on a phone,
+	// so a rejected word used to change nothing the visitor could see.
 	const spellInput = $('#aa-spell-input');
 	const spellBtn = $('#aa-spell-btn');
+	const spellFeedback = $('#aa-spell-feedback');
+
+	const saySpell = (text, state) => {
+		if (!spellFeedback) return;
+		spellFeedback.textContent = text;
+		spellFeedback.dataset.state = state;
+	};
+
+	/** Lay the spelling out as cells and hand them back in clip order. */
+	function renderTrail(marks) {
+		if (!spellFeedback) return [];
+		spellFeedback.textContent = '';
+		spellFeedback.dataset.state = 'shown';
+		const row = document.createElement('span');
+		row.className = 'aa-trail';
+		const cells = marks.map((mark) => {
+			const cell = document.createElement('span');
+			cell.className = 'aa-trail-ch';
+			const space = mark.letter === ' ';
+			cell.textContent = space ? ' ' : mark.letter;
+			if (space) cell.setAttribute('data-space', 'true');
+			row.appendChild(cell);
+			return cell;
+		});
+		spellFeedback.appendChild(row);
+		return cells;
+	}
+
 	const spellIt = async () => {
 		const raw = spellInput?.value?.trim();
 		if (!raw) {
-			setStatus('Type a word and the avatar spells it, letter by letter.');
+			saySpell('Type a word first: a name, a city, anything with no sign of its own.', 'wrong');
 			spellInput?.focus();
 			return;
 		}
 		const normalized = normalizeWord(raw);
 		if (!normalized) {
-			setStatus('Letters and numbers only: that is all the manual alphabet can spell.');
+			saySpell('Letters and numbers only: that is all the manual alphabet can spell.', 'wrong');
 			spellInput?.focus();
 			return;
 		}
 		setStatus(`Spelling ${normalized.toLowerCase()}`);
 		shareTarget = { param: 'spell', value: normalized };
 		if (shareBtn) shareBtn.hidden = false;
-		await play(normalized);
+		if (!(await play(normalized, { trail: true }))) saySpell(stageProblem(), 'wrong');
 	};
 	spellBtn?.addEventListener('click', spellIt);
 	spellInput?.addEventListener('keydown', (e) => {
@@ -264,6 +322,12 @@ async function boot() {
 			spellIt();
 		}
 	});
+	// A shared spelling arrives in the box straight away, so the link reads as
+	// itself while the rig is still downloading.
+	if (linkedWord) {
+		if (spellInput) spellInput.value = linkedWord;
+		shareTarget = { param: 'spell', value: normalizeWord(linkedWord) };
+	}
 
 	shareBtn?.addEventListener('click', async () => {
 		const { param, value } = shareTarget;
@@ -466,8 +530,11 @@ async function boot() {
 			persist();
 			setStatus('Loading avatar…');
 			if (await mountStage()) {
+				// Say the swap landed. Replaying the letter is silent, so without
+				// this the stage sat under "Loading avatar…" for the rest of the
+				// visit, and a screen reader was never told the load had finished.
+				setStatus(`${picked.label} is forming the letters now.`);
 				if (current) play(current, { describe: false });
-				else if (picked.custom) setStatus(`${picked.label} is forming the letters now.`);
 				return true;
 			}
 			// No finger bones means no handshapes, and a hand that cannot move is
@@ -502,16 +569,14 @@ async function boot() {
 	};
 	if (canSign) await waitForIdleClip();
 
-	const params = new URLSearchParams(location.search);
-	const wanted = (params.get('letter') || '').toUpperCase().slice(0, 1);
-	const wantedWord = params.get('spell') || '';
-	if (wantedWord && normalizeWord(wantedWord)) {
-		if (spellInput) spellInput.value = wantedWord.slice(0, 24);
+	// The card was seeded from these at build time; what is left is the playback,
+	// which is the only part that had to wait for a rig.
+	if (linkedWord) {
 		if (!reducedMotion) spellIt();
-		else setStatus(`Ready to spell ${normalizeWord(wantedWord).toLowerCase()}. Press Spell it.`);
-	} else if (CHARS.includes(wanted)) {
-		if (!reducedMotion) signLetter(wanted);
-		else showLetter(wanted);
+		else setStatus(`Ready to spell ${normalizeWord(linkedWord).toLowerCase()}. Press Spell it.`);
+	} else if (CHARS.includes(linkedLetter)) {
+		if (!reducedMotion) signLetter(linkedLetter);
+		else showLetter(linkedLetter);
 	} else if (userPicked) {
 		// Someone who pressed a key while the rig was still downloading has
 		// already chosen: sign what they asked for rather than resetting to A.

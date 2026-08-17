@@ -51,6 +51,7 @@ All four live under the agent. `:id` is the agent's UUID.
 | Method | Path | Auth | Does |
 |---|---|---|---|
 | `GET` | `/api/agents/:id/bundles` | public | List the agent's active bundles |
+| `GET` | `/api/agents/:id/bundles?include_inactive=1` | owner | The same list with paused bundles included |
 | `GET` | `/api/agents/:id/bundles?action=pricing&skills=a,b` | public | Price a candidate bundle against real sales |
 | `POST` | `/api/agents/:id/bundles` | owner | Publish a bundle |
 | `PATCH` | `/api/agents/:id/bundles/:bundleId` | owner | Rename, reprice, or change its skills |
@@ -134,6 +135,13 @@ fifty. The response is `201` with the created bundle and its skills.
 
 `DELETE` sets `is_active = false`. Buyers who already paid keep their access,
 because access lives on their `skill_purchases` rows, not on the bundle.
+
+Pausing is reversible. `PATCH` with `{"is_active": true}` puts the bundle back on
+sale, and `include_inactive=1` is how you find it again: the plain `GET` is the
+buyer-facing list and stays active-only, so a paused bundle is returned only to a
+session that owns the agent. Anyone else passing the flag gets the public list
+unchanged. The builder page uses exactly this, which is why a paused bundle stays
+on screen, dimmed, with a **Reactivate** button.
 
 ---
 

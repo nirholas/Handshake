@@ -72,6 +72,12 @@ const state = {
 	raf: 0,
 	lastT: 0,
 	stagedClip: null, // clip currently mounted on the stage
+	/** True while a play is still binding its clips and nothing is on stage yet. */
+	starting: false,
+	/** Bumped by every start and every stop, so work that was already in flight
+	 *  when the user changed their mind can tell that it no longer owns the
+	 *  stage. Binding a cold routine takes seconds; a lot can happen in them. */
+	startGen: 0,
 	agents: null, // null = not fetched, [] = signed out or none
 	dragIndex: -1,
 	loadedFromLink: false,
@@ -122,13 +128,31 @@ async function loadManifest() {
 }
 
 /**
- * The signed-in user's agents. A 401 is the ordinary signed-out case, not an
- * error: the whole page works without an account.
+ * The signed-in user's agents. Being signed out is the ordinary case here, not
+ * an error: the whole page works without an account, and only the save panel
+ * needs to know. `/api/auth/me` answers 200 either way, so asking it first keeps
+ * an anonymous visitor's console clean instead of printing a red 401 from
+ * `/api/agents` on every first paint.
  */
 async function loadAgents() {
 	try {
-		const res = await fetch('/api/agents', {
-			credentials: 'include',
+		const { apiFetch, noteSession } = await import('./api.js');
+		const who = await apiFetch('/api/auth/me', {
+			allowAnonymous: true,
+			headers: { accept: 'application/json' },
+		});
+		const user = who.ok ? (await who.json()).user : null;
+		noteSession(!!user);
+		if (!user) {
+			state.agents = [];
+			renderSave();
+			return;
+		}
+		// allowAnonymous keeps a session that expired mid-edit from bouncing the
+		// composer to /login: the save panel simply falls back to its signed-out
+		// state and the routine on screen survives.
+		const res = await apiFetch('/api/agents', {
+			allowAnonymous: true,
 			headers: { accept: 'application/json' },
 		});
 		state.agents = res.ok ? ((await res.json()).agents ?? []) : [];
@@ -519,6 +543,7 @@ async function stageStep(step, { crossfade = true } = {}) {
 		setStageState('error', `"${stepClip(step)}" is not in the clip manifest.`);
 		return;
 	}
+	const gen = state.startGen;
 	const preview = await getPreview();
 	const bounds = state.boundClips || [];
 	try {
@@ -527,11 +552,15 @@ async function stageStep(step, { crossfade = true } = {}) {
 			crossfade: crossfade && state.stagedClip ? CROSSFADE : 0,
 			frameWith: bounds.filter(Boolean),
 		});
+		// Stopped or restarted while this clip was binding: whatever is on the
+		// stage now is the routine the user asked for, so leave it alone.
+		if (gen !== state.startGen) return;
 		state.stagedClip = def.id;
 		setStageState('none');
 		el('stage-badge').hidden = false;
 		el('stage-badge').textContent = `${step.slot} · ${clipLabel(def.id)}`;
 	} catch (err) {
+		if (gen !== state.startGen) return;
 		setStageState('error', err?.message ? `Preview failed: ${err.message}` : undefined);
 	}
 }
@@ -543,9 +572,15 @@ async function prepareClips(routine) {
 	state.boundClips = await preview.prepare(defs);
 }
 
+/**
+ * Cue the routine and start it.
+ * @param {number} [fromIndex] step to open on
+ * @returns {Promise<boolean>} false when a newer start or a stop took the stage
+ *   before this one finished binding, so callers can skip their follow-up.
+ */
 async function startPlayback(fromIndex = 0) {
 	const routine = currentRoutine();
-	if (!routine) return;
+	if (!routine) return false;
 
 	stopRaf();
 	el('stage-loading-text').textContent =
@@ -555,8 +590,12 @@ async function startPlayback(fromIndex = 0) {
 	// take seconds on a cold first play, and a play button that still reads "▶"
 	// while the stage spins reads as a click that did not register.
 	setPlayButton(true);
+	state.starting = true;
+	const gen = ++state.startGen;
 
 	await prepareClips(routine);
+	if (gen !== state.startGen) return false;
+	state.starting = false;
 
 	state.player = new RoutinePlayer(routine, {
 		loop: state.loop,
@@ -577,6 +616,7 @@ async function startPlayback(fromIndex = 0) {
 	setPlayButton(true);
 	startRaf();
 	setStatus(`Playing ${routine.name}, ${routine.steps.length} steps.`);
+	return true;
 }
 
 function playFrom(index) {
@@ -585,6 +625,8 @@ function playFrom(index) {
 
 function stopPlayback() {
 	stopRaf();
+	state.startGen++;
+	state.starting = false;
 	state.player = null;
 	state.stagedClip = null;
 	state.preview?.stop();
@@ -606,8 +648,8 @@ function restageIfPlaying() {
 		stopPlayback();
 		return;
 	}
-	startPlayback(0).then(() => {
-		if (!state.player) return;
+	startPlayback(0).then((ok) => {
+		if (!ok || !state.player) return;
 		state.player.seek(Math.min(at, routineDuration(routine)));
 		if (!wasPlaying) {
 			state.player.pause();
@@ -644,6 +686,15 @@ function stopRaf() {
 
 function togglePlay() {
 	if (!state.steps.length) return;
+	if (state.starting) {
+		// The transport already reads "pause" while the clips bind, so pressing it
+		// has to call that load off. Without this it would queue a second copy of
+		// the same load behind the first and leave the user watching the spinner
+		// they were trying to dismiss.
+		stopPlayback();
+		setStatus('Stopped before the routine started.');
+		return;
+	}
 	if (!state.player) {
 		startPlayback(0);
 		return;
@@ -667,7 +718,8 @@ function scrubTo(seconds) {
 	const routine = currentRoutine();
 	if (!routine) return;
 	if (!state.player) {
-		startPlayback(0).then(() => {
+		startPlayback(0).then((ok) => {
+			if (!ok) return;
 			state.player?.seek(seconds);
 			state.player?.pause();
 			setPlayButton(false);
@@ -682,11 +734,37 @@ function scrubTo(seconds) {
 
 /* ── url state ─────────────────────────────────────────────────────────── */
 
+/** The query key a routine travels in. */
+const ROUTINE_PARAM = 'r';
+
+/**
+ * The raw `?r=` value, read without decoding it.
+ *
+ * `encodeRoutine` already escapes the routine name, and the `|` `,` `:` `*` `@`
+ * it separates steps with are all legal in a query string, so the encoded
+ * routine belongs in the URL verbatim. Handing it to `URLSearchParams` instead
+ * would escape its percent signs a second time, so the share link for a routine
+ * called "The pitch" read `?r=The%2520pitch|…`, and reading it back through
+ * `URLSearchParams.get` would strip exactly one layer, turning a name that
+ * legitimately contains an escaped `|` into a raw bar that splits the routine on
+ * the wrong character.
+ *
+ * @returns {string|null}
+ */
+function readEncodedRoutine() {
+	for (const pair of window.location.search.replace(/^\?/, '').split('&')) {
+		if (pair.startsWith(`${ROUTINE_PARAM}=`)) return pair.slice(ROUTINE_PARAM.length + 1);
+	}
+	return null;
+}
+
 function syncUrl() {
 	const routine = currentRoutine();
 	const url = new URL(window.location.href);
-	if (routine) url.searchParams.set('r', encodeRoutine(routine));
-	else url.searchParams.delete('r');
+	url.searchParams.delete(ROUTINE_PARAM);
+	const others = url.searchParams.toString();
+	const mine = routine ? `${ROUTINE_PARAM}=${encodeRoutine(routine)}` : '';
+	url.search = [others, mine].filter(Boolean).join('&');
 	window.history.replaceState(null, '', url);
 }
 
@@ -711,16 +789,30 @@ function loadRoutine(routine, { announce = true } = {}) {
  *   point instead" belong in one sentence, not two that overwrite each other.
  */
 function applyDeepLink() {
-	const encoded = new URLSearchParams(window.location.search).get('r');
+	const encoded = readEncodedRoutine();
 	if (!encoded) return null;
+	// Links shared before the studio wrote its own query carry one extra layer of
+	// escaping. A value that does not parse as-is gets one decode and a second
+	// chance, so every link that used to work still does.
+	const candidates = [encoded];
 	try {
-		loadRoutine(decodeRoutine(encoded), { announce: false });
-		setStatus(`Loaded a shared routine: ${state.name}.`);
-		state.loadedFromLink = true;
-		return null;
-	} catch (err) {
-		return err.message;
+		const once = decodeURIComponent(encoded);
+		if (once !== encoded) candidates.push(once);
+	} catch {
+		// A lone percent sign means it was never double-escaped: nothing to retry.
 	}
+	let firstError = null;
+	for (const candidate of candidates) {
+		try {
+			loadRoutine(decodeRoutine(candidate), { announce: false });
+			setStatus(`Loaded a shared routine: ${state.name}.`);
+			state.loadedFromLink = true;
+			return null;
+		} catch (err) {
+			firstError ??= err.message;
+		}
+	}
+	return firstError;
 }
 
 /* ── saving ────────────────────────────────────────────────────────────── */

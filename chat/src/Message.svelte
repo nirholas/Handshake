@@ -754,6 +754,7 @@
 						<button
 							class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
 							on:click={copyContent}
+							aria-label="Copy message"
 							title="Copy"
 						>
 							{#if copied}
@@ -765,6 +766,8 @@
 					{/if}
 					<button
 						class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
+						aria-label="Edit message"
+						title="Edit"
 						on:click={async () => {
 							convo.messages[i].editing = true;
 							convo.messages[i].pendingContent = convo.messages[i].content;
@@ -784,6 +787,8 @@
 					{#if message.role !== 'system'}
 						<button
 							class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
+							aria-label="Regenerate reply"
+							title="Regenerate"
 							on:click={() => {
 								activeToolcall = null;
 
@@ -822,6 +827,8 @@
 					{/if}
 					<button
 						class="group/actions flex h-7 w-7 shrink-0 rounded-lg hover:bg-gray-100"
+						aria-label="Delete message"
+						title="Delete"
 						on:click={() => {
 							// Remove this message from the conversation:
 							convo.messages = convo.messages.slice(0, i).concat(convo.messages.slice(i + 1));
@@ -840,6 +847,8 @@
 			{/if}
 		</div>
 		<button
+			aria-label="Insert a message here"
+			title="Insert a message here"
 			on:click={async () => {
 				// Insert a blank message inbetween the next message and the next next message:
 				let role;

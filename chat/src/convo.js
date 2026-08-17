@@ -212,6 +212,11 @@ export async function complete(convo, onupdate, onabort) {
 	}
 	} catch (err) {
 		if (err.name === 'AbortError') return;
+		// fetch rejects with a bare TypeError when the request never reached the
+		// server (offline, DNS, a blocked or refused connection). Its message is
+		// "Failed to fetch", which told the user nothing; tag it so the UI can
+		// answer with something they can act on.
+		if (err instanceof TypeError && !err.code) err.code = 'network';
 		onabort?.(err);
 	}
 }
@@ -405,7 +410,14 @@ async function streamResponse(provider, readableStream, onupdate, onabort) {
 		if (error instanceof DOMException && error.name === 'AbortError') {
 			onabort();
 		} else {
-			onupdate({ error: error.message });
+			// The stream died after the reply started. Say so, and say what is
+			// safe to do next, rather than printing the transport's own wording.
+			onupdate({
+				error:
+					error instanceof TypeError
+						? 'The reply stopped early because the connection dropped. Hover this reply and press the refresh button to regenerate it.'
+						: error.message,
+			});
 		}
 	}
 }

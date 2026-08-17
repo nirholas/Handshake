@@ -44,8 +44,16 @@
 			</button>
 		</div>
 
-		<!-- CENTER: main-site navigation (desktop) -->
-		<nav class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 lg:flex" aria-label="three.ws">
+		<!-- CENTER: main-site navigation (desktop).
+		     In flow, not absolutely centered: a centered overlay sat on top of the
+		     right-hand cluster at every width, so the Pay pill covered Features and
+		     Docs and neither was clickable. Shown from xl, where the three clusters
+		     fit side by side; below that the links live in the sheet behind the
+		     hamburger. -->
+		<nav
+			class="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex"
+			aria-label="three.ws"
+		>
 			{#each siteLinks as link}
 				<a
 					href={link.href}
@@ -59,15 +67,17 @@
 			{/each}
 		</nav>
 
-		<!-- RIGHT: auth buttons + hamburger -->
-		<div class="flex items-center gap-2">
+		<!-- RIGHT: auth buttons + hamburger. The hamburger stays until xl, because
+		     that is where the site links join the bar; without it, every width
+		     between md and xl had no way to reach them at all. -->
+		<div class="flex shrink-0 items-center gap-2">
 			<div class="hidden items-center gap-2 md:flex">
 				<NotificationBell />
 				<PayWalletPicker />
 				<WalletConnect />
 			</div>
 			<button
-				class="rounded-full p-2 text-ink transition-colors hover:bg-paper-deep md:hidden"
+				class="rounded-full p-2 text-ink transition-colors hover:bg-paper-deep xl:hidden"
 				aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
 				aria-expanded={mobileOpen}
 				on:click={() => (mobileOpen = !mobileOpen)}
@@ -79,7 +89,7 @@
 
 	<!-- Mobile sheet -->
 	{#if mobileOpen}
-		<div class="border-t border-rule bg-paper md:hidden">
+		<div class="border-t border-rule bg-paper xl:hidden">
 			<div class="flex flex-col gap-1 px-4 py-3">
 				<button
 					on:click={goChatHome}
@@ -109,7 +119,9 @@
 					Back to three.ws
 				</a>
 
-				<div class="mt-2 flex flex-col gap-3 border-t border-rule pt-3">
+				<!-- Only when the header cluster is hidden, so the wallet controls are
+				     never offered twice on the same screen. -->
+				<div class="mt-2 flex flex-col gap-3 border-t border-rule pt-3 md:hidden">
 					<PayWalletPicker />
 					<WalletConnect />
 				</div>

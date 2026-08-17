@@ -104,9 +104,9 @@ Another 41 everyday spellings route to those same signs, so ordinary sentences w
 
 - **Click a key, or press it.** Typing `q` signs a Q. A single letter holds its pose so you can study it; a word settles back to rest the way a signer finishes.
 - **Every letter is described**, with the letters it is confused with named explicitly (F against 9, M against N, K against V, G against Q). Look-alikes are where reading breaks down, so they are called out rather than left to be discovered.
-- **Spell any word** and each key lights up as the hand reaches it. The highlight comes from the clip builder itself, not from a timer guessed alongside it, so it stays in step at any speed.
+- **Spell any word** and each key lights up as the hand reaches it. The word is also laid out under the input, one cell per letter, lit in the same cadence, so a long word can be followed without scrolling back to the A-to-Z grid. The highlight comes from the clip builder itself, not from a timer guessed alongside it, so it stays in step at any speed.
 - **Practice reading it**, which is the harder half. The avatar spells a letter or a word, you type what you read, and your streak is kept on the device.
-- Deep links: `?letter=W` opens a letter, `?spell=HELLO` spells a word.
+- Deep links: `?letter=W` opens a letter, `?spell=HELLO` spells a word. The link is read before the page builds anything, so the letter's description, its look-alike note and its pressed key are on screen immediately and the avatar catches up when the rig finishes loading.
 
 Speed, signing hand, and avatar are the same settings as /sign-language, stored under the same key, so a left-handed signer sets that once for both pages. That includes [your own avatar](#sign-with-your-own-avatar): pick it on either page and it forms the letters on both.
 

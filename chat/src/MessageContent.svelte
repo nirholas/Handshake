@@ -7,9 +7,30 @@
 </script>
 
 {#if message.error}
-	<span class="markdown text-slate-600 prose-a:underline">
-		<Markdown source={message.error} />
-	</span>
+	<!-- An error is a state of its own, not a quieter reply: give it a border, a
+	     warning tint and a role so it is legible at a glance and announced. -->
+	<div
+		role="alert"
+		class="markdown flex w-full max-w-none items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-left text-sm text-ink-soft prose-a:underline"
+	>
+		<svg
+			viewBox="0 0 24 24"
+			class="mt-[3px] h-4 w-4 shrink-0 text-amber-400"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M12 9v4" />
+			<path
+				d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+			/>
+			<path d="M12 17h.01" />
+		</svg>
+		<span class="min-w-0"><Markdown source={message.error} /></span>
+	</div>
 {:else if message.content}
 	<div
 		bind:clientHeight={contentHeight}

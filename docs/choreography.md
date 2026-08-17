@@ -187,8 +187,10 @@ player.update(deltaSeconds);
 Routines round-trip through the URL, so a link is the routine. The studio keeps `?r=` in sync as you edit:
 
 ```
-https://three.ws/choreograph?r=Welcome%7Cwave%3A2%2Cnod%3A1.2%2Cidle%3A1.6
+https://three.ws/choreograph?r=Welcome|wave:2,nod:1.2,idle:1.6
 ```
+
+The studio writes that query itself rather than through `URLSearchParams`, because the encoding below already escapes everything it needs to and a second pass would turn a routine called `The pitch` into `?r=The%2520pitch|…`. Links written the older way still load: the page retries a value that will not parse after one `decodeURIComponent`.
 
 The encoding is deliberately legible rather than base64, so you can read a link before you click it and hand-write one when that is easier:
 
@@ -199,7 +201,7 @@ Name|slot:hold[*speed][@clip],slot:hold,…
 - `Welcome|wave:2,nod:1.2` gives two beats
 - `Slow%20clap|celebrate:3*0.5` plays at half speed
 - `Encore|dance:4@av-offabean-dance` pins a specific clip (naming the slot's default instead, `@rumba`, stores `null` and leaves the slot resolving)
-- `Waiting~loop|patience:3,fidget:2.4` sets `loop` via the `~loop` suffix on the name
+- `Waiting~loop|patience:3,fidget:2.4` sets `loop` via the `~loop` suffix on the name (a `~` inside the name itself is escaped to `%7E`, so a routine really called `Encore~loop` stays one)
 
 `encodeRoutine()` and `decodeRoutine()` in the runtime module are the canonical implementations. A malformed link throws with the reason rather than dropping steps quietly, and the studio shows that reason instead of silently loading something else.
 

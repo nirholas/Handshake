@@ -1009,6 +1009,13 @@
 	border-radius: 10px;
 	background: var(--ch-surface-2);
 	overflow-x: auto;
+	/* The block scrolls its own long lines, but its intrinsic width still
+	   counted toward the page's min-content size, and `main` sits in a flex
+	   column where that min-content wins over the viewport. One line of the
+	   embed snippet is wider than a 320px phone, so the whole page scrolled
+	   sideways. Containment says out loud what `overflow-x` already implies:
+	   this box's width does not depend on what is inside it. */
+	contain: inline-size;
 	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 	font-size: 12px;
 	line-height: 1.55;

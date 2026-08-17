@@ -446,6 +446,17 @@
 	--text-3: #888f9c;
 	--text-4: #aab0bc;
 	--nv-bar-bg: rgba(255, 255, 255, 0.82);
+
+	/* Wallet identity accent. The dark palette's pale violets (#c4b5fd text,
+	   #a78bfa vanity) were never remapped for light, so every wallet chip on a
+	   light surface rendered its address at 1.7:1 against the card: unreadable,
+	   and well under the 4.5:1 AA floor for the 11px type it uses. Darkening the
+	   two ink tokens to the violet-600/700 rungs keeps the violet identity that
+	   marks wallet UI across the app and measures 5.3:1 and 6.6:1. The fills,
+	   strokes and glow are alpha-based on the same 139,92,246 hue and already
+	   composite correctly on a light canvas, so they stay put. */
+	--wallet-accent:        #6d28d9;
+	--wallet-accent-strong: #5b21b6;
 }
 
 @media (prefers-reduced-motion: reduce) {
