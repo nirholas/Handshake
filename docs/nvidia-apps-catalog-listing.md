@@ -77,10 +77,11 @@ Pick the closest available options in the form; the taxonomy varies.
 
 Every item below is live in production unless marked otherwise. Do not claim TensorRT, Triton, or self-hosted NIM microservices; the GPU workers are PyTorch + CUDA today (TensorRT-LLM is an Inception roadmap item).
 
-- **NVIDIA L4 GPUs** (Google Cloud Run GPU) running the entire self-hosted 3D generation fleet: image-to-3D, sketch-to-3D, auto-rigging, text-to-motion, video-to-scene
+Also do not claim the **video-to-scene world scanner** or the **texture worker**, and do not re-add **FlashInfer** on their behalf. Both have a GPU `cloudbuild.yaml` in the tree but neither is deployed in any region (verified 2026-08-17 with the recount command below), so they are built code, not a running lane. Deploy them and they belong here; until then a curator who checks would find nothing behind the claim.
+
+- **NVIDIA L4 GPUs** (Google Cloud Run GPU) running the entire self-hosted 3D generation fleet: image-to-3D, sketch-to-3D, auto-rigging, text-to-motion. Eight GPU workers, twelve deployments across `us-central1` and `us-east4` (eleven L4, one RTX PRO 6000). Recount before submitting: `gcloud run services list --project aerial-vehicle-466722-p5 --format="csv[no-heading](metadata.name,region,spec.template.spec.nodeSelector)" | grep -i accelerator`
 - **CUDA** with custom-compiled extensions (nvdiffrast, diffoctreerast, diff-gaussian-rasterization, torchmcubes)
 - **NVIDIA Kaolin** (TRELLIS worker)
-- **FlashInfer** paged-KV-cache attention (video-to-scene worker)
 - **NIM APIs** (integrate.api.nvidia.com): Nemotron Super and Nano LLMs, Nemotron Nano VL vision, NV-EmbedQA-E5-v5 embeddings, Mistral 4B reranking, NemoGuard 8B content safety
 - **NVCF**: microsoft/trellis text-to-3D (the free default forge lane) and FLUX.1-schnell text-to-image
 - **NVIDIA Riva**: Magpie multilingual TTS and Riva ASR over NVCF gRPC

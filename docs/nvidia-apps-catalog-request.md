@@ -16,7 +16,7 @@ three.ws is an NVIDIA Inception member (accepted July 2026). Our product record 
 
 **Why it belongs in the catalog:** the whole product is NVIDIA accelerated computing end to end, in two layers.
 
-Self-hosted: ten GPU workers on Google Cloud Run NVIDIA L4s, built on `nvidia/cuda` 12.1 to 12.8 images with custom-compiled CUDA extensions (nvdiffrast, diffoctreerast, diff-gaussian-rasterization, torchmcubes) and NVIDIA Kaolin. These run Hunyuan3D 2.1 and TRELLIS for image-to-3D, TripoSG for sketch-to-3D, TripoSR for fast drafts, Make-It-Animatable for auto-rigging, Motion Diffusion Model for text-to-motion, and a video-to-scene world scanner. The heavy image-to-3D lane is validated on RTX PRO 6000 Blackwell with `sm_120` kernel builds.
+Self-hosted: eight GPU workers on Google Cloud Run, twelve service deployments across two regions, eleven on NVIDIA L4 and one on RTX PRO 6000 Blackwell. They are built on `nvidia/cuda` 12.1 to 12.8 images with custom-compiled CUDA extensions (nvdiffrast, diffoctreerast, diff-gaussian-rasterization, torchmcubes) and NVIDIA Kaolin, and they run Hunyuan3D 2.1 and TRELLIS for image-to-3D, TripoSG for sketch-to-3D, TripoSR for fast drafts, Make-It-Animatable for auto-rigging, and Motion Diffusion Model for text-to-motion. The heavy image-to-3D lane is validated on RTX PRO 6000 Blackwell with `sm_120` kernel builds.
 
 NVIDIA-hosted: Nemotron Super and Nano power agent reasoning, Nemotron Nano VL handles vision, NV-EmbedQA-E5-v5 and Mistral reranking power agent memory, NemoGuard 8B gates every public publish, Riva Magpie TTS and Riva ASR give agents a voice, and Audio2Face-3D drives real-time ARKit blendshape facial animation in the browser (live demo: https://three.ws/demos/audio2face).
 
