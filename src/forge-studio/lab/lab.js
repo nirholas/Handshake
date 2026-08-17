@@ -235,6 +235,11 @@ function resetDownload() {
 	const dl = $('#lab-download');
 	dl.classList.add('is-disabled');
 	dl.removeAttribute('href');
+	// Href-less anchors are invisible to keyboard and screen-reader users, so the
+	// disabled affordance has to be announced explicitly rather than implied by
+	// the dimmed style alone.
+	dl.setAttribute('aria-disabled', 'true');
+	dl.setAttribute('title', 'Generate something first, then download it as a file');
 }
 
 function setDownload(url, filename, label) {
@@ -243,6 +248,8 @@ function setDownload(url, filename, label) {
 	dl.setAttribute('download', filename);
 	dl.querySelector('.lab-dl-label').textContent = label;
 	dl.classList.remove('is-disabled');
+	dl.removeAttribute('aria-disabled');
+	dl.setAttribute('title', `Download ${filename}`);
 }
 
 // ── Generate ──────────────────────────────────────────────────────────────────

@@ -94,7 +94,10 @@
 			border-bottom: 1.6px solid var(--faint); transform: translateY(-65%) rotate(45deg); pointer-events: none; }
 
 		/* coin grid */
-		.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+		/* min() keeps the 330px track from forcing a wider-than-viewport column on a
+		   320px phone, where html/body carry overflow-x:clip and would silently shear
+		   the right edge (score badge and ☆ watch button) off every card. */
+		.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 14px; }
 		.sm-coin-wrap { position: relative; }
 		.sm-watch { position: absolute; top: 10px; right: 10px; z-index: 2; width: 28px; height: 28px;
 			display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line);
@@ -477,9 +480,27 @@
 			bar.hidden = true;
 		}
 
+		// Every caller needs to tell "the radar answered, and the answer is no data"
+		// apart from "we never reached the radar". Those are different states with
+		// different copy and different affordances (retry vs. explain), so the error
+		// carries the distinction instead of collapsing both into one message.
 		async function getJSON(url) {
-			const r = await fetch(url, { headers: { accept: 'application/json' } });
-			if (!r.ok) throw new Error(`${r.status}`);
+			let r;
+			try {
+				r = await fetch(url, { headers: { accept: 'application/json' } });
+			} catch (e) {
+				const err = new Error(e && e.message ? e.message : 'network request failed');
+				err.unreachable = true;
+				throw err;
+			}
+			if (!r.ok) {
+				const err = new Error(`${r.status}`);
+				err.status = r.status;
+				// A 4xx is the server's considered answer ("no such wallet"); a 5xx is
+				// the radar being down and is worth retrying.
+				err.unreachable = r.status >= 500;
+				throw err;
+			}
 			return r.json();
 		}
 
@@ -753,34 +774,45 @@
 			}
 			grid.innerHTML = Array.from({ length: Math.min(mints.length, 6) }, () => '<div class="skel"></div>').join('');
 			const results = await Promise.allSettled(mints.map((m) => getJSON(`${API}?mint=${encodeURIComponent(m)}`)));
-			grid.innerHTML = '';
-			let any = false;
-			results.forEach((r, i) => {
-				if (r.status === 'fulfilled' && r.value && r.value.coin) {
-					grid.appendChild(coinCard(r.value.coin, { watchOffer: true }));
-					any = true;
-				} else {
-					grid.appendChild(watchUnscored(mints[i]));
-				}
-			});
-			if (!any && !results.some((r) => r.status === 'fulfilled')) {
-				// all lookups failed — likely a transient error, not "unscored"
+
+			// Every lookup failing means the radar is unreachable, not that the whole
+			// watchlist went unscored. Say so once, with a retry, instead of labelling
+			// each tracked coin "not on the radar" on the strength of a network blip.
+			if (results.every((r) => r.status === 'rejected' && r.reason?.unreachable)) {
+				grid.innerHTML = `<div class="state" style="grid-column:1/-1"><b>Couldn't reach the radar.</b>
+					Your ${mints.length} watched coin${mints.length > 1 ? 's are' : ' is'} still saved on this device. ${esc(results[0].reason.message)}
+					<button class="btn primary" id="watchRetry" type="button">Retry</button></div>`;
+				$('watchRetry').addEventListener('click', renderWatchlist);
+				return;
 			}
+
+			grid.innerHTML = '';
+			results.forEach((r, i) => {
+				if (r.status === 'fulfilled' && r.value && r.value.coin) grid.appendChild(coinCard(r.value.coin, { watchOffer: true }));
+				else grid.appendChild(watchUnscored(mints[i], r.status === 'rejected' && r.reason?.unreachable));
+			});
 		}
 
-		function watchUnscored(mint) {
+		function watchUnscored(mint, unreachable = false) {
 			const wrap = document.createElement('div');
 			wrap.className = 'sm-coin-wrap';
 			const card = document.createElement('div');
 			card.className = 'coin';
 			card.style.opacity = '.78';
+			const headline = unreachable ? "Couldn't load this one" : 'Not on the radar yet';
+			const detail = unreachable
+				? "We couldn't reach the radar for this coin. It stays on your watchlist; try again in a moment."
+				: "The radar only scores coins from their first hours of trading. This one isn't in the current window.";
 			card.innerHTML = `
 				<div class="coin-top">
-					<div class="coin-img">?</div>
-					<div class="coin-id"><div class="coin-sym">${esc(mint.slice(0, 6))}…</div><div class="coin-name">Not on the radar yet</div></div>
+					<div class="coin-img">${unreachable ? '!' : '?'}</div>
+					<div class="coin-id"><div class="coin-sym">${esc(mint.slice(0, 6))}…</div><div class="coin-name">${headline}</div></div>
 				</div>
-				<p style="margin:0;color:var(--muted);font-size:12.5px">The radar only scores coins from their first hours of trading. This one isn't in the current window.</p>
+				<p style="margin:0;color:var(--muted);font-size:12.5px">${detail}</p>
+				${unreachable ? '<button class="btn" type="button" data-watch-retry>Retry</button>' : ''}
 				<a class="btn" href="https://pump.fun/${esc(mint)}" target="_blank" rel="noopener">Open on pump.fun →</a>`;
+			const retry = card.querySelector('[data-watch-retry]');
+			if (retry) retry.addEventListener('click', renderWatchlist);
 			const wb = document.createElement('button');
 			wb.className = 'sm-watch sm-watched';
 			wb.type = 'button';
@@ -825,6 +857,15 @@
 					setTimeout(() => { b.classList.remove('done'); span.textContent = prev; }, 1400);
 				} catch { /* clipboard blocked — Solscan link is the fallback */ }
 			}));
+		}
+
+		// Failed drawer load: retryable when the radar was unreachable, explanatory
+		// when it answered and genuinely had nothing on record.
+		function drawerFailure(err, notFoundHtml, retry) {
+			if (!err || !err.unreachable) { $('drBody').innerHTML = notFoundHtml; return; }
+			$('drBody').innerHTML = `<div class="state"><b>Couldn't reach the radar.</b>${esc(err.message)}
+				<button class="btn primary" id="drRetry" type="button">Retry</button></div>`;
+			$('drRetry').addEventListener('click', retry);
 		}
 
 		async function openCoin(mint, { push = true } = {}) {
@@ -888,7 +929,13 @@
 							<a href="/oracle/coin/${encodeURIComponent(mint)}" class="sm-oracle-link" target="_blank" rel="noopener">Full coin page →</a>`;
 					});
 			} catch (e) {
-				$('drBody').innerHTML = `<div class="state"><b>Not scored yet.</b>This coin hasn't been picked up by the radar.</div>`;
+				$('drTitle').textContent = 'Coin';
+				drawerFailure(
+					e,
+					`<div class="state"><b>Not scored yet.</b>This coin hasn't been picked up by the radar. The radar scores coins from their first hours of trading, so older mints fall outside the window.
+						<a class="btn" href="https://pump.fun/${esc(mint)}" target="_blank" rel="noopener">Open on pump.fun →</a></div>`,
+					() => openCoin(mint, { push: false }),
+				);
 			}
 			syncBackBtn();
 		}
@@ -903,7 +950,7 @@
 					<div class="lw-top"><span class="lw-addr">${esc(c.symbol || c.mint.slice(0, 8))}</span>${c.graduated ? '<span class="nlabel lb-smart_money">graduated</span>' : ''}</div>
 					<div class="lstat">${fmtSol(c.buy_sol)}◎</div>
 					<a class="solscan" href="https://pump.fun/${esc(c.mint)}" target="_blank" rel="noopener">pump ↗</a>
-				</div>`).join('') || '<p style="color:var(--muted)">No recent coins on record.</p>';
+				</div>`).join('') || `<p style="color:var(--muted)">No recent coins on record. This wallet's judged trades sit outside the window the radar keeps coin-level detail for${last ? `, and it was last active ${last} ago` : ''}. Its reputation above still counts every verdict.</p>`;
 				const last = ago(w.last_active_at);
 				$('drBody').innerHTML = `
 					<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -931,7 +978,13 @@
 					el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
 				});
 			} catch (e) {
-				$('drBody').innerHTML = `<div class="state"><b>No track record yet.</b>We haven't recorded judged trades for this wallet.</div>`;
+				$('drTitle').textContent = short(wallet);
+				drawerFailure(
+					e,
+					`<div class="state"><b>No track record yet.</b>We haven't recorded judged trades for this wallet. A wallet enters the graph once it buys a pump.fun launch the radar is scoring.
+						<a class="btn" href="https://solscan.io/account/${esc(wallet)}" target="_blank" rel="noopener">Solscan →</a></div>`,
+					() => openWallet(wallet, { push: false }),
+				);
 			}
 			syncBackBtn();
 		}
@@ -1024,8 +1077,17 @@
 				clearStale();
 			} catch (e) {
 				if (!hasData) {
-					$('feedGrid').innerHTML = `<div class="state" style="grid-column:1/-1"><b>Couldn't reach the radar.</b>${esc(e.message)}<button class="btn primary" id="retry">Retry</button></div>`;
-					const r = $('retry'); if (r) r.addEventListener('click', refresh);
+					// Cold failure: no view has ever rendered, so every tab would be a
+					// blank void. Give the feed the retry and tell the other two tabs
+					// the same story rather than leaving them empty.
+					const why = e.status ? `The radar API answered ${e.status}.` : "We couldn't reach the radar from this browser.";
+					$('feedGrid').innerHTML = `<div class="state" style="grid-column:1/-1"><b>Couldn't reach the radar.</b>${esc(why)} Nothing is cached yet, so there is nothing to show.
+						<button class="btn primary" id="retry" type="button">Retry</button></div>`;
+					$('retry').addEventListener('click', refresh);
+					$('walletList').innerHTML = `<tr><td colspan="${WALLET_COLS.length}"><div class="state"><b>Couldn't reach the radar.</b>${esc(why)}
+						<button class="btn primary" id="walletRetry" type="button">Retry</button></div></td></tr>`;
+					$('walletRetry').addEventListener('click', refresh);
+					$('dist').hidden = true;
 				} else {
 					staleFails++;
 					showStale();

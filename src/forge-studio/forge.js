@@ -414,21 +414,53 @@ function updateAspectVisibility() {
 // Fetch the tier/backend/cost catalog once, then build the engine selector from
 // the backends that are live (platform-configured) or BYOK (always selectable).
 async function loadCatalog() {
+	const qualityEl = els.engine?.closest('#forge-quality');
+	const errorEl = document.getElementById('forge-quality-error');
+	// A transport failure and a served-but-catalog-less response mean different
+	// things to the user: the first is retryable and worth surfacing, the second
+	// is a deploy that simply has no picker to show.
+	let reachable = false;
 	try {
 		const res = await fetch('/api/forge?catalog=1', { headers: CLIENT_HEADERS });
-		catalog = await res.json().catch(() => null);
+		reachable = res.ok;
+		catalog = reachable ? await res.json().catch(() => null) : null;
 	} catch {
 		catalog = null;
 	}
 	if (!catalog || !Array.isArray(catalog.backends)) {
-		// No catalog (older deploy) — hide the controls; defaults still work.
-		els.engine?.closest('#forge-quality')?.classList.add('is-hidden');
+		qualityEl?.classList.add('is-hidden');
+		// A served response without a backends array is an older deploy with
+		// nothing to pick, so it stays silent as before.
+		if (errorEl && !reachable) showCatalogError(errorEl);
 		return;
 	}
+	errorEl?.classList.add('is-hidden');
+	qualityEl?.classList.remove('is-hidden');
 	buildEngineButtons();
 	selectTier(selectedTier);
 	revealSketchMode();
 	loadHealth();
+}
+
+// Render the retryable notice that replaces the quality/engine controls when the
+// catalog could not be reached. A served response without a backends array is an
+// older deploy with nothing to pick, so it stays silent as before.
+function showCatalogError(errorEl, reachable) {
+	if (reachable) {
+		errorEl.classList.add('is-hidden');
+		errorEl.innerHTML = '';
+		return;
+	}
+	errorEl.innerHTML = errorStateHTML({
+		title: "Couldn't load the engine list",
+		body: 'Quality and engine options are unavailable right now. Generation still works on the default free engine, or retry to get the full picker back.',
+	});
+	errorEl.classList.remove('is-hidden');
+	errorEl.querySelector('[data-sk-retry]')?.addEventListener('click', () => {
+		errorEl.innerHTML = '';
+		errorEl.classList.add('is-hidden');
+		loadCatalog();
+	});
 }
 
 // Sketch→3D needs the self-host TripoSG worker — the tab stays hidden unless

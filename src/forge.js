@@ -1482,9 +1482,24 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 		body: JSON.stringify(body),
 	});
 	const data = await res.json().catch(() => ({}));
-	if (res.status === 503 || data.error === 'unconfigured') {
+	// Only a genuine deployment gap earns the unconfigured panel: it names env
+	// vars and offers no retry, which is the right answer for an operator and the
+	// wrong one for a visitor. The other 503s (`generation_unavailable`) are
+	// transient upstream capacity - a worker still warming, or a free lane that
+	// shed the request - so they land in the recoverable countdown state carrying
+	// the server's own message and retry_after.
+	if (data.error === 'unconfigured') {
 		const e = new Error(data.message || 'unconfigured');
 		e.kind = 'unconfigured';
+		throw e;
+	}
+	if (res.status === 503) {
+		const e = new Error(
+			data.message || 'The generator is temporarily unavailable. Try again shortly.',
+		);
+		e.kind = 'rate_limited';
+		e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 20;
+		e.unavailable = true;
 		throw e;
 	}
 	// Geometry path needs a BYOK key we don't have — a recoverable, designed state.

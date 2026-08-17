@@ -441,6 +441,8 @@
 			};
 			let viewer = null;
 			let busy = false;
+			let statusTimer = null;
+			let retryTimer = null;
 
 			document.getElementById('examples').addEventListener('click', (e) => {
 				const chip = e.target.closest('.chip');
@@ -456,17 +458,61 @@
 				const s = el.querySelector('.state');
 				if (s) s.textContent = label || state;
 			}
+			// The refine lane is a chain, not one fixed model: when NVIDIA's Nemotron
+			// NIM is busy the request falls through to the next free rung. Rename the
+			// stage to whatever actually answered so the pipeline never claims a model
+			// that did not run.
+			function setStageWho(name, who) {
+				const el = stages[name];
+				const w = el && el.querySelector('.who');
+				if (w) w.textContent = who;
+			}
 			function resetStages() {
 				for (const name of Object.keys(stages)) setStage(name, 'idle', 'idle');
+				setStageWho('nemotron', 'Nemotron');
 			}
+			// A real elapsed counter (never a synthetic progress bar): a cold TRELLIS
+			// lane can hold a request for minutes, and a frozen line reads as a hang.
 			function showStatus(text) {
+				const started = Date.now();
 				statusText.textContent = text;
 				statusEl.hidden = false;
+				clearInterval(statusTimer);
+				statusTimer = setInterval(() => {
+					const secs = Math.round((Date.now() - started) / 1000);
+					statusText.textContent = secs >= 5 ? text + ' (' + secs + 's)' : text;
+				}, 1000);
 			}
-			function hideStatus() { statusEl.hidden = true; }
-			function showError(msg) {
+			function hideStatus() {
+				clearInterval(statusTimer);
+				statusTimer = null;
+				statusEl.hidden = true;
+			}
+			// `retryAfter` comes from the endpoint's own retry-after hint on a 429, so
+			// the recovery button opens exactly when a retry can succeed.
+			function showError(msg, retryAfter) {
 				errorText.textContent = msg;
 				errorEl.hidden = false;
+				clearInterval(retryTimer);
+				retryTimer = null;
+				retry.disabled = false;
+				retry.textContent = 'Try again';
+				let left = Math.min(Math.round(Number(retryAfter) || 0), 120);
+				if (left <= 0) return;
+				const tick = () => {
+					if (left <= 0) {
+						clearInterval(retryTimer);
+						retryTimer = null;
+						retry.disabled = false;
+						retry.textContent = 'Try again';
+						return;
+					}
+					retry.disabled = true;
+					retry.textContent = 'Try again in ' + left + 's';
+					left -= 1;
+				};
+				tick();
+				retryTimer = setInterval(tick, 1000);
 			}
 			function clearError() { errorEl.hidden = true; errorText.textContent = ''; }
 
@@ -505,10 +551,12 @@
 					const data = await r.json();
 					const refined = (data.prompt || raw).trim();
 					const model = data.model || 'Nemotron';
+					const label = prettyModel(model, data.provider);
 					refinedEl.hidden = false;
 					refinedEl.innerHTML =
 						'<b>Refined prompt</b> · ' + escapeHtml(refined) +
-						'<span class="by">refined with ' + escapeHtml(prettyModel(model, data.provider)) + '</span>';
+						'<span class="by">refined with ' + escapeHtml(label) + '</span>';
+					setStageWho('nemotron', label);
 					setStage('nemotron', 'done', 'done');
 					return refined;
 				} catch (err) {
@@ -532,7 +580,10 @@
 				});
 				const data = await r.json().catch(() => ({}));
 				if (!r.ok) {
-					throw new Error(data.message || data.error || ('forge ' + r.status));
+					throw withRetryHint(
+						new Error(data.message || data.error || ('forge ' + r.status)),
+						data.retry_after || r.headers.get('retry-after'),
+					);
 				}
 				if (data.status === 'done' && (data.glb_url || data.model_url)) {
 					markReconstructDone();
@@ -571,7 +622,7 @@
 						return data.glb_url || data.model_url;
 					}
 					if (status === 'failed' || status === 'error') {
-						throw new Error(data.error || 'Reconstruction failed.');
+						throw new Error(data.message || data.error || 'Reconstruction failed.');
 					}
 					// running / queued — keep waiting
 				}
@@ -606,11 +657,12 @@
 					for (const name of Object.keys(stages)) {
 						if (stages[name].dataset.state === 'active') setStage(name, 'failed', 'failed');
 					}
-					showError(err.message || 'Something went wrong. Please try again.');
+					showError(err.message || 'Something went wrong. Please try again.', err.retryAfter);
 				} finally {
 					busy = false;
 					generateBtn.disabled = false;
-					retry.disabled = false;
+					// A live retry countdown owns the button until it expires.
+					if (!retryTimer) retry.disabled = false;
 					generateBtn.textContent = 'Generate 3D model';
 				}
 			}
@@ -630,6 +682,11 @@
 			});
 
 			function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+			function withRetryHint(err, seconds) {
+				const n = Number(seconds);
+				if (Number.isFinite(n) && n > 0) err.retryAfter = n;
+				return err;
+			}
 			function escapeHtml(s) {
 				return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 			}

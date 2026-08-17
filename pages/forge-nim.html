@@ -799,6 +799,7 @@
 									</p>
 									<div class="state-actions">
 										<button type="button" class="btn btn-ghost" id="set-endpoint" data-i18n="forge_nim.set_endpoint">Set the endpoint</button>
+										<button type="button" class="btn btn-ghost" id="retry-health" hidden data-i18n="forge_nim.retry_check">Retry check</button>
 									</div>
 									<div class="state-links">
 										<a href="/forge" data-i18n="forge_nim.link_hosted_forge">Use the hosted forge instead</a>
@@ -875,7 +876,9 @@
 				stateLoading: $('state-loading'),
 				stateError: $('state-error'),
 				stateUnconfigured: $('state-unconfigured'),
+				unconfiguredMsg: $('unconfigured-msg'),
 				setEndpoint: $('set-endpoint'),
+				retryHealth: $('retry-health'),
 				advanced: document.querySelector('details.advanced'),
 				errorTitle: $('error-title'),
 				errorMsg: $('error-msg'),
@@ -924,16 +927,25 @@
 					// only the deployment default is unknown, so do not lock the composer.
 					state.hasEndpoint = Boolean(override);
 					setStatus('down', 'Status unavailable');
+					setUnconfiguredCopy(
+						'The status check could not reach this site’s API, so whether a NIM is wired here is unknown. Retry the check, or paste the base URL of your own TRELLIS NIM to run against it directly.',
+						true,
+					);
 					applyEndpointState();
 					return;
 				}
 				if (seq !== state.healthSeq) return;
 
 				// A rejected override answers from the env instead of the box, and says so
-				// via `reason` with no masked baseUrl echoed back. Treat it as no endpoint
-				// rather than letting the composer promise a POST that can only 400.
+				// via `reason` with no masked baseUrl echoed back.
+				// A rejected override is a typo the user has to fix: the composer would
+				// otherwise POST that same bad URL and can only ever get a 400 back.
 				const overrideRejected = Boolean(override) && !d.baseUrl;
-				state.hasEndpoint = overrideRejected ? Boolean(d.configured) : Boolean(override) || Boolean(d.configured);
+				state.hasEndpoint = overrideRejected ? false : Boolean(override) || Boolean(d.configured);
+				setUnconfiguredCopy(
+					overrideRejected ? `That endpoint was rejected: ${d.reason || 'it must be a public https URL.'}` : null,
+					false,
+				);
 
 				if (overrideRejected) {
 					setStatus('down', 'Endpoint rejected');
@@ -948,6 +960,22 @@
 				}
 				applyEndpointState();
 			}
+
+			// The setup card explains the ONE thing that is actually wrong. Its default is
+			// "no NIM is wired here"; a failed status check is a different problem with a
+			// different fix, so that case swaps the copy and offers a retry.
+			const unconfiguredDefaultHtml = els.unconfiguredMsg.innerHTML;
+			function setUnconfiguredCopy(text, offerRetry) {
+				if (text) {
+					els.unconfiguredMsg.textContent = text;
+					els.unconfiguredMsg.dataset.i18nOwned = '1';
+				} else {
+					els.unconfiguredMsg.innerHTML = unconfiguredDefaultHtml;
+					delete els.unconfiguredMsg.dataset.i18nOwned;
+				}
+				els.retryHealth.hidden = !offerRetry;
+			}
+			els.retryHealth.addEventListener('click', () => checkHealth(els.baseUrl.value));
 
 			function setStatus(s, text) {
 				els.status.dataset.state = s;

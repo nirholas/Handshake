@@ -156,7 +156,10 @@
 				#club-top .tagline,
 				#club-top .sep,
 				#club-top .club-pill:not(.club-pill-toggle) { display: none; }
-				#club-top .brand { min-width: 0; }
+				#club-top .brand { min-width: 0; gap: 6px; font-size: 13px; }
+				/* The pulsing dot is decorative (aria-hidden) and costs the width
+				   that decides whether the page title reads "Pole Club" or "P…". */
+				#club-top .dot { display: none; }
 				#club-top .club-top-title {
 					min-width: 0;
 					overflow: hidden;

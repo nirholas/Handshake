@@ -208,9 +208,13 @@
 				color: var(--ink);
 			}
 			/* Live backend health on the engine buttons: a throttled upstream gets
-			   an amber dot, a down/unconfigured one is disabled with the reason in
-			   its tooltip. Dots ride ::after so the label spacing stays put. */
-			.aspect button[data-health='degraded']::after {
+			   an amber dot, a down/unconfigured one a red dot and the reason in its
+			   tooltip. Both states are decoded by the legend below the picker, so
+			   each one has to actually render, or the legend explains a swatch that
+			   never appears. Dots ride ::after so the label spacing stays put. */
+			.aspect button[data-health='degraded']::after,
+			.aspect button[data-health='down']::after,
+			.aspect button[data-health='unconfigured']::after {
 				content: '';
 				display: inline-block;
 				width: 0.4em;
@@ -219,6 +223,14 @@
 				border-radius: 50%;
 				background: var(--warning, #e0a93e);
 				vertical-align: 0.08em;
+			}
+			/* A disabled button is dimmed to 0.45, which would wash the red dot out
+			   to roughly the amber one, keep it full-strength so "unavailable"
+			   stays distinguishable from "busy" at a glance. */
+			.aspect button[data-health='down']::after,
+			.aspect button[data-health='unconfigured']::after {
+				background: var(--danger, #e05a5a);
+				opacity: 1;
 			}
 			.aspect button:disabled {
 				opacity: 0.45;
