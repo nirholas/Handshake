@@ -2533,7 +2533,7 @@ function renderLeaderboardError(kind) {
 		`</div>`;
 	lbRowsEl.querySelector('.club-lb-retry')?.addEventListener('click', () => {
 		lbRowsEl.innerHTML = '<div class="club-lb-empty">Loading leaderboard…</div>';
-		fetchLeaderboard();
+		fetchLeaderboard({ force: true });
 	});
 }
 
@@ -2611,7 +2611,7 @@ function setLeaderboardWindow(next) {
 			<div class="club-lb-skeleton" style="opacity:0.4"></div>
 		`;
 	}
-	fetchLeaderboard();
+	fetchLeaderboard({ force: true });
 }
 
 for (const tab of lbTabsEls) {
