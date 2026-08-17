@@ -67,6 +67,8 @@
 			.stat-card.is-hot .stat-val { color: var(--amber); }
 			.stat-card.is-money .stat-val { color: var(--green); }
 			.stat-unit { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+			/* Second and later queue currencies: the headline can only name one. */
+			.stat-note { font-size: 11px; color: var(--dim); margin-top: 6px; }
 
 			/* ── Rows ────────────────────────────────────────────────────── */
 			.cv-list { display: flex; flex-direction: column; gap: 10px; }
@@ -134,6 +136,8 @@
 			.cv-state.is-error { border-color: color-mix(in srgb, var(--red) 40%, var(--line-2)); }
 			.cv-state.is-error h2 { color: var(--red); }
 			.cv-state-icon { font-size: 22px; opacity: .7; margin-bottom: 10px; }
+
+			.cv-truncated { font-size: 12px; color: var(--muted); text-align: center; padding: 14px 4px 0; }
 
 			.cv-note { font-size: 12px; color: var(--dim); margin-top: 18px; line-height: 1.6; }
 			.cv-note a { text-decoration: underline; }
