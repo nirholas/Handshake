@@ -36,6 +36,16 @@ function plural(n, one, many) {
 	return `${n} ${n === 1 ? one : many}`;
 }
 
+/**
+ * " · started 3h ago", or nothing at all when the server has no timestamp.
+ * A trial row that printed the bare word "started" with an empty time after it
+ * read like a truncated sentence, which is worse than simply not saying when.
+ */
+function timeClause(prefix, iso) {
+	const rel = relativeTime(iso);
+	return rel ? ` · ${prefix} ${esc(rel)}` : '';
+}
+
 /** "3 hours ago" without pulling a date library in for one label. */
 function relativeTime(iso) {
 	if (!iso) return '';
@@ -70,23 +80,36 @@ const STATE_PILL = {
 };
 
 /**
+ * One sentence for the runs left, used verbatim by both the visible count and
+ * the meter's aria-label so the two can never drift. `grant` is null when the
+ * seller has since delisted the skill and the size of the original grant is
+ * unknowable: saying "1 of 1" there invented a denominator the server never
+ * reported, so that case names the remaining runs and stops.
+ */
+export function runsLeftText(left, grant, wrap = (n) => String(n)) {
+	if (left === 0) return 'Every free run spent';
+	if (grant) return `${wrap(left)} of ${grant} free ${grant === 1 ? 'run' : 'runs'} left`;
+	return `${wrap(left)} free ${left === 1 ? 'run' : 'runs'} left`;
+}
+
+/**
  * The runs-left meter. A metered trial that renders as a bare number teaches
  * nothing; pips make "one run left" read at a glance. Capped so a generous
  * grant does not produce a hundred pips.
  */
 function meterHtml(remaining, granted) {
-	const total = Math.max(1, Math.min(10, Number(granted) || Number(remaining) || 1));
+	const grantNum = Number(granted);
+	const grant = Number.isFinite(grantNum) && grantNum > 0 ? grantNum : null;
+	const total = Math.max(1, Math.min(10, grant || Number(remaining) || 1));
 	const left = Math.max(0, Math.min(total, Number(remaining) || 0));
 	const low = left <= Math.max(1, Math.floor(total / 3));
 	const pips = Array.from({ length: total }, (_, i) => {
 		const filled = i < left;
 		return `<span class="meter-pip${filled ? ' is-left' : ''}${filled && low ? ' is-low' : ''}"></span>`;
 	}).join('');
-	const label = granted ? `${left} of ${granted} free runs left` : `${plural(left, 'free run', 'free runs')} left`;
-	const count = left === 0 ? 'Every free run spent' : `<strong>${left}</strong> of ${esc(granted ?? left)} free runs left`;
 	return `
-		<div class="meter${left === 0 ? ' is-spent' : ''}" role="img" aria-label="${esc(label)}">${pips}</div>
-		<div class="meter-count">${count}</div>`;
+		<div class="meter${left === 0 ? ' is-spent' : ''}" role="img" aria-label="${esc(runsLeftText(left, grant))}">${pips}</div>
+		<div class="meter-count">${runsLeftText(left, grant, (n) => `<strong>${n}</strong>`)}</div>`;
 }
 
 // ── renderers ─────────────────────────────────────────────────────────────────
@@ -98,6 +121,7 @@ function renderStats(cards) {
 			<div class="stat-card${c.tone ? ` is-${c.tone}` : ''}">
 				<div class="stat-val">${esc(c.value)}${c.unit ? `<span class="stat-unit">${esc(c.unit)}</span>` : ''}</div>
 				<div class="stat-lbl">${esc(c.label)}</div>
+				${c.note ? `<div class="stat-note">${esc(c.note)}</div>` : ''}
 			</div>`,
 		)
 		.join('');
@@ -121,21 +145,23 @@ function renderBuyer(data) {
 		});
 	}
 
-	els.list.innerHTML = data.trials
-		.map((t) => {
-			const pill = STATE_PILL[t.state] || STATE_PILL.fresh;
-			const cta =
-				t.state === 'exhausted'
-					? `<a class="btn btn-primary" href="${esc(t.agentUrl)}">Buy it</a>`
-					: `<a class="btn" href="${esc(t.agentUrl)}">Open agent</a>`;
-			return `
+	els.list.innerHTML =
+		data.trials
+			.map((t) => {
+				const pill = STATE_PILL[t.state] || STATE_PILL.fresh;
+				const href = skillHref(t.agentUrl, t.skill);
+				const cta =
+					t.state === 'exhausted'
+						? `<a class="btn btn-primary" href="${esc(href)}">Buy it</a>`
+						: `<a class="btn" href="${esc(href)}">Open agent</a>`;
+				return `
 			<article class="cv-row">
 				<div class="cv-main">
 					<div class="cv-title">
 						<span class="cv-skill">${esc(t.skill)}</span>
 						<span class="pill ${pill.cls}">${esc(pill.label)}</span>
 					</div>
-					<div class="cv-agent">from <a href="${esc(t.agentUrl)}">${esc(t.agentName)}</a> · started ${esc(relativeTime(t.startedAt))}</div>
+					<div class="cv-agent">from <a href="${esc(t.agentUrl)}">${esc(t.agentName)}</a>${timeClause('started', t.startedAt)}</div>
 					${meterHtml(t.trialRemaining, t.trialUses)}
 				</div>
 				<div class="cv-side">
@@ -143,8 +169,36 @@ function renderBuyer(data) {
 					${cta}
 				</div>
 			</article>`;
-		})
-		.join('');
+			})
+			.join('') + truncationHtml(data);
+}
+
+/**
+ * Deep-link the row's CTA at the skill it is about. The agent page lists every
+ * skill the agent sells, so landing at the top of it left the buyer hunting for
+ * the one their trial just ran out on; `?skill=…#pricing` opens on that row.
+ */
+function skillHref(agentUrl, skill) {
+	return `${agentUrl}?skill=${encodeURIComponent(skill)}#pricing`;
+}
+
+/**
+ * The list is capped server-side. Saying so is the difference between a page
+ * that shows part of the truth and a page that quietly lies about how many
+ * trials somebody holds.
+ */
+function truncationHtml(data) {
+	if (!data.truncated) return '';
+	return `<p class="cv-truncated">Showing the ${data.trials.length} trials closest to converting, of ${esc(data.total)} you hold.</p>`;
+}
+
+/** "plus 40 USDC" for every queue currency the headline number leaves out. */
+export function otherMintsNote(potentials) {
+	if (!Array.isArray(potentials) || potentials.length < 2) return null;
+	return `plus ${potentials
+		.slice(1)
+		.map((p) => `${p.display} ${mintLabel(p.mint)}`.trim())
+		.join(', ')}`;
 }
 
 function renderSeller(data) {
@@ -158,6 +212,11 @@ function renderSeller(data) {
 			unit: mintLabel(s.potential.mint),
 			label: 'Sitting in the queue',
 			tone: 'money',
+			// The endpoint totals the queue per mint because atomic amounts from two
+			// mints cannot be added; it hands over the largest bucket as the headline
+			// and the rest alongside it. Naming the rest is the only way a seller who
+			// prices in two currencies sees their whole queue.
+			note: otherMintsNote(s.potentials),
 		},
 	]);
 
@@ -180,9 +239,9 @@ function renderSeller(data) {
 						<span class="cv-skill">${esc(q.skill)}</span>
 						${q.exhausted ? `<span class="pill pill-out">${esc(plural(q.exhausted, 'buyer waiting', 'buyers waiting'))}</span>` : ''}
 					</div>
-					<div class="cv-agent">on <a href="/agent/${esc(q.agentId)}">${esc(q.agentName)}</a> · last activity ${esc(relativeTime(q.lastActivity))}</div>
+					<div class="cv-agent">on <a href="/agent/${esc(q.agentId)}">${esc(q.agentName)}</a>${timeClause('last activity', q.lastActivity)}</div>
 					<div class="cv-metrics">
-						<span class="cv-metric"><b>${esc(q.activeTrials)}</b> trials running</span>
+						<span class="cv-metric"><b>${esc(q.activeTrials)}</b> ${q.activeTrials === 1 ? 'trial' : 'trials'} running</span>
 						<span class="cv-metric${q.lastRun ? ' is-hot' : ''}"><b>${esc(q.lastRun)}</b> on last run</span>
 						<span class="cv-metric"><b>${esc(q.sold)}</b> sold</span>
 						<span class="cv-metric"><b>${rate}%</b> convert</span>
