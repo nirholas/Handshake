@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T05:22:51.398Z",
+	"generated_at": "2026-08-17T05:33:50.826Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/docs/play-vehicles",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "A busy Forge engine now says it is busy and counts you back in, instead of telling you to go set an environment variable",
+			"summary": "The /forge page was driven end to end in a real browser. When every free 3D engine was momentarily at capacity, or a worker was still warming up, the server said so clearly and told the page to try again in about half a minute. The page threw that away. It treated any temporary outage as proof that the whole generator had never been set up, and showed a panel headed Generator not configured that asked you to set NVIDIA_API_KEY or HF_TOKEN on the deployment. For anyone who is not running the servers, which is everyone using the site, that is an instruction you cannot act on, about a problem you do not have, and the panel had no Try again button at all, so a wait of thirty seconds became a dead end that looked like the product was broken. A temporary outage now lands in the wait state the site already had for this: a heading that says Temporarily unavailable, the countdown ticking down to when the engines free up, and a Retry button that switches itself on the moment the wait is over. The genuine case, a deployment with no engine wired at all, still gets its original panel, because for the operator that message is the correct one. The engine picker also had a key underneath it explaining that a red dot means an engine is unavailable, but no engine could ever show that dot: only the amber busy dot was ever drawn, so a down engine was dimmed with no indication why, and the key described something that did not exist. Down engines now carry the red dot the key promises, at full strength so it stays distinct from the amber one. Separately, roughly one in ten preview thumbnails failed to load while developing locally, which made the gallery look like a broken image host when nothing was actually wrong with it.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -263,6 +274,17 @@
 			"title": "Selfie to Avatar tells you your library is full before it spends ninety seconds building",
 			"summary": "Five fixes to Selfie to Avatar. If your avatar library was already at the limit for your plan, nothing noticed until the very end: you waited out the full reconstruction, and then the page said the 3D engine had hit a snag and told you to try again. It was not an engine problem, trying again could never work, and every attempt spent another ninety seconds of generation to land in the same place. Your library is now checked the moment you press the button, so a full one is refused immediately with the actual reason and what to do about it, and a build that fills the last slot while it is running ends with that same plain explanation instead of the engine message. The page also stopped losing its own error messages: the Build button floats above the page, so tapping it from higher up left the explanation somewhere below the fold while the button quietly reset itself, which read as nothing having happened. Errors now scroll into view. On the finished-avatar screen, Learn how to embed pointed at a page that did not exist and answered 404; it now opens the embedding guide. And on a narrow phone the Photoreal and Stylized choices were squeezed into two columns barely wide enough for one word per line, so they now stack and can be read.",
 			"link": "/create/selfie",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Skill tags now actually filter, a failed skills load says so instead of claiming the catalog is empty, and a shared skills link brings its filters with it",
+			"summary": "The /skills path was driven end to end in a real browser. It forwards into the Marketplace Skills tab, and it was forwarding a search that the tab then threw away: a link like /skills?q=whale landed on the full unfiltered list with an empty search box. The Skills tab now reads its search, category, tag, and sort straight off the address bar, and writes them back as you change them, so the view you are looking at is the view you can bookmark, share, reload, and step back through. The tag chips on a skill were the clearest casualty of that gap: clicking one navigated to a list that looked exactly the same as before, because nothing was filtering by tag at all. Tags now filter for real in the catalog itself, the tab shows which tag it is filtering by, and one click clears it. When the catalog cannot be reached, the grid used to show the words No skills found with an invitation to publish one, which is the same screen an empty catalog would give you and offers no way to try again: the error state and its Retry button were being overwritten a fraction of a second after they rendered. A failed load now says it could not load skills and hands you the retry. The count under the heading was also being reverted to its placeholder by the translation pass a moment after it was written, so it never showed how many skills you were looking at; it does now, and it names your active category or tag. The empty state names the filters that emptied the list instead of guessing. For anyone arriving without JavaScript, including crawlers, /skills was a completely blank page with no link out of it; it now carries a real heading, an explanation, and a link into the Marketplace. The search box has a proper label, the free and paid chips announce which one is selected, and the page holds up from 320px to 1440px.",
+			"link": "/marketplace?tab=skills",
 			"tags": [
 				"fix",
 				"improvement"

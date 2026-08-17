@@ -7885,7 +7885,9 @@
 		"set_endpoint": "Set the endpoint",
 		"link_hosted_forge": "Use the hosted forge instead",
 		"link_nvidia_docs": "NVIDIA model docs",
-		"retry_check": "Retry check"
+		"retry_check": "Retry check",
+		"label_reconstruct": "Reconstruct 3D",
+		"label_generate": "Generate 3D"
 	},
 	"forge_spark": {
 		"1_nemotron_refines_your_prompt_idle": "<span class=\"num\">1</span> <span><span class=\"who\">Nemotron</span><br><span class=\"does\">refines your prompt</span></span> <span class=\"state\">idle</span>",
@@ -8061,9 +8063,13 @@
 	},
 	"forgot_password": {
 		"back_to_sign_in": "<a href=\"/login\">Back to sign in</a>",
+		"couldn_t_reach_the_server_check_your": "Couldn't reach the server. Check your connection and try again.",
 		"email": "Email",
+		"enter_a_valid_email_address_datahintinvalid": "Enter a valid email address.",
 		"enter_your_email_and_we_ll_send": "Enter your email and we'll send you a reset link.",
 		"forgot_password": "Forgot password",
+		"if_an_account_exists_for_that_email": "If an account exists for that email, a reset link has been sent.",
+		"looks_valid_datahintvalid": "Looks valid",
 		"meta_description": "Request a password-reset email.",
 		"meta_og_description": "Request a password-reset email.",
 		"meta_og_title": "Forgot password · three.ws",
@@ -8071,6 +8077,8 @@
 		"meta_twitter_description": "Request a password-reset email.",
 		"meta_twitter_title": "Forgot password · three.ws",
 		"send_reset_link": "Send reset link",
+		"sending_datasendinglabel": "Sending…",
+		"something_went_wrong_on_our_end_and": "Something went wrong on our end and your reset link was not sent. Please try again.",
 		"three_ws": "three.ws",
 		"three_ws_home_arialabel": "three.ws home",
 		"we_ll_send_you_a_link_to": "We'll send you a link to reset your password."

@@ -475,7 +475,13 @@
 				min-height: 420px;
 				background: radial-gradient(120% 120% at 50% 18%, #141b2e 0%, #0b0e18 55%, #05060c 100%);
 			}
+			/* Absolute fill, not height:100%. `.stage-view` is a flex item with an auto
+			   specified height, so a percentage height on this child resolves to auto:
+			   the viewer collapsed to 0px, and model-viewer's own visibility observer
+			   then never loaded the GLB, so a finished reconstruction rendered nothing. */
 			model-viewer {
+				position: absolute;
+				inset: 0;
 				width: 100%;
 				height: 100%;
 				--poster-color: transparent;
@@ -724,8 +730,15 @@
 							</div>
 						</div>
 
-						<button class="btn" id="generate" type="submit" data-i18n-html="forge_nim.reconstruct_3d">
-							<span id="generate-label">Reconstruct 3D</span>
+						<!-- Both labels live in the markup and toggle with `hidden`. The button
+						     itself carries no data-i18n-html: that key held the label's own
+						     markup, so translating it replaced this subtree and detached the
+						     node the script had captured, leaving the label frozen and the
+						     in-flight spinner invisible. -->
+						<button class="btn" id="generate" type="submit">
+							<span class="spinner" id="generate-spinner" hidden aria-hidden="true"></span>
+							<span id="label-image" data-i18n="forge_nim.label_reconstruct">Reconstruct 3D</span>
+							<span id="label-text" hidden data-i18n="forge_nim.label_generate">Generate 3D</span>
 						</button>
 
 						<details class="advanced">
@@ -809,7 +822,7 @@
 							</div>
 
 							<!-- Loading -->
-							<div class="stage-state" id="state-loading">
+							<div class="stage-state" id="state-loading" role="status" aria-live="polite">
 								<div class="state-inner">
 									<div class="loader-ring"></div>
 									<h3 id="loading-title" data-i18n="forge_nim.reconstructing">Reconstructing…</h3>
@@ -820,7 +833,7 @@
 							</div>
 
 							<!-- Error -->
-							<div class="stage-state" id="state-error">
+							<div class="stage-state" id="state-error" role="alert">
 								<div class="state-inner">
 									<svg class="state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 										<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
@@ -870,7 +883,9 @@
 				prompt: $('prompt'),
 				baseUrl: $('base-url'),
 				generate: $('generate'),
-				generateLabel: $('generate-label'),
+				labelImage: $('label-image'),
+				labelText: $('label-text'),
+				spinner: $('generate-spinner'),
 				viewer: $('viewer'),
 				stateIdle: $('state-idle'),
 				stateLoading: $('state-loading'),
@@ -1002,8 +1017,16 @@
 				els.tabText.setAttribute('aria-selected', String(!isImage));
 				els.paneImage.classList.toggle('active', isImage);
 				els.paneText.classList.toggle('active', !isImage);
-				els.generateLabel.textContent = isImage ? 'Reconstruct 3D' : 'Generate 3D';
+				setBusy(false);
 				updateGenerateEnabled();
+			}
+			// The button shows exactly one of: the spinner, the photo label, the text label.
+			// Toggling pre-translated nodes keeps every state localized without the script
+			// ever writing copy of its own.
+			function setBusy(busy) {
+				els.spinner.hidden = !busy;
+				els.labelImage.hidden = busy || state.mode !== 'image';
+				els.labelText.hidden = busy || state.mode !== 'text';
 			}
 			els.tabImage.addEventListener('click', () => setMode('image'));
 			els.tabText.addEventListener('click', () => setMode('text'));
@@ -1210,7 +1233,7 @@
 
 				state.abort = new AbortController();
 				els.generate.disabled = true;
-				els.generateLabel.innerHTML = '<span class="spinner"></span>';
+				setBusy(true);
 				showState('loading');
 				startTimers();
 
@@ -1235,7 +1258,7 @@
 				} finally {
 					stopTimers();
 					els.generate.disabled = false;
-					els.generateLabel.textContent = state.mode === 'image' ? 'Reconstruct 3D' : 'Generate 3D';
+					setBusy(false);
 					updateGenerateEnabled();
 				}
 			}
