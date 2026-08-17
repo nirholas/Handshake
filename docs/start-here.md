@@ -167,6 +167,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Tokens API on three.ws](./tokens-xyz.md): the Solana Foundation asset layer that tells us which mints are the same asset, why it sits second in the market-data cascade, and the one env var that turns it on
 - [NVIDIA Inception membership](./nvidia-inception.md): what the platform already runs on NVIDIA silicon and what the program adds on top
 - [NVIDIA visibility map](./nvidia-visibility-map.md): every NVIDIA surface worth being on (Showcase, GTC, NGC, ACE, the forums, social), the verified intake route for each, and the member benefits nobody has claimed yet
+- [Big-tech recognition dispatch board](./big-tech-recognition-week.md): every big-tech surface ranked against every other by the odds of a published mention this week, which six are already one action from shipping, and what to stop chasing
 - [The generator was never the hard part](./nvidia-nemotron-spotlight.md): our Nemotron Nano write-up, published on the NVIDIA Developer Forums
 - [three.ws on the AWS Builder Center](./aws-builder-center.md): the index of our published AWS engineering writing, what code each article documents, and the checklist for publishing the next one
 - [The onboarding tier](./onboarding-tier.md): why a first-time visitor sees ~20 nav destinations instead of ~100, how the Simple ⇄ Everything switch works, and which tier a new page belongs in

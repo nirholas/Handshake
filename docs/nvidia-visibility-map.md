@@ -221,12 +221,15 @@ Recorded so the next person does not repeat the search.
 | Member portal | `programs.nvidia.com/phoenix/application` |
 
 One thread, one address. Every ask in Tier 1 goes to the same inbox, so batch
-them into a single email rather than sending four. The
-[Apps Catalog request](./nvidia-apps-catalog-request.md) is already written and
-already addressed there: **add the Showcase, ACE redirect, co-marketing kit, and
-GTC pavilion questions to that email rather than starting a new thread.** A
-program manager who gets one clear email with four asks answers it; four emails
-read as noise.
+them into a single email rather than sending four.
+
+**Done: the batched email is written.** [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md)
+now carries all five asks (catalog listing, Showcase nomination, co-marketing kit,
+ACE redirect, GTC pavilion and event slots) in one thread. Do not start a second
+one. It is still gated on the portal record correction, which is step 1 of
+[nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md): as filed the
+record reads as a CUDA consumer, which undercuts the first two asks. Correct the
+record, save it, then send and stamp the date in the request doc.
 
 ## Verification log
 
@@ -253,6 +256,7 @@ gcloud run services list --project aerial-vehicle-466722-p5 \
 
 ## Related
 
+- [Big-tech recognition dispatch board](./big-tech-recognition-week.md): this map ranked against every other big-tech surface (OpenAI, Anthropic, AWS, IBM) by the odds of a published mention this week. Read that first if you are deciding where a week goes, and this one once NVIDIA is the answer.
 - [NVIDIA Inception membership](./nvidia-inception.md): what membership is, and the rule that it is a program and not a partnership or an endorsement
 - [Apps Catalog listing kit](./nvidia-apps-catalog-listing.md) and [inclusion request](./nvidia-apps-catalog-request.md): the one surface with its own dedicated docs
 - [NVIDIA models on three.ws](./nvidia-models.md): the source of truth for every NVIDIA technical claim made in any pitch
