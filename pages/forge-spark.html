@@ -420,6 +420,8 @@
 		<script src="/footer.js" defer></script>
 		<script src="/model-viewer-meshopt.js"></script>
 		<script type="module">
+			import { resolveDevR2Url } from '/src/shared/dev-r2-proxy.js';
+
 			const form = document.getElementById('composer');
 			const promptEl = document.getElementById('prompt');
 			const generateBtn = document.getElementById('generate');
@@ -530,7 +532,12 @@
 					viewer.setAttribute('alt', 'Generated 3D model');
 					shell.appendChild(viewer);
 				}
-				viewer.src = url;
+				// The R2 asset host only sends CORS headers for the production
+				// origins, so the viewer's fetch reads through the dev proxy on
+				// localhost / Codespaces and the raw URL everywhere else. The
+				// download link is a plain navigation, so it always keeps the
+				// canonical URL.
+				viewer.src = resolveDevR2Url(url);
 				emptyEl.hidden = true;
 				download.href = url;
 				actions.hidden = false;
@@ -640,6 +647,10 @@
 
 				busy = true;
 				generateBtn.disabled = true;
+				// Any countdown left from the previous failure is void the moment a
+				// new attempt starts.
+				clearInterval(retryTimer);
+				retryTimer = null;
 				retry.disabled = true;
 				generateBtn.textContent = 'Generating…';
 				clearError();
