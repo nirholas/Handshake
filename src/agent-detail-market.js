@@ -614,6 +614,7 @@ function renderPricing(a) {
 
 	bindReviewsDelegation(a);
 	hydrateSkillPromos(a, body);
+	focusRequestedSkill(card, body);
 
 	const lib = $('ad-pricing-library');
 	if (libraryArr.length) {
@@ -626,6 +627,44 @@ function renderPricing(a) {
 	} else {
 		lib.hidden = true;
 	}
+}
+
+// The pricing card renders again after a purchase or a trial claim; the deep
+// link is honoured once, so a later re-render never yanks the page around under
+// somebody who has since scrolled away.
+let pricingDeepLinkHandled = false;
+
+/**
+ * Honour `/agent/:id?skill=<name>#pricing`, the link every conversion surface
+ * (notably the Buy CTA on /conversions) sends a buyer here with. Without it the
+ * buyer lands at the top of an agent selling a dozen skills and has to find the
+ * one their trial just ran out on.
+ *
+ * The pricing card is hidden until this render, so the browser's own anchor
+ * scroll has already come and gone by the time the row exists: it has to be
+ * done here, after the rows are in the DOM.
+ */
+export function focusRequestedSkill(card, body) {
+	if (pricingDeepLinkHandled) return;
+	let wanted = null;
+	try {
+		wanted = new URL(location.href).searchParams.get('skill');
+	} catch {
+		return;
+	}
+	const wantsPricing = location.hash === '#pricing' || location.hash === '#ad-pricing-card';
+	if (!wanted && !wantsPricing) return;
+	pricingDeepLinkHandled = true;
+
+	const row = wanted
+		? [...body.querySelectorAll('.ad-skill-row .ad-skill-name')]
+				.find((n) => n.textContent === wanted)
+				?.closest('.ad-skill-row')
+		: null;
+	const target = row || (wantsPricing ? card : null);
+	if (!target) return;
+	target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	if (row) row.classList.add('ad-skill-row--focused');
 }
 
 /**
