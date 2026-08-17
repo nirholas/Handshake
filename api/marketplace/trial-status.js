@@ -122,12 +122,19 @@ function priceOf(row) {
 	};
 }
 
+/** How many trials one buyer view returns before it starts truncating. */
+export const BUYER_LIMIT = 200;
+
 export async function buyerView(userId) {
 	const rows = await sql`
 		SELECT sp.id, sp.agent_id, sp.skill, sp.trial_remaining, sp.created_at, sp.updated_at,
 		       ai.name               AS agent_name,
 		       ai.profile_image_url  AS agent_image,
-		       asp.trial_uses, asp.amount, asp.currency_mint, asp.chain, asp.mint_decimals
+		       asp.trial_uses, asp.amount, asp.currency_mint, asp.chain, asp.mint_decimals,
+		       -- Counted over the whole match, before the LIMIT, so a buyer holding
+		       -- more trials than one page can carry is told the list is partial
+		       -- instead of reading a total that silently stops at the cap.
+		       COUNT(*) OVER ()::int AS total_trials
 		  FROM skill_purchases sp
 		  JOIN agent_identities ai
 		    ON ai.id = sp.agent_id AND ai.deleted_at IS NULL
@@ -135,7 +142,7 @@ export async function buyerView(userId) {
 		    ON asp.agent_id = sp.agent_id AND asp.skill = sp.skill AND asp.is_active = true
 		 WHERE sp.user_id = ${userId} AND sp.status = 'trial'
 		 ORDER BY COALESCE(sp.trial_remaining, 0) ASC, sp.updated_at DESC
-		 LIMIT 200
+		 LIMIT ${BUYER_LIMIT}
 	`;
 
 	const trials = rows.map((r) => ({
@@ -153,9 +160,13 @@ export async function buyerView(userId) {
 		agentUrl: `/agent/${r.agent_id}`,
 	}));
 
+	const total = Number(rows[0]?.total_trials ?? trials.length);
+
 	return {
 		role: 'buyer',
 		trials,
+		total,
+		truncated: total > trials.length,
 		summary: {
 			active: trials.length,
 			fresh: trials.filter((t) => t.state === 'fresh').length,
