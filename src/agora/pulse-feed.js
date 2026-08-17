@@ -34,6 +34,11 @@ export class PulseFeed {
 		this.opts = { ...DEFAULTS, ...opts };
 		this._listeners = new Map();   // type → Set<fn>
 		this._timers = { pulse: null, board: null };
+		// One request per resource at a time. A visibility change or a refreshNow()
+		// used to open a second poll alongside a slow one, and the newcomer's abort
+		// timeout killed the request already on the wire: an aborted fetch that read
+		// as a failure even though the data was arriving fine.
+		this._inFlight = { pulse: false, board: false };
 		this._backoff = { pulse: 0, board: 0 };
 		this._seen = new Set();
 		this._seenOrder = [];
@@ -108,7 +113,11 @@ export class PulseFeed {
 
 	async _poll(resource, immediate = false) {
 		if (!this._running || document.hidden) return;
+		// A poll already on the wire owns this resource; it will deliver and
+		// reschedule. Opening a second one only aborts the first.
+		if (this._inFlight[resource]) return;
 		if (immediate && this._timers[resource]) { clearTimeout(this._timers[resource]); this._timers[resource] = null; }
+		this._inFlight[resource] = true;
 
 		const url = resource === 'pulse'
 			? '/api/agora/pulse'
@@ -130,6 +139,7 @@ export class PulseFeed {
 			this._emit('error', { resource, error: err?.message || 'poll_failed', backoff: this._backoff[resource] });
 		} finally {
 			clearTimeout(to);
+			this._inFlight[resource] = false;
 			this._schedule(resource);
 		}
 	}

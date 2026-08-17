@@ -108,6 +108,14 @@ function fmtPct(ratio) {
 	if (ratio == null) return LAMP_NA;
 	return `${Math.round(Number(ratio) * 100)}%`;
 }
+// `wallet_reputation` stores win_rate / early_win_rate / dump_rate already in
+// percentage points (see pct() in src/pump/wallet-reputation.js, which divides
+// then multiplies by 100), so these values must NOT be scaled again. Running a
+// 5.7% lifetime win rate through fmtPct printed "570%" on the live card.
+function fmtPctPoints(points) {
+	if (points == null || !Number.isFinite(Number(points))) return LAMP_NA;
+	return `${Math.round(Number(points))}%`;
+}
 function fmtRoi(roi) {
 	if (roi == null) return LAMP_NA;
 	const pct = Math.round(roi * 100);
@@ -198,11 +206,18 @@ async function analyze(wallet) {
 			fetch(`/api/traders/preview?wallet=${encodeURIComponent(wallet)}`),
 			getSolPrice(),
 		]);
-		if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.message || `HTTP ${r.status}`); }
+		if (!r.ok) {
+			const d = await r.json().catch(() => ({}));
+			throw new Error(d.message || d.error_description || `The intelligence brain answered HTTP ${r.status}.`);
+		}
 		data = await r.json();
 	} catch (e) {
-		result.innerHTML = '';
-		showErr(e.message || 'Could not load wallet data.');
+		// A dead fetch used to blank the page and print the browser's raw
+		// "Failed to fetch" next to the search box, with no way forward.
+		hideErr();
+		result.innerHTML = errorHtml(wallet, e);
+		const retry = result.querySelector('#cwRetry');
+		if (retry) retry.addEventListener('click', () => analyze(wallet));
 		btn.disabled = false; btn.textContent = 'Analyze';
 		return;
 	}
@@ -329,8 +344,8 @@ function identityHtml(wallet, profile) {
 			</div>
 			<div class="cw-id-meta">
 				<span class="cw-label ${esc(label)}">${esc(labelTxt)}</span>
-				<div class="cw-winbar" role="tablist" aria-label="Time window">
-					${['7d', '30d', 'all'].map((w) => `<button type="button" role="tab" class="cw-wintab${STATE.win === w ? ' active' : ''}" data-win="${w}" aria-selected="${STATE.win === w}">${w === 'all' ? 'ALL' : w.toUpperCase()}</button>`).join('')}
+				<div class="cw-winbar" role="group" aria-label="Time window">
+					${['7d', '30d', 'all'].map((w) => `<button type="button" class="cw-wintab${STATE.win === w ? ' active' : ''}" data-win="${w}" aria-pressed="${STATE.win === w}">${w === 'all' ? 'ALL' : w.toUpperCase()}</button>`).join('')}
 				</div>
 			</div>
 		</div>
@@ -367,7 +382,7 @@ function kpiHtml(agg, profile, sol) {
 		<div class="cw-kpi">
 			<div class="cw-kpi-lbl">Win Rate</div>
 			<div class="cw-kpi-val ${wr != null && wr >= 0.5 ? 'pos' : ''}">${wr != null ? fmtPct(wr) : LAMP_NA}</div>
-			<div class="cw-kpi-sub">${agg.closed} closed${lifetimeWr != null ? ` · ${fmtPct(lifetimeWr)} lifetime` : ''}</div>
+			<div class="cw-kpi-sub">${agg.closed} closed${lifetimeWr != null ? ` · ${fmtPctPoints(lifetimeWr)} lifetime` : ''}</div>
 		</div>
 		<div class="cw-kpi">
 			<div class="cw-kpi-lbl">Smart-Money Score</div>
@@ -439,8 +454,8 @@ function reputationPanel(profile, summary) {
 	const meter = (val, cls = '') => `<div class="cw-meter ${cls}"><i style="width:${Math.max(0, Math.min(100, val))}%"></i></div>`;
 	const rows = [
 		`<div class="cw-row"><span class="cw-row-k">Smart-money score</span><span class="cw-row-v" style="display:flex;align-items:center;gap:10px">${score != null ? score : LAMP_NA}${score != null ? meter(score) : ''}</span></div>`,
-		`<div class="cw-row"><span class="cw-row-k">Early-entry win rate</span><span class="cw-row-v ${profile.early_win_rate >= 0.5 ? 'pos' : ''}" style="display:flex;align-items:center;gap:10px">${profile.early_win_rate != null ? fmtPct(profile.early_win_rate) : LAMP_NA}${profile.early_win_rate != null ? meter(profile.early_win_rate * 100, 'pos') : ''}</span></div>`,
-		`<div class="cw-row"><span class="cw-row-k">Dump rate</span><span class="cw-row-v ${profile.dump_rate > 0.3 ? 'neg' : ''}" style="display:flex;align-items:center;gap:10px">${profile.dump_rate != null ? fmtPct(profile.dump_rate) : LAMP_NA}${profile.dump_rate != null ? meter(profile.dump_rate * 100, 'neg') : ''}</span></div>`,
+		`<div class="cw-row"><span class="cw-row-k">Early-entry win rate</span><span class="cw-row-v ${profile.early_win_rate >= 50 ? 'pos' : ''}" style="display:flex;align-items:center;gap:10px">${fmtPctPoints(profile.early_win_rate)}${profile.early_win_rate != null ? meter(profile.early_win_rate, 'pos') : ''}</span></div>`,
+		`<div class="cw-row"><span class="cw-row-k">Dump rate</span><span class="cw-row-v ${profile.dump_rate > 30 ? 'neg' : ''}" style="display:flex;align-items:center;gap:10px">${fmtPctPoints(profile.dump_rate)}${profile.dump_rate != null ? meter(profile.dump_rate, 'neg') : ''}</span></div>`,
 		statRow('Lifetime coins', String(profile.coins_traded ?? summary?.total_coins ?? 0)),
 		statRow('Lifetime wins / duds', `<span class="cw-row-v pos">${profile.wins ?? 0}</span> / <span class="cw-row-v neg">${profile.duds ?? 0}</span>`),
 		statRow('Dumps', String(profile.dumps ?? 0), { cls: profile.dumps > 0 ? 'neg' : '' }),
@@ -507,22 +522,49 @@ const COLS = [
 	{ key: 'last_seen_at', label: 'Last', sort: (c) => (c.last_seen_at ? new Date(c.last_seen_at).getTime() : 0) },
 ];
 
+function filtersActive() {
+	return !!STATE.q || STATE.hideDust || STATE.hideClosed || STATE.creatorOnly;
+}
+
+// The ledger header must never claim more rows than the table shows: `Hide dust`
+// is on by default, so a 60-coin window routinely renders 52 rows.
+function ledgerCountLabel(shown, total) {
+	const win = STATE.win === 'all' ? 'all-time' : STATE.win.toUpperCase();
+	const coins = shown === total ? `${total} coins` : `${shown} of ${total} coins`;
+	return `${coins} · ${win}`;
+}
+
 function ledgerHtml(coins, sol) {
 	const rows = ledgerRows(coins, sol);
+	const shown = filteredSortedCoins(coins).length;
 	const head = COLS.map((col) => {
 		const active = STATE.sortKey === col.key;
 		const arr = active ? (STATE.sortDir === -1 ? '↓' : '↑') : '';
-		return `<th data-sort="${col.key}">${esc(col.label)}<span class="arr">${arr}</span></th>`;
-	}).join('') + '<th aria-label="open"></th>';
+		const aria = active ? (STATE.sortDir === -1 ? 'descending' : 'ascending') : 'none';
+		return `<th aria-sort="${aria}"><button type="button" class="cw-th-btn" data-sort="${col.key}">${esc(col.label)}<span class="arr">${arr}</span></button></th>`;
+	}).join('') + '<th><span class="cw-sr">Open coin dashboard</span></th>';
+
+	// A wallet the brain has graded can still have zero indexed coin rows (the
+	// per-coin indexer and the reputation rollup advance independently). Showing
+	// the filter chips over an empty table there reads as "your filters are
+	// wrong" when nothing was ever loaded, so the panel says which it is.
+	if (!coins.length) {
+		return `<div class="cw-panel cw-ledger">
+			<div class="cw-ledger-bar">
+				<div class="cw-ledger-title">Trade ledger <span class="count">${ledgerCountLabel(0, 0)}</span></div>
+			</div>
+			${ledgerBlankHtml()}
+		</div>`;
+	}
 
 	return `<div class="cw-panel cw-ledger">
 		<div class="cw-ledger-bar">
-			<div class="cw-ledger-title">Trade ledger <span class="count">${coins.length} coins · ${STATE.win === 'all' ? 'all-time' : STATE.win.toUpperCase()}</span></div>
+			<div class="cw-ledger-title">Trade ledger <span class="count" id="cwLedgerCount">${ledgerCountLabel(shown, coins.length)}</span></div>
 			<div class="cw-ledger-tools">
 				<input type="text" class="cw-tsearch" id="cwSearch" placeholder="Filter token / mint…" value="${esc(STATE.q)}" aria-label="Filter ledger" />
-				<button type="button" class="cw-chip${STATE.hideDust ? ' on' : ''}" data-filter="hideDust">Hide dust</button>
-				<button type="button" class="cw-chip${STATE.hideClosed ? ' on' : ''}" data-filter="hideClosed">Open only</button>
-				<button type="button" class="cw-chip${STATE.creatorOnly ? ' on' : ''}" data-filter="creatorOnly">Created</button>
+				<button type="button" class="cw-chip${STATE.hideDust ? ' on' : ''}" data-filter="hideDust" aria-pressed="${STATE.hideDust}">Hide dust</button>
+				<button type="button" class="cw-chip${STATE.hideClosed ? ' on' : ''}" data-filter="hideClosed" aria-pressed="${STATE.hideClosed}">Open only</button>
+				<button type="button" class="cw-chip${STATE.creatorOnly ? ' on' : ''}" data-filter="creatorOnly" aria-pressed="${STATE.creatorOnly}">Created</button>
 			</div>
 		</div>
 		<div class="cw-table-wrap">
@@ -531,6 +573,24 @@ function ledgerHtml(coins, sol) {
 				<tbody id="cwTbody">${rows}</tbody>
 			</table>
 		</div>
+	</div>`;
+}
+
+// Nothing was loaded for this window at all. Name the cause and offer the one
+// control that can change it (a wider window), never a dead end.
+function ledgerBlankHtml() {
+	const lifetime = Number(STATE.data?.profile?.coins_traded) || 0;
+	const wider = STATE.win !== 'all'
+		? `<button type="button" class="cw-action" data-win="all">Widen to all-time →</button>`
+		: '';
+	const body = STATE.win !== 'all'
+		? `No pump.fun trades from this wallet in the last ${STATE.win === '7d' ? '7' : '30'} days.`
+		: lifetime > 0
+			? `The reputation brain has graded ${lifetime} lifetime coin${lifetime === 1 ? '' : 's'} for this wallet, but its per-coin trade rows are still being indexed. The lifetime figures above are live; the ledger fills in as the indexer catches up.`
+			: 'No indexed pump.fun trades for this wallet yet.';
+	return `<div class="cw-ledger-blank">
+		<p>${esc(body)}</p>
+		${wider}
 	</div>`;
 }
 
@@ -558,7 +618,10 @@ function filteredSortedCoins(coins) {
 function ledgerRows(coins, sol) {
 	const rows = filteredSortedCoins(coins);
 	if (!rows.length) {
-		return `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--ink-faint)">No coins match these filters.</td></tr>`;
+		const why = filtersActive()
+			? `<p>None of this window's ${coins.length} coin${coins.length === 1 ? '' : 's'} match the active filters.</p><button type="button" class="cw-action" id="cwClearFilters">Clear filters</button>`
+			: `<p>No coins in this window.</p>`;
+		return `<tr><td colspan="9" class="cw-nomatch">${why}</td></tr>`;
 	}
 	return rows.map((c) => {
 		const sym = esc((c.symbol || c.mint?.slice(0, 6) || '?').toUpperCase());
@@ -585,7 +648,7 @@ function ledgerRows(coins, sol) {
 			<td><span class="cw-muted">${c.buy_count || 0}<span style="opacity:.5">/</span>${c.sell_count || 0}</span></td>
 			<td class="cw-muted">${fmtDuration(c.hold_ms)}</td>
 			<td class="cw-muted">${timeAgo(c.last_seen_at)}</td>
-			<td><span class="cw-go">→</span></td>
+			<td><a class="cw-go" href="/launches/${encodeURIComponent(c.mint)}" aria-label="Open the $${sym} dashboard">→</a></td>
 		</tr>`;
 	}).join('');
 }
@@ -621,8 +684,8 @@ function ctaHtml(wallet, data) {
 function wireDashboard(result) {
 	const { wallet, data } = STATE;
 
-	// window tabs
-	result.querySelectorAll('.cw-wintab').forEach((tab) => {
+	// window tabs, plus the "widen to all-time" escape hatch in the blank ledger
+	result.querySelectorAll('[data-win]').forEach((tab) => {
 		tab.addEventListener('click', () => {
 			STATE.win = tab.dataset.win;
 			renderDashboard();
@@ -647,9 +710,9 @@ function wireDashboard(result) {
 	result.querySelectorAll('#cwClaim, #cwClaim2').forEach((btn) => btn.addEventListener('click', () => claimWallet(wallet, result, data)));
 
 	// ledger: sort headers
-	result.querySelectorAll('.cw-table thead th[data-sort]').forEach((th) => {
-		th.addEventListener('click', () => {
-			const key = th.dataset.sort;
+	result.querySelectorAll('.cw-table thead .cw-th-btn').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const key = btn.dataset.sort;
 			if (STATE.sortKey === key) STATE.sortDir *= -1;
 			else { STATE.sortKey = key; STATE.sortDir = -1; }
 			refreshLedger(result);
@@ -681,10 +744,21 @@ function wireDashboard(result) {
 
 function wireRows(result) {
 	result.querySelectorAll('.cw-table tbody tr[data-mint]').forEach((tr) => {
-		tr.addEventListener('click', () => {
+		tr.addEventListener('click', (e) => {
+			// The last cell holds a real <a> to the same destination so keyboard
+			// users can reach it; let the anchor navigate on its own.
+			if (e.target.closest('a')) return;
 			const mint = tr.dataset.mint;
 			if (mint) window.location.href = `/launches/${encodeURIComponent(mint)}`;
 		});
+	});
+	const clear = result.querySelector('#cwClearFilters');
+	if (clear) clear.addEventListener('click', () => {
+		STATE.q = '';
+		STATE.hideDust = STATE.hideClosed = STATE.creatorOnly = false;
+		const s = result.querySelector('#cwSearch');
+		if (s) s.value = '';
+		refreshLedger(result);
 	});
 }
 
@@ -692,16 +766,22 @@ function wireRows(result) {
 function refreshLedger(result, { keepFocus = false } = {}) {
 	const coins = windowedCoins();
 	const sol = _solPrice || 0;
-	// header arrows
-	result.querySelectorAll('.cw-table thead th[data-sort]').forEach((th) => {
-		const active = STATE.sortKey === th.dataset.sort;
-		const arr = th.querySelector('.arr');
+	// header arrows + announced sort direction
+	result.querySelectorAll('.cw-table thead .cw-th-btn').forEach((btn) => {
+		const active = STATE.sortKey === btn.dataset.sort;
+		const arr = btn.querySelector('.arr');
 		if (arr) arr.textContent = active ? (STATE.sortDir === -1 ? '↓' : '↑') : '';
+		const th = btn.closest('th');
+		if (th) th.setAttribute('aria-sort', active ? (STATE.sortDir === -1 ? 'descending' : 'ascending') : 'none');
 	});
 	// chips
 	result.querySelectorAll('.cw-chip[data-filter]').forEach((chip) => {
-		chip.classList.toggle('on', !!STATE[chip.dataset.filter]);
+		const on = !!STATE[chip.dataset.filter];
+		chip.classList.toggle('on', on);
+		chip.setAttribute('aria-pressed', String(on));
 	});
+	const count = result.querySelector('#cwLedgerCount');
+	if (count) count.textContent = ledgerCountLabel(filteredSortedCoins(coins).length, coins.length);
 	const tbody = result.querySelector('#cwTbody');
 	if (tbody) { tbody.innerHTML = ledgerRows(coins, sol); wireRows(result); }
 	if (keepFocus) { const s = result.querySelector('#cwSearch'); if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); } }
@@ -824,6 +904,30 @@ function skeletonHtml() {
 		<div class="cw-skel cw-skel-table"></div>
 	</div>`;
 }
+// A failed report is a state, not an accident: name the cause, keep the address
+// on screen, and put the retry one click away.
+function errorHtml(wallet, err) {
+	const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+	const raw = String(err?.message || '');
+	const detail = offline
+		? 'Your browser is offline, so the report could not be requested.'
+		: /failed to fetch|networkerror|load failed/i.test(raw)
+			? 'The request never reached three.ws. That is usually a dropped connection or a blocked request.'
+			: raw || 'The intelligence brain could not be reached.';
+	return `<div class="cw-empty cw-error" role="alert">
+		<div class="ico">⚠</div>
+		<h2>Could not load this wallet's report</h2>
+		<p>
+			<code>${esc(wallet)}</code><br><br>
+			${esc(detail)} Nothing about this wallet's on-chain record has changed; only the read failed.
+		</p>
+		<div class="cw-error-actions">
+			<button type="button" class="cw-action primary" id="cwRetry">Try again</button>
+			<a class="cw-action" href="/leaderboard">Browse the leaderboard</a>
+		</div>
+	</div>`;
+}
+
 function notFoundHtml(wallet) {
 	return `<div class="cw-empty">
 		<div class="ico">◎</div>

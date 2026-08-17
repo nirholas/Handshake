@@ -24,6 +24,10 @@ export const AVATAR_DEFAULT = '/avatars/default.glb';
 export const MANIFEST_URL = '/animations/manifest.json';
 export const CLIP_IDLE = 'idle';
 export const CLIP_WALK = 'av-walk-feminine';
+// The seated idle a driver holds behind the wheel. It lives in the emote half of
+// the manifest, so locomotion-only rigs (every /play avatar) fetch it on demand
+// through crossfadeToMotion rather than paying for it at join.
+export const CLIP_DRIVE = 'sitloop';
 
 // A shared GLTF loader with Draco decompression wired in — many avatar GLBs
 // (and most Sketchfab/pump.fun exports) are Draco-compressed, and without this
@@ -342,6 +346,38 @@ export async function buildAvatar(rig, url, anim, opts = {}) {
 	}
 }
 
+// The library clip a networked `motion` value poses an avatar in. Every scene
+// that renders somebody else's motion goes through this, so a driver reads as
+// seated for their peers exactly as they do for themselves.
+export function clipForMotion(motion) {
+	if (motion === 'walk' || motion === 'run') return CLIP_WALK;
+	if (motion === 'drive') return CLIP_DRIVE;
+	return CLIP_IDLE;
+}
+
+/**
+ * Crossfade a rig into the clip for a `motion` value, fetching the clip first
+ * when the rig was built locomotion-only. Falls back to the standing idle if
+ * the seated clip can't be loaded or retargeted onto this particular model, so
+ * an avatar is never left frozen in whatever pose it was last in.
+ */
+export async function crossfadeToMotion(anim, motion, duration = 0.18) {
+	if (!anim) return;
+	const name = clipForMotion(motion);
+	try {
+		if (!anim.clips?.has?.(name)) {
+			if (!_animDefs) await loadManifest();
+			const def = (_animDefs || []).find((d) => d.name === name);
+			if (def) await anim.loadAnimation(name, def.url, { loop: true });
+		}
+		await anim.crossfadeTo(name, duration);
+		if (anim.currentName === name || name === CLIP_IDLE) return;
+	} catch (e) {
+		log.warn(`[avatar-rig] "${name}" unavailable for this rig:`, e?.message);
+	}
+	await anim.crossfadeTo(CLIP_IDLE, duration);
+}
+
 // Play a one-shot emote clip on a rig's AnimationManager, then return to the
 // locomotion clip. No-op if the emote isn't in the loaded manifest.
 export async function playEmoteClip(anim, name, motion) {
@@ -350,7 +386,7 @@ export async function playEmoteClip(anim, name, motion) {
 	try {
 		if (!anim.clips?.has?.(name)) await anim.loadAnimation(name, def.url, { loop: false });
 		await anim.crossfadeTo(name, 0.15);
-		setTimeout(() => anim.crossfadeTo(motion === 'walk' || motion === 'run' ? CLIP_WALK : CLIP_IDLE, 0.2), 2400);
+		setTimeout(() => crossfadeToMotion(anim, motion, 0.2), 2400);
 	} catch { /* clip missing — ignore */ }
 }
 

@@ -26,7 +26,8 @@
 
 import { Vector3, Quaternion, Raycaster, Vector2 } from 'three';
 import { buildVehicleMesh } from './vehicle-mesh.js';
-import { CLIP_IDLE } from './avatar-rig.js';
+import { crossfadeToMotion } from './avatar-rig.js';
+import { preloadVehicleModel } from './vehicle-model.js';
 import {
 	vehicleSpec, vehicleRestHeight,
 	VEHICLE_ENTER_RANGE_M, VEHICLE_WORLD_BOUND_M,
@@ -80,6 +81,11 @@ export class VehicleManager {
 		// the rest of the scene.
 		this.phys = host._physicsOk ? host._physics : null;
 		if (!this.phys) log.warn('[vehicles] no shared physics world, driving disabled this session.');
+
+		// Warm the default car's model before the first vehicle state arrives, so
+		// the fleet is wearing its real body by the time a player walks up to it
+		// rather than swapping out of its stand-in under their nose.
+		preloadVehicleModel();
 
 		this._injectStyles();
 		this._buildPrompt();
@@ -270,7 +276,7 @@ export class VehicleManager {
 		g.quaternion.set(t.qx, t.qy, t.qz, t.qw);
 		this._updateDrivenWheels(entry);
 		// Brake-light glow when slowing or reversing.
-		for (const bl of entry.mesh.brakeLights) bl.material.color.setHex(braking ? 0xff3b30 : 0x6e1411);
+		entry.mesh.setBrake(braking);
 
 		// Seat the avatar, hand the camera to a chase view, and carry the player's
 		// networked position with the car (so peers see them at the wheel and exiting
@@ -293,14 +299,27 @@ export class VehicleManager {
 		});
 	}
 
+	// Put the driver in the seat: `spec.seat` is the offset from the chassis
+	// centre to where the rig's origin (the avatar's feet) belongs, so the whole
+	// placement is one rotate-and-add. The car's own tilt is applied too, so a
+	// driver leans with the chassis over a kerb instead of floating level.
 	_seatAvatar(entry, t, yaw) {
 		const rig = this.host.localRig;
 		if (!rig) return;
 		const seat = entry.spec.seat;
 		_v2.set(seat.x, seat.y, seat.z).applyQuaternion(_q.set(t.qx, t.qy, t.qz, t.qw));
-		rig.position.set(t.x + _v2.x, t.y + _v2.y - entry.spec.dims.h * 0.2, t.z + _v2.z);
+		rig.position.set(t.x + _v2.x, t.y + _v2.y, t.z + _v2.z);
 		rig.rotation.set(0, yaw, 0);
-		if (this.host.localAnim?.currentName !== CLIP_IDLE) this.host.localAnim?.crossfadeTo(CLIP_IDLE, 0.2);
+		// Sit them down. A standing idle in a car reads as the driver kneeling on
+		// the seat with their head through the roof; the shared clip library has a
+		// seated idle, and _driveClip falls back to the standing one only when a
+		// model genuinely cannot play it.
+		// Once per stint at the wheel: crossfadeToMotion fetches the seated clip on
+		// demand (play rigs carry locomotion clips only) and falls back to the
+		// standing idle for a rig that cannot play it.
+		if (this._seatedClip) return;
+		this._seatedClip = true;
+		crossfadeToMotion(this.host.localAnim, 'drive', 0.25);
 	}
 
 	_updateDrivenWheels(entry) {
@@ -398,6 +417,7 @@ export class VehicleManager {
 
 	_beginDriving(id) {
 		this._clearPending();
+		this._seatedClip = false;
 		const entry = this.vehicles.get(id);
 		if (!entry) { this._releaseSeat(id, null); return; }
 		if (!this.phys) {
@@ -466,6 +486,11 @@ export class VehicleManager {
 			this.host.localPos.y = 0;
 		}
 		this.host.motion = 'idle';
+		// Stand them back up: _stepLocal only crossfades when `motion` CHANGES, and
+		// it is already 'idle', so nothing else would take the driver out of the
+		// seated pose they'd otherwise walk around in.
+		if (this._seatedClip) crossfadeToMotion(this.host.localAnim, 'idle', 0.2);
+		this._seatedClip = false;
 		if (this.host.localRig) {
 			this.host.localRig.position.copy(this.host.localPos);
 			this.host.localRig.rotation.set(0, this.host.localYaw, 0);

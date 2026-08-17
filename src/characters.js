@@ -42,7 +42,9 @@ function safeUrl(u) {
 }
 
 function avatarPlaceholder(name) {
-	const letter = (name || '?')[0].toUpperCase();
+	// Index by code point, not code unit: a name starting with an emoji or any
+	// astral glyph splits its surrogate pair with [0] and renders as a tofu box.
+	const letter = ([...(name || '?')][0] || '?').toUpperCase();
 	const hue = [...(name || 'X')].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 	return { letter, color: `hsl(${hue}, 55%, 45%)` };
 }
@@ -104,6 +106,74 @@ function cardHtml(ch) {
 		</a>`;
 }
 
+// A full-grid state (empty / error) spans every column and owns the recovery
+// action, so the user is never left staring at a dead panel with no way out.
+function noticeHtml({ title, body, actionId, actionLabel, actionHref }) {
+	const action = actionHref
+		? `<a class="chs-notice-btn" href="${actionHref}">${actionLabel}</a>`
+		: `<button type="button" class="chs-notice-btn" id="${actionId}">${actionLabel}</button>`;
+	return `
+		<div class="chs-notice">
+			<p class="chs-notice-title">${escHtml(title)}</p>
+			<p class="chs-notice-body">${escHtml(body)}</p>
+			${action}
+		</div>`;
+}
+
+function setStatus(text) {
+	const el = document.getElementById('chs-status');
+	if (el) el.textContent = text;
+}
+
+function showEmpty(grid) {
+	// Two different dead ends with two different exits: a search that matched
+	// nothing is fixed by clearing the search; a genuinely empty feed is fixed by
+	// creating the first character.
+	grid.innerHTML = state.q
+		? noticeHtml({
+			title: `No characters match “${state.q}”.`,
+			body: 'Try a shorter word, or clear the search to browse everything.',
+			actionId: 'chs-clear-search',
+			actionLabel: 'Clear search',
+		  })
+		: noticeHtml({
+			title: 'No characters published yet.',
+			body: 'Publish an agent and it shows up here for everyone to chat with.',
+			actionLabel: 'Create a character',
+			actionHref: '/create-agent',
+		  });
+	setStatus(state.q ? `No characters match ${state.q}.` : 'No characters published yet.');
+	document.getElementById('chs-clear-search')?.addEventListener('click', () => {
+		const input = document.getElementById('chs-search');
+		if (input) input.value = '';
+		state.q = '';
+		fetchCharacters(true);
+		input?.focus();
+	});
+}
+
+function showError(grid, appending) {
+	if (appending) {
+		// The already-rendered cards stay; only the load-more control reports the
+		// failure, so a flaky second page never wipes a good first one.
+		const loadBtn = document.getElementById('chs-load-btn');
+		if (loadBtn) {
+			loadBtn.textContent = 'Retry loading more';
+			loadBtn.classList.add('chs-load-btn-error');
+		}
+		setStatus('Could not load more characters. Press retry.');
+		return;
+	}
+	grid.innerHTML = noticeHtml({
+		title: 'Could not load characters.',
+		body: 'The feed did not respond. Your connection may have dropped.',
+		actionId: 'chs-retry',
+		actionLabel: 'Try again',
+	});
+	setStatus('Could not load characters.');
+	document.getElementById('chs-retry')?.addEventListener('click', () => fetchCharacters(true));
+}
+
 async function fetchCharacters(reset = false) {
 	if (state.loading) return;
 	state.loading = true;
@@ -115,9 +185,15 @@ async function fetchCharacters(reset = false) {
 	if (reset) {
 		state.cursor = null;
 		grid.innerHTML = Array(6).fill('<div class="chs-skeleton-card"></div>').join('');
+		setStatus('Loading characters…');
 	}
+	grid.setAttribute('aria-busy', 'true');
 
-	if (loadBtn) loadBtn.disabled = true;
+	if (loadBtn) {
+		loadBtn.disabled = true;
+		loadBtn.classList.remove('chs-load-btn-error');
+		if (!reset) loadBtn.textContent = 'Loading…';
+	}
 
 	const params = new URLSearchParams({ limit: '24', sort: state.sort });
 	if (state.cursor) params.set('cursor', state.cursor);
@@ -126,10 +202,12 @@ async function fetchCharacters(reset = false) {
 	let data;
 	try {
 		const res = await fetch('/api/characters?' + params.toString());
-		if (!res.ok) throw new Error('fetch failed');
+		if (!res.ok) throw new Error('characters feed responded ' + res.status);
 		data = await res.json();
 	} catch {
-		grid.innerHTML = '<div class="chs-empty">Failed to load characters. Please try again.</div>';
+		grid.setAttribute('aria-busy', 'false');
+		showError(grid, !reset);
+		if (loadBtn) loadBtn.disabled = false;
 		state.loading = false;
 		return;
 	}
@@ -138,17 +216,20 @@ async function fetchCharacters(reset = false) {
 
 	if (reset) {
 		if (!chars.length) {
-			grid.innerHTML = '<div class="chs-empty">No characters found.</div>';
-			if (loadMore) loadMore.style.display = 'none';
+			grid.setAttribute('aria-busy', 'false');
+			showEmpty(grid);
+			if (loadMore) loadMore.hidden = true;
 			state.loading = false;
 			return;
 		}
 		grid.innerHTML = chars.map(cardHtml).join('');
 		enterStagger(grid.querySelectorAll('.chs-card'));
+		setStatus(`${chars.length} character${chars.length === 1 ? '' : 's'} loaded.`);
 	} else {
 		const before = grid.children.length;
 		grid.insertAdjacentHTML('beforeend', chars.map(cardHtml).join(''));
 		enterStagger(Array.from(grid.children).slice(before));
+		setStatus(`${chars.length} more loaded, ${grid.children.length} total.`);
 	}
 
 	// Wire the wallet chips' copy + Tip actions on the freshly-injected cards.
@@ -156,9 +237,13 @@ async function fetchCharacters(reset = false) {
 	// action; wiring is idempotent per chip, so re-running it on append is safe.
 	wireWalletChips(grid);
 
+	grid.setAttribute('aria-busy', 'false');
 	state.cursor = data.next_cursor || null;
-	if (loadMore) loadMore.style.display = state.cursor ? 'flex' : 'none';
-	if (loadBtn) loadBtn.disabled = false;
+	if (loadMore) loadMore.hidden = !state.cursor;
+	if (loadBtn) {
+		loadBtn.disabled = false;
+		loadBtn.textContent = 'Load more';
+	}
 	state.loading = false;
 }
 
@@ -171,15 +256,21 @@ function init() {
 	searchInput?.addEventListener('input', () => {
 		clearTimeout(searchTimer);
 		searchTimer = setTimeout(() => {
-			state.q = searchInput.value.trim();
+			const next = searchInput.value.trim();
+			if (next === state.q) return;
+			state.q = next;
 			fetchCharacters(true);
 		}, 300);
 	});
 
 	sortBtns.forEach(btn => {
 		btn.addEventListener('click', () => {
-			sortBtns.forEach(b => b.classList.remove('active'));
-			btn.classList.add('active');
+			if (btn.dataset.sort === state.sort) return;
+			sortBtns.forEach(b => {
+				const on = b === btn;
+				b.classList.toggle('active', on);
+				b.setAttribute('aria-pressed', String(on));
+			});
 			state.sort = btn.dataset.sort;
 			fetchCharacters(true);
 		});

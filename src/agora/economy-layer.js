@@ -161,20 +161,29 @@ export function mountEconomyLayer(ctx) {
 	function alreadyPaid(taskPda) { return paidTasks.has(taskPda); }
 
 	// ── connection state pip ───────────────────────────────────────────────────
-	let errorStreak = 0;
-	function handleError() {
-		errorStreak++;
-		if (errorStreak >= 2) root.classList.add('agora-econ-offline');
+	// The pip means "nothing has arrived in a while", not "a request failed".
+	// Counting consecutive errors latched it on a single aborted poll: a board
+	// request timing out while the square places 200 citizens was enough to print
+	// "reconnecting…" across a ticker showing fresh, correct numbers, and it stayed
+	// up until the next success. Staleness is the honest signal, and it clears
+	// itself the moment data lands.
+	const STALE_AFTER_MS = 30000;
+	let lastFresh = Date.now();
+	function markFresh() {
+		lastFresh = Date.now();
+		root.classList.remove('agora-econ-offline');
 	}
-	function clearError() { errorStreak = 0; root.classList.remove('agora-econ-offline'); }
+	function checkStale() {
+		if (Date.now() - lastFresh >= STALE_AFTER_MS) root.classList.add('agora-econ-offline');
+	}
+	const staleTimer = setInterval(checkStale, 5000);
 
 	// ── feed wiring ────────────────────────────────────────────────────────────
 	const feed = new PulseFeed();
 	const offs = [
-		feed.on('board', (b) => { clearError(); jobBoard.setBoard(b); }),
-		feed.on('pulse', (p) => { clearError(); ticker.setPulse(p); }),
+		feed.on('board', (b) => { markFresh(); jobBoard.setBoard(b); }),
+		feed.on('pulse', (p) => { markFresh(); ticker.setPulse(p); }),
 		feed.on('activity', handleActivity),
-		feed.on('error', handleError),
 	];
 	feed.start();
 
@@ -223,6 +232,7 @@ export function mountEconomyLayer(ctx) {
 			ticker.setReducedMotion(on);
 		},
 		dispose() {
+			clearInterval(staleTimer);
 			for (const off of offs) off?.();
 			feed.stop();
 			canvas.removeEventListener('pointermove', onPointerMove);

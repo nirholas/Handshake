@@ -21,8 +21,10 @@ import {
 } from 'three';
 import { AnimationManager } from '../../animation-manager.js';
 import { buildAvatar, releaseAvatar, CLIP_IDLE, CLIP_WALK } from '../avatar-rig.js';
+import { instantiateVehicleModel, TRENCH_CAR_URL } from '../vehicle-model.js';
 import { mulberry32 } from './nav-graph.js';
 import { loadCitizenPool, isCitizen } from './citizens.js';
+import { log } from '../../shared/log.js';
 
 const DEFAULT_AVATAR = '/avatars/default.glb';
 
@@ -39,6 +41,19 @@ const PED_LINES = ['gm', 'wagmi', 'nice build', 'lfg', 'few understand', 'vibes'
 // One shared wall clock, in seconds. Clients are NTP-close, so a continuous
 // function of this reads identically across machines for ambient purposes.
 const worldClock = () => Date.now() / 1000;
+
+// Free the geometry and materials of a subtree this module built itself. Never
+// call it on a clone of a shared model template: those buffers are still in use
+// by every other object wearing the same model.
+function disposeTree(root) {
+	root.traverse((o) => {
+		if (o.geometry) o.geometry.dispose?.();
+		if (o.material) {
+			if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose?.());
+			else o.material.dispose?.();
+		}
+	});
+}
 
 // ---- detailed GLB pedestrian -------------------------------------------------
 
@@ -184,6 +199,12 @@ class Pedestrian {
 
 // Build a low-poly vehicle. style 'wagon' for frontier towns, 'car' elsewhere.
 // Shared unit geometry scaled per part keeps a vehicle to a handful of meshes.
+//
+// Modern towns upgrade the 'car' silhouette to the Trench Car GLB as soon as the
+// shared model lands (see Vehicle._upgradeToModel), the same model the drivable
+// fleet uses, so the traffic a player watches go by is the traffic they can flag
+// down and take the wheel of. This box car is the instant stand-in that holds
+// the road until then, and the permanent body if the model can't be fetched.
 function buildVehicle(style) {
 	const g = new Group();
 	const box = new BoxGeometry(1, 1, 1);
@@ -227,12 +248,44 @@ class Vehicle {
 		this.lane = lane;
 		this.dir = dir; // +1 / -1 travel direction around the ring
 		this.curL = phase;
+		this.scene = scene;
+		this._disposed = false;
+		this._model = null;
+		this._braking = false;
+
+		this.group = new Group();
 		const built = buildVehicle(style);
-		this.group = built.group;
-		this.wheels = built.wheels;
+		this.group.add(built.group);
+		this._standIn = built.group;
+		this.wheels = built.wheels;          // spun by update(), whichever body is on
 		this.brakeLights = built.brakeLights;
 		scene.add(this.group);
-		this.scene = scene;
+
+		if (style === 'car') this._upgradeToModel();
+	}
+
+	// Swap the box stand-in for the real car. The model is shared with every other
+	// car in the world (one download, one parse), and this is the only place the
+	// swap happens, so a vehicle mid-lap keeps its position and phase.
+	async _upgradeToModel() {
+		let instance;
+		try {
+			instance = await instantiateVehicleModel(TRENCH_CAR_URL);
+		} catch (e) {
+			// The stand-in is already driving the route: traffic keeps flowing.
+			log.warn('[ambient-life] traffic model unavailable, keeping the stand-in:', e?.message);
+			return;
+		}
+		if (this._disposed) { instance.dispose(); return; }
+		this.group.remove(this._standIn);
+		disposeTree(this._standIn);
+		this._standIn = null;
+		this.group.add(instance.body);
+		for (const wheel of instance.wheels) this.group.add(wheel.pivot);
+		this.wheels = instance.wheels.map((w) => w.spinner);
+		this.brakeLights = null;
+		this._model = instance;
+		this._model.setBrake(this._braking);
 	}
 
 	update(dt, T, player) {
@@ -260,10 +313,22 @@ class Vehicle {
 		// Spin the wheels with actual travel; flash brake lights when yielding.
 		const moved = Math.abs(this.curL - prevL);
 		for (const w of this.wheels) w.rotation.x += moved * 1.8;
-		if (this.brakeLights) this.brakeLights.material.color.setHex(blocked ? 0xff3b30 : 0x551111);
+		if (blocked !== this._braking) {
+			this._braking = blocked;
+			if (this._model) this._model.setBrake(blocked);
+			else if (this.brakeLights) this.brakeLights.material.color.setHex(blocked ? 0xff3b30 : 0x551111);
+		}
 	}
 
-	dispose() { this.scene.remove(this.group); }
+	dispose() {
+		this._disposed = true;
+		this.scene.remove(this.group);
+		// The stand-in's geometry is this vehicle's own; the model's belongs to the
+		// shared template and is only dereferenced.
+		if (this._standIn) disposeTree(this._standIn);
+		this._model?.dispose();
+		this._model = null;
+	}
 }
 
 // ---- the ambient-life system -------------------------------------------------

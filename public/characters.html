@@ -34,26 +34,45 @@
 <div id="nav-container"></div>
 <script src="/nav.js"></script>
 
-<div class="chs-header">
-	<h1 class="chs-title" data-i18n="characters.characters">Characters</h1>
-	<div class="chs-controls">
-		<input id="chs-search" class="chs-search" type="search" placeholder="Search characters…" autocomplete="off" />
-		<div class="chs-sort">
-			<button class="chs-sort-btn active" data-sort="new" data-i18n="characters.new">New</button>
-			<button class="chs-sort-btn" data-sort="chats" data-i18n="characters.top">Top</button>
+<main id="main-content" class="chs-main">
+
+	<div class="chs-header">
+		<div class="chs-header-top">
+			<div>
+				<h1 class="chs-title" data-i18n="characters.characters">Characters</h1>
+				<p class="chs-sub" data-i18n="characters.subtitle">Discover AI characters on three.ws. Chat, trade, and create.</p>
+			</div>
+			<a class="chs-create" href="/create-agent">
+				<span aria-hidden="true">+</span>
+				<span data-i18n="characters.create">Create a character</span>
+			</a>
+		</div>
+		<div class="chs-controls">
+			<label class="sr-only" for="chs-search" data-i18n="characters.search_label">Search characters by name or description</label>
+			<input id="chs-search" class="chs-search" type="search" placeholder="Search characters…"
+			       data-i18n-attr="placeholder:characters.search_placeholder" autocomplete="off" />
+			<div class="chs-sort" role="group" aria-label="Sort characters" data-i18n-attr="aria-label:characters.sort_label">
+				<button type="button" class="chs-sort-btn active" data-sort="new" aria-pressed="true" data-i18n="characters.new">New</button>
+				<button type="button" class="chs-sort-btn" data-sort="chats" aria-pressed="false" data-i18n="characters.top">Top</button>
+			</div>
 		</div>
 	</div>
-</div>
 
-<div id="chs-grid" class="chs-grid">
-	<!-- cards injected by characters.js -->
-</div>
+	<div id="chs-grid" class="chs-grid" aria-busy="true">
+		<!-- cards injected by characters.js -->
+	</div>
 
-<div id="chs-load-more" class="chs-load-more" style="display:none">
-	<button id="chs-load-btn" class="chs-load-btn" data-i18n="characters.load_more">Load more</button>
-</div>
+	<!-- Announces load results to screen readers; the grid itself is too chatty
+	     to make a live region when 24 cards land at once. -->
+	<p id="chs-status" class="sr-only" role="status" aria-live="polite"></p>
 
-<div class="chs-bottom-pad"></div>
+	<div id="chs-load-more" class="chs-load-more" hidden>
+		<button type="button" id="chs-load-btn" class="chs-load-btn" data-i18n="characters.load_more">Load more</button>
+	</div>
+
+	<div class="chs-bottom-pad"></div>
+
+</main>
 
 <script type="module" src="/src/characters.js"></script>
 	<script src="/brand.js" defer></script>

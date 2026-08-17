@@ -8,6 +8,26 @@ import { formatUsd, escapeHtml as esc } from './shared/coin-format.js';
 
 const $ = (id) => document.getElementById(id);
 
+// A press that travels further than this is a drag, not a click on a row.
+const DRAG_SLOP_PX = 6;
+
+// True while the visitor is holding a text selection, so row-click navigation
+// can stand down and let them copy.
+function isSelecting() {
+	const sel = typeof getSelection === 'function' ? getSelection() : null;
+	return !!sel && !sel.isCollapsed && String(sel).trim().length > 0;
+}
+
+// A press that travels further than this is a drag, not a click on a row.
+const DRAG_SLOP_PX = 6;
+
+// True while the visitor is holding a text selection, so row-click navigation
+// can stand down and let them copy.
+function isSelecting() {
+	const sel = typeof getSelection === 'function' ? getSelection() : null;
+	return !!sel && !sel.isCollapsed && String(sel).trim().length > 0;
+}
+
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
 	if (!res.ok) {
@@ -174,7 +194,7 @@ function renderTable() {
 				<td class="price">${esc(formatUsd(c.tvl))}</td>
 				<td class="pct cv-mono">${(c.share_pct || 0).toFixed(2)}%</td>
 				<td class="left hide-md chains-bar-cell">
-					<span class="chains-bar" role="img" aria-label="${(c.share_pct || 0).toFixed(2)}% of total value locked">
+					<span class="chains-bar" aria-hidden="true">
 						<span class="chains-bar-fill" style="width:${barPct.toFixed(1)}%"></span>
 					</span>
 				</td>
@@ -217,8 +237,21 @@ function renderTable() {
 	// handles its own click (and the whole keyboard path), so bail out on it
 	// rather than navigating twice.
 	el.querySelectorAll('tr[data-href]').forEach((tr) => {
+		// Where the press started, so a drag that merely ends inside the row is
+		// not mistaken for a click on it.
+		let downX = 0;
+		let downY = 0;
+		tr.addEventListener('pointerdown', (e) => {
+			downX = e.clientX;
+			downY = e.clientY;
+		});
 		tr.addEventListener('click', (e) => {
 			if (e.target.closest('a')) return;
+			// Copying a TVL figure or a chain name means dragging across a cell,
+			// and that drag ends in a click on the row. Navigating would throw
+			// the selection away before the visitor can copy it.
+			if (isSelecting()) return;
+			if (Math.hypot(e.clientX - downX, e.clientY - downY) > DRAG_SLOP_PX) return;
 			location.assign(tr.dataset.href);
 		});
 	});

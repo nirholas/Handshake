@@ -1,78 +1,160 @@
-/* /characters — character discovery feed */
+/* /characters — character discovery feed.
+
+   Token-driven (public/tokens.css, reaching this page via nav.css), so the
+   whole surface flips with [data-theme] instead of fighting the shared header:
+   the page used to hardcode a light-blue gradient and dark ink, which under the
+   site default (dark) put a light page under a dark nav. */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	font-family: var(--font-body);
 	min-height: 100vh;
-	background: linear-gradient(160deg, #c8dff7 0%, #e8f4ff 40%, #f0f8ff 100%);
-	color: #1b1b1b;
+	background:
+		radial-gradient(70% 50% at 50% -10%, var(--surface-2), transparent 70%),
+		var(--bg-0);
+	color: var(--ink);
 }
+
+.chs-main {
+	display: block;
+}
+
+/* The main landmark receives focus from the shared skip link; it is not an
+   interactive control, so it gets no ring of its own. */
+.chs-main:focus { outline: none; }
 
 /* ── Header ───────────────────────────────────────────── */
 .chs-header {
-	padding: 32px 20px 20px;
-	max-width: 640px;
+	padding: var(--space-xl) var(--space-md) var(--space-md);
+	max-width: 1120px;
 	margin: 0 auto;
+	width: 100%;
+}
+
+.chs-header-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--space-md);
+	flex-wrap: wrap;
+	margin-bottom: var(--space-md);
 }
 
 .chs-title {
-	font-size: 28px;
-	font-weight: 700;
-	letter-spacing: -0.5px;
-	margin-bottom: 16px;
+	font-size: var(--text-xl);
+	font-weight: var(--weight-bold);
+	letter-spacing: -0.02em;
+	color: var(--ink-bright, var(--ink));
 }
+
+.chs-sub {
+	margin-top: var(--space-2xs);
+	font-size: var(--text-ui);
+	color: var(--ink-dim);
+	max-width: 46ch;
+}
+
+.chs-create {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-xs);
+	flex-shrink: 0;
+	padding: var(--space-sm) var(--space-md);
+	border-radius: var(--radius-pill);
+	border: 1px solid var(--stroke-strong);
+	background: var(--surface-2);
+	color: var(--ink);
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+	text-decoration: none;
+	transition:
+		background var(--duration-fast, 0.14s) var(--ease-standard),
+		border-color var(--duration-fast, 0.14s) var(--ease-standard),
+		transform var(--duration-fast, 0.14s) var(--ease-standard);
+}
+
+.chs-create:hover {
+	background: var(--surface-3);
+	border-color: var(--accent);
+}
+
+.chs-create:active { transform: translateY(1px); }
 
 /* ── Search + sort bar ────────────────────────────────── */
 .chs-controls {
 	display: flex;
-	gap: 8px;
+	gap: var(--space-sm);
 	align-items: center;
-	margin-bottom: 4px;
+	flex-wrap: wrap;
 }
 
 .chs-search {
 	flex: 1;
-	min-width: 0;
-	background: rgba(255, 255, 255, 0.7);
-	border: 1.5px solid rgba(0,0,0,0.1);
-	border-radius: 32px;
-	padding: 10px 18px;
-	font-size: 14px;
-	color: #1b1b1b;
-	outline: none;
+	min-width: 12rem;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	padding: var(--space-sm) var(--space-md);
+	font: inherit;
+	font-size: var(--text-ui);
+	color: var(--ink);
 }
 
+.chs-search::placeholder { color: var(--ink-dim); }
+
+.chs-search:hover { border-color: var(--stroke-strong); }
+
 .chs-search:focus {
-	border-color: #2563eb;
-	background: rgba(255,255,255,0.9);
+	outline: none;
+	border-color: var(--accent);
+	background: var(--surface-2);
 }
 
 .chs-sort {
 	display: flex;
-	background: rgba(255,255,255,0.6);
-	border-radius: 32px;
-	padding: 4px;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	padding: 3px;
 	gap: 2px;
 }
 
 .chs-sort-btn {
 	border: none;
 	background: transparent;
-	border-radius: 24px;
-	padding: 6px 14px;
-	font-size: 13px;
-	font-weight: 500;
-	color: #6b7280;
+	border-radius: var(--radius-pill);
+	padding: var(--space-xs) var(--space-md);
+	font: inherit;
+	font-size: var(--text-md);
+	font-weight: var(--weight-medium);
+	color: var(--ink-dim);
 	cursor: pointer;
-	transition: background 0.12s, color 0.12s;
+	transition:
+		background var(--duration-fast, 0.14s) var(--ease-standard),
+		color var(--duration-fast, 0.14s) var(--ease-standard);
 }
 
+.chs-sort-btn:hover { color: var(--ink); }
+
 .chs-sort-btn.active {
-	background: #fff;
-	color: #1b1b1b;
-	font-weight: 600;
-	box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+	background: var(--surface-3);
+	color: var(--ink-bright, var(--ink));
+	font-weight: var(--weight-semibold);
+}
+
+/* ── Focus rings ──────────────────────────────────────────
+   Every control on the page carries the same visible ring. The sort and
+   load-more buttons previously had none at all, so keyboard users could not
+   see where they were. */
+.chs-search:focus-visible,
+.chs-sort-btn:focus-visible,
+.chs-load-btn:focus-visible,
+.chs-notice-btn:focus-visible,
+.chs-create:focus-visible,
+.chs-card:focus-visible {
+	outline: 2px solid var(--focus-ring-color, var(--accent));
+	outline-offset: 2px;
 }
 
 /* ── Grid ─────────────────────────────────────────────── */
@@ -82,57 +164,63 @@ body {
 	   shrink below the cards' content min-width so token/stat rows never
 	   force horizontal scroll on narrow phones. */
 	grid-template-columns: minmax(0, 1fr);
-	gap: 12px;
-	padding: 16px 20px;
-	max-width: 640px;
+	gap: var(--space-sm);
+	padding: var(--space-md);
+	max-width: 1120px;
 	margin: 0 auto;
+	width: 100%;
 }
 
 @media (min-width: 480px) {
 	.chs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+@media (min-width: 860px) {
+	.chs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1180px) {
+	.chs-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
 /* ── Character card ───────────────────────────────────── */
 .chs-card {
-	/* Light-theme surface — character picker has its own visual identity.
-	   Structural tokens (radius, transition) align to the canonical card system. */
-	background: rgba(255,255,255,0.55);
-	backdrop-filter: blur(10px);
-	border: 1px solid rgba(255,255,255,0.7);
-	border-radius: var(--card-radius, 14px);
-	padding: 16px;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	padding: var(--space-md);
 	text-decoration: none;
 	color: inherit;
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
-	box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+	gap: var(--space-sm);
 	cursor: pointer;
 	transition:
-		border-color 0.15s ease,
-		transform    0.15s ease,
-		box-shadow   0.15s ease;
+		border-color var(--duration-fast, 0.15s) var(--ease-standard),
+		background    var(--duration-fast, 0.15s) var(--ease-standard),
+		transform     var(--duration-fast, 0.15s) var(--ease-standard);
 }
 
 .chs-card:hover {
-	border-color: rgba(255,255,255,0.95);
+	border-color: var(--stroke-strong);
+	background: var(--surface-2);
 	transform: translateY(-2px);
-	box-shadow: 0 6px 20px rgba(0,0,0,0.1);
 }
 
 .chs-card:active {
 	transform: translateY(0) scale(0.99);
 }
 
-.chs-card:focus-visible {
-	outline: 2px solid #2563eb;
-	outline-offset: 2px;
+@media (prefers-reduced-motion: reduce) {
+	.chs-card,
+	.chs-create { transition: none; }
+	.chs-card:hover { transform: none; }
 }
 
 .chs-card-top {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: var(--space-sm);
 }
 
 .chs-card-avatar {
@@ -141,7 +229,7 @@ body {
 	border-radius: 50%;
 	object-fit: cover;
 	flex-shrink: 0;
-	background: #cbd5e1;
+	background: var(--surface-3);
 }
 
 .chs-card-avatar-ph {
@@ -151,8 +239,8 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
-	font-weight: 700;
+	font-size: var(--text-lg);
+	font-weight: var(--weight-bold);
 	color: #fff;
 	flex-shrink: 0;
 }
@@ -163,28 +251,29 @@ body {
 }
 
 .chs-card-name {
-	font-size: 14px;
-	font-weight: 700;
+	font-size: var(--text-ui);
+	font-weight: var(--weight-bold);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	color: #1b1b1b;
+	color: var(--ink-bright, var(--ink));
 }
 
 .chs-card-creator {
-	font-size: 11px;
-	color: #6b7280;
+	font-size: var(--text-2xs);
+	color: var(--ink-dim);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
 .chs-card-desc {
-	font-size: 12px;
-	line-height: 1.5;
-	color: #4b5563;
+	font-size: var(--text-sm);
+	line-height: var(--leading-normal);
+	color: var(--ink-dim);
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
+	line-clamp: 2;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 }
@@ -194,9 +283,10 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background: rgba(255,255,255,0.6);
-	border-radius: 12px;
-	padding: 8px 10px;
+	gap: var(--space-xs);
+	background: var(--surface-2);
+	border-radius: var(--radius-md);
+	padding: var(--space-sm);
 	margin-top: auto;
 }
 
@@ -204,88 +294,147 @@ body {
 	display: flex;
 	flex-direction: column;
 	gap: 1px;
+	min-width: 0;
 }
 
 .chs-card-token-symbol {
-	font-size: 11px;
-	font-weight: 700;
-	color: #1b1b1b;
+	font-size: var(--text-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--ink);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .chs-card-token-price {
-	font-size: 13px;
-	font-weight: 700;
-	color: #1b1b1b;
+	font-size: var(--text-md);
+	font-weight: var(--weight-bold);
+	color: var(--ink-bright, var(--ink));
 }
 
 .chs-card-token-change {
-	font-size: 11px;
-	font-weight: 600;
+	font-size: var(--text-2xs);
+	font-weight: var(--weight-semibold);
+	white-space: nowrap;
 }
 
-.chs-card-token-change.up { color: #16a34a; }
-.chs-card-token-change.down { color: #dc2626; }
+.chs-card-token-change.up { color: var(--success); }
+.chs-card-token-change.down { color: var(--danger); }
 
 /* Stats row */
 .chs-card-stats {
 	display: flex;
-	gap: 8px;
+	gap: var(--space-sm);
+	flex-wrap: wrap;
 }
 
 .chs-card-stat {
 	display: flex;
 	align-items: center;
-	gap: 4px;
-	font-size: 11px;
-	color: #6b7280;
+	gap: var(--space-3xs);
+	font-size: var(--text-2xs);
+	color: var(--ink-dim);
 }
 
 .chs-card-stat-num {
-	font-weight: 600;
-	color: #404040;
+	font-weight: var(--weight-semibold);
+	color: var(--ink);
 }
 
 /* ── Load more ────────────────────────────────────────── */
 .chs-load-more {
 	display: flex;
 	justify-content: center;
-	padding: 20px;
+	padding: var(--space-md);
 }
 
 .chs-load-btn {
-	background: rgba(255,255,255,0.7);
-	border: 1.5px solid rgba(0,0,0,0.1);
-	border-radius: 32px;
-	padding: 12px 32px;
-	font-size: 14px;
-	font-weight: 600;
-	color: #1b1b1b;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke-strong);
+	border-radius: var(--radius-pill);
+	padding: var(--space-sm) var(--space-xl);
+	font: inherit;
+	font-size: var(--text-ui);
+	font-weight: var(--weight-semibold);
+	color: var(--ink);
+	cursor: pointer;
+	transition: background var(--duration-fast, 0.14s) var(--ease-standard);
+}
+
+.chs-load-btn:hover { background: var(--surface-3); }
+.chs-load-btn:active { background: var(--surface-2); }
+.chs-load-btn:disabled { opacity: 0.5; cursor: progress; }
+
+.chs-load-btn-error {
+	border-color: var(--danger);
+	color: var(--danger);
+}
+
+/* ── Empty / error notice ─────────────────────────────────
+   Spans the whole grid whatever the column count, and always carries the one
+   action that gets the user out of the state. */
+.chs-notice {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-sm);
+	text-align: center;
+	padding: var(--space-2xl) var(--space-md);
+	border: 1px dashed var(--stroke-strong);
+	border-radius: var(--radius-lg);
+	background: var(--surface-1);
+}
+
+.chs-notice-title {
+	font-size: var(--text-lg);
+	font-weight: var(--weight-semibold);
+	color: var(--ink-bright, var(--ink));
+}
+
+.chs-notice-body {
+	font-size: var(--text-ui);
+	color: var(--ink-dim);
+	max-width: 42ch;
+}
+
+.chs-notice-btn {
+	margin-top: var(--space-xs);
+	display: inline-flex;
+	align-items: center;
+	padding: var(--space-sm) var(--space-lg);
+	border-radius: var(--radius-pill);
+	border: 1px solid var(--stroke-strong);
+	background: var(--surface-2);
+	color: var(--ink);
+	font: inherit;
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+	text-decoration: none;
 	cursor: pointer;
 }
 
-.chs-load-btn:hover { background: rgba(255,255,255,0.9); }
-.chs-load-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* ── Empty / loading ──────────────────────────────────── */
-.chs-empty {
-	grid-column: span 2;
-	text-align: center;
-	padding: 40px 20px;
-	color: #9ca3af;
-	font-size: 14px;
+.chs-notice-btn:hover {
+	background: var(--surface-3);
+	border-color: var(--accent);
 }
 
 .chs-skeleton-card {
-	background: rgba(255,255,255,0.4);
-	border-radius: 20px;
-	height: 160px;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	height: 168px;
 	animation: chs-shimmer 1.4s infinite;
 }
 
 @keyframes chs-shimmer {
-	0% { opacity: 0.6; }
+	0% { opacity: 0.5; }
 	50% { opacity: 1; }
-	100% { opacity: 0.6; }
+	100% { opacity: 0.5; }
 }
 
-.chs-bottom-pad { height: 48px; }
+@media (prefers-reduced-motion: reduce) {
+	.chs-skeleton-card { animation: none; }
+}
+
+.chs-bottom-pad { height: var(--space-2xl); }

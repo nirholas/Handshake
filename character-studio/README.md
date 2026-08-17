@@ -94,7 +94,7 @@ const creator = new AvatarCreator({
 await creator.open();
 ```
 
-`AvatarCreator` opens this app in a modal iframe (default URL `https://three.ws/avatar-studio/`, overridable with `studioUrl` for a local dev server), verifies the message origin against the iframe it opened, and resolves the `characterstudio` export payload into a `Blob` before closing the modal.
+`AvatarCreator` opens this app in a modal iframe (default URL `https://three.ws/avatar-studio/index.html`, overridable with `studioUrl` for a local dev server), verifies the message origin against the iframe it opened, and resolves the `characterstudio` export payload into a `Blob` before closing the modal.
 
 ## Tests
 

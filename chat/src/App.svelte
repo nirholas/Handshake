@@ -179,7 +179,7 @@
 
 		transaction.onerror = () => {
 			console.error('Message save failed', transaction.error);
-			notify('Failed to save â your changes may be lost. Check browser storage settings.');
+			notify('Failed to save. Your changes may be lost. Check browser storage settings.');
 		};
 	}, 500);
 
@@ -361,7 +361,7 @@
 
 		transaction.onerror = () => {
 			console.error('Conversation save failed', transaction.error);
-			notify('Failed to save â your changes may be lost. Check browser storage settings.');
+			notify('Failed to save. Your changes may be lost. Check browser storage settings.');
 		};
 	}, 500);
 
@@ -633,7 +633,7 @@
 				convo.messages[convo.messages.length - 1].reasoning = true;
 				convo.messages[convo.messages.length - 1].thinking = true;
 				convo.messages[convo.messages.length - 1].thoughts = '';
-				// Keep reasoning collapsed in the thread â the "Thinkingâ¦" pill and the
+				// Keep reasoning collapsed in the thread: the "Thinking..." pill and the
 				// avatar thought bubble surface that the model is reasoning; the raw
 				// transcript stays behind the pill instead of dumping into the chat.
 				convo.messages[convo.messages.length - 1].thoughtsExpanded = false;
@@ -728,7 +728,7 @@
 			if (choice.delta.reasoning && !convo.messages[i].reasoning) {
 				convo.messages[i].reasoning = true;
 				convo.messages[i].thoughts = '';
-				// Collapsed by default â reasoning lives behind the pill, not inline.
+				// Collapsed by default: reasoning lives behind the pill, not inline.
 				convo.messages[i].thoughtsExpanded = false;
 				if (!convo.messages[i].thinking && !unexpandedThinkingOnce) {
 					unexpandedThinkingOnce = true;
@@ -1637,13 +1637,13 @@
 				localStorage.setItem('x402PayPackBootstrapped', '1');
 			}
 		} catch (err) {
-			// Best-effort bootstrap â e.g. Safari private mode blocks
+			// Best-effort bootstrap, e.g. Safari private mode blocks
 			// localStorage. Don't break the rest of onMount over it.
 			console.warn('[x402-pay] bootstrap failed:', err);
 		}
 
-		// Same one-time bootstrap for the Text â 3D Forge pack, so "make me a
-		// 3D model ofâ¦" works on a fresh chat without a trip through Tool Packs.
+		// Same one-time bootstrap for the Text to 3D Forge pack, so "make me a
+		// 3D model of..." works on a fresh chat without a trip through Tool Packs.
 		// Honors removal via the bootstrap flag, exactly like the x402 pack.
 		try {
 			if (!localStorage.getItem('forgePackBootstrapped')) {
@@ -1712,7 +1712,7 @@
 
 		// When the user installs a Local skill from the Skills modal, auto-enable
 		// the new tools in the current conversation so the LLM can call them on
-		// the next turn â same UX as the x402-pay bootstrap above, but
+		// the next turn, same UX as the x402-pay bootstrap above, but
 		// triggered on-demand instead of once at startup. We only enable for
 		// the active convo; other convos pick up the new tools through the
 		// usual Tools dropdown.
@@ -1771,7 +1771,7 @@
 				).json();
 			} catch (error) {
 				console.debug(
-					`[tool server] not detected at ${$remoteServer.address} â start it if you want local tools.`
+					`[tool server] not detected at ${$remoteServer.address}. Start it if you want local tools.`
 				);
 			}
 		}
@@ -1857,7 +1857,7 @@
 
 	// Walk while tokens are actively arriving. `generating` flips false the
 	// instant the network stream ends, but we want the avatar to keep walking
-	// until rendering settles â 600ms tail bridges micro-pauses between tokens
+	// until rendering settles: a 600ms tail bridges micro-pauses between tokens
 	// and the gap between last token and DOM paint.
 	let tokensFlowing = false;
 	let _tokensFlowingTimer = null;
@@ -1867,7 +1867,7 @@
 		_tokensFlowingTimer = setTimeout(() => { tokensFlowing = false; }, 600);
 	}
 
-	// Live thought bubble above the avatar â streams the active reasoning,
+	// Live thought bubble above the avatar: streams the active reasoning,
 	// then collapses to a "Thought for Xs" summary while the response streams.
 	let thoughtBubbleEl;
 	$: thinkingMessage = (() => {
@@ -1977,7 +1977,7 @@
 	$: if (agentEl && !agentReady) {
 		agentEl.addEventListener('agent:ready', () => {
 			agentReady = true;
-			// Re-frame once the canvas has its final on-screen size â the
+			// Re-frame once the canvas has its final on-screen size, because the
 			// internal framing happens at load time, before our ResizeObserver
 			// has reacted to the host's actual width/height. Without this, the
 			// avatar's feet can clip on first render at large element sizes.
@@ -2026,9 +2026,9 @@
 		}
 		// Blocker #2: prefers-reduced-motion (browsers with this on never start walk)
 		// We can't change the OS pref, but we sidestep agent-3d's _onStreamChunk
-		// path entirely by calling play() directly. So â no early return here.
+		// path entirely by calling play() directly. So no early return here.
 
-		// Blocker #3: agent-3d's internal _isWalking flag stuck true â _onStreamChunk
+		// Blocker #3: agent-3d's internal _isWalking flag stuck true means _onStreamChunk
 		// no-ops. Reset it so any future stream chunks can re-trigger walk too.
 		try { agentEl._isWalking = false; } catch {}
 		clearTimeout(agentEl._walkStopDebounce);
@@ -2898,7 +2898,7 @@
 {#if gateState}
 	<div transition:fade={{ duration: 150 }} class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm">
 		<div class="mx-4 w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
-			<div class="mb-2 text-2xl font-bold text-slate-900">ð Token-Gated Scene</div>
+			<div class="mb-2 text-2xl font-bold text-slate-900">🔒 Token-Gated Scene</div>
 			<p class="mb-6 text-sm text-slate-600">This 3D scene requires wallet ownership verification to access. Connect your wallet and prove you hold the required token.</p>
 
 			{#if gateState === 'pending'}
@@ -2921,7 +2921,7 @@
 			{:else if gateState === 'checking'}
 				<div class="flex flex-col items-center gap-3 py-4">
 					<div class="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
-					<p class="text-sm text-slate-500">Connecting wallet and verifyingâ¦</p>
+					<p class="text-sm text-slate-500">Connecting wallet and verifying...</p>
 				</div>
 			{:else if gateState === 'denied'}
 				<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">
@@ -3111,7 +3111,7 @@
 		opacity: 1;
 	}
 	/* The chat canvas is dark, so let the shared (dark) footer.css show through
-	   unchanged â only keep the layout spacing tweak. */
+	   unchanged; only keep the layout spacing tweak. */
 	:global(.h-footer-inner) {
 		margin-bottom: 2rem;
 	}
@@ -3189,7 +3189,7 @@
         </nav>
     </div>
     <div class="h-footer-bottom">
-        <p class="h-footer-legal">Â© 2026 three.ws â All rights reserved.</p>
+        <p class="h-footer-legal">© 2026 three.ws. All rights reserved.</p>
         <div class="h-footer-legal-links">
             <a href="/legal/privacy">Privacy Policy</a>
             <a href="/legal/tos">Terms of Use</a>

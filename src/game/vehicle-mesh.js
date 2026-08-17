@@ -1,7 +1,13 @@
-// Procedural vehicle meshes — original, honest geometry (no third-party model
-// assets), built from primitives so they load instantly and theme to each
-// vehicle's colour. One builder per silhouette (coupe / sedan / pickup / buggy)
-// keeps the four types visually distinct, matching their distinct handling.
+// Vehicle meshes for the drivable fleet.
+//
+// Two kinds of car live here. Procedural silhouettes (coupe / sedan / pickup /
+// buggy) are built from primitives so they load instantly and theme to each
+// vehicle's colour. Model-backed types (the Trench Car, VEHICLE_TYPES.trench)
+// carry a `model` key and drive a real GLB from src/game/vehicle-model.js: the
+// procedural silhouette is built first as an instant stand-in, and the GLB body
+// and wheels are swapped into the SAME group and wheel pivots the moment the
+// download lands. Nothing downstream re-binds, so a car that upgrades mid-drive
+// keeps its physics, its camera and its driver.
 //
 // The returned group's origin is the chassis CENTRE, aligned with the Rapier
 // rigid body's origin, with +z forward and +y up — so the physics transform maps
@@ -14,6 +20,13 @@ import {
 	Group, Mesh, BoxGeometry, CylinderGeometry, SphereGeometry,
 	MeshStandardMaterial, MeshBasicMaterial, Color,
 } from 'three';
+import { vehicleRestHeight } from '../../multiplayer/src/vehicles.js';
+import { instantiateVehicleModel, TRENCH_CAR_URL } from './vehicle-model.js';
+import { log } from '../shared/log.js';
+
+// `spec.model` is a key, not a path: the handling table is shared with the
+// server, which has no business knowing where the client serves assets from.
+const MODEL_URLS = { 'trench-car': TRENCH_CAR_URL };
 
 function lighten(hex, amt) {
 	const c = new Color(hex);
@@ -169,28 +182,57 @@ function buildBuggy(spec, color) {
 
 const BUILDERS = { coupe: buildCoupe, sedan: buildSedan, pickup: buildPickup, buggy: buildBuggy };
 
+// Free every geometry/material an object owns. Only ever called on the
+// procedural parts this module built, GLB parts share their buffers with the
+// model template and are released through the instance's own dispose().
+function disposeOwned(root) {
+	root.traverse((o) => {
+		if (o.geometry) o.geometry.dispose?.();
+		if (o.material) {
+			if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose?.());
+			else o.material.dispose?.();
+		}
+	});
+}
+
 /**
  * Build a complete vehicle mesh for a spec + colour.
- * @returns {{ group, wheels:Array<{pivot,spinner}>, brakeLights:Mesh[], dispose:Function }}
+ *
+ * Returns synchronously, a model-backed type hands back its procedural
+ * stand-in and upgrades itself in place once the GLB arrives.
+ *
+ * @returns {{ group: Group, wheels: Array<{pivot: Group, spinner: Group}>,
+ *   setBrake: (on: boolean) => void, ready: Promise<boolean>, dispose: Function }}
  */
 export function buildVehicleMesh(spec, color) {
 	const group = new Group();
 	const tint = Number.isFinite(color) ? color : spec.color;
 
+	// The body and its lights live under one node so a GLB swap replaces the
+	// whole procedural shell in one move, without touching the wheel pivots the
+	// vehicle controller drives.
+	const bodyRoot = new Group();
+	group.add(bodyRoot);
+
 	const builder = BUILDERS[spec.id] || buildSedan;
-	const body = builder(spec, tint);
-	group.add(body);
+	bodyRoot.add(builder(spec, tint));
 
 	// Lights, placed off the body's front/rear faces.
 	const { l, w } = spec.dims;
 	const tail = buildTailLights(w, -l / 2 + 0.05, 0.18);
 	const head = buildHeadLights(w, l / 2 - 0.05, 0.12);
-	for (const m of tail) group.add(m);
-	for (const m of head) group.add(m);
+	for (const m of tail) bodyRoot.add(m);
+	for (const m of head) bodyRoot.add(m);
 
 	// Four wheels at the chassis corners (matching the physics connection points).
 	const wb = w / 2 - spec.wheel.inset;
-	const cy = -spec.dims.h * 0.2; // resting connection height in chassis space
+	// Resting suspension connection height in chassis space. This MUST match
+	// PhysicsWorld.createVehicle's `cy = -(h / 2) * 0.2` and the same term in
+	// vehicleRestHeight: it was -h * 0.2 here, twice the offset the simulation
+	// uses, which parked every car with its wheels sunk (h/2)*0.2 into the road
+	// and then snapped them up the instant a driver took the wheel and
+	// _updateDrivenWheels started writing real connection points.
+	const cy = -(spec.dims.h / 2) * 0.2;
 	const positions = [
 		{ x: wb, z: spec.wheel.frontZ },
 		{ x: -wb, z: spec.wheel.frontZ },
@@ -204,18 +246,67 @@ export function buildVehicleMesh(spec, color) {
 		return wheel;
 	});
 
-	return {
+	let model = null;      // the GLB instance, once it lands
+	let disposed = false;
+	let braking = false;
+
+	const mesh = {
 		group,
 		wheels,
-		brakeLights: tail,
+		// Brake-light state, whichever body is currently mounted.
+		setBrake(on) {
+			braking = !!on;
+			if (model) { model.setBrake(braking); return; }
+			for (const bl of tail) bl.material.color.setHex(braking ? 0xff3b30 : 0x6e1411);
+		},
+		ready: Promise.resolve(false),
 		dispose() {
-			group.traverse((o) => {
-				if (o.geometry) o.geometry.dispose?.();
-				if (o.material) {
-					if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose?.());
-					else o.material.dispose?.();
-				}
-			});
+			disposed = true;
+			// Detach the GLB parts BEFORE freeing what this module owns: their
+			// geometry and textures belong to the shared template and are still in
+			// use by every other car wearing the same model.
+			if (model) {
+				bodyRoot.clear();
+				for (const w of wheels) w.spinner.clear();
+				model.dispose();
+				model = null;
+			}
+			disposeOwned(group);
 		},
 	};
+
+	const url = MODEL_URLS[spec.model];
+	if (url) {
+		mesh.ready = instantiateVehicleModel(url)
+			.then((instance) => {
+				// Disposed while the model was in flight: hand the reference straight
+				// back so the shared template's refcount stays honest.
+				if (disposed) { instance.dispose(); return false; }
+				// The GLB is authored with its origin on the road; this group's origin
+				// is the chassis centre, so drop it by the resting ride height.
+				instance.body.position.y = -vehicleRestHeight(spec.id);
+				disposeOwned(bodyRoot);
+				bodyRoot.clear();
+				bodyRoot.add(instance.body);
+				// Re-skin the wheels in place: the pivots stay the same objects, so
+				// the suspension/steer/roll writes from VehicleManager keep landing.
+				for (let i = 0; i < wheels.length && i < instance.wheels.length; i++) {
+					const spinner = wheels[i].spinner;
+					disposeOwned(spinner);
+					spinner.clear();
+					for (const child of [...instance.wheels[i].spinner.children]) spinner.add(child);
+				}
+				model = instance;
+				model.setBrake(braking);
+				return true;
+			})
+			.catch((e) => {
+				// The procedural stand-in is already on screen and fully drivable, so
+				// a missing model costs looks, never the feature.
+				log.warn(`[vehicle-mesh] ${spec.id} model unavailable, keeping the stand-in:`, e?.message);
+				return false;
+			});
+	}
+
+	return mesh;
 }

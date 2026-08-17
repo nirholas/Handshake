@@ -84,7 +84,9 @@
 		</script>
 	</head>
 	<body>
-		<header><div id="nav-container"></div></header>
+		<!-- nav.html supplies its own <header class="nav">, so no wrapper here: a
+		     second <header> around it makes two banner landmarks, one nested. -->
+		<div id="nav-container"></div>
 		<script src="/nav.js"></script>
 
 		<main class="cv-container">

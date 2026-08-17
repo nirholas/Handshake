@@ -565,9 +565,12 @@
 				background: linear-gradient(100deg, rgba(255,255,255,0.05) 30%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 70%);
 				background-size: 220% 100%; animation: as-shimmer 1.4s ease-in-out infinite; margin-bottom: 14px;
 			}
-			@keyframes as-shimmer { to { background-position: -120% 0; } }
 			#as-loading { flex-direction: column; }
-			@media (prefers-reduced-motion: reduce) { .as-spin, .as-skel { animation: none; } }
+			/* The spinner classes are `spin` / `spin-lg`; an `.as-spin` rule here
+			   matched nothing, so reduced-motion users kept getting the spin. */
+			@media (prefers-reduced-motion: reduce) {
+				.spin, .spin-lg, .as-skel { animation: none; }
+			}
 
 			@media (max-width: 980px) {
 				/* Stacked layout: let the document scroll, but keep the avatar

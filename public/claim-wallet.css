@@ -79,6 +79,28 @@ body {
 .cw-examples button { background: none; border: none; color: var(--cw-accent); font: inherit; cursor: pointer; padding: 0 4px; font-family: var(--cw-mono); }
 .cw-examples button:hover { text-decoration: underline; }
 
+/* Keyboard visibility. Every control on this page is reachable by Tab, so every
+   control has to say where focus is; none of them did. */
+.cw-btn:focus-visible,
+.cw-action:focus-visible,
+.cw-chip:focus-visible,
+.cw-wintab:focus-visible,
+.cw-copy:focus-visible,
+.cw-th-btn:focus-visible,
+.cw-go:focus-visible {
+	outline: 2px solid var(--cw-accent);
+	outline-offset: 2px;
+	border-radius: var(--radius-sm);
+}
+.cw-input:focus-visible, .cw-tsearch:focus-visible { outline: 2px solid var(--cw-accent); outline-offset: 1px; }
+.cw-table tbody tr:focus-within { background: var(--surface-2); }
+
+/* Visually hidden, still announced. */
+.cw-sr {
+	position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+	overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
 /* ── Dashboard shell ────────────────────────────────────────────────────────── */
 .cw-dash { animation: cwFade var(--duration-base) var(--ease-emphasized); margin-top: 24px; }
 @keyframes cwFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -255,8 +277,15 @@ body {
 	border-bottom: 1px solid var(--cw-line); cursor: pointer; user-select: none;
 }
 .cw-table thead th:first-child { text-align: left; }
-.cw-table thead th:hover { color: var(--ink-bright); }
-.cw-table thead th .arr { color: var(--cw-accent); margin-left: 3px; }
+/* The sort control is a real <button> so it is tabbable and Enter/Space work;
+   the <th> only carries aria-sort. */
+.cw-th-btn {
+	background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+	font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit;
+	transition: color var(--duration-fast);
+}
+.cw-table thead th:hover .cw-th-btn, .cw-th-btn:hover { color: var(--ink-bright); }
+.cw-th-btn .arr { color: var(--cw-accent); margin-left: 3px; }
 .cw-table tbody td { padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--cw-line); font: var(--weight-medium) var(--text-md)/1.2 var(--cw-mono); color: var(--ink); white-space: nowrap; }
 .cw-table tbody td:first-child { text-align: left; }
 .cw-table tbody tr { cursor: pointer; transition: background var(--duration-fast); }
@@ -282,8 +311,16 @@ body {
 .cw-roi-bar { width: 44px; height: 5px; border-radius: var(--radius-pill); background: var(--surface-3); overflow: hidden; }
 .cw-roi-bar > i { display: block; height: 100%; border-radius: inherit; }
 .cw-muted { color: var(--ink-faint); }
-.cw-go { color: var(--ink-faint); transition: color var(--duration-fast), transform var(--duration-fast); }
-.cw-table tbody tr:hover .cw-go { color: var(--cw-accent); transform: translateX(2px); }
+.cw-go { display: inline-block; color: var(--ink-faint); text-decoration: none; transition: color var(--duration-fast), transform var(--duration-fast); }
+.cw-table tbody tr:hover .cw-go, .cw-go:focus-visible { color: var(--cw-accent); transform: translateX(2px); }
+
+/* Filtered to nothing, and no coins at all: two different messages, both with
+   a way forward. */
+.cw-nomatch { text-align: center; padding: 36px 24px; color: var(--ink-faint); }
+.cw-nomatch p { margin: 0 0 14px; font-size: var(--text-sm); }
+.cw-ledger-blank { text-align: center; padding: 40px 24px; border: 1px dashed var(--cw-line); border-radius: var(--cw-radius); }
+.cw-ledger-blank p { margin: 0 auto 16px; max-width: 460px; font-size: var(--text-sm); color: var(--ink-dim); line-height: var(--leading-normal); }
+.cw-ledger-blank .cw-action:last-child { margin: 0; }
 
 /* ── Claim CTA ──────────────────────────────────────────────────────────────── */
 .cw-cta { margin-top: 4px; background: linear-gradient(135deg, var(--cw-accent-soft), transparent 70%); border: 1px solid var(--cw-stroke); border-radius: var(--cw-radius); padding: 22px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
@@ -304,6 +341,9 @@ body {
 .cw-empty p { font-size: var(--text-sm); color: var(--ink-dim); line-height: var(--leading-normal); max-width: 420px; margin: 0 auto; }
 .cw-empty code { word-break: break-all; font-size: var(--text-2xs); color: var(--ink-faint); }
 .cw-empty .cw-action { margin-top: 20px; }
+.cw-error { border-color: color-mix(in srgb, var(--cw-neg) 32%, var(--cw-line)); }
+.cw-error .ico { color: var(--cw-neg); opacity: 1; }
+.cw-error-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
 
 .cw-skel { border-radius: var(--cw-radius); background: var(--surface-1); border: 1px solid var(--cw-line); position: relative; overflow: hidden; }
 .cw-skel::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--surface-2), transparent); transform: translateX(-100%); animation: cwShimmer 1.4s infinite; }

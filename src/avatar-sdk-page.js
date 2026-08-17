@@ -337,7 +337,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			try {
 				const mod = await import('../avatar-sdk/src/creator.js');
 				creator = new mod.AvatarCreator({
-					studioUrl: new URL('/avatar-studio/', location.origin).toString(),
+					// Same origin so a codespace/dev host loads its own build, and
+					// the index file by name: the bare /avatar-studio path serves the
+					// native sculpting page, which does not speak the export protocol.
+					studioUrl: new URL('/avatar-studio/index.html', location.origin).toString(),
 					onExport: (blob) => {
 						setStatus(`Avatar exported: ${(blob.size / 1024).toFixed(0)} KB GLB`, 'ok');
 					},

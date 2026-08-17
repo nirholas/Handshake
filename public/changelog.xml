@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Avatar Studio now shows your whole avatar, and its Save button fits on a phone</title>
+			<link>https://three.ws/avatar-studio</link>
+			<guid isPermaLink="false">2026-08-17:Avatar Studio now shows your whole avatar, and its Save button fits on a phone</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The studio camera was framing the base body from the shoulders to the knees: the face you were sculpting and the shoes you were picking were both outside the picture, and the only way to see them was to orbit the camera yourself every time the page loaded. The framing is now solved from the lens rather than guessed at, so a full-body shot really does hold the avatar head to toe, arms included, on any window shape, and the half-body and headshot views stay as tight as their names promise. On a 320px phone the top bar had been running past the edge of the screen and taking the Save avatar button with it, so a look built on a phone could not be saved at all; the bar now fits, with the Back and title labels standing down to make room. The tab strip on that same narrow layout had been hiding its labels without putting anything in their place, leaving six blank buttons, and now shows an icon per tab. The Parametric body badge that read 120+ sliders was white text on a white pill and invisible everywhere. A failed save now says the connection could not be reached and that your look is still there, instead of repeating the browser phrase Failed to fetch, and every accessory search box, every tab and the Back link now carry names a screen reader can read. Opening avatar-studio in local development also serves the same page production does, which it previously did not.</description>
+		</item>
+		<item>
 			<title>The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts &quot;Meet Agent&quot;</title>
 			<link>https://three.ws/app</link>
 			<guid isPermaLink="false">2026-08-17:The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts &quot;Meet Agent&quot;</guid>

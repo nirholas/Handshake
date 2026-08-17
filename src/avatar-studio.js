@@ -569,7 +569,14 @@ async function bootScene(glbUrl, editAvatar) {
 			: 'Choose a style below to get started.');
 	} catch (err) {
 		log.error('[avatar-studio] bootScene', err);
-		renderStageError($('as-loading'), 'We couldn’t load the avatar. Check your connection and try again.');
+		// The loading placeholder is removed the moment the model mounts, and
+		// several steps after that can still throw. Targeting only the removed
+		// placeholder made those failures render nowhere at all, leaving the user
+		// on a silent, half-built stage, so fall back to the stage container.
+		renderStageError(
+			$('as-loading') || $('as-stage'),
+			'We couldn’t load the avatar. Check your connection and try again.',
+		);
 	}
 }
 

@@ -56,7 +56,7 @@ import {
 import { proxiedImageURL } from '../ipfs.js';
 import {
 	loadManifest, getEmoteDefs, getAllEmoteDefs, resolveAvatarUrl, buildAvatar, releaseAvatar, playEmoteClip,
-	CLIP_IDLE, CLIP_WALK,
+	crossfadeToMotion, CLIP_IDLE, CLIP_WALK,
 } from './avatar-rig.js';
 import { GUEST_SENTINEL, uploadPendingGuestAvatar, getPlayCosmetics, setPlayCosmetics, setPlayAvatar } from './play-handoff.js';
 import { AvatarSwitcher } from './avatar-switcher.js';
@@ -349,7 +349,7 @@ class RemotePlayer {
 		resolveAvatarUrl(url).then((u) => buildAvatar(this.rig, u, anim, { clips: 'locomotion' }).then(({ height }) => {
 			if (this._disposed || token !== this._avatarToken) return;
 			this.height = height;
-			anim.crossfadeTo(this.motion === 'walk' || this.motion === 'run' ? CLIP_WALK : CLIP_IDLE, 0);
+			crossfadeToMotion(anim, this.motion, 0);
 			this.applyCosmetics();
 		})).catch(() => {});
 	}
@@ -464,7 +464,7 @@ class RemotePlayer {
 		}
 		if (player.motion !== this.motion) {
 			this.motion = player.motion;
-			this.anim.crossfadeTo(this.motion === 'walk' || this.motion === 'run' ? CLIP_WALK : CLIP_IDLE, 0.18);
+			crossfadeToMotion(this.anim, this.motion, 0.18);
 		}
 		if (player.emote && player.emoteTs && player.emoteTs !== this._emoteTs) {
 			this._emoteTs = player.emoteTs;
