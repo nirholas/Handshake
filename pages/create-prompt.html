@@ -728,7 +728,10 @@
 				</div>
 				<div class="done-tags" id="done-tags"></div>
 				<div class="done-actions">
-					<a class="btn-primary" id="open-editor">
+					<!-- href is rewritten to /avatars/<id>/edit the moment a build
+					     finishes; the static value keeps it a real, focusable link
+					     instead of a bare <a> with no destination. -->
+					<a class="btn-primary" id="open-editor" href="/dashboard">
 						Open in editor
 						<svg
 							width="14"

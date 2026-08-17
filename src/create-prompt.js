@@ -123,6 +123,10 @@ $('#back-btn').addEventListener('click', () => {
 
 generateBtn.addEventListener('click', start);
 
+// Bound once at module scope, not inside renderDone: re-binding it per finished
+// build stacked a fresh listener on the same button every time.
+$('#make-another').addEventListener('click', () => resetToCompose());
+
 // ── Submit + poll ────────────────────────────────────────────────────────────
 
 function nameFromPrompt(prompt) {
@@ -366,7 +370,7 @@ function setProgressWidth(pct) {
 
 // ── Done ─────────────────────────────────────────────────────────────────────
 
-async function renderDone(avatarId) {
+async function renderDone(avatarId, run) {
 	let avatar = null;
 	try {
 		const res = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, { credentials: 'include' });
@@ -375,10 +379,11 @@ async function renderDone(avatarId) {
 	} catch (err) {
 		log.warn('[create-prompt] could not fetch finished avatar', err);
 	}
+	// The avatar fetch is another await the user can cancel across.
+	if (isStale(run)) return;
 
 	const editorUrl = `/avatars/${encodeURIComponent(avatarId)}/edit`;
 	$('#open-editor').setAttribute('href', editorUrl);
-	$('#make-another').addEventListener('click', () => resetToCompose());
 
 	// Private avatars (the default for this flow) have a null public model_url;
 	// the owner's GET response carries a short-lived presigned `url` instead.
@@ -428,6 +433,9 @@ async function renderDone(avatarId) {
 }
 
 function resetToCompose() {
+	// Burn the current build token: whatever run was in flight can no longer
+	// write to the screen the user just came back to.
+	_runId++;
 	_submitting = false;
 	stopElapsed();
 	setError(composeError, '');
@@ -483,11 +491,13 @@ function prefersReducedMotion() {
 	}
 }
 
-// Cancel button on the building screen — and Escape as a keyboard equivalent.
+// Cancel button on the building screen, with Escape as a keyboard equivalent.
+// Both defer the "is there anything to cancel?" test to cancelBuild so the two
+// entry points can never disagree about when cancelling is allowed.
 const cancelBtn = document.getElementById('cancel-build');
 cancelBtn?.addEventListener('click', cancelBuild);
 document.addEventListener('keydown', (e) => {
-	if (e.key === 'Escape' && _submitting) cancelBuild();
+	if (e.key === 'Escape') cancelBuild();
 });
 
 // Deep link: /create/prompt?prompt=<text> prefills the composer, so "copy

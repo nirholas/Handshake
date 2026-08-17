@@ -2446,6 +2446,15 @@ renderPoles();
 // unpaid_atomics so the user can watch the value drain as the payout cron
 // sweeps. Polling pauses when the tab is hidden to spare RPC budget.
 const LB_REFRESH_MS = 30_000;
+// Empty copy is per window: "no tips yet" is only true of the all-time board.
+// On 24h or 1h the club has simply been quiet, and telling a visitor there has
+// never been a tip here when the all-time board is full reads as broken.
+const LB_EMPTY_COPY = {
+	hour: 'Quiet hour so far. Tip a dancer and take the top spot.',
+	day: 'No tips in the last 24 hours. Tip a dancer and take the top spot.',
+	week: 'No tips this week. Tip a dancer and take the top spot.',
+	all: 'No tips yet. Be the first to tip a dancer!',
+};
 let lbWindow = 'day';
 let lbTimer = null;
 let lbInflight = false;

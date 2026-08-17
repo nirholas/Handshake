@@ -1149,67 +1149,119 @@ async function loadAvatar(url, name = 'Avatar', record = null) {
 })();
 
 // ── Avatar prompt UI ──────────────────────────────────────────────────────────
-btnLoadUrl.addEventListener('click', () => {
-	const url = avatarUrlInput.value.trim();
-	if (!url) return;
-	loadAvatar(url, 'Avatar');
+btnLoadUrl.addEventListener('click', async () => {
+	const value = avatarUrlInput.value.trim();
+	if (!value) { showAvatarError('Paste a GLB URL or an avatar ID first.'); avatarUrlInput.focus(); return; }
+	clearAvatarError();
+	showLoading('Resolving avatar…');
+	try {
+		const { url, name, record } = await resolveAvatarInput(value);
+		await loadAvatar(url, name, record);
+	} catch (err) {
+		hideLoading();
+		showAvatarError(`${err.message}. Paste a public .glb URL, or browse your avatars below.`);
+		avatarUrlInput.focus();
+	}
 });
 avatarUrlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') btnLoadUrl.click(); });
-btnSkip.addEventListener('click', () => { avatarPrompt.classList.add('h'); canvasHint.classList.remove('h'); hideLoading(); });
-btnLoadAvSmall.addEventListener('click', () => avatarPrompt.classList.remove('h'));
+avatarUrlInput.addEventListener('input', clearAvatarError);
+btnSkip.addEventListener('click', () => { avatarPrompt.classList.add('h'); clearAvatarError(); canvasHint.classList.remove('h'); hideLoading(); });
+btnLoadAvSmall.addEventListener('click', () => { avatarPrompt.classList.remove('h'); setScenePanel(false); avatarUrlInput.focus(); });
 
 btnBrowseAv.addEventListener('click', openAvatarModal);
 avatarModalClose.addEventListener('click', closeAvatarModal);
 avatarModal.addEventListener('click', (e) => { if (e.target === avatarModal) closeAvatarModal(); });
 
+function avatarModalMessage(text, { error = false, retry = false, link = null } = {}) {
+	avatarModalBody.innerHTML = '';
+	const box = document.createElement('div');
+	box.className = 'ame' + (error ? ' err' : '');
+	box.append(text);
+	if (link) {
+		const a = document.createElement('a');
+		a.href = link.href; a.textContent = link.label;
+		box.append(' ', a);
+	}
+	if (retry) {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'geb';
+		btn.textContent = 'Try again';
+		btn.addEventListener('click', () => loadAvatarChoices());
+		box.append(document.createElement('br'), btn);
+	}
+	avatarModalBody.appendChild(box);
+}
+
 async function openAvatarModal() {
-	avatarModal.hidden = false;
-	avatarModalBody.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#52525b;font-size:12px;">Loading…</div>';
+	openDialog(avatarModal, avatarModalClose);
+	await loadAvatarChoices();
+}
+
+async function loadAvatarChoices() {
+	avatarModalBody.setAttribute('aria-busy', 'true');
+	avatarModalMessage('Loading avatars…');
 	try {
-		const res = await fetch('/api/explore?type=avatar&limit=24');
+		// source=avatar&only3d=1, not the invented type=avatar: /api/explore has no
+		// `type` param, so the old call returned a mixed on-chain-agent feed whose
+		// rows mostly carry no model at all, and the picker silently dropped them.
+		const res = await fetch('/api/explore?source=avatar&only3d=1&limit=24');
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json().catch(() => ({}));
-		const avatars = data.avatars || data.items || [];
-		avatarModalBody.innerHTML = '';
+		const avatars = (data.items || data.avatars || []).filter((a) => a.glbUrl || a.glb_url);
 		if (!avatars.length) {
-			avatarModalBody.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#52525b;font-size:12px;">No avatars found. <a href="/forge" style="color:#a5b4fc;">Forge one first.</a></div>';
+			avatarModalMessage('No public avatars are available yet.', { link: { href: '/create', label: 'Create one →' } });
 			return;
 		}
+		avatarModalBody.innerHTML = '';
 		for (const av of avatars) {
 			const glbUrl = av.glbUrl || av.glb_url;
-			if (!glbUrl) continue;
-			const card = document.createElement('div');
-			card.style.cssText = 'aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;background:#111120;border:1px solid rgba(255,255,255,.07);position:relative;transition:border-color .12s,transform .1s;';
-			card.addEventListener('mouseenter', () => { card.style.borderColor='rgba(99,102,241,.5)'; card.style.transform='scale(1.03)'; });
-			card.addEventListener('mouseleave', () => { card.style.borderColor=''; card.style.transform=''; });
-			const thumb = av.thumbnailUrl || av.thumbnail_url;
+			const name = av.name || 'Avatar';
+			const card = document.createElement('button');
+			card.type = 'button';
+			card.className = 'amcard';
+			card.title = name;
+			// /api/explore returns the avatar thumbnail as `image`; the old
+			// thumbnailUrl/thumbnail_url read never matched, so every card fell
+			// through to the placeholder glyph.
+			const thumb = av.image || av.thumbnailUrl || av.thumbnail_url;
 			if (thumb) {
 				const img = document.createElement('img');
-				img.src = thumb; img.alt = av.name || 'Avatar';
-				img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+				img.src = thumb; img.alt = ''; img.loading = 'lazy';
+				img.addEventListener('error', () => { img.replaceWith(placeholderGlyph()); });
 				card.appendChild(img);
 			} else {
-				card.style.display = 'flex'; card.style.alignItems = 'center'; card.style.justifyContent = 'center';
-				card.innerHTML = '<span style="font-size:28px;opacity:.3;">◉</span>';
+				card.appendChild(placeholderGlyph());
 			}
-			const lbl = document.createElement('div');
-			lbl.style.cssText = 'position:absolute;bottom:0;left:0;right:0;padding:4px 6px;background:rgba(0,0,0,.65);font-size:10px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-			lbl.textContent = av.name || 'Avatar';
+			const lbl = document.createElement('span');
+			lbl.className = 'amlb';
+			lbl.textContent = name;
 			card.appendChild(lbl);
 			// /api/explore names the avatar record `avatarId`; carrying it through
 			// is what lets "Save outfit" write back to the browsed avatar.
 			const recordId = av.avatarId || av.id || null;
 			card.addEventListener('click', () => {
 				closeAvatarModal();
-				loadAvatar(glbUrl, av.name || 'Avatar', recordId ? { id: recordId } : null);
+				loadAvatar(glbUrl, name, recordId ? { id: recordId } : null);
 			});
 			avatarModalBody.appendChild(card);
 		}
-	} catch {
-		avatarModalBody.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#f87171;font-size:12px;">Failed to load avatars</div>';
+	} catch (err) {
+		avatarModalMessage(`Could not load avatars: ${err.message}.`, { error: true, retry: true });
+	} finally {
+		avatarModalBody.setAttribute('aria-busy', 'false');
 	}
 }
 
-function closeAvatarModal() { avatarModal.hidden = true; }
+function placeholderGlyph() {
+	const span = document.createElement('span');
+	span.className = 'amph';
+	span.setAttribute('aria-hidden', 'true');
+	span.textContent = '◉';
+	return span;
+}
+
+function closeAvatarModal() { closeDialog(avatarModal); }
 
 // ── Intent chips + suggested prompts ─────────────────────────────────────────
 function updateSuggestions() {
@@ -1367,43 +1419,81 @@ function promptGradient(str) {
 	return `linear-gradient(135deg,hsl(${hue},28%,14%),hsl(${(hue+40)%360},22%,10%))`;
 }
 
+function galleryMessage(text, { retry = false } = {}) {
+	creationsList.innerHTML = '';
+	const box = document.createElement('div');
+	box.className = 'ge';
+	box.append(text);
+	if (retry) {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'geb';
+		btn.textContent = 'Try again';
+		btn.addEventListener('click', () => loadGallery());
+		box.append(document.createElement('br'), btn);
+	}
+	creationsList.appendChild(box);
+}
+
+async function fetchCreations(query) {
+	const res = await fetch(`/api/forge-gallery?${query}`, { headers: CH });
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	const data = await res.json().catch(() => ({}));
+	return (data.creations || []).filter((c) => c.glb_url);
+}
+
 async function loadGallery() {
+	creationsList.setAttribute('aria-busy', 'true');
+	galleryMessage('Loading…');
 	try {
-		const res = await fetch('/api/forge-gallery?limit=24', { headers: CH });
-		const data = await res.json().catch(() => ({}));
-		const items = data.creations || [];
+		let items = await fetchCreations('limit=24');
+		let mine = true;
 		if (!items.length) {
-			creationsList.innerHTML = '<div class="ge">Forge your first item above</div>';
+			// A first-time visitor has no creations of their own, and an empty strip
+			// left the fastest path into the composer (drop a real model into the
+			// scene) behind a multi-minute generation. The community showcase is a
+			// live public feed, so seed the strip from that instead.
+			mine = false;
+			items = await fetchCreations('scope=community&limit=24');
+		}
+		creationsHead.textContent = mine ? 'Recent Creations' : 'Fresh from the Forge';
+		if (!items.length) {
+			galleryMessage('No creations yet. Describe an item above and press Forge to make the first one.');
 			return;
 		}
 		creationsList.innerHTML = '';
 		for (const c of items) {
-			if (!c.glb_url) continue;
-			const card = document.createElement('div');
+			const label = c.prompt || 'Forged item';
+			const card = document.createElement('button');
+			card.type = 'button';
 			card.className = 'gc';
-			card.title = c.prompt || 'Forged item';
+			card.title = label;
+			card.setAttribute('aria-label', `Add to scene: ${label}`);
 			if (c.preview_image_url) {
 				const img = document.createElement('img');
-				img.src = c.preview_image_url; img.alt = c.prompt || ''; img.loading = 'lazy';
-				img.onerror = () => { img.remove(); addGradient(card, c.prompt); };
+				img.src = c.preview_image_url; img.alt = ''; img.loading = 'lazy';
+				img.addEventListener('error', () => { img.remove(); addGradient(card, c.prompt); });
 				card.appendChild(img);
 			} else {
 				addGradient(card, c.prompt);
 			}
-			const ov = document.createElement('div');
+			// Spans, not divs: a <button> may only contain phrasing content.
+			const ov = document.createElement('span');
 			ov.className = 'gco';
-			ov.innerHTML = `<div class="gcp">${escHtml(c.prompt || 'Forged item')}</div><div class="gca">+ Add to scene</div>`;
+			ov.innerHTML = `<span class="gcp">${escHtml(label)}</span><span class="gca">+ Add to scene</span>`;
 			card.appendChild(ov);
 			card.addEventListener('click', () => loadGalleryItem(c));
 			creationsList.appendChild(card);
 		}
-	} catch {
-		creationsList.innerHTML = '<div class="ge">Could not load creations</div>';
+	} catch (err) {
+		galleryMessage(`Could not load creations: ${err.message}.`, { retry: true });
+	} finally {
+		creationsList.setAttribute('aria-busy', 'false');
 	}
 }
 
 function addGradient(card, prompt) {
-	const d = document.createElement('div');
+	const d = document.createElement('span');
 	d.className = 'gcg'; d.textContent = prompt || 'Forged item';
 	d.style.background = promptGradient(prompt);
 	card.prepend(d);

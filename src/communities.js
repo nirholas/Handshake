@@ -21,6 +21,7 @@ const nameInput = $('name-input');
 const avatarRow = $('avatar-row');
 const avatarUrlInput = $('avatar-url-input');
 const avatarUrlError = $('avatar-url-error');
+const avatarHint = $('avatar-hint');
 const coinGrid = $('coin-grid');
 const searchInput = $('coin-search');
 const mintInput = $('mint-input');
@@ -122,10 +123,22 @@ async function initAvatars() {
 		if (saved && saved.kind) selectedAvatar = saved;
 	} catch {}
 
-	// Signed-in users get their real avatars to pick from.
+	// Signed-in users get their real avatars to pick from. /api/auth/me answers
+	// 200 with `{ user: null }` when signed out, so probing it first costs one
+	// clean request and skips a roster read that could only 401 (which lands as a
+	// red console error on a page most visitors reach signed out).
+	let signedIn = false;
+	let rosterFailed = false;
+	let ownedCount = 0;
 	try {
-		const res = await fetch('/api/avatars?limit=24', { credentials: 'include' });
-		if (res.ok) {
+		const me = await fetch('/api/auth/me', { credentials: 'include', headers: { accept: 'application/json' } });
+		signedIn = me.ok && !!(await me.json())?.user;
+	} catch { /* offline: treat as signed out, default + paste still work */ }
+
+	if (signedIn) {
+		try {
+			const res = await fetch('/api/avatars?limit=24', { credentials: 'include', headers: { accept: 'application/json' } });
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const data = await res.json();
 			const avatars = data?.avatars ?? [];
 			for (const a of avatars) {
@@ -137,9 +150,13 @@ async function initAvatars() {
 				});
 				chip.dataset.value = a.id;
 				avatarRow.appendChild(chip);
+				ownedCount++;
 			}
+		} catch (err) {
+			rosterFailed = true;
+			log.warn('[communities] avatar roster', err?.message ?? err);
 		}
-	} catch { /* not signed in / offline — default + paste still work */ }
+	}
 
 	// "Create one" shortcut so an empty-handed user has a path to their own avatar.
 	const create = document.createElement('a');
@@ -148,7 +165,26 @@ async function initAvatars() {
 	create.innerHTML = `<span class="avatar-thumb"><span class="avatar-glyph">+</span></span><span class="avatar-name">Create</span>`;
 	avatarRow.appendChild(create);
 
+	renderAvatarHint({ signedIn, rosterFailed, ownedCount });
 	markSelectedAvatar();
+}
+
+// A row holding only "Default" and "Create" looks broken unless it says why.
+function renderAvatarHint({ signedIn, rosterFailed, ownedCount }) {
+	if (!avatarHint) return;
+	if (rosterFailed) {
+		avatarHint.innerHTML = 'Your saved avatars could not be loaded. The default avatar and a pasted URL still work.';
+		return;
+	}
+	if (!signedIn) {
+		avatarHint.innerHTML = '<a href="/login">Sign in</a> to pick from your saved avatars, or walk in with the default.';
+		return;
+	}
+	if (!ownedCount) {
+		avatarHint.innerHTML = 'No saved avatars yet. <a href="/create">Create one</a> and it shows up here.';
+		return;
+	}
+	avatarHint.textContent = '';
 }
 
 // Paste a direct GLB / VRM / Ready Player Me URL.
@@ -400,8 +436,11 @@ function fmtAge(ts) {
 
 function shortAddr(a) { return a ? `${a.slice(0, 4)}…${a.slice(-4)}` : ''; }
 
-async function loadCoinProfile(mint) {
-	if (_coinProfileMint === mint) return;
+async function loadCoinProfile(mint, { force = false } = {}) {
+	// Retry re-requests the mint the page is already showing, so the
+	// already-loaded guard has to yield to an explicit retry or the button is
+	// dead on exactly the failure it exists for.
+	if (_coinProfileMint === mint && !force) return;
 	_coinProfileMint = mint;
 
 	$('coin-profile-skeleton').hidden = false;
@@ -436,7 +475,7 @@ async function loadCoinProfile(mint) {
 			setPageTitle('Couldn’t load coin · three.ws');
 			if (retryBtn) {
 				retryBtn.hidden = false;
-				retryBtn.onclick = () => loadCoinProfile(mint);
+				retryBtn.onclick = () => loadCoinProfile(mint, { force: true });
 			}
 		} else {
 			releaseI18n($('coin-profile-empty-msg'));

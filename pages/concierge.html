@@ -245,6 +245,17 @@
 			.cl-links { display: flex; gap: var(--space-md); flex-wrap: wrap; }
 			.cl-links a { color: var(--accent); text-decoration: none; font-size: var(--text-sm); }
 			.cl-links a:hover { text-decoration: underline; }
+
+			/* Site-wide focus tokens rather than the UA default ring, so keyboard
+			   focus on this page reads the same as every other surface. */
+			.cl-btn:focus-visible,
+			.cl-tab:focus-visible,
+			.cl-copy:focus-visible,
+			.cl-links a:focus-visible,
+			.cl-code pre:focus-visible {
+				outline: var(--focus-ring-width) solid var(--focus-ring-color);
+				outline-offset: var(--focus-ring-offset);
+			}
 		</style>
 	
 	<meta property="og:image:alt" content="Concierge: AI Chat Widget — three.ws">
@@ -411,22 +422,59 @@ concierge.ask('What does the Pro plan cost?');</code></pre>
 			// Install-tab switcher + copy buttons (no framework, matches site style).
 			const tabs = [...document.querySelectorAll('.cl-tab')];
 			const panels = [...document.querySelectorAll('.cl-panel')];
+
+			// Roving tabindex: the tablist is ONE tab stop, and Left/Right/Home/End
+			// move between the tabs inside it, per the WAI-ARIA tabs pattern. Without
+			// this the role="tab" markup promises a keyboard behavior the page did
+			// not implement, which is worse for a screen-reader user than plain
+			// buttons would have been.
+			function selectTab(tab, { focus = false } = {}) {
+				for (const t of tabs) {
+					const on = t === tab;
+					t.setAttribute('aria-selected', String(on));
+					t.tabIndex = on ? 0 : -1;
+				}
+				for (const p of panels) p.hidden = p.dataset.panel !== tab.dataset.panel;
+				if (focus) tab.focus();
+			}
+
 			for (const tab of tabs) {
-				tab.addEventListener('click', () => {
-					for (const t of tabs) t.setAttribute('aria-selected', String(t === tab));
-					for (const p of panels) p.hidden = p.dataset.panel !== tab.dataset.panel;
+				tab.addEventListener('click', () => selectTab(tab));
+				tab.addEventListener('keydown', (e) => {
+					const i = tabs.indexOf(tab);
+					let next = null;
+					if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+					else if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+					else if (e.key === 'Home') next = tabs[0];
+					else if (e.key === 'End') next = tabs[tabs.length - 1];
+					if (!next) return;
+					e.preventDefault();
+					selectTab(next, { focus: true });
 				});
 			}
+
 			for (const btn of document.querySelectorAll('[data-copy]')) {
+				const idle = btn.textContent;
 				btn.addEventListener('click', async () => {
 					const code = btn.parentElement.querySelector('code')?.textContent || '';
 					try {
 						await navigator.clipboard.writeText(code);
 						btn.textContent = 'copied';
-						setTimeout(() => (btn.textContent = 'copy'), 1400);
+						setTimeout(() => (btn.textContent = idle), 1400);
 					} catch {
+						// Clipboard is blocked (insecure origin, denied permission).
+						// Select the snippet so the visitor can still press Ctrl+C,
+						// instead of only being told to do it by hand.
+						const el = btn.parentElement.querySelector('code');
+						if (el) {
+							const range = document.createRange();
+							range.selectNodeContents(el);
+							const sel = window.getSelection();
+							sel.removeAllRanges();
+							sel.addRange(range);
+						}
 						btn.textContent = 'select + copy';
-						setTimeout(() => (btn.textContent = 'copy'), 1800);
+						setTimeout(() => (btn.textContent = idle), 1800);
 					}
 				});
 			}
