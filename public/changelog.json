@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T05:59:12.393Z",
+	"generated_at": "2026-08-17T06:57:02.770Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -90,6 +90,18 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Chat is the chat again: the fake marketing pages inside /chat are gone",
+			"summary": "The chat app at three.ws/chat had grown a second copy of a marketing site inside it, and none of it was real: a pricing page with invented plans that did not match our actual pricing, a trust centre claiming SOC 2, ISO 27001, HIPAA and PCI certifications we do not hold, blog posts and product updates nobody wrote, customer case studies with made-up companies and numbers, webinars and conference appearances with made-up staff names and dates, and a banner announcing an acquisition that never happened. The top navigation had already stopped linking to any of it, so it survived only as old links people could still land on. Every one of those pages is now removed, and every old link redirects to the real page that covers the topic: pricing to three.ws/pricing, updates to the changelog, blog to the blog, docs to the docs, security to the security doc, events to the community page. Sign-in got the same treatment: the email and password form used to accept anything you typed and drop you into the chat without signing you in at all. It now signs you in for real against the same account system as the rest of three.ws, shows you why a sign-in was refused, and asks you to accept the Terms when you create an account. The earnings page tells a signed-out visitor to sign in instead of reporting a load failure, buttons that did nothing (import a template, import from Figma, apply a code block, pick an image model that was never used) either do something now or are gone, and the deck templates and slide-count picker actually shape what you get back. The page also loads about eight times lighter: the removed in-app docs browser was bundling every documentation file into the app on first load.",
+			"link": "/chat",
+			"tags": [
+				"fix",
+				"improvement",
+				"security"
 			]
 		},
 		{
@@ -222,6 +234,17 @@
 				"feature",
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Forgot password now answers in your language, announces itself, and shows a focus ring you can see",
+			"summary": "The password-reset request page at /forgot-password was audited end to end in a real browser. Four things were wrong. Its result messages were the only copy on the page not wired into translation, so a visitor reading the page in Spanish typed their email and got the outcome back in English; worse, the first submit permanently reset the button to its English label. Those messages also carried no live-region role, so a screen reader announced nothing at all when the reset link went out and the visitor had no way to know it had. Every link and button on the page fell back to the browser default focus ring, which is a near-black outline drawn on a near-black page: keyboard users could not see where they were. And the avatar beside the form pulsed a loading skeleton forever if its model failed to load, promising something that was never coming. All four are fixed. The result copy, the two failure messages, and the inline email hint now come from the translation catalog, the success notice is announced, focus rings are drawn in a high-contrast accent across every sign-in and account page, and the avatar panel settles into a designed resting state when its model cannot load. The decorative avatar no longer catches Tab, which used to strand keyboard users inside a panel screen readers cannot see.",
+			"link": "/forgot-password",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -425,6 +448,17 @@
 		{
 			"date": "2026-08-17",
 			"type": "update",
+			"title": "The Runway Lab called a stalled payment rail healthy, because nobody had tried to pay that day",
+			"summary": "The Runway Lab at /economy-lab is the page that tells you whether platform payments can still settle, and it was audited end to end in a real browser. It was getting the headline exactly backwards. The fee wallet that pays Solana network fees is currently below the hard floor it is never allowed to spend past, so nothing could settle at all, and the banner read \"settlement is healthy\" in green. The cause was that the page seeded its demand knob from measured traffic, the rail had taken no payments in 24 hours, and a projection of zero attempts came back with nothing refused, which the model scored as success. Zero attempts is now its own answer rather than a pass mark, and when the log shows no traffic the knob starts at a stated example load and says so instead of quietly projecting nothing. The live panel matches: a wallet under its floor no longer shows a green daily allowance it cannot reach, and an unread balance no longer prints as a confident 0.0%. If the page cannot read the rail at all, every knob now visibly switches off and there is a retry button, rather than six sliders that look live and do nothing. The projection chart was unreadable on a small balance, labelling all five of its gridlines 0.002 or 0.001, and on a phone it clipped those labels, ran its legend off the panel and stamped its own captions over the bars. Tapping a knob's help mark on a phone opened its explanation and closed it again in the same tap, so the explanations were unreachable on touch. Underneath, a projection of a starved rail was doing one full pass of the real settle-path check per refused payment, hundreds of thousands of them for a single slider drag; it now settles each refused hour in one step and gives the same numbers.",
+			"link": "/economy-lab",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
 			"title": "The security agent in the world no longer opens its scanner in your face",
 			"summary": "zauth, the security agent standing in the town plaza, used to throw its RepoScan panel over the screen the moment you walked within a few metres of it, interrupting whatever you were doing and hiding the world behind a modal you never asked for. Walking up now only gets you the agent's line and the usual E prompt above its head. The scanner opens when you choose to open it: press E, click the agent, or click its nameplate. Nothing else changed about the scan itself, and the price is still fetched live from zauth in the background as you approach, so the panel shows the real cost the instant it opens instead of a loading shimmer.",
 			"link": "/play",
@@ -484,6 +518,17 @@
 			"title": "Wallet Intelligence stops reporting win rates like 570% and 9790%",
 			"summary": "The pump.fun track record at /claim-wallet was audited end to end in a real browser, and the headline numbers were wrong. Lifetime win rate, early-entry win rate and dump rate are stored as percentages, but the page multiplied them by a hundred a second time, so a wallet that wins 5.7% of its trades was shown as '570% lifetime' and a 97.9% dump rate read '9790%'. The meters beside them were pinned full for the same reason, and the colour that flags a heavy dumper was triggered by anything above 0.3%. All three now read the real figure. Four other repairs came out of the same pass. A wallet the reputation brain has graded but whose per-coin rows are still indexing used to show an empty ledger captioned 'No coins match these filters', blaming filters that were not the cause; it now explains that the ledger is still filling in. When filters genuinely do hide everything, the table says how many coins were hidden and offers one click to clear them. The ledger header no longer claims 60 coins while showing 52, since dust is hidden by default. A dropped connection used to blank the report and print the browser's raw 'Failed to fetch' beside the search box with no way forward, and now shows a proper panel naming the cause with a Try again button. The Analyze button's 'Analyzing…' label was being overwritten by the translation pass and never appeared. Keyboard and screen-reader users can now sort the ledger and open any coin: the column sorters are real buttons that announce their sort direction, every row carries a real link to that coin's dashboard, the time-window and filter controls report whether they are on, and every control on the page shows a visible focus ring.",
 			"link": "/claim-wallet",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "watsonx Constellation: stars actually open when you click them, and the page says which model really answered",
+			"summary": "The galaxy of live Solana tokens at three.ws/constellation had a broken centrepiece. Clicking a star only opened its panel if the click both landed within a pixel or two of the sphere's geometry and finished inside 450 milliseconds, so a slightly slow click, a press held a moment too long, or any tap on a phone silently did nothing. A click is now judged the way every other interface judges one: if the pointer ends where it started, it is a click however long you held it, and it opens the nearest star to where you aimed rather than demanding pixel precision on a dot a few pixels wide. The page also stopped taking credit it had not earned. The layout is meant to come from IBM Granite embeddings on watsonx.ai and the analysis from IBM Granite, but both have automatic failover chains, and the page labelled every result as Granite regardless of what actually served it. The status line now names the embedder that really placed the stars, and the analysis panel names the model that really wrote the text, saying plainly when watsonx Granite could not serve the request. Clicking a star while signed out used to end at \"Analysis unavailable (unauthorized)\"; it now explains that live analysis needs an account and links straight to sign-in and registration, with the galaxy, the live prices and the semantic layout staying open to everyone. The whole surface is reachable from the keyboard for the first time: arrow keys walk the stars in trending order, Enter opens one, Escape closes it and returns you to the galaxy, and a screen reader hears each star announced as you move. A failed or empty token feed now offers a Try again button instead of a dead message, the panel leads with the market cap the feed actually carries rather than a price it usually does not, the panel no longer holds keyboard focus while it is closed, and the hint bar no longer runs off the screen or under the language switcher on a phone or tablet.",
+			"link": "/constellation",
 			"tags": [
 				"fix",
 				"improvement"
