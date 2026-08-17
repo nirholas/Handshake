@@ -50,7 +50,10 @@ function fmtSol(lamports, max = 4) {
 	const n = Number(lamports) / LAMPORTS_PER_SOL;
 	if (!Number.isFinite(n)) return '0';
 	if (n === 0) return '0';
-	if (n < 0.0001) return n.toExponential(2);
+	// Plain decimals all the way down. Exponential notation ("5.00e-6 SOL") is
+	// unreadable next to a lamport figure and reads as a rendering fault rather
+	// than a small number.
+	if (Math.abs(n) < 0.0001) return n.toLocaleString('en-US', { maximumFractionDigits: 9 });
 	return n.toLocaleString('en-US', { maximumFractionDigits: max });
 }
 
@@ -281,9 +284,11 @@ function renderLiveState() {
 		{
 			label: 'Spendable',
 			value: spendable === null ? 'not read' : `${fmtSol(spendable)} SOL`,
-			sub: belowFloor
-				? `${fmtSol(cfg.floor_lamports - w.sol_lamports)} SOL short of the hard floor`
-				: 'balance above the hard floor',
+			sub: !w.balance_read
+				? 'no balance to measure against the floor'
+				: belowFloor
+					? `${fmtSol(cfg.floor_lamports - w.sol_lamports)} SOL short of the hard floor`
+					: 'balance above the hard floor',
 			tone: spendable === null ? '' : spendable <= 0 ? 'bad' : spendable < cfg.min_budget_lamports ? 'warn' : 'good',
 		},
 		{
@@ -324,8 +329,8 @@ function renderLiveState() {
 	$('el-stamp').textContent = `Read ${new Date(seed.generated_at).toLocaleTimeString()}`;
 
 	const notes = [];
-	if (!w.balance_read) notes.push('The fee wallet balance could not be read from Solana RPC, so the projection is seeded from the configured floor. Nothing here should be read as a starvation signal.');
-	if (seed.db_error) notes.push('The facilitator ledger could not be read, so observed demand, fee size, and refusal causes are unavailable. The knobs still work against the live balance and config.');
+	if (!w.balance_read) notes.push('The fee wallet balance could not be read from Solana RPC, so the projection is seeded from the configured floor. Read the verdict as a scenario built on that assumption, not as a live starvation signal, and set the balance knob to project a figure you trust.');
+	if (seed.db_error) notes.push('The facilitator ledger could not be read, so observed demand, fee size, and refusal causes are unavailable. The knobs still work against the config this deploy is running.');
 	if (!seed.self_facilitator_enabled) notes.push('The self-hosted facilitator is disabled on this deploy, so settlement routes externally and this governor is not in the path.');
 	const note = $('el-live-note');
 	note.hidden = notes.length === 0;
@@ -337,7 +342,14 @@ function renderVerdict(summary) {
 	const box = $('el-verdict');
 	const icon = box.querySelector('.el-verdict-icon');
 	const dirty = isDirty();
-	const scope = dirty ? 'With your changes' : 'As configured right now';
+	// With no balance reading the projection is seeded from the configured floor,
+	// which lands on the floor by construction and therefore refuses everything.
+	// Announcing that as a live starvation would be inventing an outage out of an
+	// RPC failure, so the banner says whose number it is projecting.
+	const balanceRead = seed.fee_wallet.balance_read === true;
+	const scope = dirty
+		? 'With your changes'
+		: balanceRead ? 'As configured right now' : 'On the assumed balance';
 
 	const limiterText = {
 		floor: 'the hard SOL floor is refusing settles: the wallet has nothing spendable left, and no config change moves this. Only funding does.',
@@ -361,10 +373,15 @@ function renderVerdict(summary) {
 	// An idle projection has admitted nothing and refused nothing, which is not a
 	// clean bill of health: it is an experiment that was never run. Say that
 	// instead of reporting a 100% admission rate over an empty set.
-	$('el-verdict-detail').textContent = state === 'idle'
+	const unreadBalanceNote = balanceRead
+		? ''
+		: ' The fee wallet balance could not be read from Solana RPC, so this runs on the configured floor rather than a live figure: set the balance knob to project a number you trust.';
+
+	$('el-verdict-detail').textContent = (state === 'idle'
 		? `No settles are attempted over the next ${fmtWhenSpan(summary.hoursSimulated)}, so this projection cannot say whether the rail would admit them. Raise demand to find out what this balance and config would actually deliver.`
 		: `${fmtInt(summary.admitted)} of ${fmtInt(summary.demanded)} settles land over the next ${fmtWhenSpan(summary.hoursSimulated)}: ${limiterText}` +
-			(summary.firstRefusalHour !== null ? ` First refusal ${fmtWhen(summary.firstRefusalHour)}.` : '');
+			(summary.firstRefusalHour !== null ? ` First refusal ${fmtWhen(summary.firstRefusalHour)}.` : '')
+	) + unreadBalanceNote;
 }
 
 function fmtWhenSpan(hours) {
@@ -380,13 +397,25 @@ function renderKpis(summary, knobs) {
 	// floor" are facts about an empty simulation, not about the rail. Reporting
 	// them in green is the same error as a 100% admission rate over zero settles.
 	const idle = summary.demanded === 0;
+	// What this configuration COULD sustain, as opposed to what the demand knob
+	// asked of it. Without this distinction a healthy rail carrying 9,000 settles
+	// a day against 74,900 of capacity reported "-65,900 vs live", which compares
+	// delivered throughput against a ceiling and reads as a collapse.
+	const capacityPerDay = equilibriumSettlesPerDay({
+		spendableLamports: Math.max(0, knobs.startLamports - knobs.floorLamports),
+		feeLamports,
+		runwayDays: knobs.runwayDays,
+		minBudgetLamports: knobs.governorEnabled ? knobs.minBudgetLamports : Number.MAX_SAFE_INTEGER,
+	});
 
 	const kpis = [
 		{
 			label: 'Settles / day',
 			value: fmtInt(steady),
 			tone: steady <= 0 ? 'bad' : steady < 1000 ? 'warn' : 'good',
-			delta: delta === null ? 'steady state' : delta === 0 ? 'same as live' : `${delta > 0 ? '+' : ''}${fmtInt(delta)} vs live`,
+			delta: summary.limiter === 'demand'
+				? `demand-limited; capacity ${fmtInt(capacityPerDay)}/day`
+				: delta === null ? 'steady state' : delta === 0 ? 'same as live' : `${delta > 0 ? '+' : ''}${fmtInt(delta)} vs live`,
 		},
 		{
 			label: 'Admission rate',
@@ -436,7 +465,14 @@ function drawChart(series, knobs) {
 	const canvas = $('el-chart');
 	const dpr = Math.min(2, window.devicePixelRatio || 1);
 	const cssW = canvas.clientWidth || 1000;
-	const cssH = Math.round((cssW * 380) / 1000);
+	const narrow = cssW < 560;
+	// A phone gets a taller chart. At the wide 380/1000 ratio a 235px-wide canvas
+	// is 89px tall, and after the axis gutters there is barely a plot left to
+	// read.
+	const cssH = Math.round(cssW * (narrow ? 0.66 : 0.38));
+	// Explicit height, or the stylesheet's aspect-ratio keeps the box at the wide
+	// ratio and the backing store is drawn squashed into it.
+	canvas.style.height = `${cssH}px`;
 	canvas.width = Math.round(cssW * dpr);
 	canvas.height = Math.round(cssH * dpr);
 	const ctx = canvas.getContext('2d');
@@ -451,8 +487,8 @@ function drawChart(series, knobs) {
 	const danger = col('--el-danger', '#fb7185');
 	const info = col('--el-info', '#7dd3fc');
 
-	const padL = 58;
-	const padR = 52;
+	const padL = narrow ? 42 : 58;
+	const padR = narrow ? 34 : 52;
 	const padT = 16;
 	const padB = 28;
 	const w = cssW - padL - padR;
@@ -782,8 +818,10 @@ function renderObserved(summary) {
 // ── Render ─────────────────────────────────────────────────────────────────
 let rafId = 0;
 function render() {
+	if (!seed) return;
 	cancelAnimationFrame(rafId);
 	rafId = requestAnimationFrame(() => {
+		if (!seed) return;
 		const knobs = readKnobs();
 		const { series, summary } = simulateRunway({
 			...knobs,
@@ -826,44 +864,84 @@ function esc(s) {
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────
+// Without a seed there is nothing for a knob to move, so the panel is disabled
+// rather than left looking live. Six sliders, a switch, and a number field that
+// silently do nothing is a worse failure than the one that caused it: the
+// visitor concludes the lab is broken in some deeper way than "one fetch
+// failed", and there is nothing on screen to tell them otherwise.
+function setControlsEnabled(on) {
+	for (const key of Object.keys(KNOBS)) KNOBS[key].el.disabled = !on;
+	$('el-governor').disabled = !on;
+	$('el-target').disabled = !on;
+	if (!on) $('el-reset').disabled = true;
+	$('el-controls').dataset.inert = String(!on);
+}
+
+function showLoading() {
+	const box = $('el-verdict');
+	box.dataset.state = 'loading';
+	box.querySelector('.el-verdict-icon').innerHTML = '<span class="el-spin"></span>';
+	$('el-verdict-head').textContent = 'Reading live rail state';
+	$('el-verdict-detail').textContent =
+		'Fetching the fee wallet balance, the governor config this deploy is running, and 24 hours of settle outcomes.';
+	$('el-retry').hidden = true;
+	$('el-stats').innerHTML = '<div class="el-stat el-skeleton" aria-hidden="true"></div>'.repeat(6);
+	$('el-live-note').hidden = true;
+	setControlsEnabled(false);
+}
+
 function fail(message) {
 	const box = $('el-verdict');
 	box.dataset.state = 'error';
 	box.querySelector('.el-verdict-icon').textContent = '×';
 	$('el-verdict-head').textContent = 'Could not read the live rail';
 	$('el-verdict-detail').textContent =
-		`${message} The lab needs live state to be honest, so it will not fall back to invented numbers. Retry, or read the raw seed at /api/x402/runway-lab.`;
+		`${message} The lab needs live state to be honest, so it will not fall back to invented numbers. Retry below, or read the raw seed at /api/x402/runway-lab.`;
+	$('el-retry').hidden = false;
 	$('el-stats').innerHTML = '';
+	$('el-live-note').hidden = true;
+	setControlsEnabled(false);
 }
 
-async function boot() {
+async function loadAndRender() {
+	showLoading();
+	try {
+		seed = await loadSeed();
+	} catch (err) {
+		seed = null;
+		fail(err?.message ? `${err.message}.` : 'The seed request failed.');
+		return;
+	}
+
+	$('el-retry').hidden = true;
+	setControlsEnabled(true);
+	applySeedToKnobs();
+	renderLiveState();
+	render();
+}
+
+function boot() {
 	for (const key of Object.keys(KNOBS)) {
 		KNOBS[key].el = $(`el-${key}`);
 		KNOBS[key].out = $(`el-${key}-out`);
 	}
 	initTooltips();
 
-	try {
-		seed = await loadSeed();
-	} catch (err) {
-		fail(err?.message ? `${err.message}.` : 'The seed request failed.');
-		return;
-	}
-
-	applySeedToKnobs();
-	renderLiveState();
-
+	// Bound once, before the first fetch: render() is a no-op without a seed, so
+	// a retry after a failure needs no rewiring and cannot double-bind.
 	for (const key of Object.keys(KNOBS)) KNOBS[key].el.addEventListener('input', render);
 	$('el-governor').addEventListener('change', render);
-	$('el-target').addEventListener('input', () => { renderLevers(); });
+	$('el-target').addEventListener('input', () => { if (seed) renderLevers(); });
 	$('el-reset').addEventListener('click', () => {
+		if (!seed) return;
 		for (const key of Object.keys(KNOBS)) KNOBS[key].el.value = String(KNOBS[key].live);
 		$('el-governor').checked = seed.config.governor_enabled;
 		render();
 	});
+	$('el-retry').addEventListener('click', () => { loadAndRender(); });
 	window.addEventListener('resize', () => render(), { passive: true });
 
-	render();
+	loadAndRender();
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

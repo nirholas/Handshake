@@ -185,6 +185,23 @@
 .el-verdict-head { margin: 0; font-weight: 650; font-size: 1.02rem; }
 .el-verdict-detail { margin: 0.3rem 0 0; color: var(--el-muted); font-size: 0.93rem; }
 
+/* The recovery action for a failed seed read. Hidden until there is something
+   to recover from, so the healthy page never carries a stray button. */
+.el-retry {
+	margin-top: 0.7rem;
+	border: 1px solid var(--el-danger);
+	background: transparent;
+	color: var(--el-ink);
+	border-radius: 999px;
+	padding: 0.34rem 0.9rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.16s ease, color 0.16s ease;
+}
+.el-retry:hover { background: var(--el-danger); color: var(--el-bg); }
+.el-retry:active { transform: translateY(1px); }
+
 /* ── Sections ──────────────────────────────────────────────────────────── */
 .el-section { margin-top: clamp(2.25rem, 5vw, 3.5rem); }
 .el-section-head { margin-bottom: 1rem; }
@@ -277,6 +294,15 @@
 	background: var(--el-surface);
 	padding: 1.1rem 1.15rem 1.25rem;
 }
+
+/* No seed, no knobs: the panel dims and stops taking input rather than
+   pretending a slider still drives a projection that cannot be computed. */
+.el-panel-controls[data-inert='true'] {
+	opacity: 0.45;
+	filter: saturate(0.4);
+}
+.el-panel-controls[data-inert='true'] .el-hint,
+.el-panel-controls[data-inert='true'] .el-value { visibility: hidden; }
 
 .el-panel-head {
 	display: flex;
@@ -506,6 +532,9 @@
 	display: block;
 	width: 100%;
 	height: auto;
+	/* Reserves the box before the first paint so nothing shifts under the
+	   reader. drawChart() then sets an explicit height, taller on narrow
+	   viewports where this ratio leaves no plot to read. */
 	aspect-ratio: 1000 / 380;
 	border-radius: var(--el-r-sm);
 	background: var(--el-surface-2);

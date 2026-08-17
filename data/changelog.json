@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Trial Conversions: the Buy button lands on the right skill, and Edit pricing stops going nowhere",
+			"summary": "Six fixes to the Trial Conversions page, which shows both sides of a free trial running out: the trials you hold and the trials running on skills you sell. A seller's Edit pricing button pointed at a page that no longer exists and answered 404 on every row; it now opens that agent's monetization panel, where the price and the trial grant are actually set. A buyer's Buy it and Open agent buttons dropped you at the top of an agent selling a dozen skills, leaving you to hunt for the one your trial just ran out on; they now open the agent's pricing list scrolled to that exact skill, with the row briefly marked so you can see which one you came for. Those links also took a redirect that quietly discarded everything after the question mark, so they now use the direct address. A trial whose skill has since been delisted used to claim \"1 of 1 free runs left\", inventing a grant size nobody ever reported, and said \"free runs\" even when there was one run; the count now says only what is known, and matches word for word what a screen reader is told. A row missing a timestamp printed the bare word \"started\" with nothing after it, and the seller list said \"1 trials running\"; both now read as sentences. If you hold more trials than one page can carry, the page says how many it is leaving out instead of showing a total that stops at the cap. Sellers who price in more than one currency now see the currencies the headline number cannot hold, rather than only the largest pile.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/conversions"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Coin Intelligence fits a phone screen, and a search no longer snaps back to the previous results",
 			"summary": "Five fixes to the Coin Intelligence dashboard. On a narrow phone the page was sized against its own tab strip rather than the screen, pushing the layout about 170px wider than the viewport; because the site clips sideways overflow, the right-hand third of the headline, the counters and every coin card was cut off with no way to scroll to it. The page now fits the screen and the tab strip scrolls inside its own row. Changing a filter or typing a search could also snap back to the previous set of coins a second later, because the older request was still open and whichever answer arrived last won; only the newest request can now paint the radar. The leaderboard used to greet an empty day with the radar's message about loosening filters, next to a Reset filters button that did nothing at all, since the leaderboard has no filters; it now explains that nothing has cleared observation in the last 24 hours. When the feed is down, the counters in the header stay in place instead of vanishing, the Confirmed winners rail and the Outcomes and Coverage panels say so instead of standing over empty boxes, and every one of those messages now carries a Retry that actually reloads. Smart Money shows shimmering placeholder rows while its cross-coin wallet aggregate is computed, and that aggregate plus the learning stats are now cached for minutes at the edge rather than seconds, so repeat visits are immediate.",
 			"tags": [
@@ -24324,6 +24334,16 @@
 				"improvement"
 			],
 			"link": "/coin3d"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Talking Avatar Video stops handing the renderer a 3D file where a photo belongs, and says up front when the GPU lane is down",
+			"summary": "The /create/video page turns one of your avatars plus an audio clip into a lip-synced video, and it was driven end to end in a real browser: every state, every button, every width. The worst finding was invisible from the page. The reference frame the GPU worker renders from was being taken from whatever the browser had handy, which for an avatar with no thumbnail meant its 3D model file. The worker saved that as the reference photo and then failed on it minutes later, after the wait had already been spent. The page now sends only the avatar, and the server resolves a real image for it: the stored thumbnail, or a fresh portrait render when there is none. Second, the GPU renderer is a separate service, and when it is not running the only signal was a failure after you had already picked a file and uploaded it. The page now asks first and, if the lane is down, says so at the top, keeps Generate switched off, and points at the Avatar Studio and prompt-to-avatar in the meantime. The rest is the ordinary polish an audit turns up: a failed avatar list used to look identical to owning no avatars, so it sent people off to create one they already had, and now it says what broke and offers a retry; having no avatars yet gets a real empty state with a link to make one; the Generate button always explains what it is still waiting for and, once audio is in, how many clips of video that audio is worth; the clip you picked can be played back with its length and size before you spend a generation on it; a render job that goes unreachable now says so after thirty seconds instead of spinning for twenty minutes; and after a spent free trial the button under the error no longer stayed stuck on Upgrade plan for every later error. Avatar thumbnails are real buttons with visible focus rings, the two form fields have proper labels, and the second animated avatar that the site companion used to drop onto this page no longer loads over the one you are working on.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/create/video"
 		}
 	]
 }

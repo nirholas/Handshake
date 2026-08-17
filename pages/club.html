@@ -143,6 +143,16 @@
 				color: var(--text-2);
 			}
 			#club-top .spacer { flex: 1; }
+			/* The bar is a nowrap flex row inside an `overflow: hidden` body, so
+			   anything that does not fit is clipped away with no way to scroll to
+			   it. On a 320px phone that silently ate the audio and 8D buttons.
+			   Drop the read-only labels (the tagline and the price/rail pills, all
+			   of which the panel's "How it works" section repeats) and let the two
+			   real controls keep the room. */
+			@media (max-width: 560px) {
+				#club-top .tagline { display: none; }
+				#club-top .club-pill:not(.club-pill-toggle) { display: none; }
+			}
 			.club-pill {
 				display: inline-flex;
 				align-items: center;

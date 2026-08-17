@@ -383,7 +383,7 @@ export function createNvidiaCosmosProvider() {
 			const candidates = invokeCandidates();
 			let retiredErr = null;
 			let parsed = null;
-			for (const url of candidates) {
+			for (const [i, url] of candidates.entries()) {
 				try {
 					parsed = await postInvoke(body, url);
 					break;
@@ -391,7 +391,12 @@ export function createNvidiaCosmosProvider() {
 					// Only a retired route is worth stepping past; a key, quota, or
 					// gateway failure means the next rung would fail the same way.
 					if (err?.code !== 'lane_unavailable') throw err;
-					console.warn('[nvidia-cosmos] route retired, trying the next rung: %s', url);
+					const more = i < candidates.length - 1;
+					console.warn(
+						'[nvidia-cosmos] route retired for this account (%s): %s',
+						more ? 'trying the next rung' : 'no rungs left',
+						url,
+					);
 					retiredErr = err;
 				}
 			}

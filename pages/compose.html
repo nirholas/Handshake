@@ -39,6 +39,12 @@
 			/* Screen-reader-only: kept focusable, unlike display:none. */
 			.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;}
 
+			/* One explicit keyboard focus ring for the whole editor. The UA default
+			   resolves to a near-black outline against these dark surfaces, which is
+			   effectively invisible on the panels. */
+			:focus-visible{outline:2px solid var(--accent-text);outline-offset:2px;border-radius:var(--rs);}
+			#cc:focus-visible{outline-offset:-2px;}
+
 			/* Root grid. min-width:0 on every track child so a wide toolbar can never
 			   force the grid past the viewport (that is what clipped the canvas and
 			   the whole right panel off-screen at 320px). */
