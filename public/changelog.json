@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T07:37:02.213Z",
+	"generated_at": "2026-08-17T07:52:30.838Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -411,6 +411,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "The coin-community lobby tells you which worlds people are actually standing in",
+			"summary": "The front door at three.ws/play has been rebuilt around the question it exists to answer: which of these coin worlds is worth walking into right now. It opens with the claim and three live numbers (how many communities are listed, how many people are inside a world at this moment, and what those communities are worth together), and every one of them is measured rather than decorated: the headcount comes straight from the multiplayer matchmaker, and when that cannot be read the number is left out instead of guessed. Each card now carries its own live count, so a world with nine people in it says so, and the search field has grown into a full-width command bar with a / shortcut and a clear button. Above the grid there are four orderings that are real reorders of real fields: the live trending order, most people inside, biggest market cap, and newest launch; the headcount ordering stays switched off, and says why, while live counts are unavailable. Cards gained the details you actually pick a world on (how old the coin is, whether it launched in the last day, whether it is still on its bonding curve, and how loud its board is), and lost the badge that was true of almost every coin and therefore told you nothing. The avatar picker, which used to be a tall panel standing between you and the worlds, is now a single row showing the avatar you will be seen as and the name above your head, folded away for anyone who has already chosen and wide open for anyone who has not. A card whose artwork fails to load keeps the coin's initial instead of leaving a grey hole, the grid fades in in reading order, and the whole page holds together from a 390px phone to a desktop.",
+			"link": "/play",
+			"tags": [
+				"improvement",
+				"feature"
 			]
 		},
 		{
