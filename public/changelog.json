@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T13:44:11.030Z",
+	"generated_at": "2026-08-17T13:53:45.524Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -543,6 +543,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Trading Swarms reads on a phone, says what actually went wrong, and lets you get back to the full directory",
+			"summary": "The swarms page has had an end-to-end pass. When something failed, it used to print the server's internal code at you: a swarm that no longer exists said \"not_found\", and a rejected contribution said \"bad_agent\". It now shows the sentence the API was already sending, so a failed join tells you what to do about it. \"My swarms\" was a one-way door with no way back to the public list; it is now a proper two-state switch next to the network switch, and both live in the address bar, so a filtered view is a link you can share and the back button behaves. Every swarm card is a real link too, so you can middle-click or cmd-click one open in a new tab. On a 320px phone the cards and the dashboard panels used to be cut off at the right edge; they now fit. The join, create, and kill dialogs take keyboard focus when they open, hold Tab inside themselves, and hand focus back to whatever you opened them from, and signing in or creating an agent is now offered as a button rather than named in a toast you cannot act on.",
+			"link": "/swarms",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
