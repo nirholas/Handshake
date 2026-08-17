@@ -82,8 +82,8 @@ describe('isGrounded', () => {
 	});
 
 	it('allows the follower count, which is real but not part of the trade', () => {
-		expect(isGrounded({ hook: '$NIBZ closed 1.89x.', feature_stat: '1.89x', body: 'Copied by 12 traders.', alt_text: 'A win.' }, WIN, 12)).toBe(true);
-		expect(isGrounded({ hook: '$NIBZ closed 1.89x.', feature_stat: '1.89x', body: 'Copied by 900 traders.', alt_text: 'A win.' }, WIN, 12)).toBe(false);
+		expect(isGrounded({ hook: '$NIBZ closed 1.89x.', feature_stat: '1.89x', body: 'Copied by 12 traders.', alt_text: 'A win.' }, WIN, { copiedByCount: 12 })).toBe(true);
+		expect(isGrounded({ hook: '$NIBZ closed 1.89x.', feature_stat: '1.89x', body: 'Copied by 900 traders.', alt_text: 'A win.' }, WIN, { copiedByCount: 12 })).toBe(false);
 	});
 
 	it('rejects empty copy rather than passing it through as vacuously grounded', () => {
@@ -128,7 +128,7 @@ describe('directClip', () => {
 	it('rejects a card whose numbers only survive until the length clamp cuts them', async () => {
 		// finalize() clamps the hook at 120 chars. A clamp landing mid-number turns
 		// a real 1.89 into a stated 1.8, so the guard runs on the finalized bytes.
-		const pad = 'On-chain, verifiable, no screenshots, the full round-trip is on the record for anyone to check today.';
+		const pad = 'On-chain, verifiable, no screenshots, and the whole round-trip stays on the public record for anyone to check.';
 		llmText.mockResolvedValue(JSON.stringify({
 			hook: `${pad} $NIBZ 1.89x`,
 			feature_stat: '1.89x', avatar_gesture: 'celebrate',
@@ -139,12 +139,14 @@ describe('directClip', () => {
 	});
 
 	it('gives a loss an honest card, never a celebration', async () => {
-		llmText.mockRejectedValue(new Error('providers exhausted'));
+		llmText.mockImplementation(() => { throw new Error('providers exhausted'); });
+		// "Swarm 2" is a real agent name, not a stated figure: the guard has to know
+		// the difference or every numbered agent falls back forever.
 		const clip = await directClip({ agentName: 'Swarm 2', trade: LOSS, surface: 'feed' });
 		expect(clip.source).toBe('deterministic');
 		expect(['sweat', 'shrug']).toContain(clip.avatar_gesture);
 		expect(clip.cta).toBe('view-track-record');
-		expect(isGrounded(clip, LOSS)).toBe(true);
+		expect(isGrounded(clip, LOSS, { agentName: 'Swarm 2' })).toBe(true);
 	});
 
 	it('will not let a writer celebrate a stop-out', async () => {

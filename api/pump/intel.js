@@ -323,22 +323,27 @@ async function getTraders({ network, limit }) {
 	const cap = Math.max(1, Math.min(100, limit || 40));
 	let traders = [];
 	try {
+		// `count(*)`, not `count(distinct w.mint)`: pump_coin_wallets is unique on
+		// (mint, wallet), so within a `group by w.wallet` the mints are already
+		// distinct and the DISTINCT only bought a sort of the whole 3M-row ledger by
+		// (wallet, mint) that spilled ~100MB to disk on every request. Same result,
+		// one hash aggregate instead.
 		const rows = await sql`
 			select w.wallet,
-				count(distinct w.mint)::int as coins,
+				count(*)::int as coins,
 				sum(w.buy_lamports)::numeric as buy_lamports,
 				sum(w.sell_lamports)::numeric as sell_lamports,
 				sum(w.buy_count)::int as buys,
 				sum(w.sell_count)::int as sells,
 				bool_or(w.is_creator) as ever_creator,
-				count(distinct w.mint) filter (where o.outcome in ('graduated','pumped'))::int as wins,
-				count(distinct w.mint) filter (where o.outcome is not null and o.outcome <> 'unknown')::int as labeled
+				count(*) filter (where o.outcome in ('graduated','pumped'))::int as wins,
+				count(*) filter (where o.outcome is not null and o.outcome <> 'unknown')::int as labeled
 			from pump_coin_wallets w
 			join pump_coin_intel i on i.mint = w.mint and i.network = ${network}
 			left join pump_coin_outcomes o on o.mint = w.mint
 			where w.buy_count > 0
 			group by w.wallet
-			having count(distinct w.mint) >= 2
+			having count(*) >= 2
 			order by sum(w.buy_lamports) desc
 			limit ${cap}
 		`;
@@ -490,8 +495,16 @@ export default wrap(async (req, res) => {
 				});
 				break;
 		}
-		return json(res, 200, { view, network, ...payload, ts: Date.now() },
-			{ 'cache-control': 'public, max-age=5, stale-while-revalidate=20' });
+		// The radar is a live feed and stays on a 5s edge cache. `traders` and
+		// `learning` are whole-history aggregates over every observed coin: they cost
+		// seconds to compute and move by fractions of a percent between runs, so a
+		// 5s cache made every visitor pay the full aggregate. Serve them for minutes
+		// and revalidate in the background instead.
+		const SLOW_AGGREGATE_VIEWS = new Set(['traders', 'learning']);
+		const cacheControl = SLOW_AGGREGATE_VIEWS.has(view)
+			? 'public, max-age=300, stale-while-revalidate=3600'
+			: 'public, max-age=5, stale-while-revalidate=20';
+		return json(res, 200, { view, network, ...payload, ts: Date.now() }, { 'cache-control': cacheControl });
 	} catch (err) {
 		// The engine tables may not be migrated in this environment yet. Tell the
 		// dashboard so it shows its "warming up" state rather than a hard failure.
