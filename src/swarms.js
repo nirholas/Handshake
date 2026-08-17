@@ -14,7 +14,7 @@ const PCT = (n) => (n == null ? '—' : `${(Number(n) * 100).toFixed(0)}%`);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const short = (a) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '');
 
-const state = { network: 'mainnet', agents: null, authed: false };
+const state = { agents: null, authed: false };
 
 // Single-use CSRF token for a state-changing call. Never cached: the server
 // consumes the token in the same statement that validates it, so a reused one is
@@ -30,6 +30,17 @@ async function csrfToken() {
 	}
 }
 
+// The platform error envelope is { error: <machine code>, error_description: <sentence> }.
+// Reading `error` first surfaced raw codes to the user: a missing swarm read
+// "not_found" and a rejected contribution read "bad_agent", so the human sentence the
+// API already sends never reached the screen. Prefer the sentence, in the order the
+// handlers actually populate it, and only fall back to the code when there is none.
+function errorText(data, status) {
+	const pick = [data?.error_description, data?.message, data?.error?.message, typeof data?.error === 'string' ? data.error : null]
+		.find((v) => typeof v === 'string' && v.trim());
+	return pick ? pick.trim() : `Request failed (HTTP ${status}).`;
+}
+
 async function api(path, opts = {}) {
 	const ctrl = new AbortController();
 	const to = setTimeout(() => ctrl.abort(), opts.timeout || 20000);
@@ -43,7 +54,7 @@ async function api(path, opts = {}) {
 		}
 		const res = await fetch(path, { credentials: 'include', signal: ctrl.signal, ...opts, headers });
 		const data = await res.json().catch(() => null);
-		return { ok: res.ok, status: res.status, data: data?.data ?? data, error: res.ok ? null : data?.message || data?.error || `HTTP ${res.status}` };
+		return { ok: res.ok, status: res.status, data: data?.data ?? data, error: res.ok ? null : errorText(data, res.status) };
 	} catch (e) {
 		return { ok: false, status: 0, data: null, error: e?.name === 'AbortError' ? 'request timed out' : 'network error' };
 	} finally {
@@ -54,31 +65,71 @@ async function api(path, opts = {}) {
 function toast(msg, isErr = false) {
 	const t = document.createElement('div');
 	t.className = 'sw-toast' + (isErr ? ' err' : '');
+	// Errors interrupt, confirmations wait their turn; either way the toast is the only
+	// feedback some actions give, so it has to reach a screen reader.
+	t.setAttribute('role', isErr ? 'alert' : 'status');
 	t.textContent = msg;
 	document.body.appendChild(t);
 	setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, isErr ? 5200 : 3400);
 }
 
-async function loadAgents() {
-	if (state.agents) return state.agents;
-	const r = await api('/api/agents');
-	const list = Array.isArray(r.data) ? r.data : Array.isArray(r.data?.agents) ? r.data.agents : [];
-	state.agents = list.map((a) => ({ id: a.id, name: a.name || 'Agent' }));
-	state.authed = r.ok;
-	return state.agents;
+// The in-flight promise is cached, not just the result: boot and the dashboard's
+// action bar both need the agent list, and without this they raced into two
+// identical reads on every dashboard open.
+let agentsPromise = null;
+function loadAgents() {
+	if (state.agents) return Promise.resolve(state.agents);
+	if (agentsPromise) return agentsPromise;
+	// /api/auth/me answers 200 with a null user for a signed-out visitor, while
+	// /api/agents answers 401. Asking the former first keeps a page that reads
+	// perfectly well anonymously from logging a console error on every visit, and
+	// skips a request whose answer is already known.
+	agentsPromise = api('/api/auth/me').then(async (me) => {
+		state.authed = Boolean(me.ok && (me.data?.user || me.data?.id));
+		if (!state.authed) return (state.agents = []);
+		const r = await api('/api/agents');
+		const list = Array.isArray(r.data) ? r.data : Array.isArray(r.data?.agents) ? r.data.agents : [];
+		state.authed = r.ok;
+		return (state.agents = list.map((a) => ({ id: a.id, name: a.name || 'Agent' })));
+	}).finally(() => { agentsPromise = null; });
+	return agentsPromise;
 }
 
 // ── router ────────────────────────────────────────────────────────────────────
+//
+// Everything that decides what the page shows (which swarm, which network, whose
+// swarms) lives in the query string, so every view is linkable, survives a reload,
+// and answers the back button. Scope used to be click-only state with no way back to
+// the public list once you opened "My swarms".
 
-function currentId() {
-	return new URL(location.href).searchParams.get('id');
-}
-function goto(id) {
+const params = () => new URL(location.href).searchParams;
+const currentId = () => params().get('id');
+const currentNetwork = () => (params().get('network') === 'devnet' ? 'devnet' : 'mainnet');
+const currentScope = () => (params().get('scope') === 'mine' ? 'mine' : 'all');
+
+// Build the URL this page would have with `patch` applied; null clears a key.
+function hrefWith(patch) {
 	const u = new URL(location.href);
-	if (id) u.searchParams.set('id', id); else u.searchParams.delete('id');
-	history.pushState({}, '', u);
+	for (const [k, v] of Object.entries(patch)) {
+		if (v == null || v === '') u.searchParams.delete(k);
+		else u.searchParams.set(k, String(v));
+	}
+	const q = u.searchParams.toString();
+	return u.pathname + (q ? `?${q}` : '');
+}
+
+// Navigating between swarms pushes history; flipping a filter replaces it, so the
+// back button steps between views rather than through every toggle.
+function navigate(patch, { replace = false } = {}) {
+	const href = hrefWith(patch);
+	if (href === location.pathname + location.search) return;
+	history[replace ? 'replaceState' : 'pushState']({}, '', href);
 	render();
 }
+
+const goto = (id) => navigate({ id });
+const isPlainClick = (e) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+
 window.addEventListener('popstate', render);
 
 function render() {
@@ -90,65 +141,98 @@ function render() {
 // ── directory ──────────────────────────────────────────────────────────────────
 
 async function renderDirectory() {
+	const net = currentNetwork();
+	const scope = currentScope();
 	root.innerHTML = `
 		<section class="sw-hero">
 			<div>
 				<h1>Trading Swarms</h1>
-				<p>Pool capital with other agents into one auditable on-chain treasury. The swarm only fires when enough of its members' verified track record agrees — and pays realized profit back to every member pro-rata.</p>
+				<p>Pool capital with other agents into one auditable on-chain treasury. The swarm only fires when enough of its members' verified track record agrees, and pays realized profit back to every member pro-rata.</p>
 			</div>
 			<div class="sw-hero-actions">
 				<button class="sw-btn sw-btn--primary" id="sw-create">＋ Create a swarm</button>
 			</div>
 		</section>
 		<div class="sw-toolbar">
-			<div class="sw-seg" role="tablist" aria-label="Network">
-				<button data-net="mainnet" aria-pressed="${state.network === 'mainnet'}">Mainnet</button>
-				<button data-net="devnet" aria-pressed="${state.network === 'devnet'}">Devnet</button>
+			<div class="sw-seg" role="group" aria-label="Which swarms to show">
+				<button data-scope="all" aria-pressed="${scope === 'all'}">All swarms</button>
+				<button data-scope="mine" aria-pressed="${scope === 'mine'}">My swarms</button>
 			</div>
-			<button class="sw-btn sw-btn--ghost sw-btn--sm" id="sw-mine">My swarms</button>
+			<div class="sw-seg" role="group" aria-label="Network">
+				<button data-net="mainnet" aria-pressed="${net === 'mainnet'}">Mainnet</button>
+				<button data-net="devnet" aria-pressed="${net === 'devnet'}">Devnet</button>
+			</div>
 		</div>
 		<div id="sw-list" class="sw-grid" aria-busy="true">${skeletons(6)}</div>`;
 
 	document.getElementById('sw-create').onclick = openCreateModal;
 	root.querySelectorAll('[data-net]').forEach((b) => {
-		b.onclick = () => { state.network = b.dataset.net; renderDirectory(); };
+		b.onclick = () => navigate({ network: b.dataset.net === 'devnet' ? 'devnet' : null }, { replace: true });
 	});
-	document.getElementById('sw-mine').onclick = () => loadList(true);
+	root.querySelectorAll('[data-scope]').forEach((b) => {
+		b.onclick = () => navigate({ scope: b.dataset.scope === 'mine' ? 'mine' : null }, { replace: true });
+	});
 
-	loadList(false);
+	loadList();
 }
 
 function skeletons(n) {
 	return Array.from({ length: n }, () => '<div class="sw-skel"></div>').join('');
 }
 
-async function loadList(mine) {
+// Every list read carries a generation. A slower earlier request (the public list
+// still in flight when the visitor switches to "My swarms") used to land last and
+// overwrite the newer result, so the toolbar and the grid disagreed.
+let listGen = 0;
+
+async function loadList() {
+	const gen = ++listGen;
 	const listEl = document.getElementById('sw-list');
 	if (!listEl) return;
+	const mine = currentScope() === 'mine';
+	const network = currentNetwork();
 	listEl.setAttribute('aria-busy', 'true');
 	listEl.innerHTML = skeletons(6);
-	const path = mine ? `/api/swarms?mine=1&network=${state.network}` : `/api/swarms?network=${state.network}`;
-	const r = await api(path);
+	// A signed-out visitor's "my swarms" read can only ever 401, so resolve the session
+	// first and answer from what we already know instead of spending a round trip on a
+	// guaranteed rejection. The 401 branch below still covers a session that expired
+	// between this check and the read.
+	if (mine) await loadAgents();
+	const r = state.authed || !mine
+		? await api(`/api/swarms?${mine ? 'mine=1&' : ''}network=${network}`)
+		: { ok: false, status: 401, data: null, error: 'sign in required' };
+	if (gen !== listGen || !listEl.isConnected) return; // superseded by a newer read
 	listEl.setAttribute('aria-busy', 'false');
 	if (!r.ok && r.status === 401 && mine) {
-		listEl.innerHTML = msg('Sign in to see your swarms', 'Your swarms — ones you created or funded — appear here once you sign in.');
+		listEl.innerHTML = msg('Sign in to see your swarms', 'Swarms you created or funded appear here once you sign in.', 'Sign in', () => { location.href = loginHref(); });
 		return;
 	}
 	if (!r.ok) {
-		listEl.innerHTML = msg('Couldn’t load swarms', esc(r.error || 'Something went wrong.'), 'Retry', () => loadList(mine));
+		listEl.innerHTML = msg('Couldn’t load swarms', esc(r.error || 'Something went wrong.'), 'Retry', () => loadList());
 		return;
 	}
 	const swarms = Array.isArray(r.data) ? r.data : [];
 	if (!swarms.length) {
 		listEl.innerHTML = mine
 			? msg('No swarms yet', 'You haven’t created or joined a swarm. Start one and invite agents to pool capital.', 'Create a swarm', openCreateModal)
-			: msg('No open swarms yet', 'Be the first — create a swarm, set its consensus policy, and invite other agents to fund the treasury.', 'Create a swarm', openCreateModal);
+			: msg(`No open swarms on ${network} yet`, 'Be the first: create a swarm, set its consensus policy, and invite other agents to fund the treasury.', 'Create a swarm', openCreateModal);
 		return;
 	}
 	listEl.innerHTML = swarms.map(cardHTML).join('');
 	listEl.querySelectorAll('[data-swarm]').forEach((c) => {
-		c.onclick = () => goto(c.dataset.swarm);
-		c.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goto(c.dataset.swarm); } };
+		// The card is a real link, so cmd/middle-click opens the swarm in a new tab and
+		// the browser shows its target on hover. Only a plain click is intercepted, and
+		// the re-render is deferred out of the dispatch: rewriting root.innerHTML from
+		// inside the handler detaches the anchor that is still being dispatched on.
+		// data-no-transition on the markup is what lets this handler run at all: the
+		// site-wide view-transition listener in src/view-transitions.js captures internal
+		// link clicks at the document level, ahead of any per-page handler, and would
+		// otherwise turn each directory click into a full page load.
+		c.onclick = (e) => {
+			if (!isPlainClick(e)) return;
+			e.preventDefault();
+			queueMicrotask(() => goto(c.dataset.swarm));
+		};
 	});
 }
 
@@ -162,7 +246,7 @@ function cardHTML(s) {
 	const pnlCls = s.realized_pnl_sol > 0 ? 'pos' : s.realized_pnl_sol < 0 ? 'neg' : '';
 	const wr = s.win_rate == null ? '—' : `${Math.round(s.win_rate * 100)}%`;
 	return `
-		<a class="sw-card" tabindex="0" role="button" data-swarm="${esc(s.id)}" aria-label="Open ${esc(s.name)}">
+		<a class="sw-card" href="${esc(hrefWith({ id: s.id }))}" data-no-transition="1" data-swarm="${esc(s.id)}" aria-label="Open ${esc(s.name)}">
 			<div class="sw-card-top">
 				<h3 class="sw-card-name">${esc(s.name)}</h3>
 				${statusPill(s.status)}
@@ -195,21 +279,43 @@ function closeStream() {
 	if (activeStream) { try { activeStream.close(); } catch {} activeStream = null; }
 }
 
+let dashGen = 0;
+
 async function renderDashboard(id) {
 	closeStream();
-	root.innerHTML = `<a class="sw-back" id="sw-back" href="/swarms">← All swarms</a><div id="sw-dash" aria-busy="true">${skeletons(3)}</div>`;
-	document.getElementById('sw-back').onclick = (e) => { e.preventDefault(); goto(null); };
+	const gen = ++dashGen;
+	root.innerHTML = `<a class="sw-back" id="sw-back" href="${esc(hrefWith({ id: null }))}" data-no-transition="1">← All swarms</a>
+		<div id="sw-dash" aria-busy="true">${dashSkeleton()}</div>`;
+	document.getElementById('sw-back').onclick = (e) => {
+		if (!isPlainClick(e)) return;
+		e.preventDefault();
+		queueMicrotask(() => goto(null));
+	};
 
 	const r = await api(`/api/swarms/${id}`);
 	const dash = document.getElementById('sw-dash');
-	if (!dash) return;
+	if (gen !== dashGen || !dash) return; // the visitor moved on before this landed
 	dash.setAttribute('aria-busy', 'false');
 	if (!r.ok) {
-		dash.innerHTML = msg('Swarm not found', esc(r.error || 'This swarm doesn’t exist or was removed.'), 'Back to directory', () => goto(null));
+		const [title, body] = r.status === 404
+			? ['Swarm not found', 'This swarm doesn’t exist, or it was removed.']
+			: ['Couldn’t load this swarm', r.error || 'Something went wrong.'];
+		dash.innerHTML = msg(title, esc(body), r.status === 404 ? 'Back to directory' : 'Retry',
+			r.status === 404 ? () => goto(null) : () => renderDashboard(id));
 		return;
 	}
 	paintDashboard(dash, r.data);
 	subscribeStream(id);
+}
+
+// Mirrors the real dashboard's shape (title strip, tile row, two panels) so the load
+// does not reflow from a stack of card-sized blocks into a different layout.
+function dashSkeleton() {
+	return `<div class="sw-dash-skel">
+		<div class="sw-skel"></div>
+		<div class="sw-skel sw-skel--tiles"></div>
+		<div class="sw-skel sw-skel--panel"></div>
+	</div>`;
 }
 
 function paintDashboard(dash, s) {
@@ -217,13 +323,12 @@ function paintDashboard(dash, s) {
 	const pol = s.policy;
 	const tr = s.treasury;
 	const rec = s.track_record;
-	const member = s.viewer_member;
 	const pnlCls = rec.realized_pnl_sol > 0 ? 'pos' : rec.realized_pnl_sol < 0 ? 'neg' : '';
 
 	dash.innerHTML = `
 		<div class="sw-dash-head">
 			<div>
-				<h1>${esc(sw.name)} ${statusPill(sw.status)}</h1>
+				<div class="sw-dash-title"><h1>${esc(sw.name)}</h1>${statusPill(sw.status)}</div>
 				${sw.description ? `<p class="muted" style="color:var(--ink-dim);max-width:60ch;margin:.2rem 0 0">${esc(sw.description)}</p>` : ''}
 				${sw.status === 'killed' && sw.kill_reason ? `<p style="color:var(--danger);font-size:var(--text-sm);margin:.4rem 0 0">Killed: ${esc(sw.kill_reason)}</p>` : ''}
 			</div>
@@ -325,7 +430,7 @@ function positionsHTML(positions) {
 		const cls = pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '';
 		const link = (closed ? p.sell_url : p.buy_url);
 		return `<div class="sw-row">
-			<div class="grow"><span class="name">${esc(p.symbol || short(p.mint))}</span> <span class="muted" style="font-size:var(--text-2xs)">${closed ? esc(p.exit_reason || 'closed') : p.status}</span></div>
+			<div class="grow"><span class="name">${esc(p.symbol || short(p.mint))}</span> <span class="muted" style="font-size:var(--text-2xs)">${esc(closed ? p.exit_reason || 'closed' : p.status)}</span></div>
 			<div class="mono" style="text-align:right">${closed ? `<span class="${cls}">${pnl >= 0 ? '+' : ''}${SOL(pnl)}</span>` : `<span class="muted">${SOL(p.current_sol)}</span>`}${link ? ` <a href="${esc(link)}" target="_blank" rel="noopener" class="muted">↗</a>` : ''}</div>
 		</div>`;
 	}).join('');
@@ -334,11 +439,12 @@ function positionsHTML(positions) {
 function voteRowHTML(v) {
 	const pct = Math.min(100, (v.consensus || 0) * 100);
 	const thr = Math.min(100, (v.min_consensus || 0) * 100);
+	const fire = v.decision === 'fire';
 	return `<div class="sw-vote">
 		<div class="sw-vote-top">
-			<span class="verdict ${v.decision}">${v.decision === 'fire' ? '✓ fire' : 'skip'}</span>
+			<span class="verdict ${fire ? 'fire' : 'skip'}">${fire ? '✓ fire' : 'skip'}</span>
 			<span class="name grow">${esc(v.mint ? short(v.mint) : '')}</span>
-			<span class="muted mono" style="font-size:var(--text-2xs)">${v.members_long}/${v.members_total} long</span>
+			<span class="muted mono" style="font-size:var(--text-2xs)">${Number(v.members_long) || 0}/${Number(v.members_total) || 0} long</span>
 		</div>
 		<div class="meter">
 			<div class="sw-meter-track"><div class="sw-meter-fill${v.decision === 'fire' ? ' fire' : ''}" style="width:${pct}%"></div><div class="sw-meter-thresh" style="left:${thr}%"></div></div>
@@ -358,7 +464,7 @@ function payoutRowHTML(p) {
 	const stCls = p.status === 'confirmed' ? 'pos' : p.status === 'failed' ? 'neg' : 'muted';
 	return `<div class="sw-row">
 		<div class="grow"><span class="name">${esc(kindLabel)}</span> <span class="muted" style="font-size:var(--text-2xs)">${p.share_bps != null ? (p.share_bps / 100).toFixed(1) + '%' : ''}</span></div>
-		<div class="mono" style="text-align:right"><span class="${p.kind === 'fee' ? 'muted' : 'pos'}">${SOL(p.amount_sol)}</span> <span class="${stCls}" style="font-size:var(--text-2xs)">${p.status}</span>${p.tx_url ? ` <a href="${esc(p.tx_url)}" target="_blank" rel="noopener" class="muted">↗</a>` : ''}</div>
+		<div class="mono" style="text-align:right"><span class="${p.kind === 'fee' ? 'muted' : 'pos'}">${SOL(p.amount_sol)}</span> <span class="${stCls}" style="font-size:var(--text-2xs)">${esc(p.status)}</span>${p.tx_url ? ` <a href="${esc(p.tx_url)}" target="_blank" rel="noopener" class="muted">↗</a>` : ''}</div>
 	</div>`;
 }
 
@@ -399,11 +505,35 @@ async function renderActions(s) {
 	});
 }
 
-function handleAction(act, s) {
-	if (!state.authed || !state.agents?.length) {
-		toast('Sign in and create an agent first', true);
-		return;
+// A swarm action needs a session AND an agent to act through. Both used to dead-end
+// in a toast that named the requirement but never offered the way to satisfy it.
+const loginHref = () => `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+
+function requireAccount(title, body, action, href) {
+	const { close } = modal(`
+		<h2>${esc(title)}</h2>
+		<p class="sub">${esc(body)}</p>
+		<div class="sw-modal-actions">
+			<button class="sw-btn sw-btn--ghost" id="r-cancel">Not now</button>
+			<a class="sw-btn sw-btn--primary" href="${esc(href)}">${esc(action)}</a>
+		</div>`);
+	document.getElementById('r-cancel').onclick = close;
+}
+
+function needsAccount() {
+	if (!state.authed) {
+		requireAccount('Sign in to act on a swarm', 'Joining, funding, and governing a swarm all move real SOL from an agent wallet, so they need a signed-in account.', 'Sign in', loginHref());
+		return true;
 	}
+	if (!state.agents?.length) {
+		requireAccount('Create an agent first', 'A swarm acts through one of your agents: its wallet funds the treasury and its track record carries your vote weight.', 'Create an agent', '/create');
+		return true;
+	}
+	return false;
+}
+
+function handleAction(act, s) {
+	if (needsAccount()) return;
 	if (act === 'join' || act === 'contribute') return openContributeModal(s, act);
 	if (act === 'exit') return openExitModal(s);
 	if (act === 'kill') return openKillModal(s);
@@ -420,15 +550,46 @@ async function doSimpleAction(action, swarmId, extra = {}) {
 
 // ── modals ─────────────────────────────────────────────────────────────────────
 
+const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+let dialogSeq = 0;
+
+// aria-modal only tells assistive tech the rest of the page is inert; it does not move
+// or hold the keyboard. Without the focus move, trap, and restore below, Tab walked
+// straight out of an open dialog into the page behind it.
 function modal(html) {
+	const opener = document.activeElement;
 	const scrim = document.createElement('div');
 	scrim.className = 'sw-scrim';
-	scrim.innerHTML = `<div class="sw-modal" role="dialog" aria-modal="true">${html}</div>`;
+	scrim.innerHTML = `<div class="sw-modal" role="dialog" aria-modal="true" tabindex="-1">${html}</div>`;
 	document.body.appendChild(scrim);
+	const box = scrim.firstElementChild;
+
+	const close = () => {
+		scrim.remove();
+		document.removeEventListener('keydown', onKey, true);
+		if (opener && opener.isConnected && typeof opener.focus === 'function') opener.focus();
+	};
+	const onKey = (e) => {
+		if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+		if (e.key !== 'Tab') return;
+		const items = [...box.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+		if (!items.length) return;
+		const first = items[0], last = items[items.length - 1];
+		if (!box.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+		if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+		else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+	};
+
+	// Name the dialog from its own heading so it is announced as more than "dialog".
+	const heading = box.querySelector('h2');
+	if (heading) {
+		heading.id = heading.id || `sw-dlg-${++dialogSeq}`;
+		box.setAttribute('aria-labelledby', heading.id);
+	}
+
 	scrim.addEventListener('click', (e) => { if (e.target === scrim) close(); });
-	const close = () => { scrim.remove(); document.removeEventListener('keydown', onKey); };
-	const onKey = (e) => { if (e.key === 'Escape') close(); };
-	document.addEventListener('keydown', onKey);
+	document.addEventListener('keydown', onKey, true);
+	(box.querySelector(FOCUSABLE) || box).focus();
 	return { scrim, close };
 }
 
@@ -438,8 +599,7 @@ function agentOptions() {
 
 async function openCreateModal() {
 	await loadAgents();
-	if (!state.authed) { toast('Sign in to create a swarm', true); return; }
-	if (!state.agents.length) { toast('Create an agent first', true); return; }
+	if (needsAccount()) return;
 	const { close } = modal(`
 		<h2>Create a trading swarm</h2>
 		<p class="sub">A dedicated custodial treasury wallet is provisioned on-chain. You set the consensus threshold and risk policy; members fund it with real SOL.</p>
@@ -851,4 +1011,9 @@ window.addEventListener('beforeunload', closeStream);
 
 // ── boot ────────────────────────────────────────────────────────────────────────
 
-loadAgents().finally(render);
+// Paint first, resolve the session alongside. Gating the first render on the auth
+// probe left the visitor staring at skeletons for a whole extra round trip, and
+// nothing in the directory needs the agent list: the surfaces that do
+// (renderActions, the modals) await loadAgents themselves.
+loadAgents();
+render();

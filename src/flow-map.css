@@ -249,6 +249,17 @@ body {
 	font-variant-numeric: tabular-nums;
 }
 
+/* A background re-read never covers the map, so the stamp is where it is
+   reported: brighter while the request is out, and coloured when the last one
+   failed and the graph on screen is therefore older than it looks. */
+.fm-stamp[data-state='busy'] {
+	color: var(--fm-dim);
+}
+
+.fm-stamp[data-state='stale'] {
+	color: var(--fm-sink);
+}
+
 /* Label text that only assistive tech needs. Defined here because the shared
    stylesheets do not ship a screen-reader utility class. */
 .fm-wrap .sr-only {
@@ -788,6 +799,12 @@ body {
 .fm-below {
 	margin-top: 22px;
 	display: grid;
+	/* Explicit minmax(0, 1fr) rather than the implicit single column: a grid item
+	   defaults to min-width:auto, so the table's own min-width pushed both
+	   sections past the viewport on a phone. The page clips horizontal overflow,
+	   so the services grid and the whole wallet table were cut off with no way to
+	   scroll to them. Constrained here, .fm-table-shell scrolls its own table. */
+	grid-template-columns: minmax(0, 1fr);
 	gap: 18px;
 }
 

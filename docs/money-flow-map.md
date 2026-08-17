@@ -169,6 +169,14 @@ Two fields worth reading before you trust a number:
 Cached for 60s server-side; the page refreshes every 60s and stops polling
 entirely in a hidden tab.
 
+That background refresh never covers the drawn map. The timestamp beside the
+controls reports the re-read while it is out, and if it fails, the last good
+graph stays on screen with the failure named there rather than being replaced by
+an error panel. Switching window is the opposite case, because it throws the
+drawn topology away: that one takes the loading state, and it cancels any read
+still in flight, so a slow earlier window can never land on top of a newer one
+and draw a graph the buttons disagree with.
+
 ---
 
 ## Reading the page

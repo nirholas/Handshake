@@ -12,6 +12,11 @@ body {
 	padding: var(--space-xl) var(--space-lg) var(--space-2xl);
 	min-height: 70vh;
 }
+/* Below ~360px the lg inline padding costs more than a fifth of the viewport, which
+   is what pushed the card grid past the right edge on a 320px phone. */
+@media (max-width: 420px) {
+	.sw-shell { padding-inline: var(--space-md); }
+}
 
 /* ── hero ─────────────────────────────────────────────────────────────────── */
 .sw-hero {
@@ -58,7 +63,9 @@ body {
 		background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast);
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: var(--space-2xs);
+	text-decoration: none; /* the class is also worn by anchors (sign-in, create agent) */
 }
 .sw-btn:hover { background: var(--surface-3); transform: translateY(-1px); }
 .sw-btn:active { transform: translateY(0); }
@@ -96,11 +103,15 @@ body {
 	cursor: pointer;
 	transition: color var(--duration-fast), background var(--duration-fast);
 }
+.sw-seg button:hover { color: var(--ink); background: var(--surface-2); }
+.sw-seg button:focus-visible { outline: 2px solid var(--wallet-accent); outline-offset: -2px; }
 .sw-seg button[aria-pressed='true'] { background: var(--surface-3); color: var(--ink-bright); }
 
 .sw-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+	/* min() so the track collapses with the viewport instead of forcing a fixed 310px
+	   column (and a clipped card) inside a narrower container. */
+	grid-template-columns: repeat(auto-fill, minmax(min(310px, 100%), 1fr));
 	gap: var(--space-md);
 }
 .sw-card {
@@ -151,13 +162,16 @@ body {
 .sw-back:hover { color: var(--ink); }
 
 .sw-dash-head { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: flex-start; justify-content: space-between; margin-bottom: var(--space-lg); }
-.sw-dash-head h1 { margin: 0 0 var(--space-3xs); font-size: var(--text-xl); color: var(--ink-bright); }
+/* The status pill sits beside the heading, not inside it: a screen reader announcing
+   the h1 should read the swarm's name, not "Test Funding". */
+.sw-dash-title { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); margin-bottom: var(--space-3xs); }
+.sw-dash-head h1 { margin: 0; font-size: var(--text-xl); color: var(--ink-bright); overflow-wrap: anywhere; }
 .sw-live { display: inline-flex; align-items: center; gap: var(--space-2xs); font-size: var(--text-2xs); color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
 .sw-live .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); }
 .sw-live[data-state='live'] .dot { background: var(--success); box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18); }
 .sw-live[data-state='live'] { color: var(--success); }
 
-.sw-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-sm); margin-bottom: var(--space-lg); }
+.sw-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: var(--space-sm); margin-bottom: var(--space-lg); }
 .sw-tile { padding: var(--space-md); border: 1px solid var(--stroke); border-radius: var(--radius-lg); background: var(--surface-1); }
 /* Directional flash when a live value moves: green up, red down, then settle. */
 .sw-tile--up { animation: sw-tile-up 0.9s ease-out; }
@@ -175,8 +189,11 @@ body {
 .sw-tile a { color: var(--wallet-accent); text-decoration: none; font-size: var(--text-sm); }
 .sw-tile a:hover { text-decoration: underline; }
 
-.sw-cols { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-lg); align-items: start; }
-@media (max-width: 880px) { .sw-cols { grid-template-columns: 1fr; } }
+/* minmax(0, …) rather than a bare fr: an fr track floors at its content's min-content
+   width, and the panel rows' min-content held the column open ~70px past a 320px
+   viewport, clipping every panel's right edge. */
+.sw-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--space-lg); align-items: start; }
+@media (max-width: 880px) { .sw-cols { grid-template-columns: minmax(0, 1fr); } }
 
 .sw-panel { border: 1px solid var(--stroke); border-radius: var(--radius-lg); background: var(--surface-1); overflow: hidden; margin-bottom: var(--space-lg); }
 .sw-panel-h { display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--stroke); }
@@ -184,7 +201,7 @@ body {
 .sw-panel-h .count { font-size: var(--text-2xs); color: var(--ink-faint); }
 .sw-panel-body { max-height: 420px; overflow-y: auto; }
 
-.sw-row { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-xs) var(--space-md); border-bottom: 1px solid var(--surface-1); font-size: var(--text-sm); }
+.sw-row { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-xs) var(--space-md); border-bottom: 1px solid var(--surface-1); font-size: var(--text-sm); min-width: 0; overflow-wrap: anywhere; }
 .sw-row:last-child { border-bottom: 0; }
 .sw-row .grow { flex: 1; min-width: 0; }
 .sw-row .mono { font-variant-numeric: tabular-nums; }
@@ -252,7 +269,8 @@ body {
 	.sw-member.sw-win { animation: none; }
 }
 
-.sw-vote { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--surface-1); font-size: var(--text-sm); }
+.sw-vote { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--surface-1); font-size: var(--text-sm); min-width: 0; overflow-wrap: anywhere; }
+.sw-vote-top .name { min-width: 0; }
 .sw-vote:last-child { border-bottom: 0; }
 .sw-vote-top { display: flex; align-items: center; gap: var(--space-xs); }
 .sw-vote .verdict { font-size: var(--text-2xs); font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: var(--radius-pill); }
@@ -328,7 +346,8 @@ body {
 	background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-md); color: var(--ink);
 }
 .sw-field input:focus, .sw-field select:focus, .sw-field textarea:focus { outline: none; border-color: var(--wallet-accent); }
-.sw-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); }
+.sw-grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-sm); }
+@media (max-width: 460px) { .sw-grid2 { grid-template-columns: minmax(0, 1fr); } }
 .sw-modal-actions { display: flex; justify-content: flex-end; gap: var(--space-sm); margin-top: var(--space-md); }
 .sw-modal-err { color: var(--danger); font-size: var(--text-sm); margin-top: var(--space-xs); min-height: 1.2em; }
 
@@ -337,6 +356,12 @@ body {
 .sw-msg h3 { color: var(--ink); font-size: var(--text-lg); margin: 0 0 var(--space-xs); }
 .sw-msg p { margin: 0 auto var(--space-md); max-width: 44ch; line-height: 1.5; }
 .sw-skel { border: 1px solid var(--stroke); border-radius: var(--radius-lg); height: 168px; background: linear-gradient(100deg, var(--surface-1) 30%, var(--surface-3) 50%, var(--surface-1) 70%); background-size: 200% 100%; animation: swShimmer 1.4s ease infinite; }
+/* The dashboard is not a card grid, so its placeholder mirrors the real layout
+   (header strip, tile row, two panels) instead of stacking card-shaped blocks. */
+.sw-dash-skel { display: grid; gap: var(--space-md); }
+.sw-dash-skel .sw-skel { height: 64px; }
+.sw-dash-skel .sw-skel--tiles { height: 92px; }
+.sw-dash-skel .sw-skel--panel { height: 220px; }
 @keyframes swShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .sw-skel { animation: none; } .sw-card:hover { transform: none; } }
 

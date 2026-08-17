@@ -26,6 +26,10 @@ import {
 const $ = (sel) => document.querySelector(sel);
 const REFRESH_MS = 60_000;
 const ROLE_IDS = ['source', 'hub', 'relay', 'sink', 'quiet'];
+// Narrowest first, so "the next window that could hold more" is just the next
+// entry. The order has to match the buttons in the markup.
+const WINDOWS = ['24h', '7d', '30d', '90d'];
+const WINDOW_LABELS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days', '90d': '90 days' };
 
 const state = {
 	raw: null,
@@ -45,26 +49,63 @@ const state = {
 	timer: 0,
 	paused: false,
 	reduceMotion: false,
+	refreshing: false,
+	staleError: '',
+	loadId: 0,
+	inflight: null,
 };
 
 // ── data ─────────────────────────────────────────────────────────────────────
 
-async function load() {
-	setOverlay('loading');
+/**
+ * Fetch the graph for the current window.
+ *
+ * `replace` distinguishes the two reasons this runs, because they want opposite
+ * treatment on screen. Switching window (or the very first load, or a retry) is
+ * about to throw the drawn topology away, so it takes the overlay. The 60s poll
+ * is not: covering a live map with a spinner every minute would make the page
+ * look like it is failing when it is working. That one only marks the stamp.
+ *
+ * Every call takes a ticket. A slower earlier response landing after a newer one
+ * would otherwise draw a window the visitor is no longer looking at, under a
+ * button that says something else, which is the one lie a live map cannot tell.
+ */
+async function load({ replace = true } = {}) {
+	const id = (state.loadId += 1);
+	state.inflight?.abort();
+	const controller = new AbortController();
+	state.inflight = controller;
+
+	if (replace || !state.raw) setOverlay('loading');
+	else { state.refreshing = true; stamp(); }
+
 	try {
 		const r = await fetch(`/api/pulse?view=graph&window=${encodeURIComponent(state.window)}`, {
 			headers: { accept: 'application/json' },
+			signal: controller.signal,
 		});
 		if (!r.ok) throw new Error(`HTTP ${r.status}`);
 		const body = await r.json();
+		if (id !== state.loadId) return;
 		if (!body?.data) throw new Error('malformed response');
 		state.raw = annotate(body.data);
-		state.error = null;
+		state.refreshing = false;
+		state.staleError = '';
 		applyFilters({ relayout: true });
 		stamp();
 	} catch (err) {
-		state.error = err;
-		setOverlay('error', err);
+		if (err?.name === 'AbortError' || id !== state.loadId) return;
+		state.refreshing = false;
+		// A background refresh that fails must not blank a map that is still
+		// perfectly readable: keep the last good graph and say so on the stamp.
+		if (!replace && state.raw) {
+			state.staleError = err?.message || 'request failed';
+			stamp();
+		} else {
+			setOverlay('error', err);
+		}
+	} finally {
+		if (id === state.loadId) state.inflight = null;
 	}
 }
 
@@ -93,6 +134,17 @@ function applyFilters({ relayout = false } = {}) {
 	renderDetail();
 	setOverlay(roleFiltered.nodes.length ? null : 'empty');
 	draw();
+}
+
+/** True when the visitor narrowed the view themselves, so an empty result is
+ *  something they can undo rather than something the economy did. */
+function hasFilters() {
+	return Boolean(state.query) || state.kind !== 'all' || state.roles.size !== ROLE_IDS.length;
+}
+
+/** The next window that can only contain more than the current one, if any. */
+function widerWindow() {
+	return WINDOWS[WINDOWS.indexOf(state.window) + 1] || null;
 }
 
 /** Hide whole roles, then drop any edge that lost an end. */
@@ -157,11 +209,21 @@ function sizeCanvas() {
 	ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-const cssVar = (name) => getComputedStyle(document.documentElement).getPointerVar
-	? ''
-	: getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+// Every colour the canvas paints, resolved ONCE per frame. Reading a custom
+// property is a style lookup, and the draw loop asks for one per edge and two
+// per node: on a 400-route graph that was tens of thousands of forced style
+// resolutions a second, for six values that cannot change mid-frame. Resolving
+// per frame also means a theme switch is picked up on the very next paint with
+// no cache to invalidate.
+const PALETTE_ROLES = ['source', 'hub', 'relay', 'sink', 'quiet'];
 
-const roleColor = (role) => cssVar(`--fm-${role}`) || '#888';
+function readPalette() {
+	const cs = getComputedStyle(document.documentElement);
+	const read = (name) => cs.getPropertyValue(name).trim();
+	const out = { accent: read('--fm-accent') || '#888', ink: read('--fm-canvas-ink') || '255, 255, 255' };
+	for (const role of PALETTE_ROLES) out[role] = read(`--fm-${role}`) || '#888';
+	return out;
+}
 
 function toScreen(p) {
 	const { x, y, scale } = state.transform;
@@ -177,9 +239,9 @@ function draw(now = performance.now()) {
 	ctx.clearRect(0, 0, w, h);
 
 	const { scale } = state.transform;
-	const nodesById = new Map(state.view.nodes.map((n) => [n.id, n]));
 	const focus = state.hovered || state.selected;
 	const neighbours = focus ? neighboursOf(focus) : null;
+	const palette = readPalette();
 
 	const maxEdgeUsd = Math.max(0, ...state.view.edges.map((e) => e.usd || 0));
 
@@ -194,9 +256,7 @@ function draw(now = performance.now()) {
 
 		ctx.save();
 		ctx.globalAlpha = dim ? 0.06 : 0.34 + weight * 0.4;
-		ctx.strokeStyle = e.kinds?.includes('tip')
-			? roleColor('sink')
-			: roleColor('hub');
+		ctx.strokeStyle = e.kinds?.includes('tip') ? palette.sink : palette.hub;
 		ctx.lineWidth = Math.max(0.7, (0.8 + weight * 2.6) * Math.min(1.4, scale));
 		ctx.beginPath();
 		ctx.moveTo(pa.x, pa.y);
@@ -205,7 +265,7 @@ function draw(now = performance.now()) {
 		ctx.restore();
 
 		if (dim) continue;
-		drawParticles(ctx, pa, pb, e, weight, now);
+		drawParticles(ctx, pa, pb, e, weight, now, palette);
 	}
 
 	const ordered = [...state.view.nodes].sort(
@@ -217,7 +277,7 @@ function draw(now = performance.now()) {
 		const s = toScreen(p);
 		const r = (state.radii.get(n.id) || 10) * Math.min(1.5, Math.max(0.55, scale));
 		const dim = focus && n.id !== focus && !neighbours?.has(n.id);
-		drawNode(ctx, n, s, r, dim, n.id === state.selected, n.id === state.hovered);
+		drawNode(ctx, n, s, r, dim, n.id === state.selected, n.id === state.hovered, palette);
 	}
 
 	// Label only what can be read: at low zoom labels turn into noise.
@@ -234,15 +294,15 @@ function draw(now = performance.now()) {
 			const s = toScreen(p);
 			const dim = focus && n.id !== focus && !neighbours?.has(n.id);
 			ctx.globalAlpha = dim ? 0.12 : 0.82;
-			ctx.fillStyle = `rgb(${cssVar('--fm-canvas-ink') || '255,255,255'})`;
+			ctx.fillStyle = `rgb(${palette.ink})`;
 			ctx.fillText(truncate(n.name, 18), s.x, s.y + r + 5);
 		}
 		ctx.restore();
 	}
 }
 
-function drawNode(ctx, n, s, r, dim, selected, hovered) {
-	const color = roleColor(n.role || 'quiet');
+function drawNode(ctx, n, s, r, dim, selected, hovered, palette) {
+	const color = palette[n.role] || palette.quiet;
 	ctx.save();
 	ctx.globalAlpha = dim ? 0.16 : 1;
 
@@ -291,7 +351,7 @@ function drawNode(ctx, n, s, r, dim, selected, hovered) {
 	ctx.restore();
 }
 
-function drawParticles(ctx, a, b, e, weight, now) {
+function drawParticles(ctx, a, b, e, weight, now, palette) {
 	if (state.reduceMotion || state.paused) return;
 	const dx = b.x - a.x;
 	const dy = b.y - a.y;
@@ -302,7 +362,7 @@ function drawParticles(ctx, a, b, e, weight, now) {
 	const count = Math.min(4, 1 + Math.floor(Math.log2(1 + (e.count || 1))));
 	const speed = 0.00013 + weight * 0.00009;
 	ctx.save();
-	ctx.fillStyle = e.kinds?.includes('tip') ? roleColor('sink') : roleColor('accent');
+	ctx.fillStyle = e.kinds?.includes('tip') ? palette.sink : palette.accent;
 	for (let i = 0; i < count; i += 1) {
 		const t = ((now * speed) + i / count + hash01(e.from + e.to + i)) % 1;
 		const x = a.x + dx * t;
@@ -718,9 +778,14 @@ function renderTable() {
 	const caption = $('#fm-table-caption');
 	if (!body || !state.view) return;
 	const nodes = [...state.view.nodes].sort((a, b) => b.throughput_usd - a.throughput_usd);
+	// The caption is the table's own empty state, and it has to tell the same
+	// story the overlay does: "no match" and "nothing happened" are different
+	// answers, and only one of them is the visitor's to fix.
 	caption.textContent = nodes.length
 		? `Every wallet on the map, ranked by value handled. Selecting a row highlights it above. ${nodes.length} shown.`
-		: 'No wallets match the current filters.';
+		: hasFilters()
+			? 'No wallets match the current filters.'
+			: 'No settled transfers in this window, so there is nothing to list.';
 
 	body.innerHTML = '';
 	for (const n of nodes) {
@@ -812,25 +877,34 @@ function setOverlay(kind, err) {
 		btn.type = 'button';
 		btn.className = 'fm-btn';
 		btn.textContent = 'Try again';
-		btn.addEventListener('click', load);
+		btn.addEventListener('click', () => load({ replace: true }));
 		overlay.append(h2, p, btn);
 		return;
 	}
 
-	const filtered = state.query || state.kind !== 'all' || state.roles.size !== ROLE_IDS.length;
+	const filtered = hasFilters();
+	const wider = widerWindow();
 	h2.textContent = filtered ? 'Nothing matches those filters' : 'No settled flow in this window';
 	p.textContent = filtered
 		? 'Widen the window, clear the search, or turn a role back on.'
-		: 'Every edge here is a real on-chain transfer between agent wallets, so a quiet platform draws an empty map rather than a fabricated one. Try a longer window.';
+		: wider
+			? 'Every edge here is a real on-chain transfer between agent wallets, so a quiet platform draws an empty map rather than a fabricated one. Try a longer window.'
+			: 'Every edge here is a real on-chain transfer between agent wallets, so a quiet platform draws an empty map rather than a fabricated one. Nothing has settled in the longest window we keep, so the next transfer will appear here on its own.';
+	overlay.append(h2, p);
+
+	// An action is only offered when it can change the outcome: a "Show 90 days"
+	// button on the 90-day window is a control that does nothing, which is worse
+	// than no control at all.
+	if (!filtered && !wider) return;
 	const btn = document.createElement('button');
 	btn.type = 'button';
 	btn.className = 'fm-btn';
-	btn.textContent = filtered ? 'Clear filters' : 'Show 90 days';
+	btn.textContent = filtered ? 'Clear filters' : `Show ${WINDOW_LABELS[wider]}`;
 	btn.addEventListener('click', () => {
 		if (filtered) resetFilters();
-		else setWindow('90d');
+		else setWindow(wider);
 	});
-	overlay.append(h2, p, btn);
+	overlay.append(btn);
 }
 
 function stamp() {
@@ -838,7 +912,10 @@ function stamp() {
 	if (!el || !state.raw) return;
 	const bits = [`updated ${relTime(state.raw.generated_at)}`];
 	if (state.raw.truncated) bits.push(`top ${state.raw.max_edges} routes`);
+	if (state.refreshing) bits.push('refreshing…');
+	else if (state.staleError) bits.push(`refresh failed (${state.staleError}), showing the last good read`);
 	el.textContent = bits.join(' · ');
+	el.dataset.state = state.refreshing ? 'busy' : state.staleError ? 'stale' : '';
 	const note = $('#fm-truncated');
 	if (note) {
 		note.hidden = !state.raw.truncated;
@@ -855,7 +932,9 @@ function setWindow(w) {
 	for (const b of document.querySelectorAll('[data-window]')) {
 		b.setAttribute('aria-pressed', String(b.dataset.window === w));
 	}
-	load();
+	// A window switch replaces the topology outright, so the overlay is honest
+	// here in a way it would not be for a background refresh.
+	load({ replace: true });
 }
 
 function resetFilters() {
@@ -863,6 +942,7 @@ function resetFilters() {
 	state.kind = 'all';
 	state.roles = new Set(ROLE_IDS);
 	$('#fm-q').value = '';
+	$('#fm-q-clear').hidden = true;
 	for (const b of document.querySelectorAll('[data-kind]')) {
 		b.setAttribute('aria-pressed', String(b.dataset.kind === 'all'));
 	}
@@ -914,7 +994,9 @@ function bindControls() {
 		applyFilters({ relayout: true });
 	});
 
-	$('#fm-refresh').addEventListener('click', load);
+	// Refresh re-reads the window the visitor is already looking at, so the map
+	// stays on screen and the stamp reports the round trip.
+	$('#fm-refresh').addEventListener('click', () => load({ replace: false }));
 	const pause = $('#fm-pause');
 	pause.addEventListener('click', () => {
 		state.paused = !state.paused;
@@ -924,10 +1006,11 @@ function bindControls() {
 	});
 
 	document.addEventListener('keydown', (ev) => {
-		if (ev.target.matches('input, textarea')) return;
+		const el = ev.target;
+		if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"]')) return;
 		if (ev.key === '/') { ev.preventDefault(); q.focus(); }
 		if (ev.key === 'Escape') select(null);
-		if (ev.key === 'r' && !ev.metaKey && !ev.ctrlKey) load();
+		if (ev.key === 'r' && !ev.metaKey && !ev.ctrlKey && !ev.altKey) load({ replace: false });
 	});
 }
 
@@ -952,20 +1035,21 @@ function boot() {
 
 	// Polling stops entirely in a hidden tab: this is an RPC-backed read and an
 	// ops page left open all day should not keep paying for nobody.
+	const poll = () => { if (!state.paused) load({ replace: false }); };
 	document.addEventListener('visibilitychange', () => {
 		if (document.hidden) {
 			clearInterval(state.timer);
 			state.timer = 0;
 		} else if (!state.timer) {
-			state.timer = setInterval(() => { if (!state.paused) load(); }, REFRESH_MS);
-			load();
+			state.timer = setInterval(poll, REFRESH_MS);
+			poll();
 		}
 	});
-	state.timer = setInterval(() => { if (!state.paused) load(); }, REFRESH_MS);
+	state.timer = setInterval(poll, REFRESH_MS);
 	setInterval(stamp, 15_000);
 
 	if (!state.reduceMotion) state.raf = requestAnimationFrame(tick);
-	load();
+	load({ replace: true });
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
