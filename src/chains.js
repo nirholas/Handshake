@@ -18,16 +18,6 @@ function isSelecting() {
 	return !!sel && !sel.isCollapsed && String(sel).trim().length > 0;
 }
 
-// A press that travels further than this is a drag, not a click on a row.
-const DRAG_SLOP_PX = 6;
-
-// True while the visitor is holding a text selection, so row-click navigation
-// can stand down and let them copy.
-function isSelecting() {
-	const sel = typeof getSelection === 'function' ? getSelection() : null;
-	return !!sel && !sel.isCollapsed && String(sel).trim().length > 0;
-}
-
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
 	if (!res.ok) {
