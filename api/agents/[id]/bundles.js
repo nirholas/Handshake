@@ -3,6 +3,9 @@
  *
  * Routes (vercel.json rewrites map /api/agents/:id/bundles → this file):
  *   GET    /api/agents/:id/bundles            list active bundles (public)
+ *   GET    /api/agents/:id/bundles?include_inactive=1
+ *                                             the owner's own list, paused
+ *                                             bundles included (owner only)
  *   GET    /api/agents/:id/bundles?action=pricing&skills=a,b[&price=N]
  *                                             price a candidate bundle against
  *                                             this agent's real sales (public)
@@ -65,7 +68,7 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET' && url.searchParams.get('action') === 'pricing')
 		return handlePricing(req, res, agentId, url);
-	if (req.method === 'GET')    return handleList(req, res, agentId);
+	if (req.method === 'GET')    return handleList(req, res, agentId, url);
 	if (req.method === 'POST' && !bundleId) return handleCreate(req, res, agentId);
 	if (req.method === 'PATCH' && bundleId) return handlePatch(req, res, agentId, bundleId);
 	if (req.method === 'DELETE' && bundleId) return handleDelete(req, res, agentId, bundleId);
@@ -85,18 +88,37 @@ async function ownerCheck(req, res, agentId) {
 
 // ── GET list ────────────────────────────────────────────────────────────────
 
-async function handleList(req, res, agentId) {
+async function handleList(req, res, agentId, url) {
 	if (!method(req, res, ['GET'])) return;
 
+	// A paused bundle has to stay invisible to buyers, but it also has to stay
+	// visible to the one person who can bring it back. Without this the DELETE
+	// below was a one-way door: the owner's own bundle vanished from every
+	// surface that could reactivate it. `include_inactive=1` is honoured only
+	// for the agent's owner; everyone else gets the public, active-only list no
+	// matter what they ask for.
+	let includeInactive = false;
+	if (url.searchParams.get('include_inactive') === '1') {
+		const user = await getSessionUser(req);
+		if (user) {
+			const [owned] = await sql`
+				SELECT id FROM agent_identities
+				WHERE id = ${agentId} AND user_id = ${user.id} AND deleted_at IS NULL
+			`;
+			includeInactive = !!owned;
+		}
+	}
+
+	const visible = includeInactive ? sql`TRUE` : sql`sb.is_active = true`;
 	const bundles = await sql`
 		SELECT sb.id, sb.name, sb.description, sb.price_amount, sb.currency_mint, sb.chain,
 		       sb.is_active, sb.created_at,
 		       COALESCE(json_agg(bi.skill_name ORDER BY bi.created_at) FILTER (WHERE bi.skill_name IS NOT NULL), '[]') AS skills
 		FROM skill_bundles sb
 		LEFT JOIN bundle_items bi ON bi.bundle_id = sb.id
-		WHERE sb.agent_id = ${agentId} AND sb.is_active = true
+		WHERE sb.agent_id = ${agentId} AND ${visible}
 		GROUP BY sb.id
-		ORDER BY sb.created_at ASC
+		ORDER BY sb.is_active DESC, sb.created_at ASC
 	`;
 
 	return json(res, 200, { data: { bundles } });
