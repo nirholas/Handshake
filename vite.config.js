@@ -497,8 +497,8 @@ const appConfig = {
 					chunk.name === 'feature-tour' ||
 					chunk.name === 'notifications' ||
 					chunk.name === 'nav-tier-badge' ||
-					chunk.name === 'agent-bus'
-					|| chunk.name === 'i18n'
+					chunk.name === 'agent-bus' ||
+					chunk.name === 'i18n'
 						? `${chunk.name}.js`
 						: 'assets/[name]-[hash].js',
 			},
@@ -617,7 +617,7 @@ const appConfig = {
 				'agent-detail': resolve(__dirname, 'pages/agent-detail.html'),
 				'agent-detail-classic': resolve(__dirname, 'pages/agent-detail-classic.html'),
 				'agent-screen': resolve(__dirname, 'pages/agent-screen.html'),
-				'agents-live':  resolve(__dirname, 'pages/agents-live.html'),
+				'agents-live': resolve(__dirname, 'pages/agents-live.html'),
 				monitor: resolve(__dirname, 'pages/monitor.html'),
 				'agent-wallet': resolve(__dirname, 'pages/agent-wallet.html'),
 				wallet: resolve(__dirname, 'pages/wallet.html'),
@@ -751,7 +751,10 @@ const appConfig = {
 				profile: resolve(__dirname, 'pages/profile.html'),
 				feed: resolve(__dirname, 'pages/feed.html'),
 				'threews-claim': resolve(__dirname, 'pages/threews-claim.html'),
-				'events-build-3d-agents-live': resolve(__dirname, 'pages/events/build-3d-agents-live.html'),
+				'events-build-3d-agents-live': resolve(
+					__dirname,
+					'pages/events/build-3d-agents-live.html',
+				),
 				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
 				'avatar-sdk': resolve(__dirname, 'pages/avatar-sdk.html'),
 				'avatar-cli': resolve(__dirname, 'pages/avatar-cli.html'),
@@ -929,7 +932,7 @@ const appConfig = {
 				press: resolve(__dirname, 'pages/press/index.html'),
 				'agent-trade': resolve(__dirname, 'pages/agent-trade.html'),
 				'autopilot-activity': resolve(__dirname, 'pages/autopilot-activity.html'),
-support: resolve(__dirname, 'pages/support.html'),
+				support: resolve(__dirname, 'pages/support.html'),
 				// dashboard-next prototype — sub-pages auto-discovered so the parallel
 				// agents that land new pages/dashboard-next/*.html files don't have to
 				// touch this config to register them as Rollup inputs.
@@ -1107,7 +1110,9 @@ support: resolve(__dirname, 'pages/support.html'),
 				return /^\/agent-3d\/[^/]+\/agent-3d\.(js|umd\.cjs)$/.test(id) ? id : null;
 			},
 			load(id) {
-				return /^\/agent-3d\/[^/]+\/agent-3d\.(js|umd\.cjs)$/.test(id) ? 'export {};' : null;
+				return /^\/agent-3d\/[^/]+\/agent-3d\.(js|umd\.cjs)$/.test(id)
+					? 'export {};'
+					: null;
 			},
 			transformIndexHtml: {
 				order: 'pre',
@@ -1450,8 +1455,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/pump-visualizer': resolve(root, 'pages/pump-visualizer.html'),
 					'/pump-visualizer/': resolve(root, 'pages/pump-visualizer.html'),
 					'/three': resolve(root, 'pages/three.html'),
-						'/three/': resolve(root, 'pages/three.html'),
-						'/three-live': resolve(root, 'pages/three-live.html'),
+					'/three/': resolve(root, 'pages/three.html'),
+					'/three-live': resolve(root, 'pages/three-live.html'),
 					'/three-live/': resolve(root, 'pages/three-live.html'),
 					'/three-token': resolve(root, 'pages/three-token.html'),
 					'/three-token/': resolve(root, 'pages/three-token.html'),
@@ -1540,7 +1545,7 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/nvidia/': resolve(root, 'pages/nvidia/index.html'),
 					'/press': resolve(root, 'pages/press/index.html'),
 					'/press/': resolve(root, 'pages/press/index.html'),
-'/support': resolve(root, 'pages/support.html'),
+					'/support': resolve(root, 'pages/support.html'),
 					'/support/': resolve(root, 'pages/support.html'),
 					// Top-level galaxy/constellation are routed in vercel.json (prod) and
 					// linked from the global nav — mirror them here so local dev matches prod
@@ -1743,7 +1748,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					}
 					// C4: the standalone /avatar-edit landing is retired — the editor is
 					// only reachable in-flow at /avatars/:id/edit (or the legacy ?id= form).
-					if ((path === '/avatar-edit' || path === '/avatar-edit/') && !/[?&]id=/.test(url)) {
+					if (
+						(path === '/avatar-edit' || path === '/avatar-edit/') &&
+						!/[?&]id=/.test(url)
+					) {
 						res.statusCode = 301;
 						res.setHeader('Location', '/dashboard/avatars');
 						return res.end();
@@ -1960,28 +1968,30 @@ support: resolve(__dirname, 'pages/support.html'),
 					)
 						filePath = resolve(root, 'pages/communities.html');
 					// /launches/:mint  → rich coin detail page
-					else if (
-						!filePath &&
-						/^\/launches\/[1-9A-HJ-NP-Za-km-z]{32,44}\/?$/.test(path)
-					)
+					else if (!filePath && /^\/launches\/[1-9A-HJ-NP-Za-km-z]{32,44}\/?$/.test(path))
 						filePath = resolve(root, 'pages/launch-detail.html');
 					// /coin/:id  → global coin detail page (CoinGecko slug or Solana mint)
-					else if (
-						!filePath &&
-						/^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path)
-					)
+					else if (!filePath && /^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path))
 						filePath = resolve(root, 'pages/coin.html');
 					// /m/:id  → model detail page (forge_creations uuid)
 					else if (
 						!filePath &&
-						/^\/m\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/.test(path)
+						/^\/m\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/.test(
+							path,
+						)
 					)
 						filePath = resolve(root, 'pages/model.html');
 					// /markets/robinhood/stock/:symbol  → Robinhood Chain Stock Token detail
-					else if (!filePath && /^\/markets\/robinhood\/stock\/[A-Za-z0-9.-]{1,10}\/?$/.test(path))
+					else if (
+						!filePath &&
+						/^\/markets\/robinhood\/stock\/[A-Za-z0-9.-]{1,10}\/?$/.test(path)
+					)
 						filePath = resolve(root, 'pages/robinhood-stock.html');
 					// /markets/robinhood/coin/:address  → Robinhood Chain coin detail
-					else if (!filePath && /^\/markets\/robinhood\/coin\/0x[0-9a-fA-F]{40}\/?$/.test(path))
+					else if (
+						!filePath &&
+						/^\/markets\/robinhood\/coin\/0x[0-9a-fA-F]{40}\/?$/.test(path)
+					)
 						filePath = resolve(root, 'pages/robinhood-coin.html');
 					// /drop/:id  → sealed wallet gift claim page (24 lowercase hex chars,
 					// matching api/vanity/drops.js's id format)
@@ -2008,11 +2018,11 @@ support: resolve(__dirname, 'pages/support.html'),
 					// /@<handle>  → public live profile page
 					else if (!filePath && /^\/@[a-z0-9_-]{3,30}\/?$/i.test(path))
 						filePath = resolve(root, 'pages/handle.html');
-						else if (
-							!filePath &&
-							/^\/u\/(?:0x[0-9a-fA-F]{40}|[a-z0-9_-]{3,30})\/?$/i.test(path)
-						)
-							filePath = resolve(root, 'pages/profile.html');
+					else if (
+						!filePath &&
+						/^\/u\/(?:0x[0-9a-fA-F]{40}|[a-z0-9_-]{3,30})\/?$/i.test(path)
+					)
+						filePath = resolve(root, 'pages/profile.html');
 					// /a/<chainId>/<agentId>  or  /a/<chainId>/<registry>/<agentId>
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/?$/.test(path))
 						filePath = resolve(root, 'pages/app.html');
@@ -2128,8 +2138,8 @@ support: resolve(__dirname, 'pages/support.html'),
 						]) {
 							const candidate = resolve(root, rel);
 							if (existsSync(candidate)) {
-							filePath = candidate;
-							break;
+								filePath = candidate;
+								break;
 							}
 						}
 					}
@@ -2312,7 +2322,11 @@ support: resolve(__dirname, 'pages/support.html'),
 						"window.__threeErrQ=window.__threeErrQ||[];window.__threeErrCap=1;addEventListener('error',function(e){window.__threeErrQ.push(e)},!0);addEventListener('unhandledrejection',function(e){window.__threeErrQ.push(e)});";
 					return [
 						{ tag: 'script', children: BOOTSTRAP, injectTo: 'head' },
-						{ tag: 'script', attrs: { defer: true, src: '/error-reporter.js' }, injectTo: 'head' },
+						{
+							tag: 'script',
+							attrs: { defer: true, src: '/error-reporter.js' },
+							injectTo: 'head',
+						},
 					];
 				},
 			},
@@ -2346,7 +2360,13 @@ support: resolve(__dirname, 'pages/support.html'),
 						.split('/')
 						.pop();
 					if (EXCLUDED.has(filename)) return [];
-					return [{ tag: 'script', attrs: { type: 'module', src: '/atlas.js' }, injectTo: 'body' }];
+					return [
+						{
+							tag: 'script',
+							attrs: { type: 'module', src: '/atlas.js' },
+							injectTo: 'body',
+						},
+					];
 				},
 			},
 		},
@@ -2368,7 +2388,13 @@ support: resolve(__dirname, 'pages/support.html'),
 						.split('/')
 						.pop();
 					if (FRAGMENTS.has(filename)) return [];
-					return [{ tag: 'script', attrs: { src: '/inline-behaviors.js', defer: true }, injectTo: 'head' }];
+					return [
+						{
+							tag: 'script',
+							attrs: { src: '/inline-behaviors.js', defer: true },
+							injectTo: 'head',
+						},
+					];
 				},
 			},
 		},
@@ -2715,9 +2741,16 @@ support: resolve(__dirname, 'pages/support.html'),
 					if (!rel) return next();
 					const file = resolve(dir, rel);
 					// Path-traversal guard: never serve outside pages/ibm/.
-					if (!file.startsWith(dir + '/') || !existsSync(file) || !statSync(file).isFile())
+					if (
+						!file.startsWith(dir + '/') ||
+						!existsSync(file) ||
+						!statSync(file).isFile()
+					)
 						return next();
-					res.setHeader('Content-Type', MIME[extname(file)] || 'application/octet-stream');
+					res.setHeader(
+						'Content-Type',
+						MIME[extname(file)] || 'application/octet-stream',
+					);
 					createReadStream(file).pipe(res);
 				});
 			},
@@ -2827,7 +2860,13 @@ support: resolve(__dirname, 'pages/support.html'),
 						// fallback robot in dev. Only text payloads can carry an r2.dev URL,
 						// so rewrite those and pass anything else through byte-for-byte.
 						if (!/^(application\/(json|.*\+json)|text\/)/i.test(type)) {
-							for (const h of ['content-length', 'accept-ranges', 'content-range', 'etag', 'cache-control']) {
+							for (const h of [
+								'content-length',
+								'accept-ranges',
+								'content-range',
+								'etag',
+								'cache-control',
+							]) {
 								const v = resp.headers.get(h);
 								if (v) res.setHeader(h, v);
 							}
@@ -2958,7 +2997,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					['dist/public/character.html', 'dist/character.html'],
 					['dist/public/agents/index.html', 'dist/agents/index.html'],
 					['dist/public/validation/index.html', 'dist/validation/index.html'],
-					['dist/public/reputation/market/index.html', 'dist/reputation/market/index.html'],
+					[
+						'dist/public/reputation/market/index.html',
+						'dist/reputation/market/index.html',
+					],
 					['dist/public/gallery/index.html', 'dist/gallery/index.html'],
 					['dist/public/demos/brain.html', 'dist/demos/brain.html'],
 					['dist/public/demos/lipsync-tts.html', 'dist/demos/lipsync-tts.html'],
@@ -3185,8 +3227,7 @@ support: resolve(__dirname, 'pages/support.html'),
 						urlPattern: ({ url, request, sameOrigin }) =>
 							sameOrigin &&
 							url.pathname.startsWith('/assets/') &&
-							(request.destination === 'script' ||
-								request.destination === 'style'),
+							(request.destination === 'script' || request.destination === 'style'),
 						handler: 'StaleWhileRevalidate',
 						options: {
 							cacheName: 'app-assets',
@@ -3214,8 +3255,7 @@ support: resolve(__dirname, 'pages/support.html'),
 					{
 						urlPattern: ({ request, sameOrigin }) =>
 							sameOrigin &&
-							(request.destination === 'script' ||
-								request.destination === 'style'),
+							(request.destination === 'script' || request.destination === 'style'),
 						handler: 'NetworkFirst',
 						options: {
 							cacheName: 'app-shell-assets',

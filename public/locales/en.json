@@ -2393,6 +2393,7 @@
   },
   "characters": {
     "characters": "Characters",
+    "create": "Create a character",
     "load_more": "Load more",
     "meta_description": "Discover AI characters on three.ws. Chat, trade, and create.",
     "meta_og_description": "Discover AI characters. Chat, trade, create.",
@@ -2401,6 +2402,10 @@
     "meta_twitter_description": "Discover AI characters on three.ws. Chat, trade, and create.",
     "meta_twitter_title": "Characters · three.ws",
     "new": "New",
+    "search_label": "Search characters by name or description",
+    "search_placeholder": "Search characters…",
+    "sort_label": "Sort characters",
+    "subtitle": "Discover AI characters on three.ws. Chat, trade, and create.",
     "top": "Top"
   },
   "city": {

@@ -136,6 +136,41 @@ function queueOp(fn) {
 	return next;
 }
 
+/**
+ * queueOp() swallows failures so one bad op cannot stall the chain, which left
+ * callers unable to tell success from silence. This keeps the chain intact and
+ * still hands the caller the outcome so it can show a real error.
+ */
+async function runQueued(fn) {
+	let captured = null;
+	await queueOp(async () => {
+		try {
+			await fn();
+		} catch (err) {
+			captured = err;
+		}
+	});
+	return { ok: !captured, error: captured };
+}
+
+// ── Busy state ───────────────────────────────────────────────────────
+// Accessory work is a network round trip plus a rig pass. Nested/overlapping
+// ops are counted so the last one out is the one that clears the indicator.
+let busyDepth = 0;
+
+function beginBusy(label) {
+	busyDepth++;
+	$('as-panel')?.setAttribute('aria-busy', 'true');
+	setStatus('spin', label);
+	let released = false;
+	return () => {
+		if (released) return;
+		released = true;
+		busyDepth = Math.max(0, busyDepth - 1);
+		if (busyDepth === 0) $('as-panel')?.removeAttribute('aria-busy');
+	};
+}
+
 const TABS = [
 	{ id: 'color', label: 'Color', kinds: [], emoji: '🎨', color: true },
 	{ id: 'hat', label: 'Hats', kinds: ['hat'], emoji: '🎩', single: true },
@@ -409,11 +444,29 @@ function redoAppearance() {
 	applyHistoryState(history[historyIndex]);
 }
 
+// Every history step is stamped, so a step superseded while its accessories were
+// still loading neither hydrates the rig from the newer step's appearance nor
+// repaints the UI over it. Previously the queued thunk read the shared
+// `workingAppearance` at execution time, so two quick undo/redo presses could
+// leave the rig and the panel showing different states.
+let historyToken = 0;
+
 async function applyHistoryState(state) {
-	workingAppearance = cloneAppearance(state);
+	const token = ++historyToken;
+	const target = cloneAppearance(state);
+	workingAppearance = target;
+	// The index moved synchronously, so the buttons must too: gating them behind
+	// the accessory fetch left Undo looking dead right after it was pressed.
+	updateUndoRedoBtns();
+	// Undo/redo also pay the accessory fetch, so they get the same busy feedback
+	// a tile click does rather than appearing to do nothing for seconds.
+	const done = beginBusy('Applying…');
 	if (accessoryManager) {
-		await queueOp(() => accessoryManager.hydrateFromAppearance(workingAppearance));
+		await runQueued(() => accessoryManager.hydrateFromAppearance(target));
 	}
+	done();
+	if (token !== historyToken) return;
+
 	if (scene?.root) {
 		applyAllColors();
 		applyAllLayers();
@@ -425,6 +478,7 @@ async function applyHistoryState(state) {
 	updateUndoRedoBtns();
 	updateDirtyState();
 	scheduleDraftSave();
+	setStatusDefault();
 }
 
 function updateUndoRedoBtns() {
@@ -1404,14 +1458,26 @@ async function onTileClick(tab, presetId) {
 	previewedId = null;
 	previewToken++;
 
-	await queueOp(async () => {
-		await applyAccessory(tab, presetId || null);
-	});
+	const preset = presetId ? presetsById.get(presetId) : null;
+	const label = preset ? preset.name : `${tab.label.toLowerCase()}`;
+	// Fetching and rigging an accessory GLB takes seconds on a slow link. Without
+	// this the tile click looked like it did nothing at all until the model
+	// popped in, and a failed fetch was completely silent.
+	const done = beginBusy(presetId ? `Putting on ${label}…` : `Removing ${label}…`);
+	const { ok, error } = await runQueued(() => applyAccessory(tab, presetId || null));
+	done();
+
 	pushHistory();
 	renderActivePanel();
 	renderChips();
 	updateDirtyState();
 	scheduleDraftSave();
+
+	if (!ok) {
+		setStatus('err', `Couldn’t load ${label}: ${error?.message || 'Unknown error'}. Tap it again to retry.`);
+		return;
+	}
+	setStatus('ok', presetId ? `${label} on.` : `${label} removed.`);
 }
 
 async function removeCommitted(id) {
@@ -1419,15 +1485,18 @@ async function removeCommitted(id) {
 	if (!preset) return;
 	previewedId = null;
 	previewToken++;
-	await queueOp(async () => {
+	const done = beginBusy(`Removing ${preset.name}…`);
+	await runQueued(async () => {
 		accessoryManager?.removePreset(id);
 	});
+	done();
 	workingAppearance.accessories = workingAppearance.accessories.filter((a) => a !== id);
 	pushHistory();
 	renderActivePanel();
 	renderChips();
 	updateDirtyState();
 	scheduleDraftSave();
+	setStatus('ok', `${preset.name} removed.`);
 }
 
 async function applyAccessory(tab, presetId) {
