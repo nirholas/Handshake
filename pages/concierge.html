@@ -536,6 +536,56 @@ concierge.ask('What does the Pro plan cost?');</code></pre>
 				].join('\n'),
 				persona: 'friendly, precise, a little playful',
 			});
+
+			// Claim the bottom-right corner in the shared corner-stack, the same way
+			// the Walk Companion does. The widget is a host-agnostic embed, so it
+			// knows nothing about three.ws internals and cannot join the stack's
+			// flex flow; without a reservation the feature-discovery card lands on
+			// the same pixel and the passive "Have you tried" prompt renders on top
+			// of the live demo. Width is declared as well as height because the
+			// stack goes full-width on a phone, where a lift tall enough to clear
+			// the widget would strand its cards mid-page instead of at the bottom.
+			const CORNER_KEY = 'concierge-demo';
+			function syncCornerReserve() {
+				const stack = window.twsCornerStack;
+				if (!stack?.reserve) return;
+				// The launcher is the persistent footprint; the teaser is a
+				// transient nudge that sits above it, so the union of the two is
+				// what actually occupies the corner at any moment.
+				const parts = document.querySelectorAll('.tc-launcher, .tc-teaser');
+				let top = Infinity;
+				let left = Infinity;
+				for (const el of parts) {
+					const r = el.getBoundingClientRect();
+					if (!r.width || !r.height) continue;
+					top = Math.min(top, r.top);
+					left = Math.min(left, r.left);
+				}
+				if (!Number.isFinite(top)) return;
+				stack.reserve(CORNER_KEY, {
+					height: Math.max(0, window.innerHeight - top),
+					width: Math.max(0, window.innerWidth - left),
+				});
+			}
+
+			// The teaser appears and retracts on its own timers, and the launcher
+			// only exists once the widget has built, so re-measure on the events
+			// that can change the footprint rather than measuring once. Every
+			// measurement forces a layout, and streaming an answer mutates the
+			// thread on every token, so coalesce to at most one read per frame.
+			let queued = false;
+			function queueCornerReserve() {
+				if (queued) return;
+				queued = true;
+				requestAnimationFrame(() => {
+					queued = false;
+					syncCornerReserve();
+				});
+			}
+			new MutationObserver(queueCornerReserve).observe(document.body, { childList: true, subtree: true });
+			window.addEventListener('resize', queueCornerReserve);
+			window.addEventListener('tws-corner-stack:ready', queueCornerReserve);
+			queueCornerReserve();
 		</script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

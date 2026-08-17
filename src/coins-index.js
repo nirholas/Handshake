@@ -178,7 +178,10 @@ function renderTable() {
 	const head = COIN_COLUMNS.map((col) => {
 		const active = col.key === state.sortKey;
 		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
-		return `<th scope="col" tabindex="0" data-key="${col.key}" class="${col.left ? 'left' : ''} ${col.hide || ''}"${active ? ` aria-sort="${state.sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
+		// Every sortable header carries aria-sort (the inactive ones as "none"), so
+		// a screen reader reads the whole row as sortable rather than one column.
+		const sort = active ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}" class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
 	}).join('');
 
 	const rows = sortedCoins().map(coinRow).join('');

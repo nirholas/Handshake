@@ -242,6 +242,9 @@ async function fetchTokens(limit = 64) {
 			name: String(t.name).slice(0, 80),
 			logo: t.logo || '',
 			price_usd: Number(t.price_usd) || 0,
+			// The trending feed carries market cap far more reliably than a per-token
+			// price, so the panel leads with the number that is actually there.
+			market_cap_usd: Number(t.usd_market_cap) || 0,
 			rank: Number.isFinite(t.rank) ? t.rank : i + 1,
 		}));
 }
@@ -426,7 +429,11 @@ function selectNode(index, { fromKeyboard = false } = {}) {
 	logo.style.display = token.logo ? '' : 'none';
 	if (token.logo) logo.src = token.logo; else logo.removeAttribute('src');
 	logo.alt = token.logo ? `${token.symbol} token logo` : '';
+	$('c-panel-mcap').textContent = token.market_cap_usd ? formatUsd(token.market_cap_usd) : '…';
+	// Price is optional in the live feed. Hide the stat entirely rather than
+	// leaving a permanently empty tile next to the numbers that do arrive.
 	$('c-panel-price').textContent = token.price_usd ? formatPrice(token.price_usd) : '—';
+	$('c-stat-price').hidden = !token.price_usd;
 	$('c-panel-rank').textContent = `#${token.rank}`;
 
 	const neigh = nearestNeighbors(index, 3);
@@ -455,6 +462,13 @@ function formatPrice(p) {
 	if (p >= 1) return `$${p.toFixed(3)}`;
 	if (p >= 0.0001) return `$${p.toFixed(6)}`;
 	return `$${p.toExponential(2)}`;
+}
+// Compact USD for market caps, which run from five to nine figures.
+function formatUsd(v) {
+	if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
+	if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
+	if (v >= 1e3) return `$${Math.round(v / 1e3)}K`;
+	return `$${Math.round(v)}`;
 }
 function closePanel() {
 	if (!panel.classList.contains('open')) return;
@@ -495,8 +509,9 @@ async function runGraniteAnalysis(token, neighbors) {
 	const neighborLine = neighbors.length
 		? ` Its closest neighbors in the embedding space that lays out this galaxy are ${neighbors.map((n) => `${n.token.name} (${n.token.symbol})`).join(', ')}.`
 		: '';
+	const capLine = token.market_cap_usd ? ` Its market cap is about ${formatUsd(token.market_cap_usd)}.` : '';
 	const system = 'You are a concise, neutral crypto market analyst. You never give financial advice or price predictions. You explain what a token\'s name and ticker suggest, the typical risks of similar Solana meme/utility tokens, and concrete things a careful trader should verify (liquidity, holder concentration, mint authority, socials).';
-	const userMsg = `Briefly analyze the Solana token "${token.name}" (ticker ${token.symbol}), currently trending at rank #${token.rank}.${neighborLine} In ~110 words: what the name/ticker signals about its theme, the main risks, and 3 things to check before touching it. End with one line: "Not financial advice."`;
+	const userMsg = `Briefly analyze the Solana token "${token.name}" (ticker ${token.symbol}), currently trending at rank #${token.rank}.${capLine}${neighborLine} In ~110 words: what the name/ticker signals about its theme, the main risks, and 3 things to check before touching it. End with one line: "Not financial advice."`;
 
 	let text = '';
 	try {

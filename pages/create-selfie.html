@@ -175,55 +175,6 @@
 				display: block;
 			}
 
-			.choice-grid {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 14px;
-			}
-			@media (max-width: 560px) {
-				.choice-grid {
-					grid-template-columns: 1fr;
-				}
-			}
-			.choice {
-				padding: 22px 18px;
-				background: var(--panel);
-				border: 1px solid var(--border);
-				border-radius: 12px;
-				color: var(--text);
-				font: inherit;
-				text-align: left;
-				cursor: pointer;
-				transition:
-					border-color 120ms,
-					transform 120ms,
-					background 120ms;
-			}
-			.choice:hover:not(:disabled) {
-				border-color: var(--accent);
-				transform: translateY(-1px);
-			}
-			.choice:disabled {
-				opacity: 0.45;
-				cursor: not-allowed;
-			}
-			.choice .icon {
-				font-size: 26px;
-				margin-bottom: 10px;
-				display: block;
-			}
-			.choice .title {
-				font-size: 16px;
-				font-weight: 600;
-				margin: 0 0 4px;
-			}
-			.choice .desc {
-				color: var(--muted);
-				font-size: 13px;
-				line-height: 1.5;
-				margin: 0;
-			}
-
 			.hero-slot-wrap {
 				margin: 8px 0 18px;
 			}
@@ -502,6 +453,15 @@
 				display: grid;
 				grid-template-columns: 1fr 1fr;
 				gap: 10px;
+			}
+			/* Two columns leave ~70px for the description once the 44px swatch and
+			   the padding are taken out on a 320px phone, which shreds "Likeness-
+			   first. Closest to how you actually look." into a one-word-per-line
+			   column. Stack the cards instead: the choice is read, not scanned. */
+			@media (max-width: 430px) {
+				.style-grid {
+					grid-template-columns: 1fr;
+				}
 			}
 			.style-card {
 				background: var(--panel);
@@ -1776,7 +1736,7 @@
 
 				<div class="portability-note">
 					<span data-i18n="create_selfie.this_avatar_works_in_any_three_ws">This avatar works in any three.ws-powered app.</span>
-					<a href="/docs/embed" target="_blank" rel="noopener" data-i18n="create_selfie.learn_how_to_embed">Learn how to embed →</a>
+					<a href="/docs/embedding" target="_blank" rel="noopener" data-i18n="create_selfie.learn_how_to_embed">Learn how to embed →</a>
 				</div>
 			</section>
 		</main>

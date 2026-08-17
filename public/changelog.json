@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T03:22:30.452Z",
+	"generated_at": "2026-08-17T03:27:31.557Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -128,6 +128,17 @@
 		{
 			"date": "2026-08-17",
 			"type": "update",
+			"title": "Coins explains a failed market feed and gives you a button that actually retries it",
+			"summary": "The Coins index had three ways to leave you stuck with no explanation. Load more coins swallowed a failed request silently, so a click that fetched nothing looked like a broken button, and it kept offering more rows forever even after the feed had run out. A market table that failed to load said only that data was temporarily unavailable, with nothing to press. The global stats strip across the top vanished entirely when its request failed, so the page looked like it simply had no market cap, dominance or Fear and Greed to show. All three now say what happened and hand you a working retry: the table and the stats strip each get a Try again that refetches in place, a load-more failure keeps the rows you already have and explains itself, and once the feed is exhausted the button retires with a line telling you how many coins it ranked. Being rate limited is now told apart from an outage, so you are asked to wait a minute rather than to keep hammering a feed that will refuse you. The coin search box shows a Searching indicator while it waits instead of staying shut, explains a failed lookup instead of closing as if nothing happened, keeps its previous results readable while the next query resolves, and can no longer let a slow answer overwrite a newer one. Screen readers now follow the highlighted search result, and an empty feed no longer wears the wording of a failure.",
+			"link": "/coins",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
 			"title": "Compare Coins now tells you when a coin will not load instead of shimmering forever",
 			"summary": "The side-by-side coin comparison had one failure mode that looked exactly like a hung page: when the market data service did not answer, the stats table kept its grey loading shimmer up permanently and the chips still showed the raw coin ids, with nothing to click and nothing to read. Every one of those states is now written out. A coin that does not exist is labelled Not found with a one-click Remove; a coin the service failed to return is labelled Failed to load with a Retry that actually refetches it and redraws the chart. The chart says which of the two happened and offers the same recovery. The search box no longer goes quiet when the coin index is slow or down: it shows a Searching indicator while it waits and an explanation if the request fails, and a slow answer can no longer overwrite a newer one. Once four coins are up, the box says four is the maximum and stops accepting a fifth rather than silently swallowing the pick. New Copy link button next to the picker hands over the shareable matchup URL, the three default coins load in parallel instead of one after another, and the stats table now carries proper row and column headers for screen readers with a visible focus ring on every chip.",
 			"link": "/compare",
@@ -154,6 +165,29 @@
 			"summary": "The sector leaderboard at /categories was audited end to end in a real browser: the table, the search box, the sortable columns, the paging, and the loading, empty, error and rate-limited states all behave, at phone, tablet and desktop widths. One real defect turned up, and it only showed outside English. The page's own summary line and the description search engines and link previews read were translated once against an older wording and had kept a dash where the English now uses a colon, so every non-English visitor saw punctuation the platform does not use, in the headline copy and in the shared-link preview. All 83 translated catalogs are corrected, with the full-width colon that Japanese, Korean and Chinese actually want rather than a Latin one.",
 			"link": "/categories",
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Describe it to 3D keeps your prompt when it asks you to sign in, and stops a cancelled build from hijacking the next one",
+			"summary": "Four fixes to the prompt-to-avatar page. If you were not signed in, typing a long description and pressing Generate bounced you to the login page and threw the description away; you now come back to the page with your words still in the box. Cancelling a build and immediately starting another used to leave the abandoned build running in the background, so a minute later the cancelled avatar could take over the screen and Open in editor would point at the wrong character; each build now carries a token and an abandoned one can no longer write to the page. The Cancel button went dead in the one state where people reach for it most, after a build had already failed, because it was checking whether a build was still in flight rather than whether you were still looking at the build screen; Cancel and the Escape key both work there now. And when an avatar finished, Open in editor and Make another sat just below the bottom edge of a laptop screen, so the result appeared to have no next step: the preview is now sized against the window height, and both buttons land in view.",
+			"link": "/create/prompt",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Every Crypto Converter result now has its own link you can share",
+			"summary": "The converter promised a shareable result and never had one: the address bar stayed on /converter no matter what you picked, so there was no way to hand someone a rate. Now the page reads and writes its own URL. Pick BTC to EUR and type an amount and the address becomes /converter?from=bitcoin&to=EUR&amount=3, a new Copy link button puts that on your clipboard, and opening the link restores both sides and the amount exactly. Alongside that: the asset picker is fully keyboard-driven (arrow keys move the highlight, Enter picks, Escape closes and returns focus to the button you came from), the amount field says what it wants when you type something it cannot use instead of showing a silent dash, a coin whose price failed to load says price unavailable rather than a bare dash, the four quick presets light up when they match what you are looking at and stay disabled until live rates arrive, and the whole widget fits a 320px phone screen, where the currency buttons used to be pushed off the right edge and the picker off the left.",
+			"link": "/converter",
+			"tags": [
+				"feature",
+				"improvement",
 				"fix"
 			]
 		},
@@ -189,6 +223,17 @@
 				"fix",
 				"sdk",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "The Character Library counts its own characters, and fills the screen while it does",
+			"summary": "The library page had been advertising 106 rigged characters since launch. There are 107 on the shelf today, and there will be more tomorrow, so the number is no longer typed into the headline, the page description or the share card: the page asks the library how many it has and prints the answer under the hero. The grid also stopped wasting a third of a desktop screen. A layout rule left the page shrink-to-fitting to about two thirds of the window, so a wide monitor showed three columns where five fit; it now uses the full width it was designed for. Every character card previously carried a hidden second tab stop that announced the same name as the card itself, which made keyboard browsing twice as long as it needed to be, and thumbnails could not be dragged out of alignment by an accidental swipe anymore because the preview no longer pretends to be an interactive 3D control. The search box has a visible focus ring again instead of a one pixel border shift, and when the library cannot be reached the page now says what actually went wrong rather than reverting to a generic sentence a moment later.",
+			"link": "/character-library",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

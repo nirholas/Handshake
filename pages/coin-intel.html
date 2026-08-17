@@ -40,11 +40,13 @@
 		.site-header { position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 		* { box-sizing: border-box; }
 
-		/* `body` is a flex container site-wide, so this is a flex item: without an
-		   explicit min-width it refuses to shrink below its min-content width and
-		   the page silently overflows a 320px viewport (html/body clip the overflow,
-		   so the right edge is cut off with no scrollbar to reveal it). */
-		.ci-wrap { max-width: 1320px; min-width: 0; margin: 0 auto; padding: 0 20px 80px; }
+		/* `body` is a column flex container site-wide, so this is a flex item that is
+		   sized from its own content: at 320px it resolved to its 494px min-content
+		   width (the tab strip drives it) while html/body clip the overflow, so the
+		   right third of the hero, stats and cards was cut off with no scrollbar to
+		   reveal it. Resolving the width against the container instead pins it to the
+		   viewport and lets .ci-tabs use the horizontal scroll it already declares. */
+		.ci-wrap { width: 100%; max-width: 1320px; min-width: 0; margin: 0 auto; padding: 0 20px 80px; }
 
 		/* ── hero / header ─────────────────────────────── */
 		.ci-hero {
