@@ -56,6 +56,7 @@ function fgClass(v) {
 
 async function loadStats() {
 	const el = $('cv-stats');
+	if (!el) return; // shell navigation left /coins before the retry landed
 	el.innerHTML =
 		'<div style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">' +
 		Array.from({ length: 6 }, () => '<div class="cv-skel" style="height:6rem"></div>').join('') +
@@ -109,17 +110,47 @@ async function loadStats() {
 		}
 		el.innerHTML = cards.length
 			? `<div style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">${cards.join('')}</div>`
-			: '';
+			: statsNote('No global market stats are being reported right now.');
 	} catch {
-		el.innerHTML = ''; // Stats bar is an enhancement — the table is the page.
+		// The stats bar is an enhancement (the table is the page), so its failure
+		// stays quiet. Quiet is not silent: a blank strip reads as "this page has
+		// no stats", so say what happened and offer the retry.
+		el.innerHTML = statsNote('Global market stats are unavailable right now.');
 	}
+	el.querySelector('[data-act="retry-stats"]')?.addEventListener('click', loadStats);
+}
+
+// Same visual language as the liquidations offline line: one quiet row, a dot,
+// and an inline retry.
+function statsNote(message) {
+	return `<p class="cv-inline-note" role="status"><span class="dot" aria-hidden="true"></span>${esc(message)} <button type="button" class="cv-linkbtn" data-act="retry-stats">Try again</button>.</p>`;
 }
 
 // ── Market table ────────────────────────────────────────────────────────────
 // Row/column/sort primitives are shared with the /markets hub — see
 // src/shared/market-table.js.
 
-const state = { coins: [], sortKey: 'rank', sortDir: 'asc', page: 1, loadingMore: false };
+const state = {
+	coins: [],
+	sortKey: 'rank',
+	sortDir: 'asc',
+	page: 1,
+	loadingMore: false,
+	// The three no-rows outcomes are different problems: a failed first fetch is
+	// retryable, an upstream that answered with nothing is not the user's doing,
+	// and a failed load-more must not look like the button is broken.
+	errorStatus: null,
+	moreErrorStatus: null,
+	exhausted: false,
+};
+
+// A 429 is our own per-IP budget, not an upstream outage: telling the user to
+// retry immediately would only spend the next token they have.
+function whyFailed(status) {
+	return status === 429
+		? 'You have requested this feed too many times in a row. Give it a minute, then'
+		: 'The market data provider did not answer.';
+}
 
 function sortedCoins() {
 	const copy = [...state.coins];
@@ -137,8 +168,10 @@ function renderTable() {
 	const el = $('cv-market');
 	if (!el) return; // shell navigation left /coins while a fetch was in flight
 	if (!state.coins.length) {
-		el.innerHTML =
-			'<div class="cv-empty">Market data is temporarily unavailable. Please try again shortly.</div>';
+		el.innerHTML = state.errorStatus
+			? `<div class="cv-empty">Market data could not be loaded. ${whyFailed(state.errorStatus)} <button type="button" class="cv-linkbtn" data-act="retry">${state.errorStatus === 429 ? 'load it again' : 'Try again'}</button>.</div>`
+			: '<div class="cv-empty">No coins are being reported right now. <button type="button" class="cv-linkbtn" data-act="retry">Refresh</button> to check again.</div>';
+		el.querySelector('[data-act="retry"]')?.addEventListener('click', loadCoins);
 		return;
 	}
 
@@ -150,6 +183,19 @@ function renderTable() {
 
 	const rows = sortedCoins().map(coinRow).join('');
 
+	// Footer: the button while more rows exist, an end-of-list line once the feed
+	// is exhausted (a button that can never add another row is a dead control),
+	// and an explanation when a load-more failed so the click never looks ignored.
+	const moreError =
+		state.moreErrorStatus === 429
+			? 'More coins could not be loaded. You have requested this feed too many times in a row. Give it a minute, then press Load more coins again.'
+			: 'More coins could not be loaded. The market data provider did not answer. Press Load more coins again.';
+	const footer = state.exhausted
+		? `<p class="cv-load-end" role="status">That is every coin the market feed ranks (${state.coins.length.toLocaleString('en-US')} in total).</p>`
+		: `<button type="button" class="cv-load-more" id="cv-load-more"${state.loadingMore ? ' disabled' : ''}>
+			${state.loadingMore ? 'Loading…' : 'Load more coins'}
+		</button>` + (state.moreErrorStatus ? `<p class="cv-load-err" role="status">${moreError}</p>` : '');
+
 	el.innerHTML = `
 		<div class="cv-table-wrap">
 			<table class="cv-table">
@@ -157,9 +203,7 @@ function renderTable() {
 				<tbody>${rows}</tbody>
 			</table>
 		</div>
-		<button type="button" class="cv-load-more" id="cv-load-more"${state.loadingMore ? ' disabled' : ''}>
-			${state.loadingMore ? 'Loading…' : 'Load more coins'}
-		</button>`;
+		${footer}`;
 
 	el.querySelectorAll('th[data-key]').forEach((th) => {
 		const activate = () => {
@@ -193,33 +237,49 @@ function renderTable() {
 	$('cv-load-more')?.addEventListener('click', loadMore);
 }
 
+const PER_PAGE = 100;
+
 async function loadCoins() {
 	const el = $('cv-market');
+	if (!el) return; // shell navigation left /coins before the retry landed
 	el.innerHTML =
 		'<div class="cv-table-wrap" style="padding:0.75rem">' +
 		Array.from({ length: 12 }, () => '<div class="cv-skel" style="height:2.5rem;margin:0.375rem 0"></div>').join('') +
 		'</div>';
 	try {
-		const { coins } = await getJson('/api/coin/markets?page=1&per_page=100');
+		const { coins } = await getJson(`/api/coin/markets?page=1&per_page=${PER_PAGE}`);
 		state.coins = coins;
 		state.page = 1;
-	} catch {
+		state.errorStatus = null;
+		state.exhausted = coins.length < PER_PAGE;
+	} catch (err) {
 		state.coins = [];
+		state.errorStatus = err.status || 0;
+		state.exhausted = false;
 	}
+	state.moreErrorStatus = null;
 	renderTable();
 }
 
 async function loadMore() {
 	if (state.loadingMore) return;
 	state.loadingMore = true;
+	state.moreErrorStatus = null;
 	renderTable();
 	try {
-		const { coins } = await getJson(`/api/coin/markets?page=${state.page + 1}&per_page=100`);
+		const { coins } = await getJson(`/api/coin/markets?page=${state.page + 1}&per_page=${PER_PAGE}`);
 		const seen = new Set(state.coins.map((c) => c.id));
-		state.coins.push(...coins.filter((c) => !seen.has(c.id)));
+		const fresh = coins.filter((c) => !seen.has(c.id));
+		state.coins.push(...fresh);
 		state.page += 1;
-	} catch {
-		// keep what we have; button re-enables for a retry
+		// The endpoint caps `page`, so past the last page it replays rows we
+		// already have. Either signal means there is nothing left to load, and the
+		// button retires rather than pretending forever.
+		state.exhausted = !fresh.length || coins.length < PER_PAGE;
+	} catch (err) {
+		// Keep the rows we have and say why the click added none, so the button
+		// never reads as broken.
+		state.moreErrorStatus = err.status || 0;
 	}
 	state.loadingMore = false;
 	renderTable();
@@ -235,21 +295,31 @@ function wireSearch() {
 	let items = [];
 	let active = -1;
 	let lastQuery = '';
+	let searchErrorStatus = null;
 
 	function close() {
 		pop.hidden = true;
 		input.setAttribute('aria-expanded', 'false');
+		input.removeAttribute('aria-activedescendant');
 		active = -1;
 	}
 
 	function renderPop() {
-		if (!items.length) {
+		if (searchErrorStatus) {
+			// A search that answers with nothing at all is a dead end: say the
+			// lookup failed rather than closing the panel as if nothing happened.
+			pop.innerHTML = `<div class="none">${
+				searchErrorStatus === 429
+					? 'Coin search is rate limited right now. Give it a minute, then type to search again.'
+					: 'Coin search is unavailable right now. The market data provider did not answer. Type to search again.'
+			}</div>`;
+		} else if (!items.length) {
 			pop.innerHTML = `<div class="none">No coins match “${esc(lastQuery)}”.</div>`;
 		} else {
 			pop.innerHTML = items
 				.map(
 					(c, i) => `
-				<a href="/coin/${encodeURIComponent(c.id)}" role="option" data-active="${i === active ? 1 : 0}" aria-selected="${i === active}">
+				<a id="cv-search-opt-${i}" href="/coin/${encodeURIComponent(c.id)}" role="option" data-active="${i === active ? 1 : 0}" aria-selected="${i === active}">
 					${c.thumb ? `<img loading="lazy" decoding="async" src="${esc(c.thumb)}" alt="" width="20" height="20" data-no-dark-filter />` : ''}
 					<span>${esc(c.name)}</span>
 					<span class="sym">${esc(c.symbol)}</span>
@@ -260,6 +330,10 @@ function wireSearch() {
 		}
 		pop.hidden = false;
 		input.setAttribute('aria-expanded', 'true');
+		// Screen readers follow the active option through aria-activedescendant;
+		// data-active only moves the highlight visually.
+		if (active >= 0 && items[active]) input.setAttribute('aria-activedescendant', `cv-search-opt-${active}`);
+		else input.removeAttribute('aria-activedescendant');
 	}
 
 	input.addEventListener('input', () => {
@@ -275,10 +349,13 @@ function wireSearch() {
 				lastQuery = q;
 				items = coins;
 				active = -1;
-				renderPop();
-			} catch {
-				close();
+				searchErrorStatus = null;
+			} catch (err) {
+				items = [];
+				active = -1;
+				searchErrorStatus = err.status || 0;
 			}
+			renderPop();
 		}, 250);
 	});
 

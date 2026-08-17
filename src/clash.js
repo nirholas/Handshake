@@ -77,22 +77,33 @@ function fmtUsd(n) {
 	return `$${n < 1 ? n.toFixed(3) : n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-async function apiGet(action, params = '') {
-	const r = await fetch(`${API}/${action}${params}`, { credentials: 'include' });
+// One network boundary for every call. A fetch that never reaches the server
+// rejects with a raw TypeError ("Failed to fetch"), which used to land verbatim
+// in the arena's error card; a visitor cannot act on that string, so the
+// transport failure is named here instead and tagged so callers can tell it
+// apart from a real server answer.
+async function apiFetch(action, params, init) {
+	let r;
+	try {
+		r = await fetch(`${API}/${action}${params}`, init);
+	} catch (cause) {
+		throw Object.assign(new Error('Couldn’t reach the battle server. Check your connection and try again.'), { code: 'network_error', cause });
+	}
 	const body = await r.json().catch(() => ({}));
 	if (!r.ok) throw Object.assign(new Error(body.error_description || body.error || `HTTP ${r.status}`), { status: r.status, code: body.error });
 	return body.data;
 }
+
+async function apiGet(action, params = '') {
+	return apiFetch(action, params, { credentials: 'include' });
+}
 async function apiPost(action, payload) {
-	const r = await fetch(`${API}/${action}`, {
+	return apiFetch(action, '', {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify(payload),
 	});
-	const body = await r.json().catch(() => ({}));
-	if (!r.ok) throw Object.assign(new Error(body.error_description || body.error || `HTTP ${r.status}`), { status: r.status, code: body.error });
-	return body.data;
 }
 
 // ── Avatar (image or seeded initials) ────────────────────────────────────────

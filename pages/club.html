@@ -109,6 +109,15 @@
 				font-size: 13px;
 			}
 			#club-top .brand a:hover { color: var(--text); }
+			/* The document's single h1 lives in the top bar so the page always has
+			   exactly one, in the room itself, rather than on the transient loader
+			   splash or the door dialog (both of which get torn down). It has to
+			   read as the brand line it sits in, so the h1 defaults are cleared. */
+			#club-top .club-top-title {
+				margin: 0;
+				font: inherit;
+				color: inherit;
+			}
 			#club-top .dot {
 				width: 9px;
 				height: 9px;
@@ -623,6 +632,14 @@
 				outline: 2px solid #fff;
 				outline-offset: 2px;
 			}
+			/* The stage is a programmatic focus target (see its tabindex="-1"). Show
+			   a ring when a keyboard actually landed there, and stay quiet when the
+			   gate moves focus in on admission. */
+			#club-stage:focus-visible {
+				outline: 2px solid var(--accent-2);
+				outline-offset: -3px;
+			}
+			#club-stage:focus:not(:focus-visible) { outline: none; }
 
 			/* ── Entrance fade ──────────────────────────────────── */
 			.club-entrance {
@@ -674,7 +691,16 @@
 				opacity: 1;
 				transition: opacity 0.7s ease;
 			}
-			.club-loader.is-done { opacity: 0; pointer-events: none; }
+			/* Once faded, the splash must leave the accessibility tree too, not just
+			   stop taking clicks: a full-screen `opacity:0` overlay is still read by
+			   screen readers, so its wordmark and status line would keep shadowing
+			   the room behind it. visibility flips after the fade, never during. */
+			.club-loader.is-done {
+				opacity: 0;
+				pointer-events: none;
+				visibility: hidden;
+				transition: opacity 0.7s ease, visibility 0s linear 0.7s;
+			}
 			.club-loader-inner { max-width: 420px; width: 100%; }
 			.club-loader-kicker {
 				font-size: 10.5px;
@@ -1933,7 +1959,7 @@
 		<div id="club-loader" class="club-loader" role="status" aria-live="polite">
 			<div class="club-loader-inner">
 				<div class="club-loader-kicker">three.ws</div>
-				<h1 class="club-loader-title" data-i18n-html="club.poleclub">Pole<span>Club</span></h1>
+				<p class="club-loader-title" data-i18n-html="club.poleclub">Pole<span>Club</span></p>
 				<p class="club-loader-tagline" data-i18n="club.step_into_the_alley_and_walk_it">Step into the alley and walk it in. Tip a dancer and she takes the pole.</p>
 				<div class="club-loader-track"><div id="club-loader-bar" class="club-loader-bar"></div></div>
 				<div id="club-loader-status" class="club-loader-status">Loading the night…</div>
@@ -1996,7 +2022,7 @@
 				<!-- QUEUE: pay the cover -->
 				<div class="club-door-state is-queue">
 					<p class="club-door-eyebrow" data-i18n="club.at_the_door">At the door</p>
-					<h1 id="club-door-title" class="club-door-title" data-i18n="club.pole_club">Pole Club</h1>
+					<h2 id="club-door-title" class="club-door-title" data-i18n="club.pole_club">Pole Club</h2>
 					<p class="club-door-copy" data-i18n-html="club.there_s_a_cover_tonight_pay_0">
 						There's a cover tonight. Pay <b>$0.01 USDC</b> — the bouncer checks
 						your wallet on-chain, and if you're on the list, the rope drops and
@@ -2017,21 +2043,21 @@
 				<div class="club-door-state is-checking">
 					<div class="club-door-spinner" aria-hidden="true"></div>
 					<p class="club-door-eyebrow" data-i18n="club.at_the_door_2">At the door</p>
-					<h1 class="club-door-title" data-i18n="club.checking_the_list">Checking the list…</h1>
+					<h2 class="club-door-title" data-i18n="club.checking_the_list">Checking the list…</h2>
 					<p class="club-door-copy" data-i18n="club.verifying_your_wallet_on_chain">Verifying your wallet on-chain.</p>
 				</div>
 
 				<!-- ADMITTED -->
 				<div class="club-door-state is-admitted" role="status" aria-live="polite">
 					<div class="club-door-result-icon" aria-hidden="true">🎟️</div>
-					<h1 class="club-door-title" data-i18n="club.you_re_in">You're in</h1>
+					<h2 class="club-door-title" data-i18n="club.you_re_in">You're in</h2>
 					<p class="club-door-tier" id="club-door-tier"></p>
 				</div>
 
 				<!-- DENIED -->
 				<div class="club-door-state is-denied" role="status" aria-live="polite">
 					<div class="club-door-result-icon" aria-hidden="true">🚫</div>
-					<h1 class="club-door-title" data-i18n="club.not_tonight">Not tonight</h1>
+					<h2 class="club-door-title" data-i18n="club.not_tonight">Not tonight</h2>
 					<p class="club-door-reason" id="club-door-reason" data-i18n="club.not_on_the_list_tonight">Not on the list tonight.</p>
 				</div>
 			</div>
@@ -2044,7 +2070,7 @@
 					<a href="/" title="three.ws home" data-i18n="club.three_ws" data-i18n-attr="title:club.three_ws_home_title">three.ws</a>
 					<span>/</span>
 					<span class="dot" aria-hidden="true"></span>
-					<span data-i18n="club.pole_club_2">Pole Club</span>
+					<h1 class="club-top-title" data-i18n="club.pole_club_2">Pole Club</h1>
 				</div>
 				<span class="sep"></span>
 				<span class="tagline" data-i18n="club.tip_in_usdc_she_dances">tip in USDC · she dances</span>
@@ -2067,8 +2093,11 @@
 				 data-i18n="club.8d_off" data-i18n-attr="title:club.8d_audio_orbits_the_sound_ar_title">🎧 8D off</button>
 			</header>
 
-			<!-- STAGE -->
-			<main id="club-stage">
+			<!-- STAGE. tabindex="-1" makes it a real focus target: the skip link at
+			     the top of the body and src/club-gate.js (which focuses the stage the
+			     moment the velvet rope drops) both call focus() on it, and on a plain
+			     <main> that call is a silent no-op that strands keyboard focus. -->
+			<main id="club-stage" tabindex="-1">
 				<canvas id="club-canvas"></canvas>
 				<div id="club-status" role="status" aria-live="polite" hidden>Loading…</div>
 			</main>

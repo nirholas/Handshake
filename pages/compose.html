@@ -36,13 +36,21 @@
 			*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 			html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased;}
 
-			/* Root grid */
-			#cr{display:grid;grid-template-rows:46px 1fr;grid-template-columns:248px 1fr 288px;height:100vh;overflow:hidden;}
+			/* Screen-reader-only: kept focusable, unlike display:none. */
+			.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;}
 
-			/* Topbar */
-			#tb{grid-column:1/-1;display:flex;align-items:center;gap:5px;padding:0 10px;background:var(--surface);border-bottom:1px solid var(--border);user-select:none;}
+			/* Root grid. min-width:0 on every track child so a wide toolbar can never
+			   force the grid past the viewport (that is what clipped the canvas and
+			   the whole right panel off-screen at 320px). */
+			#cr{display:grid;grid-template-rows:46px 1fr;grid-template-columns:248px 1fr 288px;height:100dvh;overflow:hidden;min-width:0;}
+			#cr > *{min-width:0;}
+
+			/* Topbar. Scrolls horizontally when the controls outgrow the viewport, so
+			   every button stays reachable on a phone instead of being cut off. */
+			#tb{grid-column:1/-1;display:flex;align-items:center;gap:5px;padding:0 10px;background:var(--surface);border-bottom:1px solid var(--border);user-select:none;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;}
+			#tb::-webkit-scrollbar{height:0;}
 			.tbl{font-size:13px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:-.01em;flex-shrink:0;}
-			.tbp{font-size:12px;font-weight:500;color:var(--ink-dim);padding:0 8px;border-left:1px solid var(--border);}
+			.tbp{font-size:12px;font-weight:500;color:var(--ink-dim);padding:0 8px;border-left:1px solid var(--border);flex-shrink:0;}
 			.tbs{width:1px;height:18px;background:var(--border);margin:0 1px;flex-shrink:0;}
 			.tbsp{flex:1;}
 			.tbg{display:flex;align-items:center;gap:2px;}
@@ -57,8 +65,8 @@
 			.campw{position:relative;}
 			#cmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:500;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:4px;min-width:120px;box-shadow:0 12px 40px rgba(0,0,0,.55);}
 			#cmenu[hidden]{display:none;}
-			.cmi{padding:5px 10px;border-radius:var(--rs);font-size:12px;color:var(--ink-dim);cursor:pointer;transition:background .08s,color .08s;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-			.cmi:hover{background:rgba(255,255,255,.07);color:var(--ink);}
+			.cmi{width:100%;padding:5px 10px;border:none;background:none;font-family:inherit;text-align:left;border-radius:var(--rs);font-size:12px;color:var(--ink-dim);cursor:pointer;transition:background .08s,color .08s;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+			.cmi:hover,.cmi:focus-visible{background:rgba(255,255,255,.07);color:var(--ink);}
 			.cmik{font-size:9px;font-family:var(--mono);opacity:.4;}
 			#ss{font-size:11px;color:var(--ink-dim);opacity:0;transition:opacity .3s;padding:0 4px;}
 			#ss.v{opacity:1;}
@@ -69,16 +77,20 @@
 			.phb{padding:2px 8px;border-radius:var(--rs);background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--ink-dim);font-size:11px;cursor:pointer;transition:background .08s,color .08s;}
 			.phb:hover{background:rgba(255,255,255,.1);color:var(--ink);}
 			#ol{flex:1;overflow-y:auto;padding:2px 0;}
-			.or{display:flex;align-items:center;gap:5px;padding:5px 8px 5px 10px;cursor:pointer;border-left:2px solid transparent;transition:background .08s;}
+			.or{display:flex;align-items:center;gap:5px;padding:0 8px 0 0;border-left:2px solid transparent;transition:background .08s;}
 			.or:hover{background:rgba(255,255,255,.03);}
 			.or.sel{background:rgba(99,102,241,.1);border-left-color:var(--accent);}
+			/* The row's select target is a real button, so the hierarchy is keyboard
+			   navigable and the hide/remove buttons are not nested inside a control. */
+			.ob{flex:1;min-width:0;display:flex;align-items:center;gap:5px;padding:5px 4px 5px 10px;background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;color:inherit;}
 			.oi{flex:0 0 15px;text-align:center;font-size:12px;color:var(--ink-mute);}
 			.on{flex:1;min-width:0;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);}
 			.oni{flex:1;background:rgba(99,102,241,.12);border:1px solid var(--accent-border);border-radius:3px;color:var(--ink);font-size:12px;padding:1px 5px;outline:none;}
 			.ot{font-size:9px;font-weight:600;letter-spacing:.04em;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,.06);color:var(--ink-mute);text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
 			.ot.b{background:rgba(99,102,241,.15);color:var(--accent-text);}
+			/* Revealed on focus too, or a keyboard user could never reach hide/remove. */
 			.oa{display:flex;gap:1px;opacity:0;transition:opacity .1s;}
-			.or:hover .oa{opacity:1;}
+			.or:hover .oa,.or:focus-within .oa{opacity:1;}
 			.oab{width:18px;height:18px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-mute);border-radius:3px;text-align:center;line-height:18px;transition:background .08s,color .08s;}
 			.oab:hover{background:rgba(255,255,255,.08);color:var(--ink);}
 			.oab.d:hover{background:rgba(248,113,113,.12);color:var(--danger);}
@@ -135,6 +147,9 @@
 			.aplk:hover{opacity:1;}
 			.apsk{font-size:11px;color:var(--ink-dim);background:none;border:1px solid var(--border);border-radius:var(--r);padding:6px 16px;cursor:pointer;transition:background .1s,color .1s;}
 			.apsk:hover{background:rgba(255,255,255,.06);color:var(--ink);}
+			/* Persistent load error: a toast vanishes before a user can read the cause. */
+			#ape{display:none;max-width:350px;font-size:11px;line-height:1.5;color:var(--danger);background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.28);border-radius:var(--r);padding:7px 11px;}
+			#ape.on{display:block;}
 
 			/* Right panel */
 			#pf{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
@@ -175,18 +190,21 @@
 			.gh a{font-size:10px;color:var(--ink-mute);text-decoration:none;text-transform:none;letter-spacing:normal;transition:color .1s;}
 			.gh a:hover{color:var(--accent-text);}
 			#gl{flex:1;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px 10px;align-content:start;}
-			.gc{aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;cursor:pointer;background:var(--surface2);border:1px solid var(--border);transition:border-color .12s,transform .1s;}
-			.gc:hover{border-color:var(--accent-border);transform:scale(1.02);}
+			.gc{aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;cursor:pointer;background:var(--surface2);border:1px solid var(--border);transition:border-color .12s,transform .1s;padding:0;display:block;width:100%;font-family:inherit;}
+			.gc:hover,.gc:focus-visible{border-color:var(--accent-border);transform:scale(1.02);}
 			.gc img{width:100%;height:100%;object-fit:cover;display:block;}
 			.gco{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 55%);display:flex;flex-direction:column;justify-content:flex-end;padding:6px;opacity:0;transition:opacity .12s;}
-			.gc:hover .gco{opacity:1;}
+			.gc:hover .gco,.gc:focus-visible .gco{opacity:1;}
 			.gcp{font-size:10px;color:#fff;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 			.gca{font-size:10px;font-weight:600;color:var(--accent-text);background:rgba(99,102,241,.28);border-radius:4px;padding:2px 6px;margin-top:3px;text-align:center;}
 			.gcg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,.2);text-align:center;padding:8px;}
-			.ge{grid-column:1/-1;text-align:center;padding:20px 0;font-size:11px;color:var(--ink-mute);}
+			.ge{grid-column:1/-1;text-align:center;padding:20px 8px;font-size:11px;color:var(--ink-mute);line-height:1.6;}
+			.geb{margin-top:8px;padding:4px 12px;border-radius:var(--rs);background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--ink-dim);font-size:11px;font-family:inherit;cursor:pointer;transition:background .1s,color .1s;}
+			.geb:hover{background:rgba(255,255,255,.1);color:var(--ink);}
 			#dz{margin:0 8px 8px;border:1px dashed rgba(255,255,255,.09);border-radius:var(--r);padding:9px;text-align:center;font-size:10px;color:var(--ink-mute);cursor:pointer;transition:border-color .12s,background .12s;flex-shrink:0;}
-			#dz:hover,#dz.dh{border-color:var(--accent-border);background:rgba(99,102,241,.04);color:var(--accent-text);}
-			#dz input{display:none;}
+			#dz:hover,#dz.dh,#dz:focus-within{border-color:var(--accent-border);background:rgba(99,102,241,.04);color:var(--accent-text);}
+			/* sr-only, not display:none — a hidden file input cannot take keyboard focus. */
+			#dz input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
 
 			/* Avatar modal */
 			#am{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;}
@@ -221,8 +239,34 @@
 			::-webkit-scrollbar-thumb{background:rgba(255,255,255,.09);border-radius:2px;}
 			::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.16);}
 
-			@media(max-width:900px){#cr{grid-template-columns:0 1fr 272px;}#po{display:none;}}
-			@media(max-width:600px){#cr{grid-template-columns:1fr;grid-template-rows:46px 1fr 260px;}#pf{grid-row:3;}#cst{display:none;}}
+			/* Below 900px the scene panel becomes an overlay drawer instead of being
+			   hidden outright: `display:none` removed it from the grid, which shunted
+			   the canvas into the 0px track and left it invisible, and it also stranded
+			   the hierarchy, inspector and bone-attach UI with no way to reach them. */
+			#btn-panel{display:none;}
+			#poscrim{display:none;}
+			@media(max-width:900px){
+				#cr{grid-template-columns:1fr 272px;}
+				#cw{grid-column:1;}
+				#pf{grid-column:2;}
+				#btn-panel{display:inline-flex;}
+				#po{position:fixed;top:46px;left:0;bottom:0;width:min(268px,82vw);z-index:600;transform:translateX(-100%);transition:transform .22s ease;box-shadow:0 0 40px rgba(0,0,0,.5);}
+				#po.open{transform:none;}
+				#poscrim{display:block;position:fixed;inset:46px 0 0;z-index:590;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .22s;border:0;padding:0;}
+				#poscrim.open{opacity:1;pointer-events:auto;}
+			}
+			@media(max-width:600px){
+				#cr{grid-template-columns:1fr;grid-template-rows:46px 1fr 262px;}
+				#cw{grid-column:1;grid-row:2;}
+				#pf{grid-column:1;grid-row:3;border-left:none;border-top:1px solid var(--border);}
+				#cst{display:none;}
+				#ap{padding:20px 16px;gap:11px;}
+				.apr{flex-direction:column;}
+				.apbt{width:100%;}
+			}
+			@media(prefers-reduced-motion:reduce){
+				*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+			}
 		</style>
 	
 	<link rel="canonical" href="https://three.ws/compose">
@@ -241,8 +285,9 @@
 			<!-- Topbar -->
 			<header id="tb">
 				<a href="/" class="tbl" data-i18n="compose.three_ws">three.ws</a>
-				<span class="tbp" data-i18n="compose.scene_composer">Scene Composer</span>
+				<h1 class="tbp" data-i18n="compose.scene_composer">Scene Composer</h1>
 				<div class="tbs"></div>
+				<button class="btn" id="btn-panel" type="button" title="Scene panel" aria-expanded="false" aria-controls="po" data-i18n-attr="title:compose.scene_panel_title">☰</button>
 				<div class="tbg">
 					<button class="btn" id="btn-undo" title="Undo (Ctrl+Z)" disabled data-i18n-attr="title:compose.undo_ctrl_z_title">↩</button>
 					<button class="btn" id="btn-redo" title="Redo (Ctrl+Y)" disabled data-i18n-attr="title:compose.redo_ctrl_y_title">↪</button>
@@ -260,14 +305,14 @@
 				</div>
 				<div class="tbs"></div>
 				<div class="tbg campw">
-					<button class="btn" id="btn-cam" title="Camera views" data-i18n="compose.view" data-i18n-attr="title:compose.camera_views_title">📷 View ▾</button>
-					<div id="cmenu" hidden>
-						<div class="cmi" data-cam="front">Front <span class="cmik" data-i18n="compose.num1">Num1</span></div>
-						<div class="cmi" data-cam="back">Back</div>
-						<div class="cmi" data-cam="left">Left <span class="cmik" data-i18n="compose.num3">Num3</span></div>
-						<div class="cmi" data-cam="right">Right</div>
-						<div class="cmi" data-cam="top">Top <span class="cmik" data-i18n="compose.num7">Num7</span></div>
-						<div class="cmi" data-cam="iso">Isometric</div>
+					<button class="btn" id="btn-cam" title="Camera views" aria-haspopup="true" aria-expanded="false" aria-controls="cmenu" data-i18n="compose.view" data-i18n-attr="title:compose.camera_views_title">📷 View ▾</button>
+					<div id="cmenu" hidden role="menu" aria-label="Camera views">
+						<button type="button" class="cmi" role="menuitem" data-cam="front">Front <span class="cmik" data-i18n="compose.num1">Num1</span></button>
+						<button type="button" class="cmi" role="menuitem" data-cam="back">Back</button>
+						<button type="button" class="cmi" role="menuitem" data-cam="left">Left <span class="cmik" data-i18n="compose.num3">Num3</span></button>
+						<button type="button" class="cmi" role="menuitem" data-cam="right">Right</button>
+						<button type="button" class="cmi" role="menuitem" data-cam="top">Top <span class="cmik" data-i18n="compose.num7">Num7</span></button>
+						<button type="button" class="cmi" role="menuitem" data-cam="iso">Isometric</button>
 					</div>
 				</div>
 				<div class="tbsp"></div>
@@ -279,11 +324,12 @@
 			</header>
 
 			<!-- Left panel -->
-			<aside id="po">
+			<aside id="po" aria-label="Scene objects and inspector">
 				<div class="ph">Scene <button class="phb" id="btn-load-av" data-i18n="compose.load_avatar">Load Avatar</button></div>
 				<div id="ol"></div>
 				<div id="ins"><div class="ie">Select an object</div></div>
 			</aside>
+			<button id="poscrim" type="button" tabindex="-1" aria-label="Close scene panel"></button>
 
 			<!-- Canvas -->
 			<main id="cw">
@@ -298,9 +344,11 @@
 					<div class="apt">Start with an Avatar</div>
 					<div class="apb">Load an avatar to attach items to its bones, or start fresh and build freely.</div>
 					<div class="apr">
-						<input class="api" type="url" id="av-url" placeholder="Paste GLB URL or avatar ID…" autocomplete="off" />
+						<label class="sr" for="av-url" data-i18n="compose.avatar_glb_url_or_id">Avatar GLB URL or avatar ID</label>
+						<input class="api" type="text" id="av-url" placeholder="Paste GLB URL or avatar ID…" autocomplete="off" spellcheck="false" />
 						<button class="apbt" id="btn-load-url" data-i18n="compose.load">Load</button>
 					</div>
+					<p id="ape" role="alert"></p>
 					<span class="apor" data-i18n="compose.or">or</span>
 					<button class="aplk" id="btn-browse-av" data-i18n="compose.browse_my_avatars">Browse my avatars</button>
 					<button class="apsk" id="btn-skip" data-i18n="compose.start_with_empty_scene">Start with empty scene</button>
@@ -325,6 +373,7 @@
 					</div>
 				</div>
 				<div class="pw">
+					<label class="sr" for="fp" data-i18n="compose.describe_the_item_to_forge">Describe the item to forge</label>
 					<textarea id="fp" placeholder="A glowing katana with blue neon energy…" rows="3"></textarea>
 					<div class="sps" id="sps"></div>
 					<button id="fb" data-i18n-html="compose.forge"><span class="bs"></span><span class="bl">⚡ Forge</span></button>

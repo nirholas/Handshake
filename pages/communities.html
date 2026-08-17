@@ -41,6 +41,10 @@
 				--radius: 16px;
 			}
 			html, body { background: var(--bg); color: var(--text); }
+			.sr-only {
+				position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+				overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+			}
 			body {
 				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 				-webkit-font-smoothing: antialiased;
@@ -104,6 +108,8 @@
 			}
 			.url-field input.is-error { border-color: #f87171; }
 			.url-field { margin-top: 14px; }
+			.field-error { font-size: 12px; min-height: 16px; margin-top: 6px; color: #f87171; }
+			.field-error.is-ok { color: #34d399; }
 
 			.avatar-row { display: flex; gap: 10px; flex-wrap: wrap; }
 			.avatar-chip {
@@ -145,7 +151,6 @@
 				transition: border-color .15s, transform .12s, box-shadow .15s;
 			}
 			.coin-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
-			.coin-card:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 			.coin-thumb {
 				width: 46px; height: 46px; border-radius: 50%; position: relative; overflow: hidden;
 				background: linear-gradient(135deg, rgba(124,92,255,0.45), rgba(0,0,0,0.45));
@@ -256,6 +261,34 @@
 			.cp-skel-line.w50 { width: 50%; } .cp-skel-line.w30 { width: 30%; }
 			.cp-skel-stats { height: 80px; border-radius: 12px; background: rgba(255,255,255,0.05); margin-top: 22px; animation: pulse 1.3s ease-in-out infinite; }
 			.coin-profile-empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+
+			/* Keyboard focus and press feedback, last so they beat the component
+			   rules above. Every control on this page is a real button or link, so
+			   one ring definition covers the whole surface. */
+			.brand:focus-visible,
+			.topbar nav a:focus-visible,
+			.avatar-chip:focus-visible,
+			.coin-card:focus-visible,
+			.mainland-card:focus-visible,
+			.primary-btn:focus-visible,
+			.ghost-btn:focus-visible,
+			.cp-mint:focus-visible,
+			.cp-social:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 3px;
+				border-radius: 11px;
+			}
+			.avatar-chip:active, .coin-card:active, .mainland-card:active,
+			.primary-btn:active, .ghost-btn:active { transform: translateY(0) scale(0.98); }
+			.cp-mint:active, .cp-social:active { filter: brightness(0.9); }
+			@media (prefers-reduced-motion: reduce) {
+				.avatar-chip, .coin-card, .mainland-card, .primary-btn, .ghost-btn,
+				.coin-enter, .coin-card .sk, .coin-card.is-skeleton .coin-thumb,
+				.cp-skel-avatar, .cp-skel-line, .cp-skel-stats { transition: none; animation: none; }
+				.avatar-chip:hover, .coin-card:hover, .mainland-card:hover,
+				.primary-btn:hover, .avatar-chip:active, .coin-card:active,
+				.mainland-card:active, .primary-btn:active, .ghost-btn:active { transform: none; }
+			}
 		</style>
 	
 	<link rel="canonical" href="https://three.ws/communities">
@@ -275,7 +308,7 @@
 
 		<section class="hero">
 			<h1 data-i18n="communities.every_coin_its_own_world">Every coin, its own world.</h1>
-			<p data-i18n="communities.drop_in_an_avatar_and_walk_around">Drop in an avatar and walk around with everyone else who holds the same coin — live, in 3D, right in your browser.</p>
+			<p data-i18n="communities.drop_in_an_avatar_and_walk_around">Drop in an avatar and walk around with everyone else who holds the same coin. Live, in 3D, right in your browser.</p>
 			<div class="steps"><span data-i18n-html="communities.1_pick_your_avatar"><b>1.</b> Pick your avatar</span><span data-i18n-html="communities.2_choose_a_coin"><b>2.</b> Choose a coin</span><span data-i18n-html="communities.3_you_re_in"><b>3.</b> You're in.</span></div>
 		</section>
 
@@ -290,7 +323,8 @@
 						</div>
 						<div class="url-field">
 							<label class="field-label" for="avatar-url-input" data-i18n="communities.or_paste_a_glb_gltf_avatar_url">…or paste a GLB / glTF avatar URL</label>
-							<input id="avatar-url-input" type="url" autocomplete="off" spellcheck="false" placeholder="https://…/model.glb" />
+							<input id="avatar-url-input" type="url" autocomplete="off" spellcheck="false" placeholder="https://…/model.glb" aria-describedby="avatar-url-error" />
+							<p id="avatar-url-error" class="field-error" role="alert"></p>
 						</div>
 					</div>
 					<div>
@@ -305,21 +339,23 @@
 
 				<button type="button" id="enter-mainland" class="mainland-card" data-i18n-html="communities.mainlandthe_shared_world_everyone_no_coin_re">
 					<span class="ml-icon">🌐</span>
-					<span class="ml-text"><b>Mainland</b><span>The shared world — everyone, no coin required</span></span>
+					<span class="ml-text"><b>Mainland</b><span>The shared world: everyone, no coin required</span></span>
 					<span class="ml-go">Enter →</span>
 				</button>
 
 				<div class="coin-toolbar">
 					<div class="coin-search-wrap">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+						<label class="sr-only" for="coin-search">Search coins by name or ticker</label>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
 						<input id="coin-search" type="search" autocomplete="off" placeholder="Search coins by name or ticker…" />
 					</div>
 				</div>
 
-				<div id="coin-grid" class="coin-grid"></div>
+				<div id="coin-grid" class="coin-grid" aria-busy="true"></div>
 
 				<div class="mint-row">
-					<input id="mint-input" type="text" autocomplete="off" spellcheck="false" placeholder="Or paste any Solana mint address to enter its world" />
+					<label class="sr-only" for="mint-input">Solana mint address</label>
+					<input id="mint-input" type="text" autocomplete="off" spellcheck="false" placeholder="Or paste any Solana mint address to enter its world" aria-describedby="mint-error" />
 					<button type="button" id="mint-enter" class="primary-btn" data-i18n="communities.enter_world">Enter world</button>
 				</div>
 				<div id="mint-error" class="mint-error" role="alert"></div>

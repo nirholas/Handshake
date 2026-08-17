@@ -96,9 +96,11 @@ vi.mock('../../api/_lib/auth.js', () => ({
 vi.mock('../../api/_lib/csrf.js', () => ({ requireCsrf: vi.fn(async () => true) }));
 
 const xSeed = vi.fn(async () => ({ success: true, limit: 1, remaining: 0, reset: 1 }));
+const xSeedRefund = vi.fn(async () => true);
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		xSeed: (...a) => xSeed(...a),
+		xSeedRefund: (...a) => xSeedRefund(...a),
 		authIp: vi.fn(async () => ({ success: true })),
 	},
 	clientIp: vi.fn(() => '127.0.0.1'),
@@ -192,6 +194,7 @@ beforeEach(() => {
 	dbState.queries = [];
 	dbState.inserts = [];
 	xSeed.mockResolvedValue({ success: true, limit: 1, remaining: 0, reset: 1 });
+	xSeedRefund.mockResolvedValue(true);
 	vi.stubGlobal('fetch', vi.fn(async () => {
 		throw new Error('the network must not be touched on a refusal path');
 	}));
@@ -502,6 +505,125 @@ describe('POST /api/agents/:id/memory/seed/x seeding', () => {
 		expect(res.statusCode).toBe(429);
 		expect(res.json).toMatchObject({ error: 'rate_limited' });
 		expect(globalThis.fetch).not.toHaveBeenCalled();
+	});
+
+	// Everything past the rate-limit charge either stores rows or hands the
+	// window back. Without that, an outage at X, a revoked connection, or a
+	// timeline of nothing but replies costs the owner six hours for a run that
+	// never touched their agent.
+	describe('a run that stores nothing gives the window back', () => {
+		function xError(status, headers = {}) {
+			return {
+				ok: false,
+				status,
+				headers: { get: (k) => headers[k.toLowerCase()] ?? null },
+				text: async () => `{"title":"error ${status}"}`,
+				json: async () => ({ title: `error ${status}` }),
+			};
+		}
+
+		beforeEach(() => {
+			dbState.connection = liveConnection();
+			dbState.consent = liveConsent();
+		});
+
+		it('refunds and says to reconnect when X refuses the profile read', async () => {
+			vi.stubGlobal('fetch', vi.fn(async () => xError(401)));
+
+			const res = await call({ method: 'POST', body: {} });
+
+			expect(res.statusCode).toBe(502);
+			expect(res.json).toMatchObject({ error: 'x_read_denied', window_refunded: true });
+			expect(res.json.error_description).toMatch(/reconnect x/i);
+			expect(xSeedRefund).toHaveBeenCalledWith(AGENT);
+			expect(dbState.inserts).toHaveLength(0);
+			expect(dbState.queries.some((c) => /^DELETE FROM agent_memories/i.test(c.q))).toBe(false);
+		});
+
+		it('refunds and names the wait when X rate limits the posts read', async () => {
+			const reset = Math.floor((Date.now() + 9 * 60_000) / 1000);
+			vi.stubGlobal('fetch', vi.fn(async (url) => {
+				if (String(url).includes('/2/users/me')) {
+					return { ok: true, json: async () => profilePayload };
+				}
+				return xError(429, { 'x-rate-limit-reset': String(reset) });
+			}));
+
+			const res = await call({ method: 'POST', body: {} });
+
+			expect(res.statusCode).toBe(503);
+			expect(res.json).toMatchObject({ error: 'x_rate_limited', window_refunded: true });
+			expect(res.json.retry_at).toBe(new Date(reset * 1000).toISOString());
+			expect(res.json.error_description).toMatch(/about 9 minutes/);
+			expect(dbState.inserts).toHaveLength(0);
+		});
+
+		it('refunds when the access token cannot be refreshed', async () => {
+			dbState.connection = liveConnection({ expires_at: new Date(Date.now() - 1000).toISOString() });
+			vi.stubGlobal('fetch', vi.fn(async () => ({
+				ok: false,
+				status: 400,
+				text: async () => 'invalid_grant',
+			})));
+
+			const res = await call({ method: 'POST', body: {} });
+
+			expect(res.statusCode).toBe(502);
+			expect(res.json).toMatchObject({ error: 'x_token_expired', window_refunded: true });
+			expect(xSeedRefund).toHaveBeenCalledWith(AGENT);
+			expect(dbState.inserts).toHaveLength(0);
+		});
+
+		it('refunds on an account mismatch, which reads nothing of the new account', async () => {
+			vi.stubGlobal('fetch', vi.fn(async (url) => {
+				if (String(url).includes('/2/users/me')) {
+					return { ok: true, json: async () => ({ data: { ...profilePayload.data, id: 'x-account-77' } }) };
+				}
+				return { ok: true, json: async () => postsPayload };
+			}));
+
+			const res = await call({ method: 'POST', body: {} });
+
+			expect(res.statusCode).toBe(409);
+			expect(res.json).toMatchObject({ error: 'account_mismatch', window_refunded: true });
+		});
+
+		it('keeps the previous batch when a run yields no usable fact', async () => {
+			dbState.seededCount = 4;
+			vi.stubGlobal('fetch', vi.fn(async (url) => {
+				if (String(url).includes('/2/users/me')) {
+					// No name, no bio: nothing the derived-fact fallback can state.
+					return {
+						ok: true,
+						json: async () => ({
+							data: { id: 'x-account-42', username: '', name: '', public_metrics: {} },
+						}),
+					};
+				}
+				return { ok: true, json: async () => ({ data: [] }) };
+			}));
+			llmComplete.mockResolvedValue({ text: '[]' });
+
+			const res = await call({ method: 'POST', body: {} });
+
+			expect(res.statusCode).toBe(502);
+			expect(res.json).toMatchObject({ error: 'seed_empty', window_refunded: true, posts_read: 0 });
+			// The delete that clears the old batch must not have run: a re-seed that
+			// found nothing leaves the good memories in place.
+			expect(dbState.queries.some((c) => /^DELETE FROM agent_memories/i.test(c.q))).toBe(false);
+			expect(dbState.inserts).toHaveLength(0);
+		});
+
+		it('still reports the failure when the refund itself fails', async () => {
+			xSeedRefund.mockRejectedValue(new Error('redis down'));
+			vi.stubGlobal('fetch', vi.fn(async () => xError(503)));
+
+			const res = await call({ method: 'POST', body: {} });
+
+			expect(res.statusCode).toBe(502);
+			expect(res.json).toMatchObject({ error: 'x_unavailable', window_refunded: false });
+			expect(res.json.error_description).not.toMatch(/did not use up/);
+		});
 	});
 });
 

@@ -29,21 +29,16 @@
 		<link rel="stylesheet" href="/mobile.css" />
 		<script defer src="/footer-newsletter.js"></script>
 		<style>
-			:root {
-				color-scheme: dark;
-				--bg: #000000;
-				--panel: #141414;
-				--border: #222222;
-				--text: #e8e8f0;
-				--muted: #888888;
-				--accent: #ffffff;
-			}
+			/* Palette is token-derived (see /tokens.css), so this page flips with
+			   the site theme switcher instead of staying black on a light canvas. */
 			* { box-sizing: border-box; }
 			body {
-				font: 15px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-				color: var(--text);
+				font-family: var(--font-body);
+				font-size: 15px;
+				line-height: 1.6;
+				color: var(--ink);
 				margin: 0;
-				background: var(--bg);
+				background: var(--bg-0);
 				min-height: 100vh;
 			}
 			.wrap { max-width: 860px; margin: 0 auto; padding: 64px 24px 96px; }
@@ -62,7 +57,7 @@
 				line-height: 1.1;
 				font-weight: 600;
 			}
-			.sub { color: var(--muted); font-size: 17px; margin: 0 0 48px; max-width: 620px; line-height: 1.55; }
+			.sub { color: var(--ink-dim); font-size: 17px; margin: 0 0 48px; max-width: 620px; line-height: 1.55; }
 			.grid {
 				display: grid;
 				grid-template-columns: 1fr 1fr;
@@ -71,19 +66,20 @@
 			}
 			@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
 			.card {
-				background: var(--panel);
-				border: 1px solid var(--border);
+				background: var(--bg-1);
+				border: 1px solid var(--stroke);
 				border-radius: 16px;
 				padding: 28px 24px;
 				display: flex;
 				flex-direction: column;
 				gap: 12px;
-				transition: border-color 0.15s;
+				transition: border-color 0.15s, transform 0.15s;
 			}
-			.card:hover { border-color: #333333; }
+			.card:hover { border-color: var(--stroke-strong); transform: translateY(-2px); }
+			.card:focus-within { border-color: var(--stroke-strong); }
 			.card h2 { margin: 0; font-size: 18px; font-weight: 600; }
-			.card p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
-			.card .icon { font-size: 28px; }
+			.card p { margin: 0; color: var(--ink-dim); font-size: 14.5px; line-height: 1.55; }
+			.card .icon { font-size: 28px; line-height: 1; }
 			.card-link {
 				display: inline-flex;
 				align-items: center;
@@ -98,11 +94,50 @@
 
 			.section { margin-bottom: 48px; }
 			.section h2 { font-size: 22px; margin: 0 0 16px; font-weight: 600; }
-			.section p { color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 620px; }
+			.section p { color: var(--ink-dim); font-size: 15px; line-height: 1.6; max-width: 620px; }
 			.section ul { margin: 12px 0 0; padding-left: 20px; }
-			.section li { color: var(--muted); font-size: 14.5px; margin-bottom: 8px; line-height: 1.5; }
-			.section li strong { color: var(--text); }
+			.section li { color: var(--ink-dim); font-size: 14.5px; margin-bottom: 8px; line-height: 1.5; }
+			.section li strong { color: var(--ink); }
 			a { color: var(--accent); }
+
+			.newsletter-form {
+				display: flex;
+				gap: 10px;
+				margin-top: 18px;
+				max-width: 460px;
+				flex-wrap: wrap;
+			}
+			.newsletter-form input {
+				flex: 1 1 220px;
+				min-width: 0;
+				background: var(--bg-1);
+				border: 1px solid var(--stroke);
+				border-radius: 10px;
+				padding: 11px 14px;
+				color: var(--ink);
+				font: inherit;
+				font-size: 14.5px;
+			}
+			.newsletter-form input::placeholder { color: var(--ink-faint); }
+			.newsletter-form input:hover { border-color: var(--stroke-strong); }
+			.newsletter-form button {
+				flex: 0 0 auto;
+				background: var(--btn-primary-bg);
+				color: var(--btn-primary-fg);
+				border: 1px solid var(--btn-primary-border);
+				border-radius: 10px;
+				padding: 11px 20px;
+				font: inherit;
+				font-size: 14.5px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+			.newsletter-form button:hover:not(:disabled) { background: var(--btn-primary-bg-hover); }
+			.newsletter-form button:active:not(:disabled) { background: var(--btn-primary-bg-active); }
+			.newsletter-msg { margin-top: 10px; font-size: 13.5px; min-height: 20px; color: var(--ink-dim); }
+			.newsletter-msg.is-error { color: var(--danger); }
+			.newsletter-msg.is-success { color: var(--success); }
 
 			.activity-head {
 				display: flex;
@@ -121,63 +156,101 @@
 			.activity-head a:hover { text-decoration: underline; }
 
 			.activity-list {
-				border: 1px solid var(--border);
+				border: 1px solid var(--stroke);
 				border-radius: 16px;
-				background: var(--panel);
+				background: var(--bg-1);
 				overflow: hidden;
 			}
+			/* The row is a container, never an anchor: it holds a stretched primary
+			   link plus a separate profile link, and nesting one <a> inside another
+			   is invalid HTML that the parser shreds into three broken rows. */
 			.activity-row {
+				position: relative;
 				display: flex;
 				align-items: center;
 				gap: 12px;
 				padding: 14px 18px;
-				border-bottom: 1px solid var(--border);
-				text-decoration: none;
+				border-bottom: 1px solid var(--stroke);
 				color: inherit;
 				transition: background 0.15s;
 				animation: activity-in 0.35s ease both;
 			}
 			@keyframes activity-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+			@media (prefers-reduced-motion: reduce) {
+				.activity-row { animation: none; }
+				.activity-skeleton { animation: none; }
+			}
 			.activity-row:last-child { border-bottom: none; }
-			.activity-row:hover { background: #1a1a1a; }
+			.activity-row:hover, .activity-row:focus-within { background: var(--surface-2); }
+			.activity-main { position: absolute; inset: 0; z-index: 0; }
+			.activity-row > :not(.activity-main) { position: relative; z-index: 1; pointer-events: none; }
+			.activity-user { pointer-events: auto; color: inherit; text-decoration: none; }
+			.activity-user:hover { text-decoration: underline; }
 			.activity-avatar {
 				width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
-				background: #1e1e1e; border: 1px solid var(--border);
+				background: var(--surface-2); border: 1px solid var(--stroke);
 				object-fit: cover; display: flex; align-items: center; justify-content: center;
-				color: var(--muted); font-size: 0.95rem; overflow: hidden;
+				color: var(--ink-dim); font-size: 0.95rem; overflow: hidden;
 			}
 			.activity-avatar img { width: 100%; height: 100%; object-fit: cover; }
 			.activity-thumb {
 				width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0;
-				background: #1e1e1e; object-fit: cover; overflow: hidden;
-				display: flex; align-items: center; justify-content: center; color: var(--muted);
+				background: var(--surface-2); object-fit: cover; overflow: hidden;
+				display: flex; align-items: center; justify-content: center; color: var(--ink-dim);
 			}
 			.activity-thumb img { width: 100%; height: 100%; object-fit: cover; }
 			.activity-text { flex: 1; min-width: 0; }
 			.activity-line {
 				font-size: 14px;
-				color: var(--text);
+				color: var(--ink);
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
 			}
 			.activity-line strong { font-weight: 600; }
-			.activity-verb { color: var(--muted); font-weight: 400; }
-			.activity-time { font-size: 12px; color: var(--muted); margin-top: 2px; }
+			.activity-verb { color: var(--ink-dim); font-weight: 400; }
+			.activity-meta {
+				font-size: 12px;
+				color: var(--ink-dim);
+				margin-top: 2px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
 			.activity-empty, .activity-error {
 				padding: 32px 18px;
 				text-align: center;
-				color: var(--muted);
+				color: var(--ink-dim);
 				font-size: 14px;
 			}
+			.activity-retry {
+				display: inline-block;
+				margin-top: 12px;
+				background: var(--surface-2);
+				border: 1px solid var(--stroke-strong);
+				border-radius: 10px;
+				color: var(--ink);
+				padding: 8px 16px;
+				font: inherit;
+				font-size: 13.5px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: background 0.15s;
+			}
+			.activity-retry:hover:not(:disabled) { background: var(--surface-3); }
 			.activity-skeleton {
 				height: 62px;
-				border-bottom: 1px solid var(--border);
-				background: linear-gradient(90deg, #161616 25%, #1c1c1c 37%, #161616 63%);
+				border-bottom: 1px solid var(--stroke);
+				background: linear-gradient(90deg, var(--surface-1) 25%, var(--surface-3) 37%, var(--surface-1) 63%);
 				background-size: 400% 100%;
 				animation: activity-shimmer 1.4s ease infinite;
 			}
+			.activity-skeleton:last-child { border-bottom: none; }
 			@keyframes activity-shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+			.sr-only {
+				position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+				overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+			}
 		</style>
 	
 	<meta name="twitter:card" content="summary_large_image">
@@ -205,7 +278,7 @@
 					<h2 data-i18n="community.live_activity">Live activity</h2>
 					<a href="/feed" data-i18n="community.open_the_full_feed">Open the full feed →</a>
 				</div>
-				<div class="activity-list" id="community-activity">
+				<div class="activity-list" id="community-activity" aria-live="polite" aria-busy="true">
 					<div class="activity-skeleton"></div>
 					<div class="activity-skeleton"></div>
 					<div class="activity-skeleton"></div>
@@ -214,37 +287,37 @@
 
 			<div class="grid">
 				<div class="card">
-					<span class="icon" data-i18n="community.text">&#x1D54F;</span>
+					<span class="icon" aria-hidden="true" data-i18n="community.text">&#x1D54F;</span>
 					<h2 data-i18n="community.follow_on_x">Follow on X</h2>
 					<p data-i18n="community.live_builds_demos_release_notes_and_conversa">Live builds, demos, release notes, and conversations with the team. Most day-to-day updates happen here.</p>
 					<a class="card-link" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer" data-i18n="community.trythreews">@trythreews →</a>
 				</div>
 				<div class="card">
-					<span class="icon">&#128736;</span>
+					<span class="icon" aria-hidden="true">&#128736;</span>
 					<h2 data-i18n="community.github">GitHub</h2>
 					<p data-i18n="community.the_codebase_is_public_file_issues_read">The codebase is public. File issues, read the source, or submit a PR. SDKs, examples, and the embed runtime all live here.</p>
 					<a class="card-link" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" data-i18n="community.nirholas_three_ws">nirholas/three.ws →</a>
 				</div>
 				<div class="card">
-					<span class="icon">&#128218;</span>
+					<span class="icon" aria-hidden="true">&#128218;</span>
 					<h2 data-i18n="community.docs">Docs</h2>
 					<p data-i18n="community.api_reference_embed_guides_sdk_quickstarts_a">API reference, embed guides, SDK quickstarts, and the Solana agent-kit. Start here if you're integrating.</p>
 					<a class="card-link" href="/docs" data-i18n="community.read_the_docs">Read the docs →</a>
 				</div>
 				<div class="card">
-					<span class="icon">&#127891;</span>
+					<span class="icon" aria-hidden="true">&#127891;</span>
 					<h2 data-i18n="community.tutorials">Tutorials</h2>
 					<p data-i18n="community.step_by_step_guides_for_creating_your">Step-by-step guides for creating your first agent, embedding on your site, minting on Solana, and adding paid skills.</p>
 					<a class="card-link" href="/tutorials" data-i18n="community.browse_tutorials">Browse tutorials →</a>
 				</div>
 				<div class="card">
-					<span class="icon">&#127970;</span>
+					<span class="icon" aria-hidden="true">&#127970;</span>
 					<h2 data-i18n="community.ibm_user_group">IBM user group</h2>
 					<p data-i18n="community.a_public_group_on_ibm_community_for_developers">A public group on IBM Community for developers building AI agents with 3D capabilities: spatial reasoning, generative 3D, agentic pipelines, and real-time interactive systems. Threads, blogs, and a platform tour to start from.</p>
 					<a class="card-link" href="https://community.ibm.com/community/user/groups/community-home?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016" target="_blank" rel="noopener noreferrer" data-i18n="community.join_the_user_group">Join the user group →</a>
 				</div>
 				<div class="card">
-					<span class="icon">&#127942;</span>
+					<span class="icon" aria-hidden="true">&#127942;</span>
 					<h2 data-i18n="community.rankings">Rankings</h2>
 					<p data-i18n="community.the_cross_surface_leaderboard_creations_remi">The cross-surface leaderboard — creations, remixes, launches, followers, and walk distance. Build a daily streak and earn badges.</p>
 					<a class="card-link" href="/rankings" data-i18n="community.see_who_s_ranked">See who's ranked →</a>
@@ -264,7 +337,20 @@
 
 			<div class="section">
 				<h2 data-i18n="community.newsletter">Newsletter</h2>
-				<p data-i18n="community.weekly_updates_on_features_protocol_changes">Weekly updates on features, protocol changes, and community highlights. No spam — unsubscribe anytime.</p>
+				<p data-i18n="community.weekly_updates_on_features_protocol_changes">Weekly updates on features, protocol changes, and community highlights. No spam, unsubscribe anytime.</p>
+				<form class="newsletter-form" data-newsletter-form novalidate>
+					<label class="sr-only" for="community-newsletter-email">Email address</label>
+					<input
+						id="community-newsletter-email"
+						type="email"
+						name="email"
+						placeholder="you@example.com"
+						autocomplete="email"
+						required
+					/>
+					<button type="submit">Subscribe</button>
+				</form>
+				<p class="newsletter-msg" data-newsletter-msg role="status"></p>
 			</div>
 		</div>
 
@@ -286,7 +372,7 @@
 				world: 'built a world',
 				restyle: 'restyled a model',
 			};
-			const GLYPH = { avatar: '◎', agent: '🤖', coin: '◉', model: '✦', world: '🌐', restyle: '🎨', follow: '⇢' };
+			const GLYPH = { avatar: '\u25CE', agent: '\u{1F916}', coin: '\u25C9', model: '\u2726', world: '\u{1F310}', restyle: '\u{1F3A8}', follow: '\u21E2' };
 
 			function relTime(iso) {
 				const then = new Date(iso).getTime();
@@ -301,24 +387,31 @@
 				return d < 30 ? `${d}d ago` : new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 			}
 
+			// Rows carry two destinations (the item and its creator's profile), so the
+			// item link is a stretched overlay rather than a wrapper: an <a> inside an
+			// <a> is unparseable and the browser splits it into broken fragments.
 			function rowEl(it) {
 				const a = it.actor || {};
 				const name = esc(a.display_name || 'A three.ws creator');
-				const nameHtml = a.username ? `<a href="/u/${attr(a.username)}" style="color:inherit;text-decoration:none">${name}</a>` : name;
+				const nameHtml = a.username
+					? `<a class="activity-user" href="/u/${attr(a.username)}">${name}</a>`
+					: name;
 				const avatarHtml = a.avatar_url
 					? `<img src="${attr(a.avatar_url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
-					: GLYPH[it.kind] || '◎';
+					: GLYPH[it.kind] || '\u25CE';
+				const when = esc(relTime(it.created_at));
 
 				if (it.kind === 'follow') {
-					const t = it.target || {};
+					const target = esc((it.target || {}).display_name || 'a creator');
 					return `
-						<a class="activity-row" href="${attr(it.href)}">
+						<div class="activity-row">
+							<a class="activity-main" href="${attr(it.href)}"><span class="sr-only">${name} followed ${target}</span></a>
 							<span class="activity-avatar">${avatarHtml}</span>
 							<div class="activity-text">
-								<div class="activity-line"><strong>${nameHtml}</strong> <span class="activity-verb">followed</span> <strong>${esc(t.display_name)}</strong></div>
-								<div class="activity-time">${esc(relTime(it.created_at))}</div>
+								<div class="activity-line"><strong>${nameHtml}</strong> <span class="activity-verb">followed</span> <strong>${target}</strong></div>
+								<div class="activity-meta">${when}</div>
 							</div>
-						</a>
+						</div>
 					`;
 				}
 
@@ -327,41 +420,59 @@
 					: it.kind === 'restyle' && it.isVariant
 						? 'made a colorway variant'
 						: VERB[it.kind] || 'shared something';
+				const title = esc(it.title || 'Untitled');
 				const thumbHtml = it.image
 					? `<img src="${attr(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
-					: (GLYPH[it.kind] || '◎');
+					: (GLYPH[it.kind] || '\u25CE');
+				const external = it.external ? ' target="_blank" rel="noopener noreferrer"' : '';
 				return `
-					<a class="activity-row" href="${attr(it.href)}"${it.external ? ' target="_blank" rel="noopener"' : ''}>
+					<div class="activity-row">
+						<a class="activity-main" href="${attr(it.href)}"${external}><span class="sr-only">${title}</span></a>
 						<span class="activity-avatar">${avatarHtml}</span>
 						<div class="activity-text">
-							<div class="activity-line"><strong>${nameHtml}</strong> <span class="activity-verb">${esc(verb)}</span> — ${esc(it.title || 'Untitled')}</div>
-							<div class="activity-time">${esc(relTime(it.created_at))}</div>
+							<div class="activity-line"><strong>${nameHtml}</strong> <span class="activity-verb">${esc(verb)}</span></div>
+							<div class="activity-meta">${title} \u00B7 ${when}</div>
 						</div>
 						<span class="activity-thumb">${thumbHtml}</span>
-					</a>
+					</div>
 				`;
 			}
 
-			(async function load() {
-				let res;
+			function showError(message) {
+				el.innerHTML = `
+					<div class="activity-error">
+						<div>${esc(message)}</div>
+						<button type="button" class="activity-retry">Try again</button>
+					</div>
+				`;
+				el.querySelector('.activity-retry').addEventListener('click', load);
+			}
+
+			function showSkeleton() {
+				el.innerHTML = '<div class="activity-skeleton"></div>'.repeat(3);
+			}
+
+			async function load() {
+				showSkeleton();
+				el.setAttribute('aria-busy', 'true');
 				try {
-					res = await fetch('/api/users/me/feed?scope=all&limit=10');
+					const res = await fetch('/api/users/me/feed?scope=all&limit=10', { headers: { accept: 'application/json' } });
+					if (!res.ok) throw new Error(`feed responded ${res.status}`);
+					const data = await res.json();
+					const items = Array.isArray(data.items) ? data.items : [];
+					if (!items.length) {
+						el.innerHTML = `<div class="activity-empty">No activity yet. Be the first to <a href="/create">create something</a>.</div>`;
+						return;
+					}
+					el.innerHTML = items.map(rowEl).join('');
 				} catch {
-					el.innerHTML = `<div class="activity-error">Could not load live activity right now.</div>`;
-					return;
+					showError('Could not load live activity right now.');
+				} finally {
+					el.setAttribute('aria-busy', 'false');
 				}
-				if (!res.ok) {
-					el.innerHTML = `<div class="activity-error">Could not load live activity right now.</div>`;
-					return;
-				}
-				const data = await res.json();
-				const items = data.items || [];
-				if (!items.length) {
-					el.innerHTML = `<div class="activity-empty">Nothing has happened yet — be the first to <a href="/create">create something</a>.</div>`;
-					return;
-				}
-				el.innerHTML = items.map(rowEl).join('');
-			})();
+			}
+
+			load();
 		</script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

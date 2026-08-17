@@ -966,6 +966,39 @@ html.cv-page,
 	color: var(--cv-accent);
 }
 
+/* A secondary strip that failed (the /coins global stats bar) states it in one
+   quiet line rather than collapsing to a blank void. Same visual language as
+   .cv-liq-offline so the two degraded strips read as one system. */
+.cv-inline-note {
+	color: var(--cv-text-3);
+	font-size: 0.8125rem;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0;
+}
+.cv-inline-note .dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--cv-text-3);
+	flex-shrink: 0;
+}
+
+/* Load-more outcomes that are not another page of rows: the end of the feed,
+   and a failed fetch that must not read as a broken button. */
+.cv-load-end,
+.cv-load-err {
+	margin: 1.25rem 0 0;
+	text-align: center;
+	font-size: 0.8125rem;
+	color: var(--cv-text-3);
+}
+.cv-load-err {
+	margin-top: 0.625rem;
+	color: var(--cv-down);
+}
+
 /* An in-prose control that acts on this page (retry, clear a filter) is a button,
    not a link: it navigates nowhere. It still reads as a link so the sentence it
    sits in keeps working, and it gets the keyboard and focus behaviour a native

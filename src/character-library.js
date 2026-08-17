@@ -1,6 +1,6 @@
 // /character-library — the Mixamo character library gallery.
 //
-// Browses the 106 professionally rigged humanoid characters served by
+// Browses the professionally rigged humanoid characters served by
 // GET /api/avatars/library (manifest on R2, mirroring the /animations gallery).
 // Each card renders a live <model-viewer> off the GLB's CDN url and deep-links
 // into the three viewers that accept a raw model URL:
@@ -8,8 +8,9 @@
 //   Use     → /studio?model=<glb>   (widget studio)
 //   Animate → /pose?src=<glb>       (animation studio; r2.dev is a trusted host)
 //
-// The library is small (106 entries) so the whole manifest is fetched once and
-// filtered/sorted client-side — no pagination round-trips, instant search.
+// The library is small (a hundred or so entries) so the whole manifest is
+// fetched once and filtered/sorted client-side: no pagination round-trips,
+// instant search.
 
 const els = {
 	grid: document.querySelector('[data-role="grid"]'),
@@ -51,6 +52,13 @@ function formatBytes(n) {
 	return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
 }
 
+// A card's <model-viewer> is deliberately control-free. model-viewer reads
+// `camera-controls` as a boolean attribute, so the old `camera-controls="false"`
+// switched controls ON: it made every thumbnail drag-orbit under the link that
+// wraps it, and it gave each of the hundred-plus cards a keyboard tab stop with
+// nothing to operate. Dropping the attribute leaves auto-rotate (which does not
+// need controls) and hands the click straight to the viewer link. The `disable-*`
+// attributes went with it; they only ever qualified camera-controls.
 function renderCard(a) {
 	const glbUrl = a.url || '';
 	const previewUrl = glbUrl ? `/app#model=${encodeURIComponent(glbUrl)}` : '#';
@@ -69,11 +77,7 @@ function renderCard(a) {
 				class="ch-card-mv"
 				reveal="manual"
 				loading="lazy"
-				disable-zoom
-				disable-pan
-				disable-tap
 				interaction-prompt="none"
-				camera-controls="false"
 				auto-rotate
 				rotation-per-second="20deg"
 				environment-image="neutral"
@@ -216,9 +220,12 @@ async function load() {
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 		state.all = Array.isArray(data.avatars) ? data.avatars : [];
+		// The hero used to hard-code "106" in its headline, which went stale the
+		// moment the 107th character landed on R2. The manifest is now the only
+		// place the number lives, and it renders here.
 		if (els.heroStats) {
 			els.heroStats.textContent = state.all.length
-				? `${state.all.length} rigged characters · ready to animate`
+				? `${state.all.length} rigged characters · free to use`
 				: '';
 		}
 		applyView();
@@ -228,7 +235,13 @@ async function load() {
 		show(els.empty, false);
 		show(els.emptySearch, false);
 		show(els.error, true);
-		if (els.errorMsg) els.errorMsg.textContent = `Failed to load characters: ${err?.message || 'network error'}`;
+		if (els.errorMsg) {
+			// The catalog pass lands after /api/locale resolves and would otherwise
+			// revert this concrete reason back to the generic placeholder shipped in
+			// the HTML. data-i18n-owned hands the element to this script for good.
+			els.errorMsg.dataset.i18nOwned = '1';
+			els.errorMsg.textContent = `Failed to load characters: ${err?.message || 'network error'}`;
+		}
 	}
 }
 

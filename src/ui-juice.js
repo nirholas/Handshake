@@ -379,8 +379,48 @@ export function liveDot(state = 'idle', opts = {}) {
 		+ `</span>`;
 }
 
+function stampLiveDot(live, state, label) {
+	live.dataset.state = state;
+	const txt = live.querySelector('.juice-live-txt');
+	if (txt && label != null) txt.textContent = label;
+}
+
+// A live badge is usually authored inside a line of copy, and on four surfaces
+// (/clash, /leaderboard, /labor-market, /signals) that line carries
+// `data-i18n-html`. The catalog value for such a key is a frozen snapshot of the
+// original markup, badge included, so the i18n pass reinstates the authored
+// state ("connecting") over whatever the page has since learned. The pass is
+// async, so it always lands after the first setLiveDot call, and a surface that
+// then stops polling (an unconfigured upstream, a settled stream) is left
+// showing an amber "connecting" that contradicts the page beneath it.
+//
+// Re-stamp the last requested state whenever the badge's container swaps its
+// children out. Watching the container rather than listening for an i18n event
+// keeps this correct for every writer: the boot-time document pass, a locale
+// switch, and the injected-content observer all rewrite children the same way.
+const liveDotWanted = new WeakMap(); // container -> { state, label }
+const liveDotWatched = new WeakSet(); // containers already observed
+
+function watchLiveDot(live, state, label) {
+	const host = live.closest?.('[data-i18n-html]') || live.parentElement;
+	if (!host) return;
+	liveDotWanted.set(host, { state, label });
+	if (liveDotWatched.has(host) || typeof MutationObserver !== 'function') return;
+	liveDotWatched.add(host);
+	// childList only, no subtree: the re-stamp writes an attribute and a text
+	// node deeper down, so it can never retrigger this observer.
+	const observer = new MutationObserver(() => {
+		const want = liveDotWanted.get(host);
+		const next = host.querySelector('.juice-live');
+		if (!want || !next || next.dataset.state === want.state) return;
+		stampLiveDot(next, want.state, want.label);
+	});
+	observer.observe(host, { childList: true });
+}
+
 /**
- * Update an existing `.juice-live` element's state + label in place.
+ * Update an existing `.juice-live` element's state + label in place, and keep it
+ * updated if something later rewrites the markup around it (see above).
  * @param {HTMLElement} el a `.juice-live` element (or container of one)
  * @param {'live'|'connecting'|'idle'|'error'} state
  * @param {string} [label]
@@ -389,9 +429,8 @@ export function setLiveDot(el, state, label) {
 	if (!el) return;
 	const live = el.classList && el.classList.contains('juice-live') ? el : el.querySelector && el.querySelector('.juice-live');
 	if (!live) return;
-	live.dataset.state = state;
-	const txt = live.querySelector('.juice-live-txt');
-	if (txt && label != null) txt.textContent = label;
+	stampLiveDot(live, state, label);
+	watchLiveDot(live, state, label);
 }
 
 // ── 8. rippleOnce ───────────────────────────────────────────────────────────────

@@ -8,21 +8,21 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
-			content="106 professionally rigged 3D characters, free to use on three.ws. Every one drives the full animation library — idle, walk, run, wave, dance. Preview, animate, or drop into the Widget Studio in one click."
+			content="Professionally rigged 3D characters, free to use on three.ws. Every one drives the full animation library: idle, walk, run, wave, dance. Preview, animate, or drop into the Widget Studio in one click."
 		 data-i18n-attr="content:character_library.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/character-library" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content="Character Library · three.ws"  data-i18n-attr="content:character_library.meta_og_title"/>
-		<meta property="og:description" content="106 rigged 3D characters, ready to animate. Preview, animate, or use in the Studio."  data-i18n-attr="content:character_library.meta_og_description"/>
+		<meta property="og:description" content="Rigged 3D characters, ready to animate. Preview, animate, or use in the Studio."  data-i18n-attr="content:character_library.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/character-library" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Character+Library&amp;d=106+professionally+rigged+3D+characters%2C+free+to+use.+Every+one+drives+the+full+animation+library+and+drops+into+the+Studio%2C+Animation+Studio%2C+and+embed+viewer&amp;p=%2Fcharacter-library" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Character+Library&amp;d=Professionally+rigged+3D+characters%2C+free+to+use.+Every+one+drives+the+full+animation+library+and+drops+into+the+Studio%2C+Animation+Studio%2C+and+embed+viewer.&amp;p=%2Fcharacter-library" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="Character Library · three.ws"  data-i18n-attr="content:character_library.meta_twitter_title"/>
-		<meta name="twitter:description" content="106 rigged 3D characters, ready to animate."  data-i18n-attr="content:character_library.meta_twitter_description"/>
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Character+Library&amp;d=106+professionally+rigged+3D+characters%2C+free+to+use.+Every+one+drives+the+full+animation+library+and+drops+into+the+Studio%2C+Animation+Studio%2C+and+embed+viewer&amp;p=%2Fcharacter-library" />
+		<meta name="twitter:description" content="Rigged 3D characters, ready to animate."  data-i18n-attr="content:character_library.meta_twitter_description"/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Character+Library&amp;d=Professionally+rigged+3D+characters%2C+free+to+use.+Every+one+drives+the+full+animation+library+and+drops+into+the+Studio%2C+Animation+Studio%2C+and+embed+viewer.&amp;p=%2Fcharacter-library" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<meta property="og:locale" content="en_US" />
@@ -34,7 +34,7 @@
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
-		<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Character Library","description":"106 professionally rigged 3D characters, free to use on three.ws. Each drives the full animation library and drops into the Studio, Animation Studio, and embed viewer.","url":"https://three.ws/character-library","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Character Library","description":"Professionally rigged 3D characters, free to use on three.ws. Each drives the full animation library and drops into the Studio, Animation Studio, and embed viewer.","url":"https://three.ws/character-library","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 		<style>
 			.ch-main { max-width: 1320px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; }
@@ -65,9 +65,20 @@
 			.ch-search {
 				width: 100%; padding: 10px 34px 10px 34px; border-radius: var(--radius-md);
 				border: 1px solid var(--stroke); background: var(--surface-1); color: var(--ink);
-				font-size: 14px; outline: none;
+				font-size: 14px;
 			}
 			.ch-search:focus { border-color: var(--stroke-strong); }
+			/* The search box used to set `outline: none`, which left keyboard users
+			   with a 1px border shift as their only focus cue. Every control on the
+			   page now carries the same deliberate accent ring. */
+			.ch-search:focus-visible,
+			.ch-sort:focus-visible,
+			.ch-btn:focus-visible,
+			.ch-hbtn:focus-visible,
+			.ch-card-thumb:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
 			.ch-search-kbd {
 				position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
 				font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
@@ -123,6 +134,7 @@
 			.ch-btn--primary:hover { filter: brightness(1.08); }
 			.ch-btn--ghost { background: var(--surface-1); color: var(--ink); }
 			.ch-btn--ghost:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
+			.ch-btn:active { transform: translateY(1px); }
 
 			.ch-skeleton-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
 			.ch-skeleton { aspect-ratio: 1 / 1.35; border-radius: var(--radius-lg); border: 1px solid var(--stroke);
@@ -141,8 +153,10 @@
 				border: 1px solid var(--stroke); cursor: pointer;
 			}
 			.ch-hbtn--primary { background: var(--accent); color: var(--accent-ink, #0b0b0f); border-color: transparent; }
+			.ch-hbtn--primary:hover { filter: brightness(1.08); }
 			.ch-hbtn--secondary { background: var(--surface-1); color: var(--ink); }
 			.ch-hbtn--secondary:hover { border-color: var(--stroke-strong); }
+			.ch-hbtn:active { transform: translateY(1px); }
 
 			@media (max-width: 560px) {
 				.ch-grid, .ch-skeleton-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
@@ -164,10 +178,10 @@
 					<span class="ch-hero-dot" aria-hidden="true"></span>
 					<span data-i18n="character_library.character_library">Character Library</span>
 				</div>
-				<h1 data-i18n="character_library.106_rigged_characters_ready_to_animate">106 rigged characters, ready to animate</h1>
+				<h1 data-i18n="character_library.rigged_characters_ready_to_animate">Rigged characters, ready to animate</h1>
 				<p data-i18n="character_library.a_curated_library_of_professionally_rigged_h">
 					A curated library of professionally rigged humanoid characters. Every one ships with a skeleton and
-					skin weights, so it drives the full three.ws animation library out of the box — idle, walk, run, wave,
+					skin weights, so it drives the full three.ws animation library out of the box: idle, walk, run, wave,
 					dance. Preview any character live, send it to the Animation Studio, or drop it straight into the Widget Studio.
 				</p>
 				<div class="ch-hero-actions">

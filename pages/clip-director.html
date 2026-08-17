@@ -52,7 +52,11 @@
 			.cd-field label { display: block; font-size: 12px; color: var(--cd-faint); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; font-weight: 600; }
 			.cd-field select, .cd-field input { width: 100%; background: var(--cd-panel-2); border: 1px solid var(--cd-line); border-radius: 10px; color: var(--cd-text); font: inherit; font-size: 15px; padding: 11px 12px; outline: none; }
 			.cd-field select:focus-visible, .cd-field input:focus-visible { border-color: var(--cd-accent); outline: 2px solid var(--cd-accent); outline-offset: 1px; }
+			.cd-field select:disabled { color: var(--cd-faint); cursor: progress; }
 			.cd-trade { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; background: var(--cd-panel); border: 1px solid var(--cd-line); border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; }
+			.cd-trade .who { font-size: 13px; font-weight: 700; color: var(--cd-dim); text-decoration: none; }
+			.cd-trade a.who:hover { color: var(--cd-text); text-decoration: underline; }
+			.cd-trade a.who:focus-visible, .cd-trade a.proof:focus-visible { outline: 2px solid var(--cd-accent); outline-offset: 3px; border-radius: 4px; }
 			.cd-trade .sym { font-weight: 800; font-size: 18px; }
 			.cd-trade .stat { font-size: 14px; color: var(--cd-dim); } .cd-trade .stat b { color: var(--cd-text); }
 			.cd-trade .win { color: var(--cd-green); } .cd-trade .loss { color: var(--cd-red); }
@@ -70,7 +74,10 @@
 			.cd-featstat .gesture { font-size: 26px; line-height: 1; }
 			.cd-featstat .num { font-size: 24px; font-weight: 800; letter-spacing: -.02em; background: linear-gradient(90deg, var(--cd-accent), var(--cd-accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 			.cd-text { font-size: 13.5px; color: var(--cd-dim); line-height: 1.5; }
-			.cd-cta { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--cd-accent-2); }
+			.cd-cta { align-self: flex-start; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--cd-accent-2); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 2px; transition: border-color .15s, color .15s; }
+			.cd-cta:hover { border-bottom-color: var(--cd-accent-2); }
+			.cd-cta:active { color: var(--cd-accent); }
+			.cd-cta:focus-visible { outline: 2px solid var(--cd-accent-2); outline-offset: 3px; border-radius: 3px; }
 			.cd-alt { font-size: 11.5px; color: var(--cd-faint); border-top: 1px dashed var(--cd-line); padding-top: 10px; line-height: 1.45; }
 			.cd-alt b { color: var(--cd-dim); }
 			.cd-copy { margin-top: auto; appearance: none; border: 1px solid var(--cd-line); background: var(--cd-panel-2); color: var(--cd-text); font: inherit; font-weight: 600; font-size: 13px; padding: 9px; border-radius: 9px; cursor: pointer; transition: background .15s, border-color .15s; }
@@ -82,7 +89,10 @@
 			.cd-empty, .cd-error { text-align: center; padding: 48px 20px; border: 1px dashed var(--cd-line); border-radius: 16px; background: var(--cd-panel); }
 			.cd-empty h3, .cd-error h3 { margin: 0 0 8px; font-size: 18px; }
 			.cd-empty p, .cd-error p { color: var(--cd-dim); margin: 0 auto 16px; max-width: 46ch; font-size: 14px; line-height: 1.55; }
-			.cd-empty a, .cd-error button { display: inline-block; background: var(--cd-accent); color: #06232b; border: none; text-decoration: none; padding: 10px 18px; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; }
+			.cd-empty a, .cd-error button { display: inline-block; background: var(--cd-accent); color: #06232b; border: none; text-decoration: none; padding: 10px 18px; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; transition: filter .15s, transform .15s; }
+			.cd-empty a:hover, .cd-error button:hover { filter: brightness(1.12); }
+			.cd-empty a:active, .cd-error button:active { transform: translateY(1px); }
+			.cd-empty a:focus-visible, .cd-error button:focus-visible { outline: 2px solid var(--cd-accent); outline-offset: 3px; }
 			.cd-skel { display: grid; grid-template-columns: 1fr; gap: 16px; }
 			@media (min-width: 760px) { .cd-skel { grid-template-columns: repeat(3, 1fr); } }
 			.cd-skel-card { height: 240px; border-radius: 14px; background: linear-gradient(100deg, var(--cd-panel) 30%, var(--cd-panel-2) 50%, var(--cd-panel) 70%); background-size: 200% 100%; animation: cd-sh 1.3s ease-in-out infinite; border: 1px solid var(--cd-line); }
