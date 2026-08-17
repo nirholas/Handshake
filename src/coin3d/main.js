@@ -1271,6 +1271,15 @@ async function main() {
 	}
 
 	if (!isKnownToken(snapshot)) {
+		if (!snapshot.answered) {
+			setStatus(
+				'error',
+				"Can't reach the data sources",
+				'Every live source for this token failed to respond. Check your connection, then try again.',
+				{ href: `/coin3d?mint=${encodeURIComponent(mint)}`, label: 'Retry' },
+			);
+			return;
+		}
 		setStatus('error', 'Token not found', `No on-chain data for ${mint}.`, {
 			href: '/launches',
 			label: 'Browse coins',
