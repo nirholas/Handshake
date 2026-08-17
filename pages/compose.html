@@ -203,7 +203,7 @@
 			.geb:hover{background:rgba(255,255,255,.1);color:var(--ink);}
 			#dz{margin:0 8px 8px;border:1px dashed rgba(255,255,255,.09);border-radius:var(--r);padding:9px;text-align:center;font-size:10px;color:var(--ink-mute);cursor:pointer;transition:border-color .12s,background .12s;flex-shrink:0;}
 			#dz:hover,#dz.dh,#dz:focus-within{border-color:var(--accent-border);background:rgba(99,102,241,.04);color:var(--accent-text);}
-			/* sr-only, not display:none — a hidden file input cannot take keyboard focus. */
+			/* sr-only, not display:none: a hidden file input cannot take keyboard focus. */
 			#dz input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
 
 			/* Avatar modal */
@@ -215,6 +215,14 @@
 			.amc{background:none;border:none;color:var(--ink-dim);font-size:20px;cursor:pointer;padding:2px 6px;border-radius:4px;transition:background .1s;}
 			.amc:hover{background:rgba(255,255,255,.07);}
 			#amb{flex:1;overflow-y:auto;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;align-content:start;}
+			.ame{grid-column:1/-1;text-align:center;padding:24px 12px;font-size:12px;line-height:1.6;color:var(--ink-mute);}
+			.ame.err{color:var(--danger);}
+			.ame a{color:var(--accent-text);}
+			.amcard{aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;background:var(--surface2);border:1px solid var(--border);position:relative;padding:0;display:block;width:100%;font-family:inherit;transition:border-color .12s,transform .1s;}
+			.amcard:hover,.amcard:focus-visible{border-color:var(--accent-border);transform:scale(1.03);}
+			.amcard img{width:100%;height:100%;object-fit:cover;display:block;}
+			.amph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--ink-mute);}
+			.amlb{position:absolute;bottom:0;left:0;right:0;padding:4px 6px;background:rgba(0,0,0,.65);font-size:10px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 			/* Help panel */
 			#hp{position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;}
@@ -383,8 +391,8 @@
 					</div>
 					<div class="fe" id="fe"></div>
 				</div>
-				<div class="gh">Recent Creations <a href="/forge" target="_blank" rel="noopener" data-i18n="compose.open_forge">Open Forge →</a></div>
-				<div id="gl"><div class="ge">Loading…</div></div>
+				<div class="gh"><span id="glh">Recent Creations</span> <a href="/forge" target="_blank" rel="noopener" data-i18n="compose.open_forge">Open Forge →</a></div>
+				<div id="gl" aria-busy="true"><div class="ge">Loading…</div></div>
 				<label id="dz" title="Drop a GLB/glTF file" data-i18n-attr="title:compose.drop_a_glb_gltf_file_title">
 					<input type="file" id="gfi" accept=".glb,.gltf" />
 					Drop GLB / glTF · or click to browse
@@ -396,7 +404,7 @@
 		<div id="am" hidden role="dialog" aria-modal="true" aria-label="Choose an avatar">
 			<div class="amd">
 				<div class="amh"><span data-i18n="compose.choose_an_avatar">Choose an Avatar</span><button class="amc" id="am-close" aria-label="Close avatar picker" data-i18n-attr="aria-label:compose.close_avatar_picker_arialabel">×</button></div>
-				<div id="amb"><div style="grid-column:1/-1;text-align:center;padding:24px;color:#52525b;font-size:12px;">Loading…</div></div>
+				<div id="amb" aria-busy="true"><div class="ame">Loading…</div></div>
 			</div>
 		</div>
 
@@ -425,7 +433,7 @@
 			</div>
 		</div>
 
-		<div id="tr"></div>
+		<div id="tr" role="status" aria-live="polite"></div>
 		<script type="module" src="/src/scene-compose.js"></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
