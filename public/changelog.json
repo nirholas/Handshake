@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T02:26:07.798Z",
+	"generated_at": "2026-08-17T02:41:59.362Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,16 @@
 			"link": "/docs/play-vehicles",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "A failed X seed no longer costs you six hours, and can no longer wipe a good one",
+			"summary": "Seeding an agent from your X posts is allowed once every six hours per agent, and until now that window was spent the moment we started reading, whatever happened next. If X was throttling us, if X had stopped accepting the connection, or if your sign-in could not be renewed, you got a bare failure and a six-hour lockout for something that was never yours to fix. Every one of those now hands the window straight back and says what actually happened: reconnect X, or wait the number of minutes X itself told us to wait. Worse was the run that read your account fine and found nothing usable in it, which is what a timeline of only replies and reposts looks like. That run deleted the batch of facts your agent already had and put nothing in its place. It now stops before the deletion, keeps the memories you had, gives the window back, and tells you what to post or add to your profile so the next seed has something to work with. Nothing else about the lane changes: nothing is read until you consent on a screen that lists what is read and stored, and revoking still deletes every memory the seeding produced.",
+			"link": "/settings",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -101,6 +111,18 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "The avatar SDK bundle we ship is now built from the code we deploy",
+			"summary": "The <agent-3d> runtime that sites load from three.ws is a single bundled file, and the production build never rebuilt it. It was copied from whatever the build machine happened to have on disk, which could be days older than the code being deployed, so a fix to the avatar element could ship everywhere else on the site and quietly not reach the SDK. The deploy now rebuilds that bundle from the same commit as the rest of the release, every time. Nothing to change on your side: existing embeds keep working and simply pick up the current runtime.",
+			"link": "/avatar-sdk",
+			"tags": [
+				"fix",
+				"sdk",
+				"infra"
 			]
 		},
 		{
@@ -11661,7 +11683,7 @@
 			"date": "2026-07-19",
 			"type": "launch",
 			"title": "Character Library",
-			"summary": "106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
+			"summary": "Professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer.",
 			"link": "/character-library",
 			"tags": [
 				"launch"

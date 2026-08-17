@@ -228,6 +228,35 @@ distilled posts behind on an agent you forgot about.
 | `consent_required` | 403 | No live grant; the response carries the disclosure to show |
 | `account_mismatch` | 409 | The consent was granted for a different X account |
 | rate limited | 429 | One seed per agent per 6 hours |
+| `x_token_expired` | 502 | The stored access token would not refresh; reconnect X |
+| `x_read_denied` | 502 | X answered the read with 401/403, so the connection was revoked or narrowed on X's side |
+| `x_rate_limited` | 503 | X is throttling us; `retry_at` carries X's own reset time when it sent one |
+| `x_unavailable` | 502 | X answered with something else; `x_status` carries what |
+| `seed_empty` | 502 | Nothing usable came back, so nothing was written and the previous batch was left alone |
+
+### A run that stores nothing costs no window
+
+The six-hour budget is charged once a request is authorized, connected and
+consented, immediately before the first read. Every exit after that point which
+writes no rows (the five codes above, plus `account_mismatch`) hands the window
+straight back, and the response says which happened:
+
+```json
+{
+  "error": "x_rate_limited",
+  "error_description": "X is rate limiting us and returned no posts. X should accept the read again in about 9 minutes. Your memories are unchanged and this attempt did not use up your six-hour window, so you can seed again as soon as it is fixed",
+  "x_status": 429,
+  "retry_at": "2026-08-17T02:49:00.000Z",
+  "window_refunded": true
+}
+```
+
+`window_refunded` is `false` only when the refund itself could not be recorded
+(a Redis outage); the wording drops the "did not use up" clause to match. Two
+guarantees hold on all of these paths: the agent's existing memories are
+untouched, and no partial batch is ever written. In particular a re-seed that
+yields no usable fact returns `seed_empty` rather than deleting a good batch and
+replacing it with nothing.
 
 ## Enabling it on a deployment
 

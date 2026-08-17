@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T02:26:07.777Z",
+	"generated_at": "2026-08-17T02:41:59.288Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -78,7 +78,7 @@
 				{
 					"path": "/character-library",
 					"title": "Character Library",
-					"description": "106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
+					"description": "Professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer.",
 					"added": "2026-07-19",
 					"auth": null,
 					"indexable": true,

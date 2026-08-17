@@ -53,7 +53,7 @@ Compose agent gestures into a timed routine on a real timeline, preview the whol
 
 URL: https://three.ws/character-library
 
-106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.
+Professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer.
 
 ### Sign Language Avatars
 
