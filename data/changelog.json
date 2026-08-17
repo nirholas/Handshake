@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Chat stops hiding two nav links, and says something useful when a reply fails",
+			"summary": "The chat at /chat was audited end to end in a real browser: loading it cold, sending a message on the free built-in lane and getting a reply back, following every link in the header and footer, and the empty, loading, error and populated states at phone, tablet and desktop widths. The header was covering itself: the centred site links sat on top of the wallet controls, so Features and Docs were partly hidden and could not be clicked at any desktop width, and between tablet and laptop widths there was no way to reach those links at all. The links now sit in the row with everything else, and below the width where they fit they move into the menu. The footer had been shipping a mangled copyright line (a leftover encoding accident that printed stray characters where the copyright symbol belongs). When a reply could not be sent, the thread printed the browser's own words, Failed to fetch; it now says what happened, that nothing was sent, and how to retry, in a message styled as an error rather than as a quieter reply. A rate-limited reply used to say Try again in 79445s; it now says the wait in hours or minutes and, when the free daily allowance is the thing that ran out, points at adding your own provider key. Icon-only buttons across the header and each message (share, model settings, copy, edit, regenerate, delete) now carry names for screen readers, and the page title and description finally describe the page.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/chat"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Choreographer share links are readable again, and the studio fits a phone",
+			"summary": "The gesture composer at /choreograph was audited end to end in a real browser: loading a starter routine, adding and reordering beats, retiming and repointing a step, previewing the whole performance on a live avatar, scrubbing the timeline, sharing a link, and saving to a real agent, at phone, tablet and desktop widths. Copy share link used to hand you a link with the routine name escaped twice, so a routine called The pitch travelled as The%2520pitch: it worked, but it looked broken, and it invited people to tidy it up and break it for real. Links now carry the routine as you can read it, and every link shared before today still opens. A routine whose name ended in the loop marker came back from a link under the wrong name and looping when it should not. On a 320 pixel phone, opening either of the two code panels pushed the whole page sideways; the code block now scrolls on its own instead. Pressing the transport a second time while the first play was still loading its clips said Pause but started a second load; it now stops the one in progress, and deleting the last beat mid-load can no longer bring an avatar back onto a stage the routine has left. Signed-out visitors also no longer see a failed request in the browser console on first paint.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/choreograph"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "The Characters gallery pages past the first screen, and stops fighting dark mode",
 			"summary": "The character gallery at /characters was audited end to end in a real browser: loading the feed, both sort orders, search, Load more, following a card through to its character page, and the loading, empty and error states, at phone, tablet and desktop widths. The worst finding was that the Top sort was quietly broken. Sorting by most-chatted read the right first screen, but pressing Load more asked the server to continue from the wrong place, so the feed ended after eight characters out of more than two thousand. It now pages all the way through, in order. The page also ignored the site theme: it painted a fixed light-blue background under the dark header no matter what you had chosen, which is now fixed in both directions, and wallet addresses on the cards were nearly invisible on a light background everywhere they appear on the site. The gallery filled only a narrow strip down the middle of a desktop screen and now uses the full width, up to four cards across. If the feed failed to load you got one line of grey text and no way to retry; there is now a proper message with a Try again button, a failed Load more keeps the characters you already had, and searching for something with no matches offers to clear the search rather than leaving you at a dead end. Pressing Top while the first screen was still loading used to light up the button and change nothing, so you were left reading New results under a Top heading. The search box had no label for screen readers, the sort buttons never showed which was selected, and neither they nor Load more showed a focus outline for anyone navigating by keyboard. Keyboard users can also now skip the header and land in the gallery. Finally, the feed itself is several times faster to answer on a cold request, because it no longer counts every conversation of every published character just to show you twenty-four of them.",
 			"tags": [
