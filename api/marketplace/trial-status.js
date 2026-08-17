@@ -157,7 +157,10 @@ export async function buyerView(userId) {
 		price: priceOf(r),
 		startedAt: r.created_at,
 		lastUsedAt: r.updated_at,
-		agentUrl: `/agent/${r.agent_id}`,
+		// Canonical, non-redirecting form. `/agent/:id` answers 301 to `/agents/:id`
+		// and drops the query string on the way, which silently ate the `?skill=`
+		// deep link every conversion CTA carries.
+		agentUrl: `/agents/${r.agent_id}`,
 	}));
 
 	const total = Number(rows[0]?.total_trials ?? trials.length);
@@ -232,7 +235,11 @@ export async function sellerView(userId) {
 			potential: price
 				? { atomic: potential, display: formatAtomic(potential, price.decimals), mint: price.mint }
 				: null,
-			pricingUrl: `/dashboard-next/agent?id=${r.agent_id}`,
+			agentUrl: `/agents/${r.agent_id}`,
+			// The agent editor's monetization panel is where skill prices and trial
+			// grants are actually set. The old `/dashboard-next/agent` target was a
+			// 404 on every seller row on the page.
+			pricingUrl: `/agent/${r.agent_id}/edit?tab=monetization`,
 		};
 	});
 

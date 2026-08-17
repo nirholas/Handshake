@@ -402,7 +402,10 @@
 			.c3d-spark-empty {
 				height: 44px;
 				border-radius: 8px;
-				background: rgba(255, 255, 255, 0.04);
+				background: rgba(255, 255, 255, 0.05);
+				/* Price history arrives after the HUD paints, so this reads as
+				   loading rather than as a chart with nothing in it. */
+				animation: c3dPulse 1.4s ease-in-out infinite;
 			}
 
 			/* Risk flags */
@@ -740,8 +743,10 @@
 				#hud {
 					width: calc(100vw - 32px);
 					left: 16px;
-					bottom: 16px;
-					max-height: 72vh;
+					/* Sits above the site-wide locale switcher pinned to the bottom
+					   of the viewport, which otherwise covers the HUD's link row. */
+					bottom: 56px;
+					max-height: 68vh;
 				}
 				#status {
 					padding: 20px 16px;
