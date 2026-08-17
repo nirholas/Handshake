@@ -41,14 +41,14 @@ The main tweet stays inside the exact shape IBM replies to. The three.ws story g
 the self-reply, where it reaches everyone who opens the post but does not dilute the
 pattern match on the tweet IBM's team sees.
 
-**Tweet 1** (attach the badge image, 226 characters):
+**Tweet 1** (attach the badge image, 231 characters):
 
 ```
 View my verified achievement from @IBM.
 
 https://www.credly.com/badges/b7ea921a-ce3d-4f4d-bfac-38f95276d361/twitter via @credly
 
-Getting Started with Cybersecurity, done. Sharpening the security fundamentals behind everything we ship.
+Cybersecurity is a skill everyone should hold. Sharpening the security fundamentals behind everything we ship.
 
 #IBMSkillsBuild #Cybersecurity #Developer
 ```
