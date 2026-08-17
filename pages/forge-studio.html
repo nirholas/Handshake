@@ -530,6 +530,27 @@
 			.forge-quality-error .tws-es-icon { display: none; }
 			.forge-quality-error .tws-es-title { font-size: var(--text-sm); }
 			.forge-quality-error .tws-es-body { font-size: var(--text-xs); }
+			/* The retry holds the block open while the catalog round trip runs, so
+			   the button needs a pending look the shared state-kit does not carry. */
+			.forge-quality-error .tws-es-btn:disabled {
+				opacity: 0.55;
+				cursor: progress;
+			}
+			.forge-quality-error[aria-busy='true'] .tws-es-title::after {
+				content: '';
+				display: inline-block;
+				width: 0.7em;
+				height: 0.7em;
+				margin-left: 0.5em;
+				border: 2px solid currentColor;
+				border-right-color: transparent;
+				border-radius: 50%;
+				vertical-align: -1px;
+				animation: studioSpin 0.7s linear infinite;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.forge-quality-error[aria-busy='true'] .tws-es-title::after { animation: none; }
+			}
 			.fq-row {
 				display: flex;
 				align-items: center;

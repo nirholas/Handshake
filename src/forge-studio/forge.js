@@ -438,6 +438,7 @@ async function loadCatalog() {
 	if (errorEl) {
 		errorEl.innerHTML = '';
 		errorEl.classList.add('is-hidden');
+		errorEl.removeAttribute('aria-busy');
 	}
 	qualityEl?.classList.remove('is-hidden');
 	buildEngineButtons();
@@ -454,9 +455,18 @@ function showCatalogError(errorEl) {
 		body: 'Quality and engine options are unavailable right now. Generation still works on the default free engine, or retry to get the full picker back.',
 	});
 	errorEl.classList.remove('is-hidden');
+	errorEl.removeAttribute('aria-busy');
 	errorEl.querySelector('[data-sk-retry]')?.addEventListener('click', () => {
-		errorEl.innerHTML = '';
-		errorEl.classList.add('is-hidden');
+		// Hold the block open with a real pending state instead of clearing it.
+		// The catalog round trip takes seconds on a cold or busy backend, and
+		// blanking the notice on click left an unexplained gap where the picker
+		// belongs until loadCatalog resolved.
+		const btn = errorEl.querySelector('[data-sk-retry]');
+		if (btn) {
+			btn.disabled = true;
+			btn.textContent = 'Checking again';
+		}
+		errorEl.setAttribute('aria-busy', 'true');
 		loadCatalog();
 	});
 }
