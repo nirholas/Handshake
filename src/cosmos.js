@@ -220,7 +220,7 @@ function stopTimers() {
 async function generate() {
 	const prompt = els.prompt.value.trim();
 	if (prompt.length < 3) {
-		showNote('err', 'Describe a world first — even a few words is enough.');
+		showNote('err', 'Describe a world first. Even a few words is enough.');
 		els.prompt.focus();
 		return;
 	}
@@ -393,11 +393,18 @@ async function downloadClip() {
 	}
 }
 
+// A shared world has to arrive as a world. The link carries the clip itself plus
+// the avatar and prompt that framed it, so the recipient opens the finished scene
+// rather than a blank stage and a prefilled textarea.
 async function shareLink() {
 	if (!lastVideoUrl) return;
 	const url = new URL(window.location.href);
+	url.search = '';
 	url.searchParams.set('prompt', lastPrompt);
+	url.searchParams.set('world', lastVideoUrl);
 	if (activeAvatarUrl) url.searchParams.set('avatar', activeAvatarUrl);
+	const seedVal = els.seed.value.trim();
+	if (seedVal) url.searchParams.set('seed', seedVal);
 	const link = url.toString();
 	try {
 		await navigator.clipboard.writeText(link);
@@ -436,7 +443,18 @@ function init() {
 	} else {
 		selectAvatar(DEFAULT_AVATAR, { quiet: true });
 	}
-	if (deepPrompt) els.prompt.value = deepPrompt.slice(0, 300);
+	if (deepPrompt) {
+		els.prompt.value = deepPrompt.slice(0, 300);
+		lastPrompt = els.prompt.value;
+	}
+	const deepSeed = params.get('seed');
+	if (deepSeed && Number.isFinite(Number(deepSeed))) els.seed.value = String(Math.trunc(Number(deepSeed)));
+
+	// A shared world plays straight away. Only an https .mp4 is honored, matching
+	// the durable URLs this lane hands out; anything else is ignored so a crafted
+	// link cannot point the stage at arbitrary content.
+	const deepWorld = params.get('world');
+	if (deepWorld && /^https:\/\/[^\s]+\.mp4(\?[^\s]*)?$/i.test(deepWorld)) succeed(deepWorld);
 
 	loadCommunityAvatars();
 

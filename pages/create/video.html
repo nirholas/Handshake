@@ -725,6 +725,20 @@
 				background: #140a0a;
 			}
 
+			/* ── Focus visibility ───────────────────────────────────────── */
+			.back-btn:focus-visible,
+			.avatar-thumb:focus-visible,
+			.audio-drop:focus-within,
+			.audio-file-clear:focus-visible,
+			.generate-btn:focus-visible,
+			.retry-btn:focus-visible,
+			.video-action-btn:focus-visible,
+			.note-action:focus-visible,
+			.prompt-input:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+
 			/* ── Responsive ─────────────────────────────────────────────── */
 			@media (max-width: 780px) {
 				main {
@@ -790,6 +804,31 @@
 				</div>
 			</div>
 
+			<div class="offline-banner" id="offline-banner" role="status">
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<circle cx="12" cy="12" r="10" />
+					<line x1="12" y1="8" x2="12" y2="13" />
+					<line x1="12" y1="16" x2="12.01" y2="16" />
+				</svg>
+				<div>
+					<strong data-i18n="create_video.video_rendering_is_offline">Video rendering is offline</strong>
+					<p data-i18n-html="create_video.the_gpu_renderer_behind_this_page">
+						The GPU renderer behind this page is not reachable right now, so a
+						generation would fail after the upload. Your avatars still animate in
+						the <a href="/avatar-studio">Avatar Studio</a>, and
+						<a href="/create/prompt">prompt to avatar</a> is unaffected.
+					</p>
+				</div>
+			</div>
+
 			<div class="workspace">
 				<!-- Left: 3D avatar preview + selector -->
 				<div class="avatar-panel">
@@ -816,6 +855,20 @@
 						<span class="avatar-select-loading" id="avatar-bar-loading"
 							 data-i18n="create_video.loading_avatars">Loading avatars…</span
 						>
+						<div class="avatar-bar-note" id="avatar-bar-empty">
+							<span class="note-text" data-i18n="create_video.no_avatars_yet_make_one_and_it">
+								No avatars yet. Make one and it shows up here, ready to speak.
+							</span>
+							<a class="note-action" href="/create" data-i18n="create_video.create_an_avatar">Create an avatar</a>
+						</div>
+						<div class="avatar-bar-note" id="avatar-bar-error">
+							<span class="note-text" data-i18n="create_video.we_could_not_load_your_avatars">
+								We could not load your avatars. Check your connection and try again.
+							</span>
+							<button class="note-action" type="button" id="avatar-bar-retry" data-i18n="create_video.retry">
+								Retry
+							</button>
+						</div>
 					</div>
 				</div>
 
@@ -823,13 +876,12 @@
 				<div class="controls-panel">
 					<!-- Audio -->
 					<div class="control-block">
-						<p class="control-label" data-i18n="create_video.audio_file">Audio file</p>
+						<label class="control-label" for="audio-input" data-i18n="create_video.audio_file">Audio file</label>
 						<div class="audio-drop" id="audio-drop">
 							<input
 								type="file"
 								accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac"
 								id="audio-input"
-								aria-label="Upload audio file"
 							/>
 							<svg
 								viewBox="0 0 24 24"

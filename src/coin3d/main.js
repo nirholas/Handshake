@@ -451,6 +451,17 @@ function animate() {
 		o.mesh.position.x = Math.cos(o.angle) * o.radius;
 		o.mesh.position.z = Math.sin(o.angle) * o.radius;
 		o.mesh.position.y = o.y + Math.sin(t * o.bob + o.phase) * 0.08;
+		if (o.spawn !== undefined) {
+			const k = (t - o.spawn) / 0.55;
+			if (k >= 1) {
+				o.mesh.scale.setScalar(1);
+				o.spawn = undefined;
+			} else {
+				// Ease-out back: a touch of overshoot so the arrival reads as motion.
+				const e = Math.max(0, 1 - Math.pow(1 - Math.max(0, k), 3));
+				o.mesh.scale.setScalar(Math.max(0.001, e * (1 + Math.sin(e * Math.PI) * 0.12)));
+			}
+		}
 	}
 
 	stepPulses();
@@ -1174,6 +1185,18 @@ function launchCard(l) {
 }
 
 // ── Boot ────────────────────────────────────────────────────────────────────
+let marketTimer = null;
+
+// The static <title> carries a data-i18n key, and the runtime i18n catalog pass
+// lands asynchronously (and again on every locale switch). Without claiming
+// ownership the way the shared runtime expects, that pass reverts the per-token
+// title back to the generic page title.
+function setPageTitle(text) {
+	const el = document.querySelector('title');
+	if (el) el.setAttribute('data-i18n-owned', '1');
+	document.title = text;
+}
+
 async function main() {
 	if (!mint) {
 		renderLanding();
@@ -1199,7 +1222,7 @@ async function main() {
 		return;
 	}
 
-	if (snapshot.name === 'Unknown token' && !snapshot.image && !snapshot.holders.length) {
+	if (!isKnownToken(snapshot)) {
 		setStatus('error', 'Token not found', `No on-chain data for ${mint}.`, {
 			href: '/launches',
 			label: 'Browse coins',
@@ -1213,7 +1236,7 @@ async function main() {
 	// of hanging on the loading spinner forever.
 	renderHud(snapshot);
 	setStatus(null);
-	document.title = `${snapshot.name}${snapshot.symbol ? ` ($${snapshot.symbol})` : ''} · 3D — three.ws`;
+	setPageTitle(`${snapshot.name}${snapshot.symbol ? ` ($${snapshot.symbol})` : ''} · 3D · three.ws`);
 
 	let sceneOk = true;
 	try {
@@ -1221,20 +1244,20 @@ async function main() {
 		buildPulsePool();
 		buildCoin(snapshot);
 		buildGraduationRing(snapshot);
-		buildHolderGalaxy(snapshot);
 	} catch (err) {
 		sceneOk = false;
 		console.warn('[coin3d] 3D scene unavailable, falling back to data view:', err?.message || err);
 		showSceneFallback();
 	}
 
-	// Async enrichment — none of these block the scene render.
+	// Async enrichment. None of these block the scene render.
+	loadHolders().then((h) => applyHolders(snapshot, h, sceneOk));
 	fetchOracleConviction(mint, network).then((cv) => renderOracleSlot(cv, mint));
 	fetchMarket(mint).then(applyMarket);
 	fetchCoinIntel(mint, network).then(applyIntel);
 	startTradePolling(mint);
 	// Refresh market figures periodically so price/volume stay live.
-	setInterval(() => fetchMarket(mint).then(applyMarket), 60_000);
+	marketTimer = setInterval(() => fetchMarket(mint).then(applyMarket), 60_000);
 
 	// Expose the live scene for embedders and host pages (e.g. to react to the
 	// loaded snapshot or drive the camera from the outside).
@@ -1255,6 +1278,7 @@ function showSceneFallback() {
 addEventListener('beforeunload', () => {
 	if (rafId) cancelAnimationFrame(rafId);
 	if (tape.timer) clearInterval(tape.timer);
+	if (marketTimer) clearInterval(marketTimer);
 	renderer?.dispose?.();
 });
 
