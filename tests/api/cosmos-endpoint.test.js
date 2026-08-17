@@ -153,11 +153,11 @@ describe('/api/cosmos: the poll hands back status, never diagnostics', () => {
 	});
 
 	it('returns the durable clip URL on completion', async () => {
-		status.mockResolvedValue({ status: 'done', resultVideoUrl: 'https://cdn.three.ws/forge/cosmos/a.mp4' });
+		status.mockResolvedValue({ status: 'done', resultVideoUrl: 'https://three.ws/cdn/forge/cosmos/a.mp4' });
 		const res = await dispatch(makeReq({ method: 'GET', url: `/api/cosmos?job=${JOB}` }));
 
 		expect(res.body.status).toBe('done');
-		expect(res.body.video_url).toBe('https://cdn.three.ws/forge/cosmos/a.mp4');
+		expect(res.body.video_url).toBe('https://three.ws/cdn/forge/cosmos/a.mp4');
 		expect(res.body.error).toBeNull();
 	});
 
