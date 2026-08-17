@@ -1200,7 +1200,12 @@ async function openAvatarModal() {
 
 async function loadAvatarChoices() {
 	avatarModalBody.setAttribute('aria-busy', 'true');
-	avatarModalMessage('Loading avatars…');
+	avatarModalBody.innerHTML = '';
+	for (let i = 0; i < 8; i++) {
+		const s = document.createElement('div');
+		s.className = 'gsk';
+		avatarModalBody.appendChild(s);
+	}
 	try {
 		// source=avatar&only3d=1, not the invented type=avatar: /api/explore has no
 		// `type` param, so the old call returned a mixed on-chain-agent feed whose
@@ -1442,9 +1447,18 @@ async function fetchCreations(query) {
 	return (data.creations || []).filter((c) => c.glb_url);
 }
 
+function showGallerySkeleton() {
+	creationsList.innerHTML = '';
+	for (let i = 0; i < 6; i++) {
+		const s = document.createElement('div');
+		s.className = 'gsk';
+		creationsList.appendChild(s);
+	}
+}
+
 async function loadGallery() {
 	creationsList.setAttribute('aria-busy', 'true');
-	galleryMessage('Loading…');
+	showGallerySkeleton();
 	try {
 		// A first-time visitor has no creations of their own, and an empty strip
 		// left the fastest path into the composer (drop a real model into the

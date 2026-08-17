@@ -199,6 +199,8 @@
 			.gca{display:block;font-size:10px;font-weight:600;color:var(--accent-text);background:rgba(99,102,241,.28);border-radius:4px;padding:2px 6px;margin-top:3px;text-align:center;}
 			.gcg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,.2);text-align:center;padding:8px;}
 			.ge{grid-column:1/-1;text-align:center;padding:20px 8px;font-size:11px;color:var(--ink-mute);line-height:1.6;}
+			.gsk{aspect-ratio:1;border-radius:8px;background:linear-gradient(100deg,var(--surface2) 30%,rgba(255,255,255,.05) 50%,var(--surface2) 70%);background-size:220% 100%;animation:shm 1.3s ease-in-out infinite;}
+			@keyframes shm{from{background-position:180% 0;}to{background-position:-80% 0;}}
 			.geb{margin-top:8px;padding:4px 12px;border-radius:var(--rs);background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--ink-dim);font-size:11px;font-family:inherit;cursor:pointer;transition:background .1s,color .1s;}
 			.geb:hover{background:rgba(255,255,255,.1);color:var(--ink);}
 			#dz{position:relative;margin:0 8px 8px;border:1px dashed rgba(255,255,255,.09);border-radius:var(--r);padding:9px;text-align:center;font-size:10px;color:var(--ink-mute);cursor:pointer;transition:border-color .12s,background .12s;flex-shrink:0;}
@@ -392,7 +394,7 @@
 					<div class="fe" id="fe"></div>
 				</div>
 				<div class="gh"><span id="glh">Recent Creations</span> <a href="/forge" target="_blank" rel="noopener" data-i18n="compose.open_forge">Open Forge →</a></div>
-				<div id="gl" aria-busy="true"><div class="ge">Loading…</div></div>
+				<div id="gl" aria-busy="true"><div class="gsk"></div><div class="gsk"></div><div class="gsk"></div><div class="gsk"></div><div class="gsk"></div><div class="gsk"></div></div>
 				<label id="dz" title="Drop a GLB/glTF file" data-i18n-attr="title:compose.drop_a_glb_gltf_file_title">
 					<input type="file" id="gfi" accept=".glb,.gltf" />
 					Drop GLB / glTF · or click to browse
