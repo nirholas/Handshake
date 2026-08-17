@@ -816,6 +816,7 @@ const tape = {
 	timer: null,
 	netFlow: 0, // running USD net flow over the session
 	primed: false,
+	misses: 0, // consecutive failed polls
 };
 
 async function pollTrades(mintAddr) {
@@ -823,7 +824,8 @@ async function pollTrades(mintAddr) {
 		const r = await fetch(`/api/pump/dex-trades?mint=${encodeURIComponent(mintAddr)}&limit=40`, {
 			signal: AbortSignal.timeout(9000),
 		});
-		if (!r.ok) return;
+		if (!r.ok) throw new Error(`dex-trades ${r.status}`);
+		tape.misses = 0;
 		const body = await r.json();
 		const trades = Array.isArray(body?.trades) ? body.trades : [];
 		// Oldest-first so newest ends up at the top of the tape and pulses fire
@@ -835,7 +837,11 @@ async function pollTrades(mintAddr) {
 		const stale = body?.stale === true;
 		updateLiveDot(stale, trades.length > 0);
 
-		if (!fresh.length) return;
+		if (!fresh.length) {
+			// Restores the "watching" message if an earlier outage replaced it.
+			if (!tape.rows.length) renderTape();
+			return;
+		}
 		for (const t of fresh) tape.seen.add(t.signature);
 		// Keep the seen-set from growing without bound over a long session.
 		if (tape.seen.size > 4000) tape.seen = new Set([...tape.seen].slice(-2000));
@@ -851,7 +857,17 @@ async function pollTrades(mintAddr) {
 		tape.primed = true;
 		renderTape();
 	} catch {
-		// Tape is best-effort; a blip just skips this tick.
+		// A single blip just skips a tick. A sustained outage gets said out loud,
+		// so the tape never sits on "watching for swaps" while nothing is watching.
+		tape.misses += 1;
+		updateLiveDot(true, tape.rows.length > 0);
+		if (tape.misses >= 2 && !tape.rows.length) {
+			const list = document.getElementById('c3d-tape-list');
+			if (list) {
+				list.innerHTML =
+					'<div class="c3d-tape-empty">Live trades are unavailable right now. Retrying every few seconds.</div>';
+			}
+		}
 	}
 }
 

@@ -1391,7 +1391,14 @@ export class CommunityUI {
 			// so anchoring there stranded the Holders badge in the middle of the
 			// card, floating over the seam. Hang them off the card instead, which
 			// is also position:relative, so they land on its real top corners.
-			el('div', { class: 'cc-card-img', style: cssBgImage(c.image) }, featured ? [mono] : [mono, liveBadge, holdersBadge, popPill]),
+			// The monogram is a layer BELOW the artwork, not a fallback swapped in on
+			// error: a CSS background cannot report a load failure, so the mark simply
+			// stays behind the image and shows through when there is no image to paint.
+			el('div', { class: 'cc-card-img' }, [
+				mono,
+				el('div', { class: 'cc-card-art', style: cssBgImage(c.image) }),
+				...(featured ? [] : [liveBadge, holdersBadge, popPill]),
+			]),
 			el('div', { class: 'cc-card-body' }, [
 				el('div', { class: 'cc-card-name', text: c.name || 'Unnamed coin' }),
 				el('div', { class: 'cc-card-meta' }, [
@@ -3152,6 +3159,9 @@ export class CommunityUI {
 		this.hud.hidden = true;
 		this.lobby.hidden = false;
 		this._renderGrid();
+		// Coming back out of a world, the headcounts on the cards are as old as the
+		// session that just ended. Re-read them now rather than at the next tick.
+		this._readPopulation();
 	}
 
 	setStatus(state, error = null) {

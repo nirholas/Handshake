@@ -75,6 +75,11 @@ let signedIn = false; // resolved once at boot; gates the Granite analysis call
 function setStatus(kind, html) {
 	statusEl.classList.remove('live', 'off', 'err');
 	if (kind) statusEl.classList.add(kind);
+	// "Starting…" is an annotated placeholder, and the i18n runtime re-applies
+	// translations asynchronously once its catalog lands. Dropping the annotation
+	// before the first live write stops a late pass from resetting the pipeline
+	// status back to "Starting…" after the galaxy is already up.
+	statusText.removeAttribute('data-i18n');
 	statusText.innerHTML = html;
 }
 function hideOverlay() {
