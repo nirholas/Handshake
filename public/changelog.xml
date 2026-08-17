@@ -127,6 +127,22 @@
 			<description>The activity list on the Community page was building each row as a link wrapped around another link, which no browser can parse: every entry was torn into three stray fragments, so the creator, the item and its thumbnail landed on separate lines with gaps between them and the whole list was unreadable. Rows are now single, valid entries again: click anywhere on one to open the creation, or click the creator's name to open their profile. If the feed cannot load, or returns something the page cannot read, you get a clear message and a Try again button instead of skeleton placeholders that never resolve. The page also follows the light and dark theme switch now instead of staying black on a light canvas, and the newsletter section finally has the signup field its text promises, rather than sending you hunting for the one in the footer.</description>
 		</item>
 		<item>
+			<title>The Pole Club leaderboard now ranks the dancers who are actually on the poles</title>
+			<link>https://three.ws/club</link>
+			<guid isPermaLink="false">2026-08-17:The Pole Club leaderboard now ranks the dancers who are actually on the poles</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The club's leaderboard was reading names out of the payout registry instead of off the stage, so it listed four dancers under names matching none of the three at the poles, every one of them sitting at zero. It now names each dancer exactly as her pole card does, drops entries for dancers who are not in tonight's lineup and have never been tipped, and says what a quiet board actually means: the 24h and 1h views tell you the club has been quiet rather than claiming nobody has ever tipped, which was never true while the all-time board was full. Keyboard and screen-reader visitors get the rest of the pass: the page carries one real heading instead of five competing ones, Skip to stage now lands you on the stage, and the controls belonging to the walk-in (the agent picker, the Enter the club prompt) no longer sit invisibly in the tab order once you are inside the room.</description>
+		</item>
+		<item>
+			<title>The security agent in the world no longer opens its scanner in your face</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-17:The security agent in the world no longer opens its scanner in your face</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>zauth, the security agent standing in the town plaza, used to throw its RepoScan panel over the screen the moment you walked within a few metres of it, interrupting whatever you were doing and hiding the world behind a modal you never asked for. Walking up now only gets you the agent's line and the usual E prompt above its head. The scanner opens when you choose to open it: press E, click the agent, or click its nameplate. Nothing else changed about the scan itself, and the price is still fetched live from zauth in the background as you approach, so the panel shows the real cost the instant it opens instead of a loading shimmer.</description>
+		</item>
+		<item>
 			<title>The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts &quot;Meet Agent&quot;</title>
 			<link>https://three.ws/app</link>
 			<guid isPermaLink="false">2026-08-17:The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts &quot;Meet Agent&quot;</guid>
