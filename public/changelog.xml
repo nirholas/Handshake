@@ -191,6 +191,14 @@
 			<description>The activity list on the Community page was building each row as a link wrapped around another link, which no browser can parse: every entry was torn into three stray fragments, so the creator, the item and its thumbnail landed on separate lines with gaps between them and the whole list was unreadable. Rows are now single, valid entries again: click anywhere on one to open the creation, or click the creator's name to open their profile. If the feed cannot load, or returns something the page cannot read, you get a clear message and a Try again button instead of skeleton placeholders that never resolve. The page also follows the light and dark theme switch now instead of staying black on a light canvas, and the newsletter section finally has the signup field its text promises, rather than sending you hunting for the one in the footer.</description>
 		</item>
 		<item>
+			<title>The Concierge page stops cutting itself off on a phone, and its install tabs work from the keyboard</title>
+			<link>https://three.ws/concierge</link>
+			<guid isPermaLink="false">2026-08-17:The Concierge page stops cutting itself off on a phone, and its install tabs work from the keyboard</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes to the Concierge landing page. On a narrow phone screen the whole page was being sized against the longest line of the install snippet, which pushed the column roughly twice as wide as the screen; because the site clips sideways overflow, the right-hand half of every headline, paragraph and button was simply cut off with no way to scroll to it. The column now fits the screen and the code snippet scrolls inside its own box, the way it already did on a laptop. The four install tabs (one tag, web component, npm, imperative) announced themselves to a screen reader as tabs but were not wired to the panels they open and ignored the arrow keys; they now move with Left, Right, Home and End, and each tab is properly tied to its snippet. Copy buttons also say which snippet they copy, and if the browser blocks the clipboard the snippet is selected for you so Ctrl+C still works. Finally, the passive &quot;Have you tried&quot; suggestion card could land on top of the live concierge demo in the corner; it now stacks clear of it.</description>
+		</item>
+		<item>
 			<title>The Pole Club leaderboard now ranks the dancers who are actually on the poles</title>
 			<link>https://three.ws/club</link>
 			<guid isPermaLink="false">2026-08-17:The Pole Club leaderboard now ranks the dancers who are actually on the poles</guid>
