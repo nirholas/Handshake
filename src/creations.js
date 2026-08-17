@@ -217,7 +217,7 @@ async function loadFeed({ reset = false } = {}) {
 				host.setAttribute('aria-busy', 'false');
 				host.innerHTML =
 					`<div class="cr-error"><div class="cr-empty-title">The remix bazaar is temporarily unavailable</div>` +
-					`<p>Nothing is lost — published creations reappear as soon as it is back. ` +
+					`<p>Nothing is lost. Published creations reappear as soon as it is back. ` +
 					`<button type="button" class="cr-retry" id="cr-retry">Retry</button></p></div>`;
 				$('cr-retry')?.addEventListener('click', () => loadFeed({ reset: true }));
 			}
@@ -592,11 +592,12 @@ function wirePublishForm() {
 			}
 			const p = data.published;
 			statusEl.dataset.kind = 'done';
+			// The gallery reloads below, so the entry is already on screen.
 			statusEl.textContent = p.remixable
 				? p.royaltyPayable
-					? `Published — remixable at ${p.royaltyPercent}% royalty. Refresh the gallery to see it.`
-					: `Published — remixable at ${p.royaltyPercent}% royalty, but add a wallet above to actually collect it.`
-				: 'Published to the gallery — display only, not remixable.';
+					? `Published to the gallery, remixable at ${p.royaltyPercent}% royalty.`
+					: `Published to the gallery, remixable at ${p.royaltyPercent}% royalty, but add a payout wallet above to actually collect it.`
+				: 'Published to the gallery, display only, not remixable.';
 			form.reset();
 			royaltyOut.textContent = `${royaltyInput.value}%`;
 			royaltyRow.hidden = licenseSel.value === 'all-rights';
