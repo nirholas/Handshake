@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "The Concierge page stops cutting itself off on a phone, and its install tabs work from the keyboard",
+			"summary": "Three fixes to the Concierge landing page. On a narrow phone screen the whole page was being sized against the longest line of the install snippet, which pushed the column roughly twice as wide as the screen; because the site clips sideways overflow, the right-hand half of every headline, paragraph and button was simply cut off with no way to scroll to it. The column now fits the screen and the code snippet scrolls inside its own box, the way it already did on a laptop. The four install tabs (one tag, web component, npm, imperative) announced themselves to a screen reader as tabs but were not wired to the panels they open and ignored the arrow keys; they now move with Left, Right, Home and End, and each tab is properly tied to its snippet. Copy buttons also say which snippet they copy, and if the browser blocks the clipboard the snippet is selected for you so Ctrl+C still works. Finally, the passive \"Have you tried\" suggestion card could land on top of the live concierge demo in the corner; it now stacks clear of it.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/concierge"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Describe it to 3D keeps your prompt when it asks you to sign in, and stops a cancelled build from hijacking the next one",
 			"summary": "Four fixes to the prompt-to-avatar page. If you were not signed in, typing a long description and pressing Generate bounced you to the login page and threw the description away; you now come back to the page with your words still in the box. Cancelling a build and immediately starting another used to leave the abandoned build running in the background, so a minute later the cancelled avatar could take over the screen and Open in editor would point at the wrong character; each build now carries a token and an abandoned one can no longer write to the page. The Cancel button went dead in the one state where people reach for it most, after a build had already failed, because it was checking whether a build was still in flight rather than whether you were still looking at the build screen; Cancel and the Escape key both work there now. And when an avatar finished, Open in editor and Make another sat just below the bottom edge of a laptop screen, so the result appeared to have no next step: the preview is now sized against the window height, and both buttons land in view.",
 			"tags": [
