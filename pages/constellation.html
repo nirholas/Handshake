@@ -164,7 +164,8 @@
 
 	<div class="c-overlay" id="c-overlay">
 		<div class="c-spinner" id="c-spinner"></div>
-		<div class="msg" id="c-overlay-msg"><strong data-i18n="constellation.loading_the_constellation">Loading the constellation…</strong><br/>Fetching live trending tokens.</div>
+		<div class="msg" id="c-overlay-msg" role="status" aria-live="polite"><strong data-i18n="constellation.loading_the_constellation">Loading the constellation…</strong><br/>Fetching live trending tokens.</div>
+		<button class="c-retry" id="c-retry" hidden>Try again</button>
 	</div>
 
 	<script type="module" src="/src/constellation/main.js"></script>

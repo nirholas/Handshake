@@ -58,6 +58,15 @@ const DEFAULT_AVATAR = BUNDLED[0].url;
 
 const POLL_INTERVAL_MS = 4000;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000;
+// Reveal the clip even if `canplay` was missed (cache/seek edge); cleared the
+// moment the video reports it can play, or that it cannot.
+const REVEAL_FALLBACK_MS = 1200;
+
+// Shown whenever the lane itself reports it is down (unconfigured deployment, or
+// NVIDIA retired every hosted Cosmos route this account can reach). The aurora
+// backdrop stays, so the stage is a designed scene rather than a dead void.
+const LANE_OFFLINE_COPY =
+	'NVIDIA Cosmos world generation is offline right now. Your avatar keeps its living backdrop above; check back soon for generated worlds.';
 
 let activeAvatarUrl = null;
 let job = null; // { id, startedAt }
@@ -74,17 +83,31 @@ function toast(msg) {
 	toast._t = setTimeout(() => els.toast.classList.remove('show'), 2400);
 }
 
-function showNote(kind, html) {
+// Notes render as text plus an optional real <button>. Server copy is never
+// interpolated into innerHTML: the upstream lane has answered with vendor detail
+// before, and a banner is not a template.
+function showNote(kind, message, action = null) {
 	els.note.className = `cz-note show ${kind}`;
-	els.note.innerHTML = html;
+	els.note.replaceChildren(document.createTextNode(message));
+	if (!action) return;
+	els.note.appendChild(document.createTextNode(' '));
+	const btn = document.createElement('button');
+	btn.type = 'button';
+	btn.textContent = action.label;
+	btn.addEventListener('click', action.onClick);
+	els.note.appendChild(btn);
 }
 function clearNote() {
 	els.note.className = 'cz-note';
-	els.note.innerHTML = '';
+	els.note.replaceChildren();
 }
 
-function setBadge(on, text) {
-	els.statusBadge.classList.toggle('is-off', !on);
+// Three honest badge states: idle (nothing attempted yet), live (the lane just
+// accepted a job), off (the lane told us it is down). The dot never claims a
+// health we have not observed.
+function setBadge(state, text) {
+	els.statusBadge.classList.toggle('is-off', state === 'off');
+	els.statusBadge.classList.toggle('is-idle', state === 'idle');
 	els.statusText.textContent = text;
 }
 
@@ -224,27 +247,25 @@ async function generate() {
 		});
 		data = await res.json();
 	} catch {
-		return failGeneration(
-			res && res.status === 404
-				? 'The Cosmos lane isn’t deployed on this environment yet.'
-				: 'Couldn’t reach the Cosmos service. Check your connection and try again.',
-			{ unconfigured: true },
-		);
+		// A dropped connection or an unparseable body is recoverable, so it keeps a
+		// Retry: only the lane telling us it is offline drops the retry affordance.
+		if (res && res.status === 404) {
+			setBadge('off', 'Cosmos offline');
+			return failGeneration(LANE_OFFLINE_COPY, { unconfigured: true });
+		}
+		return failGeneration('Could not reach the Cosmos service. Check your connection and try again.');
 	}
 
-	if (res.status === 503 || res.status === 404 || data?.error === 'unconfigured') {
-		setBadge(false, 'Cosmos offline');
-		return failGeneration(
-			'NVIDIA Cosmos isn’t available on this environment yet. Your avatar still shines on the living backdrop above — check back soon for generated worlds.',
-			{ unconfigured: true },
-		);
+	if (res.status === 503 || res.status === 404 || data?.error === 'unconfigured' || data?.error === 'lane_unavailable') {
+		setBadge('off', 'Cosmos offline');
+		return failGeneration(LANE_OFFLINE_COPY, { unconfigured: true });
 	}
 	if (!res.ok) {
 		const retry = data?.retry_after ? ` Try again in ~${data.retry_after}s.` : '';
-		return failGeneration((data?.message || 'Cosmos couldn’t start this world.') + retry);
+		return failGeneration((data?.message || 'Cosmos could not start this world.') + retry);
 	}
 
-	setBadge(true, 'NVIDIA Cosmos');
+	setBadge('live', 'NVIDIA Cosmos');
 
 	// Rare synchronous completion.
 	if (data.status === 'done' && data.video_url) {
@@ -263,21 +284,33 @@ async function poll() {
 	if (Date.now() - job.startedAt > POLL_TIMEOUT_MS) {
 		return failGeneration('This world is taking unusually long. Try a simpler prompt or generate again.');
 	}
-	let data;
+	let data, res;
 	try {
-		const res = await fetch(`/api/cosmos?job=${encodeURIComponent(job.id)}`, { headers: { accept: 'application/json' } });
+		res = await fetch(`/api/cosmos?job=${encodeURIComponent(job.id)}`, { headers: { accept: 'application/json' } });
 		data = await res.json();
 	} catch {
 		// transient network hiccup — keep the job alive
 		pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
 		return;
 	}
+
+	// The lane can go down mid-render (a redeploy that drops the key, a retired
+	// upstream route). Land in the designed offline state instead of polling a job
+	// nobody is answering for the full five-minute ceiling.
+	if (res.status === 503 || data?.error === 'unconfigured' || data?.error === 'lane_unavailable') {
+		setBadge('off', 'Cosmos offline');
+		return failGeneration(LANE_OFFLINE_COPY, { unconfigured: true });
+	}
+	if (!res.ok) {
+		return failGeneration('Lost track of this world while it was rendering. Generate it again.');
+	}
+
 	job.status = data?.status || 'running';
 	renderProgress(job.status);
 
 	if (data?.status === 'done' && data.video_url) return succeed(data.video_url);
 	if (data?.status === 'failed') {
-		return failGeneration(data?.error || 'Cosmos couldn’t finish this world. Try a different prompt.');
+		return failGeneration(data?.error || 'Cosmos could not finish this world. Try a different prompt.');
 	}
 	pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
 }
@@ -286,15 +319,27 @@ function succeed(videoUrl) {
 	stopTimers();
 	lastVideoUrl = videoUrl;
 	const v = els.world;
-	v.src = videoUrl;
-	v.removeAttribute('aria-hidden');
+	let revealTimer = null;
 	const reveal = () => {
+		clearTimeout(revealTimer);
 		v.classList.add('is-live');
 		v.play().catch(() => {});
 	};
 	v.oncanplay = reveal;
+	// A durable URL that will not decode (storage hiccup, expired object) must not
+	// leave a "done" stage with nothing in it.
+	v.onerror = () => {
+		clearTimeout(revealTimer);
+		v.classList.remove('is-live');
+		v.setAttribute('aria-hidden', 'true');
+		els.stage.classList.remove('is-done');
+		lastVideoUrl = null;
+		failGeneration('The world rendered but its clip would not play. Generate it again.');
+	};
+	v.src = videoUrl;
+	v.removeAttribute('aria-hidden');
 	// Safety: reveal even if canplay was missed (cache/seek edge).
-	setTimeout(reveal, 1200);
+	revealTimer = setTimeout(reveal, REVEAL_FALLBACK_MS);
 
 	job = null;
 	setBusy(false);
@@ -311,14 +356,13 @@ function failGeneration(message, { unconfigured = false } = {}) {
 	setBusy(false);
 	els.regen.style.display = lastVideoUrl ? 'inline-block' : 'none';
 	els.secondary.style.display = lastVideoUrl ? 'flex' : 'none';
+	// An offline lane gets no Retry: the same request would fail the same way, and
+	// a button that cannot work is worse than none.
 	showNote(
 		unconfigured ? 'info' : 'err',
-		`${message}${unconfigured ? '' : ' <button type="button" id="cz-retry">Retry</button>'}`,
+		message,
+		unconfigured ? null : { label: 'Retry', onClick: () => generate() },
 	);
-	const retry = $('cz-retry');
-	if (retry) {
-		retry.addEventListener('click', () => generate());
-	}
 }
 
 function cancelJob() {

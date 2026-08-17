@@ -75,14 +75,16 @@
 				max-width: 1080px;
 				margin: 0 auto;
 				padding: 0 var(--space-md);
-				/* body is display:flex site-wide, so this main is a flex item and
-				   inherits min-width:auto. Its min-content size is set by the
-				   longest unbreakable line in the install <pre>, which pushed the
-				   whole column to ~609px inside a 320px viewport; mobile.css clips
-				   horizontal overflow, so that content was cut off with no way to
-				   scroll to it. min-width:0 lets the column shrink and hands the
-				   scrolling back to the <pre>, which is built for it. */
-				min-width: 0;
+				/* body is display:flex (column) site-wide, so this main is a flex
+				   item whose auto width resolves against the min-content of the
+				   longest unbreakable line in the install <pre>. That pushed the
+				   column to ~609px inside a 320px viewport, and mobile.css clips
+				   horizontal overflow, so the copy was cut off with no way to
+				   scroll to it. An explicit width makes the cross size definite,
+				   which caps the column at the viewport and hands the scrolling
+				   back to the <pre>, which is built for it. box-sizing is
+				   border-box, so the padding above stays inside the viewport. */
+				width: 100%;
 			}
 			.cl-hero {
 				padding: calc(var(--space-xl) * 2) 0 var(--space-xl);

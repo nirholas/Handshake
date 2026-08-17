@@ -42,7 +42,7 @@ Output STRICT JSON only, no prose, no code fence:
   "cta": "fork-this-trade|copy-the-agent|view-track-record",
   "alt_text": "accessibility description of the card" }
 
-Rules: feature the real number. If the trade was a LOSS, still produce an honest card (brand = transparency) with a 'live to trade again' tone. Tune length/voice to the surface (X punchier, Telegram chattier, Feed mid). Reference no token other than the traded one or $THREE. Always keep a verifiable angle (the record is on-chain). Never invent numbers not present in the input.`;
+Rules: feature the real number. If the trade was a LOSS, still produce an honest card (brand = transparency) with a 'live to trade again' tone. Tune length/voice to the surface (X punchier, Telegram chattier, Feed mid). Name NO ticker other than the traded one. Always keep a verifiable angle (the record is on-chain). State NO number that is not in the input: every figure you write is machine-checked against the trade, and a card that states a ticker or a number the trade does not contain is discarded.`;
 
 // Build the compact, real trade view the director reasons over. Accepts a raw
 // agent_sniper_positions row (or an equivalent object) and derives only from
@@ -83,8 +83,13 @@ export async function directClip({ agentName, avatarStyle = null, trade, copiedB
 
 	if (llmConfigured()) {
 		try {
-			artifact = await llmClip({ agentName, avatarStyle, trade, copiedByCount, surface: surf, userId });
-			if (artifact) source = 'llm';
+			const written = await llmClip({ agentName, avatarStyle, trade, copiedByCount, surface: surf, userId });
+			// The model writes the voice, never the facts. An artifact that states a
+			// ticker or a figure the trade does not contain is discarded outright.
+			if (written && isGrounded(written, trade, copiedByCount)) {
+				artifact = written;
+				source = 'llm';
+			}
 		} catch (err) {
 			if (!(err instanceof LlmUnavailableError)) artifact = null;
 		}
@@ -123,6 +128,80 @@ async function llmClip({ agentName, avatarStyle, trade, copiedByCount, surface, 
 	const parsed = extractJson(out?.text);
 	if (!parsed || typeof parsed.hook !== 'string') return null;
 	return parsed;
+}
+
+// ---------------------------------------------------------------------------
+// Grounding: the one guarantee this page sells is "the real number, never a
+// screenshot", so a generated card is checked against the trade it claims to
+// describe before it is allowed out. This is not hypothetical: a provider in the
+// chain answered a real +1.89x win on one coin with "-8.2% realized loss" on a
+// completely different ticker, gesture "celebrate", every word fluent and every
+// fact invented. Nothing downstream could have caught that. An artifact that
+// names a foreign ticker or states a figure absent from the trade is rejected
+// and the deterministic director answers instead.
+// ---------------------------------------------------------------------------
+
+/** @returns {string} the trade's ticker, no leading $, uppercase. */
+function tickerOf(trade) {
+	const sym = trade.symbol || trade.name || (trade.mint ? trade.mint.slice(0, 4) : '');
+	return String(sym).replace(/^\$/, '').toUpperCase();
+}
+
+// Same rounding the API renders with, so "1.89" written by the model matches the
+// 1.89 the card shows rather than a raw 1.8899999.
+const normNum = (n) => String(Math.round(n * 100) / 100);
+
+function groundedNumbers(trade, copiedByCount) {
+	const ok = new Set();
+	const add = (n) => {
+		if (n == null || !Number.isFinite(Number(n))) return;
+		const v = Number(n);
+		ok.add(normNum(v));
+		ok.add(normNum(Math.abs(v)));
+		ok.add(normNum(Math.round(v)));
+	};
+	add(trade.multiple);
+	add(trade.pnl_pct);
+	add(trade.entry_sol);
+	add(trade.exit_sol);
+	add(trade.realized_pnl_sol);
+	add(trade.hold_min);
+	// holdLabel renders the same duration in minutes, hours, or days; all three
+	// readings are the same real fact.
+	if (trade.hold_min != null && Number.isFinite(Number(trade.hold_min))) {
+		add(Math.round(Number(trade.hold_min) / 60));
+		add(Math.round(Number(trade.hold_min) / 1440));
+	}
+	add(copiedByCount);
+	return ok;
+}
+
+/**
+ * Does every ticker and every number in the copy trace to this trade?
+ * @param {object} artifact the parsed LLM artifact
+ * @param {object} trade the real closed round-trip
+ * @param {number} copiedByCount follower count, the one non-trade figure allowed
+ * @returns {boolean}
+ */
+export function isGrounded(artifact, trade, copiedByCount = 0) {
+	const copy = [artifact.hook, artifact.feature_stat, artifact.body, artifact.alt_text]
+		.filter((s) => typeof s === 'string').join(' ');
+	if (!copy.trim()) return false;
+
+	const allowedTickers = new Set([tickerOf(trade), String(trade.symbol || '').toUpperCase(), String(trade.name || '').toUpperCase()]
+		.filter(Boolean).map((t) => t.replace(/^\$/, '')));
+	for (const m of copy.matchAll(/\$([A-Za-z][A-Za-z0-9_]*)/g)) {
+		if (!allowedTickers.has(m[1].toUpperCase())) return false;
+	}
+
+	// Tickers are stripped first so a symbol like $W3B does not read as the
+	// number 3, and "SOL" style unit words carry no digits to begin with.
+	const numbers = copy.replace(/\$[A-Za-z][A-Za-z0-9_]*/g, ' ').matchAll(/-?\d+(?:\.\d+)?/g);
+	const allowed = groundedNumbers(trade, copiedByCount);
+	for (const m of numbers) {
+		if (!allowed.has(normNum(Number(m[0])))) return false;
+	}
+	return true;
 }
 
 // Deterministic director, honest, surface-tuned copy from the real numbers.
@@ -184,8 +263,16 @@ function trimReason(reason) {
 
 const VALID_CTA = new Set(['fork-this-trade', 'copy-the-agent', 'view-track-record']);
 
+// A gesture pointing the wrong way (celebrating a loss) reads as sarcasm at best
+// and a bug at worst, so the reaction is constrained to the direction the trade
+// actually went rather than trusted from the writer.
+const LOSS_GESTURES = new Set(['sweat', 'shrug']);
+const WIN_GESTURES = new Set(['celebrate', 'point', 'wave']);
+
 function finalize({ artifact, source, trade, surface }) {
-	const gesture = GESTURES.includes(artifact.avatar_gesture) ? artifact.avatar_gesture : (trade.is_win === false ? 'sweat' : 'celebrate');
+	const asked = GESTURES.includes(artifact.avatar_gesture) ? artifact.avatar_gesture : null;
+	const allowed = trade.is_win === false ? LOSS_GESTURES : WIN_GESTURES;
+	const gesture = asked && allowed.has(asked) ? asked : (trade.is_win === false ? 'sweat' : 'celebrate');
 	const cta = VALID_CTA.has(artifact.cta) ? artifact.cta : (trade.is_win === false ? 'view-track-record' : 'copy-the-agent');
 	return {
 		source,

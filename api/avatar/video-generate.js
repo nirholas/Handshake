@@ -9,11 +9,17 @@
 //   image_url  string  — publicly accessible reference image (PNG/JPG)
 //   audio_url  string  — publicly accessible audio file (WAV/MP3)
 //   prompt     string? — optional text description
-//   avatar_id  string? — three.ws avatar id; resolved to a render URL
-//                        when image_url is not supplied
+//   avatar_id  string?  three.ws avatar id, resolved to a reference image
+//                       when image_url is not supplied
 //
 // Response 202:
 //   { job_id, status: "queued" }
+//
+// GET returns an availability document instead of a job:
+//   { endpoint, available, reason, free_generations }
+// so a client can tell a visitor the renderer is offline BEFORE it walks them
+// through uploading audio. Without it the only signal was a 503 raised after
+// the upload had already happened.
 //
 // Errors:
 //   400 invalid_request   - missing required fields
@@ -24,9 +30,14 @@
 import { cors, error, json, wrap, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { publicUrl } from '../_lib/r2.js';
+import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { env } from '../_lib/env.js';
+import { resolveRenderParams, renderAvatarImage } from '../_lib/avatar-render.js';
+
+// Rendering a fresh reference image runs headless chromium, so this handler can
+// legitimately outrun the 10 s default on a first-time avatar.
+export const maxDuration = 60;
 
 // Mirror of trustedOrigin() in api/avatar/optimize.js: image_url/audio_url are
 // forwarded to the LongCat worker, which fetches them server-side. Restrict them
@@ -68,6 +79,20 @@ function workerConfig() {
 	return { url: url.replace(/\/$/, ''), key };
 }
 
+// The worker writes whatever this resolves to straight into `ref_image.png` and
+// hands it to inference as `cond_image`, so it has to be an actual raster image.
+// Returning the avatar's GLB (which is what this did) produced a job that always
+// failed deep inside the worker, minutes after the caller was told "queued".
+// Order: the stored thumbnail if one exists, otherwise a portrait render through
+// the same cached pipeline /api/avatar/render uses, so the second video from an
+// avatar costs a HEAD instead of a chromium launch.
+const REFERENCE_RENDER = resolveRenderParams({
+	scene: 'portrait',
+	size: '768',
+	bg: '#101010',
+	format: 'png',
+}).params;
+
 async function resolveImageUrl(avatarId, requesterId) {
 	if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(avatarId || ''))) {
 		throw Object.assign(new Error('avatar not found'), { code: 'avatar_not_found', status: 404 });
@@ -76,7 +101,7 @@ async function resolveImageUrl(avatarId, requesterId) {
 	// avatar they own or one that is public/unlisted — never another user's
 	// private avatar. (Previously resolved by id alone — an IDOR.)
 	const rows = await sql`
-		select storage_key from avatars
+		select id, storage_key, thumbnail_key, updated_at from avatars
 		where id = ${avatarId} and deleted_at is null
 		  and (owner_id = ${requesterId} or visibility in ('public', 'unlisted'))
 		limit 1
@@ -86,11 +111,53 @@ async function resolveImageUrl(avatarId, requesterId) {
 			code: 'avatar_not_found',
 			status: 404,
 		});
-	return publicUrl(rows[0].storage_key);
+
+	const stored = thumbnailUrl(rows[0].thumbnail_key);
+	if (stored) return stored;
+
+	try {
+		const out = await renderAvatarImage({
+			avatar: { id: rows[0].id, updated_at: rows[0].updated_at },
+			glbUrl: publicUrl(rows[0].storage_key),
+			params: REFERENCE_RENDER,
+			awaitUpload: true,
+		});
+		return out.imageUrl;
+	} catch (err) {
+		console.error('[video-generate] reference render failed:', err?.message || err);
+		throw Object.assign(
+			new Error('Could not render a reference image for this avatar. Give it a thumbnail and try again.'),
+			{ code: 'reference_image_failed', status: 502 },
+		);
+	}
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
+
+	if (req.method === 'GET') {
+		const configured = workerConfig() !== null;
+		return json(
+			res,
+			200,
+			{
+				endpoint: 'POST /api/avatar/video-generate',
+				description:
+					'Render a talking-head video from a three.ws avatar and a spoken audio clip.',
+				available: configured,
+				reason: configured ? 'ready' : 'worker_unconfigured',
+				free_generations: 1,
+				accepts: {
+					avatar_id: 'three.ws avatar UUID; resolved server-side to a reference image',
+					image_url: 'https URL on a three.ws host, used instead of avatar_id',
+					audio_url: 'https URL on a three.ws host (WAV/MP3/M4A)',
+					prompt: 'optional scene description',
+				},
+			},
+			{ 'cache-control': 'no-store' },
+		);
+	}
+
 	if (req.method !== 'POST')
 		return error(res, 405, 'method_not_allowed', `method ${req.method} not allowed`);
 

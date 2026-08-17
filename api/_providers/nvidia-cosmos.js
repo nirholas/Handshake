@@ -48,7 +48,10 @@
 //
 // Error codes match the established provider contract (nvidia.js / replicate.js):
 //   provider_unreachable / invalid_key / insufficient_credits / rate_limited /
-//   provider_error — so callers can route around a dead/limited lane.
+//   provider_error, so callers can route around a dead/limited lane. One code is
+//   specific to this lane: lane_unavailable, raised when NVIDIA has retired every
+//   hosted cosmos-predict route this account can reach (see the route chain
+//   below), so the caller degrades instead of offering a pointless retry.
 
 import { env } from '../_lib/env.js';
 

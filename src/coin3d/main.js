@@ -95,20 +95,23 @@ async function mcpCall(name, args = {}, timeoutMs = 15_000) {
 	return env.result?.structuredContent ?? null;
 }
 
-// Pull the core data sources in parallel. Holder + curve data are best-effort:
-// if a source is unavailable we keep the snapshot but degrade the matching
-// visual, rather than failing the whole scene.
+// Identity frame: everything the HUD and the medallion need to paint. Curve
+// data is best-effort, so an unavailable source degrades the matching visual
+// rather than failing the whole scene.
+//
+// The holder scan is deliberately NOT in here. It is by far the slowest source
+// (a full token-account walk, ~10s on a cold cache for a large holder set) and
+// waiting on it held the entire page behind the loading spinner for the whole
+// duration. It now loads in the background and fills in when it lands.
 async function loadSnapshot() {
-	const [details, curve, holders, meta] = await Promise.allSettled([
+	const [details, curve, meta] = await Promise.allSettled([
 		mcpCall('getTokenDetails', { mint }),
 		mcpCall('getBondingCurve', { mint, network }),
-		mcpCall('getTokenHolders', { mint, limit: 12, network }),
 		fetchTokenMeta(mint),
 	]);
 	const d = details.status === 'fulfilled' ? details.value || {} : {};
 	const c = curve.status === 'fulfilled' ? curve.value || null : null;
-	const h = holders.status === 'fulfilled' ? holders.value || null : null;
-	// GeckoTerminal token info — the reliable name/symbol/logo/market-cap source
+	// GeckoTerminal token info: the reliable name/symbol/logo/market-cap source
 	// for graduated coins, whose on-chain metadata authority is renounced so
 	// getTokenDetails comes back null (e.g. $THREE itself).
 	const gt = meta.status === 'fulfilled' ? meta.value || null : null;
@@ -128,9 +131,38 @@ async function loadSnapshot() {
 		volume24: gt?.volume24 ?? null,
 		graduationProgress: clamp01(numOrNull(c?.graduationProgress ?? c?.progress)),
 		graduated: Boolean(c?.graduated || c?.complete),
-		topHolderPercent: numOrNull(h?.topHolderPercent),
-		holders: Array.isArray(h?.holders) ? h.holders : [],
+		topHolderPercent: null,
+		holders: [],
 	};
+}
+
+// The token exists as far as any of our sources are concerned. Used to tell a
+// real coin whose enrichment happened to be thin apart from a mint that simply
+// is not a token.
+function isKnownToken(s) {
+	return (
+		s.name !== 'Unknown token' ||
+		Boolean(s.image) ||
+		s.marketCapUsd !== null ||
+		s.priceUsd !== null ||
+		s.graduationProgress !== null ||
+		s.graduated
+	);
+}
+
+// Top holders, loaded after the HUD has painted. Best-effort by design: a
+// failure leaves the galaxy empty and the concentration stat unknown, both of
+// which have designed states.
+async function loadHolders() {
+	try {
+		const h = await mcpCall('getTokenHolders', { mint, limit: 12, network }, 25_000);
+		return {
+			topHolderPercent: numOrNull(h?.topHolderPercent),
+			holders: Array.isArray(h?.holders) ? h.holders : [],
+		};
+	} catch {
+		return { topHolderPercent: null, holders: [] };
+	}
 }
 
 // Token info from three keyless, CORS-enabled sources, tried in order
@@ -245,17 +277,21 @@ function clamp01(v) {
 function setStatus(kind, title, detail, action) {
 	if (kind === null) {
 		statusEl.hidden = true;
+		statusEl.removeAttribute('data-kind');
 		statusEl.innerHTML = '';
 		return;
 	}
 	statusEl.hidden = false;
 	statusEl.dataset.kind = kind;
+	// The overlay owns the page's only heading while it is up (the HUD's <h1>
+	// exists only after the overlay is cleared), so this is an <h1>, not an
+	// <h2> under a heading that never rendered.
 	statusEl.innerHTML = `
-		<div class="status-card">
+		<div class="status-card" role="status" aria-live="polite">
 			${kind === 'loading' ? '<div class="spinner" aria-hidden="true"></div>' : ''}
-			<h2>${escapeHtml(title)}</h2>
+			<h1>${escapeHtml(title)}</h1>
 			${detail ? `<p>${escapeHtml(detail)}</p>` : ''}
-			${action ? `<a class="status-action" href="${action.href}">${escapeHtml(action.label)}</a>` : ''}
+			${action ? `<a class="status-action" href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>` : ''}
 		</div>`;
 }
 
@@ -273,7 +309,23 @@ function compact(n) {
 	if (abs >= 1e9) return (n / 1e9).toFixed(2) + 'B';
 	if (abs >= 1e6) return (n / 1e6).toFixed(2) + 'M';
 	if (abs >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-	return n.toFixed(0);
+	if (abs >= 100) return n.toFixed(0);
+	// Meme-coin tape entries are routinely worth cents. Rounding those to a
+	// whole number printed every real swap as "$0", which reads as a bug.
+	if (abs >= 1) return n.toFixed(2);
+	if (abs >= 0.01) return n.toFixed(3);
+	if (abs > 0) return n.toFixed(4);
+	return '0';
+}
+
+// SOL leg of a tape row. Same problem as `compact`: a 0.0004 SOL swap must not
+// print as "0.000 SOL".
+function fmtSol(n) {
+	if (!Number.isFinite(n) || n < 0) return '';
+	if (n >= 1) return n.toFixed(2);
+	if (n >= 0.01) return n.toFixed(3);
+	if (n > 0) return n.toPrecision(2).replace(/0+$/, '').replace(/\.$/, '');
+	return '0';
 }
 
 // Price formatting that survives sub-cent meme-coin prices without lying about
@@ -500,6 +552,9 @@ function buildHolderGalaxy(snapshot) {
 		const angle = (i / holders.length) * Math.PI * 2;
 		const y = MathUtils.lerp(-0.6, 0.6, (i % 4) / 3);
 		mesh.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+		// The scan resolves after the scene is already turning, so each sphere
+		// scales up on a short stagger instead of popping into frame.
+		mesh.scale.setScalar(0.001);
 		holderGalaxy.add(mesh);
 		holderOrbits.push({
 			mesh,
@@ -509,6 +564,7 @@ function buildHolderGalaxy(snapshot) {
 			speed: 0.0008 + (i % 3) * 0.0004,
 			bob: 0.6 + (i % 5) * 0.15,
 			phase: i,
+			spawn: performance.now() / 1000 + i * 0.04,
 		});
 	});
 }
@@ -809,18 +865,23 @@ function renderTape() {
 			const usd = Number(t.sol_value_usd);
 			const usdLabel = Number.isFinite(usd) ? `$${compact(usd)}` : '—';
 			const sol = Number(t.sol_amount);
-			const solLabel = Number.isFinite(sol) ? `${sol.toFixed(sol < 1 ? 3 : 2)} SOL` : '';
+			const solText = fmtSol(sol);
+			const solLabel = solText ? `${solText} SOL` : '';
 			const href = t.signature ? `https://solscan.io/tx/${encodeURIComponent(t.signature)}` : null;
 			const trader = shortAddr(t.trader);
 			const ago = timeAgo(t.timestamp);
+			// A trade with no readable SOL leg drops that segment rather than
+			// rendering an empty one between two separators.
+			const mid = [solLabel, trader].filter(Boolean).map(escapeHtml).join(' · ');
 			const inner = `
 				<span class="t-side" aria-hidden="true"></span>
-				<span class="t-mid"><span class="t-usd">${t.is_buy ? '↑' : '↓'} ${usdLabel}</span> · ${escapeHtml(solLabel)} · ${escapeHtml(trader)}</span>
+				<span class="t-mid"><span class="t-usd">${t.is_buy ? '↑' : '↓'} ${usdLabel}</span> · ${mid}</span>
 				<span class="t-time">${ago}</span>`;
 			// New rows (only the top one on a fresh poll) animate in.
 			const cls = `c3d-trade ${side}${i === 0 ? ' enter' : ''}`;
+			const label = `${side} ${usdLabel} by ${trader}, ${ago} ago. Opens the transaction on Solscan.`;
 			return href
-				? `<a class="${cls}" href="${href}" target="_blank" rel="noopener" aria-label="${side} ${usdLabel} by ${escapeHtml(trader)} ${ago} ago — view transaction">${inner}</a>`
+				? `<a class="${cls}" href="${href}" target="_blank" rel="noopener" aria-label="${escapeHtml(label)}">${inner}</a>`
 				: `<div class="${cls}">${inner}</div>`;
 		})
 		.join('');
@@ -888,7 +949,7 @@ function renderHud(s) {
 		<dl class="hud-stats">
 			<div><dt>Market cap</dt><dd id="c3d-mcap">${s.marketCapUsd !== null ? '$' + compact(s.marketCapUsd) : '—'}</dd></div>
 			<div><dt>24h volume</dt><dd id="c3d-vol">${s.volume24 !== null ? '$' + compact(s.volume24) : '—'}</dd></div>
-			<div><dt>Top-holder share</dt><dd id="c3d-conc">${s.topHolderPercent !== null ? s.topHolderPercent.toFixed(1) + '%' : '—'}</dd></div>
+			<div><dt>Top-holder share</dt><dd id="c3d-conc">${s.topHolderPercent !== null ? escapeHtml(s.topHolderPercent.toFixed(1)) + '%' : '<span class="c3d-dd-sk" role="img" aria-label="Loading top-holder share"></span>'}</dd></div>
 			<div><dt>Status</dt><dd id="c3d-status">${escapeHtml(gradLabel(s))}</dd></div>
 			<div><dt>Quality</dt><dd id="c3d-quality">—</dd></div>
 			<div><dt>Smart money</dt><dd id="c3d-smart">—</dd></div>
@@ -942,6 +1003,30 @@ function applyMarket(m) {
 	if (spark) spark.innerHTML = sparklineSvg(m.closes, (m.change ?? 0) >= 0);
 }
 
+// Set once the on-chain holder scan has produced a top-holder share, so the
+// intel engine's estimate never overwrites it.
+let concOwned = false;
+
+// Fold the (late) holder scan into a HUD that has already painted: fill the
+// concentration stat and grow the galaxy in, rather than popping 12 spheres
+// into an established scene.
+function applyHolders(s, result, sceneOk) {
+	s.topHolderPercent = result.topHolderPercent;
+	s.holders = result.holders;
+
+	const conc = document.getElementById('c3d-conc');
+	if (conc) {
+		if (result.topHolderPercent !== null) {
+			conc.textContent = `${result.topHolderPercent.toFixed(1)}%`;
+			concOwned = true;
+		} else if (conc.querySelector('.c3d-dd-sk')) {
+			// The scan came back empty. Say so instead of pulsing forever.
+			conc.textContent = 'Unknown';
+		}
+	}
+	if (sceneOk) buildHolderGalaxy(s);
+}
+
 function applyIntel(intel) {
 	if (!intel || intel.error) return;
 	const cat = document.getElementById('c3d-cat');
@@ -955,9 +1040,11 @@ function applyIntel(intel) {
 	if (smart && intel.smart_money_count != null) {
 		smart.textContent = intel.smart_money_count > 0 ? `${intel.smart_money_count} wallet${intel.smart_money_count === 1 ? '' : 's'}` : 'None';
 	}
-	// Prefer the intel engine's concentration when MCP didn't supply one.
+	// Prefer the intel engine's concentration when the holder scan didn't supply
+	// one. `concOwned` is the authority flag: the holder scan can land after the
+	// intel call, and the on-chain number must win whichever order they arrive in.
 	const conc = document.getElementById('c3d-conc');
-	if (conc && conc.textContent === '—' && intel.concentration_top1 != null) {
+	if (conc && !concOwned && intel.concentration_top1 != null) {
 		conc.textContent = `${(intel.concentration_top1 * (intel.concentration_top1 <= 1 ? 100 : 1)).toFixed(1)}%`;
 	}
 	// Risk flags → chips (danger flags only; a clean coin shows a green "Clean").
@@ -989,7 +1076,7 @@ function renderLanding() {
 	statusEl.dataset.kind = 'empty';
 	statusEl.innerHTML = `
 		<div class="c3d-landing">
-			<h2>See any token in 3D</h2>
+			<h1>See any token in 3D</h1>
 			<p class="lede">Paste a pump.fun or Solana mint to render it as a live scene — a logo medallion, holder galaxy, graduation ring, and real-time trade pulses, all from on-chain data.</p>
 			<form class="c3d-search" id="c3d-form" autocomplete="off">
 				<input id="c3d-mint-input" type="text" inputmode="text" spellcheck="false"

@@ -18,6 +18,10 @@
  *
  * Reuses the platform NVIDIA_API_KEY (free NIM tier). When it is absent the lane
  * reports itself unconfigured (503) and the page degrades to a static backdrop.
+ * The same 503 shape (error:'lane_unavailable') answers the case where the key is
+ * present but NVIDIA has retired every hosted cosmos-predict route this account
+ * can reach, so the page lands in the same designed offline state instead of
+ * asking the user to retry something that cannot succeed.
  */
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
@@ -36,6 +40,31 @@ function unconfigured(res) {
 		message:
 			'Cosmos world generation is not configured. Set NVIDIA_API_KEY (an nvapi-… key from ' +
 			'build.nvidia.com) to enable the free NVIDIA Cosmos lane.',
+	});
+}
+
+// User-facing copy per normalized provider code. The upstream detail is operator
+// diagnostics (it has carried NVCF function ids and the account id) and is logged,
+// never returned: a caller can act on "the lane is down", not on a function uuid.
+const FAILURE_COPY = {
+	lane_unavailable:
+		'NVIDIA Cosmos world generation is offline right now. Your avatar keeps its living backdrop above; ' +
+		'check back soon for generated worlds.',
+	invalid_key: 'The Cosmos lane rejected this deployment’s NVIDIA credentials. An operator needs to refresh the key.',
+	insufficient_credits: 'The Cosmos lane is out of NVIDIA credits for now.',
+	rate_limited: 'NVIDIA Cosmos is rate limiting right now.',
+	provider_unreachable: 'NVIDIA Cosmos did not answer. Try again in a moment.',
+	provider_error: 'Cosmos could not start this world. Try again, or try a simpler prompt.',
+};
+
+function failureResponse(res, err) {
+	const code = FAILURE_COPY[err?.code] ? err.code : 'provider_error';
+	const status = code === 'lane_unavailable' ? 503 : code === 'rate_limited' ? 429 : code === 'invalid_key' ? 401 : code === 'insufficient_credits' ? 402 : 502;
+	console.warn('[cosmos] submit failed (%s/%s): %s', code, err?.providerStatus ?? '-', err?.message || 'no detail');
+	return json(res, status, {
+		error: code,
+		message: FAILURE_COPY[code],
+		...(err?.retryAfter ? { retry_after: err.retryAfter } : {}),
 	});
 }
 
@@ -74,12 +103,7 @@ async function startJob(req, res) {
 			eta_seconds: ETA_SECONDS,
 		});
 	} catch (err) {
-		const status = err?.code === 'rate_limited' ? 429 : err?.code === 'invalid_key' ? 401 : 502;
-		return json(res, status, {
-			error: err?.code || 'cosmos_failed',
-			message: err?.message || 'Cosmos world generation could not start.',
-			...(err?.retryAfter ? { retry_after: err.retryAfter } : {}),
-		});
+		return failureResponse(res, err);
 	}
 }
 
@@ -101,11 +125,15 @@ async function pollJob(req, res, jobId) {
 	}
 
 	const result = await provider.status({ taskId: jobId });
+	// The provider's `error` is operator diagnostics on both the running and failed
+	// paths (upstream statuses, persist failures). Log it, hand the caller a stable
+	// sentence it can render, and never echo it while the job is still alive.
+	if (result.error) console.warn('[cosmos] poll %s (%s): %s', jobId, result.status, result.error);
 	return json(res, 200, {
 		job_id: jobId,
 		status: result.status,
 		video_url: result.resultVideoUrl || null,
-		error: result.error || null,
+		error: result.status === 'failed' ? 'Cosmos could not finish this world. Try again, or try a different prompt.' : null,
 	});
 }
 

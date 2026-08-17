@@ -14,6 +14,13 @@
 // Granite embeddings arrive the stars animate into their semantic positions. If
 // watsonx is not configured the page says so plainly and keeps the rank layout —
 // it never fabricates vectors or an analysis.
+//
+// Attribution is load-bearing here. Both backing endpoints have failover chains
+// (the embed endpoint falls through to NVIDIA/Vertex/OpenAI; /api/brain/chat
+// falls through to its free-tier routes and announces it with an SSE `fallback`
+// event). This page therefore labels what ACTUALLY served the request rather
+// than what it hoped for: crediting IBM Granite for another model's output would
+// be a fabrication, the same class of defect as inventing the data itself.
 
 import {
 	Scene, PerspectiveCamera, WebGLRenderer, Color, Group,
@@ -38,10 +45,20 @@ const hint = $('c-hint');
 const overlay = $('c-overlay');
 const overlayMsg = $('c-overlay-msg');
 const spinner = $('c-spinner');
+const retryBtn = $('c-retry');
 const panel = $('c-panel');
+const liveRegion = $('c-a11y-live');
 
-const EMBED_MODEL_HINT = 'ibm/granite-embedding-278m-multilingual';
 const RADIUS = 28; // target galaxy radius for the semantic / rank layouts
+// A star is ~1-2 world units across at a camera distance of ~74, so an exact
+// ray hit demands near-pixel precision, on a phone it is unhittable, and even
+// with a mouse the pick can miss the star the tooltip is naming. Falling back to
+// the nearest star within this screen-space radius makes the target the visible
+// glow rather than the geometry.
+const PICK_RADIUS_PX = 22;
+const PICK_RADIUS_COARSE_PX = 34;
+const SIGN_IN_HREF = '/login?next=%2Fconstellation';
+const REGISTER_HREF = '/register?next=%2Fconstellation';
 
 // WebGL-dependent objects, assigned in boot(). Functions below close over these
 // module bindings, so they resolve correctly once boot() has run.
@@ -52,6 +69,7 @@ const pointer = new Vector2();
 /** @type {{token:object, mesh:Mesh, glow:Sprite, baseColor:Color, baseScale:number, target:Vector3}[]} */
 let nodes = [];
 let vectorsByIndex = null; // number[][] aligned with nodes, for neighbor lookups
+let signedIn = false; // resolved once at boot; gates the Granite analysis call
 
 // ---- status / overlay helpers ---------------------------------------------
 function setStatus(kind, html) {
@@ -59,11 +77,27 @@ function setStatus(kind, html) {
 	if (kind) statusEl.classList.add(kind);
 	statusText.innerHTML = html;
 }
-function hideOverlay() { overlay.classList.add('hidden'); }
-function fatalOverlay(html) {
-	spinner.style.display = 'none';
+function hideOverlay() {
+	overlay.classList.add('hidden');
+	overlay.setAttribute('aria-hidden', 'true');
+	retryBtn.hidden = true;
+}
+function loadingOverlay(html) {
+	spinner.style.display = '';
+	retryBtn.hidden = true;
 	overlayMsg.innerHTML = html;
 	overlay.classList.remove('hidden');
+	overlay.removeAttribute('aria-hidden');
+}
+// A dead end the visitor can act on: every recoverable failure offers the retry
+// button, so the page never leaves someone staring at an error with no way out.
+function fatalOverlay(html, { retryable = false } = {}) {
+	spinner.style.display = 'none';
+	overlayMsg.innerHTML = html;
+	retryBtn.hidden = !retryable;
+	overlay.classList.remove('hidden');
+	overlay.removeAttribute('aria-hidden');
+	if (retryable) retryBtn.focus();
 }
 function webglAvailable() {
 	try {
@@ -124,8 +158,22 @@ function fibonacciPoint(i, n, radius) {
 }
 
 function buildNodes(tokens) {
-	for (const n of nodes) { nodesGroup.remove(n.mesh); nodesGroup.remove(n.glow); }
+	// Retrying after a failed load rebuilds the galaxy, so the previous pass's
+	// per-node materials are disposed rather than left on the GPU. The sphere
+	// geometry and glow texture are shared across every node and every rebuild,
+	// so they are deliberately kept.
+	for (const n of nodes) {
+		nodesGroup.remove(n.mesh);
+		nodesGroup.remove(n.glow);
+		n.mesh.material.dispose();
+		n.glow.material.dispose();
+	}
 	nodes = [];
+	hovered = null;
+	selectedNode = null;
+	focusIndex = -1;
+	keyboardFocused = false;
+	hideTooltip();
 	const N = tokens.length;
 	tokens.forEach((token, i) => {
 		const rank = Number.isFinite(token.rank) ? token.rank : i + 1;
@@ -212,9 +260,13 @@ async function embedTokens(tokens) {
 	return res.json(); // { model, dimensions, vectors }
 }
 
-// ---- interaction: hover + click ------------------------------------------
+// ---- interaction: hover + click + keyboard --------------------------------
 let hovered = null;
 let selectedNode = null;
+let focusIndex = -1;        // keyboard cursor into `nodes`
+let keyboardFocused = false; // the tooltip is tracking a keyboard-picked star
+const pointerPx = [0, 0];
+const _projected = new Vector3();
 
 // The glow scale for a node depends on its state: selected stars stay largest,
 // hovered stars enlarge for feedback, everything else sits at its base size.
@@ -225,35 +277,80 @@ function glowScaleFor(node) {
 }
 
 function updatePointer(e) {
+	pointerPx[0] = e.clientX;
+	pointerPx[1] = e.clientY;
 	pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
 	pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
 }
+
+// Where a star currently sits on screen, in CSS pixels. Used for proximity
+// picking and for anchoring the tooltip to a keyboard-selected star.
+function screenXY(node) {
+	_projected.copy(node.mesh.position).project(camera);
+	return [
+		((_projected.x + 1) / 2) * window.innerWidth,
+		((1 - _projected.y) / 2) * window.innerHeight,
+	];
+}
+function pickTolerancePx() {
+	return window.matchMedia?.('(pointer: coarse)')?.matches ? PICK_RADIUS_COARSE_PX : PICK_RADIUS_PX;
+}
+function nearestNodeToScreen(px, py, maxPx) {
+	let best = null;
+	let bestD = maxPx;
+	for (const node of nodes) {
+		const [x, y] = screenXY(node);
+		const d = Math.hypot(x - px, y - py);
+		if (d < bestD) { bestD = d; best = node; }
+	}
+	return best;
+}
+// Exact ray hit first (it respects depth, so the front star wins where two
+// overlap), then the screen-space fallback so the visible glow is the target.
 function pickNode() {
 	raycaster.setFromCamera(pointer, camera);
 	const hits = raycaster.intersectObjects(nodes.map((n) => n.mesh), false);
-	return hits.length ? nodes[hits[0].object.userData.index] : null;
+	if (hits.length) return nodes[hits[0].object.userData.index];
+	return nearestNodeToScreen(pointerPx[0], pointerPx[1], pickTolerancePx());
 }
+
+function hideTooltip() {
+	tooltip.style.opacity = '0';
+	keyboardFocused = false;
+}
+// Keep the tooltip inside the viewport: it is translated (-50%, -130%) from this
+// anchor, so a star near an edge would otherwise push it off screen.
+function placeTooltip(x, y) {
+	const half = (tooltip.offsetWidth || 0) / 2;
+	tooltip.style.left = `${Math.min(Math.max(x, half + 10), window.innerWidth - half - 10)}px`;
+	tooltip.style.top = `${Math.max(y, (tooltip.offsetHeight || 28) + 12)}px`;
+}
+function showTooltip(node, x, y) {
+	tipSym.textContent = node.token.symbol;
+	tipNm.textContent = node.token.name;
+	placeTooltip(x, y);
+	tooltip.style.opacity = '1';
+}
+
+function setHovered(node) {
+	if (node === hovered) return;
+	const prev = hovered;
+	hovered = node;
+	if (prev) prev.glow.scale.setScalar(glowScaleFor(prev));
+	if (node) node.glow.scale.setScalar(glowScaleFor(node));
+}
+
 function onPointerMove(e) {
 	updatePointer(e);
 	const node = pickNode();
 	if (node !== hovered) {
-		const prev = hovered;
-		hovered = node;
-		if (prev) prev.glow.scale.setScalar(glowScaleFor(prev));
+		setHovered(node);
+		keyboardFocused = false;
 		renderer.domElement.style.cursor = node ? 'pointer' : 'grab';
-		if (node) {
-			node.glow.scale.setScalar(glowScaleFor(node));
-			tipSym.textContent = node.token.symbol;
-			tipNm.textContent = node.token.name;
-			tooltip.style.left = `${e.clientX}px`;
-			tooltip.style.top = `${e.clientY}px`;
-			tooltip.style.opacity = '1';
-		} else {
-			tooltip.style.opacity = '0';
-		}
-	} else if (node) {
-		tooltip.style.left = `${e.clientX}px`;
-		tooltip.style.top = `${e.clientY}px`;
+		if (node) showTooltip(node, e.clientX, e.clientY);
+		else hideTooltip();
+	} else if (node && !keyboardFocused) {
+		placeTooltip(e.clientX, e.clientY);
 	}
 }
 
@@ -261,19 +358,56 @@ let downAt = 0; let downXY = [0, 0];
 function onPointerDown(e) { downAt = performance.now(); downXY = [e.clientX, e.clientY]; }
 function onPointerUp(e) {
 	const moved = Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]);
-	if (moved < 6 && performance.now() - downAt < 450) {
-		updatePointer(e);
-		const node = pickNode();
-		if (node) selectNode(node.mesh.userData.index);
+	if (moved >= 6 || performance.now() - downAt >= 450) return; // an orbit drag, not a tap
+	updatePointer(e);
+	// The star under the release wins; if the ray and the proximity sweep both
+	// come up empty, fall back to whatever the tooltip was naming, that is the
+	// star the visitor was aiming at, and the scene keeps auto-rotating under the
+	// cursor between the hover and the release.
+	const node = pickNode() || hovered;
+	if (node) { keyboardFocused = false; selectNode(node.mesh.userData.index, { fromKeyboard: false }); }
+}
+
+// Keyboard path to the same flow: arrows walk the stars in trending-rank order,
+// Enter/Space opens the analysis panel. Without this the page's only real
+// interaction is mouse-only.
+function focusStar(index) {
+	if (!nodes.length) return;
+	focusIndex = ((index % nodes.length) + nodes.length) % nodes.length;
+	const node = nodes[focusIndex];
+	setHovered(node);
+	keyboardFocused = true;
+	const [x, y] = screenXY(node);
+	showTooltip(node, x, y);
+	liveRegion.textContent = `${node.token.symbol}, ${node.token.name}, trending rank ${node.token.rank}. ${focusIndex + 1} of ${nodes.length}. Press Enter for a live analysis.`;
+}
+function onCanvasKeyDown(e) {
+	if (!nodes.length) return;
+	const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+	if (step) {
+		e.preventDefault();
+		focusStar(focusIndex < 0 ? (step > 0 ? 0 : nodes.length - 1) : focusIndex + step);
+		return;
+	}
+	if (e.key === 'Home' || e.key === 'End') {
+		e.preventDefault();
+		focusStar(e.key === 'Home' ? 0 : nodes.length - 1);
+		return;
+	}
+	if ((e.key === 'Enter' || e.key === ' ') && focusIndex >= 0) {
+		e.preventDefault();
+		selectNode(focusIndex, { fromKeyboard: true });
 	}
 }
 
 // ---- detail panel + Granite analysis stream -------------------------------
 let analysisAbort = null;
+let returnFocusToCanvas = false;
 
-function selectNode(index) {
+function selectNode(index, { fromKeyboard = false } = {}) {
 	const prev = selectedNode;
 	selectedNode = nodes[index];
+	focusIndex = index;
 	if (prev && prev !== selectedNode) prev.glow.scale.setScalar(glowScaleFor(prev));
 	selectedNode.glow.scale.setScalar(glowScaleFor(selectedNode));
 	const { token } = nodes[index];
@@ -282,7 +416,11 @@ function selectNode(index) {
 	$('c-panel-sym').textContent = token.symbol;
 	$('c-panel-nm').textContent = token.name;
 	const logo = $('c-panel-logo');
-	if (token.logo) { logo.src = token.logo; logo.style.display = ''; } else { logo.style.display = 'none'; }
+	// A token logo is caller-supplied and often dead; a 404 must not leave a
+	// broken-image glyph (or the previous token's art) in the header.
+	logo.style.display = token.logo ? '' : 'none';
+	if (token.logo) logo.src = token.logo; else logo.removeAttribute('src');
+	logo.alt = token.logo ? `${token.symbol} token logo` : '';
 	$('c-panel-price').textContent = token.price_usd ? formatPrice(token.price_usd) : '—';
 	$('c-panel-rank').textContent = `#${token.rank}`;
 
@@ -296,6 +434,9 @@ function selectNode(index) {
 
 	panel.classList.add('open');
 	panel.setAttribute('aria-hidden', 'false');
+	panel.removeAttribute('inert');
+	returnFocusToCanvas = fromKeyboard;
+	if (fromKeyboard) $('c-close').focus();
 
 	runGraniteAnalysis(token, neigh);
 }
