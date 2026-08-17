@@ -170,6 +170,44 @@ describe('GET /api/skills pagination', () => {
 	});
 });
 
+// The marketplace renders a tag pill on every skill and links it back here.
+// Without a tag filter those pills navigated to an unfiltered list, so the
+// catalog answered a question nobody asked.
+describe('GET /api/skills?tag=', () => {
+	it('filters on an exact, case-insensitive tag match for every sort', async () => {
+		for (const sort of ['popular', 'new', 'az']) {
+			sqlState.calls = [];
+			sqlState.queue = [[skillRow({ tags: ['whale', 'analysis'] })]];
+
+			const r = await invoke(listHandler, { url: `/api/skills?tag=WHALE&sort=${sort}` });
+
+			expect(r.status).toBe(200);
+			expect(r.body.skills).toHaveLength(1);
+			const listQuery = sqlState.calls.at(-1);
+			expect(listQuery.query).toContain('unnest(ms.tags)');
+			// Lowercased before it reaches the query, so tags authored in any
+			// case still match the pill the visitor clicked.
+			expect(listQuery.values).toContain('whale');
+		}
+	});
+
+	it('leaves the tag predicate inert when no tag is asked for', async () => {
+		sqlState.queue = [[skillRow()]];
+
+		const r = await invoke(listHandler, { url: '/api/skills' });
+
+		expect(r.status).toBe(200);
+		expect(sqlState.calls.at(-1).values).toContain(null);
+	});
+
+	it('rejects a tag longer than any publishable tag before touching the database', async () => {
+		const r = await invoke(listHandler, { url: `/api/skills?tag=${'a'.repeat(41)}` });
+		expect(r.status).toBe(400);
+		expect(r.body.error).toBe('validation_error');
+		expect(sqlState.calls).toHaveLength(0);
+	});
+});
+
 describe('POST /api/skills/:id/install', () => {
 	it('refuses a cookie-session install without a CSRF token', async () => {
 		authState.session = { id: USER, plan: 'free' };

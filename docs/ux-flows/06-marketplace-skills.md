@@ -129,12 +129,13 @@ Routing facts confirmed in `vercel.json` (line numbers shift too often to pin; g
 
 ### Skills marketplace (browse / install / rate) — `/skills` → `/marketplace?tab=skills`
 - **Source:** `pages/skills.html` (redirect shell), `src/marketplace.js` skills tab (`skillsState` ~L2128, `loadSkillsTab()`, `renderSkillsGrid()`/`renderSkillCard()` ~L2229, skill detail ~L2348, `toggleSkillInstall()` ~L2582). Backend `/api/skills`, `/api/skills/categories`, `/api/skills/:id`, `/api/skills/:id/install`, `/api/skills/:id/rate`. x402 per-call via `/api/x402/skill-call`. Runtime gate `src/skills/index.js`.
-- **Entry point:** `/skills` client-redirects (preserving `?q=`, `?category=`) to `/marketplace?tab=skills`; the SPA renders the skills grid.
+- **Entry point:** `/skills` client-redirects (preserving `?q=`, `?category=`, `?tag=`, `?sort=`) to `/marketplace?tab=skills`; the SPA reads those params back off the URL into `skillsState` and renders the skills grid. Without JavaScript the shell shows a heading, an explanation, and a link to the Marketplace, and a `<noscript>` refresh forwards anyway.
 - **Prerequisites / gates:** Browse is open. Install and rate require auth (401 → `/login?next=…`). Installing is **free** — payment for skills is per-call via x402, separate from install.
 - **Steps (N):**
-  1. SPA loads the skills tab → `GET /api/skills?limit=24&q=&category=&sort=&cursor=` and `/api/skills/categories`; renders skeletons then cards (name, price-per-call or "free", description, category pill, x402 badge for paid, install/tool counts, rating, "Installed ✓").
-  2. (optional) User filters by category chip → `skillsState.category` → `loadSkillsTab(true)` refetch.
+  1. SPA loads the skills tab → `GET /api/skills?limit=24&q=&category=&tag=&sort=&cursor=` and `/api/skills/categories`; renders skeletons then cards (name, price-per-call or "free", description, category pill, x402 badge for paid, install/tool counts, rating, "Installed ✓").
+  2. (optional) User filters by category chip → `skillsState.category` → `loadSkillsTab(true)` refetch. Search, category, tag, and sort all write back to the URL (`syncSkillsToUrl`), so the view is shareable and survives a reload and the back button.
   3. (optional) User searches → `skillsState.q` → refetch; or toggles Free/Paid (client-side `isPaidSkill`).
+  3b. (optional) User clicks a tag pill on a skill detail → `/marketplace?tab=skills&tag=X` → `GET /api/skills?tag=X` (exact, case-insensitive match against the skill's `tags`); a banner names the active tag and clears it in one click.
   4. (optional) User scrolls → cursor pagination appends more cards.
   5. User clicks a card → `/marketplace/skills/:id` → `GET /api/skills/:id` renders the detail panel (header, meta pills, description, tool schemas, full content, related skills).
   6. User clicks "Install" → `toggleSkillInstall()` POSTs `/api/skills/:id/install` (DELETE to remove); 401 → login redirect; on success the detail + grid refetch, the button flips to "Installed ✓ — Remove", and the "what next" panel (`#skill-detail-next`) appears: knowledge skills get a "Chat with your agent →" CTA to `/app`, schema-only packs get the `GET /api/skills?installed=true` retrieval hint. Pre-install, `#skill-detail-how` explains what installing does.
@@ -143,7 +144,7 @@ Routing facts confirmed in `vercel.json` (line numbers shift too often to pin; g
 - **Decision points / branches:** free vs paid (paid = x402 per-call, not an install purchase); installed vs not; authed vs anon (install/rate gated). Marketplace skills (community tool packs with schema/content) are distinct from built-in agent skills in `src/agent-skills*.js`.
 - **External calls / dependencies:** `/api/skills`, `/api/skills/categories`, `/api/skills/:id`, `/api/skills/:id/install` (POST/DELETE), `/api/skills/:id/rate`, `/api/x402/skill-call` (per-call payment), `/api/creators/:id` (author modal).
 - **Success state:** Skill installed (flips to "Installed ✓" + the what-next panel), rating recorded, x402 snippet copyable. Installs take effect at chat time: `/api/chat` loads the signed-in user's installed knowledge skills (`api/_lib/installed-skills.js`, newest 8, content budget 24k chars) into the system prompt and reports them as `skills_applied` in the SSE `done` event; `GET /api/skills?installed=true` returns the full payload (content + schema_json) for external agents.
-- **Empty / error states:** "No skills found" with Clear-filters / Publish-a-Skill CTAs; `renderErrorState('skills')` with retry; install button restores text + re-enables on error; auth redirect on 401.
+- **Empty / error states:** "No skills found", naming the search / category / tag that emptied the list, with Clear-filters / Publish-a-Skill CTAs; a failed fetch renders `renderErrorState('skills')` ("Couldn't load skills") with a working Retry; install button restores text + re-enables on error; auth redirect on 401.
 - **Step count:** 3 required (+5 optional)
 
 ---

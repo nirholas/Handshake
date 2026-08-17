@@ -3905,17 +3905,18 @@
 						id="skills-search"
 						type="search"
 						placeholder="Search skills…"
+						aria-label="Search skills"
 						autocomplete="off"
 						style="flex: 1; max-width: 320px"
 					/>
 					<div class="market-filter-chips" role="tablist" aria-label="Skill filter">
-						<button class="market-chip active" data-skill-filter="all" role="tab" data-i18n="marketplace.all_2">
+						<button class="market-chip active" data-skill-filter="all" role="tab" aria-selected="true" data-i18n="marketplace.all_2">
 							All
 						</button>
-						<button class="market-chip" data-skill-filter="free" role="tab" data-i18n="marketplace.free_2">
+						<button class="market-chip" data-skill-filter="free" role="tab" aria-selected="false" data-i18n="marketplace.free_2">
 							Free
 						</button>
-						<button class="market-chip" data-skill-filter="paid" role="tab" data-i18n="marketplace.paid_2">
+						<button class="market-chip" data-skill-filter="paid" role="tab" aria-selected="false" data-i18n="marketplace.paid_2">
 							Paid
 						</button>
 					</div>
@@ -3926,6 +3927,7 @@
 					</select>
 				</header>
 				<div class="market-skills-tab">
+					<div class="market-tag-banner" id="skills-tag-banner" role="status" hidden></div>
 					<div
 						class="market-cat-chips"
 						id="skills-cat-chips"

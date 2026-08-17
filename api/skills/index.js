@@ -6,6 +6,11 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse, isUuid } from '../_lib/validate.js';
 
 const CATEGORY_RE = /^[a-z0-9-]{1,50}$/;
+// Tags are authored freely on publish, so browse matches them case-insensitively
+// on an exact value (the marketplace tag pills link straight here). Anything
+// longer than the publish schema allows cannot match a row, so it is rejected
+// rather than run as a full table scan.
+const TAG_MAX = 40;
 const VALID_SORTS = new Set(['popular', 'new', 'az']);
 const DEFAULT_SORT = 'popular';
 
@@ -90,6 +95,12 @@ async function handleList(req, res) {
 	const limit = Math.min(50, Math.max(1, Number(url.searchParams.get('limit')) || 20));
 	const installedOnly = url.searchParams.get('installed') === 'true';
 
+	const tagRaw = (url.searchParams.get('tag') || '').trim();
+	if (tagRaw.length > TAG_MAX) {
+		return error(res, 400, 'validation_error', `tag must be ${TAG_MAX} characters or fewer`);
+	}
+	const tag = tagRaw ? tagRaw.toLowerCase() : null;
+
 	let category = null;
 	if (categoryRaw != null && categoryRaw !== '') {
 		if (!CATEGORY_RE.test(categoryRaw)) {
@@ -161,6 +172,7 @@ async function handleList(req, res) {
 		sort,
 		userId,
 		category,
+		tag,
 		qLike,
 		installedOnly,
 		cursor,
@@ -194,6 +206,7 @@ function runListQuery(p) {
 		sort,
 		userId,
 		category,
+		tag,
 		qLike,
 		installedOnly,
 		cursor,
@@ -231,6 +244,10 @@ function runListQuery(p) {
 					OR (ms.created_at = ${cursorCreatedAt}::timestamptz AND ms.id::text < ${cursor}::text)
 				)
 				AND (${category}::text IS NULL OR ms.category = ${category})
+			AND (
+				${tag}::text IS NULL
+				OR EXISTS (SELECT 1 FROM unnest(ms.tags) t WHERE lower(t) = ${tag})
+			)
 				AND (
 					${qLike}::text IS NULL
 					OR ms.name ILIKE ${qLike}
@@ -276,6 +293,10 @@ function runListQuery(p) {
 					OR (ms.name = ${cursorName}::text AND ms.id::text > ${cursor}::text)
 				)
 				AND (${category}::text IS NULL OR ms.category = ${category})
+			AND (
+				${tag}::text IS NULL
+				OR EXISTS (SELECT 1 FROM unnest(ms.tags) t WHERE lower(t) = ${tag})
+			)
 				AND (
 					${qLike}::text IS NULL
 					OR ms.name ILIKE ${qLike}
@@ -321,6 +342,10 @@ function runListQuery(p) {
 				OR (ms.install_count = ${cursorInstallCount}::integer AND ms.id::text < ${cursor}::text)
 			)
 			AND (${category}::text IS NULL OR ms.category = ${category})
+			AND (
+				${tag}::text IS NULL
+				OR EXISTS (SELECT 1 FROM unnest(ms.tags) t WHERE lower(t) = ${tag})
+			)
 			AND (
 				${qLike}::text IS NULL
 				OR ms.name ILIKE ${qLike}

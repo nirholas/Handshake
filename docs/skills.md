@@ -720,6 +720,27 @@ Paid skills price per *call*, not per install: the detail page shows an x402 end
 
 Publish your own from the marketplace ("Publish a Skill") or `POST /api/skills` with `{ name, slug, description, category, tags, content }` (or `schema_json`).
 
+### Browsing the catalog from code
+
+`GET /api/skills` is public and takes the same filters the marketplace UI uses, so a script can reproduce any view you can link to:
+
+| Param | Meaning |
+| --- | --- |
+| `q` | Substring match across name, description, and tags |
+| `category` | Exact category slug (`GET /api/skills/categories` lists them with counts) |
+| `tag` | Exact tag, case-insensitive, matched against the skill's `tags` array |
+| `sort` | `popular` (default), `new`, or `az` |
+| `limit` / `cursor` | Page size (max 50) and the keyset cursor returned as `next_cursor` |
+| `installed=true` | Authed only: your own installed set, with `content` and `schema_json` |
+
+```bash
+# Every free skill tagged "solana", newest first
+curl -s 'https://three.ws/api/skills?tag=solana&sort=new&limit=50' \
+  | jq '.skills[] | select(.price_per_call_usd == 0) | {name, slug, tags}'
+```
+
+Those filters are also the page URL, so [/marketplace?tab=skills&tag=solana&sort=new](https://three.ws/marketplace?tab=skills&tag=solana&sort=new) opens that exact view in a browser and can be shared as-is. The retired `/skills` path forwards there, carrying `q`, `category`, `tag`, and `sort` with it.
+
 ---
 
 ## Versioning

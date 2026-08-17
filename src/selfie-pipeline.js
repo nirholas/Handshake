@@ -339,15 +339,9 @@ async function pollUntilDone(jobId) {
 			return job;
 		}
 		if (job.status === 'failed') {
-			// errorKind 'input' means the API already vetted this string as
-			// caller-facing copy (a plan refusal, a worker's "no face detected").
-			// Running it back through friendlyJobError's keyword match would
-			// overwrite an exact reason with a guess, "your library is full"
-			// becomes "try again with a clearer photo", which sends the user off
-			// to retake a photo that was never the problem.
 			throw withMessage(
 				new Error(job.error || 'reconstruct failed'),
-				job.errorKind === 'input' && job.error ? job.error : friendlyJobError(job.error),
+				friendlyJobError(job.error, job.errorKind),
 				inferFailingSlot(job.error),
 			);
 		}
@@ -392,9 +386,15 @@ function statusLabel(status, attempt, elapsedMs) {
 	return 'Processing...';
 }
 
-/** @param {string | null | undefined} raw */
-function friendlyJobError(raw) {
-	if (!raw) return 'Avatar reconstruction failed. Try clearer photos in better light.';
+/**
+ * Recognise a job error and phrase it as an instruction the user can act on.
+ * Returns null when nothing matched, so callers can decide what an unrecognised
+ * error deserves rather than being handed a guess dressed up as an answer.
+ * @param {string | null | undefined} raw
+ * @returns {string | null}
+ */
+function recogniseJobError(raw) {
+	if (!raw) return null;
 	const lower = raw.toLowerCase();
 
 	if (lower.includes('face') && lower.includes('detect'))
@@ -411,6 +411,28 @@ function friendlyJobError(raw) {
 	if (lower.includes('oom') || lower.includes('memory'))
 		return 'The engine ran out of resources. Try again with a simpler photo.';
 
+	return null;
+}
+
+/**
+ * Turn a failed job into the sentence the build screen shows.
+ *
+ * errorKind 'input' means the API vetted this string as caller-facing copy: a
+ * worker's "no face detected in any of the provided photos", or a plan refusal.
+ * Our own phrasing still wins wherever we recognise the fault, because it says
+ * what to do next. What changes is the unrecognised case: a caller-facing
+ * message is relayed rather than overwritten by the catch-all, which used to
+ * turn "your library is full" into "try again with a clearer photo" and send
+ * the user off to retake a photo that was never the problem.
+ *
+ * @param {string | null | undefined} raw
+ * @param {string | null | undefined} [errorKind]
+ */
+function friendlyJobError(raw, errorKind) {
+	const known = recogniseJobError(raw);
+	if (known) return known;
+	if (errorKind === 'input' && raw) return String(raw);
+	if (!raw) return 'Avatar reconstruction failed. Try clearer photos in better light.';
 	return 'Avatar reconstruction failed. Try again with a clearer photo.';
 }
 

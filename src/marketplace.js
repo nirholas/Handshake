@@ -187,6 +187,9 @@ const els = {
 // readRoute and syncFilterToUrl agree on which strings are valid.
 const LIST_FILTER_TABS = new Set(['agents', 'avatars', 'onchain']);
 const SORT_VALUES = new Set(['recommended', 'recent', 'popular', 'top_rated']);
+// The Skills tab sorts server-side through /api/skills, which accepts its own,
+// shorter set. Kept next to SORT_VALUES so the two never drift into each other.
+const SKILL_SORT_VALUES = new Set(['popular', 'new', 'az']);
 
 function readRoute() {
 	const m = location.pathname.match(/^\/marketplace\/agents\/([^/]+)/);
@@ -208,7 +211,14 @@ function readRoute() {
 	const sort = SORT_VALUES.has(params.get('sort')) ? params.get('sort') : null;
 	const pricing = params.get('pricing') === 'paid' || params.get('pricing') === 'free' ? params.get('pricing') : null;
 	if (tab === 'tools') return { view: 'tools', tag };
-	if (tab === 'skills') return { view: 'skills', tag };
+	// The Skills tab owns q / category / sort as well as tag: the /skills shim
+	// forwards them and its own controls write them back, so they have to
+	// survive a reload and the back button like every other list view's do.
+	if (tab === 'skills') {
+		const category = (params.get('category') || '').trim().toLowerCase().slice(0, 50) || null;
+		const skillSort = SKILL_SORT_VALUES.has(params.get('sort')) ? params.get('sort') : null;
+		return { view: 'skills', tag, q, category, sort: skillSort };
+	}
 	if (tab === 'mine') return { view: 'mine', tag };
 	if (tab === 'purchases') return { view: 'purchases', tag };
 	if (tab === 'earn') return { view: 'earn', tag };
@@ -2287,9 +2297,58 @@ const skillsState = {
 	filter: 'all',
 	sort: 'popular',
 	category: null,
+	tag: null,
 	categories: [],
 	detailId: null,
 };
+
+// Query params the Skills tab owns. Values equal to the default drop out of
+// the URL so a plain browse stays at /marketplace?tab=skills, and anything the
+// visitor actually chose survives a reload, a share, and the back button. The
+// /skills shim forwards this exact set.
+const SKILLS_URL_DEFAULTS = { q: '', category: '', tag: '', sort: 'popular' };
+
+function syncSkillsToUrl({ push = false } = {}) {
+	if (location.pathname !== '/marketplace') return;
+	syncStateToUrl(
+		{
+			tab: 'skills',
+			q: skillsState.q || '',
+			category: skillsState.category || '',
+			tag: skillsState.tag || '',
+			sort: skillsState.sort || 'popular',
+		},
+		SKILLS_URL_DEFAULTS,
+		{ push },
+	);
+}
+
+// Pull the filters back off the URL when the Skills tab is (re)entered, so a
+// deep link, a tag pill, and the browser's back button all restore the same
+// view instead of silently showing an unfiltered list.
+function hydrateSkillsFromRoute(r) {
+	const nextQ = r.q || '';
+	const nextCategory = r.category || null;
+	const nextTag = r.tag || null;
+	const nextSort = r.sort || skillsState.sort;
+	const changed =
+		nextQ !== skillsState.q ||
+		nextCategory !== skillsState.category ||
+		nextTag !== skillsState.tag ||
+		nextSort !== skillsState.sort;
+	skillsState.q = nextQ;
+	skillsState.category = nextCategory;
+	skillsState.tag = nextTag;
+	skillsState.sort = nextSort;
+
+	const input = $('skills-search');
+	if (input && input.value !== nextQ) input.value = nextQ;
+	const sortSel = $('skills-sort');
+	if (sortSel && sortSel.value !== nextSort) sortSel.value = nextSort;
+	renderSkillCategoryChips();
+	renderSkillTagBanner();
+	return changed;
+}
 
 async function loadSkillCategories() {
 	try {
@@ -2306,10 +2365,11 @@ async function loadSkillCategories() {
 function renderSkillCategoryChips() {
 	const wrap = $('skills-cat-chips');
 	if (!wrap) return;
-	const all = `<button class="market-chip ${skillsState.category == null ? 'active' : ''}" data-skill-cat="">All</button>`;
+	const isAll = skillsState.category == null;
+	const all = `<button type="button" class="market-chip ${isAll ? 'active' : ''}" data-skill-cat="" aria-pressed="${isAll}">All</button>`;
 	const chips = skillsState.categories.map((c) => {
-		const active = skillsState.category === c.slug ? 'active' : '';
-		return `<button class="market-chip ${active}" data-skill-cat="${escapeHtml(c.slug)}">${escapeHtml(c.label)}<span class="chip-count">${c.count}</span></button>`;
+		const on = skillsState.category === c.slug;
+		return `<button type="button" class="market-chip ${on ? 'active' : ''}" data-skill-cat="${escapeHtml(c.slug)}" aria-pressed="${on}">${escapeHtml(c.label)}<span class="chip-count">${c.count}</span></button>`;
 	}).join('');
 	wrap.innerHTML = all + chips;
 	wrap.querySelectorAll('[data-skill-cat]').forEach((b) => {
@@ -2318,6 +2378,7 @@ function renderSkillCategoryChips() {
 			if (slug === skillsState.category) return;
 			skillsState.category = slug;
 			renderSkillCategoryChips();
+			syncSkillsToUrl({ push: true });
 			loadSkillsTab(true);
 		});
 	});
@@ -2341,6 +2402,7 @@ async function loadSkillsTab(force = false, append = false) {
 		url.searchParams.set('limit', '24');
 		if (skillsState.q) url.searchParams.set('q', skillsState.q);
 		if (skillsState.category) url.searchParams.set('category', skillsState.category);
+		if (skillsState.tag) url.searchParams.set('tag', skillsState.tag);
 		if (skillsState.sort) url.searchParams.set('sort', skillsState.sort);
 		if (append && skillsState.cursor) url.searchParams.set('cursor', skillsState.cursor);
 
@@ -2357,12 +2419,19 @@ async function loadSkillsTab(force = false, append = false) {
 		log.error('[marketplace] skills load', err);
 		if (grid && !append) {
 			grid.innerHTML = renderErrorState('skills');
+			grid.removeAttribute('aria-busy');
 			grid.querySelector('[data-empty-action="empty-retry"]')?.addEventListener('click', () => {
 				grid.setAttribute('aria-busy', 'true');
 				grid.innerHTML = renderSkeletons(8);
 				loadSkillsTab(true);
 			});
 		}
+		// The grid now holds the error state and its Retry button. Falling
+		// through to renderSkillsGrid() would immediately overwrite both with
+		// "No skills found", which reads as an empty catalog and offers no way
+		// back: the error state was unreachable until this return. The finally
+		// block below still clears the in-flight flags.
+		return;
 	} finally {
 		skillsState.loading = false;
 		skillsState.loadingMore = false;
@@ -2378,6 +2447,31 @@ function skillToolCount(s) {
 	return Array.isArray(s?.schema_json) ? s.schema_json.length : 0;
 }
 
+// A tag filter arrives from a skill's tag pill, so the tab has to show that it
+// is filtered and offer the way out. Mirrors the discovery list's tag banner.
+function renderSkillTagBanner() {
+	const banner = $('skills-tag-banner');
+	if (!banner) return;
+	if (!skillsState.tag) {
+		banner.hidden = true;
+		banner.innerHTML = '';
+		return;
+	}
+	banner.hidden = false;
+	banner.innerHTML = `
+		<span class="market-tag-banner-label">Filtering by tag</span>
+		<span class="market-tag-banner-chip">
+			${escapeHtml(skillsState.tag)}
+			<button class="market-tag-banner-clear" aria-label="Clear tag filter" type="button">✕</button>
+		</span>`;
+	banner.querySelector('.market-tag-banner-clear')?.addEventListener('click', () => {
+		skillsState.tag = null;
+		syncSkillsToUrl({ push: true });
+		renderSkillTagBanner();
+		loadSkillsTab(true);
+	});
+}
+
 function renderSkillsGrid() {
 	const grid = $('skills-grid');
 	if (!grid) return;
@@ -2387,28 +2481,43 @@ function renderSkillsGrid() {
 		return true;
 	});
 
+	grid.removeAttribute('aria-busy');
+	renderSkillTagBanner();
+
 	const sub = $('skills-subtitle');
 	if (sub) {
 		const cat = skillsState.category
 			? (skillsState.categories.find((c) => c.slug === skillsState.category)?.label || skillsState.category)
 			: null;
 		const noun = filtered.length === 1 ? 'skill' : 'skills';
-		sub.textContent = cat
-			? `${filtered.length} ${noun} in ${cat}${skillsState.cursor ? '+' : ''}`
-			: `Browse ${filtered.length}${skillsState.cursor ? '+' : ''} ${noun} from the community`;
+		const more = skillsState.cursor ? '+' : '';
+		let text;
+		if (skillsState.tag) text = `${filtered.length}${more} ${noun} tagged #${skillsState.tag}`;
+		else if (cat) text = `${filtered.length} ${noun} in ${cat}${more}`;
+		else text = `Browse ${filtered.length}${more} ${noun} from the community`;
+		// The subtitle ships with a data-i18n placeholder so the pre-render copy
+		// is translated, but from here on it carries a live count. Without this
+		// the catalog pass that lands after /api/locale resolves reverts it to
+		// the placeholder, which is what shipped: the count never showed.
+		sub.setAttribute('data-i18n-owned', '1');
+		sub.textContent = text;
 	}
 
 	const loadMoreRow = $('skills-loadmore-row');
 	if (loadMoreRow) loadMoreRow.hidden = !skillsState.cursor;
 
 	if (!filtered.length) {
+		const bits = [];
+		if (skillsState.q) bits.push(`the search "${escapeHtml(skillsState.q)}"`);
+		if (skillsState.category) bits.push(`the ${escapeHtml(skillsState.category)} category`);
+		if (skillsState.tag) bits.push(`the tag #${escapeHtml(skillsState.tag)}`);
 		const msg = !skillsState.skills.length
 			? `<div class="market-empty-cta">
 					<h3>No skills found</h3>
-					<p>Try a different category, clear your search, or publish your own skill.</p>
+					<p>${bits.length ? `Nothing published matches ${bits.join(' and ')} yet. Clear the filters, or publish the skill yourself.` : 'Nothing is published here yet. Be the first to publish a skill.'}</p>
 					<div class="market-empty-cta-actions">
-						<button class="market-empty-cta-btn" id="skills-empty-clear">Clear filters</button>
-						<button class="market-empty-cta-btn primary" id="skills-empty-publish">Publish a Skill</button>
+						${bits.length ? '<button type="button" class="market-empty-cta-btn" id="skills-empty-clear">Clear filters</button>' : ''}
+						<button type="button" class="market-empty-cta-btn primary" id="skills-empty-publish">Publish a Skill</button>
 					</div>
 				</div>`
 			: '<div class="market-empty">No skills match your free/paid filter.</div>';
@@ -2416,12 +2525,16 @@ function renderSkillsGrid() {
 		$('skills-empty-clear')?.addEventListener('click', () => {
 			skillsState.q = '';
 			skillsState.category = null;
+			skillsState.tag = null;
 			skillsState.filter = 'all';
 			const input = $('skills-search'); if (input) input.value = '';
 			document.querySelectorAll('[data-skill-filter]').forEach((c) => {
-				c.classList.toggle('active', c.dataset.skillFilter === 'all');
+				const on = c.dataset.skillFilter === 'all';
+				c.classList.toggle('active', on);
+				c.setAttribute('aria-selected', on ? 'true' : 'false');
 			});
 			renderSkillCategoryChips();
+			syncSkillsToUrl({ push: true });
 			loadSkillsTab(true);
 		});
 		$('skills-empty-publish')?.addEventListener('click', openSubmitModal);
@@ -4517,8 +4630,20 @@ function renderEmptyState() {
 	</div>`;
 }
 
+// Every tab that can fail renders through here, so the label has to cover all
+// of them: the old ternary only knew avatars and onchain, which told a visitor
+// whose skills/animations/plugins fetch died that we "couldn't load agents".
+const ERROR_SCOPE_LABELS = {
+	agents: 'agents',
+	avatars: 'avatars',
+	onchain: 'onchain agents',
+	skills: 'skills',
+	animations: 'animations',
+	plugins: 'plugins',
+};
+
 function renderErrorState(scope = 'agents') {
-	const label = scope === 'avatars' ? 'avatars' : scope === 'onchain' ? 'onchain agents' : 'agents';
+	const label = ERROR_SCOPE_LABELS[scope] || ERROR_SCOPE_LABELS.agents;
 	return `<div class="tws-es tws-es--error" role="alert">
 		<div class="tws-es-icon tws-es-icon--err" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.5" opacity=".35"/><path d="M16 9v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="22.5" r="1.25" fill="currentColor"/></svg></div>
 		<h3 class="tws-es-title">Couldn't load ${escapeHtml(label)}</h3>
@@ -6122,6 +6247,7 @@ function bindEvents() {
 			const next = e.target.value.trim();
 			if (next === skillsState.q) return;
 			skillsState.q = next;
+			syncSkillsToUrl();
 			loadSkillsTab(true);
 		}, 250);
 	});
@@ -6129,6 +6255,7 @@ function bindEvents() {
 		const next = e.target.value;
 		if (next === skillsState.sort) return;
 		skillsState.sort = next;
+		syncSkillsToUrl({ push: true });
 		loadSkillsTab(true);
 	});
 	$('skills-loadmore')?.addEventListener('click', () => {
@@ -6136,8 +6263,12 @@ function bindEvents() {
 	});
 	document.querySelectorAll('[data-skill-filter]').forEach((chip) => {
 		chip.addEventListener('click', () => {
-			document.querySelectorAll('[data-skill-filter]').forEach((c) => c.classList.remove('active'));
+			document.querySelectorAll('[data-skill-filter]').forEach((c) => {
+				c.classList.remove('active');
+				c.setAttribute('aria-selected', 'false');
+			});
 			chip.classList.add('active');
+			chip.setAttribute('aria-selected', 'true');
 			skillsState.filter = chip.dataset.skillFilter;
 			renderSkillsGrid();
 		});
@@ -7991,7 +8122,9 @@ function render() {
 		setHidden(memorySec, true);
 		setHidden(avatarDetailSec, true);
 		setHidden(skillsSec, false);
-		loadSkillsTab();
+		// A URL change (deep link, tag pill, back button) has to re-query, not
+		// replay the cached first page under the old filters.
+		loadSkillsTab(hydrateSkillsFromRoute(r));
 	} else if (r.view === 'mine') {
 		setHidden(detail, true);
 		setHidden(discovery, true);

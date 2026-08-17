@@ -18108,10 +18108,13 @@
 		"x402_siwx_manual_test": "x402 SIWX — manual test"
 	},
 	"skills": {
-		"meta_description": "Browse, discover, and install agent skills — tool packs, knowledge bases, and capabilities that make your AI agents smarter.",
+		"forward_body": "Every agent skill (tool packs, knowledge bases, and the capabilities that make AI agents smarter) is now browsable on the Marketplace Skills tab.",
+		"forward_cta": "Open the Skills Marketplace",
+		"forward_heading": "Skills moved into the Marketplace",
+		"meta_description": "Browse, search, and install agent skills: tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.",
 		"meta_og_description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
 		"meta_og_title": "Skills Marketplace · three.ws",
-		"meta_title": "Skills · three.ws",
+		"meta_title": "Skills Marketplace · three.ws",
 		"meta_twitter_description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
 		"meta_twitter_title": "Skills Marketplace · three.ws"
 	},

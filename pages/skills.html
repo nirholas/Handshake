@@ -4,6 +4,23 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
+		<script>
+			// Skills now live inside the marketplace. Forward any old /skills links
+			// (and their query) to the marketplace Skills tab, preserving the
+			// filters the Skills tab actually reads back off the URL. This runs
+			// first in the head on purpose: every tag below it is a request the
+			// browser would start and then cancel a moment later.
+			(function () {
+				var src = new URLSearchParams(location.search);
+				var out = new URLSearchParams();
+				out.set('tab', 'skills');
+				['q', 'category', 'tag', 'sort'].forEach(function (key) {
+					var v = src.get(key);
+					if (v) out.set(key, v);
+				});
+				location.replace('/marketplace?' + out.toString());
+			})();
+		</script>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -11,22 +28,74 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title data-i18n="skills.meta_title">Skills · three.ws</title>
-		<meta name="description" content="Browse, discover, and install agent skills — tool packs, knowledge bases, and capabilities that make your AI agents smarter."  data-i18n-attr="content:skills.meta_description"/>
+		<title data-i18n="skills.meta_title">Skills Marketplace · three.ws</title>
+		<meta name="description" content="Browse, search, and install agent skills: tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there."  data-i18n-attr="content:skills.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="canonical" href="https://three.ws/marketplace?tab=skills" />
-		<script>
-			// Skills now live inside the marketplace. Forward any old /skills links
-			// (and their query) to the marketplace Skills tab, preserving search.
-			(function () {
-				var src = new URLSearchParams(location.search);
-				var out = new URLSearchParams();
-				out.set('tab', 'skills');
-				if (src.get('q')) out.set('q', src.get('q'));
-				if (src.get('category')) out.set('category', src.get('category'));
-				location.replace('/marketplace?' + out.toString());
-			})();
-		</script>
+		<!-- The forward at the top of this head needs JS. Without it (crawlers, JS off, a script
+		     error) the visitor would otherwise land on an empty document, so
+		     send them on with a refresh and leave a real link behind it. -->
+		<noscript><meta http-equiv="refresh" content="0;url=/marketplace?tab=skills" /></noscript>
+		<style>
+			.skills-forward {
+				min-height: 100vh;
+				margin: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 24px;
+				background: #0b0b0f;
+				color: #f4f4f5;
+				font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+				line-height: 1.55;
+			}
+			.skills-forward-card {
+				max-width: 34rem;
+				text-align: center;
+			}
+			.skills-forward h1 {
+				font-size: clamp(1.5rem, 4vw, 2rem);
+				margin: 0 0 0.75rem;
+				letter-spacing: -0.01em;
+			}
+			.skills-forward p {
+				margin: 0 0 1.5rem;
+				color: #a1a1aa;
+			}
+			.skills-forward a {
+				display: inline-block;
+				padding: 0.7rem 1.4rem;
+				border-radius: 999px;
+				background: #f4f4f5;
+				color: #0b0b0f;
+				font-weight: 600;
+				text-decoration: none;
+				transition: transform 0.15s ease, opacity 0.15s ease;
+			}
+			.skills-forward a:hover {
+				opacity: 0.88;
+			}
+			.skills-forward a:active {
+				transform: translateY(1px);
+			}
+			.skills-forward a:focus-visible {
+				outline: 2px solid #7c9cff;
+				outline-offset: 3px;
+			}
+			@media (prefers-color-scheme: light) {
+				.skills-forward {
+					background: #ffffff;
+					color: #18181b;
+				}
+				.skills-forward p {
+					color: #52525b;
+				}
+				.skills-forward a {
+					background: #18181b;
+					color: #ffffff;
+				}
+			}
+		</style>
 	
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
@@ -46,7 +115,17 @@
 	<meta property="og:image:alt" content="Skills Marketplace — three.ws">
 	<meta name="twitter:site" content="@trythreews">
 </head>
-	<body>	<script src="/brand.js" defer></script>
+	<body class="skills-forward">
+		<main class="skills-forward-card">
+			<h1 data-i18n="skills.forward_heading">Skills moved into the Marketplace</h1>
+			<p data-i18n="skills.forward_body">
+				Every agent skill (tool packs, knowledge bases, and the capabilities
+				that make AI agents smarter) is now browsable on the Marketplace
+				Skills tab.
+			</p>
+			<a href="/marketplace?tab=skills" data-i18n="skills.forward_cta">Open the Skills Marketplace</a>
+		</main>
+		<script src="/brand.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>
