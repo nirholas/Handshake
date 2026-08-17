@@ -86,6 +86,12 @@ export class TalkEmotes {
 	 */
 	loadManifest() {
 		if (this._manifestPromise) return this._manifestPromise;
+		// Only a SUCCESSFUL load is memoized. Caching the failure too meant one
+		// dropped request disabled every clip for the rest of the session and no
+		// retry could ever reach the network again, so the caller's "try again"
+		// was a button that could not work. Clearing the memo on failure keeps
+		// concurrent callers sharing the in-flight request while still letting
+		// the next attempt re-fetch.
 		this._manifestPromise = (async () => {
 			try {
 				const r = await fetch('/animations/manifest.json');
@@ -100,7 +106,16 @@ export class TalkEmotes {
 				log.warn('[talk-emotes] manifest fetch failed:', err?.message);
 				return false;
 			}
-		})();
+		})().then(
+			(ok) => {
+				if (!ok) this._manifestPromise = null;
+				return ok;
+			},
+			(err) => {
+				this._manifestPromise = null;
+				throw err;
+			},
+		);
 		return this._manifestPromise;
 	}
 
