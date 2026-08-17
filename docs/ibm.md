@@ -213,6 +213,22 @@ curl -s https://three.ws/api/watsonx/embed \
 
 It returns one vector per input (the response reports the model and its native `dimensions`), plus a `cachedHits` count: a warm process-local LRU keeps repeat embeddings free, and per-IP + global rate limits cap watsonx spend. The response itself is sent `cache-control: no-store`, because a POST body varies per request and must never be shared-cached.
 
+**Always read `model` from the response.** The endpoint leads with Granite on watsonx.ai and falls through to the platform's free-first embedding chain (NVIDIA NIM, then Vertex, then OpenAI) when watsonx cannot serve a full batch, so a 200 does not by itself mean Granite answered. Every vector in one response comes from one provider, so `dimensions` is uniform. Only when no provider at all is configured does it answer `503 embed_unconfigured`, which is what lets a caller show an honest "not configured" state instead of inventing vectors.
+
+## watsonx Constellation
+
+**Page:** [`/constellation`](https://three.ws/constellation)
+
+The Constellation applies the same Granite embedding space to live market data instead of agents. It pulls trending Solana tokens from `GET /api/pump/trending`, embeds each token's name and ticker through `POST /api/watsonx/embed`, projects the vectors to three axes with classical MDS in the browser, and renders each token as a star, so tokens that mean similar things sit near each other. Picking a star opens its detail panel and streams an IBM Granite analysis of that token from `POST /api/brain/chat` with `provider: ibm-granite`.
+
+Three behaviours matter if you are reading the page or building on it:
+
+- **It names what actually served.** Both backing endpoints have failover chains, so the status line reports the embedder that really placed the stars and the analysis panel reports the model that really wrote the text, saying so plainly when watsonx Granite could not serve the request. It never credits Granite for another model's output.
+- **It never fabricates a layout.** Tokens first render in a deterministic by-rank layout and animate into their semantic positions once the vectors land. If embeddings are unavailable the by-rank layout stays and the status line says the semantic layout is off.
+- **The analysis needs a signed-in account.** `/api/brain/chat` restricts anonymous callers to its free-tier providers, so the panel links to sign-in rather than failing. The galaxy itself, its live market data and the semantic layout are open to everyone.
+
+The page is keyboard operable: the canvas takes focus, arrow keys walk the stars in trending order, Enter opens the focused star, and Escape closes the panel and returns focus to the galaxy.
+
 A batch is 1 to 96 texts, each truncated to 512 characters. When watsonx is not configured on a deployment (or is failing), the endpoint falls through to the platform's free-first embedding chain (NVIDIA NIM, then Vertex `text-embedding-005`, then OpenAI `text-embedding-3-small`) and reports whichever `model` actually served, so `dimensions` is uniform within a response but can differ between them. A provider that covers only part of a batch counts as a failure and the next provider takes over: the response never carries a null where a vector belongs. With no provider configured at all you get a `503 embed_unconfigured` naming the env vars to set, never invented vectors.
 
 ---
@@ -285,12 +301,13 @@ It reads the same `WATSONX_*` environment variables documented above. See the [M
 
 ## Live pages and API surfaces
 
-The two live IBM pages on the product:
+The live IBM pages on the product:
 
 | Route                                                    | What it is                                                       |
 | -------------------------------------------------------- | ---------------------------------------------------------------- |
 | [`/ibm/hello`](https://three.ws/ibm/hello)               | The IBM and three.ws partnership page                            |
 | [`/ibm/x402-demo`](https://three.ws/ibm/x402-demo)       | Live x402 micropayment demo built with IBM                       |
+| [`/constellation`](https://three.ws/constellation)       | watsonx Constellation: trending Solana tokens in embedding space |
 
 The Granite demo pages that used to live under `/ibm/*` (galaxy, oracle, twin, trust-layer, identity, proof, vision) were retired from navigation and removed. Their API endpoints remain live and callable:
 

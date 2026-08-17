@@ -374,9 +374,12 @@ function onPointerMove(e) {
 	}
 }
 
-let downAt = 0; let downXY = [0, 0]; let downNode = null;
+// How far the pointer may travel between press and release and still count as a
+// tap rather than an orbit drag. Fingers wobble more than a mouse does.
+function tapSlopPx() { return coarsePointer() ? 12 : 6; }
+
+let downXY = [0, 0]; let downNode = null;
 function onPointerDown(e) {
-	downAt = performance.now();
 	downXY = [e.clientX, e.clientY];
 	// Resolve the target at press time as well. The galaxy keeps auto-rotating,
 	// so the star can slide out from under a stationary cursor between the press
@@ -386,7 +389,11 @@ function onPointerDown(e) {
 }
 function onPointerUp(e) {
 	const moved = Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]);
-	if (moved >= 6 || performance.now() - downAt >= 450) return; // an orbit drag, not a tap
+	// Movement is the only honest test for "orbit drag vs tap". A press that ends
+	// where it started is a tap however long it was held: gating on duration made
+	// a deliberate slow click, or any press on a loaded device, silently do
+	// nothing, which is exactly the interaction this whole page is built around.
+	if (moved >= tapSlopPx()) return;
 	updatePointer(e);
 	// The star under the release wins; then the star the tooltip is naming; then
 	// the one that was under the press. Any of the three is the intended target.

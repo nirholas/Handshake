@@ -63,11 +63,13 @@
 		.c-status code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--brand-blue-light); }
 
 		.c-hint { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 5; color: var(--muted); font-size: 12.5px; background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px; white-space: nowrap; transition: opacity .4s; }
-		/* Narrow viewports: the hint wraps instead of overflowing the screen, and
-		   sits above the language switcher rather than underneath it. */
-		@media (max-width: 720px) {
-			.c-hint { font-size: 11px; padding: 6px 14px; bottom: 74px; white-space: normal; text-align: center; max-width: calc(100vw - 28px); border-radius: 14px; line-height: 1.45; }
+		/* The hint is centered and the language switcher is pinned bottom-right, so
+		   below roughly 1120px the full-width pill runs underneath the switcher.
+		   There it wraps and sits above the switcher instead of colliding with it. */
+		@media (max-width: 1120px) {
+			.c-hint { padding: 6px 14px; bottom: 74px; white-space: normal; text-align: center; max-width: calc(100vw - 28px); border-radius: 14px; line-height: 1.45; }
 		}
+		@media (max-width: 720px) { .c-hint { font-size: 11px; } }
 
 		.c-tooltip { position: fixed; z-index: 6; pointer-events: none; background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 9px; padding: 6px 10px; font-size: 12.5px; opacity: 0; transition: opacity .12s; transform: translate(-50%, -130%); white-space: nowrap; }
 		.c-tooltip .sym { color: var(--brand-blue-light); font-weight: 700; }
