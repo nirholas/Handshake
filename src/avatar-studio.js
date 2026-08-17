@@ -1184,11 +1184,15 @@ function applyAllLayers() {
 	}
 }
 
-let _layerCssInjected = false;
+// The guard is the injected node itself, not a module-scoped `let`. init() now
+// paints the rail before its first await, so this runs while the module body is
+// still evaluating and any binding declared below here would still be in its
+// temporal dead zone: a `let` flag threw a ReferenceError that took the whole
+// page down to its error state.
 function ensureLayerCss() {
-	if (_layerCssInjected) return;
-	_layerCssInjected = true;
+	if (document.getElementById('as-layer-css')) return;
 	const style = document.createElement('style');
+	style.id = 'as-layer-css';
 	style.textContent = `
 		.as-layers { border: 1px solid var(--border, #1f1f1f); border-radius: 12px; background: var(--panel, #111); padding: 12px 14px; }
 		.as-layers-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -1315,11 +1319,13 @@ function applyLook(look) {
 	setStatus('ok', `Applied the ${look.name} look.`);
 }
 
-let _colorExtrasCssInjected = false;
+// Same DOM-node guard as ensureLayerCss, and for the same reason: this runs
+// while the module is still evaluating, so a flag declared here is in its
+// temporal dead zone at the only moment it is read.
 function ensureColorExtrasCss() {
-	if (_colorExtrasCssInjected) return;
-	_colorExtrasCssInjected = true;
+	if (document.getElementById('as-color-extras-css')) return;
 	const style = document.createElement('style');
+	style.id = 'as-color-extras-css';
 	style.textContent = `
 		.as-looks { margin-bottom: 18px; }
 		.as-looks-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 10px; }
@@ -1709,7 +1715,10 @@ function setStatusDefault() {
 }
 
 function setStatus(kind, text) {
+	// The rail is gone once renderStageError() has replaced the shell, and every
+	// later status write would then throw on top of the failure it is reporting.
 	const el = $('as-status');
+	if (!el) return;
 	el.className = `as-status${kind ? ' ' + kind : ''}`;
 	el.innerHTML = kind === 'spin' ? `<span class="spin"></span>${esc(text)}` : esc(text);
 }
