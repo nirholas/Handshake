@@ -26,7 +26,13 @@ const apiFetch = vi.fn(async () => ({
 	json: async () => ({ avatars: [] }),
 }));
 
-vi.mock('../src/api.js', () => ({ apiFetch: (...a) => apiFetch(...a) }));
+// noteSession is a module-local session flag setter with no observable effect
+// on this suite, but create-agent.js calls it during boot, so the mock has to
+// export it or boot rejects before the first assertion runs.
+vi.mock('../src/api.js', () => ({
+	apiFetch: (...a) => apiFetch(...a),
+	noteSession: () => {},
+}));
 vi.mock('../src/account.js', () => ({
 	getMe: vi.fn(async () => ({ id: 'u1', plan: 'free' })),
 	saveRemoteGlbToAccount: (...a) => saveRemoteGlbToAccount(...a),

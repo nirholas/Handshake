@@ -389,47 +389,145 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-foot-links a:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; border-radius: var(--cc-radius-sm); }
 
 .cc-lobby-inner { position: relative; max-width: 1180px; margin: 0 auto; padding: 26px 22px 56px; }
-.cc-lobby-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+
+/* ---------------- hero ----------------
+   The page opens with one claim and three measured numbers. Two columns on a
+   desktop (claim left, counters right), stacked below 860px. */
+.cc-hero {
+	display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 34px; align-items: end;
+	padding: 26px 0 30px; margin-bottom: 22px;
+	border-bottom: 1px solid var(--cc-edge-soft);
+}
+.cc-hero-copy { min-width: 0; }
 .cc-brand { display: flex; align-items: center; gap: 13px; }
 .cc-brand-logo {
 	width: 44px; height: 44px; border-radius: var(--cc-radius);
 	background: #fff; color: var(--cc-ink);
-	display: grid; place-items: center;
+	display: grid; place-items: center; flex: none;
 	box-shadow: var(--cc-glow);
 	transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 .cc-brand-logo svg { width: 26px; height: 26px; display: block; }
 .cc-brand-logo:hover { transform: translateY(-1px); }
 .cc-brand-logo:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.cc-brand-title { font-size: 21px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; }
+.cc-brand-title { font-size: 13px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
 .cc-brand-sub { color: var(--cc-dim); font-size: 12px; margin-top: 3px; letter-spacing: 0.02em; }
+.cc-hero-title {
+	margin: 22px 0 0; font-size: clamp(32px, 4.6vw, 54px); line-height: 1.02;
+	font-weight: 800; letter-spacing: -0.03em; color: var(--cc-text);
+}
+/* The one "colour" this design language allows is light. */
+.cc-hero-title em { font-style: normal; color: #fff; text-shadow: 0 0 30px rgba(255, 255, 255, 0.35); }
+.cc-hero-sub {
+	margin: 14px 0 0; max-width: 62ch; color: var(--cc-dim);
+	font-size: 14.5px; line-height: 1.6;
+}
+.cc-hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+
+/* Live counters. Tabular figures so a count ticking 9 → 10 never shifts the
+   layout, and hairline rules instead of boxes to keep the hero calm. */
+.cc-stats {
+	display: flex; gap: 0; margin: 0; padding: 0;
+	border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius);
+	background: var(--cc-panel);
+}
+.cc-stat { padding: 14px 20px; min-width: 132px; }
+.cc-stat + .cc-stat { border-left: 1px solid var(--cc-edge-soft); }
+.cc-stat-v {
+	margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
+	font-variant-numeric: tabular-nums; color: var(--cc-text); line-height: 1.1;
+}
+.cc-stat-k {
+	margin-top: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em;
+	text-transform: uppercase; color: var(--cc-faint);
+}
+@media (max-width: 860px) {
+	.cc-hero { grid-template-columns: 1fr; gap: 22px; align-items: start; }
+	.cc-stats { align-self: stretch; }
+	.cc-stat { flex: 1; min-width: 0; padding: 12px 14px; }
+	.cc-stat-v { font-size: 21px; }
+}
+
+/* ---------------- command bar ---------------- */
+.cc-cmd { margin-bottom: 22px; }
 .cc-search {
-	margin-left: auto; flex: 1; min-width: 220px; max-width: 380px;
-	display: flex; align-items: center; gap: 9px;
+	display: flex; align-items: center; gap: 12px;
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); padding: 0 14px;
-	transition: border-color 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.2s ease;
 }
-.cc-search:focus-within { border-color: var(--cc-edge-hi); }
-.cc-search span { color: var(--cc-faint); }
+.cc-search:hover { border-color: rgba(255, 255, 255, 0.22); }
+.cc-search:focus-within { border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi), 0 0 34px rgba(255, 255, 255, 0.07); }
+.cc-search-ico { display: block; width: 18px; height: 18px; flex: none; color: var(--cc-faint); }
+.cc-search-ico svg { display: block; width: 100%; height: 100%; }
+.cc-search:focus-within .cc-search-ico { color: var(--cc-text); }
 /* The field carries the row's vertical padding rather than the wrapper, so the
    input's own hit box fills the search bar. With the padding on the wrapper the
    tappable target was only as tall as one line of text (20px), and a thumb
    landing anywhere else in the bar did nothing. */
 .cc-search input {
-	flex: 1; min-width: 0; align-self: stretch; min-height: 44px; padding: 11px 0;
-	background: none; border: none; color: var(--cc-text); font-size: 14px; outline: none;
+	flex: 1; min-width: 0; align-self: stretch; min-height: 52px; padding: 11px 0;
+	background: none; border: none; color: var(--cc-text); font-size: 15px; outline: none;
 }
 .cc-search input::placeholder { color: var(--cc-dim); }
+.cc-search input::-webkit-search-cancel-button { display: none; }
+.cc-search-clear {
+	display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0;
+	background: rgba(255, 255, 255, 0.06); border: 1px solid var(--cc-edge-soft);
+	border-radius: 50%; color: var(--cc-dim); cursor: pointer;
+	transition: color 0.14s ease, background 0.14s ease;
+}
+.cc-search-clear svg { width: 12px; height: 12px; display: block; }
+.cc-search-clear:hover { color: var(--cc-text); background: rgba(255, 255, 255, 0.12); }
+.cc-search-clear:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
+.cc-search-kbd {
+	flex: none; font: inherit; font-size: 11px; font-weight: 700; line-height: 1;
+	color: var(--cc-faint); background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius-sm);
+	padding: 5px 8px;
+}
+.cc-search:focus-within .cc-search-kbd { opacity: 0; }
+@media (hover: none) { .cc-search-kbd { display: none; } }
+.cc-cmd-hint { margin: 9px 2px 0; color: var(--cc-faint); font-size: 12px; }
 
-/* avatar picker */
+/* avatar picker, in its collapsed "who you are" form and its open picker form */
 .cc-avatar-bar {
-	display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
-	border-radius: var(--cc-radius); padding: 16px 18px; margin-bottom: 24px;
+	border-radius: var(--cc-radius); padding: 14px 16px; margin-bottom: 26px;
 	box-shadow: var(--cc-shadow);
 }
-.cc-avatar-label { font-weight: 700; font-size: 13px; letter-spacing: 0.02em; text-transform: uppercase; }
+.cc-id-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.cc-id-portrait {
+	flex: none; width: 58px; height: 58px; border-radius: var(--cc-radius);
+	border: 1px solid var(--cc-edge); background: var(--cc-bg2);
+	display: grid; place-items: center; overflow: hidden;
+}
+.cc-id-portrait img { width: 100%; height: 100%; object-fit: contain; object-position: center top; }
+.cc-id-portrait-glyph { font-size: 26px; line-height: 1; filter: grayscale(1); opacity: 0.85; }
+.cc-id-fields { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 1; min-width: 220px; }
+.cc-id-summary {
+	color: var(--cc-faint); font-size: 12px; letter-spacing: 0.02em;
+	overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 30ch;
+}
+.cc-id-toggle {
+	display: inline-flex; align-items: center; gap: 8px; flex: none; cursor: pointer;
+	min-height: 40px; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 600;
+	color: var(--cc-text); background: var(--cc-bg2);
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cc-id-toggle:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
+.cc-id-toggle:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
+.cc-id-toggle-caret { font-size: 10px; opacity: 0.6; transition: transform 0.2s ease; }
+.cc-avatar-bar.cc-id-open .cc-id-toggle-caret { transform: rotate(180deg); }
+.cc-id-body {
+	display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+	margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--cc-edge-soft);
+	animation: cc-id-reveal 0.24s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes cc-id-reveal { from { opacity: 0; transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .cc-id-body { animation: none; } }
+.cc-avatar-label { width: 100%; font-weight: 700; font-size: 13px; letter-spacing: 0.02em; text-transform: uppercase; }
 .cc-avatar-label small { display: block; color: var(--cc-dim); font-weight: 400; font-size: 12px; margin-top: 3px; text-transform: none; letter-spacing: 0; }
 .cc-avatar-presets { display: flex; gap: 8px; flex-wrap: wrap; }
 .cc-avatar-chip {
