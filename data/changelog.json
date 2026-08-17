@@ -24344,6 +24344,16 @@
 				"improvement"
 			],
 			"link": "/create/video"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Building an agent no longer throws you out to the login page, and the wizard answers the keyboard",
+			"summary": "The six-step agent builder at /create-agent was audited end to end in a real browser: naming an agent, generating a whole spec from one sentence, choosing a body from the starter library, the skills and personality steps, the voice step, and the review screen, plus the loading, empty and error states at phone, tablet and desktop widths. The worst finding was that the wizard broke its own promise. It is built so anyone can construct an entire agent before making an account, and sign in only at the final step where the agent gets its wallet. But opening the My avatars tab without an account threw the visitor straight out to the login page, mid-build, with no warning and no explanation, because that tab asked for avatars you can only have if you are signed in. It now recognises a visitor who has no account, says so in the tab, and points at the Starter library and Upload tabs, which both work without one, alongside a Sign in button that saves the build first so nothing is lost either way. The step markers across the top of the wizard could only be used with a mouse. They are the only way back to an earlier step from the review screen, so anyone working by keyboard reached the end of the flow with no way to correct anything; they are now real buttons that take focus, show a focus ring, and respond to Enter and Space, with the completed steps marked as such for screen readers. The four tabs on the body step also announced themselves as tabs without ever telling a screen reader which panel each one opens, and left the arrow keys dead; the arrow keys, Home and End now move between them the way tabs are meant to work. Finally, a first-time visitor generating an agent from a description no longer sees a failed request in the browser console.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/create-agent"
 		}
 	]
 }
