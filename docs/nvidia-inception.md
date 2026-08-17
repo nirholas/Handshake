@@ -32,6 +32,7 @@ Membership is a startup program, not a partnership or an investment: NVIDIA revi
 
 ## Related
 
+- [NVIDIA visibility map](./nvidia-visibility-map.md): every NVIDIA surface where three.ws can earn recognition, what each one requires, and which membership benefits are still unclaimed
 - [NVIDIA models on three.ws](/docs/nvidia-models) — the free inference layer, model by model
 - [The generator was never the hard part](/docs/nvidia-nemotron-spotlight): our Nemotron Nano write-up, published on the NVIDIA Developer Forums
 - [Image-to-3D on NVIDIA L4 and Blackwell](https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell): the engineering post on the GPU fleet itself: memory ceilings, `sm_120` kernels, and regional quota

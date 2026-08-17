@@ -2,7 +2,7 @@
 
 Everything needed to submit three.ws to the NVIDIA Inception Accelerated Apps Catalog. The form lives behind the Inception portal login (Portal > Profile > Add product), so this doc holds the copy, categories, links, and assets ready to paste. Submissions are reviewed by NVIDIA on a rolling basis; approval is subject to fit.
 
-Related docs: [nvidia-inception.md](./nvidia-inception.md) (membership overview), [nvidia-models.md](./nvidia-models.md) (full model map, the source of truth for every NVIDIA claim below).
+Related docs: [nvidia-inception.md](./nvidia-inception.md) (membership overview), [nvidia-models.md](./nvidia-models.md) (full model map, the source of truth for every NVIDIA claim below), [nvidia-visibility-map.md](./nvidia-visibility-map.md) (every other NVIDIA surface, and the asks to batch into the request email below).
 
 ---
 
