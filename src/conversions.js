@@ -239,7 +239,7 @@ function renderSeller(data) {
 						<span class="cv-skill">${esc(q.skill)}</span>
 						${q.exhausted ? `<span class="pill pill-out">${esc(plural(q.exhausted, 'buyer waiting', 'buyers waiting'))}</span>` : ''}
 					</div>
-					<div class="cv-agent">on <a href="/agent/${esc(q.agentId)}">${esc(q.agentName)}</a>${timeClause('last activity', q.lastActivity)}</div>
+					<div class="cv-agent">on <a href="${esc(q.agentUrl || `/agents/${q.agentId}`)}">${esc(q.agentName)}</a>${timeClause('last activity', q.lastActivity)}</div>
 					<div class="cv-metrics">
 						<span class="cv-metric"><b>${esc(q.activeTrials)}</b> ${q.activeTrials === 1 ? 'trial' : 'trials'} running</span>
 						<span class="cv-metric${q.lastRun ? ' is-hot' : ''}"><b>${esc(q.lastRun)}</b> on last run</span>

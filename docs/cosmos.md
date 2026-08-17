@@ -14,6 +14,10 @@ Cosmos runs on NVIDIA's Cosmos World Foundation Model family. The endpoint (`api
 
 The lane reuses the platform `NVIDIA_API_KEY` (the free NIM tier). When that key is absent, the lane reports itself unconfigured (503) and the page degrades gracefully: the avatar still stands on a designed, slowly shifting aurora backdrop instead of a blank void.
 
+NVIDIA retires a hosted preview model without retiring its gateway path: the route keeps answering, and only an authenticated submit reveals that the function behind it is gone for your account. So the submit walks the published `cosmos-predict` routes in order and only gives up when every rung is gone, at which point it answers `503 {"error":"lane_unavailable"}` and the page shows the same designed offline state as an unconfigured deployment. Setting `NVIDIA_COSMOS_INVOKE_URL` opts out of the chain and pins one endpoint (a specific model, or a self-hosted Cosmos NIM), which is the lever for pointing the lane at a live function without a code change. Confirm what an account can actually reach with `node scripts/verify-nvidia-cosmos.mjs`.
+
+Upstream detail never reaches the browser. The gateway phrases a retired model as `Function '<uuid>': Not found for account '<id>'`; that is operator diagnostics (it carries the account id), so it is logged server-side and the caller gets a sentence it can act on instead.
+
 On the page (`src/cosmos.js`), the avatar is a Google `<model-viewer>` with a transparent background. Five humanoid avatars ship bundled for instant selection (Aria, Kai, Michelle, X-Bot, Mona), and you can bring your own. The generate flow is real async with no fake timers: submit to `POST /api/cosmos`, then poll `GET /api/cosmos?job=<id>` every four seconds (with a five-minute ceiling), driving a real elapsed-based progress state. When the clip is ready it plays on canplay as a looping backdrop behind the avatar, a regenerate control appears, and the clip is available to download.
 
 ## Walkthrough
@@ -72,7 +76,9 @@ else {
 - **Prompt** must be 3 to 300 characters; an optional integer `seed` makes a render reproducible.
 - **Render time** is roughly 60 to 120 seconds on the shared free tier; the client shows a real elapsed progress state and gives up after five minutes with a "try a simpler prompt" message.
 - **Unconfigured (503)**: when `NVIDIA_API_KEY` is absent, the page keeps the avatar on a designed aurora backdrop and tells you generation is offline. No mock clip is ever shown.
+- **Lane unavailable (503, `lane_unavailable`)**: the key is present but NVIDIA has retired every hosted `cosmos-predict` route this account can reach. Same designed offline state, and deliberately no Retry button: the request cannot succeed until an operator points `NVIDIA_COSMOS_INVOKE_URL` at a live function.
 - **Rate limited (429)** and **invalid key (401)** surface with honest messages and, where provided, a retry-after hint.
+- **Unplayable clip**: a durable URL that will not decode drops the stage out of its finished state and offers a retry, rather than leaving a "done" stage with nothing in it.
 - Output is a durable MP4; the avatar is a standard GLB rendered with `<model-viewer>`.
 - Rate limits are per client IP on the shared 3D generation buckets.
 

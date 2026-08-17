@@ -1003,7 +1003,15 @@ function gradLabel(s) {
 }
 
 function applyMarket(m) {
-	if (!m) return;
+	const sparkSlot = document.getElementById('c3d-spark');
+	if (!m) {
+		// No candles for this mint (a brand-new coin, or the history provider is
+		// down). Say so once rather than pulsing a skeleton that never resolves.
+		if (sparkSlot?.querySelector('.c3d-spark-empty')) {
+			sparkSlot.innerHTML = '<p class="c3d-spark-none">No price history yet.</p>';
+		}
+		return;
+	}
 	const priceEl = document.getElementById('c3d-price');
 	if (priceEl) priceEl.textContent = fmtPrice(m.price);
 	const volEl = document.getElementById('c3d-vol');

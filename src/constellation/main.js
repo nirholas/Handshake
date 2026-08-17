@@ -73,7 +73,6 @@ let signedIn = false; // resolved once at boot; gates the Granite analysis call
 
 // ---- status / overlay helpers ---------------------------------------------
 function setStatus(kind, html) {
-	console.log("DBG setStatus", kind, String(html).slice(0,60));
 	statusEl.classList.remove('live', 'off', 'err');
 	if (kind) statusEl.classList.add(kind);
 	statusText.innerHTML = html;
@@ -344,7 +343,6 @@ function setHovered(node) {
 function onPointerMove(e) {
 	updatePointer(e);
 	const node = pickNode();
-	console.log("DBG move", e.clientX, e.clientY, node && node.token.symbol);
 	if (node !== hovered) {
 		setHovered(node);
 		keyboardFocused = false;
@@ -367,7 +365,6 @@ function onPointerUp(e) {
 	// star the visitor was aiming at, and the scene keeps auto-rotating under the
 	// cursor between the hover and the release.
 	const node = pickNode() || hovered;
-	console.log("DBG up pick=", !!pickNode(), "hovered=", hovered && hovered.token.symbol, "px=", pointerPx.join(","));
 	if (node) { keyboardFocused = false; selectNode(node.mesh.userData.index, { fromKeyboard: false }); }
 }
 
@@ -455,7 +452,6 @@ function formatPrice(p) {
 	return `$${p.toExponential(2)}`;
 }
 function closePanel() {
-	console.log("DBG closePanel", new Error().stack);
 	if (!panel.classList.contains('open')) return;
 	panel.classList.remove('open');
 	panel.setAttribute('aria-hidden', 'true');

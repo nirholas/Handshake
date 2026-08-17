@@ -15,8 +15,10 @@ The page is a Three.js scene with PMREM image-based lighting, soft shadows, expo
 - **Forge from text.** The prompt box posts to `/api/forge` with an optional intent (accessory, item, scene, creature, vehicle) that becomes the model's category. The studio polls the job to completion, streaming staged progress, then loads the resulting GLB into the scene. Meshopt-compressed models are decoded on load. Generation runs on the platform's real text-to-3D lanes; a queued job restarts the timeout window so waiting for a GPU never counts against the run budget.
 - **Transform gizmos.** Select any object and translate, rotate, or scale it with `TransformControls`. Toggle world/local space, turn on 0.25-unit grid snapping, and lock proportional scale. Every drag and every numeric-field edit is one undoable step in a 50-deep undo/redo stack.
 - **Bone attachment.** When a rigged avatar is in the scene, any non-avatar item's inspector gains an "Attach to Bone" control. The avatar's bones are grouped into readable regions (Head, Torso, Left/Right Arm, Left/Right Leg, Fingers L/R) with the raw bone names cleaned of rig prefixes (`mixamorig:`, `CC_Base_`, `rig_`). Attaching parents the item to that bone at the origin, so it rides the bone; detaching returns it to world space.
-- **Scene tooling.** Click-to-select raycasting, a hierarchy panel with per-object visibility and rename (double-click), camera presets (front/back/left/right/top/isometric, plus Blender-style numpad keys), F to frame the selection, Ctrl+D to duplicate, a live triangle-and-object counter, screenshot export, and toast notifications for every action. Geometry, materials, and textures are disposed on removal, so long sessions do not leak memory.
-- **Bring your own avatar.** Load an avatar by URL, browse your gallery through `/api/explore`, or arrive with `?avatar=<id>` (resolved via `/api/avatars/<id>`) or `?glb=<url>`. If the avatar ships animations, its first clip (typically idle) plays automatically through an `AnimationMixer`.
+- **Scene tooling.** Click-to-select raycasting, a hierarchy panel with per-object visibility and rename (double-click), camera presets (front/back/left/right/top/isometric, plus Blender-style numpad keys), F to frame the selection, Ctrl+D to duplicate, a live triangle-and-object counter, screenshot export, and toast notifications for every action. Geometry, materials, and textures are disposed once the step that removed them can no longer be undone (it falls off the 50-deep history), so long sessions do not leak memory and undo still restores the real object.
+- **Bring your own avatar.** Load an avatar by pasting a GLB URL *or* a three.ws avatar id (both go through the same `/api/avatars/<id>` lookup), browse the public 3D avatars through `/api/explore?source=avatar&only3d=1`, or arrive with `?avatar=<id>` or `?glb=<url>`. If the avatar ships animations, its first clip (typically idle) plays automatically through an `AnimationMixer`. A model that cannot be loaded leaves a persistent inline explanation on the start panel, not a toast that vanishes before you can read it.
+- **A gallery that is never empty.** The Recent Creations strip shows the models this browser has forged. A first-time visitor has none, so the strip falls back to the live community showcase (`/api/forge-gallery?scope=community`) under the heading "Fresh from the Forge": real, public models you can click straight into the scene without waiting on a generation. Both reads go out together, so the fallback costs nothing in time.
+- **Works on a phone.** Below 900px the scene panel (hierarchy, inspector, bone attachment) becomes a drawer behind the ☰ button in the toolbar rather than disappearing, and the toolbar scrolls horizontally instead of pushing the canvas off screen. Every control is a real button with a focus state; the camera menu, avatar picker and shortcuts panel trap focus and return it to their trigger on Escape.
 
 ### Export vs. save outfit
 
@@ -24,7 +26,7 @@ There are two ways out. **Export GLB** bakes every visible, non-bone-attached ob
 
 ## Walkthrough
 
-1. Open [/compose](https://three.ws/compose). Load an avatar: paste a model URL, click "Browse" to pick from your gallery, or skip and compose props only.
+1. Open [/compose](https://three.ws/compose). Load an avatar: paste a model URL or an avatar id, click "Browse my avatars" to pick from the public 3D avatars, or skip and compose props only.
 2. Choose an intent chip (for example, Accessory), pick a suggested prompt or type your own ("neon visor"), and forge it. Watch the progress bar; the item drops into the scene when it is done.
 3. Select the item. In the inspector, open "Attach to Bone", choose Head from the region-grouped list, and click Attach. The visor snaps onto the head.
 4. Switch the gizmo to scale (press R) and size it to fit. Use grid snap and proportional lock as needed.
@@ -68,7 +70,8 @@ curl -X PATCH 'https://three.ws/api/avatars/<avatarId>' \
 - **Bone-attached items are excluded from Export GLB.** Export bakes visible, world-space objects; items parented to a bone belong to the avatar and are saved through Save outfit instead.
 - **Generation can take minutes.** Full-quality bakes legitimately run past ten minutes; the studio's ceiling sits above the slowest real generation, and a queued job restarts the wait window. A genuinely failed or timed-out job surfaces an actionable error.
 - **Undo is 50 deep.** Transforms, adds, and removes are undoable (Ctrl+Z / Ctrl+Y); a full scene wipe is not a single undo step.
-- **Ownership is client-keyed.** Forge creations and the gallery are scoped to a per-browser client key stored in local storage, so your generations follow the browser without an account.
+- **Ownership is client-keyed.** Forge creations and the gallery are scoped to a per-browser client key stored in local storage, so your generations follow the browser without an account. Until you have forged anything, the strip shows the public community showcase instead.
+- **A locally dropped GLB cannot be saved as an outfit.** A file dragged onto the drop zone lives at a `blob:` URL that dies with the tab, so Save outfit refuses it by name and points you at Export GLB (or uploading it through [/forge](https://three.ws/forge)) rather than persisting a link that breaks on reload.
 
 ## Related
 

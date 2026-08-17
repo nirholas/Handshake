@@ -839,19 +839,68 @@ html[data-bg="transparent"] #cc-lobby {
 }
 
 /* coin grid */
-.cc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cc-faint); margin: 10px 2px 14px; }
-.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(224px, 1fr)); gap: 14px; }
+.cc-feed-head {
+	display: flex; align-items: center; justify-content: space-between; gap: 16px;
+	flex-wrap: wrap; margin: 4px 2px 14px;
+}
+.cc-feed-title { display: flex; align-items: baseline; gap: 10px; }
+.cc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--cc-faint); margin: 0; }
+.cc-feed-count { color: var(--cc-dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cc-sorts { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cc-sort {
+	cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+	min-height: 34px; padding: 0 13px; color: var(--cc-dim);
+	background: transparent; border: 1px solid var(--cc-edge-soft); border-radius: 999px;
+	transition: color 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.cc-sort:hover { color: var(--cc-text); border-color: var(--cc-edge); }
+.cc-sort:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
+.cc-sort.cc-on { color: var(--cc-ink); background: #fff; border-color: #fff; box-shadow: var(--cc-glow); }
+
+.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 16px; }
 .cc-card {
 	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	overflow: hidden; cursor: pointer; position: relative;
-	transition: transform 0.12s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+	transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.14s ease, box-shadow 0.14s ease;
 	display: flex; flex-direction: column;
+	animation: cc-card-in 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	animation-delay: var(--cc-in-delay, 0ms);
 }
-.cc-card:hover { transform: translateY(-3px); border-color: var(--cc-edge-hi); box-shadow: var(--cc-shadow); }
-.cc-card:focus-visible { outline: none; transform: translateY(-3px); border-color: #fff; box-shadow: 0 0 0 1px #fff, var(--cc-shadow); }
-.cc-card-img { aspect-ratio: 16/10; background: var(--cc-bg2) center/cover no-repeat; position: relative; filter: saturate(0.96) contrast(1.03); transition: filter 0.25s ease; }
-.cc-card:hover .cc-card-img { filter: saturate(1.12) contrast(1.05); }
+@keyframes cc-card-in { from { opacity: 0; transform: translateY(10px); } }
+@media (prefers-reduced-motion: reduce) { .cc-card { animation: none; } }
+.cc-card:hover { transform: translateY(-4px); border-color: var(--cc-edge-hi); box-shadow: var(--cc-shadow), 0 0 28px rgba(255, 255, 255, 0.06); }
+.cc-card:focus-visible { outline: none; transform: translateY(-4px); border-color: #fff; box-shadow: 0 0 0 1px #fff, var(--cc-shadow); }
+.cc-card-img {
+	aspect-ratio: 16/10; background: var(--cc-bg2) center/cover no-repeat; position: relative;
+	filter: saturate(0.96) contrast(1.03); overflow: hidden;
+	transition: filter 0.25s ease, transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.cc-card:hover .cc-card-img { filter: saturate(1.12) contrast(1.05); transform: scale(1.03); }
+@media (prefers-reduced-motion: reduce) { .cc-card:hover .cc-card-img { transform: none; } }
 .cc-card-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(6, 6, 7, 0.92)); }
+/* Identity mark under the artwork: visible only where the art is missing or the
+   gateway failed, so a card is never a blank grey rectangle. */
+.cc-card-mono {
+	position: absolute; inset: 0; z-index: 0; display: grid; place-items: center;
+	font-size: 40px; font-weight: 800; letter-spacing: 0.02em;
+	color: rgba(255, 255, 255, 0.14); background: var(--cc-bg2);
+}
+/* Live headcount over the artwork. Hidden at zero (see _coinCard): an empty
+   world is normal and "0 inside" is noise, not information. */
+.cc-card-pop {
+	position: absolute; left: 9px; bottom: 9px; z-index: 1;
+	display: inline-flex; align-items: baseline; gap: 6px;
+	padding: 4px 10px; border-radius: 999px;
+	background: rgba(6, 6, 7, 0.72); border: 1px solid var(--cc-edge);
+	backdrop-filter: blur(6px);
+	font-size: 11px; font-weight: 600; color: var(--cc-text); letter-spacing: 0.01em;
+}
+.cc-card-pop-dot {
+	align-self: center; width: 6px; height: 6px; border-radius: 50%;
+	background: var(--cc-live); box-shadow: var(--cc-glow); animation: cc-blink 1.8s infinite;
+}
+.cc-card-pop-n { font-variant-numeric: tabular-nums; font-weight: 800; }
+.cc-card-pop-l { color: var(--cc-dim); font-weight: 500; }
 .cc-card-live {
 	position: absolute; top: 9px; left: 9px; z-index: 1;
 	display: inline-flex; align-items: center; gap: 6px;
@@ -1426,8 +1475,9 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-ping[data-grade="ok"]   { color: #d8c08a; }
 .cc-ping[data-grade="bad"]  { color: #d88a8a; }
 
-/* Name field in the lobby avatar bar. */
-.cc-name-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+/* Name field in the lobby avatar bar. Sits inline in the identity row now, so
+   the bottom margin that used to separate it from the picker below is gone. */
+.cc-name-row { display: flex; align-items: center; gap: 12px; }
 .cc-name-label {
 	color: var(--cc-dim); font-size: 12px; letter-spacing: 0.18em;
 	text-transform: uppercase; flex: none;
