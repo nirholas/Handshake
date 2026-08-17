@@ -596,6 +596,11 @@
 				border-color: rgba(160, 150, 255, 0.25);
 				background: rgba(160, 150, 255, 0.07);
 			}
+			.chip-soon {
+				color: #ffd9a8;
+				border-color: rgba(255, 190, 110, 0.28);
+				background: rgba(255, 190, 110, 0.08);
+			}
 			.chip-live-dot {
 				display: inline-block;
 				width: 5px;
@@ -743,6 +748,96 @@
 			}
 			.create-footnote a:hover {
 				color: #fff;
+			}
+
+			/* ── Inline alert ─────────────────────────────────────────────────────
+			   A toast disappears; a failure that leaves the visitor with nothing to
+			   look at must not. Hard errors (a remix that could not be loaded) land
+			   here instead: named, explained, and recoverable without a reload. */
+			.create-alert {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				margin: 0 0 24px;
+				padding: 16px 18px;
+				border-radius: 14px;
+				border: 1px solid rgba(255, 92, 92, 0.38);
+				background: #140a0a;
+				animation: ya-in 0.35s ease both;
+			}
+			.create-alert-title {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 14px;
+				font-weight: 600;
+				line-height: 1.3;
+				margin: 0;
+				color: #ffb3b3;
+			}
+			.create-alert-title svg {
+				width: 16px;
+				height: 16px;
+				flex: 0 0 auto;
+			}
+			.create-alert-body {
+				margin: 0;
+				font-size: 13px;
+				line-height: 1.55;
+				color: rgba(255, 214, 214, 0.8);
+			}
+			.create-alert-actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				margin-top: 4px;
+			}
+			.create-alert-btn {
+				display: inline-flex;
+				align-items: center;
+				min-height: 36px;
+				padding: 8px 14px;
+				border-radius: 9px;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(255, 255, 255, 0.06);
+				color: var(--text);
+				font: inherit;
+				font-size: 12.5px;
+				font-weight: 600;
+				cursor: pointer;
+				transition:
+					background 0.15s,
+					border-color 0.15s,
+					transform 0.15s;
+			}
+			.create-alert-btn:hover {
+				background: rgba(255, 255, 255, 0.12);
+				border-color: rgba(255, 255, 255, 0.3);
+				transform: translateY(-1px);
+			}
+			.create-alert-btn:active {
+				transform: none;
+			}
+			.create-alert-btn:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.create-alert-btn--primary {
+				background: var(--accent);
+				border-color: transparent;
+				color: var(--accent-ink);
+			}
+			.create-alert-btn--primary:hover {
+				background: #fff;
+				border-color: transparent;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.create-alert {
+					animation: none;
+				}
+				.create-alert-btn:hover {
+					transform: none;
+				}
 			}
 
 			/* ── Status toast ─────────────────────────────────────────────────── */
@@ -1148,20 +1243,40 @@
 			crossorigin="anonymous"
 		></script>
 		<script>
-			fetch('/api/auth/me', { credentials: 'include' })
-				.then(function (r) {
-					return r.ok ? r.json() : null;
-				})
-				.then(function (data) {
-					window.__authed = !!(data && data.user);
+			(function () {
+				var cleared = false;
+				function clearBootOverlay() {
+					if (cleared) return;
+					cleared = true;
 					var el = document.getElementById('page-loading');
 					if (el) el.remove();
-				})
-				.catch(function () {
-					window.__authed = false;
-					var el = document.getElementById('page-loading');
-					if (el) el.remove();
-				});
+				}
+				// #page-loading is a full-screen blackout. A rejected fetch clears it,
+				// but a request that simply never answers (stalled edge, captive
+				// portal, hung upstream) would leave it up forever and the whole page
+				// would read as broken. Bound the wait: an unanswered probe means
+				// "treat as signed out" and hand the page back. The auth-gated cards
+				// re-check at /login, so a wrong guess here costs one redirect.
+				var timer = setTimeout(function () {
+					if (window.__authed === undefined) window.__authed = false;
+					clearBootOverlay();
+				}, 6000);
+				function settle(authed) {
+					window.__authed = authed;
+					clearTimeout(timer);
+					clearBootOverlay();
+				}
+				fetch('/api/auth/me', { credentials: 'include' })
+					.then(function (r) {
+						return r.ok ? r.json() : null;
+					})
+					.then(function (data) {
+						settle(!!(data && data.user));
+					})
+					.catch(function () {
+						settle(false);
+					});
+			})();
 		</script>
 
 		<link rel="canonical" href="https://three.ws/create" />
@@ -1263,6 +1378,9 @@
 						&nbsp;·&nbsp; Make a 3D avatar
 					</p>
 				</div>
+				<!-- Hard-failure surface (see .create-alert): filled by src/create.js -->
+				<div id="create-alert-slot" role="alert" aria-live="assertive"></div>
+
 				<!-- Returning users: remix one you already made -->
 				<section class="your-avatars" id="your-avatars" hidden aria-label="Your avatars">
 					<div class="your-avatars-head">
@@ -1540,12 +1658,12 @@
 							Upload audio and your avatar lip-syncs to it. Generates a video you can
 							share anywhere.
 						</p>
-						<div class="card-meta" aria-hidden="true">
+						<div class="card-meta" id="card-video-avatar-meta" aria-hidden="true">
 							<span class="chip chip-auth" data-i18n="create.sign_in_3">Sign-in</span>
 							<span class="chip" data-i18n="create.lip_sync">Lip-sync</span>
 						</div>
 						<span class="card-cta card-cta--ghost">
-							Generate video
+							<span id="card-video-avatar-cta">Generate video</span>
 							<svg
 								width="13"
 								height="13"

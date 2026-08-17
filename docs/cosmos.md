@@ -28,6 +28,7 @@ On the page (`src/cosmos.js`), the avatar is a Google `<model-viewer>` with a tr
 4. Optionally set a seed for a reproducible render.
 5. Click Generate. A real progress state runs while the NVCF job renders; expect roughly 60 to 120 seconds on the free tier.
 6. When the world lands it plays behind your avatar. Preview it, regenerate with a new prompt or seed, or download the clip.
+7. Share copies a link that carries the finished clip, the avatar, the prompt, and the seed (`?world=…&avatar=…&prompt=…&seed=…`), so whoever opens it lands on the world already playing rather than an empty stage.
 
 ## Examples
 

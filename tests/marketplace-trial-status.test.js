@@ -170,6 +170,11 @@ describe('sellerView', () => {
 		const out = await sellerView(USER);
 
 		expect(out.role).toBe('seller');
+		// "Edit pricing" pointed at /dashboard-next/agent, which 404s. The agent
+		// editor's monetization panel is the surface that actually sets a skill's
+		// price and trial grant.
+		expect(out.queue[0].pricingUrl).toBe(`/agent/${AGENT}/edit?tab=monetization`);
+		expect(out.queue[0].agentUrl).toBe(`/agents/${AGENT}`);
 		expect(out.summary.warmLeads).toBe(3);
 		expect(out.summary.sold).toBe(2);
 		// 6dp mint: 2 exhausted buyers x 2 each. $THREE: 1 exhausted buyer x 0.5.
@@ -198,13 +203,13 @@ describe('buyerView', () => {
 			{
 				id: 'p1', agent_id: AGENT, skill: 'icon-set', trial_remaining: 0,
 				created_at: '2026-08-01T00:00:00.000Z', updated_at: '2026-08-03T00:00:00.000Z',
-				agent_name: 'Ink', agent_image: null,
+				agent_name: 'Ink', agent_image: null, total_trials: 2,
 				trial_uses: 3, amount: '2000000', currency_mint: MINT_6DP, chain: 'solana', mint_decimals: 6,
 			},
 			{
 				id: 'p2', agent_id: AGENT, skill: 'lore', trial_remaining: 3,
 				created_at: '2026-08-01T00:00:00.000Z', updated_at: '2026-08-02T00:00:00.000Z',
-				agent_name: 'Ink', agent_image: null,
+				agent_name: 'Ink', agent_image: null, total_trials: 2,
 				trial_uses: 3, amount: null, currency_mint: null, chain: null, mint_decimals: null,
 			},
 		]];
@@ -213,14 +218,44 @@ describe('buyerView', () => {
 
 		expect(out.role).toBe('buyer');
 		expect(out.summary).toEqual({ active: 2, fresh: 1, runningLow: 0, exhausted: 1 });
+		expect(out.truncated).toBe(false);
+		expect(out.total).toBe(2);
+		// `/agent/:id` answers 301 and drops the query string, which ate the
+		// `?skill=` deep link the page's Buy CTA appends.
 		expect(out.trials[0]).toMatchObject({
-			purchaseId: 'p1', skill: 'icon-set', state: 'exhausted', agentUrl: `/agent/${AGENT}`,
+			purchaseId: 'p1', skill: 'icon-set', state: 'exhausted', agentUrl: `/agents/${AGENT}`,
 		});
 		expect(out.trials[0].price).toEqual({
 			atomic: '2000000', decimals: 6, display: '2', mint: MINT_6DP, chain: 'solana',
 		});
 		// A delisted skill still shows its trial, just without a price to convert at.
 		expect(out.trials[1].price).toBeNull();
+	});
+
+	it('reports the true total when the list is capped, instead of counting the page', async () => {
+		// The window count is taken before the LIMIT, so a buyer past the cap is
+		// told the list is partial rather than reading a total that stops at 200.
+		sqlQueue = [[
+			{
+				id: 'p1', agent_id: AGENT, skill: 'icon-set', trial_remaining: 0,
+				created_at: '2026-08-01T00:00:00.000Z', updated_at: '2026-08-03T00:00:00.000Z',
+				agent_name: 'Ink', agent_image: null, total_trials: 412,
+				trial_uses: 3, amount: '2000000', currency_mint: MINT_6DP, chain: 'solana', mint_decimals: 6,
+			},
+		]];
+
+		const out = await buyerView(USER);
+
+		expect(out.total).toBe(412);
+		expect(out.truncated).toBe(true);
+	});
+
+	it('answers an empty result without inventing a total', async () => {
+		sqlQueue = [[]];
+		const out = await buyerView(USER);
+		expect(out.trials).toEqual([]);
+		expect(out.total).toBe(0);
+		expect(out.truncated).toBe(false);
 	});
 });
 
