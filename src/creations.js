@@ -187,8 +187,17 @@ function setFeedLive(kind) {
 
 // ── feed loading ─────────────────────────────────────────────────────────────
 
+let inflight = null;
+
 async function loadFeed({ reset = false } = {}) {
-	if (state.loading) return;
+	// A sort or filter change supersedes whatever is in flight: the controls
+	// already show the new selection, so dropping the reload (or queueing it
+	// behind a slow response) would leave the feed showing the wrong slice
+	// under the wrong tab. Pagination, by contrast, never stacks pages.
+	if (reset) inflight?.abort();
+	else if (state.loading) return;
+	const ctrl = new AbortController();
+	inflight = ctrl;
 	state.loading = true;
 	if (reset) {
 		state.cursor = null;
@@ -207,7 +216,7 @@ async function loadFeed({ reset = false } = {}) {
 		if (state.category) params.set('category', state.category);
 		if (state.q) params.set('q', state.q);
 		if (state.cursor && !reset) params.set('before', state.cursor);
-		const res = await fetch(`/api/remix-feed?${params}`, { headers: { accept: 'application/json' } });
+		const res = await fetch(`/api/remix-feed?${params}`, { headers: { accept: 'application/json' }, signal: ctrl.signal });
 		const data = await res.json().catch(() => ({}));
 		if (!res.ok) throw new Error(data?.message || `feed returned ${res.status}`);
 		if (!data.enabled) {
@@ -231,6 +240,8 @@ async function loadFeed({ reset = false } = {}) {
 		updateCount();
 		setFeedLive(state.items.length ? 'live' : 'idle');
 	} catch (err) {
+		// Superseded by a newer request: the replacement owns the UI now.
+		if (ctrl.signal.aborted) return;
 		log.warn('feed failed', err?.message);
 		setFeedLive('error');
 		updateCount();
@@ -242,8 +253,11 @@ async function loadFeed({ reset = false } = {}) {
 			$('cr-retry')?.addEventListener('click', () => loadFeed({ reset: true }));
 		}
 	} finally {
-		state.loading = false;
-		renderLoadMoreSentinel();
+		if (inflight === ctrl) {
+			inflight = null;
+			state.loading = false;
+			renderLoadMoreSentinel();
+		}
 	}
 }
 
