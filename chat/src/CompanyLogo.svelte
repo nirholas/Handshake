@@ -5,7 +5,7 @@
 	export let model;
 	export let size = 'h-7 w-7';
 	export let rounded = null;
-	/** Live-animated walking avatar. Set false for dense lists (dropdown rows) — uses still frame. */
+	/** Live-animated walking avatar. Set false for dense lists (dropdown rows), which uses a still frame. */
 	export let live = true;
 
 	// Remember to update hasCompanyLogo from convo.js when adding new logos.

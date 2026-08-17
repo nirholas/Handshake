@@ -77,7 +77,7 @@
 		<div class="text-[12px] text-slate-500">
 			{uploadProgress.stage === 'done'
 				? 'Saved!'
-				: `${uploadProgress.stage} — ${uploadProgress.done}/${uploadProgress.total} chunks…`}
+				: `${uploadProgress.stage}: ${uploadProgress.done}/${uploadProgress.total} chunks…`}
 		</div>
 	{:else}
 		<label class="cursor-pointer rounded-lg border border-dashed border-slate-300 px-4 py-3 text-center text-[12px] text-slate-500 hover:border-indigo-400 hover:text-indigo-500 transition">

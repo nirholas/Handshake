@@ -28,11 +28,7 @@
 	import Notifications from './Notifications.svelte';
 	import TxApprovalModal from './TxApprovalModal.svelte';
 	import AuthPage from './three-ui/pages/AuthPage.svelte';
-	import Pricing from './three-ui/pages/Pricing.svelte';
-	import MarketingPage from './three-ui/pages/MarketingPage.svelte';
-	import ResourcePage from './three-ui/pages/ResourcePage.svelte';
-	import FeaturePage from './three-ui/pages/FeaturePage.svelte';
-	import EventsPage from './three-ui/pages/EventsPage.svelte';
+	import { siteRouteFor } from './three-ui/site-routes.js';
 	import SettingsModal from './SettingsModal.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
 	import MessageContent from './MessageContent.svelte';
@@ -90,6 +86,15 @@
 			throwOnError: false,
 		})
 	);
+
+	// The chat app's own marketing pages were removed; every surface they
+	// covered is published for real at the site root. Old links still resolve:
+	// the hash is mapped to the live page and the location is replaced, so the
+	// dead route never occupies a history entry.
+	$: {
+		const retired = siteRouteFor($route);
+		if (retired) window.location.replace(retired);
+	}
 
 	const convoId = persisted('convoId');
 	let convos = {};
@@ -777,7 +782,7 @@
 					}
 					if (tool_call.function.arguments != null) {
 						// Most providers stream arguments as JSON-string fragments we concatenate.
-						// Some (e.g. GPT OSS 120B) send the fully-formed arguments object in one chunk —
+						// Some (e.g. GPT OSS 120B) send the fully-formed arguments object in one chunk,
 						// concatenating that with += would coerce it to the literal "[object Object]"
 						// and break the JSON.parse below. Stringify non-string deltas first.
 						const delta = tool_call.function.arguments;
@@ -1052,12 +1057,6 @@
 		cleanShareLink();
 		activeToolcall = null;
 
-		// if (convo.messages.length === 0) {
-		// 	historyOpen = false;
-		// 	inputTextareaEl.focus();
-		// 	return;
-		// }
-
 		const existingNewConvo = Object.values(convos).find((convo) => convo.messages.length === 0);
 		if (existingNewConvo) {
 			const oldModels = convo.models;
@@ -1066,7 +1065,7 @@
 			convo.models = oldModels;
 
 			historyOpen = false;
-			inputTextareaEl.focus();
+			inputTextareaEl?.focus();
 			return;
 		}
 
@@ -1105,7 +1104,7 @@
 
 		historyOpen = false;
 		if (innerWidth > 880) {
-			inputTextareaEl.focus();
+			inputTextareaEl?.focus();
 		}
 	}
 
@@ -2334,40 +2333,22 @@
 	/>
 {/if}
 
-{#if $route === 'pricing'}
-  <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <Pricing />
+{#if siteRouteFor($route)}
+  <!-- A retired marketing hash. The reactive block above is already replacing
+       the location; this holds the frame until the browser navigates so the
+       chat UI never flashes behind the redirect. -->
+  <div class="flex min-h-dvh items-center justify-center bg-paper">
+    <p class="text-sm text-ink-soft">Opening {siteRouteFor($route)}…</p>
   </div>
 {:else if $route === 'signin' || $route === 'signup'}
   <div class="min-h-dvh bg-paper">
     <div class="sticky top-0 z-[110]"><TopNav /></div>
     <AuthPage kind={$route} />
   </div>
-{:else if $route.startsWith('solutions/') || $route.startsWith('business/')}
-  <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <MarketingPage slug={$route} />
-  </div>
-{:else if $route.startsWith('events/')}
-  <div class="min-h-dvh bg-paper overflow-y-auto">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <EventsPage slug={$route} />
-  </div>
-{:else if $route.startsWith('resources/')}
-  <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <ResourcePage slug={$route.slice('resources/'.length)} />
-  </div>
 {:else if $route === 'dashboard/revenue'}
   <div class="min-h-dvh bg-paper">
     <div class="sticky top-0 z-[110]"><TopNav /></div>
     <RevenueDashboard />
-  </div>
-{:else if $route.startsWith('features/')}
-  <div class="min-h-dvh bg-paper overflow-y-auto">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <FeaturePage slug={$route.slice('features/'.length)} />
   </div>
 {:else}
 <main class="flex h-dvh w-screen flex-col">
@@ -2851,7 +2832,7 @@
 									</button>
 								{/if}
 								{#if effectiveAgentId}
-									<!-- The agent's wallet identity — tip it for a good answer. -->
+									<!-- The agent's wallet identity. Tip it for a good answer. -->
 									<AgentWallet agentId={effectiveAgentId} />
 								{/if}
 							</div>
@@ -3188,7 +3169,7 @@
     <div class="h-footer-inner">
         <div class="h-footer-brand-col">
             <div class="h-footer-brand">
-                <img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+                <img class="wordmark-logo" src="{import.meta.env.BASE_URL}three.svg" alt="" aria-hidden="true" />
                 <span class="wordmark-dot" aria-hidden="true"></span>
                 <span>three.ws</span>
             </div>

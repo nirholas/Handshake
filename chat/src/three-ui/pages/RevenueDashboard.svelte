@@ -9,6 +9,7 @@
   let withdrawalsTotal = 0;
   let loading = true;
   let loadError = '';
+  let needsSignIn = false;
 
   // Available balance = net earned minus pending/processing withdrawals
   let availableBalance = 0;
@@ -55,6 +56,7 @@
   async function loadAll() {
     loading = true;
     loadError = '';
+    needsSignIn = false;
     try {
       const [revRes, walletsRes, histRes] = await Promise.all([
         fetch('/api/billing/revenue', { credentials: 'include' }),
@@ -62,9 +64,15 @@
         fetch(`/api/billing/withdrawals?limit=${HIST_LIMIT}&offset=${histOffset}`, { credentials: 'include' }),
       ]);
 
-      if (!revRes.ok) throw new Error('Failed to load revenue');
-      if (!walletsRes.ok) throw new Error('Failed to load payout wallets');
-      if (!histRes.ok) throw new Error('Failed to load withdrawal history');
+      // 401 is not a failure, it is the page telling an anonymous visitor what
+      // to do next. Saying "failed to load" there sends people hunting a bug.
+      if ([revRes, walletsRes, histRes].some((r) => r.status === 401)) {
+        needsSignIn = true;
+        return;
+      }
+      if (!revRes.ok) throw new Error('Could not load your revenue. Try again in a moment.');
+      if (!walletsRes.ok) throw new Error('Could not load your payout wallets. Try again in a moment.');
+      if (!histRes.ok) throw new Error('Could not load your withdrawal history. Try again in a moment.');
 
       revenueData = await revRes.json();
       const walletsJson = await walletsRes.json();
@@ -159,7 +167,7 @@
         return;
       }
 
-      submitSuccess = 'Withdrawal requested. Processing typically takes 1–2 business days.';
+      submitSuccess = 'Withdrawal requested. Processing typically takes 1-2 business days.';
       amountDisplay = '';
       await loadAll();
     } catch (e) {
@@ -198,8 +206,21 @@
 
   {#if loading}
     <p class="text-ink-soft text-sm">Loading…</p>
+  {:else if needsSignIn}
+    <div class="rounded-xl border border-rule bg-white p-6 text-center">
+      <p class="text-sm text-ink">Sign in to see what your agents have earned.</p>
+      <button
+        class="mt-4 h-10 rounded-full bg-black px-5 text-sm font-medium text-white transition-colors hover:bg-[#333]"
+        on:click={() => route.set('signin')}
+      >Sign in</button>
+    </div>
   {:else if loadError}
-    <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{loadError}</div>
+    <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <p>{loadError}</p>
+      <button class="mt-3 rounded-full border border-red-300 px-3 py-1 text-xs font-medium hover:bg-red-100" on:click={loadAll}>
+        Retry
+      </button>
+    </div>
   {:else}
 
   <!-- Summary cards -->
@@ -365,7 +386,7 @@
                       {w.tx_signature.slice(0, 8)}…
                     </a>
                   {:else}
-                    <span class="text-xs text-ink-faint">—</span>
+                    <span class="text-xs text-ink-faint">-</span>
                   {/if}
                 </td>
               </tr>
@@ -377,7 +398,7 @@
       <!-- Pagination -->
       {#if withdrawalsTotal > HIST_LIMIT}
         <div class="flex items-center justify-between mt-4 text-sm text-ink-soft">
-          <span>{histOffset + 1}–{Math.min(histOffset + HIST_LIMIT, withdrawalsTotal)} of {withdrawalsTotal}</span>
+          <span>{histOffset + 1}-{Math.min(histOffset + HIST_LIMIT, withdrawalsTotal)} of {withdrawalsTotal}</span>
           <div class="flex gap-2">
             <button
               disabled={histOffset === 0}

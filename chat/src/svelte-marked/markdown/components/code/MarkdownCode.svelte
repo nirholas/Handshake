@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { flash } from '../../../../actions.js';
-	import { feChevronDown, feChevronUp, feCopy, feFile, fePlay } from '../../../../feather.js';
+	import { feChevronDown, feChevronUp, feCopy } from '../../../../feather.js';
 	import Icon from '../../../../Icon.svelte';
 	import type { MarkdownOptions, Renderers } from '../../markedConfiguration';
 	import type { Tokens } from 'marked';
@@ -8,7 +8,9 @@
 	export let token: Tokens.Code;
 	export const options: MarkdownOptions = undefined;
 	export const renderers: Renderers = undefined;
-	export let message;
+	// Passed to every renderer by the marked harness; this one renders the same
+	// header for assistant and user code blocks, so it goes unread.
+	export const message = undefined;
 
 	let attrs: Record<string, any> = {};
 
@@ -49,14 +51,6 @@
 			</span>
 		{/if}
 		<div class="ml-auto flex gap-2">
-			{#if message && message.role === 'assistant'}
-				<button
-					class="flex items-center gap-x-1.5 self-start rounded-full bg-gray-200 px-3.5 py-2 text-left text-xs transition-colors hover:bg-gray-300"
-				>
-					<Icon icon={fePlay} class="h-3 w-3" />
-					Apply
-				</button>
-			{/if}
 			<button
 				class="flex items-center gap-x-1.5 self-start rounded-full bg-gray-200 px-3.5 py-2 text-left text-xs transition-colors hover:bg-gray-300"
 				use:flash

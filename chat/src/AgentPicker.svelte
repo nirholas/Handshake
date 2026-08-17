@@ -315,7 +315,7 @@
 					>
 						<option value="popular">Popular</option>
 						<option value="recent">Recent</option>
-						<option value="name">A–Z</option>
+						<option value="name">A-Z</option>
 					</select>
 				</div>
 			</div>
@@ -324,7 +324,7 @@
 				<p class="text-center text-[12px] text-slate-400 py-3">{$t('loading')}</p>
 			{:else if marketError}
 				<p class="text-[12px] text-slate-400 py-2">
-					Failed to load — <button class="underline" on:click={() => searchMarket(query, true)}>retry</button>
+					Failed to load. <button class="underline" on:click={() => searchMarket(query, true)}>retry</button>
 				</p>
 			{:else if marketAgents.length === 0}
 				<p class="text-[12px] text-slate-400 py-2">{$t('noAgentsFound')}</p>

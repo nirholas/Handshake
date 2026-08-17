@@ -13,7 +13,7 @@ export function chunkText(text, chunkSize = 500, overlap = 50) {
 
 export async function embedTexts(texts) {
 	const apiKey = get(openaiAPIKey);
-	if (!apiKey) throw new Error('No OpenAI API key set — add it in Settings.');
+	if (!apiKey) throw new Error('No OpenAI API key set. Add it in Settings.');
 	const res = await fetch('https://api.openai.com/v1/embeddings', {
 		method: 'POST',
 		headers: {

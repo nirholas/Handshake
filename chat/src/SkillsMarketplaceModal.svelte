@@ -61,7 +61,7 @@
 	}
 
 	/**
-	 * Install a Local skill into the chat. No HTTP round-trip — local skills
+	 * Install a Local skill into the chat. No HTTP round-trip: local skills
 	 * are not stored in the marketplace DB; they live on disk (SKILL.md packs)
 	 * or in-code (AgentSkills). Install just mutates the two client stores:
 	 *   - knowledgeSkills: full SKILL.md body injected into the system prompt
@@ -550,7 +550,7 @@
 					category: p.meta?.category || '',
 					manifestUrl: p.manifest || `${base}/${p.identifier}.json`,
 				}));
-				// No upfront HEAD probe — surfacing 100+ 404s in the console on
+				// No upfront HEAD probe: surfacing 100+ 404s in the console on
 				// every Library open isn't worth filtering broken entries early.
 				// Install-time fetch (installLibraryPlugin) reports the real failure.
 			} else {
@@ -1177,7 +1177,7 @@
 									{/if}
 								</button>
 								{#if libraryFailed[plugin.identifier]}
-									<span class="text-[10px] text-red-500">Install failed — retry?</span>
+									<span class="text-[10px] text-red-500">Install failed. Retry?</span>
 								{/if}
 							</div>
 						</div>

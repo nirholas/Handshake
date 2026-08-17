@@ -1,7 +1,7 @@
 <script>
   import { composerFill } from '../../stores.js';
   import Icon from '../../Icon.svelte';
-  import { feArrowUpLeft, feLayout, feChevronDown, feUpload } from '../../feather.js';
+  import { feArrowUpLeft, feLayout, feChevronDown } from '../../feather.js';
 
   const samplePrompts = [
     'Automate weekly team status reporting',
@@ -10,14 +10,38 @@
     'Design investor pitch deck with projections',
   ];
 
-  const templateCount = 8;
+  // Each template is a real prompt preset: picking one writes its outline into
+  // the composer and sends it, exactly like picking a sample prompt does.
+  const templates = [
+    { name: 'Pitch deck',      outline: 'problem, solution, market size, product demo, traction, business model, team, and the ask' },
+    { name: 'Product launch',  outline: 'what shipped, who it is for, the before/after, a live demo, pricing, and rollout dates' },
+    { name: 'Quarterly review',outline: 'goals set, results against them, wins, misses with root causes, and next quarter priorities' },
+    { name: 'Sales narrative',  outline: 'the customer pain, the cost of the status quo, our approach, proof, and next steps' },
+    { name: 'Technical design', outline: 'context, constraints, the proposed architecture, alternatives considered, risks, and rollout' },
+    { name: 'Team onboarding',  outline: 'how the team works, the systems we run, who owns what, and the first-week checklist' },
+    { name: 'Research readout', outline: 'the question, the method, what we found, what surprised us, and what we recommend' },
+    { name: 'Board update',     outline: 'headline metrics, progress against plan, the top three risks, and decisions needed' },
+  ];
 
   const slideCountOptions = ['4 - 8', '8 - 12', '12 - 16', '16 - 20'];
   let selectedSlideCount = '8 - 12';
   let slideCountOpen = false;
 
+  /** The chosen length is part of every request, so the control actually steers output. */
+  function withSlideCount(text) {
+    return `${text}. Make it ${selectedSlideCount} slides.`;
+  }
+
   function selectPrompt(prompt) {
-    composerFill.set({ text: prompt, submit: true, ifEmpty: false });
+    composerFill.set({ text: withSlideCount(prompt), submit: true, ifEmpty: false });
+  }
+
+  function selectTemplate(template) {
+    composerFill.set({
+      text: withSlideCount(`Build a ${template.name.toLowerCase()} covering ${template.outline}`),
+      submit: true,
+      ifEmpty: false,
+    });
   }
 </script>
 
@@ -26,7 +50,7 @@
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
     {#each samplePrompts as prompt}
       <button
-        class="bg-white border border-rule rounded-xl p-4 text-left h-[112px] flex flex-col justify-between hover:bg-paper transition-colors"
+        class="bg-white border border-rule rounded-xl p-4 text-left h-[112px] flex flex-col justify-between hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
         on:click={() => selectPrompt(prompt)}
       >
         <span class="text-sm text-ink line-clamp-2">{prompt}</span>
@@ -39,7 +63,9 @@
     <h2 class="text-sm font-semibold text-ink">Choose a template</h2>
     <div class="relative">
       <button
-        class="bg-white border border-rule rounded-full h-9 px-3 text-sm flex items-center gap-2 hover:bg-paper transition-colors"
+        class="bg-white border border-rule rounded-full h-9 px-3 text-sm flex items-center gap-2 hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        aria-expanded={slideCountOpen}
+        aria-label="Slide count: {selectedSlideCount}"
         on:click={() => (slideCountOpen = !slideCountOpen)}
       >
         <Icon icon={feLayout} class="w-4 h-4 text-ink-soft" />
@@ -51,6 +77,7 @@
           {#each slideCountOptions as option}
             <button
               class="block w-full px-4 py-2 text-sm text-left text-ink hover:bg-paper first:rounded-t-xl last:rounded-b-xl"
+              aria-current={option === selectedSlideCount ? 'true' : undefined}
               on:click={() => { selectedSlideCount = option; slideCountOpen = false; }}
             >
               {option}
@@ -61,14 +88,14 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-4 gap-4 pb-8">
-    <button class="aspect-[4/3] bg-white border border-rule rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-paper transition-colors">
-      <Icon icon={feUpload} class="w-5 h-5 text-ink-soft" />
-      <span class="text-xs text-ink-soft">Import template</span>
-    </button>
-    {#each Array(templateCount) as _, i}
-      <button class="aspect-[4/3] bg-paper-deep rounded-xl flex items-center justify-center hover:opacity-80 transition-opacity">
-        <span class="text-xs text-ink-soft font-serif text-center px-2">Sample template {i + 1}</span>
+  <div class="grid grid-cols-2 gap-4 pb-8 md:grid-cols-4">
+    {#each templates as template}
+      <button
+        class="aspect-[4/3] bg-paper-deep rounded-xl flex flex-col items-center justify-center gap-1.5 px-2 text-center hover:bg-white hover:border hover:border-rule transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        on:click={() => selectTemplate(template)}
+      >
+        <span class="text-sm text-ink font-serif">{template.name}</span>
+        <Icon icon={feArrowUpLeft} class="w-[14px] h-[14px] text-ink-faint" />
       </button>
     {/each}
   </div>

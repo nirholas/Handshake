@@ -19,7 +19,7 @@ let failureWarned = false;
 function circuitOpen() {
 	if (consecutiveFailures < MAX_FAILURES) return false;
 	if (Date.now() - circuitOpenedAt > COOLDOWN_MS) {
-		// Cool-down elapsed — allow one probe to test recovery.
+		// Cool-down elapsed, so allow one probe to test recovery.
 		consecutiveFailures = 0;
 		failureWarned = false;
 		return false;
@@ -28,7 +28,7 @@ function circuitOpen() {
 }
 
 async function safePostJson(url, body, fallback) {
-	// No address configured (or relative) — skip silently.
+	// No address configured (or relative), so skip silently.
 	if (!url || typeof url !== 'string' || !/^https?:\/\//i.test(url)) return fallback;
 	if (circuitOpen()) return fallback;
 	try {
@@ -55,7 +55,7 @@ async function safePostJson(url, body, fallback) {
 	}
 }
 
-// Reset the breaker — call after the user changes the sync address so a new host
+// Reset the breaker. Call it after the user changes the sync address so a new host
 // gets a fresh attempt instead of inheriting the prior host's failure count.
 export function resetSyncCircuit() {
 	consecutiveFailures = 0;

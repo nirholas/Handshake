@@ -101,7 +101,7 @@
 		}
 	}
 
-	// Avatar selector — pulls user's avatars (session auth) + featured public avatars
+	// Avatar selector: pulls user's avatars (session auth) + featured public avatars
 	let myAvatars = [];
 	let featuredAvatars = [];
 	let avatarsLoading = false;
@@ -175,7 +175,7 @@
 
 	let elRefreshToolSchema;
 
-	// Draft values for API keys — nothing commits until Save is clicked
+	// Draft values for API keys: nothing commits until Save is clicked
 	let draftKeys = {
 		openrouter: $openrouterAPIKey,
 		anthropic: $anthropicAPIKey,
@@ -358,7 +358,7 @@
 						<span>Enable local model providers</span>
 						<span class="text-[11px] text-slate-500">
 							Probe Ollama (localhost:11434) and the local tool server (localhost:8081) on load.
-							Leave off if you don't run these locally — otherwise the browser logs connection errors.
+							Leave off if you don't run these locally, otherwise the browser logs connection errors.
 						</span>
 					</span>
 				</label>
@@ -702,7 +702,7 @@
 							<p class="text-[12px] text-red-500">{brandSaveError}</p>
 						{/if}
 						{#if brandSaveOk}
-							<p class="text-[12px] text-green-600">Saved — all users will see the updated branding.</p>
+							<p class="text-[12px] text-green-600">Saved. All users will see the updated branding.</p>
 						{/if}
 						<button
 							class="mt-1 rounded-lg bg-indigo-500 px-4 py-2 text-[13px] font-medium text-white hover:bg-indigo-600 disabled:opacity-50"

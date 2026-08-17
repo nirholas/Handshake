@@ -9,7 +9,6 @@
     feCloud,
     feLink,
     feArrowUpLeft,
-    feFigma,
   } from '../../feather.js';
 
   const categories = [
@@ -39,7 +38,22 @@
     linkbio:   'Create a link-in-bio page for ',
   };
 
-  export let compact = false;
+  let referenceOpen = false;
+  let referenceUrl = '';
+
+  /** Append a site the model should take its cues from to whatever is composed. */
+  function addReference() {
+    const url = referenceUrl.trim();
+    if (!url) return;
+    composerFill.set({
+      text: `Use ${url} as the visual reference. `,
+      submit: false,
+      ifEmpty: false,
+      append: true,
+    });
+    referenceUrl = '';
+    referenceOpen = false;
+  }
 
   function pick(id) {
     const isDeselecting = $websiteCategory === id;
@@ -57,18 +71,33 @@
 <div class="mt-8 max-w-[760px] mx-auto px-1">
   <div class="flex items-center justify-between">
     <h3 class="text-sm font-semibold text-ink">What would you like to build?</h3>
-    {#if !compact}
-      <div class="flex items-center gap-3 text-sm text-ink">
-        <button class="inline-flex items-center gap-1.5 hover:underline">
-          <Icon icon={feLink} size={14} /> Add website reference
-        </button>
-        <span class="text-ink-faint">|</span>
-        <button class="inline-flex items-center gap-1.5 hover:underline">
-          <Icon icon={feFigma} size={14} /> Import from Figma
-        </button>
-      </div>
-    {/if}
+    <button
+      class="inline-flex items-center gap-1.5 text-sm text-ink hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ink rounded"
+      aria-expanded={referenceOpen}
+      on:click={() => (referenceOpen = !referenceOpen)}
+    >
+      <Icon icon={feLink} size={14} /> Add website reference
+    </button>
   </div>
+
+  {#if referenceOpen}
+    <form class="mt-3 flex gap-2" on:submit|preventDefault={addReference}>
+      <input
+        type="url"
+        bind:value={referenceUrl}
+        placeholder="https://a-site-you-like.com"
+        aria-label="Website to use as a visual reference"
+        class="h-9 flex-1 rounded-full border border-rule bg-white px-4 text-sm text-ink placeholder-ink-faint focus:border-ink focus:outline-none"
+      />
+      <button
+        type="submit"
+        disabled={!referenceUrl.trim()}
+        class="h-9 shrink-0 rounded-full bg-black px-4 text-sm font-medium text-white transition-colors hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        Add
+      </button>
+    </form>
+  {/if}
 
   <div class="mt-4 flex gap-2 overflow-x-auto scrollbar-none">
     {#each categories as c}

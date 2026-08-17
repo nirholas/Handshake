@@ -124,13 +124,13 @@ function stripCodeFence(text) {
  *   genuinely unparseable. The raw payload is attached as `err.payload`.
  */
 export function parseToolCallArguments(raw) {
-	// Already an object (and not null) — providers that hand back parsed args.
+	// Already an object (and not null): providers that hand back parsed args.
 	if (raw !== null && typeof raw === 'object') {
 		return raw;
 	}
 
 	if (typeof raw !== 'string') {
-		// null / undefined / number — treat as "no arguments".
+		// null / undefined / number: treat as "no arguments".
 		return {};
 	}
 
@@ -149,7 +149,7 @@ export function parseToolCallArguments(raw) {
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
 		const wrapped = new Error(message);
-		// @ts-ignore — attach the offending payload for diagnostics/UI.
+		// @ts-ignore: attach the offending payload for diagnostics/UI.
 		wrapped.payload = raw;
 		throw wrapped;
 	}

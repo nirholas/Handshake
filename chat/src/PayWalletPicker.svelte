@@ -18,7 +18,7 @@
 	$: selectedAgent = agentsWithWallet.find((a) => a.id === $payAgentId) || null;
 
 	function fmtUsdc(v) {
-		if (v == null || Number.isNaN(Number(v))) return '— USDC';
+		if (v == null || Number.isNaN(Number(v))) return '- USDC';
 		return Number(v).toFixed(3) + ' USDC';
 	}
 	function shortAddr(a) {
@@ -36,7 +36,7 @@
 			demoWallet = await r.json();
 			if (demoWallet?.configured === false) {
 				// A wallet that simply isn't set up is a neutral state, not an
-				// error — only misconfiguration and fetch failures go red.
+				// error: only misconfiguration and fetch failures go red.
 				if (demoWallet.code === 'wallet_unconfigured') {
 					demoUnconfigured = true;
 				} else {
@@ -114,7 +114,7 @@
 		loadDemoWallet();
 	}
 	function selectAgent(a) {
-		if (!a.solana_address) return; // No wallet — handled via separate flow
+		if (!a.solana_address) return; // No wallet, handled via separate flow
 		$payAgentId = a.id;
 		open = false;
 	}
@@ -124,7 +124,7 @@
 	}
 
 	function onSettled() {
-		// A paid tool call just settled — refresh balances so the pill ticks down.
+		// A paid tool call just settled, so refresh balances so the pill ticks down.
 		refreshAll();
 	}
 
@@ -209,7 +209,7 @@
 						{:else if demoError}
 							<span class="text-red-600">{demoError}</span>
 						{:else if demoUnconfigured && signedIn && agentsWithWallet.length > 0}
-							not configured — pick one of your agent wallets below
+							not configured. Pick one of your agent wallets below
 						{:else}
 							not configured
 						{/if}

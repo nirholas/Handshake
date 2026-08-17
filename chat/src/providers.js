@@ -9,7 +9,7 @@ import {
 	localProvidersEnabled,
 } from './stores.js';
 
-// First-paint seed ONLY — the real list comes from /api/chat/models, which
+// First-paint seed ONLY. The real list comes from /api/chat/models, which
 // returns what OpenRouter is serving right now, ranked best-first.
 //
 // Do not treat these ids as durable. OpenRouter retires `:free` endpoints with
@@ -30,7 +30,7 @@ export const BUILTIN_MODELS = [
  *
  * Order: the configured default when it is actually available, else the first
  * model the server says is live, else the local seed. The middle rung is the
- * one that matters — it is what keeps chat working through a model retirement
+ * one that matters: it is what keeps chat working through a model retirement
  * without a redeploy.
  */
 export function resolveDefaultModel(available, configuredId) {
@@ -302,7 +302,7 @@ export async function fetchModels({ onFinally }) {
 				.catch((err) => {
 					if (provider.isLocal) {
 						console.debug(
-							`[${provider.name}] not detected at ${provider.url} — start the local service if you want it.`
+							`[${provider.name}] not detected at ${provider.url}. Start the local service if you want it.`
 						);
 					} else {
 						console.debug('Error fetching models from provider', provider.name, err);
@@ -312,7 +312,7 @@ export async function fetchModels({ onFinally }) {
 		});
 
 		const [serverModels, ...providerResults] = await Promise.all([serverModelsPromise, ...promises]);
-		// User's own provider keys take precedence — deduplicate by id.
+		// User's own provider keys take precedence, so deduplicate by id.
 		const userModels = providerResults.flat();
 		const userModelIds = new Set(userModels.map((m) => m.id));
 		const externalModels = [...userModels, ...serverModels.filter((m) => !userModelIds.has(m.id))];

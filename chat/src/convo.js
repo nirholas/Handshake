@@ -72,7 +72,7 @@ export async function complete(convo, onupdate, onabort) {
 	}
 
 	// Drop a trailing unclosed, empty assistant message so we never submit a
-	// dangling turn — applies across every provider, Anthropic included.
+	// dangling turn, and it applies across every provider, Anthropic included.
 	if (
 		convo.messages[convo.messages.length - 1].unclosed &&
 		convo.messages[convo.messages.length - 1].content === ''

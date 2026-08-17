@@ -57,7 +57,7 @@
 
 	// Walk the avatar down from the previous message's slot into this one. The slot
 	// stays hidden until the agent's GLB is ready, then it appears at the old
-	// position and glides to its resting spot while the walk clip plays — so the
+	// position and glides to its resting spot while the walk clip plays, so the
 	// agent looks like it strolled to the new message rather than teleporting.
 	function walkAgentIntoPlace(slot, el) {
 		if (!slot || !el) return;

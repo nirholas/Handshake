@@ -30,5 +30,5 @@
   "cancel": "取消",
   "install": "安装",
   "installed": "已安装",
-  "showingOf": "显示 {shown} / {total} — 搜索筛选"
+  "showingOf": "显示 {shown} / {total},搜索筛选"
 }

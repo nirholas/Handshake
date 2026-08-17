@@ -85,7 +85,7 @@ export const pluginLibraryUrl = persisted('pluginLibraryUrl', 'https://ai-agent-
 // reply, the sidebar logo, and the Settings avatar picker all read this one.
 export const talkingHeadAvatarUrl = persisted('talkingHeadAvatarUrl', '');
 
-// True while the assistant is generating a response — drives the chat avatar
+// True while the assistant is generating a response. Drives the chat avatar
 // walk animation so the agent visibly "moves with the chat".
 export const generating = writable(false);
 
@@ -107,7 +107,6 @@ export const websiteCategory = writable(null);
 export const composerFill = writable(null);
 export const flowSecondary = persisted('flowSecondary', {});
 export const appPlatforms = writable(new Set(['macOS']));
-export const designModel = writable('gpt-image-2');
 
 export const notifications = writable([]);
 

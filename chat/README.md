@@ -29,6 +29,32 @@ This directory is covered by [LICENSE](LICENSE) (proprietary, copyright 2026 nir
   Pasted `.glb` links auto-render too, proxied through `/api/glb?src=` when the host lacks CORS.
 - **Conversations** live entirely in the browser (localStorage), with optional
   end-to-end-encrypted sync through the Go server in [sync/](sync).
+- **Sign-in** ([src/three-ui/pages/AuthPage.svelte](src/three-ui/pages/AuthPage.svelte),
+  hash routes `#signin` / `#signup`): wallet sign-in over SIWE/SIWS
+  ([src/walletAuth.js](src/walletAuth.js)) or email and password against the platform's
+  own `/api/auth/login` and `/api/auth/register`
+  ([src/passwordAuth.js](src/passwordAuth.js)). All four paths set the same cookie
+  session the rest of three.ws reads, so a chat sign-in is a platform sign-in.
+  Registration sends the server-enforced Terms clickwrap; without it the API refuses to
+  create the account, so the submit button stays disabled until the box is checked.
+
+## Routes
+
+This app is the chat, and only the chat. Everything marketing (pricing, blog, updates,
+docs, use cases, security, events, per-solution landing pages) is published for real at
+the site root and reached through the top nav's `CHAT_SITE_LINKS`, never re-implemented
+here. The hash routes that used to render in-app copies of those pages now resolve to
+the live page that owns each topic and replace the location
+([src/three-ui/site-routes.js](src/three-ui/site-routes.js), covered by
+[../tests/chat-app-core.test.js](../tests/chat-app-core.test.js)), so an old
+`/chat#pricing` link still lands somewhere true.
+
+| Hash route | Renders |
+|---|---|
+| `#chat` (default) | The conversation surface |
+| `#signin`, `#signup` | Wallet or email sign-in |
+| `#dashboard/revenue` | Agent earnings and withdrawals (`/api/billing/*`, signed in) |
+| `#pricing`, `#resources/*`, `#features/*`, `#solutions/*`, `#business/*`, `#events/*` | Redirect to the real site page |
 
 ## Local development
 
@@ -53,8 +79,18 @@ The dev server ([vite.config.js](vite.config.js)) does three things for you:
 - Aliases `$src` to [src/](src) and `$shared` to `../src/shared` (the app imports the
   platform's `portable-wallet.js` from there: one repo, one wallet truth).
 
-`npm run format` / `format:check` run Prettier. There is no test suite inside `chat/`;
-platform tests live in the repo root (`npm test`).
+`npm run format` / `format:check` run Prettier. Note that `format:check` currently
+reports pre-existing style drift across most of the tree; it is not a gate.
+
+Tests live in the repo root and run with the platform suite (`npm test`, or
+`npx vitest run tests/chat-app-core.test.js` for just this app). They cover the pure
+core paths underneath the Svelte UI: model selection and provider headers
+([src/providers.js](src/providers.js)), the tool-call argument codec
+([src/util.js](src/util.js)), the fund-moving-tool gate that decides which wallet calls
+are preflighted through GuardChain ([src/guard.js](src/guard.js)), credential auth
+([src/passwordAuth.js](src/passwordAuth.js)), and the retired-route resolver
+([src/three-ui/site-routes.js](src/three-ui/site-routes.js)), including an assertion
+that every route it redirects to is a page `data/pages.json` actually declares.
 
 ## How production builds it
 
@@ -94,8 +130,9 @@ Everything below is a real `api/` handler in the repo root, reached same-origin:
 
 - **Chat**: `/api/chat/models`, `/api/chat/config`, `/api/chat/proxy` (free lane with
   moderation and model failover), `/api/chat-skills`, `/api/tts/google` (voice).
-- **Auth and identity**: `/api/auth/me`, `/api/csrf-token` (cookie session shared with
-  the rest of three.ws).
+- **Auth and identity**: `/api/auth/login`, `/api/auth/register`, `/api/auth/me`,
+  `/api/auth/logout`, the SIWE/SIWS nonce and verify pairs, `/api/csrf-token` (cookie
+  session shared with the rest of three.ws).
 - **Forge and 3D**: `/api/forge` (create, poll, rig), `/api/avatars/from-forge`,
   `/api/glb` (CORS proxy), `/api/nft/resolve`.
 - **Agents and marketplace**: `/api/agents/*`, `/api/marketplace/agents`,

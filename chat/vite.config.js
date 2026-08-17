@@ -62,7 +62,7 @@ export default defineConfig(function () {
 			strictPort: true,
 			fs: {
 				// The chat app reuses shared wallet modules that live in the main
-				// repo's src/ (one repo, one wallet truth) — allow Vite to serve them.
+				// repo's src/ (one repo, one wallet truth), so allow Vite to serve them.
 				allow: [path.resolve(__dirname, '..')],
 			},
 			proxy: {

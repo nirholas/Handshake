@@ -1,13 +1,15 @@
 <script>
   import { route, loadCurrentUser } from '../../stores.js';
   import { signInWithEVM, signInWithSolana } from '../../walletAuth.js';
+  import { signInWithPassword, registerWithPassword } from '../../passwordAuth.js';
 
   export let kind = 'signin'; // 'signin' | 'signup'
 
   let email = '';
   let password = '';
   let name = '';
-  let loading = null; // 'evm' | 'sol' | null
+  let tosAccepted = false;
+  let loading = null; // 'evm' | 'sol' | 'password' | null
   let error = '';
 
   async function connectEVM() {
@@ -38,9 +40,23 @@
     }
   }
 
-  function submit() {
-    // Email/password auth not yet implemented
-    route.set('chat');
+  async function submit() {
+    error = '';
+    loading = 'password';
+    try {
+      if (kind === 'signup') {
+        await registerWithPassword({ email, password, displayName: name, tosAccepted });
+      } else {
+        await signInWithPassword({ email, password });
+      }
+      await loadCurrentUser();
+      password = '';
+      route.set('chat');
+    } catch (e) {
+      error = e.message || 'Sign-in failed.';
+    } finally {
+      loading = null;
+    }
   }
 </script>
 
@@ -70,9 +86,6 @@
       >
         {loading === 'sol' ? 'Connecting…' : 'Connect Solana Wallet'}
       </button>
-      {#if error}
-        <p class="text-xs text-red-500 text-center">{error}</p>
-      {/if}
     </div>
 
     <div class="flex items-center gap-3 text-xs text-ink-faint my-4">
@@ -90,18 +103,41 @@
       <label class="block">
         <span class="text-xs font-medium text-ink-soft mb-1.5 block">Email</span>
         <input class="w-full h-11 px-4 rounded-xl border border-rule bg-white focus:outline-none focus:border-ink"
-               type="email" bind:value={email} required>
+               type="email" bind:value={email} required autocomplete="email">
       </label>
       <label class="block">
         <span class="text-xs font-medium text-ink-soft mb-1.5 block">Password</span>
         <input class="w-full h-11 px-4 rounded-xl border border-rule bg-white focus:outline-none focus:border-ink"
-               type="password" bind:value={password} required minlength="8">
+               type="password" bind:value={password} required minlength="8"
+               autocomplete={kind === 'signup' ? 'new-password' : 'current-password'}>
       </label>
+      {#if kind === 'signup'}
+        <!-- Clickwrap. The server refuses account creation without it, so the
+             submit button stays disabled until it is checked. -->
+        <label class="flex items-start gap-2 text-xs text-ink-soft">
+          <input type="checkbox" bind:checked={tosAccepted} required class="mt-0.5 accent-black">
+          <span>
+            I agree to the
+            <a href="/legal/tos" class="text-ink underline">Terms of Service</a>
+            and
+            <a href="/legal/privacy" class="text-ink underline">Privacy Policy</a>.
+          </span>
+        </label>
+      {/if}
       <button type="submit"
-              class="w-full h-11 rounded-full bg-black text-white text-sm font-medium hover:bg-ink">
-        {kind === 'signin' ? 'Sign in' : 'Create account'}
+              disabled={loading !== null || (kind === 'signup' && !tosAccepted)}
+              class="w-full h-11 rounded-full bg-black text-white text-sm font-medium hover:bg-ink disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        {#if loading === 'password'}
+          {kind === 'signin' ? 'Signing in…' : 'Creating account…'}
+        {:else}
+          {kind === 'signin' ? 'Sign in' : 'Create account'}
+        {/if}
       </button>
     </form>
+
+    {#if error}
+      <p role="alert" class="text-xs text-red-500 text-center mt-3">{error}</p>
+    {/if}
   </div>
 
   <p class="text-center text-sm text-ink-soft mt-6">

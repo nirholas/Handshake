@@ -23,7 +23,7 @@
 <header class="sticky top-0 z-40 border-b border-rule bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/80">
 	<div class="mx-auto flex h-14 max-w-[1240px] items-center justify-between px-4 sm:px-6">
 
-		<!-- LEFT: brand breadcrumb — three.ws (home) / Chat -->
+		<!-- LEFT: brand breadcrumb: three.ws (home) / Chat -->
 		<div class="flex min-w-0 items-center gap-1.5">
 			<a
 				href="/"
@@ -137,7 +137,7 @@
 		border-radius: 12px;
 	}
 
-	/* Iris live dot — same signature as the main-site nav's Text → 3D pill. */
+	/* Iris live dot: same signature as the main-site nav's Text → 3D pill. */
 	.iris-dot {
 		width: 6px;
 		height: 6px;

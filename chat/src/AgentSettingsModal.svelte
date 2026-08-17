@@ -52,7 +52,7 @@
 
 <Modal bind:open>
 	<div class="flex flex-col gap-4 p-4 w-[480px] max-w-full">
-		<h2 class="text-[15px] font-semibold text-slate-800">Agent Settings — {$activeAgent?.name}</h2>
+		<h2 class="text-[15px] font-semibold text-slate-800">Agent Settings: {$activeAgent?.name}</h2>
 
 		<label class="flex flex-col gap-1.5 text-[12px] font-medium text-slate-600">
 			System Prompt

@@ -55,7 +55,9 @@
 		composerFill.set(null);
 		const shouldFill = !fill.ifEmpty || !content;
 		if (shouldFill) {
-			content = fill.text;
+			// `append` adds to what is already composed instead of replacing it,
+			// so a flow can layer a hint onto a half-written prompt.
+			content = fill.append && content ? `${content.trimEnd()} ${fill.text}` : fill.text;
 			tick().then(() => {
 				autoresizeTextarea();
 				if (fill.submit) sendMessage();

@@ -1,7 +1,7 @@
 // Reusable client-side body that POSTs to /api/x402-pay and returns a
 // structured envelope the LLM can reason over. Built once and shared by every
 // x402-paid tool below so the on-chain payment + MCP dispatch happens for real
-// on every call — no mocks, no fallbacks.
+// on every call: no mocks, no fallbacks.
 //
 // Inputs: `tool` (string) → MCP tool name; `args` (object) → MCP arguments.
 // Side-effects: dispatches a CustomEvent on window after settlement so the
@@ -16,7 +16,7 @@ if (agentId) {
 	try {
 		const ct = await fetch('/api/csrf-token', { credentials: 'include' });
 		if (ct.ok) { const cj = await ct.json().catch(() => null); const tok = cj && cj.data && cj.data.token; if (tok) headers['x-csrf-token'] = tok; }
-	} catch (e) { /* fall through — server will 403 if the token is truly required */ }
+	} catch (e) { /* fall through: server will 403 if the token is truly required */ }
 }
 const r = await fetch('/api/x402-pay', {
 	method: 'POST',
@@ -324,7 +324,7 @@ export const curatedToolPacks = [
 		id: 'x402-pay',
 		name: 'three.ws · Pay-per-call (x402)',
 		description:
-			'Call real paid MCP tools on three.ws — every invocation signs an SPL transferChecked, pays $0.001 USDC on Solana mainnet, and settles on-chain. Same flow as /pay, surfaced as native chat tools.',
+			'Call real paid MCP tools on three.ws: every invocation signs an SPL transferChecked, pays $0.001 USDC on Solana mainnet, and settles on-chain. Same flow as /pay, surfaced as native chat tools.',
 		schema: [
 			{
 				clientDefinition: {
@@ -447,7 +447,7 @@ const argsObj = q ? { q, limit } : { limit };
 						type: 'object',
 						properties: {
 							q: { type: 'string', description: 'Free-text query (name, traits, description). Omit to browse.' },
-							limit: { type: 'integer', description: 'Max results (1–48, default 12).' },
+							limit: { type: 'integer', description: 'Max results (1-48, default 12).' },
 						},
 						required: [],
 					},
@@ -692,7 +692,7 @@ html,body{margin:0;height:100%;background:#0b0d10;color:#e5e7eb;font-family:ui-s
 .up{color:#22c55e}.dn{color:#ef4444}
 #err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#fca5a5;padding:24px;text-align:center}
 </style></head><body>
-<div id="info"><div id="name">Loading…</div><div id="price">—</div><div id="chg">—</div></div>
+<div id="info"><div id="name">Loading…</div><div id="price">-</div><div id="chg">-</div></div>
 <div id="err"></div>
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.160.0';
@@ -838,7 +838,7 @@ return JSON.stringify({ abstract: d.AbstractText || '', topics });`,
   try { await window.solana?.connect(); } catch(e) { throw new Error('Solana wallet not connected: ' + (e?.message||e)); }
 }
 const pubkey = window.solana?.publicKey?.toBase58?.();
-if (!pubkey) throw new Error('No Solana public key available — connect a wallet first.');
+if (!pubkey) throw new Error('No Solana public key available. Connect a wallet first.');
 const agentId = String(args.agent_id || '').trim();
 const name = String(args.name || '').trim();
 const symbol = String(args.symbol || '').trim();
@@ -1143,7 +1143,7 @@ return { mint, signature, metadataUri, explorer: 'https://solscan.io/tx/' + sign
 					name: 'ForgeTextTo3D',
 					description: 'Generate a 3D model (GLB) from a text prompt and render it in an orbit viewer.',
 					arguments: [
-						{ name: 'prompt', type: 'string', description: 'Single-subject object description, e.g. "a brass steampunk owl, full body". 3–1000 chars.' },
+						{ name: 'prompt', type: 'string', description: 'Single-subject object description, e.g. "a brass steampunk owl, full body". 3-1000 chars.' },
 					],
 					body: `const prompt = String(args.prompt || '').trim();
 	// Submit on the host page (same-origin, cookies), then return an
@@ -1154,7 +1154,7 @@ return { mint, signature, metadataUri, explorer: 'https://solscan.io/tx/' + sign
 	if (prompt.length < 3) {
 	  payload = { error: 'Describe one subject in at least 3 characters, e.g. "a brass steampunk owl, full body".', prompt };
 	} else if (prompt.length > 1000) {
-	  payload = { error: 'Keep the prompt under 1000 characters — one clear subject works best.', prompt };
+	  payload = { error: 'Keep the prompt under 1000 characters. One clear subject works best.', prompt };
 	} else {
 	  try {
 	    const res = await fetch('/api/forge', { method: 'POST', headers: {'content-type':'application/json'}, credentials: 'include', body: JSON.stringify({ prompt }) });
@@ -1192,7 +1192,7 @@ return { mint, signature, metadataUri, explorer: 'https://solscan.io/tx/' + sign
 					parameters: {
 						type: 'object',
 						properties: {
-							prompt: { type: 'string', description: 'Single-subject object description, e.g. "a brass steampunk owl, full body". 3–1000 characters.' },
+							prompt: { type: 'string', description: 'Single-subject object description, e.g. "a brass steampunk owl, full body". 3-1000 characters.' },
 						},
 						required: ['prompt'],
 					},
@@ -1204,7 +1204,7 @@ return { mint, signature, metadataUri, explorer: 'https://solscan.io/tx/' + sign
 		id: 'forge-avatar',
 		name: 'Text → 3D Avatar',
 		description:
-			'Generate a real, textured 3D avatar from a text prompt, auto-rig it into an animation-ready character, and save it to your three.ws avatar library — the full text → mesh → rig → library pipeline, rendered in an orbit viewer with a skeleton toggle.',
+			'Generate a real, textured 3D avatar from a text prompt, auto-rig it into an animation-ready character, and save it to your three.ws avatar library: the full text → mesh → rig → library pipeline, rendered in an orbit viewer with a skeleton toggle.',
 		schema: [
 			{
 				clientDefinition: {
@@ -1212,12 +1212,12 @@ return { mint, signature, metadataUri, explorer: 'https://solscan.io/tx/' + sign
 					name: 'ForgeAvatar',
 					description: 'Generate a 3D avatar (GLB) from a text prompt, auto-rig it, save it to the avatar library, and render it in an orbit viewer.',
 					arguments: [
-						{ name: 'prompt', type: 'string', description: 'Single-subject avatar description, e.g. "a friendly cyberpunk fox mascot, full body". 3–1000 chars.' },
+						{ name: 'prompt', type: 'string', description: 'Single-subject avatar description, e.g. "a friendly cyberpunk fox mascot, full body". 3-1000 chars.' },
 						{ name: 'name', type: 'string', description: 'Optional name for the saved avatar (defaults to the prompt).' },
 						{ name: 'save', type: 'boolean', description: 'Save the rigged avatar to the signed-in user library (default true). Set false to only preview.' },
 					],
 					body: `const prompt = String(args.prompt || '').trim();
-if (prompt.length < 3) throw new Error('prompt required (3–1000 chars)');
+if (prompt.length < 3) throw new Error('prompt required (3-1000 chars)');
 const wantSave = args.save !== false;
 const avatarName = (String(args.name || '').trim() || prompt).slice(0, 80);
 async function pollForge(jobId, tries) {
@@ -1237,7 +1237,7 @@ const job = await submit.json();
 if (!job.job_id) throw new Error('Forge returned no job id');
 let state = await pollForge(job.job_id, 75);
 if (!state || state.status === 'failed') throw new Error('Generation failed: ' + ((state && state.error) || 'unknown error'));
-if (state.status !== 'done') throw new Error('Generation timed out after ~3 minutes — try again or open three.ws/forge');
+if (state.status !== 'done') throw new Error('Generation timed out after ~3 minutes. Try again or open three.ws/forge');
 let glb = state.glb_url;
 if (!glb) throw new Error('Job finished without a model URL');
 let rigged = false, rigNote = '';
@@ -1248,14 +1248,14 @@ try {
     if (rj.job_id) {
       const rstate = await pollForge(rj.job_id, 60);
       if (rstate && rstate.status === 'done' && rstate.glb_url) { glb = rstate.glb_url; rigged = true; }
-      else rigNote = (rstate && rstate.error) ? ('Rigging failed (' + rstate.error + ') — using the static mesh.') : 'Rigging did not finish — using the static mesh.';
-    } else rigNote = 'Rigging returned no job — using the static mesh.';
+      else rigNote = (rstate && rstate.error) ? ('Rigging failed (' + rstate.error + '). Using the static mesh.') : 'Rigging did not finish. Using the static mesh.';
+    } else rigNote = 'Rigging returned no job. Using the static mesh.';
   } else if (rs.status === 501) {
-    rigNote = 'Auto-rigging is not enabled on this deployment — using the static mesh.';
+    rigNote = 'Auto-rigging is not enabled on this deployment. Using the static mesh.';
   } else {
-    rigNote = 'Rigging unavailable (' + rs.status + ') — using the static mesh.';
+    rigNote = 'Rigging unavailable (' + rs.status + '). Using the static mesh.';
   }
-} catch (e) { rigNote = 'Rigging error — using the static mesh.'; }
+} catch (e) { rigNote = 'Rigging error. Using the static mesh.'; }
 let savedUrl = '', saveNote = '';
 if (wantSave) {
   try {
@@ -1291,11 +1291,11 @@ return {
 				function: {
 					name: 'ForgeAvatar',
 					description:
-						'Generate a real 3D AVATAR from a text prompt: forge a textured GLB, auto-rig it into an animation-ready character, save it to the signed-in user three.ws avatar library, and render it in an interactive orbit viewer (press S for the skeleton). Use whenever the user asks to make, create, or generate an AVATAR, character, or agent body from a description (use ForgeTextTo3D instead for a generic object/prop). Takes ~1–3 min. Describe ONE full-body subject with material and style. If the user is not signed in, it still returns the rigged model and notes that sign-in is needed to save.',
+						'Generate a real 3D AVATAR from a text prompt: forge a textured GLB, auto-rig it into an animation-ready character, save it to the signed-in user three.ws avatar library, and render it in an interactive orbit viewer (press S for the skeleton). Use whenever the user asks to make, create, or generate an AVATAR, character, or agent body from a description (use ForgeTextTo3D instead for a generic object/prop). Takes ~1-3 min. Describe ONE full-body subject with material and style. If the user is not signed in, it still returns the rigged model and notes that sign-in is needed to save.',
 					parameters: {
 						type: 'object',
 						properties: {
-							prompt: { type: 'string', description: 'Single-subject, full-body avatar description, e.g. "a friendly cyberpunk fox mascot, full body". 3–1000 characters.' },
+							prompt: { type: 'string', description: 'Single-subject, full-body avatar description, e.g. "a friendly cyberpunk fox mascot, full body". 3-1000 characters.' },
 							name: { type: 'string', description: 'Optional name for the saved avatar. Defaults to the prompt.' },
 							save: { type: 'boolean', description: 'Whether to save the rigged avatar to the library (default true).' },
 						},
@@ -1391,7 +1391,7 @@ return {
 					name: 'TokenGateScene',
 					description: 'Token-gate the current scene and return a share URL.',
 					arguments: [
-						{ name: 'sceneRef', type: 'string', description: 'Identifier for the current scene (the chat already exposes one via the viewer share API — pass the same string the existing /share command uses).' },
+						{ name: 'sceneRef', type: 'string', description: 'Identifier for the current scene (the chat already exposes one via the viewer share API, pass the same string the existing /share command uses).' },
 						{ name: 'chain', type: 'string', description: 'solana | evm' },
 						{ name: 'kind', type: 'string', description: 'spl | collection | erc20 | erc721' },
 						{ name: 'address', type: 'string', description: 'Token mint, collection address, or contract address.' },
@@ -1728,7 +1728,7 @@ export const pumpToolSchema = {
 			type: 'function',
 			function: {
 				name: 'getKingOfTheHill',
-				description: 'Get the king of the hill — the highest market cap pump.fun token still on the bonding curve.',
+				description: 'Get the king of the hill: the highest market cap pump.fun token still on the bonding curve.',
 				parameters: { type: 'object', properties: {} },
 			},
 		},
@@ -1966,7 +1966,7 @@ export const agentPaymentsToolSchema = {
 					type: 'object',
 					properties: {
 						mint: { type: 'string', description: 'Agent token mint address (base58)' },
-						currency_mint: { type: 'string', description: 'Currency mint — USDC or wSOL (default USDC)' },
+						currency_mint: { type: 'string', description: 'Currency mint: USDC or wSOL (default USDC)' },
 					},
 					required: ['mint'],
 				},
@@ -1986,7 +1986,7 @@ export const agentPaymentsToolSchema = {
 			type: 'function',
 			function: {
 				name: 'agentPaymentsDistribute',
-				description: 'Distribute the payment vault — splits funds into buyback vault and withdraw vault per on-chain BPS config. Permissionless.',
+				description: 'Distribute the payment vault: splits funds into buyback vault and withdraw vault per on-chain BPS config. Permissionless.',
 				parameters: {
 					type: 'object',
 					properties: {

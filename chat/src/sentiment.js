@@ -2,7 +2,7 @@
 // Emotion vocabulary: 'celebration' | 'concern' | 'curiosity' | 'empathy' | 'patience'
 //
 // Returns { emotion, weight } or null if nothing reads strongly enough.
-// Keyword lists are deliberately small and high-precision — false positives
+// Keyword lists are deliberately small and high-precision: false positives
 // look worse than no reaction.
 
 const PATTERNS = {

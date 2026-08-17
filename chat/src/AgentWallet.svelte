@@ -1,5 +1,5 @@
 <script>
-	// The wallet identity of the agent you're chatting with — tip it for a good
+	// The wallet identity of the agent you're chatting with. Tip it for a good
 	// answer, copy its address, or open its full wallet on three.ws. Thin Svelte
 	// wrapper over the shared portable wallet (one module, mounted everywhere the
 	// avatar appears) so the chat never forks the wallet logic. Reads only public

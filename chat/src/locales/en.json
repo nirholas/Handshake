@@ -30,5 +30,5 @@
   "cancel": "Cancel",
   "install": "Install",
   "installed": "Installed",
-  "showingOf": "Showing {shown} of {total} — search to filter"
+  "showingOf": "Showing {shown} of {total}, search to filter"
 }

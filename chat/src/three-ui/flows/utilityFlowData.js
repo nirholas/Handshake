@@ -43,7 +43,7 @@ export const modeConfig = {
   chat: {
     label: 'Chat mode',
     icon: feMessageSquare,
-    placeholder: 'Just chat — no tools, no agents.',
+    placeholder: 'Just chat. No tools, no agents.',
     secondary: null,
   },
   playbook: {
@@ -66,7 +66,7 @@ export const schedulePrompts = [
 export const researchPrompts = [
   'Compare the top 10 vector databases on price, latency, scale',
   'Find every YC W24 company in dev tools with public pricing',
-  'Summarize recent papers on LLM evaluation from 2024–2026',
+  'Summarize recent papers on LLM evaluation from 2024-2026',
   'List all Series A AI infra startups with announced rounds in Q1',
   'Extract feature parity matrix for Cursor, Claude Code, and three.ws',
   'Find hiring pages of top 50 robotics startups; pull JD for SWE',
@@ -146,9 +146,9 @@ export const portfolioPrompts = [
 
 export const rugcheckPrompts = [
   'Rug check this token: [paste mint address]',
-  'Analyze the holder distribution — is this token concentrated?',
+  'Analyze the holder distribution: is this token concentrated?',
   'How much does the dev wallet hold? Any recent dumps?',
-  'Show me the bonding curve — is it near graduation or stalling?',
+  'Show me the bonding curve: is it near graduation or stalling?',
   'Check for suspicious trading patterns on this token',
   'Flag any honeypot signals or locked liquidity issues',
 ];
