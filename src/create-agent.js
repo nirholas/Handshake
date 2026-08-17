@@ -1130,6 +1130,9 @@ function wireModel() {
 				const on = t === tab;
 				t.classList.toggle('is-active', on);
 				t.setAttribute('aria-selected', on ? 'true' : 'false');
+				// Roving tabindex: a tablist is one tab stop, and the arrow keys
+				// move within it (wired below).
+				t.tabIndex = on ? 0 : -1;
 			});
 			document
 				.querySelectorAll('.model-pane')
@@ -1155,6 +1158,25 @@ function wireModel() {
 			} else if (pane === 'starter' && state.model.mode !== 'starter') {
 				// re-entering starter tab with nothing chosen — leave unselected
 			}
+		});
+	});
+
+	// Arrow-key navigation across the tablist, per the WAI-ARIA tabs pattern.
+	// Without it the roving tabindex above would trap a keyboard user on
+	// whichever tab is selected, with no way to reach the other three.
+	const modelTabs = Array.from(document.querySelectorAll('.model-tab'));
+	modelTabs.forEach((tab, idx) => {
+		tab.addEventListener('keydown', (e) => {
+			const last = modelTabs.length - 1;
+			let target;
+			if (e.key === 'ArrowRight') target = modelTabs[idx === last ? 0 : idx + 1];
+			else if (e.key === 'ArrowLeft') target = modelTabs[idx === 0 ? last : idx - 1];
+			else if (e.key === 'Home') target = modelTabs[0];
+			else if (e.key === 'End') target = modelTabs[last];
+			else return;
+			e.preventDefault();
+			target.focus();
+			target.click();
 		});
 	});
 
