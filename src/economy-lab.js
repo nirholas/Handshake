@@ -487,30 +487,43 @@ function drawChart(series, knobs) {
 	const danger = col('--el-danger', '#fb7185');
 	const info = col('--el-info', '#7dd3fc');
 
-	const padL = narrow ? 42 : 58;
-	const padR = narrow ? 34 : 52;
+	if (!series.length) return;
+
+	const maxBal = Math.max(knobs.floorLamports * 1.15, ...series.map((s) => s.lamports), 1);
+	const maxCount = Math.max(1, ...series.map((s) => s.admitted + s.refusedFloor + s.refusedGovernor));
+
+	// Tick precision is derived from the range being plotted: a fee wallet
+	// holding 0.0023 SOL rendered every one of its five gridlines as "0.002" or
+	// "0.001" at a fixed three decimals, which is an axis that cannot be read.
+	ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+	const solDigits = axisSolDigits(maxBal);
+	const ticks = [0, 1, 2, 3, 4].map((g) => ({
+		sol: fmtSol(maxBal * (1 - g / 4), solDigits),
+		count: fmtInt(maxCount * (1 - g / 4)),
+	}));
+	const widest = (key) => Math.max(...ticks.map((t) => ctx.measureText(t[key]).width));
+
+	// The gutters are sized to the labels they must hold. A fixed 42px left gutter
+	// clipped "0.0023" to ".0023" on a phone, which turns a precise axis back into
+	// an unreadable one by a different route.
+	const padL = Math.min(cssW * 0.32, Math.max(narrow ? 34 : 46, widest('sol') + 12));
+	const padR = Math.min(cssW * 0.28, Math.max(narrow ? 28 : 40, widest('count') + 12));
 	// Room above the plot for the axis unit captions, which used to be drawn
 	// inside it and landed straight on top of the first gridline label.
 	const padT = 26;
 	const padB = 30;
 	const w = cssW - padL - padR;
 	const h = cssH - padT - padB;
-	if (w <= 0 || h <= 0 || !series.length) return;
+	if (w <= 0 || h <= 0) return;
 
-	const maxBal = Math.max(knobs.floorLamports * 1.15, ...series.map((s) => s.lamports), 1);
-	const maxCount = Math.max(1, ...series.map((s) => s.admitted + s.refusedFloor + s.refusedGovernor));
 	const x = (i) => padL + (series.length === 1 ? w / 2 : (i / (series.length - 1)) * w);
 	const yBal = (v) => padT + h - (v / maxBal) * h;
 	const yCount = (v) => padT + h - (v / maxCount) * h;
 
-	// Grid. Tick precision is derived from the range being plotted: a fee wallet
-	// holding 0.0023 SOL rendered every one of its five gridlines as "0.002" or
-	// "0.001" at a fixed three decimals, which is an axis that cannot be read.
+	// Grid
 	ctx.strokeStyle = line;
 	ctx.lineWidth = 1;
-	ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
 	ctx.fillStyle = faint;
-	const solDigits = axisSolDigits(maxBal);
 	for (let g = 0; g <= 4; g++) {
 		const yy = padT + (h / 4) * g;
 		ctx.beginPath();
@@ -518,9 +531,9 @@ function drawChart(series, knobs) {
 		ctx.lineTo(padL + w, yy);
 		ctx.stroke();
 		ctx.textAlign = 'right';
-		ctx.fillText(fmtSol(maxBal * (1 - g / 4), solDigits), padL - 8, yy + 4);
+		ctx.fillText(ticks[g].sol, padL - 6, yy + 4);
 		ctx.textAlign = 'left';
-		ctx.fillText(fmtInt(maxCount * (1 - g / 4)), padL + w + 8, yy + 4);
+		ctx.fillText(ticks[g].count, padL + w + 6, yy + 4);
 	}
 
 	// Axis captions, in the gutter above the plot so they cannot sit on a tick.
