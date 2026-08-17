@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts &quot;Meet Agent&quot;</title>
+			<link>https://three.ws/app</link>
+			<guid isPermaLink="false">2026-08-17:The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts &quot;Meet Agent&quot;</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Five fixes to the 3D model viewer at /app. Opening the Backdrop picker and taking a few seconds to read the six choices used to make the picker fade out from under the cursor: the viewer hides its controls after five seconds of stillness, and the picker was not on the list of surfaces that keep them awake, so an open picker went invisible and unclickable while still counting as open. It now stays put until you choose a backdrop or close it, and the controls resume fading once it is shut. Typing in the animation search while the clips were still loading stacked a second, contradictory message under the first, so the panel read &quot;Loading clips&quot; and &quot;No clips matching&quot; at the same time, and clearing the box left behind the nonsense line &quot;No clips matching&quot; with nothing in the quotes; the search now stays quiet until there are clips to search. Sharing the viewer to X, Farcaster or Telegram published &quot;Meet Agent&quot;, an internal placeholder name, for anyone who had not loaded an agent of their own, and now uses the generic line instead. The page also shipped a sign-in panel and a welcome card that its own stylesheet blanked unconditionally, four links nobody could ever reach, and the preview card shown when the page is shared described the platform instead of the viewer. The avatar gallery behind the Avatar button is now announced to screen readers as a named dialog.</description>
+		</item>
+		<item>
 			<title>Docs · Avatar Artifact viewer</title>
 			<link>https://three.ws/docs/avatar-artifact</link>
 			<guid isPermaLink="false">2026-08-16:Docs · Avatar Artifact viewer</guid>

@@ -733,6 +733,12 @@ function wireAnimationSheet() {
 			if (match) visible++;
 		});
 		grid.querySelectorAll('.nxt-anim-empty[data-search]').forEach((n) => n.remove());
+		// No cards means the grid is showing its own status ("Loading clips…", "This
+		// avatar has no animations", a rig warning). The search box is focused 60ms
+		// after the sheet opens, so typing straight away is the normal flow, and
+		// appending a second message there stacks two contradictory answers under
+		// each other. An empty query has nothing to report either way.
+		if (!cards.length || !q) return;
 		if (visible === 0) {
 			const empty = document.createElement('div');
 			empty.className = 'nxt-anim-empty';
@@ -845,11 +851,16 @@ function wireShare() {
 	const farcasterBtn = document.getElementById('nxt-share-farcaster');
 	const telegramBtn = document.getElementById('nxt-share-telegram');
 
+	// The stock identity is literally named "Agent", so a visitor who has not
+	// loaded an agent of their own used to broadcast "Meet Agent" to X, Farcaster
+	// and Telegram. A placeholder name is no name: fall through to the generic
+	// line instead of publishing the default.
+	const PLACEHOLDER_NAMES = new Set(['agent', 'untitled', 'unnamed', 'avatar']);
 	const shareText = () => {
 		const app = window.VIEWER?.app;
-		const name = app?.identity?.name;
-		return name
-			? `Meet ${name} — an embodied AI agent on @trythreews`
+		const name = app?.identity?.name?.trim();
+		return name && !PLACEHOLDER_NAMES.has(name.toLowerCase())
+			? `Meet ${name}, an embodied AI agent on @trythreews`
 			: 'Check out this embodied AI agent on @trythreews';
 	};
 
@@ -1497,7 +1508,18 @@ function wireAutoHide() {
 }
 
 function anyPanelOpen() {
-	const ids = ['nxt-anim-sheet', 'nxt-share-popover', 'nxt-help', 'nxt-more-menu', 'nav-user-menu'];
+	// Every dismissible surface belongs here. Auto-hide drops pointer-events on
+	// the action bar, and the backdrop picker lives INSIDE that bar: leave it out
+	// and a user who opens the picker and spends five seconds reading the six
+	// swatch names watches their open picker fade out from under the cursor.
+	const ids = [
+		'nxt-anim-sheet',
+		'nxt-share-popover',
+		'nxt-backdrop-popover',
+		'nxt-help',
+		'nxt-more-menu',
+		'nav-user-menu',
+	];
 	for (const id of ids) {
 		const el = document.getElementById(id);
 		if (el && !el.hidden) return true;

@@ -117,6 +117,13 @@ export class AvatarGalleryPicker {
 
 		this._overlay = document.createElement('div');
 		this._overlay.className = 'agp-overlay';
+		// Modal semantics, so a screen reader announces the picker as a dialog with
+		// a name instead of an unlabelled div, and treats the page behind it as
+		// inert. Only the modal path gets these: mountInline() renders the same
+		// shell as ordinary in-page content, where a dialog role would be a lie.
+		this._overlay.setAttribute('role', 'dialog');
+		this._overlay.setAttribute('aria-modal', 'true');
+		this._overlay.setAttribute('aria-label', this.opts.title);
 		this._overlay.addEventListener('click', (e) => {
 			if (e.target === this._overlay) this.close();
 		});

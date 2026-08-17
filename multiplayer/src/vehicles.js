@@ -16,11 +16,49 @@
 
 // Handling profiles. Lengths in metres, mass in kg, forces in Newtons, speeds in
 // m/s, angles in radians. Each type has a distinct feel:
+//   trench — the world's default car, the Trench Car GLB, balanced and quick
 //   coupe  — low, fast, light, twitchy steering, less grip (slides)
 //   sedan  — the balanced everyday car
 //   pickup — heavy, slower, planted, wide turning, lots of grip
 //   buggy  — light off-roader, high grip + stiff suspension, nimble
+//
+// A type with a `model` drives a real GLB (src/game/vehicle-model.js) instead of
+// the procedural silhouettes in src/game/vehicle-mesh.js. Its dims, wheel
+// geometry and seat are measured off that mesh, so the physics chassis, the
+// wheels the player watches turn, and the driver in the seat all agree.
 export const VEHICLE_TYPES = {
+	trench: {
+		id: 'trench',
+		label: 'Trench Car',
+		// The community model staged at public/vehicles/trench-car.glb by
+		// scripts/build-trench-car.mjs. The client resolves this to a URL; the
+		// server only ever passes the string through.
+		model: 'trench-car',
+		mass: 1400,
+		topSpeed: 26,        // ~94 km/h
+		engineForce: 5000,
+		brakeForce: 125,
+		reverseForce: 2500,
+		steerMax: 0.5,
+		steerSpeed: 2.9,
+		grip: 2.4,
+		// Measured off the GLB (tests/vehicles-trench-car.test.js re-measures it):
+		// 1.85 m wide, 4.31 m long, roof 1.31 m above the road, wheel centres at
+		// z +1.21 / -1.29, x ±0.70, radius 0.30. Height is road-to-roof, so the
+		// collider wraps the whole visible car.
+		dims: { l: 4.31, w: 1.85, h: 1.31 },
+		wheel: { radius: 0.3, halfWidth: 0.11, inset: 0.22, frontZ: 1.21, rearZ: -1.29 },
+		// rest=0.58 follows the clearance rule the other types learned the hard
+		// way (see coupe below): the chassis collider's underside sits
+		// 1.3 * (h/2) below the body origin, so the resting chassis centre
+		// (vehicleRestHeight = 1.011) has to clear it. 0.58 leaves 0.16 m of air
+		// under the collider, matching the sedan's proven margin, so the wheels
+		// carry the car instead of the hull grinding on the road.
+		suspension: { rest: 0.58, stiffness: 25, travel: 0.18, compression: 0.84, relax: 0.9 },
+		// Driver's seat: the model's footwell floor, 0.30 m above the road.
+		seat: { x: -0.42, y: -0.71, z: -0.15 },
+		color: 0x1b1d22,
+	},
 	coupe: {
 		id: 'coupe',
 		label: 'Coupe',
@@ -45,7 +83,12 @@ export const VEHICLE_TYPES = {
 		// (not the hull) carry the car's weight and traction (10.8 m/s after the
 		// same 3s in the same repro).
 		suspension: { rest: 0.4, stiffness: 26, travel: 0.16, compression: 0.82, relax: 0.88 },
-		seat: { x: -0.42, y: 0.62, z: -0.2 }, // driver seat offset in chassis space
+		// Driver's seat, as the offset from the chassis CENTRE to where the
+		// driver's rig origin (their feet) belongs — the footwell floor, which is
+		// below the chassis centre on every car, hence the negative y. Both the
+		// client (VehicleManager._seatAvatar) and the server (WalkRoom's rider
+		// height) read this, so a driver sits in the same place for everyone.
+		seat: { x: -0.42, y: -0.53, z: -0.2 },
 		color: 0xc8402f,
 	},
 	sedan: {
@@ -66,7 +109,7 @@ export const VEHICLE_TYPES = {
 		// Verified: stock 0.36 never moves (0.00 m/s after 3s full throttle) in
 		// the real-Rapier repro; 0.5 reaches 7.9 m/s in the same window.
 		suspension: { rest: 0.5, stiffness: 24, travel: 0.18, compression: 0.85, relax: 0.9 },
-		seat: { x: -0.44, y: 0.72, z: -0.1 },
+		seat: { x: -0.44, y: -0.61, z: -0.1 },
 		color: 0x2f6fc8,
 	},
 	pickup: {
@@ -88,7 +131,7 @@ export const VEHICLE_TYPES = {
 		// real-Rapier repro. 0.6 clears the chassis off the ground and reaches
 		// 4.1 m/s in 3s, matching a heavy/planted truck's slower character.
 		suspension: { rest: 0.6, stiffness: 22, travel: 0.22, compression: 0.85, relax: 0.9 },
-		seat: { x: -0.5, y: 0.92, z: 0.35 },
+		seat: { x: -0.5, y: -0.55, z: 0.35 },
 		color: 0x2b2f36,
 	},
 	buggy: {
@@ -105,7 +148,7 @@ export const VEHICLE_TYPES = {
 		dims: { l: 3.4, w: 1.8, h: 1.0 },
 		wheel: { radius: 0.4, halfWidth: 0.24, inset: 0.06, frontZ: 1.2, rearZ: -1.15 },
 		suspension: { rest: 0.46, stiffness: 28, travel: 0.26, compression: 0.8, relax: 0.86 },
-		seat: { x: -0.4, y: 0.66, z: -0.1 },
+		seat: { x: -0.4, y: -0.62, z: -0.1 },
 		color: 0xe0a52e,
 	},
 };
@@ -116,8 +159,12 @@ export function isVehicleType(t) {
 	return typeof t === 'string' && Object.prototype.hasOwnProperty.call(VEHICLE_TYPES, t);
 }
 
+// The world's default car: what an unknown/blank type resolves to, what ambient
+// traffic drives, and what a player finds parked at the spawn plaza.
+export const DEFAULT_VEHICLE_TYPE = 'trench';
+
 export function vehicleSpec(type) {
-	return VEHICLE_TYPES[type] || VEHICLE_TYPES.sedan;
+	return VEHICLE_TYPES[type] || VEHICLE_TYPES[DEFAULT_VEHICLE_TYPE];
 }
 
 // The chassis-centre height a parked/resting vehicle sits at, derived from the
@@ -139,15 +186,18 @@ export function vehicleRestHeight(type) {
 // plaza-edge cars sit near the Downtown spawn so a freshly-dropped player finds a
 // ride within a few seconds' walk (clear of the totem (0,0,-12), the jumbotron
 // (0,0,-30) and the Agent Exchange (8,0,-6)). yaw is the resting heading (0 = +z).
+// The default car takes the two plaza bays and the North Depot, so the first
+// vehicle a player ever walks up to is the one ambient traffic is driving past
+// them; the other depots keep the handling variety.
 export const VEHICLE_SPAWNS = [
 	// Avenue bays — keep in sync with world-zones.js type:'vehicle' points.
-	{ id: 'veh-north-ave', type: 'coupe', x: 6, z: -90, yaw: 0 },
+	{ id: 'veh-north-ave', type: 'trench', x: 6, z: -90, yaw: 0 },
 	{ id: 'veh-south-ave', type: 'sedan', x: -6, z: 90, yaw: Math.PI },
 	{ id: 'veh-east-ave', type: 'pickup', x: 90, z: 6, yaw: -Math.PI / 2 },
 	{ id: 'veh-west-ave', type: 'buggy', x: -90, z: -6, yaw: Math.PI / 2 },
 	// Plaza-edge starters for discoverability.
-	{ id: 'veh-plaza-1', type: 'sedan', x: -16, z: 14, yaw: Math.PI },
-	{ id: 'veh-plaza-2', type: 'buggy', x: 18, z: 14, yaw: Math.PI },
+	{ id: 'veh-plaza-1', type: 'trench', x: -16, z: 14, yaw: Math.PI },
+	{ id: 'veh-plaza-2', type: 'trench', x: 18, z: 14, yaw: Math.PI },
 ];
 
 // --- Anti-cheat limits (server-enforced) ----------------------------------

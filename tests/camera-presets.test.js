@@ -96,6 +96,60 @@ describe('computeFraming — preset semantics', () => {
 	});
 });
 
+describe('computeFraming: the preset keeps its subject in frame', () => {
+	// What the frustum actually sees at the returned distance. A preset that
+	// promises "entire avatar in frame" has to be checked against the projection,
+	// not against a distance multiplier: the multiplier alone once left the
+	// avatar studio cropping the head and the feet off the base body.
+	const visible = (framing, aspectRatio) => {
+		const distance = framing.position.z - framing.target.z;
+		const height = 2 * distance * Math.tan((framing.fov * Math.PI) / 360);
+		return { height, width: height * aspectRatio };
+	};
+
+	it('full frames the whole body, head to toe, on every viewport shape', () => {
+		for (const aspectRatio of [0.5, 0.75, 1, 1.33, 1.78, 2.4]) {
+			const r = computeFraming({ box: HUMANOID, preset: 'full', aspectRatio });
+			const { height, width } = visible(r, aspectRatio);
+			const bodyHeight = HUMANOID.max.y - HUMANOID.min.y;
+			const bodyWidth = HUMANOID.max.x - HUMANOID.min.x;
+			// Both extremes of the body sit inside the vertical frustum.
+			expect(r.target.y - height / 2, `aspect ${aspectRatio}`).toBeLessThanOrEqual(HUMANOID.min.y);
+			expect(r.target.y + height / 2, `aspect ${aspectRatio}`).toBeGreaterThanOrEqual(HUMANOID.max.y);
+			expect(width, `aspect ${aspectRatio}`).toBeGreaterThanOrEqual(bodyWidth);
+			// ...and not so far back that the avatar is a speck.
+			expect(height, `aspect ${aspectRatio}`).toBeLessThan(bodyHeight * 2.5);
+		}
+	});
+
+	it('full keeps a wide T-pose inside the frame too', () => {
+		const tPose = { min: { x: -0.8, y: 0, z: -0.15 }, max: { x: 0.8, y: 1.7, z: 0.15 } };
+		for (const aspectRatio of [0.5, 1, 1.78]) {
+			const r = computeFraming({ box: tPose, preset: 'full', aspectRatio });
+			const { width } = visible(r, aspectRatio);
+			expect(width, `aspect ${aspectRatio}`).toBeGreaterThanOrEqual(tPose.max.x - tPose.min.x);
+		}
+	});
+
+	it('half and headshot stay tight instead of drifting to a full body', () => {
+		const bodyHeight = HUMANOID.max.y - HUMANOID.min.y;
+		expect(visible(computeFraming({ box: HUMANOID, preset: 'half' }), 1).height).toBeLessThan(
+			bodyHeight * 0.7,
+		);
+		expect(visible(computeFraming({ box: HUMANOID, preset: 'headshot' }), 1).height).toBeLessThan(
+			bodyHeight * 0.35,
+		);
+	});
+
+	it('clears the subject depth so a deep model never sits behind the camera', () => {
+		const deep = { min: { x: -0.2, y: 0, z: -0.6 }, max: { x: 0.2, y: 1.7, z: 0.6 } };
+		for (const preset of CAMERA_PRESETS) {
+			const r = computeFraming({ box: deep, preset });
+			expect(r.position.z, preset).toBeGreaterThan(deep.max.z);
+		}
+	});
+});
+
 describe('computeFraming — aspect ratio scaling', () => {
 	it('narrower viewport pulls the camera further back', () => {
 		const wide = computeFraming({ box: HUMANOID, preset: 'half', aspectRatio: 1.8 });

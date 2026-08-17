@@ -118,7 +118,7 @@ export class Vehicle extends Schema {
 	constructor() {
 		super();
 		this.id = '';
-		this.type = 'sedan'; // VEHICLE_TYPES key, picks the mesh + handling profile
+		this.type = 'trench'; // VEHICLE_TYPES key, picks the mesh + handling profile
 		this.color = 0xffffff;
 		this.x = 0;
 		this.y = 0;

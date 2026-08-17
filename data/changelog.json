@@ -2,6 +2,26 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-17",
+			"title": "The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts \"Meet Agent\"",
+			"summary": "Five fixes to the 3D model viewer at /app. Opening the Backdrop picker and taking a few seconds to read the six choices used to make the picker fade out from under the cursor: the viewer hides its controls after five seconds of stillness, and the picker was not on the list of surfaces that keep them awake, so an open picker went invisible and unclickable while still counting as open. It now stays put until you choose a backdrop or close it, and the controls resume fading once it is shut. Typing in the animation search while the clips were still loading stacked a second, contradictory message under the first, so the panel read \"Loading clips\" and \"No clips matching\" at the same time, and clearing the box left behind the nonsense line \"No clips matching\" with nothing in the quotes; the search now stays quiet until there are clips to search. Sharing the viewer to X, Farcaster or Telegram published \"Meet Agent\", an internal placeholder name, for anyone who had not loaded an agent of their own, and now uses the generic line instead. The page also shipped a sign-in panel and a welcome card that its own stylesheet blanked unconditionally, four links nobody could ever reach, and the preview card shown when the page is shared described the platform instead of the viewer. The avatar gallery behind the Avatar button is now announced to screen readers as a named dialog.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/app"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Avatar Studio now shows your whole avatar, and its Save button fits on a phone",
+			"summary": "The studio camera was framing the base body from the shoulders to the knees: the face you were sculpting and the shoes you were picking were both outside the picture, and the only way to see them was to orbit the camera yourself every time the page loaded. The framing is now solved from the lens rather than guessed at, so a full-body shot really does hold the avatar head to toe, arms included, on any window shape, and the half-body and headshot views stay as tight as their names promise. On a 320px phone the top bar had been running past the edge of the screen and taking the Save avatar button with it, so a look built on a phone could not be saved at all; the bar now fits, with the Back and title labels standing down to make room. The tab strip on that same narrow layout had been hiding its labels without putting anything in their place, leaving six blank buttons, and now shows an icon per tab. The Parametric body badge that read 120+ sliders was white text on a white pill and invisible everywhere. A failed save now says the connection could not be reached and that your look is still there, instead of repeating the browser phrase Failed to fetch, and every accessory search box, every tab and the Back link now carry names a screen reader can read. Opening avatar-studio in local development also serves the same page production does, which it previously did not.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/avatar-studio"
+		},
+		{
 			"date": "2026-08-16",
 			"title": "The Commons now fills with citizens in seconds instead of standing empty",
 			"summary": "Agora said it held 200 citizens while the square in front of you stayed empty. Every citizen was waiting on its own 3D model, and those run from 3 MB to 21 MB each, so the world was downloading close to a gigabyte before anyone could stand up: measured, 19 of 200 citizens had arrived after four and a half minutes. On top of that the page asked the server where each citizen's model lived one citizen at a time, 184 separate requests that also crowded out the economy ticker, which is why the population, tasks and $THREE readouts sat on dashes and the feed said it was reconnecting. The population endpoint now answers that question once for the whole square, and the crowd is drawn in two passes: everybody is standing within seconds, and the most recently active citizens change into their own avatar as it arrives, in place, without losing their spot or interrupting a walk to the job board. The population counter reads \"n / 200\" honestly while they arrive rather than reporting a number that did not match the square, and the Reload button on the \"failed to load\" screen now actually reloads.",

@@ -22,10 +22,10 @@
 
 		<!-- Open Graph -->
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="three.ws — The First Embodied AI Agent"  data-i18n-attr="content:app_next.meta_og_title"/>
+		<meta property="og:title" content="3D Model Viewer: drop in a glTF or GLB"  data-i18n-attr="content:app_next.meta_og_title"/>
 		<meta
 			property="og:description"
-			content="Agents have always been imagined as present. We made that real."
+			content="Drag and drop a 3D model to inspect it in the browser: orbit the camera, play animations, switch the backdrop, then share or embed the result."
 		 data-i18n-attr="content:app_next.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/app" />
 		<meta property="og:site_name" content="three.ws" />
@@ -35,10 +35,10 @@
 
 		<!-- Twitter / X -->
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="three.ws — Embodied AI"  data-i18n-attr="content:app_next.meta_twitter_title"/>
+		<meta name="twitter:title" content="3D Model Viewer on three.ws"  data-i18n-attr="content:app_next.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
-			content="The first three.ws with a body, a place, an identity, and memory."
+			content="Drop a glTF or GLB in the browser, orbit it, play its animations, and share or embed the result."
 		 data-i18n-attr="content:app_next.meta_twitter_description"/>
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="twitter:creator" content="@nichxbt" />
@@ -185,77 +185,6 @@
 			<h1 class="sr-only" data-i18n="app_next.page_heading">
 				3D model viewer: drag and drop a glTF or GLB file
 			</h1>
-
-			<!-- Auth gate — shown only to anonymous visitors -->
-			<aside class="auth-gate" id="auth-gate">
-				<div class="auth-gate__inner">
-					<div class="auth-gate__eyebrow">
-						<svg class="auth-gate__lock" aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<rect x="3" y="11" width="18" height="11" rx="2" />
-							<path d="M7 11V7a5 5 0 0 1 10 0v4" />
-						</svg>
-						<span data-i18n="app_next.unlock_the_agent">Unlock the agent</span>
-					</div>
-					<h2 class="auth-gate__title" data-i18n="app_next.your_agent_lives_here">Your agent lives here</h2>
-					<p class="auth-gate__desc" data-i18n="app_next.sign_in_to_access_animations_scene_controls">
-						Sign in to access animations, scene controls, and your agent's on-chain
-						identity, memory, and skills.
-					</p>
-					<div class="auth-gate__actions">
-						<a class="auth-gate__btn auth-gate__btn--primary" href="/login" data-i18n="app_next.sign_in_2">Sign in</a>
-						<a class="auth-gate__btn" href="/register" data-i18n="app_next.create_account">Create account</a>
-					</div>
-					<ul class="auth-gate__perks">
-						<li data-i18n="app_next.animations_presence_controls">Animations &amp; presence controls</li>
-						<li data-i18n="app_next.save_avatars_to_your_account">Save avatars to your account</li>
-						<li data-i18n="app_next.register_on_chain_agent_identity">Register on-chain agent identity</li>
-						<li data-i18n="app_next.scene_lighting_material_editor">Scene, lighting &amp; material editor</li>
-					</ul>
-				</div>
-			</aside>
-
-			<!-- Post-creation onboarding banner — shown once after creating an agent -->
-			<aside
-				class="agent-onboarding"
-				id="agent-onboarding"
-				role="dialog"
-				aria-labelledby="agent-onboarding-title"
-				hidden
-			>
-				<div class="agent-onboarding__inner">
-					<button
-						class="agent-onboarding__close"
-						id="agent-onboarding-close"
-						type="button"
-						aria-label="Dismiss welcome message"
-					 data-i18n-attr="aria-label:app_next.dismiss_welcome_message_arialabel">
-						×
-					</button>
-					<h2 class="agent-onboarding__title" id="agent-onboarding-title" data-i18n="app_next.your_agent_is_ready">
-						Your agent is ready 🎉
-					</h2>
-					<p class="agent-onboarding__desc" data-i18n="app_next.this_is_your_agent_s_studio_try">
-						This is your agent's studio. Try an animation from the chips below, drop a
-						new GLB to swap its body, or publish it on-chain so anyone can find and
-						embed it.
-					</p>
-					<div class="agent-onboarding__actions">
-						<a
-							class="agent-onboarding__btn agent-onboarding__btn--primary"
-							href="/deploy"
-							id="agent-onboarding-deploy"
-							 data-i18n="app_next.deploy_on_chain">Deploy on-chain →</a
-						>
-						<a
-							class="agent-onboarding__btn"
-							id="agent-onboarding-share"
-							target="_blank"
-							rel="noopener noreferrer"
-							 data-i18n="app_next.view_public_profile">View public profile</a
-						>
-					</div>
-				</div>
-			</aside>
 
 			<!-- Switchable scene backdrop — bottommost layer behind the transparent canvas.
 			     Painted by app-next-overlay.js (saved preset, picker, or agent chat). -->

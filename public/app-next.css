@@ -71,10 +71,13 @@ body.app-next-body {
 }
 
 /* Hide every chrome element produced by the production app.js that the
-   demo overrides. None of these are required for the viewer to work. */
+   demo overrides. None of these are required for the viewer to work.
+   The auth gate and the "Your agent is ready" onboarding card used to be
+   listed here AND shipped in this page's markup, so the page rendered two
+   panels it then hid unconditionally: four links nobody could ever reach.
+   The markup is gone; app.js only ever queried those ids, never created
+   them, and every one of its lookups is null-guarded. */
 body.app-next-body #agent-presence-sidebar,
-body.app-next-body #auth-gate,
-body.app-next-body #agent-onboarding,
 body.app-next-body .dropzone,
 body.app-next-body footer,
 body.app-next-body .h-footer,

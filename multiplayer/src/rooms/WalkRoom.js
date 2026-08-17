@@ -2425,6 +2425,12 @@ export class WalkRoom extends Room {
 		this._releaseVehicleOf(client.sessionId, id); // give up any other car first
 		v.driver = client.sessionId;
 		v.tsServer = Date.now();
+		// Peers pose a player from `motion`, and a driver never sends 'move' again
+		// until they step out, so seat them here. 'drive' is server-authored only:
+		// MOTION_VALUES deliberately excludes it, so a player on foot cannot claim
+		// to be sitting in a car they aren't in.
+		player.motion = 'drive';
+		player.tsServer = v.tsServer;
 		client.send('vehicle', { event: 'enter', id });
 	}
 
@@ -2480,7 +2486,7 @@ export class WalkRoom extends Room {
 			player.x = v.x;
 			player.z = v.z;
 			player.y = Math.max(0, Math.min(3, v.y + vehicleSpec(v.type).seat.y));
-			player.motion = 'idle';
+			player.motion = 'drive';
 			player.tsServer = v.tsServer;
 			// The ordinary 'move' handler drives zone-entry detection, but a seated
 			// driver never sends 'move', they stream 'vsync' instead. Without this, a
@@ -2538,13 +2544,20 @@ export class WalkRoom extends Room {
 
 	// Release any vehicle driven by this session (except `keepId`, when re-claiming).
 	_releaseVehicleOf(sessionId, keepId = null) {
+		let released = false;
 		for (const [, v] of this.state.vehicles) {
 			if (v.driver === sessionId && v.id !== keepId) {
 				v.driver = '';
 				v.speed = 0;
 				v.tsServer = Date.now();
+				released = true;
 			}
 		}
+		// Out of the seat, out of the seated pose. An eviction sweep (disconnect,
+		// switching cars) is the one path that clears a driver without going through
+		// the exit handler, so a peer would otherwise keep seeing them sitting.
+		const player = released ? this.state.players.get(sessionId) : null;
+		if (player && player.motion === 'drive') player.motion = 'idle';
 	}
 
 	// Heading (radians about the up axis) extracted from a vehicle's quaternion.
