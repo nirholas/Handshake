@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T14:14:53.946Z",
+	"generated_at": "2026-08-17T14:48:00.518Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -466,6 +466,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "The listings page now records our NVIDIA Inception membership",
+			"summary": "Anyone reading the listings and distribution page to see which programs back three.ws was getting an incomplete answer: the startup-programs table named Quicknode and Google Cloud but left NVIDIA Inception out entirely, even though the platform has been a member since July 2026 and every 3D generation lane runs on NVIDIA GPUs. The table now carries the NVIDIA row, saying what the membership is, what runs on the hardware behind it, and, as everywhere else on the site, that a startup program is not a partnership, an investment, or an endorsement.",
+			"link": "/docs/listings",
+			"tags": [
+				"docs",
+				"fix"
 			]
 		},
 		{

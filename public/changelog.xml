@@ -343,6 +343,14 @@
 			<description>Three fixes to the front door for creating, plus a strip of your own avatars that was never once drawn. The page is meant to greet a returning creator with &quot;Start from one of yours&quot; and a row of the avatars they have already made, one click from remixing any of them. It read the library reply in the wrong shape, decided it had received nothing, and hid the row every single time, so nobody has ever seen it. It reads the reply correctly now and the row appears, with a real thumbnail for each avatar. The page opens behind a full-screen loading screen while it checks whether you are signed in; if that check got no answer at all (a stalled connection rather than a refused one) the screen stayed black forever and the page read as dead. It now hands the page back after a short wait and treats you as signed out, which costs at most one extra trip through sign-in. Separately, opening a remix link for an avatar that had been deleted or made private used to show a message for four seconds and then leave you on a page where not one of the eight creation cards did anything: the remix ran before the buttons were wired and gave up without wiring them. The cards are live first now, and a failed remix explains itself in a panel that stays put, with a button to try again and a button to move on. Also: the talking-avatar-video card now says &quot;Coming soon&quot; on the card itself instead of only dimming, answers the keyboard the same way it answers a mouse, and stops calling itself unavailable when the check simply could not reach us (it asks again when you click). A saved avatar whose thumbnail has been deleted falls back to a silhouette instead of a broken image.</description>
 		</item>
 		<item>
+			<title>The listings page now records our NVIDIA Inception membership</title>
+			<link>https://three.ws/docs/listings</link>
+			<guid isPermaLink="false">2026-08-17:The listings page now records our NVIDIA Inception membership</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Anyone reading the listings and distribution page to see which programs back three.ws was getting an incomplete answer: the startup-programs table named Quicknode and Google Cloud but left NVIDIA Inception out entirely, even though the platform has been a member since July 2026 and every 3D generation lane runs on NVIDIA GPUs. The table now carries the NVIDIA row, saying what the membership is, what runs on the hardware behind it, and, as everywhere else on the site, that a startup program is not a partnership, an investment, or an endorsement.</description>
+		</item>
+		<item>
 			<title>The Money Flow Map stops cutting its own table off on a phone, and a refresh no longer blanks the map</title>
 			<link>https://three.ws/flow</link>
 			<guid isPermaLink="false">2026-08-17:The Money Flow Map stops cutting its own table off on a phone, and a refresh no longer blanks the map</guid>

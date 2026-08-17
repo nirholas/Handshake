@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "The listings page now records our NVIDIA Inception membership",
+			"summary": "Anyone reading the listings and distribution page to see which programs back three.ws was getting an incomplete answer: the startup-programs table named Quicknode and Google Cloud but left NVIDIA Inception out entirely, even though the platform has been a member since July 2026 and every 3D generation lane runs on NVIDIA GPUs. The table now carries the NVIDIA row, saying what the membership is, what runs on the hardware behind it, and, as everywhere else on the site, that a startup program is not a partnership, an investment, or an endorsement.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/listings"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "One car in the world: the Trench Car now drives every road in /play",
 			"summary": "The cars in a coin world no longer come in four unrelated shapes. Alongside the Trench Car, the community model from the avatar gallery, /play was also parking three procedural box cars in its depots: a boxy sedan, a pickup, and an amber roll-caged buggy on oversized wheels that looked nothing like anything else in the town. All three are gone. Every bay in every world, plaza and depot alike, now parks the Trench Car, so the car that drives past you on the ring road is the car you walk up to, press F, and drive away in. Frontier towns are included: their traffic used to be horse-drawn covered wagons, and it is the same car as everywhere else now. The car still appears the instant a world loads, as a plain silhouette on the same wheels, and fills in with the real model the moment it finishes downloading, so nothing waits on the asset and a slow connection never leaves an empty road.",
 			"tags": [
