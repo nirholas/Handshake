@@ -130,17 +130,24 @@ function avatarTile({ name, url, image }) {
 	btn.title = name;
 	btn.setAttribute('aria-label', `Use avatar ${name}`);
 	btn.setAttribute('aria-pressed', 'false');
+	const placeholder = () => {
+		const ph = document.createElement('span');
+		ph.className = 'ph';
+		ph.textContent = (name || '?').trim().charAt(0).toUpperCase();
+		return ph;
+	};
 	if (image) {
 		const img = document.createElement('img');
 		img.src = image;
 		img.alt = '';
 		img.loading = 'lazy';
+		// Community previews outlive their stored object: the gallery still lists a
+		// thumbnail URL after the bytes are gone. Swap a dead one for the initial
+		// tile so the picker never shows a broken image.
+		img.addEventListener('error', () => img.replaceWith(placeholder()), { once: true });
 		btn.appendChild(img);
 	} else {
-		const ph = document.createElement('span');
-		ph.className = 'ph';
-		ph.textContent = (name || '?').trim().charAt(0).toUpperCase();
-		btn.appendChild(ph);
+		btn.appendChild(placeholder());
 	}
 	btn.addEventListener('click', () => selectAvatar(url));
 	return btn;
