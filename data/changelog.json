@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Cosmos tells you when world generation is offline instead of showing you NVIDIA's internal error",
+			"summary": "The Cosmos page asked NVIDIA for a world and, when NVIDIA had retired the model behind that endpoint, printed the vendor's raw reply straight into the banner: a function id, our account id, and a Retry button for a request that could never succeed. That failure is now recognised for what it is. The lane tries each published Cosmos world model in turn, and only when every one is gone does it report itself offline, with a plain sentence, the living aurora backdrop still running behind your avatar, and no button that pretends the next click will work. A dropped connection still gets a real Retry, because that one can. Alongside that: the stage no longer overflows its column on a phone (it was rendered 672px wide inside a 320px screen, clipping the avatar) and now stands portrait on small screens so your character has room; a clip that arrives but will not play says so instead of leaving a finished stage with nothing in it; the Share button copies a link that actually carries the world, so whoever opens it sees the scene playing rather than an empty stage with the prompt refilled; a community avatar whose thumbnail has been deleted falls back to its initial instead of a broken image; the status dot no longer claims the lane is healthy before anything has been asked of it; and a job the service can no longer track ends promptly rather than spinning for five minutes.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/cosmos"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Compare Coins now tells you when a coin will not load instead of shimmering forever",
 			"summary": "The side-by-side coin comparison had one failure mode that looked exactly like a hung page: when the market data service did not answer, the stats table kept its grey loading shimmer up permanently and the chips still showed the raw coin ids, with nothing to click and nothing to read. Every one of those states is now written out. A coin that does not exist is labelled Not found with a one-click Remove; a coin the service failed to return is labelled Failed to load with a Retry that actually refetches it and redraws the chart. The chart says which of the two happened and offers the same recovery. The search box no longer goes quiet when the coin index is slow or down: it shows a Searching indicator while it waits and an explanation if the request fails, and a slow answer can no longer overwrite a newer one. Once four coins are up, the box says four is the maximum and stops accepting a fifth rather than silently swallowing the pick. New Copy link button next to the picker hands over the shareable matchup URL, the three default coins load in parallel instead of one after another, and the stats table now carries proper row and column headers for screen readers with a visible focus ring on every chip.",
 			"tags": [

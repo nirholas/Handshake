@@ -39,27 +39,81 @@ function requireAuthForSelfie() {
 // Probe runtime feature flags. Selfie reconstruction is always available
 // (BYOK providers are always an option); only video avatar is gated on an
 // optional Cloud Run worker.
-let _videoAvatarReady = false;
-async function probeFeatures() {
+//
+// Three states, not a boolean: "the probe never answered" is not the same
+// answer as "the worker is off". Collapsing them brands a live lane "coming
+// soon" for anyone who loaded the page during a network blip, with no way back
+// short of a reload. 'unknown' keeps the card live and re-asks on activation.
+/** @type {'ready' | 'unavailable' | 'unknown'} */
+let _videoAvatar = 'unknown';
+
+async function probeVideoAvatar() {
 	try {
 		const r = await fetch('/api/config', { credentials: 'omit' });
-		if (!r.ok) return;
+		if (!r.ok) return 'unknown';
 		const j = await r.json();
-		_videoAvatarReady = j?.features?.videoAvatar === true;
+		return j?.features?.videoAvatar === true ? 'ready' : 'unavailable';
 	} catch {
-		// network blip — keep defaults.
+		return 'unknown';
 	}
-	if (!_videoAvatarReady) markVideoAvatarUnavailable();
 }
 
+async function probeFeatures() {
+	_videoAvatar = await probeVideoAvatar();
+	if (_videoAvatar === 'unavailable') markVideoAvatarUnavailable();
+}
+
+// The dimmed card has to say why it is dimmed. The title carries a data-i18n
+// annotation, so runtime i18n reclaims anything written into it; the state goes
+// into a chip and the CTA label instead, both of which the catalog never owns.
 function markVideoAvatarUnavailable() {
 	const card = document.getElementById('card-video-avatar');
-	if (!card) return;
+	if (!card || card.dataset.unavailable === '1') return;
+	card.dataset.unavailable = '1';
 	card.setAttribute('aria-disabled', 'true');
+	card.setAttribute(
+		'aria-label',
+		'Talking avatar video: coming soon, this lane is not live yet',
+	);
 	card.style.opacity = '0.45';
 	card.style.cursor = 'not-allowed';
-	const title = card.querySelector('.card-title');
-	if (title) title.textContent = 'Talking avatar video · coming soon';
+
+	const meta = document.getElementById('card-video-avatar-meta');
+	if (meta && !meta.querySelector('.chip-soon')) {
+		const chip = document.createElement('span');
+		chip.className = 'chip chip-soon';
+		chip.textContent = 'Coming soon';
+		meta.prepend(chip);
+	}
+	const cta = document.getElementById('card-video-avatar-cta');
+	if (cta) cta.textContent = 'Coming soon';
+}
+
+// Activation handler for the video-avatar card, shared by pointer and keyboard.
+// 'unknown' means the boot probe never got an answer, so ask again on the click
+// rather than refusing a lane that may well be live.
+async function openVideoAvatar() {
+	if (_videoAvatar === 'unknown') {
+		showStatus('Checking whether talking avatar video is available…', 'loading');
+		_videoAvatar = await probeVideoAvatar();
+		if (_videoAvatar === 'unavailable') markVideoAvatarUnavailable();
+		if (_videoAvatar === 'unknown') {
+			showStatus(
+				'Could not reach three.ws to check this feature. Check your connection and try again.',
+				'error',
+			);
+			return;
+		}
+	}
+	if (_videoAvatar === 'unavailable') {
+		showStatus('Talking avatar video is coming soon. Stay tuned.', 'info');
+		return;
+	}
+	if (window.__authed === false) {
+		window.location.replace(`/login?next=${encodeURIComponent('/create/video')}`);
+		return;
+	}
+	window.location.href = '/create/video';
 }
 
 async function handleFork(avatarId) {
@@ -110,17 +164,71 @@ async function handleFork(avatarId) {
 	} catch (err) {
 		hideSaveOverlay();
 		log.error('[create] fork failed:', err);
-		showStatus(err.message || 'Could not remix this avatar. Try again.', 'error');
+		showFatal({
+			title: 'That remix could not be loaded',
+			body: `${err.message || 'Could not remix this avatar.'} The original may have been deleted or made private. Every other way to create is still open below.`,
+			retryLabel: 'Try the remix again',
+			onRetry: () => handleFork(avatarId),
+		});
 	}
 }
 
-async function boot() {
-	const forkId = new URLSearchParams(location.search).get('fork');
-	if (forkId) {
-		await handleFork(forkId);
-		return;
+// Hard failures render into #create-alert-slot, not the 4.5s toast: a visitor
+// who arrived on a ?fork= link and hit an error has nothing else on screen to
+// act on, so the message has to persist and carry its own way forward.
+function showFatal({ title, body, retryLabel, onRetry }) {
+	const slot = document.getElementById('create-alert-slot');
+	if (!slot) return;
+	slot.replaceChildren();
+
+	const box = document.createElement('div');
+	box.className = 'create-alert';
+
+	const h = document.createElement('p');
+	h.className = 'create-alert-title';
+	h.innerHTML =
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>';
+	h.append(title);
+
+	const p = document.createElement('p');
+	p.className = 'create-alert-body';
+	p.textContent = body;
+
+	const actions = document.createElement('div');
+	actions.className = 'create-alert-actions';
+
+	if (onRetry) {
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.className = 'create-alert-btn create-alert-btn--primary';
+		retry.textContent = retryLabel || 'Try again';
+		retry.addEventListener('click', () => {
+			slot.replaceChildren();
+			onRetry();
+		});
+		actions.appendChild(retry);
 	}
 
+	const dismiss = document.createElement('button');
+	dismiss.type = 'button';
+	dismiss.className = 'create-alert-btn';
+	dismiss.textContent = 'Start something new instead';
+	dismiss.addEventListener('click', () => {
+		slot.replaceChildren();
+		// Drop ?fork= so a reload does not replay the failure.
+		const url = new URL(window.location.href);
+		url.searchParams.delete('fork');
+		history.replaceState(null, '', url.pathname + url.search + url.hash);
+		document.getElementById('card-default-editor')?.focus();
+	});
+	actions.appendChild(dismiss);
+
+	box.append(h, p, actions);
+	slot.appendChild(box);
+	box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+async function boot() {
 	probeFeatures();
 	const creator = new AvatarCreator(document.body, (blob, meta = {}) => {
 		const provider = meta.provider || 'avaturn';
@@ -163,17 +271,7 @@ async function boot() {
 		if (await isAtAvatarLimit()) return;
 		window.location.href = '/create/prompt';
 	});
-	wireCard('card-video-avatar', () => {
-		if (!_videoAvatarReady) {
-			showStatus('Talking avatar video is coming soon — stay tuned.', 'info');
-			return;
-		}
-		if (window.__authed === false) {
-			window.location.replace(`/login?next=${encodeURIComponent('/create/video')}`);
-			return;
-		}
-		window.location.href = '/create/video';
-	});
+	wireCard('card-video-avatar', () => openVideoAvatar());
 	wireCard('card-cosmos', () => {
 		window.location.href = '/cosmos';
 	});
