@@ -271,6 +271,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['clip-director', 'internal: content strategy'],
 	['coin-launches', 'owner-gated: names a crypto project other than $THREE'],
 	['coin-pages', 'owner-gated: names a crypto project other than $THREE'],
+	['coingecko-listing-update-2026-08', 'internal: dated listing-update notes prepared for an external venue'],
 	['coinmarketcap-article', 'internal: draft prepared for an external publisher'],
 	['coinmarketcap-live-article', 'internal: draft prepared for an external publisher'],
 	['coinmarketcap-article-play', 'internal: draft prepared for an external publisher'],
