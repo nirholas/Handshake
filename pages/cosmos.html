@@ -169,20 +169,6 @@
 				.cz-wrap {
 					grid-template-columns: 1fr;
 				}
-				/* min-height plus aspect-ratio forces a WIDTH: 420px at 16/10 is a
-				   672px stage, which overflowed its column (and clipped the avatar)
-				   on every phone. Below the two-column breakpoint the ratio alone
-				   sizes the stage from the width that is actually available. */
-				.cz-stage {
-					min-height: 0;
-				}
-			}
-			@media (max-width: 560px) {
-				/* A 16/10 letterbox on a phone leaves the avatar a sliver; go
-				   portrait so the character still has vertical room to stand in. */
-				.cz-stage {
-					aspect-ratio: 4 / 5;
-				}
 			}
 
 			/* ── Stage (avatar in front of the living world) ──────────────── */
@@ -196,6 +182,22 @@
 				box-shadow: var(--cz-shadow);
 				background: #05060a;
 				isolation: isolate;
+			}
+			/* min-height plus aspect-ratio forces a WIDTH: 420px at 16/10 is a 672px
+			   stage, which overflowed its column and clipped the avatar on every
+			   phone. Below the two-column breakpoint the ratio alone sizes the stage
+			   from the width that is actually available. */
+			@media (max-width: 900px) {
+				.cz-stage {
+					min-height: 0;
+				}
+			}
+			/* A 16/10 letterbox on a phone leaves the avatar a sliver; go portrait so
+			   the character still has vertical room to stand in. */
+			@media (max-width: 560px) {
+				.cz-stage {
+					aspect-ratio: 4 / 5;
+				}
 			}
 			/* Designed empty/fallback backdrop: a slow living aurora so the stage is
 			   never a dead void before (or instead of) a generated world. */

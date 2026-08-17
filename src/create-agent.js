@@ -921,7 +921,7 @@ function selectStarter(id) {
 // Items, scenes, accessories, vehicles, etc. are 3D assets — not characters.
 const AGENTABLE_CATEGORIES = new Set(['avatar', 'creature']);
 
-let libraryState = 'idle'; // idle | loading | loaded | error
+let libraryState = 'idle'; // idle | loading | loaded | signedout | error
 let libraryAvatars = [];
 let libraryOffset = 0;
 let libraryHasMore = false;
@@ -933,7 +933,10 @@ const avatarModelUrl = (av) => av?.model_url || av?.base_model_url || '';
 
 async function loadLibraryAvatars({ append = false } = {}) {
 	if (libraryState === 'loading') return;
-	if (!append && (libraryState === 'loaded' || libraryState === 'error')) {
+	if (
+		!append &&
+		(libraryState === 'loaded' || libraryState === 'error' || libraryState === 'signedout')
+	) {
 		renderLibrary();
 		return;
 	}
@@ -941,7 +944,17 @@ async function loadLibraryAvatars({ append = false } = {}) {
 	if (!append) renderLibrary();
 	try {
 		const url = `/api/avatars?limit=${LIBRARY_PAGE + 1}&offset=${libraryOffset}`;
-		const res = await apiFetch(url, { credentials: 'include' });
+		// allowAnonymous: /api/avatars answers 401 to a guest, and without this the
+		// shared 401 handler in api.js would bounce the whole tab to /login the
+		// moment a signed-out visitor opened this tab, mid-wizard, on a flow whose
+		// entire design is "build first, sign in only at the ship step". Owning the
+		// 401 here keeps them in the wizard and renders a real next step instead.
+		const res = await apiFetch(url, { credentials: 'include', allowAnonymous: true });
+		if (res.status === 401) {
+			libraryState = 'signedout';
+			renderLibrary();
+			return;
+		}
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 		const all = (data.avatars || []).filter((a) => a && a.id);
@@ -974,6 +987,24 @@ function renderLibrary() {
 
 	if (libraryState === 'loading') {
 		grid.innerHTML = note('Loading your avatars…');
+		return;
+	}
+	if (libraryState === 'signedout') {
+		grid.innerHTML = note(
+			'Sign in to reuse an avatar you already made. Nothing here is required: the Starter library and Upload tabs both work without an account, and you can connect an owned avatar later from the editor.',
+		);
+		const signin = document.createElement('button');
+		signin.type = 'button';
+		signin.className = 'btn btn--ghost';
+		signin.style = 'grid-column:1/-1;margin-top:6px;justify-self:start';
+		signin.textContent = 'Sign in';
+		// Save first: the wizard is restored on return, so signing in from here
+		// costs the visitor nothing they have already built.
+		signin.addEventListener('click', () => {
+			saveDraft();
+			window.location.href = `/login?next=${encodeURIComponent('/create-agent')}`;
+		});
+		grid.appendChild(signin);
 		return;
 	}
 	if (libraryState === 'error') {

@@ -488,9 +488,21 @@ async function loadCoinProfile(mint, { force = false } = {}) {
 	if (retryBtn) retryBtn.hidden = true;
 
 	renderCoinProfile(coin);
-	// Live market data + trades enrich the page once the core render is up.
-	loadCoinMarket(mint);
-	loadCoinTrades(mint);
+	// Live market data + trades enrich the page once the core render is up. Price
+	// has two independent sources (bonding curve, then the last trade for a
+	// graduated coin), so the shimmer only resolves once both have settled: a
+	// permanent shimmer would read as a hung page, and an early dash would read
+	// as "no price" while the second source was still in flight.
+	await Promise.allSettled([loadCoinMarket(mint), loadCoinTrades(mint)]);
+	if (_coinProfileMint !== mint) return;
+	if ($('cp-stat-price')?.classList.contains('is-loading')) setCoinPrice(',');
+}
+
+function setCoinPrice(text) {
+	const el = $('cp-stat-price');
+	if (!el) return;
+	el.classList.remove('is-loading');
+	el.textContent = text;
 }
 
 function renderCoinProfile(coin) {
@@ -529,10 +541,11 @@ function renderCoinProfile(coin) {
 	const mcap = fmtMcap(coin.usd_market_cap ?? coin.market_cap);
 	$('cp-stats').innerHTML = [
 		mcap ? statHtml('Market cap', mcap, true) : '',
-		statHtml('Price', '—', false, 'cp-stat-price'),
+		statHtml('Price', '', false, 'cp-stat-price'),
 		statHtml('Created', fmtAge(coin.created_timestamp) || '—'),
 		coin.reply_count != null ? statHtml('Replies', String(coin.reply_count)) : '',
 	].filter(Boolean).join('');
+	$('cp-stat-price')?.classList.add('is-loading');
 
 	const descEl = $('cp-desc');
 	if (coin.description) { descEl.hidden = false; descEl.textContent = coin.description; }
@@ -591,8 +604,8 @@ async function loadCoinMarket(mint) {
 		// Graduated coins carry no bonding-curve price object; their live DEX price
 		// arrives under graduatedPrice instead. Prefer the curve price, fall back.
 		const usd = data?.price?.usdPrice ?? data?.graduatedPrice?.priceUsd;
-		const priceEl = $('cp-stat-price');
-		if (priceEl && usd) priceEl.textContent = fmtPrice(usd) || priceEl.textContent;
+		const priced = usd ? fmtPrice(usd) : '';
+		if (priced) setCoinPrice(priced);
 
 		// Graduation comes as progressBps (0–10000) + isGraduated.
 		const g = data?.graduation || {};
@@ -624,11 +637,11 @@ async function loadCoinTrades(mint) {
 		if (!trades.length) return;
 
 		// Price fallback: graduated coins have no bonding-curve price, so use the
-		// most recent trade's USD price if loadCoinMarket left the stat empty.
-		const priceEl = $('cp-stat-price');
-		if (priceEl && (!priceEl.textContent || priceEl.textContent === '…' || priceEl.textContent === '—')) {
+		// most recent trade's USD price if loadCoinMarket left the stat unresolved.
+		if ($('cp-stat-price')?.classList.contains('is-loading')) {
 			const last = trades.find((t) => Number(t.price_usd) > 0);
-			if (last) priceEl.textContent = fmtPrice(last.price_usd) || '—';
+			const priced = last ? fmtPrice(last.price_usd) : '';
+			if (priced) setCoinPrice(priced);
 		}
 
 		list.innerHTML = trades.map((t) => {

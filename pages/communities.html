@@ -242,6 +242,7 @@
 			.cp-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
 			.cp-stat-value { font-size: 20px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
 			.cp-stat-value.up { color: #34d399; }
+			.cp-stat-value.is-loading::after { content: ''; display: block; width: 74px; height: 20px; border-radius: 6px; background: rgba(255,255,255,0.09); animation: pulse 1.3s ease-in-out infinite; }
 			.cp-desc { margin-top: 20px; color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 680px; }
 			.cp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; align-items: center; }
 			.cp-actions .ghost-btn { text-decoration: none; display: inline-flex; align-items: center; }
@@ -289,6 +290,7 @@
 				.avatar-chip, .coin-card, .mainland-card, .primary-btn, .ghost-btn,
 				.coin-enter, .coin-card .sk, .coin-card.is-skeleton .coin-thumb,
 				.cp-skel-avatar, .cp-skel-line, .cp-skel-stats { transition: none; animation: none; }
+				.cp-stat-value.is-loading::after { animation: none; }
 				.avatar-chip:hover, .coin-card:hover, .mainland-card:hover,
 				.primary-btn:hover, .avatar-chip:active, .coin-card:active,
 				.mainland-card:active, .primary-btn:active, .ghost-btn:active { transform: none; }

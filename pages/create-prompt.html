@@ -453,8 +453,12 @@
 				padding-top: 8px;
 			}
 			.done-viewer {
-				width: 100%;
-				max-width: 460px;
+				/* The 460px box is 575px tall at 4/5, which pushed "Open in editor"
+				   and "Make another" off the bottom of a laptop screen the moment
+				   the build finished. The viewport-height term keeps the result and
+				   its actions on one screen; on a tall display the 460px cap still
+				   wins, so nothing shrinks where there was already room. */
+				width: min(100%, 460px, 38vh);
 				aspect-ratio: 4/5;
 				margin: 18px auto 0;
 				border: 1px solid var(--border-strong);

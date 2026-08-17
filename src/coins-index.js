@@ -296,16 +296,27 @@ function wireSearch() {
 	let active = -1;
 	let lastQuery = '';
 	let searchErrorStatus = null;
+	let pending = false;
+	let queryToken = 0; // bumped per keystroke so a slow earlier response can't overwrite a newer one
 
 	function close() {
 		pop.hidden = true;
 		input.setAttribute('aria-expanded', 'false');
 		input.removeAttribute('aria-activedescendant');
+		pop.removeAttribute('aria-busy');
 		active = -1;
+		// Closing cancels whatever is in flight, so a late response cannot pop the
+		// panel back open over a cleared or dismissed search.
+		pending = false;
+		queryToken++;
 	}
 
 	function renderPop() {
-		if (searchErrorStatus) {
+		if (pending && !items.length) {
+			// First query of a session: say the lookup is running rather than
+			// leaving the panel shut until the network answers.
+			pop.innerHTML = '<div class="none">Searching…</div>';
+		} else if (searchErrorStatus) {
 			// A search that answers with nothing at all is a dead end: say the
 			// lookup failed rather than closing the panel as if nothing happened.
 			pop.innerHTML = `<div class="none">${
@@ -329,6 +340,10 @@ function wireSearch() {
 				.join('');
 		}
 		pop.hidden = false;
+		// Results already on screen stay readable while the next query resolves;
+		// aria-busy tells assistive tech they are about to be replaced.
+		if (pending) pop.setAttribute('aria-busy', 'true');
+		else pop.removeAttribute('aria-busy');
 		input.setAttribute('aria-expanded', 'true');
 		// Screen readers follow the active option through aria-activedescendant;
 		// data-active only moves the highlight visually.
@@ -343,18 +358,24 @@ function wireSearch() {
 			close();
 			return;
 		}
+		pending = true;
+		renderPop();
+		const token = ++queryToken;
 		timer = setTimeout(async () => {
 			try {
 				const { coins } = await getJson(`/api/coin/markets?q=${encodeURIComponent(q)}`);
+				if (token !== queryToken) return; // a newer keystroke owns the panel
 				lastQuery = q;
 				items = coins;
 				active = -1;
 				searchErrorStatus = null;
 			} catch (err) {
+				if (token !== queryToken) return;
 				items = [];
 				active = -1;
 				searchErrorStatus = err.status || 0;
 			}
+			pending = false;
 			renderPop();
 		}, 250);
 	});
