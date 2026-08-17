@@ -291,6 +291,12 @@ async function boot() {
 	});
 
 	loadYourAvatars();
+
+	// The remix runs LAST, and only after every card above is live. It used to
+	// run first and return early, so a failed ?fork= left the visitor looking at
+	// a full page of cards where not one of them was wired to anything.
+	const forkId = new URLSearchParams(location.search).get('fork');
+	if (forkId) await handleFork(forkId);
 }
 
 // Returning users with at least one saved avatar get a "Start from one of
@@ -340,6 +346,12 @@ async function loadYourAvatars() {
 			img.src = thumb;
 			img.alt = '';
 			img.loading = 'lazy';
+			// A thumbnail whose storage object has expired must not leave a broken
+			// image icon in the strip: fall back to the same silhouette a
+			// thumbnail-less avatar gets. The remix button still works either way.
+			img.addEventListener('error', () => {
+				imgWrap.innerHTML = placeholder;
+			});
 			imgWrap.appendChild(img);
 		} else {
 			imgWrap.innerHTML = placeholder;
@@ -432,7 +444,10 @@ function wireCard(id, handler) {
 	if (!el) return;
 	el.addEventListener('click', handler);
 	el.addEventListener('keydown', (e) => {
-		if (el.getAttribute('aria-disabled') === 'true') return;
+		// No aria-disabled short-circuit here: the pointer path always reaches the
+		// handler, and a card that answers a mouse with an explanation but a
+		// keyboard with silence is broken for exactly the people who need the
+		// explanation most. The handler owns the decision on both paths.
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
 			handler(e);
